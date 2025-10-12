@@ -1,12 +1,12 @@
 ﻿namespace GT4
 {
-    public partial class App : Application
+  public partial class App : Application
+  {
+    public App()
     {
-        public App()
-        {
-            InitializeComponent();
+      InitializeComponent();
 
-            MainPage = new AppShell();
-        }
+      MainPage = new AppShell();
     }
+  }
 }

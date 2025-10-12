@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="GT4.UI.MainPage">
+
+  <ScrollView>
+    <VerticalStackLayout
+            Padding="30,0"
+            Spacing="25">
+      <Image
+                Source="gt4_logo.png"
+                HeightRequest="185"
+                Aspect="AspectFit"
+                SemanticProperties.Description="dot net bot in a race car number eight" />
+
+      <Label
+        Text="{Binding AppName}"
+        Style="{StaticResource Headline}"
+        SemanticProperties.HeadingLevel="Level1" />
+
+      <Label
+        Text="{Binding WelcomeTitle}"
+        Style="{StaticResource SubHeadline}"
+        SemanticProperties.HeadingLevel="Level2"
+        SemanticProperties.Description="Welcome to GT4 app powered by dot net Multi platform App UI" />
+
+      <Button
+        x:Name="OpenOrCreateBtn"
+        Text="{Binding OpenOrCreateBtName}" 
+        FontSize="Large"
+        SemanticProperties.Hint="{Binding OpenOrCreateBtHint}"
+        Command="{Binding NavigateToCreateOrOpenDialog}"
+        CommandParameter="OpenOrCreateDialog"
+        HorizontalOptions="Fill" />
+    </VerticalStackLayout>
+  </ScrollView>
+
+</ContentPage>

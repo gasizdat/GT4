@@ -3,7 +3,7 @@
     x:Class="GT4.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:GT4"
+    xmlns:local="clr-namespace:GT4.UI"
     Shell.FlyoutBehavior="Disabled"
     Title="GT4">
 
