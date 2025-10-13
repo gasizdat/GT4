@@ -18,7 +18,7 @@ public partial class OpenOrCreateDialog : ContentPage
     {
       var ret = new ObservableCollection<ProjectListItem>
       {
-        new ProjectListItem { Name = "Create New!", Path = "Create new Genealogy Tree" }
+        new ProjectListItemCreate{ }
       };
 
       using var projectList = Utils.ServiceBuilder.DefaultServices.GetService<Utils.IProjectList>() 
@@ -30,5 +30,14 @@ public partial class OpenOrCreateDialog : ContentPage
 
       return ret;
     }
+  }
+
+  public async void OnProjectSelected(object sender, SelectionChangedEventArgs e)
+  {
+    if (e.CurrentSelection.FirstOrDefault() is ProjectListItemCreate item)
+    {
+      await Shell.Current.GoToAsync(UIRoutes.GetRoute<CreateNewProjectDialog>());
+    }
+    //App.Current.MainPage = new MainPage(item.Name, item.Path);
   }
 }

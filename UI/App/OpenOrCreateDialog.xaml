@@ -12,12 +12,12 @@
             VerticalOptions="Center" 
             HorizontalOptions="Center" />
 
-      <CollectionView ItemsSource="{Binding Projects}">
+      <CollectionView ItemsSource="{Binding Projects}" SelectionMode="Single" SelectionChanged="OnProjectSelected">
         <CollectionView.ItemTemplate>
           <DataTemplate x:DataType="gt4_ui:ProjectListItem">
             <VerticalStackLayout>
-              <Label Text="{Binding Name}" FontSize="20" FontAttributes="Bold" Padding="10"/>
-              <Label Text="{Binding Path}" FontSize="12" Padding="10"/>
+              <Label Text="{Binding Name}" FontSize="20" FontAttributes="Bold" Padding="2"/>
+              <Label Text="{Binding Path}" FontSize="12" Padding="2"/>
             </VerticalStackLayout>
           </DataTemplate>
         </CollectionView.ItemTemplate>

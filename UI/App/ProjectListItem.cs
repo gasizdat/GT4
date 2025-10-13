@@ -2,6 +2,6 @@
 
 public class ProjectListItem
 {
-  public string Name { get; init; } = "Some Project Name";
-  public string Path { get; init; } = "/path/to/project.file";
+  public string Name { get; init; } = string.Empty;
+  public string Path { get; init; } = string.Empty;
 }

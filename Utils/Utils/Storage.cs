@@ -6,4 +6,5 @@ internal class Storage : IStorage
 
   public string ApplicationData => Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
   public string ProjectListPath => Path.Combine(ApplicationData, AppId, "projects.json");
+  public string ProjectsRoot => Path.Combine(ApplicationData, AppId, "local_projects");
 }

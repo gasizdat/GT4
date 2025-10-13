@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Diagnostics;
+using System.Text.Json;
 
 namespace GT4.Utils;
 
@@ -21,13 +22,16 @@ internal class ProjectList : IDisposable, IProjectList
     }
   }
 
-  private void StoreItems()
-  {
+  private void StoreItems() =>
     _FileSystem.WriteJsonFile(_Storage.ProjectListPath, JsonSerializer.SerializeToDocument(Items));
-  }
+  
 
   private static bool CompareNames(string name1, string name2) =>
     string.Equals(name1, name2, StringComparison.InvariantCultureIgnoreCase);
+
+  [Conditional("DEBUG")]
+  private void DropTheList() =>
+    _FileSystem.RemoveFile(_Storage.ProjectListPath);
 
   public ProjectList(IStorage storage, IFileSystem fileSystem)
   {

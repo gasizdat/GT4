@@ -37,4 +37,10 @@ internal class FileSystem : IFileSystem
       throw new ApplicationException("Failed to serialize JSON document", ex);
     }
   }
+
+  public void RemoveFile(string path)
+  {
+    if (File.Exists(path))
+      File.Delete(path);
+  }
 }

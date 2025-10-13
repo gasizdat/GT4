@@ -40,10 +40,10 @@
 
 	<ItemGroup>
 		<!-- App Icon -->
-		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
+		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#1E4437" />
 
 		<!-- Splash Screen -->
-		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
+		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#1E4437" BaseSize="128,128" />
 
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />
@@ -66,12 +66,18 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Compile Update="CreateNewProjectDialog.xaml.cs">
+	    <DependentUpon>CreateNewProjectDialog.xaml</DependentUpon>
+	  </Compile>
 	  <Compile Update="UI\OpenOrCreateDialog.xaml.cs">
 	    <DependentUpon>OpenOrCreateDialog.xaml</DependentUpon>
 	  </Compile>
 	</ItemGroup>
 
 	<ItemGroup>
+	  <MauiXaml Update="CreateNewProjectDialog.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="UI\OpenOrCreateDialog.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>

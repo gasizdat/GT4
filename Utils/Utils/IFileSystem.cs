@@ -6,4 +6,5 @@ public interface IFileSystem
 {
   JsonDocument ReadJsonFile(string path);
   void WriteJsonFile(string path, JsonDocument doc);
+  void RemoveFile(string path);
 }
