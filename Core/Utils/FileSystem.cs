@@ -4,7 +4,7 @@ namespace GT4.Utils;
 
 internal class FileSystem : IFileSystem
 {
-  private static void CreatePath(string path)
+  private void CreatePath(string path)
   {
     var parentDir = Path.GetDirectoryName(path);
     if (parentDir is not null && !Directory.Exists(parentDir))
@@ -42,5 +42,22 @@ internal class FileSystem : IFileSystem
   {
     if (File.Exists(path))
       File.Delete(path);
+  }
+
+  public FileStream CreateEmptyFile(string path)
+  {
+    CreatePath(path);
+    return File.Create(path);
+  }
+
+  public IReadOnlyList<string> GetFiles(string path, string searchPattern, bool recursive)
+  {
+    if (Directory.Exists(path))
+    {
+      var option = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+      return Directory.GetFiles(path, searchPattern, option);
+    }
+    
+    return Array.Empty<string>();
   }
 }

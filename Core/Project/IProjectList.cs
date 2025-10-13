@@ -1,10 +1,10 @@
 ﻿
-namespace GT4.Utils;
+namespace GT4.Project;
 
-public interface IProjectList : IDisposable
+public interface IProjectList
 {
   IReadOnlyList<ProjectItem> Items { get; }
 
-  void Add(string name, string path);
+  void Create(string name);
   void Remove(string name);
 }

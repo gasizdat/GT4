@@ -30,8 +30,4 @@
 
   <Import Project="AppCommon.props" />
 
-  <ItemGroup>
-    <MauiSplashScreen Include="Resources\Splash\splash.svg" />
-  </ItemGroup>
-
 </Project>

@@ -1,4 +1,4 @@
-using GT4.Utils;
+using GT4.Project;
 using System.Collections.ObjectModel;
 
 namespace GT4.UI;
@@ -15,17 +15,16 @@ public partial class OpenOrCreateDialog : ContentPage
 
   public string DialogTitle => "Open or Create a Genealogy";
   public string DialogHint => "You can open the existent or create a new Genealogy Tree";
-  public ObservableCollection<ProjectListItem> Projects
+  public ICollection<ProjectListItem> Projects
   {
     get
     {
-      var ret = new ObservableCollection<ProjectListItem> { };
+      var ret = new Collection<ProjectListItem> { };
 
-      using var projectList = _services.GetRequiredService<IProjectList>();
-      projectList
-          .Items
-          .ToList()
-          .ForEach(i => ret.Add(new ProjectListItem { Name = i.Name, Path = i.Path }));
+      _services.GetRequiredService<IProjectList>()
+        .Items
+        .ToList()
+        .ForEach(i => ret.Add(new ProjectListItem { Name = i.Name, Path = i.Path }));
 
       ret.Add(new ProjectListItemCreate());
 
@@ -75,8 +74,7 @@ public partial class OpenOrCreateDialog : ContentPage
       if (projectName == string.Empty)
         return;
 
-      var newProjectPath = Path.Combine(_services.GetRequiredService<IStorage>().ProjectsRoot, Guid.NewGuid().ToString());
-      _services.GetRequiredService<IProjectList>().Add(projectName, newProjectPath);
+      _services.GetRequiredService<IProjectList>().Create(projectName);
     }
     catch (Exception ex)
     {

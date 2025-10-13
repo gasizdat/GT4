@@ -23,7 +23,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\..\Utils\Utils\Utils.csproj" />
+    <ProjectReference Include="..\..\Core\Utils\Utils.csproj" />
+    <ProjectReference Include="..\..\Core\Project\Project.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

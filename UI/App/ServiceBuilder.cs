@@ -1,12 +1,12 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using GT4.Project;
+using GT4.Utils;
 
-namespace GT4.Utils;
+namespace GT4.UI;
 
 public class ServiceBuilder
 {
   public static ServiceProvider DefaultServices => new ServiceCollection()
-        .AddSingleton<IStorage, Storage>()
-        .AddSingleton<IFileSystem, FileSystem>()
-        .AddSingleton<IProjectList, ProjectList>()
+        .BuildDefaultUtils()
+        .BuildDefaultProject()
         .BuildServiceProvider();
 }
