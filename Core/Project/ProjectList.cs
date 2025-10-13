@@ -29,6 +29,7 @@ internal class ProjectList : IProjectList
     }
   }
 
+  private void InvalidateItems() => _Items = null;
 
   private static bool CompareNames(string name1, string name2) =>
     string.Equals(name1, name2, StringComparison.InvariantCultureIgnoreCase);
@@ -48,7 +49,9 @@ internal class ProjectList : IProjectList
 
     var path = Path.Combine(_Storage.ProjectsRoot, Guid.NewGuid().ToString(), "project.db");
     using var file = _FileSystem.CreateEmptyFile(path);
+
     ProjectDoc.CreateNew(file, name);
+    InvalidateItems();
   }
 
   public void Remove(string name)
@@ -59,5 +62,6 @@ internal class ProjectList : IProjectList
       return;
 
     _FileSystem.RemoveFile(item.Path);
+    InvalidateItems();
   }
 }
