@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "App", "UI\App\App.csproj", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "UI", "UI", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Utils", "Utils", "{5FCCEC2A-56F0-4DC0-9E02-2133B63B3483}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utils", "Utils\Utils\Utils.csproj", "{6E4292B8-5059-4E09-9702-197E9969431F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -19,12 +23,17 @@ Global
 		{331B7549-D876-C07D-194E-163C52F42376}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{331B7549-D876-C07D-194E-163C52F42376}.Release|Any CPU.Build.0 = Release|Any CPU
 		{331B7549-D876-C07D-194E-163C52F42376}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{6E4292B8-5059-4E09-9702-197E9969431F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6E4292B8-5059-4E09-9702-197E9969431F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6E4292B8-5059-4E09-9702-197E9969431F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6E4292B8-5059-4E09-9702-197E9969431F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{331B7549-D876-C07D-194E-163C52F42376} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{6E4292B8-5059-4E09-9702-197E9969431F} = {5FCCEC2A-56F0-4DC0-9E02-2133B63B3483}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {88FBFEBE-C0F6-41C0-B751-7BC66B846B8E}

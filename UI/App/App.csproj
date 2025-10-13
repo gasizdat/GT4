@@ -62,6 +62,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <ProjectReference Include="..\..\Utils\Utils\Utils.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
 	  <Compile Update="UI\OpenOrCreateDialog.xaml.cs">
 	    <DependentUpon>OpenOrCreateDialog.xaml</DependentUpon>
 	  </Compile>

@@ -1,8 +1,7 @@
-﻿namespace GT4.UI
+﻿namespace GT4.UI;
+
+public class ProjectListItem
 {
-  public class ProjectListItem
-  {
-    public string Name => "Some Project Name";
-    public string Path => "/path/to/project.file";
-  }
+  public string Name { get; init; } = "Some Project Name";
+  public string Path { get; init; } = "/path/to/project.file";
 }
