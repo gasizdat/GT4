@@ -1,9 +1,13 @@
+using GT4.Utils;
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 
 namespace GT4.UI;
 
 public partial class OpenOrCreateDialog : ContentPage
 {
+  private readonly ServiceProvider _services = ServiceBuilder.DefaultServices;
+
   public OpenOrCreateDialog()
   {
     InitializeComponent();
@@ -16,17 +20,15 @@ public partial class OpenOrCreateDialog : ContentPage
   {
     get
     {
-      var ret = new ObservableCollection<ProjectListItem>
-      {
-        new ProjectListItemCreate{ }
-      };
+      var ret = new ObservableCollection<ProjectListItem> { };
 
-      using var projectList = Utils.ServiceBuilder.DefaultServices.GetService<Utils.IProjectList>() 
-        ?? throw new ApplicationException("Cannot get IProjectList service");
+      using var projectList = _services.GetRequiredService<IProjectList>();
       projectList
-        .Items
-        .ToList()
-        .ForEach(i => ret.Add(new ProjectListItem { Name = i.Name, Path = i.Path }));
+          .Items
+          .ToList()
+          .ForEach(i => ret.Add(new ProjectListItem { Name = i.Name, Path = i.Path }));
+
+      ret.Add(new ProjectListItemCreate());
 
       return ret;
     }
@@ -36,8 +38,54 @@ public partial class OpenOrCreateDialog : ContentPage
   {
     if (e.CurrentSelection.FirstOrDefault() is ProjectListItemCreate item)
     {
-      await Shell.Current.GoToAsync(UIRoutes.GetRoute<CreateNewProjectDialog>());
+      await OnCreateProject();
     }
-    //App.Current.MainPage = new MainPage(item.Name, item.Path);
+  }
+
+  public async void OnDeleteProjectSelected(object sender, EventArgs e)
+  {
+
+    var item = (sender as BindableObject)?.BindingContext as ProjectListItem;
+    if (item is null or ProjectListItemCreate)
+      return;
+
+    try
+    {
+      var result = await DisplayAlert("Info", $"Are you really want to delete {item.Name}", "Yes", "No");
+      if (result == false)
+        return;
+
+      _services.GetRequiredService<IProjectList>().Remove(item.Name);
+    }
+    finally
+    {
+      OnPropertyChanged(nameof(Projects));
+    }
+  }
+
+  internal async Task OnCreateProject()
+  {
+    var dialog = new CreateNewProjectDialog();
+
+    await Navigation.PushModalAsync(dialog);
+    var projectName = await dialog.result.Task;
+    await Navigation.PopModalAsync();
+
+    try
+    {
+      if (projectName == string.Empty)
+        return;
+
+      var newProjectPath = Path.Combine(_services.GetRequiredService<IStorage>().ProjectsRoot, Guid.NewGuid().ToString());
+      _services.GetRequiredService<IProjectList>().Add(projectName, newProjectPath);
+    }
+    catch (Exception ex)
+    {
+      await DisplayAlert("Error", ex.Message, "OK");
+    }
+    finally
+    {
+      OnPropertyChanged(nameof(Projects));
+    }
   }
 }

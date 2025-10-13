@@ -6,8 +6,7 @@
              Title="{Binding DialogTitle}">
   <ScrollView>
 
-    <VerticalStackLayout Padding="20" Spacing="10"             
->
+    <VerticalStackLayout Padding="20" Spacing="10" VerticalOptions="Center">
 
       <Entry
           x:Name="ProjectNameEntry"
@@ -19,7 +18,7 @@
           x:Name="CreateProjectBtn"
           Text="{Binding CreateProjectBtName}" 
           FontSize="Large"
-          Command="{Binding CreateNewProjectCommand}"
+          Clicked="OnCreateProjectBtn"
           HorizontalOptions="Fill" />
 
     </VerticalStackLayout>

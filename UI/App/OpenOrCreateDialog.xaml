@@ -15,8 +15,32 @@
       <CollectionView ItemsSource="{Binding Projects}" SelectionMode="Single" SelectionChanged="OnProjectSelected">
         <CollectionView.ItemTemplate>
           <DataTemplate x:DataType="gt4_ui:ProjectListItem">
+            
             <VerticalStackLayout>
-              <Label Text="{Binding Name}" FontSize="20" FontAttributes="Bold" Padding="2"/>
+              <FlexLayout Direction="Row">
+                
+                <Image 
+                  Source="project_icon.png" 
+                  WidthRequest="32" 
+                  HeightRequest="32" 
+                  Margin="2"/>
+                
+                <Label 
+                  FlexLayout.Grow="1"
+                  Text="{Binding Name}" 
+                  FontSize="20" 
+                  FontAttributes="Bold" 
+                  Padding="2"/>
+                
+                <Button 
+                  Text="❌" 
+                  Clicked="OnDeleteProjectSelected"
+                  WidthRequest="32" 
+                  HeightRequest="32"
+                  Padding="0"/>
+                
+              </FlexLayout>
+              
               <Label Text="{Binding Path}" FontSize="12" Padding="2"/>
             </VerticalStackLayout>
           </DataTemplate>
