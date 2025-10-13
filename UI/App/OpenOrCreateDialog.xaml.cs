@@ -53,7 +53,11 @@ public partial class OpenOrCreateDialog : ContentPage
       if (result == false)
         return;
 
-      _services.GetRequiredService<IProjectList>().Remove(item.Name);
+      await _services.GetRequiredService<IProjectList>().RemoveAsync(item.Name);
+    }
+    catch (Exception ex)
+    {
+      await DisplayAlert("Error", ex.Message, "OK");
     }
     finally
     {
@@ -74,7 +78,7 @@ public partial class OpenOrCreateDialog : ContentPage
       if (projectName == string.Empty)
         return;
 
-      _services.GetRequiredService<IProjectList>().Create(projectName);
+      await _services.GetRequiredService<IProjectList>().CreateAsync(projectName);
     }
     catch (Exception ex)
     {

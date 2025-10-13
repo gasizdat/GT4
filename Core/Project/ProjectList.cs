@@ -42,7 +42,7 @@ internal class ProjectList : IProjectList
 
   public IReadOnlyList<ProjectItem> Items { get => _Items ??= LoadItems(); }
 
-  public void Create(string name)
+  public async Task CreateAsync(string name)
   {
     if (Items.Any(i => CompareNames(i.Name, name)))
       throw new ApplicationException($"A project with name '{name}' already exists");
@@ -50,18 +50,18 @@ internal class ProjectList : IProjectList
     var path = Path.Combine(_Storage.ProjectsRoot, Guid.NewGuid().ToString(), "project.db");
     using var file = _FileSystem.CreateEmptyFile(path);
 
-    ProjectDoc.CreateNew(file, name);
+    await ProjectDoc.CreateNewAsync(file, name);
     InvalidateItems();
   }
 
-  public void Remove(string name)
+  public async Task RemoveAsync(string name)
   {
     var modifiableItems = Items.ToList();
     var item = modifiableItems.FirstOrDefault(i => CompareNames(i.Name, name));
     if (item.Name is null)
       return;
 
-    _FileSystem.RemoveFile(item.Path);
+    await Task.Run(() => _FileSystem.RemoveFile(item.Path));
     InvalidateItems();
   }
 }

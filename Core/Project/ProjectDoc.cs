@@ -2,7 +2,7 @@
 
 public class ProjectDoc
 {
-  public static ProjectDoc CreateNew(FileStream dbFile, string name)
+  public static async Task<ProjectDoc> CreateNewAsync(FileStream dbFile, string name)
   {
     string path;
     using (dbFile)
@@ -13,8 +13,8 @@ public class ProjectDoc
 
     SQLitePCL.Batteries.Init();
     var connectionString = $"Data Source={path}";//"Data Source=:memory:"
-    var connection = new Microsoft.Data.Sqlite.SqliteConnection(connectionString);
-    connection.Open();
+    using var connection = new Microsoft.Data.Sqlite.SqliteConnection(connectionString);
+    await connection.OpenAsync();
     using var command = connection.CreateCommand();
     command.CommandText = "CREATE TABLE IF NOT EXISTS Users (Id INTEGER PRIMARY KEY, Name TEXT)";
     command.ExecuteNonQuery();
@@ -24,6 +24,7 @@ public class ProjectDoc
     {
     };
 
+    await connection.CloseAsync();
     return ret;
   }
 }
