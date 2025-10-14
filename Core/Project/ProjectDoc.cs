@@ -1,7 +1,58 @@
-﻿namespace GT4.Project;
+﻿using Microsoft.Data.Sqlite;
 
-public class ProjectDoc
+namespace GT4.Project;
+
+public class ProjectDoc : IAsyncDisposable//, IDisposable
 {
+  readonly SqliteConnection _connection;
+
+  static ProjectDoc()
+  {
+    SQLitePCL.Batteries.Init();
+  }
+
+  private ProjectDoc(string dbFilaName = ":memory:")
+  {
+    var connectionString = $"Data Source={dbFilaName}";
+    _connection = new SqliteConnection(connectionString);
+  }
+
+  ~ProjectDoc()
+  {
+    Dispose();
+  }
+
+  private async Task OpenAsync()
+  {
+    await _connection.OpenAsync();
+  }
+
+  private async Task InitNewDB()
+  {
+    using var command = _connection.CreateCommand();
+    command.CommandText = "CREATE TABLE IF NOT EXISTS Metadata (Id TEXT PRIMARY KEY, Data BLOB)";
+    await command.ExecuteNonQueryAsync();
+  }
+
+  public async Task AddMetadataAsync<TData>(string id, TData data)
+  {
+    using var command = _connection.CreateCommand();
+    command.CommandText = "INSERT OR REPLACE INTO Metadata (Id, Data) VALUES (@id, @data);";
+    command.Parameters.AddWithValue("@id", id);
+    command.Parameters.AddWithValue("@data", data);
+    var rowsAffected = await command.ExecuteNonQueryAsync();
+    Console.WriteLine(rowsAffected);
+  }
+
+  public async Task<TData?> GetMetadataAsync<TData>(string id)
+  {
+    using var command = _connection.CreateCommand();
+    command.CommandText = "SELECT Data FROM Metadata WHERE Id=@id;";
+    command.Parameters.Add(new SqliteParameter("@id", id));
+    var result = await command.ExecuteScalarAsync();
+    return (TData?)result;
+  }
+
   public static async Task<ProjectDoc> CreateNewAsync(FileStream dbFile, string name)
   {
     string path;
@@ -11,20 +62,30 @@ public class ProjectDoc
       dbFile.Close();
     }
 
-    SQLitePCL.Batteries.Init();
-    var connectionString = $"Data Source={path}";//"Data Source=:memory:"
-    using var connection = new Microsoft.Data.Sqlite.SqliteConnection(connectionString);
-    await connection.OpenAsync();
-    using var command = connection.CreateCommand();
-    command.CommandText = "CREATE TABLE IF NOT EXISTS Users (Id INTEGER PRIMARY KEY, Name TEXT)";
-    command.ExecuteNonQuery();
-    Console.WriteLine("Table 'Users' created or already exists.");
+    var ret = new ProjectDoc(path);
+    await ret.OpenAsync();
+    await ret.InitNewDB();
 
-    var ret = new ProjectDoc
-    {
-    };
-
-    await connection.CloseAsync();
     return ret;
+  }
+
+  public static async Task<ProjectDoc> OpenAsync(string path)
+  {
+    var ret = new ProjectDoc(path);
+    await ret.OpenAsync();
+
+    return ret;
+  }
+
+  public async ValueTask DisposeAsync()
+  {
+    await _connection.CloseAsync();
+    await _connection.DisposeAsync();
+  }
+
+  public void Dispose()
+  {
+    _connection.Close();
+    _connection.Dispose();
   }
 }

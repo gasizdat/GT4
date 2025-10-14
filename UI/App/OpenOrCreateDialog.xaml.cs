@@ -23,6 +23,7 @@ public partial class OpenOrCreateDialog : ContentPage
 
       _services.GetRequiredService<IProjectList>()
         .Items
+        .Result
         .ToList()
         .ForEach(i => ret.Add(new ProjectListItem { Name = i.Name, Path = i.Path }));
 
@@ -78,7 +79,7 @@ public partial class OpenOrCreateDialog : ContentPage
       if (projectName == string.Empty)
         return;
 
-      await _services.GetRequiredService<IProjectList>().CreateAsync(projectName);
+      await _services.GetRequiredService<IProjectList>().CreateAsync(projectName, "todo: add the description");
     }
     catch (Exception ex)
     {
