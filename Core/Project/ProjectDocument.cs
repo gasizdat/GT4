@@ -2,22 +2,22 @@
 
 namespace GT4.Project;
 
-public class ProjectDoc : IAsyncDisposable//, IDisposable
+public class ProjectDocument : IAsyncDisposable, IDisposable
 {
   readonly SqliteConnection _connection;
 
-  static ProjectDoc()
+  static ProjectDocument()
   {
     SQLitePCL.Batteries.Init();
   }
 
-  private ProjectDoc(string dbFilaName = ":memory:")
+  private ProjectDocument(string dbFilaName = ":memory:")
   {
     var connectionString = $"Data Source={dbFilaName}";
     _connection = new SqliteConnection(connectionString);
   }
 
-  ~ProjectDoc()
+  ~ProjectDocument()
   {
     Dispose();
   }
@@ -53,7 +53,7 @@ public class ProjectDoc : IAsyncDisposable//, IDisposable
     return (TData?)result;
   }
 
-  public static async Task<ProjectDoc> CreateNewAsync(FileStream dbFile, string name)
+  public static async Task<ProjectDocument> CreateNewAsync(FileStream dbFile, string name)
   {
     string path;
     using (dbFile)
@@ -62,16 +62,16 @@ public class ProjectDoc : IAsyncDisposable//, IDisposable
       dbFile.Close();
     }
 
-    var ret = new ProjectDoc(path);
+    var ret = new ProjectDocument(path);
     await ret.OpenAsync();
     await ret.InitNewDB();
 
     return ret;
   }
 
-  public static async Task<ProjectDoc> OpenAsync(string path)
+  public static async Task<ProjectDocument> OpenAsync(string path)
   {
-    var ret = new ProjectDoc(path);
+    var ret = new ProjectDocument(path);
     await ret.OpenAsync();
 
     return ret;

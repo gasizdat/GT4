@@ -12,7 +12,7 @@ internal class ProjectList : IProjectList
   {
     try
     {
-      await using var project = await ProjectDoc.OpenAsync(path);
+      await using var project = await ProjectDocument.OpenAsync(path);
       var results = await Task.WhenAll(
         project.GetMetadataAsync<string>("name"),
         project.GetMetadataAsync<string>("description"));
@@ -72,7 +72,7 @@ internal class ProjectList : IProjectList
     var path = Path.Combine(_Storage.ProjectsRoot, Guid.NewGuid().ToString(), "project.db");
     using var file = _FileSystem.CreateEmptyFile(path);
 
-    await using var project = await ProjectDoc.CreateNewAsync(file, name);
+    await using var project = await ProjectDocument.CreateNewAsync(file, name);
     await Task.WhenAll(
       project.AddMetadataAsync("name", name),
       project.AddMetadataAsync("description", description));
