@@ -74,11 +74,13 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
   {
     await _connection.CloseAsync();
     await _connection.DisposeAsync();
+    SqliteConnection.ClearPool(_connection);
   }
 
   public void Dispose()
   {
     _connection.Close();
     _connection.Dispose();
+    SqliteConnection.ClearPool(_connection);
   }
 }
