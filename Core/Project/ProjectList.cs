@@ -7,8 +7,9 @@ internal class ProjectList : IProjectList
 {
   private IStorage _Storage;
   private IFileSystem _FileSystem;
+  private IReadOnlyList<ProjectItem>? _Items;
 
-  private async Task<ProjectItem> GetProjectItemAsync(string path)
+  private static async Task<ProjectItem> GetProjectItemAsync(string path)
   {
     try
     {
@@ -36,8 +37,14 @@ internal class ProjectList : IProjectList
     }
   }
 
+  private static bool CompareNames(string name1, string name2) =>
+    string.Equals(name1, name2, StringComparison.InvariantCultureIgnoreCase);
+
   private async Task<IReadOnlyList<ProjectItem>> LoadItemsAsync()
   {
+    if (_Items is not null)
+      return _Items;
+
     try
     {
       var tasks = _FileSystem.GetFiles(_Storage.ProjectsRoot, "*.db", true)
@@ -53,8 +60,10 @@ internal class ProjectList : IProjectList
     }
   }
 
-  private static bool CompareNames(string name1, string name2) =>
-    string.Equals(name1, name2, StringComparison.InvariantCultureIgnoreCase);
+  private void InvalidateItems()
+  {
+    _Items = null;
+  }
 
   public ProjectList(IStorage storage, IFileSystem fileSystem)
   {
@@ -69,10 +78,12 @@ internal class ProjectList : IProjectList
     if ((await Items).Any(i => CompareNames(i.Name, name)))
       throw new ApplicationException($"A project with name '{name}' already exists");
 
+    InvalidateItems();
     var path = Path.Combine(_Storage.ProjectsRoot, Guid.NewGuid().ToString(), "project.db");
-    using var file = _FileSystem.CreateEmptyFile(path);
+    using (var file = _FileSystem.CreateEmptyFile(path))
+      file.Close();
 
-    await using var project = await ProjectDocument.CreateNewAsync(file, name);
+    await using var project = await ProjectDocument.CreateNewAsync(path, name);
     await Task.WhenAll(
       project.AddMetadataAsync("name", name),
       project.AddMetadataAsync("description", description));
@@ -85,6 +96,7 @@ internal class ProjectList : IProjectList
     if (item.Name is null)
       return;
 
-    await Task.Run(() => _FileSystem.RemoveFile(item.Path));
+    InvalidateItems();
+    _FileSystem.RemoveFile(item.Path);
   }
 }

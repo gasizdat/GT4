@@ -53,15 +53,8 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
     return (TData?)result;
   }
 
-  public static async Task<ProjectDocument> CreateNewAsync(FileStream dbFile, string name)
+  public static async Task<ProjectDocument> CreateNewAsync(string path, string name)
   {
-    string path;
-    using (dbFile)
-    {
-      path = dbFile.Name;
-      dbFile.Close();
-    }
-
     var ret = new ProjectDocument(path);
     await ret.OpenAsync();
     await ret.InitNewDB();
