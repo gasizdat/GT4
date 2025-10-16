@@ -9,4 +9,5 @@ public interface IFileSystem
   void RemoveFile(string path);
   FileStream CreateEmptyFile(string path);
   IReadOnlyList<string> GetFiles(string path, string searchPattern, bool recursive);
+  void RemoveDirectory(string path);
 }

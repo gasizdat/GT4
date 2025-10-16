@@ -97,6 +97,6 @@ internal class ProjectList : IProjectList
       return;
 
     InvalidateItems();
-    _FileSystem.RemoveFile(item.Path);
+    _FileSystem.RemoveDirectory(Path.GetDirectoryName(item.Path)!);
   }
 }

@@ -44,6 +44,14 @@ internal class FileSystem : IFileSystem
       File.Delete(path);
   }
 
+  public void RemoveDirectory(string path)
+  {
+    if (Directory.Exists(path))
+    {
+      Directory.Delete(path, true);
+    }
+  }
+
   public FileStream CreateEmptyFile(string path)
   {
     CreatePath(path);
