@@ -47,7 +47,8 @@ internal class ProjectList : IProjectList
 
     try
     {
-      var tasks = _FileSystem.GetFiles(_Storage.ProjectsRoot, "*.db", true)
+      var tasks = _FileSystem
+        .GetFiles(_Storage.ProjectsRoot, $"*.{ProjectExtension}", true)
         .ToList()
         .Select(GetProjectItemAsync);
       var result = await Task.WhenAll(tasks);
@@ -71,29 +72,31 @@ internal class ProjectList : IProjectList
     _FileSystem = fileSystem;
   }
 
+  public readonly static string ProjectExtension = "gt4";
+
   public Task<IReadOnlyList<ProjectItem>> Items => LoadItemsAsync();
 
-  public async Task CreateAsync(string name, string description)
+  public async Task CreateAsync(ProjectInfo info)
   {
-    if ((await Items).Any(i => CompareNames(i.Name, name)))
-      throw new ApplicationException($"A project with name '{name}' already exists");
+    if ((await Items).Any(i => CompareNames(i.Name, info.Name)))
+      throw new ApplicationException($"A project with name '{info.Name}' already exists");
 
     InvalidateItems();
-    var path = Path.Combine(_Storage.ProjectsRoot, Guid.NewGuid().ToString(), "project.db");
+    var path = Path.Combine(_Storage.ProjectsRoot, Guid.NewGuid().ToString(), $"project.{ProjectExtension}");
     using (var file = _FileSystem.CreateEmptyFile(path))
       file.Close();
 
-    await using var project = await ProjectDocument.CreateNewAsync(path, name);
+    await using var project = await ProjectDocument.CreateNewAsync(path, info.Name);
     await Task.WhenAll(
-      project.AddMetadataAsync("name", name),
-      project.AddMetadataAsync("description", description));
+      project.AddMetadataAsync("name", info.Name),
+      project.AddMetadataAsync("description", info.Description));
   }
 
   public async Task RemoveAsync(string name)
   {
     var modifiableItems = (await Items).ToList();
     var item = modifiableItems.FirstOrDefault(i => CompareNames(i.Name, name));
-    if (item.Name is null)
+    if (item?.Name is null)
       return;
 
     InvalidateItems();

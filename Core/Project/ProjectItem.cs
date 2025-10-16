@@ -1,9 +1,7 @@
 ﻿namespace GT4.Project;
 
-public record struct ProjectItem
+public record class ProjectItem : ProjectInfo
 {
-  public string Name { get; init; }
-  public string Path { get; init; }
-  public string Description { get; init; }
+  public string Path { get; init; } = string.Empty;
 }
 
