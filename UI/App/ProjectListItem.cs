@@ -2,6 +2,14 @@
 
 public class ProjectListItem
 {
-  public string Name { get; init; } = string.Empty;
-  public string Path { get; init; } = string.Empty;
+  Project.ProjectItem _item;
+
+  public ProjectListItem(Project.ProjectItem item)
+  {
+    _item = item;
+  }
+
+  public string Description => _item.Description;
+  public string Name => _item.Name;
+  public string Path => _item.Path;
 }

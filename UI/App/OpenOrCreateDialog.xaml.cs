@@ -25,7 +25,7 @@ public partial class OpenOrCreateDialog : ContentPage
         .Items
         .Result
         .ToList()
-        .ForEach(i => ret.Add(new ProjectListItem { Name = i.Name, Path = i.Path }));
+        .ForEach(item => ret.Add(new ProjectListItem(item)));
 
       ret.Add(new ProjectListItemCreate());
 
@@ -71,15 +71,15 @@ public partial class OpenOrCreateDialog : ContentPage
     var dialog = new CreateNewProjectDialog();
 
     await Navigation.PushModalAsync(dialog);
-    var projectName = await dialog.result.Task;
+    var projectInfo = await dialog.ProjectInfo;
     await Navigation.PopModalAsync();
 
     try
     {
-      if (projectName == string.Empty)
+      if (projectInfo.Name == string.Empty)
         return;
 
-      await _services.GetRequiredService<IProjectList>().CreateAsync(projectName, "todo: add the description");
+      await _services.GetRequiredService<IProjectList>().CreateAsync(projectInfo);
     }
     catch (Exception ex)
     {
