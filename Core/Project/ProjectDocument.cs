@@ -11,9 +11,13 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
     SQLitePCL.Batteries.Init();
   }
 
-  private ProjectDocument(string dbFilaName = ":memory:")
+  private ProjectDocument(string dbFilaName, SqliteOpenMode mode)
   {
-    var connectionString = $"Data Source={dbFilaName}";
+    var builder = new SqliteConnectionStringBuilder();
+    builder.Pooling = false;
+    builder.DataSource = dbFilaName;
+    builder.Mode = mode;
+    var connectionString = builder.ConnectionString;
     _connection = new SqliteConnection(connectionString);
   }
 
@@ -55,7 +59,7 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
 
   public static async Task<ProjectDocument> CreateNewAsync(string path, string name)
   {
-    var ret = new ProjectDocument(path);
+    var ret = new ProjectDocument(path, SqliteOpenMode.ReadWriteCreate);
     await ret.OpenAsync();
     await ret.InitNewDB();
 
@@ -64,7 +68,7 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
 
   public static async Task<ProjectDocument> OpenAsync(string path)
   {
-    var ret = new ProjectDocument(path);
+    var ret = new ProjectDocument(path, SqliteOpenMode.ReadWrite);
     await ret.OpenAsync();
 
     return ret;
@@ -74,13 +78,11 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
   {
     await _connection.CloseAsync();
     await _connection.DisposeAsync();
-    SqliteConnection.ClearPool(_connection);
   }
 
   public void Dispose()
   {
     _connection.Close();
     _connection.Dispose();
-    SqliteConnection.ClearPool(_connection);
   }
 }
