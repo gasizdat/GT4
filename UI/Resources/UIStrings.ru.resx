@@ -117,10 +117,23 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AppGeneralName" xml:space="preserve">
+    <value>Генеалогическое древо (v.4)</value>
+  </data>
+  <data name="AppGeneralWelcomeTitle" xml:space="preserve">
+    <value>Создайте свое собственное
+генеалогическое дерево</value>
+  </data>
+  <data name="BtnHintOpenOrCreate" xml:space="preserve">
+    <value>Откройте существующее древо или создайте новое.</value>
+  </data>
   <data name="BtnNameCancel" xml:space="preserve">
     <value>Отмена</value>
   </data>
   <data name="BtnNameCreateGenealogyTree" xml:space="preserve">
     <value>Создать генеалогическое дерево</value>
+  </data>
+  <data name="BtnNameOpenOrCreateProject" xml:space="preserve">
+    <value>Создать или открыть</value>
   </data>
 </root>

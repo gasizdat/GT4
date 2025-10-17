@@ -1,4 +1,6 @@
-﻿namespace GT4
+﻿using System.Globalization;
+
+namespace GT4
 {
   public partial class App : Application
   {

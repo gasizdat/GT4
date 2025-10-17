@@ -1,9 +1,36 @@
-﻿using System.Windows.Input;
+﻿using System.Collections;
+using System.Globalization;
+using System.Windows.Input;
 
 namespace GT4.UI;
 
+using GT4.UI.Resources;
+
 public partial class MainPage : ContentPage
 {
+  private static readonly Language _DefaultLanguage = new Language("en", "English");
+  private static readonly List<Language> _Languages = new()
+  {
+    _DefaultLanguage,
+    new Language("fr", "Français"),
+    new Language("es", "Español"),
+    new Language("de", "Deutsch"),
+    new Language("it", "Italiano"),
+    new Language("pt", "Português"),
+    new Language("ru", "Русский"),
+    new Language("zh", "中文"),
+    new Language("ja", "日本語"),
+    new Language("ko", "한국어")
+  };
+
+  private static Language _SelectedLanguage = GetCurrentLanguage();
+
+  private static Language GetCurrentLanguage()
+  {
+    var culture = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+    var currentLanguage = _Languages.Where(lang => lang.Code == culture).FirstOrDefault() ?? _DefaultLanguage;
+    return currentLanguage;
+  }
 
   public MainPage()
   {
@@ -15,8 +42,27 @@ public partial class MainPage : ContentPage
     await Shell.Current.GoToAsync(UIRoutes.GetRoute<OpenOrCreateDialog>())
   );
 
-  public string AppName => "Genealogy Tree 4";
-  public string WelcomeTitle => "Create your own\ngenealogy tree and enjoy!";
-  public string OpenOrCreateBtName => "Open or Create";
-  public string OpenOrCreateBtHint => "Open an existing Genealogy Tree or create a new one.";
+  public string AppName => UIStrings.AppGeneralName;
+  public string WelcomeTitle => UIStrings.AppGeneralWelcomeTitle;
+  public string OpenOrCreateBtName => UIStrings.BtnNameOpenOrCreateProject;
+  public string OpenOrCreateBtHint => UIStrings.BtnHintOpenOrCreate;
+  public IList Languages => _Languages;
+  public Language SelectedLanguage
+  {
+    get => _SelectedLanguage;
+    set
+    {
+      if (_SelectedLanguage == value)
+        return;
+      _SelectedLanguage = value;
+      var culture = new CultureInfo(_SelectedLanguage.Code);
+      Thread.CurrentThread.CurrentCulture = culture;
+      Thread.CurrentThread.CurrentUICulture = culture;
+      CultureInfo.DefaultThreadCurrentCulture = culture;
+      CultureInfo.DefaultThreadCurrentUICulture = culture;
+      var app = Application.Current as App;
+      app?.MainPage?.Dispatcher.Dispatch(() => app.MainPage = new AppShell());
+    }
+  }
+  public record class Language(string Code, string Name);
 }
