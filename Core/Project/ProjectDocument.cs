@@ -1,6 +1,6 @@
 ﻿using Microsoft.Data.Sqlite;
 
-namespace GT4.Project;
+namespace GT4.Core.Project;
 
 public class ProjectDocument : IAsyncDisposable, IDisposable
 {

@@ -1,10 +1,12 @@
 ﻿namespace GT4.UI;
 
+using GT4.Core.Project;
+
 public class ProjectListItem
 {
-  Project.ProjectItem _item;
+  ProjectItem _item;
 
-  public ProjectListItem(Project.ProjectItem item)
+  public ProjectListItem(ProjectItem item)
   {
     _item = item;
   }

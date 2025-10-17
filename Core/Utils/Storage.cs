@@ -1,4 +1,4 @@
-﻿namespace GT4.Utils;
+﻿namespace GT4.Core.Utils;
 
 internal class Storage : IStorage
 {

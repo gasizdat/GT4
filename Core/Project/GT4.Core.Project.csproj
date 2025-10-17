@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Core\Utils\Utils.csproj" />
+    <ProjectReference Include="..\..\Core\Utils\GT4.Core.Utils.csproj" />
   </ItemGroup>
 
 </Project>

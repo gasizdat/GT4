@@ -1,4 +1,4 @@
-using GT4.Project;
+using GT4.Core.Project;
 using System.Collections.ObjectModel;
 
 namespace GT4.UI;

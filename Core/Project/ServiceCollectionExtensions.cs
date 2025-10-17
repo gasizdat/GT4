@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
-namespace GT4.Project;
+namespace GT4.Core.Project;
 
 public static class ServiceCollectionExtensions
 {

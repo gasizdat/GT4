@@ -1,5 +1,5 @@
-﻿using GT4.Project;
-using GT4.Utils;
+﻿using GT4.Core.Project;
+using GT4.Core.Utils;
 
 namespace GT4.UI;
 

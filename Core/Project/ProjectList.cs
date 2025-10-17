@@ -1,7 +1,7 @@
-﻿using GT4.Utils;
+﻿using GT4.Core.Utils;
 using System.Data;
 
-namespace GT4.Project;
+namespace GT4.Core.Project;
 
 internal class ProjectList : IProjectList
 {

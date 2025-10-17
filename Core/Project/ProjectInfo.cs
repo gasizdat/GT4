@@ -1,4 +1,4 @@
-﻿namespace GT4.Project;
+﻿namespace GT4.Core.Project;
 
 public record class ProjectInfo
 {
