@@ -6,7 +6,7 @@
              Title="{Binding DialogTitle}">
   <ScrollView>
 
-    <VerticalStackLayout Padding="200" Spacing="30" VerticalOptions="Center">
+    <VerticalStackLayout Padding="20" Spacing="10" VerticalOptions="Center">
 
       <Entry
           x:Name="ProjectNameEntry"
