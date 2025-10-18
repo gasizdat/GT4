@@ -5,9 +5,9 @@ namespace GT4.Core.Project;
 
 internal class ProjectList : IProjectList
 {
-  private IStorage _Storage;
-  private IFileSystem _FileSystem;
-  private IReadOnlyList<ProjectItem>? _Items;
+  private readonly IStorage _Storage;
+  private readonly IFileSystem _FileSystem;
+  private readonly WeakReference<ProjectItem[]?> _Items = new(null);
 
   private static async Task<ProjectItem> GetProjectItemAsync(string path)
   {
@@ -40,10 +40,10 @@ internal class ProjectList : IProjectList
   private static bool CompareNames(string name1, string name2) =>
     string.Equals(name1, name2, StringComparison.InvariantCultureIgnoreCase);
 
-  private async Task<IReadOnlyList<ProjectItem>> LoadItemsAsync()
+  private async Task<ProjectItem[]> LoadItemsAsync()
   {
-    if (_Items is not null)
-      return _Items;
+    if (_Items.TryGetTarget(out var items))
+      return items;
 
     try
     {
@@ -51,19 +51,20 @@ internal class ProjectList : IProjectList
         .GetFiles(_Storage.ProjectsRoot, $"*.{ProjectExtension}", true)
         .ToList()
         .Select(GetProjectItemAsync);
-      var result = await Task.WhenAll(tasks);
+      items = await Task.WhenAll(tasks);
 
-      return result;
+      _Items.SetTarget(items);
+      return items;
     }
     catch
     {
-      return new List<ProjectItem> { };
+      return Array.Empty<ProjectItem>();
     }
   }
 
   private void InvalidateItems()
   {
-    _Items = null;
+    _Items.SetTarget(null);
   }
 
   public ProjectList(IStorage storage, IFileSystem fileSystem)
@@ -74,7 +75,7 @@ internal class ProjectList : IProjectList
 
   public readonly static string ProjectExtension = "gt4";
 
-  public Task<IReadOnlyList<ProjectItem>> Items => LoadItemsAsync();
+  public Task<ProjectItem[]> Items => LoadItemsAsync();
 
   public async Task CreateAsync(ProjectInfo info)
   {

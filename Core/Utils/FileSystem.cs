@@ -58,7 +58,7 @@ internal class FileSystem : IFileSystem
     return File.Create(path);
   }
 
-  public IReadOnlyList<string> GetFiles(string path, string searchPattern, bool recursive)
+  public string[] GetFiles(string path, string searchPattern, bool recursive)
   {
     if (Directory.Exists(path))
     {

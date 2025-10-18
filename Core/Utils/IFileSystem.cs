@@ -8,6 +8,6 @@ public interface IFileSystem
   void WriteJsonFile(string path, JsonDocument doc);
   void RemoveFile(string path);
   FileStream CreateEmptyFile(string path);
-  IReadOnlyList<string> GetFiles(string path, string searchPattern, bool recursive);
+  string[] GetFiles(string path, string searchPattern, bool recursive);
   void RemoveDirectory(string path);
 }

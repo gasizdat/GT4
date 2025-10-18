@@ -2,7 +2,7 @@
 
 public interface IProjectList
 {
-  Task<IReadOnlyList<ProjectItem>> Items { get; }
+  Task<ProjectItem[]> Items { get; }
 
   Task CreateAsync(ProjectInfo info);
   Task RemoveAsync(string name);
