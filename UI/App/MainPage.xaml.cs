@@ -4,8 +4,6 @@ using System.Windows.Input;
 
 namespace GT4.UI;
 
-using GT4.UI.Resources;
-
 public partial class MainPage : ContentPage
 {
   private static readonly Language _DefaultLanguage = new Language("en", "English");
@@ -42,10 +40,6 @@ public partial class MainPage : ContentPage
     await Shell.Current.GoToAsync(UIRoutes.GetRoute<OpenOrCreateDialog>())
   );
 
-  public string AppName => UIStrings.AppGeneralName;
-  public string WelcomeTitle => UIStrings.AppGeneralWelcomeTitle;
-  public string OpenOrCreateBtName => UIStrings.BtnNameOpenOrCreateProject;
-  public string OpenOrCreateBtHint => UIStrings.BtnHintOpenOrCreate;
   public IList Languages => _Languages;
   public Language SelectedLanguage
   {

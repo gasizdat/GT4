@@ -3,20 +3,21 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
              x:Class="GT4.UI.CreateNewProjectDialog"
-             Title="{Binding DialogTitle}">
+             xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
+             Title="{x:Static resources:UIStrings.WndTitleCreateNewProjectDialog}">
   <ScrollView>
 
     <VerticalStackLayout Padding="20" Spacing="10" VerticalOptions="Center">
 
       <Entry
           x:Name="ProjectNameEntry"
-          Placeholder="{Binding ProjectNamePlaceholder}"
+          Placeholder="{x:Static resources:UIStrings.TxtPlaceholderPtojectName}"
           Text="{Binding ProjectName}"
           HorizontalOptions="Fill"/>
 
       <Entry
           x:Name="ProjectDescriptionEntry"
-          Placeholder="{Binding ProjectDescriptionPlaceholder}"
+          Placeholder="{x:Static resources:UIStrings.TxtPlaceholderProjectDescription}"
           Text="{Binding ProjectDescription}"
           HorizontalOptions="Fill"/>
 

@@ -117,6 +117,18 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AlertTextDeleteConfirmationText" xml:space="preserve">
+    <value>Вы действительно хотите удалить {1}?</value>
+  </data>
+  <data name="AlertTitleInfo" xml:space="preserve">
+    <value>Информация</value>
+  </data>
+  <data name="AlertTitleConfirmation" xml:space="preserve">
+    <value>Подтверждение</value>
+  </data>
+  <data name="AlertTitleWarning" xml:space="preserve">
+    <value>Предупреждение</value>
+  </data>
   <data name="AppGeneralName" xml:space="preserve">
     <value>Генеалогическое древо (v.4)</value>
   </data>
@@ -124,7 +136,7 @@
     <value>Создайте свое собственное
 генеалогическое дерево</value>
   </data>
-  <data name="BtnHintOpenOrCreate" xml:space="preserve">
+  <data name="BtnHintOpenOrCreateProject" xml:space="preserve">
     <value>Откройте существующее древо или создайте новое.</value>
   </data>
   <data name="BtnNameCancel" xml:space="preserve">
@@ -133,7 +145,41 @@
   <data name="BtnNameCreateGenealogyTree" xml:space="preserve">
     <value>Создать генеалогическое дерево</value>
   </data>
+  <data name="BtnNameNo" xml:space="preserve">
+    <value>Нет</value>
+  </data>
   <data name="BtnNameOpenOrCreateProject" xml:space="preserve">
     <value>Создать или открыть</value>
+  </data>
+  <data name="BtnNameYes" xml:space="preserve">
+    <value>Да</value>
+  </data>
+  <data name="WndHintOpenOrCreateDialog" xml:space="preserve">
+    <value>Здесь вы можете создать новое или открыть существующее генеалогическое древо</value>
+  </data>
+  <data name="WndTitleOpenOrCreateDialog" xml:space="preserve">
+    <value>Создать или открыть генеалогию</value>
+  </data>
+  <data name="AlertTitleError" xml:space="preserve">
+    <value>Ошибка</value>
+  </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="BtnNameOk" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="WndTitleCreateNewProjectDialog" xml:space="preserve">
+    <value>Создайте новое генеалогическое дерево</value>
+  </data>
+  <data name="TxtPlaceholderProjectDescription" xml:space="preserve">
+    <value>Добавьте описание для нового генеалогического древа</value>
+  </data>
+  <data name="TxtPlaceholderPtojectName" xml:space="preserve">
+    <value>Добавьте имя для нового генеалогического древа</value>
+  </data>
+  <data name="WndAppTitle" xml:space="preserve">
+    <value>🏠</value>
+  </data>
+  <data name="PkrLanguageHint" xml:space="preserve">
+    <value>🌐 Язык</value>
   </data>
 </root>

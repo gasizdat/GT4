@@ -61,6 +61,51 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Are you really want to delete {1}?.
+        /// </summary>
+        public static string AlertTextDeleteConfirmationText {
+            get {
+                return ResourceManager.GetString("AlertTextDeleteConfirmationText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to (?) Confirmation.
+        /// </summary>
+        public static string AlertTitleConfirmation {
+            get {
+                return ResourceManager.GetString("AlertTitleConfirmation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error.
+        /// </summary>
+        public static string AlertTitleError {
+            get {
+                return ResourceManager.GetString("AlertTitleError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Info.
+        /// </summary>
+        public static string AlertTitleInfo {
+            get {
+                return ResourceManager.GetString("AlertTitleInfo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Warning.
+        /// </summary>
+        public static string AlertTitleWarning {
+            get {
+                return ResourceManager.GetString("AlertTitleWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Genealogy Tree 4.
         /// </summary>
         public static string AppGeneralName {
@@ -82,9 +127,9 @@ namespace GT4.UI.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Open an existing Genealogy Tree or create a new one..
         /// </summary>
-        public static string BtnHintOpenOrCreate {
+        public static string BtnHintOpenOrCreateProject {
             get {
-                return ResourceManager.GetString("BtnHintOpenOrCreate", resourceCulture);
+                return ResourceManager.GetString("BtnHintOpenOrCreateProject", resourceCulture);
             }
         }
         
@@ -107,11 +152,101 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to No.
+        /// </summary>
+        public static string BtnNameNo {
+            get {
+                return ResourceManager.GetString("BtnNameNo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Ok.
+        /// </summary>
+        public static string BtnNameOk {
+            get {
+                return ResourceManager.GetString("BtnNameOk", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Open or Create.
         /// </summary>
         public static string BtnNameOpenOrCreateProject {
             get {
                 return ResourceManager.GetString("BtnNameOpenOrCreateProject", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Yes.
+        /// </summary>
+        public static string BtnNameYes {
+            get {
+                return ResourceManager.GetString("BtnNameYes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 🌐 Language.
+        /// </summary>
+        public static string PkrLanguageHint {
+            get {
+                return ResourceManager.GetString("PkrLanguageHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enter a description for the new Genealogy Tree.
+        /// </summary>
+        public static string TxtPlaceholderProjectDescription {
+            get {
+                return ResourceManager.GetString("TxtPlaceholderProjectDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enter a name for the new Genealogy Tree.
+        /// </summary>
+        public static string TxtPlaceholderPtojectName {
+            get {
+                return ResourceManager.GetString("TxtPlaceholderPtojectName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 🏠.
+        /// </summary>
+        public static string WndAppTitle {
+            get {
+                return ResourceManager.GetString("WndAppTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You can open the existent or create a new Genealogy Tree.
+        /// </summary>
+        public static string WndHintOpenOrCreateDialog {
+            get {
+                return ResourceManager.GetString("WndHintOpenOrCreateDialog", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create a Genealogy Tree.
+        /// </summary>
+        public static string WndTitleCreateNewProjectDialog {
+            get {
+                return ResourceManager.GetString("WndTitleCreateNewProjectDialog", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Open or Create a Genealogy.
+        /// </summary>
+        public static string WndTitleOpenOrCreateDialog {
+            get {
+                return ResourceManager.GetString("WndTitleOpenOrCreateDialog", resourceCulture);
             }
         }
     }

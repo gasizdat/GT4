@@ -3,6 +3,8 @@ using System.Collections.ObjectModel;
 
 namespace GT4.UI;
 
+using GT4.UI.Resources;
+
 public partial class OpenOrCreateDialog : ContentPage
 {
   private readonly ServiceProvider _services = ServiceBuilder.DefaultServices;
@@ -13,8 +15,6 @@ public partial class OpenOrCreateDialog : ContentPage
     BindingContext = this;
   }
 
-  public string DialogTitle => "Open or Create a Genealogy";
-  public string DialogHint => "You can open the existent or create a new Genealogy Tree";
   public ICollection<ProjectListItem> Projects
   {
     get
@@ -50,7 +50,9 @@ public partial class OpenOrCreateDialog : ContentPage
 
     try
     {
-      var result = await DisplayAlert("Info", $"Are you really want to delete {item.Name}", "Yes", "No");
+      var result = await DisplayAlert(UIStrings.AlertTitleConfirmation,
+        UIStrings.AlertTextDeleteConfirmationText, UIStrings.BtnNameYes, UIStrings.BtnNameNo);
+
       if (result == false)
         return;
 
@@ -58,7 +60,7 @@ public partial class OpenOrCreateDialog : ContentPage
     }
     catch (Exception ex)
     {
-      await DisplayAlert("Error", ex.Message, "OK");
+      await DisplayAlert(UIStrings.AlertTitleError, ex.Message, UIStrings.BtnNameOk);
     }
     finally
     {
@@ -83,7 +85,7 @@ public partial class OpenOrCreateDialog : ContentPage
     }
     catch (Exception ex)
     {
-      await DisplayAlert("Error", ex.Message, "OK");
+      await DisplayAlert(UIStrings.AlertTitleError, ex.Message, UIStrings.BtnNameOk);
     }
     finally
     {

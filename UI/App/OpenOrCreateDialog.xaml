@@ -3,12 +3,13 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="GT4.UI.OpenOrCreateDialog"
              xmlns:gt4_ui="clr-namespace:GT4.UI"
-             Title="{Binding DialogTitle}">
+             xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
+             Title="{x:Static resources:UIStrings.WndTitleOpenOrCreateDialog}">
   <ScrollView>
 
     <VerticalStackLayout Padding="20" Spacing="10">
       <Label 
-            Text="{Binding DialogHint}"
+            Text="{x:Static resources:UIStrings.WndHintOpenOrCreateDialog}"
             VerticalOptions="Center" 
             HorizontalOptions="Center" />
 

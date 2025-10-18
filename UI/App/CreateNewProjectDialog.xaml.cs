@@ -22,10 +22,7 @@ public partial class CreateNewProjectDialog : ContentPage
   public Task<ProjectInfo> ProjectInfo => _info.Task;
 
   public string CreateProjectBtName => string.IsNullOrWhiteSpace(ProjectName) ? UIStrings.BtnNameCancel : UIStrings.BtnNameCreateGenealogyTree;
-  public string DialogTitle => "Create a Genealogy Tree";
-  public string ProjectDescriptionPlaceholder => "Enter a description for the new Genealogy Tree";
   public string ProjectDescription { get; set; } = string.Empty;
-  public string ProjectNamePlaceholder => "Enter a name for the new Genealogy Tree";
   public string ProjectName
   {
     get => _projectName;

@@ -117,6 +117,18 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AlertTextDeleteConfirmationText" xml:space="preserve">
+    <value>Are you really want to delete {1}?</value>
+  </data>
+  <data name="AlertTitleInfo" xml:space="preserve">
+    <value>Info</value>
+  </data>
+  <data name="AlertTitleConfirmation" xml:space="preserve">
+    <value>(?) Confirmation</value>
+  </data>
+  <data name="AlertTitleWarning" xml:space="preserve">
+    <value>Warning</value>
+  </data>
   <data name="AppGeneralName" xml:space="preserve">
     <value>Genealogy Tree 4</value>
   </data>
@@ -124,7 +136,7 @@
     <value>Create your own
 genealogy tree and enjoy!</value>
   </data>
-  <data name="BtnHintOpenOrCreate" xml:space="preserve">
+  <data name="BtnHintOpenOrCreateProject" xml:space="preserve">
     <value>Open an existing Genealogy Tree or create a new one.</value>
   </data>
   <data name="BtnNameCancel" xml:space="preserve">
@@ -133,7 +145,40 @@ genealogy tree and enjoy!</value>
   <data name="BtnNameCreateGenealogyTree" xml:space="preserve">
     <value>Create Genealogy Tree</value>
   </data>
+  <data name="BtnNameNo" xml:space="preserve">
+    <value>No</value>
+  </data>
   <data name="BtnNameOpenOrCreateProject" xml:space="preserve">
     <value>Open or Create</value>
+  </data>
+  <data name="BtnNameYes" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="WndHintOpenOrCreateDialog" xml:space="preserve">
+    <value>You can open the existent or create a new Genealogy Tree</value>
+  </data>
+  <data name="WndTitleOpenOrCreateDialog" xml:space="preserve">
+    <value>Open or Create a Genealogy</value>
+  </data>
+  <data name="AlertTitleError" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="BtnNameOk" xml:space="preserve">
+    <value>Ok</value>
+  </data>
+  <data name="WndTitleCreateNewProjectDialog" xml:space="preserve">
+    <value>Create a Genealogy Tree</value>
+  </data>
+  <data name="TxtPlaceholderProjectDescription" xml:space="preserve">
+    <value>Enter a description for the new Genealogy Tree</value>
+  </data>
+  <data name="TxtPlaceholderPtojectName" xml:space="preserve">
+    <value>Enter a name for the new Genealogy Tree</value>
+  </data>
+  <data name="WndAppTitle" xml:space="preserve">
+    <value>🏠</value>
+  </data>
+  <data name="PkrLanguageHint" xml:space="preserve">
+    <value>🌐 Language</value>
   </data>
 </root>
