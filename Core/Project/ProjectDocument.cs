@@ -1,4 +1,6 @@
 ﻿using Microsoft.Data.Sqlite;
+using System.Data;
+using System.Reflection.Metadata;
 
 namespace GT4.Core.Project;
 
@@ -26,42 +28,58 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
     Dispose();
   }
 
-  private async Task OpenAsync()
+  private async Task OpenAsync(CancellationToken token)
   {
-    await _connection.OpenAsync();
+    await _connection.OpenAsync(token);
   }
 
-  private async Task InitNewDBAsync()
+  private async Task InitNewDBAsync(CancellationToken token)
   {
+    using var transaction = await BeginTransactionAsync(token);
+
     await Task.WhenAll(
-      Metadata.CreateAsync(),
-      Names.CreateAsync(),
-      Persons.CreateAsync()
+      Metadata.CreateAsync(token),
+      Names.CreateAsync(token),
+      Persons.CreateAsync(token)
     );
+
+    transaction.Commit();
   }
 
   public TableMetadata Metadata => new(this);
   public TableNames Names => new(this);
   public TablePersons Persons => new(this);
 
+  public async Task<int> GetLastInsertRowIdAsync(CancellationToken token)
+  {
+    using var command = CreateCommand();
+    command.CommandText = "SELECT last_insert_rowid();";
+    return Convert.ToInt32(await command.ExecuteScalarAsync(token));
+  }
+  
   public SqliteCommand CreateCommand()
   {
     return _connection.CreateCommand();
   }
 
-  public static async Task<ProjectDocument> CreateNewAsync(string path, string name)
+  public async Task<IDbTransaction> BeginTransactionAsync(CancellationToken token)
+  {
+    return await _connection.BeginTransactionAsync(token);
+  }
+
+  public static async Task<ProjectDocument> CreateNewAsync(string path, string name, CancellationToken token)
   {
     var ret = new ProjectDocument(path, SqliteOpenMode.ReadWriteCreate);
-    await ret.OpenAsync();
-    await ret.InitNewDBAsync();
+    await ret.OpenAsync(token);
+    await ret.InitNewDBAsync(token);
 
     return ret;
   }
 
-  public static async Task<ProjectDocument> OpenAsync(string path)
+  public static async Task<ProjectDocument> OpenAsync(string path, CancellationToken token)
   {
     var ret = new ProjectDocument(path, SqliteOpenMode.ReadWrite);
-    await ret.OpenAsync();
+    await ret.OpenAsync(token);
 
     return ret;
   }

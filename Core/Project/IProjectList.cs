@@ -2,8 +2,7 @@
 
 public interface IProjectList
 {
-  Task<ProjectItem[]> Items { get; }
-
-  Task CreateAsync(ProjectInfo info);
-  Task RemoveAsync(string name);
+  Task<ProjectItem[]> GetItemsAsync(CancellationToken token);
+  Task CreateAsync(ProjectInfo info, CancellationToken token);
+  Task RemoveAsync(string name, CancellationToken token);
 }

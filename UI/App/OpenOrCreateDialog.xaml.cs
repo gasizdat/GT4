@@ -19,10 +19,11 @@ public partial class OpenOrCreateDialog : ContentPage
   {
     get
     {
-      var ret = new Collection<ProjectListItem> { };
+      var ret = new Collection<ProjectListItem> { }; 
 
+      using var token = new Core.Utils.DefaultCancellationToken();
       _services.GetRequiredService<IProjectList>()
-        .Items
+        .GetItemsAsync(token)
         .Result
         .ToList()
         .ForEach(item => ret.Add(new ProjectListItem(item)));
@@ -56,7 +57,8 @@ public partial class OpenOrCreateDialog : ContentPage
       if (result == false)
         return;
 
-      await _services.GetRequiredService<IProjectList>().RemoveAsync(item.Name);
+      using var token = new Core.Utils.DefaultCancellationToken();
+      await _services.GetRequiredService<IProjectList>().RemoveAsync(item.Name, token);
     }
     catch (Exception ex)
     {
@@ -81,7 +83,8 @@ public partial class OpenOrCreateDialog : ContentPage
       if (projectInfo.Name == string.Empty)
         return;
 
-      await _services.GetRequiredService<IProjectList>().CreateAsync(projectInfo);
+      using var token = new Core.Utils.DefaultCancellationToken();
+      await _services.GetRequiredService<IProjectList>().CreateAsync(projectInfo, token);
     }
     catch (Exception ex)
     {

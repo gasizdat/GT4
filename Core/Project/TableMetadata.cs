@@ -8,7 +8,7 @@ public class TableMetadata : TableBase
   {
   }
 
-  public override async Task CreateAsync()
+  public override async Task CreateAsync(CancellationToken token)
   {
     using var command = Document.CreateCommand();
     command.CommandText = """
@@ -17,10 +17,10 @@ public class TableMetadata : TableBase
       Data BLOB
     );
     """;
-    await command.ExecuteNonQueryAsync();
+    await command.ExecuteNonQueryAsync(token);
   }
 
-  public async Task AddAsync<TData>(string id, TData data)
+  public async Task AddAsync<TData>(string id, TData data, CancellationToken token)
   {
     using var command = Document.CreateCommand();
     command.CommandText = """
@@ -30,16 +30,16 @@ public class TableMetadata : TableBase
       """;
     command.Parameters.AddWithValue("@id", id);
     command.Parameters.AddWithValue("@data", data);
-    var rowsAffected = await command.ExecuteNonQueryAsync();
+    var rowsAffected = await command.ExecuteNonQueryAsync(token);
     Console.WriteLine(rowsAffected);
   }
 
-  public async Task<TData?> GetAsync<TData>(string id)
+  public async Task<TData?> GetAsync<TData>(string id, CancellationToken token)
   {
     using var command = Document.CreateCommand();
     command.CommandText = "SELECT Data FROM Metadata WHERE Id=@id;";
     command.Parameters.Add(new SqliteParameter("@id", id));
-    var result = await command.ExecuteScalarAsync();
+    var result = await command.ExecuteScalarAsync(token);
     return (TData?)result;
   }
 }

@@ -9,14 +9,14 @@ internal class ProjectList : IProjectList
   private readonly IFileSystem _FileSystem;
   private readonly WeakReference<ProjectItem[]?> _Items = new(null);
 
-  private static async Task<ProjectItem> GetProjectItemAsync(string path)
+  private static async Task<ProjectItem> GetProjectItemAsync(string path, CancellationToken token)
   {
     try
     {
-      await using var project = await ProjectDocument.OpenAsync(path);
+      await using var project = await ProjectDocument.OpenAsync(path, token);
       var results = await Task.WhenAll(
-        project.Metadata.GetAsync<string>("name"),
-        project.Metadata.GetAsync<string>("description"));
+        project.Metadata.GetAsync<string>("name", token),
+        project.Metadata.GetAsync<string>("description", token));
 
       return new ProjectItem
       {
@@ -40,28 +40,6 @@ internal class ProjectList : IProjectList
   private static bool CompareNames(string name1, string name2) =>
     string.Equals(name1, name2, StringComparison.InvariantCultureIgnoreCase);
 
-  private async Task<ProjectItem[]> LoadItemsAsync()
-  {
-    if (_Items.TryGetTarget(out var items))
-      return items;
-
-    try
-    {
-      var tasks = _FileSystem
-        .GetFiles(_Storage.ProjectsRoot, $"*.{ProjectExtension}", true)
-        .ToList()
-        .Select(GetProjectItemAsync);
-      items = await Task.WhenAll(tasks);
-
-      _Items.SetTarget(items);
-      return items;
-    }
-    catch
-    {
-      return Array.Empty<ProjectItem>();
-    }
-  }
-
   private void InvalidateItems()
   {
     _Items.SetTarget(null);
@@ -75,11 +53,31 @@ internal class ProjectList : IProjectList
 
   public readonly static string ProjectExtension = "gt4";
 
-  public Task<ProjectItem[]> Items => LoadItemsAsync();
-
-  public async Task CreateAsync(ProjectInfo info)
+  public async Task<ProjectItem[]> GetItemsAsync(CancellationToken token)
   {
-    if ((await Items).Any(i => CompareNames(i.Name, info.Name)))
+    if (_Items.TryGetTarget(out var items))
+      return items;
+
+    try
+    {
+      var tasks = _FileSystem
+        .GetFiles(_Storage.ProjectsRoot, $"*.{ProjectExtension}", true)
+        .ToList()
+        .Select(path => GetProjectItemAsync(path, token));
+      items = await Task.WhenAll(tasks);
+
+      _Items.SetTarget(items);
+      return items;
+    }
+    catch
+    {
+      return Array.Empty<ProjectItem>();
+    }
+  }
+
+  public async Task CreateAsync(ProjectInfo info, CancellationToken token)
+  {
+    if ((await GetItemsAsync(token)).Any(i => CompareNames(i.Name, info.Name)))
       throw new ApplicationException($"A project with name '{info.Name}' already exists");
 
     InvalidateItems();
@@ -87,15 +85,15 @@ internal class ProjectList : IProjectList
     using (var file = _FileSystem.CreateEmptyFile(path))
       file.Close();
 
-    await using var project = await ProjectDocument.CreateNewAsync(path, info.Name);
+    await using var project = await ProjectDocument.CreateNewAsync(path, info.Name, token);
     await Task.WhenAll(
-      project.Metadata.AddAsync("name", info.Name),
-      project.Metadata.AddAsync("description", info.Description));
+      project.Metadata.AddAsync("name", info.Name, token),
+      project.Metadata.AddAsync("description", info.Description, token));
   }
 
-  public async Task RemoveAsync(string name)
+  public async Task RemoveAsync(string name, CancellationToken token)
   {
-    var modifiableItems = (await Items).ToList();
+    var modifiableItems = (await GetItemsAsync(token)).ToList();
     var item = modifiableItems.FirstOrDefault(i => CompareNames(i.Name, name));
     if (item?.Name is null)
       return;
