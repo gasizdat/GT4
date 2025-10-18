@@ -1,4 +1,4 @@
-﻿namespace GT4.Core.Project;
+﻿namespace GT4.Core.Project.Dto;
 
 public enum NameType
 {
