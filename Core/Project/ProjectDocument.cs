@@ -4,7 +4,7 @@ namespace GT4.Core.Project;
 
 public class ProjectDocument : IAsyncDisposable, IDisposable
 {
-  readonly SqliteConnection _connection;
+  private readonly SqliteConnection _connection;
 
   static ProjectDocument()
   {
@@ -31,37 +31,29 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
     await _connection.OpenAsync();
   }
 
-  private async Task InitNewDB()
+  private async Task InitNewDBAsync()
   {
-    using var command = _connection.CreateCommand();
-    command.CommandText = "CREATE TABLE IF NOT EXISTS Metadata (Id TEXT PRIMARY KEY, Data BLOB)";
-    await command.ExecuteNonQueryAsync();
+    await Task.WhenAll(
+      Metadata.CreateAsync(),
+      Names.CreateAsync(),
+      Persons.CreateAsync()
+    );
   }
 
-  public async Task AddMetadataAsync<TData>(string id, TData data)
-  {
-    using var command = _connection.CreateCommand();
-    command.CommandText = "INSERT OR REPLACE INTO Metadata (Id, Data) VALUES (@id, @data);";
-    command.Parameters.AddWithValue("@id", id);
-    command.Parameters.AddWithValue("@data", data);
-    var rowsAffected = await command.ExecuteNonQueryAsync();
-    Console.WriteLine(rowsAffected);
-  }
+  public TableMetadata Metadata => new(this);
+  public TableNames Names => new(this);
+  public TablePersons Persons => new(this);
 
-  public async Task<TData?> GetMetadataAsync<TData>(string id)
+  public SqliteCommand CreateCommand()
   {
-    using var command = _connection.CreateCommand();
-    command.CommandText = "SELECT Data FROM Metadata WHERE Id=@id;";
-    command.Parameters.Add(new SqliteParameter("@id", id));
-    var result = await command.ExecuteScalarAsync();
-    return (TData?)result;
+    return _connection.CreateCommand();
   }
 
   public static async Task<ProjectDocument> CreateNewAsync(string path, string name)
   {
     var ret = new ProjectDocument(path, SqliteOpenMode.ReadWriteCreate);
     await ret.OpenAsync();
-    await ret.InitNewDB();
+    await ret.InitNewDBAsync();
 
     return ret;
   }

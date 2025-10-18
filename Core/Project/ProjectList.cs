@@ -15,8 +15,8 @@ internal class ProjectList : IProjectList
     {
       await using var project = await ProjectDocument.OpenAsync(path);
       var results = await Task.WhenAll(
-        project.GetMetadataAsync<string>("name"),
-        project.GetMetadataAsync<string>("description"));
+        project.Metadata.GetAsync<string>("name"),
+        project.Metadata.GetAsync<string>("description"));
 
       return new ProjectItem
       {
@@ -88,8 +88,8 @@ internal class ProjectList : IProjectList
 
     await using var project = await ProjectDocument.CreateNewAsync(path, info.Name);
     await Task.WhenAll(
-      project.AddMetadataAsync("name", info.Name),
-      project.AddMetadataAsync("description", info.Description));
+      project.Metadata.AddAsync("name", info.Name),
+      project.Metadata.AddAsync("description", info.Description));
   }
 
   public async Task RemoveAsync(string name)
