@@ -3,6 +3,7 @@
   public record class Person(
     int Id,
     Name[] Names,
+    byte[]?[] Photos,
     DateTime? BirthDate,
     DateStatus BirthDateStatus,
     DateTime? DeathDate,

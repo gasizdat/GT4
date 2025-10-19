@@ -35,6 +35,7 @@ public partial class TablePersons : TableBase
     (
       Id: personId,
       Names: await Document.PersonNames.GetPersonNamesAsync(personId, token),
+      Photos: [], //TODO
       BirthDate: TryGetDateTime(reader, 11),
       BirthDateStatus: GetEnum<DateStatus>(reader, 12),
       DeathDate: TryGetDateTime(reader, 13),
