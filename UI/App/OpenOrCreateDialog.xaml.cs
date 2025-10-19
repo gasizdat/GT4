@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 namespace GT4.UI;
 
 using GT4.UI.Resources;
+using Microsoft.UI.Xaml.Media;
 
 public partial class OpenOrCreateDialog : ContentPage
 {
@@ -15,20 +16,17 @@ public partial class OpenOrCreateDialog : ContentPage
     BindingContext = this;
   }
 
-  public ICollection<ProjectListItem> Projects
+  public ICollection<ProjectItem> Projects
   {
     get
     {
-      var ret = new Collection<ProjectListItem> { }; 
-
       using var token = new Core.Utils.DefaultCancellationToken();
-      _services.GetRequiredService<IProjectList>()
+      var ret = _services.GetRequiredService<IProjectList>()
         .GetItemsAsync(token)
         .Result
-        .ToList()
-        .ForEach(item => ret.Add(new ProjectListItem(item)));
+        .ToList();
 
-      ret.Add(new ProjectListItemCreate());
+      ret.Add(new ProjectItemCreate());
 
       return ret;
     }
@@ -36,17 +34,23 @@ public partial class OpenOrCreateDialog : ContentPage
 
   public async void OnProjectSelected(object sender, SelectionChangedEventArgs e)
   {
-    if (e.CurrentSelection.FirstOrDefault() is ProjectListItemCreate item)
+    if (e.CurrentSelection.FirstOrDefault() is ProjectItemCreate item)
     {
       await OnCreateProject();
+    }
+    else if(e.CurrentSelection.FirstOrDefault() is ProjectItem projectItem)
+    {
+      using var token = new Core.Utils.DefaultCancellationToken();
+      await _services.GetRequiredService<ICurrentProjectProvider>().OpenAsync(projectItem, token);
+      await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamiliesPage>());
     }
   }
 
   public async void OnDeleteProjectSelected(object sender, EventArgs e)
   {
 
-    var item = (sender as BindableObject)?.BindingContext as ProjectListItem;
-    if (item is null or ProjectListItemCreate)
+    var item = (sender as BindableObject)?.BindingContext as ProjectItem;
+    if (item is null or ProjectItemCreate)
       return;
 
     try

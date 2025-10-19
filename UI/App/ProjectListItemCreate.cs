@@ -2,9 +2,9 @@
 
 using GT4.Core.Project;
 
-public class ProjectListItemCreate : ProjectListItem
+public record class ProjectItemCreate : ProjectItem
 {
-  public ProjectListItemCreate()
+  public ProjectItemCreate()
     : base(new ProjectItem
     {
       Description = "Create a new Genealogy Tree",
