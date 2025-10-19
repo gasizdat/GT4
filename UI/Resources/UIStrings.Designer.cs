@@ -143,6 +143,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Create Family.
+        /// </summary>
+        public static string BtnNameCreateFamily {
+            get {
+                return ResourceManager.GetString("BtnNameCreateFamily", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Create Genealogy Tree.
         /// </summary>
         public static string BtnNameCreateGenealogyTree {
@@ -215,11 +224,20 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 🏠.
+        ///   Looks up a localized string similar to 🏠 Home.
         /// </summary>
         public static string WndAppTitle {
             get {
                 return ResourceManager.GetString("WndAppTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Open or create family.
+        /// </summary>
+        public static string WndHintFamiliesPage {
+            get {
+                return ResourceManager.GetString("WndHintFamiliesPage", resourceCulture);
             }
         }
         
@@ -238,6 +256,15 @@ namespace GT4.UI.Resources {
         public static string WndTitleCreateNewProjectDialog {
             get {
                 return ResourceManager.GetString("WndTitleCreateNewProjectDialog", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Families.
+        /// </summary>
+        public static string WndTitleFamiliesPage {
+            get {
+                return ResourceManager.GetString("WndTitleFamiliesPage", resourceCulture);
             }
         }
         

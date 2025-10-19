@@ -38,7 +38,7 @@ public partial class OpenOrCreateDialog : ContentPage
     {
       await OnCreateProject();
     }
-    else if(e.CurrentSelection.FirstOrDefault() is ProjectItem projectItem)
+    else if (e.CurrentSelection.FirstOrDefault() is ProjectItem projectItem)
     {
       using var token = new Core.Utils.DefaultCancellationToken();
       await _services.GetRequiredService<ICurrentProjectProvider>().OpenAsync(projectItem, token);

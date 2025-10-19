@@ -15,47 +15,50 @@ public partial class FamiliesPage : ContentPage
     BindingContext = this;
   }
 
-  public ICollection<ProjectItem> Projects
+  public ICollection<FamilyInfoItem> Families
   {
     get
     {
       using var token = new Core.Utils.DefaultCancellationToken();
-      var ret = _services.GetRequiredService<IProjectList>()
-        .GetItemsAsync(token)
+      var ret = _services.GetRequiredService<ICurrentProjectProvider>()
+        .Project
+        .Names
+        .GetNamesAsync(Core.Project.Dto.NameType.FamilyName, token)
         .Result
+        .Select(name => new FamilyInfoItem(name.Value))
         .ToList();
 
-      ret.Add(new ProjectItemCreate());
+      ret.Add(new FamilyInfoItemCreate());
 
       return ret;
     }
   }
 
-  public async void OnProjectSelected(object sender, SelectionChangedEventArgs e)
+  public async void OnFamilySelected(object sender, SelectionChangedEventArgs e)
   {
     if (e.CurrentSelection.FirstOrDefault() is ProjectItemCreate item)
     {
-      await OnCreateProject();
+      await OnCreateFamily();
     }
   }
 
-  public async void OnDeleteProjectSelected(object sender, EventArgs e)
+  public async void OnDeleteFamilySelected(object sender, EventArgs e)
   {
 
-    var item = (sender as BindableObject)?.BindingContext as ProjectItem;
-    if (item is null or ProjectItemCreate)
+    var item = (sender as BindableObject)?.BindingContext as FamilyInfoItem;
+    if (item is null or FamilyInfoItemCreate)
       return;
 
     try
     {
       var result = await DisplayAlert(UIStrings.AlertTitleConfirmation,
-        UIStrings.AlertTextDeleteConfirmationText, UIStrings.BtnNameYes, UIStrings.BtnNameNo);
+        string.Format(UIStrings.AlertTextDeleteConfirmationText, item.FamilyName), UIStrings.BtnNameYes, UIStrings.BtnNameNo);
 
       if (result == false)
         return;
 
       using var token = new Core.Utils.DefaultCancellationToken();
-      await _services.GetRequiredService<IProjectList>().RemoveAsync(item.Name, token);
+      // TODO
     }
     catch (Exception ex)
     {
@@ -63,11 +66,11 @@ public partial class FamiliesPage : ContentPage
     }
     finally
     {
-      OnPropertyChanged(nameof(Projects));
+      OnPropertyChanged(nameof(Families));
     }
   }
 
-  internal async Task OnCreateProject()
+  internal async Task OnCreateFamily()
   {
     var dialog = new CreateNewProjectDialog();
 
@@ -89,7 +92,7 @@ public partial class FamiliesPage : ContentPage
     }
     finally
     {
-      OnPropertyChanged(nameof(Projects));
+      OnPropertyChanged(nameof(Families));
     }
   }
 }

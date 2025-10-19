@@ -1,0 +1,11 @@
+﻿using GT4.Core.Project.Dto;
+
+namespace GT4.UI;
+
+public class FamilyInfoItemCreate : FamilyInfoItem
+{
+  public FamilyInfoItemCreate()
+    : base(new Name(0, Resources.UIStrings.BtnNameCreateFamily, NameType.FamilyName, null))
+  {
+  }
+}

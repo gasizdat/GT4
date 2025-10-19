@@ -4,22 +4,22 @@
              x:Class="GT4.UI.FamiliesPage"
              xmlns:ui="clr-namespace:GT4.UI"
              xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
-             Title="{x:Static resources:UIStrings.WndTitleOpenOrCreateDialog}">
+             Title="{x:Static resources:UIStrings.WndTitleFamiliesPage}">
   <ScrollView>
 
     <VerticalStackLayout Padding="20" Spacing="10">
       <Label 
-            Text="{x:Static resources:UIStrings.WndHintOpenOrCreateDialog}"
+            Text="{x:Static resources:UIStrings.WndHintFamiliesPage}"
             VerticalOptions="Center" 
             HorizontalOptions="Center" />
 
       <CollectionView 
-          ItemsSource="{Binding Projects}" 
+          ItemsSource="{Binding Families}" 
           SelectionMode="Single" 
-          SelectionChanged="OnProjectSelected">
+          SelectionChanged="OnFamilySelected">
         
-        <!-- CollectionView.ItemTemplate>
-          <DataTemplate x:DataType="gt4_ui:ProjectListItem">
+        <CollectionView.ItemTemplate>
+          <DataTemplate x:DataType="ui:FamilyInfoItem">
 
             <FlexLayout 
                 Direction="Row"
@@ -35,28 +35,23 @@
                   FlexLayout.Grow="1">
 
                 <Label 
-                    Text="{Binding Name}" 
+                    Text="{Binding FamilyName.Value}" 
                     FontSize="20" 
                     FontAttributes="Bold" 
                     Padding="2"/>
 
-                <Label 
-                    Text="{Binding Description}" 
-                    FontSize="12" 
-                    Padding="2"/>
-                
               </VerticalStackLayout>
 
               <Button 
                   Text="❌" 
-                  Clicked="OnDeleteProjectSelected"
+                  Clicked="OnDeleteFamilySelected"
                   WidthRequest="32" 
                   HeightRequest="32"
                   Padding="0"/>
 
             </FlexLayout>
           </DataTemplate>
-        </CollectionView.ItemTemplate-->
+        </CollectionView.ItemTemplate>
       </CollectionView>
 
     </VerticalStackLayout>

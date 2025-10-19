@@ -177,9 +177,18 @@
     <value>Добавьте имя для нового генеалогического древа</value>
   </data>
   <data name="WndAppTitle" xml:space="preserve">
-    <value>🏠</value>
+    <value>🏠 Домой</value>
   </data>
   <data name="PkrLanguageHint" xml:space="preserve">
     <value>🌐 Язык</value>
+  </data>
+  <data name="BtnNameCreateFamily" xml:space="preserve">
+    <value>Создайте семью</value>
+  </data>
+  <data name="WndTitleFamiliesPage" xml:space="preserve">
+    <value>Фамилии</value>
+  </data>
+  <data name="WndHintFamiliesPage" xml:space="preserve">
+    <value>Откройте или создайте род</value>
   </data>
 </root>

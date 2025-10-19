@@ -176,9 +176,18 @@ genealogy tree and enjoy!</value>
     <value>Enter a name for the new Genealogy Tree</value>
   </data>
   <data name="WndAppTitle" xml:space="preserve">
-    <value>🏠</value>
+    <value>🏠 Home</value>
   </data>
   <data name="PkrLanguageHint" xml:space="preserve">
     <value>🌐 Language</value>
+  </data>
+  <data name="BtnNameCreateFamily" xml:space="preserve">
+    <value>Create Family</value>
+  </data>
+  <data name="WndTitleFamiliesPage" xml:space="preserve">
+    <value>Families</value>
+  </data>
+  <data name="WndHintFamiliesPage" xml:space="preserve">
+    <value>Open or create family</value>
   </data>
 </root>
