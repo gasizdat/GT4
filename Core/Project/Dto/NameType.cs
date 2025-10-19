@@ -2,6 +2,8 @@
 
 public enum NameType
 {
+  // For the internal use only
+  AllNames = 0,
   // The first name of a person
   FirstName = 1,
   // The optional middle name of the person

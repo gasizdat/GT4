@@ -1,15 +1,14 @@
-﻿using Microsoft.Data.Sqlite;
-using GT4.Core.Project.Dto;
+﻿using GT4.Core.Project.Dto;
+using Microsoft.Data.Sqlite;
+using System.Diagnostics.CodeAnalysis;
 
 namespace GT4.Core.Project;
 
+using NameList = WeakReference<IReadOnlyDictionary<int, Name>?>;
+
 public class TableNames : TableBase
 {
-  private record NamePlaceholder(int Id) : Name(Id: Id, Value: string.Empty, Type: NameType.MaleName, null);
-  private readonly WeakReference<IReadOnlyDictionary<int, Name>?> _Items = new(null);
-
-  private static Name? GetNamePlaceholder(int? id) =>
-    id == null ? null : new NamePlaceholder(id.Value);
+  private readonly Dictionary<NameType, NameList> _Items = new();
 
   private static Name CreateName(SqliteDataReader reader)
   {
@@ -17,14 +16,20 @@ public class TableNames : TableBase
     var value = reader.GetString(1);
     var type = (NameType)reader.GetInt32(2);
     var parentId = TryGetInteger(reader, 3);
-    var name = new Name(Id: id, Value: string.Empty, Type: type, Parent: GetNamePlaceholder(parentId));
+    var name = new Name(Id: id, Value: string.Empty, Type: type, ParentId: parentId);
 
     return name;
   }
 
-  private void InvalidateItems()
+  private void InvalidateItems(NameType nameType)
   {
-    _Items.SetTarget(null);
+    _Items.Remove(nameType);
+  }
+
+  private bool TryGetNameList(NameType nameType, [MaybeNullWhen(false)] out IReadOnlyDictionary<int, Name> list)
+  {
+    list = null;
+    return _Items.TryGetValue(nameType, out var items) && items.TryGetTarget(out list);
   }
 
   public TableNames(ProjectDocument document) : base(document)
@@ -50,9 +55,9 @@ public class TableNames : TableBase
     await command.ExecuteNonQueryAsync(token);
   }
 
-  public async Task<IReadOnlyDictionary<int, Name>> GetNamesAsync(CancellationToken token)
+  public async Task<IReadOnlyDictionary<int, Name>> GetNamesAsync(NameType nameType, CancellationToken token)
   {
-    if (_Items.TryGetTarget(out var items))
+    if (TryGetNameList(nameType, out var items))
       return items;
 
     using var command = Document.CreateCommand();
@@ -70,15 +75,7 @@ public class TableNames : TableBase
       result.Add(name.Id, name);
     }
 
-    foreach (var name in result.Values)
-    {
-      if (name.Parent is NamePlaceholder placeholder && result.TryGetValue(placeholder.Id, out var parent))
-      {
-        result[name.Id] = name with { Parent = parent };
-      }
-    }
-
-    _Items.SetTarget(result);
+    _Items.Add(nameType, new NameList(result));
     return result;
   }
 
@@ -88,7 +85,7 @@ public class TableNames : TableBase
     {
       return null;
     }
-    if (_Items.TryGetTarget(out var items) && items.TryGetValue(id.Value, out var name))
+    if (TryGetNameList(NameType.AllNames, out var items) && items.TryGetValue(id.Value, out var name))
     {
       return name;
     }
@@ -105,15 +102,43 @@ public class TableNames : TableBase
     if (await reader.ReadAsync(token))
     {
       name = CreateName(reader);
-      if (name.Parent is NamePlaceholder placeholder)
-      {
-        name = name with { Parent = await GetNameAsync(placeholder.Id, token) };
-      }
-
       return name;
     }
 
     return null;
+  }
+
+  public async Task<Name[]?> GetNameWithSubnamesAsync(int? id, CancellationToken token)
+  {
+    if (!id.HasValue)
+    {
+      return null;
+    }
+
+    List<Name> ret;
+    if (TryGetNameList(NameType.AllNames, out var items) && items.TryGetValue(id.Value, out var name))
+    {
+      ret = items.Values.Where(name => name.ParentId == id.Value).ToList();
+      ret.Insert(0, name);
+      return ret.ToArray();
+    }
+
+    using var command = Document.CreateCommand();
+    command.CommandText = """
+      SELECT Id, Value, Type, ParentId
+      FROM Names
+      WHERE Id=@id OR ParentId=@id;
+      """;
+    command.Parameters.AddWithValue("@id", id.Value);
+
+    using var reader = await command.ExecuteReaderAsync(token);
+    ret = new();
+    while (await reader.ReadAsync(token))
+    {
+      ret.Add(CreateName(reader));
+    }
+
+    return ret.Count > 0 ? ret.ToArray() : null;
   }
 
   public async Task<Name> AddNameAsync(string value, NameType type, Name? parent, CancellationToken token)
@@ -127,8 +152,8 @@ public class TableNames : TableBase
     command.Parameters.AddWithValue("@type", (int)type);
     command.Parameters.AddWithValue("@parentId", parent != null ? parent.Id : DBNull.Value);
     await command.ExecuteNonQueryAsync(token);
-    InvalidateItems();
+    InvalidateItems(type);
 
-    return new Name(Id: await Document.GetLastInsertRowIdAsync(token), Value: value, Type: type, Parent: parent);
+    return new Name(Id: await Document.GetLastInsertRowIdAsync(token), Value: value, Type: type, ParentId: parent?.Id);
   }
 }
