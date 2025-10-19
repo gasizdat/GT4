@@ -6,6 +6,7 @@ internal static class UIRoutes
   {
     AddRoute<OpenOrCreateDialog>();
     AddRoute<CreateNewProjectDialog>();
+    AddRoute<FamiliesPage>();
   }
 
   public static string GetRoute<TPage>() => $"{typeof(TPage).Namespace}/{typeof(TPage).Name}";
