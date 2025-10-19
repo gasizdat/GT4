@@ -14,9 +14,9 @@ public class TableNames : TableBase
   {
     var id = reader.GetInt32(0);
     var value = reader.GetString(1);
-    var type = (NameType)reader.GetInt32(2);
+    var type = GetEnum<NameType>(reader, 2);
     var parentId = TryGetInteger(reader, 3);
-    var name = new Name(Id: id, Value: string.Empty, Type: type, ParentId: parentId);
+    var name = new Name(Id: id, Value: value, Type: type, ParentId: parentId);
 
     return name;
   }
@@ -62,10 +62,22 @@ public class TableNames : TableBase
 
     using var command = Document.CreateCommand();
 
-    command.CommandText = """
-      SELECT Id, Value, Type, ParentId
-      FROM Names;
-      """;
+    if (nameType == NameType.AllNames)
+    {
+      command.CommandText = """
+        SELECT Id, Value, Type, ParentId
+        FROM Names;
+        """;
+    }
+    else
+    {
+      command.CommandText = """
+        SELECT Id, Value, Type, ParentId
+        FROM Names
+        WHERE Type=@type;
+        """;
+      command.Parameters.AddWithValue("@type", nameType);
+    }
 
     using var reader = await command.ExecuteReaderAsync(token);
     var result = new Dictionary<int, Name>();

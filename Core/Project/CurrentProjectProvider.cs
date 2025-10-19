@@ -7,6 +7,7 @@ internal class CurrentProjectProvider : ICurrentProjectProvider
 
   public async Task OpenAsync(ProjectItem item, CancellationToken token)
   {
+    await CloseAsync(token);
     _item = item;
     _project = await ProjectDocument.OpenAsync(item.Path, token);
   }
