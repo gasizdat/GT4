@@ -13,13 +13,17 @@
             VerticalOptions="Center" 
             HorizontalOptions="Center" />
 
-      <CollectionView ItemsSource="{Binding Projects}" SelectionMode="Single" SelectionChanged="OnProjectSelected">
+      <CollectionView 
+          ItemsSource="{Binding Projects}" 
+          SelectionMode="Single" 
+          SelectionChanged="OnProjectSelected">
+        
         <CollectionView.ItemTemplate>
           <DataTemplate x:DataType="gt4_ui:ProjectListItem">
 
             <FlexLayout 
-              Direction="Row"
-              HeightRequest="50" >
+                Direction="Row"
+                HeightRequest="50" >
 
               <Image 
                   Source="project_icon.png" 

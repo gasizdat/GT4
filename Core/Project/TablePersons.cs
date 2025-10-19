@@ -18,31 +18,11 @@ public partial class TablePersons : TableBase
     command.CommandText = """
       CREATE TABLE IF NOT EXISTS Persons (
         Id INTEGER PRIMARY KEY AUTOINCREMENT,
-        Name1 INTEGER NOT NULL,
-        Name2 INTEGER,
-        Name3 INTEGER,
-        Name4 INTEGER,
-        Name5 INTEGER,
-        Name6 INTEGER,
-        Name7 INTEGER,
-        Name8 INTEGER,
-        Name9 INTEGER,
-        Name10 INTEGER,
         BirthDate NUMERIC,
         BirthDateStatus INTEGER NOT NULL,
         DeathDate NUMERIC,
         DeathDateStatus INTEGER,
-        BiologicalSex INTEGER NOT NULL,
-        FOREIGN KEY(Name1) REFERENCES Names(Id),
-        FOREIGN KEY(Name2) REFERENCES Names(Id),
-        FOREIGN KEY(Name3) REFERENCES Names(Id),
-        FOREIGN KEY(Name4) REFERENCES Names(Id),
-        FOREIGN KEY(Name5) REFERENCES Names(Id),
-        FOREIGN KEY(Name6) REFERENCES Names(Id),
-        FOREIGN KEY(Name7) REFERENCES Names(Id),
-        FOREIGN KEY(Name8) REFERENCES Names(Id),
-        FOREIGN KEY(Name9) REFERENCES Names(Id),
-        FOREIGN KEY(Name10) REFERENCES Names(Id)
+        BiologicalSex INTEGER NOT NULL
       );
       """;
     await command.ExecuteNonQueryAsync(token);
@@ -50,32 +30,11 @@ public partial class TablePersons : TableBase
 
   private async Task<Person> CreatePersonAsync(SqliteDataReader reader, CancellationToken token)
   {
-    var names = await Task.WhenAll(
-      Document.Names.GetNameAsync(reader.GetInt32(1), token),
-      Document.Names.GetNameAsync(reader.GetInt32(2), token),
-      Document.Names.GetNameAsync(reader.GetInt32(3), token),
-      Document.Names.GetNameAsync(reader.GetInt32(4), token),
-      Document.Names.GetNameAsync(reader.GetInt32(5), token),
-      Document.Names.GetNameAsync(reader.GetInt32(6), token),
-      Document.Names.GetNameAsync(reader.GetInt32(7), token),
-      Document.Names.GetNameAsync(reader.GetInt32(8), token),
-      Document.Names.GetNameAsync(reader.GetInt32(9), token),
-      Document.Names.GetNameAsync(reader.GetInt32(10), token)
-    );
-
+    var personId = reader.GetInt32(0);
     return new Person
     (
-      Id: reader.GetInt32(0),
-      Name: names[0]!,
-      Name2: names[1],
-      Name3: names[2],
-      Name4: names[3],
-      Name5: names[4],
-      Name6: names[5],
-      Name7: names[6],
-      Name8: names[7],
-      Name9: names[8],
-      Name10: names[9],
+      Id: personId,
+      Names: await Document.PersonNames.GetPersonNamesAsync(personId, token),
       BirthDate: TryGetDateTime(reader, 11),
       BirthDateStatus: GetEnum<DateStatus>(reader, 12),
       DeathDate: TryGetDateTime(reader, 13),
@@ -94,12 +53,10 @@ public partial class TablePersons : TableBase
     if (_Items.TryGetTarget(out var items))
       return items;
 
-    using var transaction = Document.BeginTransactionAsync(token);
     using var command = Document.CreateCommand();
 
     command.CommandText = """
-      SELECT Id, Name1, Name2, Name3, Name4, Name5, Name6, Name7, Name8, Name9, Name10, 
-             BirthDate, BirthDateStatus, DeathDate, DeathDateStatus, BiologicalSex
+      SELECT Id, BirthDate, BirthDateStatus, DeathDate, DeathDateStatus, BiologicalSex
       FROM Persons;
       """;
 
@@ -113,5 +70,28 @@ public partial class TablePersons : TableBase
 
     _Items.SetTarget(result);
     return result;
+  }
+
+  public async Task<int> AddPersonAsync(Person person, CancellationToken token)
+  {
+    InvalidateItems();
+    using var transaction = await Document.BeginTransactionAsync(token);
+    using var command = Document.CreateCommand();
+    command.CommandText = """
+      INSERT INTO Persons (BirthDate, BirthDateStatus, DeathDate, DeathDateStatus, BiologicalSex)
+      VALUES (@birthDate, @birthDateStatus, @deathDate, @deathDateStatus, @biologicalSex);
+      """;
+    command.Parameters.AddWithValue("@birthDate", person.BirthDate is not null ? person.BirthDate : DBNull.Value);
+    command.Parameters.AddWithValue("@birthDateStatus", person.BirthDateStatus);
+    command.Parameters.AddWithValue("@deathDate", person.DeathDate is not null ? person.DeathDate : DBNull.Value);
+    command.Parameters.AddWithValue("@deathDateStatus", person.DeathDateStatus.HasValue ? (int)person.DeathDateStatus.Value : DBNull.Value);
+    command.Parameters.AddWithValue("@biologicalSex", person.BiologicalSex);
+    await command.ExecuteNonQueryAsync(token);
+    var personId = await Document.GetLastInsertRowIdAsync(token);
+    if (person.Names.Length > 0)
+    {
+      await Document.PersonNames.AddNamesAsync(personId, person.Names, token);
+    }
+    return personId;
   }
 }

@@ -40,7 +40,8 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
     await Task.WhenAll(
       Metadata.CreateAsync(token),
       Names.CreateAsync(token),
-      Persons.CreateAsync(token)
+      Persons.CreateAsync(token),
+      PersonNames.CreateAsync(token)
     );
 
     transaction.Commit();
@@ -49,6 +50,7 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
   public TableMetadata Metadata => new(this);
   public TableNames Names => new(this);
   public TablePersons Persons => new(this);
+  public TablePersonNames PersonNames => new(this);
 
   public async Task<int> GetLastInsertRowIdAsync(CancellationToken token)
   {
