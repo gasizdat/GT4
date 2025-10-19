@@ -1,12 +1,11 @@
 ﻿using GT4.Core.Project.Dto;
 using Microsoft.Data.Sqlite;
-using System.Reflection.Metadata;
 
 namespace GT4.Core.Project;
 
 public partial class TablePersons : TableBase
 {
-  private readonly WeakReference<IReadOnlyDictionary<int, Person>?> _Items = new(null);
+  private readonly WeakReference<IList<Person>?> _Items = new(null);
 
   public TablePersons(ProjectDocument document) : base(document)
   {
@@ -36,11 +35,11 @@ public partial class TablePersons : TableBase
       Id: personId,
       Names: await Document.PersonNames.GetPersonNamesAsync(personId, token),
       Photos: [], //TODO
-      BirthDate: TryGetDateTime(reader, 11),
-      BirthDateStatus: GetEnum<DateStatus>(reader, 12),
-      DeathDate: TryGetDateTime(reader, 13),
-      DeathDateStatus: TryGetEnum<DateStatus>(reader, 14),
-      BiologicalSex: GetEnum<BiologicalSex>(reader, 15)
+      BirthDate: TryGetDateTime(reader, 1),
+      BirthDateStatus: GetEnum<DateStatus>(reader, 2),
+      DeathDate: TryGetDateTime(reader, 3),
+      DeathDateStatus: TryGetEnum<DateStatus>(reader, 4),
+      BiologicalSex: GetEnum<BiologicalSex>(reader, 5)
     );
   }
 
@@ -49,10 +48,10 @@ public partial class TablePersons : TableBase
     _Items.SetTarget(null);
   }
 
-  public async Task<IReadOnlyDictionary<int, Person>> GetPersonsAsync(CancellationToken token)
+  public async Task<Person[]> GetPersonsAsync(CancellationToken token)
   {
     if (_Items.TryGetTarget(out var items))
-      return items;
+      return items.ToArray();
 
     using var command = Document.CreateCommand();
 
@@ -62,15 +61,40 @@ public partial class TablePersons : TableBase
       """;
 
     using var reader = await command.ExecuteReaderAsync(token);
-    var result = new Dictionary<int, Person>();
+    var result = new List<Person>();
     while (await reader.ReadAsync(token))
     {
       var person = await CreatePersonAsync(reader, token);
-      result.Add(person.Id, person);
+      result.Add(person);
     }
 
     _Items.SetTarget(result);
-    return result;
+    return result.ToArray();
+  }
+
+  public async Task<Person[]> GetPersonsByNameAsync(Name name, CancellationToken token)
+  {
+    if (_Items.TryGetTarget(out var items))
+      return items.Where(p => p.Names.Count(n => n.Id == name.Id) > 0).ToArray();
+
+    using var command = Document.CreateCommand();
+    command.CommandText = """
+      SELECT Id, BirthDate, BirthDateStatus, DeathDate, DeathDateStatus, BiologicalSex
+      FROM Persons
+      INNER JOIN
+        PersonNames ON PersonNames.PersonId=Persons.Id
+      WHERE PersonNames.NameId=@id;
+      """;
+    command.Parameters.AddWithValue("@id", name.Id);
+    using var reader = await command.ExecuteReaderAsync(token);
+
+    var result = new List<Person>();
+    while (await reader.ReadAsync(token))
+    {
+      var person = await CreatePersonAsync(reader, token);
+      result.Add(person);
+    }
+    return result.ToArray();
   }
 
   public async Task<int> AddPersonAsync(Person person, CancellationToken token)
