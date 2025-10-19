@@ -7,6 +7,7 @@ public static class ServiceCollectionExtensions
   public static IServiceCollection BuildDefaultProject(this IServiceCollection services)
   {
     return services
-      .AddSingleton<IProjectList, ProjectList>();
+      .AddSingleton<IProjectList, ProjectList>()
+      .AddSingleton<ICurrentProjectProvider, CurrentProjectProvider>();
   }
 }
