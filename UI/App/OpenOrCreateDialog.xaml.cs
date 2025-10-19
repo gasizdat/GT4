@@ -1,10 +1,8 @@
 using GT4.Core.Project;
-using System.Collections.ObjectModel;
 
 namespace GT4.UI;
 
 using GT4.UI.Resources;
-using Microsoft.UI.Xaml.Media;
 
 public partial class OpenOrCreateDialog : ContentPage
 {

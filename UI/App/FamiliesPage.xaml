@@ -23,7 +23,7 @@
 
             <FlexLayout 
                 Direction="Row"
-                HeightRequest="50" >
+                VerticalOptions="Fill">
 
               <Image 
                   Source="project_icon.png" 
@@ -39,6 +39,21 @@
                     FontSize="20" 
                     FontAttributes="Bold" 
                     Padding="2"/>
+
+                <CollectionView 
+                    ItemsSource="{Binding Persons}">
+
+                  <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="ui:PersonInfoItem">
+                      <Label 
+                        Text="{Binding LastName.Value}" 
+                        FontSize="12" 
+                        Margin="10,0,0,0"
+                        Padding="2"/>
+                    </DataTemplate>
+                  </CollectionView.ItemTemplate>
+                
+                </CollectionView>
 
               </VerticalStackLayout>
 

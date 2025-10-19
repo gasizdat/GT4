@@ -1,13 +1,25 @@
 using GT4.Core.Project;
-using System.Collections.ObjectModel;
+using GT4.Core.Project.Dto;
 
 namespace GT4.UI;
 
 using GT4.UI.Resources;
+using System.Linq;
 
 public partial class FamiliesPage : ContentPage
 {
   private readonly ServiceProvider _services = ServiceBuilder.DefaultServices;
+
+  private PersonInfoItem[] GetFamilyPersons(Name name, CancellationToken token)
+  {
+    return _services.GetRequiredService<ICurrentProjectProvider>()
+      .Project
+      .Persons
+      .GetPersonsByNameAsync(name, token)
+      .Result
+      .Select(person => new PersonInfoItem(person))
+      .ToArray();
+  }
 
   public FamiliesPage()
   {
@@ -23,9 +35,10 @@ public partial class FamiliesPage : ContentPage
       var ret = _services.GetRequiredService<ICurrentProjectProvider>()
         .Project
         .Names
-        .GetNamesAsync(Core.Project.Dto.NameType.FamilyName, token)
+        .GetNamesAsync(NameType.FamilyName, token)
         .Result
-        .Select(name => new FamilyInfoItem(name.Value))
+        .Values
+        .Select(name => new FamilyInfoItem(name, GetFamilyPersons(name, token)))
         .ToList();
 
       ret.Add(new FamilyInfoItemCreate());
