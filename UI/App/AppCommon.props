@@ -28,22 +28,4 @@
     <ProjectReference Include="..\..\Core\Project\GT4.Core.Project.csproj" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <Compile Update="CreateNewProjectDialog.xaml.cs">
-	    <DependentUpon>CreateNewProjectDialog.xaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="UI\OpenOrCreateDialog.xaml.cs">
-	    <DependentUpon>OpenOrCreateDialog.xaml</DependentUpon>
-	  </Compile>
-	</ItemGroup>
-
-	<ItemGroup>
-	  <MauiXaml Update="CreateNewProjectDialog.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="UI\OpenOrCreateDialog.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	</ItemGroup>
-
 </Project>
