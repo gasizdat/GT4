@@ -15,8 +15,10 @@ public partial class TablePersonNames : TableBase
     using var command = Document.CreateCommand();
     command.CommandText = """
       CREATE TABLE IF NOT EXISTS PersonNames (
-        FOREIGN KEY(PersonId) REFERENCES Persons(Id),
-        FOREIGN KEY(NameId) REFERENCES Names(Id)
+          PersonId INTEGER NOT NULL,
+          NameId INTEGER NOT NULL,
+          FOREIGN KEY(PersonId) REFERENCES Persons(Id),
+          FOREIGN KEY(NameId) REFERENCES Names(Id)
       );
       """;
     await command.ExecuteNonQueryAsync(token);
