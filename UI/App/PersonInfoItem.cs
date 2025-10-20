@@ -1,17 +1,18 @@
-﻿using GT4.Core.Project.Dto;
+﻿using GT4.Core.Project;
+using GT4.Core.Project.Dto;
 
 namespace GT4.UI;
 
 public class PersonInfoItem
 {
   private readonly Person _person;
+  private readonly INameFormatter _nameFormatter;
 
-  public PersonInfoItem(Person person)
+  public PersonInfoItem(Person person, INameFormatter nameFormatter)
   {
     _person = person; 
+    _nameFormatter = nameFormatter;
   }
 
-  public Name? FirstName => _person.Names.Where(n => (n.Type & NameType.FirstName) == NameType.FirstName).FirstOrDefault();
-  public Name? MiddleName => _person.Names.Where(n => (n.Type & NameType.MiddleName) == NameType.MiddleName).FirstOrDefault();
-  public Name? LastName => _person.Names.Where(n => (n.Type & NameType.LastName)== NameType.LastName).FirstOrDefault();
+  public string CommonName => _nameFormatter.GetCommonPersonName(_person);
 }

@@ -46,7 +46,7 @@
                   <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="ui:PersonInfoItem">
                       <Label 
-                        Text="{Binding LastName.Value}" 
+                        Text="{Binding CommonName}" 
                         FontSize="12" 
                         Margin="10,0,0,0"
                         Padding="2"/>

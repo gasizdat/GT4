@@ -12,12 +12,13 @@ public partial class FamiliesPage : ContentPage
 
   private PersonInfoItem[] GetFamilyPersons(Name name, CancellationToken token)
   {
+    var nameFormatter = _services.GetRequiredService<INameFormatter>();
     return _services.GetRequiredService<ICurrentProjectProvider>()
       .Project
       .Persons
       .GetPersonsByNameAsync(name, token)
       .Result
-      .Select(person => new PersonInfoItem(person))
+      .Select(person => new PersonInfoItem(person, nameFormatter))
       .ToArray();
   }
 

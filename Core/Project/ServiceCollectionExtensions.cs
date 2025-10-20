@@ -8,6 +8,7 @@ public static class ServiceCollectionExtensions
   {
     return services
       .AddSingleton<IProjectList, ProjectList>()
-      .AddSingleton<ICurrentProjectProvider, CurrentProjectProvider>();
+      .AddSingleton<ICurrentProjectProvider, CurrentProjectProvider>()
+      .AddSingleton<INameFormatter, NameFormatter>();
   }
 }
