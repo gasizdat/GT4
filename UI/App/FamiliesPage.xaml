@@ -34,13 +34,12 @@
               <Image 
                   Grid.Row="0" 
                   Grid.Column="0"
-                  Source="project_icon.png"  
+                  Source="family_stub.png"  
                   WidthRequest="32"
                   HeightRequest="32"
                   VerticalOptions="Start"
                   Aspect="AspectFit"/>
 
-              <!-- TODO check why Grid.RowSpan="2" is needed for correct spacing-->
               <Label 
                   Grid.Row="0" 
                   Grid.Column="1"
@@ -71,12 +70,22 @@
 
                   <DataTemplate x:DataType="ui:PersonInfoItem">
 
-                    <Label 
-                        Text="{Binding CommonName}" 
-                        FontSize="Small"
-                        Margin="50, 0, 0, 0"
-                        LineBreakMode="TailTruncation" />
+                    <HorizontalStackLayout
+                        Margin="50, 0, 0, 0">
+                      <Image 
+                          Source="male_stub.png"  
+                          WidthRequest="32"
+                          HeightRequest="32"
+                          VerticalOptions="Start"
+                          Aspect="AspectFit"/>
 
+                      <Label 
+                          Text="{Binding CommonName}" 
+                          FontSize="Small"
+                          LineBreakMode="TailTruncation"
+                          HorizontalOptions="Fill"/>
+                    </HorizontalStackLayout>
+                  
                   </DataTemplate>
 
                 </BindableLayout.ItemTemplate>

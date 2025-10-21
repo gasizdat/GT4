@@ -58,7 +58,6 @@ public partial class FamiliesPage : ContentPage
 
   public async void OnDeleteFamilySelected(object sender, EventArgs e)
   {
-
     var item = (sender as BindableObject)?.BindingContext as FamilyInfoItem;
     if (item is null or FamilyInfoItemCreate)
       return;
