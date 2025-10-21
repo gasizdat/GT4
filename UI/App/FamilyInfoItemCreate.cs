@@ -8,4 +8,6 @@ public class FamilyInfoItemCreate : FamilyInfoItem
     : base(new Name(0, Resources.UIStrings.BtnNameCreateFamily, NameType.FamilyName, null), Array.Empty<PersonInfoItem>())
   {
   }
+
+  public override bool IsHandlesVisible => false;
 }

@@ -15,4 +15,5 @@ public class FamilyInfoItem
 
   public Name FamilyName => _familyName;
   public PersonInfoItem[] Persons => _persons;
+  public virtual bool IsHandlesVisible => true;
 }
