@@ -17,11 +17,13 @@ public partial class TablePersons : TableBase
     command.CommandText = """
       CREATE TABLE IF NOT EXISTS Persons (
         Id INTEGER PRIMARY KEY AUTOINCREMENT,
+        MainPhotoId INTEGER,
         BirthDate NUMERIC,
         BirthDateStatus INTEGER NOT NULL,
         DeathDate NUMERIC,
         DeathDateStatus INTEGER,
-        BiologicalSex INTEGER NOT NULL
+        BiologicalSex INTEGER NOT NULL,
+        FOREIGN KEY(MainPhotoId) REFERENCES Data(Id)
       );
       """;
     await command.ExecuteNonQueryAsync(token);
@@ -34,12 +36,12 @@ public partial class TablePersons : TableBase
     (
       Id: personId,
       Names: await Document.PersonNames.GetPersonNamesAsync(personId, token),
-      Photos: [], //TODO
-      BirthDate: TryGetDateTime(reader, 1),
-      BirthDateStatus: GetEnum<DateStatus>(reader, 2),
-      DeathDate: TryGetDateTime(reader, 3),
-      DeathDateStatus: TryGetEnum<DateStatus>(reader, 4),
-      BiologicalSex: GetEnum<BiologicalSex>(reader, 5)
+      MainPhoto: (await Document.Data.GetDataAsync(TryGetInteger(reader, 1), token))?.Content,
+      BirthDate: TryGetDateTime(reader, 2),
+      BirthDateStatus: GetEnum<DateStatus>(reader, 3),
+      DeathDate: TryGetDateTime(reader, 4),
+      DeathDateStatus: TryGetEnum<DateStatus>(reader, 5),
+      BiologicalSex: GetEnum<BiologicalSex>(reader, 6)
     );
   }
 
@@ -56,7 +58,7 @@ public partial class TablePersons : TableBase
     using var command = Document.CreateCommand();
 
     command.CommandText = """
-      SELECT Id, BirthDate, BirthDateStatus, DeathDate, DeathDateStatus, BiologicalSex
+      SELECT Id, MainPhotoId, BirthDate, BirthDateStatus, DeathDate, DeathDateStatus, BiologicalSex
       FROM Persons;
       """;
 
@@ -79,7 +81,7 @@ public partial class TablePersons : TableBase
 
     using var command = Document.CreateCommand();
     command.CommandText = """
-      SELECT Id, BirthDate, BirthDateStatus, DeathDate, DeathDateStatus, BiologicalSex
+      SELECT Id, MainPhotoId, BirthDate, BirthDateStatus, DeathDate, DeathDateStatus, BiologicalSex
       FROM Persons
       INNER JOIN
         PersonNames ON PersonNames.PersonId=Persons.Id
