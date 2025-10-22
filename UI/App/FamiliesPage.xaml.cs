@@ -57,9 +57,14 @@ public partial class FamiliesPage : ContentPage
 
   public async void OnFamilySelected(object sender, SelectionChangedEventArgs e)
   {
-    if (e.CurrentSelection.FirstOrDefault() is ProjectItemCreate item)
+    switch (e.CurrentSelection.FirstOrDefault())
     {
-      await OnCreateFamily();
+      case FamilyInfoItemCreate:
+        await OnCreateFamily();
+        break;
+      case FamilyInfoItemRefresh:
+        OnPropertyChanged(nameof(Families));
+        break;
     }
   }
 
