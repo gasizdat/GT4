@@ -7,6 +7,14 @@ public class PersonInfoItem
 {
   private readonly Person _person;
   private readonly INameFormatter _nameFormatter;
+  private Task<Stream> DefaultImage
+  {
+    get
+    {
+      var resourceName = _person.BiologicalSex == BiologicalSex.Female ? "female_stub.png" : "male_stub.png";
+      return FileSystem.OpenAppPackageFileAsync(resourceName);
+    }
+  }
 
   public PersonInfoItem(Person person, INameFormatter nameFormatter)
   {
@@ -15,13 +23,6 @@ public class PersonInfoItem
   }
 
   public string CommonName => _nameFormatter.GetCommonPersonName(_person);
-  public ImageSource MainImage
-  {
-    get
-    {
-      var resourceName = _person.BiologicalSex == BiologicalSex.Female ? "female_stub.png" : "male_stub.png";
-      var ret = ImageSource.FromStream(token => FileSystem.OpenAppPackageFileAsync(resourceName));
-      return ret;
-    }
-  }
+  public ImageSource MainImage => ImageSource.FromStream(token => _person.MainPhoto is null ? 
+    DefaultImage : Task.Run<Stream>(() => new MemoryStream(_person.MainPhoto), token));
 }
