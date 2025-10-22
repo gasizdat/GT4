@@ -124,7 +124,7 @@
     <value>Info</value>
   </data>
   <data name="AlertTitleConfirmation" xml:space="preserve">
-    <value>(?) Confirmation</value>
+    <value>Confirmation</value>
   </data>
   <data name="AlertTitleWarning" xml:space="preserve">
     <value>Warning</value>
@@ -189,5 +189,8 @@ genealogy tree and enjoy!</value>
   </data>
   <data name="WndHintFamiliesPage" xml:space="preserve">
     <value>Open or create family</value>
+  </data>
+  <data name="BtnNameRefreshAfterError" xml:space="preserve">
+    <value>An error occurred. Refresh?</value>
   </data>
 </root>

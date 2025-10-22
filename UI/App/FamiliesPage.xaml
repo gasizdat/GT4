@@ -34,7 +34,7 @@
               <Image 
                   Grid.Row="0" 
                   Grid.Column="0"
-                  Source="family_stub.png"  
+                  Source="{Binding FamilyImage}"  
                   WidthRequest="32"
                   HeightRequest="32"
                   VerticalOptions="Start"

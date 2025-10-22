@@ -191,4 +191,7 @@
   <data name="WndHintFamiliesPage" xml:space="preserve">
     <value>Откройте или создайте род</value>
   </data>
+  <data name="BtnNameRefreshAfterError" xml:space="preserve">
+    <value>Произошла ошибка. Повторить?</value>
+  </data>
 </root>

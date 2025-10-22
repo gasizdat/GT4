@@ -32,19 +32,26 @@ public partial class FamiliesPage : ContentPage
   {
     get
     {
-      using var token = new Core.Utils.DefaultCancellationToken();
-      var ret = _services.GetRequiredService<ICurrentProjectProvider>()
-        .Project
-        .Names
-        .GetNamesAsync(NameType.FamilyName, token)
-        .Result
-        .Values
-        .Select(name => new FamilyInfoItem(name, GetFamilyPersons(name, token)))
-        .ToList();
+      try
+      {
+        using var token = new Core.Utils.DefaultCancellationToken();
+        var ret = _services.GetRequiredService<ICurrentProjectProvider>()
+          .Project
+          .Names
+          .GetNamesAsync(NameType.FamilyName, token)
+          .Result
+          .Values
+          .Select(name => new FamilyInfoItem(name, GetFamilyPersons(name, token)))
+          .ToList();
 
-      ret.Add(new FamilyInfoItemCreate());
+        ret.Add(new FamilyInfoItemCreate());
 
-      return ret;
+        return ret;
+      }
+      catch (Exception ex)
+      {
+        return [new FamilyInfoItemRefresh(ex)];
+      }
     }
   }
 

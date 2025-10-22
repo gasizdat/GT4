@@ -70,7 +70,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to (?) Confirmation.
+        ///   Looks up a localized string similar to Confirmation.
         /// </summary>
         public static string AlertTitleConfirmation {
             get {
@@ -184,6 +184,15 @@ namespace GT4.UI.Resources {
         public static string BtnNameOpenOrCreateProject {
             get {
                 return ResourceManager.GetString("BtnNameOpenOrCreateProject", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to An error occurred. Refresh?.
+        /// </summary>
+        public static string BtnNameRefreshAfterError {
+            get {
+                return ResourceManager.GetString("BtnNameRefreshAfterError", resourceCulture);
             }
         }
         
