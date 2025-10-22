@@ -8,12 +8,12 @@ using System.Linq;
 
 public partial class FamiliesPage : ContentPage
 {
-  private readonly ServiceProvider _services = ServiceBuilder.DefaultServices;
+  private readonly ServiceProvider _Services = ServiceBuilder.DefaultServices;
 
   private PersonInfoItem[] GetFamilyPersons(Name name, CancellationToken token)
   {
-    var nameFormatter = _services.GetRequiredService<INameFormatter>();
-    return _services.GetRequiredService<ICurrentProjectProvider>()
+    var nameFormatter = _Services.GetRequiredService<INameFormatter>();
+    return _Services.GetRequiredService<ICurrentProjectProvider>()
       .Project
       .Persons
       .GetPersonsByNameAsync(name, token)
@@ -35,7 +35,7 @@ public partial class FamiliesPage : ContentPage
       try
       {
         using var token = new Core.Utils.DefaultCancellationToken();
-        var ret = _services.GetRequiredService<ICurrentProjectProvider>()
+        var ret = _Services.GetRequiredService<ICurrentProjectProvider>()
           .Project
           .Names
           .GetNamesAsync(NameType.FamilyName, token)
@@ -104,7 +104,7 @@ public partial class FamiliesPage : ContentPage
         return;
 
       using var token = new Core.Utils.DefaultCancellationToken();
-      await _services.GetRequiredService<IProjectList>().CreateAsync(projectInfo, token);
+      await _Services.GetRequiredService<IProjectList>().CreateAsync(projectInfo, token);
     }
     catch (Exception ex)
     {

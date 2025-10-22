@@ -4,7 +4,7 @@ namespace GT4.Core.Project;
 
 internal class NameFormatter : INameFormatter
 {
-  private readonly string _partsDelimiter = " ";
+  private readonly string _PartsDelimiter = " ";
 
   protected static IEnumerable<Name> GetNameParts(Person person, NameType nameType)
   {
@@ -31,7 +31,7 @@ internal class NameFormatter : INameFormatter
   {
     //TODO use settings
     var parts = GetNameParts(person, [NameType.FirstName, NameType.MiddleName, NameType.LastName, NameType.AdditionalName]);
-    var ret = string.Join(_partsDelimiter, parts);
+    var ret = string.Join(_PartsDelimiter, parts);
 
     return ret;
   }
@@ -40,7 +40,7 @@ internal class NameFormatter : INameFormatter
   {
     //TODO use settings
     var parts = GetNameParts(person, [NameType.FirstName, NameType.MiddleName, NameType.LastName]);
-    var ret = string.Join(_partsDelimiter, parts);
+    var ret = string.Join(_PartsDelimiter, parts);
 
     return ret;
   }

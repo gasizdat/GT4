@@ -6,7 +6,7 @@ using GT4.UI.Resources;
 
 public partial class OpenOrCreateDialog : ContentPage
 {
-  private readonly ServiceProvider _services = ServiceBuilder.DefaultServices;
+  private readonly ServiceProvider _Services = ServiceBuilder.DefaultServices;
 
   public OpenOrCreateDialog()
   {
@@ -19,7 +19,7 @@ public partial class OpenOrCreateDialog : ContentPage
     get
     {
       using var token = new Core.Utils.DefaultCancellationToken();
-      var ret = _services.GetRequiredService<IProjectList>()
+      var ret = _Services.GetRequiredService<IProjectList>()
         .GetItemsAsync(token)
         .Result
         .ToList();
@@ -39,7 +39,7 @@ public partial class OpenOrCreateDialog : ContentPage
     else if (e.CurrentSelection.FirstOrDefault() is ProjectItem projectItem)
     {
       using var token = new Core.Utils.DefaultCancellationToken();
-      await _services.GetRequiredService<ICurrentProjectProvider>().OpenAsync(projectItem, token);
+      await _Services.GetRequiredService<ICurrentProjectProvider>().OpenAsync(projectItem, token);
       await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamiliesPage>());
     }
   }
@@ -60,7 +60,7 @@ public partial class OpenOrCreateDialog : ContentPage
         return;
 
       using var token = new Core.Utils.DefaultCancellationToken();
-      await _services.GetRequiredService<IProjectList>().RemoveAsync(item.Name, token);
+      await _Services.GetRequiredService<IProjectList>().RemoveAsync(item.Name, token);
     }
     catch (Exception ex)
     {
@@ -86,7 +86,7 @@ public partial class OpenOrCreateDialog : ContentPage
         return;
 
       using var token = new Core.Utils.DefaultCancellationToken();
-      await _services.GetRequiredService<IProjectList>().CreateAsync(projectInfo, token);
+      await _Services.GetRequiredService<IProjectList>().CreateAsync(projectInfo, token);
     }
     catch (Exception ex)
     {

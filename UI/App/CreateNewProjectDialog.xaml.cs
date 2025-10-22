@@ -5,8 +5,8 @@ using GT4.UI.Resources;
 
 public partial class CreateNewProjectDialog : ContentPage
 {
-  private string _projectName = string.Empty;
-  private TaskCompletionSource<ProjectInfo> _info = new();
+  private string _ProjectName = string.Empty;
+  private TaskCompletionSource<ProjectInfo> _Info = new();
 
   public CreateNewProjectDialog()
   {
@@ -16,19 +16,19 @@ public partial class CreateNewProjectDialog : ContentPage
 
   public void OnCreateProjectBtn(object sender, EventArgs e)
   {
-    _info.SetResult(new ProjectInfo { Description = ProjectDescription, Name = ProjectName });
+    _Info.SetResult(new ProjectInfo { Description = ProjectDescription, Name = ProjectName });
   }
 
-  public Task<ProjectInfo> ProjectInfo => _info.Task;
+  public Task<ProjectInfo> ProjectInfo => _Info.Task;
 
   public string CreateProjectBtName => string.IsNullOrWhiteSpace(ProjectName) ? UIStrings.BtnNameCancel : UIStrings.BtnNameCreateGenealogyTree;
   public string ProjectDescription { get; set; } = string.Empty;
   public string ProjectName
   {
-    get => _projectName;
+    get => _ProjectName;
     set
     {
-      _projectName = value;
+      _ProjectName = value;
       OnPropertyChanged(nameof(CreateProjectBtName));
     }
   }

@@ -5,10 +5,10 @@ namespace GT4.UI;
 
 public class ServiceBuilder
 {
-  static readonly ServiceProvider _defaultServices = new ServiceCollection()
+  private static readonly ServiceProvider _DefaultServices = new ServiceCollection()
         .BuildDefaultUtils()
         .BuildDefaultProject()
         .BuildServiceProvider();
 
-  public static ServiceProvider DefaultServices => _defaultServices;
+  public static ServiceProvider DefaultServices => _DefaultServices;
 }

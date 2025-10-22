@@ -2,29 +2,29 @@
 
 internal class CurrentProjectProvider : ICurrentProjectProvider
 {
-  private ProjectItem? _item = null;
-  private ProjectDocument? _project = null;
+  private ProjectItem? _Item = null;
+  private ProjectDocument? _Project = null;
 
   public async Task OpenAsync(ProjectItem item, CancellationToken token)
   {
     await CloseAsync(token);
-    _item = item;
-    _project = await ProjectDocument.OpenAsync(item.Path, token);
+    _Item = item;
+    _Project = await ProjectDocument.OpenAsync(item.Path, token);
   }
 
   public async Task CloseAsync(CancellationToken token)
   {
-    if (_project is not null)
+    if (_Project is not null)
     {
-      await _project.DisposeAsync();
-      _item = null;
-      _project = null;
+      await _Project.DisposeAsync();
+      _Item = null;
+      _Project = null;
     }
   }
 
-  public bool HasCurrentProject => _project is not null;
+  public bool HasCurrentProject => _Project is not null;
 
-  public ProjectDocument Project => _project ?? throw new InvalidOperationException("Project is not opened yet.");
+  public ProjectDocument Project => _Project ?? throw new InvalidOperationException("Project is not opened yet.");
 
-  public ProjectItem Item => _item ?? throw new InvalidOperationException("Project is not opened yet.");
+  public ProjectItem Item => _Item ?? throw new InvalidOperationException("Project is not opened yet.");
 }

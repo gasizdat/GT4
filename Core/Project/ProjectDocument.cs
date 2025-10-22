@@ -6,7 +6,7 @@ namespace GT4.Core.Project;
 
 public class ProjectDocument : IAsyncDisposable, IDisposable
 {
-  private readonly SqliteConnection _connection;
+  private readonly SqliteConnection _Connection;
 
   static ProjectDocument()
   {
@@ -20,7 +20,7 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
     builder.DataSource = dbFilaName;
     builder.Mode = mode;
     var connectionString = builder.ConnectionString;
-    _connection = new SqliteConnection(connectionString);
+    _Connection = new SqliteConnection(connectionString);
   }
 
   ~ProjectDocument()
@@ -30,7 +30,7 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
 
   private async Task OpenAsync(CancellationToken token)
   {
-    await _connection.OpenAsync(token);
+    await _Connection.OpenAsync(token);
   }
 
   private async Task InitNewDBAsync(CancellationToken token)
@@ -63,12 +63,12 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
   
   public SqliteCommand CreateCommand()
   {
-    return _connection.CreateCommand();
+    return _Connection.CreateCommand();
   }
 
   public async Task<IDbTransaction> BeginTransactionAsync(CancellationToken token)
   {
-    return await _connection.BeginTransactionAsync(token);
+    return await _Connection.BeginTransactionAsync(token);
   }
 
   public static async Task<ProjectDocument> CreateNewAsync(string path, string name, CancellationToken token)
@@ -90,13 +90,13 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
 
   public async ValueTask DisposeAsync()
   {
-    await _connection.CloseAsync();
-    await _connection.DisposeAsync();
+    await _Connection.CloseAsync();
+    await _Connection.DisposeAsync();
   }
 
   public void Dispose()
   {
-    _connection.Close();
-    _connection.Dispose();
+    _Connection.Close();
+    _Connection.Dispose();
   }
 }
