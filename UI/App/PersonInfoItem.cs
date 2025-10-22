@@ -10,9 +10,18 @@ public class PersonInfoItem
 
   public PersonInfoItem(Person person, INameFormatter nameFormatter)
   {
-    _person = person; 
+    _person = person;
     _nameFormatter = nameFormatter;
   }
 
   public string CommonName => _nameFormatter.GetCommonPersonName(_person);
+  public ImageSource MainImage
+  {
+    get
+    {
+      var resourceName = _person.BiologicalSex == BiologicalSex.Female ? "female_stub.png" : "male_stub.png";
+      var ret = ImageSource.FromStream(token => FileSystem.OpenAppPackageFileAsync(resourceName));
+      return ret;
+    }
+  }
 }
