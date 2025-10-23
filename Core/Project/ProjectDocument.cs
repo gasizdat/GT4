@@ -1,6 +1,5 @@
 ﻿using Microsoft.Data.Sqlite;
 using System.Data;
-using System.Reflection.Metadata;
 
 namespace GT4.Core.Project;
 
@@ -42,7 +41,8 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
       Names.CreateAsync(token),
       Persons.CreateAsync(token),
       PersonNames.CreateAsync(token),
-      Data.CreateAsync(token)
+      Data.CreateAsync(token),
+      Relatives.CreateAsync(token)
     );
 
     transaction.Commit();
@@ -53,6 +53,7 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
   public TablePersons Persons => new(this);
   public TablePersonNames PersonNames => new(this);
   public TableData Data => new(this);
+  public TableRelatives Relatives => new(this);
 
   public async Task<int> GetLastInsertRowIdAsync(CancellationToken token)
   {

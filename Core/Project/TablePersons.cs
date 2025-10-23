@@ -99,6 +99,29 @@ public partial class TablePersons : TableBase
     return result.ToArray();
   }
 
+  public async Task<Person?> TryGetPersonById(int personId, CancellationToken token)
+  {
+    if (_Items.TryGetTarget(out var items))
+      return items.SingleOrDefault(item => item.Id == personId);
+
+    using var command = Document.CreateCommand();
+
+    command.CommandText = """
+      SELECT Id, MainPhotoId, BirthDate, BirthDateStatus, DeathDate, DeathDateStatus, BiologicalSex
+      FROM Persons
+      WHERE Id=@id;
+      """;
+    command.Parameters.AddWithValue("@id", personId);
+
+    using var reader = await command.ExecuteReaderAsync(token);
+    if (await reader.ReadAsync(token))
+    {
+      return await CreatePersonAsync(reader, token);
+    }
+
+    return null;
+  }
+
   public async Task<int> AddPersonAsync(Person person, CancellationToken token)
   {
     InvalidateItems();
