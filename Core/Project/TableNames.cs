@@ -79,7 +79,7 @@ public class TableNames : TableBase
       command.Parameters.AddWithValue("@type", nameType);
     }
 
-    using var reader = await command.ExecuteReaderAsync(token);
+    await using var reader = await command.ExecuteReaderAsync(token);
     var result = new Dictionary<int, Name>();
     while (await reader.ReadAsync(token))
     {
@@ -110,7 +110,7 @@ public class TableNames : TableBase
       """;
     command.Parameters.AddWithValue("@id", id.Value);
 
-    using var reader = await command.ExecuteReaderAsync(token);
+    await using var reader = await command.ExecuteReaderAsync(token);
     if (await reader.ReadAsync(token))
     {
       name = CreateName(reader);
@@ -143,7 +143,7 @@ public class TableNames : TableBase
       """;
     command.Parameters.AddWithValue("@id", id.Value);
 
-    using var reader = await command.ExecuteReaderAsync(token);
+    await using var reader = await command.ExecuteReaderAsync(token);
     ret = new();
     while (await reader.ReadAsync(token))
     {

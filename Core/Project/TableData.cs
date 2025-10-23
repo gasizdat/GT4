@@ -53,7 +53,7 @@ public class TableData : TableBase
       FROM Data;
       """;
 
-    using var reader = await command.ExecuteReaderAsync(token);
+    await using var reader = await command.ExecuteReaderAsync(token);
     var result = new Dictionary<int, Data>();
     while (await reader.ReadAsync(token))
     {
@@ -84,7 +84,7 @@ public class TableData : TableBase
       """;
     command.Parameters.AddWithValue("@id", id.Value);
 
-    using var reader = await command.ExecuteReaderAsync(token);
+    await using var reader = await command.ExecuteReaderAsync(token);
     if (await reader.ReadAsync(token))
     {
       data = CreateData(reader);

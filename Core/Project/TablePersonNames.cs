@@ -35,7 +35,7 @@ public partial class TablePersonNames : TableBase
       """;
     command.Parameters.AddWithValue("@personId", personId);
 
-    using var reader = await command.ExecuteReaderAsync(token);
+    await using var reader = await command.ExecuteReaderAsync(token);
     var result = new List<Name>();
     while (await reader.ReadAsync(token))
     {

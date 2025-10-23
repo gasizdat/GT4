@@ -62,7 +62,7 @@ public partial class TablePersons : TableBase
       FROM Persons;
       """;
 
-    using var reader = await command.ExecuteReaderAsync(token);
+    await using var reader = await command.ExecuteReaderAsync(token);
     var result = new List<Person>();
     while (await reader.ReadAsync(token))
     {
@@ -88,7 +88,7 @@ public partial class TablePersons : TableBase
       WHERE PersonNames.NameId=@id;
       """;
     command.Parameters.AddWithValue("@id", name.Id);
-    using var reader = await command.ExecuteReaderAsync(token);
+    await using var reader = await command.ExecuteReaderAsync(token);
 
     var result = new List<Person>();
     while (await reader.ReadAsync(token))
@@ -113,7 +113,7 @@ public partial class TablePersons : TableBase
       """;
     command.Parameters.AddWithValue("@id", personId);
 
-    using var reader = await command.ExecuteReaderAsync(token);
+    await using var reader = await command.ExecuteReaderAsync(token);
     if (await reader.ReadAsync(token))
     {
       return await CreatePersonAsync(reader, token);

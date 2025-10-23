@@ -48,7 +48,7 @@ public class TableRelatives : TableBase
       """;
     command.Parameters.AddWithValue("@id", personId);
 
-    using var reader = await command.ExecuteReaderAsync(token);
+    await using var reader = await command.ExecuteReaderAsync(token);
     var tasks = new List<Task<Relative?>>();
     while (await reader.ReadAsync(token))
     {
