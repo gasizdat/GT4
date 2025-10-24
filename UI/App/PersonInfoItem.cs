@@ -22,6 +22,7 @@ public class PersonInfoItem
     _NameFormatter = nameFormatter;
   }
 
+  public Person Person => _Person;
   public string CommonName => _NameFormatter.GetCommonPersonName(_Person);
   public ImageSource MainImage => ImageSource.FromStream(token => _Person.MainPhoto is null ? 
     _DefaultImage : Task.Run<Stream>(() => new MemoryStream(_Person.MainPhoto), token));

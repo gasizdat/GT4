@@ -38,13 +38,12 @@ public partial class FamilyPage : ContentPage
       try
       {
         using var token = new Core.Utils.DefaultCancellationToken();
-        var nameFormatter = Services.GetRequiredService<INameFormatter>();
         return Services.GetRequiredService<ICurrentProjectProvider>()
           .Project
           .Persons
           .GetPersonsByNameAsync(FamilyName, token)
           .Result
-          .Select(person => new PersonInfoItem(person, nameFormatter))
+          .Select(person => new FamilyMemberInfoItem(person, Services))
           .ToArray();
       }
       catch (Exception ex)

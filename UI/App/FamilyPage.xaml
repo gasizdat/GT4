@@ -26,24 +26,36 @@
         </CollectionView.ItemsLayout>
 
         <CollectionView.ItemTemplate>
-          <DataTemplate x:DataType="ui:PersonInfoItem">
+          <DataTemplate x:DataType="ui:FamilyMemberInfoItem">
 
-            <HorizontalStackLayout
+            <VerticalStackLayout
                   Margin="50, 0, 0, 0">
-              <Image 
-                  Source="{Binding MainImage}"  
-                  WidthRequest="32"
-                  HeightRequest="32"
-                  VerticalOptions="Start"
-                  Aspect="AspectFit"/>
+              
+              <HorizontalStackLayout>
+                <Image 
+                    Source="{Binding MainImage}"  
+                    WidthRequest="32"
+                    HeightRequest="32"
+                    VerticalOptions="Start"
+                    Aspect="AspectFit"/>
 
+                <Label 
+                    Text="{Binding CommonName}" 
+                    FontSize="Small"
+                    LineBreakMode="TailTruncation"
+                    HorizontalOptions="Fill"/>
+              </HorizontalStackLayout>
               <Label 
-                  Text="{Binding CommonName}" 
+                  Text="{Binding DayOfBirth}" 
                   FontSize="Small"
                   LineBreakMode="TailTruncation"
                   HorizontalOptions="Fill"/>
-            </HorizontalStackLayout>
-
+              <Label 
+                  Text="{Binding DayOfDeath}" 
+                  FontSize="Small"
+                  LineBreakMode="TailTruncation"
+                  HorizontalOptions="Fill"/>
+            </VerticalStackLayout>
           </DataTemplate>
         </CollectionView.ItemTemplate>
       </CollectionView>
