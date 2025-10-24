@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
+             x:Class="GT4.UI.FamilyPage"
+             xmlns:ui="clr-namespace:GT4.UI"
+             xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
+             Title="{x:Static resources:UIStrings.WndTitleCreateNewProjectDialog}">
+  <ScrollView>
+
+    <VerticalStackLayout Padding="20" Spacing="10">
+      <Label 
+          Text="{x:Static resources:UIStrings.WndHintFamiliesPage}"
+          VerticalOptions="Center" 
+          HorizontalOptions="Center" />
+
+      <CollectionView 
+        ItemsSource="{Binding Members}" 
+        SelectionMode="Single" 
+        SelectionChanged="OnMemberSelected">
+
+        <CollectionView.ItemsLayout>
+          <LinearItemsLayout 
+            Orientation="Vertical" 
+            ItemSpacing="3" />
+        </CollectionView.ItemsLayout>
+
+        <CollectionView.ItemTemplate>
+          <DataTemplate x:DataType="ui:PersonInfoItem">
+
+            <HorizontalStackLayout
+                  Margin="50, 0, 0, 0">
+              <Image 
+                  Source="{Binding MainImage}"  
+                  WidthRequest="32"
+                  HeightRequest="32"
+                  VerticalOptions="Start"
+                  Aspect="AspectFit"/>
+
+              <Label 
+                  Text="{Binding CommonName}" 
+                  FontSize="Small"
+                  LineBreakMode="TailTruncation"
+                  HorizontalOptions="Fill"/>
+            </HorizontalStackLayout>
+
+          </DataTemplate>
+        </CollectionView.ItemTemplate>
+      </CollectionView>
+
+    </VerticalStackLayout>
+
+  </ScrollView>
+</ContentPage>
