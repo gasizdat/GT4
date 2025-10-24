@@ -6,6 +6,8 @@ namespace GT4.UI;
 public class ServiceBuilder
 {
   private static readonly ServiceProvider _DefaultServices = new ServiceCollection()
+        .AddSingleton<IDateFormatter, DateFormatter>()
+        .AddSingleton<INameFormatter, NameFormatter>()
         .BuildDefaultUtils()
         .BuildDefaultProject()
         .BuildServiceProvider();
