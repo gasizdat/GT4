@@ -65,7 +65,7 @@ public class TableData : TableBase
     return result;
   }
 
-  public async Task<Data?> GetDataAsync(int? id, CancellationToken token)
+  public async Task<Data?> TryGetDataAsync(int? id, CancellationToken token)
   {
     if (!id.HasValue)
     {

@@ -36,7 +36,7 @@ public partial class TablePersons : TableBase
     (
       Id: personId,
       Names: await Document.PersonNames.GetPersonNamesAsync(personId, token),
-      MainPhoto: (await Document.Data.GetDataAsync(TryGetInteger(reader, 1), token))?.Content,
+      MainPhoto: (await Document.Data.TryGetDataAsync(TryGetInteger(reader, 1), token))?.Content,
       BirthDate: TryGetDateTime(reader, 2),
       BirthDateStatus: GetEnum<DateStatus>(reader, 3),
       DeathDate: TryGetDateTime(reader, 4),
