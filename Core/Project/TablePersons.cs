@@ -134,7 +134,7 @@ public partial class TablePersons : TableBase
     command.Parameters.AddWithValue("@birthDate", person.BirthDate is not null ? person.BirthDate : DBNull.Value);
     command.Parameters.AddWithValue("@birthDateStatus", person.BirthDateStatus);
     command.Parameters.AddWithValue("@deathDate", person.DeathDate is not null ? person.DeathDate : DBNull.Value);
-    command.Parameters.AddWithValue("@deathDateStatus", person.DeathDateStatus.HasValue ? (int)person.DeathDateStatus.Value : DBNull.Value);
+    command.Parameters.AddWithValue("@deathDateStatus", person.DeathDateStatus.HasValue ? person.DeathDateStatus.Value : DBNull.Value);
     command.Parameters.AddWithValue("@biologicalSex", person.BiologicalSex);
     await command.ExecuteNonQueryAsync(token);
     var personId = await Document.GetLastInsertRowIdAsync(token);
