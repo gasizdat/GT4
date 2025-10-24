@@ -10,9 +10,10 @@ public class TableRelatives : TableBase
     var id = reader.GetInt32(0);
     var type = GetEnum<RelativeType>(reader, 1);
     var dateTime = TryGetDateTime(reader, 2);
+    var dateStatus = TryGetEnum<DateStatus>(reader, 3);
     var relative = await Document.Persons.TryGetPersonById(id, token);
 
-    return relative is null ? null : new Relative(Person: relative, Type: type, DateTime: dateTime);
+    return relative is null ? null : new Relative(Person: relative, Type: type, DateTime: dateTime, DateStatus: dateStatus);
   }
 
   public TableRelatives(ProjectDocument document) : base(document)
@@ -29,9 +30,10 @@ public class TableRelatives : TableBase
           RelativeId INTEGER NOT NULL,
           Type INTEGER NOT NULL,
           Date INTEGER,
+          DateStatus INTEGER,
           FOREIGN KEY(PersonId) REFERENCES Persons(Id),
           FOREIGN KEY(RelativeId) REFERENCES Persons(Id),
-      	  PRIMARY KEY (PersonId, RelativeId, Type)
+      	  PRIMARY KEY (PersonId, RelativeId, Type, Date)
       );
       """;
     await command.ExecuteNonQueryAsync(token);
@@ -42,7 +44,7 @@ public class TableRelatives : TableBase
     using var command = Document.CreateCommand();
 
     command.CommandText = """
-      SELECT RelativeId, Type, Date
+      SELECT RelativeId, Type, Date, DateStatus
       FROM Relatives
       WHERE PersonId=@id;
       """;
@@ -61,19 +63,20 @@ public class TableRelatives : TableBase
       .ToArray() ?? [];
   }
 
-  public async Task<Relative> AddRelativeAsync(Person person, Person relative, RelativeType type, DateTime? dateTime, CancellationToken token)
+  public async Task<Relative> AddRelativeAsync(Person person, Person relative, RelativeType type, DateTime? dateTime, DateStatus? dateStatus, CancellationToken token)
   {
     using var command = Document.CreateCommand();
     command.CommandText = """
-      INSERT INTO Parents (PersonId, RelativeId, Type, Date)
-      VALUES (@personId, @relativeId, @type, @date);
+      INSERT INTO Parents (PersonId, RelativeId, Type, Date, DateStatus)
+      VALUES (@personId, @relativeId, @type, @date, @dateStatus);
       """;
     command.Parameters.AddWithValue("@personId", person.Id);
     command.Parameters.AddWithValue("@relativeId", relative.Id);
     command.Parameters.AddWithValue("@type", type);
     command.Parameters.AddWithValue("@date", dateTime is not null ? dateTime : DBNull.Value);
+    command.Parameters.AddWithValue("@dateStatus", dateStatus.HasValue ? dateTime : DBNull.Value);
     await command.ExecuteNonQueryAsync(token);
 
-    return new Relative(Person: relative, Type: type, DateTime: dateTime);
+    return new Relative(Person: relative, Type: type, DateTime: dateTime, DateStatus: dateStatus);
   }
 }
