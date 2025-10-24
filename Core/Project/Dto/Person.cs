@@ -4,9 +4,9 @@ public record class Person(
   int Id,
   Name[] Names,
   byte[]? MainPhoto,
-  DateTime? BirthDate,
+  DateOnly? BirthDate,
   DateStatus BirthDateStatus,
-  DateTime? DeathDate,
+  DateOnly? DeathDate,
   DateStatus? DeathDateStatus,
   BiologicalSex BiologicalSex
 );

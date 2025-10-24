@@ -3,6 +3,6 @@
 public record class Relative(
   Person Person, 
   RelativeType Type, 
-  DateTime? DateTime,
+  DateOnly? Date,
   DateStatus? DateStatus
 );

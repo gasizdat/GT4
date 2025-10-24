@@ -9,11 +9,11 @@ public class TableRelatives : TableBase
   {
     var id = reader.GetInt32(0);
     var type = GetEnum<RelativeType>(reader, 1);
-    var dateTime = TryGetDateTime(reader, 2);
+    var date = TryGetDate(reader, 2);
     var dateStatus = TryGetEnum<DateStatus>(reader, 3);
     var relative = await Document.Persons.TryGetPersonById(id, token);
 
-    return relative is null ? null : new Relative(Person: relative, Type: type, DateTime: dateTime, DateStatus: dateStatus);
+    return relative is null ? null : new Relative(Person: relative, Type: type, Date: date, DateStatus: dateStatus);
   }
 
   public TableRelatives(ProjectDocument document) : base(document)
@@ -63,7 +63,7 @@ public class TableRelatives : TableBase
       .ToArray() ?? [];
   }
 
-  public async Task<Relative> AddRelativeAsync(Person person, Person relative, RelativeType type, DateTime? dateTime, DateStatus? dateStatus, CancellationToken token)
+  public async Task<Relative> AddRelativeAsync(Person person, Person relative, RelativeType type, DateOnly? date, DateStatus? dateStatus, CancellationToken token)
   {
     using var command = Document.CreateCommand();
     command.CommandText = """
@@ -73,10 +73,10 @@ public class TableRelatives : TableBase
     command.Parameters.AddWithValue("@personId", person.Id);
     command.Parameters.AddWithValue("@relativeId", relative.Id);
     command.Parameters.AddWithValue("@type", type);
-    command.Parameters.AddWithValue("@date", dateTime is not null ? dateTime : DBNull.Value);
-    command.Parameters.AddWithValue("@dateStatus", dateStatus.HasValue ? dateTime : DBNull.Value);
+    command.Parameters.AddWithValue("@date", date is not null ? date : DBNull.Value);
+    command.Parameters.AddWithValue("@dateStatus", dateStatus.HasValue ? date : DBNull.Value);
     await command.ExecuteNonQueryAsync(token);
 
-    return new Relative(Person: relative, Type: type, DateTime: dateTime, DateStatus: dateStatus);
+    return new Relative(Person: relative, Type: type, Date: date, DateStatus: dateStatus);
   }
 }

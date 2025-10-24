@@ -12,8 +12,14 @@ public abstract class TableBase
   protected static long? TryGetLong(SqliteDataReader reader, int ordinal) =>
     reader.IsDBNull(ordinal) ? null : reader.GetInt64(ordinal);
 
-  protected static DateTime? TryGetDateTime(SqliteDataReader reader, int ordinal) =>
-    reader.IsDBNull(ordinal) ? null : reader.GetDateTime(ordinal);
+  protected static DateOnly? TryGetDate(SqliteDataReader reader, int ordinal)
+  {
+    if (reader.IsDBNull(ordinal))
+      return null;
+
+    var (date, _) = reader.GetDateTime(ordinal);
+    return date;
+  }
 
   protected static TEnum? TryGetEnum<TEnum>(SqliteDataReader reader, int ordinal) where TEnum : Enum =>
     reader.IsDBNull(ordinal) ? default : GetEnum<TEnum>(reader, ordinal);
