@@ -6,20 +6,20 @@ using GT4.UI.Resources;
 
 public partial class OpenOrCreateDialog : ContentPage
 {
-  private readonly ServiceProvider _Services = ServiceBuilder.DefaultServices;
-
   public OpenOrCreateDialog()
   {
     InitializeComponent();
     BindingContext = this;
   }
 
+  public ServiceProvider Services { get; set; } = ServiceBuilder.DefaultServices;
+
   public ICollection<ProjectItem> Projects
   {
     get
     {
       using var token = new Core.Utils.DefaultCancellationToken();
-      var ret = _Services.GetRequiredService<IProjectList>()
+      var ret = Services.GetRequiredService<IProjectList>()
         .GetItemsAsync(token)
         .Result
         .ToList();
@@ -32,15 +32,25 @@ public partial class OpenOrCreateDialog : ContentPage
 
   public async void OnProjectSelected(object sender, SelectionChangedEventArgs e)
   {
-    if (e.CurrentSelection.FirstOrDefault() is ProjectItemCreate item)
+    switch (e.CurrentSelection.FirstOrDefault())
     {
-      await OnCreateProject();
-    }
-    else if (e.CurrentSelection.FirstOrDefault() is ProjectItem projectItem)
-    {
-      using var token = new Core.Utils.DefaultCancellationToken();
-      await _Services.GetRequiredService<ICurrentProjectProvider>().OpenAsync(projectItem, token);
-      await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamiliesPage>());
+      case ProjectItemCreate item:
+        await OnCreateProject();
+        break;
+
+      case ProjectItem projectItem:
+        {
+          using var token = new Core.Utils.DefaultCancellationToken();
+          await Services.GetRequiredService<ICurrentProjectProvider>().OpenAsync(projectItem, token);
+          await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamiliesPage>());
+
+          // TODO not so good approach
+          if (sender is SelectableItemsView view)
+          {
+            view.SelectedItem = null;
+          }
+          break;
+        }
     }
   }
 
@@ -60,7 +70,7 @@ public partial class OpenOrCreateDialog : ContentPage
         return;
 
       using var token = new Core.Utils.DefaultCancellationToken();
-      await _Services.GetRequiredService<IProjectList>().RemoveAsync(item.Name, token);
+      await Services.GetRequiredService<IProjectList>().RemoveAsync(item.Name, token);
     }
     catch (Exception ex)
     {
@@ -86,7 +96,7 @@ public partial class OpenOrCreateDialog : ContentPage
         return;
 
       using var token = new Core.Utils.DefaultCancellationToken();
-      await _Services.GetRequiredService<IProjectList>().CreateAsync(projectInfo, token);
+      await Services.GetRequiredService<IProjectList>().CreateAsync(projectInfo, token);
     }
     catch (Exception ex)
     {

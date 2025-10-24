@@ -8,12 +8,10 @@ using System.Linq;
 
 public partial class FamiliesPage : ContentPage
 {
-  private readonly ServiceProvider _Services = ServiceBuilder.DefaultServices;
-
   private PersonInfoItem[] GetFamilyPersons(Name name, CancellationToken token)
   {
-    var nameFormatter = _Services.GetRequiredService<INameFormatter>();
-    return _Services.GetRequiredService<ICurrentProjectProvider>()
+    var nameFormatter = Services.GetRequiredService<INameFormatter>();
+    return Services.GetRequiredService<ICurrentProjectProvider>()
       .Project
       .Persons
       .GetPersonsByNameAsync(name, token)
@@ -28,6 +26,8 @@ public partial class FamiliesPage : ContentPage
     BindingContext = this;
   }
 
+  public ServiceProvider Services { get; set; } = ServiceBuilder.DefaultServices;
+
   public ICollection<FamilyInfoItem> Families
   {
     get
@@ -35,7 +35,7 @@ public partial class FamiliesPage : ContentPage
       try
       {
         using var token = new Core.Utils.DefaultCancellationToken();
-        var ret = _Services.GetRequiredService<ICurrentProjectProvider>()
+        var ret = Services.GetRequiredService<ICurrentProjectProvider>()
           .Project
           .Names
           .GetNamesAsync(NameType.FamilyName, token)
@@ -64,6 +64,14 @@ public partial class FamiliesPage : ContentPage
         break;
       case FamilyInfoItemRefresh:
         OnPropertyChanged(nameof(Families));
+        break;
+      case FamilyInfoItem item:
+        await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { { "FamilyName", item.FamilyName } });
+        // TODO not so good approach
+        if (sender is SelectableItemsView view)
+        {
+          view.SelectedItem = null;
+        }
         break;
     }
   }
@@ -109,7 +117,7 @@ public partial class FamiliesPage : ContentPage
         return;
 
       using var token = new Core.Utils.DefaultCancellationToken();
-      await _Services.GetRequiredService<IProjectList>().CreateAsync(projectInfo, token);
+      await Services.GetRequiredService<IProjectList>().CreateAsync(projectInfo, token);
     }
     catch (Exception ex)
     {
