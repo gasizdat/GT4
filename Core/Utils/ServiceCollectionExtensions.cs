@@ -8,6 +8,7 @@ public static class ServiceCollectionExtensions
   {
     return services
       .AddSingleton<IStorage, Storage>()
-      .AddSingleton<IFileSystem, FileSystem>();
+      .AddSingleton<IFileSystem, FileSystem>()
+      .AddSingleton<ICancellationTokenProvider, CancellationTokenProvider>();
   }
 }

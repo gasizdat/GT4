@@ -1,6 +1,7 @@
-using GT4.UI.App.Items;
 using GT4.Core.Project;
 using GT4.Core.Project.Dto;
+using GT4.Core.Utils;
+using GT4.UI.App.Items;
 
 namespace GT4.UI.App.Pages;
 
@@ -39,7 +40,7 @@ public partial class FamilyPage : ContentPage
 
       try
       {
-        using var token = new Core.Utils.DefaultCancellationToken();
+        using var token = Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
         return Services.GetRequiredService<ICurrentProjectProvider>()
           .Project
           .Persons

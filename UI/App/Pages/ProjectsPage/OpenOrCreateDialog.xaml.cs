@@ -1,5 +1,6 @@
 using GT4.Core.Project;
 using GT4.Core.Project.Dto;
+using GT4.Core.Utils;
 using GT4.UI.App.Dialogs;
 using GT4.UI.App.Items;
 using GT4.UI.Resources;
@@ -20,7 +21,7 @@ public partial class OpenOrCreateDialog : ContentPage
   {
     get
     {
-      using var token = new Core.Utils.DefaultCancellationToken();
+      using var token = Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
       var ret = Services.GetRequiredService<IProjectList>()
         .GetItemsAsync(token)
         .Result
@@ -42,7 +43,7 @@ public partial class OpenOrCreateDialog : ContentPage
 
       case ProjectInfo projectInfo:
         {
-          using var token = new Core.Utils.DefaultCancellationToken();
+          using var token = Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
           await Services.GetRequiredService<ICurrentProjectProvider>().OpenAsync(projectInfo, token);
           await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamiliesPage>());
 
@@ -70,7 +71,7 @@ public partial class OpenOrCreateDialog : ContentPage
       if (result == false)
         return;
 
-      using var token = new Core.Utils.DefaultCancellationToken();
+      using var token = Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
       await Services.GetRequiredService<IProjectList>().RemoveAsync(item.Name, token);
     }
     catch (Exception ex)
@@ -96,7 +97,7 @@ public partial class OpenOrCreateDialog : ContentPage
       if (projectInfo.Name == string.Empty)
         return;
 
-      using var token = new Core.Utils.DefaultCancellationToken();
+      using var token = Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
       await Services.GetRequiredService<IProjectList>().CreateAsync(projectInfo, token);
     }
     catch (Exception ex)

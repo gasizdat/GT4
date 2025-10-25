@@ -1,5 +1,6 @@
 using GT4.Core.Project;
 using GT4.Core.Project.Dto;
+using GT4.Core.Utils;
 using GT4.UI.App.Dialogs;
 using GT4.UI.App.Items;
 using GT4.UI.Resources;
@@ -34,7 +35,7 @@ public partial class FamiliesPage : ContentPage
     {
       try
       {
-        using var token = new Core.Utils.DefaultCancellationToken();
+        using var token = Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
         var ret = Services.GetRequiredService<ICurrentProjectProvider>()
           .Project
           .Names
@@ -90,7 +91,7 @@ public partial class FamiliesPage : ContentPage
       if (result == false)
         return;
 
-      using var token = new Core.Utils.DefaultCancellationToken();
+      using var token = Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
       // TODO
     }
     catch (Exception ex)
@@ -118,7 +119,7 @@ public partial class FamiliesPage : ContentPage
         return;
       }
 
-      using var token = new Core.Utils.DefaultCancellationToken();
+      using var token = Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
       var family = await Services.GetRequiredService<ICurrentProjectProvider>()
         .Project
         .AddFamilyAsync(familyName: info.Name, maleLastName: info.MaleLastName, femaleLastName: info.FemaleLastName, token);
