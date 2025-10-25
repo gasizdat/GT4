@@ -85,7 +85,7 @@ public partial class FamiliesPage : ContentPage
     try
     {
       var result = await DisplayAlert(UIStrings.AlertTitleConfirmation,
-        string.Format(UIStrings.AlertTextDeleteConfirmationText, item.FamilyName), UIStrings.BtnNameYes, UIStrings.BtnNameNo);
+        string.Format(UIStrings.AlertTextDeleteConfirmationText_1, item.FamilyName.Value), UIStrings.BtnNameYes, UIStrings.BtnNameNo);
 
       if (result == false)
         return;

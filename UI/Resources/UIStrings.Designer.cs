@@ -61,11 +61,11 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Are you really want to delete {1}?.
+        ///   Looks up a localized string similar to Are you really want to delete {0}?.
         /// </summary>
-        public static string AlertTextDeleteConfirmationText {
+        public static string AlertTextDeleteConfirmationText_1 {
             get {
-                return ResourceManager.GetString("AlertTextDeleteConfirmationText", resourceCulture);
+                return ResourceManager.GetString("AlertTextDeleteConfirmationText_1", resourceCulture);
             }
         }
         
@@ -206,6 +206,42 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to unknown.
+        /// </summary>
+        public static string DateStatusUnknown {
+            get {
+                return ResourceManager.GetString("DateStatusUnknown", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to about {0}.
+        /// </summary>
+        public static string DateStatusYearApproximate_1 {
+            get {
+                return ResourceManager.GetString("DateStatusYearApproximate_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Date of birth: {0}.
+        /// </summary>
+        public static string FieldDateOfBirth_1 {
+            get {
+                return ResourceManager.GetString("FieldDateOfBirth_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Date of death: {0}.
+        /// </summary>
+        public static string FieldDateOfDeath_1 {
+            get {
+                return ResourceManager.GetString("FieldDateOfDeath_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 🌐 Language.
         /// </summary>
         public static string PkrLanguageHint {
@@ -247,6 +283,15 @@ namespace GT4.UI.Resources {
         public static string WndHintFamiliesPage {
             get {
                 return ResourceManager.GetString("WndHintFamiliesPage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Open family member or create a new one.
+        /// </summary>
+        public static string WndHintFamilyPage {
+            get {
+                return ResourceManager.GetString("WndHintFamilyPage", resourceCulture);
             }
         }
         

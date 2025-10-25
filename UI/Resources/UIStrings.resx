@@ -117,8 +117,8 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="AlertTextDeleteConfirmationText" xml:space="preserve">
-    <value>Are you really want to delete {1}?</value>
+  <data name="AlertTextDeleteConfirmationText_1" xml:space="preserve">
+    <value>Are you really want to delete {0}?</value>
   </data>
   <data name="AlertTitleInfo" xml:space="preserve">
     <value>Info</value>
@@ -192,5 +192,20 @@ genealogy tree and enjoy!</value>
   </data>
   <data name="BtnNameOk" xml:space="preserve">
     <value>Ok</value>
+  </data>
+  <data name="WndHintFamilyPage" xml:space="preserve">
+    <value>Open family member or create a new one</value>
+  </data>
+  <data name="DateStatusYearApproximate_1" xml:space="preserve">
+    <value>about {0}</value>
+  </data>
+  <data name="DateStatusUnknown" xml:space="preserve">
+    <value>unknown</value>
+  </data>
+  <data name="FieldDateOfBirth_1" xml:space="preserve">
+    <value>Date of birth: {0}</value>
+  </data>
+  <data name="FieldDateOfDeath_1" xml:space="preserve">
+    <value>Date of death: {0}</value>
   </data>
 </root>

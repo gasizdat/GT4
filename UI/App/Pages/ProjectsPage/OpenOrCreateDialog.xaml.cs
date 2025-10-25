@@ -65,7 +65,7 @@ public partial class OpenOrCreateDialog : ContentPage
     try
     {
       var result = await DisplayAlert(UIStrings.AlertTitleConfirmation,
-        UIStrings.AlertTextDeleteConfirmationText, UIStrings.BtnNameYes, UIStrings.BtnNameNo);
+        string.Format(UIStrings.AlertTextDeleteConfirmationText_1, item.Name), UIStrings.BtnNameYes, UIStrings.BtnNameNo);
 
       if (result == false)
         return;

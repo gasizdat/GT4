@@ -117,8 +117,8 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="AlertTextDeleteConfirmationText" xml:space="preserve">
-    <value>Вы действительно хотите удалить {1}?</value>
+  <data name="AlertTextDeleteConfirmationText_1" xml:space="preserve">
+    <value>Вы действительно хотите удалить {0}?</value>
   </data>
   <data name="AlertTitleInfo" xml:space="preserve">
     <value>Информация</value>
@@ -192,5 +192,20 @@
   </data>
   <data name="BtnNameOk" xml:space="preserve">
     <value>OK</value>
+  </data>
+  <data name="WndHintFamilyPage" xml:space="preserve">
+    <value>Выберите представителя рода или создайте нового</value>
+  </data>
+  <data name="DateStatusYearApproximate_1" xml:space="preserve">
+    <value>около {0}</value>
+  </data>
+  <data name="DateStatusUnknown" xml:space="preserve">
+    <value>неизвестно</value>
+  </data>
+  <data name="FieldDateOfBirth_1" xml:space="preserve">
+    <value>Дата рождения: {0}</value>
+  </data>
+  <data name="FieldDateOfDeath_1" xml:space="preserve">
+    <value>Дата смерти: {0}</value>
   </data>
 </root>
