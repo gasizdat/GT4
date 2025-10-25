@@ -58,6 +58,8 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
   public TableRelatives Relatives => new(this);
   public TablePersonData PersonData => new(this);
 
+  public Family Family => new(this);
+
   public async Task<int> GetLastInsertRowIdAsync(CancellationToken token)
   {
     using var command = CreateCommand();
@@ -73,20 +75,6 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
   public async Task<IDbTransaction> BeginTransactionAsync(CancellationToken token)
   {
     return await _Connection.BeginTransactionAsync(token);
-  }
-
-  public async Task<Name> AddFamilyAsync(string familyName, string maleLastName, string femaleLastName, CancellationToken token)
-  {
-    using var transaction = await BeginTransactionAsync(token);
-
-    var name = await Names.AddNameAsync(familyName, NameType.FamilyName, null, token);
-    await Task.WhenAll(
-      Names.AddNameAsync(maleLastName, NameType.LastName | NameType.MaleDeclension, name, token),
-      Names.AddNameAsync(femaleLastName, NameType.LastName | NameType.FemaleDeclension, name, token));
-    
-    transaction.Commit();
-
-    return name;
   }
 
   public static async Task<ProjectDocument> CreateNewAsync(string path, string name, CancellationToken token)

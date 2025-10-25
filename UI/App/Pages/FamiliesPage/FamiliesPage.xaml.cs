@@ -92,7 +92,10 @@ public partial class FamiliesPage : ContentPage
         return;
 
       using var token = Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
-      // TODO
+      await Services.GetRequiredService<ICurrentProjectProvider>()
+        .Project
+        .Family
+        .RemoveFamilyAsync(item.FamilyName, token);
     }
     catch (Exception ex)
     {
@@ -122,8 +125,8 @@ public partial class FamiliesPage : ContentPage
       using var token = Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
       var family = await Services.GetRequiredService<ICurrentProjectProvider>()
         .Project
+        .Family
         .AddFamilyAsync(familyName: info.Name, maleLastName: info.MaleLastName, femaleLastName: info.FemaleLastName, token);
-
     }
     catch (Exception ex)
     {
