@@ -9,5 +9,6 @@ public class FamilyInfoItemCreate : FamilyInfoItem
   {
   }
 
+  public override ImageSource FamilyImage => ImageSource.FromStream(token => FileSystem.OpenAppPackageFileAsync("add_content.png"));
   public override bool IsHandlesVisible => false;
 }

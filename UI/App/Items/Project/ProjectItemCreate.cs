@@ -3,7 +3,13 @@ using GT4.UI.Resources;
 
 namespace GT4.UI.App.Items;
 
-public record class ProjectItemCreate() : ProjectInfo(
-      Description: string.Empty,
-      Name: UIStrings.BtnNameCreateGenealogyTree,
-      Path: string.Empty);
+public class ProjectItemCreate : ProjectItem
+{
+  public ProjectItemCreate()
+    : base(new ProjectInfo(UIStrings.BtnNameCreateGenealogyTree, string.Empty, string.Empty))
+  {
+  }
+
+  public override ImageSource ProjectImage => ImageSource.FromStream(token => FileSystem.OpenAppPackageFileAsync("add_content.png"));
+  public override bool IsHandlesVisible => false;
+}

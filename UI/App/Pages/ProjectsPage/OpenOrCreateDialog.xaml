@@ -2,7 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="GT4.UI.App.Pages.OpenOrCreateDialog"
-             xmlns:dto="clr-namespace:GT4.Core.Project.Dto;assembly=GT4.Core.Project"
+             xmlns:items="clr-namespace:GT4.UI.App.Items"
              xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
              Title="{x:Static resources:UIStrings.WndTitleOpenOrCreateDialog}">
   <ScrollView>
@@ -19,14 +19,14 @@
           SelectionChanged="OnProjectSelected">
         
         <CollectionView.ItemTemplate>
-          <DataTemplate x:DataType="dto:ProjectInfo">
+          <DataTemplate x:DataType="items:ProjectItem">
 
             <FlexLayout 
                 Direction="Row"
                 HeightRequest="50" >
 
               <Image 
-                  Source="project_icon.png" 
+                  Source="{Binding ProjectImage}" 
                   WidthRequest="32" 
                   HeightRequest="32" 
                   Margin="2"/>
@@ -52,7 +52,8 @@
                   Clicked="OnDeleteProjectSelected"
                   WidthRequest="32" 
                   HeightRequest="32"
-                  Padding="0"/>
+                  Padding="0"
+                  IsVisible="{Binding IsHandlesVisible}"/>
 
             </FlexLayout>
           </DataTemplate>

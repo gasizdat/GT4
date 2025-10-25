@@ -17,7 +17,7 @@ public partial class OpenOrCreateDialog : ContentPage
 
   public ServiceProvider Services { get; set; } = ServiceBuilder.DefaultServices;
 
-  public ICollection<ProjectInfo> Projects
+  public ICollection<ProjectItem> Projects
   {
     get
     {
@@ -25,6 +25,7 @@ public partial class OpenOrCreateDialog : ContentPage
       var ret = Services.GetRequiredService<IProjectList>()
         .GetItemsAsync(token)
         .Result
+        .Select(projectInfo => new ProjectItem(projectInfo))
         .ToList();
 
       ret.Add(new ProjectItemCreate());
@@ -41,10 +42,10 @@ public partial class OpenOrCreateDialog : ContentPage
         await OnCreateProject();
         break;
 
-      case ProjectInfo projectInfo:
+      case ProjectItem projectItem:
         {
           using var token = Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
-          await Services.GetRequiredService<ICurrentProjectProvider>().OpenAsync(projectInfo, token);
+          await Services.GetRequiredService<ICurrentProjectProvider>().OpenAsync(projectItem.Info, token);
           await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamiliesPage>());
 
           // TODO not so good approach
@@ -59,7 +60,7 @@ public partial class OpenOrCreateDialog : ContentPage
 
   public async void OnDeleteProjectSelected(object sender, EventArgs e)
   {
-    var item = (sender as BindableObject)?.BindingContext as ProjectInfo;
+    var item = (sender as BindableObject)?.BindingContext as ProjectItem;
     if (item is null or ProjectItemCreate)
       return;
 
