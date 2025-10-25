@@ -163,10 +163,6 @@
   <data name="AlertTitleError" xml:space="preserve">
     <value>Ошибка</value>
   </data>
-  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="BtnNameOk" type="System.Resources.ResXNullRef, System.Windows.Forms">
-    <value />
-  </data>
   <data name="WndTitleCreateNewProjectDialog" xml:space="preserve">
     <value>Создайте новое генеалогическое дерево</value>
   </data>
@@ -193,5 +189,8 @@
   </data>
   <data name="BtnNameRefreshAfterError" xml:space="preserve">
     <value>Произошла ошибка. Повторить?</value>
+  </data>
+  <data name="BtnNameOk" xml:space="preserve">
+    <value>OK</value>
   </data>
 </root>

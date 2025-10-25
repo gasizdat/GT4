@@ -1,4 +1,4 @@
-using GT4.Core.Project;
+using GT4.Core.Project.Dto;
 using GT4.UI.Resources;
 
 namespace GT4.UI.App.Dialogs;
@@ -16,7 +16,7 @@ public partial class CreateNewProjectDialog : ContentPage
 
   public void OnCreateProjectBtn(object sender, EventArgs e)
   {
-    _Info.SetResult(new ProjectInfo { Description = ProjectDescription, Name = ProjectName });
+    _Info.SetResult(new ProjectInfo(Description: ProjectDescription, Name: ProjectName, Path: string.Empty));
   }
 
   public Task<ProjectInfo> ProjectInfo => _Info.Task;

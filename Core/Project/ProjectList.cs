@@ -1,4 +1,6 @@
 ﻿using GT4.Core.Utils;
+using GT4.Core.Project.Dto;
+
 using System.Data;
 
 namespace GT4.Core.Project;
@@ -7,9 +9,9 @@ internal class ProjectList : IProjectList
 {
   private readonly IStorage _Storage;
   private readonly IFileSystem _FileSystem;
-  private readonly WeakReference<ProjectItem[]?> _Items = new(null);
+  private readonly WeakReference<ProjectInfo[]?> _Items = new(null);
 
-  private static async Task<ProjectItem> GetProjectItemAsync(string path, CancellationToken token)
+  private static async Task<ProjectInfo> GetProjectItemAsync(string path, CancellationToken token)
   {
     try
     {
@@ -18,22 +20,21 @@ internal class ProjectList : IProjectList
         project.Metadata.GetAsync<string>("name", token),
         project.Metadata.GetAsync<string>("description", token));
 
-      return new ProjectItem
-      {
-        Name = results[0]
+      return new ProjectInfo(
+        Description: results[1] ?? string.Empty,
+        Name : results[0]
           ?? throw new DataException($"There is no name stored in the project ({path})"),
-        Path = path,
-        Description = results[1] ?? string.Empty
-      };
+        Path: path
+      );
     }
     catch (Exception ex)
     {
       //TODO BrokenProjectItem
-      return new ProjectItem
-      {
-        Name = $"Error: {ex.Message}",
-        Path = path
-      };
+      return new ProjectInfo (
+        Description: ex.ToString(),
+        Name: $"Error: {ex.Message}",
+        Path: path
+      );
     }
   }
 
@@ -53,7 +54,7 @@ internal class ProjectList : IProjectList
 
   public readonly static string ProjectExtension = "gt4";
 
-  public async Task<ProjectItem[]> GetItemsAsync(CancellationToken token)
+  public async Task<ProjectInfo[]> GetItemsAsync(CancellationToken token)
   {
     if (_Items.TryGetTarget(out var items))
       return items;
@@ -71,7 +72,7 @@ internal class ProjectList : IProjectList
     }
     catch
     {
-      return Array.Empty<ProjectItem>();
+      return Array.Empty<ProjectInfo>();
     }
   }
 

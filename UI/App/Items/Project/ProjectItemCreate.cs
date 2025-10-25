@@ -1,15 +1,9 @@
-﻿namespace GT4.UI;
+﻿using GT4.Core.Project.Dto;
+using GT4.UI.Resources;
 
-using GT4.Core.Project;
+namespace GT4.UI.App.Items;
 
-public record class ProjectItemCreate : ProjectItem
-{
-  public ProjectItemCreate()
-    : base(new ProjectItem
-    {
-      Description = "Create a new Genealogy Tree",
-      Name = "Create New!"
-    })
-  {
-  }
-}
+public record class ProjectItemCreate() : ProjectInfo(
+      Description: string.Empty,
+      Name: UIStrings.BtnNameCreateGenealogyTree,
+      Path: string.Empty);

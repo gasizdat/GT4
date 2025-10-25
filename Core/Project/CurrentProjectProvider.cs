@@ -1,15 +1,17 @@
-﻿namespace GT4.Core.Project;
+﻿using GT4.Core.Project.Dto;
+
+namespace GT4.Core.Project;
 
 internal class CurrentProjectProvider : ICurrentProjectProvider
 {
-  private ProjectItem? _Item = null;
+  private ProjectInfo? _Info = null;
   private ProjectDocument? _Project = null;
 
-  public async Task OpenAsync(ProjectItem item, CancellationToken token)
+  public async Task OpenAsync(ProjectInfo info, CancellationToken token)
   {
     await CloseAsync(token);
-    _Item = item;
-    _Project = await ProjectDocument.OpenAsync(item.Path, token);
+    _Info = info;
+    _Project = await ProjectDocument.OpenAsync(info.Path, token);
   }
 
   public async Task CloseAsync(CancellationToken token)
@@ -17,7 +19,6 @@ internal class CurrentProjectProvider : ICurrentProjectProvider
     if (_Project is not null)
     {
       await _Project.DisposeAsync();
-      _Item = null;
       _Project = null;
     }
   }
@@ -26,5 +27,5 @@ internal class CurrentProjectProvider : ICurrentProjectProvider
 
   public ProjectDocument Project => _Project ?? throw new InvalidOperationException("Project is not opened yet.");
 
-  public ProjectItem Item => _Item ?? throw new InvalidOperationException("Project is not opened yet.");
+  public ProjectInfo Info => _Info ?? throw new InvalidOperationException("Project is not opened yet.");
 }

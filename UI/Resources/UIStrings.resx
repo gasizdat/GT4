@@ -163,9 +163,6 @@ genealogy tree and enjoy!</value>
   <data name="AlertTitleError" xml:space="preserve">
     <value>Error</value>
   </data>
-  <data name="BtnNameOk" xml:space="preserve">
-    <value>Ok</value>
-  </data>
   <data name="WndTitleCreateNewProjectDialog" xml:space="preserve">
     <value>Create a Genealogy Tree</value>
   </data>
@@ -192,5 +189,8 @@ genealogy tree and enjoy!</value>
   </data>
   <data name="BtnNameRefreshAfterError" xml:space="preserve">
     <value>An error occurred. Refresh?</value>
+  </data>
+  <data name="BtnNameOk" xml:space="preserve">
+    <value>Ok</value>
   </data>
 </root>

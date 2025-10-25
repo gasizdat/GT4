@@ -1,12 +1,13 @@
-﻿
+﻿using GT4.Core.Project.Dto;
+
 namespace GT4.Core.Project;
 
 public interface ICurrentProjectProvider
 {
-  ProjectItem Item { get; }
+  ProjectInfo Info { get; }
   ProjectDocument Project { get; }
   bool HasCurrentProject { get; }
 
   Task CloseAsync(CancellationToken token);
-  Task OpenAsync(ProjectItem item, CancellationToken token);
+  Task OpenAsync(ProjectInfo info, CancellationToken token);
 }

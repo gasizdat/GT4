@@ -1,5 +1,7 @@
 using GT4.Core.Project;
+using GT4.Core.Project.Dto;
 using GT4.UI.App.Dialogs;
+using GT4.UI.App.Items;
 using GT4.UI.Resources;
 
 namespace GT4.UI.App.Pages;
@@ -14,7 +16,7 @@ public partial class OpenOrCreateDialog : ContentPage
 
   public ServiceProvider Services { get; set; } = ServiceBuilder.DefaultServices;
 
-  public ICollection<ProjectItem> Projects
+  public ICollection<ProjectInfo> Projects
   {
     get
     {
@@ -34,14 +36,14 @@ public partial class OpenOrCreateDialog : ContentPage
   {
     switch (e.CurrentSelection.FirstOrDefault())
     {
-      case ProjectItemCreate item:
+      case ProjectItemCreate:
         await OnCreateProject();
         break;
 
-      case ProjectItem projectItem:
+      case ProjectInfo projectInfo:
         {
           using var token = new Core.Utils.DefaultCancellationToken();
-          await Services.GetRequiredService<ICurrentProjectProvider>().OpenAsync(projectItem, token);
+          await Services.GetRequiredService<ICurrentProjectProvider>().OpenAsync(projectInfo, token);
           await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamiliesPage>());
 
           // TODO not so good approach
@@ -56,8 +58,7 @@ public partial class OpenOrCreateDialog : ContentPage
 
   public async void OnDeleteProjectSelected(object sender, EventArgs e)
   {
-
-    var item = (sender as BindableObject)?.BindingContext as ProjectItem;
+    var item = (sender as BindableObject)?.BindingContext as ProjectInfo;
     if (item is null or ProjectItemCreate)
       return;
 
