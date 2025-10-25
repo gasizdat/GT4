@@ -166,9 +166,6 @@ genealogy tree and enjoy!</value>
   <data name="WndTitleCreateNewProjectDialog" xml:space="preserve">
     <value>Create a Genealogy Tree</value>
   </data>
-  <data name="TxtPlaceholderProjectDescription" xml:space="preserve">
-    <value>Enter a description for the new Genealogy Tree</value>
-  </data>
   <data name="TxtPlaceholderPtojectName" xml:space="preserve">
     <value>Enter a name for the new Genealogy Tree</value>
   </data>
@@ -210,5 +207,29 @@ genealogy tree and enjoy!</value>
   </data>
   <data name="FieldAge_1" xml:space="preserve">
     <value>Age: {0}</value>
+  </data>
+  <data name="WndTitleCreateNewFamilyDialog" xml:space="preserve">
+    <value>Create a Family</value>
+  </data>
+  <data name="FieldFamilyNameEntry" xml:space="preserve">
+    <value>Family Name:</value>
+  </data>
+  <data name="TxtPlaceholderFamilyName" xml:space="preserve">
+    <value>Enter a Family name in the plural (for example, Smiths)</value>
+  </data>
+  <data name="FieldLastNameMaleEntry" xml:space="preserve">
+    <value>The last name in the male declension</value>
+  </data>
+  <data name="FieldLastNameFemaleEntry" xml:space="preserve">
+    <value>The last name in the female declension</value>
+  </data>
+  <data name="TxtPlaceholderLastNameFemale" xml:space="preserve">
+    <value>The last name in the female declension (for example, mr Smith)</value>
+  </data>
+  <data name="TxtPlaceholderProjectDescription" xml:space="preserve">
+    <value>Enter a description for the new Genealogy Tree</value>
+  </data>
+  <data name="TxtPlaceholderLastNameMale" xml:space="preserve">
+    <value>The last name in the male declension (mrs Smith)</value>
   </data>
 </root>

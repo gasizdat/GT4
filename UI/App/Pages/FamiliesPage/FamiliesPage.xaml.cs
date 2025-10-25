@@ -105,19 +105,24 @@ public partial class FamiliesPage : ContentPage
 
   internal async Task OnCreateFamily()
   {
-    var dialog = new CreateNewProjectDialog();
+    var dialog = new CreateNewFamilyDialog();
 
     await Navigation.PushModalAsync(dialog);
-    var projectInfo = await dialog.ProjectInfo;
+    var info = await dialog.Info;
     await Navigation.PopModalAsync();
 
     try
     {
-      if (projectInfo.Name == string.Empty)
+      if (info is null)
+      {
         return;
+      }
 
       using var token = new Core.Utils.DefaultCancellationToken();
-      await Services.GetRequiredService<IProjectList>().CreateAsync(projectInfo, token);
+      var family = await Services.GetRequiredService<ICurrentProjectProvider>()
+        .Project
+        .AddFamilyAsync(familyName: info.Name, maleLastName: info.MaleLastName, femaleLastName: info.FemaleLastName, token);
+
     }
     catch (Exception ex)
     {

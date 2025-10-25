@@ -164,10 +164,7 @@
     <value>Ошибка</value>
   </data>
   <data name="WndTitleCreateNewProjectDialog" xml:space="preserve">
-    <value>Создайте новое генеалогическое дерево</value>
-  </data>
-  <data name="TxtPlaceholderProjectDescription" xml:space="preserve">
-    <value>Добавьте описание для нового генеалогического древа</value>
+    <value>Создайте генеалогическое дерево</value>
   </data>
   <data name="TxtPlaceholderPtojectName" xml:space="preserve">
     <value>Добавьте имя для нового генеалогического древа</value>
@@ -210,5 +207,29 @@
   </data>
   <data name="FieldAge_1" xml:space="preserve">
     <value>Возраст: {0}</value>
+  </data>
+  <data name="WndTitleCreateNewFamilyDialog" xml:space="preserve">
+    <value>Добавьте род</value>
+  </data>
+  <data name="FieldFamilyNameEntry" xml:space="preserve">
+    <value>Название рода:</value>
+  </data>
+  <data name="TxtPlaceholderFamilyName" xml:space="preserve">
+    <value>Добавьте имя рода во множественном числе (например, Ивановы)</value>
+  </data>
+  <data name="FieldLastNameMaleEntry" xml:space="preserve">
+    <value>Фамилия в мужском склонении</value>
+  </data>
+  <data name="FieldLastNameFemaleEntry" xml:space="preserve">
+    <value>Фамилия в женском склонении</value>
+  </data>
+  <data name="TxtPlaceholderLastNameFemale" xml:space="preserve">
+    <value>Фамилия в женском склонении (например, Иванова)</value>
+  </data>
+  <data name="TxtPlaceholderProjectDescription" xml:space="preserve">
+    <value>Добавьте описание для нового генеалогического древа</value>
+  </data>
+  <data name="TxtPlaceholderLastNameMale" xml:space="preserve">
+    <value>Фамилия в мужском склонении (например, Иванов)</value>
   </data>
 </root>

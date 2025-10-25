@@ -251,11 +251,65 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Family Name:.
+        /// </summary>
+        public static string FieldFamilyNameEntry {
+            get {
+                return ResourceManager.GetString("FieldFamilyNameEntry", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The last name in the female declension.
+        /// </summary>
+        public static string FieldLastNameFemaleEntry {
+            get {
+                return ResourceManager.GetString("FieldLastNameFemaleEntry", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The last name in the male declension.
+        /// </summary>
+        public static string FieldLastNameMaleEntry {
+            get {
+                return ResourceManager.GetString("FieldLastNameMaleEntry", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 🌐 Language.
         /// </summary>
         public static string PkrLanguageHint {
             get {
                 return ResourceManager.GetString("PkrLanguageHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enter a Family name in the plural (for example, Smiths).
+        /// </summary>
+        public static string TxtPlaceholderFamilyName {
+            get {
+                return ResourceManager.GetString("TxtPlaceholderFamilyName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The last name in the female declension (for example, mr Smith).
+        /// </summary>
+        public static string TxtPlaceholderLastNameFemale {
+            get {
+                return ResourceManager.GetString("TxtPlaceholderLastNameFemale", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The last name in the male declension (mrs Smith).
+        /// </summary>
+        public static string TxtPlaceholderLastNameMale {
+            get {
+                return ResourceManager.GetString("TxtPlaceholderLastNameMale", resourceCulture);
             }
         }
         
@@ -310,6 +364,15 @@ namespace GT4.UI.Resources {
         public static string WndHintOpenOrCreateDialog {
             get {
                 return ResourceManager.GetString("WndHintOpenOrCreateDialog", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create a Family.
+        /// </summary>
+        public static string WndTitleCreateNewFamilyDialog {
+            get {
+                return ResourceManager.GetString("WndTitleCreateNewFamilyDialog", resourceCulture);
             }
         }
         
