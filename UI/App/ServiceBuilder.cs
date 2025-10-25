@@ -8,6 +8,7 @@ public class ServiceBuilder
   private static readonly ServiceProvider _DefaultServices = new ServiceCollection()
         .AddSingleton<IDateFormatter, DateFormatter>()
         .AddSingleton<INameFormatter, NameFormatter>()
+        .AddSingleton<IDateSpanFormatter, DateSpanFormatter>()
         .BuildDefaultUtils()
         .BuildDefaultProject()
         .BuildServiceProvider();

@@ -47,13 +47,20 @@
               </HorizontalStackLayout>
               
               <Label 
-                  Text="{Binding DayOfBirth}" 
+                  Text="{Binding DateOfBirth}" 
                   FontSize="Small"
                   LineBreakMode="TailTruncation"
                   HorizontalOptions="Fill"/>
               
               <Label 
-                  Text="{Binding DayOfDeath}" 
+                  Text="{Binding DateOfDeath}" 
+                  FontSize="Small"
+                  LineBreakMode="TailTruncation"
+                  HorizontalOptions="Fill"
+                  IsVisible="{Binding ShowDateOfDeath}"/>
+
+              <Label 
+                  Text="{Binding Age}" 
                   FontSize="Small"
                   LineBreakMode="TailTruncation"
                   HorizontalOptions="Fill"/>

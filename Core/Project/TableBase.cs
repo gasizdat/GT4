@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.Sqlite;
+﻿using GT4.Core.Utils;
+using Microsoft.Data.Sqlite;
 
 namespace GT4.Core.Project;
 
@@ -17,7 +18,7 @@ public abstract class TableBase
     if (reader.IsDBNull(ordinal))
       return null;
 
-    var (date, _) = reader.GetDateTime(ordinal);
+    var date = reader.GetDateTime(ordinal).Now();
     return date;
   }
 
