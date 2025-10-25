@@ -51,7 +51,7 @@ public class TableNames : TableBase
       """;
     await command.ExecuteNonQueryAsync(token);
 
-    command.CommandText = "CREATE UNIQUE INDEX NamesValueType ON Names(Value, Type);";
+    command.CommandText = "CREATE UNIQUE INDEX NamesValueType ON Names(Value, Type, ParentId);";
     await command.ExecuteNonQueryAsync(token);
   }
 
@@ -167,5 +167,17 @@ public class TableNames : TableBase
     InvalidateItems(type);
 
     return new Name(Id: await Document.GetLastInsertRowIdAsync(token), Value: value, Type: type, ParentId: parent?.Id);
+  }
+
+  public async Task RemoveNameWithSubnamesAsync(Name name, CancellationToken token)
+  {
+    using var command = Document.CreateCommand();
+    command.CommandText = """
+      DELETE FROM Names
+      WHERE Id=@id OR ParentId=@id;
+      """;
+    command.Parameters.AddWithValue("@id", name.Id);
+    await command.ExecuteNonQueryAsync(token);
+    InvalidateItems(name.Type);
   }
 }
