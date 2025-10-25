@@ -1,26 +1,31 @@
-﻿using GT4.Core.Project.Dto;
+﻿using GT4.Core.Utils;
 using GT4.UI.Resources;
 
 namespace GT4.UI;
 
 public class DateFormatter : IDateFormatter
 {
-  public string ToString(DateOnly? date, DateStatus dateStatus)
+  private const string D4 = "D4";
+  private const string D2 = "D2";
+
+  public string ToString(Date? date)
   {
-    // TODO use configuration
+    // TODO Use configuration
+
+    // TOD Apply Date.Sign
 
     if (date.HasValue)
     {
-      switch (dateStatus)
+      switch (date.Value.Status)
       {
         case DateStatus.WellKnown:
-          return date.Value.ToString("DD MMM yyyy");
+          return $"{date.Value.Year.ToString(D4)}-{date.Value.Month.ToString(D2)}-{date.Value.Day.ToString(D2)}";
         case DateStatus.DayUnknown:
-          return date.Value.ToString("MMM yyyy");
+          return $"{date.Value.Year.ToString(D4)}-{date.Value.Month.ToString(D2)}";
         case DateStatus.MonthUnknown:
-          return date.Value.ToString("yyyy");
+          return date.Value.Year.ToString(D4);
         case DateStatus.YearApproximate:
-          return string.Format(UIStrings.DateStatusYearApproximate_1, date.Value.ToString("yyyy"));
+          return string.Format(UIStrings.DateStatusYearApproximate_1, date.Value.Year.ToString(D4));
       }
     }
 

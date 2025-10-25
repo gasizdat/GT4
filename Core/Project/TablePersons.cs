@@ -37,10 +37,8 @@ public partial class TablePersons : TableBase
       Id: personId,
       Names: await Document.PersonNames.GetPersonNamesAsync(personId, token),
       MainPhoto: (await Document.Data.TryGetDataAsync(TryGetInteger(reader, 1), token))?.Content,
-      BirthDate: TryGetDate(reader, 2),
-      BirthDateStatus: GetEnum<DateStatus>(reader, 3),
-      DeathDate: TryGetDate(reader, 4),
-      DeathDateStatus: TryGetEnum<DateStatus>(reader, 5),
+      BirthDate: GetDate(reader, 2, 3),
+      DeathDate: TryGetDate(reader, 4, 5),
       BiologicalSex: GetEnum<BiologicalSex>(reader, 6)
     );
   }
@@ -131,10 +129,10 @@ public partial class TablePersons : TableBase
       INSERT INTO Persons (BirthDate, BirthDateStatus, DeathDate, DeathDateStatus, BiologicalSex)
       VALUES (@birthDate, @birthDateStatus, @deathDate, @deathDateStatus, @biologicalSex);
       """;
-    command.Parameters.AddWithValue("@birthDate", person.BirthDate is not null ? person.BirthDate : DBNull.Value);
-    command.Parameters.AddWithValue("@birthDateStatus", person.BirthDateStatus);
-    command.Parameters.AddWithValue("@deathDate", person.DeathDate is not null ? person.DeathDate : DBNull.Value);
-    command.Parameters.AddWithValue("@deathDateStatus", person.DeathDateStatus.HasValue ? person.DeathDateStatus.Value : DBNull.Value);
+    command.Parameters.AddWithValue("@birthDate", person.BirthDate.Code);
+    command.Parameters.AddWithValue("@birthDateStatus", person.BirthDate.Status);
+    command.Parameters.AddWithValue("@deathDate", person.DeathDate.HasValue ? person.DeathDate.Value.Code : DBNull.Value);
+    command.Parameters.AddWithValue("@deathDateStatus", person.DeathDate.HasValue ? person.DeathDate.Value.Status : DBNull.Value);
     command.Parameters.AddWithValue("@biologicalSex", person.BiologicalSex);
     await command.ExecuteNonQueryAsync(token);
     var personId = await Document.GetLastInsertRowIdAsync(token);

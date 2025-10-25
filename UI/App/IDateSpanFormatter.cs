@@ -5,5 +5,5 @@ namespace GT4.UI;
 
 public interface IDateSpanFormatter
 {
-  string ToString(DateSpan? dateSpan, params DateStatus[] dateStatuses);
+  string ToString(DateSpan? dateSpan);
 }

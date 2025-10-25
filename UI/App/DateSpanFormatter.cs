@@ -6,15 +6,13 @@ namespace GT4.UI;
 
 public class DateSpanFormatter : IDateSpanFormatter
 {
-  public string ToString(DateSpan? dateSpan, params DateStatus[] dateStatuses)
+  public string ToString(DateSpan? dateSpan)
   {
-    var worstStatus = dateStatuses.Max();
-
     // TODO use configuration
 
     if (dateSpan.HasValue)
     {
-      switch (worstStatus)
+      switch (dateSpan.Value.Status)
       {
         case DateStatus.WellKnown:
           return $"{YearsFormat(dateSpan.Value.Years)} {MonthsFormat(dateSpan.Value.Months)} {DaysFormat(dateSpan.Value.Days)}";
@@ -71,7 +69,7 @@ public class DateSpanFormatter : IDateSpanFormatter
 
   protected static string EnglishNumeralsDeclension(int value, string single, string many)
   {
-    return value == 1 ? single : many;
+    return string.Format(value == 1 ? single : many, value);
   }
 
   protected static string RussianNumeralsDeclension(int value, string single, string several, string many)
@@ -86,14 +84,14 @@ public class DateSpanFormatter : IDateSpanFormatter
     switch (lastDigit)
     {
       case 1:
-        return single;
+        return string.Format(single, value);
       case 2:
       case 3:
       case 4:
-        return several;
+        return string.Format(several, value);
       case 0:
       default:
-        return many;
+        return string.Format(many, value);
     }
   }
 }

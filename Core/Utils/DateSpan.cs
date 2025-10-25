@@ -3,4 +3,5 @@
 public record struct DateSpan(
   int Years, 
   int Months, 
-  int Days);
+  int Days,
+  DateStatus Status);

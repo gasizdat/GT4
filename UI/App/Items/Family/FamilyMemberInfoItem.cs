@@ -17,24 +17,17 @@ public class FamilyMemberInfoItem : PersonInfoItem
   }
 
   public string DateOfBirth => 
-    string.Format(UIStrings.FieldDateOfBirth_1, _DateFormatter.ToString(Person.BirthDate, Person.BirthDateStatus));
+    string.Format(UIStrings.FieldDateOfBirth_1, _DateFormatter.ToString(Person.BirthDate));
   public string DateOfDeath => 
-    string.Format(UIStrings.FieldDateOfDeath_1, _DateFormatter.ToString(Person.DeathDate, 
-      Person.DeathDateStatus.HasValue ? Person.DeathDateStatus!.Value : default));
-  public bool ShowDateOfDeath => Person.DeathDateStatus.HasValue;
+    string.Format(UIStrings.FieldDateOfDeath_1, _DateFormatter.ToString(Person.DeathDate));
+  public bool ShowDateOfDeath => Person.DeathDate.HasValue;
   public string Age
   {
     get
     {
-      if (!Person.BirthDate.HasValue)
-      {
-        return string.Format(UIStrings.FieldAge_1, _DateFormatter.ToString(Person.BirthDate, Person.BirthDateStatus));
-      }
-
-      var lastDate = Person.DeathDateStatus.HasValue && Person.DeathDate.HasValue ? Person.DeathDate.Value : new DateOnly().Now();
-      var age = Person.BirthDate.Value.Period(lastDate);
-      var ageText = _DateSpanFormatter.ToString(age, Person.BirthDateStatus, 
-        Person.DeathDateStatus.HasValue ? Person.DeathDateStatus!.Value : DateStatus.WellKnown);
+      var ofDate = Person.DeathDate.HasValue ? Person.DeathDate.Value : Date.Now;
+      var age = ofDate - Person.BirthDate;
+      var ageText = _DateSpanFormatter.ToString(age);
 
       return string.Format(UIStrings.FieldAge_1, ageText);
     }

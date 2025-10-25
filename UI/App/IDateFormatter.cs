@@ -1,8 +1,8 @@
-﻿using GT4.Core.Project.Dto;
+﻿using GT4.Core.Utils;
 
 namespace GT4.UI;
 
 public interface IDateFormatter
 {
-  string ToString(DateOnly? date, DateStatus dateStatus);
+  string ToString(Date? date);
 }
