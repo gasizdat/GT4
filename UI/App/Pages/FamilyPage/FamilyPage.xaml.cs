@@ -1,7 +1,8 @@
-namespace GT4.UI;
-
+using GT4.UI.App.Items;
 using GT4.Core.Project;
 using GT4.Core.Project.Dto;
+
+namespace GT4.UI.App.Pages;
 
 [QueryProperty(nameof(FamilyName), "FamilyName")]
 public partial class FamilyPage : ContentPage

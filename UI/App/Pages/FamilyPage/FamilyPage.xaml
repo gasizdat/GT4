@@ -2,8 +2,8 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
-             x:Class="GT4.UI.FamilyPage"
-             xmlns:ui="clr-namespace:GT4.UI"
+             x:Class="GT4.UI.App.Pages.FamilyPage"
+             xmlns:items="clr-namespace:GT4.UI.App.Items"
              xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
              Title="{x:Static resources:UIStrings.WndTitleCreateNewProjectDialog}">
   <ScrollView>
@@ -26,7 +26,7 @@
         </CollectionView.ItemsLayout>
 
         <CollectionView.ItemTemplate>
-          <DataTemplate x:DataType="ui:FamilyMemberInfoItem">
+          <DataTemplate x:DataType="items:FamilyMemberInfoItem">
 
             <VerticalStackLayout
                   Margin="50, 0, 0, 0">

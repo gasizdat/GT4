@@ -1,7 +1,7 @@
-namespace GT4.UI;
-
 using GT4.Core.Project;
 using GT4.UI.Resources;
+
+namespace GT4.UI.App.Dialogs;
 
 public partial class CreateNewProjectDialog : ContentPage
 {

@@ -1,10 +1,10 @@
 using GT4.Core.Project;
 using GT4.Core.Project.Dto;
-
-namespace GT4.UI;
-
+using GT4.UI.App.Dialogs;
+using GT4.UI.App.Items;
 using GT4.UI.Resources;
-using System.Linq;
+
+namespace GT4.UI.App.Pages;
 
 public partial class FamiliesPage : ContentPage
 {

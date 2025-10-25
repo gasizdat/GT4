@@ -2,7 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
-             x:Class="GT4.UI.CreateNewProjectDialog"
+             x:Class="GT4.UI.App.Dialogs.CreateNewProjectDialog"
              xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
              Title="{x:Static resources:UIStrings.WndTitleCreateNewProjectDialog}">
   <ScrollView>

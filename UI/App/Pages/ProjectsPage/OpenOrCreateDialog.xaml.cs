@@ -1,8 +1,8 @@
 using GT4.Core.Project;
-
-namespace GT4.UI;
-
+using GT4.UI.App.Dialogs;
 using GT4.UI.Resources;
+
+namespace GT4.UI.App.Pages;
 
 public partial class OpenOrCreateDialog : ContentPage
 {
