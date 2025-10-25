@@ -1,4 +1,5 @@
 ﻿using GT4.Core.Project.Dto;
+using GT4.UI.Resources;
 
 namespace GT4.UI.App.Items;
 
@@ -12,7 +13,8 @@ public class FamilyMemberInfoItem : PersonInfoItem
     _DateFormatter = services.GetRequiredService<IDateFormatter>();
   }
 
-  public string DayOfBirth => _DateFormatter.ToString(Person.BirthDate, Person.BirthDateStatus);
+  public string DayOfBirth => 
+    string.Format(UIStrings.FieldDateOfBirth_1, _DateFormatter.ToString(Person.BirthDate, Person.BirthDateStatus));
   public string DayOfDeath => Person.DeathDateStatus.HasValue ?
-    _DateFormatter.ToString(Person.DeathDate, Person.DeathDateStatus.Value) : string.Empty;
+    string.Format(UIStrings.FieldDateOfDeath_1, _DateFormatter.ToString(Person.DeathDate, Person.DeathDateStatus.Value)) : string.Empty;
 }

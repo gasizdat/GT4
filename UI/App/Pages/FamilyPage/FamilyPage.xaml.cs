@@ -22,6 +22,7 @@ public partial class FamilyPage : ContentPage
     {
       _FamilyName = value;
       OnPropertyChanged(nameof(Members));
+      OnPropertyChanged(nameof(FamilyName));
     }
   }
 

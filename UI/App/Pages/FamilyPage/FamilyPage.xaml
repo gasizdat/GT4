@@ -5,29 +5,29 @@
              x:Class="GT4.UI.App.Pages.FamilyPage"
              xmlns:items="clr-namespace:GT4.UI.App.Items"
              xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
-             Title="{x:Static resources:UIStrings.WndTitleCreateNewProjectDialog}">
+             Title="{Binding FamilyName?.Value}">
   <ScrollView>
-
     <VerticalStackLayout Padding="20" Spacing="10">
+      
       <Label 
-          Text="{x:Static resources:UIStrings.WndHintFamiliesPage}"
+          Text="{x:Static resources:UIStrings.WndHintFamilyPage}"
           VerticalOptions="Center" 
           HorizontalOptions="Center" />
 
       <CollectionView 
-        ItemsSource="{Binding Members}" 
-        SelectionMode="Single" 
-        SelectionChanged="OnMemberSelected">
+          ItemsSource="{Binding Members}" 
+          SelectionMode="Single" 
+          SelectionChanged="OnMemberSelected">
 
         <CollectionView.ItemsLayout>
           <LinearItemsLayout 
-            Orientation="Vertical" 
-            ItemSpacing="3" />
+              Orientation="Vertical" 
+              ItemSpacing="3" />
         </CollectionView.ItemsLayout>
 
         <CollectionView.ItemTemplate>
           <DataTemplate x:DataType="items:FamilyMemberInfoItem">
-
+            
             <VerticalStackLayout
                   Margin="50, 0, 0, 0">
               
@@ -38,29 +38,31 @@
                     HeightRequest="32"
                     VerticalOptions="Start"
                     Aspect="AspectFit"/>
-
+           
                 <Label 
                     Text="{Binding CommonName}" 
                     FontSize="Small"
                     LineBreakMode="TailTruncation"
                     HorizontalOptions="Fill"/>
               </HorizontalStackLayout>
+              
               <Label 
                   Text="{Binding DayOfBirth}" 
                   FontSize="Small"
                   LineBreakMode="TailTruncation"
                   HorizontalOptions="Fill"/>
+              
               <Label 
                   Text="{Binding DayOfDeath}" 
                   FontSize="Small"
                   LineBreakMode="TailTruncation"
                   HorizontalOptions="Fill"/>
             </VerticalStackLayout>
+          
           </DataTemplate>
         </CollectionView.ItemTemplate>
       </CollectionView>
 
     </VerticalStackLayout>
-
   </ScrollView>
 </ContentPage>
