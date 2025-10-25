@@ -21,8 +21,8 @@ public abstract class TableBase
     return date;
   }
 
-  protected static TEnum? TryGetEnum<TEnum>(SqliteDataReader reader, int ordinal) where TEnum : Enum =>
-    reader.IsDBNull(ordinal) ? default : GetEnum<TEnum>(reader, ordinal);
+  protected static TEnum? TryGetEnum<TEnum>(SqliteDataReader reader, int ordinal) where TEnum : struct, Enum =>
+    reader.IsDBNull(ordinal) ? null : GetEnum<TEnum>(reader, ordinal);
 
   protected static TEnum GetEnum<TEnum>(SqliteDataReader reader, int ordinal) where TEnum : Enum =>
     (TEnum)Enum.ToObject(typeof(TEnum), reader.GetInt32(ordinal));
