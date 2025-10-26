@@ -1,7 +1,9 @@
 using GT4.Core.Project;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.App.Dialogs;
 using GT4.UI.App.Items;
+using GT4.UI.Resources;
 using System.Windows.Input;
 
 namespace GT4.UI.App.Pages;
@@ -70,7 +72,19 @@ public partial class FamilyPage : ContentPage
 
   internal async void OnMemberSelected(FamilyMemberInfoItem member)
   {
-
+    switch (member)
+    {
+      case FamilyMemberInfoItemRefresh:
+        OnPropertyChanged(nameof(Members));
+        break;
+      case FamilyMemberInfoItemCreate:
+        await OnCreatePerson();
+        break;
+      case FamilyMemberInfoItem item:
+        // TODO
+        // await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamilyMemberPage>(), true, new() { { "FamilyName", item } });
+        break;
+    }
   }
 
   internal async void OnDeletePersonSelected(object sender, EventArgs e)
@@ -79,6 +93,37 @@ public partial class FamilyPage : ContentPage
 
   internal async void OnEditPersonSelected(object sender, EventArgs e)
   {
+  }
+
+  internal async Task OnCreatePerson()
+  {
+    var dialog = new CreateNewPersonDialog(null);
+
+    await Navigation.PushModalAsync(dialog);
+    var person = await dialog.Person;
+    await Navigation.PopModalAsync();
+
+    try
+    {
+      if (person is null)
+      {
+        return;
+      }
+
+      using var token = Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
+      await Services.GetRequiredService<ICurrentProjectProvider>()
+        .Project
+        .Persons
+        .AddPersonAsync(person, token);
+    }
+    catch (Exception ex)
+    {
+      await DisplayAlert(UIStrings.AlertTitleError, ex.Message, UIStrings.BtnNameOk);
+    }
+    finally
+    {
+      OnPropertyChanged(nameof(Members));
+    }
   }
 
   protected override void OnSizeAllocated(double width, double height)
