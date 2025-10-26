@@ -22,18 +22,34 @@ public partial class CreateNewFamilyDialog : ContentPage
 
   public string FamilyName
   {
-    get => _FamilyName; 
+    get => _FamilyName;
     set
     {
       _FamilyName = value;
       OnPropertyChanged(nameof(FamilyName));
+      OnPropertyChanged(nameof(CreateFamilyBtnName));
+    }
+  }
+  public string MaleLastName
+  {
+    get => _MaleLastName; 
+    set 
+    { 
+      _MaleLastName = value;
       OnPropertyChanged(nameof(MaleLastName));
+      OnPropertyChanged(nameof(CreateFamilyBtnName));
+    }
+  }
+  public string FemaleLastName 
+  { 
+    get => _FemaleLastName;
+    set
+    {
+      _FemaleLastName = value;
       OnPropertyChanged(nameof(FemaleLastName));
       OnPropertyChanged(nameof(CreateFamilyBtnName));
     }
   }
-  public string MaleLastName { get => _MaleLastName; set => _MaleLastName = value; }
-  public string FemaleLastName { get => _FemaleLastName; set => _FemaleLastName = value; }
   public Task<FamilyInfo?> Info => _Info.Task;
   public string CreateFamilyBtnName => _NotReady ? UIStrings.BtnNameCancel : UIStrings.BtnNameCreateFamily;
 
