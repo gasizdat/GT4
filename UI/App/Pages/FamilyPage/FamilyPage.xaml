@@ -27,52 +27,82 @@
 
         <CollectionView.ItemTemplate>
           <DataTemplate x:DataType="items:FamilyMemberInfoItem">
-            
-            <VerticalStackLayout
-                  Margin="50, 0, 0, 0">
-              
-              <HorizontalStackLayout>
-                <Image 
-                    Source="{Binding Icon}"  
-                    WidthRequest="32"
-                    HeightRequest="32"
-                    VerticalOptions="Start"
-                    Aspect="AspectFit"/>
-           
+            <Grid
+                Padding="20" 
+                VerticalOptions="Center"
+                RowDefinitions="Auto, Auto"
+                ColumnDefinitions="100, 30, *, Auto"
+                ColumnSpacing="10"
+                RowSpacing="10">
+
+              <Image 
+                  Grid.Column="0"
+                  Grid.Row="0"
+                  Grid.RowSpan="2"
+                  Source="{Binding Icon}"  
+                  VerticalOptions="Start"
+                  Aspect="AspectFit"/>
+
+              <Label 
+                  Grid.Column="1"
+                  Grid.Row="0"
+                  Grid.ColumnSpan="2"
+                  Text="{Binding CommonName}" 
+                  FontSize="Medium"
+                  FontAttributes="Bold"
+                  LineBreakMode="TailTruncation"
+                  HorizontalOptions="Fill"/>
+
+              <VerticalStackLayout
+                  Grid.Column="2"
+                  Grid.Row="1"
+                  IsVisible="{Binding IsHandlesVisible}">
+
                 <Label 
-                    Text="{Binding CommonName}" 
-                    FontSize="Medium"
-                    FontAttributes="Bold"
+                    Text="{Binding DateOfBirth}" 
+                    FontSize="Small"
                     LineBreakMode="TailTruncation"
                     HorizontalOptions="Fill"/>
-              </HorizontalStackLayout>
-              
-              <Label 
-                  Text="{Binding DateOfBirth}" 
-                  FontSize="Small"
-                  LineBreakMode="TailTruncation"
-                  HorizontalOptions="Fill"
-                  Margin="50, 0"
-                  IsVisible="{Binding IsHandlesVisible}"/>
 
-              <Label 
-                  Text="{Binding DateOfDeath}" 
-                  FontSize="Small"
-                  LineBreakMode="TailTruncation"
-                  HorizontalOptions="Fill"
-                  Margin="50, 0"
-                  IsVisible="{Binding ShowDateOfDeath}"/>
+                <Label 
+                    Text="{Binding DateOfDeath}" 
+                    FontSize="Small"
+                    LineBreakMode="TailTruncation"
+                    HorizontalOptions="Fill"
+                    IsVisible="{Binding ShowDateOfDeath}"/>
 
-              <Label 
-                  Text="{Binding Age}" 
-                  FontSize="Small"
-                  LineBreakMode="TailTruncation"
-                  HorizontalOptions="Fill"
-                  Margin="50, 0"
-                  IsVisible="{Binding IsHandlesVisible}"/>
-              
-            </VerticalStackLayout>
-          
+                <Label 
+                    Text="{Binding Age}" 
+                    FontSize="Small"
+                    LineBreakMode="TailTruncation"
+                    HorizontalOptions="Fill"/>
+
+              </VerticalStackLayout>
+
+              <VerticalStackLayout
+                  Grid.Column="3"
+                  Grid.Row="0"
+                  Grid.RowSpan="2"
+                  Spacing="10"
+                  IsVisible="{Binding IsHandlesVisible}">
+
+                <Button 
+                    Text="🖋️"   
+                    Clicked="OnEditPersonSelected"
+                    WidthRequest="32"
+                    HeightRequest="32"
+                    VerticalOptions="Start"/>
+
+                <Button 
+                    Text="❌"  
+                    Clicked="OnDeletePersonSelected"
+                    WidthRequest="32"
+                    HeightRequest="32"
+                    VerticalOptions="Start"/>
+
+              </VerticalStackLayout>
+
+            </Grid>
           </DataTemplate>
         </CollectionView.ItemTemplate>
       </CollectionView>

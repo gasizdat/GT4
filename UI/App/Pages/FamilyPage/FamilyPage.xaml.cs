@@ -65,4 +65,12 @@ public partial class FamilyPage : ContentPage
   {
 
   }
+
+  internal async void OnDeletePersonSelected(object sender, EventArgs e)
+  {
+  }
+
+  internal async void OnEditPersonSelected(object sender, EventArgs e)
+  {
+  }
 }
