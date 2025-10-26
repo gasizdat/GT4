@@ -2,6 +2,7 @@
 using GT4.Core.Utils;
 using GT4.UI.App.Items;
 using GT4.UI.Comparers;
+using System.Collections.Generic;
 
 namespace GT4.UI;
 
@@ -14,6 +15,7 @@ public class ServiceBuilder
         .AddSingleton<IComparer<FamilyInfoItem>, FamilyInfoItemComparer>()
         .AddSingleton<IComparer<FamilyMemberInfoItem>, FamilyMemberInfoItemComparer>()
         .AddSingleton<IComparer<ProjectItem>, ProjectItemComparer>()
+        .AddSingleton<IComparer<PersonInfoItem>, PersonInfoItemComparer>()
         .BuildDefaultUtils()
         .BuildDefaultProject()
         .BuildServiceProvider();

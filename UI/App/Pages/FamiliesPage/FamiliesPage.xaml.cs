@@ -18,6 +18,7 @@ public partial class FamiliesPage : ContentPage
       .GetPersonsByNameAsync(name, token)
       .Result
       .Select(person => new PersonInfoItem(person, nameFormatter))
+      .OrderBy(item => item, Services.GetRequiredService<IComparer<PersonInfoItem>>())
       .ToArray();
   }
 
@@ -43,9 +44,9 @@ public partial class FamiliesPage : ContentPage
           .Result
           .Values
           .Select(name => new FamilyInfoItem(name, GetFamilyPersons(name, token)))
+          .OrderBy(item => item, Services.GetRequiredService<IComparer<FamilyInfoItem>>())
           .ToList();
 
-        ret.Sort(Services.GetRequiredService<IComparer<FamilyInfoItem>>());
         ret.Add(new FamilyInfoItemCreate());
 
         return ret;

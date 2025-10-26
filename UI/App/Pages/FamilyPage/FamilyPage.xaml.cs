@@ -41,17 +41,14 @@ public partial class FamilyPage : ContentPage
       try
       {
         using var token = Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
-        var ret = Services.GetRequiredService<ICurrentProjectProvider>()
+        return Services.GetRequiredService<ICurrentProjectProvider>()
           .Project
           .Persons
           .GetPersonsByNameAsync(FamilyName, token)
           .Result
           .Select(person => new FamilyMemberInfoItem(person, Services))
+          .OrderBy(item => item, Services.GetRequiredService<IComparer<FamilyMemberInfoItem>>())
           .ToList();
-
-        ret.Sort(Services.GetRequiredService<IComparer<FamilyMemberInfoItem>>());
-
-        return ret;
       }
       catch (Exception ex)
       {

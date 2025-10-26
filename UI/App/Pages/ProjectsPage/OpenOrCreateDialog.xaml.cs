@@ -25,9 +25,8 @@ public partial class OpenOrCreateDialog : ContentPage
         .GetItemsAsync(token)
         .Result
         .Select(projectInfo => new ProjectItem(projectInfo))
+        .OrderBy(item => item, Services.GetRequiredService<IComparer<ProjectItem>>())
         .ToList();
-
-      ret.Sort(Services.GetRequiredService<IComparer<ProjectItem>>());
 
       ret.Add(new ProjectItemCreate());
 
