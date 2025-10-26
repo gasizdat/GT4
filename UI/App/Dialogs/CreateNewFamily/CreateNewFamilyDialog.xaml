@@ -7,69 +7,51 @@
              Title="{x:Static resources:UIStrings.WndTitleCreateNewFamilyDialog}">
   <ScrollView>
 
-    <Grid
+    <VerticalStackLayout 
         Padding="20" 
-        VerticalOptions="Center"
-        RowDefinitions="Auto, Auto, Auto, Auto"
-        ColumnDefinitions="Auto, *"
-        ColumnSpacing="10"
-        RowSpacing="10">
+        Spacing="10" 
+        VerticalOptions="Center">
 
       <Label 
-          Grid.Row="0" 
-          Grid.Column="0"
           Text="{x:Static resources:UIStrings.FieldFamilyNameEntry}"
           FontAttributes="Bold"
           FontSize="Medium"
           VerticalOptions="Start"/>
 
       <Entry
-          Grid.Row="0" 
-          Grid.Column="1"
           Placeholder="{x:Static resources:UIStrings.TxtPlaceholderFamilyName}"
           Text="{Binding FamilyName}"
           HorizontalOptions="Fill"/>
 
       <Label 
-          Grid.Row="1" 
-          Grid.Column="0"
           Text="{x:Static resources:UIStrings.FieldLastNameMaleEntry}"
           FontAttributes="Bold"
           FontSize="Medium"
           VerticalOptions="Start" />
 
       <Entry 
-          Grid.Row="1" 
-          Grid.Column="1"
           Placeholder="{x:Static resources:UIStrings.TxtPlaceholderLastNameMale}"
           Text="{Binding MaleLastName}"
           HorizontalOptions="Fill"/>
 
       <Label 
-          Grid.Row="2" 
-          Grid.Column="0"
           Text="{x:Static resources:UIStrings.FieldLastNameFemaleEntry}"
           FontAttributes="Bold"
           FontSize="Medium"
           VerticalOptions="Start" />
 
       <Entry 
-          Grid.Row="2" 
-          Grid.Column="1"
           Placeholder="{x:Static resources:UIStrings.TxtPlaceholderLastNameFemale}"
           Text="{Binding FemaleLastName}"
           HorizontalOptions="Fill"/>
 
       <Button
-          Grid.Row="3" 
-          Grid.Column="0"
-          Grid.ColumnSpan="2"
           Text="{Binding CreateFamilyBtnName}" 
           FontSize="Large"
           Clicked="OnCreateFamilyBtn"
           HorizontalOptions="Fill" />
 
-    </Grid>
+    </VerticalStackLayout>
 
   </ScrollView>
 </ContentPage>
