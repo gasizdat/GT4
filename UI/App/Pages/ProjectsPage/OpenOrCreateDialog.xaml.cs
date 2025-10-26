@@ -1,5 +1,4 @@
 using GT4.Core.Project;
-using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.App.Dialogs;
 using GT4.UI.App.Items;
@@ -27,6 +26,8 @@ public partial class OpenOrCreateDialog : ContentPage
         .Result
         .Select(projectInfo => new ProjectItem(projectInfo))
         .ToList();
+
+      ret.Sort(Services.GetRequiredService<IComparer<ProjectItem>>());
 
       ret.Add(new ProjectItemCreate());
 

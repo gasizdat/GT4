@@ -45,6 +45,7 @@ public partial class FamiliesPage : ContentPage
           .Select(name => new FamilyInfoItem(name, GetFamilyPersons(name, token)))
           .ToList();
 
+        ret.Sort(Services.GetRequiredService<IComparer<FamilyInfoItem>>());
         ret.Add(new FamilyInfoItemCreate());
 
         return ret;
