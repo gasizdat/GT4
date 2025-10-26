@@ -232,4 +232,7 @@
   <data name="TxtPlaceholderLastNameMale" xml:space="preserve">
     <value>Фамилия в мужском склонении (например, Иванов)</value>
   </data>
+  <data name="BtnNameCreateFamilyPerson" xml:space="preserve">
+    <value>Создайте персону</value>
+  </data>
 </root>

@@ -4,11 +4,8 @@ namespace GT4.UI.App.Items;
 
 public class FamilyInfoItemRefresh : FamilyInfoItem
 {
-  private static string GetName(Exception ex) =>
-    string.Format(Resources.UIStrings.BtnNameRefreshAfterError, ex.Message);
-
   public FamilyInfoItemRefresh(Exception ex)
-    : base(new Name(0, GetName(ex), NameType.FamilyName, null), Array.Empty<PersonInfoItem>())
+    : base(new Name(0, GetRefreshOnErrorButtonName(ex), NameType.FamilyName, null), Array.Empty<PersonInfoItem>())
   {
   }
 

@@ -143,7 +143,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Create Family.
+        ///   Looks up a localized string similar to Create a Family.
         /// </summary>
         public static string BtnNameCreateFamily {
             get {
@@ -152,7 +152,16 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Create Genealogy Tree.
+        ///   Looks up a localized string similar to Create a Person.
+        /// </summary>
+        public static string BtnNameCreateFamilyPerson {
+            get {
+                return ResourceManager.GetString("BtnNameCreateFamilyPerson", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create a Genealogy Tree.
         /// </summary>
         public static string BtnNameCreateGenealogyTree {
             get {

@@ -9,6 +9,11 @@ public class FamilyMemberInfoItem : PersonInfoItem
   private readonly IDateFormatter _DateFormatter;
   private readonly IDateSpanFormatter _DateSpanFormatter;
 
+  protected FamilyMemberInfoItem(string itemName, ServiceProvider services)
+    : this(new Person(0, [new(0, itemName, NameType.FirstName, null)], null, new(), null, BiologicalSex.Unknown), services)
+  {
+  }
+
   public FamilyMemberInfoItem(Person person, ServiceProvider services)
     : base(person, services.GetRequiredService<INameFormatter>())
   {
@@ -16,9 +21,9 @@ public class FamilyMemberInfoItem : PersonInfoItem
     _DateSpanFormatter = services.GetRequiredService<IDateSpanFormatter>();
   }
 
-  public string DateOfBirth => 
+  public string DateOfBirth =>
     string.Format(UIStrings.FieldDateOfBirth_1, _DateFormatter.ToString(Info.BirthDate));
-  public string DateOfDeath => 
+  public string DateOfDeath =>
     string.Format(UIStrings.FieldDateOfDeath_1, _DateFormatter.ToString(Info.DeathDate));
   public bool ShowDateOfDeath => Info.DeathDate.HasValue;
   public string Age
@@ -31,5 +36,5 @@ public class FamilyMemberInfoItem : PersonInfoItem
 
       return string.Format(UIStrings.FieldAge_1, ageText);
     }
-  }  
+  }
 }

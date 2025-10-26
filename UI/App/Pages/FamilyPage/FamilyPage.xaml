@@ -52,22 +52,25 @@
                   FontSize="Small"
                   LineBreakMode="TailTruncation"
                   HorizontalOptions="Fill"
-                  Margin="50, 0"/>
-              
+                  Margin="50, 0"
+                  IsVisible="{Binding IsHandlesVisible}"/>
+
               <Label 
                   Text="{Binding DateOfDeath}" 
                   FontSize="Small"
                   LineBreakMode="TailTruncation"
                   HorizontalOptions="Fill"
-                  IsVisible="{Binding ShowDateOfDeath}"
-                  Margin="50, 0"/>
+                  Margin="50, 0"
+                  IsVisible="{Binding ShowDateOfDeath}"/>
 
               <Label 
                   Text="{Binding Age}" 
                   FontSize="Small"
                   LineBreakMode="TailTruncation"
                   HorizontalOptions="Fill"
-                  Margin="50, 0"/>
+                  Margin="50, 0"
+                  IsVisible="{Binding IsHandlesVisible}"/>
+              
             </VerticalStackLayout>
           
           </DataTemplate>

@@ -143,7 +143,7 @@ genealogy tree and enjoy!</value>
     <value>Cancel</value>
   </data>
   <data name="BtnNameCreateGenealogyTree" xml:space="preserve">
-    <value>Create Genealogy Tree</value>
+    <value>Create a Genealogy Tree</value>
   </data>
   <data name="BtnNameNo" xml:space="preserve">
     <value>No</value>
@@ -176,7 +176,7 @@ genealogy tree and enjoy!</value>
     <value>🌐 Language</value>
   </data>
   <data name="BtnNameCreateFamily" xml:space="preserve">
-    <value>Create Family</value>
+    <value>Create a Family</value>
   </data>
   <data name="WndTitleFamiliesPage" xml:space="preserve">
     <value>Families</value>
@@ -231,5 +231,8 @@ genealogy tree and enjoy!</value>
   </data>
   <data name="TxtPlaceholderLastNameMale" xml:space="preserve">
     <value>The last name in the male declension (mrs Smith)</value>
+  </data>
+  <data name="BtnNameCreateFamilyPerson" xml:space="preserve">
+    <value>Create a Person</value>
   </data>
 </root>
