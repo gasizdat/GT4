@@ -28,18 +28,6 @@
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
 	</PropertyGroup>
 
-	<ItemGroup>
-	  <Compile Update="Dialogs\CreateNewFamily\CreateNewFamilyDialog.xaml.cs">
-	    <DependentUpon>CreateNewFamilyDialog.xaml</DependentUpon>
-	  </Compile>
-	</ItemGroup>
-
-	<ItemGroup>
-	  <MauiXaml Update="Dialogs\CreateNewFamily\CreateNewFamilyDialog.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	</ItemGroup>
-
   <Import Project="AppCommon.props" />
 
 </Project>
