@@ -2,20 +2,13 @@
 
 namespace GT4.UI.App.Items;
 
-public class ProjectItem
+public class ProjectItem : CollectionItemBase<ProjectInfo>
 {
-  private readonly ProjectInfo _Info;
-  private ImageSource _DefaultProjectImage => ImageSource.FromStream(token => FileSystem.OpenAppPackageFileAsync("project_icon.png"));
-
-
   public ProjectItem(ProjectInfo info)
+    : base (info, "project_icon.png")
   {
-    _Info = info;
   }
 
-  public ProjectInfo Info => _Info;
-  public string Description => _Info.Description;
-  public string Name => _Info.Name;
-  public virtual ImageSource ProjectImage => _DefaultProjectImage;
-  public virtual bool IsHandlesVisible => true;
+  public string Description => Info.Description;
+  public string Name => Info.Name;
 }

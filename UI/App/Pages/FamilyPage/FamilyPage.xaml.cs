@@ -29,7 +29,7 @@ public partial class FamilyPage : ContentPage
 
   public ServiceProvider Services { get; set; } = ServiceBuilder.DefaultServices;
 
-  public ICollection<PersonInfoItem> Members
+  public ICollection<FamilyMemberInfoItem> Members
   {
     get
     {

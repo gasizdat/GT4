@@ -10,6 +10,7 @@ public class ProjectItemCreate : ProjectItem
   {
   }
 
-  public override ImageSource ProjectImage => ImageSource.FromStream(token => FileSystem.OpenAppPackageFileAsync("add_content.png"));
+  protected override ImageSource? CustomImage => CreateItemImage;
+
   public override bool IsHandlesVisible => false;
 }

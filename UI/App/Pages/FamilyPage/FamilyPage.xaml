@@ -33,7 +33,7 @@
               
               <HorizontalStackLayout>
                 <Image 
-                    Source="{Binding MainImage}"  
+                    Source="{Binding Icon}"  
                     WidthRequest="32"
                     HeightRequest="32"
                     VerticalOptions="Start"

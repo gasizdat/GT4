@@ -2,27 +2,17 @@
 
 namespace GT4.UI.App.Items;
 
-public class PersonInfoItem
+public class PersonInfoItem : CollectionItemBase<Person>
 {
-  private readonly Person _Person;
   private readonly INameFormatter _NameFormatter;
-  private Task<Stream> _DefaultImage
-  {
-    get
-    {
-      var resourceName = _Person.BiologicalSex == BiologicalSex.Female ? "female_stub.png" : "male_stub.png";
-      return FileSystem.OpenAppPackageFileAsync(resourceName);
-    }
-  }
 
   public PersonInfoItem(Person person, INameFormatter nameFormatter)
+    : base(person, person.BiologicalSex == BiologicalSex.Female ? "female_stub.png" : "male_stub.png")
   {
-    _Person = person;
     _NameFormatter = nameFormatter;
   }
 
-  public Person Person => _Person;
-  public string CommonName => _NameFormatter.GetCommonPersonName(_Person);
-  public ImageSource MainImage => ImageSource.FromStream(token => _Person.MainPhoto is null ? 
-    _DefaultImage : Task.Run<Stream>(() => new MemoryStream(_Person.MainPhoto), token));
+  protected override ImageSource? CustomImage => Info.MainPhoto is null ? null : ImageFromBytes(Info.MainPhoto);
+
+  public string CommonName => _NameFormatter.GetCommonPersonName(Info);
 }

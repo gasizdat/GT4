@@ -34,7 +34,7 @@
               <Image 
                   Grid.Row="0" 
                   Grid.Column="0"
-                  Source="{Binding FamilyImage}"  
+                  Source="{Binding Icon}"  
                   WidthRequest="32"
                   HeightRequest="32"
                   VerticalOptions="Start"
@@ -44,7 +44,7 @@
                   Grid.Row="0" 
                   Grid.Column="1"
                   Grid.RowSpan="2"
-                  Text="{Binding FamilyName.Value}"
+                  Text="{Binding Info.Value}"
                   FontAttributes="Bold"
                   FontSize="Medium"
                   VerticalOptions="Start"
@@ -73,7 +73,7 @@
                     <HorizontalStackLayout
                         Margin="50, 0, 0, 0">
                       <Image 
-                          Source="{Binding MainImage}"  
+                          Source="{Binding Icon}"  
                           WidthRequest="32"
                           HeightRequest="32"
                           VerticalOptions="Start"

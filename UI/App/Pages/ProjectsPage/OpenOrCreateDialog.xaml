@@ -26,7 +26,7 @@
                 HeightRequest="50" >
 
               <Image 
-                  Source="{Binding ProjectImage}" 
+                  Source="{Binding Icon}" 
                   WidthRequest="32" 
                   HeightRequest="32" 
                   Margin="2"/>
@@ -35,13 +35,13 @@
                   FlexLayout.Grow="1">
 
                 <Label 
-                    Text="{Binding Name}" 
+                    Text="{Binding Info.Name}" 
                     FontSize="20" 
                     FontAttributes="Bold" 
                     Padding="2"/>
 
                 <Label 
-                    Text="{Binding Description}" 
+                    Text="{Binding Info.Description}" 
                     FontSize="12" 
                     Padding="2"/>
                 

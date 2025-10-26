@@ -68,7 +68,7 @@ public partial class FamiliesPage : ContentPage
         OnPropertyChanged(nameof(Families));
         break;
       case FamilyInfoItem item:
-        await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { { "FamilyName", item.FamilyName } });
+        await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { { "FamilyName", item.Info } });
         // TODO not so good approach
         if (sender is SelectableItemsView view)
         {
@@ -87,7 +87,7 @@ public partial class FamiliesPage : ContentPage
     try
     {
       var result = await DisplayAlert(UIStrings.AlertTitleConfirmation,
-        string.Format(UIStrings.AlertTextDeleteConfirmationText_1, item.FamilyName.Value), UIStrings.BtnNameYes, UIStrings.BtnNameNo);
+        string.Format(UIStrings.AlertTextDeleteConfirmationText_1, item.Info.Value), UIStrings.BtnNameYes, UIStrings.BtnNameNo);
 
       if (result == false)
         return;
@@ -96,7 +96,7 @@ public partial class FamiliesPage : ContentPage
       await Services.GetRequiredService<ICurrentProjectProvider>()
         .Project
         .Family
-        .RemoveFamilyAsync(item.FamilyName, token);
+        .RemoveFamilyAsync(item.Info, token);
     }
     catch (Exception ex)
     {
