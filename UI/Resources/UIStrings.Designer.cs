@@ -206,6 +206,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Update the Person.
+        /// </summary>
+        public static string BtnNameUpdateFamilyPerson {
+            get {
+                return ResourceManager.GetString("BtnNameUpdateFamilyPerson", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Yes.
         /// </summary>
         public static string BtnNameYes {
