@@ -2,6 +2,7 @@ using GT4.Core.Project;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.App.Items;
+using System.Windows.Input;
 
 namespace GT4.UI.App.Pages;
 
@@ -9,11 +10,13 @@ namespace GT4.UI.App.Pages;
 public partial class FamilyPage : ContentPage
 {
   private Name? _FamilyName = null;
+  private int _PersonItemMinimalWidth;
 
   public FamilyPage()
   {
     InitializeComponent();
     BindingContext = this;
+    MemberItemTappedCommand = new Command<FamilyMemberInfoItem>(OnMemberSelected);
   }
 
   public Name? FamilyName
@@ -28,6 +31,10 @@ public partial class FamilyPage : ContentPage
   }
 
   public ServiceProvider Services { get; set; } = ServiceBuilder.DefaultServices;
+
+  public int PersonItemMinimalWidth => _PersonItemMinimalWidth;
+
+  public ICommand MemberItemTappedCommand { get; init;  }
 
   public ICollection<FamilyMemberInfoItem> Members
   {
@@ -61,7 +68,7 @@ public partial class FamilyPage : ContentPage
     }
   }
 
-  internal async void OnMemberSelected(object sender, SelectionChangedEventArgs e)
+  internal async void OnMemberSelected(FamilyMemberInfoItem member)
   {
 
   }
@@ -72,5 +79,16 @@ public partial class FamilyPage : ContentPage
 
   internal async void OnEditPersonSelected(object sender, EventArgs e)
   {
+  }
+
+  protected override void OnSizeAllocated(double width, double height)
+  {
+    const double PercentageOfWidth = 0.9;
+    const int ItemsPerRow = 2;
+
+    base.OnSizeAllocated(width, height);
+    _PersonItemMinimalWidth = (int)(width * PercentageOfWidth / ItemsPerRow);
+
+    OnPropertyChanged(nameof(PersonItemMinimalWidth));
   }
 }

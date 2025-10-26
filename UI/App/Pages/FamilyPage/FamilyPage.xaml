@@ -14,98 +14,111 @@
           VerticalOptions="Center" 
           HorizontalOptions="Center" />
 
-      <CollectionView 
-          ItemsSource="{Binding Members}" 
-          SelectionMode="Single" 
-          SelectionChanged="OnMemberSelected">
+      <FlexLayout 
+          Direction="Row" 
+          Wrap="Wrap" 
+          JustifyContent="SpaceAround" 
+          MinimumHeightRequest="50"
+          AlignContent="Center"
+          AlignItems="Center"
+          BindableLayout.ItemsSource="{Binding Members}">
 
-        <CollectionView.ItemsLayout>
-          <LinearItemsLayout 
-              Orientation="Vertical" 
-              ItemSpacing="3" />
-        </CollectionView.ItemsLayout>
-
-        <CollectionView.ItemTemplate>
+        <BindableLayout.ItemTemplate>
           <DataTemplate x:DataType="items:FamilyMemberInfoItem">
-            <Grid
-                Padding="20" 
-                VerticalOptions="Center"
-                RowDefinitions="Auto, Auto"
-                ColumnDefinitions="100, 30, *, Auto"
-                ColumnSpacing="10"
-                RowSpacing="10">
+            <Frame 
+                CornerRadius="10" 
+                HasShadow="True"
+                Margin="2.5"
+                MinimumWidthRequest="{Binding Path=BindingContext.PersonItemMinimalWidth, 
+                                              Source={RelativeSource AncestorType={x:Type ContentPage}}}">
 
-              <Image 
-                  Grid.Column="0"
-                  Grid.Row="0"
-                  Grid.RowSpan="2"
-                  Source="{Binding Icon}"  
-                  VerticalOptions="Start"
-                  Aspect="AspectFit"/>
+              <Frame.GestureRecognizers>
+                <TapGestureRecognizer 
+                    Command="{Binding Path=BindingContext.MemberItemTappedCommand, 
+                                      Source={RelativeSource AncestorType={x:Type ContentPage}}}"
+                    CommandParameter="{Binding .}"/>
+              </Frame.GestureRecognizers>
 
-              <Label 
-                  Grid.Column="1"
-                  Grid.Row="0"
-                  Grid.ColumnSpan="2"
-                  Text="{Binding CommonName}" 
-                  FontSize="Medium"
-                  FontAttributes="Bold"
-                  LineBreakMode="TailTruncation"
-                  HorizontalOptions="Fill"/>
+              <Grid
+                  Padding="20" 
+                  VerticalOptions="Center"
+                  RowDefinitions="Auto, Auto"
+                  ColumnDefinitions="100, 30, *, Auto"
+                  ColumnSpacing="10"
+                  RowSpacing="10">
 
-              <VerticalStackLayout
-                  Grid.Column="2"
-                  Grid.Row="1"
-                  IsVisible="{Binding IsHandlesVisible}">
+                <Image 
+                    Grid.Column="0"
+                    Grid.Row="0"
+                    Grid.RowSpan="2"
+                    Source="{Binding Icon}"  
+                    VerticalOptions="Start"
+                    Aspect="AspectFit"/>
 
                 <Label 
-                    Text="{Binding DateOfBirth}" 
-                    FontSize="Small"
+                    Grid.Column="1"
+                    Grid.Row="0"
+                    Grid.ColumnSpan="2"
+                    Text="{Binding CommonName}" 
+                    FontSize="Medium"
+                    FontAttributes="Bold"
                     LineBreakMode="TailTruncation"
                     HorizontalOptions="Fill"/>
 
-                <Label 
-                    Text="{Binding DateOfDeath}" 
-                    FontSize="Small"
-                    LineBreakMode="TailTruncation"
-                    HorizontalOptions="Fill"
-                    IsVisible="{Binding ShowDateOfDeath}"/>
+                <VerticalStackLayout
+                    Grid.Column="2"
+                    Grid.Row="1"
+                    IsVisible="{Binding IsHandlesVisible}">
 
-                <Label 
-                    Text="{Binding Age}" 
-                    FontSize="Small"
-                    LineBreakMode="TailTruncation"
-                    HorizontalOptions="Fill"/>
+                  <Label 
+                      Text="{Binding DateOfBirth}" 
+                      FontSize="Small"
+                      LineBreakMode="TailTruncation"
+                      HorizontalOptions="Fill"/>
 
-              </VerticalStackLayout>
+                  <Label 
+                      Text="{Binding DateOfDeath}" 
+                      FontSize="Small"
+                      LineBreakMode="TailTruncation"
+                      HorizontalOptions="Fill"
+                      IsVisible="{Binding ShowDateOfDeath}"/>
 
-              <VerticalStackLayout
-                  Grid.Column="3"
-                  Grid.Row="0"
-                  Grid.RowSpan="2"
-                  Spacing="10"
-                  IsVisible="{Binding IsHandlesVisible}">
+                  <Label 
+                      Text="{Binding Age}" 
+                      FontSize="Small"
+                      LineBreakMode="TailTruncation"
+                      HorizontalOptions="Fill"/>
 
-                <Button 
-                    Text="🖋️"   
-                    Clicked="OnEditPersonSelected"
-                    WidthRequest="32"
-                    HeightRequest="32"
-                    VerticalOptions="Start"/>
+                </VerticalStackLayout>
 
-                <Button 
-                    Text="❌"  
-                    Clicked="OnDeletePersonSelected"
-                    WidthRequest="32"
-                    HeightRequest="32"
-                    VerticalOptions="Start"/>
+                <VerticalStackLayout
+                    Grid.Column="3"
+                    Grid.Row="0"
+                    Grid.RowSpan="2"
+                    Spacing="10"
+                    IsVisible="{Binding IsHandlesVisible}">
 
-              </VerticalStackLayout>
+                  <Button 
+                      Text="🖋️"   
+                      Clicked="OnEditPersonSelected"
+                      WidthRequest="32"
+                      HeightRequest="32"
+                      VerticalOptions="Start"/>
 
-            </Grid>
+                  <Button 
+                      Text="❌"  
+                      Clicked="OnDeletePersonSelected"
+                      WidthRequest="32"
+                      HeightRequest="32"
+                      VerticalOptions="Start"/>
+
+                </VerticalStackLayout>
+
+              </Grid>
+            </Frame>
           </DataTemplate>
-        </CollectionView.ItemTemplate>
-      </CollectionView>
+        </BindableLayout.ItemTemplate>
+      </FlexLayout>
 
     </VerticalStackLayout>
   </ScrollView>
