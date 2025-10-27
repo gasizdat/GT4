@@ -1,12 +1,161 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="GT4.UI.App.Dialogs.CreateNewPersonDialog"
-             Title="NewPage1">
-    <VerticalStackLayout>
-        <Label 
-            Text="Welcome to .NET MAUI!"
-            VerticalOptions="Center" 
-            HorizontalOptions="Center" />
+						 xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+						 x:Class="GT4.UI.App.Dialogs.CreateNewPersonDialog"
+						 Title="NewPage1">
+  <ContentPage.Resources>
+    <ResourceDictionary>
+
+      <OnIdiom 
+        x:Key="PhotoHeight" 
+        x:TypeArguments="x:Double"
+        Phone="100" 
+        Tablet="140" 
+        Desktop="300" />
+      <OnIdiom 
+        x:Key="PhotoWidth"  
+        x:TypeArguments="x:Double"
+        Phone="100" 
+        Tablet="140" 
+        Desktop="300" />
+
+      <Style x:Key="PhotoThumbStyle" TargetType="Image">
+        <Setter Property="Aspect" Value="AspectFit" />
+        <Setter Property="HeightRequest" Value="{StaticResource PhotoHeight}" />
+        <Setter Property="WidthRequest"  Value="{StaticResource PhotoWidth}" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+        <Setter Property="VerticalOptions"   Value="Center" />
+      </Style>
+    </ResourceDictionary>
+  </ContentPage.Resources>
+
+  <ScrollView>
+    <VerticalStackLayout 
+					Spacing="20" 
+					Padding="20">
+
+      <Frame 
+					CornerRadius="10"
+					HorizontalOptions="Fill">
+
+        <Grid 
+          ColumnDefinitions="Auto,*,Auto"
+          ColumnSpacing="10">
+
+          <Label
+            Grid.Row="0"
+            Grid.Column="0"
+            Text="Pictures" />
+          <CollectionView 
+            Grid.Row="0"
+            Grid.Column="1"
+								ItemsSource="{Binding Photos}" 
+								SelectionMode="Single" 
+                HorizontalScrollBarVisibility="Always">
+
+            <CollectionView.ItemsLayout>
+              <LinearItemsLayout 
+										Orientation="Horizontal" 
+										ItemSpacing="3" />
+            </CollectionView.ItemsLayout>
+
+            <CollectionView.ItemTemplate>
+              <DataTemplate>
+                <Image 
+                    Source="{Binding .}"
+									  Style="{StaticResource PhotoThumbStyle}"/>
+              </DataTemplate>
+            </CollectionView.ItemTemplate>
+          </CollectionView>
+          <Button 
+            Grid.Row="0"
+            Grid.Column="2"
+							Text="Add Photo" 
+							Command="{Binding AddChildCommand}" 
+							StyleClass="Secondary" />
+
+        </Grid>
+      </Frame>
+
+      <Frame Style="{StaticResource CardFrameStyle}">
+        <Grid RowDefinitions="Auto, Auto, Auto" ColumnDefinitions="*, *" ColumnSpacing="10" RowSpacing="15">
+
+          <Label Text="Full Name(s):" Grid.Row="0" Grid.Column="0" VerticalOptions="Center" />
+          <Entry Placeholder="Enter main name" Text="{Binding MainName}" Grid.Row="0" Grid.Column="1" />
+
+        </Grid>
+      </Frame>
+
+      <Frame Style="{StaticResource CardFrameStyle}">
+        <VerticalStackLayout Spacing="15">
+
+          <Label Text="Date Information" Style="{StaticResource HeaderLabelStyle}" />
+
+          <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="10">
+            <Label Text="Birthday:" Grid.Column="0" VerticalOptions="Center" />
+            <DatePicker Date="{Binding BirthDate}" Format="d" Grid.Column="1" />
+            <Picker Title="Status" SelectedItem="{Binding BirthDateStatus}" Grid.Column="2" WidthRequest="100">
+              <Picker.ItemsSource>
+                <x:Array Type="{x:Type x:String}">
+                  <x:String>Exact</x:String>
+                  <x:String>Approximate</x:String>
+                  <x:String>Before</x:String>
+                  <x:String>After</x:String>
+                </x:Array>
+              </Picker.ItemsSource>
+            </Picker>
+          </Grid>
+
+          <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="10">
+            <Label Text="Death Date:" Grid.Column="0" VerticalOptions="Center" />
+            <DatePicker Date="{Binding DeathDate}" Format="d" Grid.Column="1" />
+            <Picker Title="Status" SelectedItem="{Binding DeathDateStatus}" Grid.Column="2" WidthRequest="100">
+              <Picker.ItemsSource>
+                <x:Array Type="{x:Type x:String}">
+                  <x:String>Exact</x:String>
+                  <x:String>Approximate</x:String>
+                  <x:String>Before</x:String>
+                  <x:String>After</x:String>
+                </x:Array>
+              </Picker.ItemsSource>
+            </Picker>
+          </Grid>
+        </VerticalStackLayout>
+      </Frame>
+
+      <Frame Style="{StaticResource CardFrameStyle}">
+        <VerticalStackLayout Spacing="15">
+
+          <Label Text="Relationships" Style="{StaticResource HeaderLabelStyle}" />
+
+          <Grid ColumnDefinitions="Auto, *">
+            <Label Text="Couple/Spouse:" Grid.Column="0" VerticalOptions="Center" />
+            <Entry Placeholder="Search or type name" Text="{Binding CoupleName}" Grid.Column="1" />
+          </Grid>
+
+          <VerticalStackLayout Spacing="5">
+            <Label Text="Children:" />
+            <Button Text="Add Child" Command="{Binding AddChildCommand}" StyleClass="Secondary" />
+            <BindableLayout.ItemTemplate>
+              <DataTemplate>
+                <Label Text="{Binding Name}" />
+              </DataTemplate>
+            </BindableLayout.ItemTemplate>
+          </VerticalStackLayout>
+        </VerticalStackLayout>
+      </Frame>
+
+      <Frame Style="{StaticResource CardFrameStyle}">
+        <VerticalStackLayout Spacing="10">
+          <Label Text="Biography" Style="{StaticResource HeaderLabelStyle}" />
+          <Editor Placeholder="Enter a biography or life story..."
+														HeightRequest="200"
+														Text="{Binding Biography}" />
+        </VerticalStackLayout>
+      </Frame>
+
+      <Button Text="{Binding CreatePersonBtnName}" Command="{Binding SavePersonCommand}" StyleClass="Primary" />
+
     </VerticalStackLayout>
+  </ScrollView>
 </ContentPage>

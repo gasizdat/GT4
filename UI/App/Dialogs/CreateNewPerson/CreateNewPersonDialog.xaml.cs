@@ -8,7 +8,7 @@ public partial class CreateNewPersonDialog : ContentPage
 {
   private readonly string _SaveButtonName;
   private bool _NotReady = true;
-  private ImageSource? _MainPhoto;
+  private readonly List<ImageSource> _Photos = new();
   private Name? _FirstName;
   private Name? _MiddleName;
   private Name? _LastName;
@@ -22,17 +22,13 @@ public partial class CreateNewPersonDialog : ContentPage
     InitializeComponent();
     BindingContext = this;
     _SaveButtonName = person is null ? UIStrings.BtnNameCreateFamilyPerson : UIStrings.BtnNameUpdateFamilyPerson;
+
+    // TODO just tests
+    _Photos.Add(ImageSource.FromFile("family_stub.png"));
+    _Photos.Add(ImageSource.FromStream(_ => FileSystem.OpenAppPackageFileAsync("family_stub.png")));
   }
 
-  public ImageSource? MainPhoto
-  {
-    get => _MainPhoto;
-    set
-    {
-      _MainPhoto = value; 
-      OnPropertyChanged(nameof(CreateFamilyBtnName));
-    }
-  }
+  public ICollection<ImageSource> Photos => _Photos;
 
   public Name? FirstName
   {
@@ -40,7 +36,7 @@ public partial class CreateNewPersonDialog : ContentPage
     set
     {
       _FirstName = value;
-      OnPropertyChanged(nameof(CreateFamilyBtnName));
+      OnPropertyChanged(nameof(CreatePersonBtnName));
     }
   }
 
@@ -50,7 +46,7 @@ public partial class CreateNewPersonDialog : ContentPage
     set
     {
       _MiddleName = value;
-      OnPropertyChanged(nameof(CreateFamilyBtnName));
+      OnPropertyChanged(nameof(CreatePersonBtnName));
     }
   }
 
@@ -60,7 +56,7 @@ public partial class CreateNewPersonDialog : ContentPage
     set
     {
       _LastName = value;
-      OnPropertyChanged(nameof(CreateFamilyBtnName));
+      OnPropertyChanged(nameof(CreatePersonBtnName));
     }
   }
 
@@ -70,7 +66,7 @@ public partial class CreateNewPersonDialog : ContentPage
     set
     {
       _AdditionalNames = value;
-      OnPropertyChanged(nameof(CreateFamilyBtnName));
+      OnPropertyChanged(nameof(CreatePersonBtnName));
     }
   }
 
@@ -80,7 +76,7 @@ public partial class CreateNewPersonDialog : ContentPage
     set
     {
       _BirthDate = value;
-      OnPropertyChanged(nameof(CreateFamilyBtnName));
+      OnPropertyChanged(nameof(CreatePersonBtnName));
     }
   }
 
@@ -90,7 +86,7 @@ public partial class CreateNewPersonDialog : ContentPage
     set
     {
       _DeathDate = value;
-      OnPropertyChanged(nameof(CreateFamilyBtnName));
+      OnPropertyChanged(nameof(CreatePersonBtnName));
     }
   }
 
@@ -100,10 +96,10 @@ public partial class CreateNewPersonDialog : ContentPage
     set
     {
       _Sex = value;
-      OnPropertyChanged(nameof(CreateFamilyBtnName));
+      OnPropertyChanged(nameof(CreatePersonBtnName));
     }
   }
 
   public Task<Person?> Person => new TaskCompletionSource<Person?>(null).Task;
-  public string CreateFamilyBtnName => _NotReady ? UIStrings.BtnNameCancel : _SaveButtonName;
+  public string CreatePersonBtnName => _NotReady ? UIStrings.BtnNameCancel : _SaveButtonName;
 }
