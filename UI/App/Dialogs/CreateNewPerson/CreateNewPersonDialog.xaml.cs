@@ -9,10 +9,7 @@ public partial class CreateNewPersonDialog : ContentPage
   private readonly string _SaveButtonName;
   private bool _NotReady = true;
   private readonly List<ImageSource> _Photos = new();
-  private Name? _FirstName;
-  private Name? _MiddleName;
-  private Name? _LastName;
-  private Name[]? _AdditionalNames;
+  private readonly List<Name> _Names = new();
   private Date _BirthDate;
   private Date? _DeathDate;
   private BiologicalSex _Sex;
@@ -24,51 +21,18 @@ public partial class CreateNewPersonDialog : ContentPage
     _SaveButtonName = person is null ? UIStrings.BtnNameCreateFamilyPerson : UIStrings.BtnNameUpdateFamilyPerson;
 
     // TODO just tests
-    _Photos.Add(ImageSource.FromFile("family_stub.png"));
-    _Photos.Add(ImageSource.FromStream(_ => FileSystem.OpenAppPackageFileAsync("family_stub.png")));
+    _Photos.Add(ImageSource.FromFile("female_stub.png"));
+    _Photos.Add(ImageSource.FromStream(_ => FileSystem.OpenAppPackageFileAsync("male_stub.png")));
+
+    // TODO just tests
+    _Names.Add(new Name(0, "Clark", NameType.FirstName, null));
+    _Names.Add(new Name(0, "Jeremy", NameType.AdditionalName, null));
+    _Names.Add(new Name(0, "Campbell", NameType.FirstName, null));
   }
 
   public ICollection<ImageSource> Photos => _Photos;
 
-  public Name? FirstName
-  {
-    get => _FirstName;
-    set
-    {
-      _FirstName = value;
-      OnPropertyChanged(nameof(CreatePersonBtnName));
-    }
-  }
-
-  public Name? MiddleName
-  {
-    get => _MiddleName;
-    set
-    {
-      _MiddleName = value;
-      OnPropertyChanged(nameof(CreatePersonBtnName));
-    }
-  }
-
-  public Name? LastName
-  {
-    get => _LastName;
-    set
-    {
-      _LastName = value;
-      OnPropertyChanged(nameof(CreatePersonBtnName));
-    }
-  }
-
-  public Name[]? AdditionalNames
-  {
-    get => _AdditionalNames;
-    set
-    {
-      _AdditionalNames = value;
-      OnPropertyChanged(nameof(CreatePersonBtnName));
-    }
-  }
+  public ICollection<Name> Names => _Names;
 
   public Date BirthDate
   {

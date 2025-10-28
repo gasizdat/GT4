@@ -26,6 +26,17 @@
         <Setter Property="HorizontalOptions" Value="Center" />
         <Setter Property="VerticalOptions"   Value="Center" />
       </Style>
+
+      <Style x:Key="CardFrameStyle" TargetType="Frame">
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="HorizontalOptions" Value="Fill" />
+      </Style>
+
+      <Style x:Key="CardFrameTitle" TargetType="Label">
+        <Setter Property="FontSize" Value="Title" />
+        <Setter Property="FontAttributes" Value="Bold" />
+      </Style>
+
     </ResourceDictionary>
   </ContentPage.Resources>
 
@@ -35,28 +46,27 @@
 					Padding="20">
 
       <Frame 
-					CornerRadius="10"
-					HorizontalOptions="Fill">
+					Style="{StaticResource CardFrameStyle}">
 
         <Grid 
-          ColumnDefinitions="Auto,*,Auto"
-          ColumnSpacing="10">
-
+          ColumnDefinitions="*, Auto"
+          RowDefinitions="Auto, *">
           <Label
             Grid.Row="0"
             Grid.Column="0"
+            Style="{StaticResource CardFrameTitle}"
             Text="Pictures" />
           <CollectionView 
-            Grid.Row="0"
-            Grid.Column="1"
-								ItemsSource="{Binding Photos}" 
-								SelectionMode="Single" 
-                HorizontalScrollBarVisibility="Always">
+            Grid.Row="1"
+            Grid.Column="0"
+						ItemsSource="{Binding Photos}" 
+						SelectionMode="Single" 
+            HorizontalScrollBarVisibility="Always">
 
             <CollectionView.ItemsLayout>
               <LinearItemsLayout 
 										Orientation="Horizontal" 
-										ItemSpacing="3" />
+										ItemSpacing="10" />
             </CollectionView.ItemsLayout>
 
             <CollectionView.ItemTemplate>
@@ -68,21 +78,60 @@
             </CollectionView.ItemTemplate>
           </CollectionView>
           <Button 
-            Grid.Row="0"
-            Grid.Column="2"
+              Grid.Row="1"
+              Grid.Column="1"
 							Text="Add Photo" 
-							Command="{Binding AddChildCommand}" 
+							Command="{Binding AddPhotoCommand}" 
 							StyleClass="Secondary" />
 
         </Grid>
       </Frame>
 
-      <Frame Style="{StaticResource CardFrameStyle}">
-        <Grid RowDefinitions="Auto, Auto, Auto" ColumnDefinitions="*, *" ColumnSpacing="10" RowSpacing="15">
+      <Frame 
+          Style="{StaticResource CardFrameStyle}">
+        <Grid 
+            RowDefinitions="Auto, *, Auto" 
+            ColumnDefinitions="Auto, *" >
 
-          <Label Text="Full Name(s):" Grid.Row="0" Grid.Column="0" VerticalOptions="Center" />
-          <Entry Placeholder="Enter main name" Text="{Binding MainName}" Grid.Row="0" Grid.Column="1" />
+          <Label
+              Grid.Column="0"
+              Grid.Row="0"
+              Style="{StaticResource CardFrameTitle}"
+              Text="Names" />
 
+          <CollectionView 
+              Grid.Column="1"
+              Grid.Row="1"
+              ItemsSource="{Binding Names}" 
+              SelectionMode="Single" 
+              HorizontalOptions="Center">
+
+            <CollectionView.ItemsLayout>
+              <LinearItemsLayout 
+									Orientation="Vertical" />
+            </CollectionView.ItemsLayout>
+
+            <CollectionView.ItemTemplate>
+              <DataTemplate>
+                <Label 
+                    Padding="15"
+                    Text="{Binding Value}" 
+                    FontSize="Medium"
+                    HorizontalTextAlignment="Start"
+                    VerticalTextAlignment="Center"
+                    HorizontalOptions="Fill"/>
+              </DataTemplate>
+            </CollectionView.ItemTemplate>
+          </CollectionView>
+          
+          <Button 
+              Grid.Column="0"
+              Grid.Row="2"
+              Grid.ColumnSpan="2"
+				      Text="Add Name" 
+				      Command="{Binding AddNameCommand}" 
+				      StyleClass="Secondary" 
+              HorizontalOptions="Fill"/>
         </Grid>
       </Frame>
 
