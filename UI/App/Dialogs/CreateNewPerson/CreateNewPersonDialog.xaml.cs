@@ -20,14 +20,17 @@ public partial class CreateNewPersonDialog : ContentPage
     BindingContext = this;
     _SaveButtonName = person is null ? UIStrings.BtnNameCreateFamilyPerson : UIStrings.BtnNameUpdateFamilyPerson;
 
-    // TODO just tests
+    // TODO just testing
     _Photos.Add(ImageSource.FromFile("female_stub.png"));
     _Photos.Add(ImageSource.FromStream(_ => FileSystem.OpenAppPackageFileAsync("male_stub.png")));
 
-    // TODO just tests
+    // TODO just testing
     _Names.Add(new Name(0, "Clark", NameType.FirstName, null));
     _Names.Add(new Name(0, "Jeremy", NameType.AdditionalName, null));
     _Names.Add(new Name(0, "Campbell", NameType.FirstName, null));
+
+    // TODO just testing
+    _BirthDate = Date.Create(20251029, DateStatus.WellKnown);
   }
 
   public ICollection<ImageSource> Photos => _Photos;

@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
 						 xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
 						 x:Class="GT4.UI.App.Dialogs.CreateNewPersonDialog"
+             xmlns:components="clr-namespace:GT4.UI.App.Components"
 						 Title="NewPage1">
   <ContentPage.Resources>
     <ResourceDictionary>
@@ -49,8 +50,8 @@
 					Style="{StaticResource CardFrameStyle}">
 
         <Grid 
-          ColumnDefinitions="*, Auto"
-          RowDefinitions="Auto, *">
+          RowDefinitions="Auto, *"
+          ColumnDefinitions="*, Auto">
           <Label
             Grid.Row="0"
             Grid.Column="0"
@@ -89,9 +90,9 @@
 
       <Frame 
           Style="{StaticResource CardFrameStyle}">
-        <Grid 
-            RowDefinitions="Auto, *, Auto" 
-            ColumnDefinitions="Auto, *" >
+        <Grid  
+            ColumnDefinitions="Auto, *" 
+            RowDefinitions="Auto, *, Auto">
 
           <Label
               Grid.Column="0"
@@ -123,7 +124,7 @@
               </DataTemplate>
             </CollectionView.ItemTemplate>
           </CollectionView>
-          
+
           <Button 
               Grid.Column="0"
               Grid.Row="2"
@@ -135,72 +136,70 @@
         </Grid>
       </Frame>
 
-      <Frame Style="{StaticResource CardFrameStyle}">
-        <VerticalStackLayout Spacing="15">
+      <Frame 
+          Style="{StaticResource CardFrameStyle}">
+        <Grid  
+            ColumnDefinitions="Auto"
+            RowDefinitions="Auto, Auto, Auto" >
 
-          <Label Text="Date Information" Style="{StaticResource HeaderLabelStyle}" />
+          <Label
+              Grid.Column="0"
+              Grid.Row="0"
+              Style="{StaticResource CardFrameTitle}"
+              Text="Dates" />
 
-          <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="10">
-            <Label Text="Birthday:" Grid.Column="0" VerticalOptions="Center" />
-            <DatePicker Date="{Binding BirthDate}" Format="d" Grid.Column="1" />
-            <Picker Title="Status" SelectedItem="{Binding BirthDateStatus}" Grid.Column="2" WidthRequest="100">
-              <Picker.ItemsSource>
-                <x:Array Type="{x:Type x:String}">
-                  <x:String>Exact</x:String>
-                  <x:String>Approximate</x:String>
-                  <x:String>Before</x:String>
-                  <x:String>After</x:String>
-                </x:Array>
-              </Picker.ItemsSource>
-            </Picker>
-          </Grid>
+          <components:DateInfoView
+              Grid.Column="0"
+              Grid.Row="1"
+              Caption="Birth date: "
+              Date="{Binding BirthDate}" />
 
-          <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="10">
-            <Label Text="Death Date:" Grid.Column="0" VerticalOptions="Center" />
-            <DatePicker Date="{Binding DeathDate}" Format="d" Grid.Column="1" />
-            <Picker Title="Status" SelectedItem="{Binding DeathDateStatus}" Grid.Column="2" WidthRequest="100">
-              <Picker.ItemsSource>
-                <x:Array Type="{x:Type x:String}">
-                  <x:String>Exact</x:String>
-                  <x:String>Approximate</x:String>
-                  <x:String>Before</x:String>
-                  <x:String>After</x:String>
-                </x:Array>
-              </Picker.ItemsSource>
-            </Picker>
-          </Grid>
-        </VerticalStackLayout>
+          <components:DateInfoView
+              Grid.Column="0"
+              Grid.Row="2"
+              Caption="Death date: "
+              Date="{Binding DeathDate}" />
+
+        </Grid>
       </Frame>
 
-      <Frame Style="{StaticResource CardFrameStyle}">
-        <VerticalStackLayout Spacing="15">
+      <Frame 
+          Style="{StaticResource CardFrameStyle}">
 
-          <Label Text="Relationships" Style="{StaticResource HeaderLabelStyle}" />
+        <Grid  
+            ColumnDefinitions="Auto"
+            RowDefinitions="Auto, Auto, Auto" >
 
-          <Grid ColumnDefinitions="Auto, *">
-            <Label Text="Couple/Spouse:" Grid.Column="0" VerticalOptions="Center" />
-            <Entry Placeholder="Search or type name" Text="{Binding CoupleName}" Grid.Column="1" />
-          </Grid>
+          <Label
+              Grid.Column="0"
+              Grid.Row="0"
+              Style="{StaticResource CardFrameTitle}"
+              Text="Relationships" />
+        </Grid>
 
-          <VerticalStackLayout Spacing="5">
-            <Label Text="Children:" />
-            <Button Text="Add Child" Command="{Binding AddChildCommand}" StyleClass="Secondary" />
-            <BindableLayout.ItemTemplate>
-              <DataTemplate>
-                <Label Text="{Binding Name}" />
-              </DataTemplate>
-            </BindableLayout.ItemTemplate>
-          </VerticalStackLayout>
-        </VerticalStackLayout>
       </Frame>
 
-      <Frame Style="{StaticResource CardFrameStyle}">
-        <VerticalStackLayout Spacing="10">
-          <Label Text="Biography" Style="{StaticResource HeaderLabelStyle}" />
-          <Editor Placeholder="Enter a biography or life story..."
-														HeightRequest="200"
-														Text="{Binding Biography}" />
-        </VerticalStackLayout>
+      <Frame 
+          Style="{StaticResource CardFrameStyle}">
+
+        <Grid  
+            ColumnDefinitions="Auto"
+            RowDefinitions="Auto, Auto, Auto" >
+
+          <Label
+              Grid.Column="0"
+              Grid.Row="0"
+              Style="{StaticResource CardFrameTitle}"
+              Text="Biography" />
+
+          <Editor 
+            Grid.Column="0"
+            Grid.Row="1"
+            Placeholder="Enter a biography or life story..."
+						HeightRequest="200"
+						Text="{Binding Biography}" />
+        </Grid>
+
       </Frame>
 
       <Button Text="{Binding CreatePersonBtnName}" Command="{Binding SavePersonCommand}" StyleClass="Primary" />
