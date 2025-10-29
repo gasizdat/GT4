@@ -251,20 +251,20 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Date of birth: {0}.
+        ///   Looks up a localized string similar to Date of birth:.
         /// </summary>
-        public static string FieldDateOfBirth_1 {
+        public static string FieldDateOfBirth {
             get {
-                return ResourceManager.GetString("FieldDateOfBirth_1", resourceCulture);
+                return ResourceManager.GetString("FieldDateOfBirth", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Date of death: {0}.
+        ///   Looks up a localized string similar to Date of death:.
         /// </summary>
-        public static string FieldDateOfDeath_1 {
+        public static string FieldDateOfDeath {
             get {
-                return ResourceManager.GetString("FieldDateOfDeath_1", resourceCulture);
+                return ResourceManager.GetString("FieldDateOfDeath", resourceCulture);
             }
         }
         

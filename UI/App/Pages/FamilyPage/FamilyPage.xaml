@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
              x:Class="GT4.UI.App.Pages.FamilyPage"
+             xmlns:components="clr-namespace:GT4.UI.App.Components"
              xmlns:items="clr-namespace:GT4.UI.App.Items"
              xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
              Title="{Binding FamilyName.Value}">
@@ -70,16 +71,14 @@
                     Grid.Row="1"
                     IsVisible="{Binding IsHandlesVisible}">
 
-                  <Label 
-                      Text="{Binding DateOfBirth}" 
-                      FontSize="Small"
-                      LineBreakMode="TailTruncation"
+                  <components:DateInfoView 
+                      Caption="{x:Static resources:UIStrings.FieldDateOfBirth}"
+                      Date="{Binding Info.BirthDate}" 
                       HorizontalOptions="Fill"/>
 
-                  <Label 
-                      Text="{Binding DateOfDeath}" 
-                      FontSize="Small"
-                      LineBreakMode="TailTruncation"
+                  <components:DateInfoView 
+                      Caption="{x:Static resources:UIStrings.FieldDateOfDeath}"
+                      Date="{Binding Info.DeathDate}"
                       HorizontalOptions="Fill"
                       IsVisible="{Binding ShowDateOfDeath}"/>
 

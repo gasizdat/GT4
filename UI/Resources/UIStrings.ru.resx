@@ -199,11 +199,11 @@
   <data name="DateStatusUnknown" xml:space="preserve">
     <value>неизвестно</value>
   </data>
-  <data name="FieldDateOfBirth_1" xml:space="preserve">
-    <value>Дата рождения: {0}</value>
+  <data name="FieldDateOfBirth" xml:space="preserve">
+    <value>Дата рождения:</value>
   </data>
-  <data name="FieldDateOfDeath_1" xml:space="preserve">
-    <value>Дата смерти: {0}</value>
+  <data name="FieldDateOfDeath" xml:space="preserve">
+    <value>Дата смерти:</value>
   </data>
   <data name="FieldAge_1" xml:space="preserve">
     <value>Возраст: {0}</value>

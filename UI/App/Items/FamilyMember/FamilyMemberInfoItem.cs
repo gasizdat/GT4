@@ -21,10 +21,6 @@ public class FamilyMemberInfoItem : PersonInfoItem
     _DateSpanFormatter = services.GetRequiredService<IDateSpanFormatter>();
   }
 
-  public string DateOfBirth =>
-    string.Format(UIStrings.FieldDateOfBirth_1, _DateFormatter.ToString(Info.BirthDate));
-  public string DateOfDeath =>
-    string.Format(UIStrings.FieldDateOfDeath_1, _DateFormatter.ToString(Info.DeathDate));
   public bool ShowDateOfDeath => Info.DeathDate.HasValue;
   public string Age
   {

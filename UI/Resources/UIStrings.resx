@@ -199,11 +199,11 @@ genealogy tree and enjoy!</value>
   <data name="DateStatusUnknown" xml:space="preserve">
     <value>unknown</value>
   </data>
-  <data name="FieldDateOfBirth_1" xml:space="preserve">
-    <value>Date of birth: {0}</value>
+  <data name="FieldDateOfBirth" xml:space="preserve">
+    <value>Date of birth:</value>
   </data>
-  <data name="FieldDateOfDeath_1" xml:space="preserve">
-    <value>Date of death: {0}</value>
+  <data name="FieldDateOfDeath" xml:space="preserve">
+    <value>Date of death:</value>
   </data>
   <data name="FieldAge_1" xml:space="preserve">
     <value>Age: {0}</value>

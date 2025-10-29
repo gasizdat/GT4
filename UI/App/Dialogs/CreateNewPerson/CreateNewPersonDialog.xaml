@@ -3,6 +3,7 @@
 						 xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
 						 x:Class="GT4.UI.App.Dialogs.CreateNewPersonDialog"
              xmlns:components="clr-namespace:GT4.UI.App.Components"
+             xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
 						 Title="NewPage1">
   <ContentPage.Resources>
     <ResourceDictionary>
@@ -139,7 +140,7 @@
       <Frame 
           Style="{StaticResource CardFrameStyle}">
         <Grid  
-            ColumnDefinitions="Auto"
+            ColumnDefinitions="Auto, *"
             RowDefinitions="Auto, Auto, Auto" >
 
           <Label
@@ -149,15 +150,15 @@
               Text="Dates" />
 
           <components:DateInfoView
-              Grid.Column="0"
+              Grid.Column="1"
               Grid.Row="1"
-              Caption="Birth date: "
+              Caption="{x:Static resources:UIStrings.FieldDateOfBirth}"
               Date="{Binding BirthDate}" />
 
           <components:DateInfoView
-              Grid.Column="0"
+              Grid.Column="1"
               Grid.Row="2"
-              Caption="Death date: "
+              Caption="{x:Static resources:UIStrings.FieldDateOfDeath}"
               Date="{Binding DeathDate}" />
 
         </Grid>
