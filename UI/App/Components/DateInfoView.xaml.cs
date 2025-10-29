@@ -12,49 +12,22 @@ public partial class DateInfoView : ContentView
   }
 
   public static readonly BindableProperty CaptionProperty =
-    BindableProperty.Create(nameof(Caption), typeof(string), typeof(DateInfoView), default(Nullable));
+    BindableProperty.Create(nameof(Caption), typeof(string), typeof(DateInfoView), default, BindingMode.OneWay);
 
   public static readonly BindableProperty DateProperty =
-    BindableProperty.Create(nameof(Date), typeof(Date), typeof(DateInfoView), default(Nullable));
+    BindableProperty.Create(nameof(Date), typeof(Date), typeof(DateInfoView), default, BindingMode.OneWay, null, OnDateChanged);
 
-  public static readonly BindableProperty VisibleIfNoDateProperty =
-    BindableProperty.Create(nameof(VisibleIfNoDate), typeof(bool), typeof(DateInfoView), default(Boolean));
+  public Date Date => (Date)GetValue(DateProperty);
 
-  public Date? Date
+  public string Caption => (string)GetValue(CaptionProperty);
+
+  public string DateText => _Formatter.ToString(Date);
+
+  private static void OnDateChanged(BindableObject obj, object oldValue, object newValue)
   {
-    get
+    if (obj is DateInfoView view && oldValue != newValue)
     {
-      return (Date?)GetValue(DateProperty);
-    }
-    set
-    {
-      SetValue(DateProperty, value);
-      OnPropertyChanged(nameof(DateText));
-    }
-  }
-
-  public string? Caption
-  {
-    get
-    {
-      return (string?)GetValue(CaptionProperty);
-    }
-    set
-    {
-      SetValue(CaptionProperty, value);
-      OnPropertyChanged(nameof(Caption));
-    }
-  }
-
-  public string DateText =>_Formatter.ToString(Date);
-
-  public bool VisibleIfNoDate
-  {
-    get => (bool)GetValue(VisibleIfNoDateProperty);
-    set
-    {
-      SetValue(VisibleIfNoDateProperty, value);
-      OnPropertyChanged(nameof(VisibleIfNoDate));
+      view.OnPropertyChanged(nameof(DateText));
     }
   }
 }
