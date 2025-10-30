@@ -19,7 +19,7 @@ public partial class CreateNewPersonDialog : ContentPage
     _SaveButtonName = person is null ? UIStrings.BtnNameCreateFamilyPerson : UIStrings.BtnNameUpdateFamilyPerson;
 
     // TODO just testing
-    _Photos.Add(ImageSource.FromFile("female_stub.png"));
+    _Photos.Add(ImageSource.FromStream(_ => FileSystem.OpenAppPackageFileAsync("female_stub.png")));
     _Photos.Add(ImageSource.FromStream(_ => FileSystem.OpenAppPackageFileAsync("male_stub.png")));
 
     // TODO just testing
