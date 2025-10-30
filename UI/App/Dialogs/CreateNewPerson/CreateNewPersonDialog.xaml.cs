@@ -1,5 +1,6 @@
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.App.Items;
 using GT4.UI.Resources;
 
 namespace GT4.UI.App.Dialogs;
@@ -10,6 +11,7 @@ public partial class CreateNewPersonDialog : ContentPage
   private bool _NotReady = true;
   private readonly List<ImageSource> _Photos = new();
   private readonly List<Name> _Names = new();
+  private readonly List<RelativeMemberInfoItem> _Relatives = new();
   private Date _BirthDate;
   private Date? _DeathDate;
   private BiologicalSex _Sex;
@@ -25,11 +27,18 @@ public partial class CreateNewPersonDialog : ContentPage
     // TODO just testing
     _Names.Add(new Name(0, "Clark", NameType.FirstName, null));
     _Names.Add(new Name(0, "Jeremy", NameType.AdditionalName, null));
-    _Names.Add(new Name(0, "Campbell", NameType.FirstName, null));
+    _Names.Add(new Name(0, "Campbell", NameType.LastName, null));
 
     // TODO just testing
     _BirthDate = Date.Create(20251029, DateStatus.WellKnown);
 
+    // TODO relatives just testing
+    _Relatives.Add(new RelativeMemberInfoItem(new Relative(
+      new Person(0, [new Name(0, "Мариванна", NameType.FirstName, 0)],
+      null, default, null, BiologicalSex.Female), RelationshipType.Mother, Date.Create(19900521, DateStatus.WellKnown)), ServiceBuilder.DefaultServices));
+    _Relatives.Add(new RelativeMemberInfoItem(new Relative(
+      new Person(0, [new Name(0, "Скуфовский", NameType.LastName, 0)],
+      null, default, null, BiologicalSex.Male), RelationshipType.Father, Date.Create(19850521, DateStatus.YearApproximate)), ServiceBuilder.DefaultServices));
 
     InitializeComponent();
     BindingContext = this;
@@ -38,6 +47,8 @@ public partial class CreateNewPersonDialog : ContentPage
   public ICollection<ImageSource> Photos => _Photos;
 
   public ICollection<Name> Names => _Names;
+
+  public ICollection<RelativeMemberInfoItem> Relatives => _Relatives;
 
   public Date BirthDate
   {
