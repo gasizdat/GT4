@@ -22,8 +22,7 @@ public abstract class CollectionItemBase<TDto>
     ImageSource.FromStream(token => Task.Run<Stream>(() => new MemoryStream(data), token));
 
   protected static ImageSource ImageFromRawResource(string resourceName) =>
-    ImageSource.FromFile(resourceName)
-    /*ImageSource.FromStream(_ => FileSystem.OpenAppPackageFileAsync(resourceName))*/;
+    ImageSource.FromStream(_ => FileSystem.OpenAppPackageFileAsync(resourceName));
 
   public TDto Info => _Info;
   public ImageSource Icon => CustomImage ?? DefaultImage;
