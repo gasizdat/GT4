@@ -16,8 +16,6 @@ public partial class CreateNewPersonDialog : ContentPage
 
   public CreateNewPersonDialog(Person? person)
   {
-    InitializeComponent();
-    BindingContext = this;
     _SaveButtonName = person is null ? UIStrings.BtnNameCreateFamilyPerson : UIStrings.BtnNameUpdateFamilyPerson;
 
     // TODO just testing
@@ -31,6 +29,10 @@ public partial class CreateNewPersonDialog : ContentPage
 
     // TODO just testing
     _BirthDate = Date.Create(20251029, DateStatus.WellKnown);
+
+
+    InitializeComponent();
+    BindingContext = this;
   }
 
   public ICollection<ImageSource> Photos => _Photos;

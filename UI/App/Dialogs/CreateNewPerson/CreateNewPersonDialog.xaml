@@ -30,13 +30,28 @@
       </Style>
 
       <Style x:Key="CardFrameStyle" TargetType="Frame">
-        <Setter Property="CornerRadius" Value="10" />
         <Setter Property="HorizontalOptions" Value="Fill" />
       </Style>
 
-      <Style x:Key="CardFrameTitle" TargetType="Label">
-        <Setter Property="FontSize" Value="Title" />
+      <Style x:Key="CardFrameTitle" TargetType="Label" BasedOn="{StaticResource Headline}">
+        <Setter Property="HorizontalOptions" Value="Start" />
         <Setter Property="FontAttributes" Value="Bold" />
+      </Style>
+
+      <Style x:Key="ChangeAddorner" TargetType="Button">
+        <Setter Property="BorderColor" Value="{StaticResource Primary}"/>
+        <Setter Property="BackgroundColor" Value="{StaticResource Translucent80}" />
+        <Setter Property="BorderWidth" Value="1.5" />
+        <Setter Property="TextColor" Value="{StaticResource SecondaryDarkText}" />
+        <Setter Property="ZIndex" Value="2100000000"/>
+      </Style>
+
+      <Style x:Key="DeleteAddorner" TargetType="Button" BasedOn="{StaticResource ChangeAddorner}">
+        <Setter Property="Text" Value="❌"/>
+      </Style>
+
+      <Style x:Key="EditAddorner" TargetType="Button" BasedOn="{StaticResource ChangeAddorner}">
+        <Setter Property="Text" Value="🖋️"/>
       </Style>
 
     </ResourceDictionary>
@@ -51,31 +66,52 @@
 					Style="{StaticResource CardFrameStyle}">
 
         <Grid 
-          RowDefinitions="Auto, *"
-          ColumnDefinitions="*, Auto">
+            ColumnDefinitions="*, Auto"
+            RowDefinitions="Auto, Auto">
           <Label
-            Grid.Row="0"
-            Grid.Column="0"
-            Style="{StaticResource CardFrameTitle}"
-            Text="Pictures" />
+              Grid.Row="0"
+              Grid.Column="0"
+              Style="{StaticResource CardFrameTitle}"
+              Text="Pictures" />
           <CollectionView 
-            Grid.Row="1"
-            Grid.Column="0"
-						ItemsSource="{Binding Photos}" 
-						SelectionMode="Single" 
-            HorizontalScrollBarVisibility="Always">
+              Grid.Row="1"
+              Grid.Column="0"
+					    ItemsSource="{Binding Photos}" 
+					    SelectionMode="Single" 
+              HorizontalScrollBarVisibility="Always">
 
             <CollectionView.ItemsLayout>
               <LinearItemsLayout 
-										Orientation="Horizontal" 
-										ItemSpacing="10" />
+							    Orientation="Horizontal" 
+							    ItemSpacing="10" />
             </CollectionView.ItemsLayout>
 
             <CollectionView.ItemTemplate>
               <DataTemplate>
-                <Image 
-                    Source="{Binding .}"
-									  Style="{StaticResource PhotoThumbStyle}"/>
+                <Grid
+                    ColumnDefinitions="*, Auto"
+                    RowDefinitions="Auto, Auto, *"
+                    RowSpacing="10">
+
+                  <Image
+                      Grid.Column="0"
+                      Grid.ColumnSpan="2"
+                      Grid.Row="0"
+                      Grid.RowSpan="3"
+                      Source="{Binding .}"
+									    Style="{StaticResource PhotoThumbStyle}"/>
+
+                  <Button 
+                      Grid.Column="1"
+                      Grid.Row="0"
+                      Style="{StaticResource EditAddorner}"/>
+
+                  <Button 
+                      Grid.Column="1"
+                      Grid.Row="1"
+                      Style="{StaticResource DeleteAddorner}"/>
+
+                </Grid>
               </DataTemplate>
             </CollectionView.ItemTemplate>
           </CollectionView>
@@ -184,8 +220,8 @@
           Style="{StaticResource CardFrameStyle}">
 
         <Grid  
-            ColumnDefinitions="Auto"
-            RowDefinitions="Auto, Auto, Auto" >
+            ColumnDefinitions="*"
+            RowDefinitions="Auto, *" >
 
           <Label
               Grid.Column="0"
@@ -194,11 +230,12 @@
               Text="Biography" />
 
           <Editor 
-            Grid.Column="0"
-            Grid.Row="1"
-            Placeholder="Enter a biography or life story..."
-						HeightRequest="200"
-						Text="{Binding Biography}" />
+              Grid.Column="0"
+              Grid.Row="1"
+              Placeholder="Enter a biography or life story..."
+						  HeightRequest="200"
+              HorizontalOptions="Fill"
+						  Text="{Binding Biography}" />
         </Grid>
 
       </Frame>
