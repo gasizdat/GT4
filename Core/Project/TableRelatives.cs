@@ -9,7 +9,7 @@ public class TableRelatives : TableBase
   private async Task<Relative?> CreateRelativeAsync(SqliteDataReader reader, CancellationToken token)
   {
     var id = reader.GetInt32(0);
-    var type = GetEnum<RelativeType>(reader, 1);
+    var type = GetEnum<RelationshipType>(reader, 1);
     var date = TryGetDate(reader, 2, 3);
     var relative = await Document.Persons.TryGetPersonById(id, token);
 
@@ -63,7 +63,7 @@ public class TableRelatives : TableBase
       .ToArray() ?? [];
   }
 
-  public async Task<Relative> AddRelativeAsync(Person person, Person relative, RelativeType type, Date? date, CancellationToken token)
+  public async Task<Relative> AddRelativeAsync(Person person, Person relative, RelationshipType type, Date? date, CancellationToken token)
   {
     using var command = Document.CreateCommand();
     command.CommandText = """
