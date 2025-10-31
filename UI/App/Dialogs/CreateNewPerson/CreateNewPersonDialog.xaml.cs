@@ -35,10 +35,10 @@ public partial class CreateNewPersonDialog : ContentPage
 
     // TODO relatives just testing
     _Relatives.Add(new RelativeMemberInfoItem(new Relative(
-      new Person(0, [new Name(0, "Мариванна", NameType.FirstName, 0)], null, Date.Create(19900000, DateStatus.YearApproximate), null, BiologicalSex.Female), 
+      new Person(0, [new Name(0, "Jane", NameType.FirstName, 0)], null, Date.Create(19900000, DateStatus.YearApproximate), null, BiologicalSex.Female), 
       RelationshipType.Mother, Date.Create(20050521, DateStatus.WellKnown)), ServiceBuilder.DefaultServices));
     _Relatives.Add(new RelativeMemberInfoItem(new Relative(
-      new Person(0, [new Name(0, "Скуфовский", NameType.LastName, 0)], null, Date.Create(19951127, DateStatus.DayUnknown), null, BiologicalSex.Male), 
+      new Person(0, [new Name(0, "Doe", NameType.LastName, 0)], null, Date.Create(19951127, DateStatus.DayUnknown), null, BiologicalSex.Male), 
       RelationshipType.Father, Date.Create(19850521, DateStatus.YearApproximate)), ServiceBuilder.DefaultServices));
 
     InitializeComponent();
