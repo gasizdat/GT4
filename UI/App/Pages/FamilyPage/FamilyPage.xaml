@@ -1,115 +1,116 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
-             x:Class="GT4.UI.App.Pages.FamilyPage"
-             xmlns:components="clr-namespace:GT4.UI.App.Components"
-             xmlns:items="clr-namespace:GT4.UI.App.Items"
-             xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
-             Title="{Binding FamilyName.Value}">
+<ContentPage
+    x:Class="GT4.UI.App.Pages.FamilyPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:components="clr-namespace:GT4.UI.App.Components"
+    xmlns:items="clr-namespace:GT4.UI.App.Items"
+    xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
+    Title="{Binding FamilyName.Value}">
   <ScrollView>
-    <VerticalStackLayout Padding="20" Spacing="10">
-      
-      <Label 
-          Text="{x:Static resources:UIStrings.WndHintFamilyPage}"
-          VerticalOptions="Center" 
-          HorizontalOptions="Center" />
+    <VerticalStackLayout
+        Padding="20"
+        Spacing="10">
 
-      <FlexLayout 
-          Direction="Row" 
-          Wrap="Wrap" 
-          JustifyContent="SpaceAround" 
-          MinimumHeightRequest="50"
+      <Label
+          HorizontalOptions="Center"
+          Text="{x:Static resources:UIStrings.WndHintFamilyPage}"
+          VerticalOptions="Center" />
+
+      <FlexLayout
           AlignContent="Center"
           AlignItems="Center"
-          BindableLayout.ItemsSource="{Binding Members}">
+          BindableLayout.ItemsSource="{Binding Members}"
+          Direction="Row"
+          JustifyContent="SpaceAround"
+          MinimumHeightRequest="50"
+          Wrap="Wrap">
 
         <BindableLayout.ItemTemplate>
           <DataTemplate x:DataType="items:FamilyMemberInfoItem">
-            <Frame 
-                CornerRadius="10" 
-                HasShadow="True"
+            <Frame
                 Margin="2.5"
-                MinimumWidthRequest="{Binding Path=BindingContext.PersonItemMinimalWidth, 
-                                              Source={RelativeSource AncestorType={x:Type ContentPage}}}">
+                CornerRadius="10"
+                HasShadow="True"
+                MinimumWidthRequest="{Binding Path=BindingContext.PersonItemMinimalWidth, Source={RelativeSource AncestorType={x:Type ContentPage}}}">
 
               <Frame.GestureRecognizers>
-                <TapGestureRecognizer 
-                    Command="{Binding Path=BindingContext.MemberItemTappedCommand, 
-                                      Source={RelativeSource AncestorType={x:Type ContentPage}}}"
-                    CommandParameter="{Binding .}"/>
+                <TapGestureRecognizer
+                    Command="{Binding Path=BindingContext.MemberItemTappedCommand, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
+                    CommandParameter="{Binding .}" />
               </Frame.GestureRecognizers>
 
               <Grid
-                  Padding="20" 
-                  VerticalOptions="Center"
-                  RowDefinitions="Auto, Auto"
+                  Padding="20"
                   ColumnDefinitions="100, 30, *, Auto"
                   ColumnSpacing="10"
-                  RowSpacing="10">
+                  RowDefinitions="Auto, Auto"
+                  RowSpacing="10"
+                  VerticalOptions="Center">
 
-                <Image 
-                    Grid.Column="0"
+                <Image
                     Grid.Row="0"
                     Grid.RowSpan="2"
-                    Source="{Binding Icon}"  
-                    VerticalOptions="Start"
-                    Aspect="AspectFit"/>
+                    Grid.Column="0"
+                    Aspect="AspectFit"
+                    Source="{Binding Icon}"
+                    VerticalOptions="Start" />
 
-                <Label 
-                    Grid.Column="1"
+                <Label
                     Grid.Row="0"
+                    Grid.Column="1"
                     Grid.ColumnSpan="2"
-                    Text="{Binding CommonName}" 
-                    FontSize="Medium"
                     FontAttributes="Bold"
+                    FontSize="Medium"
+                    HorizontalOptions="Fill"
                     LineBreakMode="TailTruncation"
-                    HorizontalOptions="Fill"/>
+                    Text="{Binding CommonName}" />
 
                 <VerticalStackLayout
-                    Grid.Column="2"
-                    Grid.Row="1"
-                    IsVisible="{Binding IsHandlesVisible}">
+                    Grid.Row="0"
+                    Grid.RowSpan="2"
+                    Grid.Column="3"
+                    IsVisible="{Binding IsHandlesVisible}"
+                    Spacing="10">
 
-                  <components:DateInfoView 
-                      Caption="{x:Static resources:UIStrings.FieldDateOfBirth}"
-                      Date="{Binding Info.BirthDate}" 
-                      HorizontalOptions="Fill"/>
+                  <Button
+                      Clicked="OnEditPersonSelected"
+                      HeightRequest="32"
+                      Text="🖋️"
+                      VerticalOptions="Start"
+                      WidthRequest="32" />
 
-                  <components:DateInfoView 
-                      Caption="{x:Static resources:UIStrings.FieldDateOfDeath}"
-                      Date="{Binding Info.DeathDate}"
-                      HorizontalOptions="Fill"
-                      IsVisible="{Binding ShowDateOfDeath}"/>
-
-                  <Label 
-                      Text="{Binding Age}" 
-                      FontSize="Small"
-                      LineBreakMode="TailTruncation"
-                      HorizontalOptions="Fill"/>
+                  <Button
+                      Clicked="OnDeletePersonSelected"
+                      HeightRequest="32"
+                      Text="❌"
+                      VerticalOptions="Start"
+                      WidthRequest="32" />
 
                 </VerticalStackLayout>
 
                 <VerticalStackLayout
-                    Grid.Column="3"
-                    Grid.Row="0"
-                    Grid.RowSpan="2"
-                    Spacing="10"
+                    Grid.Row="1"
+                    Grid.Column="2"
                     IsVisible="{Binding IsHandlesVisible}">
 
-                  <Button 
-                      Text="🖋️"   
-                      Clicked="OnEditPersonSelected"
-                      WidthRequest="32"
-                      HeightRequest="32"
-                      VerticalOptions="Start"/>
+                  <components:DateInfoView
+                      Caption="{x:Static resources:UIStrings.FieldDateOfBirth}"
+                      Date="{Binding Info.BirthDate}"
+                      HorizontalOptions="Fill" />
 
-                  <Button 
-                      Text="❌"  
-                      Clicked="OnDeletePersonSelected"
-                      WidthRequest="32"
-                      HeightRequest="32"
-                      VerticalOptions="Start"/>
+                  <components:DateInfoView
+                      Caption="{x:Static resources:UIStrings.FieldDateOfDeath}"
+                      Date="{Binding Info.DeathDate}"
+                      HorizontalOptions="Fill"
+                      IsVisible="{Binding ShowDateOfDeath}" />
+
+                  <Label
+                      FontSize="Small"
+                      HorizontalOptions="Fill"
+                      LineBreakMode="TailTruncation"
+                      Text="{Binding Age}" />
 
                 </VerticalStackLayout>
 

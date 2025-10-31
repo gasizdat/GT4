@@ -1,64 +1,93 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
-             x:Class="GT4.UI.App.Pages.MainPage">
+<ContentPage
+    x:Class="GT4.UI.App.Pages.MainPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources">
 
   <ScrollView>
-    <VerticalStackLayout Padding="30,0" Spacing="25">
+    <VerticalStackLayout
+        Padding="30,0"
+        Spacing="25">
 
-      <Picker 
-        HorizontalOptions="End"
-        Title="{x:Static resources:UIStrings.PkrLanguageHint}"
-        ItemsSource="{Binding Languages}"
-        ItemDisplayBinding="{Binding Name}"
-        SelectedItem="{Binding SelectedLanguage}"/>
+      <Picker
+          Title="{x:Static resources:UIStrings.PkrLanguageHint}"
+          HorizontalOptions="End"
+          ItemDisplayBinding="{Binding Name}"
+          ItemsSource="{Binding Languages}"
+          SelectedItem="{Binding SelectedLanguage}" />
 
       <Image
-        Source="gt4_logo.png"
-        HeightRequest="185"
-        Aspect="AspectFit" />
+          Aspect="AspectFit"
+          HeightRequest="185"
+          Source="gt4_logo.png" />
 
       <Label
-        Text="{x:Static resources:UIStrings.AppGeneralName}"
-        Style="{StaticResource ContentTitle}"
-        HorizontalOptions="Center"
-        HorizontalTextAlignment="Center"
-        SemanticProperties.HeadingLevel="Level1" />
+          HorizontalOptions="Center"
+          HorizontalTextAlignment="Center"
+          SemanticProperties.HeadingLevel="Level1"
+          Style="{StaticResource ContentTitle}"
+          Text="{x:Static resources:UIStrings.AppGeneralName}" />
 
       <Label
-        Text="{x:Static resources:UIStrings.AppGeneralWelcomeTitle}"
-        Style="{StaticResource ContentSubtitle}"
-        HorizontalOptions="Center"
-        HorizontalTextAlignment="Center"
-        SemanticProperties.HeadingLevel="Level2"
-        SemanticProperties.Description="Welcome to GT4 app powered by dot net Multi platform App UI" />
+          HorizontalOptions="Center"
+          HorizontalTextAlignment="Center"
+          SemanticProperties.Description="Welcome to GT4 app powered by dot net Multi platform App UI"
+          SemanticProperties.HeadingLevel="Level2"
+          Style="{StaticResource ContentSubtitle}"
+          Text="{x:Static resources:UIStrings.AppGeneralWelcomeTitle}" />
 
       <Button
-        x:Name="OpenOrCreateBtn"
-        Text="{x:Static resources:UIStrings.BtnNameOpenOrCreateProject}" 
-        FontSize="Large"
-        SemanticProperties.Hint="{x:Static resources:UIStrings.BtnHintOpenOrCreateProject}"
-        Command="{Binding NavigateToCreateOrOpenDialog}"
-        CommandParameter="OpenOrCreateDialog"
-        HorizontalOptions="Fill" />
+          x:Name="OpenOrCreateBtn"
+          Command="{Binding NavigateToCreateOrOpenDialog}"
+          CommandParameter="OpenOrCreateDialog"
+          FontSize="Large"
+          HorizontalOptions="Fill"
+          SemanticProperties.Hint="{x:Static resources:UIStrings.BtnHintOpenOrCreateProject}"
+          Text="{x:Static resources:UIStrings.BtnNameOpenOrCreateProject}" />
 
-      <!-- TODO: Temporary code for testing — to be removed before production.-->
+      <!--  TODO: Temporary code for testing — to be removed before production.  -->
       <VerticalStackLayout>
 
-        <Label FontSize="11" Text="11"/>
-        <Label FontSize="12" Text="12"/>
-        <Label FontSize="Caption" Text="Caption"/>
-        <Label FontSize="14" Text="14"/>
-        <Label FontSize="Body" Text="Body"/>
-        <Label FontSize="Default" Text="Default"/>
-        <Label FontSize="Micro" Text="Micro"/>
-        <Label FontSize="16" Text="16"/>
-        <Label FontSize="Subtitle" Text="Subtitle"/>
-        <Label FontSize="Medium" Text="Medium"/>
-        <Label FontSize="Title" Text="Title"/>
-        <Label FontSize="Large" Text="Large"/>
-        <Label FontSize="Header" Text="Header"/>
+        <Label
+            FontSize="11"
+            Text="11" />
+        <Label
+            FontSize="12"
+            Text="12" />
+        <Label
+            FontSize="Caption"
+            Text="Caption" />
+        <Label
+            FontSize="14"
+            Text="14" />
+        <Label
+            FontSize="Body"
+            Text="Body" />
+        <Label
+            FontSize="Default"
+            Text="Default" />
+        <Label
+            FontSize="Micro"
+            Text="Micro" />
+        <Label
+            FontSize="16"
+            Text="16" />
+        <Label
+            FontSize="Subtitle"
+            Text="Subtitle" />
+        <Label
+            FontSize="Medium"
+            Text="Medium" />
+        <Label
+            FontSize="Title"
+            Text="Title" />
+        <Label
+            FontSize="Large"
+            Text="Large" />
+        <Label
+            FontSize="Header"
+            Text="Header" />
 
       </VerticalStackLayout>
 

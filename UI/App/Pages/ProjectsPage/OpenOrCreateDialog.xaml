@@ -1,59 +1,61 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="GT4.UI.App.Pages.OpenOrCreateDialog"
-             xmlns:items="clr-namespace:GT4.UI.App.Items"
-             xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
-             Title="{x:Static resources:UIStrings.WndTitleOpenOrCreateDialog}">
+<ContentPage
+    x:Class="GT4.UI.App.Pages.OpenOrCreateDialog"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:items="clr-namespace:GT4.UI.App.Items"
+    xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
+    Title="{x:Static resources:UIStrings.WndTitleOpenOrCreateDialog}">
   <ScrollView>
 
-    <VerticalStackLayout Padding="20" Spacing="10">
-      <Label 
-            Text="{x:Static resources:UIStrings.WndHintOpenOrCreateDialog}"
-            VerticalOptions="Center" 
-            HorizontalOptions="Center" />
+    <VerticalStackLayout
+        Padding="20"
+        Spacing="10">
+      <Label
+          HorizontalOptions="Center"
+          Text="{x:Static resources:UIStrings.WndHintOpenOrCreateDialog}"
+          VerticalOptions="Center" />
 
-      <CollectionView 
-          ItemsSource="{Binding Projects}" 
-          SelectionMode="Single" 
-          SelectionChanged="OnProjectSelected">
-        
+      <CollectionView
+          ItemsSource="{Binding Projects}"
+          SelectionChanged="OnProjectSelected"
+          SelectionMode="Single">
+
         <CollectionView.ItemTemplate>
           <DataTemplate x:DataType="items:ProjectItem">
 
-            <FlexLayout 
+            <FlexLayout
                 Direction="Row"
-                HeightRequest="50" >
+                HeightRequest="50">
 
-              <Image 
-                  Source="{Binding Icon}" 
-                  WidthRequest="32" 
-                  HeightRequest="32" 
-                  Margin="2"/>
+              <Image
+                  Margin="2"
+                  HeightRequest="32"
+                  Source="{Binding Icon}"
+                  WidthRequest="32" />
 
-              <VerticalStackLayout
-                  FlexLayout.Grow="1">
+              <VerticalStackLayout FlexLayout.Grow="1">
 
-                <Label 
-                    Text="{Binding Info.Name}" 
-                    FontSize="20" 
-                    FontAttributes="Bold" 
-                    Padding="2"/>
+                <Label
+                    Padding="2"
+                    FontAttributes="Bold"
+                    FontSize="20"
+                    Text="{Binding Info.Name}" />
 
-                <Label 
-                    Text="{Binding Info.Description}" 
-                    FontSize="12" 
-                    Padding="2"/>
-                
+                <Label
+                    Padding="2"
+                    FontSize="12"
+                    Text="{Binding Info.Description}" />
+
               </VerticalStackLayout>
 
-              <Button 
-                  Text="❌" 
-                  Clicked="OnDeleteProjectSelected"
-                  WidthRequest="32" 
-                  HeightRequest="32"
+              <Button
                   Padding="0"
-                  IsVisible="{Binding IsHandlesVisible}"/>
+                  Clicked="OnDeleteProjectSelected"
+                  HeightRequest="32"
+                  IsVisible="{Binding IsHandlesVisible}"
+                  Text="❌"
+                  WidthRequest="32" />
 
             </FlexLayout>
           </DataTemplate>

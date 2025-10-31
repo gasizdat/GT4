@@ -1,55 +1,56 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
-             x:Class="GT4.UI.App.Dialogs.CreateNewFamilyDialog"
-             xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
-             Title="{x:Static resources:UIStrings.WndTitleCreateNewFamilyDialog}">
+<ContentPage
+    x:Class="GT4.UI.App.Dialogs.CreateNewFamilyDialog"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
+    Title="{x:Static resources:UIStrings.WndTitleCreateNewFamilyDialog}">
   <ScrollView>
 
-    <VerticalStackLayout 
-        Padding="20" 
-        Spacing="10" 
+    <VerticalStackLayout
+        Padding="20"
+        Spacing="10"
         VerticalOptions="Center">
 
-      <Label 
-          Text="{x:Static resources:UIStrings.FieldFamilyNameEntry}"
+      <Label
           FontAttributes="Bold"
           FontSize="Medium"
-          VerticalOptions="Start"/>
+          Text="{x:Static resources:UIStrings.FieldFamilyNameEntry}"
+          VerticalOptions="Start" />
 
       <Entry
+          HorizontalOptions="Fill"
           Placeholder="{x:Static resources:UIStrings.TxtPlaceholderFamilyName}"
-          Text="{Binding FamilyName}"
-          HorizontalOptions="Fill"/>
+          Text="{Binding FamilyName}" />
 
-      <Label 
+      <Label
+          FontAttributes="Bold"
+          FontSize="Medium"
           Text="{x:Static resources:UIStrings.FieldLastNameMaleEntry}"
-          FontAttributes="Bold"
-          FontSize="Medium"
           VerticalOptions="Start" />
 
-      <Entry 
+      <Entry
+          HorizontalOptions="Fill"
           Placeholder="{x:Static resources:UIStrings.TxtPlaceholderLastNameMale}"
-          Text="{Binding MaleLastName}"
-          HorizontalOptions="Fill"/>
+          Text="{Binding MaleLastName}" />
 
-      <Label 
-          Text="{x:Static resources:UIStrings.FieldLastNameFemaleEntry}"
+      <Label
           FontAttributes="Bold"
           FontSize="Medium"
+          Text="{x:Static resources:UIStrings.FieldLastNameFemaleEntry}"
           VerticalOptions="Start" />
 
-      <Entry 
+      <Entry
+          HorizontalOptions="Fill"
           Placeholder="{x:Static resources:UIStrings.TxtPlaceholderLastNameFemale}"
-          Text="{Binding FemaleLastName}"
-          HorizontalOptions="Fill"/>
+          Text="{Binding FemaleLastName}" />
 
       <Button
-          Text="{Binding CreateFamilyBtnName}" 
-          FontSize="Large"
           Clicked="OnCreateFamilyBtn"
-          HorizontalOptions="Fill" />
+          FontSize="Large"
+          HorizontalOptions="Fill"
+          Text="{Binding CreateFamilyBtnName}" />
 
     </VerticalStackLayout>
 

@@ -1,91 +1,93 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="GT4.UI.App.Pages.FamiliesPage"
-             xmlns:items="clr-namespace:GT4.UI.App.Items"
-             xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
-             Title="{x:Static resources:UIStrings.WndTitleFamiliesPage}">
+<ContentPage
+    x:Class="GT4.UI.App.Pages.FamiliesPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:items="clr-namespace:GT4.UI.App.Items"
+    xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
+    Title="{x:Static resources:UIStrings.WndTitleFamiliesPage}">
   <ScrollView>
 
-    <VerticalStackLayout Padding="20" Spacing="10">
-      <Label 
-            Text="{x:Static resources:UIStrings.WndHintFamiliesPage}"
-            VerticalOptions="Center" 
-            HorizontalOptions="Center" />
+    <VerticalStackLayout
+        Padding="20"
+        Spacing="10">
+      <Label
+          HorizontalOptions="Center"
+          Text="{x:Static resources:UIStrings.WndHintFamiliesPage}"
+          VerticalOptions="Center" />
 
-      <CollectionView 
-          ItemsSource="{Binding Families}" 
-          SelectionMode="Single" 
-          SelectionChanged="OnFamilySelected">
-        
+      <CollectionView
+          ItemsSource="{Binding Families}"
+          SelectionChanged="OnFamilySelected"
+          SelectionMode="Single">
+
         <CollectionView.ItemsLayout>
-          <LinearItemsLayout 
-              Orientation="Vertical" 
-              ItemSpacing="3" />
+          <LinearItemsLayout
+              ItemSpacing="3"
+              Orientation="Vertical" />
         </CollectionView.ItemsLayout>
-        
+
         <CollectionView.ItemTemplate>
           <DataTemplate x:DataType="items:FamilyInfoItem">
-            <Grid 
-                RowDefinitions="Auto, Auto"
+            <Grid
                 ColumnDefinitions="Auto, *, Auto"
-                ColumnSpacing="10">
+                ColumnSpacing="10"
+                RowDefinitions="Auto, Auto">
 
-              <Image 
-                  Grid.Row="0" 
+              <Image
+                  Grid.Row="0"
                   Grid.Column="0"
-                  Source="{Binding Icon}"  
-                  WidthRequest="32"
+                  Aspect="AspectFit"
                   HeightRequest="32"
+                  Source="{Binding Icon}"
                   VerticalOptions="Start"
-                  Aspect="AspectFit"/>
+                  WidthRequest="32" />
 
-              <Label 
-                  Grid.Row="0" 
-                  Grid.Column="1"
+              <Label
+                  Grid.Row="0"
                   Grid.RowSpan="2"
-                  Text="{Binding Info.Value}"
+                  Grid.Column="1"
                   FontAttributes="Bold"
                   FontSize="Medium"
-                  VerticalOptions="Start"
-                  LineBreakMode="TailTruncation" />
+                  LineBreakMode="TailTruncation"
+                  Text="{Binding Info.Value}"
+                  VerticalOptions="Start" />
 
-              <Button 
-                  Grid.Row="0" 
-                  Grid.Column="2"
+              <Button
+                  Grid.Row="0"
                   Grid.RowSpan="2"
-                  Text="❌"  
+                  Grid.Column="2"
                   Clicked="OnDeleteFamilySelected"
-                  WidthRequest="32"
                   HeightRequest="32"
+                  IsVisible="{Binding IsHandlesVisible}"
+                  Text="❌"
                   VerticalOptions="Start"
-                  IsVisible="{Binding IsHandlesVisible}" />
+                  WidthRequest="32" />
 
-              <StackLayout 
-                  Grid.Row="1" 
-                  Grid.Column="0" 
+              <StackLayout
+                  Grid.Row="1"
+                  Grid.Column="0"
                   Grid.ColumnSpan="3"
                   BindableLayout.ItemsSource="{Binding Persons}">
                 <BindableLayout.ItemTemplate>
 
                   <DataTemplate x:DataType="items:PersonInfoItem">
 
-                    <HorizontalStackLayout
-                        Margin="50, 0, 0, 0">
-                      <Image 
-                          Source="{Binding Icon}"  
-                          WidthRequest="32"
+                    <HorizontalStackLayout Margin="50,0,0,0">
+                      <Image
+                          Aspect="AspectFit"
                           HeightRequest="32"
+                          Source="{Binding Icon}"
                           VerticalOptions="Start"
-                          Aspect="AspectFit"/>
+                          WidthRequest="32" />
 
-                      <Label 
-                          Text="{Binding CommonName}" 
+                      <Label
                           FontSize="Small"
+                          HorizontalOptions="Fill"
                           LineBreakMode="TailTruncation"
-                          HorizontalOptions="Fill"/>
+                          Text="{Binding CommonName}" />
                     </HorizontalStackLayout>
-                  
+
                   </DataTemplate>
 
                 </BindableLayout.ItemTemplate>

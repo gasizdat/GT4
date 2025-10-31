@@ -1,32 +1,36 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
-             x:Class="GT4.UI.App.Dialogs.CreateNewProjectDialog"
-             xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
-             Title="{x:Static resources:UIStrings.WndTitleCreateNewProjectDialog}">
+<ContentPage
+    x:Class="GT4.UI.App.Dialogs.CreateNewProjectDialog"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
+    Title="{x:Static resources:UIStrings.WndTitleCreateNewProjectDialog}">
   <ScrollView>
 
-    <VerticalStackLayout Padding="20" Spacing="10" VerticalOptions="Center">
+    <VerticalStackLayout
+        Padding="20"
+        Spacing="10"
+        VerticalOptions="Center">
 
       <Entry
           x:Name="ProjectNameEntry"
+          HorizontalOptions="Fill"
           Placeholder="{x:Static resources:UIStrings.TxtPlaceholderPtojectName}"
-          Text="{Binding ProjectName}"
-          HorizontalOptions="Fill"/>
+          Text="{Binding ProjectName}" />
 
       <Entry
           x:Name="ProjectDescriptionEntry"
+          HorizontalOptions="Fill"
           Placeholder="{x:Static resources:UIStrings.TxtPlaceholderProjectDescription}"
-          Text="{Binding ProjectDescription}"
-          HorizontalOptions="Fill"/>
+          Text="{Binding ProjectDescription}" />
 
       <Button
           x:Name="CreateProjectBtn"
-          Text="{Binding CreateProjectBtName}" 
-          FontSize="Large"
           Clicked="OnCreateProjectBtn"
-          HorizontalOptions="Fill" />
+          FontSize="Large"
+          HorizontalOptions="Fill"
+          Text="{Binding CreateProjectBtName}" />
 
     </VerticalStackLayout>
 

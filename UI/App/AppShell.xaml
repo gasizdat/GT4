@@ -5,12 +5,12 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:pages="clr-namespace:GT4.UI.App.Pages"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
-    Shell.FlyoutBehavior="Disabled"
-    Title="GT4">
+    Title="GT4"
+    Shell.FlyoutBehavior="Disabled">
 
-    <ShellContent
-        Title="{x:Static resources:UIStrings.WndAppTitle}"
-        ContentTemplate="{DataTemplate pages:MainPage}"
-        Route="MainPage" />
+  <ShellContent
+      Title="{x:Static resources:UIStrings.WndAppTitle}"
+      ContentTemplate="{DataTemplate pages:MainPage}"
+      Route="MainPage" />
 
 </Shell>
