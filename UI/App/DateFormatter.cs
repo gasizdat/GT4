@@ -12,7 +12,7 @@ public class DateFormatter : IDateFormatter
   {
     // TODO Use configuration
 
-    // TOD Apply Date.Sign
+    // TODO Apply Date.Sign
 
     if (date.HasValue)
     {
@@ -26,9 +26,15 @@ public class DateFormatter : IDateFormatter
           return date.Value.Year.ToString(D4);
         case DateStatus.YearApproximate:
           return string.Format(UIStrings.DateStatusYearApproximate_1, date.Value.Year.ToString(D4));
+        case DateStatus.Unknown:
+          return UIStrings.DateStatusUnknown;
+        default:
+          return $"⚠ Unexpected DateStatus={date.Value.Status}";
       }
     }
-
-    return UIStrings.DateStatusUnknown;
+    else
+    {
+      return UIStrings.DateStatusNotDefined;
+    }
   }
 }
