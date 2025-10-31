@@ -134,6 +134,33 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Add name.
+        /// </summary>
+        public static string BtnNameAddPersonName {
+            get {
+                return ResourceManager.GetString("BtnNameAddPersonName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Add photo.
+        /// </summary>
+        public static string BtnNameAddPersonPhoto {
+            get {
+                return ResourceManager.GetString("BtnNameAddPersonPhoto", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Add relationship.
+        /// </summary>
+        public static string BtnNameAddPersonRelationship {
+            get {
+                return ResourceManager.GetString("BtnNameAddPersonRelationship", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cancel.
         /// </summary>
         public static string BtnNameCancel {
@@ -305,11 +332,155 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Biography.
+        /// </summary>
+        public static string FieldPersonBiography {
+            get {
+                return ResourceManager.GetString("FieldPersonBiography", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Dates.
+        /// </summary>
+        public static string FieldPersonDates {
+            get {
+                return ResourceManager.GetString("FieldPersonDates", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Names.
+        /// </summary>
+        public static string FieldPersonNames {
+            get {
+                return ResourceManager.GetString("FieldPersonNames", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Photos.
+        /// </summary>
+        public static string FieldPersonPhotos {
+            get {
+                return ResourceManager.GetString("FieldPersonPhotos", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Relationships.
+        /// </summary>
+        public static string FieldPersonRelationships {
+            get {
+                return ResourceManager.GetString("FieldPersonRelationships", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 🌐 Language.
         /// </summary>
         public static string PkrLanguageHint {
             get {
                 return ResourceManager.GetString("PkrLanguageHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Adoptive {0}.
+        /// </summary>
+        public static string RelAdoptiveFemale_1 {
+            get {
+                return ResourceManager.GetString("RelAdoptiveFemale_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Adoptive {0}.
+        /// </summary>
+        public static string RelAdoptiveMale_1 {
+            get {
+                return ResourceManager.GetString("RelAdoptiveMale_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Child.
+        /// </summary>
+        public static string RelChild {
+            get {
+                return ResourceManager.GetString("RelChild", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Daughter.
+        /// </summary>
+        public static string RelDaughter {
+            get {
+                return ResourceManager.GetString("RelDaughter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Father.
+        /// </summary>
+        public static string RelFather {
+            get {
+                return ResourceManager.GetString("RelFather", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Husband.
+        /// </summary>
+        public static string RelHusband {
+            get {
+                return ResourceManager.GetString("RelHusband", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Mother.
+        /// </summary>
+        public static string RelMother {
+            get {
+                return ResourceManager.GetString("RelMother", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Son.
+        /// </summary>
+        public static string RelSon {
+            get {
+                return ResourceManager.GetString("RelSon", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Spouse.
+        /// </summary>
+        public static string RelSpouse {
+            get {
+                return ResourceManager.GetString("RelSpouse", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unknown.
+        /// </summary>
+        public static string RelUnknown {
+            get {
+                return ResourceManager.GetString("RelUnknown", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Wife.
+        /// </summary>
+        public static string RelWife {
+            get {
+                return ResourceManager.GetString("RelWife", resourceCulture);
             }
         }
         

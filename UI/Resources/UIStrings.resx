@@ -241,4 +241,61 @@ genealogy tree and enjoy!</value>
   <data name="DateStatusNotDefined" xml:space="preserve">
     <value>not defined</value>
   </data>
+  <data name="FieldPersonPhotos" xml:space="preserve">
+    <value>Photos</value>
+  </data>
+  <data name="BtnNameAddPersonPhoto" xml:space="preserve">
+    <value>Add photo</value>
+  </data>
+  <data name="FieldPersonNames" xml:space="preserve">
+    <value>Names</value>
+  </data>
+  <data name="BtnNameAddPersonName" xml:space="preserve">
+    <value>Add name</value>
+  </data>
+  <data name="FieldPersonDates" xml:space="preserve">
+    <value>Dates</value>
+  </data>
+  <data name="FieldPersonRelationships" xml:space="preserve">
+    <value>Relationships</value>
+  </data>
+  <data name="BtnNameAddPersonRelationship" xml:space="preserve">
+    <value>Add relationship</value>
+  </data>
+  <data name="FieldPersonBiography" xml:space="preserve">
+    <value>Biography</value>
+  </data>
+  <data name="RelMother" xml:space="preserve">
+    <value>Mother</value>
+  </data>
+  <data name="RelFather" xml:space="preserve">
+    <value>Father</value>
+  </data>
+  <data name="RelAdoptiveMale_1" xml:space="preserve">
+    <value>Adoptive {0}</value>
+  </data>
+  <data name="RelAdoptiveFemale_1" xml:space="preserve">
+    <value>Adoptive {0}</value>
+  </data>
+  <data name="RelSpouse" xml:space="preserve">
+    <value>Spouse</value>
+  </data>
+  <data name="RelWife" xml:space="preserve">
+    <value>Wife</value>
+  </data>
+  <data name="RelHusband" xml:space="preserve">
+    <value>Husband</value>
+  </data>
+  <data name="RelSon" xml:space="preserve">
+    <value>Son</value>
+  </data>
+  <data name="RelDaughter" xml:space="preserve">
+    <value>Daughter</value>
+  </data>
+  <data name="RelChild" xml:space="preserve">
+    <value>Child</value>
+  </data>
+  <data name="RelUnknown" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
 </root>
