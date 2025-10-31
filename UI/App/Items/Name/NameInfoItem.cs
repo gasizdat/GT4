@@ -5,32 +5,14 @@ namespace GT4.UI.App.Items;
 
 public class NameInfoItem : CollectionItemBase<Name>
 {
-  public NameInfoItem(Name name)
+  private readonly INameTypeFormatter _NameTypeFormatter;
+
+  public NameInfoItem(Name name, INameTypeFormatter nameTypeFormatter)
     : base(name, string.Empty)
   {
+    _NameTypeFormatter = nameTypeFormatter;
   }
 
   public string Value => Info.Value;
-  public string Type
-  {
-    get
-    {
-      switch (Info.Type)
-      {
-        case NameType.FirstName:
-          return UIStrings.FieldFirstName;
-        case NameType.LastName:
-          return UIStrings.FieldLastName;
-        case NameType.MiddleName:
-          return UIStrings.FieldMiddleName;
-        case NameType.FamilyName:
-          return UIStrings.FieldFamilyName;
-        case NameType.AdditionalName:
-          return UIStrings.FieldAdditionalName;
-
-        default:
-          return string.Empty;
-      }
-    }
-  }
+  public string Type => _NameTypeFormatter.ToString(Info.Type);
 }
