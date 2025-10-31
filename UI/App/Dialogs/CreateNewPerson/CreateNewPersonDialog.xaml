@@ -54,7 +54,7 @@
               Grid.Row="0"
               Grid.Column="0"
               Style="{StaticResource ContentGroupTitle}"
-              Text="Pictures" />
+              Text="{x:Static resources:UIStrings.FieldPersonPhotos}" />
           <CollectionView
               Grid.Row="1"
               Grid.Column="0"
@@ -101,8 +101,7 @@
               Grid.Row="1"
               Grid.Column="1"
               Command="{Binding AddPhotoCommand}"
-              StyleClass="Secondary"
-              Text="Add Photo" />
+              Text="{x:Static resources:UIStrings.BtnNameAddPersonPhoto}" />
 
         </Grid>
       </Frame>
@@ -117,7 +116,7 @@
               Grid.Row="0"
               Grid.Column="0"
               Style="{StaticResource ContentGroupTitle}"
-              Text="Names" />
+              Text="{x:Static resources:UIStrings.FieldPersonNames}" />
 
           <CollectionView
               Grid.Row="1"
@@ -174,7 +173,7 @@
               Command="{Binding AddNameCommand}"
               HorizontalOptions="Fill"
               StyleClass="Secondary"
-              Text="Add Name" />
+              Text="{x:Static resources:UIStrings.BtnNameAddPersonName}" />
         </Grid>
       </Frame>
 
@@ -190,7 +189,7 @@
               Grid.Row="0"
               Grid.Column="0"
               Style="{StaticResource ContentGroupTitle}"
-              Text="Dates" />
+              Text="{x:Static resources:UIStrings.FieldPersonDates}" />
 
           <components:DateInfoView
               Grid.Row="1"
@@ -233,7 +232,7 @@
               Grid.Row="0"
               Grid.Column="0"
               Style="{StaticResource ContentGroupTitle}"
-              Text="Relationships" />
+              Text="{x:Static resources:UIStrings.FieldPersonRelationships}" />
 
           <CollectionView
               Grid.Row="1"
@@ -293,7 +292,7 @@
               Grid.Column="0"
               Command="{Binding AddRelationship}"
               StyleClass="Secondary"
-              Text="Add Relationship" />
+              Text="{x:Static resources:UIStrings.BtnNameAddPersonRelationship}" />
 
         </Grid>
 
@@ -310,7 +309,7 @@
               Grid.Row="0"
               Grid.Column="0"
               Style="{StaticResource ContentGroupTitle}"
-              Text="Biography" />
+              Text="{x:Static resources:UIStrings.FieldPersonBiography}" />
 
           <Editor
               Grid.Row="1"
