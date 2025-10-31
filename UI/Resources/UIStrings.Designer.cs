@@ -278,6 +278,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Additional name.
+        /// </summary>
+        public static string FieldAdditionalName {
+            get {
+                return ResourceManager.GetString("FieldAdditionalName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Age: {0}.
         /// </summary>
         public static string FieldAge_1 {
@@ -305,11 +314,38 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Family name.
+        /// </summary>
+        public static string FieldFamilyName {
+            get {
+                return ResourceManager.GetString("FieldFamilyName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Family Name:.
         /// </summary>
         public static string FieldFamilyNameEntry {
             get {
                 return ResourceManager.GetString("FieldFamilyNameEntry", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to First name.
+        /// </summary>
+        public static string FieldFirstName {
+            get {
+                return ResourceManager.GetString("FieldFirstName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Last name.
+        /// </summary>
+        public static string FieldLastName {
+            get {
+                return ResourceManager.GetString("FieldLastName", resourceCulture);
             }
         }
         
@@ -328,6 +364,15 @@ namespace GT4.UI.Resources {
         public static string FieldLastNameMaleEntry {
             get {
                 return ResourceManager.GetString("FieldLastNameMaleEntry", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Middle name.
+        /// </summary>
+        public static string FieldMiddleName {
+            get {
+                return ResourceManager.GetString("FieldMiddleName", resourceCulture);
             }
         }
         

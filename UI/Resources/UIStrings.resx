@@ -298,4 +298,19 @@ genealogy tree and enjoy!</value>
   <data name="RelUnknown" xml:space="preserve">
     <value>Unknown</value>
   </data>
+  <data name="FieldFirstName" xml:space="preserve">
+    <value>First name</value>
+  </data>
+  <data name="FieldMiddleName" xml:space="preserve">
+    <value>Middle name</value>
+  </data>
+  <data name="FieldLastName" xml:space="preserve">
+    <value>Last name</value>
+  </data>
+  <data name="FieldAdditionalName" xml:space="preserve">
+    <value>Additional name</value>
+  </data>
+  <data name="FieldFamilyName" xml:space="preserve">
+    <value>Family name</value>
+  </data>
 </root>

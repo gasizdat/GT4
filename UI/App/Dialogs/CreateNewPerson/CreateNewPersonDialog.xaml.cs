@@ -47,7 +47,9 @@ public partial class CreateNewPersonDialog : ContentPage
 
   public ICollection<ImageSource> Photos => _Photos;
 
-  public ICollection<Name> Names => _Names;
+  public ICollection<NameInfoItem> Names => _Names
+    .Select(name => new NameInfoItem(name))
+    .ToArray();
 
   public ICollection<RelativeMemberInfoItem> Relatives => _Relatives;
 

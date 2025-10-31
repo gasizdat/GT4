@@ -298,4 +298,19 @@
   <data name="RelUnknown" xml:space="preserve">
     <value>Неизвестно</value>
   </data>
+  <data name="FieldFirstName" xml:space="preserve">
+    <value>Имя</value>
+  </data>
+  <data name="FieldMiddleName" xml:space="preserve">
+    <value>Отчество</value>
+  </data>
+  <data name="FieldLastName" xml:space="preserve">
+    <value>Фамилия</value>
+  </data>
+  <data name="FieldAdditionalName" xml:space="preserve">
+    <value>Дополнительное имя</value>
+  </data>
+  <data name="FieldFamilyName" xml:space="preserve">
+    <value>Родовое имя</value>
+  </data>
 </root>
