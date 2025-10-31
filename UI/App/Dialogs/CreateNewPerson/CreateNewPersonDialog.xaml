@@ -1,33 +1,35 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-						 xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-						 x:Class="GT4.UI.App.Dialogs.CreateNewPersonDialog"
-             xmlns:components="clr-namespace:GT4.UI.App.Components"
-             xmlns:items="clr-namespace:GT4.UI.App.Items"
-             xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
-						 Title="NewPage1">
+<ContentPage
+    x:Class="GT4.UI.App.Dialogs.CreateNewPersonDialog"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:components="clr-namespace:GT4.UI.App.Components"
+    xmlns:items="clr-namespace:GT4.UI.App.Items"
+    xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
+    Title="NewPage1">
+
   <ContentPage.Resources>
     <ResourceDictionary>
 
-      <OnIdiom 
-        x:Key="PhotoHeight" 
-        x:TypeArguments="x:Double"
-        Phone="100" 
-        Tablet="140" 
-        Desktop="300" />
-      <OnIdiom 
-        x:Key="PhotoWidth"  
-        x:TypeArguments="x:Double"
-        Phone="100" 
-        Tablet="140" 
-        Desktop="300" />
+      <OnIdiom
+          x:Key="PhotoHeight"
+          x:TypeArguments="x:Double"
+          Desktop="300"
+          Phone="100"
+          Tablet="140" />
+      <OnIdiom
+          x:Key="PhotoWidth"
+          x:TypeArguments="x:Double"
+          Desktop="300"
+          Phone="100"
+          Tablet="140" />
 
       <Style x:Key="PhotoPreviewStyle" TargetType="Image">
         <Setter Property="Aspect" Value="AspectFit" />
         <Setter Property="HeightRequest" Value="{StaticResource PhotoHeight}" />
-        <Setter Property="WidthRequest"  Value="{StaticResource PhotoWidth}" />
+        <Setter Property="WidthRequest" Value="{StaticResource PhotoWidth}" />
         <Setter Property="HorizontalOptions" Value="Center" />
-        <Setter Property="VerticalOptions"   Value="Center" />
+        <Setter Property="VerticalOptions" Value="Center" />
       </Style>
 
       <Style x:Key="CardFrameStyle" TargetType="Frame">
@@ -38,14 +40,14 @@
   </ContentPage.Resources>
 
   <ScrollView>
-    <VerticalStackLayout 
-					Spacing="20" 
-					Padding="20">
+    <VerticalStackLayout
+        Padding="20"
+        Spacing="20">
 
-      <Frame 
-					Style="{StaticResource CardFrameStyle}">
+      <!--  Pictures  -->
+      <Frame Style="{StaticResource CardFrameStyle}">
 
-        <Grid 
+        <Grid
             ColumnDefinitions="*, Auto"
             RowDefinitions="Auto, Auto">
           <Label
@@ -53,17 +55,17 @@
               Grid.Column="0"
               Style="{StaticResource ContentGroupTitle}"
               Text="Pictures" />
-          <CollectionView 
+          <CollectionView
               Grid.Row="1"
               Grid.Column="0"
-					    ItemsSource="{Binding Photos}" 
-					    SelectionMode="Single" 
-              HorizontalScrollBarVisibility="Always">
+              HorizontalScrollBarVisibility="Always"
+              ItemsSource="{Binding Photos}"
+              SelectionMode="Single">
 
             <CollectionView.ItemsLayout>
-              <LinearItemsLayout 
-							    Orientation="Horizontal" 
-							    ItemSpacing="10" />
+              <LinearItemsLayout
+                  ItemSpacing="10"
+                  Orientation="Horizontal" />
             </CollectionView.ItemsLayout>
 
             <CollectionView.ItemTemplate>
@@ -74,257 +76,257 @@
                     RowSpacing="10">
 
                   <Image
-                      Grid.Column="0"
-                      Grid.ColumnSpan="2"
                       Grid.Row="0"
                       Grid.RowSpan="3"
+                      Grid.Column="0"
+                      Grid.ColumnSpan="2"
                       Source="{Binding .}"
-									    Style="{StaticResource PhotoPreviewStyle}"/>
+                      Style="{StaticResource PhotoPreviewStyle}" />
 
-                  <Button 
-                      Grid.Column="1"
+                  <Button
                       Grid.Row="0"
-                      Style="{StaticResource EditAdorner}"/>
-
-                  <Button 
                       Grid.Column="1"
+                      Style="{StaticResource EditAdorner}" />
+
+                  <Button
                       Grid.Row="1"
-                      Style="{StaticResource DeleteAdorner}"/>
+                      Grid.Column="1"
+                      Style="{StaticResource DeleteAdorner}" />
 
                 </Grid>
               </DataTemplate>
             </CollectionView.ItemTemplate>
           </CollectionView>
-          <Button 
+          <Button
               Grid.Row="1"
               Grid.Column="1"
-							Text="Add Photo" 
-							Command="{Binding AddPhotoCommand}" 
-							StyleClass="Secondary" />
+              Command="{Binding AddPhotoCommand}"
+              StyleClass="Secondary"
+              Text="Add Photo" />
 
         </Grid>
       </Frame>
 
-      <Frame 
-          Style="{StaticResource CardFrameStyle}">
-        <Grid  
-            ColumnDefinitions="*" 
+      <!--  Names  -->
+      <Frame Style="{StaticResource CardFrameStyle}">
+        <Grid
+            ColumnDefinitions="*"
             RowDefinitions="Auto, *, Auto">
 
           <Label
-              Grid.Column="0"
               Grid.Row="0"
+              Grid.Column="0"
               Style="{StaticResource ContentGroupTitle}"
               Text="Names" />
 
-          <CollectionView 
-              Grid.Column="0"
+          <CollectionView
               Grid.Row="1"
-              ItemsSource="{Binding Names}" 
-              SelectionMode="Single" 
-              HorizontalOptions="Center">
+              Grid.Column="0"
+              HorizontalOptions="Center"
+              ItemsSource="{Binding Names}"
+              SelectionMode="Single">
 
             <CollectionView.ItemsLayout>
-              <LinearItemsLayout 
-									Orientation="Vertical" 
-                  ItemSpacing="5"/>
+              <LinearItemsLayout
+                  ItemSpacing="5"
+                  Orientation="Vertical" />
             </CollectionView.ItemsLayout>
 
             <CollectionView.ItemTemplate>
               <DataTemplate>
-                <Grid 
+                <Grid
                     ColumnDefinitions="Auto, *, Auto, Auto"
-                    RowDefinitions="Auto"
-                    ColumnSpacing="10">
-                  
-                  <Label 
+                    ColumnSpacing="10"
+                    RowDefinitions="Auto">
+
+                  <Label
                       Grid.Row="0"
                       Grid.Column="0"
-                      Text="{Binding Type}" 
-                      Style="{StaticResource ContentFieldName}"                       
-                      HorizontalOptions="Start"/>
-                  
-                  <Label 
+                      HorizontalOptions="Start"
+                      Style="{StaticResource ContentFieldName}"
+                      Text="{Binding Type}" />
+
+                  <Label
                       Grid.Row="0"
                       Grid.Column="1"
-                      Text="{Binding Value}" 
-                      Style="{StaticResource ContentFieldValue}"                       
-                      HorizontalOptions="Fill"/>
-                  
-                  <Button 
+                      HorizontalOptions="Fill"
+                      Style="{StaticResource ContentFieldValue}"
+                      Text="{Binding Value}" />
+
+                  <Button
                       Grid.Row="0"
                       Grid.Column="2"
-                      Style="{StaticResource EditAdorner}"/>
-                  
-                  <Button 
+                      Style="{StaticResource EditAdorner}" />
+
+                  <Button
                       Grid.Row="0"
                       Grid.Column="3"
-                      Style="{StaticResource DeleteAdorner}"/>
-                  
+                      Style="{StaticResource DeleteAdorner}" />
+
                 </Grid>
               </DataTemplate>
             </CollectionView.ItemTemplate>
           </CollectionView>
 
-          <Button 
-              Grid.Column="0"
+          <Button
               Grid.Row="2"
-				      Text="Add Name" 
-				      Command="{Binding AddNameCommand}" 
-				      StyleClass="Secondary" 
-              HorizontalOptions="Fill"/>
+              Grid.Column="0"
+              Command="{Binding AddNameCommand}"
+              HorizontalOptions="Fill"
+              StyleClass="Secondary"
+              Text="Add Name" />
         </Grid>
       </Frame>
 
-      <Frame 
-          Style="{StaticResource CardFrameStyle}">
-        <Grid  
+      <!--  Dates  -->
+      <Frame Style="{StaticResource CardFrameStyle}">
+        <Grid
             ColumnDefinitions="*, Auto, Auto"
+            ColumnSpacing="10"
             RowDefinitions="Auto, Auto, Auto"
-            RowSpacing="10"
-            ColumnSpacing="10" >
+            RowSpacing="10">
 
           <Label
-              Grid.Column="0"
               Grid.Row="0"
+              Grid.Column="0"
               Style="{StaticResource ContentGroupTitle}"
               Text="Dates" />
 
           <components:DateInfoView
-              Grid.Column="0"
               Grid.Row="1"
+              Grid.Column="0"
               Caption="{x:Static resources:UIStrings.FieldDateOfBirth}"
               Date="{Binding BirthDate}" />
 
-          <Button 
-              Grid.Column="2"
+          <Button
               Grid.Row="1"
-              Style="{StaticResource EditAdorner}"/>
+              Grid.Column="2"
+              Style="{StaticResource EditAdorner}" />
 
           <components:DateInfoView
-              Grid.Column="0"
               Grid.Row="2"
+              Grid.Column="0"
               Caption="{x:Static resources:UIStrings.FieldDateOfDeath}"
               Date="{Binding DeathDate}" />
 
-          <Button 
+          <Button
+              Grid.Row="2"
               Grid.Column="1"
-              Grid.Row="2"
-              Style="{StaticResource DeleteAdorner}"/>
+              Style="{StaticResource DeleteAdorner}" />
 
-          <Button 
-              Grid.Column="2"
+          <Button
               Grid.Row="2"
-              Style="{StaticResource EditAdorner}"/>
+              Grid.Column="2"
+              Style="{StaticResource EditAdorner}" />
 
         </Grid>
       </Frame>
 
-      <Frame 
-          Style="{StaticResource CardFrameStyle}">
+      <!--  Relationships  -->
+      <Frame Style="{StaticResource CardFrameStyle}">
 
-        <Grid  
+        <Grid
             ColumnDefinitions="*"
-            RowDefinitions="Auto, *, Auto" >
+            RowDefinitions="Auto, *, Auto">
 
           <Label
-              Grid.Column="0"
               Grid.Row="0"
+              Grid.Column="0"
               Style="{StaticResource ContentGroupTitle}"
               Text="Relationships" />
 
-          <CollectionView 
-              Grid.Column="0"
+          <CollectionView
               Grid.Row="1"
-              ItemsSource="{Binding Relatives}" 
+              Grid.Column="0"
+              ItemsSource="{Binding Relatives}"
               SelectionMode="Single">
 
             <CollectionView.ItemsLayout>
-              <LinearItemsLayout 
-                  Orientation="Vertical" 
-                  ItemSpacing="3" />
+              <LinearItemsLayout
+                  ItemSpacing="3"
+                  Orientation="Vertical" />
             </CollectionView.ItemsLayout>
 
             <CollectionView.ItemTemplate>
               <DataTemplate x:DataType="items:RelativeMemberInfoItem">
-                <Grid 
-                    RowDefinitions="Auto, Auto"
+                <Grid
                     ColumnDefinitions="Auto, *, Auto"
-                    ColumnSpacing="10">
+                    ColumnSpacing="10"
+                    RowDefinitions="Auto, Auto">
 
                   <components:PersonInfoView
+                      Grid.Row="0"
                       Grid.Column="0"
                       Grid.ColumnSpan="2"
-                      Grid.Row="0"
-                      Person="{Binding Info.Person}"
+                      DatesLabelStyle="{StaticResource ContentFieldValue}"
                       NameLabelStyle="{StaticResource ContentFieldName}"
-                      DatesLabelStyle="{StaticResource ContentFieldValue}"/>
+                      Person="{Binding Info.Person}" />
 
-                  <Label 
-                      Grid.Column="0"
-                      Grid.Row="1" 
-                      Text="{Binding RelationTypeName}"  />
-
-                  <Label 
-                      Grid.Column="1"
-                      Grid.Row="1" 
-                      Text="{Binding Date}" 
-                      IsVisible="{Binding ShowDate}"/>
-
-                  <Button 
-                      Grid.Column="2"
+                  <Button
                       Grid.Row="0"
-                      Style="{StaticResource EditAdorner}"/>
-
-                  <Button 
                       Grid.Column="2"
+                      Style="{StaticResource EditAdorner}" />
+
+                  <Label
                       Grid.Row="1"
-                      Style="{StaticResource DeleteAdorner}"/>
+                      Grid.Column="0"
+                      Text="{Binding RelationTypeName}" />
+
+                  <Label
+                      Grid.Row="1"
+                      Grid.Column="1"
+                      IsVisible="{Binding ShowDate}"
+                      Text="{Binding Date}" />
+
+                  <Button
+                      Grid.Row="1"
+                      Grid.Column="2"
+                      Style="{StaticResource DeleteAdorner}" />
 
                 </Grid>
               </DataTemplate>
             </CollectionView.ItemTemplate>
           </CollectionView>
 
-          <Button 
+          <Button
               Grid.Row="2"
               Grid.Column="0"
-							Text="Add Relationship" 
-							Command="{Binding AddRelationship}" 
-							StyleClass="Secondary" />
+              Command="{Binding AddRelationship}"
+              StyleClass="Secondary"
+              Text="Add Relationship" />
 
         </Grid>
 
       </Frame>
 
-      <Frame 
-          Style="{StaticResource CardFrameStyle}">
+      <!--  Biography  -->
+      <Frame Style="{StaticResource CardFrameStyle}">
 
-        <Grid  
+        <Grid
             ColumnDefinitions="*"
-            RowDefinitions="Auto, *" >
+            RowDefinitions="Auto, *">
 
           <Label
-              Grid.Column="0"
               Grid.Row="0"
+              Grid.Column="0"
               Style="{StaticResource ContentGroupTitle}"
               Text="Biography" />
 
-          <Editor 
-              Grid.Column="0"
+          <Editor
               Grid.Row="1"
-              Placeholder="Enter a biography or life story..."
-						  HeightRequest="200"
+              Grid.Column="0"
+              HeightRequest="200"
               HorizontalOptions="Fill"
-						  Text="{Binding Biography}" />
+              Placeholder="Enter a biography or life story..."
+              Text="{Binding Biography}" />
         </Grid>
 
       </Frame>
 
-      <Button 
-          Text="{Binding CreatePersonBtnName}" 
-          Clicked="OnCreatePersonBtn" 
-          StyleClass="Primary" />
+      <Button
+          Clicked="OnCreatePersonBtn"
+          StyleClass="Primary"
+          Text="{Binding CreatePersonBtnName}" />
 
     </VerticalStackLayout>
   </ScrollView>
