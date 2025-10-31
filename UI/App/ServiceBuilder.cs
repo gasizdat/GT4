@@ -12,6 +12,7 @@ public class ServiceBuilder
         .AddSingleton<IDateFormatter, DateFormatter>()
         .AddSingleton<INameFormatter, NameFormatter>()
         .AddSingleton<IDateSpanFormatter, DateSpanFormatter>()
+        .AddSingleton<IRelationshipTypeFormatter, RelationshipTypeFormatter>()
         .AddSingleton<IComparer<FamilyInfoItem>, FamilyInfoItemComparer>()
         .AddSingleton<IComparer<FamilyMemberInfoItem>, FamilyMemberInfoItemComparer>()
         .AddSingleton<IComparer<ProjectItem>, ProjectItemComparer>()
