@@ -1,4 +1,5 @@
 ﻿using GT4.Core.Project.Dto;
+using GT4.UI.Resources;
 
 namespace GT4.UI;
 
@@ -9,27 +10,27 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
     switch (type)
     {
       case RelationshipType.Mother:
-        return "Mother";
+        return UIStrings.RelMother;
       case RelationshipType.Father:
-        return "Father";
+        return UIStrings.RelFather;
       case RelationshipType.AdoptiveMother:
-        return "Adoptive Mother";
+        return string.Format(UIStrings.RelAdoptiveFemale_1, UIStrings.RelMother);
       case RelationshipType.AdoptiveFather:
-        return "Adoptive Father";
+        return string.Format(UIStrings.RelAdoptiveMale_1, UIStrings.RelFather);
       case RelationshipType.Spouse:
-        return "Spouse";
+        return UIStrings.RelSpouse;
       case RelationshipType.Wife:
-        return "Wife";
+        return UIStrings.RelWife;
       case RelationshipType.Husband:
-        return "Husband";
+        return UIStrings.RelHusband;
       case RelationshipType.Son:
-        return "Son";
+        return UIStrings.RelSon;
       case RelationshipType.Daughter:
-        return "Daughter";
+        return UIStrings.RelDaughter;
       case RelationshipType.Child:
-        return "Child";
+        return UIStrings.RelChild;
       default:
-        return "Unknown";
+        return UIStrings.RelUnknown;
     }
   }
 }
