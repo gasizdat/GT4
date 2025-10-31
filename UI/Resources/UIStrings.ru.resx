@@ -199,11 +199,11 @@
   <data name="DateStatusUnknown" xml:space="preserve">
     <value>неизвестно</value>
   </data>
-  <data name="FieldDateOfBirth_1" xml:space="preserve">
-    <value>Дата рождения: {0}</value>
+  <data name="FieldDateOfBirth" xml:space="preserve">
+    <value>Дата рождения:</value>
   </data>
-  <data name="FieldDateOfDeath_1" xml:space="preserve">
-    <value>Дата смерти: {0}</value>
+  <data name="FieldDateOfDeath" xml:space="preserve">
+    <value>Дата смерти:</value>
   </data>
   <data name="FieldAge_1" xml:space="preserve">
     <value>Возраст: {0}</value>
@@ -237,5 +237,80 @@
   </data>
   <data name="BtnNameUpdateFamilyPerson" xml:space="preserve">
     <value>Обновите персону</value>
+  </data>
+  <data name="DateStatusNotDefined" xml:space="preserve">
+    <value>не задано</value>
+  </data>
+  <data name="FieldPersonPhotos" xml:space="preserve">
+    <value>Фотографии</value>
+  </data>
+  <data name="BtnNameAddPersonPhoto" xml:space="preserve">
+    <value>Добавить фотографию</value>
+  </data>
+  <data name="FieldPersonNames" xml:space="preserve">
+    <value>Имена</value>
+  </data>
+  <data name="BtnNameAddPersonName" xml:space="preserve">
+    <value>Добавить имя</value>
+  </data>
+  <data name="FieldPersonDates" xml:space="preserve">
+    <value>Даты</value>
+  </data>
+  <data name="FieldPersonRelationships" xml:space="preserve">
+    <value>Родственные связи</value>
+  </data>
+  <data name="BtnNameAddPersonRelationship" xml:space="preserve">
+    <value>Добавить родственную связь</value>
+  </data>
+  <data name="FieldPersonBiography" xml:space="preserve">
+    <value>Биография</value>
+  </data>
+  <data name="RelMother" xml:space="preserve">
+    <value>Мать</value>
+  </data>
+  <data name="RelFather" xml:space="preserve">
+    <value>Отец</value>
+  </data>
+  <data name="RelAdoptiveMale_1" xml:space="preserve">
+    <value>Приемный {0}</value>
+  </data>
+  <data name="RelAdoptiveFemale_1" xml:space="preserve">
+    <value>Приемная {0}</value>
+  </data>
+  <data name="RelSpouse" xml:space="preserve">
+    <value>Супруг(а)</value>
+  </data>
+  <data name="RelWife" xml:space="preserve">
+    <value>Жена</value>
+  </data>
+  <data name="RelHusband" xml:space="preserve">
+    <value>Муж</value>
+  </data>
+  <data name="RelSon" xml:space="preserve">
+    <value>Сын</value>
+  </data>
+  <data name="RelDaughter" xml:space="preserve">
+    <value>Дочь</value>
+  </data>
+  <data name="RelChild" xml:space="preserve">
+    <value>Ребенок</value>
+  </data>
+  <data name="RelUnknown" xml:space="preserve">
+    <value>Неизвестно</value>
+  </data>
+  <data name="FieldFirstName" xml:space="preserve">
+    <value>Имя</value>
+  </data>
+  <data name="FieldMiddleName" xml:space="preserve">
+    <value>Отчество</value>
+  </data>
+  <data name="FieldLastName" xml:space="preserve">
+    <value>Фамилия</value>
+  </data>
+  <data name="FieldAdditionalName" xml:space="preserve">
+    <value>Дополнительное имя</value>
+  </data>
+  <data name="FieldFamilyName" xml:space="preserve">
+    <value>Родовое имя</value>
   </data>
 </root>
