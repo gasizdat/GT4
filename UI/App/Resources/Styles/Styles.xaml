@@ -465,4 +465,25 @@
         <Setter Property="SelectedTabColor" Value="{AppThemeBinding Light={StaticResource Gray950}, Dark={StaticResource Gray200}}" />
     </Style>
 
+    <OnIdiom 
+          x:Key="PhotoThumbHeight" 
+          x:TypeArguments="x:Double"
+          Phone="32" 
+          Tablet="48" 
+          Desktop="64" />
+    <OnIdiom 
+          x:Key="PhotoThumbWidth"  
+          x:TypeArguments="x:Double"
+          Phone="32" 
+          Tablet="48" 
+          Desktop="64" />
+
+    <Style x:Key="PhotoThumbStyle" TargetType="Image">
+      <Setter Property="Aspect" Value="AspectFit" />
+      <Setter Property="HeightRequest" Value="{StaticResource PhotoThumbHeight}" />
+      <Setter Property="WidthRequest"  Value="{StaticResource PhotoThumbWidth}" />
+      <Setter Property="HorizontalOptions" Value="Center" />
+      <Setter Property="VerticalOptions"   Value="Center" />
+    </Style>
+
 </ResourceDictionary>

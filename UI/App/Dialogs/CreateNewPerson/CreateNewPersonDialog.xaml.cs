@@ -8,13 +8,14 @@ namespace GT4.UI.App.Dialogs;
 public partial class CreateNewPersonDialog : ContentPage
 {
   private readonly string _SaveButtonName;
-  private bool _NotReady = true;
   private readonly List<ImageSource> _Photos = new();
   private readonly List<Name> _Names = new();
   private readonly List<RelativeMemberInfoItem> _Relatives = new();
+  private readonly TaskCompletionSource<Person?> _Person = new(null);
   private Date _BirthDate;
   private Date? _DeathDate;
   private BiologicalSex _Sex;
+  private bool _NotReady = true;
 
   public CreateNewPersonDialog(Person? person)
   {
@@ -34,11 +35,11 @@ public partial class CreateNewPersonDialog : ContentPage
 
     // TODO relatives just testing
     _Relatives.Add(new RelativeMemberInfoItem(new Relative(
-      new Person(0, [new Name(0, "Мариванна", NameType.FirstName, 0)],
-      null, default, null, BiologicalSex.Female), RelationshipType.Mother, Date.Create(19900521, DateStatus.WellKnown)), ServiceBuilder.DefaultServices));
+      new Person(0, [new Name(0, "Мариванна", NameType.FirstName, 0)], null, Date.Create(19900000, DateStatus.YearApproximate), null, BiologicalSex.Female), 
+      RelationshipType.Mother, Date.Create(20050521, DateStatus.WellKnown)), ServiceBuilder.DefaultServices));
     _Relatives.Add(new RelativeMemberInfoItem(new Relative(
-      new Person(0, [new Name(0, "Скуфовский", NameType.LastName, 0)],
-      null, default, null, BiologicalSex.Male), RelationshipType.Father, Date.Create(19850521, DateStatus.YearApproximate)), ServiceBuilder.DefaultServices));
+      new Person(0, [new Name(0, "Скуфовский", NameType.LastName, 0)], null, Date.Create(19951127, DateStatus.DayUnknown), null, BiologicalSex.Male), 
+      RelationshipType.Father, Date.Create(19850521, DateStatus.YearApproximate)), ServiceBuilder.DefaultServices));
 
     InitializeComponent();
     BindingContext = this;
@@ -80,6 +81,12 @@ public partial class CreateNewPersonDialog : ContentPage
     }
   }
 
-  public Task<Person?> Person => new TaskCompletionSource<Person?>(null).Task;
+  public Task<Person?> Person => _Person.Task;
   public string CreatePersonBtnName => _NotReady ? UIStrings.BtnNameCancel : _SaveButtonName;
+
+  public void OnCreatePersonBtn(object sender, EventArgs e)
+  {
+    // TODO
+    _Person.SetResult(null);
+  }
 }

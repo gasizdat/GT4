@@ -22,7 +22,7 @@
         Tablet="140" 
         Desktop="300" />
 
-      <Style x:Key="PhotoThumbStyle" TargetType="Image">
+      <Style x:Key="PhotoPreviewStyle" TargetType="Image">
         <Setter Property="Aspect" Value="AspectFit" />
         <Setter Property="HeightRequest" Value="{StaticResource PhotoHeight}" />
         <Setter Property="WidthRequest"  Value="{StaticResource PhotoWidth}" />
@@ -79,7 +79,7 @@
                       Grid.Row="0"
                       Grid.RowSpan="3"
                       Source="{Binding .}"
-									    Style="{StaticResource PhotoThumbStyle}"/>
+									    Style="{StaticResource PhotoPreviewStyle}"/>
 
                   <Button 
                       Grid.Column="1"
@@ -251,33 +251,23 @@
                     RowDefinitions="Auto, Auto"
                     ColumnDefinitions="Auto, *, Auto"
                     ColumnSpacing="10">
-                  <Image 
-                      Grid.Row="0" 
+
+                  <components:PersonInfoView
                       Grid.Column="0"
-                      Source="{Binding PersonItem.Icon}"  
-                      WidthRequest="32"
-                      HeightRequest="32"
-                      VerticalOptions="Start"
-                      Aspect="AspectFit"/>
+                      Grid.ColumnSpan="2"
+                      Grid.Row="0"
+                      Person="{Binding Info.Person}"
+                      NameLabelStyle="{StaticResource ContentFieldName}"
+                      DatesLabelStyle="{StaticResource ContentFieldValue}"/>
 
                   <Label 
-                      Grid.Row="0" 
-                      Grid.Column="1"
-                      Grid.RowSpan="2"
-                      Text="{Binding PersonItem.CommonName}"
-                      FontAttributes="Bold"
-                      FontSize="Medium"
-                      VerticalOptions="Start"
-                      LineBreakMode="TailTruncation" />
-
-                  <Label 
+                      Grid.Column="0"
                       Grid.Row="1" 
-                      Grid.Column="0"
                       Text="{Binding RelationTypeName}"  />
 
                   <Label 
-                      Grid.Row="1" 
                       Grid.Column="1"
+                      Grid.Row="1" 
                       Text="{Binding Date}" 
                       IsVisible="{Binding ShowDate}"/>
 
@@ -331,7 +321,10 @@
 
       </Frame>
 
-      <Button Text="{Binding CreatePersonBtnName}" Command="{Binding SavePersonCommand}" StyleClass="Primary" />
+      <Button 
+          Text="{Binding CreatePersonBtnName}" 
+          Clicked="OnCreatePersonBtn" 
+          StyleClass="Primary" />
 
     </VerticalStackLayout>
   </ScrollView>
