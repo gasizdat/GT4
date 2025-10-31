@@ -12,7 +12,7 @@ public class PersonInfoItem : CollectionItemBase<Person>
     _NameFormatter = nameFormatter;
   }
 
-  protected override ImageSource? CustomImage => Info.MainPhoto is null ? null : ImageFromBytes(Info.MainPhoto);
+  protected override ImageSource? CustomImage => Info.MainPhoto is null ? null : ImageUtils.ImageFromBytes(Info.MainPhoto);
 
   public string CommonName => _NameFormatter.GetCommonPersonName(Info);
 }
