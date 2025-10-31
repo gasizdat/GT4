@@ -49,7 +49,23 @@
         </Setter>
     </Style>
 
-    <Style TargetType="CheckBox">
+    <Style x:Key="ChangeAdorner" TargetType="Button">
+      <Setter Property="BorderColor" Value="{StaticResource Primary}"/>
+      <Setter Property="BackgroundColor" Value="{StaticResource Translucent80}" />
+      <Setter Property="BorderWidth" Value="1.5" />
+      <Setter Property="TextColor" Value="{StaticResource SecondaryDarkText}" />
+      <Setter Property="ZIndex" Value="2100000000"/>
+    </Style>
+
+    <Style x:Key="DeleteAdorner" TargetType="Button" BasedOn="{StaticResource ChangeAdorner}">
+      <Setter Property="Text" Value="❌"/>
+    </Style>
+
+    <Style x:Key="EditAdorner" TargetType="Button" BasedOn="{StaticResource ChangeAdorner}">
+      <Setter Property="Text" Value="🖋️"/>
+    </Style>
+
+  <Style TargetType="CheckBox">
         <Setter Property="Color" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}" />
         <Setter Property="MinimumHeightRequest" Value="44"/>
         <Setter Property="MinimumWidthRequest" Value="44"/>
@@ -165,7 +181,7 @@
         <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
         <Setter Property="BackgroundColor" Value="Transparent" />
         <Setter Property="FontFamily" Value="OpenSansRegular" />
-        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontSize" Value="Default" />
         <Setter Property="LineBreakMode" Value="WordWrap"/>
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
@@ -185,16 +201,40 @@
         <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
     </Style>
 
-    <Style TargetType="Label" x:Key="Headline">
+    <Style TargetType="Label" x:Key="ContentBase">
         <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource MidnightBlue}, Dark={StaticResource White}}" />
-        <Setter Property="FontSize" Value="32" />
-        <Setter Property="HorizontalOptions" Value="Center" />
-        <Setter Property="HorizontalTextAlignment" Value="Center" />
+        <Setter Property="HorizontalOptions" Value="Start" />
+        <Setter Property="VerticalOptions"  Value="Center" />
+        <Setter Property="HorizontalTextAlignment" Value="Start" />
+        <Setter Property="VerticalTextAlignment" Value="Center" />
     </Style>
 
-    <Style TargetType="Label" x:Key="SubHeadline">
+    <Style TargetType="Label" x:Key="ContentTitle" BasedOn="{StaticResource ContentBase}">
+        <Setter Property="FontSize" Value="Large" />
+        <Setter Property="FontAttributes" Value="Bold" />
+    </Style>
+
+    <Style TargetType="Label" x:Key="ContentSubtitle" BasedOn="{StaticResource ContentBase}">
+        <Setter Property="FontSize" Value="Subtitle" />
+    </Style>
+
+    <Style TargetType="Label" x:Key="ContentGroupTitle" BasedOn="{StaticResource ContentBase}">
+        <Setter Property="FontSize" Value="Title" />
+        <Setter Property="FontAttributes" Value="Bold" />
+    </Style>
+
+    <Style TargetType="Label" x:Key="ContentFieldName" BasedOn="{StaticResource ContentBase}">
+        <Setter Property="FontSize" Value="Micro" />
+        <Setter Property="FontAttributes" Value="Bold" />
+    </Style>
+
+    <Style TargetType="Label" x:Key="ContentFieldValue" BasedOn="{StaticResource ContentBase}">
+        <Setter Property="FontSize" Value="Micro" />
+    </Style>
+
+    <Style TargetType="Label" x:Key="Group">
         <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource MidnightBlue}, Dark={StaticResource White}}" />
-        <Setter Property="FontSize" Value="24" />
+        <Setter Property="FontSize" Value="Header" />
         <Setter Property="HorizontalOptions" Value="Center" />
         <Setter Property="HorizontalTextAlignment" Value="Center" />
     </Style>
@@ -423,6 +463,27 @@
         <Setter Property="BarTextColor" Value="{AppThemeBinding Light={StaticResource Magenta}, Dark={StaticResource White}}" />
         <Setter Property="UnselectedTabColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray950}}" />
         <Setter Property="SelectedTabColor" Value="{AppThemeBinding Light={StaticResource Gray950}, Dark={StaticResource Gray200}}" />
+    </Style>
+
+    <OnIdiom 
+          x:Key="PhotoThumbHeight" 
+          x:TypeArguments="x:Double"
+          Phone="32" 
+          Tablet="48" 
+          Desktop="64" />
+    <OnIdiom 
+          x:Key="PhotoThumbWidth"  
+          x:TypeArguments="x:Double"
+          Phone="32" 
+          Tablet="48" 
+          Desktop="64" />
+
+    <Style x:Key="PhotoThumbStyle" TargetType="Image">
+      <Setter Property="Aspect" Value="AspectFit" />
+      <Setter Property="HeightRequest" Value="{StaticResource PhotoThumbHeight}" />
+      <Setter Property="WidthRequest"  Value="{StaticResource PhotoThumbWidth}" />
+      <Setter Property="HorizontalOptions" Value="Center" />
+      <Setter Property="VerticalOptions"   Value="Center" />
     </Style>
 
 </ResourceDictionary>
