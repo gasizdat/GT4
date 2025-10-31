@@ -15,9 +15,9 @@ public partial class DateInfoView : ContentView
     BindableProperty.Create(nameof(Caption), typeof(string), typeof(DateInfoView), default, BindingMode.OneWay);
 
   public static readonly BindableProperty DateProperty =
-    BindableProperty.Create(nameof(Date), typeof(Date), typeof(DateInfoView), default, BindingMode.OneWay, null, OnDateChanged);
+    BindableProperty.Create(nameof(Date), typeof(Date?), typeof(DateInfoView), null, BindingMode.OneWay, null, OnDateChanged);
 
-  public Date Date => (Date)GetValue(DateProperty);
+  public Date? Date => (Date?)GetValue(DateProperty);
 
   public string Caption => (string)GetValue(CaptionProperty);
 

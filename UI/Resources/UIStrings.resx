@@ -238,4 +238,7 @@ genealogy tree and enjoy!</value>
   <data name="BtnNameUpdateFamilyPerson" xml:space="preserve">
     <value>Update the Person</value>
   </data>
+  <data name="DateStatusNotDefined" xml:space="preserve">
+    <value>not defined</value>
+  </data>
 </root>

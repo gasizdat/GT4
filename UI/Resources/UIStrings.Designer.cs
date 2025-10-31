@@ -224,6 +224,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to not defined.
+        /// </summary>
+        public static string DateStatusNotDefined {
+            get {
+                return ResourceManager.GetString("DateStatusNotDefined", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to unknown.
         /// </summary>
         public static string DateStatusUnknown {

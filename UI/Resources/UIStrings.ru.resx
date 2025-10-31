@@ -238,4 +238,7 @@
   <data name="BtnNameUpdateFamilyPerson" xml:space="preserve">
     <value>Обновите персону</value>
   </data>
+  <data name="DateStatusNotDefined" xml:space="preserve">
+    <value>не задано</value>
+  </data>
 </root>
