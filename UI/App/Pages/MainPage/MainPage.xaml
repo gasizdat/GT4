@@ -21,12 +21,16 @@
 
       <Label
         Text="{x:Static resources:UIStrings.AppGeneralName}"
-        Style="{StaticResource Headline}"
+        Style="{StaticResource ContentTitle}"
+        HorizontalOptions="Center"
+        HorizontalTextAlignment="Center"
         SemanticProperties.HeadingLevel="Level1" />
 
       <Label
         Text="{x:Static resources:UIStrings.AppGeneralWelcomeTitle}"
-        Style="{StaticResource SubHeadline}"
+        Style="{StaticResource ContentSubtitle}"
+        HorizontalOptions="Center"
+        HorizontalTextAlignment="Center"
         SemanticProperties.HeadingLevel="Level2"
         SemanticProperties.Description="Welcome to GT4 app powered by dot net Multi platform App UI" />
 
@@ -38,6 +42,25 @@
         Command="{Binding NavigateToCreateOrOpenDialog}"
         CommandParameter="OpenOrCreateDialog"
         HorizontalOptions="Fill" />
+
+      <!-- TODO: Temporary code for testing — to be removed before production.-->
+      <VerticalStackLayout>
+
+        <Label FontSize="11" Text="11"/>
+        <Label FontSize="12" Text="12"/>
+        <Label FontSize="Caption" Text="Caption"/>
+        <Label FontSize="14" Text="14"/>
+        <Label FontSize="Body" Text="Body"/>
+        <Label FontSize="Default" Text="Default"/>
+        <Label FontSize="Micro" Text="Micro"/>
+        <Label FontSize="16" Text="16"/>
+        <Label FontSize="Subtitle" Text="Subtitle"/>
+        <Label FontSize="Medium" Text="Medium"/>
+        <Label FontSize="Title" Text="Title"/>
+        <Label FontSize="Large" Text="Large"/>
+        <Label FontSize="Header" Text="Header"/>
+
+      </VerticalStackLayout>
 
     </VerticalStackLayout>
   </ScrollView>
