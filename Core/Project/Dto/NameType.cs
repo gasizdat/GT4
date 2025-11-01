@@ -19,4 +19,6 @@ public enum NameType
   MaleDeclension = 0x10,
   // The declension of a name in the Female gender (For languages ​​with gender declension)
   FemaleDeclension = 0x20,
+  // The mask for the name part without decension
+  NoDeclension = ~(MaleDeclension | FemaleDeclension)
 }

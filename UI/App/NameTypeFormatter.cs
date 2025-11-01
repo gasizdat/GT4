@@ -7,7 +7,7 @@ public class NameTypeFormatter : INameTypeFormatter
 {
   public string ToString(NameType type)
   {
-    switch (type & ~(NameType.MaleDeclension | NameType.FemaleDeclension))
+    switch (type & NameType.NoDeclension)
     {
       case NameType.FirstName:
         return UIStrings.FieldFirstName;
