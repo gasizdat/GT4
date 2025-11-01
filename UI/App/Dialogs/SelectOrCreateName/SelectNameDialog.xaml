@@ -34,7 +34,7 @@
         Grid.Row="1"
         Grid.Column="0"
         Grid.ColumnSpan="2"
-        HorizontalOptions="Center"
+        HorizontalOptions="Fill"
         ItemsSource="{Binding Names, Source={x:Reference Root}}"
         SelectedItem="{Binding CurrentName, Source={x:Reference Root}}"
         SelectionMode="Single">
@@ -48,11 +48,22 @@
       <CollectionView.ItemTemplate>
         <DataTemplate>
           <Label
+              HorizontalOptions="Fill"
+              HorizontalTextAlignment="Start"
               Style="{StaticResource ContentFieldValue}"
               Text="{Binding Info.Value}" />
         </DataTemplate>
       </CollectionView.ItemTemplate>
     </CollectionView>
+
+    <Button
+        Grid.Row="2"
+        Grid.Column="0"
+        Grid.ColumnSpan="2"
+        Clicked="OnAddNameBtn"
+        FontSize="Large"
+        HorizontalOptions="Fill"
+        Text="Add name" />
 
     <Button
         Grid.Row="3"
