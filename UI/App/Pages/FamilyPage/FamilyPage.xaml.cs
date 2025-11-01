@@ -97,7 +97,7 @@ public partial class FamilyPage : ContentPage
 
   internal async Task OnCreatePerson()
   {
-    var dialog = new CreateNewPersonDialog(null);
+    var dialog = new CreateNewPersonDialog(null, Services);
 
     await Navigation.PushModalAsync(dialog);
     var person = await dialog.Person;
