@@ -7,69 +7,62 @@
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
     x:Name="Root"
     Title="{x:Static resources:UIStrings.WndTitleSelectNameDialog}">
-  <ScrollView>
 
-    <VerticalStackLayout
-        Padding="20"
-        Spacing="10"
-        VerticalOptions="Center">
+  <Grid
+      Padding="20"
+      ColumnDefinitions="Auto, *"
+      HorizontalOptions="Fill"
+      RowDefinitions="Auto, *, Auto, Auto"
+      RowSpacing="10"
+      VerticalOptions="Start">
 
-      <Label
-          Style="{StaticResource ContentFieldName}"
-          Text="{x:Static resources:UIStrings.FieldSelectNameType}" />
+    <Label
+        Grid.Row="0"
+        Grid.Column="0"
+        Style="{StaticResource ContentFieldName}"
+        Text="{x:Static resources:UIStrings.FieldSelectName}" />
 
-      <CollectionView
-          HorizontalOptions="Center"
-          ItemsSource="{Binding NameTypes, Source={x:Reference Root}}"
-          SelectionMode="Single">
+    <Picker
+        Grid.Row="0"
+        Grid.Column="1"
+        ItemDisplayBinding="{Binding TypeName}"
+        ItemsSource="{Binding NameTypes, Source={x:Reference Root}}"
+        SelectedItem="{Binding CurrentNameType, Source={x:Reference Root}}"
+        Style="{StaticResource ContentFieldValue}" />
 
-        <CollectionView.ItemsLayout>
-          <LinearItemsLayout
-              ItemSpacing="5"
-              Orientation="Vertical" />
-        </CollectionView.ItemsLayout>
+    <CollectionView
+        Grid.Row="1"
+        Grid.Column="0"
+        Grid.ColumnSpan="2"
+        HorizontalOptions="Center"
+        ItemsSource="{Binding Names, Source={x:Reference Root}}"
+        SelectedItem="{Binding CurrentName, Source={x:Reference Root}}"
+        SelectionMode="Single">
 
-        <CollectionView.ItemTemplate>
-          <DataTemplate>
-            <Label
-                Style="{StaticResource ContentFieldValue}"
-                Text="{Binding NameTypeName}" />
-          </DataTemplate>
-        </CollectionView.ItemTemplate>
-      </CollectionView>
+      <CollectionView.ItemsLayout>
+        <LinearItemsLayout
+            ItemSpacing="5"
+            Orientation="Vertical" />
+      </CollectionView.ItemsLayout>
 
-      <Label
-          Style="{StaticResource ContentGroupTitle}"
-          Text="{x:Static resources:UIStrings.FieldSelectName_1}" />
+      <CollectionView.ItemTemplate>
+        <DataTemplate>
+          <Label
+              Style="{StaticResource ContentFieldValue}"
+              Text="{Binding Info.Value}" />
+        </DataTemplate>
+      </CollectionView.ItemTemplate>
+    </CollectionView>
 
-      <CollectionView
-          HorizontalOptions="Center"
-          ItemsSource="{Binding Names, Source={x:Reference Root}}"
-          SelectionMode="Single">
+    <Button
+        Grid.Row="3"
+        Grid.Column="0"
+        Grid.ColumnSpan="2"
+        Clicked="OnSelectNameBtn"
+        FontSize="Large"
+        HorizontalOptions="Fill"
+        Text="{Binding SelectNameBtnName, Source={x:Reference Root}}" />
 
-        <CollectionView.ItemsLayout>
-          <LinearItemsLayout
-              ItemSpacing="5"
-              Orientation="Vertical" />
-        </CollectionView.ItemsLayout>
+  </Grid>
 
-        <CollectionView.ItemTemplate>
-          <DataTemplate>
-            <Label
-                Style="{StaticResource ContentFieldValue}"
-                Text="{Binding Info.Value}" />
-          </DataTemplate>
-        </CollectionView.ItemTemplate>
-      </CollectionView>
-
-
-      <Button
-          Clicked="OnSelectNameBtn"
-          FontSize="Large"
-          HorizontalOptions="Fill"
-          Text="{Binding SelectNameBtnName, Source={x:Reference Root}}" />
-
-    </VerticalStackLayout>
-
-  </ScrollView>
 </ContentPage>
