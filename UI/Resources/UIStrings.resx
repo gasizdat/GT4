@@ -212,7 +212,7 @@ genealogy tree and enjoy!</value>
     <value>Create a Family</value>
   </data>
   <data name="FieldFamilyNameEntry" xml:space="preserve">
-    <value>Family Name:</value>
+    <value>Family Name</value>
   </data>
   <data name="TxtPlaceholderFamilyName" xml:space="preserve">
     <value>Enter a Family name in the plural (for example, Smiths)</value>
@@ -224,13 +224,13 @@ genealogy tree and enjoy!</value>
     <value>The last name in the female declension</value>
   </data>
   <data name="TxtPlaceholderLastNameFemale" xml:space="preserve">
-    <value>The last name in the female declension (for example, mr Smith)</value>
+    <value>Enter female last name (for example, mrs Smith)</value>
   </data>
   <data name="TxtPlaceholderProjectDescription" xml:space="preserve">
     <value>Enter a description for the new Genealogy Tree</value>
   </data>
   <data name="TxtPlaceholderLastNameMale" xml:space="preserve">
-    <value>The last name in the male declension (mrs Smith)</value>
+    <value>Enter male last name (mr Smith)</value>
   </data>
   <data name="BtnNameCreateFamilyPerson" xml:space="preserve">
     <value>Create a Person</value>
@@ -321,5 +321,29 @@ genealogy tree and enjoy!</value>
   </data>
   <data name="FieldSelectName" xml:space="preserve">
     <value>Select</value>
+  </data>
+  <data name="FieldFirstNameMaleEntry" xml:space="preserve">
+    <value>Male first name</value>
+  </data>
+  <data name="FieldFirstNameFemaleEntry" xml:space="preserve">
+    <value>Female first name</value>
+  </data>
+  <data name="FieldMiddleNameMaleEntry" xml:space="preserve">
+    <value>Male middle name</value>
+  </data>
+  <data name="FieldMiddleNameFemaleEntry" xml:space="preserve">
+    <value>Female middle name</value>
+  </data>
+  <data name="TxtPlaceholderMaleName" xml:space="preserve">
+    <value>Enter male name</value>
+  </data>
+  <data name="TxtPlaceholderFemaleName" xml:space="preserve">
+    <value>Enter female name</value>
+  </data>
+  <data name="TxtPlaceholderMiddleNameMale" xml:space="preserve">
+    <value>Enter male middle name</value>
+  </data>
+  <data name="TxtPlaceholderMiddleNameFemale" xml:space="preserve">
+    <value>Enter female middle name</value>
   </data>
 </root>

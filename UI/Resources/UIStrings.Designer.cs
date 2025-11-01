@@ -323,7 +323,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Family Name:.
+        ///   Looks up a localized string similar to Family Name.
         /// </summary>
         public static string FieldFamilyNameEntry {
             get {
@@ -337,6 +337,24 @@ namespace GT4.UI.Resources {
         public static string FieldFirstName {
             get {
                 return ResourceManager.GetString("FieldFirstName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Female first name.
+        /// </summary>
+        public static string FieldFirstNameFemaleEntry {
+            get {
+                return ResourceManager.GetString("FieldFirstNameFemaleEntry", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Male first name.
+        /// </summary>
+        public static string FieldFirstNameMaleEntry {
+            get {
+                return ResourceManager.GetString("FieldFirstNameMaleEntry", resourceCulture);
             }
         }
         
@@ -373,6 +391,24 @@ namespace GT4.UI.Resources {
         public static string FieldMiddleName {
             get {
                 return ResourceManager.GetString("FieldMiddleName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Female middle name.
+        /// </summary>
+        public static string FieldMiddleNameFemaleEntry {
+            get {
+                return ResourceManager.GetString("FieldMiddleNameFemaleEntry", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Male middle name.
+        /// </summary>
+        public static string FieldMiddleNameMaleEntry {
+            get {
+                return ResourceManager.GetString("FieldMiddleNameMaleEntry", resourceCulture);
             }
         }
         
@@ -557,7 +593,16 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The last name in the female declension (for example, mr Smith).
+        ///   Looks up a localized string similar to Enter female name.
+        /// </summary>
+        public static string TxtPlaceholderFemaleName {
+            get {
+                return ResourceManager.GetString("TxtPlaceholderFemaleName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enter female last name (for example, mrs Smith).
         /// </summary>
         public static string TxtPlaceholderLastNameFemale {
             get {
@@ -566,11 +611,38 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The last name in the male declension (mrs Smith).
+        ///   Looks up a localized string similar to Enter male last name (mr Smith).
         /// </summary>
         public static string TxtPlaceholderLastNameMale {
             get {
                 return ResourceManager.GetString("TxtPlaceholderLastNameMale", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enter male name.
+        /// </summary>
+        public static string TxtPlaceholderMaleName {
+            get {
+                return ResourceManager.GetString("TxtPlaceholderMaleName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enter female middle name.
+        /// </summary>
+        public static string TxtPlaceholderMiddleNameFemale {
+            get {
+                return ResourceManager.GetString("TxtPlaceholderMiddleNameFemale", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enter male middle name.
+        /// </summary>
+        public static string TxtPlaceholderMiddleNameMale {
+            get {
+                return ResourceManager.GetString("TxtPlaceholderMiddleNameMale", resourceCulture);
             }
         }
         

@@ -212,7 +212,7 @@
     <value>Добавьте род</value>
   </data>
   <data name="FieldFamilyNameEntry" xml:space="preserve">
-    <value>Название рода:</value>
+    <value>Название рода</value>
   </data>
   <data name="TxtPlaceholderFamilyName" xml:space="preserve">
     <value>Добавьте имя рода во множественном числе (например, Ивановы)</value>
@@ -224,13 +224,13 @@
     <value>Фамилия в женском склонении</value>
   </data>
   <data name="TxtPlaceholderLastNameFemale" xml:space="preserve">
-    <value>Фамилия в женском склонении (например, Иванова)</value>
+    <value>Добавьте женскую фамилию (например, Иванова)</value>
   </data>
   <data name="TxtPlaceholderProjectDescription" xml:space="preserve">
     <value>Добавьте описание для нового генеалогического древа</value>
   </data>
   <data name="TxtPlaceholderLastNameMale" xml:space="preserve">
-    <value>Фамилия в мужском склонении (например, Иванов)</value>
+    <value>Добавьте мужскую фамилию (например, Иванов)</value>
   </data>
   <data name="BtnNameCreateFamilyPerson" xml:space="preserve">
     <value>Создайте персону</value>
@@ -321,5 +321,29 @@
   </data>
   <data name="FieldSelectName" xml:space="preserve">
     <value>Выберите</value>
+  </data>
+  <data name="FieldFirstNameMaleEntry" xml:space="preserve">
+    <value>Мужское имя</value>
+  </data>
+  <data name="FieldFirstNameFemaleEntry" xml:space="preserve">
+    <value>Женское имя</value>
+  </data>
+  <data name="FieldMiddleNameMaleEntry" xml:space="preserve">
+    <value>Мужское отчество</value>
+  </data>
+  <data name="FieldMiddleNameFemaleEntry" xml:space="preserve">
+    <value>Женское отчество</value>
+  </data>
+  <data name="TxtPlaceholderMaleName" xml:space="preserve">
+    <value>Добавьте мужское имя</value>
+  </data>
+  <data name="TxtPlaceholderFemaleName" xml:space="preserve">
+    <value>Добавьте женское имя</value>
+  </data>
+  <data name="TxtPlaceholderMiddleNameMale" xml:space="preserve">
+    <value>Добавьте мужское отчество</value>
+  </data>
+  <data name="TxtPlaceholderMiddleNameFemale" xml:space="preserve">
+    <value>Добавьте женское отчество</value>
   </data>
 </root>
