@@ -422,11 +422,11 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Select {0}.
+        ///   Looks up a localized string similar to Select.
         /// </summary>
-        public static string FieldSelectName_1 {
+        public static string FieldSelectName {
             get {
-                return ResourceManager.GetString("FieldSelectName_1", resourceCulture);
+                return ResourceManager.GetString("FieldSelectName", resourceCulture);
             }
         }
         

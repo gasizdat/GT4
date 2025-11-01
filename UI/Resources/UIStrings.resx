@@ -319,7 +319,7 @@ genealogy tree and enjoy!</value>
   <data name="FieldSelectNameType" xml:space="preserve">
     <value>Select name type</value>
   </data>
-  <data name="FieldSelectName_1" xml:space="preserve">
-    <value>Select {0}</value>
+  <data name="FieldSelectName" xml:space="preserve">
+    <value>Select</value>
   </data>
 </root>

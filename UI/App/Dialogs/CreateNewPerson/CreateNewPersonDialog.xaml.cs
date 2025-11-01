@@ -49,6 +49,9 @@ public partial class CreateNewPersonDialog : ContentPage
       new Person(0, [new Name(0, "Doe", NameType.LastName, 0)], null, Date.Create(19951127, DateStatus.DayUnknown), null, BiologicalSex.Male),
       RelationshipType.Father, Date.Create(19850521, DateStatus.YearApproximate)), _ServiceProvider));
 
+    // TODO just testing
+    _Sex = BiologicalSex.Male;
+
     InitializeComponent();
   }
 

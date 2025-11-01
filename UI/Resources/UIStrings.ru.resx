@@ -319,7 +319,7 @@
   <data name="FieldSelectNameType" xml:space="preserve">
     <value>Выберите тип имени</value>
   </data>
-  <data name="FieldSelectName_1" xml:space="preserve">
-    <value>Выберите {0}</value>
+  <data name="FieldSelectName" xml:space="preserve">
+    <value>Выберите</value>
   </data>
 </root>
