@@ -2,7 +2,7 @@ using GT4.UI.Resources;
 
 namespace GT4.UI.App.Dialogs;
 
-public partial class CreateNewFamilyDialog : ContentPage
+public partial class CreateNewNameDialog : ContentPage
 {
   public record FamilyInfo(string Name, string MaleLastName, string FemaleLastName);
 
@@ -14,7 +14,7 @@ public partial class CreateNewFamilyDialog : ContentPage
     string.IsNullOrWhiteSpace(MaleLastName) ||
     string.IsNullOrWhiteSpace(FemaleLastName);
 
-  public CreateNewFamilyDialog()
+  public CreateNewNameDialog()
   {
     InitializeComponent();
     BindingContext = this;

@@ -111,7 +111,7 @@ public partial class FamiliesPage : ContentPage
 
   internal async Task OnCreateFamily()
   {
-    var dialog = new CreateNewFamilyDialog();
+    var dialog = new CreateNewNameDialog();
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;
