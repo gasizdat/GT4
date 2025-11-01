@@ -5,7 +5,7 @@ namespace GT4.UI.App.Dialogs;
 
 public partial class CreateNewNameDialog : ContentPage
 {
-  public record FamilyInfo(string Name, string MaleLastName, string FemaleLastName);
+  public record FamilyInfo(string Name, string MaleName, string FemaleName);
 
   private readonly NameType _NameType;
   private readonly TaskCompletionSource<FamilyInfo?> _Info = new(null);

@@ -128,7 +128,7 @@ public partial class FamiliesPage : ContentPage
       var family = await Services.GetRequiredService<ICurrentProjectProvider>()
         .Project
         .Family
-        .AddFamilyAsync(familyName: info.Name, maleLastName: info.MaleLastName, femaleLastName: info.FemaleLastName, token);
+        .AddFamilyAsync(familyName: info.Name, maleLastName: info.MaleName, femaleLastName: info.FemaleName, token);
     }
     catch (Exception ex)
     {
