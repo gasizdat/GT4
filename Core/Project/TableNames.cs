@@ -169,6 +169,31 @@ public class TableNames : TableBase
     return new Name(Id: await Document.GetLastInsertRowIdAsync(token), Value: value, Type: type, ParentId: parent?.Id);
   }
 
+  public async Task<Name> AddFirstMaleNameAsync(string firstName, string? maleMiddleName, string? femaleMiddleName, CancellationToken token)
+  {
+    using var transaction = await Document.BeginTransactionAsync(token);
+    var name = await AddNameAsync(firstName, NameType.FirstName | NameType.MaleDeclension, null, token);
+    var tasks = new List<Task<Name>>();
+    if (maleMiddleName is not null)
+    {
+      tasks.Add(AddNameAsync(maleMiddleName, NameType.MiddleName | NameType.MaleDeclension, name, token));
+    }
+    if (femaleMiddleName is not null)
+    {
+      tasks.Add(AddNameAsync(femaleMiddleName, NameType.MiddleName | NameType.FemaleDeclension, name, token));
+    }
+    await Task.WhenAll(tasks);
+    transaction.Commit();
+
+    return name;
+  }
+
+  public async Task<Name> AddFirstFemaleNameAsync(string firstName, CancellationToken token)
+  {
+    var name = await AddNameAsync(firstName, NameType.FirstName | NameType.FemaleDeclension, null, token);
+    return name;
+  }
+
   public async Task RemoveNameWithSubnamesAsync(Name name, CancellationToken token)
   {
     using var command = Document.CreateCommand();
