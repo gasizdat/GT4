@@ -313,4 +313,13 @@ genealogy tree and enjoy!</value>
   <data name="FieldFamilyName" xml:space="preserve">
     <value>Family name</value>
   </data>
+  <data name="WndTitleSelectNameDialog" xml:space="preserve">
+    <value>Select a name</value>
+  </data>
+  <data name="FieldSelectNameType" xml:space="preserve">
+    <value>Select name type</value>
+  </data>
+  <data name="FieldSelectName_1" xml:space="preserve">
+    <value>Select {0}</value>
+  </data>
 </root>

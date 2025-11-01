@@ -422,6 +422,24 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Select {0}.
+        /// </summary>
+        public static string FieldSelectName_1 {
+            get {
+                return ResourceManager.GetString("FieldSelectName_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select name type.
+        /// </summary>
+        public static string FieldSelectNameType {
+            get {
+                return ResourceManager.GetString("FieldSelectNameType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 🌐 Language.
         /// </summary>
         public static string PkrLanguageHint {
@@ -643,6 +661,15 @@ namespace GT4.UI.Resources {
         public static string WndTitleOpenOrCreateDialog {
             get {
                 return ResourceManager.GetString("WndTitleOpenOrCreateDialog", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select a name.
+        /// </summary>
+        public static string WndTitleSelectNameDialog {
+            get {
+                return ResourceManager.GetString("WndTitleSelectNameDialog", resourceCulture);
             }
         }
     }
