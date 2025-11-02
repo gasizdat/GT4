@@ -11,7 +11,7 @@ public class TableRelatives : TableBase
     var id = reader.GetInt32(0);
     var type = GetEnum<RelationshipType>(reader, 1);
     var date = TryGetDate(reader, 2, 3);
-    var relative = await Document.Persons.TryGetPersonById(id, token);
+    var relative = await Document.Persons.TryGetPersonByIdAsync(id, token);
 
     return relative is null ? null : new Relative(Person: relative, Type: type, Date: date);
   }

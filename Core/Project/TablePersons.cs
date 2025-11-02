@@ -97,7 +97,7 @@ public partial class TablePersons : TableBase
     return result.ToArray();
   }
 
-  public async Task<Person?> TryGetPersonById(int personId, CancellationToken token)
+  public async Task<Person?> TryGetPersonByIdAsync(int personId, CancellationToken token)
   {
     if (_Items.TryGetTarget(out var items))
       return items.SingleOrDefault(item => item.Id == personId);
