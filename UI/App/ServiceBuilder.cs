@@ -14,6 +14,7 @@ public class ServiceBuilder
         .AddSingleton<IDateSpanFormatter, DateSpanFormatter>()
         .AddSingleton<IRelationshipTypeFormatter, RelationshipTypeFormatter>()
         .AddSingleton<INameTypeFormatter, NameTypeFormatter>()
+        .AddSingleton<IBiologicalSexFormatter, BiologicalSexFormatter>()
         .AddSingleton<IComparer<FamilyInfoItem>, FamilyInfoItemComparer>()
         .AddSingleton<IComparer<FamilyMemberInfoItem>, FamilyMemberInfoItemComparer>()
         .AddSingleton<IComparer<ProjectItem>, ProjectItemComparer>()

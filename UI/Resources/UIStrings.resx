@@ -346,4 +346,13 @@ genealogy tree and enjoy!</value>
   <data name="TxtPlaceholderMiddleNameFemale" xml:space="preserve">
     <value>Enter female middle name</value>
   </data>
+  <data name="BiologicalSexMale" xml:space="preserve">
+    <value>Man</value>
+  </data>
+  <data name="BiologicalSexFemale" xml:space="preserve">
+    <value>Woman</value>
+  </data>
+  <data name="BiologicalSexUnknown" xml:space="preserve">
+    <value>Human</value>
+  </data>
 </root>

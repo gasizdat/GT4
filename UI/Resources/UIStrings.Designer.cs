@@ -125,6 +125,33 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Woman.
+        /// </summary>
+        public static string BiologicalSexFemale {
+            get {
+                return ResourceManager.GetString("BiologicalSexFemale", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Man.
+        /// </summary>
+        public static string BiologicalSexMale {
+            get {
+                return ResourceManager.GetString("BiologicalSexMale", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Human.
+        /// </summary>
+        public static string BiologicalSexUnknown {
+            get {
+                return ResourceManager.GetString("BiologicalSexUnknown", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Open an existing Genealogy Tree or create a new one..
         /// </summary>
         public static string BtnHintOpenOrCreateProject {
