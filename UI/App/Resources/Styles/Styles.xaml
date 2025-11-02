@@ -116,6 +116,10 @@
     <Setter Property="TextColor" Value="{StaticResource Tertiary}" />
   </Style>
 
+  <Style x:Key="AddAdorner" BasedOn="{StaticResource ChangeAdorner}" TargetType="Button">
+    <Setter Property="Text" Value="➕" />
+  </Style>
+
   <Style x:Key="DeleteAdorner" BasedOn="{StaticResource ChangeAdorner}" TargetType="Button">
     <Setter Property="Text" Value="❌" />
   </Style>

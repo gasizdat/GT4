@@ -126,9 +126,9 @@
               Grid.Column="1"
               Command="{Binding DialogCommand, Source={x:Reference Root}}"
               CommandParameter="AddPhotoCommand"
-              HorizontalOptions="Fill"
-              Style="{StaticResource TextAdorner}"
-              Text="{x:Static resources:UIStrings.BtnNameAddPersonPhoto}" />
+              HeightRequest="{StaticResource PhotoHeight}"
+              Style="{StaticResource AddAdorner}"
+              WidthRequest="{StaticResource PhotoWidth}" />
 
         </Grid>
       </Frame>
