@@ -126,6 +126,8 @@
               Grid.Column="1"
               Command="{Binding DialogCommand, Source={x:Reference Root}}"
               CommandParameter="AddPhotoCommand"
+              HorizontalOptions="Fill"
+              Style="{StaticResource TextAdorner}"
               Text="{x:Static resources:UIStrings.BtnNameAddPersonPhoto}" />
 
         </Grid>
@@ -215,6 +217,7 @@
               Command="{Binding DialogCommand, Source={x:Reference Root}}"
               CommandParameter="AddNameCommand"
               HorizontalOptions="Fill"
+              Style="{StaticResource TextAdorner}"
               Text="{x:Static resources:UIStrings.BtnNameAddPersonName}" />
         </Grid>
       </Frame>
@@ -360,6 +363,8 @@
               Grid.Column="0"
               Command="{Binding DialogCommand, Source={x:Reference Root}}"
               CommandParameter="AddRelationship"
+              HorizontalOptions="Fill"
+              Style="{StaticResource TextAdorner}"
               Text="{x:Static resources:UIStrings.BtnNameAddPersonRelationship}" />
 
         </Grid>
