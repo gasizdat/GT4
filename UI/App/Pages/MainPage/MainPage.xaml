@@ -23,10 +23,14 @@
           Source="gt4_logo.png" />
 
       <Label
+          HorizontalOptions="Fill"
+          HorizontalTextAlignment="Center"
           Style="{StaticResource PageTitle}"
           Text="{x:Static resources:UIStrings.AppGeneralName}" />
 
       <Label
+          HorizontalOptions="Fill"
+          HorizontalTextAlignment="Center"
           Style="{StaticResource PageSubtitle}"
           Text="{x:Static resources:UIStrings.AppGeneralWelcomeTitle}" />
 
