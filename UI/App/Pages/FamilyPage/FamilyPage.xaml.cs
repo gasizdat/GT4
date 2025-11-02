@@ -105,16 +105,17 @@ public partial class FamilyPage : ContentPage
 
     try
     {
-      if (info is null)
+      if (info is null || _FamilyName is null)
       {
         return;
       }
 
       using var token = Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
+
       await Services.GetRequiredService<ICurrentProjectProvider>()
         .Project
-        .Persons
-        .AddPersonAsync(info.Person, token);
+        .Family
+        .AddPersonToFamilyAsync(_FamilyName, info.Person, token);
     }
     catch (Exception ex)
     {

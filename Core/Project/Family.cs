@@ -34,4 +34,18 @@ public class Family
 
     //TODO : Remove related persons or handle them appropriately
   }
+
+  public async Task<int> AddPersonToFamilyAsync(Name familyName, Person person, CancellationToken token)
+  {
+    using var transaction = await _Document.BeginTransactionAsync(token);
+
+    var personId = await _Document.Persons.AddPersonAsync(person, token);
+    if (person.Names.SingleOrDefault(name => name.Id == familyName.Id) is null)
+    {
+      await _Document.PersonNames.AddNamesAsync(personId, [familyName], token);
+    }
+    transaction.Commit();
+
+    return personId;
+  }
 }
