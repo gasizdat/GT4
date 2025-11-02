@@ -52,7 +52,7 @@ public partial class TablePersonNames : TableBase
 
   public async Task AddNamesAsync(int personId, Name[] names, CancellationToken token)
   {
-    var transaction = await Document.BeginTransactionAsync(token);
+    using var transaction = await Document.BeginTransactionAsync(token);
 
     foreach (var name in names)
     {
