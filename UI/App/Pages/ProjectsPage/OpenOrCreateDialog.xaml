@@ -12,9 +12,8 @@
         Padding="20"
         Spacing="10">
       <Label
-          HorizontalOptions="Center"
-          Text="{x:Static resources:UIStrings.WndHintOpenOrCreateDialog}"
-          VerticalOptions="Center" />
+          Style="{StaticResource PageSubtitle}"
+          Text="{x:Static resources:UIStrings.WndHintOpenOrCreateDialog}" />
 
       <CollectionView
           ItemsSource="{Binding Projects}"
@@ -37,14 +36,11 @@
               <VerticalStackLayout FlexLayout.Grow="1">
 
                 <Label
-                    Padding="2"
-                    FontAttributes="Bold"
-                    FontSize="20"
+                    Style="{StaticResource CardTitle}"
                     Text="{Binding Info.Name}" />
 
                 <Label
-                    Padding="2"
-                    FontSize="12"
+                    Style="{StaticResource CardSubtitle}"
                     Text="{Binding Info.Description}" />
 
               </VerticalStackLayout>

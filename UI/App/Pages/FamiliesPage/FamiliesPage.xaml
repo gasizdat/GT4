@@ -12,9 +12,8 @@
         Padding="20"
         Spacing="10">
       <Label
-          HorizontalOptions="Center"
-          Text="{x:Static resources:UIStrings.WndHintFamiliesPage}"
-          VerticalOptions="Center" />
+          Style="{StaticResource PageSubtitle}"
+          Text="{x:Static resources:UIStrings.WndHintFamiliesPage}" />
 
       <CollectionView
           ItemsSource="{Binding Families}"
@@ -47,9 +46,7 @@
                   Grid.Row="0"
                   Grid.RowSpan="2"
                   Grid.Column="1"
-                  FontAttributes="Bold"
-                  FontSize="Medium"
-                  LineBreakMode="TailTruncation"
+                  Style="{StaticResource CardTitle}"
                   Text="{Binding Info.Value}"
                   VerticalOptions="Start" />
 
@@ -79,9 +76,8 @@
                           WidthRequest="32" />
 
                       <Label
-                          FontSize="Small"
                           HorizontalOptions="Fill"
-                          LineBreakMode="TailTruncation"
+                          Style="{StaticResource CardContent}"
                           Text="{Binding CommonName}" />
                     </HorizontalStackLayout>
 

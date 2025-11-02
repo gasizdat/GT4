@@ -14,9 +14,8 @@
         Spacing="10">
 
       <Label
-          HorizontalOptions="Center"
-          Text="{x:Static resources:UIStrings.WndHintFamilyPage}"
-          VerticalOptions="Center" />
+          Style="{StaticResource PageSubtitle}"
+          Text="{x:Static resources:UIStrings.WndHintFamilyPage}" />
 
       <FlexLayout
           AlignContent="Center"
@@ -61,10 +60,9 @@
                     Grid.Row="0"
                     Grid.Column="1"
                     Grid.ColumnSpan="2"
-                    FontAttributes="Bold"
-                    FontSize="Medium"
                     HorizontalOptions="Fill"
                     LineBreakMode="TailTruncation"
+                    Style="{StaticResource CardTitle}"
                     Text="{Binding CommonName}" />
 
                 <VerticalStackLayout
@@ -101,9 +99,7 @@
                       IsVisible="{Binding ShowDateOfDeath}" />
 
                   <Label
-                      FontSize="Small"
-                      HorizontalOptions="Fill"
-                      LineBreakMode="TailTruncation"
+                      Style="{StaticResource CardContent}"
                       Text="{Binding Age}" />
 
                 </VerticalStackLayout>

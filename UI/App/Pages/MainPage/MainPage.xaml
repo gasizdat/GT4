@@ -23,18 +23,11 @@
           Source="gt4_logo.png" />
 
       <Label
-          HorizontalOptions="Center"
-          HorizontalTextAlignment="Center"
-          SemanticProperties.HeadingLevel="Level1"
-          Style="{StaticResource ContentTitle}"
+          Style="{StaticResource PageTitle}"
           Text="{x:Static resources:UIStrings.AppGeneralName}" />
 
       <Label
-          HorizontalOptions="Center"
-          HorizontalTextAlignment="Center"
-          SemanticProperties.Description="Welcome to GT4 app powered by dot net Multi platform App UI"
-          SemanticProperties.HeadingLevel="Level2"
-          Style="{StaticResource ContentSubtitle}"
+          Style="{StaticResource PageSubtitle}"
           Text="{x:Static resources:UIStrings.AppGeneralWelcomeTitle}" />
 
       <Button
@@ -49,45 +42,34 @@
       <!--  TODO: Temporary code for testing — to be removed before production.  -->
       <VerticalStackLayout>
 
+
         <Label
-            FontSize="11"
-            Text="11" />
+            Style="{StaticResource PageTitle}"
+            Text="PageTitle" />
         <Label
-            FontSize="12"
-            Text="12" />
+            Style="{StaticResource PageSubtitle}"
+            Text="PageSubtitle" />
         <Label
-            FontSize="Caption"
-            Text="Caption" />
+            Style="{StaticResource GroupTitle}"
+            Text="GroupTitle" />
         <Label
-            FontSize="14"
-            Text="14" />
+            Style="{StaticResource GroupSubtitle}"
+            Text="GroupSubtitle" />
         <Label
-            FontSize="Body"
-            Text="Body" />
+            Style="{StaticResource CardTitle}"
+            Text="CardTitle" />
         <Label
-            FontSize="Default"
-            Text="Default" />
+            Style="{StaticResource CardSubtitle}"
+            Text="CardSubtitle" />
         <Label
-            FontSize="Micro"
-            Text="Micro" />
+            Style="{StaticResource CardContent}"
+            Text="CardContent" />
         <Label
-            FontSize="16"
-            Text="16" />
+            Style="{StaticResource FieldName}"
+            Text="FieldName" />
         <Label
-            FontSize="Subtitle"
-            Text="Subtitle" />
-        <Label
-            FontSize="Medium"
-            Text="Medium" />
-        <Label
-            FontSize="Title"
-            Text="Title" />
-        <Label
-            FontSize="Large"
-            Text="Large" />
-        <Label
-            FontSize="Header"
-            Text="Header" />
+            Style="{StaticResource FieldValue}"
+            Text="FieldValue" />
 
       </VerticalStackLayout>
 

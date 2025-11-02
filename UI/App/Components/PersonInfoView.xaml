@@ -20,14 +20,14 @@
     <Label
         Grid.Row="0"
         Grid.Column="1"
-        Style="{Binding NameLabelStyle, Source={x:Reference Root}, TargetNullValue={StaticResource ContentTitle}}"
+        Style="{Binding NameLabelStyle, Source={x:Reference Root}, TargetNullValue={StaticResource CardTitle}}"
         Text="{Binding CommonName, Source={x:Reference Root}}" />
 
     <Label
         Grid.Row="1"
         Grid.Column="1"
         IsVisible="{Binding ShowDates, Source={x:Reference Root}}"
-        Style="{Binding DatesLabelStyle, Source={x:Reference Root}, TargetNullValue={StaticResource ContentSubtitle}}"
+        Style="{Binding DatesLabelStyle, Source={x:Reference Root}, TargetNullValue={StaticResource CardContent}}"
         Text="{Binding LifeDates, Source={x:Reference Root}}" />
 
   </Grid>

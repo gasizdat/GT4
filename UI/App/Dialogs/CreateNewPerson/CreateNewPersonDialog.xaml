@@ -24,7 +24,7 @@
           Desktop="300"
           Phone="100"
           Tablet="140" />
-      
+
       <OnIdiom
           x:Key="PhotoWidth"
           x:TypeArguments="x:Double"
@@ -61,7 +61,8 @@
           <Label
               Grid.Row="0"
               Grid.Column="0"
-              Style="{StaticResource ContentGroupTitle}"
+              Grid.ColumnSpan="3"
+              Style="{StaticResource GroupTitle}"
               Text="{x:Static resources:UIStrings.FieldPersonPhotos}" />
           <CollectionView
               Grid.Row="1"
@@ -139,7 +140,7 @@
           <Label
               Grid.Row="0"
               Grid.Column="0"
-              Style="{StaticResource ContentGroupTitle}"
+              Style="{StaticResource GroupTitle}"
               Text="{x:Static resources:UIStrings.FieldPersonNames}" />
 
           <CollectionView
@@ -167,14 +168,14 @@
                       Grid.Row="0"
                       Grid.Column="0"
                       HorizontalOptions="Start"
-                      Style="{StaticResource ContentFieldName}"
+                      Style="{StaticResource FieldName}"
                       Text="{Binding Type}" />
 
                   <Label
                       Grid.Row="0"
                       Grid.Column="1"
                       HorizontalOptions="Fill"
-                      Style="{StaticResource ContentFieldValue}"
+                      Style="{StaticResource FieldValue}"
                       Text="{Binding Value}" />
 
                   <Button
@@ -229,7 +230,7 @@
           <Label
               Grid.Row="0"
               Grid.Column="0"
-              Style="{StaticResource ContentGroupTitle}"
+              Style="{StaticResource GroupTitle}"
               Text="{x:Static resources:UIStrings.FieldPersonDates}" />
 
           <components:DateInfoView
@@ -278,7 +279,7 @@
           <Label
               Grid.Row="0"
               Grid.Column="0"
-              Style="{StaticResource ContentGroupTitle}"
+              Style="{StaticResource GroupTitle}"
               Text="{x:Static resources:UIStrings.FieldPersonRelationships}" />
 
           <CollectionView
@@ -305,8 +306,8 @@
                       Grid.Row="0"
                       Grid.Column="0"
                       Grid.ColumnSpan="2"
-                      DatesLabelStyle="{StaticResource ContentFieldValue}"
-                      NameLabelStyle="{StaticResource ContentFieldName}"
+                      DatesLabelStyle="{StaticResource FieldValue}"
+                      NameLabelStyle="{StaticResource FieldName}"
                       Person="{Binding Info.Person}" />
 
                   <Button
@@ -338,6 +339,7 @@
                   <Label
                       Grid.Row="1"
                       Grid.Column="0"
+                      Style="{StaticResource FieldName}"
                       Text="{Binding RelationTypeName}" />
 
                   <Label
@@ -345,6 +347,7 @@
                       Grid.Column="1"
                       Grid.ColumnSpan="3"
                       IsVisible="{Binding ShowDate}"
+                      Style="{StaticResource FieldValue}"
                       Text="{Binding Date}" />
 
                 </Grid>
@@ -373,7 +376,7 @@
           <Label
               Grid.Row="0"
               Grid.Column="0"
-              Style="{StaticResource ContentGroupTitle}"
+              Style="{StaticResource GroupTitle}"
               Text="{x:Static resources:UIStrings.FieldPersonBiography}" />
 
           <Editor

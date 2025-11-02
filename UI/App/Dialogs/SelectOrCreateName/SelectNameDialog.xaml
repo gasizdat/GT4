@@ -19,7 +19,7 @@
     <Label
         Grid.Row="0"
         Grid.Column="0"
-        Style="{StaticResource ContentFieldName}"
+        Style="{StaticResource FieldName}"
         Text="{x:Static resources:UIStrings.FieldSelectName}" />
 
     <Picker
@@ -28,7 +28,7 @@
         ItemDisplayBinding="{Binding TypeName}"
         ItemsSource="{Binding NameTypes, Source={x:Reference Root}}"
         SelectedItem="{Binding CurrentNameType, Source={x:Reference Root}}"
-        Style="{StaticResource ContentFieldValue}" />
+        Style="{StaticResource FieldValue}" />
 
     <CollectionView
         Grid.Row="1"
@@ -50,7 +50,7 @@
           <Label
               HorizontalOptions="Fill"
               HorizontalTextAlignment="Start"
-              Style="{StaticResource ContentFieldValue}"
+              Style="{StaticResource FieldValue}"
               Text="{Binding Info.Value}" />
         </DataTemplate>
       </CollectionView.ItemTemplate>

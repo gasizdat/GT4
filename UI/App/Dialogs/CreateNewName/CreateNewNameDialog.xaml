@@ -16,9 +16,8 @@
 
       <Label
           FontAttributes="Bold"
-          FontSize="Medium"
-          Text="{Binding GeneralNameDescription, Source={x:Reference Root}}"
-          VerticalOptions="Start" />
+          Style="{StaticResource FieldName}"
+          Text="{Binding GeneralNameDescription, Source={x:Reference Root}}" />
 
       <Entry
           HorizontalOptions="Fill"
@@ -27,10 +26,9 @@
 
       <Label
           FontAttributes="Bold"
-          FontSize="Medium"
           IsVisible="{Binding ShowDeclensionNames, Source={x:Reference Root}}"
-          Text="{Binding MaleNameDescription, Source={x:Reference Root}}"
-          VerticalOptions="Start" />
+          Style="{StaticResource FieldName}"
+          Text="{Binding MaleNameDescription, Source={x:Reference Root}}" />
 
       <Entry
           HorizontalOptions="Fill"
@@ -40,10 +38,9 @@
 
       <Label
           FontAttributes="Bold"
-          FontSize="Medium"
           IsVisible="{Binding ShowDeclensionNames, Source={x:Reference Root}}"
-          Text="{Binding FemaleNameDescription, Source={x:Reference Root}}"
-          VerticalOptions="Start" />
+          Style="{StaticResource FieldName}"
+          Text="{Binding FemaleNameDescription, Source={x:Reference Root}}" />
 
       <Entry
           HorizontalOptions="Fill"

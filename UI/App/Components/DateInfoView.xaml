@@ -12,13 +12,13 @@
     <Label
         Grid.Row="0"
         Grid.Column="0"
-        Style="{StaticResource ContentFieldName}"
+        Style="{StaticResource FieldName}"
         Text="{Binding Caption, Source={x:Reference Root}}" />
 
     <Label
         Grid.Row="0"
         Grid.Column="1"
-        Style="{StaticResource ContentFieldValue}"
+        Style="{StaticResource FieldValue}"
         Text="{Binding DateText, Source={x:Reference Root}}" />
 
   </Grid>

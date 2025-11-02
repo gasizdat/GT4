@@ -4,6 +4,55 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
+  <OnIdiom
+      x:Key="PhotoThumbHeight"
+      x:TypeArguments="x:Double"
+      Desktop="64"
+      Phone="32"
+      Tablet="48" />
+
+  <OnIdiom
+      x:Key="PhotoThumbWidth"
+      x:TypeArguments="x:Double"
+      Desktop="64"
+      Phone="32"
+      Tablet="48" />
+
+  <OnIdiom
+      x:Key="LabelTextSizeDefault"
+      x:TypeArguments="x:Double"
+      Desktop="16"
+      Phone="14"
+      Tablet="14" />
+
+  <OnIdiom
+      x:Key="LabelTextSizeMedium"
+      x:TypeArguments="x:Double"
+      Desktop="18"
+      Phone="16"
+      Tablet="16" />
+
+  <OnIdiom
+      x:Key="LabelTextSizeLarge"
+      x:TypeArguments="x:Double"
+      Desktop="20"
+      Phone="18"
+      Tablet="18" />
+
+  <OnIdiom
+      x:Key="LabelTextSizeHuge"
+      x:TypeArguments="x:Double"
+      Desktop="24"
+      Phone="22"
+      Tablet="22" />
+
+  <OnIdiom
+      x:Key="LabelTextSizeGiant"
+      x:TypeArguments="x:Double"
+      Desktop="28"
+      Phone="24"
+      Tablet="26" />
+
   <Style TargetType="ActivityIndicator">
     <Setter Property="Color" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}" />
   </Style>
@@ -211,36 +260,47 @@
     <Setter Property="VerticalOptions" Value="Center" />
     <Setter Property="HorizontalTextAlignment" Value="Start" />
     <Setter Property="VerticalTextAlignment" Value="Center" />
+    <Setter Property="LineBreakMode" Value="WordWrap" />
   </Style>
 
-  <Style x:Key="ContentTitle" BasedOn="{StaticResource ContentBase}" TargetType="Label">
-    <Setter Property="FontSize" Value="Large" />
+  <Style x:Key="PageTitle" BasedOn="{StaticResource ContentBase}" TargetType="Label">
+    <Setter Property="FontSize" Value="{StaticResource LabelTextSizeGiant}" />
+    <Setter Property="FontAttributes" Value="Bold" />
+  </Style>
+  
+  <Style x:Key="PageSubtitle" BasedOn="{StaticResource ContentBase}" TargetType="Label">
+    <Setter Property="FontSize" Value="{StaticResource LabelTextSizeLarge}" />
+  </Style>
+
+  <Style x:Key="GroupTitle" BasedOn="{StaticResource ContentBase}" TargetType="Label">
+    <Setter Property="FontSize" Value="{StaticResource LabelTextSizeLarge}" />
     <Setter Property="FontAttributes" Value="Bold" />
   </Style>
 
-  <Style x:Key="ContentSubtitle" BasedOn="{StaticResource ContentBase}" TargetType="Label">
-    <Setter Property="FontSize" Value="Subtitle" />
+  <Style x:Key="GroupSubtitle" BasedOn="{StaticResource ContentBase}" TargetType="Label">
+    <Setter Property="FontSize" Value="{StaticResource LabelTextSizeLarge}" />
   </Style>
 
-  <Style x:Key="ContentGroupTitle" BasedOn="{StaticResource ContentBase}" TargetType="Label">
-    <Setter Property="FontSize" Value="Title" />
+  <Style x:Key="CardTitle" BasedOn="{StaticResource ContentBase}" TargetType="Label">
+    <Setter Property="FontSize" Value="{StaticResource LabelTextSizeMedium}" />
     <Setter Property="FontAttributes" Value="Bold" />
   </Style>
 
-  <Style x:Key="ContentFieldName" BasedOn="{StaticResource ContentBase}" TargetType="Label">
-    <Setter Property="FontSize" Value="Micro" />
+  <Style x:Key="CardSubtitle" BasedOn="{StaticResource ContentBase}" TargetType="Label">
+    <Setter Property="FontSize" Value="{StaticResource LabelTextSizeMedium}" />
+  </Style>
+
+  <Style x:Key="CardContent" BasedOn="{StaticResource ContentBase}" TargetType="Label">
+    <Setter Property="FontSize" Value="{StaticResource LabelTextSizeDefault}" />
+  </Style>
+
+  <Style x:Key="FieldName" BasedOn="{StaticResource ContentBase}" TargetType="Label">
+    <Setter Property="FontSize" Value="{StaticResource LabelTextSizeDefault}" />
     <Setter Property="FontAttributes" Value="Bold" />
   </Style>
 
-  <Style x:Key="ContentFieldValue" BasedOn="{StaticResource ContentBase}" TargetType="Label">
-    <Setter Property="FontSize" Value="Micro" />
-  </Style>
-
-  <Style x:Key="Group" TargetType="Label">
-    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource MidnightBlue}, Dark={StaticResource White}}" />
-    <Setter Property="FontSize" Value="Header" />
-    <Setter Property="HorizontalOptions" Value="Center" />
-    <Setter Property="HorizontalTextAlignment" Value="Center" />
+  <Style x:Key="FieldValue" BasedOn="{StaticResource ContentBase}" TargetType="Label">
+    <Setter Property="FontSize" Value="{StaticResource LabelTextSizeDefault}" />
   </Style>
 
   <Style TargetType="ListView">
@@ -468,19 +528,6 @@
     <Setter Property="UnselectedTabColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray950}}" />
     <Setter Property="SelectedTabColor" Value="{AppThemeBinding Light={StaticResource Gray950}, Dark={StaticResource Gray200}}" />
   </Style>
-
-  <OnIdiom
-      x:Key="PhotoThumbHeight"
-      x:TypeArguments="x:Double"
-      Desktop="64"
-      Phone="32"
-      Tablet="48" />
-  <OnIdiom
-      x:Key="PhotoThumbWidth"
-      x:TypeArguments="x:Double"
-      Desktop="64"
-      Phone="32"
-      Tablet="48" />
 
   <Style x:Key="PhotoThumbStyle" TargetType="Image">
     <Setter Property="Aspect" Value="AspectFit" />
