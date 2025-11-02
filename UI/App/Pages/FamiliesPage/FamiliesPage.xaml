@@ -58,11 +58,8 @@
                   Grid.RowSpan="2"
                   Grid.Column="2"
                   Clicked="OnDeleteFamilySelected"
-                  HeightRequest="32"
                   IsVisible="{Binding IsHandlesVisible}"
-                  Text="❌"
-                  VerticalOptions="Start"
-                  WidthRequest="32" />
+                  Style="{StaticResource DeleteAdorner}" />
 
               <StackLayout
                   Grid.Row="1"

@@ -34,19 +34,19 @@ public partial class CreateNewPersonDialog : ContentPage
 
     // TODO just testing
     var nameTypeFormatter = _ServiceProvider.GetRequiredService<INameTypeFormatter>();
-    _Names.Add(new NameInfoItem(new Name(0, "Clark", NameType.FirstName, null), nameTypeFormatter));
+    _Names.Add(new NameInfoItem(new Name(0, "Clark", NameType.FirstName | NameType.MaleDeclension, null), nameTypeFormatter));
     _Names.Add(new NameInfoItem(new Name(0, "Jeremy", NameType.AdditionalName, null), nameTypeFormatter));
-    _Names.Add(new NameInfoItem(new Name(0, "Campbell", NameType.LastName, null), nameTypeFormatter));
+    _Names.Add(new NameInfoItem(new Name(0, "Campbell", NameType.LastName | NameType.MaleDeclension, null), nameTypeFormatter));
 
     // TODO just testing
     _BirthDate = Date.Create(20251029, DateStatus.WellKnown);
 
     // TODO relatives just testing
     _Relatives.Add(new RelativeMemberInfoItem(new Relative(
-      new Person(0, [new Name(0, "Jane", NameType.FirstName, 0)], null, Date.Create(19900000, DateStatus.YearApproximate), null, BiologicalSex.Female),
+      new Person(0, [new Name(0, "Jane", NameType.FirstName | NameType.FemaleDeclension, 0)], null, Date.Create(19900000, DateStatus.YearApproximate), null, BiologicalSex.Female),
       RelationshipType.Mother, Date.Create(20050521, DateStatus.WellKnown)), _ServiceProvider));
     _Relatives.Add(new RelativeMemberInfoItem(new Relative(
-      new Person(0, [new Name(0, "Doe", NameType.LastName, 0)], null, Date.Create(19951127, DateStatus.DayUnknown), null, BiologicalSex.Male),
+      new Person(0, [new Name(0, "Doe", NameType.LastName | NameType.MaleDeclension, 0)], null, Date.Create(19951127, DateStatus.DayUnknown), null, BiologicalSex.Male),
       RelationshipType.Father, Date.Create(19850521, DateStatus.YearApproximate)), _ServiceProvider));
 
     // TODO just testing

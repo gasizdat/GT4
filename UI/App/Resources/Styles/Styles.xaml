@@ -50,10 +50,14 @@
   </Style>
 
   <Style x:Key="ChangeAdorner" TargetType="Button">
+    <Setter Property="Padding" Value="-1" />
+    <Setter Property="Opacity" Value="0.5" />
     <Setter Property="BorderColor" Value="{StaticResource Primary}" />
     <Setter Property="BackgroundColor" Value="{StaticResource Translucent80}" />
     <Setter Property="BorderWidth" Value="1.5" />
     <Setter Property="TextColor" Value="{StaticResource SecondaryDarkText}" />
+    <Setter Property="HorizontalOptions" Value="Start" />
+    <Setter Property="VerticalOptions" Value="Start" />
     <Setter Property="ZIndex" Value="2100000000" />
   </Style>
 

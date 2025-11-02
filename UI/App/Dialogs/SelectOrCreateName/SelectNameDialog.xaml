@@ -61,7 +61,6 @@
         Grid.Column="0"
         Grid.ColumnSpan="2"
         Clicked="OnAddNameBtn"
-        FontSize="Large"
         HorizontalOptions="Fill"
         Text="Add name" />
 

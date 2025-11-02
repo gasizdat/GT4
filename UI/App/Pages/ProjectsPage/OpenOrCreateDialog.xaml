@@ -50,12 +50,9 @@
               </VerticalStackLayout>
 
               <Button
-                  Padding="0"
                   Clicked="OnDeleteProjectSelected"
-                  HeightRequest="32"
                   IsVisible="{Binding IsHandlesVisible}"
-                  Text="❌"
-                  WidthRequest="32" />
+                  Style="{StaticResource DeleteAdorner}" />
 
             </FlexLayout>
           </DataTemplate>

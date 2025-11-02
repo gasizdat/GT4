@@ -76,17 +76,11 @@
 
                   <Button
                       Clicked="OnEditPersonSelected"
-                      HeightRequest="32"
-                      Text="🖋️"
-                      VerticalOptions="Start"
-                      WidthRequest="32" />
+                      Style="{StaticResource EditAdorner}" />
 
                   <Button
                       Clicked="OnDeletePersonSelected"
-                      HeightRequest="32"
-                      Text="❌"
-                      VerticalOptions="Start"
-                      WidthRequest="32" />
+                      Style="{StaticResource DeleteAdorner}" />
 
                 </VerticalStackLayout>
 

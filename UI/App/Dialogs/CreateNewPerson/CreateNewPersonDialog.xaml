@@ -12,11 +12,19 @@
     <ResourceDictionary>
 
       <OnIdiom
+          x:Key="AdornerSpacing"
+          x:TypeArguments="x:Double"
+          Desktop="10"
+          Phone="3"
+          Tablet="5" />
+
+      <OnIdiom
           x:Key="PhotoHeight"
           x:TypeArguments="x:Double"
           Desktop="300"
           Phone="100"
           Tablet="140" />
+      
       <OnIdiom
           x:Key="PhotoWidth"
           x:TypeArguments="x:Double"
@@ -48,7 +56,7 @@
       <Frame Style="{StaticResource CardFrameStyle}">
 
         <Grid
-            ColumnDefinitions="*, Auto"
+            ColumnDefinitions="*, Auto, Auto"
             RowDefinitions="Auto, Auto">
           <Label
               Grid.Row="0"
@@ -63,24 +71,22 @@
               SelectionMode="Single">
 
             <CollectionView.ItemsLayout>
-              <LinearItemsLayout
-                  ItemSpacing="10"
-                  Orientation="Horizontal" />
+              <LinearItemsLayout Orientation="Horizontal" />
             </CollectionView.ItemsLayout>
 
             <CollectionView.ItemTemplate>
               <DataTemplate>
                 <Grid
                     x:Name="PersonPhoto"
-                    ColumnDefinitions="*, Auto"
-                    RowDefinitions="Auto, Auto, *"
-                    RowSpacing="10">
+                    ColumnDefinitions="*, Auto, Auto"
+                    ColumnSpacing="{StaticResource AdornerSpacing}"
+                    RowDefinitions="Auto, *">
 
                   <Image
                       Grid.Row="0"
-                      Grid.RowSpan="3"
+                      Grid.RowSpan="2"
                       Grid.Column="0"
-                      Grid.ColumnSpan="2"
+                      Grid.ColumnSpan="3"
                       Source="{Binding .}"
                       Style="{StaticResource PhotoPreviewStyle}" />
 
@@ -98,8 +104,8 @@
                   </Button>
 
                   <Button
-                      Grid.Row="1"
-                      Grid.Column="1"
+                      Grid.Row="0"
+                      Grid.Column="2"
                       Command="{Binding DialogCommand, Source={x:Reference Root}}"
                       Style="{StaticResource DeleteAdorner}">
 
@@ -154,7 +160,7 @@
                 <Grid
                     x:Name="PersonName"
                     ColumnDefinitions="Auto, *, Auto, Auto"
-                    ColumnSpacing="10"
+                    ColumnSpacing="{StaticResource AdornerSpacing}"
                     RowDefinitions="Auto">
 
                   <Label
@@ -216,9 +222,9 @@
       <Frame Style="{StaticResource CardFrameStyle}">
         <Grid
             ColumnDefinitions="*, Auto, Auto"
-            ColumnSpacing="10"
+            ColumnSpacing="{StaticResource AdornerSpacing}"
             RowDefinitions="Auto, Auto, Auto"
-            RowSpacing="10">
+            RowSpacing="{StaticResource AdornerSpacing}">
 
           <Label
               Grid.Row="0"
@@ -234,7 +240,7 @@
 
           <Button
               Grid.Row="1"
-              Grid.Column="2"
+              Grid.Column="1"
               Command="{Binding DialogCommand, Source={x:Reference Root}}"
               CommandParameter="EditBirthDateCommand"
               Style="{StaticResource EditAdorner}" />
@@ -249,15 +255,15 @@
               Grid.Row="2"
               Grid.Column="1"
               Command="{Binding DialogCommand, Source={x:Reference Root}}"
-              CommandParameter="RemoveDeathDateCommand"
-              Style="{StaticResource DeleteAdorner}" />
+              CommandParameter="EditDeathDateCommand"
+              Style="{StaticResource EditAdorner}" />
 
           <Button
               Grid.Row="2"
               Grid.Column="2"
               Command="{Binding DialogCommand, Source={x:Reference Root}}"
-              CommandParameter="EditDeathDateCommand"
-              Style="{StaticResource EditAdorner}" />
+              CommandParameter="RemoveDeathDateCommand"
+              Style="{StaticResource DeleteAdorner}" />
 
         </Grid>
       </Frame>
@@ -291,8 +297,8 @@
               <DataTemplate x:DataType="items:RelativeMemberInfoItem">
                 <Grid
                     x:Name="PersonRelative"
-                    ColumnDefinitions="Auto, *, Auto"
-                    ColumnSpacing="10"
+                    ColumnDefinitions="Auto, *, Auto, Auto"
+                    ColumnSpacing="{StaticResource AdornerSpacing}"
                     RowDefinitions="Auto, Auto">
 
                   <components:PersonInfoView
@@ -316,20 +322,9 @@
                     </Button.CommandParameter>
                   </Button>
 
-                  <Label
-                      Grid.Row="1"
-                      Grid.Column="0"
-                      Text="{Binding RelationTypeName}" />
-
-                  <Label
-                      Grid.Row="1"
-                      Grid.Column="1"
-                      IsVisible="{Binding ShowDate}"
-                      Text="{Binding Date}" />
-
                   <Button
-                      Grid.Row="1"
-                      Grid.Column="2"
+                      Grid.Row="0"
+                      Grid.Column="3"
                       Command="{Binding DialogCommand, Source={x:Reference Root}}"
                       Style="{StaticResource DeleteAdorner}">
 
@@ -339,6 +334,18 @@
                           Element="{Binding Source={x:Reference PersonRelative}, Path=BindingContext}" />
                     </Button.CommandParameter>
                   </Button>
+
+                  <Label
+                      Grid.Row="1"
+                      Grid.Column="0"
+                      Text="{Binding RelationTypeName}" />
+
+                  <Label
+                      Grid.Row="1"
+                      Grid.Column="1"
+                      Grid.ColumnSpan="3"
+                      IsVisible="{Binding ShowDate}"
+                      Text="{Binding Date}" />
 
                 </Grid>
               </DataTemplate>
@@ -383,6 +390,7 @@
       <Button
           Command="{Binding DialogCommand, Source={x:Reference Root}}"
           CommandParameter="CreatePersonCommand"
+          FontSize="Large"
           Text="{Binding CreatePersonBtnName, Source={x:Reference Root}}" />
 
     </VerticalStackLayout>
