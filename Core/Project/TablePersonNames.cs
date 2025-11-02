@@ -53,14 +53,15 @@ public partial class TablePersonNames : TableBase
   public async Task AddNamesAsync(int personId, Name[] names, CancellationToken token)
   {
     var transaction = await Document.BeginTransactionAsync(token);
-    using var command = Document.CreateCommand();
-      command.CommandText = """
-      INSERT INTO PersonNames (PersonId, NameId)
-      VALUES (@personId, @nameId);
-      """;
 
     foreach (var name in names)
     {
+      using var command = Document.CreateCommand();
+      command.CommandText = """
+        INSERT INTO PersonNames (PersonId, NameId)
+        VALUES (@personId, @nameId);
+        """;
+
       command.Parameters.AddWithValue("@personId", personId);
       command.Parameters.AddWithValue("@nameId", name.Id);
       await command.ExecuteNonQueryAsync(token);
