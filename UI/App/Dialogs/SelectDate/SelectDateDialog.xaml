@@ -1,0 +1,104 @@
+<ContentPage
+    x:Class="GT4.UI.App.Dialogs.SelectDateDialog"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
+    x:Name="Root"
+    Title="{x:Static resources:UIStrings.WndTitleSelectDateDialog}">
+
+  <ScrollView Padding="20">
+    <Grid
+        ColumnDefinitions="Auto, *, Auto"
+        ColumnSpacing="10"
+        RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto"
+        RowSpacing="10">
+
+      <Label
+          Grid.Row="0"
+          Grid.Column="0"
+          Grid.ColumnSpan="3"
+          HorizontalOptions="Fill"
+          HorizontalTextAlignment="Center"
+          Style="{StaticResource PageSubtitle}"
+          Text="{x:Static resources:UIStrings.WndTitleSelectDateDialog}" />
+
+      <Label
+          Grid.Row="1"
+          Grid.Column="0"
+          Style="{StaticResource FieldName}"
+          Text="{x:Static resources:UIStrings.FieldYear}" />
+
+      <Entry
+          Grid.Row="1"
+          Grid.Column="1"
+          HorizontalOptions="Fill"
+          Style="{StaticResource FieldValue}"
+          Text="{Binding Year, Source={x:Reference Root}}" />
+
+      <Switch
+          Grid.Row="1"
+          Grid.Column="2"
+          IsToggled="{Binding YearSwitch, Source={x:Reference Root}}" />
+
+      <Label
+          Grid.Row="2"
+          Grid.Column="0"
+          Style="{StaticResource FieldName}"
+          Text="{x:Static resources:UIStrings.FieldMonth}" />
+
+      <Entry
+          Grid.Row="2"
+          Grid.Column="1"
+          HorizontalOptions="Fill"
+          Style="{StaticResource FieldValue}"
+          Text="{Binding Month, Source={x:Reference Root}}" />
+
+      <Switch
+          Grid.Row="2"
+          Grid.Column="2"
+          IsToggled="{Binding MonthSwitch, Source={x:Reference Root}}" />
+
+      <Label
+          Grid.Row="3"
+          Grid.Column="0"
+          Style="{StaticResource FieldName}"
+          Text="{x:Static resources:UIStrings.FieldDay}" />
+
+      <Entry
+          Grid.Row="3"
+          Grid.Column="1"
+          HorizontalOptions="Fill"
+          Style="{StaticResource FieldValue}"
+          Text="{Binding Day, Source={x:Reference Root}}" />
+
+      <Switch
+          Grid.Row="3"
+          Grid.Column="2"
+          IsToggled="{Binding DaySwitch, Source={x:Reference Root}}" />
+
+      <Label
+          Grid.Row="4"
+          Grid.Column="0"
+          Style="{StaticResource FieldName}"
+          Text="{x:Static resources:UIStrings.FieldDateEntered}" />
+
+      <Label
+          Grid.Row="4"
+          Grid.Column="1"
+          Grid.ColumnSpan="2"
+          Style="{StaticResource FieldValue}"
+          Text="{Binding DateString, Source={x:Reference Root}}" />
+
+      <Button
+          Grid.Row="5"
+          Grid.Column="0"
+          Grid.ColumnSpan="3"
+          Clicked="OnSelectDateBtn"
+          FontSize="Large"
+          HorizontalOptions="Fill"
+          Text="{Binding SelectDateBtnName, Source={x:Reference Root}}" />
+
+    </Grid>
+  </ScrollView>
+</ContentPage>
