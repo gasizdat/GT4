@@ -62,7 +62,7 @@
         Grid.ColumnSpan="2"
         Clicked="OnAddNameBtn"
         HorizontalOptions="Fill"
-        Text="Add name" />
+        Style="{StaticResource AddAdorner}" />
 
     <Button
         Grid.Row="3"
