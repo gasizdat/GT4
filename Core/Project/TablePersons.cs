@@ -140,6 +140,8 @@ public partial class TablePersons : TableBase
     {
       await Document.PersonNames.AddNamesAsync(personId, person.Names, token);
     }
+    transaction.Commit();
+
     return personId;
   }
 }

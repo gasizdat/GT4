@@ -65,5 +65,7 @@ public partial class TablePersonNames : TableBase
       command.Parameters.AddWithValue("@nameId", name.Id);
       await command.ExecuteNonQueryAsync(token);
     }
+
+    transaction.Commit();
   }
 }

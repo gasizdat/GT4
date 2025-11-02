@@ -7,6 +7,7 @@ namespace GT4.Core.Project;
 public class ProjectDocument : IAsyncDisposable, IDisposable
 {
   private readonly SqliteConnection _Connection;
+  private NestedTransaction? _CurrentTransaction = null;
 
   static ProjectDocument()
   {
@@ -66,15 +67,29 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
     command.CommandText = "SELECT last_insert_rowid();";
     return Convert.ToInt32(await command.ExecuteScalarAsync(token));
   }
-  
+
   public SqliteCommand CreateCommand()
   {
     return _Connection.CreateCommand();
   }
 
-  public async Task<IDbTransaction> BeginTransactionAsync(CancellationToken token)
+  public Task<IDbTransaction> BeginTransactionAsync(CancellationToken token)
   {
-    return await _Connection.BeginTransactionAsync(token);
+    IDbTransaction ret;
+
+    lock (this)
+    {
+      if (_CurrentTransaction is not null && !_CurrentTransaction.IsDisposed)
+      {
+        ret = new NestedTransaction(_CurrentTransaction);
+      }
+      else
+      {
+        ret = _CurrentTransaction = new(_Connection.BeginTransactionAsync(token).Result);
+      }
+    }
+
+    return Task.FromResult(ret); 
   }
 
   public static async Task<ProjectDocument> CreateNewAsync(string path, string name, CancellationToken token)
