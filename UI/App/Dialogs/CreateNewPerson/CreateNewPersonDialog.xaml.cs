@@ -10,6 +10,8 @@ namespace GT4.UI.App.Dialogs;
 
 public partial class CreateNewPersonDialog : ContentPage
 {
+  public record PersonInfo(Person Person, byte[]?[] Photos, string? Biography);
+
   private readonly ServiceProvider _ServiceProvider;
   private readonly ICommand _DialogCommand;
   private readonly string _SaveButtonName;
@@ -17,7 +19,7 @@ public partial class CreateNewPersonDialog : ContentPage
   private readonly ObservableCollection<NameInfoItem> _Names = new();
   private readonly ObservableCollection<RelativeMemberInfoItem> _Relatives = new();
   private readonly ObservableCollection<BiologicalSexItem> _BiologicalSexes = new();
-  private readonly TaskCompletionSource<Person?> _Person = new(null);
+  private readonly TaskCompletionSource<PersonInfo?> _Info = new(null);
   private Date? _BirthDate;
   private Date? _DeathDate;
   private BiologicalSexItem? _BiologicalSex;
@@ -31,18 +33,11 @@ public partial class CreateNewPersonDialog : ContentPage
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, ServiceBuilder.DefaultServices));
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Female, ServiceBuilder.DefaultServices));
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Unknown, ServiceBuilder.DefaultServices));
+    BioSex = _BiologicalSexes.Where(i => i.Info == person?.BiologicalSex).FirstOrDefault();
 
     // TODO just testing
     _Photos.Add(ImageSource.FromStream(_ => FileSystem.OpenAppPackageFileAsync("female_stub.png")));
     _Photos.Add(ImageSource.FromStream(_ => FileSystem.OpenAppPackageFileAsync("male_stub.png")));
-
-    // TODO relatives just testing
-    _Relatives.Add(new RelativeMemberInfoItem(new Relative(
-      new Person(0, [new Name(0, "Jane", NameType.FirstName | NameType.FemaleDeclension, 0)], null, Date.Create(19900000, DateStatus.YearApproximate), null, BiologicalSex.Female),
-      RelationshipType.Mother, Date.Create(20050521, DateStatus.WellKnown)), _ServiceProvider));
-    _Relatives.Add(new RelativeMemberInfoItem(new Relative(
-      new Person(0, [new Name(0, "Doe", NameType.LastName | NameType.MaleDeclension, 0)], null, Date.Create(19951127, DateStatus.DayUnknown), null, BiologicalSex.Male),
-      RelationshipType.Father, Date.Create(19850521, DateStatus.YearApproximate)), _ServiceProvider));
 
     InitializeComponent();
   }
@@ -59,6 +54,7 @@ public partial class CreateNewPersonDialog : ContentPage
     set
     {
       _BirthDate = value;
+      OnPropertyChanged(nameof(BirthDate));
       OnPropertyChanged(nameof(CreatePersonBtnName));
     }
   }
@@ -69,6 +65,7 @@ public partial class CreateNewPersonDialog : ContentPage
     set
     {
       _DeathDate = value;
+      OnPropertyChanged(nameof(DeathDate));
       OnPropertyChanged(nameof(CreatePersonBtnName));
     }
   }
@@ -79,23 +76,39 @@ public partial class CreateNewPersonDialog : ContentPage
     set
     {
       _BiologicalSex = value;
+      OnPropertyChanged(nameof(BioSex));
       OnPropertyChanged(nameof(CreatePersonBtnName));
     }
   }
 
-  public Task<Person?> Person => _Person.Task;
+  public Task<PersonInfo?> Info => _Info.Task;
   public string CreatePersonBtnName => _NotReady ? UIStrings.BtnNameCancel : _SaveButtonName;
   public string Biography { get; set; } = string.Empty;
 
   private void OnCreatePersonCommand()
   {
-    // TODO
-    _Person.SetResult(null);
+    var person = new Person(
+      Id: 0,
+      Names: _Names
+          .Select(n => n.Info)
+          .ToArray(),
+      MainPhoto: null,    // TODO
+      BirthDate: _BirthDate!.Value,
+      DeathDate: _DeathDate,
+      BiologicalSex: _BiologicalSex!.Info);
+
+    _Info.SetResult(new PersonInfo(Person: person, Photos: [], Biography: Biography));
   }
 
   private async Task OnAddPersonNameAsync()
   {
-    var dialog = new SelectNameDialog(biologicalSex: _BiologicalSex.Info, serviceProvider: _ServiceProvider);
+    if (_BiologicalSex is null)
+    {
+      // TODO Show Alert
+      return;
+    }
+
+    var dialog = new SelectNameDialog(biologicalSex: _BiologicalSex?.Info ?? BiologicalSex.Unknown, serviceProvider: _ServiceProvider);
 
     await Navigation.PushModalAsync(dialog);
     var name = await dialog.Name;
@@ -104,6 +117,34 @@ public partial class CreateNewPersonDialog : ContentPage
     if (name is not null)
     {
       _Names.Add(new NameInfoItem(name, _ServiceProvider.GetRequiredService<INameTypeFormatter>()));
+    }
+  }
+
+  private async Task OnBirthDateSetupAsync()
+  {
+    var dialog = new SelectDateDialog(date: BirthDate, serviceProvider: _ServiceProvider);
+
+    await Navigation.PushModalAsync(dialog);
+    var date = await dialog.Info;
+    await Navigation.PopModalAsync();
+
+    if (date is not null)
+    {
+      BirthDate = date;
+    }
+  }
+
+  private async Task OnDeathDateSetupAsync()
+  {
+    var dialog = new SelectDateDialog(date: DeathDate, serviceProvider: _ServiceProvider);
+
+    await Navigation.PushModalAsync(dialog);
+    var date = await dialog.Info;
+    await Navigation.PopModalAsync();
+
+    if (date is not null)
+    {
+      DeathDate = date;
     }
   }
 
@@ -116,6 +157,15 @@ public partial class CreateNewPersonDialog : ContentPage
         break;
       case string name when name == "AddNameCommand":
         await OnAddPersonNameAsync();
+        break;
+      case string name when name == "EditBirthDateCommand":
+        await OnBirthDateSetupAsync();
+        break;
+      case string name when name == "EditDeathDateCommand":
+        await OnDeathDateSetupAsync();
+        break;
+      case string name when name == "RemoveDeathDateCommand":
+        DeathDate = null;
         break;
 
       case AdornerCommandParameter adorner when adorner.CommandName == "EditPhotoCommand":

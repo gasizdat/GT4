@@ -100,12 +100,12 @@ public partial class FamilyPage : ContentPage
     var dialog = new CreateNewPersonDialog(null, Services);
 
     await Navigation.PushModalAsync(dialog);
-    var person = await dialog.Person;
+    var info = await dialog.Info;
     await Navigation.PopModalAsync();
 
     try
     {
-      if (person is null)
+      if (info is null)
       {
         return;
       }
@@ -114,7 +114,7 @@ public partial class FamilyPage : ContentPage
       await Services.GetRequiredService<ICurrentProjectProvider>()
         .Project
         .Persons
-        .AddPersonAsync(person, token);
+        .AddPersonAsync(info.Person, token);
     }
     catch (Exception ex)
     {
