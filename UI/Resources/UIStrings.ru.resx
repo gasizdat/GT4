@@ -358,4 +358,19 @@
   <data name="FieldBiologicalSex" xml:space="preserve">
     <value>Пол</value>
   </data>
+  <data name="WndTitleSelectDateDialog" xml:space="preserve">
+    <value>Выберите дату</value>
+  </data>
+  <data name="FieldYear" xml:space="preserve">
+    <value>Год</value>
+  </data>
+  <data name="FieldMonth" xml:space="preserve">
+    <value>Месяц</value>
+  </data>
+  <data name="FieldDay" xml:space="preserve">
+    <value>День</value>
+  </data>
+  <data name="FieldDateEntered" xml:space="preserve">
+    <value>Введенная дата</value>
+  </data>
 </root>

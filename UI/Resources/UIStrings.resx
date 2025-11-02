@@ -358,4 +358,19 @@ genealogy tree and enjoy!</value>
   <data name="FieldBiologicalSex" xml:space="preserve">
     <value>Biological sex</value>
   </data>
+  <data name="WndTitleSelectDateDialog" xml:space="preserve">
+    <value>Select date</value>
+  </data>
+  <data name="FieldYear" xml:space="preserve">
+    <value>Year</value>
+  </data>
+  <data name="FieldMonth" xml:space="preserve">
+    <value>Month</value>
+  </data>
+  <data name="FieldDay" xml:space="preserve">
+    <value>Day</value>
+  </data>
+  <data name="FieldDateEntered" xml:space="preserve">
+    <value>Date entered</value>
+  </data>
 </root>

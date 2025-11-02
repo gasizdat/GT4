@@ -332,6 +332,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Date entered.
+        /// </summary>
+        public static string FieldDateEntered {
+            get {
+                return ResourceManager.GetString("FieldDateEntered", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Date of birth:.
         /// </summary>
         public static string FieldDateOfBirth {
@@ -346,6 +355,15 @@ namespace GT4.UI.Resources {
         public static string FieldDateOfDeath {
             get {
                 return ResourceManager.GetString("FieldDateOfDeath", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Day.
+        /// </summary>
+        public static string FieldDay {
+            get {
+                return ResourceManager.GetString("FieldDay", resourceCulture);
             }
         }
         
@@ -449,6 +467,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Month.
+        /// </summary>
+        public static string FieldMonth {
+            get {
+                return ResourceManager.GetString("FieldMonth", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Biography.
         /// </summary>
         public static string FieldPersonBiography {
@@ -508,6 +535,15 @@ namespace GT4.UI.Resources {
         public static string FieldSelectNameType {
             get {
                 return ResourceManager.GetString("FieldSelectNameType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Year.
+        /// </summary>
+        public static string FieldYear {
+            get {
+                return ResourceManager.GetString("FieldYear", resourceCulture);
             }
         }
         
@@ -769,6 +805,15 @@ namespace GT4.UI.Resources {
         public static string WndTitleOpenOrCreateDialog {
             get {
                 return ResourceManager.GetString("WndTitleOpenOrCreateDialog", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select date.
+        /// </summary>
+        public static string WndTitleSelectDateDialog {
+            get {
+                return ResourceManager.GetString("WndTitleSelectDateDialog", resourceCulture);
             }
         }
         
