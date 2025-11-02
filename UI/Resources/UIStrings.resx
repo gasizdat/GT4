@@ -355,4 +355,7 @@ genealogy tree and enjoy!</value>
   <data name="BiologicalSexUnknown" xml:space="preserve">
     <value>Human</value>
   </data>
+  <data name="FieldBiologicalSex" xml:space="preserve">
+    <value>Biological sex</value>
+  </data>
 </root>

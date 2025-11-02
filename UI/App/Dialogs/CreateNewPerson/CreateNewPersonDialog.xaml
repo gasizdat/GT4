@@ -133,6 +133,31 @@
         </Grid>
       </Frame>
 
+      <!--  Biological Sex  -->
+      <Frame Style="{StaticResource CardFrameStyle}">
+
+        <Grid
+            ColumnDefinitions="Auto, *"
+            ColumnSpacing="{StaticResource AdornerSpacing}"
+            RowDefinitions="Auto">
+
+          <Label
+              Grid.Row="0"
+              Grid.Column="0"
+              Style="{StaticResource FieldName}"
+              Text="{x:Static resources:UIStrings.FieldBiologicalSex}" />
+
+          <Picker
+              Grid.Row="0"
+              Grid.Column="1"
+              ItemDisplayBinding="{Binding Name}"
+              ItemsSource="{Binding BiologicalSexes, Source={x:Reference Root}}"
+              SelectedItem="{Binding BioSex, Source={x:Reference Root}}"
+              Style="{StaticResource FieldValue}" />
+
+        </Grid>
+      </Frame>
+
       <!--  Names  -->
       <Frame Style="{StaticResource CardFrameStyle}">
         <Grid

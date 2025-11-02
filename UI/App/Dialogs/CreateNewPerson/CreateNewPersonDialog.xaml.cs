@@ -16,30 +16,25 @@ public partial class CreateNewPersonDialog : ContentPage
   private readonly ObservableCollection<ImageSource> _Photos = new();
   private readonly ObservableCollection<NameInfoItem> _Names = new();
   private readonly ObservableCollection<RelativeMemberInfoItem> _Relatives = new();
+  private readonly ObservableCollection<BiologicalSexItem> _BiologicalSexes = new();
   private readonly TaskCompletionSource<Person?> _Person = new(null);
-  private Date _BirthDate;
+  private Date? _BirthDate;
   private Date? _DeathDate;
-  private BiologicalSex _Sex;
-  private bool _NotReady = true;
+  private BiologicalSexItem? _BiologicalSex;
+  private bool _NotReady => _BiologicalSex is null || _BirthDate is null;
 
   public CreateNewPersonDialog(Person? person, ServiceProvider serviceProvider)
   {
     _ServiceProvider = serviceProvider;
     _DialogCommand = new Command<object>(OnDialogCommand);
     _SaveButtonName = person is null ? UIStrings.BtnNameCreateFamilyPerson : UIStrings.BtnNameUpdateFamilyPerson;
+    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, ServiceBuilder.DefaultServices));
+    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Female, ServiceBuilder.DefaultServices));
+    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Unknown, ServiceBuilder.DefaultServices));
 
     // TODO just testing
     _Photos.Add(ImageSource.FromStream(_ => FileSystem.OpenAppPackageFileAsync("female_stub.png")));
     _Photos.Add(ImageSource.FromStream(_ => FileSystem.OpenAppPackageFileAsync("male_stub.png")));
-
-    // TODO just testing
-    var nameTypeFormatter = _ServiceProvider.GetRequiredService<INameTypeFormatter>();
-    _Names.Add(new NameInfoItem(new Name(0, "Clark", NameType.FirstName | NameType.MaleDeclension, null), nameTypeFormatter));
-    _Names.Add(new NameInfoItem(new Name(0, "Jeremy", NameType.AdditionalName, null), nameTypeFormatter));
-    _Names.Add(new NameInfoItem(new Name(0, "Campbell", NameType.LastName | NameType.MaleDeclension, null), nameTypeFormatter));
-
-    // TODO just testing
-    _BirthDate = Date.Create(20251029, DateStatus.WellKnown);
 
     // TODO relatives just testing
     _Relatives.Add(new RelativeMemberInfoItem(new Relative(
@@ -49,9 +44,6 @@ public partial class CreateNewPersonDialog : ContentPage
       new Person(0, [new Name(0, "Doe", NameType.LastName | NameType.MaleDeclension, 0)], null, Date.Create(19951127, DateStatus.DayUnknown), null, BiologicalSex.Male),
       RelationshipType.Father, Date.Create(19850521, DateStatus.YearApproximate)), _ServiceProvider));
 
-    // TODO just testing
-    _Sex = BiologicalSex.Male;
-
     InitializeComponent();
   }
 
@@ -59,8 +51,9 @@ public partial class CreateNewPersonDialog : ContentPage
   public ICollection<ImageSource> Photos => _Photos;
   public ICollection<NameInfoItem> Names => _Names;
   public ICollection<RelativeMemberInfoItem> Relatives => _Relatives;
+  public ICollection<BiologicalSexItem> BiologicalSexes => _BiologicalSexes;
 
-  public Date BirthDate
+  public Date? BirthDate
   {
     get => _BirthDate;
     set
@@ -80,12 +73,12 @@ public partial class CreateNewPersonDialog : ContentPage
     }
   }
 
-  public BiologicalSex Sex
+  public BiologicalSexItem? BioSex
   {
-    get => _Sex;
+    get => _BiologicalSex;
     set
     {
-      _Sex = value;
+      _BiologicalSex = value;
       OnPropertyChanged(nameof(CreatePersonBtnName));
     }
   }
@@ -102,7 +95,7 @@ public partial class CreateNewPersonDialog : ContentPage
 
   private async Task OnAddPersonNameAsync()
   {
-    var dialog = new SelectNameDialog(biologicalSex: _Sex, serviceProvider: _ServiceProvider);
+    var dialog = new SelectNameDialog(biologicalSex: _BiologicalSex.Info, serviceProvider: _ServiceProvider);
 
     await Navigation.PushModalAsync(dialog);
     var name = await dialog.Name;

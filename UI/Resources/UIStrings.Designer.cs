@@ -323,6 +323,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Biological sex.
+        /// </summary>
+        public static string FieldBiologicalSex {
+            get {
+                return ResourceManager.GetString("FieldBiologicalSex", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Date of birth:.
         /// </summary>
         public static string FieldDateOfBirth {
