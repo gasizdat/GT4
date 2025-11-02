@@ -2,11 +2,16 @@
 
 namespace GT4.Core.Project;
 
+// TODO Add count for nested transactions 
+// TODO Add count for nested commited transactions 
+// TODO Check if some nested transaction was not commited, than - rollback
+
 public class NestedTransaction : IDisposable, IAsyncDisposable, IDbTransaction
 {
   private readonly IDbTransaction? _DbTransaction;
   private readonly NestedTransaction? _ParentTransaction;
   private bool _Disposed = false;
+  private bool _Commited = false;
 
   private IDbTransaction _InnerTransaction => _DbTransaction ?? _ParentTransaction!._InnerTransaction;
 
@@ -28,6 +33,7 @@ public class NestedTransaction : IDisposable, IAsyncDisposable, IDbTransaction
 
   public void Commit()
   {
+    _Commited = true;
     if (_DbTransaction is not null)
       _DbTransaction.Commit();
   }
@@ -52,9 +58,9 @@ public class NestedTransaction : IDisposable, IAsyncDisposable, IDbTransaction
     {
       _DbTransaction.Dispose();
     }
-    else
+    else if (!_Commited)
     {
-      _ParentTransaction!.Dispose();
+      _InnerTransaction.Dispose();
     }
   }
 
