@@ -8,10 +8,13 @@
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
     Title="{Binding FamilyName.Value}">
+
+  <ContentPage.Resources>
+    <ResourceDictionary />
+  </ContentPage.Resources>
+
   <ScrollView>
-    <VerticalStackLayout
-        Padding="20"
-        Spacing="10">
+    <VerticalStackLayout Style="{x:StaticResource PageContentIndentation}">
 
       <Label
           Style="{StaticResource PageSubtitle}"
@@ -19,17 +22,16 @@
 
       <FlexLayout
           AlignContent="Center"
-          AlignItems="Center"
+          AlignItems="Start"
           BindableLayout.ItemsSource="{Binding Members}"
           Direction="Row"
           JustifyContent="SpaceAround"
-          MinimumHeightRequest="50"
           Wrap="Wrap">
 
         <BindableLayout.ItemTemplate>
-          <DataTemplate x:DataType="items:FamilyMemberInfoItem">
+          <DataTemplate x:DataType="items:PersonInfoItem">
             <Frame
-                Margin="2.5"
+                Margin="1"
                 CornerRadius="10"
                 HasShadow="True"
                 MinimumWidthRequest="{Binding Path=BindingContext.PersonItemMinimalWidth, Source={RelativeSource AncestorType={x:Type ContentPage}}}">
@@ -40,71 +42,10 @@
                     CommandParameter="{Binding .}" />
               </Frame.GestureRecognizers>
 
-              <Grid
-                  Padding="20"
-                  ColumnDefinitions="100, 30, *, Auto"
-                  ColumnSpacing="10"
-                  RowDefinitions="Auto, Auto"
-                  RowSpacing="10"
-                  VerticalOptions="Center">
-
-                <Image
-                    Grid.Row="0"
-                    Grid.RowSpan="2"
-                    Grid.Column="0"
-                    Aspect="AspectFit"
-                    Source="{Binding Icon}"
-                    VerticalOptions="Start" />
-
-                <Label
-                    Grid.Row="0"
-                    Grid.Column="1"
-                    Grid.ColumnSpan="2"
-                    HorizontalOptions="Fill"
-                    LineBreakMode="TailTruncation"
-                    Style="{StaticResource CardTitle}"
-                    Text="{Binding CommonName}" />
-
-                <VerticalStackLayout
-                    Grid.Row="0"
-                    Grid.RowSpan="2"
-                    Grid.Column="3"
-                    IsVisible="{Binding IsHandlesVisible}"
-                    Spacing="10">
-
-                  <Button
-                      Clicked="OnEditPersonSelected"
-                      Style="{StaticResource EditAdorner}" />
-
-                  <Button
-                      Clicked="OnDeletePersonSelected"
-                      Style="{StaticResource DeleteAdorner}" />
-
-                </VerticalStackLayout>
-
-                <VerticalStackLayout
-                    Grid.Row="1"
-                    Grid.Column="2"
-                    IsVisible="{Binding IsHandlesVisible}">
-
-                  <components:DateInfoView
-                      Caption="{x:Static resources:UIStrings.FieldDateOfBirth}"
-                      Date="{Binding Info.BirthDate}"
-                      HorizontalOptions="Fill" />
-
-                  <components:DateInfoView
-                      Caption="{x:Static resources:UIStrings.FieldDateOfDeath}"
-                      Date="{Binding Info.DeathDate}"
-                      HorizontalOptions="Fill"
-                      IsVisible="{Binding ShowDateOfDeath}" />
-
-                  <Label
-                      Style="{StaticResource CardContent}"
-                      Text="{Binding Age}" />
-
-                </VerticalStackLayout>
-
-              </Grid>
+              <components:PersonInfoView
+                  DatesLabelStyle="{StaticResource FieldValue}"
+                  NameLabelStyle="{StaticResource FieldName}"
+                  Person="{Binding Info}" />
             </Frame>
           </DataTemplate>
         </BindableLayout.ItemTemplate>
@@ -112,4 +53,5 @@
 
     </VerticalStackLayout>
   </ScrollView>
+
 </ContentPage>

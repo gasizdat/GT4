@@ -6,11 +6,10 @@
     xmlns:items="clr-namespace:GT4.UI.App.Items"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     Title="{x:Static resources:UIStrings.WndTitleFamiliesPage}">
-  <ScrollView>
 
-    <VerticalStackLayout
-        Padding="20"
-        Spacing="10">
+  <ScrollView>
+    <VerticalStackLayout Style="{x:StaticResource PageContentIndentation}">
+
       <Label
           Style="{StaticResource PageSubtitle}"
           Text="{x:Static resources:UIStrings.WndHintFamiliesPage}" />
@@ -92,7 +91,6 @@
       </CollectionView>
 
     </VerticalStackLayout>
-
   </ScrollView>
 
 </ContentPage>

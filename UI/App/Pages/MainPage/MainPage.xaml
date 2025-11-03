@@ -6,9 +6,7 @@
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources">
 
   <ScrollView>
-    <VerticalStackLayout
-        Padding="30,0"
-        Spacing="25">
+    <VerticalStackLayout Style="{x:StaticResource PageContentIndentation}">
 
       <Picker
           Title="{x:Static resources:UIStrings.PkrLanguageHint}"
