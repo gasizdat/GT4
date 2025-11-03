@@ -70,113 +70,53 @@ public partial class CreateNewNameDialog : ContentPage
     }
   }
 
-  public string GeneralNameDescription
+  public string GeneralNameDescription => _NameType switch
   {
-    get
-    {
-      switch (_NameType)
-      {
-        case NameType.FamilyName:
-          return UIStrings.FieldFamilyNameEntry;
-        case NameType.FirstName | NameType.MaleDeclension:
-          return UIStrings.FieldFirstNameMaleEntry;
-        case NameType.FirstName | NameType.FemaleDeclension:
-          return UIStrings.FieldFirstNameFemaleEntry;
-        default:
-          throw new ApplicationException(nameof(GeneralNameDescription));
-      }
-    }
-  }
+    NameType.FamilyName => UIStrings.FieldFamilyNameEntry,
+    NameType.FirstName | NameType.MaleDeclension => UIStrings.FieldFirstNameMaleEntry,
+    NameType.FirstName | NameType.FemaleDeclension => UIStrings.FieldFirstNameFemaleEntry,
+    _ => throw new ApplicationException(nameof(GeneralNameDescription))
+  };
 
-  public string GeneralNamePlaceholder
+  public string GeneralNamePlaceholder => _NameType switch
   {
-    get
-    {
-      switch (_NameType)
-      {
-        case NameType.FamilyName:
-          return UIStrings.TxtPlaceholderFamilyName;
-        case NameType.FirstName | NameType.MaleDeclension:
-          return UIStrings.TxtPlaceholderMaleName;
-        case NameType.FirstName | NameType.FemaleDeclension:
-          return UIStrings.TxtPlaceholderFemaleName;
-        default:
-          throw new ApplicationException(nameof(GeneralNamePlaceholder));
-      }
-    }
-  }
+    NameType.FamilyName => UIStrings.TxtPlaceholderFamilyName,
+    NameType.FirstName | NameType.MaleDeclension => UIStrings.TxtPlaceholderMaleName,
+    NameType.FirstName | NameType.FemaleDeclension => UIStrings.TxtPlaceholderFemaleName,
+    _ => throw new ApplicationException(nameof(GeneralNamePlaceholder))
+  };
 
-  public string MaleNameDescription
+  public string MaleNameDescription => _NameType switch
   {
-    get
-    {
-      switch (_NameType)
-      {
-        case NameType.FamilyName:
-          return UIStrings.FieldLastNameMaleEntry;
-        case NameType.FirstName | NameType.MaleDeclension:
-          return UIStrings.FieldMiddleNameMaleEntry;
-        case NameType.FirstName | NameType.FemaleDeclension:
-          return string.Empty;
-        default:
-          throw new ApplicationException(nameof(MaleNameDescription));
-      }
-    }
-  }
+    NameType.FamilyName => UIStrings.FieldLastNameMaleEntry,
+    NameType.FirstName | NameType.MaleDeclension => UIStrings.FieldMiddleNameMaleEntry,
+    NameType.FirstName | NameType.FemaleDeclension => string.Empty,
+    _ => throw new ApplicationException(nameof(MaleNameDescription))
+  };
 
-  public string MaleNamePlaceholder
+  public string MaleNamePlaceholder => _NameType switch
   {
-    get
-    {
-      switch (_NameType)
-      {
-        case NameType.FamilyName:
-          return UIStrings.TxtPlaceholderLastNameMale;
-        case NameType.FirstName | NameType.MaleDeclension:
-          return UIStrings.TxtPlaceholderMiddleNameMale;
-        case NameType.FirstName | NameType.FemaleDeclension:
-          return string.Empty;
-        default:
-          throw new ApplicationException(nameof(MaleNamePlaceholder));
-      }
-    }
-  }
+    NameType.FamilyName => UIStrings.TxtPlaceholderLastNameMale,
+    NameType.FirstName | NameType.MaleDeclension => UIStrings.TxtPlaceholderMiddleNameMale,
+    NameType.FirstName | NameType.FemaleDeclension => string.Empty,
+    _ => throw new ApplicationException(nameof(MaleNamePlaceholder))
+  };
 
-  public string FemaleNameDescription
+  public string FemaleNameDescription => _NameType switch
   {
-    get
-    {
-      switch (_NameType)
-      {
-        case NameType.FamilyName:
-          return UIStrings.FieldLastNameFemaleEntry;
-        case NameType.FirstName | NameType.MaleDeclension:
-          return UIStrings.FieldMiddleNameFemaleEntry;
-        case NameType.FirstName | NameType.FemaleDeclension:
-          return string.Empty;
-        default:
-          throw new ApplicationException(nameof(FemaleNameDescription));
-      }
-    }
-  }
+    NameType.FamilyName => UIStrings.FieldLastNameFemaleEntry,
+    NameType.FirstName | NameType.MaleDeclension => UIStrings.FieldMiddleNameFemaleEntry,
+    NameType.FirstName | NameType.FemaleDeclension => string.Empty,
+    _ => throw new ApplicationException(nameof(FemaleNameDescription))
+  };
 
-  public string FemaleNamePlaceholder
+  public string FemaleNamePlaceholder => _NameType switch
   {
-    get
-    {
-      switch (_NameType)
-      {
-        case NameType.FamilyName:
-          return UIStrings.TxtPlaceholderLastNameFemale;
-        case NameType.FirstName | NameType.MaleDeclension:
-          return UIStrings.TxtPlaceholderMiddleNameFemale;
-        case NameType.FirstName | NameType.FemaleDeclension:
-          return string.Empty;
-        default:
-          throw new ApplicationException(nameof(FemaleNamePlaceholder));
-      }
-    }
-  }
+    NameType.FamilyName => UIStrings.TxtPlaceholderLastNameFemale,
+    NameType.FirstName | NameType.MaleDeclension => UIStrings.TxtPlaceholderMiddleNameFemale,
+    NameType.FirstName | NameType.FemaleDeclension => string.Empty,
+    _ => throw new ApplicationException(nameof(FemaleNamePlaceholder))
+  };
 
   public Task<FamilyInfo?> Info => _Info.Task;
   public string CreateFamilyBtnName => _NotReady ? UIStrings.BtnNameCancel : UIStrings.BtnNameCreateFamily;

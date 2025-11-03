@@ -88,14 +88,11 @@ public partial class PersonInfoView : ContentView
 
   private ImageSource GetDefaultImage()
   {
-    switch (Person?.BiologicalSex)
+    return Person?.BiologicalSex switch
     {
-      case BiologicalSex.Male:
-        return ImageUtils.ImageFromRawResource("male_stub.png");
-      case BiologicalSex.Female:
-        return ImageUtils.ImageFromRawResource("female_stub.png");
-      default:
-        return ImageUtils.ImageFromRawResource("project_icon.png");
-    }
+      BiologicalSex.Male => ImageUtils.ImageFromRawResource("male_stub.png"),
+      BiologicalSex.Female => ImageUtils.ImageFromRawResource("female_stub.png"),
+      _ => ImageUtils.ImageFromRawResource("project_icon.png")
+    };
   }
 }

@@ -7,14 +7,11 @@ public class BiologicalSexFormatter : IBiologicalSexFormatter
 {
   public string ToString(BiologicalSex? biologicalSex)
   {
-    switch (biologicalSex)
+    return biologicalSex switch
     {
-      case BiologicalSex.Male:
-        return UIStrings.BiologicalSexMale;
-        case BiologicalSex.Female:
-        return UIStrings.BiologicalSexFemale;
-      default:
-        return UIStrings.BiologicalSexUnknown;
-    }
+      BiologicalSex.Male => UIStrings.BiologicalSexMale,
+      BiologicalSex.Female => UIStrings.BiologicalSexFemale,
+      _ => UIStrings.BiologicalSexUnknown
+    };
   }
 }

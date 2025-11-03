@@ -12,17 +12,14 @@ public class DateSpanFormatter : IDateSpanFormatter
 
     if (dateSpan.HasValue)
     {
-      switch (dateSpan.Value.Status)
+      return dateSpan.Value.Status switch
       {
-        case DateStatus.WellKnown:
-          return $"{YearsFormat(dateSpan.Value.Years)} {MonthsFormat(dateSpan.Value.Months)} {DaysFormat(dateSpan.Value.Days)}";
-        case DateStatus.DayUnknown:
-          return $"{YearsFormat(dateSpan.Value.Years)} {MonthsFormat(dateSpan.Value.Months)}";
-        case DateStatus.MonthUnknown:
-          return $"{YearsFormat(dateSpan.Value.Years)}";
-        case DateStatus.YearApproximate:
-          return string.Format(UIStrings.DateStatusYearApproximate_1, YearsFormat(dateSpan.Value.Years));
-      }
+        DateStatus.WellKnown => $"{YearsFormat(dateSpan.Value.Years)} {MonthsFormat(dateSpan.Value.Months)} {DaysFormat(dateSpan.Value.Days)}",
+        DateStatus.DayUnknown => $"{YearsFormat(dateSpan.Value.Years)} {MonthsFormat(dateSpan.Value.Months)}",
+        DateStatus.MonthUnknown => $"{YearsFormat(dateSpan.Value.Years)}",
+        DateStatus.YearApproximate => string.Format(UIStrings.DateStatusYearApproximate_1, YearsFormat(dateSpan.Value.Years)),
+        _ => UIStrings.DateStatusUnknown
+      };
     }
 
     return UIStrings.DateStatusUnknown;
@@ -33,38 +30,29 @@ public class DateSpanFormatter : IDateSpanFormatter
 
   protected static string DaysFormat(int days)
   {
-    switch (TwoLetterISOLanguageName)
+    return TwoLetterISOLanguageName switch
     {
-      case "ru":
-        return RussianNumeralsDeclension(days, "{0} день", "{0} дня", "{0} дней");
-      case "en":
-      default:
-        return EnglishNumeralsDeclension(days, "{0} day", "{0} days");
-    }
+      "ru" => RussianNumeralsDeclension(days, "{0} день", "{0} дня", "{0} дней"),
+      _ => EnglishNumeralsDeclension(days, "{0} day", "{0} days")
+    };
   }
 
   protected static string MonthsFormat(int days)
   {
-    switch (TwoLetterISOLanguageName)
+    return TwoLetterISOLanguageName switch
     {
-      case "ru":
-        return RussianNumeralsDeclension(days, "{0} месяц", "{0} месяца", "{0} месяцев");
-      case "en":
-      default:
-        return EnglishNumeralsDeclension(days, "{0} month", "{0} months");
-    }
+      "ru" => RussianNumeralsDeclension(days, "{0} месяц", "{0} месяца", "{0} месяцев"),
+      _ => EnglishNumeralsDeclension(days, "{0} month", "{0} months")
+    };
   }
 
   protected static string YearsFormat(int days)
   {
-    switch (TwoLetterISOLanguageName)
+    return TwoLetterISOLanguageName switch
     {
-      case "ru":
-        return RussianNumeralsDeclension(days, "{0} год", "{0} года", "{0} лет");
-      case "en":
-      default:
-        return EnglishNumeralsDeclension(days, "{0} year", "{0} years");
-    }
+      "ru" => RussianNumeralsDeclension(days, "{0} год", "{0} года", "{0} лет"),
+      _ => EnglishNumeralsDeclension(days, "{0} year", "{0} years")
+    };
   }
 
   protected static string EnglishNumeralsDeclension(int value, string single, string many)

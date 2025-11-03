@@ -32,18 +32,12 @@ public partial class SelectNameDialog : ContentPage
       .Select(type => new NameTypeInfoItem(_NameTypeFormatter.ToString(type), type)));
     _CurrentNameType = _NameTypes.First();
 
-    switch (biologicalSex)
+    _NameDeclension = biologicalSex switch
     {
-      case BiologicalSex.Male:
-        _NameDeclension = NameType.MaleDeclension;
-        break;
-      case BiologicalSex.Female:
-        _NameDeclension = NameType.FemaleDeclension;
-        break;
-      default:
-        _NameDeclension = NameType.AllNames;
-        break;
-    }
+      BiologicalSex.Male => NameType.MaleDeclension,
+      BiologicalSex.Female => NameType.FemaleDeclension,
+      _ => NameType.AllNames
+    };
 
     InitializeComponent();
   }
@@ -120,24 +114,21 @@ public partial class SelectNameDialog : ContentPage
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
       var project = _CurrentProjectProvider.Project;
-      Name name;
-      switch (dialogNameType)
+      var name = dialogNameType switch
       {
-        case NameType.FamilyName:
-          name = await project
+        NameType.FamilyName => 
+          await project
             .Family
-            .AddFamilyAsync(familyName: info.Name, maleLastName: info.MaleName, femaleLastName: info.FemaleName, token);
-          break;
+            .AddFamilyAsync(familyName: info.Name, maleLastName: info.MaleName, femaleLastName: info.FemaleName, token),
 
-        case NameType.FirstName | NameType.MaleDeclension:
-          name = await project.Names.AddFirstMaleNameAsync(firstName: info.Name, maleMiddleName: info.MaleName, femaleMiddleName: info.FemaleName, token);
-          break;
-        case NameType.FirstName | NameType.FemaleDeclension:
-          name = await project.Names.AddFirstFemaleNameAsync(info.Name, token);
-          break;
-        default:
-          throw new ApplicationException(nameof(OnAddNameBtn));
-      }
+        NameType.FirstName | NameType.MaleDeclension =>
+          await project.Names.AddFirstMaleNameAsync(firstName: info.Name, maleMiddleName: info.MaleName, femaleMiddleName: info.FemaleName, token),
+
+        NameType.FirstName | NameType.FemaleDeclension =>
+          await project.Names.AddFirstFemaleNameAsync(info.Name, token),
+
+        _ => throw new ApplicationException(nameof(OnAddNameBtn))
+      };
       OnPropertyChanged(nameof(Names));
 
       // TODO select created name

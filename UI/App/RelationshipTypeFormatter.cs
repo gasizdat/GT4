@@ -7,30 +7,19 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
 {
   public string GetRelationshipTypeName(RelationshipType type)
   {
-    switch (type)
+    return type switch
     {
-      case RelationshipType.Mother:
-        return UIStrings.RelMother;
-      case RelationshipType.Father:
-        return UIStrings.RelFather;
-      case RelationshipType.AdoptiveMother:
-        return string.Format(UIStrings.RelAdoptiveFemale_1, UIStrings.RelMother);
-      case RelationshipType.AdoptiveFather:
-        return string.Format(UIStrings.RelAdoptiveMale_1, UIStrings.RelFather);
-      case RelationshipType.Spouse:
-        return UIStrings.RelSpouse;
-      case RelationshipType.Wife:
-        return UIStrings.RelWife;
-      case RelationshipType.Husband:
-        return UIStrings.RelHusband;
-      case RelationshipType.Son:
-        return UIStrings.RelSon;
-      case RelationshipType.Daughter:
-        return UIStrings.RelDaughter;
-      case RelationshipType.Child:
-        return UIStrings.RelChild;
-      default:
-        return UIStrings.RelUnknown;
-    }
+      RelationshipType.Mother => UIStrings.RelMother,
+      RelationshipType.Father => UIStrings.RelFather,
+      RelationshipType.AdoptiveMother => string.Format(UIStrings.RelAdoptiveFemale_1, UIStrings.RelMother),
+      RelationshipType.AdoptiveFather => string.Format(UIStrings.RelAdoptiveMale_1, UIStrings.RelFather),
+      RelationshipType.Spouse => UIStrings.RelSpouse,
+      RelationshipType.Wife => UIStrings.RelWife,
+      RelationshipType.Husband => UIStrings.RelHusband,
+      RelationshipType.Son => UIStrings.RelSon,
+      RelationshipType.Daughter => UIStrings.RelDaughter,
+      RelationshipType.Child => UIStrings.RelChild,
+      _ => UIStrings.RelUnknown
+    };
   }
 }

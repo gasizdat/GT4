@@ -16,21 +16,15 @@ public class DateFormatter : IDateFormatter
 
     if (date.HasValue)
     {
-      switch (date.Value.Status)
+      return date.Value.Status switch
       {
-        case DateStatus.WellKnown:
-          return $"{date.Value.Year.ToString(D4)}-{date.Value.Month.ToString(D2)}-{date.Value.Day.ToString(D2)}";
-        case DateStatus.DayUnknown:
-          return $"{date.Value.Year.ToString(D4)}-{date.Value.Month.ToString(D2)}";
-        case DateStatus.MonthUnknown:
-          return date.Value.Year.ToString(D4);
-        case DateStatus.YearApproximate:
-          return string.Format(UIStrings.DateStatusYearApproximate_1, date.Value.Year.ToString(D4));
-        case DateStatus.Unknown:
-          return UIStrings.DateStatusUnknown;
-        default:
-          return $"⚠ Unexpected DateStatus={date.Value.Status}";
-      }
+        DateStatus.WellKnown => $"{date.Value.Year.ToString(D4)}-{date.Value.Month.ToString(D2)}-{date.Value.Day.ToString(D2)}",
+        DateStatus.DayUnknown => $"{date.Value.Year.ToString(D4)}-{date.Value.Month.ToString(D2)}",
+        DateStatus.MonthUnknown => date.Value.Year.ToString(D4),
+        DateStatus.YearApproximate => string.Format(UIStrings.DateStatusYearApproximate_1, date.Value.Year.ToString(D4)),
+        DateStatus.Unknown => UIStrings.DateStatusUnknown,
+        _ => $"⚠ Unexpected DateStatus={date.Value.Status}"
+      };
     }
     else
     {

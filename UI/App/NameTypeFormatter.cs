@@ -7,21 +7,14 @@ public class NameTypeFormatter : INameTypeFormatter
 {
   public string ToString(NameType type)
   {
-    switch (type & NameType.NoDeclension)
+    return (type & NameType.NoDeclension) switch
     {
-      case NameType.FirstName:
-        return UIStrings.FieldFirstName;
-      case NameType.LastName:
-        return UIStrings.FieldLastName;
-      case NameType.MiddleName:
-        return UIStrings.FieldMiddleName;
-      case NameType.FamilyName:
-        return UIStrings.FieldFamilyName;
-      case NameType.AdditionalName:
-        return UIStrings.FieldAdditionalName;
-
-      default:
-        return string.Empty;
-    }
+      NameType.FirstName => UIStrings.FieldFirstName,
+      NameType.LastName => UIStrings.FieldLastName,
+      NameType.MiddleName => UIStrings.FieldMiddleName,
+      NameType.FamilyName => UIStrings.FieldFamilyName,
+      NameType.AdditionalName => UIStrings.FieldAdditionalName,
+      _ => string.Empty
+    };
   }
 }
