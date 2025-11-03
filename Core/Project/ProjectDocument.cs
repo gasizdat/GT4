@@ -8,6 +8,7 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
 {
   private readonly SqliteConnection _Connection;
   private NestedTransaction? _CurrentTransaction = null;
+  private int _TransactionNo = 0;
 
   static ProjectDocument()
   {
@@ -81,7 +82,8 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
     {
       if (_CurrentTransaction is not null && !_CurrentTransaction.IsDisposed)
       {
-        ret = new NestedTransaction(_CurrentTransaction);
+        var transactionName = $"InnerTransaction_{Interlocked.Increment(ref _TransactionNo)}";
+        ret = new NestedTransaction(_CurrentTransaction, transactionName);
       }
       else
       {

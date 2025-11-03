@@ -8,21 +8,40 @@ namespace GT4.Core.Project;
 
 public class NestedTransaction : IDisposable, IAsyncDisposable, IDbTransaction
 {
+  private readonly string _TransactionName;
   private readonly IDbTransaction? _DbTransaction;
   private readonly NestedTransaction? _ParentTransaction;
   private bool _Disposed = false;
   private bool _Commited = false;
+  private bool _Reverted = false;
 
   private IDbTransaction _InnerTransaction => _DbTransaction ?? _ParentTransaction!._InnerTransaction;
 
   public NestedTransaction(IDbTransaction dbTransaction)
   {
     _DbTransaction = dbTransaction;
+    _TransactionName = "Initial";
   }
 
-  public NestedTransaction(NestedTransaction parentTransaction)
+  ~NestedTransaction()
+  {
+    if (!_Disposed)
+      throw new ApplicationException($"The transaction {_TransactionName} has leaked");
+
+    if (!_Commited && !_Reverted)
+      throw new ApplicationException($"The transaction {_TransactionName} is hanged");
+  }
+
+  public NestedTransaction(NestedTransaction parentTransaction, string innerTransactionName)
   {
     _ParentTransaction = parentTransaction;
+    _TransactionName = innerTransactionName;
+    if (Connection is null)
+      return;
+
+    var command = Connection.CreateCommand();
+    command.CommandText = $"SAVEPOINT {innerTransactionName};";
+    command.ExecuteNonQuery();
   }
 
   public IDbConnection? Connection => _InnerTransaction.Connection;
@@ -33,26 +52,51 @@ public class NestedTransaction : IDisposable, IAsyncDisposable, IDbTransaction
 
   public void Commit()
   {
+    if (_Commited || _Reverted || _Disposed)
+      throw new ApplicationException($"The transaction {_TransactionName} is not in the correct state");
+
     _Commited = true;
+
     if (_DbTransaction is not null)
+    {
       _DbTransaction.Commit();
+    }
+    else if (Connection is not null)
+    {
+      var command = Connection.CreateCommand();
+      command.CommandText = $"RELEASE SAVEPOINT {_TransactionName};";
+      command.ExecuteNonQuery();
+    }
   }
 
   public void Rollback()
   {
-    _InnerTransaction.Rollback();
+    if (_Commited || _Disposed)
+      throw new ApplicationException("The transaction is not in the correct state");
+    
+    if (_Reverted)
+      return;
+
+    _Reverted = true;
+
+    if (_DbTransaction is not null)
+    {
+      _DbTransaction.Rollback();
+    }
+    else if (Connection is not null)
+    {
+      var command = Connection.CreateCommand();
+      command.CommandText = $"ROLLBACK TO SAVEPOINT {_TransactionName};";
+      command.ExecuteNonQuery();
+    }
   }
 
   public void Dispose()
   {
-    lock (this)
-    {
-      if (_Disposed)
-      {
-        return;
-      }
-      _Disposed = true;
-    }
+    if (_Disposed)
+      return;
+
+    _Disposed = true;
 
     if (_DbTransaction is not null)
     {
@@ -60,7 +104,7 @@ public class NestedTransaction : IDisposable, IAsyncDisposable, IDbTransaction
     }
     else if (!_Commited)
     {
-      _InnerTransaction.Dispose();
+      Rollback();
     }
   }
 
@@ -68,5 +112,4 @@ public class NestedTransaction : IDisposable, IAsyncDisposable, IDbTransaction
   {
     return new ValueTask(new Task(Dispose));
   }
-
 }
