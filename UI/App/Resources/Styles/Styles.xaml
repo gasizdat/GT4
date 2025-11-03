@@ -55,7 +55,7 @@
 
   <OnIdiom
       x:Key="PageContentPadding"
-      x:TypeArguments="x:Double"
+      x:TypeArguments="Thickness"
       Desktop="40"
       Phone="5"
       Tablet="10" />

@@ -87,6 +87,12 @@ public partial class CreateNewPersonDialog : ContentPage
 
   private void OnCreatePersonCommand()
   {
+    if (_NotReady)
+    {
+      _Info.SetResult(null);
+      return;
+    }
+
     var person = new Person(
       Id: 0,
       Names: _Names
