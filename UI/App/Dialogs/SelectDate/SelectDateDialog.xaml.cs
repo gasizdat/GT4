@@ -58,9 +58,8 @@ public partial class SelectDateDialog : ContentPage
     get => _Year.ToString(D4);
     set
     {
+      // Derty update
       int.TryParse(value, out _Year);
-      OnPropertyChanged(nameof(Year));
-      Refresh();
     }
   }
 
@@ -69,12 +68,17 @@ public partial class SelectDateDialog : ContentPage
     get => _YearSwitch;
     set
     {
+      if (_YearSwitch == value)
+      {
+        return;
+      }
+
       _YearSwitch = value;
       if (!_YearSwitch)
       {
         MonthSwitch = false;
-        DaySwitch = false;
       }
+      OnPropertyChanged(nameof(YearSwitch));
       Refresh();
     }
   }
@@ -84,10 +88,8 @@ public partial class SelectDateDialog : ContentPage
     get => _Month.ToString(D2);
     set
     {
+      //Derty update
       int.TryParse(value, out _Month);
-      //_Month = Math.Clamp(_Month, 1, 12);
-      OnPropertyChanged(nameof(Month));
-      Refresh();
     }
   }
 
@@ -96,12 +98,22 @@ public partial class SelectDateDialog : ContentPage
     get => _MonthSwitch;
     set
     {
-      _MonthSwitch = YearSwitch && value;
-      if (!_MonthSwitch)
+      if (MonthSwitch == value)
+      {
+        return;
+      }
+
+      _MonthSwitch = value;
+      if (_MonthSwitch)
+      {
+        YearSwitch = true;
+        OnMonthChangedEnd(new(), new());
+      }
+      else
       {
         DaySwitch = false;
-        OnPropertyChanged(nameof(MonthSwitch));
       }
+      OnPropertyChanged(nameof(MonthSwitch));
       Refresh();
     }
   }
@@ -111,10 +123,8 @@ public partial class SelectDateDialog : ContentPage
     get => _Day.ToString(D2);
     set
     {
+      //Derty update
       int.TryParse(value, out _Day);
-      //_Day = Math.Clamp(_Day, 1, 31);
-      OnPropertyChanged(nameof(Day));
-      Refresh();
     }
   }
 
@@ -123,7 +133,17 @@ public partial class SelectDateDialog : ContentPage
     get => _DaySwitch;
     set
     {
-      _DaySwitch = MonthSwitch && value;
+      if (DaySwitch == value)
+      {
+        return;
+      }
+
+      _DaySwitch = value;
+      if (_DaySwitch)
+      {
+        MonthSwitch = true;
+        OnDayChangedEnd(new(), new());
+      }
       OnPropertyChanged(nameof(DaySwitch));
       Refresh();
     }
@@ -163,6 +183,55 @@ public partial class SelectDateDialog : ContentPage
   }
 
   public Task<Date?> Info => _Info.Task;
+
+  public void OnYearChangedEnd(object sender, EventArgs e)
+  {
+    OnPropertyChanged(nameof(Year));
+    YearSwitch = true;
+    if (DaySwitch)
+    {
+      OnDayChangedEnd(sender, e);
+    }
+    Refresh();
+  }
+
+  public void OnMonthChangedEnd(object sender, EventArgs e)
+  {
+    _Month = Math.Clamp(_Month, 1, 12);
+    OnPropertyChanged(nameof(Month));
+    MonthSwitch = true;
+    if (DaySwitch)
+    {
+      OnDayChangedEnd(sender, e);
+    }
+    Refresh();
+  }
+
+  public void OnDayChangedEnd(object sender, EventArgs e)
+  {
+    var daysInMonth = _Month switch
+    {
+      1 => 31,
+      2 => (_Year % 4) == 0 && ((_Year % 100) != 0 || (_Year % 400) == 0) ? 29 : 28,
+      3 => 31,
+      4 => 30,
+      5 => 31,
+      6 => 30,
+      7 => 31,
+      8 => 31,
+      9 => 30,
+      10 => 31,
+      11 => 30,
+      12 => 31,
+      _ => 0
+    };
+
+
+    _Day = Math.Clamp(_Day, 1, daysInMonth);
+    OnPropertyChanged(nameof(Day));
+    DaySwitch = true;
+    Refresh();
+  }
 
   public void OnSelectDateBtn(object sender, EventArgs e)
   {

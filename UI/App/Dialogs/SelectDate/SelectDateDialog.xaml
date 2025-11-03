@@ -32,9 +32,12 @@
       <Entry
           Grid.Row="1"
           Grid.Column="1"
+          Completed="OnYearChangedEnd"
           HorizontalOptions="Fill"
+          Keyboard="Numeric"
           Style="{StaticResource FieldValue}"
-          Text="{Binding Year, Source={x:Reference Root}}" />
+          Text="{Binding Year, Source={x:Reference Root}}"
+          Unfocused="OnYearChangedEnd" />
 
       <Switch
           Grid.Row="1"
@@ -50,9 +53,12 @@
       <Entry
           Grid.Row="2"
           Grid.Column="1"
+          Completed="OnMonthChangedEnd"
           HorizontalOptions="Fill"
+          Keyboard="Numeric"
           Style="{StaticResource FieldValue}"
-          Text="{Binding Month, Source={x:Reference Root}}" />
+          Text="{Binding Month, Source={x:Reference Root}}"
+          Unfocused="OnMonthChangedEnd" />
 
       <Switch
           Grid.Row="2"
@@ -68,9 +74,12 @@
       <Entry
           Grid.Row="3"
           Grid.Column="1"
+          Completed="OnDayChangedEnd"
           HorizontalOptions="Fill"
+          Keyboard="Numeric"
           Style="{StaticResource FieldValue}"
-          Text="{Binding Day, Source={x:Reference Root}}" />
+          Text="{Binding Day, Source={x:Reference Root}}"
+          Unfocused="OnDayChangedEnd" />
 
       <Switch
           Grid.Row="3"
