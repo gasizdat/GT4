@@ -4,6 +4,7 @@ using GT4.UI.App.Dialogs;
 using GT4.UI.App.Items;
 using GT4.UI.Resources;
 
+
 namespace GT4.UI.App.Pages;
 
 public partial class OpenOrCreateDialog : ContentPage
@@ -13,6 +14,54 @@ public partial class OpenOrCreateDialog : ContentPage
     InitializeComponent();
     BindingContext = this;
   }
+
+#if ANDROID
+
+  public async Task RequestFileAccessPermissionsAsync()
+  {
+    if (!await RequestStoragePermissionsAsync())
+    {
+      return;
+    }
+
+    string? documentFolder = Android.OS.Environment.DirectoryDocuments;
+    string? path = Android.OS.Environment.GetExternalStoragePublicDirectory(documentFolder)?.AbsolutePath;
+    if (path is not null)
+    {
+      string filePath = Path.Combine(path, "GT4", "myfile.txt");
+      Directory.CreateDirectory(Path.GetDirectoryName(filePath));
+      File.WriteAllText(filePath, "test");
+    }
+  }
+
+  public async void OnLoaded(object sender, EventArgs e)
+  {
+    await RequestFileAccessPermissionsAsync();
+  }
+
+  public async Task<bool> RequestStoragePermissionsAsync()
+  {
+    var statusRead = await Permissions.CheckStatusAsync<Permissions.StorageRead>();
+    var statusWrite = await Permissions.CheckStatusAsync<Permissions.StorageWrite>();
+
+    if (statusRead != PermissionStatus.Granted)
+    {
+      statusRead = await Permissions.RequestAsync<Permissions.StorageRead>();
+    }
+
+    if (statusWrite != PermissionStatus.Granted)
+    {
+      statusWrite = await Permissions.RequestAsync<Permissions.StorageWrite>();
+    }
+
+    return statusRead == PermissionStatus.Granted && statusWrite == PermissionStatus.Granted;
+  }
+#else
+  public void RequestFileAccessPermissions()
+  {
+  }
+#endif
+
 
   public ServiceProvider Services { get; set; } = ServiceBuilder.DefaultServices;
 
@@ -56,6 +105,24 @@ public partial class OpenOrCreateDialog : ContentPage
           break;
         }
     }
+  }
+
+  public async void OnSaveProjectSelected(object sender, EventArgs e)
+  {
+    var fileTypes =
+new Dictionary<DevicePlatform, IEnumerable<string>>
+{
+    { DevicePlatform.iOS, new[] { "public.image" } }, // UTType
+    { DevicePlatform.Android, new[] { "image/*","*", ".gt4" , ".jpg", ".png"} },   // MIME type
+    { DevicePlatform.WinUI, new[] { ".jpg", ".png" } }, // File extensions
+    { DevicePlatform.macOS, new[] { "jpg", "png" } },
+};
+    var result = await FilePicker.Default.PickAsync(new PickOptions
+    {
+      PickerTitle = "Please select a file",
+      FileTypes = new FilePickerFileType(fileTypes)
+    });
+
   }
 
   public async void OnDeleteProjectSelected(object sender, EventArgs e)

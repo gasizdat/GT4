@@ -5,7 +5,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:items="clr-namespace:GT4.UI.App.Items"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
-    Title="{x:Static resources:UIStrings.WndTitleOpenOrCreateDialog}">
+    Title="{x:Static resources:UIStrings.WndTitleOpenOrCreateDialog}"
+    Loaded="OnLoaded">
 
   <ScrollView>
     <VerticalStackLayout Style="{x:StaticResource PageContentIndentation}">
@@ -43,6 +44,12 @@
                     Text="{Binding Info.Description}" />
 
               </VerticalStackLayout>
+
+              <Button
+                  Clicked="OnSaveProjectSelected"
+                  IsVisible="{Binding IsHandlesVisible}"
+                Text="savw"
+                  Style="{StaticResource ChangeAdorner}" />
 
               <Button
                   Clicked="OnDeleteProjectSelected"
