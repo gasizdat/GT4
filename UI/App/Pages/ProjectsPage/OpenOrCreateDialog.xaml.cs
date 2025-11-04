@@ -99,7 +99,7 @@ public partial class OpenOrCreateDialog : ContentPage
         return;
 
       using var token = Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
-      await Services.GetRequiredService<IProjectList>().CreateAsync(projectInfo.Name, projectInfo.Description, token);
+      await using var project = await Services.GetRequiredService<IProjectList>().CreateAsync(projectInfo.Name, projectInfo.Description, token);
     }
     catch (Exception ex)
     {
