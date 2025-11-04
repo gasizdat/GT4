@@ -1,71 +1,91 @@
-﻿using System.Text.Json;
-
-namespace GT4.Core.Utils;
+﻿namespace GT4.Core.Utils;
 
 internal class FileSystem : IFileSystem
 {
-  private void CreatePath(string path)
+  private static void CreatePath(string path)
   {
     var parentDir = Path.GetDirectoryName(path);
     if (parentDir is not null && !Directory.Exists(parentDir))
       Directory.CreateDirectory(parentDir);
   }
 
-  public JsonDocument ReadJsonFile(string path)
+  private FileDescription ToFileDescription(DirectoryDescription baseDir, string path)
   {
-    try
-    {
-      return JsonDocument.Parse(File.ReadAllText(path), new JsonDocumentOptions { AllowTrailingCommas = true });
-    }
-    catch
-    {
-      return JsonDocument.Parse("{}");
-    }
+    var basePath = ToPath(baseDir);
+    var relativePath = Path.GetRelativePath(basePath, path);
+    var relativeDirs = Path.GetDirectoryName(relativePath)?.Split(Path.PathSeparator) ?? [];
+    var directory = new DirectoryDescription(Root: baseDir.Root, Path: baseDir.Path.Concat(relativeDirs).ToArray());
+
+    return new FileDescription(
+      Directory: directory,
+      Path.GetFileName(relativePath),
+      MimeType: null // TODO
+    );
   }
 
-  public void WriteJsonFile(string path, JsonDocument doc)
+  public string ToPath(DirectoryDescription directoryDescription)
   {
-    try
-    {
-      var jsonText = JsonSerializer.Serialize(doc, new JsonSerializerOptions { WriteIndented = true });
-      CreatePath(path);
-      File.WriteAllText(path, jsonText);
-
-    }
-    catch (Exception ex)
-    {
-      throw new ApplicationException("Failed to serialize JSON document", ex);
-    }
+    return Path.Combine(
+      Environment.GetFolderPath(directoryDescription.Root),
+      Path.Combine(directoryDescription.Path));
   }
 
-  public void RemoveFile(string path)
+  public string ToPath(FileDescription fileDescription)
   {
+    return Path.Combine(ToPath(fileDescription.Directory), fileDescription.FileName);
+  }
+
+  public void RemoveFile(FileDescription fileDescription)
+  {
+    var path = ToPath(fileDescription);
     if (File.Exists(path))
+    {
       File.Delete(path);
+    }
   }
 
-  public void RemoveDirectory(string path)
+  public void RemoveDirectory(DirectoryDescription directoryDescription)
   {
+    var path = ToPath(directoryDescription);
+
     if (Directory.Exists(path))
     {
       Directory.Delete(path, true);
     }
   }
 
-  public FileStream CreateEmptyFile(string path)
+  public Stream OpenWriteStream(FileDescription fileDescription)
   {
+    var path = ToPath(fileDescription);
     CreatePath(path);
-    return File.Create(path);
+    return File.OpenWrite(path);
   }
 
-  public string[] GetFiles(string path, string searchPattern, bool recursive)
+  public Stream OpenReadStream(FileDescription fileDescription)
   {
+    var path = ToPath(fileDescription);
+    return File.OpenRead(path);
+  }
+
+  public FileDescription[] GetFiles(DirectoryDescription directoryDescription, string searchPattern, bool recursive)
+  {
+    var path = ToPath(directoryDescription);
     if (Directory.Exists(path))
     {
       var option = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-      return Directory.GetFiles(path, searchPattern, option);
+      return Directory
+        .GetFiles(path, searchPattern, option)
+        .Select(filePath => ToFileDescription(directoryDescription, filePath)).ToArray();
     }
-    
-    return Array.Empty<string>();
+
+    return Array.Empty<FileDescription>();
+  }
+
+  public void Copy(FileDescription from, FileDescription to)
+  {
+    using var sourceStream = OpenReadStream(from);
+    using var targetStream = OpenWriteStream(to);
+    sourceStream.CopyTo(targetStream);
+    sourceStream.Flush();
   }
 }

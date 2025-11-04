@@ -2,6 +2,6 @@
 
 public interface IStorage
 {
-  string ApplicationData { get; }
-  string ProjectsRoot { get; }
+  DirectoryDescription ApplicationData { get; }
+  DirectoryDescription ProjectsRoot { get; }
 }

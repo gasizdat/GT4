@@ -1,13 +1,14 @@
-﻿using System.Text.Json;
-
-namespace GT4.Core.Utils;
+﻿namespace GT4.Core.Utils;
 
 public interface IFileSystem
 {
-  JsonDocument ReadJsonFile(string path);
-  void WriteJsonFile(string path, JsonDocument doc);
-  void RemoveFile(string path);
-  FileStream CreateEmptyFile(string path);
-  string[] GetFiles(string path, string searchPattern, bool recursive);
-  void RemoveDirectory(string path);
+  void RemoveFile(FileDescription fileDescription);
+  Stream OpenWriteStream(FileDescription fileDescription);
+  Stream OpenReadStream(FileDescription fileDescription);
+  void Copy(FileDescription from, FileDescription to);
+  FileDescription[] GetFiles(DirectoryDescription directory, string searchPattern, bool recursive);
+  void RemoveDirectory(DirectoryDescription directory);
+
+  string ToPath(DirectoryDescription fileDescription);
+  string ToPath(FileDescription fileDescription);
 }

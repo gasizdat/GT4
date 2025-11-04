@@ -6,7 +6,7 @@ namespace GT4.UI.App.Items;
 public class ProjectItemCreate : ProjectItem
 {
   public ProjectItemCreate()
-    : base(new ProjectInfo(UIStrings.BtnNameCreateGenealogyTree, string.Empty, string.Empty))
+    : base(new ProjectInfo(UIStrings.BtnNameCreateGenealogyTree, string.Empty, default!))
   {
   }
 

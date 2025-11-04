@@ -16,7 +16,7 @@ public partial class CreateNewProjectDialog : ContentPage
 
   public void OnCreateProjectBtn(object sender, EventArgs e)
   {
-    _Info.SetResult(new ProjectInfo(Description: ProjectDescription, Name: ProjectName, Path: string.Empty));
+    _Info.SetResult(new ProjectInfo(Description: ProjectDescription, Name: ProjectName, Origin: default!));
   }
 
   public Task<ProjectInfo> ProjectInfo => _Info.Task;

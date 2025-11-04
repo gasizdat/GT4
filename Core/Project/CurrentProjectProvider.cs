@@ -4,28 +4,42 @@ namespace GT4.Core.Project;
 
 internal class CurrentProjectProvider : ICurrentProjectProvider
 {
+  private readonly IProjectList _ProjectList;
   private ProjectInfo? _Info = null;
-  private ProjectDocument? _Project = null;
+  private ProjectHost? _ProjectHost = null;
+
+  public CurrentProjectProvider(IProjectList projectList)
+  {
+    _ProjectList = projectList;
+  }
 
   public async Task OpenAsync(ProjectInfo info, CancellationToken token)
   {
     await CloseAsync(token);
     _Info = info;
-    _Project = await ProjectDocument.OpenAsync(info.Path, token);
+    _ProjectHost = await _ProjectList.OpenAsync(origin: info.Origin, token);
   }
 
   public async Task CloseAsync(CancellationToken token)
   {
-    if (_Project is not null)
+    ProjectHost projectHost;
+    lock (this)
     {
-      await _Project.DisposeAsync();
-      _Project = null;
+      if (_ProjectHost is null)
+      {
+        return;
+      }
+
+      projectHost = _ProjectHost;
+      _ProjectHost = null;
     }
+
+    await projectHost.DisposeAsync();
   }
 
-  public bool HasCurrentProject => _Project is not null;
+  public bool HasCurrentProject => _ProjectHost is not null;
 
-  public ProjectDocument Project => _Project ?? throw new InvalidOperationException("Project is not opened yet.");
+  public ProjectDocument Project => _ProjectHost?.Project ?? throw new InvalidOperationException("Project is not opened yet.");
 
   public ProjectInfo Info => _Info ?? throw new InvalidOperationException("Project is not opened yet.");
 }

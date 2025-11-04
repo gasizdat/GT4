@@ -1,7 +1,7 @@
-﻿using GT4.Core.Utils;
-using GT4.Core.Project.Dto;
-
+﻿using GT4.Core.Project.Dto;
+using GT4.Core.Utils;
 using System.Data;
+using System.IO;
 
 namespace GT4.Core.Project;
 
@@ -11,29 +11,34 @@ internal class ProjectList : IProjectList
   private readonly IFileSystem _FileSystem;
   private readonly WeakReference<ProjectInfo[]?> _Items = new(null);
 
-  private static async Task<ProjectInfo> GetProjectItemAsync(string path, CancellationToken token)
+
+
+  private async Task<ProjectInfo> GetProjectItemAsync(FileDescription origin, CancellationToken token)
   {
+    var cacheFile = GetCacheFileDescription();
     try
     {
-      await using var project = await ProjectDocument.OpenAsync(path, token);
+      using var projectHost = await OpenAsync(origin, token);
+      using var project = projectHost.Project!; 
+
       var results = await Task.WhenAll(
         project.Metadata.GetAsync<string>("name", token),
         project.Metadata.GetAsync<string>("description", token));
 
       return new ProjectInfo(
         Description: results[1] ?? string.Empty,
-        Name : results[0]
-          ?? throw new DataException($"There is no name stored in the project ({path})"),
-        Path: path
+        Name: results[0]
+          ?? throw new DataException($"There is no name stored in the project ({_FileSystem.ToPath(origin)})"),
+        Origin: origin
       );
     }
     catch (Exception ex)
     {
       //TODO BrokenProjectItem
-      return new ProjectInfo (
+      return new ProjectInfo(
         Description: ex.ToString(),
         Name: $"Error: {ex.Message}",
-        Path: path
+        Origin: origin
       );
     }
   }
@@ -76,20 +81,28 @@ internal class ProjectList : IProjectList
     }
   }
 
-  public async Task CreateAsync(ProjectInfo info, CancellationToken token)
+  public async Task<ProjectHost> OpenAsync(FileDescription origin, CancellationToken token)
   {
-    if ((await GetItemsAsync(token)).Any(i => CompareNames(i.Name, info.Name)))
-      throw new ApplicationException($"A project with name '{info.Name}' already exists");
+    var cache = GetCacheFileDescription();
+    var host = new ProjectHost(_FileSystem, origin, cache);
+    host.Project = await ProjectDocument.OpenAsync(_FileSystem.ToPath(cache), token);
 
-    InvalidateItems();
-    var path = Path.Combine(_Storage.ProjectsRoot, Guid.NewGuid().ToString(), $"project.{ProjectExtension}");
-    using (var file = _FileSystem.CreateEmptyFile(path))
-      file.Close();
+    return host;
+  }
 
-    await using var project = await ProjectDocument.CreateNewAsync(path, info.Name, token);
+  public async Task<ProjectHost> CreateAsync(string projectName, string projectDescription, CancellationToken token)
+  {
+    var origin = new FileDescription(_Storage.ProjectsRoot, projectName, ProjectDocument.MimeType);
+    var cache = GetCacheFileDescription();
+    using (var file = _FileSystem.OpenWriteStream(origin)) file.Close();
+    var host = new ProjectHost(_FileSystem, origin, cache);
+    var project = await ProjectDocument.CreateNewAsync(_FileSystem.ToPath(cache), projectName, token);
     await Task.WhenAll(
-      project.Metadata.AddAsync("name", info.Name, token),
-      project.Metadata.AddAsync("description", info.Description, token));
+      project.Metadata.AddAsync("name", projectName, token),
+      project.Metadata.AddAsync("description", projectDescription, token));
+    host.Project = project;
+
+    return host;
   }
 
   public async Task RemoveAsync(string name, CancellationToken token)
@@ -100,6 +113,10 @@ internal class ProjectList : IProjectList
       return;
 
     InvalidateItems();
-    _FileSystem.RemoveDirectory(Path.GetDirectoryName(item.Path)!);
+  }
+
+  private FileDescription GetCacheFileDescription()
+  {
+    return new FileDescription(_Storage.ApplicationData, Guid.NewGuid().ToString(), ProjectDocument.MimeType);
   }
 }

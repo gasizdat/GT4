@@ -1,5 +1,4 @@
-﻿using GT4.Core.Project.Dto;
-using Microsoft.Data.Sqlite;
+﻿using Microsoft.Data.Sqlite;
 using System.Data;
 
 namespace GT4.Core.Project;
@@ -51,6 +50,8 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
 
     transaction.Commit();
   }
+
+  public static readonly string MimeType = "application/gt4;storage=sqlite";
 
   public TableMetadata Metadata => new(this);
   public TableNames Names => new(this);
