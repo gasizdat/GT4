@@ -40,12 +40,39 @@ public class Family
     using var transaction = await _Document.BeginTransactionAsync(token);
 
     var personId = await _Document.Persons.AddPersonAsync(person, token);
-    if (person.Names.SingleOrDefault(name => name.Id == familyName.Id) is null)
+    var names = await GetRequiredNames(familyName, person, token);
+    if (names.Length > 0)
     {
-      await _Document.PersonNames.AddNamesAsync(personId, [familyName], token);
+      await _Document.PersonNames.AddNamesAsync(personId, names, token);
     }
+
     transaction.Commit();
 
     return personId;
+  }
+
+  private async Task<Name[]> GetRequiredNames(Name familyName, Person person, CancellationToken token)
+  {
+    var lastNameType = person.BiologicalSex switch
+    {
+      BiologicalSex.Male => NameType.LastName | NameType.MaleDeclension,
+      BiologicalSex.Female => NameType.LastName | NameType.FemaleDeclension,
+      _ => NameType.LastName,
+    };
+
+    var names = new List<Name>();
+    var lastNames = await _Document.Names.GetNameWithSubnamesAsync(familyName.Id, token);
+    var lastName = lastNames?.SingleOrDefault(name => name.Type == lastNameType);
+    if (lastName is not null && !person.Names.Contains(lastName))
+    {
+      names.Add(lastName);
+    }
+
+    if (!person.Names.Contains(familyName))
+    {
+      names.Add(familyName);
+    }
+
+    return names.ToArray();
   }
 }
