@@ -92,9 +92,10 @@ internal class ProjectList : IProjectList
 
   public async Task<ProjectHost> CreateAsync(string projectName, string projectDescription, CancellationToken token)
   {
-    var dir = new DirectoryDescription(
-      Root: _Storage.ProjectsRoot.Root,
-      Path: _Storage.ProjectsRoot.Path.Concat(["local_projects", Guid.NewGuid().ToString()]).ToArray());
+    var dir = _Storage.ProjectsRoot with 
+    { 
+      Path = _Storage.ProjectsRoot.Path.Concat(["local_projects", Guid.NewGuid().ToString()]).ToArray() 
+    };
     var origin = new FileDescription(dir, $"project.{ProjectExtension}", ProjectDocument.MimeType);
     var cache = GetCacheFileDescription();
     using (var file = _FileSystem.OpenWriteStream(origin)) file.Close();
