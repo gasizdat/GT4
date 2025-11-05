@@ -23,7 +23,7 @@ public partial class App : Application
   {
     var window = base.CreateWindow(activationState);
     window.Deactivated += SaveOnDeactivationAsync;
-    window.Stopped += SaveOnDisposeAsync;
+    window.Stopped += SaveOnDeactivationAsync;
     window.Destroying += SaveOnDisposeAsync;
     return window;
   }

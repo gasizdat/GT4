@@ -28,6 +28,7 @@ public class ProjectHost : IAsyncDisposable, IDisposable
     Project = null;
     project.Dispose();
     _FileSystem.Copy(_Cache, _Origin);
+    _FileSystem.RemoveFile(_Cache);
   }
 
   public ValueTask DisposeAsync()
@@ -45,6 +46,7 @@ public class ProjectHost : IAsyncDisposable, IDisposable
 
     var ret = project.DisposeAsync();
     _FileSystem.Copy(_Cache, _Origin);
+    _FileSystem.RemoveFile(_Cache);
 
     return ret;
   }
