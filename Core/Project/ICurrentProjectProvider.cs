@@ -8,6 +8,7 @@ public interface ICurrentProjectProvider
   ProjectDocument Project { get; }
   bool HasCurrentProject { get; }
 
+  Task UpdateOriginAsync(CancellationToken token);
   Task CloseAsync(CancellationToken token);
   Task OpenAsync(ProjectInfo info, CancellationToken token);
 }

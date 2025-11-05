@@ -19,6 +19,13 @@ internal class CurrentProjectProvider : ICurrentProjectProvider
     _Info = info;
     _ProjectHost = await _ProjectList.OpenAsync(origin: info.Origin, token);
   }
+  
+  public async Task UpdateOriginAsync(CancellationToken token)
+  {
+    var info = Info;
+    await CloseAsync(token);
+    await OpenAsync(info, token);
+  }
 
   public async Task CloseAsync(CancellationToken token)
   {
