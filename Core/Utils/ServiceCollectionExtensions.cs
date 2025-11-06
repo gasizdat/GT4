@@ -7,8 +7,12 @@ public static class ServiceCollectionExtensions
   public static IServiceCollection BuildDefaultUtils(this IServiceCollection services)
   {
     return services
-      .AddSingleton<IStorage, Storage>()
+#if ANDROID
+      .AddSingleton<IFileSystem, AndroidFileSystem>()
+#elif WINDOWS
       .AddSingleton<IFileSystem, FileSystem>()
+#endif
+      .AddSingleton<IStorage, Storage>()
       .AddSingleton<ICancellationTokenProvider, CancellationTokenProvider>();
   }
 }
