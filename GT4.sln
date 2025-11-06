@@ -19,8 +19,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GT4.Core.Utils", "Core\Util
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GT4.UI.Resources", "UI\Resources\GT4.UI.Resources.csproj", "{F06493FC-2EEC-4790-983E-60B3743B37B8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utils2", "Core\Utils2\Utils2.csproj", "{DAF06CD2-D525-43F7-ACFD-551A8CEF6170}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -57,10 +55,6 @@ Global
 		{F06493FC-2EEC-4790-983E-60B3743B37B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F06493FC-2EEC-4790-983E-60B3743B37B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F06493FC-2EEC-4790-983E-60B3743B37B8}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DAF06CD2-D525-43F7-ACFD-551A8CEF6170}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DAF06CD2-D525-43F7-ACFD-551A8CEF6170}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DAF06CD2-D525-43F7-ACFD-551A8CEF6170}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DAF06CD2-D525-43F7-ACFD-551A8CEF6170}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -72,7 +66,6 @@ Global
 		{37D1B043-170E-F28C-15B6-63615A0F834D} = {AB30B351-8BDA-4175-970F-B6CCEBEA8870}
 		{2D349BED-ECED-B696-B8EE-31C1B40E71BA} = {AB30B351-8BDA-4175-970F-B6CCEBEA8870}
 		{F06493FC-2EEC-4790-983E-60B3743B37B8} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
-		{DAF06CD2-D525-43F7-ACFD-551A8CEF6170} = {AB30B351-8BDA-4175-970F-B6CCEBEA8870}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8C54C6B2-3760-4F0B-A163-CA52515D2575}
