@@ -1,17 +1,16 @@
 ﻿using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using System.Data;
-using System.IO;
 
 namespace GT4.Core.Project;
+
+using IFileSystem = Utils.IFileSystem;
 
 internal class ProjectList : IProjectList
 {
   private readonly IStorage _Storage;
   private readonly IFileSystem _FileSystem;
   private readonly WeakReference<ProjectInfo[]?> _Items = new(null);
-
-
 
   private async Task<ProjectInfo> GetProjectItemAsync(FileDescription origin, CancellationToken token)
   {
