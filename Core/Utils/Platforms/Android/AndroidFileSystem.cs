@@ -47,6 +47,20 @@ public class AndroidFileSystem : IFileSystem
     return escaped.Replace("*", "%").Replace("?", "_");
   }
 
+  private bool IsFileExist(Android.Net.Uri uri)
+  {
+    try
+    {
+      using var stream = AndroidApplication.Context.ContentResolver?.OpenInputStream(uri);
+      stream?.Close();
+      return stream is not null;
+    }
+    catch (Java.IO.FileNotFoundException)
+    {
+      return false;
+    }
+  }
+
   private Dictionary<FileDescription, Android.Net.Uri> GetFilesUri(DirectoryDescription directoryDescription, string searchPattern, bool recursive)
   {
     var ret = new Dictionary<FileDescription, Android.Net.Uri>();
@@ -80,6 +94,24 @@ public class AndroidFileSystem : IFileSystem
       args.Add(ToLikePattern(searchPattern));
     }
 
+    // NEW: Exclude pending & trashed
+    if (Build.VERSION.SdkInt >= BuildVersionCodes.R) // API 30+
+    {
+      query.Add($"{MediaStore.IMediaColumns.IsTrashed}=?");
+      args.Add("0");
+
+      // Optional: Exclude items scheduled for purge from Trash
+      // (DATE_EXPIRES is usually set for trashed items; use if you prefer)
+      query.Add($"{MediaStore.IMediaColumns.DateExpires} IS NULL");
+      args.Add("0");
+    }
+    else if (Build.VERSION.SdkInt >= BuildVersionCodes.Q) // API 29+
+    {
+      query.Add($"{MediaStore.IMediaColumns.IsPending}=?");
+      args.Add("0");
+    }
+
+
     using var cursor = AndroidApplication.Context.ContentResolver?.Query(
       externalStorageUri,
       projection,
@@ -94,7 +126,13 @@ public class AndroidFileSystem : IFileSystem
       var mimeType = cursor.GetString(cursor.GetColumnIndexOrThrow(MediaStore.IMediaColumns.MimeType));
       var relativePath = cursor.GetString(cursor.GetColumnIndexOrThrow(MediaStore.IMediaColumns.RelativePath));
       var uri = ContentUris.WithAppendedId(externalStorageUri, documentId);
-      IEnumerable<string> chunks = relativePath.Split(AndroidPathSeparator);
+
+      if (!IsFileExist(uri))
+      {
+        continue;
+      }
+
+      IEnumerable<string> chunks = relativePath?.Split(AndroidPathSeparator) ?? [];
       if (chunks.FirstOrDefault() == GetAndroidRoot(directoryDescription))
       {
         chunks = chunks.Skip(1);
@@ -170,16 +208,27 @@ public class AndroidFileSystem : IFileSystem
       return _DirectAccessFileSystem.OpenWriteStream(fileDescription);
     }
 
-    using var values = new ContentValues();
-    values.Put(MediaStore.IMediaColumns.DisplayName, fileDescription.FileName);
-    values.Put(MediaStore.IMediaColumns.MimeType, fileDescription.MimeType);
-    values.Put(MediaStore.IMediaColumns.RelativePath, GetRelativePath(fileDescription.Directory));
+    Stream outStream;
 
-    var externaStoragelUri = GetExternalStorageUri();
-    var uri = AndroidApplication.Context.ContentResolver?.Insert(externaStoragelUri, values)
-             ?? throw new IOException("Failed to create file via MediaStore.");
-    var outStream = AndroidApplication.Context.ContentResolver?.OpenOutputStream(uri, "w")
+    var uris = GetFilesUri(fileDescription.Directory, string.Empty, false);
+    if (uris.TryGetValue(fileDescription, out var uri))
+    {
+      outStream = AndroidApplication.Context.ContentResolver?.OpenOutputStream(uri, "wt")
                     ?? throw new IOException("Failed to open output stream to write.");
+    }
+    else
+    {
+      using var values = new ContentValues();
+      values.Put(MediaStore.IMediaColumns.DisplayName, fileDescription.FileName);
+      values.Put(MediaStore.IMediaColumns.MimeType, fileDescription.MimeType);
+      values.Put(MediaStore.IMediaColumns.RelativePath, GetRelativePath(fileDescription.Directory));
+
+      var externaStoragelUri = GetExternalStorageUri();
+      uri = AndroidApplication.Context.ContentResolver?.Insert(externaStoragelUri, values)
+            ?? throw new IOException("Failed to create file via MediaStore.");
+      outStream = AndroidApplication.Context.ContentResolver?.OpenOutputStream(uri, "wt")
+                  ?? throw new IOException("Failed to open output stream to write.");
+    }
 
     return outStream;
   }
