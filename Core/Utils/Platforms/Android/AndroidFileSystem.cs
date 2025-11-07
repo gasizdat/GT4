@@ -7,6 +7,7 @@ namespace GT4.Core.Utils;
 
 public class AndroidFileSystem : IFileSystem
 {
+  const string AndroidPathSeparator = "/";
   private readonly FileSystem _DirectAccessFileSystem = new();
 
   private string GetAndroidRoot(DirectoryDescription directoryDescription)
@@ -29,12 +30,29 @@ public class AndroidFileSystem : IFileSystem
     return ret;
   }
 
+  private static bool IsInternalStorage(DirectoryDescription directoryDescription) =>
+    directoryDescription.Root == System.Environment.SpecialFolder.ApplicationData;
+
+  private static string EnsureTrailingSlash(string path) =>
+    string.IsNullOrEmpty(path) ? path : (path.EndsWith(AndroidPathSeparator) ? path : path + AndroidPathSeparator);
+
+  // Escape % and _ (special in LIKE) and backslashes; keep slashes as-is.
+  static string EscapeForLike(string path) =>
+    path.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
+
+  static string ToLikePattern(string path)
+  {
+    // turn simple wildcards into SQL LIKE, escaping others
+    var escaped = EscapeForLike(path);
+    return escaped.Replace("*", "%").Replace("?", "_");
+  }
+
   private Dictionary<FileDescription, Android.Net.Uri> GetFilesUri(DirectoryDescription directoryDescription, string searchPattern, bool recursive)
   {
     var ret = new Dictionary<FileDescription, Android.Net.Uri>();
     var externalStorageUri = GetExternalStorageUri();
-    var query = $"{MediaStore.IMediaColumns.RelativePath}=?";
-    var args = $"{GetRelativePath(directoryDescription)}/";
+    var query = new List<string>();
+    var args = new List<string>();
     var sort = $"{MediaStore.IMediaColumns.DateModified} DESC";
     var projection = new[]
     {
@@ -45,20 +63,38 @@ public class AndroidFileSystem : IFileSystem
         MediaStore.IMediaColumns.DateModified
     };
 
-    using var cursor = AndroidApplication.Context.ContentResolver?.Query(externalStorageUri, projection, query, [args], sort);
-    if (cursor is null)
+    if (recursive)
     {
-      return new();
+      query.Add($"{MediaStore.IMediaColumns.RelativePath} LIKE ? ESCAPE '\\'");
+      args.Add($"{EnsureTrailingSlash(GetRelativePath(directoryDescription))}%");
+    }
+    else
+    {
+      query.Add($"{MediaStore.IMediaColumns.RelativePath}=?");
+      args.Add(EnsureTrailingSlash(GetRelativePath(directoryDescription)));
     }
 
-    while (cursor.MoveToNext())
+    if (!string.IsNullOrWhiteSpace(searchPattern) && searchPattern != "*")
+    {
+      query.Add($"{MediaStore.IMediaColumns.DisplayName} LIKE ? ESCAPE '\\'");
+      args.Add(ToLikePattern(searchPattern));
+    }
+
+    using var cursor = AndroidApplication.Context.ContentResolver?.Query(
+      externalStorageUri,
+      projection,
+      string.Join(" AND ", query),
+      args.ToArray(),
+      sort);
+
+    while (cursor?.MoveToNext() == true)
     {
       var documentId = cursor.GetLong(cursor.GetColumnIndexOrThrow(Android.Provider.IBaseColumns.Id));
       var displayName = cursor.GetString(cursor.GetColumnIndexOrThrow(MediaStore.IMediaColumns.DisplayName));
       var mimeType = cursor.GetString(cursor.GetColumnIndexOrThrow(MediaStore.IMediaColumns.MimeType));
       var relativePath = cursor.GetString(cursor.GetColumnIndexOrThrow(MediaStore.IMediaColumns.RelativePath));
       var uri = ContentUris.WithAppendedId(externalStorageUri, documentId);
-      IEnumerable<string> chunks = relativePath.Split("/");
+      IEnumerable<string> chunks = relativePath.Split(AndroidPathSeparator);
       if (chunks.FirstOrDefault() == GetAndroidRoot(directoryDescription))
       {
         chunks = chunks.Skip(1);
@@ -98,19 +134,20 @@ public class AndroidFileSystem : IFileSystem
 
   public string ToPath(DirectoryDescription directoryDescription)
   {
-    throw new NotFiniteNumberException();
+    return _DirectAccessFileSystem.ToPath(directoryDescription);
   }
 
   public string ToPath(FileDescription fileDescription)
   {
-    throw new NotFiniteNumberException();
+    return _DirectAccessFileSystem.ToPath(fileDescription);
   }
 
   public void RemoveFile(FileDescription fileDescription)
   {
-    if (fileDescription.Directory.Root == System.Environment.SpecialFolder.ApplicationData)
+    if (IsInternalStorage(fileDescription.Directory))
     {
       _DirectAccessFileSystem.RemoveFile(fileDescription);
+      return;
     }
 
     throw new NotFiniteNumberException();
@@ -128,7 +165,7 @@ public class AndroidFileSystem : IFileSystem
 
   public Stream OpenWriteStream(FileDescription fileDescription)
   {
-    if (fileDescription.Directory.Root == System.Environment.SpecialFolder.ApplicationData)
+    if (IsInternalStorage(fileDescription.Directory))
     {
       return _DirectAccessFileSystem.OpenWriteStream(fileDescription);
     }
@@ -149,12 +186,13 @@ public class AndroidFileSystem : IFileSystem
 
   public Stream OpenReadStream(FileDescription fileDescription)
   {
-    if (fileDescription.Directory.Root == System.Environment.SpecialFolder.ApplicationData)
+    if (IsInternalStorage(fileDescription.Directory))
     {
-      return _DirectAccessFileSystem.OpenWriteStream(fileDescription);
+      return _DirectAccessFileSystem.OpenReadStream(fileDescription);
     }
 
-    if (!GetFilesUri(fileDescription.Directory, "", false).TryGetValue(fileDescription, out var uri))
+    var uris = GetFilesUri(fileDescription.Directory, string.Empty, false);
+    if (!uris.TryGetValue(fileDescription, out var uri))
     {
       throw new IOException($"The file {fileDescription} doesn't exist");
     }
@@ -171,44 +209,7 @@ public class AndroidFileSystem : IFileSystem
       return _DirectAccessFileSystem.GetFiles(directoryDescription, searchPattern, recursive);
     }
 
-    var ret = new List<FileDescription>();
-    var externalStorageUri = GetExternalStorageUri();
-    var query = $"{MediaStore.IMediaColumns.RelativePath}=?";
-    var args = $"{GetRelativePath(directoryDescription)}/";
-    var sort = $"{MediaStore.IMediaColumns.DateModified} DESC";
-    var projection = new[]
-    {
-        Android.Provider.IBaseColumns.Id,
-        MediaStore.IMediaColumns.DisplayName,
-        MediaStore.IMediaColumns.MimeType,
-        MediaStore.IMediaColumns.RelativePath,
-        MediaStore.IMediaColumns.DateModified
-    };
-
-    using var cursor = AndroidApplication.Context.ContentResolver?.Query(externalStorageUri, projection, query, [args], sort);
-    if (cursor is null)
-    {
-      return [];
-    }
-
-    while (cursor.MoveToNext())
-    {
-      var documentId = cursor.GetLong(cursor.GetColumnIndexOrThrow(Android.Provider.IBaseColumns.Id));
-      var displayName = cursor.GetString(cursor.GetColumnIndexOrThrow(MediaStore.IMediaColumns.DisplayName));
-      var mimeType = cursor.GetString(cursor.GetColumnIndexOrThrow(MediaStore.IMediaColumns.MimeType));
-      var relativePath = cursor.GetString(cursor.GetColumnIndexOrThrow(MediaStore.IMediaColumns.RelativePath));
-      var uri = ContentUris.WithAppendedId(externalStorageUri, documentId);
-      var fileDescription = new FileDescription(
-        Directory: new DirectoryDescription(
-          Root: directoryDescription.Root,
-          Path: relativePath?.Split("/").Skip(1).ToArray() ?? []),
-        FileName: displayName ?? "",
-        MimeType: mimeType);
-
-      ret.Add(fileDescription);
-    }
-
-    return ret.ToArray();
+    return GetFilesUri(directoryDescription, searchPattern, recursive).Keys.ToArray();
   }
 
   public void Copy(FileDescription from, FileDescription to)
