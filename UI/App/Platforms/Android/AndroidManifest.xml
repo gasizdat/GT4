@@ -1,6 +1,50 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-	<application android:allowBackup="true" android:icon="@mipmap/appicon" android:roundIcon="@mipmap/appicon_round" android:supportsRtl="true"></application>
+	<application android:allowBackup="true" android:icon="@mipmap/appicon" android:supportsRtl="true">
+
+    
+  <activity
+        android:name=".MainActivity"
+        android:exported="true">
+
+      <!-- Accept VIEW intents for your file type -->
+      <intent-filter>
+        
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+
+        <!-- Accept your custom MIME (simple, no parameters) -->
+        <data android:mimeType="application/x-gt4" />
+
+        <!-- Also accept generic MIME, since many apps send this -->
+        <data android:mimeType="application/octet-stream" />
+        <data android:mimeType="*/*" />
+
+        <!-- Match by extension for both content:// and file:// -->
+        <data android:scheme="content" android:host="*" android:pathPattern=".*\\.gt4" />
+        <data android:scheme="file"                    android:pathPattern=".*\\.gt4" />
+        <!-- (Optional) uppercase extension as some apps use it -->
+        <data android:scheme="content" android:host="*" android:pathPattern=".*\\.GT4" />
+        <data android:scheme="file"                    android:pathPattern=".*\\.GT4" />
+
+
+        <!-- Prefer a specific MIME type if you control it -->
+        <data android:mimeType="application/gt4;storage=sqlite" />
+
+        <!-- Also accept by extension (helps when file managers send generic MIME types) -->
+        <data android:scheme="content" />
+        <data android:scheme="file" />
+        <data android:host="*" />
+        <data android:pathPattern=".*\\.gt4" />
+      </intent-filter>
+    </activity>
+
+  </application>
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<uses-permission android:name="android.permission.INTERNET" />
+	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+	<uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+	<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+	<uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
 </manifest>
