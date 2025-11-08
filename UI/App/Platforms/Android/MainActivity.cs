@@ -2,38 +2,37 @@
 using Android.Content;
 using Android.Content.PM;
 using Android.OS;
+using Android.Provider;
+using GT4.Core.Project;
+using GT4.Core.Utils;
+using GT4.UI;
+using GT4.UI.App;
+using GT4.UI.App.Pages;
 using GT4.UI.Resources;
+using System.ComponentModel;
 
 namespace GT4
 {
   [Activity(
-    //Name = "com.gasizdat.gt4.MainActivity", // 👈 force the Java/Android name
     Theme = "@style/Maui.SplashTheme",
     MainLauncher = true,
     LaunchMode = LaunchMode.SingleTask,
-    ConfigurationChanges = ConfigChanges.ScreenSize 
-                         | ConfigChanges.Orientation 
-                         | ConfigChanges.UiMode 
-                         | ConfigChanges.ScreenLayout 
-                         | ConfigChanges.SmallestScreenSize 
+    ConfigurationChanges = ConfigChanges.ScreenSize
+                         | ConfigChanges.Orientation
+                         | ConfigChanges.UiMode
+                         | ConfigChanges.ScreenLayout
+                         | ConfigChanges.SmallestScreenSize
                          | ConfigChanges.Density
   )]
 
-
   // Accept *.gt4 files by MIME and by extension (for generic MIME senders)
   [IntentFilter(
-        new[] { Intent.ActionView },
-        Categories = new[] { Intent.CategoryDefault, Intent.CategoryBrowsable },
-        DataMimeTypes = new[] {
-            "application/gt4",
-            "application/gt4;storage=sqlite",
-            "application/octet-stream",
-            "*/*"
-        },
-        DataSchemes = new[] { "content", "file" },
-        DataPathPatterns = new[] { ".*\\.gt4", ".*\\.GT4" }
-    )]
-
+        [Intent.ActionView],
+        Categories = [Intent.CategoryDefault, Intent.CategoryBrowsable],
+        DataMimeTypes = [ProjectDocument.MimeType, "application/gt4", "application/octet-stream", "*/*"],
+        DataSchemes = ["content", "file"],
+        DataPathPatterns = [".*\\.gt4", ".*\\.GT4"]
+  )]
   public class MainActivity : MauiAppCompatActivity
   {
 
@@ -61,23 +60,45 @@ namespace GT4
       {
         return;
       }
-      // If it’s a content:// Uri, a read grant is typically provided with the Intent.
-      // You can persist the grant if needed:
-      try
+
+      // Persistable is only valid for SAF (DocumentsProvider) + flag present on the incoming intent
+      var isDocumentUri = DocumentsContract.IsDocumentUri(this, uri);
+      var hasPersistableGrant = intent.Flags.HasFlag(ActivityFlags.GrantPersistableUriPermission);
+
+      if (!isDocumentUri || !hasPersistableGrant)
       {
-        if ((intent.Flags & ActivityFlags.GrantReadUriPermission) == ActivityFlags.GrantReadUriPermission)
+        var backgroundWorker = new BackgroundWorker();
+        backgroundWorker.DoWork += async (s, e) =>
         {
-          ContentResolver?.TakePersistableUriPermission(uri, ActivityFlags.GrantReadUriPermission);
-        }
+          try
+          {
+            using var input = ContentResolver?.OpenInputStream(uri) ??
+              throw new ApplicationException($"Unable to open provided URI {uri}");
+
+            var services = ServiceBuilder.DefaultServices;
+            var token = services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
+            var projectInfo = await services.GetRequiredService<IProjectList>().ExportAsync(input, token);
+            RunOnUiThread(async () => await Shell.Current.GoToAsync(UIRoutes.GetRoute<OpenOrCreateDialog>()));
+          }
+          catch (Exception ex)
+          {
+            RunOnUiThread(async () =>
+            {
+              await Shell.Current.DisplayAlert(UIStrings.AlertTitleError, ex.Message, UIStrings.BtnNameCancel);
+            });
+          }
+        };
+        backgroundWorker.RunWorkerAsync();
+
       }
-      catch (Exception ex)
+      else
       {
-       // DisplayAlert(UIStrings.AlertTitleError, ex.Message, UIStrings.BtnNameOk);
-
+        var takeFlags = intent.Flags & (ActivityFlags.GrantReadUriPermission |
+                                        ActivityFlags.GrantWriteUriPermission |
+                                        ActivityFlags.GrantPersistableUriPermission);
+        ContentResolver?.TakePersistableUriPermission(uri, takeFlags);
+        //TODO
       }
-
-      // TODO: hand off the Uri to your MAUI code (e.g., MessagingCenter/WeakReferenceMessenger/Singleton)
     }
-
   }
 }
