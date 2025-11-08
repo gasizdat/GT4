@@ -10,7 +10,7 @@ public class AndroidFileSystem : IFileSystem
   const string AndroidPathSeparator = "/";
   private readonly FileSystem _DirectAccessFileSystem = new();
 
-  private string GetAndroidRoot(DirectoryDescription directoryDescription)
+  private static string GetAndroidRoot(DirectoryDescription directoryDescription)
   {
     return directoryDescription.Root switch
     {
@@ -21,7 +21,7 @@ public class AndroidFileSystem : IFileSystem
     };
   }
 
-  private string GetRelativePath(DirectoryDescription directoryDescription)
+  private static string GetRelativePath(DirectoryDescription directoryDescription)
   {
     var chanks = new List<string>([GetAndroidRoot(directoryDescription)]);
     chanks.AddRange(directoryDescription.Path);
@@ -37,17 +37,17 @@ public class AndroidFileSystem : IFileSystem
     string.IsNullOrEmpty(path) ? path : (path.EndsWith(AndroidPathSeparator) ? path : path + AndroidPathSeparator);
 
   // Escape % and _ (special in LIKE) and backslashes; keep slashes as-is.
-  static string EscapeForLike(string path) =>
+  private static string EscapeForLike(string path) =>
     path.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
 
-  static string ToLikePattern(string path)
+  private static string ToLikePattern(string path)
   {
     // turn simple wildcards into SQL LIKE, escaping others
     var escaped = EscapeForLike(path);
     return escaped.Replace("*", "%").Replace("?", "_");
   }
 
-  private bool IsFileExist(Android.Net.Uri uri)
+  private static bool ResourceExists(Android.Net.Uri uri)
   {
     try
     {
@@ -61,21 +61,21 @@ public class AndroidFileSystem : IFileSystem
     }
   }
 
-  private Dictionary<FileDescription, Android.Net.Uri> GetFilesUri(DirectoryDescription directoryDescription, string searchPattern, bool recursive)
+  private static Dictionary<FileDescription, Android.Net.Uri> GetFilesUri(DirectoryDescription directoryDescription, string searchPattern, bool recursive)
   {
     var ret = new Dictionary<FileDescription, Android.Net.Uri>();
     var externalStorageUri = GetExternalStorageUri();
     var query = new List<string>();
     var args = new List<string>();
     var sort = $"{MediaStore.IMediaColumns.DateModified} DESC";
-    var projection = new[]
-    {
-        Android.Provider.IBaseColumns.Id,
+    string[] projection = 
+    [
+        IBaseColumns.Id,
         MediaStore.IMediaColumns.DisplayName,
         MediaStore.IMediaColumns.MimeType,
         MediaStore.IMediaColumns.RelativePath,
         MediaStore.IMediaColumns.DateModified
-    };
+    ];
 
     if (recursive)
     {
@@ -111,7 +111,6 @@ public class AndroidFileSystem : IFileSystem
       args.Add("0");
     }
 
-
     using var cursor = AndroidApplication.Context.ContentResolver?.Query(
       externalStorageUri,
       projection,
@@ -127,7 +126,7 @@ public class AndroidFileSystem : IFileSystem
       var relativePath = cursor.GetString(cursor.GetColumnIndexOrThrow(MediaStore.IMediaColumns.RelativePath));
       var uri = ContentUris.WithAppendedId(externalStorageUri, documentId);
 
-      if (!IsFileExist(uri))
+      if (!ResourceExists(uri))
       {
         continue;
       }
@@ -155,7 +154,6 @@ public class AndroidFileSystem : IFileSystem
     return ret;
   }
 
-
   private static Android.Net.Uri GetExternalStorageUri()
   {
     return MediaStore.Files.GetContentUri(MediaStore.VolumeExternalPrimary)
@@ -172,11 +170,19 @@ public class AndroidFileSystem : IFileSystem
 
   public string ToPath(DirectoryDescription directoryDescription)
   {
+    if (!IsInternalStorage(directoryDescription))
+    {
+      throw new ArgumentException($"{nameof(directoryDescription)} should be internal");
+    }
     return _DirectAccessFileSystem.ToPath(directoryDescription);
   }
 
   public string ToPath(FileDescription fileDescription)
   {
+    if (!IsInternalStorage(fileDescription.Directory))
+    {
+      throw new ArgumentException($"{nameof(fileDescription)} should be internal");
+    }
     return _DirectAccessFileSystem.ToPath(fileDescription);
   }
 
@@ -188,7 +194,7 @@ public class AndroidFileSystem : IFileSystem
       return;
     }
 
-    throw new NotFiniteNumberException();
+    throw new NotImplementedException();
   }
 
   public void RemoveDirectory(DirectoryDescription directoryDescription)
@@ -198,7 +204,7 @@ public class AndroidFileSystem : IFileSystem
       _DirectAccessFileSystem.RemoveDirectory(directoryDescription);
     }
 
-    throw new NotFiniteNumberException();
+    throw new NotImplementedException();
   }
 
   public Stream OpenWriteStream(FileDescription fileDescription)
@@ -264,8 +270,26 @@ public class AndroidFileSystem : IFileSystem
   public void Copy(FileDescription from, FileDescription to)
   {
     using var sourceStream = OpenReadStream(from);
+    Copy(sourceStream, to);
+  }
+
+  public void Copy(Stream from, FileDescription to)
+  {
     using var targetStream = OpenWriteStream(to);
-    sourceStream.CopyTo(targetStream);
-    sourceStream.Flush();
+    from.CopyTo(targetStream);
+    targetStream.Flush();
+    targetStream.Close();
+  }
+
+  public bool FileExists(FileDescription fileDescription)
+  {
+    if (IsInternalStorage(fileDescription.Directory))
+    {
+      return _DirectAccessFileSystem.FileExists(fileDescription);
+    }
+    var uris = GetFilesUri(fileDescription.Directory, string.Empty, false);
+    
+    var ret = uris.TryGetValue(fileDescription, out var uri) && uri is not null;
+    return ret;
   }
 }

@@ -6,6 +6,8 @@ public interface IFileSystem
   Stream OpenWriteStream(FileDescription fileDescription);
   Stream OpenReadStream(FileDescription fileDescription);
   void Copy(FileDescription from, FileDescription to);
+  void Copy(Stream from, FileDescription to);
+  bool FileExists(FileDescription FileExists);
   FileDescription[] GetFiles(DirectoryDescription directory, string searchPattern, bool recursive);
   void RemoveDirectory(DirectoryDescription directory);
 
