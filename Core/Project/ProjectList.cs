@@ -12,24 +12,28 @@ internal class ProjectList : IProjectList
   private readonly IFileSystem _FileSystem;
   private readonly WeakReference<ProjectInfo[]?> _Items = new(null);
 
-  private async Task<ProjectInfo> GetProjectItemAsync(FileDescription origin, CancellationToken token)
+  private async Task<ProjectInfo> GetProjectInfoAsync(ProjectDocument project, CancellationToken token)
   {
-    var cacheFile = GetCacheFileDescription();
-    try
-    {
-      using var projectHost = await OpenAsync(origin, token);
-      using var project = projectHost.Project!; 
-
-      var results = await Task.WhenAll(
+    var results = await Task.WhenAll(
         project.Metadata.GetAsync<string>("name", token),
         project.Metadata.GetAsync<string>("description", token));
 
-      return new ProjectInfo(
-        Description: results[1] ?? string.Empty,
-        Name: results[0]
-          ?? throw new DataException($"There is no name stored in the project ({_FileSystem.ToPath(origin)})"),
-        Origin: origin
-      );
+    return new ProjectInfo(
+      Description: results[1] ?? string.Empty,
+      Name: results[0] ?? throw new DataException($"There is no name stored in the project"),
+      Origin: default!
+    );
+  }
+
+  private async Task<ProjectInfo> GetProjectInfoAsync(FileDescription origin, CancellationToken token)
+  {
+    try
+    {
+      using var projectHost = await OpenAsync(origin, token);
+      using var project = projectHost.Project!;
+      var projectInfo = await GetProjectInfoAsync(project, token);
+
+      return projectInfo with { Origin = origin };
     }
     catch (Exception ex)
     {
@@ -68,7 +72,7 @@ internal class ProjectList : IProjectList
       var tasks = _FileSystem
         .GetFiles(_Storage.ProjectsRoot, $"*.{ProjectExtension}", true)
         .ToList()
-        .Select(path => GetProjectItemAsync(path, token));
+        .Select(path => GetProjectInfoAsync(path, token));
       items = await Task.WhenAll(tasks);
 
       _Items.SetTarget(items);
@@ -91,10 +95,7 @@ internal class ProjectList : IProjectList
 
   public async Task<ProjectHost> CreateAsync(string projectName, string projectDescription, CancellationToken token)
   {
-    var dir = _Storage.ProjectsRoot with 
-    { 
-      Path = _Storage.ProjectsRoot.Path.Concat(["local_projects", Guid.NewGuid().ToString()]).ToArray() 
-    };
+    var dir = GetProjectDirectoryByName(projectName);
     var origin = new FileDescription(dir, $"project.{ProjectExtension}", ProjectDocument.MimeType);
     var cache = GetCacheFileDescription();
     using (var file = _FileSystem.OpenWriteStream(origin)) file.Close();
@@ -105,7 +106,29 @@ internal class ProjectList : IProjectList
       project.Metadata.AddAsync("description", projectDescription, token));
     host.Project = project;
 
+    InvalidateItems();
+    
     return host;
+  }
+
+  public async Task<ProjectInfo> ExportAsync(Stream content, CancellationToken token)
+  {
+    var temp = GetCacheFileDescription();
+    _FileSystem.Copy(content, temp);
+
+    ProjectInfo projectInfo;
+    using (var project = await ProjectDocument.OpenAsync(_FileSystem.ToPath(temp), token))
+    {
+      projectInfo = await GetProjectInfoAsync(project, token);
+    }
+
+    var dir = GetProjectDirectoryByName(Guid.NewGuid().ToString());
+    var origin = new FileDescription(dir, $"project.{ProjectExtension}", ProjectDocument.MimeType);
+    _FileSystem.Copy(temp, origin);
+
+    InvalidateItems();
+
+    return projectInfo with { Origin = origin };
   }
 
   public async Task RemoveAsync(string name, CancellationToken token)
@@ -121,5 +144,17 @@ internal class ProjectList : IProjectList
   private FileDescription GetCacheFileDescription()
   {
     return new FileDescription(_Storage.ApplicationData, Guid.NewGuid().ToString(), ProjectDocument.MimeType);
+  }
+
+  public DirectoryDescription GetProjectDirectoryByName(string projectName)
+  {
+    var directoryName = string.Join(string.Empty, 
+      projectName
+      .Select(c => (char.IsLetterOrDigit(c) || char.IsWhiteSpace(c)) ? c.ToString() : string.Format("{0:X2}", (int)c)));
+
+    return _Storage.ProjectsRoot with
+    {
+      Path = _Storage.ProjectsRoot.Path.Concat([directoryName]).ToArray()
+    };
   }
 }
