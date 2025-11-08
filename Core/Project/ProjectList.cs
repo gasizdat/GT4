@@ -46,6 +46,9 @@ internal class ProjectList : IProjectList
     }
   }
 
+  private static string GetUniqueProjectName() =>
+    $"project-{Guid.NewGuid().ToString("N")}.{ProjectExtension}";
+
   private static bool CompareNames(string name1, string name2) =>
     string.Equals(name1, name2, StringComparison.InvariantCultureIgnoreCase);
 
@@ -96,7 +99,7 @@ internal class ProjectList : IProjectList
   public async Task<ProjectHost> CreateAsync(string projectName, string projectDescription, CancellationToken token)
   {
     var dir = GetProjectDirectoryByName(projectName);
-    var origin = new FileDescription(dir, $"project.{ProjectExtension}", ProjectDocument.MimeType);
+    var origin = new FileDescription(dir, GetUniqueProjectName(), ProjectDocument.MimeType);
     var cache = GetCacheFileDescription();
     using (var file = _FileSystem.OpenWriteStream(origin)) file.Close();
     var host = new ProjectHost(_FileSystem, origin, cache);
@@ -107,7 +110,7 @@ internal class ProjectList : IProjectList
     host.Project = project;
 
     InvalidateItems();
-    
+
     return host;
   }
 
@@ -122,8 +125,8 @@ internal class ProjectList : IProjectList
       projectInfo = await GetProjectInfoAsync(project, token);
     }
 
-    var dir = GetProjectDirectoryByName(Guid.NewGuid().ToString());
-    var origin = new FileDescription(dir, $"project.{ProjectExtension}", ProjectDocument.MimeType);
+    var dir = GetProjectDirectoryByName(projectInfo.Name);
+    var origin = new FileDescription(dir, GetUniqueProjectName(), ProjectDocument.MimeType);
     _FileSystem.Copy(temp, origin);
 
     InvalidateItems();
@@ -148,7 +151,7 @@ internal class ProjectList : IProjectList
 
   public DirectoryDescription GetProjectDirectoryByName(string projectName)
   {
-    var directoryName = string.Join(string.Empty, 
+    var directoryName = string.Join(string.Empty,
       projectName
       .Select(c => (char.IsLetterOrDigit(c) || char.IsWhiteSpace(c)) ? c.ToString() : string.Format("{0:X2}", (int)c)));
 
