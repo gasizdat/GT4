@@ -68,7 +68,7 @@ public class AndroidFileSystem : IFileSystem
     var query = new List<string>();
     var args = new List<string>();
     var sort = $"{MediaStore.IMediaColumns.DateModified} DESC";
-    string[] projection = 
+    string[] projection =
     [
         IBaseColumns.Id,
         MediaStore.IMediaColumns.DisplayName,
@@ -94,21 +94,16 @@ public class AndroidFileSystem : IFileSystem
       args.Add(ToLikePattern(searchPattern));
     }
 
-    // NEW: Exclude pending & trashed
+    query.Add($"{MediaStore.IMediaColumns.IsPending}=0");
+
+    // Exclude items scheduled for purge from Trash
+    // (DATE_EXPIRES is usually set for trashed items; use if you prefer)
+    query.Add($"{MediaStore.IMediaColumns.DateExpires} IS NULL");
+
     if (Build.VERSION.SdkInt >= BuildVersionCodes.R) // API 30+
     {
-      query.Add($"{MediaStore.IMediaColumns.IsTrashed}=?");
-      args.Add("0");
-
-      // Optional: Exclude items scheduled for purge from Trash
-      // (DATE_EXPIRES is usually set for trashed items; use if you prefer)
-      query.Add($"{MediaStore.IMediaColumns.DateExpires} IS NULL");
-      args.Add("0");
-    }
-    else if (Build.VERSION.SdkInt >= BuildVersionCodes.Q) // API 29+
-    {
-      query.Add($"{MediaStore.IMediaColumns.IsPending}=?");
-      args.Add("0");
+      // Exclude pending & trashed     
+      query.Add($"{MediaStore.IMediaColumns.IsTrashed}=0");
     }
 
     using var cursor = AndroidApplication.Context.ContentResolver?.Query(
@@ -120,7 +115,7 @@ public class AndroidFileSystem : IFileSystem
 
     while (cursor?.MoveToNext() == true)
     {
-      var documentId = cursor.GetLong(cursor.GetColumnIndexOrThrow(Android.Provider.IBaseColumns.Id));
+      var documentId = cursor.GetLong(cursor.GetColumnIndexOrThrow(IBaseColumns.Id));
       var displayName = cursor.GetString(cursor.GetColumnIndexOrThrow(MediaStore.IMediaColumns.DisplayName));
       var mimeType = cursor.GetString(cursor.GetColumnIndexOrThrow(MediaStore.IMediaColumns.MimeType));
       var relativePath = cursor.GetString(cursor.GetColumnIndexOrThrow(MediaStore.IMediaColumns.RelativePath));
@@ -288,7 +283,7 @@ public class AndroidFileSystem : IFileSystem
       return _DirectAccessFileSystem.FileExists(fileDescription);
     }
     var uris = GetFilesUri(fileDescription.Directory, string.Empty, false);
-    
+
     var ret = uris.TryGetValue(fileDescription, out var uri) && uri is not null;
     return ret;
   }
