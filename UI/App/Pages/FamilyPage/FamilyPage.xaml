@@ -7,7 +7,8 @@
     xmlns:items="clr-namespace:GT4.UI.App.Items"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
-    Title="{Binding FamilyName.Value}">
+    x:Name="Root"
+    Title="{Binding FamilyName.Value, Source={x:Reference Root}}">
 
   <ContentPage.Resources>
     <ResourceDictionary />
@@ -23,7 +24,7 @@
       <FlexLayout
           AlignContent="Center"
           AlignItems="Start"
-          BindableLayout.ItemsSource="{Binding Members}"
+          BindableLayout.ItemsSource="{Binding Members, Source={x:Reference Root}}"
           Direction="Row"
           JustifyContent="SpaceAround"
           Wrap="Wrap">
@@ -34,11 +35,11 @@
                 Margin="1"
                 CornerRadius="10"
                 HasShadow="True"
-                MinimumWidthRequest="{Binding Path=BindingContext.PersonItemMinimalWidth, Source={RelativeSource AncestorType={x:Type ContentPage}}}">
+                MinimumWidthRequest="{Binding Path=PersonItemMinimalWidth, Source={RelativeSource AncestorType={x:Type ContentPage}}}">
 
               <Frame.GestureRecognizers>
                 <TapGestureRecognizer
-                    Command="{Binding Path=BindingContext.MemberItemTappedCommand, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
+                    Command="{Binding Path=MemberItemTappedCommand, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
                     CommandParameter="{Binding .}" />
               </Frame.GestureRecognizers>
 

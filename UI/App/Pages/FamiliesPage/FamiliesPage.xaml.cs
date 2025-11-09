@@ -25,7 +25,6 @@ public partial class FamiliesPage : ContentPage
   public FamiliesPage()
   {
     InitializeComponent();
-    BindingContext = this;
   }
 
   public ServiceProvider Services { get; set; } = ServiceBuilder.DefaultServices;

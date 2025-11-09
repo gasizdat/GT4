@@ -11,7 +11,6 @@ public partial class CreateNewProjectDialog : ContentPage
   public CreateNewProjectDialog()
   {
     InitializeComponent();
-    BindingContext = this;
   }
 
   public void OnCreateProjectBtn(object sender, EventArgs e)

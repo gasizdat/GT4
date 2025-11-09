@@ -5,6 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:items="clr-namespace:GT4.UI.App.Items"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
+    x:Name="Root"
     Title="{x:Static resources:UIStrings.WndTitleOpenOrCreateDialog}">
 
   <ScrollView>
@@ -15,7 +16,7 @@
           Text="{x:Static resources:UIStrings.WndHintOpenOrCreateDialog}" />
 
       <CollectionView
-          ItemsSource="{Binding Projects}"
+          ItemsSource="{Binding Projects, Source={x:Reference Root}}"
           SelectionChanged="OnProjectSelected"
           SelectionMode="Single">
 

@@ -17,7 +17,6 @@ public partial class FamilyPage : ContentPage
   public FamilyPage()
   {
     InitializeComponent();
-    BindingContext = this;
     MemberItemTappedCommand = new Command<FamilyMemberInfoItem>(OnMemberSelected);
   }
 

@@ -33,7 +33,6 @@ public partial class MainPage : ContentPage
   public MainPage()
   {
     InitializeComponent();
-    BindingContext = this;
   }
 
   public ICommand NavigateToCreateOrOpenDialog => new Command(async () =>

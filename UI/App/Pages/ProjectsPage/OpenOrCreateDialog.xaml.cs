@@ -11,7 +11,6 @@ public partial class OpenOrCreateDialog : ContentPage
   public OpenOrCreateDialog()
   {
     InitializeComponent();
-    BindingContext = this;
   }
 
   public ServiceProvider Services { get; set; } = ServiceBuilder.DefaultServices;
