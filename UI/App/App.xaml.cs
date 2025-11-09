@@ -1,6 +1,7 @@
 ﻿
 using GT4.Core.Project;
 using GT4.Core.Utils;
+using Microsoft.Maui.Controls.Xaml.Diagnostics;
 
 namespace GT4.UI.App;
 
@@ -15,6 +16,25 @@ public partial class App : Application
       Current?.On<Microsoft.Maui.Controls.PlatformConfiguration.Android>(),
       Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific.WindowSoftInputModeAdjust.Resize);
 #endif
+
+    BindingDiagnostics.BindingFailed += (sender, args) =>
+    {
+      switch (args)
+      {
+        case BindingErrorEventArgs bindingError:
+          System.Diagnostics.Debug.WriteLine(
+            $"[BindingDiagnostics] {bindingError.Message}, "
+           + "Source='{bindingError.Source}', "
+           + "Target='{bindingError.Target}', "
+           + "Property='{bindingError.TargetProperty}'");
+          break;
+
+        default:
+          System.Diagnostics.Debug.WriteLine($"[BindingDiagnostics] {args.Message}, Raw='{args}");
+          break;
+      }
+    };
+
 
     MainPage = new AppShell();
   }
