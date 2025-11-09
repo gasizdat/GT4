@@ -1,6 +1,4 @@
 ﻿using GT4.Core.Project.Dto;
-using Microsoft.Data.Sqlite;
-using System.Reflection.Metadata;
 
 namespace GT4.Core.Project;
 
@@ -66,6 +64,42 @@ public partial class TablePersonNames : TableBase
       command.Parameters.AddWithValue("@nameId", name.Id);
       await command.ExecuteNonQueryAsync(token);
     }
+
+    transaction.Commit();
+  }
+
+  public async Task UpdateNamesAsync(int personId, Name[] names, CancellationToken token)
+  {
+    var oldNames = await GetPersonNamesAsync(personId, token);
+    var newNameIds = names.Select(n => n.Id).ToHashSet();
+    var remainedNames = new HashSet<int>();
+    var tasks = new List<Task>();
+
+    using var transaction = await Document.BeginTransactionAsync(token);
+
+    foreach (var oldName in oldNames)
+    {
+      var isNameRemained = newNameIds.Contains(oldName.Id) || oldName.Type == NameType.FamilyName; // Preserve Family Name
+      if (isNameRemained)
+      {
+        remainedNames.Add(oldName.Id);
+        continue;
+      }
+
+      using var command = Document.CreateCommand();
+
+      command.CommandText = """
+        DELETE FROM PersonNames
+        WHERE PersonId=@personId AND NameId=@nameId;
+        """;
+      command.Parameters.AddWithValue("@personId", personId);
+      command.Parameters.AddWithValue("@nameId", oldName.Id);
+      tasks.Add(command.ExecuteNonQueryAsync(token));
+    }
+
+    tasks.Add(AddNamesAsync(personId, names.Where(n => !remainedNames.Contains(n.Id)).ToArray(), token));
+
+    await Task.WhenAll(tasks);
 
     transaction.Commit();
   }
