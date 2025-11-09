@@ -53,8 +53,11 @@ public partial class FamilyPage : ContentPage
 
       try
       {
-        using var token = Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
-        var ret = Services.GetRequiredService<ICurrentProjectProvider>()
+        using var token = Services
+          .GetRequiredService<ICancellationTokenProvider>()
+          .CreateDbCancellationToken();
+        var ret = Services
+          .GetRequiredService<ICurrentProjectProvider>()
           .Project
           .Persons
           .GetPersonsByNameAsync(FamilyName, token)
@@ -74,7 +77,7 @@ public partial class FamilyPage : ContentPage
     }
   }
 
-  internal async void OnMemberSelected(FamilyMemberInfoItem member)
+  private async void OnMemberSelected(FamilyMemberInfoItem member)
   {
     switch (member)
     {
@@ -84,19 +87,18 @@ public partial class FamilyPage : ContentPage
       case FamilyMemberInfoItemCreate:
         await OnCreatePerson();
         break;
-      case FamilyMemberInfoItem item:
-        // TODO
-        // await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamilyMemberPage>(), true, new() { { "FamilyName", item } });
+      case FamilyMemberInfoItem familyMember:
+        await OnEditPerson(familyMember);
         break;
     }
   }
 
-  internal async void OnDeleteFmily(object? parameter)
+  private async void OnDeleteFmily(object? parameter)
   {
     var canDelete = _FamilyName is not null &&
        await DisplayAlert(UIStrings.AlertTitleConfirmation,
-                          string.Format(UIStrings.AlertTextDeleteConfirmationText_1, _FamilyName.Value), 
-                          UIStrings.BtnNameYes, 
+                          string.Format(UIStrings.AlertTextDeleteConfirmationText_1, _FamilyName.Value),
+                          UIStrings.BtnNameYes,
                           UIStrings.BtnNameNo);
 
     if (!canDelete)
@@ -106,8 +108,11 @@ public partial class FamilyPage : ContentPage
 
     try
     {
-      using var token = Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
-      await Services.GetRequiredService<ICurrentProjectProvider>()
+      using var token = Services
+        .GetRequiredService<ICancellationTokenProvider>()
+        .CreateDbCancellationToken();
+      await Services
+        .GetRequiredService<ICurrentProjectProvider>()
         .Project
         .Family
         .RemoveFamilyAsync(_FamilyName!, token);
@@ -122,11 +127,11 @@ public partial class FamilyPage : ContentPage
     }
   }
 
-  internal async void OnEditFmily(object? parameter)
+  private async void OnEditFmily(object? parameter)
   {
   }
 
-  internal async Task OnCreatePerson()
+  private async Task OnCreatePerson()
   {
     var dialog = new CreateNewPersonDialog(null, Services);
 
@@ -141,12 +146,50 @@ public partial class FamilyPage : ContentPage
         return;
       }
 
-      using var token = Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
+      using var token = Services
+        .GetRequiredService<ICancellationTokenProvider>()
+        .CreateDbCancellationToken();
 
-      await Services.GetRequiredService<ICurrentProjectProvider>()
+      await Services
+        .GetRequiredService<ICurrentProjectProvider>()
         .Project
         .Family
         .AddPersonToFamilyAsync(_FamilyName, info.Person, token);
+    }
+    catch (Exception ex)
+    {
+      await DisplayAlert(UIStrings.AlertTitleError, ex.Message, UIStrings.BtnNameOk);
+    }
+    finally
+    {
+      OnPropertyChanged(nameof(Members));
+    }
+  }
+
+  private async Task OnEditPerson(FamilyMemberInfoItem familyMember)
+  {
+    var dialog = new CreateNewPersonDialog(familyMember.Info, Services);
+
+    await Navigation.PushModalAsync(dialog);
+    var info = await dialog.Info;
+    await Navigation.PopModalAsync();
+
+    try
+    {
+      if (info is null || _FamilyName is null)
+      {
+        return;
+      }
+
+      using var token = Services
+        .GetRequiredService<ICancellationTokenProvider>()
+        .CreateDbCancellationToken();
+
+      await Services
+        .GetRequiredService<ICurrentProjectProvider>()
+        .Project
+        .Persons
+        .UpdatePersonAsync(info.Person, token);
     }
     catch (Exception ex)
     {
