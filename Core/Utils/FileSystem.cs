@@ -84,8 +84,19 @@ internal class FileSystem : IFileSystem
   public void Copy(FileDescription from, FileDescription to)
   {
     using var sourceStream = OpenReadStream(from);
+    Copy(sourceStream, to);
+  }
+
+  public void Copy(Stream from, FileDescription to)
+  {
     using var targetStream = OpenWriteStream(to);
-    sourceStream.CopyTo(targetStream);
-    sourceStream.Flush();
+    from.CopyTo(targetStream);
+    targetStream.Flush();
+    targetStream.Close();
+  }
+
+  public bool FileExists(FileDescription FileExists)
+  {
+    return File.Exists(ToPath(FileExists));
   }
 }

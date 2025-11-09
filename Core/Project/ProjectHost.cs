@@ -2,6 +2,8 @@
 
 namespace GT4.Core.Project;
 
+using IFileSystem = Utils.IFileSystem;
+
 public class ProjectHost : IAsyncDisposable, IDisposable
 {
   private readonly IFileSystem _FileSystem;

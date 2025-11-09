@@ -51,7 +51,7 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
     transaction.Commit();
   }
 
-  public static readonly string MimeType = "application/gt4;storage=sqlite";
+  public const string MimeType = "application/gt4;storage=sqlite";
 
   public TableMetadata Metadata => new(this);
   public TableNames Names => new(this);
@@ -92,7 +92,7 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
       }
     }
 
-    return Task.FromResult(ret); 
+    return Task.FromResult(ret);
   }
 
   public static async Task<ProjectDocument> CreateNewAsync(string path, string name, CancellationToken token)
