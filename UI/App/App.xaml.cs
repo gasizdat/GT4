@@ -24,10 +24,10 @@ public partial class App : Application
         case BindingErrorEventArgs bindingError:
           System.Diagnostics.Debug.WriteLine(
             $"[BindingDiagnostics] {string.Format(bindingError.Message, bindingError.MessageArgs)}, "
-          + $"Path={(bindingError.Binding as Binding)?.Path ?? "unknown"}"
+          + $"Path={(bindingError.Binding as Binding)?.Path ?? "unknown"}, "
           + $"Source='{bindingError.Source}', "
           + $"Target='{bindingError.Target}', "
-          + $"Property='{bindingError.TargetProperty}'");
+          + $"Property='{bindingError.TargetProperty.PropertyName}'");
           break;
 
         default:
