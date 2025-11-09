@@ -16,8 +16,11 @@ public partial class FamilyPage : ContentPage
 
   public FamilyPage()
   {
-    InitializeComponent();
     MemberItemTappedCommand = new Command<FamilyMemberInfoItem>(OnMemberSelected);
+    DeleteFamilyCommand = new Command<object?>(OnDeleteFmily);
+    EditFamilyCommand = new Command<object?>(OnEditFmily);
+
+    InitializeComponent();
   }
 
   public Name? FamilyName
@@ -35,7 +38,9 @@ public partial class FamilyPage : ContentPage
 
   public int PersonItemMinimalWidth => _PersonItemMinimalWidth;
 
-  public ICommand MemberItemTappedCommand { get; init;  }
+  public ICommand MemberItemTappedCommand { get; init; }
+  public ICommand DeleteFamilyCommand { get; init; }
+  public ICommand EditFamilyCommand { get; init; }
 
   public ICollection<FamilyMemberInfoItem> Members
   {
@@ -86,11 +91,38 @@ public partial class FamilyPage : ContentPage
     }
   }
 
-  internal async void OnDeletePersonSelected(object sender, EventArgs e)
+  internal async void OnDeleteFmily(object? parameter)
   {
+    var canDelete = _FamilyName is not null &&
+       await DisplayAlert(UIStrings.AlertTitleConfirmation,
+                          string.Format(UIStrings.AlertTextDeleteConfirmationText_1, _FamilyName.Value), 
+                          UIStrings.BtnNameYes, 
+                          UIStrings.BtnNameNo);
+
+    if (!canDelete)
+    {
+      return;
+    }
+
+    try
+    {
+      using var token = Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
+      await Services.GetRequiredService<ICurrentProjectProvider>()
+        .Project
+        .Family
+        .RemoveFamilyAsync(_FamilyName!, token);
+    }
+    catch (Exception ex)
+    {
+      await DisplayAlert(UIStrings.AlertTitleError, ex.Message, UIStrings.BtnNameOk);
+    }
+    finally
+    {
+      await Shell.Current.GoToAsync("..", true);
+    }
   }
 
-  internal async void OnEditPersonSelected(object sender, EventArgs e)
+  internal async void OnEditFmily(object? parameter)
   {
   }
 
