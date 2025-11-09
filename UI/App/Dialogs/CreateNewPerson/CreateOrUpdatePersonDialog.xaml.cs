@@ -10,7 +10,7 @@ using System.Windows.Input;
 
 namespace GT4.UI.App.Dialogs;
 
-public partial class CreateNewPersonDialog : ContentPage
+public partial class CreateOrUpdatePersonDialog : ContentPage
 {
   public record PersonInfo(
     Person Person,
@@ -33,7 +33,7 @@ public partial class CreateNewPersonDialog : ContentPage
   private BiologicalSexItem? _BiologicalSex;
   private bool _NotReady => _BiologicalSex is null || _BirthDate is null;
 
-  public CreateNewPersonDialog(Person? person, ServiceProvider serviceProvider)
+  public CreateOrUpdatePersonDialog(Person? person, ServiceProvider serviceProvider)
   {
     _ServiceProvider = serviceProvider;
     _DialogCommand = new Command<object>(OnDialogCommand);

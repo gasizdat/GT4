@@ -133,7 +133,7 @@ public partial class FamilyPage : ContentPage
 
   private async Task OnCreatePerson()
   {
-    var dialog = new CreateNewPersonDialog(null, Services);
+    var dialog = new CreateOrUpdatePersonDialog(null, Services);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;
@@ -168,7 +168,7 @@ public partial class FamilyPage : ContentPage
 
   private async Task OnEditPerson(FamilyMemberInfoItem familyMember)
   {
-    var dialog = new CreateNewPersonDialog(familyMember.Info, Services);
+    var dialog = new CreateOrUpdatePersonDialog(familyMember.Info, Services);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;
