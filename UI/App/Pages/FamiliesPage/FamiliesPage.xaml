@@ -29,7 +29,7 @@
         <CollectionView.ItemTemplate>
           <DataTemplate x:DataType="items:FamilyInfoItem">
             <Grid
-                ColumnDefinitions="Auto, *, Auto"
+                ColumnDefinitions="Auto, *"
                 ColumnSpacing="10"
                 RowDefinitions="Auto, Auto">
 
@@ -50,18 +50,10 @@
                   Text="{Binding Info.Value}"
                   VerticalOptions="Start" />
 
-              <Button
-                  Grid.Row="0"
-                  Grid.RowSpan="2"
-                  Grid.Column="2"
-                  Clicked="OnDeleteFamilySelected"
-                  IsVisible="{Binding IsHandlesVisible}"
-                  Style="{StaticResource DeleteAdorner}" />
-
               <StackLayout
                   Grid.Row="1"
                   Grid.Column="0"
-                  Grid.ColumnSpan="3"
+                  Grid.ColumnSpan="2"
                   BindableLayout.ItemsSource="{Binding Persons}">
                 <BindableLayout.ItemTemplate>
 

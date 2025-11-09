@@ -5,8 +5,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
-    Title="{x:Static resources:UIStrings.WndTitleCreateNewProjectDialog}"
-    x:Name="Root">
+    x:Name="Root"
+    Title="{x:Static resources:UIStrings.WndTitleCreateNewProjectDialog}">
   <ScrollView>
 
     <VerticalStackLayout

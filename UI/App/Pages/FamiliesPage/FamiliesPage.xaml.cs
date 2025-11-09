@@ -78,36 +78,6 @@ public partial class FamiliesPage : ContentPage
     }
   }
 
-  public async void OnDeleteFamilySelected(object sender, EventArgs e)
-  {
-    var item = (sender as BindableObject)?.BindingContext as FamilyInfoItem;
-    if (item is null or FamilyInfoItemCreate)
-      return;
-
-    try
-    {
-      var result = await DisplayAlert(UIStrings.AlertTitleConfirmation,
-        string.Format(UIStrings.AlertTextDeleteConfirmationText_1, item.Info.Value), UIStrings.BtnNameYes, UIStrings.BtnNameNo);
-
-      if (result == false)
-        return;
-
-      using var token = Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
-      await Services.GetRequiredService<ICurrentProjectProvider>()
-        .Project
-        .Family
-        .RemoveFamilyAsync(item.Info, token);
-    }
-    catch (Exception ex)
-    {
-      await DisplayAlert(UIStrings.AlertTitleError, ex.Message, UIStrings.BtnNameOk);
-    }
-    finally
-    {
-      OnPropertyChanged(nameof(Families));
-    }
-  }
-
   internal async Task OnCreateFamily()
   {
     var dialog = new CreateNewNameDialog(NameType.FamilyName);
@@ -137,5 +107,11 @@ public partial class FamiliesPage : ContentPage
     {
       OnPropertyChanged(nameof(Families));
     }
+  }
+
+  protected override void OnNavigatedTo(NavigatedToEventArgs args)
+  {
+    base.OnNavigatedTo(args);
+    OnPropertyChanged(nameof(Families));
   }
 }
