@@ -144,4 +144,30 @@ public partial class TablePersons : TableBase
 
     return personId;
   }
+
+  public async Task UpdatePersonAsync(Person person, CancellationToken token)
+  {
+    InvalidateItems();
+    using var transaction = await Document.BeginTransactionAsync(token);
+    using var command = Document.CreateCommand();
+    command.CommandText = """
+      UPDATE Persons 
+      SET BirthDate=@birthDate, BirthDateStatus=@birthDateStatus, DeathDate=@deathDate, DeathDateStatus=@deathDateStatus, BiologicalSex=@biologicalSex
+      WHERE Id=@personId;
+      """;
+    command.Parameters.AddWithValue("@birthDate", person.BirthDate.Code);
+    command.Parameters.AddWithValue("@birthDateStatus", person.BirthDate.Status);
+    command.Parameters.AddWithValue("@deathDate", person.DeathDate.HasValue ? person.DeathDate.Value.Code : DBNull.Value);
+    command.Parameters.AddWithValue("@deathDateStatus", person.DeathDate.HasValue ? person.DeathDate.Value.Status : DBNull.Value);
+    command.Parameters.AddWithValue("@biologicalSex", person.BiologicalSex);
+    command.Parameters.AddWithValue("@personId", person.Id);
+    await command.ExecuteNonQueryAsync(token);
+
+    if (person.Names.Length > 0)
+    {
+      await Document.PersonNames.UpdateNamesAsync(person.Id, person.Names, token);
+    }
+
+    transaction.Commit();
+  }
 }
