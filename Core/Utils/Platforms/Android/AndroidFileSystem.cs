@@ -17,6 +17,12 @@ public class AndroidFileSystem : IFileSystem
       System.Environment.SpecialFolder.MyDocuments => Android.OS.Environment.DirectoryDocuments
         ?? throw new IOException($"{nameof(Android.OS.Environment.DirectoryDocuments)}"),
 
+      System.Environment.SpecialFolder.MyPictures => Android.OS.Environment.DirectoryPictures
+        ?? throw new IOException($"{nameof(Android.OS.Environment.DirectoryPictures)}"),
+
+      System.Environment.SpecialFolder.MyMusic => Android.OS.Environment.DirectoryMusic
+        ?? throw new IOException($"{nameof(Android.OS.Environment.DirectoryMusic)}"),
+
       _ => throw new NotSupportedException($"Not Supported root: {directoryDescription.Root}")
     };
   }
