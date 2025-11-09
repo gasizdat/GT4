@@ -7,4 +7,42 @@ public static class ImageUtils
 
   public static ImageSource ImageFromRawResource(string resourceName) =>
     ImageSource.FromStream(_ => FileSystem.OpenAppPackageFileAsync(resourceName));
+
+  public static async Task<byte[]?> ToBytesAsync(ImageSource? source, CancellationToken token)
+  {
+    if (source == null)
+    {
+      return null;
+    }
+
+    var httpStreamReaderAsync = async (Uri uri, CancellationToken token) =>
+    {
+      // TODO switch to HTTP Client provider
+      using var http = new HttpClient();
+      return await http.GetStreamAsync(uri, token).ConfigureAwait(false);
+    };
+
+    Stream? stream = source switch
+    {
+      FileImageSource fileImageSource => File.OpenRead(fileImageSource.File),
+      StreamImageSource streamImageSource => await streamImageSource
+        .Stream(token)
+        .ConfigureAwait(false),
+      UriImageSource uriImageSource => await httpStreamReaderAsync(uriImageSource.Uri, token),
+      _ => throw new NotSupportedException("Unsupported stream type"),
+    };
+
+    if (stream == null)
+    {
+      throw new InvalidOperationException(
+        $"Could not obtain a stream from {source.GetType().Name}."
+      );
+    }
+    using (stream)
+    using (var ms = new MemoryStream())
+    {
+      await stream.CopyToAsync(ms, token).ConfigureAwait(false);
+      return ms.ToArray();
+    }
+  }
 }
