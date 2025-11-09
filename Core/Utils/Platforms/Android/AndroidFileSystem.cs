@@ -197,7 +197,11 @@ public class AndroidFileSystem : IFileSystem
       return;
     }
 
-    throw new NotImplementedException();
+    var uris = GetFilesUri(fileDescription.Directory, string.Empty, false);
+    if (uris.TryGetValue(fileDescription, out var uri))
+    {
+      AndroidApplication.Context.ContentResolver?.Delete(uri, null, null);
+    }
   }
 
   public void RemoveDirectory(DirectoryDescription directoryDescription)

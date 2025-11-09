@@ -29,6 +29,8 @@ internal class ProjectList : IProjectList
   {
     try
     {
+      // TODO Implement Project sniffer to upload the stream into memory and retrieve metada from the in-memory DB.
+
       using var projectHost = await OpenAsync(origin, token);
       using var project = projectHost.Project!;
       var projectInfo = await GetProjectInfoAsync(project, token);
@@ -140,6 +142,8 @@ internal class ProjectList : IProjectList
     var item = modifiableItems.FirstOrDefault(i => CompareNames(i.Name, name));
     if (item?.Name is null)
       return;
+
+    _FileSystem.RemoveFile(item.Origin);
 
     InvalidateItems();
   }
