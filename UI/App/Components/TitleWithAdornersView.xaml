@@ -3,12 +3,15 @@
     x:Class="GT4.UI.App.Components.TitleWithAdornersView"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:components="clr-namespace:GT4.UI.App.Components"
     x:Name="Root">
+
   <Grid
       Margin="10,0,0,0"
       ColumnDefinitions="*, Auto, Auto"
       RowDefinitions="Auto, Auto">
 
+    <!--  Title  -->
     <Label
         Grid.Row="0"
         Grid.Column="0"
@@ -17,6 +20,25 @@
         Text="{Binding TitleText, Source={x:Reference Root}}"
         VerticalOptions="Fill" />
 
+    <!--  Edit adorner  -->
+    <Button
+        Grid.Row="0"
+        Grid.RowSpan="2"
+        Grid.Column="1"
+        Clicked="OnEditAdornerClicked"
+        Style="{StaticResource EditAdorner}" />
+
+
+    <!--  Delete adorner  -->
+    <Button
+        Grid.Row="0"
+        Grid.RowSpan="2"
+        Grid.Column="2"
+        Clicked="OnDeleteAdornerClicked"
+        Style="{StaticResource DeleteAdorner}" />
+
+
+    <!--  Subtitle  -->
     <Label
         Grid.Row="1"
         Grid.Column="0"
