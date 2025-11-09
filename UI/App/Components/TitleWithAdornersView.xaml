@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="GT4.UI.App.Components.TitleWithAdornersView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Name="Root">
+  <Grid
+      Margin="10,0,0,0"
+      ColumnDefinitions="*, Auto, Auto"
+      RowDefinitions="Auto, Auto">
+
+    <Label
+        Grid.Row="0"
+        Grid.Column="0"
+        HorizontalOptions="Fill"
+        Style="{StaticResource PageTitle}"
+        Text="{Binding TitleText, Source={x:Reference Root}}"
+        VerticalOptions="Fill" />
+
+    <Label
+        Grid.Row="1"
+        Grid.Column="0"
+        Grid.ColumnSpan="3"
+        HorizontalOptions="Fill"
+        IsVisible="{Binding IsSubtitleTextVisible, Source={x:Reference Root}}"
+        Style="{StaticResource PageSubtitle}"
+        Text="{Binding SubtitleText, Source={x:Reference Root}}"
+        VerticalOptions="Fill" />
+
+  </Grid>
+</ContentView>
