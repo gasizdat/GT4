@@ -97,7 +97,9 @@ namespace GT4
                                         ActivityFlags.GrantWriteUriPermission |
                                         ActivityFlags.GrantPersistableUriPermission);
         ContentResolver?.TakePersistableUriPermission(uri, takeFlags);
-        //TODO
+
+        // TODO remove the else section or implement it
+        throw new NotImplementedException(nameof(HandleOpenIntentIfAny));
       }
     }
   }

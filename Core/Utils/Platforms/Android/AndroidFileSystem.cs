@@ -5,6 +5,8 @@ using AndroidApplication = Android.App.Application;
 
 namespace GT4.Core.Utils;
 
+// TODO Refactor class for improved clarity and simplicity
+
 public class AndroidFileSystem : IFileSystem
 {
   const string AndroidPathSeparator = "/";
