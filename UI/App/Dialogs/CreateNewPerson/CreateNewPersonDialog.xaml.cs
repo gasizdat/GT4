@@ -1,16 +1,23 @@
+using GT4.Core.Project;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.App.Components;
 using GT4.UI.App.Items;
 using GT4.UI.Resources;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Windows.Input;
 
 namespace GT4.UI.App.Dialogs;
 
 public partial class CreateNewPersonDialog : ContentPage
 {
-  public record PersonInfo(Person Person, byte[]?[] Photos, string? Biography);
+  public record PersonInfo(
+    Person Person,
+    byte[]?[] Photos,
+    Relative[]? Relatives,
+    string? Biography
+  );
 
   private readonly ServiceProvider _ServiceProvider;
   private readonly ICommand _DialogCommand;
@@ -20,6 +27,7 @@ public partial class CreateNewPersonDialog : ContentPage
   private readonly ObservableCollection<RelativeMemberInfoItem> _Relatives = new();
   private readonly ObservableCollection<BiologicalSexItem> _BiologicalSexes = new();
   private readonly TaskCompletionSource<PersonInfo?> _Info = new(null);
+  private int? _PersonId;
   private Date? _BirthDate;
   private Date? _DeathDate;
   private BiologicalSexItem? _BiologicalSex;
@@ -33,13 +41,68 @@ public partial class CreateNewPersonDialog : ContentPage
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, ServiceBuilder.DefaultServices));
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Female, ServiceBuilder.DefaultServices));
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Unknown, ServiceBuilder.DefaultServices));
-    BioSex = _BiologicalSexes.Where(i => i.Info == person?.BiologicalSex).FirstOrDefault();
-
-    // TODO just testing
-    _Photos.Add(ImageSource.FromStream(_ => FileSystem.OpenAppPackageFileAsync("female_stub.png")));
-    _Photos.Add(ImageSource.FromStream(_ => FileSystem.OpenAppPackageFileAsync("male_stub.png")));
+    _BiologicalSex = _BiologicalSexes.Where(i => i.Info == person?.BiologicalSex).FirstOrDefault();
+    UpdatePersonInformation(person);
 
     InitializeComponent();
+  }
+
+  void UpdatePersonInformation(Person? person)
+  {
+    if (person is null)
+    {
+      return;
+    }
+
+    _PersonId = person.Id;
+    BirthDate = person.BirthDate;
+    DeathDate = person.DeathDate;
+    if (person.MainPhoto is not null)
+    {
+      _Photos.Add(ImageUtils.ImageFromBytes(person.MainPhoto));
+    }
+
+    var nameFormater = _ServiceProvider.GetRequiredService<INameTypeFormatter>();
+    foreach (var name in person.Names)
+    {
+      Names.Add(new NameInfoItem(name, nameFormater));
+    }
+
+    PersonData[]? photos = null;
+    PersonData[]? bio = null;
+    Relative[]? relatives = null;
+    var backgroundWorker = new BackgroundWorker();
+    backgroundWorker.DoWork += async (s, e) =>
+    {
+      var token = _ServiceProvider
+        .GetRequiredService<ICancellationTokenProvider>()
+        .CreateDbCancellationToken();
+      var project = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>().Project;
+      photos = await project.PersonData.GetPersonDataAsync(person, DataCategory.PersonPhoto, token);
+      bio = await project.PersonData.GetPersonDataAsync(person, DataCategory.PersonBio, token);
+      relatives = await project.Relatives.GetRelativeAsync(person.Id, token);
+    };
+    backgroundWorker.RunWorkerCompleted += (s, e) =>
+    {
+      foreach (var photo in photos ?? [])
+      {
+        Photos.Add(ImageUtils.ImageFromBytes(photo.Data.Content));
+      }
+
+      var bioData = bio?.FirstOrDefault();
+      if (bioData is not null)
+      {
+        // TODO check MIME type
+        Biography = System.Text.Encoding.UTF8.GetString(bioData.Data.Content);
+      }
+
+      foreach (var relative in relatives ?? [])
+      {
+        Relatives.Add(new RelativeMemberInfoItem(relative, _ServiceProvider));
+      }
+    };
+
+    backgroundWorker.RunWorkerAsync();
   }
 
   public ICommand DialogCommand => _DialogCommand;
@@ -93,17 +156,30 @@ public partial class CreateNewPersonDialog : ContentPage
       return;
     }
 
+    var token = _ServiceProvider
+      .GetRequiredService<ICancellationTokenProvider>()
+      .CreateDbCancellationToken();
+
     var person = new Person(
-      Id: 0,
-      Names: _Names
-          .Select(n => n.Info)
-          .ToArray(),
-      MainPhoto: null,    // TODO
+      Id: _PersonId ?? 0,
+      Names: _Names.Select(n => n.Info).ToArray(),
+      MainPhoto: ImageUtils.ToBytesAsync(_Photos.FirstOrDefault(), token).Result,
       BirthDate: _BirthDate!.Value,
       DeathDate: _DeathDate,
-      BiologicalSex: _BiologicalSex!.Info);
+      BiologicalSex: _BiologicalSex!.Info
+    );
 
-    _Info.SetResult(new PersonInfo(Person: person, Photos: [], Biography: Biography));
+    _Info.SetResult(
+      new PersonInfo(
+        Person: person,
+        Photos: _Photos
+          .Skip(1)
+          .Select(photo => ImageUtils.ToBytesAsync(photo, token).Result)
+          .ToArray(),
+        Relatives: [],
+        Biography: Biography
+      )
+    );
   }
 
   private async Task OnAddPersonNameAsync()
@@ -114,15 +190,19 @@ public partial class CreateNewPersonDialog : ContentPage
       return;
     }
 
-    var dialog = new SelectNameDialog(biologicalSex: _BiologicalSex?.Info ?? BiologicalSex.Unknown, serviceProvider: _ServiceProvider);
+    var dialog = new SelectNameDialog(
+      biologicalSex: _BiologicalSex?.Info ?? BiologicalSex.Unknown,
+      serviceProvider: _ServiceProvider
+    );
 
     await Navigation.PushModalAsync(dialog);
     var name = await dialog.Name;
     await Navigation.PopModalAsync();
 
+    var nameFormater = _ServiceProvider.GetRequiredService<INameTypeFormatter>();
     if (name is not null)
     {
-      _Names.Add(new NameInfoItem(name, _ServiceProvider.GetRequiredService<INameTypeFormatter>()));
+      _Names.Add(new NameInfoItem(name, nameFormater));
     }
   }
 
