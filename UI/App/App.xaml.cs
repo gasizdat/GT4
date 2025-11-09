@@ -23,10 +23,11 @@ public partial class App : Application
       {
         case BindingErrorEventArgs bindingError:
           System.Diagnostics.Debug.WriteLine(
-            $"[BindingDiagnostics] {bindingError.Message}, "
-           + "Source='{bindingError.Source}', "
-           + "Target='{bindingError.Target}', "
-           + "Property='{bindingError.TargetProperty}'");
+            $"[BindingDiagnostics] {string.Format(bindingError.Message, bindingError.MessageArgs)}, "
+          + $"Binding={bindingError.Binding}"
+          + $"Source='{bindingError.Source}', "
+          + $"Target='{bindingError.Target}', "
+          + $"Property='{bindingError.TargetProperty}'");
           break;
 
         default:
