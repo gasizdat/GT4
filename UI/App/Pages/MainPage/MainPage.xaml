@@ -13,8 +13,8 @@
           Title="{x:Static resources:UIStrings.PkrLanguageHint}"
           HorizontalOptions="End"
           ItemDisplayBinding="{Binding Name}"
-          ItemsSource="{Binding Languages}"
-          SelectedItem="{Binding SelectedLanguage}" />
+          ItemsSource="{Binding Languages, Source={x:Reference Root}}"
+          SelectedItem="{Binding SelectedLanguage, Source={x:Reference Root}}" />
 
       <Image
           Aspect="AspectFit"
