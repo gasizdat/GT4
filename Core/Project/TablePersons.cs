@@ -32,15 +32,20 @@ public partial class TablePersons : TableBase
   private async Task<Person> CreatePersonAsync(SqliteDataReader reader, CancellationToken token)
   {
     var personId = reader.GetInt32(0);
-    return new Person
+    var person = new Person
     (
       Id: personId,
-      Names: await Document.PersonNames.GetPersonNamesAsync(personId, token),
-      MainPhoto: (await Document.Data.TryGetDataAsync(TryGetInteger(reader, 1), token))?.Content,
+      Names: [],
+      MainPhoto: null,
       BirthDate: GetDate(reader, 2, 3),
       DeathDate: TryGetDate(reader, 4, 5),
       BiologicalSex: GetEnum<BiologicalSex>(reader, 6)
     );
+    var names = Document.PersonNames.GetPersonNamesAsync(person, token);
+    var mainPhoto = Document.Data.TryGetDataAsync(TryGetInteger(reader, 1), token);
+    await Task.WhenAll(names, mainPhoto);
+
+    return person with { Names = names.Result, MainPhoto = mainPhoto.Result?.Content };
   }
 
   private void InvalidateItems()
@@ -138,7 +143,7 @@ public partial class TablePersons : TableBase
     var personId = await Document.GetLastInsertRowIdAsync(token);
     if (person.Names.Length > 0)
     {
-      await Document.PersonNames.AddNamesAsync(personId, person.Names, token);
+      await Document.PersonNames.AddNamesAsync(person, person.Names, token);
     }
     transaction.Commit();
 
@@ -165,7 +170,7 @@ public partial class TablePersons : TableBase
 
     if (person.Names.Length > 0)
     {
-      await Document.PersonNames.UpdateNamesAsync(person.Id, person.Names, token);
+      await Document.PersonNames.UpdateNamesAsync(person, person.Names, token);
     }
 
     transaction.Commit();

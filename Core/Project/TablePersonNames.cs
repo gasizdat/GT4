@@ -22,7 +22,7 @@ public partial class TablePersonNames : TableBase
     await command.ExecuteNonQueryAsync(token);
   }
 
-  public async Task<Name[]> GetPersonNamesAsync(int personId, CancellationToken token)
+  public async Task<Name[]> GetPersonNamesAsync(Person person, CancellationToken token)
   {
     using var command = Document.CreateCommand();
 
@@ -31,7 +31,7 @@ public partial class TablePersonNames : TableBase
       FROM PersonNames
       WHERE PersonId=@personId;
       """;
-    command.Parameters.AddWithValue("@personId", personId);
+    command.Parameters.AddWithValue("@personId", person.Id);
 
     await using var reader = await command.ExecuteReaderAsync(token);
     var result = new List<Name>();
@@ -48,7 +48,7 @@ public partial class TablePersonNames : TableBase
     return result.ToArray();
   }
 
-  public async Task AddNamesAsync(int personId, Name[] names, CancellationToken token)
+  public async Task AddNamesAsync(Person person, Name[] names, CancellationToken token)
   {
     using var transaction = await Document.BeginTransactionAsync(token);
 
@@ -60,7 +60,7 @@ public partial class TablePersonNames : TableBase
         VALUES (@personId, @nameId);
         """;
 
-      command.Parameters.AddWithValue("@personId", personId);
+      command.Parameters.AddWithValue("@personId", person.Id);
       command.Parameters.AddWithValue("@nameId", name.Id);
       await command.ExecuteNonQueryAsync(token);
     }
@@ -68,9 +68,9 @@ public partial class TablePersonNames : TableBase
     transaction.Commit();
   }
 
-  public async Task UpdateNamesAsync(int personId, Name[] names, CancellationToken token)
+  public async Task UpdateNamesAsync(Person person, Name[] names, CancellationToken token)
   {
-    var oldNames = await GetPersonNamesAsync(personId, token);
+    var oldNames = await GetPersonNamesAsync(person, token);
     var newNameIds = names.Select(n => n.Id).ToHashSet();
     var remainedNames = new HashSet<int>();
     var tasks = new List<Task>();
@@ -92,12 +92,12 @@ public partial class TablePersonNames : TableBase
         DELETE FROM PersonNames
         WHERE PersonId=@personId AND NameId=@nameId;
         """;
-      command.Parameters.AddWithValue("@personId", personId);
+      command.Parameters.AddWithValue("@personId", person.Id);
       command.Parameters.AddWithValue("@nameId", oldName.Id);
       tasks.Add(command.ExecuteNonQueryAsync(token));
     }
 
-    tasks.Add(AddNamesAsync(personId, names.Where(n => !remainedNames.Contains(n.Id)).ToArray(), token));
+    tasks.Add(AddNamesAsync(person, names.Where(n => !remainedNames.Contains(n.Id)).ToArray(), token));
 
     await Task.WhenAll(tasks);
 

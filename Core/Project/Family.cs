@@ -43,7 +43,7 @@ public class Family
     var names = await GetRequiredNames(familyName, person, token);
     if (names.Length > 0)
     {
-      await _Document.PersonNames.AddNamesAsync(personId, names, token);
+      await _Document.PersonNames.AddNamesAsync(person, names, token);
     }
 
     transaction.Commit();
