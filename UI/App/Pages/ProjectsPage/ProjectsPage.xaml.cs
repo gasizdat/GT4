@@ -6,9 +6,9 @@ using GT4.UI.Resources;
 
 namespace GT4.UI.App.Pages;
 
-public partial class OpenOrCreateDialog : ContentPage
+public partial class ProjectsPage : ContentPage
 {
-  public OpenOrCreateDialog()
+  public ProjectsPage()
   {
     InitializeComponent();
   }
