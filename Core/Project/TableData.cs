@@ -108,4 +108,16 @@ public class TableData : TableBase
 
     return new Data(Id: await Document.GetLastInsertRowIdAsync(token), Content: content, MimeType: mimeType);
   }
+
+  public async Task RemoveDataAsync(Data data, CancellationToken token)
+  {
+    using var command = Document.CreateCommand();
+    command.CommandText = """
+      DELETE FROM Data
+      WHERE Id=@id;
+      """;
+    command.Parameters.AddWithValue("@id", data.Id);
+    await command.ExecuteNonQueryAsync(token);
+    InvalidateItems();
+  }
 }
