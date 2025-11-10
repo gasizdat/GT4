@@ -152,7 +152,6 @@ public partial class TablePersons : TableBase
 
   public async Task UpdatePersonAsync(Person person, CancellationToken token)
   {
-    InvalidateItems();
     using var transaction = await Document.BeginTransactionAsync(token);
     using var command = Document.CreateCommand();
     command.CommandText = """
@@ -166,13 +165,15 @@ public partial class TablePersons : TableBase
     command.Parameters.AddWithValue("@deathDateStatus", person.DeathDate.HasValue ? person.DeathDate.Value.Status : DBNull.Value);
     command.Parameters.AddWithValue("@biologicalSex", person.BiologicalSex);
     command.Parameters.AddWithValue("@personId", person.Id);
+    
     await command.ExecuteNonQueryAsync(token);
 
-    if (person.Names.Length > 0)
-    {
-      await Document.PersonNames.UpdateNamesAsync(person, person.Names, token);
-    }
+    await Document.PersonNames.UpdateNamesAsync(person, person.Names, token);
+
+    await Document.PersonData.UpdatePersonSingleDataAsync(person, person.MainPhoto, DataCategory.PersonMainPhoto, token);
 
     transaction.Commit();
+
+    InvalidateItems();
   }
 }
