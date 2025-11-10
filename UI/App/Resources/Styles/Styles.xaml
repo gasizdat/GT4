@@ -67,6 +67,20 @@
       Phone="5"
       Tablet="10" />
 
+  <OnIdiom
+      x:Key="ButtonTextSize"
+      x:TypeArguments="x:Double"
+      Desktop="14"
+      Phone="14"
+      Tablet="14" />
+
+  <OnIdiom
+      x:Key="AdornerButtonTextSize"
+      x:TypeArguments="x:Double"
+      Desktop="10"
+      Phone="8"
+      Tablet="9" />
+
   <Style x:Key="PageContentIndentation" TargetType="VerticalStackLayout">
     <Setter Property="Padding" Value="{StaticResource PageContentPadding}" />
     <Setter Property="Spacing" Value="{StaticResource PageContentSpacing}" />
@@ -95,7 +109,7 @@
     <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource PrimaryDarkText}}" />
     <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
     <Setter Property="FontFamily" Value="OpenSansRegular" />
-    <Setter Property="FontSize" Value="14" />
+    <Setter Property="FontSize" Value="{x:StaticResource ButtonTextSize}" />
     <Setter Property="BorderWidth" Value="0" />
     <Setter Property="CornerRadius" Value="8" />
     <Setter Property="Padding" Value="14,10" />
@@ -111,13 +125,19 @@
               <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
             </VisualState.Setters>
           </VisualState>
-          <VisualState x:Name="PointerOver" />
+          <VisualState x:Name="PointerOver">
+            <VisualState.Setters>
+              <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource PrimaryDarkText}}" />
+              <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource PrimaryButtonHover}, Dark={StaticResource PrimaryDarkButtonHover}}" />
+            </VisualState.Setters>
+          </VisualState>
         </VisualStateGroup>
       </VisualStateGroupList>
     </Setter>
   </Style>
 
   <Style x:Key="ChangeAdorner" TargetType="Button">
+    <Setter Property="FontSize" Value="{x:StaticResource AdornerButtonTextSize}" />
     <Setter Property="Padding" Value="-1" />
     <Setter Property="Opacity" Value="0.5" />
     <Setter Property="BorderColor" Value="{StaticResource Primary}" />
@@ -126,6 +146,20 @@
     <Setter Property="HorizontalOptions" Value="Start" />
     <Setter Property="VerticalOptions" Value="Start" />
     <Setter Property="ZIndex" Value="2100000000" />
+
+    <Setter Property="VisualStateManager.VisualStateGroups">
+      <VisualStateGroupList>
+        <VisualStateGroup x:Name="CommonStates">
+          <VisualState x:Name="Normal" />
+          <VisualState x:Name="PointerOver">
+            <VisualState.Setters>
+              <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource PrimaryDarkText}}" />
+              <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource SecondaryDarkText}}" />
+            </VisualState.Setters>
+          </VisualState>
+        </VisualStateGroup>
+      </VisualStateGroupList>
+    </Setter>
   </Style>
 
   <Style x:Key="TextAdorner" BasedOn="{StaticResource ChangeAdorner}" TargetType="Button">
@@ -133,6 +167,7 @@
     <Setter Property="Padding" Value="5" />
     <Setter Property="Opacity" Value="0.8" />
     <Setter Property="TextColor" Value="{StaticResource Tertiary}" />
+    <Setter Property="FontSize" Value="{StaticResource LabelTextSizeDefault}" />
   </Style>
 
   <Style x:Key="AddAdorner" BasedOn="{StaticResource ChangeAdorner}" TargetType="Button">
