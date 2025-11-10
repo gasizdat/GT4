@@ -2,8 +2,10 @@
 
 public enum DataCategory
 {
+  // The main person's photo used as a profile icon
+  PersonMainPhoto = 1,
   // Additional person photo
-  PersonPhoto = 1,
+  PersonPhoto = 2,
   // Person biography
-  PersonBio = 2
+  PersonBio = 3
 }

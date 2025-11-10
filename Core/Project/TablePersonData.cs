@@ -11,11 +11,10 @@ public partial class TablePersonData : TableBase
 
   private async Task<PersonData?> TryCreatePersonDataAsync(Person person, SqliteDataReader reader, CancellationToken token)
   {
-    var id = reader.GetInt32(0);
-    var dataId = reader.GetInt32(1);
-    var category = GetEnum<DataCategory>(reader, 2);
+    var dataId = reader.GetInt32(0);
+    var category = GetEnum<DataCategory>(reader, 1);
     var data = await Document.Data.TryGetDataAsync(dataId, token);
-    return data is not null ? new PersonData(Id: id, Person: person, Data: data, Category: category) : null; 
+    return data is not null ? new PersonData(Person: person, Data: data, Category: category) : null;
   }
 
   public override async Task CreateAsync(CancellationToken token)
@@ -23,7 +22,6 @@ public partial class TablePersonData : TableBase
     using var command = Document.CreateCommand();
     command.CommandText = """
       CREATE TABLE IF NOT EXISTS PersonData (
-        Id INTEGER PRIMARY KEY AUTOINCREMENT,
         PersonId INTEGER NOT NULL,
         DataId INTEGER NOT NULL,
         Category INTEGER NOT NULL,
@@ -53,7 +51,7 @@ public partial class TablePersonData : TableBase
     else
     {
       command.CommandText = """
-        SELECT Id, DataId, Category
+        SELECT DataId, Category
         FROM PersonData
         WHERE PersonId=@personId;
         """;
@@ -73,9 +71,8 @@ public partial class TablePersonData : TableBase
       .ToArray() ?? [];
   }
 
-  public async Task<int> AddPersonDataAsync(Person person, Data data, DataCategory category, CancellationToken token)
+  public async Task AddPersonDataAsync(Person person, Data data, DataCategory category, CancellationToken token)
   {
-    using var transaction = await Document.BeginTransactionAsync(token);
     using var command = Document.CreateCommand();
 
     command.CommandText = """
@@ -86,8 +83,61 @@ public partial class TablePersonData : TableBase
     command.Parameters.AddWithValue("@dataId", data.Id);
     command.Parameters.AddWithValue("@category", category);
     await command.ExecuteNonQueryAsync(token);
-    var personDataId = await Document.GetLastInsertRowIdAsync(token);
+  }
 
-    return personDataId;
+  public async Task UpdateDatasAsync(Person person, PersonData[] datas, CancellationToken token)
+  {
+    throw new NotImplementedException(nameof(UpdateDatasAsync));
+  }
+
+  public async Task RemoveDataAsync(Person person, PersonData personData, CancellationToken token)
+  {
+    using var transaction = await Document.BeginTransactionAsync(token);
+    using var command = Document.CreateCommand();
+    command.CommandText = """
+      DELETE FROM PersonData
+      WHERE PersonId=@personId, DataId=@dataId, Category=@category;
+      """;
+    command.Parameters.AddWithValue("@personId", person.Id);
+    command.Parameters.AddWithValue("@dataId", personData.Data.Id);
+    command.Parameters.AddWithValue("@category", personData.Category);
+    await command.ExecuteNonQueryAsync(token);
+
+    try
+    {
+      await Document.Data.RemoveDataAsync(personData.Data, token);
+    }
+    catch { /* The data content still in use */ }
+
+    transaction.Commit();
+  }
+
+  public async Task UpdatePersonSingleDataAsync(Person person, Data? newData, DataCategory dataCategory, CancellationToken token)
+  {
+    var resource = await GetPersonDataAsync(person, dataCategory, token);
+    if (resource.Count() > 1)
+    {
+      throw new ArgumentException($"The data with category '{dataCategory}' has multiple items");
+    }
+
+    var oldData = resource.FirstOrDefault();
+    if (newData?.Id == oldData?.Data.Id)
+    {
+      return;
+    }
+   
+    using var transaction = await Document.BeginTransactionAsync(token);
+
+    if (oldData is not null)
+    {
+      await RemoveDataAsync(person, oldData, token);
+    }
+
+    if (newData is not null)
+    {
+      await AddPersonDataAsync(person, newData, dataCategory, token);
+    }
+
+    transaction.Commit();
   }
 }
