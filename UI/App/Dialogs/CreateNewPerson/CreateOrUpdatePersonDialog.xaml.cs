@@ -14,7 +14,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 {
   public record PersonInfo(
     Person Person,
-    byte[]?[] Photos,
+    Data[]? Photos,
     Relative[]? Relatives,
     string? Biography
   );
@@ -59,7 +59,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     DeathDate = person.DeathDate;
     if (person.MainPhoto is not null)
     {
-      _Photos.Add(ImageUtils.ImageFromBytes(person.MainPhoto));
+      _Photos.Add(ImageUtils.ImageFromBytes(person.MainPhoto.Content));
     }
 
     var nameFormater = _ServiceProvider.GetRequiredService<INameTypeFormatter>();
@@ -92,8 +92,13 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       var bioData = bio?.FirstOrDefault();
       if (bioData is not null)
       {
-        // TODO check MIME type
-        Biography = System.Text.Encoding.UTF8.GetString(bioData.Data.Content);
+        Biography = bioData.Data.MimeType switch
+        {
+          System.Net.Mime.MediaTypeNames.Application.Octet =>
+            System.Text.Encoding.UTF8.GetString(bioData.Data.Content),
+
+          _ => throw new NotSupportedException($"MIME type '{bioData.Data.MimeType}' is not supported yet")
+        };       
       }
 
       foreach (var relative in relatives ?? [])
@@ -160,10 +165,18 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       .GetRequiredService<ICancellationTokenProvider>()
       .CreateDbCancellationToken();
 
+    var photos = Task.WhenAll(
+      _Photos
+      .Skip(1)
+      .Select(photo => ImageUtils.ToBytesAsync(photo, token)))
+      .Result
+      .Where(content => content is not null)
+      .Select(content => new Data(Id: 0, Content: content!, MimeType: System.Net.Mime.MediaTypeNames.Image.Bmp));
+
     var person = new Person(
       Id: _PersonId ?? 0,
       Names: _Names.Select(n => n.Info).ToArray(),
-      MainPhoto: ImageUtils.ToBytesAsync(_Photos.FirstOrDefault(), token).Result,
+      MainPhoto: photos?.FirstOrDefault(),
       BirthDate: _BirthDate!.Value,
       DeathDate: _DeathDate,
       BiologicalSex: _BiologicalSex!.Info
@@ -172,11 +185,10 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     _Info.SetResult(
       new PersonInfo(
         Person: person,
-        Photos: _Photos
+        Photos: photos?
           .Skip(1)
-          .Select(photo => ImageUtils.ToBytesAsync(photo, token).Result)
           .ToArray(),
-        Relatives: [],
+        Relatives: null,
         Biography: Biography
       )
     );

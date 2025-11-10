@@ -45,7 +45,7 @@ public partial class TablePersons : TableBase
     var mainPhoto = Document.Data.TryGetDataAsync(TryGetInteger(reader, 1), token);
     await Task.WhenAll(names, mainPhoto);
 
-    return person with { Names = names.Result, MainPhoto = mainPhoto.Result?.Content };
+    return person with { Names = names.Result, MainPhoto = mainPhoto.Result };
   }
 
   private void InvalidateItems()

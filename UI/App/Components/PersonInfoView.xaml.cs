@@ -74,7 +74,7 @@ public partial class PersonInfoView : ContentView
       return ret.ToString();
     }
   }
-  public ImageSource Photo => Person?.MainPhoto is null ? GetDefaultImage() : ImageUtils.ImageFromBytes(Person.MainPhoto);
+  public ImageSource Photo => Person?.MainPhoto is null ? GetDefaultImage() : ImageUtils.ImageFromBytes(Person.MainPhoto.Content);
 
   private static void OnPersonChanged(BindableObject obj, object oldValue, object newValue)
   {
