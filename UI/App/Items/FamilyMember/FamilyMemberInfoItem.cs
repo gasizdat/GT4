@@ -1,4 +1,5 @@
-﻿using GT4.Core.Project.Dto;
+﻿using GT4.Core.Project;
+using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Resources;
 
@@ -11,12 +12,12 @@ public class FamilyMemberInfoItem : PersonInfoItem
 
   protected FamilyMemberInfoItem(string itemName, ServiceProvider services)
     : this(personInfo: new PersonInfo(
-        Id: 0,
+        Id: TableBase.NonCommitedId,
         BirthDate: default,
         DeathDate: default,
         BiologicalSex: default,
         Names:[ new Name(
-          Id: 0,
+          Id: TableBase.NonCommitedId,
           Value: itemName,
           Type: NameType.AdditionalName,
           ParentId: default) ],

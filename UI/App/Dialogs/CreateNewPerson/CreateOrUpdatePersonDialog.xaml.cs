@@ -145,12 +145,12 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       .Select(photo => ImageUtils.ToBytesAsync(photo, token)))
       .Result
       .Where(content => content is not null)
-      .Select(content => new Data(Id: 0, Content: content!, MimeType: mimeTypeBmp, Category: DataCategory.PersonPhoto));
+      .Select(content => new Data(Id: TableBase.NonCommitedId, Content: content!, MimeType: mimeTypeBmp, Category: DataCategory.PersonPhoto));
     
     var mainPhoto = photos?.FirstOrDefault();
 
     var result = new PersonFullInfo(
-      Id: _PersonId ?? 0,
+      Id: _PersonId ?? TableBase.NonCommitedId,
       Names: _Names.Select(n => n.Info).ToArray(),
       MainPhoto: mainPhoto is null ? null : mainPhoto with { Category = DataCategory.PersonMainPhoto },
       BirthDate: _BirthDate!.Value,
@@ -158,7 +158,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       BiologicalSex: _BiologicalSex!.Info,
       AdditionalPhotos: photos?.Skip(1).ToArray(),
       Relatives: _Relatives.Select(relative => relative.Info).ToArray(),
-      Biography: new Data(Id: 0, Content: System.Text.Encoding.UTF8.GetBytes(Biography), mimeTypePlaintText, Category: DataCategory.PersonBio)
+      Biography: new Data(Id: TableBase.NonCommitedId, Content: System.Text.Encoding.UTF8.GetBytes(Biography), mimeTypePlaintText, Category: DataCategory.PersonBio)
     );
 
     _Info.SetResult(result);

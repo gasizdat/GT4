@@ -26,9 +26,9 @@ public class PersonManager : TableBase
 
   public async Task<PersonFullInfo> GetPersonFullInfoAsync(Person person, CancellationToken token)
   {
-    if (person.Id == 0)
+    if (person.Id == NonCommitedId)
     {
-      throw new ArgumentException("person.Id == 0");
+      throw new ArgumentException("person is not commited");
     }
 
     var names = Document.PersonNames.GetPersonNamesAsync(person, token);

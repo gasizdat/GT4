@@ -44,6 +44,8 @@ public abstract class TableBase
   protected static TEnum GetEnum<TEnum>(SqliteDataReader reader, int ordinal) where TEnum : Enum =>
     (TEnum)Enum.ToObject(typeof(TEnum), reader.GetInt32(ordinal));
 
+  public static readonly int NonCommitedId = 0;
+
   public ProjectDocument Document { get; init; }
 
   public abstract Task CreateAsync(CancellationToken token);

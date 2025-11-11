@@ -1,11 +1,12 @@
-﻿using GT4.Core.Project.Dto;
+﻿using GT4.Core.Project;
+using GT4.Core.Project.Dto;
 
 namespace GT4.UI.App.Items;
 
 public class FamilyInfoItemCreate : FamilyInfoItem
 {
   public FamilyInfoItemCreate()
-    : base(new Name(0, Resources.UIStrings.BtnNameCreateFamily, NameType.FamilyName, null), Array.Empty<PersonInfoItem>())
+    : base(new Name(TableBase.NonCommitedId, Resources.UIStrings.BtnNameCreateFamily, NameType.FamilyName, null), Array.Empty<PersonInfoItem>())
   {
   }
 
