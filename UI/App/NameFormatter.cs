@@ -6,9 +6,9 @@ internal class NameFormatter : INameFormatter
 {
   private readonly string _PartsDelimiter = " ";
 
-  protected static IEnumerable<Name> GetNameParts(Person person, NameType nameType)
+  protected static IEnumerable<Name> GetNameParts(PersonInfo personInfo, NameType nameType)
   {
-    return person
+    return personInfo
       .Names
       .Where(n => (n.Type & nameType) == nameType);
   }
@@ -18,34 +18,34 @@ internal class NameFormatter : INameFormatter
     return name is not null ? name.Value : string.Empty;
   }
 
-  protected static string[] GetNameParts(Person person, NameType[] types)
+  protected static string[] GetNameParts(PersonInfo personInfo, NameType[] types)
   {
     var parts = types
-      .SelectMany(type => GetNameParts(person, type))
+      .SelectMany(type => GetNameParts(personInfo, type))
       .Select(GetNameValue)
       .ToArray();
     return parts;
   }
 
-  public string GetFullPersonName(Person person)
+  public string GetFullPersonName(PersonInfo personInfo)
   {
     //TODO use settings
-    var parts = GetNameParts(person, [NameType.FirstName, NameType.MiddleName, NameType.LastName, NameType.AdditionalName]);
+    var parts = GetNameParts(personInfo, [NameType.FirstName, NameType.MiddleName, NameType.LastName, NameType.AdditionalName]);
     var ret = string.Join(_PartsDelimiter, parts);
 
     return ret;
   }
 
-  public string GetCommonPersonName(Person person)
+  public string GetCommonPersonName(PersonInfo personInfo)
   {
     //TODO use settings
-    var parts = GetNameParts(person, [NameType.FirstName, NameType.MiddleName, NameType.LastName]);
+    var parts = GetNameParts(personInfo, [NameType.FirstName, NameType.MiddleName, NameType.LastName]);
     var ret = string.Join(_PartsDelimiter, parts);
 
     return ret;
   }
 
-  public string GetPersonInitials(Person person)
+  public string GetPersonInitials(PersonInfo personInfo)
   {
     throw new NotImplementedException();
   }

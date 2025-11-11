@@ -50,7 +50,6 @@ public partial class SelectNameDialog : ContentPage
     .Names
     .GetNamesAsync(CurrentNameType.Type | _NameDeclension, _CancellationTokenProvider.CreateDbCancellationToken())
     .Result
-    .Values
     .Select(name => new NameInfoItem(name, _NameTypeFormatter))
     .ToArray();
 
@@ -118,7 +117,7 @@ public partial class SelectNameDialog : ContentPage
       {
         NameType.FamilyName => 
           await project
-            .Family
+            .FamilyManager
             .AddFamilyAsync(familyName: info.Name, maleLastName: info.MaleName, femaleLastName: info.FemaleName, token),
 
         NameType.FirstName | NameType.MaleDeclension =>

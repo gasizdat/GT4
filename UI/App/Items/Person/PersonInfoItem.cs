@@ -2,12 +2,12 @@
 
 namespace GT4.UI.App.Items;
 
-public class PersonInfoItem : CollectionItemBase<Person>
+public class PersonInfoItem : CollectionItemBase<PersonInfo>
 {
   private readonly INameFormatter _NameFormatter;
 
-  public PersonInfoItem(Person person, INameFormatter nameFormatter)
-    : base(person, person.BiologicalSex == BiologicalSex.Female ? "female_stub.png" : "male_stub.png")
+  public PersonInfoItem(PersonInfo personInfo, INameFormatter nameFormatter)
+    : base(personInfo, personInfo.BiologicalSex == BiologicalSex.Female ? "female_stub.png" : "male_stub.png")
   {
     _NameFormatter = nameFormatter;
   }

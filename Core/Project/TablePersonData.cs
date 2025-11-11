@@ -9,12 +9,12 @@ public partial class TablePersonData : TableBase
   {
   }
 
-  private async Task<PersonData?> TryCreatePersonDataAsync(Person person, SqliteDataReader reader, CancellationToken token)
+  private async Task<DataWithCategory?> TryCreatePersonDataAsync(Person person, SqliteDataReader reader, CancellationToken token)
   {
     var dataId = reader.GetInt32(0);
     var category = GetEnum<DataCategory>(reader, 1);
     var data = await Document.Data.TryGetDataAsync(dataId, token);
-    return data is not null ? new PersonData(Person: person, Data: data, Category: category) : null;
+    return data is not null ? new DataWithCategory(data: data, category: category) : null;
   }
 
   public override async Task CreateAsync(CancellationToken token)
@@ -35,7 +35,7 @@ public partial class TablePersonData : TableBase
     await command.ExecuteNonQueryAsync(token);
   }
 
-  public async Task<PersonData[]> GetPersonDataAsync(Person person, DataCategory? category, CancellationToken token)
+  public async Task<DataWithCategory[]> GetPersonDataAsync(Person person, DataCategory? category, CancellationToken token)
   {
     using var command = Document.CreateCommand();
 
@@ -59,7 +59,7 @@ public partial class TablePersonData : TableBase
     command.Parameters.AddWithValue("@personId", person.Id);
 
     await using var reader = await command.ExecuteReaderAsync(token);
-    var tasks = new List<Task<PersonData?>>();
+    var tasks = new List<Task<DataWithCategory?>>();
     while (await reader.ReadAsync(token))
     {
       tasks.Add(TryCreatePersonDataAsync(person, reader, token));
@@ -85,12 +85,12 @@ public partial class TablePersonData : TableBase
     await command.ExecuteNonQueryAsync(token);
   }
 
-  public async Task UpdateDatasAsync(Person person, PersonData[] datas, CancellationToken token)
+  public async Task UpdateDatasAsync(Person person, DataWithCategory[] datas, CancellationToken token)
   {
     throw new NotImplementedException(nameof(UpdateDatasAsync));
   }
 
-  public async Task RemoveDataAsync(Person person, PersonData personData, CancellationToken token)
+  public async Task RemoveDataAsync(Person person, DataWithCategory personData, CancellationToken token)
   {
     using var transaction = await Document.BeginTransactionAsync(token);
     using var command = Document.CreateCommand();
@@ -99,13 +99,13 @@ public partial class TablePersonData : TableBase
       WHERE PersonId=@personId, DataId=@dataId, Category=@category;
       """;
     command.Parameters.AddWithValue("@personId", person.Id);
-    command.Parameters.AddWithValue("@dataId", personData.Data.Id);
+    command.Parameters.AddWithValue("@dataId", personData.Id);
     command.Parameters.AddWithValue("@category", personData.Category);
     await command.ExecuteNonQueryAsync(token);
 
     try
     {
-      await Document.Data.RemoveDataAsync(personData.Data, token);
+      await Document.Data.RemoveDataAsync(personData, token);
     }
     catch { /* The data content still in use */ }
 
@@ -121,7 +121,7 @@ public partial class TablePersonData : TableBase
     }
 
     var oldData = resource.FirstOrDefault();
-    if (newData?.Id == oldData?.Data.Id)
+    if (newData?.Id == oldData?.Id)
     {
       return;
     }

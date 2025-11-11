@@ -10,12 +10,23 @@ public class FamilyMemberInfoItem : PersonInfoItem
   private readonly IDateSpanFormatter _DateSpanFormatter;
 
   protected FamilyMemberInfoItem(string itemName, ServiceProvider services)
-    : this(new Person(0, [new(0, itemName, NameType.FirstName, null)], null, new(), null, BiologicalSex.Unknown), services)
+    : this(personInfo: new PersonInfo(
+        Id: 0,
+        BirthDate: default,
+        DeathDate: default,
+        BiologicalSex: default,
+        Names:[ new Name(
+          Id: 0,
+          Value: itemName,
+          Type: NameType.AdditionalName,
+          ParentId: default) ],
+        MainPhoto: default),
+      services: services)
   {
   }
 
-  public FamilyMemberInfoItem(Person person, ServiceProvider services)
-    : base(person, services.GetRequiredService<INameFormatter>())
+  public FamilyMemberInfoItem(PersonInfo personInfo, ServiceProvider services)
+    : base(personInfo, services.GetRequiredService<INameFormatter>())
   {
     _DateFormatter = services.GetRequiredService<IDateFormatter>();
     _DateSpanFormatter = services.GetRequiredService<IDateSpanFormatter>();

@@ -12,13 +12,6 @@ namespace GT4.UI.App.Dialogs;
 
 public partial class CreateOrUpdatePersonDialog : ContentPage
 {
-  public record PersonInfo(
-    Person Person,
-    Data[]? Photos,
-    Relative[]? Relatives,
-    string? Biography
-  );
-
   private readonly ServiceProvider _ServiceProvider;
   private readonly ICommand _DialogCommand;
   private readonly string _SaveButtonName;
@@ -26,14 +19,14 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private readonly ObservableCollection<NameInfoItem> _Names = new();
   private readonly ObservableCollection<RelativeMemberInfoItem> _Relatives = new();
   private readonly ObservableCollection<BiologicalSexItem> _BiologicalSexes = new();
-  private readonly TaskCompletionSource<PersonInfo?> _Info = new(null);
+  private readonly TaskCompletionSource<PersonFullInfo?> _Info = new(null);
   private int? _PersonId;
   private Date? _BirthDate;
   private Date? _DeathDate;
   private BiologicalSexItem? _BiologicalSex;
   private bool _NotReady => _BiologicalSex is null || _BirthDate is null;
 
-  public CreateOrUpdatePersonDialog(Person? person, ServiceProvider serviceProvider)
+  public CreateOrUpdatePersonDialog(PersonFullInfo? person, ServiceProvider serviceProvider)
   {
     _ServiceProvider = serviceProvider;
     _DialogCommand = new Command<object>(OnDialogCommand);
@@ -47,7 +40,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     InitializeComponent();
   }
 
-  void UpdatePersonInformation(Person? person)
+  void UpdatePersonInformation(PersonFullInfo? person)
   {
     if (person is null)
     {
@@ -68,46 +61,26 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       Names.Add(new NameInfoItem(name, nameFormater));
     }
 
-    PersonData[]? photos = null;
-    PersonData[]? bio = null;
-    Relative[]? relatives = null;
-    var backgroundWorker = new BackgroundWorker();
-    backgroundWorker.DoWork += async (s, e) =>
+    foreach (var photo in person.AdditionalPhotos ?? [])
     {
-      var token = _ServiceProvider
-        .GetRequiredService<ICancellationTokenProvider>()
-        .CreateDbCancellationToken();
-      var project = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>().Project;
-      photos = await project.PersonData.GetPersonDataAsync(person, DataCategory.PersonPhoto, token);
-      bio = await project.PersonData.GetPersonDataAsync(person, DataCategory.PersonBio, token);
-      relatives = await project.Relatives.GetRelativeAsync(person.Id, token);
-    };
-    backgroundWorker.RunWorkerCompleted += (s, e) =>
+      Photos.Add(ImageUtils.ImageFromBytes(photo.Content));
+    }
+
+    if (person.Biography is not null)
     {
-      foreach (var photo in photos ?? [])
+      Biography = person.Biography.MimeType switch
       {
-        Photos.Add(ImageUtils.ImageFromBytes(photo.Data.Content));
-      }
+        System.Net.Mime.MediaTypeNames.Application.Octet =>
+          System.Text.Encoding.UTF8.GetString(person.Biography.Content),
 
-      var bioData = bio?.FirstOrDefault();
-      if (bioData is not null)
-      {
-        Biography = bioData.Data.MimeType switch
-        {
-          System.Net.Mime.MediaTypeNames.Application.Octet =>
-            System.Text.Encoding.UTF8.GetString(bioData.Data.Content),
+        _ => throw new NotSupportedException($"MIME type '{person.Biography.MimeType}' is not supported yet")
+      };
+    }
 
-          _ => throw new NotSupportedException($"MIME type '{bioData.Data.MimeType}' is not supported yet")
-        };       
-      }
-
-      foreach (var relative in relatives ?? [])
-      {
-        Relatives.Add(new RelativeMemberInfoItem(relative, _ServiceProvider));
-      }
-    };
-
-    backgroundWorker.RunWorkerAsync();
+    foreach (var relative in person.Relatives ?? [])
+    {
+      Relatives.Add(new RelativeMemberInfoItem(relative, _ServiceProvider));
+    }
   }
 
   public ICommand DialogCommand => _DialogCommand;
@@ -149,7 +122,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
   }
 
-  public Task<PersonInfo?> Info => _Info.Task;
+  public Task<PersonFullInfo?> Info => _Info.Task;
   public string CreatePersonBtnName => _NotReady ? UIStrings.BtnNameCancel : _SaveButtonName;
   public string Biography { get; set; } = string.Empty;
 
@@ -173,25 +146,19 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       .Where(content => content is not null)
       .Select(content => new Data(Id: 0, Content: content!, MimeType: System.Net.Mime.MediaTypeNames.Image.Bmp));
 
-    var person = new Person(
+    var result = new PersonFullInfo(
       Id: _PersonId ?? 0,
       Names: _Names.Select(n => n.Info).ToArray(),
       MainPhoto: photos?.FirstOrDefault(),
       BirthDate: _BirthDate!.Value,
       DeathDate: _DeathDate,
-      BiologicalSex: _BiologicalSex!.Info
+      BiologicalSex: _BiologicalSex!.Info,
+      AdditionalPhotos: photos?.Skip(1).ToArray(),
+      Relatives: _Relatives.Select(relative => relative.Info).ToArray(),
+      Biography: new Data(Id: 0, Content: System.Text.Encoding.UTF8.GetBytes(Biography), System.Net.Mime.MediaTypeNames.Text.Plain)
     );
 
-    _Info.SetResult(
-      new PersonInfo(
-        Person: person,
-        Photos: photos?
-          .Skip(1)
-          .ToArray(),
-        Relatives: null,
-        Biography: Biography
-      )
-    );
+    _Info.SetResult(result);
   }
 
   private async Task OnAddPersonNameAsync()

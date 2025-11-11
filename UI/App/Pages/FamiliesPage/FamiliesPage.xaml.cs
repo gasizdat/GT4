@@ -14,8 +14,8 @@ public partial class FamiliesPage : ContentPage
     var nameFormatter = Services.GetRequiredService<INameFormatter>();
     return Services.GetRequiredService<ICurrentProjectProvider>()
       .Project
-      .Persons
-      .GetPersonsByNameAsync(name, token)
+      .PersonManager
+      .GetPersonInfosByNameAsync(name, token)
       .Result
       .Select(person => new PersonInfoItem(person, nameFormatter))
       .OrderBy(item => item, Services.GetRequiredService<IComparer<PersonInfoItem>>())
@@ -38,10 +38,9 @@ public partial class FamiliesPage : ContentPage
         using var token = Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
         var ret = Services.GetRequiredService<ICurrentProjectProvider>()
           .Project
-          .Names
-          .GetNamesAsync(NameType.FamilyName, token)
+          .FamilyManager
+          .GetFamiliesAsync(token)
           .Result
-          .Values
           .Select(name => new FamilyInfoItem(name, GetFamilyPersons(name, token)))
           .OrderBy(item => item, Services.GetRequiredService<IComparer<FamilyInfoItem>>())
           .ToList();
@@ -96,7 +95,7 @@ public partial class FamiliesPage : ContentPage
       using var token = Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
       var family = await Services.GetRequiredService<ICurrentProjectProvider>()
         .Project
-        .Family
+        .FamilyManager
         .AddFamilyAsync(familyName: info.Name, maleLastName: info.MaleName, femaleLastName: info.FemaleName, token);
     }
     catch (Exception ex)

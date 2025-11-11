@@ -59,8 +59,8 @@ public partial class FamilyPage : ContentPage
         var ret = Services
           .GetRequiredService<ICurrentProjectProvider>()
           .Project
-          .Persons
-          .GetPersonsByNameAsync(FamilyName, token)
+          .PersonManager
+          .GetPersonInfosByNameAsync(FamilyName, token)
           .Result
           .Select(person => new FamilyMemberInfoItem(person, Services))
           .OrderBy(item => item, Services.GetRequiredService<IComparer<FamilyMemberInfoItem>>())
@@ -114,7 +114,7 @@ public partial class FamilyPage : ContentPage
       await Services
         .GetRequiredService<ICurrentProjectProvider>()
         .Project
-        .Family
+        .FamilyManager
         .RemoveFamilyAsync(_FamilyName!, token);
     }
     catch (Exception ex)
@@ -153,8 +153,8 @@ public partial class FamilyPage : ContentPage
       await Services
         .GetRequiredService<ICurrentProjectProvider>()
         .Project
-        .Family
-        .AddPersonToFamilyAsync(_FamilyName, info.Person, token);
+        .PersonManager
+        .AddPersonInfoAsync(info, token);
     }
     catch (Exception ex)
     {
@@ -168,8 +168,15 @@ public partial class FamilyPage : ContentPage
 
   private async Task OnEditPerson(FamilyMemberInfoItem familyMember)
   {
-    var dialog = new CreateOrUpdatePersonDialog(familyMember.Info, Services);
+    var projectProvider = Services.GetRequiredService<ICurrentProjectProvider>();
+    var tokenProvider = Services.GetRequiredService<ICancellationTokenProvider>();
+    using var readToken = tokenProvider.CreateDbCancellationToken();
+    var familyMemberFullInfo = await projectProvider
+      .Project
+      .PersonManager
+      .GetPersonFullInfoAsync(familyMember.Info, readToken);
 
+    var dialog = new CreateOrUpdatePersonDialog(familyMemberFullInfo, Services);
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;
     await Navigation.PopModalAsync();
@@ -181,15 +188,14 @@ public partial class FamilyPage : ContentPage
         return;
       }
 
-      using var token = Services
+      using var updateToken = Services
         .GetRequiredService<ICancellationTokenProvider>()
         .CreateDbCancellationToken();
 
-      await Services
-        .GetRequiredService<ICurrentProjectProvider>()
+      await projectProvider
         .Project
         .Persons
-        .UpdatePersonAsync(info.Person, token);
+        .UpdatePersonAsync(info, updateToken);
     }
     catch (Exception ex)
     {

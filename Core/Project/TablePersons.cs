@@ -17,13 +17,11 @@ public partial class TablePersons : TableBase
     command.CommandText = """
       CREATE TABLE IF NOT EXISTS Persons (
         Id INTEGER PRIMARY KEY AUTOINCREMENT,
-        MainPhotoId INTEGER,
         BirthDate NUMERIC,
         BirthDateStatus INTEGER NOT NULL,
         DeathDate NUMERIC,
         DeathDateStatus INTEGER,
-        BiologicalSex INTEGER NOT NULL,
-        FOREIGN KEY(MainPhotoId) REFERENCES Data(Id)
+        BiologicalSex INTEGER NOT NULL
       );
       """;
     await command.ExecuteNonQueryAsync(token);
@@ -31,21 +29,15 @@ public partial class TablePersons : TableBase
 
   private async Task<Person> CreatePersonAsync(SqliteDataReader reader, CancellationToken token)
   {
-    var personId = reader.GetInt32(0);
     var person = new Person
     (
-      Id: personId,
-      Names: [],
-      MainPhoto: null,
-      BirthDate: GetDate(reader, 2, 3),
-      DeathDate: TryGetDate(reader, 4, 5),
-      BiologicalSex: GetEnum<BiologicalSex>(reader, 6)
+      Id: reader.GetInt32(0),
+      BirthDate: GetDate(reader, 1, 2),
+      DeathDate: TryGetDate(reader, 3, 4),
+      BiologicalSex: GetEnum<BiologicalSex>(reader, 5)
     );
-    var names = Document.PersonNames.GetPersonNamesAsync(person, token);
-    var mainPhoto = Document.Data.TryGetDataAsync(TryGetInteger(reader, 1), token);
-    await Task.WhenAll(names, mainPhoto);
 
-    return person with { Names = names.Result, MainPhoto = mainPhoto.Result };
+    return person;
   }
 
   private void InvalidateItems()
@@ -61,7 +53,7 @@ public partial class TablePersons : TableBase
     using var command = Document.CreateCommand();
 
     command.CommandText = """
-      SELECT Id, MainPhotoId, BirthDate, BirthDateStatus, DeathDate, DeathDateStatus, BiologicalSex
+      SELECT Id, BirthDate, BirthDateStatus, DeathDate, DeathDateStatus, BiologicalSex
       FROM Persons;
       """;
 
@@ -77,31 +69,6 @@ public partial class TablePersons : TableBase
     return result.ToArray();
   }
 
-  public async Task<Person[]> GetPersonsByNameAsync(Name name, CancellationToken token)
-  {
-    if (_Items.TryGetTarget(out var items))
-      return items.Where(p => p.Names.Count(n => n.Id == name.Id) > 0).ToArray();
-
-    using var command = Document.CreateCommand();
-    command.CommandText = """
-      SELECT Id, MainPhotoId, BirthDate, BirthDateStatus, DeathDate, DeathDateStatus, BiologicalSex
-      FROM Persons
-      INNER JOIN
-        PersonNames ON PersonNames.PersonId=Persons.Id
-      WHERE PersonNames.NameId=@id;
-      """;
-    command.Parameters.AddWithValue("@id", name.Id);
-    await using var reader = await command.ExecuteReaderAsync(token);
-
-    var result = new List<Person>();
-    while (await reader.ReadAsync(token))
-    {
-      var person = await CreatePersonAsync(reader, token);
-      result.Add(person);
-    }
-    return result.ToArray();
-  }
-
   public async Task<Person?> TryGetPersonByIdAsync(int personId, CancellationToken token)
   {
     if (_Items.TryGetTarget(out var items))
@@ -110,7 +77,7 @@ public partial class TablePersons : TableBase
     using var command = Document.CreateCommand();
 
     command.CommandText = """
-      SELECT Id, MainPhotoId, BirthDate, BirthDateStatus, DeathDate, DeathDateStatus, BiologicalSex
+      SELECT Id, BirthDate, BirthDateStatus, DeathDate, DeathDateStatus, BiologicalSex
       FROM Persons
       WHERE Id=@id;
       """;
@@ -125,10 +92,8 @@ public partial class TablePersons : TableBase
     return null;
   }
 
-  public async Task<int> AddPersonAsync(Person person, CancellationToken token)
+  public async Task<Person> AddPersonAsync(Person person, CancellationToken token)
   {
-    InvalidateItems();
-    using var transaction = await Document.BeginTransactionAsync(token);
     using var command = Document.CreateCommand();
     command.CommandText = """
       INSERT INTO Persons (BirthDate, BirthDateStatus, DeathDate, DeathDateStatus, BiologicalSex)
@@ -141,18 +106,14 @@ public partial class TablePersons : TableBase
     command.Parameters.AddWithValue("@biologicalSex", person.BiologicalSex);
     await command.ExecuteNonQueryAsync(token);
     var personId = await Document.GetLastInsertRowIdAsync(token);
-    if (person.Names.Length > 0)
-    {
-      await Document.PersonNames.AddNamesAsync(person, person.Names, token);
-    }
-    transaction.Commit();
+    
+    InvalidateItems();
 
-    return personId;
+    return person with { Id = personId };
   }
 
   public async Task UpdatePersonAsync(Person person, CancellationToken token)
   {
-    using var transaction = await Document.BeginTransactionAsync(token);
     using var command = Document.CreateCommand();
     command.CommandText = """
       UPDATE Persons 
@@ -165,14 +126,7 @@ public partial class TablePersons : TableBase
     command.Parameters.AddWithValue("@deathDateStatus", person.DeathDate.HasValue ? person.DeathDate.Value.Status : DBNull.Value);
     command.Parameters.AddWithValue("@biologicalSex", person.BiologicalSex);
     command.Parameters.AddWithValue("@personId", person.Id);
-    
     await command.ExecuteNonQueryAsync(token);
-
-    await Document.PersonNames.UpdateNamesAsync(person, person.Names, token);
-
-    await Document.PersonData.UpdatePersonSingleDataAsync(person, person.MainPhoto, DataCategory.PersonMainPhoto, token);
-
-    transaction.Commit();
 
     InvalidateItems();
   }

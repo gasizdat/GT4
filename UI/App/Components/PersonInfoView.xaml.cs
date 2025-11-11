@@ -16,7 +16,7 @@ public partial class PersonInfoView : ContentView
   }
 
   public static readonly BindableProperty PersonProperty =
-    BindableProperty.Create(nameof(Person), typeof(Person), typeof(PersonInfoView), default, BindingMode.OneWay, null, OnPersonChanged);
+    BindableProperty.Create(nameof(PersonInfo), typeof(PersonInfo), typeof(PersonInfoView), default, BindingMode.OneWay, null, OnPersonChanged);
 
   public static readonly BindableProperty ShowPhotoProperty =
     BindableProperty.Create(nameof(ShowPhoto), typeof(bool), typeof(PersonInfoView), true);
@@ -39,7 +39,7 @@ public partial class PersonInfoView : ContentView
   public static readonly BindableProperty PhotoStyleProperty =
     BindableProperty.Create(nameof(PhotoStyle), typeof(Style), typeof(PersonInfoView), null);
 
-  public Person? Person => (Person?)GetValue(PersonProperty);
+  public PersonInfo? PersonInfo => (PersonInfo?)GetValue(PersonProperty);
   public bool ShowPhoto => (bool)GetValue(ShowPhotoProperty);
   public bool ShowDates => (bool)GetValue(ShowDatesProperty);
   public bool ShowDeathDate => (bool)GetValue(ShowDeathDateProperty);
@@ -48,33 +48,35 @@ public partial class PersonInfoView : ContentView
   public Style? DatesLabelStyle => (Style?)GetValue(DatesLabelStyleProperty);
   public Style? PhotoStyle => (Style?)GetValue(PhotoStyleProperty);
 
-  public string? CommonName => Person is null ? null : _NameFormatter.GetCommonPersonName(Person);
+  public string? CommonName => PersonInfo is null ? null : _NameFormatter.GetCommonPersonName(PersonInfo);
   public string? LifeDates
   {
     get
     {
-      if (Person is null)
+      if (PersonInfo is null)
+      {
         return null;
+      }
 
-      var ret = new StringBuilder(_DateFormatter.ToString(Person.BirthDate));
+      var ret = new StringBuilder(_DateFormatter.ToString(PersonInfo.BirthDate));
 
-      if (ShowDeathDate && Person.DeathDate.HasValue)
+      if (ShowDeathDate && PersonInfo.DeathDate.HasValue)
       {
         ret.Append(" - ");
-        ret.Append(_DateFormatter.ToString(Person.DeathDate));
+        ret.Append(_DateFormatter.ToString(PersonInfo.DeathDate));
       }
 
       if (ShowAge)
       {
         ret.Append(" (");
-        ret.Append(_DateSpanFormatter.ToString((Person.DeathDate.HasValue ? Person.DeathDate : Date.Now) - Person.BirthDate));
+        ret.Append(_DateSpanFormatter.ToString((PersonInfo.DeathDate.HasValue ? PersonInfo.DeathDate : Date.Now) - PersonInfo.BirthDate));
         ret.Append(")");
       }
 
       return ret.ToString();
     }
   }
-  public ImageSource Photo => Person?.MainPhoto is null ? GetDefaultImage() : ImageUtils.ImageFromBytes(Person.MainPhoto.Content);
+  public ImageSource Photo => PersonInfo?.MainPhoto is null ? GetDefaultImage() : ImageUtils.ImageFromBytes(PersonInfo.MainPhoto.Content);
 
   private static void OnPersonChanged(BindableObject obj, object oldValue, object newValue)
   {
@@ -88,7 +90,7 @@ public partial class PersonInfoView : ContentView
 
   private ImageSource GetDefaultImage()
   {
-    return Person?.BiologicalSex switch
+    return PersonInfo?.BiologicalSex switch
     {
       BiologicalSex.Male => ImageUtils.ImageFromRawResource("male_stub.png"),
       BiologicalSex.Female => ImageUtils.ImageFromRawResource("female_stub.png"),

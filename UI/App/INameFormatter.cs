@@ -4,7 +4,7 @@ namespace GT4.UI;
 
 public interface INameFormatter
 {
-  string GetCommonPersonName(Person person);
-  string GetFullPersonName(Person person);
-  string GetPersonInitials(Person person);
+  string GetCommonPersonName(PersonInfo personInfo);
+  string GetFullPersonName(PersonInfo personInfo);
+  string GetPersonInitials(PersonInfo personInfo);
 }

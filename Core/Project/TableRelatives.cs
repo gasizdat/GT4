@@ -39,7 +39,7 @@ public class TableRelatives : TableBase
     await command.ExecuteNonQueryAsync(token);
   }
 
-  public async Task<Relative[]> GetRelativeAsync(int personId, CancellationToken token)
+  public async Task<Relative[]> GetRelativeAsync(Person person, CancellationToken token)
   {
     using var command = Document.CreateCommand();
 
@@ -48,7 +48,7 @@ public class TableRelatives : TableBase
       FROM Relatives
       WHERE PersonId=@id;
       """;
-    command.Parameters.AddWithValue("@id", personId);
+    command.Parameters.AddWithValue("@id", person.Id);
 
     await using var reader = await command.ExecuteReaderAsync(token);
     var tasks = new List<Task<Relative?>>();

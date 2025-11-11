@@ -55,10 +55,12 @@ public class TableNames : TableBase
     await command.ExecuteNonQueryAsync(token);
   }
 
-  public async Task<IReadOnlyDictionary<int, Name>> GetNamesAsync(NameType nameType, CancellationToken token)
+  public async Task<Name[]> GetNamesAsync(NameType nameType, CancellationToken token)
   {
     if (TryGetNameList(nameType, out var items))
-      return items;
+      return items
+        .Values
+        .ToArray();
 
     using var command = Document.CreateCommand();
 
@@ -88,7 +90,9 @@ public class TableNames : TableBase
     }
 
     _Items.Add(nameType, new NameList(result));
-    return result;
+    return result
+      .Values
+      .ToArray();
   }
 
   public async Task<Name?> GetNameAsync(int? id, CancellationToken token)

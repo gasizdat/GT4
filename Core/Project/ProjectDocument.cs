@@ -61,7 +61,8 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
   public TableRelatives Relatives => new(this);
   public TablePersonData PersonData => new(this);
 
-  public Family Family => new(this);
+  public FamilyManager FamilyManager => new(this);
+  public PersonManager PersonManager => new(this);
 
   public async Task<int> GetLastInsertRowIdAsync(CancellationToken token)
   {
