@@ -62,6 +62,16 @@ public partial class TablePersonData : TableBase
     return ret.ToArray();
   }
 
+  private async Task<Data> AddDataContentIfNotExist(Data data, CancellationToken token)
+  {
+    if (data.Id == NonCommitedId)
+    {
+      return await Document.Data.AddDataAsync(data.Content, data.MimeType, data.Category, token);
+    }
+
+    return data;
+  }
+
   public async Task<Data[]> GetPersonDataSetAsync(Person person, DataCategory? category, CancellationToken token)
   {
     var ids = await GetPersonDataIdsAsync(person, category, token);
@@ -81,6 +91,8 @@ public partial class TablePersonData : TableBase
 
     foreach (var data in dataSet)
     {
+      var dataId = (await AddDataContentIfNotExist(data, token)).Id;
+
       using var command = Document.CreateCommand();
 
       command.CommandText = """
@@ -88,11 +100,12 @@ public partial class TablePersonData : TableBase
         VALUES (@personId, @dataId);
         """;
       command.Parameters.AddWithValue("@personId", person.Id);
-      command.Parameters.AddWithValue("@dataId", data.Id);
+      command.Parameters.AddWithValue("@dataId", dataId);
       tasks.Add(command.ExecuteNonQueryAsync(token));
     }
 
     await Task.WhenAll(tasks);
+    transaction.Commit();
   }
 
   public async Task UpdatePersonDataSetAsync(Person person, Data[] dataSet, CancellationToken token)
@@ -146,6 +159,10 @@ public partial class TablePersonData : TableBase
     }
 
     using var transaction = await Document.BeginTransactionAsync(token);
+    if (newData is not null)
+    {
+      newData = await AddDataContentIfNotExist(newData, token);
+    }
 
     if (oldData is not null)
     {

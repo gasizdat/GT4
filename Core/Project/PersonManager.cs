@@ -79,17 +79,7 @@ public class PersonManager : TableBase
     return ret ?? [];
   }
 
-  public async Task UpdatePersonInfoAsync(PersonInfo personInfo, CancellationToken token)
-  {
-    using var transaction = await Document.BeginTransactionAsync(token);
-
-    await Document.PersonNames.UpdatePersonNamesAsync(personInfo, personInfo.Names, token);
-    await Document.PersonData.UpdatePersonDataAsync(personInfo, personInfo.MainPhoto, DataCategory.PersonMainPhoto, token);
-
-    transaction.Commit();
-  }
-
-  public async Task<PersonInfo> AddPersonInfoAsync(PersonFullInfo personFullInfo, CancellationToken token)
+  public async Task<PersonInfo> AddPersonAsync(PersonFullInfo personFullInfo, CancellationToken token)
   {
     using var transaction = await Document.BeginTransactionAsync(token);
 
@@ -99,9 +89,8 @@ public class PersonManager : TableBase
       var requiredFamilyNames = await Document.FamilyManager.GetRequiredNames(familyName, personFullInfo, token);
       personFullInfo = personFullInfo with { Names = personFullInfo.Names.Concat(requiredFamilyNames).ToArray() };
     }
-
     var person = await Document.Persons.AddPersonAsync(personFullInfo, token);
-    await Document.PersonNames.AddPersonNamesAsync(personFullInfo, personFullInfo.Names, token);
+    await Document.PersonNames.AddPersonNamesAsync(person, personFullInfo.Names, token);
 
     transaction.Commit();
 
@@ -114,7 +103,18 @@ public class PersonManager : TableBase
 
     await Document.Persons.UpdatePersonAsync(personFullInfo, token);
     await Document.PersonNames.UpdatePersonNamesAsync(personFullInfo, personFullInfo.Names, token);
-    await Document.PersonData.UpdatePersonDataAsync(personFullInfo, personFullInfo.MainPhoto, DataCategory.PersonMainPhoto, token);
+
+    var personDataSet = new List<Data>(personFullInfo.AdditionalPhotos ?? []);
+    if (personFullInfo.MainPhoto is not null)
+    {
+      personDataSet.Add(personFullInfo.MainPhoto);
+    }
+    if (personFullInfo.Biography is not null)
+    {
+      personDataSet.Add(personFullInfo.Biography);
+    }
+
+    await Document.PersonData.UpdatePersonDataSetAsync(personFullInfo, personDataSet.ToArray(), token);
 
     transaction.Commit();
   }
