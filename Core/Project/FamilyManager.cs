@@ -16,6 +16,20 @@ public class FamilyManager : TableBase
     return ret;
   }
 
+  public TPerson SetUpPersonFamily<TPerson>(TPerson person, Name familyName) where TPerson : PersonInfo
+  {
+    if (familyName.Type != NameType.FamilyName)
+    {
+      throw new ArgumentException($"{nameof(familyName)} does not contain a family name");
+    }
+    if (person.Names?.Contains(familyName) == false)
+    {
+      return person with { Names = (person.Names ?? []).Concat([familyName]).ToArray() };
+    }
+
+    return person;
+  }
+
   public async Task<Name> AddFamilyAsync(string familyName, string maleLastName, string femaleLastName, CancellationToken token)
   {
     using var transaction = await Document.BeginTransactionAsync(token);

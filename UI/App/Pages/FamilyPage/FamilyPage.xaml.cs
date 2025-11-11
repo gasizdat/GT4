@@ -146,15 +146,17 @@ public partial class FamilyPage : ContentPage
         return;
       }
 
-      using var token = Services
-        .GetRequiredService<ICancellationTokenProvider>()
-        .CreateDbCancellationToken();
-
-      await Services
-        .GetRequiredService<ICurrentProjectProvider>()
+      var projectProvider = Services.GetRequiredService<ICurrentProjectProvider>();
+      using var token = Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
+      var person = projectProvider
+        .Project
+        .FamilyManager
+        .SetUpPersonFamily(info, _FamilyName);
+      
+      await projectProvider
         .Project
         .PersonManager
-        .AddPersonInfoAsync(info, token);
+        .AddPersonAsync(person, token);
     }
     catch (Exception ex)
     {
@@ -191,10 +193,14 @@ public partial class FamilyPage : ContentPage
       using var updateToken = Services
         .GetRequiredService<ICancellationTokenProvider>()
         .CreateDbCancellationToken();
+      var person = projectProvider
+        .Project
+        .FamilyManager
+        .SetUpPersonFamily(info, _FamilyName);
 
       await projectProvider
         .Project
-        .Persons
+        .PersonManager
         .UpdatePersonAsync(info, updateToken);
     }
     catch (Exception ex)
