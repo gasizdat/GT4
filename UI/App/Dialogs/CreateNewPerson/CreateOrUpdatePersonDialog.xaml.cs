@@ -70,7 +70,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     {
       Biography = person.Biography.MimeType switch
       {
-        System.Net.Mime.MediaTypeNames.Application.Octet =>
+        System.Net.Mime.MediaTypeNames.Text.Plain =>
           System.Text.Encoding.UTF8.GetString(person.Biography.Content),
 
         _ => throw new NotSupportedException($"MIME type '{person.Biography.MimeType}' is not supported yet")
