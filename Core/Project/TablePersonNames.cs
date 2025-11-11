@@ -34,21 +34,21 @@ public partial class TablePersonNames : TableBase
     command.Parameters.AddWithValue("@personId", person.Id);
 
     await using var reader = await command.ExecuteReaderAsync(token);
-    var result = new List<Name>();
+    var tasks = new List<Task<Name?>>();
     while (await reader.ReadAsync(token))
     {
       var id = reader.GetInt32(0);
-      var name = await Document.Names.GetNameAsync(id, token);
-      if (name is not null)
-      {
-        result.Add(name);
-      }
+      tasks.Add(Document.Names.TryGetNameByIdAsync(id, token));
     }
 
-    return result.ToArray();
+    var names = await Task.WhenAll(tasks);
+    return names
+      .Where(name => name is not null)
+      .Select(name => name!)
+      .ToArray();
   }
 
-  public async Task AddNamesAsync(Person person, Name[] names, CancellationToken token)
+  public async Task AddPersonNamesAsync(Person person, Name[] names, CancellationToken token)
   {
     using var transaction = await Document.BeginTransactionAsync(token);
 
@@ -68,7 +68,7 @@ public partial class TablePersonNames : TableBase
     transaction.Commit();
   }
 
-  public async Task UpdateNamesAsync(Person person, Name[] names, CancellationToken token)
+  public async Task UpdatePersonNamesAsync(Person person, Name[] names, CancellationToken token)
   {
     var oldNames = await GetPersonNamesAsync(person, token);
     var newNameIds = names.Select(n => n.Id).ToHashSet();
@@ -97,7 +97,7 @@ public partial class TablePersonNames : TableBase
       tasks.Add(command.ExecuteNonQueryAsync(token));
     }
 
-    tasks.Add(AddNamesAsync(person, names.Where(n => !remainedNames.Contains(n.Id)).ToArray(), token));
+    tasks.Add(AddPersonNamesAsync(person, names.Where(n => !remainedNames.Contains(n.Id)).ToArray(), token));
 
     await Task.WhenAll(tasks);
 

@@ -12,7 +12,7 @@ public class PersonManager : TableBase
   private async Task<PersonInfo> CreatePersonInfoAsync(Person person, CancellationToken token)
   {
     var names = Document.PersonNames.GetPersonNamesAsync(person, token);
-    var mainPhoto = Document.PersonData.GetPersonDataAsync(person, DataCategory.PersonMainPhoto, token);
+    var mainPhoto = Document.PersonData.GetPersonDataSetAsync(person, DataCategory.PersonMainPhoto, token);
     await Task.WhenAll(names, mainPhoto);
     var ret = new PersonInfo
     (
@@ -32,7 +32,7 @@ public class PersonManager : TableBase
     }
 
     var names = Document.PersonNames.GetPersonNamesAsync(person, token);
-    var personData = Document.PersonData.GetPersonDataAsync(person, null, token);
+    var personData = Document.PersonData.GetPersonDataSetAsync(person, null, token);
     var relatives = Document.Relatives.GetRelativeAsync(person, token);
     await Task.WhenAll(names, personData, relatives);
 
@@ -83,8 +83,8 @@ public class PersonManager : TableBase
   {
     using var transaction = await Document.BeginTransactionAsync(token);
 
-    await Document.PersonNames.UpdateNamesAsync(personInfo, personInfo.Names, token);
-    await Document.PersonData.UpdatePersonSingleDataAsync(personInfo, personInfo.MainPhoto, DataCategory.PersonMainPhoto, token);
+    await Document.PersonNames.UpdatePersonNamesAsync(personInfo, personInfo.Names, token);
+    await Document.PersonData.UpdatePersonDataAsync(personInfo, personInfo.MainPhoto, DataCategory.PersonMainPhoto, token);
 
     transaction.Commit();
   }
@@ -101,7 +101,7 @@ public class PersonManager : TableBase
     }
 
     var person = await Document.Persons.AddPersonAsync(personFullInfo, token);
-    await Document.PersonNames.AddNamesAsync(personFullInfo, personFullInfo.Names, token);
+    await Document.PersonNames.AddPersonNamesAsync(personFullInfo, personFullInfo.Names, token);
 
     transaction.Commit();
 
@@ -113,8 +113,8 @@ public class PersonManager : TableBase
     using var transaction = await Document.BeginTransactionAsync(token);
 
     await Document.Persons.UpdatePersonAsync(personFullInfo, token);
-    await Document.PersonNames.UpdateNamesAsync(personFullInfo, personFullInfo.Names, token);
-    await Document.PersonData.UpdatePersonSingleDataAsync(personFullInfo, personFullInfo.MainPhoto, DataCategory.PersonMainPhoto, token);
+    await Document.PersonNames.UpdatePersonNamesAsync(personFullInfo, personFullInfo.Names, token);
+    await Document.PersonData.UpdatePersonDataAsync(personFullInfo, personFullInfo.MainPhoto, DataCategory.PersonMainPhoto, token);
 
     transaction.Commit();
   }

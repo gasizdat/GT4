@@ -48,7 +48,7 @@ public partial class SelectNameDialog : ContentPage
     _CurrentProjectProvider
     .Project
     .Names
-    .GetNamesAsync(CurrentNameType.Type | _NameDeclension, _CancellationTokenProvider.CreateDbCancellationToken())
+    .GetNamesByTypeAsync(CurrentNameType.Type | _NameDeclension, _CancellationTokenProvider.CreateDbCancellationToken())
     .Result
     .Select(name => new NameInfoItem(name, _NameTypeFormatter))
     .ToArray();

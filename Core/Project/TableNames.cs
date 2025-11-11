@@ -55,7 +55,7 @@ public class TableNames : TableBase
     await command.ExecuteNonQueryAsync(token);
   }
 
-  public async Task<Name[]> GetNamesAsync(NameType nameType, CancellationToken token)
+  public async Task<Name[]> GetNamesByTypeAsync(NameType nameType, CancellationToken token)
   {
     if (TryGetNameList(nameType, out var items))
       return items
@@ -95,7 +95,7 @@ public class TableNames : TableBase
       .ToArray();
   }
 
-  public async Task<Name?> GetNameAsync(int? id, CancellationToken token)
+  public async Task<Name?> TryGetNameByIdAsync(int? id, CancellationToken token)
   {
     if (!id.HasValue)
     {
@@ -115,16 +115,12 @@ public class TableNames : TableBase
     command.Parameters.AddWithValue("@id", id.Value);
 
     await using var reader = await command.ExecuteReaderAsync(token);
-    if (await reader.ReadAsync(token))
-    {
-      name = CreateName(reader);
-      return name;
-    }
+    var ret = (await reader.ReadAsync(token)) ? CreateName(reader) : null;
 
-    return null;
+    return ret;
   }
 
-  public async Task<Name[]?> GetNameWithSubnamesAsync(int? id, CancellationToken token)
+  public async Task<Name[]?> TryGetNameWithSubnamesByIdAsync(int? id, CancellationToken token)
   {
     if (!id.HasValue)
     {

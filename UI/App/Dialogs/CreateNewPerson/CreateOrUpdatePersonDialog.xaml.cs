@@ -134,28 +134,31 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       return;
     }
 
+    var mimeTypeBmp = System.Net.Mime.MediaTypeNames.Image.Bmp;
+    var mimeTypePlaintText = System.Net.Mime.MediaTypeNames.Text.Plain;
     var token = _ServiceProvider
       .GetRequiredService<ICancellationTokenProvider>()
       .CreateDbCancellationToken();
 
     var photos = Task.WhenAll(
       _Photos
-      .Skip(1)
       .Select(photo => ImageUtils.ToBytesAsync(photo, token)))
       .Result
       .Where(content => content is not null)
-      .Select(content => new Data(Id: 0, Content: content!, MimeType: System.Net.Mime.MediaTypeNames.Image.Bmp));
+      .Select(content => new Data(Id: 0, Content: content!, MimeType: mimeTypeBmp, Category: DataCategory.PersonPhoto));
+    
+    var mainPhoto = photos?.FirstOrDefault();
 
     var result = new PersonFullInfo(
       Id: _PersonId ?? 0,
       Names: _Names.Select(n => n.Info).ToArray(),
-      MainPhoto: photos?.FirstOrDefault(),
+      MainPhoto: mainPhoto is null ? null : mainPhoto with { Category = DataCategory.PersonMainPhoto },
       BirthDate: _BirthDate!.Value,
       DeathDate: _DeathDate,
       BiologicalSex: _BiologicalSex!.Info,
       AdditionalPhotos: photos?.Skip(1).ToArray(),
       Relatives: _Relatives.Select(relative => relative.Info).ToArray(),
-      Biography: new Data(Id: 0, Content: System.Text.Encoding.UTF8.GetBytes(Biography), System.Net.Mime.MediaTypeNames.Text.Plain)
+      Biography: new Data(Id: 0, Content: System.Text.Encoding.UTF8.GetBytes(Biography), mimeTypePlaintText, Category: DataCategory.PersonBio)
     );
 
     _Info.SetResult(result);

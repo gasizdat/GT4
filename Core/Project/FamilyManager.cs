@@ -11,7 +11,7 @@ public class FamilyManager : TableBase
 
   public async Task<Name[]> GetFamiliesAsync(CancellationToken token)
   {
-    var ret = await Document.Names.GetNamesAsync(NameType.FamilyName, token);
+    var ret = await Document.Names.GetNamesByTypeAsync(NameType.FamilyName, token);
 
     return ret;
   }
@@ -50,7 +50,7 @@ public class FamilyManager : TableBase
     };
 
     var names = new List<Name>();
-    var lastNames = await Document.Names.GetNameWithSubnamesAsync(familyName.Id, token);
+    var lastNames = await Document.Names.TryGetNameWithSubnamesByIdAsync(familyName.Id, token);
     var lastName = lastNames?.SingleOrDefault(name => name.Type == lastNameType);
     if (lastName is not null && !personInfo.Names.Contains(lastName))
     {

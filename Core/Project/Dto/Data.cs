@@ -3,5 +3,6 @@
   public record class Data(
     int Id,
     byte[] Content,
-    string MimeType
+    string? MimeType,
+    DataCategory Category
   );
