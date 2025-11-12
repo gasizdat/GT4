@@ -1,6 +1,4 @@
 ﻿using GT4.Core.Project.Dto;
-using Microsoft.Data.Sqlite;
-using System.Reflection.PortableExecutable;
 
 namespace GT4.Core.Project;
 
@@ -126,15 +124,7 @@ public partial class TablePersonData : TableBase
         continue;
       }
 
-      using var command = Document.CreateCommand();
-
-      command.CommandText = """
-        DELETE FROM PersonNames
-        WHERE PersonId=@personId AND NameId=@nameId;
-        """;
-      command.Parameters.AddWithValue("@personId", person.Id);
-      command.Parameters.AddWithValue("@nameId", oldData.Id);
-      tasks.Add(command.ExecuteNonQueryAsync(token));
+      tasks.Add(RemovePersonDataAsync(person, oldData, token));
     }
 
     tasks.Add(AddPersonDataSetAsync(person, dataSet.Where(data => !remainedData.Contains(data.Id)).ToArray(), token));
@@ -183,7 +173,7 @@ public partial class TablePersonData : TableBase
     using var command = Document.CreateCommand();
     command.CommandText = """
       DELETE FROM PersonData
-      WHERE PersonId=@personId, DataId=@dataId;
+      WHERE PersonId=@personId AND DataId=@dataId;
       """;
     command.Parameters.AddWithValue("@personId", person.Id);
     command.Parameters.AddWithValue("@dataId", data.Id);
