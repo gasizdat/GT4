@@ -12,10 +12,10 @@ namespace GT4.UI.App.Dialogs;
 
 public partial class CreateOrUpdatePersonDialog : ContentPage
 {
-  private readonly ServiceProvider _ServiceProvider;
+  private readonly IServiceProvider _ServiceProvider;
   private readonly ICommand _DialogCommand;
   private readonly string _SaveButtonName;
-  private readonly ObservableCollection<ImageSource> _Photos = new();
+  private readonly ObservableCollection<PersonDataItem> _Photos = new();
   private readonly ObservableCollection<NameInfoItem> _Names = new();
   private readonly ObservableCollection<RelativeMemberInfoItem> _Relatives = new();
   private readonly ObservableCollection<BiologicalSexItem> _BiologicalSexes = new();
@@ -24,16 +24,18 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private Date? _BirthDate;
   private Date? _DeathDate;
   private BiologicalSexItem? _BiologicalSex;
+  private PersonDataItem _Biography;
   private bool _NotReady => _BiologicalSex is null || _BirthDate is null;
 
-  public CreateOrUpdatePersonDialog(PersonFullInfo? person, ServiceProvider serviceProvider)
+  public CreateOrUpdatePersonDialog(PersonFullInfo? person, IServiceProvider serviceProvider)
   {
     _ServiceProvider = serviceProvider;
     _DialogCommand = new Command<object>(OnDialogCommand);
     _SaveButtonName = person is null ? UIStrings.BtnNameCreateFamilyPerson : UIStrings.BtnNameUpdateFamilyPerson;
-    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, ServiceBuilder.DefaultServices));
-    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Female, ServiceBuilder.DefaultServices));
-    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Unknown, ServiceBuilder.DefaultServices));
+    var biologicalSexFormatter = _ServiceProvider.GetRequiredService<IBiologicalSexFormatter>();
+    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, biologicalSexFormatter));
+    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Female, biologicalSexFormatter));
+    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Unknown, biologicalSexFormatter));
     _BiologicalSex = _BiologicalSexes.Where(i => i.Info == person?.BiologicalSex).FirstOrDefault();
     UpdatePersonInformation(person);
 
@@ -50,44 +52,55 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     _PersonId = person.Id;
     BirthDate = person.BirthDate;
     DeathDate = person.DeathDate;
-    if (person.MainPhoto is not null)
-    {
-      _Photos.Add(ImageUtils.ImageFromBytes(person.MainPhoto.Content));
-    }
-
     var nameFormater = _ServiceProvider.GetRequiredService<INameTypeFormatter>();
     foreach (var name in person.Names)
     {
-      Names.Add(new NameInfoItem(name, nameFormater));
+      _Names.Add(new NameInfoItem(name, nameFormater));
     }
 
-    foreach (var photo in person.AdditionalPhotos ?? [])
+    if (person.MainPhoto is not null)
     {
-      Photos.Add(ImageUtils.ImageFromBytes(photo.Content));
+      _Photos.Add(new PersonDataItem(
+        data: person.MainPhoto,
+        _ServiceProvider.GetRequiredKeyedService<IDataConverter>(person.MainPhoto.Category),
+        _ServiceProvider.GetRequiredService<ICancellationTokenProvider>()));
     }
 
-    if (person.Biography is not null)
+    foreach (var photo in person.AdditionalPhotos)
     {
-      Biography = person.Biography.MimeType switch
-      {
-        System.Net.Mime.MediaTypeNames.Text.Plain =>
-          System.Text.Encoding.UTF8.GetString(person.Biography.Content),
-
-        _ => throw new NotSupportedException($"MIME type '{person.Biography.MimeType}' is not supported yet")
-      };
+      _Photos.Add(new PersonDataItem(
+        data: photo,
+        _ServiceProvider.GetRequiredKeyedService<IDataConverter>(photo.Category),
+        _ServiceProvider.GetRequiredService<ICancellationTokenProvider>()));
     }
 
-    foreach (var relative in person.Relatives ?? [])
+    _Biography = person.Biography switch
     {
-      Relatives.Add(new RelativeMemberInfoItem(relative, _ServiceProvider));
+      Data biography =>
+        new PersonDataItem(
+            data: biography,
+            _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonBio),
+            _ServiceProvider.GetRequiredService<ICancellationTokenProvider>()),
+
+      _ => new PersonDataItem(
+            dataCategory: DataCategory.PersonBio,
+            _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonBio),
+            _ServiceProvider.GetRequiredService<ICancellationTokenProvider>())
+    };
+
+
+    foreach (var relative in person.Relatives)
+    {
+      _Relatives.Add(new RelativeMemberInfoItem(relative, _ServiceProvider));
     }
   }
 
   public ICommand DialogCommand => _DialogCommand;
-  public ICollection<ImageSource> Photos => _Photos;
+  public ICollection<PersonDataItem> Photos => _Photos;
   public ICollection<NameInfoItem> Names => _Names;
   public ICollection<RelativeMemberInfoItem> Relatives => _Relatives;
   public ICollection<BiologicalSexItem> BiologicalSexes => _BiologicalSexes;
+  public PersonDataItem Biography => _Biography;
 
   public Date? BirthDate
   {
@@ -124,7 +137,6 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   public Task<PersonFullInfo?> Info => _Info.Task;
   public string CreatePersonBtnName => _NotReady ? UIStrings.BtnNameCancel : _SaveButtonName;
-  public string Biography { get; set; } = string.Empty;
 
   private void OnCreatePersonCommand()
   {
@@ -134,21 +146,19 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       return;
     }
 
-    var mimeTypeBmp = System.Net.Mime.MediaTypeNames.Image.Bmp;
-    var mimeTypePlaintText = System.Net.Mime.MediaTypeNames.Text.Plain;
     var token = _ServiceProvider
       .GetRequiredService<ICancellationTokenProvider>()
       .CreateDbCancellationToken();
 
     var photos = Task.WhenAll(
       _Photos
-      .Select(photo => ImageUtils.ToBytesAsync(photo, token)))
+      .Select(photo => photo.ToDataAsync()))
       .Result
-      .Where(content => content is not null)
-      .Select(content => new Data(Id: TableBase.NonCommitedId, Content: content!, MimeType: mimeTypeBmp, Category: DataCategory.PersonPhoto));
+      .Where(data => data is not null)
+      .Select(data => data!);
     
     var mainPhoto = photos?.FirstOrDefault();
-
+    var additionalPhotos = photos?.Skip(1).ToArray() ?? [];
     var result = new PersonFullInfo(
       Id: _PersonId ?? TableBase.NonCommitedId,
       Names: _Names.Select(n => n.Info).ToArray(),
@@ -156,9 +166,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       BirthDate: _BirthDate!.Value,
       DeathDate: _DeathDate,
       BiologicalSex: _BiologicalSex!.Info,
-      AdditionalPhotos: photos?.Skip(1).ToArray(),
+      AdditionalPhotos: additionalPhotos,
       Relatives: _Relatives.Select(relative => relative.Info).ToArray(),
-      Biography: new Data(Id: TableBase.NonCommitedId, Content: System.Text.Encoding.UTF8.GetBytes(Biography), mimeTypePlaintText, Category: DataCategory.PersonBio)
+      Biography: _Biography.ToDataAsync().Result
     );
 
     _Info.SetResult(result);
@@ -190,7 +200,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   private async Task OnBirthDateSetupAsync()
   {
-    var dialog = new SelectDateDialog(date: BirthDate, serviceProvider: _ServiceProvider);
+    var dialog = new SelectDateDialog(date: BirthDate, dateFormatter: _ServiceProvider.GetRequiredService<IDateFormatter>());
 
     await Navigation.PushModalAsync(dialog);
     var date = await dialog.Info;
@@ -204,7 +214,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   private async Task OnDeathDateSetupAsync()
   {
-    var dialog = new SelectDateDialog(date: DeathDate, serviceProvider: _ServiceProvider);
+    var dialog = new SelectDateDialog(
+      date: DeathDate, 
+      dateFormatter: _ServiceProvider.GetRequiredService<IDateFormatter>());
 
     await Navigation.PushModalAsync(dialog);
     var date = await dialog.Info;
@@ -238,7 +250,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
       case AdornerCommandParameter adorner when adorner.CommandName == "EditPhotoCommand":
         break;
-      case AdornerCommandParameter adorner when adorner.CommandName == "RemovePhotoCommand" && adorner.Element is ImageSource photo:
+      case AdornerCommandParameter adorner when adorner.CommandName == "RemovePhotoCommand" && adorner.Element is PersonDataItem photo:
         _Photos.Remove(photo);
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "EditNameCommand":

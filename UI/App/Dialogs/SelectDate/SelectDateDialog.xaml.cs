@@ -19,9 +19,9 @@ public partial class SelectDateDialog : ContentPage
   private bool _DaySwitch = false;
   private string _SelectDateBtnName = UIStrings.BtnNameCancel;
 
-  public SelectDateDialog(Date? date, ServiceProvider serviceProvider)
+  public SelectDateDialog(Date? date, IDateFormatter dateFormatter)
   {
-    _DateFormatter = serviceProvider.GetRequiredService<IDateFormatter>();
+    _DateFormatter = dateFormatter;
     if (date.HasValue)
     {
       _Year = date.Value.Year;

@@ -7,11 +7,11 @@ public class RelativeMemberInfoItem : CollectionItemBase<Relative>
   private readonly IDateFormatter _DateFormatter;
   private readonly IRelationshipTypeFormatter _RelationshipTypeFormatter;
 
-  public RelativeMemberInfoItem(Relative relative, ServiceProvider services)
+  public RelativeMemberInfoItem(Relative relative, IServiceProvider serviceProvider)
     : base(relative, "wife.png")
   {
-    _DateFormatter = services.GetRequiredService<IDateFormatter>();
-    _RelationshipTypeFormatter = services.GetRequiredService<IRelationshipTypeFormatter>();
+    _DateFormatter = serviceProvider.GetRequiredService<IDateFormatter>();
+    _RelationshipTypeFormatter = serviceProvider.GetRequiredService<IRelationshipTypeFormatter>();
   }
 
   public bool ShowDate => Info.Date.HasValue;

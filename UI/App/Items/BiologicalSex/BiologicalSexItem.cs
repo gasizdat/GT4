@@ -4,14 +4,14 @@ namespace GT4.UI.App.Items;
 
 public class BiologicalSexItem : CollectionItemBase<BiologicalSex>
 {
-  private readonly IBiologicalSexFormatter _biologicalSexFormatter;
+  private readonly IBiologicalSexFormatter _BiologicalSexFormatter;
 
-  public BiologicalSexItem(BiologicalSex biologicalSex, ServiceProvider services)
+  public BiologicalSexItem(BiologicalSex biologicalSex, IBiologicalSexFormatter biologicalSexFormatter)
     : base(biologicalSex, biologicalSex == BiologicalSex.Male ? "male_stub.png" : "female_stub.png")
   {
-    _biologicalSexFormatter = services.GetRequiredService<IBiologicalSexFormatter>();
+    _BiologicalSexFormatter = biologicalSexFormatter;
   }
 
-  public string Name => _biologicalSexFormatter.ToString(Info);
+  public string Name => _BiologicalSexFormatter.ToString(Info);
 }
 

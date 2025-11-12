@@ -23,7 +23,7 @@ public partial class SelectNameDialog : ContentPage
   private bool _NotReady => _CurrentName is null;
 
 
-  public SelectNameDialog(BiologicalSex biologicalSex, ServiceProvider serviceProvider)
+  public SelectNameDialog(BiologicalSex biologicalSex, IServiceProvider serviceProvider)
   {
     _NameTypeFormatter = serviceProvider.GetRequiredService<INameTypeFormatter>();
     _CurrentProjectProvider = serviceProvider.GetRequiredService<ICurrentProjectProvider>();

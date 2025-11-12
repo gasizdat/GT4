@@ -68,7 +68,7 @@ namespace GT4
       if (!isDocumentUri || !hasPersistableGrant)
       {
         var backgroundWorker = new BackgroundWorker();
-        backgroundWorker.DoWork += async (s, e) =>
+        backgroundWorker.DoWork += async (_, _) =>
         {
           try
           {

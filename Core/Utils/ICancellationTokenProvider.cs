@@ -3,4 +3,5 @@
 public interface ICancellationTokenProvider
 {
   CancellationTokenHost CreateDbCancellationToken();
+  CancellationTokenHost CreateShortOperationCancellationToken();
 }
