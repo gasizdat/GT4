@@ -11,6 +11,7 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private object? _Content = null;
   private bool _IsReady = false;
+  private bool _IsModified = false;
 
   private void OnContentChanged()
   {
@@ -63,8 +64,12 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
 
     set
     {
-      _Content = value;
-      OnContentChanged();
+      if (_Content != value)
+      {
+        _Content = value;
+        _IsModified = true;
+        OnContentChanged();
+      }
     }
   }
 
@@ -73,7 +78,8 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
     var ret = await _DataConverter.FromObjectAsync(_Content, _CancellationTokenProvider.CreateShortOperationCancellationToken());
     if (ret is not null)
     {
-      ret = ret with { Id = Info.Id };
+      var id = _IsModified ? TableBase.NonCommitedId : Info.Id;
+      ret = ret with { Id = id, Category = Info.Category };
     }
 
     return ret;

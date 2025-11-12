@@ -5,7 +5,6 @@ using GT4.UI.App.Components;
 using GT4.UI.App.Items;
 using GT4.UI.Resources;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Windows.Input;
 
 namespace GT4.UI.App.Dialogs;
@@ -24,7 +23,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private Date? _BirthDate;
   private Date? _DeathDate;
   private BiologicalSexItem? _BiologicalSex;
-  private PersonDataItem _Biography;
+  private PersonDataItem? _Biography;
   private bool _NotReady => _BiologicalSex is null || _BirthDate is null;
 
   public CreateOrUpdatePersonDialog(PersonFullInfo? person, IServiceProvider serviceProvider)
@@ -50,8 +49,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
 
     _PersonId = person.Id;
-    BirthDate = person.BirthDate;
-    DeathDate = person.DeathDate;
+    _BirthDate = person.BirthDate;
+    _DeathDate = person.DeathDate;
     var nameFormater = _ServiceProvider.GetRequiredService<INameTypeFormatter>();
     foreach (var name in person.Names)
     {
@@ -100,7 +99,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   public ICollection<NameInfoItem> Names => _Names;
   public ICollection<RelativeMemberInfoItem> Relatives => _Relatives;
   public ICollection<BiologicalSexItem> BiologicalSexes => _BiologicalSexes;
-  public PersonDataItem Biography => _Biography;
+  public PersonDataItem? Biography => _Biography;
 
   public Date? BirthDate
   {
@@ -156,7 +155,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       .Result
       .Where(data => data is not null)
       .Select(data => data!);
-    
+
     var mainPhoto = photos?.FirstOrDefault();
     var additionalPhotos = photos?.Skip(1).ToArray() ?? [];
     var result = new PersonFullInfo(
@@ -168,8 +167,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       BiologicalSex: _BiologicalSex!.Info,
       AdditionalPhotos: additionalPhotos,
       Relatives: _Relatives.Select(relative => relative.Info).ToArray(),
-      Biography: _Biography.ToDataAsync().Result
-    );
+      Biography: _Biography?.ToDataAsync().Result);
 
     _Info.SetResult(result);
   }
@@ -215,7 +213,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private async Task OnDeathDateSetupAsync()
   {
     var dialog = new SelectDateDialog(
-      date: DeathDate, 
+      date: DeathDate,
       dateFormatter: _ServiceProvider.GetRequiredService<IDateFormatter>());
 
     await Navigation.PushModalAsync(dialog);
