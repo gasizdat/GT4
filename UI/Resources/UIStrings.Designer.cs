@@ -548,6 +548,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Select pictures.
+        /// </summary>
+        public static string FileDialogSelectPictures {
+            get {
+                return ResourceManager.GetString("FileDialogSelectPictures", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 🌐 Language.
         /// </summary>
         public static string PkrLanguageHint {

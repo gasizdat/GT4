@@ -226,6 +226,59 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
   }
 
+  private static byte[] FromStream(Stream stream)
+  {
+    using var ret = new MemoryStream();
+    stream.CopyTo(ret);
+    return ret.ToArray();
+  }
+
+  private async Task OnAddPhotoAsync()
+  {
+    var pickOptions = new PickOptions
+    {
+      PickerTitle = UIStrings.FileDialogSelectPictures,
+      FileTypes = FilePickerFileType.Images
+    };
+    var result = await FilePicker.Default.PickMultipleAsync(pickOptions);
+    if (result is null)
+    {
+      return;
+    }
+
+    IEnumerable<Stream>? streams = null;
+    try
+    {
+      var token = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>().CreateShortOperationCancellationToken();
+      var filesContent = result.Select(file => (Stream: file.OpenReadAsync(), MimeType: file.ContentType));
+      streams = await Task.WhenAll(filesContent.Select(file => file.Stream));
+      var photoAssets = filesContent.Select(content =>
+          new Data(
+            Id: TableBase.NonCommitedId,
+            Content: FromStream(content.Stream.Result),
+            MimeType: content.MimeType,
+            Category: default));
+
+      foreach (var photoAsset in photoAssets)
+      {
+        var category = Photos.Count() == 0 ? DataCategory.PersonMainPhoto : DataCategory.PersonPhoto;
+
+        Photos.Add(new PersonDataItem(
+          data: photoAsset with { Category = category },
+          dataConverter: _ServiceProvider.GetRequiredKeyedService<IDataConverter>(category),
+          cancellationTokenProvider: _ServiceProvider.GetRequiredService<ICancellationTokenProvider>()));
+      }
+    }
+    finally
+    {
+      foreach (var stream in streams ?? [])
+      {
+        stream.Close();
+        stream.Dispose();
+      }
+    }
+  }
+
   private async void OnDialogCommand(object obj)
   {
     switch (obj)
@@ -244,6 +297,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         break;
       case string name when name == "RemoveDeathDateCommand":
         DeathDate = null;
+        break;
+      case string name when name == "AddPhotoCommand":
+        await OnAddPhotoAsync();
         break;
 
       case AdornerCommandParameter adorner when adorner.CommandName == "EditPhotoCommand":

@@ -373,4 +373,7 @@
   <data name="FieldDateEntered" xml:space="preserve">
     <value>Введенная дата</value>
   </data>
+  <data name="FileDialogSelectPictures" xml:space="preserve">
+    <value>Выберите изображения</value>
+  </data>
 </root>

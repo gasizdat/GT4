@@ -373,4 +373,7 @@ genealogy tree and enjoy!</value>
   <data name="FieldDateEntered" xml:space="preserve">
     <value>Date entered</value>
   </data>
+  <data name="FileDialogSelectPictures" xml:space="preserve">
+    <value>Select pictures</value>
+  </data>
 </root>
