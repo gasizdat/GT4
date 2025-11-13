@@ -149,10 +149,10 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       .GetRequiredService<ICancellationTokenProvider>()
       .CreateDbCancellationToken();
 
-    var photos = Task.WhenAll(
+    // We do not change the person photo, so we can reuse photo.Info rather than using photo.ToDataAsync()
+    var photos = 
       _Photos
-      .Select(photo => photo.ToDataAsync()))
-      .Result
+      .Select(photo => photo.Info)
       .Where(data => data is not null)
       .Select(data => data!);
 

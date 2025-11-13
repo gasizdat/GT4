@@ -10,6 +10,7 @@ public class ImageDataConverter : IDataConverter
   public async Task<Data?> FromObjectAsync(object? data, CancellationToken token)
   {
     var image = data as ImageSource;
+    // TODO Figure out why 'await ImageUtils.ToBytesAsync' hangs sometimes
     var content = image is null ? null : await ImageUtils.ToBytesAsync(image, token);
 
     return content is null ? null : new Data(
