@@ -22,6 +22,7 @@ public class TableMetadata : TableBase
 
   public async Task AddAsync<TData>(string id, TData data, CancellationToken token)
   {
+    using var transaction = await Document.BeginTransactionAsync(token);
     using var command = Document.CreateCommand();
     command.CommandText = """
       INSERT OR REPLACE INTO Metadata 
@@ -30,8 +31,8 @@ public class TableMetadata : TableBase
       """;
     command.Parameters.AddWithValue("@id", id);
     command.Parameters.AddWithValue("@data", data);
-    var rowsAffected = await command.ExecuteNonQueryAsync(token);
-    Console.WriteLine(rowsAffected);
+    await command.ExecuteNonQueryAsync(token);
+    transaction.Commit();
   }
 
   public async Task<TData?> GetAsync<TData>(string id, CancellationToken token)

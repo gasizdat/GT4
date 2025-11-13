@@ -10,6 +10,7 @@ public class NestedTransaction : IDisposable, IAsyncDisposable, IDbTransaction
 {
   private readonly string _TransactionName;
   private readonly IDbTransaction? _DbTransaction;
+  private readonly ProjectDocument? _Document;
   private readonly NestedTransaction? _ParentTransaction;
   private bool _Disposed = false;
   private bool _Commited = false;
@@ -17,10 +18,11 @@ public class NestedTransaction : IDisposable, IAsyncDisposable, IDbTransaction
 
   private IDbTransaction _InnerTransaction => _DbTransaction ?? _ParentTransaction!._InnerTransaction;
 
-  public NestedTransaction(IDbTransaction dbTransaction)
+  public NestedTransaction(IDbTransaction dbTransaction, ProjectDocument document)
   {
-    _DbTransaction = dbTransaction;
     _TransactionName = "Initial";
+    _DbTransaction = dbTransaction;
+    _Document = document;
   }
 
   ~NestedTransaction()
@@ -60,6 +62,7 @@ public class NestedTransaction : IDisposable, IAsyncDisposable, IDbTransaction
     if (_DbTransaction is not null)
     {
       _DbTransaction.Commit();
+      _Document?.UpdateRevision();
     }
     else if (Connection is not null)
     {

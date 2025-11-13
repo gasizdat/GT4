@@ -65,6 +65,7 @@ public class TableRelatives : TableBase
 
   public async Task<Relative> AddRelativeAsync(Person person, Person relative, RelationshipType type, Date? date, CancellationToken token)
   {
+    using var transaction = await Document.BeginTransactionAsync(token);
     using var command = Document.CreateCommand();
     command.CommandText = """
       INSERT INTO Parents (PersonId, RelativeId, Type, Date, DateStatus)
@@ -76,6 +77,7 @@ public class TableRelatives : TableBase
     command.Parameters.AddWithValue("@date", date.HasValue ? date.Value.Code : DBNull.Value);
     command.Parameters.AddWithValue("@dateStatus", date.HasValue ? date.Value.Status : DBNull.Value);
     await command.ExecuteNonQueryAsync(token);
+    transaction.Commit();
 
     return new Relative(Person: relative, Type: type, Date: date);
   }

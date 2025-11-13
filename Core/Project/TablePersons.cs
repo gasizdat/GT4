@@ -94,6 +94,7 @@ public partial class TablePersons : TableBase
 
   public async Task<Person> AddPersonAsync(Person person, CancellationToken token)
   {
+    using var transaction = await Document.BeginTransactionAsync(token);
     using var command = Document.CreateCommand();
     command.CommandText = """
       INSERT INTO Persons (BirthDate, BirthDateStatus, DeathDate, DeathDateStatus, BiologicalSex)
@@ -106,7 +107,8 @@ public partial class TablePersons : TableBase
     command.Parameters.AddWithValue("@biologicalSex", person.BiologicalSex);
     await command.ExecuteNonQueryAsync(token);
     var personId = await Document.GetLastInsertRowIdAsync(token);
-    
+    transaction.Commit();
+
     InvalidateItems();
 
     return person with { Id = personId };
@@ -114,6 +116,7 @@ public partial class TablePersons : TableBase
 
   public async Task UpdatePersonAsync(Person person, CancellationToken token)
   {
+    using var transaction = await Document.BeginTransactionAsync(token);
     using var command = Document.CreateCommand();
     command.CommandText = """
       UPDATE Persons 
@@ -127,6 +130,7 @@ public partial class TablePersons : TableBase
     command.Parameters.AddWithValue("@biologicalSex", person.BiologicalSex);
     command.Parameters.AddWithValue("@personId", person.Id);
     await command.ExecuteNonQueryAsync(token);
+    transaction.Commit();
 
     InvalidateItems();
   }

@@ -9,6 +9,8 @@ public class ProjectHost : IAsyncDisposable, IDisposable
   private readonly IFileSystem _FileSystem;
   private readonly FileDescription _Origin;
   private readonly FileDescription _Cache;
+  private long? _ProjectRevision;
+  private ProjectDocument? _Project = null;
 
   public ProjectHost(IFileSystem fileSystem, FileDescription origin, FileDescription cache)
   {
@@ -18,16 +20,24 @@ public class ProjectHost : IAsyncDisposable, IDisposable
     _FileSystem.Copy(_Origin, _Cache);
   }
 
-  public ProjectDocument? Project { get; set; } = null;
+  public ProjectDocument? Project 
+  { 
+    get => _Project; 
+    set 
+    {
+      _Project = value;
+      _ProjectRevision = _Project?.ProjectRevision;
+    }
+  }
 
   public void Dispose()
   {
-    if (Project is null)
+    if (_Project is null || _Project.ProjectRevision == _ProjectRevision)
     {
       return;
     }
-    var project = Project;
-    Project = null;
+    var project = _Project;
+    _Project = null;
     project.Dispose();
     _FileSystem.Copy(_Cache, _Origin);
     _FileSystem.RemoveFile(_Cache);
@@ -38,12 +48,12 @@ public class ProjectHost : IAsyncDisposable, IDisposable
     ProjectDocument project;
     lock (this)
     {
-      if (Project is null)
+      if (_Project is null || _Project.ProjectRevision == _ProjectRevision)
       {
         return ValueTask.CompletedTask;
       }
-      project = Project;
-      Project = null;
+      project = _Project;
+      _Project = null;
     }
 
     var ret = project.DisposeAsync();

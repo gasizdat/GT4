@@ -155,6 +155,7 @@ public class TableNames : TableBase
 
   public async Task<Name> AddNameAsync(string value, NameType type, Name? parent, CancellationToken token)
   {
+    using var transaction = await Document.BeginTransactionAsync(token);
     using var command = Document.CreateCommand();
     command.CommandText = """
       INSERT INTO Names (Value, Type, ParentId)
@@ -164,6 +165,7 @@ public class TableNames : TableBase
     command.Parameters.AddWithValue("@type", (int)type);
     command.Parameters.AddWithValue("@parentId", parent != null ? parent.Id : DBNull.Value);
     await command.ExecuteNonQueryAsync(token);
+    transaction.Commit();
     InvalidateItems(type);
 
     return new Name(Id: await Document.GetLastInsertRowIdAsync(token), Value: value, Type: type, ParentId: parent?.Id);
@@ -196,6 +198,7 @@ public class TableNames : TableBase
 
   public async Task RemoveNameWithSubnamesAsync(Name name, CancellationToken token)
   {
+    using var transaction = await Document.BeginTransactionAsync(token);
     using var command = Document.CreateCommand();
     command.CommandText = """
       DELETE FROM Names
@@ -204,5 +207,6 @@ public class TableNames : TableBase
     command.Parameters.AddWithValue("@id", name.Id);
     await command.ExecuteNonQueryAsync(token);
     InvalidateItems(name.Type);
+    transaction.Commit();
   }
 }

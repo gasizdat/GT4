@@ -7,7 +7,8 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
 {
   private readonly SqliteConnection _Connection;
   private NestedTransaction? _CurrentTransaction = null;
-  private int _TransactionNo = 0;
+  private long _TransactionNo = 0;
+  private long _ProjectRevision = 0;
 
   static ProjectDocument()
   {
@@ -63,6 +64,12 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
 
   public FamilyManager FamilyManager => new(this);
   public PersonManager PersonManager => new(this);
+  public long ProjectRevision => _ProjectRevision;
+
+  public void UpdateRevision()
+  {
+    Interlocked.Increment(ref _ProjectRevision);
+  }
 
   public async Task<int> GetLastInsertRowIdAsync(CancellationToken token)
   {
@@ -89,7 +96,7 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
       }
       else
       {
-        ret = _CurrentTransaction = new(_Connection.BeginTransactionAsync(token).Result);
+        ret = _CurrentTransaction = new NestedTransaction(_Connection.BeginTransactionAsync(token).Result, this);
       }
     }
 

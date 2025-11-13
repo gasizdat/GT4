@@ -60,6 +60,7 @@ public class TableData : TableBase
 
   public async Task<Data> AddDataAsync(byte[] content, string? mimeType, DataCategory dataCategory, CancellationToken token)
   {
+    using var transaction = await Document.BeginTransactionAsync(token);
     using var command = Document.CreateCommand();
     command.CommandText = """
       INSERT INTO Data (Value, MimeType, Category)
@@ -69,12 +70,14 @@ public class TableData : TableBase
     command.Parameters.AddWithValue("@mimeType", mimeType is null ? DBNull.Value : mimeType);
     command.Parameters.AddWithValue("@category", (int)dataCategory);
     await command.ExecuteNonQueryAsync(token);
+    transaction.Commit();
 
     return new Data(Id: await Document.GetLastInsertRowIdAsync(token), Content: content, MimeType: mimeType, Category: dataCategory);
   }
 
   public async Task RemoveDataAsync(Data data, CancellationToken token)
   {
+    using var transaction = await Document.BeginTransactionAsync(token);
     using var command = Document.CreateCommand();
     command.CommandText = """
       DELETE FROM Data
@@ -82,5 +85,6 @@ public class TableData : TableBase
       """;
     command.Parameters.AddWithValue("@id", data.Id);
     await command.ExecuteNonQueryAsync(token);
+    transaction.Commit();
   }
 }
