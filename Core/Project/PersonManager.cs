@@ -24,6 +24,22 @@ public class PersonManager : TableBase
     return ret;
   }
 
+  private static Data[] CombinePersonData(PersonFullInfo personFullInfo)
+  {
+    var personDataSet = new List<Data>(personFullInfo.AdditionalPhotos);
+
+    if (personFullInfo.MainPhoto is not null)
+    {
+      personDataSet.Add(personFullInfo.MainPhoto);
+    }
+    if (personFullInfo.Biography is not null)
+    {
+      personDataSet.Add(personFullInfo.Biography);
+    }
+
+    return personDataSet.ToArray();
+  }
+
   public async Task<PersonFullInfo> GetPersonFullInfoAsync(Person person, CancellationToken token)
   {
     if (person.Id == NonCommitedId)
@@ -90,7 +106,10 @@ public class PersonManager : TableBase
       personFullInfo = personFullInfo with { Names = personFullInfo.Names.Concat(requiredFamilyNames).ToArray() };
     }
     var person = await Document.Persons.AddPersonAsync(personFullInfo, token);
-    await Document.PersonNames.AddPersonNamesAsync(person, personFullInfo.Names, token);
+
+    await Task.WhenAll(
+      Document.PersonNames.AddPersonNamesAsync(person, personFullInfo.Names, token),
+      Document.PersonData.AddPersonDataSetAsync(person, CombinePersonData(personFullInfo), token));
 
     transaction.Commit();
 
@@ -102,19 +121,9 @@ public class PersonManager : TableBase
     using var transaction = await Document.BeginTransactionAsync(token);
 
     await Document.Persons.UpdatePersonAsync(personFullInfo, token);
-    await Document.PersonNames.UpdatePersonNamesAsync(personFullInfo, personFullInfo.Names, token);
-
-    var personDataSet = new List<Data>(personFullInfo.AdditionalPhotos ?? []);
-    if (personFullInfo.MainPhoto is not null)
-    {
-      personDataSet.Add(personFullInfo.MainPhoto);
-    }
-    if (personFullInfo.Biography is not null)
-    {
-      personDataSet.Add(personFullInfo.Biography);
-    }
-
-    await Document.PersonData.UpdatePersonDataSetAsync(personFullInfo, personDataSet.ToArray(), token);
+    await Task.WhenAll(
+      Document.PersonNames.UpdatePersonNamesAsync(personFullInfo, personFullInfo.Names, token),
+      Document.PersonData.UpdatePersonDataSetAsync(personFullInfo, CombinePersonData(personFullInfo), token));
 
     transaction.Commit();
   }
