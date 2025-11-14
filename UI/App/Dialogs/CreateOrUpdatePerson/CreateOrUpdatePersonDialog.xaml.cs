@@ -2,6 +2,8 @@ using GT4.Core.Project;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Components;
+using GT4.UI.Converters;
+using GT4.UI.Formatters;
 using GT4.UI.Items;
 using GT4.UI.Resources;
 using System.Collections.ObjectModel;

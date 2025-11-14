@@ -1,6 +1,6 @@
 ﻿using GT4.Core.Project.Dto;
 
-namespace GT4.UI;
+namespace GT4.UI.Formatters;
 
 internal class NameFormatter : INameFormatter
 {

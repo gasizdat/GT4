@@ -2,7 +2,7 @@
 using GT4.Core.Utils;
 using GT4.UI.Resources;
 
-namespace GT4.UI;
+namespace GT4.UI.Formatters;
 
 public class DateSpanFormatter : IDateSpanFormatter
 {
@@ -62,13 +62,13 @@ public class DateSpanFormatter : IDateSpanFormatter
 
   protected static string RussianNumeralsDeclension(int value, string single, string several, string many)
   {
-    int lastTwoDigits = value % 100;
+    var lastTwoDigits = value % 100;
     if (lastTwoDigits >= 11 && lastTwoDigits <= 20)
     {
       return many;
     }
 
-    int lastDigit = value % 10;
+    var lastDigit = value % 10;
     switch (lastDigit)
     {
       case 1:

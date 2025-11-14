@@ -1,8 +1,7 @@
 ﻿using GT4.Core.Project;
 using GT4.Core.Project.Dto;
-using GT4.UI;
 
-namespace GT4;
+namespace GT4.UI.Converters;
 public class TextDataConverter : IDataConverter
 {
   const string MimeTypePlainText = System.Net.Mime.MediaTypeNames.Text.Plain;

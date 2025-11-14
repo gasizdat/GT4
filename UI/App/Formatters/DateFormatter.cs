@@ -1,7 +1,7 @@
 ﻿using GT4.Core.Utils;
 using GT4.UI.Resources;
 
-namespace GT4.UI;
+namespace GT4.UI.Formatters;
 
 public class DateFormatter : IDateFormatter
 {
