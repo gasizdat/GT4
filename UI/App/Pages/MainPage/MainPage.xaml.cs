@@ -2,7 +2,7 @@
 using System.Globalization;
 using System.Windows.Input;
 
-namespace GT4.UI.App.Pages;
+namespace GT4.UI.Pages;
 
 public partial class MainPage : ContentPage
 {

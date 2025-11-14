@@ -1,12 +1,12 @@
 using GT4.Core.Project;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
-using GT4.UI.App.Dialogs;
-using GT4.UI.App.Items;
+using GT4.UI.Dialogs;
+using GT4.UI.Items;
 using GT4.UI.Resources;
 using System.Windows.Input;
 
-namespace GT4.UI.App.Pages;
+namespace GT4.UI.Pages;
 
 [QueryProperty(nameof(FamilyName), "FamilyName")]
 public partial class FamilyPage : ContentPage

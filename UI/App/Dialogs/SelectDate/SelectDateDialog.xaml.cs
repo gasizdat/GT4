@@ -1,8 +1,7 @@
 using GT4.Core.Utils;
 using GT4.UI.Resources;
-using static GT4.UI.App.Dialogs.CreateNewNameDialog;
 
-namespace GT4.UI.App.Dialogs;
+namespace GT4.UI.Dialogs;
 
 public partial class SelectDateDialog : ContentPage
 {

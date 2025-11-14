@@ -3,7 +3,7 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using System.ComponentModel;
 
-namespace GT4.UI.App.Items;
+namespace GT4.UI.Items;
 
 public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
 {

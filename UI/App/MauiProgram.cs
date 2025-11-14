@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 
-namespace GT4.UI.App;
+namespace GT4.UI;
 
 public static class MauiProgram
 {

@@ -1,5 +1,5 @@
 ﻿using Foundation;
-using GT4.UI.App;
+using GT4.UI;
 
 namespace GT4
 {

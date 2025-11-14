@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage
-    x:Class="GT4.UI.App.Pages.FamiliesPage"
+    x:Class="GT4.UI.Pages.FamiliesPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:items="clr-namespace:GT4.UI.App.Items"
+    xmlns:items="clr-namespace:GT4.UI.Items"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root"
     Title="{x:Static resources:UIStrings.WndTitleFamiliesPage}">

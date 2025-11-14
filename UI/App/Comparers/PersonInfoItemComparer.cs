@@ -1,4 +1,4 @@
-﻿using GT4.UI.App.Items;
+﻿using GT4.UI.Items;
 
 namespace GT4.UI.Comparers;
 

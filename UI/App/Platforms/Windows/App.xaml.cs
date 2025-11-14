@@ -1,4 +1,4 @@
-﻿using GT4.UI.App;
+﻿using GT4.UI;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.

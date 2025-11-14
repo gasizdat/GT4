@@ -1,6 +1,6 @@
 using System.Windows.Input;
 
-namespace GT4.UI.App.Components;
+namespace GT4.UI.Components;
 
 public partial class TitleWithAdornersView : ContentView
 {

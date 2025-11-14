@@ -1,7 +1,7 @@
-﻿using GT4.UI.App.Dialogs;
-using GT4.UI.App.Pages;
+﻿using GT4.UI.Dialogs;
+using GT4.UI.Pages;
 
-namespace GT4.UI.App;
+namespace GT4.UI;
 
 internal static class UIRoutes
 {

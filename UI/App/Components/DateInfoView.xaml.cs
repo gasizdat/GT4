@@ -1,6 +1,6 @@
 using GT4.Core.Utils;
 
-namespace GT4.UI.App.Components;
+namespace GT4.UI.Components;
 
 public partial class DateInfoView : ContentView
 {

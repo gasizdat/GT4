@@ -1,7 +1,7 @@
 using System;
 using Microsoft.Maui;
 using Microsoft.Maui.Hosting;
-using GT4.UI.App;
+using GT4.UI;
 
 namespace GT4
 {

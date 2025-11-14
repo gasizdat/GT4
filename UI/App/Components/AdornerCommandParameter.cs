@@ -1,4 +1,4 @@
-﻿namespace GT4.UI.App.Components;
+﻿namespace GT4.UI.Components;
 
 public class AdornerCommandParameter : BindableObject
 {

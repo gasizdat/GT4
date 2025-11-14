@@ -1,13 +1,13 @@
 using GT4.Core.Project;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
-using GT4.UI.App.Components;
-using GT4.UI.App.Items;
+using GT4.UI.Components;
+using GT4.UI.Items;
 using GT4.UI.Resources;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 
-namespace GT4.UI.App.Dialogs;
+namespace GT4.UI.Dialogs;
 
 public partial class CreateOrUpdatePersonDialog : ContentPage
 {

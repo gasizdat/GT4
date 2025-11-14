@@ -3,7 +3,7 @@ using GT4.Core.Project;
 using GT4.Core.Utils;
 using Microsoft.Maui.Controls.Xaml.Diagnostics;
 
-namespace GT4.UI.App;
+namespace GT4.UI;
 
 public partial class App : Application
 {

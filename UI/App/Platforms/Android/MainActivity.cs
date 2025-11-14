@@ -6,8 +6,8 @@ using Android.Provider;
 using GT4.Core.Project;
 using GT4.Core.Utils;
 using GT4.UI;
-using GT4.UI.App;
-using GT4.UI.App.Pages;
+using GT4.UI;
+using GT4.UI.Pages;
 using GT4.UI.Resources;
 using System.ComponentModel;
 

@@ -1,6 +1,6 @@
 ﻿using Android.App;
 using Android.Runtime;
-using GT4.UI.App;
+using GT4.UI;
 
 namespace GT4
 {
