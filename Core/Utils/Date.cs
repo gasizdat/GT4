@@ -15,7 +15,7 @@ public struct Date
       Sign = int.Sign(code),
       Day = status >= DateStatus.DayUnknown ? UndefinedValue : (absCode % Digit),
       Month = status >= DateStatus.MonthUnknown ? UndefinedValue : ((absCode / Digit) % Digit),
-      Year = absCode / (Digit * Digit),
+      Year = status >= DateStatus.Unknown ? UndefinedValue : (absCode / (Digit * Digit)),
       Status = status
     };
   }
@@ -46,14 +46,17 @@ public struct Date
   public int Code => Sign * (
     (Status >= DateStatus.DayUnknown ? UndefinedValue : Day) +
     (Status >= DateStatus.MonthUnknown ? UndefinedValue : (Digit * Month)) +
-    (Digit * Digit * Year));
+    (Status >= DateStatus.Unknown ? UndefinedValue : (Digit * Digit * Year)));
 
   public static Date Now => Create(DateTime.Now);
 
   public static bool operator <(Date a, Date b)
   {
     if (a.Sign < b.Sign)
+    {
       return true;
+    }
+
     if (a.Sign == b.Sign)
     {
       return a.Code < b.Code;
