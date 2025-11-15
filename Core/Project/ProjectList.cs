@@ -104,12 +104,11 @@ internal class ProjectList : IProjectList
     var origin = new FileDescription(dir, GetUniqueProjectName(), ProjectDocument.MimeType);
     var cache = GetCacheFileDescription();
     using (var file = _FileSystem.OpenWriteStream(origin)) file.Close();
-    var host = new ProjectHost(_FileSystem, origin, cache);
-    var project = await ProjectDocument.CreateNewAsync(_FileSystem.ToPath(cache), projectName, token);
+    using var host = new ProjectHost(_FileSystem, origin, cache);
+    host.Project = await ProjectDocument.CreateNewAsync(_FileSystem.ToPath(cache), projectName, token);
     await Task.WhenAll(
-      project.Metadata.AddAsync("name", projectName, token),
-      project.Metadata.AddAsync("description", projectDescription, token));
-    host.Project = project;
+      host.Project.Metadata.AddAsync("name", projectName, token),
+      host.Project.Metadata.AddAsync("description", projectDescription, token));
 
     InvalidateItems();
 
