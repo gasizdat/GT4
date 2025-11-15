@@ -3,36 +3,78 @@
     x:Class="GT4.UI.Pages.MainPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:components="clr-namespace:GT4.UI.Components"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root">
 
-  <ScrollView>
-    <VerticalStackLayout Style="{x:StaticResource PageContentIndentation}">
-
+  <components:PageLayout>
+    <components:PageLayout.Header>
       <Picker
           Title="{x:Static resources:UIStrings.PkrLanguageHint}"
           HorizontalOptions="End"
           ItemDisplayBinding="{Binding Name}"
           ItemsSource="{Binding Languages, Source={x:Reference Root}}"
           SelectedItem="{Binding SelectedLanguage, Source={x:Reference Root}}" />
+    </components:PageLayout.Header>
 
-      <Image
-          Aspect="AspectFit"
-          HeightRequest="185"
-          Source="gt4_logo.png" />
+    <components:PageLayout.Body>
+      <VerticalStackLayout
+          Padding="{x:StaticResource PageContentPadding}"
+          Spacing="{x:StaticResource PageContentSpacing}">
 
-      <Label
-          HorizontalOptions="Fill"
-          HorizontalTextAlignment="Center"
-          Style="{StaticResource PageTitle}"
-          Text="{x:Static resources:UIStrings.AppGeneralName}" />
+        <Image
+            Aspect="AspectFit"
+            HeightRequest="200"
+            Source="gt4_logo.png" />
 
-      <Label
-          HorizontalOptions="Fill"
-          HorizontalTextAlignment="Center"
-          Style="{StaticResource PageSubtitle}"
-          Text="{x:Static resources:UIStrings.AppGeneralWelcomeTitle}" />
+        <Label
+            HorizontalOptions="Fill"
+            HorizontalTextAlignment="Center"
+            Style="{StaticResource PageTitle}"
+            Text="{x:Static resources:UIStrings.AppGeneralName}" />
 
+        <Label
+            HorizontalOptions="Fill"
+            HorizontalTextAlignment="Center"
+            Style="{StaticResource PageSubtitle}"
+            Text="{x:Static resources:UIStrings.AppGeneralWelcomeTitle}" />
+
+        <!--  TODO: Temporary code for testing — to be removed before production.  -->
+        <VerticalStackLayout IsVisible="Hidden">
+          <Label
+              Style="{StaticResource PageTitle}"
+              Text="PageTitle" />
+          <Label
+              Style="{StaticResource PageSubtitle}"
+              Text="PageSubtitle" />
+          <Label
+              Style="{StaticResource GroupTitle}"
+              Text="GroupTitle" />
+          <Label
+              Style="{StaticResource GroupSubtitle}"
+              Text="GroupSubtitle" />
+          <Label
+              Style="{StaticResource CardTitle}"
+              Text="CardTitle" />
+          <Label
+              Style="{StaticResource CardSubtitle}"
+              Text="CardSubtitle" />
+          <Label
+              Style="{StaticResource CardContent}"
+              Text="CardContent" />
+          <Label
+              Style="{StaticResource FieldName}"
+              Text="FieldName" />
+          <Label
+              Style="{StaticResource FieldValue}"
+              Text="FieldValue" />
+
+        </VerticalStackLayout>
+
+      </VerticalStackLayout>
+    </components:PageLayout.Body>
+
+    <components:PageLayout.Footer>
       <Button
           x:Name="OpenOrCreateBtn"
           Command="{Binding NavigateToCreateOrOpenDialog, Source={x:Reference Root}}"
@@ -41,42 +83,7 @@
           HorizontalOptions="Fill"
           SemanticProperties.Hint="{x:Static resources:UIStrings.BtnHintOpenOrCreateProject}"
           Text="{x:Static resources:UIStrings.BtnNameOpenOrCreateProject}" />
+    </components:PageLayout.Footer>
 
-      <!--  TODO: Temporary code for testing — to be removed before production.  -->
-      <VerticalStackLayout>
-
-
-        <Label
-            Style="{StaticResource PageTitle}"
-            Text="PageTitle" />
-        <Label
-            Style="{StaticResource PageSubtitle}"
-            Text="PageSubtitle" />
-        <Label
-            Style="{StaticResource GroupTitle}"
-            Text="GroupTitle" />
-        <Label
-            Style="{StaticResource GroupSubtitle}"
-            Text="GroupSubtitle" />
-        <Label
-            Style="{StaticResource CardTitle}"
-            Text="CardTitle" />
-        <Label
-            Style="{StaticResource CardSubtitle}"
-            Text="CardSubtitle" />
-        <Label
-            Style="{StaticResource CardContent}"
-            Text="CardContent" />
-        <Label
-            Style="{StaticResource FieldName}"
-            Text="FieldName" />
-        <Label
-            Style="{StaticResource FieldValue}"
-            Text="FieldValue" />
-
-      </VerticalStackLayout>
-
-    </VerticalStackLayout>
-  </ScrollView>
-
+  </components:PageLayout>
 </ContentPage>

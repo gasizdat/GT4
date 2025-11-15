@@ -97,8 +97,12 @@ public partial class ProjectsPage : ContentPage
       if (projectInfo.Name == string.Empty)
         return;
 
-      using var token = Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
-      await using var project = await Services.GetRequiredService<IProjectList>().CreateAsync(projectInfo.Name, projectInfo.Description, token);
+      using var token = Services
+        .GetRequiredService<ICancellationTokenProvider>()
+        .CreateDbCancellationToken();
+      await using var project = await Services
+        .GetRequiredService<IProjectList>()
+        .CreateAsync(projectInfo.Name, projectInfo.Description, token);
     }
     catch (Exception ex)
     {
