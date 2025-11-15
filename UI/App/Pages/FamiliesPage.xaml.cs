@@ -39,6 +39,7 @@ public partial class FamiliesPage : ContentPage
         break;
 
         case string name when name == "EditProject":
+          await OnEditProject();
           break;
       }
     }
@@ -59,6 +60,39 @@ public partial class FamiliesPage : ContentPage
     }
 
     await Shell.Current.GoToAsync("..", true);
+  }
+
+  private async Task OnEditProject()
+  {
+    var currentProject = Services.GetRequiredService<ICurrentProjectProvider>();
+    var dialog = new CreateOrUpdateProjectDialog(currentProject.Info);
+
+    await Navigation.PushModalAsync(dialog);
+    var projectInfo = await dialog.ProjectInfo;
+    await Navigation.PopModalAsync();
+
+    try
+    {
+      if (projectInfo.Name == string.Empty)
+        return;
+
+      var project = currentProject.Project;
+      using var token = Services
+        .GetRequiredService<ICancellationTokenProvider>()
+        .CreateDbCancellationToken();
+
+      using var transaction = await project.BeginTransactionAsync(token);
+      await Task.WhenAll(
+        project.Metadata.SetProjectName(projectInfo.Name, token),
+        project.Metadata.SetProjectDescription(projectInfo.Description, token));
+      transaction.Commit();
+
+      await Shell.Current.GoToAsync("..", true);
+    }
+    catch (Exception ex)
+    {
+      await this.ShowError(ex);
+    }
   }
 
   public FamiliesPage()

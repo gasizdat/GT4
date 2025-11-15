@@ -15,8 +15,8 @@ internal class ProjectList : IProjectList
   private async Task<ProjectInfo> GetProjectInfoAsync(ProjectDocument project, CancellationToken token)
   {
     var results = await Task.WhenAll(
-        project.Metadata.GetAsync<string>("name", token),
-        project.Metadata.GetAsync<string>("description", token));
+        project.Metadata.GetProjectName(token),
+        project.Metadata.GetProjectDescription(token));
 
     return new ProjectInfo(
       Description: results[1] ?? string.Empty,
@@ -107,8 +107,8 @@ internal class ProjectList : IProjectList
     using var host = new ProjectHost(_FileSystem, origin, cache);
     host.Project = await ProjectDocument.CreateNewAsync(_FileSystem.ToPath(cache), projectName, token);
     await Task.WhenAll(
-      host.Project.Metadata.AddAsync("name", projectName, token),
-      host.Project.Metadata.AddAsync("description", projectDescription, token));
+      host.Project.Metadata.SetProjectName(projectName, token),
+      host.Project.Metadata.SetProjectDescription(projectDescription, token));
 
     InvalidateItems();
 

@@ -43,4 +43,12 @@ public class TableMetadata : TableBase
     var result = await command.ExecuteScalarAsync(token);
     return (TData?)result;
   }
+
+  public Task<string?> GetProjectName(CancellationToken token) => GetAsync<string>("name", token);
+
+  public Task<string?> GetProjectDescription(CancellationToken token) => GetAsync<string>("description", token);
+
+  public Task SetProjectName(string value, CancellationToken token) => AddAsync("name", value, token);
+
+  public Task SetProjectDescription(string value, CancellationToken token) => AddAsync("description", value, token);
 }
