@@ -7,12 +7,12 @@
     x:Name="Root"
     Title="{x:Static resources:UIStrings.WndTitleSelectDateDialog}">
 
-  <ScrollView Padding="20">
+  <ScrollView Padding="{x:StaticResource PageContentPadding}">
     <Grid
         ColumnDefinitions="Auto, *, Auto"
-        ColumnSpacing="10"
+        ColumnSpacing="{x:StaticResource PageContentSpacing}"
         RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto"
-        RowSpacing="10">
+        RowSpacing="{x:StaticResource PageContentSpacing}">
 
       <Label
           Grid.Row="0"
@@ -74,14 +74,6 @@
           ItemDisplayBinding="{Binding .}"
           ItemsSource="{Binding Days, Source={x:Reference Root}}"
           SelectedItem="{Binding Day, Source={x:Reference Root}}" />
-
-      <!--<Entry
-          Grid.Row="3"
-          Grid.Column="1"
-          HorizontalOptions="Fill"
-          Keyboard="Numeric"
-          Style="{StaticResource FieldValue}"
-          Text="{Binding Day, Source={x:Reference Root}}" />-->
 
       <Switch
           Grid.Row="3"

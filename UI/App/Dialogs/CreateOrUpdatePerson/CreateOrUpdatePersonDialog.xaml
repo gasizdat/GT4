@@ -48,7 +48,9 @@
   </ContentPage.Resources>
 
   <ScrollView>
-    <VerticalStackLayout Style="{x:StaticResource PageContentIndentation}">
+    <VerticalStackLayout
+        Padding="{x:StaticResource PageContentPadding}"
+        Spacing="{x:StaticResource PageContentSpacing}">
 
       <!--  Pictures  -->
       <Frame Style="{StaticResource CardFrameStyle}">
