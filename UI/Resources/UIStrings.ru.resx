@@ -380,6 +380,42 @@
     <value>Удалить '{0}'&#9;❌</value>
   </data>
   <data name="MenuItemNameEdit_1" xml:space="preserve">
-    <value>Править '{0}'&#9;🖋️</value>
+    <value>Править '{0}'&#9;&#9;🖋️</value>
+  </data>
+  <data name="Month_01" xml:space="preserve">
+    <value>{0}Январь</value>
+  </data>
+  <data name="Month_02" xml:space="preserve">
+    <value>{0}Февраль</value>
+  </data>
+  <data name="Month_03" xml:space="preserve">
+    <value>{0}Март</value>
+  </data>
+  <data name="Month_04" xml:space="preserve">
+    <value>{0}Апрель</value>
+  </data>
+  <data name="Month_05" xml:space="preserve">
+    <value>{0}Май</value>
+  </data>
+  <data name="Month_06" xml:space="preserve">
+    <value>{0}Июнь</value>
+  </data>
+  <data name="Month_07" xml:space="preserve">
+    <value>{0}Июль</value>
+  </data>
+  <data name="Month_08" xml:space="preserve">
+    <value>{0}Август</value>
+  </data>
+  <data name="Month_09" xml:space="preserve">
+    <value>{0}Сентябрь</value>
+  </data>
+  <data name="Month_10" xml:space="preserve">
+    <value>{0}Октябрь</value>
+  </data>
+  <data name="Month_11" xml:space="preserve">
+    <value>{0}Ноябрь</value>
+  </data>
+  <data name="Month_12" xml:space="preserve">
+    <value>{0}Декабрь</value>
   </data>
 </root>

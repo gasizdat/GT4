@@ -382,4 +382,40 @@ genealogy tree and enjoy!</value>
   <data name="MenuItemNameEdit_1" xml:space="preserve">
     <value>Edit '{0}'&#9;&#9;🖋️</value>
   </data>
+  <data name="Month_01" xml:space="preserve">
+    <value>{0}January</value>
+  </data>
+  <data name="Month_02" xml:space="preserve">
+    <value>{0}Fabruary</value>
+  </data>
+  <data name="Month_03" xml:space="preserve">
+    <value>{0}March</value>
+  </data>
+  <data name="Month_04" xml:space="preserve">
+    <value>{0}April</value>
+  </data>
+  <data name="Month_05" xml:space="preserve">
+    <value>{0}May</value>
+  </data>
+  <data name="Month_06" xml:space="preserve">
+    <value>{0}June</value>
+  </data>
+  <data name="Month_07" xml:space="preserve">
+    <value>{0}July</value>
+  </data>
+  <data name="Month_08" xml:space="preserve">
+    <value>{0}August</value>
+  </data>
+  <data name="Month_09" xml:space="preserve">
+    <value>{0}September</value>
+  </data>
+  <data name="Month_10" xml:space="preserve">
+    <value>{0}October</value>
+  </data>
+  <data name="Month_11" xml:space="preserve">
+    <value>{0}November</value>
+  </data>
+  <data name="Month_12" xml:space="preserve">
+    <value>{0}December</value>
+  </data>
 </root>

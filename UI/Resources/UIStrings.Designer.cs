@@ -575,6 +575,114 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {0}January.
+        /// </summary>
+        public static string Month_01 {
+            get {
+                return ResourceManager.GetString("Month_01", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0}Fabruary.
+        /// </summary>
+        public static string Month_02 {
+            get {
+                return ResourceManager.GetString("Month_02", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0}March.
+        /// </summary>
+        public static string Month_03 {
+            get {
+                return ResourceManager.GetString("Month_03", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0}April.
+        /// </summary>
+        public static string Month_04 {
+            get {
+                return ResourceManager.GetString("Month_04", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0}May.
+        /// </summary>
+        public static string Month_05 {
+            get {
+                return ResourceManager.GetString("Month_05", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0}June.
+        /// </summary>
+        public static string Month_06 {
+            get {
+                return ResourceManager.GetString("Month_06", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0}July.
+        /// </summary>
+        public static string Month_07 {
+            get {
+                return ResourceManager.GetString("Month_07", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0}August.
+        /// </summary>
+        public static string Month_08 {
+            get {
+                return ResourceManager.GetString("Month_08", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0}September.
+        /// </summary>
+        public static string Month_09 {
+            get {
+                return ResourceManager.GetString("Month_09", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0}October.
+        /// </summary>
+        public static string Month_10 {
+            get {
+                return ResourceManager.GetString("Month_10", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0}November.
+        /// </summary>
+        public static string Month_11 {
+            get {
+                return ResourceManager.GetString("Month_11", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0}December.
+        /// </summary>
+        public static string Month_12 {
+            get {
+                return ResourceManager.GetString("Month_12", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 🌐 Language.
         /// </summary>
         public static string PkrLanguageHint {

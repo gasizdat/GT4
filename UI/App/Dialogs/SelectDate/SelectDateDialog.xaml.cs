@@ -85,7 +85,9 @@ public partial class SelectDateDialog : ContentPage
     var ret = new List<string>();
     for (var i = 1; i <= 12; i++)
     {
-      ret.Add(i.ToString(D2));
+      var monthNo = i.ToString(D2);
+      var monthName = UIStrings.ResourceManager.GetString($"Month_{monthNo}", UIStrings.Culture) ?? "{0}??";
+      ret.Add(string.Format(monthName, $"{monthNo} - "));
     }
     return ret.ToArray();
   }
