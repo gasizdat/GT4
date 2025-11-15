@@ -773,11 +773,11 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to You can open the existent or create a new Genealogy Tree.
+        ///   Looks up a localized string similar to Open or create a new one.
         /// </summary>
-        public static string WndHintOpenOrCreateDialog {
+        public static string WndHintProjectPage {
             get {
-                return ResourceManager.GetString("WndHintOpenOrCreateDialog", resourceCulture);
+                return ResourceManager.GetString("WndHintProjectPage", resourceCulture);
             }
         }
         
@@ -809,11 +809,11 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Open or Create a Genealogy.
+        ///   Looks up a localized string similar to Genealogy Tree.
         /// </summary>
-        public static string WndTitleOpenOrCreateDialog {
+        public static string WndTitleProjectPage {
             get {
-                return ResourceManager.GetString("WndTitleOpenOrCreateDialog", resourceCulture);
+                return ResourceManager.GetString("WndTitleProjectPage", resourceCulture);
             }
         }
         

@@ -154,11 +154,11 @@ genealogy tree and enjoy!</value>
   <data name="BtnNameYes" xml:space="preserve">
     <value>Yes</value>
   </data>
-  <data name="WndHintOpenOrCreateDialog" xml:space="preserve">
-    <value>You can open the existent or create a new Genealogy Tree</value>
+  <data name="WndHintProjectPage" xml:space="preserve">
+    <value>Open or create a new one</value>
   </data>
-  <data name="WndTitleOpenOrCreateDialog" xml:space="preserve">
-    <value>Open or Create a Genealogy</value>
+  <data name="WndTitleProjectPage" xml:space="preserve">
+    <value>Genealogy Tree</value>
   </data>
   <data name="AlertTitleError" xml:space="preserve">
     <value>Error</value>

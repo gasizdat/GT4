@@ -154,11 +154,11 @@
   <data name="BtnNameYes" xml:space="preserve">
     <value>Да</value>
   </data>
-  <data name="WndHintOpenOrCreateDialog" xml:space="preserve">
-    <value>Здесь вы можете создать новое или открыть существующее генеалогическое древо</value>
+  <data name="WndHintProjectPage" xml:space="preserve">
+    <value>Откройте или создайте новое</value>
   </data>
-  <data name="WndTitleOpenOrCreateDialog" xml:space="preserve">
-    <value>Создать или открыть генеалогию</value>
+  <data name="WndTitleProjectPage" xml:space="preserve">
+    <value>Генеалогическое дерево</value>
   </data>
   <data name="AlertTitleError" xml:space="preserve">
     <value>Ошибка</value>
