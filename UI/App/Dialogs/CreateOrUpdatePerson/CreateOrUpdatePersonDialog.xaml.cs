@@ -13,6 +13,10 @@ namespace GT4.UI.Dialogs;
 
 public partial class CreateOrUpdatePersonDialog : ContentPage
 {
+  private readonly ICancellationTokenProvider _CancellationTokenProvider;
+  private readonly IBiologicalSexFormatter _BiologicalSexFormatter;
+  private readonly INameTypeFormatter _NameTypeFormatter;
+  private readonly IDateFormatter _DateFormatter;
   private readonly IServiceProvider _ServiceProvider;
   private readonly ICommand _DialogCommand;
   private readonly string _SaveButtonName;
@@ -31,12 +35,15 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   public CreateOrUpdatePersonDialog(PersonFullInfo? person, IServiceProvider serviceProvider)
   {
     _ServiceProvider = serviceProvider;
+    _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
+    _BiologicalSexFormatter = _ServiceProvider.GetRequiredService<IBiologicalSexFormatter>();
+    _NameTypeFormatter = _ServiceProvider.GetRequiredService<INameTypeFormatter>();
+    _DateFormatter = _ServiceProvider.GetRequiredService<IDateFormatter>();
     _DialogCommand = new Command<object>(OnDialogCommand);
     _SaveButtonName = person is null ? UIStrings.BtnNameCreateFamilyPerson : UIStrings.BtnNameUpdateFamilyPerson;
-    var biologicalSexFormatter = _ServiceProvider.GetRequiredService<IBiologicalSexFormatter>();
-    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, biologicalSexFormatter));
-    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Female, biologicalSexFormatter));
-    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Unknown, biologicalSexFormatter));
+    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, _BiologicalSexFormatter));
+    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Female, _BiologicalSexFormatter));
+    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Unknown, _BiologicalSexFormatter));
     _BiologicalSex = _BiologicalSexes.Where(i => i.Info == person?.BiologicalSex).FirstOrDefault();
     UpdatePersonInformation(person);
 
@@ -53,10 +60,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     _PersonId = person.Id;
     _BirthDate = person.BirthDate;
     _DeathDate = person.DeathDate;
-    var nameFormater = _ServiceProvider.GetRequiredService<INameTypeFormatter>();
     foreach (var name in person.Names)
     {
-      _Names.Add(new NameInfoItem(name, nameFormater));
+      _Names.Add(new NameInfoItem(name, _NameTypeFormatter));
     }
 
     if (person.MainPhoto is not null)
@@ -64,7 +70,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       _Photos.Add(new PersonDataItem(
         data: person.MainPhoto,
         _ServiceProvider.GetRequiredKeyedService<IDataConverter>(person.MainPhoto.Category),
-        _ServiceProvider.GetRequiredService<ICancellationTokenProvider>()));
+        _CancellationTokenProvider));
     }
 
     foreach (var photo in person.AdditionalPhotos)
@@ -72,7 +78,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       _Photos.Add(new PersonDataItem(
         data: photo,
         _ServiceProvider.GetRequiredKeyedService<IDataConverter>(photo.Category),
-        _ServiceProvider.GetRequiredService<ICancellationTokenProvider>()));
+        _CancellationTokenProvider));
     }
 
     _Biography = person.Biography switch
@@ -81,12 +87,12 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         new PersonDataItem(
             data: biography,
             _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonBio),
-            _ServiceProvider.GetRequiredService<ICancellationTokenProvider>()),
+            _CancellationTokenProvider),
 
       _ => new PersonDataItem(
             dataCategory: DataCategory.PersonBio,
             _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonBio),
-            _ServiceProvider.GetRequiredService<ICancellationTokenProvider>())
+            _CancellationTokenProvider)
     };
 
 
@@ -147,12 +153,10 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       return;
     }
 
-    var token = _ServiceProvider
-      .GetRequiredService<ICancellationTokenProvider>()
-      .CreateDbCancellationToken();
+    var token = _CancellationTokenProvider.CreateDbCancellationToken();
 
     // We do not change the person photo, so we can reuse photo.Info rather than using photo.ToDataAsync()
-    var photos = 
+    var photos =
       _Photos
       .Select(photo => photo.Info)
       .Where(data => data is not null)
@@ -191,16 +195,15 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     var name = await dialog.Name;
     await Navigation.PopModalAsync();
 
-    var nameFormater = _ServiceProvider.GetRequiredService<INameTypeFormatter>();
     if (name is not null)
     {
-      _Names.Add(new NameInfoItem(name, nameFormater));
+      _Names.Add(new NameInfoItem(name, _NameTypeFormatter));
     }
   }
 
   private async Task OnBirthDateSetupAsync()
   {
-    var dialog = new SelectDateDialog(date: BirthDate, dateFormatter: _ServiceProvider.GetRequiredService<IDateFormatter>());
+    var dialog = new SelectDateDialog(date: BirthDate, dateFormatter: _DateFormatter);
 
     await Navigation.PushModalAsync(dialog);
     var date = await dialog.Info;
@@ -216,7 +219,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   {
     var dialog = new SelectDateDialog(
       date: DeathDate,
-      dateFormatter: _ServiceProvider.GetRequiredService<IDateFormatter>());
+      dateFormatter: _DateFormatter);
 
     await Navigation.PushModalAsync(dialog);
     var date = await dialog.Info;
@@ -251,7 +254,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     IEnumerable<Stream>? streams = null;
     try
     {
-      var token = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>().CreateShortOperationCancellationToken();
+      var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
       var filesContent = result.Select(file => (Stream: file.OpenReadAsync(), MimeType: file.ContentType));
       streams = await Task.WhenAll(filesContent.Select(file => file.Stream));
       var photoAssets = filesContent.Select(content =>
@@ -268,7 +271,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         Photos.Add(new PersonDataItem(
           data: photoAsset with { Category = category },
           dataConverter: _ServiceProvider.GetRequiredKeyedService<IDataConverter>(category),
-          cancellationTokenProvider: _ServiceProvider.GetRequiredService<ICancellationTokenProvider>()));
+          cancellationTokenProvider: _CancellationTokenProvider));
       }
     }
     finally

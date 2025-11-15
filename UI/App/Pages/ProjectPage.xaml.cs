@@ -11,22 +11,26 @@ namespace GT4.UI.Pages;
 
 public partial class ProjectPage : ContentPage
 {
-  private readonly IServiceProvider _Services;
+  private readonly ICancellationTokenProvider _CancellationTokenProvider;
+  private readonly ICurrentProjectProvider _CurrentProjectProvider;
+  private readonly IComparer<PersonInfoItem> _PersonInfoComparer;
+  private readonly IComparer<FamilyInfoItem> _FamilyInfoComparer;
+  private readonly INameFormatter _NameFormatter;
+  private readonly IProjectList _ProjectList;
 
   private long? _ProjectRevision;
 
   private PersonInfoItem[] GetFamilyPersons(Name name, CancellationToken token)
   {
-    var project = _Services.GetRequiredService<ICurrentProjectProvider>().Project;
-    var nameFormatter = _Services.GetRequiredService<INameFormatter>();
+    var project = _CurrentProjectProvider.Project;
     _ProjectRevision = project.ProjectRevision;
 
     return project
       .PersonManager
       .GetPersonInfosByNameAsync(name, token)
       .Result
-      .Select(person => new PersonInfoItem(person, nameFormatter))
-      .OrderBy(item => item, _Services.GetRequiredService<IComparer<PersonInfoItem>>())
+      .Select(person => new PersonInfoItem(person, _NameFormatter))
+      .OrderBy(item => item, _PersonInfoComparer)
       .ToArray();
   }
 
@@ -53,12 +57,12 @@ public partial class ProjectPage : ContentPage
 
   private async Task OnRemoveProject()
   {
-    var projectName = _Services.GetRequiredService<ICurrentProjectProvider>().Info.Name;
+    var projectName = _CurrentProjectProvider.Info.Name;
     var confirmationText = string.Format(UIStrings.AlertTextDeleteConfirmationText_1, projectName);
     if (await PageAlert.ShowConfirmation(confirmationText))
     {
-      using var token = _Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
-      await _Services.GetRequiredService<IProjectList>().RemoveAsync(projectName, token);
+      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      await _ProjectList.RemoveAsync(projectName, token);
     }
 
     await Shell.Current.GoToAsync("..", true);
@@ -66,8 +70,7 @@ public partial class ProjectPage : ContentPage
 
   private async Task OnEditProject()
   {
-    var currentProject = _Services.GetRequiredService<ICurrentProjectProvider>();
-    var dialog = new CreateOrUpdateProjectDialog(currentProject.Info);
+    var dialog = new CreateOrUpdateProjectDialog(_CurrentProjectProvider.Info);
 
     await Navigation.PushModalAsync(dialog);
     var projectInfo = await dialog.ProjectInfo;
@@ -78,10 +81,8 @@ public partial class ProjectPage : ContentPage
       if (projectInfo.Name == string.Empty)
         return;
 
-      var project = currentProject.Project;
-      using var token = _Services
-        .GetRequiredService<ICancellationTokenProvider>()
-        .CreateDbCancellationToken();
+      var project = _CurrentProjectProvider.Project;
+      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
 
       using var transaction = await project.BeginTransactionAsync(token);
       await Task.WhenAll(
@@ -99,7 +100,12 @@ public partial class ProjectPage : ContentPage
 
   protected ProjectPage(IServiceProvider serviceProvider)
   {
-    _Services = serviceProvider;
+    _CancellationTokenProvider = serviceProvider.GetRequiredService<ICancellationTokenProvider>();
+    _CurrentProjectProvider = serviceProvider.GetRequiredService<ICurrentProjectProvider>();
+    _PersonInfoComparer = serviceProvider.GetRequiredService<IComparer<PersonInfoItem>>();
+    _FamilyInfoComparer = serviceProvider.GetRequiredService<IComparer<FamilyInfoItem>>();
+    _NameFormatter = serviceProvider.GetRequiredService<INameFormatter>();
+    _ProjectList = serviceProvider.GetRequiredService<IProjectList>();
 
     MenuItemCommand = new Command<object>(OnMenuItemCommand);
     InitializeComponent();
@@ -116,14 +122,14 @@ public partial class ProjectPage : ContentPage
     {
       try
       {
-        using var token = _Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
-        var ret = _Services.GetRequiredService<ICurrentProjectProvider>()
+        using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+        var ret = _CurrentProjectProvider
           .Project
           .FamilyManager
           .GetFamiliesAsync(token)
           .Result
           .Select(name => new FamilyInfoItem(name, GetFamilyPersons(name, token)))
-          .OrderBy(item => item, _Services.GetRequiredService<IComparer<FamilyInfoItem>>())
+          .OrderBy(item => item, _FamilyInfoComparer)
           .ToList();
 
         ret.Add(new FamilyInfoItemCreate());
@@ -138,10 +144,10 @@ public partial class ProjectPage : ContentPage
   }
 
   public string RemoveProjectToolbarItemName =>
-    string.Format(UIStrings.MenuItemNameRemove_1, _Services.GetRequiredService<ICurrentProjectProvider>().Info.Name);
+    string.Format(UIStrings.MenuItemNameRemove_1, _CurrentProjectProvider.Info.Name);
 
   public string EditProjectToolbarItemName =>
-    string.Format(UIStrings.MenuItemNameEdit_1, _Services.GetRequiredService<ICurrentProjectProvider>().Info.Name);
+    string.Format(UIStrings.MenuItemNameEdit_1, _CurrentProjectProvider.Info.Name);
 
 
   public async void OnFamilySelected(object sender, SelectionChangedEventArgs e)
@@ -182,8 +188,8 @@ public partial class ProjectPage : ContentPage
         return;
       }
 
-      using var token = _Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
-      var family = await _Services.GetRequiredService<ICurrentProjectProvider>()
+      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      var family = await _CurrentProjectProvider
         .Project
         .FamilyManager
         .AddFamilyAsync(familyName: info.Name, maleLastName: info.MaleName, femaleLastName: info.FemaleName, token);
@@ -202,7 +208,7 @@ public partial class ProjectPage : ContentPage
   {
     base.OnNavigatedTo(args);
 
-    var projectRevision = _Services.GetRequiredService<ICurrentProjectProvider>().Project.ProjectRevision;
+    var projectRevision = _CurrentProjectProvider.Project.ProjectRevision;
     if (projectRevision != _ProjectRevision)
     {
       _ProjectRevision = projectRevision;

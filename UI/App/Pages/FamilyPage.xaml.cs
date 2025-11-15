@@ -12,12 +12,17 @@ namespace GT4.UI.Pages;
 public partial class FamilyPage : ContentPage
 {
   private readonly IServiceProvider _Services;
+  private readonly ICancellationTokenProvider _CancellationTokenProvider;
+  private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private Name? _FamilyName = null;
   private int _PersonItemMinimalWidth;
 
   protected FamilyPage(IServiceProvider serviceProvider)
   {
     _Services = serviceProvider;
+    _CancellationTokenProvider = _Services.GetRequiredService<ICancellationTokenProvider>();
+    _CurrentProjectProvider = _Services.GetRequiredService<ICurrentProjectProvider>();
+
     MemberItemTappedCommand = new Command<FamilyMemberInfoItem>(OnMemberSelected);
     DeleteFamilyCommand = new Command<object?>(OnDeleteFmily);
     EditFamilyCommand = new Command<object?>(OnEditFmily);
@@ -58,11 +63,8 @@ public partial class FamilyPage : ContentPage
 
       try
       {
-        using var token = _Services
-          .GetRequiredService<ICancellationTokenProvider>()
-          .CreateDbCancellationToken();
-        var ret = _Services
-          .GetRequiredService<ICurrentProjectProvider>()
+        using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+        var ret = _CurrentProjectProvider
           .Project
           .PersonManager
           .GetPersonInfosByNameAsync(FamilyName, token)
@@ -110,11 +112,8 @@ public partial class FamilyPage : ContentPage
 
     try
     {
-      using var token = _Services
-        .GetRequiredService<ICancellationTokenProvider>()
-        .CreateDbCancellationToken();
-      await _Services
-        .GetRequiredService<ICurrentProjectProvider>()
+      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      await _CurrentProjectProvider
         .Project
         .FamilyManager
         .RemoveFamilyAsync(_FamilyName!, token);
@@ -148,14 +147,13 @@ public partial class FamilyPage : ContentPage
         return;
       }
 
-      var projectProvider = _Services.GetRequiredService<ICurrentProjectProvider>();
-      using var token = _Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
-      var person = projectProvider
+      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      var person = _CurrentProjectProvider
         .Project
         .FamilyManager
         .SetUpPersonFamily(info, _FamilyName);
 
-      await projectProvider
+      await _CurrentProjectProvider
         .Project
         .PersonManager
         .AddPersonAsync(person, token);
@@ -172,10 +170,8 @@ public partial class FamilyPage : ContentPage
 
   private async Task OnEditPerson(FamilyMemberInfoItem familyMember)
   {
-    var projectProvider = _Services.GetRequiredService<ICurrentProjectProvider>();
-    var tokenProvider = _Services.GetRequiredService<ICancellationTokenProvider>();
-    using var readToken = tokenProvider.CreateDbCancellationToken();
-    var familyMemberFullInfo = await projectProvider
+    using var readToken = _CancellationTokenProvider.CreateDbCancellationToken();
+    var familyMemberFullInfo = await _CurrentProjectProvider
       .Project
       .PersonManager
       .GetPersonFullInfoAsync(familyMember.Info, readToken);
@@ -192,15 +188,13 @@ public partial class FamilyPage : ContentPage
         return;
       }
 
-      using var updateToken = _Services
-        .GetRequiredService<ICancellationTokenProvider>()
-        .CreateDbCancellationToken();
-      var person = projectProvider
+      using var updateToken = _CancellationTokenProvider.CreateDbCancellationToken();
+      var person = _CurrentProjectProvider
         .Project
         .FamilyManager
         .SetUpPersonFamily(info, _FamilyName);
 
-      await projectProvider
+      await _CurrentProjectProvider
         .Project
         .PersonManager
         .UpdatePersonAsync(info, updateToken);

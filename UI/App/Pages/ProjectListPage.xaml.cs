@@ -8,17 +8,20 @@ namespace GT4.UI.Pages;
 
 public partial class ProjectListPage : ContentPage
 {
+  private readonly ICancellationTokenProvider _CancellationTokenProvider;
+  private readonly ICurrentProjectProvider _CurrentProjectProvider;
+  private readonly IComparer<ProjectItem> _ProjectItemsComparer;
+  private readonly IProjectList _ProjectList;
   private readonly ObservableCollection<ProjectItem> _Projects = new();
-  private readonly IServiceProvider _Services;
 
   private void UpdateProjectList()
   {
-    using var token = _Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
-    var projects = _Services.GetRequiredService<IProjectList>()
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    var projects = _ProjectList
       .GetItemsAsync(token)
       .Result
       .Select(projectInfo => new ProjectItem(projectInfo))
-      .OrderBy(item => item, _Services.GetRequiredService<IComparer<ProjectItem>>());
+      .OrderBy(item => item, _ProjectItemsComparer);
 
     _Projects.Clear();
     foreach (var project in projects)
@@ -30,7 +33,11 @@ public partial class ProjectListPage : ContentPage
 
   protected ProjectListPage(IServiceProvider services)
   {
-    _Services = services;
+    _CancellationTokenProvider = services.GetRequiredService<ICancellationTokenProvider>();
+    _CurrentProjectProvider = services.GetRequiredService<ICurrentProjectProvider>();
+    _ProjectItemsComparer = services.GetRequiredService<IComparer<ProjectItem>>();
+    _ProjectList = services.GetRequiredService<IProjectList>();
+
     InitializeComponent();
   }
 
@@ -51,8 +58,8 @@ public partial class ProjectListPage : ContentPage
 
       case ProjectItem projectItem:
       {
-        using var token = _Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
-        await _Services.GetRequiredService<ICurrentProjectProvider>().OpenAsync(projectItem.Info, token);
+        using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+        await _CurrentProjectProvider.OpenAsync(projectItem.Info, token);
         await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectPage>());
 
         // TODO not so good approach
@@ -78,13 +85,8 @@ public partial class ProjectListPage : ContentPage
       if (projectInfo.Name == string.Empty)
         return;
 
-      using var token = _Services
-        .GetRequiredService<ICancellationTokenProvider>()
-        .CreateDbCancellationToken();
-      await using var project = await _Services
-        .GetRequiredService<IProjectList>()
-        .CreateAsync(projectInfo.Name, projectInfo.Description, token);
-
+      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      await using var project = await _ProjectList.CreateAsync(projectInfo.Name, projectInfo.Description, token);
     }
     catch (Exception ex)
     {
