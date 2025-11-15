@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="GT4.UI.Components.PageLayout"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Name="Root">
+
+  <ContentView.Resources>
+    <ResourceDictionary>
+      <Thickness
+          x:Key="HeaderAndFooterPadding"
+          Bottom="0"
+          Left="{StaticResource PageContentHorizontalPadding}"
+          Right="{StaticResource PageContentHorizontalPadding}"
+          Top="0" />
+      
+      <Thickness
+          x:Key="BodyPadding"
+          Bottom="{StaticResource PageContentVerticalPadding}"
+          Left="{StaticResource PageContentHorizontalPadding}"
+          Right="{StaticResource PageContentHorizontalPadding}"
+          Top="{StaticResource PageContentVerticalPadding}" />
+    </ResourceDictionary>
+  </ContentView.Resources>
+
+  <Grid
+      ColumnDefinitions="*"
+      RowDefinitions="Auto, *, Auto">
+
+    <!--  Header slot  -->
+    <ContentView
+        Grid.Row="0"
+        Grid.Column="0"
+        Padding="{StaticResource HeaderAndFooterPadding}"
+        Content="{Binding Header, Source={x:Reference Root}}"
+        IsVisible="{Binding IsHeaderVisible, Source={x:Reference Root}}" />
+
+    <!--  Body slot  -->
+    <ContentView
+        Grid.Row="1"
+        Grid.Column="0"
+        Padding="{StaticResource PageContentPadding}"
+        Content="{Binding Body, Source={x:Reference Root}}" />
+
+    <!--  Footer slot  -->
+    <ContentView
+        Grid.Row="2"
+        Grid.Column="0"
+        Padding="{StaticResource HeaderAndFooterPadding}"
+        Content="{Binding Footer, Source={x:Reference Root}}"
+        IsVisible="{Binding IsFooterVisible, Source={x:Reference Root}}" />
+  </Grid>
+
+</ContentView>
