@@ -48,11 +48,6 @@
 
               </VerticalStackLayout>
 
-              <Button
-                  Clicked="OnDeleteProjectSelected"
-                  IsVisible="{Binding IsHandlesVisible}"
-                  Style="{StaticResource DeleteAdorner}" />
-
             </FlexLayout>
           </DataTemplate>
         </CollectionView.ItemTemplate>

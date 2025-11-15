@@ -2,36 +2,44 @@ using GT4.Core.Project;
 using GT4.Core.Utils;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
-using GT4.UI.Resources;
+using System.Collections.ObjectModel;
 
 namespace GT4.UI.Pages;
 
 public partial class ProjectsPage : ContentPage
 {
-  public ProjectsPage()
+  private readonly ObservableCollection<ProjectItem> _Projects = new();
+  private readonly IServiceProvider _Services;
+
+  private void UpdateProjectList()
   {
+    using var token = _Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
+    var projects = _Services.GetRequiredService<IProjectList>()
+      .GetItemsAsync(token)
+      .Result
+      .Select(projectInfo => new ProjectItem(projectInfo))
+      .OrderBy(item => item, _Services.GetRequiredService<IComparer<ProjectItem>>());
+
+    _Projects.Clear();
+    foreach (var project in projects)
+    {
+      _Projects.Add(project);
+    }
+    _Projects.Add(new ProjectItemCreate());
+  }
+
+  protected ProjectsPage(IServiceProvider services)
+  {
+    _Services = services;
     InitializeComponent();
   }
 
-  public ServiceProvider Services { get; set; } = ServiceBuilder.DefaultServices;
-
-  public ICollection<ProjectItem> Projects
+  public ProjectsPage()
+    : this(ServiceBuilder.DefaultServices)
   {
-    get
-    {
-      using var token = Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
-      var ret = Services.GetRequiredService<IProjectList>()
-        .GetItemsAsync(token)
-        .Result
-        .Select(projectInfo => new ProjectItem(projectInfo))
-        .OrderBy(item => item, Services.GetRequiredService<IComparer<ProjectItem>>())
-        .ToList();
-
-      ret.Add(new ProjectItemCreate());
-
-      return ret;
-    }
   }
+
+  public ICollection<ProjectItem> Projects => _Projects;
 
   public async void OnProjectSelected(object sender, SelectionChangedEventArgs e)
   {
@@ -42,45 +50,18 @@ public partial class ProjectsPage : ContentPage
         break;
 
       case ProjectItem projectItem:
+      {
+        using var token = _Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
+        await _Services.GetRequiredService<ICurrentProjectProvider>().OpenAsync(projectItem.Info, token);
+        await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamiliesPage>());
+
+        // TODO not so good approach
+        if (sender is SelectableItemsView view)
         {
-          using var token = Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
-          await Services.GetRequiredService<ICurrentProjectProvider>().OpenAsync(projectItem.Info, token);
-          await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamiliesPage>());
-
-          // TODO not so good approach
-          if (sender is SelectableItemsView view)
-          {
-            view.SelectedItem = null;
-          }
-          break;
+          view.SelectedItem = null;
         }
-    }
-  }
-
-  public async void OnDeleteProjectSelected(object sender, EventArgs e)
-  {
-    var item = (sender as BindableObject)?.BindingContext as ProjectItem;
-    if (item is null or ProjectItemCreate)
-      return;
-
-    try
-    {
-      var result = await DisplayAlert(UIStrings.AlertTitleConfirmation,
-        string.Format(UIStrings.AlertTextDeleteConfirmationText_1, item.Name), UIStrings.BtnNameYes, UIStrings.BtnNameNo);
-
-      if (result == false)
-        return;
-
-      using var token = Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
-      await Services.GetRequiredService<IProjectList>().RemoveAsync(item.Name, token);
-    }
-    catch (Exception ex)
-    {
-      await DisplayAlert(UIStrings.AlertTitleError, ex.Message, UIStrings.BtnNameOk);
-    }
-    finally
-    {
-      OnPropertyChanged(nameof(Projects));
+        break;
+      }
     }
   }
 
@@ -97,12 +78,13 @@ public partial class ProjectsPage : ContentPage
       if (projectInfo.Name == string.Empty)
         return;
 
-      using var token = Services
+      using var token = _Services
         .GetRequiredService<ICancellationTokenProvider>()
         .CreateDbCancellationToken();
-      await using var project = await Services
+      await using var project = await _Services
         .GetRequiredService<IProjectList>()
         .CreateAsync(projectInfo.Name, projectInfo.Description, token);
+
     }
     catch (Exception ex)
     {
@@ -110,7 +92,13 @@ public partial class ProjectsPage : ContentPage
     }
     finally
     {
-      OnPropertyChanged(nameof(Projects));
+      UpdateProjectList();
     }
+  }
+
+  protected override void OnNavigatedTo(NavigatedToEventArgs args)
+  {
+    base.OnNavigatedTo(args);
+    UpdateProjectList();
   }
 }

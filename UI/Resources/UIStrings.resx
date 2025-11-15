@@ -376,4 +376,10 @@ genealogy tree and enjoy!</value>
   <data name="FileDialogSelectPictures" xml:space="preserve">
     <value>Select pictures</value>
   </data>
+  <data name="MenuItemNameRemove_1" xml:space="preserve">
+    <value>Remove '{0}'&#9;❌</value>
+  </data>
+  <data name="MenuItemNameEdit_1" xml:space="preserve">
+    <value>Edit '{0}'&#9;&#9;🖋️</value>
+  </data>
 </root>

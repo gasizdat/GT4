@@ -9,6 +9,19 @@
     x:Name="Root"
     Title="{x:Static resources:UIStrings.WndTitleFamiliesPage}">
 
+  <ContentPage.ToolbarItems>
+    <ToolbarItem
+        Command="{Binding MenuItemCommand, Source={x:Reference Root}}"
+        CommandParameter="RemoveProject"
+        Order="Secondary"
+        Text="{Binding RemoveProjectToolbarItemName, Source={x:Reference Root}}" />
+    <ToolbarItem
+        Command="{Binding MenuItemCommand, Source={x:Reference Root}}"
+        CommandParameter="EditProject"
+        Order="Secondary"
+        Text="{Binding EditProjectToolbarItemName, Source={x:Reference Root}}" />
+  </ContentPage.ToolbarItems>
+
   <components:PageLayout>
     <components:PageLayout.Header>
       <Label

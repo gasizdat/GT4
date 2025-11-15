@@ -5,16 +5,21 @@ using GT4.UI.Dialogs;
 using GT4.UI.Formatters;
 using GT4.UI.Items;
 using GT4.UI.Resources;
+using System.Windows.Input;
 
 namespace GT4.UI.Pages;
 
 public partial class FamiliesPage : ContentPage
 {
+  private long? _ProjectRevision;
+
   private PersonInfoItem[] GetFamilyPersons(Name name, CancellationToken token)
   {
+    var project = Services.GetRequiredService<ICurrentProjectProvider>().Project;
     var nameFormatter = Services.GetRequiredService<INameFormatter>();
-    return Services.GetRequiredService<ICurrentProjectProvider>()
-      .Project
+    _ProjectRevision = project.ProjectRevision;
+
+    return project
       .PersonManager
       .GetPersonInfosByNameAsync(name, token)
       .Result
@@ -23,8 +28,42 @@ public partial class FamiliesPage : ContentPage
       .ToArray();
   }
 
+  private async void OnMenuItemCommand(object obj)
+  {
+    try
+    {
+      switch (obj)
+      {
+        case string name when name == "RemoveProject":
+          await OnRemoveProject();
+        break;
+
+        case string name when name == "EditProject":
+          break;
+      }
+    }
+    catch (Exception ex)
+    {
+      await this.ShowError(ex);
+    }
+  }
+
+  private async Task OnRemoveProject()
+  {
+    var projectName = Services.GetRequiredService<ICurrentProjectProvider>().Info.Name;
+    var confirmationText = string.Format(UIStrings.AlertTextDeleteConfirmationText_1, projectName);
+    if (await PageAlert.ShowConfirmation(confirmationText))
+    {
+      using var token = Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
+      await Services.GetRequiredService<IProjectList>().RemoveAsync(projectName, token);
+    }
+
+    await Shell.Current.GoToAsync("..", true);
+  }
+
   public FamiliesPage()
   {
+    MenuItemCommand = new Command<object>(OnMenuItemCommand);
     InitializeComponent();
   }
 
@@ -57,6 +96,13 @@ public partial class FamiliesPage : ContentPage
     }
   }
 
+  public string RemoveProjectToolbarItemName =>
+    string.Format(UIStrings.MenuItemNameRemove_1, Services.GetRequiredService<ICurrentProjectProvider>().Info.Name);
+
+  public string EditProjectToolbarItemName =>
+    string.Format(UIStrings.MenuItemNameEdit_1, Services.GetRequiredService<ICurrentProjectProvider>().Info.Name);
+
+
   public async void OnFamilySelected(object sender, SelectionChangedEventArgs e)
   {
     switch (e.CurrentSelection.FirstOrDefault())
@@ -77,6 +123,8 @@ public partial class FamiliesPage : ContentPage
         break;
     }
   }
+
+  public ICommand MenuItemCommand { get; init; }
 
   internal async Task OnCreateFamily()
   {
@@ -112,6 +160,12 @@ public partial class FamiliesPage : ContentPage
   protected override void OnNavigatedTo(NavigatedToEventArgs args)
   {
     base.OnNavigatedTo(args);
-    OnPropertyChanged(nameof(Families));
+
+    var projectRevision = Services.GetRequiredService<ICurrentProjectProvider>().Project.ProjectRevision;
+    if (projectRevision != _ProjectRevision)
+    {
+      _ProjectRevision = projectRevision;
+      OnPropertyChanged(nameof(Families));
+    }
   }
 }

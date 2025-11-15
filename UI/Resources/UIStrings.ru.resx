@@ -376,4 +376,10 @@
   <data name="FileDialogSelectPictures" xml:space="preserve">
     <value>Выберите изображения</value>
   </data>
+  <data name="MenuItemNameRemove_1" xml:space="preserve">
+    <value>Удалить '{0}'&#9;❌</value>
+  </data>
+  <data name="MenuItemNameEdit_1" xml:space="preserve">
+    <value>Править '{0}'&#9;🖋️</value>
+  </data>
 </root>

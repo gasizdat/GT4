@@ -557,6 +557,24 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Edit &apos;{0}&apos;		🖋️.
+        /// </summary>
+        public static string MenuItemNameEdit_1 {
+            get {
+                return ResourceManager.GetString("MenuItemNameEdit_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Remove &apos;{0}&apos;	❌.
+        /// </summary>
+        public static string MenuItemNameRemove_1 {
+            get {
+                return ResourceManager.GetString("MenuItemNameRemove_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 🌐 Language.
         /// </summary>
         public static string PkrLanguageHint {
