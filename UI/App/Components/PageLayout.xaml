@@ -8,7 +8,7 @@
   <ContentView.Resources>
     <ResourceDictionary>
       <Thickness
-          x:Key="HeaderAndFooterPadding"
+          x:Key="HeaderPadding"
           Bottom="0"
           Left="{StaticResource PageContentHorizontalPadding}"
           Right="{StaticResource PageContentHorizontalPadding}"
@@ -20,6 +20,13 @@
           Left="{StaticResource PageContentHorizontalPadding}"
           Right="{StaticResource PageContentHorizontalPadding}"
           Top="{StaticResource PageContentVerticalPadding}" />
+
+      <Thickness
+          x:Key="FooterPadding"
+          Bottom="{StaticResource PageContentVerticalPadding}"
+          Left="{StaticResource PageContentHorizontalPadding}"
+          Right="{StaticResource PageContentHorizontalPadding}"
+          Top="0" />
     </ResourceDictionary>
   </ContentView.Resources>
 
@@ -31,7 +38,7 @@
     <ContentView
         Grid.Row="0"
         Grid.Column="0"
-        Padding="{StaticResource HeaderAndFooterPadding}"
+        Padding="{StaticResource HeaderPadding}"
         Content="{Binding Header, Source={x:Reference Root}}"
         IsVisible="{Binding IsHeaderVisible, Source={x:Reference Root}}" />
 
@@ -46,7 +53,7 @@
     <ContentView
         Grid.Row="2"
         Grid.Column="0"
-        Padding="{StaticResource HeaderAndFooterPadding}"
+        Padding="{StaticResource FooterPadding}"
         Content="{Binding Footer, Source={x:Reference Root}}"
         IsVisible="{Binding IsFooterVisible, Source={x:Reference Root}}" />
   </Grid>
