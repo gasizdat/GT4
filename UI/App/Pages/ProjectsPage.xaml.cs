@@ -67,7 +67,7 @@ public partial class ProjectsPage : ContentPage
 
   internal async Task OnCreateProject()
   {
-    var dialog = new CreateNewProjectDialog();
+    var dialog = new CreateOrUpdateProjectDialog(null);
 
     await Navigation.PushModalAsync(dialog);
     var projectInfo = await dialog.ProjectInfo;

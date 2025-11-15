@@ -8,7 +8,6 @@ internal static class UIRoutes
   static UIRoutes()
   {
     AddRoute<ProjectsPage>();
-    AddRoute<CreateNewProjectDialog>();
     AddRoute<FamiliesPage>();
     AddRoute<FamilyPage>();
   }
