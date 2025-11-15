@@ -9,7 +9,7 @@ using System.Windows.Input;
 
 namespace GT4.UI.Pages;
 
-public partial class FamiliesPage : ContentPage
+public partial class ProjectPage : ContentPage
 {
   private long? _ProjectRevision;
 
@@ -95,7 +95,7 @@ public partial class FamiliesPage : ContentPage
     }
   }
 
-  public FamiliesPage()
+  public ProjectPage()
   {
     MenuItemCommand = new Command<object>(OnMenuItemCommand);
     InitializeComponent();

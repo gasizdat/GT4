@@ -53,7 +53,7 @@ public partial class ProjectListPage : ContentPage
       {
         using var token = _Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
         await _Services.GetRequiredService<ICurrentProjectProvider>().OpenAsync(projectItem.Info, token);
-        await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamiliesPage>());
+        await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectPage>());
 
         // TODO not so good approach
         if (sender is SelectableItemsView view)
