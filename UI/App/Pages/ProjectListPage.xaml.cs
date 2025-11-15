@@ -6,7 +6,7 @@ using System.Collections.ObjectModel;
 
 namespace GT4.UI.Pages;
 
-public partial class ProjectsPage : ContentPage
+public partial class ProjectListPage : ContentPage
 {
   private readonly ObservableCollection<ProjectItem> _Projects = new();
   private readonly IServiceProvider _Services;
@@ -28,13 +28,13 @@ public partial class ProjectsPage : ContentPage
     _Projects.Add(new ProjectItemCreate());
   }
 
-  protected ProjectsPage(IServiceProvider services)
+  protected ProjectListPage(IServiceProvider services)
   {
     _Services = services;
     InitializeComponent();
   }
 
-  public ProjectsPage()
+  public ProjectListPage()
     : this(ServiceBuilder.DefaultServices)
   {
   }

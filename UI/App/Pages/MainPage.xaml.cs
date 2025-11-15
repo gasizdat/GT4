@@ -36,7 +36,7 @@ public partial class MainPage : ContentPage
   }
 
   public ICommand NavigateToCreateOrOpenDialog => new Command(async () =>
-    await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectsPage>())
+    await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectListPage>())
   );
 
   public IList Languages => _Languages;
