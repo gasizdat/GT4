@@ -135,7 +135,7 @@ public partial class SelectNameDialog : ContentPage
     }
     catch (Exception ex)
     {
-      await DisplayAlert(UIStrings.AlertTitleError, ex.Message, UIStrings.BtnNameOk);
+      await this.ShowError(ex);
     }
   }
 

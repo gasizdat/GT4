@@ -96,10 +96,7 @@ public partial class FamilyPage : ContentPage
   private async void OnDeleteFmily(object? parameter)
   {
     var canDelete = _FamilyName is not null &&
-       await DisplayAlert(UIStrings.AlertTitleConfirmation,
-                          string.Format(UIStrings.AlertTextDeleteConfirmationText_1, _FamilyName.Value),
-                          UIStrings.BtnNameYes,
-                          UIStrings.BtnNameNo);
+       await this.ShowConfirmation(string.Format(UIStrings.AlertTextDeleteConfirmationText_1, _FamilyName.Value));
 
     if (!canDelete)
     {
@@ -119,7 +116,7 @@ public partial class FamilyPage : ContentPage
     }
     catch (Exception ex)
     {
-      await DisplayAlert(UIStrings.AlertTitleError, ex.Message, UIStrings.BtnNameOk);
+      await this.ShowError(ex);
     }
     finally
     {
@@ -152,7 +149,7 @@ public partial class FamilyPage : ContentPage
         .Project
         .FamilyManager
         .SetUpPersonFamily(info, _FamilyName);
-      
+
       await projectProvider
         .Project
         .PersonManager
@@ -160,7 +157,7 @@ public partial class FamilyPage : ContentPage
     }
     catch (Exception ex)
     {
-      await DisplayAlert(UIStrings.AlertTitleError, ex.Message, UIStrings.BtnNameOk);
+      await this.ShowError(ex);
     }
     finally
     {
@@ -205,7 +202,7 @@ public partial class FamilyPage : ContentPage
     }
     catch (Exception ex)
     {
-      await DisplayAlert(UIStrings.AlertTitleError, ex.Message, UIStrings.BtnNameOk);
+      await this.ShowError(ex);
     }
     finally
     {

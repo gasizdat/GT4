@@ -101,7 +101,7 @@ public partial class FamiliesPage : ContentPage
     }
     catch (Exception ex)
     {
-      await DisplayAlert(UIStrings.AlertTitleError, ex.Message, UIStrings.BtnNameOk);
+      await this.ShowError(ex);
     }
     finally
     {

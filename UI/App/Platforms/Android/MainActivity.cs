@@ -6,7 +6,6 @@ using Android.Provider;
 using GT4.Core.Project;
 using GT4.Core.Utils;
 using GT4.UI;
-using GT4.UI;
 using GT4.UI.Pages;
 using GT4.UI.Resources;
 using System.ComponentModel;
@@ -84,7 +83,7 @@ namespace GT4
           {
             RunOnUiThread(async () =>
             {
-              await Shell.Current.DisplayAlert(UIStrings.AlertTitleError, ex.Message, UIStrings.BtnNameCancel);
+              await PageAlert.ShowError(ex);
             });
           }
         };
