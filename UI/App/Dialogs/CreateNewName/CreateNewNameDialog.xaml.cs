@@ -30,7 +30,6 @@ public partial class CreateNewNameDialog : ContentPage
         throw new NotSupportedException($"Unsupported name type {nameType}");
     }
 
-
     InitializeComponent();
   }
 

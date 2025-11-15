@@ -32,12 +32,10 @@
       <Entry
           Grid.Row="1"
           Grid.Column="1"
-          Completed="OnYearChangedEnd"
           HorizontalOptions="Fill"
           Keyboard="Numeric"
           Style="{StaticResource FieldValue}"
-          Text="{Binding Year, Source={x:Reference Root}}"
-          Unfocused="OnYearChangedEnd" />
+          Text="{Binding Year, Source={x:Reference Root}}" />
 
       <Switch
           Grid.Row="1"
@@ -50,15 +48,13 @@
           Style="{StaticResource FieldName}"
           Text="{x:Static resources:UIStrings.FieldMonth}" />
 
-      <Entry
+      <Picker
           Grid.Row="2"
           Grid.Column="1"
-          Completed="OnMonthChangedEnd"
           HorizontalOptions="Fill"
-          Keyboard="Numeric"
-          Style="{StaticResource FieldValue}"
-          Text="{Binding Month, Source={x:Reference Root}}"
-          Unfocused="OnMonthChangedEnd" />
+          ItemDisplayBinding="{Binding .}"
+          ItemsSource="{Binding Months, Source={x:Reference Root}}"
+          SelectedItem="{Binding Month, Source={x:Reference Root}}" />
 
       <Switch
           Grid.Row="2"
@@ -71,15 +67,21 @@
           Style="{StaticResource FieldName}"
           Text="{x:Static resources:UIStrings.FieldDay}" />
 
-      <Entry
+      <Picker
           Grid.Row="3"
           Grid.Column="1"
-          Completed="OnDayChangedEnd"
+          HorizontalOptions="Fill"
+          ItemDisplayBinding="{Binding .}"
+          ItemsSource="{Binding Days, Source={x:Reference Root}}"
+          SelectedItem="{Binding Day, Source={x:Reference Root}}" />
+
+      <!--<Entry
+          Grid.Row="3"
+          Grid.Column="1"
           HorizontalOptions="Fill"
           Keyboard="Numeric"
           Style="{StaticResource FieldValue}"
-          Text="{Binding Day, Source={x:Reference Root}}"
-          Unfocused="OnDayChangedEnd" />
+          Text="{Binding Day, Source={x:Reference Root}}" />-->
 
       <Switch
           Grid.Row="3"

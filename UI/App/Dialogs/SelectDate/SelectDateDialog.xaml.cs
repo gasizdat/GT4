@@ -6,11 +6,12 @@ namespace GT4.UI.Dialogs;
 
 public partial class SelectDateDialog : ContentPage
 {
-  private const string D4 = "D4";
   private const string D2 = "D2";
 
   private readonly IDateFormatter _DateFormatter;
   private readonly TaskCompletionSource<Date?> _Info = new(null);
+  private readonly string[] _Months = GetMonths();
+  private readonly string[] _Days = GetDays();
   private int _Year = 0;
   private int _Month = 1;
   private int _Day = 1;
@@ -24,27 +25,79 @@ public partial class SelectDateDialog : ContentPage
     _DateFormatter = dateFormatter;
     if (date.HasValue)
     {
-      _Year = date.Value.Year;
-      _Month = date.Value.Month;
-      _Day = date.Value.Day;
+      _Year = NormalizeYear(date.Value.Year);
+      _Month = NormalizeMonth(date.Value.Month);
+      _Day = NormalizeDay(_Year, _Month, date.Value.Day);
+
       switch (date.Value.Status)
       {
         case DateStatus.MonthUnknown:
-          YearSwitch = true;
+          _YearSwitch = true;
           break;
         case DateStatus.DayUnknown:
-          YearSwitch = true;
-          MonthSwitch = true;
+          _YearSwitch = true;
+          _MonthSwitch = true;
           break;
         case DateStatus.WellKnown:
-          YearSwitch = true;
-          MonthSwitch = true;
-          DaySwitch = true;
+          _YearSwitch = true;
+          _MonthSwitch = true;
+          _DaySwitch = true;
           break;
       }
     }
 
     InitializeComponent();
+  }
+
+  private static int NormalizeYear(int year) => year;
+
+  private static int NormalizeMonth(int month) => Math.Clamp(month, 1, 12);
+
+  private static bool IsLeapYear(int year) =>
+    (year % 4) == 0 && ((year % 100) != 0 || (year % 400) == 0);
+
+  private static int NormalizeDay(int year, int month, int day)
+  {
+    var daysInMonth = month switch
+    {
+      1 => 31,
+      2 => IsLeapYear(year) ? 29 : 28,
+      3 => 31,
+      4 => 30,
+      5 => 31,
+      6 => 30,
+      7 => 31,
+      8 => 31,
+      9 => 30,
+      10 => 31,
+      11 => 30,
+      12 => 31,
+      _ => 0
+    };
+
+
+    day = Math.Clamp(day, 1, daysInMonth);
+    return day;
+  }
+
+  private static string[] GetMonths()
+  {
+    var ret = new List<string>();
+    for (var i = 1; i <= 12; i++)
+    {
+      ret.Add(i.ToString(D2));
+    }
+    return ret.ToArray();
+  }
+
+  private static string[] GetDays()
+  {
+    var ret = new List<string>();
+    for (var i = 1; i <= 31; i++)
+    {
+      ret.Add(i.ToString(D2));
+    }
+    return ret.ToArray();
   }
 
   private void Refresh()
@@ -53,13 +106,35 @@ public partial class SelectDateDialog : ContentPage
     OnPropertyChanged(nameof(DateString));
   }
 
+  public string[] Months => _Months;
+
+  public string[] Days => _Days;
+
   public string Year
   {
-    get => _Year.ToString(D4);
+    get => _Year.ToString();
     set
     {
-      // Derty update
-      int.TryParse(value, out _Year);
+      if (!int.TryParse(value, out var year))
+      {
+        year = 0;
+      }
+
+      year = NormalizeYear(year);
+      if (_Year != year)
+      {
+        _Year = year;
+        _Day = NormalizeDay(_Year, _Month, _Day);
+        YearSwitch = true;
+
+        OnPropertyChanged(nameof(Year));
+        OnPropertyChanged(nameof(Day));
+        Refresh();
+      }
+      else
+      {
+        OnPropertyChanged(nameof(Year));
+      }
     }
   }
 
@@ -68,28 +143,39 @@ public partial class SelectDateDialog : ContentPage
     get => _YearSwitch;
     set
     {
-      if (_YearSwitch == value)
+      if (_YearSwitch != value)
       {
-        return;
+        _YearSwitch = value;
+        if (!_YearSwitch)
+        {
+          MonthSwitch = false;
+        }
+        OnPropertyChanged(nameof(YearSwitch));
+        Refresh();
       }
-
-      _YearSwitch = value;
-      if (!_YearSwitch)
-      {
-        MonthSwitch = false;
-      }
-      OnPropertyChanged(nameof(YearSwitch));
-      Refresh();
     }
   }
 
   public string Month
   {
-    get => _Month.ToString(D2);
+    get => _Months[_Month - 1];
     set
     {
-      //Derty update
-      int.TryParse(value, out _Month);
+      var month = NormalizeMonth(Array.FindIndex(_Months, month => month == value) + 1);
+
+      if (_Month != month)
+      {
+        _Month = month;
+        _Day = NormalizeDay(_Year, _Month, _Day);
+        MonthSwitch = month > 0;
+        OnPropertyChanged(nameof(Month));
+        OnPropertyChanged(nameof(Day));
+        Refresh();
+      }
+      else
+      {
+        OnPropertyChanged(nameof(Month));
+      }
     }
   }
 
@@ -98,33 +184,42 @@ public partial class SelectDateDialog : ContentPage
     get => _MonthSwitch;
     set
     {
-      if (MonthSwitch == value)
+      if (_MonthSwitch != value)
       {
-        return;
-      }
+        _MonthSwitch = value;
+        if (_MonthSwitch)
+        {
+          YearSwitch = true;
+        }
+        else
+        {
+          DaySwitch = false;
+        }
 
-      _MonthSwitch = value;
-      if (_MonthSwitch)
-      {
-        YearSwitch = true;
-        OnMonthChangedEnd(new(), new());
+        OnPropertyChanged(nameof(MonthSwitch));
+        Refresh();
       }
-      else
-      {
-        DaySwitch = false;
-      }
-      OnPropertyChanged(nameof(MonthSwitch));
-      Refresh();
     }
   }
 
   public string Day
   {
-    get => _Day.ToString(D2);
+    get => _Days[_Day - 1];
     set
     {
-      //Derty update
-      int.TryParse(value, out _Day);
+      var day = NormalizeDay(_Year, _Month, Array.FindIndex(_Days, day => day == value) + 1);
+
+      if (_Day != day)
+      {
+        _Day = day;
+        DaySwitch = true;
+        OnPropertyChanged(nameof(Day));
+        Refresh();
+      }
+      else
+      {
+        OnPropertyChanged(nameof(Day));
+      }
     }
   }
 
@@ -133,19 +228,16 @@ public partial class SelectDateDialog : ContentPage
     get => _DaySwitch;
     set
     {
-      if (DaySwitch == value)
+      if (_DaySwitch != value)
       {
-        return;
+        _DaySwitch = value;
+        if (_DaySwitch)
+        {
+          MonthSwitch = true;
+        }
+        OnPropertyChanged(nameof(DaySwitch));
+        Refresh();
       }
-
-      _DaySwitch = value;
-      if (_DaySwitch)
-      {
-        MonthSwitch = true;
-        OnDayChangedEnd(new(), new());
-      }
-      OnPropertyChanged(nameof(DaySwitch));
-      Refresh();
     }
   }
 
@@ -153,9 +245,6 @@ public partial class SelectDateDialog : ContentPage
   {
     get
     {
-      int.TryParse(Year, out var year);
-      int.TryParse(Month, out var month);
-      int.TryParse(Day, out var day);
       DateStatus status;
       if (!YearSwitch)
         status = DateStatus.Unknown;
@@ -166,7 +255,7 @@ public partial class SelectDateDialog : ContentPage
       else
         status = DateStatus.WellKnown;
 
-      return Date.Create(year, month, day, status);
+      return Date.Create(_Year, _Month, _Day, status);
     }
   }
 
@@ -183,55 +272,6 @@ public partial class SelectDateDialog : ContentPage
   }
 
   public Task<Date?> Info => _Info.Task;
-
-  public void OnYearChangedEnd(object sender, EventArgs e)
-  {
-    OnPropertyChanged(nameof(Year));
-    YearSwitch = true;
-    if (DaySwitch)
-    {
-      OnDayChangedEnd(sender, e);
-    }
-    Refresh();
-  }
-
-  public void OnMonthChangedEnd(object sender, EventArgs e)
-  {
-    _Month = Math.Clamp(_Month, 1, 12);
-    OnPropertyChanged(nameof(Month));
-    MonthSwitch = true;
-    if (DaySwitch)
-    {
-      OnDayChangedEnd(sender, e);
-    }
-    Refresh();
-  }
-
-  public void OnDayChangedEnd(object sender, EventArgs e)
-  {
-    var daysInMonth = _Month switch
-    {
-      1 => 31,
-      2 => (_Year % 4) == 0 && ((_Year % 100) != 0 || (_Year % 400) == 0) ? 29 : 28,
-      3 => 31,
-      4 => 30,
-      5 => 31,
-      6 => 30,
-      7 => 31,
-      8 => 31,
-      9 => 30,
-      10 => 31,
-      11 => 30,
-      12 => 31,
-      _ => 0
-    };
-
-
-    _Day = Math.Clamp(_Day, 1, daysInMonth);
-    OnPropertyChanged(nameof(Day));
-    DaySwitch = true;
-    Refresh();
-  }
 
   public void OnSelectDateBtn(object sender, EventArgs e)
   {
