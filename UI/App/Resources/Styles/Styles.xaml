@@ -54,11 +54,18 @@
       Tablet="26" />
 
   <OnIdiom
-      x:Key="PageContentPadding"
-      x:TypeArguments="Thickness"
+      x:Key="PageContentHorizontalPadding"
+      x:TypeArguments="x:Double"
       Desktop="40"
       Phone="5"
       Tablet="10" />
+
+  <OnIdiom
+      x:Key="PageContentVerticalPadding"
+      x:TypeArguments="x:Double"
+      Desktop="20"
+      Phone="2.5"
+      Tablet="5" />
 
   <OnIdiom
       x:Key="PageContentSpacing"
@@ -81,10 +88,12 @@
       Phone="8"
       Tablet="9" />
 
-  <Style x:Key="PageContentIndentation" TargetType="VerticalStackLayout">
-    <Setter Property="Padding" Value="{StaticResource PageContentPadding}" />
-    <Setter Property="Spacing" Value="{StaticResource PageContentSpacing}" />
-  </Style>
+  <Thickness
+      x:Key="PageContentPadding"
+      Bottom="{StaticResource PageContentVerticalPadding}"
+      Left="{StaticResource PageContentHorizontalPadding}"
+      Right="{StaticResource PageContentHorizontalPadding}"
+      Top="{StaticResource PageContentVerticalPadding}" />
 
   <Style TargetType="ActivityIndicator">
     <Setter Property="Color" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}" />
@@ -333,7 +342,7 @@
   </Style>
 
   <Style x:Key="PageSubtitle" BasedOn="{StaticResource ContentBase}" TargetType="Label">
-    <Setter Property="FontSize" Value="{StaticResource LabelTextSizeLarge}" />
+    <Setter Property="FontSize" Value="{StaticResource LabelTextSizeDefault}" />
   </Style>
 
   <Style x:Key="GroupTitle" BasedOn="{StaticResource ContentBase}" TargetType="Label">
