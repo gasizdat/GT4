@@ -11,7 +11,7 @@ public class FamilyMemberInfoItem : PersonInfoItem
   private readonly IDateFormatter _DateFormatter;
   private readonly IDateSpanFormatter _DateSpanFormatter;
 
-  protected FamilyMemberInfoItem(string itemName, ServiceProvider services)
+  protected FamilyMemberInfoItem(string itemName, IServiceProvider services)
     : this(personInfo: new PersonInfo(
         Id: TableBase.NonCommitedId,
         BirthDate: default,
@@ -27,7 +27,7 @@ public class FamilyMemberInfoItem : PersonInfoItem
   {
   }
 
-  public FamilyMemberInfoItem(PersonInfo personInfo, ServiceProvider services)
+  public FamilyMemberInfoItem(PersonInfo personInfo, IServiceProvider services)
     : base(personInfo, services.GetRequiredService<INameFormatter>())
   {
     _DateFormatter = services.GetRequiredService<IDateFormatter>();

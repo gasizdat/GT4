@@ -7,8 +7,11 @@ namespace GT4.UI;
 
 public partial class App : Application
 {
-  public App()
+  private readonly IServiceProvider _Services;
+
+  protected App(IServiceProvider serviceProvider)
   {
+    _Services = serviceProvider;
     InitializeComponent();
 
 #if ANDROID
@@ -40,6 +43,12 @@ public partial class App : Application
     MainPage = new AppShell();
   }
 
+  public App()
+    : this(ServiceBuilder.DefaultServices)
+  {
+
+  }
+
   protected override Window CreateWindow(IActivationState? activationState)
   {
     var window = base.CreateWindow(activationState);
@@ -51,8 +60,8 @@ public partial class App : Application
 
   private async void SaveOnDeactivationAsync(object? sender, EventArgs e)
   {
-    var token = ServiceBuilder.DefaultServices.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
-    var projectProvider = ServiceBuilder.DefaultServices.GetRequiredService<ICurrentProjectProvider>();
+    var token = _Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
+    var projectProvider = _Services.GetRequiredService<ICurrentProjectProvider>();
     if (projectProvider.HasCurrentProject)
     {
       await projectProvider.UpdateOriginAsync(token);
@@ -61,8 +70,8 @@ public partial class App : Application
 
   private async void SaveOnDisposeAsync(object? sender, EventArgs e)
   {
-    var token = ServiceBuilder.DefaultServices.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
-    var projectProvider = ServiceBuilder.DefaultServices.GetRequiredService<ICurrentProjectProvider>();
+    var token = _Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
+    var projectProvider = _Services.GetRequiredService<ICurrentProjectProvider>();
     if (projectProvider.HasCurrentProject)
     {
       await projectProvider.CloseAsync(token);

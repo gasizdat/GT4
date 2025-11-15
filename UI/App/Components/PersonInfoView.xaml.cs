@@ -7,13 +7,22 @@ namespace GT4.UI.Components;
 
 public partial class PersonInfoView : ContentView
 {
-  private readonly IDateSpanFormatter _DateSpanFormatter = ServiceBuilder.DefaultServices.GetRequiredService<IDateSpanFormatter>();
-  private readonly IDateFormatter _DateFormatter = ServiceBuilder.DefaultServices.GetRequiredService<IDateFormatter>();
-  private readonly INameFormatter _NameFormatter = ServiceBuilder.DefaultServices.GetRequiredService<INameFormatter>();
+  private readonly IDateSpanFormatter _DateSpanFormatter;
+  private readonly IDateFormatter _DateFormatter;
+  private readonly INameFormatter _NameFormatter;
+
+  protected PersonInfoView(IServiceProvider serviceProvider)
+  {
+    _DateSpanFormatter = serviceProvider.GetRequiredService<IDateSpanFormatter>();
+    _DateFormatter = serviceProvider.GetRequiredService<IDateFormatter>();
+    _NameFormatter = serviceProvider.GetRequiredService<INameFormatter>();
+    InitializeComponent();
+  }
 
   public PersonInfoView()
+    : this(ServiceBuilder.DefaultServices)
   {
-    InitializeComponent();
+
   }
 
   public static readonly BindableProperty PersonProperty =

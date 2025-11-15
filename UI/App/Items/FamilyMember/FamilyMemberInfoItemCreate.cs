@@ -2,8 +2,13 @@
 
 public class FamilyMemberInfoItemCreate : FamilyMemberInfoItem
 {
+  public FamilyMemberInfoItemCreate(IServiceProvider serviceProvider)
+    : base(Resources.UIStrings.BtnNameCreateFamilyPerson, serviceProvider)
+  {
+  }
+
   public FamilyMemberInfoItemCreate()
-    : base(Resources.UIStrings.BtnNameCreateFamilyPerson, ServiceBuilder.DefaultServices)
+    : this(ServiceBuilder.DefaultServices)
   {
 
   }

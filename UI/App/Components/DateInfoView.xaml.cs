@@ -5,11 +5,18 @@ namespace GT4.UI.Components;
 
 public partial class DateInfoView : ContentView
 {
-  private readonly IDateFormatter _Formatter = ServiceBuilder.DefaultServices.GetRequiredService<IDateFormatter>();
+  private readonly IDateFormatter _Formatter;
+
+  protected DateInfoView(IServiceProvider serviceProvider)
+  {
+    _Formatter = serviceProvider.GetRequiredService<IDateFormatter>();
+    InitializeComponent();
+  }
 
   public DateInfoView()
+    : this(ServiceBuilder.DefaultServices)
   {
-    InitializeComponent();
+
   }
 
   public static readonly BindableProperty CaptionProperty =

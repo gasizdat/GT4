@@ -34,6 +34,18 @@ namespace GT4
   )]
   public class MainActivity : MauiAppCompatActivity
   {
+    private readonly IServiceProvider _Services;
+
+    protected MainActivity(IServiceProvider serviceProvider)
+    {
+      _Services = serviceProvider;
+    }
+
+    public MainActivity()
+      : this(ServiceBuilder.DefaultServices)
+    {
+
+    }
 
     protected override void OnCreate(Bundle? savedInstanceState)
     {
@@ -74,9 +86,8 @@ namespace GT4
             using var input = ContentResolver?.OpenInputStream(uri) ??
               throw new ApplicationException($"Unable to open provided URI {uri}");
 
-            var services = ServiceBuilder.DefaultServices;
-            var token = services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
-            var projectInfo = await services.GetRequiredService<IProjectList>().ExportAsync(input, token);
+            var token = _Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
+            var projectInfo = await _Services.GetRequiredService<IProjectList>().ExportAsync(input, token);
             RunOnUiThread(async () => await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectsPage>()));
           }
           catch (Exception ex)

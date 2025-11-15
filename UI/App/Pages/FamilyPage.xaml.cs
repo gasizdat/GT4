@@ -11,16 +11,23 @@ namespace GT4.UI.Pages;
 [QueryProperty(nameof(FamilyName), "FamilyName")]
 public partial class FamilyPage : ContentPage
 {
+  private readonly IServiceProvider _Services;
   private Name? _FamilyName = null;
   private int _PersonItemMinimalWidth;
 
-  public FamilyPage()
+  protected FamilyPage(IServiceProvider serviceProvider)
   {
+    _Services = serviceProvider;
     MemberItemTappedCommand = new Command<FamilyMemberInfoItem>(OnMemberSelected);
     DeleteFamilyCommand = new Command<object?>(OnDeleteFmily);
     EditFamilyCommand = new Command<object?>(OnEditFmily);
 
     InitializeComponent();
+  }
+
+  public FamilyPage()
+    : this(ServiceBuilder.DefaultServices)
+  {
   }
 
   public Name? FamilyName
@@ -33,8 +40,6 @@ public partial class FamilyPage : ContentPage
       OnPropertyChanged(nameof(FamilyName));
     }
   }
-
-  public ServiceProvider Services { get; set; } = ServiceBuilder.DefaultServices;
 
   public int PersonItemMinimalWidth => _PersonItemMinimalWidth;
 
@@ -53,17 +58,17 @@ public partial class FamilyPage : ContentPage
 
       try
       {
-        using var token = Services
+        using var token = _Services
           .GetRequiredService<ICancellationTokenProvider>()
           .CreateDbCancellationToken();
-        var ret = Services
+        var ret = _Services
           .GetRequiredService<ICurrentProjectProvider>()
           .Project
           .PersonManager
           .GetPersonInfosByNameAsync(FamilyName, token)
           .Result
-          .Select(person => new FamilyMemberInfoItem(person, Services))
-          .OrderBy(item => item, Services.GetRequiredService<IComparer<FamilyMemberInfoItem>>())
+          .Select(person => new FamilyMemberInfoItem(person, _Services))
+          .OrderBy(item => item, _Services.GetRequiredService<IComparer<FamilyMemberInfoItem>>())
           .ToList();
 
         ret.Add(new FamilyMemberInfoItemCreate());
@@ -105,10 +110,10 @@ public partial class FamilyPage : ContentPage
 
     try
     {
-      using var token = Services
+      using var token = _Services
         .GetRequiredService<ICancellationTokenProvider>()
         .CreateDbCancellationToken();
-      await Services
+      await _Services
         .GetRequiredService<ICurrentProjectProvider>()
         .Project
         .FamilyManager
@@ -130,7 +135,7 @@ public partial class FamilyPage : ContentPage
 
   private async Task OnCreatePerson()
   {
-    var dialog = new CreateOrUpdatePersonDialog(null, Services);
+    var dialog = new CreateOrUpdatePersonDialog(null, _Services);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;
@@ -143,8 +148,8 @@ public partial class FamilyPage : ContentPage
         return;
       }
 
-      var projectProvider = Services.GetRequiredService<ICurrentProjectProvider>();
-      using var token = Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
+      var projectProvider = _Services.GetRequiredService<ICurrentProjectProvider>();
+      using var token = _Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
       var person = projectProvider
         .Project
         .FamilyManager
@@ -167,15 +172,15 @@ public partial class FamilyPage : ContentPage
 
   private async Task OnEditPerson(FamilyMemberInfoItem familyMember)
   {
-    var projectProvider = Services.GetRequiredService<ICurrentProjectProvider>();
-    var tokenProvider = Services.GetRequiredService<ICancellationTokenProvider>();
+    var projectProvider = _Services.GetRequiredService<ICurrentProjectProvider>();
+    var tokenProvider = _Services.GetRequiredService<ICancellationTokenProvider>();
     using var readToken = tokenProvider.CreateDbCancellationToken();
     var familyMemberFullInfo = await projectProvider
       .Project
       .PersonManager
       .GetPersonFullInfoAsync(familyMember.Info, readToken);
 
-    var dialog = new CreateOrUpdatePersonDialog(familyMemberFullInfo, Services);
+    var dialog = new CreateOrUpdatePersonDialog(familyMemberFullInfo, _Services);
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;
     await Navigation.PopModalAsync();
@@ -187,7 +192,7 @@ public partial class FamilyPage : ContentPage
         return;
       }
 
-      using var updateToken = Services
+      using var updateToken = _Services
         .GetRequiredService<ICancellationTokenProvider>()
         .CreateDbCancellationToken();
       var person = projectProvider
