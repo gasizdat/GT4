@@ -10,12 +10,16 @@
     x:Name="Root"
     Title="{Binding FamilyName.Value, Source={x:Reference Root}}">
 
-  <ContentPage.ToolbarItems>
-    <ToolbarItem
-        IconImageSource="refresh_on_error.png"
-        Order="Secondary"
-        Text="zzzz" />
-  </ContentPage.ToolbarItems>
+  <ContentPage.Resources>
+    <ResourceDictionary>
+      <Thickness
+          x:Key="PersonInfoViewPadding"
+          Bottom="{StaticResource PageContentVerticalPadding}"
+          Left="{StaticResource PageContentVerticalPadding}"
+          Right="{StaticResource PageContentVerticalPadding}"
+          Top="{StaticResource PageContentVerticalPadding}" />
+    </ResourceDictionary>
+  </ContentPage.Resources>
 
   <components:PageLayout>
 
@@ -40,7 +44,7 @@
               BindableLayout.ItemsSource="{Binding Members, Source={x:Reference Root}}"
               Direction="Row"
               JustifyContent="SpaceAround"
-              Style="{x:StaticResource PageContentIndentation}"
+              Style="{x:StaticResource PersonInfoViewPadding}"
               Wrap="Wrap">
 
             <BindableLayout.ItemTemplate>
