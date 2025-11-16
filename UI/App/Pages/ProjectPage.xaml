@@ -46,7 +46,8 @@
             <Grid
                 ColumnDefinitions="Auto, *"
                 ColumnSpacing="10"
-                RowDefinitions="Auto, Auto">
+                RowDefinitions="Auto, Auto"
+                Style="{StaticResource HoverItem}">
 
               <Image
                   Grid.Row="0"

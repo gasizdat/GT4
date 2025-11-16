@@ -81,7 +81,8 @@
                     x:Name="PersonPhoto"
                     ColumnDefinitions="*, Auto, Auto"
                     ColumnSpacing="{StaticResource AdornerSpacing}"
-                    RowDefinitions="Auto, *">
+                    RowDefinitions="Auto, *"
+                    Style="{StaticResource HoverItem}">
 
                   <Image
                       Grid.Row="0"
@@ -189,7 +190,8 @@
                     x:Name="PersonName"
                     ColumnDefinitions="Auto, *, Auto, Auto"
                     ColumnSpacing="{StaticResource AdornerSpacing}"
-                    RowDefinitions="Auto">
+                    RowDefinitions="Auto"
+                    Style="{StaticResource HoverItem}">
 
                   <Label
                       Grid.Row="0"

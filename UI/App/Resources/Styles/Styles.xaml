@@ -610,4 +610,46 @@
     <Setter Property="VerticalOptions" Value="Center" />
   </Style>
 
+  <Style x:Key="SelectableItem" TargetType="View">
+    <!--  Optional defaults  -->
+    <Setter Property="BackgroundColor" Value="Transparent" />
+    <Setter Property="VisualStateManager.VisualStateGroups">
+      <VisualStateGroupList>
+        <VisualStateGroup x:Name="CommonStates">
+          <VisualState x:Name="Normal">
+            <VisualState.Setters>
+              <Setter Property="BackgroundColor" Value="Transparent" />
+            </VisualState.Setters>
+          </VisualState>
+          <VisualState x:Name="Selected">
+            <VisualState.Setters>
+              <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource PrimaryButtonHover}, Dark={StaticResource PrimaryDarkButtonHover}}" />
+            </VisualState.Setters>
+          </VisualState>
+        </VisualStateGroup>
+      </VisualStateGroupList>
+    </Setter>
+  </Style>
+
+  <Style x:Key="HoverItem" TargetType="View">
+    <!--  Optional defaults  -->
+    <Setter Property="BackgroundColor" Value="Transparent" />
+    <Setter Property="VisualStateManager.VisualStateGroups">
+      <VisualStateGroupList>
+        <VisualStateGroup x:Name="CommonStates">
+          <VisualState x:Name="Normal">
+            <VisualState.Setters>
+              <Setter Property="BackgroundColor" Value="Transparent" />
+            </VisualState.Setters>
+          </VisualState>
+          <VisualState x:Name="PointerOver">
+            <VisualState.Setters>
+              <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource PrimaryButtonHover}, Dark={StaticResource PrimaryDarkButtonHover}}" />
+            </VisualState.Setters>
+          </VisualState>
+        </VisualStateGroup>
+      </VisualStateGroupList>
+    </Setter>
+  </Style>
+
 </ResourceDictionary>

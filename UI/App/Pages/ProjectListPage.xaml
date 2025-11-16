@@ -28,7 +28,8 @@
 
             <FlexLayout
                 Direction="Row"
-                HeightRequest="50">
+                HeightRequest="50"
+                Style="{StaticResource HoverItem}">
 
               <Image
                   Margin="2"

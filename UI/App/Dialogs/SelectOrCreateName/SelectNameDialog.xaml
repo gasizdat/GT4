@@ -47,11 +47,13 @@
 
       <CollectionView.ItemTemplate>
         <DataTemplate>
+          <Grid Style="{StaticResource SelectableItem}">
           <Label
               HorizontalOptions="Fill"
               HorizontalTextAlignment="Start"
               Style="{StaticResource FieldValue}"
               Text="{Binding Info.Value}" />
+          </Grid>
         </DataTemplate>
       </CollectionView.ItemTemplate>
     </CollectionView>

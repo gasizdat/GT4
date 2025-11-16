@@ -95,11 +95,13 @@
 
         <CollectionView.ItemTemplate>
           <DataTemplate x:DataType="items:PersonInfoItem">
-            <Label
-                Padding="{StaticResource PageContentPadding}"
-                HorizontalOptions="Fill"
-                Style="{StaticResource FieldValue}"
-                Text="{Binding CommonName}" />
+            <Grid Style="{StaticResource SelectableItem}">
+              <Label
+                  Padding="{StaticResource PageContentPadding}"
+                  HorizontalOptions="Fill"
+                  Style="{StaticResource FieldValue}"
+                  Text="{Binding CommonName}" />
+            </Grid>
           </DataTemplate>
         </CollectionView.ItemTemplate>
       </CollectionView>
