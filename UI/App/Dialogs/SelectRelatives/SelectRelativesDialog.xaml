@@ -97,7 +97,7 @@
           <DataTemplate x:DataType="items:PersonInfoItem">
             <Grid Style="{StaticResource SelectableItem}">
               <Label
-                  Padding="{StaticResource PageContentPadding}"
+                  Padding="{StaticResource CollectionItemsVerticalPadding}"
                   HorizontalOptions="Fill"
                   Style="{StaticResource FieldValue}"
                   Text="{Binding CommonName}" />

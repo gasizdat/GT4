@@ -56,9 +56,7 @@
 
     <components:PageLayout.Body>
       <ScrollView>
-        <VerticalStackLayout
-            Padding="{x:StaticResource PageContentPadding}"
-            Spacing="{x:StaticResource PageContentSpacing}">
+        <VerticalStackLayout >
 
           <!--  Pictures  -->
           <Frame Style="{StaticResource CardFrameStyle}">
@@ -184,19 +182,13 @@
                   ItemsSource="{Binding Names, Source={x:Reference Root}}"
                   SelectionMode="Single">
 
-                <CollectionView.ItemsLayout>
-                  <LinearItemsLayout
-                      ItemSpacing="5"
-                      Orientation="Vertical" />
-                </CollectionView.ItemsLayout>
-
                 <CollectionView.ItemTemplate>
                   <DataTemplate>
                     <Grid
                         x:Name="PersonName"
-                        Padding="{StaticResource PageContentPadding}"
                         ColumnDefinitions="Auto, *, Auto, Auto"
                         ColumnSpacing="{StaticResource AdornerSpacing}"
+                        RowSpacing="{StaticResource AdornerSpacing}"
                         RowDefinitions="Auto"
                         Style="{StaticResource HoverItem}">
 
@@ -334,6 +326,7 @@
                   <DataTemplate x:DataType="items:RelativeMemberInfoItem">
                     <Grid
                         x:Name="PersonRelative"
+                        Padding="{StaticResource CollectionItemsVerticalPadding}"
                         ColumnDefinitions="Auto, *, Auto, Auto"
                         ColumnSpacing="{StaticResource AdornerSpacing}"
                         RowDefinitions="Auto, Auto">
@@ -424,7 +417,7 @@
                   Text="{Binding Biography.Content, Source={x:Reference Root}}" />
             </Grid>
           </Frame>
-          
+
         </VerticalStackLayout>
       </ScrollView>
     </components:PageLayout.Body>

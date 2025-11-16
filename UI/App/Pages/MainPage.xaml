@@ -18,9 +18,7 @@
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>
-      <VerticalStackLayout
-          Padding="{x:StaticResource PageContentPadding}"
-          Spacing="{x:StaticResource PageContentSpacing}">
+      <VerticalStackLayout Spacing="{x:StaticResource PageContentSpacing}">
 
         <Image
             Aspect="AspectFit"

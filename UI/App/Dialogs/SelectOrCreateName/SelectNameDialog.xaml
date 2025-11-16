@@ -57,7 +57,7 @@
             <DataTemplate>
               <Grid Style="{StaticResource SelectableItem}">
                 <Label
-                    Padding="{StaticResource PageContentPadding}"
+                    Padding="{StaticResource CollectionItemsVerticalPadding}"
                     HorizontalOptions="Fill"
                     HorizontalTextAlignment="Start"
                     Style="{StaticResource FieldValue}"

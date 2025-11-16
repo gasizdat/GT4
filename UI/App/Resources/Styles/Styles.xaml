@@ -89,10 +89,10 @@
       Tablet="9" />
 
   <Thickness
-      x:Key="PageContentPadding"
+      x:Key="CollectionItemsVerticalPadding"
       Bottom="{StaticResource PageContentVerticalPadding}"
-      Left="{StaticResource PageContentHorizontalPadding}"
-      Right="{StaticResource PageContentHorizontalPadding}"
+      Left="0"
+      Right="0"
       Top="{StaticResource PageContentVerticalPadding}" />
 
   <Style TargetType="ActivityIndicator">
