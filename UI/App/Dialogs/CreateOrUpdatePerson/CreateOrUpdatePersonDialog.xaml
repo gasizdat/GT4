@@ -336,7 +336,7 @@
                       Grid.ColumnSpan="2"
                       DatesLabelStyle="{StaticResource FieldValue}"
                       NameLabelStyle="{StaticResource FieldName}"
-                      Person="{Binding Info.Person}" />
+                      Person="{Binding Info}" />
 
                   <Button
                       Grid.Row="0"

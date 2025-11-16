@@ -284,6 +284,27 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
   }
 
+  private async Task OnAddRelationship()
+  {
+    var dialog = new SelectRelativesDialog(biologicalSex: null, _ServiceProvider);
+
+    await Navigation.PushModalAsync(dialog);
+    var result = await dialog.Info;
+    await Navigation.PopModalAsync();
+
+    if (result?.Length > 0)
+    {
+      _Relatives.Clear();
+      var relatives = result
+        .Select(person => new Relative(Person: person.Info, Type: RelationshipType.Spouse, null))
+        .Select(relative => new RelativeMemberInfoItem(relative: relative, _ServiceProvider));
+      foreach (var relative in relatives)
+      {
+        _Relatives.Add(relative);
+      }
+    }
+  }
+
   private async void OnDialogCommand(object obj)
   {
     switch (obj)
@@ -305,6 +326,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         break;
       case string name when name == "AddPhotoCommand":
         await OnAddPhotoAsync();
+        break;
+      case string name when name == "AddRelationship":
+        await OnAddRelationship();
         break;
 
       case AdornerCommandParameter adorner when adorner.CommandName == "EditPhotoCommand":
