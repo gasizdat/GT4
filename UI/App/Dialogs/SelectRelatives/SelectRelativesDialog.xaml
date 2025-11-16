@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="GT4.UI.Dialogs.SelectRelativesDialog"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:components="clr-namespace:GT4.UI.Components"
+    xmlns:items="clr-namespace:GT4.UI.Items"
+    xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
+    x:Name="Root">
+
+  <components:PageLayout>
+    <components:PageLayout.Header>
+      <Grid
+          ColumnDefinitions="Auto, *, Auto, Auto"
+          ColumnSpacing="{StaticResource PageContentSpacing}"
+          RowDefinitions="Auto, Auto, Auto, Auto"
+          RowSpacing="{StaticResource PageContentSpacing}">
+
+        <!--  Row 0 - Title  -->
+        <Label
+            Grid.Row="0"
+            Grid.Column="0"
+            Grid.ColumnSpan="3"
+            HorizontalTextAlignment="Center"
+            Style="{StaticResource PageTitle}"
+            Text="{x:Static resources:UIStrings.WndTitleSelectRelativesDialog}" />
+
+        <!--  Row 1 - Search  -->
+        <Label
+            Grid.Row="1"
+            Grid.Column="0"
+            Style="{StaticResource FieldName}"
+            Text="Search" />
+
+        <Entry
+            Grid.Row="1"
+            Grid.Column="1"
+            Grid.ColumnSpan="3"
+            HorizontalOptions="Fill"
+            Style="{StaticResource FieldValue}"
+            Text="{Binding NameFilter, Source={x:Reference Root}}" />
+
+        <!--  Row 2 - Biological Sex  -->
+        <Label
+            Grid.Row="2"
+            Grid.Column="0"
+            Style="{StaticResource FieldName}"
+            Text="{x:Static resources:UIStrings.FieldBiologicalSex}" />
+
+        <Picker
+            Grid.Row="2"
+            Grid.Column="1"
+            Grid.ColumnSpan="3"
+            ItemDisplayBinding="{Binding Name}"
+            ItemsSource="{Binding BiologicalSexes, Source={x:Reference Root}}"
+            SelectedItem="{Binding BioSex, Source={x:Reference Root}}"
+            Style="{StaticResource FieldValue}" />
+
+        <!--  Row 3 - Relationship Date  -->
+
+        <components:DateInfoView
+            Grid.Row="3"
+            Grid.Column="0"
+            Grid.ColumnSpan="2"
+            Caption="{x:Static resources:UIStrings.FieldRelationshipStartDate}"
+            Date="{Binding RelationshipDate, Source={x:Reference Root}}" />
+
+        <Button
+            Grid.Row="3"
+            Grid.Column="2"
+            Command="{Binding DialogCommand, Source={x:Reference Root}}"
+            CommandParameter="EditRelationshipDateCommand"
+            Style="{StaticResource EditAdorner}" />
+
+        <Button
+            Grid.Row="3"
+            Grid.Column="3"
+            Command="{Binding DialogCommand, Source={x:Reference Root}}"
+            CommandParameter="RemoveRelationshipDateCommand"
+            Style="{StaticResource DeleteAdorner}" />
+
+      </Grid>
+    </components:PageLayout.Header>
+
+    <components:PageLayout.Body>
+      <CollectionView
+          HorizontalOptions="Center"
+          ItemsSource="{Binding Persons, Source={x:Reference Root}}"
+          SelectedItems="{Binding SelectedItems, Source={x:Reference Root}}"
+          SelectionMode="Multiple">
+
+        <CollectionView.ItemsLayout>
+          <LinearItemsLayout Orientation="Vertical" />
+        </CollectionView.ItemsLayout>
+
+        <CollectionView.ItemTemplate>
+          <DataTemplate x:DataType="items:PersonInfoItem">
+            <Label
+                Padding="{StaticResource PageContentPadding}"
+                HorizontalOptions="Fill"
+                Style="{StaticResource FieldValue}"
+                Text="{Binding CommonName}" />
+          </DataTemplate>
+        </CollectionView.ItemTemplate>
+      </CollectionView>
+
+    </components:PageLayout.Body>
+
+    <components:PageLayout.Footer>
+      <Button
+          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+          CommandParameter="SelectPersonCommand"
+          FontSize="Large"
+          Text="{Binding DialogBtnName, Source={x:Reference Root}}" />
+
+    </components:PageLayout.Footer>
+  </components:PageLayout>
+</ContentPage>

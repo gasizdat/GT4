@@ -418,4 +418,10 @@ genealogy tree and enjoy!</value>
   <data name="Month_12" xml:space="preserve">
     <value>{0}December</value>
   </data>
+  <data name="WndTitleSelectRelativesDialog" xml:space="preserve">
+    <value>Select relatives</value>
+  </data>
+  <data name="FieldRelationshipStartDate" xml:space="preserve">
+    <value>Start date</value>
+  </data>
 </root>

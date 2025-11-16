@@ -418,4 +418,10 @@
   <data name="Month_12" xml:space="preserve">
     <value>{0}Декабрь</value>
   </data>
+  <data name="WndTitleSelectRelativesDialog" xml:space="preserve">
+    <value>Выберите родственников</value>
+  </data>
+  <data name="FieldRelationshipStartDate" xml:space="preserve">
+    <value>Начало отношений</value>
+  </data>
 </root>

@@ -521,6 +521,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Start date.
+        /// </summary>
+        public static string FieldRelationshipStartDate {
+            get {
+                return ResourceManager.GetString("FieldRelationshipStartDate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Select.
         /// </summary>
         public static string FieldSelectName {
@@ -958,6 +967,15 @@ namespace GT4.UI.Resources {
         public static string WndTitleSelectNameDialog {
             get {
                 return ResourceManager.GetString("WndTitleSelectNameDialog", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select relatives.
+        /// </summary>
+        public static string WndTitleSelectRelativesDialog {
+            get {
+                return ResourceManager.GetString("WndTitleSelectRelativesDialog", resourceCulture);
             }
         }
     }
