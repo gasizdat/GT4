@@ -10,17 +10,6 @@
     x:Name="Root"
     Title="{Binding FamilyName.Value, Source={x:Reference Root}}">
 
-  <ContentPage.Resources>
-    <ResourceDictionary>
-      <Thickness
-          x:Key="PersonInfoViewPadding"
-          Bottom="{StaticResource PageContentVerticalPadding}"
-          Left="{StaticResource PageContentVerticalPadding}"
-          Right="{StaticResource PageContentVerticalPadding}"
-          Top="{StaticResource PageContentVerticalPadding}" />
-    </ResourceDictionary>
-  </ContentPage.Resources>
-
   <components:PageLayout>
 
     <components:PageLayout.Header>
@@ -44,7 +33,6 @@
               BindableLayout.ItemsSource="{Binding Members, Source={x:Reference Root}}"
               Direction="Row"
               JustifyContent="SpaceAround"
-              Style="{x:StaticResource PersonInfoViewPadding}"
               Wrap="Wrap">
 
             <BindableLayout.ItemTemplate>

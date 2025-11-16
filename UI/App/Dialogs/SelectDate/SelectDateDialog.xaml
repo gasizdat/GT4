@@ -15,7 +15,7 @@
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>
-      <ScrollView >
+      <ScrollView>
         <Grid
             ColumnDefinitions="Auto, *, Auto"
             ColumnSpacing="{x:StaticResource PageContentSpacing}"

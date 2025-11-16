@@ -46,13 +46,6 @@
             ItemsSource="{Binding Names, Source={x:Reference Root}}"
             SelectedItem="{Binding CurrentName, Source={x:Reference Root}}"
             SelectionMode="Single">
-
-          <CollectionView.ItemsLayout>
-            <LinearItemsLayout
-                ItemSpacing="5"
-                Orientation="Vertical" />
-          </CollectionView.ItemsLayout>
-
           <CollectionView.ItemTemplate>
             <DataTemplate>
               <Grid Style="{StaticResource SelectableItem}">
