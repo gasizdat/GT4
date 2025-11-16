@@ -2,6 +2,7 @@
 using GT4.Core.Project;
 using GT4.Core.Utils;
 using Microsoft.Maui.Controls.Xaml.Diagnostics;
+using System.Globalization;
 
 namespace GT4.UI;
 
@@ -13,6 +14,33 @@ public partial class App : Application
   {
     _Services = serviceProvider;
     InitializeComponent();
+
+    AppDomain.CurrentDomain.UnhandledException += async (object sender, UnhandledExceptionEventArgs e) =>
+    {
+      string errorMessage = e.ExceptionObject switch
+      {
+        Exception exception => exception.ToString(),
+        _ => e.ExceptionObject.ToString() ?? "Undefined error"
+      };
+
+      var logDir = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        "GT4",
+        "CrashLogs");
+      Directory.CreateDirectory(logDir);
+
+      var time = DateTime.Now;
+      var logName = $"gt4-run-{time.ToString("o", CultureInfo.InvariantCulture)}.log"
+        .Replace(':', '-')
+        .Replace('\\', '-')
+        .Replace('/', '-');
+
+      using var fileStream = File.OpenWrite(Path.Combine(logDir, logName));
+      using var writer = new StreamWriter(fileStream);
+      writer.Write(errorMessage);
+      fileStream.Flush();
+      fileStream.Close();
+    };
 
 #if ANDROID
     Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific.Application.UseWindowSoftInputModeAdjust(
