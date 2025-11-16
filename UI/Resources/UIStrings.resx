@@ -377,10 +377,10 @@ genealogy tree and enjoy!</value>
     <value>Select pictures</value>
   </data>
   <data name="MenuItemNameRemove_1" xml:space="preserve">
-    <value>Remove '{0}'&#9;❌</value>
+    <value>Remove '{0}'	❌</value>
   </data>
   <data name="MenuItemNameEdit_1" xml:space="preserve">
-    <value>Edit '{0}'&#9;&#9;🖋️</value>
+    <value>Edit '{0}'		🖋️</value>
   </data>
   <data name="Month_01" xml:space="preserve">
     <value>{0}January</value>
@@ -423,5 +423,8 @@ genealogy tree and enjoy!</value>
   </data>
   <data name="FieldRelationshipStartDate" xml:space="preserve">
     <value>Start date</value>
+  </data>
+  <data name="WndTitleCreateOrUpdatePersonDialog" xml:space="preserve">
+    <value>Fill in person information</value>
   </data>
 </root>

@@ -935,6 +935,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Fill in person information.
+        /// </summary>
+        public static string WndTitleCreateOrUpdatePersonDialog {
+            get {
+                return ResourceManager.GetString("WndTitleCreateOrUpdatePersonDialog", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Families.
         /// </summary>
         public static string WndTitleFamiliesPage {
