@@ -3,78 +3,87 @@
     x:Class="GT4.UI.Dialogs.SelectNameDialog"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:components="clr-namespace:GT4.UI.Components"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
-    x:Name="Root"
-    Title="{x:Static resources:UIStrings.WndTitleSelectNameDialog}">
+    x:Name="Root">
 
-  <Grid
-      Padding="20"
-      ColumnDefinitions="Auto, *"
-      HorizontalOptions="Fill"
-      RowDefinitions="Auto, *, Auto, Auto"
-      RowSpacing="10"
-      VerticalOptions="Start">
+  <components:PageLayout>
+    <components:PageLayout.Header>
+      <Label
+          Style="{StaticResource PageTitle}"
+          Text="{x:Static resources:UIStrings.WndTitleSelectNameDialog}" />
+    </components:PageLayout.Header>
 
-    <Label
-        Grid.Row="0"
-        Grid.Column="0"
-        Style="{StaticResource FieldName}"
-        Text="{x:Static resources:UIStrings.FieldSelectName}" />
+    <components:PageLayout.Body>
+      <Grid
+          Padding="20"
+          ColumnDefinitions="Auto, *"
+          HorizontalOptions="Fill"
+          RowDefinitions="Auto, *, Auto, Auto"
+          RowSpacing="10"
+          VerticalOptions="Start">
 
-    <Picker
-        Grid.Row="0"
-        Grid.Column="1"
-        ItemDisplayBinding="{Binding TypeName}"
-        ItemsSource="{Binding NameTypes, Source={x:Reference Root}}"
-        SelectedItem="{Binding CurrentNameType, Source={x:Reference Root}}"
-        Style="{StaticResource FieldValue}" />
+        <Label
+            Grid.Row="0"
+            Grid.Column="0"
+            Style="{StaticResource FieldName}"
+            Text="{x:Static resources:UIStrings.FieldSelectName}" />
 
-    <CollectionView
-        Grid.Row="1"
-        Grid.Column="0"
-        Grid.ColumnSpan="2"
-        HorizontalOptions="Fill"
-        ItemsSource="{Binding Names, Source={x:Reference Root}}"
-        SelectedItem="{Binding CurrentName, Source={x:Reference Root}}"
-        SelectionMode="Single">
+        <Picker
+            Grid.Row="0"
+            Grid.Column="1"
+            ItemDisplayBinding="{Binding TypeName}"
+            ItemsSource="{Binding NameTypes, Source={x:Reference Root}}"
+            SelectedItem="{Binding CurrentNameType, Source={x:Reference Root}}"
+            Style="{StaticResource FieldValue}" />
 
-      <CollectionView.ItemsLayout>
-        <LinearItemsLayout
-            ItemSpacing="5"
-            Orientation="Vertical" />
-      </CollectionView.ItemsLayout>
+        <CollectionView
+            Grid.Row="1"
+            Grid.Column="0"
+            Grid.ColumnSpan="2"
+            HorizontalOptions="Fill"
+            ItemsSource="{Binding Names, Source={x:Reference Root}}"
+            SelectedItem="{Binding CurrentName, Source={x:Reference Root}}"
+            SelectionMode="Single">
 
-      <CollectionView.ItemTemplate>
-        <DataTemplate>
-          <Grid Style="{StaticResource SelectableItem}">
-          <Label
-              HorizontalOptions="Fill"
-              HorizontalTextAlignment="Start"
-              Style="{StaticResource FieldValue}"
-              Text="{Binding Info.Value}" />
-          </Grid>
-        </DataTemplate>
-      </CollectionView.ItemTemplate>
-    </CollectionView>
+          <CollectionView.ItemsLayout>
+            <LinearItemsLayout
+                ItemSpacing="5"
+                Orientation="Vertical" />
+          </CollectionView.ItemsLayout>
 
-    <Button
-        Grid.Row="2"
-        Grid.Column="0"
-        Grid.ColumnSpan="2"
-        Clicked="OnAddNameBtn"
-        HorizontalOptions="Fill"
-        Style="{StaticResource AddAdorner}" />
+          <CollectionView.ItemTemplate>
+            <DataTemplate>
+              <Grid Style="{StaticResource SelectableItem}">
+                <Label
+                    Padding="{StaticResource PageContentPadding}"
+                    HorizontalOptions="Fill"
+                    HorizontalTextAlignment="Start"
+                    Style="{StaticResource FieldValue}"
+                    Text="{Binding Info.Value}" />
+              </Grid>
+            </DataTemplate>
+          </CollectionView.ItemTemplate>
+        </CollectionView>
 
-    <Button
-        Grid.Row="3"
-        Grid.Column="0"
-        Grid.ColumnSpan="2"
-        Clicked="OnSelectNameBtn"
-        FontSize="Large"
-        HorizontalOptions="Fill"
-        Text="{Binding SelectNameBtnName, Source={x:Reference Root}}" />
+        <Button
+            Grid.Row="2"
+            Grid.Column="0"
+            Grid.ColumnSpan="2"
+            Clicked="OnAddNameBtn"
+            HorizontalOptions="Fill"
+            Style="{StaticResource AddAdorner}" />
 
-  </Grid>
+      </Grid>
+    </components:PageLayout.Body>
 
+    <components:PageLayout.Footer>
+      <Button
+          Clicked="OnSelectNameBtn"
+          FontSize="Large"
+          HorizontalOptions="Fill"
+          Text="{Binding SelectNameBtnName, Source={x:Reference Root}}" />
+    </components:PageLayout.Footer>
+  </components:PageLayout>
 </ContentPage>

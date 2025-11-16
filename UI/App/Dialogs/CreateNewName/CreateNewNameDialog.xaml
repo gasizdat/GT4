@@ -3,58 +3,68 @@
     x:Class="GT4.UI.Dialogs.CreateNewNameDialog"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:components="clr-namespace:GT4.UI.Components"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
-    x:Name="Root"
-    Title="{x:Static resources:UIStrings.WndTitleCreateNewFamilyDialog}">
-  <ScrollView>
+    x:Name="Root">
 
-    <VerticalStackLayout
-        Padding="20"
-        Spacing="10"
-        VerticalOptions="Start">
-
+  <components:PageLayout>
+    <components:PageLayout.Header>
       <Label
-          FontAttributes="Bold"
-          Style="{StaticResource FieldName}"
-          Text="{Binding GeneralNameDescription, Source={x:Reference Root}}" />
+          Style="{StaticResource PageTitle}"
+          Text="{x:Static resources:UIStrings.WndTitleCreateNewFamilyDialog}" />
+    </components:PageLayout.Header>
 
-      <Entry
-          HorizontalOptions="Fill"
-          Placeholder="{Binding GeneralNamePlaceholder, Source={x:Reference Root}}"
-          Text="{Binding GeneralName, Source={x:Reference Root}}" />
+    <components:PageLayout.Body>
+      <ScrollView>
+        <VerticalStackLayout
+            Spacing="{StaticResource PageContentSpacing}"
+            VerticalOptions="Start">
 
-      <Label
-          FontAttributes="Bold"
-          IsVisible="{Binding ShowDeclensionNames, Source={x:Reference Root}}"
-          Style="{StaticResource FieldName}"
-          Text="{Binding MaleNameDescription, Source={x:Reference Root}}" />
+          <Label
+              FontAttributes="Bold"
+              Style="{StaticResource FieldName}"
+              Text="{Binding GeneralNameDescription, Source={x:Reference Root}}" />
 
-      <Entry
-          HorizontalOptions="Fill"
-          IsVisible="{Binding ShowDeclensionNames, Source={x:Reference Root}}"
-          Placeholder="{Binding MaleNamePlaceholder, Source={x:Reference Root}}"
-          Text="{Binding MaleName, Source={x:Reference Root}}" />
+          <Entry
+              HorizontalOptions="Fill"
+              Placeholder="{Binding GeneralNamePlaceholder, Source={x:Reference Root}}"
+              Text="{Binding GeneralName, Source={x:Reference Root}}" />
 
-      <Label
-          FontAttributes="Bold"
-          IsVisible="{Binding ShowDeclensionNames, Source={x:Reference Root}}"
-          Style="{StaticResource FieldName}"
-          Text="{Binding FemaleNameDescription, Source={x:Reference Root}}" />
+          <Label
+              FontAttributes="Bold"
+              IsVisible="{Binding ShowDeclensionNames, Source={x:Reference Root}}"
+              Style="{StaticResource FieldName}"
+              Text="{Binding MaleNameDescription, Source={x:Reference Root}}" />
 
-      <Entry
-          HorizontalOptions="Fill"
-          IsVisible="{Binding ShowDeclensionNames, Source={x:Reference Root}}"
-          Placeholder="{Binding FemaleNamePlaceholder, Source={x:Reference Root}}"
-          Text="{Binding FemaleName, Source={x:Reference Root}}" />
+          <Entry
+              HorizontalOptions="Fill"
+              IsVisible="{Binding ShowDeclensionNames, Source={x:Reference Root}}"
+              Placeholder="{Binding MaleNamePlaceholder, Source={x:Reference Root}}"
+              Text="{Binding MaleName, Source={x:Reference Root}}" />
 
+          <Label
+              FontAttributes="Bold"
+              IsVisible="{Binding ShowDeclensionNames, Source={x:Reference Root}}"
+              Style="{StaticResource FieldName}"
+              Text="{Binding FemaleNameDescription, Source={x:Reference Root}}" />
+
+          <Entry
+              HorizontalOptions="Fill"
+              IsVisible="{Binding ShowDeclensionNames, Source={x:Reference Root}}"
+              Placeholder="{Binding FemaleNamePlaceholder, Source={x:Reference Root}}"
+              Text="{Binding FemaleName, Source={x:Reference Root}}" />
+
+        </VerticalStackLayout>
+      </ScrollView>
+    </components:PageLayout.Body>
+
+    <components:PageLayout.Footer>
       <Button
           Clicked="OnCreateFamilyBtn"
           FontSize="Large"
           HorizontalOptions="Fill"
           Text="{Binding CreateFamilyBtnName, Source={x:Reference Root}}" />
-
-    </VerticalStackLayout>
-
-  </ScrollView>
+    </components:PageLayout.Footer>
+  </components:PageLayout>
 </ContentPage>

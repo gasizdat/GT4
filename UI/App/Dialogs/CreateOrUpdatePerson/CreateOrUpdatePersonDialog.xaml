@@ -47,388 +47,394 @@
     </ResourceDictionary>
   </ContentPage.Resources>
 
-  <ScrollView>
-    <VerticalStackLayout
-        Padding="{x:StaticResource PageContentPadding}"
-        Spacing="{x:StaticResource PageContentSpacing}">
+  <components:PageLayout>
+    <components:PageLayout.Header>
+      <Label
+          Style="{StaticResource PageTitle}"
+          Text="{x:Static resources:UIStrings.WndTitleCreateNewProjectDialog}" />
+    </components:PageLayout.Header>
 
-      <!--  Pictures  -->
-      <Frame Style="{StaticResource CardFrameStyle}">
+    <components:PageLayout.Body>
+      <ScrollView>
+        <VerticalStackLayout
+            Padding="{x:StaticResource PageContentPadding}"
+            Spacing="{x:StaticResource PageContentSpacing}">
 
-        <Grid
-            ColumnDefinitions="*, Auto, Auto"
-            RowDefinitions="Auto, Auto">
-          <Label
-              Grid.Row="0"
-              Grid.Column="0"
-              Grid.ColumnSpan="3"
-              Style="{StaticResource GroupTitle}"
-              Text="{x:Static resources:UIStrings.FieldPersonPhotos}" />
-          <CollectionView
-              Grid.Row="1"
-              Grid.Column="0"
-              HorizontalScrollBarVisibility="Always"
-              ItemsSource="{Binding Photos, Source={x:Reference Root}}"
-              SelectionMode="Single">
+          <!--  Pictures  -->
+          <Frame Style="{StaticResource CardFrameStyle}">
+            <Grid
+                ColumnDefinitions="*, Auto, Auto"
+                RowDefinitions="Auto, Auto">
+              <Label
+                  Grid.Row="0"
+                  Grid.Column="0"
+                  Grid.ColumnSpan="3"
+                  Style="{StaticResource GroupTitle}"
+                  Text="{x:Static resources:UIStrings.FieldPersonPhotos}" />
+              <CollectionView
+                  Grid.Row="1"
+                  Grid.Column="0"
+                  HorizontalScrollBarVisibility="Always"
+                  ItemsSource="{Binding Photos, Source={x:Reference Root}}"
+                  SelectionMode="Single">
 
-            <CollectionView.ItemsLayout>
-              <LinearItemsLayout Orientation="Horizontal" />
-            </CollectionView.ItemsLayout>
+                <CollectionView.ItemsLayout>
+                  <LinearItemsLayout Orientation="Horizontal" />
+                </CollectionView.ItemsLayout>
 
-            <CollectionView.ItemTemplate>
-              <DataTemplate>
-                <Grid
-                    x:Name="PersonPhoto"
-                    ColumnDefinitions="*, Auto, Auto"
-                    ColumnSpacing="{StaticResource AdornerSpacing}"
-                    RowDefinitions="Auto, *"
-                    Style="{StaticResource HoverItem}">
+                <CollectionView.ItemTemplate>
+                  <DataTemplate>
+                    <Grid
+                        x:Name="PersonPhoto"
+                        ColumnDefinitions="*, Auto, Auto"
+                        ColumnSpacing="{StaticResource AdornerSpacing}"
+                        RowDefinitions="Auto, *"
+                        Style="{StaticResource HoverItem}">
 
-                  <Image
-                      Grid.Row="0"
-                      Grid.RowSpan="2"
-                      Grid.Column="0"
-                      Grid.ColumnSpan="3"
-                      Source="{Binding Content}"
-                      Style="{StaticResource PhotoPreviewStyle}" />
+                      <Image
+                          Grid.Row="0"
+                          Grid.RowSpan="2"
+                          Grid.Column="0"
+                          Grid.ColumnSpan="3"
+                          Source="{Binding Content}"
+                          Style="{StaticResource PhotoPreviewStyle}" />
 
-                  <Button
-                      Grid.Row="0"
-                      Grid.Column="1"
-                      Command="{Binding DialogCommand, Source={x:Reference Root}}"
-                      Style="{StaticResource EditAdorner}">
+                      <Button
+                          Grid.Row="0"
+                          Grid.Column="1"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource EditAdorner}">
 
-                    <Button.CommandParameter>
-                      <components:AdornerCommandParameter
-                          CommandName="EditPhotoCommand"
-                          Element="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
-                    </Button.CommandParameter>
-                  </Button>
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="EditPhotoCommand"
+                              Element="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
 
-                  <Button
-                      Grid.Row="0"
-                      Grid.Column="2"
-                      Command="{Binding DialogCommand, Source={x:Reference Root}}"
-                      Style="{StaticResource DeleteAdorner}">
+                      <Button
+                          Grid.Row="0"
+                          Grid.Column="2"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource DeleteAdorner}">
 
-                    <Button.CommandParameter>
-                      <components:AdornerCommandParameter
-                          CommandName="RemovePhotoCommand"
-                          Element="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
-                    </Button.CommandParameter>
-                  </Button>
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="RemovePhotoCommand"
+                              Element="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
 
-                </Grid>
-              </DataTemplate>
-            </CollectionView.ItemTemplate>
-          </CollectionView>
-          <Button
-              Grid.Row="1"
-              Grid.Column="1"
-              Command="{Binding DialogCommand, Source={x:Reference Root}}"
-              CommandParameter="AddPhotoCommand"
-              HeightRequest="{StaticResource PhotoHeight}"
-              Style="{StaticResource AddAdorner}"
-              WidthRequest="{StaticResource PhotoWidth}" />
+                    </Grid>
+                  </DataTemplate>
+                </CollectionView.ItemTemplate>
+              </CollectionView>
+              <Button
+                  Grid.Row="1"
+                  Grid.Column="1"
+                  Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                  CommandParameter="AddPhotoCommand"
+                  HeightRequest="{StaticResource PhotoHeight}"
+                  Style="{StaticResource AddAdorner}"
+                  WidthRequest="{StaticResource PhotoWidth}" />
 
-        </Grid>
-      </Frame>
+            </Grid>
+          </Frame>
 
-      <!--  Biological Sex  -->
-      <Frame Style="{StaticResource CardFrameStyle}">
+          <!--  Biological Sex  -->
+          <Frame Style="{StaticResource CardFrameStyle}">
+            <Grid
+                ColumnDefinitions="Auto, *"
+                ColumnSpacing="{StaticResource AdornerSpacing}"
+                RowDefinitions="Auto">
 
-        <Grid
-            ColumnDefinitions="Auto, *"
-            ColumnSpacing="{StaticResource AdornerSpacing}"
-            RowDefinitions="Auto">
+              <Label
+                  Grid.Row="0"
+                  Grid.Column="0"
+                  Style="{StaticResource FieldName}"
+                  Text="{x:Static resources:UIStrings.FieldBiologicalSex}" />
 
-          <Label
-              Grid.Row="0"
-              Grid.Column="0"
-              Style="{StaticResource FieldName}"
-              Text="{x:Static resources:UIStrings.FieldBiologicalSex}" />
+              <Picker
+                  Grid.Row="0"
+                  Grid.Column="1"
+                  ItemDisplayBinding="{Binding Name}"
+                  ItemsSource="{Binding BiologicalSexes, Source={x:Reference Root}}"
+                  SelectedItem="{Binding BioSex, Source={x:Reference Root}}"
+                  Style="{StaticResource FieldValue}" />
 
-          <Picker
-              Grid.Row="0"
-              Grid.Column="1"
-              ItemDisplayBinding="{Binding Name}"
-              ItemsSource="{Binding BiologicalSexes, Source={x:Reference Root}}"
-              SelectedItem="{Binding BioSex, Source={x:Reference Root}}"
-              Style="{StaticResource FieldValue}" />
+            </Grid>
+          </Frame>
 
-        </Grid>
-      </Frame>
+          <!--  Names  -->
+          <Frame Style="{StaticResource CardFrameStyle}">
+            <Grid
+                ColumnDefinitions="*"
+                RowDefinitions="Auto, *, Auto">
 
-      <!--  Names  -->
-      <Frame Style="{StaticResource CardFrameStyle}">
-        <Grid
-            ColumnDefinitions="*"
-            RowDefinitions="Auto, *, Auto">
+              <Label
+                  Grid.Row="0"
+                  Grid.Column="0"
+                  Style="{StaticResource GroupTitle}"
+                  Text="{x:Static resources:UIStrings.FieldPersonNames}" />
 
-          <Label
-              Grid.Row="0"
-              Grid.Column="0"
-              Style="{StaticResource GroupTitle}"
-              Text="{x:Static resources:UIStrings.FieldPersonNames}" />
+              <CollectionView
+                  Grid.Row="1"
+                  Grid.Column="0"
+                  HorizontalOptions="Center"
+                  ItemsSource="{Binding Names, Source={x:Reference Root}}"
+                  SelectionMode="Single">
 
-          <CollectionView
-              Grid.Row="1"
-              Grid.Column="0"
-              HorizontalOptions="Center"
-              ItemsSource="{Binding Names, Source={x:Reference Root}}"
-              SelectionMode="Single">
+                <CollectionView.ItemsLayout>
+                  <LinearItemsLayout
+                      ItemSpacing="5"
+                      Orientation="Vertical" />
+                </CollectionView.ItemsLayout>
 
-            <CollectionView.ItemsLayout>
-              <LinearItemsLayout
-                  ItemSpacing="5"
-                  Orientation="Vertical" />
-            </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                  <DataTemplate>
+                    <Grid
+                        x:Name="PersonName"
+                        Padding="{StaticResource PageContentPadding}"
+                        ColumnDefinitions="Auto, *, Auto, Auto"
+                        ColumnSpacing="{StaticResource AdornerSpacing}"
+                        RowDefinitions="Auto"
+                        Style="{StaticResource HoverItem}">
 
-            <CollectionView.ItemTemplate>
-              <DataTemplate>
-                <Grid
-                    x:Name="PersonName"
-                    ColumnDefinitions="Auto, *, Auto, Auto"
-                    ColumnSpacing="{StaticResource AdornerSpacing}"
-                    RowDefinitions="Auto"
-                    Style="{StaticResource HoverItem}">
+                      <Label
+                          Grid.Row="0"
+                          Grid.Column="0"
+                          HorizontalOptions="Start"
+                          Style="{StaticResource FieldName}"
+                          Text="{Binding Type}" />
 
-                  <Label
-                      Grid.Row="0"
-                      Grid.Column="0"
-                      HorizontalOptions="Start"
-                      Style="{StaticResource FieldName}"
-                      Text="{Binding Type}" />
+                      <Label
+                          Grid.Row="0"
+                          Grid.Column="1"
+                          HorizontalOptions="Fill"
+                          Style="{StaticResource FieldValue}"
+                          Text="{Binding Value}" />
 
-                  <Label
-                      Grid.Row="0"
-                      Grid.Column="1"
-                      HorizontalOptions="Fill"
-                      Style="{StaticResource FieldValue}"
-                      Text="{Binding Value}" />
+                      <Button
+                          Grid.Row="0"
+                          Grid.Column="2"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource EditAdorner}">
 
-                  <Button
-                      Grid.Row="0"
-                      Grid.Column="2"
-                      Command="{Binding DialogCommand, Source={x:Reference Root}}"
-                      Style="{StaticResource EditAdorner}">
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="EditNameCommand"
+                              Element="{Binding Source={x:Reference PersonName}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
 
-                    <Button.CommandParameter>
-                      <components:AdornerCommandParameter
-                          CommandName="EditNameCommand"
-                          Element="{Binding Source={x:Reference PersonName}, Path=BindingContext}" />
-                    </Button.CommandParameter>
-                  </Button>
+                      <Button
+                          Grid.Row="0"
+                          Grid.Column="3"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource DeleteAdorner}">
 
-                  <Button
-                      Grid.Row="0"
-                      Grid.Column="3"
-                      Command="{Binding DialogCommand, Source={x:Reference Root}}"
-                      Style="{StaticResource DeleteAdorner}">
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="RemoveNameCommand"
+                              Element="{Binding Source={x:Reference PersonName}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
 
-                    <Button.CommandParameter>
-                      <components:AdornerCommandParameter
-                          CommandName="RemoveNameCommand"
-                          Element="{Binding Source={x:Reference PersonName}, Path=BindingContext}" />
-                    </Button.CommandParameter>
-                  </Button>
+                    </Grid>
+                  </DataTemplate>
+                </CollectionView.ItemTemplate>
+              </CollectionView>
 
-                </Grid>
-              </DataTemplate>
-            </CollectionView.ItemTemplate>
-          </CollectionView>
+              <Button
+                  Grid.Row="2"
+                  Grid.Column="0"
+                  Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                  CommandParameter="AddNameCommand"
+                  HorizontalOptions="Fill"
+                  Style="{StaticResource TextAdorner}"
+                  Text="{x:Static resources:UIStrings.BtnNameAddPersonName}" />
+            </Grid>
+          </Frame>
 
-          <Button
-              Grid.Row="2"
-              Grid.Column="0"
-              Command="{Binding DialogCommand, Source={x:Reference Root}}"
-              CommandParameter="AddNameCommand"
-              HorizontalOptions="Fill"
-              Style="{StaticResource TextAdorner}"
-              Text="{x:Static resources:UIStrings.BtnNameAddPersonName}" />
-        </Grid>
-      </Frame>
+          <!--  Dates  -->
+          <Frame Style="{StaticResource CardFrameStyle}">
+            <Grid
+                ColumnDefinitions="*, Auto, Auto"
+                ColumnSpacing="{StaticResource AdornerSpacing}"
+                RowDefinitions="Auto, Auto, Auto"
+                RowSpacing="{StaticResource AdornerSpacing}">
 
-      <!--  Dates  -->
-      <Frame Style="{StaticResource CardFrameStyle}">
-        <Grid
-            ColumnDefinitions="*, Auto, Auto"
-            ColumnSpacing="{StaticResource AdornerSpacing}"
-            RowDefinitions="Auto, Auto, Auto"
-            RowSpacing="{StaticResource AdornerSpacing}">
+              <Label
+                  Grid.Row="0"
+                  Grid.Column="0"
+                  Style="{StaticResource GroupTitle}"
+                  Text="{x:Static resources:UIStrings.FieldPersonDates}" />
 
-          <Label
-              Grid.Row="0"
-              Grid.Column="0"
-              Style="{StaticResource GroupTitle}"
-              Text="{x:Static resources:UIStrings.FieldPersonDates}" />
+              <components:DateInfoView
+                  Grid.Row="1"
+                  Grid.Column="0"
+                  Caption="{x:Static resources:UIStrings.FieldDateOfBirth}"
+                  Date="{Binding BirthDate, Source={x:Reference Root}}" />
 
-          <components:DateInfoView
-              Grid.Row="1"
-              Grid.Column="0"
-              Caption="{x:Static resources:UIStrings.FieldDateOfBirth}"
-              Date="{Binding BirthDate, Source={x:Reference Root}}" />
+              <Button
+                  Grid.Row="1"
+                  Grid.Column="1"
+                  Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                  CommandParameter="EditBirthDateCommand"
+                  Style="{StaticResource EditAdorner}" />
 
-          <Button
-              Grid.Row="1"
-              Grid.Column="1"
-              Command="{Binding DialogCommand, Source={x:Reference Root}}"
-              CommandParameter="EditBirthDateCommand"
-              Style="{StaticResource EditAdorner}" />
+              <components:DateInfoView
+                  Grid.Row="2"
+                  Grid.Column="0"
+                  Caption="{x:Static resources:UIStrings.FieldDateOfDeath}"
+                  Date="{Binding DeathDate, Source={x:Reference Root}}" />
 
-          <components:DateInfoView
-              Grid.Row="2"
-              Grid.Column="0"
-              Caption="{x:Static resources:UIStrings.FieldDateOfDeath}"
-              Date="{Binding DeathDate, Source={x:Reference Root}}" />
+              <Button
+                  Grid.Row="2"
+                  Grid.Column="1"
+                  Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                  CommandParameter="EditDeathDateCommand"
+                  Style="{StaticResource EditAdorner}" />
 
-          <Button
-              Grid.Row="2"
-              Grid.Column="1"
-              Command="{Binding DialogCommand, Source={x:Reference Root}}"
-              CommandParameter="EditDeathDateCommand"
-              Style="{StaticResource EditAdorner}" />
+              <Button
+                  Grid.Row="2"
+                  Grid.Column="2"
+                  Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                  CommandParameter="RemoveDeathDateCommand"
+                  Style="{StaticResource DeleteAdorner}" />
 
-          <Button
-              Grid.Row="2"
-              Grid.Column="2"
-              Command="{Binding DialogCommand, Source={x:Reference Root}}"
-              CommandParameter="RemoveDeathDateCommand"
-              Style="{StaticResource DeleteAdorner}" />
+            </Grid>
+          </Frame>
 
-        </Grid>
-      </Frame>
+          <!--  Relationships  -->
+          <Frame Style="{StaticResource CardFrameStyle}">
+            <Grid
+                ColumnDefinitions="*"
+                RowDefinitions="Auto, *, Auto">
 
-      <!--  Relationships  -->
-      <Frame Style="{StaticResource CardFrameStyle}">
+              <Label
+                  Grid.Row="0"
+                  Grid.Column="0"
+                  Style="{StaticResource GroupTitle}"
+                  Text="{x:Static resources:UIStrings.FieldPersonRelationships}" />
 
-        <Grid
-            ColumnDefinitions="*"
-            RowDefinitions="Auto, *, Auto">
+              <CollectionView
+                  Grid.Row="1"
+                  Grid.Column="0"
+                  ItemsSource="{Binding Relatives, Source={x:Reference Root}}"
+                  SelectionMode="Single">
 
-          <Label
-              Grid.Row="0"
-              Grid.Column="0"
-              Style="{StaticResource GroupTitle}"
-              Text="{x:Static resources:UIStrings.FieldPersonRelationships}" />
+                <CollectionView.ItemsLayout>
+                  <LinearItemsLayout
+                      ItemSpacing="3"
+                      Orientation="Vertical" />
+                </CollectionView.ItemsLayout>
 
-          <CollectionView
-              Grid.Row="1"
-              Grid.Column="0"
-              ItemsSource="{Binding Relatives, Source={x:Reference Root}}"
-              SelectionMode="Single">
+                <CollectionView.ItemTemplate>
+                  <DataTemplate x:DataType="items:RelativeMemberInfoItem">
+                    <Grid
+                        x:Name="PersonRelative"
+                        ColumnDefinitions="Auto, *, Auto, Auto"
+                        ColumnSpacing="{StaticResource AdornerSpacing}"
+                        RowDefinitions="Auto, Auto">
 
-            <CollectionView.ItemsLayout>
-              <LinearItemsLayout
-                  ItemSpacing="3"
-                  Orientation="Vertical" />
-            </CollectionView.ItemsLayout>
+                      <components:PersonInfoView
+                          Grid.Row="0"
+                          Grid.Column="0"
+                          Grid.ColumnSpan="2"
+                          DatesLabelStyle="{StaticResource FieldValue}"
+                          NameLabelStyle="{StaticResource FieldName}"
+                          Person="{Binding Info}" />
 
-            <CollectionView.ItemTemplate>
-              <DataTemplate x:DataType="items:RelativeMemberInfoItem">
-                <Grid
-                    x:Name="PersonRelative"
-                    ColumnDefinitions="Auto, *, Auto, Auto"
-                    ColumnSpacing="{StaticResource AdornerSpacing}"
-                    RowDefinitions="Auto, Auto">
+                      <Button
+                          Grid.Row="0"
+                          Grid.Column="2"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource EditAdorner}">
 
-                  <components:PersonInfoView
-                      Grid.Row="0"
-                      Grid.Column="0"
-                      Grid.ColumnSpan="2"
-                      DatesLabelStyle="{StaticResource FieldValue}"
-                      NameLabelStyle="{StaticResource FieldName}"
-                      Person="{Binding Info}" />
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="EditRelativeCommand"
+                              Element="{Binding Source={x:Reference PersonRelative}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
 
-                  <Button
-                      Grid.Row="0"
-                      Grid.Column="2"
-                      Command="{Binding DialogCommand, Source={x:Reference Root}}"
-                      Style="{StaticResource EditAdorner}">
+                      <Button
+                          Grid.Row="0"
+                          Grid.Column="3"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource DeleteAdorner}">
 
-                    <Button.CommandParameter>
-                      <components:AdornerCommandParameter
-                          CommandName="EditRelativeCommand"
-                          Element="{Binding Source={x:Reference PersonRelative}, Path=BindingContext}" />
-                    </Button.CommandParameter>
-                  </Button>
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="RemoveRelativeCommand"
+                              Element="{Binding Source={x:Reference PersonRelative}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
 
-                  <Button
-                      Grid.Row="0"
-                      Grid.Column="3"
-                      Command="{Binding DialogCommand, Source={x:Reference Root}}"
-                      Style="{StaticResource DeleteAdorner}">
+                      <Label
+                          Grid.Row="1"
+                          Grid.Column="0"
+                          Style="{StaticResource FieldName}"
+                          Text="{Binding RelationTypeName}" />
 
-                    <Button.CommandParameter>
-                      <components:AdornerCommandParameter
-                          CommandName="RemoveRelativeCommand"
-                          Element="{Binding Source={x:Reference PersonRelative}, Path=BindingContext}" />
-                    </Button.CommandParameter>
-                  </Button>
+                      <Label
+                          Grid.Row="1"
+                          Grid.Column="1"
+                          Grid.ColumnSpan="3"
+                          IsVisible="{Binding ShowDate}"
+                          Style="{StaticResource FieldValue}"
+                          Text="{Binding Date}" />
 
-                  <Label
-                      Grid.Row="1"
-                      Grid.Column="0"
-                      Style="{StaticResource FieldName}"
-                      Text="{Binding RelationTypeName}" />
+                    </Grid>
+                  </DataTemplate>
+                </CollectionView.ItemTemplate>
+              </CollectionView>
 
-                  <Label
-                      Grid.Row="1"
-                      Grid.Column="1"
-                      Grid.ColumnSpan="3"
-                      IsVisible="{Binding ShowDate}"
-                      Style="{StaticResource FieldValue}"
-                      Text="{Binding Date}" />
+              <Button
+                  Grid.Row="2"
+                  Grid.Column="0"
+                  Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                  CommandParameter="AddRelationship"
+                  HorizontalOptions="Fill"
+                  Style="{StaticResource TextAdorner}"
+                  Text="{x:Static resources:UIStrings.BtnNameAddPersonRelationship}" />
 
-                </Grid>
-              </DataTemplate>
-            </CollectionView.ItemTemplate>
-          </CollectionView>
+            </Grid>
+          </Frame>
 
-          <Button
-              Grid.Row="2"
-              Grid.Column="0"
-              Command="{Binding DialogCommand, Source={x:Reference Root}}"
-              CommandParameter="AddRelationship"
-              HorizontalOptions="Fill"
-              Style="{StaticResource TextAdorner}"
-              Text="{x:Static resources:UIStrings.BtnNameAddPersonRelationship}" />
+          <!--  Biography  -->
+          <Frame Style="{StaticResource CardFrameStyle}">
+            <Grid
+                ColumnDefinitions="*"
+                RowDefinitions="Auto, *">
 
-        </Grid>
+              <Label
+                  Grid.Row="0"
+                  Grid.Column="0"
+                  Style="{StaticResource GroupTitle}"
+                  Text="{x:Static resources:UIStrings.FieldPersonBiography}" />
 
-      </Frame>
+              <Editor
+                  Grid.Row="1"
+                  Grid.Column="0"
+                  HeightRequest="200"
+                  HorizontalOptions="Fill"
+                  Placeholder="Enter a biography or life story..."
+                  Text="{Binding Biography.Content, Source={x:Reference Root}}" />
+            </Grid>
+          </Frame>
+          
+        </VerticalStackLayout>
+      </ScrollView>
+    </components:PageLayout.Body>
 
-      <!--  Biography  -->
-      <Frame Style="{StaticResource CardFrameStyle}">
-
-        <Grid
-            ColumnDefinitions="*"
-            RowDefinitions="Auto, *">
-
-          <Label
-              Grid.Row="0"
-              Grid.Column="0"
-              Style="{StaticResource GroupTitle}"
-              Text="{x:Static resources:UIStrings.FieldPersonBiography}" />
-
-          <Editor
-              Grid.Row="1"
-              Grid.Column="0"
-              HeightRequest="200"
-              HorizontalOptions="Fill"
-              Placeholder="Enter a biography or life story..."
-              Text="{Binding Biography.Content, Source={x:Reference Root}}" />
-        </Grid>
-
-      </Frame>
-
+    <components:PageLayout.Footer>
       <Button
           Command="{Binding DialogCommand, Source={x:Reference Root}}"
           CommandParameter="CreatePersonCommand"
           FontSize="Large"
           Text="{Binding CreatePersonBtnName, Source={x:Reference Root}}" />
-
-    </VerticalStackLayout>
-  </ScrollView>
-
+    </components:PageLayout.Footer>
+  </components:PageLayout>
 </ContentPage>

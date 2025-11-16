@@ -13,7 +13,7 @@
           Left="{StaticResource PageContentHorizontalPadding}"
           Right="{StaticResource PageContentHorizontalPadding}"
           Top="0" />
-      
+
       <Thickness
           x:Key="BodyPadding"
           Bottom="{StaticResource PageContentVerticalPadding}"
@@ -46,7 +46,7 @@
     <ContentView
         Grid.Row="1"
         Grid.Column="0"
-        Padding="{StaticResource PageContentPadding}"
+        Padding="{StaticResource BodyPadding}"
         Content="{Binding Body, Source={x:Reference Root}}" />
 
     <!--  Footer slot  -->
