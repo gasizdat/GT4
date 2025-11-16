@@ -27,7 +27,7 @@ public partial class ProjectPage : ContentPage
 
     return project
       .PersonManager
-      .GetPersonInfosByNameAsync(name, token)
+      .GetPersonInfosByNameAsync(name: name, selectMainPhoto: true, token)
       .Result
       .Select(person => new PersonInfoItem(person, _NameFormatter))
       .OrderBy(item => item, _PersonInfoComparer)

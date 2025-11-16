@@ -67,7 +67,7 @@ public partial class FamilyPage : ContentPage
         var ret = _CurrentProjectProvider
           .Project
           .PersonManager
-          .GetPersonInfosByNameAsync(FamilyName, token)
+          .GetPersonInfosByNameAsync(name: FamilyName, selectMainPhoto: true,  token)
           .Result
           .Select(person => new FamilyMemberInfoItem(person, _Services))
           .OrderBy(item => item, _Services.GetRequiredService<IComparer<FamilyMemberInfoItem>>())

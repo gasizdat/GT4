@@ -9,10 +9,12 @@ public class PersonManager : TableBase
   {
   }
 
-  private async Task<PersonInfo> CreatePersonInfoAsync(Person person, CancellationToken token)
+  private async Task<PersonInfo> CreatePersonInfoAsync(Person person, bool selectMainPhoto, CancellationToken token)
   {
     var names = Document.PersonNames.GetPersonNamesAsync(person, token);
-    var mainPhoto = Document.PersonData.GetPersonDataSetAsync(person, DataCategory.PersonMainPhoto, token);
+    var mainPhoto = selectMainPhoto
+      ? Document.PersonData.GetPersonDataSetAsync(person, DataCategory.PersonMainPhoto, token)
+      : Task.FromResult(Array.Empty<Data>());
     await Task.WhenAll(names, mainPhoto);
     var ret = new PersonInfo
     (
@@ -52,7 +54,7 @@ public class PersonManager : TableBase
     var relatives = Document.Relatives.GetRelativeAsync(person, token);
     await Task.WhenAll(names, personData, relatives);
 
-    var personInfo = await CreatePersonInfoAsync(person, token);
+    var personInfo = await CreatePersonInfoAsync(person, true, token);
     var ret = new PersonFullInfo(
       Id: person.Id,
       BirthDate: person.BirthDate,
@@ -67,7 +69,15 @@ public class PersonManager : TableBase
     return ret;
   }
 
-  public async Task<PersonInfo[]> GetPersonInfosByNameAsync(Name name, CancellationToken token)
+  public async Task<PersonInfo[]> GetPersonInfosAsync(bool selectMainPhoto, CancellationToken token)
+  {
+    var persons = await Document.Persons.GetPersonsAsync(token);
+    var ret = await Task.WhenAll(persons.Select(person => CreatePersonInfoAsync(person, selectMainPhoto, token)));
+
+    return ret;
+  }
+
+  public async Task<PersonInfo[]> GetPersonInfosByNameAsync(Name name, bool selectMainPhoto, CancellationToken token)
   {
     using var command = Document.CreateCommand();
     command.CommandText = """
@@ -90,7 +100,7 @@ public class PersonManager : TableBase
     var persons = await Task.WhenAll(tasks);
     var ret = await Task.WhenAll(persons
       .Where(person => person is not null)
-      .Select(person => CreatePersonInfoAsync(person!, token)));
+      .Select(person => CreatePersonInfoAsync(person!, selectMainPhoto, token)));
 
     return ret ?? [];
   }
