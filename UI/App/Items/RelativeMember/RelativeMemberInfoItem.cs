@@ -3,19 +3,26 @@ using GT4.UI.Formatters;
 
 namespace GT4.UI.Items;
 
-public class RelativeMemberInfoItem : CollectionItemBase<Relative>
+public class RelativeMemberInfoItem : PersonInfoItem
 {
   private readonly IDateFormatter _DateFormatter;
   private readonly IRelationshipTypeFormatter _RelationshipTypeFormatter;
+  private readonly RelativeInfo _RelativeInfo;
 
-  public RelativeMemberInfoItem(Relative relative, IServiceProvider serviceProvider)
-    : base(relative, "wife.png")
+  public RelativeMemberInfoItem(
+    RelativeInfo relativeInfo, 
+    IDateFormatter dateFormatter, 
+    IRelationshipTypeFormatter relationshipTypeFormatter,
+    INameFormatter nameFormatter)
+    : base(personInfo: relativeInfo, nameFormatter: nameFormatter)
   {
-    _DateFormatter = serviceProvider.GetRequiredService<IDateFormatter>();
-    _RelationshipTypeFormatter = serviceProvider.GetRequiredService<IRelationshipTypeFormatter>();
+    _DateFormatter = dateFormatter;
+    _RelationshipTypeFormatter = relationshipTypeFormatter;
+    _RelativeInfo = relativeInfo;
   }
 
-  public bool ShowDate => Info.Date.HasValue;
-  public string Date => _DateFormatter.ToString(Info.Date);
-  public string RelationTypeName => _RelationshipTypeFormatter.GetRelationshipTypeName(Info.Type);
+  public bool ShowDate => _RelativeInfo.Relative.Date.HasValue;
+  public string Date => _DateFormatter.ToString(_RelativeInfo.Relative.Date);
+  public string RelationTypeName => _RelationshipTypeFormatter.GetRelationshipTypeName(_RelativeInfo.Relative.Type, _RelativeInfo.BiologicalSex);
+  public RelativeInfo RelativeInfo => _RelativeInfo;
 }

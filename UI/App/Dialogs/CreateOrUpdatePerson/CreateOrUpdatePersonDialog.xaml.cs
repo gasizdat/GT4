@@ -14,8 +14,10 @@ namespace GT4.UI.Dialogs;
 public partial class CreateOrUpdatePersonDialog : ContentPage
 {
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
+  private readonly IRelationshipTypeFormatter _RelationshipTypeFormatter;
   private readonly IBiologicalSexFormatter _BiologicalSexFormatter;
   private readonly INameTypeFormatter _NameTypeFormatter;
+  private readonly INameFormatter _NameFormatter;
   private readonly IDateFormatter _DateFormatter;
   private readonly IServiceProvider _ServiceProvider;
   private readonly ICommand _DialogCommand;
@@ -36,8 +38,10 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   {
     _ServiceProvider = serviceProvider;
     _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
+    _RelationshipTypeFormatter = _ServiceProvider.GetRequiredService<IRelationshipTypeFormatter>();
     _BiologicalSexFormatter = _ServiceProvider.GetRequiredService<IBiologicalSexFormatter>();
     _NameTypeFormatter = _ServiceProvider.GetRequiredService<INameTypeFormatter>();
+    _NameFormatter = _ServiceProvider.GetRequiredService<INameFormatter>();
     _DateFormatter = _ServiceProvider.GetRequiredService<IDateFormatter>();
     _DialogCommand = new Command<object>(OnDialogCommand);
     _SaveButtonName = person is null ? UIStrings.BtnNameCreateFamilyPerson : UIStrings.BtnNameUpdateFamilyPerson;
@@ -50,55 +54,61 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     InitializeComponent();
   }
 
-  void UpdatePersonInformation(PersonFullInfo? person)
+  private void UpdatePersonInformation(PersonFullInfo? person)
   {
     if (person is null)
     {
       return;
     }
 
-    _PersonId = person.Id;
-    _BirthDate = person.BirthDate;
-    _DeathDate = person.DeathDate;
-    foreach (var name in person.Names)
+    try
     {
-      _Names.Add(new NameInfoItem(name, _NameTypeFormatter));
+      _PersonId = person.Id;
+      _BirthDate = person.BirthDate;
+      _DeathDate = person.DeathDate;
+      foreach (var name in person.Names)
+      {
+        _Names.Add(new NameInfoItem(name, _NameTypeFormatter));
+      }
+
+      if (person.MainPhoto is not null)
+      {
+        _Photos.Add(new PersonDataItem(
+          data: person.MainPhoto,
+          _ServiceProvider.GetRequiredKeyedService<IDataConverter>(person.MainPhoto.Category),
+          _CancellationTokenProvider));
+      }
+
+      foreach (var photo in person.AdditionalPhotos)
+      {
+        _Photos.Add(new PersonDataItem(
+          data: photo,
+          _ServiceProvider.GetRequiredKeyedService<IDataConverter>(photo.Category),
+          _CancellationTokenProvider));
+      }
+
+      _Biography = person.Biography switch
+      {
+        Data biography =>
+          new PersonDataItem(
+              data: biography,
+              _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonBio),
+              _CancellationTokenProvider),
+
+        _ => new PersonDataItem(
+              dataCategory: DataCategory.PersonBio,
+              _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonBio),
+              _CancellationTokenProvider)
+      };
+
+      foreach (var relativeInfo in person.RelativeInfos)
+      {
+        _Relatives.Add(new RelativeMemberInfoItem(relativeInfo, _DateFormatter, _RelationshipTypeFormatter, _NameFormatter));
+      }
     }
-
-    if (person.MainPhoto is not null)
+    catch (Exception ex)
     {
-      _Photos.Add(new PersonDataItem(
-        data: person.MainPhoto,
-        _ServiceProvider.GetRequiredKeyedService<IDataConverter>(person.MainPhoto.Category),
-        _CancellationTokenProvider));
-    }
-
-    foreach (var photo in person.AdditionalPhotos)
-    {
-      _Photos.Add(new PersonDataItem(
-        data: photo,
-        _ServiceProvider.GetRequiredKeyedService<IDataConverter>(photo.Category),
-        _CancellationTokenProvider));
-    }
-
-    _Biography = person.Biography switch
-    {
-      Data biography =>
-        new PersonDataItem(
-            data: biography,
-            _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonBio),
-            _CancellationTokenProvider),
-
-      _ => new PersonDataItem(
-            dataCategory: DataCategory.PersonBio,
-            _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonBio),
-            _CancellationTokenProvider)
-    };
-
-
-    foreach (var relative in person.Relatives)
-    {
-      _Relatives.Add(new RelativeMemberInfoItem(relative, _ServiceProvider));
+      PageAlert.ShowError(ex);
     }
   }
 
@@ -172,7 +182,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       DeathDate: _DeathDate,
       BiologicalSex: _BiologicalSex!.Info,
       AdditionalPhotos: additionalPhotos,
-      Relatives: _Relatives.Select(relative => relative.Info).ToArray(),
+      RelativeInfos: _Relatives.Select(relative => relative.RelativeInfo).ToArray(),
       Biography: _Biography?.ToDataAsync().Result);
 
     _Info.SetResult(result);
@@ -296,8 +306,13 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     {
       _Relatives.Clear();
       var relatives = result
-        .Select(person => new Relative(Person: person.Info, Type: RelationshipType.Spouse, null))
-        .Select(relative => new RelativeMemberInfoItem(relative: relative, _ServiceProvider));
+        .Select(person =>
+        {
+          var relative = new Relative(person.Info, dialog.RelType.Info, dialog.RelationshipDate);
+          var relativeInfo = new RelativeInfo(relative, person.Info.Names, person.Info.MainPhoto);
+          return relativeInfo;
+        })
+        .Select(relativeInfo => new RelativeMemberInfoItem(relativeInfo, _DateFormatter, _RelationshipTypeFormatter, _NameFormatter));
       foreach (var relative in relatives)
       {
         _Relatives.Add(relative);
