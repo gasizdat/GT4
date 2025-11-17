@@ -4,6 +4,7 @@ using GT4.Core.Utils;
 using GT4.UI.Formatters;
 using GT4.UI.Items;
 using GT4.UI.Resources;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Input;
 
@@ -13,17 +14,18 @@ public partial class SelectRelativesDialog : ContentPage
 {
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
-  private readonly IBiologicalSexFormatter _BiologicalSexFormatter;
   private readonly IDateFormatter _DateFormatter;
   private readonly INameFormatter _NameFormatter;
   private readonly BiologicalSexItem[] _BiologicalSexes;
-  private readonly List<PersonInfoItem> _Persons = new(); 
+  private readonly RelationshipTypeItem[] _RelationshipTypes;
+  private readonly List<PersonInfoItem> _Persons = [];
+  private readonly ObservableCollection<object> _SelectedItems = [];
   private readonly TaskCompletionSource<PersonInfoItem[]?> _Info = new(null);
   private readonly ICommand _DialogCommand;
 
   private BiologicalSexItem _BiologicalSex;
+  private RelationshipTypeItem _RelationshipType;
   private long _ProjectRevision;
-  private IList<PersonInfoItem>? _SelectedItems;
   private Date? _RelationshipDate;
 
   private bool PersonSelector(PersonInfoItem personItem)
@@ -42,7 +44,7 @@ public partial class SelectRelativesDialog : ContentPage
         RelationshipDate = null;
         break;
       case string commandName when commandName == "SelectPersonCommand":
-        _Info.SetResult(_SelectedItems?.ToArray());
+        _Info.SetResult(_SelectedItems.Select(i => (PersonInfoItem)i).ToArray());
         break;
     }
   }
@@ -63,17 +65,28 @@ public partial class SelectRelativesDialog : ContentPage
 
   public SelectRelativesDialog(BiologicalSex? biologicalSex, IServiceProvider serviceProvider)
   {
+    var biologicalSexFormatter = serviceProvider.GetRequiredService<IBiologicalSexFormatter>();
+    var relationshipTypeFormatter = serviceProvider.GetRequiredService<IRelationshipTypeFormatter>();
+
     _CancellationTokenProvider = serviceProvider.GetRequiredService<ICancellationTokenProvider>();
     _CurrentProjectProvider = serviceProvider.GetRequiredService<ICurrentProjectProvider>();
-    _BiologicalSexFormatter = serviceProvider.GetRequiredService<IBiologicalSexFormatter>();
     _DateFormatter = serviceProvider.GetRequiredService<IDateFormatter>();
     _NameFormatter = serviceProvider.GetRequiredService<INameFormatter>();
     _DialogCommand = new Command<object>(OnDialogCommand);
     _ProjectRevision = _CurrentProjectProvider.Project.ProjectRevision;
     _BiologicalSexes = new[] { BiologicalSex.Male, BiologicalSex.Female, BiologicalSex.Unknown }
-      .Select(sex => new BiologicalSexItem(sex, _BiologicalSexFormatter))
+      .Select(sex => new BiologicalSexItem(sex, biologicalSexFormatter))
       .ToArray();
     _BiologicalSex = _BiologicalSexes.SingleOrDefault(i => i.Info == biologicalSex, _BiologicalSexes[2]);
+    _RelationshipTypes = new[] {
+        RelationshipType.Parent,
+        RelationshipType.Child,
+        RelationshipType.Spose,
+        RelationshipType.AdoptiveParent,
+        RelationshipType.AdoptiveChild }
+      .Select(type => new RelationshipTypeItem(type, relationshipTypeFormatter))
+      .ToArray();
+    _RelationshipType = _RelationshipTypes.First();
 
     InitializeComponent();
   }
@@ -83,6 +96,10 @@ public partial class SelectRelativesDialog : ContentPage
   public BiologicalSexItem BioSex { get => _BiologicalSex; set => _BiologicalSex = value; }
 
   public BiologicalSexItem[] BiologicalSexes => _BiologicalSexes;
+
+  public RelationshipTypeItem RelType { get => _RelationshipType; set => _RelationshipType = value; }
+
+  public RelationshipTypeItem[] RelationshipTypes => _RelationshipTypes;
 
   public IEnumerable<PersonInfoItem> Persons
   {
@@ -113,15 +130,7 @@ public partial class SelectRelativesDialog : ContentPage
     }
   }
 
-  public IList<PersonInfoItem>? SelectedItems
-  {
-    get => _SelectedItems;
-    set
-    {
-      _SelectedItems = value;
-      OnPropertyChanged(nameof(DialogBtnName));
-    }
-  }
+  public IList<object> SelectedItems => _SelectedItems;
 
   public string DialogBtnName =>
     (_SelectedItems?.Count ?? 0) > 0 ? UIStrings.BtnNameOk : UIStrings.BtnNameCancel;
@@ -130,8 +139,8 @@ public partial class SelectRelativesDialog : ContentPage
 
   public ICommand DialogCommand => _DialogCommand;
 
-  public Date? RelationshipDate 
-  { 
+  public Date? RelationshipDate
+  {
     get => _RelationshipDate;
     set
     {

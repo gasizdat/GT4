@@ -13,7 +13,7 @@
       <Grid
           ColumnDefinitions="Auto, *, Auto, Auto"
           ColumnSpacing="{StaticResource PageContentSpacing}"
-          RowDefinitions="Auto, Auto, Auto, Auto"
+          RowDefinitions="Auto, Auto, Auto, Auto, Auto"
           RowSpacing="{StaticResource PageContentSpacing}">
 
         <!--  Row 0 - Title  -->
@@ -56,17 +56,32 @@
             SelectedItem="{Binding BioSex, Source={x:Reference Root}}"
             Style="{StaticResource FieldValue}" />
 
-        <!--  Row 3 - Relationship Date  -->
-
-        <components:DateInfoView
+        <!--  Row 3 - Relationship Type  -->
+        <Label
             Grid.Row="3"
+            Grid.Column="0"
+            Style="{StaticResource FieldName}"
+            Text="{x:Static resources:UIStrings.FieldRelationshipType}" />
+
+        <Picker
+            Grid.Row="3"
+            Grid.Column="1"
+            Grid.ColumnSpan="3"
+            ItemDisplayBinding="{Binding Name}"
+            ItemsSource="{Binding RelationshipTypes, Source={x:Reference Root}}"
+            SelectedItem="{Binding RelType, Source={x:Reference Root}}"
+            Style="{StaticResource FieldValue}" />
+
+        <!--  Row 4 - Relationship Date  -->
+        <components:DateInfoView
+            Grid.Row="4"
             Grid.Column="0"
             Grid.ColumnSpan="2"
             Caption="{x:Static resources:UIStrings.FieldRelationshipStartDate}"
             Date="{Binding RelationshipDate, Source={x:Reference Root}}" />
 
         <Button
-            Grid.Row="3"
+            Grid.Row="4"
             Grid.Column="2"
             Command="{Binding DialogCommand, Source={x:Reference Root}}"
             CommandParameter="EditRelationshipDateCommand"
@@ -86,7 +101,7 @@
       <CollectionView
           HorizontalOptions="Center"
           ItemsSource="{Binding Persons, Source={x:Reference Root}}"
-          SelectedItems="{Binding SelectedItems, Source={x:Reference Root}}"
+          SelectedItems="{Binding SelectedItems, Source={x:Reference Root}, Mode=TwoWay}"
           SelectionMode="Multiple">
 
         <CollectionView.ItemsLayout>
