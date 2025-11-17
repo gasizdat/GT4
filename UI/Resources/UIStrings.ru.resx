@@ -427,4 +427,13 @@
   <data name="WndTitleCreateOrUpdatePersonDialog" xml:space="preserve">
     <value>Заполните информацию о персоне</value>
   </data>
+  <data name="FieldRelationshipType" xml:space="preserve">
+    <value>Вид родства</value>
+  </data>
+  <data name="RelParent" xml:space="preserve">
+    <value>Родитель</value>
+  </data>
+  <data name="RelAdoptiveInvariant_1" xml:space="preserve">
+    <value>Приемный {0}</value>
+  </data>
 </root>

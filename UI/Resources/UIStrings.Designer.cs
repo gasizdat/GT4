@@ -530,6 +530,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Type of relationship.
+        /// </summary>
+        public static string FieldRelationshipType {
+            get {
+                return ResourceManager.GetString("FieldRelationshipType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Select.
         /// </summary>
         public static string FieldSelectName {
@@ -712,6 +721,15 @@ namespace GT4.UI.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Adoptive {0}.
         /// </summary>
+        public static string RelAdoptiveInvariant_1 {
+            get {
+                return ResourceManager.GetString("RelAdoptiveInvariant_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Adoptive {0}.
+        /// </summary>
         public static string RelAdoptiveMale_1 {
             get {
                 return ResourceManager.GetString("RelAdoptiveMale_1", resourceCulture);
@@ -760,6 +778,15 @@ namespace GT4.UI.Resources {
         public static string RelMother {
             get {
                 return ResourceManager.GetString("RelMother", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Parent.
+        /// </summary>
+        public static string RelParent {
+            get {
+                return ResourceManager.GetString("RelParent", resourceCulture);
             }
         }
         

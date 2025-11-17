@@ -427,4 +427,13 @@ genealogy tree and enjoy!</value>
   <data name="WndTitleCreateOrUpdatePersonDialog" xml:space="preserve">
     <value>Fill in person information</value>
   </data>
+  <data name="FieldRelationshipType" xml:space="preserve">
+    <value>Type of relationship</value>
+  </data>
+  <data name="RelParent" xml:space="preserve">
+    <value>Parent</value>
+  </data>
+  <data name="RelAdoptiveInvariant_1" xml:space="preserve">
+    <value>Adoptive {0}</value>
+  </data>
 </root>

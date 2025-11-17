@@ -5,21 +5,39 @@ namespace GT4.UI.Formatters;
 
 public class RelationshipTypeFormatter : IRelationshipTypeFormatter
 {
-  public string GetRelationshipTypeName(RelationshipType type)
+  public string GetRelationshipTypeName(RelationshipType type, BiologicalSex? biologicalSex = null)
   {
-    return type switch
+    var ret = biologicalSex switch
     {
-      RelationshipType.Mother => UIStrings.RelMother,
-      RelationshipType.Father => UIStrings.RelFather,
-      RelationshipType.AdoptiveMother => string.Format(UIStrings.RelAdoptiveFemale_1, UIStrings.RelMother),
-      RelationshipType.AdoptiveFather => string.Format(UIStrings.RelAdoptiveMale_1, UIStrings.RelFather),
-      RelationshipType.Spouse => UIStrings.RelSpouse,
-      RelationshipType.Wife => UIStrings.RelWife,
-      RelationshipType.Husband => UIStrings.RelHusband,
-      RelationshipType.Son => UIStrings.RelSon,
-      RelationshipType.Daughter => UIStrings.RelDaughter,
-      RelationshipType.Child => UIStrings.RelChild,
-      _ => UIStrings.RelUnknown
+      BiologicalSex.Male => type switch
+      {
+        RelationshipType.Parent => UIStrings.RelFather,
+        RelationshipType.Child => UIStrings.RelSon,
+        RelationshipType.Spose => UIStrings.RelHusband,
+        RelationshipType.AdoptiveParent => string.Format(UIStrings.RelAdoptiveMale_1, UIStrings.RelFather),
+        RelationshipType.AdoptiveChild => string.Format(UIStrings.RelAdoptiveMale_1, UIStrings.RelSon),
+        _ => throw new NotSupportedException($"type: {type}, sex: {biologicalSex}")
+      },
+      BiologicalSex.Female => type switch
+      {
+        RelationshipType.Parent => UIStrings.RelMother,
+        RelationshipType.Child => UIStrings.RelDaughter,
+        RelationshipType.Spose => UIStrings.RelWife,
+        RelationshipType.AdoptiveParent => string.Format(UIStrings.RelAdoptiveFemale_1, UIStrings.RelMother),
+        RelationshipType.AdoptiveChild => string.Format(UIStrings.RelAdoptiveFemale_1, UIStrings.RelDaughter),
+        _ => throw new NotSupportedException($"type: {type}, sex: {biologicalSex}")
+      },
+      _=> type switch
+      {
+        RelationshipType.Parent => UIStrings.RelParent,
+        RelationshipType.Child => UIStrings.RelChild,
+        RelationshipType.Spose => UIStrings.RelSpouse,
+        RelationshipType.AdoptiveParent => string.Format(UIStrings.RelAdoptiveInvariant_1, UIStrings.RelParent),
+        RelationshipType.AdoptiveChild => string.Format(UIStrings.RelAdoptiveInvariant_1, UIStrings.RelChild),
+        _ => throw new NotSupportedException($"type: {type}, sex: {biologicalSex}")
+      }
     };
+
+    return ret;
   }
 }
