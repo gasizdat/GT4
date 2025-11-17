@@ -197,7 +197,7 @@ public partial class FamilyPage : ContentPage
       await _CurrentProjectProvider
         .Project
         .PersonManager
-        .UpdatePersonAsync(info, updateToken);
+        .UpdatePersonAsync(person, updateToken);
     }
     catch (Exception ex)
     {

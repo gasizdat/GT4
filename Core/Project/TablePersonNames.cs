@@ -51,6 +51,7 @@ public partial class TablePersonNames : TableBase
   public async Task AddPersonNamesAsync(Person person, Name[] names, CancellationToken token)
   {
     using var transaction = await Document.BeginTransactionAsync(token);
+    var tasks = new List<Task>();
 
     foreach (var name in names)
     {
@@ -62,8 +63,10 @@ public partial class TablePersonNames : TableBase
 
       command.Parameters.AddWithValue("@personId", person.Id);
       command.Parameters.AddWithValue("@nameId", name.Id);
-      await command.ExecuteNonQueryAsync(token);
+      tasks.Add(command.ExecuteNonQueryAsync(token));
     }
+
+    await Task.WhenAll(tasks);
 
     transaction.Commit();
   }

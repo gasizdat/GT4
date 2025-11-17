@@ -39,10 +39,10 @@
 
         <!--  TODO: Temporary code for testing — to be removed before production.  -->
         <VerticalStackLayout IsVisible="Visible">
-          <Button Style="{StaticResource DeleteAdorner}"
-                  HeightRequest="20"
-                  WidthRequest="20"
-                  />
+          <Button
+              HeightRequest="20"
+              Style="{StaticResource DeleteAdorner}"
+              WidthRequest="20" />
           <Label
               Style="{StaticResource PageTitle}"
               Text="PageTitle" />
