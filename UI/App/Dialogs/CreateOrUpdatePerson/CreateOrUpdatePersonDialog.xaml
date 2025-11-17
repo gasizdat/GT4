@@ -12,13 +12,6 @@
     <ResourceDictionary>
 
       <OnIdiom
-          x:Key="AdornerSpacing"
-          x:TypeArguments="x:Double"
-          Desktop="10"
-          Phone="3"
-          Tablet="5" />
-
-      <OnIdiom
           x:Key="PhotoHeight"
           x:TypeArguments="x:Double"
           Desktop="300"
@@ -85,7 +78,6 @@
                     <Grid
                         x:Name="PersonPhoto"
                         ColumnDefinitions="*, Auto, Auto"
-                        ColumnSpacing="{StaticResource AdornerSpacing}"
                         RowDefinitions="Auto, *"
                         Style="{StaticResource HoverItem}">
 
@@ -143,7 +135,6 @@
           <Frame Style="{StaticResource CardFrameStyle}">
             <Grid
                 ColumnDefinitions="Auto, *"
-                ColumnSpacing="{StaticResource AdornerSpacing}"
                 RowDefinitions="Auto">
 
               <Label
@@ -187,8 +178,6 @@
                     <Grid
                         x:Name="PersonName"
                         ColumnDefinitions="Auto, *, Auto, Auto"
-                        ColumnSpacing="{StaticResource AdornerSpacing}"
-                        RowSpacing="{StaticResource AdornerSpacing}"
                         RowDefinitions="Auto"
                         Style="{StaticResource HoverItem}">
 
@@ -252,9 +241,7 @@
           <Frame Style="{StaticResource CardFrameStyle}">
             <Grid
                 ColumnDefinitions="*, Auto, Auto"
-                ColumnSpacing="{StaticResource AdornerSpacing}"
-                RowDefinitions="Auto, Auto, Auto"
-                RowSpacing="{StaticResource AdornerSpacing}">
+                RowDefinitions="Auto, Auto, Auto">
 
               <Label
                   Grid.Row="0"
@@ -316,19 +303,12 @@
                   ItemsSource="{Binding Relatives, Source={x:Reference Root}}"
                   SelectionMode="Single">
 
-                <CollectionView.ItemsLayout>
-                  <LinearItemsLayout
-                      ItemSpacing="3"
-                      Orientation="Vertical" />
-                </CollectionView.ItemsLayout>
-
                 <CollectionView.ItemTemplate>
                   <DataTemplate x:DataType="items:RelativeMemberInfoItem">
                     <Grid
                         x:Name="PersonRelative"
                         Padding="{StaticResource CollectionItemsVerticalPadding}"
                         ColumnDefinitions="Auto, *, Auto, Auto"
-                        ColumnSpacing="{StaticResource AdornerSpacing}"
                         RowDefinitions="Auto, Auto">
 
                       <components:PersonInfoView

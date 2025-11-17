@@ -38,7 +38,11 @@
             Text="{x:Static resources:UIStrings.AppGeneralWelcomeTitle}" />
 
         <!--  TODO: Temporary code for testing — to be removed before production.  -->
-        <VerticalStackLayout IsVisible="Hidden">
+        <VerticalStackLayout IsVisible="Visible">
+          <Button Style="{StaticResource DeleteAdorner}"
+                  HeightRequest="20"
+                  WidthRequest="20"
+                  />
           <Label
               Style="{StaticResource PageTitle}"
               Text="PageTitle" />

@@ -88,6 +88,42 @@
       Phone="8"
       Tablet="9" />
 
+  <OnIdiom
+      x:Key="AddornerButtonMarginValues"
+      x:TypeArguments="x:Double"
+      Desktop="3"
+      Phone="1"
+      Tablet="2" />
+
+  <OnIdiom
+      x:Key="AddornerButtonEmojiSize"
+      x:TypeArguments="x:Double"
+      Desktop="30"
+      Phone="25"
+      Tablet="30" />
+
+  <Thickness
+      x:Key="AddornerButtonMargin"
+      Bottom="{StaticResource AddornerButtonMarginValues}"
+      Left="{StaticResource AddornerButtonMarginValues}"
+      Right="{StaticResource AddornerButtonMarginValues}"
+      Top="{StaticResource AddornerButtonMarginValues}" />
+
+  <Thickness
+      x:Key="GroupTitleMargin"
+      Bottom="{OnIdiom Default=20,
+                       Phone=15}"
+      Left="0"
+      Right="0"
+      Top="0" />
+
+  <Thickness
+      x:Key="FieldNameLabelMargin"
+      Bottom="0"
+      Left="0"
+      Right="{StaticResource PageContentSpacing}"
+      Top="0" />
+
   <Thickness
       x:Key="CollectionItemsVerticalPadding"
       Bottom="{StaticResource PageContentVerticalPadding}"
@@ -147,14 +183,15 @@
 
   <Style x:Key="ChangeAdorner" TargetType="Button">
     <Setter Property="FontSize" Value="{x:StaticResource AdornerButtonTextSize}" />
-    <Setter Property="Padding" Value="-1" />
-    <Setter Property="Opacity" Value="0.5" />
+    <Setter Property="Padding" Value="0" />
     <Setter Property="BorderColor" Value="{StaticResource Primary}" />
     <Setter Property="BackgroundColor" Value="{StaticResource Translucent80}" />
     <Setter Property="BorderWidth" Value="1.5" />
     <Setter Property="HorizontalOptions" Value="Start" />
     <Setter Property="VerticalOptions" Value="Start" />
     <Setter Property="ZIndex" Value="2100000000" />
+    <Setter Property="Margin" Value="{StaticResource AddornerButtonMargin}" />
+    <Setter Property="FontSize" Value="{StaticResource LabelTextSizeDefault}" />
 
     <Setter Property="VisualStateManager.VisualStateGroups">
       <VisualStateGroupList>
@@ -172,22 +209,27 @@
   </Style>
 
   <Style x:Key="TextAdorner" BasedOn="{StaticResource ChangeAdorner}" TargetType="Button">
-    <Setter Property="LineBreakMode" Value="WordWrap" />
-    <Setter Property="Padding" Value="5" />
     <Setter Property="Opacity" Value="0.8" />
-    <Setter Property="TextColor" Value="{StaticResource Tertiary}" />
-    <Setter Property="FontSize" Value="{StaticResource LabelTextSizeDefault}" />
+    <Setter Property="LineBreakMode" Value="WordWrap" />
   </Style>
 
-  <Style x:Key="AddAdorner" BasedOn="{StaticResource ChangeAdorner}" TargetType="Button">
+  <Style x:Key="EmojiAdorner" BasedOn="{StaticResource ChangeAdorner}" TargetType="Button">
+    <Setter Property="Opacity" Value="0.5" />
+    <Setter Property="LineBreakMode" Value="WordWrap" />
+    <Setter Property="MinimumHeightRequest" Value="{StaticResource AddornerButtonEmojiSize}" />
+    <Setter Property="MinimumWidthRequest" Value="{StaticResource AddornerButtonEmojiSize}" />
+    <Setter Property="TextColor" Value="{StaticResource Tertiary}" />
+  </Style>
+
+  <Style x:Key="AddAdorner" BasedOn="{StaticResource EmojiAdorner}" TargetType="Button">
     <Setter Property="Text" Value="➕" />
   </Style>
 
-  <Style x:Key="DeleteAdorner" BasedOn="{StaticResource ChangeAdorner}" TargetType="Button">
+  <Style x:Key="DeleteAdorner" BasedOn="{StaticResource EmojiAdorner}" TargetType="Button">
     <Setter Property="Text" Value="❌" />
   </Style>
 
-  <Style x:Key="EditAdorner" BasedOn="{StaticResource ChangeAdorner}" TargetType="Button">
+  <Style x:Key="EditAdorner" BasedOn="{StaticResource EmojiAdorner}" TargetType="Button">
     <Setter Property="Text" Value="🖋️" />
   </Style>
 
@@ -334,6 +376,7 @@
     <Setter Property="HorizontalTextAlignment" Value="Start" />
     <Setter Property="VerticalTextAlignment" Value="Center" />
     <Setter Property="LineBreakMode" Value="WordWrap" />
+    <Setter Property="Margin" Value="{StaticResource FieldNameLabelMargin}" />
   </Style>
 
   <Style x:Key="PageTitle" BasedOn="{StaticResource ContentBase}" TargetType="Label">
@@ -348,6 +391,7 @@
   <Style x:Key="GroupTitle" BasedOn="{StaticResource ContentBase}" TargetType="Label">
     <Setter Property="FontSize" Value="{StaticResource LabelTextSizeLarge}" />
     <Setter Property="FontAttributes" Value="Bold" />
+    <Setter Property="Margin" Value="{StaticResource GroupTitleMargin}" />
   </Style>
 
   <Style x:Key="GroupSubtitle" BasedOn="{StaticResource ContentBase}" TargetType="Label">
