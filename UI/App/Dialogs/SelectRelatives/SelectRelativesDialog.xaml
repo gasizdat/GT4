@@ -101,7 +101,7 @@
       <CollectionView
           HorizontalOptions="Center"
           ItemsSource="{Binding Persons, Source={x:Reference Root}}"
-          SelectedItems="{Binding SelectedItems, Source={x:Reference Root}, Mode=TwoWay}"
+          SelectedItems="{Binding SelectedItems, Source={x:Reference Root}}"
           SelectionMode="Multiple">
 
         <CollectionView.ItemsLayout>

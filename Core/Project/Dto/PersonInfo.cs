@@ -1,27 +1,9 @@
-﻿using GT4.Core.Utils;
-
-namespace GT4.Core.Project.Dto;
+﻿namespace GT4.Core.Project.Dto;
 
 public record class PersonInfo(
-  int Id,
-  Date BirthDate,
-  Date? DeathDate,
-  BiologicalSex BiologicalSex,
+  Person Person,
   Name[] Names,
   Data? MainPhoto)
-  : Person(
-    Id: Id,
-    BirthDate: BirthDate,
-    DeathDate: DeathDate,
-    BiologicalSex: BiologicalSex)
+  : Person(original: Person)
 {
-  public PersonInfo(Person person, Name[] names, Data? mainPhoto)
-    : this (Id: person.Id, 
-            BirthDate: person.BirthDate, 
-            DeathDate: person.DeathDate, 
-            BiologicalSex: person.BiologicalSex, 
-            Names: names, 
-            MainPhoto: mainPhoto)
-  {
-  }
 }

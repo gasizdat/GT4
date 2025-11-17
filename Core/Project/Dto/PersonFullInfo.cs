@@ -1,36 +1,24 @@
-﻿using GT4.Core.Utils;
-
-namespace GT4.Core.Project.Dto;
+﻿namespace GT4.Core.Project.Dto;
 
 public record class PersonFullInfo(
-  int Id,
-  Date BirthDate,
-  Date? DeathDate,
-  BiologicalSex BiologicalSex,
-  Name[] Names,
-  Data? MainPhoto,
+  PersonInfo PersonInfo,
   Data[] AdditionalPhotos,
   RelativeInfo[] RelativeInfos,
   Data? Biography
-  ) : PersonInfo(
-    Id: Id,
-    BirthDate: BirthDate,
-    DeathDate: DeathDate,
-    BiologicalSex: BiologicalSex,
-    Names: Names,
-    MainPhoto: MainPhoto)
+  ) : PersonInfo(original: PersonInfo)
 {
-  public PersonFullInfo(PersonInfo personInfo, Data[] additionalPhotos, RelativeInfo[] relativeInfos, Data? biography)
-  : this(
-      Id: personInfo.Id,
-      BirthDate: personInfo.BirthDate,
-      DeathDate: personInfo.DeathDate,
-      BiologicalSex: personInfo.BiologicalSex,
-      Names: personInfo.Names,
-      MainPhoto: personInfo.MainPhoto,
-      AdditionalPhotos: additionalPhotos,
-      RelativeInfos: relativeInfos,
-      Biography: biography)
+  public PersonFullInfo(
+    Person person,
+    Name[] names,
+    Data? mainPhoto,
+    Data[] additionalPhotos,
+    RelativeInfo[] relativeInfos,
+    Data? biography)
+    : this(
+        PersonInfo: new PersonInfo(Person: person, Names: names, MainPhoto: mainPhoto),
+        AdditionalPhotos: additionalPhotos,
+        RelativeInfos: relativeInfos,
+        Biography: biography)
   {
   }
 }

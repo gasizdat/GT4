@@ -18,9 +18,9 @@ public class PersonManager : TableBase
     await Task.WhenAll(names, mainPhoto);
     var ret = new PersonInfo
     (
-      person: person,
-      names: names.Result,
-      mainPhoto: mainPhoto.Result.FirstOrDefault()
+      Person: person,
+      Names: names.Result,
+      MainPhoto: mainPhoto.Result.FirstOrDefault()
     );
 
     return ret;
@@ -67,17 +67,13 @@ public class PersonManager : TableBase
       relativeInfos[i] = new RelativeInfo(Relative: relative, Names: relativePerson.Names, MainPhoto: relativePerson.MainPhoto);
     }
 
-    var personInfo = await CreatePersonInfoAsync(person, selectMainPhoto, token);
     var ret = new PersonFullInfo(
-      Id: person.Id,
-      BirthDate: person.BirthDate,
-      DeathDate: person.DeathDate,
-      BiologicalSex: person.BiologicalSex,
-      Names: names.Result.ToArray(),
-      MainPhoto: personData.Result.SingleOrDefault(data => data.Category == DataCategory.PersonMainPhoto),
-      AdditionalPhotos: personData.Result.Where(data => data.Category == DataCategory.PersonPhoto).ToArray(),
-      RelativeInfos: relativeInfos,
-      Biography: personData.Result.SingleOrDefault(data => data.Category == DataCategory.PersonBio));
+      person: person,
+      names: names.Result.ToArray(),
+      mainPhoto: personData.Result.SingleOrDefault(data => data.Category == DataCategory.PersonMainPhoto),
+      additionalPhotos: personData.Result.Where(data => data.Category == DataCategory.PersonPhoto).ToArray(),
+      relativeInfos: relativeInfos,
+      biography: personData.Result.SingleOrDefault(data => data.Category == DataCategory.PersonBio));
 
     return ret;
   }

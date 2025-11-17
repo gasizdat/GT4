@@ -174,16 +174,18 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
     var mainPhoto = photos?.FirstOrDefault();
     var additionalPhotos = photos?.Skip(1).ToArray() ?? [];
-    var result = new PersonFullInfo(
+    var person = new Person(
       Id: _PersonId ?? TableBase.NonCommitedId,
-      Names: _Names.Select(n => n.Info).ToArray(),
-      MainPhoto: mainPhoto is null ? null : mainPhoto with { Category = DataCategory.PersonMainPhoto },
       BirthDate: _BirthDate!.Value,
       DeathDate: _DeathDate,
-      BiologicalSex: _BiologicalSex!.Info,
-      AdditionalPhotos: additionalPhotos,
-      RelativeInfos: _Relatives.Select(relative => relative.RelativeInfo).ToArray(),
-      Biography: _Biography?.ToDataAsync().Result);
+      BiologicalSex: _BiologicalSex!.Info);
+    var result = new PersonFullInfo(
+      person: person,
+      names: _Names.Select(n => n.Info).ToArray(),
+      additionalPhotos: additionalPhotos,
+      relativeInfos: _Relatives.Select(relative => relative.RelativeInfo).ToArray(),
+      mainPhoto: mainPhoto is null ? null : mainPhoto with { Category = DataCategory.PersonMainPhoto },
+      biography: _Biography?.ToDataAsync().Result);
 
     _Info.SetResult(result);
   }

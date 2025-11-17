@@ -7,5 +7,5 @@ public record class RelativeInfo(
   : Relative(original: Relative)
 {
   public static implicit operator PersonInfo(RelativeInfo relativeInfo) => 
-    new PersonInfo(person: relativeInfo, names: relativeInfo.Names, mainPhoto: relativeInfo.MainPhoto);
+    new PersonInfo(Person: relativeInfo, Names: relativeInfo.Names, MainPhoto: relativeInfo.MainPhoto);
 }
