@@ -3,7 +3,10 @@
 namespace GT4.Core.Project.Dto;
 
 public record class Relative(
-  Person Person, 
-  RelationshipType Type, 
+  Person Person,
+  RelationshipType Type,
   Date? Date
-);
+) : Person(original: Person)
+{
+
+}

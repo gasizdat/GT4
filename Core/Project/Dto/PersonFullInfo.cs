@@ -10,7 +10,7 @@ public record class PersonFullInfo(
   Name[] Names,
   Data? MainPhoto,
   Data[] AdditionalPhotos,
-  Relative[] Relatives,
+  RelativeInfo[] RelativeInfos,
   Data? Biography
   ) : PersonInfo(
     Id: Id,
@@ -20,7 +20,7 @@ public record class PersonFullInfo(
     Names: Names,
     MainPhoto: MainPhoto)
 {
-  public PersonFullInfo(PersonInfo personInfo, Data[] additionalPhotos, Relative[] relatives, Data? biography)
+  public PersonFullInfo(PersonInfo personInfo, Data[] additionalPhotos, RelativeInfo[] relativeInfos, Data? biography)
   : this(
       Id: personInfo.Id,
       BirthDate: personInfo.BirthDate,
@@ -29,7 +29,7 @@ public record class PersonFullInfo(
       Names: personInfo.Names,
       MainPhoto: personInfo.MainPhoto,
       AdditionalPhotos: additionalPhotos,
-      Relatives: relatives,
+      RelativeInfos: relativeInfos,
       Biography: biography)
   {
   }

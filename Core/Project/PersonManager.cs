@@ -49,12 +49,25 @@ public class PersonManager : TableBase
       throw new ArgumentException("person is not commited");
     }
 
+    const bool selectMainPhoto = true;
     var names = Document.PersonNames.GetPersonNamesAsync(person, token);
     var personData = Document.PersonData.GetPersonDataSetAsync(person, null, token);
-    var relatives = Document.Relatives.GetRelativeAsync(person, token);
+    var relatives = Document.Relatives.GetRelativesAsync(person, token);
     await Task.WhenAll(names, personData, relatives);
+    var relativePersonInfos = await GetPersonInfosAsync(
+      persons: relatives.Result.Select(i => i.Person).ToArray(),
+      selectMainPhoto: selectMainPhoto,
+      token: token);
 
-    var personInfo = await CreatePersonInfoAsync(person, true, token);
+    var relativeInfos = new RelativeInfo[relativePersonInfos.Length];
+    for (var i = 0; i < relativePersonInfos.Length; i++)
+    {
+      var relative = relatives.Result[i];
+      var relativePerson = relativePersonInfos[i];
+      relativeInfos[i] = new RelativeInfo(Relative: relative, Names: relativePerson.Names, MainPhoto: relativePerson.MainPhoto);
+    }
+
+    var personInfo = await CreatePersonInfoAsync(person, selectMainPhoto, token);
     var ret = new PersonFullInfo(
       Id: person.Id,
       BirthDate: person.BirthDate,
@@ -63,7 +76,7 @@ public class PersonManager : TableBase
       Names: names.Result.ToArray(),
       MainPhoto: personData.Result.SingleOrDefault(data => data.Category == DataCategory.PersonMainPhoto),
       AdditionalPhotos: personData.Result.Where(data => data.Category == DataCategory.PersonPhoto).ToArray(),
-      Relatives: relatives.Result.ToArray(),
+      RelativeInfos: relativeInfos,
       Biography: personData.Result.SingleOrDefault(data => data.Category == DataCategory.PersonBio));
 
     return ret;
@@ -72,8 +85,14 @@ public class PersonManager : TableBase
   public async Task<PersonInfo[]> GetPersonInfosAsync(bool selectMainPhoto, CancellationToken token)
   {
     var persons = await Document.Persons.GetPersonsAsync(token);
-    var ret = await Task.WhenAll(persons.Select(person => CreatePersonInfoAsync(person, selectMainPhoto, token)));
+    var ret = await GetPersonInfosAsync(persons, selectMainPhoto, token);
 
+    return ret;
+  }
+
+  public async Task<PersonInfo[]> GetPersonInfosAsync(Person[] persons, bool selectMainPhoto, CancellationToken token)
+  {
+    var ret = await Task.WhenAll(persons.Select(person => CreatePersonInfoAsync(person, selectMainPhoto, token)));
     return ret;
   }
 
@@ -119,7 +138,8 @@ public class PersonManager : TableBase
 
     await Task.WhenAll(
       Document.PersonNames.AddPersonNamesAsync(person, personFullInfo.Names, token),
-      Document.PersonData.AddPersonDataSetAsync(person, CombinePersonData(personFullInfo), token));
+      Document.PersonData.AddPersonDataSetAsync(person, CombinePersonData(personFullInfo), token),
+      Document.Relatives.AddRelativesAsync(person, personFullInfo.RelativeInfos.Select(i => i.Relative).ToArray(), token));
 
     transaction.Commit();
 

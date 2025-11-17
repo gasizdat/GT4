@@ -39,7 +39,7 @@ public class TableRelatives : TableBase
     await command.ExecuteNonQueryAsync(token);
   }
 
-  public async Task<Relative[]> GetRelativeAsync(Person person, CancellationToken token)
+  public async Task<Relative[]> GetRelativesAsync(Person person, CancellationToken token)
   {
     using var command = Document.CreateCommand();
 
@@ -63,22 +63,27 @@ public class TableRelatives : TableBase
       .ToArray() ?? [];
   }
 
-  public async Task<Relative> AddRelativeAsync(Person person, Person relative, RelationshipType type, Date? date, CancellationToken token)
+  public async Task AddRelativesAsync(Person person, Relative[] relatives, CancellationToken token)
   {
     using var transaction = await Document.BeginTransactionAsync(token);
-    using var command = Document.CreateCommand();
-    command.CommandText = """
-      INSERT INTO Parents (PersonId, RelativeId, Type, Date, DateStatus)
-      VALUES (@personId, @relativeId, @type, @date, @dateStatus);
-      """;
-    command.Parameters.AddWithValue("@personId", person.Id);
-    command.Parameters.AddWithValue("@relativeId", relative.Id);
-    command.Parameters.AddWithValue("@type", type);
-    command.Parameters.AddWithValue("@date", date.HasValue ? date.Value.Code : DBNull.Value);
-    command.Parameters.AddWithValue("@dateStatus", date.HasValue ? date.Value.Status : DBNull.Value);
-    await command.ExecuteNonQueryAsync(token);
-    transaction.Commit();
+    var tasks = new List<Task>();
 
-    return new Relative(Person: relative, Type: type, Date: date);
+    foreach (var relative in relatives)
+    {
+      using var command = Document.CreateCommand();
+      command.CommandText = """
+        INSERT INTO Parents (PersonId, RelativeId, Type, Date, DateStatus)
+        VALUES (@personId, @relativeId, @type, @date, @dateStatus);
+        """;
+      command.Parameters.AddWithValue("@personId", person.Id);
+      command.Parameters.AddWithValue("@relativeId", relative.Person.Id);
+      command.Parameters.AddWithValue("@type", relative.Type);
+      command.Parameters.AddWithValue("@date", relative.Date.HasValue ? relative.Date.Value.Code : DBNull.Value);
+      command.Parameters.AddWithValue("@dateStatus", relative.Date.HasValue ? relative.Date.Value.Status : DBNull.Value);
+      tasks.Add(command.ExecuteNonQueryAsync(token));
+    }
+
+    await Task.WhenAll(tasks);
+    transaction.Commit();
   }
 }
