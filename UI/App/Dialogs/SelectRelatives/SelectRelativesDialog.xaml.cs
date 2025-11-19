@@ -80,13 +80,14 @@ public partial class SelectRelativesDialog : ContentPage
     _BiologicalSex = _BiologicalSexes.SingleOrDefault(i => i.Info == biologicalSex, _BiologicalSexes[2]);
     _RelationshipTypes = new[] {
         RelationshipType.Parent,
-        RelationshipType.Child,
+        RelationshipType.Child, 
         RelationshipType.Spose,
         RelationshipType.AdoptiveParent,
         RelationshipType.AdoptiveChild }
       .Select(type => new RelationshipTypeItem(type, relationshipTypeFormatter))
       .ToArray();
     _RelationshipType = _RelationshipTypes.First();
+    _SelectedItems.CollectionChanged += (_, _) => OnPropertyChanged(nameof(DialogBtnName));
 
     InitializeComponent();
   }

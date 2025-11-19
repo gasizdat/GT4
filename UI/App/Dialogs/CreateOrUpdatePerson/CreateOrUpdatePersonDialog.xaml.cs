@@ -126,7 +126,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     {
       _BirthDate = value;
       OnPropertyChanged(nameof(BirthDate));
-      OnPropertyChanged(nameof(CreatePersonBtnName));
+      OnPropertyChanged(nameof(DialogBtnName));
     }
   }
 
@@ -137,7 +137,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     {
       _DeathDate = value;
       OnPropertyChanged(nameof(DeathDate));
-      OnPropertyChanged(nameof(CreatePersonBtnName));
+      OnPropertyChanged(nameof(DialogBtnName));
     }
   }
 
@@ -148,12 +148,12 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     {
       _BiologicalSex = value;
       OnPropertyChanged(nameof(BioSex));
-      OnPropertyChanged(nameof(CreatePersonBtnName));
+      OnPropertyChanged(nameof(DialogBtnName));
     }
   }
 
   public Task<PersonFullInfo?> Info => _Info.Task;
-  public string CreatePersonBtnName => _NotReady ? UIStrings.BtnNameCancel : _SaveButtonName;
+  public string DialogBtnName => _NotReady ? UIStrings.BtnNameCancel : _SaveButtonName;
 
   private void OnCreatePersonCommand()
   {
@@ -306,7 +306,6 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
     if (result?.Length > 0)
     {
-      _Relatives.Clear();
       var relatives = result
         .Select(person =>
         {

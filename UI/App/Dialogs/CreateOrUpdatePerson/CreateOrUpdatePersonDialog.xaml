@@ -49,7 +49,7 @@
 
     <components:PageLayout.Body>
       <ScrollView>
-        <VerticalStackLayout >
+        <VerticalStackLayout>
 
           <!--  Pictures  -->
           <Frame Style="{StaticResource CardFrameStyle}">
@@ -321,8 +321,10 @@
 
                       <Button
                           Grid.Row="0"
+                          Grid.RowSpan="2"
                           Grid.Column="2"
                           Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          VerticalOptions="Center"
                           Style="{StaticResource EditAdorner}">
 
                         <Button.CommandParameter>
@@ -334,8 +336,10 @@
 
                       <Button
                           Grid.Row="0"
+                          Grid.RowSpan="2"
                           Grid.Column="3"
                           Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          VerticalOptions="Center"
                           Style="{StaticResource DeleteAdorner}">
 
                         <Button.CommandParameter>
@@ -407,7 +411,7 @@
           Command="{Binding DialogCommand, Source={x:Reference Root}}"
           CommandParameter="CreatePersonCommand"
           FontSize="Large"
-          Text="{Binding CreatePersonBtnName, Source={x:Reference Root}}" />
+          Text="{Binding DialogBtnName, Source={x:Reference Root}}" />
     </components:PageLayout.Footer>
   </components:PageLayout>
 </ContentPage>
