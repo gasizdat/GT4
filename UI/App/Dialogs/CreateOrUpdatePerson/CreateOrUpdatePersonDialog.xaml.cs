@@ -298,7 +298,13 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   private async Task OnAddRelationship()
   {
-    var dialog = new SelectRelativesDialog(biologicalSex: null, _ServiceProvider);
+    var existingRelatives = _Relatives
+      .Select(item => item.RelativeInfo)
+      .ToArray();
+    var dialog = new SelectRelativesDialog(
+      biologicalSex: _BiologicalSex?.Info, 
+      existingRelatives: existingRelatives, 
+      _ServiceProvider);
 
     await Navigation.PushModalAsync(dialog);
     var result = await dialog.Info;

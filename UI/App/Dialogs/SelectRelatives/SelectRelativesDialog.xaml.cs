@@ -22,6 +22,7 @@ public partial class SelectRelativesDialog : ContentPage
   private readonly ObservableCollection<object> _SelectedItems = [];
   private readonly TaskCompletionSource<PersonInfoItem[]?> _Info = new(null);
   private readonly ICommand _DialogCommand;
+  private readonly HashSet<int> _ExistingRelativeIds;
 
   private BiologicalSexItem _BiologicalSex;
   private RelationshipTypeItem _RelationshipType;
@@ -63,7 +64,7 @@ public partial class SelectRelativesDialog : ContentPage
     }
   }
 
-  public SelectRelativesDialog(BiologicalSex? biologicalSex, IServiceProvider serviceProvider)
+  public SelectRelativesDialog(BiologicalSex? biologicalSex, Relative[] existingRelatives, IServiceProvider serviceProvider)
   {
     var biologicalSexFormatter = serviceProvider.GetRequiredService<IBiologicalSexFormatter>();
     var relationshipTypeFormatter = serviceProvider.GetRequiredService<IRelationshipTypeFormatter>();
@@ -78,9 +79,10 @@ public partial class SelectRelativesDialog : ContentPage
       .Select(sex => new BiologicalSexItem(sex, biologicalSexFormatter))
       .ToArray();
     _BiologicalSex = _BiologicalSexes.SingleOrDefault(i => i.Info == biologicalSex, _BiologicalSexes[2]);
+    _ExistingRelativeIds = [.. existingRelatives.Select(r => r.Id)];
     _RelationshipTypes = new[] {
         RelationshipType.Parent,
-        RelationshipType.Child, 
+        RelationshipType.Child,
         RelationshipType.Spose,
         RelationshipType.AdoptiveParent,
         RelationshipType.AdoptiveChild }
@@ -117,7 +119,9 @@ public partial class SelectRelativesDialog : ContentPage
             .Project
             .PersonManager
             .GetPersonInfosAsync(selectMainPhoto: false, token);
-
+          persons = persons
+            .Where(person => !_ExistingRelativeIds.Contains(person.Id))
+            .ToArray();
         };
         worker.RunWorkerCompleted += (s, e) =>
         {
