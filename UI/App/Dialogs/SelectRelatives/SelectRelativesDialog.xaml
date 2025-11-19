@@ -88,7 +88,7 @@
             Style="{StaticResource EditAdorner}" />
 
         <Button
-            Grid.Row="3"
+            Grid.Row="4"
             Grid.Column="3"
             Command="{Binding DialogCommand, Source={x:Reference Root}}"
             CommandParameter="RemoveRelationshipDateCommand"
@@ -111,11 +111,10 @@
         <CollectionView.ItemTemplate>
           <DataTemplate x:DataType="items:PersonInfoItem">
             <Grid Style="{StaticResource SelectableItem}">
-              <Label
-                  Padding="{StaticResource CollectionItemsVerticalPadding}"
-                  HorizontalOptions="Fill"
-                  Style="{StaticResource FieldValue}"
-                  Text="{Binding CommonName}" />
+              <components:PersonInfoView
+                  DatesLabelStyle="{StaticResource FieldValue}"
+                  NameLabelStyle="{StaticResource FieldName}"
+                  Person="{Binding Info}" />
             </Grid>
           </DataTemplate>
         </CollectionView.ItemTemplate>
