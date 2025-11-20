@@ -18,7 +18,7 @@ public partial class SelectRelativesDialog : ContentPage
   private readonly INameFormatter _NameFormatter;
   private readonly BiologicalSexItem[] _BiologicalSexes;
   private readonly RelationshipTypeItem[] _RelationshipTypes;
-  private readonly List<PersonInfoItem> _Persons = [];
+  private readonly FilteredObservableCollection<PersonInfoItem> _Persons = new();
   private readonly ObservableCollection<object> _SelectedItems = [];
   private readonly TaskCompletionSource<PersonInfoItem[]?> _Info = new(null);
   private readonly ICommand _DialogCommand;
@@ -28,9 +28,28 @@ public partial class SelectRelativesDialog : ContentPage
   private RelationshipTypeItem _RelationshipType;
   private long _ProjectRevision;
   private Date? _RelationshipDate;
+  private string _NameFilter = string.Empty;
 
-  private bool PersonSelector(PersonInfoItem personItem)
+  private bool PersonFilter(FilteredObservableCollection<PersonInfoItem> collection, PersonInfoItem personItem)
   {
+    if (!string.IsNullOrEmpty(_NameFilter))
+    {
+      var isMatched = personItem
+        .Info
+        .Names
+        .Any(name => name.Value.Contains(_NameFilter, StringComparison.InvariantCultureIgnoreCase));
+
+      if (!isMatched)
+      {
+        return false;
+      }
+    }
+
+    if (_BiologicalSex.Info != BiologicalSex.Unknown && personItem.Info.BiologicalSex != _BiologicalSex.Info)
+    {
+      return false;
+    }
+
     return true;
   }
 
@@ -90,13 +109,30 @@ public partial class SelectRelativesDialog : ContentPage
       .ToArray();
     _RelationshipType = _RelationshipTypes.First();
     _SelectedItems.CollectionChanged += (_, _) => OnPropertyChanged(nameof(DialogBtnName));
+    _Persons.Filter = PersonFilter;
 
     InitializeComponent();
   }
 
-  public string NameFilter { get; set; } = string.Empty;
+  public string NameFilter
+  { 
+    get => _NameFilter;
+    set
+    {
+      _NameFilter = value;
+      _Persons.Update();
+    }
+  }
 
-  public BiologicalSexItem BioSex { get => _BiologicalSex; set => _BiologicalSex = value; }
+  public BiologicalSexItem BioSex
+  {
+    get => _BiologicalSex;
+    set
+    {
+      _BiologicalSex = value;
+      _Persons.Update();
+    }
+  }
 
   public BiologicalSexItem[] BiologicalSexes => _BiologicalSexes;
 
@@ -123,7 +159,7 @@ public partial class SelectRelativesDialog : ContentPage
             .Where(person => !_ExistingRelativeIds.Contains(person.Id))
             .ToArray();
         };
-        worker.RunWorkerCompleted += (s, e) =>
+        worker.RunWorkerCompleted += (_, _) =>
         {
           _Persons.AddRange(persons?.Select(personInfo => new PersonInfoItem(personInfo, _NameFormatter)) ?? []);
           OnPropertyChanged(nameof(Persons));
@@ -131,7 +167,7 @@ public partial class SelectRelativesDialog : ContentPage
         worker.RunWorkerAsync();
       }
 
-      return _Persons.Where(PersonSelector);
+      return _Persons.Items;
     }
   }
 
