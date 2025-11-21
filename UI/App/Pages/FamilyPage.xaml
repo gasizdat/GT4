@@ -10,6 +10,17 @@
     x:Name="Root"
     Title="{Binding FamilyName.Value, Source={x:Reference Root}}">
 
+  <ContentPage.ToolbarItems>
+    <ToolbarItem
+        Command="{Binding DeleteFamilyCommand, Source={x:Reference Root}}"
+        Order="Secondary"
+        Text="{Binding RemoveFamilyToolbarItemName, Source={x:Reference Root}}" />
+    <ToolbarItem
+        Command="{Binding EditFamilyCommand, Source={x:Reference Root}}"
+        Order="Secondary"
+        Text="{Binding EditFamilyToolbarItemName, Source={x:Reference Root}}" />
+  </ContentPage.ToolbarItems>
+
   <components:PageLayout>
 
     <components:PageLayout.Header>

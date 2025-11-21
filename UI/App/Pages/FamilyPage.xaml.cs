@@ -25,7 +25,7 @@ public partial class FamilyPage : ContentPage
 
     MemberItemTappedCommand = new Command<FamilyMemberInfoItem>(OnMemberSelected);
     DeleteFamilyCommand = new Command<object?>(OnDeleteFmily);
-    EditFamilyCommand = new Command<object?>(OnEditFmily);
+    EditFamilyCommand = new Command<object?>(OnEditFamily);
 
     InitializeComponent();
   }
@@ -43,13 +43,17 @@ public partial class FamilyPage : ContentPage
       _FamilyName = value;
       OnPropertyChanged(nameof(Members));
       OnPropertyChanged(nameof(FamilyName));
+      OnPropertyChanged(nameof(RemoveFamilyToolbarItemName));
+      OnPropertyChanged(nameof(EditFamilyToolbarItemName));
     }
   }
 
   public int PersonItemMinimalWidth => _PersonItemMinimalWidth;
 
   public ICommand MemberItemTappedCommand { get; init; }
+
   public ICommand DeleteFamilyCommand { get; init; }
+
   public ICommand EditFamilyCommand { get; init; }
 
   public ICollection<FamilyMemberInfoItem> Members
@@ -67,7 +71,7 @@ public partial class FamilyPage : ContentPage
         var ret = _CurrentProjectProvider
           .Project
           .PersonManager
-          .GetPersonInfosByNameAsync(name: FamilyName, selectMainPhoto: true,  token)
+          .GetPersonInfosByNameAsync(name: FamilyName, selectMainPhoto: true, token)
           .Result
           .Select(person => new FamilyMemberInfoItem(person, _Services))
           .OrderBy(item => item, _Services.GetRequiredService<IComparer<FamilyMemberInfoItem>>())
@@ -83,6 +87,12 @@ public partial class FamilyPage : ContentPage
       }
     }
   }
+
+  public string RemoveFamilyToolbarItemName =>
+    string.Format(UIStrings.MenuItemNameRemove_1, _FamilyName?.Value ?? string.Empty);
+
+  public string EditFamilyToolbarItemName =>
+    string.Format(UIStrings.MenuItemNameEdit_1, _FamilyName?.Value ?? string.Empty);
 
   private async void OnMemberSelected(FamilyMemberInfoItem member)
   {
@@ -128,8 +138,54 @@ public partial class FamilyPage : ContentPage
     }
   }
 
-  private async void OnEditFmily(object? parameter)
+  private async void OnEditFamily(object? parameter)
   {
+    Name[]? names;
+    using (var token = _CancellationTokenProvider.CreateDbCancellationToken())
+    {
+      names = await _CurrentProjectProvider
+        .Project
+        .Names
+        .TryGetNameWithSubnamesByIdAsync(FamilyName?.Id, token);
+    }
+
+    var familyName = names?.SingleOrDefault(n => n.Type.HasFlag(NameType.FamilyName));
+    var maleLastName = names?.SingleOrDefault(n => n.Type.HasFlag(NameType.LastName | NameType.MaleDeclension));
+    var femaleLastName = names?.SingleOrDefault(n => n.Type.HasFlag(NameType.LastName | NameType.FemaleDeclension));
+    if (familyName is null)
+    {
+      return;
+    }
+
+    var dialog = new CreateOrUpdateNameDialog(familyName, maleLastName, femaleLastName);
+
+    await Navigation.PushModalAsync(dialog);
+    var info = await dialog.Info;
+    await Navigation.PopModalAsync();
+
+    try
+    {
+      if (info is null)
+      {
+        return;
+      }
+
+      familyName = familyName with { Value = info.Name };
+      maleLastName = maleLastName is null ? null : maleLastName with { Value = info.MaleName };
+      femaleLastName = femaleLastName is null ? null : femaleLastName with { Value = info.FemaleName };
+
+      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      await _CurrentProjectProvider
+        .Project
+        .FamilyManager
+        .UpdateFamilyAsync(familyName, maleLastName, femaleLastName, token);
+
+      FamilyName = familyName;
+    }
+    catch (Exception ex)
+    {
+      await this.ShowError(ex);
+    }
   }
 
   private async Task OnCreatePerson()
