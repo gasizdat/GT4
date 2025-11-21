@@ -18,7 +18,7 @@ public partial class SelectDateDialog : ContentPage
   private bool _YearSwitch = false;
   private bool _MonthSwitch = false;
   private bool _DaySwitch = false;
-  private string _SelectDateBtnName = UIStrings.BtnNameCancel;
+  private bool _NotReady = true;
 
   public SelectDateDialog(Date? date, IDateFormatter dateFormatter)
   {
@@ -104,8 +104,9 @@ public partial class SelectDateDialog : ContentPage
 
   private void Refresh()
   {
-    SelectDateBtnName = UIStrings.BtnNameOk;
+    _NotReady = false;
     OnPropertyChanged(nameof(DateString));
+    OnPropertyChanged(nameof(SelectDateBtnName));
   }
 
   public string[] Months => _Months;
@@ -263,20 +264,12 @@ public partial class SelectDateDialog : ContentPage
 
   public string DateString => _DateFormatter.ToString(Date);
 
-  public string SelectDateBtnName
-  {
-    get => _SelectDateBtnName;
-    set
-    {
-      _SelectDateBtnName = value;
-      OnPropertyChanged(nameof(SelectDateBtnName));
-    }
-  }
+  public string SelectDateBtnName => _NotReady ? UIStrings.BtnNameCancel : UIStrings.BtnNameOk;
 
   public Task<Date?> Info => _Info.Task;
 
   public void OnSelectDateBtn(object sender, EventArgs e)
   {
-    _Info.SetResult(Date);
+    _Info.SetResult(_NotReady ? null : Date);
   }
 }
