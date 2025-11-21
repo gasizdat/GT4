@@ -433,4 +433,7 @@ genealogy tree and enjoy!</value>
   <data name="RelAdoptiveInvariant_1" xml:space="preserve">
     <value>Adoptive {0}</value>
   </data>
+  <data name="BtnNameUpdateGenealogyTree" xml:space="preserve">
+    <value>Update Genealogy Tree</value>
+  </data>
 </root>

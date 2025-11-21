@@ -133,7 +133,7 @@
     <value>Генеалогическое древо (v.4)</value>
   </data>
   <data name="AppGeneralWelcomeTitle" xml:space="preserve">
-    <value>Создайте свое собственное
+    <value>Создать свое собственное
 генеалогическое дерево</value>
   </data>
   <data name="BtnNameCancel" xml:space="preserve">
@@ -152,7 +152,7 @@
     <value>Да</value>
   </data>
   <data name="WndHintProjectPage" xml:space="preserve">
-    <value>Откройте или создайте новое</value>
+    <value>Открыть или создать новое</value>
   </data>
   <data name="WndTitleProjectPage" xml:space="preserve">
     <value>Генеалогическое дерево</value>
@@ -161,10 +161,10 @@
     <value>Ошибка</value>
   </data>
   <data name="WndTitleCreateNewProjectDialog" xml:space="preserve">
-    <value>Создайте генеалогическое дерево</value>
+    <value>Создать генеалогическое дерево</value>
   </data>
   <data name="TxtPlaceholderPtojectName" xml:space="preserve">
-    <value>Добавьте имя для нового генеалогического древа</value>
+    <value>Добавить имя для нового генеалогического древа</value>
   </data>
   <data name="WndAppTitle" xml:space="preserve">
     <value>🏠 Домой</value>
@@ -173,13 +173,13 @@
     <value>🌐 Язык</value>
   </data>
   <data name="BtnNameCreateFamily" xml:space="preserve">
-    <value>Создайте семью</value>
+    <value>Создать семью</value>
   </data>
   <data name="WndTitleFamiliesPage" xml:space="preserve">
     <value>Фамилии</value>
   </data>
   <data name="WndHintFamiliesPage" xml:space="preserve">
-    <value>Откройте или создайте род</value>
+    <value>Открыть или создать род</value>
   </data>
   <data name="BtnNameRefreshAfterError" xml:space="preserve">
     <value>Произошла ошибка. Повторить?</value>
@@ -188,7 +188,7 @@
     <value>OK</value>
   </data>
   <data name="WndHintFamilyPage" xml:space="preserve">
-    <value>Выберите представителя рода или создайте нового</value>
+    <value>Выбрать представителя рода или создать нового</value>
   </data>
   <data name="DateStatusYearApproximate_1" xml:space="preserve">
     <value>около {0}</value>
@@ -206,13 +206,13 @@
     <value>Возраст: {0}</value>
   </data>
   <data name="WndTitleCreateNewFamilyDialog" xml:space="preserve">
-    <value>Добавьте род</value>
+    <value>Добавить род</value>
   </data>
   <data name="FieldFamilyNameEntry" xml:space="preserve">
     <value>Название рода</value>
   </data>
   <data name="TxtPlaceholderFamilyName" xml:space="preserve">
-    <value>Добавьте имя рода во множественном числе (например, Ивановы)</value>
+    <value>Добавить имя рода во множественном числе (например, Ивановы)</value>
   </data>
   <data name="FieldLastNameMaleEntry" xml:space="preserve">
     <value>Фамилия в мужском склонении</value>
@@ -221,16 +221,16 @@
     <value>Фамилия в женском склонении</value>
   </data>
   <data name="TxtPlaceholderLastNameFemale" xml:space="preserve">
-    <value>Добавьте женскую фамилию (например, Иванова)</value>
+    <value>Добавить женскую фамилию (например, Иванова)</value>
   </data>
   <data name="TxtPlaceholderProjectDescription" xml:space="preserve">
-    <value>Добавьте описание для нового генеалогического древа</value>
+    <value>Добавить описание для нового генеалогического древа</value>
   </data>
   <data name="TxtPlaceholderLastNameMale" xml:space="preserve">
-    <value>Добавьте мужскую фамилию (например, Иванов)</value>
+    <value>Добавить мужскую фамилию (например, Иванов)</value>
   </data>
   <data name="BtnNameCreateFamilyPerson" xml:space="preserve">
-    <value>Создайте персону</value>
+    <value>Создать персону</value>
   </data>
   <data name="BtnNameUpdateFamilyPerson" xml:space="preserve">
     <value>Обновите персону</value>
@@ -311,13 +311,13 @@
     <value>Родовое имя</value>
   </data>
   <data name="WndTitleSelectNameDialog" xml:space="preserve">
-    <value>Выберите имя</value>
+    <value>Выбрать имя</value>
   </data>
   <data name="FieldSelectNameType" xml:space="preserve">
-    <value>Выберите тип имени</value>
+    <value>Выбрать тип имени</value>
   </data>
   <data name="FieldSelectName" xml:space="preserve">
-    <value>Выберите</value>
+    <value>Выбрать</value>
   </data>
   <data name="FieldFirstNameMaleEntry" xml:space="preserve">
     <value>Мужское имя</value>
@@ -332,16 +332,16 @@
     <value>Женское отчество</value>
   </data>
   <data name="TxtPlaceholderMaleName" xml:space="preserve">
-    <value>Добавьте мужское имя</value>
+    <value>Добавить мужское имя</value>
   </data>
   <data name="TxtPlaceholderFemaleName" xml:space="preserve">
-    <value>Добавьте женское имя</value>
+    <value>Добавить женское имя</value>
   </data>
   <data name="TxtPlaceholderMiddleNameMale" xml:space="preserve">
-    <value>Добавьте мужское отчество</value>
+    <value>Добавить мужское отчество</value>
   </data>
   <data name="TxtPlaceholderMiddleNameFemale" xml:space="preserve">
-    <value>Добавьте женское отчество</value>
+    <value>Добавить женское отчество</value>
   </data>
   <data name="BiologicalSexMale" xml:space="preserve">
     <value>Мужчина</value>
@@ -356,7 +356,7 @@
     <value>Пол</value>
   </data>
   <data name="WndTitleSelectDateDialog" xml:space="preserve">
-    <value>Выберите дату</value>
+    <value>Выбрать дату</value>
   </data>
   <data name="FieldYear" xml:space="preserve">
     <value>Год</value>
@@ -371,7 +371,7 @@
     <value>Введенная дата</value>
   </data>
   <data name="FileDialogSelectPictures" xml:space="preserve">
-    <value>Выберите изображения</value>
+    <value>Выбрать изображения</value>
   </data>
   <data name="MenuItemNameRemove_1" xml:space="preserve">
     <value>Удалить '{0}'	❌</value>
@@ -416,13 +416,13 @@
     <value>{0}Декабрь</value>
   </data>
   <data name="WndTitleSelectRelativesDialog" xml:space="preserve">
-    <value>Выберите родственников</value>
+    <value>Выбрать родственников</value>
   </data>
   <data name="FieldRelationshipStartDate" xml:space="preserve">
     <value>Начало отношений</value>
   </data>
   <data name="WndTitleCreateOrUpdatePersonDialog" xml:space="preserve">
-    <value>Заполните информацию о персоне</value>
+    <value>Заполнить информацию о персоне</value>
   </data>
   <data name="FieldRelationshipType" xml:space="preserve">
     <value>Вид родства</value>
@@ -432,5 +432,8 @@
   </data>
   <data name="RelAdoptiveInvariant_1" xml:space="preserve">
     <value>Приемный {0}</value>
+  </data>
+  <data name="BtnNameUpdateGenealogyTree" xml:space="preserve">
+    <value>Обновить генеалогическое дерево</value>
   </data>
 </root>
