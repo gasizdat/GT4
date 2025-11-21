@@ -8,6 +8,7 @@ public partial class CreateOrUpdateProjectDialog : ContentPage
   private readonly TaskCompletionSource<ProjectInfo> _Info = new();
   private string _ProjectDescription = string.Empty;
   private string _ProjectName = string.Empty;
+  private string _DialogButtonName;
 
   public CreateOrUpdateProjectDialog(ProjectInfo? info)
   {
@@ -15,6 +16,11 @@ public partial class CreateOrUpdateProjectDialog : ContentPage
     {
       _ProjectDescription = info.Description;
       _ProjectName = info.Name;
+      _DialogButtonName = UIStrings.BtnNameUpdateGenealogyTree;
+    }
+    else
+    {
+      _DialogButtonName = UIStrings.BtnNameCreateGenealogyTree;
     }
 
     InitializeComponent();
@@ -27,13 +33,13 @@ public partial class CreateOrUpdateProjectDialog : ContentPage
 
   public Task<ProjectInfo> ProjectInfo => _Info.Task;
 
-  public string CreateProjectBtName => string.IsNullOrWhiteSpace(_ProjectName) ? 
-    UIStrings.BtnNameCancel : UIStrings.BtnNameCreateGenealogyTree;
+  public string CreateProjectBtName => 
+    string.IsNullOrWhiteSpace(_ProjectName) ? UIStrings.BtnNameCancel : _DialogButtonName;
 
-  public string ProjectDescription 
-  { 
-    get => _ProjectDescription; 
-    set => _ProjectDescription = value; 
+  public string ProjectDescription
+  {
+    get => _ProjectDescription;
+    set => _ProjectDescription = value;
   }
 
   public string ProjectName
