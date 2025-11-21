@@ -172,9 +172,6 @@ genealogy tree and enjoy!</value>
   <data name="PkrLanguageHint" xml:space="preserve">
     <value>🌐 Language</value>
   </data>
-  <data name="BtnNameCreateFamily" xml:space="preserve">
-    <value>Create a Family</value>
-  </data>
   <data name="WndTitleFamiliesPage" xml:space="preserve">
     <value>Families</value>
   </data>
@@ -204,9 +201,6 @@ genealogy tree and enjoy!</value>
   </data>
   <data name="FieldAge_1" xml:space="preserve">
     <value>Age: {0}</value>
-  </data>
-  <data name="WndTitleCreateNewFamilyDialog" xml:space="preserve">
-    <value>Create a Family</value>
   </data>
   <data name="FieldFamilyNameEntry" xml:space="preserve">
     <value>Family Name</value>
@@ -435,5 +429,17 @@ genealogy tree and enjoy!</value>
   </data>
   <data name="BtnNameUpdateGenealogyTree" xml:space="preserve">
     <value>Update Genealogy Tree</value>
+  </data>
+  <data name="BtnNameCreateFamily" xml:space="preserve">
+    <value>Create a Family</value>
+  </data>
+  <data name="BtnNameUpdateName_1" xml:space="preserve">
+    <value>Update the {0}</value>
+  </data>
+  <data name="BtnNameCreateName_1" xml:space="preserve">
+    <value>Create a {0}</value>
+  </data>
+  <data name="WndTitleCreateOrUpdateNameDialog_1" xml:space="preserve">
+    <value>Create or update {0}</value>
   </data>
 </root>

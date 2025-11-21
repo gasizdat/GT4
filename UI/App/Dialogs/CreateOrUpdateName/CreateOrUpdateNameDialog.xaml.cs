@@ -14,14 +14,26 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   private string _GeneralName = string.Empty;
   private string _MaleName = string.Empty;
   private string _FemaleName = string.Empty;
+  private bool _IsModified = false;
   private bool _NotReady =>
     string.IsNullOrWhiteSpace(_GeneralName) ||
+    !_IsModified ||
     ShowDeclensionNames && (string.IsNullOrWhiteSpace(_MaleName) || string.IsNullOrWhiteSpace(_FemaleName));
+
+  private bool IsModified
+  {
+    set
+    {
+      _IsModified = value;
+      OnPropertyChanged(nameof(DialogButtonName));
+    }
+  }
 
   public CreateOrUpdateNameDialog(NameType nameType, IServiceProvider serviceProvider)
   {
-    var nameTypeFormatter = serviceProvider.GetRequiredService<INameTypeFormatter>();
-    _DialogButtonName = string.Format(UIStrings.BtnNameCreateName_1, nameTypeFormatter.ToString(nameType));
+    var nameTypeName = serviceProvider.GetRequiredService<INameTypeFormatter>().ToString(nameType);
+    _DialogButtonName = string.Format(UIStrings.BtnNameCreateName_1, nameTypeName);
+
     switch (nameType)
     {
       case NameType.FamilyName:
@@ -35,16 +47,21 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     }
 
     InitializeComponent();
+
+    IsModified = false;
   }
 
   public CreateOrUpdateNameDialog(Name name, Name? maleName, Name? femaleName, IServiceProvider serviceProvider)
     : this(name.Type, serviceProvider)
   {
-    var nameTypeFormatter = serviceProvider.GetRequiredService<INameTypeFormatter>();
-    _DialogButtonName = string.Format(UIStrings.BtnNameUpdateName_1, nameTypeFormatter.ToString(name.Type));
+    var nameTypeName = serviceProvider.GetRequiredService<INameTypeFormatter>().ToString(name.Type);
+    _DialogButtonName = string.Format(UIStrings.BtnNameUpdateName_1, nameTypeName);
     GeneralName = name.Value;
     MaleName = maleName?.Value ?? string.Empty;
     FemaleName = femaleName?.Value ?? string.Empty;
+    IsModified = false;
+
+    OnPropertyChanged(nameof(DialogTitle));
   }
 
   public bool ShowDeclensionNames =>
@@ -56,8 +73,8 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     set
     {
       _GeneralName = value;
+      IsModified = true;
       OnPropertyChanged(nameof(GeneralName));
-      OnPropertyChanged(nameof(DialogButtonName));
     }
   }
 
@@ -67,8 +84,8 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     set
     {
       _MaleName = value;
+      IsModified = true;
       OnPropertyChanged(nameof(MaleName));
-      OnPropertyChanged(nameof(DialogButtonName));
     }
   }
 
@@ -78,8 +95,8 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     set
     {
       _FemaleName = value;
+      IsModified = true;
       OnPropertyChanged(nameof(FemaleName));
-      OnPropertyChanged(nameof(DialogButtonName));
     }
   }
 
@@ -132,7 +149,10 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   };
 
   public Task<FamilyInfo?> Info => _Info.Task;
+
   public string DialogButtonName => _NotReady ? UIStrings.BtnNameCancel : _DialogButtonName;
+
+  public string DialogTitle => _DialogButtonName;
 
   public void OnCreateFamilyBtn(object sender, EventArgs e)
   {

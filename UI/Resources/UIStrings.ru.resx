@@ -172,9 +172,6 @@
   <data name="PkrLanguageHint" xml:space="preserve">
     <value>🌐 Язык</value>
   </data>
-  <data name="BtnNameCreateFamily" xml:space="preserve">
-    <value>Создать семью</value>
-  </data>
   <data name="WndTitleFamiliesPage" xml:space="preserve">
     <value>Фамилии</value>
   </data>
@@ -204,9 +201,6 @@
   </data>
   <data name="FieldAge_1" xml:space="preserve">
     <value>Возраст: {0}</value>
-  </data>
-  <data name="WndTitleCreateNewFamilyDialog" xml:space="preserve">
-    <value>Добавить род</value>
   </data>
   <data name="FieldFamilyNameEntry" xml:space="preserve">
     <value>Название рода</value>
@@ -435,5 +429,17 @@
   </data>
   <data name="BtnNameUpdateGenealogyTree" xml:space="preserve">
     <value>Обновить генеалогическое дерево</value>
+  </data>
+  <data name="BtnNameCreateFamily" xml:space="preserve">
+    <value>Создать семью</value>
+  </data>
+  <data name="BtnNameUpdateName_1" xml:space="preserve">
+    <value>Обновить {0}</value>
+  </data>
+  <data name="BtnNameCreateName_1" xml:space="preserve">
+    <value>Создать {0}</value>
+  </data>
+  <data name="WndTitleCreateOrUpdateNameDialog_1" xml:space="preserve">
+    <value>Создать или обновить {0}</value>
   </data>
 </root>

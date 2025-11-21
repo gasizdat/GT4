@@ -12,7 +12,7 @@
     <components:PageLayout.Header>
       <Label
           Style="{StaticResource PageTitle}"
-          Text="{x:Static resources:UIStrings.WndTitleCreateNewFamilyDialog}" />
+          Text="{Binding DialogTitle, Source={x:Reference Root}}" />
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>

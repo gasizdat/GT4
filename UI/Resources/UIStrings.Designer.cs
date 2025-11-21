@@ -215,6 +215,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Create a {0}.
+        /// </summary>
+        public static string BtnNameCreateName_1 {
+            get {
+                return ResourceManager.GetString("BtnNameCreateName_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to No.
         /// </summary>
         public static string BtnNameNo {
@@ -265,6 +274,15 @@ namespace GT4.UI.Resources {
         public static string BtnNameUpdateGenealogyTree {
             get {
                 return ResourceManager.GetString("BtnNameUpdateGenealogyTree", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Update the {0}.
+        /// </summary>
+        public static string BtnNameUpdateName_1 {
+            get {
+                return ResourceManager.GetString("BtnNameUpdateName_1", resourceCulture);
             }
         }
         
@@ -944,20 +962,20 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Create a Family.
-        /// </summary>
-        public static string WndTitleCreateNewFamilyDialog {
-            get {
-                return ResourceManager.GetString("WndTitleCreateNewFamilyDialog", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Create a Genealogy Tree.
         /// </summary>
         public static string WndTitleCreateNewProjectDialog {
             get {
                 return ResourceManager.GetString("WndTitleCreateNewProjectDialog", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create or update {0}.
+        /// </summary>
+        public static string WndTitleCreateOrUpdateNameDialog_1 {
+            get {
+                return ResourceManager.GetString("WndTitleCreateOrUpdateNameDialog_1", resourceCulture);
             }
         }
         
