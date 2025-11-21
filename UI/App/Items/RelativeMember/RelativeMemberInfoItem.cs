@@ -8,22 +8,25 @@ public class RelativeMemberInfoItem : PersonInfoItem
 {
   private readonly IDateFormatter _DateFormatter;
   private readonly IRelationshipTypeFormatter _RelationshipTypeFormatter;
+  private readonly Date _PersonBirthDate;
   private readonly RelativeInfo _RelativeInfo;
 
   private Date? _RelationshipDate => _RelativeInfo.Type switch
   {
-    RelationshipType.Parent => _RelativeInfo.BirthDate,
+    RelationshipType.Parent => _PersonBirthDate,
     RelationshipType.Child => _RelativeInfo.BirthDate,
     _ => _RelativeInfo.Date
   };
 
   public RelativeMemberInfoItem(
+    Date personBirthDate,
     RelativeInfo relativeInfo,
     IDateFormatter dateFormatter,
     IRelationshipTypeFormatter relationshipTypeFormatter,
     INameFormatter nameFormatter)
     : base(personInfo: relativeInfo, nameFormatter: nameFormatter)
   {
+    _PersonBirthDate = personBirthDate;
     _DateFormatter = dateFormatter;
     _RelationshipTypeFormatter = relationshipTypeFormatter;
     _RelativeInfo = relativeInfo;

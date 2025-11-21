@@ -103,7 +103,13 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
       foreach (var relativeInfo in person.RelativeInfos)
       {
-        _Relatives.Add(new RelativeMemberInfoItem(relativeInfo, _DateFormatter, _RelationshipTypeFormatter, _NameFormatter));
+        var item = new RelativeMemberInfoItem(
+          person.BirthDate,
+          relativeInfo,
+          _DateFormatter,
+          _RelationshipTypeFormatter,
+          _NameFormatter);
+        _Relatives.Add(item);
       }
     }
     catch (Exception ex)
@@ -322,7 +328,12 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
             true);
           return relativeInfo;
         })
-        .Select(relativeInfo => new RelativeMemberInfoItem(relativeInfo, _DateFormatter, _RelationshipTypeFormatter, _NameFormatter));
+        .Select(relativeInfo => new RelativeMemberInfoItem(
+          _BirthDate.GetValueOrDefault(), 
+          relativeInfo, 
+          _DateFormatter, 
+          _RelationshipTypeFormatter, 
+          _NameFormatter));
       foreach (var relative in relatives)
       {
         _Relatives.Add(relative);
@@ -345,6 +356,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       var insertIndex = _Relatives.IndexOf(relative);
       _Relatives.Remove(relative);
       var newRelative = new RelativeMemberInfoItem(
+        _BirthDate.GetValueOrDefault(),
         relativeInfo: relative.RelativeInfo with { Date = date },
         _DateFormatter,
         _RelationshipTypeFormatter,
