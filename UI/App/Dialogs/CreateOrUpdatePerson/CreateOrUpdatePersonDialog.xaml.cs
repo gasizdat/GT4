@@ -296,14 +296,14 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
   }
 
-  private async Task OnAddRelationship()
+  private async Task OnAddRelationshipAsync()
   {
     var existingRelatives = _Relatives
       .Select(item => item.RelativeInfo)
       .ToArray();
     var dialog = new SelectRelativesDialog(
-      biologicalSex: _BiologicalSex?.Info, 
-      existingRelatives: existingRelatives, 
+      biologicalSex: _BiologicalSex?.Info,
+      existingRelatives: existingRelatives,
       _ServiceProvider);
 
     await Navigation.PushModalAsync(dialog);
@@ -324,6 +324,29 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       {
         _Relatives.Add(relative);
       }
+    }
+  }
+
+  private async Task OnEditRelationshipAsync(RelativeMemberInfoItem relative)
+  {
+    var dialog = new SelectDateDialog(
+      date: relative.RelativeInfo.Date,
+      dateFormatter: _DateFormatter);
+
+    await Navigation.PushModalAsync(dialog);
+    var date = await dialog.Info;
+    await Navigation.PopModalAsync();
+
+    if (date is not null)
+    {
+      var insertIndex = _Relatives.IndexOf(relative);
+      _Relatives.Remove(relative);
+      var newRelative = new RelativeMemberInfoItem(
+        relativeInfo: relative.RelativeInfo with { Date = date },
+        _DateFormatter,
+        _RelationshipTypeFormatter,
+        _NameFormatter);
+      _Relatives.Insert(insertIndex, newRelative);
     }
   }
 
@@ -350,7 +373,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         await OnAddPhotoAsync();
         break;
       case string name when name == "AddRelationship":
-        await OnAddRelationship();
+        await OnAddRelationshipAsync();
         break;
 
       case AdornerCommandParameter adorner when adorner.CommandName == "EditPhotoCommand":
@@ -363,7 +386,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       case AdornerCommandParameter adorner when adorner.CommandName == "RemoveNameCommand" && adorner.Element is NameInfoItem name:
         _Names.Remove(name);
         break;
-      case AdornerCommandParameter adorner when adorner.CommandName == "EditRelativeCommand":
+      case AdornerCommandParameter adorner when adorner.CommandName == "EditRelativeCommand" && adorner.Element is RelativeMemberInfoItem relative:
+        await OnEditRelationshipAsync(relative);
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "RemoveRelativeCommand" && adorner.Element is RelativeMemberInfoItem relative:
         _Relatives.Remove(relative);
