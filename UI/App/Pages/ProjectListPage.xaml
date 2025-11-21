@@ -55,5 +55,13 @@
       </CollectionView>
     </components:PageLayout.Body>
 
+    <components:PageLayout.Footer>
+      <Button
+          Command="{Binding CreateProjectCommand, Source={x:Reference Root}}"
+          FontSize="Large"
+          HorizontalOptions="Fill"
+          Text="{x:Static resources:UIStrings.BtnNameCreateGenealogyTree}" />
+    </components:PageLayout.Footer>
+
   </components:PageLayout>
 </ContentPage>

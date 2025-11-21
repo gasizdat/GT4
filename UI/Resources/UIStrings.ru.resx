@@ -136,9 +136,6 @@
     <value>Создайте свое собственное
 генеалогическое дерево</value>
   </data>
-  <data name="BtnHintOpenOrCreateProject" xml:space="preserve">
-    <value>Откройте существующее древо или создайте новое.</value>
-  </data>
   <data name="BtnNameCancel" xml:space="preserve">
     <value>Отмена</value>
   </data>

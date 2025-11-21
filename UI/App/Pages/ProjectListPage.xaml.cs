@@ -3,6 +3,7 @@ using GT4.Core.Utils;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using System.Collections.ObjectModel;
+using System.Windows.Input;
 
 namespace GT4.UI.Pages;
 
@@ -11,6 +12,7 @@ public partial class ProjectListPage : ContentPage
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IComparer<ProjectItem> _ProjectItemsComparer;
+  private readonly ICommand _CreateProjectCommand;
   private readonly IProjectList _ProjectList;
   private readonly ObservableCollection<ProjectItem> _Projects = new();
 
@@ -28,7 +30,6 @@ public partial class ProjectListPage : ContentPage
     {
       _Projects.Add(project);
     }
-    _Projects.Add(new ProjectItemCreate());
   }
 
   protected ProjectListPage(IServiceProvider services)
@@ -36,6 +37,7 @@ public partial class ProjectListPage : ContentPage
     _CancellationTokenProvider = services.GetRequiredService<ICancellationTokenProvider>();
     _CurrentProjectProvider = services.GetRequiredService<ICurrentProjectProvider>();
     _ProjectItemsComparer = services.GetRequiredService<IComparer<ProjectItem>>();
+    _CreateProjectCommand = new Command(OnCreateProject);
     _ProjectList = services.GetRequiredService<IProjectList>();
 
     InitializeComponent();
@@ -48,14 +50,12 @@ public partial class ProjectListPage : ContentPage
 
   public ICollection<ProjectItem> Projects => _Projects;
 
+  public ICommand CreateProjectCommand => _CreateProjectCommand;
+
   public async void OnProjectSelected(object sender, SelectionChangedEventArgs e)
   {
     switch (e.CurrentSelection.FirstOrDefault())
     {
-      case ProjectItemCreate:
-        await OnCreateProject();
-        break;
-
       case ProjectItem projectItem:
       {
         using var token = _CancellationTokenProvider.CreateDbCancellationToken();
@@ -72,7 +72,7 @@ public partial class ProjectListPage : ContentPage
     }
   }
 
-  internal async Task OnCreateProject()
+  internal async void OnCreateProject(object _)
   {
     var dialog = new CreateOrUpdateProjectDialog(null);
 

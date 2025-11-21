@@ -1,5 +1,4 @@
 ﻿using GT4.Core.Project.Dto;
-using GT4.Core.Utils;
 using Microsoft.Data.Sqlite;
 
 namespace GT4.Core.Project;
@@ -118,7 +117,6 @@ public class TableRelatives : TableBase
     }
 
     tasks.Add(AddRelativesAsync(person, relatives.Where(r => !remainedRelatives.Contains(r.Id)).ToArray(), token));
-
     await Task.WhenAll(tasks);
 
     transaction.Commit();

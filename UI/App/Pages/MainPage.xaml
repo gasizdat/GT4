@@ -78,12 +78,10 @@
 
     <components:PageLayout.Footer>
       <Button
-          x:Name="OpenOrCreateBtn"
           Command="{Binding NavigateToCreateOrOpenDialog, Source={x:Reference Root}}"
           CommandParameter="OpenOrCreateDialog"
           FontSize="Large"
           HorizontalOptions="Fill"
-          SemanticProperties.Hint="{x:Static resources:UIStrings.BtnHintOpenOrCreateProject}"
           Text="{x:Static resources:UIStrings.BtnNameOpenOrCreateProject}" />
     </components:PageLayout.Footer>
 

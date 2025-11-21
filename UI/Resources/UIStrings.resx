@@ -136,9 +136,6 @@
     <value>Create your own
 genealogy tree and enjoy!</value>
   </data>
-  <data name="BtnHintOpenOrCreateProject" xml:space="preserve">
-    <value>Open an existing Genealogy Tree or create a new one.</value>
-  </data>
   <data name="BtnNameCancel" xml:space="preserve">
     <value>Cancel</value>
   </data>

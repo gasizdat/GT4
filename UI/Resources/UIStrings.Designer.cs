@@ -152,15 +152,6 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Open an existing Genealogy Tree or create a new one..
-        /// </summary>
-        public static string BtnHintOpenOrCreateProject {
-            get {
-                return ResourceManager.GetString("BtnHintOpenOrCreateProject", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Add name.
         /// </summary>
         public static string BtnNameAddPersonName {
