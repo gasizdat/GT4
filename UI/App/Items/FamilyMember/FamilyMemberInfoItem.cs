@@ -13,17 +13,17 @@ public class FamilyMemberInfoItem : PersonInfoItem
 
   protected FamilyMemberInfoItem(string itemName, IServiceProvider services)
     : this(personInfo: new PersonInfo(
-        Person: new Person(
+        person: new Person(
           Id: TableBase.NonCommitedId,
           BirthDate: default,
           DeathDate: default,
           BiologicalSex: default),
-        Names:[ new Name(
+        names:[ new Name(
           Id: TableBase.NonCommitedId,
           Value: itemName,
           Type: NameType.AdditionalName,
           ParentId: default) ],
-        MainPhoto: default),
+        mainPhoto: default),
       services: services)
   {
   }
