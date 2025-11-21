@@ -100,7 +100,7 @@ public partial class SelectNameDialog : ContentPage
         return;
     }
 
-    var dialog = new CreateNewNameDialog(dialogNameType);
+    var dialog = new CreateOrUpdateNameDialog(dialogNameType);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;

@@ -3,7 +3,7 @@ using GT4.UI.Resources;
 
 namespace GT4.UI.Dialogs;
 
-public partial class CreateNewNameDialog : ContentPage
+public partial class CreateOrUpdateNameDialog : ContentPage
 {
   public record FamilyInfo(string Name, string MaleName, string FemaleName);
 
@@ -16,7 +16,7 @@ public partial class CreateNewNameDialog : ContentPage
     string.IsNullOrWhiteSpace(_GeneralName) ||
     ShowDeclensionNames && (string.IsNullOrWhiteSpace(_MaleName) || string.IsNullOrWhiteSpace(_FemaleName));
 
-  public CreateNewNameDialog(NameType nameType)
+  public CreateOrUpdateNameDialog(NameType nameType)
   {
     switch (nameType)
     {
@@ -31,6 +31,14 @@ public partial class CreateNewNameDialog : ContentPage
     }
 
     InitializeComponent();
+  }
+
+  public CreateOrUpdateNameDialog(Name name, Name? maleName, Name? femaleName)
+    : this(name.Type)
+  {
+    GeneralName = name.Value;
+    MaleName = maleName?.Value ?? string.Empty;
+    FemaleName = femaleName?.Value ?? string.Empty;
   }
 
   public bool ShowDeclensionNames =>
