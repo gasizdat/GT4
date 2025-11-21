@@ -3,10 +3,23 @@
 namespace GT4.Core.Project.Dto;
 
 public record class Relative(
-  Person Person,
+  int Id,
+  Date BirthDate,
+  Date? DeathDate,
+  BiologicalSex BiologicalSex,
   RelationshipType Type,
   Date? Date
-) : Person(original: Person)
+) : Person(Id, BirthDate, DeathDate, BiologicalSex)
 {
-
+  public Relative(Person person, RelationshipType type, Date? date)
+    : this(
+        person.Id, 
+        person.BirthDate, 
+        person.DeathDate, 
+        person.BiologicalSex, 
+        type, 
+        date
+  )
+  {
+  }
 }

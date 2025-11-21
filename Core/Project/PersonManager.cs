@@ -16,13 +16,8 @@ public class PersonManager : TableBase
       ? Document.PersonData.GetPersonDataSetAsync(person, DataCategory.PersonMainPhoto, token)
       : Task.FromResult(Array.Empty<Data>());
     await Task.WhenAll(names, mainPhoto);
-    var ret = new PersonInfo
-    (
-      Person: person,
-      Names: names.Result,
-      MainPhoto: mainPhoto.Result.FirstOrDefault()
-    );
-
+    
+    var ret = new PersonInfo(person, names.Result, mainPhoto.Result.FirstOrDefault());
     return ret;
   }
 
@@ -55,7 +50,7 @@ public class PersonManager : TableBase
     var relatives = Document.Relatives.GetRelativesAsync(person, token);
     await Task.WhenAll(names, personData, relatives);
     var relativePersonInfos = await GetPersonInfosAsync(
-      persons: relatives.Result.Select(i => i.Person).ToArray(),
+      persons: relatives.Result,
       selectMainPhoto: selectMainPhoto,
       token: token);
 
@@ -64,12 +59,12 @@ public class PersonManager : TableBase
     {
       var relative = relatives.Result[i];
       var relativePerson = relativePersonInfos[i];
-      relativeInfos[i] = new RelativeInfo(Relative: relative, Names: relativePerson.Names, MainPhoto: relativePerson.MainPhoto);
+      relativeInfos[i] = new RelativeInfo(relative, relativePerson.Names, relativePerson.MainPhoto);
     }
 
     var ret = new PersonFullInfo(
       person: person,
-      names: names.Result.ToArray(),
+      names: names.Result,
       mainPhoto: personData.Result.SingleOrDefault(data => data.Category == DataCategory.PersonMainPhoto),
       additionalPhotos: personData.Result.Where(data => data.Category == DataCategory.PersonPhoto).ToArray(),
       relativeInfos: relativeInfos,
@@ -135,7 +130,7 @@ public class PersonManager : TableBase
     await Task.WhenAll(
       Document.PersonNames.AddPersonNamesAsync(person, personFullInfo.Names, token),
       Document.PersonData.AddPersonDataSetAsync(person, CombinePersonData(personFullInfo), token),
-      Document.Relatives.AddRelativesAsync(person, personFullInfo.RelativeInfos.Select(i => i.Relative).ToArray(), token));
+      Document.Relatives.AddRelativesAsync(person, personFullInfo.RelativeInfos, token));
 
     transaction.Commit();
 

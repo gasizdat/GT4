@@ -13,7 +13,7 @@ public class TableRelatives : TableBase
     var date = TryGetDate(reader, 2, 3);
     var relative = await Document.Persons.TryGetPersonByIdAsync(id, token);
 
-    return relative is null ? null : new Relative(Person: relative, Type: type, Date: date);
+    return relative is null ? null : new Relative(relative, type, date);
   }
 
   public TableRelatives(ProjectDocument document) : base(document)
@@ -76,7 +76,7 @@ public class TableRelatives : TableBase
         VALUES (@personId, @relativeId, @type, @date, @dateStatus);
         """;
       command.Parameters.AddWithValue("@personId", person.Id);
-      command.Parameters.AddWithValue("@relativeId", relative.Person.Id);
+      command.Parameters.AddWithValue("@relativeId", relative.Id);
       command.Parameters.AddWithValue("@type", relative.Type);
       command.Parameters.AddWithValue("@date", relative.Date.HasValue ? relative.Date.Value.Code : DBNull.Value);
       command.Parameters.AddWithValue("@dateStatus", relative.Date.HasValue ? relative.Date.Value.Status : DBNull.Value);

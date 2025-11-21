@@ -1,12 +1,38 @@
-﻿namespace GT4.Core.Project.Dto;
+﻿using GT4.Core.Utils;
+
+namespace GT4.Core.Project.Dto;
 
 public record class PersonFullInfo(
-  PersonInfo PersonInfo,
+  int Id,
+  Date BirthDate,
+  Date? DeathDate,
+  BiologicalSex BiologicalSex,
+  Name[] Names,
+  Data? MainPhoto,
   Data[] AdditionalPhotos,
   RelativeInfo[] RelativeInfos,
   Data? Biography
-  ) : PersonInfo(original: PersonInfo)
+) : PersonInfo(Id, BirthDate, DeathDate, BiologicalSex, Names, MainPhoto)
 {
+  public PersonFullInfo(
+    PersonInfo person,
+    Data[] additionalPhotos,
+    RelativeInfo[] relativeInfos,
+    Data? biography)
+    : this(
+        person.Id, 
+        person.BirthDate, 
+        person.DeathDate, 
+        person.BiologicalSex, 
+        person.Names, 
+        person.MainPhoto,
+        additionalPhotos,
+        relativeInfos,
+        biography
+  )
+  {
+  }
+
   public PersonFullInfo(
     Person person,
     Name[] names,
@@ -15,10 +41,16 @@ public record class PersonFullInfo(
     RelativeInfo[] relativeInfos,
     Data? biography)
     : this(
-        PersonInfo: new PersonInfo(Person: person, Names: names, MainPhoto: mainPhoto),
-        AdditionalPhotos: additionalPhotos,
-        RelativeInfos: relativeInfos,
-        Biography: biography)
+        person.Id,
+        person.BirthDate,
+        person.DeathDate,
+        person.BiologicalSex,
+        names,
+        mainPhoto,
+        additionalPhotos,
+        relativeInfos,
+        biography
+  )
   {
   }
 }
