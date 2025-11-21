@@ -72,7 +72,7 @@ public class TableRelatives : TableBase
     {
       using var command = Document.CreateCommand();
       command.CommandText = """
-        INSERT INTO Parents (PersonId, RelativeId, Type, Date, DateStatus)
+        INSERT INTO Relatives (PersonId, RelativeId, Type, Date, DateStatus)
         VALUES (@personId, @relativeId, @type, @date, @dateStatus);
         """;
       command.Parameters.AddWithValue("@personId", person.Id);
@@ -84,6 +84,43 @@ public class TableRelatives : TableBase
     }
 
     await Task.WhenAll(tasks);
+    transaction.Commit();
+  }
+
+  public async Task UpdateRelativesAsync(Person person, Relative[] relatives, CancellationToken token)
+  {
+    var oldRelatives = await GetRelativesAsync(person, token);
+    var newRelativeIds = relatives.Select(r => r.Id).ToHashSet();
+    var remainedRelatives = new HashSet<int>();
+    var tasks = new List<Task>();
+
+    using var transaction = await Document.BeginTransactionAsync(token);
+
+    foreach (var oldRelative in oldRelatives)
+    {
+      var isRelativeRemained = newRelativeIds.Contains(oldRelative.Id);
+      if (isRelativeRemained)
+      {
+        remainedRelatives.Add(oldRelative.Id);
+        continue;
+      }
+
+      using var command = Document.CreateCommand();
+
+      command.CommandText = """
+        DELETE FROM Relatives
+        WHERE PersonId=@personId AND RelativeId=@relativeId AND Type=@type;
+        """;
+      command.Parameters.AddWithValue("@personId", person.Id);
+      command.Parameters.AddWithValue("@relativeId", oldRelative.Id);
+      command.Parameters.AddWithValue("@type", oldRelative.Type);
+      tasks.Add(command.ExecuteNonQueryAsync(token));
+    }
+
+    tasks.Add(AddRelativesAsync(person, relatives.Where(r => !remainedRelatives.Contains(r.Id)).ToArray(), token));
+
+    await Task.WhenAll(tasks);
+
     transaction.Commit();
   }
 }

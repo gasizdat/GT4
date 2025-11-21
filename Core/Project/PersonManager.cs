@@ -149,7 +149,8 @@ public class PersonManager : TableBase
     await Document.Persons.UpdatePersonAsync(personFullInfo, token);
     await Task.WhenAll(
       Document.PersonNames.UpdatePersonNamesAsync(personFullInfo, personFullInfo.Names, token),
-      Document.PersonData.UpdatePersonDataSetAsync(personFullInfo, CombinePersonData(personFullInfo), token));
+      Document.PersonData.UpdatePersonDataSetAsync(personFullInfo, CombinePersonData(personFullInfo), token),
+      Document.Relatives.UpdateRelativesAsync(personFullInfo, personFullInfo.RelativeInfos, token));
 
     transaction.Commit();
   }
