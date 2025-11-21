@@ -8,17 +8,19 @@ public record class Relative(
   Date? DeathDate,
   BiologicalSex BiologicalSex,
   RelationshipType Type,
-  Date? Date
+  Date? Date,
+  bool ForwardLink
 ) : Person(Id, BirthDate, DeathDate, BiologicalSex)
 {
-  public Relative(Person person, RelationshipType type, Date? date)
+  public Relative(Person person, RelationshipType type, Date? date, bool forwardLink)
     : this(
         person.Id, 
         person.BirthDate, 
         person.DeathDate, 
         person.BiologicalSex, 
         type, 
-        date
+        date,
+        forwardLink
   )
   {
   }

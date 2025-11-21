@@ -7,36 +7,54 @@ public record class RelativeInfo(
   Date BirthDate,
   Date? DeathDate,
   BiologicalSex BiologicalSex,
+  Name[] Names,
+  Data? MainPhoto,
   RelationshipType Type,
   Date? Date,
-  Name[] Names,
-  Data? MainPhoto
-) : Relative(Id, BirthDate, DeathDate, BiologicalSex, Type, Date)
+  bool ForwardLink
+) : Relative(Id, BirthDate, DeathDate, BiologicalSex, Type, Date, ForwardLink)
 {
   public RelativeInfo(Relative relative, Name[] names, Data? mainPhoto)
     : this(
         relative.Id, 
         relative.BirthDate, 
         relative.DeathDate, 
-        relative.BiologicalSex, 
+        relative.BiologicalSex,
+        names, 
+        mainPhoto, 
         relative.Type, 
         relative.Date, 
-        names, 
-        mainPhoto
+        relative.ForwardLink
   )
   {
   }
 
-  public RelativeInfo(Person person,  RelationshipType type,  Date? date, Name[] names, Data? mainPhoto)
+  public RelativeInfo(Person person, Name[] names, Data? mainPhoto,  RelationshipType type,  Date? date, bool forwardLink)
     : this(
         person.Id,
         person.BirthDate,
         person.DeathDate,
         person.BiologicalSex,
+        names,
+        mainPhoto,
         type,
         date,
-        names,
-        mainPhoto
+        forwardLink
+  )
+  {
+  }
+
+  public RelativeInfo(PersonInfo person, RelationshipType type, Date? date, bool forwardLink)
+    : this(
+        person.Id,
+        person.BirthDate,
+        person.DeathDate,
+        person.BiologicalSex,
+        person.Names,
+        person.MainPhoto,
+        type,
+        date,
+        forwardLink
   )
   {
   }

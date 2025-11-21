@@ -315,8 +315,11 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       var relatives = result
         .Select(person =>
         {
-          var relative = new Relative(person.Info, dialog.RelType.Info, dialog.RelationshipDate);
-          var relativeInfo = new RelativeInfo(relative, person.Info.Names, person.Info.MainPhoto);
+          var relativeInfo = new RelativeInfo(
+            person.Info, 
+            dialog.RelType.Info, 
+            dialog.RelationshipDate, 
+            true);
           return relativeInfo;
         })
         .Select(relativeInfo => new RelativeMemberInfoItem(relativeInfo, _DateFormatter, _RelationshipTypeFormatter, _NameFormatter));

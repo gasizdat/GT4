@@ -5,14 +5,34 @@ namespace GT4.Core.Project;
 
 public class TableRelatives : TableBase
 {
-  private async Task<Relative?> CreateRelativeAsync(SqliteDataReader reader, CancellationToken token)
+  private static RelationshipType NormalizeRelationshipType(RelationshipType relationshipType, bool forwardLink)
+  {
+    if (forwardLink)
+    {
+      return relationshipType;
+    }
+
+    var ret = relationshipType switch
+    {
+      RelationshipType.Parent => RelationshipType.Child,
+      RelationshipType.Child => RelationshipType.Parent,
+      RelationshipType.AdoptiveParent => RelationshipType.AdoptiveChild,
+      RelationshipType.AdoptiveChild => RelationshipType.AdoptiveParent,
+      _ => relationshipType
+    };
+
+    return ret;
+  }
+
+  private async Task<Relative?> CreateRelativeAsync(SqliteDataReader reader, bool forwardLink, CancellationToken token)
   {
     var id = reader.GetInt32(0);
     var type = GetEnum<RelationshipType>(reader, 1);
     var date = TryGetDate(reader, 2, 3);
     var relative = await Document.Persons.TryGetPersonByIdAsync(id, token);
+    var normalizedType = NormalizeRelationshipType(type, forwardLink);
 
-    return relative is null ? null : new Relative(relative, type, date);
+    return relative is null ? null : new Relative(relative, normalizedType, date, forwardLink);
   }
 
   public TableRelatives(ProjectDocument document) : base(document)
@@ -40,20 +60,38 @@ public class TableRelatives : TableBase
 
   public async Task<Relative[]> GetRelativesAsync(Person person, CancellationToken token)
   {
-    using var command = Document.CreateCommand();
-
-    command.CommandText = """
-      SELECT RelativeId, Type, Date, DateStatus
-      FROM Relatives
-      WHERE PersonId=@id;
-      """;
-    command.Parameters.AddWithValue("@id", person.Id);
-
-    await using var reader = await command.ExecuteReaderAsync(token);
     var tasks = new List<Task<Relative?>>();
-    while (await reader.ReadAsync(token))
+
+    using (var command = Document.CreateCommand())
     {
-      tasks.Add(CreateRelativeAsync(reader, token));
+      command.CommandText = """
+        SELECT RelativeId, Type, Date, DateStatus
+        FROM Relatives
+        WHERE PersonId=@id;
+      """;
+      command.Parameters.AddWithValue("@id", person.Id);
+
+      await using var reader = await command.ExecuteReaderAsync(token);
+      while (await reader.ReadAsync(token))
+      {
+        tasks.Add(CreateRelativeAsync(reader, forwardLink: true, token));
+      }
+    }
+
+    using (var command = Document.CreateCommand())
+    {
+      command.CommandText = """
+        SELECT PersonId, Type, Date, DateStatus
+        FROM Relatives
+        WHERE RelativeId=@id;
+      """;
+      command.Parameters.AddWithValue("@id", person.Id);
+
+      await using var reader = await command.ExecuteReaderAsync(token);
+      while (await reader.ReadAsync(token))
+      {
+        tasks.Add(CreateRelativeAsync(reader, forwardLink: false, token));
+      }
     }
 
     return (await Task.WhenAll(tasks))
@@ -67,7 +105,7 @@ public class TableRelatives : TableBase
     using var transaction = await Document.BeginTransactionAsync(token);
     var tasks = new List<Task>();
 
-    foreach (var relative in relatives)
+    foreach (var relative in relatives.Where(r => r.ForwardLink))
     {
       using var command = Document.CreateCommand();
       command.CommandText = """
@@ -116,7 +154,7 @@ public class TableRelatives : TableBase
       tasks.Add(command.ExecuteNonQueryAsync(token));
     }
 
-    tasks.Add(AddRelativesAsync(person, relatives.Where(r => !remainedRelatives.Contains(r.Id)).ToArray(), token));
+    tasks.Add(AddRelativesAsync(person, relatives.Where(r => r.ForwardLink && !remainedRelatives.Contains(r.Id)).ToArray(), token));
     await Task.WhenAll(tasks);
 
     transaction.Commit();
