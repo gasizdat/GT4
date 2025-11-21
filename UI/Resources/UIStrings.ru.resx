@@ -374,10 +374,10 @@
     <value>Выбрать изображения</value>
   </data>
   <data name="MenuItemNameRemove_1" xml:space="preserve">
-    <value>Удалить '{0}'	❌</value>
+    <value>❌ Удалить '{0}'</value>
   </data>
   <data name="MenuItemNameEdit_1" xml:space="preserve">
-    <value>Править '{0}'		🖋️</value>
+    <value>🖋️ Править '{0}'</value>
   </data>
   <data name="Month_01" xml:space="preserve">
     <value>{0}Январь</value>

@@ -53,7 +53,7 @@ public partial class SelectNameDialog : ContentPage
     .Select(name => new NameInfoItem(name, _NameTypeFormatter))
     .ToArray();
 
-  public string SelectNameBtnName => _NotReady ? UIStrings.BtnNameCancel : UIStrings.BtnNameOk;
+  public string DialogButtonName => _NotReady ? UIStrings.BtnNameCancel : UIStrings.BtnNameOk;
 
   public Task<Name?> Name => _Info.Task;
 
@@ -77,7 +77,7 @@ public partial class SelectNameDialog : ContentPage
     set
     {
       _CurrentName = value;
-      OnPropertyChanged(nameof(SelectNameBtnName));
+      OnPropertyChanged(nameof(DialogButtonName));
     }
   }
 

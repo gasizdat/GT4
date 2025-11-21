@@ -106,7 +106,7 @@ public partial class SelectDateDialog : ContentPage
   {
     _NotReady = false;
     OnPropertyChanged(nameof(DateString));
-    OnPropertyChanged(nameof(SelectDateBtnName));
+    OnPropertyChanged(nameof(DialogButtonName));
   }
 
   public string[] Months => _Months;
@@ -264,7 +264,7 @@ public partial class SelectDateDialog : ContentPage
 
   public string DateString => _DateFormatter.ToString(Date);
 
-  public string SelectDateBtnName => _NotReady ? UIStrings.BtnNameCancel : UIStrings.BtnNameOk;
+  public string DialogButtonName => _NotReady ? UIStrings.BtnNameCancel : UIStrings.BtnNameOk;
 
   public Task<Date?> Info => _Info.Task;
 

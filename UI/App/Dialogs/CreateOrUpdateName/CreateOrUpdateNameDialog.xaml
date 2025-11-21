@@ -64,7 +64,7 @@
           Clicked="OnCreateFamilyBtn"
           FontSize="Large"
           HorizontalOptions="Fill"
-          Text="{Binding CreateFamilyBtnName, Source={x:Reference Root}}" />
+          Text="{Binding DialogButtonName, Source={x:Reference Root}}" />
     </components:PageLayout.Footer>
   </components:PageLayout>
 </ContentPage>

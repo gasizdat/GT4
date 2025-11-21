@@ -108,7 +108,7 @@ public partial class SelectRelativesDialog : ContentPage
       .Select(type => new RelationshipTypeItem(type, relationshipTypeFormatter))
       .ToArray();
     _RelationshipType = _RelationshipTypes.First();
-    _SelectedItems.CollectionChanged += (_, _) => OnPropertyChanged(nameof(DialogBtnName));
+    _SelectedItems.CollectionChanged += (_, _) => OnPropertyChanged(nameof(DialogButtonName));
     _Persons.Filter = PersonFilter;
 
     InitializeComponent();
@@ -173,7 +173,7 @@ public partial class SelectRelativesDialog : ContentPage
 
   public IList<object> SelectedItems => _SelectedItems;
 
-  public string DialogBtnName =>
+  public string DialogButtonName =>
     (_SelectedItems?.Count ?? 0) > 0 ? UIStrings.BtnNameOk : UIStrings.BtnNameCancel;
 
   public Task<PersonInfoItem[]?> Info => _Info.Task;

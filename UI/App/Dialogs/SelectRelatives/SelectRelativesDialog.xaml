@@ -127,7 +127,7 @@
           Command="{Binding DialogCommand, Source={x:Reference Root}}"
           CommandParameter="SelectPersonCommand"
           FontSize="Large"
-          Text="{Binding DialogBtnName, Source={x:Reference Root}}" />
+          Text="{Binding DialogButtonName, Source={x:Reference Root}}" />
 
     </components:PageLayout.Footer>
   </components:PageLayout>

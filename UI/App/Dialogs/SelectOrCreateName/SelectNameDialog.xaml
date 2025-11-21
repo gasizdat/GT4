@@ -76,7 +76,7 @@
           Clicked="OnSelectNameBtn"
           FontSize="Large"
           HorizontalOptions="Fill"
-          Text="{Binding SelectNameBtnName, Source={x:Reference Root}}" />
+          Text="{Binding DialogButtonName, Source={x:Reference Root}}" />
     </components:PageLayout.Footer>
   </components:PageLayout>
 </ContentPage>

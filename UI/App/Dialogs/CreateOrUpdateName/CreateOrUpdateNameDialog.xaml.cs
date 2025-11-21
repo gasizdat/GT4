@@ -51,7 +51,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     {
       _GeneralName = value;
       OnPropertyChanged(nameof(GeneralName));
-      OnPropertyChanged(nameof(CreateFamilyBtnName));
+      OnPropertyChanged(nameof(DialogButtonName));
     }
   }
 
@@ -62,7 +62,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     {
       _MaleName = value;
       OnPropertyChanged(nameof(MaleName));
-      OnPropertyChanged(nameof(CreateFamilyBtnName));
+      OnPropertyChanged(nameof(DialogButtonName));
     }
   }
 
@@ -73,7 +73,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     {
       _FemaleName = value;
       OnPropertyChanged(nameof(FemaleName));
-      OnPropertyChanged(nameof(CreateFamilyBtnName));
+      OnPropertyChanged(nameof(DialogButtonName));
     }
   }
 
@@ -126,7 +126,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   };
 
   public Task<FamilyInfo?> Info => _Info.Task;
-  public string CreateFamilyBtnName => _NotReady ? UIStrings.BtnNameCancel : UIStrings.BtnNameCreateFamily;
+  public string DialogButtonName => _NotReady ? UIStrings.BtnNameCancel : UIStrings.BtnNameCreateFamily;
 
   public void OnCreateFamilyBtn(object sender, EventArgs e)
   {

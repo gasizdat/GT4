@@ -374,10 +374,10 @@ genealogy tree and enjoy!</value>
     <value>Select pictures</value>
   </data>
   <data name="MenuItemNameRemove_1" xml:space="preserve">
-    <value>Remove '{0}'	❌</value>
+    <value>❌ Remove '{0}'</value>
   </data>
   <data name="MenuItemNameEdit_1" xml:space="preserve">
-    <value>Edit '{0}'		🖋️</value>
+    <value>🖋️ Edit '{0}'</value>
   </data>
   <data name="Month_01" xml:space="preserve">
     <value>{0}January</value>

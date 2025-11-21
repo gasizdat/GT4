@@ -33,7 +33,7 @@ public partial class CreateOrUpdateProjectDialog : ContentPage
 
   public Task<ProjectInfo> ProjectInfo => _Info.Task;
 
-  public string CreateProjectBtName => 
+  public string DialogButtonName => 
     string.IsNullOrWhiteSpace(_ProjectName) ? UIStrings.BtnNameCancel : _DialogButtonName;
 
   public string ProjectDescription
@@ -48,7 +48,7 @@ public partial class CreateOrUpdateProjectDialog : ContentPage
     set
     {
       _ProjectName = value;
-      OnPropertyChanged(nameof(CreateProjectBtName));
+      OnPropertyChanged(nameof(DialogButtonName));
     }
   }
 }
