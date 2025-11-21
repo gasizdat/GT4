@@ -11,6 +11,7 @@ namespace GT4.UI.Pages;
 
 public partial class ProjectPage : ContentPage
 {
+  private readonly IServiceProvider _ServiceProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IComparer<PersonInfoItem> _PersonInfoComparer;
@@ -100,12 +101,13 @@ public partial class ProjectPage : ContentPage
 
   protected ProjectPage(IServiceProvider serviceProvider)
   {
-    _CancellationTokenProvider = serviceProvider.GetRequiredService<ICancellationTokenProvider>();
-    _CurrentProjectProvider = serviceProvider.GetRequiredService<ICurrentProjectProvider>();
-    _PersonInfoComparer = serviceProvider.GetRequiredService<IComparer<PersonInfoItem>>();
-    _FamilyInfoComparer = serviceProvider.GetRequiredService<IComparer<FamilyInfoItem>>();
-    _NameFormatter = serviceProvider.GetRequiredService<INameFormatter>();
-    _ProjectList = serviceProvider.GetRequiredService<IProjectList>();
+    _ServiceProvider = serviceProvider;
+    _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
+    _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
+    _PersonInfoComparer = _ServiceProvider.GetRequiredService<IComparer<PersonInfoItem>>();
+    _FamilyInfoComparer = _ServiceProvider.GetRequiredService<IComparer<FamilyInfoItem>>();
+    _NameFormatter = _ServiceProvider.GetRequiredService<INameFormatter>();
+    _ProjectList = _ServiceProvider.GetRequiredService<IProjectList>();
 
     MenuItemCommand = new Command<object>(OnMenuItemCommand);
     InitializeComponent();
@@ -175,7 +177,7 @@ public partial class ProjectPage : ContentPage
 
   internal async Task OnCreateFamily()
   {
-    var dialog = new CreateOrUpdateNameDialog(NameType.FamilyName);
+    var dialog = new CreateOrUpdateNameDialog(NameType.FamilyName, _ServiceProvider);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;

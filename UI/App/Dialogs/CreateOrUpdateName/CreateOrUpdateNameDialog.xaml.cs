@@ -1,4 +1,5 @@
 using GT4.Core.Project.Dto;
+using GT4.UI.Formatters;
 using GT4.UI.Resources;
 
 namespace GT4.UI.Dialogs;
@@ -9,6 +10,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
 
   private readonly NameType _NameType;
   private readonly TaskCompletionSource<FamilyInfo?> _Info = new(null);
+  private readonly string _DialogButtonName;
   private string _GeneralName = string.Empty;
   private string _MaleName = string.Empty;
   private string _FemaleName = string.Empty;
@@ -16,8 +18,10 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     string.IsNullOrWhiteSpace(_GeneralName) ||
     ShowDeclensionNames && (string.IsNullOrWhiteSpace(_MaleName) || string.IsNullOrWhiteSpace(_FemaleName));
 
-  public CreateOrUpdateNameDialog(NameType nameType)
+  public CreateOrUpdateNameDialog(NameType nameType, IServiceProvider serviceProvider)
   {
+    var nameTypeFormatter = serviceProvider.GetRequiredService<INameTypeFormatter>();
+    _DialogButtonName = string.Format(UIStrings.BtnNameCreateName_1, nameTypeFormatter.ToString(nameType));
     switch (nameType)
     {
       case NameType.FamilyName:
@@ -33,9 +37,11 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     InitializeComponent();
   }
 
-  public CreateOrUpdateNameDialog(Name name, Name? maleName, Name? femaleName)
-    : this(name.Type)
+  public CreateOrUpdateNameDialog(Name name, Name? maleName, Name? femaleName, IServiceProvider serviceProvider)
+    : this(name.Type, serviceProvider)
   {
+    var nameTypeFormatter = serviceProvider.GetRequiredService<INameTypeFormatter>();
+    _DialogButtonName = string.Format(UIStrings.BtnNameUpdateName_1, nameTypeFormatter.ToString(name.Type));
     GeneralName = name.Value;
     MaleName = maleName?.Value ?? string.Empty;
     FemaleName = femaleName?.Value ?? string.Empty;
@@ -126,7 +132,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   };
 
   public Task<FamilyInfo?> Info => _Info.Task;
-  public string DialogButtonName => _NotReady ? UIStrings.BtnNameCancel : UIStrings.BtnNameCreateFamily;
+  public string DialogButtonName => _NotReady ? UIStrings.BtnNameCancel : _DialogButtonName;
 
   public void OnCreateFamilyBtn(object sender, EventArgs e)
   {

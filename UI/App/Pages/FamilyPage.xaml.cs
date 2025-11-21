@@ -157,7 +157,7 @@ public partial class FamilyPage : ContentPage
       return;
     }
 
-    var dialog = new CreateOrUpdateNameDialog(familyName, maleLastName, femaleLastName);
+    var dialog = new CreateOrUpdateNameDialog(familyName, maleLastName, femaleLastName, _Services);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;

@@ -13,6 +13,7 @@ public partial class SelectNameDialog : ContentPage
   public record NameTypeInfoItem(string TypeName, NameType Type);
 
   private readonly TaskCompletionSource<Name?> _Info = new(null);
+  private readonly IServiceProvider _ServiceProvider;
   private readonly INameTypeFormatter _NameTypeFormatter;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
@@ -25,9 +26,10 @@ public partial class SelectNameDialog : ContentPage
 
   public SelectNameDialog(BiologicalSex biologicalSex, IServiceProvider serviceProvider)
   {
-    _NameTypeFormatter = serviceProvider.GetRequiredService<INameTypeFormatter>();
-    _CurrentProjectProvider = serviceProvider.GetRequiredService<ICurrentProjectProvider>();
-    _CancellationTokenProvider = serviceProvider.GetRequiredService<ICancellationTokenProvider>();
+    _ServiceProvider = serviceProvider;
+    _NameTypeFormatter = _ServiceProvider.GetRequiredService<INameTypeFormatter>();
+    _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
+    _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
     _NameTypes = new((new[] { NameType.FirstName, NameType.MiddleName, NameType.LastName, NameType.AdditionalName })
       .Select(type => new NameTypeInfoItem(_NameTypeFormatter.ToString(type), type)));
     _CurrentNameType = _NameTypes.First();
@@ -100,7 +102,7 @@ public partial class SelectNameDialog : ContentPage
         return;
     }
 
-    var dialog = new CreateOrUpdateNameDialog(dialogNameType);
+    var dialog = new CreateOrUpdateNameDialog(dialogNameType, _ServiceProvider);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;
