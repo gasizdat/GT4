@@ -32,7 +32,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private Date? _DeathDate;
   private BiologicalSexItem? _BiologicalSex;
   private PersonDataItem? _Biography;
-  private bool _NotReady => _BiologicalSex is null || _BirthDate is null;
+  private bool _IsModified;
+  private bool _NotReady => _BiologicalSex is null || _BirthDate is null || !_IsModified;
 
   public CreateOrUpdatePersonDialog(PersonFullInfo? person, IServiceProvider serviceProvider)
   {
@@ -52,6 +53,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     UpdatePersonInformation(person);
 
     InitializeComponent();
+    IsModified = false;
   }
 
   private void UpdatePersonInformation(PersonFullInfo? person)
@@ -118,6 +120,15 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
   }
 
+  private bool IsModified
+  {
+    set
+    {
+      _IsModified = value;
+      OnPropertyChanged(nameof(DialogBtnName));
+    }
+  }
+
   public ICommand DialogCommand => _DialogCommand;
   public ICollection<PersonDataItem> Photos => _Photos;
   public ICollection<NameInfoItem> Names => _Names;
@@ -131,6 +142,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     set
     {
       _BirthDate = value;
+      IsModified = true;
       OnPropertyChanged(nameof(BirthDate));
       OnPropertyChanged(nameof(DialogBtnName));
     }
@@ -142,6 +154,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     set
     {
       _DeathDate = value;
+      IsModified = true;
       OnPropertyChanged(nameof(DeathDate));
       OnPropertyChanged(nameof(DialogBtnName));
     }
@@ -153,12 +166,14 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     set
     {
       _BiologicalSex = value;
+      IsModified = true;
       OnPropertyChanged(nameof(BioSex));
       OnPropertyChanged(nameof(DialogBtnName));
     }
   }
 
   public Task<PersonFullInfo?> Info => _Info.Task;
+
   public string DialogBtnName => _NotReady ? UIStrings.BtnNameCancel : _SaveButtonName;
 
   private void OnCreatePersonCommand()
@@ -216,6 +231,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     if (name is not null)
     {
       _Names.Add(new NameInfoItem(name, _NameTypeFormatter));
+      IsModified = true;
     }
   }
 
@@ -291,6 +307,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
           dataConverter: _ServiceProvider.GetRequiredKeyedService<IDataConverter>(category),
           cancellationTokenProvider: _CancellationTokenProvider));
       }
+
+      IsModified = true;
     }
     finally
     {
@@ -338,6 +356,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       {
         _Relatives.Add(relative);
       }
+      IsModified = true;
     }
   }
 
@@ -362,6 +381,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         _RelationshipTypeFormatter,
         _NameFormatter);
       _Relatives.Insert(insertIndex, newRelative);
+      IsModified = true;
     }
   }
 
@@ -395,17 +415,20 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "RemovePhotoCommand" && adorner.Element is PersonDataItem photo:
         _Photos.Remove(photo);
+        IsModified = true;
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "EditNameCommand":
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "RemoveNameCommand" && adorner.Element is NameInfoItem name:
         _Names.Remove(name);
+        IsModified = true;
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "EditRelativeCommand" && adorner.Element is RelativeMemberInfoItem relative:
         await OnEditRelationshipAsync(relative);
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "RemoveRelativeCommand" && adorner.Element is RelativeMemberInfoItem relative:
         _Relatives.Remove(relative);
+        IsModified = true;
         break;
     }
   }
