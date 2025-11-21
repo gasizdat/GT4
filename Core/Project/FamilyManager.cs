@@ -79,6 +79,43 @@ public class FamilyManager : TableBase
     return names.ToArray();
   }
 
+  public async Task UpdateFamilyAsync(Name familyName, Name? maleLastName, Name? femaleLastName, CancellationToken token)
+  {
+    if (familyName.ParentId is not null)
+    {
+      throw new ArgumentException(nameof(familyName));
+    }
+
+    if (maleLastName is not null && maleLastName.ParentId != familyName.Id)
+    {
+      throw new ArgumentException(nameof(maleLastName));
+    }
+
+    if (femaleLastName is not null && femaleLastName.ParentId != familyName.Id)
+    {
+      throw new ArgumentException(nameof(femaleLastName));
+    }
+
+    using var transaction = await Document.BeginTransactionAsync(token);
+
+    var tasks = new List<Task>
+    {
+      Document.Names.UpdateName(familyName, token)
+    };
+    if (maleLastName is not null)
+    {
+      tasks.Add(Document.Names.UpdateName(maleLastName, token));
+    }
+    if (femaleLastName is not null)
+    {
+      tasks.Add(Document.Names.UpdateName(femaleLastName, token));
+    }
+
+    await Task.WhenAll(tasks);
+
+    transaction.Commit();
+  }
+
   public override Task CreateAsync(CancellationToken token)
   {
     throw new NotSupportedException();

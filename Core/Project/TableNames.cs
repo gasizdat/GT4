@@ -196,6 +196,22 @@ public class TableNames : TableBase
     return name;
   }
 
+  public async Task UpdateName(Name name, CancellationToken token)
+  {
+    using var transaction = await Document.BeginTransactionAsync(token);
+    using var command = Document.CreateCommand();
+    command.CommandText = """
+      UPDATE Names 
+      SET Value=@value
+      WHERE Id=@nameId;
+      """;
+    command.Parameters.AddWithValue("@value", name.Value);
+    command.Parameters.AddWithValue("@nameId", name.Id);
+    await command.ExecuteNonQueryAsync(token);
+    transaction.Commit();
+    InvalidateItems(name.Type);
+  }
+
   public async Task RemoveNameWithSubnamesAsync(Name name, CancellationToken token)
   {
     using var transaction = await Document.BeginTransactionAsync(token);

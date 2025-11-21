@@ -97,7 +97,7 @@ public class TableRelatives : TableBase
     return (await Task.WhenAll(tasks))
       .Where(i => i is not null)
       .Select(i => i!)
-      .ToArray() ?? [];
+      .ToArray();
   }
 
   public async Task AddRelativesAsync(Person person, Relative[] relatives, CancellationToken token)
