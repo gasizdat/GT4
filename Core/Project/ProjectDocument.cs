@@ -8,7 +8,7 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
   private readonly SqliteConnection _Connection;
   private NestedTransaction? _CurrentTransaction = null;
   private long _TransactionNo = 0;
-  private long _ProjectRevision = 0;
+  private long _ProjectRevision = Environment.TickCount64;
 
   static ProjectDocument()
   {
@@ -68,7 +68,10 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
 
   public void UpdateRevision()
   {
-    Interlocked.Increment(ref _ProjectRevision);
+    lock (this)
+    {
+      _ProjectRevision = Environment.TickCount64;
+    }
   }
 
   public async Task<int> GetLastInsertRowIdAsync(CancellationToken token)
