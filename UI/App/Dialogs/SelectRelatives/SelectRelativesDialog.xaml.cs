@@ -16,6 +16,7 @@ public partial class SelectRelativesDialog : ContentPage
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IDateFormatter _DateFormatter;
   private readonly INameFormatter _NameFormatter;
+  private readonly IComparer<PersonInfoItem> _PersonComparer;
   private readonly BiologicalSexItem[] _BiologicalSexes;
   private readonly RelationshipTypeItem[] _RelationshipTypes;
   private readonly FilteredObservableCollection<PersonInfoItem> _Persons = new();
@@ -92,6 +93,7 @@ public partial class SelectRelativesDialog : ContentPage
     _CurrentProjectProvider = serviceProvider.GetRequiredService<ICurrentProjectProvider>();
     _DateFormatter = serviceProvider.GetRequiredService<IDateFormatter>();
     _NameFormatter = serviceProvider.GetRequiredService<INameFormatter>();
+    _PersonComparer = serviceProvider.GetRequiredService<IComparer<PersonInfoItem>>();
     _DialogCommand = new Command<object>(OnDialogCommand);
     _ProjectRevision = _CurrentProjectProvider.Project.ProjectRevision;
     _BiologicalSexes = new[] { BiologicalSex.Male, BiologicalSex.Female, BiologicalSex.Unknown }
@@ -115,7 +117,7 @@ public partial class SelectRelativesDialog : ContentPage
   }
 
   public string NameFilter
-  { 
+  {
     get => _NameFilter;
     set
     {
@@ -161,7 +163,10 @@ public partial class SelectRelativesDialog : ContentPage
         };
         worker.RunWorkerCompleted += (_, _) =>
         {
-          _Persons.AddRange(persons?.Select(personInfo => new PersonInfoItem(personInfo, _NameFormatter)) ?? []);
+          var items = persons?
+            .Select(personInfo => new PersonInfoItem(personInfo, _NameFormatter))
+            .OrderBy(item => item, _PersonComparer);
+          _Persons.AddRange(items ?? Enumerable.Empty<PersonInfoItem>());
           OnPropertyChanged(nameof(Persons));
         };
         worker.RunWorkerAsync();

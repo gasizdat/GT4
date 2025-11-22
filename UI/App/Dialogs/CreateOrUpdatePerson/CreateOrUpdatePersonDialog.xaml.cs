@@ -19,6 +19,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private readonly INameTypeFormatter _NameTypeFormatter;
   private readonly INameFormatter _NameFormatter;
   private readonly IDateFormatter _DateFormatter;
+  private readonly IComparer<PersonInfoItem> _PersonComparer;
   private readonly IServiceProvider _ServiceProvider;
   private readonly ICommand _DialogCommand;
   private readonly string _SaveButtonName;
@@ -44,6 +45,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     _NameTypeFormatter = _ServiceProvider.GetRequiredService<INameTypeFormatter>();
     _NameFormatter = _ServiceProvider.GetRequiredService<INameFormatter>();
     _DateFormatter = _ServiceProvider.GetRequiredService<IDateFormatter>();
+    _PersonComparer = _ServiceProvider.GetRequiredService<IComparer<PersonInfoItem>>();
     _DialogCommand = new Command<object>(OnDialogCommand);
     _SaveButtonName = person is null ? UIStrings.BtnNameCreateFamilyPerson : UIStrings.BtnNameUpdateFamilyPerson;
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, _BiologicalSexFormatter));
@@ -103,14 +105,18 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
               _CancellationTokenProvider)
       };
 
-      foreach (var relativeInfo in person.RelativeInfos)
-      {
-        var item = new RelativeMemberInfoItem(
+      var relativeItems = person
+        .RelativeInfos
+        .Select(relativeInfo => new RelativeMemberInfoItem(
           person.BirthDate,
           relativeInfo,
           _DateFormatter,
           _RelationshipTypeFormatter,
-          _NameFormatter);
+          _NameFormatter))
+        .OrderBy(item => item, _PersonComparer);
+
+      foreach (var item in relativeItems)
+      {
         _Relatives.Add(item);
       }
     }

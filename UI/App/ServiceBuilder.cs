@@ -1,12 +1,10 @@
 ﻿using GT4.Core.Project;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
-using GT4.UI.Items;
 using GT4.UI.Comparers;
-using System.Collections.Generic;
-using System.Net.Mime;
 using GT4.UI.Converters;
 using GT4.UI.Formatters;
+using GT4.UI.Items;
 
 namespace GT4.UI;
 
@@ -23,6 +21,7 @@ public class ServiceBuilder
         .AddSingleton<IComparer<FamilyMemberInfoItem>, FamilyMemberInfoItemComparer>()
         .AddSingleton<IComparer<ProjectItem>, ProjectItemComparer>()
         .AddSingleton<IComparer<PersonInfoItem>, PersonInfoItemComparer>()
+        .AddSingleton<IComparer<NameInfoItem>, NameInfoItemComparer>()
         .AddKeyedSingleton<IDataConverter, ImageDataConverter>(DataCategory.PersonPhoto)
         .AddKeyedSingleton<IDataConverter, ImageDataConverter>(DataCategory.PersonMainPhoto)
         .AddKeyedSingleton<IDataConverter, TextDataConverter>(DataCategory.PersonBio)

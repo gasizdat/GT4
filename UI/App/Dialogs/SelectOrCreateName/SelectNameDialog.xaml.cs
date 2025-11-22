@@ -17,6 +17,7 @@ public partial class SelectNameDialog : ContentPage
   private readonly INameTypeFormatter _NameTypeFormatter;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
+  private readonly IComparer<NameInfoItem> _NameComparer;
   private readonly ObservableCollection<NameTypeInfoItem> _NameTypes;
   private NameTypeInfoItem _CurrentNameType;
   private readonly NameType _NameDeclension;
@@ -30,6 +31,7 @@ public partial class SelectNameDialog : ContentPage
     _NameTypeFormatter = _ServiceProvider.GetRequiredService<INameTypeFormatter>();
     _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
     _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
+    _NameComparer = _ServiceProvider.GetRequiredService<IComparer<NameInfoItem>>();
     _NameTypes = new((new[] { NameType.FirstName, NameType.MiddleName, NameType.LastName, NameType.AdditionalName })
       .Select(type => new NameTypeInfoItem(_NameTypeFormatter.ToString(type), type)));
     _CurrentNameType = _NameTypes.First();
@@ -53,6 +55,7 @@ public partial class SelectNameDialog : ContentPage
     .GetNamesByTypeAsync(CurrentNameType.Type | _NameDeclension, _CancellationTokenProvider.CreateDbCancellationToken())
     .Result
     .Select(name => new NameInfoItem(name, _NameTypeFormatter))
+    .OrderBy(name => name, _NameComparer)
     .ToArray();
 
   public string DialogButtonName => _NotReady ? UIStrings.BtnNameCancel : UIStrings.BtnNameOk;
@@ -117,7 +120,7 @@ public partial class SelectNameDialog : ContentPage
       var project = _CurrentProjectProvider.Project;
       var name = dialogNameType switch
       {
-        NameType.FamilyName => 
+        NameType.FamilyName =>
           await project
             .FamilyManager
             .AddFamilyAsync(familyName: info.Name, maleLastName: info.MaleName, femaleLastName: info.FemaleName, token),
