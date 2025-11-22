@@ -81,25 +81,24 @@ namespace GT4
         var backgroundWorker = new BackgroundWorker();
         backgroundWorker.DoWork += async (_, _) =>
         {
-          try
-          {
-            using var input = ContentResolver?.OpenInputStream(uri) ??
-              throw new ApplicationException($"Unable to open provided URI {uri}");
+          using var input = ContentResolver?.OpenInputStream(uri) ??
+            throw new ApplicationException($"Unable to open provided URI {uri}");
 
-            var token = _Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
-            var projectInfo = await _Services.GetRequiredService<IProjectList>().ExportAsync(input, token);
-            RunOnUiThread(async () => await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectPage>()));
-          }
-          catch (Exception ex)
+          var token = _Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
+          var projectInfo = await _Services.GetRequiredService<IProjectList>().ExportAsync(input, token);
+        };
+        backgroundWorker.RunWorkerCompleted += async (object? _, RunWorkerCompletedEventArgs args) =>
+        {
+          if (args.Error is not null)
           {
-            RunOnUiThread(async () =>
-            {
-              await PageAlert.ShowError(ex);
-            });
+            await PageAlert.ShowError(args.Error);
+          }
+          else
+          {
+            await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectPage>());
           }
         };
-        backgroundWorker.RunWorkerAsync();
-
+        RunOnUiThread(backgroundWorker.RunWorkerAsync);
       }
       else
       {

@@ -149,20 +149,26 @@ public partial class SelectRelativesDialog : ContentPage
       if (_Persons.Count == 0 || _ProjectRevision != _CurrentProjectProvider.Project.ProjectRevision)
       {
         var worker = new BackgroundWorker();
-        PersonInfo[]? persons = null;
-        worker.DoWork += async (_, _) =>
+        worker.DoWork += async (object? _, DoWorkEventArgs args) =>
         {
           var token = _CancellationTokenProvider.CreateDbCancellationToken();
-          persons = await _CurrentProjectProvider
+          var persons = await _CurrentProjectProvider
             .Project
             .PersonManager
             .GetPersonInfosAsync(selectMainPhoto: false, token);
-          persons = persons
+          args.Result = persons
             .Where(person => !_ExistingRelativeIds.Contains(person.Id))
             .ToArray();
         };
-        worker.RunWorkerCompleted += (_, _) =>
+        worker.RunWorkerCompleted += (object? _, RunWorkerCompletedEventArgs args) =>
         {
+          if (args.Error is not null)
+          {
+            PageAlert.ShowError(args.Error);
+            return;
+          }
+
+          var persons = args.Result as PersonInfo[];
           var items = persons?
             .Select(personInfo => new PersonInfoItem(personInfo, _NameFormatter))
             .OrderBy(item => item, _PersonComparer);

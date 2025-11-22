@@ -46,16 +46,21 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
       {
         _IsReady = true;
 
-        object? asyncContent = null;
         var worker = new BackgroundWorker();
-        worker.DoWork += async (_, _) =>
+        worker.DoWork += async (object? _, DoWorkEventArgs args) =>
         {
           var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
-          asyncContent = await _DataConverter.ToObjectAsync(Info, token);
+          args.Result = await _DataConverter.ToObjectAsync(Info, token);
         };
-        worker.RunWorkerCompleted += (_, _) =>
+        worker.RunWorkerCompleted += (object? _, RunWorkerCompletedEventArgs args) =>
         {
-          _Content = asyncContent;
+          if (args.Error is not null)
+          {
+            PageAlert.ShowError(args.Error);
+            return;
+          }
+
+          _Content = args.Result;
           OnContentChanged();
         };
         worker.RunWorkerAsync();
