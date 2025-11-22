@@ -4,7 +4,7 @@ namespace GT4.UI.Formatters;
 
 internal class NameFormatter : INameFormatter
 {
-  private readonly string _PartsDelimiter = " ";
+  private readonly static string _PartsDelimiter = " ";
 
   protected static IEnumerable<Name> GetNameParts(PersonInfo personInfo, NameType nameType)
   {
@@ -27,7 +27,7 @@ internal class NameFormatter : INameFormatter
     return parts;
   }
 
-  public string GetFullPersonName(PersonInfo personInfo)
+  protected static string GetFullPersonName(PersonInfo personInfo)
   {
     //TODO use settings
     var parts = GetNameParts(personInfo, [NameType.FirstName, NameType.MiddleName, NameType.LastName, NameType.AdditionalName]);
@@ -36,7 +36,7 @@ internal class NameFormatter : INameFormatter
     return ret;
   }
 
-  public string GetCommonPersonName(PersonInfo personInfo)
+  protected static string GetCommonPersonName(PersonInfo personInfo)
   {
     //TODO use settings
     var parts = GetNameParts(personInfo, [NameType.FirstName, NameType.MiddleName, NameType.LastName]);
@@ -45,8 +45,20 @@ internal class NameFormatter : INameFormatter
     return ret;
   }
 
-  public string GetPersonInitials(PersonInfo personInfo)
+  protected static string GetPersonInitials(PersonInfo personInfo)
   {
     throw new NotImplementedException();
+  }
+
+  public string ToString(PersonInfo personInfo, NameFormat format)
+  {
+    return format switch
+    {
+      NameFormat.CommonPersonName => GetCommonPersonName(personInfo),
+      NameFormat.FullPersonName => GetFullPersonName(personInfo),
+      NameFormat.PersonInitials => GetPersonInitials(personInfo),
+      _ => throw new ArgumentException(nameof(format))
+
+    };
   }
 }

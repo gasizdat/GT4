@@ -15,5 +15,5 @@ public class PersonInfoItem : CollectionItemBase<PersonInfo>
 
   protected override ImageSource? CustomImage => Info.MainPhoto is null ? null : ImageUtils.ImageFromBytes(Info.MainPhoto.Content);
 
-  public string CommonName => _NameFormatter.GetCommonPersonName(Info);
+  public string CommonName => _NameFormatter.ToString(Info, NameFormat.CommonPersonName);
 }

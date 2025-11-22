@@ -58,7 +58,7 @@ public partial class PersonInfoView : ContentView
   public Style? DatesLabelStyle => (Style?)GetValue(DatesLabelStyleProperty);
   public Style? PhotoStyle => (Style?)GetValue(PhotoStyleProperty);
 
-  public string? CommonName => Person is null ? null : _NameFormatter.GetCommonPersonName(Person);
+  public string? CommonName => Person is null ? null : _NameFormatter.ToString(Person, NameFormat.CommonPersonName);
   public string? LifeDates
   {
     get
