@@ -4,5 +4,6 @@ public enum NameFormat
 {
   FullPersonName,
   CommonPersonName,
+  ShortPersonName,
   PersonInitials
 }

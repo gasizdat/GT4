@@ -1,7 +1,7 @@
 ﻿namespace GT4.Core.Project.Dto;
 
 [Flags]
-public enum NameType
+public enum NameType : int
 {
   // For the internal use only
   AllNames = 0,
