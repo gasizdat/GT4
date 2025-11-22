@@ -154,6 +154,22 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   public PersonDataItem? Biography => _Biography;
 
+  public string PersonFullName
+  {
+    get
+    {
+      var dummyPersonInfo = new PersonInfo(
+        TableBase.NonCommitedId,
+        default,
+        default,
+        default,
+        _Names.Select(item => item.Info).ToArray(),
+        default);
+
+      return _NameFormatter.ToString(dummyPersonInfo, NameFormat.FullPersonName);
+    }
+  }
+
   public Date? BirthDate
   {
     get => _BirthDate;
@@ -252,6 +268,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       var index = lastNameWithTheSameType is null ? -1 : _Names.IndexOf(lastNameWithTheSameType);
       var item = new NameInfoItem(name, _NameTypeFormatter);
       _Names.Insert(index + 1, item);
+
+      OnPropertyChanged(nameof(PersonFullName));
       IsModified = true;
     }
   }
@@ -439,9 +457,12 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         IsModified = true;
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "EditNameCommand":
+        OnPropertyChanged(nameof(PersonFullName));
+        IsModified = true;
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "RemoveNameCommand" && adorner.Element is NameInfoItem name:
         _Names.Remove(name);
+        OnPropertyChanged(nameof(PersonFullName));
         IsModified = true;
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "EditRelativeCommand" && adorner.Element is RelativeMemberInfoItem relative:

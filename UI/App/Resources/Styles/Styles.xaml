@@ -102,6 +102,12 @@
       Phone="25"
       Tablet="30" />
 
+  <OnIdiom
+      x:Key="GroupTitleMarginBottom"
+      x:TypeArguments="x:Double"
+      Default="20"
+      Phone="15" />
+
   <Thickness
       x:Key="AddornerButtonMargin"
       Bottom="{StaticResource AddornerButtonMarginValues}"
@@ -111,8 +117,7 @@
 
   <Thickness
       x:Key="GroupTitleMargin"
-      Bottom="{OnIdiom Default=20,
-                       Phone=15}"
+      Bottom="{StaticResource GroupTitleMarginBottom}"
       Left="0"
       Right="0"
       Top="0" />

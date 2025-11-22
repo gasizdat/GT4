@@ -157,7 +157,7 @@
           <!--  Names  -->
           <Frame Style="{StaticResource CardFrameStyle}">
             <Grid
-                ColumnDefinitions="*"
+                ColumnDefinitions="Auto, *"
                 RowDefinitions="Auto, *, Auto">
 
               <Label
@@ -166,9 +166,18 @@
                   Style="{StaticResource GroupTitle}"
                   Text="{x:Static resources:UIStrings.FieldPersonNames}" />
 
+              <Label
+                  Grid.Row="0"
+                  Grid.Column="1"
+                  Margin="{Thickness Bottom={StaticResource GroupTitleMarginBottom},
+                                     Left={StaticResource PageContentSpacing}}"
+                  Style="{StaticResource FieldValue}"
+                  Text="{Binding PersonFullName, Source={x:Reference Root}}" />
+
               <CollectionView
                   Grid.Row="1"
                   Grid.Column="0"
+                  Grid.ColumnSpan="2"
                   HorizontalOptions="Center"
                   ItemsSource="{Binding Names, Source={x:Reference Root}}"
                   SelectionMode="Single">
@@ -229,6 +238,7 @@
               <Button
                   Grid.Row="2"
                   Grid.Column="0"
+                  Grid.ColumnSpan="2"
                   Command="{Binding DialogCommand, Source={x:Reference Root}}"
                   CommandParameter="AddNameCommand"
                   HorizontalOptions="Fill"
