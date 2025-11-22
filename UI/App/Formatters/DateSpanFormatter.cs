@@ -10,19 +10,22 @@ public class DateSpanFormatter : IDateSpanFormatter
   {
     // TODO use configuration
 
+    string ret = string.Empty;
+
     if (dateSpan.HasValue)
     {
-      return dateSpan.Value.Status switch
+      ret = dateSpan.Value.Status switch
       {
         DateStatus.WellKnown => $"{YearsFormat(dateSpan.Value.Years)} {MonthsFormat(dateSpan.Value.Months)} {DaysFormat(dateSpan.Value.Days)}",
         DateStatus.DayUnknown => $"{YearsFormat(dateSpan.Value.Years)} {MonthsFormat(dateSpan.Value.Months)}",
-        DateStatus.MonthUnknown => $"{YearsFormat(dateSpan.Value.Years)}",
+        DateStatus.MonthUnknown => YearsFormat(dateSpan.Value.Years),
+        DateStatus.YearApproximate when dateSpan.Value.Years == 0 => string.Empty,
         DateStatus.YearApproximate => string.Format(UIStrings.DateStatusYearApproximate_1, YearsFormat(dateSpan.Value.Years)),
-        _ => UIStrings.DateStatusUnknown
+        _ => string.Empty
       };
     }
 
-    return UIStrings.DateStatusUnknown;
+    return string.IsNullOrWhiteSpace(ret) ? UIStrings.DateStatusUnknown : ret;
   }
 
   protected static string TwoLetterISOLanguageName =>
@@ -32,26 +35,29 @@ public class DateSpanFormatter : IDateSpanFormatter
   {
     return TwoLetterISOLanguageName switch
     {
+      _ when days == 0 => string.Empty,
       "ru" => RussianNumeralsDeclension(days, "{0} день", "{0} дня", "{0} дней"),
       _ => EnglishNumeralsDeclension(days, "{0} day", "{0} days")
     };
   }
 
-  protected static string MonthsFormat(int days)
+  protected static string MonthsFormat(int months)
   {
     return TwoLetterISOLanguageName switch
     {
-      "ru" => RussianNumeralsDeclension(days, "{0} месяц", "{0} месяца", "{0} месяцев"),
-      _ => EnglishNumeralsDeclension(days, "{0} month", "{0} months")
+      _ when months == 0 => string.Empty,
+      "ru" => RussianNumeralsDeclension(months, "{0} месяц", "{0} месяца", "{0} месяцев"),
+      _ => EnglishNumeralsDeclension(months, "{0} month", "{0} months")
     };
   }
 
-  protected static string YearsFormat(int days)
+  protected static string YearsFormat(int years)
   {
     return TwoLetterISOLanguageName switch
     {
-      "ru" => RussianNumeralsDeclension(days, "{0} год", "{0} года", "{0} лет"),
-      _ => EnglishNumeralsDeclension(days, "{0} year", "{0} years")
+      _ when years == 0 => string.Empty,
+      "ru" => RussianNumeralsDeclension(years, "{0} год", "{0} года", "{0} лет"),
+      _ => EnglishNumeralsDeclension(years, "{0} year", "{0} years")
     };
   }
 
@@ -65,7 +71,7 @@ public class DateSpanFormatter : IDateSpanFormatter
     var lastTwoDigits = value % 100;
     if (lastTwoDigits >= 11 && lastTwoDigits <= 20)
     {
-      return many;
+      return string.Format(many, value);
     }
 
     var lastDigit = value % 10;
