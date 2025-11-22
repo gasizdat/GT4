@@ -70,9 +70,16 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       _PersonId = person.Id;
       _BirthDate = person.BirthDate;
       _DeathDate = person.DeathDate;
-      foreach (var name in person.Names)
+      var names = person
+        .Names
+        .Select(name => new NameInfoItem(name, _NameTypeFormatter))
+        .GroupBy(item => item.Info.Type & NameType.NoDeclension)
+        .OrderBy(group => group.Key)
+        .SelectMany(item => item);
+
+      foreach (var name in names)
       {
-        _Names.Add(new NameInfoItem(name, _NameTypeFormatter));
+        _Names.Add(name);
       }
 
       if (person.MainPhoto is not null)
@@ -136,10 +143,15 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   }
 
   public ICommand DialogCommand => _DialogCommand;
+
   public ICollection<PersonDataItem> Photos => _Photos;
+
   public ICollection<NameInfoItem> Names => _Names;
+
   public ICollection<RelativeMemberInfoItem> Relatives => _Relatives;
+
   public ICollection<BiologicalSexItem> BiologicalSexes => _BiologicalSexes;
+
   public PersonDataItem? Biography => _Biography;
 
   public Date? BirthDate
@@ -236,7 +248,10 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
     if (name is not null)
     {
-      _Names.Add(new NameInfoItem(name, _NameTypeFormatter));
+      var lastNameWithTheSameType = _Names.LastOrDefault(item => item?.Info.Type == name.Type, null);
+      var index = lastNameWithTheSameType is null ? -1 : _Names.IndexOf(lastNameWithTheSameType);
+      var item = new NameInfoItem(name, _NameTypeFormatter);
+      _Names.Insert(index + 1, item);
       IsModified = true;
     }
   }
@@ -346,17 +361,17 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         .Select(person =>
         {
           var relativeInfo = new RelativeInfo(
-            person.Info, 
-            dialog.RelType.Info, 
-            dialog.RelationshipDate, 
+            person.Info,
+            dialog.RelType.Info,
+            dialog.RelationshipDate,
             true);
           return relativeInfo;
         })
         .Select(relativeInfo => new RelativeMemberInfoItem(
-          _BirthDate.GetValueOrDefault(), 
-          relativeInfo, 
-          _DateFormatter, 
-          _RelationshipTypeFormatter, 
+          _BirthDate.GetValueOrDefault(),
+          relativeInfo,
+          _DateFormatter,
+          _RelationshipTypeFormatter,
           _NameFormatter));
       foreach (var relative in relatives)
       {
