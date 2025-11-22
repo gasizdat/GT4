@@ -5,7 +5,7 @@ namespace GT4.UI.Formatters;
 
 public class RelationshipTypeFormatter : IRelationshipTypeFormatter
 {
-  public string GetRelationshipTypeName(RelationshipType type, BiologicalSex? biologicalSex = null)
+  public string ToString(RelationshipType type, BiologicalSex? biologicalSex = null)
   {
     var ret = biologicalSex switch
     {

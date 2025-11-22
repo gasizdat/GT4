@@ -4,5 +4,5 @@ namespace GT4.UI.Formatters;
 
 public interface IRelationshipTypeFormatter
 {
-  string GetRelationshipTypeName(RelationshipType type, BiologicalSex? biologicalSex);
+  string ToString(RelationshipType type, BiologicalSex? biologicalSex);
 }

@@ -35,6 +35,6 @@ public class RelativeMemberInfoItem : PersonInfoItem
   public bool ShowDate => _RelationshipDate.HasValue;
   public string Date => _DateFormatter.ToString(_RelationshipDate);
   public string RelationTypeName =>
-    _RelationshipTypeFormatter.GetRelationshipTypeName(_RelativeInfo.Type, _RelativeInfo.BiologicalSex);
+    _RelationshipTypeFormatter.ToString(_RelativeInfo.Type, _RelativeInfo.BiologicalSex);
   public RelativeInfo RelativeInfo => _RelativeInfo;
 }

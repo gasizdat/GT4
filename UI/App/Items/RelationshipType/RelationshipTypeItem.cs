@@ -9,7 +9,7 @@ public class RelationshipTypeItem : CollectionItemBase<RelationshipType>
   public RelationshipTypeItem(RelationshipType type, IRelationshipTypeFormatter relationshipTypeFormatter)
     : base(type, string.Empty)
   {
-    _Name = relationshipTypeFormatter.GetRelationshipTypeName(type, null);
+    _Name = relationshipTypeFormatter.ToString(type, null);
   }
 
   public string Name => _Name;
