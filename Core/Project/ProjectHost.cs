@@ -43,23 +43,34 @@ public class ProjectHost : IAsyncDisposable, IDisposable
     _FileSystem.RemoveFile(_Cache);
   }
 
-  public ValueTask DisposeAsync()
+  public async ValueTask DisposeAsync()
   {
     ProjectDocument project;
     lock (this)
     {
       if (_Project is null || _Project.ProjectRevision == _ProjectRevision)
       {
-        return ValueTask.CompletedTask;
+        return;
       }
       project = _Project;
       _Project = null;
     }
 
-    var ret = project.DisposeAsync();
-    _FileSystem.Copy(_Cache, _Origin);
-    _FileSystem.RemoveFile(_Cache);
+    await project.DisposeAsync();
 
-    return ret;
+    for (var i = 0; i < 5; i++)
+    {
+      try
+      {
+        _FileSystem.Copy(_Cache, _Origin);
+        _FileSystem.RemoveFile(_Cache);
+        break;
+      }
+      catch
+      {
+        var backoffInterval = TimeSpan.FromMilliseconds(100 + 200 * i);
+        await Task.Delay(backoffInterval);
+      }
+    }
   }
 }
