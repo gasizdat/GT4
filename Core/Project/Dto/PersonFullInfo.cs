@@ -53,4 +53,16 @@ public record class PersonFullInfo(
   )
   {
   }
+
+  public static readonly PersonFullInfo Empty = new PersonFullInfo(
+    Id: TableBase.NonCommitedId,
+    BirthDate: Date.Now,
+    DeathDate: null,
+    BiologicalSex: default,
+    Names: [],
+    MainPhoto: null,
+    AdditionalPhotos: [],
+    RelativeInfos: [],
+    Biography: null
+  );
 }

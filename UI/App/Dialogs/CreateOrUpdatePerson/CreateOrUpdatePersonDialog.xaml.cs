@@ -158,14 +158,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   {
     get
     {
-      var dummyPersonInfo = new PersonInfo(
-        TableBase.NonCommitedId,
-        default,
-        default,
-        default,
-        _Names.Select(item => item.Info).ToArray(),
-        default);
-
+      var dummyPersonInfo = PersonFullInfo.Empty with { Names = _Names.Select(item => item.Info).ToArray() };
       return _NameFormatter.ToString(dummyPersonInfo, NameFormat.FullPersonName);
     }
   }
@@ -326,7 +319,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     else
     {
       var result = await FilePicker.Default.PickAsync(pickOptions);
-      results = result is null ? null : [ result ];
+      results = result is null ? null : [result];
     }
 
     if (results is null)

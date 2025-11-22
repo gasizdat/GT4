@@ -12,19 +12,15 @@ public class FamilyMemberInfoItem : PersonInfoItem
   private readonly IDateSpanFormatter _DateSpanFormatter;
 
   protected FamilyMemberInfoItem(string itemName, IServiceProvider services)
-    : this(personInfo: new PersonInfo(
-        person: new Person(
-          Id: TableBase.NonCommitedId,
-          BirthDate: default,
-          DeathDate: default,
-          BiologicalSex: default),
-        names:[ new Name(
+    : this(personInfo: PersonFullInfo.Empty with 
+    { 
+      Names = [new Name(
           Id: TableBase.NonCommitedId,
           Value: itemName,
           Type: NameType.AdditionalName,
-          ParentId: default) ],
-        mainPhoto: default),
-      services: services)
+          ParentId: default)] 
+    },
+    services: services)
   {
   }
 
