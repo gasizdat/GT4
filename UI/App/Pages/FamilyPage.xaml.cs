@@ -105,7 +105,7 @@ public partial class FamilyPage : ContentPage
         await OnCreatePerson();
         break;
       case FamilyMemberInfoItem familyMember:
-        await OnEditPerson(familyMember);
+        await OnOpenPerson(familyMember);
         break;
     }
   }
@@ -224,45 +224,9 @@ public partial class FamilyPage : ContentPage
     }
   }
 
-  private async Task OnEditPerson(FamilyMemberInfoItem familyMember)
+  private async Task OnOpenPerson(FamilyMemberInfoItem familyMember)
   {
-    using var readToken = _CancellationTokenProvider.CreateDbCancellationToken();
-    var familyMemberFullInfo = await _CurrentProjectProvider
-      .Project
-      .PersonManager
-      .GetPersonFullInfoAsync(familyMember.Info, readToken);
-
-    var dialog = new CreateOrUpdatePersonDialog(familyMemberFullInfo, _Services);
-    await Navigation.PushModalAsync(dialog);
-    var info = await dialog.Info;
-    await Navigation.PopModalAsync();
-
-    try
-    {
-      if (info is null || _FamilyName is null)
-      {
-        return;
-      }
-
-      using var updateToken = _CancellationTokenProvider.CreateDbCancellationToken();
-      var person = _CurrentProjectProvider
-        .Project
-        .FamilyManager
-        .SetUpPersonFamily(info, _FamilyName);
-
-      await _CurrentProjectProvider
-        .Project
-        .PersonManager
-        .UpdatePersonAsync(person, updateToken);
-    }
-    catch (Exception ex)
-    {
-      await this.ShowError(ex);
-    }
-    finally
-    {
-      OnPropertyChanged(nameof(Members));
-    }
+    await Shell.Current.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { { "PersonInfo", familyMember.Info } });
   }
 
   protected override void OnSizeAllocated(double width, double height)

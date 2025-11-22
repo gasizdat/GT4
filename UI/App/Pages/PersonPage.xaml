@@ -8,22 +8,74 @@
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root">
 
+  <ContentPage.Resources>
+    <ResourceDictionary>
+
+      <OnIdiom
+          x:Key="PhotoHeight"
+          x:TypeArguments="x:Double"
+          Desktop="500"
+          Phone="250"
+          Tablet="400" />
+
+      <OnIdiom
+          x:Key="PhotoWidth"
+          x:TypeArguments="x:Double"
+          Desktop="500"
+          Phone="250"
+          Tablet="400" />
+
+      <Style x:Key="PhotoStyle" TargetType="Image">
+        <Setter Property="Aspect" Value="AspectFit" />
+        <Setter Property="HeightRequest" Value="{StaticResource PhotoHeight}" />
+        <Setter Property="WidthRequest" Value="{StaticResource PhotoWidth}" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+        <Setter Property="VerticalOptions" Value="Center" />
+      </Style>
+
+    </ResourceDictionary>
+  </ContentPage.Resources>
+
+  <ContentPage.ToolbarItems>
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="RemovePerson"
+        Order="Secondary"
+        Text="{Binding RemovePersonToolbarItemName, Source={x:Reference Root}}" />
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="EditPerson"
+        Order="Secondary"
+        Text="{Binding EditPersonToolbarItemName, Source={x:Reference Root}}" />
+  </ContentPage.ToolbarItems>
+
   <components:PageLayout>
     <components:PageLayout.Header>
-      <Label
-        Style="{StaticResource PageTitle}"
-        Text="{x:Static resources:UIStrings.WndTitleCreateOrUpdatePersonDialog}" />
+      <VerticalStackLayout>
+        <Grid
+            ColumnDefinitions="Auto, *"
+            RowDefinitions="Auto, Auto, Auto, Auto, *">
+
+          <Image
+              Grid.Row="0"
+              Grid.RowSpan="4"
+              Grid.Column="0"
+              Source="{Binding Photo, Source={x:Reference Root}}"
+              Style="{StaticResource PhotoStyle}" />
+
+          <Label
+              Grid.Row="0"
+              Grid.RowSpan="3"
+              Grid.Column="1"
+              Style="{StaticResource PageTitle}"
+              Text="{Binding ShortName, Source={x:Reference Root}}" />
+
+        </Grid>
+      </VerticalStackLayout>
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>
-      <ScrollView>
-        <VerticalStackLayout>
-          <Grid
-            ColumnDefinitions="0"> 
-            
-          </Grid>
-        </VerticalStackLayout>
-      </ScrollView>
+      <ScrollView />
     </components:PageLayout.Body>
 
   </components:PageLayout>
