@@ -1,4 +1,5 @@
 ﻿using GT4.Core.Utils;
+using System.Diagnostics.CodeAnalysis;
 
 namespace GT4.Core.Project.Dto;
 
@@ -59,6 +60,9 @@ public record class RelativeInfo(
   {
   }
 
-  public static implicit operator PersonInfo(RelativeInfo relativeInfo) =>
-    new PersonInfo(person: relativeInfo, names: relativeInfo.Names, mainPhoto: relativeInfo.MainPhoto);
+  [return: NotNullIfNotNull(nameof(relativeInfo))]
+  public static implicit operator PersonInfo?(RelativeInfo? relativeInfo) =>
+    relativeInfo is null 
+    ? null
+    : new PersonInfo(person: relativeInfo, names: relativeInfo.Names, mainPhoto: relativeInfo.MainPhoto);
 }
