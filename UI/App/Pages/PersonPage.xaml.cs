@@ -78,7 +78,7 @@ public partial class PersonPage : ContentPage
         }
 
         _PersonFullInfo = (PersonFullInfo)args.Result;
-        RefreshAll();
+        Utils.RefreshView(this);
       };
 
       backgroundWorker.RunWorkerAsync();
@@ -93,6 +93,9 @@ public partial class PersonPage : ContentPage
         break;
       case string name when name == "EditPerson":
         await OnPersonEdit();
+        break;
+      case string name when name == "Refresh":
+        Utils.RefreshView(this);
         break;
     }
   }
@@ -118,24 +121,11 @@ public partial class PersonPage : ContentPage
         .UpdatePersonAsync(info, token);
 
       _PersonFullInfo = info;
-      RefreshAll();
+      Utils.RefreshView(this);
     }
     catch (Exception ex)
     {
       await this.ShowError(ex);
-    }
-  }
-
-  private void RefreshAll()
-  {
-    var pageType = this.GetType();
-    var propertyNames = pageType
-      .GetProperties()
-      .Where(p => p.GetGetMethod()?.IsPublic == true && p.GetGetMethod(false)?.DeclaringType == pageType)
-      .Select(p => p.Name);
-    foreach (var propertyName in propertyNames)
-    {
-      OnPropertyChanged(propertyName);
     }
   }
 

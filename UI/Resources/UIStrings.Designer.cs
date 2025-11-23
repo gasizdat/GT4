@@ -611,6 +611,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ⟳ Refresh.
+        /// </summary>
+        public static string MenuItemNameRefresh {
+            get {
+                return ResourceManager.GetString("MenuItemNameRefresh", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to ❌ Remove &apos;{0}&apos;.
         /// </summary>
         public static string MenuItemNameRemove_1 {

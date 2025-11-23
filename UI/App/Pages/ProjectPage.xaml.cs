@@ -48,6 +48,10 @@ public partial class ProjectPage : ContentPage
         case string name when name == "EditProject":
           await OnEditProject();
           break;
+
+        case string name when name == "Refresh":
+          Utils.RefreshView(this);
+          break;
       }
     }
     catch (Exception ex)

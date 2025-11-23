@@ -13,6 +13,7 @@ public partial class ProjectListPage : ContentPage
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IComparer<ProjectItem> _ProjectItemsComparer;
   private readonly ICommand _CreateProjectCommand;
+  private readonly ICommand _MenuItemCommand;
   private readonly IProjectList _ProjectList;
   private readonly ObservableCollection<ProjectItem> _Projects = new();
 
@@ -32,12 +33,18 @@ public partial class ProjectListPage : ContentPage
     }
   }
 
+  private void OnMenuItemCommand(object obj)
+  {
+    Utils.RefreshView(this);
+  }
+
   protected ProjectListPage(IServiceProvider services)
   {
     _CancellationTokenProvider = services.GetRequiredService<ICancellationTokenProvider>();
     _CurrentProjectProvider = services.GetRequiredService<ICurrentProjectProvider>();
     _ProjectItemsComparer = services.GetRequiredService<IComparer<ProjectItem>>();
     _CreateProjectCommand = new Command(OnCreateProject);
+    _MenuItemCommand = new Command(OnMenuItemCommand);
     _ProjectList = services.GetRequiredService<IProjectList>();
 
     InitializeComponent();
@@ -51,6 +58,8 @@ public partial class ProjectListPage : ContentPage
   public ICollection<ProjectItem> Projects => _Projects;
 
   public ICommand CreateProjectCommand => _CreateProjectCommand;
+
+  public ICommand MenuItemCommand => _MenuItemCommand;
 
   public async void OnProjectSelected(object sender, SelectionChangedEventArgs e)
   {

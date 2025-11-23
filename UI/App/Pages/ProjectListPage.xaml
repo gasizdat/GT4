@@ -9,6 +9,14 @@
     x:Name="Root"
     Title="{x:Static resources:UIStrings.WndTitleProjectPage}">
 
+  <ContentPage.ToolbarItems>
+    <ToolbarItem
+        Command="{Binding MenuItemCommand, Source={x:Reference Root}}"
+        CommandParameter="Refresh"
+        Order="Secondary"
+        Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
+  </ContentPage.ToolbarItems>
+  
   <components:PageLayout>
 
     <components:PageLayout.Header>

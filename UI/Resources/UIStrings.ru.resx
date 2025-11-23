@@ -445,4 +445,7 @@
   <data name="MenuItemNameAddPerson" xml:space="preserve">
     <value>➕ Создать персону</value>
   </data>
+  <data name="MenuItemNameRefresh" xml:space="preserve">
+    <value>⟳ Обновить</value>
+  </data>
 </root>

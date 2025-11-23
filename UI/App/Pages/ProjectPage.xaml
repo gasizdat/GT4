@@ -20,6 +20,11 @@
         CommandParameter="EditProject"
         Order="Secondary"
         Text="{Binding EditProjectToolbarItemName, Source={x:Reference Root}}" />
+    <ToolbarItem
+        Command="{Binding MenuItemCommand, Source={x:Reference Root}}"
+        CommandParameter="Refresh"
+        Order="Secondary"
+        Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
   </ContentPage.ToolbarItems>
 
   <components:PageLayout>

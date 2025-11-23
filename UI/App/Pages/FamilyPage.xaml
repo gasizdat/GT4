@@ -12,17 +12,25 @@
 
   <ContentPage.ToolbarItems>
     <ToolbarItem
-        Command="{Binding DeleteFamilyCommand, Source={x:Reference Root}}"
+        Command="{Binding MenuItemCommand, Source={x:Reference Root}}"
+        CommandParameter="RemoveFamily"
         Order="Secondary"
         Text="{Binding RemoveFamilyToolbarItemName, Source={x:Reference Root}}" />
     <ToolbarItem
-        Command="{Binding EditFamilyCommand, Source={x:Reference Root}}"
+        Command="{Binding MenuItemCommand, Source={x:Reference Root}}"
+        CommandParameter="EditFamily"
         Order="Secondary"
         Text="{Binding EditFamilyToolbarItemName, Source={x:Reference Root}}" />
     <ToolbarItem
-        Command="{Binding CreatePersonCommand, Source={x:Reference Root}}"
+        Command="{Binding MenuItemCommand, Source={x:Reference Root}}"
+        CommandParameter="CreatePerson"
         Order="Secondary"
         Text="{x:Static resources:UIStrings.MenuItemNameAddPerson}" />
+    <ToolbarItem
+        Command="{Binding MenuItemCommand, Source={x:Reference Root}}"
+        CommandParameter="Refresh"
+        Order="Secondary"
+        Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
   </ContentPage.ToolbarItems>
 
   <components:PageLayout>

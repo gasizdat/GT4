@@ -28,9 +28,7 @@ public partial class FamilyPage : ContentPage
     _NameFormatrer = _Services.GetRequiredService<INameFormatter>();
 
     MemberItemTappedCommand = new Command<PersonInfoItem>(OnOpenPerson);
-    DeleteFamilyCommand = new Command<object?>(OnDeleteFmily);
-    EditFamilyCommand = new Command<object?>(OnEditFamily);
-    CreatePersonCommand = new Command<object?>(OnCreatePerson);
+    MenuItemCommand = new Command<object?>(OnMenuItemCommand);
 
     InitializeComponent();
   }
@@ -57,11 +55,7 @@ public partial class FamilyPage : ContentPage
 
   public ICommand MemberItemTappedCommand { get; init; }
 
-  public ICommand DeleteFamilyCommand { get; init; }
-
-  public ICommand EditFamilyCommand { get; init; }
-
-  public ICommand CreatePersonCommand { get; init; }
+  public ICommand MenuItemCommand { get; init; }
 
   public ICollection<PersonInfoItem> Persons
   {
@@ -100,7 +94,7 @@ public partial class FamilyPage : ContentPage
   public string EditFamilyToolbarItemName =>
     string.Format(UIStrings.MenuItemNameEdit_1, _FamilyName?.Value ?? string.Empty);
 
-  private async void OnDeleteFmily(object? _)
+  private async Task OnDeleteFmily()
   {
     var canDelete = _FamilyName is not null &&
        await this.ShowConfirmation(string.Format(UIStrings.AlertTextDeleteConfirmationText_1, _FamilyName.Value));
@@ -110,25 +104,16 @@ public partial class FamilyPage : ContentPage
       return;
     }
 
-    try
-    {
-      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-      await _CurrentProjectProvider
-        .Project
-        .FamilyManager
-        .RemoveFamilyAsync(_FamilyName!, token);
-    }
-    catch (Exception ex)
-    {
-      await this.ShowError(ex);
-    }
-    finally
-    {
-      await Shell.Current.GoToAsync("..", true);
-    }
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    await _CurrentProjectProvider
+      .Project
+      .FamilyManager
+      .RemoveFamilyAsync(_FamilyName!, token);
+
+    await Shell.Current.GoToAsync("..", true);
   }
 
-  private async void OnEditFamily(object? _)
+  private async Task OnEditFamily()
   {
     Name[]? names;
     using (var token = _CancellationTokenProvider.CreateDbCancellationToken())
@@ -153,32 +138,27 @@ public partial class FamilyPage : ContentPage
     var info = await dialog.Info;
     await Navigation.PopModalAsync();
 
-    try
+    if (info is null)
     {
-      if (info is null)
-      {
-        return;
-      }
+      return;
+    }
 
-      familyName = familyName with { Value = info.Name };
-      maleLastName = maleLastName is null ? null : maleLastName with { Value = info.MaleName };
-      femaleLastName = femaleLastName is null ? null : femaleLastName with { Value = info.FemaleName };
+    familyName = familyName with { Value = info.Name };
+    maleLastName = maleLastName is null ? null : maleLastName with { Value = info.MaleName };
+    femaleLastName = femaleLastName is null ? null : femaleLastName with { Value = info.FemaleName };
 
-      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    using (var token = _CancellationTokenProvider.CreateDbCancellationToken())
+    {
       await _CurrentProjectProvider
         .Project
         .FamilyManager
         .UpdateFamilyAsync(familyName, maleLastName, femaleLastName, token);
+    }
 
-      FamilyName = familyName;
-    }
-    catch (Exception ex)
-    {
-      await this.ShowError(ex);
-    }
+    FamilyName = familyName;
   }
 
-  private async void OnCreatePerson(object? _)
+  private async Task OnCreatePerson()
   {
     var dialog = new CreateOrUpdatePersonDialog(null, _Services);
 
@@ -186,37 +166,57 @@ public partial class FamilyPage : ContentPage
     var info = await dialog.Info;
     await Navigation.PopModalAsync();
 
-    try
+    if (info is null || _FamilyName is null)
     {
-      if (info is null || _FamilyName is null)
-      {
-        return;
-      }
+      return;
+    }
 
-      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-      var person = _CurrentProjectProvider
-        .Project
-        .FamilyManager
-        .SetUpPersonFamily(info, _FamilyName);
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    var person = _CurrentProjectProvider
+      .Project
+      .FamilyManager
+      .SetUpPersonFamily(info, _FamilyName);
 
-      await _CurrentProjectProvider
-        .Project
-        .PersonManager
-        .AddPersonAsync(person, token);
-    }
-    catch (Exception ex)
-    {
-      await this.ShowError(ex);
-    }
-    finally
-    {
-      OnPropertyChanged(nameof(Persons));
-    }
+    await _CurrentProjectProvider
+      .Project
+      .PersonManager
+      .AddPersonAsync(person, token);
+
+    OnPropertyChanged(nameof(Persons));
   }
 
   private async void OnOpenPerson(PersonInfoItem familyMember)
   {
     await Shell.Current.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { { "PersonInfo", familyMember.Info } });
+  }
+
+  private async void OnMenuItemCommand(object? parameter)
+  {
+    try
+    {
+      switch (parameter)
+      {
+        case string name when name == "RemoveFamily":
+          await OnDeleteFmily();
+          break;
+
+        case string name when name == "EditFamily":
+          await OnEditFamily();
+          break;
+
+        case string name when name == "CreatePerson":
+          await OnCreatePerson();
+          break;
+
+        case string name when name == "Refresh":
+          Utils.RefreshView(this);
+          break;
+      }
+    }
+    catch (Exception ex)
+    {
+      await this.ShowError(ex);
+    }
   }
 
   protected override void OnSizeAllocated(double width, double height)

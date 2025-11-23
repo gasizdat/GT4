@@ -445,4 +445,7 @@ genealogy tree and enjoy!</value>
   <data name="MenuItemNameAddPerson" xml:space="preserve">
     <value>➕ Create a Person</value>
   </data>
+  <data name="MenuItemNameRefresh" xml:space="preserve">
+    <value>⟳ Refresh</value>
+  </data>
 </root>
