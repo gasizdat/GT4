@@ -4,6 +4,8 @@ namespace GT4.Core.Project;
 
 public class PersonManager : TableBase
 {
+  private static readonly ElementIdComparer<RelativeInfo> _RelativeInfoComparer = new();
+
   public PersonManager(ProjectDocument document)
     : base(document: document)
   {
@@ -16,7 +18,7 @@ public class PersonManager : TableBase
       ? Document.PersonData.GetPersonDataSetAsync(person, DataCategory.PersonMainPhoto, token)
       : Task.FromResult(Array.Empty<Data>());
     await Task.WhenAll(names, mainPhoto);
-    
+
     var ret = new PersonInfo(person, names.Result, mainPhoto.Result.FirstOrDefault());
     return ret;
   }
@@ -148,6 +150,167 @@ public class PersonManager : TableBase
       Document.Relatives.UpdateRelativesAsync(personFullInfo, personFullInfo.RelativeInfos, token));
 
     transaction.Commit();
+  }
+
+  public async Task<Siblings> GetSiblings(PersonFullInfo info, CancellationToken token)
+  {
+    var tasks = info
+      .RelativeInfos
+      .Where(r => r.Type == RelationshipType.Parent || r.Type == RelationshipType.AdoptiveParent)
+      .Select(r => GetPersonFullInfoAsync(r, token));
+
+    var parents = await Task.WhenAll(tasks);
+
+    bool IsSibling(RelativeInfo relativeInfo)
+    {
+      var ret = relativeInfo switch
+      {
+        _ when relativeInfo.Id == info.Id => false,
+        _ when relativeInfo.Type == RelationshipType.Child => true,
+        _ when relativeInfo.Type == RelationshipType.AdoptiveChild => true,
+        _ => false
+      };
+
+      return ret;
+    }
+
+    return new SiblingsInfo
+    (
+      person: info,
+      relatives: parents.ToDictionary(p => p.Id, p => p.RelativeInfos.Where(IsSibling).ToArray())
+    );
+  }
+
+  public static RelativeInfo? Mother(PersonFullInfo info) =>
+    info
+    .RelativeInfos
+    .SingleOrDefault(r => r.Type == RelationshipType.Parent && r.BiologicalSex == BiologicalSex.Female);
+
+  public static RelativeInfo? Father(PersonFullInfo info) =>
+    info
+    .RelativeInfos
+    .SingleOrDefault(r => r.Type == RelationshipType.Parent && r.BiologicalSex == BiologicalSex.Male);
+
+  public static RelativeInfo[] Sons(PersonFullInfo info) =>
+    info
+    .RelativeInfos
+    .Where(r => r.Type == RelationshipType.Child && r.BiologicalSex == BiologicalSex.Male)
+    .ToArray();
+
+  public static RelativeInfo[] Daughters(PersonFullInfo info) =>
+    info
+    .RelativeInfos
+    .Where(r => r.Type == RelationshipType.Child && r.BiologicalSex == BiologicalSex.Female)
+    .ToArray();
+
+  public static RelativeInfo[] AdoptiveFathers(PersonFullInfo info) =>
+    info
+    .RelativeInfos
+    .Where(r => r.Type == RelationshipType.AdoptiveParent && r.BiologicalSex == BiologicalSex.Male)
+    .ToArray();
+
+  public static RelativeInfo[] AdoptiveMothers(PersonFullInfo info) =>
+    info
+    .RelativeInfos
+    .Where(r => r.Type == RelationshipType.AdoptiveParent && r.BiologicalSex == BiologicalSex.Female)
+    .ToArray();
+
+  public static RelativeInfo[] AdoptiveSons(PersonFullInfo info) =>
+    info
+    .RelativeInfos
+    .Where(r => r.Type == RelationshipType.AdoptiveChild && r.BiologicalSex == BiologicalSex.Male)
+    .ToArray();
+
+  public static RelativeInfo[] AdoptiveDaughters(PersonFullInfo info) =>
+    info
+    .RelativeInfos
+    .Where(r => r.Type == RelationshipType.AdoptiveChild && r.BiologicalSex == BiologicalSex.Female)
+    .ToArray();
+
+  public static RelativeInfo[] NativeSiblings(Siblings siblings, BiologicalSex? biologicalSex)
+  {
+    var info = (SiblingsInfo)siblings;
+    var mother = Mother(info.person);
+    var father = Father(info.person);
+    if (mother is null || father is null)
+    {
+      return [];
+    }
+
+    var siblingsByFather = info.relatives[father.Id];
+    var siblingsByMother = info.relatives[mother.Id];
+    var ret = siblingsByFather
+      .Intersect(siblingsByMother, _RelativeInfoComparer)
+      .Where(r => biologicalSex is null || r.BiologicalSex == biologicalSex)
+      .ToArray();
+
+    return ret;
+  }
+
+  public static RelativeInfo[] SiblingsByFather(Siblings siblings, BiologicalSex? biologicalSex)
+  {
+    var info = (SiblingsInfo)siblings;
+    var father = Father(info.person);
+    var mother = Mother(info.person);
+    if (father is null)
+    {
+      return [];
+    }
+
+    var siblingsByFather = info.relatives[father.Id];
+    if (mother is null)
+    {
+      return siblingsByFather.ToArray();
+    }
+
+    var siblingsByMother = info.relatives[mother.Id];
+    var ret = siblingsByFather
+      .Except(siblingsByMother, _RelativeInfoComparer)
+      .Where(r => biologicalSex is null || r.BiologicalSex == biologicalSex)
+      .ToArray();
+
+    return ret;
+  }
+
+  public static RelativeInfo[] SiblingsByMother(Siblings siblings, BiologicalSex? biologicalSex)
+  {
+    var info = (SiblingsInfo)siblings;
+    var father = Father(info.person);
+    var mother = Mother(info.person);
+    if (mother is null)
+    {
+      return [];
+    }
+
+    var siblingsByMother = info.relatives[mother.Id];
+    if (father is null)
+    {
+      return siblingsByMother.ToArray();
+    }
+
+    var siblingsByFather = info.relatives[father.Id];
+    var ret = siblingsByMother
+      .Except(siblingsByFather, _RelativeInfoComparer)
+      .Where(r => biologicalSex is null || r.BiologicalSex == biologicalSex)
+      .ToArray();
+
+    return ret;
+  }
+
+  public static RelativeInfo[] AdoptiveSiblings(Siblings siblings, BiologicalSex? biologicalSex)
+  {
+    var info = (SiblingsInfo)siblings;
+    var mother = Mother(info.person);
+    var father = Father(info.person);
+
+    var ret = info
+      .relatives
+      .Where(i => i.Key != mother?.Id && i.Key != father?.Id)
+      .SelectMany(i => i.Value)
+      .Where(r => biologicalSex is null || r.BiologicalSex == biologicalSex)
+      .ToArray();
+
+    return ret;
   }
 
   public override Task CreateAsync(CancellationToken token)
