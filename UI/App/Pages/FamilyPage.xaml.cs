@@ -2,8 +2,10 @@ using GT4.Core.Project;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Dialogs;
+using GT4.UI.Formatters;
 using GT4.UI.Items;
 using GT4.UI.Resources;
+using Microsoft.VisualBasic;
 using System.Windows.Input;
 
 namespace GT4.UI.Pages;
@@ -14,6 +16,7 @@ public partial class FamilyPage : ContentPage
   private readonly IServiceProvider _Services;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
+  private readonly INameFormatter _NameFormatrer;
   private Name? _FamilyName = null;
   private int _PersonItemMinimalWidth;
 
@@ -22,10 +25,12 @@ public partial class FamilyPage : ContentPage
     _Services = serviceProvider;
     _CancellationTokenProvider = _Services.GetRequiredService<ICancellationTokenProvider>();
     _CurrentProjectProvider = _Services.GetRequiredService<ICurrentProjectProvider>();
+    _NameFormatrer = _Services.GetRequiredService<INameFormatter>();
 
-    MemberItemTappedCommand = new Command<FamilyMemberInfoItem>(OnMemberSelected);
+    MemberItemTappedCommand = new Command<PersonInfoItem>(OnOpenPerson);
     DeleteFamilyCommand = new Command<object?>(OnDeleteFmily);
     EditFamilyCommand = new Command<object?>(OnEditFamily);
+    CreatePersonCommand = new Command<object?>(OnCreatePerson);
 
     InitializeComponent();
   }
@@ -41,7 +46,7 @@ public partial class FamilyPage : ContentPage
     set
     {
       _FamilyName = value;
-      OnPropertyChanged(nameof(Members));
+      OnPropertyChanged(nameof(Persons));
       OnPropertyChanged(nameof(FamilyName));
       OnPropertyChanged(nameof(RemoveFamilyToolbarItemName));
       OnPropertyChanged(nameof(EditFamilyToolbarItemName));
@@ -56,7 +61,9 @@ public partial class FamilyPage : ContentPage
 
   public ICommand EditFamilyCommand { get; init; }
 
-  public ICollection<FamilyMemberInfoItem> Members
+  public ICommand CreatePersonCommand { get; init; }
+
+  public ICollection<PersonInfoItem> Persons
   {
     get
     {
@@ -73,17 +80,16 @@ public partial class FamilyPage : ContentPage
           .PersonManager
           .GetPersonInfosByNameAsync(name: FamilyName, selectMainPhoto: true, token)
           .Result
-          .Select(person => new FamilyMemberInfoItem(person, _Services))
-          .OrderBy(item => item, _Services.GetRequiredService<IComparer<FamilyMemberInfoItem>>())
+          .Select(person => new PersonInfoItem(person, _NameFormatrer))
+          .OrderBy(item => item, _Services.GetRequiredService<IComparer<PersonInfoItem>>())
           .ToList();
-
-        ret.Add(new FamilyMemberInfoItemCreate());
 
         return ret;
       }
       catch (Exception ex)
       {
-        return [new FamilyMemberInfoItemRefresh(ex)];
+        _ = PageAlert.ShowError(ex);
+        return Enumerable.Empty<PersonInfoItem>().ToList();
       }
     }
   }
@@ -94,23 +100,7 @@ public partial class FamilyPage : ContentPage
   public string EditFamilyToolbarItemName =>
     string.Format(UIStrings.MenuItemNameEdit_1, _FamilyName?.Value ?? string.Empty);
 
-  private async void OnMemberSelected(FamilyMemberInfoItem member)
-  {
-    switch (member)
-    {
-      case FamilyMemberInfoItemRefresh:
-        OnPropertyChanged(nameof(Members));
-        break;
-      case FamilyMemberInfoItemCreate:
-        await OnCreatePerson();
-        break;
-      case FamilyMemberInfoItem familyMember:
-        await OnOpenPerson(familyMember);
-        break;
-    }
-  }
-
-  private async void OnDeleteFmily(object? parameter)
+  private async void OnDeleteFmily(object? _)
   {
     var canDelete = _FamilyName is not null &&
        await this.ShowConfirmation(string.Format(UIStrings.AlertTextDeleteConfirmationText_1, _FamilyName.Value));
@@ -138,7 +128,7 @@ public partial class FamilyPage : ContentPage
     }
   }
 
-  private async void OnEditFamily(object? parameter)
+  private async void OnEditFamily(object? _)
   {
     Name[]? names;
     using (var token = _CancellationTokenProvider.CreateDbCancellationToken())
@@ -188,7 +178,7 @@ public partial class FamilyPage : ContentPage
     }
   }
 
-  private async Task OnCreatePerson()
+  private async void OnCreatePerson(object? _)
   {
     var dialog = new CreateOrUpdatePersonDialog(null, _Services);
 
@@ -220,11 +210,11 @@ public partial class FamilyPage : ContentPage
     }
     finally
     {
-      OnPropertyChanged(nameof(Members));
+      OnPropertyChanged(nameof(Persons));
     }
   }
 
-  private async Task OnOpenPerson(FamilyMemberInfoItem familyMember)
+  private async void OnOpenPerson(PersonInfoItem familyMember)
   {
     await Shell.Current.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { { "PersonInfo", familyMember.Info } });
   }

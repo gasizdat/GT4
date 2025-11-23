@@ -442,4 +442,7 @@ genealogy tree and enjoy!</value>
   <data name="WndTitleCreateOrUpdateNameDialog_1" xml:space="preserve">
     <value>Create or update {0}</value>
   </data>
+  <data name="MenuItemNameAddPerson" xml:space="preserve">
+    <value>➕ Create a Person</value>
+  </data>
 </root>

@@ -19,6 +19,10 @@
         Command="{Binding EditFamilyCommand, Source={x:Reference Root}}"
         Order="Secondary"
         Text="{Binding EditFamilyToolbarItemName, Source={x:Reference Root}}" />
+    <ToolbarItem
+        Command="{Binding CreatePersonCommand, Source={x:Reference Root}}"
+        Order="Secondary"
+        Text="{x:Static resources:UIStrings.MenuItemNameAddPerson}" />
   </ContentPage.ToolbarItems>
 
   <components:PageLayout>
@@ -41,7 +45,7 @@
           <FlexLayout
               AlignContent="Center"
               AlignItems="Start"
-              BindableLayout.ItemsSource="{Binding Members, Source={x:Reference Root}}"
+              BindableLayout.ItemsSource="{Binding Persons, Source={x:Reference Root}}"
               Direction="Row"
               JustifyContent="SpaceAround"
               Wrap="Wrap">
