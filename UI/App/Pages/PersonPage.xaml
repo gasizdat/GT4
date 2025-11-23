@@ -126,6 +126,7 @@
           <Label
               Grid.Row="6"
               Grid.Column="1"
+              IsVisible="{Binding ShowMother, Source={x:Reference Root}}"
               Style="{StaticResource FieldName}"
               Text="{x:Static resources:UIStrings.RelMother}" />
 
@@ -134,13 +135,13 @@
               Grid.Column="2"
               Grid.ColumnSpan="2"
               DatesLabelStyle="{StaticResource FieldValue}"
-              IsVisible="{Binding ShowMother, Source={x:Reference Root}}"
               NameLabelStyle="{StaticResource FieldName}"
               Person="{Binding Mother, Source={x:Reference Root}}" />
 
           <Label
               Grid.Row="7"
               Grid.Column="1"
+              IsVisible="{Binding ShowFather, Source={x:Reference Root}}"
               Style="{StaticResource FieldName}"
               Text="{x:Static resources:UIStrings.RelFather}" />
 

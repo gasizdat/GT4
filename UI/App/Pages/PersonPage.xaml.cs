@@ -72,7 +72,7 @@ public partial class PersonPage : ContentPage
 
   public bool ShowMother => Mother is not null;
 
-  public PersonInfo? Father => PersonManager.Mother(_PersonFullInfo);
+  public PersonInfo? Father => PersonManager.Father(_PersonFullInfo);
 
   public bool ShowFather => Father is not null;
 
