@@ -7,4 +7,4 @@ public record class Person(
   Date BirthDate,
   Date? DeathDate,
   BiologicalSex BiologicalSex
-);
+) : ElementId(Id);

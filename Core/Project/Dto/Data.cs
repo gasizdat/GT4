@@ -5,4 +5,4 @@
     byte[] Content,
     string? MimeType,
     DataCategory Category
-  );
+  ) : ElementId(Id);
