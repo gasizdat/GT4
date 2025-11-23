@@ -6,7 +6,8 @@
     xmlns:components="clr-namespace:GT4.UI.Components"
     xmlns:items="clr-namespace:GT4.UI.Items"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
-    x:Name="Root">
+    x:Name="Root"
+    Title="{Binding ShortName, Source={x:Reference Root}}">
 
   <ContentPage.Resources>
     <ResourceDictionary>
@@ -21,9 +22,9 @@
       <OnIdiom
           x:Key="PhotoWidth"
           x:TypeArguments="x:Double"
-          Desktop="500"
-          Phone="250"
-          Tablet="400" />
+          Desktop="375"
+          Phone="187.5"
+          Tablet="300" />
 
       <Style x:Key="PhotoStyle" TargetType="Image">
         <Setter Property="Aspect" Value="AspectFit" />
@@ -58,22 +59,99 @@
     <components:PageLayout.Header>
       <VerticalStackLayout>
         <Grid
-            ColumnDefinitions="Auto, *"
-            RowDefinitions="Auto, Auto, Auto, Auto, *">
+            ColumnDefinitions="Auto, Auto, *"
+            RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, *">
 
           <Image
               Grid.Row="0"
-              Grid.RowSpan="4"
+              Grid.RowSpan="100"
               Grid.Column="0"
+              Margin="{Thickness Right={StaticResource PageContentSpacing}}"
               Source="{Binding Photo, Source={x:Reference Root}}"
               Style="{StaticResource PhotoStyle}" />
 
           <Label
               Grid.Row="0"
-              Grid.RowSpan="3"
               Grid.Column="1"
-              Style="{StaticResource PageTitle}"
-              Text="{Binding ShortName, Source={x:Reference Root}}" />
+              Grid.ColumnSpan="2"
+              Style="{StaticResource GroupTitle}"
+              Text="{Binding CommonName, Source={x:Reference Root}}" />
+
+          <Label
+              Grid.Row="1"
+              Grid.Column="1"
+              Grid.ColumnSpan="100"
+              IsVisible="{Binding ShowFullName, Source={x:Reference Root}}"
+              Style="{StaticResource CardSubtitle}"
+              Text="{Binding FullName, Source={x:Reference Root}}" />
+
+          <Label
+              Grid.Row="2"
+              Grid.Column="1"
+              Style="{StaticResource FieldName}"
+              Text="{x:Static resources:UIStrings.FieldDateOfBirth}" />
+
+          <Label
+              Grid.Row="2"
+              Grid.Column="2"
+              Style="{StaticResource FieldValue}"
+              Text="{Binding BirthDate, Source={x:Reference Root}}" />
+
+          <Label
+              Grid.Row="3"
+              Grid.Column="1"
+              IsVisible="{Binding ShowDeathDate, Source={x:Reference Root}}"
+              Style="{StaticResource FieldName}"
+              Text="{x:Static resources:UIStrings.FieldDateOfDeath}" />
+
+          <Label
+              Grid.Row="3"
+              Grid.Column="2"
+              IsVisible="{Binding ShowDeathDate, Source={x:Reference Root}}"
+              Style="{StaticResource FieldValue}"
+              Text="{Binding DeathDate, Source={x:Reference Root}}" />
+
+          <Label
+              Grid.Row="4"
+              Grid.Column="1"
+              Style="{StaticResource FieldName}"
+              Text="{x:Static resources:UIStrings.FieldAge}" />
+
+          <Label
+              Grid.Row="4"
+              Grid.Column="2"
+              Style="{StaticResource FieldValue}"
+              Text="{Binding Age, Source={x:Reference Root}}" />
+
+          <Label
+              Grid.Row="6"
+              Grid.Column="1"
+              Style="{StaticResource FieldName}"
+              Text="{x:Static resources:UIStrings.RelMother}" />
+
+          <components:PersonInfoView
+              Grid.Row="6"
+              Grid.Column="2"
+              Grid.ColumnSpan="2"
+              DatesLabelStyle="{StaticResource FieldValue}"
+              IsVisible="{Binding ShowMother, Source={x:Reference Root}}"
+              NameLabelStyle="{StaticResource FieldName}"
+              Person="{Binding Mother, Source={x:Reference Root}}" />
+
+          <Label
+              Grid.Row="7"
+              Grid.Column="1"
+              Style="{StaticResource FieldName}"
+              Text="{x:Static resources:UIStrings.RelFather}" />
+
+          <components:PersonInfoView
+              Grid.Row="7"
+              Grid.Column="2"
+              Grid.ColumnSpan="2"
+              DatesLabelStyle="{StaticResource FieldValue}"
+              IsVisible="{Binding ShowFather, Source={x:Reference Root}}"
+              NameLabelStyle="{StaticResource FieldName}"
+              Person="{Binding Father, Source={x:Reference Root}}" />
 
         </Grid>
       </VerticalStackLayout>

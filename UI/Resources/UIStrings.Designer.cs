@@ -332,11 +332,11 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Age: {0}.
+        ///   Looks up a localized string similar to Age:.
         /// </summary>
-        public static string FieldAge_1 {
+        public static string FieldAge {
             get {
-                return ResourceManager.GetString("FieldAge_1", resourceCulture);
+                return ResourceManager.GetString("FieldAge", resourceCulture);
             }
         }
         

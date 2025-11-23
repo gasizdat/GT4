@@ -199,8 +199,8 @@
   <data name="FieldDateOfDeath" xml:space="preserve">
     <value>Дата смерти:</value>
   </data>
-  <data name="FieldAge_1" xml:space="preserve">
-    <value>Возраст: {0}</value>
+  <data name="FieldAge" xml:space="preserve">
+    <value>Возраст:</value>
   </data>
   <data name="FieldFamilyNameEntry" xml:space="preserve">
     <value>Название рода</value>

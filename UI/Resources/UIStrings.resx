@@ -199,8 +199,8 @@ genealogy tree and enjoy!</value>
   <data name="FieldDateOfDeath" xml:space="preserve">
     <value>Date of death:</value>
   </data>
-  <data name="FieldAge_1" xml:space="preserve">
-    <value>Age: {0}</value>
+  <data name="FieldAge" xml:space="preserve">
+    <value>Age:</value>
   </data>
   <data name="FieldFamilyNameEntry" xml:space="preserve">
     <value>Family Name</value>

@@ -15,6 +15,8 @@ public partial class PersonPage : ContentPage
   private readonly IServiceProvider _ServiceProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
+  private readonly IDateSpanFormatter _DateSpanFormmater;
+  private readonly IDateFormatter _DateFormmater;
   private readonly INameFormatter _NameFormmater;
   private readonly ICommand _PageCommand;
   private PersonFullInfo _PersonFullInfo = PersonFullInfo.Empty;
@@ -24,6 +26,8 @@ public partial class PersonPage : ContentPage
     _ServiceProvider = serviceProvider;
     _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
     _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
+    _DateSpanFormmater = _ServiceProvider.GetRequiredService<IDateSpanFormatter>();
+    _DateFormmater = _ServiceProvider.GetRequiredService<IDateFormatter>();
     _NameFormmater = _ServiceProvider.GetRequiredService<INameFormatter>();
     _PageCommand = new Command(OnPageCommand);
 
@@ -41,11 +45,36 @@ public partial class PersonPage : ContentPage
 
   public string RemovePersonToolbarItemName => string.Format(UIStrings.MenuItemNameRemove_1, ShortName);
 
+  public string ShortName => _NameFormmater.ToString(_PersonFullInfo, NameFormat.ShortPersonName);
+
   public string CommonName => _NameFormmater.ToString(_PersonFullInfo, NameFormat.CommonPersonName);
 
   public string FullName => _NameFormmater.ToString(_PersonFullInfo, NameFormat.FullPersonName);
 
-  public string ShortName => _NameFormmater.ToString(_PersonFullInfo, NameFormat.ShortPersonName);
+  public bool ShowFullName => CommonName != FullName;
+
+  public string BirthDate => _DateFormmater.ToString(_PersonFullInfo.BirthDate);
+
+  public string DeathDate => _DateFormmater.ToString(_PersonFullInfo.DeathDate);
+
+  public bool ShowDeathDate => _PersonFullInfo.DeathDate.HasValue;
+
+  public string Age
+  {
+    get
+    {
+      var age = _PersonFullInfo.DeathDate.GetValueOrDefault(Date.Now) - _PersonFullInfo.BirthDate;
+      return _DateSpanFormmater.ToString(age);
+    }
+  }
+
+  public PersonInfo? Mother => PersonManager.Mother(_PersonFullInfo);
+
+  public bool ShowMother => Mother is not null;
+
+  public PersonInfo? Father => PersonManager.Mother(_PersonFullInfo);
+
+  public bool ShowFather => Father is not null;
 
   public ImageSource Photo => _PersonFullInfo?.MainPhoto is null
     ? GetDefaultImage()
@@ -78,6 +107,7 @@ public partial class PersonPage : ContentPage
         }
 
         _PersonFullInfo = (PersonFullInfo)args.Result;
+
         Utils.RefreshView(this);
       };
 

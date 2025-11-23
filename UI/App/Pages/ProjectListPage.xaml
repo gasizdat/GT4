@@ -16,7 +16,7 @@
         Order="Secondary"
         Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
   </ContentPage.ToolbarItems>
-  
+
   <components:PageLayout>
 
     <components:PageLayout.Header>
