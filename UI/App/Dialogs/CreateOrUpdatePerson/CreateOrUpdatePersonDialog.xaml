@@ -314,7 +314,7 @@
                   SelectionMode="Single">
 
                 <CollectionView.ItemTemplate>
-                  <DataTemplate x:DataType="items:RelativeMemberInfoItem">
+                  <DataTemplate x:DataType="items:RelativeInfoItem">
                     <Grid
                         x:Name="PersonRelative"
                         Padding="{StaticResource CollectionItemsVerticalPadding}"

@@ -4,7 +4,7 @@ using GT4.UI.Formatters;
 
 namespace GT4.UI.Items;
 
-public class RelativeMemberInfoItem : PersonInfoItem
+public class RelativeInfoItem : PersonInfoItem
 {
   private readonly IDateFormatter _DateFormatter;
   private readonly IRelationshipTypeFormatter _RelationshipTypeFormatter;
@@ -18,7 +18,7 @@ public class RelativeMemberInfoItem : PersonInfoItem
     _ => _RelativeInfo.Date
   };
 
-  public RelativeMemberInfoItem(
+  public RelativeInfoItem(
     Date personBirthDate,
     RelativeInfo relativeInfo,
     IDateFormatter dateFormatter,

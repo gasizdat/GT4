@@ -25,7 +25,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private readonly string _SaveButtonName;
   private readonly ObservableCollection<PersonDataItem> _Photos = new();
   private readonly ObservableCollection<NameInfoItem> _Names = new();
-  private readonly ObservableCollection<RelativeMemberInfoItem> _Relatives = new();
+  private readonly ObservableCollection<RelativeInfoItem> _Relatives = new();
   private readonly ObservableCollection<BiologicalSexItem> _BiologicalSexes = new();
   private readonly TaskCompletionSource<PersonFullInfo?> _Info = new(null);
   private int? _PersonId;
@@ -114,7 +114,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
       var relativeItems = person
         .RelativeInfos
-        .Select(relativeInfo => new RelativeMemberInfoItem(
+        .Select(relativeInfo => new RelativeInfoItem(
           person.BirthDate,
           relativeInfo,
           _DateFormatter,
@@ -148,7 +148,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   public ICollection<NameInfoItem> Names => _Names;
 
-  public ICollection<RelativeMemberInfoItem> Relatives => _Relatives;
+  public ICollection<RelativeInfoItem> Relatives => _Relatives;
 
   public ICollection<BiologicalSexItem> BiologicalSexes => _BiologicalSexes;
 
@@ -395,7 +395,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
             true);
           return relativeInfo;
         })
-        .Select(relativeInfo => new RelativeMemberInfoItem(
+        .Select(relativeInfo => new RelativeInfoItem(
           _BirthDate.GetValueOrDefault(),
           relativeInfo,
           _DateFormatter,
@@ -409,7 +409,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
   }
 
-  private async Task OnEditRelationshipAsync(RelativeMemberInfoItem relative)
+  private async Task OnEditRelationshipAsync(RelativeInfoItem relative)
   {
     var dialog = new SelectDateDialog(
       date: relative.RelativeInfo.Date,
@@ -423,7 +423,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     {
       var insertIndex = _Relatives.IndexOf(relative);
       _Relatives.Remove(relative);
-      var newRelative = new RelativeMemberInfoItem(
+      var newRelative = new RelativeInfoItem(
         _BirthDate.GetValueOrDefault(),
         relativeInfo: relative.RelativeInfo with { Date = date },
         _DateFormatter,
@@ -476,10 +476,10 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         OnPropertyChanged(nameof(PersonFullName));
         IsModified = true;
         break;
-      case AdornerCommandParameter adorner when adorner.CommandName == "EditRelativeCommand" && adorner.Element is RelativeMemberInfoItem relative:
+      case AdornerCommandParameter adorner when adorner.CommandName == "EditRelativeCommand" && adorner.Element is RelativeInfoItem relative:
         await OnEditRelationshipAsync(relative);
         break;
-      case AdornerCommandParameter adorner when adorner.CommandName == "RemoveRelativeCommand" && adorner.Element is RelativeMemberInfoItem relative:
+      case AdornerCommandParameter adorner when adorner.CommandName == "RemoveRelativeCommand" && adorner.Element is RelativeInfoItem relative:
         _Relatives.Remove(relative);
         IsModified = true;
         break;
