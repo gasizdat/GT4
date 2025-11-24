@@ -181,57 +181,34 @@ public class PersonManager : TableBase
     );
   }
 
-  public static RelativeInfo? Mother(PersonFullInfo info) =>
+  public static RelativeInfo? Parent(PersonFullInfo info, BiologicalSex biologicalSex) =>
     info
     .RelativeInfos
-    .SingleOrDefault(r => r.Type == RelationshipType.Parent && r.BiologicalSex == BiologicalSex.Female);
+    .SingleOrDefault(r => r.Type == RelationshipType.Parent && r.BiologicalSex == biologicalSex);
 
-  public static RelativeInfo? Father(PersonFullInfo info) =>
+  public static RelativeInfo[] Children(PersonFullInfo info, BiologicalSex biologicalSex) =>
     info
     .RelativeInfos
-    .SingleOrDefault(r => r.Type == RelationshipType.Parent && r.BiologicalSex == BiologicalSex.Male);
-
-  public static RelativeInfo[] Sons(PersonFullInfo info) =>
-    info
-    .RelativeInfos
-    .Where(r => r.Type == RelationshipType.Child && r.BiologicalSex == BiologicalSex.Male)
+    .Where(r => r.Type == RelationshipType.Child && r.BiologicalSex == biologicalSex)
     .ToArray();
 
-  public static RelativeInfo[] Daughters(PersonFullInfo info) =>
+  public static RelativeInfo[] AdoptiveParent(PersonFullInfo info, BiologicalSex biologicalSex) =>
     info
     .RelativeInfos
-    .Where(r => r.Type == RelationshipType.Child && r.BiologicalSex == BiologicalSex.Female)
+    .Where(r => r.Type == RelationshipType.AdoptiveParent && r.BiologicalSex == biologicalSex)
     .ToArray();
 
-  public static RelativeInfo[] AdoptiveFathers(PersonFullInfo info) =>
+  public static RelativeInfo[] AdoptiveChildren(PersonFullInfo info, BiologicalSex biologicalSex) =>
     info
     .RelativeInfos
-    .Where(r => r.Type == RelationshipType.AdoptiveParent && r.BiologicalSex == BiologicalSex.Male)
-    .ToArray();
-
-  public static RelativeInfo[] AdoptiveMothers(PersonFullInfo info) =>
-    info
-    .RelativeInfos
-    .Where(r => r.Type == RelationshipType.AdoptiveParent && r.BiologicalSex == BiologicalSex.Female)
-    .ToArray();
-
-  public static RelativeInfo[] AdoptiveSons(PersonFullInfo info) =>
-    info
-    .RelativeInfos
-    .Where(r => r.Type == RelationshipType.AdoptiveChild && r.BiologicalSex == BiologicalSex.Male)
-    .ToArray();
-
-  public static RelativeInfo[] AdoptiveDaughters(PersonFullInfo info) =>
-    info
-    .RelativeInfos
-    .Where(r => r.Type == RelationshipType.AdoptiveChild && r.BiologicalSex == BiologicalSex.Female)
+    .Where(r => r.Type == RelationshipType.AdoptiveChild && r.BiologicalSex == biologicalSex)
     .ToArray();
 
   public static RelativeInfo[] NativeSiblings(Siblings siblings, BiologicalSex? biologicalSex)
   {
     var info = (SiblingsInfo)siblings;
-    var mother = Mother(info.person);
-    var father = Father(info.person);
+    var mother = Parent(info.person, BiologicalSex.Female);
+    var father = Parent(info.person, BiologicalSex.Male);
     if (mother is null || father is null)
     {
       return [];
@@ -250,8 +227,8 @@ public class PersonManager : TableBase
   public static RelativeInfo[] SiblingsByFather(Siblings siblings, BiologicalSex? biologicalSex)
   {
     var info = (SiblingsInfo)siblings;
-    var father = Father(info.person);
-    var mother = Mother(info.person);
+    var mother = Parent(info.person, BiologicalSex.Female);
+    var father = Parent(info.person, BiologicalSex.Male);
     if (father is null)
     {
       return [];
@@ -275,8 +252,8 @@ public class PersonManager : TableBase
   public static RelativeInfo[] SiblingsByMother(Siblings siblings, BiologicalSex? biologicalSex)
   {
     var info = (SiblingsInfo)siblings;
-    var father = Father(info.person);
-    var mother = Mother(info.person);
+    var mother = Parent(info.person, BiologicalSex.Female);
+    var father = Parent(info.person, BiologicalSex.Male);
     if (mother is null)
     {
       return [];
@@ -300,9 +277,8 @@ public class PersonManager : TableBase
   public static RelativeInfo[] AdoptiveSiblings(Siblings siblings, BiologicalSex? biologicalSex)
   {
     var info = (SiblingsInfo)siblings;
-    var mother = Mother(info.person);
-    var father = Father(info.person);
-
+    var mother = Parent(info.person, BiologicalSex.Female);
+    var father = Parent(info.person, BiologicalSex.Male);
     var ret = info
       .relatives
       .Where(i => i.Key != mother?.Id && i.Key != father?.Id)
