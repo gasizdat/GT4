@@ -3,7 +3,10 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Dialogs;
 using GT4.UI.Formatters;
+using GT4.UI.Items;
 using GT4.UI.Resources;
+using System.Collections;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Input;
 
@@ -14,17 +17,20 @@ public partial class PersonPage : ContentPage
 {
   private readonly IServiceProvider _ServiceProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
+  private readonly IRelationshipTypeFormatter _RelationshipTypeFormatter;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IDateSpanFormatter _DateSpanFormmater;
   private readonly IDateFormatter _DateFormmater;
   private readonly INameFormatter _NameFormmater;
   private readonly ICommand _PageCommand;
+  private readonly ObservableCollection<RelativeInfoItem> _Relatives = new();
   private PersonFullInfo _PersonFullInfo = PersonFullInfo.Empty;
 
   public PersonPage(IServiceProvider serviceProvider)
   {
     _ServiceProvider = serviceProvider;
     _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
+    _RelationshipTypeFormatter = _ServiceProvider.GetRequiredService<IRelationshipTypeFormatter>();
     _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
     _DateSpanFormmater = _ServiceProvider.GetRequiredService<IDateSpanFormatter>();
     _DateFormmater = _ServiceProvider.GetRequiredService<IDateFormatter>();
@@ -68,13 +74,7 @@ public partial class PersonPage : ContentPage
     }
   }
 
-  public PersonInfo? Mother => PersonManager.Mother(_PersonFullInfo);
-
-  public bool ShowMother => Mother is not null;
-
-  public PersonInfo? Father => PersonManager.Father(_PersonFullInfo);
-
-  public bool ShowFather => Father is not null;
+  public ICollection Relatives => _Relatives;
 
   public ImageSource Photo => _PersonFullInfo?.MainPhoto is null
     ? GetDefaultImage()
@@ -89,7 +89,13 @@ public partial class PersonPage : ContentPage
       {
         var token = _CancellationTokenProvider.CreateDbCancellationToken();
         var project = _CurrentProjectProvider.Project;
-        args.Result = await project.PersonManager.GetPersonFullInfoAsync(value, token);
+        var person = await project.PersonManager.GetPersonFullInfoAsync(value, token);
+        var siblings = await _CurrentProjectProvider
+          .Project
+          .PersonManager
+          .GetSiblings(person, token);
+
+        args.Result = new Tuple<PersonFullInfo, Siblings>(person, siblings);
       };
       backgroundWorker.RunWorkerCompleted += async (object? _, RunWorkerCompletedEventArgs args) =>
       {
@@ -106,7 +112,42 @@ public partial class PersonPage : ContentPage
           return;
         }
 
-        _PersonFullInfo = (PersonFullInfo)args.Result;
+        var (person, siblings) = (Tuple<PersonFullInfo, Siblings>)args.Result;
+        var mother = PersonManager.Parent(_PersonFullInfo, BiologicalSex.Female);
+        var father = PersonManager.Parent(_PersonFullInfo, BiologicalSex.Male);
+        _PersonFullInfo = person;
+        RelativeInfoItem GetRelativeInfoItem(RelativeInfo relativeInfo) =>
+          new RelativeInfoItem(_PersonFullInfo.BirthDate, relativeInfo, _DateFormmater, _RelationshipTypeFormatter, _NameFormmater);
+        void AddRange(IEnumerable<RelativeInfo> relatives)
+        {
+          foreach (var relative in relatives)
+          {
+            _Relatives.Add(GetRelativeInfoItem(relative));
+          }
+        }
+
+        if (mother is not null)
+        {
+          _Relatives.Add(GetRelativeInfoItem(mother));
+        }
+        if (father is not null)
+        {
+          _Relatives.Add(GetRelativeInfoItem(father));
+        }
+        AddRange(PersonManager.AdoptiveParent(person, BiologicalSex.Female));
+        AddRange(PersonManager.AdoptiveParent(person, BiologicalSex.Male));
+        AddRange(PersonManager.NativeSiblings(siblings, BiologicalSex.Female));
+        AddRange(PersonManager.NativeSiblings(siblings, BiologicalSex.Male));
+        AddRange(PersonManager.SiblingsByFather(siblings, BiologicalSex.Female));
+        AddRange(PersonManager.SiblingsByFather(siblings, BiologicalSex.Male));
+        AddRange(PersonManager.SiblingsByMother(siblings, BiologicalSex.Female));
+        AddRange(PersonManager.SiblingsByMother(siblings, BiologicalSex.Male));
+        AddRange(PersonManager.AdoptiveSiblings(siblings, BiologicalSex.Female));
+        AddRange(PersonManager.AdoptiveSiblings(siblings, BiologicalSex.Male));
+        AddRange(PersonManager.Children(person, BiologicalSex.Female));
+        AddRange(PersonManager.Children(person, BiologicalSex.Male));
+        AddRange(PersonManager.AdoptiveChildren(person, BiologicalSex.Female));
+        AddRange(PersonManager.AdoptiveChildren(person, BiologicalSex.Male));
 
         Utils.RefreshView(this);
       };
