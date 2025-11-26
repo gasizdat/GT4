@@ -113,9 +113,9 @@ public partial class PersonPage : ContentPage
         }
 
         var (person, siblings) = (Tuple<PersonFullInfo, Siblings>)args.Result;
+        _PersonFullInfo = person;
         var mother = PersonManager.Parent(_PersonFullInfo, BiologicalSex.Female);
         var father = PersonManager.Parent(_PersonFullInfo, BiologicalSex.Male);
-        _PersonFullInfo = person;
         RelativeInfoItem GetRelativeInfoItem(RelativeInfo relativeInfo) =>
           new RelativeInfoItem(_PersonFullInfo.BirthDate, relativeInfo, _DateFormmater, _RelationshipTypeFormatter, _NameFormmater);
         void AddRange(IEnumerable<RelativeInfo> relatives)
