@@ -234,19 +234,20 @@ public class PersonManager : TableBase
       return [];
     }
 
+    IEnumerable<RelativeInfo> ret;
     var siblingsByFather = info.relatives[father.Id];
     if (mother is null)
     {
-      return siblingsByFather.ToArray();
+      ret = siblingsByFather;
     }
-
-    var siblingsByMother = info.relatives[mother.Id];
-    var ret = siblingsByFather
-      .Except(siblingsByMother, _RelativeInfoComparer)
+    else
+    {
+      var siblingsByMother = info.relatives[mother.Id];
+      ret = siblingsByFather.Except(siblingsByMother, _RelativeInfoComparer);
+    }
+    return ret
       .Where(r => biologicalSex is null || r.BiologicalSex == biologicalSex)
       .ToArray();
-
-    return ret;
   }
 
   public static RelativeInfo[] SiblingsByMother(Siblings siblings, BiologicalSex? biologicalSex)
@@ -259,19 +260,22 @@ public class PersonManager : TableBase
       return [];
     }
 
+    IEnumerable<RelativeInfo> ret;
     var siblingsByMother = info.relatives[mother.Id];
     if (father is null)
     {
-      return siblingsByMother.ToArray();
+      ret = siblingsByMother;
     }
-
-    var siblingsByFather = info.relatives[father.Id];
-    var ret = siblingsByMother
-      .Except(siblingsByFather, _RelativeInfoComparer)
+    else
+    {
+      var siblingsByFather = info.relatives[father.Id];
+      ret = siblingsByMother
+        .Except(siblingsByFather, _RelativeInfoComparer);
+    }
+      
+    return ret
       .Where(r => biologicalSex is null || r.BiologicalSex == biologicalSex)
       .ToArray();
-
-    return ret;
   }
 
   public static RelativeInfo[] AdoptiveSiblings(Siblings siblings, BiologicalSex? biologicalSex)

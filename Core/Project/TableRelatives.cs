@@ -5,23 +5,44 @@ namespace GT4.Core.Project;
 
 public class TableRelatives : TableBase
 {
-  private static RelationshipType NormalizeRelationshipType(RelationshipType relationshipType, bool forwardLink)
+  private static RelationshipType GetBackwardDirection(RelationshipType relationshipType)
   {
-    if (forwardLink)
-    {
-      return relationshipType;
-    }
-
     var ret = relationshipType switch
     {
-      RelationshipType.Parent => RelationshipType.Child,
       RelationshipType.Child => RelationshipType.Parent,
-      RelationshipType.AdoptiveParent => RelationshipType.AdoptiveChild,
       RelationshipType.AdoptiveChild => RelationshipType.AdoptiveParent,
+      RelationshipType.Parent => RelationshipType.Child,
+      RelationshipType.AdoptiveParent => RelationshipType.AdoptiveChild,
       _ => relationshipType
     };
 
     return ret;
+  }
+
+  private static bool IsBackwardDirection(Relative relative)
+  {
+    return relative.Type switch
+    {
+      RelationshipType.Child => true,
+      RelationshipType.AdoptiveChild => true,
+      _ => false
+    };
+  }
+
+  private static void AddCommandParameters(Person person, Relative relative, SqliteCommand command)
+  {
+    if (IsBackwardDirection(relative))
+    {
+      command.Parameters.AddWithValue("@personId", relative.Id);
+      command.Parameters.AddWithValue("@relativeId", person.Id);
+      command.Parameters.AddWithValue("@type", GetBackwardDirection(relative.Type));
+    }
+    else
+    {
+      command.Parameters.AddWithValue("@personId", person.Id);
+      command.Parameters.AddWithValue("@relativeId", relative.Id);
+      command.Parameters.AddWithValue("@type", relative.Type);
+    }
   }
 
   private async Task<Relative?> CreateRelativeAsync(SqliteDataReader reader, bool forwardLink, CancellationToken token)
@@ -30,9 +51,12 @@ public class TableRelatives : TableBase
     var type = GetEnum<RelationshipType>(reader, 1);
     var date = TryGetDate(reader, 2, 3);
     var relative = await Document.Persons.TryGetPersonByIdAsync(id, token);
-    var normalizedType = NormalizeRelationshipType(type, forwardLink);
+    if (forwardLink == false)
+    {
+      type = GetBackwardDirection(type);
+    }
 
-    return relative is null ? null : new Relative(relative, normalizedType, date, forwardLink);
+    return relative is null ? null : new Relative(relative, type, date);
   }
 
   public TableRelatives(ProjectDocument document) : base(document)
@@ -105,16 +129,14 @@ public class TableRelatives : TableBase
     using var transaction = await Document.BeginTransactionAsync(token);
     var tasks = new List<Task>();
 
-    foreach (var relative in relatives.Where(r => r.ForwardLink))
+    foreach (var relative in relatives)
     {
       using var command = Document.CreateCommand();
       command.CommandText = """
         INSERT INTO Relatives (PersonId, RelativeId, Type, Date, DateStatus)
         VALUES (@personId, @relativeId, @type, @date, @dateStatus);
         """;
-      command.Parameters.AddWithValue("@personId", person.Id);
-      command.Parameters.AddWithValue("@relativeId", relative.Id);
-      command.Parameters.AddWithValue("@type", relative.Type);
+      AddCommandParameters(person, relative, command);
       command.Parameters.AddWithValue("@date", relative.Date.HasValue ? relative.Date.Value.Code : DBNull.Value);
       command.Parameters.AddWithValue("@dateStatus", relative.Date.HasValue ? relative.Date.Value.Status : DBNull.Value);
       tasks.Add(command.ExecuteNonQueryAsync(token));
@@ -148,13 +170,11 @@ public class TableRelatives : TableBase
         DELETE FROM Relatives
         WHERE PersonId=@personId AND RelativeId=@relativeId AND Type=@type;
         """;
-      command.Parameters.AddWithValue("@personId", person.Id);
-      command.Parameters.AddWithValue("@relativeId", oldRelative.Id);
-      command.Parameters.AddWithValue("@type", oldRelative.Type);
+      AddCommandParameters(person, oldRelative, command);
       tasks.Add(command.ExecuteNonQueryAsync(token));
     }
 
-    tasks.Add(AddRelativesAsync(person, relatives.Where(r => r.ForwardLink && !remainedRelatives.Contains(r.Id)).ToArray(), token));
+    tasks.Add(AddRelativesAsync(person, relatives.Where(r => !remainedRelatives.Contains(r.Id)).ToArray(), token));
     await Task.WhenAll(tasks);
 
     transaction.Commit();

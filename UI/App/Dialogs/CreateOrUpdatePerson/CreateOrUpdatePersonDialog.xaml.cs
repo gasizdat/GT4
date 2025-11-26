@@ -386,15 +386,10 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     if (result?.Length > 0)
     {
       var relatives = result
-        .Select(person =>
-        {
-          var relativeInfo = new RelativeInfo(
-            person.Info,
-            dialog.RelType.Info,
-            dialog.RelationshipDate,
-            true);
-          return relativeInfo;
-        })
+        .Select(person => new RelativeInfo(
+          person.Info,
+          dialog.RelType.Info,
+          dialog.RelationshipDate))
         .Select(relativeInfo => new RelativeInfoItem(
           _BirthDate.GetValueOrDefault(),
           relativeInfo,

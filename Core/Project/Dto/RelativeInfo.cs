@@ -11,9 +11,8 @@ public record class RelativeInfo(
   Name[] Names,
   Data? MainPhoto,
   RelationshipType Type,
-  Date? Date,
-  bool ForwardLink
-) : Relative(Id, BirthDate, DeathDate, BiologicalSex, Type, Date, ForwardLink)
+  Date? Date
+) : Relative(Id, BirthDate, DeathDate, BiologicalSex, Type, Date)
 {
   public RelativeInfo(Relative relative, Name[] names, Data? mainPhoto)
     : this(
@@ -24,13 +23,12 @@ public record class RelativeInfo(
         names, 
         mainPhoto, 
         relative.Type, 
-        relative.Date, 
-        relative.ForwardLink
+        relative.Date
   )
   {
   }
 
-  public RelativeInfo(Person person, Name[] names, Data? mainPhoto,  RelationshipType type,  Date? date, bool forwardLink)
+  public RelativeInfo(Person person, Name[] names, Data? mainPhoto,  RelationshipType type,  Date? date)
     : this(
         person.Id,
         person.BirthDate,
@@ -39,13 +37,12 @@ public record class RelativeInfo(
         names,
         mainPhoto,
         type,
-        date,
-        forwardLink
+        date
   )
   {
   }
 
-  public RelativeInfo(PersonInfo person, RelationshipType type, Date? date, bool forwardLink)
+  public RelativeInfo(PersonInfo person, RelationshipType type, Date? date)
     : this(
         person.Id,
         person.BirthDate,
@@ -54,8 +51,7 @@ public record class RelativeInfo(
         person.Names,
         person.MainPhoto,
         type,
-        date,
-        forwardLink
+        date
   )
   {
   }
