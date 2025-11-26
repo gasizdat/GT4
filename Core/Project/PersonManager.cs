@@ -219,6 +219,7 @@ public class PersonManager : TableBase
     var ret = siblingsByFather
       .Intersect(siblingsByMother, _RelativeInfoComparer)
       .Where(r => biologicalSex is null || r.BiologicalSex == biologicalSex)
+      .Select(r => r with { Type = RelationshipType.Sibling })
       .ToArray();
 
     return ret;
@@ -247,6 +248,7 @@ public class PersonManager : TableBase
     }
     return ret
       .Where(r => biologicalSex is null || r.BiologicalSex == biologicalSex)
+      .Select(r => r with { Type = RelationshipType.SiblingByFather })
       .ToArray();
   }
 
@@ -272,9 +274,10 @@ public class PersonManager : TableBase
       ret = siblingsByMother
         .Except(siblingsByFather, _RelativeInfoComparer);
     }
-      
+
     return ret
       .Where(r => biologicalSex is null || r.BiologicalSex == biologicalSex)
+      .Select(r => r with { Type = RelationshipType.SiblingByMother })
       .ToArray();
   }
 
@@ -288,10 +291,13 @@ public class PersonManager : TableBase
       .Where(i => i.Key != mother?.Id && i.Key != father?.Id)
       .SelectMany(i => i.Value)
       .Where(r => biologicalSex is null || r.BiologicalSex == biologicalSex)
+      .Select(r => r with { Type = RelationshipType.AdoptiveSibling })
       .ToArray();
 
     return ret;
   }
+
+  //TODO Add step siblings
 
   public override Task CreateAsync(CancellationToken token)
   {

@@ -448,4 +448,28 @@ genealogy tree and enjoy!</value>
   <data name="MenuItemNameRefresh" xml:space="preserve">
     <value>⟳ Refresh</value>
   </data>
+  <data name="RelBrother" xml:space="preserve">
+    <value>Brother</value>
+  </data>
+  <data name="RelSister" xml:space="preserve">
+    <value>Sister</value>
+  </data>
+  <data name="RelParental_1" xml:space="preserve">
+    <value>Parental {0}</value>
+  </data>
+  <data name="RelMaternal_1" xml:space="preserve">
+    <value>Maternal {0}</value>
+  </data>
+  <data name="RelSibling" xml:space="preserve">
+    <value>Sibling</value>
+  </data>
+  <data name="RelStepMale_1" xml:space="preserve">
+    <value>Step{0}</value>
+  </data>
+  <data name="RelStepFemale_1" xml:space="preserve">
+    <value>Step{0}</value>
+  </data>
+  <data name="RelStepInvariant_1" xml:space="preserve">
+    <value>Step{0}</value>
+  </data>
 </root>

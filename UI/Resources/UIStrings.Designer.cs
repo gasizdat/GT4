@@ -773,6 +773,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Brother.
+        /// </summary>
+        public static string RelBrother {
+            get {
+                return ResourceManager.GetString("RelBrother", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Child.
         /// </summary>
         public static string RelChild {
@@ -809,6 +818,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Maternal {0}.
+        /// </summary>
+        public static string RelMaternal_1 {
+            get {
+                return ResourceManager.GetString("RelMaternal_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Mother.
         /// </summary>
         public static string RelMother {
@@ -827,6 +845,33 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Parental {0}.
+        /// </summary>
+        public static string RelParental_1 {
+            get {
+                return ResourceManager.GetString("RelParental_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Sibling.
+        /// </summary>
+        public static string RelSibling {
+            get {
+                return ResourceManager.GetString("RelSibling", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Sister.
+        /// </summary>
+        public static string RelSister {
+            get {
+                return ResourceManager.GetString("RelSister", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Son.
         /// </summary>
         public static string RelSon {
@@ -841,6 +886,33 @@ namespace GT4.UI.Resources {
         public static string RelSpouse {
             get {
                 return ResourceManager.GetString("RelSpouse", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Step{0}.
+        /// </summary>
+        public static string RelStepFemale_1 {
+            get {
+                return ResourceManager.GetString("RelStepFemale_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Step{0}.
+        /// </summary>
+        public static string RelStepInvariant_1 {
+            get {
+                return ResourceManager.GetString("RelStepInvariant_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Step{0}.
+        /// </summary>
+        public static string RelStepMale_1 {
+            get {
+                return ResourceManager.GetString("RelStepMale_1", resourceCulture);
             }
         }
         

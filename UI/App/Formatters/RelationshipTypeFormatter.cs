@@ -16,6 +16,11 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
         RelationshipType.Spose => UIStrings.RelHusband,
         RelationshipType.AdoptiveParent => string.Format(UIStrings.RelAdoptiveMale_1, UIStrings.RelFather),
         RelationshipType.AdoptiveChild => string.Format(UIStrings.RelAdoptiveMale_1, UIStrings.RelSon),
+        RelationshipType.Sibling => UIStrings.RelBrother,
+        RelationshipType.SiblingByFather => string.Format(UIStrings.RelParental_1, UIStrings.RelBrother),
+        RelationshipType.SiblingByMother => string.Format(UIStrings.RelMaternal_1, UIStrings.RelBrother),
+        RelationshipType.AdoptiveSibling => string.Format(UIStrings.RelAdoptiveMale_1, UIStrings.RelBrother),
+        RelationshipType.StepSibling => string.Format(UIStrings.RelStepMale_1, UIStrings.RelBrother),
         _ => throw new NotSupportedException($"type: {type}, sex: {biologicalSex}")
       },
       BiologicalSex.Female => type switch
@@ -25,15 +30,25 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
         RelationshipType.Spose => UIStrings.RelWife,
         RelationshipType.AdoptiveParent => string.Format(UIStrings.RelAdoptiveFemale_1, UIStrings.RelMother),
         RelationshipType.AdoptiveChild => string.Format(UIStrings.RelAdoptiveFemale_1, UIStrings.RelDaughter),
+        RelationshipType.Sibling => UIStrings.RelSister,
+        RelationshipType.SiblingByFather => string.Format(UIStrings.RelParental_1, UIStrings.RelSister),
+        RelationshipType.SiblingByMother => string.Format(UIStrings.RelMaternal_1, UIStrings.RelSister),
+        RelationshipType.AdoptiveSibling => string.Format(UIStrings.RelAdoptiveFemale_1, UIStrings.RelSister),
+        RelationshipType.StepSibling => string.Format(UIStrings.RelStepFemale_1, UIStrings.RelSister),
         _ => throw new NotSupportedException($"type: {type}, sex: {biologicalSex}")
       },
-      _=> type switch
+      _ => type switch
       {
         RelationshipType.Parent => UIStrings.RelParent,
         RelationshipType.Child => UIStrings.RelChild,
         RelationshipType.Spose => UIStrings.RelSpouse,
         RelationshipType.AdoptiveParent => string.Format(UIStrings.RelAdoptiveInvariant_1, UIStrings.RelParent),
         RelationshipType.AdoptiveChild => string.Format(UIStrings.RelAdoptiveInvariant_1, UIStrings.RelChild),
+        RelationshipType.Sibling => UIStrings.RelSibling,
+        RelationshipType.SiblingByFather => string.Format(UIStrings.RelParental_1, UIStrings.RelSibling),
+        RelationshipType.SiblingByMother => string.Format(UIStrings.RelMaternal_1, UIStrings.RelSibling),
+        RelationshipType.AdoptiveSibling => string.Format(UIStrings.RelAdoptiveInvariant_1, UIStrings.RelSibling),
+        RelationshipType.StepSibling => string.Format(UIStrings.RelStepInvariant_1, UIStrings.RelSibling),
         _ => throw new NotSupportedException($"type: {type}, sex: {biologicalSex}")
       }
     };

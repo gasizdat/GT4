@@ -31,6 +31,18 @@ public class TableRelatives : TableBase
 
   private static void AddCommandParameters(Person person, Relative relative, SqliteCommand command)
   {
+    switch (relative.Type)
+    {
+      case RelationshipType.Parent:
+      case RelationshipType.Child:
+      case RelationshipType.Spose:
+      case RelationshipType.AdoptiveParent:
+      case RelationshipType.AdoptiveChild:
+        break;
+      default:
+        throw new ArgumentException(nameof(relative.Type));
+    }
+
     if (IsBackwardDirection(relative))
     {
       command.Parameters.AddWithValue("@personId", relative.Id);

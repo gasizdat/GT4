@@ -448,4 +448,28 @@
   <data name="MenuItemNameRefresh" xml:space="preserve">
     <value>⟳ Обновить</value>
   </data>
+  <data name="RelBrother" xml:space="preserve">
+    <value>Брат</value>
+  </data>
+  <data name="RelSister" xml:space="preserve">
+    <value>Сестра</value>
+  </data>
+  <data name="RelParental_1" xml:space="preserve">
+    <value>{0} по отцу</value>
+  </data>
+  <data name="RelMaternal_1" xml:space="preserve">
+    <value>{0} по матери</value>
+  </data>
+  <data name="RelSibling" xml:space="preserve">
+    <value>Брат или сестра</value>
+  </data>
+  <data name="RelStepMale_1" xml:space="preserve">
+    <value>Сводный {0}</value>
+  </data>
+  <data name="RelStepFemale_1" xml:space="preserve">
+    <value>Сводная {0}</value>
+  </data>
+  <data name="RelStepInvariant_1" xml:space="preserve">
+    <value>Сводный {0}</value>
+  </data>
 </root>
