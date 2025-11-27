@@ -114,40 +114,40 @@ public partial class PersonPage : ContentPage
 
         var (person, siblings) = (Tuple<PersonFullInfo, Siblings>)args.Result;
         _PersonFullInfo = person;
-        var mother = PersonManager.Parent(_PersonFullInfo, BiologicalSex.Female);
-        var father = PersonManager.Parent(_PersonFullInfo, BiologicalSex.Male);
-        RelativeInfoItem GetRelativeInfoItem(RelativeInfo relativeInfo) =>
-          new RelativeInfoItem(_PersonFullInfo.BirthDate, relativeInfo, _DateFormmater, _RelationshipTypeFormatter, _NameFormmater);
-        void AddRange(IEnumerable<RelativeInfo> relatives)
+          
+        void Add(BiologicalSex biologicalSex, RelativeInfo[] relatives)
         {
           foreach (var relative in relatives)
           {
-            _Relatives.Add(GetRelativeInfoItem(relative));
+            if (relative.BiologicalSex != biologicalSex)
+            {
+              continue;
+            }
+
+            var relativeInfoItem = new RelativeInfoItem(
+              _PersonFullInfo.BirthDate, relative, _DateFormmater, _RelationshipTypeFormatter, _NameFormmater);
+            _Relatives.Add(relativeInfoItem);
           }
         }
 
-        if (mother is not null)
-        {
-          _Relatives.Add(GetRelativeInfoItem(mother));
-        }
-        if (father is not null)
-        {
-          _Relatives.Add(GetRelativeInfoItem(father));
-        }
-        AddRange(PersonManager.AdoptiveParent(person, BiologicalSex.Female));
-        AddRange(PersonManager.AdoptiveParent(person, BiologicalSex.Male));
-        AddRange(PersonManager.NativeSiblings(siblings, BiologicalSex.Female));
-        AddRange(PersonManager.NativeSiblings(siblings, BiologicalSex.Male));
-        AddRange(PersonManager.SiblingsByFather(siblings, BiologicalSex.Female));
-        AddRange(PersonManager.SiblingsByFather(siblings, BiologicalSex.Male));
-        AddRange(PersonManager.SiblingsByMother(siblings, BiologicalSex.Female));
-        AddRange(PersonManager.SiblingsByMother(siblings, BiologicalSex.Male));
-        AddRange(PersonManager.AdoptiveSiblings(siblings, BiologicalSex.Female));
-        AddRange(PersonManager.AdoptiveSiblings(siblings, BiologicalSex.Male));
-        AddRange(PersonManager.Children(person, BiologicalSex.Female));
-        AddRange(PersonManager.Children(person, BiologicalSex.Male));
-        AddRange(PersonManager.AdoptiveChildren(person, BiologicalSex.Female));
-        AddRange(PersonManager.AdoptiveChildren(person, BiologicalSex.Male));
+        Add(BiologicalSex.Female, PersonManager.Parent(_PersonFullInfo));
+        Add(BiologicalSex.Male, PersonManager.Parent(_PersonFullInfo));
+        Add(BiologicalSex.Female, PersonManager.AdoptiveParent(person));
+        Add(BiologicalSex.Male, PersonManager.AdoptiveParent(person));
+        Add(BiologicalSex.Female, siblings.Native);
+        Add(BiologicalSex.Male, siblings.Native);
+        Add(BiologicalSex.Female, siblings.ByFather);
+        Add(BiologicalSex.Male, siblings.ByFather);
+        Add(BiologicalSex.Female, siblings.ByMother);
+        Add(BiologicalSex.Male, siblings.ByMother);
+        Add(BiologicalSex.Female, siblings.Step);
+        Add(BiologicalSex.Male, siblings.Step);
+        Add(BiologicalSex.Female, siblings.Adoptive);
+        Add(BiologicalSex.Male, siblings.Adoptive);
+        Add(BiologicalSex.Female, PersonManager.Children(person));
+        Add(BiologicalSex.Male, PersonManager.Children(person));
+        Add(BiologicalSex.Female, PersonManager.AdoptiveChildren(person));
+        Add(BiologicalSex.Male, PersonManager.AdoptiveChildren(person));
 
         Utils.RefreshView(this);
       };
