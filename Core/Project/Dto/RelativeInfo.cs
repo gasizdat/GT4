@@ -1,8 +1,10 @@
 ﻿using GT4.Core.Utils;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace GT4.Core.Project.Dto;
 
+[DebuggerDisplay("{BiologicalSex}, {Type}, {DisplayName}")]
 public record class RelativeInfo(
   int Id,
   Date BirthDate,
@@ -61,4 +63,6 @@ public record class RelativeInfo(
     relativeInfo is null 
     ? null
     : new PersonInfo(person: relativeInfo, names: relativeInfo.Names, mainPhoto: relativeInfo.MainPhoto);
+
+  public string DisplayName => ((PersonInfo)this).DisplayName;
 }

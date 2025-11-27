@@ -1,7 +1,9 @@
 ﻿using GT4.Core.Utils;
+using System.Diagnostics;
 
 namespace GT4.Core.Project.Dto;
 
+[DebuggerDisplay("{BiologicalSex}, {DisplayName}")]
 public record class PersonInfo(
   int Id,
   Date BirthDate,
@@ -22,4 +24,6 @@ public record class PersonInfo(
   )
   {
   }
+
+  public string DisplayName => string.Join(" ", Names.Select(n => n.Value));
 }
