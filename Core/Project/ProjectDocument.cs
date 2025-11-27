@@ -9,6 +9,7 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
   private NestedTransaction? _CurrentTransaction = null;
   private long _TransactionNo = 0;
   private long _ProjectRevision = Environment.TickCount64;
+  private bool _Disposed = false;
 
   static ProjectDocument()
   {
@@ -25,6 +26,14 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
     _Connection = new SqliteConnection(connectionString);
   }
 
+  private void CheckForDisposed()
+  {
+    if (_Disposed)
+    {
+      throw new ObjectDisposedException(nameof(ProjectDocument));
+    }
+  }
+
   ~ProjectDocument()
   {
     Dispose();
@@ -32,11 +41,13 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
 
   private async Task OpenAsync(CancellationToken token)
   {
+    CheckForDisposed();
     await _Connection.OpenAsync(token);
   }
 
   private async Task InitNewDBAsync(CancellationToken token)
   {
+    CheckForDisposed();
     using var transaction = await BeginTransactionAsync(token);
 
     await Task.WhenAll(
@@ -68,6 +79,7 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
 
   public void UpdateRevision()
   {
+    CheckForDisposed();
     lock (this)
     {
       _ProjectRevision = Environment.TickCount64;
@@ -76,6 +88,7 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
 
   public async Task<int> GetLastInsertRowIdAsync(CancellationToken token)
   {
+    CheckForDisposed();
     using var command = CreateCommand();
     command.CommandText = "SELECT last_insert_rowid();";
     return Convert.ToInt32(await command.ExecuteScalarAsync(token));
@@ -83,11 +96,13 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
 
   public SqliteCommand CreateCommand()
   {
+    CheckForDisposed();
     return _Connection.CreateCommand();
   }
 
   public Task<IDbTransaction> BeginTransactionAsync(CancellationToken token)
   {
+    CheckForDisposed();
     IDbTransaction ret;
 
     lock (this)
@@ -125,12 +140,14 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
 
   public async ValueTask DisposeAsync()
   {
+    _Disposed = true;
     await _Connection.CloseAsync();
     await _Connection.DisposeAsync();
   }
 
   public void Dispose()
   {
+    _Disposed = true;
     _Connection.Close();
     _Connection.Dispose();
   }
