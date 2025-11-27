@@ -1,5 +1,4 @@
 ﻿using System.Reflection;
-using Windows.UI.ViewManagement;
 
 namespace GT4.UI;
 
