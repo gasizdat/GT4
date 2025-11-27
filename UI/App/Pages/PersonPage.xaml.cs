@@ -19,9 +19,9 @@ public partial class PersonPage : ContentPage
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly IRelationshipTypeFormatter _RelationshipTypeFormatter;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
-  private readonly IDateSpanFormatter _DateSpanFormmater;
-  private readonly IDateFormatter _DateFormmater;
-  private readonly INameFormatter _NameFormmater;
+  private readonly IDateSpanFormatter _DateSpanFormatter;
+  private readonly IDateFormatter _DateFormatter;
+  private readonly INameFormatter _NameFormatter;
   private readonly ICommand _PageCommand;
   private readonly ObservableCollection<RelativeInfoItem> _Relatives = new();
   private PersonFullInfo _PersonFullInfo = PersonFullInfo.Empty;
@@ -32,9 +32,9 @@ public partial class PersonPage : ContentPage
     _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
     _RelationshipTypeFormatter = _ServiceProvider.GetRequiredService<IRelationshipTypeFormatter>();
     _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
-    _DateSpanFormmater = _ServiceProvider.GetRequiredService<IDateSpanFormatter>();
-    _DateFormmater = _ServiceProvider.GetRequiredService<IDateFormatter>();
-    _NameFormmater = _ServiceProvider.GetRequiredService<INameFormatter>();
+    _DateSpanFormatter = _ServiceProvider.GetRequiredService<IDateSpanFormatter>();
+    _DateFormatter = _ServiceProvider.GetRequiredService<IDateFormatter>();
+    _NameFormatter = _ServiceProvider.GetRequiredService<INameFormatter>();
     _PageCommand = new Command(OnPageCommand);
 
     InitializeComponent();
@@ -51,17 +51,17 @@ public partial class PersonPage : ContentPage
 
   public string RemovePersonToolbarItemName => string.Format(UIStrings.MenuItemNameRemove_1, ShortName);
 
-  public string ShortName => _NameFormmater.ToString(_PersonFullInfo, NameFormat.ShortPersonName);
+  public string ShortName => _NameFormatter.ToString(_PersonFullInfo, NameFormat.ShortPersonName);
 
-  public string CommonName => _NameFormmater.ToString(_PersonFullInfo, NameFormat.CommonPersonName);
+  public string CommonName => _NameFormatter.ToString(_PersonFullInfo, NameFormat.CommonPersonName);
 
-  public string FullName => _NameFormmater.ToString(_PersonFullInfo, NameFormat.FullPersonName);
+  public string FullName => _NameFormatter.ToString(_PersonFullInfo, NameFormat.FullPersonName);
 
   public bool ShowFullName => CommonName != FullName;
 
-  public string BirthDate => _DateFormmater.ToString(_PersonFullInfo.BirthDate);
+  public string BirthDate => _DateFormatter.ToString(_PersonFullInfo.BirthDate);
 
-  public string DeathDate => _DateFormmater.ToString(_PersonFullInfo.DeathDate);
+  public string DeathDate => _DateFormatter.ToString(_PersonFullInfo.DeathDate);
 
   public bool ShowDeathDate => _PersonFullInfo.DeathDate.HasValue;
 
@@ -70,7 +70,7 @@ public partial class PersonPage : ContentPage
     get
     {
       var age = _PersonFullInfo.DeathDate.GetValueOrDefault(Date.Now) - _PersonFullInfo.BirthDate;
-      return _DateSpanFormmater.ToString(age);
+      return _DateSpanFormatter.ToString(age);
     }
   }
 
@@ -84,7 +84,7 @@ public partial class PersonPage : ContentPage
   {
     set
     {
-      var backgroundWorker = new BackgroundWorker();
+      using var backgroundWorker = new BackgroundWorker();
       backgroundWorker.DoWork += async (object? _, DoWorkEventArgs args) =>
       {
         var token = _CancellationTokenProvider.CreateDbCancellationToken();
@@ -95,7 +95,7 @@ public partial class PersonPage : ContentPage
           .PersonManager
           .GetSiblings(person, token);
 
-        args.Result = new Tuple<PersonFullInfo, Siblings>(person, siblings);
+        args.Result = (person, siblings);
       };
       backgroundWorker.RunWorkerCompleted += async (object? _, RunWorkerCompletedEventArgs args) =>
       {
@@ -112,24 +112,26 @@ public partial class PersonPage : ContentPage
           return;
         }
 
-        var (person, siblings) = (Tuple<PersonFullInfo, Siblings>)args.Result;
+        var (person, siblings) = ((PersonFullInfo, Siblings))args.Result;
         _PersonFullInfo = person;
-          
-        void Add(BiologicalSex biologicalSex, RelativeInfo[] relatives)
+        _Relatives.Clear();
+
+        void Add(BiologicalSex biologicalSex, IEnumerable<RelativeInfo> relatives)
         {
           foreach (var relative in relatives)
           {
-            if (relative.BiologicalSex != biologicalSex)
+            if (BiologicalSex.Unknown != biologicalSex && relative.BiologicalSex != biologicalSex)
             {
               continue;
             }
 
             var relativeInfoItem = new RelativeInfoItem(
-              _PersonFullInfo.BirthDate, relative, _DateFormmater, _RelationshipTypeFormatter, _NameFormmater);
+              _PersonFullInfo.BirthDate, relative, _DateFormatter, _RelationshipTypeFormatter, _NameFormatter);
             _Relatives.Add(relativeInfoItem);
           }
         }
 
+        Add(BiologicalSex.Unknown, _PersonFullInfo.RelativeInfos.Where(r => r.Type == RelationshipType.Spose));
         Add(BiologicalSex.Female, PersonManager.Parent(_PersonFullInfo));
         Add(BiologicalSex.Male, PersonManager.Parent(_PersonFullInfo));
         Add(BiologicalSex.Female, PersonManager.AdoptiveParent(person));
@@ -166,7 +168,10 @@ public partial class PersonPage : ContentPage
         await OnPersonEdit();
         break;
       case string name when name == "Refresh":
-        Utils.RefreshView(this);
+        PersonInfo = _PersonFullInfo;
+        break;
+      case RelativeInfoItem relativeInfoItem:
+        await Shell.Current.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { { "PersonInfo", relativeInfoItem.Info } });
         break;
     }
   }
@@ -191,8 +196,7 @@ public partial class PersonPage : ContentPage
         .PersonManager
         .UpdatePersonAsync(info, token);
 
-      _PersonFullInfo = info;
-      Utils.RefreshView(this);
+      PersonInfo = info;
     }
     catch (Exception ex)
     {

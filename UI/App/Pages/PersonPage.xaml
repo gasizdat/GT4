@@ -133,6 +133,7 @@
           <CollectionView
               Grid.Row="0"
               Grid.Column="1"
+                SelectionMode="Single"
               ItemsSource="{Binding Relatives, Source={x:Reference Root}}"
               VerticalScrollBarVisibility="Always">
             <CollectionView.ItemsLayout>
@@ -159,6 +160,12 @@
                       DatesLabelStyle="{StaticResource FieldValue}"
                       NameLabelStyle="{StaticResource FieldName}"
                       Person="{Binding Info}" />
+
+                  <Grid.GestureRecognizers>
+                    <TapGestureRecognizer
+                       Command="{Binding Path=PageCommand, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
+                       CommandParameter="{Binding .}" />
+                  </Grid.GestureRecognizers>
 
                 </Grid>
               </DataTemplate>
