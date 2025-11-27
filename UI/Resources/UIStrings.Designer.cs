@@ -125,7 +125,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Woman.
+        ///   Looks up a localized string similar to ♀ Woman.
         /// </summary>
         public static string BiologicalSexFemale {
             get {
@@ -134,7 +134,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Man.
+        ///   Looks up a localized string similar to ♂ Man.
         /// </summary>
         public static string BiologicalSexMale {
             get {
@@ -143,7 +143,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Human.
+        ///   Looks up a localized string similar to ⚧️ Human.
         /// </summary>
         public static string BiologicalSexUnknown {
             get {
@@ -611,7 +611,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to ⟳ Refresh.
+        ///   Looks up a localized string similar to 🔄️ Refresh.
         /// </summary>
         public static string MenuItemNameRefresh {
             get {

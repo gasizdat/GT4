@@ -338,13 +338,13 @@ genealogy tree and enjoy!</value>
     <value>Enter female middle name</value>
   </data>
   <data name="BiologicalSexMale" xml:space="preserve">
-    <value>Man</value>
+    <value>♂ Man</value>
   </data>
   <data name="BiologicalSexFemale" xml:space="preserve">
-    <value>Woman</value>
+    <value>♀ Woman</value>
   </data>
   <data name="BiologicalSexUnknown" xml:space="preserve">
-    <value>Human</value>
+    <value>⚧️ Human</value>
   </data>
   <data name="FieldBiologicalSex" xml:space="preserve">
     <value>Biological sex</value>
@@ -446,7 +446,7 @@ genealogy tree and enjoy!</value>
     <value>➕ Create a Person</value>
   </data>
   <data name="MenuItemNameRefresh" xml:space="preserve">
-    <value>⟳ Refresh</value>
+    <value>🔄️ Refresh</value>
   </data>
   <data name="RelBrother" xml:space="preserve">
     <value>Brother</value>

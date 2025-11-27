@@ -338,13 +338,13 @@
     <value>Добавить женское отчество</value>
   </data>
   <data name="BiologicalSexMale" xml:space="preserve">
-    <value>Мужчина</value>
+    <value>♂ Мужчина</value>
   </data>
   <data name="BiologicalSexFemale" xml:space="preserve">
-    <value>Женщина</value>
+    <value>♀ Женщина</value>
   </data>
   <data name="BiologicalSexUnknown" xml:space="preserve">
-    <value>Человек</value>
+    <value>⚧️ Человек</value>
   </data>
   <data name="FieldBiologicalSex" xml:space="preserve">
     <value>Пол</value>
@@ -446,7 +446,7 @@
     <value>➕ Создать персону</value>
   </data>
   <data name="MenuItemNameRefresh" xml:space="preserve">
-    <value>⟳ Обновить</value>
+    <value>🔄️ Обновить</value>
   </data>
   <data name="RelBrother" xml:space="preserve">
     <value>Брат</value>
