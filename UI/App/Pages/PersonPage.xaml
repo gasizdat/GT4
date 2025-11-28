@@ -128,7 +128,7 @@
 
           <Image
               Margin="{Thickness Right={StaticResource PageContentSpacing}}"
-              FlexLayout.Grow="1"
+              FlexLayout.Grow="0.7"
               FlexLayout.Order="1"
               Source="{Binding Photo, Source={x:Reference Root}}"
               Style="{StaticResource PhotoStyle}"
@@ -142,16 +142,17 @@
               SelectionMode="Single"
               VerticalScrollBarVisibility="Always">
             <CollectionView.ItemsLayout>
-              <LinearItemsLayout Orientation="Vertical" />
+              <LinearItemsLayout
+                  ItemSpacing="{StaticResource PageContentSpacing}"
+                  Orientation="Vertical" />
             </CollectionView.ItemsLayout>
 
             <CollectionView.ItemTemplate>
               <DataTemplate x:DataType="items:RelativeInfoItem">
                 <Grid
                     ColumnDefinitions="Auto, *"
-                    RowDefinitions="*"
+                    RowDefinitions="Auto, Auto"
                     Style="{StaticResource HoverItem}">
-
                   <Grid.GestureRecognizers>
                     <TapGestureRecognizer
                         Command="{Binding Path=PageCommand, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
@@ -161,13 +162,22 @@
                   <Label
                       Grid.Row="0"
                       Grid.Column="0"
-                      Style="{StaticResource FieldName}"
+                      Style="{StaticResource FieldValue}"
                       Text="{Binding RelationTypeName}"
                       VerticalOptions="Start" />
 
-                  <components:PersonInfoView
+                  <Label
                       Grid.Row="0"
                       Grid.Column="1"
+                      IsVisible="{Binding ShowDate}"
+                      Style="{StaticResource FieldValue}"
+                      Text="{Binding Date}"
+                      VerticalOptions="Start" />
+
+                  <components:PersonInfoView
+                      Grid.Row="1"
+                      Grid.Column="0"
+                      Grid.ColumnSpan="2"
                       DatesLabelStyle="{StaticResource FieldValue}"
                       NameLabelStyle="{StaticResource FieldName}"
                       Person="{Binding Info}" />
