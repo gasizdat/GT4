@@ -32,7 +32,17 @@ public class RelativeInfoItem : PersonInfoItem
     _RelativeInfo = relativeInfo;
   }
 
-  public bool ShowDate => _RelationshipDate.HasValue;
+  public bool ShowDate =>
+    _RelationshipDate.HasValue &&
+    _RelationshipDate.Value.Status != DateStatus.Unknown &&
+    _RelativeInfo.Type switch
+    {
+      RelationshipType.Spose => true,
+      RelationshipType.AdoptiveChild => true,
+      RelationshipType.AdoptiveParent => true,
+      RelationshipType.AdoptiveSibling => true,
+      _ => false
+    };
   public string Date => _DateFormatter.ToString(_RelationshipDate);
   public string RelationTypeName =>
     _RelationshipTypeFormatter.ToString(_RelativeInfo.Type, _RelativeInfo.BiologicalSex);

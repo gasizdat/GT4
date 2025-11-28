@@ -116,40 +116,26 @@ public partial class PersonPage : ContentPage
         _PersonFullInfo = person;
         _Relatives.Clear();
 
-        void Add(BiologicalSex biologicalSex, IEnumerable<RelativeInfo> relatives)
+        void Add(IEnumerable<RelativeInfo> relatives)
         {
-          foreach (var relative in relatives)
+          foreach (var relative in relatives.OrderBy(r => r.BiologicalSex))
           {
-            if (BiologicalSex.Unknown != biologicalSex && relative.BiologicalSex != biologicalSex)
-            {
-              continue;
-            }
-
             var relativeInfoItem = new RelativeInfoItem(
               _PersonFullInfo.BirthDate, relative, _DateFormatter, _RelationshipTypeFormatter, _NameFormatter);
             _Relatives.Add(relativeInfoItem);
           }
         }
 
-        Add(BiologicalSex.Unknown, _PersonFullInfo.RelativeInfos.Where(r => r.Type == RelationshipType.Spose));
-        Add(BiologicalSex.Female, PersonManager.Parent(_PersonFullInfo));
-        Add(BiologicalSex.Male, PersonManager.Parent(_PersonFullInfo));
-        Add(BiologicalSex.Female, PersonManager.AdoptiveParent(person));
-        Add(BiologicalSex.Male, PersonManager.AdoptiveParent(person));
-        Add(BiologicalSex.Female, siblings.Native);
-        Add(BiologicalSex.Male, siblings.Native);
-        Add(BiologicalSex.Female, siblings.ByFather);
-        Add(BiologicalSex.Male, siblings.ByFather);
-        Add(BiologicalSex.Female, siblings.ByMother);
-        Add(BiologicalSex.Male, siblings.ByMother);
-        Add(BiologicalSex.Female, siblings.Step);
-        Add(BiologicalSex.Male, siblings.Step);
-        Add(BiologicalSex.Female, siblings.Adoptive);
-        Add(BiologicalSex.Male, siblings.Adoptive);
-        Add(BiologicalSex.Female, PersonManager.Children(person));
-        Add(BiologicalSex.Male, PersonManager.Children(person));
-        Add(BiologicalSex.Female, PersonManager.AdoptiveChildren(person));
-        Add(BiologicalSex.Male, PersonManager.AdoptiveChildren(person));
+        Add(_PersonFullInfo.RelativeInfos.Where(r => r.Type == RelationshipType.Spose));
+        Add(PersonManager.Parent(_PersonFullInfo));
+        Add(PersonManager.AdoptiveParent(person));
+        Add(siblings.Native);
+        Add(siblings.ByFather);
+        Add(siblings.ByMother);
+        Add(siblings.Step);
+        Add(siblings.Adoptive);
+        Add(PersonManager.Children(person));
+        Add(PersonManager.AdoptiveChildren(person));
 
         Utils.RefreshView(this);
       };
