@@ -42,48 +42,39 @@
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>
-      <Grid
-          ColumnDefinitions="*"
-          RowDefinitions="Auto, *">
+      <ScrollView>
+        <FlexLayout
+            AlignContent="Start"
+            AlignItems="Start"
+            BindableLayout.ItemsSource="{Binding Persons, Source={x:Reference Root}}"
+            Direction="Row"
+            Wrap="Wrap">
 
-        <ScrollView
-            Grid.Row="1"
-            Grid.Column="0">
+          <BindableLayout.ItemTemplate>
+            <DataTemplate x:DataType="items:PersonInfoItem">
+              <Frame
+                  Margin="{Thickness Bottom={StaticResource PageContentSpacing},
+                                     Right={StaticResource PageContentSpacing}}"
+                  FlexLayout.Grow="1"
+                  HasShadow="True"
+                  MinimumWidthRequest="{Binding Path=PersonItemMinimalWidth, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
+                  Style="{StaticResource HoverItem}">
 
-          <FlexLayout
-              AlignContent="Center"
-              AlignItems="Start"
-              BindableLayout.ItemsSource="{Binding Persons, Source={x:Reference Root}}"
-              Direction="Row"
-              JustifyContent="SpaceAround"
-              Wrap="Wrap">
+                <Frame.GestureRecognizers>
+                  <TapGestureRecognizer
+                      Command="{Binding Path=MemberItemTappedCommand, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
+                      CommandParameter="{Binding .}" />
+                </Frame.GestureRecognizers>
 
-            <BindableLayout.ItemTemplate>
-              <DataTemplate x:DataType="items:PersonInfoItem">
-                <Frame
-                    Margin="1"
-                    CornerRadius="10"
-                    HasShadow="True"
-                    MinimumWidthRequest="{Binding Path=PersonItemMinimalWidth, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
-                    Style="{StaticResource HoverItem}">
-
-                  <Frame.GestureRecognizers>
-                    <TapGestureRecognizer
-                        Command="{Binding Path=MemberItemTappedCommand, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
-                        CommandParameter="{Binding .}" />
-                  </Frame.GestureRecognizers>
-
-                  <components:PersonInfoView
-                      DatesLabelStyle="{StaticResource FieldValue}"
-                      NameLabelStyle="{StaticResource FieldName}"
-                      Person="{Binding Info}" />
-                </Frame>
-              </DataTemplate>
-            </BindableLayout.ItemTemplate>
-          </FlexLayout>
-
-        </ScrollView>
-      </Grid>
+                <components:PersonInfoView
+                    DatesLabelStyle="{StaticResource FieldValue}"
+                    NameLabelStyle="{StaticResource FieldName}"
+                    Person="{Binding Info}" />
+              </Frame>
+            </DataTemplate>
+          </BindableLayout.ItemTemplate>
+        </FlexLayout>
+      </ScrollView>
     </components:PageLayout.Body>
 
   </components:PageLayout>

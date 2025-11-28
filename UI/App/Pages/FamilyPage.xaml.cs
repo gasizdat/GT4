@@ -5,7 +5,6 @@ using GT4.UI.Dialogs;
 using GT4.UI.Formatters;
 using GT4.UI.Items;
 using GT4.UI.Resources;
-using Microsoft.VisualBasic;
 using System.Windows.Input;
 
 namespace GT4.UI.Pages;
@@ -16,16 +15,16 @@ public partial class FamilyPage : ContentPage
   private readonly IServiceProvider _Services;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
-  private readonly INameFormatter _NameFormatrer;
+  private readonly INameFormatter _NameFormatter;
   private Name? _FamilyName = null;
-  private int _PersonItemMinimalWidth;
+  private double _PersonItemMinimalWidth;
 
   protected FamilyPage(IServiceProvider serviceProvider)
   {
     _Services = serviceProvider;
     _CancellationTokenProvider = _Services.GetRequiredService<ICancellationTokenProvider>();
     _CurrentProjectProvider = _Services.GetRequiredService<ICurrentProjectProvider>();
-    _NameFormatrer = _Services.GetRequiredService<INameFormatter>();
+    _NameFormatter = _Services.GetRequiredService<INameFormatter>();
 
     MemberItemTappedCommand = new Command<PersonInfoItem>(OnOpenPerson);
     MenuItemCommand = new Command<object?>(OnMenuItemCommand);
@@ -51,7 +50,7 @@ public partial class FamilyPage : ContentPage
     }
   }
 
-  public int PersonItemMinimalWidth => _PersonItemMinimalWidth;
+  public double PersonItemMinimalWidth => _PersonItemMinimalWidth;
 
   public ICommand MemberItemTappedCommand { get; init; }
 
@@ -74,7 +73,7 @@ public partial class FamilyPage : ContentPage
           .PersonManager
           .GetPersonInfosByNameAsync(name: FamilyName, selectMainPhoto: true, token)
           .Result
-          .Select(person => new PersonInfoItem(person, _NameFormatrer))
+          .Select(person => new PersonInfoItem(person, _NameFormatter))
           .OrderBy(item => item, _Services.GetRequiredService<IComparer<PersonInfoItem>>())
           .ToList();
 
@@ -225,7 +224,7 @@ public partial class FamilyPage : ContentPage
     const int ItemsPerRow = 2;
 
     base.OnSizeAllocated(width, height);
-    _PersonItemMinimalWidth = (int)(width * PercentageOfWidth / ItemsPerRow);
+    _PersonItemMinimalWidth = width * PercentageOfWidth / ItemsPerRow;
 
     OnPropertyChanged(nameof(PersonItemMinimalWidth));
   }
