@@ -15,6 +15,7 @@ namespace GT4.UI.Pages;
 [QueryProperty(nameof(PersonInfo), "PersonInfo")]
 public partial class PersonPage : ContentPage
 {
+  private readonly Stack<Person> _PersonBackNavigationStack = [];
   private readonly IServiceProvider _ServiceProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly IRelationshipTypeFormatter _RelationshipTypeFormatter;
@@ -43,6 +44,67 @@ public partial class PersonPage : ContentPage
   public PersonPage()
     : this(ServiceBuilder.DefaultServices)
   {
+  }
+
+  public void ShowPersonInfo(Person person)
+  {
+    using var backgroundWorker = new BackgroundWorker();
+    backgroundWorker.DoWork += async (object? _, DoWorkEventArgs args) =>
+    {
+      var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      var project = _CurrentProjectProvider.Project;
+      var personFullInfo = await project.PersonManager.GetPersonFullInfoAsync(person, token);
+      var siblings = await _CurrentProjectProvider
+        .Project
+        .PersonManager
+        .GetSiblings(personFullInfo, token);
+
+      args.Result = (personFullInfo, siblings);
+    };
+    backgroundWorker.RunWorkerCompleted += async (object? _, RunWorkerCompletedEventArgs args) =>
+    {
+      if (args.Error is not null)
+      {
+        await PageAlert.ShowError(args.Error);
+        await Shell.Current.GoToAsync("..", true);
+        return;
+      }
+      if (args.Cancelled || args.Result is null)
+      {
+        await PageAlert.ShowConfirmation("Operation cancelled");
+        await Shell.Current.GoToAsync("..", true);
+        return;
+      }
+
+      var (personFullInfo, siblings) = ((PersonFullInfo, Siblings))args.Result;
+      _PersonFullInfo = personFullInfo;
+      _Relatives.Clear();
+
+      void Add(IEnumerable<RelativeInfo> relatives)
+      {
+        foreach (var relative in relatives.OrderBy(r => r.BiologicalSex))
+        {
+          var relativeInfoItem = new RelativeInfoItem(
+            _PersonFullInfo.BirthDate, relative, _DateFormatter, _RelationshipTypeFormatter, _NameFormatter);
+          _Relatives.Add(relativeInfoItem);
+        }
+      }
+
+      Add(_PersonFullInfo.RelativeInfos.Where(r => r.Type == RelationshipType.Spose));
+      Add(PersonManager.Parent(_PersonFullInfo));
+      Add(PersonManager.AdoptiveParent(personFullInfo));
+      Add(siblings.Native);
+      Add(siblings.ByFather);
+      Add(siblings.ByMother);
+      Add(siblings.Step);
+      Add(siblings.Adoptive);
+      Add(PersonManager.Children(personFullInfo));
+      Add(PersonManager.AdoptiveChildren(personFullInfo));
+
+      Utils.RefreshView(this);
+    };
+
+    backgroundWorker.RunWorkerAsync();
   }
 
   public ICommand PageCommand => _PageCommand;
@@ -82,66 +144,19 @@ public partial class PersonPage : ContentPage
 
   public PersonInfo PersonInfo
   {
-    set
+    set => ShowPersonInfo(value);
+  }
+
+  protected override bool OnBackButtonPressed()
+  {
+    if (_PersonBackNavigationStack.Count > 0)
     {
-      using var backgroundWorker = new BackgroundWorker();
-      backgroundWorker.DoWork += async (object? _, DoWorkEventArgs args) =>
-      {
-        var token = _CancellationTokenProvider.CreateDbCancellationToken();
-        var project = _CurrentProjectProvider.Project;
-        var person = await project.PersonManager.GetPersonFullInfoAsync(value, token);
-        var siblings = await _CurrentProjectProvider
-          .Project
-          .PersonManager
-          .GetSiblings(person, token);
-
-        args.Result = (person, siblings);
-      };
-      backgroundWorker.RunWorkerCompleted += async (object? _, RunWorkerCompletedEventArgs args) =>
-      {
-        if (args.Error is not null)
-        {
-          await PageAlert.ShowError(args.Error);
-          await Shell.Current.GoToAsync("..", true);
-          return;
-        }
-        if (args.Cancelled || args.Result is null)
-        {
-          await PageAlert.ShowConfirmation("Operation cancelled");
-          await Shell.Current.GoToAsync("..", true);
-          return;
-        }
-
-        var (person, siblings) = ((PersonFullInfo, Siblings))args.Result;
-        _PersonFullInfo = person;
-        _Relatives.Clear();
-
-        void Add(IEnumerable<RelativeInfo> relatives)
-        {
-          foreach (var relative in relatives.OrderBy(r => r.BiologicalSex))
-          {
-            var relativeInfoItem = new RelativeInfoItem(
-              _PersonFullInfo.BirthDate, relative, _DateFormatter, _RelationshipTypeFormatter, _NameFormatter);
-            _Relatives.Add(relativeInfoItem);
-          }
-        }
-
-        Add(_PersonFullInfo.RelativeInfos.Where(r => r.Type == RelationshipType.Spose));
-        Add(PersonManager.Parent(_PersonFullInfo));
-        Add(PersonManager.AdoptiveParent(person));
-        Add(siblings.Native);
-        Add(siblings.ByFather);
-        Add(siblings.ByMother);
-        Add(siblings.Step);
-        Add(siblings.Adoptive);
-        Add(PersonManager.Children(person));
-        Add(PersonManager.AdoptiveChildren(person));
-
-        Utils.RefreshView(this);
-      };
-
-      backgroundWorker.RunWorkerAsync();
+      var person = _PersonBackNavigationStack.Pop();
+      var routeName = GetRoute(person);
+      ShowPersonInfo(person);
     }
+
+    return base.OnBackButtonPressed();
   }
 
   private async void OnPageCommand(object obj)
@@ -157,7 +172,11 @@ public partial class PersonPage : ContentPage
         PersonInfo = _PersonFullInfo;
         break;
       case RelativeInfoItem relativeInfoItem:
-        await Shell.Current.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { { "PersonInfo", relativeInfoItem.Info } });
+        var nextPerson = ToPerson(relativeInfoItem.Info);
+        var routeName = GetRoute(nextPerson);
+        RegisterRoute(routeName, nextPerson);
+        _ = Shell.Current.GoToAsync(routeName);
+        _PersonBackNavigationStack.Push(ToPerson(_PersonFullInfo));
         break;
     }
   }
@@ -198,5 +217,56 @@ public partial class PersonPage : ContentPage
       BiologicalSex.Female => ImageUtils.ImageFromRawResource("female_stub.png"),
       _ => ImageUtils.ImageFromRawResource("project_icon.png")
     };
+  }
+
+  private static Person ToPerson(Person person)
+  {
+    var ret = new Person(
+      Id : person.Id, 
+      BirthDate: person.BirthDate, 
+      DeathDate: person.DeathDate, 
+      BiologicalSex: person.BiologicalSex);
+    return ret;
+  }
+
+  private static string GetRoute(Person person)
+  {
+    const string pidPrefix = "pid";
+    var newRoute = Routing.FormatRoute([pidPrefix, $"{person.Id}"]);
+    return newRoute;
+  }
+
+  private void RegisterRoute(string routeName, Person person)
+  {
+    Routing.UnRegisterRoute(routeName);
+    Routing.RegisterRoute(routeName, new PersonPageRouteFactory(this, person));
+  }
+
+  class PersonPageRouteFactory : RouteFactory
+  {
+    private readonly WeakReference<PersonPage> _PersonPage;
+    private readonly Person _Person;
+
+    public PersonPageRouteFactory(PersonPage personPage, Person person)
+    {
+      _PersonPage = new(personPage);
+      _Person = person;
+    }
+
+    public override Element GetOrCreate()
+    {
+      if (_PersonPage.TryGetTarget(out var personPage))
+      {
+        personPage.ShowPersonInfo(_Person);
+        return personPage;
+      }
+
+      throw new ApplicationException("Unable to get PersonPage");
+    }
+
+    public override Element GetOrCreate(IServiceProvider services)
+    {
+      return GetOrCreate();
+    }
   }
 }
