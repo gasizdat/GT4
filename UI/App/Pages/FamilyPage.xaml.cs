@@ -186,7 +186,7 @@ public partial class FamilyPage : ContentPage
 
   private async void OnOpenPerson(PersonInfoItem familyMember)
   {
-    await Shell.Current.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { { "PersonInfo", familyMember.Info } });
+    await Shell.Current.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { ["PersonInfo"] = familyMember.Info });
   }
 
   private async void OnMenuItemCommand(object? parameter)

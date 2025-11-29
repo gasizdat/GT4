@@ -167,12 +167,7 @@ public partial class ProjectPage : ContentPage
         OnPropertyChanged(nameof(Families));
         break;
       case FamilyInfoItem item:
-        await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { { "FamilyName", item.Info } });
-        // TODO not so good approach
-        if (sender is SelectableItemsView view)
-        {
-          view.SelectedItem = null;
-        }
+        await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = item.Info });
         break;
     }
   }
@@ -206,7 +201,7 @@ public partial class ProjectPage : ContentPage
     }
     finally
     {
-      OnPropertyChanged(nameof(Families));
+      Utils.RefreshView(this);
     }
   }
 
@@ -218,7 +213,7 @@ public partial class ProjectPage : ContentPage
     if (projectRevision != _ProjectRevision)
     {
       _ProjectRevision = projectRevision;
-      OnPropertyChanged(nameof(Families));
+      Utils.RefreshView(this);
     }
   }
 }
