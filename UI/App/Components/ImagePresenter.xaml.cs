@@ -1,5 +1,3 @@
-using GT4.Core.Project.Dto;
-
 namespace GT4.UI.Components;
 
 public partial class ImagePresenter : ContentView
@@ -70,7 +68,7 @@ public partial class ImagePresenter : ContentView
 
       if (i < ImageSources.Length)
       {
-        _Images[i] = ImageUtils.ImageFromBytes(ImageSources[i].Content);
+        _Images[i] = ImageUtils.ImageFromBytes(ImageSources[i]);
         _ImageOpacities[0] = _MaxOpacity;
       }
       else
@@ -145,7 +143,7 @@ public partial class ImagePresenter : ContentView
       {
         var sourceIndex = (_CurrentIndex + 1) % ImageSources.Length;
         _ImageOpacities[i] = _MinOpacity;
-        _Images[i] = ImageUtils.ImageFromBytes(ImageSources[sourceIndex].Content);
+        _Images[i] = ImageUtils.ImageFromBytes(ImageSources[sourceIndex]);
 
         OnPropertyChanged(_ImageProperties[i]);
       }
@@ -189,8 +187,8 @@ public partial class ImagePresenter : ContentView
       images.Add(ImageUtils.ImageFromBytes([]));
     }
 
-    _ImageOpacities = [.. opacities];
-    _Images = [.. images];
+    _ImageOpacities = [..opacities];
+    _Images = [..images];
     Loaded += (_, _) =>
     {
       Init();
@@ -228,9 +226,9 @@ public partial class ImagePresenter : ContentView
 
   public static readonly BindableProperty ImageSourcesProperty = BindableProperty.Create(
     nameof(ImageSources),
-    typeof(Data[]),
+    typeof(byte[][]),
     typeof(ImagePresenter),
-    Array.Empty<Data>(),
+    Array.Empty<byte[]>(),
     BindingMode.OneWay,
     null,
     OnBindablePropertyChanged);
@@ -241,9 +239,9 @@ public partial class ImagePresenter : ContentView
     set => SetValue(ImageStyleProperty, value);
   }
 
-  public Data[] ImageSources
+  public byte[][] ImageSources
   {
-    get => (Data[]?)GetValue(ImageSourcesProperty) ?? [];
+    get => (byte[][]?)GetValue(ImageSourcesProperty) ?? [];
     set => SetValue(ImageSourcesProperty, value);
   }
 
