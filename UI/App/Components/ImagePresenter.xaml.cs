@@ -4,6 +4,7 @@ namespace GT4.UI.Components;
 
 public partial class ImagePresenter : ContentView
 {
+  private const int _UpdateTimerInterval = 100;
   private const double _MinOpacity = 0.0;
   private const double _MaxOpacity = 1.0;
   private const int _ActiveImages = 2;
@@ -60,17 +61,17 @@ public partial class ImagePresenter : ContentView
   {
     for (var i = 0; i < _ActiveImages; i++)
     {
+      _ImageOpacities[i] = _MinOpacity;
+
       if (i < ImageSources.Length)
       {
         _Images[i] = ImageUtils.ImageFromBytes(ImageSources[i].Content);
+        _ImageOpacities[0] = _MaxOpacity;
       }
       else
       {
         _Images[i] = ImageUtils.ImageFromBytes([]);
       }
-
-      _ImageOpacities[i] = _MinOpacity;
-      _ImageOpacities[0] = _MaxOpacity;
 
       OnPropertyChanged(_ImageProperties[i]);
       OnPropertyChanged(_ImageOpacityProperties[i]);
@@ -102,12 +103,15 @@ public partial class ImagePresenter : ContentView
     {
       UpdateStageTime();
       _CurrentState = State.StopFading;
+      return;
     }
 
     var activeIndex = _CurrentIndex % _ActiveImages;
+    var currentTime = CurrentStateTime;
+    var fadeOpacity = Math.Clamp(currentTime / ImageFadeTime, _MinOpacity, _MaxOpacity);
+    
     for (var i = 0; i < _ActiveImages; i++)
     {
-      var fadeOpacity = Math.Clamp(ImageFadeTime / CurrentStateTime, _MinOpacity, _MaxOpacity);
       if (i == activeIndex)
       {
         _ImageOpacities[i] = _MaxOpacity - fadeOpacity;
@@ -163,7 +167,7 @@ public partial class ImagePresenter : ContentView
   static ImagePresenter()
   {
     _Timer = Shell.Current.Dispatcher.CreateTimer();
-    _Timer.Interval = TimeSpan.FromMicroseconds(500);
+    _Timer.Interval = TimeSpan.FromMilliseconds(_UpdateTimerInterval);
     _Timer.IsRepeating = true;
     _Timer.Start();
   }
@@ -247,8 +251,8 @@ public partial class ImagePresenter : ContentView
   public ImageSource Image1 => _Images[0];
 
   public ImageSource Image2 => _Images[1];
-  
+
   public double ImageOpacity1 => _ImageOpacities[0];
-  
+
   public double ImageOpacity2 => _ImageOpacities[1];
 }

@@ -3,7 +3,7 @@
     x:Class="GT4.UI.Components.ImagePresenter"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-  x:Name="Root">
+    x:Name="Root">
   <Grid>
     <Image
         Opacity="{Binding ImageOpacity1, Source={x:Reference Root}}"
