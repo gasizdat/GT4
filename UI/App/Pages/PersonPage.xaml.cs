@@ -26,6 +26,7 @@ public partial class PersonPage : ContentPage
   private readonly ICommand _PageCommand;
   private readonly ObservableCollection<RelativeInfoItem> _Relatives = new();
   private PersonFullInfo _PersonFullInfo = PersonFullInfo.Empty;
+  private byte[][] _Photos = [];
 
   public PersonPage(IServiceProvider serviceProvider)
   {
@@ -58,8 +59,27 @@ public partial class PersonPage : ContentPage
         .Project
         .PersonManager
         .GetSiblings(personFullInfo, token);
+      byte[][] photos;
 
-      args.Result = (personFullInfo, siblings);
+      token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
+      if (personFullInfo.MainPhoto is null)
+      {
+        if (_PersonFullInfo is not null && _PersonFullInfo.AdditionalPhotos.Length != 0)
+        {
+          throw new ApplicationException("Person photos inconsistency");
+        }
+
+        photos = [await ImageUtils.ToBytesAsync(GetDefaultImage(), token) ?? []];
+      }
+      else
+      {
+        photos = [personFullInfo.MainPhoto.Content,
+                  .._PersonFullInfo
+                    .AdditionalPhotos
+                    .Select(photo => photo.Content)];
+      }
+
+      args.Result = (personFullInfo, siblings, photos);
     };
     backgroundWorker.RunWorkerCompleted += async (object? _, RunWorkerCompletedEventArgs args) =>
     {
@@ -76,8 +96,9 @@ public partial class PersonPage : ContentPage
         return;
       }
 
-      var (personFullInfo, siblings) = ((PersonFullInfo, Siblings))args.Result;
+      var (personFullInfo, siblings, photos) = ((PersonFullInfo, Siblings, byte[][]))args.Result;
       _PersonFullInfo = personFullInfo;
+      _Photos = photos;
       _Relatives.Clear();
 
       void Add(IEnumerable<RelativeInfo> relatives)
@@ -138,9 +159,7 @@ public partial class PersonPage : ContentPage
 
   public ICollection Relatives => _Relatives;
 
-  public ImageSource Photo => _PersonFullInfo?.MainPhoto is null
-    ? GetDefaultImage()
-    : ImageUtils.ImageFromBytes(_PersonFullInfo.MainPhoto.Content);
+  public byte[][] Photos => _Photos;
 
   public PersonInfo PersonInfo
   {
@@ -222,9 +241,9 @@ public partial class PersonPage : ContentPage
   private static Person ToPerson(Person person)
   {
     var ret = new Person(
-      Id : person.Id, 
-      BirthDate: person.BirthDate, 
-      DeathDate: person.DeathDate, 
+      Id: person.Id,
+      BirthDate: person.BirthDate,
+      DeathDate: person.DeathDate,
       BiologicalSex: person.BiologicalSex);
     return ret;
   }

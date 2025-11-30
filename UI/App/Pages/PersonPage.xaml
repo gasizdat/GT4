@@ -126,11 +126,11 @@
             VerticalOptions="Start"
             Wrap="Wrap">
 
-          <Image
+          <components:ImagePresenter
               Margin="{Thickness Right={StaticResource PageContentSpacing}}"
               FlexLayout.Grow="0.7"
               FlexLayout.Order="1"
-              Source="{Binding Photo, Source={x:Reference Root}}"
+              ImageSources="{Binding Photos, Source={x:Reference Root}}"
               Style="{StaticResource PhotoStyle}"
               VerticalOptions="Start" />
 
