@@ -125,7 +125,7 @@ public class PersonManager : TableBase
     if (familyName is not null)
     {
       var requiredFamilyNames = await Document.FamilyManager.GetRequiredNames(familyName, personFullInfo, token);
-      personFullInfo = personFullInfo with { Names = personFullInfo.Names.Concat(requiredFamilyNames).ToArray() };
+      personFullInfo = personFullInfo with { Names = [..personFullInfo.Names, ..requiredFamilyNames] };
     }
     var person = await Document.Persons.AddPersonAsync(personFullInfo, token);
 

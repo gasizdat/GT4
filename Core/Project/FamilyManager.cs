@@ -24,7 +24,7 @@ public class FamilyManager : TableBase
     }
     if (person.Names?.Contains(familyName) == false)
     {
-      return person with { Names = (person.Names ?? []).Concat([familyName]).ToArray() };
+      return person with { Names = [..person.Names, familyName] };
     }
 
     return person;

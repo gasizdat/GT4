@@ -160,7 +160,7 @@ internal class ProjectList : IProjectList
 
     return _Storage.ProjectsRoot with
     {
-      Path = _Storage.ProjectsRoot.Path.Concat([directoryName]).ToArray()
+      Path = [.._Storage.ProjectsRoot.Path, directoryName]
     };
   }
 }

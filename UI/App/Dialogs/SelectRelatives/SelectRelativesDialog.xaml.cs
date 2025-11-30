@@ -100,7 +100,7 @@ public partial class SelectRelativesDialog : ContentPage
       .Select(sex => new BiologicalSexItem(sex, biologicalSexFormatter))
       .ToArray();
     _BiologicalSex = _BiologicalSexes.SingleOrDefault(i => i.Info == biologicalSex, _BiologicalSexes[2]);
-    _ExistingRelativeIds = [.. existingRelatives.Select(r => r.Id)];
+    _ExistingRelativeIds = [..existingRelatives.Select(r => r.Id)];
     _RelationshipTypes = new[] {
         RelationshipType.Parent,
         RelationshipType.Child,
