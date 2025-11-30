@@ -4,7 +4,7 @@ namespace GT4.UI.Components;
 
 public partial class ImagePresenter : ContentView
 {
-  private const int _UpdateTimerInterval = 100;
+  private const int _RefreshFPS = 30;
   private const double _MinOpacity = 0.0;
   private const double _MaxOpacity = 1.0;
   private const int _ActiveImages = 2;
@@ -30,6 +30,11 @@ public partial class ImagePresenter : ContentView
 
   private void Update()
   {
+    if (!IsVisible)
+    {
+      return;
+    }
+
     switch (_CurrentState)
     {
       case State.Init:
@@ -77,6 +82,7 @@ public partial class ImagePresenter : ContentView
       OnPropertyChanged(_ImageOpacityProperties[i]);
     }
 
+    _CurrentIndex = 0;
     if (ImageSources.Length > 1)
     {
       UpdateStageTime();
@@ -109,7 +115,7 @@ public partial class ImagePresenter : ContentView
     var activeIndex = _CurrentIndex % _ActiveImages;
     var currentTime = CurrentStateTime;
     var fadeOpacity = Math.Clamp(currentTime / ImageFadeTime, _MinOpacity, _MaxOpacity);
-    
+
     for (var i = 0; i < _ActiveImages; i++)
     {
       if (i == activeIndex)
@@ -166,8 +172,9 @@ public partial class ImagePresenter : ContentView
 
   static ImagePresenter()
   {
+    const double refreshInterval = 1.0 / _RefreshFPS;
     _Timer = Shell.Current.Dispatcher.CreateTimer();
-    _Timer.Interval = TimeSpan.FromMilliseconds(_UpdateTimerInterval);
+    _Timer.Interval = TimeSpan.FromSeconds(refreshInterval);
     _Timer.IsRepeating = true;
     _Timer.Start();
   }
@@ -184,7 +191,11 @@ public partial class ImagePresenter : ContentView
 
     _ImageOpacities = [.. opacities];
     _Images = [.. images];
-    Loaded += (_, _) => _Timer.Tick += TimerTick;
+    Loaded += (_, _) =>
+    {
+      Init();
+      _Timer.Tick += TimerTick;
+    };
     Unloaded += (_, _) => _Timer.Tick -= TimerTick;
 
     InitializeComponent();
