@@ -52,7 +52,7 @@ public partial class PersonPage : ContentPage
     using var backgroundWorker = new BackgroundWorker();
     backgroundWorker.DoWork += async (object? _, DoWorkEventArgs args) =>
     {
-      var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
       var project = _CurrentProjectProvider.Project;
       var personFullInfo = await project.PersonManager.GetPersonFullInfoAsync(person, token);
       var siblings = await _CurrentProjectProvider
@@ -61,20 +61,23 @@ public partial class PersonPage : ContentPage
         .GetSiblings(personFullInfo, token);
       byte[][] photos;
 
-      token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
       if (personFullInfo.MainPhoto is null)
       {
-        if (_PersonFullInfo is not null && _PersonFullInfo.AdditionalPhotos.Length != 0)
+        if (personFullInfo.AdditionalPhotos.Length != 0)
         {
           throw new ApplicationException("Person photos inconsistency");
         }
 
-        photos = [await ImageUtils.ToBytesAsync(GetDefaultImage(), token) ?? []];
+        using var readResourceToken = _CancellationTokenProvider.CreateShortOperationCancellationToken();
+        var defaultImageResourceName = GetDefaultImageResourceName(personFullInfo.BiologicalSex);
+        // TODO for some reason await stops this DoWork handler ahead of time and RunWorkerCompleted handler is preliminary invoked.
+        var defaultPhoto = ImageUtils.ToBytesAsync(defaultImageResourceName, readResourceToken).Result ?? [];
+        photos = [defaultPhoto];
       }
       else
       {
         photos = [personFullInfo.MainPhoto.Content,
-                  .._PersonFullInfo
+                  ..personFullInfo
                     .AdditionalPhotos
                     .Select(photo => photo.Content)];
       }
@@ -228,15 +231,13 @@ public partial class PersonPage : ContentPage
     }
   }
 
-  private ImageSource GetDefaultImage()
-  {
-    return _PersonFullInfo.BiologicalSex switch
+  private static string GetDefaultImageResourceName(BiologicalSex biologicalSex)=>
+    biologicalSex switch
     {
-      BiologicalSex.Male => ImageUtils.ImageFromRawResource("male_stub.png"),
-      BiologicalSex.Female => ImageUtils.ImageFromRawResource("female_stub.png"),
-      _ => ImageUtils.ImageFromRawResource("project_icon.png")
+      BiologicalSex.Male => "male_stub.png",
+      BiologicalSex.Female => "female_stub.png",
+      _ => "project_icon.png"
     };
-  }
 
   private static Person ToPerson(Person person)
   {

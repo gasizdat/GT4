@@ -131,7 +131,7 @@
               FlexLayout.Grow="0.7"
               FlexLayout.Order="1"
               ImageSources="{Binding Photos, Source={x:Reference Root}}"
-              Style="{StaticResource PhotoStyle}"
+              ImageStyle="{StaticResource PhotoStyle}"
               VerticalOptions="Start" />
 
           <CollectionView
