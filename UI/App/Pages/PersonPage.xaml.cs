@@ -176,6 +176,7 @@ public partial class PersonPage : ContentPage
       var person = _PersonBackNavigationStack.Pop();
       var routeName = GetRoute(person);
       ShowPersonInfo(person);
+      return false;
     }
 
     return base.OnBackButtonPressed();
