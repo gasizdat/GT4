@@ -211,8 +211,6 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       return;
     }
 
-    var token = _CancellationTokenProvider.CreateDbCancellationToken();
-
     // We do not change the person photo, so we can reuse photo.Info rather than using photo.ToDataAsync()
     var photos =
       _Photos
@@ -330,7 +328,6 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     IEnumerable<Stream>? streams = null;
     try
     {
-      var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
       var filesContent = results.Select(file => (Stream: file.OpenReadAsync(), MimeType: file.ContentType));
       streams = await Task.WhenAll(filesContent.Select(file => file.Stream));
       var photoAssets = filesContent.Select(content =>

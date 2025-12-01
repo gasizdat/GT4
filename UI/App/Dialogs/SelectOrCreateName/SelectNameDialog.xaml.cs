@@ -48,16 +48,23 @@ public partial class SelectNameDialog : ContentPage
 
   public ICollection<NameTypeInfoItem> NameTypes => _NameTypes;
 
-  public ICollection<NameInfoItem> Names =>
-    _CurrentProjectProvider
-    .Project
-    .Names
-    .GetNamesByTypeAsync(CurrentNameType.Type | _NameDeclension, _CancellationTokenProvider.CreateDbCancellationToken())
-    .Result
-    .Select(name => new NameInfoItem(name, _NameTypeFormatter))
-    .OrderBy(name => name, _NameComparer)
-    .ToArray();
+  public ICollection<NameInfoItem> Names
+  {
+    get
+    {
+      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      var ret = _CurrentProjectProvider
+        .Project
+        .Names
+        .GetNamesByTypeAsync(CurrentNameType.Type | _NameDeclension, token)
+        .Result
+        .Select(name => new NameInfoItem(name, _NameTypeFormatter))
+        .OrderBy(name => name, _NameComparer)
+        .ToArray();
 
+      return ret;
+    }
+  }
   public string DialogButtonName => _NotReady ? UIStrings.BtnNameCancel : UIStrings.BtnNameOk;
 
   public Task<Name?> Name => _Info.Task;

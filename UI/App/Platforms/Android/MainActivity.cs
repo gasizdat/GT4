@@ -84,7 +84,7 @@ namespace GT4
           using var input = ContentResolver?.OpenInputStream(uri) ??
             throw new ApplicationException($"Unable to open provided URI {uri}");
 
-          var token = _Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
+          using var token = _Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
           var projectInfo = await _Services.GetRequiredService<IProjectList>().ExportAsync(input, token);
         };
         backgroundWorker.RunWorkerCompleted += async (object? _, RunWorkerCompletedEventArgs args) =>

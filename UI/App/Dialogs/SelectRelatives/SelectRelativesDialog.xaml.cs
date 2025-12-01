@@ -151,7 +151,7 @@ public partial class SelectRelativesDialog : ContentPage
         var worker = new BackgroundWorker();
         worker.DoWork += async (object? _, DoWorkEventArgs args) =>
         {
-          var token = _CancellationTokenProvider.CreateDbCancellationToken();
+          using var token = _CancellationTokenProvider.CreateDbCancellationToken();
           var persons = await _CurrentProjectProvider
             .Project
             .PersonManager

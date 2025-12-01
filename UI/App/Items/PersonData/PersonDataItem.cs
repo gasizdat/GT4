@@ -49,7 +49,7 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
         var worker = new BackgroundWorker();
         worker.DoWork += async (object? _, DoWorkEventArgs args) =>
         {
-          var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
+          using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
           args.Result = await _DataConverter.ToObjectAsync(Info, token);
         };
         worker.RunWorkerCompleted += (object? _, RunWorkerCompletedEventArgs args) =>
@@ -81,7 +81,8 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
 
   public async Task<Data?> ToDataAsync()
   {
-    var ret = await _DataConverter.FromObjectAsync(_Content, _CancellationTokenProvider.CreateShortOperationCancellationToken());
+    using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
+    var ret = await _DataConverter.FromObjectAsync(_Content, token);
     if (ret is not null)
     {
       var id = _IsModified ? TableBase.NonCommitedId : Info.Id;

@@ -88,7 +88,7 @@ public partial class App : Application
 
   private async void SaveOnDeactivationAsync(object? sender, EventArgs e)
   {
-    var token = _Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
+    using var token = _Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
     var projectProvider = _Services.GetRequiredService<ICurrentProjectProvider>();
     if (projectProvider.HasCurrentProject)
     {
@@ -98,7 +98,7 @@ public partial class App : Application
 
   private async void SaveOnDisposeAsync(object? sender, EventArgs e)
   {
-    var token = _Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
+    using var token = _Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
     var projectProvider = _Services.GetRequiredService<ICurrentProjectProvider>();
     if (projectProvider.HasCurrentProject)
     {
