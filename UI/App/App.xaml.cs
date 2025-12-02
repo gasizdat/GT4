@@ -15,7 +15,7 @@ public partial class App : Application
     _Services = serviceProvider;
     InitializeComponent();
 
-    AppDomain.CurrentDomain.UnhandledException += async (object sender, UnhandledExceptionEventArgs e) =>
+    AppDomain.CurrentDomain.UnhandledException += (object sender, UnhandledExceptionEventArgs e) =>
     {
       string errorMessage = e.ExceptionObject switch
       {
