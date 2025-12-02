@@ -125,8 +125,6 @@ public partial class PersonPage : ContentPage
 
         using var readResourceToken = _CancellationTokenProvider.CreateShortOperationCancellationToken();
         var defaultImageResourceName = GetDefaultImageResourceName(personFullInfo.BiologicalSex);
-        // TODO for some reason await stops this DoWork handler ahead of time and RunWorkerCompleted handler is preliminary invoked.
-        //var defaultPhoto = ImageUtils.ToBytesAsync(defaultImageResourceName, readResourceToken).Result ?? [];
         var defaultPhoto = await ImageUtils.ToBytesAsync(defaultImageResourceName, readResourceToken) ?? [];
         photos = [defaultPhoto];
       }
