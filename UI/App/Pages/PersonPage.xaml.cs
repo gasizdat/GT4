@@ -49,86 +49,7 @@ public partial class PersonPage : ContentPage
 
   public void ShowPersonInfo(Person person)
   {
-    using var backgroundWorker = new BackgroundWorker();
-    backgroundWorker.DoWork += async (object? _, DoWorkEventArgs args) =>
-    {
-      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-      var project = _CurrentProjectProvider.Project;
-      var personFullInfo = await project.PersonManager.GetPersonFullInfoAsync(person, token);
-      var siblings = await _CurrentProjectProvider
-        .Project
-        .PersonManager
-        .GetSiblings(personFullInfo, token);
-      byte[][] photos;
-
-      if (personFullInfo.MainPhoto is null)
-      {
-        if (personFullInfo.AdditionalPhotos.Length != 0)
-        {
-          throw new ApplicationException("Person photos inconsistency");
-        }
-
-        using var readResourceToken = _CancellationTokenProvider.CreateShortOperationCancellationToken();
-        var defaultImageResourceName = GetDefaultImageResourceName(personFullInfo.BiologicalSex);
-        // TODO for some reason await stops this DoWork handler ahead of time and RunWorkerCompleted handler is preliminary invoked.
-        var defaultPhoto = ImageUtils.ToBytesAsync(defaultImageResourceName, readResourceToken).Result ?? [];
-        photos = [defaultPhoto];
-      }
-      else
-      {
-        photos = [personFullInfo.MainPhoto.Content,
-                  ..personFullInfo
-                    .AdditionalPhotos
-                    .Select(photo => photo.Content)];
-      }
-
-      args.Result = (personFullInfo, siblings, photos);
-    };
-    backgroundWorker.RunWorkerCompleted += async (object? _, RunWorkerCompletedEventArgs args) =>
-    {
-      if (args.Error is not null)
-      {
-        await PageAlert.ShowError(args.Error);
-        await Shell.Current.GoToAsync("..", true);
-        return;
-      }
-      if (args.Cancelled || args.Result is null)
-      {
-        await PageAlert.ShowConfirmation("Operation cancelled");
-        await Shell.Current.GoToAsync("..", true);
-        return;
-      }
-
-      var (personFullInfo, siblings, photos) = ((PersonFullInfo, Siblings, byte[][]))args.Result;
-      _PersonFullInfo = personFullInfo;
-      _Photos = photos;
-      _Relatives.Clear();
-
-      void Add(IEnumerable<RelativeInfo> relatives)
-      {
-        foreach (var relative in relatives.OrderBy(r => r.BiologicalSex))
-        {
-          var relativeInfoItem = new RelativeInfoItem(
-            _PersonFullInfo.BirthDate, relative, _DateFormatter, _RelationshipTypeFormatter, _NameFormatter);
-          _Relatives.Add(relativeInfoItem);
-        }
-      }
-
-      Add(_PersonFullInfo.RelativeInfos.Where(r => r.Type == RelationshipType.Spose));
-      Add(PersonManager.Parent(_PersonFullInfo));
-      Add(PersonManager.AdoptiveParent(personFullInfo));
-      Add(siblings.Native);
-      Add(siblings.ByFather);
-      Add(siblings.ByMother);
-      Add(siblings.Step);
-      Add(siblings.Adoptive);
-      Add(PersonManager.Children(personFullInfo));
-      Add(PersonManager.AdoptiveChildren(personFullInfo));
-
-      Utils.RefreshView(this);
-    };
-
-    backgroundWorker.RunWorkerAsync();
+    Task.Run(async () => await GetPersonDataAsync(person));
   }
 
   public ICommand PageCommand => _PageCommand;
@@ -182,6 +103,80 @@ public partial class PersonPage : ContentPage
     return base.OnBackButtonPressed();
   }
 
+  private async Task GetPersonDataAsync(Person person)
+  {
+    try
+    {
+      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      var project = _CurrentProjectProvider.Project;
+      var personFullInfo = await project.PersonManager.GetPersonFullInfoAsync(person, token);
+      var siblings = await _CurrentProjectProvider
+        .Project
+        .PersonManager
+        .GetSiblings(personFullInfo, token);
+      byte[][] photos;
+
+      if (personFullInfo.MainPhoto is null)
+      {
+        if (personFullInfo.AdditionalPhotos.Length != 0)
+        {
+          throw new ApplicationException("Person photos inconsistency");
+        }
+
+        using var readResourceToken = _CancellationTokenProvider.CreateShortOperationCancellationToken();
+        var defaultImageResourceName = GetDefaultImageResourceName(personFullInfo.BiologicalSex);
+        // TODO for some reason await stops this DoWork handler ahead of time and RunWorkerCompleted handler is preliminary invoked.
+        //var defaultPhoto = ImageUtils.ToBytesAsync(defaultImageResourceName, readResourceToken).Result ?? [];
+        var defaultPhoto = await ImageUtils.ToBytesAsync(defaultImageResourceName, readResourceToken) ?? [];
+        photos = [defaultPhoto];
+      }
+      else
+      {
+        photos = [personFullInfo.MainPhoto.Content,
+                  ..personFullInfo
+                    .AdditionalPhotos
+                    .Select(photo => photo.Content)];
+      }
+      _ = MainThread.InvokeOnMainThreadAsync(() => UpdateUI(personFullInfo, siblings, photos));
+    }
+    catch (Exception ex)
+    {
+      await PageAlert.ShowError(ex);
+      await Shell.Current.GoToAsync("..", true);
+      return;
+    }
+  }
+
+  public void UpdateUI(PersonFullInfo personFullInfo, Siblings siblings, byte[][] photos)
+  {
+    _PersonFullInfo = personFullInfo;
+    _Photos = photos;
+    _Relatives.Clear();
+
+    void Add(IEnumerable<RelativeInfo> relatives)
+    {
+      foreach (var relative in relatives.OrderBy(r => r.BiologicalSex))
+      {
+        var relativeInfoItem = new RelativeInfoItem(
+          _PersonFullInfo.BirthDate, relative, _DateFormatter, _RelationshipTypeFormatter, _NameFormatter);
+        _Relatives.Add(relativeInfoItem);
+      }
+    }
+
+    Add(_PersonFullInfo.RelativeInfos.Where(r => r.Type == RelationshipType.Spose));
+    Add(PersonManager.Parent(_PersonFullInfo));
+    Add(PersonManager.AdoptiveParent(personFullInfo));
+    Add(siblings.Native);
+    Add(siblings.ByFather);
+    Add(siblings.ByMother);
+    Add(siblings.Step);
+    Add(siblings.Adoptive);
+    Add(PersonManager.Children(personFullInfo));
+    Add(PersonManager.AdoptiveChildren(personFullInfo));
+
+    Utils.RefreshView(this);
+  }
+
   private async void OnPageCommand(object obj)
   {
     switch (obj)
@@ -232,7 +227,7 @@ public partial class PersonPage : ContentPage
     }
   }
 
-  private static string GetDefaultImageResourceName(BiologicalSex biologicalSex)=>
+  private static string GetDefaultImageResourceName(BiologicalSex biologicalSex) =>
     biologicalSex switch
     {
       BiologicalSex.Male => "male_stub.png",
