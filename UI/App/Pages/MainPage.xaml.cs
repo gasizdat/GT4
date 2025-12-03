@@ -1,11 +1,14 @@
 ﻿using System.Collections;
 using System.Globalization;
+using System.Reflection;
 using System.Windows.Input;
 
 namespace GT4.UI.Pages;
 
 public partial class MainPage : ContentPage
 {
+  public record class Language(string Code, string Name);
+
   private static readonly Language _DefaultLanguage = new Language("en", "English");
   private static readonly List<Language> _Languages = new()
   {
@@ -40,6 +43,7 @@ public partial class MainPage : ContentPage
   );
 
   public IList Languages => _Languages;
+
   public Language SelectedLanguage
   {
     get => _SelectedLanguage;
@@ -57,5 +61,15 @@ public partial class MainPage : ContentPage
       app?.MainPage?.Dispatcher.Dispatch(() => app.MainPage = new AppShell());
     }
   }
-  public record class Language(string Code, string Name);
+
+  public string AppVersion
+  {
+    get
+    {
+      var assembly = Assembly.GetExecutingAssembly();
+      var version = assembly.GetName().Version;
+
+      return $"({version?.ToString() ?? "??"})";
+    }
+  }
 }

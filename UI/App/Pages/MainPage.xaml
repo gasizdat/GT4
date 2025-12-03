@@ -37,6 +37,12 @@
             Style="{StaticResource PageSubtitle}"
             Text="{x:Static resources:UIStrings.AppGeneralWelcomeTitle}" />
 
+        <Label
+            HorizontalOptions="Fill"
+            HorizontalTextAlignment="Center"
+            Style="{StaticResource FieldValue}"
+            Text="{Binding AppVersion, Source={x:Reference Root}}" />
+
         <!--  TODO: Temporary code for testing — to be removed before production.  -->
         <VerticalStackLayout IsVisible="Hidden">
           <Button

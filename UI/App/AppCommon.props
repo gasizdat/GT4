@@ -26,34 +26,59 @@
 
     <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
   </PropertyGroup>
-  
-	<ItemGroup>
-		<!-- App Icon -->
-		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#1E4437" />
 
-		<!-- Splash Screen -->
-		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#1E4437" BaseSize="128,128" />
+  <!-- Read & increment build number -->
+  <Target Name="IncrementBuildNumber" BeforeTargets="PrepareForBuild">
+    <ReadLinesFromFile File="$(SolutionDir)buildnumber.txt">
+      <Output TaskParameter="Lines" ItemName="BuildNumberFileContent" />
+    </ReadLinesFromFile>
 
-		<!-- Images -->
-		<MauiImage Include="Resources\Images\*" />
+    <PropertyGroup>
+      <ExistingBuildNumber>%(BuildNumberFileContent.Identity)</ExistingBuildNumber>
+      <ExistingBuildNumber Condition="'$(ExistingBuildNumber)'==''">0</ExistingBuildNumber>
+      <BuildNumber>$([MSBuild]::Add($(ExistingBuildNumber), 1))</BuildNumber>
+      <VersionPrefix>4.0.0</VersionPrefix>
+      <Version>$(VersionPrefix).$(BuildNumber)</Version>
+      
+      <AssemblyVersion>$(Version)</AssemblyVersion>
+      <FileVersion>$(Version)</FileVersion>
+      <InformationalVersion>$(Version)</InformationalVersion>
+      <ApplicationVersion>$(Version)</ApplicationVersion>
+      <BundleVersion>$(Version)</BundleVersion>
+      <VersionCode>$(BuildNumber)</VersionCode>
+    </PropertyGroup>
+    
+    <WriteLinesToFile File="$(SolutionDir)buildnumber.txt" Lines="$(BuildNumber)" Overwrite="true" />
+    <Message Text="Setup building Version: $(Version) (Code: $(VersionCode)) $(BeforeTargets)" Importance="high" />
+  </Target>
 
-		<!-- Custom Fonts -->
-		<MauiFont Include="Resources\Fonts\*" />
+  <ItemGroup>
+    <!-- App Icon -->
+    <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#1E4437" />
 
-		<!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
-		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
-	</ItemGroup>
+    <!-- Splash Screen -->
+    <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#1E4437" BaseSize="128,128" />
 
-	<ItemGroup>
-		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
-		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="$(MauiVersion)" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.1" />
-	</ItemGroup>
+    <!-- Images -->
+    <MauiImage Include="Resources\Images\*" />
 
-	<ItemGroup>
+    <!-- Custom Fonts -->
+    <MauiFont Include="Resources\Fonts\*" />
+
+    <!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
+    <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
+    <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="$(MauiVersion)" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Resources\GT4.UI.Resources.csproj" />
     <ProjectReference Include="..\..\Core\Utils\GT4.Core.Utils.csproj" />
     <ProjectReference Include="..\..\Core\Project\GT4.Core.Project.csproj" />
-	</ItemGroup>
+  </ItemGroup>
 
 </Project>
