@@ -100,7 +100,7 @@ public partial class SelectRelativesDialog : ContentPage
       .Select(sex => new BiologicalSexItem(sex, biologicalSexFormatter))
       .ToArray();
     _BiologicalSex = _BiologicalSexes.SingleOrDefault(i => i.Info == biologicalSex, _BiologicalSexes[2]);
-    _ExistingRelativeIds = [..existingRelatives.Select(r => r.Id)];
+    _ExistingRelativeIds = [.. existingRelatives.Select(r => r.Id)];
     _RelationshipTypes = new[] {
         RelationshipType.Parent,
         RelationshipType.Child,
@@ -146,36 +146,31 @@ public partial class SelectRelativesDialog : ContentPage
   {
     get
     {
-      if (_Persons.Count == 0 || _ProjectRevision != _CurrentProjectProvider.Project.ProjectRevision)
+      async Task AddPersonInfoItemsAsync()
       {
-        var worker = new BackgroundWorker();
-        worker.DoWork += async (object? _, DoWorkEventArgs args) =>
+        try
         {
           using var token = _CancellationTokenProvider.CreateDbCancellationToken();
           var persons = await _CurrentProjectProvider
             .Project
             .PersonManager
             .GetPersonInfosAsync(selectMainPhoto: false, token);
-          args.Result = persons
+          var items = persons
             .Where(person => !_ExistingRelativeIds.Contains(person.Id))
-            .ToArray();
-        };
-        worker.RunWorkerCompleted += (object? _, RunWorkerCompletedEventArgs args) =>
-        {
-          if (args.Error is not null)
-          {
-            PageAlert.ShowError(args.Error);
-            return;
-          }
-
-          var persons = args.Result as PersonInfo[];
-          var items = persons?
             .Select(personInfo => new PersonInfoItem(personInfo, _NameFormatter))
             .OrderBy(item => item, _PersonComparer);
-          _Persons.AddRange(items ?? Enumerable.Empty<PersonInfoItem>());
-          OnPropertyChanged(nameof(Persons));
-        };
-        worker.RunWorkerAsync();
+
+          MainThread.BeginInvokeOnMainThread(() => _Persons.AddRange(items));
+        }
+        catch (Exception ex)
+        {
+          await PageAlert.ShowError(ex);
+        }
+      }
+
+      if (_Persons.Count == 0 || _ProjectRevision != _CurrentProjectProvider.Project.ProjectRevision)
+      {
+        Task.Run(AddPersonInfoItemsAsync);
       }
 
       return _Persons.Items;
