@@ -86,7 +86,7 @@ public partial class PersonPage : ContentPage
   public byte[][] Photos => _Photos;
 
   public PersonInfo PersonInfo
-  {
+  { 
     set => ShowPersonInfo(value);
   }
 
@@ -97,9 +97,10 @@ public partial class PersonPage : ContentPage
       var person = _PersonBackNavigationStack.Pop();
       var routeName = GetRoute(person);
       ShowPersonInfo(person);
-      return false;
+      return true;
     }
 
+    _ = Shell.Current.GoToAsync("..", true);
     return base.OnBackButtonPressed();
   }
 

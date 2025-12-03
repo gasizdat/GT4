@@ -1,7 +1,7 @@
 namespace GT4.UI.Components;
 
 public partial class ImagePresenter : ContentView
-{
+{ 
   private const int _RefreshFPS = 30;
   private const double _MinOpacity = 0.0;
   private const double _MaxOpacity = 1.0;
@@ -28,7 +28,7 @@ public partial class ImagePresenter : ContentView
 
   private void Update()
   {
-    if (!IsVisible)
+    if (!IsVisible || !IsLoaded)
     {
       return;
     }
@@ -187,8 +187,8 @@ public partial class ImagePresenter : ContentView
       images.Add(ImageUtils.ImageFromBytes([]));
     }
 
-    _ImageOpacities = [..opacities];
-    _Images = [..images];
+    _ImageOpacities = [.. opacities];
+    _Images = [.. images];
     Loaded += (_, _) =>
     {
       Init();
