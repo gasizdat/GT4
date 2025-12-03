@@ -59,7 +59,7 @@ namespace GT4
       HandleOpenIntentIfAny(intent);
     }
 
-    private async Task ExportProjectAsync(Uri uri)
+    private async Task ExportProjectAsync(Android.Net.Uri uri)
     {
       try
       {
