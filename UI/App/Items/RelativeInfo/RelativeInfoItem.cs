@@ -41,6 +41,7 @@ public class RelativeInfoItem : PersonInfoItem
       RelationshipType.AdoptiveChild => true,
       RelationshipType.AdoptiveParent => true,
       RelationshipType.AdoptiveSibling => true,
+      RelationshipType.StepSibling => true,
       _ => false
     };
   public string Date => _DateFormatter.ToString(_RelationshipDate);
