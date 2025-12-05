@@ -7,7 +7,6 @@ using GT4.UI.Items;
 using GT4.UI.Resources;
 using System.Collections;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Windows.Input;
 
 namespace GT4.UI.Pages;
@@ -97,10 +96,9 @@ public partial class PersonPage : ContentPage
       var person = _PersonBackNavigationStack.Pop();
       var routeName = GetRoute(person);
       ShowPersonInfo(person);
-      return true;
+      return false;
     }
 
-    _ = Shell.Current.GoToAsync("..", true);
     return base.OnBackButtonPressed();
   }
 
