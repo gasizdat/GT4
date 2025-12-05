@@ -161,7 +161,7 @@ public class TableRelatives : TableBase
   public async Task UpdateRelativesAsync(Person person, Relative[] relatives, CancellationToken token)
   {
     var oldRelatives = await GetRelativesAsync(person, token);
-    var newRelativeIds = relatives.Select(r => r.Id).ToHashSet();
+    var newRelatives = relatives.ToDictionary(r => r.Id, r => r);
     var remainedRelatives = new HashSet<int>();
     var tasks = new List<Task>();
 
@@ -169,8 +169,7 @@ public class TableRelatives : TableBase
 
     foreach (var oldRelative in oldRelatives)
     {
-      var isRelativeRemained = newRelativeIds.Contains(oldRelative.Id);
-      if (isRelativeRemained)
+      if (newRelatives.TryGetValue(oldRelative.Id, out var newRelative) && newRelative.Date == oldRelative.Date)
       {
         remainedRelatives.Add(oldRelative.Id);
         continue;
