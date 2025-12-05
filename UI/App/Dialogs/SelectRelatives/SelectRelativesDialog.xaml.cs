@@ -5,7 +5,6 @@ using GT4.UI.Formatters;
 using GT4.UI.Items;
 using GT4.UI.Resources;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Windows.Input;
 
 namespace GT4.UI.Dialogs;
@@ -21,7 +20,7 @@ public partial class SelectRelativesDialog : ContentPage
   private readonly RelationshipTypeItem[] _RelationshipTypes;
   private readonly FilteredObservableCollection<PersonInfoItem> _Persons = new();
   private readonly ObservableCollection<object> _SelectedItems = [];
-  private readonly TaskCompletionSource<PersonInfoItem[]?> _Info = new(null);
+  private readonly TaskCompletionSource<RelativeInfo[]?> _Info = new(null);
   private readonly ICommand _DialogCommand;
   private readonly HashSet<int> _ExistingRelativeIds;
 
@@ -65,7 +64,11 @@ public partial class SelectRelativesDialog : ContentPage
         RelationshipDate = null;
         break;
       case string commandName when commandName == "SelectPersonCommand":
-        _Info.SetResult(_SelectedItems.Select(i => (PersonInfoItem)i).ToArray());
+        var relatives = _SelectedItems
+          .Select(i => ((PersonInfoItem)i).Info)
+          .Select(i => new RelativeInfo(i, _RelationshipType.Info, _RelationshipDate.HasValue ? _RelationshipDate.Value : null));
+
+        _Info.SetResult([.. relatives]);
         break;
     }
   }
@@ -182,7 +185,7 @@ public partial class SelectRelativesDialog : ContentPage
   public string DialogButtonName =>
     (_SelectedItems?.Count ?? 0) > 0 ? UIStrings.BtnNameOk : UIStrings.BtnNameCancel;
 
-  public Task<PersonInfoItem[]?> Info => _Info.Task;
+  public Task<RelativeInfo[]?> Info => _Info.Task;
 
   public ICommand DialogCommand => _DialogCommand;
 

@@ -383,10 +383,6 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     if (result?.Length > 0)
     {
       var relatives = result
-        .Select(person => new RelativeInfo(
-          person.Info,
-          dialog.RelType.Info,
-          dialog.RelationshipDate))
         .Select(relativeInfo => new RelativeInfoItem(
           _BirthDate.GetValueOrDefault(),
           relativeInfo,
