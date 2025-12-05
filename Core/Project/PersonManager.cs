@@ -125,7 +125,7 @@ public class PersonManager : TableBase
     if (familyName is not null)
     {
       var requiredFamilyNames = await Document.FamilyManager.GetRequiredNames(familyName, personFullInfo, token);
-      personFullInfo = personFullInfo with { Names = [..personFullInfo.Names, ..requiredFamilyNames] };
+      personFullInfo = personFullInfo with { Names = [.. personFullInfo.Names, .. requiredFamilyNames] };
     }
     var person = await Document.Persons.AddPersonAsync(personFullInfo, token);
 
@@ -154,6 +154,10 @@ public class PersonManager : TableBase
 
   public async Task<Siblings> GetSiblings(PersonFullInfo personInfo, CancellationToken token)
   {
+    async Task<(RelativeInfo Relative, PersonFullInfo Person)>
+      GetRelativePersonFullInfoAsync(RelativeInfo relative, CancellationToken token) =>
+        (Relative: relative, Person: await GetPersonFullInfoAsync(relative, token));
+
     var parentTasks = personInfo
       .RelativeInfos
       .Where(r => r.Type == RelationshipType.Parent)
@@ -161,11 +165,12 @@ public class PersonManager : TableBase
     var adoptiveParentTasks = personInfo
       .RelativeInfos
       .Where(r => r.Type == RelationshipType.AdoptiveParent)
-      .Select(r => GetPersonFullInfoAsync(r, token));
-
-    var allParents = await Task.WhenAll(Task.WhenAll(parentTasks), Task.WhenAll(adoptiveParentTasks));
-    var parents = allParents[0];
-    var adoptiveParents = allParents[1];
+      .Select(r => GetRelativePersonFullInfoAsync(r, token));
+    var parentsTasks = Task.WhenAll(parentTasks);
+    var adoptiveParentsTasks = Task.WhenAll(adoptiveParentTasks);
+    await Task.WhenAll(parentsTasks, adoptiveParentsTasks);
+    var parents = parentsTasks.Result;
+    var adoptiveParents = adoptiveParentsTasks.Result;
     var allMotherChildren = parents
         .Where(p => p.BiologicalSex == BiologicalSex.Female)
         .SelectMany(p => p.RelativeInfos)
@@ -179,27 +184,31 @@ public class PersonManager : TableBase
     var commonChildren = allFatherChildren.Intersect(allMotherChildren, _RelativeInfoComparer);
     var fatherChildren = allFatherChildren.Except(commonChildren, _RelativeInfoComparer);
     var motherChildren = allMotherChildren.Except(commonChildren, _RelativeInfoComparer);
-    var adoptiveChildren = parents
+    var adoptiveChildrenOfNativeParents = parents
       .SelectMany(p => p.RelativeInfos)
-      .Where(r => r.Type == RelationshipType.AdoptiveChild)
-      .Concat(adoptiveParents
-        .SelectMany(p => p.RelativeInfos)
-        .Where(r => r.Type == RelationshipType.Child || (r.Type == RelationshipType.AdoptiveChild && r.Id != personInfo.Id)))
+      .Where(r => r.Type == RelationshipType.AdoptiveChild);
+    var childrenOfAdoptiveParents = adoptiveParents
+        .SelectMany(i => i.Person.RelativeInfos.Select(r => r with { Date = i.Relative.Date }))
+        .Where(r => r.Type == RelationshipType.Child || (r.Type == RelationshipType.AdoptiveChild && r.Id != personInfo.Id));
+    var adoptiveChildren = ((IEnumerable<RelativeInfo>)[.. adoptiveChildrenOfNativeParents, .. childrenOfAdoptiveParents])
       .Distinct(_RelativeInfoComparer);
-    var allParentIds = parents.Concat(adoptiveParents).Select(p => p.Id).ToHashSet();
+    var allParentIds = parents
+      .Concat(adoptiveParents.Select(i => i.Person))
+      .Select(p => p.Id)
+      .ToHashSet();
     var stepParentTasks = parents
       .SelectMany(p => p.RelativeInfos)
       .Where(r => r.Type == RelationshipType.Spose)
       .Where(r => !allParentIds.Contains(r.Id))
-      .Select(r => GetPersonFullInfoAsync(r, token));
+      .Select(r => GetRelativePersonFullInfoAsync(r, token));
     var stepParents = await Task.WhenAll(stepParentTasks);
     var stepParentChildren = stepParents
-      .SelectMany(p => p.RelativeInfos)
+      .SelectMany(i => i.Person.RelativeInfos.Select(r => r with { Date = i.Relative.Date }))
       .Where(r => r.Type == RelationshipType.Child || r.Type == RelationshipType.AdoptiveChild)
       .Distinct(_RelativeInfoComparer);
 
     RelativeInfo[] ToTypedArray(IEnumerable<RelativeInfo> sibling, RelationshipType type) =>
-      sibling.Select(s => s with { Type = type }).ToArray();
+      [.. sibling.Select(s => s with { Type = type })];
 
     return new Siblings(
       Native: ToTypedArray(commonChildren, RelationshipType.Sibling),
