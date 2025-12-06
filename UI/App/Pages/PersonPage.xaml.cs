@@ -109,7 +109,10 @@ public partial class PersonPage : ContentPage
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
       var project = _CurrentProjectProvider.Project;
       var personFullInfo = await project.PersonManager.GetPersonFullInfoAsync(person, token);
-      var parents = await project.PersonManager.GetParentsAsync(personFullInfo, token);
+      var parentsTasks = project.PersonManager.GetParentsAsync(personFullInfo, token);
+      var stepChildrenTasks = project.PersonManager.GetStepChildrenAsync(personFullInfo, token);
+      await Task.WhenAll(parentsTasks, stepChildrenTasks);
+
       byte[][] photos;
 
       if (personFullInfo.MainPhoto is null)
@@ -131,7 +134,8 @@ public partial class PersonPage : ContentPage
                     .AdditionalPhotos
                     .Select(photo => photo.Content)];
       }
-      _ = MainThread.InvokeOnMainThreadAsync(() => UpdateUI(personFullInfo, parents, photos));
+      _ = MainThread.InvokeOnMainThreadAsync(
+        () => UpdateUI(personFullInfo, parentsTasks.Result, stepChildrenTasks.Result, photos));
     }
     catch (Exception ex)
     {
@@ -141,7 +145,7 @@ public partial class PersonPage : ContentPage
     }
   }
 
-  public void UpdateUI(PersonFullInfo personFullInfo, Parents parents, byte[][] photos)
+  public void UpdateUI(PersonFullInfo personFullInfo, Parents parents, RelativeInfo[] stepChildren, byte[][] photos)
   {
     var siblings = PersonManager.GetSiblings(personFullInfo, parents);
     _PersonFullInfo = personFullInfo;
@@ -161,6 +165,7 @@ public partial class PersonPage : ContentPage
     Add(_PersonFullInfo.RelativeInfos.Where(r => r.Type == RelationshipType.Spose));
     Add(parents.Native);
     Add(parents.Adoptive);
+    Add(parents.Step);
     Add(siblings.Native);
     Add(siblings.ByFather);
     Add(siblings.ByMother);
@@ -168,6 +173,7 @@ public partial class PersonPage : ContentPage
     Add(siblings.Adoptive);
     Add(PersonManager.Children(personFullInfo));
     Add(PersonManager.AdoptiveChildren(personFullInfo));
+    Add(stepChildren);
 
     Utils.RefreshView(this);
   }

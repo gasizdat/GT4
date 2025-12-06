@@ -24,7 +24,7 @@ public class PersonManager : TableBase
   }
 
   private async Task<RelativeFullInfo> GetRelativeFullInfoAsync(RelativeInfo relative, CancellationToken token) =>
-    new (person: await GetPersonFullInfoAsync(relative, token), type: relative.Type, date: relative.Date);
+    new(person: await GetPersonFullInfoAsync(relative, token), type: relative.Type, date: relative.Date);
 
   private static Data[] CombinePersonData(PersonFullInfo personFullInfo)
   {
@@ -175,13 +175,35 @@ public class PersonManager : TableBase
       .SelectMany(p => p.RelativeInfos)
       .Where(r => r.Type == RelationshipType.Spose)
       .Where(r => !allParentIds.Contains(r.Id))
-      .Select(r => GetRelativeFullInfoAsync(r, token));
+      .Select(r => GetRelativeFullInfoAsync(r with { Type = RelationshipType.StepParent }, token));
     var stepParents = await Task.WhenAll(stepParentTasks);
 
     return new Parents(
       Native: parents,
       Adoptive: adoptiveParents,
       Step: stepParents);
+  }
+
+  public async Task<RelativeInfo[]> GetStepChildrenAsync(PersonFullInfo info, CancellationToken token)
+  {
+    var ownChildrenIds = info
+      .RelativeInfos
+      .Where(r => r.Type == RelationshipType.Child || r.Type == RelationshipType.AdoptiveChild)
+      .Select(r => r.Id)
+      .ToHashSet();
+    var sposesTasks = info
+      .RelativeInfos
+      .Where(r => r.Type == RelationshipType.Spose)
+      .Select(r => GetRelativeFullInfoAsync(r, token));
+    var sposes = await Task.WhenAll(sposesTasks);
+    var ret = sposes
+      .SelectMany(s => s
+        .RelativeInfos
+        .Where(r => r.Type == RelationshipType.Child || r.Type == RelationshipType.AdoptiveChild)
+        .Where(r => !ownChildrenIds.Contains(r.Id))
+        .Select(r => r with { Type = RelationshipType.StepChild, Date = s.Date }));
+
+    return [.. ret];
   }
 
   public static Siblings GetSiblings(Person person, Parents parents)
