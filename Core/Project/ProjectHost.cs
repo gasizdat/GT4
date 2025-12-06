@@ -1,4 +1,5 @@
-﻿using GT4.Core.Utils;
+﻿using GT4.Core.Project.Abstraction;
+using GT4.Core.Utils;
 
 namespace GT4.Core.Project;
 
@@ -10,7 +11,7 @@ public class ProjectHost : IAsyncDisposable, IDisposable
   private readonly FileDescription _Origin;
   private readonly FileDescription _Cache;
   private long? _ProjectRevision;
-  private ProjectDocument? _Project = null;
+  private IProjectDocument? _Project = null;
 
   public ProjectHost(IFileSystem fileSystem, FileDescription origin, FileDescription cache)
   {
@@ -20,7 +21,7 @@ public class ProjectHost : IAsyncDisposable, IDisposable
     _FileSystem.Copy(_Origin, _Cache);
   }
 
-  public ProjectDocument? Project 
+  public IProjectDocument? Project 
   { 
     get => _Project; 
     set 
@@ -45,7 +46,7 @@ public class ProjectHost : IAsyncDisposable, IDisposable
 
   public async ValueTask DisposeAsync()
   {
-    ProjectDocument project;
+    IProjectDocument project;
     lock (this)
     {
       if (_Project is null || _Project.ProjectRevision == _ProjectRevision)

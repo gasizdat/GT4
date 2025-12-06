@@ -1,14 +1,15 @@
-﻿using GT4.Core.Project.Dto;
+﻿using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Dto;
 
 namespace GT4.Core.Project;
 
-public partial class TablePersonData : TableBase
+internal partial class TablePersonData : TableBase, ITablePersonData
 {
-  public TablePersonData(ProjectDocument document) : base(document)
+  public TablePersonData(IProjectDocument document) : base(document)
   {
   }
 
-  public override async Task CreateAsync(CancellationToken token)
+  internal override async Task CreateAsync(CancellationToken token)
   {
     using var command = Document.CreateCommand();
     command.CommandText = """

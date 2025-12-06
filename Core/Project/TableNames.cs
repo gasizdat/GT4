@@ -1,4 +1,5 @@
-﻿using GT4.Core.Project.Dto;
+﻿using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Dto;
 using Microsoft.Data.Sqlite;
 using System.Diagnostics.CodeAnalysis;
 
@@ -6,7 +7,7 @@ namespace GT4.Core.Project;
 
 using NameList = WeakReference<IReadOnlyDictionary<int, Name>?>;
 
-public class TableNames : TableBase
+internal class TableNames : TableBase, ITableNames
 {
   private readonly Dictionary<NameType, NameList> _Items = new();
 
@@ -32,11 +33,11 @@ public class TableNames : TableBase
     return _Items.TryGetValue(nameType, out var items) && items.TryGetTarget(out list);
   }
 
-  public TableNames(ProjectDocument document) : base(document)
+  public TableNames(IProjectDocument document) : base(document)
   {
   }
 
-  public override async Task CreateAsync(CancellationToken token)
+  internal override async Task CreateAsync(CancellationToken token)
   {
     using var command = Document.CreateCommand();
 

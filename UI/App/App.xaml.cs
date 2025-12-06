@@ -1,5 +1,4 @@
-﻿
-using GT4.Core.Project;
+﻿using GT4.Core.Project.Abstraction;
 using GT4.Core.Utils;
 using Microsoft.Maui.Controls.Xaml.Diagnostics;
 using System.Globalization;

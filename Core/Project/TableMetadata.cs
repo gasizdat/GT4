@@ -1,14 +1,15 @@
-﻿using Microsoft.Data.Sqlite;
+﻿using GT4.Core.Project.Abstraction;
+using Microsoft.Data.Sqlite;
 
 namespace GT4.Core.Project;
 
-public class TableMetadata : TableBase
+internal class TableMetadata : TableBase, ITableMetadata
 {
-  public TableMetadata(ProjectDocument document) : base(document)
+  public TableMetadata(IProjectDocument document) : base(document)
   {
   }
 
-  public override async Task CreateAsync(CancellationToken token)
+  internal override async Task CreateAsync(CancellationToken token)
   {
     using var command = Document.CreateCommand();
     command.CommandText = """

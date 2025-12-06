@@ -1,11 +1,11 @@
 ﻿using GT4.Core.Project.Dto;
 
-namespace GT4.Core.Project;
+namespace GT4.Core.Project.Abstraction;
 
 public interface ICurrentProjectProvider
 {
   ProjectInfo Info { get; }
-  ProjectDocument Project { get; }
+  IProjectDocument Project { get; }
   bool HasCurrentProject { get; }
 
   Task UpdateOriginAsync(CancellationToken token);

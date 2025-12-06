@@ -1,9 +1,10 @@
-﻿using GT4.Core.Project.Dto;
+﻿using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Dto;
 using Microsoft.Data.Sqlite;
 
 namespace GT4.Core.Project;
 
-public class TableData : TableBase
+internal class TableData : TableBase, ITableData
 {
   private static Data CreateData(SqliteDataReader reader)
   {
@@ -18,11 +19,11 @@ public class TableData : TableBase
     return image;
   }
 
-  public TableData(ProjectDocument document) : base(document)
+  public TableData(IProjectDocument document) : base(document)
   {
   }
 
-  public override async Task CreateAsync(CancellationToken token)
+  internal override async Task CreateAsync(CancellationToken token)
   {
     using var command = Document.CreateCommand();
 

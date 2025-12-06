@@ -1,11 +1,22 @@
-﻿using Microsoft.Data.Sqlite;
+﻿using GT4.Core.Project.Abstraction;
+using Microsoft.Data.Sqlite;
 using System.Data;
 
 namespace GT4.Core.Project;
 
-public class ProjectDocument : IAsyncDisposable, IDisposable
+internal class ProjectDocument : IProjectDocument, IAsyncDisposable, IDisposable
 {
   private readonly SqliteConnection _Connection;
+  private readonly TableMetadata _TableMetadata;
+  private readonly TableNames _TableNames;
+  private readonly TablePersons _TablePersons;
+  private readonly TablePersonNames _TablePersonNames;
+  private readonly TableData _TableData;
+  private readonly TableRelatives _TableRelatives;
+  private readonly TablePersonData _TablePersonData;
+  private readonly FamilyManager _FamilyManager;
+  private readonly PersonManager _PersonManager;
+
   private NestedTransaction? _CurrentTransaction = null;
   private long _TransactionNo = 0;
   private long _ProjectRevision = Environment.TickCount64;
@@ -24,6 +35,15 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
     builder.Mode = mode;
     var connectionString = builder.ConnectionString;
     _Connection = new SqliteConnection(connectionString);
+    _TableMetadata = new(this);
+    _TableNames = new(this);
+    _TablePersons = new(this);
+    _TablePersonNames = new(this);
+    _TableData = new(this);
+    _TableRelatives = new(this);
+    _TablePersonData = new(this);
+    _FamilyManager = new(this);
+    _PersonManager = new(this);
   }
 
   private void CheckForDisposed()
@@ -51,13 +71,13 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
     using var transaction = await BeginTransactionAsync(token);
 
     await Task.WhenAll(
-      Metadata.CreateAsync(token),
-      Names.CreateAsync(token),
-      Persons.CreateAsync(token),
-      PersonNames.CreateAsync(token),
-      Data.CreateAsync(token),
-      Relatives.CreateAsync(token),
-      PersonData.CreateAsync(token)
+      _TableMetadata.CreateAsync(token),
+      _TableNames.CreateAsync(token),
+      _TablePersons.CreateAsync(token),
+      _TablePersonNames.CreateAsync(token),
+      _TableData.CreateAsync(token),
+      _TableRelatives.CreateAsync(token),
+      _TablePersonData.CreateAsync(token)
     );
 
     transaction.Commit();
@@ -65,16 +85,16 @@ public class ProjectDocument : IAsyncDisposable, IDisposable
 
   public const string MimeType = "application/gt4;storage=sqlite";
 
-  public TableMetadata Metadata => new(this);
-  public TableNames Names => new(this);
-  public TablePersons Persons => new(this);
-  public TablePersonNames PersonNames => new(this);
-  public TableData Data => new(this);
-  public TableRelatives Relatives => new(this);
-  public TablePersonData PersonData => new(this);
+  public ITableMetadata Metadata => _TableMetadata;
+  public ITableNames Names => _TableNames;
+  public ITablePersons Persons => _TablePersons;
+  public ITablePersonNames PersonNames => _TablePersonNames;
+  public ITableData Data => _TableData;
+  public ITableRelatives Relatives => _TableRelatives;
+  public ITablePersonData PersonData => _TablePersonData;
 
-  public FamilyManager FamilyManager => new(this);
-  public PersonManager PersonManager => new(this);
+  public IFamilyManager FamilyManager => _FamilyManager;
+  public IPersonManager PersonManager => _PersonManager;
   public long ProjectRevision => _ProjectRevision;
 
   public void UpdateRevision()

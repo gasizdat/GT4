@@ -1,4 +1,5 @@
-﻿using GT4.Core.Project.Dto;
+﻿using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using System.Data;
 
@@ -12,7 +13,7 @@ internal class ProjectList : IProjectList
   private readonly IFileSystem _FileSystem;
   private readonly WeakReference<ProjectInfo[]?> _Items = new(null);
 
-  private async Task<ProjectInfo> GetProjectInfoAsync(ProjectDocument project, CancellationToken token)
+  private async Task<ProjectInfo> GetProjectInfoAsync(IProjectDocument project, CancellationToken token)
   {
     var results = await Task.WhenAll(
         project.Metadata.GetProjectName(token),

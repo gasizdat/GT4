@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using GT4.Core.Project.Abstraction;
 
 namespace GT4.Core.Project;
 
