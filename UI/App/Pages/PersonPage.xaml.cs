@@ -1,4 +1,4 @@
-using GT4.Core.Project;
+using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Dialogs;
@@ -147,7 +147,8 @@ public partial class PersonPage : ContentPage
 
   public void UpdateUI(PersonFullInfo personFullInfo, Parents parents, RelativeInfo[] stepChildren, byte[][] photos)
   {
-    var siblings = PersonManager.GetSiblings(personFullInfo, parents);
+    var personManager = _CurrentProjectProvider.Project.PersonManager;
+    var siblings = personManager.GetSiblings(personFullInfo, parents);
     _PersonFullInfo = personFullInfo;
     _Photos = photos;
     _Relatives.Clear();
@@ -171,8 +172,8 @@ public partial class PersonPage : ContentPage
     Add(siblings.ByMother);
     Add(siblings.Step);
     Add(siblings.Adoptive);
-    Add(PersonManager.Children(personFullInfo));
-    Add(PersonManager.AdoptiveChildren(personFullInfo));
+    Add(personManager.Children(personFullInfo));
+    Add(personManager.AdoptiveChildren(personFullInfo));
     Add(stepChildren);
 
     Utils.RefreshView(this);
