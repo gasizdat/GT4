@@ -9,29 +9,24 @@ public record class RelativeFullInfo(
   BiologicalSex BiologicalSex,
   Name[] Names,
   Data? MainPhoto,
-  Data[] AdditionalPhotos,
-  RelativeInfo[] RelativeInfos,
-  Data? Biography,
   RelationshipType Type,
-  Date? Date
+  Date? Date,
+  RelativeInfo[] RelativeInfos
 ) : RelativeInfo(Id, BirthDate, DeathDate, BiologicalSex, Names, MainPhoto, Type, Date)
 {
   public RelativeFullInfo(
-    PersonFullInfo person,
-    RelationshipType type,
-    Date? date)
+    RelativeInfo relative,
+    RelativeInfo[] relativeInfos)
     : this(
-        person.Id,
-        person.BirthDate,
-        person.DeathDate, 
-        person.BiologicalSex, 
-        person.Names, 
-        person.MainPhoto, 
-        person.AdditionalPhotos, 
-        person.RelativeInfos, 
-        person.Biography,
-        type,
-        date)
+        relative.Id,
+        relative.BirthDate,
+        relative.DeathDate, 
+        relative.BiologicalSex, 
+        relative.Names,
+        relative.MainPhoto,
+        relative.Type,
+        relative.Date, 
+        relativeInfos)
   {
   }
 }
