@@ -472,4 +472,22 @@
   <data name="RelStepInvariant_1" xml:space="preserve">
     <value>Сводный {0}</value>
   </data>
+  <data name="RelStepFather" xml:space="preserve">
+    <value>Отчим</value>
+  </data>
+  <data name="RelStepMother" xml:space="preserve">
+    <value>Мачеха</value>
+  </data>
+  <data name="RelStepSon" xml:space="preserve">
+    <value>Пасынок</value>
+  </data>
+  <data name="RelStepDaughter" xml:space="preserve">
+    <value>Падчерица</value>
+  </data>
+  <data name="RelStepParent" xml:space="preserve">
+    <value>Отчим или мачеха</value>
+  </data>
+  <data name="RelStepChild" xml:space="preserve">
+    <value>Пасынок или падчерица</value>
+  </data>
 </root>

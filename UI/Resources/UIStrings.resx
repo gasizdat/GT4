@@ -472,4 +472,22 @@ genealogy tree and enjoy!</value>
   <data name="RelStepInvariant_1" xml:space="preserve">
     <value>Step{0}</value>
   </data>
+  <data name="RelStepFather" xml:space="preserve">
+    <value>Step father</value>
+  </data>
+  <data name="RelStepMother" xml:space="preserve">
+    <value>Step mother</value>
+  </data>
+  <data name="RelStepSon" xml:space="preserve">
+    <value>Step son</value>
+  </data>
+  <data name="RelStepDaughter" xml:space="preserve">
+    <value>Step daughter</value>
+  </data>
+  <data name="RelStepParent" xml:space="preserve">
+    <value>Step parent</value>
+  </data>
+  <data name="RelStepChild" xml:space="preserve">
+    <value>Step child</value>
+  </data>
 </root>

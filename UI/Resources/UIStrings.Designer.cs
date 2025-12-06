@@ -890,6 +890,33 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Step child.
+        /// </summary>
+        public static string RelStepChild {
+            get {
+                return ResourceManager.GetString("RelStepChild", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Step daughter.
+        /// </summary>
+        public static string RelStepDaughter {
+            get {
+                return ResourceManager.GetString("RelStepDaughter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Step father.
+        /// </summary>
+        public static string RelStepFather {
+            get {
+                return ResourceManager.GetString("RelStepFather", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Step{0}.
         /// </summary>
         public static string RelStepFemale_1 {
@@ -913,6 +940,33 @@ namespace GT4.UI.Resources {
         public static string RelStepMale_1 {
             get {
                 return ResourceManager.GetString("RelStepMale_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Step mother.
+        /// </summary>
+        public static string RelStepMother {
+            get {
+                return ResourceManager.GetString("RelStepMother", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Step parent.
+        /// </summary>
+        public static string RelStepParent {
+            get {
+                return ResourceManager.GetString("RelStepParent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Step son.
+        /// </summary>
+        public static string RelStepSon {
+            get {
+                return ResourceManager.GetString("RelStepSon", resourceCulture);
             }
         }
         

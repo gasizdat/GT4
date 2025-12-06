@@ -39,7 +39,9 @@ public class RelativeInfoItem : PersonInfoItem
     {
       RelationshipType.Spose => true,
       RelationshipType.AdoptiveChild => true,
+      RelationshipType.StepChild => true,
       RelationshipType.AdoptiveParent => true,
+      RelationshipType.StepParent => true,
       RelationshipType.AdoptiveSibling => true,
       RelationshipType.StepSibling => true,
       _ => false

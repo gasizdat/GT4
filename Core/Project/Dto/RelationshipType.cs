@@ -12,5 +12,7 @@ public enum RelationshipType
   SiblingByMother = 101,
   SiblingByFather = 102,
   AdoptiveSibling = 103,
-  StepSibling = 104
+  StepSibling = 104,
+  StepParent = 105,
+  StepChild = 106,
 }
