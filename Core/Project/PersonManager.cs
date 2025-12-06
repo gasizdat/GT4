@@ -24,8 +24,27 @@ internal class PersonManager : TableBase, IPersonManager
     return ret;
   }
 
+  private async Task<RelativeInfo[]> GetRelativeInfosAsync(Person person, bool selectMainPhoto, CancellationToken token)
+  {
+    var relatives = await Document.Relatives.GetRelativesAsync(person, token);
+    var personInfos = await GetPersonInfosAsync(
+      persons: relatives,
+      selectMainPhoto: selectMainPhoto,
+      token: token);
+
+    var relativeInfos = new RelativeInfo[personInfos.Length];
+    for (var i = 0; i < personInfos.Length; i++)
+    {
+      var relative = relatives[i];
+      var personInfo = personInfos[i];
+      relativeInfos[i] = new RelativeInfo(relative, personInfo.Names, personInfo.MainPhoto);
+    }
+
+    return relativeInfos;
+  }
+
   private async Task<RelativeFullInfo> GetRelativeFullInfoAsync(RelativeInfo relative, CancellationToken token) =>
-    new(person: await GetPersonFullInfoAsync(relative, token), type: relative.Type, date: relative.Date);
+    new(relative: relative, relativeInfos: await GetRelativeInfosAsync(relative, true, token));
 
   private static RelativeInfo[] ToTypedArray(IEnumerable<RelativeInfo> sibling, RelationshipType type) =>
     [.. sibling.Select(s => s with { Type = type })];
@@ -53,30 +72,17 @@ internal class PersonManager : TableBase, IPersonManager
       throw new ArgumentException("person is not commited");
     }
 
-    const bool selectMainPhoto = true;
     var names = Document.PersonNames.GetPersonNamesAsync(person, token);
     var personData = Document.PersonData.GetPersonDataSetAsync(person, null, token);
-    var relatives = Document.Relatives.GetRelativesAsync(person, token);
-    await Task.WhenAll(names, personData, relatives);
-    var relativePersonInfos = await GetPersonInfosAsync(
-      persons: relatives.Result,
-      selectMainPhoto: selectMainPhoto,
-      token: token);
-
-    var relativeInfos = new RelativeInfo[relativePersonInfos.Length];
-    for (var i = 0; i < relativePersonInfos.Length; i++)
-    {
-      var relative = relatives.Result[i];
-      var relativePerson = relativePersonInfos[i];
-      relativeInfos[i] = new RelativeInfo(relative, relativePerson.Names, relativePerson.MainPhoto);
-    }
+    var relativeInfos = GetRelativeInfosAsync(person, selectMainPhoto: true, token);
+    await Task.WhenAll(names, personData, relativeInfos);
 
     var ret = new PersonFullInfo(
       person: person,
       names: names.Result,
       mainPhoto: personData.Result.SingleOrDefault(data => data.Category == DataCategory.PersonMainPhoto),
       additionalPhotos: personData.Result.Where(data => data.Category == DataCategory.PersonPhoto).ToArray(),
-      relativeInfos: relativeInfos,
+      relativeInfos: relativeInfos.Result,
       biography: personData.Result.SingleOrDefault(data => data.Category == DataCategory.PersonBio));
 
     return ret;
@@ -159,14 +165,12 @@ internal class PersonManager : TableBase, IPersonManager
     transaction.Commit();
   }
 
-  public async Task<Parents> GetParentsAsync(PersonFullInfo personInfo, CancellationToken token)
+  public async Task<Parents> GetParentsAsync(RelativeInfo[] relativeInfos, CancellationToken token)
   {
-    var parentTasks = personInfo
-      .RelativeInfos
+    var parentTasks = relativeInfos
       .Where(r => r.Type == RelationshipType.Parent)
       .Select(r => GetRelativeFullInfoAsync(r, token));
-    var adoptiveParentTasks = personInfo
-      .RelativeInfos
+    var adoptiveParentTasks = relativeInfos
       .Where(r => r.Type == RelationshipType.AdoptiveParent)
       .Select(r => GetRelativeFullInfoAsync(r, token));
     var parentsTasks = Task.WhenAll(parentTasks);
@@ -188,15 +192,13 @@ internal class PersonManager : TableBase, IPersonManager
       Step: stepParents);
   }
 
-  public async Task<RelativeInfo[]> GetStepChildrenAsync(PersonFullInfo info, CancellationToken token)
+  public async Task<RelativeInfo[]> GetStepChildrenAsync(RelativeInfo[] relativeInfos, CancellationToken token)
   {
-    var ownChildrenIds = info
-      .RelativeInfos
+    var ownChildrenIds = relativeInfos
       .Where(r => r.Type == RelationshipType.Child || r.Type == RelationshipType.AdoptiveChild)
       .Select(r => r.Id)
       .ToHashSet();
-    var sposesTasks = info
-      .RelativeInfos
+    var sposesTasks = relativeInfos
       .Where(r => r.Type == RelationshipType.Spose)
       .Select(r => GetRelativeFullInfoAsync(r, token));
     var sposes = await Task.WhenAll(sposesTasks);
@@ -244,15 +246,13 @@ internal class PersonManager : TableBase, IPersonManager
       Step: ToTypedArray(stepParentChildren, RelationshipType.StepSibling));
   }
 
-  public RelativeInfo[] Children(PersonFullInfo info) =>
-    info
-    .RelativeInfos
+  public RelativeInfo[] Children(RelativeInfo[] relativeInfos) =>
+    relativeInfos
     .Where(r => r.Type == RelationshipType.Child)
     .ToArray();
 
-  public RelativeInfo[] AdoptiveChildren(PersonFullInfo info) =>
-    info
-    .RelativeInfos
+  public RelativeInfo[] AdoptiveChildren(RelativeInfo[] relativeInfos) =>
+    relativeInfos
     .Where(r => r.Type == RelationshipType.AdoptiveChild)
     .ToArray();
 

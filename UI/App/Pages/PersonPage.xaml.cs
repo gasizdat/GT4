@@ -109,8 +109,8 @@ public partial class PersonPage : ContentPage
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
       var project = _CurrentProjectProvider.Project;
       var personFullInfo = await project.PersonManager.GetPersonFullInfoAsync(person, token);
-      var parentsTasks = project.PersonManager.GetParentsAsync(personFullInfo, token);
-      var stepChildrenTasks = project.PersonManager.GetStepChildrenAsync(personFullInfo, token);
+      var parentsTasks = project.PersonManager.GetParentsAsync(personFullInfo.RelativeInfos, token);
+      var stepChildrenTasks = project.PersonManager.GetStepChildrenAsync(personFullInfo.RelativeInfos, token);
       await Task.WhenAll(parentsTasks, stepChildrenTasks);
 
       byte[][] photos;
@@ -172,8 +172,8 @@ public partial class PersonPage : ContentPage
     Add(siblings.ByMother);
     Add(siblings.Step);
     Add(siblings.Adoptive);
-    Add(personManager.Children(personFullInfo));
-    Add(personManager.AdoptiveChildren(personFullInfo));
+    Add(personManager.Children(personFullInfo.RelativeInfos));
+    Add(personManager.AdoptiveChildren(personFullInfo.RelativeInfos));
     Add(stepChildren);
 
     Utils.RefreshView(this);
