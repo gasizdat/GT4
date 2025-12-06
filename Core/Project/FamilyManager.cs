@@ -1,10 +1,11 @@
-﻿using GT4.Core.Project.Dto;
+﻿using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Dto;
 
 namespace GT4.Core.Project;
 
-public class FamilyManager : TableBase
+internal class FamilyManager : TableBase, IFamilyManager
 {
-  public FamilyManager(ProjectDocument document)
+  public FamilyManager(IProjectDocument document)
     : base(document: document)
   {
   }
@@ -24,7 +25,7 @@ public class FamilyManager : TableBase
     }
     if (person.Names?.Contains(familyName) == false)
     {
-      return person with { Names = [..person.Names, familyName] };
+      return person with { Names = [.. person.Names, familyName] };
     }
 
     return person;
@@ -116,7 +117,7 @@ public class FamilyManager : TableBase
     transaction.Commit();
   }
 
-  public override Task CreateAsync(CancellationToken token)
+  internal override Task CreateAsync(CancellationToken token)
   {
     throw new NotSupportedException();
   }

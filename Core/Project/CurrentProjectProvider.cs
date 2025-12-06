@@ -1,4 +1,5 @@
-﻿using GT4.Core.Project.Dto;
+﻿using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Dto;
 
 namespace GT4.Core.Project;
 
@@ -46,7 +47,7 @@ internal class CurrentProjectProvider : ICurrentProjectProvider
 
   public bool HasCurrentProject => _ProjectHost is not null;
 
-  public ProjectDocument Project => _ProjectHost?.Project ?? throw new InvalidOperationException("Project is not opened yet.");
+  public IProjectDocument Project => _ProjectHost?.Project ?? throw new InvalidOperationException("Project is not opened yet.");
 
   public ProjectInfo Info => _Info ?? throw new InvalidOperationException("Project is not opened yet.");
 }

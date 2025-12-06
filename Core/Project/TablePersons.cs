@@ -1,17 +1,18 @@
-﻿using GT4.Core.Project.Dto;
+﻿using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Dto;
 using Microsoft.Data.Sqlite;
 
 namespace GT4.Core.Project;
 
-public partial class TablePersons : TableBase
+internal partial class TablePersons : TableBase, ITablePersons
 {
   private readonly WeakReference<IList<Person>?> _Items = new(null);
 
-  public TablePersons(ProjectDocument document) : base(document)
+  public TablePersons(IProjectDocument document) : base(document)
   {
   }
 
-  public override async Task CreateAsync(CancellationToken token)
+  internal override async Task CreateAsync(CancellationToken token)
   {
     using var command = Document.CreateCommand();
     command.CommandText = """

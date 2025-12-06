@@ -1,11 +1,12 @@
-﻿using GT4.Core.Utils;
+﻿using GT4.Core.Project.Abstraction;
+using GT4.Core.Utils;
 using Microsoft.Data.Sqlite;
 
 namespace GT4.Core.Project;
 
 public abstract class TableBase
 {
-  protected TableBase(ProjectDocument document) => Document = document;
+  protected TableBase(IProjectDocument document) => Document = document;
 
   protected static int? TryGetInteger(SqliteDataReader reader, int ordinal) =>
     reader.IsDBNull(ordinal) ? null : reader.GetInt32(ordinal);
@@ -46,7 +47,7 @@ public abstract class TableBase
 
   public static readonly int NonCommitedId = 0;
 
-  public ProjectDocument Document { get; init; }
+  internal IProjectDocument Document { get; init; }
 
-  public abstract Task CreateAsync(CancellationToken token);
+  internal abstract Task CreateAsync(CancellationToken token);
 }

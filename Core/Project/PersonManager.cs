@@ -1,12 +1,13 @@
-﻿using GT4.Core.Project.Dto;
+﻿using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Dto;
 
 namespace GT4.Core.Project;
 
-public class PersonManager : TableBase
+internal class PersonManager : TableBase, IPersonManager
 {
   private static readonly ElementIdComparer<RelativeInfo> _RelativeInfoComparer = new();
 
-  public PersonManager(ProjectDocument document)
+  public PersonManager(IProjectDocument document)
     : base(document: document)
   {
   }
@@ -207,7 +208,7 @@ public class PersonManager : TableBase
     return ToTypedArray(ret, RelationshipType.StepChild);
   }
 
-  public static Siblings GetSiblings(Person person, Parents parents)
+  public Siblings GetSiblings(Person person, Parents parents)
   {
     var allMotherChildren = parents.Native
         .Where(p => p.BiologicalSex == BiologicalSex.Female)
@@ -243,19 +244,19 @@ public class PersonManager : TableBase
       Step: ToTypedArray(stepParentChildren, RelationshipType.StepSibling));
   }
 
-  public static RelativeInfo[] Children(PersonFullInfo info) =>
+  public RelativeInfo[] Children(PersonFullInfo info) =>
     info
     .RelativeInfos
     .Where(r => r.Type == RelationshipType.Child)
     .ToArray();
 
-  public static RelativeInfo[] AdoptiveChildren(PersonFullInfo info) =>
+  public RelativeInfo[] AdoptiveChildren(PersonFullInfo info) =>
     info
     .RelativeInfos
     .Where(r => r.Type == RelationshipType.AdoptiveChild)
     .ToArray();
 
-  public override Task CreateAsync(CancellationToken token)
+  internal override Task CreateAsync(CancellationToken token)
   {
     throw new NotSupportedException();
   }
