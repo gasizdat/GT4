@@ -85,7 +85,7 @@ public partial class PersonPage : ContentPage
   public byte[][] Photos => _Photos;
 
   public PersonInfo PersonInfo
-  { 
+  {
     set => ShowPersonInfo(value);
   }
 
@@ -109,10 +109,7 @@ public partial class PersonPage : ContentPage
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
       var project = _CurrentProjectProvider.Project;
       var personFullInfo = await project.PersonManager.GetPersonFullInfoAsync(person, token);
-      var siblings = await _CurrentProjectProvider
-        .Project
-        .PersonManager
-        .GetSiblings(personFullInfo, token);
+      var parents = await project.PersonManager.GetParentsAsync(personFullInfo, token);
       byte[][] photos;
 
       if (personFullInfo.MainPhoto is null)
@@ -134,7 +131,7 @@ public partial class PersonPage : ContentPage
                     .AdditionalPhotos
                     .Select(photo => photo.Content)];
       }
-      _ = MainThread.InvokeOnMainThreadAsync(() => UpdateUI(personFullInfo, siblings, photos));
+      _ = MainThread.InvokeOnMainThreadAsync(() => UpdateUI(personFullInfo, parents, photos));
     }
     catch (Exception ex)
     {
@@ -144,8 +141,9 @@ public partial class PersonPage : ContentPage
     }
   }
 
-  public void UpdateUI(PersonFullInfo personFullInfo, Siblings siblings, byte[][] photos)
+  public void UpdateUI(PersonFullInfo personFullInfo, Parents parents, byte[][] photos)
   {
+    var siblings = PersonManager.GetSiblings(personFullInfo, parents);
     _PersonFullInfo = personFullInfo;
     _Photos = photos;
     _Relatives.Clear();
@@ -161,8 +159,8 @@ public partial class PersonPage : ContentPage
     }
 
     Add(_PersonFullInfo.RelativeInfos.Where(r => r.Type == RelationshipType.Spose));
-    Add(PersonManager.Parent(_PersonFullInfo));
-    Add(PersonManager.AdoptiveParent(personFullInfo));
+    Add(parents.Native);
+    Add(parents.Adoptive);
     Add(siblings.Native);
     Add(siblings.ByFather);
     Add(siblings.ByMother);
