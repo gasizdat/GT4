@@ -26,6 +26,9 @@ public class PersonManager : TableBase
   private async Task<RelativeFullInfo> GetRelativeFullInfoAsync(RelativeInfo relative, CancellationToken token) =>
     new(person: await GetPersonFullInfoAsync(relative, token), type: relative.Type, date: relative.Date);
 
+  private static RelativeInfo[] ToTypedArray(IEnumerable<RelativeInfo> sibling, RelationshipType type) =>
+    [.. sibling.Select(s => s with { Type = type })];
+
   private static Data[] CombinePersonData(PersonFullInfo personFullInfo)
   {
     var personDataSet = new List<Data>(personFullInfo.AdditionalPhotos);
@@ -197,13 +200,11 @@ public class PersonManager : TableBase
       .Select(r => GetRelativeFullInfoAsync(r, token));
     var sposes = await Task.WhenAll(sposesTasks);
     var ret = sposes
-      .SelectMany(s => s
-        .RelativeInfos
-        .Where(r => r.Type == RelationshipType.Child || r.Type == RelationshipType.AdoptiveChild)
-        .Where(r => !ownChildrenIds.Contains(r.Id))
-        .Select(r => r with { Type = RelationshipType.StepChild, Date = s.Date }));
+      .SelectMany(s => s.RelativeInfos.Select(r => r with { Date = s.Date }))
+      .Where(r => r.Type == RelationshipType.Child || r.Type == RelationshipType.AdoptiveChild)
+      .Where(r => !ownChildrenIds.Contains(r.Id));
 
-    return [.. ret];
+    return ToTypedArray(ret, RelationshipType.StepChild);
   }
 
   public static Siblings GetSiblings(Person person, Parents parents)
@@ -233,9 +234,6 @@ public class PersonManager : TableBase
       .SelectMany(p => p.RelativeInfos.Select(r => r with { Date = p.Date }))
       .Where(r => r.Type == RelationshipType.Child || r.Type == RelationshipType.AdoptiveChild)
       .Distinct(_RelativeInfoComparer);
-
-    RelativeInfo[] ToTypedArray(IEnumerable<RelativeInfo> sibling, RelationshipType type) =>
-      [.. sibling.Select(s => s with { Type = type })];
 
     return new Siblings(
       Native: ToTypedArray(commonChildren, RelationshipType.Sibling),
