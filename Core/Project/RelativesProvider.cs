@@ -124,12 +124,12 @@ internal class RelativesProvider : TableBase, IRelativesProvider
       Step: ToTypedArray(stepParentChildren, RelationshipType.StepSibling));
   }
 
-  public RelativeInfo[] Children(RelativeInfo[] relativeInfos) =>
+  public RelativeInfo[] GetChildren(RelativeInfo[] relativeInfos) =>
     relativeInfos
     .Where(r => r.Type == RelationshipType.Child)
     .ToArray();
 
-  public RelativeInfo[] AdoptiveChildren(RelativeInfo[] relativeInfos) =>
+  public RelativeInfo[] GetAdoptiveChildren(RelativeInfo[] relativeInfos) =>
     relativeInfos
     .Where(r => r.Type == RelationshipType.AdoptiveChild)
     .ToArray();

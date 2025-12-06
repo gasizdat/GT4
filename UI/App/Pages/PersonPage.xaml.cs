@@ -172,8 +172,8 @@ public partial class PersonPage : ContentPage
     Add(siblings.ByMother);
     Add(siblings.Step);
     Add(siblings.Adoptive);
-    Add(relativesProvider.Children(personFullInfo.RelativeInfos));
-    Add(relativesProvider.AdoptiveChildren(personFullInfo.RelativeInfos));
+    Add(relativesProvider.GetChildren(personFullInfo.RelativeInfos));
+    Add(relativesProvider.GetAdoptiveChildren(personFullInfo.RelativeInfos));
     Add(stepChildren);
 
     Utils.RefreshView(this);
