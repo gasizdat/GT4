@@ -109,8 +109,8 @@ public partial class PersonPage : ContentPage
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
       var project = _CurrentProjectProvider.Project;
       var personFullInfo = await project.PersonManager.GetPersonFullInfoAsync(person, token);
-      var parentsTasks = project.PersonManager.GetParentsAsync(personFullInfo.RelativeInfos, token);
-      var stepChildrenTasks = project.PersonManager.GetStepChildrenAsync(personFullInfo.RelativeInfos, token);
+      var parentsTasks = project.RelativesProvider.GetParentsAsync(personFullInfo.RelativeInfos, token);
+      var stepChildrenTasks = project.RelativesProvider.GetStepChildrenAsync(personFullInfo.RelativeInfos, token);
       await Task.WhenAll(parentsTasks, stepChildrenTasks);
 
       byte[][] photos;
@@ -147,8 +147,8 @@ public partial class PersonPage : ContentPage
 
   public void UpdateUI(PersonFullInfo personFullInfo, Parents parents, RelativeInfo[] stepChildren, byte[][] photos)
   {
-    var personManager = _CurrentProjectProvider.Project.PersonManager;
-    var siblings = personManager.GetSiblings(personFullInfo, parents);
+    var relativesProvider = _CurrentProjectProvider.Project.RelativesProvider;
+    var siblings = relativesProvider.GetSiblings(personFullInfo, parents);
     _PersonFullInfo = personFullInfo;
     _Photos = photos;
     _Relatives.Clear();
@@ -172,8 +172,8 @@ public partial class PersonPage : ContentPage
     Add(siblings.ByMother);
     Add(siblings.Step);
     Add(siblings.Adoptive);
-    Add(personManager.Children(personFullInfo.RelativeInfos));
-    Add(personManager.AdoptiveChildren(personFullInfo.RelativeInfos));
+    Add(relativesProvider.Children(personFullInfo.RelativeInfos));
+    Add(relativesProvider.AdoptiveChildren(personFullInfo.RelativeInfos));
     Add(stepChildren);
 
     Utils.RefreshView(this);

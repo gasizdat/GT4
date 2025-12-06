@@ -16,6 +16,7 @@ internal class ProjectDocument : IProjectDocument, IAsyncDisposable, IDisposable
   private readonly TablePersonData _TablePersonData;
   private readonly FamilyManager _FamilyManager;
   private readonly PersonManager _PersonManager;
+  private readonly RelativesProvider _RelativesProvider;
 
   private NestedTransaction? _CurrentTransaction = null;
   private long _TransactionNo = 0;
@@ -44,6 +45,7 @@ internal class ProjectDocument : IProjectDocument, IAsyncDisposable, IDisposable
     _TablePersonData = new(this);
     _FamilyManager = new(this);
     _PersonManager = new(this);
+    _RelativesProvider = new(this);
   }
 
   private void CheckForDisposed()
@@ -95,6 +97,7 @@ internal class ProjectDocument : IProjectDocument, IAsyncDisposable, IDisposable
 
   public IFamilyManager FamilyManager => _FamilyManager;
   public IPersonManager PersonManager => _PersonManager;
+  public IRelativesProvider RelativesProvider => _RelativesProvider;
   public long ProjectRevision => _ProjectRevision;
 
   public void UpdateRevision()

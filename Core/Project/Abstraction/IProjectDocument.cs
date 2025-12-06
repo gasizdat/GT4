@@ -15,9 +15,8 @@ public interface IProjectDocument : IAsyncDisposable, IDisposable
   ITablePersonNames PersonNames { get; }
   ITablePersons Persons { get; }
   ITableRelatives Relatives { get; }
+  IRelativesProvider RelativesProvider { get; }
 
-//  static abstract Task<ProjectDocument> CreateNewAsync(string path, string name, CancellationToken token);
-//  static abstract Task<ProjectDocument> OpenAsync(string path, CancellationToken token);
   Task<IDbTransaction> BeginTransactionAsync(CancellationToken token);
   SqliteCommand CreateCommand();
   Task<int> GetLastInsertRowIdAsync(CancellationToken token);
