@@ -95,7 +95,8 @@ public partial class PersonPage : ContentPage
   protected override void OnSizeAllocated(double width, double height)
   {
     base.OnSizeAllocated(width, height);
-    if (width < height || width < 800)
+    var widthInPixels = () => width * DeviceDisplay.Current.MainDisplayInfo.Density;
+    if (width < height || widthInPixels() < 900)
     {
       _SmartLayout = new PersonPageSmartLayout(
         Image: new GridLayout(Column: 0, ColumnSpan: 2, Row: 0, RowSpan: 0),
