@@ -118,26 +118,25 @@
 
     <components:PageLayout.Body>
       <ScrollView>
-        <FlexLayout
-            AlignContent="Center"
-            AlignItems="Start"
-            Direction="Row"
-            JustifyContent="SpaceBetween"
-            VerticalOptions="Start"
-            Wrap="Wrap">
+        <Grid
+            ColumnDefinitions="Auto, *"
+            RowDefinitions="Auto, Auto, *">
 
           <components:ImagePresenter
+              Grid.Row="{Binding Path=SmartLayout.Image.Row, Source={x:Reference Root}}"
+              Grid.RowSpan="{Binding Path=SmartLayout.Image.RowSpan, Source={x:Reference Root}}"
+              Grid.Column="{Binding Path=SmartLayout.Image.Column, Source={x:Reference Root}}"
+              Grid.ColumnSpan="{Binding Path=SmartLayout.Image.ColumnSpan, Source={x:Reference Root}}"
               Margin="{Thickness Right={StaticResource PageContentSpacing}}"
-              FlexLayout.Grow="0.7"
-              FlexLayout.Order="1"
               ImageSources="{Binding Photos, Source={x:Reference Root}}"
               ImageStyle="{StaticResource PhotoStyle}"
               VerticalOptions="Start" />
 
           <CollectionView
-              FlexLayout.Basis="60%"
-              FlexLayout.Grow="1"
-              FlexLayout.Order="2"
+              Grid.Row="{Binding Path=SmartLayout.Relatives.Row, Source={x:Reference Root}}"
+              Grid.RowSpan="{Binding Path=SmartLayout.Relatives.RowSpan, Source={x:Reference Root}}"
+              Grid.Column="{Binding Path=SmartLayout.Relatives.Column, Source={x:Reference Root}}"
+              Grid.ColumnSpan="{Binding Path=SmartLayout.Relatives.ColumnSpan, Source={x:Reference Root}}"
               ItemsSource="{Binding Relatives, Source={x:Reference Root}}"
               SelectionMode="Single"
               VerticalScrollBarVisibility="Always">
@@ -150,7 +149,7 @@
             <CollectionView.ItemTemplate>
               <DataTemplate x:DataType="items:RelativeInfoItem">
                 <Grid
-                    ColumnDefinitions="Auto, *"
+                    ColumnDefinitions="Auto, *, Auto"
                     RowDefinitions="Auto, Auto"
                     Style="{StaticResource HoverItem}">
                   <Grid.GestureRecognizers>
@@ -174,6 +173,13 @@
                       Text="{Binding Date}"
                       VerticalOptions="Start" />
 
+                  <Button
+                      Grid.Row="0"
+                      Grid.RowSpan="2"
+                      Grid.Column="2"
+                      Style="{StaticResource EmojiAdorner}"
+                      Text="⬇️" />
+
                   <components:PersonInfoView
                       Grid.Row="1"
                       Grid.Column="0"
@@ -187,7 +193,7 @@
             </CollectionView.ItemTemplate>
           </CollectionView>
 
-        </FlexLayout>
+        </Grid>
       </ScrollView>
     </components:PageLayout.Body>
 

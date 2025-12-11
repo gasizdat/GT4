@@ -26,6 +26,7 @@ public partial class PersonPage : ContentPage
   private readonly ObservableCollection<RelativeInfoItem> _Relatives = new();
   private PersonFullInfo _PersonFullInfo = PersonFullInfo.Empty;
   private byte[][] _Photos = [];
+  private PersonPageSmartLayout _SmartLayout = new();
 
   public PersonPage(IServiceProvider serviceProvider)
   {
@@ -87,6 +88,26 @@ public partial class PersonPage : ContentPage
   public PersonInfo PersonInfo
   {
     set => ShowPersonInfo(value);
+  }
+
+  public PersonPageSmartLayout SmartLayout => _SmartLayout;
+
+  protected override void OnSizeAllocated(double width, double height)
+  {
+    base.OnSizeAllocated(width, height);
+    if (width < height || width < 800)
+    {
+      _SmartLayout = new PersonPageSmartLayout(
+        Image: new GridLayout(Column: 0, ColumnSpan: 2, Row: 0, RowSpan: 0),
+        Relatives: new GridLayout(Column: 0, ColumnSpan: 2, Row: 1, RowSpan: 0));
+    }
+    else
+    {
+      _SmartLayout = new PersonPageSmartLayout(
+        Image: new GridLayout(Column: 0, ColumnSpan: 1, Row: 0, RowSpan: 0),
+        Relatives: new GridLayout(Column: 1, ColumnSpan: 1, Row: 0, RowSpan: 0));
+    }
+    OnPropertyChanged(nameof(SmartLayout));
   }
 
   protected override bool OnBackButtonPressed()
