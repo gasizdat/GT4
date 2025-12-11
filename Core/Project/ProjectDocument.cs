@@ -85,8 +85,6 @@ internal class ProjectDocument : IProjectDocument, IAsyncDisposable, IDisposable
     transaction.Commit();
   }
 
-  public const string MimeType = "application/gt4;storage=sqlite";
-
   public ITableMetadata Metadata => _TableMetadata;
   public ITableNames Names => _TableNames;
   public ITablePersons Persons => _TablePersons;

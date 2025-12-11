@@ -5,6 +5,7 @@ namespace GT4.Core.Project.Abstraction;
 
 public interface IProjectDocument : IAsyncDisposable, IDisposable
 {
+  const string MimeType = "application/gt4;storage=sqlite";
   long ProjectRevision { get; }
   ITableData Data { get; }
   IFamilyManager FamilyManager { get; }

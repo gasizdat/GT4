@@ -102,7 +102,7 @@ internal class ProjectList : IProjectList
   public async Task<ProjectHost> CreateAsync(string projectName, string projectDescription, CancellationToken token)
   {
     var dir = GetProjectDirectoryByName(projectName);
-    var origin = new FileDescription(dir, GetUniqueProjectName(), ProjectDocument.MimeType);
+    var origin = new FileDescription(dir, GetUniqueProjectName(), IProjectDocument.MimeType);
     var cache = GetCacheFileDescription();
     using (var file = _FileSystem.OpenWriteStream(origin)) file.Close();
     using var host = new ProjectHost(_FileSystem, origin, cache);
@@ -128,7 +128,7 @@ internal class ProjectList : IProjectList
     }
 
     var dir = GetProjectDirectoryByName(projectInfo.Name);
-    var origin = new FileDescription(dir, GetUniqueProjectName(), ProjectDocument.MimeType);
+    var origin = new FileDescription(dir, GetUniqueProjectName(), IProjectDocument.MimeType);
     _FileSystem.Copy(temp, origin);
 
     InvalidateItems();
@@ -150,7 +150,7 @@ internal class ProjectList : IProjectList
 
   private FileDescription GetCacheFileDescription()
   {
-    return new FileDescription(_Storage.ApplicationData, Guid.NewGuid().ToString(), ProjectDocument.MimeType);
+    return new FileDescription(_Storage.ApplicationData, Guid.NewGuid().ToString(), IProjectDocument.MimeType);
   }
 
   public DirectoryDescription GetProjectDirectoryByName(string projectName)

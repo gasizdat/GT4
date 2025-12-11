@@ -4,6 +4,7 @@ using Android.Content.PM;
 using Android.OS;
 using Android.Provider;
 using GT4.Core.Project;
+using GT4.Core.Project.Abstraction;
 using GT4.Core.Utils;
 using GT4.UI;
 using GT4.UI.Pages;
@@ -28,7 +29,7 @@ namespace GT4
   [IntentFilter(
         [Intent.ActionView],
         Categories = [Intent.CategoryDefault, Intent.CategoryBrowsable],
-        DataMimeTypes = [ProjectDocument.MimeType, "application/gt4", "application/octet-stream", "*/*"],
+        DataMimeTypes = [IProjectDocument.MimeType, "application/gt4", "application/octet-stream", "*/*"],
         DataSchemes = ["content", "file"],
         DataPathPatterns = [".*\\.gt4", ".*\\.GT4"]
   )]
