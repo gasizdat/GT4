@@ -23,7 +23,7 @@ public partial class PersonPage : ContentPage
   private readonly IDateFormatter _DateFormatter;
   private readonly INameFormatter _NameFormatter;
   private readonly ICommand _PageCommand;
-  private readonly ObservableCollection<RelativeInfoItem> _Relatives = new();
+  private readonly ObservableCollection<RelativeInfo> _Relatives = new();
   private PersonFullInfo _PersonFullInfo = PersonFullInfo.Empty;
   private byte[][] _Photos = [];
   private PersonPageSmartLayout _SmartLayout = new();
@@ -84,6 +84,8 @@ public partial class PersonPage : ContentPage
   public ICollection Relatives => _Relatives;
 
   public byte[][] Photos => _Photos;
+
+  public PersonFullInfo PersonFullInfo => _PersonFullInfo;
 
   public PersonInfo PersonInfo
   {
@@ -179,9 +181,7 @@ public partial class PersonPage : ContentPage
     {
       foreach (var relative in relatives.OrderBy(r => r.BiologicalSex))
       {
-        var relativeInfoItem = new RelativeInfoItem(
-          _PersonFullInfo.BirthDate, relative, _DateFormatter, _RelationshipTypeFormatter, _NameFormatter);
-        _Relatives.Add(relativeInfoItem);
+        _Relatives.Add(relative);
       }
     }
 
@@ -213,8 +213,8 @@ public partial class PersonPage : ContentPage
       case string name when name == "Refresh":
         PersonInfo = _PersonFullInfo;
         break;
-      case RelativeInfoItem relativeInfoItem:
-        var nextPerson = ToPerson(relativeInfoItem.Info);
+      case RelativeInfo relativeInfo:
+        var nextPerson = ToPerson(relativeInfo);
         var routeName = GetRoute(nextPerson);
         RegisterRoute(routeName, nextPerson);
         _ = Shell.Current.GoToAsync(routeName);

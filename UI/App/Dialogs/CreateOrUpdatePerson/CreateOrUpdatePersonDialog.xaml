@@ -4,7 +4,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:components="clr-namespace:GT4.UI.Components"
-    xmlns:items="clr-namespace:GT4.UI.Items"
+    xmlns:dto="clr-namespace:GT4.Core.Project.Dto;assembly=GT4.Core.Project"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root">
 
@@ -314,25 +314,21 @@
                   SelectionMode="Single">
 
                 <CollectionView.ItemTemplate>
-                  <DataTemplate x:DataType="items:RelativeInfoItem">
+                  <DataTemplate x:DataType="dto:RelativeInfo">
                     <Grid
                         x:Name="PersonRelative"
                         Padding="{StaticResource CollectionItemsVerticalPadding}"
-                        ColumnDefinitions="Auto, *, Auto, Auto"
-                        RowDefinitions="Auto, Auto">
+                        ColumnDefinitions="*, Auto, Auto"
+                        RowDefinitions="Auto">
 
-                      <components:PersonInfoView
+                      <components:RelativeInfoView
                           Grid.Row="0"
                           Grid.Column="0"
-                          Grid.ColumnSpan="2"
-                          DatesLabelStyle="{StaticResource FieldValue}"
-                          NameLabelStyle="{StaticResource FieldName}"
-                          Person="{Binding Info}" />
+                          Relative="{Binding .}" />
 
                       <Button
                           Grid.Row="0"
-                          Grid.RowSpan="2"
-                          Grid.Column="2"
+                          Grid.Column="1"
                           Command="{Binding DialogCommand, Source={x:Reference Root}}"
                           Style="{StaticResource EditAdorner}"
                           VerticalOptions="Center">
@@ -346,8 +342,7 @@
 
                       <Button
                           Grid.Row="0"
-                          Grid.RowSpan="2"
-                          Grid.Column="3"
+                          Grid.Column="2"
                           Command="{Binding DialogCommand, Source={x:Reference Root}}"
                           Style="{StaticResource DeleteAdorner}"
                           VerticalOptions="Center">
@@ -358,20 +353,6 @@
                               Element="{Binding Source={x:Reference PersonRelative}, Path=BindingContext}" />
                         </Button.CommandParameter>
                       </Button>
-
-                      <Label
-                          Grid.Row="1"
-                          Grid.Column="0"
-                          Style="{StaticResource FieldName}"
-                          Text="{Binding RelationTypeName}" />
-
-                      <Label
-                          Grid.Row="1"
-                          Grid.Column="1"
-                          Grid.ColumnSpan="3"
-                          IsVisible="{Binding ShowDate}"
-                          Style="{StaticResource FieldValue}"
-                          Text="{Binding Date}" />
 
                     </Grid>
                   </DataTemplate>

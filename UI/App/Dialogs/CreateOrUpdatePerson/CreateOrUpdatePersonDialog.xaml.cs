@@ -19,13 +19,12 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private readonly INameTypeFormatter _NameTypeFormatter;
   private readonly INameFormatter _NameFormatter;
   private readonly IDateFormatter _DateFormatter;
-  private readonly IComparer<PersonInfoItem> _PersonComparer;
   private readonly IServiceProvider _ServiceProvider;
   private readonly ICommand _DialogCommand;
   private readonly string _SaveButtonName;
   private readonly ObservableCollection<PersonDataItem> _Photos = new();
   private readonly ObservableCollection<NameInfoItem> _Names = new();
-  private readonly ObservableCollection<RelativeInfoItem> _Relatives = new();
+  private readonly ObservableCollection<RelativeInfo> _Relatives = new();
   private readonly ObservableCollection<BiologicalSexItem> _BiologicalSexes = new();
   private readonly TaskCompletionSource<PersonFullInfo?> _Info = new(null);
   private int? _PersonId;
@@ -45,7 +44,6 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     _NameTypeFormatter = _ServiceProvider.GetRequiredService<INameTypeFormatter>();
     _NameFormatter = _ServiceProvider.GetRequiredService<INameFormatter>();
     _DateFormatter = _ServiceProvider.GetRequiredService<IDateFormatter>();
-    _PersonComparer = _ServiceProvider.GetRequiredService<IComparer<PersonInfoItem>>();
     _DialogCommand = new Command<object>(OnDialogCommand);
     _SaveButtonName = person is null ? UIStrings.BtnNameCreateFamilyPerson : UIStrings.BtnNameUpdateFamilyPerson;
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, _BiologicalSexFormatter));
@@ -112,19 +110,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
               _CancellationTokenProvider)
       };
 
-      var relativeItems = person
-        .RelativeInfos
-        .Select(relativeInfo => new RelativeInfoItem(
-          person.BirthDate,
-          relativeInfo,
-          _DateFormatter,
-          _RelationshipTypeFormatter,
-          _NameFormatter))
-        .OrderBy(item => item, _PersonComparer);
-
-      foreach (var item in relativeItems)
+      foreach (var relative in person.RelativeInfos)
       {
-        _Relatives.Add(item);
+        _Relatives.Add(relative);
       }
     }
     catch (Exception ex)
@@ -148,7 +136,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   public ICollection<NameInfoItem> Names => _Names;
 
-  public ICollection<RelativeInfoItem> Relatives => _Relatives;
+  public ICollection<RelativeInfo> Relatives => _Relatives;
 
   public ICollection<BiologicalSexItem> BiologicalSexes => _BiologicalSexes;
 
@@ -229,7 +217,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       person: person,
       names: _Names.Select(n => n.Info).ToArray(),
       additionalPhotos: additionalPhotos,
-      relativeInfos: _Relatives.Select(relative => relative.RelativeInfo).ToArray(),
+      relativeInfos: [.._Relatives],
       mainPhoto: mainPhoto is null ? null : mainPhoto with { Category = DataCategory.PersonMainPhoto },
       biography: _Biography?.ToDataAsync().Result);
 
@@ -368,12 +356,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   private async Task OnAddRelationshipAsync()
   {
-    var existingRelatives = _Relatives
-      .Select(item => item.RelativeInfo)
-      .ToArray();
     var dialog = new SelectRelativesDialog(
       biologicalSex: _BiologicalSex?.Info,
-      existingRelatives: existingRelatives,
+      existingRelatives: [..Relatives],
       _ServiceProvider);
 
     await Navigation.PushModalAsync(dialog);
@@ -382,14 +367,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
     if (result?.Length > 0)
     {
-      var relatives = result
-        .Select(relativeInfo => new RelativeInfoItem(
-          _BirthDate.GetValueOrDefault(),
-          relativeInfo,
-          _DateFormatter,
-          _RelationshipTypeFormatter,
-          _NameFormatter));
-      foreach (var relative in relatives)
+      foreach (var relative in result)
       {
         _Relatives.Add(relative);
       }
@@ -397,10 +375,10 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
   }
 
-  private async Task OnEditRelationshipAsync(RelativeInfoItem relative)
+  private async Task OnEditRelationshipAsync(RelativeInfo relative)
   {
     var dialog = new SelectDateDialog(
-      date: relative.RelativeInfo.Date,
+      date: relative.Date,
       dateFormatter: _DateFormatter);
 
     await Navigation.PushModalAsync(dialog);
@@ -410,14 +388,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     if (date is not null)
     {
       var insertIndex = _Relatives.IndexOf(relative);
-      _Relatives.Remove(relative);
-      var newRelative = new RelativeInfoItem(
-        _BirthDate.GetValueOrDefault(),
-        relativeInfo: relative.RelativeInfo with { Date = date },
-        _DateFormatter,
-        _RelationshipTypeFormatter,
-        _NameFormatter);
-      _Relatives.Insert(insertIndex, newRelative);
+      _Relatives.RemoveAt(insertIndex);
+      _Relatives.Insert(insertIndex, relative with { Date = date });
       IsModified = true;
     }
   }
@@ -464,10 +436,10 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         OnPropertyChanged(nameof(PersonFullName));
         IsModified = true;
         break;
-      case AdornerCommandParameter adorner when adorner.CommandName == "EditRelativeCommand" && adorner.Element is RelativeInfoItem relative:
+      case AdornerCommandParameter adorner when adorner.CommandName == "EditRelativeCommand" && adorner.Element is RelativeInfo relative:
         await OnEditRelationshipAsync(relative);
         break;
-      case AdornerCommandParameter adorner when adorner.CommandName == "RemoveRelativeCommand" && adorner.Element is RelativeInfoItem relative:
+      case AdornerCommandParameter adorner when adorner.CommandName == "RemoveRelativeCommand" && adorner.Element is RelativeInfo relative:
         _Relatives.Remove(relative);
         IsModified = true;
         break;
