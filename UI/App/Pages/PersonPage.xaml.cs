@@ -3,7 +3,6 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Dialogs;
 using GT4.UI.Formatters;
-using GT4.UI.Items;
 using GT4.UI.Resources;
 using System.Collections;
 using System.Collections.ObjectModel;
@@ -17,7 +16,6 @@ public partial class PersonPage : ContentPage
   private readonly Stack<Person> _PersonBackNavigationStack = [];
   private readonly IServiceProvider _ServiceProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
-  private readonly IRelationshipTypeFormatter _RelationshipTypeFormatter;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IDateSpanFormatter _DateSpanFormatter;
   private readonly IDateFormatter _DateFormatter;
@@ -32,7 +30,6 @@ public partial class PersonPage : ContentPage
   {
     _ServiceProvider = serviceProvider;
     _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
-    _RelationshipTypeFormatter = _ServiceProvider.GetRequiredService<IRelationshipTypeFormatter>();
     _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
     _DateSpanFormatter = _ServiceProvider.GetRequiredService<IDateSpanFormatter>();
     _DateFormatter = _ServiceProvider.GetRequiredService<IDateFormatter>();
