@@ -15,6 +15,7 @@ public partial class FamilyPage : ContentPage
   private readonly IServiceProvider _Services;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
+  private readonly IComparer<PersonInfo> _PersonInfoComparer;
   private readonly INameFormatter _NameFormatter;
   private Name? _FamilyName = null;
   private double _PersonItemMinimalWidth;
@@ -24,6 +25,7 @@ public partial class FamilyPage : ContentPage
     _Services = serviceProvider;
     _CancellationTokenProvider = _Services.GetRequiredService<ICancellationTokenProvider>();
     _CurrentProjectProvider = _Services.GetRequiredService<ICurrentProjectProvider>();
+    _PersonInfoComparer = _Services.GetRequiredService<IComparer<PersonInfo>>();
     _NameFormatter = _Services.GetRequiredService<INameFormatter>();
 
     MemberItemTappedCommand = new Command<PersonInfoItem>(OnOpenPerson);
@@ -74,7 +76,7 @@ public partial class FamilyPage : ContentPage
           .GetPersonInfosByNameAsync(name: FamilyName, selectMainPhoto: true, token)
           .Result
           .Select(person => new PersonInfoItem(person, _NameFormatter))
-          .OrderBy(item => item, _Services.GetRequiredService<IComparer<PersonInfoItem>>())
+          .OrderBy(item => item.Info, _PersonInfoComparer)
           .ToList();
 
         return ret;
@@ -93,7 +95,7 @@ public partial class FamilyPage : ContentPage
   public string EditFamilyToolbarItemName =>
     string.Format(UIStrings.MenuItemNameEdit_1, _FamilyName?.Value ?? string.Empty);
 
-  private async Task OnDeleteFmily()
+  private async Task OnDeleteFamily()
   {
     var canDelete = _FamilyName is not null &&
        await this.ShowConfirmation(string.Format(UIStrings.AlertTextDeleteConfirmationText_1, _FamilyName.Value));
@@ -196,7 +198,7 @@ public partial class FamilyPage : ContentPage
       switch (parameter)
       {
         case string name when name == "RemoveFamily":
-          await OnDeleteFmily();
+          await OnDeleteFamily();
           break;
 
         case string name when name == "EditFamily":

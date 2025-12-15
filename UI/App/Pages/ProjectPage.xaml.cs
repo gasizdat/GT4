@@ -14,8 +14,8 @@ public partial class ProjectPage : ContentPage
   private readonly IServiceProvider _ServiceProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
-  private readonly IComparer<PersonInfoItem> _PersonInfoComparer;
-  private readonly IComparer<FamilyInfoItem> _FamilyInfoComparer;
+  private readonly IComparer<PersonInfo> _PersonInfoComparer;
+  private readonly IComparer<Name> _NameComparer;
   private readonly INameFormatter _NameFormatter;
   private readonly IProjectList _ProjectList;
 
@@ -31,7 +31,7 @@ public partial class ProjectPage : ContentPage
       .GetPersonInfosByNameAsync(name: name, selectMainPhoto: true, token)
       .Result
       .Select(person => new PersonInfoItem(person, _NameFormatter))
-      .OrderBy(item => item, _PersonInfoComparer)
+      .OrderBy(item => item.Info, _PersonInfoComparer)
       .ToArray();
   }
 
@@ -108,8 +108,8 @@ public partial class ProjectPage : ContentPage
     _ServiceProvider = serviceProvider;
     _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
     _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
-    _PersonInfoComparer = _ServiceProvider.GetRequiredService<IComparer<PersonInfoItem>>();
-    _FamilyInfoComparer = _ServiceProvider.GetRequiredService<IComparer<FamilyInfoItem>>();
+    _PersonInfoComparer = _ServiceProvider.GetRequiredService<IComparer<PersonInfo>>();
+    _NameComparer = _ServiceProvider.GetRequiredService<IComparer<Name>>();
     _NameFormatter = _ServiceProvider.GetRequiredService<INameFormatter>();
     _ProjectList = _ServiceProvider.GetRequiredService<IProjectList>();
 
@@ -135,7 +135,7 @@ public partial class ProjectPage : ContentPage
           .GetFamiliesAsync(token)
           .Result
           .Select(name => new FamilyInfoItem(name, GetFamilyPersons(name, token)))
-          .OrderBy(item => item, _FamilyInfoComparer)
+          .OrderBy(item => item.Info, _NameComparer)
           .ToList();
 
         ret.Add(new FamilyInfoItemCreate());

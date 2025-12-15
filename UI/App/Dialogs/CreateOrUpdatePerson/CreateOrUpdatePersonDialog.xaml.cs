@@ -14,11 +14,11 @@ namespace GT4.UI.Dialogs;
 public partial class CreateOrUpdatePersonDialog : ContentPage
 {
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
-  private readonly IRelationshipTypeFormatter _RelationshipTypeFormatter;
   private readonly IBiologicalSexFormatter _BiologicalSexFormatter;
   private readonly INameTypeFormatter _NameTypeFormatter;
   private readonly INameFormatter _NameFormatter;
   private readonly IDateFormatter _DateFormatter;
+  private readonly IComparer<PersonInfo> _PersonInfoComparer;
   private readonly IServiceProvider _ServiceProvider;
   private readonly ICommand _DialogCommand;
   private readonly string _SaveButtonName;
@@ -39,11 +39,11 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   {
     _ServiceProvider = serviceProvider;
     _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
-    _RelationshipTypeFormatter = _ServiceProvider.GetRequiredService<IRelationshipTypeFormatter>();
     _BiologicalSexFormatter = _ServiceProvider.GetRequiredService<IBiologicalSexFormatter>();
     _NameTypeFormatter = _ServiceProvider.GetRequiredService<INameTypeFormatter>();
     _NameFormatter = _ServiceProvider.GetRequiredService<INameFormatter>();
     _DateFormatter = _ServiceProvider.GetRequiredService<IDateFormatter>();
+    _PersonInfoComparer = _ServiceProvider.GetRequiredService<IComparer<PersonInfo>>();
     _DialogCommand = new Command<object>(OnDialogCommand);
     _SaveButtonName = person is null ? UIStrings.BtnNameCreateFamilyPerson : UIStrings.BtnNameUpdateFamilyPerson;
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, _BiologicalSexFormatter));
@@ -110,7 +110,10 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
               _CancellationTokenProvider)
       };
 
-      foreach (var relative in person.RelativeInfos)
+      var relatives = person
+        .RelativeInfos
+        .OrderBy(item => item, _PersonInfoComparer);
+      foreach (var relative in relatives)
       {
         _Relatives.Add(relative);
       }

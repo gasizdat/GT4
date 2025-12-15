@@ -15,7 +15,7 @@ public partial class SelectRelativesDialog : ContentPage
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IDateFormatter _DateFormatter;
   private readonly INameFormatter _NameFormatter;
-  private readonly IComparer<PersonInfoItem> _PersonComparer;
+  private readonly IComparer<PersonInfo> _PersonInfoComparer;
   private readonly BiologicalSexItem[] _BiologicalSexes;
   private readonly RelationshipTypeItem[] _RelationshipTypes;
   private readonly FilteredObservableCollection<PersonInfoItem> _Persons = new();
@@ -96,7 +96,7 @@ public partial class SelectRelativesDialog : ContentPage
     _CurrentProjectProvider = serviceProvider.GetRequiredService<ICurrentProjectProvider>();
     _DateFormatter = serviceProvider.GetRequiredService<IDateFormatter>();
     _NameFormatter = serviceProvider.GetRequiredService<INameFormatter>();
-    _PersonComparer = serviceProvider.GetRequiredService<IComparer<PersonInfoItem>>();
+    _PersonInfoComparer = serviceProvider.GetRequiredService<IComparer<PersonInfo>>();
     _DialogCommand = new Command<object>(OnDialogCommand);
     _ProjectRevision = _CurrentProjectProvider.Project.ProjectRevision;
     _BiologicalSexes = new[] { BiologicalSex.Male, BiologicalSex.Female, BiologicalSex.Unknown }
@@ -161,7 +161,7 @@ public partial class SelectRelativesDialog : ContentPage
           var items = persons
             .Where(person => !_ExistingRelativeIds.Contains(person.Id))
             .Select(personInfo => new PersonInfoItem(personInfo, _NameFormatter))
-            .OrderBy(item => item, _PersonComparer);
+            .OrderBy(item => item.Info, _PersonInfoComparer);
 
           MainThread.BeginInvokeOnMainThread(() => _Persons.AddRange(items));
         }

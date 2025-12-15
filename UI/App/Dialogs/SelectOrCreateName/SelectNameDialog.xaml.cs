@@ -17,7 +17,7 @@ public partial class SelectNameDialog : ContentPage
   private readonly INameTypeFormatter _NameTypeFormatter;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
-  private readonly IComparer<NameInfoItem> _NameComparer;
+  private readonly IComparer<Name> _NameComparer;
   private readonly ObservableCollection<NameTypeInfoItem> _NameTypes;
   private NameTypeInfoItem _CurrentNameType;
   private readonly NameType _NameDeclension;
@@ -31,7 +31,7 @@ public partial class SelectNameDialog : ContentPage
     _NameTypeFormatter = _ServiceProvider.GetRequiredService<INameTypeFormatter>();
     _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
     _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
-    _NameComparer = _ServiceProvider.GetRequiredService<IComparer<NameInfoItem>>();
+    _NameComparer = _ServiceProvider.GetRequiredService<IComparer<Name>>();
     _NameTypes = new((new[] { NameType.FirstName, NameType.MiddleName, NameType.LastName, NameType.AdditionalName })
       .Select(type => new NameTypeInfoItem(_NameTypeFormatter.ToString(type), type)));
     _CurrentNameType = _NameTypes.First();
@@ -59,7 +59,7 @@ public partial class SelectNameDialog : ContentPage
         .GetNamesByTypeAsync(CurrentNameType.Type | _NameDeclension, token)
         .Result
         .Select(name => new NameInfoItem(name, _NameTypeFormatter))
-        .OrderBy(name => name, _NameComparer)
+        .OrderBy(name => name.Info, _NameComparer)
         .ToArray();
 
       return ret;
