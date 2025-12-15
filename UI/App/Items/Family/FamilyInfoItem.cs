@@ -4,13 +4,13 @@ namespace GT4.UI.Items;
 
 public class FamilyInfoItem : CollectionItemBase<Name>
 {
-  private readonly PersonInfoItem[] _Persons;
+  private readonly PersonInfo[] _Persons;
 
-  public FamilyInfoItem(Name familyName, PersonInfoItem[] persons)
+  public FamilyInfoItem(Name familyName, PersonInfo[] persons)
     : base(familyName, "family_stub.png")
   {
     _Persons = persons;
   }
 
-  public PersonInfoItem[] Persons => _Persons;
+  public PersonInfo[] Persons => _Persons;
 }

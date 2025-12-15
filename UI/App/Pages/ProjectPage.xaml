@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:components="clr-namespace:GT4.UI.Components"
+    xmlns:dto="clr-namespace:GT4.Core.Project.Dto;assembly=GT4.Core.Project"
     xmlns:items="clr-namespace:GT4.UI.Items"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root"
@@ -57,11 +58,8 @@
               <Image
                   Grid.Row="0"
                   Grid.Column="0"
-                  Aspect="AspectFit"
-                  HeightRequest="32"
                   Source="{Binding Icon}"
-                  VerticalOptions="Start"
-                  WidthRequest="32" />
+                  Style="{StaticResource PhotoThumbStyle}" />
 
               <Label
                   Grid.Row="0"
@@ -75,27 +73,22 @@
                   Grid.Row="1"
                   Grid.Column="0"
                   Grid.ColumnSpan="2"
-                  BindableLayout.ItemsSource="{Binding Persons}">
+                  Margin="{Thickness Left={StaticResource PhotoThumbWidth}}"
+                  BindableLayout.ItemsSource="{Binding Persons}"
+                  Shadow="{Shadow Offset={Point X=10,
+                                                Y=10},
+                                  Brush=Gray}">
                 <BindableLayout.ItemTemplate>
+                  <DataTemplate x:DataType="dto:PersonInfo">
 
-                  <DataTemplate x:DataType="items:PersonInfoItem">
-
-                    <HorizontalStackLayout Margin="50,0,0,0">
-                      <Image
-                          Aspect="AspectFit"
-                          HeightRequest="32"
-                          Source="{Binding Icon}"
-                          VerticalOptions="Start"
-                          WidthRequest="32" />
-
-                      <Label
-                          HorizontalOptions="Fill"
-                          Style="{StaticResource CardContent}"
-                          Text="{Binding CommonName}" />
-                    </HorizontalStackLayout>
+                    <components:PersonInfoView
+                        NameLabelStyle="{StaticResource FieldValue}"
+                        Person="{Binding .}"
+                        PhotoStyle="{StaticResource PhotoCompactStyle}"
+                        ShowAge="False"
+                        ShowDates="False" />
 
                   </DataTemplate>
-
                 </BindableLayout.ItemTemplate>
               </StackLayout>
 

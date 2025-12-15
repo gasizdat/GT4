@@ -2,7 +2,6 @@ using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Dialogs;
-using GT4.UI.Formatters;
 using GT4.UI.Items;
 using GT4.UI.Resources;
 using System.Windows.Input;
@@ -16,12 +15,11 @@ public partial class ProjectPage : ContentPage
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IComparer<PersonInfo> _PersonInfoComparer;
   private readonly IComparer<Name> _NameComparer;
-  private readonly INameFormatter _NameFormatter;
   private readonly IProjectList _ProjectList;
 
   private long? _ProjectRevision;
 
-  private PersonInfoItem[] GetFamilyPersons(Name name, CancellationToken token)
+  private PersonInfo[] GetFamilyPersons(Name name, CancellationToken token)
   {
     var project = _CurrentProjectProvider.Project;
     _ProjectRevision = project.ProjectRevision;
@@ -30,8 +28,7 @@ public partial class ProjectPage : ContentPage
       .PersonManager
       .GetPersonInfosByNameAsync(name: name, selectMainPhoto: true, token)
       .Result
-      .Select(person => new PersonInfoItem(person, _NameFormatter))
-      .OrderBy(item => item.Info, _PersonInfoComparer)
+      .OrderBy(item => item, _PersonInfoComparer)
       .ToArray();
   }
 
@@ -110,7 +107,6 @@ public partial class ProjectPage : ContentPage
     _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
     _PersonInfoComparer = _ServiceProvider.GetRequiredService<IComparer<PersonInfo>>();
     _NameComparer = _ServiceProvider.GetRequiredService<IComparer<Name>>();
-    _NameFormatter = _ServiceProvider.GetRequiredService<INameFormatter>();
     _ProjectList = _ServiceProvider.GetRequiredService<IProjectList>();
 
     MenuItemCommand = new Command<object>(OnMenuItemCommand);

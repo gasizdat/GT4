@@ -2,8 +2,6 @@ using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Dialogs;
-using GT4.UI.Formatters;
-using GT4.UI.Items;
 using GT4.UI.Resources;
 using System.Windows.Input;
 
@@ -16,7 +14,6 @@ public partial class FamilyPage : ContentPage
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IComparer<PersonInfo> _PersonInfoComparer;
-  private readonly INameFormatter _NameFormatter;
   private Name? _FamilyName = null;
   private double _PersonItemMinimalWidth;
 
@@ -26,9 +23,8 @@ public partial class FamilyPage : ContentPage
     _CancellationTokenProvider = _Services.GetRequiredService<ICancellationTokenProvider>();
     _CurrentProjectProvider = _Services.GetRequiredService<ICurrentProjectProvider>();
     _PersonInfoComparer = _Services.GetRequiredService<IComparer<PersonInfo>>();
-    _NameFormatter = _Services.GetRequiredService<INameFormatter>();
 
-    MemberItemTappedCommand = new Command<PersonInfoItem>(OnOpenPerson);
+    MemberItemTappedCommand = new Command<PersonInfo>(OnOpenPerson);
     MenuItemCommand = new Command<object?>(OnMenuItemCommand);
 
     InitializeComponent();
@@ -58,7 +54,7 @@ public partial class FamilyPage : ContentPage
 
   public ICommand MenuItemCommand { get; init; }
 
-  public ICollection<PersonInfoItem> Persons
+  public ICollection<PersonInfo> Persons
   {
     get
     {
@@ -75,8 +71,7 @@ public partial class FamilyPage : ContentPage
           .PersonManager
           .GetPersonInfosByNameAsync(name: FamilyName, selectMainPhoto: true, token)
           .Result
-          .Select(person => new PersonInfoItem(person, _NameFormatter))
-          .OrderBy(item => item.Info, _PersonInfoComparer)
+          .OrderBy(item => item, _PersonInfoComparer)
           .ToList();
 
         return ret;
@@ -84,7 +79,7 @@ public partial class FamilyPage : ContentPage
       catch (Exception ex)
       {
         _ = PageAlert.ShowError(ex);
-        return Enumerable.Empty<PersonInfoItem>().ToList();
+        return Enumerable.Empty<PersonInfo>().ToList();
       }
     }
   }
@@ -186,9 +181,9 @@ public partial class FamilyPage : ContentPage
     OnPropertyChanged(nameof(Persons));
   }
 
-  private async void OnOpenPerson(PersonInfoItem familyMember)
+  private async void OnOpenPerson(PersonInfo familyMember)
   {
-    await Shell.Current.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { ["PersonInfo"] = familyMember.Info });
+    await Shell.Current.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { ["PersonInfo"] = familyMember });
   }
 
   private async void OnMenuItemCommand(object? parameter)

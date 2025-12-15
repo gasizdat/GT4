@@ -19,6 +19,20 @@
       Tablet="48" />
 
   <OnIdiom
+      x:Key="PhotoCompactHeight"
+      x:TypeArguments="x:Double"
+      Desktop="32"
+      Phone="24"
+      Tablet="32" />
+
+  <OnIdiom
+      x:Key="PhotoCompactWidth"
+      x:TypeArguments="x:Double"
+      Desktop="32"
+      Phone="24"
+      Tablet="32" />
+
+  <OnIdiom
       x:Key="LabelTextSizeDefault"
       x:TypeArguments="x:Double"
       Desktop="16"
@@ -657,6 +671,12 @@
     <Setter Property="WidthRequest" Value="{StaticResource PhotoThumbWidth}" />
     <Setter Property="HorizontalOptions" Value="Center" />
     <Setter Property="VerticalOptions" Value="Center" />
+  </Style>
+
+  <Style x:Key="PhotoCompactStyle" BasedOn="{StaticResource PhotoThumbStyle}" TargetType="Image">
+    <!--<Setter Property="Clip" Value="{EllipseGeometry Center={Point X=16, Y=16}, RadiusX=16, RadiusY=16}" />-->
+    <Setter Property="HeightRequest" Value="{StaticResource PhotoCompactHeight}" />
+    <Setter Property="WidthRequest" Value="{StaticResource PhotoCompactWidth}" />
   </Style>
 
   <Style x:Key="SelectableItem" TargetType="View">

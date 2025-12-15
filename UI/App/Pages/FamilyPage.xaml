@@ -4,7 +4,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:components="clr-namespace:GT4.UI.Components"
-    xmlns:items="clr-namespace:GT4.UI.Items"
+    xmlns:dto="clr-namespace:GT4.Core.Project.Dto;assembly=GT4.Core.Project"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
     x:Name="Root"
@@ -51,7 +51,7 @@
             Wrap="Wrap">
 
           <BindableLayout.ItemTemplate>
-            <DataTemplate x:DataType="items:PersonInfoItem">
+            <DataTemplate x:DataType="dto:PersonInfo">
               <Frame
                   Margin="{Thickness Bottom={StaticResource PageContentSpacing},
                                      Right={StaticResource PageContentSpacing}}"
@@ -69,7 +69,7 @@
                 <components:PersonInfoView
                     DatesLabelStyle="{StaticResource FieldValue}"
                     NameLabelStyle="{StaticResource FieldName}"
-                    Person="{Binding Info}" />
+                    Person="{Binding .}" />
               </Frame>
             </DataTemplate>
           </BindableLayout.ItemTemplate>

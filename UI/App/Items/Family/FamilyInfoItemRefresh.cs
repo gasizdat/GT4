@@ -6,7 +6,7 @@ namespace GT4.UI.Items;
 public class FamilyInfoItemRefresh : FamilyInfoItem
 {
   public FamilyInfoItemRefresh(Exception ex)
-    : base(new Name(TableBase.NonCommitedId, GetRefreshOnErrorButtonName(ex), NameType.FamilyName, null), Array.Empty<PersonInfoItem>())
+    : base(new Name(TableBase.NonCommitedId, GetRefreshOnErrorButtonName(ex), NameType.FamilyName, null), Array.Empty<PersonInfo>())
   {
   }
 

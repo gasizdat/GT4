@@ -6,7 +6,7 @@ namespace GT4.UI.Items;
 public class FamilyInfoItemCreate : FamilyInfoItem
 {
   public FamilyInfoItemCreate()
-    : base(new Name(TableBase.NonCommitedId, Resources.UIStrings.BtnNameCreateFamily, NameType.FamilyName, null), Array.Empty<PersonInfoItem>())
+    : base(new Name(TableBase.NonCommitedId, Resources.UIStrings.BtnNameCreateFamily, NameType.FamilyName, null), Array.Empty<PersonInfo>())
   {
   }
 

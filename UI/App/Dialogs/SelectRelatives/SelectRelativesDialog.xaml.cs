@@ -14,11 +14,10 @@ public partial class SelectRelativesDialog : ContentPage
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IDateFormatter _DateFormatter;
-  private readonly INameFormatter _NameFormatter;
   private readonly IComparer<PersonInfo> _PersonInfoComparer;
   private readonly BiologicalSexItem[] _BiologicalSexes;
   private readonly RelationshipTypeItem[] _RelationshipTypes;
-  private readonly FilteredObservableCollection<PersonInfoItem> _Persons = new();
+  private readonly FilteredObservableCollection<PersonInfo> _Persons = new();
   private readonly ObservableCollection<object> _SelectedItems = [];
   private readonly TaskCompletionSource<RelativeInfo[]?> _Info = new(null);
   private readonly ICommand _DialogCommand;
@@ -30,12 +29,11 @@ public partial class SelectRelativesDialog : ContentPage
   private Date? _RelationshipDate;
   private string _NameFilter = string.Empty;
 
-  private bool PersonFilter(FilteredObservableCollection<PersonInfoItem> collection, PersonInfoItem personItem)
+  private bool PersonFilter(FilteredObservableCollection<PersonInfo> collection, PersonInfo personItem)
   {
     if (!string.IsNullOrEmpty(_NameFilter))
     {
       var isMatched = personItem
-        .Info
         .Names
         .Any(name => name.Value.Contains(_NameFilter, StringComparison.InvariantCultureIgnoreCase));
 
@@ -45,7 +43,7 @@ public partial class SelectRelativesDialog : ContentPage
       }
     }
 
-    if (_BiologicalSex.Info != BiologicalSex.Unknown && personItem.Info.BiologicalSex != _BiologicalSex.Info)
+    if (_BiologicalSex.Info != BiologicalSex.Unknown && personItem.BiologicalSex != _BiologicalSex.Info)
     {
       return false;
     }
@@ -65,7 +63,7 @@ public partial class SelectRelativesDialog : ContentPage
         break;
       case string commandName when commandName == "SelectPersonCommand":
         var relatives = _SelectedItems
-          .Select(i => ((PersonInfoItem)i).Info)
+          .Select(i => (PersonInfo)i)
           .Select(i => new RelativeInfo(i, _RelationshipType.Info, _RelationshipDate.HasValue ? _RelationshipDate.Value : null));
 
         _Info.SetResult([.. relatives]);
@@ -95,7 +93,6 @@ public partial class SelectRelativesDialog : ContentPage
     _CancellationTokenProvider = serviceProvider.GetRequiredService<ICancellationTokenProvider>();
     _CurrentProjectProvider = serviceProvider.GetRequiredService<ICurrentProjectProvider>();
     _DateFormatter = serviceProvider.GetRequiredService<IDateFormatter>();
-    _NameFormatter = serviceProvider.GetRequiredService<INameFormatter>();
     _PersonInfoComparer = serviceProvider.GetRequiredService<IComparer<PersonInfo>>();
     _DialogCommand = new Command<object>(OnDialogCommand);
     _ProjectRevision = _CurrentProjectProvider.Project.ProjectRevision;
@@ -145,7 +142,7 @@ public partial class SelectRelativesDialog : ContentPage
 
   public RelationshipTypeItem[] RelationshipTypes => _RelationshipTypes;
 
-  public IEnumerable<PersonInfoItem> Persons
+  public IEnumerable<PersonInfo> Persons
   {
     get
     {
@@ -160,8 +157,7 @@ public partial class SelectRelativesDialog : ContentPage
             .GetPersonInfosAsync(selectMainPhoto: false, token);
           var items = persons
             .Where(person => !_ExistingRelativeIds.Contains(person.Id))
-            .Select(personInfo => new PersonInfoItem(personInfo, _NameFormatter))
-            .OrderBy(item => item.Info, _PersonInfoComparer);
+            .OrderBy(item => item, _PersonInfoComparer);
 
           MainThread.BeginInvokeOnMainThread(() => _Persons.AddRange(items));
         }
