@@ -98,5 +98,14 @@
       </CollectionView>
     </components:PageLayout.Body>
 
+    <components:PageLayout.Footer>
+      <Button
+          Command="{Binding MenuItemCommand, Source={x:Reference Root}}"
+          CommandParameter="CreateFamily"
+          FontSize="Large"
+          HorizontalOptions="Fill"
+          Text="{x:Static resources:UIStrings.BtnNameCreateFamily}" />
+    </components:PageLayout.Footer>
+
   </components:PageLayout>
 </ContentPage>

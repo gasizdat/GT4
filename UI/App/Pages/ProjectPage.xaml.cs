@@ -49,6 +49,10 @@ public partial class ProjectPage : ContentPage
         case string name when name == "Refresh":
           Utils.RefreshView(this);
           break;
+
+        case string name when name == "CreateFamily":
+          await OnCreateFamily();
+          break;
       }
     }
     catch (Exception ex)
@@ -134,13 +138,12 @@ public partial class ProjectPage : ContentPage
           .OrderBy(item => item.Info, _NameComparer)
           .ToList();
 
-        ret.Add(new FamilyInfoItemCreate());
-
         return ret;
       }
       catch (Exception ex)
       {
-        return [new FamilyInfoItemRefresh(ex)];
+        this.ShowError(ex);
+        return [];
       }
     }
   }
@@ -154,17 +157,9 @@ public partial class ProjectPage : ContentPage
 
   public async void OnFamilySelected(object sender, SelectionChangedEventArgs e)
   {
-    switch (e.CurrentSelection.FirstOrDefault())
+    if (e.CurrentSelection.FirstOrDefault() is FamilyInfoItem item)
     {
-      case FamilyInfoItemCreate:
-        await OnCreateFamily();
-        break;
-      case FamilyInfoItemRefresh:
-        OnPropertyChanged(nameof(Families));
-        break;
-      case FamilyInfoItem item:
         await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = item.Info });
-        break;
     }
   }
 
