@@ -101,8 +101,16 @@ public partial class RelativeInfoView : ContentView
     get => _ShowRelatives;
     private set
     {
-      _ShowRelatives = value;
-      OnPropertyChanged(nameof(ShowRelatives));
+      if (_ShowRelatives != value)
+      {
+        _ShowRelatives = value;
+        if (!_ShowRelatives)
+        {
+          Relatives = null;
+          MoreBtnName = ExpandSymbol;
+        }
+        OnPropertyChanged(nameof(ShowRelatives));
+      }
     }
   }
   public ICommand ShowMoreRelativesCommand { get; init; }
@@ -122,8 +130,11 @@ public partial class RelativeInfoView : ContentView
     get => _MoreBtnName;
     private set
     {
-      _MoreBtnName = value;
-      OnPropertyChanged(nameof(MoreBtnName));
+      if (_MoreBtnName != value)
+      {
+        _MoreBtnName = value;
+        OnPropertyChanged(nameof(MoreBtnName));
+      }
     }
   }
 
@@ -131,6 +142,7 @@ public partial class RelativeInfoView : ContentView
   {
     if (obj is RelativeInfoView view && oldValue != newValue)
     {
+      view.ShowRelatives = false;
       Utils.RefreshView(view);
     }
   }
@@ -146,8 +158,6 @@ public partial class RelativeInfoView : ContentView
     if (ShowRelatives)
     {
       ShowRelatives = false;
-      Relatives = null;
-      MoreBtnName = ExpandSymbol;
     }
     else
     {
