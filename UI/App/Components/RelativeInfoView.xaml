@@ -4,10 +4,11 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:components="clr-namespace:GT4.UI.Components"
+    xmlns:dto="clr-namespace:GT4.Core.Project.Dto;assembly=GT4.Core.Project"
     x:Name="Root">
   <Grid
       ColumnDefinitions="Auto, *, Auto"
-      RowDefinitions="Auto, Auto">
+      RowDefinitions="Auto, Auto, *">
 
     <Label
         Grid.Row="0"
@@ -36,11 +37,47 @@
         x:Name="MoreBtn"
         Grid.Row="1"
         Grid.Column="2"
+        Command="{Binding ShowMoreRelativesCommand, Source={x:Reference Root}}"
         IsVisible="{Binding ShowMoreButton, Source={x:Reference Root}}"
         Style="{StaticResource EmojiAdorner}"
-        Text="⬇️"
+        Text="{Binding MoreBtnName, Source={x:Reference Root}}"
         VerticalOptions="Fill"
         WidthRequest="{Binding Height, Source={x:Reference MoreBtn}}" />
+
+    <CollectionView
+        Grid.Row="2"
+        Grid.Column="0"
+        Grid.ColumnSpan="3"
+        Margin="{Thickness Left=20}"
+        HorizontalOptions="Fill"
+        IsVisible="{Binding ShowRelatives, Source={x:Reference Root}}"
+        ItemsSource="{Binding Relatives, Source={x:Reference Root}}">
+      <CollectionView.ItemsLayout>
+        <LinearItemsLayout
+            ItemSpacing="{StaticResource PageContentSpacing}"
+            Orientation="Vertical" />
+      </CollectionView.ItemsLayout>
+
+      <CollectionView.ItemTemplate>
+        <DataTemplate x:DataType="dto:RelativeInfo">
+          <components:RelativeInfoView
+              PersonBirthDate="{Binding Relative.BirthDate, Source={x:Reference Root}}"
+              Relative="{Binding .}"
+              ShowMoreButton="True"
+              Style="{StaticResource HoverItem}">
+
+            <!--  TODO  -->
+            <!--<components:RelativeInfoView.GestureRecognizers>
+              <TapGestureRecognizer
+                  Command="{Binding Path=PageCommand, Source={x:Reference Root}}"
+                  CommandParameter="{Binding .}" />
+            </components:RelativeInfoView.GestureRecognizers>-->
+
+          </components:RelativeInfoView>
+
+        </DataTemplate>
+      </CollectionView.ItemTemplate>
+    </CollectionView>
 
   </Grid>
 </ContentView>

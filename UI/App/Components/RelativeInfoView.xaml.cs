@@ -1,18 +1,30 @@
+﻿using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Formatters;
+using System.Windows.Input;
 
 namespace GT4.UI.Components;
 
 public partial class RelativeInfoView : ContentView
 {
+  private const string ExpandSymbol = "🔽";
+  private const string CollapseSymbol = "­­­­⏫­";
+  private readonly ICancellationTokenProvider _CancellationTokenProvider;
+  private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IDateFormatter _DateFormatter;
   private readonly IRelationshipTypeFormatter _RelationshipTypeFormatter;
+  private bool _ShowRelatives = false;
+  private ICollection<RelativeInfo>? _Relatives = null;
+  private string _MoreBtnName = ExpandSymbol;
 
   protected RelativeInfoView(IServiceProvider serviceProvider)
   {
+    _CancellationTokenProvider = serviceProvider.GetRequiredService<ICancellationTokenProvider>();
+    _CurrentProjectProvider = serviceProvider.GetRequiredService<ICurrentProjectProvider>();
     _DateFormatter = serviceProvider.GetRequiredService<IDateFormatter>();
     _RelationshipTypeFormatter = serviceProvider.GetRequiredService<IRelationshipTypeFormatter>();
+    ShowMoreRelativesCommand = new Command(OnShowMoreRelativesCommandAsync);
     InitializeComponent();
   }
 
@@ -84,11 +96,70 @@ public partial class RelativeInfoView : ContentView
     ? string.Empty
     : _RelationshipTypeFormatter.ToString(Relative.Type, Relative.BiologicalSex);
 
+  public bool ShowRelatives
+  {
+    get => _ShowRelatives;
+    private set
+    {
+      _ShowRelatives = value;
+      OnPropertyChanged(nameof(ShowRelatives));
+    }
+  }
+  public ICommand ShowMoreRelativesCommand { get; init; }
+
+  public ICollection<RelativeInfo>? Relatives
+  {
+    get => _Relatives;
+    private set
+    {
+      _Relatives = value;
+      OnPropertyChanged(nameof(Relatives));
+    }
+  }
+
+  public string MoreBtnName
+  {
+    get => _MoreBtnName;
+    private set
+    {
+      _MoreBtnName = value;
+      OnPropertyChanged(nameof(MoreBtnName));
+    }
+  }
+
   private static void OnRelativeInfoChanged(BindableObject obj, object oldValue, object newValue)
   {
     if (obj is RelativeInfoView view && oldValue != newValue)
     {
       Utils.RefreshView(view);
+    }
+  }
+
+  private async void OnShowMoreRelativesCommandAsync(object obj)
+  {
+    var relative = Relative;
+    if (relative is null)
+    {
+      return;
+    }
+
+    if (ShowRelatives)
+    {
+      ShowRelatives = false;
+      Relatives = null;
+      MoreBtnName = ExpandSymbol;
+    }
+    else
+    {
+      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      var relatives = await _CurrentProjectProvider
+        .Project
+        .RelativesProvider
+        .GetRelativeInfosAsync(relative, true, token);
+
+      Relatives = relatives;
+      ShowRelatives = true;
+      MoreBtnName = CollapseSymbol;
     }
   }
 }
