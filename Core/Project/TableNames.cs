@@ -1,16 +1,11 @@
 ﻿using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using Microsoft.Data.Sqlite;
-using System.Diagnostics.CodeAnalysis;
 
 namespace GT4.Core.Project;
 
-using NameList = WeakReference<IReadOnlyDictionary<int, Name>?>;
-
 internal class TableNames : TableBase, ITableNames
 {
-  private readonly Dictionary<NameType, NameList> _Items = new();
-
   private static Name CreateName(SqliteDataReader reader)
   {
     var id = reader.GetInt32(0);
@@ -20,17 +15,6 @@ internal class TableNames : TableBase, ITableNames
     var name = new Name(Id: id, Value: value, Type: type, ParentId: parentId);
 
     return name;
-  }
-
-  private void InvalidateItems(NameType nameType)
-  {
-    _Items.Remove(nameType);
-  }
-
-  private bool TryGetNameList(NameType nameType, [MaybeNullWhen(false)] out IReadOnlyDictionary<int, Name> list)
-  {
-    list = null;
-    return _Items.TryGetValue(nameType, out var items) && items.TryGetTarget(out list);
   }
 
   public TableNames(IProjectDocument document) : base(document)
@@ -58,11 +42,6 @@ internal class TableNames : TableBase, ITableNames
 
   public async Task<Name[]> GetNamesByTypeAsync(NameType nameType, CancellationToken token)
   {
-    if (TryGetNameList(nameType, out var items))
-      return items
-        .Values
-        .ToArray();
-
     using var command = Document.CreateCommand();
 
     if (nameType == NameType.AllNames)
@@ -90,7 +69,6 @@ internal class TableNames : TableBase, ITableNames
       result.Add(name.Id, name);
     }
 
-    _Items.Add(nameType, new NameList(result));
     return result
       .Values
       .ToArray();
@@ -101,10 +79,6 @@ internal class TableNames : TableBase, ITableNames
     if (!id.HasValue)
     {
       return null;
-    }
-    if (TryGetNameList(NameType.AllNames, out var items) && items.TryGetValue(id.Value, out var name))
-    {
-      return name;
     }
     using var command = Document.CreateCommand();
 
@@ -129,12 +103,6 @@ internal class TableNames : TableBase, ITableNames
     }
 
     List<Name> ret;
-    if (TryGetNameList(NameType.AllNames, out var items) && items.TryGetValue(id.Value, out var name))
-    {
-      ret = items.Values.Where(name => name.ParentId == id.Value).ToList();
-      ret.Insert(0, name);
-      return ret.ToArray();
-    }
 
     using var command = Document.CreateCommand();
     command.CommandText = """
@@ -167,7 +135,6 @@ internal class TableNames : TableBase, ITableNames
     command.Parameters.AddWithValue("@parentId", parent != null ? parent.Id : DBNull.Value);
     await command.ExecuteNonQueryAsync(token);
     transaction.Commit();
-    InvalidateItems(type);
 
     return new Name(Id: await Document.GetLastInsertRowIdAsync(token), Value: value, Type: type, ParentId: parent?.Id);
   }
@@ -210,7 +177,6 @@ internal class TableNames : TableBase, ITableNames
     command.Parameters.AddWithValue("@nameId", name.Id);
     await command.ExecuteNonQueryAsync(token);
     transaction.Commit();
-    InvalidateItems(name.Type);
   }
 
   public async Task RemoveNameWithSubnamesAsync(Name name, CancellationToken token)
@@ -223,7 +189,6 @@ internal class TableNames : TableBase, ITableNames
       """;
     command.Parameters.AddWithValue("@id", name.Id);
     await command.ExecuteNonQueryAsync(token);
-    InvalidateItems(name.Type);
     transaction.Commit();
   }
 }
