@@ -6,6 +6,27 @@
     xmlns:components="clr-namespace:GT4.UI.Components"
     xmlns:dto="clr-namespace:GT4.Core.Project.Dto;assembly=GT4.Core.Project"
     x:Name="Root">
+
+  <ContentView.Resources>
+    <ResourceDictionary>
+      <OnIdiom
+          x:Key="VerticalLineMargin"
+          x:TypeArguments="Thickness"
+          Default="10,0,0,0"
+          Phone="7.5,0,0,0" />
+      <OnIdiom
+          x:Key="HorizontalLineMargin"
+          x:TypeArguments="Thickness"
+          Default="10,40,0,0"
+          Phone="7.5,40,0,0" />
+      <OnIdiom
+          x:Key="RelativesMargin"
+          x:TypeArguments="Thickness"
+          Default="20,0,0,0"
+          Phone="15,0,0,0" />
+    </ResourceDictionary>
+  </ContentView.Resources>
+
   <Grid
       ColumnDefinitions="Auto, *, Auto"
       RowDefinitions="Auto, Auto, *">
@@ -31,7 +52,8 @@
         Grid.ColumnSpan="2"
         DatesLabelStyle="{StaticResource FieldValue}"
         NameLabelStyle="{StaticResource FieldName}"
-        Person="{Binding Relative, Source={x:Reference Root}}" />
+        Person="{Binding Relative, Source={x:Reference Root}}"
+        Style="{StaticResource HoverItem}" />
 
     <Button
         x:Name="MoreBtn"
@@ -44,11 +66,20 @@
         VerticalOptions="Fill"
         WidthRequest="{Binding Height, Source={x:Reference MoreBtn}}" />
 
+    <BoxView
+        Grid.Row="2"
+        Grid.Column="0"
+        Margin="{StaticResource VerticalLineMargin}"
+        HorizontalOptions="Start"
+        IsVisible="{Binding ShowRelatives, Source={x:Reference Root}}"
+        VerticalOptions="Fill"
+        WidthRequest="1"
+        Color="Gray" />
+
     <CollectionView
         Grid.Row="2"
         Grid.Column="0"
         Grid.ColumnSpan="3"
-        Margin="{Thickness Left=20}"
         HorizontalOptions="Fill"
         IsVisible="{Binding ShowRelatives, Source={x:Reference Root}}"
         ItemsSource="{Binding Relatives, Source={x:Reference Root}}">
@@ -60,21 +91,31 @@
 
       <CollectionView.ItemTemplate>
         <DataTemplate x:DataType="dto:RelativeInfo">
-          <components:RelativeInfoView
-              PersonBirthDate="{Binding Relative.BirthDate, Source={x:Reference Root}}"
-              Relative="{Binding .}"
-              ShowMoreButton="True"
-              Style="{StaticResource HoverItem}">
+          <Grid>
+            <BoxView
+                Margin="{StaticResource HorizontalLineMargin}"
+                HeightRequest="1"
+                HorizontalOptions="Start"
+                VerticalOptions="Start"
+                WidthRequest="{Binding X, Source={x:Reference RelativeInfoView}}"
+                Color="Gray" />
 
-            <!--  TODO  -->
-            <!--<components:RelativeInfoView.GestureRecognizers>
+            <components:RelativeInfoView
+                x:Name="RelativeInfoView"
+                Margin="{StaticResource RelativesMargin}"
+                PersonBirthDate="{Binding Relative.BirthDate, Source={x:Reference Root}}"
+                Relative="{Binding .}"
+                ShowMoreButton="True">
+
+              <!--  TODO  -->
+              <!--<components:RelativeInfoView.GestureRecognizers>
               <TapGestureRecognizer
                   Command="{Binding Path=PageCommand, Source={x:Reference Root}}"
                   CommandParameter="{Binding .}" />
-            </components:RelativeInfoView.GestureRecognizers>-->
+              </components:RelativeInfoView.GestureRecognizers>-->
 
-          </components:RelativeInfoView>
-
+            </components:RelativeInfoView>
+          </Grid>
         </DataTemplate>
       </CollectionView.ItemTemplate>
     </CollectionView>

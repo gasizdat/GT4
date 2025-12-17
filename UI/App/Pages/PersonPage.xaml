@@ -151,8 +151,7 @@
                 <components:RelativeInfoView
                     PersonBirthDate="{Binding PersonFullInfo.BirthDate, Source={x:Reference Root}}"
                     Relative="{Binding .}"
-                    ShowMoreButton="True"
-                    Style="{StaticResource HoverItem}">
+                    ShowMoreButton="True">
 
                   <components:RelativeInfoView.GestureRecognizers>
                     <TapGestureRecognizer
