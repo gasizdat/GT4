@@ -40,6 +40,15 @@ public partial class Calculator : ContentView
       null,
       OnArgChanged);
 
+  public static readonly BindableProperty ThicknessResultProperty = BindableProperty.Create(
+      nameof(ThicknessResult),
+      typeof(Thickness),
+      typeof(Calculator),
+      default,
+      BindingMode.OneWay,
+      null,
+      OnArgChanged);
+
   public static readonly BindableProperty ExpressionProperty = BindableProperty.Create(
       nameof(Expression),
       typeof(string),
@@ -85,19 +94,25 @@ public partial class Calculator : ContentView
     set => SetValue(ResultProperty, value);
   }
 
+  public Thickness? ThicknessResult
+  {
+    get => (Thickness?)GetValue(ThicknessResultProperty);
+    set => SetValue(ThicknessResultProperty, value);
+  }
+
   public string? Expression
   {
     get => (string?)GetValue(ExpressionProperty);
     set => SetValue(ExpressionProperty, value);
   }
 
-  private double EvaluateExpression()
+  private double? EvaluateExpression(string expression)
   {
     try
     {
       const StringComparison ReplaceComparison = StringComparison.InvariantCulture;
       var table = new DataTable { Locale = CultureInfo.InvariantCulture };
-      var expression = Expression?.Replace(nameof(X1), ToStringInvariant(X1), ReplaceComparison)
+      expression = expression.Replace(nameof(X1), ToStringInvariant(X1), ReplaceComparison)
                                  .Replace(nameof(X2), ToStringInvariant(X2), ReplaceComparison)
                                  .Replace(nameof(X3), ToStringInvariant(X3), ReplaceComparison)
                                  .Replace(nameof(X4), ToStringInvariant(X4), ReplaceComparison)
@@ -108,7 +123,57 @@ public partial class Calculator : ContentView
     }
     catch
     {
-      return double.NaN;
+      return null;
+    }
+  }
+
+  private Thickness? EvaluateThicknessExpression(string expression)
+  {
+    const string Left = "Left:";
+    const string Top = "Top:";
+    const string Right = "Right:";
+    const string Bottom = "Bottom:";
+    double? left = null;
+    double? top = null;
+    double? right = null;
+    double? bottom = null;
+    foreach (var expr in expression.Split(';'))
+    {
+      switch (expr)
+      {
+        case string when expr.StartsWith(Left):
+          left = EvaluateExpression(expr.Substring(Left.Length));
+          break;
+        case string when expr.StartsWith(Top):
+          top = EvaluateExpression(expr.Substring(Top.Length));
+          break;
+        case string when expr.StartsWith(Right):
+          right = EvaluateExpression(expr.Substring(Right.Length));
+          break;
+        case string when expr.StartsWith(Bottom):
+          bottom = EvaluateExpression(expr.Substring(Bottom.Length));
+          break;
+      }
+
+    }
+    return new Thickness(left: left ?? 0, top: top ?? 0, right: right ?? 0, bottom: bottom ?? 0);
+  }
+
+  private void Evaluate()
+  {
+    const string ResultExpression = "Result=";
+    const string ThicknessExpression = "Thickness=";
+    switch (Expression?.Replace(" ", string.Empty))
+    {
+      case string expression when expression.StartsWith(ResultExpression):
+        Result = EvaluateExpression(expression.Substring(ResultExpression.Length));
+        break;
+      case string expression when expression.StartsWith(ThicknessExpression):
+        ThicknessResult = EvaluateThicknessExpression(expression.Substring(ThicknessExpression.Length));
+        break;
+      case string expression:
+        Result = expression is null ? null : EvaluateExpression(expression);
+        break;
     }
   }
 
@@ -121,7 +186,7 @@ public partial class Calculator : ContentView
   {
     if (bindable is Calculator calculator && oldValue != newValue)
     {
-      calculator.Result = calculator.EvaluateExpression();
+      calculator.Evaluate();
     }
   }
 }
