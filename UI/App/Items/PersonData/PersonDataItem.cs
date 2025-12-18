@@ -81,6 +81,8 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
     }
   }
 
+  public bool IsModified => _IsModified;
+
   public async Task<Data?> ToDataAsync()
   {
     using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();

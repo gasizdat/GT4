@@ -109,6 +109,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
               _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonBio),
               _CancellationTokenProvider)
       };
+      _Biography.PropertyChanged += (_, _) => IsModified = _Biography.IsModified;
 
       var relatives = person
         .RelativeInfos
