@@ -12,17 +12,22 @@
 
   <ContentPage.ToolbarItems>
     <ToolbarItem
-        Command="{Binding MenuItemCommand, Source={x:Reference Root}}"
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="RemoveProject"
         Order="Secondary"
         Text="{Binding RemoveProjectToolbarItemName, Source={x:Reference Root}}" />
     <ToolbarItem
-        Command="{Binding MenuItemCommand, Source={x:Reference Root}}"
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="EditProject"
         Order="Secondary"
         Text="{Binding EditProjectToolbarItemName, Source={x:Reference Root}}" />
     <ToolbarItem
-        Command="{Binding MenuItemCommand, Source={x:Reference Root}}"
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="CreateFamily"
+        Order="Secondary"
+        Text="{x:Static resources:UIStrings.MenuItemNameCreateFamily}" />
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="Refresh"
         Order="Secondary"
         Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
@@ -100,7 +105,7 @@
 
     <components:PageLayout.Footer>
       <Button
-          Command="{Binding MenuItemCommand, Source={x:Reference Root}}"
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="CreateFamily"
           FontSize="Large"
           HorizontalOptions="Fill"

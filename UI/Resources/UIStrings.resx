@@ -490,4 +490,10 @@ genealogy tree and enjoy!</value>
   <data name="RelStepChild" xml:space="preserve">
     <value>Step child</value>
   </data>
+  <data name="MenuItemNameCreateGenealogyTree" xml:space="preserve">
+    <value>➕ Create a Genealogy Tree</value>
+  </data>
+  <data name="MenuItemNameCreateFamily" xml:space="preserve">
+    <value>➕ Create a Family</value>
+  </data>
 </root>

@@ -25,7 +25,7 @@ public partial class FamilyPage : ContentPage
     _PersonInfoComparer = _Services.GetRequiredService<IComparer<PersonInfo>>();
 
     MemberItemTappedCommand = new Command<PersonInfo>(OnOpenPerson);
-    MenuItemCommand = new Command<object?>(OnMenuItemCommand);
+    PageCommand = new Command<object?>(OnMenuItemCommand);
 
     InitializeComponent();
   }
@@ -52,7 +52,7 @@ public partial class FamilyPage : ContentPage
 
   public ICommand MemberItemTappedCommand { get; init; }
 
-  public ICommand MenuItemCommand { get; init; }
+  public ICommand PageCommand { get; init; }
 
   public ICollection<PersonInfo> Persons
   {
@@ -89,6 +89,17 @@ public partial class FamilyPage : ContentPage
 
   public string EditFamilyToolbarItemName =>
     string.Format(UIStrings.MenuItemNameEdit_1, _FamilyName?.Value ?? string.Empty);
+
+  protected override void OnSizeAllocated(double width, double height)
+  {
+    const double PercentageOfWidth = 0.9;
+    const int ItemsPerRow = 2;
+
+    base.OnSizeAllocated(width, height);
+    _PersonItemMinimalWidth = width * PercentageOfWidth / ItemsPerRow;
+
+    OnPropertyChanged(nameof(PersonItemMinimalWidth));
+  }
 
   private async Task OnDeleteFamily()
   {
@@ -213,16 +224,5 @@ public partial class FamilyPage : ContentPage
     {
       await this.ShowError(ex);
     }
-  }
-
-  protected override void OnSizeAllocated(double width, double height)
-  {
-    const double PercentageOfWidth = 0.9;
-    const int ItemsPerRow = 2;
-
-    base.OnSizeAllocated(width, height);
-    _PersonItemMinimalWidth = width * PercentageOfWidth / ItemsPerRow;
-
-    OnPropertyChanged(nameof(PersonItemMinimalWidth));
   }
 }

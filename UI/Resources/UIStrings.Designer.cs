@@ -602,6 +602,24 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ➕ Create a Family.
+        /// </summary>
+        public static string MenuItemNameCreateFamily {
+            get {
+                return ResourceManager.GetString("MenuItemNameCreateFamily", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ➕ Create a Genealogy Tree.
+        /// </summary>
+        public static string MenuItemNameCreateGenealogyTree {
+            get {
+                return ResourceManager.GetString("MenuItemNameCreateGenealogyTree", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 🖋️ Edit &apos;{0}&apos;.
         /// </summary>
         public static string MenuItemNameEdit_1 {

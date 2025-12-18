@@ -11,7 +11,12 @@
 
   <ContentPage.ToolbarItems>
     <ToolbarItem
-        Command="{Binding MenuItemCommand, Source={x:Reference Root}}"
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="Create"
+        Order="Secondary"
+        Text="{x:Static resources:UIStrings.MenuItemNameCreateGenealogyTree}" />
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="Refresh"
         Order="Secondary"
         Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
@@ -65,7 +70,8 @@
 
     <components:PageLayout.Footer>
       <Button
-          Command="{Binding CreateProjectCommand, Source={x:Reference Root}}"
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="Create"
           FontSize="Large"
           HorizontalOptions="Fill"
           Text="{x:Static resources:UIStrings.BtnNameCreateGenealogyTree}" />

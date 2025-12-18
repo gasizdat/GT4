@@ -12,39 +12,16 @@ public partial class ProjectListPage : ContentPage
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IComparer<ProjectItem> _ProjectItemsComparer;
-  private readonly ICommand _CreateProjectCommand;
-  private readonly ICommand _MenuItemCommand;
+  private readonly ICommand _PageCommand;
   private readonly IProjectList _ProjectList;
   private readonly ObservableCollection<ProjectItem> _Projects = new();
-
-  private void UpdateProjectList()
-  {
-    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-    var projects = _ProjectList
-      .GetItemsAsync(token)
-      .Result
-      .Select(projectInfo => new ProjectItem(projectInfo))
-      .OrderBy(item => item, _ProjectItemsComparer);
-
-    _Projects.Clear();
-    foreach (var project in projects)
-    {
-      _Projects.Add(project);
-    }
-  }
-
-  private void OnMenuItemCommand(object obj)
-  {
-    Utils.RefreshView(this);
-  }
 
   protected ProjectListPage(IServiceProvider services)
   {
     _CancellationTokenProvider = services.GetRequiredService<ICancellationTokenProvider>();
     _CurrentProjectProvider = services.GetRequiredService<ICurrentProjectProvider>();
     _ProjectItemsComparer = services.GetRequiredService<IComparer<ProjectItem>>();
-    _CreateProjectCommand = new Command(OnCreateProject);
-    _MenuItemCommand = new Command(OnMenuItemCommand);
+    _PageCommand = new Command(OnPageCommand);
     _ProjectList = services.GetRequiredService<IProjectList>();
 
     InitializeComponent();
@@ -57,9 +34,7 @@ public partial class ProjectListPage : ContentPage
 
   public ICollection<ProjectItem> Projects => _Projects;
 
-  public ICommand CreateProjectCommand => _CreateProjectCommand;
-
-  public ICommand MenuItemCommand => _MenuItemCommand;
+  public ICommand PageCommand => _PageCommand;
 
   public async void OnProjectSelected(object sender, SelectionChangedEventArgs e)
   {
@@ -81,7 +56,42 @@ public partial class ProjectListPage : ContentPage
     }
   }
 
-  internal async void OnCreateProject(object _)
+  protected override void OnNavigatedTo(NavigatedToEventArgs args)
+  {
+    base.OnNavigatedTo(args);
+    UpdateProjectList();
+  }
+
+  private void UpdateProjectList()
+  {
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    var projects = _ProjectList
+      .GetItemsAsync(token)
+      .Result
+      .Select(projectInfo => new ProjectItem(projectInfo))
+      .OrderBy(item => item, _ProjectItemsComparer);
+
+    _Projects.Clear();
+    foreach (var project in projects)
+    {
+      _Projects.Add(project);
+    }
+  }
+
+  private async void OnPageCommand(object obj)
+  {
+    switch (obj)
+    {
+      case string s when s == "Create":
+        await OnCreateProject();
+        break;
+      case string s when s == "Refresh":
+        Utils.RefreshView(this);
+        break;
+    }
+  }
+
+  private async Task OnCreateProject()
   {
     var dialog = new CreateOrUpdateProjectDialog(null);
 
@@ -105,11 +115,5 @@ public partial class ProjectListPage : ContentPage
     {
       UpdateProjectList();
     }
-  }
-
-  protected override void OnNavigatedTo(NavigatedToEventArgs args)
-  {
-    base.OnNavigatedTo(args);
-    UpdateProjectList();
   }
 }

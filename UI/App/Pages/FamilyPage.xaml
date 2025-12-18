@@ -12,22 +12,22 @@
 
   <ContentPage.ToolbarItems>
     <ToolbarItem
-        Command="{Binding MenuItemCommand, Source={x:Reference Root}}"
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="RemoveFamily"
         Order="Secondary"
         Text="{Binding RemoveFamilyToolbarItemName, Source={x:Reference Root}}" />
     <ToolbarItem
-        Command="{Binding MenuItemCommand, Source={x:Reference Root}}"
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="EditFamily"
         Order="Secondary"
         Text="{Binding EditFamilyToolbarItemName, Source={x:Reference Root}}" />
     <ToolbarItem
-        Command="{Binding MenuItemCommand, Source={x:Reference Root}}"
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="CreatePerson"
         Order="Secondary"
         Text="{x:Static resources:UIStrings.MenuItemNameAddPerson}" />
     <ToolbarItem
-        Command="{Binding MenuItemCommand, Source={x:Reference Root}}"
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="Refresh"
         Order="Secondary"
         Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
@@ -76,6 +76,13 @@
         </FlexLayout>
       </ScrollView>
     </components:PageLayout.Body>
-
+    <components:PageLayout.Footer>
+      <Button
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="CreatePerson"
+          FontSize="Large"
+          HorizontalOptions="Fill"
+          Text="{x:Static resources:UIStrings.BtnNameCreateFamilyPerson}" />
+    </components:PageLayout.Footer>
   </components:PageLayout>
 </ContentPage>

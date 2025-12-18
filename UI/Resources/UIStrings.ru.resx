@@ -490,4 +490,10 @@
   <data name="RelStepChild" xml:space="preserve">
     <value>Пасынок или падчерица</value>
   </data>
+  <data name="MenuItemNameCreateGenealogyTree" xml:space="preserve">
+    <value>➕ Создать генеалогическое дерево</value>
+  </data>
+  <data name="MenuItemNameCreateFamily" xml:space="preserve">
+    <value>➕ Создать семью</value>
+  </data>
 </root>

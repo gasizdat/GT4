@@ -19,6 +19,78 @@ public partial class ProjectPage : ContentPage
 
   private long? _ProjectRevision;
 
+  protected ProjectPage(IServiceProvider serviceProvider)
+  {
+    _ServiceProvider = serviceProvider;
+    _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
+    _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
+    _PersonInfoComparer = _ServiceProvider.GetRequiredService<IComparer<PersonInfo>>();
+    _NameComparer = _ServiceProvider.GetRequiredService<IComparer<Name>>();
+    _ProjectList = _ServiceProvider.GetRequiredService<IProjectList>();
+
+    PageCommand = new Command<object>(OnPageCommand);
+    InitializeComponent();
+  }
+
+  public ProjectPage()
+    : this(ServiceBuilder.DefaultServices)
+  {
+  }
+
+  public ICollection<FamilyInfoItem> Families
+  {
+    get
+    {
+      try
+      {
+        using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+        var ret = _CurrentProjectProvider
+          .Project
+          .FamilyManager
+          .GetFamiliesAsync(token)
+          .Result
+          .Select(name => new FamilyInfoItem(name, GetFamilyPersons(name, token)))
+          .OrderBy(item => item.Info, _NameComparer)
+          .ToList();
+
+        return ret;
+      }
+      catch (Exception ex)
+      {
+        this.ShowError(ex);
+        return [];
+      }
+    }
+  }
+
+  public string RemoveProjectToolbarItemName =>
+    string.Format(UIStrings.MenuItemNameRemove_1, _CurrentProjectProvider.Info.Name);
+
+  public string EditProjectToolbarItemName =>
+    string.Format(UIStrings.MenuItemNameEdit_1, _CurrentProjectProvider.Info.Name);
+
+  public async void OnFamilySelected(object sender, SelectionChangedEventArgs e)
+  {
+    if (e.CurrentSelection.FirstOrDefault() is FamilyInfoItem item)
+    {
+        await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = item.Info });
+    }
+  }
+
+  public ICommand PageCommand { get; init; }
+
+  protected override void OnNavigatedTo(NavigatedToEventArgs args)
+  {
+    base.OnNavigatedTo(args);
+
+    var projectRevision = _CurrentProjectProvider.Project.ProjectRevision;
+    if (projectRevision != _ProjectRevision)
+    {
+      _ProjectRevision = projectRevision;
+      Utils.RefreshView(this);
+    }
+  }
+
   private PersonInfo[] GetFamilyPersons(Name name, CancellationToken token)
   {
     var project = _CurrentProjectProvider.Project;
@@ -32,7 +104,7 @@ public partial class ProjectPage : ContentPage
       .ToArray();
   }
 
-  private async void OnMenuItemCommand(object obj)
+  private async void OnPageCommand(object obj)
   {
     try
     {
@@ -104,68 +176,7 @@ public partial class ProjectPage : ContentPage
     }
   }
 
-  protected ProjectPage(IServiceProvider serviceProvider)
-  {
-    _ServiceProvider = serviceProvider;
-    _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
-    _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
-    _PersonInfoComparer = _ServiceProvider.GetRequiredService<IComparer<PersonInfo>>();
-    _NameComparer = _ServiceProvider.GetRequiredService<IComparer<Name>>();
-    _ProjectList = _ServiceProvider.GetRequiredService<IProjectList>();
-
-    MenuItemCommand = new Command<object>(OnMenuItemCommand);
-    InitializeComponent();
-  }
-
-  public ProjectPage()
-    : this(ServiceBuilder.DefaultServices)
-  {
-  }
-
-  public ICollection<FamilyInfoItem> Families
-  {
-    get
-    {
-      try
-      {
-        using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-        var ret = _CurrentProjectProvider
-          .Project
-          .FamilyManager
-          .GetFamiliesAsync(token)
-          .Result
-          .Select(name => new FamilyInfoItem(name, GetFamilyPersons(name, token)))
-          .OrderBy(item => item.Info, _NameComparer)
-          .ToList();
-
-        return ret;
-      }
-      catch (Exception ex)
-      {
-        this.ShowError(ex);
-        return [];
-      }
-    }
-  }
-
-  public string RemoveProjectToolbarItemName =>
-    string.Format(UIStrings.MenuItemNameRemove_1, _CurrentProjectProvider.Info.Name);
-
-  public string EditProjectToolbarItemName =>
-    string.Format(UIStrings.MenuItemNameEdit_1, _CurrentProjectProvider.Info.Name);
-
-
-  public async void OnFamilySelected(object sender, SelectionChangedEventArgs e)
-  {
-    if (e.CurrentSelection.FirstOrDefault() is FamilyInfoItem item)
-    {
-        await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = item.Info });
-    }
-  }
-
-  public ICommand MenuItemCommand { get; init; }
-
-  internal async Task OnCreateFamily()
+  private async Task OnCreateFamily()
   {
     var dialog = new CreateOrUpdateNameDialog(NameType.FamilyName, _ServiceProvider);
 
@@ -192,18 +203,6 @@ public partial class ProjectPage : ContentPage
     }
     finally
     {
-      Utils.RefreshView(this);
-    }
-  }
-
-  protected override void OnNavigatedTo(NavigatedToEventArgs args)
-  {
-    base.OnNavigatedTo(args);
-
-    var projectRevision = _CurrentProjectProvider.Project.ProjectRevision;
-    if (projectRevision != _ProjectRevision)
-    {
-      _ProjectRevision = projectRevision;
       Utils.RefreshView(this);
     }
   }
