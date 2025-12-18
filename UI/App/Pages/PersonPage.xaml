@@ -120,8 +120,26 @@
       <ScrollView>
         <Grid
             ColumnDefinitions="Auto, *"
-            RowDefinitions="Auto, Auto, *">
+            RowDefinitions="Auto, Auto, Auto">
 
+          <Border
+              Grid.Row="{Binding Path=SmartLayout.Biography.Row, Source={x:Reference Root}}"
+              Grid.RowSpan="{Binding Path=SmartLayout.Biography.RowSpan, Source={x:Reference Root}}"
+              Grid.Column="{Binding Path=SmartLayout.Biography.Column, Source={x:Reference Root}}"
+              Grid.ColumnSpan="{Binding Path=SmartLayout.Biography.ColumnSpan, Source={x:Reference Root}}"
+              IsVisible="{Binding ShowBiography, Source={x:Reference Root}}"
+              StrokeShape="RoundRectangle 10"
+              StrokeThickness="1">
+            <Editor
+                Margin="-1"
+                BackgroundColor="Transparent"
+                IsReadOnly="True"
+                IsSpellCheckEnabled="False"
+                IsTextPredictionEnabled="False"
+                MinimumHeightRequest="{OnIdiom Default=150,
+                                               Phone=100}"
+                Text="{Binding Biography, Source={x:Reference Root}, Mode=OneWay}" />
+          </Border>
           <components:ImagePresenter
               Grid.Row="{Binding Path=SmartLayout.Image.Row, Source={x:Reference Root}}"
               Grid.RowSpan="{Binding Path=SmartLayout.Image.RowSpan, Source={x:Reference Root}}"
@@ -164,7 +182,6 @@
               </DataTemplate>
             </CollectionView.ItemTemplate>
           </CollectionView>
-
         </Grid>
       </ScrollView>
     </components:PageLayout.Body>

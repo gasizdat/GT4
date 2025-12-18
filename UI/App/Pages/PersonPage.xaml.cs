@@ -1,6 +1,7 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.Converters;
 using GT4.UI.Dialogs;
 using GT4.UI.Formatters;
 using GT4.UI.Resources;
@@ -20,10 +21,12 @@ public partial class PersonPage : ContentPage
   private readonly IDateSpanFormatter _DateSpanFormatter;
   private readonly IDateFormatter _DateFormatter;
   private readonly INameFormatter _NameFormatter;
+  private readonly IDataConverter _TextConverter;
   private readonly ICommand _PageCommand;
   private readonly ObservableCollection<RelativeInfo> _Relatives = new();
   private PersonFullInfo _PersonFullInfo = PersonFullInfo.Empty;
   private byte[][] _Photos = [];
+  private string _Biography = string.Empty;
   private PersonPageSmartLayout _SmartLayout = new();
 
   public PersonPage(IServiceProvider serviceProvider)
@@ -34,6 +37,7 @@ public partial class PersonPage : ContentPage
     _DateSpanFormatter = _ServiceProvider.GetRequiredService<IDateSpanFormatter>();
     _DateFormatter = _ServiceProvider.GetRequiredService<IDateFormatter>();
     _NameFormatter = _ServiceProvider.GetRequiredService<INameFormatter>();
+    _TextConverter = _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonBio);
     _PageCommand = new Command(OnPageCommand);
 
     InitializeComponent();
@@ -91,6 +95,10 @@ public partial class PersonPage : ContentPage
 
   public PersonPageSmartLayout SmartLayout => _SmartLayout;
 
+  public string Biography => _Biography;
+
+  public bool ShowBiography => !string.IsNullOrWhiteSpace(_Biography);
+
   protected override void OnSizeAllocated(double width, double height)
   {
     base.OnSizeAllocated(width, height);
@@ -98,14 +106,16 @@ public partial class PersonPage : ContentPage
     if (width < height || widthInPixels() < 900)
     {
       _SmartLayout = new PersonPageSmartLayout(
-        Image: new GridLayout(Column: 0, ColumnSpan: 2, Row: 0, RowSpan: 0),
-        Relatives: new GridLayout(Column: 0, ColumnSpan: 2, Row: 1, RowSpan: 0));
+        Image: new GridLayout(Column: 0, ColumnSpan: 2, Row: 0, RowSpan: 1),
+        Relatives: new GridLayout(Column: 0, ColumnSpan: 2, Row: 1, RowSpan: 1),
+        Biography: new GridLayout(Column: 0, ColumnSpan: 2, Row: 2, RowSpan: 1));
     }
     else
     {
       _SmartLayout = new PersonPageSmartLayout(
-        Image: new GridLayout(Column: 0, ColumnSpan: 1, Row: 0, RowSpan: 0),
-        Relatives: new GridLayout(Column: 1, ColumnSpan: 1, Row: 0, RowSpan: 0));
+        Image: new GridLayout(Column: 0, ColumnSpan: 1, Row: 0, RowSpan: 1),
+        Relatives: new GridLayout(Column: 1, ColumnSpan: 1, Row: 0, RowSpan: 1),
+        Biography: new GridLayout(Column: 0, ColumnSpan: 2, Row: 1, RowSpan: 1));
     }
     OnPropertyChanged(nameof(SmartLayout));
   }
@@ -132,7 +142,8 @@ public partial class PersonPage : ContentPage
       var personFullInfo = await project.PersonManager.GetPersonFullInfoAsync(person, token);
       var parentsTasks = project.RelativesProvider.GetParentsAsync(personFullInfo.RelativeInfos, token);
       var stepChildrenTasks = project.RelativesProvider.GetStepChildrenAsync(personFullInfo.RelativeInfos, token);
-      await Task.WhenAll(parentsTasks, stepChildrenTasks);
+      var bioTask = _TextConverter.ToObjectAsync(personFullInfo.Biography, token);
+      await Task.WhenAll(parentsTasks, stepChildrenTasks, bioTask);
 
       byte[][] photos;
 
@@ -156,7 +167,7 @@ public partial class PersonPage : ContentPage
                     .Select(photo => photo.Content)];
       }
       _ = MainThread.InvokeOnMainThreadAsync(
-        () => UpdateUI(personFullInfo, parentsTasks.Result, stepChildrenTasks.Result, photos));
+        () => UpdateUI(personFullInfo, parentsTasks.Result, stepChildrenTasks.Result, photos, bioTask.Result as string));
     }
     catch (Exception ex)
     {
@@ -166,13 +177,14 @@ public partial class PersonPage : ContentPage
     }
   }
 
-  public void UpdateUI(PersonFullInfo personFullInfo, Parents parents, RelativeInfo[] stepChildren, byte[][] photos)
+  public void UpdateUI(PersonFullInfo personFullInfo, Parents parents, RelativeInfo[] stepChildren, byte[][] photos, string? bio)
   {
     var relativesProvider = _CurrentProjectProvider.Project.RelativesProvider;
     var siblings = relativesProvider.GetSiblings(personFullInfo, parents);
     _PersonFullInfo = personFullInfo;
     _Photos = photos;
     _Relatives.Clear();
+    _Biography = bio ?? string.Empty;
 
     void Add(IEnumerable<RelativeInfo> relatives)
     {
