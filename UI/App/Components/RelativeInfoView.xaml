@@ -10,20 +10,18 @@
   <ContentView.Resources>
     <ResourceDictionary>
       <OnIdiom
-          x:Key="VerticalLineMargin"
-          x:TypeArguments="Thickness"
-          Default="10,0,0,0"
-          Phone="7.5,0,0,0" />
+          x:Key="RelativesIndentation"
+          x:TypeArguments="x:Double"
+          Default="20"
+          Phone="10" />
       <OnIdiom
-          x:Key="HorizontalLineMargin"
-          x:TypeArguments="Thickness"
-          Default="10,40,0,0"
-          Phone="7.5,40,0,0" />
-      <OnIdiom
-          x:Key="RelativesMargin"
-          x:TypeArguments="Thickness"
-          Default="20,0,0,0"
-          Phone="15,0,0,0" />
+          x:Key="MoreBtnSize"
+          x:TypeArguments="x:Double"
+          Default="40" />
+      <components:Calculator
+        x:Key="VerticalLineMargin"
+        Expression="Thickness = Left : X1/2"
+        X1="{StaticResource RelativesIndentation}" />
     </ResourceDictionary>
   </ContentView.Resources>
 
@@ -56,20 +54,19 @@
         Style="{StaticResource HoverItem}" />
 
     <Button
-        x:Name="MoreBtn"
         Grid.Row="1"
         Grid.Column="2"
         Command="{Binding ShowMoreRelativesCommand, Source={x:Reference Root}}"
+        HeightRequest="{StaticResource MoreBtnSize}"
         IsVisible="{Binding ShowMoreButton, Source={x:Reference Root}}"
         Style="{StaticResource EmojiAdorner}"
         Text="{Binding MoreBtnName, Source={x:Reference Root}}"
-        VerticalOptions="Fill"
-        WidthRequest="{Binding Height, Source={x:Reference MoreBtn}}" />
+        WidthRequest="{StaticResource MoreBtnSize}" />
 
     <BoxView
         Grid.Row="2"
         Grid.Column="0"
-        Margin="{StaticResource VerticalLineMargin}"
+        Margin="{Binding ThicknessResult, Source={x:StaticResource VerticalLineMargin}}"
         HorizontalOptions="Start"
         IsVisible="{Binding ShowRelatives, Source={x:Reference Root}}"
         VerticalOptions="Fill"
@@ -92,8 +89,14 @@
       <CollectionView.ItemTemplate>
         <DataTemplate x:DataType="dto:RelativeInfo">
           <Grid>
+            <components:Calculator
+                x:Name="HorisontalLineMargin"
+                Expression="Thickness = Left : X1/2; Top : X2/2"
+                X1="{StaticResource RelativesIndentation}"
+                X2="{Binding Height, Source={x:Reference RelativeInfoView}}" />
+
             <BoxView
-                Margin="{StaticResource HorizontalLineMargin}"
+                Margin="{Binding ThicknessResult, Source={x:Reference HorisontalLineMargin}}"
                 HeightRequest="1"
                 HorizontalOptions="Start"
                 VerticalOptions="Start"
@@ -102,7 +105,7 @@
 
             <components:RelativeInfoView
                 x:Name="RelativeInfoView"
-                Margin="{StaticResource RelativesMargin}"
+                Margin="{Thickness Left={StaticResource RelativesIndentation}}"
                 PersonBirthDate="{Binding Relative.BirthDate, Source={x:Reference Root}}"
                 Relative="{Binding .}"
                 ShowMoreButton="True">
