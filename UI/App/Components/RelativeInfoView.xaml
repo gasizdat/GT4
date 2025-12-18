@@ -19,9 +19,9 @@
           x:TypeArguments="x:Double"
           Default="40" />
       <components:Calculator
-        x:Key="VerticalLineMargin"
-        Expression="Thickness = Left : X1/2"
-        X1="{StaticResource RelativesIndentation}" />
+          x:Key="VerticalLineMargin"
+          Expression="Thickness = Left : X1/2"
+          X1="{StaticResource RelativesIndentation}" />
     </ResourceDictionary>
   </ContentView.Resources>
 
@@ -51,6 +51,7 @@
         DatesLabelStyle="{StaticResource FieldValue}"
         NameLabelStyle="{StaticResource FieldName}"
         Person="{Binding Relative, Source={x:Reference Root}}"
+        SizeChanged="PersonInfoViewSizeChanged"
         Style="{StaticResource HoverItem}" />
 
     <Button
@@ -91,9 +92,9 @@
           <Grid>
             <components:Calculator
                 x:Name="HorisontalLineMargin"
-                Expression="Thickness = Left : X1/2; Top : X2/2"
+                Expression="Thickness = Left : X1/2; Top : X2"
                 X1="{StaticResource RelativesIndentation}"
-                X2="{Binding Height, Source={x:Reference RelativeInfoView}}" />
+                X2="{Binding PersonInfoFrame.Center.Y, Source={x:Reference RelativeInfoView}}" />
 
             <BoxView
                 Margin="{Binding ThicknessResult, Source={x:Reference HorisontalLineMargin}}"

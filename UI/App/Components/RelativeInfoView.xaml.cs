@@ -68,11 +68,20 @@ public partial class RelativeInfoView : ContentView
     null,
     OnRelativeInfoChanged);
 
+  public static readonly BindableProperty PersonInfoFrameProperty = BindableProperty.Create(
+    nameof(PersonInfoFrame),
+    typeof(Rect),
+    typeof(RelativeInfoView),
+    default,
+    BindingMode.OneWay);
+
   public bool ShowMoreButton => (bool)GetValue(ShowMoreButtonProperty);
 
   public Date? PersonBirthDate => (Date?)GetValue(PersonBirthDateProperty);
 
   public RelativeInfo? Relative => (RelativeInfo?)GetValue(RelativeProperty);
+
+  public Rect PersonInfoFrame => (Rect?)GetValue(PersonInfoFrameProperty) ?? Rect.Zero;
 
   public bool ShowDate =>
     _RelationshipDate.HasValue &&
@@ -170,6 +179,16 @@ public partial class RelativeInfoView : ContentView
       Relatives = relatives;
       ShowRelatives = true;
       MoreBtnName = CollapseSymbol;
+    }
+  }
+
+  private void PersonInfoViewSizeChanged(object sender, EventArgs e)
+  {
+    if (sender is PersonInfoView personInfoView)
+    {
+      var frame = personInfoView.Frame;
+      SetValue(PersonInfoFrameProperty, frame);
+      OnPropertyChanged(nameof(PersonInfoFrame));
     }
   }
 }
