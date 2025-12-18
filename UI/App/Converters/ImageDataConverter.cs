@@ -1,6 +1,5 @@
 ﻿using GT4.Core.Project;
 using GT4.Core.Project.Dto;
-using GT4.UI;
 
 namespace GT4.UI.Converters;
 public class ImageDataConverter : IDataConverter
@@ -10,7 +9,6 @@ public class ImageDataConverter : IDataConverter
   public async Task<Data?> FromObjectAsync(object? data, CancellationToken token)
   {
     var image = data as ImageSource;
-    // TODO Figure out why 'await ImageUtils.ToBytesAsync' hangs sometimes
     var content = image is null ? null : await ImageUtils.ToBytesAsync(image, token);
 
     return content is null ? null : new Data(
