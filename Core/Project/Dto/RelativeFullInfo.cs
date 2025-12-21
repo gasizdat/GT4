@@ -11,8 +11,10 @@ public record class RelativeFullInfo(
   Data? MainPhoto,
   RelationshipType Type,
   Date? Date,
+  Generation Generation,
+  Consanguinity Consanguinity,
   RelativeInfo[] RelativeInfos
-) : RelativeInfo(Id, BirthDate, DeathDate, BiologicalSex, Names, MainPhoto, Type, Date)
+) : RelativeInfo(Id, BirthDate, DeathDate, BiologicalSex, Names, MainPhoto, Type, Date, Generation, Consanguinity)
 {
   public RelativeFullInfo(
     RelativeInfo relative,
@@ -25,7 +27,9 @@ public record class RelativeFullInfo(
         relative.Names,
         relative.MainPhoto,
         relative.Type,
-        relative.Date, 
+        relative.Date,
+        relative.Generation,
+        relative.Consanguinity,
         relativeInfos)
   {
   }

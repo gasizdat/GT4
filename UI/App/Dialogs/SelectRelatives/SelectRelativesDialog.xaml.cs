@@ -62,9 +62,15 @@ public partial class SelectRelativesDialog : ContentPage
         RelationshipDate = null;
         break;
       case string commandName when commandName == "SelectPersonCommand":
+        var generation = new Generation(_RelationshipType.Info);
         var relatives = _SelectedItems
           .Select(i => (PersonInfo)i)
-          .Select(i => new RelativeInfo(i, _RelationshipType.Info, _RelationshipDate.HasValue ? _RelationshipDate.Value : null));
+          .Select(person => new RelativeInfo(
+            person: person,
+            type: _RelationshipType.Info, 
+            date: _RelationshipDate.HasValue ? _RelationshipDate.Value : null,
+            generation: generation,
+            consanguinity: Consanguinity.Zero));
 
         _Info.SetResult([.. relatives]);
         break;

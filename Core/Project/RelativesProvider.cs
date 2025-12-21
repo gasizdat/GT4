@@ -10,8 +10,12 @@ internal class RelativesProvider : TableBase, IRelativesProvider
   private async Task<RelativeFullInfo> GetRelativeFullInfoAsync(RelativeInfo relative, CancellationToken token) =>
     new(relative: relative, relativeInfos: await GetRelativeInfosAsync(relative, true, token));
 
-  private static RelativeInfo[] ToTypedArray(IEnumerable<RelativeInfo> sibling, RelationshipType type) =>
-    [.. sibling.Select(s => s with { Type = type })];
+  private static RelativeInfo[] ToTypedArray(
+    IEnumerable<RelativeInfo> relatives,
+    RelationshipType type,
+    Generation generation,
+    Consanguinity consanguinity) =>
+      [.. relatives.Select(s => s with { Type = type, Generation = generation, Consanguinity = consanguinity })];
 
   internal RelativesProvider(IProjectDocument document)
     : base(document)
@@ -37,7 +41,13 @@ internal class RelativesProvider : TableBase, IRelativesProvider
     {
       var relative = relatives[i];
       var personInfo = personInfos[i];
-      relativeInfos[i] = new RelativeInfo(relative, personInfo.Names, personInfo.MainPhoto);
+      var generation = new Generation(relative.Type);
+      relativeInfos[i] = new RelativeInfo(
+        relative: relative,
+        names: personInfo.Names,
+        mainPhoto: personInfo.MainPhoto,
+        generation: generation,
+        consanguinity: Consanguinity.Zero);
     }
 
     return relativeInfos;
@@ -85,7 +95,7 @@ internal class RelativesProvider : TableBase, IRelativesProvider
       .Where(r => r.Type == RelationshipType.Child || r.Type == RelationshipType.AdoptiveChild)
       .Where(r => !ownChildrenIds.Contains(r.Id));
 
-    return ToTypedArray(ret, RelationshipType.StepChild);
+    return ToTypedArray(ret, RelationshipType.StepChild, Generation.Child, Consanguinity.Zero);
   }
 
   public Siblings GetSiblings(Person person, Parents parents)
@@ -117,11 +127,11 @@ internal class RelativesProvider : TableBase, IRelativesProvider
       .Distinct(_RelativeInfoComparer);
 
     return new Siblings(
-      Native: ToTypedArray(commonChildren, RelationshipType.Sibling),
-      ByMother: ToTypedArray(motherChildren, RelationshipType.SiblingByMother),
-      ByFather: ToTypedArray(fatherChildren, RelationshipType.SiblingByFather),
-      Adoptive: ToTypedArray(adoptiveChildren, RelationshipType.AdoptiveSibling),
-      Step: ToTypedArray(stepParentChildren, RelationshipType.StepSibling));
+      Native: ToTypedArray(commonChildren, RelationshipType.Sibling, Generation.Zero, Consanguinity.Zero),
+      ByMother: ToTypedArray(motherChildren, RelationshipType.SiblingByMother, Generation.Zero, Consanguinity.Zero),
+      ByFather: ToTypedArray(fatherChildren, RelationshipType.SiblingByFather, Generation.Zero, Consanguinity.Zero),
+      Adoptive: ToTypedArray(adoptiveChildren, RelationshipType.AdoptiveSibling, Generation.Zero, Consanguinity.Zero),
+      Step: ToTypedArray(stepParentChildren, RelationshipType.StepSibling, Generation.Zero, Consanguinity.Zero));
   }
 
   public RelativeInfo[] GetChildren(RelativeInfo[] relativeInfos) =>

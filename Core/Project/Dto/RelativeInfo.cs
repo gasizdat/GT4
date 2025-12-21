@@ -13,10 +13,12 @@ public record class RelativeInfo(
   Name[] Names,
   Data? MainPhoto,
   RelationshipType Type,
-  Date? Date
+  Date? Date,
+  Generation Generation,
+  Consanguinity Consanguinity
 ) : Relative(Id, BirthDate, DeathDate, BiologicalSex, Type, Date)
 {
-  public RelativeInfo(Relative relative, Name[] names, Data? mainPhoto)
+  public RelativeInfo(Relative relative, Name[] names, Data? mainPhoto, Generation generation, Consanguinity consanguinity)
     : this(
         relative.Id, 
         relative.BirthDate, 
@@ -25,12 +27,21 @@ public record class RelativeInfo(
         names, 
         mainPhoto, 
         relative.Type, 
-        relative.Date
+        relative.Date,
+        generation,
+        consanguinity
   )
   {
   }
 
-  public RelativeInfo(Person person, Name[] names, Data? mainPhoto,  RelationshipType type,  Date? date)
+  public RelativeInfo(
+    Person person, 
+    Name[] names, 
+    Data? mainPhoto,  
+    RelationshipType type,  
+    Date? date, 
+    Generation generation, 
+    Consanguinity consanguinity)
     : this(
         person.Id,
         person.BirthDate,
@@ -39,12 +50,14 @@ public record class RelativeInfo(
         names,
         mainPhoto,
         type,
-        date
+        date, 
+        generation,
+        consanguinity
   )
   {
   }
 
-  public RelativeInfo(PersonInfo person, RelationshipType type, Date? date)
+  public RelativeInfo(PersonInfo person, RelationshipType type, Date? date, Generation generation, Consanguinity consanguinity)
     : this(
         person.Id,
         person.BirthDate,
@@ -53,7 +66,9 @@ public record class RelativeInfo(
         person.Names,
         person.MainPhoto,
         type,
-        date
+        date,
+        generation,
+        consanguinity
   )
   {
   }
