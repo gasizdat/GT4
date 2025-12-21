@@ -194,7 +194,7 @@ public partial class PersonPage : ContentPage
       }
     }
 
-    Add(_PersonFullInfo.RelativeInfos.Where(r => r.Type == RelationshipType.Spose));
+    Add(_PersonFullInfo.RelativeInfos.Where(r => r.Type == RelationshipType.Spouse));
     Add(parents.Native);
     Add(parents.Adoptive);
     Add(parents.Step);

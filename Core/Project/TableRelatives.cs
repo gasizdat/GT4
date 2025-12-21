@@ -36,7 +36,7 @@ internal class TableRelatives : TableBase, ITableRelatives
     {
       case RelationshipType.Parent:
       case RelationshipType.Child:
-      case RelationshipType.Spose:
+      case RelationshipType.Spouse:
       case RelationshipType.AdoptiveParent:
       case RelationshipType.AdoptiveChild:
         break;

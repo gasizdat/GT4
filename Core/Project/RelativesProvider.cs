@@ -59,7 +59,7 @@ internal class RelativesProvider : TableBase, IRelativesProvider
     var allParentIds = new HashSet<int>([.. parents.Select(p => p.Id), .. adoptiveParents.Select(p => p.Id)]);
     var stepParentTasks = parents
       .SelectMany(p => p.RelativeInfos)
-      .Where(r => r.Type == RelationshipType.Spose)
+      .Where(r => r.Type == RelationshipType.Spouse)
       .Where(r => !allParentIds.Contains(r.Id))
       .Select(r => GetRelativeFullInfoAsync(r with { Type = RelationshipType.StepParent }, token));
     var stepParents = await Task.WhenAll(stepParentTasks);
@@ -76,11 +76,11 @@ internal class RelativesProvider : TableBase, IRelativesProvider
       .Where(r => r.Type == RelationshipType.Child || r.Type == RelationshipType.AdoptiveChild)
       .Select(r => r.Id)
       .ToHashSet();
-    var sposesTasks = relativeInfos
-      .Where(r => r.Type == RelationshipType.Spose)
+    var spouseTasks = relativeInfos
+      .Where(r => r.Type == RelationshipType.Spouse)
       .Select(r => GetRelativeFullInfoAsync(r, token));
-    var sposes = await Task.WhenAll(sposesTasks);
-    var ret = sposes
+    var spouses = await Task.WhenAll(spouseTasks);
+    var ret = spouses
       .SelectMany(s => s.RelativeInfos.Select(r => r with { Date = s.Date }))
       .Where(r => r.Type == RelationshipType.Child || r.Type == RelationshipType.AdoptiveChild)
       .Where(r => !ownChildrenIds.Contains(r.Id));

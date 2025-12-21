@@ -13,7 +13,7 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
       {
         RelationshipType.Parent => UIStrings.RelFather,
         RelationshipType.Child => UIStrings.RelSon,
-        RelationshipType.Spose => UIStrings.RelHusband,
+        RelationshipType.Spouse => UIStrings.RelHusband,
         RelationshipType.AdoptiveParent => string.Format(UIStrings.RelAdoptiveMale_1, UIStrings.RelFather),
         RelationshipType.AdoptiveChild => string.Format(UIStrings.RelAdoptiveMale_1, UIStrings.RelSon),
         RelationshipType.Sibling => UIStrings.RelBrother,
@@ -30,7 +30,7 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
       {
         RelationshipType.Parent => UIStrings.RelMother,
         RelationshipType.Child => UIStrings.RelDaughter,
-        RelationshipType.Spose => UIStrings.RelWife,
+        RelationshipType.Spouse => UIStrings.RelWife,
         RelationshipType.AdoptiveParent => string.Format(UIStrings.RelAdoptiveFemale_1, UIStrings.RelMother),
         RelationshipType.AdoptiveChild => string.Format(UIStrings.RelAdoptiveFemale_1, UIStrings.RelDaughter),
         RelationshipType.Sibling => UIStrings.RelSister,
@@ -47,7 +47,7 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
       {
         RelationshipType.Parent => UIStrings.RelParent,
         RelationshipType.Child => UIStrings.RelChild,
-        RelationshipType.Spose => UIStrings.RelSpouse,
+        RelationshipType.Spouse => UIStrings.RelSpouse,
         RelationshipType.AdoptiveParent => string.Format(UIStrings.RelAdoptiveInvariant_1, UIStrings.RelParent),
         RelationshipType.AdoptiveChild => string.Format(UIStrings.RelAdoptiveInvariant_1, UIStrings.RelChild),
         RelationshipType.Sibling => UIStrings.RelSibling,

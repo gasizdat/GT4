@@ -104,7 +104,7 @@ public partial class SelectRelativesDialog : ContentPage
     _RelationshipTypes = new[] {
         RelationshipType.Parent,
         RelationshipType.Child,
-        RelationshipType.Spose,
+        RelationshipType.Spouse,
         RelationshipType.AdoptiveParent,
         RelationshipType.AdoptiveChild }
       .Select(type => new RelationshipTypeItem(type, relationshipTypeFormatter))

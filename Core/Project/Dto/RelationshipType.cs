@@ -4,7 +4,7 @@ public enum RelationshipType
 {
   Parent = 1,
   Child = 2,
-  Spose = 3,
+  Spouse = 3,
   AdoptiveParent = 4,
   AdoptiveChild = 5,
 

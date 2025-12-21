@@ -88,7 +88,7 @@ public partial class RelativeInfoView : ContentView
     _RelationshipDate.Value.Status != DateStatus.Unknown &&
     Relative?.Type switch
     {
-      RelationshipType.Spose => true,
+      RelationshipType.Spouse => true,
       RelationshipType.AdoptiveChild => true,
       RelationshipType.StepChild => true,
       RelationshipType.AdoptiveParent => true,
