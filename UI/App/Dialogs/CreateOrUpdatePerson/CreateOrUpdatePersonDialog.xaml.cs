@@ -402,25 +402,25 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   {
     switch (obj)
     {
-      case string name when name == "CreatePersonCommand":
+      case string commandName when commandName == "CreatePersonCommand":
         OnCreatePersonCommand();
         break;
-      case string name when name == "AddNameCommand":
+      case string commandName when commandName == "AddNameCommand":
         await OnAddPersonNameAsync();
         break;
-      case string name when name == "EditBirthDateCommand":
+      case string commandName when commandName == "EditBirthDateCommand":
         await OnBirthDateSetupAsync();
         break;
-      case string name when name == "EditDeathDateCommand":
+      case string commandName when commandName == "EditDeathDateCommand":
         await OnDeathDateSetupAsync();
         break;
-      case string name when name == "RemoveDeathDateCommand":
+      case string commandName when commandName == "RemoveDeathDateCommand":
         DeathDate = null;
         break;
-      case string name when name == "AddPhotoCommand":
+      case string commandName when commandName == "AddPhotoCommand":
         await OnAddOrUpdatePhotoAsync(null);
         break;
-      case string name when name == "AddRelationship":
+      case string commandName when commandName == "AddRelationship":
         await OnAddRelationshipAsync();
         break;
 

@@ -25,7 +25,7 @@ public partial class FamilyPage : ContentPage
     _PersonInfoComparer = _Services.GetRequiredService<IComparer<PersonInfo>>();
 
     MemberItemTappedCommand = new Command<PersonInfo>(OnOpenPerson);
-    PageCommand = new Command<object?>(OnMenuItemCommand);
+    PageCommand = new Command<object>(OnPageCommand);
 
     InitializeComponent();
   }
@@ -197,25 +197,25 @@ public partial class FamilyPage : ContentPage
     await Shell.Current.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { ["PersonInfo"] = familyMember });
   }
 
-  private async void OnMenuItemCommand(object? parameter)
+  private async void OnPageCommand(object parameter)
   {
     try
     {
       switch (parameter)
       {
-        case string name when name == "RemoveFamily":
+        case string commandName when commandName == "RemoveFamily":
           await OnDeleteFamily();
           break;
 
-        case string name when name == "EditFamily":
+        case string commandName when commandName == "EditFamily":
           await OnEditFamily();
           break;
 
-        case string name when name == "CreatePerson":
+        case string commandName when commandName == "CreatePerson":
           await OnCreatePerson();
           break;
 
-        case string name when name == "Refresh":
+        case string commandName when commandName == "Refresh":
           Utils.RefreshView(this);
           break;
       }

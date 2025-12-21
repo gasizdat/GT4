@@ -21,7 +21,7 @@ public partial class ProjectListPage : ContentPage
     _CancellationTokenProvider = services.GetRequiredService<ICancellationTokenProvider>();
     _CurrentProjectProvider = services.GetRequiredService<ICurrentProjectProvider>();
     _ProjectItemsComparer = services.GetRequiredService<IComparer<ProjectItem>>();
-    _PageCommand = new Command(OnPageCommand);
+    _PageCommand = new Command<object>(OnPageCommand);
     _ProjectList = services.GetRequiredService<IProjectList>();
 
     InitializeComponent();
@@ -82,10 +82,10 @@ public partial class ProjectListPage : ContentPage
   {
     switch (obj)
     {
-      case string s when s == "Create":
+      case string commandName when commandName == "Create":
         await OnCreateProject();
         break;
-      case string s when s == "Refresh":
+      case string commandName when commandName == "Refresh":
         Utils.RefreshView(this);
         break;
     }

@@ -113,7 +113,11 @@ public partial class RelativeInfoView : ContentView
       if (_ShowRelatives != value)
       {
         _ShowRelatives = value;
-        if (!_ShowRelatives)
+        if (_ShowRelatives)
+        {
+          MoreBtnName = CollapseSymbol;
+        }
+        else
         {
           Relatives = null;
           MoreBtnName = ExpandSymbol;
@@ -156,7 +160,7 @@ public partial class RelativeInfoView : ContentView
     }
   }
 
-  private async void OnShowMoreRelativesCommandAsync(object obj)
+  private async void OnShowMoreRelativesCommandAsync()
   {
     var relative = Relative;
     if (relative is null)
@@ -178,7 +182,6 @@ public partial class RelativeInfoView : ContentView
 
       Relatives = relatives;
       ShowRelatives = true;
-      MoreBtnName = CollapseSymbol;
     }
   }
 

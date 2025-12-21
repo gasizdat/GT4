@@ -38,7 +38,7 @@ public partial class PersonPage : ContentPage
     _DateFormatter = _ServiceProvider.GetRequiredService<IDateFormatter>();
     _NameFormatter = _ServiceProvider.GetRequiredService<INameFormatter>();
     _TextConverter = _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonBio);
-    _PageCommand = new Command(OnPageCommand);
+    _PageCommand = new Command<object>(OnPageCommand);
 
     InitializeComponent();
   }
@@ -214,12 +214,13 @@ public partial class PersonPage : ContentPage
   {
     switch (obj)
     {
-      case string name when name == "RemovePerson":
+      case string commandName when commandName == "RemovePerson":
+        // TODO Implement person removing
         break;
-      case string name when name == "EditPerson":
+      case string commandName when commandName == "EditPerson":
         await OnPersonEdit();
         break;
-      case string name when name == "Refresh":
+      case string commandName when commandName == "Refresh":
         PersonInfo = _PersonFullInfo;
         break;
       case RelativeInfo relativeInfo:

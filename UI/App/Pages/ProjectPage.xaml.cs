@@ -110,19 +110,19 @@ public partial class ProjectPage : ContentPage
     {
       switch (obj)
       {
-        case string name when name == "RemoveProject":
+        case string commandName when commandName == "RemoveProject":
           await OnRemoveProject();
           break;
 
-        case string name when name == "EditProject":
+        case string commandName when commandName == "EditProject":
           await OnEditProject();
           break;
 
-        case string name when name == "Refresh":
+        case string commandName when commandName == "Refresh":
           Utils.RefreshView(this);
           break;
 
-        case string name when name == "CreateFamily":
+        case string commandName when commandName == "CreateFamily":
           await OnCreateFamily();
           break;
       }
