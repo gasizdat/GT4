@@ -496,4 +496,13 @@ genealogy tree and enjoy!</value>
   <data name="MenuItemNameCreateFamily" xml:space="preserve">
     <value>➕ Create a Family</value>
   </data>
+  <data name="RelGrandFather" xml:space="preserve">
+    <value>Grandfather</value>
+  </data>
+  <data name="RelGrandMother" xml:space="preserve">
+    <value>Grandmother</value>
+  </data>
+  <data name="RelGrandParent" xml:space="preserve">
+    <value>Granparent</value>
+  </data>
 </root>

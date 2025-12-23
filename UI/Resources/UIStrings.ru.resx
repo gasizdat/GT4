@@ -496,4 +496,13 @@
   <data name="MenuItemNameCreateFamily" xml:space="preserve">
     <value>➕ Создать семью</value>
   </data>
+  <data name="RelGrandFather" xml:space="preserve">
+    <value>Дедушка</value>
+  </data>
+  <data name="RelGrandMother" xml:space="preserve">
+    <value>Бабушка</value>
+  </data>
+  <data name="RelGrandParent" xml:space="preserve">
+    <value>Дедушка или бабушка</value>
+  </data>
 </root>

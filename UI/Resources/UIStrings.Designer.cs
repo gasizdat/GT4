@@ -827,6 +827,33 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Grandfather.
+        /// </summary>
+        public static string RelGrandFather {
+            get {
+                return ResourceManager.GetString("RelGrandFather", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Grandmother.
+        /// </summary>
+        public static string RelGrandMother {
+            get {
+                return ResourceManager.GetString("RelGrandMother", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Granparent.
+        /// </summary>
+        public static string RelGrandParent {
+            get {
+                return ResourceManager.GetString("RelGrandParent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Husband.
         /// </summary>
         public static string RelHusband {

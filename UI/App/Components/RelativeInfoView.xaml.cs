@@ -103,7 +103,11 @@ public partial class RelativeInfoView : ContentView
   public string RelationTypeName =>
     Relative is null
     ? string.Empty
-    : _RelationshipTypeFormatter.ToString(Relative.Type, Relative.BiologicalSex);
+    : _RelationshipTypeFormatter.ToString(
+      Relative.Type, 
+      Relative.BiologicalSex, 
+      Relative.Generation, 
+      Relative.Consanguinity);
 
   public bool ShowRelatives
   {
@@ -126,6 +130,7 @@ public partial class RelativeInfoView : ContentView
       }
     }
   }
+
   public ICommand ShowMoreRelativesCommand { get; init; }
 
   public ICollection<RelativeInfo>? Relatives

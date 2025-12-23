@@ -5,61 +5,266 @@ namespace GT4.UI.Formatters;
 
 public class RelationshipTypeFormatter : IRelationshipTypeFormatter
 {
-  public string ToString(RelationshipType type, BiologicalSex? biologicalSex = null)
+  public string ToString(
+    RelationshipType type, 
+    BiologicalSex? biologicalSex,
+    Generation? generation,
+    Consanguinity? consanguinity)
   {
+    try
+    {
+      var ret = type switch
+      {
+        RelationshipType.Parent => GetParent(biologicalSex, generation, consanguinity),
+        RelationshipType.Child => GetChild(biologicalSex, generation, consanguinity),
+        RelationshipType.Spouse => GetSpouse(biologicalSex, generation, consanguinity),
+        RelationshipType.AdoptiveParent => GetAdoptiveParent(biologicalSex, generation, consanguinity),
+        RelationshipType.AdoptiveChild => GetAdoptiveChild(biologicalSex, generation, consanguinity),
+        RelationshipType.Sibling => GetSibling(biologicalSex, generation, consanguinity),
+        RelationshipType.SiblingByFather => GetSiblingByFather(biologicalSex, generation, consanguinity),
+        RelationshipType.SiblingByMother => GetSiblingByMother(biologicalSex, generation, consanguinity),
+        RelationshipType.AdoptiveSibling => GetAdoptiveSibling(biologicalSex, generation, consanguinity),
+        RelationshipType.StepSibling => GetStepSibling(biologicalSex, generation, consanguinity),
+        RelationshipType.StepParent => GetStepParent(biologicalSex, generation, consanguinity),
+        RelationshipType.StepChild => GetStepChild(biologicalSex, generation, consanguinity),
+
+        _ => throw new NotSupportedException($"type: {type}, sex: {biologicalSex}")
+      };
+
+      return ret;
+    }
+    catch (Exception)
+    {
+      return $"Unsupported or wrong relationship: Type={type}, {generation}, {consanguinity}";
+    }
+  }
+
+  private static string GetParent(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
+  {
+    if (consanguinity is not null && consanguinity != Consanguinity.Zero)
+    {
+      throw new ArgumentOutOfRangeException($"Argument {nameof(consanguinity)} should be null or Zero");
+    }
+
+    if (generation?.Value > 1)
+    {
+      var ret = biologicalSex switch
+      {
+        BiologicalSex.Male => UIStrings.RelGrandFather,
+        BiologicalSex.Female => UIStrings.RelGrandMother,
+        _ => UIStrings.RelGrandParent,
+      };
+
+      return ret;
+    }
+    else if (generation?.Value == 1 || generation is null)
+    {
+      var ret = biologicalSex switch
+      {
+        BiologicalSex.Male => UIStrings.RelFather,
+        BiologicalSex.Female => UIStrings.RelMother,
+        _ => UIStrings.RelParent,
+      };
+
+      return ret;
+    }
+
+    throw new ArgumentOutOfRangeException($"Argument {nameof(generation)} should be null or >= 1");
+  }
+
+  private static string GetStepParent(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
+  {
+    if (consanguinity is not null && consanguinity != Consanguinity.Zero)
+    {
+      throw new ArgumentOutOfRangeException($"Argument {nameof(consanguinity)} should be null or Zero");
+    }
+
+    if (generation?.Value > 1)
+    {
+      throw new NotSupportedException(nameof(generation));
+    }
+    else if (generation?.Value == 1 || generation is null)
+    {
+      var ret = biologicalSex switch
+      {
+        BiologicalSex.Male => UIStrings.RelStepFather,
+        BiologicalSex.Female => UIStrings.RelStepMother,
+        _ => UIStrings.RelStepParent,
+      };
+
+      return ret;
+    }
+
+    throw new ArgumentOutOfRangeException($"Argument {nameof(generation)} should be null or = 1");
+  }
+
+  private static string GetChild(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
+  {
+    if (consanguinity is not null && consanguinity != Consanguinity.Zero)
+    {
+      throw new NotSupportedException(nameof(consanguinity));
+    }
+
+    else if (generation?.Value < 0 || generation is null)
+    {
+      var ret = biologicalSex switch
+      {
+        BiologicalSex.Male => UIStrings.RelSon,
+        BiologicalSex.Female => UIStrings.RelDaughter,
+        _ => UIStrings.RelChild,
+      };
+
+      return ret;
+    }
+
+    throw new ArgumentOutOfRangeException("Argument generation should be null or < 0");
+  }
+
+  private static string GetStepChild(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
+  {
+    if (consanguinity is not null && consanguinity != Consanguinity.Zero)
+    {
+      throw new NotSupportedException(nameof(consanguinity));
+    }
+
+    if (generation?.Value < 0 || generation is null)
+    {
+      var ret = biologicalSex switch
+      {
+        BiologicalSex.Male => UIStrings.RelStepSon,
+        BiologicalSex.Female => UIStrings.RelStepDaughter,
+        _ => UIStrings.RelStepChild,
+      };
+
+      return ret;
+    }
+
+    throw new ArgumentOutOfRangeException("Argument generation should be null or < 0");
+  }
+
+  private static string GetSpouse(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
+  {
+    if (consanguinity is not null && consanguinity != Consanguinity.Zero)
+    {
+      throw new NotSupportedException(nameof(consanguinity));
+    }
+
+    if (generation?.Value < 0)
+    {
+      throw new NotSupportedException(nameof(generation));
+    }
+    else if (generation?.Value == 0 || generation is null)
+    {
+      var ret = biologicalSex switch
+      {
+        BiologicalSex.Male => UIStrings.RelHusband,
+        BiologicalSex.Female => UIStrings.RelWife,
+        _ => UIStrings.RelSpouse,
+      };
+
+      return ret;
+    }
+
+    throw new ArgumentOutOfRangeException("Argument generation should be null or <= 0");
+  }
+
+  private static string GetAdoptiveParent(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
+  {
+    var parent = GetParent(biologicalSex, generation, consanguinity);
     var ret = biologicalSex switch
     {
-      BiologicalSex.Male => type switch
-      {
-        RelationshipType.Parent => UIStrings.RelFather,
-        RelationshipType.Child => UIStrings.RelSon,
-        RelationshipType.Spouse => UIStrings.RelHusband,
-        RelationshipType.AdoptiveParent => string.Format(UIStrings.RelAdoptiveMale_1, UIStrings.RelFather),
-        RelationshipType.AdoptiveChild => string.Format(UIStrings.RelAdoptiveMale_1, UIStrings.RelSon),
-        RelationshipType.Sibling => UIStrings.RelBrother,
-        RelationshipType.SiblingByFather => string.Format(UIStrings.RelParental_1, UIStrings.RelBrother),
-        RelationshipType.SiblingByMother => string.Format(UIStrings.RelMaternal_1, UIStrings.RelBrother),
-        RelationshipType.AdoptiveSibling => string.Format(UIStrings.RelAdoptiveMale_1, UIStrings.RelBrother),
-        RelationshipType.StepSibling => string.Format(UIStrings.RelStepMale_1, UIStrings.RelBrother),
-        RelationshipType.StepParent => UIStrings.RelStepFather,
-        RelationshipType.StepChild => UIStrings.RelStepSon,
+      BiologicalSex.Male => string.Format(UIStrings.RelAdoptiveMale_1, parent),
+      BiologicalSex.Female => string.Format(UIStrings.RelAdoptiveFemale_1, parent),
+      _ => string.Format(UIStrings.RelAdoptiveInvariant_1, parent),
+    };
 
-        _ => throw new NotSupportedException($"type: {type}, sex: {biologicalSex}")
-      },
-      BiologicalSex.Female => type switch
-      {
-        RelationshipType.Parent => UIStrings.RelMother,
-        RelationshipType.Child => UIStrings.RelDaughter,
-        RelationshipType.Spouse => UIStrings.RelWife,
-        RelationshipType.AdoptiveParent => string.Format(UIStrings.RelAdoptiveFemale_1, UIStrings.RelMother),
-        RelationshipType.AdoptiveChild => string.Format(UIStrings.RelAdoptiveFemale_1, UIStrings.RelDaughter),
-        RelationshipType.Sibling => UIStrings.RelSister,
-        RelationshipType.SiblingByFather => string.Format(UIStrings.RelParental_1, UIStrings.RelSister),
-        RelationshipType.SiblingByMother => string.Format(UIStrings.RelMaternal_1, UIStrings.RelSister),
-        RelationshipType.AdoptiveSibling => string.Format(UIStrings.RelAdoptiveFemale_1, UIStrings.RelSister),
-        RelationshipType.StepSibling => string.Format(UIStrings.RelStepFemale_1, UIStrings.RelSister),
-        RelationshipType.StepParent => UIStrings.RelStepMother,
-        RelationshipType.StepChild => UIStrings.RelStepDaughter,
+    return ret;
+  }
 
-        _ => throw new NotSupportedException($"type: {type}, sex: {biologicalSex}")
-      },
-      _ => type switch
-      {
-        RelationshipType.Parent => UIStrings.RelParent,
-        RelationshipType.Child => UIStrings.RelChild,
-        RelationshipType.Spouse => UIStrings.RelSpouse,
-        RelationshipType.AdoptiveParent => string.Format(UIStrings.RelAdoptiveInvariant_1, UIStrings.RelParent),
-        RelationshipType.AdoptiveChild => string.Format(UIStrings.RelAdoptiveInvariant_1, UIStrings.RelChild),
-        RelationshipType.Sibling => UIStrings.RelSibling,
-        RelationshipType.SiblingByFather => string.Format(UIStrings.RelParental_1, UIStrings.RelSibling),
-        RelationshipType.SiblingByMother => string.Format(UIStrings.RelMaternal_1, UIStrings.RelSibling),
-        RelationshipType.AdoptiveSibling => string.Format(UIStrings.RelAdoptiveInvariant_1, UIStrings.RelSibling),
-        RelationshipType.StepSibling => string.Format(UIStrings.RelStepInvariant_1, UIStrings.RelSibling),
-        RelationshipType.StepParent => UIStrings.RelStepParent,
-        RelationshipType.StepChild => UIStrings.RelStepChild,
+  private static string GetAdoptiveChild(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
+  {
+    var child = GetChild(biologicalSex, generation, consanguinity);
+    var ret = biologicalSex switch
+    {
+      BiologicalSex.Male => string.Format(UIStrings.RelAdoptiveMale_1, child),
+      BiologicalSex.Female => string.Format(UIStrings.RelAdoptiveFemale_1, child),
+      _ => string.Format(UIStrings.RelAdoptiveInvariant_1, child),
+    };
 
-        _ => throw new NotSupportedException($"type: {type}, sex: {biologicalSex}")
-      }
+    return ret;
+  }
+
+  private static string GetSibling(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
+  {
+    if (consanguinity is not null && consanguinity != Consanguinity.Zero)
+    {
+      throw new NotSupportedException(nameof(consanguinity));
+    }
+
+    if (generation?.Value < 0)
+    {
+      throw new NotSupportedException(nameof(generation));
+    }
+    else if (generation?.Value == 0 || generation is null)
+    {
+      var ret = biologicalSex switch
+      {
+        BiologicalSex.Male => UIStrings.RelBrother,
+        BiologicalSex.Female => UIStrings.RelSister,
+        _ => UIStrings.RelSibling,
+      };
+
+      return ret;
+    }
+
+    throw new ArgumentOutOfRangeException("Argument generation should be null or <= 0");
+  }
+
+  private static string GetSiblingByFather(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
+  {
+    var sibling = GetSibling(biologicalSex, generation, consanguinity);
+    if (generation?.Value == 0 || generation is null)
+    {
+      var ret = string.Format(UIStrings.RelParental_1, sibling);
+      return ret;
+    }
+
+    return sibling;
+  }
+
+  private static string GetSiblingByMother(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
+  {
+    var sibling = GetSibling(biologicalSex, generation, consanguinity);
+    if (generation?.Value == 0 || generation is null)
+    {
+      var ret = string.Format(UIStrings.RelMaternal_1, sibling);
+      return ret;
+    }
+
+    return sibling;
+  }
+
+  private static string GetAdoptiveSibling(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
+  {
+    var sibling = GetSibling(biologicalSex, generation, consanguinity);
+    var ret = biologicalSex switch
+    {
+      BiologicalSex.Male => string.Format(UIStrings.RelAdoptiveMale_1, sibling),
+      BiologicalSex.Female => string.Format(UIStrings.RelAdoptiveFemale_1, sibling),
+      _ => string.Format(UIStrings.RelAdoptiveInvariant_1, sibling),
+    };
+
+    return ret;
+  }
+
+  private static string GetStepSibling(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
+  {
+    var sibling = GetSibling(biologicalSex, generation, consanguinity);
+    var ret = biologicalSex switch
+    {
+      BiologicalSex.Male => string.Format(UIStrings.RelStepMale_1, sibling),
+      BiologicalSex.Female => string.Format(UIStrings.RelStepFemale_1, sibling),
+      _ => string.Format(UIStrings.RelStepInvariant_1, sibling),
     };
 
     return ret;

@@ -71,7 +71,12 @@ internal class RelativesProvider : TableBase, IRelativesProvider
       .SelectMany(p => p.RelativeInfos)
       .Where(r => r.Type == RelationshipType.Spouse)
       .Where(r => !allParentIds.Contains(r.Id))
-      .Select(r => GetRelativeFullInfoAsync(r with { Type = RelationshipType.StepParent }, token));
+      .Select(r => r with
+      {
+        Type = RelationshipType.StepParent,
+        Generation = new Generation(RelationshipType.Parent)
+      })
+      .Select(r => GetRelativeFullInfoAsync(r, token));
     var stepParents = await Task.WhenAll(stepParentTasks);
 
     return new Parents(
