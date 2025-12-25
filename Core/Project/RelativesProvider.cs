@@ -8,7 +8,7 @@ internal class RelativesProvider : TableBase, IRelativesProvider
   private static readonly ElementIdComparer<RelativeInfo> _RelativeInfoComparer = new();
 
   private async Task<RelativeFullInfo> GetRelativeFullInfoAsync(RelativeInfo relative, CancellationToken token) =>
-    new(relative: relative, relativeInfos: await GetRelativeInfosAsync(relative, true, token));
+    new(relative: relative, relativeInfos: await GetRelativeInfosAsync(relative as Person, true, token));
 
   private static RelativeInfo[] ToTypedArray(
     IEnumerable<RelativeInfo> relatives,
@@ -26,6 +26,92 @@ internal class RelativesProvider : TableBase, IRelativesProvider
   internal override Task CreateAsync(CancellationToken token)
   {
     throw new NotSupportedException();
+  }
+
+  private static bool IsRelationshipSupported(RelationshipType? personType, RelationshipType relativeType)
+  {
+    var ret = personType switch
+    {
+      RelationshipType.Parent => relativeType switch
+      {
+        RelationshipType.Parent => true,
+        RelationshipType.Sibling => true,
+        RelationshipType.SiblingByMother => true,
+        RelationshipType.SiblingByFather => true,
+        _ => false
+      },
+      RelationshipType.Child => relativeType switch
+      {
+        RelationshipType.Child => true,
+        RelationshipType.Spouse => true,
+        _ => false
+      },
+      null => true,
+      _ => false
+    };
+
+    return ret;
+  }
+
+  private static Generation GetNextGeneration(RelationshipType? personType, RelationshipType relativeType, Generation? generation)
+  {
+    var UnsupportedRelationshipException = () =>
+       new ApplicationException($"Unsupported relationship {personType}->{relativeType}");
+
+    var startGeneration = generation ?? Generation.Zero;
+    var ret = personType switch
+    {
+      RelationshipType.Parent => relativeType switch
+      {
+        RelationshipType.Parent => ++startGeneration,
+        RelationshipType.Sibling => startGeneration,
+        RelationshipType.SiblingByMother => startGeneration,
+        RelationshipType.SiblingByFather => startGeneration,
+        _ => throw UnsupportedRelationshipException()
+      },
+      RelationshipType.Child => relativeType switch
+      {
+        RelationshipType.Child => --startGeneration,
+        RelationshipType.Spouse => startGeneration,
+        _ => throw UnsupportedRelationshipException()
+      },
+      null => new Generation(relativeType),
+      _ => throw UnsupportedRelationshipException()
+    };
+
+    return ret;
+  }
+
+  public async Task<RelativeInfo[]> GetRelativeInfosAsync(
+    RelativeInfo relativeInfo, 
+    bool selectMainPhoto,
+    CancellationToken token)
+  {
+    var relatives = await Document.Relatives.GetRelativesAsync(relativeInfo, token);
+    relatives = relatives
+      .Where(r => IsRelationshipSupported(relativeInfo.Type, r.Type))
+      .ToArray();
+
+    var personInfos = await Document.PersonManager.GetPersonInfosAsync(
+      persons: relatives,
+      selectMainPhoto: selectMainPhoto,
+      token: token);
+
+    var relativeInfos = new RelativeInfo[personInfos.Length];
+    for (var i = 0; i < personInfos.Length; i++)
+    {
+      var relative = relatives[i];
+      var nextGeneration = GetNextGeneration(relativeInfo.Type, relative.Type, relativeInfo.Generation);
+      var personInfo = personInfos[i];
+      relativeInfos[i] = new RelativeInfo(
+        relative: relative,
+        names: personInfo.Names,
+        mainPhoto: personInfo.MainPhoto,
+        generation: nextGeneration,
+        consanguinity: Consanguinity.Zero);
+    }
+
+    return relativeInfos;
   }
 
   public async Task<RelativeInfo[]> GetRelativeInfosAsync(Person person, bool selectMainPhoto, CancellationToken token)

@@ -10,4 +10,5 @@ public interface IRelativesProvider
   RelativeInfo[] GetChildren(RelativeInfo[] relativeInfos);
   Siblings GetSiblings(Person person, Parents parents);
   Task<RelativeInfo[]> GetRelativeInfosAsync(Person person, bool selectMainPhoto, CancellationToken token);
+  Task<RelativeInfo[]> GetRelativeInfosAsync(RelativeInfo relativeInfo, bool selectMainPhoto, CancellationToken token);
 }
