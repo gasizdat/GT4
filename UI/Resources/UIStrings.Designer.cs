@@ -809,11 +809,29 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Child-in-law.
+        /// </summary>
+        public static string RelChildInLaw {
+            get {
+                return ResourceManager.GetString("RelChildInLaw", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Daughter.
         /// </summary>
         public static string RelDaughter {
             get {
                 return ResourceManager.GetString("RelDaughter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Daughter-in-law.
+        /// </summary>
+        public static string RelDaughterInLaw {
+            get {
+                return ResourceManager.GetString("RelDaughterInLaw", resourceCulture);
             }
         }
         
@@ -922,6 +940,15 @@ namespace GT4.UI.Resources {
         public static string RelSon {
             get {
                 return ResourceManager.GetString("RelSon", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Son-in-law.
+        /// </summary>
+        public static string RelSonInLaw {
+            get {
+                return ResourceManager.GetString("RelSonInLaw", resourceCulture);
             }
         }
         

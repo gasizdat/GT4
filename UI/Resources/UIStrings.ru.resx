@@ -505,4 +505,13 @@
   <data name="RelGrandParent" xml:space="preserve">
     <value>Дедушка или бабушка</value>
   </data>
+  <data name="RelDaughterInLaw" xml:space="preserve">
+    <value>Невестка</value>
+  </data>
+  <data name="RelSonInLaw" xml:space="preserve">
+    <value>Зять</value>
+  </data>
+  <data name="RelChildInLaw" xml:space="preserve">
+    <value>Супруг(а) ребенка</value>
+  </data>
 </root>

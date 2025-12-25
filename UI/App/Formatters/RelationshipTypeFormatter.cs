@@ -151,7 +151,14 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
 
     if (generation?.Value < 0)
     {
-      throw new NotSupportedException(nameof(generation));
+      var ret = biologicalSex switch
+      {
+        BiologicalSex.Male => UIStrings.RelSonInLaw,
+        BiologicalSex.Female => UIStrings.RelDaughterInLaw,
+        _ => UIStrings.RelChildInLaw,
+      };
+
+      return ret;
     }
     else if (generation?.Value == 0 || generation is null)
     {
