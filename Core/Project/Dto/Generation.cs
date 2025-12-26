@@ -14,37 +14,27 @@ public record struct Generation(int Value) : IEquatable<Generation>, IComparable
     })
   { }
 
-  public int CompareTo(Generation other)
-  {
-    return Value.CompareTo(other.Value);
-  }
+  public int CompareTo(Generation other) => Value.CompareTo(other.Value);
 
   public bool Equals(Generation? other) => Value == other?.Value;
 
-  public override int GetHashCode()
-  {
-    return Value.GetHashCode();
-  }
+  public override int GetHashCode() => Value.GetHashCode();
 
-  public static Generation operator +(Generation left, Generation right)
-  {
-    return new Generation(left.Value + right.Value);
-  }
+  public static Generation operator +(Generation left, Generation right) => new Generation(left.Value + right.Value);
 
-  public static Generation operator -(Generation left, Generation right)
-  {
-    return new Generation(left.Value + right.Value);
-  }
+  public static Generation operator -(Generation left, Generation right) => new Generation(left.Value - right.Value);
 
-  public static Generation operator ++(Generation left)
-  {
-    return new Generation(left.Value + 1);
-  }
+  public static Generation operator ++(Generation left) => new Generation(left.Value + 1);
 
-  public static Generation operator --(Generation left)
-  {
-    return new Generation(left.Value - 1);
-  }
+  public static Generation operator --(Generation left) => new Generation(left.Value - 1);
+
+  public static bool operator <(Generation left, Generation right) => left.CompareTo(right) < 0;
+
+  public static bool operator >(Generation left, Generation right) => left.CompareTo(right) > 0;
+
+  public static bool operator <=(Generation left, Generation right) => left.CompareTo(right) <= 0;
+
+  public static bool operator >=(Generation left, Generation right) => left.CompareTo(right) >= 0;
 
   public static readonly Generation Parent = new Generation(1);
   public static readonly Generation Child = new Generation(-1);

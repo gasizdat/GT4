@@ -514,4 +514,16 @@ genealogy tree and enjoy!</value>
   <data name="RelChildInLaw" xml:space="preserve">
     <value>Child-in-law</value>
   </data>
+  <data name="RelGrandSon" xml:space="preserve">
+    <value>Grandson</value>
+  </data>
+  <data name="RelGrandDaughter" xml:space="preserve">
+    <value>Granddaughter</value>
+  </data>
+  <data name="RelGrandChild" xml:space="preserve">
+    <value>Grandchild</value>
+  </data>
+  <data name="RelGrand_1" xml:space="preserve">
+    <value>Grand-{0}</value>
+  </data>
 </root>

@@ -6,7 +6,7 @@ namespace GT4.UI.Formatters;
 public class RelationshipTypeFormatter : IRelationshipTypeFormatter
 {
   public string ToString(
-    RelationshipType type, 
+    RelationshipType type,
     BiologicalSex? biologicalSex,
     Generation? generation,
     Consanguinity? consanguinity)
@@ -46,7 +46,18 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
       throw new ArgumentOutOfRangeException($"Argument {nameof(consanguinity)} should be null or Zero");
     }
 
-    if (generation?.Value > 1)
+    if (generation is null || generation == Generation.Parent)
+    {
+      var ret = biologicalSex switch
+      {
+        BiologicalSex.Male => UIStrings.RelFather,
+        BiologicalSex.Female => UIStrings.RelMother,
+        _ => UIStrings.RelParent,
+      };
+
+      return ret;
+    }
+    else if (generation > Generation.Parent)
     {
       var ret = biologicalSex switch
       {
@@ -55,16 +66,10 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
         _ => UIStrings.RelGrandParent,
       };
 
-      return ret;
-    }
-    else if (generation?.Value == 1 || generation is null)
-    {
-      var ret = biologicalSex switch
+      for (var grandness = generation.Value - Generation.Parent; grandness > Generation.Parent; --grandness)
       {
-        BiologicalSex.Male => UIStrings.RelFather,
-        BiologicalSex.Female => UIStrings.RelMother,
-        _ => UIStrings.RelParent,
-      };
+        ret = string.Format(UIStrings.RelGrand_1, ret);
+      }
 
       return ret;
     }
@@ -79,11 +84,7 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
       throw new ArgumentOutOfRangeException($"Argument {nameof(consanguinity)} should be null or Zero");
     }
 
-    if (generation?.Value > 1)
-    {
-      throw new NotSupportedException(nameof(generation));
-    }
-    else if (generation?.Value == 1 || generation is null)
+    if (generation is null || generation == Generation.Parent)
     {
       var ret = biologicalSex switch
       {
@@ -93,6 +94,10 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
       };
 
       return ret;
+    }
+    else if (generation > Generation.Parent)
+    {
+      throw new NotSupportedException(nameof(generation));
     }
 
     throw new ArgumentOutOfRangeException($"Argument {nameof(generation)} should be null or = 1");
@@ -105,7 +110,7 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
       throw new NotSupportedException(nameof(consanguinity));
     }
 
-    else if (generation?.Value < 0 || generation is null)
+    if (generation is null || generation == Generation.Child)
     {
       var ret = biologicalSex switch
       {
@@ -116,10 +121,26 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
 
       return ret;
     }
+    else if (generation < Generation.Child)
+    {
+      var ret = biologicalSex switch
+      {
+        BiologicalSex.Male => UIStrings.RelGrandSon,
+        BiologicalSex.Female => UIStrings.RelGrandDaughter,
+        _ => UIStrings.RelGrandChild,
+      };
+
+      for (var grandness = generation.Value - Generation.Child; grandness < Generation.Child; ++grandness)
+      {
+        ret = string.Format(UIStrings.RelGrand_1, ret);
+      }
+
+      return ret;
+    }
 
     throw new ArgumentOutOfRangeException("Argument generation should be null or < 0");
   }
-
+  
   private static string GetStepChild(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
   {
     if (consanguinity is not null && consanguinity != Consanguinity.Zero)
@@ -127,7 +148,7 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
       throw new NotSupportedException(nameof(consanguinity));
     }
 
-    if (generation?.Value < 0 || generation is null)
+    if (generation is null || generation < Generation.Zero)
     {
       var ret = biologicalSex switch
       {
@@ -149,24 +170,24 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
       throw new NotSupportedException(nameof(consanguinity));
     }
 
-    if (generation?.Value < 0)
-    {
-      var ret = biologicalSex switch
-      {
-        BiologicalSex.Male => UIStrings.RelSonInLaw,
-        BiologicalSex.Female => UIStrings.RelDaughterInLaw,
-        _ => UIStrings.RelChildInLaw,
-      };
-
-      return ret;
-    }
-    else if (generation?.Value == 0 || generation is null)
+    if (generation is null || generation == Generation.Zero)
     {
       var ret = biologicalSex switch
       {
         BiologicalSex.Male => UIStrings.RelHusband,
         BiologicalSex.Female => UIStrings.RelWife,
         _ => UIStrings.RelSpouse,
+      };
+
+      return ret;
+    }
+    else if (generation < Generation.Zero)
+    {
+      var ret = biologicalSex switch
+      {
+        BiologicalSex.Male => UIStrings.RelSonInLaw,
+        BiologicalSex.Female => UIStrings.RelDaughterInLaw,
+        _ => UIStrings.RelChildInLaw,
       };
 
       return ret;
@@ -208,11 +229,7 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
       throw new NotSupportedException(nameof(consanguinity));
     }
 
-    if (generation?.Value < 0)
-    {
-      throw new NotSupportedException(nameof(generation));
-    }
-    else if (generation?.Value == 0 || generation is null)
+    if (generation is null || generation == Generation.Zero)
     {
       var ret = biologicalSex switch
       {
@@ -223,6 +240,10 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
 
       return ret;
     }
+    else if (generation  < Generation.Zero)
+    {
+      throw new NotSupportedException(nameof(generation));
+    }
 
     throw new ArgumentOutOfRangeException("Argument generation should be null or <= 0");
   }
@@ -230,7 +251,7 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
   private static string GetSiblingByFather(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
   {
     var sibling = GetSibling(biologicalSex, generation, consanguinity);
-    if (generation?.Value == 0 || generation is null)
+    if (generation is null || generation == Generation.Zero)
     {
       var ret = string.Format(UIStrings.RelParental_1, sibling);
       return ret;
@@ -242,7 +263,7 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
   private static string GetSiblingByMother(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
   {
     var sibling = GetSibling(biologicalSex, generation, consanguinity);
-    if (generation?.Value == 0 || generation is null)
+    if (generation is null || generation == Generation.Zero)
     {
       var ret = string.Format(UIStrings.RelMaternal_1, sibling);
       return ret;

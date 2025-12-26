@@ -514,4 +514,16 @@
   <data name="RelChildInLaw" xml:space="preserve">
     <value>Супруг(а) ребенка</value>
   </data>
+  <data name="RelGrandSon" xml:space="preserve">
+    <value>Внук</value>
+  </data>
+  <data name="RelGrandDaughter" xml:space="preserve">
+    <value>Внучка</value>
+  </data>
+  <data name="RelGrandChild" xml:space="preserve">
+    <value>Внук или внучка</value>
+  </data>
+  <data name="RelGrand_1" xml:space="preserve">
+    <value>Пра-{0}</value>
+  </data>
 </root>
