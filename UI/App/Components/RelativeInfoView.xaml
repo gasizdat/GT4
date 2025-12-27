@@ -26,12 +26,13 @@
   </ContentView.Resources>
 
   <Grid
-      ColumnDefinitions="Auto, *, Auto"
+      ColumnDefinitions=" *, Auto, Auto"
       RowDefinitions="Auto, Auto, *">
 
     <Label
         Grid.Row="0"
         Grid.Column="0"
+        LineBreakMode="WordWrap"
         Style="{StaticResource FieldValue}"
         Text="{Binding RelationTypeName, Source={x:Reference Root}}"
         VerticalOptions="Start" />

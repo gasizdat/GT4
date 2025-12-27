@@ -17,6 +17,31 @@ internal class RelativesProvider : TableBase, IRelativesProvider
     Consanguinity consanguinity) =>
       [.. relatives.Select(s => s with { Type = type, Generation = generation, Consanguinity = consanguinity })];
 
+  private async Task<RelativeInfo[]> GetRelativeInfosAsync(Relative[] relatives, bool selectMainPhoto, CancellationToken token)
+  {
+    var personInfos = await Document.PersonManager.GetPersonInfosAsync(
+      persons: relatives,
+      selectMainPhoto: selectMainPhoto,
+      token: token);
+
+    var relativeInfos = new RelativeInfo[personInfos.Length];
+    for (var i = 0; i < personInfos.Length; i++)
+    {
+      var relative = relatives[i];
+      var personInfo = personInfos[i];
+      var generation = new Generation(relative.Type);
+      relativeInfos[i] = new RelativeInfo(
+        relative: relative,
+        names: personInfo.Names,
+        mainPhoto: personInfo.MainPhoto,
+        generation: generation,
+        consanguinity: Consanguinity.Zero);
+    }
+
+    return relativeInfos;
+  }
+
+
   internal RelativesProvider(IProjectDocument document)
     : base(document)
   {
@@ -41,6 +66,14 @@ internal class RelativesProvider : TableBase, IRelativesProvider
         _ => false
       },
       RelationshipType.Child => relativeType switch
+      {
+        RelationshipType.Child => true,
+        RelationshipType.Spouse => true,
+        _ => false
+      },
+      RelationshipType.Sibling or
+      RelationshipType.SiblingByMother or
+      RelationshipType.SiblingByFather => relativeType switch
       {
         RelationshipType.Child => true,
         RelationshipType.Spouse => true,
@@ -75,6 +108,14 @@ internal class RelativesProvider : TableBase, IRelativesProvider
         RelationshipType.Spouse => startGeneration,
         _ => throw UnsupportedRelationshipException()
       },
+      RelationshipType.Sibling or
+      RelationshipType.SiblingByMother or
+      RelationshipType.SiblingByFather => relativeType switch
+      {
+        RelationshipType.Child => --startGeneration,
+        RelationshipType.Spouse => startGeneration,
+        _ => throw UnsupportedRelationshipException()
+      },
       null => new Generation(relativeType),
       _ => throw UnsupportedRelationshipException()
     };
@@ -82,34 +123,83 @@ internal class RelativesProvider : TableBase, IRelativesProvider
     return ret;
   }
 
+  private static Consanguinity GetNextConsanguinity(RelationshipType? personType, RelationshipType relativeType, Consanguinity? consanguinity)
+  {
+    var UnsupportedRelationshipException = () =>
+       new ApplicationException($"Unsupported relationship {personType}->{relativeType}");
+
+    var startConsanguinity = consanguinity ?? Consanguinity.Zero;
+    var ret = personType switch
+    {
+      RelationshipType.Parent => relativeType switch
+      {
+        RelationshipType.Parent => startConsanguinity,
+        RelationshipType.Sibling => ++startConsanguinity,
+        RelationshipType.SiblingByMother => ++startConsanguinity,
+        RelationshipType.SiblingByFather => ++startConsanguinity,
+        _ => throw UnsupportedRelationshipException()
+      },
+      RelationshipType.Child => relativeType switch
+      {
+        RelationshipType.Child => startConsanguinity,
+        RelationshipType.Spouse => startConsanguinity,
+        _ => throw UnsupportedRelationshipException()
+      },
+      RelationshipType.Sibling or
+      RelationshipType.SiblingByMother or
+      RelationshipType.SiblingByFather => relativeType switch
+      {
+        RelationshipType.Child => ++startConsanguinity,
+        RelationshipType.Spouse => startConsanguinity,
+        _ => throw UnsupportedRelationshipException()
+      },
+      null => startConsanguinity,
+      _ => throw UnsupportedRelationshipException()
+    };
+
+    return ret;
+  }
+
   public async Task<RelativeInfo[]> GetRelativeInfosAsync(
-    RelativeInfo relativeInfo, 
+    RelativeInfo relativeInfo,
     bool selectMainPhoto,
     CancellationToken token)
   {
     var relatives = await Document.Relatives.GetRelativesAsync(relativeInfo, token);
+    var parentTasks = relatives
+      .Where(r => r.Type == RelationshipType.Parent || r.Type == RelationshipType.AdoptiveParent)
+      .Select(r => Document.PersonManager.GetPersonFullInfoAsync(r, token));
     relatives = relatives
       .Where(r => IsRelationshipSupported(relativeInfo.Type, r.Type))
       .ToArray();
+    var relativeInfosTask = GetRelativeInfosAsync(relatives, true, token);
+    await Task.WhenAll([relativeInfosTask, .. parentTasks]);
+    var siblings = parentTasks
+      .Select(t => t.Result)
+      .SelectMany(p => p.RelativeInfos)
+      .Where(r => r.Id != relativeInfo.Id)
+      .Where(r => r.Type == RelationshipType.Child)
+      .Select(r => r with { Type = RelationshipType.Sibling });
 
-    var personInfos = await Document.PersonManager.GetPersonInfosAsync(
-      persons: relatives,
-      selectMainPhoto: selectMainPhoto,
-      token: token);
+    //TODO collect sibling spouses
 
-    var relativeInfos = new RelativeInfo[personInfos.Length];
-    for (var i = 0; i < personInfos.Length; i++)
-    {
-      var relative = relatives[i];
-      var nextGeneration = GetNextGeneration(relativeInfo.Type, relative.Type, relativeInfo.Generation);
-      var personInfo = personInfos[i];
-      relativeInfos[i] = new RelativeInfo(
-        relative: relative,
-        names: personInfo.Names,
-        mainPhoto: personInfo.MainPhoto,
-        generation: nextGeneration,
-        consanguinity: Consanguinity.Zero);
-    }
+    RelativeInfo[] relativeInfos =
+    [
+      ..relativeInfosTask
+        .Result
+        .Select(r =>
+        {
+          var nextGeneration = GetNextGeneration(relativeInfo.Type, r.Type, relativeInfo.Generation);
+          var nextConsanguinity = GetNextConsanguinity(relativeInfo.Type, r.Type, relativeInfo.Consanguinity);
+          return r with { Consanguinity = nextConsanguinity, Generation = nextGeneration };
+        }),
+      ..siblings
+        .Select(r =>
+        {
+          var nextConsanguinity = GetNextConsanguinity(relativeInfo.Type, r.Type, relativeInfo.Consanguinity);
+          return r with { Consanguinity = nextConsanguinity, Generation = relativeInfo.Generation };
+        })
+    ];
 
     return relativeInfos;
   }
@@ -117,24 +207,7 @@ internal class RelativesProvider : TableBase, IRelativesProvider
   public async Task<RelativeInfo[]> GetRelativeInfosAsync(Person person, bool selectMainPhoto, CancellationToken token)
   {
     var relatives = await Document.Relatives.GetRelativesAsync(person, token);
-    var personInfos = await Document.PersonManager.GetPersonInfosAsync(
-      persons: relatives,
-      selectMainPhoto: selectMainPhoto,
-      token: token);
-
-    var relativeInfos = new RelativeInfo[personInfos.Length];
-    for (var i = 0; i < personInfos.Length; i++)
-    {
-      var relative = relatives[i];
-      var personInfo = personInfos[i];
-      var generation = new Generation(relative.Type);
-      relativeInfos[i] = new RelativeInfo(
-        relative: relative,
-        names: personInfo.Names,
-        mainPhoto: personInfo.MainPhoto,
-        generation: generation,
-        consanguinity: Consanguinity.Zero);
-    }
+    var relativeInfos = await GetRelativeInfosAsync(relatives, true, token);
 
     return relativeInfos;
   }
