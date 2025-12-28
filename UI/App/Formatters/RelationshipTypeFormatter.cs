@@ -224,13 +224,13 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
 
   private static string GetSibling(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
   {
-    if (consanguinity is not null && consanguinity != Consanguinity.Zero)
-    {
-      throw new NotSupportedException(nameof(consanguinity));
-    }
-
     if (generation is null || generation == Generation.Zero)
     {
+      if (consanguinity is not null && consanguinity != Consanguinity.Zero)
+      {
+        throw new NotSupportedException(nameof(consanguinity));
+      }
+
       var ret = biologicalSex switch
       {
         BiologicalSex.Male => UIStrings.RelBrother,
@@ -240,7 +240,29 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
 
       return ret;
     }
-    else if (generation  < Generation.Zero)
+    else if (generation == Generation.Parent && consanguinity == Consanguinity.UncleAunt)
+    {
+      var ret = biologicalSex switch
+      {
+        BiologicalSex.Male => UIStrings.RelUncle,
+        BiologicalSex.Female => UIStrings.RelAunt,
+        _ => UIStrings.RelUncleAunt,
+      };
+
+      return ret;
+    }
+    else if (generation > Generation.Parent && consanguinity == Consanguinity.UncleAunt)
+    {
+      var ret = biologicalSex switch
+      {
+        BiologicalSex.Male => UIStrings.RelUncle,
+        BiologicalSex.Female => UIStrings.RelAunt,
+        _ => UIStrings.RelUncleAunt,
+      };
+
+      return ret;
+    }
+    else if (generation < Generation.Zero)
     {
       throw new NotSupportedException(nameof(generation));
     }

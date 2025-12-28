@@ -526,4 +526,13 @@ genealogy tree and enjoy!</value>
   <data name="RelGrand_1" xml:space="preserve">
     <value>Grand-{0}</value>
   </data>
+  <data name="RelUncle" xml:space="preserve">
+    <value>Uncle</value>
+  </data>
+  <data name="RelAunt" xml:space="preserve">
+    <value>Aunt</value>
+  </data>
+  <data name="RelUncleAunt" xml:space="preserve">
+    <value>Uncle or Aunt</value>
+  </data>
 </root>

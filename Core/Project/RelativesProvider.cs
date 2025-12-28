@@ -91,32 +91,46 @@ internal class RelativesProvider : TableBase, IRelativesProvider
     var UnsupportedRelationshipException = () =>
        new ApplicationException($"Unsupported relationship {personType}->{relativeType}");
 
+    if (personType is null)
+    {
+      return new Generation(relativeType);
+    }
+
     var startGeneration = generation ?? Generation.Zero;
+    var generationChanged = relativeType switch
+    {
+      RelationshipType.Sibling or
+      RelationshipType.SiblingByFather or
+      RelationshipType.SiblingByMother or
+      RelationshipType.Spouse => false,
+      _ => true
+    };
+
+    if (!generationChanged)
+    {
+      return startGeneration;
+    }
+
     var ret = personType switch
     {
       RelationshipType.Parent => relativeType switch
       {
+        RelationshipType.Child => --startGeneration,
         RelationshipType.Parent => ++startGeneration,
-        RelationshipType.Sibling => startGeneration,
-        RelationshipType.SiblingByMother => startGeneration,
-        RelationshipType.SiblingByFather => startGeneration,
         _ => throw UnsupportedRelationshipException()
       },
       RelationshipType.Child => relativeType switch
       {
+        RelationshipType.Parent => ++startGeneration,
         RelationshipType.Child => --startGeneration,
-        RelationshipType.Spouse => startGeneration,
         _ => throw UnsupportedRelationshipException()
       },
-      RelationshipType.Sibling or
-      RelationshipType.SiblingByMother or
-      RelationshipType.SiblingByFather => relativeType switch
+      RelationshipType.Sibling => relativeType switch
       {
+        RelationshipType.Parent => ++startGeneration,
         RelationshipType.Child => --startGeneration,
-        RelationshipType.Spouse => startGeneration,
         _ => throw UnsupportedRelationshipException()
       },
-      null => new Generation(relativeType),
       _ => throw UnsupportedRelationshipException()
     };
 
@@ -128,34 +142,27 @@ internal class RelativesProvider : TableBase, IRelativesProvider
     var UnsupportedRelationshipException = () =>
        new ApplicationException($"Unsupported relationship {personType}->{relativeType}");
 
-    var startConsanguinity = consanguinity ?? Consanguinity.Zero;
-    var ret = personType switch
+    if (personType is null)
     {
-      RelationshipType.Parent => relativeType switch
-      {
-        RelationshipType.Parent => startConsanguinity,
-        RelationshipType.Sibling => ++startConsanguinity,
-        RelationshipType.SiblingByMother => ++startConsanguinity,
-        RelationshipType.SiblingByFather => ++startConsanguinity,
-        _ => throw UnsupportedRelationshipException()
-      },
-      RelationshipType.Child => relativeType switch
-      {
-        RelationshipType.Child => startConsanguinity,
-        RelationshipType.Spouse => startConsanguinity,
-        _ => throw UnsupportedRelationshipException()
-      },
+      return Consanguinity.Zero;
+    }
+
+    var startConsanguinity = consanguinity ?? Consanguinity.Zero;
+    var consanguinityChanged = relativeType switch
+    {
+      RelationshipType.Child or
       RelationshipType.Sibling or
       RelationshipType.SiblingByMother or
-      RelationshipType.SiblingByFather => relativeType switch
-      {
-        RelationshipType.Child => ++startConsanguinity,
-        RelationshipType.Spouse => startConsanguinity,
-        _ => throw UnsupportedRelationshipException()
-      },
-      null => startConsanguinity,
-      _ => throw UnsupportedRelationshipException()
+      RelationshipType.SiblingByFather => true,
+      _ => false
     };
+
+    if (!consanguinityChanged)
+    {
+      return startConsanguinity;
+    }
+
+    var ret = ++startConsanguinity;
 
     return ret;
   }
@@ -172,16 +179,28 @@ internal class RelativesProvider : TableBase, IRelativesProvider
     relatives = relatives
       .Where(r => IsRelationshipSupported(relativeInfo.Type, r.Type))
       .ToArray();
-    var relativeInfosTask = GetRelativeInfosAsync(relatives, true, token);
+    var relativeInfosTask = GetRelativeInfosAsync(relatives, selectMainPhoto, token);
     await Task.WhenAll([relativeInfosTask, .. parentTasks]);
     var siblings = parentTasks
       .Select(t => t.Result)
       .SelectMany(p => p.RelativeInfos)
       .Where(r => r.Id != relativeInfo.Id)
-      .Where(r => r.Type == RelationshipType.Child)
-      .Select(r => r with { Type = RelationshipType.Sibling });
+      .Where(r => r.Type == RelationshipType.Child || r.Type == RelationshipType.AdoptiveChild)
+      .Distinct(_RelativeInfoComparer);
+    var siblingRelativeTasks = siblings
+      .Select(s => Document.Relatives.GetRelativesAsync(s, token));
+    await Task.WhenAll(siblingRelativeTasks);
+    var siblingSpouses = await GetRelativeInfosAsync(
+      [..siblingRelativeTasks
+        .SelectMany(r => r.Result)
+        .Where(r => r.Type == RelationshipType.Spouse)],
+      selectMainPhoto,
+      token);
 
-    //TODO collect sibling spouses
+    var siblingGeneration = relativeInfo.Generation;
+    var siblingConsanguinity = GetNextConsanguinity(relativeInfo.Type, RelationshipType.Sibling, relativeInfo.Consanguinity);
+    var siblingSpouseGeneration = siblingGeneration;
+    var siblingSpouseConsanguinity = siblingConsanguinity;
 
     RelativeInfo[] relativeInfos =
     [
@@ -194,10 +213,17 @@ internal class RelativesProvider : TableBase, IRelativesProvider
           return r with { Consanguinity = nextConsanguinity, Generation = nextGeneration };
         }),
       ..siblings
-        .Select(r =>
+        .Select(r => r with
         {
-          var nextConsanguinity = GetNextConsanguinity(relativeInfo.Type, r.Type, relativeInfo.Consanguinity);
-          return r with { Consanguinity = nextConsanguinity, Generation = relativeInfo.Generation };
+          Consanguinity = siblingConsanguinity,
+          Generation = siblingGeneration,
+          Type = RelationshipType.Sibling
+        }),
+      ..siblingSpouses
+        .Select(r => r with
+        {
+          Consanguinity = siblingSpouseConsanguinity,
+          Generation = siblingSpouseGeneration
         })
     ];
 

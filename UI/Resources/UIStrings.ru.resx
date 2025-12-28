@@ -526,4 +526,13 @@
   <data name="RelGrand_1" xml:space="preserve">
     <value>Пра-{0}</value>
   </data>
+  <data name="RelUncle" xml:space="preserve">
+    <value>Дядя</value>
+  </data>
+  <data name="RelAunt" xml:space="preserve">
+    <value>Тётя</value>
+  </data>
+  <data name="RelUncleAunt" xml:space="preserve">
+    <value>Дядя или тётя</value>
+  </data>
 </root>

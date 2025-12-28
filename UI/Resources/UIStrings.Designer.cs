@@ -791,6 +791,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Aunt.
+        /// </summary>
+        public static string RelAunt {
+            get {
+                return ResourceManager.GetString("RelAunt", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Brother.
         /// </summary>
         public static string RelBrother {
@@ -1075,6 +1084,24 @@ namespace GT4.UI.Resources {
         public static string RelStepSon {
             get {
                 return ResourceManager.GetString("RelStepSon", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Uncle.
+        /// </summary>
+        public static string RelUncle {
+            get {
+                return ResourceManager.GetString("RelUncle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Uncle or Aunt.
+        /// </summary>
+        public static string RelUncleAunt {
+            get {
+                return ResourceManager.GetString("RelUncleAunt", resourceCulture);
             }
         }
         
