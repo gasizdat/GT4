@@ -535,4 +535,7 @@ genealogy tree and enjoy!</value>
   <data name="RelUncleAunt" xml:space="preserve">
     <value>Uncle or Aunt</value>
   </data>
+  <data name="DateKnownApproximately" xml:space="preserve">
+    <value>Date is known approximately</value>
+  </data>
 </root>

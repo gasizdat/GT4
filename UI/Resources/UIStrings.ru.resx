@@ -535,4 +535,7 @@
   <data name="RelUncleAunt" xml:space="preserve">
     <value>Дядя или тётя</value>
   </data>
+  <data name="DateKnownApproximately" xml:space="preserve">
+    <value>Дата известна прилизительно</value>
+  </data>
 </root>

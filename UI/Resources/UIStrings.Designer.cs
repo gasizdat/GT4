@@ -296,6 +296,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Date is known approximately.
+        /// </summary>
+        public static string DateKnownApproximately {
+            get {
+                return ResourceManager.GetString("DateKnownApproximately", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to not defined.
         /// </summary>
         public static string DateStatusNotDefined {
