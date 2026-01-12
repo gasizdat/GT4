@@ -83,13 +83,13 @@ public class RelativesProviderTests
 
     siblings
       .Native
-      .Select(r => r.Id)
+      .Id()
       .Should()
       .BeEquivalentTo([commonChild.Id]);
 
     siblings
       .ByMother
-      .Select(r => r.Id)
+      .Id()
       .Should()
       .BeEquivalentTo([childByMother.Id]);
 
@@ -101,13 +101,13 @@ public class RelativesProviderTests
 
     siblings
       .Adoptive
-      .Select(r => r.Id)
+      .Id()
       .Should()
       .BeEquivalentTo([adoptiveChild.Id]);
 
     siblings
       .Step
-      .Select(r => r.Id)
+      .Id()
       .Should()
       .BeEquivalentTo([stepChild.Id]);
   }
@@ -127,34 +127,38 @@ public class RelativesProviderTests
     _documentMock.AddRelationship(grandDaughter, grandGrandChild, RelationshipType.Child);
 
     var relativesProvider = new RelativesProvider(_documentMock);
-    var relatives = await relativesProvider.GetRelativeInfosAsync(father, true, CancellationToken.None);
-    relatives
-      .Select(r => r.Id)
-      .Should()
-      .BeEquivalentTo([son.Id]);
-    Assert.Equal(relatives[0].Generation, Generation.Child);
-    Assert.Equal(relatives[0].Consanguinity, Consanguinity.Zero);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(relatives[0], true, CancellationToken.None);
-    relatives
-      .Select(r => r.Id)
-      .Should()
-      .BeEquivalentTo([grandDaughter.Id]);
-    Assert.Equal(relatives[0].Generation, new Generation(-2));
-    Assert.Equal(relatives[0].Consanguinity, Consanguinity.Zero);
+    foreach (var parent in new[] { father, mother })
+    {
+      var relatives = await relativesProvider.GetRelativeInfosAsync(parent, true, CancellationToken.None);
+      relatives
+        .Id()
+        .Should()
+        .BeEquivalentTo([son.Id]);
+      Assert.Equal(relatives[0].Generation, Generation.Child);
+      Assert.Equal(relatives[0].Consanguinity, Consanguinity.Zero);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(relatives[0], true, CancellationToken.None);
-    relatives
-      .Select(r => r.Id)
-      .Should()
-      .BeEquivalentTo([grandGrandChild.Id]);
-    Assert.Equal(relatives[0].Generation, new Generation(-3));
-    Assert.Equal(relatives[0].Consanguinity, Consanguinity.Zero);
+      relatives = await relativesProvider.GetRelativeInfosAsync(relatives[0], true, CancellationToken.None);
+      relatives
+        .Id()
+        .Should()
+        .BeEquivalentTo([grandDaughter.Id]);
+      Assert.Equal(relatives[0].Generation, new Generation(-2));
+      Assert.Equal(relatives[0].Consanguinity, Consanguinity.Zero);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(relatives[0], true, CancellationToken.None);
-    relatives
-      .Should()
-      .BeEmpty();
+      relatives = await relativesProvider.GetRelativeInfosAsync(relatives[0], true, CancellationToken.None);
+      relatives
+        .Id()
+        .Should()
+        .BeEquivalentTo([grandGrandChild.Id]);
+      Assert.Equal(relatives[0].Generation, new Generation(-3));
+      Assert.Equal(relatives[0].Consanguinity, Consanguinity.Zero);
+
+      relatives = await relativesProvider.GetRelativeInfosAsync(relatives[0], true, CancellationToken.None);
+      relatives
+        .Should()
+        .BeEmpty();
+    }
   }
 
   [Fact]
@@ -174,7 +178,7 @@ public class RelativesProviderTests
     var relativesProvider = new RelativesProvider(_documentMock);
     var relatives = await relativesProvider.GetRelativeInfosAsync(grandGrandChild, true, CancellationToken.None);
     relatives
-      .Select(r => r.Id)
+      .Id()
       .Should()
       .BeEquivalentTo([grandDaughter.Id]);
     Assert.Equal(relatives[0].Generation, Generation.Parent);
@@ -182,7 +186,7 @@ public class RelativesProviderTests
 
     relatives = await relativesProvider.GetRelativeInfosAsync(relatives[0], true, CancellationToken.None);
     relatives
-      .Select(r => r.Id)
+      .Id()
       .Should()
       .BeEquivalentTo([son.Id]);
     Assert.Equal(relatives[0].Generation, new Generation(2));
@@ -190,7 +194,7 @@ public class RelativesProviderTests
 
     relatives = await relativesProvider.GetRelativeInfosAsync(relatives[0], true, CancellationToken.None);
     relatives
-      .Select(r => r.Id)
+      .Id()
       .Should()
       .BeEquivalentTo([mother.Id, father.Id]);
     Assert.Equal(relatives[0].Generation, new Generation(3));
