@@ -207,4 +207,93 @@ public class RelativesProviderTests
       .Should()
       .BeEmpty();
   }
+
+  [Fact]
+  public async void GetRelativeInfosAsync_Parent_Childs_Spouse()
+  {
+    var parent = _documentMock.CreatePerson(BiologicalSex.Unknown);
+    var child = _documentMock.CreatePerson(BiologicalSex.Unknown);
+    var childSpouse = _documentMock.CreatePerson(BiologicalSex.Unknown);
+    var grandChild = _documentMock.CreatePerson(BiologicalSex.Unknown);
+    var grandChildSpouse = _documentMock.CreatePerson(BiologicalSex.Unknown);
+
+    _documentMock.AddRelationship(parent, child, RelationshipType.Child);
+    _documentMock.AddRelationship(child, childSpouse, RelationshipType.Spouse);
+    _documentMock.AddRelationship(child, grandChild, RelationshipType.Child);
+    _documentMock.AddRelationship(grandChild, grandChildSpouse, RelationshipType.Spouse);
+
+    var relativesProvider = new RelativesProvider(_documentMock);
+
+    var relatives = await relativesProvider.GetRelativeInfosAsync(parent, true, CancellationToken.None);
+    relatives
+      .Id()
+      .Should()
+      .BeEquivalentTo([child.Id]);
+    Assert.Equal(relatives[0].Generation, Generation.Child);
+    Assert.Equal(relatives[0].Consanguinity, Consanguinity.Zero);
+
+    relatives = await relativesProvider.GetRelativeInfosAsync(relatives[0], true, CancellationToken.None);
+    relatives
+      .Id()
+      .Should()
+      .BeEquivalentTo([grandChild.Id, childSpouse.Id]);
+
+    var relative = relatives.Single(r => r.Id == childSpouse.Id);
+    Assert.Equal(relative.Generation, Generation.Child);
+    Assert.Equal(relative.Consanguinity, Consanguinity.Zero);
+
+    relative = relatives.Single(r => r.Id == grandChild.Id);
+    Assert.Equal(relative.Generation, new Generation(-2));
+    Assert.Equal(relative.Consanguinity, Consanguinity.Zero);
+
+    relatives = await relativesProvider.GetRelativeInfosAsync(relative, true, CancellationToken.None);
+    relatives
+      .Id()
+      .Should()
+      .BeEquivalentTo([grandChildSpouse.Id]);
+  }
+
+  [Fact]
+  public async void GetRelativeInfosAsync_Childs_Parent_Spouse()
+  {
+    var grandParent = _documentMock.CreatePerson(BiologicalSex.Unknown);
+    var grandParentSpouse = _documentMock.CreatePerson(BiologicalSex.Unknown);
+    var parent = _documentMock.CreatePerson(BiologicalSex.Unknown);
+    var child = _documentMock.CreatePerson(BiologicalSex.Unknown);
+    var childSpouse = _documentMock.CreatePerson(BiologicalSex.Unknown);
+
+    _documentMock.AddRelationship(grandParent, parent, RelationshipType.Child);
+    _documentMock.AddRelationship(grandParent, grandParentSpouse, RelationshipType.Spouse);
+    _documentMock.AddRelationship(parent, child, RelationshipType.Child);
+    _documentMock.AddRelationship(child, childSpouse, RelationshipType.Spouse);
+
+    var relativesProvider = new RelativesProvider(_documentMock);
+    var relatives = await relativesProvider.GetRelativeInfosAsync(child, true, CancellationToken.None);
+    relatives
+      .Id()
+      .Should()
+      .BeEquivalentTo([parent.Id, childSpouse.Id]);
+
+    var relative = relatives.Single(r => r.Id == childSpouse.Id);
+    Assert.Equal(relative.Generation, Generation.Zero);
+    Assert.Equal(relative.Consanguinity, Consanguinity.Zero); 
+    
+    relative = relatives.Single(r => r.Id == parent.Id);
+    Assert.Equal(relative.Generation, Generation.Parent);
+    Assert.Equal(relative.Consanguinity, Consanguinity.Zero);
+
+    relatives = await relativesProvider.GetRelativeInfosAsync(relative, true, CancellationToken.None);
+    relatives
+      .Id()
+      .Should()
+      .BeEquivalentTo([grandParent.Id, grandParentSpouse.Id]); 
+    
+    relative = relatives.Single(r => r.Id == grandParent.Id);
+    Assert.Equal(relative.Generation, new Generation(2));
+    Assert.Equal(relative.Consanguinity, Consanguinity.Zero); 
+    
+    relative = relatives.Single(r => r.Id == grandParentSpouse.Id);
+    Assert.Equal(relative.Generation, new Generation(2));
+    Assert.Equal(relative.Consanguinity, Consanguinity.Zero);
+  }
 }
