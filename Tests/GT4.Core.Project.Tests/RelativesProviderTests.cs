@@ -197,10 +197,14 @@ public class RelativesProviderTests
       .Id()
       .Should()
       .BeEquivalentTo([mother.Id, father.Id]);
-    Assert.Equal(relatives[0].Generation, new Generation(3));
-    Assert.Equal(relatives[0].Consanguinity, Consanguinity.Zero);
-    Assert.Equal(relatives[1].Generation, new Generation(3));
-    Assert.Equal(relatives[1].Consanguinity, Consanguinity.Zero);
+
+    var relative = relatives.Single(r=>r.Id == father.Id);
+    Assert.Equal(relative.Generation, new Generation(3));
+    Assert.Equal(relative.Consanguinity, Consanguinity.Zero);
+
+    relative = relatives.Single(r => r.Id == father.Id);
+    Assert.Equal(relative.Generation, new Generation(3));
+    Assert.Equal(relative.Consanguinity, Consanguinity.Zero);
 
     relatives = await relativesProvider.GetRelativeInfosAsync(relatives[0], true, CancellationToken.None);
     relatives
