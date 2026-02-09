@@ -24,6 +24,36 @@ internal class ProjectDocumentMock : IProjectDocument
   private IDictionary<int, PersonFullInfo> _Persons = new Dictionary<int, PersonFullInfo>();
   private IDictionary<int, IList<Relative>> _Relatives = new Dictionary<int, IList<Relative>>();
 
+  private RelativeInfo[] GetRelatives(int personId)
+  {
+    lock (_fixture)
+    {
+      if (_Relatives.TryGetValue(personId, out var relatives))
+      {
+
+        RelativeInfo GetRelativeInfo(Relative relative)
+        {
+          var generation = new Generation(relative.Type);
+          var ret = new RelativeInfo(
+            _Persons[relative.Id],
+            relative.Type,
+            relative.Date,
+            generation,
+            Consanguinity.Zero);
+          return ret;
+        }
+
+        var ret = relatives
+            .Select(GetRelativeInfo)
+            .ToArray();
+
+        return ret;
+      }
+    }
+
+    return [];
+  }
+
   public ProjectDocumentMock()
   {
     _TableRelativesMock
@@ -34,11 +64,11 @@ internal class ProjectDocumentMock : IProjectDocument
     _PersonManagerMock
       .Setup(s => s.GetPersonInfosAsync(It.IsAny<Person[]>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync((Person[] persons, bool _, CancellationToken _) =>
-        persons.Select(p => _Persons[p.Id]).ToArray());
+        persons.Select(p => _Persons[p.Id] with { RelativeInfos = GetRelatives(p.Id) }).ToArray());
 
     _PersonManagerMock
       .Setup(s => s.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
-      .ReturnsAsync((Person p, CancellationToken _) => _Persons[p.Id]);
+      .ReturnsAsync((Person p, CancellationToken _) => _Persons[p.Id] with { RelativeInfos = GetRelatives(p.Id) });
   }
 
   public int GetNewId() => Interlocked.Add(ref _Id, 100);
@@ -102,7 +132,8 @@ internal class ProjectDocumentMock : IProjectDocument
       var person = _fixture.Create<PersonFullInfo>() with
       {
         Id = GetNewId(),
-        BiologicalSex = sex
+        BiologicalSex = sex,
+        RelativeInfos = []
       };
 
       _Persons.Add(person.Id, person);
@@ -144,31 +175,17 @@ internal class ProjectDocumentMock : IProjectDocument
 
   public RelativeFullInfo GetRelativeFullInfo(Person person)
   {
-    lock (_fixture)
-    {
-      RelativeInfo[] relatives;
-      if (_Relatives.TryGetValue(person.Id, out var rels))
-      {
-        relatives = rels
-          .Select(r => new RelativeInfo(_Persons[r.Id], r.Type, r.Date, new Generation(r.Type), Consanguinity.Zero))
-          .ToArray();
-      }
-      else
-      {
-        relatives = [];
-      }
+    var ret = new RelativeFullInfo(
+      new RelativeInfo(
+        _Persons[person.Id],
+        default,
+        default,
+        Generation.Zero,
+        Consanguinity.Zero),
+      GetRelatives(person.Id)
+    );
 
-      var ret = new RelativeFullInfo(
-        new RelativeInfo(
-          _Persons[person.Id],
-          default,
-          default,
-          Generation.Zero,
-          Consanguinity.Zero),
-        relatives
-      );
+    return ret;
 
-      return ret;
-    }
   }
 }
