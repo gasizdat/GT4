@@ -326,4 +326,95 @@ public class RelativesProviderTests
     Assert.Equal(rGrandParentSpouse.Generation, new Generation(2));
     Assert.Equal(rGrandParentSpouse.Consanguinity, Consanguinity.Zero);
   }
+
+  [Fact]
+  public async void GetRelativeInfosAsync_Parent_Siblings()
+  {
+    var fathersFathersParent = _documentMock.CreatePerson(BiologicalSex.Unknown);
+    var fathersMothersParent = _documentMock.CreatePerson(BiologicalSex.Unknown);
+    var fathersFather = _documentMock.CreatePerson(BiologicalSex.Male);
+    var fathersFathersSibling = _documentMock.CreatePerson(BiologicalSex.Unknown);
+    var fathersMother = _documentMock.CreatePerson(BiologicalSex.Female);
+    var fathersMothersSibling = _documentMock.CreatePerson(BiologicalSex.Unknown);
+    var father = _documentMock.CreatePerson(BiologicalSex.Male);
+    var fathersSibling = _documentMock.CreatePerson(BiologicalSex.Unknown);
+    var mothersParent = _documentMock.CreatePerson(BiologicalSex.Unknown);
+    var mother = _documentMock.CreatePerson(BiologicalSex.Female);
+    var mothersSibling = _documentMock.CreatePerson(BiologicalSex.Unknown);
+    var child = _documentMock.CreatePerson(BiologicalSex.Unknown);
+
+    _documentMock.AddRelationship(fathersFathersParent, fathersFather, RelationshipType.Child);
+    _documentMock.AddRelationship(fathersFathersParent, fathersFathersSibling, RelationshipType.Child);
+    _documentMock.AddRelationship(fathersMothersParent, fathersMother, RelationshipType.Child);
+    _documentMock.AddRelationship(fathersMothersParent, fathersMothersSibling, RelationshipType.Child);
+    _documentMock.AddRelationship(fathersFather, fathersMother, RelationshipType.Spouse);
+    _documentMock.AddRelationship(fathersFather, father, RelationshipType.Child);
+    _documentMock.AddRelationship(fathersFather, fathersSibling, RelationshipType.Child);
+    _documentMock.AddRelationship(fathersMother, father, RelationshipType.Child);
+    _documentMock.AddRelationship(mothersParent, mother, RelationshipType.Child);
+    _documentMock.AddRelationship(mothersParent, mothersSibling, RelationshipType.Child);
+    _documentMock.AddRelationship(father, child, RelationshipType.Child);
+    _documentMock.AddRelationship(mother, child, RelationshipType.Child);
+
+    var relativesProvider = new RelativesProvider(_documentMock);
+    var relatives = await relativesProvider.GetRelativeInfosAsync(child, true, CancellationToken.None);
+    relatives
+      .Id()
+      .Should()
+      .BeEquivalentTo([father.Id, mother.Id]);
+
+    var rFather = relatives.Single(r => r.Id == father.Id);
+    Assert.Equal(rFather.Generation, Generation.Parent);
+    Assert.Equal(rFather.Consanguinity, Consanguinity.Zero);
+
+    var rMother = relatives.Single(r => r.Id == mother.Id);
+    Assert.Equal(rMother.Generation, Generation.Parent);
+    Assert.Equal(rMother.Consanguinity, Consanguinity.Zero);
+
+    relatives = await relativesProvider.GetRelativeInfosAsync(rFather, true, CancellationToken.None);
+    relatives
+      .Id()
+      .Should()
+      .BeEquivalentTo([fathersFather.Id, fathersMother.Id, fathersSibling.Id]);
+
+    var rFathersFather = relatives.Single(r => r.Id == fathersFather.Id);
+    Assert.Equal(rFathersFather.Generation, new Generation(2));
+    Assert.Equal(rFathersFather.Consanguinity, Consanguinity.Zero);
+
+    var rFathersMother = relatives.Single(r => r.Id == fathersMother.Id);
+    Assert.Equal(rFathersMother.Generation, new Generation(2));
+    Assert.Equal(rFathersMother.Consanguinity, Consanguinity.Zero);
+
+    var rFathersSibling = relatives.Single(r => r.Id == fathersSibling.Id);
+    Assert.Equal(rFathersSibling.Generation, Generation.Parent);
+    Assert.Equal(rFathersSibling.Consanguinity, Consanguinity.UncleAunt);
+
+    relatives = await relativesProvider.GetRelativeInfosAsync(rFathersFather, true, CancellationToken.None);
+    relatives
+      .Id()
+      .Should()
+      .BeEquivalentTo([fathersFathersParent.Id, fathersFathersSibling.Id]);
+
+    var rFathersFathersParent = relatives.Single(r => r.Id == fathersFathersParent.Id);
+    Assert.Equal(rFathersFathersParent.Generation, new Generation(3));
+    Assert.Equal(rFathersFathersParent.Consanguinity, Consanguinity.Zero);
+
+    var rFathersFathersSibling = relatives.Single(r => r.Id == fathersFathersSibling.Id);
+    Assert.Equal(rFathersFathersSibling.Generation, new Generation(2));
+    Assert.Equal(rFathersFathersSibling.Consanguinity, Consanguinity.UncleAunt);
+
+    relatives = await relativesProvider.GetRelativeInfosAsync(rMother, true, CancellationToken.None);
+    relatives
+      .Id()
+      .Should()
+      .BeEquivalentTo([mothersParent.Id, mothersSibling.Id]);
+
+    var rMothersParent = relatives.Single(r=>r.Id== mothersParent.Id);
+    Assert.Equal(rMothersParent.Generation, new Generation(2));
+    Assert.Equal(rMothersParent.Consanguinity, Consanguinity.Zero);
+
+    var rMothersSibling = relatives.Single(r=>r.Id== mothersSibling.Id);
+    Assert.Equal(rMothersSibling.Generation, Generation.Parent);
+    Assert.Equal(rMothersSibling.Consanguinity, Consanguinity.UncleAunt);
+  }
 }
