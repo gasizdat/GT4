@@ -142,7 +142,7 @@ internal class RelativesProvider : TableBase, IRelativesProvider
     var UnsupportedRelationshipException = () =>
        new ApplicationException($"Unsupported relationship {personType}->{relativeType}");
 
-    if (personType is null || consanguinity is null || consanguinity == Consanguinity.Zero)
+    if (personType is null || consanguinity is null)
     {
       return Consanguinity.Zero;
     }
@@ -151,10 +151,15 @@ internal class RelativesProvider : TableBase, IRelativesProvider
 
     var consanguinityChanged = relativeType switch
     {
-      RelationshipType.Child or
+      RelationshipType.Child => startConsanguinity > Consanguinity.Zero,
       RelationshipType.Sibling or
       RelationshipType.SiblingByMother or
-      RelationshipType.SiblingByFather => true,
+      RelationshipType.SiblingByFather => personType switch
+      {
+        RelationshipType.Parent or
+        RelationshipType.AdoptiveParent => true,
+        _ => false
+      },
       _ => false
     };
 
