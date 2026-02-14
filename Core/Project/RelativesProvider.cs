@@ -192,6 +192,7 @@ internal class RelativesProvider : TableBase, IRelativesProvider
       .SelectMany(p => p.RelativeInfos)
       .Where(r => r.Id != relativeInfo.Id)
       .Where(r => r.Type == RelationshipType.Child || r.Type == RelationshipType.AdoptiveChild)
+      .Where(r => IsRelationshipSupported(relativeInfo.Type, RelationshipType.Sibling))
       .Distinct(_RelativeInfoComparer);
     var siblingRelativeTasks = siblings
       .Select(s => Document.Relatives.GetRelativesAsync(s, token));
