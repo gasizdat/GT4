@@ -142,7 +142,7 @@ internal class ProjectDocumentMock : IProjectDocument
     }
   }
 
-  public void AddRelationship(Person personA, Person personB, RelationshipType relationshipType)
+  public void AddRelationship(Person from, Person to, RelationshipType relationshipType)
   {
     void InnerAdd(Person personA, Person personB, RelationshipType relationshipType)
     {
@@ -159,7 +159,7 @@ internal class ProjectDocumentMock : IProjectDocument
 
     lock (_fixture)
     {
-      InnerAdd(personA, personB, relationshipType);
+      InnerAdd(from, to, relationshipType);
       var backRef = relationshipType switch
       {
         RelationshipType.Parent => RelationshipType.Child,
@@ -169,7 +169,7 @@ internal class ProjectDocumentMock : IProjectDocument
         RelationshipType.AdoptiveChild => RelationshipType.AdoptiveParent,
         _ => throw new ArgumentException(nameof(relationshipType))
       };
-      InnerAdd(personB, personA, backRef);
+      InnerAdd(to, from, backRef);
     }
   }
 
