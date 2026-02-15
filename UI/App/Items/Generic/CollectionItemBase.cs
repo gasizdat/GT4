@@ -1,4 +1,6 @@
-﻿namespace GT4.UI.Items;
+﻿using GT4.UI.Utils;
+
+namespace GT4.UI.Items;
 
 public abstract class CollectionItemBase<TDto>
 {

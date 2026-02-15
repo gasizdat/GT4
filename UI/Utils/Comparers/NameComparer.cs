@@ -1,6 +1,6 @@
 ﻿using GT4.Core.Project.Dto;
 
-namespace GT4.UI.Comparers;
+namespace GT4.UI.Utils.Comparers;
 
 public class NameComparer : IComparer<Name>
 {

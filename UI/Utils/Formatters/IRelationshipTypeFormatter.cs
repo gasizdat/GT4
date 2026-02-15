@@ -1,6 +1,6 @@
 ﻿using GT4.Core.Project.Dto;
 
-namespace GT4.UI.Formatters;
+namespace GT4.UI.Utils.Formatters;
 
 public interface IRelationshipTypeFormatter
 {

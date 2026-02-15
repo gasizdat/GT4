@@ -4,6 +4,7 @@ using GT4.Core.Utils;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Resources;
+using GT4.UI.Utils;
 using System.Windows.Input;
 
 namespace GT4.UI.Pages;
@@ -87,7 +88,7 @@ public partial class ProjectPage : ContentPage
     if (projectRevision != _ProjectRevision)
     {
       _ProjectRevision = projectRevision;
-      Utils.RefreshView(this);
+      this.RefreshView();
     }
   }
 
@@ -119,7 +120,7 @@ public partial class ProjectPage : ContentPage
           break;
 
         case string commandName when commandName == "Refresh":
-          Utils.RefreshView(this);
+          this.RefreshView();
           break;
 
         case string commandName when commandName == "CreateFamily":
@@ -203,7 +204,7 @@ public partial class ProjectPage : ContentPage
     }
     finally
     {
-      Utils.RefreshView(this);
+      this.RefreshView();
     }
   }
 }
