@@ -68,7 +68,7 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
 
       for (var grandness = generation.Value - Generation.Parent; grandness > Generation.Parent; --grandness)
       {
-        ret = string.Format(UIStrings.RelGrand_1, ret);
+        ret = string.Format(UIStrings.RelGreat_1, ret);
       }
 
       return ret;
@@ -132,7 +132,7 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
 
       for (var grandness = generation.Value - Generation.Child; grandness < Generation.Child; ++grandness)
       {
-        ret = string.Format(UIStrings.RelGrand_1, ret);
+        ret = string.Format(UIStrings.RelGreat_1, ret);
       }
 
       return ret;

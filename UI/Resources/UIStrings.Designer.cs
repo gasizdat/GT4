@@ -863,15 +863,6 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Grand-{0}.
-        /// </summary>
-        public static string RelGrand_1 {
-            get {
-                return ResourceManager.GetString("RelGrand_1", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Grandchild.
         /// </summary>
         public static string RelGrandChild {
@@ -908,7 +899,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Granparent.
+        ///   Looks up a localized string similar to Grandparent.
         /// </summary>
         public static string RelGrandParent {
             get {
@@ -922,6 +913,15 @@ namespace GT4.UI.Resources {
         public static string RelGrandSon {
             get {
                 return ResourceManager.GetString("RelGrandSon", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Great-{0}.
+        /// </summary>
+        public static string RelGreat_1 {
+            get {
+                return ResourceManager.GetString("RelGreat_1", resourceCulture);
             }
         }
         

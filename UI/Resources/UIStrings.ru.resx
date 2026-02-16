@@ -523,7 +523,7 @@
   <data name="RelGrandChild" xml:space="preserve">
     <value>Внук или внучка</value>
   </data>
-  <data name="RelGrand_1" xml:space="preserve">
+  <data name="RelGreat_1" xml:space="preserve">
     <value>Пра-{0}</value>
   </data>
   <data name="RelUncle" xml:space="preserve">

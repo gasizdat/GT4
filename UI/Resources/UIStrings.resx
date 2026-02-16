@@ -503,7 +503,7 @@ genealogy tree and enjoy!</value>
     <value>Grandmother</value>
   </data>
   <data name="RelGrandParent" xml:space="preserve">
-    <value>Granparent</value>
+    <value>Grandparent</value>
   </data>
   <data name="RelDaughterInLaw" xml:space="preserve">
     <value>Daughter-in-law</value>
@@ -523,8 +523,8 @@ genealogy tree and enjoy!</value>
   <data name="RelGrandChild" xml:space="preserve">
     <value>Grandchild</value>
   </data>
-  <data name="RelGrand_1" xml:space="preserve">
-    <value>Grand-{0}</value>
+  <data name="RelGreat_1" xml:space="preserve">
+    <value>Great-{0}</value>
   </data>
   <data name="RelUncle" xml:space="preserve">
     <value>Uncle</value>
