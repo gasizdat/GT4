@@ -5,6 +5,9 @@ namespace GT4.UI.Utils.Formatters;
 
 public class RelationshipTypeFormatter : IRelationshipTypeFormatter
 {
+  private readonly static Generation _GrandParent = Generation.Parent + Generation.Parent;
+  private readonly static Generation _GrandChild = Generation.Child + Generation.Child;
+
   public string ToString(
     RelationshipType type,
     BiologicalSex? biologicalSex,
@@ -39,6 +42,26 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
     }
   }
 
+  private static string ToLower(string text) => text.ToLower(); 
+
+  private static string BuildRelationship(string prefix, string main, int count)
+  {
+    var ret = main;
+
+    if (count > 4)
+    {
+      ret = $"{count}-{string.Format(prefix, ToLower(ret))}";
+    }
+    else
+    {
+      while (count-- > 0)
+      {
+        ret = string.Format(prefix, ToLower(ret));
+      }
+    }
+    return ret;
+  }
+
   private static string GetParent(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
   {
     if (consanguinity is not null && consanguinity != Consanguinity.Zero)
@@ -66,10 +89,7 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
         _ => UIStrings.RelGrandParent,
       };
 
-      for (var grandness = generation.Value - Generation.Parent; grandness > Generation.Parent; --grandness)
-      {
-        ret = string.Format(UIStrings.RelGreat_1, ret);
-      }
+      ret = BuildRelationship(UIStrings.RelGreat_1, ret, (generation.Value - _GrandParent).Value);
 
       return ret;
     }
@@ -130,17 +150,14 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
         _ => UIStrings.RelGrandChild,
       };
 
-      for (var grandness = generation.Value - Generation.Child; grandness < Generation.Child; ++grandness)
-      {
-        ret = string.Format(UIStrings.RelGreat_1, ret);
-      }
+      ret = BuildRelationship(UIStrings.RelGreat_1, ret, (_GrandChild - generation.Value).Value);
 
       return ret;
     }
 
     throw new ArgumentOutOfRangeException("Argument generation should be null or < 0");
   }
-  
+
   private static string GetStepChild(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
   {
     if (consanguinity is not null && consanguinity != Consanguinity.Zero)
