@@ -533,9 +533,54 @@ genealogy tree and enjoy!</value>
     <value>Aunt</value>
   </data>
   <data name="RelUncleAunt" xml:space="preserve">
-    <value>Uncle or Aunt</value>
+    <value>Uncle or aunt</value>
   </data>
   <data name="DateKnownApproximately" xml:space="preserve">
     <value>Date is known approximately</value>
+  </data>
+  <data name="RelGrandUncle_en" xml:space="preserve">
+    <value>Grand unclue</value>
+  </data>
+  <data name="RelGrandAunt_en" xml:space="preserve">
+    <value>Grand aunt</value>
+  </data>
+  <data name="RelGrandUncleAunt_en" xml:space="preserve">
+    <value>Grand uncle or aunt</value>
+  </data>
+  <data name="Rel2Male_ru_1" xml:space="preserve">
+    <value>- {0}</value>
+  </data>
+  <data name="Rel3Male_ru_1" xml:space="preserve">
+    <value>- {0}</value>
+  </data>
+  <data name="Rel3Unknown_ru_1" xml:space="preserve">
+    <value>- {0}</value>
+  </data>
+  <data name="Rel4Male_ru_1" xml:space="preserve">
+    <value>- {0}</value>
+  </data>
+  <data name="RelNMale_ru_2" xml:space="preserve">
+    <value>- {0}{1}</value>
+  </data>
+  <data name="Rel4Unknown_ru_1" xml:space="preserve">
+    <value>- {0}</value>
+  </data>
+  <data name="RelNUnknown_ru_2" xml:space="preserve">
+    <value>- {0}{1}</value>
+  </data>
+  <data name="Rel2Female_ru_1" xml:space="preserve">
+    <value>- {0}</value>
+  </data>
+  <data name="Rel2Unknown_ru_1" xml:space="preserve">
+    <value>- {0}</value>
+  </data>
+  <data name="Rel3Female_ru_1" xml:space="preserve">
+    <value>- {0}</value>
+  </data>
+  <data name="Rel4Female_ru_1" xml:space="preserve">
+    <value>- {0}</value>
+  </data>
+  <data name="RelNFemale_ru_2" xml:space="preserve">
+    <value>- {0}{1}</value>
   </data>
 </root>

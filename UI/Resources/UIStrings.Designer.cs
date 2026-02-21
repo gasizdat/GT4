@@ -773,6 +773,87 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to - {0}.
+        /// </summary>
+        public static string Rel2Female_ru_1 {
+            get {
+                return ResourceManager.GetString("Rel2Female_ru_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to - {0}.
+        /// </summary>
+        public static string Rel2Male_ru_1 {
+            get {
+                return ResourceManager.GetString("Rel2Male_ru_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to - {0}.
+        /// </summary>
+        public static string Rel2Unknown_ru_1 {
+            get {
+                return ResourceManager.GetString("Rel2Unknown_ru_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to - {0}.
+        /// </summary>
+        public static string Rel3Female_ru_1 {
+            get {
+                return ResourceManager.GetString("Rel3Female_ru_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to - {0}.
+        /// </summary>
+        public static string Rel3Male_ru_1 {
+            get {
+                return ResourceManager.GetString("Rel3Male_ru_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to - {0}.
+        /// </summary>
+        public static string Rel3Unknown_ru_1 {
+            get {
+                return ResourceManager.GetString("Rel3Unknown_ru_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to - {0}.
+        /// </summary>
+        public static string Rel4Female_ru_1 {
+            get {
+                return ResourceManager.GetString("Rel4Female_ru_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to - {0}.
+        /// </summary>
+        public static string Rel4Male_ru_1 {
+            get {
+                return ResourceManager.GetString("Rel4Male_ru_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to - {0}.
+        /// </summary>
+        public static string Rel4Unknown_ru_1 {
+            get {
+                return ResourceManager.GetString("Rel4Unknown_ru_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Adoptive {0}.
         /// </summary>
         public static string RelAdoptiveFemale_1 {
@@ -863,6 +944,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Grand aunt.
+        /// </summary>
+        public static string RelGrandAunt_en {
+            get {
+                return ResourceManager.GetString("RelGrandAunt_en", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Grandchild.
         /// </summary>
         public static string RelGrandChild {
@@ -917,6 +1007,24 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Grand unclue.
+        /// </summary>
+        public static string RelGrandUncle_en {
+            get {
+                return ResourceManager.GetString("RelGrandUncle_en", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Grand uncle or aunt.
+        /// </summary>
+        public static string RelGrandUncleAunt_en {
+            get {
+                return ResourceManager.GetString("RelGrandUncleAunt_en", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Great-{0}.
         /// </summary>
         public static string RelGreat_1 {
@@ -949,6 +1057,33 @@ namespace GT4.UI.Resources {
         public static string RelMother {
             get {
                 return ResourceManager.GetString("RelMother", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to - {0}{1}.
+        /// </summary>
+        public static string RelNFemale_ru_2 {
+            get {
+                return ResourceManager.GetString("RelNFemale_ru_2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to - {0}{1}.
+        /// </summary>
+        public static string RelNMale_ru_2 {
+            get {
+                return ResourceManager.GetString("RelNMale_ru_2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to - {0}{1}.
+        /// </summary>
+        public static string RelNUnknown_ru_2 {
+            get {
+                return ResourceManager.GetString("RelNUnknown_ru_2", resourceCulture);
             }
         }
         
@@ -1106,7 +1241,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Uncle or Aunt.
+        ///   Looks up a localized string similar to Uncle or aunt.
         /// </summary>
         public static string RelUncleAunt {
             get {

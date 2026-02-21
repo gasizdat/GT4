@@ -538,4 +538,49 @@
   <data name="DateKnownApproximately" xml:space="preserve">
     <value>Дата известна прилизительно</value>
   </data>
+  <data name="RelGrandUncle_en" xml:space="preserve">
+    <value>-</value>
+  </data>
+  <data name="RelGrandAunt_en" xml:space="preserve">
+    <value>-</value>
+  </data>
+  <data name="RelGrandUncleAunt_en" xml:space="preserve">
+    <value>-</value>
+  </data>
+  <data name="Rel2Male_ru_1" xml:space="preserve">
+    <value>Двоюродный {0}</value>
+  </data>
+  <data name="Rel3Male_ru_1" xml:space="preserve">
+    <value>Троюродный {0}</value>
+  </data>
+  <data name="Rel3Unknown_ru_1" xml:space="preserve">
+    <value>Троюродный {0}</value>
+  </data>
+  <data name="Rel4Male_ru_1" xml:space="preserve">
+    <value>Четвероюродный {0}</value>
+  </data>
+  <data name="RelNMale_ru_2" xml:space="preserve">
+    <value>{0}-юродный {1}</value>
+  </data>
+  <data name="Rel4Unknown_ru_1" xml:space="preserve">
+    <value>Четвероюродный {0}</value>
+  </data>
+  <data name="RelNUnknown_ru_2" xml:space="preserve">
+    <value>{0}-юродный {1}</value>
+  </data>
+  <data name="Rel2Female_ru_1" xml:space="preserve">
+    <value>Двоюродная {0}</value>
+  </data>
+  <data name="Rel2Unknown_ru_1" xml:space="preserve">
+    <value>Двоюродный {0}</value>
+  </data>
+  <data name="Rel3Female_ru_1" xml:space="preserve">
+    <value>Троюродная {0}</value>
+  </data>
+  <data name="Rel4Female_ru_1" xml:space="preserve">
+    <value>Четвероюродная {0}</value>
+  </data>
+  <data name="RelNFemale_ru_2" xml:space="preserve">
+    <value>{0}-юродная {1}</value>
+  </data>
 </root>

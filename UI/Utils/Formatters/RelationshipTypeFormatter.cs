@@ -11,11 +11,34 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
   public string ToString(
     RelationshipType type,
     BiologicalSex? biologicalSex,
-    Generation? generation,
-    Consanguinity? consanguinity)
+    Generation? generationArg,
+    Consanguinity? consanguinityArg)
   {
+    if (!generationArg.HasValue && !consanguinityArg.HasValue)
+    {
+      var ret = type switch
+      {
+        RelationshipType.Parent => GetParent(biologicalSex, Generation.Parent, Consanguinity.Zero),
+        RelationshipType.Child => GetChild(biologicalSex, Generation.Child, Consanguinity.Zero),
+        RelationshipType.Spouse => GetSpouse(biologicalSex, Generation.Zero, Consanguinity.Zero),
+        RelationshipType.AdoptiveParent => GetAdoptiveParent(biologicalSex, Generation.Parent, Consanguinity.Zero),
+        RelationshipType.AdoptiveChild => GetAdoptiveChild(biologicalSex, Generation.Child, Consanguinity.Zero),
+
+        _ => throw new NotSupportedException($"type: {type}, sex: {biologicalSex}")
+      };
+
+      return ret;
+    }
+    else if (generationArg.HasValue != consanguinityArg.HasValue)
+    {
+      throw new ArgumentException("generationArg.HasValue != consanguinityArg.HasValue");
+    }
+
+    var generation = generationArg ?? Generation.Zero;
+    var consanguinity = consanguinityArg ?? Consanguinity.Zero;
     try
     {
+
       var ret = type switch
       {
         RelationshipType.Parent => GetParent(biologicalSex, generation, consanguinity),
@@ -42,19 +65,19 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
     }
   }
 
-  private static string ToLower(string text) => text.ToLower(); 
+  private static string ToLower(string text) => text.ToLower();
 
-  private static string BuildRelationship(string prefix, string main, int count)
+  private static string BuildRelationship(string prefix, string main, Generation generation)
   {
     var ret = main;
 
-    if (count > 4)
+    if (generation.Value > 4)
     {
-      ret = $"{count}-{string.Format(prefix, ToLower(ret))}";
+      ret = $"{generation.Value}-{ToLower(string.Format(prefix, ret))}";
     }
     else
     {
-      while (count-- > 0)
+      while (generation-- > Generation.Zero)
       {
         ret = string.Format(prefix, ToLower(ret));
       }
@@ -62,14 +85,68 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
     return ret;
   }
 
-  private static string GetParent(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
+  private static string BuildRelConsanguinity(BiologicalSex? biologicalSex, string main, Consanguinity consanguinity)
   {
-    if (consanguinity is not null && consanguinity != Consanguinity.Zero)
+    if (consanguinity <= Consanguinity.Zero)
+    {
+      throw new ArgumentOutOfRangeException("Argument consanguinity should be > 0");
+    }
+
+    var ret = ToLower(main);
+
+    if (Language.Current == Language.RU)
+    {
+      if (consanguinity > new Consanguinity(3))
+      {
+        ret = biologicalSex switch
+        {
+          BiologicalSex.Male => string.Format(UIStrings.RelNMale_ru_2, consanguinity.Value, ret),
+          BiologicalSex.Female => string.Format(UIStrings.RelNFemale_ru_2, consanguinity.Value, ret),
+          _ => string.Format(UIStrings.RelNUnknown_ru_2, consanguinity.Value, ret),
+        };
+      }
+      else if (consanguinity == new Consanguinity(3))
+      {
+        ret = biologicalSex switch
+        {
+          BiologicalSex.Male => string.Format(UIStrings.Rel4Male_ru_1, ret),
+          BiologicalSex.Female => string.Format(UIStrings.Rel4Female_ru_1, ret),
+          _ => string.Format(UIStrings.Rel4Unknown_ru_1, ret),
+        };
+      }
+      else if (consanguinity == new Consanguinity(2))
+      {
+        ret = biologicalSex switch
+        {
+          BiologicalSex.Male => string.Format(UIStrings.Rel3Male_ru_1, ret),
+          BiologicalSex.Female => string.Format(UIStrings.Rel3Female_ru_1, ret),
+          _ => string.Format(UIStrings.Rel3Unknown_ru_1, ret),
+        };
+      }
+      else if (consanguinity == new Consanguinity(1))
+      {
+        ret = biologicalSex switch
+        {
+          BiologicalSex.Male => string.Format(UIStrings.Rel2Male_ru_1, ret),
+          BiologicalSex.Female => string.Format(UIStrings.Rel2Female_ru_1, ret),
+          _ => string.Format(UIStrings.Rel2Unknown_ru_1, ret),
+        };
+      }
+
+      return ret;
+    }
+
+    throw new NotImplementedException();
+  }
+
+  private static string GetParent(BiologicalSex? biologicalSex, Generation generation, Consanguinity consanguinity)
+  {
+    if (consanguinity != Consanguinity.Zero)
     {
       throw new ArgumentOutOfRangeException($"Argument {nameof(consanguinity)} should be null or Zero");
     }
 
-    if (generation is null || generation == Generation.Parent)
+    if (generation == Generation.Parent)
     {
       var ret = biologicalSex switch
       {
@@ -89,7 +166,7 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
         _ => UIStrings.RelGrandParent,
       };
 
-      ret = BuildRelationship(UIStrings.RelGreat_1, ret, (generation.Value - _GrandParent).Value);
+      ret = BuildRelationship(UIStrings.RelGreat_1, ret, generation - _GrandParent);
 
       return ret;
     }
@@ -97,14 +174,14 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
     throw new ArgumentOutOfRangeException($"Argument {nameof(generation)} should be null or >= 1");
   }
 
-  private static string GetStepParent(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
+  private static string GetStepParent(BiologicalSex? biologicalSex, Generation generation, Consanguinity consanguinity)
   {
-    if (consanguinity is not null && consanguinity != Consanguinity.Zero)
+    if (consanguinity != Consanguinity.Zero)
     {
       throw new ArgumentOutOfRangeException($"Argument {nameof(consanguinity)} should be null or Zero");
     }
 
-    if (generation is null || generation == Generation.Parent)
+    if (generation == Generation.Parent)
     {
       var ret = biologicalSex switch
       {
@@ -123,14 +200,14 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
     throw new ArgumentOutOfRangeException($"Argument {nameof(generation)} should be null or = 1");
   }
 
-  private static string GetChild(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
+  private static string GetChild(BiologicalSex? biologicalSex, Generation generation, Consanguinity consanguinity)
   {
-    if (consanguinity is not null && consanguinity != Consanguinity.Zero)
+    if (consanguinity != Consanguinity.Zero)
     {
       throw new NotSupportedException(nameof(consanguinity));
     }
 
-    if (generation is null || generation == Generation.Child)
+    if (generation == Generation.Child)
     {
       var ret = biologicalSex switch
       {
@@ -150,7 +227,7 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
         _ => UIStrings.RelGrandChild,
       };
 
-      ret = BuildRelationship(UIStrings.RelGreat_1, ret, (_GrandChild - generation.Value).Value);
+      ret = BuildRelationship(UIStrings.RelGreat_1, ret, _GrandChild - generation);
 
       return ret;
     }
@@ -158,14 +235,14 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
     throw new ArgumentOutOfRangeException("Argument generation should be null or < 0");
   }
 
-  private static string GetStepChild(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
+  private static string GetStepChild(BiologicalSex? biologicalSex, Generation generation, Consanguinity consanguinity)
   {
-    if (consanguinity is not null && consanguinity != Consanguinity.Zero)
+    if (consanguinity != Consanguinity.Zero)
     {
       throw new NotSupportedException(nameof(consanguinity));
     }
 
-    if (generation is null || generation < Generation.Zero)
+    if (generation < Generation.Zero)
     {
       var ret = biologicalSex switch
       {
@@ -180,14 +257,14 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
     throw new ArgumentOutOfRangeException("Argument generation should be null or < 0");
   }
 
-  private static string GetSpouse(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
+  private static string GetSpouse(BiologicalSex? biologicalSex, Generation generation, Consanguinity consanguinity)
   {
-    if (consanguinity is not null && consanguinity != Consanguinity.Zero)
+    if (consanguinity != Consanguinity.Zero)
     {
       throw new NotSupportedException(nameof(consanguinity));
     }
 
-    if (generation is null || generation == Generation.Zero)
+    if (generation == Generation.Zero)
     {
       var ret = biologicalSex switch
       {
@@ -213,7 +290,7 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
     throw new ArgumentOutOfRangeException("Argument generation should be null or <= 0");
   }
 
-  private static string GetAdoptiveParent(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
+  private static string GetAdoptiveParent(BiologicalSex? biologicalSex, Generation generation, Consanguinity consanguinity)
   {
     var parent = GetParent(biologicalSex, generation, consanguinity);
     var ret = biologicalSex switch
@@ -226,7 +303,7 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
     return ret;
   }
 
-  private static string GetAdoptiveChild(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
+  private static string GetAdoptiveChild(BiologicalSex? biologicalSex, Generation generation, Consanguinity consanguinity)
   {
     var child = GetChild(biologicalSex, generation, consanguinity);
     var ret = biologicalSex switch
@@ -239,11 +316,11 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
     return ret;
   }
 
-  private static string GetSibling(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
+  private static string GetSibling(BiologicalSex? biologicalSex, Generation generation, Consanguinity consanguinity)
   {
-    if (generation is null || generation == Generation.Zero)
+    if (generation == Generation.Zero)
     {
-      if (consanguinity is not null && consanguinity != Consanguinity.Zero)
+      if (consanguinity != Consanguinity.Zero)
       {
         throw new NotSupportedException(nameof(consanguinity));
       }
@@ -268,14 +345,9 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
 
       return ret;
     }
-    else if (generation > Generation.Parent && consanguinity == Consanguinity.UncleAunt)
+    else if (generation > Generation.Parent && generation.Value == consanguinity.Value)
     {
-      var ret = biologicalSex switch
-      {
-        BiologicalSex.Male => UIStrings.RelUncle,
-        BiologicalSex.Female => UIStrings.RelAunt,
-        _ => UIStrings.RelUncleAunt,
-      };
+      var ret = GetGrandUncleAunt(biologicalSex, generation);
 
       return ret;
     }
@@ -287,10 +359,38 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
     throw new ArgumentOutOfRangeException("Argument generation should be null or <= 0");
   }
 
-  private static string GetSiblingByFather(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
+  private static string GetGrandUncleAunt(BiologicalSex? biologicalSex, Generation generation)
+  {
+    string ret;
+    if (Language.Current == Language.RU)
+    {
+      ret = biologicalSex switch
+      {
+        BiologicalSex.Male => UIStrings.RelGrandFather,
+        BiologicalSex.Female => UIStrings.RelGrandFather,
+        _ => UIStrings.RelGrandParent,
+      };
+      ret = BuildRelationship(UIStrings.RelGreat_1, ret, generation - _GrandParent);
+      ret = BuildRelConsanguinity(biologicalSex, ret, Consanguinity.UncleAunt);
+    }
+    else
+    {
+      ret = biologicalSex switch
+      {
+        BiologicalSex.Male => UIStrings.RelGrandUncle_en,
+        BiologicalSex.Female => UIStrings.RelGrandAunt_en,
+        _ => UIStrings.RelGrandUncleAunt_en,
+      };
+
+      ret = BuildRelationship(UIStrings.RelGreat_1, ret, generation - _GrandParent);
+    }
+    return ret;
+  }
+
+  private static string GetSiblingByFather(BiologicalSex? biologicalSex, Generation generation, Consanguinity consanguinity)
   {
     var sibling = GetSibling(biologicalSex, generation, consanguinity);
-    if (generation is null || generation == Generation.Zero)
+    if (generation == Generation.Zero)
     {
       var ret = string.Format(UIStrings.RelParental_1, sibling);
       return ret;
@@ -299,10 +399,10 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
     return sibling;
   }
 
-  private static string GetSiblingByMother(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
+  private static string GetSiblingByMother(BiologicalSex? biologicalSex, Generation generation, Consanguinity consanguinity)
   {
     var sibling = GetSibling(biologicalSex, generation, consanguinity);
-    if (generation is null || generation == Generation.Zero)
+    if (generation == Generation.Zero)
     {
       var ret = string.Format(UIStrings.RelMaternal_1, sibling);
       return ret;
@@ -311,7 +411,7 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
     return sibling;
   }
 
-  private static string GetAdoptiveSibling(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
+  private static string GetAdoptiveSibling(BiologicalSex? biologicalSex, Generation generation, Consanguinity consanguinity)
   {
     var sibling = GetSibling(biologicalSex, generation, consanguinity);
     var ret = biologicalSex switch
@@ -324,7 +424,7 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
     return ret;
   }
 
-  private static string GetStepSibling(BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
+  private static string GetStepSibling(BiologicalSex? biologicalSex, Generation generation, Consanguinity consanguinity)
   {
     var sibling = GetSibling(biologicalSex, generation, consanguinity);
     var ret = biologicalSex switch
