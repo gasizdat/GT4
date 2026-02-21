@@ -237,11 +237,11 @@ public class RelativesProviderTests
   [Fact]
   public async void GetRelativeInfosAsync_Parent_Childs_Spouse()
   {
-    var parent = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var child = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var childSpouse = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var grandChild = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var grandChildSpouse = _documentMock.CreatePerson(BiologicalSex.Unknown);
+    var parent = _documentMock.CreatePerson();
+    var child = _documentMock.CreatePerson();
+    var childSpouse = _documentMock.CreatePerson();
+    var grandChild = _documentMock.CreatePerson();
+    var grandChildSpouse = _documentMock.CreatePerson();
 
     _documentMock.AddRelationship(parent, child, RelationshipType.Child);
     _documentMock.AddRelationship(child, childSpouse, RelationshipType.Spouse);
@@ -299,11 +299,11 @@ public class RelativesProviderTests
   [InlineData(true)]
   public async void GetRelativeInfosAsync_Childs_Parent_Spouse(bool addSpouse)
   {
-    var grandParent = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var grandParentSpouse = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var parent = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var child = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var childSpouse = _documentMock.CreatePerson(BiologicalSex.Unknown);
+    var grandParent = _documentMock.CreatePerson();
+    var grandParentSpouse = _documentMock.CreatePerson();
+    var parent = _documentMock.CreatePerson();
+    var child = _documentMock.CreatePerson();
+    var childSpouse = _documentMock.CreatePerson();
 
     _documentMock.AddRelationship(grandParent, parent, RelationshipType.Child);
     _documentMock.AddRelationship(grandParentSpouse, parent, RelationshipType.Child);
@@ -354,18 +354,18 @@ public class RelativesProviderTests
   [InlineData(true)]
   public async void GetRelativeInfosAsync_Parent_Siblings(bool addSpouse)
   {
-    var fathersFathersParent = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var fathersMothersParent = _documentMock.CreatePerson(BiologicalSex.Unknown);
+    var fathersFathersParent = _documentMock.CreatePerson();
+    var fathersMothersParent = _documentMock.CreatePerson();
     var fathersFather = _documentMock.CreatePerson(BiologicalSex.Male);
-    var fathersFathersSibling = _documentMock.CreatePerson(BiologicalSex.Unknown);
+    var fathersFathersSibling = _documentMock.CreatePerson();
     var fathersMother = _documentMock.CreatePerson(BiologicalSex.Female);
-    var fathersMothersSibling = _documentMock.CreatePerson(BiologicalSex.Unknown);
+    var fathersMothersSibling = _documentMock.CreatePerson();
     var father = _documentMock.CreatePerson(BiologicalSex.Male);
-    var fathersSibling = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var mothersParent = _documentMock.CreatePerson(BiologicalSex.Unknown);
+    var fathersSibling = _documentMock.CreatePerson();
+    var mothersParent = _documentMock.CreatePerson();
     var mother = _documentMock.CreatePerson(BiologicalSex.Female);
-    var mothersSibling = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var child = _documentMock.CreatePerson(BiologicalSex.Unknown);
+    var mothersSibling = _documentMock.CreatePerson();
+    var child = _documentMock.CreatePerson();
 
     _documentMock.AddRelationship(fathersFathersParent, fathersFather, RelationshipType.Child);
     _documentMock.AddRelationship(fathersFathersParent, fathersFathersSibling, RelationshipType.Child);
@@ -459,20 +459,20 @@ public class RelativesProviderTests
   [Fact]
   public async void GetRelativeInfosAsync_Parents_Cousins()
   {
-    var greatGreatGrandParent = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var greatGrandParentSibling = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var greatGrandParentSiblingChild = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var greatGrandParentSiblingChildChild = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var greatGrandParentSiblingChildChildChild = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var greatGrandParent = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var grandParentSibling = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var grandParentSiblingChild = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var grandParentSiblingChildChild = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var grandParent = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var parentSibling = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var parentSiblingChild = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var parent = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var child = _documentMock.CreatePerson(BiologicalSex.Unknown);
+    var greatGreatGrandParent = _documentMock.CreatePerson();
+    var greatGrandParentSibling = _documentMock.CreatePerson();
+    var greatGrandParentSiblingChild = _documentMock.CreatePerson();
+    var greatGrandParentSiblingChildChild = _documentMock.CreatePerson();
+    var greatGrandParentSiblingChildChildChild = _documentMock.CreatePerson();
+    var greatGrandParent = _documentMock.CreatePerson();
+    var grandParentSibling = _documentMock.CreatePerson();
+    var grandParentSiblingChild = _documentMock.CreatePerson();
+    var grandParentSiblingChildChild = _documentMock.CreatePerson();
+    var grandParent = _documentMock.CreatePerson();
+    var parentSibling = _documentMock.CreatePerson();
+    var parentSiblingChild = _documentMock.CreatePerson();
+    var parent = _documentMock.CreatePerson();
+    var child = _documentMock.CreatePerson();
 
     _documentMock.AddRelationship(greatGreatGrandParent, greatGrandParentSibling, RelationshipType.Child);
     _documentMock.AddRelationship(greatGreatGrandParent, greatGrandParent, RelationshipType.Child);
@@ -593,20 +593,20 @@ public class RelativesProviderTests
   [Fact]
   public async void GetRelativeInfosAsync_Parents_Cousins_2()
   {
-    var greatGreatGrandParent = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var greatGrandParentSibling = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var greatGrandParentSiblingChild = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var greatGrandParentSiblingChildChild = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var greatGrandParentSiblingChildChildChild = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var greatGrandParent = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var grandParentSibling = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var grandParentSiblingChild = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var grandParentSiblingChildChild = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var grandParent = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var parentSibling = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var parentSiblingChild = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var parent = _documentMock.CreatePerson(BiologicalSex.Unknown);
-    var child = _documentMock.CreatePerson(BiologicalSex.Unknown);
+    var greatGreatGrandParent = _documentMock.CreatePerson();
+    var greatGrandParentSibling = _documentMock.CreatePerson();
+    var greatGrandParentSiblingChild = _documentMock.CreatePerson();
+    var greatGrandParentSiblingChildChild = _documentMock.CreatePerson();
+    var greatGrandParentSiblingChildChildChild = _documentMock.CreatePerson();
+    var greatGrandParent = _documentMock.CreatePerson();
+    var grandParentSibling = _documentMock.CreatePerson();
+    var grandParentSiblingChild = _documentMock.CreatePerson();
+    var grandParentSiblingChildChild = _documentMock.CreatePerson();
+    var grandParent = _documentMock.CreatePerson();
+    var parentSibling = _documentMock.CreatePerson();
+    var parentSiblingChild = _documentMock.CreatePerson();
+    var parent = _documentMock.CreatePerson();
+    var child = _documentMock.CreatePerson();
 
     _documentMock.AddRelationship(greatGreatGrandParent, greatGrandParentSibling, RelationshipType.Child);
     _documentMock.AddRelationship(greatGreatGrandParent, greatGrandParent, RelationshipType.Child);
