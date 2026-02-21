@@ -1,38 +1,10 @@
-﻿using System.Collections;
-using System.Globalization;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Windows.Input;
 
 namespace GT4.UI.Pages;
 
 public partial class MainPage : ContentPage
 {
-  public record class Language(string Code, string Name);
-
-  private static readonly Language _DefaultLanguage = new Language("en", "English");
-  private static readonly List<Language> _Languages = new()
-  {
-    _DefaultLanguage,
-    new Language("fr", "Français"),
-    new Language("es", "Español"),
-    new Language("de", "Deutsch"),
-    new Language("it", "Italiano"),
-    new Language("pt", "Português"),
-    new Language("ru", "Русский"),
-    new Language("zh", "中文"),
-    new Language("ja", "日本語"),
-    new Language("ko", "한국어")
-  };
-
-  private static Language _SelectedLanguage = GetCurrentLanguage();
-
-  private static Language GetCurrentLanguage()
-  {
-    var culture = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
-    var currentLanguage = _Languages.Where(lang => lang.Code == culture).FirstOrDefault() ?? _DefaultLanguage;
-    return currentLanguage;
-  }
-
   public MainPage()
   {
     InitializeComponent();
@@ -42,21 +14,17 @@ public partial class MainPage : ContentPage
     await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectListPage>())
   );
 
-  public IList Languages => _Languages;
+  public Utils.Language[] Languages => Utils.Language.Languages;
 
-  public Language SelectedLanguage
+  public Utils.Language SelectedLanguage
   {
-    get => _SelectedLanguage;
+    get => Utils.Language.Current;
     set
     {
-      if (_SelectedLanguage == value)
+      if (Utils.Language.Current == value)
         return;
-      _SelectedLanguage = value;
-      var culture = new CultureInfo(_SelectedLanguage.Code);
-      Thread.CurrentThread.CurrentCulture = culture;
-      Thread.CurrentThread.CurrentUICulture = culture;
-      CultureInfo.DefaultThreadCurrentCulture = culture;
-      CultureInfo.DefaultThreadCurrentUICulture = culture;
+
+      Utils.Language.Current = value;
       var app = Application.Current as App;
       app?.MainPage?.Dispatcher.Dispatch(() => app.MainPage = new AppShell());
     }
