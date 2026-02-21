@@ -128,9 +128,9 @@ public class RelativesProviderTests
 
     var relativesProvider = new RelativesProvider(_documentMock);
     var relatives = await relativesProvider.GetRelativeInfosAsync(child, true, CancellationToken.None);
-      relatives
-        .Id()
-        .Should()
+    relatives
+      .Id()
+      .Should()
       .BeEquivalentTo([parent.Id]);
 
     var rParent = relatives.SingleId(parent);
@@ -139,9 +139,9 @@ public class RelativesProviderTests
     Assert.Equal(Consanguinity.Zero, rParent.Consanguinity);
 
     relatives = await relativesProvider.GetRelativeInfosAsync(rParent, true, CancellationToken.None);
-      relatives
-        .Id()
-        .Should()
+    relatives
+      .Id()
+      .Should()
       .BeEquivalentTo([grandParent.Id]);
 
     var rGrandParent = relatives.SingleId(grandParent);
@@ -150,9 +150,9 @@ public class RelativesProviderTests
     Assert.Equal(Consanguinity.Zero, rGrandParent.Consanguinity);
 
     relatives = await relativesProvider.GetRelativeInfosAsync(rGrandParent, true, CancellationToken.None);
-      relatives
-        .Id()
-        .Should()
+    relatives
+      .Id()
+      .Should()
       .BeEquivalentTo([greatGrandParent.Id]);
 
     var rGreatGrandParent = relatives.SingleId(greatGrandParent);
@@ -161,16 +161,16 @@ public class RelativesProviderTests
     Assert.Equal(Consanguinity.Zero, rGreatGrandParent.Consanguinity);
 
     relatives = await relativesProvider.GetRelativeInfosAsync(rGreatGrandParent, true, CancellationToken.None);
-      relatives
+    relatives
       .Id()
-        .Should()
+      .Should()
       .BeEquivalentTo([greatGreatGrandParent.Id]);
 
     var rGreatGreatGrandParent = relatives.SingleId(greatGreatGrandParent);
     Assert.Equal(RelationshipType.Parent, rGreatGreatGrandParent.Type);
     Assert.Equal(new Generation(4), rGreatGreatGrandParent.Generation);
     Assert.Equal(Consanguinity.Zero, rGreatGreatGrandParent.Consanguinity);
-    }
+  }
 
   [Fact]
   public async void GetRelativeInfosAsync_Parent_Childs()
@@ -437,7 +437,7 @@ public class RelativesProviderTests
     var rFathersFathersSibling = relatives.SingleId(fathersFathersSibling);
     Assert.Equal(RelationshipType.Sibling, rFathersFathersSibling.Type);
     Assert.Equal(new Generation(2), rFathersFathersSibling.Generation);
-    Assert.Equal(Consanguinity.UncleAunt, rFathersFathersSibling.Consanguinity);
+    Assert.Equal(new Consanguinity(2), rFathersFathersSibling.Consanguinity);
 
     relatives = await relativesProvider.GetRelativeInfosAsync(rMother, true, CancellationToken.None);
     relatives
@@ -454,6 +454,22 @@ public class RelativesProviderTests
     Assert.Equal(RelationshipType.Sibling, rMothersSibling.Type);
     Assert.Equal(Generation.Parent, rMothersSibling.Generation);
     Assert.Equal(Consanguinity.UncleAunt, rMothersSibling.Consanguinity);
+
+    relatives = await relativesProvider.GetRelativeInfosAsync(rFathersMother, true, CancellationToken.None);
+    relatives
+      .Id()
+      .Should()
+      .BeEquivalentTo([fathersMothersParent.Id, fathersMothersSibling.Id]);
+
+    var rFathersMothersParent = relatives.SingleId(fathersMothersParent);
+    Assert.Equal(RelationshipType.Parent, rFathersMothersParent.Type);
+    Assert.Equal(new Generation(3), rFathersMothersParent.Generation);
+    Assert.Equal(Consanguinity.Zero, rFathersMothersParent.Consanguinity);
+
+    var rFathersMothersSibling = relatives.SingleId(fathersMothersSibling);
+    Assert.Equal(RelationshipType.Sibling, rFathersMothersSibling.Type);
+    Assert.Equal(new Generation(2), rFathersMothersSibling.Generation);
+    Assert.Equal(new Consanguinity(2), rFathersMothersSibling.Consanguinity);
   }
 
   [Fact]
@@ -505,6 +521,9 @@ public class RelativesProviderTests
 
     var rGrandParent = relatives.SingleId(grandParent);
     var rParentSibling = relatives.SingleId(parentSibling);
+    Assert.Equal(Generation.Parent, rParentSibling.Generation);
+    Assert.Equal(Consanguinity.UncleAunt, rParentSibling.Consanguinity);
+    Assert.Equal(RelationshipType.Sibling, rParentSibling.Type);
 
     relatives = await relativesProvider.GetRelativeInfosAsync(rParentSibling, true, CancellationToken.None);
     relatives
@@ -514,7 +533,7 @@ public class RelativesProviderTests
 
     var rParentSiblingChild = relatives.SingleId(parentSiblingChild);
     Assert.Equal(Generation.Zero, rParentSiblingChild.Generation);
-    Assert.Equal(new Consanguinity(2), rParentSiblingChild.Consanguinity);
+    Assert.Equal(Consanguinity.UncleAunt, rParentSiblingChild.Consanguinity);
     Assert.Equal(RelationshipType.Child, rParentSiblingChild.Type);
 
     relatives = await relativesProvider.GetRelativeInfosAsync(rGrandParent, true, CancellationToken.None);
@@ -525,6 +544,9 @@ public class RelativesProviderTests
 
     var rGreatGrandParent = relatives.SingleId(greatGrandParent);
     var rGrandParentSibling = relatives.SingleId(grandParentSibling);
+    Assert.Equal(new Generation(2), rGrandParentSibling.Generation);
+    Assert.Equal(new Consanguinity(2), rGrandParentSibling.Consanguinity);
+    Assert.Equal(RelationshipType.Sibling, rGrandParentSibling.Type);
 
     relatives = await relativesProvider.GetRelativeInfosAsync(rGrandParentSibling, true, CancellationToken.None);
     relatives
@@ -545,7 +567,7 @@ public class RelativesProviderTests
 
     var rGrandParentSiblingChildChild = relatives.SingleId(grandParentSiblingChildChild);
     Assert.Equal(Generation.Zero, rGrandParentSiblingChildChild.Generation);
-    Assert.Equal(new Consanguinity(3), rGrandParentSiblingChildChild.Consanguinity);
+    Assert.Equal(new Consanguinity(2), rGrandParentSiblingChildChild.Consanguinity);
     Assert.Equal(RelationshipType.Child, rGrandParentSiblingChildChild.Type);
 
     relatives = await relativesProvider.GetRelativeInfosAsync(rGreatGrandParent, true, CancellationToken.None);
@@ -555,6 +577,9 @@ public class RelativesProviderTests
       .BeEquivalentTo([greatGreatGrandParent.Id, greatGrandParentSibling.Id]);
 
     var rGreatGrandParentSibling = relatives.SingleId(greatGrandParentSibling);
+    Assert.Equal(new Generation(3), rGreatGrandParentSibling.Generation);
+    Assert.Equal(new Consanguinity(3), rGreatGrandParentSibling.Consanguinity);
+    Assert.Equal(RelationshipType.Sibling, rGreatGrandParentSibling.Type);
 
     relatives = await relativesProvider.GetRelativeInfosAsync(rGreatGrandParentSibling, true, CancellationToken.None);
     relatives
@@ -564,7 +589,7 @@ public class RelativesProviderTests
 
     var rGreatGrandParentSiblingChild = relatives.SingleId(greatGrandParentSiblingChild);
     Assert.Equal(new Generation(2), rGreatGrandParentSiblingChild.Generation);
-    Assert.Equal(new Consanguinity(2), rGreatGrandParentSiblingChild.Consanguinity);
+    Assert.Equal(new Consanguinity(3), rGreatGrandParentSiblingChild.Consanguinity);
     Assert.Equal(RelationshipType.Child, rGreatGrandParentSiblingChild.Type);
 
     relatives = await relativesProvider.GetRelativeInfosAsync(rGreatGrandParentSiblingChild, true, CancellationToken.None);
@@ -586,7 +611,7 @@ public class RelativesProviderTests
 
     var rGreatGrandParentSiblingChildChildChild = relatives.SingleId(greatGrandParentSiblingChildChildChild);
     Assert.Equal(Generation.Zero, rGreatGrandParentSiblingChildChildChild.Generation);
-    Assert.Equal(new Consanguinity(4), rGreatGrandParentSiblingChildChildChild.Consanguinity);
+    Assert.Equal(new Consanguinity(3), rGreatGrandParentSiblingChildChildChild.Consanguinity);
     Assert.Equal(RelationshipType.Child, rGreatGrandParentSiblingChildChildChild.Type);
   }
 
@@ -649,7 +674,7 @@ public class RelativesProviderTests
 
     var rGreatGrandParent = relatives.SingleId(greatGrandParent);
     Assert.Equal(new Generation(3), rGreatGrandParent.Generation);
-    Assert.Equal(Consanguinity.UncleAunt, rGreatGrandParent.Consanguinity);
+    Assert.Equal(new Consanguinity(3), rGreatGrandParent.Consanguinity);
     Assert.Equal(RelationshipType.Sibling, rGreatGrandParent.Type);
 
     relatives = await relativesProvider.GetRelativeInfosAsync(rGreatGrandParent, true, CancellationToken.None);
@@ -660,12 +685,12 @@ public class RelativesProviderTests
 
     var rGrandParent = relatives.SingleId(grandParent);
     Assert.Equal(new Generation(2), rGrandParent.Generation);
-    Assert.Equal(new Consanguinity(2), rGrandParent.Consanguinity);
+    Assert.Equal(new Consanguinity(3), rGrandParent.Consanguinity);
     Assert.Equal(RelationshipType.Child, rGrandParent.Type);
 
     var rGrandParentSibling = relatives.SingleId(grandParentSibling);
     Assert.Equal(new Generation(2), rGrandParentSibling.Generation);
-    Assert.Equal(new Consanguinity(2), rGrandParentSibling.Consanguinity);
+    Assert.Equal(new Consanguinity(3), rGrandParentSibling.Consanguinity);
     Assert.Equal(RelationshipType.Child, rGrandParentSibling.Type);
 
     relatives = await relativesProvider.GetRelativeInfosAsync(rGrandParentSibling, true, CancellationToken.None);
@@ -687,7 +712,7 @@ public class RelativesProviderTests
 
     var rGrandParentSiblingChildChild = relatives.SingleId(grandParentSiblingChildChild);
     Assert.Equal(Generation.Zero, rGrandParentSiblingChildChild.Generation);
-    Assert.Equal(new Consanguinity(4), rGrandParentSiblingChildChild.Consanguinity);
+    Assert.Equal(new Consanguinity(3), rGrandParentSiblingChildChild.Consanguinity);
     Assert.Equal(RelationshipType.Child, rGrandParentSiblingChildChild.Type);
 
     relatives = await relativesProvider.GetRelativeInfosAsync(rGrandParent, true, CancellationToken.None);
@@ -714,7 +739,7 @@ public class RelativesProviderTests
 
     var rChild = relatives.SingleId(child);
     Assert.Equal(Generation.Zero, rChild.Generation);
-    Assert.Equal(new Consanguinity(4), rChild.Consanguinity);
+    Assert.Equal(new Consanguinity(3), rChild.Consanguinity);
     Assert.Equal(RelationshipType.Child, rChild.Type);
 
     relatives = await relativesProvider.GetRelativeInfosAsync(rParentSibling, true, CancellationToken.None);
@@ -725,7 +750,7 @@ public class RelativesProviderTests
 
     var rParentSiblingChild = relatives.SingleId(parentSiblingChild);
     Assert.Equal(Generation.Zero, rParentSiblingChild.Generation);
-    Assert.Equal(new Consanguinity(4), rParentSiblingChild.Consanguinity);
+    Assert.Equal(new Consanguinity(3), rParentSiblingChild.Consanguinity);
     Assert.Equal(RelationshipType.Child, rParentSiblingChild.Type);
   }
 }
