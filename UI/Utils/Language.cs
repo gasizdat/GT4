@@ -4,9 +4,10 @@ namespace GT4.UI.Utils;
 
 public record class Language(string Code, string Name)
 {
-  public static readonly Language Default = new Language("en", "English");
+  public static readonly Language EN = new Language("en", "English");
   public static readonly Language RU = new Language("ru", "Русский");
-  public static readonly Language[] Languages = [Default, RU];
+  public static readonly Language Default = EN;
+  public static readonly Language[] Languages = [EN, RU];
 
   public static Language Current
   {
