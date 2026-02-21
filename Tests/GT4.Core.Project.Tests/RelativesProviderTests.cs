@@ -113,125 +113,125 @@ public class RelativesProviderTests
   }
 
   [Fact]
-  public async void GetRelativeInfosAsync_Parent_Childs()
-  {
-    var father = _documentMock.CreatePerson(BiologicalSex.Male);
-    var mother = _documentMock.CreatePerson(BiologicalSex.Female);
-    var son = _documentMock.CreatePerson(BiologicalSex.Male);
-    var grandDaughter = _documentMock.CreatePerson(BiologicalSex.Female);
-    var grandGrandChild = _documentMock.CreatePerson();
-
-    _documentMock.AddRelationship(father, son, RelationshipType.Child);
-    _documentMock.AddRelationship(mother, son, RelationshipType.Child);
-    _documentMock.AddRelationship(son, grandDaughter, RelationshipType.Child);
-    _documentMock.AddRelationship(grandDaughter, grandGrandChild, RelationshipType.Child);
-
-    var relativesProvider = new RelativesProvider(_documentMock);
-
-    foreach (var parent in new[] { father, mother })
-    {
-      var relatives = await relativesProvider.GetRelativeInfosAsync(parent, true, CancellationToken.None);
-      relatives
-        .Id()
-        .Should()
-        .BeEquivalentTo([son.Id]);
-
-      var rSon = relatives.SingleId(son);
-      Assert.Equal(RelationshipType.Child, rSon.Type);
-      Assert.Equal(Generation.Child, rSon.Generation);
-      Assert.Equal(Consanguinity.Zero, rSon.Consanguinity);
-
-      relatives = await relativesProvider.GetRelativeInfosAsync(rSon, true, CancellationToken.None);
-      relatives
-        .Id()
-        .Should()
-        .BeEquivalentTo([grandDaughter.Id]);
-
-      var rGrandDaughter = relatives.SingleId(grandDaughter);
-      Assert.Equal(RelationshipType.Child, rGrandDaughter.Type);
-      Assert.Equal(new Generation(-2), rGrandDaughter.Generation);
-      Assert.Equal(Consanguinity.Zero, rGrandDaughter.Consanguinity);
-
-      relatives = await relativesProvider.GetRelativeInfosAsync(rGrandDaughter, true, CancellationToken.None);
-      relatives
-        .Id()
-        .Should()
-        .BeEquivalentTo([grandGrandChild.Id]);
-
-      var rGrandGrandChild = relatives.SingleId(grandGrandChild);
-      Assert.Equal(RelationshipType.Child, rGrandGrandChild.Type);
-      Assert.Equal(new Generation(-3), rGrandGrandChild.Generation);
-      Assert.Equal(Consanguinity.Zero, rGrandGrandChild.Consanguinity);
-
-      relatives = await relativesProvider.GetRelativeInfosAsync(rGrandGrandChild, true, CancellationToken.None);
-      relatives
-        .Should()
-        .BeEmpty();
-    }
-  }
-
-  [Fact]
   public async void GetRelativeInfosAsync_Childs_Parent()
   {
-    var father = _documentMock.CreatePerson(BiologicalSex.Male);
-    var mother = _documentMock.CreatePerson(BiologicalSex.Female);
-    var son = _documentMock.CreatePerson(BiologicalSex.Male);
-    var grandDaughter = _documentMock.CreatePerson(BiologicalSex.Female);
-    var grandGrandChild = _documentMock.CreatePerson();
+    var greatGreatGrandParent = _documentMock.CreatePerson();
+    var greatGrandParent = _documentMock.CreatePerson();
+    var grandParent = _documentMock.CreatePerson();
+    var parent = _documentMock.CreatePerson();
+    var child = _documentMock.CreatePerson();
 
-    _documentMock.AddRelationship(father, son, RelationshipType.Child);
-    _documentMock.AddRelationship(mother, son, RelationshipType.Child);
-    _documentMock.AddRelationship(son, grandDaughter, RelationshipType.Child);
-    _documentMock.AddRelationship(grandDaughter, grandGrandChild, RelationshipType.Child);
+    _documentMock.AddRelationship(greatGreatGrandParent, greatGrandParent, RelationshipType.Child);
+    _documentMock.AddRelationship(greatGrandParent, grandParent, RelationshipType.Child);
+    _documentMock.AddRelationship(grandParent, parent, RelationshipType.Child);
+    _documentMock.AddRelationship(parent, child, RelationshipType.Child);
 
     var relativesProvider = new RelativesProvider(_documentMock);
-    var relatives = await relativesProvider.GetRelativeInfosAsync(grandGrandChild, true, CancellationToken.None);
+    var relatives = await relativesProvider.GetRelativeInfosAsync(child, true, CancellationToken.None);
+      relatives
+        .Id()
+        .Should()
+      .BeEquivalentTo([parent.Id]);
+
+    var rParent = relatives.SingleId(parent);
+    Assert.Equal(RelationshipType.Parent, rParent.Type);
+    Assert.Equal(Generation.Parent, rParent.Generation);
+    Assert.Equal(Consanguinity.Zero, rParent.Consanguinity);
+
+    relatives = await relativesProvider.GetRelativeInfosAsync(rParent, true, CancellationToken.None);
+      relatives
+        .Id()
+        .Should()
+      .BeEquivalentTo([grandParent.Id]);
+
+    var rGrandParent = relatives.SingleId(grandParent);
+    Assert.Equal(RelationshipType.Parent, rGrandParent.Type);
+    Assert.Equal(new Generation(2), rGrandParent.Generation);
+    Assert.Equal(Consanguinity.Zero, rGrandParent.Consanguinity);
+
+    relatives = await relativesProvider.GetRelativeInfosAsync(rGrandParent, true, CancellationToken.None);
+      relatives
+        .Id()
+        .Should()
+      .BeEquivalentTo([greatGrandParent.Id]);
+
+    var rGreatGrandParent = relatives.SingleId(greatGrandParent);
+    Assert.Equal(RelationshipType.Parent, rGreatGrandParent.Type);
+    Assert.Equal(new Generation(3), rGreatGrandParent.Generation);
+    Assert.Equal(Consanguinity.Zero, rGreatGrandParent.Consanguinity);
+
+    relatives = await relativesProvider.GetRelativeInfosAsync(rGreatGrandParent, true, CancellationToken.None);
+      relatives
+      .Id()
+        .Should()
+      .BeEquivalentTo([greatGreatGrandParent.Id]);
+
+    var rGreatGreatGrandParent = relatives.SingleId(greatGreatGrandParent);
+    Assert.Equal(RelationshipType.Parent, rGreatGreatGrandParent.Type);
+    Assert.Equal(new Generation(4), rGreatGreatGrandParent.Generation);
+    Assert.Equal(Consanguinity.Zero, rGreatGreatGrandParent.Consanguinity);
+    }
+
+  [Fact]
+  public async void GetRelativeInfosAsync_Parent_Childs()
+  {
+    var parent = _documentMock.CreatePerson();
+    var child = _documentMock.CreatePerson();
+    var grandChild = _documentMock.CreatePerson();
+    var greatGrandChild = _documentMock.CreatePerson();
+    var greatGreatGrandChild = _documentMock.CreatePerson();
+
+    _documentMock.AddRelationship(greatGreatGrandChild, greatGrandChild, RelationshipType.Parent);
+    _documentMock.AddRelationship(greatGrandChild, grandChild, RelationshipType.Parent);
+    _documentMock.AddRelationship(grandChild, child, RelationshipType.Parent);
+    _documentMock.AddRelationship(child, parent, RelationshipType.Parent);
+
+    var relativesProvider = new RelativesProvider(_documentMock);
+
+    var relatives = await relativesProvider.GetRelativeInfosAsync(parent, true, CancellationToken.None);
     relatives
       .Id()
       .Should()
-      .BeEquivalentTo([grandDaughter.Id]);
+      .BeEquivalentTo([child.Id]);
 
-    var rGrandDaughter = relatives.SingleId(grandDaughter);
-    Assert.Equal(RelationshipType.Parent, rGrandDaughter.Type);
-    Assert.Equal(Generation.Parent, rGrandDaughter.Generation);
-    Assert.Equal(Consanguinity.Zero, rGrandDaughter.Consanguinity);
+    var rChild = relatives.SingleId(child);
+    Assert.Equal(RelationshipType.Child, rChild.Type);
+    Assert.Equal(Generation.Child, rChild.Generation);
+    Assert.Equal(Consanguinity.Zero, rChild.Consanguinity);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rGrandDaughter, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rChild, true, CancellationToken.None);
     relatives
       .Id()
       .Should()
-      .BeEquivalentTo([son.Id]);
+      .BeEquivalentTo([grandChild.Id]);
 
-    var rSon = relatives.SingleId(son);
-    Assert.Equal(RelationshipType.Parent, rSon.Type);
-    Assert.Equal(new Generation(2), rSon.Generation);
-    Assert.Equal(Consanguinity.Zero, rSon.Consanguinity);
+    var rGrandChild = relatives.SingleId(grandChild);
+    Assert.Equal(RelationshipType.Child, rGrandChild.Type);
+    Assert.Equal(new Generation(-2), rGrandChild.Generation);
+    Assert.Equal(Consanguinity.Zero, rGrandChild.Consanguinity);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rSon, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rGrandChild, true, CancellationToken.None);
     relatives
       .Id()
       .Should()
-      .BeEquivalentTo([mother.Id, father.Id]);
+      .BeEquivalentTo([greatGrandChild.Id]);
 
-    var rFather = relatives.SingleId(father);
-    Assert.Equal(RelationshipType.Parent, rFather.Type);
-    Assert.Equal(new Generation(3), rFather.Generation);
-    Assert.Equal(Consanguinity.Zero, rFather.Consanguinity);
+    var rGreatGrandChild = relatives.SingleId(greatGrandChild);
+    Assert.Equal(RelationshipType.Child, rGreatGrandChild.Type);
+    Assert.Equal(new Generation(-3), rGreatGrandChild.Generation);
+    Assert.Equal(Consanguinity.Zero, rGreatGrandChild.Consanguinity);
 
-    var rMother = relatives.SingleId(mother);
-    Assert.Equal(RelationshipType.Parent, rMother.Type);
-    Assert.Equal(new Generation(3), rMother.Generation);
-    Assert.Equal(Consanguinity.Zero, rMother.Consanguinity);
-
-    relatives = await relativesProvider.GetRelativeInfosAsync(rFather, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rGreatGrandChild, true, CancellationToken.None);
     relatives
+      .Id()
       .Should()
-      .BeEmpty();
+      .BeEquivalentTo([greatGreatGrandChild.Id]);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rMother, true, CancellationToken.None);
-    relatives
-      .Should()
-      .BeEmpty();
+
+    var rGreatGreatGrandChild = relatives.SingleId(greatGreatGrandChild);
+    Assert.Equal(RelationshipType.Child, rGreatGreatGrandChild.Type);
+    Assert.Equal(new Generation(-4), rGreatGreatGrandChild.Generation);
+    Assert.Equal(Consanguinity.Zero, rGreatGreatGrandChild.Consanguinity);
   }
 
   [Fact]
