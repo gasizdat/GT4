@@ -137,12 +137,12 @@ internal class RelativesProvider : TableBase, IRelativesProvider
     return ret;
   }
 
-  private static Consanguinity GetNextConsanguinity(RelationshipType? personType, RelationshipType relativeType, Consanguinity? consanguinity)
+  private static Consanguinity GetNextConsanguinity(RelationshipType relativeType, Generation? generation, Consanguinity? consanguinity)
   {
     var UnsupportedRelationshipException = () =>
-       new ApplicationException($"Unsupported relationship {personType}->{relativeType}");
+       new ApplicationException($"Unsupported relationship type {relativeType}");
 
-    if (personType is null || consanguinity is null)
+    if (generation is null || consanguinity is null)
     {
       return Consanguinity.Zero;
     }
@@ -151,15 +151,9 @@ internal class RelativesProvider : TableBase, IRelativesProvider
 
     var consanguinityChanged = relativeType switch
     {
-      RelationshipType.Child => startConsanguinity > Consanguinity.Zero,
       RelationshipType.Sibling or
       RelationshipType.SiblingByMother or
-      RelationshipType.SiblingByFather => personType switch
-      {
-        RelationshipType.Parent or
-        RelationshipType.AdoptiveParent => true,
-        _ => false
-      },
+      RelationshipType.SiblingByFather => true,
       _ => false
     };
 
@@ -168,7 +162,7 @@ internal class RelativesProvider : TableBase, IRelativesProvider
       return startConsanguinity;
     }
 
-    var ret = ++startConsanguinity;
+    var ret = new Consanguinity(generation.Value.Value);
 
     return ret;
   }
@@ -205,7 +199,7 @@ internal class RelativesProvider : TableBase, IRelativesProvider
       token);
 
     var siblingGeneration = relativeInfo.Generation;
-    var siblingConsanguinity = GetNextConsanguinity(relativeInfo.Type, RelationshipType.Sibling, relativeInfo.Consanguinity);
+    var siblingConsanguinity = GetNextConsanguinity(RelationshipType.Sibling, relativeInfo.Generation, relativeInfo.Consanguinity);
     var siblingSpouseGeneration = siblingGeneration;
     var siblingSpouseConsanguinity = siblingConsanguinity;
 
@@ -216,7 +210,7 @@ internal class RelativesProvider : TableBase, IRelativesProvider
         .Select(r =>
         {
           var nextGeneration = GetNextGeneration(relativeInfo.Type, r.Type, relativeInfo.Generation);
-          var nextConsanguinity = GetNextConsanguinity(relativeInfo.Type, r.Type, relativeInfo.Consanguinity);
+          var nextConsanguinity = GetNextConsanguinity(r.Type, r.Generation, relativeInfo.Consanguinity);
           return r with { Consanguinity = nextConsanguinity, Generation = nextGeneration };
         }),
       ..siblings
