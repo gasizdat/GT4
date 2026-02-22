@@ -123,6 +123,19 @@ public class RelationshipTypeFormatterTests
     Assert.Equal(expected, actual);
   }
 
+  [Fact]
+  public void RU_Female_UncleAunt_Regression()
+  {
+    SetRu();
+    var actual = _formatter.ToString(
+      RelationshipType.Sibling,
+      BiologicalSex.Female,
+      ToGeneration(4),
+      ToConsanguinity(4));
+
+    Assert.Equal("Двоюродная пра-пра-бабушка", actual);
+  }
+
   [Theory]
   [InlineData(0, 1, "Cousin")]
   [InlineData(0, 2, "Second cousin")]
