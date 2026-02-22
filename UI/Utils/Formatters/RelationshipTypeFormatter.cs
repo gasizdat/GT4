@@ -430,7 +430,7 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
       var ret = biologicalSex switch
       {
         BiologicalSex.Male => UIStrings.RelGrandFather,
-        BiologicalSex.Female => UIStrings.RelGrandFather,
+        BiologicalSex.Female => UIStrings.RelGrandMother,
         _ => UIStrings.RelGrandParent,
       };
 
