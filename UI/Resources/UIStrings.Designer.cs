@@ -917,6 +917,78 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to once removed.
+        /// </summary>
+        public static string RelCousin1Removed_en {
+            get {
+                return ResourceManager.GetString("RelCousin1Removed_en", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to twice removed.
+        /// </summary>
+        public static string RelCousin2Removed_en {
+            get {
+                return ResourceManager.GetString("RelCousin2Removed_en", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cousin.
+        /// </summary>
+        public static string RelCousinFirst_en {
+            get {
+                return ResourceManager.GetString("RelCousinFirst_en", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Fourth cousin.
+        /// </summary>
+        public static string RelCousinFourth_en {
+            get {
+                return ResourceManager.GetString("RelCousinFourth_en", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} cousin.
+        /// </summary>
+        public static string RelCousinN_1_en {
+            get {
+                return ResourceManager.GetString("RelCousinN_1_en", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0}x removed.
+        /// </summary>
+        public static string RelCousinNRemoved_en {
+            get {
+                return ResourceManager.GetString("RelCousinNRemoved_en", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Second cousin.
+        /// </summary>
+        public static string RelCousinSecond_en {
+            get {
+                return ResourceManager.GetString("RelCousinSecond_en", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Third cousin.
+        /// </summary>
+        public static string RelCousinThird_en {
+            get {
+                return ResourceManager.GetString("RelCousinThird_en", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Daughter.
         /// </summary>
         public static string RelDaughter {

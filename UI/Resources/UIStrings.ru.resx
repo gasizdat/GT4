@@ -583,4 +583,28 @@
   <data name="RelNFemale_ru_2" xml:space="preserve">
     <value>{0}-юродная {1}</value>
   </data>
+  <data name="RelCousinThird_en" xml:space="preserve">
+    <value>-</value>
+  </data>
+  <data name="RelCousinN_1_en" xml:space="preserve">
+    <value>{0} -</value>
+  </data>
+  <data name="RelCousinFirst_en" xml:space="preserve">
+    <value>-</value>
+  </data>
+  <data name="RelCousinSecond_en" xml:space="preserve">
+    <value>-</value>
+  </data>
+  <data name="RelCousin1Removed_en" xml:space="preserve">
+    <value>-</value>
+  </data>
+  <data name="RelCousin2Removed_en" xml:space="preserve">
+    <value>-</value>
+  </data>
+  <data name="RelCousinNRemoved_en" xml:space="preserve">
+    <value>{0} -</value>
+  </data>
+  <data name="RelCousinFourth_en" xml:space="preserve">
+    <value>-</value>
+  </data>
 </root>

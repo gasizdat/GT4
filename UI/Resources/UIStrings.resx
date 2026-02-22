@@ -583,4 +583,28 @@ genealogy tree and enjoy!</value>
   <data name="RelNFemale_ru_2" xml:space="preserve">
     <value>- {0}{1}</value>
   </data>
+  <data name="RelCousinThird_en" xml:space="preserve">
+    <value>Third cousin</value>
+  </data>
+  <data name="RelCousinN_1_en" xml:space="preserve">
+    <value>{0} cousin</value>
+  </data>
+  <data name="RelCousinFirst_en" xml:space="preserve">
+    <value>Cousin</value>
+  </data>
+  <data name="RelCousinSecond_en" xml:space="preserve">
+    <value>Second cousin</value>
+  </data>
+  <data name="RelCousin1Removed_en" xml:space="preserve">
+    <value>once removed</value>
+  </data>
+  <data name="RelCousin2Removed_en" xml:space="preserve">
+    <value>twice removed</value>
+  </data>
+  <data name="RelCousinNRemoved_en" xml:space="preserve">
+    <value>{0}x removed</value>
+  </data>
+  <data name="RelCousinFourth_en" xml:space="preserve">
+    <value>Fourth cousin</value>
+  </data>
 </root>
