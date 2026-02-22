@@ -36,6 +36,10 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
 
     var generation = generationArg ?? Generation.Zero;
     var consanguinity = consanguinityArg ?? Consanguinity.Zero;
+    if (consanguinity < Consanguinity.Zero)
+    {
+      throw new NotSupportedException(nameof(consanguinity));
+    }
     try
     {
 
@@ -273,9 +277,18 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
 
   private static string GetSpouse(BiologicalSex? biologicalSex, Generation generation, Consanguinity consanguinity)
   {
-    if (consanguinity != Consanguinity.Zero)
+    if (consanguinity > Consanguinity.Zero)
     {
-      throw new NotSupportedException(nameof(consanguinity));
+      if (generation.Value == consanguinity.Value)
+      {
+        return GetSibling(biologicalSex, generation, consanguinity);
+      }
+      else if (generation.Value < consanguinity.Value)
+      {
+        return GetChild(biologicalSex, generation, consanguinity);
+      }
+
+      throw new ArgumentException("generation.Value > consanguinity.Value");
     }
 
     if (generation == Generation.Zero)
