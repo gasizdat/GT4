@@ -1115,6 +1115,33 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to In-law.
+        /// </summary>
+        public static string RelInLawFemale {
+            get {
+                return ResourceManager.GetString("RelInLawFemale", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to In-law.
+        /// </summary>
+        public static string RelInLawMale {
+            get {
+                return ResourceManager.GetString("RelInLawMale", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to In-law.
+        /// </summary>
+        public static string RelInLawUnknown {
+            get {
+                return ResourceManager.GetString("RelInLawUnknown", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Maternal {0}.
         /// </summary>
         public static string RelMaternal_1 {

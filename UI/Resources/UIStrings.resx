@@ -607,4 +607,13 @@ genealogy tree and enjoy!</value>
   <data name="RelCousinFourth_en" xml:space="preserve">
     <value>Fourth cousin</value>
   </data>
+  <data name="RelInLawFemale" xml:space="preserve">
+    <value>In-law</value>
+  </data>
+  <data name="RelInLawUnknown" xml:space="preserve">
+    <value>In-law</value>
+  </data>
+  <data name="RelInLawMale" xml:space="preserve">
+    <value>In-law</value>
+  </data>
 </root>

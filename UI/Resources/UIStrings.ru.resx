@@ -607,4 +607,13 @@
   <data name="RelCousinFourth_en" xml:space="preserve">
     <value>-</value>
   </data>
+  <data name="RelInLawFemale" xml:space="preserve">
+    <value>Свойственница</value>
+  </data>
+  <data name="RelInLawUnknown" xml:space="preserve">
+    <value>Свойственник</value>
+  </data>
+  <data name="RelInLawMale" xml:space="preserve">
+    <value>Свойственник</value>
+  </data>
 </root>

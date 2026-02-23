@@ -279,16 +279,27 @@ public class RelationshipTypeFormatter : IRelationshipTypeFormatter
   {
     if (consanguinity > Consanguinity.Zero)
     {
+      string ret;
       if (generation.Value == consanguinity.Value)
       {
-        return GetSibling(biologicalSex, generation, consanguinity);
+        ret = GetSibling(biologicalSex, generation, consanguinity);
       }
       else if (generation.Value < consanguinity.Value)
       {
-        return GetChild(biologicalSex, generation, consanguinity);
+        ret = GetChild(biologicalSex, generation, consanguinity);
       }
-
-      throw new ArgumentException("generation.Value > consanguinity.Value");
+      else
+      {
+        throw new ArgumentException("generation.Value > consanguinity.Value");
+      }
+      var spouseType = biologicalSex switch
+      {
+        BiologicalSex.Female => UIStrings.RelInLawFemale,
+        BiologicalSex.Male => UIStrings.RelInLawMale,
+        _ => UIStrings.RelInLawUnknown,
+      };
+      ret = string.Format($"{ret} ({ToLower(spouseType)})");
+      return ret;
     }
 
     if (generation == Generation.Zero)
