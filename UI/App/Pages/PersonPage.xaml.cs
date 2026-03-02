@@ -30,7 +30,7 @@ public partial class PersonPage : ContentPage
   private string _Biography = string.Empty;
   private PersonPageSmartLayout _SmartLayout = new();
 
-  public PersonPage(IServiceProvider serviceProvider)
+  protected PersonPage(IServiceProvider serviceProvider)
   {
     _ServiceProvider = serviceProvider;
     _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
