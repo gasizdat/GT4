@@ -125,7 +125,9 @@ internal class RelativesProvider : TableBase, IRelativesProvider
         RelationshipType.Child => --startGeneration,
         _ => throw UnsupportedRelationshipException()
       },
-      RelationshipType.Sibling => relativeType switch
+      RelationshipType.Sibling or
+      RelationshipType.SiblingByFather or
+      RelationshipType.SiblingByMother => relativeType switch
       {
         RelationshipType.Parent => ++startGeneration,
         RelationshipType.Child => --startGeneration,
