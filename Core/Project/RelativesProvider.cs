@@ -60,6 +60,7 @@ internal class RelativesProvider : TableBase, IRelativesProvider
       RelationshipType.Parent => relativeType switch
       {
         RelationshipType.Parent => true,
+        RelationshipType.AdoptiveParent => true,
         RelationshipType.Sibling => true,
         RelationshipType.SiblingByMother => true,
         RelationshipType.SiblingByFather => true,
@@ -116,7 +117,8 @@ internal class RelativesProvider : TableBase, IRelativesProvider
       RelationshipType.Parent => relativeType switch
       {
         RelationshipType.Child => --startGeneration,
-        RelationshipType.Parent => ++startGeneration,
+        RelationshipType.Parent or 
+        RelationshipType.AdoptiveParent => ++startGeneration,
         _ => throw UnsupportedRelationshipException()
       },
       RelationshipType.Child => relativeType switch
