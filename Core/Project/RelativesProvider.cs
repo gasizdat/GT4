@@ -164,7 +164,7 @@ internal class RelativesProvider : TableBase, IRelativesProvider
       return startConsanguinity;
     }
 
-    var ret = new Consanguinity(generation.Value.Value);
+    var ret = Consanguinity.Sibling + new Consanguinity(generation.Value.Value);
 
     return ret;
   }
@@ -320,11 +320,11 @@ internal class RelativesProvider : TableBase, IRelativesProvider
       .Distinct(_RelativeInfoComparer);
 
     return new Siblings(
-      Native: ToTypedArray(commonChildren, RelationshipType.Sibling, Generation.Zero, Consanguinity.Zero),
-      ByMother: ToTypedArray(motherChildren, RelationshipType.SiblingByMother, Generation.Zero, Consanguinity.Zero),
-      ByFather: ToTypedArray(fatherChildren, RelationshipType.SiblingByFather, Generation.Zero, Consanguinity.Zero),
-      Adoptive: ToTypedArray(adoptiveChildren, RelationshipType.AdoptiveSibling, Generation.Zero, Consanguinity.Zero),
-      Step: ToTypedArray(stepParentChildren, RelationshipType.StepSibling, Generation.Zero, Consanguinity.Zero));
+      Native: ToTypedArray(commonChildren, RelationshipType.Sibling, Generation.Zero, Consanguinity.Sibling),
+      ByMother: ToTypedArray(motherChildren, RelationshipType.SiblingByMother, Generation.Zero, Consanguinity.Sibling),
+      ByFather: ToTypedArray(fatherChildren, RelationshipType.SiblingByFather, Generation.Zero, Consanguinity.Sibling),
+      Adoptive: ToTypedArray(adoptiveChildren, RelationshipType.AdoptiveSibling, Generation.Zero, Consanguinity.Sibling),
+      Step: ToTypedArray(stepParentChildren, RelationshipType.StepSibling, Generation.Zero, Consanguinity.Sibling));
   }
 
   public RelativeInfo[] GetChildren(RelativeInfo[] relativeInfos) =>
