@@ -32,7 +32,7 @@ internal class RelationshipTypeFormatterRu
       _Converters =
       [
         [Guard],
-        [A1_C0,],
+        [A1_C0, A1_CM],
         [AN_C0,]
       ];
     }
@@ -41,7 +41,7 @@ internal class RelationshipTypeFormatterRu
       _Gen = Generation.Zero - _Gen;
       _Converters =
       [
-        [D0_C0, D0_CN],
+        [D0_C0, D0_CM],
         [D1_C0],
         [DN_C0],
       ];
@@ -112,7 +112,8 @@ internal class RelationshipTypeFormatterRu
   protected string AddConsanguinity(string main)
   {
     var ret = main;
-    var consanguinity = _Con;
+    var consanguinityStartLevel = new Consanguinity(_Gen.Value);
+    var consanguinity = _Con - consanguinityStartLevel;
     var maxLevel = _ConsanguinityMaxLevel;
     Row row;
 
@@ -151,7 +152,6 @@ internal class RelationshipTypeFormatterRu
     throw new ArgumentException($"Not supported Type={_Type}, Sex={_Sex}, G{_Gen.Value}, C{_Con.Value}");
   }
 
-
   protected string D0_C0()
   {
     var table = new Table
@@ -175,7 +175,7 @@ internal class RelationshipTypeFormatterRu
     return ret;
   }
 
-  protected string D0_CN()
+  protected string D0_CM()
   {
     var table = new Table
     {
@@ -229,6 +229,19 @@ internal class RelationshipTypeFormatterRu
     };
 
     var ret = ToString(table);
+
+    return ret;
+  }
+
+  protected string A1_CM()
+  {
+    var table = new Table
+    {
+      [RelationshipType.Child] = new(F: S.RelAunt, M: S.RelUncle, U: S.RelUncleAunt)
+    };
+
+    var ret = ToString(table);
+    ret = AddConsanguinity(ret);
 
     return ret;
   }
