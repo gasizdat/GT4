@@ -117,7 +117,7 @@ internal class RelativesProvider : TableBase, IRelativesProvider
       RelationshipType.Parent => relativeType switch
       {
         RelationshipType.Child => --startGeneration,
-        RelationshipType.Parent or 
+        RelationshipType.Parent or
         RelationshipType.AdoptiveParent => ++startGeneration,
         _ => throw UnsupportedRelationshipException()
       },
@@ -309,17 +309,19 @@ internal class RelativesProvider : TableBase, IRelativesProvider
     var fatherChildren = allFatherChildren.Except(commonChildren, _RelativeInfoComparer);
     var motherChildren = allMotherChildren.Except(commonChildren, _RelativeInfoComparer);
     var adoptiveChildrenOfNativeParents = parents.Native
-      .SelectMany(p => p.RelativeInfos)
-      .Where(r => r.Type == RelationshipType.AdoptiveChild);
+        .SelectMany(p => p.RelativeInfos)
+        .Where(r => r.Type == RelationshipType.AdoptiveChild);
     var childrenOfAdoptiveParents = parents.Adoptive
         .SelectMany(p => p.RelativeInfos.Select(r => r with { Date = p.Date }))
         .Where(r => r.Type == RelationshipType.Child || (r.Type == RelationshipType.AdoptiveChild && r.Id != person.Id));
     var adoptiveChildren = ((IEnumerable<RelativeInfo>)[.. adoptiveChildrenOfNativeParents, .. childrenOfAdoptiveParents])
-      .Distinct(_RelativeInfoComparer);
+        .Distinct(_RelativeInfoComparer)
+        .Except(fatherChildren, _RelativeInfoComparer)
+        .Except(motherChildren, _RelativeInfoComparer);
     var stepParentChildren = parents.Step
-      .SelectMany(p => p.RelativeInfos.Select(r => r with { Date = p.Date }))
-      .Where(r => r.Type == RelationshipType.Child || r.Type == RelationshipType.AdoptiveChild)
-      .Distinct(_RelativeInfoComparer);
+        .SelectMany(p => p.RelativeInfos.Select(r => r with { Date = p.Date }))
+        .Where(r => r.Type == RelationshipType.Child || r.Type == RelationshipType.AdoptiveChild)
+        .Distinct(_RelativeInfoComparer);
 
     return new Siblings(
       Native: ToTypedArray(commonChildren, RelationshipType.Sibling, Generation.Zero, Consanguinity.Sibling),
