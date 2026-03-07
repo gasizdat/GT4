@@ -81,7 +81,15 @@ internal class RelationshipTypeFormatterRu
     }
 
     var ret = row.ToString(_Sex);
-    if (row.SubType.HasValue)
+    if (ret == string.Empty)
+    {
+      if (!row.SubType.HasValue)
+      {
+        Guard();
+      }
+      ret = ToString(table, row.SubType.Value);
+    }
+    else if (row.SubType.HasValue)
     {
       ret = string.Format(ret, ToString(table, row.SubType.Value));
     }
@@ -188,11 +196,10 @@ internal class RelationshipTypeFormatterRu
 
   protected string D0_CM()
   {
-    var siblings = new Row(F: S.RelSister, M: S.RelBrother, U: S.RelSibling);
     var table = new Table
     {
-      [RelationshipType.Child] = siblings,
-      [RelationshipType.Sibling] = siblings,
+      [RelationshipType.Child] = new(F: S.RelSister, M: S.RelBrother, U: S.RelSibling),
+      [RelationshipType.Sibling] = new(RelationshipType.Child),
       [RelationshipType.SiblingByFather] = new(F: S.RelParental_1, M: S.RelParental_1, U: S.RelParental_1, RelationshipType.Sibling),
       [RelationshipType.SiblingByMother] = new(F: S.RelMaternal_1, M: S.RelMaternal_1, U: S.RelMaternal_1, RelationshipType.Sibling),
     };
@@ -247,11 +254,11 @@ internal class RelationshipTypeFormatterRu
 
   protected string A1_CM()
   {
-    var uncleAunt = new Row(F: S.RelAunt, M: S.RelUncle, U: S.RelUncleAunt);
     var table = new Table
     {
-      [RelationshipType.Child] = uncleAunt,
-      [RelationshipType.Sibling] = uncleAunt,
+      [RelationshipType.Child] = new(F: S.RelAunt, M: S.RelUncle, U: S.RelUncleAunt),
+      [RelationshipType.Sibling] = new(RelationshipType.Child),
+      [RelationshipType.Spouse] = new(RelationshipType.Child),
     };
 
     var ret = ToString(table);
@@ -276,17 +283,16 @@ internal class RelationshipTypeFormatterRu
 
   protected string AN_CM()
   {
-    if(_Gen.Value >= _Con.Value)
+    if (_Gen.Value >= _Con.Value)
     {
       Guard();
     }
 
-    var grandParents = new Row(F: S.RelGrandMother, M: S.RelGrandFather, U: S.RelGrandParent);
     var table = new Table
     {
-      [RelationshipType.Child] = grandParents,
-      [RelationshipType.Sibling] = grandParents,
-      [RelationshipType.Spouse] = grandParents,
+      [RelationshipType.Child] = new(F: S.RelGrandMother, M: S.RelGrandFather, U: S.RelGrandParent),
+      [RelationshipType.Sibling] = new(RelationshipType.Child),
+      [RelationshipType.Spouse] = new(RelationshipType.Child),
     };
 
     var ret = ToString(table);
