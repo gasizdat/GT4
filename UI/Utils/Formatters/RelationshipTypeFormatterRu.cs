@@ -42,8 +42,8 @@ internal class RelationshipTypeFormatterRu
       _Converters =
       [
         [D0_C0, D0_CM],
-        [D1_C0],
-        [DN_C0],
+        [D1_C0, D1_CM],
+        [DN_C0, DN_CM],
       ];
     }
   }
@@ -200,6 +200,7 @@ internal class RelationshipTypeFormatterRu
     {
       [RelationshipType.Child] = new(F: S.RelSister, M: S.RelBrother, U: S.RelSibling),
       [RelationshipType.Sibling] = new(RelationshipType.Child),
+      [RelationshipType.AdoptiveSibling] = new(F: S.RelAdoptiveFemale_1, M: S.RelAdoptiveMale_1, U: S.RelAdoptiveInvariant_1, RelationshipType.Sibling),
       [RelationshipType.SiblingByFather] = new(F: S.RelParental_1, M: S.RelParental_1, U: S.RelParental_1, RelationshipType.Sibling),
       [RelationshipType.SiblingByMother] = new(F: S.RelMaternal_1, M: S.RelMaternal_1, U: S.RelMaternal_1, RelationshipType.Sibling),
     };
@@ -224,6 +225,20 @@ internal class RelationshipTypeFormatterRu
     return ret;
   }
 
+  protected string D1_CM()
+  {
+    var table = new Table
+    {
+      [RelationshipType.Child] = new(F: S.RelNiece, M: S.RelNephew, U: S.RelNephewNiece),
+      [RelationshipType.AdoptiveChild] = new(F: S.RelAdoptiveFemale_1, M: S.RelAdoptiveMale_1, U: S.RelAdoptiveInvariant_1, RelationshipType.Child),
+    };
+
+    var ret = ToString(table);
+    ret = AddConsanguinity(ret, _Con);
+
+    return ret;
+  }
+
   protected string DN_C0()
   {
     var table = new Table
@@ -234,6 +249,21 @@ internal class RelationshipTypeFormatterRu
 
     var ret = ToString(table);
     ret = AddGreatness(ret);
+
+    return ret;
+  }
+
+  protected string DN_CM()
+  {
+    var table = new Table
+    {
+      [RelationshipType.Child] = new(F: S.RelGrandDaughter, M: S.RelGrandSon, U: S.RelGrandChild),
+      [RelationshipType.AdoptiveChild] = new(F: S.RelAdoptiveFemale_1, M: S.RelAdoptiveMale_1, U: S.RelAdoptiveInvariant_1, RelationshipType.Child),
+    };
+
+    var ret = ToString(table);
+    ret = AddGreatness(ret);
+    ret = AddConsanguinity(ret, _Con + Consanguinity.Sibling);
 
     return ret;
   }
@@ -292,6 +322,7 @@ internal class RelationshipTypeFormatterRu
     {
       [RelationshipType.Child] = new(F: S.RelGrandMother, M: S.RelGrandFather, U: S.RelGrandParent),
       [RelationshipType.Sibling] = new(RelationshipType.Child),
+      [RelationshipType.AdoptiveSibling] = new(F: S.RelAdoptiveFemale_1, M: S.RelAdoptiveMale_1, U: S.RelAdoptiveInvariant_1, RelationshipType.Sibling),
       [RelationshipType.Spouse] = new(RelationshipType.Child),
     };
 

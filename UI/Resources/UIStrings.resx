@@ -616,4 +616,13 @@ genealogy tree and enjoy!</value>
   <data name="RelInLawMale" xml:space="preserve">
     <value>In-law</value>
   </data>
+  <data name="RelNephew" xml:space="preserve">
+    <value>Nephew</value>
+  </data>
+  <data name="RelNiece" xml:space="preserve">
+    <value>Niece</value>
+  </data>
+  <data name="RelNephewNiece" xml:space="preserve">
+    <value>Nephew or niece</value>
+  </data>
 </root>

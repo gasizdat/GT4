@@ -616,4 +616,13 @@
   <data name="RelInLawMale" xml:space="preserve">
     <value>Свойственник</value>
   </data>
+  <data name="RelNephew" xml:space="preserve">
+    <value>Племянник</value>
+  </data>
+  <data name="RelNiece" xml:space="preserve">
+    <value>Племянница</value>
+  </data>
+  <data name="RelNephewNiece" xml:space="preserve">
+    <value>Племянник или племянница</value>
+  </data>
 </root>

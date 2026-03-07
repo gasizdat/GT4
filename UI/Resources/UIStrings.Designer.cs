@@ -19,7 +19,7 @@ namespace GT4.UI.Resources {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "18.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class UIStrings {
@@ -1160,11 +1160,38 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Nephew.
+        /// </summary>
+        public static string RelNephew {
+            get {
+                return ResourceManager.GetString("RelNephew", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Nephew or niece.
+        /// </summary>
+        public static string RelNephewNiece {
+            get {
+                return ResourceManager.GetString("RelNephewNiece", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to - {0}{1}.
         /// </summary>
         public static string RelNFemale_ru_2 {
             get {
                 return ResourceManager.GetString("RelNFemale_ru_2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Niece.
+        /// </summary>
+        public static string RelNiece {
+            get {
+                return ResourceManager.GetString("RelNiece", resourceCulture);
             }
         }
         
