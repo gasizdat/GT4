@@ -45,7 +45,9 @@ public class RelationshipTypeFormatterTests
   public void RU_UnknownSex_Parent(int? generation, string expected)
   {
     SetRu();
-    var actual = _formatter.ToString(
+    var formatter = new RelationshipTypeFormatter2();
+
+    var actual = formatter.ToString(
       RelationshipType.Parent,
       BiologicalSex.Unknown,
       ToGeneration(generation),
@@ -127,11 +129,12 @@ public class RelationshipTypeFormatterTests
   public void RU_Female_UncleAunt_Regression()
   {
     SetRu();
-    var actual = _formatter.ToString(
+    var formatter = new RelationshipTypeFormatter2();
+    var actual = formatter.ToString(
       RelationshipType.Sibling,
       BiologicalSex.Female,
       ToGeneration(4),
-      ToConsanguinity(4));
+      ToConsanguinity(5));
 
     Assert.Equal("Двоюродная пра-пра-бабушка", actual);
   }
@@ -159,24 +162,25 @@ public class RelationshipTypeFormatterTests
   }
 
   [Theory]
-  [InlineData(0, 1, "Двоюродный брат или сестра")]
-  [InlineData(0, 2, "Троюродный брат или сестра")]
-  [InlineData(0, 55, "56-юродный брат или сестра")]
-  [InlineData(1, 2, "Двоюродный дядя или тётя")]
-  [InlineData(1, 3, "Троюродный дядя или тётя")]
-  [InlineData(1, 11, "11-юродный дядя или тётя")]
-  [InlineData(2, 3, "Троюродный дедушка или бабушка")]
-  [InlineData(2, 4, "Четвероюродный дедушка или бабушка")]
-  [InlineData(2, 24, "24-юродный дедушка или бабушка")]
-  [InlineData(3, 4, "Троюродный пра-дедушка или бабушка")]
-  [InlineData(3, 6, "5-юродный пра-дедушка или бабушка")]
-  [InlineData(13, 15, "Четвероюродный 11-пра-дедушка или бабушка")]
-  [InlineData(10, 15, "7-юродный 8-пра-дедушка или бабушка")]
-  [InlineData(11, 10, "Unsupported or wrong relationship: Type=Child, Generation { Value = 11 }, Consanguinity { Value = 10 }")]
+  [InlineData(0, 2, "Двоюродный брат или сестра")]
+  [InlineData(0, 3, "Троюродный брат или сестра")]
+  [InlineData(0, 56, "56-юродный брат или сестра")]
+  [InlineData(1, 3, "Двоюродный дядя или тётя")]
+  [InlineData(1, 4, "Троюродный дядя или тётя")]
+  [InlineData(1, 12, "11-юродный дядя или тётя")]
+  [InlineData(2, 4, "Троюродный дедушка или бабушка")]
+  [InlineData(2, 5, "Четвероюродный дедушка или бабушка")]
+  [InlineData(2, 25, "24-юродный дедушка или бабушка")]
+  [InlineData(3, 5, "Троюродный пра-дедушка или бабушка")]
+  [InlineData(3, 7, "5-юродный пра-дедушка или бабушка")]
+  [InlineData(13, 16, "Четвероюродный 11-пра-дедушка или бабушка")]
+  [InlineData(10, 16, "7-юродный 8-пра-дедушка или бабушка")]
+  [InlineData(11, 11, "Unsupported or wrong relationship: Type=Child, Sex=Unknown, G11, C11")]
   public void RU_UnknownSex_Cousin(int generation, int consanguinity, string expected)
   {
     SetRu();
-    var actual = _formatter.ToString(
+    var formatter = new RelationshipTypeFormatter2();
+    var actual = formatter.ToString(
       RelationshipType.Child,
       BiologicalSex.Unknown,
       ToGeneration(generation),
