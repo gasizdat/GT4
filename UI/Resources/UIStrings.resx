@@ -547,65 +547,50 @@ genealogy tree and enjoy!</value>
   <data name="RelGrandUncleAunt_en" xml:space="preserve">
     <value>Grand uncle or aunt</value>
   </data>
-  <data name="Rel2Male_ru_1" xml:space="preserve">
-    <value>- {0}</value>
+  <data name="Rel2Male_1" xml:space="preserve">
+    <value>Second {0}</value>
   </data>
-  <data name="Rel3Male_ru_1" xml:space="preserve">
-    <value>- {0}</value>
+  <data name="Rel3Male_1" xml:space="preserve">
+    <value>Third {0}</value>
   </data>
-  <data name="Rel3Unknown_ru_1" xml:space="preserve">
-    <value>- {0}</value>
+  <data name="Rel3Unknown_1" xml:space="preserve">
+    <value>Third {0}</value>
   </data>
-  <data name="Rel4Male_ru_1" xml:space="preserve">
-    <value>- {0}</value>
+  <data name="Rel4Male_1" xml:space="preserve">
+    <value>Fourth {0}</value>
   </data>
-  <data name="RelNMale_ru_2" xml:space="preserve">
-    <value>- {0}{1}</value>
+  <data name="RelNMale_2" xml:space="preserve">
+    <value>{0}th {1}</value>
   </data>
-  <data name="Rel4Unknown_ru_1" xml:space="preserve">
-    <value>- {0}</value>
+  <data name="Rel4Unknown_1" xml:space="preserve">
+    <value>Fourth {0}</value>
   </data>
-  <data name="RelNUnknown_ru_2" xml:space="preserve">
-    <value>- {0}{1}</value>
+  <data name="RelNUnknown_2" xml:space="preserve">
+    <value>{0}th {1}</value>
   </data>
-  <data name="Rel2Female_ru_1" xml:space="preserve">
-    <value>- {0}</value>
+  <data name="Rel2Unknown_1" xml:space="preserve">
+    <value>Second {0}</value>
   </data>
-  <data name="Rel2Unknown_ru_1" xml:space="preserve">
-    <value>- {0}</value>
+  <data name="Rel3Female_1" xml:space="preserve">
+    <value>Third {0}</value>
   </data>
-  <data name="Rel3Female_ru_1" xml:space="preserve">
-    <value>- {0}</value>
+  <data name="Rel4Female_1" xml:space="preserve">
+    <value>Fourth {0}</value>
   </data>
-  <data name="Rel4Female_ru_1" xml:space="preserve">
-    <value>- {0}</value>
+  <data name="RelNFemale_2" xml:space="preserve">
+    <value>{0}th {1}</value>
   </data>
-  <data name="RelNFemale_ru_2" xml:space="preserve">
-    <value>- {0}{1}</value>
-  </data>
-  <data name="RelCousinThird_en" xml:space="preserve">
-    <value>Third cousin</value>
-  </data>
-  <data name="RelCousinN_1_en" xml:space="preserve">
-    <value>{0} cousin</value>
-  </data>
-  <data name="RelCousinFirst_en" xml:space="preserve">
+  <data name="RelCousin_en" xml:space="preserve">
     <value>Cousin</value>
   </data>
-  <data name="RelCousinSecond_en" xml:space="preserve">
-    <value>Second cousin</value>
+  <data name="Rel1Removed_en_1" xml:space="preserve">
+    <value>{0} once removed</value>
   </data>
-  <data name="RelCousin1Removed_en" xml:space="preserve">
-    <value>once removed</value>
+  <data name="Rel2Removed_en_1" xml:space="preserve">
+    <value>{0} twice removed</value>
   </data>
-  <data name="RelCousin2Removed_en" xml:space="preserve">
-    <value>twice removed</value>
-  </data>
-  <data name="RelCousinNRemoved_en" xml:space="preserve">
-    <value>{0}x removed</value>
-  </data>
-  <data name="RelCousinFourth_en" xml:space="preserve">
-    <value>Fourth cousin</value>
+  <data name="RelNRemoved_en_2" xml:space="preserve">
+    <value>{0} {1}x removed</value>
   </data>
   <data name="RelInLawFemale" xml:space="preserve">
     <value>In-law</value>
@@ -619,10 +604,25 @@ genealogy tree and enjoy!</value>
   <data name="RelNephew" xml:space="preserve">
     <value>Nephew</value>
   </data>
+  <data name="RelGrandNephew_en" xml:space="preserve">
+    <value>Grandnephew</value>
+  </data>
   <data name="RelNiece" xml:space="preserve">
     <value>Niece</value>
   </data>
+  <data name="RelGrandNiece_en" xml:space="preserve">
+    <value>Grandniece</value>
+  </data>
   <data name="RelNephewNiece" xml:space="preserve">
     <value>Nephew or niece</value>
+  </data>
+  <data name="RelGrandNephewNiece_en" xml:space="preserve">
+    <value>Grand nephew or niece</value>
+  </data>
+  <data name="Rel2Female_1" xml:space="preserve">
+    <value>Second {0}</value>
+  </data>
+  <data name="Rel3Removed_en_1" xml:space="preserve">
+    <value>{0} trice removed </value>
   </data>
 </root>

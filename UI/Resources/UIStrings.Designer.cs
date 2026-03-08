@@ -773,83 +773,110 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to - {0}.
+        ///   Looks up a localized string similar to {0} once removed.
         /// </summary>
-        public static string Rel2Female_ru_1 {
+        public static string Rel1Removed_en_1 {
             get {
-                return ResourceManager.GetString("Rel2Female_ru_1", resourceCulture);
+                return ResourceManager.GetString("Rel1Removed_en_1", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to - {0}.
+        ///   Looks up a localized string similar to Second {0}.
         /// </summary>
-        public static string Rel2Male_ru_1 {
+        public static string Rel2Female_1 {
             get {
-                return ResourceManager.GetString("Rel2Male_ru_1", resourceCulture);
+                return ResourceManager.GetString("Rel2Female_1", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to - {0}.
+        ///   Looks up a localized string similar to Second {0}.
         /// </summary>
-        public static string Rel2Unknown_ru_1 {
+        public static string Rel2Male_1 {
             get {
-                return ResourceManager.GetString("Rel2Unknown_ru_1", resourceCulture);
+                return ResourceManager.GetString("Rel2Male_1", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to - {0}.
+        ///   Looks up a localized string similar to {0} twice removed.
         /// </summary>
-        public static string Rel3Female_ru_1 {
+        public static string Rel2Removed_en_1 {
             get {
-                return ResourceManager.GetString("Rel3Female_ru_1", resourceCulture);
+                return ResourceManager.GetString("Rel2Removed_en_1", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to - {0}.
+        ///   Looks up a localized string similar to Second {0}.
         /// </summary>
-        public static string Rel3Male_ru_1 {
+        public static string Rel2Unknown_1 {
             get {
-                return ResourceManager.GetString("Rel3Male_ru_1", resourceCulture);
+                return ResourceManager.GetString("Rel2Unknown_1", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to - {0}.
+        ///   Looks up a localized string similar to Third {0}.
         /// </summary>
-        public static string Rel3Unknown_ru_1 {
+        public static string Rel3Female_1 {
             get {
-                return ResourceManager.GetString("Rel3Unknown_ru_1", resourceCulture);
+                return ResourceManager.GetString("Rel3Female_1", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to - {0}.
+        ///   Looks up a localized string similar to Third {0}.
         /// </summary>
-        public static string Rel4Female_ru_1 {
+        public static string Rel3Male_1 {
             get {
-                return ResourceManager.GetString("Rel4Female_ru_1", resourceCulture);
+                return ResourceManager.GetString("Rel3Male_1", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to - {0}.
+        ///   Looks up a localized string similar to {0} trice removed .
         /// </summary>
-        public static string Rel4Male_ru_1 {
+        public static string Rel3Removed_en_1 {
             get {
-                return ResourceManager.GetString("Rel4Male_ru_1", resourceCulture);
+                return ResourceManager.GetString("Rel3Removed_en_1", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to - {0}.
+        ///   Looks up a localized string similar to Third {0}.
         /// </summary>
-        public static string Rel4Unknown_ru_1 {
+        public static string Rel3Unknown_1 {
             get {
-                return ResourceManager.GetString("Rel4Unknown_ru_1", resourceCulture);
+                return ResourceManager.GetString("Rel3Unknown_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Fourth {0}.
+        /// </summary>
+        public static string Rel4Female_1 {
+            get {
+                return ResourceManager.GetString("Rel4Female_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Fourth {0}.
+        /// </summary>
+        public static string Rel4Male_1 {
+            get {
+                return ResourceManager.GetString("Rel4Male_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Fourth {0}.
+        /// </summary>
+        public static string Rel4Unknown_1 {
+            get {
+                return ResourceManager.GetString("Rel4Unknown_1", resourceCulture);
             }
         }
         
@@ -917,74 +944,11 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to once removed.
-        /// </summary>
-        public static string RelCousin1Removed_en {
-            get {
-                return ResourceManager.GetString("RelCousin1Removed_en", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to twice removed.
-        /// </summary>
-        public static string RelCousin2Removed_en {
-            get {
-                return ResourceManager.GetString("RelCousin2Removed_en", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Cousin.
         /// </summary>
-        public static string RelCousinFirst_en {
+        public static string RelCousin_en {
             get {
-                return ResourceManager.GetString("RelCousinFirst_en", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Fourth cousin.
-        /// </summary>
-        public static string RelCousinFourth_en {
-            get {
-                return ResourceManager.GetString("RelCousinFourth_en", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to {0} cousin.
-        /// </summary>
-        public static string RelCousinN_1_en {
-            get {
-                return ResourceManager.GetString("RelCousinN_1_en", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to {0}x removed.
-        /// </summary>
-        public static string RelCousinNRemoved_en {
-            get {
-                return ResourceManager.GetString("RelCousinNRemoved_en", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Second cousin.
-        /// </summary>
-        public static string RelCousinSecond_en {
-            get {
-                return ResourceManager.GetString("RelCousinSecond_en", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Third cousin.
-        /// </summary>
-        public static string RelCousinThird_en {
-            get {
-                return ResourceManager.GetString("RelCousinThird_en", resourceCulture);
+                return ResourceManager.GetString("RelCousin_en", resourceCulture);
             }
         }
         
@@ -1057,6 +1021,33 @@ namespace GT4.UI.Resources {
         public static string RelGrandMother {
             get {
                 return ResourceManager.GetString("RelGrandMother", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Grandnephew.
+        /// </summary>
+        public static string RelGrandNephew_en {
+            get {
+                return ResourceManager.GetString("RelGrandNephew_en", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Grand nephew or niece.
+        /// </summary>
+        public static string RelGrandNephewNiece_en {
+            get {
+                return ResourceManager.GetString("RelGrandNephewNiece_en", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Grandniece.
+        /// </summary>
+        public static string RelGrandNiece_en {
+            get {
+                return ResourceManager.GetString("RelGrandNiece_en", resourceCulture);
             }
         }
         
@@ -1178,11 +1169,11 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to - {0}{1}.
+        ///   Looks up a localized string similar to {0}th {1}.
         /// </summary>
-        public static string RelNFemale_ru_2 {
+        public static string RelNFemale_2 {
             get {
-                return ResourceManager.GetString("RelNFemale_ru_2", resourceCulture);
+                return ResourceManager.GetString("RelNFemale_2", resourceCulture);
             }
         }
         
@@ -1196,20 +1187,29 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to - {0}{1}.
+        ///   Looks up a localized string similar to {0}th {1}.
         /// </summary>
-        public static string RelNMale_ru_2 {
+        public static string RelNMale_2 {
             get {
-                return ResourceManager.GetString("RelNMale_ru_2", resourceCulture);
+                return ResourceManager.GetString("RelNMale_2", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to - {0}{1}.
+        ///   Looks up a localized string similar to {0} {1}x removed.
         /// </summary>
-        public static string RelNUnknown_ru_2 {
+        public static string RelNRemoved_en_2 {
             get {
-                return ResourceManager.GetString("RelNUnknown_ru_2", resourceCulture);
+                return ResourceManager.GetString("RelNRemoved_en_2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0}th {1}.
+        /// </summary>
+        public static string RelNUnknown_2 {
+            get {
+                return ResourceManager.GetString("RelNUnknown_2", resourceCulture);
             }
         }
         

@@ -62,7 +62,7 @@ internal abstract class RelationshipTypeFormatterBase
 
   protected Func<string> GetConverter()
   {
-    var gen = Math.Abs(Gen.Value);
+    var gen = AbsGen.Value;
     var candidates = _Converters.Length > gen ? _Converters[gen] : _Converters.Last();
     var ret = candidates.Length > Con.Value ? candidates[Con.Value] : candidates.Last();
 

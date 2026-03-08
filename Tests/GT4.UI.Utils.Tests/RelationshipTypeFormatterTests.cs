@@ -45,9 +45,7 @@ public class RelationshipTypeFormatterTests
   public void RU_UnknownSex_Parent(int? generation, string expected)
   {
     SetRu();
-    var formatter = new RelationshipTypeFormatter2();
-
-    var actual = formatter.ToString(
+    var actual = _formatter.ToString(
       RelationshipType.Parent,
       BiologicalSex.Unknown,
       ToGeneration(generation),
@@ -129,8 +127,7 @@ public class RelationshipTypeFormatterTests
   public void RU_Female_UncleAunt_Regression()
   {
     SetRu();
-    var formatter = new RelationshipTypeFormatter2();
-    var actual = formatter.ToString(
+    var actual = _formatter.ToString(
       RelationshipType.Sibling,
       BiologicalSex.Female,
       ToGeneration(4),
@@ -179,8 +176,7 @@ public class RelationshipTypeFormatterTests
   public void RU_UnknownSex_Cousin(int generation, int consanguinity, string expected)
   {
     SetRu();
-    var formatter = new RelationshipTypeFormatter2();
-    var actual = formatter.ToString(
+    var actual = _formatter.ToString(
       RelationshipType.Child,
       BiologicalSex.Unknown,
       ToGeneration(generation),

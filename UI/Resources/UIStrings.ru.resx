@@ -547,65 +547,50 @@
   <data name="RelGrandUncleAunt_en" xml:space="preserve">
     <value>-</value>
   </data>
-  <data name="Rel2Male_ru_1" xml:space="preserve">
+  <data name="Rel2Male_1" xml:space="preserve">
     <value>Двоюродный {0}</value>
   </data>
-  <data name="Rel3Male_ru_1" xml:space="preserve">
+  <data name="Rel3Male_1" xml:space="preserve">
     <value>Троюродный {0}</value>
   </data>
-  <data name="Rel3Unknown_ru_1" xml:space="preserve">
+  <data name="Rel3Unknown_1" xml:space="preserve">
     <value>Троюродный {0}</value>
   </data>
-  <data name="Rel4Male_ru_1" xml:space="preserve">
+  <data name="Rel4Male_1" xml:space="preserve">
     <value>Четвероюродный {0}</value>
   </data>
-  <data name="RelNMale_ru_2" xml:space="preserve">
+  <data name="RelNMale_2" xml:space="preserve">
     <value>{0}-юродный {1}</value>
   </data>
-  <data name="Rel4Unknown_ru_1" xml:space="preserve">
+  <data name="Rel4Unknown_1" xml:space="preserve">
     <value>Четвероюродный {0}</value>
   </data>
-  <data name="RelNUnknown_ru_2" xml:space="preserve">
+  <data name="RelNUnknown_2" xml:space="preserve">
     <value>{0}-юродный {1}</value>
   </data>
-  <data name="Rel2Female_ru_1" xml:space="preserve">
-    <value>Двоюродная {0}</value>
-  </data>
-  <data name="Rel2Unknown_ru_1" xml:space="preserve">
+  <data name="Rel2Unknown_1" xml:space="preserve">
     <value>Двоюродный {0}</value>
   </data>
-  <data name="Rel3Female_ru_1" xml:space="preserve">
+  <data name="Rel3Female_1" xml:space="preserve">
     <value>Троюродная {0}</value>
   </data>
-  <data name="Rel4Female_ru_1" xml:space="preserve">
+  <data name="Rel4Female_1" xml:space="preserve">
     <value>Четвероюродная {0}</value>
   </data>
-  <data name="RelNFemale_ru_2" xml:space="preserve">
+  <data name="RelNFemale_2" xml:space="preserve">
     <value>{0}-юродная {1}</value>
   </data>
-  <data name="RelCousinThird_en" xml:space="preserve">
+  <data name="RelCousin_en" xml:space="preserve">
     <value>-</value>
   </data>
-  <data name="RelCousinN_1_en" xml:space="preserve">
-    <value>{0} -</value>
+  <data name="Rel1Removed_en_1" xml:space="preserve">
+    <value>-{0}</value>
   </data>
-  <data name="RelCousinFirst_en" xml:space="preserve">
-    <value>-</value>
+  <data name="Rel2Removed_en_1" xml:space="preserve">
+    <value>-{0}</value>
   </data>
-  <data name="RelCousinSecond_en" xml:space="preserve">
-    <value>-</value>
-  </data>
-  <data name="RelCousin1Removed_en" xml:space="preserve">
-    <value>-</value>
-  </data>
-  <data name="RelCousin2Removed_en" xml:space="preserve">
-    <value>-</value>
-  </data>
-  <data name="RelCousinNRemoved_en" xml:space="preserve">
-    <value>{0} -</value>
-  </data>
-  <data name="RelCousinFourth_en" xml:space="preserve">
-    <value>-</value>
+  <data name="RelNRemoved_en_2" xml:space="preserve">
+    <value>-{0}{1}</value>
   </data>
   <data name="RelInLawFemale" xml:space="preserve">
     <value>Свойственница</value>
@@ -619,10 +604,25 @@
   <data name="RelNephew" xml:space="preserve">
     <value>Племянник</value>
   </data>
+  <data name="RelGrandNephew_en" xml:space="preserve">
+    <value>-</value>
+  </data>
   <data name="RelNiece" xml:space="preserve">
     <value>Племянница</value>
   </data>
+  <data name="RelGrandNiece_en" xml:space="preserve">
+    <value>-</value>
+  </data>
   <data name="RelNephewNiece" xml:space="preserve">
     <value>Племянник или племянница</value>
+  </data>
+  <data name="RelGrandNephewNiece_en" xml:space="preserve">
+    <value>-</value>
+  </data>
+  <data name="Rel2Female_1" xml:space="preserve">
+    <value>Двоюродная {0}</value>
+  </data>
+  <data name="Rel3Removed_en_1" xml:space="preserve">
+    <value>-{0}</value>
   </data>
 </root>

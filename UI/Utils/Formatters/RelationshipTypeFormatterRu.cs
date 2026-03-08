@@ -45,7 +45,7 @@ internal class RelationshipTypeFormatterRu : RelationshipTypeFormatterBase
 
     if (consanguinity > maxLevel)
     {
-      row = new Row(F: S.RelNFemale_ru_2, M: S.RelNMale_ru_2, U: S.RelNUnknown_ru_2);
+      row = new Row(F: S.RelNFemale_2, M: S.RelNMale_2, U: S.RelNUnknown_2);
       ret = string.Format(row.ToString(Sex), consanguinity.Value, ret);
 
       return ret;
@@ -53,15 +53,15 @@ internal class RelationshipTypeFormatterRu : RelationshipTypeFormatterBase
 
     if (consanguinity == maxLevel--)
     {
-      row = new Row(F: S.Rel4Female_ru_1, M: S.Rel4Male_ru_1, U: S.Rel4Unknown_ru_1);
+      row = new Row(F: S.Rel4Female_1, M: S.Rel4Male_1, U: S.Rel4Unknown_1);
     }
     else if (consanguinity == maxLevel--)
     {
-      row = new Row(F: S.Rel3Female_ru_1, M: S.Rel3Male_ru_1, U: S.Rel3Unknown_ru_1);
+      row = new Row(F: S.Rel3Female_1, M: S.Rel3Male_1, U: S.Rel3Unknown_1);
     }
     else if (consanguinity == maxLevel--)
     {
-      row = new Row(F: S.Rel2Female_ru_1, M: S.Rel2Male_ru_1, U: S.Rel2Unknown_ru_1);
+      row = new Row(F: S.Rel2Female_1, M: S.Rel2Male_1, U: S.Rel2Unknown_1);
     }
     else
     {

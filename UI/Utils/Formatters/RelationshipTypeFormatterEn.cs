@@ -11,6 +11,7 @@ internal class RelationshipTypeFormatterEn : RelationshipTypeFormatterBase
 {
   private readonly static Generation _GreatnessStartLevel = new Generation(2);
   private readonly static Generation _GreatnessMaxLevel = new Generation(4);
+  private readonly static Generation _RemovedMaxLevel = new Generation(3);
   private readonly static Consanguinity _ConsanguinityMaxLevel = new Consanguinity(4);
 
   public RelationshipTypeFormatterEn(RelationshipType type, BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
@@ -21,7 +22,7 @@ internal class RelationshipTypeFormatterEn : RelationshipTypeFormatterBase
   protected string AddGreatness(string main)
   {
     var ret = main;
-    var generation = Gen - _GreatnessStartLevel;
+    var generation = AbsGen - _GreatnessStartLevel;
 
     if (generation > _GreatnessMaxLevel)
     {
@@ -41,11 +42,17 @@ internal class RelationshipTypeFormatterEn : RelationshipTypeFormatterBase
   {
     var ret = main;
     var maxLevel = _ConsanguinityMaxLevel;
+
+    if (consanguinity < Consanguinity.Zero)
+    {
+      Guard();
+    }
+
     Row row;
 
     if (consanguinity > maxLevel)
     {
-      row = new Row(F: S.RelNFemale_ru_2, M: S.RelNMale_ru_2, U: S.RelNUnknown_ru_2);
+      row = new Row(F: S.RelNFemale_2, M: S.RelNMale_2, U: S.RelNUnknown_2);
       ret = string.Format(row.ToString(Sex), consanguinity.Value, ret);
 
       return ret;
@@ -53,15 +60,15 @@ internal class RelationshipTypeFormatterEn : RelationshipTypeFormatterBase
 
     if (consanguinity == maxLevel--)
     {
-      row = new Row(F: S.Rel4Female_ru_1, M: S.Rel4Male_ru_1, U: S.Rel4Unknown_ru_1);
+      row = new Row(F: S.Rel4Female_1, M: S.Rel4Male_1, U: S.Rel4Unknown_1);
     }
     else if (consanguinity == maxLevel--)
     {
-      row = new Row(F: S.Rel3Female_ru_1, M: S.Rel3Male_ru_1, U: S.Rel3Unknown_ru_1);
+      row = new Row(F: S.Rel3Female_1, M: S.Rel3Male_1, U: S.Rel3Unknown_1);
     }
     else if (consanguinity == maxLevel--)
     {
-      row = new Row(F: S.Rel2Female_ru_1, M: S.Rel2Male_ru_1, U: S.Rel2Unknown_ru_1);
+      row = new Row(F: S.Rel2Female_1, M: S.Rel2Male_1, U: S.Rel2Unknown_1);
     }
     else
     {
@@ -72,16 +79,26 @@ internal class RelationshipTypeFormatterEn : RelationshipTypeFormatterBase
     return ret;
   }
 
-  protected string AddAncestorConsanguinity(string main)
+  protected string AddRemoved(string main)
   {
-    var consanguinityStartLevel = new Consanguinity(Gen.Value);
-    if (Gen > Generation.Parent)
+    var ret = main;
+    var maxLevel = _RemovedMaxLevel;
+    if (AbsGen > maxLevel)
     {
-      // There is no any additional consaguinities between "дед" and "двоюродный дед"
-      --consanguinityStartLevel;
+      ret = string.Format(S.RelNRemoved_en_2, ret, AbsGen.Value);
     }
-    var consanguinity = Con - consanguinityStartLevel;
-    var ret = AddConsanguinity(main, consanguinity);
+    else if (AbsGen == maxLevel--)
+    {
+      ret = string.Format(S.Rel3Removed_en_1, ret);
+    }
+    else if (AbsGen == maxLevel--)
+    {
+      ret = string.Format(S.Rel2Removed_en_1, ret);
+    }
+    else if (AbsGen == maxLevel--)
+    {
+      ret = string.Format(S.Rel1Removed_en_1, ret);
+    }
 
     return ret;
   }
@@ -109,7 +126,7 @@ internal class RelationshipTypeFormatterEn : RelationshipTypeFormatterBase
     return ret;
   }
 
-  protected string D0_CM()
+  protected string D0_C1()
   {
     var table = new Table
     {
@@ -121,7 +138,6 @@ internal class RelationshipTypeFormatterEn : RelationshipTypeFormatterBase
     };
 
     var ret = ToString(table);
-    ret = AddConsanguinity(ret, Con);
 
     return ret;
   }
@@ -140,16 +156,31 @@ internal class RelationshipTypeFormatterEn : RelationshipTypeFormatterBase
     return ret;
   }
 
-  protected string D1_CM()
+  protected string D1_C1()
   {
     var table = new Table
     {
       [RelationshipType.Child] = new(F: S.RelNiece, M: S.RelNephew, U: S.RelNephewNiece),
-      [RelationshipType.AdoptiveChild] = new(F: S.RelAdoptiveFemale_1, M: S.RelAdoptiveMale_1, U: S.RelAdoptiveInvariant_1, RelationshipType.Child),
+      [RelationshipType.Sibling] = new(RelationshipType.Child),
+      [RelationshipType.AdoptiveSibling] = new(F: S.RelAdoptiveFemale_1, M: S.RelAdoptiveMale_1, U: S.RelAdoptiveInvariant_1, RelationshipType.Sibling),
     };
 
     var ret = ToString(table);
-    ret = AddConsanguinity(ret, Con);
+
+    return ret;
+  }
+
+  protected string DN_C1()
+  {
+    var table = new Table
+    {
+      [RelationshipType.Child] = new(F: S.RelGrandNiece_en, M: S.RelGrandNephew_en, U: S.RelGrandNephewNiece_en),
+      [RelationshipType.Sibling] = new(RelationshipType.Child),
+      [RelationshipType.AdoptiveSibling] = new(F: S.RelAdoptiveFemale_1, M: S.RelAdoptiveMale_1, U: S.RelAdoptiveInvariant_1, RelationshipType.Sibling),
+    };
+
+    var ret = ToString(table);
+    ret = AddGreatness(ret);
 
     return ret;
   }
@@ -170,15 +201,10 @@ internal class RelationshipTypeFormatterEn : RelationshipTypeFormatterBase
 
   protected string DN_CM()
   {
-    var table = new Table
-    {
-      [RelationshipType.Child] = new(F: S.RelGrandDaughter, M: S.RelGrandSon, U: S.RelGrandChild),
-      [RelationshipType.AdoptiveChild] = new(F: S.RelAdoptiveFemale_1, M: S.RelAdoptiveMale_1, U: S.RelAdoptiveInvariant_1, RelationshipType.Child),
-    };
-
-    var ret = ToString(table);
-    ret = AddGreatness(ret);
-    ret = AddConsanguinity(ret, Con + Consanguinity.Sibling);
+    var consanguinity = Con - Consanguinity.Sibling;
+    var ret = S.RelCousin_en;
+    ret = AddConsanguinity(ret, consanguinity);
+    ret = AddRemoved(ret);
 
     return ret;
   }
@@ -197,7 +223,7 @@ internal class RelationshipTypeFormatterEn : RelationshipTypeFormatterBase
     return ret;
   }
 
-  protected string A1_CM()
+  protected string A1_C2()
   {
     var table = new Table
     {
@@ -207,7 +233,6 @@ internal class RelationshipTypeFormatterEn : RelationshipTypeFormatterBase
     };
 
     var ret = ToString(table);
-    ret = AddAncestorConsanguinity(ret);
 
     return ret;
   }
@@ -233,29 +258,40 @@ internal class RelationshipTypeFormatterEn : RelationshipTypeFormatterBase
       Guard();
     }
 
-    var table = new Table
+    var isUncle = Con - new Consanguinity(Gen.Value) == Consanguinity.Sibling;
+    if (isUncle)
     {
-      [RelationshipType.Child] = new(F: S.RelGrandMother, M: S.RelGrandFather, U: S.RelGrandParent),
-      [RelationshipType.Sibling] = new(RelationshipType.Child),
-      [RelationshipType.AdoptiveSibling] = new(F: S.RelAdoptiveFemale_1, M: S.RelAdoptiveMale_1, U: S.RelAdoptiveInvariant_1, RelationshipType.Sibling),
-      [RelationshipType.Spouse] = new(RelationshipType.Child),
-    };
+      var table = new Table
+      {
+        [RelationshipType.Child] = new(F: S.RelGrandAunt_en, M: S.RelGrandUncle_en, U: S.RelGrandUncleAunt_en),
+        [RelationshipType.Sibling] = new(RelationshipType.Child),
+        [RelationshipType.Spouse] = new(RelationshipType.Child),
+      };
 
-    var ret = ToString(table);
-    ret = AddGreatness(ret);
-    ret = AddAncestorConsanguinity(ret);
+      var ret = ToString(table);
+      ret = AddGreatness(ret);
 
-    return ret;
+      return ret;
+    }
+    else
+    {
+      var consanguinity = Con - Consanguinity.Sibling - new Consanguinity(Gen.Value);
+      var ret = S.RelCousin_en;
+      ret = AddConsanguinity(ret, consanguinity);
+      ret = AddRemoved(ret);
+
+      return ret;
+    }
   }
 
   protected override Func<string>[][] GetConverters()
   {
     if (Gen > Generation.Zero) //ancestors
     {
-      return 
+      return
       [
         [Guard],
-        [A1_C0, A1_CM],
+        [A1_C0, Guard, A1_C2, AN_CM],
         [AN_C0, AN_CM]
       ];
     }
@@ -263,9 +299,9 @@ internal class RelationshipTypeFormatterEn : RelationshipTypeFormatterBase
     {
       return
       [
-        [D0_C0, D0_CM],
-        [D1_C0, D1_CM],
-        [DN_C0, DN_CM],
+        [D0_C0, D0_C1, DN_CM],
+        [D1_C0, D1_C1, DN_CM],
+        [DN_C0, DN_C1, DN_CM],
       ];
     }
   }
