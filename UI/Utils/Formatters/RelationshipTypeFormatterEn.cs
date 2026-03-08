@@ -7,13 +7,13 @@ using Row = RelationshipTypeTableRow;
 using S = UIStrings;
 using Table = Dictionary<RelationshipType, RelationshipTypeTableRow>;
 
-internal class RelationshipTypeFormatterRu : RelationshipTypeFormatterBase
+internal class RelationshipTypeFormatterEn : RelationshipTypeFormatterBase
 {
   private readonly static Generation _GreatnessStartLevel = new Generation(2);
   private readonly static Generation _GreatnessMaxLevel = new Generation(4);
   private readonly static Consanguinity _ConsanguinityMaxLevel = new Consanguinity(4);
 
-  public RelationshipTypeFormatterRu(RelationshipType type, BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
+  public RelationshipTypeFormatterEn(RelationshipType type, BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
     : base(type, biologicalSex, generation, consanguinity)
   {
   }
@@ -21,7 +21,7 @@ internal class RelationshipTypeFormatterRu : RelationshipTypeFormatterBase
   protected string AddGreatness(string main)
   {
     var ret = main;
-    var generation = AbsGen - _GreatnessStartLevel;
+    var generation = Gen - _GreatnessStartLevel;
 
     if (generation > _GreatnessMaxLevel)
     {
@@ -252,7 +252,7 @@ internal class RelationshipTypeFormatterRu : RelationshipTypeFormatterBase
   {
     if (Gen > Generation.Zero) //ancestors
     {
-      return
+      return 
       [
         [Guard],
         [A1_C0, A1_CM],

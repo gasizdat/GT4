@@ -1,4 +1,5 @@
 ﻿using GT4.Core.Project.Dto;
+using GT4.UI.Utils.Formatters.Detailed;
 
 namespace GT4.UI.Utils.Formatters;
 
@@ -15,17 +16,18 @@ public class RelationshipTypeFormatter2 : IRelationshipTypeFormatter
       throw new ArgumentException("consanguinity < Consanguinity.Zero");
     }
 
-    string ret;
+    RelationshipTypeFormatterBase formatter;
 
     if (Language.Current == Language.RU)
     {
-      ret = new Detailed.RelationshipTypeFormatterRu(type, biologicalSex, generation, consanguinity).ToString();
+      formatter = new RelationshipTypeFormatterRu(type, biologicalSex, generation, consanguinity);
     }
     else
     {
-      throw new NotImplementedException($"Formatter for language {Language.Current.Code} is not implemented");
+      formatter = new RelationshipTypeFormatterEn(type, biologicalSex, generation, consanguinity);
     }
 
+    var ret = formatter.ToString();
     return ret;
   }
 }
