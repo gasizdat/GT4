@@ -135,6 +135,7 @@ internal class RelationshipTypeFormatterEn : RelationshipTypeFormatterBase
       [RelationshipType.AdoptiveSibling] = new(F: S.RelAdoptiveFemale_1, M: S.RelAdoptiveMale_1, U: S.RelAdoptiveInvariant_1, RelationshipType.Sibling),
       [RelationshipType.SiblingByFather] = new(F: S.RelParental_1, M: S.RelParental_1, U: S.RelParental_1, RelationshipType.Sibling),
       [RelationshipType.SiblingByMother] = new(F: S.RelMaternal_1, M: S.RelMaternal_1, U: S.RelMaternal_1, RelationshipType.Sibling),
+      [RelationshipType.StepSibling] = new(F: S.RelStepFemale_1, M: S.RelStepMale_1, U: S.RelStepInvariant_1, RelationshipType.Sibling),
     };
 
     var ret = ToString(table);
