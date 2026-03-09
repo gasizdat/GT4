@@ -1,5 +1,4 @@
 ﻿using GT4.Core.Project.Dto;
-using GT4.UI.Resources;
 using System.Diagnostics.CodeAnalysis;
 
 namespace GT4.UI.Utils.Formatters.Detailed;
@@ -15,7 +14,7 @@ internal abstract class RelationshipTypeFormatterBase
   private readonly Generation _AbsGen;
   private readonly Consanguinity _Con;
   private readonly Converters _Converters;
-  private static bool? _isRunningInTest;
+  private static bool? _IsRunningInTest;
 
   protected RelationshipType Type => _Type;
   protected BiologicalSex Sex => _Sex;
@@ -62,15 +61,15 @@ internal abstract class RelationshipTypeFormatterBase
   {
     get
     {
-      if (!_isRunningInTest.HasValue)
+      if (!_IsRunningInTest.HasValue)
       {
          string[] testHosts = ["xunit.runner", "nunit.framework", "Microsoft.VisualStudio.TestPlatform"];
-        _isRunningInTest = AppDomain
+        _IsRunningInTest = AppDomain
           .CurrentDomain
           .GetAssemblies()
           .Any(a => testHosts.Any(b => a?.FullName?.StartsWith(b) == true));
       }
-      return _isRunningInTest.Value;
+      return _IsRunningInTest.Value;
     }
   }
 
