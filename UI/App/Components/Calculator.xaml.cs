@@ -58,39 +58,39 @@ public partial class Calculator : ContentView
       null,
       OnArgChanged);
 
-  public double? X1
+  public object? X1
   {
-    get => (double?)GetValue(X1Property);
+    get => GetValue(X1Property);
     set => SetValue(X1Property, value);
   }
 
-  public double? X2
+  public object? X2
   {
-    get => (double?)GetValue(X2Property);
+    get => GetValue(X2Property);
     set => SetValue(X2Property, value);
   }
 
-  public double? X3
+  public object? X3
   {
-    get => (double?)GetValue(X3Property);
+    get => GetValue(X3Property);
     set => SetValue(X3Property, value);
   }
 
-  public double? X4
+  public object? X4
   {
-    get => (double?)GetValue(X4Property);
+    get => GetValue(X4Property);
     set => SetValue(X4Property, value);
   }
 
-  public double? X5
+  public object? X5
   {
-    get => (double?)GetValue(X5Property);
+    get => GetValue(X5Property);
     set => SetValue(X5Property, value);
   }
 
-  public double? Result
+  public object? Result
   {
-    get => (double?)GetValue(ResultProperty);
+    get => GetValue(ResultProperty);
     set => SetValue(ResultProperty, value);
   }
 
@@ -177,7 +177,7 @@ public partial class Calculator : ContentView
     }
   }
 
-  private static string? ToStringInvariant(double? value)
+  private static string? ToStringInvariant(object? value)
   {
     return Convert.ToString(value, CultureInfo.InvariantCulture);
   }
