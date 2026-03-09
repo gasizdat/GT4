@@ -101,7 +101,7 @@ public class RelationshipTypeFormatterTests
       RelationshipType.Sibling,
       BiologicalSex.Unknown,
       ToGeneration(generation),
-      ToConsanguinity(generation));
+      ToConsanguinity(generation) + Consanguinity.Sibling);
 
     Assert.Equal(expected, actual);
   }
@@ -118,7 +118,7 @@ public class RelationshipTypeFormatterTests
       RelationshipType.Sibling,
       BiologicalSex.Unknown,
       ToGeneration(generation),
-      ToConsanguinity(generation));
+      ToConsanguinity(generation) + Consanguinity.Sibling);
 
     Assert.Equal(expected, actual);
   }
@@ -137,15 +137,15 @@ public class RelationshipTypeFormatterTests
   }
 
   [Theory]
-  [InlineData(0, 1, "Cousin")]
-  [InlineData(0, 2, "Second cousin")]
-  [InlineData(0, 55, "55 cousin")]
-  [InlineData(1, 2, "Cousin once removed")]
-  [InlineData(1, 3, "Second cousin once removed")]
-  [InlineData(2, 3, "Cousin twice removed")]
-  [InlineData(2, 4, "Second cousin twice removed")]
-  [InlineData(15, 24, "9 cousin 15x removed")]
-  [InlineData(1, 1, "Unsupported or wrong relationship: Type=Child, Generation { Value = 1 }, Consanguinity { Value = 1 }")]
+  [InlineData(0, 2, "Cousin")]
+  [InlineData(0, 3, "Second cousin")]
+  [InlineData(0, 56, "55th cousin")]
+  [InlineData(1, 3, "Cousin once removed")]
+  [InlineData(1, 4, "Second cousin once removed")]
+  [InlineData(2, 4, "Cousin twice removed")]
+  [InlineData(2, 5, "Second cousin twice removed")]
+  [InlineData(15, 25, "9th cousin 15x removed")]
+  [InlineData(1, 1, "Unsupported or wrong relationship: Type=Child, Sex=Unknown, G1, C1")]
   public void EN_UnknownSex_Cousin(int generation, int consanguinity, string expected)
   {
     SetEn();
