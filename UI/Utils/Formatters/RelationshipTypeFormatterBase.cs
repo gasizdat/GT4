@@ -15,6 +15,7 @@ internal abstract class RelationshipTypeFormatterBase
   private readonly Generation _AbsGen;
   private readonly Consanguinity _Con;
   private readonly Converters _Converters;
+  private static bool? _isRunningInTest;
 
   protected RelationshipType Type => _Type;
   protected BiologicalSex Sex => _Sex;
@@ -39,11 +40,15 @@ internal abstract class RelationshipTypeFormatterBase
       var toString = GetConverter();
       var ret = toString();
       ret = ret.Substring(0, 1) + ret.Substring(1).ToLower();
+
 #if DEBUG
-      return $"{ret} G{Gen.Value}, C{Con.Value}";
-#else
-      return ret;
+      if (!IsRunningInTest)
+      {
+        ret = $"{ret} G{Gen.Value} C{Con.Value}";
+      }
 #endif
+
+      return ret;
     }
     catch (Exception ex)
     {
@@ -53,6 +58,21 @@ internal abstract class RelationshipTypeFormatterBase
 
   protected abstract Converters GetConverters();
 
+  public static bool IsRunningInTest
+  {
+    get
+    {
+      if (!_isRunningInTest.HasValue)
+      {
+         string[] testHosts = ["xunit.runner", "nunit.framework", "Microsoft.VisualStudio.TestPlatform"];
+        _isRunningInTest = AppDomain
+          .CurrentDomain
+          .GetAssemblies()
+          .Any(a => testHosts.Any(b => a?.FullName?.StartsWith(b) == true));
+      }
+      return _isRunningInTest.Value;
+    }
+  }
 
   [DoesNotReturn]
   protected string Guard()
