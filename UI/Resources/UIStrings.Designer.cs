@@ -764,6 +764,33 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {0} ({1}).
+        /// </summary>
+        public static string PersonAge_2 {
+            get {
+                return ResourceManager.GetString("PersonAge_2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} - {1}.
+        /// </summary>
+        public static string PersonDates_2 {
+            get {
+                return ResourceManager.GetString("PersonDates_2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to † {0}.
+        /// </summary>
+        public static string PersonDeathMark_1 {
+            get {
+                return ResourceManager.GetString("PersonDeathMark_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 🌐 Language.
         /// </summary>
         public static string PkrLanguageHint {
@@ -1070,7 +1097,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Grand unclue.
+        ///   Looks up a localized string similar to Grand uncle.
         /// </summary>
         public static string RelGrandUncle_en {
             get {

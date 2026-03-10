@@ -539,7 +539,7 @@ genealogy tree and enjoy!</value>
     <value>Date is known approximately</value>
   </data>
   <data name="RelGrandUncle_en" xml:space="preserve">
-    <value>Grand unclue</value>
+    <value>Grand uncle</value>
   </data>
   <data name="RelGrandAunt_en" xml:space="preserve">
     <value>Grand aunt</value>
@@ -624,5 +624,14 @@ genealogy tree and enjoy!</value>
   </data>
   <data name="Rel3Removed_en_1" xml:space="preserve">
     <value>{0} trice removed </value>
+  </data>
+  <data name="PersonDates_2" xml:space="preserve">
+    <value>{0} - {1}</value>
+  </data>
+  <data name="PersonDeathMark_1" xml:space="preserve">
+    <value>† {0}</value>
+  </data>
+  <data name="PersonAge_2" xml:space="preserve">
+    <value>{0} ({1})</value>
   </data>
 </root>

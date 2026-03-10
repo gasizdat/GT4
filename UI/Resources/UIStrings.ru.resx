@@ -625,4 +625,13 @@
   <data name="Rel3Removed_en_1" xml:space="preserve">
     <value>-{0}</value>
   </data>
+  <data name="PersonDates_2" xml:space="preserve">
+    <value>{0} - {1}</value>
+  </data>
+  <data name="PersonDeathMark_1" xml:space="preserve">
+    <value>† {0}</value>
+  </data>
+  <data name="PersonAge_2" xml:space="preserve">
+    <value>{0} ({1})</value>
+  </data>
 </root>
