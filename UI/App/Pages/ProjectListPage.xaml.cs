@@ -1,7 +1,9 @@
 using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
+using GT4.UI.Utils;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 
@@ -11,7 +13,7 @@ public partial class ProjectListPage : ContentPage
 {
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
-  private readonly IComparer<ProjectItem> _ProjectItemsComparer;
+  private readonly IComparer<ProjectInfo> _ProjectInfoComparer;
   private readonly ICommand _PageCommand;
   private readonly IProjectList _ProjectList;
   private readonly ObservableCollection<ProjectItem> _Projects = new();
@@ -20,7 +22,7 @@ public partial class ProjectListPage : ContentPage
   {
     _CancellationTokenProvider = services.GetRequiredService<ICancellationTokenProvider>();
     _CurrentProjectProvider = services.GetRequiredService<ICurrentProjectProvider>();
-    _ProjectItemsComparer = services.GetRequiredService<IComparer<ProjectItem>>();
+    _ProjectInfoComparer = services.GetRequiredService<IComparer<ProjectInfo>>();
     _PageCommand = new Command<object>(OnPageCommand);
     _ProjectList = services.GetRequiredService<IProjectList>();
 
@@ -69,7 +71,7 @@ public partial class ProjectListPage : ContentPage
       .GetItemsAsync(token)
       .Result
       .Select(projectInfo => new ProjectItem(projectInfo))
-      .OrderBy(item => item, _ProjectItemsComparer);
+      .OrderBy(item => item.Info, _ProjectInfoComparer);
 
     _Projects.Clear();
     foreach (var project in projects)
@@ -86,7 +88,7 @@ public partial class ProjectListPage : ContentPage
         await OnCreateProject();
         break;
       case string commandName when commandName == "Refresh":
-        Utils.RefreshView(this);
+        this.RefreshView();
         break;
     }
   }
