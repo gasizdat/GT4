@@ -3,6 +3,7 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Dialogs;
 using GT4.UI.Resources;
+using GT4.UI.Utils;
 using System.Windows.Input;
 
 namespace GT4.UI.Pages;
@@ -216,7 +217,7 @@ public partial class FamilyPage : ContentPage
           break;
 
         case string commandName when commandName == "Refresh":
-          Utils.RefreshView(this);
+          this.RefreshView();
           break;
       }
     }

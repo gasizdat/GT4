@@ -1,10 +1,9 @@
 ﻿using GT4.Core.Project;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
-using GT4.UI.Comparers;
-using GT4.UI.Converters;
-using GT4.UI.Formatters;
-using GT4.UI.Items;
+using GT4.UI.Utils.Comparers;
+using GT4.UI.Utils.Converters;
+using GT4.UI.Utils.Formatters;
 
 namespace GT4.UI;
 
@@ -17,7 +16,7 @@ public class ServiceBuilder
         .AddSingleton<IRelationshipTypeFormatter, RelationshipTypeFormatter>()
         .AddSingleton<INameTypeFormatter, NameTypeFormatter>()
         .AddSingleton<IBiologicalSexFormatter, BiologicalSexFormatter>()
-        .AddSingleton<IComparer<ProjectItem>, ProjectItemComparer>()
+        .AddSingleton<IComparer<ProjectInfo>, ProjectInfoComparer>()
         .AddSingleton<IComparer<PersonInfo>, PersonInfoComparer>()
         .AddSingleton<IComparer<Name>, NameComparer>()
         .AddKeyedSingleton<IDataConverter, ImageDataConverter>(DataCategory.PersonPhoto)

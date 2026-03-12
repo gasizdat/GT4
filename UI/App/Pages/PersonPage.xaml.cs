@@ -1,10 +1,11 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
-using GT4.UI.Converters;
 using GT4.UI.Dialogs;
-using GT4.UI.Formatters;
+using GT4.UI.Utils.Formatters;
 using GT4.UI.Resources;
+using GT4.UI.Utils;
+using GT4.UI.Utils.Converters;
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
@@ -29,7 +30,7 @@ public partial class PersonPage : ContentPage
   private string _Biography = string.Empty;
   private PersonPageSmartLayout _SmartLayout = new();
 
-  public PersonPage(IServiceProvider serviceProvider)
+  protected PersonPage(IServiceProvider serviceProvider)
   {
     _ServiceProvider = serviceProvider;
     _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
@@ -207,7 +208,7 @@ public partial class PersonPage : ContentPage
     Add(relativesProvider.GetAdoptiveChildren(personFullInfo.RelativeInfos));
     Add(stepChildren);
 
-    Utils.RefreshView(this);
+    this.RefreshView();
   }
 
   private async void OnPageCommand(object obj)
