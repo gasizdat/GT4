@@ -19,7 +19,7 @@ namespace GT4.UI.Resources {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "18.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class UIStrings {
@@ -292,6 +292,15 @@ namespace GT4.UI.Resources {
         public static string BtnNameYes {
             get {
                 return ResourceManager.GetString("BtnNameYes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Date is known approximately.
+        /// </summary>
+        public static string DateKnownApproximately {
+            get {
+                return ResourceManager.GetString("DateKnownApproximately", resourceCulture);
             }
         }
         
@@ -755,11 +764,146 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {0} ({1}).
+        /// </summary>
+        public static string PersonAge_2 {
+            get {
+                return ResourceManager.GetString("PersonAge_2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} - {1}.
+        /// </summary>
+        public static string PersonDates_2 {
+            get {
+                return ResourceManager.GetString("PersonDates_2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to † {0}.
+        /// </summary>
+        public static string PersonDeathMark_1 {
+            get {
+                return ResourceManager.GetString("PersonDeathMark_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 🌐 Language.
         /// </summary>
         public static string PkrLanguageHint {
             get {
                 return ResourceManager.GetString("PkrLanguageHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} once removed.
+        /// </summary>
+        public static string Rel1Removed_en_1 {
+            get {
+                return ResourceManager.GetString("Rel1Removed_en_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Second {0}.
+        /// </summary>
+        public static string Rel2Female_1 {
+            get {
+                return ResourceManager.GetString("Rel2Female_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Second {0}.
+        /// </summary>
+        public static string Rel2Male_1 {
+            get {
+                return ResourceManager.GetString("Rel2Male_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} twice removed.
+        /// </summary>
+        public static string Rel2Removed_en_1 {
+            get {
+                return ResourceManager.GetString("Rel2Removed_en_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Second {0}.
+        /// </summary>
+        public static string Rel2Unknown_1 {
+            get {
+                return ResourceManager.GetString("Rel2Unknown_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Third {0}.
+        /// </summary>
+        public static string Rel3Female_1 {
+            get {
+                return ResourceManager.GetString("Rel3Female_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Third {0}.
+        /// </summary>
+        public static string Rel3Male_1 {
+            get {
+                return ResourceManager.GetString("Rel3Male_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} trice removed .
+        /// </summary>
+        public static string Rel3Removed_en_1 {
+            get {
+                return ResourceManager.GetString("Rel3Removed_en_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Third {0}.
+        /// </summary>
+        public static string Rel3Unknown_1 {
+            get {
+                return ResourceManager.GetString("Rel3Unknown_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Fourth {0}.
+        /// </summary>
+        public static string Rel4Female_1 {
+            get {
+                return ResourceManager.GetString("Rel4Female_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Fourth {0}.
+        /// </summary>
+        public static string Rel4Male_1 {
+            get {
+                return ResourceManager.GetString("Rel4Male_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Fourth {0}.
+        /// </summary>
+        public static string Rel4Unknown_1 {
+            get {
+                return ResourceManager.GetString("Rel4Unknown_1", resourceCulture);
             }
         }
         
@@ -791,6 +935,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Aunt.
+        /// </summary>
+        public static string RelAunt {
+            get {
+                return ResourceManager.GetString("RelAunt", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Brother.
         /// </summary>
         public static string RelBrother {
@@ -814,6 +967,15 @@ namespace GT4.UI.Resources {
         public static string RelChildInLaw {
             get {
                 return ResourceManager.GetString("RelChildInLaw", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cousin.
+        /// </summary>
+        public static string RelCousin_en {
+            get {
+                return ResourceManager.GetString("RelCousin_en", resourceCulture);
             }
         }
         
@@ -845,11 +1007,11 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Grand-{0}.
+        ///   Looks up a localized string similar to Grand aunt.
         /// </summary>
-        public static string RelGrand_1 {
+        public static string RelGrandAunt_en {
             get {
-                return ResourceManager.GetString("RelGrand_1", resourceCulture);
+                return ResourceManager.GetString("RelGrandAunt_en", resourceCulture);
             }
         }
         
@@ -890,7 +1052,34 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Granparent.
+        ///   Looks up a localized string similar to Grandnephew.
+        /// </summary>
+        public static string RelGrandNephew_en {
+            get {
+                return ResourceManager.GetString("RelGrandNephew_en", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Grand nephew or niece.
+        /// </summary>
+        public static string RelGrandNephewNiece_en {
+            get {
+                return ResourceManager.GetString("RelGrandNephewNiece_en", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Grandniece.
+        /// </summary>
+        public static string RelGrandNiece_en {
+            get {
+                return ResourceManager.GetString("RelGrandNiece_en", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Grandparent.
         /// </summary>
         public static string RelGrandParent {
             get {
@@ -908,11 +1097,65 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Grand uncle.
+        /// </summary>
+        public static string RelGrandUncle_en {
+            get {
+                return ResourceManager.GetString("RelGrandUncle_en", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Grand uncle or aunt.
+        /// </summary>
+        public static string RelGrandUncleAunt_en {
+            get {
+                return ResourceManager.GetString("RelGrandUncleAunt_en", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Great-{0}.
+        /// </summary>
+        public static string RelGreat_1 {
+            get {
+                return ResourceManager.GetString("RelGreat_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Husband.
         /// </summary>
         public static string RelHusband {
             get {
                 return ResourceManager.GetString("RelHusband", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to In-law.
+        /// </summary>
+        public static string RelInLawFemale {
+            get {
+                return ResourceManager.GetString("RelInLawFemale", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to In-law.
+        /// </summary>
+        public static string RelInLawMale {
+            get {
+                return ResourceManager.GetString("RelInLawMale", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to In-law.
+        /// </summary>
+        public static string RelInLawUnknown {
+            get {
+                return ResourceManager.GetString("RelInLawUnknown", resourceCulture);
             }
         }
         
@@ -931,6 +1174,69 @@ namespace GT4.UI.Resources {
         public static string RelMother {
             get {
                 return ResourceManager.GetString("RelMother", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Nephew.
+        /// </summary>
+        public static string RelNephew {
+            get {
+                return ResourceManager.GetString("RelNephew", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Nephew or niece.
+        /// </summary>
+        public static string RelNephewNiece {
+            get {
+                return ResourceManager.GetString("RelNephewNiece", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0}th {1}.
+        /// </summary>
+        public static string RelNFemale_2 {
+            get {
+                return ResourceManager.GetString("RelNFemale_2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Niece.
+        /// </summary>
+        public static string RelNiece {
+            get {
+                return ResourceManager.GetString("RelNiece", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0}th {1}.
+        /// </summary>
+        public static string RelNMale_2 {
+            get {
+                return ResourceManager.GetString("RelNMale_2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} {1}x removed.
+        /// </summary>
+        public static string RelNRemoved_en_2 {
+            get {
+                return ResourceManager.GetString("RelNRemoved_en_2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0}th {1}.
+        /// </summary>
+        public static string RelNUnknown_2 {
+            get {
+                return ResourceManager.GetString("RelNUnknown_2", resourceCulture);
             }
         }
         
@@ -1075,6 +1381,24 @@ namespace GT4.UI.Resources {
         public static string RelStepSon {
             get {
                 return ResourceManager.GetString("RelStepSon", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Uncle.
+        /// </summary>
+        public static string RelUncle {
+            get {
+                return ResourceManager.GetString("RelUncle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Uncle or aunt.
+        /// </summary>
+        public static string RelUncleAunt {
+            get {
+                return ResourceManager.GetString("RelUncleAunt", resourceCulture);
             }
         }
         
