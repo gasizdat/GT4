@@ -1,10 +1,10 @@
 ﻿using System.Reflection;
 
-namespace GT4.UI;
+namespace GT4.UI.Utils;
 
-public static class Utils
+public static class ViewUtils
 {
-  public static void RefreshView(Microsoft.Maui.Controls.BindableObject element)
+  public static void RefreshView(this Microsoft.Maui.Controls.BindableObject element)
   {
     var elementType = element.GetType();
     var onPropertyChanged = TryGetMethod(elementType, "OnPropertyChanged", [typeof(string)]);

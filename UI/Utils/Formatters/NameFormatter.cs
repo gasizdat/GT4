@@ -1,8 +1,8 @@
 ﻿using GT4.Core.Project.Dto;
 
-namespace GT4.UI.Formatters;
+namespace GT4.UI.Utils.Formatters;
 
-internal class NameFormatter : INameFormatter
+public class NameFormatter : INameFormatter
 {
   private readonly static string _PartsDelimiter = " ";
   private readonly static char _InitialSuffix = '.';

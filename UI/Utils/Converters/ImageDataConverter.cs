@@ -1,7 +1,8 @@
 ﻿using GT4.Core.Project;
 using GT4.Core.Project.Dto;
 
-namespace GT4.UI.Converters;
+namespace GT4.UI.Utils.Converters;
+
 public class ImageDataConverter : IDataConverter
 {
   const string MimeTypeBmp = System.Net.Mime.MediaTypeNames.Image.Bmp;

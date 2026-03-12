@@ -1,4 +1,4 @@
-﻿namespace GT4.UI.Formatters;
+﻿namespace GT4.UI.Utils.Formatters;
 
 public enum NameFormat
 {

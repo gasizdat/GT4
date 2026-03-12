@@ -1,7 +1,7 @@
 ﻿using GT4.Core.Utils;
 using GT4.UI.Resources;
 
-namespace GT4.UI.Formatters;
+namespace GT4.UI.Utils.Formatters;
 
 public class DateSpanFormatter : IDateSpanFormatter
 {

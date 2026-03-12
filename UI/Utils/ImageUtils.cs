@@ -1,4 +1,4 @@
-﻿namespace GT4.UI;
+﻿namespace GT4.UI.Utils;
 
 public static class ImageUtils
 {
