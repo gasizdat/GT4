@@ -69,22 +69,41 @@ public partial class PersonInfoView : ContentView
         return null;
       }
 
-      var ret = new StringBuilder(_DateFormatter.ToString(Person.BirthDate));
+      string personDates = string.Empty;
+      var isDeathDateDisplayed = ShowDeathDate && Person.DeathDate.HasValue;
 
-      if (ShowDeathDate && Person.DeathDate.HasValue)
+      if (Person.BirthDate.Status != DateStatus.Unknown || !isDeathDateDisplayed)
       {
-        ret.Append(" - ");
-        ret.Append(_DateFormatter.ToString(Person.DeathDate));
+        personDates = _DateFormatter.ToString(Person.BirthDate);
+      }
+
+      if (isDeathDateDisplayed)
+      {
+        string deathDate = Person.DeathDate!.Value.Status == DateStatus.Unknown 
+                           ? string.Empty 
+                           : _DateFormatter.ToString(Person.DeathDate);
+        deathDate = string.Format(UIStrings.PersonDeathMark_1, deathDate);
+
+        if (personDates == string.Empty)
+        {
+          personDates = deathDate;
+        }
+        else
+        {
+          personDates = string.Format(UIStrings.PersonDates_2, personDates, deathDate);
+        }
       }
 
       if (ShowAge)
       {
-        ret.Append(" (");
-        ret.Append(_DateSpanFormatter.ToString((Person.DeathDate.HasValue ? Person.DeathDate : Date.Now) - Person.BirthDate));
-        ret.Append(")");
+        var timeSpan = (Person.DeathDate.HasValue ? Person.DeathDate : Date.Now) - Person.BirthDate;
+        if (timeSpan.HasValue && timeSpan.Value.Status != DateStatus.Unknown)
+        {
+          personDates = string.Format(UIStrings.PersonAge_2, personDates, _DateSpanFormatter.ToString(timeSpan));
+        }
       }
 
-      return ret.ToString();
+      return personDates;
     }
   }
   public ImageSource Photo => Person?.MainPhoto is null ? GetDefaultImage() : ImageUtils.ImageFromBytes(Person.MainPhoto.Content);
