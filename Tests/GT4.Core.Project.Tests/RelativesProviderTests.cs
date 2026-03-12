@@ -113,7 +113,7 @@ public class RelativesProviderTests
   }
 
   [Fact]
-  public async void GetRelativeInfosAsync_Childs_Parent()
+  public async Task GetRelativeInfosAsync_Childs_Parent()
   {
     var greatGreatGrandParent = _documentMock.CreatePerson();
     var greatGrandParent = _documentMock.CreatePerson();
@@ -173,7 +173,7 @@ public class RelativesProviderTests
   }
 
   [Fact]
-  public async void GetRelativeInfosAsync_Parent_Childs()
+  public async Task GetRelativeInfosAsync_Parent_Childs()
   {
     var parent = _documentMock.CreatePerson();
     var child = _documentMock.CreatePerson();
@@ -235,7 +235,7 @@ public class RelativesProviderTests
   }
 
   [Fact]
-  public async void GetRelativeInfosAsync_Parent_Childs_Spouse()
+  public async Task GetRelativeInfosAsync_Parent_Childs_Spouse()
   {
     var parent = _documentMock.CreatePerson();
     var child = _documentMock.CreatePerson();
@@ -297,7 +297,7 @@ public class RelativesProviderTests
   [Theory]
   [InlineData(false)]
   [InlineData(true)]
-  public async void GetRelativeInfosAsync_Childs_Parent_Spouse(bool addSpouse)
+  public async Task GetRelativeInfosAsync_Childs_Parent_Spouse(bool addSpouse)
   {
     var grandParent = _documentMock.CreatePerson();
     var grandParentSpouse = _documentMock.CreatePerson();
@@ -352,7 +352,7 @@ public class RelativesProviderTests
   [Theory]
   [InlineData(false)]
   [InlineData(true)]
-  public async void GetRelativeInfosAsync_Parent_Siblings(bool addSpouse)
+  public async Task GetRelativeInfosAsync_Parent_Siblings(bool addSpouse)
   {
     var fathersFathersParent = _documentMock.CreatePerson();
     var fathersMothersParent = _documentMock.CreatePerson();
@@ -473,7 +473,7 @@ public class RelativesProviderTests
   }
 
   [Fact]
-  public async void GetRelativeInfosAsync_Parents_Cousins()
+  public async Task GetRelativeInfosAsync_Parents_Cousins()
   {
     var greatGreatGrandParent = _documentMock.CreatePerson();
     var greatGrandParentSibling = _documentMock.CreatePerson();
@@ -616,7 +616,7 @@ public class RelativesProviderTests
   }
 
   [Fact]
-  public async void GetRelativeInfosAsync_Parents_Cousins_2()
+  public async Task GetRelativeInfosAsync_Parents_Cousins_2()
   {
     var greatGreatGrandParent = _documentMock.CreatePerson();
     var greatGrandParentSibling = _documentMock.CreatePerson();
@@ -755,7 +755,7 @@ public class RelativesProviderTests
   }
 
   [Fact]
-  public async void GetRelativeInfosAsync_Nepheu_Regression()
+  public async Task GetRelativeInfosAsync_Nepheu_Regression()
   {
     var father = _documentMock.CreatePerson(BiologicalSex.Male);
     var mother = _documentMock.CreatePerson(BiologicalSex.Female);
