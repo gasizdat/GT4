@@ -1,7 +1,8 @@
 ﻿using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
-using GT4.UI.Formatters;
+using GT4.UI.Utils;
+using GT4.UI.Utils.Formatters;
 using System.Windows.Input;
 
 namespace GT4.UI.Components;
@@ -161,7 +162,7 @@ public partial class RelativeInfoView : ContentView
     if (obj is RelativeInfoView view && oldValue != newValue)
     {
       view.ShowRelatives = false;
-      Utils.RefreshView(view);
+      view.RefreshView();
     }
   }
 

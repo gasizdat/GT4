@@ -503,7 +503,7 @@ genealogy tree and enjoy!</value>
     <value>Grandmother</value>
   </data>
   <data name="RelGrandParent" xml:space="preserve">
-    <value>Granparent</value>
+    <value>Grandparent</value>
   </data>
   <data name="RelDaughterInLaw" xml:space="preserve">
     <value>Daughter-in-law</value>
@@ -523,7 +523,115 @@ genealogy tree and enjoy!</value>
   <data name="RelGrandChild" xml:space="preserve">
     <value>Grandchild</value>
   </data>
-  <data name="RelGrand_1" xml:space="preserve">
-    <value>Grand-{0}</value>
+  <data name="RelGreat_1" xml:space="preserve">
+    <value>Great-{0}</value>
+  </data>
+  <data name="RelUncle" xml:space="preserve">
+    <value>Uncle</value>
+  </data>
+  <data name="RelAunt" xml:space="preserve">
+    <value>Aunt</value>
+  </data>
+  <data name="RelUncleAunt" xml:space="preserve">
+    <value>Uncle or aunt</value>
+  </data>
+  <data name="DateKnownApproximately" xml:space="preserve">
+    <value>Date is known approximately</value>
+  </data>
+  <data name="RelGrandUncle_en" xml:space="preserve">
+    <value>Grand uncle</value>
+  </data>
+  <data name="RelGrandAunt_en" xml:space="preserve">
+    <value>Grand aunt</value>
+  </data>
+  <data name="RelGrandUncleAunt_en" xml:space="preserve">
+    <value>Grand uncle or aunt</value>
+  </data>
+  <data name="Rel2Male_1" xml:space="preserve">
+    <value>Second {0}</value>
+  </data>
+  <data name="Rel3Male_1" xml:space="preserve">
+    <value>Third {0}</value>
+  </data>
+  <data name="Rel3Unknown_1" xml:space="preserve">
+    <value>Third {0}</value>
+  </data>
+  <data name="Rel4Male_1" xml:space="preserve">
+    <value>Fourth {0}</value>
+  </data>
+  <data name="RelNMale_2" xml:space="preserve">
+    <value>{0}th {1}</value>
+  </data>
+  <data name="Rel4Unknown_1" xml:space="preserve">
+    <value>Fourth {0}</value>
+  </data>
+  <data name="RelNUnknown_2" xml:space="preserve">
+    <value>{0}th {1}</value>
+  </data>
+  <data name="Rel2Unknown_1" xml:space="preserve">
+    <value>Second {0}</value>
+  </data>
+  <data name="Rel3Female_1" xml:space="preserve">
+    <value>Third {0}</value>
+  </data>
+  <data name="Rel4Female_1" xml:space="preserve">
+    <value>Fourth {0}</value>
+  </data>
+  <data name="RelNFemale_2" xml:space="preserve">
+    <value>{0}th {1}</value>
+  </data>
+  <data name="RelCousin_en" xml:space="preserve">
+    <value>Cousin</value>
+  </data>
+  <data name="Rel1Removed_en_1" xml:space="preserve">
+    <value>{0} once removed</value>
+  </data>
+  <data name="Rel2Removed_en_1" xml:space="preserve">
+    <value>{0} twice removed</value>
+  </data>
+  <data name="RelNRemoved_en_2" xml:space="preserve">
+    <value>{0} {1}x removed</value>
+  </data>
+  <data name="RelInLawFemale" xml:space="preserve">
+    <value>In-law</value>
+  </data>
+  <data name="RelInLawUnknown" xml:space="preserve">
+    <value>In-law</value>
+  </data>
+  <data name="RelInLawMale" xml:space="preserve">
+    <value>In-law</value>
+  </data>
+  <data name="RelNephew" xml:space="preserve">
+    <value>Nephew</value>
+  </data>
+  <data name="RelGrandNephew_en" xml:space="preserve">
+    <value>Grandnephew</value>
+  </data>
+  <data name="RelNiece" xml:space="preserve">
+    <value>Niece</value>
+  </data>
+  <data name="RelGrandNiece_en" xml:space="preserve">
+    <value>Grandniece</value>
+  </data>
+  <data name="RelNephewNiece" xml:space="preserve">
+    <value>Nephew or niece</value>
+  </data>
+  <data name="RelGrandNephewNiece_en" xml:space="preserve">
+    <value>Grand nephew or niece</value>
+  </data>
+  <data name="Rel2Female_1" xml:space="preserve">
+    <value>Second {0}</value>
+  </data>
+  <data name="Rel3Removed_en_1" xml:space="preserve">
+    <value>{0} trice removed </value>
+  </data>
+  <data name="PersonDates_2" xml:space="preserve">
+    <value>{0} - {1}</value>
+  </data>
+  <data name="PersonDeathMark_1" xml:space="preserve">
+    <value>† {0}</value>
+  </data>
+  <data name="PersonAge_2" xml:space="preserve">
+    <value>{0} ({1})</value>
   </data>
 </root>

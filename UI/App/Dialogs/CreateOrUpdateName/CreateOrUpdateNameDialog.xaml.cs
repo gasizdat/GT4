@@ -1,6 +1,6 @@
 using GT4.Core.Project.Dto;
-using GT4.UI.Formatters;
 using GT4.UI.Resources;
+using GT4.UI.Utils.Formatters;
 
 namespace GT4.UI.Dialogs;
 

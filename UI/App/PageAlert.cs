@@ -10,7 +10,7 @@ public static class PageAlert
     CurrentShell.ShowConfirmation(confirmationText);
 
   public static Task<bool> ShowConfirmation(this Page page, string confirmationText) =>
-    CurrentShell.DisplayAlert(
+    CurrentShell.DisplayAlertAsync(
       UIStrings.AlertTitleConfirmation,
       confirmationText,
       UIStrings.BtnNameYes,
@@ -20,5 +20,5 @@ public static class PageAlert
     CurrentShell.ShowError(exception);
 
   public static Task ShowError(this Page page, Exception exception) =>
-    page.DisplayAlert(UIStrings.AlertTitleError, exception.Message, UIStrings.BtnNameOk);
+    page.DisplayAlertAsync(UIStrings.AlertTitleError, exception.Message, UIStrings.BtnNameOk);
 }

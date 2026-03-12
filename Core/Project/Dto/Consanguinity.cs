@@ -27,4 +27,6 @@ public record struct Consanguinity(int Value) : IEquatable<Consanguinity>, IComp
   public static bool operator >=(Consanguinity left, Consanguinity right) => left.CompareTo(right) >= 0;
 
   public static readonly Consanguinity Zero = new Consanguinity(0);
+  public static readonly Consanguinity Sibling = new Consanguinity(1);
+  public static readonly Consanguinity UncleAunt = new Consanguinity(2);
 }
