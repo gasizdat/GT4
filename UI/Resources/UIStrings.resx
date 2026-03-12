@@ -634,4 +634,7 @@ genealogy tree and enjoy!</value>
   <data name="PersonAge_2" xml:space="preserve">
     <value>{0} ({1})</value>
   </data>
+  <data name="PersonSinceBirthDay_1" xml:space="preserve">
+    <value>{0} since birth</value>
+  </data>
 </root>

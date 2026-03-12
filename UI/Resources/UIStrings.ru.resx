@@ -634,4 +634,7 @@
   <data name="PersonAge_2" xml:space="preserve">
     <value>{0} ({1})</value>
   </data>
+  <data name="PersonSinceBirthDay_1" xml:space="preserve">
+    <value>{0} со дня рождения</value>
+  </data>
 </root>

@@ -791,6 +791,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {0} since birth.
+        /// </summary>
+        public static string PersonSinceBirthDay_1 {
+            get {
+                return ResourceManager.GetString("PersonSinceBirthDay_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 🌐 Language.
         /// </summary>
         public static string PkrLanguageHint {

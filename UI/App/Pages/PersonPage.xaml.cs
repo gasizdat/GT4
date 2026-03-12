@@ -83,6 +83,26 @@ public partial class PersonPage : ContentPage
     }
   }
 
+  public bool ShowSinceBirth
+  {
+    get
+    {
+      return _PersonFullInfo.BirthDate.Status < DateStatus.Unknown && _PersonFullInfo.DeathDate.HasValue;
+    }
+  }
+
+  public string SinceBirth
+  {
+    get
+    {
+      var dateSpan = Date.Now - _PersonFullInfo.BirthDate;
+      var ret = _DateSpanFormatter.ToString(dateSpan with { Status = DateStatus.DayUnknown});
+      ret = string.Format(UIStrings.PersonSinceBirthDay_1, ret);
+
+      return ret;
+    }
+  }
+
   public ICollection Relatives => _Relatives;
 
   public byte[][] Photos => _Photos;

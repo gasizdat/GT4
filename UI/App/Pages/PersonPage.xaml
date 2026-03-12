@@ -59,7 +59,7 @@
     <components:PageLayout.Header>
       <Grid
           ColumnDefinitions="Auto, *"
-          RowDefinitions="Auto, Auto, Auto, Auto, Auto">
+          RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto">
 
         <Label
             Grid.Row="0"
@@ -113,6 +113,15 @@
             Grid.Column="1"
             Style="{StaticResource FieldValue}"
             Text="{Binding Age, Source={x:Reference Root}}" />
+
+        <Label
+            Grid.Row="5"
+            Grid.Column="0"
+            Grid.ColumnSpan="2"
+            IsVisible="{Binding ShowSinceBirth, Source={x:Reference Root}}"
+            Style="{StaticResource FieldValue}"
+            Text="{Binding SinceBirth, Source={x:Reference Root}}" />
+          
       </Grid>
     </components:PageLayout.Header>
 

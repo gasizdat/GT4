@@ -14,7 +14,7 @@ public class ServiceBuilder
 
   static ServiceBuilder()
   {
-    var configuration = new ConfigurationBuilder()
+    IConfiguration configuration = new ConfigurationBuilder()
       .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
       .AddEnvironmentVariables()
       .Build();
