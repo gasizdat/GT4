@@ -24,9 +24,9 @@ public class DateFormatter : IDateFormatter
 
     if (date.HasValue)
     {
-      var year = YearToString(date.Value.Year);
-      var month = MonthToString(date.Value.Month);
-      var day = DayToString(date.Value.Day);
+      var year = YearToString(date.Value);
+      var month = MonthToString(date.Value);
+      var day = DayToString(date.Value);
       return date.Value.Status switch
       {
         DateStatus.WellKnown => ToString(_Configuration.FullFormat, year, month, day),
@@ -43,19 +43,46 @@ public class DateFormatter : IDateFormatter
     }
   }
 
-  protected static string YearToString(int year)
+  protected static string YearToString(Date date)
   {
-    var ret = year.ToString(D4);
+    var ret = date.Year.ToString(D4);
 
     return ret;
   }
 
-  protected string MonthToString(int month)
+  protected string MonthToString(Date date)
   {
     string ret;
+    var month = date.Month;
     if (_Configuration.MonthAsNumber)
     {
       ret = month.ToString(D2);
+    }
+    else if (Language.Current == Language.RU)
+    {
+      ret = month switch
+      {
+        1 => UIStrings.Month_01,
+        2 => UIStrings.Month_02,
+        3 => UIStrings.Month_03,
+        4 => UIStrings.Month_04,
+        5 => UIStrings.Month_05,
+        6 => UIStrings.Month_06,
+        7 => UIStrings.Month_07,
+        8 => UIStrings.Month_08,
+        9 => UIStrings.Month_09,
+        10 => UIStrings.Month_10,
+        11 => UIStrings.Month_11,
+        12 => UIStrings.Month_12,
+        _ => month.ToString(D2)
+      };
+
+      ret = ret.ToLower();
+
+      if (date.Status == DateStatus.WellKnown)
+      {
+        ret = MonthGenitiveRU(ret);
+      }
     }
     else
     {
@@ -79,9 +106,20 @@ public class DateFormatter : IDateFormatter
     return ret;
   }
 
-  protected static string DayToString(int day)
+  protected static string MonthGenitiveRU(string month)
   {
-    var ret = day.ToString(D2);
+    var ret = month.Last() switch
+    {
+      'ь' or 'й' => month.Substring(0, month.Length - 1) + "я",
+      _ => month + "a"
+    };
+
+    return ret;
+  }
+
+  protected static string DayToString(Date date)
+  {
+    var ret = date.Day.ToString(D2);
 
     return ret;
   }
