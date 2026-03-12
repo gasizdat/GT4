@@ -15,6 +15,7 @@ public partial class SelectDateDialog : ContentPage
   private int _Year = 0;
   private int _Month = 1;
   private int _Day = 1;
+  private bool _ApproximateSwitch = false;
   private bool _YearSwitch = false;
   private bool _MonthSwitch = false;
   private bool _DaySwitch = false;
@@ -141,6 +142,27 @@ public partial class SelectDateDialog : ContentPage
     }
   }
 
+  public bool ApproximateSwitch
+  {
+    get => _ApproximateSwitch;
+    set
+    {
+      if (_ApproximateSwitch != value)
+      {
+        _ApproximateSwitch = value;
+        if (_ApproximateSwitch)
+        {
+          YearSwitch = true;
+          MonthSwitch = false;
+          DaySwitch = false;
+        }
+
+        OnPropertyChanged(nameof(ApproximateSwitch));
+        Refresh();
+      }
+    }
+  }
+
   public bool YearSwitch
   {
     get => _YearSwitch;
@@ -151,6 +173,7 @@ public partial class SelectDateDialog : ContentPage
         _YearSwitch = value;
         if (!_YearSwitch)
         {
+          ApproximateSwitch = false;
           MonthSwitch = false;
         }
         OnPropertyChanged(nameof(YearSwitch));
@@ -192,6 +215,7 @@ public partial class SelectDateDialog : ContentPage
         _MonthSwitch = value;
         if (_MonthSwitch)
         {
+          ApproximateSwitch = false;
           YearSwitch = true;
         }
         else
@@ -236,6 +260,7 @@ public partial class SelectDateDialog : ContentPage
         _DaySwitch = value;
         if (_DaySwitch)
         {
+          ApproximateSwitch = false;
           MonthSwitch = true;
         }
         OnPropertyChanged(nameof(DaySwitch));
@@ -249,7 +274,10 @@ public partial class SelectDateDialog : ContentPage
     get
     {
       DateStatus status;
-      if (!YearSwitch)
+
+      if (_ApproximateSwitch)
+        status = DateStatus.YearApproximate;
+      else if (!YearSwitch)
         status = DateStatus.Unknown;
       else if (!MonthSwitch)
         status = DateStatus.MonthUnknown;
