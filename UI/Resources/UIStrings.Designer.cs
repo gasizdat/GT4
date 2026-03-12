@@ -656,7 +656,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}January.
+        ///   Looks up a localized string similar to January.
         /// </summary>
         public static string Month_01 {
             get {
@@ -665,7 +665,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}Fabruary.
+        ///   Looks up a localized string similar to Fabruary.
         /// </summary>
         public static string Month_02 {
             get {
@@ -674,7 +674,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}March.
+        ///   Looks up a localized string similar to March.
         /// </summary>
         public static string Month_03 {
             get {
@@ -683,7 +683,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}April.
+        ///   Looks up a localized string similar to April.
         /// </summary>
         public static string Month_04 {
             get {
@@ -692,7 +692,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}May.
+        ///   Looks up a localized string similar to May.
         /// </summary>
         public static string Month_05 {
             get {
@@ -701,7 +701,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}June.
+        ///   Looks up a localized string similar to June.
         /// </summary>
         public static string Month_06 {
             get {
@@ -710,7 +710,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}July.
+        ///   Looks up a localized string similar to July.
         /// </summary>
         public static string Month_07 {
             get {
@@ -719,7 +719,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}August.
+        ///   Looks up a localized string similar to August.
         /// </summary>
         public static string Month_08 {
             get {
@@ -728,7 +728,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}September.
+        ///   Looks up a localized string similar to September.
         /// </summary>
         public static string Month_09 {
             get {
@@ -737,7 +737,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}October.
+        ///   Looks up a localized string similar to October.
         /// </summary>
         public static string Month_10 {
             get {
@@ -746,7 +746,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}November.
+        ///   Looks up a localized string similar to November.
         /// </summary>
         public static string Month_11 {
             get {
@@ -755,7 +755,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}December.
+        ///   Looks up a localized string similar to December.
         /// </summary>
         public static string Month_12 {
             get {
