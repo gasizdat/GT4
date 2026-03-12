@@ -1,5 +1,7 @@
 ﻿using GT4.Core.Utils;
 using GT4.UI.Resources;
+using Microsoft.Extensions.Configuration;
+using System.Text.Json;
 
 namespace GT4.UI.Utils.Formatters;
 
@@ -7,21 +9,30 @@ public class DateFormatter : IDateFormatter
 {
   private const string D4 = "D4";
   private const string D2 = "D2";
+  private readonly Configuration.Date _Configuration;
+
+  public DateFormatter(IConfiguration configuration)
+  {
+    var dateConfig = configuration.GetSection(Configuration.Date.SectionName).Value;
+    var dto = dateConfig == null ? null : JsonSerializer.Deserialize<Configuration.Date>(dateConfig);
+    _Configuration = dto ?? new();
+  }
 
   public string ToString(Date? date)
   {
-    // TODO Use configuration
-
     // TODO Apply Date.Sign
 
     if (date.HasValue)
     {
+      var year = YearToString(date.Value.Year);
+      var month = MonthToString(date.Value.Month);
+      var day = DayToString(date.Value.Day);
       return date.Value.Status switch
       {
-        DateStatus.WellKnown => $"{date.Value.Year.ToString(D4)}-{date.Value.Month.ToString(D2)}-{date.Value.Day.ToString(D2)}",
-        DateStatus.DayUnknown => $"{date.Value.Year.ToString(D4)}-{date.Value.Month.ToString(D2)}",
-        DateStatus.MonthUnknown => date.Value.Year.ToString(D4),
-        DateStatus.YearApproximate => string.Format(UIStrings.DateStatusYearApproximate_1, date.Value.Year.ToString(D4)),
+        DateStatus.WellKnown => ToString(_Configuration.FullFormat, year, month, day),
+        DateStatus.DayUnknown => ToString(_Configuration.ShortFormat, year, month, day),
+        DateStatus.MonthUnknown => year,
+        DateStatus.YearApproximate => string.Format(UIStrings.DateStatusYearApproximate_1, year),
         DateStatus.Unknown => UIStrings.DateStatusUnknown,
         _ => $"⚠ Unexpected DateStatus={date.Value.Status}"
       };
@@ -30,5 +41,58 @@ public class DateFormatter : IDateFormatter
     {
       return UIStrings.DateStatusNotDefined;
     }
+  }
+
+  protected static string YearToString(int year)
+  {
+    var ret = year.ToString(D4);
+
+    return ret;
+  }
+
+  protected string MonthToString(int month)
+  {
+    string ret;
+    if (_Configuration.MonthAsNumber)
+    {
+      ret = month.ToString(D2);
+    }
+    else
+    {
+      ret = month switch
+      {
+        1 => UIStrings.Month_01,
+        2 => UIStrings.Month_02,
+        3 => UIStrings.Month_03,
+        4 => UIStrings.Month_04,
+        5 => UIStrings.Month_05,
+        6 => UIStrings.Month_06,
+        7 => UIStrings.Month_07,
+        8 => UIStrings.Month_08,
+        9 => UIStrings.Month_09,
+        10 => UIStrings.Month_10,
+        11 => UIStrings.Month_11,
+        12 => UIStrings.Month_12,
+        _ => month.ToString(D2)
+      };
+    }
+    return ret;
+  }
+
+  protected static string DayToString(int day)
+  {
+    var ret = day.ToString(D2);
+
+    return ret;
+  }
+
+  protected static string ToString(string format, string year, string month, string day)
+  {
+    var ret = format
+      .Replace("YYYY", year)
+      .Replace("MM", month)
+      .Replace("DD", day);
+
+    return ret;
   }
 }
