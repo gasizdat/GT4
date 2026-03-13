@@ -64,9 +64,8 @@ public partial class SelectNameDialog : ContentPage
           break;
         case Name nameInfo:
           await CreateOrUpdateNameDialog.UpdateNameAsync(nameInfo, _ServiceProvider, Navigation);
-          _Names = null;
-          OnPropertyChanged(nameof(Names));
-          CurrentName = _Names?.SingleOrDefault(n => n.Info.Id == nameInfo.Id);
+          Names = null;
+          CurrentName = Names?.SingleOrDefault(n => n.Info.Id == nameInfo.Id);
           break;
       }
     }
@@ -82,7 +81,7 @@ public partial class SelectNameDialog : ContentPage
 
   public ICommand DialogCommand => _DialogCommand;
 
-  public ICollection<NameInfoItem> Names
+  public ICollection<NameInfoItem>? Names
   {
     get
     {
@@ -103,6 +102,11 @@ public partial class SelectNameDialog : ContentPage
 
       return _Names;
     }
+    set
+    {
+      _Names = value;
+      OnPropertyChanged(nameof(Names));
+    }
   }
   public string DialogButtonName => _NotReady ? UIStrings.BtnNameCancel : UIStrings.BtnNameOk;
 
@@ -117,7 +121,7 @@ public partial class SelectNameDialog : ContentPage
         return;
 
       _CurrentNameType = value;
-      OnPropertyChanged(nameof(Names));
+      Names = null;
       CurrentName = null;
     }
   }
@@ -180,9 +184,8 @@ public partial class SelectNameDialog : ContentPage
 
         _ => throw new ApplicationException(nameof(OnAddNameAsync))
       };
-      OnPropertyChanged(nameof(Names));
-
-      // TODO select created name
+      Names = null;
+      CurrentName = Names?.SingleOrDefault(n => n.Info.Id == name.Id);
     }
     catch (Exception ex)
     {
