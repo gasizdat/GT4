@@ -257,6 +257,24 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
   }
 
+  private async Task OnEditPersonNameAsync(NameInfoItem nameInfoItem)
+  {
+    var dialog = new SelectNameDialog(
+      biologicalSex: _BiologicalSex?.Info ?? BiologicalSex.Unknown,
+      serviceProvider: _ServiceProvider
+    );
+
+    await Navigation.PushModalAsync(dialog);
+    var name = await dialog.Name;
+    await Navigation.PopModalAsync();
+
+    if (name is not null)
+    {
+      var index = _Names.IndexOf(nameInfoItem);
+      _Names[index] = new NameInfoItem(name, _NameTypeFormatter);
+    }
+  }
+
   private async Task OnBirthDateSetupAsync()
   {
     var dialog = new SelectDateDialog(date: BirthDate, dateFormatter: _DateFormatter);
@@ -431,7 +449,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         _Photos.Remove(photo);
         IsModified = true;
         break;
-      case AdornerCommandParameter adorner when adorner.CommandName == "EditNameCommand":
+      case AdornerCommandParameter adorner when adorner.CommandName == "EditNameCommand" && adorner.Element is NameInfoItem name:
+        await OnEditPersonNameAsync(name);
         OnPropertyChanged(nameof(PersonFullName));
         IsModified = true;
         break;
