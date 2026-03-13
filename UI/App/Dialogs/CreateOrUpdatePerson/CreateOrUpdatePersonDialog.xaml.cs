@@ -221,7 +221,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       person: person,
       names: _Names.Select(n => n.Info).ToArray(),
       additionalPhotos: additionalPhotos,
-      relativeInfos: [.._Relatives],
+      relativeInfos: [.. _Relatives],
       mainPhoto: mainPhoto is null ? null : mainPhoto with { Category = DataCategory.PersonMainPhoto },
       biography: _Biography?.ToDataAsync().Result);
 
@@ -380,7 +380,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   {
     var dialog = new SelectRelativesDialog(
       biologicalSex: _BiologicalSex?.Info,
-      existingRelatives: [..Relatives],
+      existingRelatives: [.. Relatives],
       _ServiceProvider);
 
     await Navigation.PushModalAsync(dialog);
@@ -441,6 +441,12 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       case string commandName when commandName == "AddRelationship":
         await OnAddRelationshipAsync();
         break;
+      case string commandName when commandName == "UndefinedBirthDateCommand":
+        SetUndefinedBirthDate();
+        break;
+      case string commandName when commandName == "UndefinedDeathDateCommand":
+        SetUndefinedDeathDate();
+        break;
 
       case AdornerCommandParameter adorner when adorner.CommandName == "EditPhotoCommand" && adorner.Element is PersonDataItem photo:
         await OnAddOrUpdatePhotoAsync(photo);
@@ -467,5 +473,15 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         IsModified = true;
         break;
     }
+  }
+
+  private void SetUndefinedBirthDate()
+  {
+    BirthDate = Date.Create(0, DateStatus.Unknown);
+  }
+
+  private void SetUndefinedDeathDate()
+  {
+    DeathDate = Date.Create(0, DateStatus.Unknown);
   }
 }
