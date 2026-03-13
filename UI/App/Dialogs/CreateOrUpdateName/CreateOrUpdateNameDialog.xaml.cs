@@ -1,4 +1,6 @@
+using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
+using GT4.Core.Utils;
 using GT4.UI.Resources;
 using GT4.UI.Utils.Formatters;
 
@@ -157,5 +159,73 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   public void OnCreateFamilyBtn(object sender, EventArgs e)
   {
     _Info.SetResult(_NotReady ? null : new(GeneralName, ShowDeclensionNames ? MaleName : string.Empty, ShowDeclensionNames ? FemaleName : string.Empty));
+  }
+
+  private record NamesGroup(Name FirstName, Name? MaleName, Name? FemaleName);
+
+  public static async Task UpdateNameAsync(Name name, IServiceProvider serviceProvider, INavigation navigation)
+  {
+    var currentProjectProvider = serviceProvider.GetRequiredService<ICurrentProjectProvider>();
+    var cancellationTokenProvider = serviceProvider.GetRequiredService<ICancellationTokenProvider>();
+    async Task<NamesGroup> GetNameWithSubnames()
+    {
+      using var token = cancellationTokenProvider.CreateDbCancellationToken();
+      var names = await currentProjectProvider
+        .Project
+        .Names
+        .TryGetNameWithSubnamesByIdAsync(name.Id, token);
+
+      var firstName = names?.Single(n => n.Type.HasFlag(NameType.FirstName) || n.Type.HasFlag(NameType.FamilyName))
+        ?? throw new Exception($"A parent name was not found for '{name.Value}'");
+      var maleName = names?.SingleOrDefault(
+        n => (n.Type.HasFlag(NameType.MiddleName) || n.Type.HasFlag(NameType.LastName)) && n.Type.HasFlag(NameType.MaleDeclension));
+      var femaleName = names?.SingleOrDefault(
+        n => (n.Type.HasFlag(NameType.MiddleName) || n.Type.HasFlag(NameType.LastName)) && n.Type.HasFlag(NameType.FemaleDeclension));
+      var ret = new NamesGroup(firstName, maleName, femaleName);
+
+      return ret;
+    }
+
+    var names = name.Type switch
+    {
+      NameType.MiddleName | NameType.MaleDeclension or
+      NameType.MiddleName | NameType.FemaleDeclension or
+      NameType.LastName | NameType.MaleDeclension or
+      NameType.LastName | NameType.FemaleDeclension or
+      NameType.FamilyName => await GetNameWithSubnames(),
+      _ => new NamesGroup(name, null, null),
+    };
+    var dialog = new CreateOrUpdateNameDialog(names.FirstName, names.MaleName, names.FemaleName, serviceProvider);
+
+    await navigation.PushModalAsync(dialog);
+    var info = await dialog.Info;
+    await navigation.PopModalAsync();
+
+    if (info is null)
+      return;
+
+    using var token = cancellationTokenProvider.CreateDbCancellationToken();
+    var tasks = new List<Task>
+    {
+      currentProjectProvider
+        .Project
+        .Names
+        .UpdateName(names.FirstName with { Value = info.Name }, token)
+    };
+    if (names.MaleName != null)
+    {
+      tasks.Add(currentProjectProvider
+          .Project
+          .Names
+          .UpdateName(names.MaleName with { Value = info.MaleName }, token));
+    }
+    if (names.FemaleName != null)
+    {
+      tasks.Add(currentProjectProvider
+          .Project
+          .Names
+          .UpdateName(names.FemaleName with { Value = info.FemaleName }, token));
+    }
+    await Task.WhenAll(tasks);
   }
 }
