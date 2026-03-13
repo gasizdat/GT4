@@ -21,6 +21,7 @@ public partial class SelectNameDialog : ContentPage
   private readonly IComparer<Name> _NameComparer;
   private readonly ObservableCollection<NameTypeInfoItem> _NameTypes;
   private readonly ICommand _DialogCommand;
+  private ICollection<NameInfoItem>? _Names;
   private NameTypeInfoItem _CurrentNameType;
   private readonly NameType _NameDeclension;
   private NameInfoItem? _CurrentName;
@@ -63,6 +64,9 @@ public partial class SelectNameDialog : ContentPage
           break;
         case Name nameInfo:
           await CreateOrUpdateNameDialog.UpdateNameAsync(nameInfo, _ServiceProvider, Navigation);
+          _Names = null;
+          OnPropertyChanged(nameof(Names));
+          CurrentName = _Names?.SingleOrDefault(n => n.Info.Id == nameInfo.Id);
           break;
       }
     }
@@ -82,8 +86,13 @@ public partial class SelectNameDialog : ContentPage
   {
     get
     {
+      if (_Names != null)
+      {
+        return _Names;
+      }
+
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-      var ret = _CurrentProjectProvider
+      _Names = _CurrentProjectProvider
         .Project
         .Names
         .GetNamesByTypeAsync(CurrentNameType.Type | _NameDeclension, token)
@@ -92,7 +101,7 @@ public partial class SelectNameDialog : ContentPage
         .OrderBy(name => name.Info, _NameComparer)
         .ToArray();
 
-      return ret;
+      return _Names;
     }
   }
   public string DialogButtonName => _NotReady ? UIStrings.BtnNameCancel : UIStrings.BtnNameOk;
@@ -119,6 +128,7 @@ public partial class SelectNameDialog : ContentPage
     set
     {
       _CurrentName = value;
+      OnPropertyChanged(nameof(CurrentName));
       OnPropertyChanged(nameof(DialogButtonName));
     }
   }
