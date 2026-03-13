@@ -121,51 +121,6 @@ public partial class FamilyPage : ContentPage
     await Shell.Current.GoToAsync("..", true);
   }
 
-  private async Task OnEditFamily()
-  {
-    Name[]? names;
-    using (var token = _CancellationTokenProvider.CreateDbCancellationToken())
-    {
-      names = await _CurrentProjectProvider
-        .Project
-        .Names
-        .TryGetNameWithSubnamesByIdAsync(FamilyName?.Id, token);
-    }
-
-    var familyName = names?.SingleOrDefault(n => n.Type.HasFlag(NameType.FamilyName));
-    var maleLastName = names?.SingleOrDefault(n => n.Type.HasFlag(NameType.LastName | NameType.MaleDeclension));
-    var femaleLastName = names?.SingleOrDefault(n => n.Type.HasFlag(NameType.LastName | NameType.FemaleDeclension));
-    if (familyName is null)
-    {
-      return;
-    }
-
-    var dialog = new CreateOrUpdateNameDialog(familyName, maleLastName, femaleLastName, _Services);
-
-    await Navigation.PushModalAsync(dialog);
-    var info = await dialog.Info;
-    await Navigation.PopModalAsync();
-
-    if (info is null)
-    {
-      return;
-    }
-
-    familyName = familyName with { Value = info.Name };
-    maleLastName = maleLastName is null ? null : maleLastName with { Value = info.MaleName };
-    femaleLastName = femaleLastName is null ? null : femaleLastName with { Value = info.FemaleName };
-
-    using (var token = _CancellationTokenProvider.CreateDbCancellationToken())
-    {
-      await _CurrentProjectProvider
-        .Project
-        .FamilyManager
-        .UpdateFamilyAsync(familyName, maleLastName, femaleLastName, token);
-    }
-
-    FamilyName = familyName;
-  }
-
   private async Task OnCreatePerson()
   {
     var dialog = new CreateOrUpdatePersonDialog(null, _Services);
@@ -209,7 +164,7 @@ public partial class FamilyPage : ContentPage
           break;
 
         case string commandName when commandName == "EditFamily":
-          await OnEditFamily();
+          await CreateOrUpdateNameDialog.UpdateNameAsync(FamilyName!, _Services, Navigation);
           break;
 
         case string commandName when commandName == "CreatePerson":
