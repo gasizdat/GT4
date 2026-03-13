@@ -77,7 +77,10 @@
                     Style="{StaticResource AddAdorner}" />
 
                 <!--  TODO. Investigate why this placeholder is required so the addorner button doesn't get crop  -->
-                <Frame Grid.Row="3" MinimumHeightRequest="{StaticResource AddornerButtonEmojiSize}" />
+                <Border 
+                    Grid.Row="3" 
+                    MinimumHeightRequest="{StaticResource AddornerButtonEmojiSize}" 
+                    StrokeThickness="0" />
 
             </Grid>
         </components:PageLayout.Body>

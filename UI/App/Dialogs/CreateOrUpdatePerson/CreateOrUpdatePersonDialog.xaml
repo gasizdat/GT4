@@ -33,8 +33,8 @@
         <Setter Property="VerticalOptions" Value="Center" />
       </Style>
 
-      <Style x:Key="CardFrameStyle" TargetType="Frame">
-        <Setter Property="HorizontalOptions" Value="Fill" />
+      <Style x:Key="CardBorderStyle" TargetType="Border">
+        <Setter Property="Margin" Value="{Thickness Bottom={StaticResource PageContentSpacing}}" />
       </Style>
 
     </ResourceDictionary>
@@ -52,7 +52,7 @@
         <VerticalStackLayout>
 
           <!--  Pictures  -->
-          <Frame Style="{StaticResource CardFrameStyle}">
+          <Border Style="{StaticResource CardBorderStyle}">
             <Grid
                 ColumnDefinitions="*, Auto, Auto"
                 RowDefinitions="Auto, Auto">
@@ -125,14 +125,13 @@
                   Command="{Binding DialogCommand, Source={x:Reference Root}}"
                   CommandParameter="AddPhotoCommand"
                   HeightRequest="{StaticResource PhotoHeight}"
-                  Style="{StaticResource AddAdorner}"
-                  WidthRequest="{StaticResource PhotoWidth}" />
+                  Style="{StaticResource AddAdorner}" />
 
             </Grid>
-          </Frame>
+          </Border>
 
           <!--  Biological Sex  -->
-          <Frame Style="{StaticResource CardFrameStyle}">
+          <Border Style="{StaticResource CardBorderStyle}">
             <Grid
                 ColumnDefinitions="Auto, *"
                 RowDefinitions="Auto">
@@ -152,10 +151,10 @@
                   Style="{StaticResource FieldValue}" />
 
             </Grid>
-          </Frame>
+          </Border>
 
           <!--  Names  -->
-          <Frame Style="{StaticResource CardFrameStyle}">
+          <Border Style="{StaticResource CardBorderStyle}">
             <Grid
                 ColumnDefinitions="Auto, *"
                 RowDefinitions="Auto, *, Auto">
@@ -245,10 +244,10 @@
                   Style="{StaticResource TextAdorner}"
                   Text="{x:Static resources:UIStrings.BtnNameAddPersonName}" />
             </Grid>
-          </Frame>
+          </Border>
 
           <!--  Dates  -->
-          <Frame Style="{StaticResource CardFrameStyle}">
+          <Border Style="{StaticResource CardBorderStyle}">
             <Grid
                 ColumnDefinitions="*, Auto, Auto, Auto"
                 RowDefinitions="Auto, Auto, Auto">
@@ -309,10 +308,10 @@
                   Style="{StaticResource DeleteAdorner}" />
 
             </Grid>
-          </Frame>
+          </Border>
 
           <!--  Relationships  -->
-          <Frame Style="{StaticResource CardFrameStyle}">
+          <Border Style="{StaticResource CardBorderStyle}">
             <Grid
                 ColumnDefinitions="*"
                 RowDefinitions="Auto, *, Auto">
@@ -385,10 +384,10 @@
                   Text="{x:Static resources:UIStrings.BtnNameAddPersonRelationship}" />
 
             </Grid>
-          </Frame>
+          </Border>
 
           <!--  Biography  -->
-          <Frame Style="{StaticResource CardFrameStyle}">
+          <Border Style="{StaticResource CardBorderStyle}">
             <Grid
                 ColumnDefinitions="*"
                 RowDefinitions="Auto, *">
@@ -407,7 +406,7 @@
                   Placeholder="Enter a biography or life story..."
                   Text="{Binding Biography.Content, Source={x:Reference Root}}" />
             </Grid>
-          </Frame>
+          </Border>
 
         </VerticalStackLayout>
       </ScrollView>

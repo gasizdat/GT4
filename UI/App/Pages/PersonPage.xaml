@@ -136,9 +136,7 @@
               Grid.RowSpan="{Binding Path=SmartLayout.Biography.RowSpan, Source={x:Reference Root}}"
               Grid.Column="{Binding Path=SmartLayout.Biography.Column, Source={x:Reference Root}}"
               Grid.ColumnSpan="{Binding Path=SmartLayout.Biography.ColumnSpan, Source={x:Reference Root}}"
-              IsVisible="{Binding ShowBiography, Source={x:Reference Root}}"
-              StrokeShape="RoundRectangle 10"
-              StrokeThickness="1">
+              IsVisible="{Binding ShowBiography, Source={x:Reference Root}}" >
             <Editor
                 Margin="-1"
                 BackgroundColor="Transparent"
