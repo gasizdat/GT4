@@ -46,7 +46,9 @@
                     SelectionMode="Single">
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
-                            <Grid ColumnDefinitions="*, Auto" Style="{StaticResource SelectableItem}">
+                            <Grid 
+                                ColumnDefinitions="*, Auto" Style="{StaticResource SelectableItem}"
+                                Padding="{Thickness Left={StaticResource PageContentSpacing}, Right={StaticResource PageContentSpacing}}">
                                 <Label
                                     Padding="{StaticResource CollectionItemsVerticalPadding}"
                                     HorizontalOptions="Fill"
@@ -58,6 +60,7 @@
                                     Grid.Column="1"
                                     Command="{Binding DialogCommand, Source={x:Reference Root}}"
                                     CommandParameter="{Binding Info}"
+                                    VerticalOptions="Center"
                                     Style="{StaticResource EditAdorner}" />
                             </Grid>
                         </DataTemplate>
