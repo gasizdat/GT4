@@ -5,6 +5,7 @@ using GT4.UI.Items;
 using GT4.UI.Resources;
 using GT4.UI.Utils.Formatters;
 using System.Collections.ObjectModel;
+using System.Windows.Input;
 
 namespace GT4.UI.Dialogs;
 
@@ -19,6 +20,7 @@ public partial class SelectNameDialog : ContentPage
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly IComparer<Name> _NameComparer;
   private readonly ObservableCollection<NameTypeInfoItem> _NameTypes;
+  private readonly ICommand _DialogCommand;
   private NameTypeInfoItem _CurrentNameType;
   private readonly NameType _NameDeclension;
   private NameInfoItem? _CurrentName;
@@ -34,6 +36,7 @@ public partial class SelectNameDialog : ContentPage
     _NameComparer = _ServiceProvider.GetRequiredService<IComparer<Name>>();
     _NameTypes = new((new[] { NameType.FirstName, NameType.MiddleName, NameType.LastName, NameType.AdditionalName })
       .Select(type => new NameTypeInfoItem(_NameTypeFormatter.ToString(type), type)));
+    _DialogCommand = new Command<object>(OnDialogCommandAsync);
     _CurrentNameType = _NameTypes.First();
 
     _NameDeclension = biologicalSex switch
@@ -46,7 +49,34 @@ public partial class SelectNameDialog : ContentPage
     InitializeComponent();
   }
 
+  private async void OnDialogCommandAsync(object obj)
+  {
+    try
+    {
+      switch (obj)
+      {
+        case string commandName when commandName == "AddName":
+          await OnAddNameAsync();
+          break;
+        case string commandName when commandName == "SelectName":
+          OnSelectName();
+          break;
+        case Name nameInfo:
+          await CreateOrUpdateNameDialog.UpdateNameAsync(nameInfo, _ServiceProvider, Navigation);
+          break;
+      }
+    }
+    catch (Exception ex)
+    {
+      await this.ShowError(ex);
+    }
+  }
+
+  private record NamesGroup(Name FirstName, Name? MaleName, Name? FemaleName);
+
   public ICollection<NameTypeInfoItem> NameTypes => _NameTypes;
+
+  public ICommand DialogCommand => _DialogCommand;
 
   public ICollection<NameInfoItem> Names
   {
@@ -93,7 +123,7 @@ public partial class SelectNameDialog : ContentPage
     }
   }
 
-  public async void OnAddNameBtn(object sender, EventArgs e)
+  public async Task OnAddNameAsync()
   {
     NameType dialogNameType;
     switch (_CurrentNameType.Type)
@@ -138,7 +168,7 @@ public partial class SelectNameDialog : ContentPage
         NameType.FirstName | NameType.FemaleDeclension =>
           await project.Names.AddFirstFemaleNameAsync(info.Name, token),
 
-        _ => throw new ApplicationException(nameof(OnAddNameBtn))
+        _ => throw new ApplicationException(nameof(OnAddNameAsync))
       };
       OnPropertyChanged(nameof(Names));
 
@@ -150,7 +180,7 @@ public partial class SelectNameDialog : ContentPage
     }
   }
 
-  public void OnSelectNameBtn(object sender, EventArgs e)
+  public void OnSelectName()
   {
     _Info.SetResult(_NotReady ? null : _CurrentName?.Info);
   }
