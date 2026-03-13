@@ -106,9 +106,9 @@ internal class TableNames : TableBase, ITableNames
 
     using var command = Document.CreateCommand();
     command.CommandText = """
-      SELECT Id, Value, Type, ParentId
-      FROM Names
-      WHERE Id=@id OR ParentId=@id;
+      SELECT t1.Id, t1.Value, t1.Type, t1.ParentId
+      FROM Names AS t1
+      INNER JOIN Names AS t2 ON t2.Id=@id AND (t2.ParentId=t1.Id OR t2.ParentId=t1.ParentId OR t1.Id=@id OR t1.ParentId=@id);
       """;
     command.Parameters.AddWithValue("@id", id.Value);
 
