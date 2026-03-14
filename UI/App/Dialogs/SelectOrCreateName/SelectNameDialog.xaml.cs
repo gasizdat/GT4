@@ -131,9 +131,13 @@ public partial class SelectNameDialog : ContentPage
     get => _CurrentName;
     set
     {
-      _CurrentName = value;
-      OnPropertyChanged(nameof(CurrentName));
-      OnPropertyChanged(nameof(DialogButtonName));
+      if (value?.Info.Id != _CurrentName?.Info.Id)
+      {
+        _CurrentName = value;
+        
+        OnPropertyChanged(nameof(CurrentName));
+        OnPropertyChanged(nameof(DialogButtonName));
+      }
     }
   }
 
