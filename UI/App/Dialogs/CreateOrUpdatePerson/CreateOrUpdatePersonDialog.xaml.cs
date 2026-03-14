@@ -195,7 +195,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   public string DialogButtonName => _NotReady ? UIStrings.BtnNameCancel : _SaveButtonName;
 
-  private void OnCreatePersonCommand()
+  private async Task OnCreatePersonCommand()
   {
     if (_NotReady)
     {
@@ -203,10 +203,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       return;
     }
 
-    // We do not change the person photo, so we can reuse photo.Info rather than using photo.ToDataAsync()
-    var photos =
-      _Photos
-      .Select(photo => photo.Info)
+    var photos = (await Task.WhenAll(_Photos.Select(photo => photo.ToDataAsync())))
       .Where(data => data is not null)
       .Select(data => data!);
 
@@ -455,6 +452,12 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         _Photos.Remove(photo);
         IsModified = true;
         break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "MovePhotoToLeftCommand" && adorner.Element is PersonDataItem photo:
+        MovePhoto(photo, -1);
+        break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "MovePhotoToRightCommand" && adorner.Element is PersonDataItem photo:
+        MovePhoto(photo, 1);
+        break;
       case AdornerCommandParameter adorner when adorner.CommandName == "EditNameCommand" && adorner.Element is NameInfoItem name:
         await OnEditPersonNameAsync(name);
         OnPropertyChanged(nameof(PersonFullName));
@@ -473,6 +476,13 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         IsModified = true;
         break;
     }
+  }
+
+  private void MovePhoto(PersonDataItem photo, int dIndex)
+  {
+    var oldIndex = _Photos.IndexOf(photo);
+    var newIndex = oldIndex + dIndex;
+    _Photos.Move(oldIndex, newIndex);
   }
 
   private void SetUndefinedBirthDate()

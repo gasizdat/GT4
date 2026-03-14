@@ -78,12 +78,12 @@
                     <Grid
                         x:Name="PersonPhoto"
                         ColumnDefinitions="*, Auto, Auto"
-                        RowDefinitions="Auto, *"
+                        RowDefinitions="Auto, Auto, *"
                         Style="{StaticResource HoverItem}">
 
                       <Image
                           Grid.Row="0"
-                          Grid.RowSpan="2"
+                          Grid.RowSpan="3"
                           Grid.Column="0"
                           Grid.ColumnSpan="3"
                           Source="{Binding Content}"
@@ -111,6 +111,32 @@
                         <Button.CommandParameter>
                           <components:AdornerCommandParameter
                               CommandName="RemovePhotoCommand"
+                              Element="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
+                        
+                      <Button
+                          Grid.Row="1"
+                          Grid.Column="1"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource LeftAdorner}">
+
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="MovePhotoToLeftCommand"
+                              Element="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
+
+                      <Button
+                          Grid.Row="1"
+                          Grid.Column="2"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource RightAdorner}">
+
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="MovePhotoToRightCommand"
                               Element="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
                         </Button.CommandParameter>
                       </Button>
