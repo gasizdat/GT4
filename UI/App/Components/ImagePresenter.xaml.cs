@@ -1,9 +1,10 @@
 using GT4.UI.Utils;
+using System.Windows.Input;
 
 namespace GT4.UI.Components;
 
 public partial class ImagePresenter : ContentView
-{ 
+{
   private const int _RefreshFPS = 30;
   private const double _MinOpacity = 0.0;
   private const double _MaxOpacity = 1.0;
@@ -15,6 +16,7 @@ public partial class ImagePresenter : ContentView
   private static readonly string[] _ImageOpacityProperties = [nameof(ImageOpacity1), nameof(ImageOpacity2)];
   private readonly ImageSource[] _Images;
   private readonly double[] _ImageOpacities;
+  private readonly ICommand _Command;
   private uint _CurrentIndex = 0;
   private State _CurrentState = State.Init;
   private int _LastStageTime = 0;
@@ -134,6 +136,11 @@ public partial class ImagePresenter : ContentView
   private void StopFading()
   {
     _CurrentIndex++;
+    Finish();
+  }
+
+  private void Finish()
+  {
     var activeIndex = _CurrentIndex % _ActiveImages;
     for (var i = 0; i < _ActiveImages; i++)
     {
@@ -167,6 +174,7 @@ public partial class ImagePresenter : ContentView
     {
       view._CurrentIndex = 0;
       view._CurrentState = State.Init;
+      view.OnPropertyChanged(nameof(ShowPrevNext));
     }
   }
 
@@ -197,11 +205,27 @@ public partial class ImagePresenter : ContentView
       _Timer.Tick += TimerTick;
     };
     Unloaded += (_, _) => _Timer.Tick -= TimerTick;
+    _Command = new Command(OnNextPicture);
 
     InitializeComponent();
   }
 
   private void TimerTick(object? sender, EventArgs e) => Update();
+
+  private void OnNextPicture(object obj)
+  {
+    switch (obj)
+    {
+      case string commandName when commandName == "PrevPicture":
+        _CurrentIndex--;
+        Finish();
+        break;
+      case string commandName when commandName == "NextPicture":
+        _CurrentIndex++;
+        Finish();
+        break;
+    }
+  }
 
   public static readonly BindableProperty ImageShowTimeProperty = BindableProperty.Create(
       nameof(ImageShowTime),
@@ -259,6 +283,11 @@ public partial class ImagePresenter : ContentView
     set => SetValue(ImageFadeTimeProperty, value);
   }
 
+  public bool ShowPrevNext
+  {
+    get => ImageSources.Length > 1;
+  }
+
   public ImageSource Image1 => _Images[0];
 
   public ImageSource Image2 => _Images[1];
@@ -266,4 +295,6 @@ public partial class ImagePresenter : ContentView
   public double ImageOpacity1 => _ImageOpacities[0];
 
   public double ImageOpacity2 => _ImageOpacities[1];
+
+  public ICommand Command => _Command;
 }
