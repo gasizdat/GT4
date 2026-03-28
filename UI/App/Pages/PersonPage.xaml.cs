@@ -120,6 +120,8 @@ public partial class PersonPage : ContentPage
 
   public bool ShowBiography => !string.IsNullOrWhiteSpace(_Biography);
 
+  public Name? FamilyName => _PersonFullInfo.Names.SingleOrDefault(n => n.Type == NameType.FamilyName);
+
   protected override void OnSizeAllocated(double width, double height)
   {
     base.OnSizeAllocated(width, height);
@@ -243,6 +245,12 @@ public partial class PersonPage : ContentPage
         break;
       case string commandName when commandName == "Refresh":
         PersonInfo = _PersonFullInfo;
+        break;
+      case string commandName when commandName == "GoToHome":
+        await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectPage>());
+        break;
+      case string commandName when commandName == "GoToFamily":
+        await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = FamilyName });
         break;
       case RelativeInfo relativeInfo:
         var nextPerson = ToPerson(relativeInfo);

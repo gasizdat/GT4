@@ -40,6 +40,16 @@
   <ContentPage.ToolbarItems>
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="GoToHome"
+        Order="Secondary"
+        Text="{x:Static resources:UIStrings.WndAppTitle}" />
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="GoToFamily"
+        Order="Secondary"
+        Text="{Binding FamilyName.Value, Source={x:Reference Root}}" />
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="RemovePerson"
         Order="Secondary"
         Text="{Binding RemovePersonToolbarItemName, Source={x:Reference Root}}" />
