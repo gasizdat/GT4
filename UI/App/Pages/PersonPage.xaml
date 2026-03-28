@@ -26,7 +26,9 @@
           Phone="187.5"
           Tablet="300" />
 
-      <Style x:Key="PhotoStyle" TargetType="Image">
+      <Style
+          x:Key="PhotoStyle"
+          TargetType="Image">
         <Setter Property="Aspect" Value="AspectFit" />
         <Setter Property="HeightRequest" Value="{StaticResource PhotoHeight}" />
         <Setter Property="WidthRequest" Value="{StaticResource PhotoWidth}" />
@@ -131,7 +133,7 @@
             IsVisible="{Binding ShowSinceBirth, Source={x:Reference Root}}"
             Style="{StaticResource FieldValue}"
             Text="{Binding SinceBirth, Source={x:Reference Root}}" />
-          
+
       </Grid>
     </components:PageLayout.Header>
 
@@ -146,7 +148,7 @@
               Grid.RowSpan="{Binding Path=SmartLayout.Biography.RowSpan, Source={x:Reference Root}}"
               Grid.Column="{Binding Path=SmartLayout.Biography.Column, Source={x:Reference Root}}"
               Grid.ColumnSpan="{Binding Path=SmartLayout.Biography.ColumnSpan, Source={x:Reference Root}}"
-              IsVisible="{Binding ShowBiography, Source={x:Reference Root}}" >
+              IsVisible="{Binding ShowBiography, Source={x:Reference Root}}">
             <Editor
                 Margin="-1"
                 BackgroundColor="Transparent"
