@@ -111,7 +111,7 @@ public partial class ProjectListPage : ContentPage
     }
     catch (Exception ex)
     {
-      await this.ShowError(ex);
+      await this.ShowErrorAsync(ex);
     }
     finally
     {

@@ -194,7 +194,7 @@ public partial class PersonPage : ContentPage
     }
     catch (Exception ex)
     {
-      await PageAlert.ShowError(ex);
+      await this.ShowErrorAsync(ex);
       await Shell.Current.GoToAsync("..", true);
       return;
     }
@@ -286,7 +286,7 @@ public partial class PersonPage : ContentPage
     }
     catch (Exception ex)
     {
-      await this.ShowError(ex);
+      await this.ShowErrorAsync(ex);
     }
   }
 

@@ -71,7 +71,7 @@ public partial class SelectNameDialog : ContentPage
     }
     catch (Exception ex)
     {
-      await this.ShowError(ex);
+      await this.ShowErrorAsync(ex);
     }
   }
 
@@ -193,7 +193,7 @@ public partial class SelectNameDialog : ContentPage
     }
     catch (Exception ex)
     {
-      await this.ShowError(ex);
+      await this.ShowErrorAsync(ex);
     }
   }
 

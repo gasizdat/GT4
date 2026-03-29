@@ -121,7 +121,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
     catch (Exception ex)
     {
-      PageAlert.ShowError(ex);
+      _ = this.ShowErrorAsync(ex);
     }
   }
 

@@ -61,7 +61,7 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
           }
           catch (Exception ex)
           {
-            await PageAlert.ShowError(ex);
+            await PageAlert.ShowErrorAsync(ex);
           }
         }
 

@@ -79,7 +79,7 @@ public partial class FamilyPage : ContentPage
       }
       catch (Exception ex)
       {
-        _ = PageAlert.ShowError(ex);
+        _ = this.ShowErrorAsync(ex);
         return Enumerable.Empty<PersonInfo>().ToList();
       }
     }
@@ -105,7 +105,7 @@ public partial class FamilyPage : ContentPage
   private async Task OnDeleteFamily()
   {
     var canDelete = _FamilyName is not null &&
-       await this.ShowConfirmation(string.Format(UIStrings.AlertTextDeleteConfirmationText_1, _FamilyName.Value));
+       await this.ShowConfirmationAsync(string.Format(UIStrings.AlertTextDeleteConfirmationText_1, _FamilyName.Value));
 
     if (!canDelete)
     {
@@ -178,7 +178,7 @@ public partial class FamilyPage : ContentPage
     }
     catch (Exception ex)
     {
-      await this.ShowError(ex);
+      await this.ShowErrorAsync(ex);
     }
   }
 }

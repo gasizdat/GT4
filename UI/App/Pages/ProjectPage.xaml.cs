@@ -58,7 +58,7 @@ public partial class ProjectPage : ContentPage
       }
       catch (Exception ex)
       {
-        this.ShowError(ex);
+        this.ShowErrorAsync(ex);
         return [];
       }
     }
@@ -130,7 +130,7 @@ public partial class ProjectPage : ContentPage
     }
     catch (Exception ex)
     {
-      await this.ShowError(ex);
+      await this.ShowErrorAsync(ex);
     }
   }
 
@@ -138,7 +138,7 @@ public partial class ProjectPage : ContentPage
   {
     var projectName = _CurrentProjectProvider.Info.Name;
     var confirmationText = string.Format(UIStrings.AlertTextDeleteConfirmationText_1, projectName);
-    if (await PageAlert.ShowConfirmation(confirmationText))
+    if (await this.ShowConfirmationAsync(confirmationText))
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
       await _ProjectList.RemoveAsync(projectName, token);
@@ -173,7 +173,7 @@ public partial class ProjectPage : ContentPage
     }
     catch (Exception ex)
     {
-      await this.ShowError(ex);
+      await this.ShowErrorAsync(ex);
     }
   }
 
@@ -200,7 +200,7 @@ public partial class ProjectPage : ContentPage
     }
     catch (Exception ex)
     {
-      await this.ShowError(ex);
+      await this.ShowErrorAsync(ex);
     }
     finally
     {
