@@ -21,4 +21,7 @@ public static class PageAlert
 
   public static Task ShowErrorAsync(this Page page, Exception exception) =>
     page.DisplayAlertAsync(UIStrings.AlertTitleError, exception.Message, UIStrings.BtnNameOk);
+
+  public static Task ShowWarningAsync(this Page page, string message) =>
+    page.DisplayAlertAsync(UIStrings.AlertTitleWarning, message, UIStrings.BtnNameOk);
 }

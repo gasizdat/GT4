@@ -70,6 +70,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Unable to add name for the &apos;{0}&apos; biological sex.
+        /// </summary>
+        public static string AlertTextUnableToAddNameForTheSexSelected_1 {
+            get {
+                return ResourceManager.GetString("AlertTextUnableToAddNameForTheSexSelected_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Confirmation.
         /// </summary>
         public static string AlertTitleConfirmation {
@@ -79,7 +88,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error.
+        ///   Looks up a localized string similar to ⛔ Error.
         /// </summary>
         public static string AlertTitleError {
             get {
@@ -88,7 +97,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Info.
+        ///   Looks up a localized string similar to ℹ️ Info.
         /// </summary>
         public static string AlertTitleInfo {
             get {
@@ -97,7 +106,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Warning.
+        ///   Looks up a localized string similar to ⚠️ Warning.
         /// </summary>
         public static string AlertTitleWarning {
             get {

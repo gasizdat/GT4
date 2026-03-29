@@ -121,13 +121,13 @@
     <value>Are you really want to delete {0}?</value>
   </data>
   <data name="AlertTitleInfo" xml:space="preserve">
-    <value>Info</value>
+    <value>ℹ️ Info</value>
   </data>
   <data name="AlertTitleConfirmation" xml:space="preserve">
     <value>Confirmation</value>
   </data>
   <data name="AlertTitleWarning" xml:space="preserve">
-    <value>Warning</value>
+    <value>⚠️ Warning</value>
   </data>
   <data name="AppGeneralName" xml:space="preserve">
     <value>Genealogy Tree 4</value>
@@ -158,7 +158,7 @@ genealogy tree and enjoy!</value>
     <value>Genealogy Tree</value>
   </data>
   <data name="AlertTitleError" xml:space="preserve">
-    <value>Error</value>
+    <value>⛔ Error</value>
   </data>
   <data name="WndTitleCreateNewProjectDialog" xml:space="preserve">
     <value>Create a Genealogy Tree</value>
@@ -636,5 +636,8 @@ genealogy tree and enjoy!</value>
   </data>
   <data name="PersonSinceBirthDay_1" xml:space="preserve">
     <value>{0} since birth</value>
+  </data>
+  <data name="AlertTextUnableToAddNameForTheSexSelected_1" xml:space="preserve">
+    <value>Unable to add name for the '{0}' biological sex</value>
   </data>
 </root>

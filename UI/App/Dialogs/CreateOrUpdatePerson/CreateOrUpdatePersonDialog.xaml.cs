@@ -49,7 +49,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, _BiologicalSexFormatter));
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Female, _BiologicalSexFormatter));
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Unknown, _BiologicalSexFormatter));
-    _BiologicalSex = _BiologicalSexes.Where(i => i.Info == person?.BiologicalSex).FirstOrDefault();
+    _BiologicalSex = _BiologicalSexes.FirstOrDefault(i => i.Info == person?.BiologicalSex);
     UpdatePersonInformation(person);
 
     InitializeComponent();
@@ -195,7 +195,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   public string DialogButtonName => _NotReady ? UIStrings.BtnNameCancel : _SaveButtonName;
 
-  private async Task OnCreatePersonCommand()
+  private async Task OnCreatePersonCommandAsync()
   {
     if (_NotReady)
     {
@@ -227,14 +227,17 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   private async Task OnAddPersonNameAsync()
   {
-    if (_BiologicalSex is null)
+    var biologicalSex = _BiologicalSex?.Info ?? BiologicalSex.Unknown;
+    if (biologicalSex == BiologicalSex.Unknown)
     {
-      // TODO Show Alert
+      var message = string.Format(UIStrings.AlertTextUnableToAddNameForTheSexSelected_1, 
+        _BiologicalSexFormatter.ToString(_BiologicalSex?.Info));
+      await this.ShowWarningAsync(message);
       return;
     }
 
     var dialog = new SelectNameDialog(
-      biologicalSex: _BiologicalSex?.Info ?? BiologicalSex.Unknown,
+      biologicalSex: biologicalSex,
       serviceProvider: _ServiceProvider
     );
 
@@ -418,7 +421,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     switch (obj)
     {
       case string commandName when commandName == "CreatePersonCommand":
-        OnCreatePersonCommand();
+        await OnCreatePersonCommandAsync();
         break;
       case string commandName when commandName == "AddNameCommand":
         await OnAddPersonNameAsync();

@@ -121,13 +121,13 @@
     <value>Вы действительно хотите удалить {0}?</value>
   </data>
   <data name="AlertTitleInfo" xml:space="preserve">
-    <value>Информация</value>
+    <value>ℹ️ Информация</value>
   </data>
   <data name="AlertTitleConfirmation" xml:space="preserve">
     <value>Подтверждение</value>
   </data>
   <data name="AlertTitleWarning" xml:space="preserve">
-    <value>Предупреждение</value>
+    <value>⚠️ Предупреждение</value>
   </data>
   <data name="AppGeneralName" xml:space="preserve">
     <value>Генеалогическое древо (v.4)</value>
@@ -158,7 +158,7 @@
     <value>Генеалогическое дерево</value>
   </data>
   <data name="AlertTitleError" xml:space="preserve">
-    <value>Ошибка</value>
+    <value>⛔ Ошибка</value>
   </data>
   <data name="WndTitleCreateNewProjectDialog" xml:space="preserve">
     <value>Создать генеалогическое дерево</value>
@@ -636,5 +636,8 @@
   </data>
   <data name="PersonSinceBirthDay_1" xml:space="preserve">
     <value>{0} со дня рождения</value>
+  </data>
+  <data name="AlertTextUnableToAddNameForTheSexSelected_1" xml:space="preserve">
+    <value>Невозможно выбрать имя для выбранного пола: {0}</value>
   </data>
 </root>
