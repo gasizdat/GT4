@@ -6,5 +6,6 @@ public interface ITableRelatives
 {
   Task AddRelativesAsync(Person person, Relative[] relatives, CancellationToken token);
   Task<Relative[]> GetRelativesAsync(Person person, CancellationToken token);
+  Task<bool> HasCommonRelativesAsync(Person personA, Person personB, CancellationToken token);
   Task UpdateRelativesAsync(Person person, Relative[] relatives, CancellationToken token);
 }

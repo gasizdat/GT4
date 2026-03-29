@@ -1,6 +1,7 @@
 ﻿using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using Microsoft.Data.Sqlite;
+using System.Collections.Concurrent;
 
 namespace GT4.Core.Project;
 
@@ -190,5 +191,34 @@ internal class TableRelatives : TableBase, ITableRelatives
     await Task.WhenAll(tasks);
 
     transaction.Commit();
+  }
+
+  public async Task<bool> HasCommonRelativesAsync(Person personA, Person personB, CancellationToken token)
+  {
+    async Task GetAllRelativesAsync(Person person, RelationshipType relationshipType, ConcurrentBag<Person> relatives)
+    {
+      relatives.Add(person);
+      var personRelatives = await GetRelativesAsync(person, token);
+      var parentTasks = personRelatives
+        .Where(r => r.Type == relationshipType)
+        .Select(p => GetAllRelativesAsync(p, relationshipType, relatives));
+
+      await Task.WhenAll(parentTasks);
+    }
+
+    ConcurrentBag<Person> relativesA = new();
+    ConcurrentBag<Person> relativesB = new();
+    ElementIdComparer<Person> personComparer = new();
+
+    await Task.WhenAll(
+      GetAllRelativesAsync(personA, RelationshipType.Parent, relativesA),
+      GetAllRelativesAsync(personB, RelationshipType.Parent, relativesB),
+      GetAllRelativesAsync(personA, RelationshipType.Child, relativesA),
+      GetAllRelativesAsync(personB, RelationshipType.Child, relativesB));
+    var firstIntersection = relativesA
+      .Intersect(relativesB, personComparer)
+      .FirstOrDefault();
+
+    return firstIntersection != null;
   }
 }
