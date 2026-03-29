@@ -49,7 +49,7 @@
         Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="GoToFamily"
         Order="Secondary"
-        Text="{Binding FamilyName.Value, Source={x:Reference Root}}" />
+        Text="{Binding GoToFamilyName, Source={x:Reference Root}}" />
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="RemovePerson"

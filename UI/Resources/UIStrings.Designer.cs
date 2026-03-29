@@ -611,6 +611,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 👪 To family: {0}.
+        /// </summary>
+        public static string MenuItemGotoFamily_1 {
+            get {
+                return ResourceManager.GetString("MenuItemGotoFamily_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to ➕ Create a Person.
         /// </summary>
         public static string MenuItemNameAddPerson {

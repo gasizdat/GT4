@@ -640,4 +640,7 @@ genealogy tree and enjoy!</value>
   <data name="AlertTextUnableToAddNameForTheSexSelected_1" xml:space="preserve">
     <value>Unable to add name for the '{0}' biological sex</value>
   </data>
+  <data name="MenuItemGotoFamily_1" xml:space="preserve">
+    <value>👪 To family: {0}</value>
+  </data>
 </root>

@@ -122,6 +122,8 @@ public partial class PersonPage : ContentPage
 
   public Name? FamilyName => _PersonFullInfo.Names.SingleOrDefault(n => n.Type == NameType.FamilyName);
 
+  public string GoToFamilyName => string.Format(UIStrings.MenuItemGotoFamily_1, FamilyName?.Value ?? string.Empty);
+
   protected override void OnSizeAllocated(double width, double height)
   {
     base.OnSizeAllocated(width, height);

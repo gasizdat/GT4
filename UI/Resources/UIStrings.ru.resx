@@ -640,4 +640,7 @@
   <data name="AlertTextUnableToAddNameForTheSexSelected_1" xml:space="preserve">
     <value>Невозможно выбрать имя для выбранного пола: {0}</value>
   </data>
+  <data name="MenuItemGotoFamily_1" xml:space="preserve">
+    <value>👪 К семье: {0}</value>
+  </data>
 </root>
