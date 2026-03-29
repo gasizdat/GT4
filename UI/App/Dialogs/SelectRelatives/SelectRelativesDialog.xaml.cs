@@ -21,7 +21,7 @@ public partial class SelectRelativesDialog : ContentPage
   private readonly ObservableCollection<object> _SelectedItems = [];
   private readonly TaskCompletionSource<RelativeInfo[]?> _Info = new(null);
   private readonly ICommand _DialogCommand;
-  private readonly HashSet<int> _ExistingRelativeIds;
+  private readonly Relative[] _ExistingRelatives;
 
   private BiologicalSexItem _BiologicalSex;
   private RelationshipTypeItem _RelationshipType;
@@ -67,7 +67,7 @@ public partial class SelectRelativesDialog : ContentPage
           .Select(i => (PersonInfo)i)
           .Select(person => new RelativeInfo(
             person: person,
-            type: _RelationshipType.Info, 
+            type: _RelationshipType.Info,
             date: _RelationshipDate.HasValue ? _RelationshipDate.Value : null,
             generation: generation,
             consanguinity: Consanguinity.Zero));
@@ -106,7 +106,7 @@ public partial class SelectRelativesDialog : ContentPage
       .Select(sex => new BiologicalSexItem(sex, biologicalSexFormatter))
       .ToArray();
     _BiologicalSex = _BiologicalSexes.SingleOrDefault(i => i.Info == biologicalSex, _BiologicalSexes[2]);
-    _ExistingRelativeIds = [.. existingRelatives.Select(r => r.Id)];
+    _ExistingRelatives = existingRelatives;
     _RelationshipTypes = new[] {
         RelationshipType.Parent,
         RelationshipType.Child,
@@ -161,8 +161,33 @@ public partial class SelectRelativesDialog : ContentPage
             .Project
             .PersonManager
             .GetPersonInfosAsync(selectMainPhoto: false, token);
+
           var items = persons
-            .Where(person => !_ExistingRelativeIds.Contains(person.Id))
+            .Where(p =>
+            {
+              foreach (var relative in _ExistingRelatives)
+              {
+                if (relative.Type == RelationshipType.Parent || relative.Type == RelationshipType.Child)
+                {
+                  using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+                  var hasCommonAncestors = _CurrentProjectProvider
+                    .Project
+                    .Relatives
+                    .HasCommonRelativesAsync(p, relative, token)
+                    .Result;
+                  if (hasCommonAncestors)
+                  {
+                    return false;
+                  }
+                }
+                else if (relative.Id == p.Id)
+                {
+                  return false;
+                }
+              }
+
+              return true;
+            })
             .OrderBy(item => item, _PersonInfoComparer);
 
           MainThread.BeginInvokeOnMainThread(() => _Persons.AddRange(items));
