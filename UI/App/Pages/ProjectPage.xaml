@@ -28,6 +28,11 @@
         Text="{x:Static resources:UIStrings.MenuItemNameCreateFamily}" />
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="GoToNames"
+        Order="Secondary"
+        Text="{x:Static resources:UIStrings.MenuItemGoToNames}" />
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="Refresh"
         Order="Secondary"
         Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />

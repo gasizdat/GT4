@@ -643,4 +643,13 @@
   <data name="MenuItemGotoFamily_1" xml:space="preserve">
     <value>👪 К семье: {0}</value>
   </data>
+  <data name="TitleNamesPage" xml:space="preserve">
+    <value>Имена</value>
+  </data>
+  <data name="HintNamesPage" xml:space="preserve">
+    <value>Добавление, редактирование или удаление имени</value>
+  </data>
+  <data name="MenuItemGoToNames" xml:space="preserve">
+    <value>📝 К именам</value>
+  </data>
 </root>

@@ -8,4 +8,16 @@
 
   <Import Project="AppCommon.props" />
 
+  <ItemGroup>
+    <Compile Update="Pages\NamesPage.xaml.cs">
+      <DependentUpon>NamesPage.xaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <MauiXaml Update="Pages\NamesPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+  </ItemGroup>
+
 </Project>

@@ -629,6 +629,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to You can add, edit or delete the names of any person..
+        /// </summary>
+        public static string HintNamesPage {
+            get {
+                return ResourceManager.GetString("HintNamesPage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Open or create a new one.
         /// </summary>
         public static string HintProjectPage {
@@ -643,6 +652,15 @@ namespace GT4.UI.Resources {
         public static string MenuItemGotoFamily_1 {
             get {
                 return ResourceManager.GetString("MenuItemGotoFamily_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 📝 To Names.
+        /// </summary>
+        public static string MenuItemGoToNames {
+            get {
+                return ResourceManager.GetString("MenuItemGoToNames", resourceCulture);
             }
         }
         
@@ -1516,6 +1534,15 @@ namespace GT4.UI.Resources {
         public static string TitleFamiliesPage {
             get {
                 return ResourceManager.GetString("TitleFamiliesPage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Names.
+        /// </summary>
+        public static string TitleNamesPage {
+            get {
+                return ResourceManager.GetString("TitleNamesPage", resourceCulture);
             }
         }
         

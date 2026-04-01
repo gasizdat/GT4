@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="GT4.UI.Pages.NamesPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:behaviors="clr-namespace:GT4.UI.Behaviors"
+    xmlns:components="clr-namespace:GT4.UI.Components"
+    xmlns:dto="clr-namespace:GT4.Core.Project.Dto;assembly=GT4.Core.Project"
+    xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
+    x:Name="Root"
+    Title="{x:Static resources:UIStrings.TitleNamesPage}">
+
+  <ContentPage.ToolbarItems>
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="Refresh"
+        Order="Secondary"
+        Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
+  </ContentPage.ToolbarItems>
+
+  <components:PageLayout>
+    <components:PageLayout.Header>
+      <Label
+          Style="{StaticResource PageSubtitle}"
+          Text="{x:Static resources:UIStrings.HintNamesPage}" />
+    </components:PageLayout.Header>
+
+    <components:PageLayout.Body>
+      <Grid
+          Padding="20"
+          ColumnDefinitions="Auto, Auto, *"
+          HorizontalOptions="Fill"
+          RowDefinitions="Auto, *, Auto, Auto"
+          RowSpacing="10"
+          VerticalOptions="Start">
+
+        <Label
+            Grid.Row="0"
+            Grid.Column="0"
+            Style="{StaticResource FieldName}"
+            Text="{x:Static resources:UIStrings.FieldSelectName}" />
+
+        <Picker
+            Grid.Row="0"
+            Grid.Column="1"
+            ItemDisplayBinding="{Binding Name}"
+            ItemsSource="{Binding BiologicalSexes, Source={x:Reference Root}}"
+            SelectedItem="{Binding CurrentBiologicalSex, Source={x:Reference Root}}"
+            Style="{StaticResource FieldValue}" />
+
+        <Picker
+            Grid.Row="0"
+            Grid.Column="2"
+            ItemDisplayBinding="{Binding TypeName}"
+            ItemsSource="{Binding NameTypes, Source={x:Reference Root}}"
+            SelectedItem="{Binding CurrentNameType, Source={x:Reference Root}}"
+            Style="{StaticResource FieldValue}" />
+
+        <CollectionView
+            x:Name="NamesCollectionView"
+            Grid.Row="1"
+            Grid.Column="0"
+            Grid.ColumnSpan="3"
+            behaviors:ScrollToSelected.ScrollToItem="{Binding CurrentName, Source={x:Reference Root}}"
+            HorizontalOptions="Fill"
+            ItemsSource="{Binding Names, Source={x:Reference Root}}"
+            SelectedItem="{Binding CurrentName, Source={x:Reference Root}}"
+            SelectionMode="Single">
+          <CollectionView.ItemTemplate>
+            <DataTemplate>
+              <Grid
+                  Padding="{Thickness Left={StaticResource PageContentSpacing},
+                                      Right={StaticResource PageContentSpacing}}"
+                  ColumnDefinitions="*, Auto"
+                  Style="{StaticResource SelectableItem}">
+                <Label
+                    Padding="{StaticResource CollectionItemsVerticalPadding}"
+                    HorizontalOptions="Fill"
+                    HorizontalTextAlignment="Start"
+                    Style="{StaticResource FieldValue}"
+                    Text="{Binding Info.Value}" />
+
+                <Button
+                    Grid.Column="1"
+                    Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                    CommandParameter="{Binding Info}"
+                    Style="{StaticResource EditAdorner}"
+                    VerticalOptions="Center" />
+              </Grid>
+            </DataTemplate>
+          </CollectionView.ItemTemplate>
+        </CollectionView>
+
+      </Grid>
+
+    </components:PageLayout.Body>
+
+    <components:PageLayout.Footer>
+
+      <Button
+          Grid.Row="2"
+          Grid.Column="0"
+          Grid.ColumnSpan="2"
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="AddName"
+          HorizontalOptions="Fill"
+          Style="{StaticResource AddAdorner}" />
+
+    </components:PageLayout.Footer>
+
+  </components:PageLayout>
+</ContentPage>

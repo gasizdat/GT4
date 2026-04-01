@@ -126,6 +126,10 @@ public partial class ProjectPage : ContentPage
         case string commandName when commandName == "CreateFamily":
           await OnCreateFamily();
           break;
+
+        case string commandName when commandName == "GoToNames":
+          await Shell.Current.GoToAsync(UIRoutes.GetRoute<NamesPage>());
+          break;
       }
     }
     catch (Exception ex)

@@ -643,4 +643,13 @@ genealogy tree and enjoy!</value>
   <data name="MenuItemGotoFamily_1" xml:space="preserve">
     <value>👪 To family: {0}</value>
   </data>
+  <data name="TitleNamesPage" xml:space="preserve">
+    <value>Names</value>
+  </data>
+  <data name="HintNamesPage" xml:space="preserve">
+    <value>You can add, edit or delete the names of any person.</value>
+  </data>
+  <data name="MenuItemGoToNames" xml:space="preserve">
+    <value>📝 To Names</value>
+  </data>
 </root>
