@@ -26,9 +26,7 @@
           Phone="187.5"
           Tablet="300" />
 
-      <Style
-          x:Key="PhotoStyle"
-          TargetType="Image">
+      <Style x:Key="PhotoStyle" TargetType="Image">
         <Setter Property="Aspect" Value="AspectFit" />
         <Setter Property="HeightRequest" Value="{StaticResource PhotoHeight}" />
         <Setter Property="WidthRequest" Value="{StaticResource PhotoWidth}" />

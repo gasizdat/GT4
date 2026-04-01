@@ -64,12 +64,13 @@
                       Command="{Binding Path=MemberItemTappedCommand, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
                       CommandParameter="{Binding .}" />
                 </Border.GestureRecognizers>
-                  
+
                 <Border.Shadow>
-                  <Shadow Brush="Black"
-                          Offset="5,5"
-                          Radius="5"
-                          Opacity="0.2" />
+                  <Shadow
+                      Brush="Black"
+                      Opacity="0.2"
+                      Radius="5"
+                      Offset="5,5" />
                 </Border.Shadow>
 
                 <components:PersonInfoView

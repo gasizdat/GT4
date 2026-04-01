@@ -114,7 +114,7 @@
                               Element="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
                         </Button.CommandParameter>
                       </Button>
-                        
+
                       <Button
                           Grid.Row="1"
                           Grid.Column="1"
@@ -302,8 +302,8 @@
                   Grid.Column="2"
                   Command="{Binding DialogCommand, Source={x:Reference Root}}"
                   CommandParameter="UndefinedBirthDateCommand"
-                  Text="�"
-                  Style="{StaticResource EmojiAdorner}" />
+                  Style="{StaticResource EmojiAdorner}"
+                  Text="�" />
 
               <components:DateInfoView
                   Grid.Row="2"
@@ -323,8 +323,8 @@
                   Grid.Column="2"
                   Command="{Binding DialogCommand, Source={x:Reference Root}}"
                   CommandParameter="UndefinedDeathDateCommand"
-                  Text="�"
-                  Style="{StaticResource EmojiAdorner}" />
+                  Style="{StaticResource EmojiAdorner}"
+                  Text="�" />
 
               <Button
                   Grid.Row="2"
