@@ -4,32 +4,36 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     x:Name="Root">
-    <Grid>
-        <Image
-            Opacity="{Binding ImageOpacity1, Source={x:Reference Root}}"
-            Source="{Binding Image1, Source={x:Reference Root}}"
-            Style="{Binding ImageStyle, Source={x:Reference Root}, TargetNullValue={StaticResource PhotoThumbStyle}}" />
-        <Image
-            Opacity="{Binding ImageOpacity2, Source={x:Reference Root}}"
-            Source="{Binding Image2, Source={x:Reference Root}}"
-            Style="{Binding ImageStyle, Source={x:Reference Root}, TargetNullValue={StaticResource PhotoThumbStyle}}" />
-        <ImageButton
-            BackgroundColor="Transparent"
-            Command="{Binding Command, Source={x:Reference Root}}"
-            CommandParameter="PrevPicture"
-            HorizontalOptions="Start"
-            IsVisible="{Binding ShowPrevNext, Source={x:Reference Root}}"
-            Opacity="0.2"
-            Source="left_row.png"
-            VerticalOptions="Center" />
-        <ImageButton
-            BackgroundColor="Transparent"
-            Command="{Binding Command, Source={x:Reference Root}}"
-            CommandParameter="NextPicture"
-            HorizontalOptions="End"
-            IsVisible="{Binding ShowPrevNext, Source={x:Reference Root}}"
-            Opacity="0.2"
-            Source="right_row.png"
-            VerticalOptions="Center" />
-    </Grid>
+  <Grid
+      ColumnDefinitions="*"
+      RowDefinitions="*">
+    <Image
+        Aspect="AspectFill"
+        Opacity="{Binding ImageOpacity1, Source={x:Reference Root}}"
+        Source="{Binding Image1, Source={x:Reference Root}}"
+        Style="{Binding ImageStyle, Source={x:Reference Root}, TargetNullValue={StaticResource PhotoThumbStyle}}" />
+    <Image
+        Aspect="AspectFill"
+        Opacity="{Binding ImageOpacity2, Source={x:Reference Root}}"
+        Source="{Binding Image2, Source={x:Reference Root}}"
+        Style="{Binding ImageStyle, Source={x:Reference Root}, TargetNullValue={StaticResource PhotoThumbStyle}}" />
+    <ImageButton
+        BackgroundColor="Transparent"
+        Command="{Binding Command, Source={x:Reference Root}}"
+        CommandParameter="PrevPicture"
+        HorizontalOptions="Start"
+        IsVisible="{Binding ShowPrevNext, Source={x:Reference Root}}"
+        Opacity="0.2"
+        Source="left_row.png"
+        VerticalOptions="Center" />
+    <ImageButton
+        BackgroundColor="Transparent"
+        Command="{Binding Command, Source={x:Reference Root}}"
+        CommandParameter="NextPicture"
+        HorizontalOptions="End"
+        IsVisible="{Binding ShowPrevNext, Source={x:Reference Root}}"
+        Opacity="0.2"
+        Source="right_row.png"
+        VerticalOptions="Center" />
+  </Grid>
 </ContentView>
