@@ -23,7 +23,7 @@
             Grid.ColumnSpan="3"
             HorizontalTextAlignment="Center"
             Style="{StaticResource PageTitle}"
-            Text="{x:Static resources:UIStrings.WndTitleSelectRelativesDialog}" />
+            Text="{x:Static resources:UIStrings.TitleSelectRelativesDialog}" />
 
         <!--  Row 1 - Search  -->
         <Label

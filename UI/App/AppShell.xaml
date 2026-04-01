@@ -9,7 +9,7 @@
     Shell.FlyoutBehavior="Disabled">
 
   <ShellContent
-      Title="{x:Static resources:UIStrings.WndAppTitle}"
+      Title="{x:Static resources:UIStrings.TitleApp}"
       ContentTemplate="{DataTemplate pages:MainPage}"
       Route="MainPage" />
 

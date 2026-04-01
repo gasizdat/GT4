@@ -151,31 +151,31 @@ genealogy tree and enjoy!</value>
   <data name="BtnNameYes" xml:space="preserve">
     <value>Yes</value>
   </data>
-  <data name="WndHintProjectPage" xml:space="preserve">
+  <data name="HintProjectPage" xml:space="preserve">
     <value>Open or create a new one</value>
   </data>
-  <data name="WndTitleProjectPage" xml:space="preserve">
+  <data name="TitleProjectPage" xml:space="preserve">
     <value>Genealogy Tree</value>
   </data>
   <data name="AlertTitleError" xml:space="preserve">
     <value>⛔ Error</value>
   </data>
-  <data name="WndTitleCreateNewProjectDialog" xml:space="preserve">
+  <data name="TitleCreateNewProjectDialog" xml:space="preserve">
     <value>Create a Genealogy Tree</value>
   </data>
   <data name="TxtPlaceholderPtojectName" xml:space="preserve">
     <value>Enter a name for the new Genealogy Tree</value>
   </data>
-  <data name="WndAppTitle" xml:space="preserve">
+  <data name="TitleApp" xml:space="preserve">
     <value>🏠 Home</value>
   </data>
   <data name="PkrLanguageHint" xml:space="preserve">
     <value>🌐 Language</value>
   </data>
-  <data name="WndTitleFamiliesPage" xml:space="preserve">
+  <data name="TitleFamiliesPage" xml:space="preserve">
     <value>Families</value>
   </data>
-  <data name="WndHintFamiliesPage" xml:space="preserve">
+  <data name="HintFamiliesPage" xml:space="preserve">
     <value>Open or create family</value>
   </data>
   <data name="BtnNameRefreshAfterError" xml:space="preserve">
@@ -184,7 +184,7 @@ genealogy tree and enjoy!</value>
   <data name="BtnNameOk" xml:space="preserve">
     <value>Ok</value>
   </data>
-  <data name="WndHintFamilyPage" xml:space="preserve">
+  <data name="HintFamilyPage" xml:space="preserve">
     <value>Open family member or create a new one</value>
   </data>
   <data name="DateStatusYearApproximate_1" xml:space="preserve">
@@ -304,7 +304,7 @@ genealogy tree and enjoy!</value>
   <data name="FieldFamilyName" xml:space="preserve">
     <value>Family name</value>
   </data>
-  <data name="WndTitleSelectNameDialog" xml:space="preserve">
+  <data name="TitleSelectNameDialog" xml:space="preserve">
     <value>Select a name</value>
   </data>
   <data name="FieldSelectNameType" xml:space="preserve">
@@ -349,7 +349,7 @@ genealogy tree and enjoy!</value>
   <data name="FieldBiologicalSex" xml:space="preserve">
     <value>Biological sex</value>
   </data>
-  <data name="WndTitleSelectDateDialog" xml:space="preserve">
+  <data name="TitleSelectDateDialog" xml:space="preserve">
     <value>Select date</value>
   </data>
   <data name="FieldYear" xml:space="preserve">
@@ -409,13 +409,13 @@ genealogy tree and enjoy!</value>
   <data name="Month_12" xml:space="preserve">
     <value>December</value>
   </data>
-  <data name="WndTitleSelectRelativesDialog" xml:space="preserve">
+  <data name="TitleSelectRelativesDialog" xml:space="preserve">
     <value>Select relatives</value>
   </data>
   <data name="FieldRelationshipStartDate" xml:space="preserve">
     <value>Start date</value>
   </data>
-  <data name="WndTitleCreateOrUpdatePersonDialog" xml:space="preserve">
+  <data name="TitleCreateOrUpdatePersonDialog" xml:space="preserve">
     <value>Fill in person information</value>
   </data>
   <data name="FieldRelationshipType" xml:space="preserve">
@@ -439,7 +439,7 @@ genealogy tree and enjoy!</value>
   <data name="BtnNameCreateName_1" xml:space="preserve">
     <value>Create a {0}</value>
   </data>
-  <data name="WndTitleCreateOrUpdateNameDialog_1" xml:space="preserve">
+  <data name="TitleCreateOrUpdateNameDialog_1" xml:space="preserve">
     <value>Create or update {0}</value>
   </data>
   <data name="MenuItemNameAddPerson" xml:space="preserve">

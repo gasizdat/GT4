@@ -7,7 +7,7 @@
     xmlns:items="clr-namespace:GT4.UI.Items"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root"
-    Title="{x:Static resources:UIStrings.WndTitleProjectPage}">
+    Title="{x:Static resources:UIStrings.TitleProjectPage}">
 
   <ContentPage.ToolbarItems>
     <ToolbarItem
@@ -27,7 +27,7 @@
     <components:PageLayout.Header>
       <Label
           Style="{StaticResource PageSubtitle}"
-          Text="{x:Static resources:UIStrings.WndHintProjectPage}" />
+          Text="{x:Static resources:UIStrings.HintProjectPage}" />
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>

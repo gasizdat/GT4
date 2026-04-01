@@ -44,7 +44,7 @@
     <components:PageLayout.Header>
       <Label
           Style="{StaticResource PageTitle}"
-          Text="{x:Static resources:UIStrings.WndTitleCreateOrUpdatePersonDialog}" />
+          Text="{x:Static resources:UIStrings.TitleCreateOrUpdatePersonDialog}" />
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>

@@ -13,7 +13,7 @@
     <components:PageLayout.Header>
       <Label
           Style="{StaticResource PageTitle}"
-          Text="{x:Static resources:UIStrings.WndTitleSelectNameDialog}" />
+          Text="{x:Static resources:UIStrings.TitleSelectNameDialog}" />
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>

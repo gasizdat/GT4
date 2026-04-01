@@ -42,7 +42,7 @@
         Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="GoToHome"
         Order="Secondary"
-        Text="{x:Static resources:UIStrings.WndAppTitle}" />
+        Text="{x:Static resources:UIStrings.TitleApp}" />
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="GoToFamily"

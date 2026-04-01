@@ -38,7 +38,7 @@
     <components:PageLayout.Header>
       <Label
           Style="{StaticResource PageSubtitle}"
-          Text="{x:Static resources:UIStrings.WndHintFamilyPage}" />
+          Text="{x:Static resources:UIStrings.HintFamilyPage}" />
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>

@@ -611,6 +611,33 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Open or create family.
+        /// </summary>
+        public static string HintFamiliesPage {
+            get {
+                return ResourceManager.GetString("HintFamiliesPage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Open family member or create a new one.
+        /// </summary>
+        public static string HintFamilyPage {
+            get {
+                return ResourceManager.GetString("HintFamilyPage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Open or create a new one.
+        /// </summary>
+        public static string HintProjectPage {
+            get {
+                return ResourceManager.GetString("HintProjectPage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 👪 To family: {0}.
         /// </summary>
         public static string MenuItemGotoFamily_1 {
@@ -1448,6 +1475,87 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 🏠 Home.
+        /// </summary>
+        public static string TitleApp {
+            get {
+                return ResourceManager.GetString("TitleApp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create a Genealogy Tree.
+        /// </summary>
+        public static string TitleCreateNewProjectDialog {
+            get {
+                return ResourceManager.GetString("TitleCreateNewProjectDialog", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create or update {0}.
+        /// </summary>
+        public static string TitleCreateOrUpdateNameDialog_1 {
+            get {
+                return ResourceManager.GetString("TitleCreateOrUpdateNameDialog_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Fill in person information.
+        /// </summary>
+        public static string TitleCreateOrUpdatePersonDialog {
+            get {
+                return ResourceManager.GetString("TitleCreateOrUpdatePersonDialog", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Families.
+        /// </summary>
+        public static string TitleFamiliesPage {
+            get {
+                return ResourceManager.GetString("TitleFamiliesPage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Genealogy Tree.
+        /// </summary>
+        public static string TitleProjectPage {
+            get {
+                return ResourceManager.GetString("TitleProjectPage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select date.
+        /// </summary>
+        public static string TitleSelectDateDialog {
+            get {
+                return ResourceManager.GetString("TitleSelectDateDialog", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select a name.
+        /// </summary>
+        public static string TitleSelectNameDialog {
+            get {
+                return ResourceManager.GetString("TitleSelectNameDialog", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select relatives.
+        /// </summary>
+        public static string TitleSelectRelativesDialog {
+            get {
+                return ResourceManager.GetString("TitleSelectRelativesDialog", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Enter a Family name in the plural (for example, Smiths).
         /// </summary>
         public static string TxtPlaceholderFamilyName {
@@ -1525,114 +1633,6 @@ namespace GT4.UI.Resources {
         public static string TxtPlaceholderPtojectName {
             get {
                 return ResourceManager.GetString("TxtPlaceholderPtojectName", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 🏠 Home.
-        /// </summary>
-        public static string WndAppTitle {
-            get {
-                return ResourceManager.GetString("WndAppTitle", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Open or create family.
-        /// </summary>
-        public static string WndHintFamiliesPage {
-            get {
-                return ResourceManager.GetString("WndHintFamiliesPage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Open family member or create a new one.
-        /// </summary>
-        public static string WndHintFamilyPage {
-            get {
-                return ResourceManager.GetString("WndHintFamilyPage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Open or create a new one.
-        /// </summary>
-        public static string WndHintProjectPage {
-            get {
-                return ResourceManager.GetString("WndHintProjectPage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Create a Genealogy Tree.
-        /// </summary>
-        public static string WndTitleCreateNewProjectDialog {
-            get {
-                return ResourceManager.GetString("WndTitleCreateNewProjectDialog", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Create or update {0}.
-        /// </summary>
-        public static string WndTitleCreateOrUpdateNameDialog_1 {
-            get {
-                return ResourceManager.GetString("WndTitleCreateOrUpdateNameDialog_1", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Fill in person information.
-        /// </summary>
-        public static string WndTitleCreateOrUpdatePersonDialog {
-            get {
-                return ResourceManager.GetString("WndTitleCreateOrUpdatePersonDialog", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Families.
-        /// </summary>
-        public static string WndTitleFamiliesPage {
-            get {
-                return ResourceManager.GetString("WndTitleFamiliesPage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Genealogy Tree.
-        /// </summary>
-        public static string WndTitleProjectPage {
-            get {
-                return ResourceManager.GetString("WndTitleProjectPage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Select date.
-        /// </summary>
-        public static string WndTitleSelectDateDialog {
-            get {
-                return ResourceManager.GetString("WndTitleSelectDateDialog", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Select a name.
-        /// </summary>
-        public static string WndTitleSelectNameDialog {
-            get {
-                return ResourceManager.GetString("WndTitleSelectNameDialog", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Select relatives.
-        /// </summary>
-        public static string WndTitleSelectRelativesDialog {
-            get {
-                return ResourceManager.GetString("WndTitleSelectRelativesDialog", resourceCulture);
             }
         }
     }
