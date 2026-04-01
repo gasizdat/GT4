@@ -11,8 +11,6 @@ namespace GT4.UI.Dialogs;
 
 public partial class SelectNameDialog : ContentPage
 {
-  public record NameTypeInfoItem(string TypeName, NameType Type);
-
   private readonly TaskCompletionSource<Name?> _Info = new(null);
   private readonly IServiceProvider _ServiceProvider;
   private readonly INameTypeFormatter _NameTypeFormatter;
@@ -75,8 +73,6 @@ public partial class SelectNameDialog : ContentPage
     }
   }
 
-  private record NamesGroup(Name FirstName, Name? MaleName, Name? FemaleName);
-
   public ICollection<NameTypeInfoItem> NameTypes => _NameTypes;
 
   public ICommand DialogCommand => _DialogCommand;
@@ -108,6 +104,7 @@ public partial class SelectNameDialog : ContentPage
       OnPropertyChanged(nameof(Names));
     }
   }
+
   public string DialogButtonName => _NotReady ? UIStrings.BtnNameCancel : UIStrings.BtnNameOk;
 
   public Task<Name?> Name => _Info.Task;
