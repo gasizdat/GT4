@@ -2,6 +2,7 @@ using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Resources;
+using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
 
 namespace GT4.UI.Dialogs;
@@ -16,6 +17,8 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   private string _GeneralName = string.Empty;
   private string _MaleName = string.Empty;
   private string _FemaleName = string.Empty;
+  private bool _MaleNameEnteredManually = false;
+  private bool _FemaleNameEnteredManually = false;
   private bool _IsModified = false;
   private bool _NotReady =>
     string.IsNullOrWhiteSpace(_GeneralName) ||
@@ -74,7 +77,26 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     get => _GeneralName;
     set
     {
+      if (_GeneralName == value)
+      {
+        return;
+      }
+
       _GeneralName = value;
+      if (!_MaleNameEnteredManually)
+      {
+        var maleName = NameDeclension.ToMaleDeclension(Language.Current, _NameType, value);
+        MaleName = maleName;
+        _MaleNameEnteredManually = false;
+      }
+
+      if (!_FemaleNameEnteredManually)
+      {
+        var femaleName = NameDeclension.ToFemaleDeclension(Language.Current, _NameType, value);
+        FemaleName = femaleName;
+        _FemaleNameEnteredManually = false;
+      }
+
       IsModified = true;
       OnPropertyChanged(nameof(GeneralName));
     }
@@ -85,7 +107,14 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     get => _MaleName;
     set
     {
+      if (_MaleName == value)
+      {
+        return;
+      }
+
       _MaleName = value;
+      _MaleNameEnteredManually = !string.IsNullOrEmpty(value);
+
       IsModified = true;
       OnPropertyChanged(nameof(MaleName));
     }
@@ -97,6 +126,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     set
     {
       _FemaleName = value;
+      _FemaleNameEnteredManually = !string.IsNullOrEmpty(value);
       IsModified = true;
       OnPropertyChanged(nameof(FemaleName));
     }
