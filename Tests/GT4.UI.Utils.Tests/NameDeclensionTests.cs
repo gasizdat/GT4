@@ -79,5 +79,36 @@ public class NameDeclensionTests
     Assert.Equal(female, femalePatronymic);
   }
 
+  [Theory]
+  // Rule 1
+  [InlineData("Ивановы", "Иванов", "Иванова")]
+  [InlineData("Кузнецовы", "Кузнецов", "Кузнецова")]
+  // Rule 2
+  [InlineData("Григорьевы", "Григорьев", "Григорьева")]
+  // Rule 3
+  [InlineData("Пушкины", "Пушкин", "Пушкина")]
+  // Rule 4
+  [InlineData("Голицыны", "Голицын", "Голицына")]
+  [InlineData("Лисицыны", "Лисицын", "Лисицына")]
+  // Rule 5
+  [InlineData("Достоевские", "Достоевский", "Достоевская")]
+  // Rule 6
+  [InlineData("Луцкие", "Луцкий", "Луцкая")]
+  // Rule 7
+  [InlineData("Белые", "Белый", "Белая")]
+  [InlineData("Толстые", "Толстый", "Толстая")]
+  // Rule 8
+  [InlineData("Дикие", "Дикий", "Дикая")]
+  // Rule 9
+  [InlineData("Блоки", "Блок", "Блок")]
+  [InlineData("Эдельманы", "Эдельман", "Эдельман")]
+  public void FamilyNameRU(string name, string male, string female)
+  {
+    var maleSurname = NameDeclension.ToMaleDeclension(Language.RU, Core.Project.Dto.NameType.FamilyName, name);
+    var femaleSurname = NameDeclension.ToFemaleDeclension(Language.RU, Core.Project.Dto.NameType.FamilyName, name);
+
+    Assert.Equal(male, maleSurname);
+    Assert.Equal(female, femaleSurname);
+  }
 }
 

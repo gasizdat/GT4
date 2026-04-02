@@ -70,15 +70,26 @@ partial class NameDeclension
 
   private static string ToFemaleLastNameRU(string familyName)
   {
-    var single = ToSingleRU(familyName);
-    var ret = single;
+    var rule = GetFamilyRuleRU(familyName);
+    var ret = rule switch
+    {
+      1 => familyName[..^3] + "ова",
+      2 => familyName[..^3] + "ева",
+      3 => familyName[..^3] + "ина",
+      4 => familyName[..^3] + "ына",
+      5 => familyName[..^4] + "ская",
+      6 => familyName[..^4] + "цкая",
+      7 => familyName[..^2] + "ая",
+      8 => familyName[..^2] + "ая",
+      9 => familyName[..^1],
+      _ => familyName
+    };
 
     return ret;
   }
 
   private static string ToFemaleLastNameEN(string familyName)
   {
-    var single = ToSingleEN(familyName);
     return familyName;
   }
 }
