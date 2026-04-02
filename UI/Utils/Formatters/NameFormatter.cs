@@ -46,7 +46,7 @@ public class NameFormatter : INameFormatter
   protected static string GetFullPersonName(PersonInfo personInfo)
   {
     //TODO use settings
-    var parts = GetNameParts(personInfo, [NameType.FirstName, NameType.AdditionalName, NameType.MiddleName, NameType.LastName]);
+    var parts = GetNameParts(personInfo, [NameType.FirstName, NameType.AdditionalName, NameType.Patronymic, NameType.LastName]);
     var ret = string.Join(_PartsDelimiter, parts);
 
     return ret;
@@ -55,7 +55,7 @@ public class NameFormatter : INameFormatter
   protected static string GetCommonPersonName(PersonInfo personInfo)
   {
     //TODO use settings
-    var parts = GetNameParts(personInfo, [NameType.FirstName, NameType.MiddleName, NameType.LastName]);
+    var parts = GetNameParts(personInfo, [NameType.FirstName, NameType.Patronymic, NameType.LastName]);
     var ret = string.Join(_PartsDelimiter, parts);
 
     return ret;
@@ -64,7 +64,7 @@ public class NameFormatter : INameFormatter
   protected static string GetShortPersonName(PersonInfo personInfo)
   {
     //TODO use settings
-    var parts = GetNameParts(personInfo, [NameType.FirstName, NameType.MiddleName | _Initials, NameType.LastName]);
+    var parts = GetNameParts(personInfo, [NameType.FirstName, NameType.Patronymic | _Initials, NameType.LastName]);
     var ret = string.Join(_PartsDelimiter, parts);
 
     return ret;
@@ -73,7 +73,7 @@ public class NameFormatter : INameFormatter
   protected static string GetPersonInitials(PersonInfo personInfo)
   {
     //TODO use settings
-    var parts = GetNameParts(personInfo, [NameType.LastName, NameType.FirstName | _Initials, NameType.MiddleName | _Initials]);
+    var parts = GetNameParts(personInfo, [NameType.LastName, NameType.FirstName | _Initials, NameType.Patronymic | _Initials]);
     var ret = string.Join(_PartsDelimiter, parts);
 
     return ret;

@@ -33,7 +33,7 @@ public partial class SelectNameDialog : ContentPage
     _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
     _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
     _NameComparer = _ServiceProvider.GetRequiredService<IComparer<Name>>();
-    _NameTypes = new((new[] { NameType.FirstName, NameType.MiddleName, NameType.LastName, NameType.AdditionalName })
+    _NameTypes = new((new[] { NameType.FirstName, NameType.Patronymic, NameType.LastName, NameType.AdditionalName })
       .Select(type => new NameTypeInfoItem(_NameTypeFormatter.ToString(type), type)));
     _DialogCommand = new Command<object>(OnDialogCommandAsync);
     _CurrentNameType = _NameTypes.First();
@@ -143,7 +143,7 @@ public partial class SelectNameDialog : ContentPage
     NameType dialogNameType;
     switch (_CurrentNameType.Type)
     {
-      case NameType.MiddleName:
+      case NameType.Patronymic:
         dialogNameType = NameType.FirstName | NameType.MaleDeclension;
         break;
       case NameType.FirstName:
@@ -178,7 +178,7 @@ public partial class SelectNameDialog : ContentPage
             .AddFamilyAsync(familyName: info.Name, maleLastName: info.MaleName, femaleLastName: info.FemaleName, token),
 
         NameType.FirstName | NameType.MaleDeclension =>
-          await project.Names.AddFirstMaleNameAsync(firstName: info.Name, maleMiddleName: info.MaleName, femaleMiddleName: info.FemaleName, token),
+          await project.Names.AddFirstMaleNameAsync(firstName: info.Name, malePatronymic: info.MaleName, femalePatronymic: info.FemaleName, token),
 
         NameType.FirstName | NameType.FemaleDeclension =>
           await project.Names.AddFirstFemaleNameAsync(info.Name, token),

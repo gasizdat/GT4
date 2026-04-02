@@ -292,8 +292,8 @@ genealogy tree and enjoy!</value>
   <data name="FieldFirstName" xml:space="preserve">
     <value>First name</value>
   </data>
-  <data name="FieldMiddleName" xml:space="preserve">
-    <value>Middle name</value>
+  <data name="FieldPatronymic" xml:space="preserve">
+    <value>Patronymic</value>
   </data>
   <data name="FieldLastName" xml:space="preserve">
     <value>Last name</value>
@@ -319,11 +319,11 @@ genealogy tree and enjoy!</value>
   <data name="FieldFirstNameFemaleEntry" xml:space="preserve">
     <value>Female first name</value>
   </data>
-  <data name="FieldMiddleNameMaleEntry" xml:space="preserve">
-    <value>Male middle name</value>
+  <data name="FieldPatronymicMaleEntry" xml:space="preserve">
+    <value>Male patronymic</value>
   </data>
-  <data name="FieldMiddleNameFemaleEntry" xml:space="preserve">
-    <value>Female middle name</value>
+  <data name="FieldPatronymicFemaleEntry" xml:space="preserve">
+    <value>Female patronymic</value>
   </data>
   <data name="TxtPlaceholderMaleName" xml:space="preserve">
     <value>Enter male name</value>
@@ -331,11 +331,11 @@ genealogy tree and enjoy!</value>
   <data name="TxtPlaceholderFemaleName" xml:space="preserve">
     <value>Enter female name</value>
   </data>
-  <data name="TxtPlaceholderMiddleNameMale" xml:space="preserve">
-    <value>Enter male middle name</value>
+  <data name="TxtPlaceholderPatronymicMale" xml:space="preserve">
+    <value>Enter male patronymic</value>
   </data>
-  <data name="TxtPlaceholderMiddleNameFemale" xml:space="preserve">
-    <value>Enter female middle name</value>
+  <data name="TxtPlaceholderPatronymicFemale" xml:space="preserve">
+    <value>Enter female patronymic</value>
   </data>
   <data name="BiologicalSexMale" xml:space="preserve">
     <value>♂ Man</value>

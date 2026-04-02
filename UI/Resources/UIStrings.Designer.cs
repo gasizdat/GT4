@@ -476,38 +476,38 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Middle name.
-        /// </summary>
-        public static string FieldMiddleName {
-            get {
-                return ResourceManager.GetString("FieldMiddleName", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Female middle name.
-        /// </summary>
-        public static string FieldMiddleNameFemaleEntry {
-            get {
-                return ResourceManager.GetString("FieldMiddleNameFemaleEntry", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Male middle name.
-        /// </summary>
-        public static string FieldMiddleNameMaleEntry {
-            get {
-                return ResourceManager.GetString("FieldMiddleNameMaleEntry", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Month.
         /// </summary>
         public static string FieldMonth {
             get {
                 return ResourceManager.GetString("FieldMonth", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Patronymic.
+        /// </summary>
+        public static string FieldPatronymic {
+            get {
+                return ResourceManager.GetString("FieldPatronymic", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Female patronymic.
+        /// </summary>
+        public static string FieldPatronymicFemaleEntry {
+            get {
+                return ResourceManager.GetString("FieldPatronymicFemaleEntry", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Male patronymic.
+        /// </summary>
+        public static string FieldPatronymicMaleEntry {
+            get {
+                return ResourceManager.GetString("FieldPatronymicMaleEntry", resourceCulture);
             }
         }
         
@@ -1628,20 +1628,20 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Enter female middle name.
+        ///   Looks up a localized string similar to Enter female patronymic.
         /// </summary>
-        public static string TxtPlaceholderMiddleNameFemale {
+        public static string TxtPlaceholderPatronymicFemale {
             get {
-                return ResourceManager.GetString("TxtPlaceholderMiddleNameFemale", resourceCulture);
+                return ResourceManager.GetString("TxtPlaceholderPatronymicFemale", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Enter male middle name.
+        ///   Looks up a localized string similar to Enter male patronymic.
         /// </summary>
-        public static string TxtPlaceholderMiddleNameMale {
+        public static string TxtPlaceholderPatronymicMale {
             get {
-                return ResourceManager.GetString("TxtPlaceholderMiddleNameMale", resourceCulture);
+                return ResourceManager.GetString("TxtPlaceholderPatronymicMale", resourceCulture);
             }
         }
         

@@ -139,18 +139,18 @@ internal class TableNames : TableBase, ITableNames
     return new Name(Id: await Document.GetLastInsertRowIdAsync(token), Value: value, Type: type, ParentId: parent?.Id);
   }
 
-  public async Task<Name> AddFirstMaleNameAsync(string firstName, string? maleMiddleName, string? femaleMiddleName, CancellationToken token)
+  public async Task<Name> AddFirstMaleNameAsync(string firstName, string? malePatronymic, string? femalePatronymic, CancellationToken token)
   {
     using var transaction = await Document.BeginTransactionAsync(token);
     var name = await AddNameAsync(firstName, NameType.FirstName | NameType.MaleDeclension, null, token);
     var tasks = new List<Task<Name>>();
-    if (maleMiddleName is not null)
+    if (malePatronymic is not null)
     {
-      tasks.Add(AddNameAsync(maleMiddleName, NameType.MiddleName | NameType.MaleDeclension, name, token));
+      tasks.Add(AddNameAsync(malePatronymic, NameType.Patronymic | NameType.MaleDeclension, name, token));
     }
-    if (femaleMiddleName is not null)
+    if (femalePatronymic is not null)
     {
-      tasks.Add(AddNameAsync(femaleMiddleName, NameType.MiddleName | NameType.FemaleDeclension, name, token));
+      tasks.Add(AddNameAsync(femalePatronymic, NameType.Patronymic | NameType.FemaleDeclension, name, token));
     }
     await Task.WhenAll(tasks);
     transaction.Commit();

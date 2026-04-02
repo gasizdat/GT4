@@ -121,7 +121,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   public string MaleNameDescription => _NameType switch
   {
     NameType.FamilyName => UIStrings.FieldLastNameMaleEntry,
-    NameType.FirstName | NameType.MaleDeclension => UIStrings.FieldMiddleNameMaleEntry,
+    NameType.FirstName | NameType.MaleDeclension => UIStrings.FieldPatronymicMaleEntry,
     NameType.FirstName | NameType.FemaleDeclension => string.Empty,
     _ => throw new ApplicationException(nameof(MaleNameDescription))
   };
@@ -129,7 +129,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   public string MaleNamePlaceholder => _NameType switch
   {
     NameType.FamilyName => UIStrings.TxtPlaceholderLastNameMale,
-    NameType.FirstName | NameType.MaleDeclension => UIStrings.TxtPlaceholderMiddleNameMale,
+    NameType.FirstName | NameType.MaleDeclension => UIStrings.TxtPlaceholderPatronymicMale,
     NameType.FirstName | NameType.FemaleDeclension => string.Empty,
     _ => throw new ApplicationException(nameof(MaleNamePlaceholder))
   };
@@ -137,7 +137,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   public string FemaleNameDescription => _NameType switch
   {
     NameType.FamilyName => UIStrings.FieldLastNameFemaleEntry,
-    NameType.FirstName | NameType.MaleDeclension => UIStrings.FieldMiddleNameFemaleEntry,
+    NameType.FirstName | NameType.MaleDeclension => UIStrings.FieldPatronymicFemaleEntry,
     NameType.FirstName | NameType.FemaleDeclension => string.Empty,
     _ => throw new ApplicationException(nameof(FemaleNameDescription))
   };
@@ -145,7 +145,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   public string FemaleNamePlaceholder => _NameType switch
   {
     NameType.FamilyName => UIStrings.TxtPlaceholderLastNameFemale,
-    NameType.FirstName | NameType.MaleDeclension => UIStrings.TxtPlaceholderMiddleNameFemale,
+    NameType.FirstName | NameType.MaleDeclension => UIStrings.TxtPlaceholderPatronymicFemale,
     NameType.FirstName | NameType.FemaleDeclension => string.Empty,
     _ => throw new ApplicationException(nameof(FemaleNamePlaceholder))
   };
@@ -178,9 +178,9 @@ public partial class CreateOrUpdateNameDialog : ContentPage
       var firstName = names?.Single(n => n.Type.HasFlag(NameType.FirstName) || n.Type.HasFlag(NameType.FamilyName))
         ?? throw new Exception($"A parent name was not found for '{name.Value}'");
       var maleName = names?.SingleOrDefault(
-        n => (n.Type.HasFlag(NameType.MiddleName) || n.Type.HasFlag(NameType.LastName)) && n.Type.HasFlag(NameType.MaleDeclension));
+        n => (n.Type.HasFlag(NameType.Patronymic) || n.Type.HasFlag(NameType.LastName)) && n.Type.HasFlag(NameType.MaleDeclension));
       var femaleName = names?.SingleOrDefault(
-        n => (n.Type.HasFlag(NameType.MiddleName) || n.Type.HasFlag(NameType.LastName)) && n.Type.HasFlag(NameType.FemaleDeclension));
+        n => (n.Type.HasFlag(NameType.Patronymic) || n.Type.HasFlag(NameType.LastName)) && n.Type.HasFlag(NameType.FemaleDeclension));
       var ret = new NamesGroup(firstName, maleName, femaleName);
 
       return ret;
@@ -188,8 +188,9 @@ public partial class CreateOrUpdateNameDialog : ContentPage
 
     var names = name.Type switch
     {
-      NameType.MiddleName | NameType.MaleDeclension or
-      NameType.MiddleName | NameType.FemaleDeclension or
+      NameType.FirstName | NameType.MaleDeclension or
+      NameType.Patronymic | NameType.MaleDeclension or
+      NameType.Patronymic | NameType.FemaleDeclension or
       NameType.LastName | NameType.MaleDeclension or
       NameType.LastName | NameType.FemaleDeclension or
       NameType.FamilyName => await GetNameWithSubnames(),

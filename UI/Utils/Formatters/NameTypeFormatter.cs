@@ -11,7 +11,7 @@ public class NameTypeFormatter : INameTypeFormatter
     {
       NameType.FirstName => UIStrings.FieldFirstName,
       NameType.LastName => UIStrings.FieldLastName,
-      NameType.MiddleName => UIStrings.FieldMiddleName,
+      NameType.Patronymic => UIStrings.FieldPatronymic,
       NameType.FamilyName => UIStrings.FieldFamilyName,
       NameType.AdditionalName => UIStrings.FieldAdditionalName,
       _ => string.Empty
