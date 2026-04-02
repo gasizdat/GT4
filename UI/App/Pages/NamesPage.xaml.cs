@@ -1,11 +1,11 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Utils.Formatters;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
-using System.Xml.Linq;
 
 namespace GT4.UI.Pages;
 
@@ -18,6 +18,8 @@ public partial class NamesPage : ContentPage
   private readonly IComparer<Name> _NameComparer;
   private readonly ObservableCollection<NameTypeInfoItem> _NameTypes;
   private readonly ObservableCollection<BiologicalSexItem> _BiologicalSexes = new();
+  private readonly ICommand _EditNameCommand;
+  private readonly ICommand _DeleteNameCommand;
   private readonly ICommand _PageCommand;
   private ICollection<NameInfoItem>? _Names;
   private NameTypeInfoItem _CurrentNameType;
@@ -31,8 +33,10 @@ public partial class NamesPage : ContentPage
     _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
     _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
     _NameComparer = _ServiceProvider.GetRequiredService<IComparer<Name>>();
-    _NameTypes = new((new[] { NameType.FirstName, NameType.MiddleName, NameType.LastName, NameType.AdditionalName })
+    _NameTypes = new((new[] { NameType.FirstName, NameType.Patronymic, NameType.LastName, NameType.AdditionalName })
       .Select(type => new NameTypeInfoItem(_NameTypeFormatter.ToString(type), type)));
+    _EditNameCommand = new Command<object>(OnEditCommandAsync);
+    _DeleteNameCommand = new Command<object>(OnDeleteCommandAsync);
     _PageCommand = new Command<object>(OnPageCommandAsync);
     _CurrentNameType = _NameTypes.First();
 
@@ -50,10 +54,26 @@ public partial class NamesPage : ContentPage
   {
   }
 
+  private async void OnEditCommandAsync(object obj)
+  {
+    if (obj is Name name)
+    {
+      await CreateOrUpdateNameDialog.UpdateNameAsync(name, _ServiceProvider, Navigation); 
+      Names = null;
+      CurrentName = Names?.SingleOrDefault(n => n.Info.Id == name.Id);
+    }
+  }
+
+  private async void OnDeleteCommandAsync(object obj)
+  {
+
+  }
+
   private async void OnPageCommandAsync(object obj)
   {
 
   }
+
   public ICollection<BiologicalSexItem> BiologicalSexes => _BiologicalSexes;
 
   public BiologicalSexItem CurrentBiologicalSex
@@ -68,6 +88,10 @@ public partial class NamesPage : ContentPage
     }
   }
   public ICollection<NameTypeInfoItem> NameTypes => _NameTypes;
+
+  public ICommand EditNameCommand => _EditNameCommand;
+
+  public ICommand DeleteNameCommand => _DeleteNameCommand;
 
   public ICommand PageCommand => _PageCommand;
 

@@ -71,8 +71,9 @@
               <Grid
                   Padding="{Thickness Left={StaticResource PageContentSpacing},
                                       Right={StaticResource PageContentSpacing}}"
-                  ColumnDefinitions="*, Auto"
+                  ColumnDefinitions="*, Auto, Auto"
                   Style="{StaticResource SelectableItem}">
+
                 <Label
                     Padding="{StaticResource CollectionItemsVerticalPadding}"
                     HorizontalOptions="Fill"
@@ -82,10 +83,18 @@
 
                 <Button
                     Grid.Column="1"
-                    Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                    Command="{Binding DeleteNameCommand, Source={x:Reference Root}}"
+                    CommandParameter="{Binding Info}"
+                    Style="{StaticResource DeleteAdorner}"
+                    VerticalOptions="Center" />
+
+                <Button
+                    Grid.Column="2"
+                    Command="{Binding EditNameCommand, Source={x:Reference Root}}"
                     CommandParameter="{Binding Info}"
                     Style="{StaticResource EditAdorner}"
                     VerticalOptions="Center" />
+
               </Grid>
             </DataTemplate>
           </CollectionView.ItemTemplate>
