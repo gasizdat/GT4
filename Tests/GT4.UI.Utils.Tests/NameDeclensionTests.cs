@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Xunit;
+﻿using Xunit;
 
 namespace GT4.UI.Utils.Tests;
 
@@ -73,13 +70,13 @@ public class NameDeclensionTests
   [InlineData("Бимбии", "Бимбииевич", "Бимбииевна")]
   [InlineData("Бобоо", "Бобооевич", "Бобооевна")]
   [InlineData("Бурбээ", "Бурбээевич", "Бурбээевна")]
-  public void PatronymicRU(string name, string expectedMalePatronymic, string expectedFemalePatronymic)
+  public void PatronymicRU(string name, string male, string female)
   {
     var malePatronymic = NameDeclension.ToMaleDeclension(Language.RU, Core.Project.Dto.NameType.FirstName, name);
     var femalePatronymic = NameDeclension.ToFemaleDeclension(Language.RU, Core.Project.Dto.NameType.FirstName, name);
 
-    Assert.Equal(expectedMalePatronymic, malePatronymic);
-    Assert.Equal(expectedFemalePatronymic, femalePatronymic);
+    Assert.Equal(male, malePatronymic);
+    Assert.Equal(female, femalePatronymic);
   }
 
 }
