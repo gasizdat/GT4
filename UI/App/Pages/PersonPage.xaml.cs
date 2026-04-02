@@ -252,7 +252,7 @@ public partial class PersonPage : ContentPage
         await Shell.Current.GoToAsync(UIRoutes.GetRoute<MainPage>());
         break;
       case string commandName when commandName == "GoToFamily":
-        await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = FamilyName });
+        await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = FamilyName! });
         break;
       case RelativeInfo relativeInfo:
         var nextPerson = ToPerson(relativeInfo);
