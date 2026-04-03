@@ -20,12 +20,16 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   private bool _MaleNameEnteredManually = false;
   private bool _FemaleNameEnteredManually = false;
   private bool _IsModified = false;
-  private bool _NotReady =>
+  private bool _FocusGenericName = false;
+  private bool _FocusMaleName = false;
+  private bool _FocusFemaleName = false;
+
+  protected bool NotReady =>
     string.IsNullOrWhiteSpace(_GeneralName) ||
     !_IsModified ||
     ShowDeclensionNames && (string.IsNullOrWhiteSpace(_MaleName) || string.IsNullOrWhiteSpace(_FemaleName));
 
-  private bool IsModified
+  protected bool IsModified
   {
     set
     {
@@ -182,13 +186,52 @@ public partial class CreateOrUpdateNameDialog : ContentPage
 
   public Task<FamilyInfo?> Info => _Info.Task;
 
-  public string DialogButtonName => _NotReady ? UIStrings.BtnNameCancel : _DialogButtonName;
+  public string DialogButtonName => NotReady ? UIStrings.BtnNameCancel : _DialogButtonName;
 
   public string DialogTitle => _DialogButtonName;
 
+  public bool FocusGenericName
+  {
+    get => _FocusGenericName;
+    set
+    {
+      if (_FocusGenericName != value)
+      {
+        _FocusGenericName = value;
+        OnPropertyChanged(nameof(FocusGenericName));
+      }
+    }
+  }
+
+  public bool FocusMaleName
+  {
+    get => _FocusMaleName;
+    set
+    {
+      if (_FocusMaleName != value)
+      {
+        _FocusMaleName = value;
+        OnPropertyChanged(nameof(FocusMaleName));
+      }
+    }
+  }
+
+  public bool FocusFemaleName
+  {
+    get => _FocusFemaleName;
+    set
+    {
+      if (_FocusFemaleName != value)
+      {
+        _FocusFemaleName = value;
+        OnPropertyChanged(nameof(FocusFemaleName));
+      }
+    }
+  }
+
   public void OnCreateFamilyBtn(object sender, EventArgs e)
   {
-    _Info.SetResult(_NotReady ? null : new(GeneralName, ShowDeclensionNames ? MaleName : string.Empty, ShowDeclensionNames ? FemaleName : string.Empty));
+    _Info.SetResult(NotReady ? null : new(GeneralName, ShowDeclensionNames ? MaleName : string.Empty, ShowDeclensionNames ? FemaleName : string.Empty));
   }
 
   private record NamesGroup(Name FirstName, Name? MaleName, Name? FemaleName);
@@ -226,7 +269,13 @@ public partial class CreateOrUpdateNameDialog : ContentPage
       NameType.FamilyName => await GetNameWithSubnames(),
       _ => new NamesGroup(name, null, null),
     };
-    var dialog = new CreateOrUpdateNameDialog(names.FirstName, names.MaleName, names.FemaleName, serviceProvider);
+    var focusGenericName = name.Type.HasFlag(NameType.FirstName) || name.Type.HasFlag(NameType.FamilyName);
+    var dialog = new CreateOrUpdateNameDialog(names.FirstName, names.MaleName, names.FemaleName, serviceProvider)
+    {
+      FocusGenericName = focusGenericName,
+      FocusMaleName = !focusGenericName && name.Type.HasFlag(NameType.MaleDeclension),
+      FocusFemaleName = !focusGenericName && name.Type.HasFlag(NameType.FemaleDeclension)
+    };
 
     await navigation.PushModalAsync(dialog);
     var info = await dialog.Info;
