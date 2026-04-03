@@ -652,4 +652,7 @@ genealogy tree and enjoy!</value>
   <data name="MenuItemGoToNames" xml:space="preserve">
     <value>📝 To Names</value>
   </data>
+  <data name="FieldSearchText" xml:space="preserve">
+    <value>Search</value>
+  </data>
 </root>

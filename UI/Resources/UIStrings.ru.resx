@@ -652,4 +652,7 @@
   <data name="MenuItemGoToNames" xml:space="preserve">
     <value>📝 К именам</value>
   </data>
+  <data name="FieldSearchText" xml:space="preserve">
+    <value>Поиск</value>
+  </data>
 </root>
