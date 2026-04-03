@@ -18,13 +18,32 @@ public partial class NamesPage : ContentPage
   private readonly IComparer<Name> _NameComparer;
   private readonly ObservableCollection<NameTypeInfoItem> _NameTypes;
   private readonly ObservableCollection<BiologicalSexItem> _BiologicalSexes = new();
+  private readonly FilteredObservableCollection<NameInfoItem> _Names = new();
   private readonly ICommand _EditNameCommand;
   private readonly ICommand _DeleteNameCommand;
   private readonly ICommand _PageCommand;
-  private ICollection<NameInfoItem>? _Names;
   private NameTypeInfoItem _CurrentNameType;
   private NameInfoItem? _CurrentName;
   private BiologicalSexItem _CurrentBiologicalSex;
+  private bool _UpdateNames = true;
+  private string _NameFilter = string.Empty;
+
+  private bool NamesFilter(FilteredObservableCollection<NameInfoItem> _, NameInfoItem nameItem)
+  {
+    if (!string.IsNullOrEmpty(_NameFilter))
+    {
+      var isMatched = nameItem
+        .Value
+        .Contains(_NameFilter, StringComparison.InvariantCultureIgnoreCase);
+
+      if (!isMatched)
+      {
+        return false;
+      }
+    }
+
+    return true;
+  }
 
   protected NamesPage(IServiceProvider serviceProvider)
   {
@@ -39,6 +58,7 @@ public partial class NamesPage : ContentPage
     _DeleteNameCommand = new Command<object>(OnDeleteCommandAsync);
     _PageCommand = new Command<object>(OnPageCommandAsync);
     _CurrentNameType = _NameTypes.First();
+    _Names.Filter = NamesFilter;
 
     var biologicalSexFormatter = _ServiceProvider.GetRequiredService<IBiologicalSexFormatter>();
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, biologicalSexFormatter));
@@ -58,8 +78,8 @@ public partial class NamesPage : ContentPage
   {
     if (obj is Name name)
     {
-      await CreateOrUpdateNameDialog.UpdateNameAsync(name, _ServiceProvider, Navigation); 
-      Names = null;
+      await CreateOrUpdateNameDialog.UpdateNameAsync(name, _ServiceProvider, Navigation);
+      _UpdateNames = true;
       CurrentName = Names?.SingleOrDefault(n => n.Info.Id == name.Id);
     }
   }
@@ -82,9 +102,10 @@ public partial class NamesPage : ContentPage
     set
     {
       _CurrentBiologicalSex = value;
-      OnPropertyChanged(nameof(CurrentBiologicalSex));
-      Names = null;
+      _UpdateNames = true;
       CurrentName = null;
+      OnPropertyChanged(nameof(CurrentBiologicalSex));
+      OnPropertyChanged(nameof(Names));
     }
   }
   public ICollection<NameTypeInfoItem> NameTypes => _NameTypes;
@@ -95,37 +116,43 @@ public partial class NamesPage : ContentPage
 
   public ICommand PageCommand => _PageCommand;
 
-  public ICollection<NameInfoItem>? Names
+  public IEnumerable<NameInfoItem> Names
   {
     get
     {
-      if (_Names != null)
+      async Task AddNameItemsAsync()
       {
-        return _Names;
+        var nameDeclension = _CurrentBiologicalSex.Info switch
+        {
+          BiologicalSex.Male => NameType.MaleDeclension,
+          BiologicalSex.Female => NameType.FemaleDeclension,
+          _ => NameType.AllNames
+        };
+
+        using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+        var names = _CurrentProjectProvider
+          .Project
+          .Names
+          .GetNamesByTypeAsync(CurrentNameType.Type | nameDeclension, token)
+          .Result
+          .Select(name => new NameInfoItem(name, _NameTypeFormatter))
+          .OrderBy(name => name.Info, _NameComparer)
+          .ToArray();
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+          _Names.Clear();
+          _Names.AddRange(names);
+        });
       }
-      var nameDeclension = _CurrentBiologicalSex.Info switch
+
+      if (_UpdateNames)
       {
-        BiologicalSex.Male => NameType.MaleDeclension,
-        BiologicalSex.Female => NameType.FemaleDeclension,
-        _ => NameType.AllNames
-      };
+        _UpdateNames = false;
+        Task.Run(AddNameItemsAsync);
+      }
 
-      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-      _Names = _CurrentProjectProvider
-        .Project
-        .Names
-        .GetNamesByTypeAsync(CurrentNameType.Type | nameDeclension, token)
-        .Result
-        .Select(name => new NameInfoItem(name, _NameTypeFormatter))
-        .OrderBy(name => name.Info, _NameComparer)
-        .ToArray();
-
-      return _Names;
-    }
-    set
-    {
-      _Names = value;
-      OnPropertyChanged(nameof(Names));
+      return _Names.Items;
     }
   }
 
@@ -138,8 +165,9 @@ public partial class NamesPage : ContentPage
         return;
 
       _CurrentNameType = value;
-      Names = null;
+      _UpdateNames = true;
       CurrentName = null;
+      OnPropertyChanged(nameof(Names));
     }
   }
 
@@ -153,6 +181,16 @@ public partial class NamesPage : ContentPage
         _CurrentName = value;
         OnPropertyChanged(nameof(CurrentName));
       }
+    }
+  }
+
+  public string NameFilter
+  {
+    get => _NameFilter;
+    set
+    {
+      _NameFilter = value;
+      _Names.Update();
     }
   }
 }

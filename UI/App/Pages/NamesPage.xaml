@@ -30,10 +30,11 @@
           Padding="20"
           ColumnDefinitions="Auto, Auto, *"
           HorizontalOptions="Fill"
-          RowDefinitions="Auto, *, Auto, Auto"
+          RowDefinitions="Auto, Auto, *"
           RowSpacing="10"
           VerticalOptions="Start">
 
+        <!--  Row 0 - Filters  -->
         <Label
             Grid.Row="0"
             Grid.Column="0"
@@ -56,9 +57,25 @@
             SelectedItem="{Binding CurrentNameType, Source={x:Reference Root}}"
             Style="{StaticResource FieldValue}" />
 
+        <!--  Row 1 - Search  -->
+        <Label
+            Grid.Row="1"
+            Grid.Column="0"
+            Style="{StaticResource FieldName}"
+            Text="{x:Static resources:UIStrings.FieldSearchText}" />
+
+        <Entry
+            Grid.Row="1"
+            Grid.Column="1"
+            Grid.ColumnSpan="2"
+            HorizontalOptions="Fill"
+            Style="{StaticResource FieldValue}"
+            Text="{Binding NameFilter, Source={x:Reference Root}}" />
+
+        <!--  Row 2 - Search  -->
         <CollectionView
             x:Name="NamesCollectionView"
-            Grid.Row="1"
+            Grid.Row="2"
             Grid.Column="0"
             Grid.ColumnSpan="3"
             behaviors:ScrollToSelected.ScrollToItem="{Binding CurrentName, Source={x:Reference Root}}"
@@ -107,9 +124,6 @@
     <components:PageLayout.Footer>
 
       <Button
-          Grid.Row="2"
-          Grid.Column="0"
-          Grid.ColumnSpan="2"
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="AddName"
           HorizontalOptions="Fill"
