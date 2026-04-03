@@ -2,7 +2,7 @@
 
 partial class NameDeclension
 {
-  private static int GetFamilyRuleRU(string familyName)
+  private static int GetLastNameRuleRU(string familyName)
   {
     if (familyName.EndsWith("овы"))
     {
@@ -42,5 +42,19 @@ partial class NameDeclension
     }
 
     return 0;
+  }
+
+  private static int GetLastNameRuleEN(string familyName)
+  {
+    if (familyName.EndsWith("es"))
+    {
+      return 1;
+    }
+    if (familyName.StartsWith("s"))
+    {
+      return 2;
+    }
+
+    return 3;
   }
 }

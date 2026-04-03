@@ -22,23 +22,30 @@ partial class NameDeclension
     {
       return ToFemalePatronymicRU(firstName);
     }
+    if (language == Language.EN)
+    {
+      return ToFemalePatronymicEN(firstName);
+    }
 
-    return ToFemalePatronymicEN(firstName);
+    return firstName;
   }
 
-  private static string ToFemaleLastName(Language language, string firstName)
+  private static string ToFemaleLastName(Language language, string familyName)
   {
     if (language == Language.RU)
     {
-      return ToFemaleLastNameRU(firstName);
+      return ToFemaleLastNameRU(familyName);
+    }
+    if (language == Language.EN)
+    {
+      return ToFemaleLastNameEN(familyName);
     }
 
-    return ToFemaleLastNameEN(firstName);
+    return familyName;
   }
 
   private static string ToFemalePatronymicRU(string firstName)
   {
-
     var rule = GetPatronymicRuleRU(firstName);
     var ret = rule switch
     {
@@ -70,7 +77,7 @@ partial class NameDeclension
 
   private static string ToFemaleLastNameRU(string familyName)
   {
-    var rule = GetFamilyRuleRU(familyName);
+    var rule = GetLastNameRuleRU(familyName);
     var ret = rule switch
     {
       1 => familyName[..^3] + "ова",
@@ -90,6 +97,14 @@ partial class NameDeclension
 
   private static string ToFemaleLastNameEN(string familyName)
   {
-    return familyName;
+    var rule = GetLastNameRuleEN(familyName);
+    var ret = rule switch
+    {
+      1 => familyName[..^2],
+      2 => familyName[..^1],
+      _ => familyName
+    };
+
+    return ret;
   }
 }
