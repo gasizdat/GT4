@@ -4,7 +4,7 @@ namespace GT4.UI.Utils;
 
 partial class NameDeclension
 {
-  public static string ToMaleDeclension(Language language, NameType nameType, string name)
+  public static partial string ToMaleDeclension(Language language, NameType nameType, string name)
   {
     var noDeclensionNameType = nameType & NameType.NoDeclension;
     var ret = noDeclensionNameType switch
