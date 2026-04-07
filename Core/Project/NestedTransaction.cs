@@ -13,6 +13,9 @@ internal class NestedTransaction : IDisposable, IAsyncDisposable, IDbTransaction
   private readonly IDbTransaction? _DbTransaction;
   private readonly IProjectDocument? _Document;
   private readonly NestedTransaction? _ParentTransaction;
+#if DEBUG
+  private readonly System.Diagnostics.StackTrace _StackTrace = new(fNeedFileInfo: true);
+#endif
   private bool _Disposed = false;
   private bool _Commited = false;
   private bool _Reverted = false;
@@ -77,7 +80,7 @@ internal class NestedTransaction : IDisposable, IAsyncDisposable, IDbTransaction
   {
     if (_Commited || _Disposed)
       throw new ApplicationException("The transaction is not in the correct state");
-    
+
     if (_Reverted)
       return;
 
@@ -105,6 +108,7 @@ internal class NestedTransaction : IDisposable, IAsyncDisposable, IDbTransaction
     if (_DbTransaction is not null)
     {
       _DbTransaction.Dispose();
+      _Reverted = _Reverted || !_Commited;
     }
     else if (!_Commited)
     {
