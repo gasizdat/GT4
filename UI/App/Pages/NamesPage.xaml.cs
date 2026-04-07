@@ -70,7 +70,21 @@ public partial class NamesPage : ContentPage
 
   protected async void OnDeleteCommandAsync(object obj)
   {
+    if (obj is Name name)
+    {
+      try
+      {
+        var project = _CurrentProjectProvider.Project;
+        var token = _CancellationTokenProvider.CreateDbCancellationToken();
 
+        await project.Names.RemoveNameWithSubnamesAsync(name, token);
+        RequestUpdateNames(name);
+      }
+      catch (Exception ex)
+      {
+        await this.ShowErrorAsync(ex);
+      }
+    }
   }
 
   protected async Task OnAddName()
@@ -153,11 +167,18 @@ public partial class NamesPage : ContentPage
 
   protected async void OnPageCommandAsync(object obj)
   {
-    switch (obj)
+    try
     {
-      case string commandName when commandName == "AddName":
-        await OnAddName();
-        break;
+      switch (obj)
+      {
+        case string commandName when commandName == "AddName":
+          await OnAddName();
+          break;
+      }
+    }
+    catch (Exception ex)
+    {
+      await this.ShowErrorAsync(ex);
     }
   }
 
