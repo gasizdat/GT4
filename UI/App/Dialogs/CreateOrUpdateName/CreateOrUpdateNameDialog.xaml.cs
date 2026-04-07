@@ -285,6 +285,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
       return;
 
     using var token = cancellationTokenProvider.CreateDbCancellationToken();
+    using var transaction = await currentProjectProvider.Project.BeginTransactionAsync(token);
     var tasks = new List<Task>
     {
       currentProjectProvider
@@ -299,6 +300,19 @@ public partial class CreateOrUpdateNameDialog : ContentPage
           .Names
           .UpdateName(names.MaleName with { Value = info.MaleName }, token));
     }
+    else if (!string.IsNullOrEmpty(info.MaleName))
+    {
+      var nameType = names.FirstName.Type switch
+      {
+        NameType.FamilyName => NameType.LastName,
+        NameType.FirstName => NameType.Patronymic,
+        _=> throw new ApplicationException(nameof(UpdateNameAsync))
+      } | NameType.MaleDeclension;
+      tasks.Add(currentProjectProvider
+          .Project
+          .Names
+          .AddNameAsync(info.MaleName, nameType, names.FirstName, token));
+    }
     if (names.FemaleName != null)
     {
       tasks.Add(currentProjectProvider
@@ -306,6 +320,20 @@ public partial class CreateOrUpdateNameDialog : ContentPage
           .Names
           .UpdateName(names.FemaleName with { Value = info.FemaleName }, token));
     }
+    else if (!string.IsNullOrEmpty(info.FemaleName))
+    {
+      var nameType = names.FirstName.Type switch
+      {
+        NameType.FamilyName => NameType.LastName,
+        NameType.FirstName => NameType.Patronymic,
+        _ => throw new ApplicationException(nameof(UpdateNameAsync))
+      } | NameType.FemaleDeclension;
+      tasks.Add(currentProjectProvider
+          .Project
+          .Names
+          .AddNameAsync(info.FemaleName, nameType, names.FirstName, token));
+    }
     await Task.WhenAll(tasks);
+    transaction.Commit();
   }
 }
