@@ -28,6 +28,139 @@ public partial class NamesPage : ContentPage
   private bool _UpdateNames = true;
   private string _NameFilter = string.Empty;
 
+  protected NamesPage(IServiceProvider serviceProvider)
+  {
+    var nameTypes = new[]
+    {
+      NameType.FamilyName,
+      NameType.FirstName,
+      NameType.Patronymic,
+      NameType.LastName,
+      NameType.AdditionalName
+    };
+    _ServiceProvider = serviceProvider;
+    _NameTypeFormatter = _ServiceProvider.GetRequiredService<INameTypeFormatter>();
+    _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
+    _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
+    _NameComparer = _ServiceProvider.GetRequiredService<IComparer<Name>>();
+    _NameTypes = new(nameTypes.Select(type => new NameTypeInfoItem(_NameTypeFormatter.ToString(type), type)));
+    _EditNameCommand = new Command<object>(OnEditCommandAsync);
+    _DeleteNameCommand = new Command<object>(OnDeleteCommandAsync);
+    _PageCommand = new Command<object>(OnPageCommandAsync);
+    _CurrentNameType = _NameTypes.First();
+    _Names.Filter = NamesFilter;
+
+    var biologicalSexFormatter = _ServiceProvider.GetRequiredService<IBiologicalSexFormatter>();
+    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, biologicalSexFormatter));
+    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Female, biologicalSexFormatter));
+    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Unknown, biologicalSexFormatter));
+    _CurrentBiologicalSex = _BiologicalSexes.First();
+
+    InitializeComponent();
+  }
+
+  protected async void OnEditCommandAsync(object obj)
+  {
+    if (obj is Name name)
+    {
+      await CreateOrUpdateNameDialog.UpdateNameAsync(name, _ServiceProvider, Navigation);
+      RequestUpdateNames(name);
+    }
+  }
+
+  protected async void OnDeleteCommandAsync(object obj)
+  {
+
+  }
+
+  protected async Task OnAddName()
+  {
+    var nameType = CurrentNameType.Type switch
+    {
+      NameType.FamilyName or NameType.LastName => NameType.FamilyName,
+      NameType.FirstName when _CurrentBiologicalSex.Info == BiologicalSex.Male => NameType.FirstName | NameType.MaleDeclension,
+      NameType.FirstName when _CurrentBiologicalSex.Info == BiologicalSex.Female => NameType.FirstName | NameType.FemaleDeclension,
+      NameType.Patronymic => NameType.FirstName | NameType.MaleDeclension,
+      _ => throw new ApplicationException(nameof(OnPageCommandAsync))
+    };
+
+    var dialog = new CreateOrUpdateNameDialog(nameType, _ServiceProvider);
+
+    await Navigation.PushModalAsync(dialog);
+    var info = await dialog.Info;
+    await Navigation.PopModalAsync();
+
+    if (info is null)
+    {
+      return;
+    }
+
+    var project = _CurrentProjectProvider.Project;
+    var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    var addedName = nameType switch
+    {
+      NameType.FamilyName =>
+        await project
+          .FamilyManager
+          .AddFamilyAsync(familyName: info.Name, maleLastName: info.MaleName, femaleLastName: info.FemaleName, token),
+
+      NameType.FirstName | NameType.MaleDeclension => await project.
+          Names.
+          AddFirstMaleNameAsync(firstName: info.Name, malePatronymic: info.MaleName, femalePatronymic: info.FemaleName, token),
+
+      NameType.FirstName | NameType.FemaleDeclension => await project.Names.AddFirstFemaleNameAsync(info.Name, token),
+
+      _ => null
+    };
+
+    if (addedName is null)
+    {
+      return;
+    }
+
+    var names = await project.Names.TryGetNameWithSubnamesByIdAsync(addedName.Id, token);
+    switch (_CurrentNameType.Type)
+    {
+      case NameType.FirstName:
+        RequestUpdateNames(addedName);
+        break;
+
+      case NameType.FamilyName:
+        RequestUpdateNames(names?.SingleOrDefault(n => n.Type == NameType.FamilyName));
+        break;
+
+      case NameType.LastName when _CurrentBiologicalSex.Info == BiologicalSex.Male:
+        RequestUpdateNames(names?.SingleOrDefault(n => n.Type == (NameType.LastName | NameType.MaleDeclension)));
+        break;
+
+      case NameType.LastName when _CurrentBiologicalSex.Info == BiologicalSex.Female:
+        RequestUpdateNames(names?.SingleOrDefault(n => n.Type == (NameType.LastName | NameType.FemaleDeclension)));
+        break;
+
+      case NameType.Patronymic when _CurrentBiologicalSex.Info == BiologicalSex.Male:
+        RequestUpdateNames(names?.SingleOrDefault(n => n.Type == (NameType.Patronymic | NameType.MaleDeclension)));
+        break;
+
+      case NameType.Patronymic when _CurrentBiologicalSex.Info == BiologicalSex.Female:
+        RequestUpdateNames(names?.SingleOrDefault(n => n.Type == (NameType.Patronymic | NameType.FemaleDeclension)));
+        break;
+
+      default:
+        RequestUpdateNames();
+        break;
+    }
+  }
+
+  protected async void OnPageCommandAsync(object obj)
+  {
+    switch (obj)
+    {
+      case string commandName when commandName == "AddName":
+        await OnAddName();
+        break;
+    }
+  }
+
   private bool NamesFilter(FilteredObservableCollection<NameInfoItem> _, NameInfoItem nameItem)
   {
     if (!string.IsNullOrEmpty(_NameFilter))
@@ -45,53 +178,16 @@ public partial class NamesPage : ContentPage
     return true;
   }
 
-  protected NamesPage(IServiceProvider serviceProvider)
+  protected void RequestUpdateNames(Name? selectedName = null)
   {
-    _ServiceProvider = serviceProvider;
-    _NameTypeFormatter = _ServiceProvider.GetRequiredService<INameTypeFormatter>();
-    _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
-    _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
-    _NameComparer = _ServiceProvider.GetRequiredService<IComparer<Name>>();
-    _NameTypes = new((new[] { NameType.FirstName, NameType.Patronymic, NameType.LastName, NameType.AdditionalName })
-      .Select(type => new NameTypeInfoItem(_NameTypeFormatter.ToString(type), type)));
-    _EditNameCommand = new Command<object>(OnEditCommandAsync);
-    _DeleteNameCommand = new Command<object>(OnDeleteCommandAsync);
-    _PageCommand = new Command<object>(OnPageCommandAsync);
-    _CurrentNameType = _NameTypes.First();
-    _Names.Filter = NamesFilter;
-
-    var biologicalSexFormatter = _ServiceProvider.GetRequiredService<IBiologicalSexFormatter>();
-    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, biologicalSexFormatter));
-    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Female, biologicalSexFormatter));
-    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Unknown, biologicalSexFormatter));
-    _CurrentBiologicalSex = _BiologicalSexes.First();
-
-    InitializeComponent();
+    _UpdateNames = true;
+    CurrentName = selectedName is null ? null : new NameInfoItem(selectedName, _NameTypeFormatter);
+    OnPropertyChanged(nameof(Names));
   }
 
   public NamesPage()
     : this(ServiceBuilder.DefaultServices)
   {
-  }
-
-  private async void OnEditCommandAsync(object obj)
-  {
-    if (obj is Name name)
-    {
-      await CreateOrUpdateNameDialog.UpdateNameAsync(name, _ServiceProvider, Navigation);
-      _UpdateNames = true;
-      CurrentName = Names?.SingleOrDefault(n => n.Info.Id == name.Id);
-    }
-  }
-
-  private async void OnDeleteCommandAsync(object obj)
-  {
-
-  }
-
-  private async void OnPageCommandAsync(object obj)
-  {
-
   }
 
   public ICollection<BiologicalSexItem> BiologicalSexes => _BiologicalSexes;
@@ -102,12 +198,11 @@ public partial class NamesPage : ContentPage
     set
     {
       _CurrentBiologicalSex = value;
-      _UpdateNames = true;
-      CurrentName = null;
       OnPropertyChanged(nameof(CurrentBiologicalSex));
-      OnPropertyChanged(nameof(Names));
+      RequestUpdateNames();
     }
   }
+
   public ICollection<NameTypeInfoItem> NameTypes => _NameTypes;
 
   public ICommand EditNameCommand => _EditNameCommand;
@@ -124,6 +219,7 @@ public partial class NamesPage : ContentPage
       {
         var nameDeclension = _CurrentBiologicalSex.Info switch
         {
+          _ when CurrentNameType.Type == NameType.FamilyName => NameType.FamilyName,
           BiologicalSex.Male => NameType.MaleDeclension,
           BiologicalSex.Female => NameType.FemaleDeclension,
           _ => NameType.AllNames
@@ -143,6 +239,10 @@ public partial class NamesPage : ContentPage
         {
           _Names.Clear();
           _Names.AddRange(names);
+          if (CurrentName is not null)
+          {
+            CurrentName = _Names.SingleOrDefault(n => n.Info.Id == CurrentName.Info.Id);
+          }
         });
       }
 
@@ -165,9 +265,8 @@ public partial class NamesPage : ContentPage
         return;
 
       _CurrentNameType = value;
-      _UpdateNames = true;
-      CurrentName = null;
-      OnPropertyChanged(nameof(Names));
+      RequestUpdateNames();
+      OnPropertyChanged(nameof(CurrentNameType));
     }
   }
 
@@ -176,7 +275,7 @@ public partial class NamesPage : ContentPage
     get => _CurrentName;
     set
     {
-      if (value?.Info.Id != _CurrentName?.Info.Id)
+      if (value != _CurrentName)
       {
         _CurrentName = value;
         OnPropertyChanged(nameof(CurrentName));
