@@ -34,6 +34,9 @@
 
             <Entry.Behaviors>
               <behaviors:FocusOnTrueBehavior IsFocused="{Binding FocusGenericName, Source={x:Reference Root}}" />
+              <behaviors:SetCursorOnTrueBehavior
+                  CursorPosition="End"
+                  IsCursorSet="{Binding FocusGenericName, Source={x:Reference Root}}" />
             </Entry.Behaviors>
 
           </Entry>
@@ -52,6 +55,9 @@
 
             <Entry.Behaviors>
               <behaviors:FocusOnTrueBehavior IsFocused="{Binding FocusMaleName, Source={x:Reference Root}}" />
+              <behaviors:SetCursorOnTrueBehavior
+                  CursorPosition="End"
+                  IsCursorSet="{Binding FocusMaleName, Source={x:Reference Root}}" />
             </Entry.Behaviors>
 
           </Entry>
@@ -70,6 +76,9 @@
 
             <Entry.Behaviors>
               <behaviors:FocusOnTrueBehavior IsFocused="{Binding FocusFemaleName, Source={x:Reference Root}}" />
+              <behaviors:SetCursorOnTrueBehavior
+                  CursorPosition="End"
+                  IsCursorSet="{Binding FocusFemaleName, Source={x:Reference Root}}" />
             </Entry.Behaviors>
 
           </Entry>
