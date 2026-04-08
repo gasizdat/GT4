@@ -25,7 +25,7 @@ public partial class RelativeInfoView : ContentView
     _CurrentProjectProvider = serviceProvider.GetRequiredService<ICurrentProjectProvider>();
     _DateFormatter = serviceProvider.GetRequiredService<IDateFormatter>();
     _RelationshipTypeFormatter = serviceProvider.GetRequiredService<IRelationshipTypeFormatter>();
-    ShowMoreRelativesCommand = new Command(OnShowMoreRelativesCommandAsync);
+    ShowMoreRelativesCommand = new SafeCommand(OnShowMoreRelativesCommandAsync);
     InitializeComponent();
   }
 
@@ -166,7 +166,7 @@ public partial class RelativeInfoView : ContentView
     }
   }
 
-  private async void OnShowMoreRelativesCommandAsync()
+  private async Task OnShowMoreRelativesCommandAsync()
   {
     var relative = Relative;
     if (relative is null)

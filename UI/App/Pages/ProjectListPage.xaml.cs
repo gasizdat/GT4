@@ -23,7 +23,7 @@ public partial class ProjectListPage : ContentPage
     _CancellationTokenProvider = services.GetRequiredService<ICancellationTokenProvider>();
     _CurrentProjectProvider = services.GetRequiredService<ICurrentProjectProvider>();
     _ProjectInfoComparer = services.GetRequiredService<IComparer<ProjectInfo>>();
-    _PageCommand = new Command<object>(OnPageCommand);
+    _PageCommand = new SafeCommand(OnPageCommand);
     _ProjectList = services.GetRequiredService<IProjectList>();
 
     InitializeComponent();
@@ -43,18 +43,18 @@ public partial class ProjectListPage : ContentPage
     switch (e.CurrentSelection.FirstOrDefault())
     {
       case ProjectItem projectItem:
-      {
-        using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-        await _CurrentProjectProvider.OpenAsync(projectItem.Info, token);
-        await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectPage>());
-
-        // TODO not so good approach
-        if (sender is SelectableItemsView view)
         {
-          view.SelectedItem = null;
+          using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+          await _CurrentProjectProvider.OpenAsync(projectItem.Info, token);
+          await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectPage>());
+
+          // TODO not so good approach
+          if (sender is SelectableItemsView view)
+          {
+            view.SelectedItem = null;
+          }
+          break;
         }
-        break;
-      }
     }
   }
 
@@ -80,7 +80,7 @@ public partial class ProjectListPage : ContentPage
     }
   }
 
-  private async void OnPageCommand(object obj)
+  private async Task OnPageCommand(object obj)
   {
     switch (obj)
     {
@@ -101,21 +101,10 @@ public partial class ProjectListPage : ContentPage
     var projectInfo = await dialog.ProjectInfo;
     await Navigation.PopModalAsync();
 
-    try
-    {
-      if (projectInfo.Name == string.Empty)
-        return;
+    if (projectInfo.Name == string.Empty)
+      return;
 
-      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-      await using var project = await _ProjectList.CreateAsync(projectInfo.Name, projectInfo.Description, token);
-    }
-    catch (Exception ex)
-    {
-      await this.ShowErrorAsync(ex);
-    }
-    finally
-    {
-      UpdateProjectList();
-    }
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    await using var project = await _ProjectList.CreateAsync(projectInfo.Name, projectInfo.Description, token);
   }
 }

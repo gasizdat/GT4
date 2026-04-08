@@ -44,9 +44,9 @@ public partial class NamesPage : ContentPage
     _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
     _NameComparer = _ServiceProvider.GetRequiredService<IComparer<Name>>();
     _NameTypes = new(nameTypes.Select(type => new NameTypeInfoItem(_NameTypeFormatter.ToString(type), type)));
-    _EditNameCommand = new Command<object>(OnEditCommandAsync);
-    _DeleteNameCommand = new Command<object>(OnDeleteCommandAsync);
-    _PageCommand = new Command<object>(OnPageCommandAsync);
+    _EditNameCommand = new SafeCommand(OnEditCommandAsync);
+    _DeleteNameCommand = new SafeCommand(OnDeleteCommandAsync);
+    _PageCommand = new SafeCommand(OnPageCommandAsync);
     _CurrentNameType = _NameTypes.First();
     _Names.Filter = NamesFilter;
 
@@ -59,7 +59,7 @@ public partial class NamesPage : ContentPage
     InitializeComponent();
   }
 
-  protected async void OnEditCommandAsync(object obj)
+  protected async Task OnEditCommandAsync(object obj)
   {
     if (obj is Name name)
     {
@@ -68,22 +68,15 @@ public partial class NamesPage : ContentPage
     }
   }
 
-  protected async void OnDeleteCommandAsync(object obj)
+  protected async Task OnDeleteCommandAsync(object obj)
   {
     if (obj is Name name)
     {
-      try
-      {
-        var project = _CurrentProjectProvider.Project;
-        var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      var project = _CurrentProjectProvider.Project;
+      var token = _CancellationTokenProvider.CreateDbCancellationToken();
 
-        await project.Names.RemoveNameWithSubnamesAsync(name, token);
-        RequestUpdateNames(name);
-      }
-      catch (Exception ex)
-      {
-        await this.ShowErrorAsync(ex);
-      }
+      await project.Names.RemoveNameWithSubnamesAsync(name, token);
+      RequestUpdateNames(name);
     }
   }
 
@@ -165,20 +158,13 @@ public partial class NamesPage : ContentPage
     }
   }
 
-  protected async void OnPageCommandAsync(object obj)
+  protected async Task OnPageCommandAsync(object obj)
   {
-    try
+    switch (obj)
     {
-      switch (obj)
-      {
-        case string commandName when commandName == "AddName":
-          await OnAddName();
-          break;
-      }
-    }
-    catch (Exception ex)
-    {
-      await this.ShowErrorAsync(ex);
+      case string commandName when commandName == "AddName":
+        await OnAddName();
+        break;
     }
   }
 

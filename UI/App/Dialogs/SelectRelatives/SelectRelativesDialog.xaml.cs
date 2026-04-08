@@ -51,7 +51,7 @@ public partial class SelectRelativesDialog : ContentPage
     return true;
   }
 
-  private async void OnDialogCommand(object obj)
+  private async Task OnDialogCommand(object obj)
   {
     switch (obj)
     {
@@ -100,7 +100,7 @@ public partial class SelectRelativesDialog : ContentPage
     _CurrentProjectProvider = serviceProvider.GetRequiredService<ICurrentProjectProvider>();
     _DateFormatter = serviceProvider.GetRequiredService<IDateFormatter>();
     _PersonInfoComparer = serviceProvider.GetRequiredService<IComparer<PersonInfo>>();
-    _DialogCommand = new Command<object>(OnDialogCommand);
+    _DialogCommand = new SafeCommand(OnDialogCommand);
     _ProjectRevision = _CurrentProjectProvider.Project.ProjectRevision;
     _BiologicalSexes = new[] { BiologicalSex.Male, BiologicalSex.Female, BiologicalSex.Unknown }
       .Select(sex => new BiologicalSexItem(sex, biologicalSexFormatter))

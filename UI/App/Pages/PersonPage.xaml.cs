@@ -39,7 +39,7 @@ public partial class PersonPage : ContentPage
     _DateFormatter = _ServiceProvider.GetRequiredService<IDateFormatter>();
     _NameFormatter = _ServiceProvider.GetRequiredService<INameFormatter>();
     _TextConverter = _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonBio);
-    _PageCommand = new Command<object>(OnPageCommand);
+    _PageCommand = new SafeCommand(OnPageCommand);
 
     InitializeComponent();
   }
@@ -96,7 +96,7 @@ public partial class PersonPage : ContentPage
     get
     {
       var dateSpan = Date.Now - _PersonFullInfo.BirthDate;
-      var ret = _DateSpanFormatter.ToString(dateSpan with { Status = DateStatus.DayUnknown});
+      var ret = _DateSpanFormatter.ToString(dateSpan with { Status = DateStatus.DayUnknown });
       ret = string.Format(UIStrings.PersonSinceBirthDay_1, ret);
 
       return ret;
@@ -235,7 +235,7 @@ public partial class PersonPage : ContentPage
     this.RefreshView();
   }
 
-  private async void OnPageCommand(object obj)
+  private async Task OnPageCommand(object obj)
   {
     switch (obj)
     {
@@ -271,25 +271,18 @@ public partial class PersonPage : ContentPage
     var info = await dialog.Info;
     await Navigation.PopModalAsync();
 
-    try
+    if (info is null)
     {
-      if (info is null)
-      {
-        return;
-      }
-
-      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-      await _CurrentProjectProvider
-        .Project
-        .PersonManager
-        .UpdatePersonAsync(info, token);
-
-      PersonInfo = info;
+      return;
     }
-    catch (Exception ex)
-    {
-      await this.ShowErrorAsync(ex);
-    }
+
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    await _CurrentProjectProvider
+      .Project
+      .PersonManager
+      .UpdatePersonAsync(info, token);
+
+    PersonInfo = info;
   }
 
   private static string GetDefaultImageResourceName(BiologicalSex biologicalSex) =>

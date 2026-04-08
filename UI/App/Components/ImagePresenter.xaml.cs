@@ -205,7 +205,7 @@ public partial class ImagePresenter : ContentView
       _Timer.Tick += TimerTick;
     };
     Unloaded += (_, _) => _Timer.Tick -= TimerTick;
-    _Command = new Command(OnNextPicture);
+    _Command = new SafeCommand(OnNextPicture);
 
     InitializeComponent();
   }

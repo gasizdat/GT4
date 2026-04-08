@@ -10,7 +10,7 @@ public partial class MainPage : ContentPage
     InitializeComponent();
   }
 
-  public ICommand NavigateToCreateOrOpenDialog => new Command(async () =>
+  public ICommand NavigateToCreateOrOpenDialog => new SafeCommand(async () =>
     await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectListPage>())
   );
 

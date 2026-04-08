@@ -35,7 +35,7 @@ public partial class SelectNameDialog : ContentPage
     _NameComparer = _ServiceProvider.GetRequiredService<IComparer<Name>>();
     _NameTypes = new((new[] { NameType.FirstName, NameType.Patronymic, NameType.LastName, NameType.AdditionalName })
       .Select(type => new NameTypeInfoItem(_NameTypeFormatter.ToString(type), type)));
-    _DialogCommand = new Command<object>(OnDialogCommandAsync);
+    _DialogCommand = new SafeCommand(OnDialogCommandAsync);
     _CurrentNameType = _NameTypes.First();
 
     _NameDeclension = biologicalSex switch
@@ -48,28 +48,21 @@ public partial class SelectNameDialog : ContentPage
     InitializeComponent();
   }
 
-  private async void OnDialogCommandAsync(object obj)
+  private async Task OnDialogCommandAsync(object obj)
   {
-    try
+    switch (obj)
     {
-      switch (obj)
-      {
-        case string commandName when commandName == "AddName":
-          await OnAddNameAsync();
-          break;
-        case string commandName when commandName == "SelectName":
-          OnSelectName();
-          break;
-        case Name nameInfo:
-          await CreateOrUpdateNameDialog.UpdateNameAsync(nameInfo, _ServiceProvider, Navigation);
-          Names = null;
-          CurrentName = Names?.SingleOrDefault(n => n.Info.Id == nameInfo.Id);
-          break;
-      }
-    }
-    catch (Exception ex)
-    {
-      await this.ShowErrorAsync(ex);
+      case string commandName when commandName == "AddName":
+        await OnAddNameAsync();
+        break;
+      case string commandName when commandName == "SelectName":
+        OnSelectName();
+        break;
+      case Name nameInfo:
+        await CreateOrUpdateNameDialog.UpdateNameAsync(nameInfo, _ServiceProvider, Navigation);
+        Names = null;
+        CurrentName = Names?.SingleOrDefault(n => n.Info.Id == nameInfo.Id);
+        break;
     }
   }
 
@@ -131,7 +124,7 @@ public partial class SelectNameDialog : ContentPage
       if (value?.Info.Id != _CurrentName?.Info.Id)
       {
         _CurrentName = value;
-        
+
         OnPropertyChanged(nameof(CurrentName));
         OnPropertyChanged(nameof(DialogButtonName));
       }
@@ -166,32 +159,25 @@ public partial class SelectNameDialog : ContentPage
     if (info is null)
       return;
 
-    try
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    var project = _CurrentProjectProvider.Project;
+    var name = dialogNameType switch
     {
-      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-      var project = _CurrentProjectProvider.Project;
-      var name = dialogNameType switch
-      {
-        NameType.FamilyName =>
-          await project
-            .FamilyManager
-            .AddFamilyAsync(familyName: info.Name, maleLastName: info.MaleName, femaleLastName: info.FemaleName, token),
+      NameType.FamilyName =>
+        await project
+          .FamilyManager
+          .AddFamilyAsync(familyName: info.Name, maleLastName: info.MaleName, femaleLastName: info.FemaleName, token),
 
-        NameType.FirstName | NameType.MaleDeclension =>
-          await project.Names.AddFirstMaleNameAsync(firstName: info.Name, malePatronymic: info.MaleName, femalePatronymic: info.FemaleName, token),
+      NameType.FirstName | NameType.MaleDeclension =>
+        await project.Names.AddFirstMaleNameAsync(firstName: info.Name, malePatronymic: info.MaleName, femalePatronymic: info.FemaleName, token),
 
-        NameType.FirstName | NameType.FemaleDeclension =>
-          await project.Names.AddFirstFemaleNameAsync(info.Name, token),
+      NameType.FirstName | NameType.FemaleDeclension =>
+        await project.Names.AddFirstFemaleNameAsync(info.Name, token),
 
-        _ => throw new ApplicationException(nameof(OnAddNameAsync))
-      };
-      Names = null;
-      CurrentName = Names?.SingleOrDefault(n => n.Info.Id == name.Id);
-    }
-    catch (Exception ex)
-    {
-      await this.ShowErrorAsync(ex);
-    }
+      _ => throw new ApplicationException(nameof(OnAddNameAsync))
+    };
+    Names = null;
+    CurrentName = Names?.SingleOrDefault(n => n.Info.Id == name.Id);
   }
 
   public void OnSelectName()

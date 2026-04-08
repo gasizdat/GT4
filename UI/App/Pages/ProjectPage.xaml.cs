@@ -29,7 +29,7 @@ public partial class ProjectPage : ContentPage
     _NameComparer = _ServiceProvider.GetRequiredService<IComparer<Name>>();
     _ProjectList = _ServiceProvider.GetRequiredService<IProjectList>();
 
-    PageCommand = new Command<object>(OnPageCommand);
+    PageCommand = new SafeCommand(OnPageCommand);
     InitializeComponent();
   }
 
@@ -74,7 +74,7 @@ public partial class ProjectPage : ContentPage
   {
     if (e.CurrentSelection.FirstOrDefault() is FamilyInfoItem item)
     {
-        await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = item.Info });
+      await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = item.Info });
     }
   }
 
@@ -105,36 +105,29 @@ public partial class ProjectPage : ContentPage
       .ToArray();
   }
 
-  private async void OnPageCommand(object obj)
+  private async Task OnPageCommand(object obj)
   {
-    try
+    switch (obj)
     {
-      switch (obj)
-      {
-        case string commandName when commandName == "RemoveProject":
-          await OnRemoveProject();
-          break;
+      case string commandName when commandName == "RemoveProject":
+        await OnRemoveProject();
+        break;
 
-        case string commandName when commandName == "EditProject":
-          await OnEditProject();
-          break;
+      case string commandName when commandName == "EditProject":
+        await OnEditProject();
+        break;
 
-        case string commandName when commandName == "Refresh":
-          this.RefreshView();
-          break;
+      case string commandName when commandName == "Refresh":
+        this.RefreshView();
+        break;
 
-        case string commandName when commandName == "CreateFamily":
-          await OnCreateFamily();
-          break;
+      case string commandName when commandName == "CreateFamily":
+        await OnCreateFamily();
+        break;
 
-        case string commandName when commandName == "GoToNames":
-          await Shell.Current.GoToAsync(UIRoutes.GetRoute<NamesPage>());
-          break;
-      }
-    }
-    catch (Exception ex)
-    {
-      await this.ShowErrorAsync(ex);
+      case string commandName when commandName == "GoToNames":
+        await Shell.Current.GoToAsync(UIRoutes.GetRoute<NamesPage>());
+        break;
     }
   }
 
@@ -159,26 +152,19 @@ public partial class ProjectPage : ContentPage
     var projectInfo = await dialog.ProjectInfo;
     await Navigation.PopModalAsync();
 
-    try
-    {
-      if (projectInfo.Name == string.Empty)
-        return;
+    if (projectInfo.Name == string.Empty)
+      return;
 
-      var project = _CurrentProjectProvider.Project;
-      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    var project = _CurrentProjectProvider.Project;
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
 
-      using var transaction = await project.BeginTransactionAsync(token);
-      await Task.WhenAll(
-        project.Metadata.SetProjectName(projectInfo.Name, token),
-        project.Metadata.SetProjectDescription(projectInfo.Description, token));
-      transaction.Commit();
+    using var transaction = await project.BeginTransactionAsync(token);
+    await Task.WhenAll(
+      project.Metadata.SetProjectName(projectInfo.Name, token),
+      project.Metadata.SetProjectDescription(projectInfo.Description, token));
+    transaction.Commit();
 
-      await Shell.Current.GoToAsync("..", true);
-    }
-    catch (Exception ex)
-    {
-      await this.ShowErrorAsync(ex);
-    }
+    await Shell.Current.GoToAsync("..", true);
   }
 
   private async Task OnCreateFamily()
@@ -189,26 +175,15 @@ public partial class ProjectPage : ContentPage
     var info = await dialog.Info;
     await Navigation.PopModalAsync();
 
-    try
+    if (info is null)
     {
-      if (info is null)
-      {
-        return;
-      }
+      return;
+    }
 
-      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-      var family = await _CurrentProjectProvider
-        .Project
-        .FamilyManager
-        .AddFamilyAsync(familyName: info.Name, maleLastName: info.MaleName, femaleLastName: info.FemaleName, token);
-    }
-    catch (Exception ex)
-    {
-      await this.ShowErrorAsync(ex);
-    }
-    finally
-    {
-      this.RefreshView();
-    }
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    var family = await _CurrentProjectProvider
+      .Project
+      .FamilyManager
+      .AddFamilyAsync(familyName: info.Name, maleLastName: info.MaleName, femaleLastName: info.FemaleName, token);
   }
 }

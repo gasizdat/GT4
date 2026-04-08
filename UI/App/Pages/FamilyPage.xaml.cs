@@ -25,8 +25,8 @@ public partial class FamilyPage : ContentPage
     _CurrentProjectProvider = _Services.GetRequiredService<ICurrentProjectProvider>();
     _PersonInfoComparer = _Services.GetRequiredService<IComparer<PersonInfo>>();
 
-    MemberItemTappedCommand = new Command<PersonInfo>(OnOpenPerson);
-    PageCommand = new Command<object>(OnPageCommand);
+    MemberItemTappedCommand = new SafeCommand<PersonInfo>(OnOpenPerson);
+    PageCommand = new SafeCommand(OnPageCommand);
 
     InitializeComponent();
   }
@@ -148,37 +148,30 @@ public partial class FamilyPage : ContentPage
     OnPropertyChanged(nameof(Persons));
   }
 
-  private async void OnOpenPerson(PersonInfo familyMember)
+  private async Task OnOpenPerson(PersonInfo familyMember)
   {
     await Shell.Current.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { ["PersonInfo"] = familyMember });
   }
 
-  private async void OnPageCommand(object parameter)
+  private async Task OnPageCommand(object parameter)
   {
-    try
+    switch (parameter)
     {
-      switch (parameter)
-      {
-        case string commandName when commandName == "RemoveFamily":
-          await OnDeleteFamily();
-          break;
+      case string commandName when commandName == "RemoveFamily":
+        await OnDeleteFamily();
+        break;
 
-        case string commandName when commandName == "EditFamily":
-          await CreateOrUpdateNameDialog.UpdateNameAsync(FamilyName!, _Services, Navigation);
-          break;
+      case string commandName when commandName == "EditFamily":
+        await CreateOrUpdateNameDialog.UpdateNameAsync(FamilyName!, _Services, Navigation);
+        break;
 
-        case string commandName when commandName == "CreatePerson":
-          await OnCreatePerson();
-          break;
+      case string commandName when commandName == "CreatePerson":
+        await OnCreatePerson();
+        break;
 
-        case string commandName when commandName == "Refresh":
-          this.RefreshView();
-          break;
-      }
-    }
-    catch (Exception ex)
-    {
-      await this.ShowErrorAsync(ex);
+      case string commandName when commandName == "Refresh":
+        this.RefreshView();
+        break;
     }
   }
 }

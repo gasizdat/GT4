@@ -44,7 +44,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     _NameFormatter = _ServiceProvider.GetRequiredService<INameFormatter>();
     _DateFormatter = _ServiceProvider.GetRequiredService<IDateFormatter>();
     _PersonInfoComparer = _ServiceProvider.GetRequiredService<IComparer<PersonInfo>>();
-    _DialogCommand = new Command<object>(OnDialogCommand);
+    _DialogCommand = new SafeCommand(OnDialogCommand);
     _SaveButtonName = person is null ? UIStrings.BtnNameCreateFamilyPerson : UIStrings.BtnNameUpdateFamilyPerson;
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, _BiologicalSexFormatter));
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Female, _BiologicalSexFormatter));
@@ -416,7 +416,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
   }
 
-  private async void OnDialogCommand(object obj)
+  private async Task OnDialogCommand(object obj)
   {
     switch (obj)
     {
