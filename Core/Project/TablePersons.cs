@@ -135,4 +135,17 @@ internal partial class TablePersons : TableBase, ITablePersons
 
     InvalidateItems();
   }
+
+  public async Task RemovePersonAsync(Person person, CancellationToken token)
+  {
+    using var transaction = await Document.BeginTransactionAsync(token);
+    using var command = Document.CreateCommand();
+    command.CommandText = """
+      DELETE FROM Persons
+      WHERE Id=@id;
+      """;
+    command.Parameters.AddWithValue("@id", person.Id);
+    await command.ExecuteNonQueryAsync(token);
+    transaction.Commit();
+  }
 }

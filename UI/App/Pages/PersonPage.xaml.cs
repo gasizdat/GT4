@@ -240,10 +240,10 @@ public partial class PersonPage : ContentPage
     switch (obj)
     {
       case string commandName when commandName == "RemovePerson":
-        // TODO Implement person removing
+        await OnPersonRemoveAsync();
         break;
       case string commandName when commandName == "EditPerson":
-        await OnPersonEdit();
+        await OnPersonEditAsync();
         break;
       case string commandName when commandName == "Refresh":
         PersonInfo = _PersonFullInfo;
@@ -264,7 +264,16 @@ public partial class PersonPage : ContentPage
     }
   }
 
-  private async Task OnPersonEdit()
+  private async Task OnPersonRemoveAsync()
+  {
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    await _CurrentProjectProvider
+      .Project
+      .Persons
+      .RemovePersonAsync(_PersonFullInfo, token);
+  }
+
+  private async Task OnPersonEditAsync()
   {
     var dialog = new CreateOrUpdatePersonDialog(_PersonFullInfo, _ServiceProvider);
     await Navigation.PushModalAsync(dialog);
