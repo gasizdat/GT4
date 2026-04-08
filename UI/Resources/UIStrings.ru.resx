@@ -655,4 +655,7 @@
   <data name="FieldSearchText" xml:space="preserve">
     <value>Поиск</value>
   </data>
+  <data name="ErrorNameIsShared_2" xml:space="preserve">
+    <value>Как минимум следующие персоны носят имя {0}: {1}</value>
+  </data>
 </root>

@@ -3,6 +3,7 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
+using GT4.UI.Resources;
 using GT4.UI.Utils.Formatters;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
@@ -73,10 +74,46 @@ public partial class NamesPage : ContentPage
     if (obj is Name name)
     {
       var project = _CurrentProjectProvider.Project;
-      var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
 
-      await project.Names.RemoveNameWithSubnamesAsync(name, token);
-      RequestUpdateNames(name);
+      try
+      {
+        await project
+          .Names
+          .RemoveNameWithSubnamesAsync(name, token);
+        RequestUpdateNames(name);
+      }
+      catch
+      {
+        async Task CheckIfNameIsUsed(Name name)
+        {
+          var persons = await project
+            .PersonManager
+            .GetPersonInfosByNameAsync(name, false, token);
+          if (persons.Any())
+          {
+            var nameFormatter = _ServiceProvider.GetRequiredService<INameFormatter>();
+            var personsList = persons
+              .Take(3)
+              .Select(p => nameFormatter.ToString(p, NameFormat.CommonPersonName));
+            var errorMessage = string.Format(UIStrings.ErrorNameIsShared_2, name.Value, string.Join(", ", personsList));
+            throw new ApplicationException(errorMessage);
+          }
+        }
+
+        await CheckIfNameIsUsed(name);
+
+        var names = await project
+          .Names
+          .TryGetNameWithSubnamesByIdAsync(name.Id, token);
+
+        foreach (var subname in names!)
+        {
+          await CheckIfNameIsUsed(subname);
+        }
+
+        throw;
+      }
     }
   }
 
@@ -103,7 +140,7 @@ public partial class NamesPage : ContentPage
     }
 
     var project = _CurrentProjectProvider.Project;
-    var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
     var addedName = nameType switch
     {
       NameType.FamilyName =>

@@ -655,4 +655,7 @@ genealogy tree and enjoy!</value>
   <data name="FieldSearchText" xml:space="preserve">
     <value>Search</value>
   </data>
+  <data name="ErrorNameIsShared_2" xml:space="preserve">
+    <value>At least the following persons share name {0}: {1}</value>
+  </data>
 </root>

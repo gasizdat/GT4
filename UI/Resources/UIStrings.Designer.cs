@@ -341,6 +341,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to At least the following persons share name {0}: {1}.
+        /// </summary>
+        public static string ErrorNameIsShared_2 {
+            get {
+                return ResourceManager.GetString("ErrorNameIsShared_2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Additional name.
         /// </summary>
         public static string FieldAdditionalName {
