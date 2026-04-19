@@ -658,4 +658,19 @@
   <data name="ErrorNameIsShared_2" xml:space="preserve">
     <value>Как минимум следующие персоны носят имя {0}: {1}</value>
   </data>
+  <data name="TitleSettingsPage" xml:space="preserve">
+    <value>Настройки приложения</value>
+  </data>
+  <data name="FieldDateDisplayFormat" xml:space="preserve">
+    <value>Формат отображения дат</value>
+  </data>
+  <data name="FieldDateDisplayFormatHint" xml:space="preserve">
+    <value>YYYY - год
+MM - номер месяца (01-12)
+MMM - название месяца (январь - декабрь)
+DD - номер дня (01-31)</value>
+  </data>
+  <data name="MenuItemNameSettings" xml:space="preserve">
+    <value>⚙️ Настройки</value>
+  </data>
 </root>

@@ -377,6 +377,27 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Date display format.
+        /// </summary>
+        public static string FieldDateDisplayFormat {
+            get {
+                return ResourceManager.GetString("FieldDateDisplayFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to YYYY - year
+        ///MM - month number (01-12)
+        ///MMM - month name (January - December)
+        ///DD - day number (01-31).
+        /// </summary>
+        public static string FieldDateDisplayFormatHint {
+            get {
+                return ResourceManager.GetString("FieldDateDisplayFormatHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Date entered.
         /// </summary>
         public static string FieldDateEntered {
@@ -733,6 +754,15 @@ namespace GT4.UI.Resources {
         public static string MenuItemNameRemove_1 {
             get {
                 return ResourceManager.GetString("MenuItemNameRemove_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ⚙️ Settings.
+        /// </summary>
+        public static string MenuItemNameSettings {
+            get {
+                return ResourceManager.GetString("MenuItemNameSettings", resourceCulture);
             }
         }
         
@@ -1597,6 +1627,15 @@ namespace GT4.UI.Resources {
         public static string TitleSelectRelativesDialog {
             get {
                 return ResourceManager.GetString("TitleSelectRelativesDialog", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Application settings.
+        /// </summary>
+        public static string TitleSettingsPage {
+            get {
+                return ResourceManager.GetString("TitleSettingsPage", resourceCulture);
             }
         }
         

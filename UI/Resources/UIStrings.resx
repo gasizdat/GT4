@@ -658,4 +658,19 @@ genealogy tree and enjoy!</value>
   <data name="ErrorNameIsShared_2" xml:space="preserve">
     <value>At least the following persons share name {0}: {1}</value>
   </data>
+  <data name="TitleSettingsPage" xml:space="preserve">
+    <value>Application settings</value>
+  </data>
+  <data name="FieldDateDisplayFormat" xml:space="preserve">
+    <value>Date display format</value>
+  </data>
+  <data name="FieldDateDisplayFormatHint" xml:space="preserve">
+    <value>YYYY - year
+MM - month number (01-12)
+MMM - month name (January - December)
+DD - day number (01-31)</value>
+  </data>
+  <data name="MenuItemNameSettings" xml:space="preserve">
+    <value>⚙️ Settings</value>
+  </data>
 </root>
