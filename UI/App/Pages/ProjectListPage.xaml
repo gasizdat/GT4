@@ -20,6 +20,11 @@
         CommandParameter="Refresh"
         Order="Secondary"
         Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="Settings"
+        Order="Secondary"
+        Text="{x:Static resources:UIStrings.MenuItemNameSettings}" />
   </ContentPage.ToolbarItems>
 
   <components:PageLayout>

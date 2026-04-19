@@ -90,6 +90,9 @@ public partial class ProjectListPage : ContentPage
       case string commandName when commandName == "Refresh":
         this.RefreshView();
         break;
+      case string commandName when commandName == "Settings":
+        await Shell.Current.GoToAsync(UIRoutes.GetRoute<SettingsPage>());
+        break;
     }
   }
 

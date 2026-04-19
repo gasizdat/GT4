@@ -9,12 +9,24 @@
 
   <components:PageLayout>
     <components:PageLayout.Header>
-      <Picker
-          Title="{x:Static resources:UIStrings.PkrLanguageHint}"
+      <HorizontalStackLayout
           HorizontalOptions="End"
-          ItemDisplayBinding="{Binding Name}"
-          ItemsSource="{Binding Languages, Source={x:Reference Root}}"
-          SelectedItem="{Binding SelectedLanguage, Source={x:Reference Root}}" />
+          Spacing="{StaticResource PageContentSpacing}">
+        <Picker
+            Title="{x:Static resources:UIStrings.PkrLanguageHint}"
+            ItemDisplayBinding="{Binding Name}"
+            ItemsSource="{Binding Languages, Source={x:Reference Root}}"
+            SelectedItem="{Binding SelectedLanguage, Source={x:Reference Root}}" />
+        <Button
+            x:Name="SettingsBtn"
+            Command="{Binding PageCommand, Source={x:Reference Root}}"
+            CommandParameter="OpenSettings"
+            FontSize="Large"
+            Style="{StaticResource EmojiAdorner}"
+            Text="⚙️"
+            VerticalOptions="Fill"
+            WidthRequest="{Binding Source={x:Reference SettingsBtn}, Path=Height}" />
+      </HorizontalStackLayout>
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>
@@ -84,7 +96,7 @@
 
     <components:PageLayout.Footer>
       <Button
-          Command="{Binding NavigateToCreateOrOpenDialog, Source={x:Reference Root}}"
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="OpenOrCreateDialog"
           FontSize="Large"
           HorizontalOptions="Fill"
