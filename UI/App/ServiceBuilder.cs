@@ -14,13 +14,16 @@ public class ServiceBuilder
 
   static ServiceBuilder()
   {
-    IConfiguration configuration = new ConfigurationBuilder()
+    var configurationBuilder = new ConfigurationBuilder()
       .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-      .AddEnvironmentVariables()
+      .AddAppConfiguration();
+
+    var configuration = configurationBuilder
       .Build();
 
     _DefaultServices = new ServiceCollection()
       .AddSingleton(configuration)
+      .AddActiveConfigurations(configurationBuilder)
       .AddSingleton<IDateFormatter, DateFormatter>()
       .AddSingleton<INameFormatter, NameFormatter>()
       .AddSingleton<IDateSpanFormatter, DateSpanFormatter>()
