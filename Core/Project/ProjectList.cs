@@ -150,7 +150,7 @@ internal class ProjectList : IProjectList
 
   private FileDescription GetCacheFileDescription()
   {
-    return new FileDescription(_Storage.ApplicationData, Guid.NewGuid().ToString(), IProjectDocument.MimeType);
+    return new FileDescription(_Storage.ProjectsCache, Guid.NewGuid().ToString(), IProjectDocument.MimeType);
   }
 
   public DirectoryDescription GetProjectDirectoryByName(string projectName)
