@@ -662,7 +662,7 @@
     <value>Настройки приложения</value>
   </data>
   <data name="FieldDateDisplayFormat" xml:space="preserve">
-    <value>Формат отображения дат</value>
+    <value>Формат отображения полных дат</value>
   </data>
   <data name="FieldDateDisplayFormatHint" xml:space="preserve">
     <value>YYYY - год
@@ -670,7 +670,15 @@ MM - номер месяца (01-12)
 MMM - название месяца (январь - декабрь)
 DD - номер дня (01-31)</value>
   </data>
+  <data name="FieldShortDateDisplayFormatHint" xml:space="preserve">
+    <value>YYYY - год
+MM - номер месяца (01-12)
+MMM - название месяца (январь - декабрь)</value>
+  </data>
   <data name="MenuItemNameSettings" xml:space="preserve">
     <value>⚙️ Настройки</value>
+  </data>
+  <data name="FieldShortDateDisplayFormat" xml:space="preserve">
+    <value>Формат отображения коротких дат</value>
   </data>
 </root>

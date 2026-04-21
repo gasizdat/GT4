@@ -377,7 +377,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Date display format.
+        ///   Looks up a localized string similar to Full date display format.
         /// </summary>
         public static string FieldDateDisplayFormat {
             get {
@@ -628,6 +628,26 @@ namespace GT4.UI.Resources {
         public static string FieldSelectNameType {
             get {
                 return ResourceManager.GetString("FieldSelectNameType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Short date display format.
+        /// </summary>
+        public static string FieldShortDateDisplayFormat {
+            get {
+                return ResourceManager.GetString("FieldShortDateDisplayFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to YYYY - year
+        ///MM - month number (01-12)
+        ///MMM - month name (January - December).
+        /// </summary>
+        public static string FieldShortDateDisplayFormatHint {
+            get {
+                return ResourceManager.GetString("FieldShortDateDisplayFormatHint", resourceCulture);
             }
         }
         

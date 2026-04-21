@@ -170,6 +170,12 @@
     <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray950}, Dark={StaticResource Gray200}}" />
   </Style>
 
+  <Style x:Key="HorizontalDivider" TargetType="BoxView">
+    <Setter Property="HeightRequest" Value="1" />
+    <Setter Property="HorizontalOptions" Value="Fill" />
+    <Setter Property="Margin" Value="0,12" />
+  </Style>
+
   <Style TargetType="Button">
     <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource PrimaryDarkText}}" />
     <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
