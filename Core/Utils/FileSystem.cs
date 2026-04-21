@@ -58,7 +58,7 @@ internal class FileSystem : IFileSystem
   {
     var path = ToPath(fileDescription);
     CreatePath(path);
-    return File.OpenWrite(path);
+    return File.Create(path);
   }
 
   public Stream OpenReadStream(FileDescription fileDescription)
