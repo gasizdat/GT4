@@ -2,9 +2,11 @@
 
 namespace GT4.Core.Utils;
 
-internal class AppConfigurationProvider : ConfigurationProvider, IActiveConfiguration
+internal class AppConfigurationProvider : ConfigurationProvider, IInteractiveConfiguration
 {
   private readonly IFileSystem _FileSystem;
+
+  public string Name => WellKnownActiveConfigurations.AppConfig;
 
   public AppConfigurationProvider(IFileSystem fileSystem)
   {

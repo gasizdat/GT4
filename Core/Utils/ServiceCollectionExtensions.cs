@@ -16,13 +16,13 @@ public static class ServiceCollectionExtensions
       .AddSingleton<ICancellationTokenProvider, CancellationTokenProvider>();
   }
 
-  public static IServiceCollection AddActiveConfigurations(this IServiceCollection services, IConfigurationBuilder configurationBuilder)
+  public static IServiceCollection AddActiveConfigurations(this IServiceCollection services, IConfigurationRoot configurationRoot)
   {
-    foreach (var (key, value) in configurationBuilder.Properties)
+    foreach (var provider in configurationRoot.Providers)
     {
-      if (value is IActiveConfiguration activeConfiguration)
+      if (provider is IInteractiveConfiguration interactiveConfiguration)
       {
-        services = services.AddKeyedSingleton(key, activeConfiguration);
+        services = services.AddKeyedSingleton(interactiveConfiguration.Name, interactiveConfiguration);
       }
     }
 

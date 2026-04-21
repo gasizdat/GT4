@@ -11,9 +11,6 @@ internal class AppConfigurationSource : IConfigurationSource
       .AddSingleton<IConfigurationProvider, AppConfigurationProvider>()
       .BuildServiceProvider(); 
 
-    var ret = services.GetRequiredService<IConfigurationProvider>();
-    builder.Properties[nameof(AppConfigurationProvider)] = ret;
-
-    return ret;
+    return services.GetRequiredService<IConfigurationProvider>();
   }
 }
