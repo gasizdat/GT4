@@ -36,8 +36,8 @@ public class ServiceBuilder
       .AddKeyedSingleton<IDataConverter, ImageDataConverter>(DataCategory.PersonPhoto)
       .AddKeyedSingleton<IDataConverter, ImageDataConverter>(DataCategory.PersonMainPhoto)
       .AddKeyedSingleton<IDataConverter, TextDataConverter>(DataCategory.PersonBio)
-      .BuildDefaultUtils()
-      .BuildDefaultProject()
+      .AddDefaultUtils()
+      .AddDefaultProject()
       .BuildServiceProvider();
   }
 
