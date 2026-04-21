@@ -8,7 +8,7 @@ public class DateFormatter : IDateFormatter
 {
   private const string FullDateFormatSection = "DateFormatter.FullDateFormat";
   private const string DefaultFullDateFormat = "DD MM YYYY";
-  private const string ShortDateFormatSection = "DateFormatter.FullDateFormat";
+  private const string ShortDateFormatSection = "DateFormatter.ShortDateFormat";
   private const string DefaultShortDateFormat = "MM YYYY";
   private const string D4 = "D4";
   private const string D2 = "D2";
