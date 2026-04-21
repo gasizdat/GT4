@@ -7,7 +7,10 @@ internal class Storage : IStorage
 
   public DirectoryDescription ProjectsCache => 
     new DirectoryDescription(Root: Environment.SpecialFolder.ApplicationData, Path: [AppId, ".cache"]);
-  
-  public DirectoryDescription ProjectsRoot => 
+
+  public DirectoryDescription ProjectsRoot =>
     new DirectoryDescription(Root: Environment.SpecialFolder.MyDocuments, Path: [AppName]);
+
+  public DirectoryDescription AppConfig =>
+    new DirectoryDescription(Root: Environment.SpecialFolder.ApplicationData, Path: [AppId, ".config"]);
 }
