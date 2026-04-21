@@ -1,22 +1,36 @@
 ﻿using GT4.Core.Utils;
 using GT4.UI.Resources;
 using Microsoft.Extensions.Configuration;
-using System.Text.Json;
 
 namespace GT4.UI.Utils.Formatters;
 
 public class DateFormatter : IDateFormatter
 {
+  private const string FullDateFormatSection = "DateFormatter.FullDateFormat";
+  private const string DefaultFullDateFormat = "DD MM YYYY";
+  private const string ShortDateFormatSection = "DateFormatter.FullDateFormat";
+  private const string DefaultShortDateFormat = "MM YYYY";
   private const string D4 = "D4";
   private const string D2 = "D2";
-  private readonly Configuration.Date _Configuration;
+  private readonly IConfiguration _Configuration;
 
   public DateFormatter(IConfiguration configuration)
   {
-    var dateConfig = configuration.GetSection(Configuration.Date.SectionName).Value;
-    var dto = dateConfig == null ? null : JsonSerializer.Deserialize<Configuration.Date>(dateConfig);
-    _Configuration = dto ?? new();
+    _Configuration = configuration;
   }
+
+  public static string GetFullDateFormat(IConfiguration configuration) =>
+    configuration[FullDateFormatSection] ?? DefaultFullDateFormat;
+
+  public static string GetShortDateFormat(IConfiguration configuration) =>
+    configuration[ShortDateFormatSection] ?? DefaultShortDateFormat;
+
+  public static void SetFullDateFormat(IInteractiveConfiguration configuration, string format) =>
+    configuration.SetKey(FullDateFormatSection, format);
+
+  public static void SetShortDateFormat(IInteractiveConfiguration configuration, string format) =>
+    configuration.SetKey(ShortDateFormatSection, format);
+
 
   public string ToString(Date? date)
   {
@@ -26,11 +40,12 @@ public class DateFormatter : IDateFormatter
     {
       var year = YearToString(date.Value);
       var month = MonthToString(date.Value);
+      var monthNumber = MonthToNumber(date.Value);
       var day = DayToString(date.Value);
       return date.Value.Status switch
       {
-        DateStatus.WellKnown => ToString(_Configuration.FullFormat, year, month, day),
-        DateStatus.DayUnknown => ToString(_Configuration.ShortFormat, year, month, day),
+        DateStatus.WellKnown => ToString(GetFullDateFormat(_Configuration), year, month, monthNumber, day),
+        DateStatus.DayUnknown => ToString(GetShortDateFormat(_Configuration), year, month, monthNumber, day),
         DateStatus.MonthUnknown => year,
         DateStatus.YearApproximate => string.Format(UIStrings.DateStatusYearApproximate_1, year),
         DateStatus.Unknown => UIStrings.DateStatusUnknown,
@@ -49,16 +64,20 @@ public class DateFormatter : IDateFormatter
 
     return ret;
   }
+  protected string MonthToNumber(Date date)
+  {
+    string ret;
+    var month = date.Month;
+    ret = month.ToString(D2);
+
+    return ret;
+  }
 
   protected string MonthToString(Date date)
   {
     string ret;
     var month = date.Month;
-    if (_Configuration.MonthAsNumber)
-    {
-      ret = month.ToString(D2);
-    }
-    else if (Language.Current == Language.RU)
+    if (Language.Current == Language.RU)
     {
       ret = month switch
       {
@@ -124,11 +143,12 @@ public class DateFormatter : IDateFormatter
     return ret;
   }
 
-  protected static string ToString(string format, string year, string month, string day)
+  protected static string ToString(string format, string year, string month, string monthNumber, string day)
   {
     var ret = format
       .Replace("YYYY", year)
-      .Replace("MM", month)
+      .Replace("MMM", month)
+      .Replace("MM", monthNumber)
       .Replace("DD", day);
 
     return ret;
