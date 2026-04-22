@@ -145,11 +145,13 @@ public class DateFormatter : IDateFormatter
 
   protected static string ToString(string format, string year, string month, string monthNumber, string day)
   {
-    var ret = format
-      .Replace("YYYY", year)
-      .Replace("MMM", month)
-      .Replace("MM", monthNumber)
-      .Replace("DD", day);
+    var ret = TemplateInterpolator.Format(format, new Dictionary<string, string>()
+    {
+      { "YYYY", year},
+      { "MM", monthNumber},
+      { "MMM", month},
+      { "DD", day},
+    });
 
     return ret;
   }
