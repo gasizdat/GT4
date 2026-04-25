@@ -13,7 +13,8 @@ public static class ServiceCollectionExtensions
       .AddSingleton<IFileSystem, FileSystem>()
 #endif
       .AddSingleton<IStorage, Storage>()
-      .AddSingleton<ICancellationTokenProvider, CancellationTokenProvider>();
+      .AddSingleton<ICancellationTokenProvider, CancellationTokenProvider>()
+      .AddSingleton<ISettingEditorsHolder, SettingEditorsHolder>();
   }
 
   public static IServiceCollection AddActiveConfigurations(this IServiceCollection services, IConfigurationRoot configurationRoot)

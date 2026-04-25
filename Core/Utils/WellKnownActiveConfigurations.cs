@@ -2,5 +2,5 @@
 
 public static  class WellKnownActiveConfigurations
 {
-  public static readonly string AppConfig = nameof(AppConfigurationProvider);
+  public const string AppConfig = nameof(AppConfigurationProvider);
 }
