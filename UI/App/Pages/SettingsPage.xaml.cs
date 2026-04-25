@@ -1,40 +1,51 @@
 using GT4.Core.Utils;
+using GT4.UI.Resources;
 using GT4.UI.Utils.Formatters;
-using Microsoft.Extensions.Configuration;
 
 namespace GT4.UI.Pages;
 
 public partial class SettingsPage : ContentPage
 {
-  private readonly IInteractiveConfiguration? _AppConfig;
-  private readonly IConfiguration _Configuration;
-  private readonly IDateFormatter _DateFormatter;
+  private readonly ISettingEditorsHolder _SettingEditorsHolder;
 
-  public SettingsPage(IServiceProvider services)
+  // TODO
+  // We need to retrieve all **known** formatters to force their registration in ISettingEditorsHolder.
+  // This is a bad approach, as the settings page should know nothing about the existing settings.
+  // This is a workaround, and we need to find a better solution or even change the entire settings architecture.
+  public SettingsPage(
+    ISettingEditorsHolder settingEditorsHolder,
+    IBiologicalSexFormatter?  biologicalSexFormatter = null,
+    IDateFormatter? dateFormatter  = null,
+    IDateSpanFormatter? dateSpanFormatter = null,
+    INameFormatter? nameFormatter = null,
+    INameTypeFormatter? nameTypeFormatter = null,
+    IRelationshipTypeFormatter? relationshipTypeFormatter = null)
   {
-    _AppConfig = services.GetKeyedService<IInteractiveConfiguration>(WellKnownActiveConfigurations.AppConfig);
-    _Configuration = services.GetRequiredService<IConfiguration>();
-    _DateFormatter = services.GetRequiredService<IDateFormatter>();
+    _SettingEditorsHolder = settingEditorsHolder;
 
     InitializeComponent();
   }
 
   public string DateExample
   {
-    get => _DateFormatter.ToString(Date.Now);
+    // TODO temporary code
+    get => _SettingEditorsHolder
+      .GetSettingEditors()
+      .Single(s=>s.DisplayName == UIStrings.FieldDateDisplayFormat).Example;
   }
 
   public string DateFormat
   {
-    get => DateFormatter.GetFullDateFormat(_Configuration);
+    // TODO temporary code
+    get => _SettingEditorsHolder
+      .GetSettingEditors()
+      .Single(s => s.DisplayName == UIStrings.FieldDateDisplayFormat).Value;
     set
     {
-      if (_AppConfig == null)
-      {
-        return;
-      }
-
-      DateFormatter.SetFullDateFormat(_AppConfig, value);
+      // TODO temporary code
+      _SettingEditorsHolder
+        .GetSettingEditors()
+        .Single(s => s.DisplayName == UIStrings.FieldDateDisplayFormat).Value = value;
       OnPropertyChanged(nameof(DateFormat));
       OnPropertyChanged(nameof(DateExample));
     }
@@ -42,20 +53,24 @@ public partial class SettingsPage : ContentPage
 
   public string ShortDateExample
   {
-    get => _DateFormatter.ToString(Date.Now with { Status = DateStatus.DayUnknown });
+    // TODO temporary code
+    get => _SettingEditorsHolder
+      .GetSettingEditors()
+      .Single(s => s.DisplayName == UIStrings.FieldShortDateDisplayFormat).Example;
   }
 
   public string ShortDateFormat
   {
-    get => DateFormatter.GetShortDateFormat(_Configuration);
+    // TODO temporary code
+    get => _SettingEditorsHolder
+      .GetSettingEditors()
+      .Single(s => s.DisplayName == UIStrings.FieldShortDateDisplayFormat).Value;
+    // TODO temporary code
     set
     {
-      if (_AppConfig == null)
-      {
-        return;
-      }
-
-      DateFormatter.SetShortDateFormat(_AppConfig, value);
+      _SettingEditorsHolder
+      .GetSettingEditors()
+      .Single(s => s.DisplayName == UIStrings.FieldShortDateDisplayFormat).Value = value;
       OnPropertyChanged(nameof(ShortDateFormat));
       OnPropertyChanged(nameof(ShortDateExample));
     }
