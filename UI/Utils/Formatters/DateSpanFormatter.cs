@@ -3,7 +3,7 @@ using GT4.UI.Resources;
 
 namespace GT4.UI.Utils.Formatters;
 
-public class DateSpanFormatter : IDateSpanFormatter
+internal class DateSpanFormatter : IDateSpanFormatter
 {
   public string ToString(DateSpan? dateSpan)
   {

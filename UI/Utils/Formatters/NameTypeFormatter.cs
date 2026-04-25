@@ -3,7 +3,7 @@ using GT4.UI.Resources;
 
 namespace GT4.UI.Utils.Formatters;
 
-public class NameTypeFormatter : INameTypeFormatter
+internal class NameTypeFormatter : INameTypeFormatter
 {
   public string ToString(NameType type)
   {
