@@ -19,7 +19,7 @@ public static class MauiProgram
     builder.Logging.AddDebug();
 #endif
 
-    ServiceBuilder.AddServices(builder.Services);
+    GT4Services.Add(builder.Services);
     return builder.Build();
   }
 }

@@ -40,7 +40,7 @@ namespace GT4
     }
 
     public MainActivity()
-      : this(ServiceBuilder.DefaultServices)
+      : this(GT4Services.Provider)
     {
 
     }

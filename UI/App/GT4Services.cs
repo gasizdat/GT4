@@ -8,9 +8,9 @@ using Microsoft.Extensions.Configuration;
 
 namespace GT4.UI;
 
-public class ServiceBuilder
+public class GT4Services
 {
-  public static void AddServices(IServiceCollection serviceCollection)
+  public static void Add(IServiceCollection serviceCollection)
   {
     var configurationRoot = new ConfigurationBuilder()
       .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
@@ -36,6 +36,6 @@ public class ServiceBuilder
       .AddDefaultProject();
   }
 
-  public static IServiceProvider DefaultServices =>
+  public static IServiceProvider Provider =>
     IPlatformApplication.Current?.Services ?? throw new InvalidOperationException("DI container not available.");
 }

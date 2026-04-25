@@ -21,7 +21,7 @@ public partial class PersonInfoView : ContentView
   }
 
   public PersonInfoView()
-    : this(ServiceBuilder.DefaultServices)
+    : this(GT4Services.Provider)
   {
 
   }

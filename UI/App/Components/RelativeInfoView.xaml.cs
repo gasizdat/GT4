@@ -37,7 +37,7 @@ public partial class RelativeInfoView : ContentView
   };
 
   public RelativeInfoView()
-    : this(ServiceBuilder.DefaultServices)
+    : this(GT4Services.Provider)
   {
 
   }
