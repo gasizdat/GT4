@@ -9,7 +9,7 @@ public partial class App : Application
 {
   private readonly IServiceProvider _Services;
 
-  protected App(IServiceProvider serviceProvider)
+  public App(IServiceProvider serviceProvider)
   {
     _Services = serviceProvider;
     InitializeComponent();
@@ -68,12 +68,6 @@ public partial class App : Application
 
 
     MainPage = new AppShell();
-  }
-
-  public App()
-    : this(ServiceBuilder.DefaultServices)
-  {
-
   }
 
   protected override Window CreateWindow(IActivationState? activationState)

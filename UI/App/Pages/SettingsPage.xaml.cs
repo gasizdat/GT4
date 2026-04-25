@@ -10,19 +10,13 @@ public partial class SettingsPage : ContentPage
   private readonly IConfiguration _Configuration;
   private readonly IDateFormatter _DateFormatter;
 
-  protected SettingsPage(IServiceProvider services)
+  public SettingsPage(IServiceProvider services)
   {
     _AppConfig = services.GetKeyedService<IInteractiveConfiguration>(WellKnownActiveConfigurations.AppConfig);
     _Configuration = services.GetRequiredService<IConfiguration>();
     _DateFormatter = services.GetRequiredService<IDateFormatter>();
 
     InitializeComponent();
-  }
-
-  public SettingsPage()
-    : this(ServiceBuilder.DefaultServices)
-  {
-
   }
 
   public string DateExample

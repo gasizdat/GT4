@@ -79,8 +79,8 @@ public partial class PersonInfoView : ContentView
 
       if (isDeathDateDisplayed)
       {
-        string deathDate = Person.DeathDate!.Value.Status == DateStatus.Unknown 
-                           ? string.Empty 
+        string deathDate = Person.DeathDate!.Value.Status == DateStatus.Unknown
+                           ? string.Empty
                            : _DateFormatter.ToString(Person.DeathDate);
         deathDate = string.Format(UIStrings.PersonDeathMark_1, deathDate);
 

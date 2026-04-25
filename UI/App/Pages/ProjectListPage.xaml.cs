@@ -18,7 +18,7 @@ public partial class ProjectListPage : ContentPage
   private readonly IProjectList _ProjectList;
   private readonly ObservableCollection<ProjectItem> _Projects = new();
 
-  protected ProjectListPage(IServiceProvider services)
+  public ProjectListPage(IServiceProvider services)
   {
     _CancellationTokenProvider = services.GetRequiredService<ICancellationTokenProvider>();
     _CurrentProjectProvider = services.GetRequiredService<ICurrentProjectProvider>();
@@ -27,11 +27,6 @@ public partial class ProjectListPage : ContentPage
     _ProjectList = services.GetRequiredService<IProjectList>();
 
     InitializeComponent();
-  }
-
-  public ProjectListPage()
-    : this(ServiceBuilder.DefaultServices)
-  {
   }
 
   public ICollection<ProjectItem> Projects => _Projects;

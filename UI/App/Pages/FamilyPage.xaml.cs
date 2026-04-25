@@ -18,7 +18,7 @@ public partial class FamilyPage : ContentPage
   private Name? _FamilyName = null;
   private double _PersonItemMinimalWidth;
 
-  protected FamilyPage(IServiceProvider serviceProvider)
+  public FamilyPage(IServiceProvider serviceProvider)
   {
     _Services = serviceProvider;
     _CancellationTokenProvider = _Services.GetRequiredService<ICancellationTokenProvider>();
@@ -29,11 +29,6 @@ public partial class FamilyPage : ContentPage
     PageCommand = new SafeCommand(OnPageCommand);
 
     InitializeComponent();
-  }
-
-  public FamilyPage()
-    : this(ServiceBuilder.DefaultServices)
-  {
   }
 
   public Name? FamilyName

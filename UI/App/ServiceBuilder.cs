@@ -10,16 +10,14 @@ namespace GT4.UI;
 
 public class ServiceBuilder
 {
-  private static readonly ServiceProvider _DefaultServices;
-
-  static ServiceBuilder()
+  public static void AddServices(IServiceCollection serviceCollection)
   {
     var configurationRoot = new ConfigurationBuilder()
       .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
       .AddAppConfiguration()
       .Build();
 
-    _DefaultServices = new ServiceCollection()
+    serviceCollection
       .AddSingleton<IConfiguration>(configurationRoot)
       .AddActiveConfigurations(configurationRoot)
       .AddSingleton<IDateFormatter, DateFormatter>()
@@ -35,9 +33,9 @@ public class ServiceBuilder
       .AddKeyedSingleton<IDataConverter, ImageDataConverter>(DataCategory.PersonMainPhoto)
       .AddKeyedSingleton<IDataConverter, TextDataConverter>(DataCategory.PersonBio)
       .AddDefaultUtils()
-      .AddDefaultProject()
-      .BuildServiceProvider();
+      .AddDefaultProject();
   }
 
-  public static ServiceProvider DefaultServices => _DefaultServices;
+  public static IServiceProvider DefaultServices =>
+    IPlatformApplication.Current?.Services ?? throw new InvalidOperationException("DI container not available.");
 }

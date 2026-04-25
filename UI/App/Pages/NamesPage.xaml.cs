@@ -29,7 +29,7 @@ public partial class NamesPage : ContentPage
   private bool _UpdateNames = true;
   private string _NameFilter = string.Empty;
 
-  protected NamesPage(IServiceProvider serviceProvider)
+  public NamesPage(IServiceProvider serviceProvider)
   {
     var nameTypes = new[]
     {
@@ -227,11 +227,6 @@ public partial class NamesPage : ContentPage
     _UpdateNames = true;
     CurrentName = selectedName is null ? null : new NameInfoItem(selectedName, _NameTypeFormatter);
     OnPropertyChanged(nameof(Names));
-  }
-
-  public NamesPage()
-    : this(ServiceBuilder.DefaultServices)
-  {
   }
 
   public ICollection<BiologicalSexItem> BiologicalSexes => _BiologicalSexes;

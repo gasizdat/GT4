@@ -20,7 +20,7 @@ public partial class ProjectPage : ContentPage
 
   private long? _ProjectRevision;
 
-  protected ProjectPage(IServiceProvider serviceProvider)
+  public ProjectPage(IServiceProvider serviceProvider)
   {
     _ServiceProvider = serviceProvider;
     _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
@@ -31,11 +31,6 @@ public partial class ProjectPage : ContentPage
 
     PageCommand = new SafeCommand(OnPageCommand);
     InitializeComponent();
-  }
-
-  public ProjectPage()
-    : this(ServiceBuilder.DefaultServices)
-  {
   }
 
   public ICollection<FamilyInfoItem> Families
