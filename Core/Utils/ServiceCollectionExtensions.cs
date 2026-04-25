@@ -4,7 +4,7 @@ namespace GT4.Core.Utils;
 
 public static class ServiceCollectionExtensions
 {
-  public static IServiceCollection AddDefaultUtils(this IServiceCollection services)
+  public static IServiceCollection AddCoreUtils(this IServiceCollection services)
   {
     return services
 #if ANDROID

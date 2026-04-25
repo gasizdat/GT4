@@ -18,7 +18,7 @@ public class GT4Services
       .AddSingleton<IConfiguration>(configurationRoot)
       .AddActiveConfigurations(configurationRoot)
       .AddUIUtils()
-      .AddDefaultUtils()
+      .AddCoreUtils()
       .AddDefaultProject();
   }
 
