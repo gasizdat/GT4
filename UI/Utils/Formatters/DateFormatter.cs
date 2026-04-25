@@ -6,31 +6,88 @@ namespace GT4.UI.Utils.Formatters;
 
 public class DateFormatter : IDateFormatter
 {
-  private const string FullDateFormatSection = "DateFormatter.FullDateFormat";
-  private const string DefaultFullDateFormat = "DD MM YYYY";
-  private const string ShortDateFormatSection = "DateFormatter.ShortDateFormat";
-  private const string DefaultShortDateFormat = "MM YYYY";
-  private const string D4 = "D4";
-  private const string D2 = "D2";
-  private readonly IConfiguration _Configuration;
-
-  public DateFormatter(IConfiguration configuration)
+  class FullDateFormatSetting : ISettingEditor
   {
-    _Configuration = configuration;
+    private const string FullDateFormatSection = "DateFormatter.FullDateFormat";
+    private const string DefaultFullDateFormat = "DD MM YYYY";
+    private readonly DateFormatter _DateFormatter;
+    private readonly IConfiguration _Configuration;
+    private readonly IInteractiveConfiguration? _InteractiveConfiguration;
+
+    public FullDateFormatSetting(
+      DateFormatter dateFormatter,
+      IConfiguration configuration, 
+      IInteractiveConfiguration? interactiveConfiguration)
+    {
+      _DateFormatter = dateFormatter;
+      _Configuration = configuration;
+      _InteractiveConfiguration = interactiveConfiguration;
+    }
+
+    public string Group => nameof(DateFormatter);
+
+    public string DisplayName => UIStrings.FieldDateDisplayFormat;
+
+    public string Description => UIStrings.FieldDateDisplayFormatHint;
+
+    public string Example => _DateFormatter.ToString(Date.Now);
+
+    public string Value
+    {
+      get => _Configuration[FullDateFormatSection] ?? DefaultFullDateFormat;
+      set => _InteractiveConfiguration?.SetKey(FullDateFormatSection, value);
+    }
   }
 
-  public static string GetFullDateFormat(IConfiguration configuration) =>
-    configuration[FullDateFormatSection] ?? DefaultFullDateFormat;
+  class ShortDateFormatSetting : ISettingEditor
+  {
+    private const string ShortDateFormatSection = "DateFormatter.ShortDateFormat";
+    private const string DefaultShortDateFormat = "MM YYYY";
+    private readonly DateFormatter _DateFormatter;
+    private readonly IConfiguration _Configuration;
+    private readonly IInteractiveConfiguration? _InteractiveConfiguration;
 
-  public static string GetShortDateFormat(IConfiguration configuration) =>
-    configuration[ShortDateFormatSection] ?? DefaultShortDateFormat;
+    public ShortDateFormatSetting(
+      DateFormatter dateFormatter,
+      IConfiguration configuration,
+      IInteractiveConfiguration? interactiveConfiguration)
+    {
+      _DateFormatter = dateFormatter;
+      _Configuration = configuration;
+      _InteractiveConfiguration = interactiveConfiguration;
+    }
 
-  public static void SetFullDateFormat(IInteractiveConfiguration configuration, string format) =>
-    configuration.SetKey(FullDateFormatSection, format);
+    public string Group => nameof(DateFormatter);
 
-  public static void SetShortDateFormat(IInteractiveConfiguration configuration, string format) =>
-    configuration.SetKey(ShortDateFormatSection, format);
+    public string DisplayName => UIStrings.FieldShortDateDisplayFormat;
 
+    public string Description => UIStrings.FieldShortDateDisplayFormatHint;
+
+    public string Example => _DateFormatter.ToString(Date.Now with { Status = DateStatus.DayUnknown });
+
+    public string Value
+    {
+      get => _Configuration[ShortDateFormatSection] ?? DefaultShortDateFormat;
+      set => _InteractiveConfiguration?.SetKey(ShortDateFormatSection, value);
+    }
+  }
+  
+  private const string D4 = "D4";
+  private const string D2 = "D2";
+  private readonly FullDateFormatSetting _FullDateFormatSetting;
+  private readonly ShortDateFormatSetting _ShortDateFormatSetting;
+
+  public DateFormatter(
+    IConfiguration configuration, 
+    ISettingEditorsHolder? settingEditorsHolder = null,
+    [FromKeyedServices(WellKnownActiveConfigurations.AppConfig)] 
+    IInteractiveConfiguration? interactiveConfiguration = null)
+  {
+    _FullDateFormatSetting = new FullDateFormatSetting(this, configuration, interactiveConfiguration);
+    _ShortDateFormatSetting = new ShortDateFormatSetting(this, configuration, interactiveConfiguration);
+    settingEditorsHolder?.AddSetting(_FullDateFormatSetting);
+    settingEditorsHolder?.AddSetting(_ShortDateFormatSetting);
+  }
 
   public string ToString(Date? date)
   {
@@ -44,8 +101,8 @@ public class DateFormatter : IDateFormatter
       var day = DayToString(date.Value);
       return date.Value.Status switch
       {
-        DateStatus.WellKnown => ToString(GetFullDateFormat(_Configuration), year, month, monthNumber, day),
-        DateStatus.DayUnknown => ToString(GetShortDateFormat(_Configuration), year, month, monthNumber, day),
+        DateStatus.WellKnown => ToString(_FullDateFormatSetting.Value, year, month, monthNumber, day),
+        DateStatus.DayUnknown => ToString(_ShortDateFormatSetting.Value, year, month, monthNumber, day),
         DateStatus.MonthUnknown => year,
         DateStatus.YearApproximate => string.Format(UIStrings.DateStatusYearApproximate_1, year),
         DateStatus.Unknown => UIStrings.DateStatusUnknown,
