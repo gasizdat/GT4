@@ -26,6 +26,7 @@ public static class ServiceCollectionExtensions
       .AddKeyedSingleton<IDataConverter, TextDataConverter>(DataCategory.PersonBio)
       .AddKeyedSingleton<ISettingEditor, FullDateFormatSetting>(nameof(FullDateFormatSetting))
       .AddKeyedSingleton<ISettingEditor, ShortDateFormatSetting>(nameof(ShortDateFormatSetting))
+      .AddKeyedSingleton<ISettingEditor, CommonPersonNameSetting>(nameof(CommonPersonNameSetting))
       ;
   }
 }

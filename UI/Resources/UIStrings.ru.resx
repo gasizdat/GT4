@@ -675,10 +675,31 @@ DD - номер дня (01-31)</value>
 MM - номер месяца (01-12)
 MMM - название месяца (январь - декабрь)</value>
   </data>
+  <data name="FieldPersonNameFormatHint" xml:space="preserve">
+    <value>AA - дополнительное имя, AA. - инициал дополнительного имени
+FF - имя,                                  FF. - инициал имени
+PP - отчество,                        PP. - инициал отчества
+LL - фамилия,                        LL. - инициал фамилии</value>
+  </data>
   <data name="MenuItemNameSettings" xml:space="preserve">
     <value>⚙️ Настройки</value>
   </data>
   <data name="FieldShortDateDisplayFormat" xml:space="preserve">
     <value>Формат отображения коротких дат</value>
+  </data>
+  <data name="FieldCommonPersonNameFormat" xml:space="preserve">
+    <value>Формат отображения обычных имен</value>
+  </data>
+  <data name="NameAdditional" xml:space="preserve">
+    <value>Дополнительное</value>
+  </data>
+  <data name="NameFirst" xml:space="preserve">
+    <value>Имя</value>
+  </data>
+  <data name="NamePatronymic" xml:space="preserve">
+    <value>Отчество</value>
+  </data>
+  <data name="NameLast" xml:space="preserve">
+    <value>Фамилия</value>
   </data>
 </root>

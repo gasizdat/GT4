@@ -377,6 +377,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Common person name format.
+        /// </summary>
+        public static string FieldCommonPersonNameFormat {
+            get {
+                return ResourceManager.GetString("FieldCommonPersonNameFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Full date display format.
         /// </summary>
         public static string FieldDateDisplayFormat {
@@ -556,6 +565,18 @@ namespace GT4.UI.Resources {
         public static string FieldPersonDates {
             get {
                 return ResourceManager.GetString("FieldPersonDates", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to AA - additional name, AA. - additional name initial  
+        ///FF - first name,              FF. - first name initial
+        ///PP - patronymic,          PP. - patronymic initial
+        ///LL - last name,               LL. - last name initial.
+        /// </summary>
+        public static string FieldPersonNameFormatHint {
+            get {
+                return ResourceManager.GetString("FieldPersonNameFormatHint", resourceCulture);
             }
         }
         
@@ -891,6 +912,42 @@ namespace GT4.UI.Resources {
         public static string Month_12 {
             get {
                 return ResourceManager.GetString("Month_12", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Additional.
+        /// </summary>
+        public static string NameAdditional {
+            get {
+                return ResourceManager.GetString("NameAdditional", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to First.
+        /// </summary>
+        public static string NameFirst {
+            get {
+                return ResourceManager.GetString("NameFirst", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Last.
+        /// </summary>
+        public static string NameLast {
+            get {
+                return ResourceManager.GetString("NameLast", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Patronymic.
+        /// </summary>
+        public static string NamePatronymic {
+            get {
+                return ResourceManager.GetString("NamePatronymic", resourceCulture);
             }
         }
         

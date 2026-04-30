@@ -675,10 +675,31 @@ DD - day number (01-31)</value>
 MM - month number (01-12)
 MMM - month name (January - December)</value>
   </data>
+  <data name="FieldPersonNameFormatHint" xml:space="preserve">
+    <value>AA - additional name, AA. - additional name initial  
+FF - first name,              FF. - first name initial
+PP - patronymic,          PP. - patronymic initial
+LL - last name,               LL. - last name initial</value>
+  </data>
   <data name="MenuItemNameSettings" xml:space="preserve">
     <value>⚙️ Settings</value>
   </data>
   <data name="FieldShortDateDisplayFormat" xml:space="preserve">
     <value>Short date display format</value>
+  </data>
+  <data name="FieldCommonPersonNameFormat" xml:space="preserve">
+    <value>Common person name format</value>
+  </data>
+  <data name="NameAdditional" xml:space="preserve">
+    <value>Additional</value>
+  </data>
+  <data name="NameFirst" xml:space="preserve">
+    <value>First</value>
+  </data>
+  <data name="NamePatronymic" xml:space="preserve">
+    <value>Patronymic</value>
+  </data>
+  <data name="NameLast" xml:space="preserve">
+    <value>Last</value>
   </data>
 </root>
