@@ -15,6 +15,5 @@ public partial class SettingsPage : ContentPage
 
   public IEnumerable<ISettingEditor> SettingEditors => _SettingEditors
     .GroupBy(e => e.Group)
-    .SelectMany(g => g)
-    .OrderBy(e => e.DisplayName);
+    .SelectMany(g => g.OrderBy(e => e.DisplayName));
 }
