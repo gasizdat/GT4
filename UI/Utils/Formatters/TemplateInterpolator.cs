@@ -23,7 +23,7 @@ public class TemplateInterpolator
   /// Thrown when the generated composite format string is not valid for <see cref="string.Format(string, object?[])"/>.
   /// </exception>
 
-  public static string Format(string template, IDictionary<string, string> replacements)
+  public static string Format(string template, IDictionary<string, Func<string>> replacements)
   {
     template = template.Replace("{", "{{").Replace("}", "}}");
     var sortedReplacements = replacements.ToList();
@@ -31,7 +31,7 @@ public class TemplateInterpolator
 
     int placeholderIndex = 0;
     List<string> replacementValues = [];
-    foreach (var (key, value) in sortedReplacements)
+    foreach (var (key, valueGetter) in sortedReplacements)
     {
       // Use Regex to match whole tokens only, avoiding accidental replacements inside placeholders or substrings.
       var pattern = Regex.Escape(key);
@@ -40,11 +40,17 @@ public class TemplateInterpolator
       {
         placeholderIndex++;
         template = newTemplate;
+        var value = valueGetter();
         replacementValues.Add(value);
       }
     }
 
     var ret = string.Format(template, replacementValues.ToArray());
     return ret;
+  }
+
+  public static string Format(string template, IDictionary<string, string> replacements)
+  {
+    return Format(template, replacements.ToDictionary(k => k.Key, v => new Func<string>(() => v.Value)));
   }
 }
