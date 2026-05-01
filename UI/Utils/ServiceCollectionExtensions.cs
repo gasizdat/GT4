@@ -26,7 +26,10 @@ public static class ServiceCollectionExtensions
       .AddKeyedSingleton<IDataConverter, TextDataConverter>(DataCategory.PersonBio)
       .AddKeyedSingleton<ISettingEditor, FullDateFormatSetting>(nameof(FullDateFormatSetting))
       .AddKeyedSingleton<ISettingEditor, ShortDateFormatSetting>(nameof(ShortDateFormatSetting))
-      .AddKeyedSingleton<ISettingEditor, CommonPersonNameSetting>(nameof(CommonPersonNameSetting))
+      .AddKeyedSingleton<ISettingEditor, CommonPersonNameSetting>(NameFormat.CommonPersonName)
+      .AddKeyedSingleton<ISettingEditor, FullPersonNameSetting>(NameFormat.FullPersonName)
+      .AddKeyedSingleton<ISettingEditor, PersonInitialsSetting>(NameFormat.PersonInitials)
+      .AddKeyedSingleton<ISettingEditor, ShortPersonNameSetting>(NameFormat.ShortPersonName)
       ;
   }
 }

@@ -702,4 +702,13 @@ LL - last name,               LL. - last name initial</value>
   <data name="NameLast" xml:space="preserve">
     <value>Last</value>
   </data>
+  <data name="FieldFullPersonNameFormat" xml:space="preserve">
+    <value>Full person name format</value>
+  </data>
+  <data name="FieldPersonInitialsFormat" xml:space="preserve">
+    <value>Person initials format</value>
+  </data>
+  <data name="ShortPersonNameFormat" xml:space="preserve">
+    <value>Person short name format</value>
+  </data>
 </root>

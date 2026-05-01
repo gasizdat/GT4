@@ -702,4 +702,13 @@ LL - фамилия,                        LL. - инициал фамилии<
   <data name="NameLast" xml:space="preserve">
     <value>Фамилия</value>
   </data>
+  <data name="FieldFullPersonNameFormat" xml:space="preserve">
+    <value>Формат отображения полных имен</value>
+  </data>
+  <data name="FieldPersonInitialsFormat" xml:space="preserve">
+    <value>Формат отображения фамилии и инициалов</value>
+  </data>
+  <data name="ShortPersonNameFormat" xml:space="preserve">
+    <value>Формат отображения коротких имен</value>
+  </data>
 </root>

@@ -488,6 +488,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Full person name format.
+        /// </summary>
+        public static string FieldFullPersonNameFormat {
+            get {
+                return ResourceManager.GetString("FieldFullPersonNameFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Last name.
         /// </summary>
         public static string FieldLastName {
@@ -565,6 +574,15 @@ namespace GT4.UI.Resources {
         public static string FieldPersonDates {
             get {
                 return ResourceManager.GetString("FieldPersonDates", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Person initials format.
+        /// </summary>
+        public static string FieldPersonInitialsFormat {
+            get {
+                return ResourceManager.GetString("FieldPersonInitialsFormat", resourceCulture);
             }
         }
         
@@ -1614,6 +1632,15 @@ namespace GT4.UI.Resources {
         public static string RelWife {
             get {
                 return ResourceManager.GetString("RelWife", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Person short name format.
+        /// </summary>
+        public static string ShortPersonNameFormat {
+            get {
+                return ResourceManager.GetString("ShortPersonNameFormat", resourceCulture);
             }
         }
         
