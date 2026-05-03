@@ -9,20 +9,20 @@ namespace GT4.UI.Utils.Settings;
 abstract class CommonPersonNameSettingBase
 {
   private readonly NameFormat _NameFormat;
-  protected static readonly PersonInfo _PersonInfo = new PersonInfo(
+  private static PersonInfo _PersonInfo => new PersonInfo(
     Id: 0,
     BirthDate: Date.Now,
     DeathDate: null,
     BiologicalSex: BiologicalSex.Unknown,
     Names: [
       new Name(Id: 0, UIStrings.NameAdditional, NameType.AdditionalName, null),
-    new Name(Id: 0, UIStrings.NameFirst, NameType.FirstName, null),
-    new Name(Id: 0, UIStrings.NamePatronymic, NameType.Patronymic, null),
-    new Name(Id: 0, UIStrings.NameLast, NameType.LastName, null) ],
-    MainPhoto: null);
-  protected readonly IConfiguration _Configuration;
-  protected readonly IInteractiveConfiguration? _InteractiveConfiguration;
-  protected readonly IServiceProvider _ServiceProvider;
+      new Name(Id: 0, UIStrings.NameFirst, NameType.FirstName, null),
+      new Name(Id: 0, UIStrings.NamePatronymic, NameType.Patronymic, null),
+      new Name(Id: 0, UIStrings.NameLast, NameType.LastName, null) ],
+      MainPhoto: null);
+  private readonly IConfiguration _Configuration;
+  private readonly IInteractiveConfiguration? _InteractiveConfiguration;
+  private readonly IServiceProvider _ServiceProvider;
 
   protected CommonPersonNameSettingBase(
     IServiceProvider serviceProvider,
