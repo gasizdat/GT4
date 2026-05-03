@@ -434,6 +434,20 @@
             </Grid>
           </Border>
 
+          <!--  Biography preview  -->
+          <Border Style="{StaticResource CardBorderStyle}">
+            <WebView
+                HeightRequest="500"
+                HorizontalOptions="Fill"
+                VerticalOptions="Fill" >
+
+              <WebView.Source>
+                <HtmlWebViewSource Html="{Binding BiographyHtml, Source={x:Reference Root}}" />
+              </WebView.Source>
+
+            </WebView>
+          </Border>
+
         </VerticalStackLayout>
       </ScrollView>
     </components:PageLayout.Body>
