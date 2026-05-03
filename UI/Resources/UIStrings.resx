@@ -711,4 +711,13 @@ LL - last name,               LL. - last name initial</value>
   <data name="ShortPersonNameFormat" xml:space="preserve">
     <value>Person short name format</value>
   </data>
+  <data name="TxtPlaceholderBiography" xml:space="preserve">
+    <value>Enter a biography or life story...</value>
+  </data>
+  <data name="BtnNameMarkdownEditor" xml:space="preserve">
+    <value>Editor</value>
+  </data>
+  <data name="BtnNameMarkdownView" xml:space="preserve">
+    <value>View</value>
+  </data>
 </root>

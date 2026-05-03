@@ -233,6 +233,24 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Editor.
+        /// </summary>
+        public static string BtnNameMarkdownEditor {
+            get {
+                return ResourceManager.GetString("BtnNameMarkdownEditor", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to View.
+        /// </summary>
+        public static string BtnNameMarkdownView {
+            get {
+                return ResourceManager.GetString("BtnNameMarkdownView", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to No.
         /// </summary>
         public static string BtnNameNo {
@@ -1740,6 +1758,15 @@ namespace GT4.UI.Resources {
         public static string TitleSettingsPage {
             get {
                 return ResourceManager.GetString("TitleSettingsPage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enter a biography or life story....
+        /// </summary>
+        public static string TxtPlaceholderBiography {
+            get {
+                return ResourceManager.GetString("TxtPlaceholderBiography", resourceCulture);
             }
         }
         

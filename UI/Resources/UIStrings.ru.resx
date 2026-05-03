@@ -711,4 +711,13 @@ LL - фамилия,                        LL. - инициал фамилии<
   <data name="ShortPersonNameFormat" xml:space="preserve">
     <value>Формат отображения коротких имен</value>
   </data>
+  <data name="TxtPlaceholderBiography" xml:space="preserve">
+    <value>Добавьте биографию или историю из жизни...</value>
+  </data>
+  <data name="BtnNameMarkdownEditor" xml:space="preserve">
+    <value>Редактор</value>
+  </data>
+  <data name="BtnNameMarkdownView" xml:space="preserve">
+    <value>Вид</value>
+  </data>
 </root>

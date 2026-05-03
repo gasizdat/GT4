@@ -424,21 +424,13 @@
                   Style="{StaticResource GroupTitle}"
                   Text="{x:Static resources:UIStrings.FieldPersonBiography}" />
 
-              <Editor
+              <components:MarkdownEditor
                   Grid.Row="1"
                   Grid.Column="0"
-                  HeightRequest="200"
-                  HorizontalOptions="Fill"
-                  Placeholder="Enter a biography or life story..."
-                  Text="{Binding Biography.Content, Source={x:Reference Root}}" />
+                  HeightRequest="500"
+                  Markdown="{Binding Biography.Content, Source={x:Reference Root}}"
+                  Placeholder="{x:Static resources:UIStrings.TxtPlaceholderBiography}" />
             </Grid>
-          </Border>
-
-          <!--  Biography preview  -->
-          <Border Style="{StaticResource CardBorderStyle}">
-            <components:MarkdownView
-                HeightRequest="500"
-                Markdown="{Binding Biography.Content, Source={x:Reference Root}}" />
           </Border>
 
         </VerticalStackLayout>
