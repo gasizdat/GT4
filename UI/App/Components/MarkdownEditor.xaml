@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="GT4.UI.Components.MarkdownEditor"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:components="clr-namespace:GT4.UI.Components"
+    xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
+    x:Name="Root">
+
+  <Grid RowDefinitions="Auto,*">
+    <!--  Header  -->
+    <HorizontalStackLayout Grid.Row="0">
+      <Button
+          Command="{Binding Command, Source={x:Reference Root}}"
+          CommandParameter="Tab0"
+          Text="{x:Static resources:UIStrings.BtnNameMarkdownEditor}" />
+      <Button
+          Command="{Binding Command, Source={x:Reference Root}}"
+          CommandParameter="Tab1"
+          Text="{x:Static resources:UIStrings.BtnNameMarkdownView}" />
+    </HorizontalStackLayout>
+
+    <!--  Content  -->
+    <Grid Grid.Row="1">
+      <ScrollView
+          IsVisible="{Binding DisplayEditor, Source={x:Reference Root}}"
+          VerticalScrollBarVisibility="Default">
+        <Editor
+            AutoSize="TextChanges"
+            HorizontalOptions="Fill"
+            Placeholder="{Binding Placeholder, Source={x:Reference Root}}"
+            Text="{Binding Markdown, Source={x:Reference Root}}"
+            VerticalOptions="Fill" />
+      </ScrollView>
+
+      <components:MarkdownView
+          HorizontalOptions="Fill"
+          IsVisible="{Binding DisplayHtmlView, Source={x:Reference Root}}"
+          Markdown="{Binding Markdown, Source={x:Reference Root}}"
+          VerticalOptions="Fill" />
+    </Grid>
+  </Grid>
+</ContentView>
