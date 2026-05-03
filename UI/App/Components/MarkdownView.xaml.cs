@@ -35,6 +35,28 @@ public partial class MarkdownView : ContentView
     }
   }
 
+  private async void OnWebViewNavigated(object sender, WebNavigatedEventArgs e)
+  {
+    if (e.Result != WebNavigationResult.Success) return;
+
+    // Small delay to ensure the DOM has rendered completely
+    await Task.Delay(100);
+
+    // JavaScript to get the height of the body
+    string result = await InternalWebView.EvaluateJavaScriptAsync(
+        "Math.max(document.body.scrollHeight, document.body.offsetHeight, " +
+        "document.documentElement.clientHeight, document.documentElement.scrollHeight, " +
+        "document.documentElement.offsetHeight).toString()");
+
+    if (double.TryParse(result, out double height))
+    {
+      // Update the HeightRequest of the WebView
+      // Note: You might need to add a small buffer (e.g., +20) 
+      // to prevent tiny scrollbars on some platforms.
+      InternalWebView.HeightRequest = height;
+    }
+  }
+
   private string BuildHtmlDocument()
   {
     string bodyHtml = Markdown is null ? string.Empty : Markdig.Markdown.ToHtml(Markdown, _MarkdownPipeline);
@@ -48,6 +70,10 @@ public partial class MarkdownView : ContentView
         <meta charset=""utf-8"">
         <meta name=""viewport"" content=""width=device-width, initial-scale=1"">
         <style>
+          html, body {{overflow: hidden;    /* Removes internal scrollbars */
+              touch-action: pan-y;          /* Allows vertical touch gestures to bubble up */
+              height: auto;
+          }}
           :root {{
             color-scheme: light dark;
           }}

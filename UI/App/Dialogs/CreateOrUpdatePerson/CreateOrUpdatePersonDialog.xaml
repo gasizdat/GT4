@@ -427,7 +427,6 @@
               <components:MarkdownEditor
                   Grid.Row="1"
                   Grid.Column="0"
-                  HeightRequest="500"
                   Markdown="{Binding Biography.Content, Source={x:Reference Root}}"
                   Placeholder="{x:Static resources:UIStrings.TxtPlaceholderBiography}" />
             </Grid>

@@ -69,16 +69,13 @@
 
     <!--  Content  -->
     <Grid Grid.Row="1">
-      <ScrollView
+      <Editor
+          AutoSize="TextChanges"
+          HorizontalOptions="Fill"
           IsVisible="{Binding DisplayEditor, Source={x:Reference Root}}"
-          VerticalScrollBarVisibility="Default">
-        <Editor
-            AutoSize="TextChanges"
-            HorizontalOptions="Fill"
-            Placeholder="{Binding Placeholder, Source={x:Reference Root}}"
-            Text="{Binding Markdown, Source={x:Reference Root}}"
-            VerticalOptions="Fill" />
-      </ScrollView>
+          Placeholder="{Binding Placeholder, Source={x:Reference Root}}"
+          Text="{Binding Markdown, Source={x:Reference Root}}"
+          VerticalOptions="Fill" />
 
       <components:MarkdownView
           HorizontalOptions="Fill"
