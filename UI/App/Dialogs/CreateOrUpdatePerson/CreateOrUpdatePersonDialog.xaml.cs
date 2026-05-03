@@ -14,7 +14,6 @@ namespace GT4.UI.Dialogs;
 
 public partial class CreateOrUpdatePersonDialog : ContentPage
 {
-  private readonly MarkdownPipeline _MarkdownPipeline;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly IBiologicalSexFormatter _BiologicalSexFormatter;
   private readonly INameTypeFormatter _NameTypeFormatter;
@@ -52,10 +51,6 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Female, _BiologicalSexFormatter));
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Unknown, _BiologicalSexFormatter));
     _BiologicalSex = _BiologicalSexes.FirstOrDefault(i => i.Info == person?.BiologicalSex);
-    _MarkdownPipeline = new MarkdownPipelineBuilder()
-      .UseAdvancedExtensions()
-      .UseSoftlineBreakAsHardlineBreak()
-      .Build();
 
     UpdatePersonInformation(person);
 
@@ -116,11 +111,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
               _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonBio),
               _CancellationTokenProvider)
       };
-      _Biography.PropertyChanged += (_, _) =>
-      {
-        IsModified = _Biography.IsModified;
-        OnPropertyChanged(nameof(BiographyHtml));
-      };
+      _Biography.PropertyChanged += (_, _) => IsModified = _Biography.IsModified;
 
       var relatives = person
         .RelativeInfos
@@ -156,8 +147,6 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   public ICollection<BiologicalSexItem> BiologicalSexes => _BiologicalSexes;
 
   public PersonDataItem? Biography => _Biography;
-
-  public string BiographyHtml => BuildHtmlDocument();
 
   public string PersonFullName
   {
@@ -509,66 +498,5 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private void SetUndefinedDeathDate()
   {
     DeathDate = Date.Create(0, DateStatus.Unknown);
-  }
-
-  private string BuildHtmlDocument()
-  {
-    string bodyHtml;
-
-    if (_Biography?.Content is string markdown)
-    {
-      bodyHtml = Markdown.ToHtml(markdown, _MarkdownPipeline);
-    }
-    else
-    {
-      bodyHtml = string.Empty;
-    }
-    // Keep styling inline so it works offline on all platforms.
-    // AppThemeBinding isn't available inside HTML, so we choose neutral colors.
-    return
-      $@"<!doctype html>
-      <html>
-      <head>
-        <meta charset=""utf-8"">
-        <meta name=""viewport"" content=""width=device-width, initial-scale=1"">
-        <style>
-          :root {{
-            color-scheme: light dark;
-          }}
-          body {{
-            font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-            padding: 16px;
-            line-height: 1.5;
-          }}
-          h1, h2, h3 {{ margin-top: 1.0em; }}
-          pre {{
-            padding: 12px;
-            border-radius: 10px;
-            overflow-x: auto;
-            background: rgba(127,127,127,0.15);
-          }}
-          code {{
-            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-            font-size: 0.95em;
-          }}
-          blockquote {{
-            border-left: 4px solid rgba(127,127,127,0.35);
-            padding-left: 12px;
-            margin-left: 0;
-            color: rgba(127,127,127,0.9);
-          }}
-          table {{
-            border-collapse: collapse;
-          }}
-          th, td {{
-            border: 1px solid rgba(127,127,127,0.35);
-            padding: 6px 10px;
-          }}
-        </style>
-      </head>
-      <body>
-      {bodyHtml}
-      </body>
-      </html>";
   }
 }

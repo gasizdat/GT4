@@ -436,16 +436,9 @@
 
           <!--  Biography preview  -->
           <Border Style="{StaticResource CardBorderStyle}">
-            <WebView
+            <components:MarkdownView
                 HeightRequest="500"
-                HorizontalOptions="Fill"
-                VerticalOptions="Fill" >
-
-              <WebView.Source>
-                <HtmlWebViewSource Html="{Binding BiographyHtml, Source={x:Reference Root}}" />
-              </WebView.Source>
-
-            </WebView>
+                Markdown="{Binding Biography.Content, Source={x:Reference Root}}" />
           </Border>
 
         </VerticalStackLayout>

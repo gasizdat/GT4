@@ -147,15 +147,13 @@
               Grid.Column="{Binding Path=SmartLayout.Biography.Column, Source={x:Reference Root}}"
               Grid.ColumnSpan="{Binding Path=SmartLayout.Biography.ColumnSpan, Source={x:Reference Root}}"
               IsVisible="{Binding ShowBiography, Source={x:Reference Root}}">
-            <Editor
+
+            <components:MarkdownView
                 Margin="-1"
                 BackgroundColor="Transparent"
-                IsReadOnly="True"
-                IsSpellCheckEnabled="False"
-                IsTextPredictionEnabled="False"
-                MinimumHeightRequest="{OnIdiom Default=150,
-                                               Phone=100}"
-                Text="{Binding Biography, Source={x:Reference Root}, Mode=OneWay}" />
+                Markdown="{Binding Biography, Source={x:Reference Root}, Mode=OneWay}"
+                MinimumHeightRequest="{OnIdiom Default=300,
+                                               Phone=200}" />
           </Border>
           <components:ImagePresenter
               Grid.Row="{Binding Path=SmartLayout.Image.Row, Source={x:Reference Root}}"
