@@ -25,6 +25,13 @@
           Phone="100"
           Tablet="140" />
 
+      <OnIdiom
+          x:Key="MinBioHeight"
+          x:TypeArguments="x:Double"
+          Desktop="300"
+          Phone="100"
+          Tablet="140" />
+
       <Style x:Key="PhotoPreviewStyle" TargetType="Image">
         <Setter Property="Aspect" Value="AspectFit" />
         <Setter Property="HeightRequest" Value="{StaticResource PhotoHeight}" />
@@ -428,6 +435,7 @@
                   Grid.Row="1"
                   Grid.Column="0"
                   Markdown="{Binding Biography.Content, Source={x:Reference Root}}"
+                  MinimumHeightRequest="{StaticResource MinBioHeight}"
                   Placeholder="{x:Static resources:UIStrings.TxtPlaceholderBiography}" />
             </Grid>
           </Border>
