@@ -5,6 +5,10 @@ namespace GT4.Core.Project;
 
 internal class TableMetadata : TableBase, ITableMetadata
 {
+  private const string ProjectName = "name";
+  private const string ProjectDescription = "description";
+  private const string ProjectRevision = "revision";
+
   public TableMetadata(IProjectDocument document) : base(document)
   {
   }
@@ -45,11 +49,15 @@ internal class TableMetadata : TableBase, ITableMetadata
     return (TData?)result;
   }
 
-  public Task<string?> GetProjectName(CancellationToken token) => GetAsync<string>("name", token);
+  public Task<string?> GetProjectNameAsync(CancellationToken token) => GetAsync<string>(ProjectName, token);
 
-  public Task<string?> GetProjectDescription(CancellationToken token) => GetAsync<string>("description", token);
+  public Task<string?> GetProjectDescriptionAsync(CancellationToken token) => GetAsync<string>(ProjectDescription, token);
 
-  public Task SetProjectName(string value, CancellationToken token) => AddAsync("name", value, token);
+  public Task<string?> GetProjectRevisionAsync(CancellationToken token) => GetAsync<string>(ProjectRevision, token);
 
-  public Task SetProjectDescription(string value, CancellationToken token) => AddAsync("description", value, token);
+  public Task SetProjectNameAsync(string value, CancellationToken token) => AddAsync(ProjectName, value, token);
+
+  public Task SetProjectDescriptionAsync(string value, CancellationToken token) => AddAsync(ProjectDescription, value, token);
+
+  public Task SetProjectRevisionAsync(string value, CancellationToken token) => AddAsync(ProjectRevision, value, token);
 }

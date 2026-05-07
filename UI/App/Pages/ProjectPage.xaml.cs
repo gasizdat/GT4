@@ -155,8 +155,8 @@ public partial class ProjectPage : ContentPage
 
     using var transaction = await project.BeginTransactionAsync(token);
     await Task.WhenAll(
-      project.Metadata.SetProjectName(projectInfo.Name, token),
-      project.Metadata.SetProjectDescription(projectInfo.Description, token));
+      project.Metadata.SetProjectNameAsync(projectInfo.Name, token),
+      project.Metadata.SetProjectDescriptionAsync(projectInfo.Description, token));
     transaction.Commit();
 
     await Shell.Current.GoToAsync("..", true);
