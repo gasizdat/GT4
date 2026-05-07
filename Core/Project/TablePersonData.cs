@@ -37,7 +37,8 @@ internal partial class TablePersonData : TableBase, ITablePersonData
         FROM Data
         INNER JOIN
           PersonData ON PersonData.DataId=Data.Id AND PersonData.PersonId=@personId
-        WHERE Data.Category=@category;
+        WHERE Data.Category=@category
+        ORDER BY PersonData.ROWID;
         """;
       command.Parameters.AddWithValue("@category", category.Value);
     }
@@ -46,7 +47,8 @@ internal partial class TablePersonData : TableBase, ITablePersonData
       command.CommandText = """
         SELECT DataId
         FROM PersonData
-        WHERE PersonId=@personId;
+        WHERE PersonId=@personId
+        ORDER BY ROWID;
         """;
     }
     command.Parameters.AddWithValue("@personId", person.Id);

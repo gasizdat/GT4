@@ -30,7 +30,8 @@ internal partial class TablePersonNames : TableBase, ITablePersonNames
     command.CommandText = """
       SELECT NameId
       FROM PersonNames
-      WHERE PersonId=@personId;
+      WHERE PersonId=@personId
+      ORDER BY ROWID;
       """;
     command.Parameters.AddWithValue("@personId", person.Id);
 
