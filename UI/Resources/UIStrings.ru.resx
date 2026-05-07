@@ -720,4 +720,7 @@ LL - фамилия,                        LL. - инициал фамилии<
   <data name="BtnNameMarkdownView" xml:space="preserve">
     <value>Вид</value>
   </data>
+  <data name="FieldRevision_1" xml:space="preserve">
+    <value>Ревизия: {0}</value>
+  </data>
 </root>

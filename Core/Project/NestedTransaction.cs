@@ -65,6 +65,8 @@ internal class NestedTransaction : IDisposable, IAsyncDisposable, IDbTransaction
 
     if (_DbTransaction is not null)
     {
+      var shortToken = new CancellationTokenSource(TimeSpan.FromSeconds(0.5)).Token;
+      _Document?.Metadata.SetProjectRevisionAsync(DateTime.Now.ToString(), shortToken);
       _DbTransaction.Commit();
       _Document?.UpdateRevision();
     }

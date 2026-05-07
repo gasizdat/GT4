@@ -28,7 +28,11 @@ public partial class CreateOrUpdateProjectDialog : ContentPage
 
   public void OnCreateProjectBtn(object sender, EventArgs e)
   {
-    _Info.SetResult(new ProjectInfo(Description: _ProjectDescription, Name: _ProjectName, Origin: default!));
+    _Info.SetResult(new ProjectInfo(
+      Description: _ProjectDescription, 
+      Name: _ProjectName, 
+      Revision: string.Empty, 
+      Origin: default!));
   }
 
   public Task<ProjectInfo> ProjectInfo => _Info.Task;

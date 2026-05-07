@@ -662,6 +662,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Revision: {0}.
+        /// </summary>
+        public static string FieldRevision_1 {
+            get {
+                return ResourceManager.GetString("FieldRevision_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Search.
         /// </summary>
         public static string FieldSearchText {

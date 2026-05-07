@@ -720,4 +720,7 @@ LL - last name,               LL. - last name initial</value>
   <data name="BtnNameMarkdownView" xml:space="preserve">
     <value>View</value>
   </data>
+  <data name="FieldRevision_1" xml:space="preserve">
+    <value>Revision: {0}</value>
+  </data>
 </root>

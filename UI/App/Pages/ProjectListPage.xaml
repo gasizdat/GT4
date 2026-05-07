@@ -46,7 +46,6 @@
 
             <FlexLayout
                 Direction="Row"
-                HeightRequest="50"
                 Style="{StaticResource HoverItem}">
 
               <Image
@@ -59,11 +58,17 @@
 
                 <Label
                     Style="{StaticResource CardTitle}"
-                    Text="{Binding Info.Name}" />
+                    Text="{Binding Name}" />
 
                 <Label
+                    IsVisible="{Binding DescriptionVisible}"
                     Style="{StaticResource CardSubtitle}"
-                    Text="{Binding Info.Description}" />
+                    Text="{Binding Description}" />
+
+                <Label
+                    IsVisible="{Binding RevisionVisible}"
+                    Style="{StaticResource CardContent}"
+                    Text="{Binding Revision}" />
 
               </VerticalStackLayout>
 
