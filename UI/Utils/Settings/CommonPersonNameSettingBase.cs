@@ -15,7 +15,6 @@ abstract class CommonPersonNameSettingBase
     DeathDate: null,
     BiologicalSex: BiologicalSex.Unknown,
     Names: [
-      new Name(Id: 0, UIStrings.NameAdditional, NameType.AdditionalName, null),
       new Name(Id: 0, UIStrings.NameFirst, NameType.FirstName, null),
       new Name(Id: 0, UIStrings.NamePatronymic, NameType.Patronymic, null),
       new Name(Id: 0, UIStrings.NameLast, NameType.LastName, null) ],

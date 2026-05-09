@@ -37,7 +37,6 @@ public partial class NamesPage : ContentPage
       NameType.FirstName,
       NameType.Patronymic,
       NameType.LastName,
-      NameType.AdditionalName
     };
     _ServiceProvider = serviceProvider;
     _NameTypeFormatter = _ServiceProvider.GetRequiredService<INameTypeFormatter>();

@@ -13,8 +13,6 @@ public enum NameType : int
   Patronymic = 0x4,
   // The optional last name of the person
   LastName = 0x8,
-  // The optional additional name (e.g., middle name, nickname, alias)
-  AdditionalName = 0x40,
   // The declension of a name in the Male gender (For languages ​​with gender declension)
   MaleDeclension = 0x10,
   // The declension of a name in the Female gender (For languages ​​with gender declension)

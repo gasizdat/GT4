@@ -33,7 +33,7 @@ public partial class SelectNameDialog : ContentPage
     _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
     _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
     _NameComparer = _ServiceProvider.GetRequiredService<IComparer<Name>>();
-    _NameTypes = new((new[] { NameType.FirstName, NameType.Patronymic, NameType.LastName, NameType.AdditionalName })
+    _NameTypes = new((new[] { NameType.FirstName, NameType.Patronymic, NameType.LastName })
       .Select(type => new NameTypeInfoItem(_NameTypeFormatter.ToString(type), type)));
     _DialogCommand = new SafeCommand(OnDialogCommandAsync);
     _CurrentNameType = _NameTypes.First();
@@ -145,7 +145,6 @@ public partial class SelectNameDialog : ContentPage
       case NameType.LastName:
         dialogNameType = NameType.FamilyName;
         break;
-      case NameType.AdditionalName:
       default:
         return;
     }

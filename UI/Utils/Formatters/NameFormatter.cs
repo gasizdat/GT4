@@ -79,11 +79,9 @@ public class NameFormatter : INameFormatter
 
     var ret = TemplateInterpolator.Format(template, new Dictionary<string, Func<string>>()
     {
-      { "AA", () => GetNames(NameType.AdditionalName)},
       { "FF", () => GetNames(NameType.FirstName)},
       { "PP", () => GetNames(NameType.Patronymic)},
       { "LL", () => GetNames(NameType.LastName)},
-      { "AA.", () => GetNames(NameType.AdditionalName | _Initials)},
       { "FF.", () => GetNames(NameType.FirstName | _Initials)},
       { "PP.", () => GetNames(NameType.Patronymic | _Initials)},
       { "LL.", () => GetNames(NameType.LastName | _Initials)},

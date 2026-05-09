@@ -298,9 +298,6 @@
   <data name="FieldLastName" xml:space="preserve">
     <value>Фамилия</value>
   </data>
-  <data name="FieldAdditionalName" xml:space="preserve">
-    <value>Дополнительное имя</value>
-  </data>
   <data name="FieldFamilyName" xml:space="preserve">
     <value>Родовое имя</value>
   </data>
@@ -676,8 +673,7 @@ MM - номер месяца (01-12)
 MMM - название месяца (январь - декабрь)</value>
   </data>
   <data name="FieldPersonNameFormatHint" xml:space="preserve">
-    <value>AA - дополнительное имя, AA. - инициал дополнительного имени
-FF - имя,                                  FF. - инициал имени
+    <value>FF - имя,                                  FF. - инициал имени
 PP - отчество,                        PP. - инициал отчества
 LL - фамилия,                        LL. - инициал фамилии</value>
   </data>
@@ -689,9 +685,6 @@ LL - фамилия,                        LL. - инициал фамилии<
   </data>
   <data name="FieldCommonPersonNameFormat" xml:space="preserve">
     <value>Формат отображения обычных имен</value>
-  </data>
-  <data name="NameAdditional" xml:space="preserve">
-    <value>Дополнительное</value>
   </data>
   <data name="NameFirst" xml:space="preserve">
     <value>Имя</value>

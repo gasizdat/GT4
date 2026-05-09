@@ -13,7 +13,6 @@ internal class NameTypeFormatter : INameTypeFormatter
       NameType.LastName => UIStrings.FieldLastName,
       NameType.Patronymic => UIStrings.FieldPatronymic,
       NameType.FamilyName => UIStrings.FieldFamilyName,
-      NameType.AdditionalName => UIStrings.FieldAdditionalName,
       _ => string.Empty
     };
   }
