@@ -6,7 +6,6 @@ using GT4.UI.Items;
 using GT4.UI.Resources;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
-using Markdig;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 
@@ -58,6 +57,16 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     IsModified = false;
   }
 
+  private PersonDataItem GetPersonData(Data data, DataCategory dataCategory)
+  {
+    var ret = new PersonDataItem(
+      data: data,
+      _ServiceProvider.GetRequiredKeyedService<IDataConverter>(dataCategory),
+      _CancellationTokenProvider);
+
+    return ret;
+  }
+
   private void UpdatePersonInformation(PersonFullInfo? person)
   {
     if (person is null)
@@ -84,27 +93,17 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
       if (person.MainPhoto is not null)
       {
-        _Photos.Add(new PersonDataItem(
-          data: person.MainPhoto,
-          _ServiceProvider.GetRequiredKeyedService<IDataConverter>(person.MainPhoto.Category),
-          _CancellationTokenProvider));
+        _Photos.Add(GetPersonData(person.MainPhoto, person.MainPhoto.Category));
       }
 
       foreach (var photo in person.AdditionalPhotos)
       {
-        _Photos.Add(new PersonDataItem(
-          data: photo,
-          _ServiceProvider.GetRequiredKeyedService<IDataConverter>(photo.Category),
-          _CancellationTokenProvider));
+        _Photos.Add(GetPersonData(photo, photo.Category));
       }
 
       _Biography = person.Biography switch
       {
-        Data biography =>
-          new PersonDataItem(
-              data: biography,
-              _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonBio),
-              _CancellationTokenProvider),
+        Data biography => GetPersonData(biography, DataCategory.PersonBio),
 
         _ => new PersonDataItem(
               dataCategory: DataCategory.PersonBio,
@@ -210,7 +209,10 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       .Select(data => data!);
 
     var mainPhoto = photos?.FirstOrDefault();
-    var additionalPhotos = photos?.Skip(1).ToArray() ?? [];
+    var additionalPhotos = photos?
+      .Skip(1)
+      .Select(p => p with { Category = DataCategory.PersonPhoto })
+      .ToArray() ?? [];
     var person = new Person(
       Id: _PersonId ?? TableBase.NonCommitedId,
       BirthDate: _BirthDate!.Value,
@@ -352,10 +354,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       foreach (var photoAsset in photoAssets)
       {
         var category = _Photos.Count() == 0 ? DataCategory.PersonMainPhoto : DataCategory.PersonPhoto;
-        var item = new PersonDataItem(
-            data: photoAsset with { Category = category },
-            dataConverter: _ServiceProvider.GetRequiredKeyedService<IDataConverter>(category),
-            cancellationTokenProvider: _CancellationTokenProvider);
+        var item = GetPersonData(data: photoAsset with { Category = category }, category);
         if (photo is not null)
         {
           _Photos[_Photos.IndexOf(photo)] = item;
