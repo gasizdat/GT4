@@ -88,4 +88,19 @@ internal class TableData : TableBase, ITableData
     await command.ExecuteNonQueryAsync(token);
     transaction.Commit();
   }
+
+  public async Task UpdateCategoryAsync(Data data, DataCategory dataCategory, CancellationToken token)
+  {
+    using var transaction = await Document.BeginTransactionAsync(token);
+    using var command = Document.CreateCommand();
+    command.CommandText = """
+      UPDATE Data
+      SET Category=@category
+      WHERE Id=@id;
+      """;
+    command.Parameters.AddWithValue("@id", data.Id);
+    command.Parameters.AddWithValue("@category", (int)dataCategory);
+    await command.ExecuteNonQueryAsync(token);
+    transaction.Commit();
+  }
 }
