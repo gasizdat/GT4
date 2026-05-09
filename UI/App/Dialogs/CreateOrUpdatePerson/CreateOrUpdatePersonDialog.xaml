@@ -218,8 +218,9 @@
                   <DataTemplate>
                     <Grid
                         x:Name="PersonName"
-                        ColumnDefinitions="Auto, *, Auto, Auto"
-                        RowDefinitions="Auto"
+                        Padding="{StaticResource CollectionItemsVerticalPadding}"
+                        ColumnDefinitions="*, Auto, Auto, Auto, Auto"
+                        RowDefinitions="Auto, Auto"
                         Style="{StaticResource HoverItem}">
 
                       <Label
@@ -229,18 +230,43 @@
                           Style="{StaticResource FieldName}"
                           Text="{Binding Type}" />
 
-                      <Label
+                      <Button
                           Grid.Row="0"
+                          Grid.RowSpan="2"
                           Grid.Column="1"
-                          HorizontalOptions="Fill"
-                          Style="{StaticResource FieldValue}"
-                          Text="{Binding Value}" />
+                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource UpAdorner}"
+                          VerticalOptions="Center">
+
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="MoveNameUpCommand"
+                              Element="{Binding Source={x:Reference PersonName}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
 
                       <Button
                           Grid.Row="0"
+                          Grid.RowSpan="2"
                           Grid.Column="2"
                           Command="{Binding DialogCommand, Source={x:Reference Root}}"
-                          Style="{StaticResource EditAdorner}">
+                          Style="{StaticResource DownAdorner}"
+                          VerticalOptions="Center">
+
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="MoveNameDownCommand"
+                              Element="{Binding Source={x:Reference PersonName}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
+
+                      <Button
+                          Grid.Row="0"
+                          Grid.RowSpan="2"
+                          Grid.Column="3"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource EditAdorner}"
+                          VerticalOptions="Center">
 
                         <Button.CommandParameter>
                           <components:AdornerCommandParameter
@@ -251,9 +277,11 @@
 
                       <Button
                           Grid.Row="0"
-                          Grid.Column="3"
+                          Grid.RowSpan="2"
+                          Grid.Column="4"
                           Command="{Binding DialogCommand, Source={x:Reference Root}}"
-                          Style="{StaticResource DeleteAdorner}">
+                          Style="{StaticResource DeleteAdorner}"
+                          VerticalOptions="Center">
 
                         <Button.CommandParameter>
                           <components:AdornerCommandParameter
@@ -261,6 +289,14 @@
                               Element="{Binding Source={x:Reference PersonName}, Path=BindingContext}" />
                         </Button.CommandParameter>
                       </Button>
+
+                      <Label
+                          Grid.Row="1"
+                          Grid.Column="0"
+                          Grid.ColumnSpan="5"
+                          HorizontalOptions="Fill"
+                          Style="{StaticResource FieldValue}"
+                          Text="{Binding Value}" />
 
                     </Grid>
                   </DataTemplate>

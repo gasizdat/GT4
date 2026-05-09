@@ -77,7 +77,7 @@
   <OnIdiom
       x:Key="PageContentVerticalPadding"
       x:TypeArguments="x:Double"
-      Desktop="20"
+      Desktop="10"
       Phone="2.5"
       Tablet="5" />
 
