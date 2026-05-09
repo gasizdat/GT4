@@ -486,7 +486,15 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   {
     var oldIndex = _Photos.IndexOf(photo);
     var newIndex = oldIndex + dIndex;
+
+    if (newIndex < 0 || newIndex >= _Photos.Count)
+    {
+      throw new ApplicationException(UIStrings.ErrorTheBoundIsReached);
+    }
+
     _Photos.Move(oldIndex, newIndex);
+
+    IsModified = true;
   }
 
   private void SetUndefinedBirthDate()

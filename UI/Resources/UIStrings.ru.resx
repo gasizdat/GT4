@@ -723,4 +723,7 @@ LL - фамилия,                        LL. - инициал фамилии<
   <data name="FieldRevision_1" xml:space="preserve">
     <value>Ревизия: {0}</value>
   </data>
+  <data name="ErrorTheBoundIsReached" xml:space="preserve">
+    <value>Достигнута граница списка</value>
+  </data>
 </root>

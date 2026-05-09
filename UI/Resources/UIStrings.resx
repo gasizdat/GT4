@@ -723,4 +723,7 @@ LL - last name,               LL. - last name initial</value>
   <data name="FieldRevision_1" xml:space="preserve">
     <value>Revision: {0}</value>
   </data>
+  <data name="ErrorTheBoundIsReached" xml:space="preserve">
+    <value>The collection limit has been reached.</value>
+  </data>
 </root>

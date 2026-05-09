@@ -368,6 +368,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The collection limit has been reached..
+        /// </summary>
+        public static string ErrorTheBoundIsReached {
+            get {
+                return ResourceManager.GetString("ErrorTheBoundIsReached", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Additional name.
         /// </summary>
         public static string FieldAdditionalName {
