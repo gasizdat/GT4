@@ -88,12 +88,11 @@ internal partial class TablePersonData : TableBase, ITablePersonData
   public async Task AddPersonDataSetAsync(Person person, Data[] dataSet, CancellationToken token)
   {
     using var transaction = await Document.BeginTransactionAsync(token);
-    var tasks = new List<Task>();
 
+    // Add person data one at a time to preserve the data order.
     foreach (var data in dataSet)
     {
       var dataId = (await AddDataContentIfNotExist(data, token)).Id;
-
       using var command = Document.CreateCommand();
 
       command.CommandText = """
@@ -102,37 +101,23 @@ internal partial class TablePersonData : TableBase, ITablePersonData
         """;
       command.Parameters.AddWithValue("@personId", person.Id);
       command.Parameters.AddWithValue("@dataId", dataId);
-      tasks.Add(command.ExecuteNonQueryAsync(token));
+      await command.ExecuteNonQueryAsync(token);
     }
-
-    await Task.WhenAll(tasks);
     transaction.Commit();
   }
 
   public async Task UpdatePersonDataSetAsync(Person person, Data[] dataSet, CancellationToken token)
   {
-    var oldDataIds = await GetPersonDataSetAsync(person, null, token);
-    var newDataIds = dataSet.Select(data => data.Id).ToHashSet();
-    var remainedData = new HashSet<int>();
-    var tasks = new List<Task>();
-
     using var transaction = await Document.BeginTransactionAsync(token);
+    using var command = Document.CreateCommand();
+    command.CommandText = """
+      DELETE FROM PersonData
+      WHERE PersonId=@personId;
+      """;
+    command.Parameters.AddWithValue("@personId", person.Id);
+    await command.ExecuteNonQueryAsync(token);
 
-    foreach (var oldData in oldDataIds)
-    {
-      var isDataRemained = newDataIds.Contains(oldData.Id);
-      if (isDataRemained)
-      {
-        remainedData.Add(oldData.Id);
-        continue;
-      }
-
-      tasks.Add(RemovePersonDataAsync(person, oldData, token));
-    }
-
-    tasks.Add(AddPersonDataSetAsync(person, dataSet.Where(data => !remainedData.Contains(data.Id)).ToArray(), token));
-
-    await Task.WhenAll(tasks);
+    await AddPersonDataSetAsync(person, dataSet, token);
 
     transaction.Commit();
   }
