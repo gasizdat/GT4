@@ -53,6 +53,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
     UpdatePersonInformation(person);
 
+    _Names.CollectionChanged += (_, _) => OnPropertyChanged(nameof(PersonFullName));
+
     InitializeComponent();
     IsModified = false;
   }
@@ -256,7 +258,6 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       var item = new NameInfoItem(name, _NameTypeFormatter);
       _Names.Insert(index + 1, item);
 
-      OnPropertyChanged(nameof(PersonFullName));
       IsModified = true;
     }
   }
@@ -457,20 +458,24 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         IsModified = true;
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "MovePhotoToLeftCommand" && adorner.Element is PersonDataItem photo:
-        MovePhoto(photo, -1);
+        MoveItem(_Photos, photo, -1);
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "MovePhotoToRightCommand" && adorner.Element is PersonDataItem photo:
-        MovePhoto(photo, 1);
+        MoveItem(_Photos, photo, 1);
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "EditNameCommand" && adorner.Element is NameInfoItem name:
         await OnEditPersonNameAsync(name);
-        OnPropertyChanged(nameof(PersonFullName));
         IsModified = true;
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "RemoveNameCommand" && adorner.Element is NameInfoItem name:
         _Names.Remove(name);
-        OnPropertyChanged(nameof(PersonFullName));
         IsModified = true;
+        break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "MoveNameUpCommand" && adorner.Element is NameInfoItem name:
+        MoveItem(_Names, name, -1);
+        break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "MoveNameDownCommand" && adorner.Element is NameInfoItem name:
+        MoveItem(_Names, name, 1);
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "EditRelativeCommand" && adorner.Element is RelativeInfo relative:
         await OnEditRelationshipAsync(relative);
@@ -482,17 +487,17 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
   }
 
-  private void MovePhoto(PersonDataItem photo, int dIndex)
+  private void MoveItem<T>(ObservableCollection<T> collection, T name, int dIndex)
   {
-    var oldIndex = _Photos.IndexOf(photo);
+    var oldIndex = collection.IndexOf(name);
     var newIndex = oldIndex + dIndex;
 
-    if (newIndex < 0 || newIndex >= _Photos.Count)
+    if (newIndex < 0 || newIndex >= collection.Count)
     {
       throw new ApplicationException(UIStrings.ErrorTheBoundIsReached);
     }
 
-    _Photos.Move(oldIndex, newIndex);
+    collection.Move(oldIndex, newIndex);
 
     IsModified = true;
   }
