@@ -6,6 +6,7 @@
     xmlns:behaviors="clr-namespace:GT4.UI.Behaviors"
     xmlns:components="clr-namespace:GT4.UI.Components"
     xmlns:dto="clr-namespace:GT4.Core.Project.Dto;assembly=GT4.Core.Project"
+    xmlns:items="clr-namespace:GT4.UI.Items"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root"
     Title="{x:Static resources:UIStrings.TitleNamesPage}">
@@ -87,11 +88,11 @@
           VerticalOptions="Start">
 
         <CollectionView.ItemTemplate>
-          <DataTemplate>
+          <DataTemplate x:DataType="items:NameInfoItem">
             <Grid
                 Padding="{Thickness Left={StaticResource PageContentSpacing},
                                     Right={StaticResource PageContentSpacing}}"
-                ColumnDefinitions="*, Auto, Auto"
+                ColumnDefinitions="*, Auto, Auto, Auto"
                 Style="{StaticResource SelectableItem}">
 
               <Label
@@ -99,7 +100,7 @@
                   HorizontalOptions="Fill"
                   HorizontalTextAlignment="Start"
                   Style="{StaticResource FieldValue}"
-                  Text="{Binding Info.Value}" />
+                  Text="{Binding Value}" />
 
               <Button
                   Grid.Column="1"
@@ -113,6 +114,15 @@
                   Command="{Binding EditNameCommand, Source={x:Reference Root}}"
                   CommandParameter="{Binding Info}"
                   Style="{StaticResource EditAdorner}"
+                  VerticalOptions="Center" />
+
+              <Button
+                  Grid.Column="3"
+                  Command="{Binding ShowPersonsCommand, Source={x:Reference Root}}"
+                  CommandParameter="{Binding Info}"
+                  IsVisible="{Binding ShowMoreButton, Source={x:Reference Root}}"
+                  Style="{StaticResource EmojiAdorner}"
+                  Text="{Binding MoreBtnName, Source={x:Reference Root}}"
                   VerticalOptions="Center" />
 
             </Grid>
