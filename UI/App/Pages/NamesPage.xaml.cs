@@ -13,18 +13,18 @@ namespace GT4.UI.Pages;
 public partial class NamesPage : ContentPage
 {
   private readonly IServiceProvider _ServiceProvider;
-  private readonly INameTypeFormatter _NameTypeFormatter;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly IComparer<Name> _NameComparer;
   private readonly ObservableCollection<NameTypeInfoItem> _NameTypes;
   private readonly ObservableCollection<BiologicalSexItem> _BiologicalSexes = new();
-  private readonly FilteredObservableCollection<NameInfoItem> _Names = new();
+  private readonly FilteredObservableCollection<Name> _Names = new();
   private readonly ICommand _EditNameCommand;
   private readonly ICommand _DeleteNameCommand;
   private readonly ICommand _PageCommand;
   private NameTypeInfoItem _CurrentNameType;
-  private NameInfoItem? _CurrentName;
+  private Name? _CurrentName;
+  private int? _CurrentNameId;
   private BiologicalSexItem _CurrentBiologicalSex;
   private bool _UpdateNames = true;
   private string _NameFilter = string.Empty;
@@ -38,12 +38,12 @@ public partial class NamesPage : ContentPage
       NameType.Patronymic,
       NameType.LastName,
     };
+    var nameTypeFormatter = serviceProvider.GetRequiredService<INameTypeFormatter>();
     _ServiceProvider = serviceProvider;
-    _NameTypeFormatter = _ServiceProvider.GetRequiredService<INameTypeFormatter>();
     _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
     _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
     _NameComparer = _ServiceProvider.GetRequiredService<IComparer<Name>>();
-    _NameTypes = new(nameTypes.Select(type => new NameTypeInfoItem(_NameTypeFormatter.ToString(type), type)));
+    _NameTypes = new(nameTypes.Select(type => new NameTypeInfoItem(nameTypeFormatter.ToString(type), type)));
     _EditNameCommand = new SafeCommand(OnEditCommandAsync);
     _DeleteNameCommand = new SafeCommand(OnDeleteCommandAsync);
     _PageCommand = new SafeCommand(OnPageCommandAsync);
@@ -204,11 +204,11 @@ public partial class NamesPage : ContentPage
     }
   }
 
-  private bool NamesFilter(FilteredObservableCollection<NameInfoItem> _, NameInfoItem nameItem)
+  private bool NamesFilter(FilteredObservableCollection<Name> _, Name name)
   {
     if (!string.IsNullOrEmpty(_NameFilter))
     {
-      var isMatched = nameItem
+      var isMatched = name
         .Value
         .Contains(_NameFilter, StringComparison.InvariantCultureIgnoreCase);
 
@@ -224,7 +224,7 @@ public partial class NamesPage : ContentPage
   protected void RequestUpdateNames(Name? selectedName = null)
   {
     _UpdateNames = true;
-    CurrentName = selectedName is null ? null : new NameInfoItem(selectedName, _NameTypeFormatter);
+    _CurrentNameId = selectedName?.Id;
     OnPropertyChanged(nameof(Names));
   }
 
@@ -249,7 +249,7 @@ public partial class NamesPage : ContentPage
 
   public ICommand PageCommand => _PageCommand;
 
-  public IEnumerable<NameInfoItem> Names
+  public IEnumerable<Name> Names
   {
     get
     {
@@ -269,18 +269,14 @@ public partial class NamesPage : ContentPage
           .Names
           .GetNamesByTypeAsync(CurrentNameType.Type | nameDeclension, token)
           .Result
-          .Select(name => new NameInfoItem(name, _NameTypeFormatter))
-          .OrderBy(name => name.Info, _NameComparer)
+          .OrderBy(name => name, _NameComparer)
           .ToArray();
 
         MainThread.BeginInvokeOnMainThread(() =>
         {
           _Names.Clear();
           _Names.AddRange(names);
-          if (CurrentName is not null)
-          {
-            CurrentName = _Names.SingleOrDefault(n => n.Info.Id == CurrentName.Info.Id);
-          }
+          OnPropertyChanged(nameof(CurrentName));
         });
       }
 
@@ -308,16 +304,16 @@ public partial class NamesPage : ContentPage
     }
   }
 
-  public NameInfoItem? CurrentName
+  public Name? CurrentName
   {
-    get => _CurrentName;
-    set
+    get
     {
-      if (value != _CurrentName)
+      if (_CurrentNameId != _CurrentName?.Id)
       {
-        _CurrentName = value;
-        OnPropertyChanged(nameof(CurrentName));
+        _CurrentName = _Names?.SingleOrDefault(n => n.Id == _CurrentNameId);
       }
+
+      return _CurrentName;
     }
   }
 

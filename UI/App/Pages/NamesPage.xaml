@@ -88,41 +88,39 @@
           VerticalOptions="Start">
 
         <CollectionView.ItemTemplate>
-          <DataTemplate x:DataType="items:NameInfoItem">
+          <DataTemplate x:DataType="dto:Name">
             <Grid
                 Padding="{Thickness Left={StaticResource PageContentSpacing},
                                     Right={StaticResource PageContentSpacing}}"
                 ColumnDefinitions="*, Auto, Auto, Auto"
                 Style="{StaticResource SelectableItem}">
 
-              <Label
+              <components:NameView
+                  x:Name="NamePresenter"
+                  Name="{Binding .}"
                   Padding="{StaticResource CollectionItemsVerticalPadding}"
                   HorizontalOptions="Fill"
-                  HorizontalTextAlignment="Start"
-                  Style="{StaticResource FieldValue}"
-                  Text="{Binding Value}" />
+                  Style="{StaticResource FieldValue}" />
 
               <Button
                   Grid.Column="1"
                   Command="{Binding DeleteNameCommand, Source={x:Reference Root}}"
-                  CommandParameter="{Binding Info}"
+                  CommandParameter="{Binding .}"
                   Style="{StaticResource DeleteAdorner}"
                   VerticalOptions="Center" />
 
               <Button
                   Grid.Column="2"
                   Command="{Binding EditNameCommand, Source={x:Reference Root}}"
-                  CommandParameter="{Binding Info}"
+                  CommandParameter="{Binding .}"
                   Style="{StaticResource EditAdorner}"
                   VerticalOptions="Center" />
 
               <Button
                   Grid.Column="3"
-                  Command="{Binding ShowPersonsCommand, Source={x:Reference Root}}"
-                  CommandParameter="{Binding Info}"
-                  IsVisible="{Binding ShowMoreButton, Source={x:Reference Root}}"
+                  Command="{Binding TogglePersonsCommand, Source={x:Reference NamePresenter}}"
                   Style="{StaticResource EmojiAdorner}"
-                  Text="{Binding MoreBtnName, Source={x:Reference Root}}"
+                  Text="{Binding MoreBtnName, Source={x:Reference NamePresenter}}"
                   VerticalOptions="Center" />
 
             </Grid>
