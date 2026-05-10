@@ -95,11 +95,18 @@
                 ColumnDefinitions="*, Auto, Auto, Auto"
                 Style="{StaticResource SelectableItem}">
 
+              <Grid.GestureRecognizers>
+                <TapGestureRecognizer
+                    Command="{Binding TogglePersonsCommand, Source={x:Reference NamePresenter}}"
+                    NumberOfTapsRequired="2" />
+              </Grid.GestureRecognizers>
+
               <components:NameView
                   x:Name="NamePresenter"
                   Name="{Binding .}"
                   Padding="{StaticResource CollectionItemsVerticalPadding}"
                   HorizontalOptions="Fill"
+                  InputTransparent="True"
                   Style="{StaticResource FieldValue}" />
 
               <Button
