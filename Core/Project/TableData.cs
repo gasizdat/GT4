@@ -71,9 +71,11 @@ internal class TableData : TableBase, ITableData
     command.Parameters.AddWithValue("@mimeType", mimeType is null ? DBNull.Value : mimeType);
     command.Parameters.AddWithValue("@category", (int)dataCategory);
     await command.ExecuteNonQueryAsync(token);
+
+    var ret = new Data(Id: await Document.GetLastInsertRowIdAsync(token), Content: content, MimeType: mimeType, Category: dataCategory);
     transaction.Commit();
 
-    return new Data(Id: await Document.GetLastInsertRowIdAsync(token), Content: content, MimeType: mimeType, Category: dataCategory);
+    return ret;
   }
 
   public async Task RemoveDataAsync(Data data, CancellationToken token)

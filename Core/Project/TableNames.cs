@@ -134,9 +134,11 @@ internal class TableNames : TableBase, ITableNames
     command.Parameters.AddWithValue("@type", (int)type);
     command.Parameters.AddWithValue("@parentId", parent != null ? parent.Id : DBNull.Value);
     await command.ExecuteNonQueryAsync(token);
+    
+    var ret = new Name(Id: await Document.GetLastInsertRowIdAsync(token), Value: value, Type: type, ParentId: parent?.Id);
     transaction.Commit();
 
-    return new Name(Id: await Document.GetLastInsertRowIdAsync(token), Value: value, Type: type, ParentId: parent?.Id);
+    return ret;
   }
 
   public async Task<Name> AddFirstMaleNameAsync(string firstName, string? malePatronymic, string? femalePatronymic, CancellationToken token)
