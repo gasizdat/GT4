@@ -107,21 +107,21 @@
                   Command="{Binding DeleteNameCommand, Source={x:Reference Root}}"
                   CommandParameter="{Binding .}"
                   Style="{StaticResource DeleteAdorner}"
-                  VerticalOptions="Center" />
+                  VerticalOptions="Start" />
 
               <Button
                   Grid.Column="2"
                   Command="{Binding EditNameCommand, Source={x:Reference Root}}"
                   CommandParameter="{Binding .}"
                   Style="{StaticResource EditAdorner}"
-                  VerticalOptions="Center" />
+                  VerticalOptions="Start" />
 
               <Button
                   Grid.Column="3"
                   Command="{Binding TogglePersonsCommand, Source={x:Reference NamePresenter}}"
                   Style="{StaticResource EmojiAdorner}"
                   Text="{Binding MoreBtnName, Source={x:Reference NamePresenter}}"
-                  VerticalOptions="Center" />
+                  VerticalOptions="Start" />
 
             </Grid>
           </DataTemplate>
