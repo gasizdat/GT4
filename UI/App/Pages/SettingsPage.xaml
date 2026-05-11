@@ -8,14 +8,6 @@
     x:Name="Root"
     Title="{x:Static resources:UIStrings.TitleSettingsPage}">
 
-  <ContentPage.Resources>
-    <ResourceDictionary>
-      <Style x:Key="CardBorderStyle" TargetType="Border">
-        <Setter Property="Margin" Value="{Thickness Bottom={StaticResource PageContentSpacing}}" />
-      </Style>
-    </ResourceDictionary>
-  </ContentPage.Resources>
-
   <components:PageLayout>
     <components:PageLayout.Body>
       <CollectionView ItemsSource="{Binding SettingEditors, Source={x:Reference Root}}">
