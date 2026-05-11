@@ -50,6 +50,9 @@ public partial class PersonInfoView : ContentView
   public static readonly BindableProperty PhotoStyleProperty =
     BindableProperty.Create(nameof(PhotoStyle), typeof(Style), typeof(PersonInfoView), null);
 
+  public static readonly BindableProperty NameFormatProperty =
+    BindableProperty.Create(nameof(NameFormat), typeof(NameFormat), typeof(PersonInfoView), NameFormat.ShortPersonName);
+
   public PersonInfo? Person => (PersonInfo?)GetValue(PersonProperty);
   public bool ShowPhoto => (bool)GetValue(ShowPhotoProperty);
   public bool ShowDates => (bool)GetValue(ShowDatesProperty);
@@ -58,8 +61,9 @@ public partial class PersonInfoView : ContentView
   public Style? NameLabelStyle => (Style?)GetValue(NameLabelStyleProperty);
   public Style? DatesLabelStyle => (Style?)GetValue(DatesLabelStyleProperty);
   public Style? PhotoStyle => (Style?)GetValue(PhotoStyleProperty);
+  public NameFormat NameFormat => (NameFormat)GetValue(NameFormatProperty);
 
-  public string? CommonName => Person is null ? null : _NameFormatter.ToString(Person, NameFormat.CommonPersonName);
+  public string? CommonName => Person is null ? null : _NameFormatter.ToString(Person, NameFormat);
   public string? LifeDates
   {
     get
