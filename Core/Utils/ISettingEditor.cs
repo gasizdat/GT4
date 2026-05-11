@@ -17,4 +17,7 @@ public interface ISettingEditor
 
   // The current value of the setting.
   string Value { get; set; }
+
+  // Reset setting to default
+  void ResetToDefault();
 }
