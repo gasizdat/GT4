@@ -52,4 +52,9 @@ abstract class CommonPersonNameSettingBase
     get => _Configuration[PersonNameFormatSection] ?? DefaultPersonNameFormat;
     set => _InteractiveConfiguration?.SetKey(PersonNameFormatSection, value);
   }
+
+  public void ResetToDefault()
+  {
+    _InteractiveConfiguration?.RemoveKey(PersonNameFormatSection);
+  }
 }

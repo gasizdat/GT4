@@ -39,4 +39,9 @@ internal class ShortDateFormatSetting : ISettingEditor
     get => _Configuration[ShortDateFormatSection] ?? DefaultShortDateFormat;
     set => _InteractiveConfiguration?.SetKey(ShortDateFormatSection, value);
   }
+
+  public void ResetToDefault()
+  {
+    _InteractiveConfiguration?.RemoveKey(ShortDateFormatSection);
+  }
 }

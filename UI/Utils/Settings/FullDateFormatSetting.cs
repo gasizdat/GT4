@@ -39,4 +39,9 @@ internal class FullDateFormatSetting : ISettingEditor
     get => _Configuration[FullDateFormatSection] ?? DefaultFullDateFormat;
     set => _InteractiveConfiguration?.SetKey(FullDateFormatSection, value);
   }
+
+  public void ResetToDefault()
+  {
+    _InteractiveConfiguration?.RemoveKey(FullDateFormatSection);
+  }
 }

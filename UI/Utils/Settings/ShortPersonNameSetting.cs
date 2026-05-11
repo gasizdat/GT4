@@ -8,7 +8,7 @@ namespace GT4.UI.Utils.Settings;
 internal class ShortPersonNameSetting : CommonPersonNameSettingBase, ISettingEditor
 {
   protected override string PersonNameFormatSection => "NameFormatter.ShortPersonNameSetting";
-  protected override string DefaultPersonNameFormat => "FF PP. LL";
+  protected override string DefaultPersonNameFormat => "FF PP.";
 
   public ShortPersonNameSetting(
     IServiceProvider serviceProvider,
