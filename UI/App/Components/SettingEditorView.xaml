@@ -15,26 +15,35 @@
 
   <Border Style="{StaticResource CardBorderStyle}">
     <Grid
-      ColumnDefinitions="*"
-      RowDefinitions="Auto, Auto, Auto, Auto, Auto">
+        ColumnDefinitions="*, Auto"
+        RowDefinitions="Auto, Auto, Auto, Auto, Auto">
       <Label
-        Grid.Row="0"
-        Style="{StaticResource GroupTitle}"
-        Text="{Binding Caption, Source={x:Reference Root}}" />
+          Grid.Row="0"
+          Grid.ColumnSpan="2"
+          Style="{StaticResource GroupTitle}"
+          Text="{Binding Caption, Source={x:Reference Root}}" />
       <Label
-        Grid.Row="1"
-        Style="{StaticResource FieldValue}"
-        Text="{Binding Description, Source={x:Reference Root}}" />
+          Grid.Row="1"
+          Grid.ColumnSpan="2"
+          Style="{StaticResource FieldValue}"
+          Text="{Binding Description, Source={x:Reference Root}}" />
       <BoxView
-        Grid.Row="2"
-        Style="{StaticResource HorizontalDivider}" />
+          Grid.Row="2"
+          Grid.ColumnSpan="2"
+          Style="{StaticResource HorizontalDivider}" />
       <Label
-        Grid.Row="3"
-        Style="{StaticResource FieldValue}"
-        Text="{Binding Example, Source={x:Reference Root}}" />
+          Grid.Row="3"
+          Grid.ColumnSpan="2"
+          Style="{StaticResource FieldValue}"
+          Text="{Binding Example, Source={x:Reference Root}}" />
       <Entry
-        Grid.Row="4"
-        Text="{Binding Value, Source={x:Reference Root}}" />
+          Grid.Row="4"
+          Text="{Binding Value, Source={x:Reference Root}}" />
+      <Button
+          Grid.Row="4"
+          Grid.Column="1"
+          Command="{Binding ResetCommand, Source={x:Reference Root}}"
+          Style="{StaticResource DeleteAdorner}" />
     </Grid>
   </Border>
 </ContentView>

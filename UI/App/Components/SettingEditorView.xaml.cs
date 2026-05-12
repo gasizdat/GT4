@@ -1,4 +1,5 @@
 using GT4.Core.Utils;
+using System.Windows.Input;
 
 namespace GT4.UI.Components;
 
@@ -10,10 +11,10 @@ public partial class SettingEditorView : ContentView
   }
 
   public static readonly BindableProperty EditorProperty = BindableProperty.Create(
-    nameof(Editor), 
-    typeof(ISettingEditor), 
-    typeof(SettingEditorView), 
-    default, 
+    nameof(Editor),
+    typeof(ISettingEditor),
+    typeof(SettingEditorView),
+    default,
     BindingMode.OneWay,
     null,
     OnEditorPropertyChanged);
@@ -50,4 +51,11 @@ public partial class SettingEditorView : ContentView
       }
     }
   }
+
+  public ICommand ResetCommand => new SafeCommand(() =>
+  {
+    Editor?.ResetToDefault();
+    OnPropertyChanged(nameof(Value));
+    OnPropertyChanged(nameof(Example));
+  });
 }
