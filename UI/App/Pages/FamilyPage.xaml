@@ -76,7 +76,7 @@
                 <components:PersonInfoView
                     DatesLabelStyle="{StaticResource FieldValue}"
                     NameLabelStyle="{StaticResource FieldName}"
-                    NameFormat="ShortPersonName"
+                    NameFormat="{Binding PersonNamesFormat, Source={x:Reference Root}}"
                     Person="{Binding .}" />
               </Border>
             </DataTemplate>

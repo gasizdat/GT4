@@ -5,6 +5,7 @@ using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
+using GT4.UI.Utils.Formatters;
 using System.Windows.Input;
 
 namespace GT4.UI.Pages;
@@ -25,7 +26,8 @@ public partial class ProjectPage : ContentPage
     _ServiceProvider = serviceProvider;
     _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
     _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
-    _PersonInfoComparer = _ServiceProvider.GetRequiredService<IComparer<PersonInfo>>();
+    _PersonInfoComparer = _ServiceProvider.GetKeyedService<IComparer<PersonInfo>>(PersonNamesFormat) ??
+                          _ServiceProvider.GetRequiredService<IComparer<PersonInfo>>();
     _NameComparer = _ServiceProvider.GetRequiredService<IComparer<Name>>();
     _ProjectList = _ServiceProvider.GetRequiredService<IProjectList>();
 
@@ -74,6 +76,8 @@ public partial class ProjectPage : ContentPage
   }
 
   public ICommand PageCommand { get; init; }
+
+  public NameFormat PersonNamesFormat => NameFormat.ShortPersonName;
 
   protected override void OnNavigatedTo(NavigatedToEventArgs args)
   {

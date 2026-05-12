@@ -2,6 +2,7 @@
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Utils;
+using GT4.UI.Utils.Formatters;
 using System.Windows.Input;
 
 namespace GT4.UI.Components;
@@ -12,6 +13,7 @@ public partial class NameView : ContentView
   private const string CollapseSymbol = "­­­­⏫­";
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
+  private readonly IComparer<PersonInfo> _PersonInfoComparer;
   private bool _ShowPersons = false;
   private ICollection<PersonInfo>? _Persons = null;
   private string _MoreBtnName = ExpandSymbol;
@@ -20,7 +22,9 @@ public partial class NameView : ContentView
   {
     _CancellationTokenProvider = serviceProvider.GetRequiredService<ICancellationTokenProvider>();
     _CurrentProjectProvider = serviceProvider.GetRequiredService<ICurrentProjectProvider>();
-    TogglePersonsCommand = new SafeCommand(OnTogglePersonsAsync);
+    TogglePersonsCommand = new SafeCommand(OnTogglePersonsAsync); 
+    _PersonInfoComparer = serviceProvider.GetKeyedService<IComparer<PersonInfo>>(PersonNamesFormat) ??
+                          serviceProvider.GetRequiredService<IComparer<PersonInfo>>();
 
     InitializeComponent();
   }
@@ -43,6 +47,8 @@ public partial class NameView : ContentView
   public Name? Name => (Name?)GetValue(NameProperty);
 
   public ICommand TogglePersonsCommand { get; init; }
+
+  public NameFormat PersonNamesFormat => NameFormat.FullPersonName;
 
   public ICollection<PersonInfo>? Persons
   {
@@ -105,7 +111,9 @@ public partial class NameView : ContentView
         .PersonManager
         .GetPersonInfosByNameAsync(Name, true, token);
 
-      Persons = persons;
+      Persons = persons
+          .OrderBy(item => item, _PersonInfoComparer)
+          .ToList();
       ShowPersons = true;
     }
     else

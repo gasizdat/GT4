@@ -4,6 +4,7 @@ using GT4.Core.Utils;
 using GT4.UI.Dialogs;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
+using GT4.UI.Utils.Formatters;
 using System.Windows.Input;
 
 namespace GT4.UI.Pages;
@@ -23,7 +24,8 @@ public partial class FamilyPage : ContentPage
     _Services = serviceProvider;
     _CancellationTokenProvider = _Services.GetRequiredService<ICancellationTokenProvider>();
     _CurrentProjectProvider = _Services.GetRequiredService<ICurrentProjectProvider>();
-    _PersonInfoComparer = _Services.GetRequiredService<IComparer<PersonInfo>>();
+    _PersonInfoComparer =  _Services.GetKeyedService<IComparer<PersonInfo>>(PersonNamesFormat) ?? 
+                           _Services.GetRequiredService<IComparer<PersonInfo>>();
 
     MemberItemTappedCommand = new SafeCommand<PersonInfo>(OnOpenPerson);
     PageCommand = new SafeCommand(OnPageCommand);
@@ -49,6 +51,8 @@ public partial class FamilyPage : ContentPage
   public ICommand MemberItemTappedCommand { get; init; }
 
   public ICommand PageCommand { get; init; }
+
+  public NameFormat PersonNamesFormat => NameFormat.ShortPersonName;
 
   public ICollection<PersonInfo> Persons
   {
