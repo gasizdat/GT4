@@ -15,7 +15,6 @@ namespace GT4.UI.Pages;
 [QueryProperty(nameof(PersonInfo), "PersonInfo")]
 public partial class PersonPage : ContentPage
 {
-  private readonly Stack<Person> _PersonBackNavigationStack = [];
   private readonly IServiceProvider _ServiceProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
@@ -25,6 +24,8 @@ public partial class PersonPage : ContentPage
   private readonly IDataConverter _TextConverter;
   private readonly ICommand _PageCommand;
   private readonly ObservableCollection<RelativeInfo> _Relatives = new();
+  private ObservableCollection<PersonInfo> _NavigationHistory = new();
+  private int _NavigationIndex = -1;
   private PersonFullInfo _PersonFullInfo = PersonFullInfo.Empty;
   private byte[][] _Photos = [];
   private string _Biography = string.Empty;
@@ -44,9 +45,9 @@ public partial class PersonPage : ContentPage
     InitializeComponent();
   }
 
-  public void ShowPersonInfo(Person person)
+  public void ShowPersonInfo(Person person, bool addToNavigation)
   {
-    Task.Run(async () => await GetPersonDataAsync(person));
+    Task.Run(async () => await GetPersonDataAsync(person, addToNavigation));
   }
 
   public ICommand PageCommand => _PageCommand;
@@ -106,7 +107,7 @@ public partial class PersonPage : ContentPage
 
   public PersonInfo PersonInfo
   {
-    set => ShowPersonInfo(value);
+    set => ShowPersonInfo(value, true);
   }
 
   public PersonPageSmartLayout SmartLayout => _SmartLayout;
@@ -118,6 +119,28 @@ public partial class PersonPage : ContentPage
   public Name? FamilyName => _PersonFullInfo.Names.SingleOrDefault(n => n.Type == NameType.FamilyName);
 
   public string GoToFamilyName => string.Format(UIStrings.MenuItemGotoFamily_1, FamilyName?.Value ?? string.Empty);
+
+  public ICollection NavigationHistory => _NavigationHistory;
+
+  public PersonInfo? CurrentPerson
+  {
+    get => _NavigationIndex >= 0 ? _NavigationHistory[_NavigationIndex] : null;
+    set
+    {
+      if (value is null)
+      {
+        return;
+      }
+
+      var index = _NavigationHistory.IndexOf(value);
+      if (index != _NavigationIndex)
+      {
+        _NavigationIndex = index;
+        OnPropertyChanged(nameof(CurrentPerson));
+        ShowPersonInfo(value, false);
+      }
+    }
+  }
 
   protected override void OnSizeAllocated(double width, double height)
   {
@@ -140,20 +163,7 @@ public partial class PersonPage : ContentPage
     OnPropertyChanged(nameof(SmartLayout));
   }
 
-  protected override bool OnBackButtonPressed()
-  {
-    if (_PersonBackNavigationStack.Count > 0)
-    {
-      var person = _PersonBackNavigationStack.Pop();
-      var routeName = GetRoute(person);
-      ShowPersonInfo(person);
-      return false;
-    }
-
-    return base.OnBackButtonPressed();
-  }
-
-  private async Task GetPersonDataAsync(Person person)
+  private async Task GetPersonDataAsync(Person person, bool addToNavigation)
   {
     try
     {
@@ -186,8 +196,11 @@ public partial class PersonPage : ContentPage
                     .AdditionalPhotos
                     .Select(photo => photo.Content)];
       }
-      _ = MainThread.InvokeOnMainThreadAsync(
-        () => UpdateUI(personFullInfo, parentsTasks.Result, stepChildrenTasks.Result, photos, bioTask.Result as string));
+      _ = MainThread.InvokeOnMainThreadAsync(() => UpdateUI(personFullInfo,
+                                                            parentsTasks.Result,
+                                                            stepChildrenTasks.Result,
+                                                            photos, bioTask.Result as string,
+                                                            addToNavigation));
     }
     catch (Exception ex)
     {
@@ -197,7 +210,12 @@ public partial class PersonPage : ContentPage
     }
   }
 
-  public void UpdateUI(PersonFullInfo personFullInfo, Parents parents, RelativeInfo[] stepChildren, byte[][] photos, string? bio)
+  public void UpdateUI(PersonFullInfo personFullInfo,
+                       Parents parents,
+                       RelativeInfo[] stepChildren,
+                       byte[][] photos,
+                       string? bio,
+                       bool addToNavigation)
   {
     var relativesProvider = _CurrentProjectProvider.Project.RelativesProvider;
     var siblings = relativesProvider.GetSiblings(personFullInfo, parents);
@@ -228,6 +246,23 @@ public partial class PersonPage : ContentPage
     Add(stepChildren);
 
     this.RefreshView();
+
+    if (addToNavigation)
+    {
+      AddToNavigation(_PersonFullInfo);
+    }
+  }
+
+  private void AddToNavigation(PersonInfo personInfo)
+  {
+    var newIndex = _NavigationIndex + 1;
+    while (newIndex < _NavigationHistory.Count)
+    {
+      _NavigationHistory.RemoveAt(newIndex);
+    }
+    var personInfoCopy = new PersonInfo(personInfo, names: personInfo.Names, mainPhoto: null);
+    _NavigationHistory.Add(personInfoCopy);
+    CurrentPerson = personInfoCopy;
   }
 
   private async Task OnPageCommand(object obj)
@@ -241,7 +276,7 @@ public partial class PersonPage : ContentPage
         await OnPersonEditAsync();
         break;
       case string commandName when commandName == "Refresh":
-        PersonInfo = _PersonFullInfo;
+        ShowPersonInfo(_PersonFullInfo, false);
         break;
       case string commandName when commandName == "GoToHome":
         await Shell.Current.GoToAsync(UIRoutes.GetRoute<MainPage>());
@@ -250,12 +285,23 @@ public partial class PersonPage : ContentPage
         await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = FamilyName! });
         break;
       case RelativeInfo relativeInfo:
-        var nextPerson = ToPerson(relativeInfo);
-        var routeName = GetRoute(nextPerson);
-        RegisterRoute(routeName, nextPerson);
-        _ = Shell.Current.GoToAsync(routeName);
-        _PersonBackNavigationStack.Push(ToPerson(_PersonFullInfo));
+        ShowPersonInfo(relativeInfo, true);
         break;
+      case string commandName when commandName == "PreviousPerson":
+        OnNextPerson(-1);
+        break;
+      case string commandName when commandName == "NextPerson":
+        OnNextPerson(1);
+        break;
+    }
+  }
+
+  private void OnNextPerson(int dIndex)
+  {
+    var person = _NavigationHistory.ElementAtOrDefault(_NavigationIndex + dIndex);
+    if (person is not null)
+    {
+      CurrentPerson = person;
     }
   }
 
@@ -296,55 +342,4 @@ public partial class PersonPage : ContentPage
       BiologicalSex.Female => "female_stub.png",
       _ => "project_icon.png"
     };
-
-  private static Person ToPerson(Person person)
-  {
-    var ret = new Person(
-      Id: person.Id,
-      BirthDate: person.BirthDate,
-      DeathDate: person.DeathDate,
-      BiologicalSex: person.BiologicalSex);
-    return ret;
-  }
-
-  private static string GetRoute(Person person)
-  {
-    const string pidPrefix = "pid";
-    var newRoute = Routing.FormatRoute([pidPrefix, $"{person.Id}"]);
-    return newRoute;
-  }
-
-  private void RegisterRoute(string routeName, Person person)
-  {
-    Routing.UnRegisterRoute(routeName);
-    Routing.RegisterRoute(routeName, new PersonPageRouteFactory(this, person));
-  }
-
-  class PersonPageRouteFactory : RouteFactory
-  {
-    private readonly WeakReference<PersonPage> _PersonPage;
-    private readonly Person _Person;
-
-    public PersonPageRouteFactory(PersonPage personPage, Person person)
-    {
-      _PersonPage = new(personPage);
-      _Person = person;
-    }
-
-    public override Element GetOrCreate()
-    {
-      if (_PersonPage.TryGetTarget(out var personPage))
-      {
-        personPage.ShowPersonInfo(_Person);
-        return personPage;
-      }
-
-      throw new ApplicationException("Unable to get PersonPage");
-    }
-
-    public override Element GetOrCreate(IServiceProvider services)
-    {
-      return GetOrCreate();
-    }
-  }
 }

@@ -3,6 +3,7 @@
     x:Class="GT4.UI.Pages.PersonPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:behaviors="clr-namespace:GT4.UI.Behaviors"
     xmlns:components="clr-namespace:GT4.UI.Components"
     xmlns:dto="clr-namespace:GT4.Core.Project.Dto;assembly=GT4.Core.Project"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
@@ -69,17 +70,63 @@
     <components:PageLayout.Header>
       <Grid
           ColumnDefinitions="Auto, *"
-          RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto">
+          RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto">
+
+        <Grid
+            Grid.Row="0"
+            Grid.Column="0"
+            Grid.ColumnSpan="2"
+            ColumnDefinitions="Auto, *, Auto">
+
+          <Button
+              Grid.Row="0"
+              Grid.Column="0"
+              Command="{Binding Path=PageCommand, Source={x:Reference Root}}"
+              CommandParameter="PreviousPerson"
+              Style="{StaticResource LeftAdorner}" />
+
+          <CollectionView
+              Grid.Row="0"
+              Grid.Column="1"
+              behaviors:ScrollToSelected.ScrollToItem="{Binding CurrentPerson, Source={x:Reference Root}}"
+              ItemsSource="{Binding NavigationHistory, Source={x:Reference Root}}"
+              SelectedItem="{Binding CurrentPerson, Source={x:Reference Root}}"
+              SelectionMode="Single">
+            <CollectionView.ItemsLayout>
+              <LinearItemsLayout Orientation="Horizontal" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+              <DataTemplate x:DataType="dto:PersonInfo">
+                <components:PersonInfoView
+                    NameFormat="ShortPersonName"
+                    NameLabelStyle="{StaticResource FieldValue}"
+                    Person="{Binding .}"
+                    ShowAge="False"
+                    ShowDates="False"
+                    ShowPhoto="False"
+                    Style="{StaticResource HoverItem}" />
+              </DataTemplate>
+            </CollectionView.ItemTemplate>
+          </CollectionView>
+
+          <Button
+              Grid.Row="0"
+              Grid.Column="2"
+              Command="{Binding Path=PageCommand, Source={x:Reference Root}}"
+              CommandParameter="NextPerson"
+              Style="{StaticResource RightAdorner}" />
+
+        </Grid>
 
         <Label
-            Grid.Row="0"
+            Grid.Row="1"
             Grid.Column="0"
             Grid.ColumnSpan="2"
             Style="{StaticResource GroupTitle}"
             Text="{Binding CommonName, Source={x:Reference Root}}" />
 
         <Label
-            Grid.Row="1"
+            Grid.Row="2"
             Grid.Column="0"
             Grid.ColumnSpan="2"
             IsVisible="{Binding ShowFullName, Source={x:Reference Root}}"
@@ -87,45 +134,45 @@
             Text="{Binding FullName, Source={x:Reference Root}}" />
 
         <Label
-            Grid.Row="2"
+            Grid.Row="3"
             Grid.Column="0"
             Style="{StaticResource FieldName}"
             Text="{x:Static resources:UIStrings.FieldDateOfBirth}" />
 
         <Label
-            Grid.Row="2"
+            Grid.Row="3"
             Grid.Column="1"
             Style="{StaticResource FieldValue}"
             Text="{Binding BirthDate, Source={x:Reference Root}}" />
 
         <Label
-            Grid.Row="3"
+            Grid.Row="4"
             Grid.Column="0"
             IsVisible="{Binding ShowDeathDate, Source={x:Reference Root}}"
             Style="{StaticResource FieldName}"
             Text="{x:Static resources:UIStrings.FieldDateOfDeath}" />
 
         <Label
-            Grid.Row="3"
+            Grid.Row="4"
             Grid.Column="1"
             IsVisible="{Binding ShowDeathDate, Source={x:Reference Root}}"
             Style="{StaticResource FieldValue}"
             Text="{Binding DeathDate, Source={x:Reference Root}}" />
 
         <Label
-            Grid.Row="4"
+            Grid.Row="5"
             Grid.Column="0"
             Style="{StaticResource FieldName}"
             Text="{x:Static resources:UIStrings.FieldAge}" />
 
         <Label
-            Grid.Row="4"
+            Grid.Row="5"
             Grid.Column="1"
             Style="{StaticResource FieldValue}"
             Text="{Binding Age, Source={x:Reference Root}}" />
 
         <Label
-            Grid.Row="5"
+            Grid.Row="6"
             Grid.Column="0"
             Grid.ColumnSpan="2"
             IsVisible="{Binding ShowSinceBirth, Source={x:Reference Root}}"
