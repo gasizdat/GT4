@@ -8,7 +8,7 @@ namespace GT4.UI.Utils.Settings;
 internal class FullPersonNameSetting : CommonPersonNameSettingBase, ISettingEditor
 {
   protected override string PersonNameFormatSection => "NameFormatter.FullPersonName";
-  protected override string DefaultPersonNameFormat => "FF PP LL";
+  protected override string DefaultPersonNameFormat => "FF PP LL (FN)";
 
   public FullPersonNameSetting(
     IServiceProvider serviceProvider,

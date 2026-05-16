@@ -92,10 +92,10 @@
                   <DataTemplate x:DataType="dto:PersonInfo">
 
                     <components:PersonInfoView
+                        NameFormat="{Binding PersonNamesFormat, Source={x:Reference Root}}"
                         NameLabelStyle="{StaticResource FieldValue}"
                         Person="{Binding .}"
                         PhotoStyle="{StaticResource PhotoCompactStyle}"
-                        NameFormat="{Binding PersonNamesFormat, Source={x:Reference Root}}"
                         ShowAge="False"
                         ShowDates="False" />
 

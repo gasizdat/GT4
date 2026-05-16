@@ -675,7 +675,8 @@ MMM - название месяца (январь - декабрь)</value>
   <data name="FieldPersonNameFormatHint" xml:space="preserve">
     <value>FF - имя,                                  FF. - инициал имени
 PP - отчество,                        PP. - инициал отчества
-LL - фамилия,                        LL. - инициал фамилии</value>
+LL - фамилия,                        LL. - инициал фамилии
+FN - род</value>
   </data>
   <data name="MenuItemNameSettings" xml:space="preserve">
     <value>⚙️ Настройки</value>
@@ -718,5 +719,8 @@ LL - фамилия,                        LL. - инициал фамилии<
   </data>
   <data name="ErrorTheBoundIsReached" xml:space="preserve">
     <value>Достигнута граница списка</value>
+  </data>
+  <data name="NameFamily" xml:space="preserve">
+    <value>Род</value>
   </data>
 </root>

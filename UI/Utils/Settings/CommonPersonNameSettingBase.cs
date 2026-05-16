@@ -17,7 +17,8 @@ abstract class CommonPersonNameSettingBase
     Names: [
       new Name(Id: 0, UIStrings.NameFirst, NameType.FirstName, null),
       new Name(Id: 0, UIStrings.NamePatronymic, NameType.Patronymic, null),
-      new Name(Id: 0, UIStrings.NameLast, NameType.LastName, null) ],
+      new Name(Id: 0, UIStrings.NameLast, NameType.LastName, null),
+      new Name(Id: 0, UIStrings.NameFamily, NameType.FamilyName, null) ],
       MainPhoto: null);
   private readonly IConfiguration _Configuration;
   private readonly IInteractiveConfiguration? _InteractiveConfiguration;

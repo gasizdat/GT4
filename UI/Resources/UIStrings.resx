@@ -675,7 +675,8 @@ MMM - month name (January - December)</value>
   <data name="FieldPersonNameFormatHint" xml:space="preserve">
     <value>FF - first name,              FF. - first name initial
 PP - patronymic,          PP. - patronymic initial
-LL - last name,               LL. - last name initial</value>
+LL - last name,               LL. - last name initial
+FN - family name</value>
   </data>
   <data name="MenuItemNameSettings" xml:space="preserve">
     <value>⚙️ Settings</value>
@@ -718,5 +719,8 @@ LL - last name,               LL. - last name initial</value>
   </data>
   <data name="ErrorTheBoundIsReached" xml:space="preserve">
     <value>The collection limit has been reached.</value>
+  </data>
+  <data name="NameFamily" xml:space="preserve">
+    <value>Family</value>
   </data>
 </root>

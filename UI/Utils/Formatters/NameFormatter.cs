@@ -85,6 +85,7 @@ public class NameFormatter : INameFormatter
       { "FF.", () => GetNames(NameType.FirstName | _Initials)},
       { "PP.", () => GetNames(NameType.Patronymic | _Initials)},
       { "LL.", () => GetNames(NameType.LastName | _Initials)},
+      { "FN", () => GetNames(NameType.FamilyName)},
     });
 
     return ret;

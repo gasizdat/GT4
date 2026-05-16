@@ -607,7 +607,8 @@ namespace GT4.UI.Resources {
         /// <summary>
         ///   Looks up a localized string similar to FF - first name,              FF. - first name initial
         ///PP - patronymic,          PP. - patronymic initial
-        ///LL - last name,               LL. - last name initial.
+        ///LL - last name,               LL. - last name initial
+        ///FN - family name.
         /// </summary>
         public static string FieldPersonNameFormatHint {
             get {
@@ -956,6 +957,15 @@ namespace GT4.UI.Resources {
         public static string Month_12 {
             get {
                 return ResourceManager.GetString("Month_12", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Family.
+        /// </summary>
+        public static string NameFamily {
+            get {
+                return ResourceManager.GetString("NameFamily", resourceCulture);
             }
         }
         
