@@ -1,0 +1,18 @@
+<ContentView
+    x:Class="GT4.UI.Components.MarkdownView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Name="Root"
+    CascadeInputTransparent="False"
+    InputTransparent="True">
+
+  <WebView
+      x:Name="InternalWebView"
+      HorizontalOptions="Fill"
+      InputTransparent="True"
+      Navigated="OnWebViewNavigated">
+    <WebView.Source>
+      <HtmlWebViewSource Html="{Binding HtmlContent, Source={x:Reference Root}}" />
+    </WebView.Source>
+  </WebView>
+</ContentView>

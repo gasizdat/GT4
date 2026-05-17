@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="GT4.UI.Components.NameView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:components="clr-namespace:GT4.UI.Components"
+    xmlns:dto="clr-namespace:GT4.Core.Project.Dto;assembly=GT4.Core.Project"
+    x:Name="Root">
+
+  <Grid
+      ColumnDefinitions="*"
+      RowDefinitions="Auto, *">
+
+    <Label
+        Grid.Row="0"
+        Grid.Column="0"
+        LineBreakMode="WordWrap"
+        Style="{StaticResource FieldValue}"
+        Text="{Binding Name.Value, Source={x:Reference Root}}"
+        VerticalOptions="Start" />
+
+    <CollectionView
+        Grid.Row="1"
+        Grid.Column="0"
+        HorizontalOptions="Fill"
+        IsVisible="{Binding ShowPersons, Source={x:Reference Root}}"
+        ItemsSource="{Binding Persons, Source={x:Reference Root}}">
+      <CollectionView.ItemsLayout>
+        <LinearItemsLayout
+            ItemSpacing="{StaticResource PageContentSpacing}"
+            Orientation="Vertical" />
+      </CollectionView.ItemsLayout>
+
+      <CollectionView.ItemTemplate>
+        <DataTemplate x:DataType="dto:PersonInfo">
+          <Grid>
+            <components:PersonInfoView
+                DatesLabelStyle="{StaticResource FieldValue}"
+                NameFormat="{Binding PersonNamesFormat, Source={x:Reference Root}}"
+                NameLabelStyle="{StaticResource FieldName}"
+                Person="{Binding .}" />
+          </Grid>
+        </DataTemplate>
+      </CollectionView.ItemTemplate>
+    </CollectionView>
+
+  </Grid>
+</ContentView>

@@ -24,12 +24,15 @@ internal class PersonManager : TableBase, IPersonManager
 
   private static Data[] CombinePersonData(PersonFullInfo personFullInfo)
   {
-    var personDataSet = new List<Data>(personFullInfo.AdditionalPhotos);
+    var personDataSet = new List<Data>();
 
     if (personFullInfo.MainPhoto is not null)
     {
       personDataSet.Add(personFullInfo.MainPhoto);
     }
+
+    personDataSet.AddRange(personFullInfo.AdditionalPhotos);
+
     if (personFullInfo.Biography is not null)
     {
       personDataSet.Add(personFullInfo.Biography);
@@ -128,13 +131,31 @@ internal class PersonManager : TableBase, IPersonManager
   public async Task UpdatePersonAsync(PersonFullInfo personFullInfo, CancellationToken token)
   {
     using var transaction = await Document.BeginTransactionAsync(token);
+    var tasks = new List<Task>();
+
+    // Ensure photo categories are consistent:
+    // If the person's main photo exists but is not marked as PersonMainPhoto,
+    // update it to PersonMainPhoto and mark all additional photos as PersonPhoto.
+    var mainPhotoId = personFullInfo.MainPhoto?.Id;
+    if (mainPhotoId is not null)
+    {
+      var mainPhoto = await Document.Data.TryGetDataByIdAsync(mainPhotoId.Value, token);
+      if (mainPhoto is not null && mainPhoto.Category != DataCategory.PersonMainPhoto)
+      {
+        tasks.Add(Document.Data.UpdateCategoryAsync(mainPhoto, DataCategory.PersonMainPhoto, token));
+        tasks.AddRange(personFullInfo
+          .AdditionalPhotos
+          .Select(p => Document.Data.UpdateCategoryAsync(p, DataCategory.PersonPhoto, token)));
+      }
+    }
 
     await Document.Persons.UpdatePersonAsync(personFullInfo, token);
-    await Task.WhenAll(
+    tasks.AddRange(
       Document.PersonNames.UpdatePersonNamesAsync(personFullInfo, personFullInfo.Names, token),
       Document.PersonData.UpdatePersonDataSetAsync(personFullInfo, CombinePersonData(personFullInfo), token),
       Document.Relatives.UpdateRelativesAsync(personFullInfo, personFullInfo.RelativeInfos, token));
 
+    await Task.WhenAll(tasks);
     transaction.Commit();
   }
 

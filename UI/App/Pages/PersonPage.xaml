@@ -3,6 +3,7 @@
     x:Class="GT4.UI.Pages.PersonPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:behaviors="clr-namespace:GT4.UI.Behaviors"
     xmlns:components="clr-namespace:GT4.UI.Components"
     xmlns:dto="clr-namespace:GT4.Core.Project.Dto;assembly=GT4.Core.Project"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
@@ -40,6 +41,16 @@
   <ContentPage.ToolbarItems>
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="GoToHome"
+        Order="Secondary"
+        Text="{x:Static resources:UIStrings.TitleApp}" />
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="GoToFamily"
+        Order="Secondary"
+        Text="{Binding GoToFamilyName, Source={x:Reference Root}}" />
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="RemovePerson"
         Order="Secondary"
         Text="{Binding RemovePersonToolbarItemName, Source={x:Reference Root}}" />
@@ -59,17 +70,63 @@
     <components:PageLayout.Header>
       <Grid
           ColumnDefinitions="Auto, *"
-          RowDefinitions="Auto, Auto, Auto, Auto, Auto">
+          RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto">
+
+        <Grid
+            Grid.Row="0"
+            Grid.Column="0"
+            Grid.ColumnSpan="2"
+            ColumnDefinitions="Auto, *, Auto">
+
+          <Button
+              Grid.Row="0"
+              Grid.Column="0"
+              Command="{Binding Path=PageCommand, Source={x:Reference Root}}"
+              CommandParameter="PreviousPerson"
+              Style="{StaticResource LeftAdorner}" />
+
+          <CollectionView
+              Grid.Row="0"
+              Grid.Column="1"
+              behaviors:ScrollToSelected.ScrollToItem="{Binding CurrentPerson, Source={x:Reference Root}}"
+              ItemsSource="{Binding NavigationHistory, Source={x:Reference Root}}"
+              SelectedItem="{Binding CurrentPerson, Source={x:Reference Root}}"
+              SelectionMode="Single">
+            <CollectionView.ItemsLayout>
+              <LinearItemsLayout Orientation="Horizontal" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+              <DataTemplate x:DataType="dto:PersonInfo">
+                <components:PersonInfoView
+                    NameFormat="ShortPersonName"
+                    NameLabelStyle="{StaticResource FieldValue}"
+                    Person="{Binding .}"
+                    ShowAge="False"
+                    ShowDates="False"
+                    ShowPhoto="False"
+                    Style="{StaticResource HoverItem}" />
+              </DataTemplate>
+            </CollectionView.ItemTemplate>
+          </CollectionView>
+
+          <Button
+              Grid.Row="0"
+              Grid.Column="2"
+              Command="{Binding Path=PageCommand, Source={x:Reference Root}}"
+              CommandParameter="NextPerson"
+              Style="{StaticResource RightAdorner}" />
+
+        </Grid>
 
         <Label
-            Grid.Row="0"
+            Grid.Row="1"
             Grid.Column="0"
             Grid.ColumnSpan="2"
             Style="{StaticResource GroupTitle}"
             Text="{Binding CommonName, Source={x:Reference Root}}" />
 
         <Label
-            Grid.Row="1"
+            Grid.Row="2"
             Grid.Column="0"
             Grid.ColumnSpan="2"
             IsVisible="{Binding ShowFullName, Source={x:Reference Root}}"
@@ -77,42 +134,51 @@
             Text="{Binding FullName, Source={x:Reference Root}}" />
 
         <Label
-            Grid.Row="2"
+            Grid.Row="3"
             Grid.Column="0"
             Style="{StaticResource FieldName}"
             Text="{x:Static resources:UIStrings.FieldDateOfBirth}" />
 
         <Label
-            Grid.Row="2"
+            Grid.Row="3"
             Grid.Column="1"
             Style="{StaticResource FieldValue}"
             Text="{Binding BirthDate, Source={x:Reference Root}}" />
 
         <Label
-            Grid.Row="3"
+            Grid.Row="4"
             Grid.Column="0"
             IsVisible="{Binding ShowDeathDate, Source={x:Reference Root}}"
             Style="{StaticResource FieldName}"
             Text="{x:Static resources:UIStrings.FieldDateOfDeath}" />
 
         <Label
-            Grid.Row="3"
+            Grid.Row="4"
             Grid.Column="1"
             IsVisible="{Binding ShowDeathDate, Source={x:Reference Root}}"
             Style="{StaticResource FieldValue}"
             Text="{Binding DeathDate, Source={x:Reference Root}}" />
 
         <Label
-            Grid.Row="4"
+            Grid.Row="5"
             Grid.Column="0"
             Style="{StaticResource FieldName}"
             Text="{x:Static resources:UIStrings.FieldAge}" />
 
         <Label
-            Grid.Row="4"
+            Grid.Row="5"
             Grid.Column="1"
             Style="{StaticResource FieldValue}"
             Text="{Binding Age, Source={x:Reference Root}}" />
+
+        <Label
+            Grid.Row="6"
+            Grid.Column="0"
+            Grid.ColumnSpan="2"
+            IsVisible="{Binding ShowSinceBirth, Source={x:Reference Root}}"
+            Style="{StaticResource FieldValue}"
+            Text="{Binding SinceBirth, Source={x:Reference Root}}" />
+
       </Grid>
     </components:PageLayout.Header>
 
@@ -127,18 +193,14 @@
               Grid.RowSpan="{Binding Path=SmartLayout.Biography.RowSpan, Source={x:Reference Root}}"
               Grid.Column="{Binding Path=SmartLayout.Biography.Column, Source={x:Reference Root}}"
               Grid.ColumnSpan="{Binding Path=SmartLayout.Biography.ColumnSpan, Source={x:Reference Root}}"
-              IsVisible="{Binding ShowBiography, Source={x:Reference Root}}"
-              StrokeShape="RoundRectangle 10"
-              StrokeThickness="1">
-            <Editor
+              IsVisible="{Binding ShowBiography, Source={x:Reference Root}}">
+
+            <components:MarkdownView
                 Margin="-1"
                 BackgroundColor="Transparent"
-                IsReadOnly="True"
-                IsSpellCheckEnabled="False"
-                IsTextPredictionEnabled="False"
-                MinimumHeightRequest="{OnIdiom Default=150,
-                                               Phone=100}"
-                Text="{Binding Biography, Source={x:Reference Root}, Mode=OneWay}" />
+                Markdown="{Binding Biography, Source={x:Reference Root}, Mode=OneWay}"
+                MinimumHeightRequest="{OnIdiom Default=300,
+                                               Phone=200}" />
           </Border>
           <components:ImagePresenter
               Grid.Row="{Binding Path=SmartLayout.Image.Row, Source={x:Reference Root}}"

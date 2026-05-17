@@ -25,6 +25,13 @@
           Phone="100"
           Tablet="140" />
 
+      <OnIdiom
+          x:Key="MinBioHeight"
+          x:TypeArguments="x:Double"
+          Desktop="300"
+          Phone="100"
+          Tablet="140" />
+
       <Style x:Key="PhotoPreviewStyle" TargetType="Image">
         <Setter Property="Aspect" Value="AspectFit" />
         <Setter Property="HeightRequest" Value="{StaticResource PhotoHeight}" />
@@ -33,8 +40,8 @@
         <Setter Property="VerticalOptions" Value="Center" />
       </Style>
 
-      <Style x:Key="CardFrameStyle" TargetType="Frame">
-        <Setter Property="HorizontalOptions" Value="Fill" />
+      <Style x:Key="CardBorderStyle" TargetType="Border">
+        <Setter Property="Margin" Value="{Thickness Bottom={StaticResource PageContentSpacing}}" />
       </Style>
 
     </ResourceDictionary>
@@ -44,7 +51,7 @@
     <components:PageLayout.Header>
       <Label
           Style="{StaticResource PageTitle}"
-          Text="{x:Static resources:UIStrings.WndTitleCreateOrUpdatePersonDialog}" />
+          Text="{x:Static resources:UIStrings.TitleCreateOrUpdatePersonDialog}" />
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>
@@ -52,7 +59,7 @@
         <VerticalStackLayout>
 
           <!--  Pictures  -->
-          <Frame Style="{StaticResource CardFrameStyle}">
+          <Border Style="{StaticResource CardBorderStyle}">
             <Grid
                 ColumnDefinitions="*, Auto, Auto"
                 RowDefinitions="Auto, Auto">
@@ -78,12 +85,12 @@
                     <Grid
                         x:Name="PersonPhoto"
                         ColumnDefinitions="*, Auto, Auto"
-                        RowDefinitions="Auto, *"
+                        RowDefinitions="Auto, Auto, *"
                         Style="{StaticResource HoverItem}">
 
                       <Image
                           Grid.Row="0"
-                          Grid.RowSpan="2"
+                          Grid.RowSpan="3"
                           Grid.Column="0"
                           Grid.ColumnSpan="3"
                           Source="{Binding Content}"
@@ -115,6 +122,32 @@
                         </Button.CommandParameter>
                       </Button>
 
+                      <Button
+                          Grid.Row="1"
+                          Grid.Column="1"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource LeftAdorner}">
+
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="MovePhotoToLeftCommand"
+                              Element="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
+
+                      <Button
+                          Grid.Row="1"
+                          Grid.Column="2"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource RightAdorner}">
+
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="MovePhotoToRightCommand"
+                              Element="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
+
                     </Grid>
                   </DataTemplate>
                 </CollectionView.ItemTemplate>
@@ -125,14 +158,13 @@
                   Command="{Binding DialogCommand, Source={x:Reference Root}}"
                   CommandParameter="AddPhotoCommand"
                   HeightRequest="{StaticResource PhotoHeight}"
-                  Style="{StaticResource AddAdorner}"
-                  WidthRequest="{StaticResource PhotoWidth}" />
+                  Style="{StaticResource AddAdorner}" />
 
             </Grid>
-          </Frame>
+          </Border>
 
           <!--  Biological Sex  -->
-          <Frame Style="{StaticResource CardFrameStyle}">
+          <Border Style="{StaticResource CardBorderStyle}">
             <Grid
                 ColumnDefinitions="Auto, *"
                 RowDefinitions="Auto">
@@ -152,10 +184,10 @@
                   Style="{StaticResource FieldValue}" />
 
             </Grid>
-          </Frame>
+          </Border>
 
           <!--  Names  -->
-          <Frame Style="{StaticResource CardFrameStyle}">
+          <Border Style="{StaticResource CardBorderStyle}">
             <Grid
                 ColumnDefinitions="Auto, *"
                 RowDefinitions="Auto, *, Auto">
@@ -186,8 +218,9 @@
                   <DataTemplate>
                     <Grid
                         x:Name="PersonName"
-                        ColumnDefinitions="Auto, *, Auto, Auto"
-                        RowDefinitions="Auto"
+                        Padding="{StaticResource CollectionItemsVerticalPadding}"
+                        ColumnDefinitions="*, Auto, Auto, Auto, Auto"
+                        RowDefinitions="Auto, Auto"
                         Style="{StaticResource HoverItem}">
 
                       <Label
@@ -197,18 +230,43 @@
                           Style="{StaticResource FieldName}"
                           Text="{Binding Type}" />
 
-                      <Label
+                      <Button
                           Grid.Row="0"
+                          Grid.RowSpan="2"
                           Grid.Column="1"
-                          HorizontalOptions="Fill"
-                          Style="{StaticResource FieldValue}"
-                          Text="{Binding Value}" />
+                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource UpAdorner}"
+                          VerticalOptions="Center">
+
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="MoveNameUpCommand"
+                              Element="{Binding Source={x:Reference PersonName}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
 
                       <Button
                           Grid.Row="0"
+                          Grid.RowSpan="2"
                           Grid.Column="2"
                           Command="{Binding DialogCommand, Source={x:Reference Root}}"
-                          Style="{StaticResource EditAdorner}">
+                          Style="{StaticResource DownAdorner}"
+                          VerticalOptions="Center">
+
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="MoveNameDownCommand"
+                              Element="{Binding Source={x:Reference PersonName}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
+
+                      <Button
+                          Grid.Row="0"
+                          Grid.RowSpan="2"
+                          Grid.Column="3"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource EditAdorner}"
+                          VerticalOptions="Center">
 
                         <Button.CommandParameter>
                           <components:AdornerCommandParameter
@@ -219,9 +277,11 @@
 
                       <Button
                           Grid.Row="0"
-                          Grid.Column="3"
+                          Grid.RowSpan="2"
+                          Grid.Column="4"
                           Command="{Binding DialogCommand, Source={x:Reference Root}}"
-                          Style="{StaticResource DeleteAdorner}">
+                          Style="{StaticResource DeleteAdorner}"
+                          VerticalOptions="Center">
 
                         <Button.CommandParameter>
                           <components:AdornerCommandParameter
@@ -229,6 +289,14 @@
                               Element="{Binding Source={x:Reference PersonName}, Path=BindingContext}" />
                         </Button.CommandParameter>
                       </Button>
+
+                      <Label
+                          Grid.Row="1"
+                          Grid.Column="0"
+                          Grid.ColumnSpan="5"
+                          HorizontalOptions="Fill"
+                          Style="{StaticResource FieldValue}"
+                          Text="{Binding Value}" />
 
                     </Grid>
                   </DataTemplate>
@@ -245,12 +313,12 @@
                   Style="{StaticResource TextAdorner}"
                   Text="{x:Static resources:UIStrings.BtnNameAddPersonName}" />
             </Grid>
-          </Frame>
+          </Border>
 
           <!--  Dates  -->
-          <Frame Style="{StaticResource CardFrameStyle}">
+          <Border Style="{StaticResource CardBorderStyle}">
             <Grid
-                ColumnDefinitions="*, Auto, Auto"
+                ColumnDefinitions="*, Auto, Auto, Auto"
                 RowDefinitions="Auto, Auto, Auto">
 
               <Label
@@ -272,6 +340,14 @@
                   CommandParameter="EditBirthDateCommand"
                   Style="{StaticResource EditAdorner}" />
 
+              <Button
+                  Grid.Row="1"
+                  Grid.Column="2"
+                  Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                  CommandParameter="UndefinedBirthDateCommand"
+                  Style="{StaticResource EmojiAdorner}"
+                  Text="�" />
+
               <components:DateInfoView
                   Grid.Row="2"
                   Grid.Column="0"
@@ -289,14 +365,22 @@
                   Grid.Row="2"
                   Grid.Column="2"
                   Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                  CommandParameter="UndefinedDeathDateCommand"
+                  Style="{StaticResource EmojiAdorner}"
+                  Text="�" />
+
+              <Button
+                  Grid.Row="2"
+                  Grid.Column="3"
+                  Command="{Binding DialogCommand, Source={x:Reference Root}}"
                   CommandParameter="RemoveDeathDateCommand"
                   Style="{StaticResource DeleteAdorner}" />
 
             </Grid>
-          </Frame>
+          </Border>
 
           <!--  Relationships  -->
-          <Frame Style="{StaticResource CardFrameStyle}">
+          <Border Style="{StaticResource CardBorderStyle}">
             <Grid
                 ColumnDefinitions="*"
                 RowDefinitions="Auto, *, Auto">
@@ -369,10 +453,10 @@
                   Text="{x:Static resources:UIStrings.BtnNameAddPersonRelationship}" />
 
             </Grid>
-          </Frame>
+          </Border>
 
           <!--  Biography  -->
-          <Frame Style="{StaticResource CardFrameStyle}">
+          <Border Style="{StaticResource CardBorderStyle}">
             <Grid
                 ColumnDefinitions="*"
                 RowDefinitions="Auto, *">
@@ -383,15 +467,14 @@
                   Style="{StaticResource GroupTitle}"
                   Text="{x:Static resources:UIStrings.FieldPersonBiography}" />
 
-              <Editor
+              <components:MarkdownEditor
                   Grid.Row="1"
                   Grid.Column="0"
-                  HeightRequest="200"
-                  HorizontalOptions="Fill"
-                  Placeholder="Enter a biography or life story..."
-                  Text="{Binding Biography.Content, Source={x:Reference Root}}" />
+                  Markdown="{Binding Biography.Content, Source={x:Reference Root}}"
+                  MinimumHeightRequest="{StaticResource MinBioHeight}"
+                  Placeholder="{x:Static resources:UIStrings.TxtPlaceholderBiography}" />
             </Grid>
-          </Frame>
+          </Border>
 
         </VerticalStackLayout>
       </ScrollView>

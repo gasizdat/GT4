@@ -30,7 +30,8 @@ internal partial class TablePersonNames : TableBase, ITablePersonNames
     command.CommandText = """
       SELECT NameId
       FROM PersonNames
-      WHERE PersonId=@personId;
+      WHERE PersonId=@personId
+      ORDER BY ROWID;
       """;
     command.Parameters.AddWithValue("@personId", person.Id);
 
@@ -52,8 +53,8 @@ internal partial class TablePersonNames : TableBase, ITablePersonNames
   public async Task AddPersonNamesAsync(Person person, Name[] names, CancellationToken token)
   {
     using var transaction = await Document.BeginTransactionAsync(token);
-    var tasks = new List<Task>();
 
+    // Add person name one at a time to preserve the name order.
     foreach (var name in names)
     {
       using var command = Document.CreateCommand();
@@ -64,10 +65,8 @@ internal partial class TablePersonNames : TableBase, ITablePersonNames
 
       command.Parameters.AddWithValue("@personId", person.Id);
       command.Parameters.AddWithValue("@nameId", name.Id);
-      tasks.Add(command.ExecuteNonQueryAsync(token));
+      await command.ExecuteNonQueryAsync(token);
     }
-
-    await Task.WhenAll(tasks);
 
     transaction.Commit();
   }
@@ -75,35 +74,21 @@ internal partial class TablePersonNames : TableBase, ITablePersonNames
   public async Task UpdatePersonNamesAsync(Person person, Name[] names, CancellationToken token)
   {
     var oldNames = await GetPersonNamesAsync(person, token);
-    var newNameIds = names.Select(n => n.Id).ToHashSet();
-    var remainedNames = new HashSet<int>();
-    var tasks = new List<Task>();
 
     using var transaction = await Document.BeginTransactionAsync(token);
-
-    foreach (var oldName in oldNames)
     {
-      var isNameRemained = newNameIds.Contains(oldName.Id) || oldName.Type == NameType.FamilyName; // Preserve Family Name
-      if (isNameRemained)
-      {
-        remainedNames.Add(oldName.Id);
-        continue;
-      }
-
       using var command = Document.CreateCommand();
 
       command.CommandText = """
         DELETE FROM PersonNames
-        WHERE PersonId=@personId AND NameId=@nameId;
+        WHERE PersonId=@personId;
         """;
       command.Parameters.AddWithValue("@personId", person.Id);
-      command.Parameters.AddWithValue("@nameId", oldName.Id);
-      tasks.Add(command.ExecuteNonQueryAsync(token));
+
+      await command.ExecuteNonQueryAsync(token);
     }
 
-    tasks.Add(AddPersonNamesAsync(person, names.Where(n => !remainedNames.Contains(n.Id)).ToArray(), token));
-
-    await Task.WhenAll(tasks);
+    await AddPersonNamesAsync(person, names, token);
 
     transaction.Commit();
   }

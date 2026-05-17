@@ -6,16 +6,18 @@ namespace GT4.UI.Utils.Comparers;
 public class PersonInfoComparer : IComparer<PersonInfo>
 {
   private readonly INameFormatter _NameFormatter;
+  private readonly NameFormat _NameFormat;
 
-  public PersonInfoComparer(INameFormatter nameFormatter)
+  public PersonInfoComparer(INameFormatter nameFormatter, NameFormat nameFormat = NameFormat.CommonPersonName)
   {
     _NameFormatter = nameFormatter;
+    _NameFormat = nameFormat;
   }
 
   public int Compare(PersonInfo? x, PersonInfo? y)
   {
-    var xName = x is null ? null : _NameFormatter.ToString(x, NameFormat.CommonPersonName);
-    var yName = y is null ? null : _NameFormatter.ToString(y, NameFormat.CommonPersonName);
+    var xName = x is null ? null : _NameFormatter.ToString(x, _NameFormat);
+    var yName = y is null ? null : _NameFormatter.ToString(y, _NameFormat);
 
     return xName?.CompareTo(yName) ?? 0;
   }

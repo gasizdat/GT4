@@ -3,7 +3,7 @@ using GT4.UI.Resources;
 
 namespace GT4.UI.Utils.Formatters;
 
-public class BiologicalSexFormatter : IBiologicalSexFormatter
+internal class BiologicalSexFormatter : IBiologicalSexFormatter
 {
   public string ToString(BiologicalSex? biologicalSex)
   {

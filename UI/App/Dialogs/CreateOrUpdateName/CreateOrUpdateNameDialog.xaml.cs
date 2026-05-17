@@ -1,5 +1,8 @@
+using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
+using GT4.Core.Utils;
 using GT4.UI.Resources;
+using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
 
 namespace GT4.UI.Dialogs;
@@ -14,13 +17,19 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   private string _GeneralName = string.Empty;
   private string _MaleName = string.Empty;
   private string _FemaleName = string.Empty;
+  private bool _MaleNameEnteredManually = false;
+  private bool _FemaleNameEnteredManually = false;
   private bool _IsModified = false;
-  private bool _NotReady =>
+  private bool _FocusGenericName = false;
+  private bool _FocusMaleName = false;
+  private bool _FocusFemaleName = false;
+
+  protected bool NotReady =>
     string.IsNullOrWhiteSpace(_GeneralName) ||
     !_IsModified ||
     ShowDeclensionNames && (string.IsNullOrWhiteSpace(_MaleName) || string.IsNullOrWhiteSpace(_FemaleName));
 
-  private bool IsModified
+  protected bool IsModified
   {
     set
     {
@@ -72,7 +81,26 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     get => _GeneralName;
     set
     {
+      if (_GeneralName == value)
+      {
+        return;
+      }
+
       _GeneralName = value;
+      if (!_MaleNameEnteredManually)
+      {
+        var maleName = NameDeclension.ToMaleDeclension(Language.Current, _NameType, value);
+        MaleName = maleName;
+        _MaleNameEnteredManually = false;
+      }
+
+      if (!_FemaleNameEnteredManually)
+      {
+        var femaleName = NameDeclension.ToFemaleDeclension(Language.Current, _NameType, value);
+        FemaleName = femaleName;
+        _FemaleNameEnteredManually = false;
+      }
+
       IsModified = true;
       OnPropertyChanged(nameof(GeneralName));
     }
@@ -83,7 +111,14 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     get => _MaleName;
     set
     {
+      if (_MaleName == value)
+      {
+        return;
+      }
+
       _MaleName = value;
+      _MaleNameEnteredManually = !string.IsNullOrEmpty(value);
+
       IsModified = true;
       OnPropertyChanged(nameof(MaleName));
     }
@@ -95,6 +130,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     set
     {
       _FemaleName = value;
+      _FemaleNameEnteredManually = !string.IsNullOrEmpty(value);
       IsModified = true;
       OnPropertyChanged(nameof(FemaleName));
     }
@@ -119,7 +155,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   public string MaleNameDescription => _NameType switch
   {
     NameType.FamilyName => UIStrings.FieldLastNameMaleEntry,
-    NameType.FirstName | NameType.MaleDeclension => UIStrings.FieldMiddleNameMaleEntry,
+    NameType.FirstName | NameType.MaleDeclension => UIStrings.FieldPatronymicMaleEntry,
     NameType.FirstName | NameType.FemaleDeclension => string.Empty,
     _ => throw new ApplicationException(nameof(MaleNameDescription))
   };
@@ -127,7 +163,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   public string MaleNamePlaceholder => _NameType switch
   {
     NameType.FamilyName => UIStrings.TxtPlaceholderLastNameMale,
-    NameType.FirstName | NameType.MaleDeclension => UIStrings.TxtPlaceholderMiddleNameMale,
+    NameType.FirstName | NameType.MaleDeclension => UIStrings.TxtPlaceholderPatronymicMale,
     NameType.FirstName | NameType.FemaleDeclension => string.Empty,
     _ => throw new ApplicationException(nameof(MaleNamePlaceholder))
   };
@@ -135,7 +171,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   public string FemaleNameDescription => _NameType switch
   {
     NameType.FamilyName => UIStrings.FieldLastNameFemaleEntry,
-    NameType.FirstName | NameType.MaleDeclension => UIStrings.FieldMiddleNameFemaleEntry,
+    NameType.FirstName | NameType.MaleDeclension => UIStrings.FieldPatronymicFemaleEntry,
     NameType.FirstName | NameType.FemaleDeclension => string.Empty,
     _ => throw new ApplicationException(nameof(FemaleNameDescription))
   };
@@ -143,19 +179,161 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   public string FemaleNamePlaceholder => _NameType switch
   {
     NameType.FamilyName => UIStrings.TxtPlaceholderLastNameFemale,
-    NameType.FirstName | NameType.MaleDeclension => UIStrings.TxtPlaceholderMiddleNameFemale,
+    NameType.FirstName | NameType.MaleDeclension => UIStrings.TxtPlaceholderPatronymicFemale,
     NameType.FirstName | NameType.FemaleDeclension => string.Empty,
     _ => throw new ApplicationException(nameof(FemaleNamePlaceholder))
   };
 
   public Task<FamilyInfo?> Info => _Info.Task;
 
-  public string DialogButtonName => _NotReady ? UIStrings.BtnNameCancel : _DialogButtonName;
+  public string DialogButtonName => NotReady ? UIStrings.BtnNameCancel : _DialogButtonName;
 
   public string DialogTitle => _DialogButtonName;
 
+  public bool FocusGenericName
+  {
+    get => _FocusGenericName;
+    set
+    {
+      if (_FocusGenericName != value)
+      {
+        _FocusGenericName = value;
+        OnPropertyChanged(nameof(FocusGenericName));
+      }
+    }
+  }
+
+  public bool FocusMaleName
+  {
+    get => _FocusMaleName;
+    set
+    {
+      if (_FocusMaleName != value)
+      {
+        _FocusMaleName = value;
+        OnPropertyChanged(nameof(FocusMaleName));
+      }
+    }
+  }
+
+  public bool FocusFemaleName
+  {
+    get => _FocusFemaleName;
+    set
+    {
+      if (_FocusFemaleName != value)
+      {
+        _FocusFemaleName = value;
+        OnPropertyChanged(nameof(FocusFemaleName));
+      }
+    }
+  }
+
   public void OnCreateFamilyBtn(object sender, EventArgs e)
   {
-    _Info.SetResult(_NotReady ? null : new(GeneralName, ShowDeclensionNames ? MaleName : string.Empty, ShowDeclensionNames ? FemaleName : string.Empty));
+    _Info.SetResult(NotReady ? null : new(GeneralName, ShowDeclensionNames ? MaleName : string.Empty, ShowDeclensionNames ? FemaleName : string.Empty));
+  }
+
+  private record NamesGroup(Name FirstName, Name? MaleName, Name? FemaleName);
+
+  public static async Task UpdateNameAsync(Name name, IServiceProvider serviceProvider, INavigation navigation)
+  {
+    var currentProjectProvider = serviceProvider.GetRequiredService<ICurrentProjectProvider>();
+    var cancellationTokenProvider = serviceProvider.GetRequiredService<ICancellationTokenProvider>();
+    async Task<NamesGroup> GetNameWithSubnames()
+    {
+      using var token = cancellationTokenProvider.CreateDbCancellationToken();
+      var names = await currentProjectProvider
+        .Project
+        .Names
+        .TryGetNameWithSubnamesByIdAsync(name.Id, token);
+
+      var firstName = names?.Single(n => n.Type.HasFlag(NameType.FirstName) || n.Type.HasFlag(NameType.FamilyName))
+        ?? throw new Exception($"A parent name was not found for '{name.Value}'");
+      var maleName = names?.SingleOrDefault(
+        n => (n.Type.HasFlag(NameType.Patronymic) || n.Type.HasFlag(NameType.LastName)) && n.Type.HasFlag(NameType.MaleDeclension));
+      var femaleName = names?.SingleOrDefault(
+        n => (n.Type.HasFlag(NameType.Patronymic) || n.Type.HasFlag(NameType.LastName)) && n.Type.HasFlag(NameType.FemaleDeclension));
+      var ret = new NamesGroup(firstName, maleName, femaleName);
+
+      return ret;
+    }
+
+    var names = name.Type switch
+    {
+      NameType.FirstName | NameType.MaleDeclension or
+      NameType.Patronymic | NameType.MaleDeclension or
+      NameType.Patronymic | NameType.FemaleDeclension or
+      NameType.LastName | NameType.MaleDeclension or
+      NameType.LastName | NameType.FemaleDeclension or
+      NameType.FamilyName => await GetNameWithSubnames(),
+      _ => new NamesGroup(name, null, null),
+    };
+    var focusGenericName = name.Type.HasFlag(NameType.FirstName) || name.Type.HasFlag(NameType.FamilyName);
+    var dialog = new CreateOrUpdateNameDialog(names.FirstName, names.MaleName, names.FemaleName, serviceProvider)
+    {
+      FocusGenericName = focusGenericName,
+      FocusMaleName = !focusGenericName && name.Type.HasFlag(NameType.MaleDeclension),
+      FocusFemaleName = !focusGenericName && name.Type.HasFlag(NameType.FemaleDeclension)
+    };
+
+    await navigation.PushModalAsync(dialog);
+    var info = await dialog.Info;
+    await navigation.PopModalAsync();
+
+    if (info is null)
+      return;
+
+    using var token = cancellationTokenProvider.CreateDbCancellationToken();
+    using var transaction = await currentProjectProvider.Project.BeginTransactionAsync(token);
+    var tasks = new List<Task>
+    {
+      currentProjectProvider
+        .Project
+        .Names
+        .UpdateName(names.FirstName with { Value = info.Name }, token)
+    };
+    if (names.MaleName != null)
+    {
+      tasks.Add(currentProjectProvider
+          .Project
+          .Names
+          .UpdateName(names.MaleName with { Value = info.MaleName }, token));
+    }
+    else if (!string.IsNullOrEmpty(info.MaleName))
+    {
+      var nameType = names.FirstName.Type switch
+      {
+        NameType.FamilyName => NameType.LastName,
+        NameType.FirstName => NameType.Patronymic,
+        _=> throw new ApplicationException(nameof(UpdateNameAsync))
+      } | NameType.MaleDeclension;
+      tasks.Add(currentProjectProvider
+          .Project
+          .Names
+          .AddNameAsync(info.MaleName, nameType, names.FirstName, token));
+    }
+    if (names.FemaleName != null)
+    {
+      tasks.Add(currentProjectProvider
+          .Project
+          .Names
+          .UpdateName(names.FemaleName with { Value = info.FemaleName }, token));
+    }
+    else if (!string.IsNullOrEmpty(info.FemaleName))
+    {
+      var nameType = names.FirstName.Type switch
+      {
+        NameType.FamilyName => NameType.LastName,
+        NameType.FirstName => NameType.Patronymic,
+        _ => throw new ApplicationException(nameof(UpdateNameAsync))
+      } | NameType.FemaleDeclension;
+      tasks.Add(currentProjectProvider
+          .Project
+          .Names
+          .AddNameAsync(info.FemaleName, nameType, names.FirstName, token));
+    }
+    await Task.WhenAll(tasks);
+    transaction.Commit();
   }
 }

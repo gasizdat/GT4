@@ -12,7 +12,7 @@
     <components:PageLayout.Header>
       <Label
           Style="{StaticResource PageTitle}"
-          Text="{x:Static resources:UIStrings.WndTitleCreateNewProjectDialog}" />
+          Text="{x:Static resources:UIStrings.TitleCreateNewProjectDialog}" />
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>

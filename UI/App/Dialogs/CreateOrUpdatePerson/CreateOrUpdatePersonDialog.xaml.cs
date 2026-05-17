@@ -44,16 +44,29 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     _NameFormatter = _ServiceProvider.GetRequiredService<INameFormatter>();
     _DateFormatter = _ServiceProvider.GetRequiredService<IDateFormatter>();
     _PersonInfoComparer = _ServiceProvider.GetRequiredService<IComparer<PersonInfo>>();
-    _DialogCommand = new Command<object>(OnDialogCommand);
+    _DialogCommand = new SafeCommand(OnDialogCommand);
     _SaveButtonName = person is null ? UIStrings.BtnNameCreateFamilyPerson : UIStrings.BtnNameUpdateFamilyPerson;
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, _BiologicalSexFormatter));
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Female, _BiologicalSexFormatter));
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Unknown, _BiologicalSexFormatter));
-    _BiologicalSex = _BiologicalSexes.Where(i => i.Info == person?.BiologicalSex).FirstOrDefault();
+    _BiologicalSex = _BiologicalSexes.FirstOrDefault(i => i.Info == person?.BiologicalSex);
+
     UpdatePersonInformation(person);
+
+    _Names.CollectionChanged += (_, _) => OnPropertyChanged(nameof(PersonFullName));
 
     InitializeComponent();
     IsModified = false;
+  }
+
+  private PersonDataItem GetPersonData(Data data, DataCategory dataCategory)
+  {
+    var ret = new PersonDataItem(
+      data: data,
+      _ServiceProvider.GetRequiredKeyedService<IDataConverter>(dataCategory),
+      _CancellationTokenProvider);
+
+    return ret;
   }
 
   private void UpdatePersonInformation(PersonFullInfo? person)
@@ -82,27 +95,17 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
       if (person.MainPhoto is not null)
       {
-        _Photos.Add(new PersonDataItem(
-          data: person.MainPhoto,
-          _ServiceProvider.GetRequiredKeyedService<IDataConverter>(person.MainPhoto.Category),
-          _CancellationTokenProvider));
+        _Photos.Add(GetPersonData(person.MainPhoto, person.MainPhoto.Category));
       }
 
       foreach (var photo in person.AdditionalPhotos)
       {
-        _Photos.Add(new PersonDataItem(
-          data: photo,
-          _ServiceProvider.GetRequiredKeyedService<IDataConverter>(photo.Category),
-          _CancellationTokenProvider));
+        _Photos.Add(GetPersonData(photo, photo.Category));
       }
 
       _Biography = person.Biography switch
       {
-        Data biography =>
-          new PersonDataItem(
-              data: biography,
-              _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonBio),
-              _CancellationTokenProvider),
+        Data biography => GetPersonData(biography, DataCategory.PersonBio),
 
         _ => new PersonDataItem(
               dataCategory: DataCategory.PersonBio,
@@ -121,7 +124,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
     catch (Exception ex)
     {
-      PageAlert.ShowError(ex);
+      _ = this.ShowErrorAsync(ex);
     }
   }
 
@@ -195,7 +198,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   public string DialogButtonName => _NotReady ? UIStrings.BtnNameCancel : _SaveButtonName;
 
-  private void OnCreatePersonCommand()
+  private async Task OnCreatePersonCommandAsync()
   {
     if (_NotReady)
     {
@@ -203,15 +206,15 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       return;
     }
 
-    // We do not change the person photo, so we can reuse photo.Info rather than using photo.ToDataAsync()
-    var photos =
-      _Photos
-      .Select(photo => photo.Info)
+    var photos = (await Task.WhenAll(_Photos.Select(photo => photo.ToDataAsync())))
       .Where(data => data is not null)
       .Select(data => data!);
 
     var mainPhoto = photos?.FirstOrDefault();
-    var additionalPhotos = photos?.Skip(1).ToArray() ?? [];
+    var additionalPhotos = photos?
+      .Skip(1)
+      .Select(p => p with { Category = DataCategory.PersonPhoto })
+      .ToArray() ?? [];
     var person = new Person(
       Id: _PersonId ?? TableBase.NonCommitedId,
       BirthDate: _BirthDate!.Value,
@@ -221,7 +224,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       person: person,
       names: _Names.Select(n => n.Info).ToArray(),
       additionalPhotos: additionalPhotos,
-      relativeInfos: [.._Relatives],
+      relativeInfos: [.. _Relatives],
       mainPhoto: mainPhoto is null ? null : mainPhoto with { Category = DataCategory.PersonMainPhoto },
       biography: _Biography?.ToDataAsync().Result);
 
@@ -230,14 +233,17 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   private async Task OnAddPersonNameAsync()
   {
-    if (_BiologicalSex is null)
+    var biologicalSex = _BiologicalSex?.Info ?? BiologicalSex.Unknown;
+    if (biologicalSex == BiologicalSex.Unknown)
     {
-      // TODO Show Alert
+      var message = string.Format(UIStrings.AlertTextUnableToAddNameForTheSexSelected_1,
+        _BiologicalSexFormatter.ToString(_BiologicalSex?.Info));
+      await this.ShowWarningAsync(message);
       return;
     }
 
     var dialog = new SelectNameDialog(
-      biologicalSex: _BiologicalSex?.Info ?? BiologicalSex.Unknown,
+      biologicalSex: biologicalSex,
       serviceProvider: _ServiceProvider
     );
 
@@ -252,8 +258,25 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       var item = new NameInfoItem(name, _NameTypeFormatter);
       _Names.Insert(index + 1, item);
 
-      OnPropertyChanged(nameof(PersonFullName));
       IsModified = true;
+    }
+  }
+
+  private async Task OnEditPersonNameAsync(NameInfoItem nameInfoItem)
+  {
+    var dialog = new SelectNameDialog(
+      biologicalSex: _BiologicalSex?.Info ?? BiologicalSex.Unknown,
+      serviceProvider: _ServiceProvider
+    );
+
+    await Navigation.PushModalAsync(dialog);
+    var name = await dialog.Name;
+    await Navigation.PopModalAsync();
+
+    if (name is not null)
+    {
+      var index = _Names.IndexOf(nameInfoItem);
+      _Names[index] = new NameInfoItem(name, _NameTypeFormatter);
     }
   }
 
@@ -332,10 +355,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       foreach (var photoAsset in photoAssets)
       {
         var category = _Photos.Count() == 0 ? DataCategory.PersonMainPhoto : DataCategory.PersonPhoto;
-        var item = new PersonDataItem(
-            data: photoAsset with { Category = category },
-            dataConverter: _ServiceProvider.GetRequiredKeyedService<IDataConverter>(category),
-            cancellationTokenProvider: _CancellationTokenProvider);
+        var item = GetPersonData(data: photoAsset with { Category = category }, category);
         if (photo is not null)
         {
           _Photos[_Photos.IndexOf(photo)] = item;
@@ -362,7 +382,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   {
     var dialog = new SelectRelativesDialog(
       biologicalSex: _BiologicalSex?.Info,
-      existingRelatives: [..Relatives],
+      existingRelatives: [.. Relatives],
       _ServiceProvider);
 
     await Navigation.PushModalAsync(dialog);
@@ -398,12 +418,12 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
   }
 
-  private async void OnDialogCommand(object obj)
+  private async Task OnDialogCommand(object obj)
   {
     switch (obj)
     {
       case string commandName when commandName == "CreatePersonCommand":
-        OnCreatePersonCommand();
+        await OnCreatePersonCommandAsync();
         break;
       case string commandName when commandName == "AddNameCommand":
         await OnAddPersonNameAsync();
@@ -423,6 +443,12 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       case string commandName when commandName == "AddRelationship":
         await OnAddRelationshipAsync();
         break;
+      case string commandName when commandName == "UndefinedBirthDateCommand":
+        SetUndefinedBirthDate();
+        break;
+      case string commandName when commandName == "UndefinedDeathDateCommand":
+        SetUndefinedDeathDate();
+        break;
 
       case AdornerCommandParameter adorner when adorner.CommandName == "EditPhotoCommand" && adorner.Element is PersonDataItem photo:
         await OnAddOrUpdatePhotoAsync(photo);
@@ -431,14 +457,25 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         _Photos.Remove(photo);
         IsModified = true;
         break;
-      case AdornerCommandParameter adorner when adorner.CommandName == "EditNameCommand":
-        OnPropertyChanged(nameof(PersonFullName));
+      case AdornerCommandParameter adorner when adorner.CommandName == "MovePhotoToLeftCommand" && adorner.Element is PersonDataItem photo:
+        MoveItem(_Photos, photo, -1);
+        break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "MovePhotoToRightCommand" && adorner.Element is PersonDataItem photo:
+        MoveItem(_Photos, photo, 1);
+        break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "EditNameCommand" && adorner.Element is NameInfoItem name:
+        await OnEditPersonNameAsync(name);
         IsModified = true;
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "RemoveNameCommand" && adorner.Element is NameInfoItem name:
         _Names.Remove(name);
-        OnPropertyChanged(nameof(PersonFullName));
         IsModified = true;
+        break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "MoveNameUpCommand" && adorner.Element is NameInfoItem name:
+        MoveItem(_Names, name, -1);
+        break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "MoveNameDownCommand" && adorner.Element is NameInfoItem name:
+        MoveItem(_Names, name, 1);
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "EditRelativeCommand" && adorner.Element is RelativeInfo relative:
         await OnEditRelationshipAsync(relative);
@@ -448,5 +485,30 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         IsModified = true;
         break;
     }
+  }
+
+  private void MoveItem<T>(ObservableCollection<T> collection, T name, int dIndex)
+  {
+    var oldIndex = collection.IndexOf(name);
+    var newIndex = oldIndex + dIndex;
+
+    if (newIndex < 0 || newIndex >= collection.Count)
+    {
+      throw new ApplicationException(UIStrings.ErrorTheBoundIsReached);
+    }
+
+    collection.Move(oldIndex, newIndex);
+
+    IsModified = true;
+  }
+
+  private void SetUndefinedBirthDate()
+  {
+    BirthDate = Date.Create(0, DateStatus.Unknown);
+  }
+
+  private void SetUndefinedDeathDate()
+  {
+    DeathDate = Date.Create(0, DateStatus.Unknown);
   }
 }

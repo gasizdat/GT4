@@ -38,7 +38,7 @@
     <components:PageLayout.Header>
       <Label
           Style="{StaticResource PageSubtitle}"
-          Text="{x:Static resources:UIStrings.WndHintFamilyPage}" />
+          Text="{x:Static resources:UIStrings.HintFamilyPage}" />
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>
@@ -52,25 +52,33 @@
 
           <BindableLayout.ItemTemplate>
             <DataTemplate x:DataType="dto:PersonInfo">
-              <Frame
+              <Border
                   Margin="{Thickness Bottom={StaticResource PageContentSpacing},
                                      Right={StaticResource PageContentSpacing}}"
                   FlexLayout.Grow="1"
-                  HasShadow="True"
                   MinimumWidthRequest="{Binding Path=PersonItemMinimalWidth, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
                   Style="{StaticResource HoverItem}">
 
-                <Frame.GestureRecognizers>
+                <Border.GestureRecognizers>
                   <TapGestureRecognizer
                       Command="{Binding Path=MemberItemTappedCommand, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
                       CommandParameter="{Binding .}" />
-                </Frame.GestureRecognizers>
+                </Border.GestureRecognizers>
+
+                <Border.Shadow>
+                  <Shadow
+                      Brush="Black"
+                      Opacity="0.2"
+                      Radius="5"
+                      Offset="5,5" />
+                </Border.Shadow>
 
                 <components:PersonInfoView
                     DatesLabelStyle="{StaticResource FieldValue}"
+                    NameFormat="{Binding PersonNamesFormat, Source={x:Reference Root}}"
                     NameLabelStyle="{StaticResource FieldName}"
                     Person="{Binding .}" />
-              </Frame>
+              </Border>
             </DataTemplate>
           </BindableLayout.ItemTemplate>
         </FlexLayout>

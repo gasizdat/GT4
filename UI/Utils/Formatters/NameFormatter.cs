@@ -1,12 +1,29 @@
 ﻿using GT4.Core.Project.Dto;
+using GT4.Core.Utils;
 
 namespace GT4.UI.Utils.Formatters;
 
 public class NameFormatter : INameFormatter
 {
-  private readonly static string _PartsDelimiter = " ";
-  private readonly static char _InitialSuffix = '.';
+  private readonly ISettingEditor _CommonPersonNameSetting;
+  private readonly ISettingEditor _FullPersonNameSetting;
+  private readonly ISettingEditor _PersonInitialsSetting;
+  private readonly ISettingEditor _ShortPersonNameSetting;
+  private const string _PartsDelimiter = " ";
+  private const char _InitialSuffix = '.';
   private const NameType _Initials = (NameType)0x10000;
+
+  public NameFormatter(
+    [FromKeyedServices(NameFormat.CommonPersonName)] ISettingEditor commonPersonNameSetting,
+    [FromKeyedServices(NameFormat.FullPersonName)] ISettingEditor fullPersonNameSetting,
+    [FromKeyedServices(NameFormat.PersonInitials)] ISettingEditor personInitialsSetting,
+    [FromKeyedServices(NameFormat.ShortPersonName)] ISettingEditor shortPersonNameSetting)
+  {
+    _CommonPersonNameSetting = commonPersonNameSetting;
+    _FullPersonNameSetting = fullPersonNameSetting;
+    _PersonInitialsSetting = personInitialsSetting;
+    _ShortPersonNameSetting = shortPersonNameSetting;
+  }
 
   protected static Name GetInitial(Name name)
   {
@@ -43,52 +60,34 @@ public class NameFormatter : INameFormatter
     return parts;
   }
 
-  protected static string GetFullPersonName(PersonInfo personInfo)
-  {
-    //TODO use settings
-    var parts = GetNameParts(personInfo, [NameType.FirstName, NameType.AdditionalName, NameType.MiddleName, NameType.LastName]);
-    var ret = string.Join(_PartsDelimiter, parts);
-
-    return ret;
-  }
-
-  protected static string GetCommonPersonName(PersonInfo personInfo)
-  {
-    //TODO use settings
-    var parts = GetNameParts(personInfo, [NameType.FirstName, NameType.MiddleName, NameType.LastName]);
-    var ret = string.Join(_PartsDelimiter, parts);
-
-    return ret;
-  }
-
-  protected static string GetShortPersonName(PersonInfo personInfo)
-  {
-    //TODO use settings
-    var parts = GetNameParts(personInfo, [NameType.FirstName, NameType.MiddleName | _Initials, NameType.LastName]);
-    var ret = string.Join(_PartsDelimiter, parts);
-
-    return ret;
-  }
-
-  protected static string GetPersonInitials(PersonInfo personInfo)
-  {
-    //TODO use settings
-    var parts = GetNameParts(personInfo, [NameType.LastName, NameType.FirstName | _Initials, NameType.MiddleName | _Initials]);
-    var ret = string.Join(_PartsDelimiter, parts);
-
-    return ret;
-  }
-
   public string ToString(PersonInfo personInfo, NameFormat format)
   {
-    return format switch
+    var template = format switch
     {
-      NameFormat.CommonPersonName => GetCommonPersonName(personInfo),
-      NameFormat.FullPersonName => GetFullPersonName(personInfo),
-      NameFormat.PersonInitials => GetPersonInitials(personInfo),
-      NameFormat.ShortPersonName => GetShortPersonName(personInfo),
+      NameFormat.CommonPersonName => _CommonPersonNameSetting.Value,
+      NameFormat.FullPersonName => _FullPersonNameSetting.Value,
+      NameFormat.PersonInitials => _PersonInitialsSetting.Value,
+      NameFormat.ShortPersonName => _ShortPersonNameSetting.Value,
       _ => throw new ArgumentException(nameof(format))
-
     };
+
+    string GetNames(NameType nameType)
+    {
+      var ret = string.Join(_PartsDelimiter, [.. GetNameParts(personInfo, nameType).Select(GetNameValue)]);
+      return ret;
+    }
+
+    var ret = TemplateInterpolator.Format(template, new Dictionary<string, Func<string>>()
+    {
+      { "FF", () => GetNames(NameType.FirstName)},
+      { "PP", () => GetNames(NameType.Patronymic)},
+      { "LL", () => GetNames(NameType.LastName)},
+      { "FF.", () => GetNames(NameType.FirstName | _Initials)},
+      { "PP.", () => GetNames(NameType.Patronymic | _Initials)},
+      { "LL.", () => GetNames(NameType.LastName | _Initials)},
+      { "FN", () => GetNames(NameType.FamilyName)},
+    });
+
+    return ret;
   }
 }

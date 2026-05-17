@@ -11,7 +11,7 @@
     <components:PageLayout.Header>
       <Label
           Style="{StaticResource PageTitle}"
-          Text="{x:Static resources:UIStrings.WndTitleSelectDateDialog}" />
+          Text="{x:Static resources:UIStrings.TitleSelectDateDialog}" />
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>
@@ -29,7 +29,7 @@
               HorizontalOptions="Fill"
               HorizontalTextAlignment="Center"
               Style="{StaticResource PageSubtitle}"
-              Text="{x:Static resources:UIStrings.WndTitleSelectDateDialog}" />
+              Text="{x:Static resources:UIStrings.TitleSelectDateDialog}" />
 
           <Label
               Grid.Row="1"

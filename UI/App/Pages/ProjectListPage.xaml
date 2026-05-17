@@ -7,7 +7,7 @@
     xmlns:items="clr-namespace:GT4.UI.Items"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root"
-    Title="{x:Static resources:UIStrings.WndTitleProjectPage}">
+    Title="{x:Static resources:UIStrings.TitleProjectPage}">
 
   <ContentPage.ToolbarItems>
     <ToolbarItem
@@ -20,6 +20,11 @@
         CommandParameter="Refresh"
         Order="Secondary"
         Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="Settings"
+        Order="Secondary"
+        Text="{x:Static resources:UIStrings.MenuItemNameSettings}" />
   </ContentPage.ToolbarItems>
 
   <components:PageLayout>
@@ -27,7 +32,7 @@
     <components:PageLayout.Header>
       <Label
           Style="{StaticResource PageSubtitle}"
-          Text="{x:Static resources:UIStrings.WndHintProjectPage}" />
+          Text="{x:Static resources:UIStrings.HintProjectPage}" />
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>
@@ -41,7 +46,6 @@
 
             <FlexLayout
                 Direction="Row"
-                HeightRequest="50"
                 Style="{StaticResource HoverItem}">
 
               <Image
@@ -54,11 +58,17 @@
 
                 <Label
                     Style="{StaticResource CardTitle}"
-                    Text="{Binding Info.Name}" />
+                    Text="{Binding Name}" />
 
                 <Label
+                    IsVisible="{Binding DescriptionVisible}"
                     Style="{StaticResource CardSubtitle}"
-                    Text="{Binding Info.Description}" />
+                    Text="{Binding Description}" />
+
+                <Label
+                    IsVisible="{Binding RevisionVisible}"
+                    Style="{StaticResource CardContent}"
+                    Text="{Binding Revision}" />
 
               </VerticalStackLayout>
 

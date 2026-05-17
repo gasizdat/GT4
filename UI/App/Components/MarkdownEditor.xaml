@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="GT4.UI.Components.MarkdownEditor"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:components="clr-namespace:GT4.UI.Components"
+    xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
+    x:Name="Root">
+
+  <ContentView.Resources>
+    <ResourceDictionary>
+      <Style x:Key="TabActiveStyle" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource PrimaryButtonHover}, Dark={StaticResource PrimaryDarkButtonHover}}" />
+      </Style>
+      <Style x:Key="TabInectiveStyle" TargetType="Button" />
+    </ResourceDictionary>
+  </ContentView.Resources>
+
+  <Grid RowDefinitions="Auto,*">
+    <!--  Header  -->
+    <HorizontalStackLayout
+        Grid.Row="0"
+        Margin="{Thickness Bottom={StaticResource PageContentSpacing}}">
+      <Button
+          Margin="{Thickness Right={StaticResource PageContentSpacing}}"
+          Command="{Binding Command, Source={x:Reference Root}}"
+          CommandParameter="Tab0"
+          Text="{x:Static resources:UIStrings.BtnNameMarkdownEditor}">
+
+        <Button.Triggers>
+          <DataTrigger
+              Binding="{Binding DisplayEditor, Source={x:Reference Root}}"
+              TargetType="Button"
+              Value="False">
+            <Setter Property="Style" Value="{StaticResource TabInectiveStyle}" />
+          </DataTrigger>
+
+          <DataTrigger
+              Binding="{Binding DisplayEditor, Source={x:Reference Root}}"
+              TargetType="Button"
+              Value="True">
+            <Setter Property="Style" Value="{StaticResource TabActiveStyle}" />
+          </DataTrigger>
+        </Button.Triggers>
+
+      </Button>
+      <Button
+          Command="{Binding Command, Source={x:Reference Root}}"
+          CommandParameter="Tab1"
+          Text="{x:Static resources:UIStrings.BtnNameMarkdownView}">
+
+        <Button.Triggers>
+          <DataTrigger
+              Binding="{Binding DisplayHtmlView, Source={x:Reference Root}}"
+              TargetType="Button"
+              Value="False">
+            <Setter Property="Style" Value="{StaticResource TabInectiveStyle}" />
+          </DataTrigger>
+
+          <DataTrigger
+              Binding="{Binding DisplayHtmlView, Source={x:Reference Root}}"
+              TargetType="Button"
+              Value="True">
+            <Setter Property="Style" Value="{StaticResource TabActiveStyle}" />
+          </DataTrigger>
+        </Button.Triggers>
+      </Button>
+    </HorizontalStackLayout>
+
+    <!--  Content  -->
+    <Grid Grid.Row="1">
+      <Editor
+          AutoSize="TextChanges"
+          HorizontalOptions="Fill"
+          IsVisible="{Binding DisplayEditor, Source={x:Reference Root}}"
+          Placeholder="{Binding Placeholder, Source={x:Reference Root}}"
+          Text="{Binding Markdown, Source={x:Reference Root}}"
+          VerticalOptions="Fill" />
+
+      <components:MarkdownView
+          HorizontalOptions="Fill"
+          IsVisible="{Binding DisplayHtmlView, Source={x:Reference Root}}"
+          Markdown="{Binding Markdown, Source={x:Reference Root}}"
+          VerticalOptions="Fill" />
+    </Grid>
+  </Grid>
+</ContentView>

@@ -4,7 +4,7 @@ namespace GT4.Core.Project;
 
 public static class ServiceCollectionExtensions
 {
-  public static IServiceCollection BuildDefaultProject(this IServiceCollection services)
+  public static IServiceCollection AddDefaultProject(this IServiceCollection services)
   {
     return services
       .AddSingleton<IProjectList, ProjectList>()

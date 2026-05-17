@@ -3,13 +3,10 @@ using Android.Content;
 using Android.Content.PM;
 using Android.OS;
 using Android.Provider;
-using GT4.Core.Project;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Utils;
 using GT4.UI;
 using GT4.UI.Pages;
-using GT4.UI.Resources;
-using System.ComponentModel;
 
 namespace GT4
 {
@@ -43,7 +40,7 @@ namespace GT4
     }
 
     public MainActivity()
-      : this(ServiceBuilder.DefaultServices)
+      : this(GT4Services.Provider)
     {
 
     }
@@ -74,7 +71,7 @@ namespace GT4
       }
       catch (Exception ex)
       {
-        await PageAlert.ShowError(ex);
+        await PageAlert.ShowErrorAsync(ex);
       }
     }
 

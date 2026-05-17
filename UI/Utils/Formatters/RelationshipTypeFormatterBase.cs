@@ -63,7 +63,7 @@ internal abstract class RelationshipTypeFormatterBase
     {
       if (!_IsRunningInTest.HasValue)
       {
-         string[] testHosts = ["xunit.runner", "nunit.framework", "Microsoft.VisualStudio.TestPlatform"];
+         string[] testHosts = ["xunit.runner", "xunit.v3.runner", "nunit.framework", "Microsoft.VisualStudio.TestPlatform"];
         _IsRunningInTest = AppDomain
           .CurrentDomain
           .GetAssemblies()

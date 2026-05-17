@@ -8,7 +8,7 @@
     xmlns:items="clr-namespace:GT4.UI.Items"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root"
-    Title="{x:Static resources:UIStrings.WndTitleFamiliesPage}">
+    Title="{x:Static resources:UIStrings.TitleFamiliesPage}">
 
   <ContentPage.ToolbarItems>
     <ToolbarItem
@@ -28,6 +28,11 @@
         Text="{x:Static resources:UIStrings.MenuItemNameCreateFamily}" />
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="GoToNames"
+        Order="Secondary"
+        Text="{x:Static resources:UIStrings.MenuItemGoToNames}" />
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="Refresh"
         Order="Secondary"
         Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
@@ -37,7 +42,7 @@
     <components:PageLayout.Header>
       <Label
           Style="{StaticResource PageSubtitle}"
-          Text="{x:Static resources:UIStrings.WndHintFamiliesPage}" />
+          Text="{x:Static resources:UIStrings.HintFamiliesPage}" />
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>
@@ -87,6 +92,7 @@
                   <DataTemplate x:DataType="dto:PersonInfo">
 
                     <components:PersonInfoView
+                        NameFormat="{Binding PersonNamesFormat, Source={x:Reference Root}}"
                         NameLabelStyle="{StaticResource FieldValue}"
                         Person="{Binding .}"
                         PhotoStyle="{StaticResource PhotoCompactStyle}"

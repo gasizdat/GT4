@@ -16,10 +16,12 @@ internal class ProjectList : IProjectList
   private async Task<ProjectInfo> GetProjectInfoAsync(IProjectDocument project, CancellationToken token)
   {
     var results = await Task.WhenAll(
-        project.Metadata.GetProjectName(token),
-        project.Metadata.GetProjectDescription(token));
+        project.Metadata.GetProjectNameAsync(token),
+        project.Metadata.GetProjectDescriptionAsync(token),
+        project.Metadata.GetProjectRevisionAsync(token));
 
     return new ProjectInfo(
+      Revision: results[2] ?? string.Empty,
       Description: results[1] ?? string.Empty,
       Name: results[0] ?? throw new DataException($"There is no name stored in the project"),
       Origin: default!
@@ -42,6 +44,7 @@ internal class ProjectList : IProjectList
     {
       //TODO BrokenProjectItem
       return new ProjectInfo(
+        Revision: string.Empty,
         Description: ex.ToString(),
         Name: $"Error: {ex.Message}",
         Origin: origin
@@ -108,8 +111,8 @@ internal class ProjectList : IProjectList
     using var host = new ProjectHost(_FileSystem, origin, cache);
     host.Project = await ProjectDocument.CreateNewAsync(_FileSystem.ToPath(cache), projectName, token);
     await Task.WhenAll(
-      host.Project.Metadata.SetProjectName(projectName, token),
-      host.Project.Metadata.SetProjectDescription(projectDescription, token));
+      host.Project.Metadata.SetProjectNameAsync(projectName, token),
+      host.Project.Metadata.SetProjectDescriptionAsync(projectDescription, token));
 
     InvalidateItems();
 
@@ -150,7 +153,7 @@ internal class ProjectList : IProjectList
 
   private FileDescription GetCacheFileDescription()
   {
-    return new FileDescription(_Storage.ApplicationData, Guid.NewGuid().ToString(), IProjectDocument.MimeType);
+    return new FileDescription(_Storage.ProjectsCache, Guid.NewGuid().ToString(), IProjectDocument.MimeType);
   }
 
   public DirectoryDescription GetProjectDirectoryByName(string projectName)

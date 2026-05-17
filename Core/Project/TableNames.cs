@@ -106,9 +106,9 @@ internal class TableNames : TableBase, ITableNames
 
     using var command = Document.CreateCommand();
     command.CommandText = """
-      SELECT Id, Value, Type, ParentId
-      FROM Names
-      WHERE Id=@id OR ParentId=@id;
+      SELECT t1.Id, t1.Value, t1.Type, t1.ParentId
+      FROM Names AS t1
+      INNER JOIN Names AS t2 ON t2.Id=@id AND (t2.ParentId=t1.Id OR t2.ParentId=t1.ParentId OR t1.Id=@id OR t1.ParentId=@id);
       """;
     command.Parameters.AddWithValue("@id", id.Value);
 
@@ -134,23 +134,25 @@ internal class TableNames : TableBase, ITableNames
     command.Parameters.AddWithValue("@type", (int)type);
     command.Parameters.AddWithValue("@parentId", parent != null ? parent.Id : DBNull.Value);
     await command.ExecuteNonQueryAsync(token);
+    
+    var ret = new Name(Id: await Document.GetLastInsertRowIdAsync(token), Value: value, Type: type, ParentId: parent?.Id);
     transaction.Commit();
 
-    return new Name(Id: await Document.GetLastInsertRowIdAsync(token), Value: value, Type: type, ParentId: parent?.Id);
+    return ret;
   }
 
-  public async Task<Name> AddFirstMaleNameAsync(string firstName, string? maleMiddleName, string? femaleMiddleName, CancellationToken token)
+  public async Task<Name> AddFirstMaleNameAsync(string firstName, string? malePatronymic, string? femalePatronymic, CancellationToken token)
   {
     using var transaction = await Document.BeginTransactionAsync(token);
     var name = await AddNameAsync(firstName, NameType.FirstName | NameType.MaleDeclension, null, token);
     var tasks = new List<Task<Name>>();
-    if (maleMiddleName is not null)
+    if (malePatronymic is not null)
     {
-      tasks.Add(AddNameAsync(maleMiddleName, NameType.MiddleName | NameType.MaleDeclension, name, token));
+      tasks.Add(AddNameAsync(malePatronymic, NameType.Patronymic | NameType.MaleDeclension, name, token));
     }
-    if (femaleMiddleName is not null)
+    if (femalePatronymic is not null)
     {
-      tasks.Add(AddNameAsync(femaleMiddleName, NameType.MiddleName | NameType.FemaleDeclension, name, token));
+      tasks.Add(AddNameAsync(femalePatronymic, NameType.Patronymic | NameType.FemaleDeclension, name, token));
     }
     await Task.WhenAll(tasks);
     transaction.Commit();

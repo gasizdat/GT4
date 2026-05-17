@@ -14,7 +14,7 @@ public partial class DateInfoView : ContentView
   }
 
   public DateInfoView()
-    : this(ServiceBuilder.DefaultServices)
+    : this(GT4Services.Provider)
   {
 
   }

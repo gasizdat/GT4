@@ -1,5 +1,4 @@
-﻿using GT4.UI.Dialogs;
-using GT4.UI.Pages;
+﻿using GT4.UI.Pages;
 
 namespace GT4.UI;
 
@@ -7,10 +6,13 @@ internal static class UIRoutes
 {
   static UIRoutes()
   {
+    AddRoute<MainPage>();
     AddRoute<ProjectListPage>();
     AddRoute<ProjectPage>();
     AddRoute<FamilyPage>();
     AddRoute<PersonPage>();
+    AddRoute<NamesPage>();
+    AddRoute<SettingsPage>();
   }
 
   public static string GetRoute<TPage>() => $"{typeof(TPage).Namespace}/{typeof(TPage).Name}";

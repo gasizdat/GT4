@@ -10,9 +10,18 @@ public partial class MainPage : ContentPage
     InitializeComponent();
   }
 
-  public ICommand NavigateToCreateOrOpenDialog => new Command(async () =>
-    await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectListPage>())
-  );
+  public ICommand PageCommand => new SafeCommand(async (object arg) =>
+  {
+    switch (arg)
+    {
+      case string commandName when commandName == "OpenOrCreateDialog":
+        await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectListPage>());
+        break;
+      case string commandName when commandName == "OpenSettings":
+        await Shell.Current.GoToAsync(UIRoutes.GetRoute<SettingsPage>());
+        break;
+    }
+  });
 
   public Utils.Language[] Languages => Utils.Language.Languages;
 

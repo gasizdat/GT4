@@ -4,6 +4,7 @@ using GT4.Core.Utils;
 using GT4.UI.Dialogs;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
+using GT4.UI.Utils.Formatters;
 using System.Windows.Input;
 
 namespace GT4.UI.Pages;
@@ -18,22 +19,18 @@ public partial class FamilyPage : ContentPage
   private Name? _FamilyName = null;
   private double _PersonItemMinimalWidth;
 
-  protected FamilyPage(IServiceProvider serviceProvider)
+  public FamilyPage(IServiceProvider serviceProvider)
   {
     _Services = serviceProvider;
     _CancellationTokenProvider = _Services.GetRequiredService<ICancellationTokenProvider>();
     _CurrentProjectProvider = _Services.GetRequiredService<ICurrentProjectProvider>();
-    _PersonInfoComparer = _Services.GetRequiredService<IComparer<PersonInfo>>();
+    _PersonInfoComparer =  _Services.GetKeyedService<IComparer<PersonInfo>>(PersonNamesFormat) ?? 
+                           _Services.GetRequiredService<IComparer<PersonInfo>>();
 
-    MemberItemTappedCommand = new Command<PersonInfo>(OnOpenPerson);
-    PageCommand = new Command<object>(OnPageCommand);
+    MemberItemTappedCommand = new SafeCommand<PersonInfo>(OnOpenPerson);
+    PageCommand = new SafeCommand(OnPageCommand);
 
     InitializeComponent();
-  }
-
-  public FamilyPage()
-    : this(ServiceBuilder.DefaultServices)
-  {
   }
 
   public Name? FamilyName
@@ -54,6 +51,8 @@ public partial class FamilyPage : ContentPage
   public ICommand MemberItemTappedCommand { get; init; }
 
   public ICommand PageCommand { get; init; }
+
+  public NameFormat PersonNamesFormat => NameFormat.ShortPersonName;
 
   public ICollection<PersonInfo> Persons
   {
@@ -79,7 +78,7 @@ public partial class FamilyPage : ContentPage
       }
       catch (Exception ex)
       {
-        _ = PageAlert.ShowError(ex);
+        _ = this.ShowErrorAsync(ex);
         return Enumerable.Empty<PersonInfo>().ToList();
       }
     }
@@ -105,7 +104,7 @@ public partial class FamilyPage : ContentPage
   private async Task OnDeleteFamily()
   {
     var canDelete = _FamilyName is not null &&
-       await this.ShowConfirmation(string.Format(UIStrings.AlertTextDeleteConfirmationText_1, _FamilyName.Value));
+       await this.ShowConfirmationAsync(string.Format(UIStrings.AlertTextDeleteConfirmationText_1, _FamilyName.Value));
 
     if (!canDelete)
     {
@@ -119,51 +118,6 @@ public partial class FamilyPage : ContentPage
       .RemoveFamilyAsync(_FamilyName!, token);
 
     await Shell.Current.GoToAsync("..", true);
-  }
-
-  private async Task OnEditFamily()
-  {
-    Name[]? names;
-    using (var token = _CancellationTokenProvider.CreateDbCancellationToken())
-    {
-      names = await _CurrentProjectProvider
-        .Project
-        .Names
-        .TryGetNameWithSubnamesByIdAsync(FamilyName?.Id, token);
-    }
-
-    var familyName = names?.SingleOrDefault(n => n.Type.HasFlag(NameType.FamilyName));
-    var maleLastName = names?.SingleOrDefault(n => n.Type.HasFlag(NameType.LastName | NameType.MaleDeclension));
-    var femaleLastName = names?.SingleOrDefault(n => n.Type.HasFlag(NameType.LastName | NameType.FemaleDeclension));
-    if (familyName is null)
-    {
-      return;
-    }
-
-    var dialog = new CreateOrUpdateNameDialog(familyName, maleLastName, femaleLastName, _Services);
-
-    await Navigation.PushModalAsync(dialog);
-    var info = await dialog.Info;
-    await Navigation.PopModalAsync();
-
-    if (info is null)
-    {
-      return;
-    }
-
-    familyName = familyName with { Value = info.Name };
-    maleLastName = maleLastName is null ? null : maleLastName with { Value = info.MaleName };
-    femaleLastName = femaleLastName is null ? null : femaleLastName with { Value = info.FemaleName };
-
-    using (var token = _CancellationTokenProvider.CreateDbCancellationToken())
-    {
-      await _CurrentProjectProvider
-        .Project
-        .FamilyManager
-        .UpdateFamilyAsync(familyName, maleLastName, femaleLastName, token);
-    }
-
-    FamilyName = familyName;
   }
 
   private async Task OnCreatePerson()
@@ -193,37 +147,30 @@ public partial class FamilyPage : ContentPage
     OnPropertyChanged(nameof(Persons));
   }
 
-  private async void OnOpenPerson(PersonInfo familyMember)
+  private async Task OnOpenPerson(PersonInfo familyMember)
   {
     await Shell.Current.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { ["PersonInfo"] = familyMember });
   }
 
-  private async void OnPageCommand(object parameter)
+  private async Task OnPageCommand(object parameter)
   {
-    try
+    switch (parameter)
     {
-      switch (parameter)
-      {
-        case string commandName when commandName == "RemoveFamily":
-          await OnDeleteFamily();
-          break;
+      case string commandName when commandName == "RemoveFamily":
+        await OnDeleteFamily();
+        break;
 
-        case string commandName when commandName == "EditFamily":
-          await OnEditFamily();
-          break;
+      case string commandName when commandName == "EditFamily":
+        await CreateOrUpdateNameDialog.UpdateNameAsync(FamilyName!, _Services, Navigation);
+        break;
 
-        case string commandName when commandName == "CreatePerson":
-          await OnCreatePerson();
-          break;
+      case string commandName when commandName == "CreatePerson":
+        await OnCreatePerson();
+        break;
 
-        case string commandName when commandName == "Refresh":
-          this.RefreshView();
-          break;
-      }
-    }
-    catch (Exception ex)
-    {
-      await this.ShowError(ex);
+      case string commandName when commandName == "Refresh":
+        this.RefreshView();
+        break;
     }
   }
 }

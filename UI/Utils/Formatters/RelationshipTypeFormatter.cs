@@ -3,7 +3,7 @@ using GT4.UI.Utils.Formatters.Detailed;
 
 namespace GT4.UI.Utils.Formatters;
 
-public class RelationshipTypeFormatter : IRelationshipTypeFormatter
+internal class RelationshipTypeFormatter : IRelationshipTypeFormatter
 {
   public string ToString(RelationshipType type, BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
   {

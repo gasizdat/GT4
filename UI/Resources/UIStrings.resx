@@ -121,13 +121,13 @@
     <value>Are you really want to delete {0}?</value>
   </data>
   <data name="AlertTitleInfo" xml:space="preserve">
-    <value>Info</value>
+    <value>ℹ️ Info</value>
   </data>
   <data name="AlertTitleConfirmation" xml:space="preserve">
     <value>Confirmation</value>
   </data>
   <data name="AlertTitleWarning" xml:space="preserve">
-    <value>Warning</value>
+    <value>⚠️ Warning</value>
   </data>
   <data name="AppGeneralName" xml:space="preserve">
     <value>Genealogy Tree 4</value>
@@ -151,31 +151,31 @@ genealogy tree and enjoy!</value>
   <data name="BtnNameYes" xml:space="preserve">
     <value>Yes</value>
   </data>
-  <data name="WndHintProjectPage" xml:space="preserve">
+  <data name="HintProjectPage" xml:space="preserve">
     <value>Open or create a new one</value>
   </data>
-  <data name="WndTitleProjectPage" xml:space="preserve">
+  <data name="TitleProjectPage" xml:space="preserve">
     <value>Genealogy Tree</value>
   </data>
   <data name="AlertTitleError" xml:space="preserve">
-    <value>Error</value>
+    <value>⛔ Error</value>
   </data>
-  <data name="WndTitleCreateNewProjectDialog" xml:space="preserve">
+  <data name="TitleCreateNewProjectDialog" xml:space="preserve">
     <value>Create a Genealogy Tree</value>
   </data>
   <data name="TxtPlaceholderPtojectName" xml:space="preserve">
     <value>Enter a name for the new Genealogy Tree</value>
   </data>
-  <data name="WndAppTitle" xml:space="preserve">
+  <data name="TitleApp" xml:space="preserve">
     <value>🏠 Home</value>
   </data>
   <data name="PkrLanguageHint" xml:space="preserve">
     <value>🌐 Language</value>
   </data>
-  <data name="WndTitleFamiliesPage" xml:space="preserve">
+  <data name="TitleFamiliesPage" xml:space="preserve">
     <value>Families</value>
   </data>
-  <data name="WndHintFamiliesPage" xml:space="preserve">
+  <data name="HintFamiliesPage" xml:space="preserve">
     <value>Open or create family</value>
   </data>
   <data name="BtnNameRefreshAfterError" xml:space="preserve">
@@ -184,7 +184,7 @@ genealogy tree and enjoy!</value>
   <data name="BtnNameOk" xml:space="preserve">
     <value>Ok</value>
   </data>
-  <data name="WndHintFamilyPage" xml:space="preserve">
+  <data name="HintFamilyPage" xml:space="preserve">
     <value>Open family member or create a new one</value>
   </data>
   <data name="DateStatusYearApproximate_1" xml:space="preserve">
@@ -292,19 +292,16 @@ genealogy tree and enjoy!</value>
   <data name="FieldFirstName" xml:space="preserve">
     <value>First name</value>
   </data>
-  <data name="FieldMiddleName" xml:space="preserve">
-    <value>Middle name</value>
+  <data name="FieldPatronymic" xml:space="preserve">
+    <value>Patronymic</value>
   </data>
   <data name="FieldLastName" xml:space="preserve">
     <value>Last name</value>
   </data>
-  <data name="FieldAdditionalName" xml:space="preserve">
-    <value>Additional name</value>
-  </data>
   <data name="FieldFamilyName" xml:space="preserve">
     <value>Family name</value>
   </data>
-  <data name="WndTitleSelectNameDialog" xml:space="preserve">
+  <data name="TitleSelectNameDialog" xml:space="preserve">
     <value>Select a name</value>
   </data>
   <data name="FieldSelectNameType" xml:space="preserve">
@@ -319,11 +316,11 @@ genealogy tree and enjoy!</value>
   <data name="FieldFirstNameFemaleEntry" xml:space="preserve">
     <value>Female first name</value>
   </data>
-  <data name="FieldMiddleNameMaleEntry" xml:space="preserve">
-    <value>Male middle name</value>
+  <data name="FieldPatronymicMaleEntry" xml:space="preserve">
+    <value>Male patronymic</value>
   </data>
-  <data name="FieldMiddleNameFemaleEntry" xml:space="preserve">
-    <value>Female middle name</value>
+  <data name="FieldPatronymicFemaleEntry" xml:space="preserve">
+    <value>Female patronymic</value>
   </data>
   <data name="TxtPlaceholderMaleName" xml:space="preserve">
     <value>Enter male name</value>
@@ -331,11 +328,11 @@ genealogy tree and enjoy!</value>
   <data name="TxtPlaceholderFemaleName" xml:space="preserve">
     <value>Enter female name</value>
   </data>
-  <data name="TxtPlaceholderMiddleNameMale" xml:space="preserve">
-    <value>Enter male middle name</value>
+  <data name="TxtPlaceholderPatronymicMale" xml:space="preserve">
+    <value>Enter male patronymic</value>
   </data>
-  <data name="TxtPlaceholderMiddleNameFemale" xml:space="preserve">
-    <value>Enter female middle name</value>
+  <data name="TxtPlaceholderPatronymicFemale" xml:space="preserve">
+    <value>Enter female patronymic</value>
   </data>
   <data name="BiologicalSexMale" xml:space="preserve">
     <value>♂ Man</value>
@@ -349,7 +346,7 @@ genealogy tree and enjoy!</value>
   <data name="FieldBiologicalSex" xml:space="preserve">
     <value>Biological sex</value>
   </data>
-  <data name="WndTitleSelectDateDialog" xml:space="preserve">
+  <data name="TitleSelectDateDialog" xml:space="preserve">
     <value>Select date</value>
   </data>
   <data name="FieldYear" xml:space="preserve">
@@ -374,48 +371,48 @@ genealogy tree and enjoy!</value>
     <value>🖋️ Edit '{0}'</value>
   </data>
   <data name="Month_01" xml:space="preserve">
-    <value>{0}January</value>
+    <value>January</value>
   </data>
   <data name="Month_02" xml:space="preserve">
-    <value>{0}Fabruary</value>
+    <value>Fabruary</value>
   </data>
   <data name="Month_03" xml:space="preserve">
-    <value>{0}March</value>
+    <value>March</value>
   </data>
   <data name="Month_04" xml:space="preserve">
-    <value>{0}April</value>
+    <value>April</value>
   </data>
   <data name="Month_05" xml:space="preserve">
-    <value>{0}May</value>
+    <value>May</value>
   </data>
   <data name="Month_06" xml:space="preserve">
-    <value>{0}June</value>
+    <value>June</value>
   </data>
   <data name="Month_07" xml:space="preserve">
-    <value>{0}July</value>
+    <value>July</value>
   </data>
   <data name="Month_08" xml:space="preserve">
-    <value>{0}August</value>
+    <value>August</value>
   </data>
   <data name="Month_09" xml:space="preserve">
-    <value>{0}September</value>
+    <value>September</value>
   </data>
   <data name="Month_10" xml:space="preserve">
-    <value>{0}October</value>
+    <value>October</value>
   </data>
   <data name="Month_11" xml:space="preserve">
-    <value>{0}November</value>
+    <value>November</value>
   </data>
   <data name="Month_12" xml:space="preserve">
-    <value>{0}December</value>
+    <value>December</value>
   </data>
-  <data name="WndTitleSelectRelativesDialog" xml:space="preserve">
+  <data name="TitleSelectRelativesDialog" xml:space="preserve">
     <value>Select relatives</value>
   </data>
   <data name="FieldRelationshipStartDate" xml:space="preserve">
     <value>Start date</value>
   </data>
-  <data name="WndTitleCreateOrUpdatePersonDialog" xml:space="preserve">
+  <data name="TitleCreateOrUpdatePersonDialog" xml:space="preserve">
     <value>Fill in person information</value>
   </data>
   <data name="FieldRelationshipType" xml:space="preserve">
@@ -439,7 +436,7 @@ genealogy tree and enjoy!</value>
   <data name="BtnNameCreateName_1" xml:space="preserve">
     <value>Create a {0}</value>
   </data>
-  <data name="WndTitleCreateOrUpdateNameDialog_1" xml:space="preserve">
+  <data name="TitleCreateOrUpdateNameDialog_1" xml:space="preserve">
     <value>Create or update {0}</value>
   </data>
   <data name="MenuItemNameAddPerson" xml:space="preserve">
@@ -633,5 +630,97 @@ genealogy tree and enjoy!</value>
   </data>
   <data name="PersonAge_2" xml:space="preserve">
     <value>{0} ({1})</value>
+  </data>
+  <data name="PersonSinceBirthDay_1" xml:space="preserve">
+    <value>{0} since birth</value>
+  </data>
+  <data name="AlertTextUnableToAddNameForTheSexSelected_1" xml:space="preserve">
+    <value>Unable to add name for the '{0}' biological sex</value>
+  </data>
+  <data name="MenuItemGotoFamily_1" xml:space="preserve">
+    <value>👪 To family: {0}</value>
+  </data>
+  <data name="TitleNamesPage" xml:space="preserve">
+    <value>Names</value>
+  </data>
+  <data name="HintNamesPage" xml:space="preserve">
+    <value>You can add, edit or delete the names of any person.</value>
+  </data>
+  <data name="MenuItemGoToNames" xml:space="preserve">
+    <value>📝 To Names</value>
+  </data>
+  <data name="FieldSearchText" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="ErrorNameIsShared_2" xml:space="preserve">
+    <value>At least the following persons share name {0}: {1}</value>
+  </data>
+  <data name="TitleSettingsPage" xml:space="preserve">
+    <value>Application settings</value>
+  </data>
+  <data name="FieldDateDisplayFormat" xml:space="preserve">
+    <value>Full date display format</value>
+  </data>
+  <data name="FieldDateDisplayFormatHint" xml:space="preserve">
+    <value>YYYY - year
+MM - month number (01-12)
+MMM - month name (January - December)
+DD - day number (01-31)</value>
+  </data>
+  <data name="FieldShortDateDisplayFormatHint" xml:space="preserve">
+    <value>YYYY - year
+MM - month number (01-12)
+MMM - month name (January - December)</value>
+  </data>
+  <data name="FieldPersonNameFormatHint" xml:space="preserve">
+    <value>FF - first name,              FF. - first name initial
+PP - patronymic,          PP. - patronymic initial
+LL - last name,               LL. - last name initial
+FN - family name</value>
+  </data>
+  <data name="MenuItemNameSettings" xml:space="preserve">
+    <value>⚙️ Settings</value>
+  </data>
+  <data name="FieldShortDateDisplayFormat" xml:space="preserve">
+    <value>Short date display format</value>
+  </data>
+  <data name="FieldCommonPersonNameFormat" xml:space="preserve">
+    <value>Common person name format</value>
+  </data>
+  <data name="NameFirst" xml:space="preserve">
+    <value>First</value>
+  </data>
+  <data name="NamePatronymic" xml:space="preserve">
+    <value>Patronymic</value>
+  </data>
+  <data name="NameLast" xml:space="preserve">
+    <value>Last</value>
+  </data>
+  <data name="FieldFullPersonNameFormat" xml:space="preserve">
+    <value>Full person name format</value>
+  </data>
+  <data name="FieldPersonInitialsFormat" xml:space="preserve">
+    <value>Person initials format</value>
+  </data>
+  <data name="ShortPersonNameFormat" xml:space="preserve">
+    <value>Person short name format</value>
+  </data>
+  <data name="TxtPlaceholderBiography" xml:space="preserve">
+    <value>Enter a biography or life story...</value>
+  </data>
+  <data name="BtnNameMarkdownEditor" xml:space="preserve">
+    <value>Editor</value>
+  </data>
+  <data name="BtnNameMarkdownView" xml:space="preserve">
+    <value>View</value>
+  </data>
+  <data name="FieldRevision_1" xml:space="preserve">
+    <value>Revision: {0}</value>
+  </data>
+  <data name="ErrorTheBoundIsReached" xml:space="preserve">
+    <value>The collection limit has been reached.</value>
+  </data>
+  <data name="NameFamily" xml:space="preserve">
+    <value>Family</value>
   </data>
 </root>

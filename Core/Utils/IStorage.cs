@@ -2,6 +2,7 @@
 
 public interface IStorage
 {
-  DirectoryDescription ApplicationData { get; }
+  DirectoryDescription ProjectsCache { get; }
   DirectoryDescription ProjectsRoot { get; }
+  DirectoryDescription AppConfig { get; }
 }
