@@ -119,7 +119,7 @@ internal class ProjectList : IProjectList
     return host;
   }
 
-  public async Task<ProjectInfo> ExportAsync(Stream content, CancellationToken token)
+  public async Task<ProjectInfo> ImportAsync(Stream content,  CancellationToken token)
   {
     var temp = GetCacheFileDescription();
     _FileSystem.Copy(content, temp);
