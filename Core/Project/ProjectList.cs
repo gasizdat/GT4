@@ -52,8 +52,8 @@ internal class ProjectList : IProjectList
     }
   }
 
-  private static string GetUniqueProjectName() =>
-    $"project-{Guid.NewGuid().ToString("N")}.{ProjectExtension}";
+  private static string GetUniqueProjectName(string prefix) =>
+    $"{prefix}-{DateTime.Now.ToLocalTime():yyyy∕MM∕dd-HH﹕mm﹕ss}.{ProjectExtension}";
 
   private static bool CompareNames(string name1, string name2) =>
     string.Equals(name1, name2, StringComparison.InvariantCultureIgnoreCase);
@@ -105,7 +105,7 @@ internal class ProjectList : IProjectList
   public async Task<ProjectHost> CreateAsync(string projectName, string projectDescription, CancellationToken token)
   {
     var dir = GetProjectDirectoryByName(projectName);
-    var origin = new FileDescription(dir, GetUniqueProjectName(), IProjectDocument.MimeType);
+    var origin = new FileDescription(dir, GetUniqueProjectName("created"), IProjectDocument.MimeType);
     var cache = GetCacheFileDescription();
     using (var file = _FileSystem.OpenWriteStream(origin)) file.Close();
     using var host = new ProjectHost(_FileSystem, origin, cache);
@@ -131,7 +131,7 @@ internal class ProjectList : IProjectList
     }
 
     var dir = GetProjectDirectoryByName(projectInfo.Name);
-    var origin = new FileDescription(dir, GetUniqueProjectName(), IProjectDocument.MimeType);
+    var origin = new FileDescription(dir, GetUniqueProjectName("imported"), IProjectDocument.MimeType);
     _FileSystem.Copy(temp, origin);
 
     InvalidateItems();
@@ -164,7 +164,7 @@ internal class ProjectList : IProjectList
 
     return _Storage.ProjectsRoot with
     {
-      Path = [.._Storage.ProjectsRoot.Path, directoryName]
+      Path = [.. _Storage.ProjectsRoot.Path, directoryName]
     };
   }
 }

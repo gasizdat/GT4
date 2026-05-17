@@ -67,7 +67,7 @@ namespace GT4
         using var token = _Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
         await _Services.GetRequiredService<IProjectList>().ImportAsync(input, token);
 
-        RunOnUiThread(() => _ = Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectPage>()));
+        RunOnUiThread(() => _ = Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectListPage>()));
       }
       catch (Exception ex)
       {
