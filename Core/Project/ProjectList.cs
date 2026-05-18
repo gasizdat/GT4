@@ -95,7 +95,7 @@ internal class ProjectList : IProjectList
 
   public async Task<ProjectHost> OpenAsync(FileDescription origin, CancellationToken token)
   {
-    var cache = GetCacheFileDescription();
+    var cache = GetCacheFileDescription(origin.FileName);
     var host = new ProjectHost(_FileSystem, origin, cache);
     host.Project = await ProjectDocument.OpenAsync(_FileSystem.ToPath(cache), token);
 
@@ -105,8 +105,10 @@ internal class ProjectList : IProjectList
   public async Task<ProjectHost> CreateAsync(string projectName, string projectDescription, CancellationToken token)
   {
     var dir = GetProjectDirectoryByName(projectName);
-    var origin = new FileDescription(dir, GetUniqueProjectName("created"), IProjectDocument.MimeType);
-    var cache = GetCacheFileDescription();
+    var prefix = dir.Path.Last();
+    var projectFileName = GetUniqueProjectName(prefix);
+    var origin = new FileDescription(dir, projectFileName, IProjectDocument.MimeType);
+    var cache = GetCacheFileDescription(projectFileName);
     using (var file = _FileSystem.OpenWriteStream(origin)) file.Close();
     using var host = new ProjectHost(_FileSystem, origin, cache);
     host.Project = await ProjectDocument.CreateNewAsync(_FileSystem.ToPath(cache), projectName, token);
@@ -119,24 +121,33 @@ internal class ProjectList : IProjectList
     return host;
   }
 
-  public async Task<ProjectInfo> ImportAsync(Stream content,  CancellationToken token)
+  public async Task<ProjectInfo> ImportAsync(Stream content, CancellationToken token)
   {
-    var temp = GetCacheFileDescription();
-    _FileSystem.Copy(content, temp);
+    var importedFileName = GetUniqueProjectName("imported");
+    var temp = GetCacheFileDescription(importedFileName);
 
-    ProjectInfo projectInfo;
-    using (var project = await ProjectDocument.OpenAsync(_FileSystem.ToPath(temp), token))
+    try
     {
-      projectInfo = await GetProjectInfoAsync(project, token);
+      ProjectInfo projectInfo;
+      _FileSystem.Copy(content, temp);
+      using (var project = await ProjectDocument.OpenAsync(_FileSystem.ToPath(temp), token))
+      {
+        projectInfo = await GetProjectInfoAsync(project, token);
+      }
+
+      var dir = GetProjectDirectoryByName(projectInfo.Name);
+      var prefix = dir.Path.Last();
+      var projectFileName = GetUniqueProjectName(prefix);
+      var origin = new FileDescription(dir, projectFileName, IProjectDocument.MimeType);
+      _FileSystem.Copy(temp, origin);
+
+      InvalidateItems();
+      return projectInfo with { Origin = origin };
     }
-
-    var dir = GetProjectDirectoryByName(projectInfo.Name);
-    var origin = new FileDescription(dir, GetUniqueProjectName("imported"), IProjectDocument.MimeType);
-    _FileSystem.Copy(temp, origin);
-
-    InvalidateItems();
-
-    return projectInfo with { Origin = origin };
+    finally
+    {
+      _FileSystem.RemoveFile(temp);
+    }
   }
 
   public async Task RemoveAsync(string name, CancellationToken token)
@@ -151,9 +162,14 @@ internal class ProjectList : IProjectList
     InvalidateItems();
   }
 
-  private FileDescription GetCacheFileDescription()
+  private FileDescription GetCacheFileDescription(string projectName)
   {
-    return new FileDescription(_Storage.ProjectsCache, Guid.NewGuid().ToString(), IProjectDocument.MimeType);
+    var projectNameWithoutExtension = Path.GetFileNameWithoutExtension(projectName);
+    var projectVersionsDir = _Storage.ProjectsCache with
+    {
+      Path = [.. _Storage.ProjectsCache.Path, projectNameWithoutExtension]
+    };
+    return new FileDescription(projectVersionsDir, GetUniqueProjectName("version"), IProjectDocument.MimeType);
   }
 
   public DirectoryDescription GetProjectDirectoryByName(string projectName)
