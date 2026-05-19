@@ -89,4 +89,10 @@ public class ProjectHost : IAsyncDisposable, IDisposable
       }
     }
   }
+
+  public ICollection<DateTime> Revisions => _FileSystem
+    .GetFiles(_Cache.Directory, $"version-*.{ProjectList.ProjectExtension}", false)
+    .Where(f => f != _Cache)
+    .Select(_FileSystem.GetLastWriteTime)
+    .ToList();
 }
