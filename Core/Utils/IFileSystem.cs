@@ -10,7 +10,7 @@ public interface IFileSystem
   bool FileExists(FileDescription FileExists);
   FileDescription[] GetFiles(DirectoryDescription directory, string searchPattern, bool recursive);
   void RemoveDirectory(DirectoryDescription directory);
-
   string ToPath(DirectoryDescription fileDescription);
   string ToPath(FileDescription fileDescription);
+  DateTime GetLastWriteTime(FileDescription fileDescription);
 }

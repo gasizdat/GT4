@@ -101,4 +101,10 @@ internal class FileSystem : IFileSystem
   {
     return File.Exists(ToPath(FileExists));
   }
+
+  public DateTime GetLastWriteTime(FileDescription fileDescription)
+  {
+    var path = ToPath(fileDescription);
+    return File.GetLastWriteTime(path);
+  }
 }
