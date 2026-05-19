@@ -6,6 +6,7 @@ public record class ProjectInfo(
   string Name,
   string Description,
   string Revision,
-  FileDescription Origin
+  FileDescription Origin,
+  ICollection<DateTime> Revisions
 );
 

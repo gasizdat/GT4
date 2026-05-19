@@ -24,7 +24,8 @@ internal class ProjectList : IProjectList
       Revision: results[2] ?? string.Empty,
       Description: results[1] ?? string.Empty,
       Name: results[0] ?? throw new DataException($"There is no name stored in the project"),
-      Origin: default!
+      Origin: default!,
+      Revisions: default!
     );
   }
 
@@ -32,22 +33,21 @@ internal class ProjectList : IProjectList
   {
     try
     {
-      // TODO Implement Project sniffer to upload the stream into memory and retrieve metada from the in-memory DB.
-
       using var projectHost = await OpenAsync(origin, token);
       using var project = projectHost.Project!;
       var projectInfo = await GetProjectInfoAsync(project, token);
+      var revisions = projectHost.Revisions;
 
-      return projectInfo with { Origin = origin };
+      return projectInfo with { Origin = origin, Revisions = revisions };
     }
     catch (Exception ex)
     {
-      //TODO BrokenProjectItem
       return new ProjectInfo(
         Revision: string.Empty,
         Description: ex.ToString(),
         Name: $"Error: {ex.Message}",
-        Origin: origin
+        Origin: origin,
+        Revisions: []
       );
     }
   }
