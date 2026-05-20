@@ -7,6 +7,7 @@ public interface ICurrentProjectProvider
   ProjectInfo Info { get; }
   IProjectDocument Project { get; }
   bool HasCurrentProject { get; }
+  ICollection<DateTime> Revisions { get; }
 
   Task UpdateOriginAsync(CancellationToken token);
   Task CloseAsync(CancellationToken token);

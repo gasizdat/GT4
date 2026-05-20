@@ -24,8 +24,7 @@ internal class ProjectList : IProjectList
       Revision: results[2] ?? string.Empty,
       Description: results[1] ?? string.Empty,
       Name: results[0] ?? throw new DataException($"There is no name stored in the project"),
-      Origin: default!,
-      Revisions: default!
+      Origin: default!
     );
   }
 
@@ -36,9 +35,8 @@ internal class ProjectList : IProjectList
       using var projectHost = await OpenAsync(origin, token);
       using var project = projectHost.Project!;
       var projectInfo = await GetProjectInfoAsync(project, token);
-      var revisions = projectHost.Revisions;
 
-      return projectInfo with { Origin = origin, Revisions = revisions };
+      return projectInfo with { Origin = origin };
     }
     catch (Exception ex)
     {
@@ -46,8 +44,7 @@ internal class ProjectList : IProjectList
         Revision: string.Empty,
         Description: ex.ToString(),
         Name: $"Error: {ex.Message}",
-        Origin: origin,
-        Revisions: []
+        Origin: origin
       );
     }
   }
