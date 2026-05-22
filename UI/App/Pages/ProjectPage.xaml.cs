@@ -127,6 +127,10 @@ public partial class ProjectPage : ContentPage
       case string commandName when commandName == "GoToNames":
         await Shell.Current.GoToAsync(UIRoutes.GetRoute<NamesPage>());
         break;
+
+      case string commandName when commandName == "GoToRevisions":
+        await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectRevisionsPage>());
+        break;
     }
   }
 
