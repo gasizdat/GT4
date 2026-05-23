@@ -327,7 +327,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     IEnumerable<FileResult>? results;
     if (photo is null)
     {
-      results = await FilePicker.Default.PickMultipleAsync(pickOptions);
+      var files = await FilePicker.Default.PickMultipleAsync(pickOptions);
+      results = files?.Where(f => f is not null).Select(r => r!);
     }
     else
     {

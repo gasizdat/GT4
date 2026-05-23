@@ -77,7 +77,7 @@ public struct Date
 
   public static bool operator !=(Date a, Date b)
   {
-    return a.Code != b.Code || a.Status == b.Status;
+    return a.Code != b.Code || a.Status != b.Status;
   }
 
   public static DateStatus GetWorstStatus(params Date[] dates)
