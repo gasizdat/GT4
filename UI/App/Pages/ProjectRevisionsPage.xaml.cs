@@ -9,7 +9,7 @@ namespace GT4.UI.Pages;
 public partial class ProjectRevisionsPage : ContentPage
 {
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
-  private DateTimeItem? _SelectedRevision;
+  private ProjectRevisionItem? _SelectedRevision;
 
   public ProjectRevisionsPage(ICurrentProjectProvider currentProjectProvider)
   {
@@ -18,7 +18,7 @@ public partial class ProjectRevisionsPage : ContentPage
     InitializeComponent();
   }
 
-  public DateTimeItem? SelectedRevision
+  public ProjectRevisionItem? SelectedRevision
   {
     get => _SelectedRevision;
     set
@@ -56,7 +56,7 @@ public partial class ProjectRevisionsPage : ContentPage
   {
   });
 
-  public IEnumerable<DateTimeItem> Revisions => _CurrentProjectProvider
+  public IEnumerable<ProjectRevisionItem> Revisions => _CurrentProjectProvider
     .Revisions
-    .Select(d => new DateTimeItem(d));
+    .Select(r => new ProjectRevisionItem(r));
 }

@@ -33,7 +33,7 @@
           VerticalOptions="Start">
 
         <CollectionView.ItemTemplate>
-          <DataTemplate x:DataType="items:DateTimeItem">
+          <DataTemplate x:DataType="items:ProjectRevisionItem">
             <Grid
                 Padding="{Thickness Left={StaticResource PageContentSpacing},
                                     Right={StaticResource PageContentSpacing}}"

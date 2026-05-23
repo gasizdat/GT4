@@ -1,4 +1,5 @@
 ﻿using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 
 namespace GT4.Core.Project;
@@ -90,9 +91,9 @@ public class ProjectHost : IAsyncDisposable, IDisposable
     }
   }
 
-  public ICollection<DateTime> Revisions => _FileSystem
+  public ICollection<ProjectRevision> Revisions => _FileSystem
     .GetFiles(_Cache.Directory, $"version-*.{ProjectList.ProjectExtension}", false)
     .Where(f => f != _Cache)
-    .Select(_FileSystem.GetLastWriteTime)
+    .Select(f => new ProjectRevision(DateTime: _FileSystem.GetLastWriteTime(f), FileDescription: f))
     .ToList();
 }

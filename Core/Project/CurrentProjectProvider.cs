@@ -58,5 +58,6 @@ internal class CurrentProjectProvider : ICurrentProjectProvider
 
   public ProjectInfo Info => _Info ?? ThrowProjectNotOpened<ProjectInfo>();
 
-  public ICollection<DateTime> Revisions => _ProjectHost?.Revisions ?? ThrowProjectNotOpened<ICollection<DateTime>>();
+  public ICollection<ProjectRevision> Revisions => 
+    _ProjectHost?.Revisions ?? ThrowProjectNotOpened<ICollection<ProjectRevision>>();
 }
