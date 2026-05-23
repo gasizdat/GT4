@@ -13,7 +13,9 @@ internal class FileSystem : IFileSystem
   {
     var basePath = ToPath(baseDir);
     var relativePath = Path.GetRelativePath(basePath, path);
-    var relativeDirs = Path.GetDirectoryName(relativePath)?.Split(Path.PathSeparator) ?? [];
+    var relativeDirs = Path.GetDirectoryName(relativePath)?
+      .Split(Path.PathSeparator)
+      .Where(p => !string.IsNullOrWhiteSpace(p)) ?? [];
     var directory = baseDir with { Path = [..baseDir.Path, ..relativeDirs] };
 
     return new FileDescription(
@@ -98,5 +100,11 @@ internal class FileSystem : IFileSystem
   public bool FileExists(FileDescription FileExists)
   {
     return File.Exists(ToPath(FileExists));
+  }
+
+  public DateTime GetLastWriteTime(FileDescription fileDescription)
+  {
+    var path = ToPath(fileDescription);
+    return File.GetLastWriteTime(path);
   }
 }

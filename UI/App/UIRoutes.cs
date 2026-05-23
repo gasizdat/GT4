@@ -13,6 +13,7 @@ internal static class UIRoutes
     AddRoute<PersonPage>();
     AddRoute<NamesPage>();
     AddRoute<SettingsPage>();
+    AddRoute<ProjectRevisionsPage>();
   }
 
   public static string GetRoute<TPage>() => $"{typeof(TPage).Namespace}/{typeof(TPage).Name}";

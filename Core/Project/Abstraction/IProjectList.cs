@@ -9,6 +9,6 @@ public interface IProjectList
   Task<ProjectInfo[]> GetItemsAsync(CancellationToken token);
   Task<ProjectHost> CreateAsync(string projectName, string projectDescription, CancellationToken token);
   Task<ProjectHost> OpenAsync(FileDescription origin, CancellationToken token);
-  Task<ProjectInfo> ExportAsync(Stream content, CancellationToken token);
+  Task<ProjectInfo> ImportAsync(Stream content, CancellationToken token);
   Task RemoveAsync(string name, CancellationToken token);
 }

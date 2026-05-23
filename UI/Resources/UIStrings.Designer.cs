@@ -287,6 +287,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Restore {0}.
+        /// </summary>
+        public static string BtnNameRestore_1 {
+            get {
+                return ResourceManager.GetString("BtnNameRestore_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Update the Person.
         /// </summary>
         public static string BtnNameUpdateFamilyPerson {
@@ -772,6 +781,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Restore or remove the project revision.
+        /// </summary>
+        public static string HintProjectRevisionsPage {
+            get {
+                return ResourceManager.GetString("HintProjectRevisionsPage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 👪 To family: {0}.
         /// </summary>
         public static string MenuItemGotoFamily_1 {
@@ -786,6 +804,15 @@ namespace GT4.UI.Resources {
         public static string MenuItemGoToNames {
             get {
                 return ResourceManager.GetString("MenuItemGoToNames", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 🗓️ To project revisions.
+        /// </summary>
+        public static string MenuItemGoToRevisions {
+            get {
+                return ResourceManager.GetString("MenuItemGoToRevisions", resourceCulture);
             }
         }
         
@@ -1731,6 +1758,15 @@ namespace GT4.UI.Resources {
         public static string TitleProjectPage {
             get {
                 return ResourceManager.GetString("TitleProjectPage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select project revisions.
+        /// </summary>
+        public static string TitleProjectRevisionsPage {
+            get {
+                return ResourceManager.GetString("TitleProjectRevisionsPage", resourceCulture);
             }
         }
         

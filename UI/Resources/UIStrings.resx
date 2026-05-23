@@ -723,4 +723,16 @@ FN - family name</value>
   <data name="NameFamily" xml:space="preserve">
     <value>Family</value>
   </data>
+  <data name="MenuItemGoToRevisions" xml:space="preserve">
+    <value>🗓️ To project revisions</value>
+  </data>
+  <data name="TitleProjectRevisionsPage" xml:space="preserve">
+    <value>Select project revisions</value>
+  </data>
+  <data name="HintProjectRevisionsPage" xml:space="preserve">
+    <value>Restore or remove the project revision</value>
+  </data>
+  <data name="BtnNameRestore_1" xml:space="preserve">
+    <value>Restore {0}</value>
+  </data>
 </root>

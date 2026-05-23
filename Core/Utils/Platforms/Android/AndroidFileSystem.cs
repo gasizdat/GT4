@@ -10,7 +10,7 @@ namespace GT4.Core.Utils;
 public class AndroidFileSystem : IFileSystem
 {
   const string AndroidPathSeparator = "/";
-  private readonly FileSystem _DirectAccessFileSystem = new();
+  private readonly IFileSystem _DirectAccessFileSystem = new FileSystem();
 
   private static string GetAndroidRoot(DirectoryDescription directoryDescription)
   {
@@ -206,7 +206,7 @@ public class AndroidFileSystem : IFileSystem
 
   public void RemoveDirectory(DirectoryDescription directoryDescription)
   {
-    if (directoryDescription.Root == System.Environment.SpecialFolder.ApplicationData)
+    if (IsInternalStorage(directoryDescription))
     {
       _DirectAccessFileSystem.RemoveDirectory(directoryDescription);
     }
@@ -266,7 +266,7 @@ public class AndroidFileSystem : IFileSystem
 
   public FileDescription[] GetFiles(DirectoryDescription directoryDescription, string searchPattern, bool recursive)
   {
-    if (directoryDescription.Root == System.Environment.SpecialFolder.ApplicationData)
+    if (IsInternalStorage(directoryDescription))
     {
       return _DirectAccessFileSystem.GetFiles(directoryDescription, searchPattern, recursive);
     }
@@ -298,5 +298,15 @@ public class AndroidFileSystem : IFileSystem
 
     var ret = uris.TryGetValue(fileDescription, out var uri) && uri is not null;
     return ret;
+  }
+
+  public DateTime GetLastWriteTime(FileDescription fileDescription)
+  {
+    if (IsInternalStorage(fileDescription.Directory))
+    {
+      return _DirectAccessFileSystem.GetLastWriteTime(fileDescription);
+    }
+
+    throw new NotSupportedException(nameof(GetLastWriteTime));
   }
 }

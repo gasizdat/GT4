@@ -57,7 +57,7 @@ namespace GT4
       HandleOpenIntentIfAny(intent);
     }
 
-    private async Task ExportProjectAsync(Android.Net.Uri uri)
+    private async Task ImportProjectAsync(Android.Net.Uri uri)
     {
       try
       {
@@ -65,9 +65,9 @@ namespace GT4
           throw new ApplicationException($"Unable to open provided URI {uri}");
 
         using var token = _Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
-        await _Services.GetRequiredService<IProjectList>().ExportAsync(input, token);
+        await _Services.GetRequiredService<IProjectList>().ImportAsync(input, token);
 
-        RunOnUiThread(() => _ = Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectPage>()));
+        RunOnUiThread(() => _ = Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectListPage>()));
       }
       catch (Exception ex)
       {
@@ -94,7 +94,7 @@ namespace GT4
 
       if (!isDocumentUri || !hasPersistableGrant)
       {
-        Task.Run(() => ExportProjectAsync(uri));
+        Task.Run(() => ImportProjectAsync(uri));
       }
       else
       {

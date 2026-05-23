@@ -723,4 +723,16 @@ FN - род</value>
   <data name="NameFamily" xml:space="preserve">
     <value>Род</value>
   </data>
+  <data name="MenuItemGoToRevisions" xml:space="preserve">
+    <value>🗓️ К ревизиям проекта</value>
+  </data>
+  <data name="TitleProjectRevisionsPage" xml:space="preserve">
+    <value>Выбрать ревизию проекта</value>
+  </data>
+  <data name="HintProjectRevisionsPage" xml:space="preserve">
+    <value>Восстановить или удалить ревизию проекта</value>
+  </data>
+  <data name="BtnNameRestore_1" xml:space="preserve">
+    <value>Восстановить {0}</value>
+  </data>
 </root>

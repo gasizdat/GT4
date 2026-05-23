@@ -81,6 +81,7 @@ public partial class ProjectListPage : ContentPage
     {
       case string commandName when commandName == "Create":
         await OnCreateProject();
+        UpdateProjectList();
         break;
       case string commandName when commandName == "Refresh":
         this.RefreshView();
