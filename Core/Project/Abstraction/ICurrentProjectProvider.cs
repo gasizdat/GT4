@@ -12,4 +12,6 @@ public interface ICurrentProjectProvider
   Task UpdateOriginAsync(CancellationToken token);
   Task CloseAsync(CancellationToken token);
   Task OpenAsync(ProjectInfo info, CancellationToken token);
+  Task RemoveRevisionAsync(ProjectRevision revision, CancellationToken token);
+  Task RestoreRevisionAsync(ProjectRevision revision, CancellationToken token);
 }

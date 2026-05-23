@@ -96,4 +96,31 @@ public class ProjectHost : IAsyncDisposable, IDisposable
     .Where(f => f != _Cache)
     .Select(f => new ProjectRevision(DateTime: _FileSystem.GetLastWriteTime(f), FileDescription: f))
     .ToList();
+
+  public async Task RestoreRevisionAsync(ProjectRevision projectRevision, CancellationToken cancellationToken)
+  {
+    if (_Project is null)
+    {
+      throw new ApplicationException("No project is set");
+    }
+    if (_FileSystem.GetLastWriteTime(projectRevision.FileDescription) != projectRevision.DateTime)
+    {
+      throw new ArgumentException(nameof(projectRevision));
+    }
+
+    await _Project.DisposeAsync();
+    _Project = null;
+
+    _FileSystem.Copy(projectRevision.FileDescription, _Origin);
+  }
+
+  public Task RemoveRevisionAsync(ProjectRevision projectRevision, CancellationToken cancellationToken)
+  {
+    if (_FileSystem.GetLastWriteTime(projectRevision.FileDescription) != projectRevision.DateTime)
+    {
+      throw new ArgumentException(nameof(projectRevision));
+    }
+
+    return Task.Run(() => _FileSystem.RemoveFile(projectRevision.FileDescription), cancellationToken);
+  }
 }
