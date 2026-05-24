@@ -81,9 +81,8 @@ public partial class App : Application
   {
     var window = new Window(new AppShell());
     window.Activated += ReopenOnActivationAsync;
-    window.Deactivated += UpdateOnDeactivationAsync;
-    window.Stopped += UpdateOnDeactivationAsync;
-    window.Destroying += CloseOnDisposeAsync;
+    window.Deactivated += async (_, _) => await CloseOnDeactivationAsync(saveLastOpenProject: true);
+    window.Destroying += async (_, _) => await CloseOnDeactivationAsync(saveLastOpenProject: false);
     return window;
   }
 
@@ -98,22 +97,16 @@ public partial class App : Application
     await _CurrentProjectProvider.OpenAsync(_LastOpenedProject, token);
   }
 
-  private async void UpdateOnDeactivationAsync(object? sender, EventArgs e)
+  private async Task CloseOnDeactivationAsync(bool saveLastOpenProject)
   {
     using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    _LastOpenedProject = null;
     if (_CurrentProjectProvider.HasCurrentProject)
     {
-      _LastOpenedProject = _CurrentProjectProvider.Info;
-      await _CurrentProjectProvider.CloseAsync(token);
-    }
-  }
-
-  private async void CloseOnDisposeAsync(object? sender, EventArgs e)
-  {
-    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-    if (_CurrentProjectProvider.HasCurrentProject)
-    {
-      _LastOpenedProject = null;
+      if (saveLastOpenProject)
+      {
+        _LastOpenedProject = _CurrentProjectProvider.Info;
+      }
       await _CurrentProjectProvider.CloseAsync(token);
     }
   }
