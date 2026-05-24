@@ -71,11 +71,13 @@ public class AndroidFileSystem : IFileSystem
 
   private static Dictionary<FileDescription, Android.Net.Uri> GetFilesUri(DirectoryDescription directoryDescription, string searchPattern, bool recursive)
   {
+#pragma warning disable CA1416
     var ret = new Dictionary<FileDescription, Android.Net.Uri>();
     var externalStorageUri = GetExternalStorageUri();
     var query = new List<string>();
     var args = new List<string>();
     var sort = $"{MediaStore.IMediaColumns.DateModified} DESC";
+
     string[] projection =
     [
         IBaseColumns.Id,
@@ -155,12 +157,15 @@ public class AndroidFileSystem : IFileSystem
     }
 
     return ret;
+#pragma warning restore CA1416
   }
 
   private static Android.Net.Uri GetExternalStorageUri()
   {
+#pragma warning disable CA1416
     return MediaStore.Files.GetContentUri(MediaStore.VolumeExternalPrimary)
       ?? throw new IOException("Cannot get external URI");
+#pragma warning restore CA1416
   }
 
   public AndroidFileSystem()
@@ -216,6 +221,7 @@ public class AndroidFileSystem : IFileSystem
 
   public Stream OpenWriteStream(FileDescription fileDescription)
   {
+#pragma warning disable CA1416
     if (IsInternalStorage(fileDescription.Directory))
     {
       return _DirectAccessFileSystem.OpenWriteStream(fileDescription);
@@ -244,6 +250,7 @@ public class AndroidFileSystem : IFileSystem
     }
 
     return outStream;
+#pragma warning restore CA1416
   }
 
   public Stream OpenReadStream(FileDescription fileDescription)
