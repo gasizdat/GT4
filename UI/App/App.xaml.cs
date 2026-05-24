@@ -70,13 +70,13 @@ public partial class App : Application
   protected override Window CreateWindow(IActivationState? activationState)
   {
     var window = new Window(new AppShell());
-    window.Deactivated += SaveOnDeactivationAsync;
-    window.Stopped += SaveOnDeactivationAsync;
-    window.Destroying += SaveOnDisposeAsync;
+    window.Deactivated += UpdateOnDeactivationAsync;
+    window.Stopped += UpdateOnDeactivationAsync;
+    window.Destroying += CloseOnDisposeAsync;
     return window;
   }
 
-  private async void SaveOnDeactivationAsync(object? sender, EventArgs e)
+  private async void UpdateOnDeactivationAsync(object? sender, EventArgs e)
   {
     using var token = _Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
     var projectProvider = _Services.GetRequiredService<ICurrentProjectProvider>();
@@ -86,7 +86,7 @@ public partial class App : Application
     }
   }
 
-  private async void SaveOnDisposeAsync(object? sender, EventArgs e)
+  private async void CloseOnDisposeAsync(object? sender, EventArgs e)
   {
     using var token = _Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
     var projectProvider = _Services.GetRequiredService<ICurrentProjectProvider>();
