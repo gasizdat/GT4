@@ -1,4 +1,5 @@
 ﻿using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using Microsoft.Maui.Controls.Xaml.Diagnostics;
 using System.Globalization;
@@ -7,95 +8,106 @@ namespace GT4.UI;
 
 public partial class App : Application
 {
-  private readonly IServiceProvider _Services;
+  private readonly ICancellationTokenProvider _CancellationTokenProvider;
+  private readonly ICurrentProjectProvider _CurrentProjectProvider;
+  private ProjectInfo? _LastOpenedProject;
 
-  public App(IServiceProvider serviceProvider)
+  public App(ICancellationTokenProvider cancellationTokenProvider, ICurrentProjectProvider currentProjectProvider)
   {
-    _Services = serviceProvider;
+    _CancellationTokenProvider = cancellationTokenProvider;
+    _CurrentProjectProvider = currentProjectProvider;
+
+    AppDomain.CurrentDomain.UnhandledException += LogUnhandledException;
+    BindingDiagnostics.BindingFailed += LogBindingErrors;
+
     InitializeComponent();
-
-    AppDomain.CurrentDomain.UnhandledException += (object sender, UnhandledExceptionEventArgs e) =>
-    {
-      string errorMessage = e.ExceptionObject switch
-      {
-        Exception exception => exception.ToString(),
-        _ => e.ExceptionObject.ToString() ?? "Undefined error"
-      };
-
-      var logDir = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "GT4",
-        "CrashLogs");
-      Directory.CreateDirectory(logDir);
-
-      var time = DateTime.Now;
-      var logName = $"gt4-run-{time.ToString("o", CultureInfo.InvariantCulture)}.log"
-        .Replace(':', '-')
-        .Replace('\\', '-')
-        .Replace('/', '-');
-
-      using var fileStream = File.OpenWrite(Path.Combine(logDir, logName));
-      using var writer = new StreamWriter(fileStream);
-      writer.Write(errorMessage);
-      fileStream.Flush();
-      fileStream.Close();
-    };
 
 #if ANDROID
     Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific.Application.UseWindowSoftInputModeAdjust(
       Current?.On<Microsoft.Maui.Controls.PlatformConfiguration.Android>(),
       Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific.WindowSoftInputModeAdjust.Resize);
 #endif
+  }
 
-    BindingDiagnostics.BindingFailed += (sender, args) =>
+  protected static void LogUnhandledException(object sender, UnhandledExceptionEventArgs e)
+  {
+    string errorMessage = e.ExceptionObject switch
     {
-      switch (args)
-      {
-        case BindingErrorEventArgs bindingError:
-          System.Diagnostics.Debug.WriteLine(
-            $"[BindingDiagnostics] {string.Format(bindingError.Message, bindingError.MessageArgs)}, "
-          + $"Path={(bindingError.Binding as Binding)?.Path ?? "unknown"}, "
-          + $"Source='{bindingError.Source}', "
-          + $"Target='{bindingError.Target}', "
-          + $"Property='{bindingError.TargetProperty.PropertyName}'");
-          break;
-
-        default:
-          System.Diagnostics.Debug.WriteLine($"[BindingDiagnostics] {args.Message}, Raw='{args}");
-          break;
-      }
+      Exception exception => exception.ToString(),
+      _ => e.ExceptionObject.ToString() ?? "Undefined error"
     };
 
+    System.Diagnostics.Debug.WriteLine(errorMessage);
 
-    MainPage = new AppShell();
+    var logDir = Path.Combine(
+      Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+      "GT4",
+      "CrashLogs");
+    Directory.CreateDirectory(logDir);
+
+    var time = DateTime.Now;
+    var logName = $"gt4-run-{time.ToString("o", CultureInfo.InvariantCulture)}.log"
+      .Replace(':', '-')
+      .Replace('\\', '-')
+      .Replace('/', '-');
+
+    using var fileStream = File.OpenWrite(Path.Combine(logDir, logName));
+    using var writer = new StreamWriter(fileStream);
+    writer.Write(errorMessage);
+    fileStream.Flush();
+    fileStream.Close();
+  }
+
+  protected static void LogBindingErrors(object? sender, BindingBaseErrorEventArgs args)
+  {
+    switch (args)
+    {
+      case BindingErrorEventArgs bindingError:
+        System.Diagnostics.Debug.WriteLine(
+          $"[BindingDiagnostics] {string.Format(bindingError.Message, bindingError.MessageArgs)}, "
+        + $"Path={(bindingError.Binding as Binding)?.Path ?? "unknown"}, "
+        + $"Source='{bindingError.Source}', "
+        + $"Target='{bindingError.Target}', "
+        + $"Property='{bindingError.TargetProperty.PropertyName}'");
+        break;
+
+      default:
+        System.Diagnostics.Debug.WriteLine($"[BindingDiagnostics] {args.Message}, Raw='{args}");
+        break;
+    }
   }
 
   protected override Window CreateWindow(IActivationState? activationState)
   {
-    var window = base.CreateWindow(activationState);
-    window.Deactivated += SaveOnDeactivationAsync;
-    window.Stopped += SaveOnDeactivationAsync;
-    window.Destroying += SaveOnDisposeAsync;
+    var window = new Window(new AppShell());
+    window.Activated += ReopenOnActivationAsync;
+    window.Deactivated += async (_, _) => await CloseOnDeactivationAsync(saveLastOpenProject: true);
+    window.Destroying += async (_, _) => await CloseOnDeactivationAsync(saveLastOpenProject: false);
     return window;
   }
 
-  private async void SaveOnDeactivationAsync(object? sender, EventArgs e)
+  private async void ReopenOnActivationAsync(object? sender, EventArgs e)
   {
-    using var token = _Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
-    var projectProvider = _Services.GetRequiredService<ICurrentProjectProvider>();
-    if (projectProvider.HasCurrentProject)
+    if (_LastOpenedProject is null)
     {
-      await projectProvider.UpdateOriginAsync(token);
+      return;
     }
+
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    await _CurrentProjectProvider.OpenAsync(_LastOpenedProject, token);
   }
 
-  private async void SaveOnDisposeAsync(object? sender, EventArgs e)
+  private async Task CloseOnDeactivationAsync(bool saveLastOpenProject)
   {
-    using var token = _Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
-    var projectProvider = _Services.GetRequiredService<ICurrentProjectProvider>();
-    if (projectProvider.HasCurrentProject)
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    _LastOpenedProject = null;
+    if (_CurrentProjectProvider.HasCurrentProject)
     {
-      await projectProvider.CloseAsync(token);
+      if (saveLastOpenProject)
+      {
+        _LastOpenedProject = _CurrentProjectProvider.Info;
+      }
+      await _CurrentProjectProvider.CloseAsync(token);
     }
   }
 }

@@ -34,8 +34,12 @@ public partial class MainPage : ContentPage
         return;
 
       Utils.Language.Current = value;
-      var app = Application.Current as App;
-      app?.MainPage?.Dispatcher.Dispatch(() => app.MainPage = new AppShell());
+
+      var mainWindow = Application.Current?.Windows.SingleOrDefault(w => w.Page is AppShell);
+      if (mainWindow is not null)
+      {
+        mainWindow.Dispatcher.Dispatch(() => mainWindow.Page = new AppShell());
+      }
     }
   }
 
