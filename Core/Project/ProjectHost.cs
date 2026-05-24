@@ -95,6 +95,7 @@ public class ProjectHost : IAsyncDisposable, IDisposable
     .GetFiles(_Cache.Directory, $"version-*.{ProjectList.ProjectExtension}", false)
     .Where(f => f != _Cache)
     .Select(f => new ProjectRevision(DateTime: _FileSystem.GetLastWriteTime(f), FileDescription: f))
+    .OrderByDescending(r => r.DateTime)
     .ToList();
 
   public async Task RestoreRevisionAsync(ProjectRevision projectRevision, CancellationToken cancellationToken)
