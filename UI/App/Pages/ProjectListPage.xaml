@@ -37,28 +37,27 @@
 
         <CollectionView.ItemsLayout>
           <LinearItemsLayout
-              ItemSpacing="8"
+              ItemSpacing="{StaticResource PageContentSpacing}"
               Orientation="Vertical" />
         </CollectionView.ItemsLayout>
 
         <CollectionView.ItemTemplate>
           <DataTemplate x:DataType="items:ProjectItem">
 
-            <Border Style="{StaticResource HoverItem}">
+            <Border Style="{StaticResource CardHoverItem}">
               <Grid
                   ColumnDefinitions="Auto, *"
-                  ColumnSpacing="12"
+                  ColumnSpacing="{StaticResource PageContentSpacing}"
                   RowDefinitions="Auto, Auto, Auto">
 
                 <Image
                     Grid.Row="0"
                     Grid.RowSpan="3"
                     Grid.Column="0"
-                    Margin="0,2,0,0"
-                    HeightRequest="40"
+                    HeightRequest="{StaticResource ListIconSize}"
                     Source="{Binding Icon}"
                     VerticalOptions="Start"
-                    WidthRequest="40" />
+                    WidthRequest="{StaticResource ListIconSize}" />
 
                 <Label
                     Grid.Row="0"

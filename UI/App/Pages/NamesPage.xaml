@@ -21,11 +21,11 @@
 
   <components:PageLayout>
     <components:PageLayout.Header>
-      <Border Margin="0,4,0,0">
+      <Border Margin="{StaticResource TopSpacingSmall}">
         <Grid
             ColumnDefinitions="Auto, Auto, *"
             RowDefinitions="Auto, Auto"
-            RowSpacing="8">
+            RowSpacing="{StaticResource PageContentSpacing}">
 
           <Label
               Grid.Row="0"
@@ -78,14 +78,14 @@
 
         <CollectionView.ItemsLayout>
           <LinearItemsLayout
-              ItemSpacing="2"
+              ItemSpacing="{StaticResource ItemSpacingSmall}"
               Orientation="Vertical" />
         </CollectionView.ItemsLayout>
 
         <CollectionView.ItemTemplate>
           <DataTemplate x:DataType="dto:Name">
             <Grid
-                Padding="4,2"
+                Padding="{StaticResource ListRowPadding}"
                 ColumnDefinitions="*, Auto, Auto, Auto"
                 Style="{StaticResource SelectableItem}">
 

@@ -6,7 +6,7 @@
     x:Name="Root">
   <Grid
       ColumnDefinitions="Auto, *"
-      ColumnSpacing="12"
+      ColumnSpacing="{StaticResource PageContentSpacing}"
       RowDefinitions="Auto">
 
     <Label

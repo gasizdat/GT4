@@ -71,7 +71,7 @@
                 Grid.Row="3"
                 Grid.Column="1"
                 HorizontalOptions="End"
-                Spacing="4"
+                Spacing="{StaticResource ItemSpacingSmall}"
                 VerticalOptions="Center">
               <Button
                   Command="{Binding DialogCommand, Source={x:Reference Root}}"
@@ -98,7 +98,7 @@
 
         <CollectionView.ItemsLayout>
           <LinearItemsLayout
-              ItemSpacing="4"
+              ItemSpacing="{StaticResource ItemSpacingSmall}"
               Orientation="Vertical" />
         </CollectionView.ItemsLayout>
 

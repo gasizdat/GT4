@@ -49,13 +49,13 @@
             SelectionMode="Single">
           <CollectionView.ItemsLayout>
             <LinearItemsLayout
-                ItemSpacing="4"
+                ItemSpacing="{StaticResource ItemSpacingSmall}"
                 Orientation="Vertical" />
           </CollectionView.ItemsLayout>
           <CollectionView.ItemTemplate>
             <DataTemplate>
               <Grid
-                  Padding="4,2"
+                  Padding="{StaticResource ListRowPadding}"
                   ColumnDefinitions="*, Auto"
                   Style="{StaticResource SelectableItem}">
                 <Label
@@ -80,7 +80,7 @@
             Command="{Binding DialogCommand, Source={x:Reference Root}}"
             CommandParameter="AddName"
             HorizontalOptions="Fill"
-            Margin="0,4,0,0"
+            Margin="{StaticResource TopSpacingSmall}"
             Style="{StaticResource AddAdorner}" />
 
         <Border

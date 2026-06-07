@@ -30,12 +30,12 @@
 
     <components:PageLayout.Body>
       <VerticalStackLayout
-          Spacing="20"
+          Spacing="{StaticResource SectionSpacing}"
           VerticalOptions="Center">
 
         <Image
             Aspect="AspectFit"
-            HeightRequest="180"
+            HeightRequest="{StaticResource LogoHeight}"
             HorizontalOptions="Center"
             Source="gt4_logo.png" />
 

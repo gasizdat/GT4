@@ -53,16 +53,16 @@
 
         <CollectionView.ItemsLayout>
           <LinearItemsLayout
-              ItemSpacing="10"
+              ItemSpacing="{StaticResource PageContentSpacing}"
               Orientation="Vertical" />
         </CollectionView.ItemsLayout>
 
         <CollectionView.ItemTemplate>
           <DataTemplate x:DataType="items:FamilyInfoItem">
-            <Border>
+            <Border Style="{StaticResource CardHoverItem}">
               <Grid
                   ColumnDefinitions="Auto, *"
-                  ColumnSpacing="12"
+                  ColumnSpacing="{StaticResource PageContentSpacing}"
                   RowDefinitions="Auto, Auto">
 
                 <Image
@@ -84,7 +84,7 @@
                     Grid.Row="1"
                     Grid.Column="1"
                     BindableLayout.ItemsSource="{Binding Persons}"
-                    Spacing="4">
+                    Spacing="{StaticResource ItemSpacingSmall}">
                   <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="dto:PersonInfo">
                       <components:PersonInfoView

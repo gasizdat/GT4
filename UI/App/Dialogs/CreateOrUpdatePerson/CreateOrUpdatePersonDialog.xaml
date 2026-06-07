@@ -379,7 +379,7 @@
                   SelectionMode="Single">
                 <CollectionView.ItemsLayout>
                   <LinearItemsLayout
-                      ItemSpacing="4"
+                      ItemSpacing="{StaticResource ItemSpacingSmall}"
                       Orientation="Vertical" />
                 </CollectionView.ItemsLayout>
                 <CollectionView.ItemTemplate>

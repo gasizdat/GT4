@@ -50,7 +50,8 @@
                   Margin="{Thickness Bottom={StaticResource PageContentSpacing},
                                      Right={StaticResource PageContentSpacing}}"
                   FlexLayout.Grow="1"
-                  MinimumWidthRequest="{Binding Path=PersonItemMinimalWidth, Source={RelativeSource AncestorType={x:Type ContentPage}}}">
+                  MinimumWidthRequest="{Binding Path=PersonItemMinimalWidth, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
+                  Style="{StaticResource CardHoverItem}">
 
                 <Border.GestureRecognizers>
                   <TapGestureRecognizer

@@ -30,14 +30,14 @@
 
         <CollectionView.ItemsLayout>
           <LinearItemsLayout
-              ItemSpacing="4"
+              ItemSpacing="{StaticResource ItemSpacingSmall}"
               Orientation="Vertical" />
         </CollectionView.ItemsLayout>
 
         <CollectionView.ItemTemplate>
           <DataTemplate x:DataType="items:ProjectRevisionItem">
             <Grid
-                Padding="4,2"
+                Padding="{StaticResource ListRowPadding}"
                 ColumnDefinitions="*, Auto"
                 Style="{StaticResource SelectableItem}">
 

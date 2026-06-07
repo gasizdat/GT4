@@ -140,6 +140,151 @@
       Right="0"
       Top="{StaticResource PageContentVerticalPadding}" />
 
+  <!--  Spacing scale  -->
+  <OnIdiom
+      x:Key="SectionSpacing"
+      x:TypeArguments="x:Double"
+      Desktop="24"
+      Phone="16"
+      Tablet="20" />
+  <OnIdiom
+      x:Key="ItemSpacingSmall"
+      x:TypeArguments="x:Double"
+      Desktop="4"
+      Phone="3"
+      Tablet="4" />
+
+  <!--  Component paddings  -->
+  <OnIdiom
+      x:Key="ButtonPaddingH"
+      x:TypeArguments="x:Double"
+      Desktop="16"
+      Phone="12"
+      Tablet="14" />
+  <OnIdiom
+      x:Key="ButtonPaddingV"
+      x:TypeArguments="x:Double"
+      Desktop="11"
+      Phone="9"
+      Tablet="10" />
+  <Thickness
+      x:Key="ButtonPadding"
+      Bottom="{StaticResource ButtonPaddingV}"
+      Left="{StaticResource ButtonPaddingH}"
+      Right="{StaticResource ButtonPaddingH}"
+      Top="{StaticResource ButtonPaddingV}" />
+
+  <OnIdiom
+      x:Key="AdornerPaddingH"
+      x:TypeArguments="x:Double"
+      Desktop="6"
+      Phone="4"
+      Tablet="5" />
+  <OnIdiom
+      x:Key="AdornerPaddingV"
+      x:TypeArguments="x:Double"
+      Desktop="4"
+      Phone="2"
+      Tablet="3" />
+  <Thickness
+      x:Key="AdornerPadding"
+      Bottom="{StaticResource AdornerPaddingV}"
+      Left="{StaticResource AdornerPaddingH}"
+      Right="{StaticResource AdornerPaddingH}"
+      Top="{StaticResource AdornerPaddingV}" />
+
+  <OnIdiom
+      x:Key="CardItemPaddingH"
+      x:TypeArguments="x:Double"
+      Desktop="10"
+      Phone="6"
+      Tablet="8" />
+  <OnIdiom
+      x:Key="CardItemPaddingV"
+      x:TypeArguments="x:Double"
+      Desktop="8"
+      Phone="5"
+      Tablet="6" />
+  <Thickness
+      x:Key="CardItemPadding"
+      Bottom="{StaticResource CardItemPaddingV}"
+      Left="{StaticResource CardItemPaddingH}"
+      Right="{StaticResource CardItemPaddingH}"
+      Top="{StaticResource CardItemPaddingV}" />
+
+  <OnIdiom
+      x:Key="ListRowPaddingH"
+      x:TypeArguments="x:Double"
+      Desktop="4"
+      Phone="2"
+      Tablet="3" />
+  <OnIdiom
+      x:Key="ListRowPaddingV"
+      x:TypeArguments="x:Double"
+      Desktop="3"
+      Phone="2"
+      Tablet="2" />
+  <Thickness
+      x:Key="ListRowPadding"
+      Bottom="{StaticResource ListRowPaddingV}"
+      Left="{StaticResource ListRowPaddingH}"
+      Right="{StaticResource ListRowPaddingH}"
+      Top="{StaticResource ListRowPaddingV}" />
+
+  <!--  Named size tokens  -->
+  <OnIdiom
+      x:Key="ListIconSize"
+      x:TypeArguments="x:Double"
+      Desktop="40"
+      Phone="28"
+      Tablet="34" />
+  <OnIdiom
+      x:Key="LogoHeight"
+      x:TypeArguments="x:Double"
+      Desktop="180"
+      Phone="120"
+      Tablet="150" />
+
+  <!--  Heading and subtitle margins  -->
+  <OnIdiom
+      x:Key="HeadingMarginTopValue"
+      x:TypeArguments="x:Double"
+      Desktop="8"
+      Phone="4"
+      Tablet="6" />
+  <OnIdiom
+      x:Key="HeadingMarginBottomValue"
+      x:TypeArguments="x:Double"
+      Desktop="4"
+      Phone="2"
+      Tablet="3" />
+  <Thickness
+      x:Key="HeadingMargin"
+      Bottom="{StaticResource HeadingMarginBottomValue}"
+      Left="0"
+      Right="0"
+      Top="{StaticResource HeadingMarginTopValue}" />
+
+  <OnIdiom
+      x:Key="SubtitleMarginBottomValue"
+      x:TypeArguments="x:Double"
+      Desktop="8"
+      Phone="4"
+      Tablet="6" />
+  <Thickness
+      x:Key="SubtitleMargin"
+      Bottom="{StaticResource SubtitleMarginBottomValue}"
+      Left="0"
+      Right="0"
+      Top="0" />
+
+  <Thickness
+      x:Key="TopSpacingSmall"
+      Bottom="0"
+      Left="0"
+      Right="0"
+      Top="{StaticResource ItemSpacingSmall}" />
+
   <!--  Controls  -->
 
   <Style TargetType="ActivityIndicator">
@@ -151,12 +296,36 @@
     <Setter Property="SelectedIndicatorColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource DarkPrimary}}" />
   </Style>
 
-  <Style TargetType="Border">
+  <!--  Named base — lets CardHoverItem reuse without duplicating setters  -->
+  <Style x:Key="CardBase" TargetType="Border">
     <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource Divider}, Dark={StaticResource DarkDivider}}" />
     <Setter Property="StrokeShape" Value="RoundRectangle 12" />
     <Setter Property="StrokeThickness" Value="1" />
     <Setter Property="Padding" Value="{StaticResource PageContentSpacing}" />
     <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SurfaceCard}, Dark={StaticResource DarkCard}}" />
+  </Style>
+
+  <!--  Implicit Border style — all borders get card appearance by default  -->
+  <Style TargetType="Border" BasedOn="{StaticResource CardBase}" />
+
+  <!--  Clickable card with pointer-over highlight  -->
+  <Style x:Key="CardHoverItem" TargetType="Border" BasedOn="{StaticResource CardBase}">
+    <Setter Property="VisualStateManager.VisualStateGroups">
+      <VisualStateGroupList>
+        <VisualStateGroup x:Name="CommonStates">
+          <VisualState x:Name="Normal">
+            <VisualState.Setters>
+              <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SurfaceCard}, Dark={StaticResource DarkCard}}" />
+            </VisualState.Setters>
+          </VisualState>
+          <VisualState x:Name="PointerOver">
+            <VisualState.Setters>
+              <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource PrimaryMuted}, Dark={StaticResource DarkPrimaryMuted}}" />
+            </VisualState.Setters>
+          </VisualState>
+        </VisualStateGroup>
+      </VisualStateGroupList>
+    </Setter>
   </Style>
 
   <Style TargetType="BoxView">
@@ -177,7 +346,7 @@
     <Setter Property="FontSize" Value="{x:StaticResource ButtonTextSize}" />
     <Setter Property="BorderWidth" Value="0" />
     <Setter Property="CornerRadius" Value="8" />
-    <Setter Property="Padding" Value="16,11" />
+    <Setter Property="Padding" Value="{StaticResource ButtonPadding}" />
     <Setter Property="MinimumHeightRequest" Value="44" />
     <Setter Property="MinimumWidthRequest" Value="44" />
     <Setter Property="VisualStateManager.VisualStateGroups">
@@ -208,7 +377,7 @@
     <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource DarkPrimary}}" />
     <Setter Property="BorderWidth" Value="0" />
     <Setter Property="CornerRadius" Value="6" />
-    <Setter Property="Padding" Value="6,4" />
+    <Setter Property="Padding" Value="{StaticResource AdornerPadding}" />
     <Setter Property="Opacity" Value="0.82" />
     <Setter Property="HorizontalOptions" Value="Start" />
     <Setter Property="VerticalOptions" Value="Start" />
@@ -728,6 +897,11 @@
           <VisualState x:Name="Selected">
             <VisualState.Setters>
               <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource PrimaryMuted}, Dark={StaticResource DarkPrimaryMuted}}" />
+            </VisualState.Setters>
+          </VisualState>
+          <VisualState x:Name="PointerOver">
+            <VisualState.Setters>
+              <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SurfaceSubtle}, Dark={StaticResource DarkSubtle}}" />
             </VisualState.Setters>
           </VisualState>
         </VisualStateGroup>

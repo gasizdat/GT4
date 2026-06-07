@@ -6,8 +6,8 @@
     x:Name="Root">
   <Grid
       ColumnDefinitions="Auto, *"
-      ColumnSpacing="12"
-      Padding="10,8"
+      ColumnSpacing="{StaticResource PageContentSpacing}"
+      Padding="{StaticResource CardItemPadding}"
       RowDefinitions="Auto, Auto">
 
     <Image

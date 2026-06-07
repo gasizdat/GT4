@@ -14,7 +14,7 @@
 
         <CollectionView.ItemsLayout>
           <LinearItemsLayout
-              ItemSpacing="8"
+              ItemSpacing="{StaticResource PageContentSpacing}"
               Orientation="Vertical" />
         </CollectionView.ItemsLayout>
 
