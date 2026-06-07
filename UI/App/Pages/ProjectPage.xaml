@@ -14,12 +14,12 @@
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="CreateFamily"
-        Order="Primary"
+        Order="Secondary"
         Text="{x:Static resources:UIStrings.MenuItemNameCreateFamily}" />
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="GoToRevisions"
-        Order="Primary"
+        Order="Secondary"
         Text="{x:Static resources:UIStrings.MenuItemGoToRevisions}" />
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"

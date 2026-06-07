@@ -55,12 +55,12 @@
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="EditPerson"
-        Order="Primary"
+        Order="Secondary"
         Text="{Binding EditPersonToolbarItemName, Source={x:Reference Root}}" />
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="GoToFamily"
-        Order="Primary"
+        Order="Secondary"
         Text="{Binding GoToFamilyName, Source={x:Reference Root}}" />
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"

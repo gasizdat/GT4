@@ -14,7 +14,7 @@
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="CreatePerson"
-        Order="Primary"
+        Order="Secondary"
         Text="{x:Static resources:UIStrings.MenuItemNameAddPerson}" />
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"

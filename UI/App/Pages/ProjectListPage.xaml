@@ -13,7 +13,7 @@
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="Create"
-        Order="Primary"
+        Order="Secondary"
         Text="{x:Static resources:UIStrings.MenuItemNameCreateGenealogyTree}" />
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
