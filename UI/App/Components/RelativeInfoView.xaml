@@ -13,11 +13,11 @@
           x:Key="RelativesIndentation"
           x:TypeArguments="x:Double"
           Default="20"
-          Phone="10" />
+          Phone="12" />
       <OnIdiom
           x:Key="MoreBtnSize"
           x:TypeArguments="x:Double"
-          Default="40" />
+          Default="36" />
       <components:Calculator
           x:Key="VerticalLineMargin"
           Expression="Thickness = Left : X1/2"
@@ -26,14 +26,14 @@
   </ContentView.Resources>
 
   <Grid
-      ColumnDefinitions=" *, Auto, Auto"
+      ColumnDefinitions="*, Auto, Auto"
       RowDefinitions="Auto, Auto, *">
 
     <Label
         Grid.Row="0"
         Grid.Column="0"
         LineBreakMode="WordWrap"
-        Style="{StaticResource FieldValue}"
+        Style="{StaticResource FieldName}"
         Text="{Binding RelationTypeName, Source={x:Reference Root}}"
         VerticalOptions="Start" />
 
@@ -41,7 +41,7 @@
         Grid.Row="0"
         Grid.Column="1"
         IsVisible="{Binding ShowDate, Source={x:Reference Root}}"
-        Style="{StaticResource FieldValue}"
+        Style="{StaticResource FieldName}"
         Text="{Binding RelationshipDate, Source={x:Reference Root}}"
         VerticalOptions="Start" />
 
@@ -49,8 +49,8 @@
         Grid.Row="1"
         Grid.Column="0"
         Grid.ColumnSpan="2"
-        DatesLabelStyle="{StaticResource FieldValue}"
-        NameLabelStyle="{StaticResource FieldName}"
+        DatesLabelStyle="{StaticResource CardContent}"
+        NameLabelStyle="{StaticResource CardTitle}"
         Person="{Binding Relative, Source={x:Reference Root}}"
         SizeChanged="PersonInfoViewSizeChanged"
         Style="{StaticResource HoverItem}" />
@@ -63,17 +63,18 @@
         IsVisible="{Binding ShowMoreButton, Source={x:Reference Root}}"
         Style="{StaticResource EmojiAdorner}"
         Text="{Binding MoreBtnName, Source={x:Reference Root}}"
+        VerticalOptions="Center"
         WidthRequest="{StaticResource MoreBtnSize}" />
 
     <BoxView
         Grid.Row="2"
         Grid.Column="0"
         Margin="{Binding ThicknessResult, Source={x:StaticResource VerticalLineMargin}}"
+        BackgroundColor="{AppThemeBinding Light={StaticResource Divider}, Dark={StaticResource DarkDivider}}"
         HorizontalOptions="Start"
         IsVisible="{Binding ShowRelatives, Source={x:Reference Root}}"
         VerticalOptions="Fill"
-        WidthRequest="1"
-        Color="Gray" />
+        WidthRequest="1" />
 
     <CollectionView
         Grid.Row="2"
@@ -99,27 +100,18 @@
 
             <BoxView
                 Margin="{Binding ThicknessResult, Source={x:Reference HorisontalLineMargin}}"
+                BackgroundColor="{AppThemeBinding Light={StaticResource Divider}, Dark={StaticResource DarkDivider}}"
                 HeightRequest="1"
                 HorizontalOptions="Start"
                 VerticalOptions="Start"
-                WidthRequest="{Binding X, Source={x:Reference RelativeInfoView}}"
-                Color="Gray" />
+                WidthRequest="{Binding X, Source={x:Reference RelativeInfoView}}" />
 
             <components:RelativeInfoView
                 x:Name="RelativeInfoView"
                 Margin="{Thickness Left={StaticResource RelativesIndentation}}"
                 PersonBirthDate="{Binding Relative.BirthDate, Source={x:Reference Root}}"
                 Relative="{Binding .}"
-                ShowMoreButton="True">
-
-              <!--  TODO  -->
-              <!--<components:RelativeInfoView.GestureRecognizers>
-              <TapGestureRecognizer
-                  Command="{Binding Path=PageCommand, Source={x:Reference Root}}"
-                  CommandParameter="{Binding .}" />
-              </components:RelativeInfoView.GestureRecognizers>-->
-
-            </components:RelativeInfoView>
+                ShowMoreButton="True" />
           </Grid>
         </DataTemplate>
       </CollectionView.ItemTemplate>

@@ -14,13 +14,15 @@
 
         <CollectionView.ItemsLayout>
           <LinearItemsLayout
-              ItemSpacing="3"
+              ItemSpacing="8"
               Orientation="Vertical" />
         </CollectionView.ItemsLayout>
 
         <CollectionView.ItemTemplate>
           <DataTemplate>
-            <components:SettingEditorView Editor="{Binding .}" />
+            <Border>
+              <components:SettingEditorView Editor="{Binding .}" />
+            </Border>
           </DataTemplate>
         </CollectionView.ItemTemplate>
       </CollectionView>

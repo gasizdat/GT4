@@ -17,23 +17,23 @@
 
     <components:PageLayout.Body>
       <ScrollView>
-        <VerticalStackLayout
-            Spacing="{StaticResource PageContentSpacing}"
-            VerticalOptions="Center">
+        <Border>
+          <VerticalStackLayout Spacing="{StaticResource PageContentSpacing}">
 
-          <Entry
-              x:Name="ProjectNameEntry"
-              HorizontalOptions="Fill"
-              Placeholder="{x:Static resources:UIStrings.TxtPlaceholderPtojectName}"
-              Text="{Binding ProjectName, Source={x:Reference Root}}" />
+            <Entry
+                x:Name="ProjectNameEntry"
+                HorizontalOptions="Fill"
+                Placeholder="{x:Static resources:UIStrings.TxtPlaceholderPtojectName}"
+                Text="{Binding ProjectName, Source={x:Reference Root}}" />
 
-          <Entry
-              x:Name="ProjectDescriptionEntry"
-              HorizontalOptions="Fill"
-              Placeholder="{x:Static resources:UIStrings.TxtPlaceholderProjectDescription}"
-              Text="{Binding ProjectDescription, Source={x:Reference Root}}" />
+            <Entry
+                x:Name="ProjectDescriptionEntry"
+                HorizontalOptions="Fill"
+                Placeholder="{x:Static resources:UIStrings.TxtPlaceholderProjectDescription}"
+                Text="{Binding ProjectDescription, Source={x:Reference Root}}" />
 
-        </VerticalStackLayout>
+          </VerticalStackLayout>
+        </Border>
       </ScrollView>
     </components:PageLayout.Body>
 
@@ -41,7 +41,6 @@
       <Button
           x:Name="CreateProjectBtn"
           Clicked="OnCreateProjectBtn"
-          FontSize="Large"
           HorizontalOptions="Fill"
           Text="{Binding DialogButtonName, Source={x:Reference Root}}" />
     </components:PageLayout.Footer>

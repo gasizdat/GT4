@@ -13,7 +13,7 @@
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="Create"
-        Order="Secondary"
+        Order="Primary"
         Text="{x:Static resources:UIStrings.MenuItemNameCreateGenealogyTree}" />
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
@@ -29,50 +29,60 @@
 
   <components:PageLayout>
 
-    <components:PageLayout.Header>
-      <Label
-          Style="{StaticResource PageSubtitle}"
-          Text="{x:Static resources:UIStrings.HintProjectPage}" />
-    </components:PageLayout.Header>
-
     <components:PageLayout.Body>
       <CollectionView
           ItemsSource="{Binding Projects, Source={x:Reference Root}}"
           SelectionChanged="OnProjectSelected"
           SelectionMode="Single">
 
+        <CollectionView.ItemsLayout>
+          <LinearItemsLayout
+              ItemSpacing="8"
+              Orientation="Vertical" />
+        </CollectionView.ItemsLayout>
+
         <CollectionView.ItemTemplate>
           <DataTemplate x:DataType="items:ProjectItem">
 
-            <FlexLayout
-                Direction="Row"
-                Style="{StaticResource HoverItem}">
+            <Border Style="{StaticResource HoverItem}">
+              <Grid
+                  ColumnDefinitions="Auto, *"
+                  ColumnSpacing="12"
+                  RowDefinitions="Auto, Auto, Auto">
 
-              <Image
-                  Margin="2"
-                  HeightRequest="32"
-                  Source="{Binding Icon}"
-                  WidthRequest="32" />
-
-              <VerticalStackLayout FlexLayout.Grow="1">
+                <Image
+                    Grid.Row="0"
+                    Grid.RowSpan="3"
+                    Grid.Column="0"
+                    Margin="0,2,0,0"
+                    HeightRequest="40"
+                    Source="{Binding Icon}"
+                    VerticalOptions="Start"
+                    WidthRequest="40" />
 
                 <Label
+                    Grid.Row="0"
+                    Grid.Column="1"
                     Style="{StaticResource CardTitle}"
                     Text="{Binding Name}" />
 
                 <Label
+                    Grid.Row="1"
+                    Grid.Column="1"
                     IsVisible="{Binding DescriptionVisible}"
                     Style="{StaticResource CardSubtitle}"
                     Text="{Binding Description}" />
 
                 <Label
+                    Grid.Row="2"
+                    Grid.Column="1"
                     IsVisible="{Binding RevisionVisible}"
                     Style="{StaticResource CardContent}"
                     Text="{Binding Revision}" />
 
-              </VerticalStackLayout>
+              </Grid>
+            </Border>
 
-            </FlexLayout>
           </DataTemplate>
         </CollectionView.ItemTemplate>
       </CollectionView>
@@ -82,7 +92,6 @@
       <Button
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="Create"
-          FontSize="Large"
           HorizontalOptions="Fill"
           Text="{x:Static resources:UIStrings.BtnNameCreateGenealogyTree}" />
     </components:PageLayout.Footer>

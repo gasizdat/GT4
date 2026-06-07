@@ -16,16 +16,15 @@
       <OnIdiom
           x:Key="PhotoHeight"
           x:TypeArguments="x:Double"
-          Desktop="500"
-          Phone="250"
-          Tablet="400" />
-
+          Desktop="480"
+          Phone="240"
+          Tablet="380" />
       <OnIdiom
           x:Key="PhotoWidth"
           x:TypeArguments="x:Double"
-          Desktop="375"
-          Phone="187.5"
-          Tablet="300" />
+          Desktop="360"
+          Phone="180"
+          Tablet="280" />
 
       <Style x:Key="PhotoStyle" TargetType="Image">
         <Setter Property="Aspect" Value="AspectFit" />
@@ -35,10 +34,34 @@
         <Setter Property="VerticalOptions" Value="Center" />
       </Style>
 
+      <Style x:Key="MetaLabel" TargetType="Label">
+        <Setter Property="FontSize" Value="{StaticResource LabelTextSizeDefault}" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource DarkTextSecondary}}" />
+        <Setter Property="VerticalOptions" Value="Center" />
+        <Setter Property="FontFamily" Value="OpenSansRegular" />
+      </Style>
+
+      <Style x:Key="MetaValue" TargetType="Label">
+        <Setter Property="FontSize" Value="{StaticResource LabelTextSizeDefault}" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource MidnightBlue}, Dark={StaticResource DarkText}}" />
+        <Setter Property="VerticalOptions" Value="Center" />
+        <Setter Property="FontFamily" Value="OpenSansRegular" />
+      </Style>
+
     </ResourceDictionary>
   </ContentPage.Resources>
 
   <ContentPage.ToolbarItems>
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="EditPerson"
+        Order="Primary"
+        Text="{Binding EditPersonToolbarItemName, Source={x:Reference Root}}" />
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="GoToFamily"
+        Order="Primary"
+        Text="{Binding GoToFamilyName, Source={x:Reference Root}}" />
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="GoToHome"
@@ -46,137 +69,124 @@
         Text="{x:Static resources:UIStrings.TitleApp}" />
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="GoToFamily"
+        CommandParameter="Refresh"
         Order="Secondary"
-        Text="{Binding GoToFamilyName, Source={x:Reference Root}}" />
+        Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="RemovePerson"
         Order="Secondary"
         Text="{Binding RemovePersonToolbarItemName, Source={x:Reference Root}}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="EditPerson"
-        Order="Secondary"
-        Text="{Binding EditPersonToolbarItemName, Source={x:Reference Root}}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="Refresh"
-        Order="Secondary"
-        Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
   </ContentPage.ToolbarItems>
 
   <components:PageLayout>
     <components:PageLayout.Header>
       <Grid
-          ColumnDefinitions="Auto, *"
+          ColumnDefinitions="Auto, *, Auto"
           RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto">
 
-        <Grid
+        <!--  Navigation breadcrumb  -->
+        <Button
             Grid.Row="0"
             Grid.Column="0"
-            Grid.ColumnSpan="2"
-            ColumnDefinitions="Auto, *, Auto">
+            Command="{Binding Path=PageCommand, Source={x:Reference Root}}"
+            CommandParameter="PreviousPerson"
+            Style="{StaticResource LeftAdorner}" />
 
-          <Button
-              Grid.Row="0"
-              Grid.Column="0"
-              Command="{Binding Path=PageCommand, Source={x:Reference Root}}"
-              CommandParameter="PreviousPerson"
-              Style="{StaticResource LeftAdorner}" />
+        <CollectionView
+            Grid.Row="0"
+            Grid.Column="1"
+            behaviors:ScrollToSelected.ScrollToItem="{Binding CurrentPerson, Source={x:Reference Root}}"
+            ItemsSource="{Binding NavigationHistory, Source={x:Reference Root}}"
+            SelectedItem="{Binding CurrentPerson, Source={x:Reference Root}}"
+            SelectionMode="Single">
+          <CollectionView.ItemsLayout>
+            <LinearItemsLayout Orientation="Horizontal" />
+          </CollectionView.ItemsLayout>
+          <CollectionView.ItemTemplate>
+            <DataTemplate x:DataType="dto:PersonInfo">
+              <components:PersonInfoView
+                  NameFormat="ShortPersonName"
+                  NameLabelStyle="{StaticResource CardContent}"
+                  Person="{Binding .}"
+                  ShowAge="False"
+                  ShowDates="False"
+                  ShowPhoto="False"
+                  Style="{StaticResource HoverItem}" />
+            </DataTemplate>
+          </CollectionView.ItemTemplate>
+        </CollectionView>
 
-          <CollectionView
-              Grid.Row="0"
-              Grid.Column="1"
-              behaviors:ScrollToSelected.ScrollToItem="{Binding CurrentPerson, Source={x:Reference Root}}"
-              ItemsSource="{Binding NavigationHistory, Source={x:Reference Root}}"
-              SelectedItem="{Binding CurrentPerson, Source={x:Reference Root}}"
-              SelectionMode="Single">
-            <CollectionView.ItemsLayout>
-              <LinearItemsLayout Orientation="Horizontal" />
-            </CollectionView.ItemsLayout>
-            <CollectionView.ItemTemplate>
-              <DataTemplate x:DataType="dto:PersonInfo">
-                <components:PersonInfoView
-                    NameFormat="ShortPersonName"
-                    NameLabelStyle="{StaticResource FieldValue}"
-                    Person="{Binding .}"
-                    ShowAge="False"
-                    ShowDates="False"
-                    ShowPhoto="False"
-                    Style="{StaticResource HoverItem}" />
-              </DataTemplate>
-            </CollectionView.ItemTemplate>
-          </CollectionView>
+        <Button
+            Grid.Row="0"
+            Grid.Column="2"
+            Command="{Binding Path=PageCommand, Source={x:Reference Root}}"
+            CommandParameter="NextPerson"
+            Style="{StaticResource RightAdorner}" />
 
-          <Button
-              Grid.Row="0"
-              Grid.Column="2"
-              Command="{Binding Path=PageCommand, Source={x:Reference Root}}"
-              CommandParameter="NextPerson"
-              Style="{StaticResource RightAdorner}" />
-
-        </Grid>
-
+        <!--  Person name  -->
         <Label
             Grid.Row="1"
             Grid.Column="0"
-            Grid.ColumnSpan="2"
-            Style="{StaticResource GroupTitle}"
+            Grid.ColumnSpan="3"
+            Margin="0,8,0,2"
+            Style="{StaticResource PageTitle}"
             Text="{Binding CommonName, Source={x:Reference Root}}" />
 
         <Label
             Grid.Row="2"
             Grid.Column="0"
-            Grid.ColumnSpan="2"
+            Grid.ColumnSpan="3"
             IsVisible="{Binding ShowFullName, Source={x:Reference Root}}"
+            Margin="0,0,0,8"
             Style="{StaticResource CardSubtitle}"
             Text="{Binding FullName, Source={x:Reference Root}}" />
 
+        <!--  Metadata: dates + age  -->
         <Label
             Grid.Row="3"
             Grid.Column="0"
-            Style="{StaticResource FieldName}"
+            Style="{StaticResource MetaLabel}"
             Text="{x:Static resources:UIStrings.FieldDateOfBirth}" />
-
         <Label
             Grid.Row="3"
             Grid.Column="1"
-            Style="{StaticResource FieldValue}"
+            Grid.ColumnSpan="2"
+            Style="{StaticResource MetaValue}"
             Text="{Binding BirthDate, Source={x:Reference Root}}" />
 
         <Label
             Grid.Row="4"
             Grid.Column="0"
             IsVisible="{Binding ShowDeathDate, Source={x:Reference Root}}"
-            Style="{StaticResource FieldName}"
+            Style="{StaticResource MetaLabel}"
             Text="{x:Static resources:UIStrings.FieldDateOfDeath}" />
-
         <Label
             Grid.Row="4"
             Grid.Column="1"
+            Grid.ColumnSpan="2"
             IsVisible="{Binding ShowDeathDate, Source={x:Reference Root}}"
-            Style="{StaticResource FieldValue}"
+            Style="{StaticResource MetaValue}"
             Text="{Binding DeathDate, Source={x:Reference Root}}" />
 
         <Label
             Grid.Row="5"
             Grid.Column="0"
-            Style="{StaticResource FieldName}"
+            Style="{StaticResource MetaLabel}"
             Text="{x:Static resources:UIStrings.FieldAge}" />
-
         <Label
             Grid.Row="5"
             Grid.Column="1"
-            Style="{StaticResource FieldValue}"
+            Grid.ColumnSpan="2"
+            Style="{StaticResource MetaValue}"
             Text="{Binding Age, Source={x:Reference Root}}" />
 
         <Label
             Grid.Row="6"
             Grid.Column="0"
-            Grid.ColumnSpan="2"
+            Grid.ColumnSpan="3"
             IsVisible="{Binding ShowSinceBirth, Source={x:Reference Root}}"
-            Style="{StaticResource FieldValue}"
+            Style="{StaticResource CardContent}"
             Text="{Binding SinceBirth, Source={x:Reference Root}}" />
 
       </Grid>
@@ -199,9 +209,9 @@
                 Margin="-1"
                 BackgroundColor="Transparent"
                 Markdown="{Binding Biography, Source={x:Reference Root}, Mode=OneWay}"
-                MinimumHeightRequest="{OnIdiom Default=300,
-                                               Phone=200}" />
+                MinimumHeightRequest="{OnIdiom Default=300, Phone=200}" />
           </Border>
+
           <components:ImagePresenter
               Grid.Row="{Binding Path=SmartLayout.Image.Row, Source={x:Reference Root}}"
               Grid.RowSpan="{Binding Path=SmartLayout.Image.RowSpan, Source={x:Reference Root}}"
@@ -240,7 +250,6 @@
                   </components:RelativeInfoView.GestureRecognizers>
 
                 </components:RelativeInfoView>
-
               </DataTemplate>
             </CollectionView.ItemTemplate>
           </CollectionView>

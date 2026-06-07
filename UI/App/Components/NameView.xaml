@@ -35,9 +35,9 @@
         <DataTemplate x:DataType="dto:PersonInfo">
           <Grid>
             <components:PersonInfoView
-                DatesLabelStyle="{StaticResource FieldValue}"
+                DatesLabelStyle="{StaticResource CardContent}"
                 NameFormat="{Binding PersonNamesFormat, Source={x:Reference Root}}"
-                NameLabelStyle="{StaticResource FieldName}"
+                NameLabelStyle="{StaticResource CardTitle}"
                 Person="{Binding .}" />
           </Grid>
         </DataTemplate>

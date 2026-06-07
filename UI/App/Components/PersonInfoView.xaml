@@ -6,8 +6,9 @@
     x:Name="Root">
   <Grid
       ColumnDefinitions="Auto, *"
-      ColumnSpacing="20"
-      RowDefinitions="*, Auto">
+      ColumnSpacing="12"
+      Padding="10,8"
+      RowDefinitions="Auto, Auto">
 
     <Image
         Grid.Row="0"

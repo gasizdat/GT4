@@ -21,60 +21,49 @@
 
   <components:PageLayout>
     <components:PageLayout.Header>
-      <Grid
-          Padding="20"
-          ColumnDefinitions="Auto, Auto, *"
-          HorizontalOptions="Fill"
-          RowDefinitions="Auto, Auto, *"
-          RowSpacing="10"
-          VerticalOptions="Start">
+      <Border Margin="0,4,0,0">
+        <Grid
+            ColumnDefinitions="Auto, Auto, *"
+            RowDefinitions="Auto, Auto"
+            RowSpacing="8">
 
-        <!--  Row 0 - Title  -->
-        <Label
-            Grid.Row="0"
-            Grid.ColumnSpan="3"
-            Style="{StaticResource PageSubtitle}"
-            Text="{x:Static resources:UIStrings.HintNamesPage}" />
+          <Label
+              Grid.Row="0"
+              Grid.Column="0"
+              Style="{StaticResource FieldName}"
+              Text="{x:Static resources:UIStrings.FieldSelectName}"
+              VerticalOptions="Center" />
 
-        <!--  Row 1 - Filters  -->
-        <Label
-            Grid.Row="1"
-            Grid.Column="0"
-            Style="{StaticResource FieldName}"
-            Text="{x:Static resources:UIStrings.FieldSelectName}" />
+          <Picker
+              Grid.Row="0"
+              Grid.Column="1"
+              ItemDisplayBinding="{Binding Name}"
+              ItemsSource="{Binding BiologicalSexes, Source={x:Reference Root}}"
+              SelectedItem="{Binding CurrentBiologicalSex, Source={x:Reference Root}}" />
 
-        <Picker
-            Grid.Row="1"
-            Grid.Column="1"
-            ItemDisplayBinding="{Binding Name}"
-            ItemsSource="{Binding BiologicalSexes, Source={x:Reference Root}}"
-            SelectedItem="{Binding CurrentBiologicalSex, Source={x:Reference Root}}"
-            Style="{StaticResource FieldValue}" />
+          <Picker
+              Grid.Row="0"
+              Grid.Column="2"
+              ItemDisplayBinding="{Binding TypeName}"
+              ItemsSource="{Binding NameTypes, Source={x:Reference Root}}"
+              SelectedItem="{Binding CurrentNameType, Source={x:Reference Root}}" />
 
-        <Picker
-            Grid.Row="1"
-            Grid.Column="2"
-            ItemDisplayBinding="{Binding TypeName}"
-            ItemsSource="{Binding NameTypes, Source={x:Reference Root}}"
-            SelectedItem="{Binding CurrentNameType, Source={x:Reference Root}}"
-            Style="{StaticResource FieldValue}" />
+          <Label
+              Grid.Row="1"
+              Grid.Column="0"
+              Style="{StaticResource FieldName}"
+              Text="{x:Static resources:UIStrings.FieldSearchText}"
+              VerticalOptions="Center" />
 
-        <!--  Row 2 - Search  -->
-        <Label
-            Grid.Row="2"
-            Grid.Column="0"
-            Style="{StaticResource FieldName}"
-            Text="{x:Static resources:UIStrings.FieldSearchText}" />
+          <Entry
+              Grid.Row="1"
+              Grid.Column="1"
+              Grid.ColumnSpan="2"
+              HorizontalOptions="Fill"
+              Text="{Binding NameFilter, Source={x:Reference Root}}" />
 
-        <Entry
-            Grid.Row="2"
-            Grid.Column="1"
-            Grid.ColumnSpan="2"
-            HorizontalOptions="Fill"
-            Style="{StaticResource FieldValue}"
-            Text="{Binding NameFilter, Source={x:Reference Root}}" />
-
-      </Grid>
+        </Grid>
+      </Border>
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>
@@ -87,11 +76,16 @@
           SelectionMode="Single"
           VerticalOptions="Start">
 
+        <CollectionView.ItemsLayout>
+          <LinearItemsLayout
+              ItemSpacing="2"
+              Orientation="Vertical" />
+        </CollectionView.ItemsLayout>
+
         <CollectionView.ItemTemplate>
           <DataTemplate x:DataType="dto:Name">
             <Grid
-                Padding="{Thickness Left={StaticResource PageContentSpacing},
-                                    Right={StaticResource PageContentSpacing}}"
+                Padding="4,2"
                 ColumnDefinitions="*, Auto, Auto, Auto"
                 Style="{StaticResource SelectableItem}">
 
@@ -114,21 +108,21 @@
                   Command="{Binding DeleteNameCommand, Source={x:Reference Root}}"
                   CommandParameter="{Binding .}"
                   Style="{StaticResource DeleteAdorner}"
-                  VerticalOptions="Start" />
+                  VerticalOptions="Center" />
 
               <Button
                   Grid.Column="2"
                   Command="{Binding EditNameCommand, Source={x:Reference Root}}"
                   CommandParameter="{Binding .}"
                   Style="{StaticResource EditAdorner}"
-                  VerticalOptions="Start" />
+                  VerticalOptions="Center" />
 
               <Button
                   Grid.Column="3"
                   Command="{Binding TogglePersonsCommand, Source={x:Reference NamePresenter}}"
                   Style="{StaticResource EmojiAdorner}"
                   Text="{Binding MoreBtnName, Source={x:Reference NamePresenter}}"
-                  VerticalOptions="Start" />
+                  VerticalOptions="Center" />
 
             </Grid>
           </DataTemplate>

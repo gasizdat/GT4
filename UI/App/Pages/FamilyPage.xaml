@@ -13,9 +13,9 @@
   <ContentPage.ToolbarItems>
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="RemoveFamily"
-        Order="Secondary"
-        Text="{Binding RemoveFamilyToolbarItemName, Source={x:Reference Root}}" />
+        CommandParameter="CreatePerson"
+        Order="Primary"
+        Text="{x:Static resources:UIStrings.MenuItemNameAddPerson}" />
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="EditFamily"
@@ -23,23 +23,17 @@
         Text="{Binding EditFamilyToolbarItemName, Source={x:Reference Root}}" />
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="CreatePerson"
-        Order="Secondary"
-        Text="{x:Static resources:UIStrings.MenuItemNameAddPerson}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="Refresh"
         Order="Secondary"
         Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="RemoveFamily"
+        Order="Secondary"
+        Text="{Binding RemoveFamilyToolbarItemName, Source={x:Reference Root}}" />
   </ContentPage.ToolbarItems>
 
   <components:PageLayout>
-
-    <components:PageLayout.Header>
-      <Label
-          Style="{StaticResource PageSubtitle}"
-          Text="{x:Static resources:UIStrings.HintFamilyPage}" />
-    </components:PageLayout.Header>
 
     <components:PageLayout.Body>
       <ScrollView>
@@ -56,8 +50,7 @@
                   Margin="{Thickness Bottom={StaticResource PageContentSpacing},
                                      Right={StaticResource PageContentSpacing}}"
                   FlexLayout.Grow="1"
-                  MinimumWidthRequest="{Binding Path=PersonItemMinimalWidth, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
-                  Style="{StaticResource HoverItem}">
+                  MinimumWidthRequest="{Binding Path=PersonItemMinimalWidth, Source={RelativeSource AncestorType={x:Type ContentPage}}}">
 
                 <Border.GestureRecognizers>
                   <TapGestureRecognizer
@@ -68,15 +61,15 @@
                 <Border.Shadow>
                   <Shadow
                       Brush="Black"
-                      Opacity="0.2"
-                      Radius="5"
-                      Offset="5,5" />
+                      Opacity="0.08"
+                      Radius="6"
+                      Offset="0,2" />
                 </Border.Shadow>
 
                 <components:PersonInfoView
-                    DatesLabelStyle="{StaticResource FieldValue}"
+                    DatesLabelStyle="{StaticResource CardContent}"
                     NameFormat="{Binding PersonNamesFormat, Source={x:Reference Root}}"
-                    NameLabelStyle="{StaticResource FieldName}"
+                    NameLabelStyle="{StaticResource CardTitle}"
                     Person="{Binding .}" />
               </Border>
             </DataTemplate>
@@ -84,13 +77,14 @@
         </FlexLayout>
       </ScrollView>
     </components:PageLayout.Body>
+
     <components:PageLayout.Footer>
       <Button
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="CreatePerson"
-          FontSize="Large"
           HorizontalOptions="Fill"
           Text="{x:Static resources:UIStrings.BtnNameCreateFamilyPerson}" />
     </components:PageLayout.Footer>
+
   </components:PageLayout>
 </ContentPage>

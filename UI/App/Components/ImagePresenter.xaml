@@ -23,7 +23,7 @@
         CommandParameter="PrevPicture"
         HorizontalOptions="Start"
         IsVisible="{Binding ShowPrevNext, Source={x:Reference Root}}"
-        Opacity="0.2"
+        Opacity="0.55"
         Source="left_row.png"
         VerticalOptions="Center" />
     <ImageButton
@@ -32,7 +32,7 @@
         CommandParameter="NextPicture"
         HorizontalOptions="End"
         IsVisible="{Binding ShowPrevNext, Source={x:Reference Root}}"
-        Opacity="0.2"
+        Opacity="0.55"
         Source="right_row.png"
         VerticalOptions="Center" />
   </Grid>

@@ -11,49 +11,51 @@
 
   <components:PageLayout>
     <components:PageLayout.Header>
-      <Label
-          Style="{StaticResource PageTitle}"
-          Text="{x:Static resources:UIStrings.TitleSelectNameDialog}" />
+      <VerticalStackLayout Spacing="{StaticResource PageContentSpacing}">
+
+        <Label
+            Style="{StaticResource PageTitle}"
+            Text="{x:Static resources:UIStrings.TitleSelectNameDialog}" />
+
+        <Grid
+            ColumnDefinitions="Auto, *"
+            ColumnSpacing="{StaticResource PageContentSpacing}">
+          <Label
+              Grid.Column="0"
+              Style="{StaticResource FieldName}"
+              Text="{x:Static resources:UIStrings.FieldSelectName}"
+              VerticalOptions="Center" />
+          <Picker
+              Grid.Column="1"
+              ItemDisplayBinding="{Binding TypeName}"
+              ItemsSource="{Binding NameTypes, Source={x:Reference Root}}"
+              SelectedItem="{Binding CurrentNameType, Source={x:Reference Root}}" />
+        </Grid>
+
+      </VerticalStackLayout>
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>
       <Grid
-          Padding="20"
-          ColumnDefinitions="Auto, *"
-          HorizontalOptions="Fill"
-          RowDefinitions="Auto, *, Auto, Auto"
-          RowSpacing="10"
-          VerticalOptions="Start">
-
-        <Label
-            Grid.Row="0"
-            Grid.Column="0"
-            Style="{StaticResource FieldName}"
-            Text="{x:Static resources:UIStrings.FieldSelectName}" />
-
-        <Picker
-            Grid.Row="0"
-            Grid.Column="1"
-            ItemDisplayBinding="{Binding TypeName}"
-            ItemsSource="{Binding NameTypes, Source={x:Reference Root}}"
-            SelectedItem="{Binding CurrentNameType, Source={x:Reference Root}}"
-            Style="{StaticResource FieldValue}" />
+          RowDefinitions="*, Auto, Auto">
 
         <CollectionView
             x:Name="NamesCollectionView"
-            Grid.Row="1"
-            Grid.Column="0"
-            Grid.ColumnSpan="2"
+            Grid.Row="0"
             behaviors:ScrollToSelected.ScrollToItem="{Binding CurrentName, Source={x:Reference Root}}"
             HorizontalOptions="Fill"
             ItemsSource="{Binding Names, Source={x:Reference Root}}"
             SelectedItem="{Binding CurrentName, Source={x:Reference Root}}"
             SelectionMode="Single">
+          <CollectionView.ItemsLayout>
+            <LinearItemsLayout
+                ItemSpacing="4"
+                Orientation="Vertical" />
+          </CollectionView.ItemsLayout>
           <CollectionView.ItemTemplate>
             <DataTemplate>
               <Grid
-                  Padding="{Thickness Left={StaticResource PageContentSpacing},
-                                      Right={StaticResource PageContentSpacing}}"
+                  Padding="4,2"
                   ColumnDefinitions="*, Auto"
                   Style="{StaticResource SelectableItem}">
                 <Label
@@ -62,7 +64,6 @@
                     HorizontalTextAlignment="Start"
                     Style="{StaticResource FieldValue}"
                     Text="{Binding Info.Value}" />
-
                 <Button
                     Grid.Column="1"
                     Command="{Binding DialogCommand, Source={x:Reference Root}}"
@@ -75,17 +76,15 @@
         </CollectionView>
 
         <Button
-            Grid.Row="2"
-            Grid.Column="0"
-            Grid.ColumnSpan="2"
+            Grid.Row="1"
             Command="{Binding DialogCommand, Source={x:Reference Root}}"
             CommandParameter="AddName"
             HorizontalOptions="Fill"
+            Margin="0,4,0,0"
             Style="{StaticResource AddAdorner}" />
 
-        <!--  TODO. Investigate why this placeholder is required so the addorner button doesn't get crop  -->
         <Border
-            Grid.Row="3"
+            Grid.Row="2"
             MinimumHeightRequest="{StaticResource AddornerButtonEmojiSize}"
             StrokeThickness="0" />
 
@@ -96,7 +95,6 @@
       <Button
           Command="{Binding DialogCommand, Source={x:Reference Root}}"
           CommandParameter="SelectName"
-          FontSize="Large"
           HorizontalOptions="Fill"
           Text="{Binding DialogButtonName, Source={x:Reference Root}}" />
     </components:PageLayout.Footer>

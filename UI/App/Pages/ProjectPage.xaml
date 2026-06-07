@@ -13,24 +13,9 @@
   <ContentPage.ToolbarItems>
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="RemoveProject"
-        Order="Secondary"
-        Text="{Binding RemoveProjectToolbarItemName, Source={x:Reference Root}}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="EditProject"
-        Order="Secondary"
-        Text="{Binding EditProjectToolbarItemName, Source={x:Reference Root}}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="CreateFamily"
-        Order="Secondary"
+        Order="Primary"
         Text="{x:Static resources:UIStrings.MenuItemNameCreateFamily}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="GoToNames"
-        Order="Secondary"
-        Text="{x:Static resources:UIStrings.MenuItemGoToNames}" />
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="GoToRevisions"
@@ -38,17 +23,27 @@
         Text="{x:Static resources:UIStrings.MenuItemGoToRevisions}" />
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="EditProject"
+        Order="Secondary"
+        Text="{Binding EditProjectToolbarItemName, Source={x:Reference Root}}" />
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="GoToNames"
+        Order="Secondary"
+        Text="{x:Static resources:UIStrings.MenuItemGoToNames}" />
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="Refresh"
         Order="Secondary"
         Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="RemoveProject"
+        Order="Secondary"
+        Text="{Binding RemoveProjectToolbarItemName, Source={x:Reference Root}}" />
   </ContentPage.ToolbarItems>
 
   <components:PageLayout>
-    <components:PageLayout.Header>
-      <Label
-          Style="{StaticResource PageSubtitle}"
-          Text="{x:Static resources:UIStrings.HintFamiliesPage}" />
-    </components:PageLayout.Header>
 
     <components:PageLayout.Body>
       <CollectionView
@@ -58,57 +53,53 @@
 
         <CollectionView.ItemsLayout>
           <LinearItemsLayout
-              ItemSpacing="3"
+              ItemSpacing="10"
               Orientation="Vertical" />
         </CollectionView.ItemsLayout>
 
         <CollectionView.ItemTemplate>
           <DataTemplate x:DataType="items:FamilyInfoItem">
-            <Grid
-                ColumnDefinitions="Auto, *"
-                ColumnSpacing="10"
-                RowDefinitions="Auto, Auto"
-                Style="{StaticResource HoverItem}">
+            <Border>
+              <Grid
+                  ColumnDefinitions="Auto, *"
+                  ColumnSpacing="12"
+                  RowDefinitions="Auto, Auto">
 
-              <Image
-                  Grid.Row="0"
-                  Grid.Column="0"
-                  Source="{Binding Icon}"
-                  Style="{StaticResource PhotoThumbStyle}" />
+                <Image
+                    Grid.Row="0"
+                    Grid.RowSpan="2"
+                    Grid.Column="0"
+                    Source="{Binding Icon}"
+                    Style="{StaticResource PhotoThumbStyle}"
+                    VerticalOptions="Start" />
 
-              <Label
-                  Grid.Row="0"
-                  Grid.RowSpan="2"
-                  Grid.Column="1"
-                  Style="{StaticResource CardTitle}"
-                  Text="{Binding Info.Value}"
-                  VerticalOptions="Start" />
+                <Label
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    Style="{StaticResource CardTitle}"
+                    Text="{Binding Info.Value}"
+                    VerticalOptions="Start" />
 
-              <StackLayout
-                  Grid.Row="1"
-                  Grid.Column="0"
-                  Grid.ColumnSpan="2"
-                  Margin="{Thickness Left={StaticResource PhotoThumbWidth}}"
-                  BindableLayout.ItemsSource="{Binding Persons}"
-                  Shadow="{Shadow Offset={Point X=10,
-                                                Y=10},
-                                  Brush=Gray}">
-                <BindableLayout.ItemTemplate>
-                  <DataTemplate x:DataType="dto:PersonInfo">
+                <StackLayout
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    BindableLayout.ItemsSource="{Binding Persons}"
+                    Spacing="4">
+                  <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="dto:PersonInfo">
+                      <components:PersonInfoView
+                          NameFormat="{Binding PersonNamesFormat, Source={x:Reference Root}}"
+                          NameLabelStyle="{StaticResource CardContent}"
+                          Person="{Binding .}"
+                          PhotoStyle="{StaticResource PhotoCompactStyle}"
+                          ShowAge="False"
+                          ShowDates="False" />
+                    </DataTemplate>
+                  </BindableLayout.ItemTemplate>
+                </StackLayout>
 
-                    <components:PersonInfoView
-                        NameFormat="{Binding PersonNamesFormat, Source={x:Reference Root}}"
-                        NameLabelStyle="{StaticResource FieldValue}"
-                        Person="{Binding .}"
-                        PhotoStyle="{StaticResource PhotoCompactStyle}"
-                        ShowAge="False"
-                        ShowDates="False" />
-
-                  </DataTemplate>
-                </BindableLayout.ItemTemplate>
-              </StackLayout>
-
-            </Grid>
+              </Grid>
+            </Border>
           </DataTemplate>
         </CollectionView.ItemTemplate>
       </CollectionView>
@@ -118,7 +109,6 @@
       <Button
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="CreateFamily"
-          FontSize="Large"
           HorizontalOptions="Fill"
           Text="{x:Static resources:UIStrings.BtnNameCreateFamily}" />
     </components:PageLayout.Footer>

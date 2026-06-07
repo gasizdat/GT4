@@ -14,21 +14,19 @@
       <OnIdiom
           x:Key="PhotoHeight"
           x:TypeArguments="x:Double"
-          Desktop="300"
+          Desktop="280"
           Phone="100"
           Tablet="140" />
-
       <OnIdiom
           x:Key="PhotoWidth"
           x:TypeArguments="x:Double"
-          Desktop="300"
+          Desktop="280"
           Phone="100"
           Tablet="140" />
-
       <OnIdiom
           x:Key="MinBioHeight"
           x:TypeArguments="x:Double"
-          Desktop="300"
+          Desktop="280"
           Phone="100"
           Tablet="140" />
 
@@ -40,7 +38,7 @@
         <Setter Property="VerticalOptions" Value="Center" />
       </Style>
 
-      <Style x:Key="CardBorderStyle" TargetType="Border">
+      <Style x:Key="SectionBorder" TargetType="Border">
         <Setter Property="Margin" Value="{Thickness Bottom={StaticResource PageContentSpacing}}" />
       </Style>
 
@@ -58,28 +56,27 @@
       <ScrollView>
         <VerticalStackLayout>
 
-          <!--  Pictures  -->
-          <Border Style="{StaticResource CardBorderStyle}">
+          <!--  Photos  -->
+          <Border Style="{StaticResource SectionBorder}">
             <Grid
-                ColumnDefinitions="*, Auto, Auto"
+                ColumnDefinitions="*, Auto"
                 RowDefinitions="Auto, Auto">
               <Label
                   Grid.Row="0"
                   Grid.Column="0"
-                  Grid.ColumnSpan="3"
+                  Grid.ColumnSpan="2"
                   Style="{StaticResource GroupTitle}"
                   Text="{x:Static resources:UIStrings.FieldPersonPhotos}" />
+
               <CollectionView
                   Grid.Row="1"
                   Grid.Column="0"
                   HorizontalScrollBarVisibility="Always"
                   ItemsSource="{Binding Photos, Source={x:Reference Root}}"
                   SelectionMode="Single">
-
                 <CollectionView.ItemsLayout>
                   <LinearItemsLayout Orientation="Horizontal" />
                 </CollectionView.ItemsLayout>
-
                 <CollectionView.ItemTemplate>
                   <DataTemplate>
                     <Grid
@@ -101,7 +98,6 @@
                           Grid.Column="1"
                           Command="{Binding DialogCommand, Source={x:Reference Root}}"
                           Style="{StaticResource EditAdorner}">
-
                         <Button.CommandParameter>
                           <components:AdornerCommandParameter
                               CommandName="EditPhotoCommand"
@@ -114,7 +110,6 @@
                           Grid.Column="2"
                           Command="{Binding DialogCommand, Source={x:Reference Root}}"
                           Style="{StaticResource DeleteAdorner}">
-
                         <Button.CommandParameter>
                           <components:AdornerCommandParameter
                               CommandName="RemovePhotoCommand"
@@ -127,7 +122,6 @@
                           Grid.Column="1"
                           Command="{Binding DialogCommand, Source={x:Reference Root}}"
                           Style="{StaticResource LeftAdorner}">
-
                         <Button.CommandParameter>
                           <components:AdornerCommandParameter
                               CommandName="MovePhotoToLeftCommand"
@@ -140,7 +134,6 @@
                           Grid.Column="2"
                           Command="{Binding DialogCommand, Source={x:Reference Root}}"
                           Style="{StaticResource RightAdorner}">
-
                         <Button.CommandParameter>
                           <components:AdornerCommandParameter
                               CommandName="MovePhotoToRightCommand"
@@ -152,6 +145,7 @@
                   </DataTemplate>
                 </CollectionView.ItemTemplate>
               </CollectionView>
+
               <Button
                   Grid.Row="1"
                   Grid.Column="1"
@@ -159,35 +153,29 @@
                   CommandParameter="AddPhotoCommand"
                   HeightRequest="{StaticResource PhotoHeight}"
                   Style="{StaticResource AddAdorner}" />
-
             </Grid>
           </Border>
 
           <!--  Biological Sex  -->
-          <Border Style="{StaticResource CardBorderStyle}">
+          <Border Style="{StaticResource SectionBorder}">
             <Grid
                 ColumnDefinitions="Auto, *"
                 RowDefinitions="Auto">
-
               <Label
-                  Grid.Row="0"
                   Grid.Column="0"
                   Style="{StaticResource FieldName}"
-                  Text="{x:Static resources:UIStrings.FieldBiologicalSex}" />
-
+                  Text="{x:Static resources:UIStrings.FieldBiologicalSex}"
+                  VerticalOptions="Center" />
               <Picker
-                  Grid.Row="0"
                   Grid.Column="1"
                   ItemDisplayBinding="{Binding Name}"
                   ItemsSource="{Binding BiologicalSexes, Source={x:Reference Root}}"
-                  SelectedItem="{Binding BioSex, Source={x:Reference Root}}"
-                  Style="{StaticResource FieldValue}" />
-
+                  SelectedItem="{Binding BioSex, Source={x:Reference Root}}" />
             </Grid>
           </Border>
 
           <!--  Names  -->
-          <Border Style="{StaticResource CardBorderStyle}">
+          <Border Style="{StaticResource SectionBorder}">
             <Grid
                 ColumnDefinitions="Auto, *"
                 RowDefinitions="Auto, *, Auto">
@@ -201,19 +189,17 @@
               <Label
                   Grid.Row="0"
                   Grid.Column="1"
-                  Margin="{Thickness Bottom={StaticResource GroupTitleMarginBottom},
-                                     Left={StaticResource PageContentSpacing}}"
-                  Style="{StaticResource FieldValue}"
+                  Margin="{Thickness Bottom={StaticResource GroupTitleMarginBottom}, Left={StaticResource PageContentSpacing}}"
+                  Style="{StaticResource CardSubtitle}"
                   Text="{Binding PersonFullName, Source={x:Reference Root}}" />
 
               <CollectionView
                   Grid.Row="1"
                   Grid.Column="0"
                   Grid.ColumnSpan="2"
-                  HorizontalOptions="Center"
+                  HorizontalOptions="Fill"
                   ItemsSource="{Binding Names, Source={x:Reference Root}}"
                   SelectionMode="Single">
-
                 <CollectionView.ItemTemplate>
                   <DataTemplate>
                     <Grid
@@ -226,7 +212,6 @@
                       <Label
                           Grid.Row="0"
                           Grid.Column="0"
-                          HorizontalOptions="Start"
                           Style="{StaticResource FieldName}"
                           Text="{Binding Type}" />
 
@@ -237,7 +222,6 @@
                           Command="{Binding DialogCommand, Source={x:Reference Root}}"
                           Style="{StaticResource UpAdorner}"
                           VerticalOptions="Center">
-
                         <Button.CommandParameter>
                           <components:AdornerCommandParameter
                               CommandName="MoveNameUpCommand"
@@ -252,7 +236,6 @@
                           Command="{Binding DialogCommand, Source={x:Reference Root}}"
                           Style="{StaticResource DownAdorner}"
                           VerticalOptions="Center">
-
                         <Button.CommandParameter>
                           <components:AdornerCommandParameter
                               CommandName="MoveNameDownCommand"
@@ -267,7 +250,6 @@
                           Command="{Binding DialogCommand, Source={x:Reference Root}}"
                           Style="{StaticResource EditAdorner}"
                           VerticalOptions="Center">
-
                         <Button.CommandParameter>
                           <components:AdornerCommandParameter
                               CommandName="EditNameCommand"
@@ -282,7 +264,6 @@
                           Command="{Binding DialogCommand, Source={x:Reference Root}}"
                           Style="{StaticResource DeleteAdorner}"
                           VerticalOptions="Center">
-
                         <Button.CommandParameter>
                           <components:AdornerCommandParameter
                               CommandName="RemoveNameCommand"
@@ -316,7 +297,7 @@
           </Border>
 
           <!--  Dates  -->
-          <Border Style="{StaticResource CardBorderStyle}">
+          <Border Style="{StaticResource SectionBorder}">
             <Grid
                 ColumnDefinitions="*, Auto, Auto, Auto"
                 RowDefinitions="Auto, Auto, Auto">
@@ -332,55 +313,55 @@
                   Grid.Column="0"
                   Caption="{x:Static resources:UIStrings.FieldDateOfBirth}"
                   Date="{Binding BirthDate, Source={x:Reference Root}}" />
-
               <Button
                   Grid.Row="1"
                   Grid.Column="1"
                   Command="{Binding DialogCommand, Source={x:Reference Root}}"
                   CommandParameter="EditBirthDateCommand"
-                  Style="{StaticResource EditAdorner}" />
-
+                  Style="{StaticResource EditAdorner}"
+                  VerticalOptions="Center" />
               <Button
                   Grid.Row="1"
                   Grid.Column="2"
                   Command="{Binding DialogCommand, Source={x:Reference Root}}"
                   CommandParameter="UndefinedBirthDateCommand"
                   Style="{StaticResource EmojiAdorner}"
-                  Text="�" />
+                  Text="?"
+                  VerticalOptions="Center" />
 
               <components:DateInfoView
                   Grid.Row="2"
                   Grid.Column="0"
                   Caption="{x:Static resources:UIStrings.FieldDateOfDeath}"
                   Date="{Binding DeathDate, Source={x:Reference Root}}" />
-
               <Button
                   Grid.Row="2"
                   Grid.Column="1"
                   Command="{Binding DialogCommand, Source={x:Reference Root}}"
                   CommandParameter="EditDeathDateCommand"
-                  Style="{StaticResource EditAdorner}" />
-
+                  Style="{StaticResource EditAdorner}"
+                  VerticalOptions="Center" />
               <Button
                   Grid.Row="2"
                   Grid.Column="2"
                   Command="{Binding DialogCommand, Source={x:Reference Root}}"
                   CommandParameter="UndefinedDeathDateCommand"
                   Style="{StaticResource EmojiAdorner}"
-                  Text="�" />
-
+                  Text="?"
+                  VerticalOptions="Center" />
               <Button
                   Grid.Row="2"
                   Grid.Column="3"
                   Command="{Binding DialogCommand, Source={x:Reference Root}}"
                   CommandParameter="RemoveDeathDateCommand"
-                  Style="{StaticResource DeleteAdorner}" />
+                  Style="{StaticResource DeleteAdorner}"
+                  VerticalOptions="Center" />
 
             </Grid>
           </Border>
 
           <!--  Relationships  -->
-          <Border Style="{StaticResource CardBorderStyle}">
+          <Border Style="{StaticResource SectionBorder}">
             <Grid
                 ColumnDefinitions="*"
                 RowDefinitions="Auto, *, Auto">
@@ -396,7 +377,11 @@
                   Grid.Column="0"
                   ItemsSource="{Binding Relatives, Source={x:Reference Root}}"
                   SelectionMode="Single">
-
+                <CollectionView.ItemsLayout>
+                  <LinearItemsLayout
+                      ItemSpacing="4"
+                      Orientation="Vertical" />
+                </CollectionView.ItemsLayout>
                 <CollectionView.ItemTemplate>
                   <DataTemplate x:DataType="dto:RelativeInfo">
                     <Grid
@@ -406,17 +391,14 @@
                         RowDefinitions="Auto">
 
                       <components:RelativeInfoView
-                          Grid.Row="0"
                           Grid.Column="0"
                           Relative="{Binding .}" />
 
                       <Button
-                          Grid.Row="0"
                           Grid.Column="1"
                           Command="{Binding DialogCommand, Source={x:Reference Root}}"
                           Style="{StaticResource EditAdorner}"
                           VerticalOptions="Center">
-
                         <Button.CommandParameter>
                           <components:AdornerCommandParameter
                               CommandName="EditRelativeCommand"
@@ -425,12 +407,10 @@
                       </Button>
 
                       <Button
-                          Grid.Row="0"
                           Grid.Column="2"
                           Command="{Binding DialogCommand, Source={x:Reference Root}}"
                           Style="{StaticResource DeleteAdorner}"
                           VerticalOptions="Center">
-
                         <Button.CommandParameter>
                           <components:AdornerCommandParameter
                               CommandName="RemoveRelativeCommand"
@@ -456,7 +436,7 @@
           </Border>
 
           <!--  Biography  -->
-          <Border Style="{StaticResource CardBorderStyle}">
+          <Border Style="{StaticResource SectionBorder}">
             <Grid
                 ColumnDefinitions="*"
                 RowDefinitions="Auto, *">
@@ -484,7 +464,7 @@
       <Button
           Command="{Binding DialogCommand, Source={x:Reference Root}}"
           CommandParameter="CreatePersonCommand"
-          FontSize="Large"
+          HorizontalOptions="Fill"
           Text="{Binding DialogButtonName, Source={x:Reference Root}}" />
     </components:PageLayout.Footer>
   </components:PageLayout>

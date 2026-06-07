@@ -7,8 +7,8 @@
     xmlns:items="clr-namespace:GT4.UI.Items"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root"
-    Title="{x:Static resources:UIStrings.TitleProjectRevisionsPage}"
-    NavigatedTo="OnNavigatedTo">
+    NavigatedTo="OnNavigatedTo"
+    Title="{x:Static resources:UIStrings.TitleProjectRevisionsPage}">
 
   <ContentPage.ToolbarItems>
     <ToolbarItem
@@ -19,11 +19,6 @@
   </ContentPage.ToolbarItems>
 
   <components:PageLayout>
-    <components:PageLayout.Header>
-      <Label
-          Style="{StaticResource PageSubtitle}"
-          Text="{x:Static resources:UIStrings.HintProjectRevisionsPage}" />
-    </components:PageLayout.Header>
 
     <components:PageLayout.Body>
       <CollectionView
@@ -33,11 +28,16 @@
           SelectionMode="Single"
           VerticalOptions="Start">
 
+        <CollectionView.ItemsLayout>
+          <LinearItemsLayout
+              ItemSpacing="4"
+              Orientation="Vertical" />
+        </CollectionView.ItemsLayout>
+
         <CollectionView.ItemTemplate>
           <DataTemplate x:DataType="items:ProjectRevisionItem">
             <Grid
-                Padding="{Thickness Left={StaticResource PageContentSpacing},
-                                    Right={StaticResource PageContentSpacing}}"
+                Padding="4,2"
                 ColumnDefinitions="*, Auto"
                 Style="{StaticResource SelectableItem}">
 
@@ -52,7 +52,7 @@
                   Command="{Binding DeleteRevisionCommand, Source={x:Reference Root}}"
                   CommandParameter="{Binding .}"
                   Style="{StaticResource DeleteAdorner}"
-                  VerticalOptions="Start" />
+                  VerticalOptions="Center" />
 
             </Grid>
           </DataTemplate>
@@ -60,13 +60,14 @@
 
       </CollectionView>
     </components:PageLayout.Body>
+
     <components:PageLayout.Footer>
       <Button
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="Restore"
-          FontSize="Large"
           HorizontalOptions="Fill"
           Text="{Binding RestoreBtnName, Source={x:Reference Root}}" />
     </components:PageLayout.Footer>
+
   </components:PageLayout>
 </ContentPage>

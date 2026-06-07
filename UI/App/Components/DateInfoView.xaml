@@ -6,20 +6,22 @@
     x:Name="Root">
   <Grid
       ColumnDefinitions="Auto, *"
-      ColumnSpacing="20"
+      ColumnSpacing="12"
       RowDefinitions="Auto">
 
     <Label
         Grid.Row="0"
         Grid.Column="0"
         Style="{StaticResource FieldName}"
-        Text="{Binding Caption, Source={x:Reference Root}}" />
+        Text="{Binding Caption, Source={x:Reference Root}}"
+        VerticalOptions="Center" />
 
     <Label
         Grid.Row="0"
         Grid.Column="1"
         Style="{StaticResource FieldValue}"
-        Text="{Binding DateText, Source={x:Reference Root}}" />
+        Text="{Binding DateText, Source={x:Reference Root}}"
+        VerticalOptions="Center" />
 
   </Grid>
 </ContentView>

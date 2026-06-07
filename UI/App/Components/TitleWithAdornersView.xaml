@@ -7,38 +7,33 @@
     x:Name="Root">
 
   <Grid
-      Margin="10,0,0,0"
       ColumnDefinitions="*, Auto, Auto"
       RowDefinitions="Auto, Auto">
 
-    <!--  Title  -->
     <Label
         Grid.Row="0"
         Grid.Column="0"
         HorizontalOptions="Fill"
         Style="{StaticResource PageTitle}"
         Text="{Binding TitleText, Source={x:Reference Root}}"
-        VerticalOptions="Fill" />
+        VerticalOptions="Center" />
 
-    <!--  Edit adorner  -->
     <Button
         Grid.Row="0"
         Grid.RowSpan="2"
         Grid.Column="1"
         Clicked="OnEditAdornerClicked"
-        Style="{StaticResource EditAdorner}" />
+        Style="{StaticResource EditAdorner}"
+        VerticalOptions="Center" />
 
-
-    <!--  Delete adorner  -->
     <Button
         Grid.Row="0"
         Grid.RowSpan="2"
         Grid.Column="2"
         Clicked="OnDeleteAdornerClicked"
-        Style="{StaticResource DeleteAdorner}" />
+        Style="{StaticResource DeleteAdorner}"
+        VerticalOptions="Center" />
 
-
-    <!--  Subtitle  -->
     <Label
         Grid.Row="1"
         Grid.Column="0"
@@ -47,7 +42,7 @@
         IsVisible="{Binding IsSubtitleTextVisible, Source={x:Reference Root}}"
         Style="{StaticResource PageSubtitle}"
         Text="{Binding SubtitleText, Source={x:Reference Root}}"
-        VerticalOptions="Fill" />
+        VerticalOptions="Center" />
 
   </Grid>
 </ContentView>

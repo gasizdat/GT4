@@ -10,125 +10,117 @@
 
   <components:PageLayout>
     <components:PageLayout.Header>
-      <Grid
-          ColumnDefinitions="Auto, *, Auto, Auto"
-          ColumnSpacing="{StaticResource PageContentSpacing}"
-          RowDefinitions="Auto, Auto, Auto, Auto, Auto"
-          RowSpacing="{StaticResource PageContentSpacing}">
+      <VerticalStackLayout Spacing="{StaticResource PageContentSpacing}">
 
-        <!--  Row 0 - Title  -->
         <Label
-            Grid.Row="0"
-            Grid.Column="0"
-            Grid.ColumnSpan="3"
-            HorizontalTextAlignment="Center"
             Style="{StaticResource PageTitle}"
             Text="{x:Static resources:UIStrings.TitleSelectRelativesDialog}" />
 
-        <!--  Row 1 - Search  -->
-        <Label
-            Grid.Row="1"
-            Grid.Column="0"
-            Style="{StaticResource FieldName}"
-            Text="{x:Static resources:UIStrings.FieldSearchText}" />
+        <Border>
+          <Grid
+              ColumnDefinitions="Auto, *"
+              ColumnSpacing="{StaticResource PageContentSpacing}"
+              RowDefinitions="Auto, Auto, Auto, Auto"
+              RowSpacing="{StaticResource PageContentSpacing}">
 
-        <Entry
-            Grid.Row="1"
-            Grid.Column="1"
-            Grid.ColumnSpan="3"
-            HorizontalOptions="Fill"
-            Style="{StaticResource FieldValue}"
-            Text="{Binding NameFilter, Source={x:Reference Root}}" />
+            <Label
+                Grid.Row="0"
+                Grid.Column="0"
+                Style="{StaticResource FieldName}"
+                Text="{x:Static resources:UIStrings.FieldSearchText}"
+                VerticalOptions="Center" />
+            <Entry
+                Grid.Row="0"
+                Grid.Column="1"
+                HorizontalOptions="Fill"
+                Text="{Binding NameFilter, Source={x:Reference Root}}" />
 
-        <!--  Row 2 - Biological Sex  -->
-        <Label
-            Grid.Row="2"
-            Grid.Column="0"
-            Style="{StaticResource FieldName}"
-            Text="{x:Static resources:UIStrings.FieldBiologicalSex}" />
+            <Label
+                Grid.Row="1"
+                Grid.Column="0"
+                Style="{StaticResource FieldName}"
+                Text="{x:Static resources:UIStrings.FieldBiologicalSex}"
+                VerticalOptions="Center" />
+            <Picker
+                Grid.Row="1"
+                Grid.Column="1"
+                ItemDisplayBinding="{Binding Name}"
+                ItemsSource="{Binding BiologicalSexes, Source={x:Reference Root}}"
+                SelectedItem="{Binding BioSex, Source={x:Reference Root}}" />
 
-        <Picker
-            Grid.Row="2"
-            Grid.Column="1"
-            Grid.ColumnSpan="3"
-            ItemDisplayBinding="{Binding Name}"
-            ItemsSource="{Binding BiologicalSexes, Source={x:Reference Root}}"
-            SelectedItem="{Binding BioSex, Source={x:Reference Root}}"
-            Style="{StaticResource FieldValue}" />
+            <Label
+                Grid.Row="2"
+                Grid.Column="0"
+                Style="{StaticResource FieldName}"
+                Text="{x:Static resources:UIStrings.FieldRelationshipType}"
+                VerticalOptions="Center" />
+            <Picker
+                Grid.Row="2"
+                Grid.Column="1"
+                ItemDisplayBinding="{Binding Name}"
+                ItemsSource="{Binding RelationshipTypes, Source={x:Reference Root}}"
+                SelectedItem="{Binding RelType, Source={x:Reference Root}}" />
 
-        <!--  Row 3 - Relationship Type  -->
-        <Label
-            Grid.Row="3"
-            Grid.Column="0"
-            Style="{StaticResource FieldName}"
-            Text="{x:Static resources:UIStrings.FieldRelationshipType}" />
+            <components:DateInfoView
+                Grid.Row="3"
+                Grid.Column="0"
+                Caption="{x:Static resources:UIStrings.FieldRelationshipStartDate}"
+                Date="{Binding RelationshipDate, Source={x:Reference Root}}" />
 
-        <Picker
-            Grid.Row="3"
-            Grid.Column="1"
-            Grid.ColumnSpan="3"
-            ItemDisplayBinding="{Binding Name}"
-            ItemsSource="{Binding RelationshipTypes, Source={x:Reference Root}}"
-            SelectedItem="{Binding RelType, Source={x:Reference Root}}"
-            Style="{StaticResource FieldValue}" />
+            <HorizontalStackLayout
+                Grid.Row="3"
+                Grid.Column="1"
+                HorizontalOptions="End"
+                Spacing="4"
+                VerticalOptions="Center">
+              <Button
+                  Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                  CommandParameter="EditRelationshipDateCommand"
+                  Style="{StaticResource EditAdorner}" />
+              <Button
+                  Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                  CommandParameter="RemoveRelationshipDateCommand"
+                  Style="{StaticResource DeleteAdorner}" />
+            </HorizontalStackLayout>
 
-        <!--  Row 4 - Relationship Date  -->
-        <components:DateInfoView
-            Grid.Row="4"
-            Grid.Column="0"
-            Grid.ColumnSpan="2"
-            Caption="{x:Static resources:UIStrings.FieldRelationshipStartDate}"
-            Date="{Binding RelationshipDate, Source={x:Reference Root}}" />
+          </Grid>
+        </Border>
 
-        <Button
-            Grid.Row="4"
-            Grid.Column="2"
-            Command="{Binding DialogCommand, Source={x:Reference Root}}"
-            CommandParameter="EditRelationshipDateCommand"
-            Style="{StaticResource EditAdorner}" />
-
-        <Button
-            Grid.Row="4"
-            Grid.Column="3"
-            Command="{Binding DialogCommand, Source={x:Reference Root}}"
-            CommandParameter="RemoveRelationshipDateCommand"
-            Style="{StaticResource DeleteAdorner}" />
-
-      </Grid>
+      </VerticalStackLayout>
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>
       <CollectionView
-          HorizontalOptions="Center"
+          HorizontalOptions="Fill"
           ItemsSource="{Binding Persons, Source={x:Reference Root}}"
           SelectedItems="{Binding SelectedItems, Source={x:Reference Root}}"
           SelectionMode="Multiple">
 
         <CollectionView.ItemsLayout>
-          <LinearItemsLayout Orientation="Vertical" />
+          <LinearItemsLayout
+              ItemSpacing="4"
+              Orientation="Vertical" />
         </CollectionView.ItemsLayout>
 
         <CollectionView.ItemTemplate>
           <DataTemplate x:DataType="dto:PersonInfo">
             <Grid Style="{StaticResource SelectableItem}">
               <components:PersonInfoView
-                  DatesLabelStyle="{StaticResource FieldValue}"
-                  NameLabelStyle="{StaticResource FieldName}"
+                  DatesLabelStyle="{StaticResource CardContent}"
+                  NameLabelStyle="{StaticResource CardTitle}"
                   Person="{Binding .}" />
             </Grid>
           </DataTemplate>
         </CollectionView.ItemTemplate>
       </CollectionView>
-
     </components:PageLayout.Body>
 
     <components:PageLayout.Footer>
       <Button
           Command="{Binding DialogCommand, Source={x:Reference Root}}"
           CommandParameter="SelectPersonCommand"
-          FontSize="Large"
+          HorizontalOptions="Fill"
           Text="{Binding DialogButtonName, Source={x:Reference Root}}" />
-
     </components:PageLayout.Footer>
   </components:PageLayout>
 </ContentPage>
