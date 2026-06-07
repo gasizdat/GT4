@@ -47,6 +47,7 @@
 
     <components:PageLayout.Body>
       <CollectionView
+          x:Name="FamiliesCollection"
           ItemsSource="{Binding Families, Source={x:Reference Root}}"
           SelectionChanged="OnFamilySelected"
           SelectionMode="Single">
@@ -63,11 +64,11 @@
               <Grid
                   ColumnDefinitions="Auto, *"
                   ColumnSpacing="{StaticResource PageContentSpacing}"
-                  RowDefinitions="Auto, Auto">
+                  RowDefinitions="Auto, Auto, Auto">
 
                 <Image
                     Grid.Row="0"
-                    Grid.RowSpan="2"
+                    Grid.RowSpan="3"
                     Grid.Column="0"
                     Source="{Binding Icon}"
                     Style="{StaticResource PhotoThumbStyle}"
@@ -80,8 +81,22 @@
                     Text="{Binding Info.Value}"
                     VerticalOptions="Start" />
 
-                <StackLayout
+                <BoxView
                     Grid.Row="1"
+                    Grid.Column="1"
+                    HeightRequest="1"
+                    HorizontalOptions="Fill">
+                  <BoxView.Margin>
+                    <Thickness
+                        Bottom="{StaticResource ItemSpacingSmall}"
+                        Left="0"
+                        Right="0"
+                        Top="{StaticResource ItemSpacingSmall}" />
+                  </BoxView.Margin>
+                </BoxView>
+
+                <StackLayout
+                    Grid.Row="2"
                     Grid.Column="1"
                     BindableLayout.ItemsSource="{Binding Persons}"
                     Spacing="{StaticResource ItemSpacingSmall}">

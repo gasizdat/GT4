@@ -869,8 +869,17 @@
 
   <!--  Image styles  -->
 
+  <!--  Warm portrait frame — wraps person photos with rounded clip and accent border  -->
+  <Style x:Key="PhotoFrameBorder" TargetType="Border">
+    <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource Accent}, Dark={StaticResource DarkAccent}}" />
+    <Setter Property="StrokeShape" Value="RoundRectangle 8" />
+    <Setter Property="StrokeThickness" Value="1.5" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SurfaceSubtle}, Dark={StaticResource DarkSubtle}}" />
+  </Style>
+
   <Style x:Key="PhotoThumbStyle" TargetType="Image">
-    <Setter Property="Aspect" Value="AspectFit" />
+    <Setter Property="Aspect" Value="AspectFill" />
     <Setter Property="HeightRequest" Value="{StaticResource PhotoThumbHeight}" />
     <Setter Property="WidthRequest" Value="{StaticResource PhotoThumbWidth}" />
     <Setter Property="HorizontalOptions" Value="Center" />

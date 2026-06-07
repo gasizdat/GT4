@@ -10,13 +10,16 @@
       Padding="{StaticResource CardItemPadding}"
       RowDefinitions="Auto, Auto">
 
-    <Image
+    <Border
         Grid.Row="0"
         Grid.RowSpan="2"
         Grid.Column="0"
         IsVisible="{Binding ShowPhoto, Source={x:Reference Root}}"
-        Source="{Binding Photo, Source={x:Reference Root}}"
-        Style="{Binding PhotoStyle, Source={x:Reference Root}, TargetNullValue={StaticResource PhotoThumbStyle}}" />
+        Style="{StaticResource PhotoFrameBorder}">
+      <Image
+          Source="{Binding Photo, Source={x:Reference Root}}"
+          Style="{Binding PhotoStyle, Source={x:Reference Root}, TargetNullValue={StaticResource PhotoThumbStyle}}" />
+    </Border>
 
     <Label
         Grid.Row="0"
