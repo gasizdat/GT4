@@ -321,7 +321,9 @@ internal class RelativesProvider : TableBase, IRelativesProvider
     var stepParentChildren = parents.Step
         .SelectMany(p => p.RelativeInfos.Select(r => r with { Date = p.Date }))
         .Where(r => r.Type == RelationshipType.Child || r.Type == RelationshipType.AdoptiveChild)
-        .Distinct(_RelativeInfoComparer);
+        .Distinct(_RelativeInfoComparer)
+        .Except(fatherChildren, _RelativeInfoComparer)
+        .Except(motherChildren, _RelativeInfoComparer);
 
     return new Siblings(
       Native: ToTypedArray(commonChildren, RelationshipType.Sibling, Generation.Zero, Consanguinity.Sibling),

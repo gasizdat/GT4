@@ -755,6 +755,182 @@ public class RelativesProviderTests
   }
 
   [Fact]
+  public void GetSiblings_StepParent_ChildTypeBecomesStepSibling()
+  {
+    var relativesProvider = new RelativesProvider(_documentMock);
+    var person = _documentMock.CreatePerson();
+    var stepChild = CreateRelative(RelationshipType.Child);
+    var stepParent = CreateRelative(RelationshipType.Parent);
+    var stepParentFull = new RelativeFullInfo(stepParent, [stepChild]);
+    var parents = new Parents(Native: [], Adoptive: [], Step: [stepParentFull]);
+
+    var siblings = relativesProvider.GetSiblings(person, parents);
+
+    siblings.Step
+      .Id()
+      .Should()
+      .BeEquivalentTo([stepChild.Id]);
+    siblings.Step
+      .Single()
+      .Type
+      .Should()
+      .Be(RelationshipType.StepSibling);
+  }
+
+  [Fact]
+  public void GetSiblings_StepParent_AdoptiveChildTypeBecomesStepSibling()
+  {
+    var relativesProvider = new RelativesProvider(_documentMock);
+    var person = _documentMock.CreatePerson();
+    var stepAdoptiveChild = CreateRelative(RelationshipType.AdoptiveChild);
+    var stepParent = CreateRelative(RelationshipType.Parent);
+    var stepParentFull = new RelativeFullInfo(stepParent, [stepAdoptiveChild]);
+    var parents = new Parents(Native: [], Adoptive: [], Step: [stepParentFull]);
+
+    var siblings = relativesProvider.GetSiblings(person, parents);
+
+    siblings.Step
+      .Id()
+      .Should()
+      .BeEquivalentTo([stepAdoptiveChild.Id]);
+  }
+
+  [Fact]
+  public void GetSiblings_StepParent_NonChildRelativesExcluded()
+  {
+    var relativesProvider = new RelativesProvider(_documentMock);
+    var person = _documentMock.CreatePerson();
+    var stepParentSpouse = CreateRelative(RelationshipType.Spouse);
+    var stepParentParent = CreateRelative(RelationshipType.Parent);
+    var stepParent = CreateRelative(RelationshipType.Parent);
+    var stepParentFull = new RelativeFullInfo(stepParent, [stepParentSpouse, stepParentParent]);
+    var parents = new Parents(Native: [], Adoptive: [], Step: [stepParentFull]);
+
+    var siblings = relativesProvider.GetSiblings(person, parents);
+
+    siblings.Step
+      .Should()
+      .BeEmpty();
+  }
+
+  [Fact]
+  public void GetSiblings_StepParent_ChildSharedWithFatherOnlyExcluded()
+  {
+    var relativesProvider = new RelativesProvider(_documentMock);
+    var person = _documentMock.CreatePerson();
+    var fatherOnlyChild = CreateRelative(RelationshipType.Child);
+    var father = CreateRelative(RelationshipType.Parent) with { BiologicalSex = BiologicalSex.Male };
+    var fatherFull = new RelativeFullInfo(father, [fatherOnlyChild]);
+    var stepParent = CreateRelative(RelationshipType.Parent);
+    var stepParentFull = new RelativeFullInfo(stepParent, [fatherOnlyChild]);
+    var parents = new Parents(Native: [fatherFull], Adoptive: [], Step: [stepParentFull]);
+
+    var siblings = relativesProvider.GetSiblings(person, parents);
+
+    siblings.ByFather
+      .Id()
+      .Should()
+      .BeEquivalentTo([fatherOnlyChild.Id]);
+    siblings.Step
+      .Should()
+      .BeEmpty();
+  }
+
+  [Fact]
+  public void GetSiblings_StepParent_ChildSharedWithMotherOnlyExcluded()
+  {
+    var relativesProvider = new RelativesProvider(_documentMock);
+    var person = _documentMock.CreatePerson();
+    var motherOnlyChild = CreateRelative(RelationshipType.Child);
+    var mother = CreateRelative(RelationshipType.Parent) with { BiologicalSex = BiologicalSex.Female };
+    var motherFull = new RelativeFullInfo(mother, [motherOnlyChild]);
+    var stepParent = CreateRelative(RelationshipType.Parent);
+    var stepParentFull = new RelativeFullInfo(stepParent, [motherOnlyChild]);
+    var parents = new Parents(Native: [motherFull], Adoptive: [], Step: [stepParentFull]);
+
+    var siblings = relativesProvider.GetSiblings(person, parents);
+
+    siblings.ByMother
+      .Id()
+      .Should()
+      .BeEquivalentTo([motherOnlyChild.Id]);
+    siblings.Step
+      .Should()
+      .BeEmpty();
+  }
+
+  [Fact]
+  public void GetSiblings_StepParent_SharedChildAcrossMultipleStepParentsAppearsOnce()
+  {
+    var relativesProvider = new RelativesProvider(_documentMock);
+    var person = _documentMock.CreatePerson();
+    var sharedStepChild = CreateRelative(RelationshipType.Child);
+    var stepParent1 = CreateRelative(RelationshipType.Parent);
+    var stepParent2 = CreateRelative(RelationshipType.Parent);
+    var stepParentFull1 = new RelativeFullInfo(stepParent1, [sharedStepChild]);
+    var stepParentFull2 = new RelativeFullInfo(stepParent2, [sharedStepChild]);
+    var parents = new Parents(Native: [], Adoptive: [], Step: [stepParentFull1, stepParentFull2]);
+
+    var siblings = relativesProvider.GetSiblings(person, parents);
+
+    siblings.Step
+      .Should()
+      .HaveCount(1);
+    siblings.Step
+      .Id()
+      .Should()
+      .BeEquivalentTo([sharedStepChild.Id]);
+  }
+
+  [Fact]
+  public void GetSiblings_StepParent_DateInheritedFromStepParent()
+  {
+    var relativesProvider = new RelativesProvider(_documentMock);
+    var person = _documentMock.CreatePerson();
+    var stepChild = CreateRelative(RelationshipType.Child);
+    var stepParent = CreateRelative(RelationshipType.Parent);
+    var stepParentFull = new RelativeFullInfo(stepParent, [stepChild]);
+    var parents = new Parents(Native: [], Adoptive: [], Step: [stepParentFull]);
+
+    var siblings = relativesProvider.GetSiblings(person, parents);
+
+    siblings.Step
+      .Single()
+      .Date
+      .Should()
+      .Be(stepParent.Date);
+  }
+
+  [Fact]
+  public void GetSiblings_StepParent_ChildSharedWithNativeSiblingNotExcluded()
+  {
+    // stepParentChildren only excludes fatherChildren (father-only) and motherChildren (mother-only).
+    // A child shared by both native parents is in commonChildren, not fatherChildren/motherChildren,
+    // so it is not excluded — it appears in both Native and Step.
+    var relativesProvider = new RelativesProvider(_documentMock);
+    var person = _documentMock.CreatePerson();
+    var commonChild = CreateRelative(RelationshipType.Child);
+    var father = CreateRelative(RelationshipType.Parent) with { BiologicalSex = BiologicalSex.Male };
+    var mother = CreateRelative(RelationshipType.Parent) with { BiologicalSex = BiologicalSex.Female };
+    var fatherFull = new RelativeFullInfo(father, [commonChild]);
+    var motherFull = new RelativeFullInfo(mother, [commonChild]);
+    var stepParent = CreateRelative(RelationshipType.Parent);
+    var stepParentFull = new RelativeFullInfo(stepParent, [commonChild]);
+    var parents = new Parents(Native: [fatherFull, motherFull], Adoptive: [], Step: [stepParentFull]);
+
+    var siblings = relativesProvider.GetSiblings(person, parents);
+
+    siblings.Native
+      .Id()
+      .Should()
+      .BeEquivalentTo([commonChild.Id]);
+    siblings.Step
+      .Id()
+      .Should()
+      .BeEquivalentTo([commonChild.Id]);
+  }
+
+  [Fact]
   public async Task GetRelativeInfosAsync_Nepheu_Regression()
   {
     var father = _documentMock.CreatePerson(BiologicalSex.Male);
