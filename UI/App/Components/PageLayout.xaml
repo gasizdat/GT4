@@ -33,6 +33,12 @@
   <Grid
       ColumnDefinitions="*"
       RowDefinitions="Auto, *, Auto">
+    <Image
+        Grid.RowSpan="3"
+        Aspect="AspectFill"
+        IsAnimationPlaying="True"
+        Opacity="0.3"
+        Source="tree_bg.gif" />
 
     <!--  Header slot  -->
     <ContentView
