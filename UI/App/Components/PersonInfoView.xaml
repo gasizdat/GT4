@@ -13,8 +13,10 @@
         Grid.Row="0"
         Grid.RowSpan="2"
         Grid.Column="0"
+        HorizontalOptions="Center"
         IsVisible="{Binding ShowPhoto, Source={x:Reference Root}}"
-        Style="{StaticResource PhotoFrameBorder}">
+        Style="{StaticResource PhotoFrameBorder}"
+        VerticalOptions="Center">
       <Image
           Source="{Binding Photo, Source={x:Reference Root}}"
           Style="{Binding PhotoStyle, Source={x:Reference Root}, TargetNullValue={StaticResource PhotoThumbStyle}}" />
