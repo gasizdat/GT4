@@ -57,8 +57,8 @@
                                      Right={StaticResource PageContentSpacing}}"
                   FlexLayout.Grow="1"
                   MinimumWidthRequest="{Binding Path=PersonItemMinimalWidth, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
-                  Stroke="{AppThemeBinding Light=#A0FFFFFF,
-                                           Dark=#30FFFFFF}"
+                  Shadow="{StaticResource CardShadow}"
+                  Stroke="{StaticResource CardStroke}"
                   Style="{StaticResource HoverItem}">
 
                 <Border.GestureRecognizers>
@@ -67,13 +67,7 @@
                       CommandParameter="{Binding .}" />
                 </Border.GestureRecognizers>
 
-                <Border.Shadow>
-                  <Shadow
-                      Brush="Black"
-                      Opacity="0.2"
-                      Radius="5"
-                      Offset="5,5" />
-                </Border.Shadow>
+
 
                 <components:PersonInfoView
                     DatesLabelStyle="{StaticResource FieldValue}"

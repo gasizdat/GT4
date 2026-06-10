@@ -224,16 +224,9 @@
             <CollectionView.ItemTemplate>
               <DataTemplate x:DataType="dto:RelativeInfo">
                 <Border
-                    Stroke="{AppThemeBinding Light=#A0FFFFFF,
-                                             Dark=#30FFFFFF}"
+                    Shadow="{StaticResource CardShadow}"
+                    Stroke="{StaticResource CardStroke}"
                     Style="{StaticResource HoverItem}">
-                  <Border.Shadow>
-                    <Shadow
-                        Brush="Black"
-                        Opacity="0.2"
-                        Radius="5"
-                        Offset="5,5" />
-                  </Border.Shadow>
                   <components:RelativeInfoView
                       NameFormat="CommonPersonName"
                       PersonBirthDate="{Binding PersonFullInfo.BirthDate, Source={x:Reference Root}}"
