@@ -229,17 +229,10 @@
                     Style="{StaticResource HoverItem}">
                   <components:RelativeInfoView
                       NameFormat="CommonPersonName"
+                      SelectCommand="{Binding Path=PageCommand, Source={x:Reference Root}}"
                       PersonBirthDate="{Binding PersonFullInfo.BirthDate, Source={x:Reference Root}}"
                       Relative="{Binding .}"
-                      ShowMoreButton="True">
-
-                    <components:RelativeInfoView.GestureRecognizers>
-                      <TapGestureRecognizer
-                          Command="{Binding Path=PageCommand, Source={x:Reference Root}}"
-                          CommandParameter="{Binding .}" />
-                    </components:RelativeInfoView.GestureRecognizers>
-
-                  </components:RelativeInfoView>
+                      ShowMoreButton="True" />
                 </Border>
               </DataTemplate>
             </CollectionView.ItemTemplate>

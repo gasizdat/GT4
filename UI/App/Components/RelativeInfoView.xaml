@@ -53,7 +53,13 @@
         NameFormat="{Binding NameFormat, Source={x:Reference Root}}"
         NameLabelStyle="{StaticResource FieldName}"
         Person="{Binding Relative, Source={x:Reference Root}}"
-        SizeChanged="PersonInfoViewSizeChanged" />
+        SizeChanged="PersonInfoViewSizeChanged">
+      <components:PersonInfoView.GestureRecognizers>
+        <TapGestureRecognizer
+            Command="{Binding SelectCommand, Source={x:Reference Root}}"
+            CommandParameter="{Binding Relative, Source={x:Reference Root}}" />
+      </components:PersonInfoView.GestureRecognizers>
+    </components:PersonInfoView>
 
     <Button
         Grid.Row="1"
@@ -108,19 +114,11 @@
             <components:RelativeInfoView
                 x:Name="RelativeInfoView"
                 Margin="{Thickness Left={StaticResource RelativesIndentation}}"
+                SelectCommand="{Binding SelectCommand, Source={x:Reference Root}}"
                 PersonBirthDate="{Binding Relative.BirthDate, Source={x:Reference Root}}"
                 Relative="{Binding .}"
                 ShowMoreButton="True"
-                Style="{StaticResource HoverSubItem}">
-
-              <!--  TODO  -->
-              <!--<components:RelativeInfoView.GestureRecognizers>
-              <TapGestureRecognizer
-                  Command="{Binding Path=PageCommand, Source={x:Reference Root}}"
-                  CommandParameter="{Binding .}" />
-              </components:RelativeInfoView.GestureRecognizers>-->
-
-            </components:RelativeInfoView>
+                Style="{StaticResource HoverSubItem}" />
           </Grid>
         </DataTemplate>
       </CollectionView.ItemTemplate>

@@ -83,6 +83,13 @@ public partial class RelativeInfoView : ContentView
     NameFormat.CommonPersonName,
     BindingMode.OneWay);
 
+  public static readonly BindableProperty SelectCommandProperty = BindableProperty.Create(
+    nameof(SelectCommand),
+    typeof(ICommand),
+    typeof(RelativeInfoView),
+    default,
+    BindingMode.OneWay);
+
   public bool ShowMoreButton
   {
     get => (bool)GetValue(ShowMoreButtonProperty);
@@ -111,6 +118,12 @@ public partial class RelativeInfoView : ContentView
   {
     get => (NameFormat?)GetValue(NameFormatProperty) ?? NameFormat.CommonPersonName;
     set => SetValue(NameFormatProperty, value);
+  }
+
+  public ICommand? SelectCommand
+  {
+    get => (ICommand?)GetValue(SelectCommandProperty);
+    set => SetValue(SelectCommandProperty, value);
   }
 
   public bool ShowDate =>
