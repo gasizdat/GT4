@@ -53,8 +53,7 @@
         NameLabelStyle="{StaticResource FieldName}"
         NameFormat="{Binding NameFormat, Source={x:Reference Root}}"
         Person="{Binding Relative, Source={x:Reference Root}}"
-        SizeChanged="PersonInfoViewSizeChanged"
-        Style="{StaticResource HoverItem}" />
+        SizeChanged="PersonInfoViewSizeChanged"/>
 
     <Button
         Grid.Row="1"

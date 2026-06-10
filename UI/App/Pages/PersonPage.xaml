@@ -223,20 +223,31 @@
 
             <CollectionView.ItemTemplate>
               <DataTemplate x:DataType="dto:RelativeInfo">
-                <components:RelativeInfoView
-                    NameFormat="CommonPersonName"
-                    PersonBirthDate="{Binding PersonFullInfo.BirthDate, Source={x:Reference Root}}"
-                    Relative="{Binding .}"
-                    ShowMoreButton="True">
+                <Border
+                    Stroke="{AppThemeBinding Light=#A0FFFFFF,
+                                             Dark=#30FFFFFF}"
+                    Style="{StaticResource HoverItem}">
+                  <Border.Shadow>
+                    <Shadow
+                        Brush="Black"
+                        Opacity="0.2"
+                        Radius="5"
+                        Offset="5,5" />
+                  </Border.Shadow>
+                  <components:RelativeInfoView
+                      NameFormat="CommonPersonName"
+                      PersonBirthDate="{Binding PersonFullInfo.BirthDate, Source={x:Reference Root}}"
+                      Relative="{Binding .}"
+                      ShowMoreButton="True">
 
-                  <components:RelativeInfoView.GestureRecognizers>
-                    <TapGestureRecognizer
-                        Command="{Binding Path=PageCommand, Source={x:Reference Root}}"
-                        CommandParameter="{Binding .}" />
-                  </components:RelativeInfoView.GestureRecognizers>
+                    <components:RelativeInfoView.GestureRecognizers>
+                      <TapGestureRecognizer
+                          Command="{Binding Path=PageCommand, Source={x:Reference Root}}"
+                          CommandParameter="{Binding .}" />
+                    </components:RelativeInfoView.GestureRecognizers>
 
-                </components:RelativeInfoView>
-
+                  </components:RelativeInfoView>
+                </Border>
               </DataTemplate>
             </CollectionView.ItemTemplate>
           </CollectionView>

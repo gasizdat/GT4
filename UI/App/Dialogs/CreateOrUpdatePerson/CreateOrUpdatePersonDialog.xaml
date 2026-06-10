@@ -403,7 +403,8 @@
                         x:Name="PersonRelative"
                         Padding="{StaticResource CollectionItemsVerticalPadding}"
                         ColumnDefinitions="*, Auto, Auto"
-                        RowDefinitions="Auto">
+                        RowDefinitions="Auto"
+                        Style="{StaticResource HoverItem}">
 
                       <components:RelativeInfoView
                           Grid.Row="0"
