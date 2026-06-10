@@ -735,18 +735,40 @@
 
   <Style x:Key="HoverItem" TargetType="View">
     <!--  Optional defaults  -->
-    <Setter Property="BackgroundColor" Value="Transparent" />
+    <Setter Property="Background" >
+      <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="{AppThemeBinding Light=#82FFFFFF, Dark=#4DFFFFFF}" Offset="0.0" />
+        <GradientStop Color="{AppThemeBinding Light=#70F5F2EC, Dark=#66353530}" Offset="0.35" />
+        <GradientStop Color="{AppThemeBinding Light=#6CEAE7E0, Dark=#99353530}" Offset="1.0" />
+      </LinearGradientBrush>
+    </Setter>
     <Setter Property="VisualStateManager.VisualStateGroups">
       <VisualStateGroupList>
         <VisualStateGroup x:Name="CommonStates">
           <VisualState x:Name="Normal">
             <VisualState.Setters>
-              <Setter Property="BackgroundColor" Value="Transparent" />
+              <Setter Property="Background" >
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                  <GradientStop Color="{AppThemeBinding Light=#82FFFFFF, Dark=#4DFFFFFF}" Offset="0.0" />
+                  <GradientStop Color="{AppThemeBinding Light=#70F5F2EC, Dark=#66353530}" Offset="0.35" />
+                  <GradientStop Color="{AppThemeBinding Light=#6CEAE7E0, Dark=#99353530}" Offset="1.0" />
+                </LinearGradientBrush>
+              </Setter>
             </VisualState.Setters>
           </VisualState>
           <VisualState x:Name="PointerOver">
             <VisualState.Setters>
-              <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource PrimaryButtonHover}, Dark={StaticResource PrimaryDarkButtonHover}}" />
+              <Setter Property="Background">
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                  <GradientStop Color="{AppThemeBinding Light=#FFFFFFFF, Dark=#FFFFFFFF}" Offset="0.0" />
+                  <GradientStop Color="{AppThemeBinding Light=#F0FFFFFF, Dark=#E0FFFFFF}" Offset="0.08" />
+                  <GradientStop Color="{AppThemeBinding Light=#B4FFFFFE, Dark=#90DDDCD6}" Offset="0.18" />
+                  <GradientStop Color="{AppThemeBinding Light=#8AF8F5EF, Dark=#66454540}" Offset="0.35" />
+                  <GradientStop Color="{AppThemeBinding Light=#74EDEAE2, Dark=#783A3935}" Offset="0.78" />
+                  <GradientStop Color="{AppThemeBinding Light=#C8FFFFFF, Dark=#A8FFFFFF}" Offset="0.94" />
+                  <GradientStop Color="{AppThemeBinding Light=#F0FFFFFF, Dark=#D8FFFFFF}" Offset="1.0" />
+                </LinearGradientBrush>
+              </Setter>
             </VisualState.Setters>
           </VisualState>
         </VisualStateGroup>

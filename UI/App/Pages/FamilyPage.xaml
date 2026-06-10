@@ -57,6 +57,8 @@
                                      Right={StaticResource PageContentSpacing}}"
                   FlexLayout.Grow="1"
                   MinimumWidthRequest="{Binding Path=PersonItemMinimalWidth, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
+                  Stroke="{AppThemeBinding Light=#A0FFFFFF,
+                                           Dark=#30FFFFFF}"
                   Style="{StaticResource HoverItem}">
 
                 <Border.GestureRecognizers>
