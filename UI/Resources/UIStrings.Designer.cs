@@ -404,7 +404,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Common person name format.
+        ///   Looks up a localized string similar to Format of names of relatives.
         /// </summary>
         public static string FieldCommonPersonNameFormat {
             get {
@@ -605,7 +605,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Person initials format.
+        ///   Looks up a localized string similar to Name format in descriptions and history.
         /// </summary>
         public static string FieldPersonInitialsFormat {
             get {
@@ -1690,7 +1690,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Person short name format.
+        ///   Looks up a localized string similar to Format of names of persons of the family.
         /// </summary>
         public static string ShortPersonNameFormat {
             get {

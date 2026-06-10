@@ -685,7 +685,7 @@ FN - family name</value>
     <value>Short date display format</value>
   </data>
   <data name="FieldCommonPersonNameFormat" xml:space="preserve">
-    <value>Common person name format</value>
+    <value>Format of names of relatives</value>
   </data>
   <data name="NameFirst" xml:space="preserve">
     <value>First</value>
@@ -700,10 +700,10 @@ FN - family name</value>
     <value>Full person name format</value>
   </data>
   <data name="FieldPersonInitialsFormat" xml:space="preserve">
-    <value>Person initials format</value>
+    <value>Name format in descriptions and history</value>
   </data>
   <data name="ShortPersonNameFormat" xml:space="preserve">
-    <value>Person short name format</value>
+    <value>Format of names of persons of the family</value>
   </data>
   <data name="TxtPlaceholderBiography" xml:space="preserve">
     <value>Enter a biography or life story...</value>

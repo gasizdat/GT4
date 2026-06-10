@@ -685,7 +685,7 @@ FN - род</value>
     <value>Формат отображения коротких дат</value>
   </data>
   <data name="FieldCommonPersonNameFormat" xml:space="preserve">
-    <value>Формат отображения обычных имен</value>
+    <value>Формат имен родственников</value>
   </data>
   <data name="NameFirst" xml:space="preserve">
     <value>Имя</value>
@@ -700,10 +700,10 @@ FN - род</value>
     <value>Формат отображения полных имен</value>
   </data>
   <data name="FieldPersonInitialsFormat" xml:space="preserve">
-    <value>Формат отображения фамилии и инициалов</value>
+    <value>Формат имен в описаниях и истории</value>
   </data>
   <data name="ShortPersonNameFormat" xml:space="preserve">
-    <value>Формат отображения коротких имен</value>
+    <value>Формат имен персон рода</value>
   </data>
   <data name="TxtPlaceholderBiography" xml:space="preserve">
     <value>Добавьте биографию или историю из жизни...</value>

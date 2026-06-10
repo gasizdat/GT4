@@ -51,6 +51,7 @@
         Grid.ColumnSpan="2"
         DatesLabelStyle="{StaticResource FieldValue}"
         NameLabelStyle="{StaticResource FieldName}"
+        NameFormat="{Binding NameFormat, Source={x:Reference Root}}"
         Person="{Binding Relative, Source={x:Reference Root}}"
         SizeChanged="PersonInfoViewSizeChanged"
         Style="{StaticResource HoverItem}" />

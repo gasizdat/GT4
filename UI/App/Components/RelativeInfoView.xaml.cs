@@ -76,13 +76,42 @@ public partial class RelativeInfoView : ContentView
     default,
     BindingMode.OneWay);
 
-  public bool ShowMoreButton => (bool)GetValue(ShowMoreButtonProperty);
+  public static readonly BindableProperty NameFormatProperty = BindableProperty.Create(
+    nameof(NameFormat),
+    typeof(NameFormat),
+    typeof(RelativeInfoView),
+    NameFormat.CommonPersonName,
+    BindingMode.OneWay);
 
-  public Date? PersonBirthDate => (Date?)GetValue(PersonBirthDateProperty);
+  public bool ShowMoreButton
+  {
+    get => (bool)GetValue(ShowMoreButtonProperty);
+    set => SetValue(ShowMoreButtonProperty, value);
+  }
 
-  public RelativeInfo? Relative => (RelativeInfo?)GetValue(RelativeProperty);
+  public Date? PersonBirthDate
+  {
+    get => (Date?)GetValue(PersonBirthDateProperty);
+    set => SetValue(PersonBirthDateProperty, value);
+  }
 
-  public Rect PersonInfoFrame => (Rect?)GetValue(PersonInfoFrameProperty) ?? Rect.Zero;
+  public RelativeInfo? Relative
+  {
+    get => (RelativeInfo?)GetValue(RelativeProperty);
+    set => SetValue(RelativeProperty, value);
+  }
+
+  public Rect PersonInfoFrame
+  {
+    get => (Rect?)GetValue(PersonInfoFrameProperty) ?? Rect.Zero;
+    set => SetValue(PersonInfoFrameProperty, value);
+  }
+
+  public NameFormat NameFormat
+  {
+    get => (NameFormat?)GetValue(NameFormatProperty) ?? NameFormat.CommonPersonName;
+    set => SetValue(NameFormatProperty, value);
+  }
 
   public bool ShowDate =>
     _RelationshipDate.HasValue &&
@@ -105,9 +134,9 @@ public partial class RelativeInfoView : ContentView
     Relative is null
     ? string.Empty
     : _RelationshipTypeFormatter.ToString(
-      Relative.Type, 
-      Relative.BiologicalSex, 
-      Relative.Generation, 
+      Relative.Type,
+      Relative.BiologicalSex,
+      Relative.Generation,
       Relative.Consanguinity);
 
   public bool ShowRelatives

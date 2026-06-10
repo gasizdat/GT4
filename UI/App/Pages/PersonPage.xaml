@@ -83,7 +83,8 @@
               Grid.Column="0"
               Command="{Binding Path=PageCommand, Source={x:Reference Root}}"
               CommandParameter="PreviousPerson"
-              Style="{StaticResource LeftAdorner}" />
+              Style="{StaticResource LeftAdorner}"
+              VerticalOptions="Center" />
 
           <CollectionView
               Grid.Row="0"
@@ -98,12 +99,13 @@
             <CollectionView.ItemTemplate>
               <DataTemplate x:DataType="dto:PersonInfo">
                 <components:PersonInfoView
-                    NameFormat="ShortPersonName"
+                    NameFormat="PersonInitials"
                     NameLabelStyle="{StaticResource FieldValue}"
                     Person="{Binding .}"
+                    PhotoStyle="{StaticResource PhotoCompactStyle}"
                     ShowAge="False"
                     ShowDates="False"
-                    ShowPhoto="False"
+                    ShowPhoto="True"
                     Style="{StaticResource HoverItem}" />
               </DataTemplate>
             </CollectionView.ItemTemplate>
@@ -114,22 +116,15 @@
               Grid.Column="2"
               Command="{Binding Path=PageCommand, Source={x:Reference Root}}"
               CommandParameter="NextPerson"
-              Style="{StaticResource RightAdorner}" />
+              Style="{StaticResource RightAdorner}"
+              VerticalOptions="Center" />
 
         </Grid>
-
-        <Label
-            Grid.Row="1"
-            Grid.Column="0"
-            Grid.ColumnSpan="2"
-            Style="{StaticResource GroupTitle}"
-            Text="{Binding CommonName, Source={x:Reference Root}}" />
 
         <Label
             Grid.Row="2"
             Grid.Column="0"
             Grid.ColumnSpan="2"
-            IsVisible="{Binding ShowFullName, Source={x:Reference Root}}"
             Style="{StaticResource CardSubtitle}"
             Text="{Binding FullName, Source={x:Reference Root}}" />
 
@@ -229,6 +224,7 @@
             <CollectionView.ItemTemplate>
               <DataTemplate x:DataType="dto:RelativeInfo">
                 <components:RelativeInfoView
+                    NameFormat="CommonPersonName"
                     PersonBirthDate="{Binding PersonFullInfo.BirthDate, Source={x:Reference Root}}"
                     Relative="{Binding .}"
                     ShowMoreButton="True">

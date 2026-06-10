@@ -58,11 +58,7 @@ public partial class PersonPage : ContentPage
 
   public string ShortName => _NameFormatter.ToString(_PersonFullInfo, NameFormat.ShortPersonName);
 
-  public string CommonName => _NameFormatter.ToString(_PersonFullInfo, NameFormat.CommonPersonName);
-
   public string FullName => _NameFormatter.ToString(_PersonFullInfo, NameFormat.FullPersonName);
-
-  public bool ShowFullName => CommonName != FullName;
 
   public string BirthDate => _DateFormatter.ToString(_PersonFullInfo.BirthDate);
 
@@ -260,7 +256,7 @@ public partial class PersonPage : ContentPage
     {
       _NavigationHistory.RemoveAt(newIndex);
     }
-    var personInfoCopy = new PersonInfo(personInfo, names: personInfo.Names, mainPhoto: null);
+    var personInfoCopy = new PersonInfo(personInfo, names: personInfo.Names, mainPhoto: personInfo.MainPhoto);
     _NavigationHistory.Add(personInfoCopy);
     CurrentPerson = personInfoCopy;
   }
