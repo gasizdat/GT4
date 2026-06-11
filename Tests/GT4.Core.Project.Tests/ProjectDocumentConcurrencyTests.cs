@@ -17,7 +17,7 @@ public sealed class ProjectDocumentConcurrencyTests : IAsyncLifetime
 
   public async ValueTask InitializeAsync()
   {
-    _doc = await ProjectDocument.CreateNewAsync(_path, "concurrency-tests", CancellationToken.None);
+    _doc = await ProjectDocument.CreateNewAsync(_path, "concurrency-tests", TestContext.Current.CancellationToken);
   }
 
   public async ValueTask DisposeAsync()
@@ -89,26 +89,29 @@ public sealed class ProjectDocumentConcurrencyTests : IAsyncLifetime
     }
   }
 
-  private async Task<string[]> AllNameValuesAsync() =>
-    (await _doc.Names.GetNamesByTypeAsync(NameType.AllNames, CancellationToken.None))
+  private async Task<string[]> AllNameValuesAsync(CancellationToken token) =>
+    (await _doc.Names.GetNamesByTypeAsync(NameType.AllNames, token))
       .Select(n => n.Value)
       .ToArray();
 
   [Fact]
   public async Task ConcurrentWrites_FromManyThreads_AllPersistWithoutRacingAsync()
   {
+    var token = TestContext.Current.CancellationToken;
     const int writers = 40;
 
     RunConcurrently(writers, i =>
-      _doc.Names.AddNameAsync($"writer_{i}", NameType.FamilyName, null, CancellationToken.None));
+      _doc.Names.AddNameAsync($"writer_{i}", NameType.FamilyName, null, token));
 
-    var values = await AllNameValuesAsync();
+    var values = await AllNameValuesAsync(token);
     values.Where(v => v.StartsWith("writer_")).Should().HaveCount(writers);
   }
 
   [Fact]
   public void ConcurrentWrites_ProduceUniqueRowIds()
   {
+    var token = TestContext.Current.CancellationToken;
+
     // last_insert_rowid() integrity: if two inserts interleaved on the shared connection, ids would
     // collide. The gate guarantees each insert + id read is serialized.
     const int writers = 40;
@@ -116,7 +119,7 @@ public sealed class ProjectDocumentConcurrencyTests : IAsyncLifetime
 
     RunConcurrently(writers, async i =>
     {
-      var name = await _doc.Names.AddNameAsync($"id_{i}", NameType.FamilyName, null, CancellationToken.None);
+      var name = await _doc.Names.AddNameAsync($"id_{i}", NameType.FamilyName, null, token);
       ids.Add(name.Id);
     });
 
@@ -127,6 +130,7 @@ public sealed class ProjectDocumentConcurrencyTests : IAsyncLifetime
   [Fact]
   public async Task ConcurrentReadsAndWrites_StayConsistentAsync()
   {
+    var token = TestContext.Current.CancellationToken;
     const int total = 60;
     var expectedWrites = Enumerable.Range(0, total).Count(i => i % 3 != 0);
 
@@ -134,45 +138,46 @@ public sealed class ProjectDocumentConcurrencyTests : IAsyncLifetime
     {
       if (i % 3 == 0)
       {
-        return _doc.Names.GetNamesByTypeAsync(NameType.AllNames, CancellationToken.None);
+        return _doc.Names.GetNamesByTypeAsync(NameType.AllNames, token);
       }
 
-      return _doc.Names.AddNameAsync($"mixed_{i}", NameType.FamilyName, null, CancellationToken.None);
+      return _doc.Names.AddNameAsync($"mixed_{i}", NameType.FamilyName, null, token);
     });
 
-    var values = await AllNameValuesAsync();
+    var values = await AllNameValuesAsync(token);
     values.Where(v => v.StartsWith("mixed_")).Should().HaveCount(expectedWrites);
   }
 
   [Fact]
   public async Task OnlyOneRootTransactionIsActiveAtATime()
   {
+    var token = TestContext.Current.CancellationToken;
     var order = new ConcurrentQueue<string>();
     var aStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
     var aMayFinish = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-   
+
     var flowA = Task.Run(async () =>
     {
-      using var transaction = await _doc.BeginTransactionAsync(CancellationToken.None);
+      using var transaction = await _doc.BeginTransactionAsync(token);
       order.Enqueue("A-begin");
       aStarted.SetResult();
       await aMayFinish.Task;
       order.Enqueue("A-end");
       transaction.Commit();
-    });
+    }, token);
 
     await aStarted.Task;
 
     var flowB = Task.Run(async () =>
     {
       // Must block here until flow A releases the connection.
-      using var transaction = await _doc.BeginTransactionAsync(CancellationToken.None);
+      using var transaction = await _doc.BeginTransactionAsync(token);
       order.Enqueue("B-begin");
       transaction.Commit();
-    });
+    }, token);
 
     // Give flow B time to attempt to start its transaction; it must still be blocked.
-    await Task.Delay(250);
+    await Task.Delay(250, token);
     order.Should().NotContain("B-begin");
 
     aMayFinish.SetResult();
@@ -184,46 +189,52 @@ public sealed class ProjectDocumentConcurrencyTests : IAsyncLifetime
   [Fact]
   public async Task Transaction_DisposedWithoutCommit_RollsBackEverything()
   {
-    using (var transaction = await _doc.BeginTransactionAsync(CancellationToken.None))
+    var token = TestContext.Current.CancellationToken;
+
+    using (var transaction = await _doc.BeginTransactionAsync(token))
     {
-      await _doc.Names.AddNameAsync("rollback_me", NameType.FamilyName, null, CancellationToken.None);
+      await _doc.Names.AddNameAsync("rollback_me", NameType.FamilyName, null, token);
       // Intentionally no Commit(): leaving the using scope must roll back.
     }
 
-    (await AllNameValuesAsync()).Should().NotContain("rollback_me");
+    (await AllNameValuesAsync(token)).Should().NotContain("rollback_me");
   }
 
   [Fact]
   public async Task Transaction_Commit_Persists()
   {
-    using (var transaction = await _doc.BeginTransactionAsync(CancellationToken.None))
+    var token = TestContext.Current.CancellationToken;
+
+    using (var transaction = await _doc.BeginTransactionAsync(token))
     {
-      await _doc.Names.AddNameAsync("commit_me", NameType.FamilyName, null, CancellationToken.None);
+      await _doc.Names.AddNameAsync("commit_me", NameType.FamilyName, null, token);
       transaction.Commit();
     }
 
-    (await AllNameValuesAsync()).Should().Contain("commit_me");
+    (await AllNameValuesAsync(token)).Should().Contain("commit_me");
   }
 
   [Fact]
   public async Task NestedSavepoint_RollbackInner_KeepsOuterChanges()
   {
-    await _doc.Names.AddNameAsync("outer_committed", NameType.FamilyName, null, CancellationToken.None);
+    var token = TestContext.Current.CancellationToken;
 
-    using (var outer = await _doc.BeginTransactionAsync(CancellationToken.None))
+    await _doc.Names.AddNameAsync("outer_committed", NameType.FamilyName, null, token);
+
+    using (var outer = await _doc.BeginTransactionAsync(token))
     {
-      await _doc.Names.AddNameAsync("inside_outer", NameType.FamilyName, null, CancellationToken.None);
+      await _doc.Names.AddNameAsync("inside_outer", NameType.FamilyName, null, token);
 
-      using (var savepoint = await _doc.BeginTransactionAsync(CancellationToken.None))
+      using (var savepoint = await _doc.BeginTransactionAsync(token))
       {
-        await _doc.Names.AddNameAsync("inside_savepoint", NameType.FamilyName, null, CancellationToken.None);
+        await _doc.Names.AddNameAsync("inside_savepoint", NameType.FamilyName, null, token);
         savepoint.Rollback();
       }
 
       outer.Commit();
     }
 
-    var values = await AllNameValuesAsync();
+    var values = await AllNameValuesAsync(token);
     values.Should().Contain("outer_committed");
     values.Should().Contain("inside_outer");
     values.Should().NotContain("inside_savepoint");
@@ -232,7 +243,9 @@ public sealed class ProjectDocumentConcurrencyTests : IAsyncLifetime
   [Fact]
   public async Task NestedTransaction_OnSameFlow_DoesNotDeadlock()
   {
-    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+    // Fail fast rather than hang if a deadlock regression is introduced.
+    using var cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+    cts.CancelAfter(TimeSpan.FromSeconds(10));
 
     // A nested BeginTransaction on a flow that already owns the (gate-holding) root must not try to
     // re-acquire the gate; it must complete immediately as a savepoint.
@@ -243,7 +256,7 @@ public sealed class ProjectDocumentConcurrencyTests : IAsyncLifetime
     nested.Commit();
     outer.Commit();
 
-    (await AllNameValuesAsync()).Should().Contain("nested_ok");
+    (await AllNameValuesAsync(cts.Token)).Should().Contain("nested_ok");
   }
 
   [Fact]
@@ -251,7 +264,8 @@ public sealed class ProjectDocumentConcurrencyTests : IAsyncLifetime
   {
     // If the ambient transaction were keyed on the OS thread instead of the async flow, the work after
     // the thread hop would either deadlock (re-acquiring the held gate) or escape the transaction.
-    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+    using var cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+    cts.CancelAfter(TimeSpan.FromSeconds(10));
 
     using (var transaction = await _doc.BeginTransactionAsync(cts.Token))
     {
@@ -262,12 +276,13 @@ public sealed class ProjectDocumentConcurrencyTests : IAsyncLifetime
       // No commit: rolled back on dispose.
     }
 
-    (await AllNameValuesAsync()).Should().NotContain("after_hop");
+    (await AllNameValuesAsync(cts.Token)).Should().NotContain("after_hop");
   }
-   
+
   [Fact]
   public async Task ConcurrentTransactionsAndReads_StressTestAsync()
   {
+    var token = TestContext.Current.CancellationToken;
     const int total = 80;
     var expectedWrites = Enumerable.Range(0, total).Count(i => i % 4 != 0);
 
@@ -276,19 +291,19 @@ public sealed class ProjectDocumentConcurrencyTests : IAsyncLifetime
       if (i % 4 == 0)
       {
         // Pure reads interleaved with writers.
-        await _doc.Names.GetNamesByTypeAsync(NameType.AllNames, CancellationToken.None);
-        await _doc.Persons.GetPersonsAsync(CancellationToken.None);
+        await _doc.Names.GetNamesByTypeAsync(NameType.AllNames, token);
+        await _doc.Persons.GetPersonsAsync(token);
       }
       else
       {
         // Explicit transaction wrapping a write, committed.
-        using var transaction = await _doc.BeginTransactionAsync(CancellationToken.None);
-        await _doc.Names.AddNameAsync($"stress_{i}", NameType.FamilyName, null, CancellationToken.None);
+        using var transaction = await _doc.BeginTransactionAsync(token);
+        await _doc.Names.AddNameAsync($"stress_{i}", NameType.FamilyName, null, token);
         transaction.Commit();
       }
     });
 
-    var values = await AllNameValuesAsync();
+    var values = await AllNameValuesAsync(token);
     values.Where(v => v.StartsWith("stress_")).Should().HaveCount(expectedWrites);
   }
 }
