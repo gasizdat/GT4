@@ -1,12 +1,12 @@
-﻿using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
-using Microsoft.Data.Sqlite;
+using System.Data.Common;
 
 namespace GT4.Core.Project;
 
 internal class TableNames : TableBase, ITableNames
 {
-  private static Name CreateName(SqliteDataReader reader)
+  private static Name CreateName(DbDataReader reader)
   {
     var id = reader.GetInt32(0);
     var value = reader.GetString(1);
@@ -90,9 +90,7 @@ internal class TableNames : TableBase, ITableNames
     command.Parameters.AddWithValue("@id", id.Value);
 
     await using var reader = await command.ExecuteReaderAsync(token);
-    var ret = (await reader.ReadAsync(token)) ? CreateName(reader) : null;
-
-    return ret;
+    return (await reader.ReadAsync(token)) ? CreateName(reader) : null;
   }
 
   public async Task<Name[]?> TryGetNameWithSubnamesByIdAsync(int? id, CancellationToken token)
@@ -101,8 +99,6 @@ internal class TableNames : TableBase, ITableNames
     {
       return null;
     }
-
-    List<Name> ret;
 
     using var command = Document.CreateCommand();
     command.CommandText = """
@@ -113,7 +109,7 @@ internal class TableNames : TableBase, ITableNames
     command.Parameters.AddWithValue("@id", id.Value);
 
     await using var reader = await command.ExecuteReaderAsync(token);
-    ret = new();
+    var ret = new List<Name>();
     while (await reader.ReadAsync(token))
     {
       ret.Add(CreateName(reader));
@@ -134,7 +130,7 @@ internal class TableNames : TableBase, ITableNames
     command.Parameters.AddWithValue("@type", (int)type);
     command.Parameters.AddWithValue("@parentId", parent != null ? parent.Id : DBNull.Value);
     await command.ExecuteNonQueryAsync(token);
-    
+
     var ret = new Name(Id: await Document.GetLastInsertRowIdAsync(token), Value: value, Type: type, ParentId: parent?.Id);
     transaction.Commit();
 
@@ -145,16 +141,16 @@ internal class TableNames : TableBase, ITableNames
   {
     using var transaction = await Document.BeginTransactionAsync(token);
     var name = await AddNameAsync(firstName, NameType.FirstName | NameType.MaleDeclension, null, token);
-    var tasks = new List<Task<Name>>();
+
+    // Sequential: writes inside a transaction must run one at a time on the single connection.
     if (malePatronymic is not null)
     {
-      tasks.Add(AddNameAsync(malePatronymic, NameType.Patronymic | NameType.MaleDeclension, name, token));
+      await AddNameAsync(malePatronymic, NameType.Patronymic | NameType.MaleDeclension, name, token);
     }
     if (femalePatronymic is not null)
     {
-      tasks.Add(AddNameAsync(femalePatronymic, NameType.Patronymic | NameType.FemaleDeclension, name, token));
+      await AddNameAsync(femalePatronymic, NameType.Patronymic | NameType.FemaleDeclension, name, token);
     }
-    await Task.WhenAll(tasks);
     transaction.Commit();
 
     return name;
@@ -171,7 +167,7 @@ internal class TableNames : TableBase, ITableNames
     using var transaction = await Document.BeginTransactionAsync(token);
     using var command = Document.CreateCommand();
     command.CommandText = """
-      UPDATE Names 
+      UPDATE Names
       SET Value=@value
       WHERE Id=@nameId;
       """;

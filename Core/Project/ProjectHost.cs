@@ -1,4 +1,4 @@
-﻿using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 
@@ -11,6 +11,7 @@ public class ProjectHost : IAsyncDisposable, IDisposable
   private readonly IFileSystem _FileSystem;
   private readonly FileDescription _Origin;
   private readonly FileDescription _Cache;
+  private readonly object _Sync = new();
   private long? _ProjectRevision;
   private IProjectDocument? _Project = null;
 
@@ -24,25 +25,41 @@ public class ProjectHost : IAsyncDisposable, IDisposable
 
   public IProjectDocument? Project
   {
-    get => _Project;
+    get
+    {
+      lock (_Sync)
+      {
+        return _Project;
+      }
+    }
     set
     {
-      _Project = value;
-      _ProjectRevision = _Project?.ProjectRevision;
+      lock (_Sync)
+      {
+        _Project = value;
+        _ProjectRevision = _Project?.ProjectRevision;
+      }
     }
   }
 
   public void Dispose()
   {
-    if (_Project is null)
+    IProjectDocument project;
+    long? openedRevision;
+    lock (_Sync)
     {
-      return;
+      if (_Project is null)
+      {
+        return;
+      }
+      project = _Project;
+      openedRevision = _ProjectRevision;
+      _Project = null;
     }
-    var project = _Project;
-    _Project = null;
+
     var actualRevision = project.ProjectRevision;
     project.Dispose();
-    if (actualRevision != _ProjectRevision)
+    if (actualRevision != openedRevision)
     {
       _FileSystem.Copy(_Cache, _Origin);
     }
@@ -55,13 +72,15 @@ public class ProjectHost : IAsyncDisposable, IDisposable
   public async ValueTask DisposeAsync()
   {
     IProjectDocument project;
-    lock (this)
+    long? openedRevision;
+    lock (_Sync)
     {
       if (_Project is null)
       {
         return;
       }
       project = _Project;
+      openedRevision = _ProjectRevision;
       _Project = null;
     }
 
@@ -72,10 +91,10 @@ public class ProjectHost : IAsyncDisposable, IDisposable
     {
       try
       {
-        if (actualRevision != _ProjectRevision)
+        if (actualRevision != openedRevision)
         {
           _FileSystem.Copy(_Cache, _Origin);
-          actualRevision = _ProjectRevision ?? 0;
+          actualRevision = openedRevision ?? 0;
         }
         else
         {
@@ -100,17 +119,27 @@ public class ProjectHost : IAsyncDisposable, IDisposable
 
   public async Task RestoreRevisionAsync(ProjectRevision projectRevision, CancellationToken cancellationToken)
   {
-    if (_Project is null)
+    IProjectDocument? project;
+    lock (_Sync)
+    {
+      project = _Project;
+      _Project = null;
+    }
+
+    if (project is null)
     {
       throw new ApplicationException("No project is set");
     }
     if (_FileSystem.GetLastWriteTime(projectRevision.FileDescription) != projectRevision.DateTime)
     {
+      lock (_Sync)
+      {
+        _Project = project;
+      }
       throw new ArgumentException(nameof(projectRevision));
     }
 
-    await _Project.DisposeAsync();
-    _Project = null;
+    await project.DisposeAsync();
 
     _FileSystem.Copy(projectRevision.FileDescription, _Origin);
   }

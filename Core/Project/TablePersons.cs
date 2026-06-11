@@ -1,6 +1,6 @@
-﻿using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
-using Microsoft.Data.Sqlite;
+using System.Data.Common;
 
 namespace GT4.Core.Project;
 
@@ -28,7 +28,7 @@ internal partial class TablePersons : TableBase, ITablePersons
     await command.ExecuteNonQueryAsync(token);
   }
 
-  private async Task<Person> CreatePersonAsync(SqliteDataReader reader, CancellationToken token)
+  private static Person CreatePerson(DbDataReader reader)
   {
     var person = new Person
     (
@@ -62,8 +62,7 @@ internal partial class TablePersons : TableBase, ITablePersons
     var result = new List<Person>();
     while (await reader.ReadAsync(token))
     {
-      var person = await CreatePersonAsync(reader, token);
-      result.Add(person);
+      result.Add(CreatePerson(reader));
     }
 
     _Items.SetTarget(result);
@@ -85,12 +84,7 @@ internal partial class TablePersons : TableBase, ITablePersons
     command.Parameters.AddWithValue("@id", personId);
 
     await using var reader = await command.ExecuteReaderAsync(token);
-    if (await reader.ReadAsync(token))
-    {
-      return await CreatePersonAsync(reader, token);
-    }
-
-    return null;
+    return (await reader.ReadAsync(token)) ? CreatePerson(reader) : null;
   }
 
   public async Task<Person> AddPersonAsync(Person person, CancellationToken token)
@@ -120,7 +114,7 @@ internal partial class TablePersons : TableBase, ITablePersons
     using var transaction = await Document.BeginTransactionAsync(token);
     using var command = Document.CreateCommand();
     command.CommandText = """
-      UPDATE Persons 
+      UPDATE Persons
       SET BirthDate=@birthDate, BirthDateStatus=@birthDateStatus, DeathDate=@deathDate, DeathDateStatus=@deathDateStatus, BiologicalSex=@biologicalSex
       WHERE Id=@personId;
       """;

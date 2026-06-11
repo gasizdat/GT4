@@ -1,10 +1,27 @@
-﻿using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Abstraction;
 using Microsoft.Data.Sqlite;
 using System.Data;
 
 namespace GT4.Core.Project;
 
-internal class ProjectDocument : IProjectDocument, IAsyncDisposable, IDisposable
+/// <summary>
+/// Thread-safe abstraction over a single <see cref="SqliteConnection"/>.
+/// <para>
+/// A <see cref="SqliteConnection"/> cannot service more than one command at a time, so every
+/// statement is serialized through <see cref="_Gate"/>. Commands may be created and executed from
+/// any number of threads/async-flows; the gate guarantees they touch the connection one at a time.
+/// </para>
+/// <para>
+/// Transactions are flow-affine. <see cref="BeginTransactionAsync"/> acquires the gate and keeps it
+/// for the whole lifetime of the root transaction, recording the transaction in an
+/// <see cref="AsyncLocal{T}"/> ambient. Statements issued by the owning flow observe the ambient and
+/// run directly (the flow already owns the connection); statements from any other flow find no
+/// ambient and block on the gate until the transaction completes. Consequently only one transaction
+/// can be active at a time, and only the creating flow can use it. Nested transactions on the same
+/// flow are mapped to SAVEPOINTs.
+/// </para>
+/// </summary>
+internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDisposable
 {
   private readonly SqliteConnection _Connection;
   private readonly TableMetadata _TableMetadata;
@@ -18,10 +35,15 @@ internal class ProjectDocument : IProjectDocument, IAsyncDisposable, IDisposable
   private readonly PersonManager _PersonManager;
   private readonly RelativesProvider _RelativesProvider;
 
-  private NestedTransaction? _CurrentTransaction = null;
+  // Serializes access to the single connection (a root transaction holds it for its whole lifetime;
+  // a standalone statement holds it only while it executes) and tracks the current flow's transaction.
+  // Shared with every ProjectCommand and NestedTransaction created by this document.
+  private readonly ConnectionGate _Gate = new();
+
+  private readonly object _RevisionLock = new();
   private long _TransactionNo = 0;
   private long _ProjectRevision = Environment.TickCount64;
-  private bool _Disposed = false;
+  private volatile bool _Disposed = false;
 
   static ProjectDocument()
   {
@@ -72,15 +94,15 @@ internal class ProjectDocument : IProjectDocument, IAsyncDisposable, IDisposable
     CheckForDisposed();
     using var transaction = await BeginTransactionAsync(token);
 
-    await Task.WhenAll(
-      _TableMetadata.CreateAsync(token),
-      _TableNames.CreateAsync(token),
-      _TablePersons.CreateAsync(token),
-      _TablePersonNames.CreateAsync(token),
-      _TableData.CreateAsync(token),
-      _TableRelatives.CreateAsync(token),
-      _TablePersonData.CreateAsync(token)
-    );
+    // Created sequentially: every statement must take its turn on the single connection, and a
+    // transaction is owned exclusively by its flow.
+    await _TableMetadata.CreateAsync(token);
+    await _TableNames.CreateAsync(token);
+    await _TablePersons.CreateAsync(token);
+    await _TablePersonNames.CreateAsync(token);
+    await _TableData.CreateAsync(token);
+    await _TableRelatives.CreateAsync(token);
+    await _TablePersonData.CreateAsync(token);
 
     transaction.Commit();
   }
@@ -96,15 +118,40 @@ internal class ProjectDocument : IProjectDocument, IAsyncDisposable, IDisposable
   public IFamilyManager FamilyManager => _FamilyManager;
   public IPersonManager PersonManager => _PersonManager;
   public IRelativesProvider RelativesProvider => _RelativesProvider;
-  public long ProjectRevision => _ProjectRevision;
+  public long ProjectRevision => Interlocked.Read(ref _ProjectRevision);
 
   public void UpdateRevision()
   {
     CheckForDisposed();
-    lock (this)
+    lock (_RevisionLock)
     {
       _ProjectRevision = Environment.TickCount64;
     }
+  }
+
+  // --- Connection access used internally by NestedTransaction ------------------------------------
+
+  internal SqliteConnection Connection => _Connection;
+
+  internal long NextTransactionNo() => Interlocked.Increment(ref _TransactionNo);
+
+  /// <summary>Pops the ambient back to the enclosing transaction and releases the gate for a root.</summary>
+  internal void LeaveTransaction(NestedTransaction transaction)
+  {
+    _Gate.Current = transaction.Parent;
+    if (transaction.Parent is null)
+    {
+      // The root transaction releases the exclusive hold on the connection.
+      _Gate.Release();
+    }
+  }
+
+  // --- Command creation ---------------------------------------------------------------------------
+
+  public ProjectCommand CreateCommand()
+  {
+    CheckForDisposed();
+    return new ProjectCommand(_Connection.CreateCommand(), _Gate);
   }
 
   public async Task<int> GetLastInsertRowIdAsync(CancellationToken token)
@@ -115,31 +162,39 @@ internal class ProjectDocument : IProjectDocument, IAsyncDisposable, IDisposable
     return Convert.ToInt32(await command.ExecuteScalarAsync(token));
   }
 
-  public SqliteCommand CreateCommand()
-  {
-    CheckForDisposed();
-    return _Connection.CreateCommand();
-  }
-
   public Task<IDbTransaction> BeginTransactionAsync(CancellationToken token)
   {
     CheckForDisposed();
-    IDbTransaction ret;
 
-    lock (this)
+    // Implemented synchronously and returned as a completed task on purpose: setting the ambient
+    // inside an async continuation would not be observed by the caller (ExecutionContext changes do
+    // not flow back up). Doing the work before any await keeps the ambient visible to the caller.
+    var current = _Gate.Current;
+    NestedTransaction transaction;
+
+    if (current is null)
     {
-      if (_CurrentTransaction is not null && !_CurrentTransaction.IsDisposed)
+      // Root transaction: take exclusive ownership of the connection for the whole lifetime.
+      _Gate.Wait(token);
+      try
       {
-        var transactionName = $"InnerTransaction_{Interlocked.Increment(ref _TransactionNo)}";
-        ret = new NestedTransaction(_CurrentTransaction, transactionName);
+        var dbTransaction = _Connection.BeginTransaction();
+        transaction = NestedTransaction.CreateRoot(this, dbTransaction);
       }
-      else
+      catch
       {
-        ret = _CurrentTransaction = new NestedTransaction(_Connection.BeginTransactionAsync(token).Result, this);
+        _Gate.Release();
+        throw;
       }
     }
+    else
+    {
+      // Nested transaction on the same flow: SAVEPOINT inside the already-owned connection.
+      transaction = NestedTransaction.CreateSavepoint(this, current);
+    }
 
-    return Task.FromResult(ret);
+    _Gate.Current = transaction;
+    return Task.FromResult<IDbTransaction>(transaction);
   }
 
   public static async Task<ProjectDocument> CreateNewAsync(string path, string name, CancellationToken token)
@@ -161,15 +216,27 @@ internal class ProjectDocument : IProjectDocument, IAsyncDisposable, IDisposable
 
   public async ValueTask DisposeAsync()
   {
+    if (_Disposed)
+    {
+      return;
+    }
     _Disposed = true;
+    GC.SuppressFinalize(this);
     await _Connection.CloseAsync();
     await _Connection.DisposeAsync();
+    _Gate.Dispose();
   }
 
   public void Dispose()
   {
+    if (_Disposed)
+    {
+      return;
+    }
     _Disposed = true;
+    GC.SuppressFinalize(this);
     _Connection.Close();
     _Connection.Dispose();
+    _Gate.Dispose();
   }
 }

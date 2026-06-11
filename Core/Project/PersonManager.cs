@@ -1,4 +1,4 @@
-﻿using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 
 namespace GT4.Core.Project;
@@ -89,16 +89,20 @@ internal class PersonManager : TableBase, IPersonManager
       WHERE PersonNames.NameId=@id;
       """;
     command.Parameters.AddWithValue("@id", name.Id);
-    await using var reader = await command.ExecuteReaderAsync(token);
 
-    var tasks = new List<Task<Person?>>();
-    while (await reader.ReadAsync(token))
+    // Collect ids while holding the connection, then resolve persons; resolving issues more queries
+    // that must not run while the reader still holds the connection — so the reader is disposed
+    // (releasing the gate) before that.
+    var ids = new List<int>();
+    await using (var reader = await command.ExecuteReaderAsync(token))
     {
-      var task = Document.Persons.TryGetPersonByIdAsync(reader.GetInt32(0), token);
-      tasks.Add(task);
+      while (await reader.ReadAsync(token))
+      {
+        ids.Add(reader.GetInt32(0));
+      }
     }
 
-    var persons = await Task.WhenAll(tasks);
+    var persons = await Task.WhenAll(ids.Select(id => Document.Persons.TryGetPersonByIdAsync(id, token)));
     var ret = await Task.WhenAll(persons
       .Where(person => person is not null)
       .Select(person => CreatePersonInfoAsync(person!, selectMainPhoto, token)));
@@ -118,10 +122,10 @@ internal class PersonManager : TableBase, IPersonManager
     }
     var person = await Document.Persons.AddPersonAsync(personFullInfo, token);
 
-    await Task.WhenAll(
-      Document.PersonNames.AddPersonNamesAsync(person, personFullInfo.Names, token),
-      Document.PersonData.AddPersonDataSetAsync(person, CombinePersonData(personFullInfo), token),
-      Document.Relatives.AddRelativesAsync(person, personFullInfo.RelativeInfos, token));
+    // Sequential: writes inside a transaction must take turns on the single connection.
+    await Document.PersonNames.AddPersonNamesAsync(person, personFullInfo.Names, token);
+    await Document.PersonData.AddPersonDataSetAsync(person, CombinePersonData(personFullInfo), token);
+    await Document.Relatives.AddRelativesAsync(person, personFullInfo.RelativeInfos, token);
 
     transaction.Commit();
 
@@ -131,7 +135,6 @@ internal class PersonManager : TableBase, IPersonManager
   public async Task UpdatePersonAsync(PersonFullInfo personFullInfo, CancellationToken token)
   {
     using var transaction = await Document.BeginTransactionAsync(token);
-    var tasks = new List<Task>();
 
     // Ensure photo categories are consistent:
     // If the person's main photo exists but is not marked as PersonMainPhoto,
@@ -142,20 +145,20 @@ internal class PersonManager : TableBase, IPersonManager
       var mainPhoto = await Document.Data.TryGetDataByIdAsync(mainPhotoId.Value, token);
       if (mainPhoto is not null && mainPhoto.Category != DataCategory.PersonMainPhoto)
       {
-        tasks.Add(Document.Data.UpdateCategoryAsync(mainPhoto, DataCategory.PersonMainPhoto, token));
-        tasks.AddRange(personFullInfo
-          .AdditionalPhotos
-          .Select(p => Document.Data.UpdateCategoryAsync(p, DataCategory.PersonPhoto, token)));
+        await Document.Data.UpdateCategoryAsync(mainPhoto, DataCategory.PersonMainPhoto, token);
+        foreach (var photo in personFullInfo.AdditionalPhotos)
+        {
+          await Document.Data.UpdateCategoryAsync(photo, DataCategory.PersonPhoto, token);
+        }
       }
     }
 
+    // Sequential: writes inside a transaction must take turns on the single connection.
     await Document.Persons.UpdatePersonAsync(personFullInfo, token);
-    tasks.AddRange(
-      Document.PersonNames.UpdatePersonNamesAsync(personFullInfo, personFullInfo.Names, token),
-      Document.PersonData.UpdatePersonDataSetAsync(personFullInfo, CombinePersonData(personFullInfo), token),
-      Document.Relatives.UpdateRelativesAsync(personFullInfo, personFullInfo.RelativeInfos, token));
+    await Document.PersonNames.UpdatePersonNamesAsync(personFullInfo, personFullInfo.Names, token);
+    await Document.PersonData.UpdatePersonDataSetAsync(personFullInfo, CombinePersonData(personFullInfo), token);
+    await Document.Relatives.UpdateRelativesAsync(personFullInfo, personFullInfo.RelativeInfos, token);
 
-    await Task.WhenAll(tasks);
     transaction.Commit();
   }
 

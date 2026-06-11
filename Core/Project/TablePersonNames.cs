@@ -1,4 +1,4 @@
-﻿using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 
 namespace GT4.Core.Project;
@@ -35,15 +35,19 @@ internal partial class TablePersonNames : TableBase, ITablePersonNames
       """;
     command.Parameters.AddWithValue("@personId", person.Id);
 
-    await using var reader = await command.ExecuteReaderAsync(token);
-    var tasks = new List<Task<Name?>>();
-    while (await reader.ReadAsync(token))
+    // First read all ids while holding the connection, then resolve names. Resolving names issues
+    // further queries, which must not happen while the reader still holds the connection — so the
+    // reader is disposed (releasing the gate) before that.
+    var ids = new List<int>();
+    await using (var reader = await command.ExecuteReaderAsync(token))
     {
-      var id = reader.GetInt32(0);
-      tasks.Add(Document.Names.TryGetNameByIdAsync(id, token));
+      while (await reader.ReadAsync(token))
+      {
+        ids.Add(reader.GetInt32(0));
+      }
     }
 
-    var names = await Task.WhenAll(tasks);
+    var names = await Task.WhenAll(ids.Select(id => Document.Names.TryGetNameByIdAsync(id, token)));
     return names
       .Where(name => name is not null)
       .Select(name => name!)

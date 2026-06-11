@@ -100,7 +100,7 @@ internal class ProjectDocumentMock : IProjectDocument
     throw new NotImplementedException();
   }
 
-  public SqliteCommand CreateCommand()
+  public ProjectCommand CreateCommand()
   {
     throw new NotImplementedException();
   }

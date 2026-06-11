@@ -1,4 +1,4 @@
-﻿using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 
 namespace GT4.Core.Project;

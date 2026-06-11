@@ -1,12 +1,12 @@
 ﻿using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
-using Microsoft.Data.Sqlite;
+using System.Data.Common;
 
 namespace GT4.Core.Project;
 
 internal class TableData : TableBase, ITableData
 {
-  private static Data CreateData(SqliteDataReader reader)
+  private static Data CreateData(DbDataReader reader)
   {
     var id = reader.GetInt32(0);
     var value = reader.GetStream(1);
@@ -54,9 +54,7 @@ internal class TableData : TableBase, ITableData
     command.Parameters.AddWithValue("@id", id.Value);
 
     await using var reader = await command.ExecuteReaderAsync(token);
-    var ret = (await reader.ReadAsync(token)) ? CreateData(reader) : null;
-
-    return ret;
+    return (await reader.ReadAsync(token)) ? CreateData(reader) : null;
   }
 
   public async Task<Data> AddDataAsync(byte[] content, string? mimeType, DataCategory dataCategory, CancellationToken token)

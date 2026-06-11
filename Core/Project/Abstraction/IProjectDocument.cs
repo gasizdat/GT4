@@ -1,5 +1,4 @@
-﻿using Microsoft.Data.Sqlite;
-using System.Data;
+﻿using System.Data;
 
 namespace GT4.Core.Project.Abstraction;
 
@@ -19,7 +18,14 @@ public interface IProjectDocument : IAsyncDisposable, IDisposable
   IRelativesProvider RelativesProvider { get; }
 
   Task<IDbTransaction> BeginTransactionAsync(CancellationToken token);
-  SqliteCommand CreateCommand();
+
+  /// <summary>
+  /// Creates a command bound to the single underlying connection. Configure it and call one of its
+  /// <c>Execute*</c> methods, which serialize access to the connection and bind the command to the
+  /// current transaction automatically.
+  /// </summary>
+  ProjectCommand CreateCommand();
+
   Task<int> GetLastInsertRowIdAsync(CancellationToken token);
   void UpdateRevision();
 }
