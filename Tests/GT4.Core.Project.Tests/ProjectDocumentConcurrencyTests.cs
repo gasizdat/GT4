@@ -306,4 +306,69 @@ public sealed class ProjectDocumentConcurrencyTests : IAsyncLifetime
     var values = await AllNameValuesAsync(token);
     values.Where(v => v.StartsWith("stress_")).Should().HaveCount(expectedWrites);
   }
+
+  [Fact]
+  public async Task CommandCreatedDuringAnotherFlowsTransaction_RebindsOnExecute()
+  {
+    // Regression guard: SqliteConnection.CreateCommand() stamps the connection's CURRENT transaction
+    // onto the new command. A command created while another flow holds a transaction therefore
+    // captures that transaction; by the time it executes (after the gate frees) that transaction has
+    // completed. ProjectCommand must rebind at execution time instead of using the stale one.
+    var token = TestContext.Current.CancellationToken;
+    var aHasBegun = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var aMayCommit = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    var flowA = Task.Run(async () =>
+    {
+      using var transaction = await _doc.BeginTransactionAsync(token);
+      await _doc.Names.AddNameAsync("from_a", NameType.FamilyName, null, token);
+      aHasBegun.SetResult();
+      await aMayCommit.Task;
+      transaction.Commit();
+    }, token);
+
+    await aHasBegun.Task;
+
+    // Created while flow A's transaction is active: the (soon to be completed) transaction is stamped
+    // onto this command.
+    using var command = _doc.CreateCommand();
+    command.CommandText = "SELECT COUNT(*) FROM Names;";
+
+    // Let flow A commit and release the connection, then execute.
+    aMayCommit.SetResult();
+    await flowA;
+
+    var count = Convert.ToInt32(await command.ExecuteScalarAsync(token));
+    count.Should().BeGreaterThanOrEqualTo(1);
+  }
+
+  [Fact]
+  public async Task CreateCommand_ExecutesRawSqlDirectly()
+  {
+    // ProjectCommand is meant to be usable directly: configure it and call its own Execute* methods.
+    var token = TestContext.Current.CancellationToken;
+
+    using (var transaction = await _doc.BeginTransactionAsync(token))
+    {
+      using var insert = _doc.CreateCommand();
+      insert.CommandText = "INSERT INTO Names (Value, Type, ParentId) VALUES (@value, @type, NULL);";
+      insert.Parameters.AddWithValue("@value", "raw_command");
+      insert.Parameters.AddWithValue("@type", (int)NameType.FamilyName);
+      (await insert.ExecuteNonQueryAsync(token)).Should().Be(1);
+      transaction.Commit();
+    }
+
+    using var scalar = _doc.CreateCommand();
+    scalar.CommandText = "SELECT COUNT(*) FROM Names WHERE Value = @value;";
+    scalar.Parameters.AddWithValue("@value", "raw_command");
+    Convert.ToInt32(await scalar.ExecuteScalarAsync(token)).Should().Be(1);
+
+    using var reader = _doc.CreateCommand();
+    reader.CommandText = "SELECT Value FROM Names WHERE Value = @value;";
+    reader.Parameters.AddWithValue("@value", "raw_command");
+    var value = await reader.ExecuteReaderAsync(
+      async r => await r.ReadAsync(token) ? r.GetString(0) : null,
+      token);
+    value.Should().Be("raw_command");
+  }
 }
