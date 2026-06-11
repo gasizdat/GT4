@@ -6,7 +6,8 @@ namespace GT4.Core.Project;
 
 internal class ProjectDocument : IProjectDocument, IAsyncDisposable, IDisposable
 {
-  private readonly SqliteConnection _Connection;
+  private readonly List<WeakReference<SqliteConnection>> _ActiveConnections = new();
+  private readonly string _ConnectionString;
   private readonly TableMetadata _TableMetadata;
   private readonly TableNames _TableNames;
   private readonly TablePersons _TablePersons;
@@ -34,8 +35,7 @@ internal class ProjectDocument : IProjectDocument, IAsyncDisposable, IDisposable
     builder.Pooling = false;
     builder.DataSource = dbFilaName;
     builder.Mode = mode;
-    var connectionString = builder.ConnectionString;
-    _Connection = new SqliteConnection(connectionString);
+    _ConnectionString = builder.ConnectionString;
     _TableMetadata = new(this);
     _TableNames = new(this);
     _TablePersons = new(this);
@@ -64,7 +64,6 @@ internal class ProjectDocument : IProjectDocument, IAsyncDisposable, IDisposable
   private async Task OpenAsync(CancellationToken token)
   {
     CheckForDisposed();
-    await _Connection.OpenAsync(token);
   }
 
   private async Task InitNewDBAsync(CancellationToken token)
@@ -83,6 +82,21 @@ internal class ProjectDocument : IProjectDocument, IAsyncDisposable, IDisposable
     );
 
     transaction.Commit();
+  }
+
+  private SqliteConnection CreateConnection()
+  {
+    CheckForDisposed();
+
+    var connection = new SqliteConnection(_ConnectionString);
+    connection.Open();
+    lock (_ActiveConnections)
+    {
+      _ActiveConnections.Add(new WeakReference<SqliteConnection>(connection));
+      _ActiveConnections.RemoveAll(r => !r.TryGetTarget(out _));
+    }
+
+    return connection;
   }
 
   public ITableMetadata Metadata => _TableMetadata;
@@ -118,7 +132,12 @@ internal class ProjectDocument : IProjectDocument, IAsyncDisposable, IDisposable
   public SqliteCommand CreateCommand()
   {
     CheckForDisposed();
-    return _Connection.CreateCommand();
+
+    var connection = CreateConnection();
+    var command = connection.CreateCommand();
+    command.Disposed += (_, _) => connection?.Dispose();
+
+    return command;
   }
 
   public Task<IDbTransaction> BeginTransactionAsync(CancellationToken token)
@@ -135,7 +154,9 @@ internal class ProjectDocument : IProjectDocument, IAsyncDisposable, IDisposable
       }
       else
       {
-        ret = _CurrentTransaction = new NestedTransaction(_Connection.BeginTransactionAsync(token).Result, this);
+        var connection = CreateConnection();
+        var transaction = connection.BeginTransactionAsync(token).Result;
+        ret = _CurrentTransaction = new NestedTransaction(transaction, this);
       }
     }
 
@@ -161,15 +182,26 @@ internal class ProjectDocument : IProjectDocument, IAsyncDisposable, IDisposable
 
   public async ValueTask DisposeAsync()
   {
-    _Disposed = true;
-    await _Connection.CloseAsync();
-    await _Connection.DisposeAsync();
+    for (; ; )
+    {
+      int activeConnectionsCount;
+      lock (_ActiveConnections)
+      {
+        _ActiveConnections.RemoveAll(r => !r.TryGetTarget(out _));
+        activeConnectionsCount = _ActiveConnections.Count;
+      }
+      if (activeConnectionsCount == 0)
+      {
+        _Disposed = true;
+        break;
+      }
+      await Task.Delay(TimeSpan.FromMilliseconds(100));
+    }
   }
 
   public void Dispose()
   {
+    Task.Run(DisposeAsync).Wait();
     _Disposed = true;
-    _Connection.Close();
-    _Connection.Dispose();
   }
 }

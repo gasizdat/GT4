@@ -38,10 +38,9 @@ public class ProjectHost : IAsyncDisposable, IDisposable
     {
       return;
     }
-    var project = _Project;
+    var actualRevision = _Project.ProjectRevision;
+    _Project.Dispose();
     _Project = null;
-    var actualRevision = project.ProjectRevision;
-    project.Dispose();
     if (actualRevision != _ProjectRevision)
     {
       _FileSystem.Copy(_Cache, _Origin);
@@ -54,19 +53,13 @@ public class ProjectHost : IAsyncDisposable, IDisposable
 
   public async ValueTask DisposeAsync()
   {
-    IProjectDocument project;
-    lock (this)
+    if (_Project is null)
     {
-      if (_Project is null)
-      {
-        return;
-      }
-      project = _Project;
-      _Project = null;
+      return;
     }
-
-    var actualRevision = project.ProjectRevision;
-    await project.DisposeAsync();
+    var actualRevision = _Project.ProjectRevision;
+    await _Project.DisposeAsync();
+    _Project = null;
 
     for (var i = 0; i < 5; i++)
     {

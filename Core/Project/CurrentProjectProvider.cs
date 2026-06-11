@@ -37,19 +37,13 @@ internal class CurrentProjectProvider : ICurrentProjectProvider
 
   public async Task CloseAsync(CancellationToken token)
   {
-    ProjectHost projectHost;
-    lock (this)
+    if (_ProjectHost is null)
     {
-      if (_ProjectHost is null)
-      {
-        return;
-      }
-
-      projectHost = _ProjectHost;
-      _ProjectHost = null;
+      return;
     }
 
-    await projectHost.DisposeAsync();
+    await _ProjectHost.DisposeAsync();
+    _ProjectHost = null;
   }
 
   public async Task RemoveRevisionAsync(ProjectRevision revision, CancellationToken cancellationToken)

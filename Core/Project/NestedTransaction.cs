@@ -113,7 +113,9 @@ internal class NestedTransaction : IDisposable, IAsyncDisposable, IDbTransaction
 
     if (_DbTransaction is not null)
     {
+      var connection = Connection;
       _DbTransaction.Dispose();
+      connection?.Dispose();
       _Reverted = _Reverted || !_Commited;
     }
     else if (!_Commited)
