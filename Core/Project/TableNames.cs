@@ -34,10 +34,10 @@ internal class TableNames : TableBase, ITableNames
           FOREIGN KEY(ParentId) REFERENCES Names(Id)
       );
       """;
-    await Document.ExecuteNonQueryAsync(command, token);
+    await command.ExecuteNonQueryAsync(token);
 
     command.CommandText = "CREATE UNIQUE INDEX NamesValueType ON Names(Value, Type, ParentId);";
-    await Document.ExecuteNonQueryAsync(command, token);
+    await command.ExecuteNonQueryAsync(token);
   }
 
   public async Task<Name[]> GetNamesByTypeAsync(NameType nameType, CancellationToken token)
@@ -61,7 +61,7 @@ internal class TableNames : TableBase, ITableNames
       command.Parameters.AddWithValue("@type", nameType);
     }
 
-    return await Document.ExecuteReaderAsync(command, async reader =>
+    return await command.ExecuteReaderAsync(async reader =>
     {
       var result = new Dictionary<int, Name>();
       while (await reader.ReadAsync(token))
@@ -91,7 +91,7 @@ internal class TableNames : TableBase, ITableNames
       """;
     command.Parameters.AddWithValue("@id", id.Value);
 
-    return await Document.ExecuteReaderAsync(command, async reader =>
+    return await command.ExecuteReaderAsync(async reader =>
       (await reader.ReadAsync(token)) ? CreateName(reader) : null, token);
   }
 
@@ -110,7 +110,7 @@ internal class TableNames : TableBase, ITableNames
       """;
     command.Parameters.AddWithValue("@id", id.Value);
 
-    return await Document.ExecuteReaderAsync(command, async reader =>
+    return await command.ExecuteReaderAsync(async reader =>
     {
       var ret = new List<Name>();
       while (await reader.ReadAsync(token))
@@ -133,7 +133,7 @@ internal class TableNames : TableBase, ITableNames
     command.Parameters.AddWithValue("@value", value);
     command.Parameters.AddWithValue("@type", (int)type);
     command.Parameters.AddWithValue("@parentId", parent != null ? parent.Id : DBNull.Value);
-    await Document.ExecuteNonQueryAsync(command, token);
+    await command.ExecuteNonQueryAsync(token);
 
     var ret = new Name(Id: await Document.GetLastInsertRowIdAsync(token), Value: value, Type: type, ParentId: parent?.Id);
     transaction.Commit();
@@ -177,7 +177,7 @@ internal class TableNames : TableBase, ITableNames
       """;
     command.Parameters.AddWithValue("@value", name.Value);
     command.Parameters.AddWithValue("@nameId", name.Id);
-    await Document.ExecuteNonQueryAsync(command, token);
+    await command.ExecuteNonQueryAsync(token);
     transaction.Commit();
   }
 
@@ -190,7 +190,7 @@ internal class TableNames : TableBase, ITableNames
       WHERE Id=@id OR ParentId=@id;
       """;
     command.Parameters.AddWithValue("@id", name.Id);
-    await Document.ExecuteNonQueryAsync(command, token);
+    await command.ExecuteNonQueryAsync(token);
     transaction.Commit();
   }
 }

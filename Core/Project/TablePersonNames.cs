@@ -20,7 +20,7 @@ internal partial class TablePersonNames : TableBase, ITablePersonNames
           FOREIGN KEY(NameId) REFERENCES Names(Id)
       );
       """;
-    await Document.ExecuteNonQueryAsync(command, token);
+    await command.ExecuteNonQueryAsync(token);
   }
 
   public async Task<Name[]> GetPersonNamesAsync(Person person, CancellationToken token)
@@ -37,7 +37,7 @@ internal partial class TablePersonNames : TableBase, ITablePersonNames
 
     // First read all ids while holding the connection, then resolve names. Resolving names issues
     // further queries, which must not happen while the reader still holds the connection.
-    var ids = await Document.ExecuteReaderAsync(command, async reader =>
+    var ids = await command.ExecuteReaderAsync(async reader =>
     {
       var list = new List<int>();
       while (await reader.ReadAsync(token))
@@ -70,7 +70,7 @@ internal partial class TablePersonNames : TableBase, ITablePersonNames
 
       command.Parameters.AddWithValue("@personId", person.Id);
       command.Parameters.AddWithValue("@nameId", name.Id);
-      await Document.ExecuteNonQueryAsync(command, token);
+      await command.ExecuteNonQueryAsync(token);
     }
 
     transaction.Commit();
@@ -90,7 +90,7 @@ internal partial class TablePersonNames : TableBase, ITablePersonNames
         """;
       command.Parameters.AddWithValue("@personId", person.Id);
 
-      await Document.ExecuteNonQueryAsync(command, token);
+      await command.ExecuteNonQueryAsync(token);
     }
 
     await AddPersonNamesAsync(person, names, token);

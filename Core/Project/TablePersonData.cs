@@ -20,10 +20,10 @@ internal partial class TablePersonData : TableBase, ITablePersonData
         FOREIGN KEY(DataId) REFERENCES Data(Id)
       );
       """;
-    await Document.ExecuteNonQueryAsync(command, token);
+    await command.ExecuteNonQueryAsync(token);
 
     command.CommandText = "CREATE UNIQUE INDEX PersonDataCategory ON PersonData(PersonId, DataId);";
-    await Document.ExecuteNonQueryAsync(command, token);
+    await command.ExecuteNonQueryAsync(token);
   }
 
   private async Task<int[]> GetPersonDataIdsAsync(Person person, DataCategory? category, CancellationToken token)
@@ -53,7 +53,7 @@ internal partial class TablePersonData : TableBase, ITablePersonData
     }
     command.Parameters.AddWithValue("@personId", person.Id);
 
-    return await Document.ExecuteReaderAsync(command, async reader =>
+    return await command.ExecuteReaderAsync(async reader =>
     {
       var ret = new List<int>();
       while (await reader.ReadAsync(token))
@@ -103,7 +103,7 @@ internal partial class TablePersonData : TableBase, ITablePersonData
         """;
       command.Parameters.AddWithValue("@personId", person.Id);
       command.Parameters.AddWithValue("@dataId", dataId);
-      await Document.ExecuteNonQueryAsync(command, token);
+      await command.ExecuteNonQueryAsync(token);
     }
     transaction.Commit();
   }
@@ -117,7 +117,7 @@ internal partial class TablePersonData : TableBase, ITablePersonData
       WHERE PersonId=@personId;
       """;
     command.Parameters.AddWithValue("@personId", person.Id);
-    await Document.ExecuteNonQueryAsync(command, token);
+    await command.ExecuteNonQueryAsync(token);
 
     await AddPersonDataSetAsync(person, dataSet, token);
 
@@ -167,7 +167,7 @@ internal partial class TablePersonData : TableBase, ITablePersonData
       """;
     command.Parameters.AddWithValue("@personId", person.Id);
     command.Parameters.AddWithValue("@dataId", data.Id);
-    await Document.ExecuteNonQueryAsync(command, token);
+    await command.ExecuteNonQueryAsync(token);
 
     try
     {

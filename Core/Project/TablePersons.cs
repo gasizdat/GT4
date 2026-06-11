@@ -25,7 +25,7 @@ internal partial class TablePersons : TableBase, ITablePersons
         BiologicalSex INTEGER NOT NULL
       );
       """;
-    await Document.ExecuteNonQueryAsync(command, token);
+    await command.ExecuteNonQueryAsync(token);
   }
 
   private static Person CreatePerson(SqliteDataReader reader)
@@ -58,7 +58,7 @@ internal partial class TablePersons : TableBase, ITablePersons
       FROM Persons;
       """;
 
-    var result = await Document.ExecuteReaderAsync(command, async reader =>
+    var result = await command.ExecuteReaderAsync(async reader =>
     {
       var list = new List<Person>();
       while (await reader.ReadAsync(token))
@@ -87,7 +87,7 @@ internal partial class TablePersons : TableBase, ITablePersons
       """;
     command.Parameters.AddWithValue("@id", personId);
 
-    return await Document.ExecuteReaderAsync(command, async reader =>
+    return await command.ExecuteReaderAsync(async reader =>
       (await reader.ReadAsync(token)) ? CreatePerson(reader) : null, token);
   }
 
@@ -104,7 +104,7 @@ internal partial class TablePersons : TableBase, ITablePersons
     command.Parameters.AddWithValue("@deathDate", person.DeathDate.HasValue ? person.DeathDate.Value.Code : DBNull.Value);
     command.Parameters.AddWithValue("@deathDateStatus", person.DeathDate.HasValue ? person.DeathDate.Value.Status : DBNull.Value);
     command.Parameters.AddWithValue("@biologicalSex", person.BiologicalSex);
-    await Document.ExecuteNonQueryAsync(command, token);
+    await command.ExecuteNonQueryAsync(token);
     var personId = await Document.GetLastInsertRowIdAsync(token);
     transaction.Commit();
 
@@ -128,7 +128,7 @@ internal partial class TablePersons : TableBase, ITablePersons
     command.Parameters.AddWithValue("@deathDateStatus", person.DeathDate.HasValue ? person.DeathDate.Value.Status : DBNull.Value);
     command.Parameters.AddWithValue("@biologicalSex", person.BiologicalSex);
     command.Parameters.AddWithValue("@personId", person.Id);
-    await Document.ExecuteNonQueryAsync(command, token);
+    await command.ExecuteNonQueryAsync(token);
     transaction.Commit();
 
     InvalidateItems();
@@ -143,7 +143,7 @@ internal partial class TablePersons : TableBase, ITablePersons
       WHERE Id=@id;
       """;
     command.Parameters.AddWithValue("@id", person.Id);
-    await Document.ExecuteNonQueryAsync(command, token);
+    await command.ExecuteNonQueryAsync(token);
     transaction.Commit();
   }
 }

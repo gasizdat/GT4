@@ -92,7 +92,7 @@ internal class PersonManager : TableBase, IPersonManager
 
     // Collect ids while holding the connection, then resolve persons; resolving issues more queries
     // that must not run while the reader still holds the connection.
-    var ids = await Document.ExecuteReaderAsync(command, async reader =>
+    var ids = await command.ExecuteReaderAsync(async reader =>
     {
       var list = new List<int>();
       while (await reader.ReadAsync(token))

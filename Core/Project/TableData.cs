@@ -35,7 +35,7 @@ internal class TableData : TableBase, ITableData
           Category INTEGER NOT NULL
       );
       """;
-    await Document.ExecuteNonQueryAsync(command, token);
+    await command.ExecuteNonQueryAsync(token);
   }
 
   public async Task<Data?> TryGetDataByIdAsync(int? id, CancellationToken token)
@@ -53,7 +53,7 @@ internal class TableData : TableBase, ITableData
       """;
     command.Parameters.AddWithValue("@id", id.Value);
 
-    return await Document.ExecuteReaderAsync(command, async reader =>
+    return await command.ExecuteReaderAsync(async reader =>
       (await reader.ReadAsync(token)) ? CreateData(reader) : null, token);
   }
 
@@ -68,7 +68,7 @@ internal class TableData : TableBase, ITableData
     command.Parameters.AddWithValue("@value", content);
     command.Parameters.AddWithValue("@mimeType", mimeType is null ? DBNull.Value : mimeType);
     command.Parameters.AddWithValue("@category", (int)dataCategory);
-    await Document.ExecuteNonQueryAsync(command, token);
+    await command.ExecuteNonQueryAsync(token);
 
     var ret = new Data(Id: await Document.GetLastInsertRowIdAsync(token), Content: content, MimeType: mimeType, Category: dataCategory);
     transaction.Commit();
@@ -85,7 +85,7 @@ internal class TableData : TableBase, ITableData
       WHERE Id=@id;
       """;
     command.Parameters.AddWithValue("@id", data.Id);
-    await Document.ExecuteNonQueryAsync(command, token);
+    await command.ExecuteNonQueryAsync(token);
     transaction.Commit();
   }
 
@@ -100,7 +100,7 @@ internal class TableData : TableBase, ITableData
       """;
     command.Parameters.AddWithValue("@id", data.Id);
     command.Parameters.AddWithValue("@category", (int)dataCategory);
-    await Document.ExecuteNonQueryAsync(command, token);
+    await command.ExecuteNonQueryAsync(token);
     transaction.Commit();
   }
 }

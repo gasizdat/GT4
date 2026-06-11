@@ -35,14 +35,10 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   private readonly PersonManager _PersonManager;
   private readonly RelativesProvider _RelativesProvider;
 
-  // Serializes access to the single connection. A root transaction holds it for its whole lifetime;
-  // a standalone statement holds it only while it executes.
-  private readonly SemaphoreSlim _Gate = new(1, 1);
-
-  // The innermost transaction active on the current async-flow, or null when the flow runs no
-  // transaction. Because it flows with the ExecutionContext it survives awaits and thread hops,
-  // which makes it the correct "same thread" notion for async code.
-  private readonly AsyncLocal<NestedTransaction?> _Ambient = new();
+  // Serializes access to the single connection (a root transaction holds it for its whole lifetime;
+  // a standalone statement holds it only while it executes) and tracks the current flow's transaction.
+  // Shared with every ProjectCommand and NestedTransaction created by this document.
+  private readonly ConnectionGate _Gate = new();
 
   private readonly object _RevisionLock = new();
   private long _TransactionNo = 0;
@@ -142,7 +138,7 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   /// <summary>Pops the ambient back to the enclosing transaction and releases the gate for a root.</summary>
   internal void LeaveTransaction(NestedTransaction transaction)
   {
-    _Ambient.Value = transaction.Parent;
+    _Gate.Current = transaction.Parent;
     if (transaction.Parent is null)
     {
       // The root transaction releases the exclusive hold on the connection.
@@ -150,53 +146,12 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     }
   }
 
-  // --- Command creation and gated execution ------------------------------------------------------
+  // --- Command creation ---------------------------------------------------------------------------
 
-  public SqliteCommand CreateCommand()
+  public ProjectCommand CreateCommand()
   {
     CheckForDisposed();
-    return _Connection.CreateCommand();
-  }
-
-  public Task<int> ExecuteNonQueryAsync(SqliteCommand command, CancellationToken token) =>
-    RunGatedAsync(command, () => command.ExecuteNonQueryAsync(token), token);
-
-  public Task<object?> ExecuteScalarAsync(SqliteCommand command, CancellationToken token) =>
-    RunGatedAsync(command, () => command.ExecuteScalarAsync(token), token);
-
-  public Task<TResult> ExecuteReaderAsync<TResult>(SqliteCommand command, Func<SqliteDataReader, Task<TResult>> readAsync, CancellationToken token) =>
-    RunGatedAsync(command, async () =>
-    {
-      await using var reader = await command.ExecuteReaderAsync(token);
-      return await readAsync(reader);
-    }, token);
-
-  /// <summary>
-  /// Executes <paramref name="run"/> with exclusive access to the connection and the command bound to
-  /// the correct transaction. When the flow owns a transaction the command joins it; otherwise the
-  /// gate guarantees no transaction is active, so the command is detached from any (possibly stale)
-  /// transaction that <see cref="SqliteConnection.CreateCommand"/> may have stamped at creation time.
-  /// </summary>
-  private async Task<T> RunGatedAsync<T>(SqliteCommand command, Func<Task<T>> run, CancellationToken token)
-  {
-    CheckForDisposed();
-    var ambient = _Ambient.Value;
-    if (ambient is not null)
-    {
-      command.Transaction = ambient.RootDbTransaction;
-      return await run();
-    }
-
-    await _Gate.WaitAsync(token);
-    try
-    {
-      command.Transaction = null;
-      return await run();
-    }
-    finally
-    {
-      _Gate.Release();
-    }
+    return new ProjectCommand(_Connection.CreateCommand(), _Gate);
   }
 
   public async Task<int> GetLastInsertRowIdAsync(CancellationToken token)
@@ -204,7 +159,7 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     CheckForDisposed();
     using var command = CreateCommand();
     command.CommandText = "SELECT last_insert_rowid();";
-    return Convert.ToInt32(await ExecuteScalarAsync(command, token));
+    return Convert.ToInt32(await command.ExecuteScalarAsync(token));
   }
 
   public Task<IDbTransaction> BeginTransactionAsync(CancellationToken token)
@@ -214,7 +169,7 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     // Implemented synchronously and returned as a completed task on purpose: setting the ambient
     // inside an async continuation would not be observed by the caller (ExecutionContext changes do
     // not flow back up). Doing the work before any await keeps the ambient visible to the caller.
-    var current = _Ambient.Value;
+    var current = _Gate.Current;
     NestedTransaction transaction;
 
     if (current is null)
@@ -238,7 +193,7 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
       transaction = NestedTransaction.CreateSavepoint(this, current);
     }
 
-    _Ambient.Value = transaction;
+    _Gate.Current = transaction;
     return Task.FromResult<IDbTransaction>(transaction);
   }
 

@@ -34,7 +34,7 @@ internal class TableRelatives : TableBase, ITableRelatives
     };
   }
 
-  private static void AddCommandParameters(Person person, Relative relative, SqliteCommand command)
+  private static void AddCommandParameters(Person person, Relative relative, ProjectCommand command)
   {
     switch (relative.Type)
     {
@@ -90,7 +90,7 @@ internal class TableRelatives : TableBase, ITableRelatives
       	  PRIMARY KEY (PersonId, RelativeId, Type, Date)
       );
       """;
-    await Document.ExecuteNonQueryAsync(command, token);
+    await command.ExecuteNonQueryAsync(token);
   }
 
   public async Task<Relative[]> GetRelativesAsync(Person person, CancellationToken token)
@@ -108,7 +108,7 @@ internal class TableRelatives : TableBase, ITableRelatives
       """;
       command.Parameters.AddWithValue("@id", person.Id);
 
-      await Document.ExecuteReaderAsync(command, async reader =>
+      await command.ExecuteReaderAsync(async reader =>
       {
         while (await reader.ReadAsync(token))
         {
@@ -127,7 +127,7 @@ internal class TableRelatives : TableBase, ITableRelatives
       """;
       command.Parameters.AddWithValue("@id", person.Id);
 
-      await Document.ExecuteReaderAsync(command, async reader =>
+      await command.ExecuteReaderAsync(async reader =>
       {
         while (await reader.ReadAsync(token))
         {
@@ -159,7 +159,7 @@ internal class TableRelatives : TableBase, ITableRelatives
       AddCommandParameters(person, relative, command);
       command.Parameters.AddWithValue("@date", relative.Date.HasValue ? relative.Date.Value.Code : DBNull.Value);
       command.Parameters.AddWithValue("@dateStatus", relative.Date.HasValue ? relative.Date.Value.Status : DBNull.Value);
-      await Document.ExecuteNonQueryAsync(command, token);
+      await command.ExecuteNonQueryAsync(token);
     }
 
     transaction.Commit();
@@ -189,7 +189,7 @@ internal class TableRelatives : TableBase, ITableRelatives
         WHERE PersonId=@personId AND RelativeId=@relativeId AND Type=@type;
         """;
       AddCommandParameters(person, oldRelative, command);
-      await Document.ExecuteNonQueryAsync(command, token);
+      await command.ExecuteNonQueryAsync(token);
     }
 
     await AddRelativesAsync(person, relatives.Where(r => !remainedRelatives.Contains(r.Id)).ToArray(), token);

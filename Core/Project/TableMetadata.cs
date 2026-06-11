@@ -22,7 +22,7 @@ internal class TableMetadata : TableBase, ITableMetadata
       Data BLOB
     );
     """;
-    await Document.ExecuteNonQueryAsync(command, token);
+    await command.ExecuteNonQueryAsync(token);
   }
 
   public async Task AddAsync<TData>(string id, TData data, CancellationToken token)
@@ -36,7 +36,7 @@ internal class TableMetadata : TableBase, ITableMetadata
       """;
     command.Parameters.AddWithValue("@id", id);
     command.Parameters.AddWithValue("@data", data);
-    await Document.ExecuteNonQueryAsync(command, token);
+    await command.ExecuteNonQueryAsync(token);
     transaction.Commit();
   }
 
@@ -45,7 +45,7 @@ internal class TableMetadata : TableBase, ITableMetadata
     using var command = Document.CreateCommand();
     command.CommandText = "SELECT Data FROM Metadata WHERE Id=@id;";
     command.Parameters.Add(new SqliteParameter("@id", id));
-    var result = await Document.ExecuteScalarAsync(command, token);
+    var result = await command.ExecuteScalarAsync(token);
     return (TData?)result;
   }
 

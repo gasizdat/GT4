@@ -100,22 +100,7 @@ internal class ProjectDocumentMock : IProjectDocument
     throw new NotImplementedException();
   }
 
-  public SqliteCommand CreateCommand()
-  {
-    throw new NotImplementedException();
-  }
-
-  public Task<int> ExecuteNonQueryAsync(SqliteCommand command, CancellationToken token)
-  {
-    throw new NotImplementedException();
-  }
-
-  public Task<object?> ExecuteScalarAsync(SqliteCommand command, CancellationToken token)
-  {
-    throw new NotImplementedException();
-  }
-
-  public Task<TResult> ExecuteReaderAsync<TResult>(SqliteCommand command, Func<SqliteDataReader, Task<TResult>> readAsync, CancellationToken token)
+  public ProjectCommand CreateCommand()
   {
     throw new NotImplementedException();
   }

@@ -1,5 +1,4 @@
-﻿using Microsoft.Data.Sqlite;
-using System.Data;
+﻿using System.Data;
 
 namespace GT4.Core.Project.Abstraction;
 
@@ -19,26 +18,14 @@ public interface IProjectDocument : IAsyncDisposable, IDisposable
   IRelativesProvider RelativesProvider { get; }
 
   Task<IDbTransaction> BeginTransactionAsync(CancellationToken token);
-  SqliteCommand CreateCommand();
+
+  /// <summary>
+  /// Creates a command bound to the single underlying connection. Configure it and call one of its
+  /// <c>Execute*</c> methods, which serialize access to the connection and bind the command to the
+  /// current transaction automatically.
+  /// </summary>
+  ProjectCommand CreateCommand();
+
   Task<int> GetLastInsertRowIdAsync(CancellationToken token);
   void UpdateRevision();
-
-  /// <summary>
-  /// Executes a non-query command serialized against the single underlying connection.
-  /// When the calling async-flow owns the current transaction the command runs directly
-  /// (the flow already holds the connection); otherwise it waits for exclusive access.
-  /// </summary>
-  Task<int> ExecuteNonQueryAsync(SqliteCommand command, CancellationToken token);
-
-  /// <summary>
-  /// Executes a scalar command serialized against the single underlying connection.
-  /// </summary>
-  Task<object?> ExecuteScalarAsync(SqliteCommand command, CancellationToken token);
-
-  /// <summary>
-  /// Executes a reader command and projects it via <paramref name="readAsync"/> while the
-  /// connection is held exclusively. The callback must only read from the reader; it must not
-  /// start other database operations (that would deadlock against the held connection).
-  /// </summary>
-  Task<TResult> ExecuteReaderAsync<TResult>(SqliteCommand command, Func<SqliteDataReader, Task<TResult>> readAsync, CancellationToken token);
 }
