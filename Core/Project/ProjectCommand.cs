@@ -40,16 +40,37 @@ public sealed class ProjectCommand : IDisposable, IAsyncDisposable
     RunGatedAsync(() => _Command.ExecuteScalarAsync(token), token);
 
   /// <summary>
-  /// Executes a reader and projects it via <paramref name="readAsync"/> while the connection is held
-  /// exclusively. The callback must only read from the reader; it must not start other database
-  /// operations (that would deadlock against the held connection).
+  /// Executes a reader. The returned <see cref="ProjectDataReader"/> is used like any reader and holds
+  /// the connection until it is disposed, so always consume it with <c>await using</c>. While it is
+  /// open no other flow can touch the connection, so do not start an independent database operation
+  /// before disposing it (that would deadlock); read what you need, dispose, then continue.
   /// </summary>
-  public Task<TResult> ExecuteReaderAsync<TResult>(Func<SqliteDataReader, Task<TResult>> readAsync, CancellationToken token) =>
-    RunGatedAsync(async () =>
+  public async Task<ProjectDataReader> ExecuteReaderAsync(CancellationToken token)
+  {
+    var ambient = _Gate.Current;
+    if (ambient is not null)
     {
-      await using var reader = await _Command.ExecuteReaderAsync(token);
-      return await readAsync(reader);
-    }, token);
+      // This flow owns the transaction (and therefore the connection); the transaction holds the gate.
+      _Command.Transaction = ambient.RootDbTransaction;
+      var reader = await _Command.ExecuteReaderAsync(token);
+      return new ProjectDataReader(reader, gate: null);
+    }
+
+    await _Gate.WaitAsync(token);
+    try
+    {
+      // Holding the gate guarantees no transaction is active, so detach from any stale transaction.
+      _Command.Transaction = null;
+      var reader = await _Command.ExecuteReaderAsync(token);
+      // The gate is released when the returned reader is disposed.
+      return new ProjectDataReader(reader, _Gate);
+    }
+    catch
+    {
+      _Gate.Release();
+      throw;
+    }
+  }
 
   private async Task<T> RunGatedAsync<T>(Func<Task<T>> run, CancellationToken token)
   {

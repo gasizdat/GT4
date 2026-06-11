@@ -1,7 +1,6 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
-using Microsoft.Data.Sqlite;
 using System.Collections.Concurrent;
 
 namespace GT4.Core.Project;
@@ -108,14 +107,11 @@ internal class TableRelatives : TableBase, ITableRelatives
       """;
       command.Parameters.AddWithValue("@id", person.Id);
 
-      await command.ExecuteReaderAsync(async reader =>
+      await using var reader = await command.ExecuteReaderAsync(token);
+      while (await reader.ReadAsync(token))
       {
-        while (await reader.ReadAsync(token))
-        {
-          rows.Add(new RelativeRow(reader.GetInt32(0), GetEnum<RelationshipType>(reader, 1), TryGetDate(reader, 2, 3), ForwardLink: true));
-        }
-        return true;
-      }, token);
+        rows.Add(new RelativeRow(reader.GetInt32(0), GetEnum<RelationshipType>(reader, 1), TryGetDate(reader, 2, 3), ForwardLink: true));
+      }
     }
 
     using (var command = Document.CreateCommand())
@@ -127,14 +123,11 @@ internal class TableRelatives : TableBase, ITableRelatives
       """;
       command.Parameters.AddWithValue("@id", person.Id);
 
-      await command.ExecuteReaderAsync(async reader =>
+      await using var reader = await command.ExecuteReaderAsync(token);
+      while (await reader.ReadAsync(token))
       {
-        while (await reader.ReadAsync(token))
-        {
-          rows.Add(new RelativeRow(reader.GetInt32(0), GetEnum<RelationshipType>(reader, 1), TryGetDate(reader, 2, 3), ForwardLink: false));
-        }
-        return true;
-      }, token);
+        rows.Add(new RelativeRow(reader.GetInt32(0), GetEnum<RelationshipType>(reader, 1), TryGetDate(reader, 2, 3), ForwardLink: false));
+      }
     }
 
     var relatives = await Task.WhenAll(rows.Select(row => CreateRelativeAsync(row, token)));

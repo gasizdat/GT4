@@ -1,12 +1,12 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
-using Microsoft.Data.Sqlite;
+using System.Data.Common;
 
 namespace GT4.Core.Project;
 
 internal class TableNames : TableBase, ITableNames
 {
-  private static Name CreateName(SqliteDataReader reader)
+  private static Name CreateName(DbDataReader reader)
   {
     var id = reader.GetInt32(0);
     var value = reader.GetString(1);
@@ -61,19 +61,17 @@ internal class TableNames : TableBase, ITableNames
       command.Parameters.AddWithValue("@type", nameType);
     }
 
-    return await command.ExecuteReaderAsync(async reader =>
+    await using var reader = await command.ExecuteReaderAsync(token);
+    var result = new Dictionary<int, Name>();
+    while (await reader.ReadAsync(token))
     {
-      var result = new Dictionary<int, Name>();
-      while (await reader.ReadAsync(token))
-      {
-        var name = CreateName(reader);
-        result.Add(name.Id, name);
-      }
+      var name = CreateName(reader);
+      result.Add(name.Id, name);
+    }
 
-      return result
-        .Values
-        .ToArray();
-    }, token);
+    return result
+      .Values
+      .ToArray();
   }
 
   public async Task<Name?> TryGetNameByIdAsync(int? id, CancellationToken token)
@@ -91,8 +89,8 @@ internal class TableNames : TableBase, ITableNames
       """;
     command.Parameters.AddWithValue("@id", id.Value);
 
-    return await command.ExecuteReaderAsync(async reader =>
-      (await reader.ReadAsync(token)) ? CreateName(reader) : null, token);
+    await using var reader = await command.ExecuteReaderAsync(token);
+    return (await reader.ReadAsync(token)) ? CreateName(reader) : null;
   }
 
   public async Task<Name[]?> TryGetNameWithSubnamesByIdAsync(int? id, CancellationToken token)
@@ -110,16 +108,14 @@ internal class TableNames : TableBase, ITableNames
       """;
     command.Parameters.AddWithValue("@id", id.Value);
 
-    return await command.ExecuteReaderAsync(async reader =>
+    await using var reader = await command.ExecuteReaderAsync(token);
+    var ret = new List<Name>();
+    while (await reader.ReadAsync(token))
     {
-      var ret = new List<Name>();
-      while (await reader.ReadAsync(token))
-      {
-        ret.Add(CreateName(reader));
-      }
+      ret.Add(CreateName(reader));
+    }
 
-      return ret.Count > 0 ? ret.ToArray() : null;
-    }, token);
+    return ret.Count > 0 ? ret.ToArray() : null;
   }
 
   public async Task<Name> AddNameAsync(string value, NameType type, Name? parent, CancellationToken token)

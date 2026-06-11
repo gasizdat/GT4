@@ -363,12 +363,11 @@ public sealed class ProjectDocumentConcurrencyTests : IAsyncLifetime
     scalar.Parameters.AddWithValue("@value", "raw_command");
     Convert.ToInt32(await scalar.ExecuteScalarAsync(token)).Should().Be(1);
 
-    using var reader = _doc.CreateCommand();
-    reader.CommandText = "SELECT Value FROM Names WHERE Value = @value;";
-    reader.Parameters.AddWithValue("@value", "raw_command");
-    var value = await reader.ExecuteReaderAsync(
-      async r => await r.ReadAsync(token) ? r.GetString(0) : null,
-      token);
-    value.Should().Be("raw_command");
+    using var select = _doc.CreateCommand();
+    select.CommandText = "SELECT Value FROM Names WHERE Value = @value;";
+    select.Parameters.AddWithValue("@value", "raw_command");
+    await using var reader = await select.ExecuteReaderAsync(token);
+    (await reader.ReadAsync(token)).Should().BeTrue();
+    reader.GetString(0).Should().Be("raw_command");
   }
 }

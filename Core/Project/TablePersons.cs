@@ -1,6 +1,6 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
-using Microsoft.Data.Sqlite;
+using System.Data.Common;
 
 namespace GT4.Core.Project;
 
@@ -28,7 +28,7 @@ internal partial class TablePersons : TableBase, ITablePersons
     await command.ExecuteNonQueryAsync(token);
   }
 
-  private static Person CreatePerson(SqliteDataReader reader)
+  private static Person CreatePerson(DbDataReader reader)
   {
     var person = new Person
     (
@@ -58,16 +58,12 @@ internal partial class TablePersons : TableBase, ITablePersons
       FROM Persons;
       """;
 
-    var result = await command.ExecuteReaderAsync(async reader =>
+    await using var reader = await command.ExecuteReaderAsync(token);
+    var result = new List<Person>();
+    while (await reader.ReadAsync(token))
     {
-      var list = new List<Person>();
-      while (await reader.ReadAsync(token))
-      {
-        list.Add(CreatePerson(reader));
-      }
-
-      return list;
-    }, token);
+      result.Add(CreatePerson(reader));
+    }
 
     _Items.SetTarget(result);
     return result.ToArray();
@@ -87,8 +83,8 @@ internal partial class TablePersons : TableBase, ITablePersons
       """;
     command.Parameters.AddWithValue("@id", personId);
 
-    return await command.ExecuteReaderAsync(async reader =>
-      (await reader.ReadAsync(token)) ? CreatePerson(reader) : null, token);
+    await using var reader = await command.ExecuteReaderAsync(token);
+    return (await reader.ReadAsync(token)) ? CreatePerson(reader) : null;
   }
 
   public async Task<Person> AddPersonAsync(Person person, CancellationToken token)

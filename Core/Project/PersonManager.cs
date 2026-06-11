@@ -91,17 +91,16 @@ internal class PersonManager : TableBase, IPersonManager
     command.Parameters.AddWithValue("@id", name.Id);
 
     // Collect ids while holding the connection, then resolve persons; resolving issues more queries
-    // that must not run while the reader still holds the connection.
-    var ids = await command.ExecuteReaderAsync(async reader =>
+    // that must not run while the reader still holds the connection — so the reader is disposed
+    // (releasing the gate) before that.
+    var ids = new List<int>();
+    await using (var reader = await command.ExecuteReaderAsync(token))
     {
-      var list = new List<int>();
       while (await reader.ReadAsync(token))
       {
-        list.Add(reader.GetInt32(0));
+        ids.Add(reader.GetInt32(0));
       }
-
-      return list;
-    }, token);
+    }
 
     var persons = await Task.WhenAll(ids.Select(id => Document.Persons.TryGetPersonByIdAsync(id, token)));
     var ret = await Task.WhenAll(persons

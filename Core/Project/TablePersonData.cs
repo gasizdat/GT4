@@ -53,16 +53,14 @@ internal partial class TablePersonData : TableBase, ITablePersonData
     }
     command.Parameters.AddWithValue("@personId", person.Id);
 
-    return await command.ExecuteReaderAsync(async reader =>
+    await using var reader = await command.ExecuteReaderAsync(token);
+    var ret = new List<int>();
+    while (await reader.ReadAsync(token))
     {
-      var ret = new List<int>();
-      while (await reader.ReadAsync(token))
-      {
-        ret.Add(reader.GetInt32(0));
-      }
+      ret.Add(reader.GetInt32(0));
+    }
 
-      return ret.ToArray();
-    }, token);
+    return ret.ToArray();
   }
 
   private async Task<Data> AddDataContentIfNotExist(Data data, CancellationToken token)
