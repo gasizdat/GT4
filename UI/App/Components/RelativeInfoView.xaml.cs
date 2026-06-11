@@ -47,18 +47,14 @@ public partial class RelativeInfoView : ContentView
     typeof(bool),
     typeof(RelativeInfoView),
     default,
-    BindingMode.OneWay,
-    null,
-    OnRelativeInfoChanged);
+    BindingMode.OneWay);
 
   public static readonly BindableProperty PersonBirthDateProperty = BindableProperty.Create(
     nameof(PersonBirthDate),
     typeof(Date),
     typeof(RelativeInfoView),
     default,
-    BindingMode.OneWay,
-    null,
-    OnRelativeInfoChanged);
+    BindingMode.OneWay);
 
   public static readonly BindableProperty RelativeProperty = BindableProperty.Create(
     nameof(Relative),
@@ -89,6 +85,15 @@ public partial class RelativeInfoView : ContentView
     typeof(RelativeInfoView),
     default,
     BindingMode.OneWay);
+
+  public static readonly BindableProperty ExandAllRelativesProperty = BindableProperty.Create(
+    nameof(ExandAllRelatives),
+    typeof(bool),
+    typeof(RelativeInfoView),
+    false,
+    BindingMode.OneWay,
+    null,
+    OnExandAllRelativesChanged);
 
   public bool ShowMoreButton
   {
@@ -124,6 +129,12 @@ public partial class RelativeInfoView : ContentView
   {
     get => (ICommand?)GetValue(SelectCommandProperty);
     set => SetValue(SelectCommandProperty, value);
+  }
+
+  public bool ExandAllRelatives
+  {
+    get => (bool?)GetValue(ExandAllRelativesProperty) ?? false;
+    set => SetValue(ExandAllRelativesProperty, value);
   }
 
   public bool ShowDate =>
@@ -205,6 +216,32 @@ public partial class RelativeInfoView : ContentView
     {
       view.ShowRelatives = false;
       view.RefreshView();
+      if (view.ExandAllRelatives)
+      {
+        var value = view.ExandAllRelatives;
+        Task.Run(async () => await view.ToggleAllRelativesAsync(value));
+      }
+    }
+  }
+
+  private static void OnExandAllRelativesChanged(BindableObject obj, object oldValue, object newValue)
+  {
+    if (obj is RelativeInfoView view && oldValue != newValue)
+    {
+      var value = newValue is null ? false : (bool)newValue;
+      Task.Run(async () => await view.ToggleAllRelativesAsync(value));
+    }
+  }
+
+  private async Task ToggleAllRelativesAsync(bool expand)
+  {
+    if (ShowRelatives != expand)
+    {
+      ShowRelatives = false;
+      if (expand)
+      {
+        await OnShowMoreRelativesCommandAsync();
+      }
     }
   }
 
@@ -218,7 +255,10 @@ public partial class RelativeInfoView : ContentView
 
     if (ShowRelatives)
     {
-      ShowRelatives = false;
+      await Dispatcher.DispatchAsync(() =>
+      {
+        ShowRelatives = false;
+      });
     }
     else
     {
@@ -227,9 +267,11 @@ public partial class RelativeInfoView : ContentView
         .Project
         .RelativesProvider
         .GetRelativeInfosAsync(relative, true, token);
-
-      Relatives = relatives;
-      ShowRelatives = true;
+      await Dispatcher.DispatchAsync(() =>
+      {
+        Relatives = relatives;
+        ShowRelatives = true;
+      });
     }
   }
 

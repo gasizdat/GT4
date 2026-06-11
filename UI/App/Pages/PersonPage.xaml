@@ -228,10 +228,11 @@
                     Stroke="{StaticResource CardStroke}"
                     Style="{StaticResource HoverItem}">
                   <components:RelativeInfoView
+                      ExandAllRelatives="True"
                       NameFormat="CommonPersonName"
-                      SelectCommand="{Binding Path=PageCommand, Source={x:Reference Root}}"
                       PersonBirthDate="{Binding PersonFullInfo.BirthDate, Source={x:Reference Root}}"
                       Relative="{Binding .}"
+                      SelectCommand="{Binding Path=PageCommand, Source={x:Reference Root}}"
                       ShowMoreButton="True" />
                 </Border>
               </DataTemplate>

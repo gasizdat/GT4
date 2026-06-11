@@ -114,9 +114,10 @@
             <components:RelativeInfoView
                 x:Name="RelativeInfoView"
                 Margin="{Thickness Left={StaticResource RelativesIndentation}}"
-                SelectCommand="{Binding SelectCommand, Source={x:Reference Root}}"
+                ExandAllRelatives="{Binding ExandAllRelatives, Source={x:Reference Root}}"
                 PersonBirthDate="{Binding Relative.BirthDate, Source={x:Reference Root}}"
                 Relative="{Binding .}"
+                SelectCommand="{Binding SelectCommand, Source={x:Reference Root}}"
                 ShowMoreButton="True"
                 Style="{StaticResource HoverSubItem}" />
           </Grid>
