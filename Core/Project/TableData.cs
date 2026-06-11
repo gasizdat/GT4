@@ -35,7 +35,7 @@ internal class TableData : TableBase, ITableData
           Category INTEGER NOT NULL
       );
       """;
-    await command.ExecuteNonQueryAsync(token);
+    await Document.ExecuteNonQueryAsync(command, token);
   }
 
   public async Task<Data?> TryGetDataByIdAsync(int? id, CancellationToken token)
@@ -53,10 +53,8 @@ internal class TableData : TableBase, ITableData
       """;
     command.Parameters.AddWithValue("@id", id.Value);
 
-    await using var reader = await command.ExecuteReaderAsync(token);
-    var ret = (await reader.ReadAsync(token)) ? CreateData(reader) : null;
-
-    return ret;
+    return await Document.ExecuteReaderAsync(command, async reader =>
+      (await reader.ReadAsync(token)) ? CreateData(reader) : null, token);
   }
 
   public async Task<Data> AddDataAsync(byte[] content, string? mimeType, DataCategory dataCategory, CancellationToken token)
@@ -70,7 +68,7 @@ internal class TableData : TableBase, ITableData
     command.Parameters.AddWithValue("@value", content);
     command.Parameters.AddWithValue("@mimeType", mimeType is null ? DBNull.Value : mimeType);
     command.Parameters.AddWithValue("@category", (int)dataCategory);
-    await command.ExecuteNonQueryAsync(token);
+    await Document.ExecuteNonQueryAsync(command, token);
 
     var ret = new Data(Id: await Document.GetLastInsertRowIdAsync(token), Content: content, MimeType: mimeType, Category: dataCategory);
     transaction.Commit();
@@ -87,7 +85,7 @@ internal class TableData : TableBase, ITableData
       WHERE Id=@id;
       """;
     command.Parameters.AddWithValue("@id", data.Id);
-    await command.ExecuteNonQueryAsync(token);
+    await Document.ExecuteNonQueryAsync(command, token);
     transaction.Commit();
   }
 
@@ -102,7 +100,7 @@ internal class TableData : TableBase, ITableData
       """;
     command.Parameters.AddWithValue("@id", data.Id);
     command.Parameters.AddWithValue("@category", (int)dataCategory);
-    await command.ExecuteNonQueryAsync(token);
+    await Document.ExecuteNonQueryAsync(command, token);
     transaction.Commit();
   }
 }

@@ -1,4 +1,4 @@
-﻿using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 
 namespace GT4.Core.Project;
@@ -20,10 +20,10 @@ internal partial class TablePersonData : TableBase, ITablePersonData
         FOREIGN KEY(DataId) REFERENCES Data(Id)
       );
       """;
-    await command.ExecuteNonQueryAsync(token);
+    await Document.ExecuteNonQueryAsync(command, token);
 
     command.CommandText = "CREATE UNIQUE INDEX PersonDataCategory ON PersonData(PersonId, DataId);";
-    await command.ExecuteNonQueryAsync(token);
+    await Document.ExecuteNonQueryAsync(command, token);
   }
 
   private async Task<int[]> GetPersonDataIdsAsync(Person person, DataCategory? category, CancellationToken token)
@@ -53,14 +53,16 @@ internal partial class TablePersonData : TableBase, ITablePersonData
     }
     command.Parameters.AddWithValue("@personId", person.Id);
 
-    await using var reader = await command.ExecuteReaderAsync(token);
-    var ret = new List<int>();
-    while (await reader.ReadAsync(token))
+    return await Document.ExecuteReaderAsync(command, async reader =>
     {
-      ret.Add(reader.GetInt32(0));
-    }
+      var ret = new List<int>();
+      while (await reader.ReadAsync(token))
+      {
+        ret.Add(reader.GetInt32(0));
+      }
 
-    return ret.ToArray();
+      return ret.ToArray();
+    }, token);
   }
 
   private async Task<Data> AddDataContentIfNotExist(Data data, CancellationToken token)
@@ -101,7 +103,7 @@ internal partial class TablePersonData : TableBase, ITablePersonData
         """;
       command.Parameters.AddWithValue("@personId", person.Id);
       command.Parameters.AddWithValue("@dataId", dataId);
-      await command.ExecuteNonQueryAsync(token);
+      await Document.ExecuteNonQueryAsync(command, token);
     }
     transaction.Commit();
   }
@@ -115,7 +117,7 @@ internal partial class TablePersonData : TableBase, ITablePersonData
       WHERE PersonId=@personId;
       """;
     command.Parameters.AddWithValue("@personId", person.Id);
-    await command.ExecuteNonQueryAsync(token);
+    await Document.ExecuteNonQueryAsync(command, token);
 
     await AddPersonDataSetAsync(person, dataSet, token);
 
@@ -165,7 +167,7 @@ internal partial class TablePersonData : TableBase, ITablePersonData
       """;
     command.Parameters.AddWithValue("@personId", person.Id);
     command.Parameters.AddWithValue("@dataId", data.Id);
-    await command.ExecuteNonQueryAsync(token);
+    await Document.ExecuteNonQueryAsync(command, token);
 
     try
     {

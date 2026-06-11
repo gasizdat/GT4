@@ -1,5 +1,6 @@
-﻿using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
+using GT4.Core.Utils;
 using Microsoft.Data.Sqlite;
 using System.Collections.Concurrent;
 
@@ -7,6 +8,8 @@ namespace GT4.Core.Project;
 
 internal class TableRelatives : TableBase, ITableRelatives
 {
+  private readonly record struct RelativeRow(int Id, RelationshipType Type, Date? Date, bool ForwardLink);
+
   private static RelationshipType GetBackwardDirection(RelationshipType relationshipType)
   {
     var ret = relationshipType switch
@@ -59,18 +62,12 @@ internal class TableRelatives : TableBase, ITableRelatives
     }
   }
 
-  private async Task<Relative?> CreateRelativeAsync(SqliteDataReader reader, bool forwardLink, CancellationToken token)
+  private async Task<Relative?> CreateRelativeAsync(RelativeRow row, CancellationToken token)
   {
-    var id = reader.GetInt32(0);
-    var type = GetEnum<RelationshipType>(reader, 1);
-    var date = TryGetDate(reader, 2, 3);
-    var relative = await Document.Persons.TryGetPersonByIdAsync(id, token);
-    if (forwardLink == false)
-    {
-      type = GetBackwardDirection(type);
-    }
+    var relative = await Document.Persons.TryGetPersonByIdAsync(row.Id, token);
+    var type = row.ForwardLink ? row.Type : GetBackwardDirection(row.Type);
 
-    return relative is null ? null : new Relative(relative, type, date);
+    return relative is null ? null : new Relative(relative, type, row.Date);
   }
 
   public TableRelatives(IProjectDocument document) : base(document)
@@ -93,12 +90,14 @@ internal class TableRelatives : TableBase, ITableRelatives
       	  PRIMARY KEY (PersonId, RelativeId, Type, Date)
       );
       """;
-    await command.ExecuteNonQueryAsync(token);
+    await Document.ExecuteNonQueryAsync(command, token);
   }
 
   public async Task<Relative[]> GetRelativesAsync(Person person, CancellationToken token)
   {
-    var tasks = new List<Task<Relative?>>();
+    // Read raw rows from both directions first; resolving each related person issues further
+    // queries that must not run while a reader still holds the connection.
+    var rows = new List<RelativeRow>();
 
     using (var command = Document.CreateCommand())
     {
@@ -109,11 +108,14 @@ internal class TableRelatives : TableBase, ITableRelatives
       """;
       command.Parameters.AddWithValue("@id", person.Id);
 
-      await using var reader = await command.ExecuteReaderAsync(token);
-      while (await reader.ReadAsync(token))
+      await Document.ExecuteReaderAsync(command, async reader =>
       {
-        tasks.Add(CreateRelativeAsync(reader, forwardLink: true, token));
-      }
+        while (await reader.ReadAsync(token))
+        {
+          rows.Add(new RelativeRow(reader.GetInt32(0), GetEnum<RelationshipType>(reader, 1), TryGetDate(reader, 2, 3), ForwardLink: true));
+        }
+        return true;
+      }, token);
     }
 
     using (var command = Document.CreateCommand())
@@ -125,14 +127,18 @@ internal class TableRelatives : TableBase, ITableRelatives
       """;
       command.Parameters.AddWithValue("@id", person.Id);
 
-      await using var reader = await command.ExecuteReaderAsync(token);
-      while (await reader.ReadAsync(token))
+      await Document.ExecuteReaderAsync(command, async reader =>
       {
-        tasks.Add(CreateRelativeAsync(reader, forwardLink: false, token));
-      }
+        while (await reader.ReadAsync(token))
+        {
+          rows.Add(new RelativeRow(reader.GetInt32(0), GetEnum<RelationshipType>(reader, 1), TryGetDate(reader, 2, 3), ForwardLink: false));
+        }
+        return true;
+      }, token);
     }
 
-    return (await Task.WhenAll(tasks))
+    var relatives = await Task.WhenAll(rows.Select(row => CreateRelativeAsync(row, token)));
+    return relatives
       .Where(i => i is not null)
       .Select(i => i!)
       .ToArray();
@@ -141,8 +147,8 @@ internal class TableRelatives : TableBase, ITableRelatives
   public async Task AddRelativesAsync(Person person, Relative[] relatives, CancellationToken token)
   {
     using var transaction = await Document.BeginTransactionAsync(token);
-    var tasks = new List<Task>();
 
+    // Sequential: writes inside a transaction must take turns on the single connection.
     foreach (var relative in relatives)
     {
       using var command = Document.CreateCommand();
@@ -153,10 +159,9 @@ internal class TableRelatives : TableBase, ITableRelatives
       AddCommandParameters(person, relative, command);
       command.Parameters.AddWithValue("@date", relative.Date.HasValue ? relative.Date.Value.Code : DBNull.Value);
       command.Parameters.AddWithValue("@dateStatus", relative.Date.HasValue ? relative.Date.Value.Status : DBNull.Value);
-      tasks.Add(command.ExecuteNonQueryAsync(token));
+      await Document.ExecuteNonQueryAsync(command, token);
     }
 
-    await Task.WhenAll(tasks);
     transaction.Commit();
   }
 
@@ -165,10 +170,10 @@ internal class TableRelatives : TableBase, ITableRelatives
     var oldRelatives = await GetRelativesAsync(person, token);
     var newRelatives = relatives.ToDictionary(r => r.Id, r => r);
     var remainedRelatives = new HashSet<int>();
-    var tasks = new List<Task>();
 
     using var transaction = await Document.BeginTransactionAsync(token);
 
+    // Sequential: writes inside a transaction must take turns on the single connection.
     foreach (var oldRelative in oldRelatives)
     {
       if (newRelatives.TryGetValue(oldRelative.Id, out var newRelative) && newRelative.Date == oldRelative.Date)
@@ -184,11 +189,10 @@ internal class TableRelatives : TableBase, ITableRelatives
         WHERE PersonId=@personId AND RelativeId=@relativeId AND Type=@type;
         """;
       AddCommandParameters(person, oldRelative, command);
-      tasks.Add(command.ExecuteNonQueryAsync(token));
+      await Document.ExecuteNonQueryAsync(command, token);
     }
 
-    tasks.Add(AddRelativesAsync(person, relatives.Where(r => !remainedRelatives.Contains(r.Id)).ToArray(), token));
-    await Task.WhenAll(tasks);
+    await AddRelativesAsync(person, relatives.Where(r => !remainedRelatives.Contains(r.Id)).ToArray(), token);
 
     transaction.Commit();
   }

@@ -1,4 +1,4 @@
-﻿using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using Microsoft.Data.Sqlite;
 
@@ -25,10 +25,10 @@ internal partial class TablePersons : TableBase, ITablePersons
         BiologicalSex INTEGER NOT NULL
       );
       """;
-    await command.ExecuteNonQueryAsync(token);
+    await Document.ExecuteNonQueryAsync(command, token);
   }
 
-  private async Task<Person> CreatePersonAsync(SqliteDataReader reader, CancellationToken token)
+  private static Person CreatePerson(SqliteDataReader reader)
   {
     var person = new Person
     (
@@ -58,13 +58,16 @@ internal partial class TablePersons : TableBase, ITablePersons
       FROM Persons;
       """;
 
-    await using var reader = await command.ExecuteReaderAsync(token);
-    var result = new List<Person>();
-    while (await reader.ReadAsync(token))
+    var result = await Document.ExecuteReaderAsync(command, async reader =>
     {
-      var person = await CreatePersonAsync(reader, token);
-      result.Add(person);
-    }
+      var list = new List<Person>();
+      while (await reader.ReadAsync(token))
+      {
+        list.Add(CreatePerson(reader));
+      }
+
+      return list;
+    }, token);
 
     _Items.SetTarget(result);
     return result.ToArray();
@@ -84,13 +87,8 @@ internal partial class TablePersons : TableBase, ITablePersons
       """;
     command.Parameters.AddWithValue("@id", personId);
 
-    await using var reader = await command.ExecuteReaderAsync(token);
-    if (await reader.ReadAsync(token))
-    {
-      return await CreatePersonAsync(reader, token);
-    }
-
-    return null;
+    return await Document.ExecuteReaderAsync(command, async reader =>
+      (await reader.ReadAsync(token)) ? CreatePerson(reader) : null, token);
   }
 
   public async Task<Person> AddPersonAsync(Person person, CancellationToken token)
@@ -106,7 +104,7 @@ internal partial class TablePersons : TableBase, ITablePersons
     command.Parameters.AddWithValue("@deathDate", person.DeathDate.HasValue ? person.DeathDate.Value.Code : DBNull.Value);
     command.Parameters.AddWithValue("@deathDateStatus", person.DeathDate.HasValue ? person.DeathDate.Value.Status : DBNull.Value);
     command.Parameters.AddWithValue("@biologicalSex", person.BiologicalSex);
-    await command.ExecuteNonQueryAsync(token);
+    await Document.ExecuteNonQueryAsync(command, token);
     var personId = await Document.GetLastInsertRowIdAsync(token);
     transaction.Commit();
 
@@ -120,7 +118,7 @@ internal partial class TablePersons : TableBase, ITablePersons
     using var transaction = await Document.BeginTransactionAsync(token);
     using var command = Document.CreateCommand();
     command.CommandText = """
-      UPDATE Persons 
+      UPDATE Persons
       SET BirthDate=@birthDate, BirthDateStatus=@birthDateStatus, DeathDate=@deathDate, DeathDateStatus=@deathDateStatus, BiologicalSex=@biologicalSex
       WHERE Id=@personId;
       """;
@@ -130,7 +128,7 @@ internal partial class TablePersons : TableBase, ITablePersons
     command.Parameters.AddWithValue("@deathDateStatus", person.DeathDate.HasValue ? person.DeathDate.Value.Status : DBNull.Value);
     command.Parameters.AddWithValue("@biologicalSex", person.BiologicalSex);
     command.Parameters.AddWithValue("@personId", person.Id);
-    await command.ExecuteNonQueryAsync(token);
+    await Document.ExecuteNonQueryAsync(command, token);
     transaction.Commit();
 
     InvalidateItems();
@@ -145,7 +143,7 @@ internal partial class TablePersons : TableBase, ITablePersons
       WHERE Id=@id;
       """;
     command.Parameters.AddWithValue("@id", person.Id);
-    await command.ExecuteNonQueryAsync(token);
+    await Document.ExecuteNonQueryAsync(command, token);
     transaction.Commit();
   }
 }

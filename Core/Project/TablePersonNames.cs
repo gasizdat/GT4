@@ -1,4 +1,4 @@
-﻿using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 
 namespace GT4.Core.Project;
@@ -20,7 +20,7 @@ internal partial class TablePersonNames : TableBase, ITablePersonNames
           FOREIGN KEY(NameId) REFERENCES Names(Id)
       );
       """;
-    await command.ExecuteNonQueryAsync(token);
+    await Document.ExecuteNonQueryAsync(command, token);
   }
 
   public async Task<Name[]> GetPersonNamesAsync(Person person, CancellationToken token)
@@ -35,15 +35,20 @@ internal partial class TablePersonNames : TableBase, ITablePersonNames
       """;
     command.Parameters.AddWithValue("@personId", person.Id);
 
-    await using var reader = await command.ExecuteReaderAsync(token);
-    var tasks = new List<Task<Name?>>();
-    while (await reader.ReadAsync(token))
+    // First read all ids while holding the connection, then resolve names. Resolving names issues
+    // further queries, which must not happen while the reader still holds the connection.
+    var ids = await Document.ExecuteReaderAsync(command, async reader =>
     {
-      var id = reader.GetInt32(0);
-      tasks.Add(Document.Names.TryGetNameByIdAsync(id, token));
-    }
+      var list = new List<int>();
+      while (await reader.ReadAsync(token))
+      {
+        list.Add(reader.GetInt32(0));
+      }
 
-    var names = await Task.WhenAll(tasks);
+      return list;
+    }, token);
+
+    var names = await Task.WhenAll(ids.Select(id => Document.Names.TryGetNameByIdAsync(id, token)));
     return names
       .Where(name => name is not null)
       .Select(name => name!)
@@ -65,7 +70,7 @@ internal partial class TablePersonNames : TableBase, ITablePersonNames
 
       command.Parameters.AddWithValue("@personId", person.Id);
       command.Parameters.AddWithValue("@nameId", name.Id);
-      await command.ExecuteNonQueryAsync(token);
+      await Document.ExecuteNonQueryAsync(command, token);
     }
 
     transaction.Commit();
@@ -85,7 +90,7 @@ internal partial class TablePersonNames : TableBase, ITablePersonNames
         """;
       command.Parameters.AddWithValue("@personId", person.Id);
 
-      await command.ExecuteNonQueryAsync(token);
+      await Document.ExecuteNonQueryAsync(command, token);
     }
 
     await AddPersonNamesAsync(person, names, token);

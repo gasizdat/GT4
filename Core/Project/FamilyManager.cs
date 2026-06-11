@@ -36,9 +36,10 @@ internal class FamilyManager : TableBase, IFamilyManager
     using var transaction = await Document.BeginTransactionAsync(token);
 
     var name = await Document.Names.AddNameAsync(familyName, NameType.FamilyName, null, token);
-    await Task.WhenAll(
-      Document.Names.AddNameAsync(maleLastName, NameType.LastName | NameType.MaleDeclension, name, token),
-      Document.Names.AddNameAsync(femaleLastName, NameType.LastName | NameType.FemaleDeclension, name, token));
+
+    // Sequential: writes inside a transaction must take turns on the single connection.
+    await Document.Names.AddNameAsync(maleLastName, NameType.LastName | NameType.MaleDeclension, name, token);
+    await Document.Names.AddNameAsync(femaleLastName, NameType.LastName | NameType.FemaleDeclension, name, token);
 
     transaction.Commit();
 
@@ -99,20 +100,16 @@ internal class FamilyManager : TableBase, IFamilyManager
 
     using var transaction = await Document.BeginTransactionAsync(token);
 
-    var tasks = new List<Task>
-    {
-      Document.Names.UpdateName(familyName, token)
-    };
+    // Sequential: writes inside a transaction must take turns on the single connection.
+    await Document.Names.UpdateName(familyName, token);
     if (maleLastName is not null)
     {
-      tasks.Add(Document.Names.UpdateName(maleLastName, token));
+      await Document.Names.UpdateName(maleLastName, token);
     }
     if (femaleLastName is not null)
     {
-      tasks.Add(Document.Names.UpdateName(femaleLastName, token));
+      await Document.Names.UpdateName(femaleLastName, token);
     }
-
-    await Task.WhenAll(tasks);
 
     transaction.Commit();
   }

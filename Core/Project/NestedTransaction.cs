@@ -1,129 +1,217 @@
-﻿using GT4.Core.Project.Abstraction;
+using Microsoft.Data.Sqlite;
 using System.Data;
 
 namespace GT4.Core.Project;
 
-// TODO Add count for nested transactions 
-// TODO Add count for nested commited transactions 
-// TODO Check if some nested transaction was not commited, than - rollback
-
-internal class NestedTransaction : IDisposable, IAsyncDisposable, IDbTransaction
+/// <summary>
+/// A transaction handle bound to the async-flow that created it.
+/// <para>
+/// The first (root) transaction on a flow takes a real <see cref="SqliteTransaction"/> and owns
+/// the document's connection gate for its whole lifetime, so no other flow can touch the single
+/// connection until it completes. Transactions started while one is already active on the same flow
+/// are implemented as SQLite SAVEPOINTs nested inside the root.
+/// </para>
+/// <para>
+/// All members are intended to be used only from the flow that created the transaction (the same
+/// rule SQLite imposes). Other flows never observe this instance through the document's ambient, so
+/// they cannot use it; they simply block on the gate until the root completes.
+/// </para>
+/// </summary>
+internal sealed class NestedTransaction : IDbTransaction, IDisposable, IAsyncDisposable
 {
-  private readonly string _TransactionName;
-  private readonly IDbTransaction? _DbTransaction;
-  private readonly IProjectDocument? _Document;
-  private readonly NestedTransaction? _ParentTransaction;
+  private readonly ProjectDocument _Document;
+  private readonly NestedTransaction? _Parent;          // null for the root transaction
+  private readonly SqliteTransaction? _DbTransaction;   // non-null only for the root transaction
+  private readonly string? _SavepointName;              // non-null only for nested transactions
+  private readonly string _Name;
+
 #if DEBUG
   private readonly System.Diagnostics.StackTrace _StackTrace = new(fNeedFileInfo: true);
 #endif
-  private bool _Disposed = false;
-  private bool _Commited = false;
-  private bool _Reverted = false;
 
-  private IDbTransaction _InnerTransaction => _DbTransaction ?? _ParentTransaction!._InnerTransaction;
+  private bool _Committed;
+  private bool _RolledBack;
+  private bool _Completed;
+  private bool _Disposed;
 
-  public NestedTransaction(IDbTransaction dbTransaction, IProjectDocument document)
+  private NestedTransaction(ProjectDocument document, SqliteTransaction dbTransaction)
   {
-    _TransactionName = "Initial";
-    _DbTransaction = dbTransaction;
     _Document = document;
+    _DbTransaction = dbTransaction;
+    _Parent = null;
+    _Name = "Root";
   }
 
-  ~NestedTransaction()
+  private NestedTransaction(ProjectDocument document, NestedTransaction parent, string savepointName)
   {
-    if (!_Disposed)
-      throw new ApplicationException($"The transaction {_TransactionName} has leaked");
-
-    if (!_Commited && !_Reverted)
-      throw new ApplicationException($"The transaction {_TransactionName} is hanged");
+    _Document = document;
+    _Parent = parent;
+    _SavepointName = savepointName;
+    _Name = savepointName;
   }
 
-  public NestedTransaction(NestedTransaction parentTransaction, string innerTransactionName)
+  /// <summary>Creates the root transaction. The caller must already hold the connection gate.</summary>
+  internal static NestedTransaction CreateRoot(ProjectDocument document, SqliteTransaction dbTransaction) =>
+    new(document, dbTransaction);
+
+  /// <summary>Creates a nested transaction (SAVEPOINT) inside <paramref name="parent"/> on the same flow.</summary>
+  internal static NestedTransaction CreateSavepoint(ProjectDocument document, NestedTransaction parent)
   {
-    _ParentTransaction = parentTransaction;
-    _TransactionName = innerTransactionName;
-    if (Connection is null)
-      return;
-
-    var command = Connection.CreateCommand();
-    command.CommandText = $"SAVEPOINT {innerTransactionName};";
-    command.ExecuteNonQuery();
+    var name = $"SP_{document.NextTransactionNo()}";
+    ExecuteSimple(document, $"SAVEPOINT {name};");
+    return new(document, parent, name);
   }
 
-  public IDbConnection? Connection => _InnerTransaction.Connection;
+  private bool IsRoot => _DbTransaction is not null;
 
-  public IsolationLevel IsolationLevel => _InnerTransaction.IsolationLevel;
+  internal NestedTransaction? Parent => _Parent;
+
+  /// <summary>The real SQLite transaction at the root of this (possibly nested) transaction.</summary>
+  internal SqliteTransaction RootDbTransaction => _DbTransaction ?? _Parent!.RootDbTransaction;
+
+  public IDbConnection? Connection => _Document.Connection;
+
+  public IsolationLevel IsolationLevel => IsolationLevel.Serializable;
 
   public bool IsDisposed => _Disposed;
 
+  private static void ExecuteSimple(ProjectDocument document, string sql)
+  {
+    using var command = document.Connection.CreateCommand();
+    command.CommandText = sql;
+    command.ExecuteNonQuery();
+  }
+
   public void Commit()
   {
-    if (_Commited || _Reverted || _Disposed)
-      throw new ApplicationException($"The transaction {_TransactionName} is not in the correct state");
-
-    _Commited = true;
-
-    if (_DbTransaction is not null)
+    if (_Committed || _RolledBack || _Disposed)
     {
-      // TODO: This is not a very good solution for updating the project revision, as we need
-      // to create a CancellationToken directly and then wait for the operation synchronously.
-      var shortToken = new CancellationTokenSource(TimeSpan.FromSeconds(0.5)).Token;
-      var task = _Document?.Metadata.SetProjectRevisionAsync(DateTime.Now.ToString(), shortToken);
-      task?.Wait(shortToken);
-
-      _DbTransaction.Commit();
-      _Document?.UpdateRevision();
+      throw new InvalidOperationException($"The transaction '{_Name}' is not in a committable state.");
     }
-    else if (Connection is not null)
+
+    _Committed = true;
+
+    try
     {
-      var command = Connection.CreateCommand();
-      command.CommandText = $"RELEASE SAVEPOINT {_TransactionName};";
-      command.ExecuteNonQuery();
+      if (IsRoot)
+      {
+        WriteRevisionBestEffort();
+        _DbTransaction!.Commit();
+        _Document.UpdateRevision();
+      }
+      else
+      {
+        ExecuteSimple(_Document, $"RELEASE SAVEPOINT {_SavepointName};");
+      }
+    }
+    finally
+    {
+      Complete();
     }
   }
 
   public void Rollback()
   {
-    if (_Commited || _Disposed)
-      throw new ApplicationException("The transaction is not in the correct state");
-
-    if (_Reverted)
-      return;
-
-    _Reverted = true;
-
-    if (_DbTransaction is not null)
+    if (_Committed || _Disposed)
     {
-      _DbTransaction.Rollback();
+      throw new InvalidOperationException($"The transaction '{_Name}' is not in a rollback-able state.");
     }
-    else if (Connection is not null)
+
+    if (_RolledBack)
     {
-      var command = Connection.CreateCommand();
-      command.CommandText = $"ROLLBACK TO SAVEPOINT {_TransactionName};";
-      command.ExecuteNonQuery();
+      return;
+    }
+
+    _RolledBack = true;
+
+    try
+    {
+      if (IsRoot)
+      {
+        _DbTransaction!.Rollback();
+      }
+      else
+      {
+        ExecuteSimple(_Document, $"ROLLBACK TO SAVEPOINT {_SavepointName};");
+      }
+    }
+    finally
+    {
+      Complete();
     }
   }
 
   public void Dispose()
   {
     if (_Disposed)
-      return;
-
-    _Disposed = true;
-
-    if (_DbTransaction is not null)
     {
-      _DbTransaction.Dispose();
-      _Reverted = _Reverted || !_Commited;
+      return;
     }
-    else if (!_Commited)
+
+    // Roll back before flagging disposal: an uncommitted transaction is undone when its scope exits.
+    if (!_Committed && !_RolledBack)
     {
       Rollback();
     }
+
+    _Disposed = true;
+    Complete();
   }
 
   public ValueTask DisposeAsync()
   {
-    return new ValueTask(new Task(Dispose));
+    Dispose();
+    return ValueTask.CompletedTask;
   }
+
+  /// <summary>
+  /// Releases the transaction's hold on the flow exactly once: pops the ambient back to the enclosing
+  /// transaction and, for the root, releases the connection gate and disposes the real transaction.
+  /// Runs synchronously so the ambient change is observed by the caller that owns the scope.
+  /// </summary>
+  private void Complete()
+  {
+    if (_Completed)
+    {
+      return;
+    }
+
+    _Completed = true;
+    _Document.LeaveTransaction(this);
+
+    if (IsRoot)
+    {
+      _DbTransaction!.Dispose();
+    }
+  }
+
+  /// <summary>
+  /// Persists a best-effort "last modified" marker as part of the root transaction. Failures are
+  /// ignored on purpose: revision tracking must never break an otherwise valid commit (for example
+  /// before the Metadata table exists).
+  /// </summary>
+  private void WriteRevisionBestEffort()
+  {
+    try
+    {
+      using var command = _Document.Connection.CreateCommand();
+      command.CommandText = "INSERT OR REPLACE INTO Metadata (Id, Data) VALUES ('revision', @data);";
+      command.Parameters.AddWithValue("@data", DateTime.Now.ToString());
+      command.ExecuteNonQuery();
+    }
+    catch
+    {
+      // Best-effort only.
+    }
+  }
+
+#if DEBUG
+  ~NestedTransaction()
+  {
+    if (!_Disposed)
+    {
+      System.Diagnostics.Debug.WriteLine($"The transaction '{_Name}' leaked without being disposed.\n{_StackTrace}");
+    }
+  }
+#endif
 }
