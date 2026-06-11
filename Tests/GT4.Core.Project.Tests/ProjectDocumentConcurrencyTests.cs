@@ -370,4 +370,109 @@ public sealed class ProjectDocumentConcurrencyTests : IAsyncLifetime
     (await reader.ReadAsync(token)).Should().BeTrue();
     reader.GetString(0).Should().Be("raw_command");
   }
+
+  [Fact]
+  public async Task OpenReader_HoldsConnection_UntilDisposed()
+  {
+    // A standalone reader holds the gate for its whole lifetime; another flow must block until the
+    // reader is disposed (which is what releases the gate).
+    var token = TestContext.Current.CancellationToken;
+    await _doc.Names.AddNameAsync("seed", NameType.FamilyName, null, token);
+
+    var order = new ConcurrentQueue<string>();
+    var readerOpen = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var mayDispose = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    var flowA = Task.Run(async () =>
+    {
+      using var command = _doc.CreateCommand();
+      command.CommandText = "SELECT Value FROM Names;";
+      await using var reader = await command.ExecuteReaderAsync(token);
+      (await reader.ReadAsync(token)).Should().BeTrue();
+      order.Enqueue("reader-open");
+      readerOpen.SetResult();
+      await mayDispose.Task;
+      order.Enqueue("reader-dispose");
+      // reader disposed when this scope exits, releasing the gate.
+    }, token);
+
+    await readerOpen.Task;
+
+    var flowB = Task.Run(async () =>
+    {
+      await _doc.Names.AddNameAsync("after_reader", NameType.FamilyName, null, token);
+      order.Enqueue("b-wrote");
+    }, token);
+
+    await Task.Delay(250, token);
+    order.Should().NotContain("b-wrote");
+
+    mayDispose.SetResult();
+    await Task.WhenAll(flowA, flowB);
+
+    order.Should().ContainInOrder("reader-open", "reader-dispose", "b-wrote");
+    (await AllNameValuesAsync(token)).Should().Contain("after_reader");
+  }
+
+  [Fact]
+  public async Task ReaderInsideTransaction_DoesNotReleaseTheTransactionGate()
+  {
+    // A reader opened inside a transaction does not own the gate (the transaction does). Disposing it
+    // must NOT free the connection: another flow stays blocked until the transaction itself completes.
+    var token = TestContext.Current.CancellationToken;
+    var order = new ConcurrentQueue<string>();
+    var readerDisposed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var mayCommit = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    var flowA = Task.Run(async () =>
+    {
+      using var transaction = await _doc.BeginTransactionAsync(token);
+      await _doc.Names.AddNameAsync("a_in_tx", NameType.FamilyName, null, token);
+
+      using (var command = _doc.CreateCommand())
+      {
+        command.CommandText = "SELECT COUNT(*) FROM Names;";
+        await using var reader = await command.ExecuteReaderAsync(token);
+        (await reader.ReadAsync(token)).Should().BeTrue();
+      }
+
+      order.Enqueue("a-reader-disposed");
+      readerDisposed.SetResult();
+      await mayCommit.Task;
+      transaction.Commit();
+      order.Enqueue("a-committed");
+    }, token);
+
+    await readerDisposed.Task;
+
+    var flowB = Task.Run(async () =>
+    {
+      await _doc.Names.AddNameAsync("b_root", NameType.FamilyName, null, token);
+      order.Enqueue("b-wrote");
+    }, token);
+
+    // The inner reader is already disposed, but A still holds the transaction, so B must stay blocked.
+    await Task.Delay(250, token);
+    order.Should().NotContain("b-wrote");
+
+    mayCommit.SetResult();
+    await Task.WhenAll(flowA, flowB);
+
+    order.Should().ContainInOrder("a-reader-disposed", "a-committed", "b-wrote");
+  }
+
+  [Fact]
+  public async Task DataBlob_RoundTripsThroughReader()
+  {
+    // Exercises the reader's GetStream delegation: TableData.CreateData reads the blob via the wrapper.
+    var token = TestContext.Current.CancellationToken;
+    var content = new byte[] { 1, 2, 3, 4, 5, 42, 255, 0, 7 };
+
+    var added = await _doc.Data.AddDataAsync(content, "application/octet-stream", DataCategory.PersonPhoto, token);
+    var fetched = await _doc.Data.TryGetDataByIdAsync(added.Id, token);
+
+    fetched.Should().NotBeNull();
+    fetched!.Content.Should().Equal(content);
+    fetched.MimeType.Should().Be("application/octet-stream");
+  }
 }
