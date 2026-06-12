@@ -44,6 +44,7 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   private long _TransactionNo = 0;
   private long _ProjectRevision = Environment.TickCount64;
   private volatile bool _Disposed = false;
+  private int _DisposeStarted = 0;
 
   static ProjectDocument()
   {
@@ -80,7 +81,13 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
 
   ~ProjectDocument()
   {
-    Dispose();
+    // Best effort only: the finalizer thread must never block on the gate waiting for an operation
+    // that may itself be waiting on a finalizable object.
+    if (Interlocked.Exchange(ref _DisposeStarted, 1) == 0)
+    {
+      _Disposed = true;
+      _Connection.Dispose();
+    }
   }
 
   private async Task OpenAsync(CancellationToken token)
@@ -122,7 +129,8 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
 
   public void UpdateRevision()
   {
-    CheckForDisposed();
+    // Deliberately no disposed check: a transaction committing while a dispose drains the gate must
+    // still stamp the revision, so the host flushes the cache back to the origin.
     lock (_RevisionLock)
     {
       _ProjectRevision = Environment.TickCount64;
@@ -150,13 +158,18 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
 
   public ProjectCommand CreateCommand()
   {
-    CheckForDisposed();
+    // A flow that owns the active transaction may keep issuing statements while a dispose is
+    // draining the gate (the transaction holds the connection until it completes); only new
+    // standalone work is rejected.
+    if (_Gate.Current is null)
+    {
+      CheckForDisposed();
+    }
     return new ProjectCommand(_Connection.CreateCommand(), _Gate);
   }
 
   public async Task<int> GetLastInsertRowIdAsync(CancellationToken token)
   {
-    CheckForDisposed();
     using var command = CreateCommand();
     command.CommandText = "SELECT last_insert_rowid();";
     return Convert.ToInt32(await command.ExecuteScalarAsync(token));
@@ -164,8 +177,6 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
 
   public Task<IDbTransaction> BeginTransactionAsync(CancellationToken token)
   {
-    CheckForDisposed();
-
     // Implemented synchronously and returned as a completed task on purpose: setting the ambient
     // inside an async continuation would not be observed by the caller (ExecutionContext changes do
     // not flow back up). Doing the work before any await keeps the ambient visible to the caller.
@@ -174,10 +185,15 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
 
     if (current is null)
     {
+      // Only new root transactions are rejected after dispose; a flow that owns the active
+      // transaction may still nest savepoints while a dispose drains the gate.
+      CheckForDisposed();
       // Root transaction: take exclusive ownership of the connection for the whole lifetime.
       _Gate.Wait(token);
       try
       {
+        // The document may have been disposed while this flow was queued on the gate.
+        _Gate.ThrowIfClosed();
         var dbTransaction = _Connection.BeginTransaction();
         transaction = NestedTransaction.CreateRoot(this, dbTransaction);
       }
@@ -214,29 +230,46 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     return ret;
   }
 
+  // Disposal drains through the gate: it waits for the in-flight statement, open reader or active
+  // transaction to complete before closing the connection, then releases the gate so queued waiters
+  // wake up and observe ObjectDisposedException instead of hanging.
+
+  private void ThrowIfDisposingInsideTransaction()
+  {
+    if (_Gate.Current is not null)
+    {
+      throw new InvalidOperationException(
+        "Cannot dispose the document from a flow that owns an active transaction.");
+    }
+  }
+
   public async ValueTask DisposeAsync()
   {
-    if (_Disposed)
+    ThrowIfDisposingInsideTransaction();
+    if (Interlocked.Exchange(ref _DisposeStarted, 1) != 0)
     {
       return;
     }
     _Disposed = true;
     GC.SuppressFinalize(this);
+    await _Gate.CloseAsync();
     await _Connection.CloseAsync();
     await _Connection.DisposeAsync();
-    _Gate.Dispose();
+    _Gate.Release();
   }
 
   public void Dispose()
   {
-    if (_Disposed)
+    ThrowIfDisposingInsideTransaction();
+    if (Interlocked.Exchange(ref _DisposeStarted, 1) != 0)
     {
       return;
     }
     _Disposed = true;
     GC.SuppressFinalize(this);
+    _Gate.Close();
     _Connection.Close();
     _Connection.Dispose();
-    _Gate.Dispose();
+    _Gate.Release();
   }
 }

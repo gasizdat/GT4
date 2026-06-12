@@ -57,8 +57,10 @@ public class ProjectHost : IAsyncDisposable, IDisposable
       _Project = null;
     }
 
-    var actualRevision = project.ProjectRevision;
+    // Dispose drains in-flight operations, so read the revision only afterwards: a transaction that
+    // commits during the drain must still be flushed back to the origin.
     project.Dispose();
+    var actualRevision = project.ProjectRevision;
     if (actualRevision != openedRevision)
     {
       _FileSystem.Copy(_Cache, _Origin);
@@ -84,8 +86,10 @@ public class ProjectHost : IAsyncDisposable, IDisposable
       _Project = null;
     }
 
-    var actualRevision = project.ProjectRevision;
+    // Dispose drains in-flight operations, so read the revision only afterwards: a transaction that
+    // commits during the drain must still be flushed back to the origin.
     await project.DisposeAsync();
+    var actualRevision = project.ProjectRevision;
 
     for (var i = 0; i < 5; i++)
     {

@@ -59,6 +59,8 @@ public sealed class ProjectCommand : IDisposable, IAsyncDisposable
     await _Gate.WaitAsync(token);
     try
     {
+      // The document may have been disposed while this flow was queued on the gate.
+      _Gate.ThrowIfClosed();
       // Holding the gate guarantees no transaction is active, so detach from any stale transaction.
       _Command.Transaction = null;
       var reader = await _Command.ExecuteReaderAsync(token);
@@ -85,6 +87,8 @@ public sealed class ProjectCommand : IDisposable, IAsyncDisposable
     await _Gate.WaitAsync(token);
     try
     {
+      // The document may have been disposed while this flow was queued on the gate.
+      _Gate.ThrowIfClosed();
       // Holding the gate guarantees no transaction is active, so detach from any stale transaction.
       _Command.Transaction = null;
       return await run();

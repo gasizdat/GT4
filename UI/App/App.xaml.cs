@@ -10,6 +10,11 @@ public partial class App : Application
 {
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
+
+  // The Activated/Deactivated/Destroying handlers are fire-and-forget for MAUI, so a quick
+  // deactivate/activate could otherwise reopen the project while the close is still flushing the
+  // cache file back to the origin. This lock keeps the open/close sequences strictly ordered.
+  private readonly SemaphoreSlim _LifecycleLock = new(1, 1);
   private ProjectInfo? _LastOpenedProject;
 
   public App(ICancellationTokenProvider cancellationTokenProvider, ICurrentProjectProvider currentProjectProvider)
@@ -88,26 +93,42 @@ public partial class App : Application
 
   private async void ReopenOnActivationAsync(object? sender, EventArgs e)
   {
-    if (_LastOpenedProject is null)
+    await _LifecycleLock.WaitAsync();
+    try
     {
-      return;
-    }
+      if (_LastOpenedProject is null)
+      {
+        return;
+      }
 
-    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-    await _CurrentProjectProvider.OpenAsync(_LastOpenedProject, token);
+      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      await _CurrentProjectProvider.OpenAsync(_LastOpenedProject, token);
+    }
+    finally
+    {
+      _LifecycleLock.Release();
+    }
   }
 
   private async Task CloseOnDeactivationAsync(bool saveLastOpenProject)
   {
-    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-    _LastOpenedProject = null;
-    if (_CurrentProjectProvider.HasCurrentProject)
+    await _LifecycleLock.WaitAsync();
+    try
     {
-      if (saveLastOpenProject)
+      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      _LastOpenedProject = null;
+      if (_CurrentProjectProvider.HasCurrentProject)
       {
-        _LastOpenedProject = _CurrentProjectProvider.Info;
+        if (saveLastOpenProject)
+        {
+          _LastOpenedProject = _CurrentProjectProvider.Info;
+        }
+        await _CurrentProjectProvider.CloseAsync(token);
       }
-      await _CurrentProjectProvider.CloseAsync(token);
+    }
+    finally
+    {
+      _LifecycleLock.Release();
     }
   }
 }

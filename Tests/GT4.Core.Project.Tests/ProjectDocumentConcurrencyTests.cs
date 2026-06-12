@@ -462,6 +462,108 @@ public sealed class ProjectDocumentConcurrencyTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task DisposeAsync_DrainsActiveTransaction_BeforeClosingConnection()
+  {
+    // Dispose must wait out an in-flight transaction (including statements it issues after the
+    // dispose has started) instead of closing the connection underneath it.
+    var token = TestContext.Current.CancellationToken;
+    var order = new ConcurrentQueue<string>();
+    var txStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var mayCommit = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    var flowA = Task.Run(async () =>
+    {
+      using var transaction = await _doc.BeginTransactionAsync(token);
+      await _doc.Names.AddNameAsync("in_tx", NameType.FamilyName, null, token);
+      txStarted.SetResult();
+      await mayCommit.Task;
+      // Issued while the dispose is already draining: the owning flow may keep working.
+      await _doc.Names.AddNameAsync("late_in_tx", NameType.FamilyName, null, token);
+      transaction.Commit();
+      order.Enqueue("a-committed");
+    }, token);
+
+    await txStarted.Task;
+
+    var revisionBefore = _doc.ProjectRevision;
+    var disposeTask = Task.Run(async () =>
+    {
+      await _doc.DisposeAsync();
+      order.Enqueue("disposed");
+    }, token);
+
+    // The transaction still owns the gate, so the dispose must stay parked.
+    await Task.Delay(250, token);
+    order.Should().NotContain("disposed");
+
+    mayCommit.SetResult();
+    await Task.WhenAll(flowA, disposeTask);
+
+    order.Should().ContainInOrder("a-committed", "disposed");
+    // The drain-time commit must still stamp the revision (the host flushes the cache based on it).
+    _doc.ProjectRevision.Should().NotBe(revisionBefore);
+  }
+
+  [Fact]
+  public async Task Dispose_WakesQueuedWaiters_WithObjectDisposedException()
+  {
+    // A flow parked on the gate behind a dispose must wake up with ObjectDisposedException, not hang
+    // forever and not execute against a closed connection.
+    var token = TestContext.Current.CancellationToken;
+    var txStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var mayCommit = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    var flowA = Task.Run(async () =>
+    {
+      using var transaction = await _doc.BeginTransactionAsync(token);
+      txStarted.SetResult();
+      await mayCommit.Task;
+      transaction.Commit();
+    }, token);
+
+    await txStarted.Task;
+
+    var flowB = Task.Run(() => _doc.Names.AddNameAsync("queued", NameType.FamilyName, null, token), token);
+    await Task.Delay(250, token); // let B park on the gate behind the transaction
+
+    var disposeTask = Task.Run(() => _doc.DisposeAsync().AsTask(), token);
+    await Task.Delay(250, token); // let the dispose mark the gate closed and park as well
+
+    mayCommit.SetResult();
+
+    await disposeTask;
+    var act = async () => await flowB;
+    await act.Should().ThrowAsync<ObjectDisposedException>();
+    await flowA;
+  }
+
+  [Fact]
+  public async Task CommandExecutedAfterDispose_Throws_InsteadOfHanging()
+  {
+    var token = TestContext.Current.CancellationToken;
+    using var command = _doc.CreateCommand();
+    command.CommandText = "SELECT COUNT(*) FROM Names;";
+
+    await _doc.DisposeAsync();
+
+    var act = async () => await command.ExecuteScalarAsync(token);
+    await act.Should().ThrowAsync<ObjectDisposedException>();
+  }
+
+  [Fact]
+  public async Task Dispose_FromFlowOwningTransaction_Throws()
+  {
+    // Disposing from inside the owning flow would deadlock on the gate the flow already holds.
+    var token = TestContext.Current.CancellationToken;
+    using var transaction = await _doc.BeginTransactionAsync(token);
+
+    var act = async () => await _doc.DisposeAsync();
+    await act.Should().ThrowAsync<InvalidOperationException>();
+
+    transaction.Rollback();
+  }
+
+  [Fact]
   public async Task DataBlob_RoundTripsThroughReader()
   {
     // Exercises the reader's GetStream delegation: TableData.CreateData reads the blob via the wrapper.
