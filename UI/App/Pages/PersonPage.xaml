@@ -228,18 +228,19 @@
 
             <CollectionView.ItemTemplate>
               <DataTemplate x:DataType="dto:RelativeInfo">
-                <Border
-                    Shadow="{StaticResource CardShadow}"
-                    Stroke="{StaticResource CardStroke}"
-                    Style="{StaticResource HoverItem}">
-                  <components:RelativeInfoView
-                      ExandAllRelatives="{Binding ExpandAll, Source={x:Reference Root}}"
-                      NameFormat="CommonPersonName"
-                      PersonBirthDate="{Binding PersonFullInfo.BirthDate, Source={x:Reference Root}}"
-                      Relative="{Binding .}"
-                      SelectCommand="{Binding Path=PageCommand, Source={x:Reference Root}}"
-                      ShowMoreButton="True" />
-                </Border>
+                <components:CardView>
+                  <Border
+                      Stroke="{StaticResource CardStroke}"
+                      Style="{StaticResource HoverItem}">
+                    <components:RelativeInfoView
+                        ExandAllRelatives="{Binding ExpandAll, Source={x:Reference Root}}"
+                        NameFormat="CommonPersonName"
+                        PersonBirthDate="{Binding PersonFullInfo.BirthDate, Source={x:Reference Root}}"
+                        Relative="{Binding .}"
+                        SelectCommand="{Binding Path=PageCommand, Source={x:Reference Root}}"
+                        ShowMoreButton="True" />
+                  </Border>
+                </components:CardView>
               </DataTemplate>
             </CollectionView.ItemTemplate>
           </CollectionView>

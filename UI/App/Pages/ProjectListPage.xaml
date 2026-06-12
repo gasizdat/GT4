@@ -44,35 +44,40 @@
         <CollectionView.ItemTemplate>
           <DataTemplate x:DataType="items:ProjectItem">
 
-            <FlexLayout
-                Direction="Row"
-                Style="{StaticResource HoverItem}">
+            <components:CardView Margin="{Thickness Bottom={StaticResource PageContentSpacing}}">
+              <Border
+                  Stroke="{StaticResource CardStroke}"
+                  Style="{StaticResource HoverItem}">
 
-              <Image
-                  Margin="2"
-                  HeightRequest="32"
-                  Source="{Binding Icon}"
-                  WidthRequest="32" />
+                <FlexLayout Direction="Row">
 
-              <VerticalStackLayout FlexLayout.Grow="1">
+                  <Image
+                      Margin="2"
+                      HeightRequest="32"
+                      Source="{Binding Icon}"
+                      WidthRequest="32" />
 
-                <Label
-                    Style="{StaticResource CardTitle}"
-                    Text="{Binding Name}" />
+                  <VerticalStackLayout FlexLayout.Grow="1">
 
-                <Label
-                    IsVisible="{Binding DescriptionVisible}"
-                    Style="{StaticResource CardSubtitle}"
-                    Text="{Binding Description}" />
+                    <Label
+                        Style="{StaticResource CardTitle}"
+                        Text="{Binding Name}" />
 
-                <Label
-                    IsVisible="{Binding RevisionVisible}"
-                    Style="{StaticResource CardContent}"
-                    Text="{Binding Revision}" />
+                    <Label
+                        IsVisible="{Binding DescriptionVisible}"
+                        Style="{StaticResource CardSubtitle}"
+                        Text="{Binding Description}" />
 
-              </VerticalStackLayout>
+                    <Label
+                        IsVisible="{Binding RevisionVisible}"
+                        Style="{StaticResource CardContent}"
+                        Text="{Binding Revision}" />
 
-            </FlexLayout>
+                  </VerticalStackLayout>
+
+                </FlexLayout>
+              </Border>
+            </components:CardView>
           </DataTemplate>
         </CollectionView.ItemTemplate>
       </CollectionView>

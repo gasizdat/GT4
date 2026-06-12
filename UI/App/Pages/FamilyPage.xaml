@@ -52,29 +52,29 @@
 
           <BindableLayout.ItemTemplate>
             <DataTemplate x:DataType="dto:PersonInfo">
-              <Border
+              <components:CardView
                   Margin="{Thickness Bottom={StaticResource PageContentSpacing},
                                      Right={StaticResource PageContentSpacing}}"
                   FlexLayout.Grow="1"
-                  MinimumWidthRequest="{Binding Path=PersonItemMinimalWidth, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
-                  Shadow="{StaticResource CardShadow}"
-                  Stroke="{StaticResource CardStroke}"
-                  Style="{StaticResource HoverItem}">
+                  MinimumWidthRequest="{Binding Path=PersonItemMinimalWidth, Source={RelativeSource AncestorType={x:Type ContentPage}}}">
 
-                <Border.GestureRecognizers>
-                  <TapGestureRecognizer
-                      Command="{Binding Path=MemberItemTappedCommand, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
-                      CommandParameter="{Binding .}" />
-                </Border.GestureRecognizers>
+                <Border
+                    Stroke="{StaticResource CardStroke}"
+                    Style="{StaticResource HoverItem}">
 
+                  <Border.GestureRecognizers>
+                    <TapGestureRecognizer
+                        Command="{Binding Path=MemberItemTappedCommand, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
+                        CommandParameter="{Binding .}" />
+                  </Border.GestureRecognizers>
 
-
-                <components:PersonInfoView
-                    DatesLabelStyle="{StaticResource FieldValue}"
-                    NameFormat="{Binding PersonNamesFormat, Source={x:Reference Root}}"
-                    NameLabelStyle="{StaticResource FieldName}"
-                    Person="{Binding .}" />
-              </Border>
+                  <components:PersonInfoView
+                      DatesLabelStyle="{StaticResource FieldValue}"
+                      NameFormat="{Binding PersonNamesFormat, Source={x:Reference Root}}"
+                      NameLabelStyle="{StaticResource FieldName}"
+                      Person="{Binding .}" />
+                </Border>
+              </components:CardView>
             </DataTemplate>
           </BindableLayout.ItemTemplate>
         </FlexLayout>

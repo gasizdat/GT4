@@ -58,57 +58,61 @@
 
         <CollectionView.ItemsLayout>
           <LinearItemsLayout
-              ItemSpacing="3"
+              ItemSpacing="{StaticResource PageContentSpacing}"
               Orientation="Vertical" />
         </CollectionView.ItemsLayout>
 
         <CollectionView.ItemTemplate>
           <DataTemplate x:DataType="items:FamilyInfoItem">
-            <Grid
-                ColumnDefinitions="Auto, *"
-                ColumnSpacing="10"
-                RowDefinitions="Auto, Auto"
-                Style="{StaticResource HoverItem}">
+            <components:CardView>
+              <Border
+                  Stroke="{StaticResource CardStroke}"
+                  Style="{StaticResource HoverItem}">
 
-              <Image
-                  Grid.Row="0"
-                  Grid.Column="0"
-                  Source="{Binding Icon}"
-                  Style="{StaticResource PhotoThumbStyle}" />
+                <Grid
+                    ColumnDefinitions="Auto, *"
+                    ColumnSpacing="10"
+                    RowDefinitions="Auto, Auto">
 
-              <Label
-                  Grid.Row="0"
-                  Grid.RowSpan="2"
-                  Grid.Column="1"
-                  Style="{StaticResource CardTitle}"
-                  Text="{Binding Info.Value}"
-                  VerticalOptions="Start" />
+                  <Image
+                      Grid.Row="0"
+                      Grid.Column="0"
+                      Source="{Binding Icon}"
+                      Style="{StaticResource PhotoThumbStyle}" />
 
-              <StackLayout
-                  Grid.Row="1"
-                  Grid.Column="0"
-                  Grid.ColumnSpan="2"
-                  Margin="{Thickness Left={StaticResource PhotoThumbWidth}}"
-                  BindableLayout.ItemsSource="{Binding Persons}"
-                  Shadow="{Shadow Offset={Point X=10,
-                                                Y=10},
-                                  Brush=Gray}">
-                <BindableLayout.ItemTemplate>
-                  <DataTemplate x:DataType="dto:PersonInfo">
+                  <Label
+                      Grid.Row="0"
+                      Grid.RowSpan="2"
+                      Grid.Column="1"
+                      Style="{StaticResource CardTitle}"
+                      Text="{Binding Info.Value}"
+                      VerticalOptions="Start" />
 
-                    <components:PersonInfoView
-                        NameFormat="{Binding PersonNamesFormat, Source={x:Reference Root}}"
-                        NameLabelStyle="{StaticResource FieldValue}"
-                        Person="{Binding .}"
-                        PhotoStyle="{StaticResource PhotoCompactStyle}"
-                        ShowAge="False"
-                        ShowDates="False" />
+                  <StackLayout
+                      Grid.Row="1"
+                      Grid.Column="0"
+                      Grid.ColumnSpan="2"
+                      Margin="{Thickness Left={StaticResource PhotoThumbWidth}}"
+                      BindableLayout.ItemsSource="{Binding Persons}"
+                      Spacing="{StaticResource PageContentSpacing}">
+                    <BindableLayout.ItemTemplate>
+                      <DataTemplate x:DataType="dto:PersonInfo">
 
-                  </DataTemplate>
-                </BindableLayout.ItemTemplate>
-              </StackLayout>
+                        <components:PersonInfoView
+                            NameFormat="{Binding PersonNamesFormat, Source={x:Reference Root}}"
+                            NameLabelStyle="{StaticResource FieldValue}"
+                            Person="{Binding .}"
+                            PhotoStyle="{StaticResource PhotoCompactStyle}"
+                            ShowAge="False"
+                            ShowDates="False" />
 
-            </Grid>
+                      </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                  </StackLayout>
+
+                </Grid>
+              </Border>
+            </components:CardView>
           </DataTemplate>
         </CollectionView.ItemTemplate>
       </CollectionView>
