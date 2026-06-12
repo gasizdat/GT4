@@ -53,8 +53,6 @@
           <BindableLayout.ItemTemplate>
             <DataTemplate x:DataType="dto:PersonInfo">
               <components:CardView
-                  Margin="{Thickness Bottom={StaticResource PageContentSpacing},
-                                     Right={StaticResource PageContentSpacing}}"
                   FlexLayout.Grow="1"
                   MinimumWidthRequest="{Binding Path=PersonItemMinimalWidth, Source={RelativeSource AncestorType={x:Type ContentPage}}}">
 

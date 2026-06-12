@@ -57,14 +57,12 @@
           SelectionMode="Single">
 
         <CollectionView.ItemsLayout>
-          <LinearItemsLayout
-              ItemSpacing="{StaticResource PageContentSpacing}"
-              Orientation="Vertical" />
+          <LinearItemsLayout Orientation="Vertical" />
         </CollectionView.ItemsLayout>
 
         <CollectionView.ItemTemplate>
           <DataTemplate x:DataType="items:FamilyInfoItem">
-            <components:CardView>
+            <components:CardView Margin="{Thickness Bottom={StaticResource PageContentSpacing}}">
 
               <Grid
                   ColumnDefinitions="Auto, *"
