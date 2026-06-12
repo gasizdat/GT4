@@ -93,6 +93,13 @@ public partial class App : Application
 
   private async void ReopenOnActivationAsync(object? sender, EventArgs e)
   {
+#if DEBUG
+    if (System.Diagnostics.Debugger.IsAttached)
+    {
+      return;
+    }
+#endif
+
     await _LifecycleLock.WaitAsync();
     try
     {
@@ -112,6 +119,13 @@ public partial class App : Application
 
   private async Task CloseOnDeactivationAsync(bool saveLastOpenProject)
   {
+#if DEBUG
+    if (System.Diagnostics.Debugger.IsAttached)
+    {
+      return;
+    }
+#endif
+
     await _LifecycleLock.WaitAsync();
     try
     {
