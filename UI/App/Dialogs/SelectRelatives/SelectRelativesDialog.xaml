@@ -113,6 +113,7 @@
             <Grid Style="{StaticResource SelectableItem}">
               <components:PersonInfoView
                   DatesLabelStyle="{StaticResource FieldValue}"
+                  NameFormat="FullPersonName"
                   NameLabelStyle="{StaticResource FieldName}"
                   Person="{Binding .}" />
             </Grid>
