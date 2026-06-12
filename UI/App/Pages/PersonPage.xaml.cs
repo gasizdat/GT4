@@ -48,6 +48,7 @@ public partial class PersonPage : ContentPage
 
   public void ShowPersonInfo(Person person, bool addToNavigation)
   {
+    ExpandAll = false;
     Task.Run(async () => await GetPersonDataAsync(person, addToNavigation));
   }
 
@@ -62,7 +63,7 @@ public partial class PersonPage : ContentPage
     }
   }
 
-  public string ToggleAllButtonName => ExpandAll ? "⏬" : "⏫";
+  public string ToggleAllButtonName => ExpandAll ? "⏫" : "⏬";
 
   public ICommand PageCommand => _PageCommand;
 
