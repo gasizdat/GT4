@@ -64,6 +64,11 @@
         CommandParameter="Refresh"
         Order="Secondary"
         Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="ToggleAll"
+        Order="Primary"
+        Text="{Binding ToggleAllButtonName, Source={x:Reference Root}}" />
   </ContentPage.ToolbarItems>
 
   <components:PageLayout>
@@ -228,7 +233,7 @@
                     Stroke="{StaticResource CardStroke}"
                     Style="{StaticResource HoverItem}">
                   <components:RelativeInfoView
-                      ExandAllRelatives="True"
+                      ExandAllRelatives="{Binding ExpandAll, Source={x:Reference Root}}"
                       NameFormat="CommonPersonName"
                       PersonBirthDate="{Binding PersonFullInfo.BirthDate, Source={x:Reference Root}}"
                       Relative="{Binding .}"

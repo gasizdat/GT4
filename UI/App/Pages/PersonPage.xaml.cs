@@ -30,6 +30,7 @@ public partial class PersonPage : ContentPage
   private byte[][] _Photos = [];
   private string _Biography = string.Empty;
   private PersonPageSmartLayout _SmartLayout = new();
+  private bool _ExpandAll = false;
 
   public PersonPage(IServiceProvider serviceProvider)
   {
@@ -49,6 +50,19 @@ public partial class PersonPage : ContentPage
   {
     Task.Run(async () => await GetPersonDataAsync(person, addToNavigation));
   }
+
+  public bool ExpandAll
+  {
+    get => _ExpandAll;
+    set
+    {
+      _ExpandAll = value;
+      OnPropertyChanged(nameof(ExpandAll));
+      OnPropertyChanged(nameof(ToggleAllButtonName));
+    }
+  }
+
+  public string ToggleAllButtonName => ExpandAll ? "⏬" : "⏫";
 
   public ICommand PageCommand => _PageCommand;
 
@@ -288,6 +302,9 @@ public partial class PersonPage : ContentPage
         break;
       case string commandName when commandName == "NextPerson":
         OnNextPerson(1);
+        break;
+      case string commandName when commandName == "ToggleAll":
+        ExpandAll = !ExpandAll;
         break;
     }
   }
