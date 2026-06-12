@@ -17,8 +17,10 @@
           <RowDefinition Height="8" />
         </Grid.RowDefinitions>
 
-        <!--  Soft shadow drawn only outside the card region (clipped),
-              so it cannot show through a translucent card  -->
+        <!--
+          Soft shadow drawn only outside the card region (clipped),
+          so it cannot show through a translucent card
+        -->
         <GraphicsView
             Grid.RowSpan="2"
             Grid.ColumnSpan="2"
@@ -28,8 +30,12 @@
           </GraphicsView.Drawable>
         </GraphicsView>
 
-        <!--  Card content — nothing is drawn behind it  -->
-        <ContentPresenter />
+        <!--  Card chrome and content — nothing is drawn behind it  -->
+        <Border
+            Stroke="{StaticResource CardStroke}"
+            Style="{StaticResource HoverItem}">
+          <ContentPresenter />
+        </Border>
 
       </Grid>
     </ControlTemplate>

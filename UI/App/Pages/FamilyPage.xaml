@@ -58,22 +58,17 @@
                   FlexLayout.Grow="1"
                   MinimumWidthRequest="{Binding Path=PersonItemMinimalWidth, Source={RelativeSource AncestorType={x:Type ContentPage}}}">
 
-                <Border
-                    Stroke="{StaticResource CardStroke}"
-                    Style="{StaticResource HoverItem}">
+                <components:CardView.GestureRecognizers>
+                  <TapGestureRecognizer
+                      Command="{Binding Path=MemberItemTappedCommand, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
+                      CommandParameter="{Binding .}" />
+                </components:CardView.GestureRecognizers>
 
-                  <Border.GestureRecognizers>
-                    <TapGestureRecognizer
-                        Command="{Binding Path=MemberItemTappedCommand, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
-                        CommandParameter="{Binding .}" />
-                  </Border.GestureRecognizers>
-
-                  <components:PersonInfoView
-                      DatesLabelStyle="{StaticResource FieldValue}"
-                      NameFormat="{Binding PersonNamesFormat, Source={x:Reference Root}}"
-                      NameLabelStyle="{StaticResource FieldName}"
-                      Person="{Binding .}" />
-                </Border>
+                <components:PersonInfoView
+                    DatesLabelStyle="{StaticResource FieldValue}"
+                    NameFormat="{Binding PersonNamesFormat, Source={x:Reference Root}}"
+                    NameLabelStyle="{StaticResource FieldName}"
+                    Person="{Binding .}" />
               </components:CardView>
             </DataTemplate>
           </BindableLayout.ItemTemplate>
