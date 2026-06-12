@@ -165,11 +165,11 @@ public partial class SelectRelativesDialog : ContentPage
           var items = persons
             .Where(p =>
             {
+              using var token = _CancellationTokenProvider.CreateDbCancellationToken();
               foreach (var relative in _ExistingRelatives)
               {
                 if (relative.Type == RelationshipType.Parent || relative.Type == RelationshipType.Child)
                 {
-                  using var token = _CancellationTokenProvider.CreateDbCancellationToken();
                   var hasCommonAncestors = _CurrentProjectProvider
                     .Project
                     .Relatives

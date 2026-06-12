@@ -738,24 +738,24 @@
   <Shadow
       x:Key="CardShadow"
       Brush="Black"
-      Offset="5,5"
       Opacity="0.2"
-      Radius="5" />
+      Radius="5"
+      Offset="5,5" />
 
   <LinearGradientBrush x:Key="FrostedGlassHover" StartPoint="0,0" EndPoint="0,1">
-    <GradientStop Color="{AppThemeBinding Light=#FFFFFFFF, Dark=#FFFFFFFF}" Offset="0.0" />
-    <GradientStop Color="{AppThemeBinding Light=#F0FFFFFF, Dark=#E0FFFFFF}" Offset="0.08" />
-    <GradientStop Color="{AppThemeBinding Light=#B4FFFFFE, Dark=#90DDDCD6}" Offset="0.18" />
-    <GradientStop Color="{AppThemeBinding Light=#8AF8F5EF, Dark=#66454540}" Offset="0.35" />
-    <GradientStop Color="{AppThemeBinding Light=#74EDEAE2, Dark=#783A3935}" Offset="0.78" />
-    <GradientStop Color="{AppThemeBinding Light=#C8FFFFFF, Dark=#A8FFFFFF}" Offset="0.94" />
-    <GradientStop Color="{AppThemeBinding Light=#F0FFFFFF, Dark=#D8FFFFFF}" Offset="1.0" />
+    <GradientStop Offset="0.0" Color="{AppThemeBinding Light=#FFFFFFFF, Dark=#FFFFFFFF}" />
+    <GradientStop Offset="0.08" Color="{AppThemeBinding Light=#F0FFFFFF, Dark=#E0FFFFFF}" />
+    <GradientStop Offset="0.18" Color="{AppThemeBinding Light=#B4FFFFFE, Dark=#90DDDCD6}" />
+    <GradientStop Offset="0.35" Color="{AppThemeBinding Light=#8AF8F5EF, Dark=#66454540}" />
+    <GradientStop Offset="0.78" Color="{AppThemeBinding Light=#74EDEAE2, Dark=#783A3935}" />
+    <GradientStop Offset="0.94" Color="{AppThemeBinding Light=#C8FFFFFF, Dark=#A8FFFFFF}" />
+    <GradientStop Offset="1.0" Color="{AppThemeBinding Light=#F0FFFFFF, Dark=#D8FFFFFF}" />
   </LinearGradientBrush>
 
   <LinearGradientBrush x:Key="FrostedGlassNormal" StartPoint="0,0" EndPoint="0,1">
-    <GradientStop Color="{AppThemeBinding Light=#82FFFFFF, Dark=#4DFFFFFF}" Offset="0.0" />
-    <GradientStop Color="{AppThemeBinding Light=#70F5F2EC, Dark=#66353530}" Offset="0.35" />
-    <GradientStop Color="{AppThemeBinding Light=#6CEAE7E0, Dark=#99353530}" Offset="1.0" />
+    <GradientStop Offset="0.0" Color="{AppThemeBinding Light=#82FFFFFF, Dark=#4DFFFFFF}" />
+    <GradientStop Offset="0.35" Color="{AppThemeBinding Light=#70F5F2EC, Dark=#66353530}" />
+    <GradientStop Offset="1.0" Color="{AppThemeBinding Light=#6CEAE7E0, Dark=#99353530}" />
   </LinearGradientBrush>
 
   <Style x:Key="HoverItem" TargetType="View">
