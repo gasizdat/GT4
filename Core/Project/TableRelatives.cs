@@ -190,7 +190,7 @@ internal class TableRelatives : TableBase, ITableRelatives
     transaction.Commit();
   }
 
-  public async Task<bool> HasCommonRelativesAsync(Person personA, Person personB, CancellationToken token)
+  public async Task<bool> HasCommonAncestorsAsync(Person personA, Person personB, CancellationToken token)
   {
     async Task GetAllRelativesAsync(Person person, RelationshipType relationshipType, ConcurrentBag<Person> relatives)
     {
@@ -203,17 +203,15 @@ internal class TableRelatives : TableBase, ITableRelatives
       await Task.WhenAll(parentTasks);
     }
 
-    ConcurrentBag<Person> relativesA = new();
-    ConcurrentBag<Person> relativesB = new();
+    ConcurrentBag<Person> ancestorsA = new();
+    ConcurrentBag<Person> ancestorsB = new();
     ElementIdComparer<Person> personComparer = new();
 
     await Task.WhenAll(
-      GetAllRelativesAsync(personA, RelationshipType.Parent, relativesA),
-      GetAllRelativesAsync(personB, RelationshipType.Parent, relativesB),
-      GetAllRelativesAsync(personA, RelationshipType.Child, relativesA),
-      GetAllRelativesAsync(personB, RelationshipType.Child, relativesB));
-    var firstIntersection = relativesA
-      .Intersect(relativesB, personComparer)
+      GetAllRelativesAsync(personA, RelationshipType.Parent, ancestorsA),
+      GetAllRelativesAsync(personB, RelationshipType.Parent, ancestorsB));
+    var firstIntersection = ancestorsA
+      .Intersect(ancestorsB, personComparer)
       .FirstOrDefault();
 
     return firstIntersection != null;

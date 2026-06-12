@@ -168,12 +168,12 @@ public partial class SelectRelativesDialog : ContentPage
               using var token = _CancellationTokenProvider.CreateDbCancellationToken();
               foreach (var relative in _ExistingRelatives)
               {
-                if (relative.Type == RelationshipType.Parent || relative.Type == RelationshipType.Child)
+                if (relative.Type == RelationshipType.Parent)
                 {
                   var hasCommonAncestors = _CurrentProjectProvider
                     .Project
                     .Relatives
-                    .HasCommonRelativesAsync(p, relative, token)
+                    .HasCommonAncestorsAsync(p, relative, token)
                     .Result;
                   if (hasCommonAncestors)
                   {
