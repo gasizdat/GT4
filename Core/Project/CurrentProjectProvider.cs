@@ -1,4 +1,4 @@
-﻿using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using System.Diagnostics.CodeAnalysis;
 
@@ -7,6 +7,10 @@ namespace GT4.Core.Project;
 internal class CurrentProjectProvider : ICurrentProjectProvider
 {
   private readonly IProjectList _ProjectList;
+  // Guards _Info and _ProjectHost. A dedicated object (not `this`) so callers can't accidentally
+  // contend on the same monitor, and held only for the brief field reads/writes — never across an
+  // await, so the document I/O it guards access to is not serialized by it.
+  private readonly object _Sync = new();
   private ProjectInfo? _Info = null;
   private ProjectHost? _ProjectHost = null;
 
@@ -21,11 +25,24 @@ internal class CurrentProjectProvider : ICurrentProjectProvider
     _ProjectList = projectList;
   }
 
+  /// <summary>Returns the currently open host, or throws if no project is open.</summary>
+  private ProjectHost RequireHost()
+  {
+    lock (_Sync)
+    {
+      return _ProjectHost?.Project is not null ? _ProjectHost : ThrowProjectNotOpened<ProjectHost>();
+    }
+  }
+
   public async Task OpenAsync(ProjectInfo info, CancellationToken token)
   {
     await CloseAsync(token);
-    _Info = info;
-    _ProjectHost = await _ProjectList.OpenAsync(origin: info.Origin, token);
+    var host = await _ProjectList.OpenAsync(origin: info.Origin, token);
+    lock (_Sync)
+    {
+      _Info = info;
+      _ProjectHost = host;
+    }
   }
 
   public async Task UpdateOriginAsync(CancellationToken token)
@@ -37,51 +54,78 @@ internal class CurrentProjectProvider : ICurrentProjectProvider
 
   public async Task CloseAsync(CancellationToken token)
   {
-    ProjectHost projectHost;
-    lock (this)
+    ProjectHost? projectHost;
+    lock (_Sync)
     {
-      if (_ProjectHost is null)
-      {
-        return;
-      }
-
       projectHost = _ProjectHost;
       _ProjectHost = null;
     }
 
-    await projectHost.DisposeAsync();
-  }
-
-  public async Task RemoveRevisionAsync(ProjectRevision revision, CancellationToken cancellationToken)
-  {
-    if (!HasCurrentProject)
+    if (projectHost is not null)
     {
-      ThrowProjectNotOpened<bool>();
+      await projectHost.DisposeAsync();
     }
-
-    await _ProjectHost.RemoveRevisionAsync(revision, cancellationToken);
   }
+
+  public Task RemoveRevisionAsync(ProjectRevision revision, CancellationToken cancellationToken) =>
+    RequireHost().RemoveRevisionAsync(revision, cancellationToken);
 
   public async Task RestoreRevisionAsync(ProjectRevision revision, CancellationToken cancellationToken)
   {
-    if (!HasCurrentProject)
+    var host = RequireHost();
+    await host.RestoreRevisionAsync(revision, cancellationToken);
+    await host.DisposeAsync();
+
+    ProjectInfo info;
+    lock (_Sync)
     {
-      ThrowProjectNotOpened<bool>();
+      info = _Info ?? ThrowProjectNotOpened<ProjectInfo>();
     }
 
-    await _ProjectHost.RestoreRevisionAsync(revision, cancellationToken);
-    await _ProjectHost.DisposeAsync();
-
-    _ProjectHost = await _ProjectList.OpenAsync(origin: _Info!.Origin, cancellationToken);
+    var reopened = await _ProjectList.OpenAsync(origin: info.Origin, cancellationToken);
+    lock (_Sync)
+    {
+      _ProjectHost = reopened;
+    }
   }
 
-  [MemberNotNullWhen(true, nameof(_ProjectHost))]
-  public bool HasCurrentProject => _ProjectHost?.Project is not null;
+  public bool HasCurrentProject
+  {
+    get
+    {
+      lock (_Sync)
+      {
+        return _ProjectHost?.Project is not null;
+      }
+    }
+  }
 
-  public IProjectDocument Project => _ProjectHost?.Project ?? ThrowProjectNotOpened<IProjectDocument>();
+  public IProjectDocument Project
+  {
+    get
+    {
+      lock (_Sync)
+      {
+        return _ProjectHost?.Project ?? ThrowProjectNotOpened<IProjectDocument>();
+      }
+    }
+  }
 
-  public ProjectInfo Info => _Info ?? ThrowProjectNotOpened<ProjectInfo>();
+  public ProjectInfo Info
+  {
+    get
+    {
+      lock (_Sync)
+      {
+        return _Info ?? ThrowProjectNotOpened<ProjectInfo>();
+      }
+    }
+  }
 
-  public ICollection<ProjectRevision> Revisions =>
-    _ProjectHost?.Revisions ?? ThrowProjectNotOpened<ICollection<ProjectRevision>>();
+  public ICollection<ProjectRevision> Revisions
+  {
+    // Snapshot the host under the lock, then enumerate revisions (which touches the filesystem)
+    // outside it so the lock is not held during I/O.
+    get => RequireHost().Revisions;
+  }
 }
