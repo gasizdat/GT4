@@ -735,4 +735,10 @@ FN - family name</value>
   <data name="BtnNameRestore_1" xml:space="preserve">
     <value>Restore {0}</value>
   </data>
+  <data name="MenuItemExpandAll_1" xml:space="preserve">
+    <value>{0} Expand all</value>
+  </data>
+  <data name="MenuItemCollapseAll_1" xml:space="preserve">
+    <value>{0} Collapse all</value>
+  </data>
 </root>

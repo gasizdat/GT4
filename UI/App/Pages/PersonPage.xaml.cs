@@ -60,10 +60,14 @@ public partial class PersonPage : ContentPage
       _ExpandAll = value;
       OnPropertyChanged(nameof(ExpandAll));
       OnPropertyChanged(nameof(ToggleAllButtonName));
+      OnPropertyChanged(nameof(ToggleAllMenuItemName));
     }
   }
 
   public string ToggleAllButtonName => ExpandAll ? "⏫" : "⏬";
+
+  public string ToggleAllMenuItemName => 
+    string.Format(ExpandAll ? UIStrings.MenuItemCollapseAll_1 : UIStrings.MenuItemExpandAll_1, ToggleAllButtonName);
 
   public ICommand PageCommand => _PageCommand;
 

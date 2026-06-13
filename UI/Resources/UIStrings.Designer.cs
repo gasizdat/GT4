@@ -790,6 +790,24 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {0} Collapse all.
+        /// </summary>
+        public static string MenuItemCollapseAll_1 {
+            get {
+                return ResourceManager.GetString("MenuItemCollapseAll_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} Expand all.
+        /// </summary>
+        public static string MenuItemExpandAll_1 {
+            get {
+                return ResourceManager.GetString("MenuItemExpandAll_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 👪 To family: {0}.
         /// </summary>
         public static string MenuItemGotoFamily_1 {

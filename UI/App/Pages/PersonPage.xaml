@@ -48,7 +48,20 @@
         Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="GoToFamily"
         Order="Secondary"
-        Text="{Binding GoToFamilyName, Source={x:Reference Root}}" />
+        Text="{Binding GoToFamilyName, Source={x:Reference Root}}" />    
+    <ToolbarItem
+        IsEnabled="False"
+        Order="Secondary"
+        Text="──────────────" />
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="ToggleAll"
+        Order="Secondary"
+        Text="{Binding ToggleAllMenuItemName, Source={x:Reference Root}}" />  
+    <ToolbarItem
+        IsEnabled="False"
+        Order="Secondary"
+        Text="──────────────" />
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="RemovePerson"
