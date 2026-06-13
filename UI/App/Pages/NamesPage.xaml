@@ -7,8 +7,10 @@
     xmlns:components="clr-namespace:GT4.UI.Components"
     xmlns:dto="clr-namespace:GT4.Core.Project.Dto;assembly=GT4.Core.Project"
     xmlns:items="clr-namespace:GT4.UI.Items"
+    xmlns:pages="clr-namespace:GT4.UI.Pages"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root"
+    x:DataType="pages:NamesPage"
     Title="{x:Static resources:UIStrings.TitleNamesPage}">
 
   <ContentPage.ToolbarItems>
@@ -46,7 +48,7 @@
         <Picker
             Grid.Row="1"
             Grid.Column="1"
-            ItemDisplayBinding="{Binding Name}"
+            ItemDisplayBinding="{Binding Name, x:DataType=items:BiologicalSexItem}"
             ItemsSource="{Binding BiologicalSexes, Source={x:Reference Root}}"
             SelectedItem="{Binding CurrentBiologicalSex, Source={x:Reference Root}}"
             Style="{StaticResource FieldValue}" />
@@ -54,7 +56,7 @@
         <Picker
             Grid.Row="1"
             Grid.Column="2"
-            ItemDisplayBinding="{Binding TypeName}"
+            ItemDisplayBinding="{Binding TypeName, x:DataType=items:NameTypeInfoItem}"
             ItemsSource="{Binding NameTypes, Source={x:Reference Root}}"
             SelectedItem="{Binding CurrentNameType, Source={x:Reference Root}}"
             Style="{StaticResource FieldValue}" />
@@ -97,7 +99,7 @@
 
               <Grid.GestureRecognizers>
                 <TapGestureRecognizer
-                    Command="{Binding TogglePersonsCommand, Source={x:Reference NamePresenter}}"
+                    Command="{Binding TogglePersonsCommand, Source={x:Reference NamePresenter}, x:DataType=components:NameView}"
                     NumberOfTapsRequired="2" />
               </Grid.GestureRecognizers>
 
@@ -111,23 +113,23 @@
 
               <Button
                   Grid.Column="1"
-                  Command="{Binding DeleteNameCommand, Source={x:Reference Root}}"
+                  Command="{Binding DeleteNameCommand, Source={x:Reference Root}, x:DataType=pages:NamesPage}"
                   CommandParameter="{Binding .}"
                   Style="{StaticResource DeleteAdorner}"
                   VerticalOptions="Start" />
 
               <Button
                   Grid.Column="2"
-                  Command="{Binding EditNameCommand, Source={x:Reference Root}}"
+                  Command="{Binding EditNameCommand, Source={x:Reference Root}, x:DataType=pages:NamesPage}"
                   CommandParameter="{Binding .}"
                   Style="{StaticResource EditAdorner}"
                   VerticalOptions="Start" />
 
               <Button
                   Grid.Column="3"
-                  Command="{Binding TogglePersonsCommand, Source={x:Reference NamePresenter}}"
+                  Command="{Binding TogglePersonsCommand, Source={x:Reference NamePresenter}, x:DataType=components:NameView}"
                   Style="{StaticResource EmojiAdorner}"
-                  Text="{Binding MoreBtnName, Source={x:Reference NamePresenter}}"
+                  Text="{Binding MoreBtnName, Source={x:Reference NamePresenter}, x:DataType=components:NameView}"
                   VerticalOptions="Start" />
 
             </Grid>

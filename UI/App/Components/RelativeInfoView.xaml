@@ -5,7 +5,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:components="clr-namespace:GT4.UI.Components"
     xmlns:dto="clr-namespace:GT4.Core.Project.Dto;assembly=GT4.Core.Project"
-    x:Name="Root">
+    x:Name="Root"
+    x:DataType="components:RelativeInfoView">
 
   <ContentView.Resources>
     <ResourceDictionary>
@@ -74,7 +75,7 @@
     <BoxView
         Grid.Row="2"
         Grid.Column="0"
-        Margin="{Binding ThicknessResult, Source={x:StaticResource VerticalLineMargin}}"
+        Margin="{Binding ThicknessResult, Source={x:StaticResource VerticalLineMargin}, x:DataType=components:Calculator}"
         HorizontalOptions="Start"
         IsVisible="{Binding ShowRelatives, Source={x:Reference Root}}"
         VerticalOptions="Fill"
@@ -101,23 +102,23 @@
                 x:Name="HorisontalLineMargin"
                 Expression="Thickness = Left : X1/2; Top : X2"
                 X1="{StaticResource RelativesIndentation}"
-                X2="{Binding PersonInfoFrame.Center.Y, Source={x:Reference RelativeInfoView}}" />
+                X2="{Binding PersonInfoFrame.Center.Y, Source={x:Reference RelativeInfoView}, x:DataType=components:RelativeInfoView}" />
 
             <BoxView
-                Margin="{Binding ThicknessResult, Source={x:Reference HorisontalLineMargin}}"
+                Margin="{Binding ThicknessResult, Source={x:Reference HorisontalLineMargin}, x:DataType=components:Calculator}"
                 HeightRequest="1"
                 HorizontalOptions="Start"
                 VerticalOptions="Start"
-                WidthRequest="{Binding X, Source={x:Reference RelativeInfoView}}"
+                WidthRequest="{Binding X, Source={x:Reference RelativeInfoView}, x:DataType=components:RelativeInfoView}"
                 Color="Gray" />
 
             <components:RelativeInfoView
                 x:Name="RelativeInfoView"
                 Margin="{Thickness Left={StaticResource RelativesIndentation}}"
-                ExandAllRelatives="{Binding ExandAllRelatives, Source={x:Reference Root}}"
-                PersonBirthDate="{Binding Relative.BirthDate, Source={x:Reference Root}}"
+                ExandAllRelatives="{Binding ExandAllRelatives, Source={x:Reference Root}, x:DataType=components:RelativeInfoView}"
+                PersonBirthDate="{Binding Relative.BirthDate, Source={x:Reference Root}, x:DataType=components:RelativeInfoView}"
                 Relative="{Binding .}"
-                SelectCommand="{Binding SelectCommand, Source={x:Reference Root}}"
+                SelectCommand="{Binding SelectCommand, Source={x:Reference Root}, x:DataType=components:RelativeInfoView}"
                 ShowMoreButton="True"
                 Style="{StaticResource HoverSubItem}" />
           </Grid>

@@ -5,9 +5,11 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:behaviors="clr-namespace:GT4.UI.Behaviors"
     xmlns:components="clr-namespace:GT4.UI.Components"
+    xmlns:dialogs="clr-namespace:GT4.UI.Dialogs"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
-    x:Name="Root">
+    x:Name="Root"
+    x:DataType="dialogs:CreateOrUpdateNameDialog">
 
   <components:PageLayout>
     <components:PageLayout.Header>

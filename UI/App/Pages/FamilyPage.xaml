@@ -5,9 +5,11 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:components="clr-namespace:GT4.UI.Components"
     xmlns:dto="clr-namespace:GT4.Core.Project.Dto;assembly=GT4.Core.Project"
+    xmlns:pages="clr-namespace:GT4.UI.Pages"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
     x:Name="Root"
+    x:DataType="pages:FamilyPage"
     Title="{Binding FamilyName.Value, Source={x:Reference Root}}">
 
   <ContentPage.ToolbarItems>
@@ -54,17 +56,17 @@
             <DataTemplate x:DataType="dto:PersonInfo">
               <components:CardView
                   FlexLayout.Grow="1"
-                  MinimumWidthRequest="{Binding Path=PersonItemMinimalWidth, Source={RelativeSource AncestorType={x:Type ContentPage}}}">
+                  MinimumWidthRequest="{Binding Path=PersonItemMinimalWidth, Source={RelativeSource AncestorType={x:Type ContentPage}}, x:DataType=pages:FamilyPage}">
 
                 <components:CardView.GestureRecognizers>
                   <TapGestureRecognizer
-                      Command="{Binding Path=MemberItemTappedCommand, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
+                      Command="{Binding Path=MemberItemTappedCommand, Source={RelativeSource AncestorType={x:Type ContentPage}}, x:DataType=pages:FamilyPage}"
                       CommandParameter="{Binding .}" />
                 </components:CardView.GestureRecognizers>
 
                 <components:PersonInfoView
                     DatesLabelStyle="{StaticResource FieldValue}"
-                    NameFormat="{Binding PersonNamesFormat, Source={x:Reference Root}}"
+                    NameFormat="{Binding PersonNamesFormat, Source={x:Reference Root}, x:DataType=pages:FamilyPage}"
                     NameLabelStyle="{StaticResource FieldName}"
                     Person="{Binding .}" />
               </components:CardView>

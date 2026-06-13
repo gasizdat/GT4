@@ -5,7 +5,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:components="clr-namespace:GT4.UI.Components"
     xmlns:dto="clr-namespace:GT4.Core.Project.Dto;assembly=GT4.Core.Project"
-    x:Name="Root">
+    x:Name="Root"
+    x:DataType="components:NameView">
 
   <Grid
       ColumnDefinitions="*"
@@ -36,7 +37,7 @@
           <Grid>
             <components:PersonInfoView
                 DatesLabelStyle="{StaticResource FieldValue}"
-                NameFormat="{Binding PersonNamesFormat, Source={x:Reference Root}}"
+                NameFormat="{Binding PersonNamesFormat, Source={x:Reference Root}, x:DataType=components:NameView}"
                 NameLabelStyle="{StaticResource FieldName}"
                 Person="{Binding .}" />
           </Grid>

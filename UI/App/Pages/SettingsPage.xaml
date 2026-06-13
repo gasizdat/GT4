@@ -4,8 +4,11 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:components="clr-namespace:GT4.UI.Components"
+    xmlns:coreUtils="clr-namespace:GT4.Core.Utils;assembly=GT4.Core.Utils"
+    xmlns:pages="clr-namespace:GT4.UI.Pages"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root"
+    x:DataType="pages:SettingsPage"
     Title="{x:Static resources:UIStrings.TitleSettingsPage}">
 
   <components:PageLayout>
@@ -19,7 +22,7 @@
         </CollectionView.ItemsLayout>
 
         <CollectionView.ItemTemplate>
-          <DataTemplate>
+          <DataTemplate x:DataType="coreUtils:ISettingEditor">
             <components:SettingEditorView Editor="{Binding .}" />
           </DataTemplate>
         </CollectionView.ItemTemplate>

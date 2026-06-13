@@ -4,9 +4,12 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:components="clr-namespace:GT4.UI.Components"
+    xmlns:dialogs="clr-namespace:GT4.UI.Dialogs"
     xmlns:dto="clr-namespace:GT4.Core.Project.Dto;assembly=GT4.Core.Project"
+    xmlns:items="clr-namespace:GT4.UI.Items"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
-    x:Name="Root">
+    x:Name="Root"
+    x:DataType="dialogs:CreateOrUpdatePersonDialog">
 
   <ContentPage.Resources>
     <ResourceDictionary>
@@ -81,7 +84,7 @@
                 </CollectionView.ItemsLayout>
 
                 <CollectionView.ItemTemplate>
-                  <DataTemplate>
+                  <DataTemplate x:DataType="items:PersonDataItem">
                     <Grid
                         x:Name="PersonPhoto"
                         ColumnDefinitions="*, Auto, Auto"
@@ -99,52 +102,52 @@
                       <Button
                           Grid.Row="0"
                           Grid.Column="1"
-                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}, x:DataType=dialogs:CreateOrUpdatePersonDialog}"
                           Style="{StaticResource EditAdorner}">
 
                         <Button.CommandParameter>
                           <components:AdornerCommandParameter
                               CommandName="EditPhotoCommand"
-                              Element="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
+                              Element="{Binding BindingContext, Source={x:Reference PersonPhoto}, x:DataType=Grid}" />
                         </Button.CommandParameter>
                       </Button>
 
                       <Button
                           Grid.Row="0"
                           Grid.Column="2"
-                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}, x:DataType=dialogs:CreateOrUpdatePersonDialog}"
                           Style="{StaticResource DeleteAdorner}">
 
                         <Button.CommandParameter>
                           <components:AdornerCommandParameter
                               CommandName="RemovePhotoCommand"
-                              Element="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
+                              Element="{Binding BindingContext, Source={x:Reference PersonPhoto}, x:DataType=Grid}" />
                         </Button.CommandParameter>
                       </Button>
 
                       <Button
                           Grid.Row="1"
                           Grid.Column="1"
-                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}, x:DataType=dialogs:CreateOrUpdatePersonDialog}"
                           Style="{StaticResource LeftAdorner}">
 
                         <Button.CommandParameter>
                           <components:AdornerCommandParameter
                               CommandName="MovePhotoToLeftCommand"
-                              Element="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
+                              Element="{Binding BindingContext, Source={x:Reference PersonPhoto}, x:DataType=Grid}" />
                         </Button.CommandParameter>
                       </Button>
 
                       <Button
                           Grid.Row="1"
                           Grid.Column="2"
-                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}, x:DataType=dialogs:CreateOrUpdatePersonDialog}"
                           Style="{StaticResource RightAdorner}">
 
                         <Button.CommandParameter>
                           <components:AdornerCommandParameter
                               CommandName="MovePhotoToRightCommand"
-                              Element="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
+                              Element="{Binding BindingContext, Source={x:Reference PersonPhoto}, x:DataType=Grid}" />
                         </Button.CommandParameter>
                       </Button>
 
@@ -155,7 +158,7 @@
               <Button
                   Grid.Row="1"
                   Grid.Column="1"
-                  Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                  Command="{Binding DialogCommand, Source={x:Reference Root}, x:DataType=dialogs:CreateOrUpdatePersonDialog}"
                   CommandParameter="AddPhotoCommand"
                   HeightRequest="{StaticResource PhotoHeight}"
                   Style="{StaticResource AddAdorner}" />
@@ -178,7 +181,7 @@
               <Picker
                   Grid.Row="0"
                   Grid.Column="1"
-                  ItemDisplayBinding="{Binding Name}"
+                  ItemDisplayBinding="{Binding Name, x:DataType=items:BiologicalSexItem}"
                   ItemsSource="{Binding BiologicalSexes, Source={x:Reference Root}}"
                   SelectedItem="{Binding BioSex, Source={x:Reference Root}}"
                   Style="{StaticResource FieldValue}" />
@@ -215,7 +218,7 @@
                   SelectionMode="Single">
 
                 <CollectionView.ItemTemplate>
-                  <DataTemplate>
+                  <DataTemplate x:DataType="items:NameInfoItem">
                     <Grid
                         x:Name="PersonName"
                         Padding="{StaticResource CollectionItemsVerticalPadding}"
@@ -234,14 +237,14 @@
                           Grid.Row="0"
                           Grid.RowSpan="2"
                           Grid.Column="1"
-                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}, x:DataType=dialogs:CreateOrUpdatePersonDialog}"
                           Style="{StaticResource UpAdorner}"
                           VerticalOptions="Center">
 
                         <Button.CommandParameter>
                           <components:AdornerCommandParameter
                               CommandName="MoveNameUpCommand"
-                              Element="{Binding Source={x:Reference PersonName}, Path=BindingContext}" />
+                              Element="{Binding BindingContext, Source={x:Reference PersonName}, x:DataType=Grid}" />
                         </Button.CommandParameter>
                       </Button>
 
@@ -249,14 +252,14 @@
                           Grid.Row="0"
                           Grid.RowSpan="2"
                           Grid.Column="2"
-                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}, x:DataType=dialogs:CreateOrUpdatePersonDialog}"
                           Style="{StaticResource DownAdorner}"
                           VerticalOptions="Center">
 
                         <Button.CommandParameter>
                           <components:AdornerCommandParameter
                               CommandName="MoveNameDownCommand"
-                              Element="{Binding Source={x:Reference PersonName}, Path=BindingContext}" />
+                              Element="{Binding BindingContext, Source={x:Reference PersonName}, x:DataType=Grid}" />
                         </Button.CommandParameter>
                       </Button>
 
@@ -264,14 +267,14 @@
                           Grid.Row="0"
                           Grid.RowSpan="2"
                           Grid.Column="3"
-                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}, x:DataType=dialogs:CreateOrUpdatePersonDialog}"
                           Style="{StaticResource EditAdorner}"
                           VerticalOptions="Center">
 
                         <Button.CommandParameter>
                           <components:AdornerCommandParameter
                               CommandName="EditNameCommand"
-                              Element="{Binding Source={x:Reference PersonName}, Path=BindingContext}" />
+                              Element="{Binding BindingContext, Source={x:Reference PersonName}, x:DataType=Grid}" />
                         </Button.CommandParameter>
                       </Button>
 
@@ -279,14 +282,14 @@
                           Grid.Row="0"
                           Grid.RowSpan="2"
                           Grid.Column="4"
-                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}, x:DataType=dialogs:CreateOrUpdatePersonDialog}"
                           Style="{StaticResource DeleteAdorner}"
                           VerticalOptions="Center">
 
                         <Button.CommandParameter>
                           <components:AdornerCommandParameter
                               CommandName="RemoveNameCommand"
-                              Element="{Binding Source={x:Reference PersonName}, Path=BindingContext}" />
+                              Element="{Binding BindingContext, Source={x:Reference PersonName}, x:DataType=Grid}" />
                         </Button.CommandParameter>
                       </Button>
 
@@ -307,7 +310,7 @@
                   Grid.Row="2"
                   Grid.Column="0"
                   Grid.ColumnSpan="2"
-                  Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                  Command="{Binding DialogCommand, Source={x:Reference Root}, x:DataType=dialogs:CreateOrUpdatePersonDialog}"
                   CommandParameter="AddNameCommand"
                   HorizontalOptions="Fill"
                   Style="{StaticResource TextAdorner}"
@@ -336,14 +339,14 @@
               <Button
                   Grid.Row="1"
                   Grid.Column="1"
-                  Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                  Command="{Binding DialogCommand, Source={x:Reference Root}, x:DataType=dialogs:CreateOrUpdatePersonDialog}"
                   CommandParameter="EditBirthDateCommand"
                   Style="{StaticResource EditAdorner}" />
 
               <Button
                   Grid.Row="1"
                   Grid.Column="2"
-                  Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                  Command="{Binding DialogCommand, Source={x:Reference Root}, x:DataType=dialogs:CreateOrUpdatePersonDialog}"
                   CommandParameter="UndefinedBirthDateCommand"
                   Style="{StaticResource EmojiAdorner}"
                   Text="�" />
@@ -357,14 +360,14 @@
               <Button
                   Grid.Row="2"
                   Grid.Column="1"
-                  Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                  Command="{Binding DialogCommand, Source={x:Reference Root}, x:DataType=dialogs:CreateOrUpdatePersonDialog}"
                   CommandParameter="EditDeathDateCommand"
                   Style="{StaticResource EditAdorner}" />
 
               <Button
                   Grid.Row="2"
                   Grid.Column="2"
-                  Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                  Command="{Binding DialogCommand, Source={x:Reference Root}, x:DataType=dialogs:CreateOrUpdatePersonDialog}"
                   CommandParameter="UndefinedDeathDateCommand"
                   Style="{StaticResource EmojiAdorner}"
                   Text="�" />
@@ -372,7 +375,7 @@
               <Button
                   Grid.Row="2"
                   Grid.Column="3"
-                  Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                  Command="{Binding DialogCommand, Source={x:Reference Root}, x:DataType=dialogs:CreateOrUpdatePersonDialog}"
                   CommandParameter="RemoveDeathDateCommand"
                   Style="{StaticResource DeleteAdorner}" />
 
@@ -414,28 +417,28 @@
                       <Button
                           Grid.Row="0"
                           Grid.Column="1"
-                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}, x:DataType=dialogs:CreateOrUpdatePersonDialog}"
                           Style="{StaticResource EditAdorner}"
                           VerticalOptions="Center">
 
                         <Button.CommandParameter>
                           <components:AdornerCommandParameter
                               CommandName="EditRelativeCommand"
-                              Element="{Binding Source={x:Reference PersonRelative}, Path=BindingContext}" />
+                              Element="{Binding BindingContext, Source={x:Reference PersonRelative}, x:DataType=Grid}" />
                         </Button.CommandParameter>
                       </Button>
 
                       <Button
                           Grid.Row="0"
                           Grid.Column="2"
-                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}, x:DataType=dialogs:CreateOrUpdatePersonDialog}"
                           Style="{StaticResource DeleteAdorner}"
                           VerticalOptions="Center">
 
                         <Button.CommandParameter>
                           <components:AdornerCommandParameter
                               CommandName="RemoveRelativeCommand"
-                              Element="{Binding Source={x:Reference PersonRelative}, Path=BindingContext}" />
+                              Element="{Binding BindingContext, Source={x:Reference PersonRelative}, x:DataType=Grid}" />
                         </Button.CommandParameter>
                       </Button>
 
@@ -447,7 +450,7 @@
               <Button
                   Grid.Row="2"
                   Grid.Column="0"
-                  Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                  Command="{Binding DialogCommand, Source={x:Reference Root}, x:DataType=dialogs:CreateOrUpdatePersonDialog}"
                   CommandParameter="AddRelationship"
                   HorizontalOptions="Fill"
                   Style="{StaticResource TextAdorner}"
@@ -483,7 +486,7 @@
 
     <components:PageLayout.Footer>
       <Button
-          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+          Command="{Binding DialogCommand, Source={x:Reference Root}, x:DataType=dialogs:CreateOrUpdatePersonDialog}"
           CommandParameter="CreatePersonCommand"
           FontSize="Large"
           Text="{Binding DialogButtonName, Source={x:Reference Root}}" />

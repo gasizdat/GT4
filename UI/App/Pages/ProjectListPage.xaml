@@ -5,8 +5,10 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:components="clr-namespace:GT4.UI.Components"
     xmlns:items="clr-namespace:GT4.UI.Items"
+    xmlns:pages="clr-namespace:GT4.UI.Pages"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root"
+    x:DataType="pages:ProjectListPage"
     Title="{x:Static resources:UIStrings.TitleProjectPage}">
 
   <ContentPage.ToolbarItems>

@@ -5,9 +5,12 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:behaviors="clr-namespace:GT4.UI.Behaviors"
     xmlns:components="clr-namespace:GT4.UI.Components"
+    xmlns:dialogs="clr-namespace:GT4.UI.Dialogs"
+    xmlns:items="clr-namespace:GT4.UI.Items"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
-    x:Name="Root">
+    x:Name="Root"
+    x:DataType="dialogs:SelectNameDialog">
 
   <components:PageLayout>
     <components:PageLayout.Header>
@@ -34,7 +37,7 @@
         <Picker
             Grid.Row="0"
             Grid.Column="1"
-            ItemDisplayBinding="{Binding TypeName}"
+            ItemDisplayBinding="{Binding TypeName, x:DataType=items:NameTypeInfoItem}"
             ItemsSource="{Binding NameTypes, Source={x:Reference Root}}"
             SelectedItem="{Binding CurrentNameType, Source={x:Reference Root}}"
             Style="{StaticResource FieldValue}" />
@@ -50,7 +53,7 @@
             SelectedItem="{Binding CurrentName, Source={x:Reference Root}}"
             SelectionMode="Single">
           <CollectionView.ItemTemplate>
-            <DataTemplate>
+            <DataTemplate x:DataType="items:NameInfoItem">
               <Grid
                   Padding="{Thickness Left={StaticResource PageContentSpacing},
                                       Right={StaticResource PageContentSpacing}}"
@@ -65,7 +68,7 @@
 
                 <Button
                     Grid.Column="1"
-                    Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                    Command="{Binding DialogCommand, Source={x:Reference Root}, x:DataType=dialogs:SelectNameDialog}"
                     CommandParameter="{Binding Info}"
                     Style="{StaticResource EditAdorner}"
                     VerticalOptions="Center" />
@@ -78,7 +81,7 @@
             Grid.Row="2"
             Grid.Column="0"
             Grid.ColumnSpan="2"
-            Command="{Binding DialogCommand, Source={x:Reference Root}}"
+            Command="{Binding DialogCommand, Source={x:Reference Root}, x:DataType=dialogs:SelectNameDialog}"
             CommandParameter="AddName"
             HorizontalOptions="Fill"
             Style="{StaticResource AddAdorner}" />
@@ -94,7 +97,7 @@
 
     <components:PageLayout.Footer>
       <Button
-          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+          Command="{Binding DialogCommand, Source={x:Reference Root}, x:DataType=dialogs:SelectNameDialog}"
           CommandParameter="SelectName"
           FontSize="Large"
           HorizontalOptions="Fill"

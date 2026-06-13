@@ -6,8 +6,10 @@
     xmlns:behaviors="clr-namespace:GT4.UI.Behaviors"
     xmlns:components="clr-namespace:GT4.UI.Components"
     xmlns:dto="clr-namespace:GT4.Core.Project.Dto;assembly=GT4.Core.Project"
+    xmlns:pages="clr-namespace:GT4.UI.Pages"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root"
+    x:DataType="pages:PersonPage"
     Title="{Binding ShortName, Source={x:Reference Root}}">
 
   <ContentPage.Resources>
@@ -228,11 +230,11 @@
               <DataTemplate x:DataType="dto:RelativeInfo">
                 <components:CardView Margin="{Thickness Bottom={StaticResource PageContentSpacing}}">
                   <components:RelativeInfoView
-                      ExandAllRelatives="{Binding ExpandAll, Source={x:Reference Root}}"
+                      ExandAllRelatives="{Binding ExpandAll, Source={x:Reference Root}, x:DataType=pages:PersonPage}"
                       NameFormat="CommonPersonName"
-                      PersonBirthDate="{Binding PersonFullInfo.BirthDate, Source={x:Reference Root}}"
+                      PersonBirthDate="{Binding PersonFullInfo.BirthDate, Source={x:Reference Root}, x:DataType=pages:PersonPage}"
                       Relative="{Binding .}"
-                      SelectCommand="{Binding Path=PageCommand, Source={x:Reference Root}}"
+                      SelectCommand="{Binding Path=PageCommand, Source={x:Reference Root}, x:DataType=pages:PersonPage}"
                       ShowMoreButton="True" />
                 </components:CardView>
               </DataTemplate>

@@ -6,8 +6,10 @@
     xmlns:components="clr-namespace:GT4.UI.Components"
     xmlns:dto="clr-namespace:GT4.Core.Project.Dto;assembly=GT4.Core.Project"
     xmlns:items="clr-namespace:GT4.UI.Items"
+    xmlns:pages="clr-namespace:GT4.UI.Pages"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root"
+    x:DataType="pages:ProjectPage"
     Title="{x:Static resources:UIStrings.TitleFamiliesPage}">
 
   <ContentPage.ToolbarItems>
@@ -94,7 +96,7 @@
                     <DataTemplate x:DataType="dto:PersonInfo">
 
                       <components:PersonInfoView
-                          NameFormat="{Binding PersonNamesFormat, Source={x:Reference Root}}"
+                          NameFormat="{Binding PersonNamesFormat, Source={x:Reference Root}, x:DataType=pages:ProjectPage}"
                           NameLabelStyle="{StaticResource FieldValue}"
                           Person="{Binding .}"
                           PhotoStyle="{StaticResource PhotoCompactStyle}"

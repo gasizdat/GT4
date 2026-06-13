@@ -4,9 +4,12 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:components="clr-namespace:GT4.UI.Components"
+    xmlns:dialogs="clr-namespace:GT4.UI.Dialogs"
     xmlns:dto="clr-namespace:GT4.Core.Project.Dto;assembly=GT4.Core.Project"
+    xmlns:items="clr-namespace:GT4.UI.Items"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
-    x:Name="Root">
+    x:Name="Root"
+    x:DataType="dialogs:SelectRelativesDialog">
 
   <components:PageLayout>
     <components:PageLayout.Header>
@@ -51,7 +54,7 @@
             Grid.Row="2"
             Grid.Column="1"
             Grid.ColumnSpan="3"
-            ItemDisplayBinding="{Binding Name}"
+            ItemDisplayBinding="{Binding Name, x:DataType=items:BiologicalSexItem}"
             ItemsSource="{Binding BiologicalSexes, Source={x:Reference Root}}"
             SelectedItem="{Binding BioSex, Source={x:Reference Root}}"
             Style="{StaticResource FieldValue}" />
@@ -67,7 +70,7 @@
             Grid.Row="3"
             Grid.Column="1"
             Grid.ColumnSpan="3"
-            ItemDisplayBinding="{Binding Name}"
+            ItemDisplayBinding="{Binding Name, x:DataType=items:RelationshipTypeItem}"
             ItemsSource="{Binding RelationshipTypes, Source={x:Reference Root}}"
             SelectedItem="{Binding RelType, Source={x:Reference Root}}"
             Style="{StaticResource FieldValue}" />
