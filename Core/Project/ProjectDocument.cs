@@ -50,11 +50,11 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     SQLitePCL.Batteries.Init();
   }
 
-  private ProjectDocument(string dbFilaName, SqliteOpenMode mode)
+  private ProjectDocument(string dbFileName, SqliteOpenMode mode)
   {
     var builder = new SqliteConnectionStringBuilder();
     builder.Pooling = false;
-    builder.DataSource = dbFilaName;
+    builder.DataSource = dbFileName;
     builder.Mode = mode;
     var connectionString = builder.ConnectionString;
     _Connection = new SqliteConnection(connectionString);

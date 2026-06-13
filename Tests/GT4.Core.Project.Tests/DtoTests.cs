@@ -134,7 +134,7 @@ public sealed class DtoTests
   {
     var empty = PersonFullInfo.Empty;
 
-    empty.Id.Should().Be(TableBase.NonCommitedId);
+    empty.Id.Should().Be(TableBase.NonCommittedId);
     empty.Names.Should().BeEmpty();
     empty.AdditionalPhotos.Should().BeEmpty();
     empty.RelativeInfos.Should().BeEmpty();

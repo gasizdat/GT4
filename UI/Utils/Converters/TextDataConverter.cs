@@ -13,7 +13,7 @@ public class TextDataConverter : IDataConverter
     {
       string text =>
         new Data(
-          Id: TableBase.NonCommitedId,
+          Id: TableBase.NonCommittedId,
           Content: System.Text.Encoding.UTF8.GetBytes(text),
           MimeType: MimeTypePlainText,
           Category: default),

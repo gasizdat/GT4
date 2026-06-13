@@ -31,9 +31,9 @@ public class AndroidFileSystem : IFileSystem
 
   private static string GetRelativePath(DirectoryDescription directoryDescription)
   {
-    var chanks = new List<string>([GetAndroidRoot(directoryDescription)]);
-    chanks.AddRange(directoryDescription.Path);
-    var ret = Path.Combine(chanks.ToArray());
+    var chunks = new List<string>([GetAndroidRoot(directoryDescription)]);
+    chunks.AddRange(directoryDescription.Path);
+    var ret = Path.Combine(chunks.ToArray());
 
     return ret;
   }
@@ -243,8 +243,8 @@ public class AndroidFileSystem : IFileSystem
       values.Put(MediaStore.IMediaColumns.MimeType, fileDescription.MimeType);
       values.Put(MediaStore.IMediaColumns.RelativePath, GetRelativePath(fileDescription.Directory));
 
-      var externaStoragelUri = GetExternalStorageUri();
-      uri = AndroidApplication.Context.ContentResolver?.Insert(externaStoragelUri, values)
+      var externalStorageUri = GetExternalStorageUri();
+      uri = AndroidApplication.Context.ContentResolver?.Insert(externalStorageUri, values)
             ?? throw new IOException("Failed to create file via MediaStore.");
       outStream = AndroidApplication.Context.ContentResolver?.OpenOutputStream(uri, "wt")
                   ?? throw new IOException("Failed to open output stream to write.");

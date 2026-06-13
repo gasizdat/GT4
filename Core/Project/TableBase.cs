@@ -45,7 +45,7 @@ public abstract class TableBase
   protected static TEnum GetEnum<TEnum>(DbDataReader reader, int ordinal) where TEnum : Enum =>
     (TEnum)Enum.ToObject(typeof(TEnum), reader.GetInt32(ordinal));
 
-  public static readonly int NonCommitedId = 0;
+  public static readonly int NonCommittedId = 0;
 
   internal IProjectDocument Document { get; init; }
 

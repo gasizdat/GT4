@@ -43,9 +43,9 @@ internal class PersonManager : TableBase, IPersonManager
 
   public async Task<PersonFullInfo> GetPersonFullInfoAsync(Person person, CancellationToken token)
   {
-    if (person.Id == NonCommitedId)
+    if (person.Id == NonCommittedId)
     {
-      throw new ArgumentException("person is not commited");
+      throw new ArgumentException("person is not committed");
     }
 
     var names = Document.PersonNames.GetPersonNamesAsync(person, token);
