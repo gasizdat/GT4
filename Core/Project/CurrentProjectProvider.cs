@@ -17,7 +17,7 @@ internal class CurrentProjectProvider : ICurrentProjectProvider
   [DoesNotReturn]
   private T ThrowProjectNotOpened<T>()
   {
-    throw new InvalidOperationException("Project is not opened yet.");
+    throw new ProjectNotOpenedException();
   }
 
   public CurrentProjectProvider(IProjectList projectList)

@@ -219,7 +219,7 @@ public partial class RelativeInfoView : ContentView
       if (view.ExandAllRelatives)
       {
         var value = view.ExandAllRelatives;
-        Task.Run(async () => await view.ToggleAllRelativesAsync(value));
+        _ = SafeTask.Run(() => view.ToggleAllRelativesAsync(value));
       }
     }
   }
@@ -229,7 +229,7 @@ public partial class RelativeInfoView : ContentView
     if (obj is RelativeInfoView view && oldValue != newValue)
     {
       var value = newValue is null ? false : (bool)newValue;
-      Task.Run(async () => await view.ToggleAllRelativesAsync(value));
+      _ = SafeTask.Run(() => view.ToggleAllRelativesAsync(value));
     }
   }
 

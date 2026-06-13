@@ -192,6 +192,11 @@ public partial class SelectRelativesDialog : ContentPage
 
           MainThread.BeginInvokeOnMainThread(() => _Persons.AddRange(items));
         }
+        catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
+        {
+          // The project was closed underneath us (e.g. the app is backgrounding). Nothing to surface.
+          System.Diagnostics.Debug.WriteLine(ex);
+        }
         catch (Exception ex)
         {
           await this.ShowErrorAsync(ex);

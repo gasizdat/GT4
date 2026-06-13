@@ -211,11 +211,18 @@ public partial class PersonPage : ContentPage
                     .AdditionalPhotos
                     .Select(photo => photo.Content)];
       }
-      _ = MainThread.InvokeOnMainThreadAsync(() => UpdateUI(personFullInfo,
-                                                            parentsTasks.Result,
-                                                            stepChildrenTasks.Result,
-                                                            photos, bioTask.Result as string,
-                                                            addToNavigation));
+      // UpdateUI touches the project document again on the UI thread; SafeTask.RunOnMainThread keeps
+      // an escaped exception (e.g. the project closed while backgrounding) from going unobserved.
+      _ = SafeTask.RunOnMainThread(() => UpdateUI(personFullInfo,
+                                                  parentsTasks.Result,
+                                                  stepChildrenTasks.Result,
+                                                  photos, bioTask.Result as string,
+                                                  addToNavigation));
+    }
+    catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
+    {
+      // The project was closed underneath us (e.g. the app is backgrounding). Nothing to surface.
+      System.Diagnostics.Debug.WriteLine(ex);
     }
     catch (Exception ex)
     {

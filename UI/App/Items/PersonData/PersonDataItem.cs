@@ -59,6 +59,11 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
               OnContentChanged();
             });
           }
+          catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
+          {
+            // The project was closed underneath us (e.g. the app is backgrounding). Nothing to surface.
+            System.Diagnostics.Debug.WriteLine(ex);
+          }
           catch (Exception ex)
           {
             await PageAlert.ShowErrorAsync(ex);
