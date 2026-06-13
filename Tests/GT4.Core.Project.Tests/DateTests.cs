@@ -159,6 +159,20 @@ public sealed class DateTests
   }
 
   [Fact]
+  public void Ordering_IsConsistent_ForEqualCodeDifferentStatus()
+  {
+    // Both truncate to the same packed code (the year only) but carry different certainty.
+    var monthUnknown = Date.Create(20230000, DateStatus.MonthUnknown);
+    var yearApprox = Date.Create(20230000, DateStatus.YearApproximate);
+
+    monthUnknown.Code.Should().Be(yearApprox.Code);
+    (monthUnknown == yearApprox).Should().BeFalse();
+
+    // Exactly one direction is "greater" — never both (the old bug) and never neither.
+    (monthUnknown > yearApprox).Should().NotBe(yearApprox > monthUnknown);
+  }
+
+  [Fact]
   public void GetWorstStatus_ReturnsTheLeastCertain()
   {
     var wellKnown = Date.Create(20230615, DateStatus.WellKnown);
