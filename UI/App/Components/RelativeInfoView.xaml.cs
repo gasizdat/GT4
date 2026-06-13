@@ -237,7 +237,8 @@ public partial class RelativeInfoView : ContentView
   {
     if (ShowRelatives != expand)
     {
-      ShowRelatives = false;
+      // Invoked from Task.Run, so marshal the property change onto the UI thread.
+      await Dispatcher.DispatchAsync(() => ShowRelatives = false);
       if (expand)
       {
         await OnShowMoreRelativesCommandAsync();

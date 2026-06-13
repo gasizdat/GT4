@@ -219,8 +219,10 @@ public partial class PersonPage : ContentPage
     }
     catch (Exception ex)
     {
+      // GetPersonDataAsync runs on a background thread (Task.Run); both the alert and the
+      // navigation touch native views, so marshal them onto the UI thread.
       await this.ShowErrorAsync(ex);
-      await Shell.Current.GoToAsync("..", true);
+      await MainThread.InvokeOnMainThreadAsync(() => Shell.Current.GoToAsync("..", true));
       return;
     }
   }
