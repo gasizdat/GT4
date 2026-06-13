@@ -231,4 +231,38 @@ public class RelationshipTypeFormatterTests
 
     Assert.Equal(expected, actual);
   }
+
+  // A sibling's spouse (same generation, sibling consanguinity) is formatted
+  // as a sibling-in-law, resolved by the spouse's own sex.
+  [Theory]
+  [InlineData(BiologicalSex.Female, "Sister-in-law")]
+  [InlineData(BiologicalSex.Male, "Brother-in-law")]
+  [InlineData(BiologicalSex.Unknown, "Sibling-in-law")]
+  public void EN_SiblingSpouse(BiologicalSex spouseSex, string expected)
+  {
+    SetEn();
+    var actual = _formatter.ToString(
+      RelationshipType.Spouse,
+      spouseSex,
+      Generation.Zero,
+      Consanguinity.Sibling);
+
+    Assert.Equal(expected, actual);
+  }
+
+  [Theory]
+  [InlineData(BiologicalSex.Female, "Невестка")]
+  [InlineData(BiologicalSex.Male, "Зять")]
+  [InlineData(BiologicalSex.Unknown, "Супруг(а) сестры или брата")]
+  public void RU_SiblingSpouse(BiologicalSex spouseSex, string expected)
+  {
+    SetRu();
+    var actual = _formatter.ToString(
+      RelationshipType.Spouse,
+      spouseSex,
+      Generation.Zero,
+      Consanguinity.Sibling);
+
+    Assert.Equal(expected, actual);
+  }
 }
