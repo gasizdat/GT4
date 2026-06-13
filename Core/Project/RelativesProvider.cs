@@ -192,20 +192,9 @@ internal class RelativesProvider : TableBase, IRelativesProvider
       .Where(r => r.Type == RelationshipType.Child || r.Type == RelationshipType.AdoptiveChild)
       .Where(r => IsRelationshipSupported(relativeInfo.Type, RelationshipType.Sibling))
       .Distinct(_RelativeInfoComparer);
-    var siblingRelativeTasks = siblings
-      .Select(s => Document.Relatives.GetRelativesAsync(s, token));
-    await Task.WhenAll(siblingRelativeTasks);
-    var siblingSpouses = await GetRelativeInfosAsync(
-      [..siblingRelativeTasks
-        .SelectMany(r => r.Result)
-        .Where(r => r.Type == RelationshipType.Spouse)],
-      selectMainPhoto,
-      token);
 
     var siblingGeneration = relativeInfo.Generation;
     var siblingConsanguinity = GetNextConsanguinity(RelationshipType.Sibling, relativeInfo.Generation, relativeInfo.Consanguinity);
-    var siblingSpouseGeneration = siblingGeneration;
-    var siblingSpouseConsanguinity = siblingConsanguinity;
 
     RelativeInfo[] relativeInfos =
     [
@@ -223,12 +212,6 @@ internal class RelativesProvider : TableBase, IRelativesProvider
           Consanguinity = siblingConsanguinity,
           Generation = siblingGeneration,
           Type = RelationshipType.Sibling
-        }),
-      ..siblingSpouses
-        .Select(r => r with
-        {
-          Consanguinity = siblingSpouseConsanguinity,
-          Generation = siblingSpouseGeneration
         })
     ];
 

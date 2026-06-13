@@ -995,4 +995,59 @@ public class RelativesProviderTests
     Assert.Equal(Generation.Child, rNephew2.Generation);
     Assert.Equal(Consanguinity.Sibling, rNephew2.Consanguinity);
   }
+
+  [Fact]
+  public async Task GetRelativeInfosAsync_UncleAuntSpouse_OnlyNestedUnderUncleAunt_Regression()
+  {
+    // The spouse of an uncle/aunt must appear only nested under the uncle/aunt
+    // node, never on the same level as the native uncle/aunt itself.
+    var grandParent = _documentMock.CreatePerson();
+    var parent = _documentMock.CreatePerson();
+    var uncleAunt = _documentMock.CreatePerson();
+    var uncleAuntSpouse = _documentMock.CreatePerson();
+    var child = _documentMock.CreatePerson();
+
+    _documentMock.AddRelationship(grandParent, parent, RelationshipType.Child);
+    _documentMock.AddRelationship(grandParent, uncleAunt, RelationshipType.Child);
+    _documentMock.AddRelationship(uncleAunt, uncleAuntSpouse, RelationshipType.Spouse);
+    _documentMock.AddRelationship(parent, child, RelationshipType.Child);
+
+    var relativesProvider = new RelativesProvider(_documentMock);
+
+    var relatives = await relativesProvider.GetRelativeInfosAsync(child, true, CancellationToken.None);
+    relatives
+      .Id()
+      .Should()
+      .BeEquivalentTo([parent.Id]);
+
+    var rParent = relatives.SingleId(parent);
+
+    // Expanding the parent must surface the grandparent and the uncle/aunt,
+    // but NOT the uncle/aunt's spouse on the same (parent) level.
+    relatives = await relativesProvider.GetRelativeInfosAsync(rParent, true, CancellationToken.None);
+    relatives
+      .Id()
+      .Should()
+      .BeEquivalentTo([grandParent.Id, uncleAunt.Id]);
+    relatives
+      .Id()
+      .Should()
+      .NotContain(uncleAuntSpouse.Id);
+
+    var rUncleAunt = relatives.SingleId(uncleAunt);
+    Assert.Equal(RelationshipType.Sibling, rUncleAunt.Type);
+    Assert.Equal(Generation.Parent, rUncleAunt.Generation);
+    Assert.Equal(Consanguinity.UncleAunt, rUncleAunt.Consanguinity);
+
+    // The uncle/aunt's spouse must appear nested under the uncle/aunt.
+    relatives = await relativesProvider.GetRelativeInfosAsync(rUncleAunt, true, CancellationToken.None);
+    relatives
+      .Id()
+      .Should()
+      .BeEquivalentTo([uncleAuntSpouse.Id]);
+
+    var rUncleAuntSpouse = relatives.SingleId(uncleAuntSpouse);
+    Assert.Equal(RelationshipType.Spouse, rUncleAuntSpouse.Type);
+    Assert.Equal(Generation.Parent, rUncleAuntSpouse.Generation);
+  }
 }
