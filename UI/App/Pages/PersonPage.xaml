@@ -50,6 +50,11 @@
         Order="Secondary"
         Text="{Binding GoToFamilyName, Source={x:Reference Root}}" />
     <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="GoToFamilyTree"
+        Order="Secondary"
+        Text="{x:Static resources:UIStrings.MenuItemNameFamilyTree}" />
+    <ToolbarItem
         IsEnabled="False"
         Order="Secondary"
         Text="──────────────" />

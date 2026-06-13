@@ -16,6 +16,7 @@ public interface IProjectDocument : IAsyncDisposable, IDisposable
   ITablePersons Persons { get; }
   ITableRelatives Relatives { get; }
   IRelativesProvider RelativesProvider { get; }
+  IFamilyTreeProvider FamilyTreeProvider { get; }
 
   Task<IDbTransaction> BeginTransactionAsync(CancellationToken token);
 

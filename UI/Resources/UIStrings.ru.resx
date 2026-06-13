@@ -762,4 +762,22 @@ FN - род</value>
   <data name="RelSiblingSpouse" xml:space="preserve">
     <value>Супруг(а) сестры или брата</value>
   </data>
+  <data name="MenuItemNameFamilyTree" xml:space="preserve">
+    <value>🌳 Древо</value>
+  </data>
+  <data name="TitleFamilyTreePage_1" xml:space="preserve">
+    <value>🌳 {0}</value>
+  </data>
+  <data name="HintFamilyTreePage" xml:space="preserve">
+    <value>Нажмите на родственника, чтобы поместить его в центр</value>
+  </data>
+  <data name="MenuItemNameOpenPerson_1" xml:space="preserve">
+    <value>Открыть {0}</value>
+  </data>
+  <data name="LblAncestors" xml:space="preserve">
+    <value>Предки</value>
+  </data>
+  <data name="LblDescendants" xml:space="preserve">
+    <value>Потомки</value>
+  </data>
 </root>

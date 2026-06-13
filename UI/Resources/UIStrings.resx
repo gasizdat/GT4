@@ -762,4 +762,22 @@ FN - family name</value>
   <data name="RelSiblingSpouse" xml:space="preserve">
     <value>Sibling-in-law</value>
   </data>
+  <data name="MenuItemNameFamilyTree" xml:space="preserve">
+    <value>🌳 Family tree</value>
+  </data>
+  <data name="TitleFamilyTreePage_1" xml:space="preserve">
+    <value>🌳 {0}</value>
+  </data>
+  <data name="HintFamilyTreePage" xml:space="preserve">
+    <value>Tap a relative to centre the tree on them</value>
+  </data>
+  <data name="MenuItemNameOpenPerson_1" xml:space="preserve">
+    <value>Open {0}</value>
+  </data>
+  <data name="LblAncestors" xml:space="preserve">
+    <value>Ancestors</value>
+  </data>
+  <data name="LblDescendants" xml:space="preserve">
+    <value>Descendants</value>
+  </data>
 </root>

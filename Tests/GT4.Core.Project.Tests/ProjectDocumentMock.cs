@@ -95,6 +95,9 @@ internal class ProjectDocumentMock : IProjectDocument
 
   public IRelativesProvider RelativesProvider => _RelativesProviderMock.Object;
 
+  // A real provider over the mocked tables: tests exercise the actual graph-walking logic.
+  public IFamilyTreeProvider FamilyTreeProvider => new FamilyTreeProvider(this);
+
   public Task<IDbTransaction> BeginTransactionAsync(CancellationToken token)
   {
     throw new NotImplementedException();

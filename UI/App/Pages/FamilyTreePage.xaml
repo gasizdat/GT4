@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="GT4.UI.Pages.FamilyTreePage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:components="clr-namespace:GT4.UI.Components"
+    xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
+    x:Name="Root"
+    Title="{Binding PageTitle, Source={x:Reference Root}}">
+
+  <ContentPage.ToolbarItems>
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="OpenPerson"
+        Order="Secondary"
+        Text="{Binding OpenPersonToolbarItemName, Source={x:Reference Root}}" />
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="Refresh"
+        Order="Secondary"
+        Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
+  </ContentPage.ToolbarItems>
+
+  <components:PageLayout>
+
+    <components:PageLayout.Header>
+      <Grid ColumnDefinitions="*, Auto" RowDefinitions="Auto">
+        <Label
+            Grid.Column="0"
+            Style="{StaticResource PageSubtitle}"
+            Text="{x:Static resources:UIStrings.HintFamilyTreePage}"
+            VerticalOptions="Center" />
+
+        <HorizontalStackLayout Grid.Column="1" Spacing="{StaticResource PageContentSpacing}">
+          <Label
+              Style="{StaticResource FieldName}"
+              Text="{x:Static resources:UIStrings.LblAncestors}"
+              VerticalOptions="Center" />
+          <Stepper
+              Increment="1"
+              Maximum="6"
+              Minimum="0"
+              Value="{Binding AncestorGenerations, Source={x:Reference Root}}"
+              VerticalOptions="Center" />
+          <Label
+              MinimumWidthRequest="20"
+              Style="{StaticResource FieldValue}"
+              Text="{Binding AncestorGenerations, Source={x:Reference Root}}"
+              VerticalOptions="Center" />
+
+          <Label
+              Style="{StaticResource FieldName}"
+              Text="{x:Static resources:UIStrings.LblDescendants}"
+              VerticalOptions="Center" />
+          <Stepper
+              Increment="1"
+              Maximum="6"
+              Minimum="0"
+              Value="{Binding DescendantGenerations, Source={x:Reference Root}}"
+              VerticalOptions="Center" />
+          <Label
+              MinimumWidthRequest="20"
+              Style="{StaticResource FieldValue}"
+              Text="{Binding DescendantGenerations, Source={x:Reference Root}}"
+              VerticalOptions="Center" />
+        </HorizontalStackLayout>
+      </Grid>
+    </components:PageLayout.Header>
+
+    <components:PageLayout.Body>
+      <ScrollView x:Name="Scroller" Orientation="Both">
+        <Grid
+            x:Name="Canvas"
+            HorizontalOptions="Start"
+            VerticalOptions="Start">
+          <GraphicsView x:Name="Connectors" InputTransparent="True" />
+          <AbsoluteLayout x:Name="Nodes" />
+        </Grid>
+      </ScrollView>
+    </components:PageLayout.Body>
+
+  </components:PageLayout>
+</ContentPage>

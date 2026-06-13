@@ -308,6 +308,13 @@ public partial class PersonPage : ContentPage
       case string commandName when commandName == "GoToFamily":
         await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = FamilyName! });
         break;
+      case string commandName when commandName == "GoToFamilyTree":
+        // Shell matches the target's [QueryProperty] by exact runtime type, so hand it a plain
+        // PersonInfo — passing the PersonFullInfo subclass sends Shell down a Convert.ChangeType path
+        // that throws (the object is not IConvertible).
+        var centerInfo = new PersonInfo(_PersonFullInfo, _PersonFullInfo.Names, _PersonFullInfo.MainPhoto);
+        await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamilyTreePage>(), true, new() { ["PersonInfo"] = centerInfo });
+        break;
       case RelativeInfo relativeInfo:
         ShowPersonInfo(relativeInfo, true);
         break;

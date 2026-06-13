@@ -34,6 +34,7 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   private readonly FamilyManager _FamilyManager;
   private readonly PersonManager _PersonManager;
   private readonly RelativesProvider _RelativesProvider;
+  private readonly FamilyTreeProvider _FamilyTreeProvider;
 
   // Serializes access to the single connection (a root transaction holds it for its whole lifetime;
   // a standalone statement holds it only while it executes) and tracks the current flow's transaction.
@@ -68,6 +69,7 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     _FamilyManager = new(this);
     _PersonManager = new(this);
     _RelativesProvider = new(this);
+    _FamilyTreeProvider = new(this);
   }
 
   private void CheckForDisposed()
@@ -131,6 +133,7 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   public IFamilyManager FamilyManager => _FamilyManager;
   public IPersonManager PersonManager => _PersonManager;
   public IRelativesProvider RelativesProvider => _RelativesProvider;
+  public IFamilyTreeProvider FamilyTreeProvider => _FamilyTreeProvider;
   public long ProjectRevision => Interlocked.Read(ref _ProjectRevision);
 
   public void UpdateRevision()
