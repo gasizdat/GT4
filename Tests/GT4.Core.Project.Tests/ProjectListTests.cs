@@ -45,9 +45,8 @@ public sealed class ProjectListTests : IDisposable
   }
 
   /// <summary>
-  /// Writes a fully valid project document directly at its library origin. CreateAsync's own
-  /// cache-flush is timing dependent (it keys on the coarse TickCount64 revision), so the listing /
-  /// open / remove / import assertions seed the origin deterministically instead.
+  /// Writes a fully valid project document directly at its library origin, used to seed the
+  /// listing / open / remove tests independently of the CreateAsync path under test elsewhere.
   /// </summary>
   private async Task<FileDescription> SeedProjectAsync(string name, string description)
   {
@@ -62,13 +61,18 @@ public sealed class ProjectListTests : IDisposable
   }
 
   [Fact]
-  public async Task Create_WritesProjectFilesUnderProjectsRoot()
+  public async Task Create_PersistsProjectToOrigin_AndListsIt()
   {
-    await using (var host = await _list.CreateAsync("Brand New", "desc", Token)) { }
+    // Regression guard: CreateAsync must flush the freshly written cache back to the origin so the
+    // project is fully persisted (and not left as an empty file) even when created in a single tick.
+    await using (var host = await _list.CreateAsync("Brand New", "The description", Token)) { }
 
-    // CreateAsync always materializes an origin under the projects root (independent of whether the
-    // cache flush ran), so a *.gt4 file must exist there.
     _fs.GetFiles(_storage.ProjectsRoot, "*.gt4", recursive: true).Should().NotBeEmpty();
+
+    var items = await _list.GetItemsAsync(Token);
+    items.Should().ContainSingle();
+    items[0].Name.Should().Be("Brand New");
+    items[0].Description.Should().Be("The description");
   }
 
   [Fact]

@@ -553,13 +553,13 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   }
 
   [Fact]
-  public async Task Write_BumpsProjectRevision()
+  public void Write_BumpsProjectRevision()
   {
+    // The revision is a monotonic counter, so every stamp strictly advances it.
     var before = _doc.ProjectRevision;
-    // Environment.TickCount64 has ~16ms granularity, so wait comfortably past it before stamping.
-    await Task.Delay(50, Token);
+
     _doc.UpdateRevision();
 
-    _doc.ProjectRevision.Should().NotBe(before);
+    _doc.ProjectRevision.Should().BeGreaterThan(before);
   }
 }
