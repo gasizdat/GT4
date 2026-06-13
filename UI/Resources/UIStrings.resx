@@ -753,4 +753,13 @@ FN - family name</value>
   <data name="RelWifesMother" xml:space="preserve">
     <value>Mother-in-law</value>
   </data>
+  <data name="RelBrothersWife" xml:space="preserve">
+    <value>Sister-in-law</value>
+  </data>
+  <data name="RelSistersHusband" xml:space="preserve">
+    <value>Brother-in-law</value>
+  </data>
+  <data name="RelSiblingSpouse" xml:space="preserve">
+    <value>Sibling-in-law</value>
+  </data>
 </root>

@@ -115,6 +115,7 @@ internal class RelationshipTypeFormatterRu : RelationshipTypeFormatterBase
     {
       [RelationshipType.Child] = new(F: S.RelSister, M: S.RelBrother, U: S.RelSibling),
       [RelationshipType.Sibling] = new(RelationshipType.Child),
+      [RelationshipType.Spouse] = new(F: S.RelBrothersWife, M: S.RelSistersHusband, U: S.RelSiblingSpouse),
       [RelationshipType.AdoptiveSibling] = new(F: S.RelAdoptiveFemale_1, M: S.RelAdoptiveMale_1, U: S.RelAdoptiveInvariant_1, RelationshipType.Sibling),
       [RelationshipType.SiblingByFather] = new(F: S.RelParental_1, M: S.RelParental_1, U: S.RelParental_1, RelationshipType.Sibling),
       [RelationshipType.SiblingByMother] = new(F: S.RelMaternal_1, M: S.RelMaternal_1, U: S.RelMaternal_1, RelationshipType.Sibling),

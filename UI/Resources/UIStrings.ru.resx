@@ -753,4 +753,13 @@ FN - род</value>
   <data name="RelWifesMother" xml:space="preserve">
     <value>Тёща</value>
   </data>
+  <data name="RelBrothersWife" xml:space="preserve">
+    <value>Невестка</value>
+  </data>
+  <data name="RelSistersHusband" xml:space="preserve">
+    <value>Зять</value>
+  </data>
+  <data name="RelSiblingSpouse" xml:space="preserve">
+    <value>Супруг(а) сестры или брата</value>
+  </data>
 </root>
