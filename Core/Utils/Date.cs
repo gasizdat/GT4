@@ -22,7 +22,7 @@ public struct Date
 
   public static Date Create(int? year, int? month, int? day, DateStatus status)
   {
-    var code = (year ?? 0) * Digit * Digit + (month ?? 0) * Digit + day ?? 0;
+    var code = (year ?? 0) * Digit * Digit + (month ?? 0) * Digit + (day ?? 0);
     return Create(code, status);
   }
 
@@ -52,17 +52,19 @@ public struct Date
 
   public static bool operator <(Date a, Date b)
   {
-    if (a.Sign < b.Sign)
+    if (a.Sign != b.Sign)
     {
-      return true;
+      return a.Sign < b.Sign;
     }
 
-    if (a.Sign == b.Sign)
+    if (a.Code != b.Code)
     {
       return a.Code < b.Code;
     }
 
-    return false;
+    // Same calendar point but differing certainty: break the tie by status so the order is total and
+    // strictly consistent with '>'.
+    return a.Status < b.Status;
   }
 
   public static bool operator >(Date a, Date b)

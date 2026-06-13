@@ -141,5 +141,7 @@ internal partial class TablePersons : TableBase, ITablePersons
     command.Parameters.AddWithValue("@id", person.Id);
     await command.ExecuteNonQueryAsync(token);
     transaction.Commit();
+
+    InvalidateItems();
   }
 }

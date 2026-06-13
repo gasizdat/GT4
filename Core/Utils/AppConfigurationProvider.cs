@@ -58,7 +58,11 @@ internal class AppConfigurationProvider : ConfigurationProvider, IInteractiveCon
         }
       }
     }
-    catch { }
+    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
+    {
+      // A missing/locked/corrupt config file must not crash startup; the provider just stays empty.
+      // Unexpected exceptions are left to propagate so real bugs are not hidden.
+    }
   }
 
   public void SetKey(string key, string value)

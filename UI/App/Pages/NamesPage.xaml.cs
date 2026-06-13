@@ -283,7 +283,9 @@ public partial class NamesPage : ContentPage
       if (_UpdateNames)
       {
         _UpdateNames = false;
-        Task.Run(AddNameItemsAsync);
+        // AddNameItemsAsync reads the project document on a background thread; SafeTask swallows the
+        // teardown race (project closed while backgrounding) and surfaces any real failure.
+        _ = SafeTask.Run(AddNameItemsAsync);
       }
 
       return _Names.Items;

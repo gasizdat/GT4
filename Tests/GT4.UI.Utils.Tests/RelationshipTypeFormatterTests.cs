@@ -265,4 +265,38 @@ public class RelationshipTypeFormatterTests
 
     Assert.Equal(expected, actual);
   }
+
+  // A direct step-sibling (same generation, no consanguinity) is gendered by
+  // the step-sibling's own sex.
+  [Theory]
+  [InlineData(BiologicalSex.Female, "Stepsister")]
+  [InlineData(BiologicalSex.Male, "Stepbrother")]
+  [InlineData(BiologicalSex.Unknown, "Stepsibling")]
+  public void EN_StepSibling(BiologicalSex sex, string expected)
+  {
+    SetEn();
+    var actual = _formatter.ToString(
+      RelationshipType.StepSibling,
+      sex,
+      Generation.Zero,
+      Consanguinity.Zero);
+
+    Assert.Equal(expected, actual);
+  }
+
+  [Theory]
+  [InlineData(BiologicalSex.Female, "Сводная сестра")]
+  [InlineData(BiologicalSex.Male, "Сводный брат")]
+  [InlineData(BiologicalSex.Unknown, "Сводный брат или сестра")]
+  public void RU_StepSibling(BiologicalSex sex, string expected)
+  {
+    SetRu();
+    var actual = _formatter.ToString(
+      RelationshipType.StepSibling,
+      sex,
+      Generation.Zero,
+      Consanguinity.Zero);
+
+    Assert.Equal(expected, actual);
+  }
 }

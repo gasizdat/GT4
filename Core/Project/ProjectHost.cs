@@ -91,27 +91,35 @@ public class ProjectHost : IAsyncDisposable, IDisposable
     await project.DisposeAsync();
     var actualRevision = project.ProjectRevision;
 
-    for (var i = 0; i < 5; i++)
+    const int attempts = 5;
+    Exception? lastError = null;
+    for (var i = 0; i < attempts; i++)
     {
       try
       {
         if (actualRevision != openedRevision)
         {
           _FileSystem.Copy(_Cache, _Origin);
-          actualRevision = openedRevision ?? 0;
         }
         else
         {
           _FileSystem.RemoveFile(_Cache);
         }
-        break;
+        return;
       }
-      catch
+      catch (Exception ex)
       {
+        lastError = ex;
         var backoffInterval = TimeSpan.FromMilliseconds(100 + 200 * i);
         await Task.Delay(backoffInterval);
       }
     }
+
+    // All attempts failed: surface it so the caller can react. The origin is left as-is and the
+    // edited cache is preserved on disk so the data is still recoverable.
+    throw new IOException(
+      $"Failed to flush the project cache back to its origin after {attempts} attempts; " +
+      "the latest changes may not be persisted.", lastError);
   }
 
   public ICollection<ProjectRevision> Revisions => _FileSystem

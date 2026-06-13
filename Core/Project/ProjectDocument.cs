@@ -40,7 +40,6 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   // Shared with every ProjectCommand and NestedTransaction created by this document.
   private readonly ConnectionGate _Gate = new();
 
-  private readonly object _RevisionLock = new();
   private long _TransactionNo = 0;
   private long _ProjectRevision = Environment.TickCount64;
   private volatile bool _Disposed = false;
@@ -51,11 +50,11 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     SQLitePCL.Batteries.Init();
   }
 
-  private ProjectDocument(string dbFilaName, SqliteOpenMode mode)
+  private ProjectDocument(string dbFileName, SqliteOpenMode mode)
   {
     var builder = new SqliteConnectionStringBuilder();
     builder.Pooling = false;
-    builder.DataSource = dbFilaName;
+    builder.DataSource = dbFileName;
     builder.Mode = mode;
     var connectionString = builder.ConnectionString;
     _Connection = new SqliteConnection(connectionString);
@@ -94,6 +93,13 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   {
     CheckForDisposed();
     await _Connection.OpenAsync(token);
+
+    // Foreign keys are off by default in SQLite and the setting is per-connection, so it must be
+    // enabled right after opening. Without it the schema's FOREIGN KEY / ON DELETE CASCADE clauses
+    // are ignored and removing a person or name would leave orphaned dependent rows.
+    using var pragma = _Connection.CreateCommand();
+    pragma.CommandText = "PRAGMA foreign_keys = ON;";
+    await pragma.ExecuteNonQueryAsync(token);
   }
 
   private async Task InitNewDBAsync(CancellationToken token)
@@ -131,10 +137,7 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   {
     // Deliberately no disposed check: a transaction committing while a dispose drains the gate must
     // still stamp the revision, so the host flushes the cache back to the origin.
-    lock (_RevisionLock)
-    {
-      _ProjectRevision = Environment.TickCount64;
-    }
+    Interlocked.Increment(ref _ProjectRevision);
   }
 
   // --- Connection access used internally by NestedTransaction ------------------------------------

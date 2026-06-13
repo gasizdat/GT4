@@ -216,7 +216,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       .Select(p => p with { Category = DataCategory.PersonPhoto })
       .ToArray() ?? [];
     var person = new Person(
-      Id: _PersonId ?? TableBase.NonCommitedId,
+      Id: _PersonId ?? TableBase.NonCommittedId,
       BirthDate: _BirthDate!.Value,
       DeathDate: _DeathDate,
       BiologicalSex: _BiologicalSex!.Info);
@@ -348,7 +348,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       streams = await Task.WhenAll(filesContent.Select(file => file.Stream));
       var photoAssets = filesContent.Select(content =>
           new Data(
-            Id: TableBase.NonCommitedId,
+            Id: TableBase.NonCommittedId,
             Content: FromStream(content.Stream.Result),
             MimeType: content.MimeType,
             Category: default));

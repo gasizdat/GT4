@@ -53,6 +53,12 @@ public partial class ProjectPage : ContentPage
 
         return ret;
       }
+      catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
+      {
+        // The project was closed underneath us (e.g. the app is backgrounding). Nothing to surface.
+        System.Diagnostics.Debug.WriteLine(ex);
+        return [];
+      }
       catch (Exception ex)
       {
         this.ShowErrorAsync(ex);
@@ -69,9 +75,21 @@ public partial class ProjectPage : ContentPage
 
   public async void OnFamilySelected(object sender, SelectionChangedEventArgs e)
   {
-    if (e.CurrentSelection.FirstOrDefault() is FamilyInfoItem item)
+    // async void event handler: an escaped exception is unobserved and crashes the app, so guard it.
+    try
     {
-      await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = item.Info });
+      if (e.CurrentSelection.FirstOrDefault() is FamilyInfoItem item)
+      {
+        await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = item.Info });
+      }
+    }
+    catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
+    {
+      System.Diagnostics.Debug.WriteLine(ex);
+    }
+    catch (Exception ex)
+    {
+      await this.ShowErrorAsync(ex);
     }
   }
 
@@ -83,11 +101,19 @@ public partial class ProjectPage : ContentPage
   {
     base.OnNavigatedTo(args);
 
-    var projectRevision = _CurrentProjectProvider.Project.ProjectRevision;
-    if (projectRevision != _ProjectRevision)
+    try
     {
-      _ProjectRevision = projectRevision;
-      this.RefreshView();
+      var projectRevision = _CurrentProjectProvider.Project.ProjectRevision;
+      if (projectRevision != _ProjectRevision)
+      {
+        _ProjectRevision = projectRevision;
+        this.RefreshView();
+      }
+    }
+    catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
+    {
+      // Navigating in just as the project closes (e.g. backgrounding). Skip the revision refresh.
+      System.Diagnostics.Debug.WriteLine(ex);
     }
   }
 

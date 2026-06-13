@@ -28,7 +28,7 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
 
   public PersonDataItem(DataCategory dataCategory, IDataConverter dataConverter, ICancellationTokenProvider cancellationTokenProvider)
     : this(new Data(
-               Id: TableBase.NonCommitedId,
+               Id: TableBase.NonCommittedId,
                Content: [],
                MimeType: null,
                Category: dataCategory),
@@ -58,6 +58,11 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
               _Content = content;
               OnContentChanged();
             });
+          }
+          catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
+          {
+            // The project was closed underneath us (e.g. the app is backgrounding). Nothing to surface.
+            System.Diagnostics.Debug.WriteLine(ex);
           }
           catch (Exception ex)
           {
@@ -89,7 +94,7 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
     var ret = await _DataConverter.FromObjectAsync(_Content, token);
     if (ret is not null)
     {
-      var id = _IsModified ? TableBase.NonCommitedId : Info.Id;
+      var id = _IsModified ? TableBase.NonCommittedId : Info.Id;
       ret = ret with { Id = id, Category = Info.Category };
     }
 

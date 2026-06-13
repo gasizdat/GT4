@@ -35,21 +35,33 @@ public partial class ProjectListPage : ContentPage
 
   public async void OnProjectSelected(object sender, SelectionChangedEventArgs e)
   {
-    switch (e.CurrentSelection.FirstOrDefault())
+    // async void event handler: an escaped exception is unobserved and crashes the app, so guard it.
+    try
     {
-      case ProjectItem projectItem:
-        {
-          using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-          await _CurrentProjectProvider.OpenAsync(projectItem.Info, token);
-          await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectPage>());
-
-          // TODO not so good approach
-          if (sender is SelectableItemsView view)
+      switch (e.CurrentSelection.FirstOrDefault())
+      {
+        case ProjectItem projectItem:
           {
-            view.SelectedItem = null;
+            using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+            await _CurrentProjectProvider.OpenAsync(projectItem.Info, token);
+            await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectPage>());
+
+            // TODO not so good approach
+            if (sender is SelectableItemsView view)
+            {
+              view.SelectedItem = null;
+            }
+            break;
           }
-          break;
-        }
+      }
+    }
+    catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
+    {
+      System.Diagnostics.Debug.WriteLine(ex);
+    }
+    catch (Exception ex)
+    {
+      await this.ShowErrorAsync(ex);
     }
   }
 

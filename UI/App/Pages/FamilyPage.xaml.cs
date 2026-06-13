@@ -76,6 +76,12 @@ public partial class FamilyPage : ContentPage
 
         return ret;
       }
+      catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
+      {
+        // The project was closed underneath us (e.g. the app is backgrounding). Nothing to surface.
+        System.Diagnostics.Debug.WriteLine(ex);
+        return Enumerable.Empty<PersonInfo>().ToList();
+      }
       catch (Exception ex)
       {
         _ = this.ShowErrorAsync(ex);

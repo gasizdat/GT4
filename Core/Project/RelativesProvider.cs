@@ -192,7 +192,8 @@ internal class RelativesProvider : TableBase, IRelativesProvider
     var relatives = await Document.Relatives.GetRelativesAsync(relativeInfo, token);
     var parentTasks = relatives
       .Where(r => r.Type == RelationshipType.Parent || r.Type == RelationshipType.AdoptiveParent)
-      .Select(r => Document.PersonManager.GetPersonFullInfoAsync(r, token));
+      .Select(r => Document.PersonManager.GetPersonFullInfoAsync(r, token))
+      .ToArray();
     relatives = relatives
       .Where(r => IsRelationshipSupported(relativeInfo, r.Type))
       .ToArray();

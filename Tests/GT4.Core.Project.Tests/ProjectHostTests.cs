@@ -110,15 +110,17 @@ public sealed class ProjectHostTests
   }
 
   [Fact]
-  public async Task DisposeAsync_GivesUpQuietly_AfterFiveFailedAttempts()
+  public async Task DisposeAsync_Throws_AfterFiveFailedAttempts()
   {
     var host = CreateHost();
     _revision++;
     _fs.CopyFailuresRemaining = int.MaxValue;
 
-    // Documents current behavior: the failure is swallowed and the origin is left stale.
-    await host.DisposeAsync();
+    // The flush failure must surface so callers can react; the edited cache is left on disk for
+    // recovery.
+    var act = () => host.DisposeAsync().AsTask();
 
+    await act.Should().ThrowAsync<IOException>();
     _fs.CopyAttempts.Should().Be(5);
     _fs.Operations.Should().BeEmpty();
   }

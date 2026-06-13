@@ -9,19 +9,24 @@ public static class PageAlert
   public static Task<bool> ShowConfirmationAsync(string confirmationText) =>
     CurrentShell.ShowConfirmationAsync(confirmationText);
 
+  // Alerts touch native views, so they must run on the UI thread. InvokeOnMainThreadAsync
+  // runs the callback inline when we are already on the main thread, so wrapping is safe
+  // for every caller and protects the background-thread call sites (Task.Run catch blocks).
   public static Task<bool> ShowConfirmationAsync(this Page page, string confirmationText) =>
-    CurrentShell.DisplayAlertAsync(
+    MainThread.InvokeOnMainThreadAsync(() => page.DisplayAlertAsync(
       UIStrings.AlertTitleConfirmation,
       confirmationText,
       UIStrings.BtnNameYes,
-      UIStrings.BtnNameNo);
+      UIStrings.BtnNameNo));
 
   public static Task ShowErrorAsync(Exception exception) =>
     CurrentShell.ShowErrorAsync(exception);
 
   public static Task ShowErrorAsync(this Page page, Exception exception) =>
-    page.DisplayAlertAsync(UIStrings.AlertTitleError, exception.Message, UIStrings.BtnNameOk);
+    MainThread.InvokeOnMainThreadAsync(() =>
+      page.DisplayAlertAsync(UIStrings.AlertTitleError, exception.Message, UIStrings.BtnNameOk));
 
   public static Task ShowWarningAsync(this Page page, string message) =>
-    page.DisplayAlertAsync(UIStrings.AlertTitleWarning, message, UIStrings.BtnNameOk);
+    MainThread.InvokeOnMainThreadAsync(() =>
+      page.DisplayAlertAsync(UIStrings.AlertTitleWarning, message, UIStrings.BtnNameOk));
 }

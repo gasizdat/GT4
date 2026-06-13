@@ -42,25 +42,39 @@ public partial class App : Application
       _ => e.ExceptionObject.ToString() ?? "Undefined error"
     };
 
+    WriteErrorLog(errorMessage);
+  }
+
+  private static void WriteErrorLog(string errorMessage)
+  {
     System.Diagnostics.Debug.WriteLine(errorMessage);
 
-    var logDir = Path.Combine(
-      Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-      "GT4",
-      "CrashLogs");
-    Directory.CreateDirectory(logDir);
+    try
+    {
+      var logDir = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        "GT4",
+        "CrashLogs");
+      Directory.CreateDirectory(logDir);
 
-    var time = DateTime.Now;
-    var logName = $"gt4-run-{time.ToString("o", CultureInfo.InvariantCulture)}.log"
-      .Replace(':', '-')
-      .Replace('\\', '-')
-      .Replace('/', '-');
+      var time = DateTime.Now;
+      var logName = $"gt4-run-{time.ToString("o", CultureInfo.InvariantCulture)}.log"
+        .Replace(':', '-')
+        .Replace('\\', '-')
+        .Replace('/', '-');
 
-    using var fileStream = File.OpenWrite(Path.Combine(logDir, logName));
-    using var writer = new StreamWriter(fileStream);
-    writer.Write(errorMessage);
-    fileStream.Flush();
-    fileStream.Close();
+      using var fileStream = File.OpenWrite(Path.Combine(logDir, logName));
+      using var writer = new StreamWriter(fileStream);
+      writer.Write(errorMessage);
+      fileStream.Flush();
+      fileStream.Close();
+    }
+    catch (Exception logFailure)
+    {
+      // Logging is best effort: never let a failure writing the log mask the original error or, when
+      // called from a lifecycle handler, escape and crash the app.
+      System.Diagnostics.Debug.WriteLine(logFailure);
+    }
   }
 
   protected static void LogBindingErrors(object? sender, BindingBaseErrorEventArgs args)
@@ -111,6 +125,13 @@ public partial class App : Application
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
       await _CurrentProjectProvider.OpenAsync(_LastOpenedProject, token);
     }
+    catch (Exception ex)
+    {
+      // This is an async void lifecycle handler: an escaped exception is posted to the platform
+      // loop (on Android it terminates the process). There is no UI to surface a failure to during
+      // a lifecycle transition, so log and swallow it instead of crashing.
+      WriteErrorLog(ex.ToString());
+    }
     finally
     {
       _LifecycleLock.Release();
@@ -139,6 +160,14 @@ public partial class App : Application
         }
         await _CurrentProjectProvider.CloseAsync(token);
       }
+    }
+    catch (Exception ex)
+    {
+      // This is an async void lifecycle handler (and CloseAsync now throws when the cache flush to
+      // the origin fails — likely on Android when the origin URI is briefly inaccessible while
+      // backgrounding). An escaped exception is posted to the platform loop and terminates the app,
+      // so log and swallow it. The edited cache is preserved on disk, so the data is recoverable.
+      WriteErrorLog(ex.ToString());
     }
     finally
     {
