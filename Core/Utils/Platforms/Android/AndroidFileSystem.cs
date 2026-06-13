@@ -214,6 +214,7 @@ public class AndroidFileSystem : IFileSystem
     if (IsInternalStorage(directoryDescription))
     {
       _DirectAccessFileSystem.RemoveDirectory(directoryDescription);
+      return;
     }
 
     throw new NotImplementedException();
