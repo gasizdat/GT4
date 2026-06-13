@@ -134,6 +134,7 @@ internal class RelationshipTypeFormatterRu : RelationshipTypeFormatterBase
       [RelationshipType.Child] = new(F: S.RelDaughter, M: S.RelSon, U: S.RelChild),
       [RelationshipType.StepChild] = new(F: S.RelStepDaughter, M: S.RelStepSon, U: S.RelStepChild),
       [RelationshipType.AdoptiveChild] = new(F: S.RelAdoptiveFemale_1, M: S.RelAdoptiveMale_1, U: S.RelAdoptiveInvariant_1, RelationshipType.Child),
+      [RelationshipType.Spouse] = new(F: S.RelDaughterInLaw, M: S.RelSonInLaw, U: S.RelChildInLaw),
     };
 
     var ret = ToString(table);
