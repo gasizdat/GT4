@@ -115,8 +115,8 @@ public class ProjectHost : IAsyncDisposable, IDisposable
       }
     }
 
-    // All attempts failed. Surface it rather than silently dropping the user's changes: the origin is
-    // left as-is and the edited cache is preserved on disk so the data is still recoverable.
+    // All attempts failed: surface it so the caller can react. The origin is left as-is and the
+    // edited cache is preserved on disk so the data is still recoverable.
     throw new IOException(
       $"Failed to flush the project cache back to its origin after {attempts} attempts; " +
       "the latest changes may not be persisted.", lastError);

@@ -116,8 +116,8 @@ public sealed class ProjectHostTests
     _revision++;
     _fs.CopyFailuresRemaining = int.MaxValue;
 
-    // The flush failure must surface (instead of silently losing the user's changes) so callers can
-    // react; the edited cache is left on disk for recovery.
+    // The flush failure must surface so callers can react; the edited cache is left on disk for
+    // recovery.
     var act = () => host.DisposeAsync().AsTask();
 
     await act.Should().ThrowAsync<IOException>();

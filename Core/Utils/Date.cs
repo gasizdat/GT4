@@ -63,8 +63,7 @@ public struct Date
     }
 
     // Same calendar point but differing certainty: break the tie by status so the order is total and
-    // strictly consistent with '>' (otherwise two equal-code/different-status dates compared each
-    // greater than the other).
+    // strictly consistent with '>'.
     return a.Status < b.Status;
   }
 

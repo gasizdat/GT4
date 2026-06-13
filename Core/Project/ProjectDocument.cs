@@ -135,10 +135,6 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
 
   public void UpdateRevision()
   {
-    // Monotonic counter rather than a wall-clock stamp: Environment.TickCount64 has ~16ms granularity,
-    // so several commits in quick succession could share a value and the host would wrongly conclude
-    // "nothing changed" and skip flushing the cache back to the origin. Incrementing guarantees every
-    // commit moves the revision.
     // Deliberately no disposed check: a transaction committing while a dispose drains the gate must
     // still stamp the revision, so the host flushes the cache back to the origin.
     Interlocked.Increment(ref _ProjectRevision);

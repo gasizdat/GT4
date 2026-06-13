@@ -168,7 +168,7 @@ public sealed class DateTests
     monthUnknown.Code.Should().Be(yearApprox.Code);
     (monthUnknown == yearApprox).Should().BeFalse();
 
-    // Exactly one direction is "greater" — never both (the old bug) and never neither.
+    // Exactly one direction is "greater" — never both and never neither.
     (monthUnknown > yearApprox).Should().NotBe(yearApprox > monthUnknown);
   }
 

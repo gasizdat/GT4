@@ -63,9 +63,8 @@ public sealed class ProjectListTests : IDisposable
   [Fact]
   public async Task Create_PersistsProjectToOrigin_AndListsIt()
   {
-    // Regression guard: CreateAsync must return a live, usable host AND flush the freshly written
-    // cache back to the origin on dispose, so the project is fully persisted (and not left empty)
-    // even when created in a single tick.
+    // CreateAsync must return a live, usable host and flush the freshly written cache back to the
+    // origin on dispose, so the project is fully persisted.
     await using (var host = await _list.CreateAsync("Brand New", "The description", Token))
     {
       host.Project.Should().NotBeNull();

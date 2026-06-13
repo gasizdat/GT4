@@ -110,8 +110,7 @@ internal class ProjectList : IProjectList
     var cache = GetCacheFileDescription(projectFileName);
     using (var file = _FileSystem.OpenWriteStream(origin)) file.Close();
     // The host is returned live and owned by the caller: disposing it flushes the freshly written
-    // cache back to the origin. (Previously it was disposed here via `using`, so callers received an
-    // already-closed host whose Project was null.)
+    // cache back to the origin.
     var host = new ProjectHost(_FileSystem, origin, cache);
     try
     {
