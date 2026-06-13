@@ -22,7 +22,7 @@ public struct Date
 
   public static Date Create(int? year, int? month, int? day, DateStatus status)
   {
-    var code = (year ?? 0) * Digit * Digit + (month ?? 0) * Digit + day ?? 0;
+    var code = (year ?? 0) * Digit * Digit + (month ?? 0) * Digit + (day ?? 0);
     return Create(code, status);
   }
 
