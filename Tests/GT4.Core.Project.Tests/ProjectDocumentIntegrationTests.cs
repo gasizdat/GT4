@@ -474,6 +474,24 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
     (await _doc.PersonData.GetPersonDataSetAsync(person, DataCategory.PersonMainPhoto, Token)).Should().BeEmpty();
   }
 
+  [Fact]
+  public async Task RemovePersonData_KeepsSharedDataReferencedByAnotherPerson()
+  {
+    // One Data blob linked to two persons. Removing it from one must unlink it there but leave the
+    // blob intact (the foreign key blocks deletion while the other person still references it).
+    var shared = await _doc.Data.AddDataAsync([7, 7], "application/octet-stream", DataCategory.PersonPhoto, Token);
+    var personA = await AddBarePersonAsync();
+    var personB = await AddBarePersonAsync();
+    await _doc.PersonData.AddPersonDataSetAsync(personA, [shared], Token);
+    await _doc.PersonData.AddPersonDataSetAsync(personB, [shared], Token);
+
+    await _doc.PersonData.RemovePersonDataAsync(personA, shared, Token);
+
+    (await _doc.PersonData.GetPersonDataSetAsync(personA, null, Token)).Should().BeEmpty();
+    (await _doc.PersonData.GetPersonDataSetAsync(personB, null, Token)).Should().ContainSingle();
+    (await _doc.Data.TryGetDataByIdAsync(shared.Id, Token)).Should().NotBeNull();
+  }
+
   // --- Relatives ---------------------------------------------------------------------------------
 
   [Fact]

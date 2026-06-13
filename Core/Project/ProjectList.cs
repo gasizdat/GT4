@@ -84,8 +84,10 @@ internal class ProjectList : IProjectList
       _Items.SetTarget(items);
       return items;
     }
-    catch
+    catch (Exception ex) when (ex is not OperationCanceledException)
     {
+      // Enumerating the project folder failed (per-project open errors are already surfaced as error
+      // entries by GetProjectInfoAsync). Cancellation must still propagate.
       return Array.Empty<ProjectInfo>();
     }
   }

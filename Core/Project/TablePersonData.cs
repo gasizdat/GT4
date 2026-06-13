@@ -1,5 +1,6 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
+using Microsoft.Data.Sqlite;
 
 namespace GT4.Core.Project;
 
@@ -17,7 +18,10 @@ internal partial class TablePersonData : TableBase, ITablePersonData
         PersonId INTEGER NOT NULL,
         DataId INTEGER NOT NULL,
         FOREIGN KEY(PersonId) REFERENCES Persons(Id) ON DELETE CASCADE,
-        FOREIGN KEY(DataId) REFERENCES Data(Id) ON DELETE CASCADE
+        -- DataId is intentionally NOT cascaded: deleting a person drops its data links (via PersonId),
+        -- but a Data blob still referenced by another person must NOT be deletable (RemovePersonData
+        -- relies on this to detect "still in use").
+        FOREIGN KEY(DataId) REFERENCES Data(Id)
       );
       """;
     await command.ExecuteNonQueryAsync(token);
@@ -171,7 +175,11 @@ internal partial class TablePersonData : TableBase, ITablePersonData
     {
       await Document.Data.RemoveDataAsync(data, token);
     }
-    catch { /* The data content still in use */ }
+    catch (SqliteException)
+    {
+      // The data content is still referenced by another person: the foreign key blocks its deletion,
+      // which is expected here. Any other failure is genuine and must surface.
+    }
 
     transaction.Commit();
   }
