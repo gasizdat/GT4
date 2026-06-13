@@ -31,7 +31,7 @@ internal class TableNames : TableBase, ITableNames
           Value TEXT NOT NULL,
           Type INTEGER NOT NULL,
           ParentId INTEGER,
-          FOREIGN KEY(ParentId) REFERENCES Names(Id)
+          FOREIGN KEY(ParentId) REFERENCES Names(Id) ON DELETE CASCADE
       );
       """;
     await command.ExecuteNonQueryAsync(token);

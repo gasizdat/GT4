@@ -93,6 +93,13 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   {
     CheckForDisposed();
     await _Connection.OpenAsync(token);
+
+    // Foreign keys are off by default in SQLite and the setting is per-connection, so it must be
+    // enabled right after opening. Without it the schema's FOREIGN KEY / ON DELETE CASCADE clauses
+    // are ignored and removing a person or name would leave orphaned dependent rows.
+    using var pragma = _Connection.CreateCommand();
+    pragma.CommandText = "PRAGMA foreign_keys = ON;";
+    await pragma.ExecuteNonQueryAsync(token);
   }
 
   private async Task InitNewDBAsync(CancellationToken token)

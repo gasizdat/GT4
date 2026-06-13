@@ -84,8 +84,8 @@ internal class TableRelatives : TableBase, ITableRelatives
           Type INTEGER NOT NULL,
           Date INTEGER,
           DateStatus INTEGER,
-          FOREIGN KEY(PersonId) REFERENCES Persons(Id),
-          FOREIGN KEY(RelativeId) REFERENCES Persons(Id),
+          FOREIGN KEY(PersonId) REFERENCES Persons(Id) ON DELETE CASCADE,
+          FOREIGN KEY(RelativeId) REFERENCES Persons(Id) ON DELETE CASCADE,
       	  PRIMARY KEY (PersonId, RelativeId, Type, Date)
       );
       """;

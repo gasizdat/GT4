@@ -389,6 +389,36 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
     (await _doc.Data.TryGetDataByIdAsync(photo.Id, Token))!.Category.Should().Be(DataCategory.PersonMainPhoto);
   }
 
+  [Fact]
+  public async Task RemovePerson_CascadesDependentRows()
+  {
+    var first = await _doc.Names.AddNameAsync("Cascade", NameType.FirstName, null, Token);
+    var added = await _doc.PersonManager.AddPersonAsync(
+      PersonFullInfo.Empty with
+      {
+        BirthDate = Birth,
+        BiologicalSex = BiologicalSex.Male,
+        Names = [first],
+        MainPhoto = NewData(DataCategory.PersonMainPhoto, 1, 2),
+      }, Token);
+    var person = new Person(added.Id, Birth, null, BiologicalSex.Male);
+    var other = await AddBarePersonAsync();
+    await _doc.Relatives.AddRelativesAsync(other, [new Relative(person, RelationshipType.Child, null)], Token);
+
+    // Sanity: the dependent rows exist before removal.
+    (await _doc.PersonNames.GetPersonNamesAsync(person, Token)).Should().NotBeEmpty();
+    (await _doc.PersonData.GetPersonDataSetAsync(person, null, Token)).Should().NotBeEmpty();
+    (await _doc.Relatives.GetRelativesAsync(other, Token)).Should().NotBeEmpty();
+
+    await _doc.Persons.RemovePersonAsync(person, Token);
+
+    // With foreign keys enforced, deleting the person cascades to every dependent row (no orphans),
+    // including the relationship row referenced from the *other* side via RelativeId.
+    (await _doc.PersonNames.GetPersonNamesAsync(person, Token)).Should().BeEmpty();
+    (await _doc.PersonData.GetPersonDataSetAsync(person, null, Token)).Should().BeEmpty();
+    (await _doc.Relatives.GetRelativesAsync(other, Token)).Should().BeEmpty();
+  }
+
   // --- Data / PersonData -------------------------------------------------------------------------
 
   [Fact]

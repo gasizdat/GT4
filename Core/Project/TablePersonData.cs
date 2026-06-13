@@ -16,8 +16,8 @@ internal partial class TablePersonData : TableBase, ITablePersonData
       CREATE TABLE IF NOT EXISTS PersonData (
         PersonId INTEGER NOT NULL,
         DataId INTEGER NOT NULL,
-        FOREIGN KEY(PersonId) REFERENCES Persons(Id),
-        FOREIGN KEY(DataId) REFERENCES Data(Id)
+        FOREIGN KEY(PersonId) REFERENCES Persons(Id) ON DELETE CASCADE,
+        FOREIGN KEY(DataId) REFERENCES Data(Id) ON DELETE CASCADE
       );
       """;
     await command.ExecuteNonQueryAsync(token);
