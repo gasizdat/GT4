@@ -15,4 +15,10 @@ public enum RelationshipType
   StepSibling = 104,
   StepParent = 105,
   StepChild = 106,
+  SpouseParent = 107,
+  SpouseSibling = 108,
+  HusbandParent = 109,
+  HusbandSibling = 110,
+  WifeParent = 111,
+  WifeSibling = 112,
 }

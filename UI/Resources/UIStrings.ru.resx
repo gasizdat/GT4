@@ -741,4 +741,16 @@ FN - род</value>
   <data name="MenuItemCollapseAll_1" xml:space="preserve">
     <value>{0} Свернуть все</value>
   </data>
+  <data name="RelHusbandsFather" xml:space="preserve">
+    <value>Свёкр</value>
+  </data>
+  <data name="RelHusbandsMother" xml:space="preserve">
+    <value>Свекровь</value>
+  </data>
+  <data name="RelWifesFather" xml:space="preserve">
+    <value>Тесть</value>
+  </data>
+  <data name="RelWifesMother" xml:space="preserve">
+    <value>Тёща</value>
+  </data>
 </root>

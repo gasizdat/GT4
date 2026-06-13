@@ -741,4 +741,16 @@ FN - family name</value>
   <data name="MenuItemCollapseAll_1" xml:space="preserve">
     <value>{0} Collapse all</value>
   </data>
+  <data name="RelHusbandsFather" xml:space="preserve">
+    <value>Father-in-law</value>
+  </data>
+  <data name="RelHusbandsMother" xml:space="preserve">
+    <value>Mother-in-law</value>
+  </data>
+  <data name="RelWifesFather" xml:space="preserve">
+    <value>Father-in-law</value>
+  </data>
+  <data name="RelWifesMother" xml:space="preserve">
+    <value>Mother-in-law</value>
+  </data>
 </root>

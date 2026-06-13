@@ -53,8 +53,11 @@ internal class RelativesProvider : TableBase, IRelativesProvider
     throw new NotSupportedException();
   }
 
-  private static bool IsRelationshipSupported(RelationshipType? personType, RelationshipType relativeType)
+  private static bool IsRelationshipSupported(RelativeInfo relativeInfo, RelationshipType relativeType)
   {
+    var personType = relativeInfo.Type;
+    var generation = relativeInfo.Generation;
+    var consanguinity = relativeInfo.Consanguinity;
     var ret = personType switch
     {
       RelationshipType.Parent => relativeType switch
@@ -69,7 +72,7 @@ internal class RelativesProvider : TableBase, IRelativesProvider
       RelationshipType.Child => relativeType switch
       {
         RelationshipType.Child => true,
-        RelationshipType.Spouse => true,
+        RelationshipType.Spouse => consanguinity == Consanguinity.Zero && generation == Generation.Child,
         _ => false
       },
       RelationshipType.Sibling or
@@ -80,7 +83,12 @@ internal class RelativesProvider : TableBase, IRelativesProvider
         RelationshipType.Spouse => true,
         _ => false
       },
-      null => true,
+      RelationshipType.Spouse => relativeType switch
+      {
+        RelationshipType.Parent or
+        RelationshipType.AdoptiveParent => generation == Generation.Zero && consanguinity == Consanguinity.Zero,
+        _ => false
+      },
       _ => false
     };
 
@@ -135,6 +143,11 @@ internal class RelativesProvider : TableBase, IRelativesProvider
         RelationshipType.Child => --startGeneration,
         _ => throw UnsupportedRelationshipException()
       },
+      RelationshipType.Spouse when generation == Generation.Zero => relativeType switch
+      {
+        RelationshipType.Parent => ++startGeneration,
+        _ => throw UnsupportedRelationshipException()
+      },
       _ => throw UnsupportedRelationshipException()
     };
 
@@ -181,7 +194,7 @@ internal class RelativesProvider : TableBase, IRelativesProvider
       .Where(r => r.Type == RelationshipType.Parent || r.Type == RelationshipType.AdoptiveParent)
       .Select(r => Document.PersonManager.GetPersonFullInfoAsync(r, token));
     relatives = relatives
-      .Where(r => IsRelationshipSupported(relativeInfo.Type, r.Type))
+      .Where(r => IsRelationshipSupported(relativeInfo, r.Type))
       .ToArray();
     var relativeInfosTask = GetRelativeInfosAsync(relatives, selectMainPhoto, token);
     await Task.WhenAll([relativeInfosTask, .. parentTasks]);
@@ -190,7 +203,7 @@ internal class RelativesProvider : TableBase, IRelativesProvider
       .SelectMany(p => p.RelativeInfos)
       .Where(r => r.Id != relativeInfo.Id)
       .Where(r => r.Type == RelationshipType.Child || r.Type == RelationshipType.AdoptiveChild)
-      .Where(r => IsRelationshipSupported(relativeInfo.Type, RelationshipType.Sibling))
+      .Where(r => IsRelationshipSupported(relativeInfo, RelationshipType.Sibling))
       .Distinct(_RelativeInfoComparer);
 
     var siblingGeneration = relativeInfo.Generation;
@@ -215,6 +228,29 @@ internal class RelativesProvider : TableBase, IRelativesProvider
         })
     ];
 
+    if (relativeInfo.Type == RelationshipType.Spouse)
+    {
+      RelationshipType GetInLawType(RelationshipType type) => type switch
+      {
+        RelationshipType.Parent => relativeInfo.BiologicalSex switch
+        {
+          BiologicalSex.Male => RelationshipType.HusbandParent,
+          BiologicalSex.Female => RelationshipType.WifeParent,
+          _ => RelationshipType.SpouseParent,
+        },
+        RelationshipType.Sibling or
+        RelationshipType.SiblingByMother or
+        RelationshipType.SiblingByFather or
+        RelationshipType.AdoptiveSibling => relativeInfo.BiologicalSex switch
+        {
+          BiologicalSex.Male => RelationshipType.HusbandSibling,
+          BiologicalSex.Female => RelationshipType.WifeSibling,
+          _ => RelationshipType.SpouseSibling,
+        },
+        _ => type
+      };
+      relativeInfos = [.. relativeInfos.Select(r => r with { Type = GetInLawType(r.Type) })];
+    }
     return relativeInfos;
   }
 

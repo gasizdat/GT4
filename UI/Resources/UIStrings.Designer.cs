@@ -1420,6 +1420,24 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Father-in-law.
+        /// </summary>
+        public static string RelHusbandsFather {
+            get {
+                return ResourceManager.GetString("RelHusbandsFather", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Mother-in-law.
+        /// </summary>
+        public static string RelHusbandsMother {
+            get {
+                return ResourceManager.GetString("RelHusbandsMother", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to In-law.
         /// </summary>
         public static string RelInLawFemale {
@@ -1704,6 +1722,24 @@ namespace GT4.UI.Resources {
         public static string RelWife {
             get {
                 return ResourceManager.GetString("RelWife", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Father-in-law.
+        /// </summary>
+        public static string RelWifesFather {
+            get {
+                return ResourceManager.GetString("RelWifesFather", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Mother-in-law.
+        /// </summary>
+        public static string RelWifesMother {
+            get {
+                return ResourceManager.GetString("RelWifesMother", resourceCulture);
             }
         }
         

@@ -216,6 +216,9 @@ internal class RelationshipTypeFormatterEn : RelationshipTypeFormatterBase
     var table = new Table
     {
       [RelationshipType.Parent] = new(F: S.RelMother, M: S.RelFather, U: S.RelParent),
+      [RelationshipType.SpouseParent] = new(F: S.RelInLawFemale, M: S.RelInLawMale, U: S.RelInLawUnknown),
+      [RelationshipType.HusbandParent] = new(F: S.RelHusbandsMother, M: S.RelHusbandsFather, U: S.RelInLawUnknown),
+      [RelationshipType.WifeParent] = new(F: S.RelWifesMother, M: S.RelWifesFather, U: S.RelInLawUnknown),
       [RelationshipType.StepParent] = new(F: S.RelStepMother, M: S.RelStepFather, U: S.RelStepParent),
       [RelationshipType.AdoptiveParent] = new(F: S.RelAdoptiveFemale_1, M: S.RelAdoptiveMale_1, U: S.RelAdoptiveInvariant_1, RelationshipType.Parent),
     };
