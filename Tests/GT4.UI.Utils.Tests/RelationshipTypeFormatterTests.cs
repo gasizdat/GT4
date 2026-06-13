@@ -184,4 +184,51 @@ public class RelationshipTypeFormatterTests
 
     Assert.Equal(expected, actual);
   }
+
+  // In-law parents: the relationship Type carries the spouse's sex
+  // (Husband/Wife/Spouse), while the BiologicalSex argument is the in-law
+  // parent's own sex (father-in-law vs mother-in-law).
+  [Theory]
+  [InlineData(RelationshipType.HusbandParent, BiologicalSex.Male, "Father-in-law")]
+  [InlineData(RelationshipType.HusbandParent, BiologicalSex.Female, "Mother-in-law")]
+  [InlineData(RelationshipType.HusbandParent, BiologicalSex.Unknown, "In-law")]
+  [InlineData(RelationshipType.WifeParent, BiologicalSex.Male, "Father-in-law")]
+  [InlineData(RelationshipType.WifeParent, BiologicalSex.Female, "Mother-in-law")]
+  [InlineData(RelationshipType.WifeParent, BiologicalSex.Unknown, "In-law")]
+  [InlineData(RelationshipType.SpouseParent, BiologicalSex.Male, "In-law")]
+  [InlineData(RelationshipType.SpouseParent, BiologicalSex.Female, "In-law")]
+  [InlineData(RelationshipType.SpouseParent, BiologicalSex.Unknown, "In-law")]
+  public void EN_InLawParent(RelationshipType type, BiologicalSex inLawSex, string expected)
+  {
+    SetEn();
+    var actual = _formatter.ToString(
+      type,
+      inLawSex,
+      Generation.Parent,
+      Consanguinity.Zero);
+
+    Assert.Equal(expected, actual);
+  }
+
+  [Theory]
+  [InlineData(RelationshipType.HusbandParent, BiologicalSex.Male, "Свёкр")]
+  [InlineData(RelationshipType.HusbandParent, BiologicalSex.Female, "Свекровь")]
+  [InlineData(RelationshipType.HusbandParent, BiologicalSex.Unknown, "Свойственник")]
+  [InlineData(RelationshipType.WifeParent, BiologicalSex.Male, "Тесть")]
+  [InlineData(RelationshipType.WifeParent, BiologicalSex.Female, "Тёща")]
+  [InlineData(RelationshipType.WifeParent, BiologicalSex.Unknown, "Свойственник")]
+  [InlineData(RelationshipType.SpouseParent, BiologicalSex.Male, "Свойственник")]
+  [InlineData(RelationshipType.SpouseParent, BiologicalSex.Female, "Свойственница")]
+  [InlineData(RelationshipType.SpouseParent, BiologicalSex.Unknown, "Свойственник")]
+  public void RU_InLawParent(RelationshipType type, BiologicalSex inLawSex, string expected)
+  {
+    SetRu();
+    var actual = _formatter.ToString(
+      type,
+      inLawSex,
+      Generation.Parent,
+      Consanguinity.Zero);
+
+    Assert.Equal(expected, actual);
+  }
 }

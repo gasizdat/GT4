@@ -282,16 +282,12 @@ public class RelativesProviderTests
       .Should()
       .BeEmpty();
 
+    // Only a direct child's spouse is surfaced. A grandchild's spouse
+    // (generation below Child) is intentionally not shown.
     relatives = await relativesProvider.GetRelativeInfosAsync(rGrandChild, true, CancellationToken.None);
     relatives
-      .Id()
       .Should()
-      .BeEquivalentTo([grandChildSpouse.Id]);
-
-    var rGrandChildSpouse = relatives.SingleId(grandChildSpouse);
-    Assert.Equal(RelationshipType.Spouse, rGrandChildSpouse.Type);
-    Assert.Equal(new Generation(-2), rGrandChildSpouse.Generation);
-    Assert.Equal(Consanguinity.Zero, rGrandChildSpouse.Consanguinity);
+      .BeEmpty();
   }
 
   [Theory]
@@ -1049,5 +1045,153 @@ public class RelativesProviderTests
     var rUncleAuntSpouse = relatives.SingleId(uncleAuntSpouse);
     Assert.Equal(RelationshipType.Spouse, rUncleAuntSpouse.Type);
     Assert.Equal(Generation.Parent, rUncleAuntSpouse.Generation);
+  }
+
+  [Theory]
+  [InlineData(BiologicalSex.Male, RelationshipType.HusbandParent)]
+  [InlineData(BiologicalSex.Female, RelationshipType.WifeParent)]
+  [InlineData(BiologicalSex.Unknown, RelationshipType.SpouseParent)]
+  public async Task GetRelativeInfosAsync_SpouseParents_BecomeInLaws(BiologicalSex spouseSex, RelationshipType expectedType)
+  {
+    var person = _documentMock.CreatePerson();
+    var spouse = _documentMock.CreatePerson(spouseSex);
+    var spouseFather = _documentMock.CreatePerson(BiologicalSex.Male);
+    var spouseMother = _documentMock.CreatePerson(BiologicalSex.Female);
+
+    _documentMock.AddRelationship(person, spouse, RelationshipType.Spouse);
+    _documentMock.AddRelationship(spouseFather, spouse, RelationshipType.Child);
+    _documentMock.AddRelationship(spouseMother, spouse, RelationshipType.Child);
+
+    var relativesProvider = new RelativesProvider(_documentMock);
+
+    var relatives = await relativesProvider.GetRelativeInfosAsync(person, true, CancellationToken.None);
+    relatives
+      .Id()
+      .Should()
+      .BeEquivalentTo([spouse.Id]);
+
+    var rSpouse = relatives.SingleId(spouse);
+    Assert.Equal(RelationshipType.Spouse, rSpouse.Type);
+    Assert.Equal(Generation.Zero, rSpouse.Generation);
+    Assert.Equal(Consanguinity.Zero, rSpouse.Consanguinity);
+
+    // Expanding a spouse surfaces the spouse's parents as in-laws, typed by
+    // the spouse's biological sex (the parent's own sex distinguishes
+    // father-in-law from mother-in-law at the formatter level).
+    relatives = await relativesProvider.GetRelativeInfosAsync(rSpouse, true, CancellationToken.None);
+    relatives
+      .Id()
+      .Should()
+      .BeEquivalentTo([spouseFather.Id, spouseMother.Id]);
+
+    foreach (var inLaw in relatives)
+    {
+      Assert.Equal(expectedType, inLaw.Type);
+      Assert.Equal(Generation.Parent, inLaw.Generation);
+      Assert.Equal(Consanguinity.Zero, inLaw.Consanguinity);
+    }
+  }
+
+  [Fact]
+  public async Task GetRelativeInfosAsync_SpouseExpansion_ExcludesSelfAndSharedChildren()
+  {
+    // Expanding a spouse must surface only the spouse's parents — never the
+    // back-reference to the person, nor children shared with the person.
+    var person = _documentMock.CreatePerson();
+    var spouse = _documentMock.CreatePerson(BiologicalSex.Female);
+    var spouseParent = _documentMock.CreatePerson();
+    var sharedChild = _documentMock.CreatePerson();
+
+    _documentMock.AddRelationship(person, spouse, RelationshipType.Spouse);
+    _documentMock.AddRelationship(spouseParent, spouse, RelationshipType.Child);
+    _documentMock.AddRelationship(spouse, sharedChild, RelationshipType.Child);
+    _documentMock.AddRelationship(person, sharedChild, RelationshipType.Child);
+
+    var relativesProvider = new RelativesProvider(_documentMock);
+
+    var relatives = await relativesProvider.GetRelativeInfosAsync(person, true, CancellationToken.None);
+    var rSpouse = relatives.SingleId(spouse);
+
+    relatives = await relativesProvider.GetRelativeInfosAsync(rSpouse, true, CancellationToken.None);
+    relatives
+      .Id()
+      .Should()
+      .BeEquivalentTo([spouseParent.Id]);
+
+    Assert.Equal(RelationshipType.WifeParent, relatives.SingleId(spouseParent).Type);
+  }
+
+  [Fact]
+  public async Task GetRelativeInfosAsync_CousinSpouse_NotSurfaced()
+  {
+    // The Child -> Spouse rule requires consanguinity 0, so a cousin's spouse
+    // is never surfaced, while the cousin's own child still is.
+    var grandParent = _documentMock.CreatePerson();
+    var parent = _documentMock.CreatePerson();
+    var uncleAunt = _documentMock.CreatePerson();
+    var cousin = _documentMock.CreatePerson();
+    var cousinSpouse = _documentMock.CreatePerson();
+    var cousinChild = _documentMock.CreatePerson();
+    var child = _documentMock.CreatePerson();
+
+    _documentMock.AddRelationship(grandParent, parent, RelationshipType.Child);
+    _documentMock.AddRelationship(grandParent, uncleAunt, RelationshipType.Child);
+    _documentMock.AddRelationship(uncleAunt, cousin, RelationshipType.Child);
+    _documentMock.AddRelationship(cousin, cousinSpouse, RelationshipType.Spouse);
+    _documentMock.AddRelationship(cousin, cousinChild, RelationshipType.Child);
+    _documentMock.AddRelationship(parent, child, RelationshipType.Child);
+
+    var relativesProvider = new RelativesProvider(_documentMock);
+
+    var relatives = await relativesProvider.GetRelativeInfosAsync(child, true, CancellationToken.None);
+    var rParent = relatives.SingleId(parent);
+
+    relatives = await relativesProvider.GetRelativeInfosAsync(rParent, true, CancellationToken.None);
+    var rUncleAunt = relatives.SingleId(uncleAunt);
+
+    relatives = await relativesProvider.GetRelativeInfosAsync(rUncleAunt, true, CancellationToken.None);
+    var rCousin = relatives.SingleId(cousin);
+    Assert.Equal(RelationshipType.Child, rCousin.Type);
+    Assert.Equal(Generation.Zero, rCousin.Generation);
+    Assert.Equal(Consanguinity.UncleAunt, rCousin.Consanguinity);
+
+    // The cousin's spouse must not appear; the cousin's child must.
+    relatives = await relativesProvider.GetRelativeInfosAsync(rCousin, true, CancellationToken.None);
+    relatives
+      .Id()
+      .Should()
+      .BeEquivalentTo([cousinChild.Id]);
+    relatives
+      .Id()
+      .Should()
+      .NotContain(cousinSpouse.Id);
+  }
+
+  [Fact]
+  public async Task GetRelativeInfosAsync_DirectChildSpouse_Surfaced()
+  {
+    // A direct child's spouse (consanguinity 0, Child generation) is surfaced.
+    var parent = _documentMock.CreatePerson();
+    var child = _documentMock.CreatePerson();
+    var childSpouse = _documentMock.CreatePerson();
+
+    _documentMock.AddRelationship(parent, child, RelationshipType.Child);
+    _documentMock.AddRelationship(child, childSpouse, RelationshipType.Spouse);
+
+    var relativesProvider = new RelativesProvider(_documentMock);
+
+    var relatives = await relativesProvider.GetRelativeInfosAsync(parent, true, CancellationToken.None);
+    var rChild = relatives.SingleId(child);
+
+    relatives = await relativesProvider.GetRelativeInfosAsync(rChild, true, CancellationToken.None);
+    relatives
+      .Id()
+      .Should()
+      .BeEquivalentTo([childSpouse.Id]);
+
+    var rChildSpouse = relatives.SingleId(childSpouse);
+    Assert.Equal(RelationshipType.Spouse, rChildSpouse.Type);
+    Assert.Equal(Generation.Child, rChildSpouse.Generation);
+    Assert.Equal(Consanguinity.Zero, rChildSpouse.Consanguinity);
   }
 }
