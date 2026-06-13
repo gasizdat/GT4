@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="GT4.UI.Components.CardView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:components="clr-namespace:GT4.UI.Components">
+
+  <ContentView.ControlTemplate>
+    <ControlTemplate>
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="8" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="*" />
+          <RowDefinition Height="8" />
+        </Grid.RowDefinitions>
+
+        <!--
+          Soft shadow drawn only outside the card region (clipped),
+          so it cannot show through a translucent card
+        -->
+        <GraphicsView
+            Grid.RowSpan="2"
+            Grid.ColumnSpan="2"
+            InputTransparent="True">
+          <GraphicsView.Drawable>
+            <components:CardShadowDrawable />
+          </GraphicsView.Drawable>
+        </GraphicsView>
+
+        <!--  Card chrome and content — nothing is drawn behind it  -->
+        <Border
+            Stroke="{StaticResource CardStroke}"
+            Style="{StaticResource HoverItem}">
+          <ContentPresenter />
+        </Border>
+
+      </Grid>
+    </ControlTemplate>
+  </ContentView.ControlTemplate>
+
+</ContentView>

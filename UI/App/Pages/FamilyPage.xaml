@@ -52,29 +52,22 @@
 
           <BindableLayout.ItemTemplate>
             <DataTemplate x:DataType="dto:PersonInfo">
-              <Border
-                  Margin="{Thickness Bottom={StaticResource PageContentSpacing},
-                                     Right={StaticResource PageContentSpacing}}"
+              <components:CardView
                   FlexLayout.Grow="1"
-                  MinimumWidthRequest="{Binding Path=PersonItemMinimalWidth, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
-                  Shadow="{StaticResource CardShadow}"
-                  Stroke="{StaticResource CardStroke}"
-                  Style="{StaticResource HoverItem}">
+                  MinimumWidthRequest="{Binding Path=PersonItemMinimalWidth, Source={RelativeSource AncestorType={x:Type ContentPage}}}">
 
-                <Border.GestureRecognizers>
+                <components:CardView.GestureRecognizers>
                   <TapGestureRecognizer
                       Command="{Binding Path=MemberItemTappedCommand, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
                       CommandParameter="{Binding .}" />
-                </Border.GestureRecognizers>
-
-
+                </components:CardView.GestureRecognizers>
 
                 <components:PersonInfoView
                     DatesLabelStyle="{StaticResource FieldValue}"
                     NameFormat="{Binding PersonNamesFormat, Source={x:Reference Root}}"
                     NameLabelStyle="{StaticResource FieldName}"
                     Person="{Binding .}" />
-              </Border>
+              </components:CardView>
             </DataTemplate>
           </BindableLayout.ItemTemplate>
         </FlexLayout>

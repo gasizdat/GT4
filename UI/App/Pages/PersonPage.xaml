@@ -221,17 +221,12 @@
               SelectionMode="Single"
               VerticalScrollBarVisibility="Always">
             <CollectionView.ItemsLayout>
-              <LinearItemsLayout
-                  ItemSpacing="{StaticResource PageContentSpacing}"
-                  Orientation="Vertical" />
+              <LinearItemsLayout Orientation="Vertical" />
             </CollectionView.ItemsLayout>
 
             <CollectionView.ItemTemplate>
               <DataTemplate x:DataType="dto:RelativeInfo">
-                <Border
-                    Shadow="{StaticResource CardShadow}"
-                    Stroke="{StaticResource CardStroke}"
-                    Style="{StaticResource HoverItem}">
+                <components:CardView Margin="{Thickness Bottom={StaticResource PageContentSpacing}}">
                   <components:RelativeInfoView
                       ExandAllRelatives="{Binding ExpandAll, Source={x:Reference Root}}"
                       NameFormat="CommonPersonName"
@@ -239,7 +234,7 @@
                       Relative="{Binding .}"
                       SelectCommand="{Binding Path=PageCommand, Source={x:Reference Root}}"
                       ShowMoreButton="True" />
-                </Border>
+                </components:CardView>
               </DataTemplate>
             </CollectionView.ItemTemplate>
           </CollectionView>

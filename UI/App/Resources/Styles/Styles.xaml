@@ -733,16 +733,9 @@
     </Setter>
   </Style>
 
-  <SolidColorBrush x:Key="CardStroke" Color="{AppThemeBinding Light=#A0FFFFFF, Dark=#30FFFFFF}" />
+  <SolidColorBrush x:Key="CardStroke" Color="{AppThemeBinding Light=#D0FFFFFF, Dark=#30FFFFFF}" />
 
-  <Shadow
-      x:Key="CardShadow"
-      Brush="Black"
-      Opacity="0.2"
-      Radius="5"
-      Offset="5,5" />
-
-  <LinearGradientBrush x:Key="FrostedGlassHover" StartPoint="0,0" EndPoint="0,1">
+<LinearGradientBrush x:Key="FrostedGlassHover" StartPoint="0,0" EndPoint="0,1">
     <GradientStop Offset="0.0" Color="{AppThemeBinding Light=#FFFFFFFF, Dark=#FFFFFFFF}" />
     <GradientStop Offset="0.08" Color="{AppThemeBinding Light=#F0FFFFFF, Dark=#E0FFFFFF}" />
     <GradientStop Offset="0.18" Color="{AppThemeBinding Light=#B4FFFFFE, Dark=#90DDDCD6}" />
