@@ -63,9 +63,14 @@ public sealed class ProjectListTests : IDisposable
   [Fact]
   public async Task Create_PersistsProjectToOrigin_AndListsIt()
   {
-    // Regression guard: CreateAsync must flush the freshly written cache back to the origin so the
-    // project is fully persisted (and not left as an empty file) even when created in a single tick.
-    await using (var host = await _list.CreateAsync("Brand New", "The description", Token)) { }
+    // Regression guard: CreateAsync must return a live, usable host AND flush the freshly written
+    // cache back to the origin on dispose, so the project is fully persisted (and not left empty)
+    // even when created in a single tick.
+    await using (var host = await _list.CreateAsync("Brand New", "The description", Token))
+    {
+      host.Project.Should().NotBeNull();
+      (await host.Project!.Metadata.GetProjectNameAsync(Token)).Should().Be("Brand New");
+    }
 
     _fs.GetFiles(_storage.ProjectsRoot, "*.gt4", recursive: true).Should().NotBeEmpty();
 

@@ -107,11 +107,22 @@ internal class ProjectList : IProjectList
     var origin = new FileDescription(dir, projectFileName, IProjectDocument.MimeType);
     var cache = GetCacheFileDescription(projectFileName);
     using (var file = _FileSystem.OpenWriteStream(origin)) file.Close();
-    using var host = new ProjectHost(_FileSystem, origin, cache);
-    host.Project = await ProjectDocument.CreateNewAsync(_FileSystem.ToPath(cache), projectName, token);
-    await Task.WhenAll(
-      host.Project.Metadata.SetProjectNameAsync(projectName, token),
-      host.Project.Metadata.SetProjectDescriptionAsync(projectDescription, token));
+    // The host is returned live and owned by the caller: disposing it flushes the freshly written
+    // cache back to the origin. (Previously it was disposed here via `using`, so callers received an
+    // already-closed host whose Project was null.)
+    var host = new ProjectHost(_FileSystem, origin, cache);
+    try
+    {
+      host.Project = await ProjectDocument.CreateNewAsync(_FileSystem.ToPath(cache), projectName, token);
+      await Task.WhenAll(
+        host.Project.Metadata.SetProjectNameAsync(projectName, token),
+        host.Project.Metadata.SetProjectDescriptionAsync(projectDescription, token));
+    }
+    catch
+    {
+      await host.DisposeAsync();
+      throw;
+    }
 
     InvalidateItems();
 
