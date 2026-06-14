@@ -79,6 +79,7 @@
       <ScrollView x:Name="Scroller" Orientation="Both">
         <Grid
             x:Name="Canvas"
+            BackgroundColor="Transparent"
             HorizontalOptions="Start"
             VerticalOptions="Start">
           <GraphicsView x:Name="Connectors" InputTransparent="True" />

@@ -22,6 +22,8 @@ public partial class FamilyTreePage : ContentPage
   private int _AncestorGenerations = 3;
   private int _DescendantGenerations = 3;
   private bool _IncludeCollaterals = false;
+  private double _PanStartScrollX;
+  private double _PanStartScrollY;
 
   public FamilyTreePage(IServiceProvider serviceProvider)
   {
@@ -36,6 +38,33 @@ public partial class FamilyTreePage : ContentPage
     _ConnectorsDrawable.ParentChildColor = GetColor("Primary", Color.FromArgb("#1E4437"));
     _ConnectorsDrawable.SpouseColor = GetColor("Accent", Color.FromArgb("#8B6F4E"));
     Connectors.Drawable = _ConnectorsDrawable;
+
+    // Drag-to-pan: the ScrollView already handles wheel, scrollbars and touch flicks, but desktop
+    // users expect to grab the canvas and drag it. Translate the pan delta into a scroll offset.
+    var pan = new PanGestureRecognizer();
+    pan.PanUpdated += OnCanvasPan;
+    Canvas.GestureRecognizers.Add(pan);
+  }
+
+  private void OnCanvasPan(object? sender, PanUpdatedEventArgs e)
+  {
+    switch (e.StatusType)
+    {
+      case GestureStatus.Started:
+        _PanStartScrollX = Scroller.ScrollX;
+        _PanStartScrollY = Scroller.ScrollY;
+        break;
+
+      case GestureStatus.Running:
+        // Dragging the content right (positive TotalX) should reveal content to the left, i.e. reduce
+        // the scroll offset — hence the subtraction. Clamp so we never scroll past the canvas edges.
+        var maxX = Math.Max(0, Canvas.Width - Scroller.Width);
+        var maxY = Math.Max(0, Canvas.Height - Scroller.Height);
+        var targetX = Math.Clamp(_PanStartScrollX - e.TotalX, 0, maxX);
+        var targetY = Math.Clamp(_PanStartScrollY - e.TotalY, 0, maxY);
+        _ = Scroller.ScrollToAsync(targetX, targetY, animated: false);
+        break;
+    }
   }
 
   public ICommand PageCommand { get; }
