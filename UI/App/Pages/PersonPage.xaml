@@ -87,6 +87,11 @@
         CommandParameter="ToggleAll"
         Order="Primary"
         Text="{Binding ToggleAllButtonName, Source={x:Reference Root}}" />
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="GoToFamilyTree"
+        Order="Primary"
+        Text="🌳" />
   </ContentPage.ToolbarItems>
 
   <components:PageLayout>
