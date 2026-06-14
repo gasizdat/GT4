@@ -34,6 +34,14 @@
         <HorizontalStackLayout Grid.Column="1" Spacing="{StaticResource PageContentSpacing}">
           <Label
               Style="{StaticResource FieldName}"
+              Text="{x:Static resources:UIStrings.LblRelatives}"
+              VerticalOptions="Center" />
+          <Switch
+              IsToggled="{Binding IncludeCollaterals, Source={x:Reference Root}}"
+              VerticalOptions="Center" />
+
+          <Label
+              Style="{StaticResource FieldName}"
               Text="{x:Static resources:UIStrings.LblAncestors}"
               VerticalOptions="Center" />
           <Stepper

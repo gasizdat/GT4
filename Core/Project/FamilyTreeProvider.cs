@@ -20,6 +20,7 @@ internal sealed class FamilyTreeProvider : TableBase, IFamilyTreeProvider
     Person center,
     int ancestorGenerations,
     int descendantGenerations,
+    bool includeCollaterals,
     CancellationToken token)
   {
     ArgumentNullException.ThrowIfNull(center);
@@ -33,7 +34,7 @@ internal sealed class FamilyTreeProvider : TableBase, IFamilyTreeProvider
 
     // Ancestors: starting at the centre, climb to parents one generation at a time.
     await ExpandAsync(
-      seed: centerNode,
+      seeds: [centerNode],
       depth: ancestorGenerations,
       generationStep: +1,
       follow: static type => type is RelationshipType.Parent or RelationshipType.AdoptiveParent,
@@ -42,9 +43,12 @@ internal sealed class FamilyTreeProvider : TableBase, IFamilyTreeProvider
       edges: edges,
       token: token);
 
-    // Descendants: starting at the centre, descend to children one generation at a time.
+    // Descendants: descend to children one generation at a time. Seeding only from the centre keeps a
+    // clean bow-tie; seeding from every ancestor as well lets siblings, aunts/uncles and cousins
+    // branch off the ancestral line.
+    var descendantSeeds = includeCollaterals ? nodes.Values.ToList() : [centerNode];
     await ExpandAsync(
-      seed: centerNode,
+      seeds: descendantSeeds,
       depth: descendantGenerations,
       generationStep: -1,
       follow: static type => type is RelationshipType.Child or RelationshipType.AdoptiveChild,
@@ -59,7 +63,7 @@ internal sealed class FamilyTreeProvider : TableBase, IFamilyTreeProvider
   }
 
   private async Task ExpandAsync(
-    FamilyTreeNode seed,
+    IReadOnlyCollection<FamilyTreeNode> seeds,
     int depth,
     int generationStep,
     Func<RelationshipType, bool> follow,
@@ -68,7 +72,7 @@ internal sealed class FamilyTreeProvider : TableBase, IFamilyTreeProvider
     HashSet<FamilyTreeEdge> edges,
     CancellationToken token)
   {
-    var frontier = new List<FamilyTreeNode> { seed };
+    var frontier = seeds.ToList();
 
     for (var level = 0; level < depth && frontier.Count != 0; level++)
     {

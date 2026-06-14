@@ -780,4 +780,7 @@ FN - family name</value>
   <data name="LblDescendants" xml:space="preserve">
     <value>Descendants</value>
   </data>
+  <data name="LblRelatives" xml:space="preserve">
+    <value>Relatives</value>
+  </data>
 </root>

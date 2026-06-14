@@ -2030,5 +2030,14 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("LblDescendants", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Relatives.
+        /// </summary>
+        public static string LblRelatives {
+            get {
+                return ResourceManager.GetString("LblRelatives", resourceCulture);
+            }
+        }
     }
 }

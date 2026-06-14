@@ -58,6 +58,10 @@ public static class FamilyTreeLayout
     LayoutBranch(tree.CenterId, childrenByParent, x);
     AlignBranch(tree.CenterId, parentsByChild, x);
 
+    // Collaterals (siblings/cousins) hang off the ancestral line, so the centre-rooted passes never
+    // reach them; give each a column under its parents.
+    PlaceCollaterals(nodesById, parentsByChild, x);
+
     PlaceSpouses(tree, nodesById, x, metrics);
     ResolveRowOverlaps(nodesById, x, metrics);
 
@@ -150,6 +154,31 @@ public static class FamilyTreeLayout
       }
 
       x[id] = slot + shift;
+    }
+  }
+
+  private static void PlaceCollaterals(
+    IReadOnlyDictionary<int, FamilyTreeNode> nodesById,
+    Dictionary<int, List<int>> parentsByChild,
+    Dictionary<int, double> x)
+  {
+    // Walk generations top-down: a node's parents sit one generation up and are therefore placed
+    // earlier in this sweep, so a collateral can inherit the average column of its placed parents.
+    foreach (var node in nodesById.Values.OrderByDescending(node => node.Generation))
+    {
+      if (x.ContainsKey(node.Id))
+      {
+        continue;
+      }
+
+      if (parentsByChild.TryGetValue(node.Id, out var parents))
+      {
+        var placed = parents.Where(x.ContainsKey).Select(parent => x[parent]).ToList();
+        if (placed.Count != 0)
+        {
+          x[node.Id] = placed.Average();
+        }
+      }
     }
   }
 

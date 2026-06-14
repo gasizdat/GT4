@@ -21,6 +21,7 @@ public partial class FamilyTreePage : ContentPage
   private string _CenterName = string.Empty;
   private int _AncestorGenerations = 3;
   private int _DescendantGenerations = 3;
+  private bool _IncludeCollaterals = false;
 
   public FamilyTreePage(IServiceProvider serviceProvider)
   {
@@ -80,6 +81,22 @@ public partial class FamilyTreePage : ContentPage
     }
   }
 
+  public bool IncludeCollaterals
+  {
+    get => _IncludeCollaterals;
+    set
+    {
+      if (_IncludeCollaterals == value)
+      {
+        return;
+      }
+
+      _IncludeCollaterals = value;
+      OnPropertyChanged(nameof(IncludeCollaterals));
+      Reload();
+    }
+  }
+
   private void SetCenter(PersonInfo person)
   {
     _Center = person;
@@ -106,7 +123,7 @@ public partial class FamilyTreePage : ContentPage
     var tree = await _CurrentProjectProvider
       .Project
       .FamilyTreeProvider
-      .BuildAsync(center, _AncestorGenerations, _DescendantGenerations, token);
+      .BuildAsync(center, _AncestorGenerations, _DescendantGenerations, _IncludeCollaterals, token);
 
     var layout = FamilyTreeLayout.Build(tree, _Metrics);
     var names = layout.Nodes.ToDictionary(

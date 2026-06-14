@@ -780,4 +780,7 @@ FN - род</value>
   <data name="LblDescendants" xml:space="preserve">
     <value>Потомки</value>
   </data>
+  <data name="LblRelatives" xml:space="preserve">
+    <value>Родственники</value>
+  </data>
 </root>
