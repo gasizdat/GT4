@@ -774,11 +774,11 @@ FN - family name</value>
   <data name="MenuItemNameOpenPerson_1" xml:space="preserve">
     <value>Open {0}</value>
   </data>
-  <data name="LblAncestors" xml:space="preserve">
-    <value>Ancestors</value>
+  <data name="BtnNameLoadAncestors" xml:space="preserve">
+    <value>▲ More ancestors</value>
   </data>
-  <data name="LblDescendants" xml:space="preserve">
-    <value>Descendants</value>
+  <data name="BtnNameLoadDescendants" xml:space="preserve">
+    <value>▼ More descendants</value>
   </data>
   <data name="LblRelatives" xml:space="preserve">
     <value>Relatives</value>

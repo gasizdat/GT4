@@ -774,11 +774,11 @@ FN - род</value>
   <data name="MenuItemNameOpenPerson_1" xml:space="preserve">
     <value>Открыть {0}</value>
   </data>
-  <data name="LblAncestors" xml:space="preserve">
-    <value>Предки</value>
+  <data name="BtnNameLoadAncestors" xml:space="preserve">
+    <value>▲ Больше предков</value>
   </data>
-  <data name="LblDescendants" xml:space="preserve">
-    <value>Потомки</value>
+  <data name="BtnNameLoadDescendants" xml:space="preserve">
+    <value>▼ Больше потомков</value>
   </data>
   <data name="LblRelatives" xml:space="preserve">
     <value>Родственники</value>

@@ -2014,20 +2014,20 @@ namespace GT4.UI.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Ancestors.
+        ///   Looks up a localized string similar to ▲ More ancestors.
         /// </summary>
-        public static string LblAncestors {
+        public static string BtnNameLoadAncestors {
             get {
-                return ResourceManager.GetString("LblAncestors", resourceCulture);
+                return ResourceManager.GetString("BtnNameLoadAncestors", resourceCulture);
             }
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Descendants.
+        ///   Looks up a localized string similar to ▼ More descendants.
         /// </summary>
-        public static string LblDescendants {
+        public static string BtnNameLoadDescendants {
             get {
-                return ResourceManager.GetString("LblDescendants", resourceCulture);
+                return ResourceManager.GetString("BtnNameLoadDescendants", resourceCulture);
             }
         }
 

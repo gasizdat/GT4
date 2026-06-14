@@ -17,13 +17,23 @@ public partial class FamilyTreePage : ContentPage
   private readonly INameFormatter _NameFormatter;
   private readonly FamilyTreeLayoutMetrics _Metrics = new();
   private readonly FamilyTreeConnectorsDrawable _ConnectorsDrawable = new();
+  // Each "load more" click adds one generation, up to this hard ceiling.
+  private const int MaxGenerations = 12;
+  private const int InitialGenerations = 2;
+
   private Person? _Center;
   private string _CenterName = string.Empty;
-  private int _AncestorGenerations = 3;
-  private int _DescendantGenerations = 3;
+  private int _AncestorGenerations = InitialGenerations;
+  private int _DescendantGenerations = InitialGenerations;
   private bool _IncludeCollaterals = false;
+  private bool _CanLoadMoreAncestors;
+  private bool _CanLoadMoreDescendants;
+  private ViewTarget _ViewTarget = ViewTarget.Center;
   private double _PanStartScrollX;
   private double _PanStartScrollY;
+
+  // Where to park the viewport after a (re)build.
+  private enum ViewTarget { Center, Top, Bottom }
 
   public FamilyTreePage(IServiceProvider serviceProvider)
   {
@@ -78,35 +88,34 @@ public partial class FamilyTreePage : ContentPage
 
   public string OpenPersonToolbarItemName => string.Format(UIStrings.MenuItemNameOpenPerson_1, _CenterName);
 
-  public int AncestorGenerations
+  // Drive the visibility of the top/bottom "load more" buttons.
+  public bool CanLoadMoreAncestors
   {
-    get => _AncestorGenerations;
-    set
+    get => _CanLoadMoreAncestors;
+    private set
     {
-      if (_AncestorGenerations == value)
+      if (_CanLoadMoreAncestors == value)
       {
         return;
       }
 
-      _AncestorGenerations = value;
-      OnPropertyChanged(nameof(AncestorGenerations));
-      Reload();
+      _CanLoadMoreAncestors = value;
+      OnPropertyChanged(nameof(CanLoadMoreAncestors));
     }
   }
 
-  public int DescendantGenerations
+  public bool CanLoadMoreDescendants
   {
-    get => _DescendantGenerations;
-    set
+    get => _CanLoadMoreDescendants;
+    private set
     {
-      if (_DescendantGenerations == value)
+      if (_CanLoadMoreDescendants == value)
       {
         return;
       }
 
-      _DescendantGenerations = value;
-      OnPropertyChanged(nameof(DescendantGenerations));
-      Reload();
+      _CanLoadMoreDescendants = value;
+      OnPropertyChanged(nameof(CanLoadMoreDescendants));
     }
   }
 
@@ -122,7 +131,7 @@ public partial class FamilyTreePage : ContentPage
 
       _IncludeCollaterals = value;
       OnPropertyChanged(nameof(IncludeCollaterals));
-      Reload();
+      Reload(ViewTarget.Center);
     }
   }
 
@@ -130,18 +139,22 @@ public partial class FamilyTreePage : ContentPage
   {
     _Center = person;
     _CenterName = _NameFormatter.ToString(person, NameFormat.ShortPersonName);
+    // A new centre starts a fresh view, so reset the depth back to the default.
+    _AncestorGenerations = InitialGenerations;
+    _DescendantGenerations = InitialGenerations;
     OnPropertyChanged(nameof(PageTitle));
     OnPropertyChanged(nameof(OpenPersonToolbarItemName));
-    Reload();
+    Reload(ViewTarget.Center);
   }
 
-  private void Reload()
+  private void Reload(ViewTarget target)
   {
     if (_Center is null)
     {
       return;
     }
 
+    _ViewTarget = target;
     var center = _Center;
     _ = SafeTask.Run(() => LoadAsync(center));
   }
@@ -190,24 +203,44 @@ public partial class FamilyTreePage : ContentPage
 
     _ConnectorsDrawable.Connectors = layout.Connectors;
 
+    // A "load more" button is offered only while the tree actually reaches the requested depth: if a
+    // generation came back shorter than asked for, that direction has no more data to fetch.
+    var maxGeneration = layout.Nodes.Count == 0 ? 0 : layout.Nodes.Max(node => node.Node.Generation);
+    var minGeneration = layout.Nodes.Count == 0 ? 0 : layout.Nodes.Min(node => node.Node.Generation);
+    CanLoadMoreAncestors = _AncestorGenerations < MaxGenerations && maxGeneration >= _AncestorGenerations;
+    CanLoadMoreDescendants = _DescendantGenerations < MaxGenerations && minGeneration <= -_DescendantGenerations;
+
     Canvas.WidthRequest = layout.CanvasSize.Width;
     Canvas.HeightRequest = layout.CanvasSize.Height;
     Connectors.WidthRequest = layout.CanvasSize.Width;
     Connectors.HeightRequest = layout.CanvasSize.Height;
     Connectors.Invalidate();
 
-    _ = CenterViewportAsync(layout.CenterTopLeft);
+    _ = PositionViewportAsync(layout.CenterTopLeft);
   }
 
-  private async Task CenterViewportAsync(Point centerTopLeft)
+  private async Task PositionViewportAsync(Point centerTopLeft)
   {
-    // Let the ScrollView measure its content before scrolling so the viewport size is known.
+    // Let the ScrollView measure its new content before scrolling so the viewport size and extents
+    // are known.
     await Task.Yield();
 
-    var targetX = centerTopLeft.X + (_Metrics.NodeWidth / 2) - (Scroller.Width / 2);
-    var targetY = centerTopLeft.Y + (_Metrics.NodeHeight / 2) - (Scroller.Height / 2);
+    var maxX = Math.Max(0, Canvas.Width - Scroller.Width);
+    var maxY = Math.Max(0, Canvas.Height - Scroller.Height);
 
-    await Scroller.ScrollToAsync(Math.Max(0, targetX), Math.Max(0, targetY), animated: false);
+    // Always keep the centre's column horizontally centred.
+    var targetX = centerTopLeft.X + (_Metrics.NodeWidth / 2) - (Scroller.Width / 2);
+
+    // Vertically, park where the freshly loaded generation appears: the top after loading ancestors,
+    // the bottom after loading descendants, otherwise centred on the focal person.
+    var targetY = _ViewTarget switch
+    {
+      ViewTarget.Top => 0,
+      ViewTarget.Bottom => maxY,
+      _ => centerTopLeft.Y + (_Metrics.NodeHeight / 2) - (Scroller.Height / 2),
+    };
+
+    await Scroller.ScrollToAsync(Math.Clamp(targetX, 0, maxX), Math.Clamp(targetY, 0, maxY), animated: false);
   }
 
   private async Task OnPageCommand(object parameter)
@@ -226,8 +259,24 @@ public partial class FamilyTreePage : ContentPage
         await Shell.Current.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { ["PersonInfo"] = center });
         break;
 
+      case string command when command == "LoadAncestors":
+        if (_AncestorGenerations < MaxGenerations)
+        {
+          _AncestorGenerations++;
+          Reload(ViewTarget.Top);
+        }
+        break;
+
+      case string command when command == "LoadDescendants":
+        if (_DescendantGenerations < MaxGenerations)
+        {
+          _DescendantGenerations++;
+          Reload(ViewTarget.Bottom);
+        }
+        break;
+
       case string command when command == "Refresh":
-        Reload();
+        Reload(ViewTarget.Center);
         break;
     }
   }

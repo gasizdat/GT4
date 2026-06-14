@@ -24,14 +24,18 @@
   <components:PageLayout>
 
     <components:PageLayout.Header>
-      <Grid ColumnDefinitions="*, Auto" RowDefinitions="Auto">
+      <Grid
+          ColumnDefinitions="*, Auto"
+          RowDefinitions="Auto">
         <Label
             Grid.Column="0"
             Style="{StaticResource PageSubtitle}"
             Text="{x:Static resources:UIStrings.HintFamilyTreePage}"
             VerticalOptions="Center" />
 
-        <HorizontalStackLayout Grid.Column="1" Spacing="{StaticResource PageContentSpacing}">
+        <HorizontalStackLayout
+            Grid.Column="1"
+            Spacing="{StaticResource PageContentSpacing}">
           <Label
               Style="{StaticResource FieldName}"
               Text="{x:Static resources:UIStrings.LblRelatives}"
@@ -39,53 +43,48 @@
           <Switch
               IsToggled="{Binding IncludeCollaterals, Source={x:Reference Root}}"
               VerticalOptions="Center" />
-
-          <Label
-              Style="{StaticResource FieldName}"
-              Text="{x:Static resources:UIStrings.LblAncestors}"
-              VerticalOptions="Center" />
-          <Stepper
-              Increment="1"
-              Maximum="6"
-              Minimum="0"
-              Value="{Binding AncestorGenerations, Source={x:Reference Root}}"
-              VerticalOptions="Center" />
-          <Label
-              MinimumWidthRequest="20"
-              Style="{StaticResource FieldValue}"
-              Text="{Binding AncestorGenerations, Source={x:Reference Root}}"
-              VerticalOptions="Center" />
-
-          <Label
-              Style="{StaticResource FieldName}"
-              Text="{x:Static resources:UIStrings.LblDescendants}"
-              VerticalOptions="Center" />
-          <Stepper
-              Increment="1"
-              Maximum="6"
-              Minimum="0"
-              Value="{Binding DescendantGenerations, Source={x:Reference Root}}"
-              VerticalOptions="Center" />
-          <Label
-              MinimumWidthRequest="20"
-              Style="{StaticResource FieldValue}"
-              Text="{Binding DescendantGenerations, Source={x:Reference Root}}"
-              VerticalOptions="Center" />
         </HorizontalStackLayout>
       </Grid>
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>
-      <ScrollView x:Name="Scroller" Orientation="Both">
-        <Grid
-            x:Name="Canvas"
-            BackgroundColor="Transparent"
-            HorizontalOptions="Start"
-            VerticalOptions="Start">
-          <GraphicsView x:Name="Connectors" InputTransparent="True" />
-          <AbsoluteLayout x:Name="Nodes" />
-        </Grid>
-      </ScrollView>
+      <Grid>
+        <ScrollView
+            x:Name="Scroller"
+            Orientation="Both">
+          <Grid
+              x:Name="Canvas"
+              BackgroundColor="Transparent"
+              HorizontalOptions="Fill"
+              VerticalOptions="Start">
+            <GraphicsView
+                x:Name="Connectors"
+                HorizontalOptions="Center"
+                InputTransparent="True" />
+            <AbsoluteLayout x:Name="Nodes" />
+          </Grid>
+        </ScrollView>
+
+        <!--  Pinned over the canvas: load another generation of ancestors (top) or descendants (bottom).  -->
+        <Button
+            Margin="0,8"
+            Padding="16,6"
+            Command="{Binding PageCommand, Source={x:Reference Root}}"
+            CommandParameter="LoadAncestors"
+            HorizontalOptions="Center"
+            IsVisible="{Binding CanLoadMoreAncestors, Source={x:Reference Root}}"
+            Text="{x:Static resources:UIStrings.BtnNameLoadAncestors}"
+            VerticalOptions="Start" />
+        <Button
+            Margin="0,8"
+            Padding="16,6"
+            Command="{Binding PageCommand, Source={x:Reference Root}}"
+            CommandParameter="LoadDescendants"
+            HorizontalOptions="Center"
+            IsVisible="{Binding CanLoadMoreDescendants, Source={x:Reference Root}}"
+            Text="{x:Static resources:UIStrings.BtnNameLoadDescendants}"
+            VerticalOptions="End" />
+      </Grid>
     </components:PageLayout.Body>
 
   </components:PageLayout>
