@@ -33,7 +33,10 @@ public sealed record FamilyTreeLayoutResult(
 /// Descendants and ancestors are laid out as two tidy trees that share the centred person as their
 /// root: leaves take successive horizontal slots and each parent is centred over its children.
 /// Spouses are pulled in beside their partner, then every generation row is swept left-to-right to
-/// remove any residual overlap.
+/// remove any residual overlap. That seeds a stable left-to-right order, which a final greedy pass
+/// refines by repeatedly pulling each node toward the column that minimises its connector fee (the
+/// weighted span of its links) — shortening the connectors so a married couple straddles the centre
+/// of their children instead of one partner fanning links across the whole row.
 /// </para>
 /// </summary>
 public static class FamilyTreeLayout
@@ -64,6 +67,10 @@ public static class FamilyTreeLayout
 
     PlaceSpouses(tree, nodesById, x, metrics);
     ResolveRowOverlaps(nodesById, x, metrics);
+
+    // The passes above fix a sensible left-to-right order per generation; this shortens the links
+    // within that order.
+    RefineColumns(tree, nodesById, x);
 
     return Assemble(tree, nodesById, x, metrics);
   }
@@ -234,6 +241,200 @@ public static class FamilyTreeLayout
         {
           x[ordered[i].Id] = previous + 1;
         }
+      }
+    }
+  }
+
+  // How many relaxation sweeps to run. The trees are small (a few dozen nodes per row at most) and the
+  // greedy pass converges quickly, so a modest fixed budget keeps the result stable and cheap.
+  private const int RefinementSweeps = 24;
+
+  // Partners are already kept side by side by the frozen row order (the seeding pass parks a spouse
+  // right next to its mate and nothing is ever reordered between them), so the spouse link only needs a
+  // gentle pull. It is deliberately lighter than a parent-child link: were it heavier, the fee-minimising
+  // column (a weighted median) of a leaf parent would collapse onto its spouse and ignore its child, so
+  // a couple would glue together but never settle over the children they share. Lighter keeps each
+  // partner tracking its children while adjacency holds the couple together.
+  private const double ParentChildWeight = 1.0;
+  private const double SpouseWeight = 0.5;
+
+  /// <summary>One relative of a node together with the fee charged per slot of horizontal separation.</summary>
+  private readonly record struct WeightedLink(int Id, double Weight);
+
+  // Greedy fee minimisation. The "fee" of a connector is its horizontal span (in slots) times the
+  // weight of its relation, and the total fee is what we want to drive down. Each generation keeps the
+  // left-to-right order it was seeded with — so no new line crossings can appear — while every node is
+  // repeatedly pulled toward the column that minimises its own incident fee (the weighted median of its
+  // relatives). Better-connected nodes move first and may shove lighter neighbours aside but never
+  // displace an equally- or better-connected one, so the spine straightens and in-married spouses and
+  // leaf parents collapse onto their children instead of trailing long links across the row.
+  private static void RefineColumns(
+    FamilyTree tree,
+    IReadOnlyDictionary<int, FamilyTreeNode> nodesById,
+    Dictionary<int, double> x)
+  {
+    var links = nodesById.Keys.ToDictionary(id => id, _ => new List<WeightedLink>());
+    foreach (var edge in tree.Edges)
+    {
+      if (!links.ContainsKey(edge.FromId) || !links.ContainsKey(edge.ToId))
+      {
+        continue;
+      }
+
+      var weight = edge.Relation == FamilyTreeRelation.Spouse ? SpouseWeight : ParentChildWeight;
+      links[edge.FromId].Add(new WeightedLink(edge.ToId, weight));
+      links[edge.ToId].Add(new WeightedLink(edge.FromId, weight));
+    }
+
+    // A node's "priority" is its total link weight: the heavier it is connected, the more it costs to
+    // leave it mis-aligned, so it gets first pick of its column and the right to push lighter nodes.
+    var priority = links.ToDictionary(pair => pair.Key, pair => pair.Value.Sum(link => link.Weight));
+
+    // Process generations top-down then bottom-up on alternating sweeps so pull from above and below
+    // balances out. The per-row order is frozen up front from the seeding passes' columns.
+    var generations = nodesById.Values
+      .Select(node => node.Generation)
+      .Distinct()
+      .OrderByDescending(generation => generation)
+      .ToList();
+
+    var rows = generations.ToDictionary(
+      generation => generation,
+      generation => nodesById.Values
+        .Where(node => node.Generation == generation)
+        .OrderBy(node => x[node.Id])
+        .ThenBy(node => node.Id)
+        .Select(node => node.Id)
+        .ToList());
+
+    for (var sweep = 0; sweep < RefinementSweeps; sweep++)
+    {
+      var order = sweep % 2 == 0 ? generations : Enumerable.Reverse(generations);
+      foreach (var generation in order)
+      {
+        var row = rows[generation];
+        // Heaviest first: they claim their fee-minimising column before lighter nodes settle around them.
+        var byPriority = Enumerable.Range(0, row.Count)
+          .OrderByDescending(index => priority[row[index]])
+          .ToList();
+
+        foreach (var index in byPriority)
+        {
+          var relatives = links[row[index]];
+          if (relatives.Count != 0)
+          {
+            MoveToward(row, priority, x, index, WeightedMedian(relatives, x));
+          }
+        }
+      }
+    }
+  }
+
+  // The column that minimises a node's own fee is the weighted median of its relatives: an L1 cost is
+  // smallest at the median, where half the link weight sits on either side. We take the midpoint of the
+  // median interval so a node pulled equally in two directions lands symmetrically between them. Because
+  // parent-child links outweigh the spouse link, a leaf parent's median resolves onto its child's
+  // column, so both partners of a couple settle over the children they share.
+  private static double WeightedMedian(IReadOnlyList<WeightedLink> relatives, IReadOnlyDictionary<int, double> x)
+  {
+    var ordered = relatives.OrderBy(link => x[link.Id]).ToList();
+    var half = ordered.Sum(link => link.Weight) / 2;
+
+    var lower = x[ordered[0].Id];
+    var cumulative = 0.0;
+    foreach (var link in ordered)
+    {
+      cumulative += link.Weight;
+      if (cumulative >= half)
+      {
+        lower = x[link.Id];
+        break;
+      }
+    }
+
+    var upper = x[ordered[^1].Id];
+    cumulative = 0.0;
+    for (var i = ordered.Count - 1; i >= 0; i--)
+    {
+      cumulative += ordered[i].Weight;
+      if (cumulative >= half)
+      {
+        upper = x[ordered[i].Id];
+        break;
+      }
+    }
+
+    return (lower + upper) / 2;
+  }
+
+  // Slides the node at <paramref name="index"/> toward <paramref name="target"/> as far as the spacing
+  // allows. Lighter nodes in the way are shoved along (keeping one slot between neighbours); the move
+  // stops at the first node whose priority is at least as high, which never yields. The row order is
+  // therefore never changed.
+  private static void MoveToward(
+    IReadOnlyList<int> row,
+    IReadOnlyDictionary<int, double> priority,
+    Dictionary<int, double> x,
+    int index,
+    double target)
+  {
+    var self = priority[row[index]];
+    var current = x[row[index]];
+
+    if (target > current)
+    {
+      // Find the first equal-or-heavier node to the right; everything before it can be pushed.
+      var blocker = index + 1;
+      while (blocker < row.Count && priority[row[blocker]] < self)
+      {
+        blocker++;
+      }
+
+      // Leave room for the pushed nodes to keep one slot each up to the blocker.
+      var limit = blocker < row.Count ? x[row[blocker]] - (blocker - index) : double.PositiveInfinity;
+      var moved = Math.Min(target, limit);
+      if (moved <= current)
+      {
+        return;
+      }
+
+      x[row[index]] = moved;
+      for (var j = index + 1; j < blocker; j++)
+      {
+        var minimum = x[row[j - 1]] + 1;
+        if (x[row[j]] >= minimum)
+        {
+          break;
+        }
+
+        x[row[j]] = minimum;
+      }
+    }
+    else if (target < current)
+    {
+      var blocker = index - 1;
+      while (blocker >= 0 && priority[row[blocker]] < self)
+      {
+        blocker--;
+      }
+
+      var limit = blocker >= 0 ? x[row[blocker]] + (index - blocker) : double.NegativeInfinity;
+      var moved = Math.Max(target, limit);
+      if (moved >= current)
+      {
+        return;
+      }
+
+      x[row[index]] = moved;
+      for (var j = index - 1; j > blocker; j--)
+      {
+        var maximum = x[row[j + 1]] - 1;
+        if (x[row[j]] <= maximum)
+        {
+          break;
+        }
+
+        x[row[j]] = maximum;
       }
     }
   }

@@ -35,11 +35,15 @@ public partial class FamilyTreePage : ContentPage
   // Where to park the viewport after a (re)build.
   private enum ViewTarget { Center, Top, Bottom }
 
-  public FamilyTreePage(IServiceProvider serviceProvider)
+  public FamilyTreePage(
+    ICancellationTokenProvider cancellationTokenProvider, 
+    ICurrentProjectProvider currentProjectProvider,
+    INameFormatter nameFormatter
+  )
   {
-    _CancellationTokenProvider = serviceProvider.GetRequiredService<ICancellationTokenProvider>();
-    _CurrentProjectProvider = serviceProvider.GetRequiredService<ICurrentProjectProvider>();
-    _NameFormatter = serviceProvider.GetRequiredService<INameFormatter>();
+    _CancellationTokenProvider = cancellationTokenProvider;
+    _CurrentProjectProvider = currentProjectProvider;
+    _NameFormatter = nameFormatter;
     PageCommand = new SafeCommand(OnPageCommand);
 
     InitializeComponent();
