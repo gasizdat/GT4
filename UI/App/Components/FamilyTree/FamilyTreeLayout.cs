@@ -38,9 +38,13 @@ public sealed record FamilyTreeLayoutResult(
 /// <para>
 /// Two optimisation passes then run in sequence. First, <em>swap refinement</em> tests every
 /// adjacent pair within each generation: if exchanging the two X positions reduces the combined
-/// spring + anchor energy, the swap is kept and the pass repeats until no pair improves. This lets
-/// nodes find the globally optimal left-to-right ordering within their row — something the spring
-/// simulation cannot discover because repulsion prevents nodes from crossing. Second, the
+/// spring + anchor + overlap energy, the swap is kept and the pass repeats until no pair improves.
+/// The overlap term charges a heavy fee whenever two horizontal connector runs share a generation
+/// band — every parent-child edge crossing the same pair of generations draws its mid-height run at
+/// one shared Y, so collinear runs are penalised hard to keep them from stacking on top of each
+/// other. This lets nodes find the globally optimal left-to-right ordering within their row —
+/// something the spring simulation cannot discover because repulsion prevents nodes from crossing.
+/// Second, the
 /// <em>spring simulation</em> fine-tunes X positions within the settled ordering: edges attract,
 /// same-row nodes repel, and already-placed nodes weakly resist positional drift. A final sweep
 /// enforces the minimum one-slot gap.
@@ -60,6 +64,9 @@ public sealed class FamilyTreeLayout
   private const int Iterations = 200;
   private const double ParentChildWeight = 1.0;
   private const double SpouseWeight = 0.5;
+  // Fee per slot of overlap between two horizontal connector runs sharing a generation band.
+  // Kept far larger than any spring/anchor term so eliminating overlap dominates every swap.
+  private const double OverlapK = 100.0;
 
   /// <summary>
   /// Clears stored positions so the next <see cref="Update"/> starts from scratch.
@@ -100,6 +107,9 @@ public sealed class FamilyTreeLayout
     // Build weighted adjacency once; shared by reseed, swap, and spring passes.
     var adj = BuildEdgeAdjacency(tree, nodesById);
 
+    // Horizontal connector runs grouped by the generation band they share, used by the overlap fee.
+    var (segByNode, segByLevel) = BuildHorizontalSegments(tree, nodesById);
+
     // Pre-seed new nodes toward their already-placed neighbours.
     ReseedNewNodes(x, existing, adj);
 
@@ -107,7 +117,7 @@ public sealed class FamilyTreeLayout
     // Anchor to original stored positions when evaluating swap energy: a swap for an existing node
     // is only kept if the spring savings outweigh the cost of moving away from its prior slot.
     var originalAnchorX = existing.ToDictionary(id => id, id => x[id]);
-    SwapRefinement(nodesById, x, adj, originalAnchorX);
+    SwapRefinement(nodesById, x, adj, originalAnchorX, segByNode, segByLevel);
 
     // ── position phase ────────────────────────────────────────────────────────────────────────
     // Anchor to post-swap positions so the spring refines within the new ordering rather than
@@ -168,16 +178,20 @@ public sealed class FamilyTreeLayout
   }
 
   // Tests every adjacent pair within each generation and swaps their X positions whenever doing so
-  // reduces the combined spring + anchor energy.  The process repeats until no pair improves,
-  // converging on the energy-minimising permutation within each row.
+  // reduces the combined spring + anchor + overlap energy.  The process repeats until no pair
+  // improves, converging on the energy-minimising permutation within each row.
   //
-  // The key invariant: the A–B edge (if one exists) is excluded from the comparison because
-  // swapping leaves the two nodes equally far apart — its contribution cancels on both sides.
+  // The spring/anchor terms use NodeEnergy, where the A–B edge (if one exists) is excluded because
+  // swapping leaves the two nodes equally far apart — its contribution cancels on both sides. The
+  // overlap term charges OverlapK per slot that two horizontal connector runs share a generation
+  // band; because OverlapK dwarfs the spring terms, the pass treats removing overlap as paramount.
   private static void SwapRefinement(
     IReadOnlyDictionary<int, FamilyTreeNode> nodesById,
     Dictionary<int, double> x,
     IReadOnlyDictionary<int, List<(int Id, double W)>> adj,
-    IReadOnlyDictionary<int, double> anchorX)
+    IReadOnlyDictionary<int, double> anchorX,
+    IReadOnlyDictionary<int, List<HorizontalRun>> segByNode,
+    IReadOnlyDictionary<int, List<HorizontalRun>> segByLevel)
   {
     var rows = nodesById.Values
       .GroupBy(n => n.Generation)
@@ -200,21 +214,99 @@ public sealed class FamilyTreeLayout
           var xA = x[idA];
           var xB = x[idB];
 
-          var currentE = NodeEnergy(idA, xA, adj[idA], idB, x, anchorX)
-                       + NodeEnergy(idB, xB, adj[idB], idA, x, anchorX);
-          var swappedE = NodeEnergy(idA, xB, adj[idA], idB, x, anchorX)
-                       + NodeEnergy(idB, xA, adj[idB], idA, x, anchorX);
+          var beforeE = NodeEnergy(idA, xA, adj[idA], idB, x, anchorX)
+                      + NodeEnergy(idB, xB, adj[idB], idA, x, anchorX)
+                      + OverlapFee(idA, idB, segByNode, segByLevel, x);
 
-          if (swappedE < currentE - 1e-9)
+          x[idA] = xB;
+          x[idB] = xA;
+
+          var afterE = NodeEnergy(idA, xB, adj[idA], idB, x, anchorX)
+                     + NodeEnergy(idB, xA, adj[idB], idA, x, anchorX)
+                     + OverlapFee(idA, idB, segByNode, segByLevel, x);
+
+          if (afterE < beforeE - 1e-9)
           {
-            x[idA] = xB;
-            x[idB] = xA;
             (row[i], row[i + 1]) = (row[i + 1], row[i]);
             improved = true;
+          }
+          else
+          {
+            x[idA] = xA;
+            x[idB] = xB;
           }
         }
       }
     }
+  }
+
+  // A horizontal connector run: the mid-height segment of a parent-child edge spans [From, To] in X
+  // and sits in generation band <see cref="Level"/> (the lower of the two generations it joins).
+  // Every run in a band shares the same Y, so two runs in one band overlap exactly when their X
+  // intervals intersect.
+  private readonly record struct HorizontalRun(int From, int To, int Level);
+
+  // Builds the horizontal runs indexed both by incident node (the endpoints that move on a swap) and
+  // by band (every run a moved run can collide with).
+  private static (Dictionary<int, List<HorizontalRun>> ByNode, Dictionary<int, List<HorizontalRun>> ByLevel)
+    BuildHorizontalSegments(FamilyTree tree, IReadOnlyDictionary<int, FamilyTreeNode> nodesById)
+  {
+    var byNode = nodesById.Keys.ToDictionary(id => id, _ => new List<HorizontalRun>());
+    var byLevel = new Dictionary<int, List<HorizontalRun>>();
+    foreach (var edge in tree.Edges)
+    {
+      if (edge.Relation != FamilyTreeRelation.ParentChild)
+        continue;
+      if (!nodesById.TryGetValue(edge.FromId, out var from) || !nodesById.TryGetValue(edge.ToId, out var to))
+        continue;
+      var level = Math.Min(from.Generation, to.Generation);
+      var run = new HorizontalRun(edge.FromId, edge.ToId, level);
+      byNode[edge.FromId].Add(run);
+      byNode[edge.ToId].Add(run);
+      if (!byLevel.TryGetValue(level, out var list))
+        byLevel[level] = list = [];
+      list.Add(run);
+    }
+    return (byNode, byLevel);
+  }
+
+  // Total overlap fee charged against every run incident to A or B at the current positions. Only
+  // these runs move when A and B swap, so comparing this quantity before and after a swap yields the
+  // exact change in overlap energy (runs not touching A or B keep their pairwise overlap either way).
+  private static double OverlapFee(
+    int idA,
+    int idB,
+    IReadOnlyDictionary<int, List<HorizontalRun>> segByNode,
+    IReadOnlyDictionary<int, List<HorizontalRun>> segByLevel,
+    IReadOnlyDictionary<int, double> x)
+  {
+    var fee = 0.0;
+    foreach (var run in segByNode[idA])
+      fee += RunOverlapAgainstBand(run, segByLevel, x);
+    foreach (var run in segByNode[idB])
+      fee += RunOverlapAgainstBand(run, segByLevel, x);
+    return fee;
+  }
+
+  private static double RunOverlapAgainstBand(
+    HorizontalRun run,
+    IReadOnlyDictionary<int, List<HorizontalRun>> segByLevel,
+    IReadOnlyDictionary<int, double> x)
+  {
+    var aL = Math.Min(x[run.From], x[run.To]);
+    var aR = Math.Max(x[run.From], x[run.To]);
+    var fee = 0.0;
+    foreach (var other in segByLevel[run.Level])
+    {
+      if (other.From == run.From && other.To == run.To)
+        continue;
+      var bL = Math.Min(x[other.From], x[other.To]);
+      var bR = Math.Max(x[other.From], x[other.To]);
+      var overlap = Math.Min(aR, bR) - Math.Max(aL, bL);
+      if (overlap > 0)
+        fee += OverlapK * overlap;
+    }
+    return fee;
   }
 
   // Spring energy of <paramref name="id"/> placed at <paramref name="pos"/>, summing over all
