@@ -114,17 +114,31 @@ public sealed class FamilyTreeLayout
     // Pre-seed new nodes toward their already-placed neighbours.
     ReseedNewNodes(x, existing, adj);
 
+    // ── settle phase ──────────────────────────────────────────────────────────────────────────
+    // Relax once before ordering so the reorder pass sees realistic columns. This matters when the
+    // centred person is a leaf (e.g. a married-in spouse with no ancestors in view): the tidy seed
+    // cannot reach the disconnected branch and collapses its nodes onto one column, leaving nothing
+    // to reorder. The spring's same-row repulsion spreads those ties into distinct positions while
+    // edge springs keep children under their parents, so the overlap fee reflects the real layout
+    // rather than artefacts of the raw seed.
+    var settleAnchorX = existing.ToDictionary(id => id, id => x[id]);
+    SpringRelax(nodesById, x, adj, settleAnchorX);
+
     // ── ordering phase ────────────────────────────────────────────────────────────────────────
-    // Anchor to original stored positions when evaluating swap energy: a swap for an existing node
-    // is only kept if the spring savings outweigh the cost of moving away from its prior slot.
+    // Reorder each row to minimise overlap + spring energy, anchored to settled positions.
     var originalAnchorX = existing.ToDictionary(id => id, id => x[id]);
-    SwapRefinement(nodesById, x, adj, originalAnchorX, segByNode, segByLevel);
+    ReorderRows(nodesById, x, adj, originalAnchorX, segByNode, segByLevel);
 
     // ── position phase ────────────────────────────────────────────────────────────────────────
     // Anchor to post-swap positions so the spring refines within the new ordering rather than
     // pulling nodes back to where they were before the swap.
     var springAnchorX = existing.ToDictionary(id => id, id => x[id]);
     SpringRelax(nodesById, x, adj, springAnchorX);
+
+    // The spring has no overlap awareness and its edge forces can re-cross a couple that the ordering
+    // pass separated (a child's parent springs can drag it back across its spouse). Re-run the
+    // ordering on the settled positions and enforce that final order so it cannot be undone again.
+    ReorderRows(nodesById, x, adj, springAnchorX, segByNode, segByLevel);
 
     ResolveRowOverlaps(nodesById, x);
 
@@ -178,15 +192,18 @@ public sealed class FamilyTreeLayout
     }
   }
 
-  // Tests every adjacent pair within each generation and swaps their X positions whenever doing so
-  // reduces the combined spring + anchor + overlap energy.  The process repeats until no pair
-  // improves, converging on the energy-minimising permutation within each row.
+  // Reorders the nodes within each generation to minimise the combined spring + anchor + overlap
+  // energy. The row keeps its fixed set of column positions; only which node occupies which column
+  // changes, so the row's footprint is preserved while the ordering is optimised.
   //
-  // The spring/anchor terms use NodeEnergy, where the A–B edge (if one exists) is excluded because
-  // swapping leaves the two nodes equally far apart — its contribution cancels on both sides. The
-  // overlap term charges OverlapK per slot that two horizontal connector runs share a generation
-  // band; because OverlapK dwarfs the spring terms, the pass treats removing overlap as paramount.
-  private static void SwapRefinement(
+  // Each step uses an *insertion* move (pull one node out and reinsert it at another column), not a
+  // pairwise swap. Swaps are too weak here: when two couples interleave (bro, bro, spouse, spouse),
+  // every single swap merely trades the spouse-line overlap for an equal parent-child overlap, so no
+  // swap is downhill and the pass stalls. The energy-minimising layout (spouse, bro, bro, spouse) is
+  // two swaps away but a *single* insertion — moving a spouse to the outside — reaches it directly.
+  // The overlap fee charges OverlapK per slot two connector runs share a band; as it dwarfs the
+  // spring terms, clearing overlap dominates the choice.
+  private static void ReorderRows(
     IReadOnlyDictionary<int, FamilyTreeNode> nodesById,
     Dictionary<int, double> x,
     IReadOnlyDictionary<int, List<(int Id, double W)>> adj,
@@ -194,51 +211,125 @@ public sealed class FamilyTreeLayout
     IReadOnlyDictionary<int, List<HorizontalRun>> segByNode,
     IReadOnlyDictionary<int, List<HorizontalRun>> segByLevel)
   {
-    var rows = nodesById.Values
-      .GroupBy(n => n.Generation)
-      .ToDictionary(g => g.Key, g => g.Select(n => n.Id).OrderBy(id => x[id]).ToList());
-
-    var improved = true;
-    while (improved)
+    foreach (var group in nodesById.Values.GroupBy(n => n.Generation))
     {
-      improved = false;
-      foreach (var row in rows.Values)
+      var order = group.Select(n => n.Id).OrderBy(id => x[id]).ToList();
+      if (order.Count < 2)
+        continue;
+
+      // The fixed columns this row occupies; reordering reassigns nodes to them left-to-right.
+      var slots = order.Select(id => x[id]).OrderBy(v => v).ToList();
+      // Bands whose overlap can change as this row is permuted.
+      var bands = order.SelectMany(id => segByNode[id]).Select(r => r.Level).Distinct().ToList();
+      ApplyOrder(order, slots, x);
+
+      var improved = true;
+      while (improved)
       {
-        if (row.Count < 2)
-          continue;
-        row.Sort((a, b) => x[a].CompareTo(x[b]));
+        improved = false;
+        var current = RowEnergy(order, x, adj, anchorX, bands, segByLevel);
+        var bestGain = 1e-9;
+        List<int>? best = null;
 
-        for (var i = 0; i < row.Count - 1; i++)
+        for (var from = 0; from < order.Count; from++)
         {
-          var idA = row[i];
-          var idB = row[i + 1];
-          var xA = x[idA];
-          var xB = x[idB];
-
-          var beforeE = NodeEnergy(idA, xA, adj[idA], idB, x, anchorX)
-                      + NodeEnergy(idB, xB, adj[idB], idA, x, anchorX)
-                      + OverlapFee(idA, idB, segByNode, segByLevel, x);
-
-          x[idA] = xB;
-          x[idB] = xA;
-
-          var afterE = NodeEnergy(idA, xB, adj[idA], idB, x, anchorX)
-                     + NodeEnergy(idB, xA, adj[idB], idA, x, anchorX)
-                     + OverlapFee(idA, idB, segByNode, segByLevel, x);
-
-          if (afterE < beforeE - 1e-9)
+          for (var to = 0; to < order.Count; to++)
           {
-            (row[i], row[i + 1]) = (row[i + 1], row[i]);
-            improved = true;
-          }
-          else
-          {
-            x[idA] = xA;
-            x[idB] = xB;
+            if (to == from)
+              continue;
+            var candidate = MoveItem(order, from, to);
+            ApplyOrder(candidate, slots, x);
+            var gain = current - RowEnergy(candidate, x, adj, anchorX, bands, segByLevel);
+            if (gain > bestGain)
+            {
+              bestGain = gain;
+              best = candidate;
+            }
           }
         }
+
+        if (best is not null)
+        {
+          order = best;
+          improved = true;
+        }
+        ApplyOrder(order, slots, x);
       }
     }
+  }
+
+  // Assigns the row's fixed columns to its nodes in left-to-right order.
+  private static void ApplyOrder(List<int> order, List<double> slots, Dictionary<int, double> x)
+  {
+    for (var k = 0; k < order.Count; k++)
+      x[order[k]] = slots[k];
+  }
+
+  // A copy of <paramref name="order"/> with the item at <paramref name="from"/> reinserted at
+  // <paramref name="to"/>.
+  private static List<int> MoveItem(List<int> order, int from, int to)
+  {
+    var copy = new List<int>(order);
+    var item = copy[from];
+    copy.RemoveAt(from);
+    copy.Insert(to, item);
+    return copy;
+  }
+
+  // Energy attributable to a single row's arrangement: spring + anchor over its nodes plus the
+  // overlap fee of every band it touches. Absolute value is irrelevant — only differences between
+  // permutations of the same row are compared, and the double/single counting of within-row and
+  // cross-row edges is identical across those permutations.
+  private static double RowEnergy(
+    List<int> order,
+    IReadOnlyDictionary<int, double> x,
+    IReadOnlyDictionary<int, List<(int Id, double W)>> adj,
+    IReadOnlyDictionary<int, double> anchorX,
+    List<int> bands,
+    IReadOnlyDictionary<int, List<HorizontalRun>> segByLevel)
+  {
+    var energy = 0.0;
+    foreach (var id in order)
+    {
+      foreach (var (neighborId, w) in adj[id])
+      {
+        var dx = x[id] - x[neighborId];
+        energy += SpringK * 0.5 * w * dx * dx;
+      }
+      if (anchorX.TryGetValue(id, out var ax))
+      {
+        var dx = x[id] - ax;
+        energy += AnchorK * 0.5 * dx * dx;
+      }
+    }
+    foreach (var band in bands)
+      energy += BandOverlapFee(band, segByLevel, x);
+    return energy;
+  }
+
+  // Sum of OverlapK × overlap length over every pair of runs sharing the given band.
+  private static double BandOverlapFee(
+    int band,
+    IReadOnlyDictionary<int, List<HorizontalRun>> segByLevel,
+    IReadOnlyDictionary<int, double> x)
+  {
+    if (!segByLevel.TryGetValue(band, out var runs))
+      return 0;
+    var fee = 0.0;
+    for (var i = 0; i < runs.Count; i++)
+    {
+      var aL = Math.Min(x[runs[i].From], x[runs[i].To]);
+      var aR = Math.Max(x[runs[i].From], x[runs[i].To]);
+      for (var j = i + 1; j < runs.Count; j++)
+      {
+        var bL = Math.Min(x[runs[j].From], x[runs[j].To]);
+        var bR = Math.Max(x[runs[j].From], x[runs[j].To]);
+        var overlap = Math.Min(aR, bR) - Math.Max(aL, bL);
+        if (overlap > 0)
+          fee += OverlapK * overlap;
+      }
+    }
+    return fee;
   }
 
   // A horizontal connector run spanning [From, To] in X within band <see cref="Level"/>. Both the
@@ -278,71 +369,6 @@ public sealed class FamilyTreeLayout
         Add(edge.FromId, edge.ToId, (2 * from.Generation) + 1);
     }
     return (byNode, byLevel);
-  }
-
-  // Total overlap fee charged against every run incident to A or B at the current positions. Only
-  // these runs move when A and B swap, so comparing this quantity before and after a swap yields the
-  // exact change in overlap energy (runs not touching A or B keep their pairwise overlap either way).
-  private static double OverlapFee(
-    int idA,
-    int idB,
-    IReadOnlyDictionary<int, List<HorizontalRun>> segByNode,
-    IReadOnlyDictionary<int, List<HorizontalRun>> segByLevel,
-    IReadOnlyDictionary<int, double> x)
-  {
-    var fee = 0.0;
-    foreach (var run in segByNode[idA])
-      fee += RunOverlapAgainstBand(run, segByLevel, x);
-    foreach (var run in segByNode[idB])
-      fee += RunOverlapAgainstBand(run, segByLevel, x);
-    return fee;
-  }
-
-  private static double RunOverlapAgainstBand(
-    HorizontalRun run,
-    IReadOnlyDictionary<int, List<HorizontalRun>> segByLevel,
-    IReadOnlyDictionary<int, double> x)
-  {
-    var aL = Math.Min(x[run.From], x[run.To]);
-    var aR = Math.Max(x[run.From], x[run.To]);
-    var fee = 0.0;
-    foreach (var other in segByLevel[run.Level])
-    {
-      if (other.From == run.From && other.To == run.To)
-        continue;
-      var bL = Math.Min(x[other.From], x[other.To]);
-      var bR = Math.Max(x[other.From], x[other.To]);
-      var overlap = Math.Min(aR, bR) - Math.Max(aL, bL);
-      if (overlap > 0)
-        fee += OverlapK * overlap;
-    }
-    return fee;
-  }
-
-  // Spring energy of <paramref name="id"/> placed at <paramref name="pos"/>, summing over all
-  // incident edges except the one to <paramref name="excludeId"/> plus the anchor penalty.
-  private static double NodeEnergy(
-    int id,
-    double pos,
-    IReadOnlyList<(int Id, double W)> neighbors,
-    int excludeId,
-    IReadOnlyDictionary<int, double> x,
-    IReadOnlyDictionary<int, double> anchorX)
-  {
-    var energy = 0.0;
-    foreach (var (neighborId, w) in neighbors)
-    {
-      if (neighborId == excludeId)
-        continue;
-      var dx = pos - x[neighborId];
-      energy += SpringK * 0.5 * w * dx * dx;
-    }
-    if (anchorX.TryGetValue(id, out var ax))
-    {
-      var dx = pos - ax;
-      energy += AnchorK * 0.5 * dx * dx;
-    }
-    return energy;
   }
 
   private static void SpringRelax(
