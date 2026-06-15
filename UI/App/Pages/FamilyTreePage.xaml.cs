@@ -16,6 +16,7 @@ public partial class FamilyTreePage : ContentPage
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly INameFormatter _NameFormatter;
   private readonly FamilyTreeLayoutMetrics _Metrics = new();
+  private readonly FamilyTreeLayout _Layout = new();
   private readonly FamilyTreeConnectorsDrawable _ConnectorsDrawable = new();
   // Each "load more" click adds one generation, up to this hard ceiling.
   private const int MaxGenerations = 120;
@@ -143,9 +144,10 @@ public partial class FamilyTreePage : ContentPage
   {
     _Center = person;
     _CenterName = _NameFormatter.ToString(person, NameFormat.ShortPersonName);
-    // A new centre starts a fresh view, so reset the depth back to the default.
+    // A new centre starts a fresh view, so reset the depth and all stored layout positions.
     _AncestorGenerations = InitialGenerations;
     _DescendantGenerations = InitialGenerations;
+    _Layout.Reset();
     OnPropertyChanged(nameof(PageTitle));
     OnPropertyChanged(nameof(OpenPersonToolbarItemName));
     Reload(ViewTarget.Center);
@@ -171,7 +173,7 @@ public partial class FamilyTreePage : ContentPage
       .FamilyTreeProvider
       .BuildAsync(center, _AncestorGenerations, _DescendantGenerations, _IncludeCollaterals, token);
 
-    var layout = FamilyTreeLayout.Build(tree, _Metrics);
+    var layout = _Layout.Update(tree, _Metrics);
     var names = layout.Nodes.ToDictionary(
       node => node.Node.Id,
       node => _NameFormatter.ToString(node.Node.Person, NameFormat.ShortPersonName));

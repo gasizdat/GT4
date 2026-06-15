@@ -30,50 +30,181 @@ public sealed record FamilyTreeLayoutResult(
 /// <summary>
 /// Turns a <see cref="FamilyTree"/> into absolute node rectangles and orthogonal connectors.
 /// <para>
-/// Descendants and ancestors are laid out as two tidy trees that share the centred person as their
-/// root: leaves take successive horizontal slots and each parent is centred over its children.
-/// Spouses are pulled in beside their partner, then every generation row is swept left-to-right to
-/// remove any residual overlap. That seeds a stable left-to-right order, which a final greedy pass
-/// refines by repeatedly pulling each node toward the column that minimises its connector fee (the
-/// weighted span of its links) — shortening the connectors so a married couple straddles the centre
-/// of their children instead of one partner fanning links across the whole row.
+/// A tidy-tree DFS seeds every node with a starting column. Previously laid-out nodes then override
+/// that seed with the X positions they held in the last render, so loading a new generation does not
+/// displace nodes already on screen. New nodes are pre-seeded at the weighted average of their
+/// already-placed neighbours, then a spring simulation relaxes all X positions simultaneously: edges
+/// attract connected nodes toward each other, same-row nodes repel within a short radius, and
+/// already-placed nodes weakly resist drifting from their prior column. A final sweep enforces the
+/// minimum one-slot gap within every row.
 /// </para>
 /// </summary>
-public static class FamilyTreeLayout
+public sealed class FamilyTreeLayout
 {
-  public static FamilyTreeLayoutResult Build(FamilyTree tree, FamilyTreeLayoutMetrics metrics)
+  // X slot positions from the last render, keyed by node ID.
+  private Dictionary<int, double> _xSlots = [];
+
+  // Spring simulation tuning constants. All forces act in "slot" units (1 slot = NodeWidth + HGap).
+  private const double SpringK = 0.25;      // attraction along each edge per slot of separation
+  private const double RepelK = 0.60;       // same-row repulsion magnitude
+  private const double RepelRadius = 2.5;   // repulsion cuts off beyond this many slots
+  private const double AnchorK = 1.80;      // resistance of previously placed nodes to drift
+  private const double Damping = 0.80;      // per-step velocity decay (overdamped → no oscillation)
+  private const double TimeStep = 0.50;
+  private const int Iterations = 200;
+  private const double ParentChildWeight = 1.0;
+  private const double SpouseWeight = 0.5;
+
+  /// <summary>
+  /// Clears stored positions so the next <see cref="Update"/> starts from scratch.
+  /// Call this when the centred person changes.
+  /// </summary>
+  public void Reset() => _xSlots = [];
+
+  public FamilyTreeLayoutResult Update(FamilyTree tree, FamilyTreeLayoutMetrics metrics)
   {
     ArgumentNullException.ThrowIfNull(tree);
     ArgumentNullException.ThrowIfNull(metrics);
 
     if (tree.Nodes.Count == 0)
-    {
       return new FamilyTreeLayoutResult([], [], new Size(0, 0), new Point(0, 0));
-    }
 
-    var nodesById = tree.Nodes.ToDictionary(node => node.Id);
+    var nodesById = tree.Nodes.ToDictionary(n => n.Id);
     var childrenByParent = BuildAdjacency(tree, nodesById, descendants: true);
     var parentsByChild = BuildAdjacency(tree, nodesById, descendants: false);
 
+    // Tidy-tree seeding: gives every node a structurally reasonable column to start from.
     var x = new Dictionary<int, double>();
-
-    // Two independent tidy passes rooted at the centre, then aligned on the centre's column.
     LayoutBranch(tree.CenterId, childrenByParent, x);
     AlignBranch(tree.CenterId, parentsByChild, x);
-
-    // Collaterals (siblings/cousins) hang off the ancestral line, so the centre-rooted passes never
-    // reach them; give each a column under its parents.
     PlaceCollaterals(nodesById, parentsByChild, x);
+    PlaceSpouses(tree, nodesById, x);
+    FillUnplaced(nodesById, x);
 
-    PlaceSpouses(tree, nodesById, x, metrics);
-    ResolveRowOverlaps(nodesById, x, metrics);
+    // Existing nodes override the tidy-tree seed with their stored columns so they don't jump when
+    // a new generation is added above or below.
+    var existing = new HashSet<int>();
+    foreach (var (id, storedX) in _xSlots)
+    {
+      if (!x.ContainsKey(id))
+        continue;
+      x[id] = storedX;
+      existing.Add(id);
+    }
 
-    // The passes above fix a sensible left-to-right order per generation; this shortens the links
-    // within that order.
-    RefineColumns(tree, nodesById, x);
+    // New nodes: pre-seed at the weighted average of already-placed neighbours so the spring only
+    // needs fine-tuning rather than covering a large initial gap.
+    ReseedNewNodes(tree, x, existing);
 
+    SpringRelax(tree, nodesById, x, existing);
+    ResolveRowOverlaps(nodesById, x);
+
+    _xSlots = new Dictionary<int, double>(x);
     return Assemble(tree, nodesById, x, metrics);
   }
+
+  // Walks the graph from new nodes outward, pulling each one toward the weighted-average X of its
+  // already-seeded neighbours.  Multiple passes handle chains of consecutive new nodes.
+  private static void ReseedNewNodes(
+    FamilyTree tree,
+    Dictionary<int, double> x,
+    HashSet<int> existing)
+  {
+    var adj = x.Keys.ToDictionary(id => id, _ => new List<(int Id, double W)>());
+    foreach (var edge in tree.Edges)
+    {
+      if (!x.ContainsKey(edge.FromId) || !x.ContainsKey(edge.ToId))
+        continue;
+      var w = edge.Relation == FamilyTreeRelation.Spouse ? SpouseWeight : ParentChildWeight;
+      adj[edge.FromId].Add((edge.ToId, w));
+      adj[edge.ToId].Add((edge.FromId, w));
+    }
+
+    var seeded = new HashSet<int>(existing);
+    var changed = true;
+    while (changed)
+    {
+      changed = false;
+      foreach (var id in x.Keys)
+      {
+        if (seeded.Contains(id))
+          continue;
+        var placed = adj[id].Where(n => seeded.Contains(n.Id)).ToList();
+        if (placed.Count == 0)
+          continue;
+        var totalW = placed.Sum(n => n.W);
+        x[id] = placed.Sum(n => x[n.Id] * n.W) / totalW;
+        seeded.Add(id);
+        changed = true;
+      }
+    }
+  }
+
+  private static void SpringRelax(
+    FamilyTree tree,
+    IReadOnlyDictionary<int, FamilyTreeNode> nodesById,
+    Dictionary<int, double> x,
+    HashSet<int> existing)
+  {
+    var velocity = nodesById.Keys.ToDictionary(id => id, _ => 0.0);
+
+    // Snapshot existing positions for the anchor force.
+    var anchorX = existing.ToDictionary(id => id, id => x[id]);
+
+    // Group node IDs by generation: only same-row pairs repel each other.
+    var rows = nodesById.Values
+      .GroupBy(n => n.Generation)
+      .ToDictionary(g => g.Key, g => g.Select(n => n.Id).ToList());
+
+    for (var iter = 0; iter < Iterations; iter++)
+    {
+      var forces = nodesById.Keys.ToDictionary(id => id, _ => 0.0);
+
+      // Edge springs: pull each connected pair toward the same horizontal position.
+      foreach (var edge in tree.Edges)
+      {
+        if (!x.ContainsKey(edge.FromId) || !x.ContainsKey(edge.ToId))
+          continue;
+        var w = edge.Relation == FamilyTreeRelation.Spouse ? SpouseWeight : ParentChildWeight;
+        var dx = x[edge.ToId] - x[edge.FromId];
+        var f = SpringK * dx * w;
+        forces[edge.FromId] += f;
+        forces[edge.ToId] -= f;
+      }
+
+      // Same-row repulsion: linear force that drops to zero at RepelRadius slots.
+      foreach (var row in rows.Values)
+      {
+        for (var i = 0; i < row.Count; i++)
+        {
+          for (var j = i + 1; j < row.Count; j++)
+          {
+            var dx = x[row[j]] - x[row[i]];
+            var dist = Math.Abs(dx);
+            if (dist >= RepelRadius)
+              continue;
+            var f = RepelK * (RepelRadius - dist) / RepelRadius;
+            var sign = dx >= 0 ? 1.0 : -1.0;
+            forces[row[i]] -= f * sign;
+            forces[row[j]] += f * sign;
+          }
+        }
+      }
+
+      // Anchor: previously placed nodes resist drifting from where they were last render.
+      foreach (var (id, ax) in anchorX)
+        forces[id] += AnchorK * (ax - x[id]);
+
+      // Semi-implicit Euler integration with velocity damping.
+      foreach (var id in nodesById.Keys)
+      {
+        velocity[id] = (velocity[id] + forces[id] * TimeStep) * Damping;
+        x[id] += velocity[id] * TimeStep;
+      }
+    }
+  }
+
+  // ── helpers carried over from the original static implementation ─────────────────────────────
 
   private static Dictionary<int, List<int>> BuildAdjacency(
     FamilyTree tree,
@@ -81,38 +212,24 @@ public static class FamilyTreeLayout
     bool descendants)
   {
     var adjacency = new Dictionary<int, List<int>>();
-
     foreach (var edge in tree.Edges)
     {
       if (edge.Relation != FamilyTreeRelation.ParentChild)
-      {
         continue;
-      }
-
-      // Descendant pass walks parent -> child (downward); ancestor pass walks child -> parent (upward).
       var (key, value) = descendants ? (edge.FromId, edge.ToId) : (edge.ToId, edge.FromId);
       if (!nodesById.ContainsKey(key) || !nodesById.ContainsKey(value))
-      {
         continue;
-      }
-
       if (!adjacency.TryGetValue(key, out var list))
-      {
         adjacency[key] = list = [];
-      }
-
       list.Add(value);
     }
-
     return adjacency;
   }
 
-  // First pass: assign an absolute slot to the centre and one whole branch (descendants).
   private static void LayoutBranch(int rootId, Dictionary<int, List<int>> childrenOf, Dictionary<int, double> x)
   {
     var cursor = 0.0;
-    var visited = new HashSet<int>();
-    AssignSlots(rootId, childrenOf, x, visited, ref cursor);
+    AssignSlots(rootId, childrenOf, x, [], ref cursor);
   }
 
   private static double AssignSlots(
@@ -124,43 +241,33 @@ public static class FamilyTreeLayout
   {
     visited.Add(id);
     var children = childrenOf.TryGetValue(id, out var list)
-      ? list.Where(child => !visited.Contains(child)).ToList()
+      ? list.Where(c => !visited.Contains(c)).ToList()
       : [];
 
     if (children.Count == 0)
     {
-      x[id] = cursor;
-      cursor += 1;
+      x[id] = cursor++;
       return x[id];
     }
 
     var sum = 0.0;
     foreach (var child in children)
-    {
       sum += AssignSlots(child, childrenOf, x, visited, ref cursor);
-    }
 
     x[id] = sum / children.Count;
     return x[id];
   }
 
-  // Second pass: lay out the other branch (ancestors) relative to its own root, then slide the whole
-  // branch sideways so the shared centre keeps the column it already got from the first pass.
   private static void AlignBranch(int rootId, Dictionary<int, List<int>> parentsOf, Dictionary<int, double> x)
   {
     var branchX = new Dictionary<int, double>();
     var cursor = 0.0;
     AssignSlots(rootId, parentsOf, branchX, [], ref cursor);
-
     var shift = x[rootId] - branchX[rootId];
     foreach (var (id, slot) in branchX)
     {
-      if (id == rootId)
-      {
-        continue;
-      }
-
-      x[id] = slot + shift;
+      if (id != rootId)
+        x[id] = slot + shift;
     }
   }
 
@@ -169,272 +276,54 @@ public static class FamilyTreeLayout
     Dictionary<int, List<int>> parentsByChild,
     Dictionary<int, double> x)
   {
-    // Walk generations top-down: a node's parents sit one generation up and are therefore placed
-    // earlier in this sweep, so a collateral can inherit the average column of its placed parents.
-    foreach (var node in nodesById.Values.OrderByDescending(node => node.Generation))
+    foreach (var node in nodesById.Values.OrderByDescending(n => n.Generation))
     {
       if (x.ContainsKey(node.Id))
-      {
         continue;
-      }
-
-      if (parentsByChild.TryGetValue(node.Id, out var parents))
-      {
-        var placed = parents.Where(x.ContainsKey).Select(parent => x[parent]).ToList();
-        if (placed.Count != 0)
-        {
-          x[node.Id] = placed.Average();
-        }
-      }
+      if (!parentsByChild.TryGetValue(node.Id, out var parents))
+        continue;
+      var placed = parents.Where(x.ContainsKey).Select(p => x[p]).ToList();
+      if (placed.Count != 0)
+        x[node.Id] = placed.Average();
     }
   }
 
   private static void PlaceSpouses(
     FamilyTree tree,
     IReadOnlyDictionary<int, FamilyTreeNode> nodesById,
-    Dictionary<int, double> x,
-    FamilyTreeLayoutMetrics metrics)
+    Dictionary<int, double> x)
   {
-    // A spouse with no slot of its own is parked one column to the right of the partner that has one.
     foreach (var edge in tree.Edges)
     {
       if (edge.Relation != FamilyTreeRelation.Spouse)
-      {
         continue;
-      }
-
       var aPlaced = x.ContainsKey(edge.FromId);
       var bPlaced = x.ContainsKey(edge.ToId);
-
       if (aPlaced && !bPlaced && nodesById.ContainsKey(edge.ToId))
-      {
         x[edge.ToId] = x[edge.FromId] + 1;
-      }
       else if (bPlaced && !aPlaced && nodesById.ContainsKey(edge.FromId))
-      {
         x[edge.FromId] = x[edge.ToId] + 1;
-      }
     }
+  }
 
-    // Any node still unplaced (disconnected spouse chains) falls back to the far right of its row.
+  private static void FillUnplaced(IReadOnlyDictionary<int, FamilyTreeNode> nodesById, Dictionary<int, double> x)
+  {
     foreach (var node in nodesById.Values)
-    {
       x.TryAdd(node.Id, 0);
-    }
   }
 
   private static void ResolveRowOverlaps(
     IReadOnlyDictionary<int, FamilyTreeNode> nodesById,
-    Dictionary<int, double> x,
-    FamilyTreeLayoutMetrics metrics)
-  {
-    var rows = nodesById.Values.GroupBy(node => node.Generation);
-
-    foreach (var row in rows)
-    {
-      var ordered = row.OrderBy(node => x[node.Id]).ThenBy(node => node.Id).ToList();
-      for (var i = 1; i < ordered.Count; i++)
-      {
-        var previous = x[ordered[i - 1].Id];
-        var current = x[ordered[i].Id];
-        if (current - previous < 1)
-        {
-          x[ordered[i].Id] = previous + 1;
-        }
-      }
-    }
-  }
-
-  // How many relaxation sweeps to run. The trees are small (a few dozen nodes per row at most) and the
-  // greedy pass converges quickly, so a modest fixed budget keeps the result stable and cheap.
-  private const int RefinementSweeps = 24;
-
-  // Partners are already kept side by side by the frozen row order (the seeding pass parks a spouse
-  // right next to its mate and nothing is ever reordered between them), so the spouse link only needs a
-  // gentle pull. It is deliberately lighter than a parent-child link: were it heavier, the fee-minimising
-  // column (a weighted median) of a leaf parent would collapse onto its spouse and ignore its child, so
-  // a couple would glue together but never settle over the children they share. Lighter keeps each
-  // partner tracking its children while adjacency holds the couple together.
-  private const double ParentChildWeight = 1.0;
-  private const double SpouseWeight = 0.5;
-
-  /// <summary>One relative of a node together with the fee charged per slot of horizontal separation.</summary>
-  private readonly record struct WeightedLink(int Id, double Weight);
-
-  // Greedy fee minimisation. The "fee" of a connector is its horizontal span (in slots) times the
-  // weight of its relation, and the total fee is what we want to drive down. Each generation keeps the
-  // left-to-right order it was seeded with — so no new line crossings can appear — while every node is
-  // repeatedly pulled toward the column that minimises its own incident fee (the weighted median of its
-  // relatives). Better-connected nodes move first and may shove lighter neighbours aside but never
-  // displace an equally- or better-connected one, so the spine straightens and in-married spouses and
-  // leaf parents collapse onto their children instead of trailing long links across the row.
-  private static void RefineColumns(
-    FamilyTree tree,
-    IReadOnlyDictionary<int, FamilyTreeNode> nodesById,
     Dictionary<int, double> x)
   {
-    var links = nodesById.Keys.ToDictionary(id => id, _ => new List<WeightedLink>());
-    foreach (var edge in tree.Edges)
+    foreach (var row in nodesById.Values.GroupBy(n => n.Generation))
     {
-      if (!links.ContainsKey(edge.FromId) || !links.ContainsKey(edge.ToId))
+      var ordered = row.OrderBy(n => x[n.Id]).ThenBy(n => n.Id).ToList();
+      for (var i = 1; i < ordered.Count; i++)
       {
-        continue;
-      }
-
-      var weight = edge.Relation == FamilyTreeRelation.Spouse ? SpouseWeight : ParentChildWeight;
-      links[edge.FromId].Add(new WeightedLink(edge.ToId, weight));
-      links[edge.ToId].Add(new WeightedLink(edge.FromId, weight));
-    }
-
-    // A node's "priority" is its total link weight: the heavier it is connected, the more it costs to
-    // leave it mis-aligned, so it gets first pick of its column and the right to push lighter nodes.
-    var priority = links.ToDictionary(pair => pair.Key, pair => pair.Value.Sum(link => link.Weight));
-
-    // Process generations top-down then bottom-up on alternating sweeps so pull from above and below
-    // balances out. The per-row order is frozen up front from the seeding passes' columns.
-    var generations = nodesById.Values
-      .Select(node => node.Generation)
-      .Distinct()
-      .OrderByDescending(generation => generation)
-      .ToList();
-
-    var rows = generations.ToDictionary(
-      generation => generation,
-      generation => nodesById.Values
-        .Where(node => node.Generation == generation)
-        .OrderBy(node => x[node.Id])
-        .ThenBy(node => node.Id)
-        .Select(node => node.Id)
-        .ToList());
-
-    for (var sweep = 0; sweep < RefinementSweeps; sweep++)
-    {
-      var order = sweep % 2 == 0 ? generations : Enumerable.Reverse(generations);
-      foreach (var generation in order)
-      {
-        var row = rows[generation];
-        // Heaviest first: they claim their fee-minimising column before lighter nodes settle around them.
-        var byPriority = Enumerable.Range(0, row.Count)
-          .OrderByDescending(index => priority[row[index]])
-          .ToList();
-
-        foreach (var index in byPriority)
-        {
-          var relatives = links[row[index]];
-          if (relatives.Count != 0)
-          {
-            MoveToward(row, priority, x, index, WeightedMedian(relatives, x));
-          }
-        }
-      }
-    }
-  }
-
-  // The column that minimises a node's own fee is the weighted median of its relatives: an L1 cost is
-  // smallest at the median, where half the link weight sits on either side. We take the midpoint of the
-  // median interval so a node pulled equally in two directions lands symmetrically between them. Because
-  // parent-child links outweigh the spouse link, a leaf parent's median resolves onto its child's
-  // column, so both partners of a couple settle over the children they share.
-  private static double WeightedMedian(IReadOnlyList<WeightedLink> relatives, IReadOnlyDictionary<int, double> x)
-  {
-    var ordered = relatives.OrderBy(link => x[link.Id]).ToList();
-    var half = ordered.Sum(link => link.Weight) / 2;
-
-    var lower = x[ordered[0].Id];
-    var cumulative = 0.0;
-    foreach (var link in ordered)
-    {
-      cumulative += link.Weight;
-      if (cumulative >= half)
-      {
-        lower = x[link.Id];
-        break;
-      }
-    }
-
-    var upper = x[ordered[^1].Id];
-    cumulative = 0.0;
-    for (var i = ordered.Count - 1; i >= 0; i--)
-    {
-      cumulative += ordered[i].Weight;
-      if (cumulative >= half)
-      {
-        upper = x[ordered[i].Id];
-        break;
-      }
-    }
-
-    return (lower + upper) / 2;
-  }
-
-  // Slides the node at <paramref name="index"/> toward <paramref name="target"/> as far as the spacing
-  // allows. Lighter nodes in the way are shoved along (keeping one slot between neighbours); the move
-  // stops at the first node whose priority is at least as high, which never yields. The row order is
-  // therefore never changed.
-  private static void MoveToward(
-    IReadOnlyList<int> row,
-    IReadOnlyDictionary<int, double> priority,
-    Dictionary<int, double> x,
-    int index,
-    double target)
-  {
-    var self = priority[row[index]];
-    var current = x[row[index]];
-
-    if (target > current)
-    {
-      // Find the first equal-or-heavier node to the right; everything before it can be pushed.
-      var blocker = index + 1;
-      while (blocker < row.Count && priority[row[blocker]] < self)
-      {
-        blocker++;
-      }
-
-      // Leave room for the pushed nodes to keep one slot each up to the blocker.
-      var limit = blocker < row.Count ? x[row[blocker]] - (blocker - index) : double.PositiveInfinity;
-      var moved = Math.Min(target, limit);
-      if (moved <= current)
-      {
-        return;
-      }
-
-      x[row[index]] = moved;
-      for (var j = index + 1; j < blocker; j++)
-      {
-        var minimum = x[row[j - 1]] + 1;
-        if (x[row[j]] >= minimum)
-        {
-          break;
-        }
-
-        x[row[j]] = minimum;
-      }
-    }
-    else if (target < current)
-    {
-      var blocker = index - 1;
-      while (blocker >= 0 && priority[row[blocker]] < self)
-      {
-        blocker--;
-      }
-
-      var limit = blocker >= 0 ? x[row[blocker]] + (index - blocker) : double.NegativeInfinity;
-      var moved = Math.Max(target, limit);
-      if (moved >= current)
-      {
-        return;
-      }
-
-      x[row[index]] = moved;
-      for (var j = index - 1; j > blocker; j--)
-      {
-        var maximum = x[row[j + 1]] - 1;
-        if (x[row[j]] <= maximum)
-        {
-          break;
-        }
-
-        x[row[j]] = maximum;
+        var minimum = x[ordered[i - 1].Id] + 1;
+        if (x[ordered[i].Id] < minimum)
+          x[ordered[i].Id] = minimum;
       }
     }
   }
@@ -445,7 +334,7 @@ public static class FamilyTreeLayout
     Dictionary<int, double> x,
     FamilyTreeLayoutMetrics metrics)
   {
-    var maxGeneration = nodesById.Values.Max(node => node.Generation);
+    var maxGeneration = nodesById.Values.Max(n => n.Generation);
     var minSlot = x.Values.Min();
 
     double Left(int id) => metrics.Margin + (x[id] - minSlot) * metrics.SlotPitch;
@@ -462,9 +351,8 @@ public static class FamilyTreeLayout
     }
 
     var connectors = BuildConnectors(tree, bounds, metrics);
-
-    var width = layouts.Max(layout => layout.Bounds.Right) + metrics.Margin;
-    var height = layouts.Max(layout => layout.Bounds.Bottom) + metrics.Margin;
+    var width = layouts.Max(l => l.Bounds.Right) + metrics.Margin;
+    var height = layouts.Max(l => l.Bounds.Bottom) + metrics.Margin;
     var centerTopLeft = bounds.TryGetValue(tree.CenterId, out var centerRect)
       ? centerRect.Location
       : new Point(0, 0);
@@ -478,21 +366,15 @@ public static class FamilyTreeLayout
     FamilyTreeLayoutMetrics metrics)
   {
     var connectors = new List<FamilyTreeConnector>(tree.Edges.Count);
-
     foreach (var edge in tree.Edges)
     {
       if (!bounds.TryGetValue(edge.FromId, out var from) || !bounds.TryGetValue(edge.ToId, out var to))
-      {
         continue;
-      }
-
       var points = edge.Relation == FamilyTreeRelation.ParentChild
-        ? ParentChildPath(parent: from, child: to)
+        ? ParentChildPath(from, to)
         : SpousePath(from, to);
-
       connectors.Add(new FamilyTreeConnector(edge.Relation, points));
     }
-
     return connectors;
   }
 
@@ -503,8 +385,6 @@ public static class FamilyTreeLayout
     var endX = (float)child.Center.X;
     var endY = (float)child.Top;
     var midY = (startY + endY) / 2f;
-
-    // Drop from the parent, run across at the midpoint, then drop into the child: two right-angle bends.
     return
     [
       new PointF(startX, startY),
@@ -518,7 +398,6 @@ public static class FamilyTreeLayout
   {
     var (left, right) = a.Center.X <= b.Center.X ? (a, b) : (b, a);
     var y = (float)left.Center.Y;
-
     return
     [
       new PointF((float)left.Right, y),
