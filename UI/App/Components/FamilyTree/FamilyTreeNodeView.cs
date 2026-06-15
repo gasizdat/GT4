@@ -28,13 +28,15 @@ public sealed class FamilyTreeNodeView : ContentView
       Clip = new EllipseGeometry(new Point(PhotoSize / 2, PhotoSize / 2), PhotoSize / 2, PhotoSize / 2),
     };
 
+    var borderThikness = isCenter ? 3 : 1.5;
+
     var ring = new Border
     {
-      WidthRequest = PhotoSize,
-      HeightRequest = PhotoSize,
+      WidthRequest = PhotoSize + borderThikness * 2,
+      HeightRequest = PhotoSize + borderThikness * 2,
       Padding = 0,
       Stroke = ringColor,
-      StrokeThickness = isCenter ? 3 : 1.5,
+      StrokeThickness = borderThikness,
       StrokeShape = new Ellipse(),
       HorizontalOptions = LayoutOptions.Center,
       Content = photo,
