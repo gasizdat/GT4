@@ -30,26 +30,32 @@ public sealed record FamilyTreeLayoutResult(
 /// <summary>
 /// Turns a <see cref="FamilyTree"/> into absolute node rectangles and orthogonal connectors.
 /// <para>
-/// A tidy-tree DFS seeds every node with a starting column. Previously laid-out nodes then override
-/// that seed with the X positions they held in the last render, so loading a new generation does not
-/// displace nodes already on screen. New nodes are pre-seeded at the weighted average of their
-/// already-placed neighbours, then a spring simulation relaxes all X positions simultaneously: edges
-/// attract connected nodes toward each other, same-row nodes repel within a short radius, and
-/// already-placed nodes weakly resist drifting from their prior column. A final sweep enforces the
-/// minimum one-slot gap within every row.
+/// A tidy-tree DFS seeds every node with a starting column. Previously laid-out nodes override
+/// that seed with their last-render positions so loading a new generation does not displace nodes
+/// already on screen. New nodes are pre-seeded at the weighted average of their already-placed
+/// neighbours.
+/// </para>
+/// <para>
+/// Two optimisation passes then run in sequence. First, <em>swap refinement</em> tests every
+/// adjacent pair within each generation: if exchanging the two X positions reduces the combined
+/// spring + anchor energy, the swap is kept and the pass repeats until no pair improves. This lets
+/// nodes find the globally optimal left-to-right ordering within their row — something the spring
+/// simulation cannot discover because repulsion prevents nodes from crossing. Second, the
+/// <em>spring simulation</em> fine-tunes X positions within the settled ordering: edges attract,
+/// same-row nodes repel, and already-placed nodes weakly resist positional drift. A final sweep
+/// enforces the minimum one-slot gap.
 /// </para>
 /// </summary>
 public sealed class FamilyTreeLayout
 {
-  // X slot positions from the last render, keyed by node ID.
   private Dictionary<int, double> _xSlots = [];
 
-  // Spring simulation tuning constants. All forces act in "slot" units (1 slot = NodeWidth + HGap).
-  private const double SpringK = 0.25;      // attraction along each edge per slot of separation
+  // All force constants act in slot units (1 slot = NodeWidth + HorizontalGap).
+  private const double SpringK = 0.25;      // attraction per slot of edge separation
   private const double RepelK = 0.60;       // same-row repulsion magnitude
   private const double RepelRadius = 2.5;   // repulsion cuts off beyond this many slots
-  private const double AnchorK = 1.80;      // resistance of previously placed nodes to drift
-  private const double Damping = 0.80;      // per-step velocity decay (overdamped → no oscillation)
+  private const double AnchorK = 0.80;      // resistance of previously placed nodes to drift
+  private const double Damping = 0.80;
   private const double TimeStep = 0.50;
   private const int Iterations = 200;
   private const double ParentChildWeight = 1.0;
@@ -73,7 +79,7 @@ public sealed class FamilyTreeLayout
     var childrenByParent = BuildAdjacency(tree, nodesById, descendants: true);
     var parentsByChild = BuildAdjacency(tree, nodesById, descendants: false);
 
-    // Tidy-tree seeding: gives every node a structurally reasonable column to start from.
+    // Tidy-tree seeding gives every node a structurally reasonable starting column.
     var x = new Dictionary<int, double>();
     LayoutBranch(tree.CenterId, childrenByParent, x);
     AlignBranch(tree.CenterId, parentsByChild, x);
@@ -81,8 +87,7 @@ public sealed class FamilyTreeLayout
     PlaceSpouses(tree, nodesById, x);
     FillUnplaced(nodesById, x);
 
-    // Existing nodes override the tidy-tree seed with their stored columns so they don't jump when
-    // a new generation is added above or below.
+    // Existing nodes override the tidy-tree seed with their stored columns.
     var existing = new HashSet<int>();
     foreach (var (id, storedX) in _xSlots)
     {
@@ -92,34 +97,56 @@ public sealed class FamilyTreeLayout
       existing.Add(id);
     }
 
-    // New nodes: pre-seed at the weighted average of already-placed neighbours so the spring only
-    // needs fine-tuning rather than covering a large initial gap.
-    ReseedNewNodes(tree, x, existing);
+    // Build weighted adjacency once; shared by reseed, swap, and spring passes.
+    var adj = BuildEdgeAdjacency(tree, nodesById);
 
-    SpringRelax(tree, nodesById, x, existing);
+    // Pre-seed new nodes toward their already-placed neighbours.
+    ReseedNewNodes(x, existing, adj);
+
+    // ── ordering phase ────────────────────────────────────────────────────────────────────────
+    // Anchor to original stored positions when evaluating swap energy: a swap for an existing node
+    // is only kept if the spring savings outweigh the cost of moving away from its prior slot.
+    var originalAnchorX = existing.ToDictionary(id => id, id => x[id]);
+    SwapRefinement(nodesById, x, adj, originalAnchorX);
+
+    // ── position phase ────────────────────────────────────────────────────────────────────────
+    // Anchor to post-swap positions so the spring refines within the new ordering rather than
+    // pulling nodes back to where they were before the swap.
+    var springAnchorX = existing.ToDictionary(id => id, id => x[id]);
+    SpringRelax(nodesById, x, adj, springAnchorX);
+
     ResolveRowOverlaps(nodesById, x);
 
     _xSlots = new Dictionary<int, double>(x);
     return Assemble(tree, nodesById, x, metrics);
   }
 
-  // Walks the graph from new nodes outward, pulling each one toward the weighted-average X of its
-  // already-seeded neighbours.  Multiple passes handle chains of consecutive new nodes.
-  private static void ReseedNewNodes(
+  // ── optimisation passes ───────────────────────────────────────────────────────────────────────
+
+  // Builds a symmetric, weighted adjacency list for every node in the tree.
+  private static Dictionary<int, List<(int Id, double W)>> BuildEdgeAdjacency(
     FamilyTree tree,
-    Dictionary<int, double> x,
-    HashSet<int> existing)
+    IReadOnlyDictionary<int, FamilyTreeNode> nodesById)
   {
-    var adj = x.Keys.ToDictionary(id => id, _ => new List<(int Id, double W)>());
+    var adj = nodesById.Keys.ToDictionary(id => id, _ => new List<(int Id, double W)>());
     foreach (var edge in tree.Edges)
     {
-      if (!x.ContainsKey(edge.FromId) || !x.ContainsKey(edge.ToId))
+      if (!adj.ContainsKey(edge.FromId) || !adj.ContainsKey(edge.ToId))
         continue;
       var w = edge.Relation == FamilyTreeRelation.Spouse ? SpouseWeight : ParentChildWeight;
       adj[edge.FromId].Add((edge.ToId, w));
       adj[edge.ToId].Add((edge.FromId, w));
     }
+    return adj;
+  }
 
+  // Pre-seed new nodes at the weighted average X of already-placed neighbours so the spring covers
+  // a much smaller initial gap.  Chains of new nodes are handled by running multiple passes.
+  private static void ReseedNewNodes(
+    Dictionary<int, double> x,
+    HashSet<int> existing,
+    IReadOnlyDictionary<int, List<(int Id, double W)>> adj)
+  {
     var seeded = new HashSet<int>(existing);
     var changed = true;
     while (changed)
@@ -140,18 +167,89 @@ public sealed class FamilyTreeLayout
     }
   }
 
-  private static void SpringRelax(
-    FamilyTree tree,
+  // Tests every adjacent pair within each generation and swaps their X positions whenever doing so
+  // reduces the combined spring + anchor energy.  The process repeats until no pair improves,
+  // converging on the energy-minimising permutation within each row.
+  //
+  // The key invariant: the A–B edge (if one exists) is excluded from the comparison because
+  // swapping leaves the two nodes equally far apart — its contribution cancels on both sides.
+  private static void SwapRefinement(
     IReadOnlyDictionary<int, FamilyTreeNode> nodesById,
     Dictionary<int, double> x,
-    HashSet<int> existing)
+    IReadOnlyDictionary<int, List<(int Id, double W)>> adj,
+    IReadOnlyDictionary<int, double> anchorX)
+  {
+    var rows = nodesById.Values
+      .GroupBy(n => n.Generation)
+      .ToDictionary(g => g.Key, g => g.Select(n => n.Id).OrderBy(id => x[id]).ToList());
+
+    var improved = true;
+    while (improved)
+    {
+      improved = false;
+      foreach (var row in rows.Values)
+      {
+        if (row.Count < 2)
+          continue;
+        row.Sort((a, b) => x[a].CompareTo(x[b]));
+
+        for (var i = 0; i < row.Count - 1; i++)
+        {
+          var idA = row[i];
+          var idB = row[i + 1];
+          var xA = x[idA];
+          var xB = x[idB];
+
+          var currentE = NodeEnergy(idA, xA, adj[idA], idB, x, anchorX)
+                       + NodeEnergy(idB, xB, adj[idB], idA, x, anchorX);
+          var swappedE = NodeEnergy(idA, xB, adj[idA], idB, x, anchorX)
+                       + NodeEnergy(idB, xA, adj[idB], idA, x, anchorX);
+
+          if (swappedE < currentE - 1e-9)
+          {
+            x[idA] = xB;
+            x[idB] = xA;
+            (row[i], row[i + 1]) = (row[i + 1], row[i]);
+            improved = true;
+          }
+        }
+      }
+    }
+  }
+
+  // Spring energy of <paramref name="id"/> placed at <paramref name="pos"/>, summing over all
+  // incident edges except the one to <paramref name="excludeId"/> plus the anchor penalty.
+  private static double NodeEnergy(
+    int id,
+    double pos,
+    IReadOnlyList<(int Id, double W)> neighbors,
+    int excludeId,
+    IReadOnlyDictionary<int, double> x,
+    IReadOnlyDictionary<int, double> anchorX)
+  {
+    var energy = 0.0;
+    foreach (var (neighborId, w) in neighbors)
+    {
+      if (neighborId == excludeId)
+        continue;
+      var dx = pos - x[neighborId];
+      energy += SpringK * 0.5 * w * dx * dx;
+    }
+    if (anchorX.TryGetValue(id, out var ax))
+    {
+      var dx = pos - ax;
+      energy += AnchorK * 0.5 * dx * dx;
+    }
+    return energy;
+  }
+
+  private static void SpringRelax(
+    IReadOnlyDictionary<int, FamilyTreeNode> nodesById,
+    Dictionary<int, double> x,
+    IReadOnlyDictionary<int, List<(int Id, double W)>> adj,
+    IReadOnlyDictionary<int, double> anchorX)
   {
     var velocity = nodesById.Keys.ToDictionary(id => id, _ => 0.0);
-
-    // Snapshot existing positions for the anchor force.
-    var anchorX = existing.ToDictionary(id => id, id => x[id]);
-
-    // Group node IDs by generation: only same-row pairs repel each other.
     var rows = nodesById.Values
       .GroupBy(n => n.Generation)
       .ToDictionary(g => g.Key, g => g.Select(n => n.Id).ToList());
@@ -160,19 +258,21 @@ public sealed class FamilyTreeLayout
     {
       var forces = nodesById.Keys.ToDictionary(id => id, _ => 0.0);
 
-      // Edge springs: pull each connected pair toward the same horizontal position.
-      foreach (var edge in tree.Edges)
+      // Edge springs: process each edge once using the id < neighborId convention.
+      foreach (var (id, neighbors) in adj)
       {
-        if (!x.ContainsKey(edge.FromId) || !x.ContainsKey(edge.ToId))
-          continue;
-        var w = edge.Relation == FamilyTreeRelation.Spouse ? SpouseWeight : ParentChildWeight;
-        var dx = x[edge.ToId] - x[edge.FromId];
-        var f = SpringK * dx * w;
-        forces[edge.FromId] += f;
-        forces[edge.ToId] -= f;
+        foreach (var (neighborId, w) in neighbors)
+        {
+          if (id >= neighborId)
+            continue;
+          var dx = x[neighborId] - x[id];
+          var f = SpringK * dx * w;
+          forces[id] += f;
+          forces[neighborId] -= f;
+        }
       }
 
-      // Same-row repulsion: linear force that drops to zero at RepelRadius slots.
+      // Same-row repulsion: linear, drops to zero at RepelRadius slots.
       foreach (var row in rows.Values)
       {
         for (var i = 0; i < row.Count; i++)
@@ -191,11 +291,11 @@ public sealed class FamilyTreeLayout
         }
       }
 
-      // Anchor: previously placed nodes resist drifting from where they were last render.
+      // Anchor: placed nodes resist drifting from their post-swap positions.
       foreach (var (id, ax) in anchorX)
         forces[id] += AnchorK * (ax - x[id]);
 
-      // Semi-implicit Euler integration with velocity damping.
+      // Semi-implicit Euler.
       foreach (var id in nodesById.Keys)
       {
         velocity[id] = (velocity[id] + forces[id] * TimeStep) * Damping;
@@ -204,7 +304,7 @@ public sealed class FamilyTreeLayout
     }
   }
 
-  // ── helpers carried over from the original static implementation ─────────────────────────────
+  // ── tidy-tree seeding helpers ─────────────────────────────────────────────────────────────────
 
   private static Dictionary<int, List<int>> BuildAdjacency(
     FamilyTree tree,
@@ -327,6 +427,8 @@ public sealed class FamilyTreeLayout
       }
     }
   }
+
+  // ── assembly ──────────────────────────────────────────────────────────────────────────────────
 
   private static FamilyTreeLayoutResult Assemble(
     FamilyTree tree,
