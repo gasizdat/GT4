@@ -13,27 +13,30 @@ between them, centred on a focal person.
   - the `"OpenPerson"` toolbar command → open the centre in `PersonPage`.
 
 ## State
-- `_Center` / `_CenterName`: the focal person and its formatted short name.
+- `_Center` (a `Person?`) / `_CenterName`: the focal person and its formatted short name.
 - `_AncestorGenerations` / `_DescendantGenerations`: how many generations are loaded up/down,
-  starting at `InitialGenerations` (2) and growable to `MaxGenerations` (12).
+  starting at `InitialGenerations` (2) and growable to `MaxGenerations` (120).
 - `_IncludeCollaterals`: toggles siblings/cousins; flipping it triggers a reload.
+- `_CanLoadMoreAncestors` / `_CanLoadMoreDescendants`: backing fields for the load-more bindables.
 - `_ViewTarget` (Center/Top/Bottom): records where the viewport should park after a rebuild.
 - `_PanStartScrollX/Y`: scroll offsets captured at the start of a drag-pan.
 
 ## Build & render pipeline
-1. `SetCenter` resets generation depth to default, raises title/menu property changes, and calls
-   `Reload(ViewTarget.Center)`.
+1. `SetCenter` resets generation depth to default, clears the layout's stored positions
+   (`_Layout.Reset()`) so the new centre lays out from scratch, raises title/menu property changes,
+   and calls `Reload(ViewTarget.Center)`.
 2. `Reload` snapshots the centre and fires `LoadAsync` off the UI thread via `SafeTask.Run`.
 3. `LoadAsync`:
-   - gets a DB cancellation token,
+   - gets a DB cancellation token (`CreateDbCancellationToken`),
    - asks `FamilyTreeProvider.BuildAsync` for the tree at the current depths/collateral setting,
-   - runs `FamilyTreeLayout.Build` to compute node bounds + connectors,
+   - runs `FamilyTreeLayout.Update` to compute node bounds + connectors (a spring layout with a
+     swap-refinement ordering pass; see `FamilyTreeLayout` for the algorithm),
    - precomputes a node-id → display-name dictionary,
-   - marshals back to the main thread to call `Render`.
+   - marshals back to the main thread (`SafeTask.RunOnMainThread`) to call `Render`.
 4. `Render`:
    - clears and rebuilds the `Nodes` AbsoluteLayout, creating a `FamilyTreeNodeView` per node
      (centre node flagged), each with a tap gesture bound to `PageCommand`,
-   - positions each view via `AbsoluteLayout.SetLayoutBounds`,
+   - positions each view via `AbsoluteLayout.SetLayoutFlags(None)` + `SetLayoutBounds`,
    - hands connectors to `_ConnectorsDrawable` and invalidates the connector canvas,
    - sizes the canvas/connectors to the computed `CanvasSize`,
    - kicks off `PositionViewportAsync`.
@@ -61,6 +64,8 @@ between them, centred on a focal person.
   clamped to the canvas edges.
 
 ## Connectors & theming
-- `_ConnectorsDrawable` (an `IDrawable`) renders parent-child and spouse lines; its corner radius
-  comes from `FamilyTreeLayoutMetrics`, and its colors resolve from app resources (`Primary`,
-  `Accent`) via the `GetColor` helper, with hard-coded fallbacks.
+- `_ConnectorsDrawable` (a `FamilyTreeConnectorsDrawable`, which implements `IDrawable`) strokes
+  parent-child links as orthogonal lines with softly rounded right-angle bends and spouse links as
+  straight horizontal lines. Its corner radius comes from `FamilyTreeLayoutMetrics`, and its colors
+  resolve from app resources (`Primary` → parent-child, `Accent` → spouse) via the `GetColor`
+  helper, with hard-coded fallbacks (`#1E4437`, `#8B6F4E`).
