@@ -18,7 +18,7 @@ public partial class FamilyTreePage : ContentPage
   private readonly FamilyTreeLayoutMetrics _Metrics = new();
   private readonly FamilyTreeConnectorsDrawable _ConnectorsDrawable = new();
   // Each "load more" click adds one generation, up to this hard ceiling.
-  private const int MaxGenerations = 12;
+  private const int MaxGenerations = 120;
   private const int InitialGenerations = 2;
 
   private Person? _Center;
