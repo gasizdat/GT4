@@ -29,8 +29,9 @@ between them, centred on a focal person.
 3. `LoadAsync`:
    - gets a DB cancellation token (`CreateDbCancellationToken`),
    - asks `FamilyTreeProvider.BuildAsync` for the tree at the current depths/collateral setting,
-   - runs `FamilyTreeLayout.Update` to compute node bounds + connectors (a spring layout with a
-     swap-refinement ordering pass; see `FamilyTreeLayout` for the algorithm),
+   - runs `FamilyTreeLayout.Update` to compute node bounds + connectors (a spring layout with an
+     insertion-based row-reorder pass that keeps spouses adjacent and connector lines from
+     overlapping; see `FamilyTreeLayout` for the algorithm),
    - precomputes a node-id → display-name dictionary,
    - marshals back to the main thread (`SafeTask.RunOnMainThread`) to call `Render`.
 4. `Render`:
