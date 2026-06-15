@@ -39,10 +39,11 @@ public sealed record FamilyTreeLayoutResult(
 /// Two optimisation passes then run in sequence. First, <em>swap refinement</em> tests every
 /// adjacent pair within each generation: if exchanging the two X positions reduces the combined
 /// spring + anchor + overlap energy, the swap is kept and the pass repeats until no pair improves.
-/// The overlap term charges a heavy fee whenever two horizontal connector runs share a generation
-/// band — every parent-child edge crossing the same pair of generations draws its mid-height run at
-/// one shared Y, so collinear runs are penalised hard to keep them from stacking on top of each
-/// other. This lets nodes find the globally optimal left-to-right ordering within their row —
+/// The overlap term charges a heavy fee whenever two horizontal connector runs share a band: every
+/// parent-child edge crossing the same generation pair draws its mid-height run at one shared Y, and
+/// every spouse link draws a straight run on its row's centre, so collinear runs (including
+/// interleaved spouse pairs) are penalised hard to keep them from stacking on top of each other.
+/// This lets nodes find the globally optimal left-to-right ordering within their row —
 /// something the spring simulation cannot discover because repulsion prevents nodes from crossing.
 /// Second, the
 /// <em>spring simulation</em> fine-tunes X positions within the settled ordering: edges attract,
@@ -240,32 +241,41 @@ public sealed class FamilyTreeLayout
     }
   }
 
-  // A horizontal connector run: the mid-height segment of a parent-child edge spans [From, To] in X
-  // and sits in generation band <see cref="Level"/> (the lower of the two generations it joins).
-  // Every run in a band shares the same Y, so two runs in one band overlap exactly when their X
-  // intervals intersect.
+  // A horizontal connector run spanning [From, To] in X within band <see cref="Level"/>. Both the
+  // mid-height segment of a parent-child edge and the straight spouse link are horizontal, so both
+  // are runs. Every run in a band shares the same Y, so two runs in one band overlap exactly when
+  // their X intervals intersect.
   private readonly record struct HorizontalRun(int From, int To, int Level);
 
   // Builds the horizontal runs indexed both by incident node (the endpoints that move on a swap) and
-  // by band (every run a moved run can collide with).
+  // by band (every run a moved run can collide with). Parent-child runs sit in the band between two
+  // generations; spouse runs sit on a generation's row centre — a distinct Y. The band key encodes
+  // both kinds into one keyspace (even = parent-child band, odd = spouse band) so a parent-child run
+  // and a spouse run are never mistaken for sharing a Y.
   private static (Dictionary<int, List<HorizontalRun>> ByNode, Dictionary<int, List<HorizontalRun>> ByLevel)
     BuildHorizontalSegments(FamilyTree tree, IReadOnlyDictionary<int, FamilyTreeNode> nodesById)
   {
     var byNode = nodesById.Keys.ToDictionary(id => id, _ => new List<HorizontalRun>());
     var byLevel = new Dictionary<int, List<HorizontalRun>>();
-    foreach (var edge in tree.Edges)
+
+    void Add(int fromId, int toId, int level)
     {
-      if (edge.Relation != FamilyTreeRelation.ParentChild)
-        continue;
-      if (!nodesById.TryGetValue(edge.FromId, out var from) || !nodesById.TryGetValue(edge.ToId, out var to))
-        continue;
-      var level = Math.Min(from.Generation, to.Generation);
-      var run = new HorizontalRun(edge.FromId, edge.ToId, level);
-      byNode[edge.FromId].Add(run);
-      byNode[edge.ToId].Add(run);
+      var run = new HorizontalRun(fromId, toId, level);
+      byNode[fromId].Add(run);
+      byNode[toId].Add(run);
       if (!byLevel.TryGetValue(level, out var list))
         byLevel[level] = list = [];
       list.Add(run);
+    }
+
+    foreach (var edge in tree.Edges)
+    {
+      if (!nodesById.TryGetValue(edge.FromId, out var from) || !nodesById.TryGetValue(edge.ToId, out var to))
+        continue;
+      if (edge.Relation == FamilyTreeRelation.ParentChild)
+        Add(edge.FromId, edge.ToId, 2 * Math.Min(from.Generation, to.Generation));
+      else
+        Add(edge.FromId, edge.ToId, (2 * from.Generation) + 1);
     }
     return (byNode, byLevel);
   }
