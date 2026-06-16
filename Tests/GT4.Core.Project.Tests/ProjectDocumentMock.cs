@@ -24,6 +24,21 @@ internal class ProjectDocumentMock : IProjectDocument
   private IDictionary<int, PersonFullInfo> _Persons = new Dictionary<int, PersonFullInfo>();
   private IDictionary<int, IList<Relative>> _Relatives = new Dictionary<int, IList<Relative>>();
 
+  private int _GetRelativesCallCount = 0;
+  private int _GetPersonFullInfoCallCount = 0;
+  private int _GetPersonInfosWithPersonsCallCount = 0;
+
+  public int GetRelativesCallCount => _GetRelativesCallCount;
+  public int GetPersonFullInfoCallCount => _GetPersonFullInfoCallCount;
+  public int GetPersonInfosWithPersonsCallCount => _GetPersonInfosWithPersonsCallCount;
+
+  public void ResetCallCounts()
+  {
+    _GetRelativesCallCount = 0;
+    _GetPersonFullInfoCallCount = 0;
+    _GetPersonInfosWithPersonsCallCount = 0;
+  }
+
   private RelativeInfo[] GetRelatives(int personId)
   {
     lock (_fixture)
@@ -59,16 +74,26 @@ internal class ProjectDocumentMock : IProjectDocument
     _TableRelativesMock
       .Setup(s => s.GetRelativesAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync((Person p, CancellationToken _) =>
-        _Relatives.TryGetValue(p.Id, out var ret) ? ret.ToArray() : []);
+      {
+        Interlocked.Increment(ref _GetRelativesCallCount);
+        return _Relatives.TryGetValue(p.Id, out var ret) ? ret.ToArray() : [];
+      });
 
     _PersonManagerMock
       .Setup(s => s.GetPersonInfosAsync(It.IsAny<Person[]>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync((Person[] persons, bool _, CancellationToken _) =>
-        persons.Select(p => _Persons[p.Id] with { RelativeInfos = GetRelatives(p.Id) }).ToArray());
+      {
+        Interlocked.Increment(ref _GetPersonInfosWithPersonsCallCount);
+        return persons.Select(p => _Persons[p.Id] with { RelativeInfos = GetRelatives(p.Id) }).ToArray();
+      });
 
     _PersonManagerMock
       .Setup(s => s.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
-      .ReturnsAsync((Person p, CancellationToken _) => _Persons[p.Id] with { RelativeInfos = GetRelatives(p.Id) });
+      .ReturnsAsync((Person p, CancellationToken _) =>
+      {
+        Interlocked.Increment(ref _GetPersonFullInfoCallCount);
+        return _Persons[p.Id] with { RelativeInfos = GetRelatives(p.Id) };
+      });
   }
 
   public int GetNewId() => Interlocked.Add(ref _Id, 100);

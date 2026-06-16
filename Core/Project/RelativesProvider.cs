@@ -190,22 +190,29 @@ internal class RelativesProvider : TableBase, IRelativesProvider
     CancellationToken token)
   {
     var relatives = await Document.Relatives.GetRelativesAsync(relativeInfo, token);
-    var parentTasks = relatives
+    // Fetch only the relatives list of each parent — not their full PersonFullInfo —
+    // since we only need their children to compute siblings. This avoids loading names,
+    // bio, photos, and each parent's relatives' photos (many cascaded queries per parent).
+    var parentRelativesTasks = relatives
       .Where(r => r.Type == RelationshipType.Parent || r.Type == RelationshipType.AdoptiveParent)
-      .Select(r => Document.PersonManager.GetPersonFullInfoAsync(r, token))
+      .Select(r => Document.Relatives.GetRelativesAsync(r, token))
       .ToArray();
     relatives = relatives
       .Where(r => IsRelationshipSupported(relativeInfo, r.Type))
       .ToArray();
     var relativeInfosTask = GetRelativeInfosAsync(relatives, selectMainPhoto, token);
-    await Task.WhenAll([relativeInfosTask, .. parentTasks]);
-    var siblings = parentTasks
-      .Select(t => t.Result)
-      .SelectMany(p => p.RelativeInfos)
+    await Task.WhenAll([relativeInfosTask, .. parentRelativesTasks]);
+    var siblingRelatives = parentRelativesTasks
+      .SelectMany(t => t.Result)
       .Where(r => r.Id != relativeInfo.Id)
       .Where(r => r.Type == RelationshipType.Child || r.Type == RelationshipType.AdoptiveChild)
       .Where(r => IsRelationshipSupported(relativeInfo, RelationshipType.Sibling))
-      .Distinct(_RelativeInfoComparer);
+      .GroupBy(r => r.Id)
+      .Select(g => g.First())
+      .ToArray();
+    var siblingInfos = siblingRelatives.Length > 0
+      ? await GetRelativeInfosAsync(siblingRelatives, selectMainPhoto, token)
+      : [];
 
     var siblingGeneration = relativeInfo.Generation;
     var siblingConsanguinity = GetNextConsanguinity(RelationshipType.Sibling, relativeInfo.Generation, relativeInfo.Consanguinity);
@@ -220,7 +227,7 @@ internal class RelativesProvider : TableBase, IRelativesProvider
           var nextConsanguinity = GetNextConsanguinity(r.Type, r.Generation, relativeInfo.Consanguinity);
           return r with { Consanguinity = nextConsanguinity, Generation = nextGeneration };
         }),
-      ..siblings
+      ..siblingInfos
         .Select(r => r with
         {
           Consanguinity = siblingConsanguinity,
