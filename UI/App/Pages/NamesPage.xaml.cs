@@ -4,6 +4,7 @@ using GT4.Core.Utils;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Resources;
+using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
 using System.Collections.ObjectModel;
 using System.Windows.Input;

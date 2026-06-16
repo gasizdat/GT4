@@ -1,9 +1,11 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.ObjectModel;
 
-delegate bool ObservableCollectionFilterPredicate<T>(FilteredObservableCollection<T> collection, T item);
+namespace GT4.UI.Utils;
 
-class FilteredObservableCollection<T> : ICollection<T>, ICollection
+public delegate bool ObservableCollectionFilterPredicate<T>(FilteredObservableCollection<T> collection, T item);
+
+public class FilteredObservableCollection<T> : ICollection<T>, ICollection
 {
   private readonly List<T> _Items = new();
   private readonly ObservableCollection<T> _InnerCollection = new();
@@ -11,7 +13,6 @@ class FilteredObservableCollection<T> : ICollection<T>, ICollection
 
   public FilteredObservableCollection()
   {
-    _InnerCollection = new();
   }
 
   public ObservableCollectionFilterPredicate<T>? Filter
@@ -66,7 +67,7 @@ class FilteredObservableCollection<T> : ICollection<T>, ICollection
 
   public bool Remove(T item)
   {
-    Items.Remove(item);
+    _Items.Remove(item);
     return _InnerCollection.Remove(item);
   }
 
