@@ -9,14 +9,11 @@ internal class TableData : TableBase, ITableData
   private static Data CreateData(DbDataReader reader)
   {
     var id = reader.GetInt32(0);
-    var value = reader.GetStream(1);
+    var content = reader.GetFieldValue<byte[]>(1);
     var mimeType = TryGetString(reader, 2);
     var category = GetEnum<DataCategory>(reader, 3);
-    using var streamReader = new BinaryReader(value);
-    var content = streamReader.ReadBytes((int)value.Length);
-    var image = new Data(Id: id, Content: content, MimeType: mimeType, Category: category);
 
-    return image;
+    return new Data(Id: id, Content: content, MimeType: mimeType, Category: category);
   }
 
   public TableData(IProjectDocument document) : base(document)
