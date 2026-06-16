@@ -1,5 +1,6 @@
 using GT4.Core.Utils;
 using GT4.UI.Resources;
+using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
 
 namespace GT4.UI.Dialogs;
@@ -52,34 +53,10 @@ public partial class SelectDateDialog : ContentPage
 
   private static int NormalizeYear(int year) => year;
 
-  private static int NormalizeMonth(int month) => Math.Clamp(month, 1, 12);
+  private static int NormalizeMonth(int month) => DateNormalizer.NormalizeMonth(month);
 
-  private static bool IsLeapYear(int year) =>
-    (year % 4) == 0 && ((year % 100) != 0 || (year % 400) == 0);
-
-  private static int NormalizeDay(int year, int month, int day)
-  {
-    var daysInMonth = month switch
-    {
-      1 => 31,
-      2 => IsLeapYear(year) ? 29 : 28,
-      3 => 31,
-      4 => 30,
-      5 => 31,
-      6 => 30,
-      7 => 31,
-      8 => 31,
-      9 => 30,
-      10 => 31,
-      11 => 30,
-      12 => 31,
-      _ => 0
-    };
-
-
-    day = Math.Clamp(day, 1, daysInMonth);
-    return day;
-  }
+  private static int NormalizeDay(int year, int month, int day) =>
+    DateNormalizer.NormalizeDay(year, month, day);
 
   private static string[] GetMonths()
   {
