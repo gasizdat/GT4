@@ -1976,5 +1976,68 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("TxtPlaceholderPtojectName", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 🌳 Family tree.
+        /// </summary>
+        public static string MenuItemNameFamilyTree {
+            get {
+                return ResourceManager.GetString("MenuItemNameFamilyTree", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 🌳 {0}.
+        /// </summary>
+        public static string TitleFamilyTreePage_1 {
+            get {
+                return ResourceManager.GetString("TitleFamilyTreePage_1", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Tap a relative to centre the tree on them.
+        /// </summary>
+        public static string HintFamilyTreePage {
+            get {
+                return ResourceManager.GetString("HintFamilyTreePage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Open {0}.
+        /// </summary>
+        public static string MenuItemNameOpenPerson_1 {
+            get {
+                return ResourceManager.GetString("MenuItemNameOpenPerson_1", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to ▲ More ancestors.
+        /// </summary>
+        public static string BtnNameLoadAncestors {
+            get {
+                return ResourceManager.GetString("BtnNameLoadAncestors", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to ▼ More descendants.
+        /// </summary>
+        public static string BtnNameLoadDescendants {
+            get {
+                return ResourceManager.GetString("BtnNameLoadDescendants", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Relatives.
+        /// </summary>
+        public static string LblRelatives {
+            get {
+                return ResourceManager.GetString("LblRelatives", resourceCulture);
+            }
+        }
     }
 }
