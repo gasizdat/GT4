@@ -93,17 +93,11 @@
           <Button
               Command="{Binding PageCommand, Source={x:Reference Root}}"
               CommandParameter="ZoomOut"
-              HeightRequest="40"
-              Padding="0"
-              Text="−"
-              WidthRequest="40" />
+              Style="{StaticResource ZoomOut}" />
           <Button
               Command="{Binding PageCommand, Source={x:Reference Root}}"
               CommandParameter="ZoomIn"
-              HeightRequest="40"
-              Padding="0"
-              Text="+"
-              WidthRequest="40" />
+              Style="{StaticResource ZoomIn}" />
         </HorizontalStackLayout>
       </Grid>
     </components:PageLayout.Body>
