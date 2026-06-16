@@ -38,8 +38,7 @@
             <Grid
                 Padding="{Thickness Left={StaticResource PageContentSpacing},
                                     Right={StaticResource PageContentSpacing}}"
-                ColumnDefinitions="*, Auto"
-                Style="{StaticResource SelectableItem}">
+                ColumnDefinitions="*, Auto">
 
               <Label
                   Padding="{StaticResource CollectionItemsVerticalPadding}"

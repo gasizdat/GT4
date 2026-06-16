@@ -92,8 +92,7 @@
             <Grid
                 Padding="{Thickness Left={StaticResource PageContentSpacing},
                                     Right={StaticResource PageContentSpacing}}"
-                ColumnDefinitions="*, Auto, Auto, Auto"
-                Style="{StaticResource SelectableItem}">
+                ColumnDefinitions="*, Auto, Auto, Auto">
 
               <Grid.GestureRecognizers>
                 <TapGestureRecognizer

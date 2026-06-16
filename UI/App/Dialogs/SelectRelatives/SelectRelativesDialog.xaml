@@ -110,7 +110,7 @@
 
         <CollectionView.ItemTemplate>
           <DataTemplate x:DataType="dto:PersonInfo">
-            <Grid Style="{StaticResource SelectableItem}">
+            <Grid>
               <components:PersonInfoView
                   DatesLabelStyle="{StaticResource FieldValue}"
                   NameFormat="FullPersonName"
