@@ -251,7 +251,7 @@
               <DataTemplate x:DataType="dto:RelativeInfo">
                 <components:CardView Margin="{Thickness Bottom={StaticResource PageContentSpacing}}">
                   <components:RelativeInfoView
-                      ExandAllRelatives="{Binding ExpandAll, Source={x:Reference Root}}"
+                      ExpandAllRelatives="{Binding ExpandAll, Source={x:Reference Root}}"
                       NameFormat="CommonPersonName"
                       PersonBirthDate="{Binding PersonFullInfo.BirthDate, Source={x:Reference Root}}"
                       Relative="{Binding .}"

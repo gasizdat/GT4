@@ -88,14 +88,14 @@ public partial class RelativeInfoView : ContentView
     default,
     BindingMode.OneWay);
 
-  public static readonly BindableProperty ExandAllRelativesProperty = BindableProperty.Create(
-    nameof(ExandAllRelatives),
+  public static readonly BindableProperty ExpandAllRelativesProperty = BindableProperty.Create(
+    nameof(ExpandAllRelatives),
     typeof(bool),
     typeof(RelativeInfoView),
     false,
     BindingMode.OneWay,
     null,
-    OnExandAllRelativesChanged);
+    OnExpandAllRelativesChanged);
 
   public bool ShowMoreButton
   {
@@ -133,10 +133,10 @@ public partial class RelativeInfoView : ContentView
     set => SetValue(SelectCommandProperty, value);
   }
 
-  public bool ExandAllRelatives
+  public bool ExpandAllRelatives
   {
-    get => (bool?)GetValue(ExandAllRelativesProperty) ?? false;
-    set => SetValue(ExandAllRelativesProperty, value);
+    get => (bool?)GetValue(ExpandAllRelativesProperty) ?? false;
+    set => SetValue(ExpandAllRelativesProperty, value);
   }
 
   public bool ShowDate =>
@@ -218,15 +218,15 @@ public partial class RelativeInfoView : ContentView
     {
       view.ShowRelatives = false;
       view.RefreshView();
-      if (view.ExandAllRelatives)
+      if (view.ExpandAllRelatives)
       {
-        var value = view.ExandAllRelatives;
+        var value = view.ExpandAllRelatives;
         _ = SafeTask.Run(() => view.ToggleAllRelativesAsync(value));
       }
     }
   }
 
-  private static void OnExandAllRelativesChanged(BindableObject obj, object oldValue, object newValue)
+  private static void OnExpandAllRelativesChanged(BindableObject obj, object oldValue, object newValue)
   {
     if (obj is RelativeInfoView view && oldValue != newValue)
     {
