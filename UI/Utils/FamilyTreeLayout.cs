@@ -1,6 +1,6 @@
 using GT4.Core.Project.Dto;
 
-namespace GT4.UI.Components.Genealogy;
+namespace GT4.UI.Utils;
 
 /// <summary>Sizing knobs for <see cref="FamilyTreeLayout"/>, all in device-independent units.</summary>
 public sealed record FamilyTreeLayoutMetrics(
