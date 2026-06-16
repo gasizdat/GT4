@@ -724,7 +724,7 @@ FN - family name</value>
     <value>Family</value>
   </data>
   <data name="MenuItemGoToRevisions" xml:space="preserve">
-    <value>🗓️ To project revisions</value>
+    <value>🗓️ Revisions</value>
   </data>
   <data name="TitleProjectRevisionsPage" xml:space="preserve">
     <value>Select project revisions</value>

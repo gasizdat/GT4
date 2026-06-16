@@ -724,7 +724,7 @@ FN - род</value>
     <value>Род</value>
   </data>
   <data name="MenuItemGoToRevisions" xml:space="preserve">
-    <value>🗓️ К ревизиям проекта</value>
+    <value>🗓️ Ревизии</value>
   </data>
   <data name="TitleProjectRevisionsPage" xml:space="preserve">
     <value>Выбрать ревизию проекта</value>
