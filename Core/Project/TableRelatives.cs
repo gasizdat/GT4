@@ -133,6 +133,65 @@ internal class TableRelatives : TableBase, ITableRelatives
     return relatives.ToArray();
   }
 
+  public async Task<Dictionary<int, Relative[]>> GetRelativesForPersonsAsync(int[] personIds, CancellationToken token)
+  {
+    if (personIds.Length == 0)
+      return [];
+
+    var inClause = string.Join(",", personIds);
+    var buckets = personIds.ToDictionary(id => id, _ => new List<Relative>());
+
+    using (var command = Document.CreateCommand())
+    {
+      command.CommandText = $"""
+        SELECT r.PersonId, r.RelativeId, r.Type, r.Date, r.DateStatus,
+               p.BirthDate, p.BirthDateStatus, p.DeathDate, p.DeathDateStatus, p.BiologicalSex
+        FROM Relatives r
+        INNER JOIN Persons p ON p.Id = r.RelativeId
+        WHERE r.PersonId IN ({inClause});
+        """;
+
+      await using var reader = await command.ExecuteReaderAsync(token);
+      while (await reader.ReadAsync(token))
+      {
+        var bucketId = reader.GetInt32(0);
+        var id = reader.GetInt32(1);
+        var type = GetEnum<RelationshipType>(reader, 2);
+        var date = TryGetDate(reader, 3, 4);
+        var birthDate = GetDate(reader, 5, 6);
+        var deathDate = TryGetDate(reader, 7, 8);
+        var biologicalSex = GetEnum<BiologicalSex>(reader, 9);
+        buckets[bucketId].Add(new Relative(new Person(id, birthDate, deathDate, biologicalSex), type, date));
+      }
+    }
+
+    using (var command = Document.CreateCommand())
+    {
+      command.CommandText = $"""
+        SELECT r.RelativeId, r.PersonId, r.Type, r.Date, r.DateStatus,
+               p.BirthDate, p.BirthDateStatus, p.DeathDate, p.DeathDateStatus, p.BiologicalSex
+        FROM Relatives r
+        INNER JOIN Persons p ON p.Id = r.PersonId
+        WHERE r.RelativeId IN ({inClause});
+        """;
+
+      await using var reader = await command.ExecuteReaderAsync(token);
+      while (await reader.ReadAsync(token))
+      {
+        var bucketId = reader.GetInt32(0);
+        var id = reader.GetInt32(1);
+        var type = GetBackwardDirection(GetEnum<RelationshipType>(reader, 2));
+        var date = TryGetDate(reader, 3, 4);
+        var birthDate = GetDate(reader, 5, 6);
+        var deathDate = TryGetDate(reader, 7, 8);
+        var biologicalSex = GetEnum<BiologicalSex>(reader, 9);
+        buckets[bucketId].Add(new Relative(new Person(id, birthDate, deathDate, biologicalSex), type, date));
+      }
+    }
+
+    return buckets.ToDictionary(kv => kv.Key, kv => kv.Value.ToArray());
+  }
+
   public async Task AddRelativesAsync(Person person, Relative[] relatives, CancellationToken token)
   {
     using var transaction = await Document.BeginTransactionAsync(token);

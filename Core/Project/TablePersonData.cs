@@ -87,6 +87,53 @@ internal partial class TablePersonData : TableBase, ITablePersonData
     return result.ToArray();
   }
 
+  public async Task<Dictionary<int, Data[]>> GetPersonDataSetAsync(int[] personIds, DataCategory? category, CancellationToken token)
+  {
+    if (personIds.Length == 0)
+      return [];
+
+    var inClause = string.Join(",", personIds);
+    using var command = Document.CreateCommand();
+
+    if (category.HasValue)
+    {
+      command.CommandText = $"""
+        SELECT pd.PersonId, d.Id, d.Value, d.MimeType, d.Category
+        FROM Data d
+        INNER JOIN PersonData pd ON pd.DataId = d.Id AND pd.PersonId IN ({inClause})
+        WHERE d.Category = @category
+        ORDER BY pd.PersonId, pd.ROWID;
+        """;
+      command.Parameters.AddWithValue("@category", category.Value);
+    }
+    else
+    {
+      command.CommandText = $"""
+        SELECT pd.PersonId, d.Id, d.Value, d.MimeType, d.Category
+        FROM Data d
+        INNER JOIN PersonData pd ON pd.DataId = d.Id
+        WHERE pd.PersonId IN ({inClause})
+        ORDER BY pd.PersonId, pd.ROWID;
+        """;
+    }
+
+    var buckets = new Dictionary<int, List<Data>>();
+    await using var reader = await command.ExecuteReaderAsync(token);
+    while (await reader.ReadAsync(token))
+    {
+      var personId = reader.GetInt32(0);
+      if (!buckets.TryGetValue(personId, out var list))
+        buckets[personId] = list = [];
+      list.Add(new Data(
+        Id: reader.GetInt32(1),
+        Content: reader.GetFieldValue<byte[]>(2),
+        MimeType: TryGetString(reader, 3),
+        Category: GetEnum<DataCategory>(reader, 4)));
+    }
+
+    return buckets.ToDictionary(kv => kv.Key, kv => kv.Value.ToArray());
+  }
+
   public async Task AddPersonDataSetAsync(Person person, Data[] dataSet, CancellationToken token)
   {
     using var transaction = await Document.BeginTransactionAsync(token);

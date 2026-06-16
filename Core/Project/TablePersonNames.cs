@@ -50,6 +50,38 @@ internal partial class TablePersonNames : TableBase, ITablePersonNames
     return names.ToArray();
   }
 
+  public async Task<Dictionary<int, Name[]>> GetPersonNamesAsync(int[] personIds, CancellationToken token)
+  {
+    if (personIds.Length == 0)
+      return [];
+
+    var inClause = string.Join(",", personIds);
+    using var command = Document.CreateCommand();
+    command.CommandText = $"""
+      SELECT pn.PersonId, n.Id, n.Value, n.Type, n.ParentId
+      FROM Names n
+      INNER JOIN PersonNames pn ON pn.NameId = n.Id
+      WHERE pn.PersonId IN ({inClause})
+      ORDER BY pn.PersonId, pn.ROWID;
+      """;
+
+    var buckets = new Dictionary<int, List<Name>>();
+    await using var reader = await command.ExecuteReaderAsync(token);
+    while (await reader.ReadAsync(token))
+    {
+      var personId = reader.GetInt32(0);
+      if (!buckets.TryGetValue(personId, out var list))
+        buckets[personId] = list = [];
+      list.Add(new Name(
+        Id: reader.GetInt32(1),
+        Value: reader.GetString(2),
+        Type: GetEnum<NameType>(reader, 3),
+        ParentId: TryGetInteger(reader, 4)));
+    }
+
+    return buckets.ToDictionary(kv => kv.Key, kv => kv.Value.ToArray());
+  }
+
   public async Task AddPersonNamesAsync(Person person, Name[] names, CancellationToken token)
   {
     using var transaction = await Document.BeginTransactionAsync(token);

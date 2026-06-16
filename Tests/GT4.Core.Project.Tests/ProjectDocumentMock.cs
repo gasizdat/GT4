@@ -79,6 +79,12 @@ internal class ProjectDocumentMock : IProjectDocument
         return _Relatives.TryGetValue(p.Id, out var ret) ? ret.ToArray() : [];
       });
 
+    _TableRelativesMock
+      .Setup(s => s.GetRelativesForPersonsAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync((int[] ids, CancellationToken _) =>
+        ids.ToDictionary(id => id, id => _Relatives.TryGetValue(id, out var ret) ? ret.ToArray() : []));
+
+
     _PersonManagerMock
       .Setup(s => s.GetPersonInfosAsync(It.IsAny<Person[]>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync((Person[] persons, bool _, CancellationToken _) =>
