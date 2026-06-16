@@ -28,30 +28,26 @@ internal partial class TablePersonNames : TableBase, ITablePersonNames
     using var command = Document.CreateCommand();
 
     command.CommandText = """
-      SELECT NameId
-      FROM PersonNames
-      WHERE PersonId=@personId
-      ORDER BY ROWID;
+      SELECT n.Id, n.Value, n.Type, n.ParentId
+      FROM Names n
+      INNER JOIN PersonNames pn ON pn.NameId = n.Id
+      WHERE pn.PersonId = @personId
+      ORDER BY pn.ROWID;
       """;
     command.Parameters.AddWithValue("@personId", person.Id);
 
-    // First read all ids while holding the connection, then resolve names. Resolving names issues
-    // further queries, which must not happen while the reader still holds the connection — so the
-    // reader is disposed (releasing the gate) before that.
-    var ids = new List<int>();
-    await using (var reader = await command.ExecuteReaderAsync(token))
+    var names = new List<Name>();
+    await using var reader = await command.ExecuteReaderAsync(token);
+    while (await reader.ReadAsync(token))
     {
-      while (await reader.ReadAsync(token))
-      {
-        ids.Add(reader.GetInt32(0));
-      }
+      names.Add(new Name(
+        Id: reader.GetInt32(0),
+        Value: reader.GetString(1),
+        Type: GetEnum<NameType>(reader, 2),
+        ParentId: TryGetInteger(reader, 3)));
     }
 
-    var names = await Task.WhenAll(ids.Select(id => Document.Names.TryGetNameByIdAsync(id, token)));
-    return names
-      .Where(name => name is not null)
-      .Select(name => name!)
-      .ToArray();
+    return names.ToArray();
   }
 
   public async Task AddPersonNamesAsync(Person person, Name[] names, CancellationToken token)

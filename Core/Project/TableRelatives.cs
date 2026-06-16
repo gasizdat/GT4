@@ -7,8 +7,6 @@ namespace GT4.Core.Project;
 
 internal class TableRelatives : TableBase, ITableRelatives
 {
-  private readonly record struct RelativeRow(int Id, RelationshipType Type, Date? Date, bool ForwardLink);
-
   private static RelationshipType GetBackwardDirection(RelationshipType relationshipType)
   {
     var ret = relationshipType switch
@@ -61,12 +59,16 @@ internal class TableRelatives : TableBase, ITableRelatives
     }
   }
 
-  private async Task<Relative?> CreateRelativeAsync(RelativeRow row, CancellationToken token)
+  private static Relative CreateRelativeFromRow(System.Data.Common.DbDataReader reader, bool forwardLink)
   {
-    var relative = await Document.Persons.TryGetPersonByIdAsync(row.Id, token);
-    var type = row.ForwardLink ? row.Type : GetBackwardDirection(row.Type);
-
-    return relative is null ? null : new Relative(relative, type, row.Date);
+    var id = reader.GetInt32(0);
+    var type = GetEnum<RelationshipType>(reader, 1);
+    var date = TryGetDate(reader, 2, 3);
+    var birthDate = GetDate(reader, 4, 5);
+    var deathDate = TryGetDate(reader, 6, 7);
+    var biologicalSex = GetEnum<BiologicalSex>(reader, 8);
+    var actualType = forwardLink ? type : GetBackwardDirection(type);
+    return new Relative(new Person(id, birthDate, deathDate, biologicalSex), actualType, date);
   }
 
   public TableRelatives(IProjectDocument document) : base(document)
@@ -94,47 +96,41 @@ internal class TableRelatives : TableBase, ITableRelatives
 
   public async Task<Relative[]> GetRelativesAsync(Person person, CancellationToken token)
   {
-    // Read raw rows from both directions first; resolving each related person issues further
-    // queries that must not run while a reader still holds the connection.
-    var rows = new List<RelativeRow>();
+    var relatives = new List<Relative>();
 
     using (var command = Document.CreateCommand())
     {
       command.CommandText = """
-        SELECT RelativeId, Type, Date, DateStatus
-        FROM Relatives
-        WHERE PersonId=@id;
+        SELECT r.RelativeId, r.Type, r.Date, r.DateStatus,
+               p.BirthDate, p.BirthDateStatus, p.DeathDate, p.DeathDateStatus, p.BiologicalSex
+        FROM Relatives r
+        INNER JOIN Persons p ON p.Id = r.RelativeId
+        WHERE r.PersonId = @id;
       """;
       command.Parameters.AddWithValue("@id", person.Id);
 
       await using var reader = await command.ExecuteReaderAsync(token);
       while (await reader.ReadAsync(token))
-      {
-        rows.Add(new RelativeRow(reader.GetInt32(0), GetEnum<RelationshipType>(reader, 1), TryGetDate(reader, 2, 3), ForwardLink: true));
-      }
+        relatives.Add(CreateRelativeFromRow(reader, forwardLink: true));
     }
 
     using (var command = Document.CreateCommand())
     {
       command.CommandText = """
-        SELECT PersonId, Type, Date, DateStatus
-        FROM Relatives
-        WHERE RelativeId=@id;
+        SELECT r.PersonId, r.Type, r.Date, r.DateStatus,
+               p.BirthDate, p.BirthDateStatus, p.DeathDate, p.DeathDateStatus, p.BiologicalSex
+        FROM Relatives r
+        INNER JOIN Persons p ON p.Id = r.PersonId
+        WHERE r.RelativeId = @id;
       """;
       command.Parameters.AddWithValue("@id", person.Id);
 
       await using var reader = await command.ExecuteReaderAsync(token);
       while (await reader.ReadAsync(token))
-      {
-        rows.Add(new RelativeRow(reader.GetInt32(0), GetEnum<RelationshipType>(reader, 1), TryGetDate(reader, 2, 3), ForwardLink: false));
-      }
+        relatives.Add(CreateRelativeFromRow(reader, forwardLink: false));
     }
 
-    var relatives = await Task.WhenAll(rows.Select(row => CreateRelativeAsync(row, token)));
-    return relatives
-      .Where(i => i is not null)
-      .Select(i => i!)
-      .ToArray();
+    return relatives.ToArray();
   }
 
   public async Task AddRelativesAsync(Person person, Relative[] relatives, CancellationToken token)
