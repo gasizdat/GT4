@@ -41,6 +41,12 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   // Shared with every ProjectCommand and NestedTransaction created by this document.
   private readonly ConnectionGate _Gate = new();
 
+  // Serializes SqliteConnection.AddCommand / RemoveCommand, which modify a non-thread-safe
+  // List<WeakReference<SqliteCommand>> inside SqliteConnection. Shared with every ProjectCommand
+  // so that CreateCommand and Dispose cannot race even when commands are created or disposed
+  // concurrently from multiple async flows.
+  private readonly object _CommandLock = new();
+
   private long _TransactionNo = 0;
   private long _ProjectRevision = Environment.TickCount64;
   private volatile bool _Disposed = false;
@@ -171,7 +177,9 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     {
       CheckForDisposed();
     }
-    return new ProjectCommand(_Connection.CreateCommand(), _Gate);
+    SqliteCommand cmd;
+    lock (_CommandLock) { cmd = _Connection.CreateCommand(); }
+    return new ProjectCommand(cmd, _Gate, _CommandLock);
   }
 
   public async Task<int> GetLastInsertRowIdAsync(CancellationToken token)

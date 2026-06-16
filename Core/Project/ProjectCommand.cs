@@ -18,11 +18,13 @@ public sealed class ProjectCommand : IDisposable, IAsyncDisposable
 {
   private readonly SqliteCommand _Command;
   private readonly ConnectionGate _Gate;
+  private readonly object _CommandLock;
 
-  internal ProjectCommand(SqliteCommand command, ConnectionGate gate)
+  internal ProjectCommand(SqliteCommand command, ConnectionGate gate, object commandLock)
   {
     _Command = command;
     _Gate = gate;
+    _CommandLock = commandLock;
   }
 
   public string CommandText
@@ -99,7 +101,7 @@ public sealed class ProjectCommand : IDisposable, IAsyncDisposable
     }
   }
 
-  public void Dispose() => _Command.Dispose();
+  public void Dispose() { lock (_CommandLock) { _Command.Dispose(); } }
 
-  public ValueTask DisposeAsync() => _Command.DisposeAsync();
+  public ValueTask DisposeAsync() { lock (_CommandLock) { _Command.Dispose(); } return ValueTask.CompletedTask; }
 }
