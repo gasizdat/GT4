@@ -10,30 +10,35 @@ namespace GT4.UI.Components.Genealogy;
 /// </summary>
 public sealed class FamilyTreeNodeView : ContentView
 {
-  private const double PhotoSize = 60;
+  private const double BorderThikness = 1.5;
+  private const double CenterBorderThikness = 3;
+  private const double PhotoSizeBase = 60;
+  private const double FontSizeBase = 12;
+  private const double SpacingBase = 4;
 
-  public FamilyTreeNodeView(PersonInfo person, string displayName, bool isCenter, double width, double height)
+  public FamilyTreeNodeView(PersonInfo person, string displayName, bool isCenter, double width, double height, double zoomScale = 1.0)
   {
     WidthRequest = width;
     HeightRequest = height;
 
+    var photoSize = PhotoSizeBase * zoomScale;
     var ringColor = GetColor(isCenter ? "Primary" : "Accent", isCenter ? Colors.DarkGreen : Color.FromArgb("#8B6F4E"));
 
     var photo = new Image
     {
       Source = ResolvePhoto(person),
       Aspect = Aspect.AspectFill,
-      WidthRequest = PhotoSize,
-      HeightRequest = PhotoSize,
-      Clip = new EllipseGeometry(new Point(PhotoSize / 2, PhotoSize / 2), PhotoSize / 2, PhotoSize / 2),
+      WidthRequest = photoSize,
+      HeightRequest = photoSize,
+      Clip = new EllipseGeometry(new Point(photoSize / 2, photoSize / 2), photoSize / 2, photoSize / 2),
     };
 
-    var borderThikness = isCenter ? 3 : 1.5;
+    var borderThikness = (isCenter ? CenterBorderThikness : BorderThikness) * zoomScale;
 
     var ring = new Border
     {
-      WidthRequest = PhotoSize + borderThikness * 2,
-      HeightRequest = PhotoSize + borderThikness * 2,
+      WidthRequest = photoSize + borderThikness * 2,
+      HeightRequest = photoSize + borderThikness * 2,
       Padding = 0,
       Stroke = ringColor,
       StrokeThickness = borderThikness,
@@ -45,7 +50,7 @@ public sealed class FamilyTreeNodeView : ContentView
     var name = new Label
     {
       Text = displayName,
-      FontSize = 12,
+      FontSize = FontSizeBase * zoomScale,
       FontAttributes = isCenter ? FontAttributes.Bold : FontAttributes.None,
       HorizontalTextAlignment = TextAlignment.Center,
       MaxLines = 2,
@@ -55,7 +60,7 @@ public sealed class FamilyTreeNodeView : ContentView
 
     Content = new VerticalStackLayout
     {
-      Spacing = 4,
+      Spacing = SpacingBase * zoomScale,
       HorizontalOptions = LayoutOptions.Center,
       Children = { ring, name },
     };

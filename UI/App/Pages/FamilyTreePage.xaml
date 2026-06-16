@@ -84,6 +84,27 @@
             IsVisible="{Binding CanLoadMoreDescendants, Source={x:Reference Root}}"
             Text="{x:Static resources:UIStrings.BtnNameLoadDescendants}"
             VerticalOptions="End" />
+
+        <HorizontalStackLayout
+            Margin="8"
+            HorizontalOptions="End"
+            Spacing="4"
+            VerticalOptions="End">
+          <Button
+              Command="{Binding PageCommand, Source={x:Reference Root}}"
+              CommandParameter="ZoomOut"
+              HeightRequest="40"
+              Padding="0"
+              Text="−"
+              WidthRequest="40" />
+          <Button
+              Command="{Binding PageCommand, Source={x:Reference Root}}"
+              CommandParameter="ZoomIn"
+              HeightRequest="40"
+              Padding="0"
+              Text="+"
+              WidthRequest="40" />
+        </HorizontalStackLayout>
       </Grid>
     </components:PageLayout.Body>
 

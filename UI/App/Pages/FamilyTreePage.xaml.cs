@@ -22,6 +22,9 @@ public partial class FamilyTreePage : ContentPage
   // Each "load more" click adds one generation, up to this hard ceiling.
   private const int MaxGenerations = 120;
   private const int InitialGenerations = 2;
+  private const double MinZoom = 0.4;
+  private const double MaxZoom = 2.5;
+  private const double ZoomStep = 0.25;
 
   private Person? _Center;
   private string _CenterName = string.Empty;
@@ -33,6 +36,7 @@ public partial class FamilyTreePage : ContentPage
   private ViewTarget _ViewTarget = ViewTarget.Center;
   private double _PanStartScrollX;
   private double _PanStartScrollY;
+  private double _ZoomScale = 1.0;
 
   // Where to park the viewport after a (re)build.
   private enum ViewTarget { Center, Top, Bottom }
@@ -174,15 +178,26 @@ public partial class FamilyTreePage : ContentPage
       .FamilyTreeProvider
       .BuildAsync(center, _AncestorGenerations, _DescendantGenerations, _IncludeCollaterals, token);
 
-    var layout = _Layout.Update(tree, _Metrics);
+    var zoom = _ZoomScale;
+    var scaledMetrics = _Metrics with
+    {
+      NodeWidth     = _Metrics.NodeWidth     * zoom,
+      NodeHeight    = _Metrics.NodeHeight    * zoom,
+      HorizontalGap = _Metrics.HorizontalGap * zoom,
+      VerticalGap   = _Metrics.VerticalGap   * zoom,
+      Margin        = _Metrics.Margin        * zoom,
+      CornerRadius  = _Metrics.CornerRadius  * zoom,
+    };
+
+    var layout = _Layout.Update(tree, scaledMetrics);
     var names = layout.Nodes.ToDictionary(
       node => node.Node.Id,
       node => _NameFormatter.ToString(node.Node.Person, NameFormat.ShortPersonName));
 
-    await SafeTask.RunOnMainThread(() => Render(tree.CenterId, layout, names));
+    await SafeTask.RunOnMainThread(() => Render(tree.CenterId, layout, names, zoom));
   }
 
-  private void Render(int centerId, FamilyTreeLayoutResult layout, IReadOnlyDictionary<int, string> names)
+  private void Render(int centerId, FamilyTreeLayoutResult layout, IReadOnlyDictionary<int, string> names, double zoom)
   {
     Nodes.Children.Clear();
 
@@ -194,8 +209,9 @@ public partial class FamilyTreePage : ContentPage
         person,
         names[person.Id],
         isCenter,
-        _Metrics.NodeWidth,
-        _Metrics.NodeHeight);
+        nodeLayout.Bounds.Width,
+        nodeLayout.Bounds.Height,
+        zoom);
 
       view.GestureRecognizers.Add(new TapGestureRecognizer
       {
@@ -209,6 +225,7 @@ public partial class FamilyTreePage : ContentPage
     }
 
     _ConnectorsDrawable.Connectors = layout.Connectors;
+    _ConnectorsDrawable.CornerRadius = _Metrics.CornerRadius * zoom;
 
     // A "load more" button is offered only while the tree actually reaches the requested depth: if a
     // generation came back shorter than asked for, that direction has no more data to fetch.
@@ -223,10 +240,10 @@ public partial class FamilyTreePage : ContentPage
     Connectors.HeightRequest = layout.CanvasSize.Height;
     Connectors.Invalidate();
 
-    _ = PositionViewportAsync(layout.CenterTopLeft);
+    _ = PositionViewportAsync(layout.CenterTopLeft, zoom);
   }
 
-  private async Task PositionViewportAsync(Point centerTopLeft)
+  private async Task PositionViewportAsync(Point centerTopLeft, double zoom)
   {
     // Let the ScrollView measure its new content before scrolling so the viewport size and extents
     // are known.
@@ -236,7 +253,7 @@ public partial class FamilyTreePage : ContentPage
     var maxY = Math.Max(0, Canvas.Height - Scroller.Height);
 
     // Always keep the centre's column horizontally centred.
-    var targetX = centerTopLeft.X + (_Metrics.NodeWidth / 2) - (Scroller.Width / 2);
+    var targetX = centerTopLeft.X + (_Metrics.NodeWidth * zoom / 2) - (Scroller.Width / 2);
 
     // Vertically, park where the freshly loaded generation appears: the top after loading ancestors,
     // the bottom after loading descendants, otherwise centred on the focal person.
@@ -244,7 +261,7 @@ public partial class FamilyTreePage : ContentPage
     {
       ViewTarget.Top => 0,
       ViewTarget.Bottom => maxY,
-      _ => centerTopLeft.Y + (_Metrics.NodeHeight / 2) - (Scroller.Height / 2),
+      _ => centerTopLeft.Y + (_Metrics.NodeHeight * zoom / 2) - (Scroller.Height / 2),
     };
 
     await Scroller.ScrollToAsync(Math.Clamp(targetX, 0, maxX), Math.Clamp(targetY, 0, maxY), animated: false);
@@ -280,6 +297,16 @@ public partial class FamilyTreePage : ContentPage
           _DescendantGenerations++;
           Reload(ViewTarget.Bottom);
         }
+        break;
+
+      case string command when command == "ZoomIn":
+        _ZoomScale = Math.Clamp(_ZoomScale + ZoomStep, MinZoom, MaxZoom);
+        Reload(ViewTarget.Center);
+        break;
+
+      case string command when command == "ZoomOut":
+        _ZoomScale = Math.Clamp(_ZoomScale - ZoomStep, MinZoom, MaxZoom);
+        Reload(ViewTarget.Center);
         break;
 
       case string command when command == "Refresh":
