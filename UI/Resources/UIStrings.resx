@@ -783,4 +783,7 @@ FN - family name</value>
   <data name="LblRelatives" xml:space="preserve">
     <value>Relatives</value>
   </data>
+  <data name="AlertTextKinshipUnfoldingAborted" xml:space="preserve">
+    <value>The operation took longer than expected. Some kinship levels remained folded. You can unfold them manually.</value>
+  </data>
 </root>

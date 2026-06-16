@@ -70,6 +70,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The operation took longer than expected. Some kinship levels remained folded. You can unfold them manually..
+        /// </summary>
+        public static string AlertTextKinshipUnfoldingAborted {
+            get {
+                return ResourceManager.GetString("AlertTextKinshipUnfoldingAborted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Unable to add name for the &apos;{0}&apos; biological sex.
         /// </summary>
         public static string AlertTextUnableToAddNameForTheSexSelected_1 {

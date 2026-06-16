@@ -783,4 +783,7 @@ FN - род</value>
   <data name="LblRelatives" xml:space="preserve">
     <value>Родственники</value>
   </data>
+  <data name="AlertTextKinshipUnfoldingAborted" xml:space="preserve">
+    <value>Операция заняла больше времени, чем ожидалось. Некоторые уровни родства остались нераскрытыми. Вы можете развернуть их вручную</value>
+  </data>
 </root>

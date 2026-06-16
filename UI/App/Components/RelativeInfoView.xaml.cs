@@ -1,6 +1,7 @@
 ﻿using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
 using System.Windows.Input;
@@ -9,6 +10,7 @@ namespace GT4.UI.Components;
 
 public partial class RelativeInfoView : ContentView
 {
+  private static bool _ShowingCancellationWarning = false;
   private const string ExpandSymbol = "🔽";
   private const string CollapseSymbol = "­­­­⏫­";
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
@@ -241,7 +243,26 @@ public partial class RelativeInfoView : ContentView
       await Dispatcher.DispatchAsync(() => ShowRelatives = false);
       if (expand)
       {
-        await OnShowMoreRelativesCommandAsync();
+        try
+        {
+          await OnShowMoreRelativesCommandAsync();
+        }
+        catch (OperationCanceledException)
+        {
+          // Benign: the DB token timed out while many items were queued through the connection gate.
+          // The item stays collapsed.
+          if (!Interlocked.Exchange(ref _ShowingCancellationWarning, true))
+          {
+            try
+            {
+              await PageAlert.CurrentShell.ShowWarningAsync(UIStrings.AlertTextKinshipUnfoldingAborted);
+            }
+            finally
+            {
+              Interlocked.Exchange(ref _ShowingCancellationWarning, false);
+            }
+          }
+        }
       }
     }
   }
