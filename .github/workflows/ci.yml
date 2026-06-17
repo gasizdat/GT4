@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Build
+        run: |
+          dotnet build Tests\GT4.Core.Project.Tests\GT4.Core.Project.Tests.csproj --configuration Release
+          dotnet build Tests\GT4.UI.Utils.Tests\GT4.UI.Utils.Tests.csproj --configuration Release
+          dotnet build Tests\GT4.UI.View.Tests\GT4.UI.View.Tests.csproj --configuration Release
+
+      - name: Test GT4.Core.Project
+        run: dotnet test Tests\GT4.Core.Project.Tests\GT4.Core.Project.Tests.csproj --no-build --configuration Release --logger "trx;LogFileName=core-project.trx"
+
+      - name: Test GT4.UI.Utils
+        if: always()
+        run: dotnet test Tests\GT4.UI.Utils.Tests\GT4.UI.Utils.Tests.csproj --no-build --configuration Release --logger "trx;LogFileName=ui-utils.trx"
+
+      - name: Test GT4.UI.View
+        if: always()
+        run: dotnet test Tests\GT4.UI.View.Tests\GT4.UI.View.Tests.csproj --no-build --configuration Release --logger "trx;LogFileName=ui-view.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: '**/*.trx'
