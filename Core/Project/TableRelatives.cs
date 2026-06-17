@@ -1,6 +1,5 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
-using GT4.Core.Utils;
 using System.Collections.Concurrent;
 
 namespace GT4.Core.Project;
@@ -144,8 +143,9 @@ internal class TableRelatives : TableBase, ITableRelatives
     using (var command = Document.CreateCommand())
     {
       command.CommandText = $"""
-        SELECT r.PersonId, r.RelativeId, r.Type, r.Date, r.DateStatus,
-               p.BirthDate, p.BirthDateStatus, p.DeathDate, p.DeathDateStatus, p.BiologicalSex
+        SELECT r.RelativeId, r.Type, r.Date, r.DateStatus,
+               p.BirthDate, p.BirthDateStatus, p.DeathDate, 
+               p.DeathDateStatus, p.BiologicalSex, r.PersonId
         FROM Relatives r
         INNER JOIN Persons p ON p.Id = r.RelativeId
         WHERE r.PersonId IN ({inClause});
@@ -154,22 +154,18 @@ internal class TableRelatives : TableBase, ITableRelatives
       await using var reader = await command.ExecuteReaderAsync(token);
       while (await reader.ReadAsync(token))
       {
-        var bucketId = reader.GetInt32(0);
-        var id = reader.GetInt32(1);
-        var type = GetEnum<RelationshipType>(reader, 2);
-        var date = TryGetDate(reader, 3, 4);
-        var birthDate = GetDate(reader, 5, 6);
-        var deathDate = TryGetDate(reader, 7, 8);
-        var biologicalSex = GetEnum<BiologicalSex>(reader, 9);
-        buckets[bucketId].Add(new Relative(new Person(id, birthDate, deathDate, biologicalSex), type, date));
+        var relative = CreateRelativeFromRow(reader: reader, forwardLink: true);
+        var bucketId = reader.GetInt32(9);
+        buckets[bucketId].Add(relative);
       }
     }
 
     using (var command = Document.CreateCommand())
     {
       command.CommandText = $"""
-        SELECT r.RelativeId, r.PersonId, r.Type, r.Date, r.DateStatus,
-               p.BirthDate, p.BirthDateStatus, p.DeathDate, p.DeathDateStatus, p.BiologicalSex
+        SELECT r.PersonId, r.Type, r.Date, r.DateStatus,
+               p.BirthDate, p.BirthDateStatus, p.DeathDate, 
+               p.DeathDateStatus, p.BiologicalSex, r.RelativeId
         FROM Relatives r
         INNER JOIN Persons p ON p.Id = r.PersonId
         WHERE r.RelativeId IN ({inClause});
@@ -178,14 +174,9 @@ internal class TableRelatives : TableBase, ITableRelatives
       await using var reader = await command.ExecuteReaderAsync(token);
       while (await reader.ReadAsync(token))
       {
-        var bucketId = reader.GetInt32(0);
-        var id = reader.GetInt32(1);
-        var type = GetBackwardDirection(GetEnum<RelationshipType>(reader, 2));
-        var date = TryGetDate(reader, 3, 4);
-        var birthDate = GetDate(reader, 5, 6);
-        var deathDate = TryGetDate(reader, 7, 8);
-        var biologicalSex = GetEnum<BiologicalSex>(reader, 9);
-        buckets[bucketId].Add(new Relative(new Person(id, birthDate, deathDate, biologicalSex), type, date));
+        var relative = CreateRelativeFromRow(reader: reader, forwardLink: false);
+        var bucketId = reader.GetInt32(9);
+        buckets[bucketId].Add(relative);
       }
     }
 
