@@ -1,10 +1,22 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
+using System.Data.Common;
 
 namespace GT4.Core.Project;
 
 internal partial class TablePersonNames : TableBase, ITablePersonNames
 {
+  private static Name CreateNameFromRow(DbDataReader reader)
+  {
+    var name = new Name(
+      Id: reader.GetInt32(0),
+      Value: reader.GetString(1),
+      Type: GetEnum<NameType>(reader, 2),
+      ParentId: TryGetInteger(reader, 3));
+
+    return name;
+  }
+
   public TablePersonNames(IProjectDocument document) : base(document)
   {
   }
@@ -40,11 +52,7 @@ internal partial class TablePersonNames : TableBase, ITablePersonNames
     await using var reader = await command.ExecuteReaderAsync(token);
     while (await reader.ReadAsync(token))
     {
-      names.Add(new Name(
-        Id: reader.GetInt32(0),
-        Value: reader.GetString(1),
-        Type: GetEnum<NameType>(reader, 2),
-        ParentId: TryGetInteger(reader, 3)));
+      names.Add(CreateNameFromRow(reader));
     }
 
     return names.ToArray();
@@ -58,7 +66,7 @@ internal partial class TablePersonNames : TableBase, ITablePersonNames
     var inClause = string.Join(",", personIds);
     using var command = Document.CreateCommand();
     command.CommandText = $"""
-      SELECT pn.PersonId, n.Id, n.Value, n.Type, n.ParentId
+      SELECT n.Id, n.Value, n.Type, n.ParentId, pn.PersonId
       FROM Names n
       INNER JOIN PersonNames pn ON pn.NameId = n.Id
       WHERE pn.PersonId IN ({inClause})
@@ -69,14 +77,10 @@ internal partial class TablePersonNames : TableBase, ITablePersonNames
     await using var reader = await command.ExecuteReaderAsync(token);
     while (await reader.ReadAsync(token))
     {
-      var personId = reader.GetInt32(0);
+      var personId = reader.GetInt32(4);
       if (!buckets.TryGetValue(personId, out var list))
         buckets[personId] = list = [];
-      list.Add(new Name(
-        Id: reader.GetInt32(1),
-        Value: reader.GetString(2),
-        Type: GetEnum<NameType>(reader, 3),
-        ParentId: TryGetInteger(reader, 4)));
+      list.Add(CreateNameFromRow(reader));
     }
 
     return buckets.ToDictionary(kv => kv.Key, kv => kv.Value.ToArray());
