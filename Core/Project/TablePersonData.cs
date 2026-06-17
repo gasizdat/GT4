@@ -98,7 +98,7 @@ internal partial class TablePersonData : TableBase, ITablePersonData
     if (category.HasValue)
     {
       command.CommandText = $"""
-        SELECT pd.PersonId, d.Id, d.Value, d.MimeType, d.Category
+        SELECT d.Id, d.Value, d.MimeType, d.Category, pd.PersonId
         FROM Data d
         INNER JOIN PersonData pd ON pd.DataId = d.Id AND pd.PersonId IN ({inClause})
         WHERE d.Category = @category
@@ -109,7 +109,7 @@ internal partial class TablePersonData : TableBase, ITablePersonData
     else
     {
       command.CommandText = $"""
-        SELECT pd.PersonId, d.Id, d.Value, d.MimeType, d.Category
+        SELECT d.Id, d.Value, d.MimeType, d.Category, pd.PersonId
         FROM Data d
         INNER JOIN PersonData pd ON pd.DataId = d.Id
         WHERE pd.PersonId IN ({inClause})
@@ -121,14 +121,10 @@ internal partial class TablePersonData : TableBase, ITablePersonData
     await using var reader = await command.ExecuteReaderAsync(token);
     while (await reader.ReadAsync(token))
     {
-      var personId = reader.GetInt32(0);
+      var personId = reader.GetInt32(4);
       if (!buckets.TryGetValue(personId, out var list))
         buckets[personId] = list = [];
-      list.Add(new Data(
-        Id: reader.GetInt32(1),
-        Content: reader.GetFieldValue<byte[]>(2),
-        MimeType: TryGetString(reader, 3),
-        Category: GetEnum<DataCategory>(reader, 4)));
+      list.Add(CreateDataFromRow(reader));
     }
 
     return buckets.ToDictionary(kv => kv.Key, kv => kv.Value.ToArray());
