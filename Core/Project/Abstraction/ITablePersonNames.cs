@@ -6,5 +6,6 @@ public interface ITablePersonNames
 {
   Task AddPersonNamesAsync(Person person, Name[] names, CancellationToken token);
   Task<Name[]> GetPersonNamesAsync(Person person, CancellationToken token);
+  Task<Dictionary<int, Name[]>> GetPersonNamesAsync(Person[] persons, CancellationToken token);
   Task UpdatePersonNamesAsync(Person person, Name[] names, CancellationToken token);
 }

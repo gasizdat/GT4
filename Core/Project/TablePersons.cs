@@ -6,7 +6,7 @@ namespace GT4.Core.Project;
 
 internal partial class TablePersons : TableBase, ITablePersons
 {
-  private readonly WeakReference<IList<Person>?> _Items = new(null);
+  private readonly WeakReference<Dictionary<int, Person>?> _Items = new(null);
 
   public TablePersons(IProjectDocument document) : base(document)
   {
@@ -49,7 +49,7 @@ internal partial class TablePersons : TableBase, ITablePersons
   public async Task<Person[]> GetPersonsAsync(CancellationToken token)
   {
     if (_Items.TryGetTarget(out var items))
-      return items.ToArray();
+      return [.. items.Values];
 
     using var command = Document.CreateCommand();
 
@@ -59,20 +59,21 @@ internal partial class TablePersons : TableBase, ITablePersons
       """;
 
     await using var reader = await command.ExecuteReaderAsync(token);
-    var result = new List<Person>();
+    var result = new Dictionary<int, Person>();
     while (await reader.ReadAsync(token))
     {
-      result.Add(CreatePerson(reader));
+      var person = CreatePerson(reader);
+      result.Add(person.Id, person);
     }
 
     _Items.SetTarget(result);
-    return result.ToArray();
+    return [.. result.Values];
   }
 
   public async Task<Person?> TryGetPersonByIdAsync(int personId, CancellationToken token)
   {
     if (_Items.TryGetTarget(out var items))
-      return items.SingleOrDefault(item => item.Id == personId);
+      return items.TryGetValue(personId, out var cached) ? cached : null;
 
     using var command = Document.CreateCommand();
 

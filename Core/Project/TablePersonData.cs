@@ -1,6 +1,7 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using Microsoft.Data.Sqlite;
+using System.Data.Common;
 
 namespace GT4.Core.Project;
 
@@ -30,41 +31,13 @@ internal partial class TablePersonData : TableBase, ITablePersonData
     await command.ExecuteNonQueryAsync(token);
   }
 
-  private async Task<int[]> GetPersonDataIdsAsync(Person person, DataCategory? category, CancellationToken token)
+  private static Data CreateDataFromRow(DbDataReader reader)
   {
-    using var command = Document.CreateCommand();
-
-    if (category.HasValue)
-    {
-      command.CommandText = """
-        SELECT Data.Id
-        FROM Data
-        INNER JOIN
-          PersonData ON PersonData.DataId=Data.Id AND PersonData.PersonId=@personId
-        WHERE Data.Category=@category
-        ORDER BY PersonData.ROWID;
-        """;
-      command.Parameters.AddWithValue("@category", category.Value);
-    }
-    else
-    {
-      command.CommandText = """
-        SELECT DataId
-        FROM PersonData
-        WHERE PersonId=@personId
-        ORDER BY ROWID;
-        """;
-    }
-    command.Parameters.AddWithValue("@personId", person.Id);
-
-    await using var reader = await command.ExecuteReaderAsync(token);
-    var ret = new List<int>();
-    while (await reader.ReadAsync(token))
-    {
-      ret.Add(reader.GetInt32(0));
-    }
-
-    return ret.ToArray();
+    return new Data(
+      Id: reader.GetInt32(0),
+      Content: reader.GetFieldValue<byte[]>(1),
+      MimeType: TryGetString(reader, 2),
+      Category: GetEnum<DataCategory>(reader, 3));
   }
 
   private async Task<Data> AddDataContentIfNotExist(Data data, CancellationToken token)
@@ -79,14 +52,82 @@ internal partial class TablePersonData : TableBase, ITablePersonData
 
   public async Task<Data[]> GetPersonDataSetAsync(Person person, DataCategory? category, CancellationToken token)
   {
-    var ids = await GetPersonDataIdsAsync(person, category, token);
-    var tasks = ids.Select(id => Document.Data.TryGetDataByIdAsync(id, token));
-    var datas = await Task.WhenAll(tasks);
+    using var command = Document.CreateCommand();
 
-    return datas
-      .Where(data => data is not null)
-      .Select(data => data!)
-      .ToArray();
+    if (category.HasValue)
+    {
+      command.CommandText = """
+        SELECT d.Id, d.Value, d.MimeType, d.Category
+        FROM Data d
+        INNER JOIN PersonData pd ON pd.DataId = d.Id AND pd.PersonId = @personId
+        WHERE d.Category = @category
+        ORDER BY pd.ROWID;
+        """;
+      command.Parameters.AddWithValue("@category", category.Value);
+    }
+    else
+    {
+      command.CommandText = """
+        SELECT d.Id, d.Value, d.MimeType, d.Category
+        FROM Data d
+        INNER JOIN PersonData pd ON pd.DataId = d.Id
+        WHERE pd.PersonId = @personId
+        ORDER BY pd.ROWID;
+        """;
+    }
+    command.Parameters.AddWithValue("@personId", person.Id);
+
+    var result = new List<Data>();
+    await using var reader = await command.ExecuteReaderAsync(token);
+    while (await reader.ReadAsync(token))
+    {
+      result.Add(CreateDataFromRow(reader));
+    }
+
+    return result.ToArray();
+  }
+
+  public async Task<Dictionary<int, Data[]>> GetPersonDataSetAsync(Person[] persons, DataCategory? category, CancellationToken token)
+  {
+    if (persons.Length == 0)
+      return [];
+
+    var inClause = string.Join(",", persons.Select(p => p.Id));
+    using var command = Document.CreateCommand();
+
+    if (category.HasValue)
+    {
+      command.CommandText = $"""
+        SELECT d.Id, d.Value, d.MimeType, d.Category, pd.PersonId
+        FROM Data d
+        INNER JOIN PersonData pd ON pd.DataId = d.Id AND pd.PersonId IN ({inClause})
+        WHERE d.Category = @category
+        ORDER BY pd.PersonId, pd.ROWID;
+        """;
+      command.Parameters.AddWithValue("@category", category.Value);
+    }
+    else
+    {
+      command.CommandText = $"""
+        SELECT d.Id, d.Value, d.MimeType, d.Category, pd.PersonId
+        FROM Data d
+        INNER JOIN PersonData pd ON pd.DataId = d.Id
+        WHERE pd.PersonId IN ({inClause})
+        ORDER BY pd.PersonId, pd.ROWID;
+        """;
+    }
+
+    var buckets = new Dictionary<int, List<Data>>();
+    await using var reader = await command.ExecuteReaderAsync(token);
+    while (await reader.ReadAsync(token))
+    {
+      var personId = reader.GetInt32(4);
+      if (!buckets.TryGetValue(personId, out var list))
+        buckets[personId] = list = [];
+      list.Add(CreateDataFromRow(reader));
+    }
+
+    return buckets.ToDictionary(kv => kv.Key, kv => kv.Value.ToArray());
   }
 
   public async Task AddPersonDataSetAsync(Person person, Data[] dataSet, CancellationToken token)

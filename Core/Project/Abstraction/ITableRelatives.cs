@@ -6,6 +6,7 @@ public interface ITableRelatives
 {
   Task AddRelativesAsync(Person person, Relative[] relatives, CancellationToken token);
   Task<Relative[]> GetRelativesAsync(Person person, CancellationToken token);
+  Task<Dictionary<int, Relative[]>> GetRelativesForPersonsAsync(Person[] persons, CancellationToken token);
   Task<bool> HasCommonAncestorsAsync(Person personA, Person personB, CancellationToken token);
   Task UpdateRelativesAsync(Person person, Relative[] relatives, CancellationToken token);
 }

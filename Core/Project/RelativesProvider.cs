@@ -7,8 +7,40 @@ internal class RelativesProvider : TableBase, IRelativesProvider
 {
   private static readonly ElementIdComparer<RelativeInfo> _RelativeInfoComparer = new();
 
-  private async Task<RelativeFullInfo> GetRelativeFullInfoAsync(RelativeInfo relative, CancellationToken token) =>
-    new(relative: relative, relativeInfos: await GetRelativeInfosAsync(relative as Person, true, token));
+  private async Task<RelativeFullInfo[]> GetRelativeFullInfosAsync(RelativeInfo[] relatives, CancellationToken token)
+  {
+    if (relatives.Length == 0)
+      return [];
+
+    var allRelativesDict = await Document.Relatives.GetRelativesForPersonsAsync(relatives, token);
+
+    var uniqueRelativesById = allRelativesDict.Values
+      .SelectMany(r => r)
+      .GroupBy(r => r.Id)
+      .ToDictionary(g => g.Key, g => (Person)g.First());
+
+    PersonInfo[] personInfos = uniqueRelativesById.Count > 0
+      ? await Document.PersonManager.GetPersonInfosAsync([.. uniqueRelativesById.Values], selectMainPhoto: true, token)
+      : [];
+
+    var personInfoById = personInfos.ToDictionary(p => p.Id);
+
+    return relatives.Select(relative =>
+    {
+      var directRelatives = allRelativesDict.GetValueOrDefault(relative.Id, []);
+      var relativeInfos = directRelatives.Select(r =>
+      {
+        personInfoById.TryGetValue(r.Id, out var info);
+        return new RelativeInfo(
+          relative: r,
+          names: info?.Names ?? [],
+          mainPhoto: info?.MainPhoto,
+          generation: new Generation(r.Type),
+          consanguinity: Consanguinity.Zero);
+      }).ToArray();
+      return new RelativeFullInfo(relative, relativeInfos);
+    }).ToArray();
+  }
 
   private static RelativeInfo[] ToTypedArray(
     IEnumerable<RelativeInfo> relatives,
@@ -190,22 +222,29 @@ internal class RelativesProvider : TableBase, IRelativesProvider
     CancellationToken token)
   {
     var relatives = await Document.Relatives.GetRelativesAsync(relativeInfo, token);
-    var parentTasks = relatives
+    // Fetch only the relatives list of each parent — not their full PersonFullInfo —
+    // since we only need their children to compute siblings. This avoids loading names,
+    // bio, photos, and each parent's relatives' photos (many cascaded queries per parent).
+    var parentRelativesTasks = relatives
       .Where(r => r.Type == RelationshipType.Parent || r.Type == RelationshipType.AdoptiveParent)
-      .Select(r => Document.PersonManager.GetPersonFullInfoAsync(r, token))
+      .Select(r => Document.Relatives.GetRelativesAsync(r, token))
       .ToArray();
     relatives = relatives
       .Where(r => IsRelationshipSupported(relativeInfo, r.Type))
       .ToArray();
     var relativeInfosTask = GetRelativeInfosAsync(relatives, selectMainPhoto, token);
-    await Task.WhenAll([relativeInfosTask, .. parentTasks]);
-    var siblings = parentTasks
-      .Select(t => t.Result)
-      .SelectMany(p => p.RelativeInfos)
+    await Task.WhenAll([relativeInfosTask, .. parentRelativesTasks]);
+    var siblingRelatives = parentRelativesTasks
+      .SelectMany(t => t.Result)
       .Where(r => r.Id != relativeInfo.Id)
       .Where(r => r.Type == RelationshipType.Child || r.Type == RelationshipType.AdoptiveChild)
       .Where(r => IsRelationshipSupported(relativeInfo, RelationshipType.Sibling))
-      .Distinct(_RelativeInfoComparer);
+      .GroupBy(r => r.Id)
+      .Select(g => g.First())
+      .ToArray();
+    var siblingInfos = siblingRelatives.Length > 0
+      ? await GetRelativeInfosAsync(siblingRelatives, selectMainPhoto, token)
+      : [];
 
     var siblingGeneration = relativeInfo.Generation;
     var siblingConsanguinity = GetNextConsanguinity(RelationshipType.Sibling, relativeInfo.Generation, relativeInfo.Consanguinity);
@@ -220,7 +259,7 @@ internal class RelativesProvider : TableBase, IRelativesProvider
           var nextConsanguinity = GetNextConsanguinity(r.Type, r.Generation, relativeInfo.Consanguinity);
           return r with { Consanguinity = nextConsanguinity, Generation = nextGeneration };
         }),
-      ..siblings
+      ..siblingInfos
         .Select(r => r with
         {
           Consanguinity = siblingConsanguinity,
@@ -265,33 +304,24 @@ internal class RelativesProvider : TableBase, IRelativesProvider
 
   public async Task<Parents> GetParentsAsync(RelativeInfo[] relativeInfos, CancellationToken token)
   {
-    var parentTasks = relativeInfos
-      .Where(r => r.Type == RelationshipType.Parent)
-      .Select(r => GetRelativeFullInfoAsync(r, token));
-    var adoptiveParentTasks = relativeInfos
-      .Where(r => r.Type == RelationshipType.AdoptiveParent)
-      .Select(r => GetRelativeFullInfoAsync(r, token));
-    var parentsTasks = Task.WhenAll(parentTasks);
-    var adoptiveParentsTasks = Task.WhenAll(adoptiveParentTasks);
-    await Task.WhenAll(parentsTasks, adoptiveParentsTasks);
-    var parents = parentsTasks.Result;
-    var adoptiveParents = adoptiveParentsTasks.Result;
-    var allParentIds = new HashSet<int>([.. parents.Select(p => p.Id), .. adoptiveParents.Select(p => p.Id)]);
-    var stepParentTasks = parents
+    var parents = relativeInfos.Where(r => r.Type == RelationshipType.Parent).ToArray();
+    var adoptiveParents = relativeInfos.Where(r => r.Type == RelationshipType.AdoptiveParent).ToArray();
+    var combined = await GetRelativeFullInfosAsync([.. parents, .. adoptiveParents], token);
+    var parentFullInfos = combined[..parents.Length];
+    var adoptiveParentFullInfos = combined[parents.Length..];
+
+    var allParentIds = new HashSet<int>([.. parentFullInfos.Select(p => p.Id), .. adoptiveParentFullInfos.Select(p => p.Id)]);
+    var stepParentRelativeInfos = parentFullInfos
       .SelectMany(p => p.RelativeInfos)
       .Where(r => r.Type == RelationshipType.Spouse)
       .Where(r => !allParentIds.Contains(r.Id))
-      .Select(r => r with
-      {
-        Type = RelationshipType.StepParent,
-        Generation = new Generation(RelationshipType.Parent)
-      })
-      .Select(r => GetRelativeFullInfoAsync(r, token));
-    var stepParents = await Task.WhenAll(stepParentTasks);
+      .Select(r => r with { Type = RelationshipType.StepParent, Generation = new Generation(RelationshipType.Parent) })
+      .ToArray();
+    var stepParents = await GetRelativeFullInfosAsync(stepParentRelativeInfos, token);
 
     return new Parents(
-      Native: parents,
-      Adoptive: adoptiveParents,
+      Native: parentFullInfos,
+      Adoptive: adoptiveParentFullInfos,
       Step: stepParents);
   }
 
@@ -301,11 +331,9 @@ internal class RelativesProvider : TableBase, IRelativesProvider
       .Where(r => r.Type == RelationshipType.Child || r.Type == RelationshipType.AdoptiveChild)
       .Select(r => r.Id)
       .ToHashSet();
-    var spouseTasks = relativeInfos
-      .Where(r => r.Type == RelationshipType.Spouse)
-      .Select(r => GetRelativeFullInfoAsync(r, token));
-    var spouses = await Task.WhenAll(spouseTasks);
-    var ret = spouses
+    var spouses = relativeInfos.Where(r => r.Type == RelationshipType.Spouse).ToArray();
+    var spouseFullInfos = await GetRelativeFullInfosAsync(spouses, token);
+    var ret = spouseFullInfos
       .SelectMany(s => s.RelativeInfos.Select(r => r with { Date = s.Date }))
       .Where(r => r.Type == RelationshipType.Child || r.Type == RelationshipType.AdoptiveChild)
       .Where(r => !ownChildrenIds.Contains(r.Id));

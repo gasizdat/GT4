@@ -10,18 +10,6 @@ internal class PersonManager : TableBase, IPersonManager
   {
   }
 
-  private async Task<PersonInfo> CreatePersonInfoAsync(Person person, bool selectMainPhoto, CancellationToken token)
-  {
-    var names = Document.PersonNames.GetPersonNamesAsync(person, token);
-    var mainPhoto = selectMainPhoto
-      ? Document.PersonData.GetPersonDataSetAsync(person, DataCategory.PersonMainPhoto, token)
-      : Task.FromResult(Array.Empty<Data>());
-    await Task.WhenAll(names, mainPhoto);
-
-    var ret = new PersonInfo(person, names.Result, mainPhoto.Result.FirstOrDefault());
-    return ret;
-  }
-
   private static Data[] CombinePersonData(PersonFullInfo personFullInfo)
   {
     var personDataSet = new List<Data>();
@@ -74,8 +62,21 @@ internal class PersonManager : TableBase, IPersonManager
 
   public async Task<PersonInfo[]> GetPersonInfosAsync(Person[] persons, bool selectMainPhoto, CancellationToken token)
   {
-    var ret = await Task.WhenAll(persons.Select(person => CreatePersonInfoAsync(person, selectMainPhoto, token)));
-    return ret;
+    if (persons.Length == 0)
+      return [];
+
+    var namesTask = Document.PersonNames.GetPersonNamesAsync(persons, token);
+    var photosTask = selectMainPhoto
+      ? Document.PersonData.GetPersonDataSetAsync(persons, DataCategory.PersonMainPhoto, token)
+      : Task.FromResult<Dictionary<int, Data[]>>([]);
+    await Task.WhenAll(namesTask, photosTask);
+
+    return persons.Select(person =>
+    {
+      namesTask.Result.TryGetValue(person.Id, out var names);
+      photosTask.Result.TryGetValue(person.Id, out var photos);
+      return new PersonInfo(person, names ?? [], photos?.FirstOrDefault());
+    }).ToArray();
   }
 
   public async Task<PersonInfo[]> GetPersonInfosByNameAsync(Name name, bool selectMainPhoto, CancellationToken token)
@@ -90,10 +91,7 @@ internal class PersonManager : TableBase, IPersonManager
       """;
     command.Parameters.AddWithValue("@id", name.Id);
 
-    // Collect ids while holding the connection, then resolve persons; resolving issues more queries
-    // that must not run while the reader still holds the connection — so the reader is disposed
-    // (releasing the gate) before that.
-    var ids = new List<int>();
+    var ids = new HashSet<int>();
     await using (var reader = await command.ExecuteReaderAsync(token))
     {
       while (await reader.ReadAsync(token))
@@ -102,12 +100,12 @@ internal class PersonManager : TableBase, IPersonManager
       }
     }
 
-    var persons = await Task.WhenAll(ids.Select(id => Document.Persons.TryGetPersonByIdAsync(id, token)));
-    var ret = await Task.WhenAll(persons
-      .Where(person => person is not null)
-      .Select(person => CreatePersonInfoAsync(person!, selectMainPhoto, token)));
+    if (ids.Count == 0)
+      return [];
 
-    return ret ?? [];
+    var allPersons = await Document.Persons.GetPersonsAsync(token);
+    var persons = allPersons.Where(p => ids.Contains(p.Id)).ToArray();
+    return await GetPersonInfosAsync(persons, selectMainPhoto, token);
   }
 
   public async Task<PersonInfo> AddPersonAsync(PersonFullInfo personFullInfo, CancellationToken token)
