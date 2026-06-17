@@ -17,20 +17,22 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Restore
-        run: dotnet restore GT4.sln
-
       - name: Build
         run: |
-          dotnet build Tests\GT4.Core.Project.Tests\GT4.Core.Project.Tests.csproj --no-restore --configuration Release
-          dotnet build Tests\GT4.UI.Utils.Tests\GT4.UI.Utils.Tests.csproj --no-restore --configuration Release
-          dotnet build Tests\GT4.UI.View.Tests\GT4.UI.View.Tests.csproj --no-restore --configuration Release
+          dotnet build Tests\GT4.Core.Project.Tests\GT4.Core.Project.Tests.csproj --configuration Release
+          dotnet build Tests\GT4.UI.Utils.Tests\GT4.UI.Utils.Tests.csproj --configuration Release
+          dotnet build Tests\GT4.UI.View.Tests\GT4.UI.View.Tests.csproj --configuration Release
 
-      - name: Test
-        run: |
-          dotnet test Tests\GT4.Core.Project.Tests\GT4.Core.Project.Tests.csproj --no-build --configuration Release --logger "trx;LogFileName=core-project.trx"
-          dotnet test Tests\GT4.UI.Utils.Tests\GT4.UI.Utils.Tests.csproj --no-build --configuration Release --logger "trx;LogFileName=ui-utils.trx"
-          dotnet test Tests\GT4.UI.View.Tests\GT4.UI.View.Tests.csproj --no-build --configuration Release --logger "trx;LogFileName=ui-view.trx"
+      - name: Test GT4.Core.Project
+        run: dotnet test Tests\GT4.Core.Project.Tests\GT4.Core.Project.Tests.csproj --no-build --configuration Release --logger "trx;LogFileName=core-project.trx"
+
+      - name: Test GT4.UI.Utils
+        if: always()
+        run: dotnet test Tests\GT4.UI.Utils.Tests\GT4.UI.Utils.Tests.csproj --no-build --configuration Release --logger "trx;LogFileName=ui-utils.trx"
+
+      - name: Test GT4.UI.View
+        if: always()
+        run: dotnet test Tests\GT4.UI.View.Tests\GT4.UI.View.Tests.csproj --no-build --configuration Release --logger "trx;LogFileName=ui-view.trx"
 
       - name: Upload test results
         if: always()
