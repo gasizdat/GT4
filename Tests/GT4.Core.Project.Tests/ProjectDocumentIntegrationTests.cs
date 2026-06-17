@@ -475,6 +475,43 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task GetPersonDataSetBatch_EmptyInput_ReturnsEmpty()
+  {
+    var result = await _doc.PersonData.GetPersonDataSetAsync([], null, Token);
+
+    result.Should().BeEmpty();
+  }
+
+  [Fact]
+  public async Task GetPersonDataSetBatch_NoCategoryFilter_ReturnsAllData()
+  {
+    var personA = await AddBarePersonAsync();
+    var personB = await AddBarePersonAsync();
+    await _doc.PersonData.AddPersonDataSetAsync(personA, [NewData(DataCategory.PersonPhoto, 1, 2)], Token);
+    await _doc.PersonData.AddPersonDataSetAsync(personB, [NewData(DataCategory.PersonBio, 3, 4)], Token);
+
+    var result = await _doc.PersonData.GetPersonDataSetAsync([personA.Id, personB.Id], null, Token);
+
+    result.Should().ContainKey(personA.Id);
+    result.Should().ContainKey(personB.Id);
+    result[personA.Id].Should().ContainSingle().Which.Content.Should().Equal(1, 2);
+    result[personB.Id].Should().ContainSingle().Which.Content.Should().Equal(3, 4);
+  }
+
+  [Fact]
+  public async Task GetPersonDataSetBatch_WithCategoryFilter_FiltersPerPerson()
+  {
+    var person = await AddBarePersonAsync();
+    await _doc.PersonData.AddPersonDataSetAsync(person,
+      [NewData(DataCategory.PersonPhoto, 10), NewData(DataCategory.PersonBio, 20)], Token);
+
+    var result = await _doc.PersonData.GetPersonDataSetAsync([person.Id], DataCategory.PersonPhoto, Token);
+
+    result.Should().ContainKey(person.Id);
+    result[person.Id].Should().ContainSingle().Which.Category.Should().Be(DataCategory.PersonPhoto);
+  }
+
+  [Fact]
   public async Task RemovePersonData_KeepsSharedDataReferencedByAnotherPerson()
   {
     // One Data blob linked to two persons. Removing it from one must unlink it there but leave the
