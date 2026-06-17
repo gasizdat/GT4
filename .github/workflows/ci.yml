@@ -24,19 +24,32 @@ jobs:
           dotnet build Tests\GT4.UI.View.Tests\GT4.UI.View.Tests.csproj --configuration Release
 
       - name: Test GT4.Core.Project
-        run: dotnet test Tests\GT4.Core.Project.Tests\GT4.Core.Project.Tests.csproj --no-build --configuration Release --logger "trx;LogFileName=core-project.trx"
+        run: dotnet test Tests\GT4.Core.Project.Tests\GT4.Core.Project.Tests.csproj --no-build --configuration Release --logger "trx;LogFileName=core-project.trx" --collect "XPlat Code Coverage" --results-directory coverage
 
       - name: Test GT4.UI.Utils
         if: always()
-        run: dotnet test Tests\GT4.UI.Utils.Tests\GT4.UI.Utils.Tests.csproj --no-build --configuration Release --logger "trx;LogFileName=ui-utils.trx"
+        run: dotnet test Tests\GT4.UI.Utils.Tests\GT4.UI.Utils.Tests.csproj --no-build --configuration Release --logger "trx;LogFileName=ui-utils.trx" --collect "XPlat Code Coverage" --results-directory coverage
 
       - name: Test GT4.UI.View
         if: always()
-        run: dotnet test Tests\GT4.UI.View.Tests\GT4.UI.View.Tests.csproj --no-build --configuration Release --logger "trx;LogFileName=ui-view.trx"
+        run: dotnet test Tests\GT4.UI.View.Tests\GT4.UI.View.Tests.csproj --no-build --configuration Release --logger "trx;LogFileName=ui-view.trx" --collect "XPlat Code Coverage" --results-directory coverage
+
+      - name: Generate coverage report
+        if: always()
+        run: |
+          dotnet tool install --global dotnet-reportgenerator-globaltool
+          reportgenerator -reports:coverage/**/coverage.cobertura.xml -targetdir:coverage/report -reporttypes:Html
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: coverage-report
+          path: coverage/report
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v6
         with:
           name: test-results
-          path: '**/*.trx'
+          path: coverage/*.trx
