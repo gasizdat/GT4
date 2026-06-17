@@ -87,12 +87,12 @@ internal partial class TablePersonData : TableBase, ITablePersonData
     return result.ToArray();
   }
 
-  public async Task<Dictionary<int, Data[]>> GetPersonDataSetAsync(int[] personIds, DataCategory? category, CancellationToken token)
+  public async Task<Dictionary<int, Data[]>> GetPersonDataSetAsync(Person[] persons, DataCategory? category, CancellationToken token)
   {
-    if (personIds.Length == 0)
+    if (persons.Length == 0)
       return [];
 
-    var inClause = string.Join(",", personIds);
+    var inClause = string.Join(",", persons.Select(p => p.Id));
     using var command = Document.CreateCommand();
 
     if (category.HasValue)

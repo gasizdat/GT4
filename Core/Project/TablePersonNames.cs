@@ -58,12 +58,12 @@ internal partial class TablePersonNames : TableBase, ITablePersonNames
     return names.ToArray();
   }
 
-  public async Task<Dictionary<int, Name[]>> GetPersonNamesAsync(int[] personIds, CancellationToken token)
+  public async Task<Dictionary<int, Name[]>> GetPersonNamesAsync(Person[] persons, CancellationToken token)
   {
-    if (personIds.Length == 0)
+    if (persons.Length == 0)
       return [];
 
-    var inClause = string.Join(",", personIds);
+    var inClause = string.Join(",", persons.Select(p => p.Id));
     using var command = Document.CreateCommand();
     command.CommandText = $"""
       SELECT n.Id, n.Value, n.Type, n.ParentId, pn.PersonId

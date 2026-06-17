@@ -490,7 +490,7 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
     await _doc.PersonData.AddPersonDataSetAsync(personA, [NewData(DataCategory.PersonPhoto, 1, 2)], Token);
     await _doc.PersonData.AddPersonDataSetAsync(personB, [NewData(DataCategory.PersonBio, 3, 4)], Token);
 
-    var result = await _doc.PersonData.GetPersonDataSetAsync([personA.Id, personB.Id], null, Token);
+    var result = await _doc.PersonData.GetPersonDataSetAsync([personA, personB], null, Token);
 
     result.Should().ContainKey(personA.Id);
     result.Should().ContainKey(personB.Id);
@@ -505,7 +505,7 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
     await _doc.PersonData.AddPersonDataSetAsync(person,
       [NewData(DataCategory.PersonPhoto, 10), NewData(DataCategory.PersonBio, 20)], Token);
 
-    var result = await _doc.PersonData.GetPersonDataSetAsync([person.Id], DataCategory.PersonPhoto, Token);
+    var result = await _doc.PersonData.GetPersonDataSetAsync([person], DataCategory.PersonPhoto, Token);
 
     result.Should().ContainKey(person.Id);
     result[person.Id].Should().ContainSingle().Which.Category.Should().Be(DataCategory.PersonPhoto);
@@ -606,7 +606,7 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
     var child = await AddBarePersonAsync();
     await _doc.Relatives.AddRelativesAsync(parent, [new Relative(child, RelationshipType.Child, null)], Token);
 
-    var result = await _doc.Relatives.GetRelativesForPersonsAsync([parent.Id], Token);
+    var result = await _doc.Relatives.GetRelativesForPersonsAsync([parent], Token);
 
     result.Should().ContainKey(parent.Id);
     result[parent.Id].Should().ContainSingle().Which.Id.Should().Be(child.Id);
@@ -622,7 +622,7 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
 
     // Query from the child side — the row is stored with child as RelativeId, so
     // the backward-link query must flip Child→Parent.
-    var result = await _doc.Relatives.GetRelativesForPersonsAsync([child.Id], Token);
+    var result = await _doc.Relatives.GetRelativesForPersonsAsync([child], Token);
 
     result.Should().ContainKey(child.Id);
     result[child.Id].Should().ContainSingle().Which.Id.Should().Be(parent.Id);
@@ -639,7 +639,7 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
     await _doc.Relatives.AddRelativesAsync(personA, [new Relative(relA, RelationshipType.Child, null)], Token);
     await _doc.Relatives.AddRelativesAsync(personB, [new Relative(relB, RelationshipType.Child, null)], Token);
 
-    var result = await _doc.Relatives.GetRelativesForPersonsAsync([personA.Id, personB.Id], Token);
+    var result = await _doc.Relatives.GetRelativesForPersonsAsync([personA, personB], Token);
 
     result.Should().ContainKey(personA.Id);
     result.Should().ContainKey(personB.Id);
@@ -656,11 +656,11 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
       [new Relative(adoptiveChild, RelationshipType.AdoptiveChild, null)], Token);
 
     // From the child's perspective the backward link must yield AdoptiveParent.
-    var resultChild = await _doc.Relatives.GetRelativesForPersonsAsync([adoptiveChild.Id], Token);
+    var resultChild = await _doc.Relatives.GetRelativesForPersonsAsync([adoptiveChild], Token);
     resultChild[adoptiveChild.Id].Single().Type.Should().Be(RelationshipType.AdoptiveParent);
 
     // From the parent's perspective the forward link must yield AdoptiveChild.
-    var resultParent = await _doc.Relatives.GetRelativesForPersonsAsync([adoptiveParent.Id], Token);
+    var resultParent = await _doc.Relatives.GetRelativesForPersonsAsync([adoptiveParent], Token);
     resultParent[adoptiveParent.Id].Single().Type.Should().Be(RelationshipType.AdoptiveChild);
   }
 

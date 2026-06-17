@@ -12,8 +12,7 @@ internal class RelativesProvider : TableBase, IRelativesProvider
     if (relatives.Length == 0)
       return [];
 
-    var personIds = relatives.Select(r => r.Id).ToArray();
-    var allRelativesDict = await Document.Relatives.GetRelativesForPersonsAsync(personIds, token);
+    var allRelativesDict = await Document.Relatives.GetRelativesForPersonsAsync(relatives, token);
 
     var uniqueRelativesById = allRelativesDict.Values
       .SelectMany(r => r)

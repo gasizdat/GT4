@@ -65,10 +65,9 @@ internal class PersonManager : TableBase, IPersonManager
     if (persons.Length == 0)
       return [];
 
-    var personIds = persons.Select(p => p.Id).ToArray();
-    var namesTask = Document.PersonNames.GetPersonNamesAsync(personIds, token);
+    var namesTask = Document.PersonNames.GetPersonNamesAsync(persons, token);
     var photosTask = selectMainPhoto
-      ? Document.PersonData.GetPersonDataSetAsync(personIds, DataCategory.PersonMainPhoto, token)
+      ? Document.PersonData.GetPersonDataSetAsync(persons, DataCategory.PersonMainPhoto, token)
       : Task.FromResult<Dictionary<int, Data[]>>([]);
     await Task.WhenAll(namesTask, photosTask);
 

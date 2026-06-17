@@ -132,11 +132,12 @@ internal class TableRelatives : TableBase, ITableRelatives
     return relatives.ToArray();
   }
 
-  public async Task<Dictionary<int, Relative[]>> GetRelativesForPersonsAsync(int[] personIds, CancellationToken token)
+  public async Task<Dictionary<int, Relative[]>> GetRelativesForPersonsAsync(Person[] persons, CancellationToken token)
   {
-    if (personIds.Length == 0)
+    if (persons.Length == 0)
       return [];
 
+    var personIds = persons.Select(p => p.Id);
     var inClause = string.Join(",", personIds);
     var buckets = personIds.ToDictionary(id => id, _ => new List<Relative>());
 
