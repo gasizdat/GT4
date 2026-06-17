@@ -555,6 +555,79 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task GetRelativesForPersons_EmptyInput_ReturnsEmpty()
+  {
+    var result = await _doc.Relatives.GetRelativesForPersonsAsync([], Token);
+
+    result.Should().BeEmpty();
+  }
+
+  [Fact]
+  public async Task GetRelativesForPersons_ForwardLink_ReturnsRelative()
+  {
+    var parent = await AddBarePersonAsync();
+    var child = await AddBarePersonAsync();
+    await _doc.Relatives.AddRelativesAsync(parent, [new Relative(child, RelationshipType.Child, null)], Token);
+
+    var result = await _doc.Relatives.GetRelativesForPersonsAsync([parent.Id], Token);
+
+    result.Should().ContainKey(parent.Id);
+    result[parent.Id].Should().ContainSingle().Which.Id.Should().Be(child.Id);
+    result[parent.Id].Single().Type.Should().Be(RelationshipType.Child);
+  }
+
+  [Fact]
+  public async Task GetRelativesForPersons_BackwardLink_ReturnsInvertedRelative()
+  {
+    var parent = await AddBarePersonAsync();
+    var child = await AddBarePersonAsync();
+    await _doc.Relatives.AddRelativesAsync(parent, [new Relative(child, RelationshipType.Child, null)], Token);
+
+    // Query from the child side — the row is stored with child as RelativeId, so
+    // the backward-link query must flip Child→Parent.
+    var result = await _doc.Relatives.GetRelativesForPersonsAsync([child.Id], Token);
+
+    result.Should().ContainKey(child.Id);
+    result[child.Id].Should().ContainSingle().Which.Id.Should().Be(parent.Id);
+    result[child.Id].Single().Type.Should().Be(RelationshipType.Parent);
+  }
+
+  [Fact]
+  public async Task GetRelativesForPersons_MultiplePersons_BucketsCorrectly()
+  {
+    var personA = await AddBarePersonAsync();
+    var personB = await AddBarePersonAsync();
+    var relA = await AddBarePersonAsync();
+    var relB = await AddBarePersonAsync();
+    await _doc.Relatives.AddRelativesAsync(personA, [new Relative(relA, RelationshipType.Child, null)], Token);
+    await _doc.Relatives.AddRelativesAsync(personB, [new Relative(relB, RelationshipType.Child, null)], Token);
+
+    var result = await _doc.Relatives.GetRelativesForPersonsAsync([personA.Id, personB.Id], Token);
+
+    result.Should().ContainKey(personA.Id);
+    result.Should().ContainKey(personB.Id);
+    result[personA.Id].Should().ContainSingle().Which.Id.Should().Be(relA.Id);
+    result[personB.Id].Should().ContainSingle().Which.Id.Should().Be(relB.Id);
+  }
+
+  [Fact]
+  public async Task GetRelativesForPersons_AdoptiveRelationship_FlipsCorrectly()
+  {
+    var adoptiveParent = await AddBarePersonAsync();
+    var adoptiveChild = await AddBarePersonAsync();
+    await _doc.Relatives.AddRelativesAsync(adoptiveParent,
+      [new Relative(adoptiveChild, RelationshipType.AdoptiveChild, null)], Token);
+
+    // From the child's perspective the backward link must yield AdoptiveParent.
+    var resultChild = await _doc.Relatives.GetRelativesForPersonsAsync([adoptiveChild.Id], Token);
+    resultChild[adoptiveChild.Id].Single().Type.Should().Be(RelationshipType.AdoptiveParent);
+
+    // From the parent's perspective the forward link must yield AdoptiveChild.
+    var resultParent = await _doc.Relatives.GetRelativesForPersonsAsync([adoptiveParent.Id], Token);
+    resultParent[adoptiveParent.Id].Single().Type.Should().Be(RelationshipType.AdoptiveChild);
+  }
+
+  [Fact]
   public async Task Relatives_HasCommonAncestors_DetectsSharedGrandparent()
   {
     var grandparent = await AddBarePersonAsync();
