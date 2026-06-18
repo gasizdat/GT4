@@ -1,6 +1,7 @@
 ﻿using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.Utils.Settings;
 using Microsoft.Maui.Controls.Xaml.Diagnostics;
 using System.Globalization;
 
@@ -17,7 +18,10 @@ public partial class App : Application
   private readonly SemaphoreSlim _LifecycleLock = new(1, 1);
   private ProjectInfo? _LastOpenedProject;
 
-  public App(ICancellationTokenProvider cancellationTokenProvider, ICurrentProjectProvider currentProjectProvider)
+  public App(
+    ICancellationTokenProvider cancellationTokenProvider,
+    ICurrentProjectProvider currentProjectProvider,
+    FontScale fontScale)
   {
     _CancellationTokenProvider = cancellationTokenProvider;
     _CurrentProjectProvider = currentProjectProvider;
@@ -26,6 +30,10 @@ public partial class App : Application
     BindingDiagnostics.BindingFailed += LogBindingErrors;
 
     InitializeComponent();
+
+    // Resources (Styles.xaml) are merged by InitializeComponent above, so the font-size tokens are
+    // now resolvable: apply the persisted multiplier before any page is built.
+    fontScale.Initialize();
 
 #if ANDROID
     Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific.Application.UseWindowSoftInputModeAdjust(

@@ -83,7 +83,7 @@
       <Button
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="Create"
-          FontSize="Large"
+          FontSize="{DynamicResource ActionButtonTextSize}"
           HorizontalOptions="Fill"
           Text="{x:Static resources:UIStrings.BtnNameCreateGenealogyTree}" />
     </components:PageLayout.Footer>

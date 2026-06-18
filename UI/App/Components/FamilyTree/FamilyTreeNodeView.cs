@@ -1,5 +1,6 @@
 using GT4.Core.Project.Dto;
 using GT4.UI.Utils;
+using GT4.UI.Utils.Settings;
 using Microsoft.Maui.Controls.Shapes;
 
 namespace GT4.UI.Components.Genealogy;
@@ -50,7 +51,7 @@ public sealed class FamilyTreeNodeView : ContentView
     var name = new Label
     {
       Text = displayName,
-      FontSize = FontSizeBase * zoomScale,
+      FontSize = FontSizeBase * zoomScale * FontScale.CurrentFactor,
       FontAttributes = isCenter ? FontAttributes.Bold : FontAttributes.None,
       HorizontalTextAlignment = TextAlignment.Center,
       MaxLines = 2,

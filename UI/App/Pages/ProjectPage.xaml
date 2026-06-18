@@ -116,7 +116,7 @@
       <Button
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="CreateFamily"
-          FontSize="Large"
+          FontSize="{DynamicResource ActionButtonTextSize}"
           HorizontalOptions="Fill"
           Text="{x:Static resources:UIStrings.BtnNameCreateFamily}" />
     </components:PageLayout.Footer>

@@ -786,4 +786,10 @@ FN - род</value>
   <data name="AlertTextKinshipUnfoldingAborted" xml:space="preserve">
     <value>Операция заняла больше времени, чем ожидалось. Некоторые уровни родства остались нераскрытыми. Вы можете развернуть их вручную</value>
   </data>
+  <data name="FieldFontScale" xml:space="preserve">
+    <value>Размер текста</value>
+  </data>
+  <data name="FieldFontScaleHint" xml:space="preserve">
+    <value>Масштаб всего текста в приложении.</value>
+  </data>
 </root>

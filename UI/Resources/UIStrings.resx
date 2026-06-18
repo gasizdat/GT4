@@ -786,4 +786,10 @@ FN - family name</value>
   <data name="AlertTextKinshipUnfoldingAborted" xml:space="preserve">
     <value>The operation took longer than expected. Some kinship levels remained folded. You can unfold them manually.</value>
   </data>
+  <data name="FieldFontScale" xml:space="preserve">
+    <value>Text size</value>
+  </data>
+  <data name="FieldFontScaleHint" xml:space="preserve">
+    <value>Scale the size of all text in the application.</value>
+  </data>
 </root>

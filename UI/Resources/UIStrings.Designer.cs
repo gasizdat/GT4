@@ -2048,5 +2048,23 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("TxtPlaceholderPtojectName", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Text size.
+        /// </summary>
+        public static string FieldFontScale {
+            get {
+                return ResourceManager.GetString("FieldFontScale", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Scale the size of all text in the application..
+        /// </summary>
+        public static string FieldFontScaleHint {
+            get {
+                return ResourceManager.GetString("FieldFontScaleHint", resourceCulture);
+            }
+        }
     }
 }
