@@ -1,12 +1,16 @@
-﻿using System.Reflection;
+﻿using GT4.UI.Utils.Settings;
+using System.Reflection;
 using System.Windows.Input;
 
 namespace GT4.UI.Pages;
 
 public partial class MainPage : ContentPage
 {
-  public MainPage()
+  private readonly LanguageSetting _LanguageSetting;
+
+  public MainPage(LanguageSetting languageSetting)
   {
+    _LanguageSetting = languageSetting;
     InitializeComponent();
   }
 
@@ -34,6 +38,7 @@ public partial class MainPage : ContentPage
         return;
 
       Utils.Language.Current = value;
+      _LanguageSetting.Value = value;
 
       var mainWindow = Application.Current?.Windows.SingleOrDefault(w => w.Page is AppShell);
       if (mainWindow is not null)

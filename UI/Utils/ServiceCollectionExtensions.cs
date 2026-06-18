@@ -18,6 +18,7 @@ public static class ServiceCollectionExtensions
       .AddSingleton<IRelationshipTypeFormatter, RelationshipTypeFormatter>()
       .AddSingleton<INameTypeFormatter, NameTypeFormatter>()
       .AddSingleton<IBiologicalSexFormatter, BiologicalSexFormatter>()
+      .AddSingleton<LanguageSetting>()
       .AddSingleton<IComparer<ProjectInfo>, ProjectInfoComparer>()
       .AddSingleton<IComparer<PersonInfo>, PersonInfoComparer>()
       .AddSingleton<IComparer<Name>, NameComparer>()
