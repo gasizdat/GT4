@@ -10,67 +10,20 @@
 
   <components:PageLayout>
     <components:PageLayout.Body>
-      <Grid RowDefinitions="Auto, *">
+      <CollectionView ItemsSource="{Binding SettingEditors, Source={x:Reference Root}}">
 
-        <Border
-            Grid.Row="0"
-            Margin="{Thickness Bottom={StaticResource PageContentSpacing}}">
-          <Grid
-              ColumnDefinitions="*, Auto, Auto"
-              RowDefinitions="Auto, Auto, Auto, Auto">
-            <Label
-                Grid.Row="0"
-                Grid.ColumnSpan="3"
-                Style="{StaticResource GroupTitle}"
-                Text="{x:Static resources:UIStrings.FieldFontScale}" />
-            <Label
-                Grid.Row="1"
-                Grid.ColumnSpan="3"
-                Style="{StaticResource FieldValue}"
-                Text="{x:Static resources:UIStrings.FieldFontScaleHint}" />
-            <BoxView
-                Grid.Row="2"
-                Grid.ColumnSpan="3"
-                Style="{StaticResource HorizontalDivider}" />
-            <Label
-                Grid.Row="3"
-                Grid.Column="0"
-                Style="{StaticResource FieldValue}"
-                Text="{Binding FontScalePercent, Source={x:Reference Root}}"
-                VerticalOptions="Center" />
-            <Stepper
-                Grid.Row="3"
-                Grid.Column="1"
-                Increment="{Binding FontScaleIncrement, Source={x:Reference Root}}"
-                Maximum="{Binding FontScaleMaximum, Source={x:Reference Root}}"
-                Minimum="{Binding FontScaleMinimum, Source={x:Reference Root}}"
-                VerticalOptions="Center"
-                Value="{Binding FontScaleFactor, Source={x:Reference Root}}" />
-            <Button
-                Grid.Row="3"
-                Grid.Column="2"
-                Command="{Binding ResetFontScaleCommand, Source={x:Reference Root}}"
-                Style="{StaticResource DeleteAdorner}" />
-          </Grid>
-        </Border>
+        <CollectionView.ItemsLayout>
+          <LinearItemsLayout
+              ItemSpacing="3"
+              Orientation="Vertical" />
+        </CollectionView.ItemsLayout>
 
-        <CollectionView
-            Grid.Row="1"
-            ItemsSource="{Binding SettingEditors, Source={x:Reference Root}}">
-
-          <CollectionView.ItemsLayout>
-            <LinearItemsLayout
-                ItemSpacing="3"
-                Orientation="Vertical" />
-          </CollectionView.ItemsLayout>
-
-          <CollectionView.ItemTemplate>
-            <DataTemplate>
-              <components:SettingEditorView Editor="{Binding .}" />
-            </DataTemplate>
-          </CollectionView.ItemTemplate>
-        </CollectionView>
-      </Grid>
+        <CollectionView.ItemTemplate>
+          <DataTemplate>
+            <components:SettingEditorView Editor="{Binding .}" />
+          </DataTemplate>
+        </CollectionView.ItemTemplate>
+      </CollectionView>
     </components:PageLayout.Body>
   </components:PageLayout>
 

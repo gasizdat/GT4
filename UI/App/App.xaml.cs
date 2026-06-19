@@ -21,6 +21,8 @@ public partial class App : Application
   public App(
     ICancellationTokenProvider cancellationTokenProvider,
     ICurrentProjectProvider currentProjectProvider,
+    [FromKeyedServices("FontScaleSetting")]
+    ISettingEditor? fontScaleSetting,
     FontScale fontScale)
   {
     _CancellationTokenProvider = cancellationTokenProvider;
@@ -31,9 +33,8 @@ public partial class App : Application
 
     InitializeComponent();
 
-    // Resources (Styles.xaml) are merged by InitializeComponent above, so the font-size tokens are
-    // now resolvable: apply the persisted multiplier before any page is built.
     fontScale.Initialize();
+    fontScale.Apply(fontScaleSetting?.Value);
 
 #if ANDROID
     Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific.Application.UseWindowSoftInputModeAdjust(
