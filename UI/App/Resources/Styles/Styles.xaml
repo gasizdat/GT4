@@ -99,9 +99,9 @@
   <OnIdiom
       x:Key="ActionButtonTextSize"
       x:TypeArguments="x:Double"
-      Desktop="20"
-      Phone="18"
-      Tablet="18" />
+      Desktop="30"
+      Phone="25"
+      Tablet="30" />
 
   <!--  Editable input controls (Entry, Editor, Picker, Date/TimePicker, SearchBar, RadioButton).  -->
   <OnIdiom
