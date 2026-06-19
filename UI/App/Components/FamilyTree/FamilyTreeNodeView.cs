@@ -17,7 +17,15 @@ public sealed class FamilyTreeNodeView : ContentView
   private const double FontSizeBase = 12;
   private const double SpacingBase = 4;
 
-  public FamilyTreeNodeView(PersonInfo person, string displayName, bool isCenter, double width, double height, double zoomScale = 1.0)
+  public FamilyTreeNodeView(
+    PersonInfo person,
+    FontScale? fontScale,
+    string displayName, 
+    bool isCenter, 
+    double width, 
+    double height, 
+    double zoomScale = 1.0
+  )
   {
     WidthRequest = width;
     HeightRequest = height;
@@ -51,7 +59,7 @@ public sealed class FamilyTreeNodeView : ContentView
     var name = new Label
     {
       Text = displayName,
-      FontSize = FontSizeBase * zoomScale * FontScale.CurrentFactor,
+      FontSize = FontSizeBase * zoomScale * (fontScale?.CurrentFactor ?? FontScale.DefaultFactor),
       FontAttributes = isCenter ? FontAttributes.Bold : FontAttributes.None,
       HorizontalTextAlignment = TextAlignment.Center,
       MaxLines = 2,
