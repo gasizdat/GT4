@@ -45,7 +45,7 @@ internal class FontScaleSetting : ISettingEditor
     set
     {
       _FontScale?.Apply(value);
-      var stringValue = $"{(int)(100 * _FontScale?.CurrentFactor ?? FontScale.DefaultFactor)}%";
+      var stringValue = $"{(int)(100 * (_FontScale?.CurrentFactor ?? FontScale.DefaultFactor))}%";
       _InteractiveConfiguration?.SetKey(FontScaleSection, stringValue);
     }
   }

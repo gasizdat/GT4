@@ -90,6 +90,18 @@ public class FontScaleSettingTests
   }
 
   [Fact]
+  public void SetValue_WithoutFontScale_PersistsDefaultPercent()
+  {
+    // Guards the operator precedence in the persisted-string expression: with no FontScale to resolve
+    // the factor, the fallback must yield the unscaled baseline ("100%"), not "1%".
+    var interactive = new Mock<IInteractiveConfiguration>();
+
+    Make(interactive: interactive.Object, fontScale: null).Value = "150%";
+
+    interactive.Verify(i => i.SetKey(FontScaleSection, Percent(FontScale.DefaultFactor)), Times.Once);
+  }
+
+  [Fact]
   public void ResetToDefault_CallsRemoveKeyWithFontScaleSection()
   {
     var interactive = new Mock<IInteractiveConfiguration>();
