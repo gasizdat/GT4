@@ -98,7 +98,7 @@ public class FontScaleTests
   {
     var fontScale = new FontScale();
 
-    var initialize = () => fontScale.Initialize();
+    var initialize = fontScale.Initialize;
 
     initialize.Should().NotThrow();
     fontScale.CurrentFactor.Should().Be(FontScale.DefaultFactor);
