@@ -129,7 +129,7 @@ public partial class App : Application
       return;
     }
 
-    var newScaleFactor = (int)(100 * (_FontScale.CurrentFactor + delta));
+    var newScaleFactor = (int)Math.Round(100 * (_FontScale.CurrentFactor + delta));
     _FontScaleSetting.Value = $"{newScaleFactor}%";
   }
 
