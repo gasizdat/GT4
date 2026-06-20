@@ -542,6 +542,42 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Text size.
+        /// </summary>
+        public static string FieldFontScale {
+            get {
+                return ResourceManager.GetString("FieldFontScale", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Scale the size of all text in the application. You can use zooming gesture to increase or decrease the scale of the text size.
+        /// </summary>
+        public static string FieldFontScaleHintAndroid {
+            get {
+                return ResourceManager.GetString("FieldFontScaleHintAndroid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Scale the size of all text in the application. You can use the Cmd + +/-/0 hotkeys to increase, decrease, or reset the current font size scale..
+        /// </summary>
+        public static string FieldFontScaleHintMac {
+            get {
+                return ResourceManager.GetString("FieldFontScaleHintMac", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Scale the size of all text in the application. You can use the Ctrl + +/-/0 hotkeys to increase, decrease, or reset the current font size scale..
+        /// </summary>
+        public static string FieldFontScaleHintWindows {
+            get {
+                return ResourceManager.GetString("FieldFontScaleHintWindows", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Full person name format.
         /// </summary>
         public static string FieldFullPersonNameFormat {

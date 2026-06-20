@@ -5,6 +5,7 @@ using GT4.UI.Components.Genealogy;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
+using GT4.UI.Utils.Settings;
 using Microsoft.Maui.Layouts;
 using System.Windows.Input;
 
@@ -19,6 +20,7 @@ public partial class FamilyTreePage : ContentPage
   private readonly FamilyTreeLayoutMetrics _Metrics = new();
   private readonly FamilyTreeLayout _Layout = new();
   private readonly FamilyTreeConnectorsDrawable _ConnectorsDrawable = new();
+  private readonly FontScale? _FontScale;
   // Each "load more" click adds one generation, up to this hard ceiling.
   private const int MaxGenerations = 120;
   private const int InitialGenerations = 2;
@@ -44,12 +46,14 @@ public partial class FamilyTreePage : ContentPage
   public FamilyTreePage(
     ICancellationTokenProvider cancellationTokenProvider, 
     ICurrentProjectProvider currentProjectProvider,
-    INameFormatter nameFormatter
+    INameFormatter nameFormatter, 
+    FontScale? fontScale
   )
   {
     _CancellationTokenProvider = cancellationTokenProvider;
     _CurrentProjectProvider = currentProjectProvider;
     _NameFormatter = nameFormatter;
+    _FontScale = fontScale;
     PageCommand = new SafeCommand(OnPageCommand);
 
     InitializeComponent();
@@ -207,6 +211,7 @@ public partial class FamilyTreePage : ContentPage
       var isCenter = person.Id == centerId;
       var view = new FamilyTreeNodeView(
         person,
+        _FontScale,
         names[person.Id],
         isCenter,
         nodeLayout.Bounds.Width,

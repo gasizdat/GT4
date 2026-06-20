@@ -95,6 +95,22 @@
       Phone="14"
       Tablet="14" />
 
+  <!--  Primary/footer action buttons and the settings gear: larger than the default button text.  -->
+  <OnIdiom
+      x:Key="ActionButtonTextSize"
+      x:TypeArguments="x:Double"
+      Desktop="30"
+      Phone="25"
+      Tablet="30" />
+
+  <!--  Editable input controls (Entry, Editor, Picker, Date/TimePicker, SearchBar, RadioButton).  -->
+  <OnIdiom
+      x:Key="InputControlTextSize"
+      x:TypeArguments="x:Double"
+      Desktop="14"
+      Phone="14"
+      Tablet="14" />
+
   <OnIdiom
       x:Key="AdornerButtonTextSize"
       x:TypeArguments="x:Double"
@@ -190,7 +206,7 @@
     <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource PrimaryDarkText}}" />
     <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
     <Setter Property="FontFamily" Value="OpenSansRegular" />
-    <Setter Property="FontSize" Value="{x:StaticResource ButtonTextSize}" />
+    <Setter Property="FontSize" Value="{DynamicResource ButtonTextSize}" />
     <Setter Property="BorderWidth" Value="0" />
     <Setter Property="CornerRadius" Value="8" />
     <Setter Property="Padding" Value="14,10" />
@@ -218,7 +234,7 @@
   </Style>
 
   <Style x:Key="ChangeAdorner" TargetType="Button">
-    <Setter Property="FontSize" Value="{x:StaticResource AdornerButtonTextSize}" />
+    <Setter Property="FontSize" Value="{DynamicResource AdornerButtonTextSize}" />
     <Setter Property="Padding" Value="0" />
     <Setter Property="BorderColor" Value="{StaticResource Primary}" />
     <Setter Property="BackgroundColor" Value="{StaticResource Translucent80}" />
@@ -227,7 +243,7 @@
     <Setter Property="VerticalOptions" Value="Start" />
     <Setter Property="ZIndex" Value="2100000000" />
     <Setter Property="Margin" Value="{StaticResource AddornerButtonMargin}" />
-    <Setter Property="FontSize" Value="{StaticResource LabelTextSizeDefault}" />
+    <Setter Property="FontSize" Value="{DynamicResource LabelTextSizeDefault}" />
 
     <Setter Property="VisualStateManager.VisualStateGroups">
       <VisualStateGroupList>
@@ -315,7 +331,7 @@
     <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource White}}" />
     <Setter Property="BackgroundColor" Value="Transparent" />
     <Setter Property="FontFamily" Value="OpenSansRegular" />
-    <Setter Property="FontSize" Value="14" />
+    <Setter Property="FontSize" Value="{DynamicResource InputControlTextSize}" />
     <Setter Property="MinimumHeightRequest" Value="44" />
     <Setter Property="MinimumWidthRequest" Value="44" />
     <Setter Property="VisualStateManager.VisualStateGroups">
@@ -336,7 +352,7 @@
     <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
     <Setter Property="BackgroundColor" Value="Transparent" />
     <Setter Property="FontFamily" Value="OpenSansRegular" />
-    <Setter Property="FontSize" Value="14" />
+    <Setter Property="FontSize" Value="{DynamicResource InputControlTextSize}" />
     <Setter Property="PlaceholderColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray500}}" />
     <Setter Property="MinimumHeightRequest" Value="44" />
     <Setter Property="MinimumWidthRequest" Value="44" />
@@ -358,7 +374,7 @@
     <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
     <Setter Property="BackgroundColor" Value="Transparent" />
     <Setter Property="FontFamily" Value="OpenSansRegular" />
-    <Setter Property="FontSize" Value="14" />
+    <Setter Property="FontSize" Value="{DynamicResource InputControlTextSize}" />
     <Setter Property="PlaceholderColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray500}}" />
     <Setter Property="MinimumHeightRequest" Value="44" />
     <Setter Property="MinimumWidthRequest" Value="44" />
@@ -409,7 +425,7 @@
     <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
     <Setter Property="BackgroundColor" Value="Transparent" />
     <Setter Property="FontFamily" Value="OpenSansRegular" />
-    <Setter Property="FontSize" Value="Default" />
+    <Setter Property="FontSize" Value="{DynamicResource LabelTextSizeDefault}" />
     <Setter Property="LineBreakMode" Value="WordWrap" />
     <Setter Property="VisualStateManager.VisualStateGroups">
       <VisualStateGroupList>
@@ -440,44 +456,44 @@
   </Style>
 
   <Style x:Key="PageTitle" BasedOn="{StaticResource ContentBase}" TargetType="Label">
-    <Setter Property="FontSize" Value="{StaticResource LabelTextSizeGiant}" />
+    <Setter Property="FontSize" Value="{DynamicResource LabelTextSizeGiant}" />
     <Setter Property="FontAttributes" Value="Bold" />
   </Style>
 
   <Style x:Key="PageSubtitle" BasedOn="{StaticResource ContentBase}" TargetType="Label">
-    <Setter Property="FontSize" Value="{StaticResource LabelTextSizeDefault}" />
+    <Setter Property="FontSize" Value="{DynamicResource LabelTextSizeDefault}" />
   </Style>
 
   <Style x:Key="GroupTitle" BasedOn="{StaticResource ContentBase}" TargetType="Label">
-    <Setter Property="FontSize" Value="{StaticResource LabelTextSizeLarge}" />
+    <Setter Property="FontSize" Value="{DynamicResource LabelTextSizeLarge}" />
     <Setter Property="FontAttributes" Value="Bold" />
     <Setter Property="Margin" Value="{StaticResource GroupTitleMargin}" />
   </Style>
 
   <Style x:Key="GroupSubtitle" BasedOn="{StaticResource ContentBase}" TargetType="Label">
-    <Setter Property="FontSize" Value="{StaticResource LabelTextSizeLarge}" />
+    <Setter Property="FontSize" Value="{DynamicResource LabelTextSizeLarge}" />
   </Style>
 
   <Style x:Key="CardTitle" BasedOn="{StaticResource ContentBase}" TargetType="Label">
-    <Setter Property="FontSize" Value="{StaticResource LabelTextSizeMedium}" />
+    <Setter Property="FontSize" Value="{DynamicResource LabelTextSizeMedium}" />
     <Setter Property="FontAttributes" Value="Bold" />
   </Style>
 
   <Style x:Key="CardSubtitle" BasedOn="{StaticResource ContentBase}" TargetType="Label">
-    <Setter Property="FontSize" Value="{StaticResource LabelTextSizeMedium}" />
+    <Setter Property="FontSize" Value="{DynamicResource LabelTextSizeMedium}" />
   </Style>
 
   <Style x:Key="CardContent" BasedOn="{StaticResource ContentBase}" TargetType="Label">
-    <Setter Property="FontSize" Value="{StaticResource LabelTextSizeDefault}" />
+    <Setter Property="FontSize" Value="{DynamicResource LabelTextSizeDefault}" />
   </Style>
 
   <Style x:Key="FieldName" BasedOn="{StaticResource ContentBase}" TargetType="Label">
-    <Setter Property="FontSize" Value="{StaticResource LabelTextSizeDefault}" />
+    <Setter Property="FontSize" Value="{DynamicResource LabelTextSizeDefault}" />
     <Setter Property="FontAttributes" Value="Bold" />
   </Style>
 
   <Style x:Key="FieldValue" BasedOn="{StaticResource ContentBase}" TargetType="Label">
-    <Setter Property="FontSize" Value="{StaticResource LabelTextSizeDefault}" />
+    <Setter Property="FontSize" Value="{DynamicResource LabelTextSizeDefault}" />
   </Style>
 
   <Style TargetType="ListView">
@@ -490,7 +506,7 @@
     <Setter Property="TitleColor" Value="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray200}}" />
     <Setter Property="BackgroundColor" Value="Transparent" />
     <Setter Property="FontFamily" Value="OpenSansRegular" />
-    <Setter Property="FontSize" Value="14" />
+    <Setter Property="FontSize" Value="{DynamicResource InputControlTextSize}" />
     <Setter Property="MinimumHeightRequest" Value="44" />
     <Setter Property="MinimumWidthRequest" Value="44" />
     <Setter Property="VisualStateManager.VisualStateGroups">
@@ -528,7 +544,7 @@
     <Setter Property="BackgroundColor" Value="Transparent" />
     <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
     <Setter Property="FontFamily" Value="OpenSansRegular" />
-    <Setter Property="FontSize" Value="14" />
+    <Setter Property="FontSize" Value="{DynamicResource InputControlTextSize}" />
     <Setter Property="MinimumHeightRequest" Value="44" />
     <Setter Property="MinimumWidthRequest" Value="44" />
     <Setter Property="VisualStateManager.VisualStateGroups">
@@ -555,7 +571,7 @@
     <Setter Property="CancelButtonColor" Value="{StaticResource Gray500}" />
     <Setter Property="BackgroundColor" Value="Transparent" />
     <Setter Property="FontFamily" Value="OpenSansRegular" />
-    <Setter Property="FontSize" Value="14" />
+    <Setter Property="FontSize" Value="{DynamicResource InputControlTextSize}" />
     <Setter Property="MinimumHeightRequest" Value="44" />
     <Setter Property="MinimumWidthRequest" Value="44" />
     <Setter Property="VisualStateManager.VisualStateGroups">
@@ -578,7 +594,7 @@
     <Setter Property="PlaceholderColor" Value="{StaticResource Gray500}" />
     <Setter Property="BackgroundColor" Value="Transparent" />
     <Setter Property="FontFamily" Value="OpenSansRegular" />
-    <Setter Property="FontSize" Value="14" />
+    <Setter Property="FontSize" Value="{DynamicResource InputControlTextSize}" />
     <Setter Property="VisualStateManager.VisualStateGroups">
       <VisualStateGroupList>
         <VisualStateGroup x:Name="CommonStates">
@@ -658,7 +674,7 @@
     <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource White}}" />
     <Setter Property="BackgroundColor" Value="Transparent" />
     <Setter Property="FontFamily" Value="OpenSansRegular" />
-    <Setter Property="FontSize" Value="14" />
+    <Setter Property="FontSize" Value="{DynamicResource InputControlTextSize}" />
     <Setter Property="MinimumHeightRequest" Value="44" />
     <Setter Property="MinimumWidthRequest" Value="44" />
     <Setter Property="VisualStateManager.VisualStateGroups">

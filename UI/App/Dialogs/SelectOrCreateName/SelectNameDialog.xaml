@@ -95,7 +95,7 @@
       <Button
           Command="{Binding DialogCommand, Source={x:Reference Root}}"
           CommandParameter="SelectName"
-          FontSize="Large"
+          FontSize="{DynamicResource ActionButtonTextSize}"
           HorizontalOptions="Fill"
           Text="{Binding DialogButtonName, Source={x:Reference Root}}" />
     </components:PageLayout.Footer>

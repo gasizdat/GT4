@@ -786,4 +786,16 @@ FN - род</value>
   <data name="AlertTextKinshipUnfoldingAborted" xml:space="preserve">
     <value>Операция заняла больше времени, чем ожидалось. Некоторые уровни родства остались нераскрытыми. Вы можете развернуть их вручную</value>
   </data>
+  <data name="FieldFontScale" xml:space="preserve">
+    <value>Размер текста</value>
+  </data>
+  <data name="FieldFontScaleHintWindows" xml:space="preserve">
+    <value>Масштаб всего текста в приложении. Вы можете использовать Ctrl+ +/-/0, чтобы увеличить, уменьшить или сбросить масштабирование размера текста </value>
+  </data>
+  <data name="FieldFontScaleHintMac" xml:space="preserve">
+    <value>Масштаб всего текста в приложении. Вы можете использовать Cmd+ +/-/0, чтобы увеличить, уменьшить или сбросить масштабирование размера текста </value>
+  </data>
+  <data name="FieldFontScaleHintAndroid" xml:space="preserve">
+    <value>Масштаб всего текста в приложении. Вы можете использовать жест масштабирования, чтобы увеличить или уменьшить масштабирование размера текста </value>
+  </data>
 </root>

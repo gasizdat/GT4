@@ -86,6 +86,7 @@ public sealed class UtilsInfraTests
       provider.SetKey("theme", "dark");
       provider.TryGet("theme", out var live).Should().BeTrue();
       live.Should().Be("dark");
+      provider.Flush();
 
       // A fresh provider over the same files reads the persisted value back.
       var reopened = new AppConfigurationProvider(new DiskFileSystem(root), new TempStorage());

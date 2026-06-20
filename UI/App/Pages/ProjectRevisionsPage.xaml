@@ -63,7 +63,7 @@
       <Button
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="Restore"
-          FontSize="Large"
+          FontSize="{DynamicResource ActionButtonTextSize}"
           HorizontalOptions="Fill"
           Text="{Binding RestoreBtnName, Source={x:Reference Root}}" />
     </components:PageLayout.Footer>
