@@ -58,6 +58,8 @@ internal class TableRelatives : TableBase, ITableRelatives
       command.Parameters.AddWithValue("@relativeId", relative.Id);
       command.Parameters.AddWithValue("@type", relative.Type);
     }
+    command.Parameters.AddWithValue("@date", relative.Date.HasValue ? relative.Date.Value.Code : DBNull.Value);
+    command.Parameters.AddWithValue("@dateStatus", relative.Date.HasValue ? relative.Date.Value.Status : DBNull.Value);
   }
 
   private static Relative CreateRelativeFromRow(System.Data.Common.DbDataReader reader, bool forwardLink)
@@ -199,8 +201,6 @@ internal class TableRelatives : TableBase, ITableRelatives
         VALUES (@personId, @relativeId, @type, @date, @dateStatus);
         """;
       AddCommandParameters(person, relative, command);
-      command.Parameters.AddWithValue("@date", relative.Date.HasValue ? relative.Date.Value.Code : DBNull.Value);
-      command.Parameters.AddWithValue("@dateStatus", relative.Date.HasValue ? relative.Date.Value.Status : DBNull.Value);
       await command.ExecuteNonQueryAsync(token);
     }
 
@@ -228,7 +228,7 @@ internal class TableRelatives : TableBase, ITableRelatives
 
       command.CommandText = """
         DELETE FROM Relatives
-        WHERE PersonId=@personId AND RelativeId=@relativeId AND Type=@type;
+        WHERE PersonId=@personId AND RelativeId=@relativeId AND Type=@type AND Date IS @date AND DateStatus IS @dateStatus;
         """;
       AddCommandParameters(person, oldRelative, command);
       await command.ExecuteNonQueryAsync(token);
