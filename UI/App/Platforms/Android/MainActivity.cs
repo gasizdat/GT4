@@ -76,14 +76,8 @@ namespace GT4
 
       public override bool OnScale(ScaleGestureDetector detector)
       {
-        if (detector.ScaleFactor < 1)
-        {
-          CurrentApp?.StepFontScale(-FontScale.Step);
-        }
-        else if (detector.ScaleFactor > 1)
-        {
-          CurrentApp?.StepFontScale(FontScale.Step);
-        }
+        const double ScaleDebuffFactor = 0.1;
+        CurrentApp?.StepFontScale(ScaleDebuffFactor * (detector.ScaleFactor - 1));
 
         return base.OnScale(detector);
       }
