@@ -73,25 +73,17 @@ namespace GT4
     private sealed class FontScaleGestureListener : ScaleGestureDetector.SimpleOnScaleGestureListener
     {
       private static App? CurrentApp => Microsoft.Maui.Controls.Application.Current as App;
-      private double _PreviousScaleFactor;
-
-      public override bool OnScaleBegin(ScaleGestureDetector detector)
-      {
-        _PreviousScaleFactor = detector.ScaleFactor;
-        return base.OnScaleBegin(detector);
-      }
 
       public override bool OnScale(ScaleGestureDetector detector)
       {
-        if (detector.ScaleFactor < _PreviousScaleFactor)
+        if (detector.ScaleFactor < 1)
         {
           CurrentApp?.StepFontScale(-FontScale.Step);
         }
-        else if (detector.ScaleFactor > _PreviousScaleFactor)
+        else if (detector.ScaleFactor > 1)
         {
           CurrentApp?.StepFontScale(FontScale.Step);
         }
-        _PreviousScaleFactor = detector.ScaleFactor;
 
         return base.OnScale(detector);
       }
