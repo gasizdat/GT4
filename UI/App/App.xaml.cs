@@ -13,6 +13,7 @@ public partial class App : Application
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly FontScale _FontScale;
   private readonly ISettingEditor? _FontScaleSetting;
+  private readonly IInteractiveConfiguration? _AppConfiguration;
 
   // The Activated/Deactivated/Destroying handlers are fire-and-forget for MAUI, so a quick
   // deactivate/activate could otherwise reopen the project while the close is still flushing the
@@ -25,12 +26,15 @@ public partial class App : Application
     ICurrentProjectProvider currentProjectProvider,
     [FromKeyedServices("FontScaleSetting")]
     ISettingEditor? fontScaleSetting,
-    FontScale fontScale)
+    FontScale fontScale,
+    [FromKeyedServices(WellKnownActiveConfigurations.AppConfig)]
+    IInteractiveConfiguration? appConfiguration)
   {
     _CancellationTokenProvider = cancellationTokenProvider;
     _CurrentProjectProvider = currentProjectProvider;
     _FontScale = fontScale;
     _FontScaleSetting = fontScaleSetting;
+    _AppConfiguration = appConfiguration;
 
     AppDomain.CurrentDomain.UnhandledException += LogUnhandledException;
     BindingDiagnostics.BindingFailed += LogBindingErrors;
@@ -170,6 +174,11 @@ public partial class App : Application
 
   private async Task CloseOnDeactivationAsync(bool saveLastOpenProject)
   {
+    // Persist any debounced settings (e.g. a just-changed font scale) before backgrounding/teardown,
+    // so a change made within the debounce window is not lost. Done before the debugger short-circuit
+    // below so settings still persist while debugging.
+    _AppConfiguration?.Flush();
+
 #if DEBUG
     if (System.Diagnostics.Debugger.IsAttached)
     {

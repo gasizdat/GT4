@@ -6,10 +6,12 @@ namespace GT4.Core.Utils;
 
 internal class AppConfigurationProvider : ConfigurationProvider, IInteractiveConfiguration
 {
+  private static readonly TimeSpan SaveDebounce = TimeSpan.FromSeconds(2);
+
   private readonly JsonSerializerOptions _SerializationOptions;
   private readonly IFileSystem _FileSystem;
   private readonly IStorage _Storage;
-  private bool _UpdateRequested = false;
+  private bool _FlushRequested = false;
 
   public string Name => WellKnownActiveConfigurations.AppConfig;
 
@@ -17,8 +19,8 @@ internal class AppConfigurationProvider : ConfigurationProvider, IInteractiveCon
   {
     _FileSystem = fileSystem;
     _Storage = storage;
-    _SerializationOptions = new() 
-    { 
+    _SerializationOptions = new()
+    {
       WriteIndented = true,
       PropertyNameCaseInsensitive = true,
       PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -29,31 +31,21 @@ internal class AppConfigurationProvider : ConfigurationProvider, IInteractiveCon
   protected FileDescription File =>
     new FileDescription(_Storage.AppConfig, "appconfig.json", System.Net.Mime.MediaTypeNames.Text.Plain);
 
-  protected void Save()
+  protected void RequestFlush()
   {
-    using var stream = _FileSystem.OpenWriteStream(File);
-    JsonSerializer.Serialize(stream, Data, _SerializationOptions);
-  }
-
-  protected void Update()
-  {
-    if (!Interlocked.Exchange(ref _UpdateRequested, true))
+    if (!Interlocked.Exchange(ref _FlushRequested, true))
     {
       async Task DelayAndUpdate()
       {
-        await Task.Delay(TimeSpan.FromSeconds(2));
-        await MainThread.InvokeOnMainThreadAsync(() =>
+        try
         {
-          try
-          {
-            Save();
-            OnReload();
-          }
-          finally
-          {
-            Interlocked.Exchange(ref _UpdateRequested, false);
-          }
-        });
+          await Task.Delay(SaveDebounce);
+        }
+        finally
+        {
+          Flush(); 
+          OnReload();
+        }
       }
 
       Task.Run(DelayAndUpdate);
@@ -88,6 +80,7 @@ internal class AppConfigurationProvider : ConfigurationProvider, IInteractiveCon
     {
       // A missing/locked/corrupt config file must not crash startup; the provider just stays empty.
       // Unexpected exceptions are left to propagate so real bugs are not hidden.
+      System.Diagnostics.Debug.WriteLine($"{nameof(Load)}(): {ex}");
     }
   }
 
@@ -96,7 +89,7 @@ internal class AppConfigurationProvider : ConfigurationProvider, IInteractiveCon
     lock (Data)
     {
       Data[key] = value;
-      Update();
+      RequestFlush();
     }
   }
 
@@ -105,7 +98,26 @@ internal class AppConfigurationProvider : ConfigurationProvider, IInteractiveCon
     lock (Data)
     {
       Data.Remove(key);
-      Update();
+      RequestFlush();
+    }
+  }
+
+  public void Flush()
+  {
+    lock (Data)
+    {
+      if (Interlocked.Exchange(ref _FlushRequested, false))
+      {
+        try
+        {
+          using var stream = _FileSystem.OpenWriteStream(File);
+          JsonSerializer.Serialize(stream, Data, _SerializationOptions);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
+        {
+          System.Diagnostics.Debug.WriteLine($"{nameof(Flush)}(): {ex}");
+        }
+      }
     }
   }
 }
