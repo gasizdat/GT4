@@ -98,7 +98,7 @@ internal sealed class NestedTransaction : IDbTransaction, IDisposable, IAsyncDis
         _Document
           .Metadata
           .SetProjectRevisionAsync(DateTime.Now.ToString(), CancellationToken.None)
-          ?.Wait();
+          .Wait();
         _DbTransaction!.Commit();
         _Document.UpdateRevision();
         _Committed = true;

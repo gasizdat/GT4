@@ -68,10 +68,12 @@ public partial class ProjectListPage : ContentPage
   protected override void OnNavigatedTo(NavigatedToEventArgs args)
   {
     base.OnNavigatedTo(args);
-    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-    _CurrentProjectProvider
-      .CloseAsync(token)
-      .ContinueWith((_) => MainThread.BeginInvokeOnMainThread(UpdateProjectList));
+    _ = SafeTask.Run(async () =>
+    {
+      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      await _CurrentProjectProvider.CloseAsync(token);
+      await SafeTask.RunOnMainThread(UpdateProjectList);
+    });
   }
 
   private void UpdateProjectList()
