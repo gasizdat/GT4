@@ -48,6 +48,10 @@ public partial class App
       return;
     }
 
+    // By default WinUI advertises each accelerator in a tooltip on the owning element; since these
+    // live on the root content that tooltip would pop up on hover anywhere in the window. Hide it.
+    root.KeyboardAcceleratorPlacementMode = Microsoft.UI.Xaml.Input.KeyboardAcceleratorPlacementMode.Hidden;
+
     // Both the main-row '='/'-' keys and the numpad +/- so either gesture works.
     Add(root, VirtualKey.Add, () => StepFontScale(FontScale.Step));
     Add(root, (VirtualKey)0xBB /* OemPlus '=' */, () => StepFontScale(FontScale.Step));
