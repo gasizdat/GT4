@@ -9,6 +9,7 @@ internal class AppConfigurationProvider : ConfigurationProvider, IInteractiveCon
   private readonly JsonSerializerOptions _SerializationOptions;
   private readonly IFileSystem _FileSystem;
   private readonly IStorage _Storage;
+  private bool _UpdateRequested = false;
 
   public string Name => WellKnownActiveConfigurations.AppConfig;
 
@@ -32,6 +33,31 @@ internal class AppConfigurationProvider : ConfigurationProvider, IInteractiveCon
   {
     using var stream = _FileSystem.OpenWriteStream(File);
     JsonSerializer.Serialize(stream, Data, _SerializationOptions);
+  }
+
+  protected void Update()
+  {
+    if (!Interlocked.Exchange(ref _UpdateRequested, true))
+    {
+      async Task DelayAndUpdate()
+      {
+        await Task.Delay(TimeSpan.FromSeconds(2));
+        await MainThread.InvokeOnMainThreadAsync(() =>
+        {
+          try
+          {
+            Save();
+            OnReload();
+          }
+          finally
+          {
+            Interlocked.Exchange(ref _UpdateRequested, false);
+          }
+        });
+      }
+
+      Task.Run(DelayAndUpdate);
+    }
   }
 
   public override void Load()
@@ -70,8 +96,7 @@ internal class AppConfigurationProvider : ConfigurationProvider, IInteractiveCon
     lock (Data)
     {
       Data[key] = value;
-      Save();
-      OnReload();
+      Update();
     }
   }
 
@@ -80,8 +105,7 @@ internal class AppConfigurationProvider : ConfigurationProvider, IInteractiveCon
     lock (Data)
     {
       Data.Remove(key);
-      Save();
-      OnReload();
+      Update();
     }
   }
 }
