@@ -8,6 +8,7 @@ using GT4.Core.Project.Abstraction;
 using GT4.Core.Utils;
 using GT4.UI;
 using GT4.UI.Pages;
+using GT4.UI.Utils.Settings;
 
 namespace GT4
 {
@@ -72,10 +73,26 @@ namespace GT4
     private sealed class FontScaleGestureListener : ScaleGestureDetector.SimpleOnScaleGestureListener
     {
       private static App? CurrentApp => Microsoft.Maui.Controls.Application.Current as App;
+      private double _PreviousScaleFactor;
+
+      public override bool OnScaleBegin(ScaleGestureDetector detector)
+      {
+        _PreviousScaleFactor = detector.ScaleFactor;
+        return base.OnScaleBegin(detector);
+      }
 
       public override bool OnScale(ScaleGestureDetector detector)
       {
-        CurrentApp?.UpdateFontScaleGesture(detector.ScaleFactor);
+        if (detector.ScaleFactor < _PreviousScaleFactor)
+        {
+          CurrentApp?.StepFontScale(-FontScale.Step);
+        }
+        else if (detector.ScaleFactor > _PreviousScaleFactor)
+        {
+          CurrentApp?.StepFontScale(FontScale.Step);
+        }
+        _PreviousScaleFactor = detector.ScaleFactor;
+
         return base.OnScale(detector);
       }
     }

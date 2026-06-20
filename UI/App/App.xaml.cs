@@ -135,17 +135,6 @@ public partial class App : Application
 
   internal void ResetFontScale() => _FontScaleSetting?.ResetToDefault();
 
-  internal void UpdateFontScaleGesture(double incrementalScale)
-  {
-    if (_FontScaleSetting is null)
-    {
-      return;
-    }
-
-    var newScaleFactor = (int)(100 * (_FontScale.CurrentFactor * incrementalScale));
-    _FontScaleSetting.Value = $"{newScaleFactor}%";
-  }
-
   private async void ReopenOnActivationAsync(object? sender, EventArgs e)
   {
 #if DEBUG
