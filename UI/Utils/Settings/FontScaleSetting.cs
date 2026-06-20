@@ -40,8 +40,13 @@ internal class FontScaleSetting : ISettingEditor
     UIStrings.FieldFontScaleHintAndroid;
 #elif WINDOWS
     UIStrings.FieldFontScaleHintWindows;
-#else
+#elif MACCATALYST
     UIStrings.FieldFontScaleHintMac;
+#elif IOS
+    // TODO we do not support IOS yet.
+    string.Empty;
+#else 
+# error  Platform Not Supported;
 #endif
 
   public string Example => FontSample;
