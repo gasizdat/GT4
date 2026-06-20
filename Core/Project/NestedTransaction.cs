@@ -95,7 +95,12 @@ internal sealed class NestedTransaction : IDbTransaction, IDisposable, IAsyncDis
     {
       if (IsRoot)
       {
-        WriteRevisionBestEffort();
+        // TODO: This is not a very good solution for updating the project revision, as we need
+        // to create a CancellationToken directly and then wait for the operation synchronously.
+        using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(1.5));
+        var shortToken = cancellationTokenSource.Token;
+        var task = _Document.Metadata.SetProjectRevisionAsync(DateTime.Now.ToString(), shortToken);
+        task?.Wait(shortToken);
         _DbTransaction!.Commit();
         _Document.UpdateRevision();
       }
@@ -182,26 +187,6 @@ internal sealed class NestedTransaction : IDbTransaction, IDisposable, IAsyncDis
     if (IsRoot)
     {
       _DbTransaction!.Dispose();
-    }
-  }
-
-  /// <summary>
-  /// Persists a best-effort "last modified" marker as part of the root transaction. Failures are
-  /// ignored on purpose: revision tracking must never break an otherwise valid commit (for example
-  /// before the Metadata table exists).
-  /// </summary>
-  private void WriteRevisionBestEffort()
-  {
-    try
-    {
-      using var command = _Document.Connection.CreateCommand();
-      command.CommandText = "INSERT OR REPLACE INTO Metadata (Id, Data) VALUES ('revision', @data);";
-      command.Parameters.AddWithValue("@data", DateTime.Now.ToString());
-      command.ExecuteNonQuery();
-    }
-    catch
-    {
-      // Best-effort only.
     }
   }
 
