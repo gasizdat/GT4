@@ -35,7 +35,14 @@ internal class FontScaleSetting : ISettingEditor
 
   public string DisplayName => UIStrings.FieldFontScale;
 
-  public string Description => UIStrings.FieldFontScaleHint;
+  public string Description =>
+#if ANDROID
+    UIStrings.FieldFontScaleHintAndroid;
+#elif WINDOWS
+    UIStrings.FieldFontScaleHintWindows;
+#else
+    UIStrings.FieldFontScaleHintMac;
+#endif
 
   public string Example => FontSample;
 

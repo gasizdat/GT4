@@ -789,7 +789,13 @@ FN - family name</value>
   <data name="FieldFontScale" xml:space="preserve">
     <value>Text size</value>
   </data>
-  <data name="FieldFontScaleHint" xml:space="preserve">
-    <value>Scale the size of all text in the application.</value>
+  <data name="FieldFontScaleHintWindows" xml:space="preserve">
+    <value>Scale the size of all text in the application. You can use the Ctrl + +/-/0 hotkeys to increase, decrease, or reset the current font size scale.</value>
+  </data>
+  <data name="FieldFontScaleHintMac" xml:space="preserve">
+    <value>Scale the size of all text in the application. You can use the Cmd + +/-/0 hotkeys to increase, decrease, or reset the current font size scale.</value>
+  </data>
+  <data name="FieldFontScaleHintAndroid" xml:space="preserve">
+    <value>Scale the size of all text in the application. You can use zooming gesture to increase or decrease the scale of the text size</value>
   </data>
 </root>
