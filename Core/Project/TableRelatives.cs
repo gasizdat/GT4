@@ -30,7 +30,7 @@ internal class TableRelatives : TableBase, ITableRelatives
     };
   }
 
-  private static void AddCommandParameters(Person person, Relative relative, ProjectCommand command)
+  private static void AddCommandParameters(Person person, Relative relative, ProjectCommand command, bool? backward = null)
   {
     switch (relative.Type)
     {
@@ -44,7 +44,9 @@ internal class TableRelatives : TableBase, ITableRelatives
         throw new ArgumentException(nameof(relative.Type));
     }
 
-    if (IsBackwardDirection(relative))
+    backward ??= IsBackwardDirection(relative);
+
+    if (backward.Value)
     {
       command.Parameters.AddWithValue("@personId", relative.Id);
       command.Parameters.AddWithValue("@relativeId", person.Id);
@@ -230,6 +232,13 @@ internal class TableRelatives : TableBase, ITableRelatives
         """;
       AddCommandParameters(person, oldRelative, command);
       await command.ExecuteNonQueryAsync(token);
+
+      if (oldRelative.Type == RelationshipType.Spouse)
+      {
+        command.Parameters.Clear();
+        AddCommandParameters(person, oldRelative, command, backward: true);
+        await command.ExecuteNonQueryAsync(token);
+      }
     }
 
     await AddRelativesAsync(person, relatives.Where(r => !remainedRelatives.Contains(r.Id)).ToArray(), token);
