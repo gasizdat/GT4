@@ -75,7 +75,7 @@ public sealed class FontScale
 
     foreach (var (key, baseSize) in _BaseSizes)
     {
-      resources[key] = baseSize * factor;
+      resources[key] = baseSize * CurrentFactor;
     }
   }
 
