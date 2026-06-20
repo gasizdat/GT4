@@ -15,6 +15,9 @@ public sealed class FontScale
   public const double MinFactor = 0.75;
   public const double MaxFactor = 2.0;
 
+  // The increment applied by a single "zoom in"/"zoom out" step (e.g. the Ctrl +/- hotkeys).
+  public const double Step = 0.05;
+
   // Every resource key whose value is a font size. Keep in sync with the tokens in Styles.xaml.
   private static readonly string[] ScaledKeys =
   [

@@ -11,6 +11,8 @@ public partial class App : Application
 {
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
+  private readonly FontScale _FontScale;
+  private readonly ISettingEditor? _FontScaleSetting;
 
   // The Activated/Deactivated/Destroying handlers are fire-and-forget for MAUI, so a quick
   // deactivate/activate could otherwise reopen the project while the close is still flushing the
@@ -27,6 +29,8 @@ public partial class App : Application
   {
     _CancellationTokenProvider = cancellationTokenProvider;
     _CurrentProjectProvider = currentProjectProvider;
+    _FontScale = fontScale;
+    _FontScaleSetting = fontScaleSetting;
 
     AppDomain.CurrentDomain.UnhandledException += LogUnhandledException;
     BindingDiagnostics.BindingFailed += LogBindingErrors;
@@ -111,7 +115,35 @@ public partial class App : Application
     window.Activated += ReopenOnActivationAsync;
     window.Deactivated += async (_, _) => await CloseOnDeactivationAsync(saveLastOpenProject: true);
     window.Destroying += async (_, _) => await CloseOnDeactivationAsync(saveLastOpenProject: false);
+    RegisterFontScaleHotkeys(window);
     return window;
+  }
+
+  // Implemented per platform (Windows). On platforms without a keyboard this compiles away.
+  partial void RegisterFontScaleHotkeys(Window window);
+
+  internal void StepFontScale(double delta)
+  {
+    if (_FontScaleSetting is null)
+    {
+      return;
+    }
+
+    var newScaleFactor = (int)(100 * (_FontScale.CurrentFactor + delta));
+    _FontScaleSetting.Value = $"{newScaleFactor}%";
+  }
+
+  internal void ResetFontScale() => _FontScaleSetting?.ResetToDefault();
+
+  internal void UpdateFontScaleGesture(double incrementalScale)
+  {
+    if (_FontScaleSetting is null)
+    {
+      return;
+    }
+
+    var newScaleFactor = (int)(100 * (_FontScale.CurrentFactor * incrementalScale));
+    _FontScaleSetting.Value = $"{newScaleFactor}%";
   }
 
   private async void ReopenOnActivationAsync(object? sender, EventArgs e)
