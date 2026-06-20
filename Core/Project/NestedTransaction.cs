@@ -89,24 +89,24 @@ internal sealed class NestedTransaction : IDbTransaction, IDisposable, IAsyncDis
       throw new InvalidOperationException($"The transaction '{_Name}' is not in a committable state.");
     }
 
-    _Committed = true;
-
     try
     {
       if (IsRoot)
       {
         // TODO: This is not a very good solution for updating the project revision, as we need
         // to create a CancellationToken directly and then wait for the operation synchronously.
-        using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(1.5));
-        var shortToken = cancellationTokenSource.Token;
-        var task = _Document.Metadata.SetProjectRevisionAsync(DateTime.Now.ToString(), shortToken);
-        task?.Wait(shortToken);
+        _Document
+          .Metadata
+          .SetProjectRevisionAsync(DateTime.Now.ToString(), CancellationToken.None)
+          ?.Wait();
         _DbTransaction!.Commit();
         _Document.UpdateRevision();
+        _Committed = true;
       }
       else
       {
         ExecuteSimple(_Document, $"RELEASE SAVEPOINT {_SavepointName};");
+        _Committed = true;
       }
     }
     finally
