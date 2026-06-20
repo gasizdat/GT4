@@ -592,6 +592,57 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task Relatives_Update_RemovesSpouse_AddedFromTheOtherSide()
+  {
+    // A spouse edge is stored as a single row whose (PersonId, RelativeId) order depends on who added
+    // it: here the marriage is added from b's side, so the row is (b, a, Spouse). Removing it while
+    // updating a's relatives must still delete that row — the forward-only DELETE used to miss it and
+    // leave a dangling spouse on both people.
+    var a = await AddBarePersonAsync(BiologicalSex.Male);
+    var b = await AddBarePersonAsync(BiologicalSex.Female);
+
+    await _doc.Relatives.AddRelativesAsync(b, [new Relative(a, RelationshipType.Spouse, null)], Token);
+
+    // Sanity check: the marriage is visible from a's side before the update.
+    (await _doc.Relatives.GetRelativesAsync(a, Token)).Should().ContainSingle();
+
+    await _doc.Relatives.UpdateRelativesAsync(a, [], Token);
+
+    (await _doc.Relatives.GetRelativesAsync(a, Token)).Should().BeEmpty();
+    (await _doc.Relatives.GetRelativesAsync(b, Token)).Should().BeEmpty();
+  }
+
+  [Fact]
+  public async Task Relatives_Update_KeepsOneOfTwoDatedSpouseRecords()
+  {
+    // Regression (currently FAILS): the DELETE in UpdateRelativesAsync filters only on
+    // (PersonId, RelativeId, Type) and ignores Date, even though the table's primary key includes
+    // Date. When a pair has two spouse records that differ only by Date (a marriage and a later
+    // remarriage), updating to keep just one deletes BOTH rows and then never re-adds the kept one
+    // (it was classified as "remained"), so the record we asked to keep is lost.
+    var a = await AddBarePersonAsync(BiologicalSex.Male);
+    var b = await AddBarePersonAsync(BiologicalSex.Female);
+
+    var firstMarriage = Date.Create(20000101, DateStatus.WellKnown);
+    var secondMarriage = Date.Create(20100101, DateStatus.WellKnown);
+
+    await _doc.Relatives.AddRelativesAsync(a,
+      [
+        new Relative(b, RelationshipType.Spouse, firstMarriage),
+        new Relative(b, RelationshipType.Spouse, secondMarriage),
+      ], Token);
+
+    // Keep only the first marriage record, drop the remarriage.
+    await _doc.Relatives.UpdateRelativesAsync(a,
+      [new Relative(b, RelationshipType.Spouse, firstMarriage)], Token);
+
+    var relatives = await _doc.Relatives.GetRelativesAsync(a, Token);
+    relatives.Should().ContainSingle();
+    relatives[0].Id.Should().Be(b.Id);
+    relatives[0].Date.Should().Be(firstMarriage);
+  }
+
+  [Fact]
   public async Task GetRelativesForPersons_EmptyInput_ReturnsEmpty()
   {
     var result = await _doc.Relatives.GetRelativesForPersonsAsync([], Token);
