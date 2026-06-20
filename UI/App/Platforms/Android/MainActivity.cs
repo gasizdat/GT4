@@ -3,10 +3,12 @@ using Android.Content;
 using Android.Content.PM;
 using Android.OS;
 using Android.Provider;
+using Android.Views;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Utils;
 using GT4.UI;
 using GT4.UI.Pages;
+using GT4.UI.Utils.Settings;
 
 namespace GT4
 {
@@ -33,6 +35,7 @@ namespace GT4
   public class MainActivity : MauiAppCompatActivity
   {
     private readonly IServiceProvider _Services;
+    private ScaleGestureDetector? _ScaleDetector;
 
     protected MainActivity(IServiceProvider serviceProvider)
     {
@@ -48,7 +51,36 @@ namespace GT4
     protected override void OnCreate(Bundle? savedInstanceState)
     {
       base.OnCreate(savedInstanceState);
+      _ScaleDetector = new ScaleGestureDetector(this, new FontScaleGestureListener());
       HandleOpenIntentIfAny(Intent);
+    }
+
+    // Feed every touch to the scale detector so a two-finger pinch zooms the global font scale from
+    // any page. The detector only reacts to multi-touch, and we always forward the event, so normal
+    // single-finger scrolling and taps are untouched.
+    public override bool DispatchTouchEvent(MotionEvent? e)
+    {
+      if (e is not null)
+      {
+        _ScaleDetector?.OnTouchEvent(e);
+      }
+
+      return base.DispatchTouchEvent(e);
+    }
+
+    // Bridges Android's pinch gesture to the shared App font-scale helpers. Touch dispatch runs on the
+    // UI thread, so applying the scale (which touches Application.Current.Resources) is safe here.
+    private sealed class FontScaleGestureListener : ScaleGestureDetector.SimpleOnScaleGestureListener
+    {
+      private static App? CurrentApp => Microsoft.Maui.Controls.Application.Current as App;
+
+      public override bool OnScale(ScaleGestureDetector detector)
+      {
+        const double ScaleDebuffFactor = 0.1;
+        CurrentApp?.StepFontScale(ScaleDebuffFactor * (detector.ScaleFactor - 1));
+
+        return base.OnScale(detector);
+      }
     }
 
     protected override void OnNewIntent(Intent? intent)

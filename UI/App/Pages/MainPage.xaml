@@ -21,7 +21,7 @@
             x:Name="SettingsBtn"
             Command="{Binding PageCommand, Source={x:Reference Root}}"
             CommandParameter="OpenSettings"
-            FontSize="Large"
+            FontSize="{DynamicResource ActionButtonTextSize}"
             Style="{StaticResource EmojiAdorner}"
             Text="⚙️"
             VerticalOptions="Fill"
@@ -98,7 +98,7 @@
       <Button
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="OpenOrCreateDialog"
-          FontSize="Large"
+          FontSize="{DynamicResource ActionButtonTextSize}"
           HorizontalOptions="Fill"
           Text="{x:Static resources:UIStrings.BtnNameOpenOrCreateProject}" />
     </components:PageLayout.Footer>

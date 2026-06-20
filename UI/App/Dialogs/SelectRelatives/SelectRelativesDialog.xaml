@@ -127,7 +127,7 @@
       <Button
           Command="{Binding DialogCommand, Source={x:Reference Root}}"
           CommandParameter="SelectPersonCommand"
-          FontSize="Large"
+          FontSize="{DynamicResource ActionButtonTextSize}"
           Text="{Binding DialogButtonName, Source={x:Reference Root}}" />
 
     </components:PageLayout.Footer>

@@ -1,6 +1,7 @@
 ﻿using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.Utils.Settings;
 using Microsoft.Maui.Controls.Xaml.Diagnostics;
 using System.Globalization;
 
@@ -10,6 +11,9 @@ public partial class App : Application
 {
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
+  private readonly FontScale _FontScale;
+  private readonly ISettingEditor? _FontScaleSetting;
+  private readonly IInteractiveConfiguration? _AppConfiguration;
 
   // The Activated/Deactivated/Destroying handlers are fire-and-forget for MAUI, so a quick
   // deactivate/activate could otherwise reopen the project while the close is still flushing the
@@ -17,15 +21,28 @@ public partial class App : Application
   private readonly SemaphoreSlim _LifecycleLock = new(1, 1);
   private ProjectInfo? _LastOpenedProject;
 
-  public App(ICancellationTokenProvider cancellationTokenProvider, ICurrentProjectProvider currentProjectProvider)
+  public App(
+    ICancellationTokenProvider cancellationTokenProvider,
+    ICurrentProjectProvider currentProjectProvider,
+    [FromKeyedServices("FontScaleSetting")]
+    ISettingEditor? fontScaleSetting,
+    FontScale fontScale,
+    [FromKeyedServices(WellKnownActiveConfigurations.AppConfig)]
+    IInteractiveConfiguration? appConfiguration)
   {
     _CancellationTokenProvider = cancellationTokenProvider;
     _CurrentProjectProvider = currentProjectProvider;
+    _FontScale = fontScale;
+    _FontScaleSetting = fontScaleSetting;
+    _AppConfiguration = appConfiguration;
 
     AppDomain.CurrentDomain.UnhandledException += LogUnhandledException;
     BindingDiagnostics.BindingFailed += LogBindingErrors;
 
     InitializeComponent();
+
+    fontScale.Initialize();
+    fontScale.Apply(fontScaleSetting?.Value);
 
 #if ANDROID
     Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific.Application.UseWindowSoftInputModeAdjust(
@@ -102,8 +119,25 @@ public partial class App : Application
     window.Activated += ReopenOnActivationAsync;
     window.Deactivated += async (_, _) => await CloseOnDeactivationAsync(saveLastOpenProject: true);
     window.Destroying += async (_, _) => await CloseOnDeactivationAsync(saveLastOpenProject: false);
+    RegisterFontScaleHotkeys(window);
     return window;
   }
+
+  // Implemented per platform (Windows). On platforms without a keyboard this compiles away.
+  partial void RegisterFontScaleHotkeys(Window window);
+
+  internal void StepFontScale(double delta)
+  {
+    if (_FontScaleSetting is null)
+    {
+      return;
+    }
+
+    var newScaleFactor = (int)Math.Round(100 * (_FontScale.CurrentFactor + delta));
+    _FontScaleSetting.Value = $"{newScaleFactor}%";
+  }
+
+  internal void ResetFontScale() => _FontScaleSetting?.ResetToDefault();
 
   private async void ReopenOnActivationAsync(object? sender, EventArgs e)
   {
@@ -140,6 +174,11 @@ public partial class App : Application
 
   private async Task CloseOnDeactivationAsync(bool saveLastOpenProject)
   {
+    // Persist any debounced settings (e.g. a just-changed font scale) before backgrounding/teardown,
+    // so a change made within the debounce window is not lost. Done before the debugger short-circuit
+    // below so settings still persist while debugging.
+    _AppConfiguration?.Flush();
+
 #if DEBUG
     if (System.Diagnostics.Debugger.IsAttached)
     {

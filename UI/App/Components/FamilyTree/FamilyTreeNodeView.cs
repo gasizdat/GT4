@@ -1,5 +1,6 @@
 using GT4.Core.Project.Dto;
 using GT4.UI.Utils;
+using GT4.UI.Utils.Settings;
 using Microsoft.Maui.Controls.Shapes;
 
 namespace GT4.UI.Components.Genealogy;
@@ -16,7 +17,15 @@ public sealed class FamilyTreeNodeView : ContentView
   private const double FontSizeBase = 12;
   private const double SpacingBase = 4;
 
-  public FamilyTreeNodeView(PersonInfo person, string displayName, bool isCenter, double width, double height, double zoomScale = 1.0)
+  public FamilyTreeNodeView(
+    PersonInfo person,
+    FontScale? fontScale,
+    string displayName, 
+    bool isCenter, 
+    double width, 
+    double height, 
+    double zoomScale = 1.0
+  )
   {
     WidthRequest = width;
     HeightRequest = height;
@@ -46,11 +55,14 @@ public sealed class FamilyTreeNodeView : ContentView
       HorizontalOptions = LayoutOptions.Center,
       Content = photo,
     };
-
+    
+    // TODO: FontScale.DefaultFactor is applied only at the node creation stage.
+    // This will not affect the font size when it changes while the graph is displayed on the page.
+    // Shall be fixed in the next release.
     var name = new Label
     {
       Text = displayName,
-      FontSize = FontSizeBase * zoomScale,
+      FontSize = FontSizeBase * zoomScale * (fontScale?.CurrentFactor ?? FontScale.DefaultFactor),
       FontAttributes = isCenter ? FontAttributes.Bold : FontAttributes.None,
       HorizontalTextAlignment = TextAlignment.Center,
       MaxLines = 2,

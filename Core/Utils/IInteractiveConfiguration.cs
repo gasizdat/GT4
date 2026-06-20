@@ -6,5 +6,7 @@ public interface IInteractiveConfiguration
 
   public void RemoveKey(string key);
 
+  public void Flush();
+
   public string Name { get; }
 }
