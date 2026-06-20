@@ -55,7 +55,10 @@ public sealed class FamilyTreeNodeView : ContentView
       HorizontalOptions = LayoutOptions.Center,
       Content = photo,
     };
-
+    
+    // TODO: FontScale.DefaultFactor is applied only at the node creation stage.
+    // This will not affect the font size when it changes while the graph is displayed on the page.
+    // Shall be fixed in the next release.
     var name = new Label
     {
       Text = displayName,
