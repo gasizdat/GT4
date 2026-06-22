@@ -1,3 +1,4 @@
+using GT4.UI.Dialogs;
 using GT4.UI.Utils;
 using System.Windows.Input;
 
@@ -17,6 +18,7 @@ public partial class ImagePresenter : ContentView
   private readonly ImageSource[] _Images;
   private readonly double[] _ImageOpacities;
   private readonly ICommand _Command;
+  private readonly ICommand _OpenViewerCommand;
   private uint _CurrentIndex = 0;
   private State _CurrentState = State.Init;
   private int _LastStageTime = 0;
@@ -206,11 +208,22 @@ public partial class ImagePresenter : ContentView
     };
     Unloaded += (_, _) => _Timer.Tick -= TimerTick;
     _Command = new SafeCommand(OnNextPicture);
+    _OpenViewerCommand = new SafeCommand(OnOpenViewerAsync);
 
     InitializeComponent();
   }
 
   private void TimerTick(object? sender, EventArgs e) => Update();
+
+  private async Task OnOpenViewerAsync()
+  {
+    if (ImageSources.Length == 0)
+    {
+      return;
+    }
+
+    await Shell.Current.Navigation.PushModalAsync(new PhotoViewerDialog(ImageSources));
+  }
 
   private void OnNextPicture(object obj)
   {
@@ -297,4 +310,6 @@ public partial class ImagePresenter : ContentView
   public double ImageOpacity2 => _ImageOpacities[1];
 
   public ICommand Command => _Command;
+
+  public ICommand OpenViewerCommand => _OpenViewerCommand;
 }

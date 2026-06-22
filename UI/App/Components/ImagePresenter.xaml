@@ -7,6 +7,9 @@
   <Grid
       ColumnDefinitions="*"
       RowDefinitions="*">
+    <Grid.GestureRecognizers>
+      <TapGestureRecognizer Command="{Binding OpenViewerCommand, Source={x:Reference Root}}" />
+    </Grid.GestureRecognizers>
     <Image
         Aspect="AspectFill"
         Opacity="{Binding ImageOpacity1, Source={x:Reference Root}}"
