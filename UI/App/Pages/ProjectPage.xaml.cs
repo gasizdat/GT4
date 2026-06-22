@@ -97,6 +97,61 @@ public partial class ProjectPage : ContentPage
 
   public NameFormat PersonNamesFormat => NameFormat.ShortPersonName;
 
+  // Guards against the re-entrancy caused by writing WidthRequest below, which itself
+  // triggers another SizeChanged on the same FlexLayout.
+  private bool _EqualizingPersonWidths;
+
+  // Makes every person item in a family card share the width of the widest item.
+  // FlexLayout has no "size all children to the widest" mode, so we measure each
+  // item's natural width and write the max back as a WidthRequest.
+  private void OnFamilyPersonsSizeChanged(object? sender, EventArgs e)
+  {
+    if (sender is not FlexLayout flex || _EqualizingPersonWidths)
+    {
+      return;
+    }
+
+    _EqualizingPersonWidths = true;
+    try
+    {
+      var maxWidth = 0d;
+      foreach (var child in flex.Children)
+      {
+        if (child is not IView view)
+        {
+          continue;
+        }
+
+        // Clear any width from a previous pass so we measure the item's natural width.
+        // This matters when the global font scale changes the content size in place.
+        if (child is VisualElement element)
+        {
+          element.WidthRequest = -1;
+        }
+
+        var desired = view.Measure(double.PositiveInfinity, double.PositiveInfinity);
+        maxWidth = Math.Max(maxWidth, desired.Width);
+      }
+
+      if (maxWidth <= 0)
+      {
+        return;
+      }
+
+      foreach (var child in flex.Children)
+      {
+        if (child is VisualElement element)
+        {
+          element.WidthRequest = maxWidth;
+        }
+      }
+    }
+    finally
+    {
+      _EqualizingPersonWidths = false;
+    }
+  }
+
   protected override void OnNavigatedTo(NavigatedToEventArgs args)
   {
     base.OnNavigatedTo(args);

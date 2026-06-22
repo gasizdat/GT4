@@ -83,16 +83,18 @@
                     Text="{Binding Info.Value}"
                     VerticalOptions="Start" />
 
-                <StackLayout
+                <FlexLayout
                     Grid.Row="1"
                     Grid.Column="0"
                     Grid.ColumnSpan="2"
                     Margin="{Thickness Left={StaticResource PhotoThumbWidth}}"
                     BindableLayout.ItemsSource="{Binding Persons}"
-                    Spacing="{StaticResource PageContentSpacing}">
+                    Direction="Row"
+                    SizeChanged="OnFamilyPersonsSizeChanged"
+                    Wrap="Wrap">
+
                   <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="dto:PersonInfo">
-
                       <components:PersonInfoView
                           NameFormat="{Binding PersonNamesFormat, Source={x:Reference Root}}"
                           NameLabelStyle="{StaticResource FieldValue}"
@@ -100,10 +102,9 @@
                           PhotoStyle="{StaticResource PhotoCompactStyle}"
                           ShowAge="False"
                           ShowDates="False" />
-
                     </DataTemplate>
                   </BindableLayout.ItemTemplate>
-                </StackLayout>
+                </FlexLayout>
 
               </Grid>
             </components:CardView>
