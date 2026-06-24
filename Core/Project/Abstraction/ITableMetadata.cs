@@ -10,4 +10,5 @@ public interface ITableMetadata
   Task SetProjectDescriptionAsync(string value, CancellationToken token);
   Task SetProjectNameAsync(string value, CancellationToken token);
   Task SetProjectRevisionAsync(string value, CancellationToken token);
+  internal void SetProjectRevision(string value);
 }

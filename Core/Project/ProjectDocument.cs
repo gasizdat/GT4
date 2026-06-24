@@ -153,28 +153,6 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
 
   internal SqliteConnection Connection => _Connection;
 
-  /// <summary>
-  /// Persists the project revision into the Metadata table as part of committing the root transaction.
-  /// <para>
-  /// Run synchronously on purpose: the committing flow already owns the connection and the open
-  /// transaction, and the rest of the commit (gate release, ambient hand-back) must run on that same
-  /// flow. Awaiting here would continue the commit on a continuation whose <see cref="AsyncLocal{T}"/>
-  /// changes the caller cannot observe, stranding the flow on a completed transaction. A direct
-  /// synchronous write cannot deadlock the way the former <c>GetAwaiter().GetResult()</c> on the async
-  /// write could, because there is no continuation to marshal back onto a captured context.
-  /// </para>
-  /// </summary>
-  internal void StampPersistedRevision()
-  {
-    // The raw command binds to the connection's active transaction (the root SqliteTransaction), the
-    // same mechanism NestedTransaction.ExecuteSimple relies on for SAVEPOINT statements.
-    using var command = _Connection.CreateCommand();
-    command.CommandText = "INSERT OR REPLACE INTO Metadata (Id, Data) VALUES (@id, @data);";
-    command.Parameters.AddWithValue("@id", TableMetadata.RevisionKey);
-    command.Parameters.AddWithValue("@data", DateTime.Now.ToString(CultureInfo.InvariantCulture));
-    command.ExecuteNonQuery();
-  }
-
   internal long NextTransactionNo() => Interlocked.Increment(ref _TransactionNo);
 
   /// <summary>Pops the ambient back to the enclosing transaction and releases the gate for a root.</summary>

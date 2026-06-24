@@ -7,7 +7,7 @@ internal class TableMetadata : TableBase, ITableMetadata
 {
   private const string ProjectName = "name";
   private const string ProjectDescription = "description";
-  internal const string RevisionKey = "revision";
+  private const string RevisionKey = "revision";
 
   public TableMetadata(IProjectDocument document) : base(document)
   {
@@ -25,10 +25,9 @@ internal class TableMetadata : TableBase, ITableMetadata
     await command.ExecuteNonQueryAsync(token);
   }
 
-  public async Task AddAsync<TData>(string id, TData data, CancellationToken token)
+  private ProjectCommand CreateAddCommand<TData>(string id, TData data)
   {
-    using var transaction = await Document.BeginTransactionAsync(token);
-    using var command = Document.CreateCommand();
+    var command = Document.CreateCommand();
     command.CommandText = """
       INSERT OR REPLACE INTO Metadata 
           (Id, Data) 
@@ -36,6 +35,13 @@ internal class TableMetadata : TableBase, ITableMetadata
       """;
     command.Parameters.AddWithValue("@id", id);
     command.Parameters.AddWithValue("@data", data);
+    return command;
+  }
+
+  public async Task AddAsync<TData>(string id, TData data, CancellationToken token)
+  {
+    using var transaction = await Document.BeginTransactionAsync(token);
+    using var command = CreateAddCommand(id, data);
     await command.ExecuteNonQueryAsync(token);
     await transaction.CommitAsync(token);
   }
@@ -60,4 +66,10 @@ internal class TableMetadata : TableBase, ITableMetadata
   public Task SetProjectDescriptionAsync(string value, CancellationToken token) => AddAsync(ProjectDescription, value, token);
 
   public Task SetProjectRevisionAsync(string value, CancellationToken token) => AddAsync(RevisionKey, value, token);
+  
+  public void SetProjectRevision(string value)
+  {
+    using var command = CreateAddCommand(RevisionKey, value);
+    command.ExecuteNonQuery();
+  }
 }
