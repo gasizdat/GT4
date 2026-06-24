@@ -1,4 +1,5 @@
-﻿using Android.Content;
+﻿#if ANDROID
+using Android.Content;
 using Android.OS;
 using Android.Provider;
 using AndroidApplication = Android.App.Application;
@@ -318,3 +319,4 @@ public class AndroidFileSystem : IFileSystem
     throw new NotSupportedException(nameof(GetLastWriteTime));
   }
 }
+#endif
