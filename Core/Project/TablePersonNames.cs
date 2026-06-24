@@ -104,7 +104,7 @@ internal partial class TablePersonNames : TableBase, ITablePersonNames
       await command.ExecuteNonQueryAsync(token);
     }
 
-    transaction.Commit();
+    await transaction.CommitAsync(token);
   }
 
   public async Task UpdatePersonNamesAsync(Person person, Name[] names, CancellationToken token)
@@ -126,6 +126,6 @@ internal partial class TablePersonNames : TableBase, ITablePersonNames
 
     await AddPersonNamesAsync(person, names, token);
 
-    transaction.Commit();
+    await transaction.CommitAsync(token);
   }
 }

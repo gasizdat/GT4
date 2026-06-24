@@ -41,7 +41,7 @@ internal class FamilyManager : TableBase, IFamilyManager
     await Document.Names.AddNameAsync(maleLastName, NameType.LastName | NameType.MaleDeclension, name, token);
     await Document.Names.AddNameAsync(femaleLastName, NameType.LastName | NameType.FemaleDeclension, name, token);
 
-    transaction.Commit();
+    await transaction.CommitAsync(token);
 
     return name;
   }
@@ -111,7 +111,7 @@ internal class FamilyManager : TableBase, IFamilyManager
       await Document.Names.UpdateName(femaleLastName, token);
     }
 
-    transaction.Commit();
+    await transaction.CommitAsync(token);
   }
 
   internal override Task CreateAsync(CancellationToken token)

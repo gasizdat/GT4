@@ -68,7 +68,7 @@ internal class TableData : TableBase, ITableData
     await command.ExecuteNonQueryAsync(token);
 
     var ret = new Data(Id: await Document.GetLastInsertRowIdAsync(token), Content: content, MimeType: mimeType, Category: dataCategory);
-    transaction.Commit();
+    await transaction.CommitAsync(token);
 
     return ret;
   }
@@ -83,7 +83,7 @@ internal class TableData : TableBase, ITableData
       """;
     command.Parameters.AddWithValue("@id", data.Id);
     await command.ExecuteNonQueryAsync(token);
-    transaction.Commit();
+    await transaction.CommitAsync(token);
   }
 
   public async Task UpdateCategoryAsync(Data data, DataCategory dataCategory, CancellationToken token)
@@ -98,6 +98,6 @@ internal class TableData : TableBase, ITableData
     command.Parameters.AddWithValue("@id", data.Id);
     command.Parameters.AddWithValue("@category", (int)dataCategory);
     await command.ExecuteNonQueryAsync(token);
-    transaction.Commit();
+    await transaction.CommitAsync(token);
   }
 }

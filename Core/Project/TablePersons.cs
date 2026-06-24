@@ -103,7 +103,7 @@ internal partial class TablePersons : TableBase, ITablePersons
     command.Parameters.AddWithValue("@biologicalSex", person.BiologicalSex);
     await command.ExecuteNonQueryAsync(token);
     var personId = await Document.GetLastInsertRowIdAsync(token);
-    transaction.Commit();
+    await transaction.CommitAsync(token);
 
     InvalidateItems();
 
@@ -126,7 +126,7 @@ internal partial class TablePersons : TableBase, ITablePersons
     command.Parameters.AddWithValue("@biologicalSex", person.BiologicalSex);
     command.Parameters.AddWithValue("@personId", person.Id);
     await command.ExecuteNonQueryAsync(token);
-    transaction.Commit();
+    await transaction.CommitAsync(token);
 
     InvalidateItems();
   }
@@ -141,7 +141,7 @@ internal partial class TablePersons : TableBase, ITablePersons
       """;
     command.Parameters.AddWithValue("@id", person.Id);
     await command.ExecuteNonQueryAsync(token);
-    transaction.Commit();
+    await transaction.CommitAsync(token);
 
     InvalidateItems();
   }

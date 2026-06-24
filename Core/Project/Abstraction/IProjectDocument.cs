@@ -1,6 +1,4 @@
-﻿using System.Data;
-
-namespace GT4.Core.Project.Abstraction;
+﻿namespace GT4.Core.Project.Abstraction;
 
 public interface IProjectDocument : IAsyncDisposable, IDisposable
 {
@@ -18,7 +16,7 @@ public interface IProjectDocument : IAsyncDisposable, IDisposable
   IRelativesProvider RelativesProvider { get; }
   IFamilyTreeProvider FamilyTreeProvider { get; }
 
-  Task<IDbTransaction> BeginTransactionAsync(CancellationToken token);
+  Task<IProjectTransaction> BeginTransactionAsync(CancellationToken token);
 
   /// <summary>
   /// Creates a command bound to the single underlying connection. Configure it and call one of its

@@ -148,7 +148,7 @@ internal partial class TablePersonData : TableBase, ITablePersonData
       command.Parameters.AddWithValue("@dataId", dataId);
       await command.ExecuteNonQueryAsync(token);
     }
-    transaction.Commit();
+    await transaction.CommitAsync(token);
   }
 
   public async Task UpdatePersonDataSetAsync(Person person, Data[] dataSet, CancellationToken token)
@@ -164,7 +164,7 @@ internal partial class TablePersonData : TableBase, ITablePersonData
 
     await AddPersonDataSetAsync(person, dataSet, token);
 
-    transaction.Commit();
+    await transaction.CommitAsync(token);
   }
 
   public async Task UpdatePersonDataAsync(Person person, Data? newData, DataCategory dataCategory, CancellationToken token)
@@ -197,7 +197,7 @@ internal partial class TablePersonData : TableBase, ITablePersonData
       await AddPersonDataSetAsync(person, [newData], token);
     }
 
-    transaction.Commit();
+    await transaction.CommitAsync(token);
   }
 
   public async Task RemovePersonDataAsync(Person person, Data data, CancellationToken token)
@@ -222,6 +222,6 @@ internal partial class TablePersonData : TableBase, ITablePersonData
       // which is expected here. Any other failure is genuine and must surface.
     }
 
-    transaction.Commit();
+    await transaction.CommitAsync(token);
   }
 }

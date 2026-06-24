@@ -7,7 +7,7 @@ internal class TableMetadata : TableBase, ITableMetadata
 {
   private const string ProjectName = "name";
   private const string ProjectDescription = "description";
-  private const string ProjectRevision = "revision";
+  internal const string RevisionKey = "revision";
 
   public TableMetadata(IProjectDocument document) : base(document)
   {
@@ -37,7 +37,7 @@ internal class TableMetadata : TableBase, ITableMetadata
     command.Parameters.AddWithValue("@id", id);
     command.Parameters.AddWithValue("@data", data);
     await command.ExecuteNonQueryAsync(token);
-    transaction.Commit();
+    await transaction.CommitAsync(token);
   }
 
   public async Task<TData?> GetAsync<TData>(string id, CancellationToken token)
@@ -53,11 +53,11 @@ internal class TableMetadata : TableBase, ITableMetadata
 
   public Task<string?> GetProjectDescriptionAsync(CancellationToken token) => GetAsync<string>(ProjectDescription, token);
 
-  public Task<string?> GetProjectRevisionAsync(CancellationToken token) => GetAsync<string>(ProjectRevision, token);
+  public Task<string?> GetProjectRevisionAsync(CancellationToken token) => GetAsync<string>(RevisionKey, token);
 
   public Task SetProjectNameAsync(string value, CancellationToken token) => AddAsync(ProjectName, value, token);
 
   public Task SetProjectDescriptionAsync(string value, CancellationToken token) => AddAsync(ProjectDescription, value, token);
 
-  public Task SetProjectRevisionAsync(string value, CancellationToken token) => AddAsync(ProjectRevision, value, token);
+  public Task SetProjectRevisionAsync(string value, CancellationToken token) => AddAsync(RevisionKey, value, token);
 }

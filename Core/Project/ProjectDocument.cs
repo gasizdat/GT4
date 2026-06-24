@@ -1,6 +1,6 @@
 using GT4.Core.Project.Abstraction;
 using Microsoft.Data.Sqlite;
-using System.Data;
+using System.Globalization;
 
 namespace GT4.Core.Project;
 
@@ -125,7 +125,7 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     await _TableRelatives.CreateAsync(token);
     await _TablePersonData.CreateAsync(token);
 
-    transaction.Commit();
+    await transaction.CommitAsync(token);
   }
 
   public ITableMetadata Metadata => _TableMetadata;
@@ -152,6 +152,28 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   // --- Connection access used internally by NestedTransaction ------------------------------------
 
   internal SqliteConnection Connection => _Connection;
+
+  /// <summary>
+  /// Persists the project revision into the Metadata table as part of committing the root transaction.
+  /// <para>
+  /// Run synchronously on purpose: the committing flow already owns the connection and the open
+  /// transaction, and the rest of the commit (gate release, ambient hand-back) must run on that same
+  /// flow. Awaiting here would continue the commit on a continuation whose <see cref="AsyncLocal{T}"/>
+  /// changes the caller cannot observe, stranding the flow on a completed transaction. A direct
+  /// synchronous write cannot deadlock the way the former <c>GetAwaiter().GetResult()</c> on the async
+  /// write could, because there is no continuation to marshal back onto a captured context.
+  /// </para>
+  /// </summary>
+  internal void StampPersistedRevision()
+  {
+    // The raw command binds to the connection's active transaction (the root SqliteTransaction), the
+    // same mechanism NestedTransaction.ExecuteSimple relies on for SAVEPOINT statements.
+    using var command = _Connection.CreateCommand();
+    command.CommandText = "INSERT OR REPLACE INTO Metadata (Id, Data) VALUES (@id, @data);";
+    command.Parameters.AddWithValue("@id", TableMetadata.RevisionKey);
+    command.Parameters.AddWithValue("@data", DateTime.Now.ToString(CultureInfo.InvariantCulture));
+    command.ExecuteNonQuery();
+  }
 
   internal long NextTransactionNo() => Interlocked.Increment(ref _TransactionNo);
 
@@ -189,7 +211,7 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     return Convert.ToInt32(await command.ExecuteScalarAsync(token));
   }
 
-  public Task<IDbTransaction> BeginTransactionAsync(CancellationToken token)
+  public Task<IProjectTransaction> BeginTransactionAsync(CancellationToken token)
   {
     // Implemented synchronously and returned as a completed task on purpose: setting the ambient
     // inside an async continuation would not be observed by the caller (ExecutionContext changes do
@@ -224,7 +246,7 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     }
 
     _Gate.Current = transaction;
-    return Task.FromResult<IDbTransaction>(transaction);
+    return Task.FromResult<IProjectTransaction>(transaction);
   }
 
   public static async Task<ProjectDocument> CreateNewAsync(string path, string name, CancellationToken token)

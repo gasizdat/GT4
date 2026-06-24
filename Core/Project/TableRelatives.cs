@@ -204,7 +204,7 @@ internal class TableRelatives : TableBase, ITableRelatives
       await command.ExecuteNonQueryAsync(token);
     }
 
-    transaction.Commit();
+    await transaction.CommitAsync(token);
   }
 
   public async Task UpdateRelativesAsync(Person person, Relative[] relatives, CancellationToken token)
@@ -243,7 +243,7 @@ internal class TableRelatives : TableBase, ITableRelatives
 
     await AddRelativesAsync(person, relatives.Where(r => !remainedRelatives.Contains(r.Id)).ToArray(), token);
 
-    transaction.Commit();
+    await transaction.CommitAsync(token);
   }
 
   public async Task<bool> HasCommonAncestorsAsync(Person personA, Person personB, CancellationToken token)
