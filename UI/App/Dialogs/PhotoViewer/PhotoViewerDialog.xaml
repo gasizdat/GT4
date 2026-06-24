@@ -6,6 +6,16 @@
     x:Name="Root"
     BackgroundColor="{StaticResource OffBlack}">
 
+  <ContentPage.Resources>
+    <ResourceDictionary>
+      <OnIdiom
+          x:Key="BackgroundOpacity"
+          x:TypeArguments="x:Double"
+          Default="0.35"
+          Desktop="0.25" />
+    </ResourceDictionary>
+  </ContentPage.Resources>
+
   <Grid>
     <CollectionView
         ItemsSource="{Binding Photos, Source={x:Reference Root}}"
@@ -20,8 +30,8 @@
           <Grid>
             <Image
                 Aspect="AspectFill"
-                HeightRequest="{Binding Height, Source={x:Reference MainPhoto}}"
-                Opacity="0.25"
+                HeightRequest="{Binding Width, Source={x:Reference Root}}"
+                Opacity="{StaticResource BackgroundOpacity}"
                 Source="{Binding .}">
               <Image.GestureRecognizers>
                 <TapGestureRecognizer Command="{Binding CloseCommand, Source={x:Reference Root}}" />
@@ -30,7 +40,7 @@
             <Image
                 x:Name="MainPhoto"
                 Aspect="AspectFit"
-                HeightRequest="{Binding Width, Source={x:Reference MainPhoto}}"
+                HeightRequest="{Binding Width, Source={x:Reference Root}}"
                 InputTransparent="True"
                 Source="{Binding .}" />
           </Grid>
