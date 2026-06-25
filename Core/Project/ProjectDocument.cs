@@ -138,8 +138,6 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     Interlocked.Increment(ref _ProjectRevision);
   }
 
-  // Connection access used internally by NestedTransaction
-
   internal SqliteConnection Connection => _Connection;
 
   internal long NextTransactionNo() => Interlocked.Increment(ref _TransactionNo);
@@ -154,8 +152,6 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
       _Gate.Release();
     }
   }
-
-  // Command creation
 
   public ProjectCommand CreateCommand()
   {
