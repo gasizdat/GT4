@@ -4,9 +4,11 @@ using System.Data.Common;
 
 namespace GT4.Core.Project;
 
-public abstract class TableBase
+public abstract class TableBase : ProjectComponentBase
 {
-  protected TableBase(IProjectDocument document) => Document = document;
+  protected TableBase(IProjectDocument document) : base(document)
+  {
+  }
 
   protected static int? TryGetInteger(DbDataReader reader, int ordinal) =>
     reader.IsDBNull(ordinal) ? null : reader.GetInt32(ordinal);
@@ -44,10 +46,6 @@ public abstract class TableBase
 
   protected static TEnum GetEnum<TEnum>(DbDataReader reader, int ordinal) where TEnum : Enum =>
     (TEnum)Enum.ToObject(typeof(TEnum), reader.GetInt32(ordinal));
-
-  public static readonly int NonCommittedId = 0;
-
-  internal IProjectDocument Document { get; init; }
 
   internal abstract Task CreateAsync(CancellationToken token);
 }

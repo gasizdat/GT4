@@ -147,11 +147,6 @@ internal class ProjectDocumentMock : IProjectDocument
     throw new NotImplementedException();
   }
 
-  public Task<int> GetLastInsertRowIdAsync(CancellationToken token)
-  {
-    throw new NotImplementedException();
-  }
-
   public void UpdateRevision()
   {
     throw new NotImplementedException();

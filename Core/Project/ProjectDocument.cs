@@ -86,17 +86,6 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     }
   }
 
-  ~ProjectDocument()
-  {
-    // Best effort only: the finalizer thread must never block on the gate waiting for an operation
-    // that may itself be waiting on a finalizable object.
-    if (Interlocked.Exchange(ref _DisposeStarted, 1) == 0)
-    {
-      _Disposed = true;
-      _Connection.Dispose();
-    }
-  }
-
   private async Task OpenAsync(CancellationToken token)
   {
     CheckForDisposed();
@@ -149,8 +138,6 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     Interlocked.Increment(ref _ProjectRevision);
   }
 
-  // --- Connection access used internally by NestedTransaction ------------------------------------
-
   internal SqliteConnection Connection => _Connection;
 
   internal long NextTransactionNo() => Interlocked.Increment(ref _TransactionNo);
@@ -166,8 +153,6 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     }
   }
 
-  // --- Command creation ---------------------------------------------------------------------------
-
   public ProjectCommand CreateCommand()
   {
     // A flow that owns the active transaction may keep issuing statements while a dispose is
@@ -180,13 +165,6 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     SqliteCommand cmd;
     lock (_CommandLock) { cmd = _Connection.CreateCommand(); }
     return new ProjectCommand(cmd, _Gate, _CommandLock);
-  }
-
-  public async Task<int> GetLastInsertRowIdAsync(CancellationToken token)
-  {
-    using var command = CreateCommand();
-    command.CommandText = "SELECT last_insert_rowid();";
-    return Convert.ToInt32(await command.ExecuteScalarAsync(token));
   }
 
   public Task<IProjectTransaction> BeginTransactionAsync(CancellationToken token)
@@ -244,10 +222,6 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     return ret;
   }
 
-  // Disposal drains through the gate: it waits for the in-flight statement, open reader or active
-  // transaction to complete before closing the connection, then releases the gate so queued waiters
-  // wake up and observe ObjectDisposedException instead of hanging.
-
   private void ThrowIfDisposingInsideTransaction()
   {
     if (_Gate.Current is not null)
@@ -265,7 +239,6 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
       return;
     }
     _Disposed = true;
-    GC.SuppressFinalize(this);
     await _Gate.CloseAsync();
     await _Connection.CloseAsync();
     await _Connection.DisposeAsync();
@@ -280,7 +253,6 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
       return;
     }
     _Disposed = true;
-    GC.SuppressFinalize(this);
     _Gate.Close();
     _Connection.Close();
     _Connection.Dispose();

@@ -25,6 +25,5 @@ public interface IProjectDocument : IAsyncDisposable, IDisposable
   /// </summary>
   ProjectCommand CreateCommand();
 
-  Task<int> GetLastInsertRowIdAsync(CancellationToken token);
   void UpdateRevision();
 }

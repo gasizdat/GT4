@@ -49,8 +49,6 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   private static Data NewData(DataCategory category, params byte[] content) =>
     new(TableBase.NonCommittedId, content, "application/octet-stream", category);
 
-  // --- Metadata ----------------------------------------------------------------------------------
-
   [Fact]
   public async Task Metadata_RoundTripsNameAndDescription()
   {
@@ -85,8 +83,6 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
 
     (await _doc.Metadata.GetProjectNameAsync(Token)).Should().Be("second");
   }
-
-  // --- Names / FamilyManager ---------------------------------------------------------------------
 
   [Fact]
   public async Task AddFamily_CreatesFamilyWithGenderedLastNames()
@@ -243,8 +239,6 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
 
     act.Should().Throw<ArgumentException>();
   }
-
-  // --- Persons -----------------------------------------------------------------------------------
 
   [Fact]
   public async Task Persons_AddGetUpdateRemove_RoundTrip()
@@ -419,8 +413,6 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
     (await _doc.Relatives.GetRelativesAsync(other, Token)).Should().BeEmpty();
   }
 
-  // --- Data / PersonData -------------------------------------------------------------------------
-
   [Fact]
   public async Task Data_AddGetUpdateCategoryRemove()
   {
@@ -528,8 +520,6 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
     (await _doc.PersonData.GetPersonDataSetAsync(personB, null, Token)).Should().ContainSingle();
     (await _doc.Data.TryGetDataByIdAsync(shared.Id, Token)).Should().NotBeNull();
   }
-
-  // --- Relatives ---------------------------------------------------------------------------------
 
   [Fact]
   public async Task Relatives_Add_ResolvesBothDirections()
@@ -733,8 +723,6 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
     (await _doc.Relatives.HasCommonAncestorsAsync(cousinA, cousinB, Token)).Should().BeTrue();
     (await _doc.Relatives.HasCommonAncestorsAsync(cousinA, stranger, Token)).Should().BeFalse();
   }
-
-  // --- Document lifecycle ------------------------------------------------------------------------
 
   [Fact]
   public async Task Open_ExistingDocument_ReadsPersistedData()
