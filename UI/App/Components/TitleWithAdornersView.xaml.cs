@@ -9,7 +9,7 @@ public partial class TitleWithAdornersView : ContentView
     InitializeComponent();
   }
 
-  // ===== Bindable Properties =====
+  // Bindable Properties
 
   public static readonly BindableProperty TitleTextProperty =
       BindableProperty.Create(
@@ -107,7 +107,7 @@ public partial class TitleWithAdornersView : ContentView
   public bool IsSubtitleTextVisible => !string.IsNullOrWhiteSpace(SubtitleText);
 
 
-  // ===== Public events to bubble up user interaction =====
+  // Public events to bubble up user interaction
 
   public event EventHandler? EditAdornerClicked;
   public event EventHandler? DeleteAdornerClicked;

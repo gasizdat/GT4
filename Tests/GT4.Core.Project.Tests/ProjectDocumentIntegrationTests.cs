@@ -49,7 +49,7 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   private static Data NewData(DataCategory category, params byte[] content) =>
     new(TableBase.NonCommittedId, content, "application/octet-stream", category);
 
-  // --- Metadata ----------------------------------------------------------------------------------
+  // Metadata
 
   [Fact]
   public async Task Metadata_RoundTripsNameAndDescription()
@@ -86,7 +86,7 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
     (await _doc.Metadata.GetProjectNameAsync(Token)).Should().Be("second");
   }
 
-  // --- Names / FamilyManager ---------------------------------------------------------------------
+  // Names / FamilyManager
 
   [Fact]
   public async Task AddFamily_CreatesFamilyWithGenderedLastNames()
@@ -244,7 +244,7 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
     act.Should().Throw<ArgumentException>();
   }
 
-  // --- Persons -----------------------------------------------------------------------------------
+  // Persons
 
   [Fact]
   public async Task Persons_AddGetUpdateRemove_RoundTrip()
@@ -419,7 +419,7 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
     (await _doc.Relatives.GetRelativesAsync(other, Token)).Should().BeEmpty();
   }
 
-  // --- Data / PersonData -------------------------------------------------------------------------
+  // Data / PersonData
 
   [Fact]
   public async Task Data_AddGetUpdateCategoryRemove()
@@ -529,7 +529,7 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
     (await _doc.Data.TryGetDataByIdAsync(shared.Id, Token)).Should().NotBeNull();
   }
 
-  // --- Relatives ---------------------------------------------------------------------------------
+  // Relatives
 
   [Fact]
   public async Task Relatives_Add_ResolvesBothDirections()
@@ -734,7 +734,7 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
     (await _doc.Relatives.HasCommonAncestorsAsync(cousinA, stranger, Token)).Should().BeFalse();
   }
 
-  // --- Document lifecycle ------------------------------------------------------------------------
+  // Document lifecycle
 
   [Fact]
   public async Task Open_ExistingDocument_ReadsPersistedData()

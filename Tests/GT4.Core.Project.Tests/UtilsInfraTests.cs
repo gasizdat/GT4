@@ -16,7 +16,7 @@ using CoreFileSystem = GT4.Core.Utils.FileSystem;
 /// </summary>
 public sealed class UtilsInfraTests
 {
-  // --- Cancellation ------------------------------------------------------------------------------
+  // Cancellation
 
   [Fact]
   public void CancellationTokenHost_ExposesAndImplicitlyConvertsToken()
@@ -40,7 +40,7 @@ public sealed class UtilsInfraTests
     shortOp.Token.IsCancellationRequested.Should().BeFalse();
   }
 
-  // --- Storage -----------------------------------------------------------------------------------
+  // Storage
 
   [Fact]
   public void Storage_ExposesDistinctWellKnownFolders()
@@ -53,7 +53,7 @@ public sealed class UtilsInfraTests
     storage.ProjectsCache.Should().NotBe(storage.AppConfig);
   }
 
-  // --- AppConfigurationProvider ------------------------------------------------------------------
+  // AppConfigurationProvider
 
   private static (AppConfigurationProvider provider, string root) NewConfigProvider()
   {
@@ -115,7 +115,7 @@ public sealed class UtilsInfraTests
     finally { Directory.Delete(root, true); }
   }
 
-  // --- DI extensions -----------------------------------------------------------------------------
+  // DI extensions
 
   [Fact]
   public void AddCoreUtils_RegistersStorageAndCancellationProvider()
@@ -155,7 +155,7 @@ public sealed class UtilsInfraTests
     configurationRoot.Providers.OfType<IInteractiveConfiguration>().Should().ContainSingle();
   }
 
-  // --- FileSystem (real disk under a temp special-folder subdir) ----------------------------------
+  // FileSystem (real disk under a temp special-folder subdir)
 
   [Fact]
   public void FileSystem_FileLifecycle_WriteReadCopyListRemove()
