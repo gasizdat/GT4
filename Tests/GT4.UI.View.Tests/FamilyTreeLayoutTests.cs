@@ -19,8 +19,6 @@ public class FamilyTreeLayoutTests
   private static FamilyTree MakeTree(int centerId, FamilyTreeNode[] nodes, FamilyTreeEdge[]? edges = null) =>
     new(centerId, nodes, edges ?? []);
 
-  // Metrics
-
   [Fact]
   public void Metrics_SlotPitch_IsNodeWidthPlusHorizontalGap()
   {
@@ -34,8 +32,6 @@ public class FamilyTreeLayoutTests
     var m = new FamilyTreeLayoutMetrics(NodeHeight: 80, VerticalGap: 40);
     m.RowPitch.Should().Be(120);
   }
-
-  // Null / empty guards
 
   [Fact]
   public void Update_NullTree_Throws()
@@ -61,8 +57,6 @@ public class FamilyTreeLayoutTests
     result.CanvasSize.Width.Should().Be(0);
     result.CanvasSize.Height.Should().Be(0);
   }
-
-  // Single node
 
   [Fact]
   public void Update_SingleNode_ReturnsOneNodeAndNoConnectors()
@@ -101,8 +95,6 @@ public class FamilyTreeLayoutTests
     result.CanvasSize.Width.Should().BeGreaterThanOrEqualTo(100 + 2 * 20);
     result.CanvasSize.Height.Should().BeGreaterThanOrEqualTo(80 + 2 * 20);
   }
-
-  // Generation placement (Y axis)
 
   [Fact]
   public void Update_AncestorIsAboveCenter()
@@ -174,8 +166,6 @@ public class FamilyTreeLayoutTests
     (row1 - row2).Should().BeApproximately(m.RowPitch, 0.001);
   }
 
-  // Horizontal ordering (X axis)
-
   [Fact]
   public void Update_SiblingNodes_DoNotHorizontallyOverlap()
   {
@@ -241,8 +231,6 @@ public class FamilyTreeLayoutTests
     for (var i = 1; i < row.Count; i++)
       row[i].Left.Should().BeGreaterThanOrEqualTo(row[i - 1].Right, "no two siblings should overlap");
   }
-
-  // Connector geometry
 
   [Fact]
   public void Update_ParentChildEdge_ConnectorHasFourPoints()
@@ -325,8 +313,6 @@ public class FamilyTreeLayoutTests
     result.Connectors.Should().HaveCount(2);
   }
 
-  // Canvas bounds
-
   [Fact]
   public void Update_AllNodeBoundsAreWithinCanvasSize()
   {
@@ -350,8 +336,6 @@ public class FamilyTreeLayoutTests
         $"node {nodeLayout.Node.Id} bottom edge must fit within canvas height");
     }
   }
-
-  // CenterTopLeft
 
   [Fact]
   public void Update_CenterTopLeft_MatchesCenterNodeBoundsTopLeft()
@@ -381,8 +365,6 @@ public class FamilyTreeLayoutTests
     result.CenterTopLeft.X.Should().Be(centerBounds.Left);
     result.CenterTopLeft.Y.Should().Be(centerBounds.Top);
   }
-
-  // Reset
 
   [Fact]
   public void Reset_SubsequentUpdateProducesSameResultAsFirstRun()

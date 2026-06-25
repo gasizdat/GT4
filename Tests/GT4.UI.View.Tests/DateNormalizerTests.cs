@@ -6,8 +6,6 @@ namespace GT4.UI.View.Tests;
 
 public class DateNormalizerTests
 {
-  // NormalizeMonth 
-
   [Theory]
   [InlineData(1, 1)]
   [InlineData(6, 6)]
@@ -28,8 +26,6 @@ public class DateNormalizerTests
   public void NormalizeMonth_AboveMax_ReturnsTwelve(int month, int expected) =>
     DateNormalizer.NormalizeMonth(month).Should().Be(expected);
 
-  // IsLeapYear 
-
   [Theory]
   [InlineData(2000)]  // divisible by 400
   [InlineData(1600)]
@@ -48,8 +44,6 @@ public class DateNormalizerTests
   [InlineData(2100)]
   public void IsLeapYear_NonLeapYear_ReturnsFalse(int year) =>
     DateNormalizer.IsLeapYear(year).Should().BeFalse();
-
-  // NormalizeDay 
 
   [Theory]
   [InlineData(1, 31)]   // January
