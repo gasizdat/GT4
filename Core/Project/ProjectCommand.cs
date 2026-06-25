@@ -76,6 +76,20 @@ public sealed class ProjectCommand : IDisposable, IAsyncDisposable
     }
   }
 
+  /// <summary>
+  /// Synchronous counterpart to <see cref="ExecuteNonQueryAsync"/>, for the rare case where the work
+  /// must finish on the caller's own flow rather than a continuation — e.g. stamping the revision while
+  /// committing a transaction. The caller must already own the active transaction; this rebinds to it
+  /// like the async path (so it never uses a stale stamped transaction) but does not take the gate.
+  /// </summary>
+  internal int ExecuteNonQuery()
+  {
+    var ambient = _Gate.Current
+      ?? throw new InvalidOperationException("ExecuteNonQuery requires an active transaction on the calling flow.");
+    _Command.Transaction = ambient.RootDbTransaction;
+    return _Command.ExecuteNonQuery();
+  }
+
   private async Task<T> RunGatedAsync<T>(Func<Task<T>> run, CancellationToken token)
   {
     var ambient = _Gate.Current;

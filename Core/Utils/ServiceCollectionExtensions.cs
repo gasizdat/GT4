@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace GT4.Core.Utils;
 
@@ -8,8 +9,9 @@ public static class ServiceCollectionExtensions
   {
     return services
 #if ANDROID
+      // Android scoped storage needs MediaStore; every other target uses direct file access.
       .AddSingleton<IFileSystem, AndroidFileSystem>()
-#elif WINDOWS
+#else
       .AddSingleton<IFileSystem, FileSystem>()
 #endif
       .AddSingleton<IStorage, Storage>()

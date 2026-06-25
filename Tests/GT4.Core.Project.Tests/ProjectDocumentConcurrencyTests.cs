@@ -163,7 +163,7 @@ public sealed class ProjectDocumentConcurrencyTests : IAsyncLifetime
       aStarted.SetResult();
       await aMayFinish.Task;
       order.Enqueue("A-end");
-      transaction.Commit();
+      await transaction.CommitAsync(token);
     }, token);
 
     await aStarted.Task;
@@ -173,7 +173,7 @@ public sealed class ProjectDocumentConcurrencyTests : IAsyncLifetime
       // Must block here until flow A releases the connection.
       using var transaction = await _doc.BeginTransactionAsync(token);
       order.Enqueue("B-begin");
-      transaction.Commit();
+      await transaction.CommitAsync(token);
     }, token);
 
     // Give flow B time to attempt to start its transaction; it must still be blocked.
@@ -208,7 +208,7 @@ public sealed class ProjectDocumentConcurrencyTests : IAsyncLifetime
     using (var transaction = await _doc.BeginTransactionAsync(token))
     {
       await _doc.Names.AddNameAsync("commit_me", NameType.FamilyName, null, token);
-      transaction.Commit();
+      await transaction.CommitAsync(token);
     }
 
     (await AllNameValuesAsync(token)).Should().Contain("commit_me");
@@ -231,7 +231,7 @@ public sealed class ProjectDocumentConcurrencyTests : IAsyncLifetime
         savepoint.Rollback();
       }
 
-      outer.Commit();
+      await outer.CommitAsync(token);
     }
 
     var values = await AllNameValuesAsync(token);
@@ -253,8 +253,8 @@ public sealed class ProjectDocumentConcurrencyTests : IAsyncLifetime
     using var nested = await _doc.BeginTransactionAsync(cts.Token);
 
     await _doc.Names.AddNameAsync("nested_ok", NameType.FamilyName, null, cts.Token);
-    nested.Commit();
-    outer.Commit();
+    await nested.CommitAsync(cts.Token);
+    await outer.CommitAsync(cts.Token);
 
     (await AllNameValuesAsync(cts.Token)).Should().Contain("nested_ok");
   }
@@ -299,7 +299,7 @@ public sealed class ProjectDocumentConcurrencyTests : IAsyncLifetime
         // Explicit transaction wrapping a write, committed.
         using var transaction = await _doc.BeginTransactionAsync(token);
         await _doc.Names.AddNameAsync($"stress_{i}", NameType.FamilyName, null, token);
-        transaction.Commit();
+        await transaction.CommitAsync(token);
       }
     });
 
@@ -324,7 +324,7 @@ public sealed class ProjectDocumentConcurrencyTests : IAsyncLifetime
       await _doc.Names.AddNameAsync("from_a", NameType.FamilyName, null, token);
       aHasBegun.SetResult();
       await aMayCommit.Task;
-      transaction.Commit();
+      await transaction.CommitAsync(token);
     }, token);
 
     await aHasBegun.Task;
@@ -355,7 +355,7 @@ public sealed class ProjectDocumentConcurrencyTests : IAsyncLifetime
       insert.Parameters.AddWithValue("@value", "raw_command");
       insert.Parameters.AddWithValue("@type", (int)NameType.FamilyName);
       (await insert.ExecuteNonQueryAsync(token)).Should().Be(1);
-      transaction.Commit();
+      await transaction.CommitAsync(token);
     }
 
     using var scalar = _doc.CreateCommand();
@@ -439,7 +439,7 @@ public sealed class ProjectDocumentConcurrencyTests : IAsyncLifetime
       order.Enqueue("a-reader-disposed");
       readerDisposed.SetResult();
       await mayCommit.Task;
-      transaction.Commit();
+      await transaction.CommitAsync(token);
       order.Enqueue("a-committed");
     }, token);
 
@@ -479,7 +479,7 @@ public sealed class ProjectDocumentConcurrencyTests : IAsyncLifetime
       await mayCommit.Task;
       // Issued while the dispose is already draining: the owning flow may keep working.
       await _doc.Names.AddNameAsync("late_in_tx", NameType.FamilyName, null, token);
-      transaction.Commit();
+      await transaction.CommitAsync(token);
       order.Enqueue("a-committed");
     }, token);
 
@@ -518,7 +518,7 @@ public sealed class ProjectDocumentConcurrencyTests : IAsyncLifetime
       using var transaction = await _doc.BeginTransactionAsync(token);
       txStarted.SetResult();
       await mayCommit.Task;
-      transaction.Commit();
+      await transaction.CommitAsync(token);
     }, token);
 
     await txStarted.Task;

@@ -1,6 +1,6 @@
 using GT4.Core.Project.Abstraction;
 using Microsoft.Data.Sqlite;
-using System.Data;
+using System.Globalization;
 
 namespace GT4.Core.Project;
 
@@ -125,7 +125,7 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     await _TableRelatives.CreateAsync(token);
     await _TablePersonData.CreateAsync(token);
 
-    transaction.Commit();
+    await transaction.CommitAsync(token);
   }
 
   public ITableMetadata Metadata => _TableMetadata;
@@ -189,7 +189,7 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     return Convert.ToInt32(await command.ExecuteScalarAsync(token));
   }
 
-  public Task<IDbTransaction> BeginTransactionAsync(CancellationToken token)
+  public Task<IProjectTransaction> BeginTransactionAsync(CancellationToken token)
   {
     // Implemented synchronously and returned as a completed task on purpose: setting the ambient
     // inside an async continuation would not be observed by the caller (ExecutionContext changes do
@@ -224,7 +224,7 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     }
 
     _Gate.Current = transaction;
-    return Task.FromResult<IDbTransaction>(transaction);
+    return Task.FromResult<IProjectTransaction>(transaction);
   }
 
   public static async Task<ProjectDocument> CreateNewAsync(string path, string name, CancellationToken token)

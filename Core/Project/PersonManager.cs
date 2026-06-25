@@ -125,7 +125,7 @@ internal class PersonManager : TableBase, IPersonManager
     await Document.PersonData.AddPersonDataSetAsync(person, CombinePersonData(personFullInfo), token);
     await Document.Relatives.AddRelativesAsync(person, personFullInfo.RelativeInfos, token);
 
-    transaction.Commit();
+    await transaction.CommitAsync(token);
 
     return personFullInfo with { Id = person.Id };
   }
@@ -157,7 +157,7 @@ internal class PersonManager : TableBase, IPersonManager
     await Document.PersonData.UpdatePersonDataSetAsync(personFullInfo, CombinePersonData(personFullInfo), token);
     await Document.Relatives.UpdateRelativesAsync(personFullInfo, personFullInfo.RelativeInfos, token);
 
-    transaction.Commit();
+    await transaction.CommitAsync(token);
   }
 
   internal override Task CreateAsync(CancellationToken token)

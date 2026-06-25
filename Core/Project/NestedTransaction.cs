@@ -1,5 +1,6 @@
+using GT4.Core.Project.Abstraction;
 using Microsoft.Data.Sqlite;
-using System.Data;
+using System.Globalization;
 
 namespace GT4.Core.Project;
 
@@ -17,7 +18,7 @@ namespace GT4.Core.Project;
 /// they cannot use it; they simply block on the gate until the root completes.
 /// </para>
 /// </summary>
-internal sealed class NestedTransaction : IDbTransaction, IDisposable, IAsyncDisposable
+internal sealed class NestedTransaction : IProjectTransaction
 {
   private readonly ProjectDocument _Document;
   private readonly NestedTransaction? _Parent;          // null for the root transaction
@@ -69,12 +70,6 @@ internal sealed class NestedTransaction : IDbTransaction, IDisposable, IAsyncDis
   /// <summary>The real SQLite transaction at the root of this (possibly nested) transaction.</summary>
   internal SqliteTransaction RootDbTransaction => _DbTransaction ?? _Parent!.RootDbTransaction;
 
-  public IDbConnection? Connection => _Document.Connection;
-
-  public IsolationLevel IsolationLevel => IsolationLevel.Serializable;
-
-  public bool IsDisposed => _Disposed;
-
   private static void ExecuteSimple(ProjectDocument document, string sql)
   {
     using var command = document.Connection.CreateCommand();
@@ -82,38 +77,46 @@ internal sealed class NestedTransaction : IDbTransaction, IDisposable, IAsyncDis
     command.ExecuteNonQuery();
   }
 
-  public void Commit()
+  /// <summary>
+  /// Commits this transaction. The body runs synchronously even though the method is awaitable: the
+  /// commit has to release the gate and hand the ambient back on the caller's own flow, which an
+  /// <c>await</c> would prevent (see <see cref="Complete"/>). It replaces the former synchronous
+  /// <c>Commit()</c> that blocked on <c>SetProjectRevisionAsync(...).GetAwaiter().GetResult()</c>; the
+  /// revision is now stamped with a direct synchronous write that cannot deadlock.
+  /// </summary>
+  public Task CommitAsync(CancellationToken token)
   {
     if (_Committed || _RolledBack || _Disposed)
     {
       throw new InvalidOperationException($"The transaction '{_Name}' is not in a committable state.");
     }
 
+    token.ThrowIfCancellationRequested();
+
     try
     {
       if (IsRoot)
       {
-        // TODO: This is not a very good solution for updating the project revision, as we need
-        // to create a CancellationToken directly and then wait for the operation synchronously.
-        _Document
-          .Metadata
-          .SetProjectRevisionAsync(DateTime.Now.ToString(), CancellationToken.None)
-          .GetAwaiter()
-          .GetResult();
+        // Synchronous write on purpose (see method summary): awaiting here would hand the ambient back
+        // on a continuation the caller can't observe; a direct synchronous write cannot deadlock.
+        var newRevision = DateTime.Now.ToString(CultureInfo.InvariantCulture);
+        _Document.Metadata.SetProjectRevision(newRevision);
         _DbTransaction!.Commit();
         _Document.UpdateRevision();
-        _Committed = true;
       }
       else
       {
         ExecuteSimple(_Document, $"RELEASE SAVEPOINT {_SavepointName};");
-        _Committed = true;
       }
+
+      _Committed = true;
     }
     finally
     {
       Complete();
     }
+
+    return Task.CompletedTask;
   }
 
   public void Rollback()
@@ -123,7 +126,10 @@ internal sealed class NestedTransaction : IDbTransaction, IDisposable, IAsyncDis
       throw new InvalidOperationException($"The transaction '{_Name}' is not in a rollback-able state.");
     }
 
-    if (_RolledBack)
+    // Already torn down (e.g. a commit that threw mid-flight ran Complete(), disposing the real
+    // transaction): there is nothing left to roll back, and touching the disposed transaction would
+    // mask the original failure.
+    if (_RolledBack || _Completed)
     {
       return;
     }
@@ -154,8 +160,11 @@ internal sealed class NestedTransaction : IDbTransaction, IDisposable, IAsyncDis
       return;
     }
 
-    // Roll back before flagging disposal: an uncommitted transaction is undone when its scope exits.
-    if (!_Committed && !_RolledBack)
+    // Roll back before flagging disposal, but only if the transaction hasn't already reached a terminal
+    // state. A CommitAsync that threw mid-flight has already run Complete(), which disposed (and thereby
+    // rolled back) the real transaction; calling Rollback() again would hit the disposed transaction and
+    // mask the original commit failure.
+    if (!_Completed)
     {
       Rollback();
     }

@@ -1,9 +1,7 @@
 ﻿using AutoFixture;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
-using Microsoft.Data.Sqlite;
 using Moq;
-using System.Data;
 
 namespace GT4.Core.Project.Tests;
 internal class ProjectDocumentMock : IProjectDocument
@@ -129,7 +127,7 @@ internal class ProjectDocumentMock : IProjectDocument
   // A real provider over the mocked tables: tests exercise the actual graph-walking logic.
   public IFamilyTreeProvider FamilyTreeProvider => new FamilyTreeProvider(this);
 
-  public Task<IDbTransaction> BeginTransactionAsync(CancellationToken token)
+  public Task<IProjectTransaction> BeginTransactionAsync(CancellationToken token)
   {
     throw new NotImplementedException();
   }

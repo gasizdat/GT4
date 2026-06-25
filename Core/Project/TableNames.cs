@@ -132,7 +132,7 @@ internal class TableNames : TableBase, ITableNames
     await command.ExecuteNonQueryAsync(token);
 
     var ret = new Name(Id: await Document.GetLastInsertRowIdAsync(token), Value: value, Type: type, ParentId: parent?.Id);
-    transaction.Commit();
+    await transaction.CommitAsync(token);
 
     return ret;
   }
@@ -151,7 +151,7 @@ internal class TableNames : TableBase, ITableNames
     {
       await AddNameAsync(femalePatronymic, NameType.Patronymic | NameType.FemaleDeclension, name, token);
     }
-    transaction.Commit();
+    await transaction.CommitAsync(token);
 
     return name;
   }
@@ -174,7 +174,7 @@ internal class TableNames : TableBase, ITableNames
     command.Parameters.AddWithValue("@value", name.Value);
     command.Parameters.AddWithValue("@nameId", name.Id);
     await command.ExecuteNonQueryAsync(token);
-    transaction.Commit();
+    await transaction.CommitAsync(token);
   }
 
   public async Task RemoveNameWithSubnamesAsync(Name name, CancellationToken token)
@@ -187,6 +187,6 @@ internal class TableNames : TableBase, ITableNames
       """;
     command.Parameters.AddWithValue("@id", name.Id);
     await command.ExecuteNonQueryAsync(token);
-    transaction.Commit();
+    await transaction.CommitAsync(token);
   }
 }

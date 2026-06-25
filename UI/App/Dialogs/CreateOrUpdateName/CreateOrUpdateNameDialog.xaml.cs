@@ -334,6 +334,6 @@ public partial class CreateOrUpdateNameDialog : ContentPage
           .AddNameAsync(info.FemaleName, nameType, names.FirstName, token));
     }
     await Task.WhenAll(tasks);
-    transaction.Commit();
+    await transaction.CommitAsync(token);
   }
 }

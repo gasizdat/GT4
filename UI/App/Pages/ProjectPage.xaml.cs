@@ -246,7 +246,7 @@ public partial class ProjectPage : ContentPage
     await Task.WhenAll(
       project.Metadata.SetProjectNameAsync(projectInfo.Name, token),
       project.Metadata.SetProjectDescriptionAsync(projectInfo.Description, token));
-    transaction.Commit();
+    await transaction.CommitAsync(token);
 
     await Shell.Current.GoToAsync("..", true);
   }
