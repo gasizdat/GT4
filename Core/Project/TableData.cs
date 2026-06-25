@@ -60,14 +60,15 @@ internal class TableData : TableBase, ITableData
     using var command = Document.CreateCommand();
     command.CommandText = """
       INSERT INTO Data (Value, MimeType, Category)
-      VALUES (@value, @mimeType, @category);
+      VALUES (@value, @mimeType, @category)
+      RETURNING Id;
       """;
     command.Parameters.AddWithValue("@value", content);
     command.Parameters.AddWithValue("@mimeType", mimeType is null ? DBNull.Value : mimeType);
     command.Parameters.AddWithValue("@category", (int)dataCategory);
-    await command.ExecuteNonQueryAsync(token);
 
-    var ret = new Data(Id: await Document.GetLastInsertRowIdAsync(token), Content: content, MimeType: mimeType, Category: dataCategory);
+    var insertedId = await command.ExecuteScalarAsync(token);
+    var ret = new Data(Id: Convert.ToInt32(insertedId), Content: content, MimeType: mimeType, Category: dataCategory);
     await transaction.CommitAsync(token);
 
     return ret;

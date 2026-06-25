@@ -171,13 +171,6 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     return new ProjectCommand(cmd, _Gate, _CommandLock);
   }
 
-  public async Task<int> GetLastInsertRowIdAsync(CancellationToken token)
-  {
-    using var command = CreateCommand();
-    command.CommandText = "SELECT last_insert_rowid();";
-    return Convert.ToInt32(await command.ExecuteScalarAsync(token));
-  }
-
   public Task<IProjectTransaction> BeginTransactionAsync(CancellationToken token)
   {
     // Implemented synchronously and returned as a completed task on purpose: setting the ambient

@@ -94,15 +94,16 @@ internal partial class TablePersons : TableBase, ITablePersons
     using var command = Document.CreateCommand();
     command.CommandText = """
       INSERT INTO Persons (BirthDate, BirthDateStatus, DeathDate, DeathDateStatus, BiologicalSex)
-      VALUES (@birthDate, @birthDateStatus, @deathDate, @deathDateStatus, @biologicalSex);
+      VALUES (@birthDate, @birthDateStatus, @deathDate, @deathDateStatus, @biologicalSex)
+      RETURNING Id;
       """;
     command.Parameters.AddWithValue("@birthDate", person.BirthDate.Code);
     command.Parameters.AddWithValue("@birthDateStatus", person.BirthDate.Status);
     command.Parameters.AddWithValue("@deathDate", person.DeathDate.HasValue ? person.DeathDate.Value.Code : DBNull.Value);
     command.Parameters.AddWithValue("@deathDateStatus", person.DeathDate.HasValue ? person.DeathDate.Value.Status : DBNull.Value);
     command.Parameters.AddWithValue("@biologicalSex", person.BiologicalSex);
-    await command.ExecuteNonQueryAsync(token);
-    var personId = await Document.GetLastInsertRowIdAsync(token);
+    var insertedId = await command.ExecuteScalarAsync(token);
+    var personId = Convert.ToInt32(insertedId);
     await transaction.CommitAsync(token);
 
     InvalidateItems();

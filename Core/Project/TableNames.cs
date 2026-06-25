@@ -124,14 +124,15 @@ internal class TableNames : TableBase, ITableNames
     using var command = Document.CreateCommand();
     command.CommandText = """
       INSERT INTO Names (Value, Type, ParentId)
-      VALUES (@value, @type, @parentId);
+      VALUES (@value, @type, @parentId)
+      RETURNING Id;
       """;
     command.Parameters.AddWithValue("@value", value);
     command.Parameters.AddWithValue("@type", (int)type);
     command.Parameters.AddWithValue("@parentId", parent != null ? parent.Id : DBNull.Value);
-    await command.ExecuteNonQueryAsync(token);
 
-    var ret = new Name(Id: await Document.GetLastInsertRowIdAsync(token), Value: value, Type: type, ParentId: parent?.Id);
+    var insertedId = await command.ExecuteScalarAsync(token);
+    var ret = new Name(Id: Convert.ToInt32(insertedId), Value: value, Type: type, ParentId: parent?.Id);
     await transaction.CommitAsync(token);
 
     return ret;
