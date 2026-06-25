@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<!-- Platform-agnostic GEDCOM 5.5.1 import/export over the GT4 domain model. Plain net10.0 so it
+		     stays as reusable and testable as the persistence layer it sits on top of. -->
+		<TargetFramework>net10.0</TargetFramework>
+
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\Core\Project\GT4.Core.Project.csproj" />
+		<ProjectReference Include="..\..\Core\Utils\GT4.Core.Utils.csproj" />
+	</ItemGroup>
+
+</Project>

@@ -1,0 +1,94 @@
+using FluentAssertions;
+using GT4.Core.Gedcom;
+using Xunit;
+
+namespace GT4.Core.Gedcom.Tests;
+
+public sealed class GedcomReaderWriterTests
+{
+  private const string Sample =
+    """
+    0 HEAD
+    1 CHAR UTF-8
+    0 @I1@ INDI
+    1 NAME John /Smith/
+    2 GIVN John
+    2 SURN Smith
+    1 SEX M
+    1 NOTE line one
+    2 CONT line two
+    2 CONC  continued
+    0 TRLR
+    """;
+
+  [Fact]
+  public void Read_ParsesRecordsXrefsAndNesting()
+  {
+    var roots = GedcomReader.Read(new StringReader(Sample));
+
+    roots.Select(r => r.Tag).Should().Equal("HEAD", "INDI", "TRLR");
+
+    var individual = roots[1];
+    individual.Xref.Should().Be("@I1@");
+    individual.Child("SEX")!.Value.Should().Be("M");
+
+    var name = individual.Child("NAME")!;
+    name.Value.Should().Be("John /Smith/");
+    name.Child("GIVN")!.Value.Should().Be("John");
+    name.Child("SURN")!.Value.Should().Be("Smith");
+  }
+
+  [Fact]
+  public void Read_FoldsContAndConcIntoOwnerValue()
+  {
+    var roots = GedcomReader.Read(new StringReader(Sample));
+
+    var note = roots[1].Child("NOTE")!;
+
+    note.Value.Should().Be("line one\nline two continued");
+  }
+
+  [Fact]
+  public void PointerValue_IsNotMistakenForRecordIdentifier()
+  {
+    var roots = GedcomReader.Read(new StringReader("0 @F1@ FAM\n1 HUSB @I1@\n"));
+
+    var family = roots.Single();
+    family.Xref.Should().Be("@F1@");
+    var husband = family.Child("HUSB")!;
+    husband.Xref.Should().BeNull();
+    husband.Value.Should().Be("@I1@");
+  }
+
+  [Fact]
+  public void Write_Then_Read_PreservesMultilineValue()
+  {
+    var note = new GedcomNode { Tag = "NOTE", Value = "first paragraph\nsecond paragraph" };
+    var record = new GedcomNode { Tag = "INDI", Xref = "@I1@" };
+    record.Add(note);
+
+    var roundTripped = WriteThenRead(record);
+
+    roundTripped.Xref.Should().Be("@I1@");
+    roundTripped.Child("NOTE")!.Value.Should().Be("first paragraph\nsecond paragraph");
+  }
+
+  [Fact]
+  public void Write_SplitsLongValueAcrossConc_AndReadsBackIdentical()
+  {
+    var longText = new string('x', 640);
+    var record = new GedcomNode { Tag = "NOTE", Value = longText };
+
+    var roundTripped = WriteThenRead(record);
+
+    roundTripped.Value.Should().Be(longText);
+  }
+
+  private static GedcomNode WriteThenRead(GedcomNode record)
+  {
+    var writer = new StringWriter();
+    GedcomWriter.Write(writer, record);
+    var roots = GedcomReader.Read(new StringReader(writer.ToString()));
+    return roots.Single();
+  }
+}
