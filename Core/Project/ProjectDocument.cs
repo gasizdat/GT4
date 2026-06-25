@@ -86,17 +86,6 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     }
   }
 
-  ~ProjectDocument()
-  {
-    // Best effort only: the finalizer thread must never block on the gate waiting for an operation
-    // that may itself be waiting on a finalizable object.
-    if (Interlocked.Exchange(ref _DisposeStarted, 1) == 0)
-    {
-      _Disposed = true;
-      _Connection.Dispose();
-    }
-  }
-
   private async Task OpenAsync(CancellationToken token)
   {
     CheckForDisposed();
@@ -244,10 +233,6 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     return ret;
   }
 
-  // Disposal drains through the gate: it waits for the in-flight statement, open reader or active
-  // transaction to complete before closing the connection, then releases the gate so queued waiters
-  // wake up and observe ObjectDisposedException instead of hanging.
-
   private void ThrowIfDisposingInsideTransaction()
   {
     if (_Gate.Current is not null)
@@ -265,7 +250,6 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
       return;
     }
     _Disposed = true;
-    GC.SuppressFinalize(this);
     await _Gate.CloseAsync();
     await _Connection.CloseAsync();
     await _Connection.DisposeAsync();
@@ -280,7 +264,6 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
       return;
     }
     _Disposed = true;
-    GC.SuppressFinalize(this);
     _Gate.Close();
     _Connection.Close();
     _Connection.Dispose();
