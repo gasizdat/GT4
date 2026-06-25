@@ -126,7 +126,10 @@ internal sealed class NestedTransaction : IProjectTransaction
       throw new InvalidOperationException($"The transaction '{_Name}' is not in a rollback-able state.");
     }
 
-    if (_RolledBack)
+    // Already torn down (e.g. a commit that threw mid-flight ran Complete(), disposing the real
+    // transaction): there is nothing left to roll back, and touching the disposed transaction would
+    // mask the original failure.
+    if (_RolledBack || _Completed)
     {
       return;
     }
@@ -157,8 +160,11 @@ internal sealed class NestedTransaction : IProjectTransaction
       return;
     }
 
-    // Roll back before flagging disposal: an uncommitted transaction is undone when its scope exits.
-    if (!_Committed && !_RolledBack)
+    // Roll back before flagging disposal, but only if the transaction hasn't already reached a terminal
+    // state. A CommitAsync that threw mid-flight has already run Complete(), which disposed (and thereby
+    // rolled back) the real transaction; calling Rollback() again would hit the disposed transaction and
+    // mask the original commit failure.
+    if (!_Completed)
     {
       Rollback();
     }
