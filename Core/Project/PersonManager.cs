@@ -3,7 +3,7 @@ using GT4.Core.Project.Dto;
 
 namespace GT4.Core.Project;
 
-internal class PersonManager : TableBase, IPersonManager
+internal class PersonManager : ProjectComponentBase, IPersonManager
 {
   public PersonManager(IProjectDocument document)
     : base(document: document)
@@ -158,10 +158,5 @@ internal class PersonManager : TableBase, IPersonManager
     await Document.Relatives.UpdateRelativesAsync(personFullInfo, personFullInfo.RelativeInfos, token);
 
     await transaction.CommitAsync(token);
-  }
-
-  internal override Task CreateAsync(CancellationToken token)
-  {
-    throw new NotSupportedException();
   }
 }

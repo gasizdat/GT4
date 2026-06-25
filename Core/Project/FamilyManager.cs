@@ -3,7 +3,7 @@ using GT4.Core.Project.Dto;
 
 namespace GT4.Core.Project;
 
-internal class FamilyManager : TableBase, IFamilyManager
+internal class FamilyManager : ProjectComponentBase, IFamilyManager
 {
   public FamilyManager(IProjectDocument document)
     : base(document: document)
@@ -112,10 +112,5 @@ internal class FamilyManager : TableBase, IFamilyManager
     }
 
     await transaction.CommitAsync(token);
-  }
-
-  internal override Task CreateAsync(CancellationToken token)
-  {
-    throw new NotSupportedException();
   }
 }

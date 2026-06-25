@@ -3,7 +3,7 @@ using GT4.Core.Project.Dto;
 
 namespace GT4.Core.Project;
 
-internal class RelativesProvider : TableBase, IRelativesProvider
+internal class RelativesProvider : ProjectComponentBase, IRelativesProvider
 {
   private static readonly ElementIdComparer<RelativeInfo> _RelativeInfoComparer = new();
 
@@ -78,11 +78,6 @@ internal class RelativesProvider : TableBase, IRelativesProvider
     : base(document)
   {
 
-  }
-
-  internal override Task CreateAsync(CancellationToken token)
-  {
-    throw new NotSupportedException();
   }
 
   private static bool IsRelationshipSupported(RelativeInfo relativeInfo, RelationshipType relativeType)
