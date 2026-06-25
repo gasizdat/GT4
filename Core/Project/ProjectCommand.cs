@@ -84,7 +84,9 @@ public sealed class ProjectCommand : IDisposable, IAsyncDisposable
   /// </summary>
   internal int ExecuteNonQuery()
   {
-    _Command.Transaction = _Gate.Current?.RootDbTransaction;
+    var ambient = _Gate.Current
+      ?? throw new InvalidOperationException("ExecuteNonQuery requires an active transaction on the calling flow.");
+    _Command.Transaction = ambient.RootDbTransaction;
     return _Command.ExecuteNonQuery();
   }
 
