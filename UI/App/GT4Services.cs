@@ -1,6 +1,9 @@
 ﻿using GT4.Core.Project;
+using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.Converters;
 using GT4.UI.Utils;
+using GT4.UI.Utils.Converters;
 using Microsoft.Extensions.Configuration;
 
 namespace GT4.UI;
@@ -19,7 +22,10 @@ public class GT4Services
       .AddActiveConfigurations(configurationRoot)
       .AddUIUtils()
       .AddCoreUtils()
-      .AddDefaultProject();
+      .AddDefaultProject()
+      // The GEDCOM residue converter lives here, not in AddUIUtils: it bridges to Core.Gedcom, and the
+      // leaf UI.Utils library must stay free of that feature dependency.
+      .AddKeyedSingleton<IDataConverter, GedcomDataConverter>(DataCategory.PersonGedcomTags);
   }
 
   public static IServiceProvider Provider =>

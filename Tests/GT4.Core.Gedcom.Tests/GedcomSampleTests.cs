@@ -174,6 +174,29 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task UnmodeledIndividualSubTags_ProjectToFactsForDisplay()
+  {
+    await using var document = await ImportSampleAsync("residue.ged");
+
+    var byName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
+    var person = byName.Should().ContainSingle().Which.Value;
+    var residue = await document.PersonData.GetPersonDataSetAsync(person, DataCategory.PersonGedcomTags, Token);
+
+    // The display projection keeps each residual child as a fact in document order, with its nested
+    // sub-tags, so the UI can label and render them (OCCU -> DATE, RESI -> PLAC).
+    var facts = GedcomNarrative.Parse(residue.Single());
+    facts.Select(f => f.Tag).Should().Equal("OCCU", "RESI", "BURI", "EVEN");
+
+    var occupation = facts[0];
+    occupation.Value.Should().Be("Blacksmith");
+    var occupationDate = occupation.Children.Should().ContainSingle().Which;
+    occupationDate.Tag.Should().Be("DATE");
+    occupationDate.Value.Should().Be("FROM 1870 TO 1900");
+
+    facts[3].Children.Select(c => c.Tag).Should().Contain("TYPE");
+  }
+
+  [Fact]
   public async Task PersonGedcomTags_SurviveAPersonEdit()
   {
     await using var document = await ImportSampleAsync("residue.ged");
