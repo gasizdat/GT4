@@ -11,24 +11,27 @@ public record class PersonFullInfo(
   Data? MainPhoto,
   Data[] AdditionalPhotos,
   RelativeInfo[] RelativeInfos,
-  Data? Biography
+  Data? Biography,
+  Data? GedcomData
 ) : PersonInfo(Id, BirthDate, DeathDate, BiologicalSex, Names, MainPhoto)
 {
   public PersonFullInfo(
     PersonInfo person,
     Data[] additionalPhotos,
     RelativeInfo[] relativeInfos,
-    Data? biography)
+    Data? biography,
+    Data? gedcomData)
     : this(
-        person.Id, 
-        person.BirthDate, 
-        person.DeathDate, 
-        person.BiologicalSex, 
-        person.Names, 
+        person.Id,
+        person.BirthDate,
+        person.DeathDate,
+        person.BiologicalSex,
+        person.Names,
         person.MainPhoto,
         additionalPhotos,
         relativeInfos,
-        biography
+        biography,
+        gedcomData
   )
   {
   }
@@ -39,7 +42,8 @@ public record class PersonFullInfo(
     Data? mainPhoto,
     Data[] additionalPhotos,
     RelativeInfo[] relativeInfos,
-    Data? biography)
+    Data? biography,
+    Data? gedcomData)
     : this(
         person.Id,
         person.BirthDate,
@@ -49,7 +53,8 @@ public record class PersonFullInfo(
         mainPhoto,
         additionalPhotos,
         relativeInfos,
-        biography
+        biography,
+        gedcomData
   )
   {
   }
@@ -63,6 +68,7 @@ public record class PersonFullInfo(
     MainPhoto: null,
     AdditionalPhotos: [],
     RelativeInfos: [],
-    Biography: null
+    Biography: null,
+    GedcomData: null
   );
 }

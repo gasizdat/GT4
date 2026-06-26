@@ -174,6 +174,24 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task PersonGedcomTags_SurviveAPersonEdit()
+  {
+    await using var document = await ImportSampleAsync("residue.ged");
+
+    // A UI edit round-trips the person through GetPersonFullInfo -> UpdatePerson. The GEDCOM tags are not
+    // editable there, so they ride along on PersonFullInfo.GedcomData; without that they would be wiped by
+    // UpdatePersonDataSet's delete-and-re-add.
+    var persons = await document.Persons.GetPersonsAsync(Token);
+    var full = await document.PersonManager.GetPersonFullInfoAsync(persons.Single(), Token);
+    full.GedcomData.Should().NotBeNull();
+
+    await document.PersonManager.UpdatePersonAsync(full with { DeathDate = Date.Create(1900, 1, 1, DateStatus.WellKnown) }, Token);
+
+    var text = await ExportToTextAsync(document);
+    text.Should().Contain("1 OCCU Blacksmith").And.Contain("1 EVEN").And.Contain("2 TYPE Census");
+  }
+
+  [Fact]
   public async Task Minimal_ImportsValueOnlyNameWithNoRelationships()
   {
     await using var document = await ImportSampleAsync("minimal.ged");

@@ -111,24 +111,24 @@ internal sealed class GedcomImporter : IGedcomImporter
       BiologicalSex = sex,
       Names = names,
       Biography = biography,
+      GedcomData = BuildResidueData(individual),
     };
 
     var added = await document.PersonManager.AddPersonAsync(toAdd, token);
-    var person = new Person(added.Id, added.BirthDate, added.DeathDate, added.BiologicalSex);
-    await ImportResidueAsync(document, individual, person, token);
-    return person;
+    return new Person(added.Id, added.BirthDate, added.DeathDate, added.BiologicalSex);
   }
 
   /// <summary>
-  /// Stores every direct INDI child GT4 does not model (<c>OCCU</c>, <c>RESI</c>, <c>BURI</c>, ...) as one
-  /// verbatim GEDCOM blob linked to the person. The subtrees are re-emitted unchanged on export, so the
-  /// tags GT4 has no schema for still survive a round-trip. Their original document order is preserved.
+  /// Captures every direct INDI child GT4 does not model (<c>OCCU</c>, <c>RESI</c>, <c>BURI</c>, ...) as one
+  /// verbatim GEDCOM blob. Carried on <see cref="PersonFullInfo.GedcomData"/>, it is stored with the person
+  /// and re-emitted unchanged on export, so the tags GT4 has no schema for survive a round-trip in their
+  /// original document order.
   /// </summary>
-  private static async Task ImportResidueAsync(IProjectDocument document, GedcomNode individual, Person person, CancellationToken token)
+  private static Data? BuildResidueData(GedcomNode individual)
   {
     var residue = individual.Children.Where(c => !OwnedIndividualTags.Contains(c.Tag)).ToArray();
     if (residue.Length == 0)
-      return;
+      return null;
 
     var writer = new StringWriter();
     foreach (var child in residue)
@@ -137,8 +137,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     }
 
     var content = Encoding.UTF8.GetBytes(writer.ToString());
-    var data = new Data(TableBase.NonCommittedId, content, ResidueMimeType, DataCategory.PersonGedcomTags);
-    await document.PersonData.AddPersonDataSetAsync(person, [data], token);
+    return new Data(TableBase.NonCommittedId, content, ResidueMimeType, DataCategory.PersonGedcomTags);
   }
 
   /// <summary>
