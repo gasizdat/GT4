@@ -23,6 +23,10 @@ public class ProjectHost : IAsyncDisposable, IDisposable
     _FileSystem.Copy(_Origin, _Cache);
   }
 
+  // The origin file backing this host. Exposed so a caller that just created a project (e.g. a GEDCOM
+  // import) can build a ProjectInfo and re-open it as the current project once the host is flushed.
+  public FileDescription Origin => _Origin;
+
   public IProjectDocument? Project
   {
     get

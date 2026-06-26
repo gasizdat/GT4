@@ -70,6 +70,51 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 📥 Import from GEDCOM.
+        /// </summary>
+        public static string MenuItemImportGedcom {
+            get {
+                return ResourceManager.GetString("MenuItemImportGedcom", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 📤 Export to GEDCOM.
+        /// </summary>
+        public static string MenuItemExportGedcom {
+            get {
+                return ResourceManager.GetString("MenuItemExportGedcom", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Select a GEDCOM file.
+        /// </summary>
+        public static string FileDialogSelectGedcom {
+            get {
+                return ResourceManager.GetString("FileDialogSelectGedcom", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Imported from GEDCOM.
+        /// </summary>
+        public static string HintImportedFromGedcom {
+            get {
+                return ResourceManager.GetString("HintImportedFromGedcom", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Export GEDCOM.
+        /// </summary>
+        public static string ShareGedcomTitle {
+            get {
+                return ResourceManager.GetString("ShareGedcomTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to The operation took longer than expected. Some kinship levels remained folded. You can unfold them manually..
         /// </summary>
         public static string AlertTextKinshipUnfoldingAborted {

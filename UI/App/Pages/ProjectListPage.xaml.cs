@@ -1,21 +1,34 @@
+using GT4.Core.Gedcom.Abstraction;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
+using GT4.UI.Resources;
 using GT4.UI.Utils;
 using System.Collections.ObjectModel;
+using System.Text;
 using System.Windows.Input;
 
 namespace GT4.UI.Pages;
 
 public partial class ProjectListPage : ContentPage
 {
+  // GEDCOM has no standard MIME type: Windows filters on the ".ged" extension, while Android has none, so
+  // it falls back to any file. A picked file always lands in a brand-new project, so this only governs
+  // which files are easy to select.
+  private static readonly FilePickerFileType GedcomFileType = new(new Dictionary<DevicePlatform, IEnumerable<string>>
+  {
+    [DevicePlatform.WinUI] = [".ged"],
+    [DevicePlatform.Android] = ["*/*"],
+  });
+
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IComparer<ProjectInfo> _ProjectInfoComparer;
   private readonly ICommand _PageCommand;
   private readonly IProjectList _ProjectList;
+  private readonly IGedcomImporter _Importer;
   private readonly ObservableCollection<ProjectItem> _Projects = new();
 
   public ProjectListPage(IServiceProvider services)
@@ -25,6 +38,7 @@ public partial class ProjectListPage : ContentPage
     _ProjectInfoComparer = services.GetRequiredService<IComparer<ProjectInfo>>();
     _PageCommand = new SafeCommand(OnPageCommand);
     _ProjectList = services.GetRequiredService<IProjectList>();
+    _Importer = services.GetRequiredService<IGedcomImporter>();
 
     InitializeComponent();
   }
@@ -100,6 +114,9 @@ public partial class ProjectListPage : ContentPage
         await OnCreateProject();
         UpdateProjectList();
         break;
+      case string commandName when commandName == "ImportGedcom":
+        await OnImportGedcom();
+        break;
       case string commandName when commandName == "Refresh":
         this.RefreshView();
         break;
@@ -122,5 +139,40 @@ public partial class ProjectListPage : ContentPage
 
     using var token = _CancellationTokenProvider.CreateDbCancellationToken();
     await using var project = await _ProjectList.CreateAsync(projectInfo.Name, projectInfo.Description, token);
+  }
+
+  // Imports a GEDCOM file into a fresh project: the importer assumes an empty document, so each import gets
+  // its own new project rather than merging into an existing one. After importing, the project is opened as
+  // current and we navigate straight into it.
+  private async Task OnImportGedcom()
+  {
+    var pickOptions = new PickOptions { PickerTitle = UIStrings.FileDialogSelectGedcom, FileTypes = GedcomFileType };
+    var file = await FilePicker.Default.PickAsync(pickOptions);
+    if (file is null)
+      return;
+
+    var name = Path.GetFileNameWithoutExtension(file.FileName);
+    var description = UIStrings.HintImportedFromGedcom;
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+
+    // Explicit dispose (not await using): the host must flush the imported data back to its origin before
+    // we re-open that origin as the current project.
+    var host = await _ProjectList.CreateAsync(name, description, token);
+    string revision;
+    try
+    {
+      using var stream = await file.OpenReadAsync();
+      using var reader = new StreamReader(stream, Encoding.UTF8);
+      await _Importer.ImportAsync(host.Project!, reader, token);
+      revision = await host.Project!.Metadata.GetProjectRevisionAsync(token) ?? string.Empty;
+    }
+    finally
+    {
+      await host.DisposeAsync();
+    }
+
+    var info = new ProjectInfo(Revision: revision, Description: description, Name: name, Origin: host.Origin);
+    await _CurrentProjectProvider.OpenAsync(info, token);
+    await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectPage>());
   }
 }

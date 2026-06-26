@@ -649,6 +649,21 @@
   <data name="MenuItemGoToNames" xml:space="preserve">
     <value>📝 К именам</value>
   </data>
+  <data name="MenuItemImportGedcom" xml:space="preserve">
+    <value>📥 Импорт из GEDCOM</value>
+  </data>
+  <data name="MenuItemExportGedcom" xml:space="preserve">
+    <value>📤 Экспорт в GEDCOM</value>
+  </data>
+  <data name="FileDialogSelectGedcom" xml:space="preserve">
+    <value>Выберите файл GEDCOM</value>
+  </data>
+  <data name="HintImportedFromGedcom" xml:space="preserve">
+    <value>Импортировано из GEDCOM</value>
+  </data>
+  <data name="ShareGedcomTitle" xml:space="preserve">
+    <value>Экспорт GEDCOM</value>
+  </data>
   <data name="FieldSearchText" xml:space="preserve">
     <value>Поиск</value>
   </data>

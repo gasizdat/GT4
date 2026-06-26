@@ -1,3 +1,4 @@
+using GT4.Core.Gedcom.Abstraction;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
@@ -6,6 +7,7 @@ using GT4.UI.Items;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
+using System.Text;
 using System.Windows.Input;
 
 namespace GT4.UI.Pages;
@@ -18,6 +20,7 @@ public partial class ProjectPage : ContentPage
   private readonly IComparer<PersonInfo> _PersonInfoComparer;
   private readonly IComparer<Name> _NameComparer;
   private readonly IProjectList _ProjectList;
+  private readonly IGedcomExporter _Exporter;
 
   private long? _ProjectRevision;
 
@@ -30,6 +33,7 @@ public partial class ProjectPage : ContentPage
                           _ServiceProvider.GetRequiredService<IComparer<PersonInfo>>();
     _NameComparer = _ServiceProvider.GetRequiredService<IComparer<Name>>();
     _ProjectList = _ServiceProvider.GetRequiredService<IProjectList>();
+    _Exporter = _ServiceProvider.GetRequiredService<IGedcomExporter>();
 
     PageCommand = new SafeCommand(OnPageCommand);
     InitializeComponent();
@@ -209,6 +213,10 @@ public partial class ProjectPage : ContentPage
         await Shell.Current.GoToAsync(UIRoutes.GetRoute<NamesPage>());
         break;
 
+      case string commandName when commandName == "ExportGedcom":
+        await OnExportGedcom();
+        break;
+
       case string commandName when commandName == "GoToRevisions":
         await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectRevisionsPage>());
         break;
@@ -269,5 +277,29 @@ public partial class ProjectPage : ContentPage
       .Project
       .FamilyManager
       .AddFamilyAsync(familyName: info.Name, maleLastName: info.MaleName, femaleLastName: info.FemaleName, token);
+  }
+
+  // Exports the open project to a GEDCOM file in the cache directory and hands it to the OS share sheet,
+  // which lets the user save or send it. GEDCOM 5.5.1 is UTF-8, written without a BOM.
+  private async Task OnExportGedcom()
+  {
+    var fileName = SanitizeFileName(_CurrentProjectProvider.Info.Name) + ".ged";
+    var path = Path.Combine(FileSystem.CacheDirectory, fileName);
+
+    await using (var writer = new StreamWriter(path, false, new UTF8Encoding(false)))
+    {
+      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      await _Exporter.ExportAsync(_CurrentProjectProvider.Project, writer, token);
+    }
+
+    var request = new ShareFileRequest { Title = UIStrings.ShareGedcomTitle, File = new ShareFile(path) };
+    await Share.Default.RequestAsync(request);
+  }
+
+  private static string SanitizeFileName(string name)
+  {
+    var invalid = Path.GetInvalidFileNameChars();
+    var sanitized = new string(name.Select(c => invalid.Contains(c) ? '_' : c).ToArray());
+    return string.IsNullOrWhiteSpace(sanitized) ? "project" : sanitized;
   }
 }

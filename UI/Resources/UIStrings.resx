@@ -649,6 +649,21 @@ genealogy tree and enjoy!</value>
   <data name="MenuItemGoToNames" xml:space="preserve">
     <value>📝 To Names</value>
   </data>
+  <data name="MenuItemImportGedcom" xml:space="preserve">
+    <value>📥 Import from GEDCOM</value>
+  </data>
+  <data name="MenuItemExportGedcom" xml:space="preserve">
+    <value>📤 Export to GEDCOM</value>
+  </data>
+  <data name="FileDialogSelectGedcom" xml:space="preserve">
+    <value>Select a GEDCOM file</value>
+  </data>
+  <data name="HintImportedFromGedcom" xml:space="preserve">
+    <value>Imported from GEDCOM</value>
+  </data>
+  <data name="ShareGedcomTitle" xml:space="preserve">
+    <value>Export GEDCOM</value>
+  </data>
   <data name="FieldSearchText" xml:space="preserve">
     <value>Search</value>
   </data>
