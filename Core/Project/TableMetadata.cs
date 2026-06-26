@@ -60,7 +60,7 @@ internal class TableMetadata : TableBase, ITableMetadata
   /// deterministic output. Used to read back a namespaced group of entries (e.g. GEDCOM passthrough
   /// records) that share a key prefix.
   /// </summary>
-  public async Task<IReadOnlyList<TData>> GetByPrefixAsync<TData>(string prefix, CancellationToken token)
+  public async Task<TData[]> GetByPrefixAsync<TData>(string prefix, CancellationToken token)
   {
     using var command = Document.CreateCommand();
     command.CommandText = "SELECT Data FROM Metadata WHERE Id LIKE @prefix ORDER BY Id;";
@@ -72,7 +72,7 @@ internal class TableMetadata : TableBase, ITableMetadata
     {
       results.Add((TData)reader.GetValue(0));
     }
-    return results;
+    return [.. results];
   }
 
   public Task<string?> GetProjectNameAsync(CancellationToken token) => GetAsync<string>(ProjectName, token);
@@ -86,7 +86,7 @@ internal class TableMetadata : TableBase, ITableMetadata
   public Task SetProjectDescriptionAsync(string value, CancellationToken token) => AddAsync(ProjectDescription, value, token);
 
   public Task SetProjectRevisionAsync(string value, CancellationToken token) => AddAsync(RevisionKey, value, token);
-  
+
   public void SetProjectRevision(string value)
   {
     using var command = CreateAddCommand(RevisionKey, value);
