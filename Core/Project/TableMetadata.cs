@@ -55,6 +55,26 @@ internal class TableMetadata : TableBase, ITableMetadata
     return (TData?)result;
   }
 
+  /// <summary>
+  /// Returns the values of every row whose key starts with <paramref name="prefix"/>, ordered by key for
+  /// deterministic output. Used to read back a namespaced group of entries (e.g. GEDCOM passthrough
+  /// records) that share a key prefix.
+  /// </summary>
+  public async Task<IReadOnlyList<TData>> GetByPrefixAsync<TData>(string prefix, CancellationToken token)
+  {
+    using var command = Document.CreateCommand();
+    command.CommandText = "SELECT Data FROM Metadata WHERE Id LIKE @prefix ORDER BY Id;";
+    command.Parameters.AddWithValue("@prefix", prefix + "%");
+
+    var results = new List<TData>();
+    await using var reader = await command.ExecuteReaderAsync(token);
+    while (await reader.ReadAsync(token))
+    {
+      results.Add((TData)reader.GetValue(0));
+    }
+    return results;
+  }
+
   public Task<string?> GetProjectNameAsync(CancellationToken token) => GetAsync<string>(ProjectName, token);
 
   public Task<string?> GetProjectDescriptionAsync(CancellationToken token) => GetAsync<string>(ProjectDescription, token);

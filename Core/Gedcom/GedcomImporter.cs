@@ -45,7 +45,24 @@ internal sealed class GedcomImporter : IGedcomImporter
       await ImportFamilyAsync(document, family, personByXref, adoptedLinks, token);
     }
 
+    await ImportPassthroughRecordsAsync(document, records, token);
+
     await transaction.CommitAsync(token);
+  }
+
+  /// <summary>
+  /// Preserves the unmodeled top-level records (submitter/submission/source/repository) verbatim in the
+  /// Metadata table so they survive a round-trip even though GT4 has no schema for them. See
+  /// <see cref="GedcomMetadata"/> for the keying and the references that are intentionally not preserved.
+  /// </summary>
+  private static async Task ImportPassthroughRecordsAsync(IProjectDocument document, List<GedcomNode> records, CancellationToken token)
+  {
+    foreach (var record in records.Where(GedcomMetadata.IsPassthrough))
+    {
+      var writer = new StringWriter();
+      GedcomWriter.Write(writer, record);
+      await document.Metadata.AddAsync(GedcomMetadata.Key(record), writer.ToString(), token);
+    }
   }
 
   private static HashSet<(string Child, string Family)> CollectAdoptedLinks(IEnumerable<GedcomNode> individuals)

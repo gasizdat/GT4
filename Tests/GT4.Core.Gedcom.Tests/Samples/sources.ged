@@ -1,0 +1,40 @@
+0 HEAD
+1 SOUR GT4Fixtures
+1 SUBM @U1@
+1 GEDC
+2 VERS 5.5.1
+2 FORM LINEAGE-LINKED
+1 CHAR UTF-8
+0 @U1@ SUBM
+1 NAME Reldon Poulson
+1 ADDR
+2 CITY Billings
+2 STAE Montana
+0 @N1@ SUBN
+1 SUBM @U1@
+1 FAMF Pedigree Resource File
+0 @I1@ INDI
+1 NAME Robert Eugene /Williams/
+2 GIVN Robert Eugene
+2 SURN Williams
+1 SEX M
+1 BIRT
+2 DATE 2 Oct 1822
+2 SOUR @S1@
+3 PAGE Sec. 2, p. 45
+1 DEAT
+2 DATE 14 Apr 1905
+2 SOUR @S2@
+0 @S1@ SOUR
+1 TITL Madison County Birth, Death, and Marriage Records
+1 REPO @R1@
+2 CALN 13B-1234.01
+0 @S2@ SOUR
+1 TITL Connecticut Death Index
+1 REPO @R1@
+0 @R1@ REPO
+1 NAME Family History Library
+1 ADDR
+2 CITY Salt Lake City
+2 STAE Utah
+0 TRLR

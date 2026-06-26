@@ -19,6 +19,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   private readonly List<string> _paths = [];
   private static CancellationToken Token => TestContext.Current.CancellationToken;
   private readonly GedcomImporter _importer = new();
+  private readonly GedcomExporter _exporter = new();
 
   public ValueTask InitializeAsync() => ValueTask.CompletedTask;
 
@@ -34,14 +35,26 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     return ValueTask.CompletedTask;
   }
 
-  private async Task<ProjectDocument> ImportSampleAsync(string fileName)
+  private async Task<ProjectDocument> NewDocumentAsync()
   {
     var path = Path.Combine(Path.GetTempPath(), $"gt4_gedcom_{Guid.NewGuid():N}.db");
     _paths.Add(path);
-    var document = await ProjectDocument.CreateNewAsync(path, "gedcom", Token);
+    return await ProjectDocument.CreateNewAsync(path, "gedcom", Token);
+  }
+
+  private async Task<ProjectDocument> ImportSampleAsync(string fileName)
+  {
+    var document = await NewDocumentAsync();
     using var reader = OpenSample(fileName);
     await _importer.ImportAsync(document, reader, Token);
     return document;
+  }
+
+  private async Task<string> ExportToTextAsync(ProjectDocument document)
+  {
+    var writer = new StringWriter();
+    await _exporter.ExportAsync(document, writer, Token);
+    return writer.ToString();
   }
 
   private static StreamReader OpenSample(string fileName)
@@ -96,6 +109,41 @@ public sealed class GedcomSampleTests : IAsyncLifetime
       "Cody Stone<-Alex Stone",
       "Cody Stone<-Brian Stone",
     ]);
+  }
+
+  [Fact]
+  public async Task UnmodeledRecords_PreservedInMetadataAndSurviveReExport()
+  {
+    await using var document = await ImportSampleAsync("sources.ged");
+
+    // Each unmodeled top-level record is stashed verbatim, keyed by tag + xref. The two SOUR records prove
+    // per-record keying: multiple records of the same tag coexist (the reason a single blob was rejected).
+    foreach (var key in new[] { "gedcom.SUBM.@U1@", "gedcom.SUBN.@N1@", "gedcom.SOUR.@S1@", "gedcom.SOUR.@S2@", "gedcom.REPO.@R1@" })
+    {
+      (await document.Metadata.GetAsync<string>(key, Token)).Should().NotBeNull();
+    }
+
+    // The whole subtree is kept, so a cross-reference among passthrough records (SOUR -> REPO) survives.
+    var source = await document.Metadata.GetAsync<string>("gedcom.SOUR.@S1@", Token);
+    source.Should().Contain("0 @S1@ SOUR").And.Contain("Madison County").And.Contain("1 REPO @R1@");
+
+    // The person is still imported normally.
+    var byName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
+    byName.Should().ContainSingle().Which.Key.Should().Be("Robert Eugene Williams");
+
+    // Export re-emits the records (both sources), and a fresh re-import stashes them again unchanged.
+    var text = await ExportToTextAsync(document);
+    text.Should().Contain("0 @U1@ SUBM").And.Contain("0 @N1@ SUBN")
+        .And.Contain("0 @S1@ SOUR").And.Contain("0 @S2@ SOUR").And.Contain("0 @R1@ REPO");
+
+    // The source CITATIONS on the events are dropped: the page detail that only lived on the citation is gone.
+    text.Should().NotContain("Sec. 2, p. 45");
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    var repo = await reimported.Metadata.GetAsync<string>("gedcom.REPO.@R1@", Token);
+    repo.Should().NotBeNull();
+    repo.Should().Contain("Family History Library");
   }
 
   [Fact]

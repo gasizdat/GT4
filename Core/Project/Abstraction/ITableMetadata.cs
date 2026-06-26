@@ -4,6 +4,7 @@ public interface ITableMetadata
 {
   Task AddAsync<TData>(string id, TData data, CancellationToken token);
   Task<TData?> GetAsync<TData>(string id, CancellationToken token);
+  Task<IReadOnlyList<TData>> GetByPrefixAsync<TData>(string prefix, CancellationToken token);
   Task<string?> GetProjectDescriptionAsync(CancellationToken token);
   Task<string?> GetProjectNameAsync(CancellationToken token);
   Task<string?> GetProjectRevisionAsync(CancellationToken token);

@@ -14,6 +14,9 @@ internal static class GedcomTags
   public const string Individual = "INDI";
   public const string Family = "FAM";
   public const string Note = "NOTE";
+  public const string Submitter = "SUBM";
+  public const string Submission = "SUBN";
+  public const string Repository = "REPO";
 
   public const string Name = "NAME";
   public const string Given = "GIVN";

@@ -35,7 +35,21 @@ internal sealed class GedcomExporter : IGedcomExporter
     WriteHeader(writer);
     WriteIndividuals(writer, persons, infoById, biographies, families);
     WriteFamilies(writer, families);
+    await WritePassthroughRecordsAsync(document, writer, token);
     GedcomWriter.Write(writer, new GedcomNode { Tag = GedcomTags.Trailer });
+  }
+
+  /// <summary>
+  /// Re-emits the unmodeled records (submitter/source/...) that import stashed verbatim in the Metadata
+  /// table. They are already serialized GEDCOM text, so they are written through unchanged.
+  /// </summary>
+  private static async Task WritePassthroughRecordsAsync(IProjectDocument document, TextWriter writer, CancellationToken token)
+  {
+    var records = await document.Metadata.GetByPrefixAsync<string>(GedcomMetadata.KeyPrefix, token);
+    foreach (var record in records)
+    {
+      writer.Write(record);
+    }
   }
 
   private static List<Family> BuildFamilies(Dictionary<int, Relative[]> relatives, Dictionary<int, Person> personById)
