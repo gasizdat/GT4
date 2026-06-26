@@ -126,8 +126,8 @@ internal sealed class GedcomImporter : IGedcomImporter
   /// </summary>
   private static Data? BuildResidueData(GedcomNode individual)
   {
-    var residue = individual.Children.Where(c => !OwnedIndividualTags.Contains(c.Tag)).ToArray();
-    if (residue.Length == 0)
+    var residue = individual.Children.Where(c => !OwnedIndividualTags.Contains(c.Tag));
+    if (!residue.Any())
       return null;
 
     var writer = new StringWriter();
