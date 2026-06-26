@@ -103,6 +103,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     var sex = GedcomMapping.ParseSex(individual.ChildValue(GedcomTags.Sex));
     var names = await BuildNamesAsync(document, individual, sex, nameCache, token);
     var biography = BuildBiography(individual, notesByXref);
+    var (mainPhoto, additionalPhotos) = BuildPhotos(individual);
 
     var toAdd = PersonFullInfo.Empty with
     {
@@ -110,6 +111,8 @@ internal sealed class GedcomImporter : IGedcomImporter
       DeathDate = ParseEventDate(individual, GedcomTags.Death),
       BiologicalSex = sex,
       Names = names,
+      MainPhoto = mainPhoto,
+      AdditionalPhotos = additionalPhotos,
       Biography = biography,
       GedcomData = BuildResidueData(individual),
     };
@@ -126,7 +129,9 @@ internal sealed class GedcomImporter : IGedcomImporter
   /// </summary>
   private static Data? BuildResidueData(GedcomNode individual)
   {
-    var residue = individual.Children.Where(c => !OwnedIndividualTags.Contains(c.Tag));
+    // Embedded photos (OBJE with a BLOB) are consumed into the person's photo set by BuildPhotos, so they
+    // are excluded here to avoid storing them a second time as opaque residue.
+    var residue = individual.Children.Where(c => !OwnedIndividualTags.Contains(c.Tag) && !IsEmbeddedPhoto(c));
     if (!residue.Any())
       return null;
 
@@ -138,6 +143,41 @@ internal sealed class GedcomImporter : IGedcomImporter
 
     var content = Encoding.UTF8.GetBytes(writer.ToString());
     return new Data(TableBase.NonCommittedId, content, ResidueMimeType, DataCategory.PersonGedcomTags);
+  }
+
+  /// <summary>
+  /// Decodes the embedded multimedia GT4 can load into its photo model: each <c>OBJE</c> with a base64
+  /// <c>BLOB</c> becomes a photo. The one marked <c>_PRIM Y</c> — or the first when none is marked —
+  /// becomes the main (profile) photo; the rest are additional. <c>OBJE</c> records without a usable
+  /// <c>BLOB</c> (e.g. third-party <c>FILE</c> references GT4 cannot resolve) are not photos and survive
+  /// untouched through the residue passthrough instead.
+  /// </summary>
+  private static (Data? Main, Data[] Additional) BuildPhotos(GedcomNode individual)
+  {
+    var photos = individual.Children.Where(IsEmbeddedPhoto).ToList();
+    if (photos.Count == 0)
+      return (null, []);
+
+    var mainNode = photos.FirstOrDefault(IsPrimary) ?? photos[0];
+    var main = ToPhotoData(mainNode, DataCategory.PersonMainPhoto);
+    var additional = photos
+      .Where(p => !ReferenceEquals(p, mainNode))
+      .Select(p => ToPhotoData(p, DataCategory.PersonPhoto))
+      .ToArray();
+    return (main, additional);
+  }
+
+  private static bool IsEmbeddedPhoto(GedcomNode node) =>
+    node.Tag == GedcomTags.Object && !string.IsNullOrWhiteSpace(node.ChildValue(GedcomTags.Blob));
+
+  private static bool IsPrimary(GedcomNode obje) =>
+    string.Equals(obje.ChildValue(GedcomTags.Primary), GedcomTags.PrimaryYes, StringComparison.OrdinalIgnoreCase);
+
+  private static Data ToPhotoData(GedcomNode obje, DataCategory category)
+  {
+    var content = Convert.FromBase64String(obje.ChildValue(GedcomTags.Blob)!);
+    var mimeType = GedcomMedia.ToMimeType(obje.ChildValue(GedcomTags.Form));
+    return new Data(TableBase.NonCommittedId, content, mimeType, category);
   }
 
   /// <summary>

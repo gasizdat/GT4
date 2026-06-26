@@ -37,6 +37,13 @@ internal static class GedcomTags
   // The PEDI value marking a child's link to a family as adoptive (the default, "birth", is left implicit).
   public const string AdoptedPedigree = "adopted";
 
+  public const string Object = "OBJE";
+  public const string Blob = "BLOB";
+  public const string Primary = "_PRIM";
+
+  // The _PRIM value marking the OBJE that GT4 treats as the person's main (profile) photo.
+  public const string PrimaryYes = "Y";
+
   public const string Concatenation = "CONC";
   public const string Continuation = "CONT";
 }

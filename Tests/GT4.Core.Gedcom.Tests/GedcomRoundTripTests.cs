@@ -209,6 +209,102 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     text.TrimEnd().Should().EndWith("0 TRLR");
   }
 
+  [Fact]
+  public async Task Photos_RoundTripAsEmbeddedObje()
+  {
+    var name = await _source.Names.AddNameAsync("Foto", NameType.FirstName, null, Token);
+    var main = new Data(TableBase.NonCommittedId, Encoding.UTF8.GetBytes("MAIN-IMAGE-BYTES"), "image/jpeg", DataCategory.PersonMainPhoto);
+    var extraOne = new Data(TableBase.NonCommittedId, Encoding.UTF8.GetBytes("EXTRA-ONE"), "image/png", DataCategory.PersonPhoto);
+    var extraTwo = new Data(TableBase.NonCommittedId, Encoding.UTF8.GetBytes("EXTRA-TWO"), "image/bmp", DataCategory.PersonPhoto);
+    var info = PersonFullInfo.Empty with
+    {
+      BirthDate = Year(1900),
+      BiologicalSex = BiologicalSex.Male,
+      Names = [name],
+      MainPhoto = main,
+      AdditionalPhotos = [extraOne, extraTwo],
+    };
+    await _source.PersonManager.AddPersonAsync(info, Token);
+
+    var text = await ExportToTextAsync(_source);
+
+    // Embedded and self-contained: OBJE with the format, the main photo marked primary, and the bytes
+    // base64-encoded into a BLOB — never raw binary.
+    text.Should().Contain("1 OBJE").And.Contain("2 FORM jpeg").And.Contain("2 _PRIM Y").And.Contain("2 BLOB ");
+    text.Should().Contain(Convert.ToBase64String(Encoding.UTF8.GetBytes("MAIN-IMAGE-BYTES")));
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+
+    var person = (await reimported.Persons.GetPersonsAsync(Token)).Single();
+    var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, Token);
+
+    full.MainPhoto.Should().NotBeNull();
+    full.MainPhoto!.MimeType.Should().Be("image/jpeg");
+    Encoding.UTF8.GetString(full.MainPhoto.Content).Should().Be("MAIN-IMAGE-BYTES");
+
+    full.AdditionalPhotos.Should().HaveCount(2);
+    full.AdditionalPhotos.Select(p => Encoding.UTF8.GetString(p.Content)).Should().BeEquivalentTo("EXTRA-ONE", "EXTRA-TWO");
+    full.AdditionalPhotos.Select(p => p.MimeType).Should().BeEquivalentTo("image/png", "image/bmp");
+  }
+
+  [Fact]
+  public async Task Photo_LargePayloadChunksAcrossConcLinesAndRoundTrips()
+  {
+    // A real photo is multi-KB, so its base64 always exceeds the writer's per-line cap and is split across
+    // CONC continuation lines. This is the production path the small-payload tests never reach: it must
+    // chunk on write and reassemble byte-for-byte on read.
+    var bytes = new byte[4096];
+    new Random(42).NextBytes(bytes);
+    var name = await _source.Names.AddNameAsync("Big", NameType.FirstName, null, Token);
+    var main = new Data(TableBase.NonCommittedId, bytes, "image/jpeg", DataCategory.PersonMainPhoto);
+    var info = PersonFullInfo.Empty with
+    {
+      BirthDate = Year(1900),
+      Names = [name],
+      MainPhoto = main,
+    };
+    await _source.PersonManager.AddPersonAsync(info, Token);
+
+    var text = await ExportToTextAsync(_source);
+    text.Should().Contain("\n3 CONC ", "a multi-KB photo's base64 must be split across CONC lines");
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+
+    var person = (await reimported.Persons.GetPersonsAsync(Token)).Single();
+    var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, Token);
+    full.MainPhoto!.Content.Should().Equal(bytes);
+  }
+
+  [Fact]
+  public async Task Photo_NullMimeTypeRoundTripsAsNull()
+  {
+    // A picked file can carry no content type, so Data.MimeType is null. Export must not invent a format,
+    // and import must give it back as null rather than fabricating one.
+    var name = await _source.Names.AddNameAsync("NoMime", NameType.FirstName, null, Token);
+    var main = new Data(TableBase.NonCommittedId, Encoding.UTF8.GetBytes("BYTES"), null, DataCategory.PersonMainPhoto);
+    var info = PersonFullInfo.Empty with
+    {
+      BirthDate = Year(1900),
+      Names = [name],
+      MainPhoto = main,
+    };
+    await _source.PersonManager.AddPersonAsync(info, Token);
+
+    var text = await ExportToTextAsync(_source);
+    text.Should().Contain("1 OBJE").And.Contain("2 BLOB ");
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+
+    var person = (await reimported.Persons.GetPersonsAsync(Token)).Single();
+    var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, Token);
+    full.MainPhoto.Should().NotBeNull();
+    full.MainPhoto!.MimeType.Should().BeNull();
+    Encoding.UTF8.GetString(full.MainPhoto.Content).Should().Be("BYTES");
+  }
+
   private async Task<string> ExportToTextAsync(ProjectDocument document)
   {
     var writer = new StringWriter();

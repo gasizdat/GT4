@@ -29,12 +29,14 @@ internal sealed class GedcomExporter : IGedcomExporter
     var infoById = personInfos.ToDictionary(p => p.Id);
     var biographies = await document.PersonData.GetPersonDataSetAsync(persons, DataCategory.PersonBio, token);
     var residues = await document.PersonData.GetPersonDataSetAsync(persons, DataCategory.PersonGedcomTags, token);
+    var mainPhotos = await document.PersonData.GetPersonDataSetAsync(persons, DataCategory.PersonMainPhoto, token);
+    var additionalPhotos = await document.PersonData.GetPersonDataSetAsync(persons, DataCategory.PersonPhoto, token);
     var relatives = await document.Relatives.GetRelativesForPersonsAsync(persons, token);
 
     var families = BuildFamilies(relatives, personById);
 
     WriteHeader(writer);
-    WriteIndividuals(writer, persons, infoById, biographies, residues, families);
+    WriteIndividuals(writer, persons, infoById, biographies, residues, mainPhotos, additionalPhotos, families);
     WriteFamilies(writer, families);
     await WritePassthroughRecordsAsync(document, writer, token);
     GedcomWriter.Write(writer, new GedcomNode { Tag = GedcomTags.Trailer });
@@ -197,6 +199,8 @@ internal sealed class GedcomExporter : IGedcomExporter
     Dictionary<int, PersonInfo> infoById,
     Dictionary<int, Data[]> biographies,
     Dictionary<int, Data[]> residues,
+    Dictionary<int, Data[]> mainPhotos,
+    Dictionary<int, Data[]> additionalPhotos,
     List<Family> families)
   {
     var spouseFamilies = new Dictionary<int, List<string>>();
@@ -216,7 +220,9 @@ internal sealed class GedcomExporter : IGedcomExporter
       var info = infoById.GetValueOrDefault(person.Id);
       var biography = biographies.GetValueOrDefault(person.Id)?.FirstOrDefault();
       var residue = residues.GetValueOrDefault(person.Id)?.FirstOrDefault();
-      var node = BuildIndividual(person, info, biography, residue, spouseFamilies, childFamilies);
+      var mainPhoto = mainPhotos.GetValueOrDefault(person.Id)?.FirstOrDefault();
+      var morePhotos = additionalPhotos.GetValueOrDefault(person.Id) ?? [];
+      var node = BuildIndividual(person, info, biography, residue, mainPhoto, morePhotos, spouseFamilies, childFamilies);
       GedcomWriter.Write(writer, node);
     }
   }
@@ -247,6 +253,8 @@ internal sealed class GedcomExporter : IGedcomExporter
     PersonInfo? info,
     Data? biography,
     Data? residue,
+    Data? mainPhoto,
+    Data[] additionalPhotos,
     Dictionary<int, List<string>> spouseFamilies,
     Dictionary<int, List<(string Xref, bool Adopted)>> childFamilies)
   {
@@ -266,6 +274,12 @@ internal sealed class GedcomExporter : IGedcomExporter
     {
       var text = Encoding.UTF8.GetString(biography.Content);
       node.Add(new GedcomNode { Tag = GedcomTags.Note, Value = text });
+    }
+
+    AddPhoto(node, mainPhoto, primary: true);
+    foreach (var photo in additionalPhotos)
+    {
+      AddPhoto(node, photo, primary: false);
     }
 
     foreach (var xref in spouseFamilies.GetValueOrDefault(person.Id) ?? [])
@@ -299,6 +313,32 @@ internal sealed class GedcomExporter : IGedcomExporter
 
     var text = Encoding.UTF8.GetString(residue.Content);
     return GedcomReader.Read(new StringReader(text));
+  }
+
+  /// <summary>
+  /// Emits a GT4 photo as an embedded multimedia object: an <c>OBJE</c> carrying the format (from the
+  /// MIME type), a <c>_PRIM Y</c> marker on the main photo, and the image bytes base64-encoded into a
+  /// <c>BLOB</c> the writer auto-chunks across CONC lines. This is the form <see cref="GedcomImporter"/>
+  /// reads back, so photos round-trip self-contained inside the single .ged file.
+  /// </summary>
+  private static void AddPhoto(GedcomNode individual, Data? photo, bool primary)
+  {
+    if (photo is null)
+      return;
+
+    var obje = new GedcomNode { Tag = GedcomTags.Object };
+    var form = GedcomMedia.ToForm(photo.MimeType);
+    if (form is not null)
+    {
+      obje.Add(new GedcomNode { Tag = GedcomTags.Form, Value = form });
+    }
+    if (primary)
+    {
+      obje.Add(new GedcomNode { Tag = GedcomTags.Primary, Value = GedcomTags.PrimaryYes });
+    }
+    var base64 = Convert.ToBase64String(photo.Content);
+    obje.Add(new GedcomNode { Tag = GedcomTags.Blob, Value = base64 });
+    individual.Add(obje);
   }
 
   /// <summary>

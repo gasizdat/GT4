@@ -268,6 +268,64 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task EmbeddedObje_ImportsBlobAsMainPhoto()
+  {
+    var blob = Convert.ToBase64String(Encoding.UTF8.GetBytes("tiny-image"));
+    var ged =
+      "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Foto /Test/\n1 SEX M\n" +
+      $"1 OBJE\n2 FORM jpeg\n2 _PRIM Y\n2 BLOB {blob}\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var person = (await document.Persons.GetPersonsAsync(Token)).Single();
+    var full = await document.PersonManager.GetPersonFullInfoAsync(person, Token);
+    full.MainPhoto.Should().NotBeNull();
+    full.MainPhoto!.MimeType.Should().Be("image/jpeg");
+    Encoding.UTF8.GetString(full.MainPhoto.Content).Should().Be("tiny-image");
+
+    // A consumed photo is not also stored as opaque residue.
+    full.GedcomData.Should().BeNull();
+  }
+
+  [Fact]
+  public async Task MultipleEmbeddedPhotos_FirstBecomesMainWhenNonePrimary()
+  {
+    var first = Convert.ToBase64String(Encoding.UTF8.GetBytes("first"));
+    var second = Convert.ToBase64String(Encoding.UTF8.GetBytes("second"));
+    var ged =
+      "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Foto /Test/\n1 SEX M\n" +
+      $"1 OBJE\n2 FORM png\n2 BLOB {first}\n1 OBJE\n2 FORM png\n2 BLOB {second}\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var person = (await document.Persons.GetPersonsAsync(Token)).Single();
+    var full = await document.PersonManager.GetPersonFullInfoAsync(person, Token);
+    Encoding.UTF8.GetString(full.MainPhoto!.Content).Should().Be("first");
+    Encoding.UTF8.GetString(full.AdditionalPhotos.Should().ContainSingle().Which.Content).Should().Be("second");
+  }
+
+  [Fact]
+  public async Task FileReferenceObje_FallsBackToResidue()
+  {
+    // A third-party OBJE that points at an external FILE has no bytes GT4 can load, so it is not a photo;
+    // it must survive verbatim through the residue passthrough rather than being dropped.
+    var ged =
+      "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Foto /Test/\n1 SEX M\n" +
+      "1 OBJE\n2 FILE photo.jpg\n3 FORM jpeg\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var person = (await document.Persons.GetPersonsAsync(Token)).Single();
+    var full = await document.PersonManager.GetPersonFullInfoAsync(person, Token);
+    full.MainPhoto.Should().BeNull();
+    full.AdditionalPhotos.Should().BeEmpty();
+    full.GedcomData.Should().NotBeNull();
+
+    var text = await ExportToTextAsync(document);
+    text.Should().Contain("1 OBJE").And.Contain("2 FILE photo.jpg");
+  }
+
+  [Fact]
   public async Task Minimal_ImportsValueOnlyNameWithNoRelationships()
   {
     await using var document = await ImportSampleAsync("minimal.ged");
