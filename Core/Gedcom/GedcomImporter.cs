@@ -172,17 +172,15 @@ internal sealed class GedcomImporter : IGedcomImporter
     var names = new List<Name>();
     if (!string.IsNullOrWhiteSpace(given))
     {
-      // A multi-token given name ("Patrick Branwell") has no single slot in GT4's model: the first token is
-      // the first name and the rest maps to the patronymic, which is exactly where the exporter looks to
-      // rebuild the GIVN, so the split round-trips.
+      // A multi-token given name ("Patrick Branwell Josef") has no single slot in GT4's model: the first
+      // token is the first name and every later token becomes its own patronymic, the only second-given
+      // slot, which is exactly where the exporter looks to rebuild the GIVN, so the split round-trips.
       var parts = given.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
       var firstName = await GetOrAddNameAsync(document, parts[0], NameType.FirstName | declension, null, nameCache, token);
       names.Add(firstName);
-      if (parts.Length > 1)
+      foreach (var middle in parts.Skip(1))
       {
-        var remainder = parts.Skip(1);
-        var patronymicValue = string.Join(' ', remainder);
-        var patronymic = await GetOrAddNameAsync(document, patronymicValue, NameType.Patronymic | declension, null, nameCache, token);
+        var patronymic = await GetOrAddNameAsync(document, middle, NameType.Patronymic | declension, null, nameCache, token);
         names.Add(patronymic);
       }
     }

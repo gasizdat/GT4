@@ -129,6 +129,25 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task Import_SplitsEachExtraGivenTokenIntoItsOwnPatronymic()
+  {
+    // "Patrick Branwell Josef" -> first name Patrick plus two separate patronymics, not one joined blob.
+    const string ged =
+      "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Patrick Branwell Josef /Stone/\n2 GIVN Patrick Branwell Josef\n2 SURN Stone\n1 SEX M\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var persons = await document.Persons.GetPersonsAsync(Token);
+    var infos = await document.PersonManager.GetPersonInfosAsync(persons, selectMainPhoto: false, Token);
+    var patronymics = infos.Single().Names.Where(n => (n.Type & NameType.Patronymic) != 0).Select(n => n.Value);
+    patronymics.Should().Equal("Branwell", "Josef");
+
+    // Both patronymics rejoin into the GIVN in order on export.
+    var text = await ExportToTextAsync(document);
+    text.Should().Contain("2 GIVN Patrick Branwell Josef");
+  }
+
+  [Fact]
   public async Task SameSexCouple_ImportsSpouseEdgeAndSharedChild()
   {
     await using var document = await ImportSampleAsync("samesex.ged");

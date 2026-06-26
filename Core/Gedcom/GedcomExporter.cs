@@ -328,13 +328,19 @@ internal sealed class GedcomExporter : IGedcomExporter
       return null;
 
     var given = SelectName(info, NameType.FirstName, sex);
-    var patronymic = SelectName(info, NameType.Patronymic, sex);
+    var patronymics = SelectNames(info, NameType.Patronymic, sex);
     var surname = SelectName(info, NameType.LastName, sex);
 
     if (given is null && surname is null)
       return null;
 
-    var givenFull = string.Join(' ', new[] { given, patronymic }.Where(p => p is not null));
+    var givenParts = new List<string>();
+    if (given is not null)
+    {
+      givenParts.Add(given);
+    }
+    givenParts.AddRange(patronymics);
+    var givenFull = string.Join(' ', givenParts);
     var node = new GedcomNode { Tag = GedcomTags.Name, Value = FormatName(givenFull, surname) };
     if (!string.IsNullOrEmpty(givenFull))
     {
@@ -370,6 +376,20 @@ internal sealed class GedcomExporter : IGedcomExporter
     var preferred = candidates.FirstOrDefault(n => wantedDeclension == 0 || (n.Type & wantedDeclension) != 0);
     var chosen = preferred ?? candidates[0];
     return chosen.Value;
+  }
+
+  /// <summary>
+  /// Like <see cref="SelectName"/> but keeps every part of the base type in stored order, used for
+  /// patronymics where a multi-token given name ("Patrick Branwell Josef") becomes several patronymic
+  /// records that must all rejoin into the GIVN. Prefers the matching declension, falling back to all.
+  /// </summary>
+  private static IEnumerable<string> SelectNames(PersonInfo info, NameType baseType, BiologicalSex sex)
+  {
+    var candidates = info.Names.Where(n => (n.Type & baseType) != 0).ToList();
+    var wantedDeclension = GedcomMapping.Declension(sex);
+    var matching = candidates.Where(n => wantedDeclension == 0 || (n.Type & wantedDeclension) != 0).ToList();
+    var chosen = matching.Count > 0 ? matching : candidates;
+    return chosen.Select(n => n.Value);
   }
 
   private static void WriteFamilies(TextWriter writer, List<Family> families)
