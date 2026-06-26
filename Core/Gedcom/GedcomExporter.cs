@@ -28,12 +28,13 @@ internal sealed class GedcomExporter : IGedcomExporter
     var personInfos = await document.PersonManager.GetPersonInfosAsync(persons, selectMainPhoto: false, token);
     var infoById = personInfos.ToDictionary(p => p.Id);
     var biographies = await document.PersonData.GetPersonDataSetAsync(persons, DataCategory.PersonBio, token);
+    var residues = await document.PersonData.GetPersonDataSetAsync(persons, DataCategory.PersonGedcomTags, token);
     var relatives = await document.Relatives.GetRelativesForPersonsAsync(persons, token);
 
     var families = BuildFamilies(relatives, personById);
 
     WriteHeader(writer);
-    WriteIndividuals(writer, persons, infoById, biographies, families);
+    WriteIndividuals(writer, persons, infoById, biographies, residues, families);
     WriteFamilies(writer, families);
     await WritePassthroughRecordsAsync(document, writer, token);
     GedcomWriter.Write(writer, new GedcomNode { Tag = GedcomTags.Trailer });
@@ -195,6 +196,7 @@ internal sealed class GedcomExporter : IGedcomExporter
     Person[] persons,
     Dictionary<int, PersonInfo> infoById,
     Dictionary<int, Data[]> biographies,
+    Dictionary<int, Data[]> residues,
     List<Family> families)
   {
     var spouseFamilies = new Dictionary<int, List<string>>();
@@ -213,7 +215,8 @@ internal sealed class GedcomExporter : IGedcomExporter
     {
       var info = infoById.GetValueOrDefault(person.Id);
       var biography = biographies.GetValueOrDefault(person.Id)?.FirstOrDefault();
-      var node = BuildIndividual(person, info, biography, spouseFamilies, childFamilies);
+      var residue = residues.GetValueOrDefault(person.Id)?.FirstOrDefault();
+      var node = BuildIndividual(person, info, biography, residue, spouseFamilies, childFamilies);
       GedcomWriter.Write(writer, node);
     }
   }
@@ -243,6 +246,7 @@ internal sealed class GedcomExporter : IGedcomExporter
     Person person,
     PersonInfo? info,
     Data? biography,
+    Data? residue,
     Dictionary<int, List<string>> spouseFamilies,
     Dictionary<int, List<(string Xref, bool Adopted)>> childFamilies)
   {
@@ -278,7 +282,23 @@ internal sealed class GedcomExporter : IGedcomExporter
       node.Add(familyChild);
     }
 
+    // Re-attach the unmodeled INDI sub-tags stashed at import: the recursive writer re-levels them back
+    // under this regenerated INDI, so they emit exactly as they came in.
+    foreach (var residueNode in ParseResidue(residue))
+    {
+      node.Add(residueNode);
+    }
+
     return node;
+  }
+
+  private static IReadOnlyList<GedcomNode> ParseResidue(Data? residue)
+  {
+    if (residue is null)
+      return [];
+
+    var text = Encoding.UTF8.GetString(residue.Content);
+    return GedcomReader.Read(new StringReader(text));
   }
 
   /// <summary>

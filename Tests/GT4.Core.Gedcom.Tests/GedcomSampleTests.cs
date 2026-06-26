@@ -147,6 +147,33 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task UnmodeledIndividualSubTags_StoredVerbatimAndRestoredOnExport()
+  {
+    await using var document = await ImportSampleAsync("residue.ged");
+
+    var byName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
+    var person = byName.Should().ContainSingle().Which.Value;
+
+    // The unmodeled INDI children are stashed as one verbatim residue blob linked to the person.
+    var residue = await document.PersonData.GetPersonDataSetAsync(person, DataCategory.PersonGedcomTags, Token);
+    residue.Should().ContainSingle();
+
+    // Export re-emits them under the regenerated INDI, nesting and order intact, alongside the modeled BIRT.
+    var text = await ExportToTextAsync(document);
+    text.Should().Contain("2 DATE 1 JAN 1850")          // owned BIRT, regenerated from the DB
+        .And.Contain("1 OCCU Blacksmith").And.Contain("2 DATE FROM 1870 TO 1900")
+        .And.Contain("1 RESI").And.Contain("2 PLAC London, England")
+        .And.Contain("1 BURI").And.Contain("2 PLAC Highgate Cemetery")
+        .And.Contain("1 EVEN").And.Contain("2 TYPE Census");
+
+    // A fresh round-trip of the exported text preserves them again unchanged.
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    var reexported = await ExportToTextAsync(reimported);
+    reexported.Should().Contain("1 OCCU Blacksmith").And.Contain("1 EVEN").And.Contain("2 TYPE Census");
+  }
+
+  [Fact]
   public async Task Minimal_ImportsValueOnlyNameWithNoRelationships()
   {
     await using var document = await ImportSampleAsync("minimal.ged");

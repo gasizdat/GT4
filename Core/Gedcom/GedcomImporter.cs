@@ -9,6 +9,13 @@ namespace GT4.Core.Gedcom;
 
 internal sealed class GedcomImporter : IGedcomImporter
 {
+  // The INDI sub-tags GT4 reads into its own model. Every other direct child of an INDI is unmodeled and
+  // is preserved verbatim (see ImportResidueAsync) so a GEDCOM -> DB -> GEDCOM round-trip loses nothing.
+  private static readonly HashSet<string> OwnedIndividualTags =
+    [GedcomTags.Name, GedcomTags.Sex, GedcomTags.Birth, GedcomTags.Death, GedcomTags.Note, GedcomTags.FamilyChild, GedcomTags.FamilySpouse];
+
+  private const string ResidueMimeType = "application/x-gedcom";
+
   public async Task ImportAsync(IProjectDocument document, TextReader reader, CancellationToken token)
   {
     var records = GedcomReader.Read(reader);
@@ -107,7 +114,31 @@ internal sealed class GedcomImporter : IGedcomImporter
     };
 
     var added = await document.PersonManager.AddPersonAsync(toAdd, token);
-    return new Person(added.Id, added.BirthDate, added.DeathDate, added.BiologicalSex);
+    var person = new Person(added.Id, added.BirthDate, added.DeathDate, added.BiologicalSex);
+    await ImportResidueAsync(document, individual, person, token);
+    return person;
+  }
+
+  /// <summary>
+  /// Stores every direct INDI child GT4 does not model (<c>OCCU</c>, <c>RESI</c>, <c>BURI</c>, ...) as one
+  /// verbatim GEDCOM blob linked to the person. The subtrees are re-emitted unchanged on export, so the
+  /// tags GT4 has no schema for still survive a round-trip. Their original document order is preserved.
+  /// </summary>
+  private static async Task ImportResidueAsync(IProjectDocument document, GedcomNode individual, Person person, CancellationToken token)
+  {
+    var residue = individual.Children.Where(c => !OwnedIndividualTags.Contains(c.Tag)).ToArray();
+    if (residue.Length == 0)
+      return;
+
+    var writer = new StringWriter();
+    foreach (var child in residue)
+    {
+      GedcomWriter.Write(writer, child);
+    }
+
+    var content = Encoding.UTF8.GetBytes(writer.ToString());
+    var data = new Data(TableBase.NonCommittedId, content, ResidueMimeType, DataCategory.PersonGedcomTags);
+    await document.PersonData.AddPersonDataSetAsync(person, [data], token);
   }
 
   /// <summary>
