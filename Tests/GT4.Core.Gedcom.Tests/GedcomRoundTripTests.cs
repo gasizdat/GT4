@@ -110,7 +110,7 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     var cb = await AddPersonAsync("Cb", BiologicalSex.Female, Year(1885));
     await MarryAsync(ca, cb, Year(1910));
 
-    var expected = await ExtractGraphAsync(_source);
+    var expected = await GedcomTestGraph.ExtractAsync(_source, Token);
 
     var text = await ExportToTextAsync(_source);
 
@@ -129,7 +129,7 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     await using var reimported = await NewDocumentAsync();
     await _importer.ImportAsync(reimported, new StringReader(text), Token);
 
-    var actual = await ExtractGraphAsync(reimported);
+    var actual = await GedcomTestGraph.ExtractAsync(reimported, Token);
 
     actual.Should().BeEquivalentTo(expected);
   }
@@ -152,7 +152,7 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     var soleAdopted = await AddPersonAsync("Sd", BiologicalSex.Male, Year(1975));
     await AddAdoptedChildAsync(soleAdopted, soleParent);
 
-    var expected = await ExtractGraphAsync(_source);
+    var expected = await GedcomTestGraph.ExtractAsync(_source, Token);
 
     var text = await ExportToTextAsync(_source);
     text.Should().Contain($"2 {GedcomTags.Pedigree} {GedcomTags.AdoptedPedigree}");
@@ -160,7 +160,7 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     await using var reimported = await NewDocumentAsync();
     await _importer.ImportAsync(reimported, new StringReader(text), Token);
 
-    var actual = await ExtractGraphAsync(reimported);
+    var actual = await GedcomTestGraph.ExtractAsync(reimported, Token);
 
     actual.Should().BeEquivalentTo(expected);
   }
@@ -216,49 +216,4 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     return writer.ToString();
   }
 
-  private static string DateKey(Date? date) =>
-    date is null ? "none" : $"{date.Value.Code}:{date.Value.Status}";
-
-  /// <summary>
-  /// Reduces a document to a name-keyed edge graph so two documents with different surrogate ids can be
-  /// compared. Spouse edges are keyed by the unordered name pair plus marriage date; parent links by the
-  /// "child &lt;- parent" name pair.
-  /// </summary>
-  private static async Task<(HashSet<string> Spouses, HashSet<string> ParentChild)> ExtractGraphAsync(ProjectDocument document)
-  {
-    var persons = await document.Persons.GetPersonsAsync(Token);
-    var infos = await document.PersonManager.GetPersonInfosAsync(persons, selectMainPhoto: false, Token);
-    var nameById = infos.ToDictionary(p => p.Id, p => p.DisplayName);
-    var relatives = await document.Relatives.GetRelativesForPersonsAsync(persons, Token);
-
-    var spouses = new HashSet<string>();
-    var parentChild = new HashSet<string>();
-    foreach (var (ownerId, ownerRelatives) in relatives)
-    {
-      foreach (var relative in ownerRelatives)
-      {
-        switch (relative.Type)
-        {
-          case RelationshipType.Spouse:
-            var pair = new[] { nameById[ownerId], nameById[relative.Id] }.OrderBy(n => n);
-            spouses.Add($"{string.Join("+", pair)}@{DateKey(relative.Date)}");
-            break;
-          case RelationshipType.Parent:
-            parentChild.Add($"{nameById[ownerId]}<-{nameById[relative.Id]}");
-            break;
-          case RelationshipType.Child:
-            parentChild.Add($"{nameById[relative.Id]}<-{nameById[ownerId]}");
-            break;
-          case RelationshipType.AdoptiveParent:
-            parentChild.Add($"adopt:{nameById[ownerId]}<-{nameById[relative.Id]}");
-            break;
-          case RelationshipType.AdoptiveChild:
-            parentChild.Add($"adopt:{nameById[relative.Id]}<-{nameById[ownerId]}");
-            break;
-        }
-      }
-    }
-
-    return (spouses, parentChild);
-  }
 }

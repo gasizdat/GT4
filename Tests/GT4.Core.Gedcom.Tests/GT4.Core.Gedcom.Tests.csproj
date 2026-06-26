@@ -24,6 +24,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <EmbeddedResource Include="Samples\*.ged" />
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\..\Core\Gedcom\GT4.Core.Gedcom.csproj" />
         <ProjectReference Include="..\..\Core\Project\GT4.Core.Project.csproj" />
     </ItemGroup>
