@@ -25,5 +25,8 @@ public record class PersonInfo(
   {
   }
 
-  public string DisplayName => string.Join(" ", Names.Select(n => n.Value));
+  // The family name duplicates the last name's value (both are the surname), so it is left out of the
+  // readable display name.
+  public string DisplayName =>
+    string.Join(" ", Names.Where(n => !n.Type.HasFlag(NameType.FamilyName)).Select(n => n.Value));
 }

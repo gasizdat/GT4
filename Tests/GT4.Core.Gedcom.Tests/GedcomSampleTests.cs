@@ -95,6 +95,21 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task Import_GroupsPersonsIntoFamiliesBySurname()
+  {
+    // The families page lists FamilyName groupings and the persons linked to each. The importer must build
+    // them, or imported persons are invisible there even though the individuals and edges exist.
+    await using var document = await ImportSampleAsync("family.ged");
+
+    var families = await document.FamilyManager.GetFamiliesAsync(Token);
+    families.Select(f => f.Value).Should().BeEquivalentTo("Williams", "Wilson");
+
+    var williams = families.Single(f => f.Value == "Williams");
+    var members = await document.PersonManager.GetPersonInfosByNameAsync(williams, selectMainPhoto: false, Token);
+    members.Select(m => m.DisplayName).Should().BeEquivalentTo("Robert Eugene Williams", "Joe Williams", "Anna Williams");
+  }
+
+  [Fact]
   public async Task SameSexCouple_ImportsSpouseEdgeAndSharedChild()
   {
     await using var document = await ImportSampleAsync("samesex.ged");

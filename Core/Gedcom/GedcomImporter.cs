@@ -35,7 +35,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     // sequential because a flow-affine transaction cannot be shared across parallel branches.
     using var transaction = await document.BeginTransactionAsync(token);
 
-    var nameCache = new Dictionary<(string Value, NameType Type), Name>();
+    var nameCache = new Dictionary<(string Value, NameType Type, int? ParentId), Name>();
     var personByXref = new Dictionary<string, Person>();
 
     foreach (var individual in individuals)
@@ -97,7 +97,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     IProjectDocument document,
     GedcomNode individual,
     IReadOnlyDictionary<string, string?> notesByXref,
-    Dictionary<(string, NameType), Name> nameCache,
+    Dictionary<(string, NameType, int?), Name> nameCache,
     CancellationToken token)
   {
     var sex = GedcomMapping.ParseSex(individual.ChildValue(GedcomTags.Sex));
@@ -158,7 +158,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     IProjectDocument document,
     GedcomNode individual,
     BiologicalSex sex,
-    Dictionary<(string, NameType), Name> nameCache,
+    Dictionary<(string, NameType, int?), Name> nameCache,
     CancellationToken token)
   {
     var nameNode = individual.Child(GedcomTags.Name);
@@ -172,12 +172,18 @@ internal sealed class GedcomImporter : IGedcomImporter
     var names = new List<Name>();
     if (!string.IsNullOrWhiteSpace(given))
     {
-      var firstName = await GetOrAddNameAsync(document, given.Trim(), NameType.FirstName | declension, nameCache, token);
+      var firstName = await GetOrAddNameAsync(document, given.Trim(), NameType.FirstName | declension, null, nameCache, token);
       names.Add(firstName);
     }
     if (!string.IsNullOrWhiteSpace(surname))
     {
-      var lastName = await GetOrAddNameAsync(document, surname.Trim(), NameType.LastName | declension, nameCache, token);
+      // Group people by surname into a GT4 family so they appear on the families page. The family name is
+      // the bare surname; the declined last name lives under it (the same shape FamilyManager.AddFamilyAsync
+      // builds) and is what the exporter reads back as the surname.
+      var trimmed = surname.Trim();
+      var family = await GetOrAddNameAsync(document, trimmed, NameType.FamilyName, null, nameCache, token);
+      var lastName = await GetOrAddNameAsync(document, trimmed, NameType.LastName | declension, family, nameCache, token);
+      names.Add(family);
       names.Add(lastName);
     }
     return names.ToArray();
@@ -187,14 +193,15 @@ internal sealed class GedcomImporter : IGedcomImporter
     IProjectDocument document,
     string value,
     NameType type,
-    Dictionary<(string, NameType), Name> nameCache,
+    Name? parent,
+    Dictionary<(string, NameType, int?), Name> nameCache,
     CancellationToken token)
   {
-    var key = (value, type);
+    var key = (value, type, parent?.Id);
     if (nameCache.TryGetValue(key, out var cached))
       return cached;
 
-    var name = await document.Names.AddNameAsync(value, type, null, token);
+    var name = await document.Names.AddNameAsync(value, type, parent, token);
     nameCache[key] = name;
     return name;
   }
