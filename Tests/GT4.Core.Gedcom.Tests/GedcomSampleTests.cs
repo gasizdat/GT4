@@ -110,6 +110,25 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task Import_SplitsMultiTokenGivenIntoFirstNameAndPatronymic()
+  {
+    // GT4 has no middle-name slot: a multi-token GIVN ("Robert Eugene") splits into a first name and a
+    // patronymic, the only second-given slot, which is also where the exporter looks to rebuild the GIVN.
+    await using var document = await ImportSampleAsync("family.ged");
+
+    var byName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
+    var robert = byName["Robert Eugene Williams"];
+    var infos = await document.PersonManager.GetPersonInfosAsync([robert], selectMainPhoto: false, Token);
+    var names = infos.Single().Names;
+    names.Should().ContainSingle(n => (n.Type & NameType.FirstName) != 0 && n.Value == "Robert");
+    names.Should().ContainSingle(n => (n.Type & NameType.Patronymic) != 0 && n.Value == "Eugene");
+
+    // The split round-trips: export rejoins the first name and patronymic into the GIVN it came from.
+    var text = await ExportToTextAsync(document);
+    text.Should().Contain("2 GIVN Robert Eugene");
+  }
+
+  [Fact]
   public async Task SameSexCouple_ImportsSpouseEdgeAndSharedChild()
   {
     await using var document = await ImportSampleAsync("samesex.ged");
