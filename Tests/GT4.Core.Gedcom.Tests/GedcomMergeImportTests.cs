@@ -193,4 +193,48 @@ public sealed class GedcomMergeImportTests : IAsyncLifetime
     full.DeathDate.Should().Be(Date.Create(1900, 1, 1, DateStatus.WellKnown));
     Encoding.UTF8.GetString(full.Biography!.Content).Should().Be("First.");
   }
+
+  [Fact]
+  public async Task Matching_GapFillsMissingPhotoAndResidue()
+  {
+    await using var document = await NewDocumentAsync();
+    await ImportAsync(document, Doc(Indi("@I1@", "John", "Smith", birthYear: 1850)));
+
+    // The re-stated person carries an embedded photo and an unmodeled OCCU tag the first one lacked.
+    var blob = Convert.ToBase64String(Encoding.UTF8.GetBytes("tiny-image"));
+    var enriched =
+      "0 @I1@ INDI\n1 NAME John /Smith/\n1 SEX M\n1 BIRT\n2 DATE 1 JAN 1850\n" +
+      $"1 OCCU Blacksmith\n1 OBJE\n2 FORM jpeg\n2 _PRIM Y\n2 BLOB {blob}\n";
+    await ImportAsync(document, Doc(enriched));
+
+    var infos = await PersonInfosAsync(document);
+    infos.Should().HaveCount(1);
+
+    var full = await document.PersonManager.GetPersonFullInfoAsync(infos.Single(), Token);
+    full.MainPhoto.Should().NotBeNull();
+    Encoding.UTF8.GetString(full.MainPhoto!.Content).Should().Be("tiny-image");
+    full.GedcomData.Should().NotBeNull();
+    Encoding.UTF8.GetString(full.GedcomData!.Content).Should().Contain("OCCU Blacksmith");
+  }
+
+  [Fact]
+  public async Task ReimportingMarriedCouple_DoesNotDuplicateSpouseEdge()
+  {
+    var file = Doc(
+      Indi("@I1@", "John", "Smith", birthYear: 1850),
+      "0 @I2@ INDI\n1 NAME Jane /Smith/\n1 SEX F\n1 BIRT\n2 DATE 1 JAN 1855\n",
+      "0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n1 MARR\n2 DATE 5 MAY 1875\n");
+
+    await using var document = await NewDocumentAsync();
+    await ImportAsync(document, file);
+    await ImportAsync(document, file);
+
+    var infos = await PersonInfosAsync(document);
+    infos.Should().HaveCount(2);
+
+    var john = infos.Single(p => p.DisplayName == "John Smith");
+    var jane = infos.Single(p => p.DisplayName == "Jane Smith");
+    var relatives = await document.Relatives.GetRelativesAsync(john, Token);
+    relatives.Where(r => r.Id == jane.Id && r.Type == RelationshipType.Spouse).Should().ContainSingle();
+  }
 }
