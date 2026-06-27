@@ -26,6 +26,12 @@
         <Label
             HorizontalOptions="Center"
             HorizontalTextAlignment="Center"
+            Style="{StaticResource CardSubtitle}"
+            Text="{Binding ImportingProjectName, Source={x:Reference Root}}" />
+
+        <Label
+            HorizontalOptions="Center"
+            HorizontalTextAlignment="Center"
             Style="{StaticResource FieldValue}"
             Text="{Binding StatusText, Source={x:Reference Root}}" />
 

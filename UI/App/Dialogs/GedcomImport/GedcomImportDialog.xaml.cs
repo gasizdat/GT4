@@ -9,12 +9,15 @@ public partial class GedcomImportDialog : ContentPage
   private readonly CancellationTokenSource _Cancellation = new();
   private bool _Cancelling;
 
-  public GedcomImportDialog()
+  public GedcomImportDialog(string importingProjectName)
   {
+    ImportingProjectName = importingProjectName;
     InitializeComponent();
   }
 
   public CancellationToken Token => _Cancellation.Token;
+
+  public string ImportingProjectName { get; init; }
 
   public bool CanCancel => !_Cancelling;
 
@@ -44,7 +47,7 @@ public partial class GedcomImportDialog : ContentPage
       return;
 
     _Cancelling = true;
-    _Cancellation.Cancel();
+    _Cancellation.Cancel(throwOnFirstException: true);
     OnPropertyChanged(nameof(CanCancel));
     OnPropertyChanged(nameof(StatusText));
   }

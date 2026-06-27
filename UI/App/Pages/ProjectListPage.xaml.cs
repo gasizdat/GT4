@@ -155,7 +155,7 @@ public partial class ProjectListPage : ContentPage
     var name = Path.GetFileNameWithoutExtension(file.FileName);
     var description = UIStrings.HintImportedFromGedcom;
 
-    var dialog = new GedcomImportDialog();
+    var dialog = new GedcomImportDialog(name);
     await Navigation.PushModalAsync(dialog);
     ProjectInfo? info = null;
     try
