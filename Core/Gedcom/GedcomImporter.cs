@@ -18,7 +18,7 @@ internal sealed class GedcomImporter : IGedcomImporter
 
   public async Task ImportAsync(IProjectDocument document, TextReader reader, CancellationToken token)
   {
-    var records = GedcomReader.Read(reader);
+    var records = await GedcomReader.ReadAsync(reader, token);
     var notesByXref = records
       .Where(r => r.Tag == GedcomTags.Note && r.Xref is not null)
       .ToDictionary(r => r.Xref!, r => r.Value);
@@ -62,7 +62,7 @@ internal sealed class GedcomImporter : IGedcomImporter
   /// Metadata table so they survive a round-trip even though GT4 has no schema for them. See
   /// <see cref="GedcomMetadata"/> for the keying and the references that are intentionally not preserved.
   /// </summary>
-  private static async Task ImportPassthroughRecordsAsync(IProjectDocument document, List<GedcomNode> records, CancellationToken token)
+  private static async Task ImportPassthroughRecordsAsync(IProjectDocument document, GedcomNode[] records, CancellationToken token)
   {
     foreach (var record in records.Where(GedcomMetadata.IsPassthrough))
     {

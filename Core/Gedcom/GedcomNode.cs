@@ -12,9 +12,9 @@ internal sealed class GedcomNode
   public string? Value { get; set; }
   public List<GedcomNode> Children { get; } = [];
 
-  public GedcomNode Add(GedcomNode child)
+  public GedcomNode Add(params GedcomNode[] children)
   {
-    Children.Add(child);
+    Children.AddRange(children);
     return this;
   }
 

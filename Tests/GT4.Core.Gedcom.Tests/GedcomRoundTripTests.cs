@@ -118,7 +118,7 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     // across two FAM records, because import re-derives the same edges from each. Assert the family
     // shape directly — exactly four families (two couples-with-kids, one single parent, one childless
     // couple) and no individual pointing at the same spouse-family twice.
-    var records = GedcomReader.Read(new StringReader(text));
+    var records = await GedcomReader.ReadAsync(new StringReader(text), Token);
     records.Count(r => r.Tag == "FAM").Should().Be(4);
     foreach (var individual in records.Where(r => r.Tag == "INDI"))
     {

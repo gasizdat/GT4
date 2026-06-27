@@ -7,7 +7,7 @@ namespace GT4.Core.Gedcom;
 /// </summary>
 internal static class GedcomReader
 {
-  public static List<GedcomNode> Read(TextReader reader)
+  public static async Task<GedcomNode[]> ReadAsync(TextReader reader, CancellationToken token)
   {
     var roots = new List<GedcomNode>();
     // The most recent node seen at each level; a node attaches under the node one level shallower.
@@ -16,6 +16,8 @@ internal static class GedcomReader
     string? line;
     while ((line = reader.ReadLine()) != null)
     {
+      token.ThrowIfCancellationRequested();
+
       var parsed = ParseLine(line);
       if (parsed is null)
         continue;
@@ -40,7 +42,7 @@ internal static class GedcomReader
       openNodes[level] = node;
     }
 
-    return roots;
+    return [.. roots];
   }
 
   private static void AppendContinuation(Dictionary<int, GedcomNode> openNodes, int level, string tag, string? value)

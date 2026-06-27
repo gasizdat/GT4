@@ -6,6 +6,8 @@ namespace GT4.Core.Gedcom.Tests;
 
 public sealed class GedcomReaderWriterTests
 {
+  private CancellationToken _Token => TestContext.Current.CancellationToken;
+
   private const string Sample =
     """
     0 HEAD
@@ -22,9 +24,9 @@ public sealed class GedcomReaderWriterTests
     """;
 
   [Fact]
-  public void Read_ParsesRecordsXrefsAndNesting()
+  public async Task Read_ParsesRecordsXrefsAndNestingAsync()
   {
-    var roots = GedcomReader.Read(new StringReader(Sample));
+    var roots = await GedcomReader.ReadAsync(new StringReader(Sample), _Token);
 
     roots.Select(r => r.Tag).Should().Equal("HEAD", "INDI", "TRLR");
 
@@ -39,9 +41,9 @@ public sealed class GedcomReaderWriterTests
   }
 
   [Fact]
-  public void Read_FoldsContAndConcIntoOwnerValue()
+  public async Task Read_FoldsContAndConcIntoOwnerValueAsync()
   {
-    var roots = GedcomReader.Read(new StringReader(Sample));
+    var roots = await GedcomReader.ReadAsync(new StringReader(Sample), _Token);
 
     var note = roots[1].Child("NOTE")!;
 
@@ -49,9 +51,9 @@ public sealed class GedcomReaderWriterTests
   }
 
   [Fact]
-  public void PointerValue_IsNotMistakenForRecordIdentifier()
+  public async Task PointerValue_IsNotMistakenForRecordIdentifierAsunc()
   {
-    var roots = GedcomReader.Read(new StringReader("0 @F1@ FAM\n1 HUSB @I1@\n"));
+    var roots = await GedcomReader.ReadAsync(new StringReader("0 @F1@ FAM\n1 HUSB @I1@\n"), _Token);
 
     var family = roots.Single();
     family.Xref.Should().Be("@F1@");
@@ -61,34 +63,34 @@ public sealed class GedcomReaderWriterTests
   }
 
   [Fact]
-  public void Write_Then_Read_PreservesMultilineValue()
+  public async Task Write_Then_Read_PreservesMultilineValueAsync()
   {
     var note = new GedcomNode { Tag = "NOTE", Value = "first paragraph\nsecond paragraph" };
     var record = new GedcomNode { Tag = "INDI", Xref = "@I1@" };
     record.Add(note);
 
-    var roundTripped = WriteThenRead(record);
+    var roundTripped = await WriteThenReadAsync(record, _Token);
 
     roundTripped.Xref.Should().Be("@I1@");
     roundTripped.Child("NOTE")!.Value.Should().Be("first paragraph\nsecond paragraph");
   }
 
   [Fact]
-  public void Write_SplitsLongValueAcrossConc_AndReadsBackIdentical()
+  public async Task Write_SplitsLongValueAcrossConc_AndReadsBackIdenticalAsync()
   {
     var longText = new string('x', 640);
     var record = new GedcomNode { Tag = "NOTE", Value = longText };
 
-    var roundTripped = WriteThenRead(record);
+    var roundTripped = await WriteThenReadAsync(record, _Token);
 
     roundTripped.Value.Should().Be(longText);
   }
 
-  private static GedcomNode WriteThenRead(GedcomNode record)
+  private static async Task<GedcomNode> WriteThenReadAsync(GedcomNode record, CancellationToken token)
   {
     var writer = new StringWriter();
     GedcomWriter.Write(writer, record);
-    var roots = GedcomReader.Read(new StringReader(writer.ToString()));
+    var roots = await GedcomReader.ReadAsync(new StringReader(writer.ToString()), token);
     return roots.Single();
   }
 }

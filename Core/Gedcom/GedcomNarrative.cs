@@ -10,19 +10,19 @@ namespace GT4.Core.Gedcom;
 /// </summary>
 public static class GedcomNarrative
 {
-  public static GedcomFact[] Parse(Data? residue)
+  public static async Task<GedcomFact[]> ParseAsync(Data? residue, CancellationToken token)
   {
     if (residue is null || residue.Content.Length == 0)
       return [];
 
     var text = Encoding.UTF8.GetString(residue.Content);
-    var roots = GedcomReader.Read(new StringReader(text));
-    return roots.Select(ToFact).ToArray();
+    var roots = await GedcomReader.ReadAsync(new StringReader(text), token);
+    return [.. roots.Select(ToFact)];
   }
 
   private static GedcomFact ToFact(GedcomNode node)
   {
-    var children = node.Children.Select(ToFact).ToArray();
-    return new GedcomFact(node.Tag, node.Value, children);
+    var children = node.Children.Select(ToFact);
+    return new GedcomFact(node.Tag, node.Value, [.. children]);
   }
 }

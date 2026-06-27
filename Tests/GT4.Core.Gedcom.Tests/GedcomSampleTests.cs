@@ -237,7 +237,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
 
     // The display projection keeps each residual child as a fact in document order, with its nested
     // sub-tags, so the UI can label and render them (OCCU -> DATE, RESI -> PLAC).
-    var facts = GedcomNarrative.Parse(residue.Single());
+    var facts = await GedcomNarrative.ParseAsync(residue.Single(), Token);
     facts.Select(f => f.Tag).Should().Equal("OCCU", "RESI", "BURI", "EVEN");
 
     var occupation = facts[0];

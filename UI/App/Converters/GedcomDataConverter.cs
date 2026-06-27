@@ -20,9 +20,9 @@ public sealed class GedcomDataConverter : IDataConverter
   public Task<Data?> FromObjectAsync(object? data, CancellationToken token) =>
     throw new NotSupportedException("GEDCOM residue is display-only; it is carried verbatim, not edited in the UI.");
 
-  public Task<object?> ToObjectAsync(Data? data, CancellationToken token)
+  public async Task<object?> ToObjectAsync(Data? data, CancellationToken token)
   {
-    var facts = GedcomNarrative.Parse(data);
+    var facts = await GedcomNarrative.ParseAsync(data, token);
     object? markdown = facts.Length == 0 ? null : Render(facts);
     return Task.FromResult(markdown);
   }
