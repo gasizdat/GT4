@@ -14,6 +14,14 @@ namespace GT4.UI.Pages;
 
 public partial class ProjectPage : ContentPage
 {
+  // GEDCOM has no standard MIME type: Windows filters on the ".ged" extension, while Android has none and
+  // falls back to any file. Mirrors the picker on the project list's fresh-import command.
+  private static readonly FilePickerFileType GedcomFileType = new(new Dictionary<DevicePlatform, IEnumerable<string>>
+  {
+    [DevicePlatform.WinUI] = [".ged"],
+    [DevicePlatform.Android] = ["*/*"],
+  });
+
   private readonly IServiceProvider _ServiceProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
@@ -21,6 +29,7 @@ public partial class ProjectPage : ContentPage
   private readonly IComparer<Name> _NameComparer;
   private readonly IProjectList _ProjectList;
   private readonly IGedcomExporter _Exporter;
+  private readonly IGedcomImporter _Importer;
 
   private long? _ProjectRevision;
 
@@ -34,6 +43,7 @@ public partial class ProjectPage : ContentPage
     _NameComparer = _ServiceProvider.GetRequiredService<IComparer<Name>>();
     _ProjectList = _ServiceProvider.GetRequiredService<IProjectList>();
     _Exporter = _ServiceProvider.GetRequiredService<IGedcomExporter>();
+    _Importer = _ServiceProvider.GetRequiredService<IGedcomImporter>();
 
     PageCommand = new SafeCommand(OnPageCommand);
     InitializeComponent();
@@ -217,6 +227,10 @@ public partial class ProjectPage : ContentPage
         await OnExportGedcom();
         break;
 
+      case string commandName when commandName == "ImportGedcom":
+        await OnImportGedcom();
+        break;
+
       case string commandName when commandName == "GoToRevisions":
         await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectRevisionsPage>());
         break;
@@ -295,6 +309,47 @@ public partial class ProjectPage : ContentPage
 
     var request = new ShareFileRequest { Title = UIStrings.ShareGedcomTitle, File = new ShareFile(path) };
     await Share.Default.RequestAsync(request);
+  }
+
+  // Merges a GEDCOM file into the open project. Unlike the project list's import (which always lands in a
+  // fresh project), this folds people that match an existing person and adds the rest. It mutates the
+  // current project, so it is confirmed first; the import is one transaction, so a cancellation or a
+  // malformed file rolls back and leaves the project untouched. The slow work runs on a background thread
+  // behind the cancellable import modal.
+  private async Task OnImportGedcom()
+  {
+    var pickOptions = new PickOptions { PickerTitle = UIStrings.FileDialogSelectGedcom, FileTypes = GedcomFileType };
+    var file = await FilePicker.Default.PickAsync(pickOptions);
+    if (file is null)
+      return;
+
+    var confirmText = string.Format(UIStrings.AlertImportGedcomConfirm_1, _CurrentProjectProvider.Info.Name);
+    if (!await this.ShowConfirmationAsync(confirmText))
+      return;
+
+    var dialog = new GedcomImportDialog(_CurrentProjectProvider.Info.Name);
+    await Navigation.PushModalAsync(dialog);
+    try
+    {
+      await Task.Run(() => RunImportAsync(file, dialog.Token));
+    }
+    catch (OperationCanceledException)
+    {
+      // Cancelled mid-import: the single import transaction rolls back, so the project is unchanged.
+    }
+    finally
+    {
+      await Navigation.PopModalAsync();
+    }
+
+    this.RefreshView();
+  }
+
+  private async Task RunImportAsync(FileResult file, CancellationToken token)
+  {
+    using var stream = await file.OpenReadAsync();
+    using var reader = new StreamReader(stream, Encoding.UTF8);
+    await _Importer.ImportAsync(_CurrentProjectProvider.Project, reader, token);
   }
 
   private static string SanitizeFileName(string name)

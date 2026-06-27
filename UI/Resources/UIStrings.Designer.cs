@@ -88,6 +88,15 @@ namespace GT4.UI.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Import a GEDCOM file into {0}? People that match an existing person are merged; the rest are added.
+        /// </summary>
+        public static string AlertImportGedcomConfirm_1 {
+            get {
+                return ResourceManager.GetString("AlertImportGedcomConfirm_1", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Select a GEDCOM file.
         /// </summary>
         public static string FileDialogSelectGedcom {

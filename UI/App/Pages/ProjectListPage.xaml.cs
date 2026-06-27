@@ -141,10 +141,11 @@ public partial class ProjectListPage : ContentPage
     await using var project = await _ProjectList.CreateAsync(projectInfo.Name, projectInfo.Description, token);
   }
 
-  // Imports a GEDCOM file into a fresh project: the importer assumes an empty document, so each import gets
-  // its own new project rather than merging into an existing one. The import can be slow, so it runs on a
-  // background thread behind a modal that lets the user cancel it; on success the project is opened as
-  // current and we navigate straight into it.
+  // Imports a GEDCOM file into a fresh project. The importer can merge into a populated document, but from
+  // the project list there is nothing open to merge into, so each import deliberately gets its own new
+  // project; merging into an existing project is offered from ProjectPage instead. The import can be slow,
+  // so it runs on a background thread behind a modal that lets the user cancel it; on success the project
+  // is opened as current and we navigate straight into it.
   private async Task OnImportGedcom()
   {
     var pickOptions = new PickOptions { PickerTitle = UIStrings.FileDialogSelectGedcom, FileTypes = GedcomFileType };

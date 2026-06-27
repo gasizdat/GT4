@@ -655,6 +655,9 @@
   <data name="MenuItemExportGedcom" xml:space="preserve">
     <value>📤 Экспорт в GEDCOM</value>
   </data>
+  <data name="AlertImportGedcomConfirm_1" xml:space="preserve">
+    <value>Импортировать файл GEDCOM в {0}? Совпадающие люди будут объединены, остальные добавлены.</value>
+  </data>
   <data name="FileDialogSelectGedcom" xml:space="preserve">
     <value>Выберите файл GEDCOM</value>
   </data>

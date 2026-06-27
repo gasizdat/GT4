@@ -655,6 +655,9 @@ genealogy tree and enjoy!</value>
   <data name="MenuItemExportGedcom" xml:space="preserve">
     <value>📤 Export to GEDCOM</value>
   </data>
+  <data name="AlertImportGedcomConfirm_1" xml:space="preserve">
+    <value>Import a GEDCOM file into {0}? People that match an existing person are merged; the rest are added.</value>
+  </data>
   <data name="FileDialogSelectGedcom" xml:space="preserve">
     <value>Select a GEDCOM file</value>
   </data>
