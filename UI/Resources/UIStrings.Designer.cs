@@ -106,6 +106,33 @@ namespace GT4.UI.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Importing GEDCOM.
+        /// </summary>
+        public static string TitleGedcomImportDialog {
+            get {
+                return ResourceManager.GetString("TitleGedcomImportDialog", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Importing the file. This may take a while….
+        /// </summary>
+        public static string HintGedcomImportInProgress {
+            get {
+                return ResourceManager.GetString("HintGedcomImportInProgress", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Cancelling….
+        /// </summary>
+        public static string HintGedcomImportCancelling {
+            get {
+                return ResourceManager.GetString("HintGedcomImportCancelling", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Export GEDCOM.
         /// </summary>
         public static string ShareGedcomTitle {

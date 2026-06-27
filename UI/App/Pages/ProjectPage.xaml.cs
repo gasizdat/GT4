@@ -226,11 +226,12 @@ public partial class ProjectPage : ContentPage
   private async Task OnRemoveProject()
   {
     var projectName = _CurrentProjectProvider.Info.Name;
+    var projectOrigin = _CurrentProjectProvider.Info.Origin;
     var confirmationText = string.Format(UIStrings.AlertTextDeleteConfirmationText_1, projectName);
     if (await this.ShowConfirmationAsync(confirmationText))
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-      await _ProjectList.RemoveAsync(projectName, token);
+      await _ProjectList.RemoveAsync(projectOrigin, token);
     }
 
     await Shell.Current.GoToAsync("..", true);

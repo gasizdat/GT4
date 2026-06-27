@@ -661,6 +661,15 @@
   <data name="HintImportedFromGedcom" xml:space="preserve">
     <value>Импортировано из GEDCOM</value>
   </data>
+  <data name="TitleGedcomImportDialog" xml:space="preserve">
+    <value>Импорт GEDCOM</value>
+  </data>
+  <data name="HintGedcomImportInProgress" xml:space="preserve">
+    <value>Импорт файла. Это может занять некоторое время…</value>
+  </data>
+  <data name="HintGedcomImportCancelling" xml:space="preserve">
+    <value>Отмена…</value>
+  </data>
   <data name="ShareGedcomTitle" xml:space="preserve">
     <value>Экспорт GEDCOM</value>
   </data>

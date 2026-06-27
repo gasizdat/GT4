@@ -159,16 +159,11 @@ internal class ProjectList : IProjectList
     }
   }
 
-  public async Task RemoveAsync(string name, CancellationToken token)
+  public Task RemoveAsync(FileDescription origin, CancellationToken token)
   {
-    var modifiableItems = (await GetItemsAsync(token)).ToList();
-    var item = modifiableItems.FirstOrDefault(i => CompareNames(i.Name, name));
-    if (item?.Name is null)
-      return;
-
-    _FileSystem.RemoveFile(item.Origin);
-
+    _FileSystem.RemoveFile(origin);
     InvalidateItems();
+    return Task.CompletedTask;
   }
 
   private FileDescription GetCacheFileDescription(string projectName)

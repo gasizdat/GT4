@@ -661,6 +661,15 @@ genealogy tree and enjoy!</value>
   <data name="HintImportedFromGedcom" xml:space="preserve">
     <value>Imported from GEDCOM</value>
   </data>
+  <data name="TitleGedcomImportDialog" xml:space="preserve">
+    <value>Importing GEDCOM</value>
+  </data>
+  <data name="HintGedcomImportInProgress" xml:space="preserve">
+    <value>Importing the file. This may take a while…</value>
+  </data>
+  <data name="HintGedcomImportCancelling" xml:space="preserve">
+    <value>Cancelling…</value>
+  </data>
   <data name="ShareGedcomTitle" xml:space="preserve">
     <value>Export GEDCOM</value>
   </data>

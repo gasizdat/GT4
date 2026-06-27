@@ -142,7 +142,8 @@ public partial class ProjectListPage : ContentPage
   }
 
   // Imports a GEDCOM file into a fresh project: the importer assumes an empty document, so each import gets
-  // its own new project rather than merging into an existing one. After importing, the project is opened as
+  // its own new project rather than merging into an existing one. The import can be slow, so it runs on a
+  // background thread behind a modal that lets the user cancel it; on success the project is opened as
   // current and we navigate straight into it.
   private async Task OnImportGedcom()
   {
@@ -153,26 +154,54 @@ public partial class ProjectListPage : ContentPage
 
     var name = Path.GetFileNameWithoutExtension(file.FileName);
     var description = UIStrings.HintImportedFromGedcom;
-    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
 
-    // Explicit dispose (not await using): the host must flush the imported data back to its origin before
-    // we re-open that origin as the current project.
+    var dialog = new GedcomImportDialog();
+    await Navigation.PushModalAsync(dialog);
+    ProjectInfo? info = null;
+    try
+    {
+      info = await Task.Run(() => RunImportAsync(file, name, description, dialog.Token));
+    }
+    catch (OperationCanceledException)
+    {
+      // The user cancelled; RunImportAsync has already deleted the half-built project. Stay on the list.
+    }
+    finally
+    {
+      await Navigation.PopModalAsync();
+    }
+
+    if (info is null)
+      return;
+
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    await _CurrentProjectProvider.OpenAsync(info, token);
+    await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectPage>());
+  }
+
+  // Runs the whole document operation as one continuous async flow on a background thread, under the
+  // dialog's cancellation token rather than a short-lived DB token. Any failure — a user cancellation or a
+  // malformed file — deletes the freshly created project shell and rethrows, so nothing is left behind; the
+  // caller turns cancellation into a quiet no-op and lets real errors surface through SafeCommand.
+  private async Task<ProjectInfo> RunImportAsync(FileResult file, string name, string description, CancellationToken token)
+  {
     var host = await _ProjectList.CreateAsync(name, description, token);
-    string revision;
     try
     {
       using var stream = await file.OpenReadAsync();
       using var reader = new StreamReader(stream, Encoding.UTF8);
       await _Importer.ImportAsync(host.Project!, reader, token);
-      revision = await host.Project!.Metadata.GetProjectRevisionAsync(token) ?? string.Empty;
+
+      var revision = await host.Project!.Metadata.GetProjectRevisionAsync(token) ?? string.Empty;
+      await host.DisposeAsync();
+      return new ProjectInfo(Revision: revision, Description: description, Name: name, Origin: host.Origin);
     }
-    finally
+    catch
     {
       await host.DisposeAsync();
+      using var cleanupToken = _CancellationTokenProvider.CreateDbCancellationToken();
+      await _ProjectList.RemoveAsync(host.Origin, cleanupToken);
+      throw;
     }
-
-    var info = new ProjectInfo(Revision: revision, Description: description, Name: name, Origin: host.Origin);
-    await _CurrentProjectProvider.OpenAsync(info, token);
-    await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectPage>());
   }
 }
