@@ -32,9 +32,10 @@ internal sealed class GedcomImporter : IGedcomImporter
 
     // Merge support: an import may land in a populated project. Existing names are reused so the
     // UNIQUE(Value, Type, ParentId) index never throws, and an incoming individual that matches an
-    // existing person (same first name, family name and a known birth date) is folded into that person
-    // instead of duplicated. Every read below runs before the write transaction so the parallel reads
-    // inside GetPersonFullInfoAsync never share the flow-affine import transaction.
+    // existing person (same first name, family name and birth date, where an absent or unknown birth
+    // date matches another absent or unknown one) is folded into that person instead of duplicated.
+    // Every read below runs before the write transaction so the parallel reads inside
+    // GetPersonFullInfoAsync never share the flow-affine import transaction.
     var existingNames = await document.Names.GetNamesByTypeAsync(NameType.AllNames, token);
     var existingPersons = await document.PersonManager.GetPersonInfosAsync(selectMainPhoto: false, token);
     var matches = await ResolveMatchesAsync(document, individuals, existingPersons, token);
@@ -81,15 +82,17 @@ internal sealed class GedcomImporter : IGedcomImporter
   // gap-fill can tell which fields are empty without re-reading inside the transaction.
   private sealed record Match(PersonInfo Existing, PersonFullInfo Full);
 
-  // The identity an incoming individual and an existing person are matched on. Only built when a first
-  // name and a known birth date are present, which is what makes a match conservative enough to trust.
-  private readonly record struct PersonIdentity(string FirstName, string? FamilyName, Date BirthDate);
+  // The identity an incoming individual and an existing person are matched on. Built whenever a first
+  // name is present; an absent or unknown birth date is carried as null, so an undated person matches
+  // only another undated person and never folds into a dated one.
+  private readonly record struct PersonIdentity(string FirstName, string? FamilyName, Date? BirthDate);
 
   /// <summary>
-  /// Decides which incoming individuals fold into an existing person. A match needs a first name and a
-  /// known birth date, the identity to be unique among the existing persons, and unique among the
-  /// incoming individuals too: anything ambiguous on either side is left to import as a new person, so
-  /// the import never collapses two distinct people into one.
+  /// Decides which incoming individuals fold into an existing person. A match needs a first name, the
+  /// identity to be unique among the existing persons, and unique among the incoming individuals too:
+  /// anything ambiguous on either side is left to import as a new person, so the import never collapses
+  /// two distinct people into one. The birth date is part of the identity but may be null, so undated
+  /// people still merge when their name alone is unique on both sides.
   /// </summary>
   private static async Task<Dictionary<string, Match>> ResolveMatchesAsync(
     IProjectDocument document,
@@ -216,19 +219,18 @@ internal sealed class GedcomImporter : IGedcomImporter
   private static PersonIdentity? IncomingIdentity(GedcomNode individual)
   {
     var birthDate = ParseEventDate(individual, GedcomTags.Birth);
-    if (birthDate is null)
-      return null;
-
     var (firstName, familyName) = RawNameParts(individual);
-    return ToIdentity(firstName, familyName, birthDate.Value);
+    return ToIdentity(firstName, familyName, birthDate);
   }
 
-  private static PersonIdentity? ToIdentity(string? firstName, string? familyName, Date birthDate)
+  private static PersonIdentity? ToIdentity(string? firstName, string? familyName, Date? birthDate)
   {
-    if (string.IsNullOrWhiteSpace(firstName) || birthDate.Status == DateStatus.Unknown)
+    if (string.IsNullOrWhiteSpace(firstName))
       return null;
 
-    return new PersonIdentity(firstName, string.IsNullOrWhiteSpace(familyName) ? null : familyName, birthDate);
+    var family = string.IsNullOrWhiteSpace(familyName) ? null : familyName;
+    var birth = birthDate is { Status: not DateStatus.Unknown } ? birthDate : null;
+    return new PersonIdentity(firstName, family, birth);
   }
 
   /// <summary>

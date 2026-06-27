@@ -9,10 +9,10 @@ namespace GT4.Core.Gedcom.Tests;
 
 /// <summary>
 /// Importing into a populated project. The importer reuses existing names and folds an incoming
-/// individual into an existing person when they share a first name, family name and a known birth date;
-/// every ambiguous case stays a new person so two distinct people are never collapsed into one. A matched
-/// person is gap-filled (missing fields only) and relationship edges that already exist are not
-/// duplicated.
+/// individual into an existing person when they share a first name, family name and birth date (where an
+/// absent or unknown birth date matches another absent or unknown one); every ambiguous case stays a new
+/// person so two distinct people are never collapsed into one. A matched person is gap-filled (missing
+/// fields only) and relationship edges that already exist are not duplicated.
 /// </summary>
 public sealed class GedcomMergeImportTests : IAsyncLifetime
 {
@@ -100,15 +100,42 @@ public sealed class GedcomMergeImportTests : IAsyncLifetime
   }
 
   [Fact]
-  public async Task UnknownBirthDate_ImportsAsNewPerson()
+  public async Task UndatedIncoming_DoesNotFoldIntoDatedExistingPerson()
   {
-    // A birth date is required to match: most imported people have none, and matching on name alone
-    // would be far too eager.
+    // An undated person matches only another undated person: it must not fold into a namesake who has a
+    // known birth date, since the date makes them a more specific, possibly different, individual.
     await using var document = await NewDocumentAsync();
     await ImportAsync(document, Doc(Indi("@I1@", "John", "Smith", birthYear: 1850)));
     await ImportAsync(document, Doc(Indi("@I1@", "John", "Smith")));
 
     (await PersonInfosAsync(document)).Should().HaveCount(2);
+  }
+
+  [Fact]
+  public async Task UndatedIncoming_FoldsIntoExistingUndatedPersonWhenNameIsUnique()
+  {
+    // Most imported people carry no birth date; re-importing the same file must still recognise them by
+    // a name that is unique on both sides rather than duplicate them.
+    await using var document = await NewDocumentAsync();
+    await ImportAsync(document, Doc(Indi("@I1@", "Arthur", "Nicholls")));
+    await ImportAsync(document, Doc(Indi("@I1@", "Arthur", "Nicholls")));
+
+    (await PersonInfosAsync(document)).Should().ContainSingle();
+  }
+
+  [Fact]
+  public async Task AmbiguousUndatedMatch_ImportsAsNewPerson()
+  {
+    // Two existing undated namesakes are ambiguous, so a third undated namesake cannot be assigned to
+    // either without guessing; it is added new instead.
+    await using var document = await NewDocumentAsync();
+    await ImportAsync(document, Doc(
+      Indi("@I1@", "Arthur", "Nicholls"),
+      Indi("@I2@", "Arthur", "Nicholls")));
+    (await PersonInfosAsync(document)).Should().HaveCount(2);
+
+    await ImportAsync(document, Doc(Indi("@I3@", "Arthur", "Nicholls")));
+    (await PersonInfosAsync(document)).Should().HaveCount(3);
   }
 
   [Fact]
