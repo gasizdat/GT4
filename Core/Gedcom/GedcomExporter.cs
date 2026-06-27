@@ -21,6 +21,20 @@ internal sealed class GedcomExporter : IGedcomExporter
     public string Xref { get; set; } = string.Empty;
   }
 
+  /// <summary>
+  /// Everything one INDI needs, gathered per person so the builder reads each field from a single object
+  /// instead of threading a parallel by-id lookup for biography, residue, photos and family links.
+  /// </summary>
+  private sealed record Individual(
+    Person Person,
+    PersonInfo? Info,
+    Data? Biography,
+    Data? Residue,
+    Data? MainPhoto,
+    Data[] AdditionalPhotos,
+    string[] SpouseFamilies,
+    (string Xref, bool Adopted)[] ChildFamilies);
+
   public async Task ExportAsync(IProjectDocument document, TextWriter writer, CancellationToken token)
   {
     var persons = await document.Persons.GetPersonsAsync(token);
@@ -34,18 +48,10 @@ internal sealed class GedcomExporter : IGedcomExporter
     var relatives = await document.Relatives.GetRelativesForPersonsAsync(persons, token);
 
     var families = BuildFamilies(relatives, personById);
+    var individuals = BuildIndividuals(persons, infoById, biographies, residues, mainPhotos, additionalPhotos, families);
 
     WriteHeader(writer);
-    await WriteIndividualsAsync(
-      writer, 
-      persons, 
-      infoById, 
-      biographies, 
-      residues, 
-      mainPhotos, 
-      additionalPhotos, 
-      families,
-      token);
+    await WriteIndividualsAsync(writer, individuals, token);
     WriteFamilies(writer, families);
     await WritePassthroughRecordsAsync(document, writer, token);
     GedcomWriter.Write(writer, new GedcomNode { Tag = GedcomTags.Trailer });
@@ -202,16 +208,23 @@ internal sealed class GedcomExporter : IGedcomExporter
     GedcomWriter.Write(writer, header);
   }
 
-  private static async Task WriteIndividualsAsync(
-    TextWriter writer,
+  private static async Task WriteIndividualsAsync(TextWriter writer, Individual[] individuals, CancellationToken token)
+  {
+    foreach (var individual in individuals)
+    {
+      var node = await BuildIndividualAsync(individual, token);
+      GedcomWriter.Write(writer, node);
+    }
+  }
+
+  private static Individual[] BuildIndividuals(
     Person[] persons,
     Dictionary<int, PersonInfo> infoById,
     Dictionary<int, Data[]> biographies,
     Dictionary<int, Data[]> residues,
     Dictionary<int, Data[]> mainPhotos,
     Dictionary<int, Data[]> additionalPhotos,
-    List<Family> families,
-    CancellationToken token)
+    List<Family> families)
   {
     var spouseFamilies = new Dictionary<int, List<string>>();
     var childFamilies = new Dictionary<int, List<(string Xref, bool Adopted)>>();
@@ -225,6 +238,7 @@ internal sealed class GedcomExporter : IGedcomExporter
       }
     }
 
+    var individuals = new List<Individual>();
     foreach (var person in persons.OrderBy(p => p.Id))
     {
       var info = infoById.GetValueOrDefault(person.Id);
@@ -232,18 +246,11 @@ internal sealed class GedcomExporter : IGedcomExporter
       var residue = residues.GetValueOrDefault(person.Id)?.FirstOrDefault();
       var mainPhoto = mainPhotos.GetValueOrDefault(person.Id)?.FirstOrDefault();
       var morePhotos = additionalPhotos.GetValueOrDefault(person.Id) ?? [];
-      var node = await BuildIndividualAsync(
-        person, 
-        info, 
-        biography, 
-        residue, 
-        mainPhoto, 
-        morePhotos, 
-        spouseFamilies, 
-        childFamilies, 
-        token);
-      GedcomWriter.Write(writer, node);
+      var spouses = spouseFamilies.GetValueOrDefault(person.Id)?.ToArray() ?? [];
+      var children = childFamilies.GetValueOrDefault(person.Id)?.ToArray() ?? [];
+      individuals.Add(new Individual(person, info, biography, residue, mainPhoto, morePhotos, spouses, children));
     }
+    return [.. individuals];
   }
 
   private static void LinkFamily(Dictionary<int, List<string>> map, int? personId, string xref)
@@ -267,20 +274,12 @@ internal sealed class GedcomExporter : IGedcomExporter
     list.Add((xref, adopted));
   }
 
-  private static async Task<GedcomNode> BuildIndividualAsync(
-    Person person,
-    PersonInfo? info,
-    Data? biography,
-    Data? residue,
-    Data? mainPhoto,
-    Data[] additionalPhotos,
-    Dictionary<int, List<string>> spouseFamilies,
-    Dictionary<int, List<(string Xref, bool Adopted)>> childFamilies,
-    CancellationToken token)
+  private static async Task<GedcomNode> BuildIndividualAsync(Individual individual, CancellationToken token)
   {
+    var person = individual.Person;
     var node = new GedcomNode { Tag = GedcomTags.Individual, Xref = $"@I{person.Id}@" };
 
-    var nameNode = BuildName(info, person.BiologicalSex);
+    var nameNode = BuildName(individual.Info, person.BiologicalSex);
     if (nameNode is not null)
     {
       node.Add(nameNode);
@@ -290,42 +289,36 @@ internal sealed class GedcomExporter : IGedcomExporter
     AddEvent(node, GedcomTags.Birth, person.BirthDate);
     AddEvent(node, GedcomTags.Death, person.DeathDate);
 
-    if (biography is not null)
+    if (individual.Biography is not null)
     {
-      var text = Encoding.UTF8.GetString(biography.Content);
+      var text = Encoding.UTF8.GetString(individual.Biography.Content);
       node.Add(new GedcomNode { Tag = GedcomTags.Note, Value = text });
     }
 
-    AddPhoto(node, mainPhoto, primary: true);
-    foreach (var photo in additionalPhotos)
+    AddPhoto(node, individual.MainPhoto, primary: true);
+    foreach (var photo in individual.AdditionalPhotos)
     {
       AddPhoto(node, photo, primary: false);
     }
 
-    var spouses = spouseFamilies
-      .GetValueOrDefault(person.Id)
-      ?.Select(xref => new GedcomNode { Tag = GedcomTags.FamilySpouse, Value = xref })
-      ?? [];
-    node.Add([.. spouses]);
+    var spouseNodes = individual
+      .SpouseFamilies
+      .Select(xref => new GedcomNode { Tag = GedcomTags.FamilySpouse, Value = xref });
 
-    var children = childFamilies
-      .GetValueOrDefault(person.Id)
-      ?.Select(keyValue =>
+    var childNodes = individual.ChildFamilies.Select(link =>
+    {
+      var familyChild = new GedcomNode { Tag = GedcomTags.FamilyChild, Value = link.Xref };
+      if (link.Adopted)
       {
-        var familyChild = new GedcomNode { Tag = GedcomTags.FamilyChild, Value = keyValue.Xref };
-        if (keyValue.Adopted)
-        {
-          familyChild.Add(new GedcomNode { Tag = GedcomTags.Pedigree, Value = GedcomTags.AdoptedPedigree });
-        }
-        return familyChild;
-      })
-      ?? [];
-
-    node.Add([.. children]);
+        familyChild.Add(new GedcomNode { Tag = GedcomTags.Pedigree, Value = GedcomTags.AdoptedPedigree });
+      }
+      return familyChild;
+    });
 
     // Re-attach the unmodeled INDI sub-tags stashed at import: the recursive writer re-levels them back
     // under this regenerated INDI, so they emit exactly as they came in.
-    node.Add(await ParseResidueAsync(residue, token));
+    var resedueData = await ParseResidueAsync(individual.Residue, token);
+    node.Add([.. spouseNodes, .. childNodes, .. resedueData]);
 
     return node;
   }

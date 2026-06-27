@@ -86,6 +86,19 @@ public sealed class GedcomReaderWriterTests
     roundTripped.Value.Should().Be(longText);
   }
 
+  [Fact]
+  public async Task Write_PreservesSpaceLandingOnAChunkBoundaryAsync()
+  {
+    // The writer splits long values at a fixed 200-char offset; here a space sits at index 199 so it ends
+    // the first chunk. The reader must not strip it, or a re-joined value silently loses the space.
+    var value = new string('a', 199) + " " + new string('b', 100);
+    var record = new GedcomNode { Tag = "NOTE", Value = value };
+
+    var roundTripped = await WriteThenReadAsync(record, _Token);
+
+    roundTripped.Value.Should().Be(value);
+  }
+
   private static async Task<GedcomNode> WriteThenReadAsync(GedcomNode record, CancellationToken token)
   {
     var writer = new StringWriter();

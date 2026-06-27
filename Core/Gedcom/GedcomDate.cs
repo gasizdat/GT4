@@ -15,6 +15,10 @@ internal static class GedcomDate
 
   private const string BeforeChrist = "B.C.";
 
+  // Range/approximation prefixes GT4 cannot express; any of them collapses the date to an approximate year.
+  private static readonly HashSet<string> Qualifiers =
+    ["ABT", "EST", "CAL", "BEF", "AFT", "FROM", "TO", "BET"];
+
   /// <summary>The GEDCOM rendering of <paramref name="date"/>, or <c>null</c> when nothing is known.</summary>
   public static string? ToGedcom(Date date)
   {
@@ -76,14 +80,13 @@ internal static class GedcomDate
   /// </summary>
   private static bool RemoveQualifiers(ref string[] tokens)
   {
-    var qualifiers = new HashSet<string> { "ABT", "EST", "CAL", "BEF", "AFT", "FROM", "TO", "BET" };
     var approximate = false;
     var kept = new List<string>();
     foreach (var token in tokens)
     {
       if (token == "AND")
         break; // Keep only the first endpoint of a BET x AND y range.
-      if (qualifiers.Contains(token))
+      if (Qualifiers.Contains(token))
       {
         approximate = true;
         continue;

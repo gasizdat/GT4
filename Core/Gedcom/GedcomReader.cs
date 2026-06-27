@@ -54,7 +54,9 @@ internal static class GedcomReader
 
   private static (int Level, string? Xref, string Tag, string? Value)? ParseLine(string rawLine)
   {
-    var line = rawLine.Trim();
+    // Only leading whitespace is stripped: a trailing space can be a significant part of a value that the
+    // writer split onto a CONC line exactly at a space, and trimming it would drop the space on round-trip.
+    var line = rawLine.TrimStart();
     if (line.Length == 0)
       return null;
 
