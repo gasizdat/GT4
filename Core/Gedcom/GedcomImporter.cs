@@ -30,17 +30,37 @@ internal sealed class GedcomImporter : IGedcomImporter
     // individual, so it is collected up front and consulted while wiring each family's children.
     var adoptedLinks = CollectAdoptedLinks(individuals);
 
+    // Merge support: an import may land in a populated project. Existing names are reused so the
+    // UNIQUE(Value, Type, ParentId) index never throws, and an incoming individual that matches an
+    // existing person (same first name, family name and a known birth date) is folded into that person
+    // instead of duplicated. Every read below runs before the write transaction so the parallel reads
+    // inside GetPersonFullInfoAsync never share the flow-affine import transaction.
+    var existingNames = await document.Names.GetNamesByTypeAsync(NameType.AllNames, token);
+    var existingPersons = await document.PersonManager.GetPersonInfosAsync(selectMainPhoto: false, token);
+    var matches = await ResolveMatchesAsync(document, individuals, existingPersons, token);
+    var existingEdges = await CollectExistingEdgesAsync(document, matches.Values, token);
+
     // One outer transaction on a single flow: every inner Add* collapses to a SAVEPOINT and the lone
     // root commit stamps the revision, so the import lands all-or-nothing. The two passes stay strictly
     // sequential because a flow-affine transaction cannot be shared across parallel branches.
     using var transaction = await document.BeginTransactionAsync(token);
 
-    var nameCache = new Dictionary<(string Value, NameType Type, int? ParentId), Name>();
+    var nameCache = existingNames.ToDictionary(n => (n.Value, n.Type, n.ParentId), n => n);
     var personByXref = new Dictionary<string, Person>();
 
     foreach (var individual in individuals)
     {
-      var person = await ImportIndividualAsync(document, individual, notesByXref, nameCache, token);
+      Person person;
+      if (individual.Xref is not null && matches.TryGetValue(individual.Xref, out var match))
+      {
+        person = match.Existing;
+        await GapFillAsync(document, match, individual, notesByXref, token);
+      }
+      else
+      {
+        person = await ImportIndividualAsync(document, individual, notesByXref, nameCache, token);
+      }
+
       if (individual.Xref is not null)
       {
         personByXref[individual.Xref] = person;
@@ -49,12 +69,183 @@ internal sealed class GedcomImporter : IGedcomImporter
 
     foreach (var family in families)
     {
-      await ImportFamilyAsync(document, family, personByXref, adoptedLinks, token);
+      await ImportFamilyAsync(document, family, personByXref, adoptedLinks, existingEdges, token);
     }
 
     await ImportPassthroughRecordsAsync(document, records, token);
 
     await transaction.CommitAsync(token);
+  }
+
+  // A reused person: the existing record an incoming individual was matched to, plus its full info so
+  // gap-fill can tell which fields are empty without re-reading inside the transaction.
+  private sealed record Match(PersonInfo Existing, PersonFullInfo Full);
+
+  // The identity an incoming individual and an existing person are matched on. Only built when a first
+  // name and a known birth date are present, which is what makes a match conservative enough to trust.
+  private readonly record struct PersonIdentity(string FirstName, string? FamilyName, Date BirthDate);
+
+  /// <summary>
+  /// Decides which incoming individuals fold into an existing person. A match needs a first name and a
+  /// known birth date, the identity to be unique among the existing persons, and unique among the
+  /// incoming individuals too: anything ambiguous on either side is left to import as a new person, so
+  /// the import never collapses two distinct people into one.
+  /// </summary>
+  private static async Task<Dictionary<string, Match>> ResolveMatchesAsync(
+    IProjectDocument document,
+    GedcomNode[] individuals,
+    PersonInfo[] existingPersons,
+    CancellationToken token)
+  {
+    var existingByIdentity = existingPersons
+      .Select(person => (person, identity: ExistingIdentity(person)))
+      .Where(x => x.identity is not null)
+      .GroupBy(x => x.identity!.Value)
+      .ToDictionary(group => group.Key, group => group.Select(x => x.person).ToArray());
+
+    var incoming = individuals
+      .Where(individual => individual.Xref is not null)
+      .Select(individual => (xref: individual.Xref!, identity: IncomingIdentity(individual)))
+      .Where(x => x.identity is not null)
+      .ToArray();
+    var incomingCounts = incoming
+      .GroupBy(x => x.identity!.Value)
+      .ToDictionary(group => group.Key, group => group.Count());
+
+    var matches = new Dictionary<string, Match>();
+    foreach (var (xref, identity) in incoming)
+    {
+      if (incomingCounts[identity!.Value] != 1)
+        continue;
+      if (!existingByIdentity.TryGetValue(identity.Value, out var candidates) || candidates.Length != 1)
+        continue;
+
+      var existing = candidates[0];
+      var full = await document.PersonManager.GetPersonFullInfoAsync(existing, token);
+      matches[xref] = new Match(existing, full);
+    }
+
+    return matches;
+  }
+
+  /// <summary>
+  /// The relationship edges the reused persons already have, keyed exactly as the importer would insert
+  /// them (owner id, relative id, type, date). A duplicate edge cannot arise unless both endpoints are
+  /// reused, so only reused persons are read; wiring then skips any edge already in this set. This
+  /// matters because a child edge stores a null date, and SQLite treats null primary-key parts as
+  /// distinct, so the PRIMARY KEY would silently admit a duplicate instead of rejecting it.
+  /// </summary>
+  private static async Task<HashSet<(int Owner, int Relative, RelationshipType Type, Date? Date)>> CollectExistingEdgesAsync(
+    IProjectDocument document,
+    IEnumerable<Match> matches,
+    CancellationToken token)
+  {
+    var edges = new HashSet<(int, int, RelationshipType, Date?)>();
+    foreach (var match in matches)
+    {
+      var relatives = await document.Relatives.GetRelativesAsync(match.Existing, token);
+      foreach (var relative in relatives)
+      {
+        edges.Add((match.Existing.Id, relative.Id, relative.Type, relative.Date));
+      }
+    }
+
+    return edges;
+  }
+
+  /// <summary>
+  /// Fills only the fields a matched person is missing: bio, unmodeled-tag residue and photos are added
+  /// when absent, and a death date is set when the person has none. Populated values are never
+  /// overwritten, so folding a file into an existing tree can enrich a person but cannot lose data.
+  /// </summary>
+  private static async Task GapFillAsync(
+    IProjectDocument document,
+    Match match,
+    GedcomNode individual,
+    IReadOnlyDictionary<string, string?> notesByXref,
+    CancellationToken token)
+  {
+    var full = match.Full;
+    var additions = new List<Data>();
+
+    if (full.Biography is null)
+    {
+      var biography = BuildBiography(individual, notesByXref);
+      if (biography is not null)
+        additions.Add(biography);
+    }
+
+    if (full.GedcomData is null)
+    {
+      var residue = BuildResidueData(individual);
+      if (residue is not null)
+        additions.Add(residue);
+    }
+
+    if (full.MainPhoto is null && full.AdditionalPhotos.Length == 0)
+    {
+      var (mainPhoto, additionalPhotos) = BuildPhotos(individual);
+      if (mainPhoto is not null)
+        additions.Add(mainPhoto);
+      additions.AddRange(additionalPhotos);
+    }
+
+    if (additions.Count > 0)
+    {
+      await document.PersonData.AddPersonDataSetAsync(match.Existing, [.. additions], token);
+    }
+
+    if (full.DeathDate is null)
+    {
+      var death = ParseEventDate(individual, GedcomTags.Death);
+      if (death is not null)
+      {
+        var updated = new Person(match.Existing.Id, match.Existing.BirthDate, death, match.Existing.BiologicalSex);
+        await document.Persons.UpdatePersonAsync(updated, token);
+      }
+    }
+  }
+
+  private static PersonIdentity? ExistingIdentity(PersonInfo person)
+  {
+    var firstName = person.Names.FirstOrDefault(name => name.Type.HasFlag(NameType.FirstName))?.Value;
+    var familyName = person.Names.FirstOrDefault(name => name.Type.HasFlag(NameType.FamilyName))?.Value;
+    return ToIdentity(firstName, familyName, person.BirthDate);
+  }
+
+  private static PersonIdentity? IncomingIdentity(GedcomNode individual)
+  {
+    var birthDate = ParseEventDate(individual, GedcomTags.Birth);
+    if (birthDate is null)
+      return null;
+
+    var (firstName, familyName) = RawNameParts(individual);
+    return ToIdentity(firstName, familyName, birthDate.Value);
+  }
+
+  private static PersonIdentity? ToIdentity(string? firstName, string? familyName, Date birthDate)
+  {
+    if (string.IsNullOrWhiteSpace(firstName) || birthDate.Status == DateStatus.Unknown)
+      return null;
+
+    return new PersonIdentity(firstName, string.IsNullOrWhiteSpace(familyName) ? null : familyName, birthDate);
+  }
+
+  /// <summary>
+  /// The first given token and the surname straight from the GEDCOM NAME, matching how
+  /// <see cref="BuildNamesAsync"/> stores the first name and family name, so the identity computed here
+  /// lines up with the one read back off an existing person.
+  /// </summary>
+  private static (string? First, string? Family) RawNameParts(GedcomNode individual)
+  {
+    var nameNode = individual.Child(GedcomTags.Name);
+    if (nameNode is null)
+      return (null, null);
+
+    var given = nameNode.ChildValue(GedcomTags.Given) ?? GivenFromValue(nameNode.Value);
+    var surname = nameNode.ChildValue(GedcomTags.Surname) ?? SurnameFromValue(nameNode.Value);
+    var first = given?.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+    return (first, surname?.Trim());
   }
 
   /// <summary>
@@ -301,6 +492,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     GedcomNode family,
     IReadOnlyDictionary<string, Person> personByXref,
     HashSet<(string Child, string Family)> adoptedLinks,
+    HashSet<(int Owner, int Relative, RelationshipType Type, Date? Date)> existingEdges,
     CancellationToken token)
   {
     var husband = Resolve(family.ChildValue(GedcomTags.Husband), personByXref);
@@ -321,6 +513,7 @@ internal sealed class GedcomImporter : IGedcomImporter
       var marriages = family.ChildrenWithTag(GedcomTags.Marriage).ToArray();
       var spouses = marriages
         .Select(m => new Relative(wife, RelationshipType.Spouse, ParseSpouseDate(m)))
+        .Where(s => !existingEdges.Contains((husband.Id, s.Id, s.Type, s.Date)))
         .ToArray();
       if (spouses.Length > 0)
       {
@@ -338,8 +531,12 @@ internal sealed class GedcomImporter : IGedcomImporter
 
       var childRelatives = children
         .Select(c => new Relative(c.Person, c.Adopted ? RelationshipType.AdoptiveChild : RelationshipType.Child, null))
+        .Where(r => !existingEdges.Contains((parent.Id, r.Id, r.Type, r.Date)))
         .ToArray();
-      await document.Relatives.AddRelativesAsync(parent, childRelatives, token);
+      if (childRelatives.Length > 0)
+      {
+        await document.Relatives.AddRelativesAsync(parent, childRelatives, token);
+      }
     }
   }
 
