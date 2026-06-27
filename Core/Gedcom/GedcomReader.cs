@@ -14,10 +14,8 @@ internal static class GedcomReader
     var openNodes = new Dictionary<int, GedcomNode>();
 
     string? line;
-    while ((line = reader.ReadLine()) != null)
+    while ((line = await reader.ReadLineAsync(token)) != null)
     {
-      token.ThrowIfCancellationRequested();
-
       var parsed = ParseLine(line);
       if (parsed is null)
         continue;

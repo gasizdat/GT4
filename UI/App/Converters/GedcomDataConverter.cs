@@ -23,8 +23,7 @@ public sealed class GedcomDataConverter : IDataConverter
   public async Task<object?> ToObjectAsync(Data? data, CancellationToken token)
   {
     var facts = await GedcomNarrative.ParseAsync(data, token);
-    object? markdown = facts.Length == 0 ? null : Render(facts);
-    return Task.FromResult(markdown);
+    return facts.Length == 0 ? null : Render(facts);
   }
 
   private static string Render(GedcomFact[] facts)

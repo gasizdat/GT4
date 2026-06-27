@@ -51,7 +51,7 @@ public sealed class GedcomReaderWriterTests
   }
 
   [Fact]
-  public async Task PointerValue_IsNotMistakenForRecordIdentifierAsunc()
+  public async Task PointerValue_IsNotMistakenForRecordIdentifierAsync()
   {
     var roots = await GedcomReader.ReadAsync(new StringReader("0 @F1@ FAM\n1 HUSB @I1@\n"), _Token);
 
