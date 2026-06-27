@@ -48,6 +48,12 @@ public partial class CreateOrUpdateNameDialog : ContentPage
       case NameType.FamilyName:
       case NameType.FirstName | NameType.MaleDeclension:
       case NameType.FirstName | NameType.FemaleDeclension:
+      // Imported patronymics/last names can be parentless (orphans); editing one in isolation is a
+      // single-value edit (no declension fields), so the dialog accepts these standalone leaf types.
+      case NameType.Patronymic | NameType.MaleDeclension:
+      case NameType.Patronymic | NameType.FemaleDeclension:
+      case NameType.LastName | NameType.MaleDeclension:
+      case NameType.LastName | NameType.FemaleDeclension:
         _NameType = nameType;
         break;
 
@@ -141,6 +147,10 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     NameType.FamilyName => UIStrings.FieldFamilyNameEntry,
     NameType.FirstName | NameType.MaleDeclension => UIStrings.FieldFirstNameMaleEntry,
     NameType.FirstName | NameType.FemaleDeclension => UIStrings.FieldFirstNameFemaleEntry,
+    NameType.Patronymic | NameType.MaleDeclension => UIStrings.FieldPatronymicMaleEntry,
+    NameType.Patronymic | NameType.FemaleDeclension => UIStrings.FieldPatronymicFemaleEntry,
+    NameType.LastName | NameType.MaleDeclension => UIStrings.FieldLastNameMaleEntry,
+    NameType.LastName | NameType.FemaleDeclension => UIStrings.FieldLastNameFemaleEntry,
     _ => throw new ApplicationException(nameof(GeneralNameDescription))
   };
 
@@ -149,39 +159,42 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     NameType.FamilyName => UIStrings.TxtPlaceholderFamilyName,
     NameType.FirstName | NameType.MaleDeclension => UIStrings.TxtPlaceholderMaleName,
     NameType.FirstName | NameType.FemaleDeclension => UIStrings.TxtPlaceholderFemaleName,
+    NameType.Patronymic | NameType.MaleDeclension => UIStrings.TxtPlaceholderPatronymicMale,
+    NameType.Patronymic | NameType.FemaleDeclension => UIStrings.TxtPlaceholderPatronymicFemale,
+    NameType.LastName | NameType.MaleDeclension => UIStrings.TxtPlaceholderLastNameMale,
+    NameType.LastName | NameType.FemaleDeclension => UIStrings.TxtPlaceholderLastNameFemale,
     _ => throw new ApplicationException(nameof(GeneralNamePlaceholder))
   };
 
+  // The declension labels below are only shown when ShowDeclensionNames is true (FamilyName and
+  // FirstName|Male); every other supported type — including the standalone orphan leaves — hides
+  // these fields, so their labels are empty.
   public string MaleNameDescription => _NameType switch
   {
     NameType.FamilyName => UIStrings.FieldLastNameMaleEntry,
     NameType.FirstName | NameType.MaleDeclension => UIStrings.FieldPatronymicMaleEntry,
-    NameType.FirstName | NameType.FemaleDeclension => string.Empty,
-    _ => throw new ApplicationException(nameof(MaleNameDescription))
+    _ => string.Empty
   };
 
   public string MaleNamePlaceholder => _NameType switch
   {
     NameType.FamilyName => UIStrings.TxtPlaceholderLastNameMale,
     NameType.FirstName | NameType.MaleDeclension => UIStrings.TxtPlaceholderPatronymicMale,
-    NameType.FirstName | NameType.FemaleDeclension => string.Empty,
-    _ => throw new ApplicationException(nameof(MaleNamePlaceholder))
+    _ => string.Empty
   };
 
   public string FemaleNameDescription => _NameType switch
   {
     NameType.FamilyName => UIStrings.FieldLastNameFemaleEntry,
     NameType.FirstName | NameType.MaleDeclension => UIStrings.FieldPatronymicFemaleEntry,
-    NameType.FirstName | NameType.FemaleDeclension => string.Empty,
-    _ => throw new ApplicationException(nameof(FemaleNameDescription))
+    _ => string.Empty
   };
 
   public string FemaleNamePlaceholder => _NameType switch
   {
     NameType.FamilyName => UIStrings.TxtPlaceholderLastNameFemale,
     NameType.FirstName | NameType.MaleDeclension => UIStrings.TxtPlaceholderPatronymicFemale,
-    NameType.FirstName | NameType.FemaleDeclension => string.Empty,
-    _ => throw new ApplicationException(nameof(FemaleNamePlaceholder))
+    _ => string.Empty
   };
 
   public Task<FamilyInfo?> Info => _Info.Task;
@@ -259,17 +272,25 @@ public partial class CreateOrUpdateNameDialog : ContentPage
       return ret;
     }
 
-    var names = name.Type switch
-    {
-      NameType.FirstName | NameType.MaleDeclension or
-      NameType.Patronymic | NameType.MaleDeclension or
-      NameType.Patronymic | NameType.FemaleDeclension or
-      NameType.LastName | NameType.MaleDeclension or
-      NameType.LastName | NameType.FemaleDeclension or
-      NameType.FamilyName => await GetNameWithSubnames(),
-      _ => new NamesGroup(name, null, null),
-    };
-    var focusGenericName = name.Type.HasFlag(NameType.FirstName) || name.Type.HasFlag(NameType.FamilyName);
+    // Imported patronymics/last names can have no parent first name (orphans). They have no
+    // declensions to gather, so edit the single value directly instead of walking to a parent that
+    // GetNameWithSubnames would fail to find.
+    var isOrphanDeclension = name.ParentId is null &&
+      (name.Type.HasFlag(NameType.Patronymic) || name.Type.HasFlag(NameType.LastName));
+    var names = isOrphanDeclension
+      ? new NamesGroup(name, null, null)
+      : name.Type switch
+      {
+        NameType.FirstName | NameType.MaleDeclension or
+        NameType.Patronymic | NameType.MaleDeclension or
+        NameType.Patronymic | NameType.FemaleDeclension or
+        NameType.LastName | NameType.MaleDeclension or
+        NameType.LastName | NameType.FemaleDeclension or
+        NameType.FamilyName => await GetNameWithSubnames(),
+        _ => new NamesGroup(name, null, null),
+      };
+    var focusGenericName = isOrphanDeclension ||
+      name.Type.HasFlag(NameType.FirstName) || name.Type.HasFlag(NameType.FamilyName);
     var dialog = new CreateOrUpdateNameDialog(names.FirstName, names.MaleName, names.FemaleName, serviceProvider)
     {
       FocusGenericName = focusGenericName,

@@ -26,6 +26,11 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
       personDataSet.Add(personFullInfo.Biography);
     }
 
+    if (personFullInfo.GedcomData is not null)
+    {
+      personDataSet.Add(personFullInfo.GedcomData);
+    }
+
     return personDataSet.ToArray();
   }
 
@@ -47,7 +52,8 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
       mainPhoto: personData.Result.SingleOrDefault(data => data.Category == DataCategory.PersonMainPhoto),
       additionalPhotos: personData.Result.Where(data => data.Category == DataCategory.PersonPhoto).ToArray(),
       relativeInfos: relativeInfos.Result,
-      biography: personData.Result.SingleOrDefault(data => data.Category == DataCategory.PersonBio));
+      biography: personData.Result.SingleOrDefault(data => data.Category == DataCategory.PersonBio),
+      gedcomData: personData.Result.SingleOrDefault(data => data.Category == DataCategory.PersonGedcomTags));
 
     return ret;
   }

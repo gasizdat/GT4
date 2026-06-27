@@ -22,6 +22,7 @@ public partial class PersonPage : ContentPage
   private readonly IDateFormatter _DateFormatter;
   private readonly INameFormatter _NameFormatter;
   private readonly IDataConverter _TextConverter;
+  private readonly IDataConverter _GedcomConverter;
   private readonly ICommand _PageCommand;
   private readonly ObservableCollection<RelativeInfo> _Relatives = new();
   private ObservableCollection<PersonInfo> _NavigationHistory = new();
@@ -41,6 +42,7 @@ public partial class PersonPage : ContentPage
     _DateFormatter = _ServiceProvider.GetRequiredService<IDateFormatter>();
     _NameFormatter = _ServiceProvider.GetRequiredService<INameFormatter>();
     _TextConverter = _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonBio);
+    _GedcomConverter = _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonGedcomTags);
     _PageCommand = new SafeCommand(OnPageCommand);
 
     InitializeComponent();
@@ -131,6 +133,17 @@ public partial class PersonPage : ContentPage
 
   public bool ShowBiography => !string.IsNullOrWhiteSpace(_Biography);
 
+  // The biography block doubles as the home for the read-only GEDCOM details: the stored bio first, then
+  // the rendered residual tags, so a person carrying only imported GEDCOM data still shows the block.
+  private static string CombineBiography(string? bio, string? gedcomDetails)
+  {
+    if (string.IsNullOrWhiteSpace(gedcomDetails))
+      return bio ?? string.Empty;
+    if (string.IsNullOrWhiteSpace(bio))
+      return gedcomDetails;
+    return $"{bio}\n\n{gedcomDetails}";
+  }
+
   public Name? FamilyName => _PersonFullInfo.Names.SingleOrDefault(n => n.Type == NameType.FamilyName);
 
   public string GoToFamilyName => string.Format(UIStrings.MenuItemGotoFamily_1, FamilyName?.Value ?? string.Empty);
@@ -188,7 +201,8 @@ public partial class PersonPage : ContentPage
       var parentsTasks = project.RelativesProvider.GetParentsAsync(personFullInfo.RelativeInfos, token);
       var stepChildrenTasks = project.RelativesProvider.GetStepChildrenAsync(personFullInfo.RelativeInfos, token);
       var bioTask = _TextConverter.ToObjectAsync(personFullInfo.Biography, token);
-      await Task.WhenAll(parentsTasks, stepChildrenTasks, bioTask);
+      var gedcomTask = _GedcomConverter.ToObjectAsync(personFullInfo.GedcomData, token);
+      await Task.WhenAll(parentsTasks, stepChildrenTasks, bioTask, gedcomTask);
 
       byte[][] photos;
 
@@ -217,6 +231,7 @@ public partial class PersonPage : ContentPage
                                                   parentsTasks.Result,
                                                   stepChildrenTasks.Result,
                                                   photos, bioTask.Result as string,
+                                                  gedcomTask.Result as string,
                                                   addToNavigation));
     }
     catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
@@ -239,6 +254,7 @@ public partial class PersonPage : ContentPage
                        RelativeInfo[] stepChildren,
                        byte[][] photos,
                        string? bio,
+                       string? gedcomDetails,
                        bool addToNavigation)
   {
     var relativesProvider = _CurrentProjectProvider.Project.RelativesProvider;
@@ -246,7 +262,7 @@ public partial class PersonPage : ContentPage
     _PersonFullInfo = personFullInfo;
     _Photos = photos;
     _Relatives.Clear();
-    _Biography = bio ?? string.Empty;
+    _Biography = CombineBiography(bio, gedcomDetails);
 
     void Add(IEnumerable<RelativeInfo> relatives)
     {

@@ -649,6 +649,33 @@ genealogy tree and enjoy!</value>
   <data name="MenuItemGoToNames" xml:space="preserve">
     <value>📝 To Names</value>
   </data>
+  <data name="MenuItemImportGedcom" xml:space="preserve">
+    <value>📥 Import from GEDCOM</value>
+  </data>
+  <data name="MenuItemExportGedcom" xml:space="preserve">
+    <value>📤 Export to GEDCOM</value>
+  </data>
+  <data name="AlertImportGedcomConfirm_1" xml:space="preserve">
+    <value>Import a GEDCOM file into {0}? People that match an existing person are merged; the rest are added.</value>
+  </data>
+  <data name="FileDialogSelectGedcom" xml:space="preserve">
+    <value>Select a GEDCOM file</value>
+  </data>
+  <data name="HintImportedFromGedcom" xml:space="preserve">
+    <value>Imported from GEDCOM</value>
+  </data>
+  <data name="TitleGedcomImportDialog" xml:space="preserve">
+    <value>Importing GEDCOM</value>
+  </data>
+  <data name="HintGedcomImportInProgress" xml:space="preserve">
+    <value>Importing the file. This may take a while…</value>
+  </data>
+  <data name="HintGedcomImportCancelling" xml:space="preserve">
+    <value>Cancelling…</value>
+  </data>
+  <data name="ShareGedcomTitle" xml:space="preserve">
+    <value>Export GEDCOM</value>
+  </data>
   <data name="FieldSearchText" xml:space="preserve">
     <value>Search</value>
   </data>
@@ -797,5 +824,113 @@ FN - family name</value>
   </data>
   <data name="FieldFontScaleHintAndroid" xml:space="preserve">
     <value>Scale the size of all text in the application. You can use zooming gesture to increase or decrease the scale of the text size</value>
+  </data>
+  <data name="FieldGedcomDetails" xml:space="preserve">
+    <value>Additional details</value>
+  </data>
+  <data name="GedcomTagOCCU" xml:space="preserve">
+    <value>Occupation</value>
+  </data>
+  <data name="GedcomTagRESI" xml:space="preserve">
+    <value>Residence</value>
+  </data>
+  <data name="GedcomTagBURI" xml:space="preserve">
+    <value>Burial</value>
+  </data>
+  <data name="GedcomTagCREM" xml:space="preserve">
+    <value>Cremation</value>
+  </data>
+  <data name="GedcomTagEVEN" xml:space="preserve">
+    <value>Event</value>
+  </data>
+  <data name="GedcomTagCENS" xml:space="preserve">
+    <value>Census</value>
+  </data>
+  <data name="GedcomTagBAPM" xml:space="preserve">
+    <value>Baptism</value>
+  </data>
+  <data name="GedcomTagCHR" xml:space="preserve">
+    <value>Christening</value>
+  </data>
+  <data name="GedcomTagCONF" xml:space="preserve">
+    <value>Confirmation</value>
+  </data>
+  <data name="GedcomTagORDN" xml:space="preserve">
+    <value>Ordination</value>
+  </data>
+  <data name="GedcomTagADOP" xml:space="preserve">
+    <value>Adoption</value>
+  </data>
+  <data name="GedcomTagEMIG" xml:space="preserve">
+    <value>Emigration</value>
+  </data>
+  <data name="GedcomTagIMMI" xml:space="preserve">
+    <value>Immigration</value>
+  </data>
+  <data name="GedcomTagNATU" xml:space="preserve">
+    <value>Naturalization</value>
+  </data>
+  <data name="GedcomTagRETI" xml:space="preserve">
+    <value>Retirement</value>
+  </data>
+  <data name="GedcomTagPROB" xml:space="preserve">
+    <value>Probate</value>
+  </data>
+  <data name="GedcomTagWILL" xml:space="preserve">
+    <value>Will</value>
+  </data>
+  <data name="GedcomTagGRAD" xml:space="preserve">
+    <value>Graduation</value>
+  </data>
+  <data name="GedcomTagEDUC" xml:space="preserve">
+    <value>Education</value>
+  </data>
+  <data name="GedcomTagRELI" xml:space="preserve">
+    <value>Religion</value>
+  </data>
+  <data name="GedcomTagNATI" xml:space="preserve">
+    <value>Nationality</value>
+  </data>
+  <data name="GedcomTagTITL" xml:space="preserve">
+    <value>Title</value>
+  </data>
+  <data name="GedcomTagPROP" xml:space="preserve">
+    <value>Property</value>
+  </data>
+  <data name="GedcomTagDSCR" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="GedcomTagDATE" xml:space="preserve">
+    <value>Date</value>
+  </data>
+  <data name="GedcomTagPLAC" xml:space="preserve">
+    <value>Place</value>
+  </data>
+  <data name="GedcomTagTYPE" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="GedcomTagADDR" xml:space="preserve">
+    <value>Address</value>
+  </data>
+  <data name="GedcomTagPHON" xml:space="preserve">
+    <value>Phone</value>
+  </data>
+  <data name="GedcomTagEMAIL" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="GedcomTagAGE" xml:space="preserve">
+    <value>Age</value>
+  </data>
+  <data name="GedcomTagAGNC" xml:space="preserve">
+    <value>Agency</value>
+  </data>
+  <data name="GedcomTagCAUS" xml:space="preserve">
+    <value>Cause</value>
+  </data>
+  <data name="GedcomTagNOTE" xml:space="preserve">
+    <value>Note</value>
+  </data>
+  <data name="GedcomTagROLE" xml:space="preserve">
+    <value>Role</value>
   </data>
 </root>

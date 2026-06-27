@@ -130,27 +130,6 @@ public sealed class ProjectListTests : IDisposable
   }
 
   [Fact]
-  public async Task Remove_DeletesTheProjectFile()
-  {
-    await SeedProjectAsync("ToRemove", "d");
-    (await _list.GetItemsAsync(Token)).Should().ContainSingle();
-
-    await _list.RemoveAsync("ToRemove", Token);
-
-    (await _list.GetItemsAsync(Token)).Should().BeEmpty();
-  }
-
-  [Fact]
-  public async Task Remove_UnknownName_IsNoOp()
-  {
-    await SeedProjectAsync("Keep", "d");
-
-    await _list.RemoveAsync("does-not-exist", Token);
-
-    (await _list.GetItemsAsync(Token)).Should().ContainSingle();
-  }
-
-  [Fact]
   public async Task Import_CopiesProjectIntoTheLibrary()
   {
     // Build a standalone project file, then import its bytes.
@@ -172,6 +151,48 @@ public sealed class ProjectListTests : IDisposable
 
     var items = await _list.GetItemsAsync(Token);
     items.Select(i => i.Name).Should().Contain("Imported");
+  }
+
+  [Fact]
+  public async Task Remove_DeletesOriginFile_AndInvalidatesCachedListing()
+  {
+    var origin = await SeedProjectAsync("Doomed", "to be removed");
+    // Populate the listing cache first, so the test also proves Remove invalidates it rather than
+    // leaving a stale entry behind.
+    (await _list.GetItemsAsync(Token)).Should().ContainSingle();
+
+    await _list.RemoveAsync(origin, Token);
+
+    _fs.FileExists(origin).Should().BeFalse();
+    (await _list.GetItemsAsync(Token)).Should().BeEmpty();
+  }
+
+  [Fact]
+  public async Task Remove_ByOrigin_DeletesOnlyThatProject_NotASameNamedSibling()
+  {
+    // The reason RemoveAsync keys on the origin file rather than the display name: two projects can share
+    // a name (e.g. re-importing the same GEDCOM), and removing one must not delete the other.
+    var first = await SeedProjectAsync("Twins", "first");
+    var second = await SeedProjectAsync("Twins", "second");
+
+    await _list.RemoveAsync(first, Token);
+
+    _fs.FileExists(first).Should().BeFalse();
+    _fs.FileExists(second).Should().BeTrue();
+    (await _list.GetItemsAsync(Token)).Should().ContainSingle().Which.Origin.Should().Be(second);
+  }
+
+  [Fact]
+  public async Task Remove_NonExistentOrigin_IsANoOp()
+  {
+    var origin = await SeedProjectAsync("Survivor", "stays");
+    var dir = _list.GetProjectDirectoryByName("Ghost");
+    var missing = new FileDescription(dir, "ghost-never-written.gt4", IProjectDocument.MimeType);
+
+    await _list.RemoveAsync(missing, Token);
+
+    _fs.FileExists(origin).Should().BeTrue();
+    (await _list.GetItemsAsync(Token)).Should().ContainSingle();
   }
 }
 

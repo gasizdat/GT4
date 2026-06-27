@@ -8,3 +8,4 @@ bin
 obj
 *.lnk
 /buildnumber.txt
+/Core/Gedcom/unsupported-tags.md

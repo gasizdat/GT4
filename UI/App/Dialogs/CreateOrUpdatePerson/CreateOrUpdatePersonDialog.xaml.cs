@@ -32,6 +32,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private Date? _DeathDate;
   private BiologicalSexItem? _BiologicalSex;
   private PersonDataItem? _Biography;
+  private Data? _GedcomData;
   private bool _IsModified;
   private bool _NotReady => _BiologicalSex is null || _BirthDate is null || !_IsModified;
 
@@ -81,6 +82,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       _PersonId = person.Id;
       _BirthDate = person.BirthDate;
       _DeathDate = person.DeathDate;
+      _GedcomData = person.GedcomData;
       var names = person
         .Names
         .Select(name => new NameInfoItem(name, _NameTypeFormatter))
@@ -226,7 +228,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       additionalPhotos: additionalPhotos,
       relativeInfos: [.. _Relatives],
       mainPhoto: mainPhoto is null ? null : mainPhoto with { Category = DataCategory.PersonMainPhoto },
-      biography: _Biography?.ToDataAsync().Result);
+      biography: _Biography?.ToDataAsync().Result,
+      gedcomData: _GedcomData);
 
     _Info.SetResult(result);
   }

@@ -7,5 +7,7 @@ public enum DataCategory
   // Additional person photo
   PersonPhoto = 2,
   // Person biography
-  PersonBio = 3
+  PersonBio = 3,
+  // Verbatim GEDCOM INDI sub-tags GT4 does not model, kept so an import/export round-trip loses nothing
+  PersonGedcomTags = 4
 }

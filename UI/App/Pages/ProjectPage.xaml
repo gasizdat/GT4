@@ -33,6 +33,16 @@
         Text="{x:Static resources:UIStrings.MenuItemGoToNames}" />
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="ImportGedcom"
+        Order="Secondary"
+        Text="{x:Static resources:UIStrings.MenuItemImportGedcom}" />
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="ExportGedcom"
+        Order="Secondary"
+        Text="{x:Static resources:UIStrings.MenuItemExportGedcom}" />
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="GoToRevisions"
         Order="Primary"
         Text="{x:Static resources:UIStrings.MenuItemGoToRevisions}" />

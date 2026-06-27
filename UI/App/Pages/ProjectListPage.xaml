@@ -17,6 +17,11 @@
         Text="{x:Static resources:UIStrings.MenuItemNameCreateGenealogyTree}" />
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="ImportGedcom"
+        Order="Secondary"
+        Text="{x:Static resources:UIStrings.MenuItemImportGedcom}" />
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="Refresh"
         Order="Secondary"
         Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />

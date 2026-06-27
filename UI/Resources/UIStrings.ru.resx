@@ -649,6 +649,33 @@
   <data name="MenuItemGoToNames" xml:space="preserve">
     <value>📝 К именам</value>
   </data>
+  <data name="MenuItemImportGedcom" xml:space="preserve">
+    <value>📥 Импорт из GEDCOM</value>
+  </data>
+  <data name="MenuItemExportGedcom" xml:space="preserve">
+    <value>📤 Экспорт в GEDCOM</value>
+  </data>
+  <data name="AlertImportGedcomConfirm_1" xml:space="preserve">
+    <value>Импортировать файл GEDCOM в {0}? Совпадающие люди будут объединены, остальные добавлены.</value>
+  </data>
+  <data name="FileDialogSelectGedcom" xml:space="preserve">
+    <value>Выберите файл GEDCOM</value>
+  </data>
+  <data name="HintImportedFromGedcom" xml:space="preserve">
+    <value>Импортировано из GEDCOM</value>
+  </data>
+  <data name="TitleGedcomImportDialog" xml:space="preserve">
+    <value>Импорт GEDCOM</value>
+  </data>
+  <data name="HintGedcomImportInProgress" xml:space="preserve">
+    <value>Импорт файла. Это может занять некоторое время…</value>
+  </data>
+  <data name="HintGedcomImportCancelling" xml:space="preserve">
+    <value>Отмена…</value>
+  </data>
+  <data name="ShareGedcomTitle" xml:space="preserve">
+    <value>Экспорт GEDCOM</value>
+  </data>
   <data name="FieldSearchText" xml:space="preserve">
     <value>Поиск</value>
   </data>
@@ -797,5 +824,113 @@ FN - род</value>
   </data>
   <data name="FieldFontScaleHintAndroid" xml:space="preserve">
     <value>Масштаб всего текста в приложении. Вы можете использовать жест масштабирования, чтобы увеличить или уменьшить масштабирование размера текста </value>
+  </data>
+  <data name="FieldGedcomDetails" xml:space="preserve">
+    <value>Дополнительные сведения</value>
+  </data>
+  <data name="GedcomTagOCCU" xml:space="preserve">
+    <value>Род занятий</value>
+  </data>
+  <data name="GedcomTagRESI" xml:space="preserve">
+    <value>Место жительства</value>
+  </data>
+  <data name="GedcomTagBURI" xml:space="preserve">
+    <value>Погребение</value>
+  </data>
+  <data name="GedcomTagCREM" xml:space="preserve">
+    <value>Кремация</value>
+  </data>
+  <data name="GedcomTagEVEN" xml:space="preserve">
+    <value>Событие</value>
+  </data>
+  <data name="GedcomTagCENS" xml:space="preserve">
+    <value>Перепись</value>
+  </data>
+  <data name="GedcomTagBAPM" xml:space="preserve">
+    <value>Крещение</value>
+  </data>
+  <data name="GedcomTagCHR" xml:space="preserve">
+    <value>Крещение младенца</value>
+  </data>
+  <data name="GedcomTagCONF" xml:space="preserve">
+    <value>Конфирмация</value>
+  </data>
+  <data name="GedcomTagORDN" xml:space="preserve">
+    <value>Рукоположение</value>
+  </data>
+  <data name="GedcomTagADOP" xml:space="preserve">
+    <value>Усыновление</value>
+  </data>
+  <data name="GedcomTagEMIG" xml:space="preserve">
+    <value>Эмиграция</value>
+  </data>
+  <data name="GedcomTagIMMI" xml:space="preserve">
+    <value>Иммиграция</value>
+  </data>
+  <data name="GedcomTagNATU" xml:space="preserve">
+    <value>Натурализация</value>
+  </data>
+  <data name="GedcomTagRETI" xml:space="preserve">
+    <value>Выход на пенсию</value>
+  </data>
+  <data name="GedcomTagPROB" xml:space="preserve">
+    <value>Утверждение завещания</value>
+  </data>
+  <data name="GedcomTagWILL" xml:space="preserve">
+    <value>Завещание</value>
+  </data>
+  <data name="GedcomTagGRAD" xml:space="preserve">
+    <value>Окончание учёбы</value>
+  </data>
+  <data name="GedcomTagEDUC" xml:space="preserve">
+    <value>Образование</value>
+  </data>
+  <data name="GedcomTagRELI" xml:space="preserve">
+    <value>Религия</value>
+  </data>
+  <data name="GedcomTagNATI" xml:space="preserve">
+    <value>Национальность</value>
+  </data>
+  <data name="GedcomTagTITL" xml:space="preserve">
+    <value>Титул</value>
+  </data>
+  <data name="GedcomTagPROP" xml:space="preserve">
+    <value>Имущество</value>
+  </data>
+  <data name="GedcomTagDSCR" xml:space="preserve">
+    <value>Описание</value>
+  </data>
+  <data name="GedcomTagDATE" xml:space="preserve">
+    <value>Дата</value>
+  </data>
+  <data name="GedcomTagPLAC" xml:space="preserve">
+    <value>Место</value>
+  </data>
+  <data name="GedcomTagTYPE" xml:space="preserve">
+    <value>Тип</value>
+  </data>
+  <data name="GedcomTagADDR" xml:space="preserve">
+    <value>Адрес</value>
+  </data>
+  <data name="GedcomTagPHON" xml:space="preserve">
+    <value>Телефон</value>
+  </data>
+  <data name="GedcomTagEMAIL" xml:space="preserve">
+    <value>Электронная почта</value>
+  </data>
+  <data name="GedcomTagAGE" xml:space="preserve">
+    <value>Возраст</value>
+  </data>
+  <data name="GedcomTagAGNC" xml:space="preserve">
+    <value>Учреждение</value>
+  </data>
+  <data name="GedcomTagCAUS" xml:space="preserve">
+    <value>Причина</value>
+  </data>
+  <data name="GedcomTagNOTE" xml:space="preserve">
+    <value>Примечание</value>
+  </data>
+  <data name="GedcomTagROLE" xml:space="preserve">
+    <value>Роль</value>
   </data>
 </root>

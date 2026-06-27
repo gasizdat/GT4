@@ -1,0 +1,34 @@
+0 HEAD
+1 SOUR GT4Fixtures
+1 GEDC
+2 VERS 5.5.1
+2 FORM LINEAGE-LINKED
+1 CHAR UTF-8
+0 @I1@ INDI
+1 NAME Alex /Stone/
+2 GIVN Alex
+2 SURN Stone
+1 SEX M
+1 FAMS @F1@
+0 @I2@ INDI
+1 NAME Brian /Stone/
+2 GIVN Brian
+2 SURN Stone
+1 SEX M
+1 FAMS @F1@
+0 @I3@ INDI
+1 NAME Cody /Stone/
+2 GIVN Cody
+2 SURN Stone
+1 SEX M
+1 BIRT
+2 DATE 12 May 2016
+1 FAMC @F1@
+0 @F1@ FAM
+1 HUSB @I1@
+1 WIFE @I2@
+1 CHIL @I3@
+1 MARR
+2 DATE 4 Jul 2015
+2 PLAC Boston, Suffolk, Massachusetts, USA
+0 TRLR

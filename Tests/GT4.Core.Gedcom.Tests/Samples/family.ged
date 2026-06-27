@@ -1,0 +1,57 @@
+0 HEAD
+1 SOUR GT4Fixtures
+1 GEDC
+2 VERS 5.5.1
+2 FORM LINEAGE-LINKED
+1 CHAR UTF-8
+0 @I1@ INDI
+1 NAME Robert Eugene /Williams/
+2 GIVN Robert Eugene
+2 SURN Williams
+1 SEX M
+1 BIRT
+2 DATE 2 Oct 1822
+2 PLAC Weston, Madison, Connecticut, USA
+1 DEAT
+2 DATE 14 Apr 1905
+1 BURI
+2 PLAC Spring Hill Cemetery, Stamford, Connecticut, USA
+1 FAMS @F1@
+0 @I2@ INDI
+1 NAME Mary Ann /Wilson/
+2 GIVN Mary Ann
+2 SURN Wilson
+1 SEX F
+1 BIRT
+2 DATE BEF 1828
+2 PLAC Connecticut, USA
+1 FAMS @F1@
+0 @I3@ INDI
+1 NAME Joe /Williams/
+2 GIVN Joe
+2 SURN Williams
+1 SEX M
+1 BIRT
+2 DATE 11 Jun 1861
+2 PLAC Idaho Falls, Bonneville, Idaho, USA
+1 FAMC @F1@
+0 @I4@ INDI
+1 NAME Anna /Williams/
+2 GIVN Anna
+2 SURN Williams
+1 SEX F
+1 BIRT
+2 DATE 1864
+1 FAMC @F1@
+2 PEDI adopted
+1 ADOP
+2 DATE 16 Mar 1866
+0 @F1@ FAM
+1 HUSB @I1@
+1 WIFE @I2@
+1 CHIL @I3@
+1 CHIL @I4@
+1 MARR
+2 DATE Dec 1859
+2 PLAC Rapid City, Pennington, South Dakota, USA
+0 TRLR
