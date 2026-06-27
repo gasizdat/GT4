@@ -364,7 +364,9 @@ internal sealed class GedcomExporter : IGedcomExporter
   /// </summary>
   private static void AddEvent(GedcomNode individual, string eventTag, Date? date)
   {
-    if (date is null && eventTag == GedcomTags.Birth)
+    // No date at all means the event was never recorded: emit nothing. A non-null but unknown-precision
+    // death still falls through to a bare DEAT below, so the fact of death survives the round-trip.
+    if (date is null)
       return;
 
     var value = date.HasValue ? GedcomDate.ToGedcom(date.Value) : null;

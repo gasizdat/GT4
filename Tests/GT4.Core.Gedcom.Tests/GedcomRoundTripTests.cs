@@ -196,6 +196,23 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task LivingPerson_HasNoDeathEventAndStaysAliveOnReimport()
+  {
+    // A person with no death date is alive: export must not emit a bare DEAT for them, or reimport would
+    // turn the empty death event back into an (unknown) death date and silently bury the living.
+    await AddPersonAsync("Alive", BiologicalSex.Male, Year(1990));
+
+    var text = await ExportToTextAsync(_source);
+    text.Should().NotContain($"1 {GedcomTags.Death}");
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+
+    var person = (await reimported.Persons.GetPersonsAsync(Token)).Single();
+    person.DeathDate.Should().BeNull();
+  }
+
+  [Fact]
   public async Task Export_EmitsHeaderEnvelopeAndTrailer()
   {
     await AddPersonAsync("Lonely", BiologicalSex.Unknown, Year(1800));
