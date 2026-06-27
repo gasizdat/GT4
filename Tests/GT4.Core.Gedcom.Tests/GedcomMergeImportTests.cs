@@ -121,6 +121,18 @@ public sealed class GedcomMergeImportTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task DatedIncoming_DoesNotFoldIntoUndatedExistingPerson()
+  {
+    // The mirror of the case above: a dated incoming person must not fold into an undated namesake
+    // already in the project, since its date makes it the more specific, possibly different, individual.
+    await using var document = await NewDocumentAsync();
+    await ImportAsync(document, Doc(Indi("@I1@", "John", "Smith")));
+    await ImportAsync(document, Doc(Indi("@I1@", "John", "Smith", birthYear: 1850)));
+
+    (await PersonInfosAsync(document)).Should().HaveCount(2);
+  }
+
+  [Fact]
   public async Task UndatedIncoming_FoldsIntoExistingUndatedPersonWhenNameIsUnique()
   {
     // Most imported people carry no birth date; re-importing the same file must still recognise them by
