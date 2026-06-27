@@ -23,8 +23,8 @@ internal sealed class GedcomImporter : IGedcomImporter
       .Where(r => r.Tag == GedcomTags.Note && r.Xref is not null)
       .ToDictionary(r => r.Xref!, r => r.Value);
 
-    var individuals = records.Where(r => r.Tag == GedcomTags.Individual).ToList();
-    var families = records.Where(r => r.Tag == GedcomTags.Family).ToList();
+    var individuals = records.Where(r => r.Tag == GedcomTags.Individual).ToArray();
+    var families = records.Where(r => r.Tag == GedcomTags.Family).ToArray();
 
     // A child's tie to a family is adoptive when its FAMC link carries "PEDI adopted"; that lives on the
     // individual, so it is collected up front and consulted while wiring each family's children.
@@ -74,23 +74,19 @@ internal sealed class GedcomImporter : IGedcomImporter
 
   private static HashSet<(string Child, string Family)> CollectAdoptedLinks(IEnumerable<GedcomNode> individuals)
   {
-    var links = new HashSet<(string, string)>();
-    foreach (var individual in individuals)
-    {
-      if (individual.Xref is null)
-        continue;
+    return individuals
+      .Where(individual => individual.Xref is not null)
+      .SelectMany(individual => individual
+        .ChildrenWithTag(GedcomTags.FamilyChild)
+        .Where(familyChild => familyChild.Value is not null && IsAdoptedLink(familyChild))
+        .Select(familyChild => (Child: individual.Xref!, Family: familyChild.Value!)))
+      .ToHashSet();
+  }
 
-      foreach (var familyChild in individual.ChildrenWithTag(GedcomTags.FamilyChild))
-      {
-        var pedigree = familyChild.ChildValue(GedcomTags.Pedigree);
-        var isAdopted = string.Equals(pedigree, GedcomTags.AdoptedPedigree, StringComparison.OrdinalIgnoreCase);
-        if (familyChild.Value is not null && isAdopted)
-        {
-          links.Add((individual.Xref, familyChild.Value));
-        }
-      }
-    }
-    return links;
+  private static bool IsAdoptedLink(GedcomNode familyChild)
+  {
+    var pedigree = familyChild.ChildValue(GedcomTags.Pedigree);
+    return string.Equals(pedigree, GedcomTags.AdoptedPedigree, StringComparison.OrdinalIgnoreCase);
   }
 
   private static async Task<Person> ImportIndividualAsync(
@@ -154,8 +150,8 @@ internal sealed class GedcomImporter : IGedcomImporter
   /// </summary>
   private static (Data? Main, Data[] Additional) BuildPhotos(GedcomNode individual)
   {
-    var photos = individual.Children.Where(IsEmbeddedPhoto).ToList();
-    if (photos.Count == 0)
+    var photos = individual.Children.Where(IsEmbeddedPhoto).ToArray();
+    if (photos.Length == 0)
       return (null, []);
 
     var mainNode = photos.FirstOrDefault(IsPrimary) ?? photos[0];
@@ -235,7 +231,7 @@ internal sealed class GedcomImporter : IGedcomImporter
       names.Add(family);
       names.Add(lastName);
     }
-    return names.ToArray();
+    return [.. names];
   }
 
   private static async Task<Name> GetOrAddNameAsync(

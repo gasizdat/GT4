@@ -70,13 +70,13 @@ internal sealed class GedcomExporter : IGedcomExporter
     }
   }
 
-  private static List<Family> BuildFamilies(Dictionary<int, Relative[]> relatives, Dictionary<int, Person> personById)
+  private static Family[] BuildFamilies(Dictionary<int, Relative[]> relatives, Dictionary<int, Person> personById)
   {
     var edges = CollectEdges(relatives);
 
     var byKey = new Dictionary<(int? Husband, int? Wife), Family>();
 
-    Family GetFamily(IReadOnlyList<int> parentIds)
+    Family GetFamily(int[] parentIds)
     {
       var key = OrderParents(parentIds, personById);
       if (!byKey.TryGetValue(key, out var family))
@@ -107,17 +107,17 @@ internal sealed class GedcomExporter : IGedcomExporter
       ordered[i].Xref = $"@F{i + 1}@";
       ordered[i].Children.Sort((a, b) => a.Id.CompareTo(b.Id));
     }
-    return ordered;
+    return [.. ordered];
   }
 
   private static void AddChildren(
     HashSet<(int Child, int Parent)> edges,
     bool adopted,
-    Func<IReadOnlyList<int>, Family> getFamily)
+    Func<int[], Family> getFamily)
   {
     var childrenByParents = edges
       .GroupBy(e => e.Child)
-      .ToDictionary(g => g.Key, g => g.Select(e => e.Parent).Distinct().ToList());
+      .ToDictionary(g => g.Key, g => g.Select(e => e.Parent).Distinct().ToArray());
 
     foreach (var (child, parents) in childrenByParents)
     {
@@ -173,9 +173,9 @@ internal sealed class GedcomExporter : IGedcomExporter
   /// child's parent-set and the same couple derived from a spouse edge always produce the identical key.
   /// Sex drives the slot (male before unknown before female); ties break by id.
   /// </summary>
-  private static (int? Husband, int? Wife) OrderParents(IReadOnlyList<int> parentIds, Dictionary<int, Person> personById)
+  private static (int? Husband, int? Wife) OrderParents(int[] parentIds, Dictionary<int, Person> personById)
   {
-    if (parentIds.Count == 1)
+    if (parentIds.Length == 1)
     {
       var only = personById[parentIds[0]];
       return only.BiologicalSex == BiologicalSex.Female ? (null, only.Id) : (only.Id, null);
@@ -224,7 +224,7 @@ internal sealed class GedcomExporter : IGedcomExporter
     Dictionary<int, Data[]> residues,
     Dictionary<int, Data[]> mainPhotos,
     Dictionary<int, Data[]> additionalPhotos,
-    List<Family> families)
+    Family[] families)
   {
     var spouseFamilies = new Dictionary<int, List<string>>();
     var childFamilies = new Dictionary<int, List<(string Xref, bool Adopted)>>();
@@ -449,7 +449,7 @@ internal sealed class GedcomExporter : IGedcomExporter
     return chosen.Select(n => n.Value);
   }
 
-  private static void WriteFamilies(TextWriter writer, List<Family> families)
+  private static void WriteFamilies(TextWriter writer, Family[] families)
   {
     foreach (var family in families)
     {

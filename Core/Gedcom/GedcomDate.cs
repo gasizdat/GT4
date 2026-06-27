@@ -80,20 +80,10 @@ internal static class GedcomDate
   /// </summary>
   private static bool RemoveQualifiers(ref string[] tokens)
   {
-    var approximate = false;
-    var kept = new List<string>();
-    foreach (var token in tokens)
-    {
-      if (token == "AND")
-        break; // Keep only the first endpoint of a BET x AND y range.
-      if (Qualifiers.Contains(token))
-      {
-        approximate = true;
-        continue;
-      }
-      kept.Add(token);
-    }
-    tokens = kept.ToArray();
+    // Keep only the first endpoint of a BET x AND y range: everything up to the AND.
+    var beforeAnd = tokens.TakeWhile(t => t != "AND").ToArray();
+    var approximate = beforeAnd.Any(Qualifiers.Contains);
+    tokens = [.. beforeAnd.Where(t => !Qualifiers.Contains(t))];
     return approximate;
   }
 

@@ -43,7 +43,7 @@ internal static class GedcomWriter
     foreach (var paragraph in paragraphs)
     {
       var chunks = Chunk(paragraph, MaxValueLength);
-      for (var i = 0; i < chunks.Count; i++)
+      for (var i = 0; i < chunks.Length; i++)
       {
         if (!headLineWritten)
         {
@@ -65,7 +65,7 @@ internal static class GedcomWriter
     writer.WriteLine(line);
   }
 
-  private static List<string> Chunk(string text, int max)
+  private static string[] Chunk(string text, int max)
   {
     if (text.Length <= max)
       return [text];
@@ -76,6 +76,6 @@ internal static class GedcomWriter
       var length = Math.Min(max, text.Length - offset);
       chunks.Add(text.Substring(offset, length));
     }
-    return chunks;
+    return [.. chunks];
   }
 }
