@@ -2,6 +2,7 @@ using FluentAssertions;
 using GT4.Core.Project;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using System.Reflection;
 using System.Text;
 using Xunit;
 
@@ -59,6 +60,14 @@ public sealed class GedcomMergeImportTests : IAsyncLifetime
 
   private static string Doc(params string[] records) =>
     "0 HEAD\n1 CHAR UTF-8\n" + string.Concat(records) + "0 TRLR\n";
+
+  private static string Sample(string fileName)
+  {
+    var assembly = Assembly.GetExecutingAssembly();
+    var name = assembly.GetManifestResourceNames().Single(n => n.EndsWith($".{fileName}", StringComparison.Ordinal));
+    using var reader = new StreamReader(assembly.GetManifestResourceStream(name)!, Encoding.UTF8);
+    return reader.ReadToEnd();
+  }
 
   private async Task<PersonInfo[]> PersonInfosAsync(ProjectDocument document)
   {
@@ -242,6 +251,23 @@ public sealed class GedcomMergeImportTests : IAsyncLifetime
     Encoding.UTF8.GetString(full.MainPhoto!.Content).Should().Be("tiny-image");
     full.GedcomData.Should().NotBeNull();
     Encoding.UTF8.GetString(full.GedcomData!.Content).Should().Contain("OCCU Blacksmith");
+  }
+
+  [Fact]
+  public async Task ReimportingRealFile_KeepsEveryPersonDistinct()
+  {
+    // The real Brontë file mixes precise, year-only, month-year and "abt" birth dates, two people with no
+    // birth date at all, and namesakes distinguished only by date (Patrick 1777 vs Patrick Branwell 1817).
+    // Re-importing it must fold every individual back onto itself and add nothing, which only holds if each
+    // identity round-trips through the database exactly as it was first stored.
+    var ged = Sample("bronte.ged");
+    await using var document = await NewDocumentAsync();
+
+    await ImportAsync(document, ged);
+    (await PersonInfosAsync(document)).Should().HaveCount(14);
+
+    await ImportAsync(document, ged);
+    (await PersonInfosAsync(document)).Should().HaveCount(14);
   }
 
   [Fact]
