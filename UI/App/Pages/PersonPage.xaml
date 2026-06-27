@@ -248,16 +248,10 @@
             </CollectionView.ItemsLayout>
 
             <CollectionView.ItemTemplate>
-              <DataTemplate x:DataType="dto:RelativeInfo">
-                <components:CardView Margin="{Thickness Bottom={StaticResource PageContentSpacing}}">
-                  <components:RelativeInfoView
-                      ExpandAllRelatives="{Binding ExpandAll, Source={x:Reference Root}}"
-                      NameFormat="CommonPersonName"
-                      PersonBirthDate="{Binding PersonFullInfo.BirthDate, Source={x:Reference Root}}"
-                      Relative="{Binding .}"
-                      SelectCommand="{Binding Path=PageCommand, Source={x:Reference Root}}"
-                      ShowMoreButton="True" />
-                </components:CardView>
+              <DataTemplate x:DataType="components:RelativeRow">
+                <components:RelativeRowView
+                    SelectCommand="{Binding Path=PageCommand, Source={x:Reference Root}}"
+                    Style="{StaticResource HoverSubItem}" />
               </DataTemplate>
             </CollectionView.ItemTemplate>
           </CollectionView>
