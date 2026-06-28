@@ -16,7 +16,8 @@ public interface IThumbnailCache
 {
   // A thumbnail ImageSource for the photo, or null when there is no resolvable photo (caller shows a default).
   ImageSource? Resolve(Data? mainPhoto);
-  // Generates and caches thumbnails for the photos not already cached, loading their blobs in one batch.
+  // Generates and caches thumbnails for the photos not already cached, using each photo's content when it
+  // already carries it and batch-loading the blobs only for the content-less (id-only) references.
   Task PrewarmAsync(IEnumerable<Data?> photos, CancellationToken token);
 }
 
@@ -58,16 +59,26 @@ internal sealed class ThumbnailCache : IThumbnailCache
     if (!_CurrentProjectProvider.HasCurrentProject)
       return;
 
-    var missing = photos
-      .Where(photo => photo is not null)
-      .Select(photo => photo!.Id)
-      .Distinct()
-      .Where(id => !File.Exists(PathFor(id)))
+    var uncached = photos
+      .OfType<Data>()
+      .DistinctBy(photo => photo.Id)
+      .Where(photo => !File.Exists(PathFor(photo.Id)))
       .ToArray();
-    if (missing.Length == 0)
+
+    // A photo that already carries its content (e.g. loaded via MainPhoto.Load) is written straight away;
+    // only the content-less references (loaded id-only) need a single batched blob read.
+    var references = new List<int>();
+    foreach (var photo in uncached)
+    {
+      if (photo.Content.Length > 0)
+        TryWrite(PathFor(photo.Id), photo.Content);
+      else
+        references.Add(photo.Id);
+    }
+    if (references.Count == 0)
       return;
 
-    var blobs = await _CurrentProjectProvider.Project.Data.GetDataByIdsAsync(missing, token);
+    var blobs = await _CurrentProjectProvider.Project.Data.GetDataByIdsAsync([.. references], token);
     foreach (var data in blobs.Values)
     {
       TryWrite(PathFor(data.Id), data.Content);
