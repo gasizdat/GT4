@@ -267,8 +267,8 @@ public partial class FamilyTreePage : ContentPage
 
     for (var i = _ConnectorPool.Count - 1; i >= connectors.Count; i--)
     {
-      _ConnectorPool[i].Handler?.DisconnectHandler();
       Connectors.Children.Remove(_ConnectorPool[i]);
+      _ConnectorPool[i].Handler?.DisconnectHandler();
       _ConnectorPool.RemoveAt(i);
     }
   }
@@ -354,8 +354,8 @@ public partial class FamilyTreePage : ContentPage
 
   private void RemoveNode(FamilyTreeNodeView view)
   {
-    view.Handler?.DisconnectHandler();
     Nodes.Children.Remove(view);
+    view.Handler?.DisconnectHandler();
   }
 
   private async Task PositionViewportAsync(Point centerTopLeft, double zoom)
