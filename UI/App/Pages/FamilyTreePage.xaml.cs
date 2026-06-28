@@ -7,6 +7,7 @@ using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
 using GT4.UI.Utils.Settings;
 using Microsoft.Maui.Layouts;
+using System.Collections.Concurrent;
 using System.Windows.Input;
 using Path = Microsoft.Maui.Controls.Shapes.Path;
 
@@ -23,11 +24,13 @@ public partial class FamilyTreePage : ContentPage
   private readonly Color _ParentChildColor;
   private readonly Color _SpouseColor;
   private readonly FontScale? _FontScale;
-  // Reused across loads so a "load more" updates the canvas instead of rebuilding (and leaking) it.
+  // Reused across loads so an incremental "load more" updates the existing canvas instead of rebuilding
+  // every node view; views that do leave the tree are disconnected to release their native resources.
   private readonly Dictionary<int, NodeEntry> _NodeCache = [];
   private readonly List<Path> _ConnectorPool = [];
   // Small per-person photo thumbnails, decoded once off the UI thread; empty = decode failed, use stub.
-  private readonly Dictionary<int, byte[]> _ThumbnailCache = [];
+  // Concurrent because overlapping loads (e.g. zoom while a load is in flight) decode into it in parallel.
+  private readonly ConcurrentDictionary<int, byte[]> _ThumbnailCache = new();
   private const float PhotoThumbnailSize = 200;
   private const double ConnectorLineWidth = 2;
   // Each "load more" click adds GenerationsPerLoad generations, up to this hard ceiling.
@@ -273,9 +276,9 @@ public partial class FamilyTreePage : ContentPage
 #endif
 
     // Reuse the connector shapes and node views across loads instead of clearing and rebuilding the
-    // whole canvas. A full rebuild every load leaks the prior native visual tree (DisconnectHandler does
-    // not release it), and the accumulation eventually makes the layout pass fail ("Layout cycle
-    // detected"). Reusing the views means nothing is destroyed per load, so there is nothing to leak.
+    // whole canvas: an incremental "load more" only adds the new generation's elements rather than
+    // recreating hundreds of node views and connector shapes every time. Elements that do leave the
+    // tree (surplus connectors, evicted nodes) are disconnected to release their native resources.
     UpdateConnectors(layout.Connectors, zoom);
     UpdateNodes(layout.Nodes, centerId, names, zoom);
 
@@ -315,8 +318,7 @@ public partial class FamilyTreePage : ContentPage
 
     for (var i = _ConnectorPool.Count - 1; i >= connectors.Count; i--)
     {
-      Connectors.Children.Remove(_ConnectorPool[i]);
-      _ConnectorPool[i].Handler?.DisconnectHandler();
+      RemoveConnector(_ConnectorPool[i]);
       _ConnectorPool.RemoveAt(i);
     }
   }
@@ -376,20 +378,23 @@ public partial class FamilyTreePage : ContentPage
     foreach (var node in tree.Nodes)
     {
       var person = node.Person;
-      if (person.MainPhoto is not { Content.Length: > 0 } photo || _ThumbnailCache.ContainsKey(person.Id))
+      if (person.MainPhoto is { Content.Length: > 0 } photo)
       {
-        continue;
+        _ThumbnailCache.GetOrAdd(person.Id, _ => Downsize(photo.Content));
       }
+    }
+  }
 
-      try
-      {
-        _ThumbnailCache[person.Id] = ImageUtils.DownsizedPng(photo.Content, PhotoThumbnailSize);
-      }
-      catch
-      {
-        // A photo that cannot be decoded falls back to the stub rather than failing the whole load.
-        _ThumbnailCache[person.Id] = [];
-      }
+  private static byte[] Downsize(byte[] content)
+  {
+    try
+    {
+      return ImageUtils.DownsizedPng(content, PhotoThumbnailSize);
+    }
+    catch
+    {
+      // A photo that cannot be decoded falls back to the stub rather than failing the whole load.
+      return [];
     }
   }
 
@@ -404,6 +409,30 @@ public partial class FamilyTreePage : ContentPage
   {
     Nodes.Children.Remove(view);
     view.Handler?.DisconnectHandler();
+  }
+
+  private void RemoveConnector(Path path)
+  {
+    Connectors.Children.Remove(path);
+    path.Handler?.DisconnectHandler();
+  }
+
+  // Drop every reused view, connector and thumbnail so the next load rebuilds from current data. Refresh
+  // uses this: the page never auto-reloads, so the cached visuals would otherwise keep showing a person's
+  // name and photo as they were when first drawn, ignoring edits made since.
+  private void ClearRenderCache()
+  {
+    foreach (var entry in _NodeCache.Values)
+    {
+      RemoveNode(entry.View);
+    }
+    foreach (var path in _ConnectorPool)
+    {
+      RemoveConnector(path);
+    }
+    _NodeCache.Clear();
+    _ConnectorPool.Clear();
+    _ThumbnailCache.Clear();
   }
 
   private async Task PositionViewportAsync(Point centerTopLeft, double zoom)
@@ -475,6 +504,7 @@ public partial class FamilyTreePage : ContentPage
         break;
 
       case string command when command == "Refresh":
+        ClearRenderCache();
         Reload(ViewTarget.Center);
         break;
 

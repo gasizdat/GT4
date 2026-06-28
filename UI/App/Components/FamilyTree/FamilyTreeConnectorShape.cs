@@ -29,8 +29,7 @@ internal static class FamilyTreeConnectorShape
   }
 
   // Re-specifies an existing path for another connector so the family tree can pool and reuse a fixed
-  // set of shapes across loads instead of recreating them (recreating the visual tree every load leaks
-  // it on WinUI).
+  // set of shapes across loads instead of recreating hundreds of them on every incremental load.
   public static void Update(Path path, FamilyTreeConnector connector, double cornerRadius, double lineWidth, Color color)
   {
     var points = connector.Points;
