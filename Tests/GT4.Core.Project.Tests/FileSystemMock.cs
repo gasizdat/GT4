@@ -75,6 +75,7 @@ internal sealed class FileSystemMock : IFileSystem
     $"{ToPath(fileDescription.Directory)}/{fileDescription.FileName}";
 
   // Not used by ProjectHost.
+  public void Move(FileDescription from, FileDescription to) => throw new NotSupportedException();
   public Stream OpenWriteStream(FileDescription fileDescription) => throw new NotSupportedException();
   public Stream OpenReadStream(FileDescription fileDescription) => throw new NotSupportedException();
   public void Copy(Stream from, FileDescription to) => throw new NotSupportedException();

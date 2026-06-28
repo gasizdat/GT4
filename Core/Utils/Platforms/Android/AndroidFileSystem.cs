@@ -283,6 +283,17 @@ public class AndroidFileSystem : IFileSystem
     return GetFilesUri(directoryDescription, searchPattern, recursive).Keys.ToArray();
   }
 
+  public void Move(FileDescription from, FileDescription to)
+  {
+    if (IsInternalStorage(from.Directory) && IsInternalStorage(to.Directory))
+    {
+      _DirectAccessFileSystem.Move(from, to);
+      return;
+    }
+
+    throw new NotImplementedException();
+  }
+
   public void Copy(FileDescription from, FileDescription to)
   {
     using var sourceStream = OpenReadStream(from);

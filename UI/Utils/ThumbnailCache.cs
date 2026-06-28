@@ -3,6 +3,7 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using System.Security.Cryptography;
 using System.Text;
+using IFileSystem = GT4.Core.Utils.IFileSystem;
 
 namespace GT4.UI.Utils;
 
@@ -29,13 +30,19 @@ internal sealed class ThumbnailCache : IThumbnailCache
 
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
+  private readonly IFileSystem _FileSystem;
+  private readonly IStorage _Storage;
 
   public ThumbnailCache(
     ICurrentProjectProvider currentProjectProvider,
-    ICancellationTokenProvider cancellationTokenProvider)
+    ICancellationTokenProvider cancellationTokenProvider,
+    IFileSystem fileSystem,
+    IStorage storage)
   {
     _CurrentProjectProvider = currentProjectProvider;
     _CancellationTokenProvider = cancellationTokenProvider;
+    _FileSystem = fileSystem;
+    _Storage = storage;
   }
 
   public ImageSource? Resolve(Data? mainPhoto)
@@ -43,15 +50,15 @@ internal sealed class ThumbnailCache : IThumbnailCache
     if (mainPhoto is null || !_CurrentProjectProvider.HasCurrentProject)
       return null;
 
-    var path = PathFor(mainPhoto.Id);
-    if (!File.Exists(path))
+    var file = FileFor(mainPhoto.Id);
+    if (!_FileSystem.FileExists(file))
     {
       var content = mainPhoto.Content.Length > 0 ? mainPhoto.Content : LoadContent(mainPhoto.Id);
-      if (!TryWrite(path, content))
+      if (!TryWrite(file, content))
         return null;
     }
 
-    return new FileImageSource { File = path };
+    return new FileImageSource { File = _FileSystem.ToPath(file) };
   }
 
   public async Task PrewarmAsync(IEnumerable<Data?> photos, CancellationToken token)
@@ -62,7 +69,7 @@ internal sealed class ThumbnailCache : IThumbnailCache
     var uncached = photos
       .OfType<Data>()
       .DistinctBy(photo => photo.Id)
-      .Where(photo => !File.Exists(PathFor(photo.Id)))
+      .Where(photo => !_FileSystem.FileExists(FileFor(photo.Id)))
       .ToArray();
 
     // A photo that already carries its content (e.g. loaded via MainPhoto.Load) is written straight away;
@@ -71,7 +78,7 @@ internal sealed class ThumbnailCache : IThumbnailCache
     foreach (var photo in uncached)
     {
       if (photo.Content.Length > 0)
-        TryWrite(PathFor(photo.Id), photo.Content);
+        TryWrite(FileFor(photo.Id), photo.Content);
       else
         references.Add(photo.Id);
     }
@@ -81,7 +88,7 @@ internal sealed class ThumbnailCache : IThumbnailCache
     var blobs = await _CurrentProjectProvider.Project.Data.GetDataByIdsAsync([.. references], token);
     foreach (var data in blobs.Values)
     {
-      TryWrite(PathFor(data.Id), data.Content);
+      TryWrite(FileFor(data.Id), data.Content);
     }
   }
 
@@ -100,11 +107,11 @@ internal sealed class ThumbnailCache : IThumbnailCache
     }
   }
 
-  private static bool TryWrite(string path, byte[] content)
+  private bool TryWrite(FileDescription file, byte[] content)
   {
     if (content.Length == 0)
       return false;
-    if (File.Exists(path))
+    if (_FileSystem.FileExists(file))
       return true;
 
     byte[] thumbnail;
@@ -118,26 +125,33 @@ internal sealed class ThumbnailCache : IThumbnailCache
       return false;
     }
 
-    Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-    // Write to a temp file and rename into place so two threads racing the same thumbnail can never
-    // expose a half-written file; the loser of the rename just discards its copy.
-    var temp = $"{path}.{Guid.NewGuid():N}.tmp";
-    File.WriteAllBytes(temp, thumbnail);
+    // Write to a temp file and atomically publish it, so a concurrent reader never sees a half-written
+    // thumbnail; the loser of a same-id race just discards its copy (the winner's file is identical).
+    var temp = file with { FileName = $"{file.FileName}.{Guid.NewGuid():N}.tmp" };
+    using (var stream = _FileSystem.OpenWriteStream(temp))
+    {
+      stream.Write(thumbnail);
+    }
+
     try
     {
-      File.Move(temp, path);
+      _FileSystem.Move(temp, file);
     }
     catch (IOException)
     {
-      // Another thread wrote the same id first; its file is identical (same id => same bytes).
-      File.Delete(temp);
+      _FileSystem.RemoveFile(temp);
     }
 
     return true;
   }
 
-  private string PathFor(int id) =>
-    Path.Combine(FileSystem.CacheDirectory, "thumbs", Scope(), $"{id}.png");
+  private FileDescription FileFor(int id)
+  {
+    var cache = _Storage.ProjectsCache;
+    var directory = cache with { Path = [.. cache.Path, "thumbs", Scope()] };
+
+    return new FileDescription(directory, $"{id}.png", "image/png");
+  }
 
   // A stable per-project namespace so two projects' Data ids (unique only within a project) cannot collide.
   private string Scope()

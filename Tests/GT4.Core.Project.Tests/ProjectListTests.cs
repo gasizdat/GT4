@@ -228,6 +228,13 @@ internal sealed class DiskFileSystem(string root) : IFileSystem
 
   public Stream OpenReadStream(FileDescription file) => File.OpenRead(ToPath(file));
 
+  public void Move(FileDescription from, FileDescription to)
+  {
+    var destination = ToPath(to);
+    Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+    File.Move(ToPath(from), destination);
+  }
+
   public void Copy(FileDescription from, FileDescription to)
   {
     using var source = OpenReadStream(from);

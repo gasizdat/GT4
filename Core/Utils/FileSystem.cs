@@ -83,6 +83,13 @@ internal class FileSystem : IFileSystem
     return Array.Empty<FileDescription>();
   }
 
+  public void Move(FileDescription from, FileDescription to)
+  {
+    var destination = ToPath(to);
+    CreatePath(destination);
+    File.Move(ToPath(from), destination);
+  }
+
   public void Copy(FileDescription from, FileDescription to)
   {
     using var sourceStream = OpenReadStream(from);
