@@ -78,7 +78,20 @@ public partial class FamilyTreePage : ContentPage
     var pan = new PanGestureRecognizer();
     pan.PanUpdated += OnCanvasPan;
     Canvas.GestureRecognizers.Add(pan);
+
+#if DEBUG
+    AddDiagnosticToolbarItems();
+#endif
   }
+
+#if DEBUG
+  // Diagnostic-only affordances for stress-testing deep-tree rendering; never shipped in Release.
+  private void AddDiagnosticToolbarItems()
+  {
+    ToolbarItems.Add(new ToolbarItem { Text = "Load deep (diag)", Order = ToolbarItemOrder.Secondary, Command = PageCommand, CommandParameter = "LoadDeep" });
+    ToolbarItems.Add(new ToolbarItem { Text = "Auto-load incremental (diag)", Order = ToolbarItemOrder.Secondary, Command = PageCommand, CommandParameter = "AutoLoad" });
+  }
+#endif
 
   private void OnCanvasPan(object? sender, PanUpdatedEventArgs e)
   {
@@ -214,7 +227,8 @@ public partial class FamilyTreePage : ContentPage
 
   private void Render(int centerId, FamilyTreeLayoutResult layout, IReadOnlyDictionary<int, string> names, double zoom)
   {
-    // TEMP diagnostic: split the "Layout cycle" crash between a content-size/texture limit and memory
+#if DEBUG
+    // Diagnostic: split the "Layout cycle" crash between a content-size/texture limit and memory
     // exhaustion. privateMB >> managedMB means unmanaged bitmaps/surfaces (decoded photos / GPU).
     var process = System.Diagnostics.Process.GetCurrentProcess();
     var managedMb = GC.GetTotalMemory(false) / (1024 * 1024);
@@ -223,6 +237,7 @@ public partial class FamilyTreePage : ContentPage
       $"[FamilyTree] nodes={layout.Nodes.Count} canvas={layout.CanvasSize.Width:F0}x{layout.CanvasSize.Height:F0} " +
       $"ancGen={_AncestorGenerations} density={DeviceDisplay.Current.MainDisplayInfo.Density:F2} " +
       $"managedMB={managedMb} privateMB={privateMb}");
+#endif
 
     // Reuse the connector shapes and node views across loads instead of clearing and rebuilding the
     // whole canvas. A full rebuild every load leaks the prior native visual tree (DisconnectHandler does
@@ -428,21 +443,24 @@ public partial class FamilyTreePage : ContentPage
         Reload(ViewTarget.Center);
         break;
 
-      // TEMP diagnostic: render a deep tree in ONE pass (no incremental Clear()+rebuild churn) to
+#if DEBUG
+      // Diagnostic: render a deep tree in ONE pass (no incremental Clear()+rebuild churn) to
       // separate a size/element-count limit from per-render rebuild cost. Each tap jumps deeper.
       case string command when command == "LoadDeep":
         _AncestorGenerations = _AncestorGenerations < 64 ? 64 : Math.Min(_AncestorGenerations + 16, MaxGenerations);
         Reload(ViewTarget.Center);
         break;
 
-      // TEMP diagnostic: the leaking path — one fully-awaited incremental render per generation. Used to
+      // Diagnostic: the leaking path — one fully-awaited incremental render per generation. Used to
       // verify the handler-disconnect fix keeps privateMB flat near the single-render baseline.
       case string command when command == "AutoLoad":
         await AutoLoadAncestorsAsync();
         break;
+#endif
     }
   }
 
+#if DEBUG
   private async Task AutoLoadAncestorsAsync()
   {
     if (_Center is null)
@@ -458,6 +476,7 @@ public partial class FamilyTreePage : ContentPage
       await Task.Delay(400);
     }
   }
+#endif
 
   private static Color GetColor(string resourceKey, Color fallback) =>
     Application.Current?.Resources is { } resources
