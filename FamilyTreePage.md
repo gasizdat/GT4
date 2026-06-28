@@ -36,8 +36,8 @@ between them, centred on a focal person.
    - marshals back to the main thread (`SafeTask.RunOnMainThread`) to call `Render`.
 4. `Render`:
    - clears and rebuilds the `Nodes` AbsoluteLayout,
-   - adds one connector `Path` per edge first (so they sit behind the nodes) via
-     `FamilyTreeConnectorShape.Create`,
+   - adds one connector `Path` per edge to the `Connectors` AbsoluteLayout (a sibling declared
+     before `Nodes`, so the lines sit behind the nodes) via `FamilyTreeConnectorShape.Create`,
    - then creates a `FamilyTreeNodeView` per node (centre node flagged), each with a tap gesture
      bound to `PageCommand`,
    - positions each view via `AbsoluteLayout.SetLayoutFlags(None)` + `SetLayoutBounds`,
@@ -68,7 +68,7 @@ between them, centred on a focal person.
 
 ## Connectors & theming
 - Each connector is an individual vector `Path` built by `FamilyTreeConnectorShape.Create` and added
-  to the `Nodes` AbsoluteLayout: parent-child links are orthogonal lines with softly rounded
+  to the `Connectors` AbsoluteLayout: parent-child links are orthogonal lines with softly rounded
   right-angle bends, spouse links straight horizontal lines. Per-shape vector geometry (rather than a
   single canvas-spanning `GraphicsView`) scrolls in lockstep with the nodes and sidesteps the GPU
   16384px max-texture limit a tall tree would otherwise hit — see

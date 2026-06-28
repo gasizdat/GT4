@@ -7,7 +7,7 @@ using Path = Microsoft.Maui.Controls.Shapes.Path;
 namespace GT4.UI.Components.Genealogy;
 
 /// <summary>
-/// Builds one family-tree connector as a vector <see cref="Path"/> placed in the node
+/// Builds one family-tree connector as a vector <see cref="Path"/> placed in the connectors
 /// <see cref="AbsoluteLayout"/>. Individual shapes render as composition vector geometry that scrolls
 /// in lockstep with the nodes, and — unlike a single canvas-spanning GraphicsView — never allocate a
 /// surface larger than the GPU max texture size (16384px), which a tall tree's connectors would hit.
