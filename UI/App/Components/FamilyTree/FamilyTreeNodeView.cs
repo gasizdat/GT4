@@ -1,5 +1,3 @@
-using GT4.Core.Project.Dto;
-using GT4.UI.Utils;
 using GT4.UI.Utils.Settings;
 using Microsoft.Maui.Controls.Shapes;
 
@@ -7,7 +5,8 @@ namespace GT4.UI.Components.Genealogy;
 
 /// <summary>
 /// A single family-tree node: a circular photo with the person's name underneath. The centred
-/// person is emphasised with a thicker, primary-coloured ring.
+/// person is emphasised with a thicker, primary-coloured ring. The photo is supplied already resolved
+/// (and downsized) by the page so this view holds only a small thumbnail, not a full-resolution bitmap.
 /// </summary>
 public sealed class FamilyTreeNodeView : ContentView
 {
@@ -18,12 +17,12 @@ public sealed class FamilyTreeNodeView : ContentView
   private const double SpacingBase = 4;
 
   public FamilyTreeNodeView(
-    PersonInfo person,
+    ImageSource photo,
     FontScale? fontScale,
-    string displayName, 
-    bool isCenter, 
-    double width, 
-    double height, 
+    string displayName,
+    bool isCenter,
+    double width,
+    double height,
     double zoomScale = 1.0
   )
   {
@@ -32,17 +31,16 @@ public sealed class FamilyTreeNodeView : ContentView
 
     var photoSize = PhotoSizeBase * zoomScale;
     var ringColor = GetColor(isCenter ? "Primary" : "Accent", isCenter ? Colors.DarkGreen : Color.FromArgb("#8B6F4E"));
+    var borderThikness = (isCenter ? CenterBorderThikness : BorderThikness) * zoomScale;
 
-    var photo = new Image
+    var image = new Image
     {
-      Source = ResolvePhoto(person),
+      Source = photo,
       Aspect = Aspect.AspectFill,
       WidthRequest = photoSize,
       HeightRequest = photoSize,
       Clip = new EllipseGeometry(new Point(photoSize / 2, photoSize / 2), photoSize / 2, photoSize / 2),
     };
-
-    var borderThikness = (isCenter ? CenterBorderThikness : BorderThikness) * zoomScale;
 
     var ring = new Border
     {
@@ -53,9 +51,9 @@ public sealed class FamilyTreeNodeView : ContentView
       StrokeThickness = borderThikness,
       StrokeShape = new Ellipse(),
       HorizontalOptions = LayoutOptions.Center,
-      Content = photo,
+      Content = image,
     };
-    
+
     // TODO: FontScale.DefaultFactor is applied only at the node creation stage.
     // This will not affect the font size when it changes while the graph is displayed on the page.
     // Shall be fixed in the next release.
@@ -77,18 +75,6 @@ public sealed class FamilyTreeNodeView : ContentView
       Children = { ring, name },
     };
   }
-
-  private static ImageSource ResolvePhoto(PersonInfo person) =>
-    person.MainPhoto is { Content.Length: > 0 } photo
-      ? ImageUtils.ImageFromBytes(photo.Content)
-      : ImageUtils.ImageFromRawResource(DefaultPhotoResource(person.BiologicalSex));
-
-  private static string DefaultPhotoResource(BiologicalSex sex) => sex switch
-  {
-    BiologicalSex.Male => "male_stub.png",
-    BiologicalSex.Female => "female_stub.png",
-    _ => "project_icon.png",
-  };
 
   private static Color GetColor(string resourceKey, Color fallback) =>
     Application.Current?.Resources is { } resources

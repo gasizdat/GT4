@@ -57,10 +57,7 @@
               BackgroundColor="Transparent"
               HorizontalOptions="Fill"
               VerticalOptions="Start">
-            <GraphicsView
-                x:Name="Connectors"
-                HorizontalOptions="Center"
-                InputTransparent="True" />
+            <AbsoluteLayout x:Name="Connectors" />
             <AbsoluteLayout x:Name="Nodes" />
           </Grid>
         </ScrollView>
@@ -72,7 +69,7 @@
             Command="{Binding PageCommand, Source={x:Reference Root}}"
             CommandParameter="LoadAncestors"
             HorizontalOptions="Center"
-            IsVisible="{Binding CanLoadMoreAncestors, Source={x:Reference Root}}"
+            IsEnabled="{Binding CanLoadMoreAncestors, Source={x:Reference Root}}"
             Text="{x:Static resources:UIStrings.BtnNameLoadAncestors}"
             VerticalOptions="Start" />
         <Button
@@ -81,7 +78,7 @@
             Command="{Binding PageCommand, Source={x:Reference Root}}"
             CommandParameter="LoadDescendants"
             HorizontalOptions="Center"
-            IsVisible="{Binding CanLoadMoreDescendants, Source={x:Reference Root}}"
+            IsEnabled="{Binding CanLoadMoreDescendants, Source={x:Reference Root}}"
             Text="{x:Static resources:UIStrings.BtnNameLoadDescendants}"
             VerticalOptions="End" />
 
@@ -99,6 +96,10 @@
               CommandParameter="ZoomIn"
               Style="{StaticResource ZoomIn}" />
         </HorizontalStackLayout>
+
+        <ActivityIndicator
+            HorizontalOptions="Center"
+            IsRunning="{Binding LoadInProgress, Source={x:Reference Root}}" />
       </Grid>
     </components:PageLayout.Body>
 
