@@ -19,6 +19,16 @@
         CommandParameter="Refresh"
         Order="Secondary"
         Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="LoadDeep"
+        Order="Secondary"
+        Text="Load deep (diag)" />
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="AutoLoad"
+        Order="Secondary"
+        Text="Auto-load incremental (diag)" />
   </ContentPage.ToolbarItems>
 
   <components:PageLayout>
@@ -57,10 +67,7 @@
               BackgroundColor="Transparent"
               HorizontalOptions="Fill"
               VerticalOptions="Start">
-            <GraphicsView
-                x:Name="Connectors"
-                HorizontalOptions="Center"
-                InputTransparent="True" />
+            <AbsoluteLayout x:Name="Connectors" />
             <AbsoluteLayout x:Name="Nodes" />
           </Grid>
         </ScrollView>

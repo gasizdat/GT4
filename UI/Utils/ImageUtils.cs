@@ -1,4 +1,6 @@
-﻿namespace GT4.UI.Utils;
+﻿using Microsoft.Maui.Graphics.Platform;
+
+namespace GT4.UI.Utils;
 
 public static class ImageUtils
 {
@@ -27,6 +29,23 @@ public static class ImageUtils
 
   public static ImageSource ImageFromBytes(byte[] data) =>
     ImageSource.FromStream(token => Task.Run<Stream>(() => new MemoryStream(data.Length > 0 ? data : TransparentPng), token));
+
+  /// <summary>
+  /// Decodes <paramref name="data"/>, scales it so its longest side is <paramref name="maxSize"/> and
+  /// re-encodes it as PNG. Lets callers keep a small thumbnail instead of a full-resolution bitmap when
+  /// the image is only ever shown tiny (a family-tree node decodes its source to a ~60px circle, so the
+  /// full-res decode is hundreds of times larger than needed).
+  /// </summary>
+  public static byte[] DownsizedPng(byte[] data, float maxSize)
+  {
+    using var input = new MemoryStream(data);
+    using var image = PlatformImage.FromStream(input);
+    using var resized = image.Downsize(maxSize);
+    using var output = new MemoryStream();
+    resized.Save(output);
+
+    return output.ToArray();
+  }
 
   public static ImageSource ImageFromRawResource(string resourceName) =>
     ImageSource.FromStream(_ => FileSystem.OpenAppPackageFileAsync(resourceName));

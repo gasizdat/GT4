@@ -35,11 +35,13 @@ between them, centred on a focal person.
    - precomputes a node-id → display-name dictionary,
    - marshals back to the main thread (`SafeTask.RunOnMainThread`) to call `Render`.
 4. `Render`:
-   - clears and rebuilds the `Nodes` AbsoluteLayout, creating a `FamilyTreeNodeView` per node
-     (centre node flagged), each with a tap gesture bound to `PageCommand`,
+   - clears and rebuilds the `Nodes` AbsoluteLayout,
+   - adds one connector `Path` per edge first (so they sit behind the nodes) via
+     `FamilyTreeConnectorShape.Create`,
+   - then creates a `FamilyTreeNodeView` per node (centre node flagged), each with a tap gesture
+     bound to `PageCommand`,
    - positions each view via `AbsoluteLayout.SetLayoutFlags(None)` + `SetLayoutBounds`,
-   - hands connectors to `_ConnectorsDrawable` and invalidates the connector canvas,
-   - sizes the canvas/connectors to the computed `CanvasSize`,
+   - sizes the canvas to the computed `CanvasSize`,
    - kicks off `PositionViewportAsync`.
 
 ## "Load more" affordances
@@ -65,8 +67,12 @@ between them, centred on a focal person.
   clamped to the canvas edges.
 
 ## Connectors & theming
-- `_ConnectorsDrawable` (a `FamilyTreeConnectorsDrawable`, which implements `IDrawable`) strokes
-  parent-child links as orthogonal lines with softly rounded right-angle bends and spouse links as
-  straight horizontal lines. Its corner radius comes from `FamilyTreeLayoutMetrics`, and its colors
-  resolve from app resources (`Primary` → parent-child, `Accent` → spouse) via the `GetColor`
-  helper, with hard-coded fallbacks (`#1E4437`, `#8B6F4E`).
+- Each connector is an individual vector `Path` built by `FamilyTreeConnectorShape.Create` and added
+  to the `Nodes` AbsoluteLayout: parent-child links are orthogonal lines with softly rounded
+  right-angle bends, spouse links straight horizontal lines. Per-shape vector geometry (rather than a
+  single canvas-spanning `GraphicsView`) scrolls in lockstep with the nodes and sidesteps the GPU
+  16384px max-texture limit a tall tree would otherwise hit — see
+  `memory/project_familytree_layout_cycle.md`.
+- Corner radius comes from `FamilyTreeLayoutMetrics` (scaled by zoom); colors resolve from app
+  resources (`Primary` → parent-child, `Accent` → spouse) via the `GetColor` helper, with hard-coded
+  fallbacks (`#1E4437`, `#8B6F4E`).
