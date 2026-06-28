@@ -43,7 +43,7 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
 
     var names = Document.PersonNames.GetPersonNamesAsync(person, token);
     var personData = Document.PersonData.GetPersonDataSetAsync(person, null, token);
-    var relativeInfos = Document.RelativesProvider.GetRelativeInfosAsync(person, selectMainPhoto: true, token);
+    var relativeInfos = Document.RelativesProvider.GetRelativeInfosAsync(person, MainPhoto.Reference, token);
     await Task.WhenAll(names, personData, relativeInfos);
 
     var ret = new PersonFullInfo(
@@ -58,23 +58,26 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
     return ret;
   }
 
-  public async Task<PersonInfo[]> GetPersonInfosAsync(bool selectMainPhoto, CancellationToken token)
+  public async Task<PersonInfo[]> GetPersonInfosAsync(MainPhoto mainPhoto, CancellationToken token)
   {
     var persons = await Document.Persons.GetPersonsAsync(token);
-    var ret = await GetPersonInfosAsync(persons, selectMainPhoto, token);
+    var ret = await GetPersonInfosAsync(persons, mainPhoto, token);
 
     return ret;
   }
 
-  public async Task<PersonInfo[]> GetPersonInfosAsync(Person[] persons, bool selectMainPhoto, CancellationToken token)
+  public async Task<PersonInfo[]> GetPersonInfosAsync(Person[] persons, MainPhoto mainPhoto, CancellationToken token)
   {
     if (persons.Length == 0)
       return [];
 
     var namesTask = Document.PersonNames.GetPersonNamesAsync(persons, token);
-    var photosTask = selectMainPhoto
-      ? Document.PersonData.GetPersonDataSetAsync(persons, DataCategory.PersonMainPhoto, token)
-      : Task.FromResult<Dictionary<int, Data[]>>([]);
+    var photosTask = mainPhoto switch
+    {
+      MainPhoto.Load => Document.PersonData.GetPersonDataSetAsync(persons, DataCategory.PersonMainPhoto, token),
+      MainPhoto.Reference => Document.PersonData.GetPersonDataReferencesAsync(persons, DataCategory.PersonMainPhoto, token),
+      _ => Task.FromResult<Dictionary<int, Data[]>>([]),
+    };
     await Task.WhenAll(namesTask, photosTask);
 
     return persons.Select(person =>
@@ -85,7 +88,7 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
     }).ToArray();
   }
 
-  public async Task<PersonInfo[]> GetPersonInfosByNameAsync(Name name, bool selectMainPhoto, CancellationToken token)
+  public async Task<PersonInfo[]> GetPersonInfosByNameAsync(Name name, MainPhoto mainPhoto, CancellationToken token)
   {
     using var command = Document.CreateCommand();
     command.CommandText = """
@@ -111,7 +114,7 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
 
     var allPersons = await Document.Persons.GetPersonsAsync(token);
     var persons = allPersons.Where(p => ids.Contains(p.Id)).ToArray();
-    return await GetPersonInfosAsync(persons, selectMainPhoto, token);
+    return await GetPersonInfosAsync(persons, mainPhoto, token);
   }
 
   public async Task<PersonInfo> AddPersonAsync(PersonFullInfo personFullInfo, CancellationToken token)

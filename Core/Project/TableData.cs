@@ -54,6 +54,30 @@ internal class TableData : TableBase, ITableData
     return (await reader.ReadAsync(token)) ? CreateData(reader) : null;
   }
 
+  public async Task<Dictionary<int, Data>> GetDataByIdsAsync(int[] ids, CancellationToken token)
+  {
+    if (ids.Length == 0)
+      return [];
+
+    var inClause = string.Join(",", ids);
+    using var command = Document.CreateCommand();
+    command.CommandText = $"""
+      SELECT Id, Value, MimeType, Category
+      FROM Data
+      WHERE Id IN ({inClause});
+      """;
+
+    var result = new Dictionary<int, Data>();
+    await using var reader = await command.ExecuteReaderAsync(token);
+    while (await reader.ReadAsync(token))
+    {
+      var data = CreateData(reader);
+      result[data.Id] = data;
+    }
+
+    return result;
+  }
+
   public async Task<Data> AddDataAsync(byte[] content, string? mimeType, DataCategory dataCategory, CancellationToken token)
   {
     using var transaction = await Document.BeginTransactionAsync(token);

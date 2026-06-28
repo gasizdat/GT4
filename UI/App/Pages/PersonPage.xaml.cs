@@ -24,6 +24,7 @@ public partial class PersonPage : ContentPage
   private readonly INameFormatter _NameFormatter;
   private readonly IDataConverter _TextConverter;
   private readonly IDataConverter _GedcomConverter;
+  private readonly IThumbnailCache _ThumbnailCache;
   private readonly ICommand _PageCommand;
   private readonly RelativeTree _Relatives;
   private ObservableCollection<PersonInfo> _NavigationHistory = new();
@@ -44,8 +45,9 @@ public partial class PersonPage : ContentPage
     _NameFormatter = _ServiceProvider.GetRequiredService<INameFormatter>();
     _TextConverter = _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonBio);
     _GedcomConverter = _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonGedcomTags);
+    _ThumbnailCache = _ServiceProvider.GetRequiredService<IThumbnailCache>();
     _PageCommand = new SafeCommand(OnPageCommand);
-    _Relatives = new RelativeTree(_CurrentProjectProvider, _CancellationTokenProvider);
+    _Relatives = new RelativeTree(_CurrentProjectProvider, _CancellationTokenProvider, _ThumbnailCache);
 
     InitializeComponent();
   }
@@ -227,6 +229,18 @@ public partial class PersonPage : ContentPage
                     .AdditionalPhotos
                     .Select(photo => photo.Content)];
       }
+      // The relatives panel renders every relative through PersonInfoView, which resolves its thumbnail
+      // synchronously. Warm the cache for the whole root set here, off the UI thread, so the rows show
+      // photos on first paint instead of self-healing one blob at a time on the UI thread.
+      var parents = parentsTasks.Result;
+      var rootRelatives = ((IEnumerable<RelativeInfo>)personFullInfo.RelativeInfos)
+        .Concat(parents.Native)
+        .Concat(parents.Adoptive)
+        .Concat(parents.Step)
+        .Concat(parents.Native.Concat(parents.Adoptive).Concat(parents.Step).SelectMany(parent => parent.RelativeInfos))
+        .Concat(stepChildrenTasks.Result);
+      await _ThumbnailCache.PrewarmAsync(rootRelatives.Select(relative => relative.MainPhoto), token);
+
       // UpdateUI touches the project document again on the UI thread; SafeTask.RunOnMainThread keeps
       // an escaped exception (e.g. the project closed while backgrounding) from going unobserved.
       _ = SafeTask.RunOnMainThread(() => UpdateUI(personFullInfo,

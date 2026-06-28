@@ -49,7 +49,7 @@ public sealed class RelativesProviderPerformanceTests
     var provider = new RelativesProvider(_mock);
     _mock.ResetCallCounts();
 
-    var result = await provider.GetRelativeInfosAsync(AsParentRelativeInfo(father), true, Token);
+    var result = await provider.GetRelativeInfosAsync(AsParentRelativeInfo(father), MainPhoto.Reference, Token);
 
     _mock.GetPersonFullInfoCallCount
       .Should().Be(0, "sibling lookup must use GetRelativesAsync, not GetPersonFullInfoAsync");
@@ -68,7 +68,7 @@ public sealed class RelativesProviderPerformanceTests
     var provider = new RelativesProvider(_mock);
     _mock.ResetCallCounts();
 
-    await provider.GetRelativeInfosAsync(AsParentRelativeInfo(father), true, Token);
+    await provider.GetRelativeInfosAsync(AsParentRelativeInfo(father), MainPhoto.Reference, Token);
 
     _mock.GetRelativesCallCount
       .Should().Be(3, "1 for Father + 1 for GF + 1 for GM");
@@ -84,7 +84,7 @@ public sealed class RelativesProviderPerformanceTests
     var provider = new RelativesProvider(_mock);
     _mock.ResetCallCounts();
 
-    await provider.GetRelativeInfosAsync(AsParentRelativeInfo(father), true, Token);
+    await provider.GetRelativeInfosAsync(AsParentRelativeInfo(father), MainPhoto.Reference, Token);
 
     _mock.GetPersonInfosWithPersonsCallCount
       .Should().Be(2, "1 call for direct relatives + 1 call for deduplicated siblings");
@@ -96,7 +96,7 @@ public sealed class RelativesProviderPerformanceTests
     var (gf, gm, uncle, father, _, _, _) = BuildFamily();
     var provider = new RelativesProvider(_mock);
 
-    var result = await provider.GetRelativeInfosAsync(AsParentRelativeInfo(father), true, Token);
+    var result = await provider.GetRelativeInfosAsync(AsParentRelativeInfo(father), MainPhoto.Reference, Token);
 
     result.Id().Should().BeEquivalentTo([gf.Id, gm.Id, uncle.Id]);
 
@@ -125,7 +125,7 @@ public sealed class RelativesProviderPerformanceTests
     var provider = new RelativesProvider(_mock);
     _mock.ResetCallCounts();
 
-    await provider.GetRelativeInfosAsync(AsParentRelativeInfo(father), true, Token);
+    await provider.GetRelativeInfosAsync(AsParentRelativeInfo(father), MainPhoto.Reference, Token);
 
     _mock.GetPersonInfosWithPersonsCallCount
       .Should().Be(1, "only the direct relatives batch; no siblings to load");

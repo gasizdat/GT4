@@ -37,7 +37,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     // Every read below runs before the write transaction so the parallel reads inside
     // GetPersonFullInfoAsync never share the flow-affine import transaction.
     var existingNames = await document.Names.GetNamesByTypeAsync(NameType.AllNames, token);
-    var existingPersons = await document.PersonManager.GetPersonInfosAsync(selectMainPhoto: false, token);
+    var existingPersons = await document.PersonManager.GetPersonInfosAsync(MainPhoto.Ignore, token);
     var matches = await ResolveMatchesAsync(document, individuals, existingPersons, token);
     var existingEdges = await CollectExistingEdgesAsync(document, matches.Values, token);
 

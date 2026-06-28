@@ -16,6 +16,7 @@ public partial class FamilyPage : ContentPage
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IComparer<PersonInfo> _PersonInfoComparer;
+  private readonly IThumbnailCache _ThumbnailCache;
   private Name? _FamilyName = null;
   private double _PersonItemMinimalWidth;
 
@@ -24,8 +25,9 @@ public partial class FamilyPage : ContentPage
     _Services = serviceProvider;
     _CancellationTokenProvider = _Services.GetRequiredService<ICancellationTokenProvider>();
     _CurrentProjectProvider = _Services.GetRequiredService<ICurrentProjectProvider>();
-    _PersonInfoComparer =  _Services.GetKeyedService<IComparer<PersonInfo>>(PersonNamesFormat) ?? 
+    _PersonInfoComparer =  _Services.GetKeyedService<IComparer<PersonInfo>>(PersonNamesFormat) ??
                            _Services.GetRequiredService<IComparer<PersonInfo>>();
+    _ThumbnailCache = _Services.GetRequiredService<IThumbnailCache>();
 
     MemberItemTappedCommand = new SafeCommand<PersonInfo>(OnOpenPerson);
     PageCommand = new SafeCommand(OnPageCommand);
@@ -69,10 +71,11 @@ public partial class FamilyPage : ContentPage
         var ret = _CurrentProjectProvider
           .Project
           .PersonManager
-          .GetPersonInfosByNameAsync(name: FamilyName, selectMainPhoto: true, token)
+          .GetPersonInfosByNameAsync(name: FamilyName, MainPhoto.Reference, token)
           .Result
           .OrderBy(item => item, _PersonInfoComparer)
           .ToList();
+        _ThumbnailCache.PrewarmAsync(ret.Select(person => person.MainPhoto), token).GetAwaiter().GetResult();
 
         return ret;
       }

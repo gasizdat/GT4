@@ -72,7 +72,7 @@ public sealed class GedcomMergeImportTests : IAsyncLifetime
   private async Task<PersonInfo[]> PersonInfosAsync(ProjectDocument document)
   {
     var persons = await document.Persons.GetPersonsAsync(Token);
-    return await document.PersonManager.GetPersonInfosAsync(persons, selectMainPhoto: false, Token);
+    return await document.PersonManager.GetPersonInfosAsync(persons, MainPhoto.Ignore, Token);
   }
 
   [Fact]

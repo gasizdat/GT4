@@ -161,7 +161,7 @@ public partial class SelectRelativesDialog : ContentPage
           var persons = await _CurrentProjectProvider
             .Project
             .PersonManager
-            .GetPersonInfosAsync(selectMainPhoto: false, token);
+            .GetPersonInfosAsync(MainPhoto.Ignore, token);
 
           var items = persons
             .Where(p =>

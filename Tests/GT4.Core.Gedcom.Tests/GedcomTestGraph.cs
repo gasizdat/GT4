@@ -19,7 +19,7 @@ internal static class GedcomTestGraph
   public static async Task<Dictionary<string, Person>> PersonsByNameAsync(ProjectDocument document, CancellationToken token)
   {
     var persons = await document.Persons.GetPersonsAsync(token);
-    var infos = await document.PersonManager.GetPersonInfosAsync(persons, selectMainPhoto: false, token);
+    var infos = await document.PersonManager.GetPersonInfosAsync(persons, MainPhoto.Ignore, token);
     var nameById = infos.ToDictionary(p => p.Id, p => p.DisplayName);
     return persons.ToDictionary(p => nameById[p.Id]);
   }
@@ -27,7 +27,7 @@ internal static class GedcomTestGraph
   public static async Task<(HashSet<string> Spouses, HashSet<string> ParentChild)> ExtractAsync(ProjectDocument document, CancellationToken token)
   {
     var persons = await document.Persons.GetPersonsAsync(token);
-    var infos = await document.PersonManager.GetPersonInfosAsync(persons, selectMainPhoto: false, token);
+    var infos = await document.PersonManager.GetPersonInfosAsync(persons, MainPhoto.Ignore, token);
     var nameById = infos.ToDictionary(p => p.Id, p => p.DisplayName);
     var relatives = await document.Relatives.GetRelativesForPersonsAsync(persons, token);
 

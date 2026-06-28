@@ -39,7 +39,7 @@ internal sealed class GedcomExporter : IGedcomExporter
   {
     var persons = await document.Persons.GetPersonsAsync(token);
     var personById = persons.ToDictionary(p => p.Id);
-    var personInfos = await document.PersonManager.GetPersonInfosAsync(persons, selectMainPhoto: false, token);
+    var personInfos = await document.PersonManager.GetPersonInfosAsync(persons, MainPhoto.Ignore, token);
     var infoById = personInfos.ToDictionary(p => p.Id);
     var biographies = await document.PersonData.GetPersonDataSetAsync(persons, DataCategory.PersonBio, token);
     var residues = await document.PersonData.GetPersonDataSetAsync(persons, DataCategory.PersonGedcomTags, token);

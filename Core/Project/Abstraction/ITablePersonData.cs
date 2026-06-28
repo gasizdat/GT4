@@ -7,6 +7,8 @@ public interface ITablePersonData
   Task AddPersonDataSetAsync(Person person, Data[] dataSet, CancellationToken token);
   Task<Data[]> GetPersonDataSetAsync(Person person, DataCategory? category, CancellationToken token);
   Task<Dictionary<int, Data[]>> GetPersonDataSetAsync(Person[] persons, DataCategory? category, CancellationToken token);
+  // Loads data identity only (Id + MimeType, empty Content), avoiding the blob read for thumbnail callers.
+  Task<Dictionary<int, Data[]>> GetPersonDataReferencesAsync(Person[] persons, DataCategory? category, CancellationToken token);
   Task RemovePersonDataAsync(Person person, Data data, CancellationToken token);
   Task UpdatePersonDataAsync(Person person, Data? newData, DataCategory dataCategory, CancellationToken token);
   Task UpdatePersonDataSetAsync(Person person, Data[] dataSet, CancellationToken token);

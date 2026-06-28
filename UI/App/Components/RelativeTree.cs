@@ -2,6 +2,7 @@ using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Resources;
+using GT4.UI.Utils;
 using System.Collections.ObjectModel;
 
 namespace GT4.UI.Components;
@@ -18,14 +19,17 @@ public sealed class RelativeTree
 
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
+  private readonly IThumbnailCache _ThumbnailCache;
   private readonly ObservableCollection<RelativeRow> _Rows = new();
 
   public RelativeTree(
     ICurrentProjectProvider currentProjectProvider,
-    ICancellationTokenProvider cancellationTokenProvider)
+    ICancellationTokenProvider cancellationTokenProvider,
+    IThumbnailCache thumbnailCache)
   {
     _CurrentProjectProvider = currentProjectProvider;
     _CancellationTokenProvider = cancellationTokenProvider;
+    _ThumbnailCache = thumbnailCache;
   }
 
   public ObservableCollection<RelativeRow> Rows => _Rows;
@@ -62,7 +66,8 @@ public sealed class RelativeTree
         var children = await _CurrentProjectProvider
           .Project
           .RelativesProvider
-          .GetRelativeInfosAsync(row.Relative, true, token);
+          .GetRelativeInfosAsync(row.Relative, MainPhoto.Reference, token);
+        await _ThumbnailCache.PrewarmAsync(children.Select(child => child.MainPhoto), token);
         await MainThread.InvokeOnMainThreadAsync(() => Expand(row, children));
       }
     }

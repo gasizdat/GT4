@@ -6,8 +6,8 @@ public interface IPersonManager
 {
   Task<PersonInfo> AddPersonAsync(PersonFullInfo personFullInfo, CancellationToken token);
   Task<PersonFullInfo> GetPersonFullInfoAsync(Person person, CancellationToken token);
-  Task<PersonInfo[]> GetPersonInfosAsync(bool selectMainPhoto, CancellationToken token);
-  Task<PersonInfo[]> GetPersonInfosAsync(Person[] persons, bool selectMainPhoto, CancellationToken token);
-  Task<PersonInfo[]> GetPersonInfosByNameAsync(Name name, bool selectMainPhoto, CancellationToken token);
+  Task<PersonInfo[]> GetPersonInfosAsync(MainPhoto mainPhoto, CancellationToken token);
+  Task<PersonInfo[]> GetPersonInfosAsync(Person[] persons, MainPhoto mainPhoto, CancellationToken token);
+  Task<PersonInfo[]> GetPersonInfosByNameAsync(Name name, MainPhoto mainPhoto, CancellationToken token);
   Task UpdatePersonAsync(PersonFullInfo personFullInfo, CancellationToken token);
 }

@@ -105,7 +105,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     families.Select(f => f.Value).Should().BeEquivalentTo("Williams", "Wilson");
 
     var williams = families.Single(f => f.Value == "Williams");
-    var members = await document.PersonManager.GetPersonInfosByNameAsync(williams, selectMainPhoto: false, Token);
+    var members = await document.PersonManager.GetPersonInfosByNameAsync(williams, MainPhoto.Ignore, Token);
     members.Select(m => m.DisplayName).Should().BeEquivalentTo("Robert Eugene Williams", "Joe Williams", "Anna Williams");
   }
 
@@ -118,7 +118,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
 
     var byName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
     var robert = byName["Robert Eugene Williams"];
-    var infos = await document.PersonManager.GetPersonInfosAsync([robert], selectMainPhoto: false, Token);
+    var infos = await document.PersonManager.GetPersonInfosAsync([robert], MainPhoto.Ignore, Token);
     var names = infos.Single().Names;
     names.Should().ContainSingle(n => (n.Type & NameType.FirstName) != 0 && n.Value == "Robert");
     names.Should().ContainSingle(n => (n.Type & NameType.Patronymic) != 0 && n.Value == "Eugene");
@@ -138,7 +138,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     await _importer.ImportAsync(document, new StringReader(ged), Token);
 
     var persons = await document.Persons.GetPersonsAsync(Token);
-    var infos = await document.PersonManager.GetPersonInfosAsync(persons, selectMainPhoto: false, Token);
+    var infos = await document.PersonManager.GetPersonInfosAsync(persons, MainPhoto.Ignore, Token);
     var patronymics = infos.Single().Names.Where(n => (n.Type & NameType.Patronymic) != 0).Select(n => n.Value);
     patronymics.Should().Equal("Branwell", "Josef");
 

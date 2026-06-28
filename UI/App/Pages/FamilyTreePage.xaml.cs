@@ -7,7 +7,6 @@ using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
 using GT4.UI.Utils.Settings;
 using Microsoft.Maui.Layouts;
-using System.Collections.Concurrent;
 using System.Windows.Input;
 using Path = Microsoft.Maui.Controls.Shapes.Path;
 
@@ -28,10 +27,7 @@ public partial class FamilyTreePage : ContentPage
   // every node view; views that do leave the tree are disconnected to release their native resources.
   private readonly Dictionary<int, NodeEntry> _NodeCache = [];
   private readonly List<Path> _ConnectorPool = [];
-  // Small per-person photo thumbnails, decoded once off the UI thread; empty = decode failed, use stub.
-  // Concurrent because overlapping loads (e.g. zoom while a load is in flight) decode into it in parallel.
-  private readonly ConcurrentDictionary<int, byte[]> _ThumbnailCache = new();
-  private const float PhotoThumbnailSize = 200;
+  private readonly IThumbnailCache _ThumbnailCache;
   private const double ConnectorLineWidth = 2;
   // Each "load more" click adds GenerationsPerLoad generations, up to this hard ceiling.
   private const int GenerationsPerLoad = 3;
@@ -64,12 +60,14 @@ public partial class FamilyTreePage : ContentPage
     ICancellationTokenProvider cancellationTokenProvider,
     ICurrentProjectProvider currentProjectProvider,
     INameFormatter nameFormatter,
+    IThumbnailCache thumbnailCache,
     FontScale? fontScale
   )
   {
     _CancellationTokenProvider = cancellationTokenProvider;
     _CurrentProjectProvider = currentProjectProvider;
     _NameFormatter = nameFormatter;
+    _ThumbnailCache = thumbnailCache;
     _FontScale = fontScale;
     PageCommand = new SafeCommand(OnPageCommand);
 
@@ -248,7 +246,8 @@ public partial class FamilyTreePage : ContentPage
       };
 
       var layout = _Layout.Update(tree, scaledMetrics);
-      CacheThumbnails(tree);
+      // Warm the thumbnail cache for every node off the UI thread, before Render binds the node views.
+      await _ThumbnailCache.PrewarmAsync(tree.Nodes.Select(node => node.Person.MainPhoto), token);
       var names = layout.Nodes.ToDictionary(
         node => node.Node.Id,
         node => _NameFormatter.ToString(node.Node.Person, NameFormat.ShortPersonName));
@@ -366,37 +365,8 @@ public partial class FamilyTreePage : ContentPage
   }
 
   private ImageSource ResolvePhoto(PersonInfo person) =>
-    _ThumbnailCache.TryGetValue(person.Id, out var thumbnail) && thumbnail.Length > 0
-      ? ImageUtils.ImageFromBytes(thumbnail)
-      : ImageUtils.ImageFromRawResource(DefaultPhotoResource(person.BiologicalSex));
-
-  // A node only ever shows a ~60px circle, so keep a small thumbnail per person rather than decoding the
-  // full-resolution source for every node (which, now that node views are retained, would pin gigabytes).
-  // Decoded here off the UI thread, before Render runs.
-  private void CacheThumbnails(FamilyTree tree)
-  {
-    foreach (var node in tree.Nodes)
-    {
-      var person = node.Person;
-      if (person.MainPhoto is { Content.Length: > 0 } photo)
-      {
-        _ThumbnailCache.GetOrAdd(person.Id, _ => Downsize(photo.Content));
-      }
-    }
-  }
-
-  private static byte[] Downsize(byte[] content)
-  {
-    try
-    {
-      return ImageUtils.DownsizedPng(content, PhotoThumbnailSize);
-    }
-    catch
-    {
-      // A photo that cannot be decoded falls back to the stub rather than failing the whole load.
-      return [];
-    }
-  }
+    _ThumbnailCache.Resolve(person.MainPhoto)
+      ?? ImageUtils.ImageFromRawResource(DefaultPhotoResource(person.BiologicalSex));
 
   private static string DefaultPhotoResource(BiologicalSex sex) => sex switch
   {
@@ -432,7 +402,6 @@ public partial class FamilyTreePage : ContentPage
     }
     _NodeCache.Clear();
     _ConnectorPool.Clear();
-    _ThumbnailCache.Clear();
   }
 
   private async Task PositionViewportAsync(Point centerTopLeft, double zoom)

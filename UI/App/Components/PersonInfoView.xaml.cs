@@ -11,12 +11,14 @@ public partial class PersonInfoView : ContentView
   private readonly IDateSpanFormatter _DateSpanFormatter;
   private readonly IDateFormatter _DateFormatter;
   private readonly INameFormatter _NameFormatter;
+  private readonly IThumbnailCache _ThumbnailCache;
 
   protected PersonInfoView(IServiceProvider serviceProvider)
   {
     _DateSpanFormatter = serviceProvider.GetRequiredService<IDateSpanFormatter>();
     _DateFormatter = serviceProvider.GetRequiredService<IDateFormatter>();
     _NameFormatter = serviceProvider.GetRequiredService<INameFormatter>();
+    _ThumbnailCache = serviceProvider.GetRequiredService<IThumbnailCache>();
     InitializeComponent();
   }
 
@@ -110,7 +112,7 @@ public partial class PersonInfoView : ContentView
       return personDates;
     }
   }
-  public ImageSource Photo => Person?.MainPhoto is null ? GetDefaultImage() : ImageUtils.ImageFromBytes(Person.MainPhoto.Content);
+  public ImageSource Photo => _ThumbnailCache.Resolve(Person?.MainPhoto) ?? GetDefaultImage();
 
   private static void OnPersonChanged(BindableObject obj, object oldValue, object newValue)
   {

@@ -20,7 +20,7 @@ internal class RelativesProvider : ProjectComponentBase, IRelativesProvider
       .ToDictionary(g => g.Key, g => (Person)g.First());
 
     PersonInfo[] personInfos = uniqueRelativesById.Count > 0
-      ? await Document.PersonManager.GetPersonInfosAsync([.. uniqueRelativesById.Values], selectMainPhoto: true, token)
+      ? await Document.PersonManager.GetPersonInfosAsync([.. uniqueRelativesById.Values], MainPhoto.Reference, token)
       : [];
 
     var personInfoById = personInfos.ToDictionary(p => p.Id);
@@ -49,11 +49,11 @@ internal class RelativesProvider : ProjectComponentBase, IRelativesProvider
     Consanguinity consanguinity) =>
       [.. relatives.Select(s => s with { Type = type, Generation = generation, Consanguinity = consanguinity })];
 
-  private async Task<RelativeInfo[]> GetRelativeInfosAsync(Relative[] relatives, bool selectMainPhoto, CancellationToken token)
+  private async Task<RelativeInfo[]> GetRelativeInfosAsync(Relative[] relatives, MainPhoto mainPhoto, CancellationToken token)
   {
     var personInfos = await Document.PersonManager.GetPersonInfosAsync(
       persons: relatives,
-      selectMainPhoto: selectMainPhoto,
+      mainPhoto: mainPhoto,
       token: token);
 
     var relativeInfos = new RelativeInfo[personInfos.Length];
@@ -213,7 +213,7 @@ internal class RelativesProvider : ProjectComponentBase, IRelativesProvider
 
   public async Task<RelativeInfo[]> GetRelativeInfosAsync(
     RelativeInfo relativeInfo,
-    bool selectMainPhoto,
+    MainPhoto mainPhoto,
     CancellationToken token)
   {
     var relatives = await Document.Relatives.GetRelativesAsync(relativeInfo, token);
@@ -227,7 +227,7 @@ internal class RelativesProvider : ProjectComponentBase, IRelativesProvider
     relatives = relatives
       .Where(r => IsRelationshipSupported(relativeInfo, r.Type))
       .ToArray();
-    var relativeInfosTask = GetRelativeInfosAsync(relatives, selectMainPhoto, token);
+    var relativeInfosTask = GetRelativeInfosAsync(relatives, mainPhoto, token);
     await Task.WhenAll([relativeInfosTask, .. parentRelativesTasks]);
     var siblingRelatives = parentRelativesTasks
       .SelectMany(t => t.Result)
@@ -238,7 +238,7 @@ internal class RelativesProvider : ProjectComponentBase, IRelativesProvider
       .Select(g => g.First())
       .ToArray();
     var siblingInfos = siblingRelatives.Length > 0
-      ? await GetRelativeInfosAsync(siblingRelatives, selectMainPhoto, token)
+      ? await GetRelativeInfosAsync(siblingRelatives, mainPhoto, token)
       : [];
 
     var siblingGeneration = relativeInfo.Generation;
@@ -289,10 +289,10 @@ internal class RelativesProvider : ProjectComponentBase, IRelativesProvider
     return relativeInfos;
   }
 
-  public async Task<RelativeInfo[]> GetRelativeInfosAsync(Person person, bool selectMainPhoto, CancellationToken token)
+  public async Task<RelativeInfo[]> GetRelativeInfosAsync(Person person, MainPhoto mainPhoto, CancellationToken token)
   {
     var relatives = await Document.Relatives.GetRelativesAsync(person, token);
-    var relativeInfos = await GetRelativeInfosAsync(relatives, true, token);
+    var relativeInfos = await GetRelativeInfosAsync(relatives, mainPhoto, token);
 
     return relativeInfos;
   }

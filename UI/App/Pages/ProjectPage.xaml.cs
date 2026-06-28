@@ -30,6 +30,7 @@ public partial class ProjectPage : ContentPage
   private readonly IProjectList _ProjectList;
   private readonly IGedcomExporter _Exporter;
   private readonly IGedcomImporter _Importer;
+  private readonly IThumbnailCache _ThumbnailCache;
 
   private long? _ProjectRevision;
 
@@ -44,6 +45,7 @@ public partial class ProjectPage : ContentPage
     _ProjectList = _ServiceProvider.GetRequiredService<IProjectList>();
     _Exporter = _ServiceProvider.GetRequiredService<IGedcomExporter>();
     _Importer = _ServiceProvider.GetRequiredService<IGedcomImporter>();
+    _ThumbnailCache = _ServiceProvider.GetRequiredService<IThumbnailCache>();
 
     PageCommand = new SafeCommand(OnPageCommand);
     InitializeComponent();
@@ -191,12 +193,15 @@ public partial class ProjectPage : ContentPage
     var project = _CurrentProjectProvider.Project;
     _ProjectRevision = project.ProjectRevision;
 
-    return project
+    var persons = project
       .PersonManager
-      .GetPersonInfosByNameAsync(name: name, selectMainPhoto: true, token)
+      .GetPersonInfosByNameAsync(name: name, MainPhoto.Reference, token)
       .Result
       .OrderBy(item => item, _PersonInfoComparer)
       .ToArray();
+    _ThumbnailCache.PrewarmAsync(persons.Select(person => person.MainPhoto), token).GetAwaiter().GetResult();
+
+    return persons;
   }
 
   private async Task OnPageCommand(object obj)

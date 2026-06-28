@@ -127,7 +127,7 @@ public class RelativesProviderTests
     _documentMock.AddRelationship(parent, child, RelationshipType.Child);
 
     var relativesProvider = new RelativesProvider(_documentMock);
-    var relatives = await relativesProvider.GetRelativeInfosAsync(child, true, CancellationToken.None);
+    var relatives = await relativesProvider.GetRelativeInfosAsync(child, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -138,7 +138,7 @@ public class RelativesProviderTests
     Assert.Equal(Generation.Parent, rParent.Generation);
     Assert.Equal(Consanguinity.Zero, rParent.Consanguinity);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rParent, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rParent, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -149,7 +149,7 @@ public class RelativesProviderTests
     Assert.Equal(new Generation(2), rGrandParent.Generation);
     Assert.Equal(Consanguinity.Zero, rGrandParent.Consanguinity);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rGrandParent, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rGrandParent, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -160,7 +160,7 @@ public class RelativesProviderTests
     Assert.Equal(new Generation(3), rGreatGrandParent.Generation);
     Assert.Equal(Consanguinity.Zero, rGreatGrandParent.Consanguinity);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rGreatGrandParent, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rGreatGrandParent, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -188,7 +188,7 @@ public class RelativesProviderTests
 
     var relativesProvider = new RelativesProvider(_documentMock);
 
-    var relatives = await relativesProvider.GetRelativeInfosAsync(parent, true, CancellationToken.None);
+    var relatives = await relativesProvider.GetRelativeInfosAsync(parent, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -199,7 +199,7 @@ public class RelativesProviderTests
     Assert.Equal(Generation.Child, rChild.Generation);
     Assert.Equal(Consanguinity.Zero, rChild.Consanguinity);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rChild, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rChild, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -210,7 +210,7 @@ public class RelativesProviderTests
     Assert.Equal(new Generation(-2), rGrandChild.Generation);
     Assert.Equal(Consanguinity.Zero, rGrandChild.Consanguinity);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rGrandChild, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rGrandChild, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -221,7 +221,7 @@ public class RelativesProviderTests
     Assert.Equal(new Generation(-3), rGreatGrandChild.Generation);
     Assert.Equal(Consanguinity.Zero, rGreatGrandChild.Consanguinity);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rGreatGrandChild, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rGreatGrandChild, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -250,7 +250,7 @@ public class RelativesProviderTests
 
     var relativesProvider = new RelativesProvider(_documentMock);
 
-    var relatives = await relativesProvider.GetRelativeInfosAsync(parent, true, CancellationToken.None);
+    var relatives = await relativesProvider.GetRelativeInfosAsync(parent, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -261,7 +261,7 @@ public class RelativesProviderTests
     Assert.Equal(Generation.Child, rChild.Generation);
     Assert.Equal(Consanguinity.Zero, rChild.Consanguinity);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rChild, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rChild, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -277,14 +277,14 @@ public class RelativesProviderTests
     Assert.Equal(new Generation(-2), rGrandChild.Generation);
     Assert.Equal(Consanguinity.Zero, rGrandChild.Consanguinity);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rChildSpouse, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rChildSpouse, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Should()
       .BeEmpty();
 
     // Only a direct child's spouse is surfaced. A grandchild's spouse
     // (generation below Child) is intentionally not shown.
-    relatives = await relativesProvider.GetRelativeInfosAsync(rGrandChild, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rGrandChild, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Should()
       .BeEmpty();
@@ -312,7 +312,7 @@ public class RelativesProviderTests
     }
 
     var relativesProvider = new RelativesProvider(_documentMock);
-    var relatives = await relativesProvider.GetRelativeInfosAsync(child, true, CancellationToken.None);
+    var relatives = await relativesProvider.GetRelativeInfosAsync(child, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -328,7 +328,7 @@ public class RelativesProviderTests
     Assert.Equal(Generation.Parent, rParent.Generation);
     Assert.Equal(Consanguinity.Zero, rParent.Consanguinity);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rParent, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rParent, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -382,7 +382,7 @@ public class RelativesProviderTests
     }
 
     var relativesProvider = new RelativesProvider(_documentMock);
-    var relatives = await relativesProvider.GetRelativeInfosAsync(child, true, CancellationToken.None);
+    var relatives = await relativesProvider.GetRelativeInfosAsync(child, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -398,7 +398,7 @@ public class RelativesProviderTests
     Assert.Equal(Generation.Parent, rMother.Generation);
     Assert.Equal(Consanguinity.Zero, rMother.Consanguinity);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rFather, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rFather, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -419,7 +419,7 @@ public class RelativesProviderTests
     Assert.Equal(Generation.Parent, rFathersSibling.Generation);
     Assert.Equal(Consanguinity.UncleAunt, rFathersSibling.Consanguinity);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rFathersFather, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rFathersFather, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -435,7 +435,7 @@ public class RelativesProviderTests
     Assert.Equal(new Generation(2), rFathersFathersSibling.Generation);
     Assert.Equal(new Consanguinity(3), rFathersFathersSibling.Consanguinity);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rMother, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rMother, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -451,7 +451,7 @@ public class RelativesProviderTests
     Assert.Equal(Generation.Parent, rMothersSibling.Generation);
     Assert.Equal(Consanguinity.UncleAunt, rMothersSibling.Consanguinity);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rFathersMother, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rFathersMother, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -501,7 +501,7 @@ public class RelativesProviderTests
     _documentMock.AddRelationship(parent, child, RelationshipType.Child);
 
     var relativesProvider = new RelativesProvider(_documentMock);
-    var relatives = await relativesProvider.GetRelativeInfosAsync(child, true, CancellationToken.None);
+    var relatives = await relativesProvider.GetRelativeInfosAsync(child, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -509,7 +509,7 @@ public class RelativesProviderTests
 
     var rParent = relatives.SingleId(parent);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rParent, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rParent, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -521,7 +521,7 @@ public class RelativesProviderTests
     Assert.Equal(Consanguinity.UncleAunt, rParentSibling.Consanguinity);
     Assert.Equal(RelationshipType.Sibling, rParentSibling.Type);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rParentSibling, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rParentSibling, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -532,7 +532,7 @@ public class RelativesProviderTests
     Assert.Equal(Consanguinity.UncleAunt, rParentSiblingChild.Consanguinity);
     Assert.Equal(RelationshipType.Child, rParentSiblingChild.Type);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rGrandParent, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rGrandParent, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -544,7 +544,7 @@ public class RelativesProviderTests
     Assert.Equal(new Consanguinity(3), rGrandParentSibling.Consanguinity);
     Assert.Equal(RelationshipType.Sibling, rGrandParentSibling.Type);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rGrandParentSibling, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rGrandParentSibling, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -555,7 +555,7 @@ public class RelativesProviderTests
     Assert.Equal(new Consanguinity(3), rGrandParentSiblingChild.Consanguinity);
     Assert.Equal(RelationshipType.Child, rGrandParentSiblingChild.Type);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rGrandParentSiblingChild, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rGrandParentSiblingChild, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -566,7 +566,7 @@ public class RelativesProviderTests
     Assert.Equal(new Consanguinity(3), rGrandParentSiblingChildChild.Consanguinity);
     Assert.Equal(RelationshipType.Child, rGrandParentSiblingChildChild.Type);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rGreatGrandParent, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rGreatGrandParent, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -577,7 +577,7 @@ public class RelativesProviderTests
     Assert.Equal(new Consanguinity(4), rGreatGrandParentSibling.Consanguinity);
     Assert.Equal(RelationshipType.Sibling, rGreatGrandParentSibling.Type);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rGreatGrandParentSibling, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rGreatGrandParentSibling, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -588,7 +588,7 @@ public class RelativesProviderTests
     Assert.Equal(new Consanguinity(4), rGreatGrandParentSiblingChild.Consanguinity);
     Assert.Equal(RelationshipType.Child, rGreatGrandParentSiblingChild.Type);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rGreatGrandParentSiblingChild, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rGreatGrandParentSiblingChild, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -599,7 +599,7 @@ public class RelativesProviderTests
     Assert.Equal(new Consanguinity(4), rGreatGrandParentSiblingChildChild.Consanguinity);
     Assert.Equal(RelationshipType.Child, rGreatGrandParentSiblingChildChild.Type);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rGreatGrandParentSiblingChildChild, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rGreatGrandParentSiblingChildChild, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -644,25 +644,25 @@ public class RelativesProviderTests
     _documentMock.AddRelationship(parent, child, RelationshipType.Child);
 
     var relativesProvider = new RelativesProvider(_documentMock);
-    var relatives = await relativesProvider.GetRelativeInfosAsync(greatGrandParentSiblingChildChildChild, true, CancellationToken.None);
+    var relatives = await relativesProvider.GetRelativeInfosAsync(greatGrandParentSiblingChildChildChild, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
       .BeEquivalentTo([greatGrandParentSiblingChildChild.Id]);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(relatives.SingleId(greatGrandParentSiblingChildChild), true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(relatives.SingleId(greatGrandParentSiblingChildChild), MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
       .BeEquivalentTo([greatGrandParentSiblingChild.Id]);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(relatives.SingleId(greatGrandParentSiblingChild), true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(relatives.SingleId(greatGrandParentSiblingChild), MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
       .BeEquivalentTo([greatGrandParentSibling.Id]);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(relatives.SingleId(greatGrandParentSibling), true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(relatives.SingleId(greatGrandParentSibling), MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -673,7 +673,7 @@ public class RelativesProviderTests
     Assert.Equal(new Consanguinity(4), rGreatGrandParent.Consanguinity);
     Assert.Equal(RelationshipType.Sibling, rGreatGrandParent.Type);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rGreatGrandParent, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rGreatGrandParent, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -689,7 +689,7 @@ public class RelativesProviderTests
     Assert.Equal(new Consanguinity(4), rGrandParentSibling.Consanguinity);
     Assert.Equal(RelationshipType.Child, rGrandParentSibling.Type);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rGrandParentSibling, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rGrandParentSibling, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -700,7 +700,7 @@ public class RelativesProviderTests
     Assert.Equal(new Consanguinity(4), rGrandParentSiblingChild.Consanguinity);
     Assert.Equal(RelationshipType.Child, rGrandParentSiblingChild.Type);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rGrandParentSiblingChild, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rGrandParentSiblingChild, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -711,7 +711,7 @@ public class RelativesProviderTests
     Assert.Equal(new Consanguinity(4), rGrandParentSiblingChildChild.Consanguinity);
     Assert.Equal(RelationshipType.Child, rGrandParentSiblingChildChild.Type);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rGrandParent, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rGrandParent, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -727,7 +727,7 @@ public class RelativesProviderTests
     Assert.Equal(new Consanguinity(4), rParentSibling.Consanguinity);
     Assert.Equal(RelationshipType.Child, rParentSibling.Type);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rParent, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rParent, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -738,7 +738,7 @@ public class RelativesProviderTests
     Assert.Equal(new Consanguinity(4), rChild.Consanguinity);
     Assert.Equal(RelationshipType.Child, rChild.Type);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rParentSibling, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rParentSibling, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -945,7 +945,7 @@ public class RelativesProviderTests
     _documentMock.AddRelationship(siblingByMother, nephew2, RelationshipType.Child);
 
     var relativesProvider = new RelativesProvider(_documentMock);
-    var relatives = await relativesProvider.GetRelativeInfosAsync(child, true, CancellationToken.None);
+    var relatives = await relativesProvider.GetRelativeInfosAsync(child, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -971,7 +971,7 @@ public class RelativesProviderTests
     Assert.Equal(Generation.Zero, rSiblingByMother.Generation);
     Assert.Equal(Consanguinity.Sibling, rSiblingByMother.Consanguinity);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rSiblingByFather, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rSiblingByFather, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -981,7 +981,7 @@ public class RelativesProviderTests
     Assert.Equal(Generation.Child, rNephew1.Generation);
     Assert.Equal(Consanguinity.Sibling, rNephew1.Consanguinity);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rSiblingByMother, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rSiblingByMother, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -1010,7 +1010,7 @@ public class RelativesProviderTests
 
     var relativesProvider = new RelativesProvider(_documentMock);
 
-    var relatives = await relativesProvider.GetRelativeInfosAsync(child, true, CancellationToken.None);
+    var relatives = await relativesProvider.GetRelativeInfosAsync(child, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -1020,7 +1020,7 @@ public class RelativesProviderTests
 
     // Expanding the parent must surface the grandparent and the uncle/aunt,
     // but NOT the uncle/aunt's spouse on the same (parent) level.
-    relatives = await relativesProvider.GetRelativeInfosAsync(rParent, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rParent, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -1036,7 +1036,7 @@ public class RelativesProviderTests
     Assert.Equal(Consanguinity.UncleAunt, rUncleAunt.Consanguinity);
 
     // The uncle/aunt's spouse must appear nested under the uncle/aunt.
-    relatives = await relativesProvider.GetRelativeInfosAsync(rUncleAunt, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rUncleAunt, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -1064,7 +1064,7 @@ public class RelativesProviderTests
 
     var relativesProvider = new RelativesProvider(_documentMock);
 
-    var relatives = await relativesProvider.GetRelativeInfosAsync(person, true, CancellationToken.None);
+    var relatives = await relativesProvider.GetRelativeInfosAsync(person, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -1078,7 +1078,7 @@ public class RelativesProviderTests
     // Expanding a spouse surfaces the spouse's parents as in-laws, typed by
     // the spouse's biological sex (the parent's own sex distinguishes
     // father-in-law from mother-in-law at the formatter level).
-    relatives = await relativesProvider.GetRelativeInfosAsync(rSpouse, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rSpouse, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -1109,10 +1109,10 @@ public class RelativesProviderTests
 
     var relativesProvider = new RelativesProvider(_documentMock);
 
-    var relatives = await relativesProvider.GetRelativeInfosAsync(person, true, CancellationToken.None);
+    var relatives = await relativesProvider.GetRelativeInfosAsync(person, MainPhoto.Reference, CancellationToken.None);
     var rSpouse = relatives.SingleId(spouse);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rSpouse, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rSpouse, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -1143,20 +1143,20 @@ public class RelativesProviderTests
 
     var relativesProvider = new RelativesProvider(_documentMock);
 
-    var relatives = await relativesProvider.GetRelativeInfosAsync(child, true, CancellationToken.None);
+    var relatives = await relativesProvider.GetRelativeInfosAsync(child, MainPhoto.Reference, CancellationToken.None);
     var rParent = relatives.SingleId(parent);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rParent, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rParent, MainPhoto.Reference, CancellationToken.None);
     var rUncleAunt = relatives.SingleId(uncleAunt);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rUncleAunt, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rUncleAunt, MainPhoto.Reference, CancellationToken.None);
     var rCousin = relatives.SingleId(cousin);
     Assert.Equal(RelationshipType.Child, rCousin.Type);
     Assert.Equal(Generation.Zero, rCousin.Generation);
     Assert.Equal(Consanguinity.UncleAunt, rCousin.Consanguinity);
 
     // The cousin's spouse must not appear; the cousin's child must.
-    relatives = await relativesProvider.GetRelativeInfosAsync(rCousin, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rCousin, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()
@@ -1180,10 +1180,10 @@ public class RelativesProviderTests
 
     var relativesProvider = new RelativesProvider(_documentMock);
 
-    var relatives = await relativesProvider.GetRelativeInfosAsync(parent, true, CancellationToken.None);
+    var relatives = await relativesProvider.GetRelativeInfosAsync(parent, MainPhoto.Reference, CancellationToken.None);
     var rChild = relatives.SingleId(child);
 
-    relatives = await relativesProvider.GetRelativeInfosAsync(rChild, true, CancellationToken.None);
+    relatives = await relativesProvider.GetRelativeInfosAsync(rChild, MainPhoto.Reference, CancellationToken.None);
     relatives
       .Id()
       .Should()

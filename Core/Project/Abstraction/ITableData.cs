@@ -8,4 +8,5 @@ public interface ITableData
   Task RemoveDataAsync(Data data, CancellationToken token);
   Task UpdateCategoryAsync(Data data, DataCategory dataCategory, CancellationToken token);
   Task<Data?> TryGetDataByIdAsync(int? id, CancellationToken token);
+  Task<Dictionary<int, Data>> GetDataByIdsAsync(int[] ids, CancellationToken token);
 }

@@ -89,7 +89,7 @@ public partial class NamesPage : ContentPage
         {
           var persons = await project
             .PersonManager
-            .GetPersonInfosByNameAsync(name, false, token);
+            .GetPersonInfosByNameAsync(name, MainPhoto.Ignore, token);
           if (persons.Any())
           {
             var nameFormatter = _ServiceProvider.GetRequiredService<INameFormatter>();

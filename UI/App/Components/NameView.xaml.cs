@@ -14,6 +14,7 @@ public partial class NameView : ContentView
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IComparer<PersonInfo> _PersonInfoComparer;
+  private readonly IThumbnailCache _ThumbnailCache;
   private bool _ShowPersons = false;
   private ICollection<PersonInfo>? _Persons = null;
   private string _MoreBtnName = ExpandSymbol;
@@ -22,9 +23,10 @@ public partial class NameView : ContentView
   {
     _CancellationTokenProvider = serviceProvider.GetRequiredService<ICancellationTokenProvider>();
     _CurrentProjectProvider = serviceProvider.GetRequiredService<ICurrentProjectProvider>();
-    TogglePersonsCommand = new SafeCommand(OnTogglePersonsAsync); 
+    TogglePersonsCommand = new SafeCommand(OnTogglePersonsAsync);
     _PersonInfoComparer = serviceProvider.GetKeyedService<IComparer<PersonInfo>>(PersonNamesFormat) ??
                           serviceProvider.GetRequiredService<IComparer<PersonInfo>>();
+    _ThumbnailCache = serviceProvider.GetRequiredService<IThumbnailCache>();
 
     InitializeComponent();
   }
@@ -109,8 +111,9 @@ public partial class NameView : ContentView
       var persons = await _CurrentProjectProvider
         .Project
         .PersonManager
-        .GetPersonInfosByNameAsync(Name, true, token);
+        .GetPersonInfosByNameAsync(Name, MainPhoto.Reference, token);
 
+      await _ThumbnailCache.PrewarmAsync(persons.Select(person => person.MainPhoto), token);
       Persons = persons
           .OrderBy(item => item, _PersonInfoComparer)
           .ToList();

@@ -337,14 +337,38 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
     var added = await _doc.PersonManager.AddPersonAsync(toAdd, Token);
     var person = new Person(added.Id, Birth, null, BiologicalSex.Male);
 
-    var all = await _doc.PersonManager.GetPersonInfosAsync(selectMainPhoto: false, Token);
+    var all = await _doc.PersonManager.GetPersonInfosAsync(MainPhoto.Ignore, Token);
     all.Id().Should().Contain(added.Id);
 
-    var byArray = await _doc.PersonManager.GetPersonInfosAsync([person], selectMainPhoto: true, Token);
+    var byArray = await _doc.PersonManager.GetPersonInfosAsync([person], MainPhoto.Load, Token);
     byArray.Should().ContainSingle().Which.Names.Select(n => n.Value).Should().Contain("Findme");
 
-    var byName = await _doc.PersonManager.GetPersonInfosByNameAsync(first, selectMainPhoto: false, Token);
+    var byName = await _doc.PersonManager.GetPersonInfosByNameAsync(first, MainPhoto.Ignore, Token);
     byName.Id().Should().Contain(added.Id);
+  }
+
+  [Fact]
+  public async Task PersonManager_GetPersonInfos_ReferenceLoadsPhotoIdWithoutContent()
+  {
+    var name = await _doc.Names.AddNameAsync("Snapshot", NameType.FirstName, null, Token);
+    var photo = new byte[] { 1, 2, 3, 4 };
+    var toAdd = PersonFullInfo.Empty with
+    {
+      BirthDate = Birth,
+      BiologicalSex = BiologicalSex.Male,
+      Names = [name],
+      MainPhoto = new Data(TableBase.NonCommittedId, photo, "image/png", DataCategory.PersonMainPhoto),
+    };
+    var added = await _doc.PersonManager.AddPersonAsync(toAdd, Token);
+    var person = new Person(added.Id, Birth, null, BiologicalSex.Male);
+
+    var loaded = await _doc.PersonManager.GetPersonInfosAsync([person], MainPhoto.Load, Token);
+    loaded.Single().MainPhoto!.Content.Should().Equal(photo);
+
+    var referenced = await _doc.PersonManager.GetPersonInfosAsync([person], MainPhoto.Reference, Token);
+    var reference = referenced.Single().MainPhoto!;
+    reference.Id.Should().Be(loaded.Single().MainPhoto!.Id);
+    reference.Content.Should().BeEmpty();
   }
 
   [Fact]

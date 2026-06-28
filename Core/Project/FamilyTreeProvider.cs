@@ -138,12 +138,12 @@ internal sealed class FamilyTreeProvider : TableBase, IFamilyTreeProvider
       return [];
     }
 
-    return await Document.PersonManager.GetPersonInfosAsync(matched, selectMainPhoto: true, token);
+    return await Document.PersonManager.GetPersonInfosAsync(matched, MainPhoto.Reference, token);
   }
 
   private async Task<PersonInfo> GetPersonInfoAsync(Person person, CancellationToken token)
   {
-    var infos = await Document.PersonManager.GetPersonInfosAsync([person], selectMainPhoto: true, token);
+    var infos = await Document.PersonManager.GetPersonInfosAsync([person], MainPhoto.Reference, token);
     return infos.Single();
   }
 

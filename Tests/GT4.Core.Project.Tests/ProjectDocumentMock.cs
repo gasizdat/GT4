@@ -84,8 +84,8 @@ internal class ProjectDocumentMock : IProjectDocument
 
 
     _PersonManagerMock
-      .Setup(s => s.GetPersonInfosAsync(It.IsAny<Person[]>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-      .ReturnsAsync((Person[] persons, bool _, CancellationToken _) =>
+      .Setup(s => s.GetPersonInfosAsync(It.IsAny<Person[]>(), It.IsAny<MainPhoto>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync((Person[] persons, MainPhoto _, CancellationToken _) =>
       {
         Interlocked.Increment(ref _GetPersonInfosWithPersonsCallCount);
         return persons.Select(p => _Persons[p.Id] with { RelativeInfos = GetRelatives(p.Id) }).ToArray();
