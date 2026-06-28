@@ -30,7 +30,8 @@ public partial class FamilyTreePage : ContentPage
   private readonly Dictionary<int, byte[]> _ThumbnailCache = [];
   private const float PhotoThumbnailSize = 200;
   private const double ConnectorLineWidth = 2;
-  // Each "load more" click adds one generation, up to this hard ceiling.
+  // Each "load more" click adds GenerationsPerLoad generations, up to this hard ceiling.
+  private const int GenerationsPerLoad = 3;
   private const int MaxGenerations = 120;
   private const int InitialGenerations = 2;
   private const double MinZoom = 0.4;
@@ -414,17 +415,19 @@ public partial class FamilyTreePage : ContentPage
         break;
 
       case string command when command == "LoadAncestors":
-        if (_AncestorGenerations < MaxGenerations)
+        var newAncestorGenerations = Math.Min(_AncestorGenerations + GenerationsPerLoad, MaxGenerations);
+        if (_AncestorGenerations < newAncestorGenerations)
         {
-          _AncestorGenerations++;
+          _AncestorGenerations = newAncestorGenerations;
           Reload(ViewTarget.Top);
         }
         break;
 
       case string command when command == "LoadDescendants":
-        if (_DescendantGenerations < MaxGenerations)
+        var newDescendantGenerations = Math.Min(_DescendantGenerations + GenerationsPerLoad, MaxGenerations);
+        if (_DescendantGenerations < newDescendantGenerations)
         {
-          _DescendantGenerations++;
+          _DescendantGenerations = newDescendantGenerations;
           Reload(ViewTarget.Bottom);
         }
         break;
