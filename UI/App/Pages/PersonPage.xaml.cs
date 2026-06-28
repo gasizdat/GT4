@@ -1,6 +1,7 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.Components;
 using GT4.UI.Dialogs;
 using GT4.UI.Utils.Formatters;
 using GT4.UI.Resources;
@@ -24,7 +25,7 @@ public partial class PersonPage : ContentPage
   private readonly IDataConverter _TextConverter;
   private readonly IDataConverter _GedcomConverter;
   private readonly ICommand _PageCommand;
-  private readonly ObservableCollection<RelativeInfo> _Relatives = new();
+  private readonly RelativeTree _Relatives;
   private ObservableCollection<PersonInfo> _NavigationHistory = new();
   private int _NavigationIndex = -1;
   private PersonFullInfo _PersonFullInfo = PersonFullInfo.Empty;
@@ -44,6 +45,7 @@ public partial class PersonPage : ContentPage
     _TextConverter = _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonBio);
     _GedcomConverter = _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonGedcomTags);
     _PageCommand = new SafeCommand(OnPageCommand);
+    _Relatives = new RelativeTree(_CurrentProjectProvider, _CancellationTokenProvider);
 
     InitializeComponent();
   }
@@ -116,7 +118,7 @@ public partial class PersonPage : ContentPage
     }
   }
 
-  public ICollection Relatives => _Relatives;
+  public ICollection Relatives => _Relatives.Rows;
 
   public byte[][] Photos => _Photos;
 
@@ -261,16 +263,10 @@ public partial class PersonPage : ContentPage
     var siblings = relativesProvider.GetSiblings(personFullInfo, parents);
     _PersonFullInfo = personFullInfo;
     _Photos = photos;
-    _Relatives.Clear();
     _Biography = CombineBiography(bio, gedcomDetails);
 
-    void Add(IEnumerable<RelativeInfo> relatives)
-    {
-      foreach (var relative in relatives.OrderBy(r => r.BiologicalSex))
-      {
-        _Relatives.Add(relative);
-      }
-    }
+    var roots = new List<RelativeInfo>();
+    void Add(IEnumerable<RelativeInfo> relatives) => roots.AddRange(relatives.OrderBy(r => r.BiologicalSex));
 
     Add(_PersonFullInfo.RelativeInfos.Where(r => r.Type == RelationshipType.Spouse));
     Add(parents.Native);
@@ -284,6 +280,8 @@ public partial class PersonPage : ContentPage
     Add(relativesProvider.GetChildren(personFullInfo.RelativeInfos));
     Add(relativesProvider.GetAdoptiveChildren(personFullInfo.RelativeInfos));
     Add(stepChildren);
+
+    _Relatives.SetRoots(roots, _PersonFullInfo.BirthDate);
 
     this.RefreshView();
 
@@ -342,6 +340,7 @@ public partial class PersonPage : ContentPage
         break;
       case string commandName when commandName == "ToggleAll":
         ExpandAll = !ExpandAll;
+        _ = SafeTask.Run(() => _Relatives.ExpandAllAsync(ExpandAll));
         break;
     }
   }

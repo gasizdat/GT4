@@ -4,30 +4,11 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:components="clr-namespace:GT4.UI.Components"
-    xmlns:dto="clr-namespace:GT4.Core.Project.Dto;assembly=GT4.Core.Project"
     x:Name="Root">
 
-  <ContentView.Resources>
-    <ResourceDictionary>
-      <OnIdiom
-          x:Key="RelativesIndentation"
-          x:TypeArguments="x:Double"
-          Default="20"
-          Phone="10" />
-      <OnIdiom
-          x:Key="MoreBtnSize"
-          x:TypeArguments="x:Double"
-          Default="40" />
-      <components:Calculator
-          x:Key="VerticalLineMargin"
-          Expression="Thickness = Left : X1/2"
-          X1="{StaticResource RelativesIndentation}" />
-    </ResourceDictionary>
-  </ContentView.Resources>
-
   <Grid
-      ColumnDefinitions=" *, Auto, Auto"
-      RowDefinitions="Auto, Auto, *">
+      ColumnDefinitions=" *, Auto"
+      RowDefinitions="Auto, Auto">
 
     <Label
         Grid.Row="0"
@@ -60,70 +41,6 @@
             CommandParameter="{Binding Relative, Source={x:Reference Root}}" />
       </components:PersonInfoView.GestureRecognizers>
     </components:PersonInfoView>
-
-    <Button
-        Grid.Row="1"
-        Grid.Column="2"
-        Command="{Binding ShowMoreRelativesCommand, Source={x:Reference Root}}"
-        HeightRequest="{StaticResource MoreBtnSize}"
-        IsVisible="{Binding ShowMoreButton, Source={x:Reference Root}}"
-        Style="{StaticResource EmojiAdorner}"
-        Text="{Binding MoreBtnName, Source={x:Reference Root}}"
-        WidthRequest="{StaticResource MoreBtnSize}" />
-
-    <BoxView
-        Grid.Row="2"
-        Grid.Column="0"
-        Margin="{Binding ThicknessResult, Source={x:StaticResource VerticalLineMargin}}"
-        HorizontalOptions="Start"
-        IsVisible="{Binding ShowRelatives, Source={x:Reference Root}}"
-        VerticalOptions="Fill"
-        WidthRequest="1"
-        Color="Gray" />
-
-    <CollectionView
-        Grid.Row="2"
-        Grid.Column="0"
-        Grid.ColumnSpan="3"
-        HorizontalOptions="Fill"
-        IsVisible="{Binding ShowRelatives, Source={x:Reference Root}}"
-        ItemsSource="{Binding Relatives, Source={x:Reference Root}}">
-      <CollectionView.ItemsLayout>
-        <LinearItemsLayout
-            ItemSpacing="{StaticResource PageContentSpacing}"
-            Orientation="Vertical" />
-      </CollectionView.ItemsLayout>
-
-      <CollectionView.ItemTemplate>
-        <DataTemplate x:DataType="dto:RelativeInfo">
-          <Grid>
-            <components:Calculator
-                x:Name="HorisontalLineMargin"
-                Expression="Thickness = Left : X1/2; Top : X2"
-                X1="{StaticResource RelativesIndentation}"
-                X2="{Binding PersonInfoFrame.Center.Y, Source={x:Reference RelativeInfoView}}" />
-
-            <BoxView
-                Margin="{Binding ThicknessResult, Source={x:Reference HorisontalLineMargin}}"
-                HeightRequest="1"
-                HorizontalOptions="Start"
-                VerticalOptions="Start"
-                WidthRequest="{Binding X, Source={x:Reference RelativeInfoView}}"
-                Color="Gray" />
-
-            <components:RelativeInfoView
-                x:Name="RelativeInfoView"
-                Margin="{Thickness Left={StaticResource RelativesIndentation}}"
-                ExpandAllRelatives="{Binding ExpandAllRelatives, Source={x:Reference Root}}"
-                PersonBirthDate="{Binding Relative.BirthDate, Source={x:Reference Root}}"
-                Relative="{Binding .}"
-                SelectCommand="{Binding SelectCommand, Source={x:Reference Root}}"
-                ShowMoreButton="True"
-                Style="{StaticResource HoverSubItem}" />
-          </Grid>
-        </DataTemplate>
-      </CollectionView.ItemTemplate>
-    </CollectionView>
 
   </Grid>
 </ContentView>

@@ -1,34 +1,33 @@
-﻿using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
-using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
 using System.Windows.Input;
 
 namespace GT4.UI.Components;
 
+/// <summary>
+/// Displays a single relative — relation label, person card and the relationship date. This is a leaf
+/// view with no expansion of its own; the relatives tree is flattened and the per-row chrome (indent,
+/// connector lines, the "more" button) lives in <see cref="RelativeRowView"/>. It is also reused
+/// standalone wherever a lone relative needs rendering.
+/// </summary>
 public partial class RelativeInfoView : ContentView
 {
-  private static bool _ShowingCancellationWarning = false;
-  private const string ExpandSymbol = "🔽";
-  private const string CollapseSymbol = "­­­­⏫­";
-  private readonly ICancellationTokenProvider _CancellationTokenProvider;
-  private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IDateFormatter _DateFormatter;
   private readonly IRelationshipTypeFormatter _RelationshipTypeFormatter;
-  private bool _ShowRelatives = false;
-  private ICollection<RelativeInfo>? _Relatives = null;
-  private string _MoreBtnName = ExpandSymbol;
 
   protected RelativeInfoView(IServiceProvider serviceProvider)
   {
-    _CancellationTokenProvider = serviceProvider.GetRequiredService<ICancellationTokenProvider>();
-    _CurrentProjectProvider = serviceProvider.GetRequiredService<ICurrentProjectProvider>();
     _DateFormatter = serviceProvider.GetRequiredService<IDateFormatter>();
     _RelationshipTypeFormatter = serviceProvider.GetRequiredService<IRelationshipTypeFormatter>();
-    ShowMoreRelativesCommand = new SafeCommand(OnShowMoreRelativesCommandAsync);
     InitializeComponent();
+  }
+
+  public RelativeInfoView()
+    : this(GT4Services.Provider)
+  {
+
   }
 
   private Date? _RelationshipDate => Relative?.Type switch
@@ -37,19 +36,6 @@ public partial class RelativeInfoView : ContentView
     RelationshipType.Child => Relative?.BirthDate,
     _ => Relative?.Date
   };
-
-  public RelativeInfoView()
-    : this(GT4Services.Provider)
-  {
-
-  }
-
-  public static readonly BindableProperty ShowMoreButtonProperty = BindableProperty.Create(
-    nameof(ShowMoreButton),
-    typeof(bool),
-    typeof(RelativeInfoView),
-    default,
-    BindingMode.OneWay);
 
   public static readonly BindableProperty PersonBirthDateProperty = BindableProperty.Create(
     nameof(PersonBirthDate),
@@ -88,21 +74,6 @@ public partial class RelativeInfoView : ContentView
     default,
     BindingMode.OneWay);
 
-  public static readonly BindableProperty ExpandAllRelativesProperty = BindableProperty.Create(
-    nameof(ExpandAllRelatives),
-    typeof(bool),
-    typeof(RelativeInfoView),
-    false,
-    BindingMode.OneWay,
-    null,
-    OnExpandAllRelativesChanged);
-
-  public bool ShowMoreButton
-  {
-    get => (bool)GetValue(ShowMoreButtonProperty);
-    set => SetValue(ShowMoreButtonProperty, value);
-  }
-
   public Date? PersonBirthDate
   {
     get => (Date?)GetValue(PersonBirthDateProperty);
@@ -133,12 +104,6 @@ public partial class RelativeInfoView : ContentView
     set => SetValue(SelectCommandProperty, value);
   }
 
-  public bool ExpandAllRelatives
-  {
-    get => (bool?)GetValue(ExpandAllRelativesProperty) ?? false;
-    set => SetValue(ExpandAllRelativesProperty, value);
-  }
-
   public bool ShowDate =>
     _RelationshipDate.HasValue &&
     _RelationshipDate.Value.Status != DateStatus.Unknown &&
@@ -165,135 +130,11 @@ public partial class RelativeInfoView : ContentView
       Relative.Generation,
       Relative.Consanguinity);
 
-  public bool ShowRelatives
-  {
-    get => _ShowRelatives;
-    private set
-    {
-      if (_ShowRelatives != value)
-      {
-        _ShowRelatives = value;
-        if (_ShowRelatives)
-        {
-          MoreBtnName = CollapseSymbol;
-        }
-        else
-        {
-          Relatives = null;
-          MoreBtnName = ExpandSymbol;
-        }
-        OnPropertyChanged(nameof(ShowRelatives));
-      }
-    }
-  }
-
-  public ICommand ShowMoreRelativesCommand { get; init; }
-
-  public ICollection<RelativeInfo>? Relatives
-  {
-    get => _Relatives;
-    private set
-    {
-      _Relatives = value;
-      OnPropertyChanged(nameof(Relatives));
-    }
-  }
-
-  public string MoreBtnName
-  {
-    get => _MoreBtnName;
-    private set
-    {
-      if (_MoreBtnName != value)
-      {
-        _MoreBtnName = value;
-        OnPropertyChanged(nameof(MoreBtnName));
-      }
-    }
-  }
-
   private static void OnRelativeInfoChanged(BindableObject obj, object oldValue, object newValue)
   {
     if (obj is RelativeInfoView view && oldValue != newValue)
     {
-      view.ShowRelatives = false;
       view.RefreshView();
-      if (view.ExpandAllRelatives)
-      {
-        var value = view.ExpandAllRelatives;
-        _ = SafeTask.Run(() => view.ToggleAllRelativesAsync(value));
-      }
-    }
-  }
-
-  private static void OnExpandAllRelativesChanged(BindableObject obj, object oldValue, object newValue)
-  {
-    if (obj is RelativeInfoView view && oldValue != newValue)
-    {
-      var value = newValue is null ? false : (bool)newValue;
-      _ = SafeTask.Run(() => view.ToggleAllRelativesAsync(value));
-    }
-  }
-
-  private async Task ToggleAllRelativesAsync(bool expand)
-  {
-    if (ShowRelatives != expand)
-    {
-      // Invoked from Task.Run, so marshal the property change onto the UI thread.
-      await Dispatcher.DispatchAsync(() => ShowRelatives = false);
-      if (expand)
-      {
-        try
-        {
-          await OnShowMoreRelativesCommandAsync();
-        }
-        catch (OperationCanceledException)
-        {
-          // Benign: the DB token timed out while many items were queued through the connection gate.
-          // The item stays collapsed.
-          if (!Interlocked.Exchange(ref _ShowingCancellationWarning, true))
-          {
-            try
-            {
-              await PageAlert.CurrentShell.ShowWarningAsync(UIStrings.AlertTextKinshipUnfoldingAborted);
-            }
-            finally
-            {
-              Interlocked.Exchange(ref _ShowingCancellationWarning, false);
-            }
-          }
-        }
-      }
-    }
-  }
-
-  private async Task OnShowMoreRelativesCommandAsync()
-  {
-    var relative = Relative;
-    if (relative is null)
-    {
-      return;
-    }
-
-    if (ShowRelatives)
-    {
-      await Dispatcher.DispatchAsync(() =>
-      {
-        ShowRelatives = false;
-      });
-    }
-    else
-    {
-      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-      var relatives = await _CurrentProjectProvider
-        .Project
-        .RelativesProvider
-        .GetRelativeInfosAsync(relative, true, token);
-      await Dispatcher.DispatchAsync(() =>
-      {
-        Relatives = relatives;
-        ShowRelatives = true;
-      });
     }
   }
 
@@ -301,9 +142,7 @@ public partial class RelativeInfoView : ContentView
   {
     if (sender is PersonInfoView personInfoView)
     {
-      var frame = personInfoView.Frame;
-      SetValue(PersonInfoFrameProperty, frame);
-      OnPropertyChanged(nameof(PersonInfoFrame));
+      PersonInfoFrame = personInfoView.Frame;
     }
   }
 }
