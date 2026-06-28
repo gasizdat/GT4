@@ -49,6 +49,7 @@ public partial class FamilyTreePage : ContentPage
   private double _PanStartScrollX;
   private double _PanStartScrollY;
   private double _ZoomScale = 1.0;
+  private int _LoadOperationsCount = 0;
 
   // Where to park the viewport after a (re)build.
   private enum ViewTarget { Center, Top, Bottom }
@@ -57,9 +58,9 @@ public partial class FamilyTreePage : ContentPage
   private sealed record NodeEntry(FamilyTreeNodeView View, double Zoom, bool IsCenter);
 
   public FamilyTreePage(
-    ICancellationTokenProvider cancellationTokenProvider, 
+    ICancellationTokenProvider cancellationTokenProvider,
     ICurrentProjectProvider currentProjectProvider,
-    INameFormatter nameFormatter, 
+    INameFormatter nameFormatter,
     FontScale? fontScale
   )
   {
@@ -129,7 +130,7 @@ public partial class FamilyTreePage : ContentPage
   // Drive the visibility of the top/bottom "load more" buttons.
   public bool CanLoadMoreAncestors
   {
-    get => _CanLoadMoreAncestors;
+    get => _CanLoadMoreAncestors && !LoadInProgress;
     private set
     {
       if (_CanLoadMoreAncestors == value)
@@ -144,7 +145,7 @@ public partial class FamilyTreePage : ContentPage
 
   public bool CanLoadMoreDescendants
   {
-    get => _CanLoadMoreDescendants;
+    get => _CanLoadMoreDescendants && !LoadInProgress;
     private set
     {
       if (_CanLoadMoreDescendants == value)
@@ -173,6 +174,29 @@ public partial class FamilyTreePage : ContentPage
     }
   }
 
+  public bool LoadInProgress
+  {
+    get => _LoadOperationsCount != 0;
+  }
+
+  private void SetLoadInProgress()
+  {
+    _LoadOperationsCount++;
+
+    OnPropertyChanged(nameof(LoadInProgress));
+    OnPropertyChanged(nameof(CanLoadMoreAncestors));
+    OnPropertyChanged(nameof(CanLoadMoreDescendants));
+  }
+
+  private void ResetLoadInProgress()
+  {
+    _LoadOperationsCount = Math.Max(_LoadOperationsCount - 1, 0);
+
+    OnPropertyChanged(nameof(LoadInProgress));
+    OnPropertyChanged(nameof(CanLoadMoreAncestors));
+    OnPropertyChanged(nameof(CanLoadMoreDescendants));
+  }
+
   private void SetCenter(PersonInfo person)
   {
     _Center = person;
@@ -195,35 +219,43 @@ public partial class FamilyTreePage : ContentPage
 
     _ViewTarget = target;
     var center = _Center;
+    SetLoadInProgress();
     _ = SafeTask.Run(() => LoadAsync(center));
   }
 
   private async Task LoadAsync(Person center)
   {
-    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-    var tree = await _CurrentProjectProvider
-      .Project
-      .FamilyTreeProvider
-      .BuildAsync(center, _AncestorGenerations, _DescendantGenerations, _IncludeCollaterals, token);
-
-    var zoom = _ZoomScale;
-    var scaledMetrics = _Metrics with
+    try
     {
-      NodeWidth     = _Metrics.NodeWidth     * zoom,
-      NodeHeight    = _Metrics.NodeHeight    * zoom,
-      HorizontalGap = _Metrics.HorizontalGap * zoom,
-      VerticalGap   = _Metrics.VerticalGap   * zoom,
-      Margin        = _Metrics.Margin        * zoom,
-      CornerRadius  = _Metrics.CornerRadius  * zoom,
-    };
+      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      var tree = await _CurrentProjectProvider
+        .Project
+        .FamilyTreeProvider
+        .BuildAsync(center, _AncestorGenerations, _DescendantGenerations, _IncludeCollaterals, token);
 
-    var layout = _Layout.Update(tree, scaledMetrics);
-    CacheThumbnails(tree);
-    var names = layout.Nodes.ToDictionary(
-      node => node.Node.Id,
-      node => _NameFormatter.ToString(node.Node.Person, NameFormat.ShortPersonName));
+      var zoom = _ZoomScale;
+      var scaledMetrics = _Metrics with
+      {
+        NodeWidth = _Metrics.NodeWidth * zoom,
+        NodeHeight = _Metrics.NodeHeight * zoom,
+        HorizontalGap = _Metrics.HorizontalGap * zoom,
+        VerticalGap = _Metrics.VerticalGap * zoom,
+        Margin = _Metrics.Margin * zoom,
+        CornerRadius = _Metrics.CornerRadius * zoom,
+      };
 
-    await SafeTask.RunOnMainThread(() => Render(tree.CenterId, layout, names, zoom));
+      var layout = _Layout.Update(tree, scaledMetrics);
+      CacheThumbnails(tree);
+      var names = layout.Nodes.ToDictionary(
+        node => node.Node.Id,
+        node => _NameFormatter.ToString(node.Node.Person, NameFormat.ShortPersonName));
+
+      await SafeTask.RunOnMainThread(() => Render(tree.CenterId, layout, names, zoom));
+    }
+    finally
+    {
+      await SafeTask.RunOnMainThread(ResetLoadInProgress);
+    }
   }
 
   private void Render(int centerId, FamilyTreeLayoutResult layout, IReadOnlyDictionary<int, string> names, double zoom)
