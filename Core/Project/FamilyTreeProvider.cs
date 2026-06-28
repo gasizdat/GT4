@@ -21,6 +21,7 @@ internal sealed class FamilyTreeProvider : TableBase, IFamilyTreeProvider
     int ancestorGenerations,
     int descendantGenerations,
     bool includeCollaterals,
+    MainPhoto mainPhoto,
     CancellationToken token)
   {
     ArgumentNullException.ThrowIfNull(center);
@@ -28,7 +29,7 @@ internal sealed class FamilyTreeProvider : TableBase, IFamilyTreeProvider
     var nodes = new Dictionary<int, FamilyTreeNode>();
     var edges = new HashSet<FamilyTreeEdge>();
 
-    var centerInfo = await GetPersonInfoAsync(center, token);
+    var centerInfo = await GetPersonInfoAsync(center, mainPhoto, token);
     var centerNode = new FamilyTreeNode(centerInfo, Generation: 0);
     nodes[center.Id] = centerNode;
 
@@ -41,6 +42,7 @@ internal sealed class FamilyTreeProvider : TableBase, IFamilyTreeProvider
       makeEdge: static (fromId, relativeId) => FamilyTreeEdge.ParentChild(parentId: relativeId, childId: fromId),
       nodes: nodes,
       edges: edges,
+      mainPhoto: mainPhoto,
       token: token);
 
     // Descendants: descend to children one generation at a time. Seeding only from the centre keeps a
@@ -55,9 +57,10 @@ internal sealed class FamilyTreeProvider : TableBase, IFamilyTreeProvider
       makeEdge: static (fromId, relativeId) => FamilyTreeEdge.ParentChild(parentId: fromId, childId: relativeId),
       nodes: nodes,
       edges: edges,
+      mainPhoto: mainPhoto,
       token: token);
 
-    await AddSpousesAsync(nodes, edges, token);
+    await AddSpousesAsync(nodes, edges, mainPhoto, token);
 
     return new FamilyTree(center.Id, [.. nodes.Values], [.. edges]);
   }
@@ -70,6 +73,7 @@ internal sealed class FamilyTreeProvider : TableBase, IFamilyTreeProvider
     Func<int, int, FamilyTreeEdge> makeEdge,
     Dictionary<int, FamilyTreeNode> nodes,
     HashSet<FamilyTreeEdge> edges,
+    MainPhoto mainPhoto,
     CancellationToken token)
   {
     var frontier = seeds.ToList();
@@ -81,7 +85,7 @@ internal sealed class FamilyTreeProvider : TableBase, IFamilyTreeProvider
       foreach (var node in frontier)
       {
         var generation = node.Generation + generationStep;
-        var matches = await GetRelativesAsync(node.Person, follow, token);
+        var matches = await GetRelativesAsync(node.Person, follow, mainPhoto, token);
 
         foreach (var relative in matches)
         {
@@ -105,13 +109,14 @@ internal sealed class FamilyTreeProvider : TableBase, IFamilyTreeProvider
   private async Task AddSpousesAsync(
     Dictionary<int, FamilyTreeNode> nodes,
     HashSet<FamilyTreeEdge> edges,
+    MainPhoto mainPhoto,
     CancellationToken token)
   {
     // Spouses sit on the same generation as the person they marry into. Snapshot the blood relatives
     // first so the spouses added here are not themselves expanded for further spouses.
     foreach (var node in nodes.Values.ToList())
     {
-      var spouses = await GetRelativesAsync(node.Person, static type => type == RelationshipType.Spouse, token);
+      var spouses = await GetRelativesAsync(node.Person, static type => type == RelationshipType.Spouse, mainPhoto, token);
 
       foreach (var spouse in spouses)
       {
@@ -128,6 +133,7 @@ internal sealed class FamilyTreeProvider : TableBase, IFamilyTreeProvider
   private async Task<PersonInfo[]> GetRelativesAsync(
     Person person,
     Func<RelationshipType, bool> follow,
+    MainPhoto mainPhoto,
     CancellationToken token)
   {
     var relatives = await Document.Relatives.GetRelativesAsync(person, token);
@@ -138,12 +144,12 @@ internal sealed class FamilyTreeProvider : TableBase, IFamilyTreeProvider
       return [];
     }
 
-    return await Document.PersonManager.GetPersonInfosAsync(matched, MainPhoto.Reference, token);
+    return await Document.PersonManager.GetPersonInfosAsync(matched, mainPhoto, token);
   }
 
-  private async Task<PersonInfo> GetPersonInfoAsync(Person person, CancellationToken token)
+  private async Task<PersonInfo> GetPersonInfoAsync(Person person, MainPhoto mainPhoto, CancellationToken token)
   {
-    var infos = await Document.PersonManager.GetPersonInfosAsync([person], MainPhoto.Reference, token);
+    var infos = await Document.PersonManager.GetPersonInfosAsync([person], mainPhoto, token);
     return infos.Single();
   }
 

@@ -4,8 +4,8 @@ namespace GT4.Core.Project.Abstraction;
 
 public interface IRelativesProvider
 {
-  Task<Parents> GetParentsAsync(RelativeInfo[] relativeInfos, CancellationToken token);
-  Task<RelativeInfo[]> GetStepChildrenAsync(RelativeInfo[] relativeInfos, CancellationToken token);
+  Task<Parents> GetParentsAsync(RelativeInfo[] relativeInfos, MainPhoto mainPhoto, CancellationToken token);
+  Task<RelativeInfo[]> GetStepChildrenAsync(RelativeInfo[] relativeInfos, MainPhoto mainPhoto, CancellationToken token);
   RelativeInfo[] GetAdoptiveChildren(RelativeInfo[] relativeInfos);
   RelativeInfo[] GetChildren(RelativeInfo[] relativeInfos);
   Siblings GetSiblings(Person person, Parents parents);

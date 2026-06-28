@@ -20,5 +20,6 @@ public interface IFamilyTreeProvider
     int ancestorGenerations,
     int descendantGenerations,
     bool includeCollaterals,
+    MainPhoto mainPhoto,
     CancellationToken token);
 }

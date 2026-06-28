@@ -18,7 +18,7 @@ public class FamilyTreeProviderTests
   {
     var person = _documentMock.CreatePerson();
 
-    var tree = await Provider.BuildAsync(person, ancestorGenerations: 2, descendantGenerations: 2, includeCollaterals: false, CancellationToken.None);
+    var tree = await Provider.BuildAsync(person, ancestorGenerations: 2, descendantGenerations: 2, includeCollaterals: false, MainPhoto.Reference, CancellationToken.None);
 
     tree.CenterId.Should().Be(person.Id);
     tree.Nodes.Id().Should().BeEquivalentTo([person.Id]);
@@ -38,7 +38,7 @@ public class FamilyTreeProviderTests
     _documentMock.AddRelationship(grandParent, parent, RelationshipType.Child);
     _documentMock.AddRelationship(parent, child, RelationshipType.Child);
 
-    var tree = await Provider.BuildAsync(child, ancestorGenerations: 2, descendantGenerations: 0, includeCollaterals: false, CancellationToken.None);
+    var tree = await Provider.BuildAsync(child, ancestorGenerations: 2, descendantGenerations: 0, includeCollaterals: false, MainPhoto.Reference, CancellationToken.None);
 
     tree.Nodes.Id().Should().BeEquivalentTo([child.Id, parent.Id, grandParent.Id]);
     GenerationOf(tree, parent).Should().Be(1);
@@ -57,7 +57,7 @@ public class FamilyTreeProviderTests
     _documentMock.AddRelationship(father, child, RelationshipType.Child);
     _documentMock.AddRelationship(mother, child, RelationshipType.Child);
 
-    var tree = await Provider.BuildAsync(child, ancestorGenerations: 1, descendantGenerations: 0, includeCollaterals: false, CancellationToken.None);
+    var tree = await Provider.BuildAsync(child, ancestorGenerations: 1, descendantGenerations: 0, includeCollaterals: false, MainPhoto.Reference, CancellationToken.None);
 
     tree.Nodes.Id().Should().BeEquivalentTo([child.Id, father.Id, mother.Id]);
     GenerationOf(tree, father).Should().Be(1);
@@ -76,7 +76,7 @@ public class FamilyTreeProviderTests
     _documentMock.AddRelationship(child, grandChild, RelationshipType.Child);
     _documentMock.AddRelationship(grandChild, greatGrandChild, RelationshipType.Child);
 
-    var tree = await Provider.BuildAsync(parent, ancestorGenerations: 0, descendantGenerations: 2, includeCollaterals: false, CancellationToken.None);
+    var tree = await Provider.BuildAsync(parent, ancestorGenerations: 0, descendantGenerations: 2, includeCollaterals: false, MainPhoto.Reference, CancellationToken.None);
 
     tree.Nodes.Id().Should().BeEquivalentTo([parent.Id, child.Id, grandChild.Id]);
     GenerationOf(tree, child).Should().Be(-1);
@@ -99,7 +99,7 @@ public class FamilyTreeProviderTests
     _documentMock.AddRelationship(grandParent, aunt, RelationshipType.Child);
     _documentMock.AddRelationship(parent, child, RelationshipType.Child);
 
-    var tree = await Provider.BuildAsync(child, ancestorGenerations: 5, descendantGenerations: 5, includeCollaterals: false, CancellationToken.None);
+    var tree = await Provider.BuildAsync(child, ancestorGenerations: 5, descendantGenerations: 5, includeCollaterals: false, MainPhoto.Reference, CancellationToken.None);
 
     tree.Nodes.Id().Should().BeEquivalentTo([child.Id, parent.Id, grandParent.Id]);
     tree.Nodes.Id().Should().NotContain(aunt.Id);
@@ -113,7 +113,7 @@ public class FamilyTreeProviderTests
 
     _documentMock.AddRelationship(person, spouse, RelationshipType.Spouse);
 
-    var tree = await Provider.BuildAsync(person, ancestorGenerations: 0, descendantGenerations: 0, includeCollaterals: false, CancellationToken.None);
+    var tree = await Provider.BuildAsync(person, ancestorGenerations: 0, descendantGenerations: 0, includeCollaterals: false, MainPhoto.Reference, CancellationToken.None);
 
     tree.Nodes.Id().Should().BeEquivalentTo([person.Id, spouse.Id]);
     GenerationOf(tree, spouse).Should().Be(0);
@@ -131,7 +131,7 @@ public class FamilyTreeProviderTests
     _documentMock.AddRelationship(parent, child, RelationshipType.Child);
     _documentMock.AddRelationship(parent, parentSpouse, RelationshipType.Spouse);
 
-    var tree = await Provider.BuildAsync(child, ancestorGenerations: 1, descendantGenerations: 0, includeCollaterals: false, CancellationToken.None);
+    var tree = await Provider.BuildAsync(child, ancestorGenerations: 1, descendantGenerations: 0, includeCollaterals: false, MainPhoto.Reference, CancellationToken.None);
 
     tree.Nodes.Id().Should().BeEquivalentTo([child.Id, parent.Id, parentSpouse.Id]);
     GenerationOf(tree, parentSpouse).Should().Be(1);
@@ -147,7 +147,7 @@ public class FamilyTreeProviderTests
     // The mock records the reciprocal Spouse link, so both endpoints report the marriage.
     _documentMock.AddRelationship(person, spouse, RelationshipType.Spouse);
 
-    var tree = await Provider.BuildAsync(person, ancestorGenerations: 0, descendantGenerations: 0, includeCollaterals: false, CancellationToken.None);
+    var tree = await Provider.BuildAsync(person, ancestorGenerations: 0, descendantGenerations: 0, includeCollaterals: false, MainPhoto.Reference, CancellationToken.None);
 
     tree.Edges.Count(edge => edge.Relation == FamilyTreeRelation.Spouse).Should().Be(1);
   }
@@ -162,7 +162,7 @@ public class FamilyTreeProviderTests
     _documentMock.AddRelationship(parent, child, RelationshipType.Child);
     _documentMock.AddRelationship(parent, sibling, RelationshipType.Child);
 
-    var tree = await Provider.BuildAsync(child, ancestorGenerations: 1, descendantGenerations: 1, includeCollaterals: true, CancellationToken.None);
+    var tree = await Provider.BuildAsync(child, ancestorGenerations: 1, descendantGenerations: 1, includeCollaterals: true, MainPhoto.Reference, CancellationToken.None);
 
     tree.Nodes.Id().Should().BeEquivalentTo([child.Id, parent.Id, sibling.Id]);
     GenerationOf(tree, sibling).Should().Be(0);
@@ -183,7 +183,7 @@ public class FamilyTreeProviderTests
     _documentMock.AddRelationship(aunt, cousin, RelationshipType.Child);
     _documentMock.AddRelationship(parent, child, RelationshipType.Child);
 
-    var tree = await Provider.BuildAsync(child, ancestorGenerations: 2, descendantGenerations: 2, includeCollaterals: true, CancellationToken.None);
+    var tree = await Provider.BuildAsync(child, ancestorGenerations: 2, descendantGenerations: 2, includeCollaterals: true, MainPhoto.Reference, CancellationToken.None);
 
     tree.Nodes.Id().Should().BeEquivalentTo([child.Id, parent.Id, grandParent.Id, aunt.Id, cousin.Id]);
     GenerationOf(tree, aunt).Should().Be(1);
@@ -209,7 +209,7 @@ public class FamilyTreeProviderTests
     _documentMock.AddRelationship(aunt, cousin, RelationshipType.Child);
     _documentMock.AddRelationship(parent, child, RelationshipType.Child);
 
-    var tree = await Provider.BuildAsync(child, ancestorGenerations: 2, descendantGenerations: 1, includeCollaterals: true, CancellationToken.None);
+    var tree = await Provider.BuildAsync(child, ancestorGenerations: 2, descendantGenerations: 1, includeCollaterals: true, MainPhoto.Reference, CancellationToken.None);
 
     tree.Nodes.Id().Should().Contain(aunt.Id);
     tree.Nodes.Id().Should().NotContain(cousin.Id);

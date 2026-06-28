@@ -189,7 +189,7 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     person.BirthDate.Should().Be(Date.Create(18500304, DateStatus.WellKnown));
     person.DeathDate.Should().Be(Date.Create(19200101, DateStatus.WellKnown));
 
-    var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, Token);
+    var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, MainPhoto.Reference, Token);
     full.DisplayName.Should().Be("Solo");
     full.Biography.Should().NotBeNull();
     Encoding.UTF8.GetString(full.Biography!.Content).Should().Be("A short life story.");
@@ -253,7 +253,7 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     await _importer.ImportAsync(reimported, new StringReader(text), Token);
 
     var person = (await reimported.Persons.GetPersonsAsync(Token)).Single();
-    var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, Token);
+    var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, MainPhoto.Reference, Token);
 
     full.MainPhoto.Should().NotBeNull();
     full.MainPhoto!.MimeType.Should().Be("image/jpeg");
@@ -289,7 +289,7 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     await _importer.ImportAsync(reimported, new StringReader(text), Token);
 
     var person = (await reimported.Persons.GetPersonsAsync(Token)).Single();
-    var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, Token);
+    var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, MainPhoto.Reference, Token);
     full.MainPhoto!.Content.Should().Equal(bytes);
   }
 
@@ -315,7 +315,7 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     await _importer.ImportAsync(reimported, new StringReader(text), Token);
 
     var person = (await reimported.Persons.GetPersonsAsync(Token)).Single();
-    var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, Token);
+    var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, MainPhoto.Reference, Token);
     full.MainPhoto.Should().NotBeNull();
     full.MainPhoto!.MimeType.Should().BeNull();
     Encoding.UTF8.GetString(full.MainPhoto.Content).Should().Be("BYTES");

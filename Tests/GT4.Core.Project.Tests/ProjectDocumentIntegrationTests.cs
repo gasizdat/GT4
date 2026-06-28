@@ -291,7 +291,7 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
     var added = await _doc.PersonManager.AddPersonAsync(toAdd, Token);
     added.Id.Should().NotBe(TableBase.NonCommittedId);
 
-    var full = await _doc.PersonManager.GetPersonFullInfoAsync(new Person(added.Id, Birth, null, BiologicalSex.Male), Token);
+    var full = await _doc.PersonManager.GetPersonFullInfoAsync(new Person(added.Id, Birth, null, BiologicalSex.Male), MainPhoto.Reference, Token);
     full.Names.Select(n => n.Value).Should().Contain("John");
     // GetRequiredNames added the male last name in addition to the explicit family name.
     full.Names.Count(n => n.Value == "Smith").Should().BeGreaterThanOrEqualTo(1);
@@ -301,7 +301,7 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   public async Task PersonManager_GetPersonFullInfo_ForNonCommitted_Throws()
   {
     var act = () => _doc.PersonManager.GetPersonFullInfoAsync(
-      new Person(TableBase.NonCommittedId, Birth, null, BiologicalSex.Male), Token);
+      new Person(TableBase.NonCommittedId, Birth, null, BiologicalSex.Male), MainPhoto.Reference, Token);
 
     await act.Should().ThrowAsync<ArgumentException>();
   }
@@ -320,7 +320,7 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
 
     var added = await _doc.PersonManager.AddPersonAsync(toAdd, Token);
     var person = new Person(added.Id, Birth, null, BiologicalSex.Female);
-    var full = await _doc.PersonManager.GetPersonFullInfoAsync(person, Token);
+    var full = await _doc.PersonManager.GetPersonFullInfoAsync(person, MainPhoto.Reference, Token);
 
     full.MainPhoto.Should().NotBeNull();
     full.MainPhoto!.Content.Should().Equal(1, 2, 3);
@@ -388,7 +388,7 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
     await _doc.PersonManager.UpdatePersonAsync(updated, Token);
 
     var full = await _doc.PersonManager.GetPersonFullInfoAsync(
-      new Person(added.Id, Birth, null, BiologicalSex.Male), Token);
+      new Person(added.Id, Birth, null, BiologicalSex.Male), MainPhoto.Reference, Token);
     full.Names.Select(n => n.Value).Should().ContainSingle().Which.Should().Be("Renamed");
     full.MainPhoto.Should().NotBeNull();
   }

@@ -950,7 +950,7 @@ public class RelativesProviderTests
       .Id()
       .Should()
       .BeEquivalentTo([father.Id, mother.Id]);
-    var parents = await relativesProvider.GetParentsAsync(relatives, CancellationToken.None);
+    var parents = await relativesProvider.GetParentsAsync(relatives, MainPhoto.Reference, CancellationToken.None);
     var siblings = relativesProvider.GetSiblings(child, parents);
     siblings.ByFather
       .Id()

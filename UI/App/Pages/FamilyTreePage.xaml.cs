@@ -232,7 +232,7 @@ public partial class FamilyTreePage : ContentPage
       var tree = await _CurrentProjectProvider
         .Project
         .FamilyTreeProvider
-        .BuildAsync(center, _AncestorGenerations, _DescendantGenerations, _IncludeCollaterals, token);
+        .BuildAsync(center, _AncestorGenerations, _DescendantGenerations, _IncludeCollaterals, MainPhoto.Reference, token);
 
       var zoom = _ZoomScale;
       var scaledMetrics = _Metrics with

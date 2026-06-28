@@ -221,7 +221,7 @@ public sealed class GedcomMergeImportTests : IAsyncLifetime
     var infos = await PersonInfosAsync(document);
     infos.Should().HaveCount(1);
 
-    var full = await document.PersonManager.GetPersonFullInfoAsync(infos.Single(), Token);
+    var full = await document.PersonManager.GetPersonFullInfoAsync(infos.Single(), MainPhoto.Reference, Token);
     full.DeathDate.Should().Be(Date.Create(1910, 1, 1, DateStatus.WellKnown));
     full.Biography.Should().NotBeNull();
     Encoding.UTF8.GetString(full.Biography!.Content).Should().Be("A blacksmith.");
@@ -237,7 +237,7 @@ public sealed class GedcomMergeImportTests : IAsyncLifetime
     var infos = await PersonInfosAsync(document);
     infos.Should().HaveCount(1);
 
-    var full = await document.PersonManager.GetPersonFullInfoAsync(infos.Single(), Token);
+    var full = await document.PersonManager.GetPersonFullInfoAsync(infos.Single(), MainPhoto.Reference, Token);
     full.DeathDate.Should().Be(Date.Create(1900, 1, 1, DateStatus.WellKnown));
     Encoding.UTF8.GetString(full.Biography!.Content).Should().Be("First.");
   }
@@ -258,7 +258,7 @@ public sealed class GedcomMergeImportTests : IAsyncLifetime
     var infos = await PersonInfosAsync(document);
     infos.Should().HaveCount(1);
 
-    var full = await document.PersonManager.GetPersonFullInfoAsync(infos.Single(), Token);
+    var full = await document.PersonManager.GetPersonFullInfoAsync(infos.Single(), MainPhoto.Reference, Token);
     full.MainPhoto.Should().NotBeNull();
     Encoding.UTF8.GetString(full.MainPhoto!.Content).Should().Be("tiny-image");
     full.GedcomData.Should().NotBeNull();

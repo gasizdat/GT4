@@ -258,7 +258,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     // editable there, so they ride along on PersonFullInfo.GedcomData; without that they would be wiped by
     // UpdatePersonDataSet's delete-and-re-add.
     var persons = await document.Persons.GetPersonsAsync(Token);
-    var full = await document.PersonManager.GetPersonFullInfoAsync(persons.Single(), Token);
+    var full = await document.PersonManager.GetPersonFullInfoAsync(persons.Single(), MainPhoto.Reference, Token);
     full.GedcomData.Should().NotBeNull();
 
     await document.PersonManager.UpdatePersonAsync(full with { DeathDate = Date.Create(1900, 1, 1, DateStatus.WellKnown) }, Token);
@@ -278,7 +278,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     await _importer.ImportAsync(document, new StringReader(ged), Token);
 
     var person = (await document.Persons.GetPersonsAsync(Token)).Single();
-    var full = await document.PersonManager.GetPersonFullInfoAsync(person, Token);
+    var full = await document.PersonManager.GetPersonFullInfoAsync(person, MainPhoto.Reference, Token);
     full.MainPhoto.Should().NotBeNull();
     full.MainPhoto!.MimeType.Should().Be("image/jpeg");
     Encoding.UTF8.GetString(full.MainPhoto.Content).Should().Be("tiny-image");
@@ -299,7 +299,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     await _importer.ImportAsync(document, new StringReader(ged), Token);
 
     var person = (await document.Persons.GetPersonsAsync(Token)).Single();
-    var full = await document.PersonManager.GetPersonFullInfoAsync(person, Token);
+    var full = await document.PersonManager.GetPersonFullInfoAsync(person, MainPhoto.Reference, Token);
     Encoding.UTF8.GetString(full.MainPhoto!.Content).Should().Be("first");
     Encoding.UTF8.GetString(full.AdditionalPhotos.Should().ContainSingle().Which.Content).Should().Be("second");
   }
@@ -316,7 +316,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     await _importer.ImportAsync(document, new StringReader(ged), Token);
 
     var person = (await document.Persons.GetPersonsAsync(Token)).Single();
-    var full = await document.PersonManager.GetPersonFullInfoAsync(person, Token);
+    var full = await document.PersonManager.GetPersonFullInfoAsync(person, MainPhoto.Reference, Token);
     full.MainPhoto.Should().BeNull();
     full.AdditionalPhotos.Should().BeEmpty();
     full.GedcomData.Should().NotBeNull();

@@ -7,7 +7,7 @@ internal class RelativesProvider : ProjectComponentBase, IRelativesProvider
 {
   private static readonly ElementIdComparer<RelativeInfo> _RelativeInfoComparer = new();
 
-  private async Task<RelativeFullInfo[]> GetRelativeFullInfosAsync(RelativeInfo[] relatives, CancellationToken token)
+  private async Task<RelativeFullInfo[]> GetRelativeFullInfosAsync(RelativeInfo[] relatives, MainPhoto mainPhoto, CancellationToken token)
   {
     if (relatives.Length == 0)
       return [];
@@ -20,7 +20,7 @@ internal class RelativesProvider : ProjectComponentBase, IRelativesProvider
       .ToDictionary(g => g.Key, g => (Person)g.First());
 
     PersonInfo[] personInfos = uniqueRelativesById.Count > 0
-      ? await Document.PersonManager.GetPersonInfosAsync([.. uniqueRelativesById.Values], MainPhoto.Reference, token)
+      ? await Document.PersonManager.GetPersonInfosAsync([.. uniqueRelativesById.Values], mainPhoto, token)
       : [];
 
     var personInfoById = personInfos.ToDictionary(p => p.Id);
@@ -297,11 +297,11 @@ internal class RelativesProvider : ProjectComponentBase, IRelativesProvider
     return relativeInfos;
   }
 
-  public async Task<Parents> GetParentsAsync(RelativeInfo[] relativeInfos, CancellationToken token)
+  public async Task<Parents> GetParentsAsync(RelativeInfo[] relativeInfos, MainPhoto mainPhoto, CancellationToken token)
   {
     var parents = relativeInfos.Where(r => r.Type == RelationshipType.Parent).ToArray();
     var adoptiveParents = relativeInfos.Where(r => r.Type == RelationshipType.AdoptiveParent).ToArray();
-    var combined = await GetRelativeFullInfosAsync([.. parents, .. adoptiveParents], token);
+    var combined = await GetRelativeFullInfosAsync([.. parents, .. adoptiveParents], mainPhoto, token);
     var parentFullInfos = combined[..parents.Length];
     var adoptiveParentFullInfos = combined[parents.Length..];
 
@@ -312,7 +312,7 @@ internal class RelativesProvider : ProjectComponentBase, IRelativesProvider
       .Where(r => !allParentIds.Contains(r.Id))
       .Select(r => r with { Type = RelationshipType.StepParent, Generation = new Generation(RelationshipType.Parent) })
       .ToArray();
-    var stepParents = await GetRelativeFullInfosAsync(stepParentRelativeInfos, token);
+    var stepParents = await GetRelativeFullInfosAsync(stepParentRelativeInfos, mainPhoto, token);
 
     return new Parents(
       Native: parentFullInfos,
@@ -320,14 +320,14 @@ internal class RelativesProvider : ProjectComponentBase, IRelativesProvider
       Step: stepParents);
   }
 
-  public async Task<RelativeInfo[]> GetStepChildrenAsync(RelativeInfo[] relativeInfos, CancellationToken token)
+  public async Task<RelativeInfo[]> GetStepChildrenAsync(RelativeInfo[] relativeInfos, MainPhoto mainPhoto, CancellationToken token)
   {
     var ownChildrenIds = relativeInfos
       .Where(r => r.Type == RelationshipType.Child || r.Type == RelationshipType.AdoptiveChild)
       .Select(r => r.Id)
       .ToHashSet();
     var spouses = relativeInfos.Where(r => r.Type == RelationshipType.Spouse).ToArray();
-    var spouseFullInfos = await GetRelativeFullInfosAsync(spouses, token);
+    var spouseFullInfos = await GetRelativeFullInfosAsync(spouses, mainPhoto, token);
     var ret = spouseFullInfos
       .SelectMany(s => s.RelativeInfos.Select(r => r with { Date = s.Date }))
       .Where(r => r.Type == RelationshipType.Child || r.Type == RelationshipType.AdoptiveChild)

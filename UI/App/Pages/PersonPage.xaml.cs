@@ -201,9 +201,9 @@ public partial class PersonPage : ContentPage
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
       var project = _CurrentProjectProvider.Project;
-      var personFullInfo = await project.PersonManager.GetPersonFullInfoAsync(person, token);
-      var parentsTasks = project.RelativesProvider.GetParentsAsync(personFullInfo.RelativeInfos, token);
-      var stepChildrenTasks = project.RelativesProvider.GetStepChildrenAsync(personFullInfo.RelativeInfos, token);
+      var personFullInfo = await project.PersonManager.GetPersonFullInfoAsync(person, MainPhoto.Reference, token);
+      var parentsTasks = project.RelativesProvider.GetParentsAsync(personFullInfo.RelativeInfos, MainPhoto.Reference, token);
+      var stepChildrenTasks = project.RelativesProvider.GetStepChildrenAsync(personFullInfo.RelativeInfos, MainPhoto.Reference, token);
       var bioTask = _TextConverter.ToObjectAsync(personFullInfo.Biography, token);
       var gedcomTask = _GedcomConverter.ToObjectAsync(personFullInfo.GedcomData, token);
       await Task.WhenAll(parentsTasks, stepChildrenTasks, bioTask, gedcomTask);

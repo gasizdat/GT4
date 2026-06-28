@@ -92,8 +92,8 @@ internal class ProjectDocumentMock : IProjectDocument
       });
 
     _PersonManagerMock
-      .Setup(s => s.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
-      .ReturnsAsync((Person p, CancellationToken _) =>
+      .Setup(s => s.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<MainPhoto>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync((Person p, MainPhoto _, CancellationToken _) =>
       {
         Interlocked.Increment(ref _GetPersonFullInfoCallCount);
         return _Persons[p.Id] with { RelativeInfos = GetRelatives(p.Id) };

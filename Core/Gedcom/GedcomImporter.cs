@@ -124,7 +124,7 @@ internal sealed class GedcomImporter : IGedcomImporter
         continue;
 
       var existing = candidates[0];
-      var full = await document.PersonManager.GetPersonFullInfoAsync(existing, token);
+      var full = await document.PersonManager.GetPersonFullInfoAsync(existing, MainPhoto.Ignore, token);
       matches[xref] = new Match(existing, full);
     }
 

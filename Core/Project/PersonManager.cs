@@ -34,7 +34,7 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
     return personDataSet.ToArray();
   }
 
-  public async Task<PersonFullInfo> GetPersonFullInfoAsync(Person person, CancellationToken token)
+  public async Task<PersonFullInfo> GetPersonFullInfoAsync(Person person, MainPhoto mainPhoto, CancellationToken token)
   {
     if (person.Id == NonCommittedId)
     {
@@ -43,7 +43,7 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
 
     var names = Document.PersonNames.GetPersonNamesAsync(person, token);
     var personData = Document.PersonData.GetPersonDataSetAsync(person, null, token);
-    var relativeInfos = Document.RelativesProvider.GetRelativeInfosAsync(person, MainPhoto.Reference, token);
+    var relativeInfos = Document.RelativesProvider.GetRelativeInfosAsync(person, mainPhoto, token);
     await Task.WhenAll(names, personData, relativeInfos);
 
     var ret = new PersonFullInfo(

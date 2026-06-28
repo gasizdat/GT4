@@ -43,6 +43,7 @@ public sealed class RelativesProviderAsyncTests
 
     var parents = await provider.GetParentsAsync(
       [AsParent(father), AsParent(mother), new RelativeInfo(adoptive, RelationshipType.AdoptiveParent, null, Generation.Parent, Consanguinity.Zero)],
+      MainPhoto.Reference,
       Token);
 
     parents.Native.Id().Should().BeEquivalentTo([father.Id, mother.Id]);
@@ -65,7 +66,7 @@ public sealed class RelativesProviderAsyncTests
 
     var provider = new RelativesProvider(_mock);
 
-    var parents = await provider.GetParentsAsync([AsParent(father), AsParent(mother)], Token);
+    var parents = await provider.GetParentsAsync([AsParent(father), AsParent(mother)], MainPhoto.Reference, Token);
 
     parents.Native.Id().Should().BeEquivalentTo([father.Id, mother.Id]);
     parents.Step.Should().BeEmpty();
@@ -87,7 +88,7 @@ public sealed class RelativesProviderAsyncTests
     var provider = new RelativesProvider(_mock);
 
     var stepChildren = await provider.GetStepChildrenAsync(
-      [AsSpouse(spouse), AsChild(sharedChild)], Token);
+      [AsSpouse(spouse), AsChild(sharedChild)], MainPhoto.Reference, Token);
 
     stepChildren.Id().Should().BeEquivalentTo([stepChild.Id]);
     stepChildren.Should().OnlyContain(r => r.Type == RelationshipType.StepChild);
@@ -102,7 +103,7 @@ public sealed class RelativesProviderAsyncTests
 
     var provider = new RelativesProvider(_mock);
 
-    var stepChildren = await provider.GetStepChildrenAsync([AsChild(child)], Token);
+    var stepChildren = await provider.GetStepChildrenAsync([AsChild(child)], MainPhoto.Reference, Token);
 
     stepChildren.Should().BeEmpty();
   }
