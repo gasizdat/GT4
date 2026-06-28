@@ -17,17 +17,20 @@ internal sealed class ThumbnailCache : IThumbnailCache
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly IFileSystem _FileSystem;
   private readonly IStorage _Storage;
+  private readonly IImageDownsizer _Downsizer;
 
   public ThumbnailCache(
     ICurrentProjectProvider currentProjectProvider,
     ICancellationTokenProvider cancellationTokenProvider,
     IFileSystem fileSystem,
-    IStorage storage)
+    IStorage storage,
+    IImageDownsizer downsizer)
   {
     _CurrentProjectProvider = currentProjectProvider;
     _CancellationTokenProvider = cancellationTokenProvider;
     _FileSystem = fileSystem;
     _Storage = storage;
+    _Downsizer = downsizer;
   }
 
   public ImageSource? Resolve(Data? mainPhoto)
@@ -102,7 +105,7 @@ internal sealed class ThumbnailCache : IThumbnailCache
     byte[] thumbnail;
     try
     {
-      thumbnail = ImageUtils.DownsizedPng(content, ThumbnailSize);
+      thumbnail = _Downsizer.Downsize(content, ThumbnailSize);
     }
     catch
     {

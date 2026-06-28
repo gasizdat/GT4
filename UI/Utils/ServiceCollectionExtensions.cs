@@ -20,6 +20,7 @@ public static class ServiceCollectionExtensions
       .AddSingleton<IBiologicalSexFormatter, BiologicalSexFormatter>()
       .AddSingleton<LanguageSetting>()
       .AddSingleton<FontScale>()
+      .AddSingleton<IImageDownsizer, ImageDownsizer>()
       .AddSingleton<IThumbnailCache, ThumbnailCache>()
       .AddSingleton<IComparer<ProjectInfo>, ProjectInfoComparer>()
       .AddSingleton<IComparer<PersonInfo>, PersonInfoComparer>()
