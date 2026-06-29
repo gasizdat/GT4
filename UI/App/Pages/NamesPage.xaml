@@ -105,8 +105,7 @@
                   Name="{Binding .}"
                   Padding="{StaticResource CollectionItemsVerticalPadding}"
                   HorizontalOptions="Fill"
-                  InputTransparent="True"
-                  Style="{StaticResource FieldValue}" />
+                  InputTransparent="True" />
 
               <Button
                   Grid.Column="1"
