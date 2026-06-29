@@ -362,6 +362,75 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task FileReferenceObje_LoadsExternalImageWhenBasePathGiven()
+  {
+    // An OBJE that points at an external image FILE (no embedded BLOB) is loaded into the person's photo set
+    // when the .ged's folder is known. The FILE path is relative and uses a forward slash, as real files do.
+    var mediaDir = Path.Combine(Path.GetTempPath(), $"gt4_media_{Guid.NewGuid():N}");
+    Directory.CreateDirectory(Path.Combine(mediaDir, "photos"));
+    var mainBytes = new byte[] { 1, 2, 3, 4, 5 };
+    var extraBytes = new byte[] { 9, 8, 7 };
+    await File.WriteAllBytesAsync(Path.Combine(mediaDir, "photos", "main.png"), mainBytes, Token);
+    await File.WriteAllBytesAsync(Path.Combine(mediaDir, "photos", "extra.png"), extraBytes, Token);
+    try
+    {
+      var ged =
+        "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Foto /Test/\n1 SEX M\n" +
+        "1 OBJE\n2 TITL Portrait\n2 FILE photos/main.png\n3 FORM png\n" +
+        "1 OBJE\n2 FILE photos/extra.png\n3 FORM png\n0 TRLR\n";
+      await using var document = await NewDocumentAsync();
+      await _importer.ImportAsync(document, new StringReader(ged), Token, mediaDir);
+
+      var person = (await document.Persons.GetPersonsAsync(Token)).Single();
+      var full = await document.PersonManager.GetPersonFullInfoAsync(person, Token);
+      full.MainPhoto.Should().NotBeNull();
+      full.MainPhoto!.Content.Should().Equal(mainBytes);
+      full.MainPhoto.MimeType.Should().Be("image/png");
+      full.AdditionalPhotos.Should().ContainSingle().Which.Content.Should().Equal(extraBytes);
+
+      // The OBJEs were consumed as photos, so they are not also kept as opaque residue (the TITL caption is
+      // dropped — GT4 photos have no caption field; preserving it is a deferred follow-up).
+      full.GedcomData.Should().BeNull();
+
+      // Export re-emits them self-contained as embedded BLOBs.
+      var text = await ExportToTextAsync(document);
+      text.Should().Contain("1 OBJE").And.Contain("2 FORM png").And.Contain("2 BLOB ");
+      text.Should().NotContain("2 FILE");
+    }
+    finally
+    {
+      Directory.Delete(mediaDir, recursive: true);
+    }
+  }
+
+  [Fact]
+  public async Task FileReferenceObje_NonImageStaysResidueEvenWithBasePath()
+  {
+    // A FILE that is not an image (a PDF scan) is never loaded into the photo set; it survives as residue
+    // even when the base path is known and the file exists on disk.
+    var mediaDir = Path.Combine(Path.GetTempPath(), $"gt4_media_{Guid.NewGuid():N}");
+    Directory.CreateDirectory(mediaDir);
+    await File.WriteAllBytesAsync(Path.Combine(mediaDir, "scan.pdf"), new byte[] { 0 }, Token);
+    try
+    {
+      var ged =
+        "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Foto /Test/\n1 SEX M\n" +
+        "1 OBJE\n2 FILE scan.pdf\n3 FORM pdf\n0 TRLR\n";
+      await using var document = await NewDocumentAsync();
+      await _importer.ImportAsync(document, new StringReader(ged), Token, mediaDir);
+
+      var person = (await document.Persons.GetPersonsAsync(Token)).Single();
+      var full = await document.PersonManager.GetPersonFullInfoAsync(person, Token);
+      full.MainPhoto.Should().BeNull();
+      full.GedcomData.Should().NotBeNull();
+    }
+    finally
+    {
+      Directory.Delete(mediaDir, recursive: true);
+    }
+  }
+
+  [Fact]
   public async Task Minimal_ImportsValueOnlyNameWithNoRelationships()
   {
     await using var document = await ImportSampleAsync("minimal.ged");
