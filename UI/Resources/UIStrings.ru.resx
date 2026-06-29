@@ -933,4 +933,52 @@ FN - род</value>
   <data name="GedcomTagROLE" xml:space="preserve">
     <value>Роль</value>
   </data>
+  <data name="GedcomTagBIRT" xml:space="preserve">
+    <value>Рождение</value>
+  </data>
+  <data name="GedcomTagDEAT" xml:space="preserve">
+    <value>Смерть</value>
+  </data>
+  <data name="GedcomTagNAME" xml:space="preserve">
+    <value>Имя</value>
+  </data>
+  <data name="GedcomTagNICK" xml:space="preserve">
+    <value>Прозвище</value>
+  </data>
+  <data name="GedcomTagMAP" xml:space="preserve">
+    <value>Координаты</value>
+  </data>
+  <data name="GedcomTagLATI" xml:space="preserve">
+    <value>Широта</value>
+  </data>
+  <data name="GedcomTagLONG" xml:space="preserve">
+    <value>Долгота</value>
+  </data>
+  <data name="GedcomTagSOUR" xml:space="preserve">
+    <value>Источник</value>
+  </data>
+  <data name="GedcomTagDATA" xml:space="preserve">
+    <value>Данные</value>
+  </data>
+  <data name="GedcomTagTEXT" xml:space="preserve">
+    <value>Текст</value>
+  </data>
+  <data name="GedcomTagFILE" xml:space="preserve">
+    <value>Файл</value>
+  </data>
+  <data name="GedcomTagOBJE" xml:space="preserve">
+    <value>Медиа</value>
+  </data>
+  <data name="GedcomTagCALN" xml:space="preserve">
+    <value>Шифр</value>
+  </data>
+  <data name="GedcomTagPAGE" xml:space="preserve">
+    <value>Страница</value>
+  </data>
+  <data name="GedcomTagFORM" xml:space="preserve">
+    <value>Формат</value>
+  </data>
+  <data name="GedcomTagCHAN" xml:space="preserve">
+    <value>Изменено</value>
+  </data>
 </root>

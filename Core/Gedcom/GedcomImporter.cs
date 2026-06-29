@@ -9,11 +9,6 @@ namespace GT4.Core.Gedcom;
 
 internal sealed class GedcomImporter : IGedcomImporter
 {
-  // The INDI sub-tags GT4 reads into its own model. Every other direct child of an INDI is unmodeled and
-  // is preserved verbatim (see ImportResidueAsync) so a GEDCOM -> DB -> GEDCOM round-trip loses nothing.
-  private static readonly HashSet<string> OwnedIndividualTags =
-    [GedcomTags.Name, GedcomTags.Sex, GedcomTags.Birth, GedcomTags.Death, GedcomTags.Note, GedcomTags.FamilyChild, GedcomTags.FamilySpouse];
-
   private const string ResidueMimeType = "application/x-gedcom";
 
   public async Task ImportAsync(IProjectDocument document, TextReader reader, CancellationToken token)
@@ -311,27 +306,63 @@ internal sealed class GedcomImporter : IGedcomImporter
   }
 
   /// <summary>
-  /// Captures every direct INDI child GT4 does not model (<c>OCCU</c>, <c>RESI</c>, <c>BURI</c>, ...) as one
-  /// verbatim GEDCOM blob. Carried on <see cref="PersonFullInfo.GedcomData"/>, it is stored with the person
-  /// and re-emitted unchanged on export, so the tags GT4 has no schema for survive a round-trip in their
-  /// original document order.
+  /// Captures everything GT4 does not model as one verbatim GEDCOM blob: each fully-unmodeled direct INDI
+  /// child (<c>OCCU</c>, <c>RESI</c>, <c>EVEN</c>, ...) whole, plus the unmodeled sub-tags of the owned tags
+  /// GT4 reads only part of (a <c>BIRT</c>'s <c>PLAC</c>/<c>SOUR</c>, a <c>NAME</c>'s <c>NICK</c>, ...) as a
+  /// residual copy of that tag. Carried on <see cref="PersonFullInfo.GedcomData"/>, the blob is stored with
+  /// the person and merged back on export, so the round-trip loses nothing in its original document order.
   /// </summary>
   private static Data? BuildResidueData(GedcomNode individual)
   {
-    // Embedded photos (OBJE with a BLOB) are consumed into the person's photo set by BuildPhotos, so they
-    // are excluded here to avoid storing them a second time as opaque residue.
-    var residue = individual.Children.Where(c => !OwnedIndividualTags.Contains(c.Tag) && !IsEmbeddedPhoto(c));
-    if (!residue.Any())
+    var roots = new List<GedcomNode>();
+    foreach (var child in individual.Children)
+    {
+      // Embedded photos (OBJE with a BLOB) are consumed into the person's photo set by BuildPhotos, so they
+      // are excluded here to avoid storing them a second time as opaque residue. FullyOwnedTags are
+      // regenerated from the edge graph, so neither they nor their sub-tags are preserved.
+      if (IsEmbeddedPhoto(child) || GedcomMapping.FullyOwnedTags.Contains(child.Tag))
+        continue;
+
+      if (GedcomMapping.OwnedTagModeledChildren.TryGetValue(child.Tag, out var modeled))
+      {
+        var residual = ResidualNode(child, modeled);
+        if (residual is not null)
+          roots.Add(residual);
+      }
+      else
+      {
+        roots.Add(child);
+      }
+    }
+
+    if (roots.Count == 0)
       return null;
 
     var writer = new StringWriter();
-    foreach (var child in residue)
+    foreach (var root in roots)
     {
-      GedcomWriter.Write(writer, child);
+      GedcomWriter.Write(writer, root);
     }
 
     var content = Encoding.UTF8.GetBytes(writer.ToString());
     return new Data(TableBase.NonCommittedId, content, ResidueMimeType, DataCategory.PersonGedcomTags);
+  }
+
+  /// <summary>
+  /// A copy of an owned node carrying only the children GT4 does not model — the node's value and modeled
+  /// sub-tags are dropped since those ride in the GT4 model — or <c>null</c> when nothing unmodeled remains
+  /// (a DATE-only BIRT yields no residue). The source node is never mutated: <see cref="ParseEventDate"/>
+  /// and <see cref="BuildNamesAsync"/> still read the live DATE/GIVN/SURN off it.
+  /// </summary>
+  private static GedcomNode? ResidualNode(GedcomNode owned, HashSet<string> modeled)
+  {
+    var residual = new GedcomNode { Tag = owned.Tag };
+    foreach (var child in owned.Children)
+    {
+      if (!modeled.Contains(child.Tag))
+        residual.Add(child);
+    }
+    return residual.Children.Count > 0 ? residual : null;
   }
 
   /// <summary>

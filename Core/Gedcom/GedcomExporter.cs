@@ -279,21 +279,28 @@ internal sealed class GedcomExporter : IGedcomExporter
     var person = individual.Person;
     var node = new GedcomNode { Tag = GedcomTags.Individual, Xref = $"@I{person.Id}@" };
 
-    var nameNode = BuildName(individual.Info, person.BiologicalSex);
+    // The residue splits into the unmodeled sub-tags of owned tags (merged back into the regenerated NAME /
+    // SEX / BIRT / DEAT / NOTE below) and the fully-unmodeled INDI children (re-attached whole at the end).
+    var residueRoots = await ParseResidueAsync(individual.Residue, token);
+    var (ownedResidual, otherResidue) = PartitionResidue(residueRoots);
+
+    var nameResidual = Residual(ownedResidual, GedcomTags.Name);
+    var nameNode = BuildName(individual.Info, person.BiologicalSex, nameResidual);
     if (nameNode is not null)
     {
       node.Add(nameNode);
     }
 
-    node.Add(new GedcomNode { Tag = GedcomTags.Sex, Value = GedcomMapping.SexLetter(person.BiologicalSex) });
-    AddEvent(node, GedcomTags.Birth, person.BirthDate);
-    AddEvent(node, GedcomTags.Death, person.DeathDate);
+    var sexResidual = Residual(ownedResidual, GedcomTags.Sex);
+    var sexNode = new GedcomNode { Tag = GedcomTags.Sex, Value = GedcomMapping.SexLetter(person.BiologicalSex) };
+    sexNode.Add([.. sexResidual]);
+    node.Add(sexNode);
 
-    if (individual.Biography is not null)
-    {
-      var text = Encoding.UTF8.GetString(individual.Biography.Content);
-      node.Add(new GedcomNode { Tag = GedcomTags.Note, Value = text });
-    }
+    AddEvent(node, GedcomTags.Birth, person.BirthDate, Residual(ownedResidual, GedcomTags.Birth));
+    AddEvent(node, GedcomTags.Death, person.DeathDate, Residual(ownedResidual, GedcomTags.Death));
+
+    var noteResidual = Residual(ownedResidual, GedcomTags.Note);
+    AddNote(node, individual.Biography, noteResidual);
 
     AddPhoto(node, individual.MainPhoto, primary: true);
     foreach (var photo in individual.AdditionalPhotos)
@@ -315,10 +322,9 @@ internal sealed class GedcomExporter : IGedcomExporter
       return familyChild;
     });
 
-    // Re-attach the unmodeled INDI sub-tags stashed at import: the recursive writer re-levels them back
-    // under this regenerated INDI, so they emit exactly as they came in.
-    var resedueData = await ParseResidueAsync(individual.Residue, token);
-    node.Add([.. spouseNodes, .. childNodes, .. resedueData]);
+    // Re-attach the fully-unmodeled INDI sub-tags stashed at import: the recursive writer re-levels them
+    // back under this regenerated INDI, so they emit exactly as they came in.
+    node.Add([.. spouseNodes, .. childNodes, .. otherResidue]);
 
     return node;
   }
@@ -330,6 +336,52 @@ internal sealed class GedcomExporter : IGedcomExporter
 
     var text = Encoding.UTF8.GetString(residue.Content);
     return await GedcomReader.ReadAsync(new StringReader(text), token);
+  }
+
+  /// <summary>
+  /// Splits the residue forest into the residual children of owned tags (keyed by that tag, to be merged
+  /// back into the regenerated node) and the fully-unmodeled roots (re-attached to the INDI verbatim).
+  /// </summary>
+  private static (Dictionary<string, List<GedcomNode>> Owned, List<GedcomNode> Other) PartitionResidue(GedcomNode[] roots)
+  {
+    var owned = new Dictionary<string, List<GedcomNode>>();
+    var other = new List<GedcomNode>();
+    foreach (var root in roots)
+    {
+      if (!GedcomMapping.OwnedTagModeledChildren.ContainsKey(root.Tag))
+      {
+        other.Add(root);
+        continue;
+      }
+
+      if (!owned.TryGetValue(root.Tag, out var list))
+      {
+        owned[root.Tag] = list = [];
+      }
+      list.AddRange(root.Children);
+    }
+    return (owned, other);
+  }
+
+  private static IReadOnlyList<GedcomNode> Residual(Dictionary<string, List<GedcomNode>> owned, string tag) =>
+    owned.TryGetValue(tag, out var list) ? list : [];
+
+  /// <summary>
+  /// Emits the biography NOTE with any preserved unmodeled NOTE sub-tags merged under it. Emits nothing when
+  /// the person has neither a biography nor preserved sub-tags.
+  /// </summary>
+  private static void AddNote(GedcomNode individual, Data? biography, IReadOnlyList<GedcomNode> residual)
+  {
+    if (biography is null && residual.Count == 0)
+      return;
+
+    var note = new GedcomNode { Tag = GedcomTags.Note };
+    if (biography is not null)
+    {
+      note.Value = Encoding.UTF8.GetString(biography.Content);
+    }
+    note.Add([.. residual]);
+    individual.Add(note);
   }
 
   /// <summary>
@@ -360,17 +412,20 @@ internal sealed class GedcomExporter : IGedcomExporter
 
   /// <summary>
   /// A birth date is only emitted when something is known; a death is emitted whenever a death date
-  /// exists at all (even with unknown precision), so the fact of death survives the round-trip.
+  /// exists at all (even with unknown precision), so the fact of death survives the round-trip. Any
+  /// preserved unmodeled sub-tags (a BIRT's PLAC/SOUR) are merged in after the DATE — and on their own keep
+  /// the event alive even when GT4 has no usable date, so they are not lost.
   /// </summary>
-  private static void AddEvent(GedcomNode individual, string eventTag, Date? date)
+  private static void AddEvent(GedcomNode individual, string eventTag, Date? date, IReadOnlyList<GedcomNode> residual)
   {
-    // No date at all means the event was never recorded: emit nothing. A non-null but unknown-precision
-    // death still falls through to a bare DEAT below, so the fact of death survives the round-trip.
-    if (date is null)
+    // No date and no preserved sub-tags means the event was never recorded: emit nothing.
+    if (date is null && residual.Count == 0)
       return;
 
     var value = date.HasValue ? GedcomDate.ToGedcom(date.Value) : null;
-    if (value is null && eventTag == GedcomTags.Birth)
+    // A birth with neither a usable date nor preserved sub-tags carries no information, so it is dropped; a
+    // death with no usable date still falls through to a bare DEAT so the fact of death survives.
+    if (value is null && residual.Count == 0 && eventTag == GedcomTags.Birth)
       return;
 
     var eventNode = new GedcomNode { Tag = eventTag };
@@ -378,10 +433,11 @@ internal sealed class GedcomExporter : IGedcomExporter
     {
       eventNode.Add(new GedcomNode { Tag = GedcomTags.Date, Value = value });
     }
+    eventNode.Add([.. residual]);
     individual.Add(eventNode);
   }
 
-  private static GedcomNode? BuildName(PersonInfo? info, BiologicalSex sex)
+  private static GedcomNode? BuildName(PersonInfo? info, BiologicalSex sex, IReadOnlyList<GedcomNode> residual)
   {
     if (info is null)
       return null;
@@ -409,6 +465,8 @@ internal sealed class GedcomExporter : IGedcomExporter
     {
       node.Add(new GedcomNode { Tag = GedcomTags.Surname, Value = surname });
     }
+    // Merge the preserved unmodeled NAME sub-tags (NICK, SPFX, ...) after GIVN/SURN.
+    node.Add([.. residual]);
     return node;
   }
 
