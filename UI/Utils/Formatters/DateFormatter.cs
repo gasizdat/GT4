@@ -6,7 +6,6 @@ namespace GT4.UI.Utils.Formatters;
 
 internal class DateFormatter : IDateFormatter
 {  
-  private const string D4 = "D4";
   private const string D2 = "D2";
   private readonly ISettingEditor _FullDateFormatSetting;
   private readonly ISettingEditor _ShortDateFormatSetting;
@@ -47,7 +46,7 @@ internal class DateFormatter : IDateFormatter
 
   protected static string YearToString(Date date)
   {
-    var ret = date.Year.ToString(D4);
+    var ret = date.Year.ToString();
 
     return ret;
   }
