@@ -191,7 +191,8 @@ public partial class ProjectListPage : ContentPage
     {
       using var stream = await file.OpenReadAsync();
       using var reader = new StreamReader(stream, Encoding.UTF8);
-      await _Importer.ImportAsync(host.Project!, reader, token);
+      var mediaBasePath = string.IsNullOrEmpty(file.FullPath) ? null : Path.GetDirectoryName(file.FullPath);
+      await _Importer.ImportAsync(host.Project!, reader, token, mediaBasePath);
 
       var revision = await host.Project!.Metadata.GetProjectRevisionAsync(token) ?? string.Empty;
       await host.DisposeAsync();

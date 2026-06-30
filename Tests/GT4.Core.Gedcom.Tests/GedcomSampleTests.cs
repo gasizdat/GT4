@@ -10,7 +10,7 @@ namespace GT4.Core.Gedcom.Tests;
 
 /// <summary>
 /// Imports hand-authored GEDCOM 5.5.1 fixtures (embedded under <c>Samples/</c>). Unlike the round-trip
-/// tests, these files are not produced by our exporter: they carry tags we deliberately ignore
+/// tests, these files are not produced by our exporter: they carry tags GT4 does not model
 /// (<c>PLAC</c>, <c>BURI</c>, <c>ADOP</c>, ...), real-world date qualifiers, and value-only names, so they
 /// exercise the importer against external-looking input rather than our own output.
 /// </summary>
@@ -189,8 +189,9 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     text.Should().Contain("0 @U1@ SUBM").And.Contain("0 @N1@ SUBN")
         .And.Contain("0 @S1@ SOUR").And.Contain("0 @S2@ SOUR").And.Contain("0 @R1@ REPO");
 
-    // The source CITATIONS on the events are dropped: the page detail that only lived on the citation is gone.
-    text.Should().NotContain("Sec. 2, p. 45");
+    // The event-level source citations are preserved as residue and merged back under the events, so the
+    // BIRT's PAGE detail survives and still points at the re-emitted @S1@ record.
+    text.Should().Contain("2 SOUR @S1@").And.Contain("3 PAGE Sec. 2, p. 45");
 
     await using var reimported = await NewDocumentAsync();
     await _importer.ImportAsync(reimported, new StringReader(text), Token);
@@ -224,6 +225,70 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     await _importer.ImportAsync(reimported, new StringReader(text), Token);
     var reexported = await ExportToTextAsync(reimported);
     reexported.Should().Contain("1 OCCU Blacksmith").And.Contain("1 EVEN").And.Contain("2 TYPE Census");
+  }
+
+  [Fact]
+  public async Task OwnedTagSubDetails_PreservedAsResidueAndMergedOnExport()
+  {
+    // GT4 reads only DATE from BIRT and GIVN/SURN from NAME. The other sub-tags (PLAC -> MAP, a source
+    // citation, a NICK) are unmodeled and must not be lost: they are stored as residue under a residual copy
+    // of the owned tag, then merged back under the regenerated tag on export with no duplicate DATE or BIRT.
+    const string ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME Louis /Capet/\n2 GIVN Louis\n2 SURN Capet\n2 NICK Sun King\n1 SEX M\n" +
+      "1 BIRT\n2 DATE 5 SEP 1638\n2 PLAC Saint-Germain-en-Laye\n3 MAP\n4 LATI N48.8979\n4 LONG E2.09592\n2 SOUR Acte\n" +
+      "0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var persons = await document.Persons.GetPersonsAsync(Token);
+    var person = persons.Single();
+
+    // Only the unmodeled sub-tags become residue, under a residual BIRT/NAME; the DATE/GIVN/SURN ride in the
+    // GT4 model instead, so they are absent from the blob.
+    var residue = await document.PersonData.GetPersonDataSetAsync(person, DataCategory.PersonGedcomTags, Token);
+    var blob = Encoding.UTF8.GetString(residue.Single().Content);
+    blob.Should().Contain("0 NAME").And.Contain("1 NICK Sun King")
+        .And.Contain("0 BIRT").And.Contain("1 PLAC Saint-Germain-en-Laye")
+        .And.Contain("2 MAP").And.Contain("3 LATI N48.8979").And.Contain("1 SOUR Acte");
+    blob.Should().NotContain("DATE").And.NotContain("GIVN").And.NotContain("SURN");
+
+    // Export merges them back under the single regenerated BIRT and NAME (no duplicate event).
+    var text = await ExportToTextAsync(document);
+    text.Should().Contain("2 DATE 5 SEP 1638").And.Contain("2 PLAC Saint-Germain-en-Laye")
+        .And.Contain("3 MAP").And.Contain("4 LATI N48.8979").And.Contain("2 SOUR Acte")
+        .And.Contain("2 NICK Sun King");
+    var births = text.Split('\n').Count(line => line.StartsWith("1 BIRT", StringComparison.Ordinal));
+    births.Should().Be(1);
+  }
+
+  [Fact]
+  public async Task RepeatedOwnedTag_SecondNameAndNoteSurviveRoundTrip()
+  {
+    // GT4 consumes only the first NAME (identity) and first NOTE (biography); a second of either has no slot
+    // in the model. It must be preserved whole as residue and re-emitted as its own standalone tag on export,
+    // not merged into the first — which would silently drop its value.
+    const string ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME John /Smith/\n1 NAME Johnny /Smith/\n1 SEX M\n" +
+      "1 NOTE A blacksmith.\n1 NOTE Also a poet.\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var person = (await document.Persons.GetPersonsAsync(Token)).Single();
+
+    var residue = await document.PersonData.GetPersonDataSetAsync(person, DataCategory.PersonGedcomTags, Token);
+    var blob = Encoding.UTF8.GetString(residue.Single().Content);
+    blob.Should().Contain("NAME Johnny /Smith/").And.Contain("NOTE Also a poet.");
+
+    var text = await ExportToTextAsync(document);
+    text.Should().Contain("1 NAME John /Smith/").And.Contain("1 NAME Johnny /Smith/")
+        .And.Contain("1 NOTE A blacksmith.").And.Contain("1 NOTE Also a poet.");
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    var reexported = await ExportToTextAsync(reimported);
+    reexported.Should().Contain("1 NAME Johnny /Smith/").And.Contain("1 NOTE Also a poet.");
   }
 
   [Fact]
@@ -323,6 +388,129 @@ public sealed class GedcomSampleTests : IAsyncLifetime
 
     var text = await ExportToTextAsync(document);
     text.Should().Contain("1 OBJE").And.Contain("2 FILE photo.jpg");
+  }
+
+  [Fact]
+  public async Task FileReferenceObje_LoadsExternalImageWhenBasePathGiven()
+  {
+    // An OBJE that points at an external image FILE (no embedded BLOB) is loaded into the person's photo set
+    // when the .ged's folder is known. The FILE path is relative and uses a forward slash, as real files do.
+    var mediaDir = Path.Combine(Path.GetTempPath(), $"gt4_media_{Guid.NewGuid():N}");
+    Directory.CreateDirectory(Path.Combine(mediaDir, "photos"));
+    var mainBytes = new byte[] { 1, 2, 3, 4, 5 };
+    var extraBytes = new byte[] { 9, 8, 7 };
+    await File.WriteAllBytesAsync(Path.Combine(mediaDir, "photos", "main.png"), mainBytes, Token);
+    await File.WriteAllBytesAsync(Path.Combine(mediaDir, "photos", "extra.png"), extraBytes, Token);
+    try
+    {
+      var ged =
+        "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Foto /Test/\n1 SEX M\n" +
+        "1 OBJE\n2 TITL Portrait\n2 FILE photos/main.png\n3 FORM png\n" +
+        "1 OBJE\n2 FILE photos/extra.png\n3 FORM png\n0 TRLR\n";
+      await using var document = await NewDocumentAsync();
+      await _importer.ImportAsync(document, new StringReader(ged), Token, mediaDir);
+
+      var person = (await document.Persons.GetPersonsAsync(Token)).Single();
+      var full = await document.PersonManager.GetPersonFullInfoAsync(person, Token);
+      full.MainPhoto.Should().NotBeNull();
+      full.MainPhoto!.Content.Should().Equal(mainBytes);
+      full.MainPhoto.MimeType.Should().Be("image/png");
+      full.AdditionalPhotos.Should().ContainSingle().Which.Content.Should().Equal(extraBytes);
+
+      // The OBJEs were consumed as photos, so they are not also kept as opaque residue (the TITL caption is
+      // dropped — GT4 photos have no caption field; preserving it is a deferred follow-up).
+      full.GedcomData.Should().BeNull();
+
+      // Export re-emits them self-contained as embedded BLOBs.
+      var text = await ExportToTextAsync(document);
+      text.Should().Contain("1 OBJE").And.Contain("2 FORM png").And.Contain("2 BLOB ");
+      text.Should().NotContain("2 FILE");
+    }
+    finally
+    {
+      Directory.Delete(mediaDir, recursive: true);
+    }
+  }
+
+  [Fact]
+  public async Task FileReferenceObje_NonImageStaysResidueEvenWithBasePath()
+  {
+    // A FILE that is not an image (a PDF scan) is never loaded into the photo set; it survives as residue
+    // even when the base path is known and the file exists on disk.
+    var mediaDir = Path.Combine(Path.GetTempPath(), $"gt4_media_{Guid.NewGuid():N}");
+    Directory.CreateDirectory(mediaDir);
+    await File.WriteAllBytesAsync(Path.Combine(mediaDir, "scan.pdf"), new byte[] { 0 }, Token);
+    try
+    {
+      var ged =
+        "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Foto /Test/\n1 SEX M\n" +
+        "1 OBJE\n2 FILE scan.pdf\n3 FORM pdf\n0 TRLR\n";
+      await using var document = await NewDocumentAsync();
+      await _importer.ImportAsync(document, new StringReader(ged), Token, mediaDir);
+
+      var person = (await document.Persons.GetPersonsAsync(Token)).Single();
+      var full = await document.PersonManager.GetPersonFullInfoAsync(person, Token);
+      full.MainPhoto.Should().BeNull();
+      full.GedcomData.Should().NotBeNull();
+    }
+    finally
+    {
+      Directory.Delete(mediaDir, recursive: true);
+    }
+  }
+
+  [Fact]
+  public async Task FileReferenceObje_UnreadableImageStaysResidueWithoutAbortingImport()
+  {
+    // An external image FILE that resolves on disk but cannot be read (here, held under an exclusive lock)
+    // must not abort the all-or-nothing import: the unreadable OBJE falls back to residue, exactly like a
+    // missing file, and the person is still imported.
+    var mediaDir = Path.Combine(Path.GetTempPath(), $"gt4_media_{Guid.NewGuid():N}");
+    Directory.CreateDirectory(mediaDir);
+    var imagePath = Path.Combine(mediaDir, "locked.png");
+    await File.WriteAllBytesAsync(imagePath, new byte[] { 1, 2, 3 }, Token);
+    try
+    {
+      using var locked = new FileStream(imagePath, FileMode.Open, FileAccess.Read, FileShare.None);
+
+      var ged =
+        "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Foto /Test/\n1 SEX M\n" +
+        "1 OBJE\n2 FILE locked.png\n3 FORM png\n0 TRLR\n";
+      await using var document = await NewDocumentAsync();
+      await _importer.ImportAsync(document, new StringReader(ged), Token, mediaDir);
+
+      var person = (await document.Persons.GetPersonsAsync(Token)).Single();
+      var full = await document.PersonManager.GetPersonFullInfoAsync(person, Token);
+      full.MainPhoto.Should().BeNull();
+      full.GedcomData.Should().NotBeNull();
+
+      var text = await ExportToTextAsync(document);
+      text.Should().Contain("1 OBJE").And.Contain("2 FILE locked.png");
+    }
+    finally
+    {
+      Directory.Delete(mediaDir, recursive: true);
+    }
+  }
+
+  [Fact]
+  public async Task EmbeddedObje_CorruptBlobStaysResidueWithoutAbortingImport()
+  {
+    // A malformed base64 BLOB cannot be decoded, so the OBJE is not a photo; like an unreadable FILE it
+    // falls back to residue instead of throwing and aborting the import.
+    var ged =
+      "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Foto /Test/\n1 SEX M\n" +
+      "1 OBJE\n2 FORM jpeg\n2 BLOB not-valid-base64!!!\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var person = (await document.Persons.GetPersonsAsync(Token)).Single();
+    var full = await document.PersonManager.GetPersonFullInfoAsync(person, Token);
+    full.MainPhoto.Should().BeNull();
+    full.GedcomData.Should().NotBeNull();
+
+    var text = await ExportToTextAsync(document);
+    text.Should().Contain("1 OBJE").And.Contain("2 BLOB ");
   }
 
   [Fact]

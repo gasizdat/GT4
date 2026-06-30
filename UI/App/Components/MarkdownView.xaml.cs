@@ -14,7 +14,12 @@ public partial class MarkdownView : ContentView
       .Build();
 
     InitializeComponent();
+    ConfigurePlatformInput();
   }
+
+  // Windows makes the WebView interactive and forwards scroll here; other platforms keep the XAML's
+  // input-transparent pass-through (no implementation, so the call is elided).
+  partial void ConfigurePlatformInput();
 
   public static readonly BindableProperty MarkdownProperty =
     BindableProperty.Create(nameof(Markdown), typeof(string), typeof(MarkdownView), default, BindingMode.OneWay, null, OnMarkdownChanged);
@@ -34,6 +39,32 @@ public partial class MarkdownView : ContentView
       view.OnPropertyChanged(nameof(HtmlContent));
     }
   }
+
+  // A tapped link (the Google Maps coordinate reference, a mailto/tel in a bio) opens in the external app
+  // rather than navigating inside the display WebView; everything else (the initial content load) proceeds
+  // untouched.
+  private async void OnWebViewNavigating(object sender, WebNavigatingEventArgs e)
+  {
+    if (!IsExternalLink(e.Url))
+      return;
+
+    e.Cancel = true;
+    try
+    {
+      await Launcher.Default.OpenAsync(e.Url);
+    }
+    catch (Exception ex)
+    {
+      System.Diagnostics.Debug.WriteLine(ex);
+    }
+  }
+
+  // The inline HTML document loads under an in-document scheme (about:/data:/file:); any other absolute URI
+  // is a real link, so its protocol is handed to the OS. Letting Uri parse the scheme catches every external
+  // protocol (http(s), mailto, tel, geo, ...) without matching prefixes by hand.
+  private static bool IsExternalLink(string url) =>
+    Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
+    uri.Scheme is not ("about" or "data" or "file");
 
   private async void OnWebViewNavigated(object sender, WebNavigatedEventArgs e)
   {
@@ -110,6 +141,22 @@ public partial class MarkdownView : ContentView
       </head>
       <body>
       {bodyHtml}
+      <script>
+        (function () {{
+          var host = window.chrome && window.chrome.webview;
+          if (!host) return;                       /* WinUI WebView2 only; mobile scrolls natively */
+          function forward(delta) {{ host.postMessage(delta.toString()); }}
+          window.addEventListener('wheel', function (e) {{ forward(e.deltaY); }}, {{ passive: true }});
+          var lastY = null;
+          window.addEventListener('touchstart', function (e) {{ lastY = e.touches.length ? e.touches[0].clientY : null; }}, {{ passive: true }});
+          window.addEventListener('touchmove', function (e) {{
+            if (lastY === null || !e.touches.length) return;
+            var y = e.touches[0].clientY;
+            forward(lastY - y);
+            lastY = y;
+          }}, {{ passive: true }});
+        }})();
+      </script>
       </body>
       </html>";
   }

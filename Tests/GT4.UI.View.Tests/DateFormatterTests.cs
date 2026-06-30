@@ -139,11 +139,15 @@ public class DateFormatterTests
     Create(shortFormat: "MMM YYYY").ToString(date).Should().StartWith(expectedName);
   }
 
-  [Fact]
-  public void WellKnown_YearZeroPadded()
+  [Theory]
+  [InlineData(5, "5")]
+  [InlineData(50, "50")]
+  [InlineData(100, "100")]
+  [InlineData(1850, "1850")]
+  public void WellKnown_YearNotZeroPadded(int year, string expected)
   {
     SetEn();
-    var date = Date.Create(100, 6, 1, DateStatus.WellKnown);
-    Create(fullFormat: "YYYY").ToString(date).Should().Be("0100");
+    var date = Date.Create(year, 6, 1, DateStatus.WellKnown);
+    Create(fullFormat: "YYYY").ToString(date).Should().Be(expected);
   }
 }

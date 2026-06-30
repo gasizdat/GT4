@@ -9,5 +9,10 @@ public interface IGedcomImporter
   /// describes into <paramref name="document"/>. The whole import runs as a single transaction, so it
   /// either lands completely or not at all.
   /// </summary>
-  Task ImportAsync(IProjectDocument document, TextReader reader, CancellationToken token);
+  /// <param name="mediaBasePath">
+  /// Directory the GEDCOM file lives in, used to resolve external <c>OBJE</c> <c>FILE</c> image references
+  /// into the person's photo set. When null (or a referenced file cannot be found) such references are not
+  /// loaded and survive verbatim as residue instead.
+  /// </param>
+  Task ImportAsync(IProjectDocument document, TextReader reader, CancellationToken token, string? mediaBasePath = null);
 }

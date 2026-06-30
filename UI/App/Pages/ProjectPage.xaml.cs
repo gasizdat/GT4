@@ -349,8 +349,15 @@ public partial class ProjectPage : ContentPage
   {
     using var stream = await file.OpenReadAsync();
     using var reader = new StreamReader(stream, Encoding.UTF8);
-    await _Importer.ImportAsync(_CurrentProjectProvider.Project, reader, token);
+    var mediaBasePath = MediaBasePath(file);
+    await _Importer.ImportAsync(_CurrentProjectProvider.Project, reader, token, mediaBasePath);
   }
+
+  // External OBJE FILE images are resolved relative to the picked .ged file's folder. On desktop FullPath is
+  // the real path; where it is unavailable (e.g. a mobile content URI) the importer simply finds no siblings
+  // and leaves those references as residue.
+  private static string? MediaBasePath(FileResult file) =>
+    string.IsNullOrEmpty(file.FullPath) ? null : Path.GetDirectoryName(file.FullPath);
 
   private static string SanitizeFileName(string name)
   {

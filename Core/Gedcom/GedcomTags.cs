@@ -39,6 +39,7 @@ internal static class GedcomTags
 
   public const string Object = "OBJE";
   public const string Blob = "BLOB";
+  public const string File = "FILE";
   public const string Primary = "_PRIM";
 
   // The _PRIM value marking the OBJE that GT4 treats as the person's main (profile) photo.

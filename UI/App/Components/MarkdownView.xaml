@@ -6,11 +6,15 @@
     CascadeInputTransparent="False"
     InputTransparent="True">
 
+  <!-- Input-transparent baseline lets the page ScrollView handle scrolling on iOS/Android/Mac. On Windows
+       the platform partial flips both to interactive (so links and text selection work) and forwards the
+       wheel/touch deltas the HTML posts back to the parent ScrollViewer. -->
   <WebView
       x:Name="InternalWebView"
       HorizontalOptions="Fill"
       InputTransparent="True"
-      Navigated="OnWebViewNavigated">
+      Navigated="OnWebViewNavigated"
+      Navigating="OnWebViewNavigating">
     <WebView.Source>
       <HtmlWebViewSource Html="{Binding HtmlContent, Source={x:Reference Root}}" />
     </WebView.Source>

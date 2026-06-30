@@ -9,14 +9,9 @@ namespace GT4.Core.Gedcom;
 
 internal sealed class GedcomImporter : IGedcomImporter
 {
-  // The INDI sub-tags GT4 reads into its own model. Every other direct child of an INDI is unmodeled and
-  // is preserved verbatim (see ImportResidueAsync) so a GEDCOM -> DB -> GEDCOM round-trip loses nothing.
-  private static readonly HashSet<string> OwnedIndividualTags =
-    [GedcomTags.Name, GedcomTags.Sex, GedcomTags.Birth, GedcomTags.Death, GedcomTags.Note, GedcomTags.FamilyChild, GedcomTags.FamilySpouse];
-
   private const string ResidueMimeType = "application/x-gedcom";
 
-  public async Task ImportAsync(IProjectDocument document, TextReader reader, CancellationToken token)
+  public async Task ImportAsync(IProjectDocument document, TextReader reader, CancellationToken token, string? mediaBasePath = null)
   {
     var records = await GedcomReader.ReadAsync(reader, token);
     var notesByXref = records
@@ -55,11 +50,11 @@ internal sealed class GedcomImporter : IGedcomImporter
       if (individual.Xref is not null && matches.TryGetValue(individual.Xref, out var match))
       {
         person = match.Existing;
-        await GapFillAsync(document, match, individual, notesByXref, token);
+        await GapFillAsync(document, match, individual, notesByXref, mediaBasePath, token);
       }
       else
       {
-        person = await ImportIndividualAsync(document, individual, notesByXref, nameCache, token);
+        person = await ImportIndividualAsync(document, individual, notesByXref, nameCache, mediaBasePath, token);
       }
 
       if (individual.Xref is not null)
@@ -166,10 +161,18 @@ internal sealed class GedcomImporter : IGedcomImporter
     Match match,
     GedcomNode individual,
     IReadOnlyDictionary<string, string?> notesByXref,
+    string? mediaBasePath,
     CancellationToken token)
   {
     var full = match.Full;
     var additions = new List<Data>();
+
+    var photos = SelectPhotos(individual, mediaBasePath);
+    // Photos are added only when the person has none. When they are not added these OBJEs stay unconsumed,
+    // so an empty consumed set is passed to the residue: the incoming portrait is preserved verbatim as
+    // residue rather than dropped from both the photo set and the blob.
+    var addingPhotos = full.MainPhoto is null && full.AdditionalPhotos.Length == 0;
+    GedcomNode[] consumedNodes = addingPhotos ? photos.Select(p => p.Node).ToArray() : [];
 
     if (full.Biography is null)
     {
@@ -178,16 +181,15 @@ internal sealed class GedcomImporter : IGedcomImporter
         additions.Add(biography);
     }
 
-    if (full.GedcomData is null)
+    var incomingResidue = BuildResidueRoots(individual, consumedNodes);
+    if (full.GedcomData is null && incomingResidue.Count > 0)
     {
-      var residue = BuildResidueData(individual);
-      if (residue is not null)
-        additions.Add(residue);
+      additions.Add(ToResidueData(incomingResidue));
     }
 
-    if (full.MainPhoto is null && full.AdditionalPhotos.Length == 0)
+    if (addingPhotos)
     {
-      var (mainPhoto, additionalPhotos) = BuildPhotos(individual);
+      var (mainPhoto, additionalPhotos) = BuildPhotos(photos);
       if (mainPhoto is not null)
         additions.Add(mainPhoto);
       additions.AddRange(additionalPhotos);
@@ -196,6 +198,13 @@ internal sealed class GedcomImporter : IGedcomImporter
     if (additions.Count > 0)
     {
       await document.PersonData.AddPersonDataSetAsync(match.Existing, [.. additions], token);
+    }
+
+    if (full.GedcomData is not null && incomingResidue.Count > 0)
+    {
+      var merged = await MergeResidueAsync(full.GedcomData, incomingResidue, token);
+      if (merged is not null)
+        await document.PersonData.UpdatePersonDataAsync(match.Existing, merged, DataCategory.PersonGedcomTags, token);
     }
 
     if (full.DeathDate is null)
@@ -287,12 +296,15 @@ internal sealed class GedcomImporter : IGedcomImporter
     GedcomNode individual,
     IReadOnlyDictionary<string, string?> notesByXref,
     Dictionary<(string, NameType, int?), Name> nameCache,
+    string? mediaBasePath,
     CancellationToken token)
   {
     var sex = GedcomMapping.ParseSex(individual.ChildValue(GedcomTags.Sex));
     var names = await BuildNamesAsync(document, individual, sex, nameCache, token);
     var biography = BuildBiography(individual, notesByXref);
-    var (mainPhoto, additionalPhotos) = BuildPhotos(individual);
+    var photos = SelectPhotos(individual, mediaBasePath);
+    var photoNodes = photos.Select(p => p.Node).ToArray();
+    var (mainPhoto, additionalPhotos) = BuildPhotos(photos);
 
     var toAdd = PersonFullInfo.Empty with
     {
@@ -303,7 +315,7 @@ internal sealed class GedcomImporter : IGedcomImporter
       MainPhoto = mainPhoto,
       AdditionalPhotos = additionalPhotos,
       Biography = biography,
-      GedcomData = BuildResidueData(individual),
+      GedcomData = BuildResidueData(individual, photoNodes),
     };
 
     var added = await document.PersonManager.AddPersonAsync(toAdd, token);
@@ -311,47 +323,169 @@ internal sealed class GedcomImporter : IGedcomImporter
   }
 
   /// <summary>
-  /// Captures every direct INDI child GT4 does not model (<c>OCCU</c>, <c>RESI</c>, <c>BURI</c>, ...) as one
-  /// verbatim GEDCOM blob. Carried on <see cref="PersonFullInfo.GedcomData"/>, it is stored with the person
-  /// and re-emitted unchanged on export, so the tags GT4 has no schema for survive a round-trip in their
-  /// original document order.
+  /// Captures everything GT4 does not model as one verbatim GEDCOM blob: each fully-unmodeled direct INDI
+  /// child (<c>OCCU</c>, <c>RESI</c>, <c>EVEN</c>, ...) whole, plus the unmodeled sub-tags of the owned tags
+  /// GT4 reads only part of (a <c>BIRT</c>'s <c>PLAC</c>/<c>SOUR</c>, a <c>NAME</c>'s <c>NICK</c>, ...) as a
+  /// residual copy of that tag. Carried on <see cref="PersonFullInfo.GedcomData"/>, the blob is stored with
+  /// the person and merged back on export, so the round-trip loses nothing in its original document order.
   /// </summary>
-  private static Data? BuildResidueData(GedcomNode individual)
+  private static Data? BuildResidueData(GedcomNode individual, GedcomNode[] consumedPhotoNodes)
   {
-    // Embedded photos (OBJE with a BLOB) are consumed into the person's photo set by BuildPhotos, so they
-    // are excluded here to avoid storing them a second time as opaque residue.
-    var residue = individual.Children.Where(c => !OwnedIndividualTags.Contains(c.Tag) && !IsEmbeddedPhoto(c));
-    if (!residue.Any())
-      return null;
-
-    var writer = new StringWriter();
-    foreach (var child in residue)
-    {
-      GedcomWriter.Write(writer, child);
-    }
-
-    var content = Encoding.UTF8.GetBytes(writer.ToString());
-    return new Data(TableBase.NonCommittedId, content, ResidueMimeType, DataCategory.PersonGedcomTags);
+    var roots = BuildResidueRoots(individual, consumedPhotoNodes);
+    return roots.Count == 0 ? null : ToResidueData(roots);
   }
 
   /// <summary>
-  /// Decodes the embedded multimedia GT4 can load into its photo model: each <c>OBJE</c> with a base64
-  /// <c>BLOB</c> becomes a photo. The one marked <c>_PRIM Y</c> — or the first when none is marked —
-  /// becomes the main (profile) photo; the rest are additional. <c>OBJE</c> records without a usable
-  /// <c>BLOB</c> (e.g. third-party <c>FILE</c> references GT4 cannot resolve) are not photos and survive
-  /// untouched through the residue passthrough instead.
+  /// The residue roots of an individual: each fully-unmodeled INDI child whole, the first occurrence of an
+  /// owned tag reduced to a residual copy of just its unmodeled sub-tags, and every later occurrence of an
+  /// owned tag whole. GT4's readers all take <c>Child(tag)</c>, so only the first occurrence is consumed into
+  /// the model; a repeated <c>NAME</c>/<c>NOTE</c> keeps its value here and is re-emitted standalone on export.
   /// </summary>
-  private static (Data? Main, Data[] Additional) BuildPhotos(GedcomNode individual)
+  private static List<GedcomNode> BuildResidueRoots(GedcomNode individual, GedcomNode[] consumedPhotoNodes)
   {
-    var photos = individual.Children.Where(IsEmbeddedPhoto).ToArray();
+    var roots = new List<GedcomNode>();
+    var consumedOwned = new HashSet<string>();
+    foreach (var child in individual.Children)
+    {
+      // OBJEs consumed into the person's photo set by BuildPhotos are excluded here to avoid storing them a
+      // second time as opaque residue. An OBJE that was not consumed — unreadable, or skipped because the
+      // person already had a photo — is absent from this set and so survives verbatim as residue.
+      // FullyOwnedTags are regenerated from the edge graph, so neither they nor their sub-tags are preserved.
+      if (consumedPhotoNodes.Contains(child) || GedcomMapping.FullyOwnedTags.Contains(child.Tag))
+        continue;
+
+      if (GedcomMapping.OwnedTagModeledChildren.TryGetValue(child.Tag, out var modeled) && consumedOwned.Add(child.Tag))
+      {
+        var residual = ResidualNode(child, modeled);
+        if (residual is not null)
+          roots.Add(residual);
+      }
+      else
+      {
+        roots.Add(child);
+      }
+    }
+    return roots;
+  }
+
+  private static Data ToResidueData(IEnumerable<GedcomNode> roots)
+  {
+    var content = Encoding.UTF8.GetBytes(SerializeRoots(roots));
+    return new Data(TableBase.NonCommittedId, content, ResidueMimeType, DataCategory.PersonGedcomTags);
+  }
+
+  private static string SerializeRoots(IEnumerable<GedcomNode> roots) => string.Concat(roots.Select(Serialize));
+
+  private static string Serialize(GedcomNode root)
+  {
+    var writer = new StringWriter();
+    GedcomWriter.Write(writer, root);
+    return writer.ToString();
+  }
+
+  /// <summary>
+  /// Folds the incoming residue roots a matched person does not already carry into their existing residue
+  /// blob, comparing <see cref="GedcomWriter"/>-serialized roots on both sides so reader/writer normalization
+  /// never makes equal content look new. Returns null when nothing new survives, so a re-import writes nothing.
+  /// </summary>
+  private static async Task<Data?> MergeResidueAsync(Data existing, List<GedcomNode> incoming, CancellationToken token)
+  {
+    var existingText = Encoding.UTF8.GetString(existing.Content);
+    var existingRoots = await GedcomReader.ReadAsync(new StringReader(existingText), token);
+    var seen = existingRoots.Select(Serialize).ToHashSet();
+
+    var added = incoming.Where(root => seen.Add(Serialize(root))).ToArray();
+    if (added.Length == 0)
+      return null;
+
+    return ToResidueData([.. existingRoots, .. added]);
+  }
+
+  /// <summary>
+  /// A copy of an owned node carrying only the children GT4 does not model — the node's value and modeled
+  /// sub-tags are dropped since those ride in the GT4 model — or <c>null</c> when nothing unmodeled remains
+  /// (a DATE-only BIRT yields no residue). The source node is never mutated: <see cref="ParseEventDate"/>
+  /// and <see cref="BuildNamesAsync"/> still read the live DATE/GIVN/SURN off it.
+  /// </summary>
+  private static GedcomNode? ResidualNode(GedcomNode owned, HashSet<string> modeled)
+  {
+    var residual = new GedcomNode { Tag = owned.Tag };
+    foreach (var child in owned.Children)
+    {
+      if (!modeled.Contains(child.Tag))
+        residual.Add(child);
+    }
+    return residual.Children.Count > 0 ? residual : null;
+  }
+
+  // A photo materialized once from an OBJE: an embedded BLOB decoded, or an external image FILE read off
+  // disk. Holding the bytes here means the "can this load?" decision is made at selection time, so an OBJE
+  // whose bytes cannot be obtained is simply absent from the set and falls through to residue.
+  private sealed record PhotoCandidate(GedcomNode Node, byte[] Content, string? MimeType, bool Primary);
+
+  /// <summary>
+  /// The direct INDI <c>OBJE</c> photos GT4 can load, materialized to bytes in document order: an embedded
+  /// base64 <c>BLOB</c>, or an external <c>FILE</c> image reference that resolves under
+  /// <paramref name="mediaBasePath"/>. An OBJE whose bytes cannot be obtained — a non-image, an unfound or
+  /// unreadable FILE, or a corrupt BLOB — is dropped from the set and survives as residue instead, so a
+  /// single bad image never aborts the all-or-nothing import.
+  /// </summary>
+  private static PhotoCandidate[] SelectPhotos(GedcomNode individual, string? mediaBasePath) =>
+    individual.Children
+      .Select(o => TryReadPhoto(o, mediaBasePath))
+      .Where(p => p is not null)
+      .Select(p => p!)
+      .ToArray();
+
+  private static PhotoCandidate? TryReadPhoto(GedcomNode obje, string? mediaBasePath)
+  {
+    if (obje.Tag != GedcomTags.Object)
+      return null;
+
+    if (IsEmbeddedPhoto(obje))
+    {
+      try
+      {
+        var blob = Convert.FromBase64String(obje.ChildValue(GedcomTags.Blob)!);
+        var mimeType = GedcomMedia.ToMimeType(obje.ChildValue(GedcomTags.Form));
+        return new PhotoCandidate(obje, blob, mimeType, IsPrimary(obje));
+      }
+      catch (FormatException)
+      {
+        return null;
+      }
+    }
+
+    var path = ExternalImagePath(obje, mediaBasePath);
+    if (path is null)
+      return null;
+
+    try
+    {
+      var content = System.IO.File.ReadAllBytes(path);
+      var mime = GedcomMedia.ToMimeType(MediaForm(obje));
+      return new PhotoCandidate(obje, content, mime, IsPrimary(obje));
+    }
+    catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+    {
+      return null;
+    }
+  }
+
+  /// <summary>
+  /// Builds the photo data from the materialized candidates. The one marked <c>_PRIM Y</c> — or the first
+  /// when none is marked — becomes the main (profile) photo; the rest are additional.
+  /// </summary>
+  private static (Data? Main, Data[] Additional) BuildPhotos(PhotoCandidate[] photos)
+  {
     if (photos.Length == 0)
       return (null, []);
 
-    var mainNode = photos.FirstOrDefault(IsPrimary) ?? photos[0];
-    var main = ToPhotoData(mainNode, DataCategory.PersonMainPhoto);
+    var mainPhoto = photos.FirstOrDefault(p => p.Primary) ?? photos[0];
+    var main = new Data(TableBase.NonCommittedId, mainPhoto.Content, mainPhoto.MimeType, DataCategory.PersonMainPhoto);
     var additional = photos
-      .Where(p => !ReferenceEquals(p, mainNode))
-      .Select(p => ToPhotoData(p, DataCategory.PersonPhoto))
+      .Where(p => !ReferenceEquals(p, mainPhoto))
+      .Select(p => new Data(TableBase.NonCommittedId, p.Content, p.MimeType, DataCategory.PersonPhoto))
       .ToArray();
     return (main, additional);
   }
@@ -362,11 +496,44 @@ internal sealed class GedcomImporter : IGedcomImporter
   private static bool IsPrimary(GedcomNode obje) =>
     string.Equals(obje.ChildValue(GedcomTags.Primary), GedcomTags.PrimaryYes, StringComparison.OrdinalIgnoreCase);
 
-  private static Data ToPhotoData(GedcomNode obje, DataCategory category)
+  /// <summary>
+  /// The on-disk path of an <c>OBJE</c>'s external image <c>FILE</c> when it resolves under
+  /// <paramref name="mediaBasePath"/> and is an image, else null. A relative reference is taken relative to
+  /// the base path; an absolute one is used as-is. Only image media is loaded, so a non-image FILE (a PDF
+  /// scan) is left as residue.
+  /// </summary>
+  private static string? ExternalImagePath(GedcomNode obje, string? mediaBasePath)
   {
-    var content = Convert.FromBase64String(obje.ChildValue(GedcomTags.Blob)!);
-    var mimeType = GedcomMedia.ToMimeType(obje.ChildValue(GedcomTags.Form));
-    return new Data(TableBase.NonCommittedId, content, mimeType, category);
+    if (mediaBasePath is null || obje.Tag != GedcomTags.Object)
+      return null;
+
+    var fileRef = obje.ChildValue(GedcomTags.File);
+    if (string.IsNullOrWhiteSpace(fileRef) || !IsImageMedia(MediaForm(obje), fileRef))
+      return null;
+
+    var normalized = fileRef.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
+    var path = Path.IsPathRooted(normalized) ? normalized : Path.Combine(mediaBasePath, normalized);
+    return System.IO.File.Exists(path) ? path : null;
+  }
+
+  // GEDCOM 5.5.1 nests FORM under FILE; the older 5.5 form sits directly under OBJE. Read either.
+  private static string? MediaForm(GedcomNode obje) =>
+    obje.Child(GedcomTags.File)?.ChildValue(GedcomTags.Form) ?? obje.ChildValue(GedcomTags.Form);
+
+  // Image subtypes GT4 will load as a photo, matched against either the OBJE FORM token or the FILE
+  // extension. A non-image FORM (e.g. "pdf") must not match: GedcomMedia.ToMimeType blindly prefixes
+  // "image/" to any token, so the form is checked against this set rather than through that mapping.
+  private static readonly HashSet<string> ImageForms =
+    new(StringComparer.OrdinalIgnoreCase) { "jpg", "jpeg", "png", "gif", "bmp", "tif", "tiff", "webp" };
+
+  private static bool IsImageMedia(string? form, string fileRef)
+  {
+    var token = form?.Trim();
+    if (token is not null && (ImageForms.Contains(token) || token.StartsWith("image/", StringComparison.OrdinalIgnoreCase)))
+      return true;
+
+    var extension = Path.GetExtension(fileRef).TrimStart('.');
+    return ImageForms.Contains(extension);
   }
 
   /// <summary>
