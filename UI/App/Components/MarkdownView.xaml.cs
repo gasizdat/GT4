@@ -40,9 +40,9 @@ public partial class MarkdownView : ContentView
     }
   }
 
-  // A tapped link (e.g. the Google Maps coordinate reference) opens in the external browser/maps app rather
-  // than navigating inside the display WebView. The inline HTML document loads without an http(s) URL, so
-  // only real links are intercepted; everything else (the initial content load) proceeds untouched.
+  // A tapped link (the Google Maps coordinate reference, a mailto/tel in a bio) opens in the external app
+  // rather than navigating inside the display WebView; everything else (the initial content load) proceeds
+  // untouched.
   private async void OnWebViewNavigating(object sender, WebNavigatingEventArgs e)
   {
     if (!IsExternalLink(e.Url))
@@ -59,9 +59,12 @@ public partial class MarkdownView : ContentView
     }
   }
 
+  // The inline HTML document loads under an in-document scheme (about:/data:/file:); any other absolute URI
+  // is a real link, so its protocol is handed to the OS. Letting Uri parse the scheme catches every external
+  // protocol (http(s), mailto, tel, geo, ...) without matching prefixes by hand.
   private static bool IsExternalLink(string url) =>
-    url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
-    url.StartsWith("https://", StringComparison.OrdinalIgnoreCase);
+    Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
+    uri.Scheme is not ("about" or "data" or "file");
 
   private async void OnWebViewNavigated(object sender, WebNavigatedEventArgs e)
   {
