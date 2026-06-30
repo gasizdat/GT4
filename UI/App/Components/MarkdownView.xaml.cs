@@ -14,7 +14,12 @@ public partial class MarkdownView : ContentView
       .Build();
 
     InitializeComponent();
+    ConfigurePlatformInput();
   }
+
+  // Windows makes the WebView interactive and forwards scroll here; other platforms keep the XAML's
+  // input-transparent pass-through (no implementation, so the call is elided).
+  partial void ConfigurePlatformInput();
 
   public static readonly BindableProperty MarkdownProperty =
     BindableProperty.Create(nameof(Markdown), typeof(string), typeof(MarkdownView), default, BindingMode.OneWay, null, OnMarkdownChanged);
@@ -34,6 +39,29 @@ public partial class MarkdownView : ContentView
       view.OnPropertyChanged(nameof(HtmlContent));
     }
   }
+
+  // A tapped link (e.g. the Google Maps coordinate reference) opens in the external browser/maps app rather
+  // than navigating inside the display WebView. The inline HTML document loads without an http(s) URL, so
+  // only real links are intercepted; everything else (the initial content load) proceeds untouched.
+  private async void OnWebViewNavigating(object sender, WebNavigatingEventArgs e)
+  {
+    if (!IsExternalLink(e.Url))
+      return;
+
+    e.Cancel = true;
+    try
+    {
+      await Launcher.Default.OpenAsync(e.Url);
+    }
+    catch (Exception ex)
+    {
+      System.Diagnostics.Debug.WriteLine(ex);
+    }
+  }
+
+  private static bool IsExternalLink(string url) =>
+    url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+    url.StartsWith("https://", StringComparison.OrdinalIgnoreCase);
 
   private async void OnWebViewNavigated(object sender, WebNavigatedEventArgs e)
   {
@@ -110,6 +138,22 @@ public partial class MarkdownView : ContentView
       </head>
       <body>
       {bodyHtml}
+      <script>
+        (function () {{
+          var host = window.chrome && window.chrome.webview;
+          if (!host) return;                       /* WinUI WebView2 only; mobile scrolls natively */
+          function forward(delta) {{ host.postMessage(delta.toString()); }}
+          window.addEventListener('wheel', function (e) {{ forward(e.deltaY); }}, {{ passive: true }});
+          var lastY = null;
+          window.addEventListener('touchstart', function (e) {{ lastY = e.touches.length ? e.touches[0].clientY : null; }}, {{ passive: true }});
+          window.addEventListener('touchmove', function (e) {{
+            if (lastY === null || !e.touches.length) return;
+            var y = e.touches[0].clientY;
+            forward(lastY - y);
+            lastY = y;
+          }}, {{ passive: true }});
+        }})();
+      </script>
       </body>
       </html>";
   }
