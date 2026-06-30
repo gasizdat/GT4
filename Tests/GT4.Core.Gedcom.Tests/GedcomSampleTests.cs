@@ -263,6 +263,35 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task RepeatedOwnedTag_SecondNameAndNoteSurviveRoundTrip()
+  {
+    // GT4 consumes only the first NAME (identity) and first NOTE (biography); a second of either has no slot
+    // in the model. It must be preserved whole as residue and re-emitted as its own standalone tag on export,
+    // not merged into the first — which would silently drop its value.
+    const string ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME John /Smith/\n1 NAME Johnny /Smith/\n1 SEX M\n" +
+      "1 NOTE A blacksmith.\n1 NOTE Also a poet.\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var person = (await document.Persons.GetPersonsAsync(Token)).Single();
+
+    var residue = await document.PersonData.GetPersonDataSetAsync(person, DataCategory.PersonGedcomTags, Token);
+    var blob = Encoding.UTF8.GetString(residue.Single().Content);
+    blob.Should().Contain("NAME Johnny /Smith/").And.Contain("NOTE Also a poet.");
+
+    var text = await ExportToTextAsync(document);
+    text.Should().Contain("1 NAME John /Smith/").And.Contain("1 NAME Johnny /Smith/")
+        .And.Contain("1 NOTE A blacksmith.").And.Contain("1 NOTE Also a poet.");
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    var reexported = await ExportToTextAsync(reimported);
+    reexported.Should().Contain("1 NAME Johnny /Smith/").And.Contain("1 NOTE Also a poet.");
+  }
+
+  [Fact]
   public async Task UnmodeledIndividualSubTags_ProjectToFactsForDisplay()
   {
     await using var document = await ImportSampleAsync("residue.ged");

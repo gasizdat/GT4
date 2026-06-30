@@ -348,7 +348,9 @@ internal sealed class GedcomExporter : IGedcomExporter
     var other = new List<GedcomNode>();
     foreach (var root in roots)
     {
-      if (!GedcomMapping.OwnedTagModeledChildren.ContainsKey(root.Tag))
+      // A genuine residual (value-less, only unmodeled children) merges back into the regenerated owned node;
+      // a root still carrying a value or a modeled child is a repeated owned tag, re-emitted standalone.
+      if (!GedcomMapping.OwnedTagModeledChildren.TryGetValue(root.Tag, out var modeled) || !IsGenuineResidual(root, modeled))
       {
         other.Add(root);
         continue;
@@ -362,6 +364,9 @@ internal sealed class GedcomExporter : IGedcomExporter
     }
     return (owned, other);
   }
+
+  private static bool IsGenuineResidual(GedcomNode root, HashSet<string> modeled) =>
+    root.Value is null && root.Children.All(child => !modeled.Contains(child.Tag));
 
   private static IReadOnlyList<GedcomNode> Residual(Dictionary<string, List<GedcomNode>> owned, string tag) =>
     owned.TryGetValue(tag, out var list) ? list : [];

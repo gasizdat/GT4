@@ -181,11 +181,10 @@ internal sealed class GedcomImporter : IGedcomImporter
         additions.Add(biography);
     }
 
-    if (full.GedcomData is null)
+    var incomingResidue = BuildResidueRoots(individual, consumedNodes);
+    if (full.GedcomData is null && incomingResidue.Count > 0)
     {
-      var residue = BuildResidueData(individual, consumedNodes);
-      if (residue is not null)
-        additions.Add(residue);
+      additions.Add(ToResidueData(incomingResidue));
     }
 
     if (addingPhotos)
@@ -199,6 +198,13 @@ internal sealed class GedcomImporter : IGedcomImporter
     if (additions.Count > 0)
     {
       await document.PersonData.AddPersonDataSetAsync(match.Existing, [.. additions], token);
+    }
+
+    if (full.GedcomData is not null && incomingResidue.Count > 0)
+    {
+      var merged = await MergeResidueAsync(full.GedcomData, incomingResidue, token);
+      if (merged is not null)
+        await document.PersonData.UpdatePersonDataAsync(match.Existing, merged, DataCategory.PersonGedcomTags, token);
     }
 
     if (full.DeathDate is null)
@@ -325,7 +331,20 @@ internal sealed class GedcomImporter : IGedcomImporter
   /// </summary>
   private static Data? BuildResidueData(GedcomNode individual, GedcomNode[] consumedPhotoNodes)
   {
+    var roots = BuildResidueRoots(individual, consumedPhotoNodes);
+    return roots.Count == 0 ? null : ToResidueData(roots);
+  }
+
+  /// <summary>
+  /// The residue roots of an individual: each fully-unmodeled INDI child whole, the first occurrence of an
+  /// owned tag reduced to a residual copy of just its unmodeled sub-tags, and every later occurrence of an
+  /// owned tag whole. GT4's readers all take <c>Child(tag)</c>, so only the first occurrence is consumed into
+  /// the model; a repeated <c>NAME</c>/<c>NOTE</c> keeps its value here and is re-emitted standalone on export.
+  /// </summary>
+  private static List<GedcomNode> BuildResidueRoots(GedcomNode individual, GedcomNode[] consumedPhotoNodes)
+  {
     var roots = new List<GedcomNode>();
+    var consumedOwned = new HashSet<string>();
     foreach (var child in individual.Children)
     {
       // OBJEs consumed into the person's photo set by BuildPhotos are excluded here to avoid storing them a
@@ -335,7 +354,7 @@ internal sealed class GedcomImporter : IGedcomImporter
       if (consumedPhotoNodes.Contains(child) || GedcomMapping.FullyOwnedTags.Contains(child.Tag))
         continue;
 
-      if (GedcomMapping.OwnedTagModeledChildren.TryGetValue(child.Tag, out var modeled))
+      if (GedcomMapping.OwnedTagModeledChildren.TryGetValue(child.Tag, out var modeled) && consumedOwned.Add(child.Tag))
       {
         var residual = ResidualNode(child, modeled);
         if (residual is not null)
@@ -346,18 +365,40 @@ internal sealed class GedcomImporter : IGedcomImporter
         roots.Add(child);
       }
     }
+    return roots;
+  }
 
-    if (roots.Count == 0)
+  private static Data ToResidueData(IEnumerable<GedcomNode> roots)
+  {
+    var content = Encoding.UTF8.GetBytes(SerializeRoots(roots));
+    return new Data(TableBase.NonCommittedId, content, ResidueMimeType, DataCategory.PersonGedcomTags);
+  }
+
+  private static string SerializeRoots(IEnumerable<GedcomNode> roots) => string.Concat(roots.Select(Serialize));
+
+  private static string Serialize(GedcomNode root)
+  {
+    var writer = new StringWriter();
+    GedcomWriter.Write(writer, root);
+    return writer.ToString();
+  }
+
+  /// <summary>
+  /// Folds the incoming residue roots a matched person does not already carry into their existing residue
+  /// blob, comparing <see cref="GedcomWriter"/>-serialized roots on both sides so reader/writer normalization
+  /// never makes equal content look new. Returns null when nothing new survives, so a re-import writes nothing.
+  /// </summary>
+  private static async Task<Data?> MergeResidueAsync(Data existing, List<GedcomNode> incoming, CancellationToken token)
+  {
+    var existingText = Encoding.UTF8.GetString(existing.Content);
+    var existingRoots = await GedcomReader.ReadAsync(new StringReader(existingText), token);
+    var seen = existingRoots.Select(Serialize).ToHashSet();
+
+    var added = incoming.Where(root => seen.Add(Serialize(root))).ToArray();
+    if (added.Length == 0)
       return null;
 
-    var writer = new StringWriter();
-    foreach (var root in roots)
-    {
-      GedcomWriter.Write(writer, root);
-    }
-
-    var content = Encoding.UTF8.GetBytes(writer.ToString());
-    return new Data(TableBase.NonCommittedId, content, ResidueMimeType, DataCategory.PersonGedcomTags);
+    return ToResidueData([.. existingRoots, .. added]);
   }
 
   /// <summary>
