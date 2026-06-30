@@ -12,6 +12,8 @@ namespace GT4.UI.Components;
 // to the nearest parent ScrollViewer, restoring page scrolling. Other platforms keep the XAML pass-through.
 public partial class MarkdownView
 {
+  private WebView2? _PlatformWebView;
+
   partial void ConfigurePlatformInput()
   {
     Root.InputTransparent = false;
@@ -19,13 +21,19 @@ public partial class MarkdownView
     InternalWebView.HandlerChanged += OnWebViewHandlerChanged;
   }
 
+  // HandlerChanged fires both when a platform WebView2 is attached and when it is torn away (handler
+  // disconnect, virtualization reuse, re-parenting). Detaching from the previously tracked view before
+  // tracking the new one keeps the subscription on exactly the live WebView2 — never on a stale one that
+  // would be retained and could replay a scroll delta.
   private void OnWebViewHandlerChanged(object? sender, EventArgs e)
   {
-    if (InternalWebView.Handler?.PlatformView is not WebView2 webView2)
-      return;
+    if (_PlatformWebView is not null)
+      _PlatformWebView.WebMessageReceived -= OnWebMessageReceived;
 
-    webView2.WebMessageReceived -= OnWebMessageReceived;
-    webView2.WebMessageReceived += OnWebMessageReceived;
+    _PlatformWebView = InternalWebView.Handler?.PlatformView as WebView2;
+
+    if (_PlatformWebView is not null)
+      _PlatformWebView.WebMessageReceived += OnWebMessageReceived;
   }
 
   private void OnWebMessageReceived(WebView2 sender, CoreWebView2WebMessageReceivedEventArgs args)
