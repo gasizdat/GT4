@@ -266,6 +266,34 @@ public sealed class GedcomMergeImportTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task Matching_ExistingPhoto_PreservesIncomingPortraitAsResidue()
+  {
+    // The first file gives John a photo. The re-stated file brings a different photo: gap-fill keeps the
+    // original (populated fields are never overwritten), but the incoming OBJE must not vanish — it is
+    // preserved verbatim as residue rather than dropped from both the photo set and the blob.
+    var firstBlob = Convert.ToBase64String(Encoding.UTF8.GetBytes("first-image"));
+    var first =
+      "0 @I1@ INDI\n1 NAME John /Smith/\n1 SEX M\n1 BIRT\n2 DATE 1 JAN 1850\n" +
+      $"1 OBJE\n2 FORM jpeg\n2 _PRIM Y\n2 BLOB {firstBlob}\n";
+    await using var document = await NewDocumentAsync();
+    await ImportAsync(document, Doc(first));
+
+    var secondBlob = Convert.ToBase64String(Encoding.UTF8.GetBytes("second-image"));
+    var second =
+      "0 @I1@ INDI\n1 NAME John /Smith/\n1 SEX M\n1 BIRT\n2 DATE 1 JAN 1850\n" +
+      $"1 OBJE\n2 FORM jpeg\n2 BLOB {secondBlob}\n";
+    await ImportAsync(document, Doc(second));
+
+    var infos = await PersonInfosAsync(document);
+    infos.Should().HaveCount(1);
+
+    var full = await document.PersonManager.GetPersonFullInfoAsync(infos.Single(), Token);
+    Encoding.UTF8.GetString(full.MainPhoto!.Content).Should().Be("first-image");
+    full.GedcomData.Should().NotBeNull();
+    Encoding.UTF8.GetString(full.GedcomData!.Content).Should().Contain(secondBlob);
+  }
+
+  [Fact]
   public async Task ReimportingRealFile_KeepsEveryPersonDistinct()
   {
     // The real Brontë file mixes precise, year-only, month-year and "abt" birth dates, two people with no

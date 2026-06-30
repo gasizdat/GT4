@@ -431,6 +431,60 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task FileReferenceObje_UnreadableImageStaysResidueWithoutAbortingImport()
+  {
+    // An external image FILE that resolves on disk but cannot be read (here, held under an exclusive lock)
+    // must not abort the all-or-nothing import: the unreadable OBJE falls back to residue, exactly like a
+    // missing file, and the person is still imported.
+    var mediaDir = Path.Combine(Path.GetTempPath(), $"gt4_media_{Guid.NewGuid():N}");
+    Directory.CreateDirectory(mediaDir);
+    var imagePath = Path.Combine(mediaDir, "locked.png");
+    await File.WriteAllBytesAsync(imagePath, new byte[] { 1, 2, 3 }, Token);
+    try
+    {
+      using var locked = new FileStream(imagePath, FileMode.Open, FileAccess.Read, FileShare.None);
+
+      var ged =
+        "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Foto /Test/\n1 SEX M\n" +
+        "1 OBJE\n2 FILE locked.png\n3 FORM png\n0 TRLR\n";
+      await using var document = await NewDocumentAsync();
+      await _importer.ImportAsync(document, new StringReader(ged), Token, mediaDir);
+
+      var person = (await document.Persons.GetPersonsAsync(Token)).Single();
+      var full = await document.PersonManager.GetPersonFullInfoAsync(person, Token);
+      full.MainPhoto.Should().BeNull();
+      full.GedcomData.Should().NotBeNull();
+
+      var text = await ExportToTextAsync(document);
+      text.Should().Contain("1 OBJE").And.Contain("2 FILE locked.png");
+    }
+    finally
+    {
+      Directory.Delete(mediaDir, recursive: true);
+    }
+  }
+
+  [Fact]
+  public async Task EmbeddedObje_CorruptBlobStaysResidueWithoutAbortingImport()
+  {
+    // A malformed base64 BLOB cannot be decoded, so the OBJE is not a photo; like an unreadable FILE it
+    // falls back to residue instead of throwing and aborting the import.
+    var ged =
+      "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Foto /Test/\n1 SEX M\n" +
+      "1 OBJE\n2 FORM jpeg\n2 BLOB not-valid-base64!!!\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var person = (await document.Persons.GetPersonsAsync(Token)).Single();
+    var full = await document.PersonManager.GetPersonFullInfoAsync(person, Token);
+    full.MainPhoto.Should().BeNull();
+    full.GedcomData.Should().NotBeNull();
+
+    var text = await ExportToTextAsync(document);
+    text.Should().Contain("1 OBJE").And.Contain("2 BLOB ");
+  }
+
+  [Fact]
   public async Task Minimal_ImportsValueOnlyNameWithNoRelationships()
   {
     await using var document = await ImportSampleAsync("minimal.ged");
