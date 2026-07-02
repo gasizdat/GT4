@@ -7,5 +7,5 @@ public static class ServiceCollectionExtensions
   public static IServiceCollection AddUILogic(this IServiceCollection services) =>
     services
       .AddSingleton<ProjectListLogic>()
-      .AddSingleton<PersonLogic>();
+      .AddSingleton<PersonPageLogic>();
 }

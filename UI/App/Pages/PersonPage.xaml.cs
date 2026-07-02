@@ -21,7 +21,7 @@ public partial class PersonPage : ContentPage
   private readonly IDateSpanFormatter _DateSpanFormatter;
   private readonly IDateFormatter _DateFormatter;
   private readonly INameFormatter _NameFormatter;
-  private readonly PersonLogic _Logic;
+  private readonly PersonPageLogic _Logic;
   private readonly ICommand _PageCommand;
   private readonly RelativeTree _Relatives;
   private ObservableCollection<PersonInfo> _NavigationHistory = new();
@@ -40,7 +40,7 @@ public partial class PersonPage : ContentPage
     _DateSpanFormatter = _ServiceProvider.GetRequiredService<IDateSpanFormatter>();
     _DateFormatter = _ServiceProvider.GetRequiredService<IDateFormatter>();
     _NameFormatter = _ServiceProvider.GetRequiredService<INameFormatter>();
-    _Logic = _ServiceProvider.GetRequiredService<PersonLogic>();
+    _Logic = _ServiceProvider.GetRequiredService<PersonPageLogic>();
     _PageCommand = new SafeCommand(OnPageCommand);
     _Relatives = new RelativeTree(currentProjectProvider, _CancellationTokenProvider);
 
@@ -126,7 +126,19 @@ public partial class PersonPage : ContentPage
     set => ShowPersonInfo(value, true);
   }
 
-  public PersonPageSmartLayout SmartLayout => _SmartLayout;
+  public PersonPageSmartLayout SmartLayout
+  {
+
+    get => _SmartLayout;
+    set
+    {
+      if (_SmartLayout != value)
+      {
+        _SmartLayout = value;
+        OnPropertyChanged(nameof(SmartLayout));
+      }
+    }
+  }
 
   public string Biography => _Biography;
 
@@ -161,9 +173,10 @@ public partial class PersonPage : ContentPage
   protected override void OnSizeAllocated(double width, double height)
   {
     base.OnSizeAllocated(width, height);
-    var density = DeviceDisplay.Current.MainDisplayInfo.Density;
-    _SmartLayout = PersonPageLogic.ComputeLayout(width, height, density);
-    OnPropertyChanged(nameof(SmartLayout));
+    SmartLayout = PersonPageLogic.ComputeLayout(
+      width: width,
+      height: height,
+      density: DeviceDisplay.Current.MainDisplayInfo.Density);
   }
 
   // Loads a person off the UI thread: PersonLogic fetches the document data and assembles the relatives;
