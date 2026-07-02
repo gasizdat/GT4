@@ -37,6 +37,44 @@ public sealed class ProjectListLogicTests
     new(Name: name, Description: string.Empty, Revision: string.Empty,
         Origin: new FileDescription(new DirectoryDescription(Environment.SpecialFolder.LocalApplicationData, []), name, null));
 
+  // A ProjectHost with a null document: DisposeAsync short-circuits, so the mock IFileSystem is never touched.
+  private static ProjectHost MakeHost()
+  {
+    var dir = new DirectoryDescription(Environment.SpecialFolder.LocalApplicationData, ["gt4_test"]);
+    var origin = new FileDescription(dir, "project.db", null);
+    var cache = new FileDescription(dir, "project.cache.db", null);
+    return new ProjectHost(new Mock<IFileSystem>().Object, origin, cache);
+  }
+
+  [Fact]
+  public async Task CreateProjectAsync_creates_a_project_with_the_given_name_and_description()
+  {
+    _projectList.Setup(l => l.CreateAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(MakeHost());
+
+    await CreateLogic().CreateProjectAsync("My Tree", "a description");
+
+    _projectList.Verify(l => l.CreateAsync("My Tree", "a description", It.IsAny<CancellationToken>()), Times.Once);
+  }
+
+  [Fact]
+  public async Task CloseCurrentAsync_closes_the_current_project()
+  {
+    await CreateLogic().CloseCurrentAsync();
+
+    _currentProjectProvider.Verify(p => p.CloseAsync(It.IsAny<CancellationToken>()), Times.Once);
+  }
+
+  [Fact]
+  public async Task OpenAsync_opens_the_given_project()
+  {
+    var info = MakeInfo("Alpha");
+
+    await CreateLogic().OpenAsync(info);
+
+    _currentProjectProvider.Verify(p => p.OpenAsync(info, It.IsAny<CancellationToken>()), Times.Once);
+  }
+
   [Fact]
   public async Task GetProjectsAsync_returns_projects_sorted_by_comparer()
   {
@@ -56,12 +94,7 @@ public sealed class ProjectListLogicTests
   [Fact]
   public async Task ImportAsync_removes_project_and_rethrows_when_import_fails()
   {
-    var fsm = new Mock<IFileSystem>();
-    var dir = new DirectoryDescription(Environment.SpecialFolder.LocalApplicationData, ["gt4_test"]);
-    var origin = new FileDescription(dir, "project.db", null);
-    var cache = new FileDescription(dir, "project.cache.db", null);
-    var host = new ProjectHost(fsm.Object, origin, cache);
-
+    var host = MakeHost();
     _projectList.Setup(l => l.CreateAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(host);
     _importer.Setup(i => i.ImportAsync(It.IsAny<IProjectDocument>(), It.IsAny<TextReader>(),
@@ -72,6 +105,6 @@ public sealed class ProjectListLogicTests
     var act = () => logic.ImportAsync(new MemoryStream(), "Test", "desc", null, CancellationToken.None);
 
     await act.Should().ThrowAsync<InvalidOperationException>();
-    _projectList.Verify(l => l.RemoveAsync(origin, It.IsAny<CancellationToken>()), Times.Once);
+    _projectList.Verify(l => l.RemoveAsync(host.Origin, It.IsAny<CancellationToken>()), Times.Once);
   }
 }
