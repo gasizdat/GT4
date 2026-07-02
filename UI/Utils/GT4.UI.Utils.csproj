@@ -24,6 +24,7 @@
 		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="$(MauiVersion)" />
 		<ProjectReference Include="..\..\Core\Project\GT4.Core.Project.csproj" />
 		<ProjectReference Include="..\Resources\GT4.UI.Resources.csproj" />
+		<ProjectReference Include="..\Abstractions\GT4.UI.Abstractions.csproj" />
 	</ItemGroup>
 
 </Project>
