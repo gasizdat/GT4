@@ -3,10 +3,10 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Components;
 using GT4.UI.Dialogs;
-using GT4.UI.Utils.Formatters;
+using GT4.UI.Logic;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
-using GT4.UI.Utils.Converters;
+using GT4.UI.Utils.Formatters;
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
@@ -18,12 +18,10 @@ public partial class PersonPage : ContentPage
 {
   private readonly IServiceProvider _ServiceProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
-  private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IDateSpanFormatter _DateSpanFormatter;
   private readonly IDateFormatter _DateFormatter;
   private readonly INameFormatter _NameFormatter;
-  private readonly IDataConverter _TextConverter;
-  private readonly IDataConverter _GedcomConverter;
+  private readonly PersonLogic _Logic;
   private readonly ICommand _PageCommand;
   private readonly RelativeTree _Relatives;
   private ObservableCollection<PersonInfo> _NavigationHistory = new();
@@ -37,15 +35,14 @@ public partial class PersonPage : ContentPage
   public PersonPage(IServiceProvider serviceProvider)
   {
     _ServiceProvider = serviceProvider;
+    var currentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
     _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
-    _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
     _DateSpanFormatter = _ServiceProvider.GetRequiredService<IDateSpanFormatter>();
     _DateFormatter = _ServiceProvider.GetRequiredService<IDateFormatter>();
     _NameFormatter = _ServiceProvider.GetRequiredService<INameFormatter>();
-    _TextConverter = _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonBio);
-    _GedcomConverter = _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonGedcomTags);
+    _Logic = _ServiceProvider.GetRequiredService<PersonLogic>();
     _PageCommand = new SafeCommand(OnPageCommand);
-    _Relatives = new RelativeTree(_CurrentProjectProvider, _CancellationTokenProvider);
+    _Relatives = new RelativeTree(currentProjectProvider, _CancellationTokenProvider);
 
     InitializeComponent();
   }
@@ -53,7 +50,7 @@ public partial class PersonPage : ContentPage
   public void ShowPersonInfo(Person person, bool addToNavigation)
   {
     ExpandAll = false;
-    Task.Run(async () => await GetPersonDataAsync(person, addToNavigation));
+    Task.Run(async () => await LoadPersonAsync(person, addToNavigation));
   }
 
   public bool ExpandAll
@@ -70,7 +67,7 @@ public partial class PersonPage : ContentPage
 
   public string ToggleAllButtonName => ExpandAll ? "⏫" : "⏬";
 
-  public string ToggleAllMenuItemName => 
+  public string ToggleAllMenuItemName =>
     string.Format(ExpandAll ? UIStrings.MenuItemCollapseAll_1 : UIStrings.MenuItemExpandAll_1, ToggleAllButtonName);
 
   public ICommand PageCommand => _PageCommand;
@@ -135,17 +132,6 @@ public partial class PersonPage : ContentPage
 
   public bool ShowBiography => !string.IsNullOrWhiteSpace(_Biography);
 
-  // The biography block doubles as the home for the read-only GEDCOM details: the stored bio first, then
-  // the rendered residual tags, so a person carrying only imported GEDCOM data still shows the block.
-  private static string CombineBiography(string? bio, string? gedcomDetails)
-  {
-    if (string.IsNullOrWhiteSpace(gedcomDetails))
-      return bio ?? string.Empty;
-    if (string.IsNullOrWhiteSpace(bio))
-      return gedcomDetails;
-    return $"{bio}\n\n{gedcomDetails}";
-  }
-
   public Name? FamilyName => _PersonFullInfo.Names.SingleOrDefault(n => n.Type == NameType.FamilyName);
 
   public string GoToFamilyName => string.Format(UIStrings.MenuItemGotoFamily_1, FamilyName?.Value ?? string.Empty);
@@ -193,48 +179,19 @@ public partial class PersonPage : ContentPage
     OnPropertyChanged(nameof(SmartLayout));
   }
 
-  private async Task GetPersonDataAsync(Person person, bool addToNavigation)
+  // Loads a person off the UI thread: PersonLogic fetches the document data and assembles the relatives;
+  // the page then resolves photos (default stub image is an app-package resource) and renders the bio/GEDCOM
+  // markdown, and finally marshals the UI update onto the main thread.
+  private async Task LoadPersonAsync(Person person, bool addToNavigation)
   {
     try
     {
-      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-      var project = _CurrentProjectProvider.Project;
-      var personFullInfo = await project.PersonManager.GetPersonFullInfoAsync(person, token);
-      var parentsTasks = project.RelativesProvider.GetParentsAsync(personFullInfo.RelativeInfos, token);
-      var stepChildrenTasks = project.RelativesProvider.GetStepChildrenAsync(personFullInfo.RelativeInfos, token);
-      var bioTask = _TextConverter.ToObjectAsync(personFullInfo.Biography, token);
-      var gedcomTask = _GedcomConverter.ToObjectAsync(personFullInfo.GedcomData, token);
-      await Task.WhenAll(parentsTasks, stepChildrenTasks, bioTask, gedcomTask);
-
-      byte[][] photos;
-
-      if (personFullInfo.MainPhoto is null)
-      {
-        if (personFullInfo.AdditionalPhotos.Length != 0)
-        {
-          throw new ApplicationException("Person photos inconsistency");
-        }
-
-        using var readResourceToken = _CancellationTokenProvider.CreateShortOperationCancellationToken();
-        var defaultImageResourceName = GetDefaultImageResourceName(personFullInfo.BiologicalSex);
-        var defaultPhoto = await ImageUtils.ToBytesAsync(defaultImageResourceName, readResourceToken) ?? [];
-        photos = [defaultPhoto];
-      }
-      else
-      {
-        photos = [personFullInfo.MainPhoto.Content,
-                  ..personFullInfo
-                    .AdditionalPhotos
-                    .Select(photo => photo.Content)];
-      }
-      // UpdateUI touches the project document again on the UI thread; SafeTask.RunOnMainThread keeps
-      // an escaped exception (e.g. the project closed while backgrounding) from going unobserved.
-      _ = SafeTask.RunOnMainThread(() => UpdateUI(personFullInfo,
-                                                  parentsTasks.Result,
-                                                  stepChildrenTasks.Result,
-                                                  photos, bioTask.Result as string,
-                                                  gedcomTask.Result as string,
-                                                  addToNavigation));
+      var data = await _Logic.GetPersonDataAsync(person);
+      var photos = await ResolvePhotosAsync(data.PersonFullInfo);
+      var biography = await _Logic.CombineBiographyAsync(data.PersonFullInfo);
+      // UpdateUI marshals onto the UI thread; SafeTask.RunOnMainThread keeps an escaped exception (e.g. the
+      // project closed while backgrounding) from going unobserved.
+      _ = SafeTask.RunOnMainThread(() => UpdateUI(data, photos, biography, addToNavigation));
     }
     catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
     {
@@ -243,45 +200,41 @@ public partial class PersonPage : ContentPage
     }
     catch (Exception ex)
     {
-      // GetPersonDataAsync runs on a background thread (Task.Run); both the alert and the
-      // navigation touch native views, so marshal them onto the UI thread.
+      // LoadPersonAsync runs on a background thread (Task.Run); both the alert and the navigation touch
+      // native views, so marshal them onto the UI thread.
       await this.ShowErrorAsync(ex);
       await MainThread.InvokeOnMainThreadAsync(() => Shell.Current.GoToAsync("..", true));
-      return;
     }
   }
 
-  public void UpdateUI(PersonFullInfo personFullInfo,
-                       Parents parents,
-                       RelativeInfo[] stepChildren,
-                       byte[][] photos,
-                       string? bio,
-                       string? gedcomDetails,
-                       bool addToNavigation)
+  // A person with no main photo shows a sex-specific stub image loaded from the app package; otherwise the
+  // main photo leads, followed by any additional photos.
+  private async Task<byte[][]> ResolvePhotosAsync(PersonFullInfo personFullInfo)
   {
-    var relativesProvider = _CurrentProjectProvider.Project.RelativesProvider;
-    var siblings = relativesProvider.GetSiblings(personFullInfo, parents);
-    _PersonFullInfo = personFullInfo;
+    if (personFullInfo.MainPhoto is null)
+    {
+      if (personFullInfo.AdditionalPhotos.Length != 0)
+      {
+        throw new ApplicationException("Person photos inconsistency");
+      }
+
+      using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
+      var resourceName = GetDefaultImageResourceName(personFullInfo.BiologicalSex);
+      var defaultPhoto = await ImageUtils.ToBytesAsync(resourceName, token) ?? [];
+      return [defaultPhoto];
+    }
+
+    var additional = personFullInfo.AdditionalPhotos.Select(photo => photo.Content);
+    return [personFullInfo.MainPhoto.Content, .. additional];
+  }
+
+  public void UpdateUI(PersonData data, byte[][] photos, string biography, bool addToNavigation)
+  {
+    _PersonFullInfo = data.PersonFullInfo;
     _Photos = photos;
-    _Biography = CombineBiography(bio, gedcomDetails);
+    _Biography = biography;
 
-    var roots = new List<RelativeInfo>();
-    void Add(IEnumerable<RelativeInfo> relatives) => roots.AddRange(relatives.OrderBy(r => r.BiologicalSex));
-
-    Add(_PersonFullInfo.RelativeInfos.Where(r => r.Type == RelationshipType.Spouse));
-    Add(parents.Native);
-    Add(parents.Adoptive);
-    Add(parents.Step);
-    Add(siblings.Native);
-    Add(siblings.ByFather);
-    Add(siblings.ByMother);
-    Add(siblings.Step);
-    Add(siblings.Adoptive);
-    Add(relativesProvider.GetChildren(personFullInfo.RelativeInfos));
-    Add(relativesProvider.GetAdoptiveChildren(personFullInfo.RelativeInfos));
-    Add(stepChildren);
-
-    _Relatives.SetRoots(roots, _PersonFullInfo.BirthDate);
+    _Relatives.SetRoots(data.Roots, _PersonFullInfo.BirthDate);
 
     this.RefreshView();
 
@@ -356,11 +309,7 @@ public partial class PersonPage : ContentPage
 
   private async Task OnPersonRemoveAsync()
   {
-    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-    await _CurrentProjectProvider
-      .Project
-      .Persons
-      .RemovePersonAsync(_PersonFullInfo, token);
+    await _Logic.RemovePersonAsync(_PersonFullInfo);
   }
 
   private async Task OnPersonEditAsync()
@@ -375,11 +324,7 @@ public partial class PersonPage : ContentPage
       return;
     }
 
-    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-    await _CurrentProjectProvider
-      .Project
-      .PersonManager
-      .UpdatePersonAsync(info, token);
+    await _Logic.UpdatePersonAsync(info);
 
     PersonInfo = info;
   }

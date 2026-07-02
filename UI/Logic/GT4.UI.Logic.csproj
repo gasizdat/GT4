@@ -10,6 +10,7 @@
     <ProjectReference Include="..\..\Core\Utils\GT4.Core.Utils.csproj" />
     <ProjectReference Include="..\..\Core\Project\GT4.Core.Project.csproj" />
     <ProjectReference Include="..\..\Core\Gedcom\GT4.Core.Gedcom.csproj" />
+    <ProjectReference Include="..\Abstractions\GT4.UI.Abstractions.csproj" />
   </ItemGroup>
 
 </Project>
