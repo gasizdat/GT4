@@ -161,21 +161,8 @@ public partial class PersonPage : ContentPage
   protected override void OnSizeAllocated(double width, double height)
   {
     base.OnSizeAllocated(width, height);
-    var widthInPixels = () => width * DeviceDisplay.Current.MainDisplayInfo.Density;
-    if (width < height || widthInPixels() < 900)
-    {
-      _SmartLayout = new PersonPageSmartLayout(
-        Image: new GridLayout(Column: 0, ColumnSpan: 2, Row: 0, RowSpan: 1),
-        Relatives: new GridLayout(Column: 0, ColumnSpan: 2, Row: 1, RowSpan: 1),
-        Biography: new GridLayout(Column: 0, ColumnSpan: 2, Row: 2, RowSpan: 1));
-    }
-    else
-    {
-      _SmartLayout = new PersonPageSmartLayout(
-        Image: new GridLayout(Column: 0, ColumnSpan: 1, Row: 0, RowSpan: 1),
-        Relatives: new GridLayout(Column: 1, ColumnSpan: 1, Row: 0, RowSpan: 1),
-        Biography: new GridLayout(Column: 0, ColumnSpan: 2, Row: 1, RowSpan: 1));
-    }
+    var density = DeviceDisplay.Current.MainDisplayInfo.Density;
+    _SmartLayout = PersonPageLogic.ComputeLayout(width, height, density);
     OnPropertyChanged(nameof(SmartLayout));
   }
 
