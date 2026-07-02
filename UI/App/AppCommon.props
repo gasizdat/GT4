@@ -81,6 +81,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Resources\GT4.UI.Resources.csproj" />
     <ProjectReference Include="..\Utils\GT4.UI.Utils.csproj" />
+    <ProjectReference Include="..\Logic\GT4.UI.Logic.csproj" />
     <ProjectReference Include="..\..\Core\Utils\GT4.Core.Utils.csproj" />
     <ProjectReference Include="..\..\Core\Project\GT4.Core.Project.csproj" />
     <ProjectReference Include="..\..\Core\Gedcom\GT4.Core.Gedcom.csproj" />

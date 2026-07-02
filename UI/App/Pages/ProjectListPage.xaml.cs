@@ -1,13 +1,10 @@
-using GT4.Core.Gedcom.Abstraction;
-using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
-using GT4.Core.Utils;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
+using GT4.UI.Logic;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
 using System.Collections.ObjectModel;
-using System.Text;
 using System.Windows.Input;
 
 namespace GT4.UI.Pages;
@@ -23,22 +20,14 @@ public partial class ProjectListPage : ContentPage
     [DevicePlatform.Android] = ["*/*"],
   });
 
-  private readonly ICancellationTokenProvider _CancellationTokenProvider;
-  private readonly ICurrentProjectProvider _CurrentProjectProvider;
-  private readonly IComparer<ProjectInfo> _ProjectInfoComparer;
+  private readonly ProjectListLogic _Logic;
   private readonly ICommand _PageCommand;
-  private readonly IProjectList _ProjectList;
-  private readonly IGedcomImporter _Importer;
   private readonly ObservableCollection<ProjectItem> _Projects = new();
 
   public ProjectListPage(IServiceProvider services)
   {
-    _CancellationTokenProvider = services.GetRequiredService<ICancellationTokenProvider>();
-    _CurrentProjectProvider = services.GetRequiredService<ICurrentProjectProvider>();
-    _ProjectInfoComparer = services.GetRequiredService<IComparer<ProjectInfo>>();
+    _Logic = services.GetRequiredService<ProjectListLogic>();
     _PageCommand = new SafeCommand(OnPageCommand);
-    _ProjectList = services.GetRequiredService<IProjectList>();
-    _Importer = services.GetRequiredService<IGedcomImporter>();
 
     InitializeComponent();
   }
@@ -56,8 +45,7 @@ public partial class ProjectListPage : ContentPage
       {
         case ProjectItem projectItem:
           {
-            using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-            await _CurrentProjectProvider.OpenAsync(projectItem.Info, token);
+            await _Logic.OpenAsync(projectItem.Info);
             await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectPage>());
 
             // TODO not so good approach
@@ -84,25 +72,18 @@ public partial class ProjectListPage : ContentPage
     base.OnNavigatedTo(args);
     _ = SafeTask.Run(async () =>
     {
-      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-      await _CurrentProjectProvider.CloseAsync(token);
-      await SafeTask.RunOnMainThread(UpdateProjectList);
+      await _Logic.CloseCurrentAsync();
+      var projects = await _Logic.GetProjectsAsync();
+      await SafeTask.RunOnMainThread(() => ReloadProjects(projects));
     });
   }
 
-  private void UpdateProjectList()
+  private void ReloadProjects(ProjectInfo[] projects)
   {
-    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-    var projects = _ProjectList
-      .GetItemsAsync(token)
-      .Result
-      .Select(projectInfo => new ProjectItem(projectInfo))
-      .OrderBy(item => item.Info, _ProjectInfoComparer);
-
     _Projects.Clear();
     foreach (var project in projects)
     {
-      _Projects.Add(project);
+      _Projects.Add(new ProjectItem(project));
     }
   }
 
@@ -112,7 +93,6 @@ public partial class ProjectListPage : ContentPage
     {
       case string commandName when commandName == "Create":
         await OnCreateProject();
-        UpdateProjectList();
         break;
       case string commandName when commandName == "ImportGedcom":
         await OnImportGedcom();
@@ -137,8 +117,9 @@ public partial class ProjectListPage : ContentPage
     if (projectInfo.Name == string.Empty)
       return;
 
-    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-    await using var project = await _ProjectList.CreateAsync(projectInfo.Name, projectInfo.Description, token);
+    await _Logic.CreateProjectAsync(projectInfo.Name, projectInfo.Description);
+    var projects = await _Logic.GetProjectsAsync();
+    ReloadProjects(projects);
   }
 
   // Imports a GEDCOM file into a fresh project. The importer can merge into a populated document, but from
@@ -155,17 +136,19 @@ public partial class ProjectListPage : ContentPage
 
     var name = Path.GetFileNameWithoutExtension(file.FileName);
     var description = UIStrings.HintImportedFromGedcom;
+    var mediaBasePath = string.IsNullOrEmpty(file.FullPath) ? null : Path.GetDirectoryName(file.FullPath);
 
     var dialog = new GedcomImportDialog(name);
     await Navigation.PushModalAsync(dialog);
     ProjectInfo? info = null;
     try
     {
-      info = await Task.Run(() => RunImportAsync(file, name, description, dialog.Token));
+      using var stream = await file.OpenReadAsync();
+      info = await Task.Run(() => _Logic.ImportAsync(stream, name, description, mediaBasePath, dialog.Token));
     }
     catch (OperationCanceledException)
     {
-      // The user cancelled; RunImportAsync has already deleted the half-built project. Stay on the list.
+      // The user cancelled; ImportAsync has already deleted the half-built project. Stay on the list.
     }
     finally
     {
@@ -175,35 +158,7 @@ public partial class ProjectListPage : ContentPage
     if (info is null)
       return;
 
-    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-    await _CurrentProjectProvider.OpenAsync(info, token);
+    await _Logic.OpenAsync(info);
     await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectPage>());
-  }
-
-  // Runs the whole document operation as one continuous async flow on a background thread, under the
-  // dialog's cancellation token rather than a short-lived DB token. Any failure — a user cancellation or a
-  // malformed file — deletes the freshly created project shell and rethrows, so nothing is left behind; the
-  // caller turns cancellation into a quiet no-op and lets real errors surface through SafeCommand.
-  private async Task<ProjectInfo> RunImportAsync(FileResult file, string name, string description, CancellationToken token)
-  {
-    var host = await _ProjectList.CreateAsync(name, description, token);
-    try
-    {
-      using var stream = await file.OpenReadAsync();
-      using var reader = new StreamReader(stream, Encoding.UTF8);
-      var mediaBasePath = string.IsNullOrEmpty(file.FullPath) ? null : Path.GetDirectoryName(file.FullPath);
-      await _Importer.ImportAsync(host.Project!, reader, token, mediaBasePath);
-
-      var revision = await host.Project!.Metadata.GetProjectRevisionAsync(token) ?? string.Empty;
-      await host.DisposeAsync();
-      return new ProjectInfo(Revision: revision, Description: description, Name: name, Origin: host.Origin);
-    }
-    catch
-    {
-      await host.DisposeAsync();
-      using var cleanupToken = _CancellationTokenProvider.CreateDbCancellationToken();
-      await _ProjectList.RemoveAsync(host.Origin, cleanupToken);
-      throw;
-    }
   }
 }
