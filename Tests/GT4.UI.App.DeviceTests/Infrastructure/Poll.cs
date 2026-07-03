@@ -9,7 +9,8 @@ namespace GT4.UI.DeviceTests;
 /// </summary>
 internal static class Poll
 {
-  public static async Task<T> UntilAsync<T>(Func<Task<T>> probe, Func<T, bool> isReady, TimeSpan? timeout = null)
+  public static async Task<T> UntilAsync<T>(
+    Func<Task<T>> probe, Func<T, bool> isReady, TimeSpan? timeout = null, string? timeoutMessage = null)
   {
     var deadline = DateTime.UtcNow + (timeout ?? TimeSpan.FromSeconds(5));
 
@@ -23,7 +24,7 @@ internal static class Poll
 
       if (DateTime.UtcNow >= deadline)
       {
-        throw new TimeoutException("Condition was not met before the timeout.");
+        throw new TimeoutException(timeoutMessage ?? "Condition was not met before the timeout.");
       }
 
       await Task.Delay(20);

@@ -168,15 +168,15 @@ public class NamesPageTests
     var services = new TestServices();
     var page = await CreatePageAsync(services);
     await page.ReloadNamesAsync(() => page.InvokeRequestUpdateNames());
-    var callsBefore = services.Names.Invocations.Count;
+    var loadsBefore = page.CompletedLoads;
     var name = N(5, "Pushkin", NameType.FamilyName);
 
     await page.InvokeDeleteAsync(name);
-    await page.ReloadNamesAsync();
+    // A load completing after the snapshot is the delete's own RequestUpdateNames landing.
+    await Poll.UntilAsync(() => Task.FromResult(page.CompletedLoads), loads => loads > loadsBefore);
 
     services.Names.Verify(n => n.RemoveNameWithSubnamesAsync(name, It.IsAny<CancellationToken>()), Times.Once());
     services.PersonManager.Verify(p => p.GetPersonInfosByNameAsync(It.IsAny<Name>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never());
-    Assert.True(services.Names.Invocations.Count > callsBefore);
   }
 
   [Fact]

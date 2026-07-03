@@ -1,6 +1,6 @@
 using GT4.Core.Project.Dto;
 using GT4.UI.Pages;
-using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace GT4.UI.DeviceTests;
 
@@ -11,6 +11,8 @@ namespace GT4.UI.DeviceTests;
 /// </summary>
 internal sealed class TestableNamesPage(IServiceProvider services) : NamesPage(services)
 {
+  private int _CompletedLoads;
+
   public Task InvokeDeleteAsync(object parameter) => OnDeleteCommandAsync(parameter);
 
   public Task InvokeAddNameAsync() => OnAddName();
@@ -20,43 +22,46 @@ internal sealed class TestableNamesPage(IServiceProvider services) : NamesPage(s
   public void InvokeRequestUpdateNames(Name? selected = null) => RequestUpdateNames(selected);
 
   /// <summary>
-  /// Runs <paramref name="interact"/> on the UI thread, triggers a Names reload, and waits for the
-  /// reload to complete (signalled by the page's own PropertyChanged(CurrentName) at the end of its
-  /// background-load pipeline), then returns the reloaded items.
+  /// How many background Names loads have finished — each one ends with the page's own
+  /// OnPropertyChanged(CurrentName) on the UI thread. A level-triggered counter, unlike a
+  /// PropertyChanged subscription, can't miss a completion that lands before the caller starts
+  /// waiting (see Poll's doc for the race).
   /// </summary>
-  public async Task<Name[]> ReloadNamesAsync(Action? interact = null, TimeSpan? timeout = null)
+  public int CompletedLoads => _CompletedLoads;
+
+  protected override void OnPropertyChanged([CallerMemberName] string? propertyName = null)
   {
-    var loadCompleted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    base.OnPropertyChanged(propertyName);
 
-    void OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    if (propertyName == nameof(CurrentName))
     {
-      if (e.PropertyName == nameof(NamesPage.CurrentName))
-      {
-        loadCompleted.TrySetResult();
-      }
-    }
-
-    PropertyChanged += OnPropertyChanged;
-    try
-    {
-      await MainThread.InvokeOnMainThreadAsync(() =>
-      {
-        interact?.Invoke();
-        _ = Names;
-      });
-
-      var completed = await Task.WhenAny(loadCompleted.Task, Task.Delay(timeout ?? TimeSpan.FromSeconds(10)));
-      if (completed != loadCompleted.Task)
-      {
-        throw new TimeoutException("Names reload did not complete; check the TestServices mock setup.");
-      }
-
-      return await MainThread.InvokeOnMainThreadAsync(() => Names.ToArray());
-    }
-    finally
-    {
-      PropertyChanged -= OnPropertyChanged;
+      _CompletedLoads++;
     }
   }
 
+  /// <summary>
+  /// Runs <paramref name="interact"/> on the UI thread, triggers a Names reload, waits for a load
+  /// completion after that point (CompletedLoads is snapshotted on the UI thread right before
+  /// <paramref name="interact"/>, so an earlier completion can't satisfy the wait), then returns
+  /// the reloaded items.
+  /// </summary>
+  public async Task<Name[]> ReloadNamesAsync(Action interact, TimeSpan? timeout = null)
+  {
+    var loadsBefore = 0;
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      loadsBefore = _CompletedLoads;
+      interact();
+      _ = Names;
+    });
+
+    await Poll.UntilAsync(
+      () => Task.FromResult(_CompletedLoads),
+      loads => loads > loadsBefore,
+      timeout,
+      "Names reload did not complete; check the TestServices mock setup.");
+
+    return await MainThread.InvokeOnMainThreadAsync(() => Names.ToArray());
+  }
 }
