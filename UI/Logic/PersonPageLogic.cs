@@ -6,8 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace GT4.UI.Logic;
 
-// The data the person page needs from the project document to render one person: the person itself and the
-// flat, display-ordered list of relatives that seeds the relatives tree.
+// Roots is the flat, display-ordered list of relatives that seeds the relatives tree.
 public record PersonData(PersonFullInfo PersonFullInfo, RelativeInfo[] Roots);
 
 // The person page arranges its image, relatives and biography in a grid whose layout adapts to the
