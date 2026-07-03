@@ -16,6 +16,7 @@ internal sealed class TestServices
   public Mock<ITableNames> Names { get; } = new();
   public Mock<IPersonManager> PersonManager { get; } = new();
   public Mock<IFamilyManager> FamilyManager { get; } = new();
+  public Mock<IProjectTransaction> Transaction { get; } = new();
   public IServiceProvider Provider { get; }
 
   public TestServices()
@@ -23,6 +24,7 @@ internal sealed class TestServices
     Project.SetupGet(p => p.Names).Returns(Names.Object);
     Project.SetupGet(p => p.PersonManager).Returns(PersonManager.Object);
     Project.SetupGet(p => p.FamilyManager).Returns(FamilyManager.Object);
+    Project.Setup(p => p.BeginTransactionAsync(It.IsAny<CancellationToken>())).ReturnsAsync(Transaction.Object);
 
     CurrentProjectProvider.SetupGet(p => p.Project).Returns(Project.Object);
     CurrentProjectProvider.SetupGet(p => p.HasCurrentProject).Returns(true);

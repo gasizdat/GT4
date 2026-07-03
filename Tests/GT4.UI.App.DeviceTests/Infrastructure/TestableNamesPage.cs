@@ -13,6 +13,10 @@ internal sealed class TestableNamesPage(IServiceProvider services) : NamesPage(s
 {
   public Task InvokeDeleteAsync(object parameter) => OnDeleteCommandAsync(parameter);
 
+  public Task InvokeAddNameAsync() => OnAddName();
+
+  public Task InvokeEditAsync(Name name) => OnEditCommandAsync(name);
+
   public void InvokeRequestUpdateNames(Name? selected = null) => RequestUpdateNames(selected);
 
   /// <summary>

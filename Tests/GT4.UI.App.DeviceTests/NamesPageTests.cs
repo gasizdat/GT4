@@ -1,14 +1,15 @@
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.Dialogs;
 using Moq;
 using Xunit;
 
 namespace GT4.UI.DeviceTests;
 
 /// <summary>
-/// Covers NamesPage's dialog-free flows against a real MAUI runtime with a mocked Core.
-/// PageCommand("AddName") and EditNameCommand push a modal CreateOrUpdateNameDialog via Navigation,
-/// which a detached page cannot exercise; deferred until the page is hosted in a real Window.
+/// Covers NamesPage against a real MAUI runtime with a mocked Core. PageCommand("AddName") and
+/// EditNameCommand push a modal CreateOrUpdateNameDialog via Navigation; those flows are driven
+/// through WindowHost/ModalDialogHarness since a detached page can't resolve modal push/pop.
 /// </summary>
 public class NamesPageTests
 {
@@ -234,6 +235,196 @@ public class NamesPageTests
     var applicationException = Assert.IsType<ApplicationException>(ex);
     Assert.Contains("Pushkina", applicationException.Message);
     Assert.Contains("Natalia", applicationException.Message);
+  }
+
+  [Fact]
+  public async Task OnAddName_creates_a_family_name_and_selects_it()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services); // default CurrentNameType/CurrentBiologicalSex = FamilyName/Male
+    var addedFamilyName = N(10, "Ivanov", NameType.FamilyName);
+    services.FamilyManager
+      .Setup(f => f.AddFamilyAsync("Ivanov", "Ivan", "Ivanova", It.IsAny<CancellationToken>()))
+      .ReturnsAsync(addedFamilyName);
+    services.Names
+      .Setup(n => n.TryGetNameWithSubnamesByIdAsync(addedFamilyName.Id, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([addedFamilyName]);
+    services.Names
+      .Setup(n => n.GetNamesByTypeAsync(NameType.FamilyName, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([addedFamilyName]);
+
+    await using var window = await WindowHost.AttachAsync(page);
+    var addTask = await MainThreadTask.StartAsync(page.InvokeAddNameAsync);
+    var dialog = await ModalDialogHarness.WaitForModalAsync<CreateOrUpdateNameDialog>(page);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      dialog.GeneralName = "Ivanov";
+      dialog.MaleName = "Ivan";
+      dialog.FemaleName = "Ivanova";
+      dialog.OnCreateFamilyBtn(dialog, EventArgs.Empty);
+    });
+    await addTask;
+
+    services.FamilyManager.Verify(
+      f => f.AddFamilyAsync("Ivanov", "Ivan", "Ivanova", It.IsAny<CancellationToken>()),
+      Times.Once());
+
+    await page.ReloadNamesAsync();
+    var currentName = await MainThread.InvokeOnMainThreadAsync(() => page.CurrentName);
+    Assert.Equal(addedFamilyName.Id, currentName!.Id);
+  }
+
+  [Fact]
+  public async Task OnAddName_creates_a_male_first_name_and_selects_it()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+    var addedFirstName = N(11, "Ivan", NameType.FirstName | NameType.MaleDeclension);
+    services.Names
+      .Setup(n => n.AddFirstMaleNameAsync("Ivan", "Ivanovich", "Ivanovna", It.IsAny<CancellationToken>()))
+      .ReturnsAsync(addedFirstName);
+    services.Names
+      .Setup(n => n.GetNamesByTypeAsync(NameType.FirstName | NameType.MaleDeclension, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([addedFirstName]);
+
+    await using var window = await WindowHost.AttachAsync(page);
+    await MainThread.InvokeOnMainThreadAsync(() => page.CurrentNameType = page.NameTypes.Single(t => t.Type == NameType.FirstName));
+    var addTask = await MainThreadTask.StartAsync(page.InvokeAddNameAsync);
+    var dialog = await ModalDialogHarness.WaitForModalAsync<CreateOrUpdateNameDialog>(page);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      dialog.GeneralName = "Ivan";
+      dialog.MaleName = "Ivanovich";
+      dialog.FemaleName = "Ivanovna";
+      dialog.OnCreateFamilyBtn(dialog, EventArgs.Empty);
+    });
+    await addTask;
+
+    services.Names.Verify(
+      n => n.AddFirstMaleNameAsync("Ivan", "Ivanovich", "Ivanovna", It.IsAny<CancellationToken>()),
+      Times.Once());
+
+    await page.ReloadNamesAsync();
+    var currentName = await MainThread.InvokeOnMainThreadAsync(() => page.CurrentName);
+    Assert.Equal(addedFirstName.Id, currentName!.Id);
+  }
+
+  [Fact]
+  public async Task OnAddName_creates_a_female_first_name_and_selects_it()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+    var addedFirstName = N(12, "Anna", NameType.FirstName | NameType.FemaleDeclension);
+    services.Names
+      .Setup(n => n.AddFirstFemaleNameAsync("Anna", It.IsAny<CancellationToken>()))
+      .ReturnsAsync(addedFirstName);
+    services.Names
+      .Setup(n => n.GetNamesByTypeAsync(NameType.FirstName | NameType.FemaleDeclension, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([addedFirstName]);
+
+    await using var window = await WindowHost.AttachAsync(page);
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      page.CurrentNameType = page.NameTypes.Single(t => t.Type == NameType.FirstName);
+      page.CurrentBiologicalSex = page.BiologicalSexes.Single(s => s.Info == BiologicalSex.Female);
+    });
+    var addTask = await MainThreadTask.StartAsync(page.InvokeAddNameAsync);
+    var dialog = await ModalDialogHarness.WaitForModalAsync<CreateOrUpdateNameDialog>(page);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      dialog.GeneralName = "Anna";
+      dialog.OnCreateFamilyBtn(dialog, EventArgs.Empty);
+    });
+    await addTask;
+
+    services.Names.Verify(n => n.AddFirstFemaleNameAsync("Anna", It.IsAny<CancellationToken>()), Times.Once());
+
+    await page.ReloadNamesAsync();
+    var currentName = await MainThread.InvokeOnMainThreadAsync(() => page.CurrentName);
+    Assert.Equal(addedFirstName.Id, currentName!.Id);
+  }
+
+  [Fact]
+  public async Task OnAddName_does_not_call_a_manager_when_the_dialog_is_cancelled()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+
+    await using var window = await WindowHost.AttachAsync(page);
+    var addTask = await MainThreadTask.StartAsync(page.InvokeAddNameAsync);
+    var dialog = await ModalDialogHarness.WaitForModalAsync<CreateOrUpdateNameDialog>(page);
+
+    // No fields touched: dialog.NotReady stays true, so confirming completes the awaited Info with null.
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.OnCreateFamilyBtn(dialog, EventArgs.Empty));
+    await addTask;
+
+    services.FamilyManager.Verify(
+      f => f.AddFamilyAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+      Times.Never());
+  }
+
+  [Fact]
+  public async Task OnEditCommandAsync_updates_a_family_name_and_its_declensions()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+    var familyName = N(1, "Ivanov", NameType.FamilyName);
+    var maleName = N(2, "Ivanov", NameType.LastName | NameType.MaleDeclension);
+    var femaleName = N(3, "Ivanova", NameType.LastName | NameType.FemaleDeclension);
+    services.Names
+      .Setup(n => n.TryGetNameWithSubnamesByIdAsync(familyName.Id, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([familyName, maleName, femaleName]);
+
+    await using var window = await WindowHost.AttachAsync(page);
+    var editTask = await MainThreadTask.StartAsync(() => page.InvokeEditAsync(familyName));
+    var dialog = await ModalDialogHarness.WaitForModalAsync<CreateOrUpdateNameDialog>(page);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      dialog.GeneralName = "Petrov";
+      dialog.MaleName = "Petrov";
+      dialog.FemaleName = "Petrova";
+      dialog.OnCreateFamilyBtn(dialog, EventArgs.Empty);
+    });
+    await editTask;
+
+    var updatedFamilyName = familyName with { Value = "Petrov" };
+    var updatedMaleName = maleName with { Value = "Petrov" };
+    var updatedFemaleName = femaleName with { Value = "Petrova" };
+    services.Names.Verify(n => n.UpdateName(updatedFamilyName, It.IsAny<CancellationToken>()), Times.Once());
+    services.Names.Verify(n => n.UpdateName(updatedMaleName, It.IsAny<CancellationToken>()), Times.Once());
+    services.Names.Verify(n => n.UpdateName(updatedFemaleName, It.IsAny<CancellationToken>()), Times.Once());
+    services.Transaction.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Once());
+  }
+
+  [Fact]
+  public async Task OnEditCommandAsync_updates_an_orphan_declension_name_directly()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+    var orphanLastName = N(7, "Sidorov", NameType.LastName | NameType.MaleDeclension);
+
+    await using var window = await WindowHost.AttachAsync(page);
+    var editTask = await MainThreadTask.StartAsync(() => page.InvokeEditAsync(orphanLastName));
+    var dialog = await ModalDialogHarness.WaitForModalAsync<CreateOrUpdateNameDialog>(page);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      dialog.GeneralName = "Sidorov-Updated";
+      dialog.OnCreateFamilyBtn(dialog, EventArgs.Empty);
+    });
+    await editTask;
+
+    var updatedOrphanLastName = orphanLastName with { Value = "Sidorov-Updated" };
+    services.Names.Verify(
+      n => n.UpdateName(updatedOrphanLastName, It.IsAny<CancellationToken>()),
+      Times.Once());
+    services.Names.Verify(
+      n => n.TryGetNameWithSubnamesByIdAsync(It.IsAny<int?>(), It.IsAny<CancellationToken>()),
+      Times.Never());
   }
 
   [Fact]
