@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 namespace GT4.UI.Logic;
 
 // Per-page back/forward history of viewed persons. Owns the observable list the CollectionView binds to
-// plus the current index; all mutation goes through Append/Move/Select.
+// plus the current index; all mutation goes through Append/Move/MoveToPerson.
 public class PersonNavigation
 {
   private int _index = -1;
@@ -35,10 +35,10 @@ public class PersonNavigation
     return History[target];
   }
 
-  // Selects an existing entry (e.g. a CollectionView tap). Returns the person to load only when the
+  // Moves to an existing entry (e.g. a CollectionView tap). Returns the person to load only when the
   // selection actually moved, so a redundant reselect / echo is a no-op. Mirrors the current setter's
   // `index != current` guard exactly (including the never-hit not-found case).
-  public PersonInfo? Select(PersonInfo? person)
+  public PersonInfo? MoveToPerson(PersonInfo? person)
   {
     if (person is null)
       return null;

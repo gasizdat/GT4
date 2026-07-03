@@ -153,7 +153,7 @@ public partial class PersonPage : ContentPage
     get => _Navigation.Current;
     set
     {
-      var next = _Navigation.Select(value);
+      var next = _Navigation.MoveToPerson(value);
       if (next is not null)
       {
         OnPropertyChanged(nameof(CurrentPerson));

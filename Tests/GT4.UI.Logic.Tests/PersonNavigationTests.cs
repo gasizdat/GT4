@@ -75,31 +75,31 @@ public sealed class PersonNavigationTests
   }
 
   [Fact]
-  public void Select_moves_to_existing_entry()
+  public void MoveToPerson_moves_to_existing_entry()
   {
     var nav = new PersonNavigation();
     nav.Append(Info(1));
     nav.Append(Info(2));
     var first = nav.History[0];
 
-    var selected = nav.Select(first);
+    var selected = nav.MoveToPerson(first);
 
     selected.Should().BeSameAs(first);
     nav.Current!.Id.Should().Be(1);
   }
 
   [Fact]
-  public void Select_returns_null_when_already_current()
+  public void MoveToPerson_returns_null_when_already_current()
   {
     var nav = new PersonNavigation();
     nav.Append(Info(1));
 
-    nav.Select(nav.Current).Should().BeNull();
+    nav.MoveToPerson(nav.Current).Should().BeNull();
   }
 
   [Fact]
-  public void Select_returns_null_for_null()
+  public void MoveToPerson_returns_null_for_null()
   {
-    new PersonNavigation().Select(null).Should().BeNull();
+    new PersonNavigation().MoveToPerson(null).Should().BeNull();
   }
 }
