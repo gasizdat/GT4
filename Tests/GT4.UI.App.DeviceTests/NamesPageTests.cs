@@ -49,7 +49,7 @@ public class NamesPageTests
 
     // The page's own CollectionView binding already consumed the ctor's automatic first load
     // before this test could subscribe to its completion; force a fresh one to observe.
-    var names = await PageWaiter.ReloadNamesAsync(page, () => page.InvokeRequestUpdateNames());
+    var names = await page.ReloadNamesAsync(() => page.InvokeRequestUpdateNames());
 
     Assert.Equal(["Aksakov", "Pushkin", "Tolstoy"], names.Select(n => n.Value));
   }
@@ -80,7 +80,7 @@ public class NamesPageTests
     // Setting CurrentNameType to its already-current value is a no-op (guarded by record
     // equality), so only CurrentBiologicalSex's unconditional setter is relied on to trigger the
     // reload that this assertion observes.
-    await PageWaiter.ReloadNamesAsync(page, () =>
+    await page.ReloadNamesAsync(() =>
     {
       page.CurrentNameType = targetType;
       page.CurrentBiologicalSex = targetSex;
@@ -94,7 +94,7 @@ public class NamesPageTests
   {
     var services = new TestServices();
     var page = await CreatePageAsync(services);
-    await PageWaiter.ReloadNamesAsync(page, () => page.InvokeRequestUpdateNames());
+    await page.ReloadNamesAsync(() => page.InvokeRequestUpdateNames());
     var callsBefore = services.Names.Invocations.Count;
 
     await MainThread.InvokeOnMainThreadAsync(() => page.CurrentNameType = page.CurrentNameType);
@@ -107,10 +107,10 @@ public class NamesPageTests
   {
     var services = new TestServices();
     var page = await CreatePageAsync(services);
-    await PageWaiter.ReloadNamesAsync(page, () => page.InvokeRequestUpdateNames());
+    await page.ReloadNamesAsync(() => page.InvokeRequestUpdateNames());
     var callsBefore = services.Names.Invocations.Count;
 
-    await PageWaiter.ReloadNamesAsync(page, () => page.CurrentBiologicalSex = page.CurrentBiologicalSex);
+    await page.ReloadNamesAsync(() => page.CurrentBiologicalSex = page.CurrentBiologicalSex);
 
     Assert.True(services.Names.Invocations.Count > callsBefore);
   }
@@ -124,7 +124,7 @@ public class NamesPageTests
       .Setup(n => n.GetNamesByTypeAsync(It.IsAny<NameType>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(loaded);
     var page = await CreatePageAsync(services);
-    await PageWaiter.ReloadNamesAsync(page, () => page.InvokeRequestUpdateNames());
+    await page.ReloadNamesAsync(() => page.InvokeRequestUpdateNames());
     var callsBefore = services.Names.Invocations.Count;
 
     await MainThread.InvokeOnMainThreadAsync(() => page.NameFilter = "ANN");
@@ -150,7 +150,7 @@ public class NamesPageTests
       .ReturnsAsync([target, other]);
     var page = await CreatePageAsync(services);
 
-    await PageWaiter.ReloadNamesAsync(page, () => page.InvokeRequestUpdateNames(target));
+    await page.ReloadNamesAsync(() => page.InvokeRequestUpdateNames(target));
     var currentName = await MainThread.InvokeOnMainThreadAsync(() => page.CurrentName);
 
     Assert.Equal(target.Id, currentName!.Id);
@@ -166,12 +166,12 @@ public class NamesPageTests
   {
     var services = new TestServices();
     var page = await CreatePageAsync(services);
-    await PageWaiter.ReloadNamesAsync(page, () => page.InvokeRequestUpdateNames());
+    await page.ReloadNamesAsync(() => page.InvokeRequestUpdateNames());
     var callsBefore = services.Names.Invocations.Count;
     var name = N(5, "Pushkin", NameType.FamilyName);
 
     await page.InvokeDeleteAsync(name);
-    await PageWaiter.ReloadNamesAsync(page);
+    await page.ReloadNamesAsync();
 
     services.Names.Verify(n => n.RemoveNameWithSubnamesAsync(name, It.IsAny<CancellationToken>()), Times.Once());
     services.PersonManager.Verify(p => p.GetPersonInfosByNameAsync(It.IsAny<Name>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never());

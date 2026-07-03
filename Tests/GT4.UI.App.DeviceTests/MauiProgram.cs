@@ -1,11 +1,14 @@
 using DeviceRunners.UITesting;
 using DeviceRunners.VisualRunners;
-using GT4.UI;
 
 namespace GT4.UI.DeviceTests;
 
 public static class MauiProgram
 {
+#if WINDOWS
+  [System.Runtime.InteropServices.DllImport("user32.dll")]
+  private static extern int MessageBox(IntPtr hWnd, string text, string caption, uint type);
+#endif
   public static MauiApp CreateMauiApp()
   {
 #if DEBUG
@@ -15,7 +18,13 @@ public static class MauiProgram
     // WinUI's native message pump and surface only as an opaque access-violation-style crash with
     // no readable text, so exit directly instead: Environment.Exit terminates before any MAUI
     // infrastructure starts, and Console.Error is flushed synchronously first.
-    Console.Error.WriteLine("GT4.UI.App.DeviceTests does not support Debug configuration. Build and run with -c Release instead.");
+
+    const string ErrorMessage = "GT4.UI.App.DeviceTests does not support Debug configuration. Build and run with -c Release instead.";
+    Console.Error.WriteLine(ErrorMessage);
+    Console.Error.Flush();
+#if WINDOWS
+    MessageBox(IntPtr.Zero, ErrorMessage, "Error", 0x10); // 0x10 = MB_ICONERROR
+#endif
     Environment.Exit(1);
 #endif
 
