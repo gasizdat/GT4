@@ -270,8 +270,9 @@ public class NamesPageTests
       f => f.AddFamilyAsync("Ivanov", "Ivan", "Ivanova", It.IsAny<CancellationToken>()),
       Times.Once());
 
-    await page.ReloadNamesAsync();
-    var currentName = await MainThread.InvokeOnMainThreadAsync(() => page.CurrentName);
+    var currentName = await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => page.CurrentName),
+      name => name?.Id == addedFamilyName.Id);
     Assert.Equal(addedFamilyName.Id, currentName!.Id);
   }
 
@@ -306,8 +307,9 @@ public class NamesPageTests
       n => n.AddFirstMaleNameAsync("Ivan", "Ivanovich", "Ivanovna", It.IsAny<CancellationToken>()),
       Times.Once());
 
-    await page.ReloadNamesAsync();
-    var currentName = await MainThread.InvokeOnMainThreadAsync(() => page.CurrentName);
+    var currentName = await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => page.CurrentName),
+      name => name?.Id == addedFirstName.Id);
     Assert.Equal(addedFirstName.Id, currentName!.Id);
   }
 
@@ -342,8 +344,9 @@ public class NamesPageTests
 
     services.Names.Verify(n => n.AddFirstFemaleNameAsync("Anna", It.IsAny<CancellationToken>()), Times.Once());
 
-    await page.ReloadNamesAsync();
-    var currentName = await MainThread.InvokeOnMainThreadAsync(() => page.CurrentName);
+    var currentName = await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => page.CurrentName),
+      name => name?.Id == addedFirstName.Id);
     Assert.Equal(addedFirstName.Id, currentName!.Id);
   }
 
