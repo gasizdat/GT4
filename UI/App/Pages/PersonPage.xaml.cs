@@ -8,7 +8,6 @@ using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
 using System.Collections;
-using System.Collections.ObjectModel;
 using System.Windows.Input;
 
 namespace GT4.UI.Pages;
@@ -24,8 +23,7 @@ public partial class PersonPage : ContentPage
   private readonly PersonPageLogic _Logic;
   private readonly ICommand _PageCommand;
   private readonly RelativeTree _Relatives;
-  private ObservableCollection<PersonInfo> _NavigationHistory = new();
-  private int _NavigationIndex = -1;
+  private readonly PersonNavigation _Navigation = new();
   private PersonFullInfo _PersonFullInfo = PersonFullInfo.Empty;
   private byte[][] _Photos = [];
   private string _Biography = string.Empty;
@@ -148,24 +146,18 @@ public partial class PersonPage : ContentPage
 
   public string GoToFamilyName => string.Format(UIStrings.MenuItemGotoFamily_1, FamilyName?.Value ?? string.Empty);
 
-  public ICollection NavigationHistory => _NavigationHistory;
+  public ICollection NavigationHistory => _Navigation.History;
 
   public PersonInfo? CurrentPerson
   {
-    get => _NavigationIndex >= 0 ? _NavigationHistory[_NavigationIndex] : null;
+    get => _Navigation.Current;
     set
     {
-      if (value is null)
+      var next = _Navigation.Select(value);
+      if (next is not null)
       {
-        return;
-      }
-
-      var index = _NavigationHistory.IndexOf(value);
-      if (index != _NavigationIndex)
-      {
-        _NavigationIndex = index;
         OnPropertyChanged(nameof(CurrentPerson));
-        ShowPersonInfo(value, false);
+        ShowPersonInfo(next, false);
       }
     }
   }
@@ -240,20 +232,9 @@ public partial class PersonPage : ContentPage
 
     if (addToNavigation)
     {
-      AddToNavigation(_PersonFullInfo);
+      _Navigation.Append(_PersonFullInfo);
+      OnPropertyChanged(nameof(CurrentPerson)); // drives CollectionView highlight + ScrollToSelected
     }
-  }
-
-  private void AddToNavigation(PersonInfo personInfo)
-  {
-    var newIndex = _NavigationIndex + 1;
-    while (newIndex < _NavigationHistory.Count)
-    {
-      _NavigationHistory.RemoveAt(newIndex);
-    }
-    var personInfoCopy = new PersonInfo(personInfo, names: personInfo.Names, mainPhoto: personInfo.MainPhoto);
-    _NavigationHistory.Add(personInfoCopy);
-    CurrentPerson = personInfoCopy;
   }
 
   private async Task OnPageCommand(object obj)
@@ -300,10 +281,11 @@ public partial class PersonPage : ContentPage
 
   private void OnNextPerson(int dIndex)
   {
-    var person = _NavigationHistory.ElementAtOrDefault(_NavigationIndex + dIndex);
+    var person = _Navigation.Move(dIndex);
     if (person is not null)
     {
-      CurrentPerson = person;
+      OnPropertyChanged(nameof(CurrentPerson));
+      ShowPersonInfo(person, false);
     }
   }
 
