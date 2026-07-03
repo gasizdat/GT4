@@ -24,12 +24,12 @@ public class PersonNavigation
     _index = History.Count - 1;
   }
 
-  // Steps the index by delta (-1/+1 = previous/next) when a person exists there, returning the person to
-  // load; returns null at the ends.
+  // Steps the index by delta (-1/+1 = previous/next) when a different person exists there, returning the
+  // person to load; returns null at the ends and when delta leaves the index where it is.
   public PersonInfo? Move(int delta)
   {
     var target = _index + delta;
-    if (target < 0 || target >= History.Count)
+    if (target < 0 || target >= History.Count || target == _index)
       return null;
     _index = target;
     return History[target];

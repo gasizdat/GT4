@@ -62,6 +62,17 @@ public sealed class PersonNavigationTests
   }
 
   [Fact]
+  public void Move_returns_null_when_delta_does_not_move()
+  {
+    var nav = new PersonNavigation();
+    nav.Append(Info(1));
+    nav.Append(Info(2));
+
+    nav.Move(0).Should().BeNull();
+    nav.Current!.Id.Should().Be(2);
+  }
+
+  [Fact]
   public void Move_steps_backward_and_forward()
   {
     var nav = new PersonNavigation();
