@@ -121,6 +121,22 @@ public class PersonPageLogic
     return $"{bio}\n\n{gedcomDetails}";
   }
 
+  // The stored photo contents in display order: main photo first, then the additional photos. A person with
+  // no main photo has no stored photos (the page substitutes a default stub) and must carry no additional
+  // photos either — that inconsistency is a corrupt record, so it throws.
+  public static byte[][]? GetStoredPhotoContents(PersonFullInfo personFullInfo)
+  {
+    if (personFullInfo.MainPhoto is null)
+    {
+      if (personFullInfo.AdditionalPhotos.Length != 0)
+        throw new ApplicationException("Person photos inconsistency");
+      return null;
+    }
+
+    var additional = personFullInfo.AdditionalPhotos.Select(photo => photo.Content);
+    return [personFullInfo.MainPhoto.Content, .. additional];
+  }
+
   // Portrait (or a narrow landscape window) stacks the three blocks in one column; a wide-enough landscape
   // puts the image and relatives side by side with the biography spanning underneath. Width is measured in
   // device-independent units, so it is scaled by the display density before the 900px threshold check.

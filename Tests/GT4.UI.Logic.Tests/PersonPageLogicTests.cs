@@ -44,6 +44,12 @@ public sealed class PersonPageLogicTests
     new(Id: id, BirthDate: Date.Now, DeathDate: null, BiologicalSex: BiologicalSex.Male, Names: [],
         MainPhoto: null, AdditionalPhotos: [], RelativeInfos: relativeInfos, Biography: null, GedcomData: null);
 
+  private static Data Photo(byte tag) => new(Id: tag, Content: [tag], MimeType: null, Category: DataCategory.PersonPhoto);
+
+  private static PersonFullInfo WithPhotos(Data? main, params Data[] additional) =>
+    new(Id: 10, BirthDate: Date.Now, DeathDate: null, BiologicalSex: BiologicalSex.Male, Names: [],
+        MainPhoto: main, AdditionalPhotos: additional, RelativeInfos: [], Biography: null, GedcomData: null);
+
   [Fact]
   public async Task GetPersonDataAsync_assembles_roots_in_display_order()
   {
@@ -113,6 +119,40 @@ public sealed class PersonPageLogicTests
     var combined = await CreateLogic().CombineBiographyAsync(fullInfo);
 
     combined.Should().Be(expected);
+  }
+
+  [Fact]
+  public void GetStoredPhotoContents_returns_null_when_no_main_photo()
+  {
+    PersonPageLogic.GetStoredPhotoContents(WithPhotos(main: null)).Should().BeNull();
+  }
+
+  [Fact]
+  public void GetStoredPhotoContents_throws_when_no_main_but_additional_present()
+  {
+    var info = WithPhotos(main: null, Photo(1));
+
+    var act = () => PersonPageLogic.GetStoredPhotoContents(info);
+
+    act.Should().Throw<ApplicationException>();
+  }
+
+  [Fact]
+  public void GetStoredPhotoContents_returns_main_only_when_no_additional()
+  {
+    var contents = PersonPageLogic.GetStoredPhotoContents(WithPhotos(Photo(10)));
+
+    contents!.Select(c => (int)c[0]).Should().Equal(10);
+  }
+
+  [Fact]
+  public void GetStoredPhotoContents_orders_main_photo_before_additional()
+  {
+    var info = WithPhotos(Photo(10), Photo(20), Photo(30));
+
+    var contents = PersonPageLogic.GetStoredPhotoContents(info);
+
+    contents!.Select(c => (int)c[0]).Should().Equal(10, 20, 30);
   }
 
   [Fact]

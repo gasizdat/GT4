@@ -203,21 +203,16 @@ public partial class PersonPage : ContentPage
   // main photo leads, followed by any additional photos.
   private async Task<byte[][]> ResolvePhotosAsync(PersonFullInfo personFullInfo)
   {
-    if (personFullInfo.MainPhoto is null)
+    var stored = PersonPageLogic.GetStoredPhotoContents(personFullInfo);
+    if (stored is not null)
     {
-      if (personFullInfo.AdditionalPhotos.Length != 0)
-      {
-        throw new ApplicationException("Person photos inconsistency");
-      }
-
-      using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
-      var resourceName = GetDefaultImageResourceName(personFullInfo.BiologicalSex);
-      var defaultPhoto = await ImageUtils.ToBytesAsync(resourceName, token) ?? [];
-      return [defaultPhoto];
+      return stored;
     }
 
-    var additional = personFullInfo.AdditionalPhotos.Select(photo => photo.Content);
-    return [personFullInfo.MainPhoto.Content, .. additional];
+    using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
+    var resourceName = GetDefaultImageResourceName(personFullInfo.BiologicalSex);
+    var defaultPhoto = await ImageUtils.ToBytesAsync(resourceName, token) ?? [];
+    return [defaultPhoto];
   }
 
   public void UpdateUI(PersonData data, byte[][] photos, string biography, bool addToNavigation)
