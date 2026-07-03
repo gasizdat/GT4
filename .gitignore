@@ -9,3 +9,4 @@ obj
 *.lnk
 /buildnumber.txt
 /Core/Gedcom/unsupported-tags.md
+/Tests/GT4.UI.App.DeviceTests/test-results/
