@@ -34,6 +34,20 @@ jobs:
         if: always()
         run: dotnet test Tests\GT4.UI.View.Tests\GT4.UI.View.Tests.csproj --no-build --configuration Release --logger "trx;LogFileName=ui-view.trx" --collect "XPlat Code Coverage" --results-directory coverage
 
+      # Debug is unsupported for this project (see the note in its .csproj); must build/run Release.
+      # -p:SolutionDir is required because the referenced AppWinOnly.csproj increments buildnumber.txt
+      # relative to it. No code coverage: the tests execute inside a separately-launched .exe that
+      # DeviceRunners spawns and talks to over TCP, so coverlet's in-process collector never sees it.
+      - name: Build GT4.UI.App.DeviceTests
+        if: always()
+        run: dotnet build Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj --configuration Release --framework net10.0-windows10.0.19041.0 -p:SolutionDir="$($PWD.Path)\"
+
+      - name: Test GT4.UI.App.DeviceTests
+        if: always()
+        # --no-build still touches AppCommon.props' buildnumber-increment target (via the
+        # referenced AppWinOnly.csproj), so SolutionDir is needed here too, not just at build time.
+        run: dotnet test Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj --no-build --configuration Release --framework net10.0-windows10.0.19041.0 -p:SolutionDir="$($PWD.Path)\" --logger "trx;LogFileName=device-tests.trx" --results-directory coverage
+
       - name: Generate coverage report
         if: always()
         run: |
