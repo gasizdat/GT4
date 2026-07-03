@@ -18,8 +18,8 @@ public record GridLayout(int Column, int ColumnSpan, int Row, int RowSpan);
 
 public class PersonPageLogic
 {
-  private readonly ICurrentProjectProvider _currentProjectProvider;
-  private readonly ICancellationTokenProvider _cancellationTokenProvider;
+  private readonly ICurrentProjectProvider _CurrentProjectProvider;
+  private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly IDataConverter _TextConverter;
   private readonly IDataConverter _GedcomConverter;
 
@@ -31,16 +31,16 @@ public class PersonPageLogic
     [FromKeyedServices(DataCategory.PersonGedcomTags)]
     IDataConverter gedcomConverter)
   {
-    _currentProjectProvider = currentProjectProvider;
-    _cancellationTokenProvider = cancellationTokenProvider;
+    _CurrentProjectProvider = currentProjectProvider;
+    _CancellationTokenProvider = cancellationTokenProvider;
     _TextConverter = dataConverter;
     _GedcomConverter = gedcomConverter;
   }
 
   public async Task<PersonData> GetPersonDataAsync(Person person)
   {
-    using var token = _cancellationTokenProvider.CreateDbCancellationToken();
-    var project = _currentProjectProvider.Project;
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    var project = _CurrentProjectProvider.Project;
     var personFullInfo = await project.PersonManager.GetPersonFullInfoAsync(person, token);
 
     var relativesProvider = project.RelativesProvider;
@@ -90,19 +90,19 @@ public class PersonPageLogic
 
   public async Task RemovePersonAsync(Person person)
   {
-    using var token = _cancellationTokenProvider.CreateDbCancellationToken();
-    await _currentProjectProvider.Project.Persons.RemovePersonAsync(person, token);
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    await _CurrentProjectProvider.Project.Persons.RemovePersonAsync(person, token);
   }
 
   public async Task UpdatePersonAsync(PersonFullInfo personFullInfo)
   {
-    using var token = _cancellationTokenProvider.CreateDbCancellationToken();
-    await _currentProjectProvider.Project.PersonManager.UpdatePersonAsync(personFullInfo, token);
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    await _CurrentProjectProvider.Project.PersonManager.UpdatePersonAsync(personFullInfo, token);
   }
 
   public async Task<string> CombineBiographyAsync(PersonFullInfo personFullInfo)
   {
-    using var token = _cancellationTokenProvider.CreateDbCancellationToken();
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
     var bioTask = _TextConverter.ToObjectAsync(personFullInfo.Biography, token);
     var gedcomTask = _GedcomConverter.ToObjectAsync(personFullInfo.GedcomData, token);
     await Task.WhenAll(bioTask, gedcomTask);

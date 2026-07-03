@@ -8,11 +8,11 @@ namespace GT4.UI.Logic;
 
 public class ProjectListLogic
 {
-  private readonly IProjectList _projectList;
-  private readonly ICurrentProjectProvider _currentProjectProvider;
-  private readonly IComparer<ProjectInfo> _projectInfoComparer;
-  private readonly IGedcomImporter _importer;
-  private readonly ICancellationTokenProvider _cancellationTokenProvider;
+  private readonly IProjectList _ProjectList;
+  private readonly ICurrentProjectProvider _CurrentProjectProvider;
+  private readonly IComparer<ProjectInfo> _ProjectInfoComparer;
+  private readonly IGedcomImporter _Importer;
+  private readonly ICancellationTokenProvider _CancellationTokenProvider;
 
   public ProjectListLogic(
     IProjectList projectList,
@@ -21,45 +21,45 @@ public class ProjectListLogic
     IGedcomImporter importer,
     ICancellationTokenProvider cancellationTokenProvider)
   {
-    _projectList = projectList;
-    _currentProjectProvider = currentProjectProvider;
-    _projectInfoComparer = projectInfoComparer;
-    _importer = importer;
-    _cancellationTokenProvider = cancellationTokenProvider;
+    _ProjectList = projectList;
+    _CurrentProjectProvider = currentProjectProvider;
+    _ProjectInfoComparer = projectInfoComparer;
+    _Importer = importer;
+    _CancellationTokenProvider = cancellationTokenProvider;
   }
 
   public async Task<ProjectInfo[]> GetProjectsAsync()
   {
-    using var token = _cancellationTokenProvider.CreateDbCancellationToken();
-    var projects = await _projectList.GetItemsAsync(token);
-    return [.. projects.OrderBy(p => p, _projectInfoComparer)];
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    var projects = await _ProjectList.GetItemsAsync(token);
+    return [.. projects.OrderBy(p => p, _ProjectInfoComparer)];
   }
 
   public async Task CreateProjectAsync(string name, string description)
   {
-    using var token = _cancellationTokenProvider.CreateDbCancellationToken();
-    await using var _ = await _projectList.CreateAsync(name, description, token);
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    await using var _ = await _ProjectList.CreateAsync(name, description, token);
   }
 
   public async Task CloseCurrentAsync()
   {
-    using var token = _cancellationTokenProvider.CreateDbCancellationToken();
-    await _currentProjectProvider.CloseAsync(token);
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    await _CurrentProjectProvider.CloseAsync(token);
   }
 
   public async Task OpenAsync(ProjectInfo info)
   {
-    using var token = _cancellationTokenProvider.CreateDbCancellationToken();
-    await _currentProjectProvider.OpenAsync(info, token);
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    await _CurrentProjectProvider.OpenAsync(info, token);
   }
 
   public async Task<ProjectInfo> ImportAsync(Stream content, string name, string description, string? mediaBasePath, CancellationToken token)
   {
-    var host = await _projectList.CreateAsync(name, description, token);
+    var host = await _ProjectList.CreateAsync(name, description, token);
     try
     {
       using var reader = new StreamReader(content, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 4096, leaveOpen: true);
-      await _importer.ImportAsync(host.Project!, reader, token, mediaBasePath);
+      await _Importer.ImportAsync(host.Project!, reader, token, mediaBasePath);
 
       var revision = await host.Project!.Metadata.GetProjectRevisionAsync(token) ?? string.Empty;
       await host.DisposeAsync();
@@ -68,8 +68,8 @@ public class ProjectListLogic
     catch
     {
       await host.DisposeAsync();
-      using var cleanupToken = _cancellationTokenProvider.CreateDbCancellationToken();
-      await _projectList.RemoveAsync(host.Origin, cleanupToken);
+      using var cleanupToken = _CancellationTokenProvider.CreateDbCancellationToken();
+      await _ProjectList.RemoveAsync(host.Origin, cleanupToken);
       throw;
     }
   }

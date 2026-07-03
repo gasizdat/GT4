@@ -7,31 +7,31 @@ namespace GT4.UI.Logic;
 // plus the current index; all mutation goes through Append/Move/MoveToPerson.
 public class PersonNavigation
 {
-  private int _index = -1;
+  private int _Index = -1;
 
   public ObservableCollection<PersonInfo> History { get; } = new();
 
-  public PersonInfo? Current => _index >= 0 ? History[_index] : null;
+  public PersonInfo? Current => _Index >= 0 ? History[_Index] : null;
 
   // Records a freshly-loaded person as the new head of history: drops any forward entries, appends a plain
   // PersonInfo copy (normalising a PersonFullInfo down so the CollectionView's value-equality selection
   // matches an item), and advances the index. The person is already loaded, so this requests no load.
   public void Append(PersonInfo person)
   {
-    while (History.Count > _index + 1)
+    while (History.Count > _Index + 1)
       History.RemoveAt(History.Count - 1);
     History.Add(new PersonInfo(person, person.Names, person.MainPhoto));
-    _index = History.Count - 1;
+    _Index = History.Count - 1;
   }
 
   // Steps the index by delta (-1/+1 = previous/next) when a different person exists there, returning the
   // person to load; returns null at the ends and when delta leaves the index where it is.
   public PersonInfo? Move(int delta)
   {
-    var target = _index + delta;
-    if (target < 0 || target >= History.Count || target == _index)
+    var target = _Index + delta;
+    if (target < 0 || target >= History.Count || target == _Index)
       return null;
-    _index = target;
+    _Index = target;
     return History[target];
   }
 
@@ -43,9 +43,9 @@ public class PersonNavigation
     if (person is null)
       return null;
     var index = History.IndexOf(person);
-    if (index == _index)
+    if (index == _Index)
       return null;
-    _index = index;
+    _Index = index;
     return person;
   }
 }
