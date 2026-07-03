@@ -1,5 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <!-- Must be run with -c Release (e.g. `dotnet test ... -c Release`): in Debug, MAUI's XAML
+       runtime type resolution (kept live for Hot Reload) assumes a page's unqualified
+       clr-namespace elements resolve against its own entry assembly. That holds for the real App
+       (self-hosted), but not here, where AppWinOnly.dll is hosted from this test host's own entry
+       assembly, so lookups like <components:PageLayout> fail with "Type not found". Release runs
+       full XamlC precompilation, which resolves types at build time and never falls back to that
+       runtime path. -->
+
   <PropertyGroup>
     <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">net10.0-windows10.0.19041.0</TargetFrameworks>
     <OutputType>Exe</OutputType>
