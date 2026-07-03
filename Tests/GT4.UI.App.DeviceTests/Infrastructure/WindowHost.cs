@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+
 namespace GT4.UI.DeviceTests;
 
 /// <summary>
@@ -11,8 +13,28 @@ internal static class WindowHost
 {
   private sealed class Attachment(Window window, Page originalPage) : IAsyncDisposable
   {
-    public ValueTask DisposeAsync() =>
-      new(MainThread.InvokeOnMainThreadAsync(() => window.Page = originalPage));
+    public ValueTask DisposeAsync() => new(MainThread.InvokeOnMainThreadAsync(RestoreOriginalPageAsync));
+
+    // Restoring the runner's own page rebuilds its native WinUI visual tree (styles, resources)
+    // right after the test page's tree was torn down. That churn has occasionally raced a WinRT
+    // interop call into a spurious COMException (observed as HRESULT 0x800F1000 out of
+    // UIElementCollection.Add) -- not reproducible on demand, so absorb it with a short retry
+    // rather than failing the test over a restore-step platform race.
+    private async Task RestoreOriginalPageAsync()
+    {
+      for (var attempt = 1; ; attempt++)
+      {
+        try
+        {
+          window.Page = originalPage;
+          return;
+        }
+        catch (COMException) when (attempt < 3)
+        {
+          await Task.Delay(50);
+        }
+      }
+    }
   }
 
   public static async Task<IAsyncDisposable> AttachAsync(Page page)
