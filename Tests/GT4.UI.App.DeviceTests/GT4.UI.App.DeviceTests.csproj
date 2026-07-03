@@ -75,4 +75,10 @@
     </ItemGroup>
   </Target>
 
+  <Target Name="WarnIfDebugConfiguration" BeforeTargets="Build;Test">
+    <Warning
+        Condition="'$(Configuration)' == 'Debug'"
+        Text="GT4.UI.App.DeviceTests does not support Debug: MAUI's Hot-Reload XAML resolution breaks pages hosted from a referenced assembly (see the note at the top of this file). Build/run with -c Release instead." />
+  </Target>
+
 </Project>

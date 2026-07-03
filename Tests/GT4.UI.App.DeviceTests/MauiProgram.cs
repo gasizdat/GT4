@@ -8,6 +8,17 @@ public static class MauiProgram
 {
   public static MauiApp CreateMauiApp()
   {
+#if DEBUG
+    // Fails fast with a readable message instead of the XamlParseException MAUI's Debug/Hot
+    // Reload XAML resolution throws when a page is hosted from a referenced assembly (see the
+    // note at the top of GT4.UI.App.DeviceTests.csproj). A thrown exception here would cross into
+    // WinUI's native message pump and surface only as an opaque access-violation-style crash with
+    // no readable text, so exit directly instead: Environment.Exit terminates before any MAUI
+    // infrastructure starts, and Console.Error is flushed synchronously first.
+    Console.Error.WriteLine("GT4.UI.App.DeviceTests does not support Debug configuration. Build and run with -c Release instead.");
+    Environment.Exit(1);
+#endif
+
     var builder = MauiApp.CreateBuilder();
     builder
       .ConfigureUITesting()
