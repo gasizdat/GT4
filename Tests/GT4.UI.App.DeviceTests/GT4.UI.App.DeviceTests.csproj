@@ -32,6 +32,10 @@
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-windows10.0.19041.0|AnyCPU'">
+    <Optimize>False</Optimize>
+  </PropertyGroup>
+
   <ItemGroup>
     <!-- Icons, fonts and images flow transitively from the referenced App project.
          The app-level style dictionaries have no x:Class, so they cannot be instantiated from the
@@ -76,9 +80,7 @@
   </Target>
 
   <Target Name="WarnIfDebugConfiguration" BeforeTargets="Build;Test">
-    <Warning
-        Condition="'$(Configuration)' == 'Debug'"
-        Text="GT4.UI.App.DeviceTests does not support Debug: MAUI's Hot-Reload XAML resolution breaks pages hosted from a referenced assembly (see the note at the top of this file). Build/run with -c Release instead." />
+    <Warning Condition="'$(Configuration)' == 'Debug'" Text="GT4.UI.App.DeviceTests does not support Debug: MAUI's Hot-Reload XAML resolution breaks pages hosted from a referenced assembly (see the note at the top of this file). Build/run with -c Release instead." />
   </Target>
 
 </Project>
