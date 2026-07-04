@@ -50,7 +50,9 @@ dotnet test (Join-Path $repoRoot 'Tests\GT4.UI.View.Tests\GT4.UI.View.Tests.cspr
 
 # coverlet's in-process collector never sees this project's tests: DeviceRunners launches
 # AppWinOnly.exe as a separate process and drives it over TCP. dotnet-coverage attaches across the
-# whole process tree instead, so it still captures real numbers for AppWinOnly.dll.
+# whole process tree instead, so it still captures real numbers for AppWinOnly.dll. CI's own
+# DeviceTests step collects none at all (see ci.yml), so expect AppWinOnly's coverage numbers here
+# to permanently differ from what CI reports.
 Write-Host "`n=== GT4.UI.App.DeviceTests ===" -ForegroundColor Cyan
 $deviceCoverageFile = Join-Path $coverageDir 'device-tests.cobertura.xml'
 $deviceTestArgs = @(

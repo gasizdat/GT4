@@ -32,6 +32,9 @@
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
   </PropertyGroup>
 
+  <!-- This project only builds/runs in Release (see ErrorIfDebugConfiguration below), but debugging
+       a test still needs reliable breakpoints/stepping, which JIT inlining under optimization
+       defeats, so optimization is disabled for this one configuration instead. -->
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-windows10.0.19041.0|AnyCPU'">
     <Optimize>False</Optimize>
   </PropertyGroup>

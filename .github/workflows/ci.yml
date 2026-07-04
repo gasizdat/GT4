@@ -38,6 +38,8 @@ jobs:
       # -p:SolutionDir is required because the referenced AppWinOnly.csproj increments buildnumber.txt
       # relative to it. No code coverage: the tests execute inside a separately-launched .exe that
       # DeviceRunners spawns and talks to over TCP, so coverlet's in-process collector never sees it.
+      # run-tests-coverage.ps1 (local) does capture this via dotnet-coverage's process-tree attach
+      # instead -- expect AppWinOnly's coverage numbers here to permanently differ from a local run.
       - name: Build GT4.UI.App.DeviceTests
         if: always()
         run: dotnet build Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj --configuration Release --framework net10.0-windows10.0.19041.0 -p:SolutionDir="$($PWD.Path)\"
