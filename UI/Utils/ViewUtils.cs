@@ -4,8 +4,10 @@ namespace GT4.UI.Utils;
 
 public static class ViewUtils
 {
-  public static void RefreshView(this Microsoft.Maui.Controls.BindableObject element, Type declaringType)
+  public static void RefreshView<TDeclaring>(this TDeclaring element)
+    where TDeclaring : Microsoft.Maui.Controls.BindableObject
   {
+    var declaringType = typeof(TDeclaring);
     var onPropertyChanged = TryGetMethod(declaringType, "OnPropertyChanged", [typeof(string)]);
     if (onPropertyChanged is null)
     {

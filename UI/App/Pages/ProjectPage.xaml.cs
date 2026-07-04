@@ -176,7 +176,7 @@ public partial class ProjectPage : ContentPage
       if (projectRevision != _ProjectRevision)
       {
         _ProjectRevision = projectRevision;
-        this.RefreshView(typeof(ProjectPage));
+        this.RefreshView();
       }
     }
     catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
@@ -212,7 +212,7 @@ public partial class ProjectPage : ContentPage
         break;
 
       case string commandName when commandName == "Refresh":
-        this.RefreshView(typeof(ProjectPage));
+        this.RefreshView();
         break;
 
       case string commandName when commandName == "CreateFamily":
@@ -342,7 +342,7 @@ public partial class ProjectPage : ContentPage
       await Navigation.PopModalAsync();
     }
 
-    this.RefreshView(typeof(ProjectPage));
+    this.RefreshView();
   }
 
   private async Task RunImportAsync(FileResult file, CancellationToken token)

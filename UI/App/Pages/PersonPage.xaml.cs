@@ -283,7 +283,7 @@ public partial class PersonPage : ContentPage
 
     _Relatives.SetRoots(roots, _PersonFullInfo.BirthDate);
 
-    this.RefreshView(typeof(PersonPage));
+    this.RefreshView();
 
     if (addToNavigation)
     {
