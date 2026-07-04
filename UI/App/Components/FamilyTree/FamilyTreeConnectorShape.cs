@@ -12,7 +12,7 @@ namespace GT4.UI.Components.Genealogy;
 /// in lockstep with the nodes, and — unlike a single canvas-spanning GraphicsView — never allocate a
 /// surface larger than the GPU max texture size (16384px), which a tall tree's connectors would hit.
 /// </summary>
-internal static class FamilyTreeConnectorShape
+public static class FamilyTreeConnectorShape
 {
   public static Path Create(FamilyTreeConnector connector, double cornerRadius, double lineWidth, Color color)
   {
