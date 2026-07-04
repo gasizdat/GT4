@@ -87,7 +87,7 @@ public partial class ProjectListPage : ContentPage
     }
     catch (Exception ex)
     {
-      await _PageAlertService.ShowErrorAsync(this, ex);
+      await _PageAlertService.ShowErrorAsync(ex);
     }
   }
 

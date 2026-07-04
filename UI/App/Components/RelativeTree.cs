@@ -104,7 +104,7 @@ public sealed class RelativeTree
       {
         try
         {
-          await _PageAlertService.ShowWarningAsync(Shell.Current, UIStrings.AlertTextKinshipUnfoldingAborted);
+          await _PageAlertService.ShowWarningAsync(UIStrings.AlertTextKinshipUnfoldingAborted);
         }
         finally
         {

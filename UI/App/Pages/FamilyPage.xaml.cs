@@ -97,7 +97,7 @@ public partial class FamilyPage : ContentPage
       }
       catch (Exception ex)
       {
-        _ = _PageAlertService.ShowErrorAsync(this, ex);
+        _ = _PageAlertService.ShowErrorAsync(ex);
         return Enumerable.Empty<PersonInfo>().ToList();
       }
     }
@@ -124,7 +124,6 @@ public partial class FamilyPage : ContentPage
   {
     var canDelete = _FamilyName is not null &&
        await _PageAlertService.ShowConfirmationAsync(
-         this,
          string.Format(UIStrings.AlertTextDeleteConfirmationText_1, _FamilyName.Value));
 
     if (!canDelete)

@@ -202,7 +202,7 @@ public partial class SelectRelativesDialog : ContentPage
         }
         catch (Exception ex)
         {
-          await _PageAlertService.ShowErrorAsync(this, ex);
+          await _PageAlertService.ShowErrorAsync(ex);
         }
       }
 

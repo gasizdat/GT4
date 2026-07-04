@@ -4,10 +4,9 @@ namespace GT4.UI;
 
 public interface IPageAlertService
 {
-  Task<bool> ShowConfirmationAsync(Page page, string confirmationText);
-  Task ShowErrorAsync(Page page, Exception exception);
+  Task<bool> ShowConfirmationAsync(string confirmationText);
   Task ShowErrorAsync(Exception exception);
-  Task ShowWarningAsync(Page page, string message);
+  Task ShowWarningAsync(string message);
 }
 
 // Alerts touch native views, so they must run on the UI thread. InvokeOnMainThreadAsync
@@ -15,20 +14,20 @@ public interface IPageAlertService
 // for every caller and protects the background-thread call sites (Task.Run catch blocks).
 internal sealed class RealPageAlertService : IPageAlertService
 {
-  public Task<bool> ShowConfirmationAsync(Page page, string confirmationText) =>
-    MainThread.InvokeOnMainThreadAsync(() => page.DisplayAlertAsync(
+  private Shell CurrentShell => Shell.Current;
+
+  public Task<bool> ShowConfirmationAsync(string confirmationText) =>
+    MainThread.InvokeOnMainThreadAsync(() => CurrentShell.DisplayAlertAsync(
       UIStrings.AlertTitleConfirmation,
       confirmationText,
       UIStrings.BtnNameYes,
       UIStrings.BtnNameNo));
 
-  public Task ShowErrorAsync(Page page, Exception exception) =>
+  public Task ShowErrorAsync(Exception exception) =>
     MainThread.InvokeOnMainThreadAsync(() =>
-      page.DisplayAlertAsync(UIStrings.AlertTitleError, exception.Message, UIStrings.BtnNameOk));
+      CurrentShell.DisplayAlertAsync(UIStrings.AlertTitleError, exception.Message, UIStrings.BtnNameOk));
 
-  public Task ShowErrorAsync(Exception exception) => ShowErrorAsync(Shell.Current, exception);
-
-  public Task ShowWarningAsync(Page page, string message) =>
+  public Task ShowWarningAsync(string message) =>
     MainThread.InvokeOnMainThreadAsync(() =>
-      page.DisplayAlertAsync(UIStrings.AlertTitleWarning, message, UIStrings.BtnNameOk));
+      CurrentShell.DisplayAlertAsync(UIStrings.AlertTitleWarning, message, UIStrings.BtnNameOk));
 }

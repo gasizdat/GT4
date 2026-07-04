@@ -91,7 +91,7 @@ public partial class ProjectPage : ContentPage
       }
       catch (Exception ex)
       {
-        _PageAlertService.ShowErrorAsync(this, ex);
+        _PageAlertService.ShowErrorAsync(ex);
         return [];
       }
     }
@@ -119,7 +119,7 @@ public partial class ProjectPage : ContentPage
     }
     catch (Exception ex)
     {
-      await _PageAlertService.ShowErrorAsync(this, ex);
+      await _PageAlertService.ShowErrorAsync(ex);
     }
   }
 
@@ -258,7 +258,7 @@ public partial class ProjectPage : ContentPage
     var projectName = _CurrentProjectProvider.Info.Name;
     var projectOrigin = _CurrentProjectProvider.Info.Origin;
     var confirmationText = string.Format(UIStrings.AlertTextDeleteConfirmationText_1, projectName);
-    if (await _PageAlertService.ShowConfirmationAsync(this, confirmationText))
+    if (await _PageAlertService.ShowConfirmationAsync(confirmationText))
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
       await _ProjectList.RemoveAsync(projectOrigin, token);
@@ -340,7 +340,7 @@ public partial class ProjectPage : ContentPage
       return;
 
     var confirmText = string.Format(UIStrings.AlertImportGedcomConfirm_1, _CurrentProjectProvider.Info.Name);
-    if (!await _PageAlertService.ShowConfirmationAsync(this, confirmText))
+    if (!await _PageAlertService.ShowConfirmationAsync(confirmText))
       return;
 
     var dialog = new GedcomImportDialog(_CurrentProjectProvider.Info.Name);

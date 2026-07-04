@@ -130,7 +130,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
     catch (Exception ex)
     {
-      _ = _PageAlertService.ShowErrorAsync(this, ex);
+      _ = _PageAlertService.ShowErrorAsync(ex);
     }
   }
 
@@ -245,7 +245,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     {
       var message = string.Format(UIStrings.AlertTextUnableToAddNameForTheSexSelected_1,
         _BiologicalSexFormatter.ToString(_BiologicalSex?.Info));
-      await _PageAlertService.ShowWarningAsync(this, message);
+      await _PageAlertService.ShowWarningAsync(message);
       return;
     }
 
