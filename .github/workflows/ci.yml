@@ -47,20 +47,36 @@ jobs:
         # --no-build still touches AppCommon.props' buildnumber-increment target (via the
         # referenced AppWinOnly.csproj), so SolutionDir is needed here too, not just at build time.
         #
-        # The DeviceRunners CLI can exit non-zero from a native WinUI teardown race (a window-class
+        # The DeviceRunners CLI can exit -1 from a native WinUI teardown race (a window-class
         # unregister failure) after every test already passed and its own TRX was written -- and
         # separately, the vendor's MSBuild target checks for a hardcoded "test-results.trx" filename
         # instead of the "device-tests.trx" our --logger arg actually produces, so it reports "no TRX
         # written" even when one exists. Trust the TRX's own pass/fail counters (ground truth) instead
-        # of the process exit code.
+        # of the process exit code, but only for that specific, previously-confirmed race (exit code
+        # -1 plus the vendor's own false-positive message) -- any other nonzero exit is treated as a
+        # real failure even if the TRX itself shows no failed tests, since a TRX written before a
+        # later, unrelated fatal error (e.g. OOM) would otherwise be misreported as success.
+        #
+        # Output streams live via the pipeline below so a real hang still shows progress in the
+        # Actions log; only the one line matching the known false positive is held back, since
+        # whether to keep or strip it depends on the TRX/exit-code check that only runs after the
+        # process exits (an already-printed GitHub error annotation can't be un-printed).
         run: |
           $trxPath = "coverage\device-tests.trx"
           if (Test-Path $trxPath) { Remove-Item $trxPath -Force }
-          $output = & dotnet test Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj --no-build --configuration Release --framework net10.0-windows10.0.19041.0 -p:SolutionDir="$($PWD.Path)\" --logger "trx;LogFileName=device-tests.trx" --results-directory coverage
+          $knownFalsePositive = 'DeviceRunners CLI exited with code -1 and no TRX was written'
+          $heldBackLines = @()
+          & dotnet test Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj --no-build --configuration Release --framework net10.0-windows10.0.19041.0 -p:SolutionDir="$($PWD.Path)\" --logger "trx;LogFileName=device-tests.trx" --results-directory coverage | ForEach-Object {
+            if ($_ -match [regex]::Escape($knownFalsePositive)) {
+              $heldBackLines += $_
+            } else {
+              Write-Host $_
+            }
+          }
           $exitCode = $LASTEXITCODE
 
           if (-not (Test-Path $trxPath)) {
-            $output | ForEach-Object { Write-Host $_ }
+            $heldBackLines | ForEach-Object { Write-Host $_ }
             Write-Host "No TRX produced (exit code $exitCode)."
             exit 1
           }
@@ -69,12 +85,10 @@ jobs:
           $failed = [int]$trx.TestRun.ResultSummary.Counters.failed
           $total = [int]$trx.TestRun.ResultSummary.Counters.total
 
-          # The vendor's own "no TRX written" error (see comment above) is a false positive whenever
-          # our TRX shows zero failures -- print it as plain text so it stays visible without minting
-          # a job annotation for a condition we've already disproven.
-          $knownFalsePositive = 'DeviceRunners CLI exited with code -1 and no TRX was written'
-          foreach ($line in $output) {
-            if ($failed -eq 0 -and $exitCode -ne 0 -and $line -match [regex]::Escape($knownFalsePositive)) {
+          $knownRaceExitCode = -1
+          $isKnownRace = $exitCode -eq $knownRaceExitCode -and $heldBackLines.Count -gt 0
+          foreach ($line in $heldBackLines) {
+            if ($failed -eq 0 -and $isKnownRace) {
               Write-Host ($line -replace '##\[error\]', '')
             } else {
               Write-Host $line
@@ -86,8 +100,12 @@ jobs:
           if ($failed -gt 0) {
             exit 1
           }
+          if ($exitCode -ne 0 -and -not $isKnownRace) {
+            Write-Host "Tests passed but the CLI exited non-zero for an unrecognized reason (exit code $exitCode); treating as failure."
+            exit 1
+          }
           if ($exitCode -ne 0) {
-            Write-Host "All tests passed but the CLI exited non-zero (known teardown race); treating as success."
+            Write-Host "All tests passed but the CLI exited non-zero (known teardown race, exit code $knownRaceExitCode); treating as success."
           }
           exit 0
 
