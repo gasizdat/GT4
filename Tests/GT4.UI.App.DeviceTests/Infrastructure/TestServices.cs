@@ -1,6 +1,7 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.Pages;
 using Moq;
 
 namespace GT4.UI.DeviceTests;
@@ -100,6 +101,9 @@ internal sealed class TestServices
     services.AddSingleton<TestableProjectPage>();
     services.AddSingleton<TestablePersonPage>();
     services.AddSingleton<TestableProjectListPage>();
+    // MainPage needs no protected-seam subclass: its PageCommand branches are checked by polling
+    // INavigationService's invocation count after Execute, not by awaiting a Task directly.
+    services.AddSingleton<MainPage>();
     Provider = services.BuildServiceProvider();
   }
 }
