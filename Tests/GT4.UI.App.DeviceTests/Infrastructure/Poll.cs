@@ -30,4 +30,27 @@ internal static class Poll
       await Task.Delay(20);
     }
   }
+
+  /// <summary>
+  /// Proves a negative over <paramref name="duration"/>: fails as soon as <paramref name="isUnwanted"/>
+  /// turns true, instead of a single check after a blind delay -- for a path with no positive signal to
+  /// poll for (e.g. a swallowed exception where nothing observable ever fires), this still catches a
+  /// regression that shows up partway through the window rather than only right at the end.
+  /// </summary>
+  public static async Task ConfirmNeverAsync<T>(
+    Func<Task<T>> probe, Func<T, bool> isUnwanted, TimeSpan duration, string? failureMessage = null)
+  {
+    var deadline = DateTime.UtcNow + duration;
+
+    while (DateTime.UtcNow < deadline)
+    {
+      var value = await probe();
+      if (isUnwanted(value))
+      {
+        throw new Exception(failureMessage ?? "An unwanted condition became true.");
+      }
+
+      await Task.Delay(20);
+    }
+  }
 }

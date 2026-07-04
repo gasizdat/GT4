@@ -122,9 +122,16 @@ public class PersonPageTests
 
     var loadsBefore = page.CompletedLoads;
     await MainThread.InvokeOnMainThreadAsync(() => page.PersonInfo = CreateSamplePerson());
-    // Nothing observable ever happens on the teardown path (no load, no alert, no navigation) --
-    // wait out a short grace window and confirm it stays that way.
-    await Task.Delay(300);
+    // Nothing observable ever happens on the teardown path (no load, no alert, no navigation) -- poll
+    // over a grace window and fail as soon as any of them fire, instead of a single check after a
+    // blind delay that a regression could slip past if it fires later than the delay on a loaded runner.
+    await Poll.ConfirmNeverAsync(
+      () => Task.FromResult(page.CompletedLoads != loadsBefore
+        || services.AlertService.Invocations.Count > 0
+        || services.NavigationService.Invocations.Count > 0),
+      unwanted => unwanted,
+      TimeSpan.FromMilliseconds(300),
+      failureMessage: "The project-teardown race was not swallowed as expected.");
 
     Assert.Equal(loadsBefore, page.CompletedLoads);
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
