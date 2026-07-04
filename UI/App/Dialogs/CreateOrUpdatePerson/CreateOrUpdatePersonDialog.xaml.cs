@@ -19,6 +19,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private readonly INameFormatter _NameFormatter;
   private readonly IDateFormatter _DateFormatter;
   private readonly IComparer<PersonInfo> _PersonInfoComparer;
+  // Kept as a locator deliberately: this dialog's only caller doesn't otherwise hold these
+  // dependencies, so converting to typed params would just relocate the GetRequiredService calls
+  // into the caller rather than remove them (see feedback_di_constructor_injection memory).
   private readonly IServiceProvider _ServiceProvider;
   private readonly IAlertService _AlertService;
   private readonly ICommand _DialogCommand;
