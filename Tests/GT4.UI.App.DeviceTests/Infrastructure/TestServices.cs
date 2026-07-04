@@ -29,8 +29,12 @@ internal sealed class TestServices
     CurrentProjectProvider.SetupGet(p => p.Project).Returns(Project.Object);
     CurrentProjectProvider.SetupGet(p => p.HasCurrentProject).Returns(true);
 
-    // Background loads must never throw: SafeTask routes failures to PageAlert.ShowErrorAsync,
-    // which needs Shell.Current (null in this host) and would otherwise fail invisibly.
+    // GetNamesByTypeAsync returns Task<Name[]>, so Moq's own default-value provider already
+    // auto-resolves an unconfigured call to Task.FromResult(Array.Empty<Name>()) (it special-cases
+    // Array). Pinned explicitly anyway so this doesn't silently regress to a null-returning default
+    // if the return type ever stops being a bare array -- background loads must never throw:
+    // SafeTask routes failures to PageAlert.ShowErrorAsync, which needs Shell.Current (null in this
+    // host) and would otherwise fail invisibly.
     Names
       .Setup(n => n.GetNamesByTypeAsync(It.IsAny<NameType>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync([]);
