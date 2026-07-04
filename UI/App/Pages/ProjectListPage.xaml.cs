@@ -102,7 +102,7 @@ public partial class ProjectListPage : ContentPage
     }, _AlertService);
   }
 
-  private void UpdateProjectList()
+  protected void UpdateProjectList()
   {
     using var token = _CancellationTokenProvider.CreateDbCancellationToken();
     var projects = _ProjectList
@@ -118,7 +118,7 @@ public partial class ProjectListPage : ContentPage
     }
   }
 
-  private async Task OnPageCommand(object obj)
+  protected async Task OnPageCommand(object obj)
   {
     switch (obj)
     {

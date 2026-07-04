@@ -85,6 +85,10 @@ internal sealed class TestServices
     RelativesProvider.Setup(r => r.GetChildren(It.IsAny<RelativeInfo[]>())).Returns([]);
     RelativesProvider.Setup(r => r.GetAdoptiveChildren(It.IsAny<RelativeInfo[]>())).Returns([]);
 
+    // Same reasoning as GetNamesByTypeAsync above: ProjectListPage.UpdateProjectList loads in the
+    // background (well, blocks on it), so an unconfigured call must not fail invisibly.
+    ProjectList.Setup(p => p.GetItemsAsync(It.IsAny<CancellationToken>())).ReturnsAsync([]);
+
     var services = new ServiceCollection();
     GT4Services.Add(services);
     services.AddSingleton(CurrentProjectProvider.Object);
@@ -95,6 +99,7 @@ internal sealed class TestServices
     services.AddSingleton<TestableFamilyPage>();
     services.AddSingleton<TestableProjectPage>();
     services.AddSingleton<TestablePersonPage>();
+    services.AddSingleton<TestableProjectListPage>();
     Provider = services.BuildServiceProvider();
   }
 }
