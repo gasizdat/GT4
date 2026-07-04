@@ -51,38 +51,31 @@ jobs:
         # unregister failure) after every test already passed and its own TRX was written -- and
         # separately, the vendor's MSBuild target checks for a hardcoded "test-results.trx" filename
         # instead of the "device-tests.trx" our --logger arg actually produces, so it reports "no TRX
-        # written" even when one exists. Retry a few times for the teardown race, then fall back to
-        # the TRX's own pass/fail counters (ground truth) instead of trusting the process exit code.
+        # written" even when one exists. Trust the TRX's own pass/fail counters (ground truth) instead
+        # of the process exit code.
         run: |
           $trxPath = "coverage\device-tests.trx"
-          $maxAttempts = 3
-          for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
-            if (Test-Path $trxPath) { Remove-Item $trxPath -Force }
-            dotnet test Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj --no-build --configuration Release --framework net10.0-windows10.0.19041.0 -p:SolutionDir="$($PWD.Path)\" --logger "trx;LogFileName=device-tests.trx" --results-directory coverage
-            $exitCode = $LASTEXITCODE
+          if (Test-Path $trxPath) { Remove-Item $trxPath -Force }
+          dotnet test Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj --no-build --configuration Release --framework net10.0-windows10.0.19041.0 -p:SolutionDir="$($PWD.Path)\" --logger "trx;LogFileName=device-tests.trx" --results-directory coverage
+          $exitCode = $LASTEXITCODE
 
-            if (-not (Test-Path $trxPath)) {
-              Write-Host "Attempt $attempt/$maxAttempts : no TRX produced (exit code $exitCode)."
-              continue
-            }
-
-            [xml]$trx = Get-Content $trxPath
-            $failed = [int]$trx.TestRun.ResultSummary.Counters.failed
-            $total = [int]$trx.TestRun.ResultSummary.Counters.total
-            Write-Host "Attempt $attempt/$maxAttempts : $total total, $failed failed (exit code $exitCode)."
-
-            if ($failed -gt 0) {
-              exit 1
-            }
-            if ($exitCode -eq 0) {
-              exit 0
-            }
-            Write-Host "All tests passed but the CLI exited non-zero (known teardown race); treating as success."
-            exit 0
+          if (-not (Test-Path $trxPath)) {
+            Write-Host "No TRX produced (exit code $exitCode)."
+            exit 1
           }
 
-          Write-Host "No TRX produced after $maxAttempts attempts."
-          exit 1
+          [xml]$trx = Get-Content $trxPath
+          $failed = [int]$trx.TestRun.ResultSummary.Counters.failed
+          $total = [int]$trx.TestRun.ResultSummary.Counters.total
+          Write-Host "$total total, $failed failed (exit code $exitCode)."
+
+          if ($failed -gt 0) {
+            exit 1
+          }
+          if ($exitCode -ne 0) {
+            Write-Host "All tests passed but the CLI exited non-zero (known teardown race); treating as success."
+          }
+          exit 0
 
       - name: Generate coverage report
         if: always()
