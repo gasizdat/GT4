@@ -53,7 +53,7 @@ public partial class SelectRelativesDialog : ContentPage
     return true;
   }
 
-  private async Task OnDialogCommand(object obj)
+  protected async Task OnDialogCommand(object obj)
   {
     switch (obj)
     {
