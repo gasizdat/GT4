@@ -46,6 +46,7 @@ internal sealed class TestServices
     CurrentProjectProvider.SetupGet(p => p.Project).Returns(Project.Object);
     CurrentProjectProvider.SetupGet(p => p.HasCurrentProject).Returns(true);
     CurrentProjectProvider.SetupGet(p => p.Info).Returns(SampleProjectInfo);
+    CurrentProjectProvider.SetupGet(p => p.Revisions).Returns([]);
 
     // Same reasoning as GetNamesByTypeAsync below: ProjectPage.Families loads in the background
     // (well, blocks on it), so an unconfigured call must not fail invisibly through IAlertService.
@@ -104,6 +105,7 @@ internal sealed class TestServices
     // MainPage needs no protected-seam subclass: its PageCommand branches are checked by polling
     // INavigationService's invocation count after Execute, not by awaiting a Task directly.
     services.AddSingleton<MainPage>();
+    services.AddSingleton<ProjectRevisionsPage>();
     Provider = services.BuildServiceProvider();
   }
 }
