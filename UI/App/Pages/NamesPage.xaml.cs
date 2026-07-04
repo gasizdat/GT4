@@ -13,10 +13,10 @@ namespace GT4.UI.Pages;
 
 public partial class NamesPage : ContentPage
 {
-  private readonly IServiceProvider _ServiceProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly IComparer<Name> _NameComparer;
+  private readonly INameTypeFormatter _NameTypeFormatter;
   private readonly ObservableCollection<NameTypeInfoItem> _NameTypes;
   private readonly ObservableCollection<BiologicalSexItem> _BiologicalSexes = new();
   private readonly FilteredObservableCollection<Name> _Names = new();
@@ -33,7 +33,6 @@ public partial class NamesPage : ContentPage
   private string _NameFilter = string.Empty;
 
   public NamesPage(
-    IServiceProvider serviceProvider,
     ICurrentProjectProvider currentProjectProvider,
     ICancellationTokenProvider cancellationTokenProvider,
     IComparer<Name> nameComparer,
@@ -50,10 +49,10 @@ public partial class NamesPage : ContentPage
       NameType.Patronymic,
       NameType.LastName,
     };
-    _ServiceProvider = serviceProvider;
     _CurrentProjectProvider = currentProjectProvider;
     _CancellationTokenProvider = cancellationTokenProvider;
     _NameComparer = nameComparer;
+    _NameTypeFormatter = nameTypeFormatter;
     _NameTypes = new(nameTypes.Select(type => new NameTypeInfoItem(nameTypeFormatter.ToString(type), type)));
     _PageAlertService = pageAlertService;
     _NameFormatter = nameFormatter;
@@ -75,7 +74,7 @@ public partial class NamesPage : ContentPage
   {
     if (obj is Name name)
     {
-      await CreateOrUpdateNameDialog.UpdateNameAsync(name, _ServiceProvider, Navigation);
+      await CreateOrUpdateNameDialog.UpdateNameAsync(name, _CurrentProjectProvider, _CancellationTokenProvider, _NameTypeFormatter, Navigation);
       RequestUpdateNames(name);
     }
   }
@@ -138,7 +137,7 @@ public partial class NamesPage : ContentPage
       _ => throw new ApplicationException(nameof(OnPageCommandAsync))
     };
 
-    var dialog = new CreateOrUpdateNameDialog(nameType, _ServiceProvider);
+    var dialog = new CreateOrUpdateNameDialog(nameType, _NameTypeFormatter);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;

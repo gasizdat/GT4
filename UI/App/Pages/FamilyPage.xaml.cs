@@ -123,7 +123,9 @@ public partial class FamilyPage : ContentPage
   private async Task OnDeleteFamily()
   {
     var canDelete = _FamilyName is not null &&
-       await _PageAlertService.ShowConfirmationAsync(this, string.Format(UIStrings.AlertTextDeleteConfirmationText_1, _FamilyName.Value));
+       await _PageAlertService.ShowConfirmationAsync(
+         this,
+         string.Format(UIStrings.AlertTextDeleteConfirmationText_1, _FamilyName.Value));
 
     if (!canDelete)
     {
@@ -180,7 +182,12 @@ public partial class FamilyPage : ContentPage
         break;
 
       case string commandName when commandName == "EditFamily":
-        await CreateOrUpdateNameDialog.UpdateNameAsync(FamilyName!, _ServiceProvider, Navigation);
+        await CreateOrUpdateNameDialog.UpdateNameAsync(
+          FamilyName!,
+          _CurrentProjectProvider,
+          _CancellationTokenProvider,
+          _ServiceProvider.GetRequiredService<INameTypeFormatter>(),
+          Navigation);
         break;
 
       case string commandName when commandName == "CreatePerson":

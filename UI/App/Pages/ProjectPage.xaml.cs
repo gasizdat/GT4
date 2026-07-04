@@ -22,7 +22,7 @@ public partial class ProjectPage : ContentPage
     [DevicePlatform.Android] = ["*/*"],
   });
 
-  private readonly IServiceProvider _ServiceProvider;
+  private readonly INameTypeFormatter _NameTypeFormatter;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IComparer<PersonInfo> _PersonInfoComparer;
@@ -36,7 +36,7 @@ public partial class ProjectPage : ContentPage
   private long? _ProjectRevision;
 
   public ProjectPage(
-    IServiceProvider serviceProvider,
+    INameTypeFormatter nameTypeFormatter,
     ICancellationTokenProvider cancellationTokenProvider,
     ICurrentProjectProvider currentProjectProvider,
     [FromKeyedServices(NameFormat.ShortPersonName)]
@@ -50,7 +50,7 @@ public partial class ProjectPage : ContentPage
     INavigationService navigationService
     )
   {
-    _ServiceProvider = serviceProvider;
+    _NameTypeFormatter = nameTypeFormatter;
     _CancellationTokenProvider = cancellationTokenProvider;
     _CurrentProjectProvider = currentProjectProvider;
     _PersonInfoComparer = personInfoComparerByShortNames ?? personInfoComparer;
@@ -292,7 +292,7 @@ public partial class ProjectPage : ContentPage
 
   private async Task OnCreateFamily()
   {
-    var dialog = new CreateOrUpdateNameDialog(NameType.FamilyName, _ServiceProvider);
+    var dialog = new CreateOrUpdateNameDialog(NameType.FamilyName, _NameTypeFormatter);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;

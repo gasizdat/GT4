@@ -1,5 +1,8 @@
+using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
+using GT4.Core.Utils;
 using GT4.UI.Pages;
+using GT4.UI.Utils.Formatters;
 using System.Runtime.CompilerServices;
 
 namespace GT4.UI.DeviceTests;
@@ -9,9 +12,20 @@ namespace GT4.UI.DeviceTests;
 /// SafeCommand's error routing (which needs Shell.Current, absent in this host); RequestUpdateNames
 /// is the only way to set the getter-only CurrentName selection.
 /// </summary>
-internal sealed class TestableNamesPage(IServiceProvider services) : NamesPage(services)
+internal sealed class TestableNamesPage : NamesPage
 {
   private int _CompletedLoads;
+
+  public TestableNamesPage(IServiceProvider services) : base(
+    services.GetRequiredService<ICurrentProjectProvider>(),
+    services.GetRequiredService<ICancellationTokenProvider>(),
+    services.GetRequiredService<IComparer<Name>>(),
+    services.GetRequiredService<INameTypeFormatter>(),
+    services.GetRequiredService<IBiologicalSexFormatter>(),
+    services.GetRequiredService<INameFormatter>(),
+    services.GetRequiredService<IPageAlertService>())
+  {
+  }
 
   public Task InvokeDeleteAsync(object parameter) => OnDeleteCommandAsync(parameter);
 
