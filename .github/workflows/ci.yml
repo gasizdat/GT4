@@ -56,10 +56,11 @@ jobs:
         run: |
           $trxPath = "coverage\device-tests.trx"
           if (Test-Path $trxPath) { Remove-Item $trxPath -Force }
-          dotnet test Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj --no-build --configuration Release --framework net10.0-windows10.0.19041.0 -p:SolutionDir="$($PWD.Path)\" --logger "trx;LogFileName=device-tests.trx" --results-directory coverage
+          $output = & dotnet test Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj --no-build --configuration Release --framework net10.0-windows10.0.19041.0 -p:SolutionDir="$($PWD.Path)\" --logger "trx;LogFileName=device-tests.trx" --results-directory coverage
           $exitCode = $LASTEXITCODE
 
           if (-not (Test-Path $trxPath)) {
+            $output | ForEach-Object { Write-Host $_ }
             Write-Host "No TRX produced (exit code $exitCode)."
             exit 1
           }
@@ -67,6 +68,19 @@ jobs:
           [xml]$trx = Get-Content $trxPath
           $failed = [int]$trx.TestRun.ResultSummary.Counters.failed
           $total = [int]$trx.TestRun.ResultSummary.Counters.total
+
+          # The vendor's own "no TRX written" error (see comment above) is a false positive whenever
+          # our TRX shows zero failures -- print it as plain text so it stays visible without minting
+          # a job annotation for a condition we've already disproven.
+          $knownFalsePositive = 'DeviceRunners CLI exited with code -1 and no TRX was written'
+          foreach ($line in $output) {
+            if ($failed -eq 0 -and $exitCode -ne 0 -and $line -match [regex]::Escape($knownFalsePositive)) {
+              Write-Host ($line -replace '##\[error\]', '')
+            } else {
+              Write-Host $line
+            }
+          }
+
           Write-Host "$total total, $failed failed (exit code $exitCode)."
 
           if ($failed -gt 0) {
