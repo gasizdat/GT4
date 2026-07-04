@@ -1,5 +1,6 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
+using GT4.Core.Utils;
 using Moq;
 
 namespace GT4.UI.DeviceTests;
@@ -17,19 +18,33 @@ internal sealed class TestServices
   public Mock<IPersonManager> PersonManager { get; } = new();
   public Mock<IFamilyManager> FamilyManager { get; } = new();
   public Mock<IProjectTransaction> Transaction { get; } = new();
+  public Mock<ITableMetadata> Metadata { get; } = new();
+  public Mock<IProjectList> ProjectList { get; } = new();
   public Mock<IAlertService> AlertService { get; } = new();
   public Mock<INavigationService> NavigationService { get; } = new();
   public IServiceProvider Provider { get; }
+
+  public static readonly ProjectInfo SampleProjectInfo = new(
+    Name: "Sample Project",
+    Description: "",
+    Revision: "",
+    Origin: new FileDescription(new DirectoryDescription(Environment.SpecialFolder.MyDocuments, []), "sample.gt4", null));
 
   public TestServices()
   {
     Project.SetupGet(p => p.Names).Returns(Names.Object);
     Project.SetupGet(p => p.PersonManager).Returns(PersonManager.Object);
     Project.SetupGet(p => p.FamilyManager).Returns(FamilyManager.Object);
+    Project.SetupGet(p => p.Metadata).Returns(Metadata.Object);
     Project.Setup(p => p.BeginTransactionAsync(It.IsAny<CancellationToken>())).ReturnsAsync(Transaction.Object);
 
     CurrentProjectProvider.SetupGet(p => p.Project).Returns(Project.Object);
     CurrentProjectProvider.SetupGet(p => p.HasCurrentProject).Returns(true);
+    CurrentProjectProvider.SetupGet(p => p.Info).Returns(SampleProjectInfo);
+
+    // Same reasoning as GetNamesByTypeAsync below: ProjectPage.Families loads in the background
+    // (well, blocks on it), so an unconfigured call must not fail invisibly through IAlertService.
+    FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([]);
 
     // GetNamesByTypeAsync returns Task<Name[]>, so Moq's own default-value provider already
     // auto-resolves an unconfigured call to Task.FromResult(Array.Empty<Name>()) (it special-cases
@@ -52,8 +67,10 @@ internal sealed class TestServices
     services.AddSingleton(CurrentProjectProvider.Object);
     services.AddSingleton(AlertService.Object);
     services.AddSingleton(NavigationService.Object);
+    services.AddSingleton(ProjectList.Object);
     services.AddSingleton<TestableNamesPage>();
     services.AddSingleton<TestableFamilyPage>();
+    services.AddSingleton<TestableProjectPage>();
     Provider = services.BuildServiceProvider();
   }
 }

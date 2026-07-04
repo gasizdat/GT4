@@ -215,7 +215,7 @@ public partial class ProjectPage : ContentPage
       .ToArray();
   }
 
-  private async Task OnPageCommand(object obj)
+  protected async Task OnPageCommand(object obj)
   {
     switch (obj)
     {
