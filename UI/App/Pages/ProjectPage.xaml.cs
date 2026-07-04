@@ -91,7 +91,7 @@ public partial class ProjectPage : ContentPage
       }
       catch (Exception ex)
       {
-        _AlertService.ShowErrorAsync(ex);
+        _ = _AlertService.ShowErrorAsync(ex);
         return [];
       }
     }
