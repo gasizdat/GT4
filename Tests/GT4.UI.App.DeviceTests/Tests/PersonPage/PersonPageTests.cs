@@ -33,31 +33,8 @@ public class PersonPageTests
     return await MainThread.InvokeOnMainThreadAsync(() => services.Provider.GetRequiredService<TestablePersonPage>());
   }
 
-  /// <summary>
-  /// Waits until either a load completes (CompletedLoads ticks past the pre-interact snapshot) or
-  /// the load's own catch path reports through IAlertService -- and if it's the latter, rethrows the
-  /// real exception instead of leaving the caller to chase a bare timeout.
-  /// </summary>
-  private static async Task WaitForLoadAsync(TestablePersonPage page, TestServices services, Action interact)
-  {
-    var loadsBefore = 0;
-    await MainThread.InvokeOnMainThreadAsync(() =>
-    {
-      loadsBefore = page.CompletedLoads;
-      interact();
-    });
-
-    await Poll.UntilAsync(
-      () => Task.FromResult(page.CompletedLoads > loadsBefore || services.AlertService.Invocations.Count > 0),
-      ready => ready,
-      timeoutMessage: "Person load neither completed nor reported an error.");
-
-    var errorInvocation = services.AlertService.Invocations.FirstOrDefault(i => i.Method.Name == nameof(IAlertService.ShowErrorAsync));
-    if (errorInvocation is not null && page.CompletedLoads == loadsBefore)
-    {
-      throw new Exception("Person load failed", (Exception)errorInvocation.Arguments[0]);
-    }
-  }
+  private static Task WaitForLoadAsync(TestablePersonPage page, TestServices services, Action interact) =>
+    LoadWait.UntilAsync(() => page.CompletedLoads, services, interact, "Person");
 
   [Fact]
   public async Task Ctor_resolves_dependencies_and_defaults()

@@ -28,26 +28,8 @@ public class FamilyTreePageTests
     return await MainThread.InvokeOnMainThreadAsync(() => services.Provider.GetRequiredService<TestableFamilyTreePage>());
   }
 
-  private static async Task WaitForLoadAsync(TestableFamilyTreePage page, TestServices services, Action interact)
-  {
-    var loadsBefore = 0;
-    await MainThread.InvokeOnMainThreadAsync(() =>
-    {
-      loadsBefore = page.CompletedLoads;
-      interact();
-    });
-
-    await Poll.UntilAsync(
-      () => Task.FromResult(page.CompletedLoads > loadsBefore || services.AlertService.Invocations.Count > 0),
-      ready => ready,
-      timeoutMessage: "FamilyTree load neither completed nor reported an error.");
-
-    var errorInvocation = services.AlertService.Invocations.FirstOrDefault(i => i.Method.Name == nameof(IAlertService.ShowErrorAsync));
-    if (errorInvocation is not null && page.CompletedLoads == loadsBefore)
-    {
-      throw new Exception("FamilyTree load failed", (Exception)errorInvocation.Arguments[0]);
-    }
-  }
+  private static Task WaitForLoadAsync(TestableFamilyTreePage page, TestServices services, Action interact) =>
+    LoadWait.UntilAsync(() => page.CompletedLoads, services, interact, "FamilyTree");
 
   [Fact]
   public async Task Ctor_resolves_dependencies_and_defaults()
