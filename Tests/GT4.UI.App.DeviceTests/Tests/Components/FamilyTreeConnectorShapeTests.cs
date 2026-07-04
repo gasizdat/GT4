@@ -92,6 +92,52 @@ public class FamilyTreeConnectorShapeTests
   }
 
   [Fact]
+  public void A_corner_radius_larger_than_half_a_segment_is_clamped_to_that_segments_midpoint()
+  {
+    // The corner-to-previous segment is only length 4; a radius of 10 would overshoot past the
+    // previous point entirely (to x=-6) if Shorten's Math.Min(radius, length/2) clamp were removed.
+    var path = FamilyTreeConnectorShape.Create(
+      MakeConnector(new PointF(0, 0), new PointF(4, 0), new PointF(4, 10)),
+      cornerRadius: 10,
+      lineWidth: 0,
+      Colors.Black);
+
+    var geometry = Assert.IsType<PathGeometry>(path.Data);
+    var figure = Assert.Single(geometry.Figures);
+    Assert.Equal(3, figure.Segments.Count);
+
+    var enter = Assert.IsType<LineSegment>(figure.Segments[0]);
+    Assert.Equal(new Point(2, 0), enter.Point);
+
+    var corner = Assert.IsType<QuadraticBezierSegment>(figure.Segments[1]);
+    Assert.Equal(new Point(4, 0), corner.Point1);
+    Assert.Equal(new Point(4, 5), corner.Point2);
+  }
+
+  [Fact]
+  public void A_corner_coincident_with_its_neighbor_is_left_unshortened_on_that_side()
+  {
+    // previous and corner are the same point (a zero-length segment); Shorten's
+    // length <= double.Epsilon guard must return the corner unchanged instead of dividing by zero.
+    var path = FamilyTreeConnectorShape.Create(
+      MakeConnector(new PointF(0, 0), new PointF(0, 0), new PointF(0, 10)),
+      cornerRadius: 2,
+      lineWidth: 0,
+      Colors.Black);
+
+    var geometry = Assert.IsType<PathGeometry>(path.Data);
+    var figure = Assert.Single(geometry.Figures);
+    Assert.Equal(3, figure.Segments.Count);
+
+    var enter = Assert.IsType<LineSegment>(figure.Segments[0]);
+    Assert.Equal(new Point(0, 0), enter.Point);
+
+    var corner = Assert.IsType<QuadraticBezierSegment>(figure.Segments[1]);
+    Assert.Equal(new Point(0, 0), corner.Point1);
+    Assert.Equal(new Point(0, 2), corner.Point2);
+  }
+
+  [Fact]
   public void Update_re_specifies_an_existing_path_instance_for_a_new_connector()
   {
     var path = FamilyTreeConnectorShape.Create(
