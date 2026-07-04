@@ -116,7 +116,7 @@ public partial class TitleWithAdornersView : ContentView
     }
   }
 
-  private void OnEditAdornerClicked(object? sender, EventArgs e)
+  protected void OnEditAdornerClicked(object? sender, EventArgs e)
   {
     EditAdornerClicked?.Invoke(this, EventArgs.Empty);
 
@@ -126,7 +126,7 @@ public partial class TitleWithAdornersView : ContentView
     }
   }
 
-  private void OnDeleteAdornerClicked(object? sender, EventArgs e)
+  protected void OnDeleteAdornerClicked(object? sender, EventArgs e)
   {
     DeleteAdornerClicked?.Invoke(this, EventArgs.Empty);
 
