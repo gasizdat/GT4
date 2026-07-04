@@ -44,6 +44,9 @@ public class ProjectRevisionsPageTests
     services.CurrentProjectProvider.SetupGet(p => p.Revisions).Returns([revision]);
     var page = await CreatePageAsync(services);
 
+    // No MainThread wrap needed: Revisions is a pure LINQ projection, and ProjectRevisionItem's
+    // ImageUtils.ImageFromRawResource call only wraps a lazy stream delegate (ImageSource.FromStream)
+    // -- no native/UI-thread touch happens until the image is actually rendered later.
     var revisions = page.Revisions.ToArray();
 
     Assert.Single(revisions);
