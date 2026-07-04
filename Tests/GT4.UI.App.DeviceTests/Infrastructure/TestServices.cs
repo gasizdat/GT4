@@ -41,12 +41,19 @@ internal sealed class TestServices
       .Setup(n => n.GetNamesByTypeAsync(It.IsAny<NameType>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync([]);
 
+    // Same reasoning as GetNamesByTypeAsync above: FamilyPage.Persons loads in the background
+    // (well, blocks on it), so an unconfigured call must not fail invisibly through IAlertService.
+    PersonManager
+      .Setup(p => p.GetPersonInfosByNameAsync(It.IsAny<Name>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync([]);
+
     var services = new ServiceCollection();
     GT4Services.Add(services);
     services.AddSingleton(CurrentProjectProvider.Object);
     services.AddSingleton(AlertService.Object);
     services.AddSingleton(NavigationService.Object);
     services.AddSingleton<TestableNamesPage>();
+    services.AddSingleton<TestableFamilyPage>();
     Provider = services.BuildServiceProvider();
   }
 }

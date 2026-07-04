@@ -167,12 +167,12 @@ public partial class FamilyPage : ContentPage
     OnPropertyChanged(nameof(Persons));
   }
 
-  private async Task OnOpenPerson(PersonInfo familyMember)
+  protected async Task OnOpenPerson(PersonInfo familyMember)
   {
     await _NavigationService.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { ["PersonInfo"] = familyMember });
   }
 
-  private async Task OnPageCommand(object parameter)
+  protected async Task OnPageCommand(object parameter)
   {
     switch (parameter)
     {
