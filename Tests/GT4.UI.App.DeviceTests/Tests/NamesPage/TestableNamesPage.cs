@@ -59,7 +59,7 @@ internal sealed class TestableNamesPage(IServiceProvider services) : NamesPage(s
     await Poll.UntilAsync(
       () => Task.FromResult(_CompletedLoads),
       loads => loads > loadsBefore,
-      timeout,
+      timeout ?? TimeSpan.FromSeconds(10),
       "Names reload did not complete; check the TestServices mock setup.");
 
     return await MainThread.InvokeOnMainThreadAsync(() => Names.ToArray());
