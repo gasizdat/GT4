@@ -320,7 +320,7 @@ public partial class PersonPage : ContentPage
     CurrentPerson = personInfoCopy;
   }
 
-  private async Task OnPageCommand(object obj)
+  protected async Task OnPageCommand(object obj)
   {
     switch (obj)
     {

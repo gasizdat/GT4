@@ -20,6 +20,8 @@ internal sealed class TestServices
   public Mock<IProjectTransaction> Transaction { get; } = new();
   public Mock<ITableMetadata> Metadata { get; } = new();
   public Mock<IProjectList> ProjectList { get; } = new();
+  public Mock<IRelativesProvider> RelativesProvider { get; } = new();
+  public Mock<ITablePersons> Persons { get; } = new();
   public Mock<IAlertService> AlertService { get; } = new();
   public Mock<INavigationService> NavigationService { get; } = new();
   public IServiceProvider Provider { get; }
@@ -36,6 +38,8 @@ internal sealed class TestServices
     Project.SetupGet(p => p.PersonManager).Returns(PersonManager.Object);
     Project.SetupGet(p => p.FamilyManager).Returns(FamilyManager.Object);
     Project.SetupGet(p => p.Metadata).Returns(Metadata.Object);
+    Project.SetupGet(p => p.RelativesProvider).Returns(RelativesProvider.Object);
+    Project.SetupGet(p => p.Persons).Returns(Persons.Object);
     Project.Setup(p => p.BeginTransactionAsync(It.IsAny<CancellationToken>())).ReturnsAsync(Transaction.Object);
 
     CurrentProjectProvider.SetupGet(p => p.Project).Returns(Project.Object);
@@ -62,6 +66,25 @@ internal sealed class TestServices
       .Setup(p => p.GetPersonInfosByNameAsync(It.IsAny<Name>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync([]);
 
+    // PersonPage.GetPersonDataAsync's whole pipeline needs every one of these non-null (a null Moq
+    // default for a custom record/array causes an NRE that gets caught and reported through
+    // IAlertService -- which reads as a mysterious timeout in the counter-based load wait, not an
+    // obvious error, unless every collaborator has a safe default up front).
+    PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(PersonFullInfo.Empty);
+    RelativesProvider
+      .Setup(r => r.GetParentsAsync(It.IsAny<RelativeInfo[]>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new Parents([], [], []));
+    RelativesProvider
+      .Setup(r => r.GetStepChildrenAsync(It.IsAny<RelativeInfo[]>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync([]);
+    RelativesProvider
+      .Setup(r => r.GetSiblings(It.IsAny<Person>(), It.IsAny<Parents>()))
+      .Returns(new Siblings([], [], [], [], []));
+    RelativesProvider.Setup(r => r.GetChildren(It.IsAny<RelativeInfo[]>())).Returns([]);
+    RelativesProvider.Setup(r => r.GetAdoptiveChildren(It.IsAny<RelativeInfo[]>())).Returns([]);
+
     var services = new ServiceCollection();
     GT4Services.Add(services);
     services.AddSingleton(CurrentProjectProvider.Object);
@@ -71,6 +94,7 @@ internal sealed class TestServices
     services.AddSingleton<TestableNamesPage>();
     services.AddSingleton<TestableFamilyPage>();
     services.AddSingleton<TestableProjectPage>();
+    services.AddSingleton<TestablePersonPage>();
     Provider = services.BuildServiceProvider();
   }
 }

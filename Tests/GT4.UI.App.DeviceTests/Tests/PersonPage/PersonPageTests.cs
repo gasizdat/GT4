@@ -1,0 +1,244 @@
+using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Dto;
+using GT4.Core.Utils;
+using GT4.UI.Dialogs;
+using GT4.UI.Pages;
+using Moq;
+using Xunit;
+
+namespace GT4.UI.DeviceTests;
+
+/// <summary>
+/// Covers PersonPage against a real MAUI runtime with a mocked Core. The relatives-tree rendering
+/// itself is RelativeTree's own concern (see project_familytree/relatives-flat-tree memory), so
+/// these tests assert scalar state (FullName, BirthDate, Photos) rather than Relatives rows.
+/// PageCommand("EditPerson") pushes a modal via Navigation, driven through WindowHost/
+/// ModalDialogHarness; CreateOrUpdatePersonDialog's own branches are covered by
+/// CreateOrUpdatePersonDialogTests.
+/// </summary>
+public class PersonPageTests
+{
+  private static Name N(int id, string value, NameType type) => new(id, value, type, null);
+
+  private static PersonFullInfo CreateSamplePerson() => PersonFullInfo.Empty with
+  {
+    Id = 1,
+    BiologicalSex = BiologicalSex.Male,
+    Names = [N(1, "Ivanov", NameType.FamilyName), N(2, "Ivan", NameType.FirstName | NameType.MaleDeclension)]
+  };
+
+  private static async Task<TestablePersonPage> CreatePageAsync(TestServices services)
+  {
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    return await MainThread.InvokeOnMainThreadAsync(() => services.Provider.GetRequiredService<TestablePersonPage>());
+  }
+
+  /// <summary>
+  /// Waits until either a load completes (CompletedLoads ticks past the pre-interact snapshot) or
+  /// the load's own catch path reports through IAlertService -- and if it's the latter, rethrows the
+  /// real exception instead of leaving the caller to chase a bare timeout.
+  /// </summary>
+  private static async Task WaitForLoadAsync(TestablePersonPage page, TestServices services, Action interact)
+  {
+    var loadsBefore = 0;
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      loadsBefore = page.CompletedLoads;
+      interact();
+    });
+
+    await Poll.UntilAsync(
+      () => Task.FromResult(page.CompletedLoads > loadsBefore || services.AlertService.Invocations.Count > 0),
+      ready => ready,
+      timeoutMessage: "Person load neither completed nor reported an error.");
+
+    var errorInvocation = services.AlertService.Invocations.FirstOrDefault(i => i.Method.Name == nameof(IAlertService.ShowErrorAsync));
+    if (errorInvocation is not null && page.CompletedLoads == loadsBefore)
+    {
+      throw new Exception("Person load failed", (Exception)errorInvocation.Arguments[0]);
+    }
+  }
+
+  [Fact]
+  public async Task Ctor_resolves_dependencies_and_defaults()
+  {
+    var page = await CreatePageAsync(new TestServices());
+
+    Assert.NotNull(page.PageCommand);
+    Assert.False(page.ExpandAll);
+    Assert.Empty(page.Photos);
+  }
+
+  [Fact]
+  public async Task Loading_a_person_populates_scalar_state()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson();
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+
+    Assert.Equal(person.Id, page.PersonFullInfo.Id);
+    Assert.NotEmpty(page.Photos);
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+  }
+
+  [Fact]
+  public async Task Loading_reports_non_teardown_exceptions_and_navigates_back()
+  {
+    var services = new TestServices();
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .ThrowsAsync(new InvalidOperationException("DB error"));
+    var page = await CreatePageAsync(services);
+
+    var loadsBefore = page.CompletedLoads;
+    await MainThread.InvokeOnMainThreadAsync(() => page.PersonInfo = CreateSamplePerson());
+    await Poll.UntilAsync(
+      () => Task.FromResult(services.AlertService.Invocations.Count),
+      count => count > 0,
+      timeoutMessage: "Load failure was not reported.");
+
+    Assert.Equal(loadsBefore, page.CompletedLoads);
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Once());
+    await Poll.UntilAsync(
+      () => Task.FromResult(services.NavigationService.Invocations.Count),
+      count => count > 0,
+      timeoutMessage: "Load failure did not navigate back.");
+    services.NavigationService.Verify(n => n.GoToAsync("..", true), Times.Once());
+  }
+
+  [Fact]
+  public async Task Loading_swallows_the_project_teardown_race()
+  {
+    var services = new TestServices();
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .ThrowsAsync(new ObjectDisposedException(nameof(IProjectDocument)));
+    var page = await CreatePageAsync(services);
+
+    var loadsBefore = page.CompletedLoads;
+    await MainThread.InvokeOnMainThreadAsync(() => page.PersonInfo = CreateSamplePerson());
+    // Nothing observable ever happens on the teardown path (no load, no alert, no navigation) --
+    // wait out a short grace window and confirm it stays that way.
+    await Task.Delay(300);
+
+    Assert.Equal(loadsBefore, page.CompletedLoads);
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+    services.NavigationService.Verify(n => n.GoToAsync(It.IsAny<string>(), It.IsAny<bool>()), Times.Never());
+  }
+
+  [Fact]
+  public async Task RemovePerson_removes_the_current_person()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson();
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+
+    await page.InvokePageCommandAsync("RemovePerson");
+
+    services.Persons.Verify(p => p.RemovePersonAsync(person, It.IsAny<CancellationToken>()), Times.Once());
+  }
+
+  [Fact]
+  public async Task EditPerson_modal_updates_the_person_and_reloads()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson();
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+
+    await using var window = await WindowHost.AttachAsync(page);
+    var commandTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("EditPerson"));
+    var dialog = await ModalDialogHarness.WaitForModalAsync<CreateOrUpdatePersonDialog>(page);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      dialog.BirthDate = Date.Create(1990, 5, 1, DateStatus.WellKnown);
+      dialog.DialogCommand.Execute("CreatePersonCommand");
+    });
+    await commandTask;
+
+    services.PersonManager.Verify(p => p.UpdatePersonAsync(It.IsAny<PersonFullInfo>(), It.IsAny<CancellationToken>()), Times.Once());
+  }
+
+  [Fact]
+  public async Task EditPerson_cancelled_dialog_does_not_update()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson();
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+
+    await using var window = await WindowHost.AttachAsync(page);
+    var commandTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("EditPerson"));
+    var dialog = await ModalDialogHarness.WaitForModalAsync<CreateOrUpdatePersonDialog>(page);
+
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.DialogCommand.Execute("CreatePersonCommand"));
+    await commandTask;
+
+    services.PersonManager.Verify(p => p.UpdatePersonAsync(It.IsAny<PersonFullInfo>(), It.IsAny<CancellationToken>()), Times.Never());
+  }
+
+  [Fact]
+  public async Task GoToHome_navigates_to_MainPage()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+    var expectedRoute = $"{typeof(MainPage).Namespace}/{typeof(MainPage).Name}";
+
+    await page.InvokePageCommandAsync("GoToHome");
+
+    services.NavigationService.Verify(n => n.GoToAsync(expectedRoute), Times.Once());
+  }
+
+  [Fact]
+  public async Task GoToFamily_navigates_with_the_persons_family_name()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson();
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+    var expectedRoute = $"{typeof(FamilyPage).Namespace}/{typeof(FamilyPage).Name}";
+    var expectedFamilyName = person.Names.Single(n => n.Type == NameType.FamilyName);
+
+    await page.InvokePageCommandAsync("GoToFamily");
+
+    services.NavigationService.Verify(
+      n => n.GoToAsync(
+        expectedRoute,
+        true,
+        It.Is<Dictionary<string, object>>(d => Equals(d["FamilyName"], expectedFamilyName))),
+      Times.Once());
+  }
+
+  [Fact]
+  public async Task GoToFamilyTree_navigates_with_a_plain_PersonInfo()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson();
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+    var expectedRoute = $"{typeof(FamilyTreePage).Namespace}/{typeof(FamilyTreePage).Name}";
+
+    await page.InvokePageCommandAsync("GoToFamilyTree");
+
+    services.NavigationService.Verify(
+      n => n.GoToAsync(
+        expectedRoute,
+        true,
+        // Shell requires the exact runtime type PersonInfo, not the PersonFullInfo subclass --
+        // see PersonPage.xaml.cs's own comment on this GoToFamilyTree branch.
+        It.Is<Dictionary<string, object>>(d => d["PersonInfo"].GetType() == typeof(PersonInfo))),
+      Times.Once());
+  }
+}
