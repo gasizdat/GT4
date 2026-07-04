@@ -465,7 +465,7 @@ public partial class FamilyTreePage : ContentPage
     await Scroller.ScrollToAsync(Math.Clamp(targetX, 0, maxX), Math.Clamp(targetY, 0, maxY), animated: false);
   }
 
-  private async Task OnPageCommand(object parameter)
+  protected async Task OnPageCommand(object parameter)
   {
     switch (parameter)
     {

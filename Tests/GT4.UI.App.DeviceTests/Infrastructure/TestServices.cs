@@ -23,6 +23,7 @@ internal sealed class TestServices
   public Mock<IProjectList> ProjectList { get; } = new();
   public Mock<IRelativesProvider> RelativesProvider { get; } = new();
   public Mock<ITablePersons> Persons { get; } = new();
+  public Mock<IFamilyTreeProvider> FamilyTreeProvider { get; } = new();
   public Mock<IAlertService> AlertService { get; } = new();
   public Mock<INavigationService> NavigationService { get; } = new();
   public IServiceProvider Provider { get; }
@@ -41,6 +42,7 @@ internal sealed class TestServices
     Project.SetupGet(p => p.Metadata).Returns(Metadata.Object);
     Project.SetupGet(p => p.RelativesProvider).Returns(RelativesProvider.Object);
     Project.SetupGet(p => p.Persons).Returns(Persons.Object);
+    Project.SetupGet(p => p.FamilyTreeProvider).Returns(FamilyTreeProvider.Object);
     Project.Setup(p => p.BeginTransactionAsync(It.IsAny<CancellationToken>())).ReturnsAsync(Transaction.Object);
 
     CurrentProjectProvider.SetupGet(p => p.Project).Returns(Project.Object);
@@ -91,6 +93,12 @@ internal sealed class TestServices
     // background (well, blocks on it), so an unconfigured call must not fail invisibly.
     ProjectList.Setup(p => p.GetItemsAsync(It.IsAny<CancellationToken>())).ReturnsAsync([]);
 
+    // Same reasoning as PersonPage's collaborators above: FamilyTreePage.LoadAsync's pipeline needs
+    // a non-null tree up front.
+    FamilyTreeProvider
+      .Setup(f => f.BuildAsync(It.IsAny<Person>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(FamilyTree.Empty);
+
     var services = new ServiceCollection();
     GT4Services.Add(services);
     services.AddSingleton(CurrentProjectProvider.Object);
@@ -106,6 +114,7 @@ internal sealed class TestServices
     // INavigationService's invocation count after Execute, not by awaiting a Task directly.
     services.AddSingleton<MainPage>();
     services.AddSingleton<ProjectRevisionsPage>();
+    services.AddSingleton<TestableFamilyTreePage>();
     Provider = services.BuildServiceProvider();
   }
 }
