@@ -134,7 +134,7 @@ public partial class RelativeInfoView : ContentView
   {
     if (obj is RelativeInfoView view && oldValue != newValue)
     {
-      view.RefreshView();
+      view.RefreshView(typeof(RelativeInfoView));
     }
   }
 

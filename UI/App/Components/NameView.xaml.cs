@@ -92,7 +92,7 @@ public partial class NameView : ContentView
     if (obj is NameView view && oldValue != newValue)
     {
       view.ShowPersons = false;
-      view.RefreshView();
+      view.RefreshView(typeof(NameView));
     }
   }
 

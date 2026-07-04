@@ -118,7 +118,7 @@ public partial class ProjectListPage : ContentPage
         await OnImportGedcom();
         break;
       case string commandName when commandName == "Refresh":
-        this.RefreshView();
+        this.RefreshView(typeof(ProjectListPage));
         break;
       case string commandName when commandName == "Settings":
         await Shell.Current.GoToAsync(UIRoutes.GetRoute<SettingsPage>());

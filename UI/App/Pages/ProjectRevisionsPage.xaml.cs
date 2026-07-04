@@ -51,7 +51,7 @@ public partial class ProjectRevisionsPage : ContentPage
         break;
 
       case string commandName when commandName == "Refresh":
-        this.RefreshView();
+        this.RefreshView(typeof(ProjectRevisionsPage));
         break;
     }
   });

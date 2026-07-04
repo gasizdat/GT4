@@ -175,7 +175,7 @@ public partial class FamilyPage : ContentPage
         break;
 
       case string commandName when commandName == "Refresh":
-        this.RefreshView();
+        this.RefreshView(typeof(FamilyPage));
         break;
     }
   }
