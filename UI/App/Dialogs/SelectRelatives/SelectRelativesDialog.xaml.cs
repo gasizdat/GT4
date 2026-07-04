@@ -95,8 +95,7 @@ public partial class SelectRelativesDialog : ContentPage
 
   // serviceProvider is kept as a locator deliberately: this dialog's only caller doesn't otherwise
   // hold these dependencies, so converting to typed params would just relocate the
-  // GetRequiredService calls into the caller rather than remove them (see
-  // feedback_di_constructor_injection memory).
+  // GetRequiredService calls into the caller rather than remove them.
   public SelectRelativesDialog(BiologicalSex? biologicalSex, Relative[] existingRelatives, IServiceProvider serviceProvider)
   {
     var biologicalSexFormatter = serviceProvider.GetRequiredService<IBiologicalSexFormatter>();
