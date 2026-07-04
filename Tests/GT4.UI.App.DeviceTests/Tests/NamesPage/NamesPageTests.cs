@@ -21,7 +21,7 @@ public class NamesPageTests
   private static async Task<TestableNamesPage> CreatePageAsync(TestServices services)
   {
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
-    return await MainThread.InvokeOnMainThreadAsync(() => new TestableNamesPage(services.Provider));
+    return await MainThread.InvokeOnMainThreadAsync(() => services.Provider.GetRequiredService<TestableNamesPage>());
   }
 
   [Fact]

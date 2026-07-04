@@ -46,6 +46,7 @@ internal sealed class TestServices
     services.AddSingleton(CurrentProjectProvider.Object);
     services.AddSingleton(PageAlertService.Object);
     services.AddSingleton(NavigationService.Object);
+    services.AddSingleton<TestableNamesPage>();
     Provider = services.BuildServiceProvider();
   }
 }

@@ -16,14 +16,22 @@ internal sealed class TestableNamesPage : NamesPage
 {
   private int _CompletedLoads;
 
-  public TestableNamesPage(IServiceProvider services) : base(
-    services.GetRequiredService<ICurrentProjectProvider>(),
-    services.GetRequiredService<ICancellationTokenProvider>(),
-    services.GetRequiredService<IComparer<Name>>(),
-    services.GetRequiredService<INameTypeFormatter>(),
-    services.GetRequiredService<IBiologicalSexFormatter>(),
-    services.GetRequiredService<INameFormatter>(),
-    services.GetRequiredService<IPageAlertService>())
+  public TestableNamesPage(
+    ICurrentProjectProvider currentProjectProvider,
+    ICancellationTokenProvider cancellationTokenProvider,
+    IComparer<Name> nameComparer,
+    INameTypeFormatter nameTypeFormatter,
+    IBiologicalSexFormatter biologicalSexFormatter,
+    INameFormatter nameFormatter,
+    IPageAlertService pageAlertService) 
+    : base(
+      currentProjectProvider,
+      cancellationTokenProvider,
+      nameComparer,
+      nameTypeFormatter,
+      biologicalSexFormatter,
+      nameFormatter,
+      pageAlertService)
   {
   }
 
