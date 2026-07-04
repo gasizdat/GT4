@@ -88,6 +88,15 @@ public class FamilyTreeNodeViewTests
   }
 
   [Fact]
+  public async Task A_non_center_nodes_ring_thickness_also_scales_with_zoomScale()
+  {
+    var node = await CreateNodeAsync(isCenter: false, zoomScale: 2.0);
+
+    var (ring, _) = GetParts(node);
+    Assert.Equal(3, ring.StrokeThickness);
+  }
+
+  [Fact]
   public async Task The_label_shows_the_display_name_and_wraps_up_to_two_lines()
   {
     var node = await CreateNodeAsync(displayName: "Jane Doe");
