@@ -13,16 +13,18 @@ namespace GT4.UI.Pages;
 
 public partial class NamesPage : ContentPage
 {
-  private readonly IServiceProvider _ServiceProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly IComparer<Name> _NameComparer;
+  private readonly INameTypeFormatter _NameTypeFormatter;
   private readonly ObservableCollection<NameTypeInfoItem> _NameTypes;
   private readonly ObservableCollection<BiologicalSexItem> _BiologicalSexes = new();
   private readonly FilteredObservableCollection<Name> _Names = new();
   private readonly ICommand _EditNameCommand;
   private readonly ICommand _DeleteNameCommand;
   private readonly ICommand _PageCommand;
+  private readonly IAlertService _AlertService;
+  private readonly INameFormatter _NameFormatter;
   private NameTypeInfoItem _CurrentNameType;
   private Name? _CurrentName;
   private int? _CurrentNameId;
@@ -30,7 +32,15 @@ public partial class NamesPage : ContentPage
   private bool _UpdateNames = true;
   private string _NameFilter = string.Empty;
 
-  public NamesPage(IServiceProvider serviceProvider)
+  public NamesPage(
+    ICurrentProjectProvider currentProjectProvider,
+    ICancellationTokenProvider cancellationTokenProvider,
+    IComparer<Name> nameComparer,
+    INameTypeFormatter nameTypeFormatter,
+    IBiologicalSexFormatter biologicalSexFormatter,
+    INameFormatter nameFormatter,
+    IAlertService alertService
+    )
   {
     var nameTypes = new[]
     {
@@ -39,19 +49,19 @@ public partial class NamesPage : ContentPage
       NameType.Patronymic,
       NameType.LastName,
     };
-    var nameTypeFormatter = serviceProvider.GetRequiredService<INameTypeFormatter>();
-    _ServiceProvider = serviceProvider;
-    _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
-    _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
-    _NameComparer = _ServiceProvider.GetRequiredService<IComparer<Name>>();
+    _CurrentProjectProvider = currentProjectProvider;
+    _CancellationTokenProvider = cancellationTokenProvider;
+    _NameComparer = nameComparer;
+    _NameTypeFormatter = nameTypeFormatter;
     _NameTypes = new(nameTypes.Select(type => new NameTypeInfoItem(nameTypeFormatter.ToString(type), type)));
-    _EditNameCommand = new SafeCommand(OnEditCommandAsync);
-    _DeleteNameCommand = new SafeCommand(OnDeleteCommandAsync);
-    _PageCommand = new SafeCommand(OnPageCommandAsync);
+    _AlertService = alertService;
+    _NameFormatter = nameFormatter;
+    _EditNameCommand = new SafeCommand(OnEditCommandAsync, _AlertService);
+    _DeleteNameCommand = new SafeCommand(OnDeleteCommandAsync, _AlertService);
+    _PageCommand = new SafeCommand(OnPageCommandAsync, _AlertService);
     _CurrentNameType = _NameTypes.First();
     _Names.Filter = NamesFilter;
 
-    var biologicalSexFormatter = _ServiceProvider.GetRequiredService<IBiologicalSexFormatter>();
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, biologicalSexFormatter));
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Female, biologicalSexFormatter));
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Unknown, biologicalSexFormatter));
@@ -64,7 +74,7 @@ public partial class NamesPage : ContentPage
   {
     if (obj is Name name)
     {
-      await CreateOrUpdateNameDialog.UpdateNameAsync(name, _ServiceProvider, Navigation);
+      await CreateOrUpdateNameDialog.UpdateNameAsync(name, _CurrentProjectProvider, _CancellationTokenProvider, _NameTypeFormatter, Navigation);
       RequestUpdateNames(name);
     }
   }
@@ -92,10 +102,9 @@ public partial class NamesPage : ContentPage
             .GetPersonInfosByNameAsync(name, false, token);
           if (persons.Any())
           {
-            var nameFormatter = _ServiceProvider.GetRequiredService<INameFormatter>();
             var personsList = persons
               .Take(3)
-              .Select(p => nameFormatter.ToString(p, NameFormat.CommonPersonName));
+              .Select(p => _NameFormatter.ToString(p, NameFormat.CommonPersonName));
             var errorMessage = string.Format(UIStrings.ErrorNameIsShared_2, name.Value, string.Join(", ", personsList));
             throw new ApplicationException(errorMessage);
           }
@@ -128,7 +137,7 @@ public partial class NamesPage : ContentPage
       _ => throw new ApplicationException(nameof(OnPageCommandAsync))
     };
 
-    var dialog = new CreateOrUpdateNameDialog(nameType, _ServiceProvider);
+    var dialog = new CreateOrUpdateNameDialog(nameType, _NameTypeFormatter);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;
@@ -286,7 +295,7 @@ public partial class NamesPage : ContentPage
         _UpdateNames = false;
         // AddNameItemsAsync reads the project document on a background thread; SafeTask swallows the
         // teardown race (project closed while backgrounding) and surfaces any real failure.
-        _ = SafeTask.Run(AddNameItemsAsync);
+        _ = SafeTask.Run(AddNameItemsAsync, _AlertService);
       }
 
       return _Names.Items;

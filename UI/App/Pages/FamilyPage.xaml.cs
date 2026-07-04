@@ -4,6 +4,7 @@ using GT4.Core.Utils;
 using GT4.UI.Dialogs;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
+using GT4.UI.Utils.Comparers;
 using GT4.UI.Utils.Formatters;
 using System.Windows.Input;
 
@@ -12,23 +13,35 @@ namespace GT4.UI.Pages;
 [QueryProperty(nameof(FamilyName), "FamilyName")]
 public partial class FamilyPage : ContentPage
 {
-  private readonly IServiceProvider _Services;
+  private readonly IServiceProvider _ServiceProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IComparer<PersonInfo> _PersonInfoComparer;
+  private readonly IAlertService _AlertService;
+  private readonly INavigationService _NavigationService;
   private Name? _FamilyName = null;
   private double _PersonItemMinimalWidth;
 
-  public FamilyPage(IServiceProvider serviceProvider)
+  public FamilyPage(
+    IServiceProvider serviceProvider,
+    ICancellationTokenProvider cancellationTokenProvider,
+    ICurrentProjectProvider currentProjectProvider,
+    [FromKeyedServices(NameFormat.ShortPersonName)]
+    IComparer<PersonInfo>? personInfoComparerByShortNames,
+    IComparer<PersonInfo> personInfoComparer,
+    IAlertService alertService,
+    INavigationService navigationService
+    )
   {
-    _Services = serviceProvider;
-    _CancellationTokenProvider = _Services.GetRequiredService<ICancellationTokenProvider>();
-    _CurrentProjectProvider = _Services.GetRequiredService<ICurrentProjectProvider>();
-    _PersonInfoComparer =  _Services.GetKeyedService<IComparer<PersonInfo>>(PersonNamesFormat) ?? 
-                           _Services.GetRequiredService<IComparer<PersonInfo>>();
+    _ServiceProvider = serviceProvider;
+    _CancellationTokenProvider = cancellationTokenProvider;
+    _CurrentProjectProvider = currentProjectProvider;
+    _PersonInfoComparer = personInfoComparerByShortNames ?? personInfoComparer;
+    _AlertService = alertService;
+    _NavigationService = navigationService;
 
-    MemberItemTappedCommand = new SafeCommand<PersonInfo>(OnOpenPerson);
-    PageCommand = new SafeCommand(OnPageCommand);
+    MemberItemTappedCommand = new SafeCommand<PersonInfo>(OnOpenPerson, _AlertService);
+    PageCommand = new SafeCommand(OnPageCommand, _AlertService);
 
     InitializeComponent();
   }
@@ -84,7 +97,7 @@ public partial class FamilyPage : ContentPage
       }
       catch (Exception ex)
       {
-        _ = this.ShowErrorAsync(ex);
+        _ = _AlertService.ShowErrorAsync(ex);
         return Enumerable.Empty<PersonInfo>().ToList();
       }
     }
@@ -110,7 +123,8 @@ public partial class FamilyPage : ContentPage
   private async Task OnDeleteFamily()
   {
     var canDelete = _FamilyName is not null &&
-       await this.ShowConfirmationAsync(string.Format(UIStrings.AlertTextDeleteConfirmationText_1, _FamilyName.Value));
+       await _AlertService.ShowConfirmationAsync(
+         string.Format(UIStrings.AlertTextDeleteConfirmationText_1, _FamilyName.Value));
 
     if (!canDelete)
     {
@@ -123,12 +137,12 @@ public partial class FamilyPage : ContentPage
       .FamilyManager
       .RemoveFamilyAsync(_FamilyName!, token);
 
-    await Shell.Current.GoToAsync("..", true);
+    await _NavigationService.GoToAsync("..", true);
   }
 
   private async Task OnCreatePerson()
   {
-    var dialog = new CreateOrUpdatePersonDialog(null, _Services);
+    var dialog = new CreateOrUpdatePersonDialog(null, _ServiceProvider);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;
@@ -153,12 +167,12 @@ public partial class FamilyPage : ContentPage
     OnPropertyChanged(nameof(Persons));
   }
 
-  private async Task OnOpenPerson(PersonInfo familyMember)
+  protected async Task OnOpenPerson(PersonInfo familyMember)
   {
-    await Shell.Current.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { ["PersonInfo"] = familyMember });
+    await _NavigationService.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { ["PersonInfo"] = familyMember });
   }
 
-  private async Task OnPageCommand(object parameter)
+  protected async Task OnPageCommand(object parameter)
   {
     switch (parameter)
     {
@@ -167,7 +181,12 @@ public partial class FamilyPage : ContentPage
         break;
 
       case string commandName when commandName == "EditFamily":
-        await CreateOrUpdateNameDialog.UpdateNameAsync(FamilyName!, _Services, Navigation);
+        await CreateOrUpdateNameDialog.UpdateNameAsync(
+          FamilyName!,
+          _CurrentProjectProvider,
+          _CancellationTokenProvider,
+          _ServiceProvider.GetRequiredService<INameTypeFormatter>(),
+          Navigation);
         break;
 
       case string commandName when commandName == "CreatePerson":

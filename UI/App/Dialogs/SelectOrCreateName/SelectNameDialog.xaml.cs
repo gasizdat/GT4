@@ -12,11 +12,15 @@ namespace GT4.UI.Dialogs;
 public partial class SelectNameDialog : ContentPage
 {
   private readonly TaskCompletionSource<Name?> _Info = new(null);
+  // Kept as a locator deliberately: this dialog's only caller doesn't otherwise hold these
+  // dependencies, so converting to typed params would just relocate the GetRequiredService calls
+  // into the caller rather than remove them.
   private readonly IServiceProvider _ServiceProvider;
   private readonly INameTypeFormatter _NameTypeFormatter;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly IComparer<Name> _NameComparer;
+  private readonly IAlertService _AlertService;
   private readonly ObservableCollection<NameTypeInfoItem> _NameTypes;
   private readonly ICommand _DialogCommand;
   private ICollection<NameInfoItem>? _Names;
@@ -35,7 +39,8 @@ public partial class SelectNameDialog : ContentPage
     _NameComparer = _ServiceProvider.GetRequiredService<IComparer<Name>>();
     _NameTypes = new((new[] { NameType.FirstName, NameType.Patronymic, NameType.LastName })
       .Select(type => new NameTypeInfoItem(_NameTypeFormatter.ToString(type), type)));
-    _DialogCommand = new SafeCommand(OnDialogCommandAsync);
+    _AlertService = _ServiceProvider.GetRequiredService<IAlertService>();
+    _DialogCommand = new SafeCommand(OnDialogCommandAsync, _AlertService);
     _CurrentNameType = _NameTypes.First();
 
     _NameDeclension = biologicalSex switch
@@ -59,7 +64,8 @@ public partial class SelectNameDialog : ContentPage
         OnSelectName();
         break;
       case Name nameInfo:
-        await CreateOrUpdateNameDialog.UpdateNameAsync(nameInfo, _ServiceProvider, Navigation);
+        await CreateOrUpdateNameDialog.UpdateNameAsync(
+          nameInfo, _CurrentProjectProvider, _CancellationTokenProvider, _NameTypeFormatter, Navigation);
         Names = null;
         CurrentName = Names?.SingleOrDefault(n => n.Info.Id == nameInfo.Id);
         break;
@@ -149,7 +155,7 @@ public partial class SelectNameDialog : ContentPage
         return;
     }
 
-    var dialog = new CreateOrUpdateNameDialog(dialogNameType, _ServiceProvider);
+    var dialog = new CreateOrUpdateNameDialog(dialogNameType, _NameTypeFormatter);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;

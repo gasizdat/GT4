@@ -11,13 +11,19 @@ public partial class ProjectRevisionsPage : ContentPage
 {
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
+  private readonly IAlertService _AlertService;
+  private readonly INavigationService _NavigationService;
   private ProjectRevisionItem? _SelectedRevision;
 
   public ProjectRevisionsPage(ICurrentProjectProvider currentProjectProvider,
-    ICancellationTokenProvider cancellationTokenProvider)
+    ICancellationTokenProvider cancellationTokenProvider,
+    IAlertService alertService,
+    INavigationService navigationService)
   {
     _CurrentProjectProvider = currentProjectProvider;
     _CancellationTokenProvider = cancellationTokenProvider;
+    _AlertService = alertService;
+    _NavigationService = navigationService;
 
     InitializeComponent();
   }
@@ -47,14 +53,14 @@ public partial class ProjectRevisionsPage : ContentPage
           await _CurrentProjectProvider.RestoreRevisionAsync(SelectedRevision.Info, token);
         }
 
-        await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectPage>());
+        await _NavigationService.GoToAsync(UIRoutes.GetRoute<ProjectPage>());
         break;
 
       case string commandName when commandName == "Refresh":
         this.RefreshView();
         break;
     }
-  });
+  }, _AlertService);
 
   public ICommand DeleteRevisionCommand => new SafeCommand(async (object item) =>
   {
@@ -64,7 +70,7 @@ public partial class ProjectRevisionsPage : ContentPage
       await _CurrentProjectProvider.RemoveRevisionAsync(projectRevisionItem.Info, token);
       OnPropertyChanged(nameof(Revisions));
     }
-  });
+  }, _AlertService);
 
   public IEnumerable<ProjectRevisionItem> Revisions => _CurrentProjectProvider
     .Revisions

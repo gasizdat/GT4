@@ -1,0 +1,89 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Must be run with -c Release (e.g. `dotnet test ... -c Release`): in Debug, MAUI's XAML
+       runtime type resolution (kept live for Hot Reload) assumes a page's unqualified
+       clr-namespace elements resolve against its own entry assembly. That holds for the real App
+       (self-hosted), but not here, where AppWinOnly.dll is hosted from this test host's own entry
+       assembly, so lookups like <components:PageLayout> fail with "Type not found". Release runs
+       full XamlC precompilation, which resolves types at build time and never falls back to that
+       runtime path. -->
+
+  <PropertyGroup>
+    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">net10.0-windows10.0.19041.0</TargetFrameworks>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>GT4.UI.DeviceTests</RootNamespace>
+    <UseMaui>true</UseMaui>
+    <SingleProject>true</SingleProject>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <MauiEnableXamlCBindingWithSourceCompilation>false</MauiEnableXamlCBindingWithSourceCompilation>
+    <!-- The MAUI app defines its own entry point; disable the auto-generated testing platform one -->
+    <GenerateTestingPlatformEntryPoint>false</GenerateTestingPlatformEntryPoint>
+
+    <ApplicationTitle>GT4 Device Tests</ApplicationTitle>
+    <ApplicationId>com.gasizdat.gt4.devicetests</ApplicationId>
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <ApplicationVersion>1</ApplicationVersion>
+
+    <WindowsPackageType>None</WindowsPackageType>
+    <CreateMSIXPackage>False</CreateMSIXPackage>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+  </PropertyGroup>
+
+  <!-- This project only builds/runs in Release (see ErrorIfDebugConfiguration below), but debugging
+       a test still needs reliable breakpoints/stepping, which JIT inlining under optimization
+       defeats, so optimization is disabled for this one configuration instead. -->
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-windows10.0.19041.0|AnyCPU'">
+    <Optimize>False</Optimize>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Icons, fonts and images flow transitively from the referenced App project.
+         The app-level style dictionaries have no x:Class, so they cannot be instantiated from the
+         App assembly; link them into this assembly and merge them via GT4TestStyles.
+         Keep in sync with the dictionaries merged by UI\App\App.xaml. -->
+    <MauiXaml Include="..\..\UI\App\Resources\Styles\Colors.xaml" Link="Resources\Styles\Colors.xaml" />
+    <MauiXaml Include="..\..\UI\App\Resources\Styles\Styles.xaml" Link="Resources\Styles\Styles.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
+    <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="$(MauiVersion)" />
+    <PackageReference Include="DeviceRunners.VisualRunners.Maui" Version="0.1.0-preview.12" />
+    <PackageReference Include="DeviceRunners.VisualRunners.Xunit3" Version="0.1.0-preview.12" />
+    <PackageReference Include="DeviceRunners.UITesting.Maui" Version="0.1.0-preview.12" />
+    <PackageReference Include="DeviceRunners.UITesting.Xunit3" Version="0.1.0-preview.12" />
+    <PackageReference Include="DeviceRunners.Testing.Targets" Version="0.1.0-preview.12" />
+    <!-- Test-authoring surface only; do NOT reference xunit.v3 / xunit.v3.core here -->
+    <PackageReference Include="xunit.v3.extensibility.core" Version="3.2.2" />
+    <PackageReference Include="xunit.v3.assert" Version="3.2.2" />
+    <PackageReference Include="Moq" Version="4.20.72" />
+    <PackageReference Include="FluentAssertions" Version="8.8.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Pages under test come from the real app assembly. Reference the unpackaged Windows head:
+         the packaged App head bakes in the WindowsAppSDK DeploymentManager auto-initializer,
+         which requires package identity and crashes this unpackaged test host at startup. -->
+    <ProjectReference Include="..\..\UI\App\AppWinOnly.csproj" />
+  </ItemGroup>
+
+  <!-- The referenced project is itself a MAUI app, so its icon arrives both raw (MauiIcon) and
+       already mapped into MauiImage, tripping Resizetizer's duplicate-output check. -->
+  <Target Name="DedupTransitiveMauiImages" AfterTargets="ResizetizeCollectItems">
+    <RemoveDuplicates Inputs="@(MauiImage)">
+      <Output TaskParameter="Filtered" ItemName="_DedupedMauiImage" />
+    </RemoveDuplicates>
+    <ItemGroup>
+      <MauiImage Remove="@(MauiImage)" />
+      <MauiImage Include="@(_DedupedMauiImage)" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="ErrorIfDebugConfiguration" BeforeTargets="Build;Test">
+    <Error Condition="'$(Configuration)' == 'Debug'" Text="GT4.UI.App.DeviceTests does not support Debug: MAUI's Hot-Reload XAML resolution breaks pages hosted from a referenced assembly (see the note at the top of this file). Build/run with -c Release instead." />
+  </Target>
+
+</Project>

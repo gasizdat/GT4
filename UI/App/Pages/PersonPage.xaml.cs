@@ -26,6 +26,8 @@ public partial class PersonPage : ContentPage
   private readonly IDataConverter _GedcomConverter;
   private readonly ICommand _PageCommand;
   private readonly RelativeTree _Relatives;
+  private readonly IAlertService _AlertService;
+  private readonly INavigationService _NavigationService;
   private ObservableCollection<PersonInfo> _NavigationHistory = new();
   private int _NavigationIndex = -1;
   private PersonFullInfo _PersonFullInfo = PersonFullInfo.Empty;
@@ -34,18 +36,33 @@ public partial class PersonPage : ContentPage
   private PersonPageSmartLayout _SmartLayout = new();
   private bool _ExpandAll = false;
 
-  public PersonPage(IServiceProvider serviceProvider)
+  public PersonPage(
+    IServiceProvider serviceProvider,
+    ICancellationTokenProvider cancellationTokenProvider,
+    ICurrentProjectProvider currentProjectProvider,
+    IDateSpanFormatter dateSpanFormatter,
+    IDateFormatter dateFormatter,
+    INameFormatter nameFormatter,
+    [FromKeyedServices(DataCategory.PersonBio)]
+    IDataConverter textConverter,
+    [FromKeyedServices(DataCategory.PersonGedcomTags)]
+    IDataConverter gedcomConverter,
+    IAlertService alertService,
+    INavigationService navigationService
+    )
   {
     _ServiceProvider = serviceProvider;
-    _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
-    _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
-    _DateSpanFormatter = _ServiceProvider.GetRequiredService<IDateSpanFormatter>();
-    _DateFormatter = _ServiceProvider.GetRequiredService<IDateFormatter>();
-    _NameFormatter = _ServiceProvider.GetRequiredService<INameFormatter>();
-    _TextConverter = _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonBio);
-    _GedcomConverter = _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonGedcomTags);
-    _PageCommand = new SafeCommand(OnPageCommand);
-    _Relatives = new RelativeTree(_CurrentProjectProvider, _CancellationTokenProvider);
+    _CancellationTokenProvider = cancellationTokenProvider;
+    _CurrentProjectProvider = currentProjectProvider;
+    _DateSpanFormatter = dateSpanFormatter;
+    _DateFormatter = dateFormatter;
+    _NameFormatter = nameFormatter;
+    _TextConverter = textConverter;
+    _GedcomConverter = gedcomConverter;
+    _AlertService = alertService;
+    _NavigationService = navigationService;
+    _PageCommand = new SafeCommand(OnPageCommand, _AlertService);
+    _Relatives = new RelativeTree(_CurrentProjectProvider, _CancellationTokenProvider, _AlertService);
 
     InitializeComponent();
   }
@@ -234,7 +251,7 @@ public partial class PersonPage : ContentPage
                                                   stepChildrenTasks.Result,
                                                   photos, bioTask.Result as string,
                                                   gedcomTask.Result as string,
-                                                  addToNavigation));
+                                                  addToNavigation), _AlertService);
     }
     catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
     {
@@ -245,8 +262,8 @@ public partial class PersonPage : ContentPage
     {
       // GetPersonDataAsync runs on a background thread (Task.Run); both the alert and the
       // navigation touch native views, so marshal them onto the UI thread.
-      await this.ShowErrorAsync(ex);
-      await MainThread.InvokeOnMainThreadAsync(() => Shell.Current.GoToAsync("..", true));
+      await _AlertService.ShowErrorAsync(ex);
+      await MainThread.InvokeOnMainThreadAsync(() => _NavigationService.GoToAsync("..", true));
       return;
     }
   }
@@ -303,7 +320,7 @@ public partial class PersonPage : ContentPage
     CurrentPerson = personInfoCopy;
   }
 
-  private async Task OnPageCommand(object obj)
+  protected async Task OnPageCommand(object obj)
   {
     switch (obj)
     {
@@ -317,17 +334,17 @@ public partial class PersonPage : ContentPage
         ShowPersonInfo(_PersonFullInfo, false);
         break;
       case string commandName when commandName == "GoToHome":
-        await Shell.Current.GoToAsync(UIRoutes.GetRoute<MainPage>());
+        await _NavigationService.GoToAsync(UIRoutes.GetRoute<MainPage>());
         break;
       case string commandName when commandName == "GoToFamily":
-        await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = FamilyName! });
+        await _NavigationService.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = FamilyName! });
         break;
       case string commandName when commandName == "GoToFamilyTree":
         // Shell matches the target's [QueryProperty] by exact runtime type, so hand it a plain
         // PersonInfo — passing the PersonFullInfo subclass sends Shell down a Convert.ChangeType path
         // that throws (the object is not IConvertible).
         var centerInfo = new PersonInfo(_PersonFullInfo, _PersonFullInfo.Names, _PersonFullInfo.MainPhoto);
-        await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamilyTreePage>(), true, new() { ["PersonInfo"] = centerInfo });
+        await _NavigationService.GoToAsync(UIRoutes.GetRoute<FamilyTreePage>(), true, new() { ["PersonInfo"] = centerInfo });
         break;
       case RelativeInfo relativeInfo:
         ShowPersonInfo(relativeInfo, true);
@@ -340,7 +357,7 @@ public partial class PersonPage : ContentPage
         break;
       case string commandName when commandName == "ToggleAll":
         ExpandAll = !ExpandAll;
-        _ = SafeTask.Run(() => _Relatives.ExpandAllAsync(ExpandAll));
+        _ = SafeTask.Run(() => _Relatives.ExpandAllAsync(ExpandAll), _AlertService);
         break;
     }
   }

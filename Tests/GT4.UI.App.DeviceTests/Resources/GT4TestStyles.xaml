@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ResourceDictionary
+    x:Class="GT4.UI.DeviceTests.GT4TestStyles"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+  <!-- Mirrors UI\App\App.xaml (together with GT4TestColors) so detached pages resolve the same
+       StaticResource keys; keep the merged dictionaries in sync. Colors live in a separate
+       wrapper because Styles.xaml resolves color keys through Application.Current during its own
+       inflation — GT4TestColors must already be in the application resources at that point. -->
+  <ResourceDictionary.MergedDictionaries>
+    <ResourceDictionary Source="Styles/Styles.xaml" />
+  </ResourceDictionary.MergedDictionaries>
+
+</ResourceDictionary>

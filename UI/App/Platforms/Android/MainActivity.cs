@@ -1,4 +1,4 @@
-﻿using Android.App;
+using Android.App;
 using Android.Content;
 using Android.Content.PM;
 using Android.OS;
@@ -99,11 +99,12 @@ namespace GT4
         using var token = _Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
         await _Services.GetRequiredService<IProjectList>().ImportAsync(input, token);
 
-        RunOnUiThread(() => _ = Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectListPage>()));
+        var navigationService = _Services.GetRequiredService<INavigationService>();
+        RunOnUiThread(() => _ = navigationService.GoToAsync(UIRoutes.GetRoute<ProjectListPage>()));
       }
       catch (Exception ex)
       {
-        await PageAlert.ShowErrorAsync(ex);
+        await _Services.GetRequiredService<IAlertService>().ShowErrorAsync(ex);
       }
     }
 

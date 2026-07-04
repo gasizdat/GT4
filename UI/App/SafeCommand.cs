@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 
 namespace GT4.UI;
 
@@ -59,8 +59,8 @@ public sealed class SafeCommand<T> : SafeCommand
     return !t.IsValueType;
   }
 
-  public SafeCommand(Action<T> execute)
-    : base(GetSafeAction(execute))
+  public SafeCommand(Action<T> execute, IAlertService alertService)
+    : base(GetSafeAction(execute), alertService)
   {
     if (execute is null)
     {
@@ -68,8 +68,8 @@ public sealed class SafeCommand<T> : SafeCommand
     }
   }
 
-  public SafeCommand(Action<T> execute, Func<T, bool> canExecute)
-    : base(GetSafeAction(execute), GetSafeCanExecuteAction(canExecute))
+  public SafeCommand(Action<T> execute, Func<T, bool> canExecute, IAlertService alertService)
+    : base(GetSafeAction(execute), GetSafeCanExecuteAction(canExecute), alertService)
   {
     if (execute is null)
       throw new ArgumentNullException(nameof(execute));
@@ -77,8 +77,8 @@ public sealed class SafeCommand<T> : SafeCommand
       throw new ArgumentNullException(nameof(canExecute));
   }
 
-  public SafeCommand(Func<T, Task> execute)
-    : base(GetSafeAction(execute))
+  public SafeCommand(Func<T, Task> execute, IAlertService alertService)
+    : base(GetSafeAction(execute), alertService)
   {
     if (execute is null)
     {
@@ -86,8 +86,8 @@ public sealed class SafeCommand<T> : SafeCommand
     }
   }
 
-  public SafeCommand(Func<T, Task> execute, Func<T, bool> canExecute)
-    : base(GetSafeAction(execute), GetSafeCanExecuteAction(canExecute))
+  public SafeCommand(Func<T, Task> execute, Func<T, bool> canExecute, IAlertService alertService)
+    : base(GetSafeAction(execute), GetSafeCanExecuteAction(canExecute), alertService)
   {
     if (execute is null)
       throw new ArgumentNullException(nameof(execute));
@@ -98,7 +98,7 @@ public sealed class SafeCommand<T> : SafeCommand
 
 public class SafeCommand : Command
 {
-  private static Action GetSafeAction(Action action)
+  private static Action GetSafeAction(Action action, IAlertService alertService)
   {
     return () =>
     {
@@ -108,12 +108,12 @@ public class SafeCommand : Command
       }
       catch (Exception ex)
       {
-        _ = PageAlert.ShowErrorAsync(ex);
+        _ = alertService.ShowErrorAsync(ex);
       }
     };
   }
 
-  private static Action<object> GetSafeAction(Action<object> action)
+  private static Action<object> GetSafeAction(Action<object> action, IAlertService alertService)
   {
     return (object obj) =>
     {
@@ -123,12 +123,12 @@ public class SafeCommand : Command
       }
       catch (Exception ex)
       {
-        _ = PageAlert.ShowErrorAsync(ex);
+        _ = alertService.ShowErrorAsync(ex);
       }
     };
   }
 
-  private static Action GetSafeAction(Func<Task> actionAsync)
+  private static Action GetSafeAction(Func<Task> actionAsync, IAlertService alertService)
   {
     return async () =>
     {
@@ -138,12 +138,12 @@ public class SafeCommand : Command
       }
       catch (Exception ex)
       {
-        await PageAlert.ShowErrorAsync(ex);
+        await alertService.ShowErrorAsync(ex);
       }
     };
   }
 
-  private static Action<object> GetSafeAction(Func<object, Task> actionAsync)
+  private static Action<object> GetSafeAction(Func<object, Task> actionAsync, IAlertService alertService)
   {
     return async (object obj) =>
     {
@@ -153,12 +153,12 @@ public class SafeCommand : Command
       }
       catch (Exception ex)
       {
-        await PageAlert.ShowErrorAsync(ex);
+        await alertService.ShowErrorAsync(ex);
       }
     };
   }
 
-  private static Func<object, bool> GetSafeCanExecuteAction(Func<object, bool> canExecute)
+  private static Func<object, bool> GetSafeCanExecuteAction(Func<object, bool> canExecute, IAlertService alertService)
   {
     return (object obj) =>
     {
@@ -168,15 +168,15 @@ public class SafeCommand : Command
       }
       catch (Exception ex)
       {
-        _ = PageAlert.ShowErrorAsync(ex);
+        _ = alertService.ShowErrorAsync(ex);
       }
 
       return false;
     };
   }
 
-  public SafeCommand(Action execute)
-  : base(GetSafeAction(execute))
+  public SafeCommand(Action execute, IAlertService alertService)
+  : base(GetSafeAction(execute, alertService))
   {
     if (execute is null)
     {
@@ -184,8 +184,8 @@ public class SafeCommand : Command
     }
   }
 
-  public SafeCommand(Action<object> execute)
-    : base(GetSafeAction(execute))
+  public SafeCommand(Action<object> execute, IAlertService alertService)
+    : base(GetSafeAction(execute, alertService))
   {
     if (execute is null)
     {
@@ -193,8 +193,8 @@ public class SafeCommand : Command
     }
   }
 
-  public SafeCommand(Action<object> execute, Func<object, bool> canExecute)
-    : base(GetSafeAction(execute), GetSafeCanExecuteAction(canExecute))
+  public SafeCommand(Action<object> execute, Func<object, bool> canExecute, IAlertService alertService)
+    : base(GetSafeAction(execute, alertService), GetSafeCanExecuteAction(canExecute, alertService))
   {
     if (execute is null)
       throw new ArgumentNullException(nameof(execute));
@@ -202,20 +202,20 @@ public class SafeCommand : Command
       throw new ArgumentNullException(nameof(canExecute));
   }
 
-  public SafeCommand(Func<Task> executeAsync)
-      : base(GetSafeAction(executeAsync))
+  public SafeCommand(Func<Task> executeAsync, IAlertService alertService)
+      : base(GetSafeAction(executeAsync, alertService))
   {
     ArgumentNullException.ThrowIfNull(executeAsync);
   }
 
-  public SafeCommand(Func<object, Task> executeAsync)
-      : base(GetSafeAction(executeAsync))
+  public SafeCommand(Func<object, Task> executeAsync, IAlertService alertService)
+      : base(GetSafeAction(executeAsync, alertService))
   {
     ArgumentNullException.ThrowIfNull(executeAsync);
   }
 
-  public SafeCommand(Func<object, Task> executeAsync, Func<object, bool> canExecute)
-      : base(GetSafeAction(executeAsync), GetSafeCanExecuteAction(canExecute))
+  public SafeCommand(Func<object, Task> executeAsync, Func<object, bool> canExecute, IAlertService alertService)
+      : base(GetSafeAction(executeAsync, alertService), GetSafeCanExecuteAction(canExecute, alertService))
   {
     ArgumentNullException.ThrowIfNull(executeAsync);
     ArgumentNullException.ThrowIfNull(canExecute);

@@ -19,7 +19,11 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private readonly INameFormatter _NameFormatter;
   private readonly IDateFormatter _DateFormatter;
   private readonly IComparer<PersonInfo> _PersonInfoComparer;
+  // Kept as a locator deliberately: this dialog's only caller doesn't otherwise hold these
+  // dependencies, so converting to typed params would just relocate the GetRequiredService calls
+  // into the caller rather than remove them.
   private readonly IServiceProvider _ServiceProvider;
+  private readonly IAlertService _AlertService;
   private readonly ICommand _DialogCommand;
   private readonly string _SaveButtonName;
   private readonly ObservableCollection<PersonDataItem> _Photos = new();
@@ -45,7 +49,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     _NameFormatter = _ServiceProvider.GetRequiredService<INameFormatter>();
     _DateFormatter = _ServiceProvider.GetRequiredService<IDateFormatter>();
     _PersonInfoComparer = _ServiceProvider.GetRequiredService<IComparer<PersonInfo>>();
-    _DialogCommand = new SafeCommand(OnDialogCommand);
+    _AlertService = _ServiceProvider.GetRequiredService<IAlertService>();
+    _DialogCommand = new SafeCommand(OnDialogCommand, _AlertService);
     _SaveButtonName = person is null ? UIStrings.BtnNameCreateFamilyPerson : UIStrings.BtnNameUpdateFamilyPerson;
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, _BiologicalSexFormatter));
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Female, _BiologicalSexFormatter));
@@ -65,7 +70,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     var ret = new PersonDataItem(
       data: data,
       _ServiceProvider.GetRequiredKeyedService<IDataConverter>(dataCategory),
-      _CancellationTokenProvider);
+      _CancellationTokenProvider,
+      _AlertService);
 
     return ret;
   }
@@ -112,7 +118,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         _ => new PersonDataItem(
               dataCategory: DataCategory.PersonBio,
               _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonBio),
-              _CancellationTokenProvider)
+              _CancellationTokenProvider,
+              _AlertService)
       };
       _Biography.PropertyChanged += (_, _) => IsModified = _Biography.IsModified;
 
@@ -126,7 +133,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
     catch (Exception ex)
     {
-      _ = this.ShowErrorAsync(ex);
+      _ = _AlertService.ShowErrorAsync(ex);
     }
   }
 
@@ -234,14 +241,14 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     _Info.SetResult(result);
   }
 
-  private async Task OnAddPersonNameAsync()
+  protected async Task OnAddPersonNameAsync()
   {
     var biologicalSex = _BiologicalSex?.Info ?? BiologicalSex.Unknown;
     if (biologicalSex == BiologicalSex.Unknown)
     {
       var message = string.Format(UIStrings.AlertTextUnableToAddNameForTheSexSelected_1,
         _BiologicalSexFormatter.ToString(_BiologicalSex?.Info));
-      await this.ShowWarningAsync(message);
+      await _AlertService.ShowWarningAsync(message);
       return;
     }
 

@@ -16,6 +16,7 @@ public partial class SelectRelativesDialog : ContentPage
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IDateFormatter _DateFormatter;
   private readonly IComparer<PersonInfo> _PersonInfoComparer;
+  private readonly IAlertService _AlertService;
   private readonly BiologicalSexItem[] _BiologicalSexes;
   private readonly RelationshipTypeItem[] _RelationshipTypes;
   private readonly FilteredObservableCollection<PersonInfo> _Persons = new();
@@ -52,7 +53,7 @@ public partial class SelectRelativesDialog : ContentPage
     return true;
   }
 
-  private async Task OnDialogCommand(object obj)
+  protected async Task OnDialogCommand(object obj)
   {
     switch (obj)
     {
@@ -92,6 +93,9 @@ public partial class SelectRelativesDialog : ContentPage
     }
   }
 
+  // serviceProvider is kept as a locator deliberately: this dialog's only caller doesn't otherwise
+  // hold these dependencies, so converting to typed params would just relocate the
+  // GetRequiredService calls into the caller rather than remove them.
   public SelectRelativesDialog(BiologicalSex? biologicalSex, Relative[] existingRelatives, IServiceProvider serviceProvider)
   {
     var biologicalSexFormatter = serviceProvider.GetRequiredService<IBiologicalSexFormatter>();
@@ -101,7 +105,8 @@ public partial class SelectRelativesDialog : ContentPage
     _CurrentProjectProvider = serviceProvider.GetRequiredService<ICurrentProjectProvider>();
     _DateFormatter = serviceProvider.GetRequiredService<IDateFormatter>();
     _PersonInfoComparer = serviceProvider.GetRequiredService<IComparer<PersonInfo>>();
-    _DialogCommand = new SafeCommand(OnDialogCommand);
+    _AlertService = serviceProvider.GetRequiredService<IAlertService>();
+    _DialogCommand = new SafeCommand(OnDialogCommand, _AlertService);
     _ProjectRevision = _CurrentProjectProvider.Project.ProjectRevision;
     _BiologicalSexes = new[] { BiologicalSex.Male, BiologicalSex.Female, BiologicalSex.Unknown }
       .Select(sex => new BiologicalSexItem(sex, biologicalSexFormatter))
@@ -200,7 +205,7 @@ public partial class SelectRelativesDialog : ContentPage
         }
         catch (Exception ex)
         {
-          await this.ShowErrorAsync(ex);
+          await _AlertService.ShowErrorAsync(ex);
         }
       }
 

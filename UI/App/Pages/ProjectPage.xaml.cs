@@ -22,7 +22,7 @@ public partial class ProjectPage : ContentPage
     [DevicePlatform.Android] = ["*/*"],
   });
 
-  private readonly IServiceProvider _ServiceProvider;
+  private readonly INameTypeFormatter _NameTypeFormatter;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IComparer<PersonInfo> _PersonInfoComparer;
@@ -30,22 +30,38 @@ public partial class ProjectPage : ContentPage
   private readonly IProjectList _ProjectList;
   private readonly IGedcomExporter _Exporter;
   private readonly IGedcomImporter _Importer;
+  private readonly IAlertService _AlertService;
+  private readonly INavigationService _NavigationService;
 
   private long? _ProjectRevision;
 
-  public ProjectPage(IServiceProvider serviceProvider)
+  public ProjectPage(
+    INameTypeFormatter nameTypeFormatter,
+    ICancellationTokenProvider cancellationTokenProvider,
+    ICurrentProjectProvider currentProjectProvider,
+    [FromKeyedServices(NameFormat.ShortPersonName)]
+    IComparer<PersonInfo>? personInfoComparerByShortNames,
+    IComparer<PersonInfo> personInfoComparer,
+    IComparer<Name> nameComparer,
+    IProjectList projectList,
+    IGedcomExporter exporter,
+    IGedcomImporter importer,
+    IAlertService alertService,
+    INavigationService navigationService
+    )
   {
-    _ServiceProvider = serviceProvider;
-    _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
-    _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
-    _PersonInfoComparer = _ServiceProvider.GetKeyedService<IComparer<PersonInfo>>(PersonNamesFormat) ??
-                          _ServiceProvider.GetRequiredService<IComparer<PersonInfo>>();
-    _NameComparer = _ServiceProvider.GetRequiredService<IComparer<Name>>();
-    _ProjectList = _ServiceProvider.GetRequiredService<IProjectList>();
-    _Exporter = _ServiceProvider.GetRequiredService<IGedcomExporter>();
-    _Importer = _ServiceProvider.GetRequiredService<IGedcomImporter>();
+    _NameTypeFormatter = nameTypeFormatter;
+    _CancellationTokenProvider = cancellationTokenProvider;
+    _CurrentProjectProvider = currentProjectProvider;
+    _PersonInfoComparer = personInfoComparerByShortNames ?? personInfoComparer;
+    _NameComparer = nameComparer;
+    _ProjectList = projectList;
+    _Exporter = exporter;
+    _Importer = importer;
+    _AlertService = alertService;
+    _NavigationService = navigationService;
 
-    PageCommand = new SafeCommand(OnPageCommand);
+    PageCommand = new SafeCommand(OnPageCommand, _AlertService);
     InitializeComponent();
   }
 
@@ -75,7 +91,7 @@ public partial class ProjectPage : ContentPage
       }
       catch (Exception ex)
       {
-        this.ShowErrorAsync(ex);
+        _ = _AlertService.ShowErrorAsync(ex);
         return [];
       }
     }
@@ -94,7 +110,7 @@ public partial class ProjectPage : ContentPage
     {
       if (e.CurrentSelection.FirstOrDefault() is FamilyInfoItem item)
       {
-        await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = item.Info });
+        await _NavigationService.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = item.Info });
       }
     }
     catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
@@ -103,7 +119,7 @@ public partial class ProjectPage : ContentPage
     }
     catch (Exception ex)
     {
-      await this.ShowErrorAsync(ex);
+      await _AlertService.ShowErrorAsync(ex);
     }
   }
 
@@ -199,7 +215,7 @@ public partial class ProjectPage : ContentPage
       .ToArray();
   }
 
-  private async Task OnPageCommand(object obj)
+  protected async Task OnPageCommand(object obj)
   {
     switch (obj)
     {
@@ -220,7 +236,7 @@ public partial class ProjectPage : ContentPage
         break;
 
       case string commandName when commandName == "GoToNames":
-        await Shell.Current.GoToAsync(UIRoutes.GetRoute<NamesPage>());
+        await _NavigationService.GoToAsync(UIRoutes.GetRoute<NamesPage>());
         break;
 
       case string commandName when commandName == "ExportGedcom":
@@ -232,7 +248,7 @@ public partial class ProjectPage : ContentPage
         break;
 
       case string commandName when commandName == "GoToRevisions":
-        await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectRevisionsPage>());
+        await _NavigationService.GoToAsync(UIRoutes.GetRoute<ProjectRevisionsPage>());
         break;
     }
   }
@@ -242,13 +258,13 @@ public partial class ProjectPage : ContentPage
     var projectName = _CurrentProjectProvider.Info.Name;
     var projectOrigin = _CurrentProjectProvider.Info.Origin;
     var confirmationText = string.Format(UIStrings.AlertTextDeleteConfirmationText_1, projectName);
-    if (await this.ShowConfirmationAsync(confirmationText))
+    if (await _AlertService.ShowConfirmationAsync(confirmationText))
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
       await _ProjectList.RemoveAsync(projectOrigin, token);
     }
 
-    await Shell.Current.GoToAsync("..", true);
+    await _NavigationService.GoToAsync("..", true);
   }
 
   private async Task OnEditProject()
@@ -271,12 +287,12 @@ public partial class ProjectPage : ContentPage
       project.Metadata.SetProjectDescriptionAsync(projectInfo.Description, token));
     await transaction.CommitAsync(token);
 
-    await Shell.Current.GoToAsync("..", true);
+    await _NavigationService.GoToAsync("..", true);
   }
 
   private async Task OnCreateFamily()
   {
-    var dialog = new CreateOrUpdateNameDialog(NameType.FamilyName, _ServiceProvider);
+    var dialog = new CreateOrUpdateNameDialog(NameType.FamilyName, _NameTypeFormatter);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;
@@ -324,7 +340,7 @@ public partial class ProjectPage : ContentPage
       return;
 
     var confirmText = string.Format(UIStrings.AlertImportGedcomConfirm_1, _CurrentProjectProvider.Info.Name);
-    if (!await this.ShowConfirmationAsync(confirmText))
+    if (!await _AlertService.ShowConfirmationAsync(confirmText))
       return;
 
     var dialog = new GedcomImportDialog(_CurrentProjectProvider.Info.Name);

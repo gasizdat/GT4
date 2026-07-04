@@ -29,16 +29,28 @@ public partial class ProjectListPage : ContentPage
   private readonly ICommand _PageCommand;
   private readonly IProjectList _ProjectList;
   private readonly IGedcomImporter _Importer;
+  private readonly IAlertService _AlertService;
+  private readonly INavigationService _NavigationService;
   private readonly ObservableCollection<ProjectItem> _Projects = new();
 
-  public ProjectListPage(IServiceProvider services)
+  public ProjectListPage(
+    ICancellationTokenProvider cancellationTokenProvider,
+    ICurrentProjectProvider currentProjectProvider,
+    IComparer<ProjectInfo> projectInfoComparer,
+    IProjectList projectList,
+    IGedcomImporter importer,
+    IAlertService alertService,
+    INavigationService navigationService
+    )
   {
-    _CancellationTokenProvider = services.GetRequiredService<ICancellationTokenProvider>();
-    _CurrentProjectProvider = services.GetRequiredService<ICurrentProjectProvider>();
-    _ProjectInfoComparer = services.GetRequiredService<IComparer<ProjectInfo>>();
-    _PageCommand = new SafeCommand(OnPageCommand);
-    _ProjectList = services.GetRequiredService<IProjectList>();
-    _Importer = services.GetRequiredService<IGedcomImporter>();
+    _CancellationTokenProvider = cancellationTokenProvider;
+    _CurrentProjectProvider = currentProjectProvider;
+    _ProjectInfoComparer = projectInfoComparer;
+    _ProjectList = projectList;
+    _Importer = importer;
+    _AlertService = alertService;
+    _NavigationService = navigationService;
+    _PageCommand = new SafeCommand(OnPageCommand, _AlertService);
 
     InitializeComponent();
   }
@@ -58,7 +70,7 @@ public partial class ProjectListPage : ContentPage
           {
             using var token = _CancellationTokenProvider.CreateDbCancellationToken();
             await _CurrentProjectProvider.OpenAsync(projectItem.Info, token);
-            await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectPage>());
+            await _NavigationService.GoToAsync(UIRoutes.GetRoute<ProjectPage>());
 
             // TODO not so good approach
             if (sender is SelectableItemsView view)
@@ -75,7 +87,7 @@ public partial class ProjectListPage : ContentPage
     }
     catch (Exception ex)
     {
-      await this.ShowErrorAsync(ex);
+      await _AlertService.ShowErrorAsync(ex);
     }
   }
 
@@ -86,11 +98,11 @@ public partial class ProjectListPage : ContentPage
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
       await _CurrentProjectProvider.CloseAsync(token);
-      await SafeTask.RunOnMainThread(UpdateProjectList);
-    });
+      await SafeTask.RunOnMainThread(UpdateProjectList, _AlertService);
+    }, _AlertService);
   }
 
-  private void UpdateProjectList()
+  protected void UpdateProjectList()
   {
     using var token = _CancellationTokenProvider.CreateDbCancellationToken();
     var projects = _ProjectList
@@ -106,7 +118,7 @@ public partial class ProjectListPage : ContentPage
     }
   }
 
-  private async Task OnPageCommand(object obj)
+  protected async Task OnPageCommand(object obj)
   {
     switch (obj)
     {
@@ -121,7 +133,7 @@ public partial class ProjectListPage : ContentPage
         this.RefreshView();
         break;
       case string commandName when commandName == "Settings":
-        await Shell.Current.GoToAsync(UIRoutes.GetRoute<SettingsPage>());
+        await _NavigationService.GoToAsync(UIRoutes.GetRoute<SettingsPage>());
         break;
     }
   }
@@ -177,7 +189,7 @@ public partial class ProjectListPage : ContentPage
 
     using var token = _CancellationTokenProvider.CreateDbCancellationToken();
     await _CurrentProjectProvider.OpenAsync(info, token);
-    await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectPage>());
+    await _NavigationService.GoToAsync(UIRoutes.GetRoute<ProjectPage>());
   }
 
   // Runs the whole document operation as one continuous async flow on a background thread, under the

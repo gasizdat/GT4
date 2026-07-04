@@ -15,6 +15,10 @@ public partial class RelativeRowView : ContentView
 
   private readonly RelativeConnectorsDrawable _Connectors = new() { Indent = Indent };
 
+  protected RelativeConnectorsDrawable ConnectorsDrawable => _Connectors;
+
+  protected RelativeInfoView InfoView => Info;
+
   public RelativeRowView()
   {
     InitializeComponent();

@@ -24,6 +24,8 @@ public partial class FamilyTreePage : ContentPage
   private readonly Color _ParentChildColor;
   private readonly Color _SpouseColor;
   private readonly FontScale? _FontScale;
+  private readonly IAlertService _AlertService;
+  private readonly INavigationService _NavigationService;
   // Reused across loads so an incremental "load more" updates the existing canvas instead of rebuilding
   // every node view; views that do leave the tree are disconnected to release their native resources.
   private readonly Dictionary<int, NodeEntry> _NodeCache = [];
@@ -64,14 +66,18 @@ public partial class FamilyTreePage : ContentPage
     ICancellationTokenProvider cancellationTokenProvider,
     ICurrentProjectProvider currentProjectProvider,
     INameFormatter nameFormatter,
-    FontScale? fontScale
+    FontScale? fontScale,
+    IAlertService alertService,
+    INavigationService navigationService
   )
   {
     _CancellationTokenProvider = cancellationTokenProvider;
     _CurrentProjectProvider = currentProjectProvider;
     _NameFormatter = nameFormatter;
     _FontScale = fontScale;
-    PageCommand = new SafeCommand(OnPageCommand);
+    _AlertService = alertService;
+    _NavigationService = navigationService;
+    PageCommand = new SafeCommand(OnPageCommand, _AlertService);
 
     InitializeComponent();
 
@@ -223,7 +229,7 @@ public partial class FamilyTreePage : ContentPage
     _ViewTarget = target;
     var center = _Center;
     SetLoadInProgress();
-    _ = SafeTask.Run(() => LoadAsync(center));
+    _ = SafeTask.Run(() => LoadAsync(center), _AlertService);
   }
 
   private async Task LoadAsync(Person center)
@@ -253,11 +259,11 @@ public partial class FamilyTreePage : ContentPage
         node => node.Node.Id,
         node => _NameFormatter.ToString(node.Node.Person, NameFormat.ShortPersonName));
 
-      await SafeTask.RunOnMainThread(() => Render(tree.CenterId, layout, names, zoom));
+      await SafeTask.RunOnMainThread(() => Render(tree.CenterId, layout, names, zoom), _AlertService);
     }
     finally
     {
-      await SafeTask.RunOnMainThread(ResetLoadInProgress);
+      await SafeTask.RunOnMainThread(ResetLoadInProgress, _AlertService);
     }
   }
 
@@ -459,12 +465,12 @@ public partial class FamilyTreePage : ContentPage
     await Scroller.ScrollToAsync(Math.Clamp(targetX, 0, maxX), Math.Clamp(targetY, 0, maxY), animated: false);
   }
 
-  private async Task OnPageCommand(object parameter)
+  protected async Task OnPageCommand(object parameter)
   {
     switch (parameter)
     {
       case PersonInfo person when person.Id == _Center?.Id:
-        await Shell.Current.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { ["PersonInfo"] = person });
+        await _NavigationService.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { ["PersonInfo"] = person });
         break;
 
       case PersonInfo person:
@@ -472,7 +478,7 @@ public partial class FamilyTreePage : ContentPage
         break;
 
       case string command when command == "OpenPerson" && _Center is PersonInfo center:
-        await Shell.Current.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { ["PersonInfo"] = center });
+        await _NavigationService.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { ["PersonInfo"] = center });
         break;
 
       case string command when command == "LoadAncestors":

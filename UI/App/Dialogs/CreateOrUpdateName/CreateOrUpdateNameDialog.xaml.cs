@@ -38,9 +38,9 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     }
   }
 
-  public CreateOrUpdateNameDialog(NameType nameType, IServiceProvider serviceProvider)
+  public CreateOrUpdateNameDialog(NameType nameType, INameTypeFormatter nameTypeFormatter)
   {
-    var nameTypeName = serviceProvider.GetRequiredService<INameTypeFormatter>().ToString(nameType);
+    var nameTypeName = nameTypeFormatter.ToString(nameType);
     _DialogButtonName = string.Format(UIStrings.BtnNameCreateName_1, nameTypeName);
 
     switch (nameType)
@@ -66,10 +66,10 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     IsModified = false;
   }
 
-  public CreateOrUpdateNameDialog(Name name, Name? maleName, Name? femaleName, IServiceProvider serviceProvider)
-    : this(name.Type, serviceProvider)
+  public CreateOrUpdateNameDialog(Name name, Name? maleName, Name? femaleName, INameTypeFormatter nameTypeFormatter)
+    : this(name.Type, nameTypeFormatter)
   {
-    var nameTypeName = serviceProvider.GetRequiredService<INameTypeFormatter>().ToString(name.Type);
+    var nameTypeName = nameTypeFormatter.ToString(name.Type);
     _DialogButtonName = string.Format(UIStrings.BtnNameUpdateName_1, nameTypeName);
     GeneralName = name.Value;
     MaleName = maleName?.Value ?? string.Empty;
@@ -249,10 +249,13 @@ public partial class CreateOrUpdateNameDialog : ContentPage
 
   private record NamesGroup(Name FirstName, Name? MaleName, Name? FemaleName);
 
-  public static async Task UpdateNameAsync(Name name, IServiceProvider serviceProvider, INavigation navigation)
+  public static async Task UpdateNameAsync(
+    Name name,
+    ICurrentProjectProvider currentProjectProvider,
+    ICancellationTokenProvider cancellationTokenProvider,
+    INameTypeFormatter nameTypeFormatter,
+    INavigation navigation)
   {
-    var currentProjectProvider = serviceProvider.GetRequiredService<ICurrentProjectProvider>();
-    var cancellationTokenProvider = serviceProvider.GetRequiredService<ICancellationTokenProvider>();
     async Task<NamesGroup> GetNameWithSubnames()
     {
       using var token = cancellationTokenProvider.CreateDbCancellationToken();
@@ -291,7 +294,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
       };
     var focusGenericName = isOrphanDeclension ||
       name.Type.HasFlag(NameType.FirstName) || name.Type.HasFlag(NameType.FamilyName);
-    var dialog = new CreateOrUpdateNameDialog(names.FirstName, names.MaleName, names.FemaleName, serviceProvider)
+    var dialog = new CreateOrUpdateNameDialog(names.FirstName, names.MaleName, names.FemaleName, nameTypeFormatter)
     {
       FocusGenericName = focusGenericName,
       FocusMaleName = !focusGenericName && name.Type.HasFlag(NameType.MaleDeclension),
