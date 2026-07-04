@@ -10,19 +10,11 @@ internal static class ModalDialogHarness
   public static async Task<TDialog> WaitForModalAsync<TDialog>(Page hostPage, TimeSpan? timeout = null)
     where TDialog : Page
   {
-    var deadline = DateTime.UtcNow + (timeout ?? TimeSpan.FromSeconds(5));
-
-    while (DateTime.UtcNow < deadline)
-    {
-      var modal = await MainThread.InvokeOnMainThreadAsync(() => hostPage.Navigation.ModalStack.LastOrDefault());
-      if (modal is TDialog dialog)
-      {
-        return dialog;
-      }
-
-      await Task.Delay(20);
-    }
-
-    throw new TimeoutException($"No {typeof(TDialog).Name} was pushed onto {hostPage.GetType().Name}'s modal stack.");
+    var modal = await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => hostPage.Navigation.ModalStack.LastOrDefault() as TDialog),
+      m => m is not null,
+      timeout,
+      $"No {typeof(TDialog).Name} was pushed onto {hostPage.GetType().Name}'s modal stack.");
+    return modal!;
   }
 }
