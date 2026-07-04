@@ -4,6 +4,7 @@ using GT4.Core.Utils;
 using GT4.UI.Dialogs;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
+using GT4.UI.Utils.Comparers;
 using GT4.UI.Utils.Formatters;
 using System.Windows.Input;
 
@@ -12,7 +13,7 @@ namespace GT4.UI.Pages;
 [QueryProperty(nameof(FamilyName), "FamilyName")]
 public partial class FamilyPage : ContentPage
 {
-  private readonly IServiceProvider _Services;
+  private readonly IServiceProvider _ServiceProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IComparer<PersonInfo> _PersonInfoComparer;
@@ -21,15 +22,23 @@ public partial class FamilyPage : ContentPage
   private Name? _FamilyName = null;
   private double _PersonItemMinimalWidth;
 
-  public FamilyPage(IServiceProvider serviceProvider)
+  public FamilyPage(
+    IServiceProvider serviceProvider,
+    ICancellationTokenProvider cancellationTokenProvider,
+    ICurrentProjectProvider currentProjectProvider,
+    [FromKeyedServices(NameFormat.ShortPersonName)]
+    IComparer<PersonInfo>? personInfoComparerByShortNames,
+    IComparer<PersonInfo> personInfoComparer,
+    IPageAlertService pageAlertService,
+    INavigationService navigationService
+    )
   {
-    _Services = serviceProvider;
-    _CancellationTokenProvider = _Services.GetRequiredService<ICancellationTokenProvider>();
-    _CurrentProjectProvider = _Services.GetRequiredService<ICurrentProjectProvider>();
-    _PersonInfoComparer =  _Services.GetKeyedService<IComparer<PersonInfo>>(PersonNamesFormat) ??
-                           _Services.GetRequiredService<IComparer<PersonInfo>>();
-    _PageAlertService = _Services.GetRequiredService<IPageAlertService>();
-    _NavigationService = _Services.GetRequiredService<INavigationService>();
+    _ServiceProvider = serviceProvider;
+    _CancellationTokenProvider = cancellationTokenProvider;
+    _CurrentProjectProvider = currentProjectProvider;
+    _PersonInfoComparer = personInfoComparerByShortNames ?? personInfoComparer;
+    _PageAlertService = pageAlertService;
+    _NavigationService = navigationService;
 
     MemberItemTappedCommand = new SafeCommand<PersonInfo>(OnOpenPerson, _PageAlertService);
     PageCommand = new SafeCommand(OnPageCommand, _PageAlertService);
@@ -132,7 +141,7 @@ public partial class FamilyPage : ContentPage
 
   private async Task OnCreatePerson()
   {
-    var dialog = new CreateOrUpdatePersonDialog(null, _Services);
+    var dialog = new CreateOrUpdatePersonDialog(null, _ServiceProvider);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;
@@ -171,7 +180,7 @@ public partial class FamilyPage : ContentPage
         break;
 
       case string commandName when commandName == "EditFamily":
-        await CreateOrUpdateNameDialog.UpdateNameAsync(FamilyName!, _Services, Navigation);
+        await CreateOrUpdateNameDialog.UpdateNameAsync(FamilyName!, _ServiceProvider, Navigation);
         break;
 
       case string commandName when commandName == "CreatePerson":

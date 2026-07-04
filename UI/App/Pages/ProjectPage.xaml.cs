@@ -35,19 +35,31 @@ public partial class ProjectPage : ContentPage
 
   private long? _ProjectRevision;
 
-  public ProjectPage(IServiceProvider serviceProvider)
+  public ProjectPage(
+    IServiceProvider serviceProvider,
+    ICancellationTokenProvider cancellationTokenProvider,
+    ICurrentProjectProvider currentProjectProvider,
+    [FromKeyedServices(NameFormat.ShortPersonName)]
+    IComparer<PersonInfo>? personInfoComparerByShortNames,
+    IComparer<PersonInfo> personInfoComparer,
+    IComparer<Name> nameComparer,
+    IProjectList projectList,
+    IGedcomExporter exporter,
+    IGedcomImporter importer,
+    IPageAlertService pageAlertService,
+    INavigationService navigationService
+    )
   {
     _ServiceProvider = serviceProvider;
-    _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
-    _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
-    _PersonInfoComparer = _ServiceProvider.GetKeyedService<IComparer<PersonInfo>>(PersonNamesFormat) ??
-                          _ServiceProvider.GetRequiredService<IComparer<PersonInfo>>();
-    _NameComparer = _ServiceProvider.GetRequiredService<IComparer<Name>>();
-    _ProjectList = _ServiceProvider.GetRequiredService<IProjectList>();
-    _Exporter = _ServiceProvider.GetRequiredService<IGedcomExporter>();
-    _Importer = _ServiceProvider.GetRequiredService<IGedcomImporter>();
-    _PageAlertService = _ServiceProvider.GetRequiredService<IPageAlertService>();
-    _NavigationService = _ServiceProvider.GetRequiredService<INavigationService>();
+    _CancellationTokenProvider = cancellationTokenProvider;
+    _CurrentProjectProvider = currentProjectProvider;
+    _PersonInfoComparer = personInfoComparerByShortNames ?? personInfoComparer;
+    _NameComparer = nameComparer;
+    _ProjectList = projectList;
+    _Exporter = exporter;
+    _Importer = importer;
+    _PageAlertService = pageAlertService;
+    _NavigationService = navigationService;
 
     PageCommand = new SafeCommand(OnPageCommand, _PageAlertService);
     InitializeComponent();

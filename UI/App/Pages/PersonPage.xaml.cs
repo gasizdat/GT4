@@ -36,18 +36,31 @@ public partial class PersonPage : ContentPage
   private PersonPageSmartLayout _SmartLayout = new();
   private bool _ExpandAll = false;
 
-  public PersonPage(IServiceProvider serviceProvider)
+  public PersonPage(
+    IServiceProvider serviceProvider,
+    ICancellationTokenProvider cancellationTokenProvider,
+    ICurrentProjectProvider currentProjectProvider,
+    IDateSpanFormatter dateSpanFormatter,
+    IDateFormatter dateFormatter,
+    INameFormatter nameFormatter,
+    [FromKeyedServices(DataCategory.PersonBio)]
+    IDataConverter textConverter,
+    [FromKeyedServices(DataCategory.PersonGedcomTags)]
+    IDataConverter gedcomConverter,
+    IPageAlertService pageAlertService,
+    INavigationService navigationService
+    )
   {
     _ServiceProvider = serviceProvider;
-    _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
-    _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
-    _DateSpanFormatter = _ServiceProvider.GetRequiredService<IDateSpanFormatter>();
-    _DateFormatter = _ServiceProvider.GetRequiredService<IDateFormatter>();
-    _NameFormatter = _ServiceProvider.GetRequiredService<INameFormatter>();
-    _TextConverter = _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonBio);
-    _GedcomConverter = _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonGedcomTags);
-    _PageAlertService = _ServiceProvider.GetRequiredService<IPageAlertService>();
-    _NavigationService = _ServiceProvider.GetRequiredService<INavigationService>();
+    _CancellationTokenProvider = cancellationTokenProvider;
+    _CurrentProjectProvider = currentProjectProvider;
+    _DateSpanFormatter = dateSpanFormatter;
+    _DateFormatter = dateFormatter;
+    _NameFormatter = nameFormatter;
+    _TextConverter = textConverter;
+    _GedcomConverter = gedcomConverter;
+    _PageAlertService = pageAlertService;
+    _NavigationService = navigationService;
     _PageCommand = new SafeCommand(OnPageCommand, _PageAlertService);
     _Relatives = new RelativeTree(_CurrentProjectProvider, _CancellationTokenProvider, _PageAlertService);
 

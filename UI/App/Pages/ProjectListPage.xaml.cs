@@ -33,15 +33,23 @@ public partial class ProjectListPage : ContentPage
   private readonly INavigationService _NavigationService;
   private readonly ObservableCollection<ProjectItem> _Projects = new();
 
-  public ProjectListPage(IServiceProvider services)
+  public ProjectListPage(
+    ICancellationTokenProvider cancellationTokenProvider,
+    ICurrentProjectProvider currentProjectProvider,
+    IComparer<ProjectInfo> projectInfoComparer,
+    IProjectList projectList,
+    IGedcomImporter importer,
+    IPageAlertService pageAlertService,
+    INavigationService navigationService
+    )
   {
-    _CancellationTokenProvider = services.GetRequiredService<ICancellationTokenProvider>();
-    _CurrentProjectProvider = services.GetRequiredService<ICurrentProjectProvider>();
-    _ProjectInfoComparer = services.GetRequiredService<IComparer<ProjectInfo>>();
-    _ProjectList = services.GetRequiredService<IProjectList>();
-    _Importer = services.GetRequiredService<IGedcomImporter>();
-    _PageAlertService = services.GetRequiredService<IPageAlertService>();
-    _NavigationService = services.GetRequiredService<INavigationService>();
+    _CancellationTokenProvider = cancellationTokenProvider;
+    _CurrentProjectProvider = currentProjectProvider;
+    _ProjectInfoComparer = projectInfoComparer;
+    _ProjectList = projectList;
+    _Importer = importer;
+    _PageAlertService = pageAlertService;
+    _NavigationService = navigationService;
     _PageCommand = new SafeCommand(OnPageCommand, _PageAlertService);
 
     InitializeComponent();

@@ -24,6 +24,7 @@ public partial class NamesPage : ContentPage
   private readonly ICommand _DeleteNameCommand;
   private readonly ICommand _PageCommand;
   private readonly IPageAlertService _PageAlertService;
+  private readonly INameFormatter _NameFormatter;
   private NameTypeInfoItem _CurrentNameType;
   private Name? _CurrentName;
   private int? _CurrentNameId;
@@ -31,7 +32,16 @@ public partial class NamesPage : ContentPage
   private bool _UpdateNames = true;
   private string _NameFilter = string.Empty;
 
-  public NamesPage(IServiceProvider serviceProvider)
+  public NamesPage(
+    IServiceProvider serviceProvider,
+    ICurrentProjectProvider currentProjectProvider,
+    ICancellationTokenProvider cancellationTokenProvider,
+    IComparer<Name> nameComparer,
+    INameTypeFormatter nameTypeFormatter,
+    IBiologicalSexFormatter biologicalSexFormatter,
+    INameFormatter nameFormatter,
+    IPageAlertService pageAlertService
+    )
   {
     var nameTypes = new[]
     {
@@ -40,20 +50,19 @@ public partial class NamesPage : ContentPage
       NameType.Patronymic,
       NameType.LastName,
     };
-    var nameTypeFormatter = serviceProvider.GetRequiredService<INameTypeFormatter>();
     _ServiceProvider = serviceProvider;
-    _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
-    _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
-    _NameComparer = _ServiceProvider.GetRequiredService<IComparer<Name>>();
+    _CurrentProjectProvider = currentProjectProvider;
+    _CancellationTokenProvider = cancellationTokenProvider;
+    _NameComparer = nameComparer;
     _NameTypes = new(nameTypes.Select(type => new NameTypeInfoItem(nameTypeFormatter.ToString(type), type)));
-    _PageAlertService = _ServiceProvider.GetRequiredService<IPageAlertService>();
+    _PageAlertService = pageAlertService;
+    _NameFormatter = nameFormatter;
     _EditNameCommand = new SafeCommand(OnEditCommandAsync, _PageAlertService);
     _DeleteNameCommand = new SafeCommand(OnDeleteCommandAsync, _PageAlertService);
     _PageCommand = new SafeCommand(OnPageCommandAsync, _PageAlertService);
     _CurrentNameType = _NameTypes.First();
     _Names.Filter = NamesFilter;
 
-    var biologicalSexFormatter = _ServiceProvider.GetRequiredService<IBiologicalSexFormatter>();
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, biologicalSexFormatter));
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Female, biologicalSexFormatter));
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Unknown, biologicalSexFormatter));
@@ -94,10 +103,9 @@ public partial class NamesPage : ContentPage
             .GetPersonInfosByNameAsync(name, false, token);
           if (persons.Any())
           {
-            var nameFormatter = _ServiceProvider.GetRequiredService<INameFormatter>();
             var personsList = persons
               .Take(3)
-              .Select(p => nameFormatter.ToString(p, NameFormat.CommonPersonName));
+              .Select(p => _NameFormatter.ToString(p, NameFormat.CommonPersonName));
             var errorMessage = string.Format(UIStrings.ErrorNameIsShared_2, name.Value, string.Join(", ", personsList));
             throw new ApplicationException(errorMessage);
           }
