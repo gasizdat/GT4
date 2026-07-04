@@ -30,7 +30,7 @@ public partial class ProjectPage : ContentPage
   private readonly IProjectList _ProjectList;
   private readonly IGedcomExporter _Exporter;
   private readonly IGedcomImporter _Importer;
-  private readonly IPageAlertService _PageAlertService;
+  private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
 
   private long? _ProjectRevision;
@@ -46,7 +46,7 @@ public partial class ProjectPage : ContentPage
     IProjectList projectList,
     IGedcomExporter exporter,
     IGedcomImporter importer,
-    IPageAlertService pageAlertService,
+    IAlertService alertService,
     INavigationService navigationService
     )
   {
@@ -58,10 +58,10 @@ public partial class ProjectPage : ContentPage
     _ProjectList = projectList;
     _Exporter = exporter;
     _Importer = importer;
-    _PageAlertService = pageAlertService;
+    _AlertService = alertService;
     _NavigationService = navigationService;
 
-    PageCommand = new SafeCommand(OnPageCommand, _PageAlertService);
+    PageCommand = new SafeCommand(OnPageCommand, _AlertService);
     InitializeComponent();
   }
 
@@ -91,7 +91,7 @@ public partial class ProjectPage : ContentPage
       }
       catch (Exception ex)
       {
-        _PageAlertService.ShowErrorAsync(ex);
+        _AlertService.ShowErrorAsync(ex);
         return [];
       }
     }
@@ -119,7 +119,7 @@ public partial class ProjectPage : ContentPage
     }
     catch (Exception ex)
     {
-      await _PageAlertService.ShowErrorAsync(ex);
+      await _AlertService.ShowErrorAsync(ex);
     }
   }
 
@@ -258,7 +258,7 @@ public partial class ProjectPage : ContentPage
     var projectName = _CurrentProjectProvider.Info.Name;
     var projectOrigin = _CurrentProjectProvider.Info.Origin;
     var confirmationText = string.Format(UIStrings.AlertTextDeleteConfirmationText_1, projectName);
-    if (await _PageAlertService.ShowConfirmationAsync(confirmationText))
+    if (await _AlertService.ShowConfirmationAsync(confirmationText))
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
       await _ProjectList.RemoveAsync(projectOrigin, token);
@@ -340,7 +340,7 @@ public partial class ProjectPage : ContentPage
       return;
 
     var confirmText = string.Format(UIStrings.AlertImportGedcomConfirm_1, _CurrentProjectProvider.Info.Name);
-    if (!await _PageAlertService.ShowConfirmationAsync(confirmText))
+    if (!await _AlertService.ShowConfirmationAsync(confirmText))
       return;
 
     var dialog = new GedcomImportDialog(_CurrentProjectProvider.Info.Name);

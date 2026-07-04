@@ -8,18 +8,18 @@ namespace GT4.UI;
 /// app and <see cref="App"/> closes the current project — which surfaces as
 /// <see cref="ObjectDisposedException"/> or <see cref="ProjectNotOpenedException"/>. Those are
 /// expected during teardown and swallowed quietly; any other failure is surfaced through the
-/// caller's <see cref="IPageAlertService"/>. Without this, an exception escaping a Task.Run or a
+/// caller's <see cref="IAlertService"/>. Without this, an exception escaping a Task.Run or a
 /// posted continuation is unobserved and terminates the app.
 /// </summary>
 internal static class SafeTask
 {
   /// <summary>Runs <paramref name="work"/> on a background thread, guarding against the teardown race.</summary>
-  public static Task Run(Func<Task> work, IPageAlertService pageAlertService) =>
-    Task.Run(() => GuardAsync(work, pageAlertService));
+  public static Task Run(Func<Task> work, IAlertService alertService) =>
+    Task.Run(() => GuardAsync(work, alertService));
 
   /// <summary>Runs <paramref name="work"/> on the UI thread, guarding against the teardown race.</summary>
-  public static Task RunOnMainThread(Action work, IPageAlertService pageAlertService) =>
-    MainThread.InvokeOnMainThreadAsync(() => Guard(work, pageAlertService));
+  public static Task RunOnMainThread(Action work, IAlertService alertService) =>
+    MainThread.InvokeOnMainThreadAsync(() => Guard(work, alertService));
 
   /// <summary>
   /// True when the exception is the benign "the project was closed underneath us" race rather than a
@@ -28,7 +28,7 @@ internal static class SafeTask
   public static bool IsProjectTeardown(Exception exception) =>
     exception is ObjectDisposedException or ProjectNotOpenedException;
 
-  private static async Task GuardAsync(Func<Task> work, IPageAlertService pageAlertService)
+  private static async Task GuardAsync(Func<Task> work, IAlertService alertService)
   {
     try
     {
@@ -40,11 +40,11 @@ internal static class SafeTask
     }
     catch (Exception ex)
     {
-      await pageAlertService.ShowErrorAsync(ex);
+      await alertService.ShowErrorAsync(ex);
     }
   }
 
-  private static void Guard(Action work, IPageAlertService pageAlertService)
+  private static void Guard(Action work, IAlertService alertService)
   {
     try
     {
@@ -56,7 +56,7 @@ internal static class SafeTask
     }
     catch (Exception ex)
     {
-      _ = pageAlertService.ShowErrorAsync(ex);
+      _ = alertService.ShowErrorAsync(ex);
     }
   }
 }

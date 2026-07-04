@@ -8,14 +8,14 @@ public partial class PhotoViewerDialog : ContentPage
   private readonly ImageSource[] _Photos;
   private readonly ICommand _CloseCommand;
 
-  public PhotoViewerDialog(byte[][] photos, IPageAlertService pageAlertService)
+  public PhotoViewerDialog(byte[][] photos, IAlertService alertService)
   {
     _Photos = (photos ?? [])
       .Where(photo => photo.Length > 0)
       .Select(ImageUtils.ImageFromBytes)
       .ToArray();
 
-    _CloseCommand = new SafeCommand(OnCloseAsync, pageAlertService);
+    _CloseCommand = new SafeCommand(OnCloseAsync, alertService);
 
     InitializeComponent();
   }

@@ -1,4 +1,4 @@
-﻿using GT4.UI.Utils.Settings;
+using GT4.UI.Utils.Settings;
 using System.Reflection;
 using System.Windows.Input;
 
@@ -7,13 +7,13 @@ namespace GT4.UI.Pages;
 public partial class MainPage : ContentPage
 {
   private readonly LanguageSetting _LanguageSetting;
-  private readonly IPageAlertService _PageAlertService;
+  private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
 
-  public MainPage(LanguageSetting languageSetting, IPageAlertService pageAlertService, INavigationService navigationService)
+  public MainPage(LanguageSetting languageSetting, IAlertService alertService, INavigationService navigationService)
   {
     _LanguageSetting = languageSetting;
-    _PageAlertService = pageAlertService;
+    _AlertService = alertService;
     _NavigationService = navigationService;
     InitializeComponent();
   }
@@ -29,7 +29,7 @@ public partial class MainPage : ContentPage
         await _NavigationService.GoToAsync(UIRoutes.GetRoute<SettingsPage>());
         break;
     }
-  }, _PageAlertService);
+  }, _AlertService);
 
   public Utils.Language[] Languages => Utils.Language.Languages;
 

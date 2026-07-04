@@ -26,7 +26,7 @@ public partial class PersonPage : ContentPage
   private readonly IDataConverter _GedcomConverter;
   private readonly ICommand _PageCommand;
   private readonly RelativeTree _Relatives;
-  private readonly IPageAlertService _PageAlertService;
+  private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
   private ObservableCollection<PersonInfo> _NavigationHistory = new();
   private int _NavigationIndex = -1;
@@ -47,7 +47,7 @@ public partial class PersonPage : ContentPage
     IDataConverter textConverter,
     [FromKeyedServices(DataCategory.PersonGedcomTags)]
     IDataConverter gedcomConverter,
-    IPageAlertService pageAlertService,
+    IAlertService alertService,
     INavigationService navigationService
     )
   {
@@ -59,10 +59,10 @@ public partial class PersonPage : ContentPage
     _NameFormatter = nameFormatter;
     _TextConverter = textConverter;
     _GedcomConverter = gedcomConverter;
-    _PageAlertService = pageAlertService;
+    _AlertService = alertService;
     _NavigationService = navigationService;
-    _PageCommand = new SafeCommand(OnPageCommand, _PageAlertService);
-    _Relatives = new RelativeTree(_CurrentProjectProvider, _CancellationTokenProvider, _PageAlertService);
+    _PageCommand = new SafeCommand(OnPageCommand, _AlertService);
+    _Relatives = new RelativeTree(_CurrentProjectProvider, _CancellationTokenProvider, _AlertService);
 
     InitializeComponent();
   }
@@ -251,7 +251,7 @@ public partial class PersonPage : ContentPage
                                                   stepChildrenTasks.Result,
                                                   photos, bioTask.Result as string,
                                                   gedcomTask.Result as string,
-                                                  addToNavigation), _PageAlertService);
+                                                  addToNavigation), _AlertService);
     }
     catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
     {
@@ -262,7 +262,7 @@ public partial class PersonPage : ContentPage
     {
       // GetPersonDataAsync runs on a background thread (Task.Run); both the alert and the
       // navigation touch native views, so marshal them onto the UI thread.
-      await _PageAlertService.ShowErrorAsync(ex);
+      await _AlertService.ShowErrorAsync(ex);
       await MainThread.InvokeOnMainThreadAsync(() => _NavigationService.GoToAsync("..", true));
       return;
     }
@@ -357,7 +357,7 @@ public partial class PersonPage : ContentPage
         break;
       case string commandName when commandName == "ToggleAll":
         ExpandAll = !ExpandAll;
-        _ = SafeTask.Run(() => _Relatives.ExpandAllAsync(ExpandAll), _PageAlertService);
+        _ = SafeTask.Run(() => _Relatives.ExpandAllAsync(ExpandAll), _AlertService);
         break;
     }
   }

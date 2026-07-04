@@ -17,7 +17,7 @@ public partial class ImagePresenter : ContentView
   private static readonly string[] _ImageOpacityProperties = [nameof(ImageOpacity1), nameof(ImageOpacity2)];
   private readonly ImageSource[] _Images;
   private readonly double[] _ImageOpacities;
-  private readonly IPageAlertService _PageAlertService;
+  private readonly IAlertService _AlertService;
   private readonly ICommand _Command;
   private readonly ICommand _OpenViewerCommand;
   private uint _CurrentIndex = 0;
@@ -192,7 +192,7 @@ public partial class ImagePresenter : ContentView
 
   protected ImagePresenter(IServiceProvider serviceProvider)
   {
-    _PageAlertService = serviceProvider.GetRequiredService<IPageAlertService>();
+    _AlertService = serviceProvider.GetRequiredService<IAlertService>();
 
     List<double> opacities = new();
     List<ImageSource> images = new();
@@ -210,8 +210,8 @@ public partial class ImagePresenter : ContentView
       _Timer.Tick += TimerTick;
     };
     Unloaded += (_, _) => _Timer.Tick -= TimerTick;
-    _Command = new SafeCommand(OnNextPicture, _PageAlertService);
-    _OpenViewerCommand = new SafeCommand(OnOpenViewerAsync, _PageAlertService);
+    _Command = new SafeCommand(OnNextPicture, _AlertService);
+    _OpenViewerCommand = new SafeCommand(OnOpenViewerAsync, _AlertService);
 
     InitializeComponent();
   }
@@ -231,7 +231,7 @@ public partial class ImagePresenter : ContentView
       return;
     }
 
-    await Shell.Current.Navigation.PushModalAsync(new PhotoViewerDialog(ImageSources, _PageAlertService));
+    await Shell.Current.Navigation.PushModalAsync(new PhotoViewerDialog(ImageSources, _AlertService));
   }
 
   private void OnNextPicture(object obj)

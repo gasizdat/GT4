@@ -1,4 +1,4 @@
-﻿using Android.App;
+using Android.App;
 using Android.Content;
 using Android.Content.PM;
 using Android.OS;
@@ -104,7 +104,7 @@ namespace GT4
       }
       catch (Exception ex)
       {
-        await _Services.GetRequiredService<IPageAlertService>().ShowErrorAsync(ex);
+        await _Services.GetRequiredService<IAlertService>().ShowErrorAsync(ex);
       }
     }
 

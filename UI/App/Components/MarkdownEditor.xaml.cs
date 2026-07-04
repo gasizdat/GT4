@@ -9,7 +9,7 @@ public partial class MarkdownEditor : ContentView
 
   protected MarkdownEditor(IServiceProvider serviceProvider)
   {
-    _Command = new SafeCommand(OnCommand, serviceProvider.GetRequiredService<IPageAlertService>());
+    _Command = new SafeCommand(OnCommand, serviceProvider.GetRequiredService<IAlertService>());
     _TabIndex = 0;
 
     InitializeComponent();

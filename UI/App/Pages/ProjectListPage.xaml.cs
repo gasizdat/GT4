@@ -29,7 +29,7 @@ public partial class ProjectListPage : ContentPage
   private readonly ICommand _PageCommand;
   private readonly IProjectList _ProjectList;
   private readonly IGedcomImporter _Importer;
-  private readonly IPageAlertService _PageAlertService;
+  private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
   private readonly ObservableCollection<ProjectItem> _Projects = new();
 
@@ -39,7 +39,7 @@ public partial class ProjectListPage : ContentPage
     IComparer<ProjectInfo> projectInfoComparer,
     IProjectList projectList,
     IGedcomImporter importer,
-    IPageAlertService pageAlertService,
+    IAlertService alertService,
     INavigationService navigationService
     )
   {
@@ -48,9 +48,9 @@ public partial class ProjectListPage : ContentPage
     _ProjectInfoComparer = projectInfoComparer;
     _ProjectList = projectList;
     _Importer = importer;
-    _PageAlertService = pageAlertService;
+    _AlertService = alertService;
     _NavigationService = navigationService;
-    _PageCommand = new SafeCommand(OnPageCommand, _PageAlertService);
+    _PageCommand = new SafeCommand(OnPageCommand, _AlertService);
 
     InitializeComponent();
   }
@@ -87,7 +87,7 @@ public partial class ProjectListPage : ContentPage
     }
     catch (Exception ex)
     {
-      await _PageAlertService.ShowErrorAsync(ex);
+      await _AlertService.ShowErrorAsync(ex);
     }
   }
 
@@ -98,8 +98,8 @@ public partial class ProjectListPage : ContentPage
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
       await _CurrentProjectProvider.CloseAsync(token);
-      await SafeTask.RunOnMainThread(UpdateProjectList, _PageAlertService);
-    }, _PageAlertService);
+      await SafeTask.RunOnMainThread(UpdateProjectList, _AlertService);
+    }, _AlertService);
   }
 
   private void UpdateProjectList()

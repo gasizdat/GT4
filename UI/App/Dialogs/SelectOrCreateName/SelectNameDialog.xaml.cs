@@ -17,7 +17,7 @@ public partial class SelectNameDialog : ContentPage
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly IComparer<Name> _NameComparer;
-  private readonly IPageAlertService _PageAlertService;
+  private readonly IAlertService _AlertService;
   private readonly ObservableCollection<NameTypeInfoItem> _NameTypes;
   private readonly ICommand _DialogCommand;
   private ICollection<NameInfoItem>? _Names;
@@ -36,8 +36,8 @@ public partial class SelectNameDialog : ContentPage
     _NameComparer = _ServiceProvider.GetRequiredService<IComparer<Name>>();
     _NameTypes = new((new[] { NameType.FirstName, NameType.Patronymic, NameType.LastName })
       .Select(type => new NameTypeInfoItem(_NameTypeFormatter.ToString(type), type)));
-    _PageAlertService = _ServiceProvider.GetRequiredService<IPageAlertService>();
-    _DialogCommand = new SafeCommand(OnDialogCommandAsync, _PageAlertService);
+    _AlertService = _ServiceProvider.GetRequiredService<IAlertService>();
+    _DialogCommand = new SafeCommand(OnDialogCommandAsync, _AlertService);
     _CurrentNameType = _NameTypes.First();
 
     _NameDeclension = biologicalSex switch

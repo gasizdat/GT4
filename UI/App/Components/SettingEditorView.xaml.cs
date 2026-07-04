@@ -5,11 +5,11 @@ namespace GT4.UI.Components;
 
 public partial class SettingEditorView : ContentView
 {
-  private readonly IPageAlertService _PageAlertService;
+  private readonly IAlertService _AlertService;
 
   protected SettingEditorView(IServiceProvider serviceProvider)
   {
-    _PageAlertService = serviceProvider.GetRequiredService<IPageAlertService>();
+    _AlertService = serviceProvider.GetRequiredService<IAlertService>();
 
     InitializeComponent();
   }
@@ -67,5 +67,5 @@ public partial class SettingEditorView : ContentView
     Editor?.ResetToDefault();
     OnPropertyChanged(nameof(Value));
     OnPropertyChanged(nameof(Example));
-  }, _PageAlertService);
+  }, _AlertService);
 }

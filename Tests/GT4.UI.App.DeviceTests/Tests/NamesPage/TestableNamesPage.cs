@@ -23,7 +23,7 @@ internal sealed class TestableNamesPage : NamesPage
     INameTypeFormatter nameTypeFormatter,
     IBiologicalSexFormatter biologicalSexFormatter,
     INameFormatter nameFormatter,
-    IPageAlertService pageAlertService) 
+    IAlertService alertService) 
     : base(
       currentProjectProvider,
       cancellationTokenProvider,
@@ -31,7 +31,7 @@ internal sealed class TestableNamesPage : NamesPage
       nameTypeFormatter,
       biologicalSexFormatter,
       nameFormatter,
-      pageAlertService)
+      alertService)
   {
   }
 

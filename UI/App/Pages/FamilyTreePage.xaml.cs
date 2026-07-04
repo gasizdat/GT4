@@ -24,7 +24,7 @@ public partial class FamilyTreePage : ContentPage
   private readonly Color _ParentChildColor;
   private readonly Color _SpouseColor;
   private readonly FontScale? _FontScale;
-  private readonly IPageAlertService _PageAlertService;
+  private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
   // Reused across loads so an incremental "load more" updates the existing canvas instead of rebuilding
   // every node view; views that do leave the tree are disconnected to release their native resources.
@@ -67,7 +67,7 @@ public partial class FamilyTreePage : ContentPage
     ICurrentProjectProvider currentProjectProvider,
     INameFormatter nameFormatter,
     FontScale? fontScale,
-    IPageAlertService pageAlertService,
+    IAlertService alertService,
     INavigationService navigationService
   )
   {
@@ -75,9 +75,9 @@ public partial class FamilyTreePage : ContentPage
     _CurrentProjectProvider = currentProjectProvider;
     _NameFormatter = nameFormatter;
     _FontScale = fontScale;
-    _PageAlertService = pageAlertService;
+    _AlertService = alertService;
     _NavigationService = navigationService;
-    PageCommand = new SafeCommand(OnPageCommand, _PageAlertService);
+    PageCommand = new SafeCommand(OnPageCommand, _AlertService);
 
     InitializeComponent();
 
@@ -229,7 +229,7 @@ public partial class FamilyTreePage : ContentPage
     _ViewTarget = target;
     var center = _Center;
     SetLoadInProgress();
-    _ = SafeTask.Run(() => LoadAsync(center), _PageAlertService);
+    _ = SafeTask.Run(() => LoadAsync(center), _AlertService);
   }
 
   private async Task LoadAsync(Person center)
@@ -259,11 +259,11 @@ public partial class FamilyTreePage : ContentPage
         node => node.Node.Id,
         node => _NameFormatter.ToString(node.Node.Person, NameFormat.ShortPersonName));
 
-      await SafeTask.RunOnMainThread(() => Render(tree.CenterId, layout, names, zoom), _PageAlertService);
+      await SafeTask.RunOnMainThread(() => Render(tree.CenterId, layout, names, zoom), _AlertService);
     }
     finally
     {
-      await SafeTask.RunOnMainThread(ResetLoadInProgress, _PageAlertService);
+      await SafeTask.RunOnMainThread(ResetLoadInProgress, _AlertService);
     }
   }
 

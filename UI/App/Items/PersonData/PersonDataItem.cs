@@ -1,4 +1,4 @@
-﻿using GT4.Core.Project;
+using GT4.Core.Project;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Utils.Converters;
@@ -10,7 +10,7 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
 {
   private readonly IDataConverter _DataConverter;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
-  private readonly IPageAlertService _PageAlertService;
+  private readonly IAlertService _AlertService;
   private object? _Content = null;
   private bool _IsReady = false;
   private bool _IsModified = false;
@@ -21,26 +21,26 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
   }
 
   public PersonDataItem(Data data, IDataConverter dataConverter, ICancellationTokenProvider cancellationTokenProvider,
-    IPageAlertService pageAlertService)
+    IAlertService alertService)
     : base(data, string.Empty)
   {
     _DataConverter = dataConverter;
     _CancellationTokenProvider = cancellationTokenProvider;
-    _PageAlertService = pageAlertService;
+    _AlertService = alertService;
   }
 
   public PersonDataItem(DataCategory dataCategory, IDataConverter dataConverter, ICancellationTokenProvider cancellationTokenProvider,
-    IPageAlertService pageAlertService)
+    IAlertService alertService)
     : this(new Data(
                Id: TableBase.NonCommittedId,
                Content: [],
                MimeType: null,
                Category: dataCategory),
-        dataConverter, cancellationTokenProvider, pageAlertService)
+        dataConverter, cancellationTokenProvider, alertService)
   {
     _DataConverter = dataConverter;
     _CancellationTokenProvider = cancellationTokenProvider;
-    _PageAlertService = pageAlertService;
+    _AlertService = alertService;
   }
 
   public object? Content
@@ -71,7 +71,7 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
           }
           catch (Exception ex)
           {
-            await _PageAlertService.ShowErrorAsync(ex);
+            await _AlertService.ShowErrorAsync(ex);
           }
         }
 

@@ -17,7 +17,7 @@ internal sealed class TestServices
   public Mock<IPersonManager> PersonManager { get; } = new();
   public Mock<IFamilyManager> FamilyManager { get; } = new();
   public Mock<IProjectTransaction> Transaction { get; } = new();
-  public Mock<IPageAlertService> PageAlertService { get; } = new();
+  public Mock<IAlertService> AlertService { get; } = new();
   public Mock<INavigationService> NavigationService { get; } = new();
   public IServiceProvider Provider { get; }
 
@@ -35,7 +35,7 @@ internal sealed class TestServices
     // auto-resolves an unconfigured call to Task.FromResult(Array.Empty<Name>()) (it special-cases
     // Array). Pinned explicitly anyway so this doesn't silently regress to a null-returning default
     // if the return type ever stops being a bare array -- background loads must never throw: SafeTask
-    // routes failures to the page's injected IPageAlertService, and an unconfigured mock call would
+    // routes failures to the page's injected IAlertService, and an unconfigured mock call would
     // otherwise fail invisibly.
     Names
       .Setup(n => n.GetNamesByTypeAsync(It.IsAny<NameType>(), It.IsAny<CancellationToken>()))
@@ -44,7 +44,7 @@ internal sealed class TestServices
     var services = new ServiceCollection();
     GT4Services.Add(services);
     services.AddSingleton(CurrentProjectProvider.Object);
-    services.AddSingleton(PageAlertService.Object);
+    services.AddSingleton(AlertService.Object);
     services.AddSingleton(NavigationService.Object);
     services.AddSingleton<TestableNamesPage>();
     Provider = services.BuildServiceProvider();

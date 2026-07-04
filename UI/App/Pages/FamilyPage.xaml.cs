@@ -17,7 +17,7 @@ public partial class FamilyPage : ContentPage
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IComparer<PersonInfo> _PersonInfoComparer;
-  private readonly IPageAlertService _PageAlertService;
+  private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
   private Name? _FamilyName = null;
   private double _PersonItemMinimalWidth;
@@ -29,7 +29,7 @@ public partial class FamilyPage : ContentPage
     [FromKeyedServices(NameFormat.ShortPersonName)]
     IComparer<PersonInfo>? personInfoComparerByShortNames,
     IComparer<PersonInfo> personInfoComparer,
-    IPageAlertService pageAlertService,
+    IAlertService alertService,
     INavigationService navigationService
     )
   {
@@ -37,11 +37,11 @@ public partial class FamilyPage : ContentPage
     _CancellationTokenProvider = cancellationTokenProvider;
     _CurrentProjectProvider = currentProjectProvider;
     _PersonInfoComparer = personInfoComparerByShortNames ?? personInfoComparer;
-    _PageAlertService = pageAlertService;
+    _AlertService = alertService;
     _NavigationService = navigationService;
 
-    MemberItemTappedCommand = new SafeCommand<PersonInfo>(OnOpenPerson, _PageAlertService);
-    PageCommand = new SafeCommand(OnPageCommand, _PageAlertService);
+    MemberItemTappedCommand = new SafeCommand<PersonInfo>(OnOpenPerson, _AlertService);
+    PageCommand = new SafeCommand(OnPageCommand, _AlertService);
 
     InitializeComponent();
   }
@@ -97,7 +97,7 @@ public partial class FamilyPage : ContentPage
       }
       catch (Exception ex)
       {
-        _ = _PageAlertService.ShowErrorAsync(ex);
+        _ = _AlertService.ShowErrorAsync(ex);
         return Enumerable.Empty<PersonInfo>().ToList();
       }
     }
@@ -123,7 +123,7 @@ public partial class FamilyPage : ContentPage
   private async Task OnDeleteFamily()
   {
     var canDelete = _FamilyName is not null &&
-       await _PageAlertService.ShowConfirmationAsync(
+       await _AlertService.ShowConfirmationAsync(
          string.Format(UIStrings.AlertTextDeleteConfirmationText_1, _FamilyName.Value));
 
     if (!canDelete)

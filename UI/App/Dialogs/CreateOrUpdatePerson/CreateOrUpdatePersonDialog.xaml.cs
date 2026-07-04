@@ -20,7 +20,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private readonly IDateFormatter _DateFormatter;
   private readonly IComparer<PersonInfo> _PersonInfoComparer;
   private readonly IServiceProvider _ServiceProvider;
-  private readonly IPageAlertService _PageAlertService;
+  private readonly IAlertService _AlertService;
   private readonly ICommand _DialogCommand;
   private readonly string _SaveButtonName;
   private readonly ObservableCollection<PersonDataItem> _Photos = new();
@@ -46,8 +46,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     _NameFormatter = _ServiceProvider.GetRequiredService<INameFormatter>();
     _DateFormatter = _ServiceProvider.GetRequiredService<IDateFormatter>();
     _PersonInfoComparer = _ServiceProvider.GetRequiredService<IComparer<PersonInfo>>();
-    _PageAlertService = _ServiceProvider.GetRequiredService<IPageAlertService>();
-    _DialogCommand = new SafeCommand(OnDialogCommand, _PageAlertService);
+    _AlertService = _ServiceProvider.GetRequiredService<IAlertService>();
+    _DialogCommand = new SafeCommand(OnDialogCommand, _AlertService);
     _SaveButtonName = person is null ? UIStrings.BtnNameCreateFamilyPerson : UIStrings.BtnNameUpdateFamilyPerson;
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, _BiologicalSexFormatter));
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Female, _BiologicalSexFormatter));
@@ -68,7 +68,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       data: data,
       _ServiceProvider.GetRequiredKeyedService<IDataConverter>(dataCategory),
       _CancellationTokenProvider,
-      _PageAlertService);
+      _AlertService);
 
     return ret;
   }
@@ -116,7 +116,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
               dataCategory: DataCategory.PersonBio,
               _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonBio),
               _CancellationTokenProvider,
-              _PageAlertService)
+              _AlertService)
       };
       _Biography.PropertyChanged += (_, _) => IsModified = _Biography.IsModified;
 
@@ -130,7 +130,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
     catch (Exception ex)
     {
-      _ = _PageAlertService.ShowErrorAsync(ex);
+      _ = _AlertService.ShowErrorAsync(ex);
     }
   }
 
@@ -245,7 +245,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     {
       var message = string.Format(UIStrings.AlertTextUnableToAddNameForTheSexSelected_1,
         _BiologicalSexFormatter.ToString(_BiologicalSex?.Info));
-      await _PageAlertService.ShowWarningAsync(message);
+      await _AlertService.ShowWarningAsync(message);
       return;
     }
 
