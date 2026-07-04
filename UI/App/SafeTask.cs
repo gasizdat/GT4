@@ -24,9 +24,16 @@ internal static class SafeTask
   /// <summary>
   /// True when the exception is the benign "the project was closed underneath us" race rather than a
   /// genuine failure. Use it in <c>catch ... when</c> clauses to swallow teardown noise quietly.
+  /// Recurses into AggregateException because several call sites block on Task.Result, which wraps
+  /// the original exception rather than rethrowing it directly.
   /// </summary>
   public static bool IsProjectTeardown(Exception exception) =>
-    exception is ObjectDisposedException or ProjectNotOpenedException;
+    exception switch
+    {
+      ObjectDisposedException or ProjectNotOpenedException => true,
+      AggregateException aggregate => aggregate.InnerException is not null && IsProjectTeardown(aggregate.InnerException),
+      _ => false
+    };
 
   private static async Task GuardAsync(Func<Task> work, IAlertService alertService)
   {

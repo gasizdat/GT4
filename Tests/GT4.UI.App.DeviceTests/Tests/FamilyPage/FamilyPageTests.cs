@@ -1,3 +1,4 @@
+using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Dialogs;
@@ -86,6 +87,26 @@ public class FamilyPageTests
 
     Assert.Empty(persons);
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.AtLeastOnce());
+  }
+
+  [Fact]
+  public async Task Persons_swallows_the_project_teardown_race()
+  {
+    var services = new TestServices();
+    var familyName = N(5, "Ivanov", NameType.FamilyName);
+    // Persons blocks on .Result, which wraps the fault in AggregateException rather than rethrowing
+    // it directly -- SafeTask.IsProjectTeardown recurses into AggregateException.InnerException for
+    // exactly this reason.
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosByNameAsync(familyName, true, It.IsAny<CancellationToken>()))
+      .ThrowsAsync(new ObjectDisposedException(nameof(IProjectDocument)));
+    var page = await CreatePageAsync(services);
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.FamilyName = familyName);
+    var persons = await MainThread.InvokeOnMainThreadAsync(() => page.Persons.ToArray());
+
+    Assert.Empty(persons);
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
 
   [Fact]
