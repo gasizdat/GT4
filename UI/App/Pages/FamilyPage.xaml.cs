@@ -16,6 +16,8 @@ public partial class FamilyPage : ContentPage
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IComparer<PersonInfo> _PersonInfoComparer;
+  private readonly IPageAlertService _PageAlertService;
+  private readonly INavigationService _NavigationService;
   private Name? _FamilyName = null;
   private double _PersonItemMinimalWidth;
 
@@ -24,11 +26,13 @@ public partial class FamilyPage : ContentPage
     _Services = serviceProvider;
     _CancellationTokenProvider = _Services.GetRequiredService<ICancellationTokenProvider>();
     _CurrentProjectProvider = _Services.GetRequiredService<ICurrentProjectProvider>();
-    _PersonInfoComparer =  _Services.GetKeyedService<IComparer<PersonInfo>>(PersonNamesFormat) ?? 
+    _PersonInfoComparer =  _Services.GetKeyedService<IComparer<PersonInfo>>(PersonNamesFormat) ??
                            _Services.GetRequiredService<IComparer<PersonInfo>>();
+    _PageAlertService = _Services.GetRequiredService<IPageAlertService>();
+    _NavigationService = _Services.GetRequiredService<INavigationService>();
 
-    MemberItemTappedCommand = new SafeCommand<PersonInfo>(OnOpenPerson);
-    PageCommand = new SafeCommand(OnPageCommand);
+    MemberItemTappedCommand = new SafeCommand<PersonInfo>(OnOpenPerson, _PageAlertService);
+    PageCommand = new SafeCommand(OnPageCommand, _PageAlertService);
 
     InitializeComponent();
   }
@@ -84,7 +88,7 @@ public partial class FamilyPage : ContentPage
       }
       catch (Exception ex)
       {
-        _ = this.ShowErrorAsync(ex);
+        _ = _PageAlertService.ShowErrorAsync(this, ex);
         return Enumerable.Empty<PersonInfo>().ToList();
       }
     }
@@ -110,7 +114,7 @@ public partial class FamilyPage : ContentPage
   private async Task OnDeleteFamily()
   {
     var canDelete = _FamilyName is not null &&
-       await this.ShowConfirmationAsync(string.Format(UIStrings.AlertTextDeleteConfirmationText_1, _FamilyName.Value));
+       await _PageAlertService.ShowConfirmationAsync(this, string.Format(UIStrings.AlertTextDeleteConfirmationText_1, _FamilyName.Value));
 
     if (!canDelete)
     {
@@ -123,7 +127,7 @@ public partial class FamilyPage : ContentPage
       .FamilyManager
       .RemoveFamilyAsync(_FamilyName!, token);
 
-    await Shell.Current.GoToAsync("..", true);
+    await _NavigationService.GoToAsync("..", true);
   }
 
   private async Task OnCreatePerson()
@@ -155,7 +159,7 @@ public partial class FamilyPage : ContentPage
 
   private async Task OnOpenPerson(PersonInfo familyMember)
   {
-    await Shell.Current.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { ["PersonInfo"] = familyMember });
+    await _NavigationService.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { ["PersonInfo"] = familyMember });
   }
 
   private async Task OnPageCommand(object parameter)

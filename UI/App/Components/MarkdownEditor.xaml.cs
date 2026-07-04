@@ -7,12 +7,18 @@ public partial class MarkdownEditor : ContentView
   private readonly ICommand _Command;
   private int _TabIndex;
 
-  public MarkdownEditor()
+  protected MarkdownEditor(IServiceProvider serviceProvider)
   {
-    _Command = new SafeCommand(OnCommand);
+    _Command = new SafeCommand(OnCommand, serviceProvider.GetRequiredService<IPageAlertService>());
     _TabIndex = 0;
 
     InitializeComponent();
+  }
+
+  public MarkdownEditor()
+    : this(GT4Services.Provider)
+  {
+
   }
 
   public static readonly BindableProperty MarkdownProperty =

@@ -7,10 +7,14 @@ namespace GT4.UI.Pages;
 public partial class MainPage : ContentPage
 {
   private readonly LanguageSetting _LanguageSetting;
+  private readonly IPageAlertService _PageAlertService;
+  private readonly INavigationService _NavigationService;
 
-  public MainPage(LanguageSetting languageSetting)
+  public MainPage(LanguageSetting languageSetting, IPageAlertService pageAlertService, INavigationService navigationService)
   {
     _LanguageSetting = languageSetting;
+    _PageAlertService = pageAlertService;
+    _NavigationService = navigationService;
     InitializeComponent();
   }
 
@@ -19,13 +23,13 @@ public partial class MainPage : ContentPage
     switch (arg)
     {
       case string commandName when commandName == "OpenOrCreateDialog":
-        await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectListPage>());
+        await _NavigationService.GoToAsync(UIRoutes.GetRoute<ProjectListPage>());
         break;
       case string commandName when commandName == "OpenSettings":
-        await Shell.Current.GoToAsync(UIRoutes.GetRoute<SettingsPage>());
+        await _NavigationService.GoToAsync(UIRoutes.GetRoute<SettingsPage>());
         break;
     }
-  });
+  }, _PageAlertService);
 
   public Utils.Language[] Languages => Utils.Language.Languages;
 

@@ -10,6 +10,7 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
 {
   private readonly IDataConverter _DataConverter;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
+  private readonly IPageAlertService _PageAlertService;
   private object? _Content = null;
   private bool _IsReady = false;
   private bool _IsModified = false;
@@ -19,23 +20,27 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Content)));
   }
 
-  public PersonDataItem(Data data, IDataConverter dataConverter, ICancellationTokenProvider cancellationTokenProvider)
+  public PersonDataItem(Data data, IDataConverter dataConverter, ICancellationTokenProvider cancellationTokenProvider,
+    IPageAlertService pageAlertService)
     : base(data, string.Empty)
   {
     _DataConverter = dataConverter;
     _CancellationTokenProvider = cancellationTokenProvider;
+    _PageAlertService = pageAlertService;
   }
 
-  public PersonDataItem(DataCategory dataCategory, IDataConverter dataConverter, ICancellationTokenProvider cancellationTokenProvider)
+  public PersonDataItem(DataCategory dataCategory, IDataConverter dataConverter, ICancellationTokenProvider cancellationTokenProvider,
+    IPageAlertService pageAlertService)
     : this(new Data(
                Id: TableBase.NonCommittedId,
                Content: [],
                MimeType: null,
                Category: dataCategory),
-        dataConverter, cancellationTokenProvider)
+        dataConverter, cancellationTokenProvider, pageAlertService)
   {
     _DataConverter = dataConverter;
     _CancellationTokenProvider = cancellationTokenProvider;
+    _PageAlertService = pageAlertService;
   }
 
   public object? Content
@@ -66,7 +71,7 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
           }
           catch (Exception ex)
           {
-            await PageAlert.ShowErrorAsync(ex);
+            await _PageAlertService.ShowErrorAsync(ex);
           }
         }
 

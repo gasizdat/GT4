@@ -14,6 +14,7 @@ public partial class NameView : ContentView
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IComparer<PersonInfo> _PersonInfoComparer;
+  private readonly IPageAlertService _PageAlertService;
   private bool _ShowPersons = false;
   private ICollection<PersonInfo>? _Persons = null;
   private string _MoreBtnName = ExpandSymbol;
@@ -22,7 +23,8 @@ public partial class NameView : ContentView
   {
     _CancellationTokenProvider = serviceProvider.GetRequiredService<ICancellationTokenProvider>();
     _CurrentProjectProvider = serviceProvider.GetRequiredService<ICurrentProjectProvider>();
-    TogglePersonsCommand = new SafeCommand(OnTogglePersonsAsync); 
+    _PageAlertService = serviceProvider.GetRequiredService<IPageAlertService>();
+    TogglePersonsCommand = new SafeCommand(OnTogglePersonsAsync, _PageAlertService);
     _PersonInfoComparer = serviceProvider.GetKeyedService<IComparer<PersonInfo>>(PersonNamesFormat) ??
                           serviceProvider.GetRequiredService<IComparer<PersonInfo>>();
 

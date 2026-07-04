@@ -16,6 +16,7 @@ public partial class SelectRelativesDialog : ContentPage
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IDateFormatter _DateFormatter;
   private readonly IComparer<PersonInfo> _PersonInfoComparer;
+  private readonly IPageAlertService _PageAlertService;
   private readonly BiologicalSexItem[] _BiologicalSexes;
   private readonly RelationshipTypeItem[] _RelationshipTypes;
   private readonly FilteredObservableCollection<PersonInfo> _Persons = new();
@@ -101,7 +102,8 @@ public partial class SelectRelativesDialog : ContentPage
     _CurrentProjectProvider = serviceProvider.GetRequiredService<ICurrentProjectProvider>();
     _DateFormatter = serviceProvider.GetRequiredService<IDateFormatter>();
     _PersonInfoComparer = serviceProvider.GetRequiredService<IComparer<PersonInfo>>();
-    _DialogCommand = new SafeCommand(OnDialogCommand);
+    _PageAlertService = serviceProvider.GetRequiredService<IPageAlertService>();
+    _DialogCommand = new SafeCommand(OnDialogCommand, _PageAlertService);
     _ProjectRevision = _CurrentProjectProvider.Project.ProjectRevision;
     _BiologicalSexes = new[] { BiologicalSex.Male, BiologicalSex.Female, BiologicalSex.Unknown }
       .Select(sex => new BiologicalSexItem(sex, biologicalSexFormatter))
@@ -200,7 +202,7 @@ public partial class SelectRelativesDialog : ContentPage
         }
         catch (Exception ex)
         {
-          await this.ShowErrorAsync(ex);
+          await _PageAlertService.ShowErrorAsync(this, ex);
         }
       }
 

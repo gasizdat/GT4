@@ -26,6 +26,8 @@ public partial class PersonPage : ContentPage
   private readonly IDataConverter _GedcomConverter;
   private readonly ICommand _PageCommand;
   private readonly RelativeTree _Relatives;
+  private readonly IPageAlertService _PageAlertService;
+  private readonly INavigationService _NavigationService;
   private ObservableCollection<PersonInfo> _NavigationHistory = new();
   private int _NavigationIndex = -1;
   private PersonFullInfo _PersonFullInfo = PersonFullInfo.Empty;
@@ -44,8 +46,10 @@ public partial class PersonPage : ContentPage
     _NameFormatter = _ServiceProvider.GetRequiredService<INameFormatter>();
     _TextConverter = _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonBio);
     _GedcomConverter = _ServiceProvider.GetRequiredKeyedService<IDataConverter>(DataCategory.PersonGedcomTags);
-    _PageCommand = new SafeCommand(OnPageCommand);
-    _Relatives = new RelativeTree(_CurrentProjectProvider, _CancellationTokenProvider);
+    _PageAlertService = _ServiceProvider.GetRequiredService<IPageAlertService>();
+    _NavigationService = _ServiceProvider.GetRequiredService<INavigationService>();
+    _PageCommand = new SafeCommand(OnPageCommand, _PageAlertService);
+    _Relatives = new RelativeTree(_CurrentProjectProvider, _CancellationTokenProvider, _PageAlertService);
 
     InitializeComponent();
   }
@@ -234,7 +238,7 @@ public partial class PersonPage : ContentPage
                                                   stepChildrenTasks.Result,
                                                   photos, bioTask.Result as string,
                                                   gedcomTask.Result as string,
-                                                  addToNavigation));
+                                                  addToNavigation), _PageAlertService);
     }
     catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
     {
@@ -245,8 +249,8 @@ public partial class PersonPage : ContentPage
     {
       // GetPersonDataAsync runs on a background thread (Task.Run); both the alert and the
       // navigation touch native views, so marshal them onto the UI thread.
-      await this.ShowErrorAsync(ex);
-      await MainThread.InvokeOnMainThreadAsync(() => Shell.Current.GoToAsync("..", true));
+      await _PageAlertService.ShowErrorAsync(this, ex);
+      await MainThread.InvokeOnMainThreadAsync(() => _NavigationService.GoToAsync("..", true));
       return;
     }
   }
@@ -317,17 +321,17 @@ public partial class PersonPage : ContentPage
         ShowPersonInfo(_PersonFullInfo, false);
         break;
       case string commandName when commandName == "GoToHome":
-        await Shell.Current.GoToAsync(UIRoutes.GetRoute<MainPage>());
+        await _NavigationService.GoToAsync(UIRoutes.GetRoute<MainPage>());
         break;
       case string commandName when commandName == "GoToFamily":
-        await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = FamilyName! });
+        await _NavigationService.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = FamilyName! });
         break;
       case string commandName when commandName == "GoToFamilyTree":
         // Shell matches the target's [QueryProperty] by exact runtime type, so hand it a plain
         // PersonInfo — passing the PersonFullInfo subclass sends Shell down a Convert.ChangeType path
         // that throws (the object is not IConvertible).
         var centerInfo = new PersonInfo(_PersonFullInfo, _PersonFullInfo.Names, _PersonFullInfo.MainPhoto);
-        await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamilyTreePage>(), true, new() { ["PersonInfo"] = centerInfo });
+        await _NavigationService.GoToAsync(UIRoutes.GetRoute<FamilyTreePage>(), true, new() { ["PersonInfo"] = centerInfo });
         break;
       case RelativeInfo relativeInfo:
         ShowPersonInfo(relativeInfo, true);
@@ -340,7 +344,7 @@ public partial class PersonPage : ContentPage
         break;
       case string commandName when commandName == "ToggleAll":
         ExpandAll = !ExpandAll;
-        _ = SafeTask.Run(() => _Relatives.ExpandAllAsync(ExpandAll));
+        _ = SafeTask.Run(() => _Relatives.ExpandAllAsync(ExpandAll), _PageAlertService);
         break;
     }
   }

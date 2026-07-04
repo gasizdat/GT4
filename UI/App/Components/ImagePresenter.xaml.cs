@@ -17,6 +17,7 @@ public partial class ImagePresenter : ContentView
   private static readonly string[] _ImageOpacityProperties = [nameof(ImageOpacity1), nameof(ImageOpacity2)];
   private readonly ImageSource[] _Images;
   private readonly double[] _ImageOpacities;
+  private readonly IPageAlertService _PageAlertService;
   private readonly ICommand _Command;
   private readonly ICommand _OpenViewerCommand;
   private uint _CurrentIndex = 0;
@@ -189,8 +190,10 @@ public partial class ImagePresenter : ContentView
     _Timer.Start();
   }
 
-  public ImagePresenter()
+  protected ImagePresenter(IServiceProvider serviceProvider)
   {
+    _PageAlertService = serviceProvider.GetRequiredService<IPageAlertService>();
+
     List<double> opacities = new();
     List<ImageSource> images = new();
     for (var i = 0; i < _ActiveImages; i++)
@@ -207,10 +210,16 @@ public partial class ImagePresenter : ContentView
       _Timer.Tick += TimerTick;
     };
     Unloaded += (_, _) => _Timer.Tick -= TimerTick;
-    _Command = new SafeCommand(OnNextPicture);
-    _OpenViewerCommand = new SafeCommand(OnOpenViewerAsync);
+    _Command = new SafeCommand(OnNextPicture, _PageAlertService);
+    _OpenViewerCommand = new SafeCommand(OnOpenViewerAsync, _PageAlertService);
 
     InitializeComponent();
+  }
+
+  public ImagePresenter()
+    : this(GT4Services.Provider)
+  {
+
   }
 
   private void TimerTick(object? sender, EventArgs e) => Update();
@@ -222,7 +231,7 @@ public partial class ImagePresenter : ContentView
       return;
     }
 
-    await Shell.Current.Navigation.PushModalAsync(new PhotoViewerDialog(ImageSources));
+    await Shell.Current.Navigation.PushModalAsync(new PhotoViewerDialog(ImageSources, _PageAlertService));
   }
 
   private void OnNextPicture(object obj)

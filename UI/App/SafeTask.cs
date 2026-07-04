@@ -7,18 +7,19 @@ namespace GT4.UI;
 /// can close/dispose the document underneath such work — most visibly when Android backgrounds the
 /// app and <see cref="App"/> closes the current project — which surfaces as
 /// <see cref="ObjectDisposedException"/> or <see cref="ProjectNotOpenedException"/>. Those are
-/// expected during teardown and swallowed quietly; any other failure is surfaced through
-/// <see cref="PageAlert"/>. Without this, an exception escaping a Task.Run or a posted continuation
-/// is unobserved and terminates the app.
+/// expected during teardown and swallowed quietly; any other failure is surfaced through the
+/// caller's <see cref="IPageAlertService"/>. Without this, an exception escaping a Task.Run or a
+/// posted continuation is unobserved and terminates the app.
 /// </summary>
 internal static class SafeTask
 {
   /// <summary>Runs <paramref name="work"/> on a background thread, guarding against the teardown race.</summary>
-  public static Task Run(Func<Task> work) => Task.Run(() => GuardAsync(work));
+  public static Task Run(Func<Task> work, IPageAlertService pageAlertService) =>
+    Task.Run(() => GuardAsync(work, pageAlertService));
 
   /// <summary>Runs <paramref name="work"/> on the UI thread, guarding against the teardown race.</summary>
-  public static Task RunOnMainThread(Action work) =>
-    MainThread.InvokeOnMainThreadAsync(() => Guard(work));
+  public static Task RunOnMainThread(Action work, IPageAlertService pageAlertService) =>
+    MainThread.InvokeOnMainThreadAsync(() => Guard(work, pageAlertService));
 
   /// <summary>
   /// True when the exception is the benign "the project was closed underneath us" race rather than a
@@ -27,7 +28,7 @@ internal static class SafeTask
   public static bool IsProjectTeardown(Exception exception) =>
     exception is ObjectDisposedException or ProjectNotOpenedException;
 
-  private static async Task GuardAsync(Func<Task> work)
+  private static async Task GuardAsync(Func<Task> work, IPageAlertService pageAlertService)
   {
     try
     {
@@ -39,11 +40,11 @@ internal static class SafeTask
     }
     catch (Exception ex)
     {
-      await PageAlert.ShowErrorAsync(ex);
+      await pageAlertService.ShowErrorAsync(ex);
     }
   }
 
-  private static void Guard(Action work)
+  private static void Guard(Action work, IPageAlertService pageAlertService)
   {
     try
     {
@@ -55,7 +56,7 @@ internal static class SafeTask
     }
     catch (Exception ex)
     {
-      _ = PageAlert.ShowErrorAsync(ex);
+      _ = pageAlertService.ShowErrorAsync(ex);
     }
   }
 }

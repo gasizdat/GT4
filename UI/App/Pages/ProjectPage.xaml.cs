@@ -30,6 +30,8 @@ public partial class ProjectPage : ContentPage
   private readonly IProjectList _ProjectList;
   private readonly IGedcomExporter _Exporter;
   private readonly IGedcomImporter _Importer;
+  private readonly IPageAlertService _PageAlertService;
+  private readonly INavigationService _NavigationService;
 
   private long? _ProjectRevision;
 
@@ -44,8 +46,10 @@ public partial class ProjectPage : ContentPage
     _ProjectList = _ServiceProvider.GetRequiredService<IProjectList>();
     _Exporter = _ServiceProvider.GetRequiredService<IGedcomExporter>();
     _Importer = _ServiceProvider.GetRequiredService<IGedcomImporter>();
+    _PageAlertService = _ServiceProvider.GetRequiredService<IPageAlertService>();
+    _NavigationService = _ServiceProvider.GetRequiredService<INavigationService>();
 
-    PageCommand = new SafeCommand(OnPageCommand);
+    PageCommand = new SafeCommand(OnPageCommand, _PageAlertService);
     InitializeComponent();
   }
 
@@ -75,7 +79,7 @@ public partial class ProjectPage : ContentPage
       }
       catch (Exception ex)
       {
-        this.ShowErrorAsync(ex);
+        _PageAlertService.ShowErrorAsync(this, ex);
         return [];
       }
     }
@@ -94,7 +98,7 @@ public partial class ProjectPage : ContentPage
     {
       if (e.CurrentSelection.FirstOrDefault() is FamilyInfoItem item)
       {
-        await Shell.Current.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = item.Info });
+        await _NavigationService.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = item.Info });
       }
     }
     catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
@@ -103,7 +107,7 @@ public partial class ProjectPage : ContentPage
     }
     catch (Exception ex)
     {
-      await this.ShowErrorAsync(ex);
+      await _PageAlertService.ShowErrorAsync(this, ex);
     }
   }
 
@@ -220,7 +224,7 @@ public partial class ProjectPage : ContentPage
         break;
 
       case string commandName when commandName == "GoToNames":
-        await Shell.Current.GoToAsync(UIRoutes.GetRoute<NamesPage>());
+        await _NavigationService.GoToAsync(UIRoutes.GetRoute<NamesPage>());
         break;
 
       case string commandName when commandName == "ExportGedcom":
@@ -232,7 +236,7 @@ public partial class ProjectPage : ContentPage
         break;
 
       case string commandName when commandName == "GoToRevisions":
-        await Shell.Current.GoToAsync(UIRoutes.GetRoute<ProjectRevisionsPage>());
+        await _NavigationService.GoToAsync(UIRoutes.GetRoute<ProjectRevisionsPage>());
         break;
     }
   }
@@ -242,13 +246,13 @@ public partial class ProjectPage : ContentPage
     var projectName = _CurrentProjectProvider.Info.Name;
     var projectOrigin = _CurrentProjectProvider.Info.Origin;
     var confirmationText = string.Format(UIStrings.AlertTextDeleteConfirmationText_1, projectName);
-    if (await this.ShowConfirmationAsync(confirmationText))
+    if (await _PageAlertService.ShowConfirmationAsync(this, confirmationText))
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
       await _ProjectList.RemoveAsync(projectOrigin, token);
     }
 
-    await Shell.Current.GoToAsync("..", true);
+    await _NavigationService.GoToAsync("..", true);
   }
 
   private async Task OnEditProject()
@@ -271,7 +275,7 @@ public partial class ProjectPage : ContentPage
       project.Metadata.SetProjectDescriptionAsync(projectInfo.Description, token));
     await transaction.CommitAsync(token);
 
-    await Shell.Current.GoToAsync("..", true);
+    await _NavigationService.GoToAsync("..", true);
   }
 
   private async Task OnCreateFamily()
@@ -324,7 +328,7 @@ public partial class ProjectPage : ContentPage
       return;
 
     var confirmText = string.Format(UIStrings.AlertImportGedcomConfirm_1, _CurrentProjectProvider.Info.Name);
-    if (!await this.ShowConfirmationAsync(confirmText))
+    if (!await _PageAlertService.ShowConfirmationAsync(this, confirmText))
       return;
 
     var dialog = new GedcomImportDialog(_CurrentProjectProvider.Info.Name);

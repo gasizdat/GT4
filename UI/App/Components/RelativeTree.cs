@@ -18,14 +18,17 @@ public sealed class RelativeTree
 
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
+  private readonly IPageAlertService _PageAlertService;
   private readonly ObservableCollection<RelativeRow> _Rows = new();
 
   public RelativeTree(
     ICurrentProjectProvider currentProjectProvider,
-    ICancellationTokenProvider cancellationTokenProvider)
+    ICancellationTokenProvider cancellationTokenProvider,
+    IPageAlertService pageAlertService)
   {
     _CurrentProjectProvider = currentProjectProvider;
     _CancellationTokenProvider = cancellationTokenProvider;
+    _PageAlertService = pageAlertService;
   }
 
   public ObservableCollection<RelativeRow> Rows => _Rows;
@@ -101,7 +104,7 @@ public sealed class RelativeTree
       {
         try
         {
-          await PageAlert.CurrentShell.ShowWarningAsync(UIStrings.AlertTextKinshipUnfoldingAborted);
+          await _PageAlertService.ShowWarningAsync(Shell.Current, UIStrings.AlertTextKinshipUnfoldingAborted);
         }
         finally
         {
@@ -171,7 +174,7 @@ public sealed class RelativeTree
     bool[] ancestorContinues)
   {
     RelativeRow? row = null;
-    var toggleCommand = new SafeCommand(() => ToggleAsync(row!));
+    var toggleCommand = new SafeCommand(() => ToggleAsync(row!), _PageAlertService);
     row = new RelativeRow(relative, personBirthDate, depth, isLast, ancestorContinues, toggleCommand);
     return row;
   }

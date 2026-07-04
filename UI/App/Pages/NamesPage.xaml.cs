@@ -23,6 +23,7 @@ public partial class NamesPage : ContentPage
   private readonly ICommand _EditNameCommand;
   private readonly ICommand _DeleteNameCommand;
   private readonly ICommand _PageCommand;
+  private readonly IPageAlertService _PageAlertService;
   private NameTypeInfoItem _CurrentNameType;
   private Name? _CurrentName;
   private int? _CurrentNameId;
@@ -45,9 +46,10 @@ public partial class NamesPage : ContentPage
     _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
     _NameComparer = _ServiceProvider.GetRequiredService<IComparer<Name>>();
     _NameTypes = new(nameTypes.Select(type => new NameTypeInfoItem(nameTypeFormatter.ToString(type), type)));
-    _EditNameCommand = new SafeCommand(OnEditCommandAsync);
-    _DeleteNameCommand = new SafeCommand(OnDeleteCommandAsync);
-    _PageCommand = new SafeCommand(OnPageCommandAsync);
+    _PageAlertService = _ServiceProvider.GetRequiredService<IPageAlertService>();
+    _EditNameCommand = new SafeCommand(OnEditCommandAsync, _PageAlertService);
+    _DeleteNameCommand = new SafeCommand(OnDeleteCommandAsync, _PageAlertService);
+    _PageCommand = new SafeCommand(OnPageCommandAsync, _PageAlertService);
     _CurrentNameType = _NameTypes.First();
     _Names.Filter = NamesFilter;
 
@@ -286,7 +288,7 @@ public partial class NamesPage : ContentPage
         _UpdateNames = false;
         // AddNameItemsAsync reads the project document on a background thread; SafeTask swallows the
         // teardown race (project closed while backgrounding) and surfaces any real failure.
-        _ = SafeTask.Run(AddNameItemsAsync);
+        _ = SafeTask.Run(AddNameItemsAsync, _PageAlertService);
       }
 
       return _Names.Items;
