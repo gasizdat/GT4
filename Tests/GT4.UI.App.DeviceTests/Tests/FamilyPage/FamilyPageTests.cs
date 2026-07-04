@@ -95,8 +95,8 @@ public class FamilyPageTests
     var services = new TestServices();
     var familyName = N(5, "Ivanov", NameType.FamilyName);
     // Persons blocks on .Result, which wraps the fault in AggregateException rather than rethrowing
-    // it directly -- SafeTask.IsProjectTeardown recurses into AggregateException.InnerException for
-    // exactly this reason.
+    // it directly -- SafeTask.IsProjectTeardown recurses into AggregateException's inner exceptions
+    // for exactly this reason.
     services.PersonManager
       .Setup(p => p.GetPersonInfosByNameAsync(familyName, true, It.IsAny<CancellationToken>()))
       .ThrowsAsync(new ObjectDisposedException(nameof(IProjectDocument)));
