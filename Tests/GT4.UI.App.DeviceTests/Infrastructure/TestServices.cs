@@ -110,14 +110,9 @@ internal sealed class TestServices
     services.AddSingleton<TestableProjectPage>();
     services.AddSingleton<TestablePersonPage>();
     services.AddSingleton<TestableProjectListPage>();
-    // MainPage needs no protected-seam subclass: its PageCommand branches are checked by polling
-    // INavigationService's invocation count after Execute, not by awaiting a Task directly.
     services.AddSingleton<MainPage>();
     services.AddSingleton<ProjectRevisionsPage>();
     services.AddSingleton<TestableFamilyTreePage>();
-    // SettingsPage takes a raw IServiceProvider (it gathers every keyed ISettingEditor via
-    // GetKeyedServices(KeyedService.AnyKey), which has no typed-constructor-parameter equivalent);
-    // DI supplies that itself, no subclass needed.
     services.AddSingleton<SettingsPage>();
     Provider = services.BuildServiceProvider();
   }
