@@ -1,7 +1,8 @@
 <#
 .SYNOPSIS
-  Runs the UI test projects (GT4.UI.Utils.Tests, GT4.UI.View.Tests, GT4.UI.App.DeviceTests) with
-  code coverage and shows an HTML report at the end.
+  Runs every test project (GT4.Core.Project.Tests, GT4.Core.Gedcom.Tests, GT4.UI.Utils.Tests,
+  GT4.UI.View.Tests, GT4.UI.App.DeviceTests) with code coverage and shows a combined HTML report at
+  the end.
 
 .PARAMETER SkipOpen
   Don't launch the generated report in the default browser.
@@ -30,6 +31,14 @@ function Install-GlobalToolIfMissing([string]$toolName) {
 Install-GlobalToolIfMissing 'dotnet-coverage'
 Install-GlobalToolIfMissing 'dotnet-reportgenerator-globaltool'
 if ($env:PATH -notlike "*$toolsPath*") { $env:PATH = "$env:PATH;$toolsPath" }
+
+Write-Host "`n=== GT4.Core.Project.Tests ===" -ForegroundColor Cyan
+dotnet test (Join-Path $repoRoot 'Tests\GT4.Core.Project.Tests\GT4.Core.Project.Tests.csproj') `
+  --configuration Release --collect "XPlat Code Coverage" --results-directory $coverageDir
+
+Write-Host "`n=== GT4.Core.Gedcom.Tests ===" -ForegroundColor Cyan
+dotnet test (Join-Path $repoRoot 'Tests\GT4.Core.Gedcom.Tests\GT4.Core.Gedcom.Tests.csproj') `
+  --configuration Release --collect "XPlat Code Coverage" --results-directory $coverageDir
 
 Write-Host "`n=== GT4.UI.Utils.Tests ===" -ForegroundColor Cyan
 dotnet test (Join-Path $repoRoot 'Tests\GT4.UI.Utils.Tests\GT4.UI.Utils.Tests.csproj') `
