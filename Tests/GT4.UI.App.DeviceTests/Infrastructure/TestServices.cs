@@ -115,6 +115,10 @@ internal sealed class TestServices
     services.AddSingleton<MainPage>();
     services.AddSingleton<ProjectRevisionsPage>();
     services.AddSingleton<TestableFamilyTreePage>();
+    // SettingsPage takes a raw IServiceProvider (it gathers every keyed ISettingEditor via
+    // GetKeyedServices(KeyedService.AnyKey), which has no typed-constructor-parameter equivalent);
+    // DI supplies that itself, no subclass needed.
+    services.AddSingleton<SettingsPage>();
     Provider = services.BuildServiceProvider();
   }
 }
