@@ -49,13 +49,13 @@ jobs:
         # --no-build still touches AppCommon.props' buildnumber-increment target (via the
         # referenced AppWinOnly.csproj), so SolutionDir is needed here too, not just at build time.
         #
-        # The DeviceRunners CLI can exit -1 from a native WinUI teardown race (a window-class
+        # The DeviceRunners CLI can exit 1 from a native WinUI teardown race (a window-class
         # unregister failure) after every test already passed and its own TRX was written -- and
         # separately, the vendor's MSBuild target checks for a hardcoded "test-results.trx" filename
         # instead of the "device-tests.trx" our --logger arg actually produces, so it reports "no TRX
         # written" even when one exists. Trust the TRX's own pass/fail counters (ground truth) instead
         # of the process exit code, but only for that specific, previously-confirmed race (exit code
-        # -1 plus the vendor's own false-positive message) -- any other nonzero exit is treated as a
+        # 1 plus the vendor's own false-positive message) -- any other nonzero exit is treated as a
         # real failure even if the TRX itself shows no failed tests, since a TRX written before a
         # later, unrelated fatal error (e.g. OOM) would otherwise be misreported as success.
         #
@@ -87,7 +87,7 @@ jobs:
           $failed = [int]$trx.TestRun.ResultSummary.Counters.failed
           $total = [int]$trx.TestRun.ResultSummary.Counters.total
 
-          $knownRaceExitCode = -1
+          $knownRaceExitCode = 1
           $isKnownRace = $exitCode -eq $knownRaceExitCode -and $heldBackLines.Count -gt 0
           foreach ($line in $heldBackLines) {
             if ($failed -eq 0 -and $isKnownRace) {
