@@ -238,7 +238,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     _Info.SetResult(result);
   }
 
-  private async Task OnAddPersonNameAsync()
+  protected async Task OnAddPersonNameAsync()
   {
     var biologicalSex = _BiologicalSex?.Info ?? BiologicalSex.Unknown;
     if (biologicalSex == BiologicalSex.Unknown)
