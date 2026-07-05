@@ -33,7 +33,19 @@ public partial class ProjectPage : ContentPage
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
 
+  private static readonly BiologicalSex?[] SexFilterValues = [null, BiologicalSex.Male, BiologicalSex.Female, BiologicalSex.Unknown];
+  private static readonly bool?[] MaritalStatusFilterValues = [null, true, false];
+
   private long? _ProjectRevision;
+  private List<(Name Family, PersonInfo[] Persons)>? _FamilyPersonsCache;
+  private Dictionary<int, bool> _IsMarried = new();
+  private double _MinYear;
+  private double _MaxYear;
+  private string _NameFilter = string.Empty;
+  private int _SexFilterIndex;
+  private int _MaritalStatusFilterIndex;
+  private bool _IsYearFilterEnabled;
+  private double _SelectedYear;
 
   public ProjectPage(
     INameTypeFormatter nameTypeFormatter,
@@ -47,7 +59,8 @@ public partial class ProjectPage : ContentPage
     IGedcomExporter exporter,
     IGedcomImporter importer,
     IAlertService alertService,
-    INavigationService navigationService
+    INavigationService navigationService,
+    IBiologicalSexFormatter biologicalSexFormatter
     )
   {
     _NameTypeFormatter = nameTypeFormatter;
@@ -61,40 +74,219 @@ public partial class ProjectPage : ContentPage
     _AlertService = alertService;
     _NavigationService = navigationService;
 
+    SexFilterLabels =
+    [
+      UIStrings.FieldFilterAny,
+      biologicalSexFormatter.ToString(BiologicalSex.Male),
+      biologicalSexFormatter.ToString(BiologicalSex.Female),
+      biologicalSexFormatter.ToString(BiologicalSex.Unknown),
+    ];
+    MaritalStatusFilterLabels =
+    [
+      UIStrings.FieldFilterAny,
+      UIStrings.FieldMaritalStatusMarried,
+      UIStrings.FieldMaritalStatusSingle,
+    ];
+
     PageCommand = new SafeCommand(OnPageCommand, _AlertService);
     InitializeComponent();
   }
 
-  public ICollection<FamilyInfoItem> Families
+  public ICollection<FamilyInfoItem> Families =>
+    GetFamilyPersonsCache()
+      // A family that never had any members is left visible (e.g. one just created); a family that
+      // had members but none of them survive the current filters is what gets hidden.
+      .Where(f => f.Persons.Length == 0 || f.Persons.Any(PersonMatches))
+      .Select(f => new FamilyInfoItem(f.Family, f.Persons.Where(PersonMatches).ToArray()))
+      .OrderBy(item => item.Info, _NameComparer)
+      .ToList();
+
+  private List<(Name Family, PersonInfo[] Persons)> GetFamilyPersonsCache()
+  {
+    if (_FamilyPersonsCache is not null)
+    {
+      return _FamilyPersonsCache;
+    }
+
+    try
+    {
+      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      var project = _CurrentProjectProvider.Project;
+      var familyPersons = project
+        .FamilyManager
+        .GetFamiliesAsync(token)
+        .Result
+        .Select(name => (Family: name, Persons: GetFamilyPersons(name, token)))
+        .ToList();
+
+      var allPersons = familyPersons.SelectMany(f => f.Persons).DistinctBy(p => p.Id).ToArray();
+      var relatives = project.Relatives.GetRelativesForPersonsAsync(allPersons, token).Result;
+      _IsMarried = relatives.ToDictionary(kv => kv.Key, kv => kv.Value.Any(r => r.Type == RelationshipType.Spouse));
+
+      (_MinYear, _MaxYear) = ComputeYearBounds(allPersons);
+      if (_SelectedYear < _MinYear || _SelectedYear > _MaxYear)
+      {
+        _SelectedYear = _MaxYear;
+      }
+
+      _FamilyPersonsCache = familyPersons;
+    }
+    catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
+    {
+      // The project was closed underneath us (e.g. the app is backgrounding). Nothing to surface.
+      System.Diagnostics.Debug.WriteLine(ex);
+      _FamilyPersonsCache = [];
+    }
+    catch (Exception ex)
+    {
+      _ = _AlertService.ShowErrorAsync(ex);
+      _FamilyPersonsCache = [];
+    }
+
+    return _FamilyPersonsCache;
+  }
+
+  private static (double Min, double Max) ComputeYearBounds(IReadOnlyCollection<PersonInfo> persons)
+  {
+    var knownYears = persons
+      .SelectMany(p => new[]
+      {
+        p.BirthDate.Status == DateStatus.Unknown ? (int?)null : p.BirthDate.Year,
+        p.DeathDate is { Status: not DateStatus.Unknown } d ? d.Year : (int?)null,
+      })
+      .Where(y => y.HasValue)
+      .Select(y => y!.Value)
+      .ToList();
+
+    var currentYear = Date.Now.Year;
+    var min = knownYears.Count > 0 ? knownYears.Min() : currentYear - 100;
+    var max = Math.Max(knownYears.Count > 0 ? knownYears.Max() : currentYear, currentYear);
+
+    return (min, max);
+  }
+
+  private bool PersonMatches(PersonInfo person)
+  {
+    if (!person.Names.Any(n => WildcardMatcher.IsMatch(n.Value, _NameFilter)))
+    {
+      return false;
+    }
+
+    if (CurrentSex is { } sex && person.BiologicalSex != sex)
+    {
+      return false;
+    }
+
+    if (CurrentMaritalStatus is { } wantMarried)
+    {
+      var isMarried = _IsMarried.TryGetValue(person.Id, out var married) && married;
+      if (wantMarried != isMarried)
+      {
+        return false;
+      }
+    }
+
+    if (_IsYearFilterEnabled && !PersonLifetimeMatcher.IsAliveInYear(person, (int)_SelectedYear))
+    {
+      return false;
+    }
+
+    return true;
+  }
+
+  public string[] SexFilterLabels { get; }
+
+  public string[] MaritalStatusFilterLabels { get; }
+
+  private BiologicalSex? CurrentSex => SexFilterValues[_SexFilterIndex];
+
+  private bool? CurrentMaritalStatus => MaritalStatusFilterValues[_MaritalStatusFilterIndex];
+
+  public string NameFilter
+  {
+    get => _NameFilter;
+    set
+    {
+      _NameFilter = value;
+      OnPropertyChanged(nameof(NameFilter));
+      OnPropertyChanged(nameof(Families));
+    }
+  }
+
+  public int SexFilterIndex
+  {
+    get => _SexFilterIndex;
+    set
+    {
+      _SexFilterIndex = value;
+      OnPropertyChanged(nameof(SexFilterIndex));
+      OnPropertyChanged(nameof(Families));
+    }
+  }
+
+  public int MaritalStatusFilterIndex
+  {
+    get => _MaritalStatusFilterIndex;
+    set
+    {
+      _MaritalStatusFilterIndex = value;
+      OnPropertyChanged(nameof(MaritalStatusFilterIndex));
+      OnPropertyChanged(nameof(Families));
+    }
+  }
+
+  public bool IsYearFilterEnabled
+  {
+    get => _IsYearFilterEnabled;
+    set
+    {
+      _IsYearFilterEnabled = value;
+      OnPropertyChanged(nameof(IsYearFilterEnabled));
+      OnPropertyChanged(nameof(Families));
+    }
+  }
+
+  public double MinYear
   {
     get
     {
-      try
-      {
-        using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-        var ret = _CurrentProjectProvider
-          .Project
-          .FamilyManager
-          .GetFamiliesAsync(token)
-          .Result
-          .Select(name => new FamilyInfoItem(name, GetFamilyPersons(name, token)))
-          .OrderBy(item => item.Info, _NameComparer)
-          .ToList();
-
-        return ret;
-      }
-      catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
-      {
-        // The project was closed underneath us (e.g. the app is backgrounding). Nothing to surface.
-        System.Diagnostics.Debug.WriteLine(ex);
-        return [];
-      }
-      catch (Exception ex)
-      {
-        _ = _AlertService.ShowErrorAsync(ex);
-        return [];
-      }
+      GetFamilyPersonsCache();
+      return _MinYear;
     }
+  }
+
+  public double MaxYear
+  {
+    get
+    {
+      GetFamilyPersonsCache();
+      return _MaxYear;
+    }
+  }
+
+  public double SelectedYear
+  {
+    get => _SelectedYear;
+    set
+    {
+      _SelectedYear = value;
+      OnPropertyChanged(nameof(SelectedYear));
+      OnPropertyChanged(nameof(Families));
+    }
+  }
+
+  private void OnClearFilters()
+  {
+    _NameFilter = string.Empty;
+    _SexFilterIndex = 0;
+    _MaritalStatusFilterIndex = 0;
+    _IsYearFilterEnabled = false;
+
+    OnPropertyChanged(nameof(NameFilter));
+    OnPropertyChanged(nameof(SexFilterIndex));
+    OnPropertyChanged(nameof(MaritalStatusFilterIndex));
+    OnPropertyChanged(nameof(IsYearFilterEnabled));
+    OnPropertyChanged(nameof(Families));
   }
 
   public string RemoveProjectToolbarItemName =>
@@ -192,6 +384,7 @@ public partial class ProjectPage : ContentPage
       if (projectRevision != _ProjectRevision)
       {
         _ProjectRevision = projectRevision;
+        _FamilyPersonsCache = null;
         this.RefreshView();
       }
     }
@@ -228,7 +421,12 @@ public partial class ProjectPage : ContentPage
         break;
 
       case string commandName when commandName == "Refresh":
+        _FamilyPersonsCache = null;
         this.RefreshView();
+        break;
+
+      case string commandName when commandName == "ClearFilters":
+        OnClearFilters();
         break;
 
       case string commandName when commandName == "CreateFamily":
@@ -358,6 +556,7 @@ public partial class ProjectPage : ContentPage
       await Navigation.PopModalAsync();
     }
 
+    _FamilyPersonsCache = null;
     this.RefreshView();
   }
 

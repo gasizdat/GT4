@@ -25,7 +25,8 @@ internal sealed class TestableProjectPage : ProjectPage
     IGedcomExporter exporter,
     IGedcomImporter importer,
     IAlertService alertService,
-    INavigationService navigationService)
+    INavigationService navigationService,
+    IBiologicalSexFormatter biologicalSexFormatter)
     : base(
       nameTypeFormatter,
       cancellationTokenProvider,
@@ -37,7 +38,8 @@ internal sealed class TestableProjectPage : ProjectPage
       exporter,
       importer,
       alertService,
-      navigationService)
+      navigationService,
+      biologicalSexFormatter)
   {
   }
 

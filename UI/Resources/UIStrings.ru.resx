@@ -981,4 +981,22 @@ FN - род</value>
   <data name="GedcomTagCHAN" xml:space="preserve">
     <value>Изменено</value>
   </data>
+  <data name="FieldFilterAny" xml:space="preserve">
+    <value>Любой</value>
+  </data>
+  <data name="FieldFilterSex" xml:space="preserve">
+    <value>Пол</value>
+  </data>
+  <data name="FieldMaritalStatusMarried" xml:space="preserve">
+    <value>В браке</value>
+  </data>
+  <data name="FieldMaritalStatusSingle" xml:space="preserve">
+    <value>Не в браке</value>
+  </data>
+  <data name="HintNameFilterWildcard" xml:space="preserve">
+    <value>Имя содержит… (поддерживаются подстановочные знаки * и ?)</value>
+  </data>
+  <data name="BtnNameClearFilters" xml:space="preserve">
+    <value>Сбросить фильтры</value>
+  </data>
 </root>

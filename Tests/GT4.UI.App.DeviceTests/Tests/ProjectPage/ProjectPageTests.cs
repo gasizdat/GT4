@@ -18,6 +18,13 @@ public class ProjectPageTests
 {
   private static Name N(int id, string value, NameType type) => new(id, value, type, null);
 
+  private static readonly Date UnknownDate = Date.Create(null, null, null, DateStatus.Unknown);
+
+  private static Date KnownYear(int year) => Date.Create(year, 1, 1, DateStatus.WellKnown);
+
+  private static PersonInfo P(int id, string firstName, BiologicalSex sex = BiologicalSex.Male, Date? birthDate = null, Date? deathDate = null) =>
+    new(id, birthDate ?? UnknownDate, deathDate, sex, [N(id * 100, firstName, NameType.FirstName)], null);
+
   private static async Task<TestableProjectPage> CreatePageAsync(TestServices services)
   {
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
@@ -222,4 +229,145 @@ public class ProjectPageTests
   // are non-public, meant to be raised only by CollectionView itself), so it can't be constructed
   // from test code. The handler is a thin "take the selected item, navigate" wrapper with no other
   // logic worth pinning.
+
+  [Fact]
+  public async Task NameFilter_matches_any_name_part_with_wildcards()
+  {
+    var services = new TestServices();
+    var ivanov = N(1, "Ivanov", NameType.FamilyName);
+    var petrov = N(2, "Petrov", NameType.FamilyName);
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([ivanov, petrov]);
+    services.PersonManager.Setup(p => p.GetPersonInfosByNameAsync(ivanov, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([P(1, "John"), P(2, "Jane")]);
+    services.PersonManager.Setup(p => p.GetPersonInfosByNameAsync(petrov, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([P(3, "Mark")]);
+    var page = await CreatePageAsync(services);
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.NameFilter = "J*n");
+    var families = await MainThread.InvokeOnMainThreadAsync(() => page.Families.ToArray());
+
+    var family = Assert.Single(families);
+    Assert.Equal("Ivanov", family.Info.Value);
+    Assert.Equal(["John"], family.Persons.Select(p => p.DisplayName));
+  }
+
+  [Fact]
+  public async Task NameFilter_cleared_shows_everyone_again()
+  {
+    var services = new TestServices();
+    var ivanov = N(1, "Ivanov", NameType.FamilyName);
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([ivanov]);
+    services.PersonManager.Setup(p => p.GetPersonInfosByNameAsync(ivanov, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([P(1, "John"), P(2, "Jane")]);
+    var page = await CreatePageAsync(services);
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.NameFilter = "John");
+    var filtered = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
+    Assert.Single(filtered);
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.NameFilter = "");
+    var restored = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
+    Assert.Equal(2, restored.Length);
+  }
+
+  [Fact]
+  public async Task SexFilterIndex_filters_by_biological_sex()
+  {
+    var services = new TestServices();
+    var family = N(1, "Ivanov", NameType.FamilyName);
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([family]);
+    services.PersonManager.Setup(p => p.GetPersonInfosByNameAsync(family, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([P(1, "John", BiologicalSex.Male), P(2, "Jane", BiologicalSex.Female)]);
+    var page = await CreatePageAsync(services);
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.SexFilterIndex = 1); // Male
+    var maleOnly = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
+    Assert.Equal(["John"], maleOnly.Select(p => p.DisplayName));
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.SexFilterIndex = 2); // Female
+    var femaleOnly = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
+    Assert.Equal(["Jane"], femaleOnly.Select(p => p.DisplayName));
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.SexFilterIndex = 0); // Any
+    var everyone = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
+    Assert.Equal(2, everyone.Length);
+  }
+
+  [Fact]
+  public async Task MaritalStatusFilterIndex_filters_by_marital_status()
+  {
+    var services = new TestServices();
+    var family = N(1, "Ivanov", NameType.FamilyName);
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([family]);
+    services.PersonManager.Setup(p => p.GetPersonInfosByNameAsync(family, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([P(1, "John"), P(2, "Jane")]);
+    services.Relatives
+      .Setup(r => r.GetRelativesForPersonsAsync(It.IsAny<Person[]>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new Dictionary<int, Relative[]> { [1] = [new Relative(2, default, null, BiologicalSex.Female, RelationshipType.Spouse, null)] });
+    var page = await CreatePageAsync(services);
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.MaritalStatusFilterIndex = 1); // Married
+    var married = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
+    Assert.Equal(["John"], married.Select(p => p.DisplayName));
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.MaritalStatusFilterIndex = 2); // Single
+    var single = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
+    Assert.Equal(["Jane"], single.Select(p => p.DisplayName));
+  }
+
+  [Fact]
+  public async Task YearFilter_matches_persons_alive_in_the_selected_year()
+  {
+    var services = new TestServices();
+    var family = N(1, "Ivanov", NameType.FamilyName);
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([family]);
+    var bornKnown = P(1, "John", birthDate: KnownYear(1950), deathDate: KnownYear(2000));
+    var noDatesAtAll = P(2, "NoDates");
+    services.PersonManager.Setup(p => p.GetPersonInfosByNameAsync(family, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([bornKnown, noDatesAtAll]);
+    var page = await CreatePageAsync(services);
+
+    var beforeFilter = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
+    Assert.Equal(2, beforeFilter.Length);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      page.IsYearFilterEnabled = true;
+      page.SelectedYear = 1975;
+    });
+    var withinRange = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
+    Assert.Equal(["John"], withinRange.Select(p => p.DisplayName));
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.SelectedYear = 2010);
+    var outsideRange = await MainThread.InvokeOnMainThreadAsync(() => page.Families.ToArray());
+    Assert.Empty(outsideRange);
+  }
+
+  [Fact]
+  public async Task ClearFilters_resets_every_filter_and_restores_the_full_list()
+  {
+    var services = new TestServices();
+    var family = N(1, "Ivanov", NameType.FamilyName);
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([family]);
+    services.PersonManager.Setup(p => p.GetPersonInfosByNameAsync(family, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([P(1, "John", BiologicalSex.Male), P(2, "Jane", BiologicalSex.Female)]);
+    var page = await CreatePageAsync(services);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      page.NameFilter = "John";
+      page.SexFilterIndex = 1;
+      page.MaritalStatusFilterIndex = 1;
+      page.IsYearFilterEnabled = true;
+    });
+
+    await page.InvokePageCommandAsync("ClearFilters");
+
+    var state = await MainThread.InvokeOnMainThreadAsync(() =>
+      (page.NameFilter, page.SexFilterIndex, page.MaritalStatusFilterIndex, page.IsYearFilterEnabled));
+    Assert.Equal((string.Empty, 0, 0, false), state);
+
+    var everyone = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
+    Assert.Equal(2, everyone.Length);
+  }
 }

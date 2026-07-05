@@ -22,6 +22,7 @@ internal sealed class TestServices
   public Mock<ITableMetadata> Metadata { get; } = new();
   public Mock<IProjectList> ProjectList { get; } = new();
   public Mock<IRelativesProvider> RelativesProvider { get; } = new();
+  public Mock<ITableRelatives> Relatives { get; } = new();
   public Mock<ITablePersons> Persons { get; } = new();
   public Mock<IFamilyTreeProvider> FamilyTreeProvider { get; } = new();
   public Mock<IAlertService> AlertService { get; } = new();
@@ -41,6 +42,7 @@ internal sealed class TestServices
     Project.SetupGet(p => p.FamilyManager).Returns(FamilyManager.Object);
     Project.SetupGet(p => p.Metadata).Returns(Metadata.Object);
     Project.SetupGet(p => p.RelativesProvider).Returns(RelativesProvider.Object);
+    Project.SetupGet(p => p.Relatives).Returns(Relatives.Object);
     Project.SetupGet(p => p.Persons).Returns(Persons.Object);
     Project.SetupGet(p => p.FamilyTreeProvider).Returns(FamilyTreeProvider.Object);
     Project.Setup(p => p.BeginTransactionAsync(It.IsAny<CancellationToken>())).ReturnsAsync(Transaction.Object);
@@ -53,6 +55,12 @@ internal sealed class TestServices
     // Same reasoning as GetNamesByTypeAsync below: ProjectPage.Families loads in the background
     // (well, blocks on it), so an unconfigured call must not fail invisibly through IAlertService.
     FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([]);
+
+    // ProjectPage.Families also batches a marital-status lookup for every loaded person; an
+    // unconfigured call must not fail invisibly through IAlertService either.
+    Relatives
+      .Setup(r => r.GetRelativesForPersonsAsync(It.IsAny<Person[]>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new Dictionary<int, Relative[]>());
 
     // GetNamesByTypeAsync returns Task<Name[]>, so Moq's own default-value provider already
     // auto-resolves an unconfigured call to Task.FromResult(Array.Empty<Name>()) (it special-cases

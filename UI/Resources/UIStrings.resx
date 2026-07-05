@@ -981,4 +981,22 @@ FN - family name</value>
   <data name="GedcomTagCHAN" xml:space="preserve">
     <value>Last changed</value>
   </data>
+  <data name="FieldFilterAny" xml:space="preserve">
+    <value>Any</value>
+  </data>
+  <data name="FieldFilterSex" xml:space="preserve">
+    <value>Sex</value>
+  </data>
+  <data name="FieldMaritalStatusMarried" xml:space="preserve">
+    <value>Married</value>
+  </data>
+  <data name="FieldMaritalStatusSingle" xml:space="preserve">
+    <value>Single</value>
+  </data>
+  <data name="HintNameFilterWildcard" xml:space="preserve">
+    <value>Name contains… (* and ? wildcards supported)</value>
+  </data>
+  <data name="BtnNameClearFilters" xml:space="preserve">
+    <value>Clear filters</value>
+  </data>
 </root>

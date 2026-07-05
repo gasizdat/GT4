@@ -2165,5 +2165,59 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("TxtPlaceholderPtojectName", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Any.
+        /// </summary>
+        public static string FieldFilterAny {
+            get {
+                return ResourceManager.GetString("FieldFilterAny", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Sex.
+        /// </summary>
+        public static string FieldFilterSex {
+            get {
+                return ResourceManager.GetString("FieldFilterSex", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Married.
+        /// </summary>
+        public static string FieldMaritalStatusMarried {
+            get {
+                return ResourceManager.GetString("FieldMaritalStatusMarried", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Single.
+        /// </summary>
+        public static string FieldMaritalStatusSingle {
+            get {
+                return ResourceManager.GetString("FieldMaritalStatusSingle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Name contains… (* and ? wildcards supported).
+        /// </summary>
+        public static string HintNameFilterWildcard {
+            get {
+                return ResourceManager.GetString("HintNameFilterWildcard", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Clear filters.
+        /// </summary>
+        public static string BtnNameClearFilters {
+            get {
+                return ResourceManager.GetString("BtnNameClearFilters", resourceCulture);
+            }
+        }
     }
 }
