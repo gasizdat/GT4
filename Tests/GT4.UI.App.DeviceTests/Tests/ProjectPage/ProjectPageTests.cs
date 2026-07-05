@@ -45,12 +45,18 @@ public class ProjectPageTests
   public async Task ToggleFilters_command_shows_and_hides_the_filters_panel()
   {
     var page = await CreatePageAsync(new TestServices());
+    await using var window = await WindowHost.AttachAsync(page);
     Assert.False(page.IsFiltersVisible);
 
-    await page.InvokePageCommandAsync("ToggleFilters");
+    // The command fades the real filters panel in/out (OnToggleFilters), which touches native UI
+    // and so -- like the modal-dialog commands elsewhere in this file -- must run on the UI thread.
+    // Unlike those, there's no modal to drive in between, so the started task is awaited right away.
+    var openTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("ToggleFilters"));
+    await openTask;
     Assert.True(page.IsFiltersVisible);
 
-    await page.InvokePageCommandAsync("ToggleFilters");
+    var closeTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("ToggleFilters"));
+    await closeTask;
     Assert.False(page.IsFiltersVisible);
   }
 
@@ -243,6 +249,47 @@ public class ProjectPageTests
   // are non-public, meant to be raised only by CollectionView itself), so it can't be constructed
   // from test code. The handler is a thin "take the selected item, navigate" wrapper with no other
   // logic worth pinning.
+
+  [Fact]
+  public async Task ToggleFilters_command_fades_the_real_filters_panel_in_and_out()
+  {
+    // Complements ToggleFilters_command_shows_and_hides_the_filters_panel: that test only pins the
+    // logical IsFiltersVisible flag, which drives the Clear-filters button and the toggle glyph. This
+    // one pins the actual native panel's end state, since IsVisible and Opacity are driven by the
+    // FadeVisibilityBehavior attached in XAML (reacting to that same flag) rather than a plain
+    // binding, so a missed reset (e.g. never re-collapsing the panel after fading it out) wouldn't
+    // show up in the logical flag at all.
+    //
+    // The fade itself is *not* awaited by ToggleFilters: setting IsFiltersVisible raises
+    // PropertyChanged synchronously, but the behavior's reaction to it is an async void animation
+    // that keeps running after the property set returns -- so the command's own task (and thus
+    // InvokePageCommandAsync) completes well before the 500ms fade does. Poll for the fade's own
+    // end state instead of assuming the command's completion implies the animation's.
+    var page = await CreatePageAsync(new TestServices());
+    await using var window = await WindowHost.AttachAsync(page);
+
+    var panel = await MainThread.InvokeOnMainThreadAsync(() => page.FindByName<Grid>("FiltersPanel"));
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      Assert.False(panel.IsVisible);
+      Assert.Equal(0, panel.Opacity);
+    });
+
+    var openTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("ToggleFilters"));
+    await openTask;
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => panel.Opacity),
+      opacity => opacity == 1,
+      timeoutMessage: "The filters panel did not finish fading in.");
+    await MainThread.InvokeOnMainThreadAsync(() => Assert.True(panel.IsVisible));
+
+    var closeTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("ToggleFilters"));
+    await closeTask;
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => panel.IsVisible),
+      isVisible => !isVisible,
+      timeoutMessage: "The filters panel did not finish fading out.");
+  }
 
   [Fact]
   public async Task NameFilter_matches_any_name_part_with_wildcards()

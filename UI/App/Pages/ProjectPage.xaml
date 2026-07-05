@@ -3,6 +3,7 @@
     x:Class="GT4.UI.Pages.ProjectPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:behaviors="clr-namespace:GT4.UI.Behaviors"
     xmlns:components="clr-namespace:GT4.UI.Components"
     xmlns:dto="clr-namespace:GT4.Core.Project.Dto;assembly=GT4.Core.Project"
     xmlns:items="clr-namespace:GT4.UI.Items"
@@ -72,10 +73,13 @@
             Command="{Binding PageCommand, Source={x:Reference Root}}"
             CommandParameter="ClearFilters"
             HorizontalOptions="End"
-            IsVisible="{Binding IsFiltersVisible, Source={x:Reference Root}}"
             Style="{StaticResource DeleteAdorner}"
             ToolTipProperties.Text="{x:Static resources:UIStrings.BtnNameClearFilters}"
-            VerticalOptions="Center" />
+            VerticalOptions="Center">
+          <Button.Behaviors>
+            <behaviors:FadeVisibilityBehavior Duration="500" IsVisible="{Binding IsFiltersVisible, Source={x:Reference Root}}" />
+          </Button.Behaviors>
+        </Button>
 
         <Button
             Grid.Column="2"
@@ -85,14 +89,19 @@
             Style="{StaticResource TextAdorner}"
             Text="{Binding ToggleFiltersButtonName, Source={x:Reference Root}}" />
 
-        <!--  Row 1 - Filters panel  -->
+        <!--  Row 1 - Filters panel. Fades via FadeVisibilityBehavior instead of snapping like a
+             plain IsVisible binding would.  -->
         <Grid
+            x:Name="FiltersPanel"
             Grid.Row="1"
             Grid.ColumnSpan="3"
             ColumnDefinitions="Auto, Auto, *"
             HorizontalOptions="Fill"
-            IsVisible="{Binding IsFiltersVisible, Source={x:Reference Root}}"
             RowDefinitions="Auto, Auto, Auto, Auto">
+
+          <Grid.Behaviors>
+            <behaviors:FadeVisibilityBehavior Duration="500" IsVisible="{Binding IsFiltersVisible, Source={x:Reference Root}}" />
+          </Grid.Behaviors>
 
           <!--  Row 0 - Name search  -->
           <Label
