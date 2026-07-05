@@ -195,6 +195,53 @@ public class PersonPageTests
   }
 
   [Fact]
+  public async Task Wide_layout_keeps_the_photo_within_the_relatives_row_while_scrolling()
+  {
+    var services = new TestServices();
+    var longBiography = new Data(
+      Id: 0,
+      Content: System.Text.Encoding.UTF8.GetBytes(string.Concat(Enumerable.Repeat("Line of biography text.\n", 80))),
+      MimeType: System.Net.Mime.MediaTypeNames.Text.Plain,
+      Category: default);
+    var person = CreateSamplePerson() with { Biography = longBiography };
+    var children = Enumerable.Range(2, 6)
+      .Select(id => new RelativeInfo(
+        id, Date.Create(2015, 1, 1, DateStatus.WellKnown), null, BiologicalSex.Male, [], null,
+        RelationshipType.Child, null, Generation.Child, Consanguinity.Zero))
+      .ToArray();
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    services.RelativesProvider.Setup(r => r.GetChildren(It.IsAny<RelativeInfo[]>())).Returns(children);
+    var page = await CreatePageAsync(services);
+    await using var window = await WindowHost.AttachAsync(page);
+    // Wide enough to land the landscape layout (photo left, relatives right, sharing one grid row).
+    // Forced again after attaching/loading: attaching to the real window can trigger its own
+    // OnSizeAllocated off the actual (narrower) test-runner window, overriding the forced one.
+    await MainThread.InvokeOnMainThreadAsync(() => page.ForceSizeAllocated(2000, 800));
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+    await MainThread.InvokeOnMainThreadAsync(() => page.ForceSizeAllocated(2000, 800));
+
+    await Poll.UntilAsync(
+      () => Task.FromResult(page.RelativesListForTest.Height),
+      height => height > page.PersonPhotoForTest.Height,
+      timeoutMessage: "The relatives row never grew taller than the photo.");
+    var maxTranslation = page.RelativesListForTest.Height - page.PersonPhotoForTest.Height;
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.BodyScrollForTest.ScrollToAsync(0, 40, false));
+    await Poll.UntilAsync(
+      () => Task.FromResult(page.PersonPhotoForTest.TranslationY),
+      translation => translation >= 40,
+      timeoutMessage: "The photo did not track a scroll within its row's bounds.");
+    Assert.Equal(40, page.PersonPhotoForTest.TranslationY);
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.BodyScrollForTest.ScrollToAsync(0, 100_000, false));
+    await Poll.UntilAsync(
+      () => Task.FromResult(page.PersonPhotoForTest.TranslationY),
+      translation => translation >= maxTranslation,
+      timeoutMessage: "The photo did not stop at the bottom of its row once scrolled past it.");
+    Assert.Equal(maxTranslation, page.PersonPhotoForTest.TranslationY);
+  }
+
+  [Fact]
   public async Task GoToHome_navigates_to_MainPage()
   {
     var services = new TestServices();
