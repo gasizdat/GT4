@@ -999,4 +999,7 @@ FN - род</value>
   <data name="BtnNameClearFilters" xml:space="preserve">
     <value>Сбросить фильтры</value>
   </data>
+  <data name="BtnNameFilters_1" xml:space="preserve">
+    <value>{0} Фильтры</value>
+  </data>
 </root>

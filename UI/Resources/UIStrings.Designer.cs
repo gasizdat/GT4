@@ -2219,5 +2219,14 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("BtnNameClearFilters", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} Filters.
+        /// </summary>
+        public static string BtnNameFilters_1 {
+            get {
+                return ResourceManager.GetString("BtnNameFilters_1", resourceCulture);
+            }
+        }
     }
 }

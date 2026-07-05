@@ -999,4 +999,7 @@ FN - family name</value>
   <data name="BtnNameClearFilters" xml:space="preserve">
     <value>Clear filters</value>
   </data>
+  <data name="BtnNameFilters_1" xml:space="preserve">
+    <value>{0} Filters</value>
+  </data>
 </root>

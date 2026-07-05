@@ -38,6 +38,20 @@ public class ProjectPageTests
 
     Assert.NotNull(page.PageCommand);
     Assert.Empty(page.Families);
+    Assert.False(page.IsFiltersVisible);
+  }
+
+  [Fact]
+  public async Task ToggleFilters_command_shows_and_hides_the_filters_panel()
+  {
+    var page = await CreatePageAsync(new TestServices());
+    Assert.False(page.IsFiltersVisible);
+
+    await page.InvokePageCommandAsync("ToggleFilters");
+    Assert.True(page.IsFiltersVisible);
+
+    await page.InvokePageCommandAsync("ToggleFilters");
+    Assert.False(page.IsFiltersVisible);
   }
 
   [Fact]

@@ -46,6 +46,7 @@ public partial class ProjectPage : ContentPage
   private int _MaritalStatusFilterIndex;
   private bool _IsYearFilterEnabled;
   private double _SelectedYear;
+  private bool _IsFiltersVisible;
 
   public ProjectPage(
     INameTypeFormatter nameTypeFormatter,
@@ -275,6 +276,20 @@ public partial class ProjectPage : ContentPage
     }
   }
 
+  public bool IsFiltersVisible
+  {
+    get => _IsFiltersVisible;
+    set
+    {
+      _IsFiltersVisible = value;
+      OnPropertyChanged(nameof(IsFiltersVisible));
+      OnPropertyChanged(nameof(ToggleFiltersButtonName));
+    }
+  }
+
+  public string ToggleFiltersButtonName =>
+    string.Format(UIStrings.BtnNameFilters_1, IsFiltersVisible ? "🔼" : "🔽");
+
   private void OnClearFilters()
   {
     _NameFilter = string.Empty;
@@ -427,6 +442,10 @@ public partial class ProjectPage : ContentPage
 
       case string commandName when commandName == "ClearFilters":
         OnClearFilters();
+        break;
+
+      case string commandName when commandName == "ToggleFilters":
+        IsFiltersVisible = !IsFiltersVisible;
         break;
 
       case string commandName when commandName == "CreateFamily":
