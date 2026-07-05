@@ -58,8 +58,7 @@ $deviceCoverageFile = Join-Path $coverageDir 'device-tests.cobertura.xml'
 $deviceTestArgs = @(
   'test', (Join-Path $repoRoot 'Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj'),
   '--configuration', 'Release',
-  '--framework', 'net10.0-windows10.0.19041.0',
-  "-p:SolutionDir=$repoRoot\"
+  '--framework', 'net10.0-windows10.0.19041.0'
 )
 dotnet-coverage collect --output $deviceCoverageFile --output-format cobertura -- dotnet @deviceTestArgs
 
