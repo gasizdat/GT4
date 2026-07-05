@@ -310,12 +310,22 @@ public partial class PersonPage : ContentPage
 
   private void AddToNavigation(PersonInfo personInfo)
   {
+    var personInfoCopy = new PersonInfo(personInfo, names: personInfo.Names, mainPhoto: personInfo.MainPhoto);
+
+    // Re-showing the person already selected in history (e.g. after editing it) must update that
+    // entry in place; otherwise every edit/refresh of the current person pushes a duplicate.
+    if (_NavigationIndex >= 0 && _NavigationHistory[_NavigationIndex].Id == personInfoCopy.Id)
+    {
+      _NavigationHistory[_NavigationIndex] = personInfoCopy;
+      OnPropertyChanged(nameof(CurrentPerson));
+      return;
+    }
+
     var newIndex = _NavigationIndex + 1;
     while (newIndex < _NavigationHistory.Count)
     {
       _NavigationHistory.RemoveAt(newIndex);
     }
-    var personInfoCopy = new PersonInfo(personInfo, names: personInfo.Names, mainPhoto: personInfo.MainPhoto);
     _NavigationHistory.Add(personInfoCopy);
     CurrentPerson = personInfoCopy;
   }

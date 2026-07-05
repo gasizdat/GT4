@@ -153,6 +153,29 @@ public class PersonPageTests
   }
 
   [Fact]
+  public async Task EditPerson_does_not_duplicate_the_current_navigation_history_entry()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson();
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+
+    await using var window = await WindowHost.AttachAsync(page);
+    var commandTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("EditPerson"));
+    var dialog = await ModalDialogHarness.WaitForModalAsync<CreateOrUpdatePersonDialog>(page);
+
+    await WaitForLoadAsync(page, services, () =>
+    {
+      dialog.BirthDate = Date.Create(1990, 5, 1, DateStatus.WellKnown);
+      dialog.DialogCommand.Execute("CreatePersonCommand");
+    });
+    await commandTask;
+
+    Assert.Equal(1, page.NavigationHistory.Count);
+  }
+
+  [Fact]
   public async Task EditPerson_cancelled_dialog_does_not_update()
   {
     var services = new TestServices();
