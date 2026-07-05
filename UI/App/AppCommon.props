@@ -26,10 +26,14 @@
 	  <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
   </PropertyGroup>
 
-  <!-- Derive build number from minutes elapsed since 2026-07-01 UTC -->
+  <!-- Derive build number from the checked-out commit's ancestor count -->
   <Target Name="SetBuildNumber" BeforeTargets="PrepareForBuild">
+    <Exec Command="git rev-list --count HEAD" ConsoleToMSBuild="true" StandardOutputImportance="low">
+      <Output TaskParameter="ConsoleOutput" ItemName="GitCommitCount" />
+    </Exec>
+
     <PropertyGroup>
-      <BuildNumber>$([System.Convert]::ToInt64($([System.DateTime]::UtcNow.Subtract($([System.DateTime]::new(2026,7,1))).TotalMinutes)))</BuildNumber>
+      <BuildNumber>@(GitCommitCount)</BuildNumber>
       <VersionPrefix>4.0.0</VersionPrefix>
       <Version>$(VersionPrefix).$(BuildNumber)</Version>
 
