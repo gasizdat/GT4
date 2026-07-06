@@ -74,7 +74,7 @@ public class ProjectPageTests
     services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(unsorted);
     var page = await CreatePageAsync(services);
 
-    var families = await MainThread.InvokeOnMainThreadAsync(() => page.Families.ToArray());
+    var families = await page.WaitForFamiliesAsync();
 
     Assert.Equal(["Aksakov", "Pushkin", "Tolstoy"], families.Select(f => f.Info.Value));
   }
@@ -332,6 +332,7 @@ public class ProjectPageTests
     services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
       .ReturnsAsync([InFamily(P(1, "John"), ivanov), InFamily(P(2, "Jane"), ivanov), InFamily(P(3, "Mark"), petrov)]);
     var page = await CreatePageAsync(services);
+    await page.WaitForFamiliesAsync();
 
     await MainThread.InvokeOnMainThreadAsync(() => page.NameFilter = "J*n");
     var families = await MainThread.InvokeOnMainThreadAsync(() => page.Families.ToArray());
@@ -350,6 +351,7 @@ public class ProjectPageTests
     services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
       .ReturnsAsync([InFamily(P(1, "John"), ivanov), InFamily(P(2, "Jane"), ivanov)]);
     var page = await CreatePageAsync(services);
+    await page.WaitForFamiliesAsync();
 
     await MainThread.InvokeOnMainThreadAsync(() => page.NameFilter = "John");
     var filtered = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
@@ -369,6 +371,7 @@ public class ProjectPageTests
     services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
       .ReturnsAsync([InFamily(P(1, "John", BiologicalSex.Male), family), InFamily(P(2, "Jane", BiologicalSex.Female), family)]);
     var page = await CreatePageAsync(services);
+    await page.WaitForFamiliesAsync();
 
     await MainThread.InvokeOnMainThreadAsync(() => page.SexFilterIndex = 1); // Male
     var maleOnly = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
@@ -395,6 +398,7 @@ public class ProjectPageTests
       .Setup(r => r.GetRelativesForPersonsAsync(It.IsAny<Person[]>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(new Dictionary<int, Relative[]> { [1] = [new Relative(2, default, null, BiologicalSex.Female, RelationshipType.Spouse, null)] });
     var page = await CreatePageAsync(services);
+    await page.WaitForFamiliesAsync();
 
     await MainThread.InvokeOnMainThreadAsync(() => page.MaritalStatusFilterIndex = 1); // Married
     var married = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
@@ -417,7 +421,8 @@ public class ProjectPageTests
       .ReturnsAsync([bornKnown, noDatesAtAll]);
     var page = await CreatePageAsync(services);
 
-    var beforeFilter = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
+    var loaded = await page.WaitForFamiliesAsync();
+    var beforeFilter = loaded.Single().Persons;
     Assert.Equal(2, beforeFilter.Count);
 
     await MainThread.InvokeOnMainThreadAsync(() =>
@@ -442,6 +447,7 @@ public class ProjectPageTests
     services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
       .ReturnsAsync([InFamily(P(1, "John", BiologicalSex.Male), family), InFamily(P(2, "Jane", BiologicalSex.Female), family)]);
     var page = await CreatePageAsync(services);
+    await page.WaitForFamiliesAsync();
 
     await MainThread.InvokeOnMainThreadAsync(() =>
     {
@@ -508,6 +514,7 @@ public class ProjectPageTests
         InFamily(P(2, "Jane", BiologicalSex.Female), ivanov),
         InFamily(P(3, "Mark", BiologicalSex.Male), petrov)]);
     var page = await CreatePageAsync(services);
+    await page.WaitForFamiliesAsync();
 
     var families = await MainThread.InvokeOnMainThreadAsync(() => page.Families);
     var petrovBefore = families.Single(f => f.Info.Value == "Petrov");
