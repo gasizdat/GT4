@@ -2,6 +2,7 @@ using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Dialogs;
+using GT4.UI.Items;
 using GT4.UI.Pages;
 using Moq;
 using Xunit;
@@ -48,9 +49,9 @@ public class ProjectPageTests
     await using var window = await WindowHost.AttachAsync(page);
     Assert.False(page.IsFiltersVisible);
 
-    // The command fades the real filters panel in/out (OnToggleFilters), which touches native UI
-    // and so -- like the modal-dialog commands elsewhere in this file -- must run on the UI thread.
-    // Unlike those, there's no modal to drive in between, so the started task is awaited right away.
+    // Setting IsFiltersVisible cascades into FadeVisibilityBehavior touching native UI, so this
+    // must run on the UI thread; unlike the modal-dialog commands, there's nothing to drive in
+    // between, so the started task is awaited right away.
     var openTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("ToggleFilters"));
     await openTask;
     Assert.True(page.IsFiltersVisible);
@@ -253,18 +254,11 @@ public class ProjectPageTests
   [Fact]
   public async Task ToggleFilters_command_fades_the_real_filters_panel_in_and_out()
   {
-    // Complements ToggleFilters_command_shows_and_hides_the_filters_panel: that test only pins the
-    // logical IsFiltersVisible flag, which drives the Clear-filters button and the toggle glyph. This
-    // one pins the actual native panel's end state, since IsVisible and Opacity are driven by the
-    // FadeVisibilityBehavior attached in XAML (reacting to that same flag) rather than a plain
-    // binding, so a missed reset (e.g. never re-collapsing the panel after fading it out) wouldn't
-    // show up in the logical flag at all.
-    //
-    // The fade itself is *not* awaited by ToggleFilters: setting IsFiltersVisible raises
-    // PropertyChanged synchronously, but the behavior's reaction to it is an async void animation
-    // that keeps running after the property set returns -- so the command's own task (and thus
-    // InvokePageCommandAsync) completes well before the 500ms fade does. Poll for the fade's own
-    // end state instead of assuming the command's completion implies the animation's.
+    // The fade is not awaited by ToggleFilters: setting IsFiltersVisible raises PropertyChanged
+    // synchronously, but FadeVisibilityBehavior's reaction to it is an async void animation that
+    // keeps running after the property set returns -- so the command's own task completes well
+    // before the 500ms fade does. Poll for the fade's own end state rather than assuming the
+    // command's completion implies the animation's.
     var page = await CreatePageAsync(new TestServices());
     await using var window = await WindowHost.AttachAsync(page);
 
@@ -328,7 +322,7 @@ public class ProjectPageTests
 
     await MainThread.InvokeOnMainThreadAsync(() => page.NameFilter = "");
     var restored = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
-    Assert.Equal(2, restored.Length);
+    Assert.Equal(2, restored.Count);
   }
 
   [Fact]
@@ -351,7 +345,7 @@ public class ProjectPageTests
 
     await MainThread.InvokeOnMainThreadAsync(() => page.SexFilterIndex = 0); // Any
     var everyone = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
-    Assert.Equal(2, everyone.Length);
+    Assert.Equal(2, everyone.Count);
   }
 
   [Fact]
@@ -389,7 +383,7 @@ public class ProjectPageTests
     var page = await CreatePageAsync(services);
 
     var beforeFilter = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
-    Assert.Equal(2, beforeFilter.Length);
+    Assert.Equal(2, beforeFilter.Count);
 
     await MainThread.InvokeOnMainThreadAsync(() =>
     {
@@ -429,6 +423,95 @@ public class ProjectPageTests
     Assert.Equal((string.Empty, 0, 0, false), state);
 
     var everyone = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
-    Assert.Equal(2, everyone.Length);
+    Assert.Equal(2, everyone.Count);
+  }
+
+  [Fact]
+  public async Task Families_returns_the_same_collection_instance_across_filter_changes()
+  {
+    var services = new TestServices();
+    var family = N(1, "Ivanov", NameType.FamilyName);
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([family]);
+    services.PersonManager.Setup(p => p.GetPersonInfosByNameAsync(family, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([P(1, "John"), P(2, "Jane")]);
+    var page = await CreatePageAsync(services);
+
+    var before = await MainThread.InvokeOnMainThreadAsync(() => page.Families);
+    await MainThread.InvokeOnMainThreadAsync(() => page.NameFilter = "John");
+    var after = page.Families;
+
+    Assert.Same(before, after);
+  }
+
+  [Fact]
+  public async Task Filtering_leaves_an_unaffected_familys_persons_collection_untouched()
+  {
+    var services = new TestServices();
+    var ivanov = N(1, "Ivanov", NameType.FamilyName);
+    var petrov = N(2, "Petrov", NameType.FamilyName);
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([ivanov, petrov]);
+    services.PersonManager.Setup(p => p.GetPersonInfosByNameAsync(ivanov, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([P(1, "John", BiologicalSex.Male), P(2, "Jane", BiologicalSex.Female)]);
+    services.PersonManager.Setup(p => p.GetPersonInfosByNameAsync(petrov, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([P(3, "Mark", BiologicalSex.Male)]);
+    var page = await CreatePageAsync(services);
+
+    var families = await MainThread.InvokeOnMainThreadAsync(() => page.Families);
+    var petrovBefore = families.Single(f => f.Info.Value == "Petrov");
+    var petrovPersonsBefore = petrovBefore.Persons;
+    var petrovChangeCount = 0;
+    petrovPersonsBefore.CollectionChanged += (_, _) => petrovChangeCount++;
+
+    // Petrov's one member (Mark, Male) matches this filter both before and after, so nothing about
+    // Petrov should change; Ivanov (John Male, Jane Female) does lose a member.
+    await MainThread.InvokeOnMainThreadAsync(() => page.SexFilterIndex = 1);
+
+    var ivanovAfter = page.Families.Single(f => f.Info.Value == "Ivanov");
+    Assert.Equal(["John"], ivanovAfter.Persons.Select(p => p.DisplayName));
+
+    var petrovAfter = page.Families.Single(f => f.Info.Value == "Petrov");
+    Assert.Same(petrovBefore, petrovAfter);
+    Assert.Same(petrovPersonsBefore, petrovAfter.Persons);
+    Assert.Equal(0, petrovChangeCount);
+    Assert.Equal(["Mark"], petrovAfter.Persons.Select(p => p.DisplayName));
+  }
+
+  [Fact]
+  public async Task BindableLayout_reflects_incremental_persons_changes_without_recreating_unaffected_views()
+  {
+    // Exercises the same BindableLayout + FilteredObservableCollection<PersonInfo> mechanism
+    // FamilyInfoItem.Persons uses in ProjectPage.xaml's per-card FlexLayout, without needing a
+    // full ProjectPage/CollectionView setup.
+    var family = new FamilyInfoItem(
+      N(1, "Ivanov", NameType.FamilyName),
+      [P(1, "John", BiologicalSex.Male), P(2, "Jane", BiologicalSex.Female)]);
+    family.UpdatePersonFilter((_, _) => true);
+
+    var flex = new FlexLayout();
+    var template = new DataTemplate(() =>
+    {
+      var label = new Label();
+      label.SetBinding(Label.TextProperty, nameof(PersonInfo.DisplayName));
+      return label;
+    });
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      BindableLayout.SetItemTemplate(flex, template);
+      BindableLayout.SetItemsSource(flex, family.Persons);
+    });
+
+    var page = new ContentPage { Content = flex };
+    await using var window = await WindowHost.AttachAsync(page);
+
+    var childrenBefore = await MainThread.InvokeOnMainThreadAsync(() => flex.Children.ToList());
+    Assert.Equal(2, childrenBefore.Count);
+    var janeViewBefore = childrenBefore.Single(c => c is BindableObject { BindingContext: PersonInfo p } && p.DisplayName == "Jane");
+
+    await MainThread.InvokeOnMainThreadAsync(() => family.UpdatePersonFilter((_, p) => p.BiologicalSex == BiologicalSex.Female));
+
+    var childrenAfter = await MainThread.InvokeOnMainThreadAsync(() => flex.Children.ToList());
+    var janeViewAfter = Assert.Single(childrenAfter);
+    Assert.Same(janeViewBefore, janeViewAfter);
   }
 }

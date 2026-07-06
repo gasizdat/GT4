@@ -7,6 +7,7 @@ using GT4.UI.Items;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
+using System.Collections.ObjectModel;
 using System.Text;
 using System.Windows.Input;
 
@@ -37,7 +38,8 @@ public partial class ProjectPage : ContentPage
   private static readonly bool?[] MaritalStatusFilterValues = [null, true, false];
 
   private long? _ProjectRevision;
-  private List<(Name Family, PersonInfo[] Persons)>? _FamilyPersonsCache;
+  private readonly FilteredObservableCollection<FamilyInfoItem> _Families = new();
+  private bool _FamiliesLoaded;
   private Dictionary<int, bool> _IsMarried = new();
   private double _MinYear;
   private double _MaxYear;
@@ -89,24 +91,30 @@ public partial class ProjectPage : ContentPage
       UIStrings.FieldMaritalStatusSingle,
     ];
 
+    // Set once: family visibility is re-evaluated via _Families.Update() (through ApplyFilters),
+    // not by reassigning this predicate.
+    _Families.Filter = (_, family) => family.HasVisiblePersons;
+
     PageCommand = new SafeCommand(OnPageCommand, _AlertService);
     InitializeComponent();
   }
 
-  public ICollection<FamilyInfoItem> Families =>
-    GetFamilyPersonsCache()
-      // A family that never had any members is left visible (e.g. one just created); a family that
-      // had members but none of them survive the current filters is what gets hidden.
-      .Where(f => f.Persons.Length == 0 || f.Persons.Any(PersonMatches))
-      .Select(f => new FamilyInfoItem(f.Family, f.Persons.Where(PersonMatches).ToArray()))
-      .OrderBy(item => item.Info, _NameComparer)
-      .ToList();
-
-  private List<(Name Family, PersonInfo[] Persons)> GetFamilyPersonsCache()
+  // CollectionView binds to this reference once and observes it live; ApplyFilters mutates it
+  // in place rather than this getter recomputing a new list.
+  public ObservableCollection<FamilyInfoItem> Families
   {
-    if (_FamilyPersonsCache is not null)
+    get
     {
-      return _FamilyPersonsCache;
+      EnsureFamiliesLoaded();
+      return _Families.Items;
+    }
+  }
+
+  private void EnsureFamiliesLoaded()
+  {
+    if (_FamiliesLoaded)
+    {
+      return;
     }
 
     try
@@ -130,21 +138,47 @@ public partial class ProjectPage : ContentPage
         _SelectedYear = _MaxYear;
       }
 
-      _FamilyPersonsCache = familyPersons;
+      var families = familyPersons
+        .Select(f => new FamilyInfoItem(f.Family, f.Persons))
+        .OrderBy(item => item.Info, _NameComparer)
+        .ToList();
+
+      // Filter each family before adding it: a fresh FamilyInfoItem has no inner filter set (zero
+      // visible persons) until this runs, and AddRange's own Update() must see correct state.
+      foreach (var family in families)
+      {
+        family.UpdatePersonFilter(PersonMatches);
+      }
+
+      _Families.Clear();
+      _Families.AddRange(families);
+      _FamiliesLoaded = true;
     }
     catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
     {
       // The project was closed underneath us (e.g. the app is backgrounding). Nothing to surface.
       System.Diagnostics.Debug.WriteLine(ex);
-      _FamilyPersonsCache = [];
+      _Families.Clear();
+      _FamiliesLoaded = true;
     }
     catch (Exception ex)
     {
       _ = _AlertService.ShowErrorAsync(ex);
-      _FamilyPersonsCache = [];
+      _Families.Clear();
+      _FamiliesLoaded = true;
+    }
+  }
+
+  // Loops AllItems, not the currently-visible Items: a family hidden by the current filters must
+  // still get its inner filter refreshed in case it becomes visible again.
+  private void ApplyFilters()
+  {
+    foreach (var family in _Families.AllItems)
+    {
+      family.UpdatePersonFilter(PersonMatches);
     }
 
-    return _FamilyPersonsCache;
+    _Families.Update();
   }
 
   private static (double Min, double Max) ComputeYearBounds(IReadOnlyCollection<PersonInfo> persons)
@@ -166,7 +200,9 @@ public partial class ProjectPage : ContentPage
     return (min, max);
   }
 
-  private bool PersonMatches(PersonInfo person)
+  // Two-arg shape (mirrors NamesPage.NamesFilter) so this can be passed directly as an
+  // ObservableCollectionFilterPredicate<PersonInfo> without an adapter lambda.
+  private bool PersonMatches(FilteredObservableCollection<PersonInfo> _, PersonInfo person)
   {
     if (!person.Names.Any(n => WildcardMatcher.IsMatch(n.Value, _NameFilter)))
     {
@@ -210,7 +246,7 @@ public partial class ProjectPage : ContentPage
     {
       _NameFilter = value;
       OnPropertyChanged(nameof(NameFilter));
-      OnPropertyChanged(nameof(Families));
+      ApplyFilters();
     }
   }
 
@@ -221,7 +257,7 @@ public partial class ProjectPage : ContentPage
     {
       _SexFilterIndex = value;
       OnPropertyChanged(nameof(SexFilterIndex));
-      OnPropertyChanged(nameof(Families));
+      ApplyFilters();
     }
   }
 
@@ -232,7 +268,7 @@ public partial class ProjectPage : ContentPage
     {
       _MaritalStatusFilterIndex = value;
       OnPropertyChanged(nameof(MaritalStatusFilterIndex));
-      OnPropertyChanged(nameof(Families));
+      ApplyFilters();
     }
   }
 
@@ -243,7 +279,7 @@ public partial class ProjectPage : ContentPage
     {
       _IsYearFilterEnabled = value;
       OnPropertyChanged(nameof(IsYearFilterEnabled));
-      OnPropertyChanged(nameof(Families));
+      ApplyFilters();
     }
   }
 
@@ -251,7 +287,7 @@ public partial class ProjectPage : ContentPage
   {
     get
     {
-      GetFamilyPersonsCache();
+      EnsureFamiliesLoaded();
       return _MinYear;
     }
   }
@@ -260,7 +296,7 @@ public partial class ProjectPage : ContentPage
   {
     get
     {
-      GetFamilyPersonsCache();
+      EnsureFamiliesLoaded();
       return _MaxYear;
     }
   }
@@ -272,7 +308,7 @@ public partial class ProjectPage : ContentPage
     {
       _SelectedYear = value;
       OnPropertyChanged(nameof(SelectedYear));
-      OnPropertyChanged(nameof(Families));
+      ApplyFilters();
     }
   }
 
@@ -301,7 +337,7 @@ public partial class ProjectPage : ContentPage
     OnPropertyChanged(nameof(SexFilterIndex));
     OnPropertyChanged(nameof(MaritalStatusFilterIndex));
     OnPropertyChanged(nameof(IsYearFilterEnabled));
-    OnPropertyChanged(nameof(Families));
+    ApplyFilters();
   }
 
   public string RemoveProjectToolbarItemName =>
@@ -399,7 +435,7 @@ public partial class ProjectPage : ContentPage
       if (projectRevision != _ProjectRevision)
       {
         _ProjectRevision = projectRevision;
-        _FamilyPersonsCache = null;
+        _FamiliesLoaded = false;
         this.RefreshView();
       }
     }
@@ -436,7 +472,7 @@ public partial class ProjectPage : ContentPage
         break;
 
       case string commandName when commandName == "Refresh":
-        _FamilyPersonsCache = null;
+        _FamiliesLoaded = false;
         this.RefreshView();
         break;
 
@@ -575,7 +611,7 @@ public partial class ProjectPage : ContentPage
       await Navigation.PopModalAsync();
     }
 
-    _FamilyPersonsCache = null;
+    _FamiliesLoaded = false;
     this.RefreshView();
   }
 

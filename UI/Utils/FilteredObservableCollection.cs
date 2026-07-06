@@ -27,6 +27,10 @@ public class FilteredObservableCollection<T> : ICollection<T>, ICollection
 
   public ObservableCollection<T> Items => _InnerCollection;
 
+  // The full, unfiltered source list -- lets a consumer reach items the current filter hides (e.g.
+  // to re-evaluate a nested filter on all of them, not just the currently-visible ones).
+  public IReadOnlyList<T> AllItems => _Items;
+
   public int Count => _InnerCollection.Count;
 
   public bool IsReadOnly => false;
@@ -35,14 +39,29 @@ public class FilteredObservableCollection<T> : ICollection<T>, ICollection
 
   public object SyncRoot => _Items;
 
+  // A positional remove-then-insert merge, not a full diff: unaffected items raise no
+  // CollectionChanged event. This is only correct because _Items is never reordered in place (only
+  // Add/AddRange append to it, and Clear wipes it), which guarantees two filter passes always agree
+  // on the relative order of any item present in both. Do not add a method that reorders _Items
+  // without revisiting this.
   public void Update()
   {
-    _InnerCollection.Clear();
-    foreach (var item in _Items)
+    var matched = _Items.Where(item => _Filter?.Invoke(this, item) == true).ToList();
+    var matchedSet = new HashSet<T>(matched);
+
+    for (var i = _InnerCollection.Count - 1; i >= 0; i--)
     {
-      if (_Filter?.Invoke(this, item) == true)
+      if (!matchedSet.Contains(_InnerCollection[i]))
       {
-        _InnerCollection.Add(item);
+        _InnerCollection.RemoveAt(i);
+      }
+    }
+
+    for (var i = 0; i < matched.Count; i++)
+    {
+      if (i >= _InnerCollection.Count || !EqualityComparer<T>.Default.Equals(_InnerCollection[i], matched[i]))
+      {
+        _InnerCollection.Insert(i, matched[i]);
       }
     }
   }
