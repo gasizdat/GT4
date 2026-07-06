@@ -160,58 +160,46 @@ public partial class SelectRelativesDialog : ContentPage
     {
       async Task AddPersonInfoItemsAsync()
       {
-        try
-        {
-          using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-          var persons = await _CurrentProjectProvider
-            .Project
-            .PersonManager
-            .GetPersonInfosAsync(selectMainPhoto: false, token);
+        using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+        var persons = await _CurrentProjectProvider
+          .Project
+          .PersonManager
+          .GetPersonInfosAsync(selectMainPhoto: false, token);
 
-          var items = persons
-            .Where(p =>
+        var items = persons
+          .Where(p =>
+          {
+            using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+            foreach (var relative in _ExistingRelatives)
             {
-              using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-              foreach (var relative in _ExistingRelatives)
+              if (relative.Type == RelationshipType.Parent)
               {
-                if (relative.Type == RelationshipType.Parent)
-                {
-                  var hasCommonAncestors = _CurrentProjectProvider
-                    .Project
-                    .Relatives
-                    .HasCommonAncestorsAsync(p, relative, token)
-                    .Result;
-                  if (hasCommonAncestors)
-                  {
-                    return false;
-                  }
-                }
-                else if (relative.Id == p.Id)
+                var hasCommonAncestors = _CurrentProjectProvider
+                  .Project
+                  .Relatives
+                  .HasCommonAncestorsAsync(p, relative, token)
+                  .Result;
+                if (hasCommonAncestors)
                 {
                   return false;
                 }
               }
+              else if (relative.Id == p.Id)
+              {
+                return false;
+              }
+            }
 
-              return true;
-            })
-            .OrderBy(item => item, _PersonInfoComparer);
+            return true;
+          })
+          .OrderBy(item => item, _PersonInfoComparer);
 
-          MainThread.BeginInvokeOnMainThread(() => _Persons.AddRange(items));
-        }
-        catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
-        {
-          // The project was closed underneath us (e.g. the app is backgrounding). Nothing to surface.
-          System.Diagnostics.Debug.WriteLine(ex);
-        }
-        catch (Exception ex)
-        {
-          await _AlertService.ShowErrorAsync(ex);
-        }
+        MainThread.BeginInvokeOnMainThread(() => _Persons.AddRange(items));
       }
 
       if (_Persons.Count == 0 || _ProjectRevision != _CurrentProjectProvider.Project.ProjectRevision)
       {
-        Task.Run(AddPersonInfoItemsAsync);
+        SafeTask.Run(AddPersonInfoItemsAsync, _AlertService);
       }
 
       return _Persons.Items;

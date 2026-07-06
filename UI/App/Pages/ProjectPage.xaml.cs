@@ -114,29 +114,31 @@ public partial class ProjectPage : ContentPage
     {
       return;
     }
+    _FamiliesLoaded = true;
+    _Families.Clear();
 
-    try
+    async Task OnLoadFamiliesAsync()
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
       var project = _CurrentProjectProvider.Project;
       _ProjectRevision = project.ProjectRevision;
 
-      var personsByFamilyNameId = project
-        .PersonManager
-        .GetPersonInfosAsync(selectMainPhoto: true, token)
-        .Result
+      var persons = await project
+          .PersonManager
+          .GetPersonInfosAsync(selectMainPhoto: true, token);
+      var familyNames = await project
+          .FamilyManager
+          .GetFamiliesAsync(token);
+      var personsByFamilyNameId = persons
         .SelectMany(person => person.Names.Select(name => (NameId: name.Id, Person: person)))
         .ToLookup(x => x.NameId, x => x.Person);
 
-      var familyPersons = project
-        .FamilyManager
-        .GetFamiliesAsync(token)
-        .Result
+      var familyPersons = familyNames
         .Select(name => (Family: name, Persons: personsByFamilyNameId[name.Id].OrderBy(item => item, _PersonInfoComparer).ToArray()))
         .ToList();
 
       var allPersons = familyPersons.SelectMany(f => f.Persons).DistinctBy(p => p.Id).ToArray();
-      var relatives = project.Relatives.GetRelativesForPersonsAsync(allPersons, token).Result;
+      var relatives = await project.Relatives.GetRelativesForPersonsAsync(allPersons, token);
       _IsMarried = relatives.ToDictionary(kv => kv.Key, kv => kv.Value.Any(r => r.Type == RelationshipType.Spouse));
 
       (_MinYear, _MaxYear) = ComputeYearBounds(allPersons);
@@ -150,23 +152,16 @@ public partial class ProjectPage : ContentPage
         .OrderBy(item => item.Info, _NameComparer)
         .ToList();
 
-      _Families.Clear();
-      _Families.AddRange(families);
-      _FamiliesLoaded = true;
+      await SafeTask.RunOnMainThread(() =>
+      {
+        _Families.AddRange(families);
+        OnPropertyChanged(nameof(MinYear));
+        OnPropertyChanged(nameof(MaxYear));
+        OnPropertyChanged(nameof(SelectedYear));
+      }, _AlertService);
     }
-    catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
-    {
-      // The project was closed underneath us (e.g. the app is backgrounding). Nothing to surface.
-      System.Diagnostics.Debug.WriteLine(ex);
-      _Families.Clear();
-      _FamiliesLoaded = true;
-    }
-    catch (Exception ex)
-    {
-      _ = _AlertService.ShowErrorAsync(ex);
-      _Families.Clear();
-      _FamiliesLoaded = true;
-    }
+
+    SafeTask.Run(OnLoadFamiliesAsync, _AlertService);
   }
 
   // Loops AllItems, not the currently-visible Items: a family hidden by the current filters must
@@ -285,8 +280,6 @@ public partial class ProjectPage : ContentPage
     }
   }
 
-  // SelectedYear is deliberately excluded: it's inert while IsYearFilterEnabled is false, so
-  // moving the slider alone doesn't count as "a filter is active."
   public bool IsAnyFilterActive =>
     !string.IsNullOrEmpty(_NameFilter) ||
     _SexFilterIndex != 0 ||
@@ -361,21 +354,15 @@ public partial class ProjectPage : ContentPage
 
   public async void OnFamilySelected(object sender, SelectionChangedEventArgs e)
   {
-    // async void event handler: an escaped exception is unobserved and crashes the app, so guard it.
-    try
+    if (e.CurrentSelection.FirstOrDefault() is FamilyInfoItem item)
     {
-      if (e.CurrentSelection.FirstOrDefault() is FamilyInfoItem item)
+      async Task GoToFamilyAsync()
       {
-        await _NavigationService.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = item.Info });
+        var route = UIRoutes.GetRoute<FamilyPage>();
+        await _NavigationService.GoToAsync(route, true, new() { ["FamilyName"] = item.Info });
       }
-    }
-    catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
-    {
-      System.Diagnostics.Debug.WriteLine(ex);
-    }
-    catch (Exception ex)
-    {
-      await _AlertService.ShowErrorAsync(ex);
+
+      await SafeTask.GuardAsync(GoToFamilyAsync, _AlertService);
     }
   }
 
@@ -442,7 +429,7 @@ public partial class ProjectPage : ContentPage
   {
     base.OnNavigatedTo(args);
 
-    try
+    void OnRefresh()
     {
       var projectRevision = _CurrentProjectProvider.Project.ProjectRevision;
       if (projectRevision != _ProjectRevision)
@@ -452,11 +439,8 @@ public partial class ProjectPage : ContentPage
         this.RefreshView();
       }
     }
-    catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
-    {
-      // Navigating in just as the project closes (e.g. backgrounding). Skip the revision refresh.
-      System.Diagnostics.Debug.WriteLine(ex);
-    }
+
+    SafeTask.Guard(OnRefresh, _AlertService);
   }
 
   protected async Task OnPageCommand(object obj)
