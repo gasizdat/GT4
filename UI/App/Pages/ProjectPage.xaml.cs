@@ -119,6 +119,7 @@ public partial class ProjectPage : ContentPage
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
       var project = _CurrentProjectProvider.Project;
+      _ProjectRevision = project.ProjectRevision;
       var familyPersons = project
         .FamilyManager
         .GetFamiliesAsync(token)
@@ -438,7 +439,6 @@ public partial class ProjectPage : ContentPage
   private PersonInfo[] GetFamilyPersons(Name name, CancellationToken token)
   {
     var project = _CurrentProjectProvider.Project;
-    _ProjectRevision = project.ProjectRevision;
 
     return project
       .PersonManager
