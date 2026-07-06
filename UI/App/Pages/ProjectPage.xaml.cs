@@ -244,6 +244,7 @@ public partial class ProjectPage : ContentPage
     {
       _NameFilter = value;
       OnPropertyChanged(nameof(NameFilter));
+      OnPropertyChanged(nameof(IsAnyFilterActive));
       UpdateFamilies();
     }
   }
@@ -255,6 +256,7 @@ public partial class ProjectPage : ContentPage
     {
       _SexFilterIndex = value;
       OnPropertyChanged(nameof(SexFilterIndex));
+      OnPropertyChanged(nameof(IsAnyFilterActive));
       UpdateFamilies();
     }
   }
@@ -266,6 +268,7 @@ public partial class ProjectPage : ContentPage
     {
       _MaritalStatusFilterIndex = value;
       OnPropertyChanged(nameof(MaritalStatusFilterIndex));
+      OnPropertyChanged(nameof(IsAnyFilterActive));
       UpdateFamilies();
     }
   }
@@ -277,9 +280,18 @@ public partial class ProjectPage : ContentPage
     {
       _IsYearFilterEnabled = value;
       OnPropertyChanged(nameof(IsYearFilterEnabled));
+      OnPropertyChanged(nameof(IsAnyFilterActive));
       UpdateFamilies();
     }
   }
+
+  // SelectedYear is deliberately excluded: it's inert while IsYearFilterEnabled is false, so
+  // moving the slider alone doesn't count as "a filter is active."
+  public bool IsAnyFilterActive =>
+    !string.IsNullOrEmpty(_NameFilter) ||
+    _SexFilterIndex != 0 ||
+    _MaritalStatusFilterIndex != 0 ||
+    _IsYearFilterEnabled;
 
   public double MinYear
   {
@@ -337,6 +349,7 @@ public partial class ProjectPage : ContentPage
     OnPropertyChanged(nameof(MaritalStatusFilterIndex));
     OnPropertyChanged(nameof(IsYearFilterEnabled));
     OnPropertyChanged(nameof(SelectedYear));
+    OnPropertyChanged(nameof(IsAnyFilterActive));
     UpdateFamilies();
   }
 

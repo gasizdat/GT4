@@ -291,6 +291,38 @@ public class ProjectPageTests
   }
 
   [Fact]
+  public async Task ClearFiltersButton_fades_in_and_out_with_filter_activity_regardless_of_panel_visibility()
+  {
+    var page = await CreatePageAsync(new TestServices());
+    await using var window = await WindowHost.AttachAsync(page);
+
+    var clearButton = await MainThread.InvokeOnMainThreadAsync(() => page.FindByName<Button>("ClearFiltersButton"));
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      Assert.False(clearButton.IsVisible);
+      Assert.Equal(0, clearButton.Opacity);
+    });
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.NameFilter = "John");
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => clearButton.Opacity),
+      opacity => opacity == 1,
+      timeoutMessage: "The clear-filters button did not finish fading in.");
+    await MainThread.InvokeOnMainThreadAsync(() => Assert.True(clearButton.IsVisible));
+
+    // The panel was never opened in this test -- proves the button's visibility no longer
+    // depends on IsFiltersVisible.
+    await MainThread.InvokeOnMainThreadAsync(() => Assert.False(page.IsFiltersVisible));
+
+    var clearTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("ClearFilters"));
+    await clearTask;
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => clearButton.IsVisible),
+      isVisible => !isVisible,
+      timeoutMessage: "The clear-filters button did not finish fading out.");
+  }
+
+  [Fact]
   public async Task NameFilter_matches_any_name_part_with_wildcards()
   {
     var services = new TestServices();
@@ -427,6 +459,23 @@ public class ProjectPageTests
 
     var everyone = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
     Assert.Equal(2, everyone.Count);
+  }
+
+  [Fact]
+  public async Task IsAnyFilterActive_reflects_filter_state_independently_of_panel_visibility()
+  {
+    var page = await CreatePageAsync(new TestServices());
+    Assert.False(page.IsAnyFilterActive);
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.NameFilter = "John");
+    Assert.True(page.IsAnyFilterActive);
+
+    // Closing the panel must not hide the "a filter is active" signal.
+    await MainThread.InvokeOnMainThreadAsync(() => page.IsFiltersVisible = false);
+    Assert.True(page.IsAnyFilterActive);
+
+    await page.InvokePageCommandAsync("ClearFilters");
+    Assert.False(page.IsAnyFilterActive);
   }
 
   [Fact]
