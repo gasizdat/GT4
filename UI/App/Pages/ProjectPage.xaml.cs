@@ -120,11 +120,19 @@ public partial class ProjectPage : ContentPage
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
       var project = _CurrentProjectProvider.Project;
       _ProjectRevision = project.ProjectRevision;
+
+      var personsByFamilyNameId = project
+        .PersonManager
+        .GetPersonInfosAsync(selectMainPhoto: true, token)
+        .Result
+        .SelectMany(person => person.Names.Select(name => (NameId: name.Id, Person: person)))
+        .ToLookup(x => x.NameId, x => x.Person);
+
       var familyPersons = project
         .FamilyManager
         .GetFamiliesAsync(token)
         .Result
-        .Select(name => (Family: name, Persons: GetFamilyPersons(name, token)))
+        .Select(name => (Family: name, Persons: personsByFamilyNameId[name.Id].OrderBy(item => item, _PersonInfoComparer).ToArray()))
         .ToList();
 
       var allPersons = familyPersons.SelectMany(f => f.Persons).DistinctBy(p => p.Id).ToArray();
@@ -436,18 +444,6 @@ public partial class ProjectPage : ContentPage
       // Navigating in just as the project closes (e.g. backgrounding). Skip the revision refresh.
       System.Diagnostics.Debug.WriteLine(ex);
     }
-  }
-
-  private PersonInfo[] GetFamilyPersons(Name name, CancellationToken token)
-  {
-    var project = _CurrentProjectProvider.Project;
-
-    return project
-      .PersonManager
-      .GetPersonInfosByNameAsync(name: name, selectMainPhoto: true, token)
-      .Result
-      .OrderBy(item => item, _PersonInfoComparer)
-      .ToArray();
   }
 
   protected async Task OnPageCommand(object obj)

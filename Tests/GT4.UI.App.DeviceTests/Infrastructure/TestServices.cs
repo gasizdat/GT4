@@ -78,6 +78,12 @@ internal sealed class TestServices
       .Setup(p => p.GetPersonInfosByNameAsync(It.IsAny<Name>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync([]);
 
+    // ProjectPage.EnsureFamiliesLoaded fetches every person in one call and groups them by family
+    // in memory, rather than querying per family -- same "must not fail invisibly" reasoning.
+    PersonManager
+      .Setup(p => p.GetPersonInfosAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync([]);
+
     // PersonPage.GetPersonDataAsync's whole pipeline needs every one of these non-null (a null Moq
     // default for a custom record/array causes an NRE that gets caught and reported through
     // IAlertService -- which reads as a mysterious timeout in the counter-based load wait, not an
