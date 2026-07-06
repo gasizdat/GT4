@@ -322,11 +322,13 @@ public partial class ProjectPage : ContentPage
     _SexFilterIndex = 0;
     _MaritalStatusFilterIndex = 0;
     _IsYearFilterEnabled = false;
+    _SelectedYear = _MaxYear;
 
     OnPropertyChanged(nameof(NameFilter));
     OnPropertyChanged(nameof(SexFilterIndex));
     OnPropertyChanged(nameof(MaritalStatusFilterIndex));
     OnPropertyChanged(nameof(IsYearFilterEnabled));
+    OnPropertyChanged(nameof(SelectedYear));
     UpdateFamilies();
   }
 
