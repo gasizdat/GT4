@@ -91,7 +91,7 @@ public partial class ProjectPage : ContentPage
       UIStrings.FieldMaritalStatusSingle,
     ];
 
-    // Set once: family visibility is re-evaluated via _Families.Update() (through ApplyFilters),
+    // Set once: family visibility is re-evaluated via _Families.Update() (through UpdateFamilies),
     // not by reassigning this predicate.
     _Families.Filter = (_, family) => family.HasVisiblePersons;
 
@@ -99,8 +99,6 @@ public partial class ProjectPage : ContentPage
     InitializeComponent();
   }
 
-  // CollectionView binds to this reference once and observes it live; ApplyFilters mutates it
-  // in place rather than this getter recomputing a new list.
   public ObservableCollection<FamilyInfoItem> Families
   {
     get
@@ -139,16 +137,9 @@ public partial class ProjectPage : ContentPage
       }
 
       var families = familyPersons
-        .Select(f => new FamilyInfoItem(f.Family, f.Persons))
+        .Select(f => new FamilyInfoItem(f.Family, f.Persons, PersonMatches))
         .OrderBy(item => item.Info, _NameComparer)
         .ToList();
-
-      // Filter each family before adding it: a fresh FamilyInfoItem has no inner filter set (zero
-      // visible persons) until this runs, and AddRange's own Update() must see correct state.
-      foreach (var family in families)
-      {
-        family.UpdatePersonFilter(PersonMatches);
-      }
 
       _Families.Clear();
       _Families.AddRange(families);
@@ -171,11 +162,11 @@ public partial class ProjectPage : ContentPage
 
   // Loops AllItems, not the currently-visible Items: a family hidden by the current filters must
   // still get its inner filter refreshed in case it becomes visible again.
-  private void ApplyFilters()
+  private void UpdateFamilies()
   {
     foreach (var family in _Families.AllItems)
     {
-      family.UpdatePersonFilter(PersonMatches);
+      family.Update();
     }
 
     _Families.Update();
@@ -200,8 +191,6 @@ public partial class ProjectPage : ContentPage
     return (min, max);
   }
 
-  // Two-arg shape (mirrors NamesPage.NamesFilter) so this can be passed directly as an
-  // ObservableCollectionFilterPredicate<PersonInfo> without an adapter lambda.
   private bool PersonMatches(FilteredObservableCollection<PersonInfo> _, PersonInfo person)
   {
     if (!person.Names.Any(n => WildcardMatcher.IsMatch(n.Value, _NameFilter)))
@@ -246,7 +235,7 @@ public partial class ProjectPage : ContentPage
     {
       _NameFilter = value;
       OnPropertyChanged(nameof(NameFilter));
-      ApplyFilters();
+      UpdateFamilies();
     }
   }
 
@@ -257,7 +246,7 @@ public partial class ProjectPage : ContentPage
     {
       _SexFilterIndex = value;
       OnPropertyChanged(nameof(SexFilterIndex));
-      ApplyFilters();
+      UpdateFamilies();
     }
   }
 
@@ -268,7 +257,7 @@ public partial class ProjectPage : ContentPage
     {
       _MaritalStatusFilterIndex = value;
       OnPropertyChanged(nameof(MaritalStatusFilterIndex));
-      ApplyFilters();
+      UpdateFamilies();
     }
   }
 
@@ -279,7 +268,7 @@ public partial class ProjectPage : ContentPage
     {
       _IsYearFilterEnabled = value;
       OnPropertyChanged(nameof(IsYearFilterEnabled));
-      ApplyFilters();
+      UpdateFamilies();
     }
   }
 
@@ -308,7 +297,7 @@ public partial class ProjectPage : ContentPage
     {
       _SelectedYear = value;
       OnPropertyChanged(nameof(SelectedYear));
-      ApplyFilters();
+      UpdateFamilies();
     }
   }
 
@@ -337,7 +326,7 @@ public partial class ProjectPage : ContentPage
     OnPropertyChanged(nameof(SexFilterIndex));
     OnPropertyChanged(nameof(MaritalStatusFilterIndex));
     OnPropertyChanged(nameof(IsYearFilterEnabled));
-    ApplyFilters();
+    UpdateFamilies();
   }
 
   public string RemoveProjectToolbarItemName =>

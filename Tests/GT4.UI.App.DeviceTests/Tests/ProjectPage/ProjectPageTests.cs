@@ -482,10 +482,11 @@ public class ProjectPageTests
     // Exercises the same BindableLayout + FilteredObservableCollection<PersonInfo> mechanism
     // FamilyInfoItem.Persons uses in ProjectPage.xaml's per-card FlexLayout, without needing a
     // full ProjectPage/CollectionView setup.
+    var showOnlyFemale = false;
     var family = new FamilyInfoItem(
       N(1, "Ivanov", NameType.FamilyName),
-      [P(1, "John", BiologicalSex.Male), P(2, "Jane", BiologicalSex.Female)]);
-    family.UpdatePersonFilter((_, _) => true);
+      [P(1, "John", BiologicalSex.Male), P(2, "Jane", BiologicalSex.Female)],
+      (_, p) => !showOnlyFemale || p.BiologicalSex == BiologicalSex.Female);
 
     var flex = new FlexLayout();
     var template = new DataTemplate(() =>
@@ -508,7 +509,8 @@ public class ProjectPageTests
     Assert.Equal(2, childrenBefore.Count);
     var janeViewBefore = childrenBefore.Single(c => c is BindableObject { BindingContext: PersonInfo p } && p.DisplayName == "Jane");
 
-    await MainThread.InvokeOnMainThreadAsync(() => family.UpdatePersonFilter((_, p) => p.BiologicalSex == BiologicalSex.Female));
+    showOnlyFemale = true;
+    await MainThread.InvokeOnMainThreadAsync(() => family.Update());
 
     var childrenAfter = await MainThread.InvokeOnMainThreadAsync(() => flex.Children.ToList());
     var janeViewAfter = Assert.Single(childrenAfter);
