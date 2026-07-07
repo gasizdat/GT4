@@ -16,8 +16,8 @@ public sealed class RelativeRow : INotifyPropertyChanged
 {
   private const string ExpandSymbol = "🔽";
   private const string CollapseSymbol = "­­­­⏫­";
-  private const string LoopIcon = "🔁";
-  private const string MultipleConnectionsIcon = "🔗";
+  private const string LoopIcon = "⚠️♾️";
+  private const string MultipleConnectionsIcon = "ℹ️";
   private bool _IsExpanded;
   private RelativeRowIssueType _Issue;
   private string? _IssueMessage;

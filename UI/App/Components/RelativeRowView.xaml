@@ -25,43 +25,44 @@
 
     <Grid
         x:Name="ContentRoot"
-        ColumnDefinitions="*, Auto"
+        ColumnDefinitions="Auto, *, Auto"
         RowDefinitions="Auto, Auto">
+
+
+      <Label
+          Grid.Row="0"
+          Grid.Column="0"
+          IsVisible="{Binding HasIssue}"
+          Text="{Binding IssueIcon}" />
+
+      <Label
+          Grid.Row="0"
+          Grid.Column="1"
+          Grid.ColumnSpan="2"
+          IsVisible="{Binding HasIssue}"
+          LineBreakMode="WordWrap"
+          Style="{StaticResource FieldValue}"
+          Text="{Binding IssueMessage}" />
 
       <components:RelativeInfoView
           x:Name="Info"
-          Grid.Row="0"
+          Grid.Row="1"
           Grid.Column="0"
+          Grid.ColumnSpan="2"
           NameFormat="CommonPersonName"
           PersonBirthDate="{Binding PersonBirthDate}"
           Relative="{Binding Relative}"
           SelectCommand="{Binding SelectCommand, Source={x:Reference Root}}" />
 
       <Button
-          Grid.Row="0"
-          Grid.Column="1"
+          Grid.Row="1"
+          Grid.Column="2"
           Command="{Binding ToggleCommand}"
           HeightRequest="{StaticResource MoreBtnSize}"
           Style="{StaticResource EmojiAdorner}"
           Text="{Binding MoreBtnName}"
           VerticalOptions="Start"
           WidthRequest="{StaticResource MoreBtnSize}" />
-
-      <HorizontalStackLayout
-          Grid.Row="1"
-          Grid.Column="0"
-          Grid.ColumnSpan="2"
-          IsVisible="{Binding HasIssue}"
-          Spacing="4">
-
-        <Label Text="{Binding IssueIcon}" />
-
-        <Label
-            Style="{StaticResource FieldValue}"
-            Text="{Binding IssueMessage}"
-            LineBreakMode="WordWrap" />
-
-      </HorizontalStackLayout>
 
     </Grid>
   </Grid>
