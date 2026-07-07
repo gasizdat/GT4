@@ -63,7 +63,24 @@ public partial class PersonInfoView : ContentView
   public Style? PhotoStyle => (Style?)GetValue(PhotoStyleProperty);
   public NameFormat NameFormat => (NameFormat)GetValue(NameFormatProperty);
 
-  public string? CommonName => Person is null ? null : _NameFormatter.ToString(Person, NameFormat);
+  public string? CommonName
+  {
+    get
+    {
+      if (Person is null)
+      {
+        return null;
+      }
+
+      var name = _NameFormatter.ToString(Person, NameFormat);
+#if DEBUG
+      // Diagnostic-only: makes it possible to cross-reference a person/relative shown on screen
+      // against Ids reported by tools like GT4.Tools.RelativesCli. Never shipped in Release.
+      name += $" (Id: {Person.Id})";
+#endif
+      return name;
+    }
+  }
   public string? LifeDates
   {
     get
