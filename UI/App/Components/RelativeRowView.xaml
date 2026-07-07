@@ -25,10 +25,12 @@
 
     <Grid
         x:Name="ContentRoot"
-        ColumnDefinitions="*, Auto">
+        ColumnDefinitions="*, Auto"
+        RowDefinitions="Auto, Auto">
 
       <components:RelativeInfoView
           x:Name="Info"
+          Grid.Row="0"
           Grid.Column="0"
           NameFormat="CommonPersonName"
           PersonBirthDate="{Binding PersonBirthDate}"
@@ -36,6 +38,7 @@
           SelectCommand="{Binding SelectCommand, Source={x:Reference Root}}" />
 
       <Button
+          Grid.Row="0"
           Grid.Column="1"
           Command="{Binding ToggleCommand}"
           HeightRequest="{StaticResource MoreBtnSize}"
@@ -43,6 +46,22 @@
           Text="{Binding MoreBtnName}"
           VerticalOptions="Start"
           WidthRequest="{StaticResource MoreBtnSize}" />
+
+      <HorizontalStackLayout
+          Grid.Row="1"
+          Grid.Column="0"
+          Grid.ColumnSpan="2"
+          IsVisible="{Binding HasIssue}"
+          Spacing="4">
+
+        <Label Text="{Binding IssueIcon}" />
+
+        <Label
+            Style="{StaticResource FieldValue}"
+            Text="{Binding IssueMessage}"
+            LineBreakMode="WordWrap" />
+
+      </HorizontalStackLayout>
 
     </Grid>
   </Grid>

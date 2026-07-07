@@ -813,6 +813,12 @@ FN - family name</value>
   <data name="AlertTextKinshipUnfoldingAborted" xml:space="preserve">
     <value>The operation took longer than expected. Some kinship levels remained folded. You can unfold them manually.</value>
   </data>
+  <data name="HintRelativeLoopDetected" xml:space="preserve">
+    <value>Relationship loop detected: this person is listed as their own ancestor or descendant, so it was not expanded.</value>
+  </data>
+  <data name="HintRelativeMultipleConnections" xml:space="preserve">
+    <value>This person connects to the family through more than one relationship.</value>
+  </data>
   <data name="FieldFontScale" xml:space="preserve">
     <value>Text size</value>
   </data>
