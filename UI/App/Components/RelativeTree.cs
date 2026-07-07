@@ -87,9 +87,13 @@ public sealed class RelativeTree
     // still produce an actual relationship cycle -- a person listed as their own ancestor or
     // descendant. Without this guard, expanding such a person keeps re-inserting the same subtree
     // forever. A person legitimately appearing twice via two different branches (e.g. cousin
-    // marriage sharing a great-grandparent) also hits this map; comparing Generation/Consanguinity
-    // against the first sighting tells the two cases apart (a real cycle changes them, a shared
-    // ancestor reached a different way doesn't).
+    // marriage sharing a great-grandparent) also hits this map; comparing Generation against the
+    // first sighting tells the two cases apart. Generation is a signed Parent(+1)/Child(-1) hop
+    // count, so it is path-independent for any internally consistent family graph -- it always
+    // comes out the same no matter which branch reached the person. Consanguinity is NOT
+    // path-independent (it also counts collateral/sideways distance), so an unequal-degree cousin
+    // marriage can legitimately give the same person two different Consanguinity values with zero
+    // contradiction in the data -- comparing it here would flag that as a false-positive Loop.
     var visitedIds = new Dictionary<int, RelativeInfo>();
 
     try
@@ -109,8 +113,7 @@ public sealed class RelativeTree
         if (!visitedIds.TryAdd(next.Relative.Id, next.Relative))
         {
           var earlierAddedRelative = visitedIds[next.Relative.Id];
-          if (earlierAddedRelative.Generation == next.Relative.Generation 
-            && earlierAddedRelative.Consanguinity == next.Relative.Consanguinity)
+          if (earlierAddedRelative.Generation == next.Relative.Generation)
           {
             await MainThread.InvokeOnMainThreadAsync(() =>
             {

@@ -11,21 +11,22 @@ namespace GT4.UI.DeviceTests;
 /// Covers RelativeTree.ExpandAllAsync's issue detection: a corrupt GEDCOM import can produce an
 /// actual relationship cycle (a person listed as their own ancestor/descendant), which would
 /// otherwise make "expand all" re-insert the same subtree forever. A person legitimately reached
-/// twice via two different branches with the same Generation/Consanguinity (e.g. cousin marriage
-/// sharing a great-grandparent) must not be confused with that and should keep expanding.
+/// twice via two different branches at the same Generation (e.g. cousin marriage sharing a
+/// great-grandparent) must not be confused with that and should keep expanding.
 /// </summary>
 public class RelativeTreeTests
 {
   private static Name N(int id, string value, NameType type) => new(id, value, type, null);
 
-  private static RelativeInfo MakeRelative(int id, string firstName, Generation generation) =>
+  private static RelativeInfo MakeRelative(
+    int id, string firstName, Generation generation, Consanguinity consanguinity = default) =>
     new(
       new PersonInfo(id, Date.Create(2000, 1, 1, DateStatus.WellKnown), null, BiologicalSex.Male,
         [N(id * 100, firstName, NameType.FirstName)], null),
       RelationshipType.Parent,
       null,
       generation,
-      Consanguinity.Zero);
+      consanguinity);
 
   private static RelativeTree CreateTree(TestServices services) =>
     new(services.CurrentProjectProvider.Object,
@@ -102,7 +103,7 @@ public class RelativeTreeTests
     var shared = MakeRelative(3, "Shared", Generation.Parent + Generation.Parent);
 
     // Both roots' ancestry reaches the same person -- a shared great-grandparent from e.g. a cousin
-    // marriage -- always at the same Generation/Consanguinity, so it's not a cycle.
+    // marriage -- always at the same Generation, so it's not a cycle.
     services.RelativesProvider
       .Setup(r => r.GetRelativeInfosAsync(It.Is<RelativeInfo>(x => x.Id == rootA.Id), true, It.IsAny<CancellationToken>()))
       .ReturnsAsync([shared]);
@@ -128,5 +129,39 @@ public class RelativeTreeTests
     services.RelativesProvider.Verify(
       r => r.GetRelativeInfosAsync(It.Is<RelativeInfo>(x => x.Id == shared.Id), true, It.IsAny<CancellationToken>()),
       Times.Exactly(2));
+  }
+
+  [Fact]
+  public async Task ExpandAllAsync_flags_MultipleConnections_not_Loop_when_only_Consanguinity_differs()
+  {
+    var services = new TestServices();
+    var rootA = MakeRelative(1, "RootA", Generation.Parent);
+    var rootB = MakeRelative(2, "RootB", Generation.Parent);
+    // Same Generation via both branches, but different Consanguinity -- exactly what an
+    // unequal-degree cousin marriage produces (see RelativeTree.ExpandAllAsync). Consanguinity
+    // alone is not path-independent, so this must still be MultipleConnections, not a Loop.
+    var sharedViaA = MakeRelative(3, "Shared", Generation.Parent + Generation.Parent, Consanguinity.Zero);
+    var sharedViaB = MakeRelative(3, "Shared", Generation.Parent + Generation.Parent, Consanguinity.Sibling);
+
+    services.RelativesProvider
+      .Setup(r => r.GetRelativeInfosAsync(It.Is<RelativeInfo>(x => x.Id == rootA.Id), true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([sharedViaA]);
+    services.RelativesProvider
+      .Setup(r => r.GetRelativeInfosAsync(It.Is<RelativeInfo>(x => x.Id == rootB.Id), true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([sharedViaB]);
+    services.RelativesProvider
+      .Setup(r => r.GetRelativeInfosAsync(It.Is<RelativeInfo>(x => x.Id == sharedViaA.Id), true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([]);
+
+    var tree = CreateTree(services);
+    await MainThread.InvokeOnMainThreadAsync(() => tree.SetRoots([rootA, rootB], null));
+
+    await tree.ExpandAllAsync(true);
+
+    var sharedRows = tree.Rows.Where(r => r.Relative.Id == sharedViaA.Id).ToArray();
+    Assert.Equal(2, sharedRows.Length);
+    Assert.All(sharedRows, row => Assert.True(row.IsExpanded));
+    Assert.DoesNotContain(sharedRows, row => row.Issue == RelativeRowIssueType.Loop);
+    Assert.Contains(sharedRows, row => row.Issue == RelativeRowIssueType.MultipleConnections);
   }
 }
