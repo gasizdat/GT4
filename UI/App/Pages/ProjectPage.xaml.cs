@@ -34,20 +34,11 @@ public partial class ProjectPage : ContentPage
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
 
-  private static readonly BiologicalSex?[] SexFilterValues = [null, BiologicalSex.Male, BiologicalSex.Female, BiologicalSex.Unknown];
-  private static readonly bool?[] MaritalStatusFilterValues = [null, true, false];
-
   private long? _ProjectRevision;
   private readonly FilteredObservableCollection<FamilyInfoItem> _Families = new();
+  private readonly PersonInfoFilter _Filter;
   private bool _FamiliesLoaded;
   private Dictionary<int, bool> _IsMarried = new();
-  private double _MinYear;
-  private double _MaxYear;
-  private string _NameFilter = string.Empty;
-  private int _SexFilterIndex;
-  private int _MaritalStatusFilterIndex;
-  private bool _IsYearFilterEnabled;
-  private double _SelectedYear;
   private bool _IsFiltersVisible;
 
   public ProjectPage(
@@ -77,19 +68,9 @@ public partial class ProjectPage : ContentPage
     _AlertService = alertService;
     _NavigationService = navigationService;
 
-    SexFilterLabels =
-    [
-      UIStrings.FieldFilterAny,
-      biologicalSexFormatter.ToString(BiologicalSex.Male),
-      biologicalSexFormatter.ToString(BiologicalSex.Female),
-      biologicalSexFormatter.ToString(BiologicalSex.Unknown),
-    ];
-    MaritalStatusFilterLabels =
-    [
-      UIStrings.FieldFilterAny,
-      UIStrings.FieldMaritalStatusMarried,
-      UIStrings.FieldMaritalStatusSingle,
-    ];
+    _Filter = new PersonInfoFilter(biologicalSexFormatter);
+    _Filter.Changed += (_, _) => UpdateFamilies();
+    _Filter.PropertyChanged += (_, e) => OnPropertyChanged(e.PropertyName);
 
     // Set once: family visibility is re-evaluated via _Families.Update() (through UpdateFamilies),
     // not by reassigning this predicate.
@@ -141,11 +122,7 @@ public partial class ProjectPage : ContentPage
       var relatives = await project.Relatives.GetRelativesForPersonsAsync(allPersons, token);
       _IsMarried = relatives.ToDictionary(kv => kv.Key, kv => kv.Value.Any(r => r.Type == RelationshipType.Spouse));
 
-      (_MinYear, _MaxYear) = ComputeYearBounds(allPersons);
-      if (_SelectedYear < _MinYear || _SelectedYear > _MaxYear)
-      {
-        _SelectedYear = _MaxYear;
-      }
+      var (minYear, maxYear) = PersonInfoFilter.ComputeYearBounds(allPersons);
 
       var families = familyPersons
         .Select(f => new FamilyInfoItem(f.Family, f.Persons, PersonMatches))
@@ -155,9 +132,7 @@ public partial class ProjectPage : ContentPage
       await SafeTask.RunOnMainThread(() =>
       {
         _Families.AddRange(families);
-        OnPropertyChanged(nameof(MinYear));
-        OnPropertyChanged(nameof(MaxYear));
-        OnPropertyChanged(nameof(SelectedYear));
+        _Filter.SetYearBounds(minYear, maxYear);
       }, _AlertService);
     }
 
@@ -176,122 +151,50 @@ public partial class ProjectPage : ContentPage
     _Families.Update();
   }
 
-  private static (double Min, double Max) ComputeYearBounds(IReadOnlyCollection<PersonInfo> persons)
-  {
-    var knownYears = persons
-      .SelectMany(p => new[]
-      {
-        p.BirthDate.Status == DateStatus.Unknown ? (int?)null : p.BirthDate.Year,
-        p.DeathDate is { Status: not DateStatus.Unknown } d ? d.Year : (int?)null,
-      })
-      .Where(y => y.HasValue)
-      .Select(y => y!.Value)
-      .ToList();
-
-    var currentYear = Date.Now.Year;
-    var min = knownYears.Count > 0 ? knownYears.Min() : currentYear - 100;
-    var max = Math.Max(knownYears.Count > 0 ? knownYears.Max() : currentYear, currentYear);
-
-    return (min, max);
-  }
-
   private bool PersonMatches(FilteredObservableCollection<PersonInfo> _, PersonInfo person)
   {
-    if (!person.Names.Any(n => WildcardMatcher.IsMatch(n.Value, _NameFilter)))
-    {
-      return false;
-    }
-
-    if (CurrentSex is { } sex && person.BiologicalSex != sex)
-    {
-      return false;
-    }
-
-    if (CurrentMaritalStatus is { } wantMarried)
-    {
-      var isMarried = _IsMarried.TryGetValue(person.Id, out var married) && married;
-      if (wantMarried != isMarried)
-      {
-        return false;
-      }
-    }
-
-    if (_IsYearFilterEnabled && !PersonLifetimeMatcher.IsAliveInYear(person, (int)_SelectedYear))
-    {
-      return false;
-    }
-
-    return true;
+    var isMarried = _IsMarried.TryGetValue(person.Id, out var married) && married;
+    return _Filter.Matches(person, isMarried);
   }
 
-  public string[] SexFilterLabels { get; }
+  public PersonInfoFilter Filter => _Filter;
 
-  public string[] MaritalStatusFilterLabels { get; }
+  public string[] SexFilterLabels => _Filter.SexFilterLabels;
 
-  private BiologicalSex? CurrentSex => SexFilterValues[_SexFilterIndex];
-
-  private bool? CurrentMaritalStatus => MaritalStatusFilterValues[_MaritalStatusFilterIndex];
+  public string[] MaritalStatusFilterLabels => _Filter.MaritalStatusFilterLabels;
 
   public string NameFilter
   {
-    get => _NameFilter;
-    set
-    {
-      _NameFilter = value;
-      OnPropertyChanged(nameof(NameFilter));
-      OnPropertyChanged(nameof(IsAnyFilterActive));
-      UpdateFamilies();
-    }
+    get => _Filter.NameFilter;
+    set => _Filter.NameFilter = value;
   }
 
   public int SexFilterIndex
   {
-    get => _SexFilterIndex;
-    set
-    {
-      _SexFilterIndex = value;
-      OnPropertyChanged(nameof(SexFilterIndex));
-      OnPropertyChanged(nameof(IsAnyFilterActive));
-      UpdateFamilies();
-    }
+    get => _Filter.SexFilterIndex;
+    set => _Filter.SexFilterIndex = value;
   }
 
   public int MaritalStatusFilterIndex
   {
-    get => _MaritalStatusFilterIndex;
-    set
-    {
-      _MaritalStatusFilterIndex = value;
-      OnPropertyChanged(nameof(MaritalStatusFilterIndex));
-      OnPropertyChanged(nameof(IsAnyFilterActive));
-      UpdateFamilies();
-    }
+    get => _Filter.MaritalStatusFilterIndex;
+    set => _Filter.MaritalStatusFilterIndex = value;
   }
 
   public bool IsYearFilterEnabled
   {
-    get => _IsYearFilterEnabled;
-    set
-    {
-      _IsYearFilterEnabled = value;
-      OnPropertyChanged(nameof(IsYearFilterEnabled));
-      OnPropertyChanged(nameof(IsAnyFilterActive));
-      UpdateFamilies();
-    }
+    get => _Filter.IsYearFilterEnabled;
+    set => _Filter.IsYearFilterEnabled = value;
   }
 
-  public bool IsAnyFilterActive =>
-    !string.IsNullOrEmpty(_NameFilter) ||
-    _SexFilterIndex != 0 ||
-    _MaritalStatusFilterIndex != 0 ||
-    _IsYearFilterEnabled;
+  public bool IsAnyFilterActive => _Filter.IsAnyFilterActive;
 
   public double MinYear
   {
     get
     {
       EnsureFamiliesLoaded();
-      return _MinYear;
+      return _Filter.MinYear;
     }
   }
 
@@ -300,19 +203,14 @@ public partial class ProjectPage : ContentPage
     get
     {
       EnsureFamiliesLoaded();
-      return _MaxYear;
+      return _Filter.MaxYear;
     }
   }
 
   public double SelectedYear
   {
-    get => _SelectedYear;
-    set
-    {
-      _SelectedYear = value;
-      OnPropertyChanged(nameof(SelectedYear));
-      UpdateFamilies();
-    }
+    get => _Filter.SelectedYear;
+    set => _Filter.SelectedYear = value;
   }
 
   public bool IsFiltersVisible
@@ -329,22 +227,7 @@ public partial class ProjectPage : ContentPage
   public string ToggleFiltersButtonName =>
     string.Format(UIStrings.BtnNameFilters_1, IsFiltersVisible ? "🔼" : "🔽");
 
-  private void OnClearFilters()
-  {
-    _NameFilter = string.Empty;
-    _SexFilterIndex = 0;
-    _MaritalStatusFilterIndex = 0;
-    _IsYearFilterEnabled = false;
-    _SelectedYear = _MaxYear;
-
-    OnPropertyChanged(nameof(NameFilter));
-    OnPropertyChanged(nameof(SexFilterIndex));
-    OnPropertyChanged(nameof(MaritalStatusFilterIndex));
-    OnPropertyChanged(nameof(IsYearFilterEnabled));
-    OnPropertyChanged(nameof(SelectedYear));
-    OnPropertyChanged(nameof(IsAnyFilterActive));
-    UpdateFamilies();
-  }
+  private void OnClearFilters() => _Filter.Clear();
 
   public string RemoveProjectToolbarItemName =>
     string.Format(UIStrings.MenuItemNameRemove_1, _CurrentProjectProvider.Info.Name);
