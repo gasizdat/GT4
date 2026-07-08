@@ -19,10 +19,13 @@ public partial class FamilyPage : ContentPage
   private readonly IComparer<PersonInfo> _PersonInfoComparer;
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
-  private readonly ObservableCollection<PersonInfo> _Persons = new();
+  private readonly FilteredObservableCollection<PersonInfo> _Persons = new();
+  private readonly PersonInfoFilter _Filter;
   private bool _PersonsLoaded;
+  private Dictionary<int, bool> _IsMarried = new();
   private Name? _FamilyName = null;
   private double _PersonItemMinimalWidth;
+  private bool _IsFiltersVisible;
 
   public FamilyPage(
     IServiceProvider serviceProvider,
@@ -32,7 +35,8 @@ public partial class FamilyPage : ContentPage
     IComparer<PersonInfo>? personInfoComparerByShortNames,
     IComparer<PersonInfo> personInfoComparer,
     IAlertService alertService,
-    INavigationService navigationService
+    INavigationService navigationService,
+    IBiologicalSexFormatter biologicalSexFormatter
     )
   {
     _ServiceProvider = serviceProvider;
@@ -41,6 +45,11 @@ public partial class FamilyPage : ContentPage
     _PersonInfoComparer = personInfoComparerByShortNames ?? personInfoComparer;
     _AlertService = alertService;
     _NavigationService = navigationService;
+
+    _Filter = new PersonInfoFilter(biologicalSexFormatter);
+    _Filter.Changed += (_, _) => _Persons.Update();
+    _Filter.PropertyChanged += (_, e) => OnPropertyChanged(e.PropertyName);
+    _Persons.Filter = PersonMatches;
 
     MemberItemTappedCommand = new SafeCommand<PersonInfo>(OnOpenPerson, _AlertService);
     PageCommand = new SafeCommand(OnPageCommand, _AlertService);
@@ -70,32 +79,60 @@ public partial class FamilyPage : ContentPage
 
   public NameFormat PersonNamesFormat => NameFormat.ShortPersonName;
 
+  public PersonInfoFilter Filter => _Filter;
+
+  public bool IsAnyFilterActive => _Filter.IsAnyFilterActive;
+
+  public bool IsFiltersVisible
+  {
+    get => _IsFiltersVisible;
+    set
+    {
+      _IsFiltersVisible = value;
+      OnPropertyChanged(nameof(IsFiltersVisible));
+      OnPropertyChanged(nameof(ToggleFiltersButtonName));
+    }
+  }
+
+  public string ToggleFiltersButtonName =>
+    string.Format(UIStrings.BtnNameFilters_1, IsFiltersVisible ? "🔼" : "🔽");
+
+  private bool PersonMatches(FilteredObservableCollection<PersonInfo> _, PersonInfo person)
+  {
+    var isMarried = _IsMarried.TryGetValue(person.Id, out var married) && married;
+    return _Filter.Matches(person, isMarried);
+  }
+
   public ICollection<PersonInfo> Persons
   {
     get
     {
       if (FamilyName is null)
       {
-        return _Persons;
+        return _Persons.Items;
       }
       var familyName = FamilyName;
 
       async Task ListPersonsAsync(Name familyName)
       {
         using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-        var persons = await _CurrentProjectProvider
-          .Project
+        var project = _CurrentProjectProvider.Project;
+        var persons = await project
           .PersonManager
           .GetPersonInfosByNameAsync(name: familyName, selectMainPhoto: true, token);
 
         persons = [.. persons.OrderBy(item => item, _PersonInfoComparer)];
+
+        var relatives = await project.Relatives.GetRelativesForPersonsAsync(persons, token);
+        var isMarried = relatives.ToDictionary(kv => kv.Key, kv => kv.Value.Any(r => r.Type == RelationshipType.Spouse));
+        var (minYear, maxYear) = PersonInfoFilter.ComputeYearBounds(persons);
+
         await SafeTask.RunOnMainThread(() =>
         {
+          _IsMarried = isMarried;
           _Persons.Clear();
-          foreach (var person in persons)
-          {
-            _Persons.Add(person);
-          }
+          _Persons.AddRange(persons);
+          _Filter.SetYearBounds(minYear, maxYear);
         }, _AlertService);
       }
 
@@ -105,7 +142,7 @@ public partial class FamilyPage : ContentPage
         SafeTask.Run(() => ListPersonsAsync(familyName), _AlertService);
       }
 
-      return _Persons;
+      return _Persons.Items;
     }
   }
 
@@ -170,8 +207,9 @@ public partial class FamilyPage : ContentPage
       .PersonManager
       .AddPersonAsync(person, token);
 
-    var insertAt = _Persons.TakeWhile(p => _PersonInfoComparer.Compare(p, newPerson) <= 0).Count();
-    _Persons.Insert(insertAt, newPerson);
+    var updated = _Persons.AllItems.Append(newPerson).OrderBy(p => p, _PersonInfoComparer).ToArray();
+    _Persons.Clear();
+    _Persons.AddRange(updated);
   }
 
   protected async Task OnOpenPerson(PersonInfo familyMember)
@@ -198,6 +236,14 @@ public partial class FamilyPage : ContentPage
 
       case string commandName when commandName == "CreatePerson":
         await OnCreatePerson();
+        break;
+
+      case string commandName when commandName == "ClearFilters":
+        _Filter.Clear();
+        break;
+
+      case string commandName when commandName == "ToggleFilters":
+        IsFiltersVisible = !IsFiltersVisible;
         break;
 
       case string commandName when commandName == "Refresh":

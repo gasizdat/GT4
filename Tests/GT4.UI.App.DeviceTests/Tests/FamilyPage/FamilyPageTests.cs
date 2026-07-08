@@ -168,6 +168,12 @@ public class FamilyPageTests
     services.FamilyManager
       .Setup(f => f.SetUpPersonFamily(It.IsAny<PersonFullInfo>(), familyName))
       .Returns(personWithFamily);
+    // AddPersonAsync returns the persisted person; an unconfigured call would default to null,
+    // which FamilyPage now sorts into place through PersonInfoFilter's predicate (the old plain
+    // ObservableCollection.Insert never exercised a predicate, so this gap was previously silent).
+    services.PersonManager
+      .Setup(p => p.AddPersonAsync(personWithFamily, It.IsAny<CancellationToken>()))
+      .ReturnsAsync(personWithFamily);
     var page = await CreatePageAsync(services);
     await MainThread.InvokeOnMainThreadAsync(() => page.FamilyName = familyName);
 

@@ -3,6 +3,7 @@
     x:Class="GT4.UI.Pages.FamilyPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:behaviors="clr-namespace:GT4.UI.Behaviors"
     xmlns:components="clr-namespace:GT4.UI.Components"
     xmlns:dto="clr-namespace:GT4.Core.Project.Dto;assembly=GT4.Core.Project"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
@@ -36,9 +37,55 @@
   <components:PageLayout>
 
     <components:PageLayout.Header>
-      <Label
-          Style="{StaticResource PageSubtitle}"
-          Text="{x:Static resources:UIStrings.HintFamilyPage}" />
+      <Grid
+          ColumnDefinitions="Auto, *, Auto"
+          HorizontalOptions="Fill"
+          RowDefinitions="Auto, Auto"
+          VerticalOptions="Start">
+
+        <!--  Row 0 - Subtitle + filters toggle  -->
+        <Label
+            Grid.Column="0"
+            Style="{StaticResource PageSubtitle}"
+            Text="{x:Static resources:UIStrings.HintFamilyPage}" />
+
+        <Button
+            x:Name="ClearFiltersButton"
+            Grid.Column="1"
+            Command="{Binding PageCommand, Source={x:Reference Root}}"
+            CommandParameter="ClearFilters"
+            HorizontalOptions="End"
+            Style="{StaticResource DeleteAdorner}"
+            ToolTipProperties.Text="{x:Static resources:UIStrings.BtnNameClearFilters}"
+            VerticalOptions="Center">
+          <Button.Behaviors>
+            <behaviors:FadeVisibilityBehavior Duration="500" IsVisible="{Binding IsAnyFilterActive, Source={x:Reference Root}}" />
+          </Button.Behaviors>
+        </Button>
+
+        <Button
+            Grid.Column="2"
+            Command="{Binding PageCommand, Source={x:Reference Root}}"
+            CommandParameter="ToggleFilters"
+            HorizontalOptions="End"
+            Style="{StaticResource TextAdorner}"
+            Text="{Binding ToggleFiltersButtonName, Source={x:Reference Root}}" />
+
+        <!--  Row 1 - Filters panel. Fades via FadeVisibilityBehavior instead of snapping like a
+             plain IsVisible binding would.  -->
+        <Grid
+            x:Name="FiltersPanel"
+            Grid.Row="1"
+            Grid.ColumnSpan="3"
+            HorizontalOptions="Fill">
+
+          <Grid.Behaviors>
+            <behaviors:FadeVisibilityBehavior Duration="500" IsVisible="{Binding IsFiltersVisible, Source={x:Reference Root}}" />
+          </Grid.Behaviors>
+
+          <components:PersonFilterFieldsView Filter="{Binding Filter, Source={x:Reference Root}}" />
+        </Grid>
+      </Grid>
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>
