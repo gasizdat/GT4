@@ -23,11 +23,11 @@ public static class PersonLifetimeMatcher
     }
 
     var start = birthKnown ? birthDate.Year : deathDate!.Value.Year - UnknownDateGuessYears;
-    var end = deathYearKnown
-      ? deathDate!.Value.Year
-      : deathDate is null
-        ? start + MaximumLifeExpectancyYears
-        : birthDate.Year + UnknownDateGuessYears;
+
+    // Covers both "no death record at all" and "a death record exists but its year is unknown" --
+    // neither tells us more than that the person was alive at `start`, so both get the same
+    // full-lifetime upper bound rather than the record-exists case guessing a much younger death.
+    var end = deathYearKnown ? deathDate!.Value.Year : start + MaximumLifeExpectancyYears;
 
     return year >= start && year <= end;
   }
