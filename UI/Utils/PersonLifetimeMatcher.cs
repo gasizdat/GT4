@@ -5,7 +5,6 @@ namespace GT4.UI.Utils;
 
 public static class PersonLifetimeMatcher
 {
-  private const int UnknownDateGuessYears = 20;
   private const int MaximumLifeExpectancyYears = 120;
 
   // A person matches `year` if it falls within their [effective birth year, effective death year]
@@ -22,11 +21,10 @@ public static class PersonLifetimeMatcher
       return false;
     }
 
-    var start = birthKnown ? birthDate.Year : deathDate!.Value.Year - UnknownDateGuessYears;
-
-    // Covers both "no death record at all" and "a death record exists but its year is unknown" --
-    // neither tells us more than that the person was alive at `start`, so both get the same
-    // full-lifetime upper bound rather than the record-exists case guessing a much younger death.
+    // An unknown endpoint (birth or death) is completely unconstrained beyond "within a max lifespan
+    // of the known endpoint" -- there's no more precise guess available, so both directions use the
+    // same MaximumLifeExpectancyYears bound.
+    var start = birthKnown ? birthDate.Year : deathDate!.Value.Year - MaximumLifeExpectancyYears;
     var end = deathYearKnown ? deathDate!.Value.Year : start + MaximumLifeExpectancyYears;
 
     return year >= start && year <= end;
