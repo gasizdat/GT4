@@ -1,6 +1,7 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.Components;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Pages;
@@ -282,7 +283,8 @@ public class ProjectPageTests
     var page = await CreatePageAsync(new TestServices());
     await using var window = await WindowHost.AttachAsync(page);
 
-    var panel = await MainThread.InvokeOnMainThreadAsync(() => page.FindByName<Grid>("FiltersPanel"));
+    var panel = await MainThread.InvokeOnMainThreadAsync(() =>
+      page.FindByName<PersonFilterFieldsView>("FilterFieldsView").FindByName<Grid>("FiltersPanel"));
     await MainThread.InvokeOnMainThreadAsync(() =>
     {
       Assert.False(panel.IsVisible);
@@ -311,7 +313,8 @@ public class ProjectPageTests
     var page = await CreatePageAsync(new TestServices());
     await using var window = await WindowHost.AttachAsync(page);
 
-    var clearButton = await MainThread.InvokeOnMainThreadAsync(() => page.FindByName<Button>("ClearFiltersButton"));
+    var clearButton = await MainThread.InvokeOnMainThreadAsync(() =>
+      page.FindByName<PersonFilterFieldsView>("FilterFieldsView").FindByName<Button>("ClearFiltersButton"));
     await MainThread.InvokeOnMainThreadAsync(() =>
     {
       Assert.False(clearButton.IsVisible);

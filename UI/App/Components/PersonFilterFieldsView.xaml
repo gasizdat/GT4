@@ -3,77 +3,119 @@
     x:Class="GT4.UI.Components.PersonFilterFieldsView"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:behaviors="clr-namespace:GT4.UI.Behaviors"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root">
 
-  <Grid
-      ColumnDefinitions="Auto, Auto, *"
-      HorizontalOptions="Fill"
-      RowDefinitions="Auto, Auto, Auto, Auto">
+  <Grid HorizontalOptions="Fill" RowDefinitions="Auto, Auto">
 
-    <!--  Row 0 - Name search  -->
-    <Label
-        Grid.Row="0"
-        Grid.Column="0"
-        Style="{StaticResource FieldName}"
-        Text="{x:Static resources:UIStrings.FieldSearchText}" />
+    <!--  Row 0 - Header text + filters toggle  -->
+    <Grid Grid.Row="0" ColumnDefinitions="*, Auto, Auto">
+      <Label
+          Grid.Column="0"
+          Style="{StaticResource PageSubtitle}"
+          Text="{Binding HeaderText, Source={x:Reference Root}}" />
 
-    <Entry
-        Grid.Row="0"
-        Grid.Column="1"
-        Grid.ColumnSpan="2"
+      <Button
+          x:Name="ClearFiltersButton"
+          Grid.Column="1"
+          Command="{Binding Command, Source={x:Reference Root}}"
+          CommandParameter="ClearFilters"
+          HorizontalOptions="End"
+          Style="{StaticResource DeleteAdorner}"
+          ToolTipProperties.Text="{x:Static resources:UIStrings.BtnNameClearFilters}"
+          VerticalOptions="Center">
+        <Button.Behaviors>
+          <behaviors:FadeVisibilityBehavior Duration="500" IsVisible="{Binding IsAnyFilterActive, Source={x:Reference Root}}" />
+        </Button.Behaviors>
+      </Button>
+
+      <Button
+          Grid.Column="2"
+          Command="{Binding Command, Source={x:Reference Root}}"
+          CommandParameter="ToggleFilters"
+          HorizontalOptions="End"
+          Style="{StaticResource TextAdorner}"
+          Text="{Binding ToggleFiltersButtonName, Source={x:Reference Root}}" />
+    </Grid>
+
+    <!--  Row 1 - Filter fields. Fades via FadeVisibilityBehavior instead of snapping like a plain
+         IsVisible binding would.  -->
+    <Grid
+        x:Name="FiltersPanel"
+        Grid.Row="1"
+        ColumnDefinitions="Auto, Auto, *"
         HorizontalOptions="Fill"
-        Placeholder="{x:Static resources:UIStrings.HintNameFilterWildcard}"
-        Style="{StaticResource FieldValue}"
-        Text="{Binding Filter.NameFilter, Source={x:Reference Root}}" />
+        RowDefinitions="Auto, Auto, Auto, Auto">
 
-    <!--  Row 1 - Sex / marital status  -->
-    <Label
-        Grid.Row="1"
-        Grid.Column="0"
-        Style="{StaticResource FieldName}"
-        Text="{x:Static resources:UIStrings.FieldFilterSex}" />
+      <Grid.Behaviors>
+        <behaviors:FadeVisibilityBehavior Duration="500" IsVisible="{Binding IsFiltersVisible, Source={x:Reference Root}}" />
+      </Grid.Behaviors>
 
-    <Picker
-        Grid.Row="1"
-        Grid.Column="1"
-        ItemsSource="{Binding Filter.SexFilterLabels, Source={x:Reference Root}}"
-        SelectedIndex="{Binding Filter.SexFilterIndex, Source={x:Reference Root}}"
-        Style="{StaticResource FieldValue}" />
+      <!--  Row 0 - Name search  -->
+      <Label
+          Grid.Row="0"
+          Grid.Column="0"
+          Style="{StaticResource FieldName}"
+          Text="{x:Static resources:UIStrings.FieldSearchText}" />
 
-    <Picker
-        Grid.Row="1"
-        Grid.Column="2"
-        ItemsSource="{Binding Filter.MaritalStatusFilterLabels, Source={x:Reference Root}}"
-        SelectedIndex="{Binding Filter.MaritalStatusFilterIndex, Source={x:Reference Root}}"
-        Style="{StaticResource FieldValue}" />
+      <Entry
+          Grid.Row="0"
+          Grid.Column="1"
+          Grid.ColumnSpan="2"
+          HorizontalOptions="Fill"
+          Placeholder="{x:Static resources:UIStrings.HintNameFilterWildcard}"
+          Style="{StaticResource FieldValue}"
+          Text="{Binding Filter.NameFilter, Source={x:Reference Root}}" />
 
-    <!--  Row 2 - Year filter toggle  -->
-    <Label
-        Grid.Row="2"
-        Grid.Column="0"
-        Style="{StaticResource FieldName}"
-        Text="{x:Static resources:UIStrings.FieldYear}" />
+      <!--  Row 1 - Sex / marital status  -->
+      <Label
+          Grid.Row="1"
+          Grid.Column="0"
+          Style="{StaticResource FieldName}"
+          Text="{x:Static resources:UIStrings.FieldFilterSex}" />
 
-    <Switch
-        Grid.Row="2"
-        Grid.Column="1"
-        IsToggled="{Binding Filter.IsYearFilterEnabled, Source={x:Reference Root}}" />
+      <Picker
+          Grid.Row="1"
+          Grid.Column="1"
+          ItemsSource="{Binding Filter.SexFilterLabels, Source={x:Reference Root}}"
+          SelectedIndex="{Binding Filter.SexFilterIndex, Source={x:Reference Root}}"
+          Style="{StaticResource FieldValue}" />
 
-    <Label
-        Grid.Row="2"
-        Grid.Column="2"
-        HorizontalOptions="End"
-        Style="{StaticResource FieldValue}"
-        Text="{Binding Filter.SelectedYear, Source={x:Reference Root}, StringFormat='{0:F0}'}" />
+      <Picker
+          Grid.Row="1"
+          Grid.Column="2"
+          ItemsSource="{Binding Filter.MaritalStatusFilterLabels, Source={x:Reference Root}}"
+          SelectedIndex="{Binding Filter.MaritalStatusFilterIndex, Source={x:Reference Root}}"
+          Style="{StaticResource FieldValue}" />
 
-    <!--  Row 3 - Year slider  -->
-    <Slider
-        Grid.Row="3"
-        Grid.ColumnSpan="3"
-        IsEnabled="{Binding Filter.IsYearFilterEnabled, Source={x:Reference Root}}"
-        Maximum="{Binding Filter.MaxYear, Source={x:Reference Root}}"
-        Minimum="{Binding Filter.MinYear, Source={x:Reference Root}}"
-        Value="{Binding Filter.SelectedYear, Source={x:Reference Root}}" />
+      <!--  Row 2 - Year filter toggle  -->
+      <Label
+          Grid.Row="2"
+          Grid.Column="0"
+          Style="{StaticResource FieldName}"
+          Text="{x:Static resources:UIStrings.FieldYear}" />
+
+      <Switch
+          Grid.Row="2"
+          Grid.Column="1"
+          IsToggled="{Binding Filter.IsYearFilterEnabled, Source={x:Reference Root}}" />
+
+      <Label
+          Grid.Row="2"
+          Grid.Column="2"
+          HorizontalOptions="End"
+          Style="{StaticResource FieldValue}"
+          Text="{Binding Filter.SelectedYear, Source={x:Reference Root}, StringFormat='{0:F0}'}" />
+
+      <!--  Row 3 - Year slider  -->
+      <Slider
+          Grid.Row="3"
+          Grid.ColumnSpan="3"
+          IsEnabled="{Binding Filter.IsYearFilterEnabled, Source={x:Reference Root}}"
+          Maximum="{Binding Filter.MaxYear, Source={x:Reference Root}}"
+          Minimum="{Binding Filter.MinYear, Source={x:Reference Root}}"
+          Value="{Binding Filter.SelectedYear, Source={x:Reference Root}}" />
+    </Grid>
   </Grid>
 </ContentView>

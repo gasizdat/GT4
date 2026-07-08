@@ -245,42 +245,14 @@
               Grid.Column="{Binding Path=SmartLayout.Relatives.Column, Source={x:Reference Root}}"
               Grid.ColumnSpan="{Binding Path=SmartLayout.Relatives.ColumnSpan, Source={x:Reference Root}}">
 
-            <!--  Filters toggle  -->
-            <Grid ColumnDefinitions="*, Auto, Auto">
-              <Button
-                  x:Name="ClearFiltersButton"
-                  Grid.Column="1"
-                  Command="{Binding PageCommand, Source={x:Reference Root}}"
-                  CommandParameter="ClearFilters"
-                  HorizontalOptions="End"
-                  Style="{StaticResource DeleteAdorner}"
-                  ToolTipProperties.Text="{x:Static resources:UIStrings.BtnNameClearFilters}"
-                  VerticalOptions="Center">
-                <Button.Behaviors>
-                  <behaviors:FadeVisibilityBehavior Duration="500" IsVisible="{Binding IsAnyFilterActive, Source={x:Reference Root}}" />
-                </Button.Behaviors>
-              </Button>
-
-              <Button
-                  Grid.Column="2"
-                  Command="{Binding PageCommand, Source={x:Reference Root}}"
-                  CommandParameter="ToggleFilters"
-                  HorizontalOptions="End"
-                  Style="{StaticResource TextAdorner}"
-                  Text="{Binding ToggleFiltersButtonName, Source={x:Reference Root}}" />
-            </Grid>
-
-            <!--  Filters panel. Fades via FadeVisibilityBehavior instead of snapping like a
-                 plain IsVisible binding would.  -->
-            <Grid
-                x:Name="FiltersPanel"
-                HorizontalOptions="Fill">
-              <Grid.Behaviors>
-                <behaviors:FadeVisibilityBehavior Duration="500" IsVisible="{Binding IsFiltersVisible, Source={x:Reference Root}}" />
-              </Grid.Behaviors>
-
-              <components:PersonFilterFieldsView Filter="{Binding Filter, Source={x:Reference Root}}" />
-            </Grid>
+            <!--  Filters toggle + panel  -->
+            <components:PersonFilterFieldsView
+                x:Name="FilterFieldsView"
+                Command="{Binding PageCommand, Source={x:Reference Root}}"
+                Filter="{Binding Filter, Source={x:Reference Root}}"
+                IsAnyFilterActive="{Binding IsAnyFilterActive, Source={x:Reference Root}}"
+                IsFiltersVisible="{Binding IsFiltersVisible, Source={x:Reference Root}}"
+                ToggleFiltersButtonName="{Binding ToggleFiltersButtonName, Source={x:Reference Root}}" />
 
             <!--  Relatives list  -->
             <CollectionView
