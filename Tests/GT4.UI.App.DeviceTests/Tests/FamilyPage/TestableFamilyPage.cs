@@ -2,6 +2,7 @@ using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Pages;
+using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
 using System.Collections.Specialized;
 
@@ -15,6 +16,7 @@ namespace GT4.UI.DeviceTests;
 internal sealed class TestableFamilyPage : FamilyPage
 {
   private int _CompletedLoads;
+  private int _FilterDataLoads;
 
   public TestableFamilyPage(
     IServiceProvider serviceProvider,
@@ -41,6 +43,17 @@ internal sealed class TestableFamilyPage : FamilyPage
     // ever set, when the getter is a side-effect-free early return -- observes every future
     // Clear()+Add() batch a background load performs.
     ((INotifyCollectionChanged)Persons).CollectionChanged += (_, _) => _CompletedLoads++;
+
+    // Subscribed on Filter itself (not this page's forwarded PropertyChanged): SetYearBounds always
+    // raises MaxYear, whether or not the bounds actually changed, and runs after SetMarriedIds within
+    // the same lazy fetch, so married ids are already populated by the time this fires.
+    Filter.PropertyChanged += (_, e) =>
+    {
+      if (e.PropertyName == nameof(PersonInfoFilter.MaxYear))
+      {
+        _FilterDataLoads++;
+      }
+    };
   }
 
   public Task InvokePageCommandAsync(object parameter) => OnPageCommand(parameter);
@@ -77,5 +90,21 @@ internal sealed class TestableFamilyPage : FamilyPage
       "Persons reload did not complete; check the TestServices mock setup.");
 
     return await MainThread.InvokeOnMainThreadAsync(() => Persons.ToArray());
+  }
+
+  /// <summary>
+  /// Opens the filter panel (if not already open) and waits for the resulting lazy marital-status
+  /// fetch + year-bounds computation to land on Filter.
+  /// </summary>
+  public async Task WaitForFilterDataAsync(TimeSpan? timeout = null)
+  {
+    var loadsBefore = _FilterDataLoads;
+    await MainThread.InvokeOnMainThreadAsync(() => IsFiltersVisible = true);
+
+    await Poll.UntilAsync(
+      () => Task.FromResult(_FilterDataLoads),
+      loads => loads > loadsBefore,
+      timeout ?? TimeSpan.FromSeconds(10),
+      "Filter data did not finish loading; check the TestServices mock setup.");
   }
 }

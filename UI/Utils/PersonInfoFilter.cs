@@ -12,6 +12,10 @@ namespace GT4.UI.Utils;
 /// shows a filterable list of persons (ProjectPage's families, FamilyPage's members, PersonPage's
 /// relatives). Bind a <see cref="PersonFilterFieldsView"/> to an instance for the field UI; call
 /// <see cref="Matches"/> from the page's own <c>FilteredObservableCollection{T}</c> predicate.
+/// Marital status requires a relatives lookup a page doesn't otherwise need, so it isn't part of the
+/// person data a page loads up front -- pages call <see cref="SetMarriedIds"/> lazily (e.g. the first
+/// time the filter panel is shown) once they've fetched it, using whatever person list they already
+/// have loaded.
 /// </summary>
 public sealed class PersonInfoFilter : INotifyPropertyChanged
 {
@@ -25,6 +29,7 @@ public sealed class PersonInfoFilter : INotifyPropertyChanged
   private double _SelectedYear;
   private double _MinYear;
   private double _MaxYear;
+  private HashSet<int> _MarriedIds = [];
 
   public PersonInfoFilter(IBiologicalSexFormatter biologicalSexFormatter)
   {
@@ -139,6 +144,14 @@ public sealed class PersonInfoFilter : INotifyPropertyChanged
     }
   }
 
+  /// <summary>Sets which persons (by Id) are married, e.g. from a lazily-fetched relatives lookup.
+  /// Re-runs the page's filter predicate, same as any other criterion changing.</summary>
+  public void SetMarriedIds(IEnumerable<int> marriedIds)
+  {
+    _MarriedIds = [.. marriedIds];
+    Changed?.Invoke(this, EventArgs.Empty);
+  }
+
   public void Clear()
   {
     _NameFilter = string.Empty;
@@ -157,8 +170,10 @@ public sealed class PersonInfoFilter : INotifyPropertyChanged
   }
 
   /// <summary>Computes the year-slider bounds from a person set's known birth/death years, falling
-  /// back to a century before the current year when nothing is known.</summary>
-  public static (double Min, double Max) ComputeYearBounds(IReadOnlyCollection<PersonInfo> persons)
+  /// back to a century before the current year when nothing is known. Takes the base Person type
+  /// (rather than PersonInfo) since that's all it needs, so a page's own RelativeInfo[] roots pass
+  /// straight through via array covariance instead of needing a PersonInfo projection.</summary>
+  public static (double Min, double Max) ComputeYearBounds(IReadOnlyCollection<Person> persons)
   {
     const int FallbackYearsBack = 100;
 
@@ -179,7 +194,7 @@ public sealed class PersonInfoFilter : INotifyPropertyChanged
     return (min, max);
   }
 
-  public bool Matches(PersonInfo person, bool isMarried)
+  public bool Matches(PersonInfo person)
   {
     // Guarded on _NameFilter being set (unlike relying on WildcardMatcher.IsMatch(x, "") == true):
     // a person with zero Names (e.g. a bare relative row with no name data) would otherwise never
@@ -194,7 +209,7 @@ public sealed class PersonInfoFilter : INotifyPropertyChanged
       return false;
     }
 
-    if (MaritalStatusFilterValues[_MaritalStatusFilterIndex] is { } wantMarried && wantMarried != isMarried)
+    if (MaritalStatusFilterValues[_MaritalStatusFilterIndex] is { } wantMarried && wantMarried != _MarriedIds.Contains(person.Id))
     {
       return false;
     }

@@ -38,7 +38,8 @@ public partial class ProjectPage : ContentPage
   private readonly FilteredObservableCollection<FamilyInfoItem> _Families = new();
   private readonly PersonInfoFilter _Filter;
   private bool _FamiliesLoaded;
-  private Dictionary<int, bool> _IsMarried = new();
+  private bool _FilterDataLoaded;
+  private PersonInfo[] _AllPersons = [];
   private bool _IsFiltersVisible;
 
   public ProjectPage(
@@ -119,10 +120,6 @@ public partial class ProjectPage : ContentPage
         .ToList();
 
       var allPersons = familyPersons.SelectMany(f => f.Persons).DistinctBy(p => p.Id).ToArray();
-      var relatives = await project.Relatives.GetRelativesForPersonsAsync(allPersons, token);
-      _IsMarried = relatives.ToDictionary(kv => kv.Key, kv => kv.Value.Any(r => r.Type == RelationshipType.Spouse));
-
-      var (minYear, maxYear) = PersonInfoFilter.ComputeYearBounds(allPersons);
 
       var families = familyPersons
         .Select(f => new FamilyInfoItem(f.Family, f.Persons, PersonMatches))
@@ -131,12 +128,43 @@ public partial class ProjectPage : ContentPage
 
       await SafeTask.RunOnMainThread(() =>
       {
+        _AllPersons = allPersons;
         _Families.AddRange(families);
-        _Filter.SetYearBounds(minYear, maxYear);
       }, _AlertService);
     }
 
     SafeTask.Run(OnLoadFamiliesAsync, _AlertService);
+  }
+
+  // Marital status needs a relatives lookup that no other part of this page's data requires, so it
+  // is fetched lazily -- only once the filter panel is actually opened -- reusing the person list the
+  // main load already gathered, rather than fetching it unconditionally for every visit to this page.
+  private void EnsureFilterDataLoaded()
+  {
+    if (_FilterDataLoaded)
+    {
+      return;
+    }
+    _FilterDataLoaded = true;
+
+    async Task LoadFilterDataAsync()
+    {
+      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      var relatives = await _CurrentProjectProvider.Project.Relatives.GetRelativesForPersonsAsync(_AllPersons, token);
+      var marriedIds = relatives
+        .Where(kv => kv.Value.Any(r => r.Type == RelationshipType.Spouse))
+        .Select(kv => kv.Key)
+        .ToArray();
+      var (minYear, maxYear) = PersonInfoFilter.ComputeYearBounds(_AllPersons);
+
+      await SafeTask.RunOnMainThread(() =>
+      {
+        _Filter.SetMarriedIds(marriedIds);
+        _Filter.SetYearBounds(minYear, maxYear);
+      }, _AlertService);
+    }
+
+    SafeTask.Run(LoadFilterDataAsync, _AlertService);
   }
 
   // Loops AllItems, not the currently-visible Items: a family hidden by the current filters must
@@ -151,11 +179,7 @@ public partial class ProjectPage : ContentPage
     _Families.Update();
   }
 
-  private bool PersonMatches(FilteredObservableCollection<PersonInfo> _, PersonInfo person)
-  {
-    var isMarried = _IsMarried.TryGetValue(person.Id, out var married) && married;
-    return _Filter.Matches(person, isMarried);
-  }
+  private bool PersonMatches(FilteredObservableCollection<PersonInfo> _, PersonInfo person) => _Filter.Matches(person);
 
   public PersonInfoFilter Filter => _Filter;
 
@@ -221,6 +245,11 @@ public partial class ProjectPage : ContentPage
       _IsFiltersVisible = value;
       OnPropertyChanged(nameof(IsFiltersVisible));
       OnPropertyChanged(nameof(ToggleFiltersButtonName));
+
+      if (value)
+      {
+        EnsureFilterDataLoaded();
+      }
     }
   }
 

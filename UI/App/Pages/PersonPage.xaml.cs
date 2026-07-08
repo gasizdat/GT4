@@ -37,7 +37,7 @@ public partial class PersonPage : ContentPage
   private bool _ExpandAll = false;
   private readonly PersonInfoFilter _Filter;
   private RelativeInfo[] _AllRoots = [];
-  private Dictionary<int, bool> _IsMarried = new();
+  private bool _FilterDataLoaded;
   private bool _IsFiltersVisible;
 
   public PersonPage(
@@ -85,6 +85,7 @@ public partial class PersonPage : ContentPage
   public void ShowPersonInfo(Person person, bool addToNavigation)
   {
     ExpandAll = false;
+    _FilterDataLoaded = false;
     Task.Run(async () => await GetPersonDataAsync(person, addToNavigation));
   }
 
@@ -117,6 +118,11 @@ public partial class PersonPage : ContentPage
       _IsFiltersVisible = value;
       OnPropertyChanged(nameof(IsFiltersVisible));
       OnPropertyChanged(nameof(ToggleFiltersButtonName));
+
+      if (value)
+      {
+        EnsureFilterDataLoaded();
+      }
     }
   }
 
@@ -128,11 +134,37 @@ public partial class PersonPage : ContentPage
   // from the DB level by level, so there is no retained unfiltered set at deeper levels to re-filter
   // against interactively (mirrors how a family with no matching persons is hidden wholesale on
   // ProjectPage/FamilyPage, rather than reaching into it for a matching grandchild).
-  private void RefreshRelatives()
+  private void RefreshRelatives() => _Relatives.SetRoots(_AllRoots.Where(r => _Filter.Matches(r)), _PersonFullInfo.BirthDate);
+
+  // Marital status needs a relatives lookup that no other part of this page's data requires, so it
+  // is fetched lazily -- only once the filter panel is actually opened -- reusing the roots list the
+  // main load already gathered, rather than fetching it unconditionally for every person visited.
+  private void EnsureFilterDataLoaded()
   {
-    var isMarried = _IsMarried;
-    var filtered = _AllRoots.Where(r => _Filter.Matches(r, isMarried.TryGetValue(r.Id, out var married) && married));
-    _Relatives.SetRoots(filtered, _PersonFullInfo.BirthDate);
+    if (_FilterDataLoaded)
+    {
+      return;
+    }
+    _FilterDataLoaded = true;
+
+    async Task LoadFilterDataAsync()
+    {
+      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      var relatives = await _CurrentProjectProvider.Project.Relatives.GetRelativesForPersonsAsync(_AllRoots, token);
+      var marriedIds = relatives
+        .Where(kv => kv.Value.Any(r => r.Type == RelationshipType.Spouse))
+        .Select(kv => kv.Key)
+        .ToArray();
+      var (minYear, maxYear) = PersonInfoFilter.ComputeYearBounds(_AllRoots);
+
+      await SafeTask.RunOnMainThread(() =>
+      {
+        _Filter.SetMarriedIds(marriedIds);
+        _Filter.SetYearBounds(minYear, maxYear);
+      }, _AlertService);
+    }
+
+    SafeTask.Run(LoadFilterDataAsync, _AlertService);
   }
 
   public ICommand PageCommand => _PageCommand;
@@ -302,11 +334,6 @@ public partial class PersonPage : ContentPage
       var siblings = relativesProvider.GetSiblings(personFullInfo, parents);
       var roots = AssembleRoots(personFullInfo, parents, siblings, stepChildren, relativesProvider);
 
-      // Fetched here (not inside UpdateUI) so the marital-status lookup can run alongside the rest
-      // of this background work instead of blocking the UI thread that UpdateUI runs on.
-      var relatedRelatives = await project.Relatives.GetRelativesForPersonsAsync(roots, token);
-      var isMarried = relatedRelatives.ToDictionary(kv => kv.Key, kv => kv.Value.Any(r => r.Type == RelationshipType.Spouse));
-
       byte[][] photos;
 
       if (personFullInfo.MainPhoto is null)
@@ -332,7 +359,6 @@ public partial class PersonPage : ContentPage
       // an escaped exception (e.g. the project closed while backgrounding) from going unobserved.
       _ = SafeTask.RunOnMainThread(() => UpdateUI(personFullInfo,
                                                   roots,
-                                                  isMarried,
                                                   photos, bioTask.Result as string,
                                                   gedcomTask.Result as string,
                                                   addToNavigation), _AlertService);
@@ -380,7 +406,6 @@ public partial class PersonPage : ContentPage
 
   public void UpdateUI(PersonFullInfo personFullInfo,
                        RelativeInfo[] roots,
-                       Dictionary<int, bool> isMarried,
                        byte[][] photos,
                        string? bio,
                        string? gedcomDetails,
@@ -390,7 +415,6 @@ public partial class PersonPage : ContentPage
     _Photos = photos;
     _Biography = CombineBiography(bio, gedcomDetails);
     _AllRoots = roots;
-    _IsMarried = isMarried;
 
     RefreshRelatives();
 

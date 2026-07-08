@@ -3,6 +3,7 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Components;
 using GT4.UI.Pages;
+using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
 using System.Runtime.CompilerServices;
@@ -17,6 +18,7 @@ namespace GT4.UI.DeviceTests;
 internal sealed class TestablePersonPage : PersonPage
 {
   private int _CompletedLoads;
+  private int _FilterDataLoads;
 
   public TestablePersonPage(
     IServiceProvider serviceProvider,
@@ -45,6 +47,16 @@ internal sealed class TestablePersonPage : PersonPage
       navigationService,
       biologicalSexFormatter)
   {
+    // Subscribed on Filter itself (not this page's forwarded PropertyChanged): SetYearBounds always
+    // raises MaxYear, whether or not the bounds actually changed, and runs after SetMarriedIds within
+    // the same lazy fetch, so married ids are already populated by the time this fires.
+    Filter.PropertyChanged += (_, e) =>
+    {
+      if (e.PropertyName == nameof(PersonInfoFilter.MaxYear))
+      {
+        _FilterDataLoads++;
+      }
+    };
   }
 
   public int CompletedLoads => _CompletedLoads;
@@ -58,6 +70,22 @@ internal sealed class TestablePersonPage : PersonPage
   public ImagePresenter PersonPhotoForTest => PersonPhotoView;
 
   public CollectionView RelativesListForTest => RelativesListView;
+
+  /// <summary>
+  /// Opens the filter panel (if not already open) and waits for the resulting lazy marital-status
+  /// fetch + year-bounds computation to land on Filter.
+  /// </summary>
+  public async Task WaitForFilterDataAsync(TimeSpan? timeout = null)
+  {
+    var loadsBefore = _FilterDataLoads;
+    await MainThread.InvokeOnMainThreadAsync(() => IsFiltersVisible = true);
+
+    await Poll.UntilAsync(
+      () => Task.FromResult(_FilterDataLoads),
+      loads => loads > loadsBefore,
+      timeout ?? TimeSpan.FromSeconds(10),
+      "Filter data did not finish loading; check the TestServices mock setup.");
+  }
 
   protected override void OnPropertyChanged([CallerMemberName] string? propertyName = null)
   {

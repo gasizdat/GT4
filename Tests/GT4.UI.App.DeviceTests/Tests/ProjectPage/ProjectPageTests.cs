@@ -399,6 +399,8 @@ public class ProjectPageTests
       .ReturnsAsync(new Dictionary<int, Relative[]> { [1] = [new Relative(2, default, null, BiologicalSex.Female, RelationshipType.Spouse, null)] });
     var page = await CreatePageAsync(services);
     await page.WaitForFamiliesAsync();
+    // Marital status is fetched lazily, the first time the filter panel is shown, not up front.
+    await page.WaitForFilterDataAsync();
 
     await MainThread.InvokeOnMainThreadAsync(() => page.MaritalStatusFilterIndex = 1); // Married
     var married = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
@@ -407,6 +409,27 @@ public class ProjectPageTests
     await MainThread.InvokeOnMainThreadAsync(() => page.MaritalStatusFilterIndex = 2); // Single
     var single = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
     Assert.Equal(["Jane"], single.Select(p => p.DisplayName));
+  }
+
+  [Fact]
+  public async Task MaritalStatusData_is_not_fetched_until_the_filter_panel_is_shown()
+  {
+    var services = new TestServices();
+    var family = N(1, "Ivanov", NameType.FamilyName);
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([family]);
+    services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([InFamily(P(1, "John"), family)]);
+    var page = await CreatePageAsync(services);
+
+    await page.WaitForFamiliesAsync();
+    services.Relatives.Verify(
+      r => r.GetRelativesForPersonsAsync(It.IsAny<Person[]>(), It.IsAny<CancellationToken>()),
+      Times.Never());
+
+    await page.WaitForFilterDataAsync();
+    services.Relatives.Verify(
+      r => r.GetRelativesForPersonsAsync(It.IsAny<Person[]>(), It.IsAny<CancellationToken>()),
+      Times.Once());
   }
 
   [Fact]
