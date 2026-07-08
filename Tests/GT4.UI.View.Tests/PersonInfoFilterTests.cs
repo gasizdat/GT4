@@ -1,3 +1,4 @@
+using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Utils;
@@ -200,5 +201,30 @@ public class PersonInfoFilterTests
 
     Assert.Equal(1900, min);
     Assert.Equal(Math.Max(1980, Date.Now.Year), max);
+  }
+
+  [Fact]
+  public async Task FetchMarriedAndYearBoundsAsync_derives_married_ids_from_spouse_relatives()
+  {
+    var married = Person(1, "John", birthDate: Date.Create(1950, 1, 1, DateStatus.WellKnown));
+    var single = Person(2, "Jane", birthDate: Date.Create(1960, 1, 1, DateStatus.WellKnown));
+    var spouse = new Relative(Person(3, ""), RelationshipType.Spouse, null);
+    var sibling = new Relative(Person(4, ""), RelationshipType.Sibling, null);
+
+    var relatives = new Mock<ITableRelatives>();
+    relatives
+      .Setup(r => r.GetRelativesForPersonsAsync(It.IsAny<Person[]>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new Dictionary<int, Relative[]>
+      {
+        [married.Id] = [spouse],
+        [single.Id] = [sibling],
+      });
+
+    var (marriedIds, minYear, maxYear) = await PersonInfoFilter.FetchMarriedAndYearBoundsAsync(
+      [married, single], relatives.Object, CancellationToken.None);
+
+    Assert.Equal([married.Id], marriedIds);
+    var expectedBounds = PersonInfoFilter.ComputeYearBounds([married, single]);
+    Assert.Equal(expectedBounds, (minYear, maxYear));
   }
 }

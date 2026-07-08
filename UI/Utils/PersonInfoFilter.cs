@@ -1,3 +1,4 @@
+using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Resources;
@@ -192,6 +193,24 @@ public sealed class PersonInfoFilter : INotifyPropertyChanged
     var max = Math.Max(knownYears.Count > 0 ? knownYears.Max() : currentYear, currentYear);
 
     return (min, max);
+  }
+
+  /// <summary>Fetches relatives for the given (unfiltered) person set and derives the married-ids/
+  /// year-bounds data a filter panel needs. Pure -- does not touch this filter's own state -- so it's
+  /// safe to await from a background thread; callers apply the result via SetMarriedIds/SetYearBounds
+  /// themselves, from whichever thread their own app-lifecycle-aware threading helpers (SafeTask, in
+  /// GT4.UI.App) land on.</summary>
+  public static async Task<(int[] MarriedIds, double MinYear, double MaxYear)> FetchMarriedAndYearBoundsAsync(
+    Person[] persons, ITableRelatives relatives, CancellationToken token)
+  {
+    var relativesByPerson = await relatives.GetRelativesForPersonsAsync(persons, token);
+    var marriedIds = relativesByPerson
+      .Where(kv => kv.Value.Any(r => r.Type == RelationshipType.Spouse))
+      .Select(kv => kv.Key)
+      .ToArray();
+    var (minYear, maxYear) = ComputeYearBounds(persons);
+
+    return (marriedIds, minYear, maxYear);
   }
 
   public bool Matches(PersonInfo person)

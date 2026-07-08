@@ -146,12 +146,8 @@ public partial class ProjectPage : ContentPage
     async Task LoadFilterDataAsync()
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-      var relatives = await _CurrentProjectProvider.Project.Relatives.GetRelativesForPersonsAsync(allPersons, token);
-      var marriedIds = relatives
-        .Where(kv => kv.Value.Any(r => r.Type == RelationshipType.Spouse))
-        .Select(kv => kv.Key)
-        .ToArray();
-      var (minYear, maxYear) = PersonInfoFilter.ComputeYearBounds(allPersons);
+      var (marriedIds, minYear, maxYear) = await PersonInfoFilter.FetchMarriedAndYearBoundsAsync(
+        allPersons, _CurrentProjectProvider.Project.Relatives, token);
 
       await SafeTask.RunOnMainThread(() =>
       {
