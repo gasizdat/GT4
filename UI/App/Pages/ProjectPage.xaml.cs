@@ -175,59 +175,7 @@ public partial class ProjectPage : ContentPage
 
   public PersonInfoFilter Filter => _Filter;
 
-  public string[] SexFilterLabels => _Filter.SexFilterLabels;
-
-  public string[] MaritalStatusFilterLabels => _Filter.MaritalStatusFilterLabels;
-
-  public string NameFilter
-  {
-    get => _Filter.NameFilter;
-    set => _Filter.NameFilter = value;
-  }
-
-  public int SexFilterIndex
-  {
-    get => _Filter.SexFilterIndex;
-    set => _Filter.SexFilterIndex = value;
-  }
-
-  public int MaritalStatusFilterIndex
-  {
-    get => _Filter.MaritalStatusFilterIndex;
-    set => _Filter.MaritalStatusFilterIndex = value;
-  }
-
-  public bool IsYearFilterEnabled
-  {
-    get => _Filter.IsYearFilterEnabled;
-    set => _Filter.IsYearFilterEnabled = value;
-  }
-
   public bool IsAnyFilterActive => _Filter.IsAnyFilterActive;
-
-  public double MinYear
-  {
-    get
-    {
-      EnsureFamiliesLoaded();
-      return _Filter.MinYear;
-    }
-  }
-
-  public double MaxYear
-  {
-    get
-    {
-      EnsureFamiliesLoaded();
-      return _Filter.MaxYear;
-    }
-  }
-
-  public double SelectedYear
-  {
-    get => _Filter.SelectedYear;
-    set => _Filter.SelectedYear = value;
-  }
 
   public bool IsFiltersVisible
   {

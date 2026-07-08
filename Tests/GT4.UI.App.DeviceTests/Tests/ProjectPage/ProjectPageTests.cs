@@ -303,7 +303,7 @@ public class ProjectPageTests
       Assert.Equal(0, clearButton.Opacity);
     });
 
-    await MainThread.InvokeOnMainThreadAsync(() => page.NameFilter = "John");
+    await MainThread.InvokeOnMainThreadAsync(() => page.Filter.NameFilter = "John");
     await Poll.UntilAsync(
       () => MainThread.InvokeOnMainThreadAsync(() => clearButton.Opacity),
       opacity => opacity == 1,
@@ -334,7 +334,7 @@ public class ProjectPageTests
     var page = await CreatePageAsync(services);
     await page.WaitForFamiliesAsync();
 
-    await MainThread.InvokeOnMainThreadAsync(() => page.NameFilter = "J*n");
+    await MainThread.InvokeOnMainThreadAsync(() => page.Filter.NameFilter = "J*n");
     var families = await MainThread.InvokeOnMainThreadAsync(() => page.Families.ToArray());
 
     var family = Assert.Single(families);
@@ -353,11 +353,11 @@ public class ProjectPageTests
     var page = await CreatePageAsync(services);
     await page.WaitForFamiliesAsync();
 
-    await MainThread.InvokeOnMainThreadAsync(() => page.NameFilter = "John");
+    await MainThread.InvokeOnMainThreadAsync(() => page.Filter.NameFilter = "John");
     var filtered = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
     Assert.Single(filtered);
 
-    await MainThread.InvokeOnMainThreadAsync(() => page.NameFilter = "");
+    await MainThread.InvokeOnMainThreadAsync(() => page.Filter.NameFilter = "");
     var restored = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
     Assert.Equal(2, restored.Count);
   }
@@ -373,15 +373,15 @@ public class ProjectPageTests
     var page = await CreatePageAsync(services);
     await page.WaitForFamiliesAsync();
 
-    await MainThread.InvokeOnMainThreadAsync(() => page.SexFilterIndex = 1); // Male
+    await MainThread.InvokeOnMainThreadAsync(() => page.Filter.SexFilterIndex = 1); // Male
     var maleOnly = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
     Assert.Equal(["John"], maleOnly.Select(p => p.DisplayName));
 
-    await MainThread.InvokeOnMainThreadAsync(() => page.SexFilterIndex = 2); // Female
+    await MainThread.InvokeOnMainThreadAsync(() => page.Filter.SexFilterIndex = 2); // Female
     var femaleOnly = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
     Assert.Equal(["Jane"], femaleOnly.Select(p => p.DisplayName));
 
-    await MainThread.InvokeOnMainThreadAsync(() => page.SexFilterIndex = 0); // Any
+    await MainThread.InvokeOnMainThreadAsync(() => page.Filter.SexFilterIndex = 0); // Any
     var everyone = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
     Assert.Equal(2, everyone.Count);
   }
@@ -402,11 +402,11 @@ public class ProjectPageTests
     // Marital status is fetched lazily, the first time the filter panel is shown, not up front.
     await page.WaitForFilterDataAsync();
 
-    await MainThread.InvokeOnMainThreadAsync(() => page.MaritalStatusFilterIndex = 1); // Married
+    await MainThread.InvokeOnMainThreadAsync(() => page.Filter.MaritalStatusFilterIndex = 1); // Married
     var married = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
     Assert.Equal(["John"], married.Select(p => p.DisplayName));
 
-    await MainThread.InvokeOnMainThreadAsync(() => page.MaritalStatusFilterIndex = 2); // Single
+    await MainThread.InvokeOnMainThreadAsync(() => page.Filter.MaritalStatusFilterIndex = 2); // Single
     var single = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
     Assert.Equal(["Jane"], single.Select(p => p.DisplayName));
   }
@@ -450,13 +450,13 @@ public class ProjectPageTests
 
     await MainThread.InvokeOnMainThreadAsync(() =>
     {
-      page.IsYearFilterEnabled = true;
-      page.SelectedYear = 1975;
+      page.Filter.IsYearFilterEnabled = true;
+      page.Filter.SelectedYear = 1975;
     });
     var withinRange = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
     Assert.Equal(["John"], withinRange.Select(p => p.DisplayName));
 
-    await MainThread.InvokeOnMainThreadAsync(() => page.SelectedYear = 2010);
+    await MainThread.InvokeOnMainThreadAsync(() => page.Filter.SelectedYear = 2010);
     var outsideRange = await MainThread.InvokeOnMainThreadAsync(() => page.Families.ToArray());
     Assert.Empty(outsideRange);
   }
@@ -474,16 +474,16 @@ public class ProjectPageTests
 
     await MainThread.InvokeOnMainThreadAsync(() =>
     {
-      page.NameFilter = "John";
-      page.SexFilterIndex = 1;
-      page.MaritalStatusFilterIndex = 1;
-      page.IsYearFilterEnabled = true;
+      page.Filter.NameFilter = "John";
+      page.Filter.SexFilterIndex = 1;
+      page.Filter.MaritalStatusFilterIndex = 1;
+      page.Filter.IsYearFilterEnabled = true;
     });
 
     await page.InvokePageCommandAsync("ClearFilters");
 
     var state = await MainThread.InvokeOnMainThreadAsync(() =>
-      (page.NameFilter, page.SexFilterIndex, page.MaritalStatusFilterIndex, page.IsYearFilterEnabled));
+      (page.Filter.NameFilter, page.Filter.SexFilterIndex, page.Filter.MaritalStatusFilterIndex, page.Filter.IsYearFilterEnabled));
     Assert.Equal((string.Empty, 0, 0, false), state);
 
     var everyone = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
@@ -496,7 +496,7 @@ public class ProjectPageTests
     var page = await CreatePageAsync(new TestServices());
     Assert.False(page.IsAnyFilterActive);
 
-    await MainThread.InvokeOnMainThreadAsync(() => page.NameFilter = "John");
+    await MainThread.InvokeOnMainThreadAsync(() => page.Filter.NameFilter = "John");
     Assert.True(page.IsAnyFilterActive);
 
     // Closing the panel must not hide the "a filter is active" signal.
@@ -518,7 +518,7 @@ public class ProjectPageTests
     var page = await CreatePageAsync(services);
 
     var before = await MainThread.InvokeOnMainThreadAsync(() => page.Families);
-    await MainThread.InvokeOnMainThreadAsync(() => page.NameFilter = "John");
+    await MainThread.InvokeOnMainThreadAsync(() => page.Filter.NameFilter = "John");
     var after = page.Families;
 
     Assert.Same(before, after);
@@ -547,7 +547,7 @@ public class ProjectPageTests
 
     // Petrov's one member (Mark, Male) matches this filter both before and after, so nothing about
     // Petrov should change; Ivanov (John Male, Jane Female) does lose a member.
-    await MainThread.InvokeOnMainThreadAsync(() => page.SexFilterIndex = 1);
+    await MainThread.InvokeOnMainThreadAsync(() => page.Filter.SexFilterIndex = 1);
 
     var ivanovAfter = page.Families.Single(f => f.Info.Value == "Ivanov");
     Assert.Equal(["John"], ivanovAfter.Persons.Select(p => p.DisplayName));
