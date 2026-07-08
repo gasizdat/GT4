@@ -27,9 +27,9 @@ public sealed class PersonInfoFilter : INotifyPropertyChanged
   private int _SexFilterIndex;
   private int _MaritalStatusFilterIndex;
   private bool _IsYearFilterEnabled;
-  private double _SelectedYear;
-  private double _MinYear;
-  private double _MaxYear;
+  private int _SelectedYear;
+  private int _MinYear;
+  private int _MaxYear;
   private HashSet<int> _MarriedIds = [];
 
   public PersonInfoFilter(IBiologicalSexFormatter biologicalSexFormatter)
@@ -114,9 +114,13 @@ public sealed class PersonInfoFilter : INotifyPropertyChanged
     get => _SelectedYear;
     set
     {
-      _SelectedYear = value;
-      OnPropertyChanged();
-      Changed?.Invoke(this, EventArgs.Empty);
+      var newValue = (int)Math.Floor(value);
+      if (_SelectedYear != newValue)
+      {
+        _SelectedYear = newValue;
+        OnPropertyChanged();
+        Changed?.Invoke(this, EventArgs.Empty);
+      }
     }
   }
 
@@ -132,7 +136,7 @@ public sealed class PersonInfoFilter : INotifyPropertyChanged
 
   /// <summary>Recomputes the year slider's bounds (e.g. after a page (re)loads its person set),
   /// clamping SelectedYear back into range if it fell outside it.</summary>
-  public void SetYearBounds(double min, double max)
+  public void SetYearBounds(int min, int max)
   {
     _MinYear = min;
     _MaxYear = max;
@@ -174,7 +178,7 @@ public sealed class PersonInfoFilter : INotifyPropertyChanged
   /// back to a century before the current year when nothing is known. Takes the base Person type
   /// (rather than PersonInfo) since that's all it needs, so a page's own RelativeInfo[] roots pass
   /// straight through via array covariance instead of needing a PersonInfo projection.</summary>
-  public static (double Min, double Max) ComputeYearBounds(IReadOnlyCollection<Person> persons)
+  public static (int Min, int Max) ComputeYearBounds(IReadOnlyCollection<Person> persons)
   {
     const int FallbackYearsBack = 100;
 
@@ -200,7 +204,7 @@ public sealed class PersonInfoFilter : INotifyPropertyChanged
   /// safe to await from a background thread; callers apply the result via SetMarriedIds/SetYearBounds
   /// themselves, from whichever thread their own app-lifecycle-aware threading helpers (SafeTask, in
   /// GT4.UI.App) land on.</summary>
-  public static async Task<(int[] MarriedIds, double MinYear, double MaxYear)> FetchMarriedAndYearBoundsAsync(
+  public static async Task<(int[] MarriedIds, int MinYear, int MaxYear)> FetchMarriedAndYearBoundsAsync(
     Person[] persons, ITableRelatives relatives, CancellationToken token)
   {
     var relativesByPerson = await relatives.GetRelativesForPersonsAsync(persons, token);
