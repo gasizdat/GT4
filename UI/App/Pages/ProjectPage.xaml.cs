@@ -36,8 +36,6 @@ public partial class ProjectPage : ContentPage
 
   private long? _ProjectRevision;
   private readonly FilteredObservableCollection<FamilyInfoItem> _Families = new();
-  private readonly PersonInfoFilter _Filter;
-  private readonly FilterPanelController _FilterPanel;
   private bool _FamiliesLoaded;
 
   public ProjectPage(
@@ -67,21 +65,17 @@ public partial class ProjectPage : ContentPage
     _AlertService = alertService;
     _NavigationService = navigationService;
 
-    _Filter = new PersonInfoFilter(biologicalSexFormatter);
-    _Filter.Changed += (_, _) => UpdateFamilies();
-    _Filter.PropertyChanged += (_, e) => OnPropertyChanged(e.PropertyName);
-
-    _FilterPanel = new FilterPanelController(
-      _Filter, _CancellationTokenProvider, _CurrentProjectProvider, _AlertService,
-      () => [.. _Families.AllItems.SelectMany(f => f.AllPersons).DistinctBy(p => p.Id)]);
-    _FilterPanel.PropertyChanged += (_, e) => OnPropertyChanged(e.PropertyName);
-
     // Set once: family visibility is re-evaluated via _Families.Update() (through UpdateFamilies),
     // not by reassigning this predicate.
     _Families.Filter = (_, family) => family.HasVisiblePersons;
 
     PageCommand = new SafeCommand(OnPageCommand, _AlertService);
     InitializeComponent();
+
+    FilterView.Initialize(
+      biologicalSexFormatter, _CancellationTokenProvider, _CurrentProjectProvider, _AlertService,
+      () => [.. _Families.AllItems.SelectMany(f => f.AllPersons).DistinctBy(p => p.Id)]);
+    FilterView.Changed += (_, _) => UpdateFamilies();
   }
 
   public ObservableCollection<FamilyInfoItem> Families
@@ -145,19 +139,7 @@ public partial class ProjectPage : ContentPage
     _Families.Update();
   }
 
-  private bool PersonMatches(FilteredObservableCollection<PersonInfo> _, PersonInfo person) => _Filter.Matches(person);
-
-  public PersonInfoFilter Filter => _Filter;
-
-  public bool IsAnyFilterActive => _FilterPanel.IsAnyFilterActive;
-
-  public bool IsFiltersVisible
-  {
-    get => _FilterPanel.IsFiltersVisible;
-    set => _FilterPanel.IsFiltersVisible = value;
-  }
-
-  public string ToggleFiltersButtonName => _FilterPanel.ToggleFiltersButtonName;
+  private bool PersonMatches(FilteredObservableCollection<PersonInfo> _, PersonInfo person) => FilterView.Matches(person);
 
   public string RemoveProjectToolbarItemName =>
     string.Format(UIStrings.MenuItemNameRemove_1, _CurrentProjectProvider.Info.Name);
@@ -271,14 +253,6 @@ public partial class ProjectPage : ContentPage
       case string commandName when commandName == "Refresh":
         _FamiliesLoaded = false;
         this.RefreshView();
-        break;
-
-      case string commandName when commandName == "ClearFilters":
-        _FilterPanel.ClearFilters();
-        break;
-
-      case string commandName when commandName == "ToggleFilters":
-        IsFiltersVisible = !IsFiltersVisible;
         break;
 
       case string commandName when commandName == "CreateFamily":

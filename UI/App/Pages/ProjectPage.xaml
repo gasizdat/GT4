@@ -55,14 +55,7 @@
 
   <components:PageLayout>
     <components:PageLayout.Header>
-      <components:PersonFilterFieldsView
-          x:Name="FilterFieldsView"
-          Command="{Binding PageCommand, Source={x:Reference Root}}"
-          Filter="{Binding Filter, Source={x:Reference Root}}"
-          HeaderText="{x:Static resources:UIStrings.HintFamiliesPage}"
-          IsAnyFilterActive="{Binding IsAnyFilterActive, Source={x:Reference Root}}"
-          IsFiltersVisible="{Binding IsFiltersVisible, Source={x:Reference Root}}"
-          ToggleFiltersButtonName="{Binding ToggleFiltersButtonName, Source={x:Reference Root}}" />
+      <components:PersonFilterView x:Name="FilterView" HeaderText="{x:Static resources:UIStrings.HintFamiliesPage}" />
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>

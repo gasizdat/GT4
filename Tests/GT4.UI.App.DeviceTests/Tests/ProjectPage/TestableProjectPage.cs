@@ -2,6 +2,7 @@ using GT4.Core.Gedcom.Abstraction;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.Components;
 using GT4.UI.Items;
 using GT4.UI.Pages;
 using GT4.UI.Utils;
@@ -62,20 +63,13 @@ internal sealed class TestableProjectPage : ProjectPage
       }
     };
 
-    // Subscribed on Filter itself, not this page's own (forwarded) PropertyChanged: RefreshView()
-    // reflectively re-raises every one of ProjectPage's own properties regardless of whether a load
-    // actually ran (see the CompletedLoads comment above for the same reasoning), but nothing touches
-    // Filter's properties except the filter-data fetch itself. SetYearBounds always raises MaxYear,
-    // whether or not the bounds actually changed, and runs after SetMarriedIds within that fetch, so
-    // married ids are already populated by the time this fires.
-    Filter.PropertyChanged += (_, e) =>
-    {
-      if (e.PropertyName == nameof(PersonInfoFilter.MaxYear))
-      {
-        _FilterDataLoads++;
-      }
-    };
+    // FilterDataLoaded fires exactly once per lazy fetch, after SetMarriedIds/SetYearBounds have
+    // been applied on the main thread.
+    FilterView = this.FindByName<PersonFilterView>("FilterView");
+    FilterView.FilterDataLoaded += (_, _) => _FilterDataLoads++;
   }
+
+  public PersonFilterView FilterView { get; }
 
   public Task InvokePageCommandAsync(object parameter) => OnPageCommand(parameter);
 
@@ -110,13 +104,13 @@ internal sealed class TestableProjectPage : ProjectPage
 
   /// <summary>
   /// Opens the filter panel (if not already open) and waits for the resulting lazy marital-status
-  /// fetch + year-bounds computation to land on Filter. Mirrors WaitForFamiliesAsync's level-triggered
+  /// fetch + year-bounds computation to land on the filter. Mirrors WaitForFamiliesAsync's level-triggered
   /// counter so it is safe even if a prior open already finished the fetch before this is called.
   /// </summary>
   public async Task WaitForFilterDataAsync(TimeSpan? timeout = null)
   {
     var loadsBefore = _FilterDataLoads;
-    await MainThread.InvokeOnMainThreadAsync(() => IsFiltersVisible = true);
+    await MainThread.InvokeOnMainThreadAsync(() => FilterView.IsFiltersVisible = true);
 
     await Poll.UntilAsync(
       () => Task.FromResult(_FilterDataLoads),

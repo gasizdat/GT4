@@ -47,17 +47,13 @@ internal sealed class TestablePersonPage : PersonPage
       navigationService,
       biologicalSexFormatter)
   {
-    // Subscribed on Filter itself (not this page's forwarded PropertyChanged): SetYearBounds always
-    // raises MaxYear, whether or not the bounds actually changed, and runs after SetMarriedIds within
-    // the same lazy fetch, so married ids are already populated by the time this fires.
-    Filter.PropertyChanged += (_, e) =>
-    {
-      if (e.PropertyName == nameof(PersonInfoFilter.MaxYear))
-      {
-        _FilterDataLoads++;
-      }
-    };
+    // FilterDataLoaded fires exactly once per lazy fetch, after SetMarriedIds/SetYearBounds have
+    // been applied on the main thread.
+    FilterView = this.FindByName<PersonFilterView>("FilterView");
+    FilterView.FilterDataLoaded += (_, _) => _FilterDataLoads++;
   }
+
+  public PersonFilterView FilterView { get; }
 
   public int CompletedLoads => _CompletedLoads;
 
@@ -73,12 +69,12 @@ internal sealed class TestablePersonPage : PersonPage
 
   /// <summary>
   /// Opens the filter panel (if not already open) and waits for the resulting lazy marital-status
-  /// fetch + year-bounds computation to land on Filter.
+  /// fetch + year-bounds computation to land on the filter.
   /// </summary>
   public async Task WaitForFilterDataAsync(TimeSpan? timeout = null)
   {
     var loadsBefore = _FilterDataLoads;
-    await MainThread.InvokeOnMainThreadAsync(() => IsFiltersVisible = true);
+    await MainThread.InvokeOnMainThreadAsync(() => FilterView.IsFiltersVisible = true);
 
     await Poll.UntilAsync(
       () => Task.FromResult(_FilterDataLoads),

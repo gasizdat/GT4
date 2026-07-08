@@ -1,6 +1,7 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.Components;
 using GT4.UI.Pages;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
@@ -44,17 +45,13 @@ internal sealed class TestableFamilyPage : FamilyPage
     // Clear()+Add() batch a background load performs.
     ((INotifyCollectionChanged)Persons).CollectionChanged += (_, _) => _CompletedLoads++;
 
-    // Subscribed on Filter itself (not this page's forwarded PropertyChanged): SetYearBounds always
-    // raises MaxYear, whether or not the bounds actually changed, and runs after SetMarriedIds within
-    // the same lazy fetch, so married ids are already populated by the time this fires.
-    Filter.PropertyChanged += (_, e) =>
-    {
-      if (e.PropertyName == nameof(PersonInfoFilter.MaxYear))
-      {
-        _FilterDataLoads++;
-      }
-    };
+    // FilterDataLoaded fires exactly once per lazy fetch, after SetMarriedIds/SetYearBounds have
+    // been applied on the main thread.
+    FilterView = this.FindByName<PersonFilterView>("FilterView");
+    FilterView.FilterDataLoaded += (_, _) => _FilterDataLoads++;
   }
+
+  public PersonFilterView FilterView { get; }
 
   public Task InvokePageCommandAsync(object parameter) => OnPageCommand(parameter);
 
@@ -94,12 +91,12 @@ internal sealed class TestableFamilyPage : FamilyPage
 
   /// <summary>
   /// Opens the filter panel (if not already open) and waits for the resulting lazy marital-status
-  /// fetch + year-bounds computation to land on Filter.
+  /// fetch + year-bounds computation to land on the filter.
   /// </summary>
   public async Task WaitForFilterDataAsync(TimeSpan? timeout = null)
   {
     var loadsBefore = _FilterDataLoads;
-    await MainThread.InvokeOnMainThreadAsync(() => IsFiltersVisible = true);
+    await MainThread.InvokeOnMainThreadAsync(() => FilterView.IsFiltersVisible = true);
 
     await Poll.UntilAsync(
       () => Task.FromResult(_FilterDataLoads),

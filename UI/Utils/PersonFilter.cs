@@ -3,36 +3,26 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Resources;
 using GT4.UI.Utils.Formatters;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 
 namespace GT4.UI.Utils;
 
 /// <summary>
-/// Shared name/sex/marital-status/alive-in-year filter state and matching, reused by every page that
-/// shows a filterable list of persons (ProjectPage's families, FamilyPage's members, PersonPage's
-/// relatives). Bind a <see cref="PersonFilterFieldsView"/> to an instance for the field UI; call
-/// <see cref="Matches"/> from the page's own <c>FilteredObservableCollection{T}</c> predicate.
-/// Marital status requires a relatives lookup a page doesn't otherwise need, so it isn't part of the
-/// person data a page loads up front -- pages call <see cref="SetMarriedIds"/> lazily (e.g. the first
-/// time the filter panel is shown) once they've fetched it, using whatever person list they already
-/// have loaded.
+/// Pure name/sex/marital-status/alive-in-year filter criteria and matching, owned and driven by
+/// <c>PersonFilterView</c> (GT4.UI.App), which syncs its controls into this state and raises its own
+/// change event; call <see cref="Matches"/> from a page's own <c>FilteredObservableCollection{T}</c>
+/// predicate. Marital status requires a relatives lookup a page doesn't otherwise need, so it isn't
+/// part of the person data a page loads up front -- the view calls <see cref="SetMarriedIds"/> lazily
+/// (the first time the filter panel is shown) once it has fetched it.
 /// </summary>
-public sealed class PersonInfoFilter : INotifyPropertyChanged
+public sealed class PersonFilter
 {
   private static readonly BiologicalSex?[] SexFilterValues = [null, BiologicalSex.Male, BiologicalSex.Female, BiologicalSex.Unknown];
   private static readonly bool?[] MaritalStatusFilterValues = [null, true, false];
 
-  private string _NameFilter = string.Empty;
-  private int _SexFilterIndex;
-  private int _MaritalStatusFilterIndex;
-  private bool _IsYearFilterEnabled;
   private int _SelectedYear;
-  private int _MinYear;
-  private int _MaxYear;
   private HashSet<int> _MarriedIds = [];
 
-  public PersonInfoFilter(IBiologicalSexFormatter biologicalSexFormatter)
+  public PersonFilter(IBiologicalSexFormatter biologicalSexFormatter)
   {
     SexFilterLabels =
     [
@@ -49,129 +39,60 @@ public sealed class PersonInfoFilter : INotifyPropertyChanged
     ];
   }
 
-  public event PropertyChangedEventHandler? PropertyChanged;
-
-  /// <summary>Raised whenever a filter criterion changes, so a page can re-run its filter predicate.</summary>
-  public event EventHandler? Changed;
-
-  private void OnPropertyChanged([CallerMemberName] string? name = null) =>
-    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-
   public string[] SexFilterLabels { get; }
 
   public string[] MaritalStatusFilterLabels { get; }
 
-  public string NameFilter
-  {
-    get => _NameFilter;
-    set
-    {
-      _NameFilter = value;
-      OnPropertyChanged();
-      OnPropertyChanged(nameof(IsAnyFilterActive));
-      Changed?.Invoke(this, EventArgs.Empty);
-    }
-  }
+  public string NameFilter { get; set; } = string.Empty;
 
-  public int SexFilterIndex
-  {
-    get => _SexFilterIndex;
-    set
-    {
-      _SexFilterIndex = value;
-      OnPropertyChanged();
-      OnPropertyChanged(nameof(IsAnyFilterActive));
-      Changed?.Invoke(this, EventArgs.Empty);
-    }
-  }
+  public int SexFilterIndex { get; set; }
 
-  public int MaritalStatusFilterIndex
-  {
-    get => _MaritalStatusFilterIndex;
-    set
-    {
-      _MaritalStatusFilterIndex = value;
-      OnPropertyChanged();
-      OnPropertyChanged(nameof(IsAnyFilterActive));
-      Changed?.Invoke(this, EventArgs.Empty);
-    }
-  }
+  public int MaritalStatusFilterIndex { get; set; }
 
-  public bool IsYearFilterEnabled
-  {
-    get => _IsYearFilterEnabled;
-    set
-    {
-      _IsYearFilterEnabled = value;
-      OnPropertyChanged();
-      OnPropertyChanged(nameof(IsAnyFilterActive));
-      Changed?.Invoke(this, EventArgs.Empty);
-    }
-  }
+  public bool IsYearFilterEnabled { get; set; }
 
   public double SelectedYear
   {
     get => _SelectedYear;
-    set
-    {
-      var newValue = (int)Math.Floor(value);
-      if (_SelectedYear != newValue)
-      {
-        _SelectedYear = newValue;
-        OnPropertyChanged();
-        Changed?.Invoke(this, EventArgs.Empty);
-      }
-    }
+    set => _SelectedYear = (int)Math.Floor(value);
   }
 
-  public double MinYear => _MinYear;
+  public int MinYear { get; private set; }
 
-  public double MaxYear => _MaxYear;
+  public int MaxYear { get; private set; }
 
   public bool IsAnyFilterActive =>
-    !string.IsNullOrEmpty(_NameFilter) ||
-    _SexFilterIndex != 0 ||
-    _MaritalStatusFilterIndex != 0 ||
-    _IsYearFilterEnabled;
+    !string.IsNullOrEmpty(NameFilter) ||
+    SexFilterIndex != 0 ||
+    MaritalStatusFilterIndex != 0 ||
+    IsYearFilterEnabled;
 
   /// <summary>Recomputes the year slider's bounds (e.g. after a page (re)loads its person set),
   /// clamping SelectedYear back into range if it fell outside it.</summary>
   public void SetYearBounds(int min, int max)
   {
-    _MinYear = min;
-    _MaxYear = max;
-    OnPropertyChanged(nameof(MinYear));
-    OnPropertyChanged(nameof(MaxYear));
+    MinYear = min;
+    MaxYear = max;
 
     if (_SelectedYear < min || _SelectedYear > max)
     {
-      SelectedYear = max;
+      _SelectedYear = max;
     }
   }
 
-  /// <summary>Sets which persons (by Id) are married, e.g. from a lazily-fetched relatives lookup.
-  /// Re-runs the page's filter predicate, same as any other criterion changing.</summary>
+  /// <summary>Sets which persons (by Id) are married, e.g. from a lazily-fetched relatives lookup.</summary>
   public void SetMarriedIds(IEnumerable<int> marriedIds)
   {
     _MarriedIds = [.. marriedIds];
-    Changed?.Invoke(this, EventArgs.Empty);
   }
 
   public void Clear()
   {
-    _NameFilter = string.Empty;
-    _SexFilterIndex = 0;
-    _MaritalStatusFilterIndex = 0;
-    _IsYearFilterEnabled = false;
-    _SelectedYear = _MaxYear;
-
-    OnPropertyChanged(nameof(NameFilter));
-    OnPropertyChanged(nameof(SexFilterIndex));
-    OnPropertyChanged(nameof(MaritalStatusFilterIndex));
-    OnPropertyChanged(nameof(IsYearFilterEnabled));
-    OnPropertyChanged(nameof(SelectedYear));
-    OnPropertyChanged(nameof(IsAnyFilterActive));
-    Changed?.Invoke(this, EventArgs.Empty);
+    NameFilter = string.Empty;
+    SexFilterIndex = 0;
+    MaritalStatusFilterIndex = 0;
+    IsYearFilterEnabled = false;
+    _SelectedYear = MaxYear;
   }
 
   /// <summary>Computes the year-slider bounds from a person set's known birth/death years, falling
@@ -219,25 +140,25 @@ public sealed class PersonInfoFilter : INotifyPropertyChanged
 
   public bool Matches(PersonInfo person)
   {
-    // Guarded on _NameFilter being set (unlike relying on WildcardMatcher.IsMatch(x, "") == true):
+    // Guarded on NameFilter being set (unlike relying on WildcardMatcher.IsMatch(x, "") == true):
     // a person with zero Names (e.g. a bare relative row with no name data) would otherwise never
     // pass Any(...) even with no filter active.
-    if (!string.IsNullOrEmpty(_NameFilter) && !person.Names.Any(n => WildcardMatcher.IsMatch(n.Value, _NameFilter)))
+    if (!string.IsNullOrEmpty(NameFilter) && !person.Names.Any(n => WildcardMatcher.IsMatch(n.Value, NameFilter)))
     {
       return false;
     }
 
-    if (SexFilterValues[_SexFilterIndex] is { } sex && person.BiologicalSex != sex)
+    if (SexFilterValues[SexFilterIndex] is { } sex && person.BiologicalSex != sex)
     {
       return false;
     }
 
-    if (MaritalStatusFilterValues[_MaritalStatusFilterIndex] is { } wantMarried && wantMarried != _MarriedIds.Contains(person.Id))
+    if (MaritalStatusFilterValues[MaritalStatusFilterIndex] is { } wantMarried && wantMarried != _MarriedIds.Contains(person.Id))
     {
       return false;
     }
 
-    if (_IsYearFilterEnabled && !PersonLifetimeMatcher.IsAliveInYear(person, (int)_SelectedYear))
+    if (IsYearFilterEnabled && !PersonLifetimeMatcher.IsAliveInYear(person, _SelectedYear))
     {
       return false;
     }

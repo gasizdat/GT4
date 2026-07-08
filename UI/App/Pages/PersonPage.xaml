@@ -246,13 +246,7 @@
               Grid.ColumnSpan="{Binding Path=SmartLayout.Relatives.ColumnSpan, Source={x:Reference Root}}">
 
             <!--  Filters toggle + panel  -->
-            <components:PersonFilterFieldsView
-                x:Name="FilterFieldsView"
-                Command="{Binding PageCommand, Source={x:Reference Root}}"
-                Filter="{Binding Filter, Source={x:Reference Root}}"
-                IsAnyFilterActive="{Binding IsAnyFilterActive, Source={x:Reference Root}}"
-                IsFiltersVisible="{Binding IsFiltersVisible, Source={x:Reference Root}}"
-                ToggleFiltersButtonName="{Binding ToggleFiltersButtonName, Source={x:Reference Root}}" />
+            <components:PersonFilterView x:Name="FilterView" />
 
             <!--  Relatives list  -->
             <CollectionView

@@ -20,8 +20,6 @@ public partial class FamilyPage : ContentPage
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
   private readonly FilteredObservableCollection<PersonInfo> _Persons = new();
-  private readonly PersonInfoFilter _Filter;
-  private readonly FilterPanelController _FilterPanel;
   private bool _PersonsLoaded;
   private Name? _FamilyName = null;
   private double _PersonItemMinimalWidth;
@@ -45,20 +43,17 @@ public partial class FamilyPage : ContentPage
     _AlertService = alertService;
     _NavigationService = navigationService;
 
-    _Filter = new PersonInfoFilter(biologicalSexFormatter);
-    _Filter.Changed += (_, _) => _Persons.Update();
-    _Filter.PropertyChanged += (_, e) => OnPropertyChanged(e.PropertyName);
     _Persons.Filter = PersonMatches;
-
-    _FilterPanel = new FilterPanelController(
-      _Filter, _CancellationTokenProvider, _CurrentProjectProvider, _AlertService,
-      () => [.. _Persons.AllItems]);
-    _FilterPanel.PropertyChanged += (_, e) => OnPropertyChanged(e.PropertyName);
 
     MemberItemTappedCommand = new SafeCommand<PersonInfo>(OnOpenPerson, _AlertService);
     PageCommand = new SafeCommand(OnPageCommand, _AlertService);
 
     InitializeComponent();
+
+    FilterView.Initialize(
+      biologicalSexFormatter, _CancellationTokenProvider, _CurrentProjectProvider, _AlertService,
+      () => [.. _Persons.AllItems]);
+    FilterView.Changed += (_, _) => _Persons.Update();
   }
 
   public Name? FamilyName
@@ -68,7 +63,7 @@ public partial class FamilyPage : ContentPage
     {
       _FamilyName = value;
       _PersonsLoaded = false;
-      _FilterPanel.ResetFilterData();
+      FilterView.ResetFilterData();
       OnPropertyChanged(nameof(Persons));
       OnPropertyChanged(nameof(FamilyName));
       OnPropertyChanged(nameof(RemoveFamilyToolbarItemName));
@@ -84,19 +79,7 @@ public partial class FamilyPage : ContentPage
 
   public NameFormat PersonNamesFormat => NameFormat.ShortPersonName;
 
-  public PersonInfoFilter Filter => _Filter;
-
-  public bool IsAnyFilterActive => _FilterPanel.IsAnyFilterActive;
-
-  public bool IsFiltersVisible
-  {
-    get => _FilterPanel.IsFiltersVisible;
-    set => _FilterPanel.IsFiltersVisible = value;
-  }
-
-  public string ToggleFiltersButtonName => _FilterPanel.ToggleFiltersButtonName;
-
-  private bool PersonMatches(FilteredObservableCollection<PersonInfo> _, PersonInfo person) => _Filter.Matches(person);
+  private bool PersonMatches(FilteredObservableCollection<PersonInfo> _, PersonInfo person) => FilterView.Matches(person);
 
   public ICollection<PersonInfo> Persons
   {
@@ -225,14 +208,6 @@ public partial class FamilyPage : ContentPage
 
       case string commandName when commandName == "CreatePerson":
         await OnCreatePerson();
-        break;
-
-      case string commandName when commandName == "ClearFilters":
-        _FilterPanel.ClearFilters();
-        break;
-
-      case string commandName when commandName == "ToggleFilters":
-        IsFiltersVisible = !IsFiltersVisible;
         break;
 
       case string commandName when commandName == "Refresh":

@@ -8,15 +8,15 @@ using Xunit;
 
 namespace GT4.UI.View.Tests;
 
-public class PersonInfoFilterTests
+public class PersonFilterTests
 {
   private static readonly Date UnknownDate = Date.Create(null, null, null, DateStatus.Unknown);
 
-  private static PersonInfoFilter CreateFilter()
+  private static PersonFilter CreateFilter()
   {
     var formatter = new Mock<IBiologicalSexFormatter>();
     formatter.Setup(f => f.ToString(It.IsAny<BiologicalSex?>())).Returns((BiologicalSex? s) => s?.ToString() ?? "?");
-    return new PersonInfoFilter(formatter.Object);
+    return new PersonFilter(formatter.Object);
   }
 
   private static PersonInfo Person(
@@ -161,27 +161,9 @@ public class PersonInfoFilterTests
   }
 
   [Fact]
-  public void Changed_fires_for_every_criterion_setter_and_for_SetMarriedIds()
-  {
-    var filter = CreateFilter();
-    var raises = 0;
-    filter.Changed += (_, _) => raises++;
-
-    filter.NameFilter = "a";
-    filter.SexFilterIndex = 1;
-    filter.MaritalStatusFilterIndex = 1;
-    filter.IsYearFilterEnabled = true;
-    filter.SelectedYear = 2000;
-    filter.SetMarriedIds([1]);
-    filter.Clear();
-
-    Assert.Equal(7, raises);
-  }
-
-  [Fact]
   public void ComputeYearBounds_falls_back_to_a_century_back_when_nothing_is_known()
   {
-    var (min, max) = PersonInfoFilter.ComputeYearBounds([Person(1, "John")]);
+    var (min, max) = PersonFilter.ComputeYearBounds([Person(1, "John")]);
 
     var currentYear = Date.Now.Year;
     Assert.Equal(currentYear - 100, min);
@@ -197,7 +179,7 @@ public class PersonInfoFilterTests
       Person(2, "Jane", deathDate: Date.Create(1980, 1, 1, DateStatus.WellKnown)),
     };
 
-    var (min, max) = PersonInfoFilter.ComputeYearBounds(persons);
+    var (min, max) = PersonFilter.ComputeYearBounds(persons);
 
     Assert.Equal(1900, min);
     Assert.Equal(Math.Max(1980, Date.Now.Year), max);
@@ -220,11 +202,11 @@ public class PersonInfoFilterTests
         [single.Id] = [sibling],
       });
 
-    var (marriedIds, minYear, maxYear) = await PersonInfoFilter.FetchMarriedAndYearBoundsAsync(
+    var (marriedIds, minYear, maxYear) = await PersonFilter.FetchMarriedAndYearBoundsAsync(
       [married, single], relatives.Object, CancellationToken.None);
 
     Assert.Equal([married.Id], marriedIds);
-    var expectedBounds = PersonInfoFilter.ComputeYearBounds([married, single]);
+    var expectedBounds = PersonFilter.ComputeYearBounds([married, single]);
     Assert.Equal(expectedBounds, (minYear, maxYear));
   }
 }
