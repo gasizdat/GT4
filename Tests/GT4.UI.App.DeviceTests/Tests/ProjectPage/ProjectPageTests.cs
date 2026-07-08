@@ -90,6 +90,13 @@ public class ProjectPageTests
 
     var families = await MainThread.InvokeOnMainThreadAsync(() => page.Families.ToArray());
 
+    // The background fetch throws asynchronously, so the alert can still be in flight once the
+    // lines above return -- wait for it instead of racing SafeTask.Run's completion.
+    await Poll.UntilAsync(
+      () => Task.FromResult(services.AlertService.Invocations.Count),
+      count => count > 0,
+      timeoutMessage: "Load failure was not reported.");
+
     Assert.Empty(families);
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.AtLeastOnce());
   }
@@ -104,6 +111,14 @@ public class ProjectPageTests
     var page = await CreatePageAsync(services);
 
     var families = await MainThread.InvokeOnMainThreadAsync(() => page.Families.ToArray());
+
+    // No positive signal to poll for here -- a swallowed exception leaves nothing observable.
+    // Prove the negative over a window instead of a single check right after triggering it.
+    await Poll.ConfirmNeverAsync(
+      () => Task.FromResult(services.AlertService.Invocations.Count),
+      count => count > 0,
+      TimeSpan.FromMilliseconds(300),
+      failureMessage: "The project-teardown race was not swallowed as expected.");
 
     Assert.Empty(families);
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
