@@ -39,7 +39,6 @@ public partial class ProjectPage : ContentPage
   private readonly PersonInfoFilter _Filter;
   private bool _FamiliesLoaded;
   private bool _FilterDataLoaded;
-  private PersonInfo[] _AllPersons = [];
   private bool _IsFiltersVisible;
 
   public ProjectPage(
@@ -119,26 +118,21 @@ public partial class ProjectPage : ContentPage
         .Select(name => (Family: name, Persons: personsByFamilyNameId[name.Id].OrderBy(item => item, _PersonInfoComparer).ToArray()))
         .ToList();
 
-      var allPersons = familyPersons.SelectMany(f => f.Persons).DistinctBy(p => p.Id).ToArray();
-
       var families = familyPersons
         .Select(f => new FamilyInfoItem(f.Family, f.Persons, PersonMatches))
         .OrderBy(item => item.Info, _NameComparer)
         .ToList();
 
-      await SafeTask.RunOnMainThread(() =>
-      {
-        _AllPersons = allPersons;
-        _Families.AddRange(families);
-      }, _AlertService);
+      await SafeTask.RunOnMainThread(() => _Families.AddRange(families), _AlertService);
     }
 
     SafeTask.Run(OnLoadFamiliesAsync, _AlertService);
   }
 
   // Marital status needs a relatives lookup that no other part of this page's data requires, so it
-  // is fetched lazily -- only once the filter panel is actually opened -- reusing the person list the
-  // main load already gathered, rather than fetching it unconditionally for every visit to this page.
+  // is fetched lazily -- only once the filter panel is actually opened -- reusing the persons already
+  // loaded into _Families (flattened here, on the main thread, before handing off to the background
+  // fetch) rather than fetching it unconditionally for every visit to this page.
   private void EnsureFilterDataLoaded()
   {
     if (_FilterDataLoaded)
@@ -147,15 +141,17 @@ public partial class ProjectPage : ContentPage
     }
     _FilterDataLoaded = true;
 
+    var allPersons = _Families.AllItems.SelectMany(f => f.AllPersons).DistinctBy(p => p.Id).ToArray();
+
     async Task LoadFilterDataAsync()
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-      var relatives = await _CurrentProjectProvider.Project.Relatives.GetRelativesForPersonsAsync(_AllPersons, token);
+      var relatives = await _CurrentProjectProvider.Project.Relatives.GetRelativesForPersonsAsync(allPersons, token);
       var marriedIds = relatives
         .Where(kv => kv.Value.Any(r => r.Type == RelationshipType.Spouse))
         .Select(kv => kv.Key)
         .ToArray();
-      var (minYear, maxYear) = PersonInfoFilter.ComputeYearBounds(_AllPersons);
+      var (minYear, maxYear) = PersonInfoFilter.ComputeYearBounds(allPersons);
 
       await SafeTask.RunOnMainThread(() =>
       {

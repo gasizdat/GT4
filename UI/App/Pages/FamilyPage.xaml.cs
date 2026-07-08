@@ -23,7 +23,6 @@ public partial class FamilyPage : ContentPage
   private readonly PersonInfoFilter _Filter;
   private bool _PersonsLoaded;
   private bool _FilterDataLoaded;
-  private PersonInfo[] _AllPersons = [];
   private Name? _FamilyName = null;
   private double _PersonItemMinimalWidth;
   private bool _IsFiltersVisible;
@@ -107,8 +106,9 @@ public partial class FamilyPage : ContentPage
   private bool PersonMatches(FilteredObservableCollection<PersonInfo> _, PersonInfo person) => _Filter.Matches(person);
 
   // Marital status needs a relatives lookup that no other part of this page's data requires, so it
-  // is fetched lazily -- only once the filter panel is actually opened -- reusing the person list the
-  // main load already gathered, rather than fetching it unconditionally for every visit to this page.
+  // is fetched lazily -- only once the filter panel is actually opened -- reusing the persons already
+  // loaded into _Persons (snapshotted here, on the main thread, before handing off to the background
+  // fetch) rather than fetching it unconditionally for every visit to this page.
   private void EnsureFilterDataLoaded()
   {
     if (_FilterDataLoaded)
@@ -117,15 +117,19 @@ public partial class FamilyPage : ContentPage
     }
     _FilterDataLoaded = true;
 
+    // Snapshot to a detached array now (AllItems exposes the live internal list) so a later mutation
+    // -- e.g. OnCreatePerson -- can't change what this fetch is computed against mid-flight.
+    var allPersons = _Persons.AllItems.ToArray();
+
     async Task LoadFilterDataAsync()
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-      var relatives = await _CurrentProjectProvider.Project.Relatives.GetRelativesForPersonsAsync(_AllPersons, token);
+      var relatives = await _CurrentProjectProvider.Project.Relatives.GetRelativesForPersonsAsync(allPersons, token);
       var marriedIds = relatives
         .Where(kv => kv.Value.Any(r => r.Type == RelationshipType.Spouse))
         .Select(kv => kv.Key)
         .ToArray();
-      var (minYear, maxYear) = PersonInfoFilter.ComputeYearBounds(_AllPersons);
+      var (minYear, maxYear) = PersonInfoFilter.ComputeYearBounds(allPersons);
 
       await SafeTask.RunOnMainThread(() =>
       {
@@ -159,7 +163,6 @@ public partial class FamilyPage : ContentPage
 
         await SafeTask.RunOnMainThread(() =>
         {
-          _AllPersons = persons;
           _Persons.Clear();
           _Persons.AddRange(persons);
         }, _AlertService);

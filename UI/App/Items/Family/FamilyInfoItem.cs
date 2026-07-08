@@ -19,6 +19,10 @@ public class FamilyInfoItem : CollectionItemBase<Name>
 
   public ObservableCollection<PersonInfo> Persons => _Persons.Items;
 
+  // The full, unfiltered membership -- e.g. for a lazy filter-data fetch that needs everyone in the
+  // family regardless of the currently-visible (filtered) set.
+  public IReadOnlyList<PersonInfo> AllPersons => _Persons.AllItems;
+
   // A family that never had any members is left visible (e.g. one just created); a family that had
   // members but none of them survive the current filter is what should be hidden.
   public bool HasVisiblePersons => _TotalPersonsCount == 0 || _Persons.Items.Count > 0;
