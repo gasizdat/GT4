@@ -239,28 +239,69 @@
               SizeChanged="OnPersonPhotoOrRelativesSizeChanged"
               VerticalOptions="Start" />
 
-          <CollectionView
-              x:Name="RelativesView"
+          <VerticalStackLayout
               Grid.Row="{Binding Path=SmartLayout.Relatives.Row, Source={x:Reference Root}}"
               Grid.RowSpan="{Binding Path=SmartLayout.Relatives.RowSpan, Source={x:Reference Root}}"
               Grid.Column="{Binding Path=SmartLayout.Relatives.Column, Source={x:Reference Root}}"
-              Grid.ColumnSpan="{Binding Path=SmartLayout.Relatives.ColumnSpan, Source={x:Reference Root}}"
-              ItemsSource="{Binding Relatives, Source={x:Reference Root}}"
-              SelectionMode="Single"
-              SizeChanged="OnPersonPhotoOrRelativesSizeChanged"
-              VerticalScrollBarVisibility="Always">
-            <CollectionView.ItemsLayout>
-              <LinearItemsLayout Orientation="Vertical" />
-            </CollectionView.ItemsLayout>
+              Grid.ColumnSpan="{Binding Path=SmartLayout.Relatives.ColumnSpan, Source={x:Reference Root}}">
 
-            <CollectionView.ItemTemplate>
-              <DataTemplate x:DataType="components:RelativeRow">
-                <components:RelativeRowView
-                    SelectCommand="{Binding Path=PageCommand, Source={x:Reference Root}}"
-                    Style="{StaticResource HoverSubItem}" />
-              </DataTemplate>
-            </CollectionView.ItemTemplate>
-          </CollectionView>
+            <!--  Filters toggle  -->
+            <Grid ColumnDefinitions="*, Auto, Auto">
+              <Button
+                  x:Name="ClearFiltersButton"
+                  Grid.Column="1"
+                  Command="{Binding PageCommand, Source={x:Reference Root}}"
+                  CommandParameter="ClearFilters"
+                  HorizontalOptions="End"
+                  Style="{StaticResource DeleteAdorner}"
+                  ToolTipProperties.Text="{x:Static resources:UIStrings.BtnNameClearFilters}"
+                  VerticalOptions="Center">
+                <Button.Behaviors>
+                  <behaviors:FadeVisibilityBehavior Duration="500" IsVisible="{Binding IsAnyFilterActive, Source={x:Reference Root}}" />
+                </Button.Behaviors>
+              </Button>
+
+              <Button
+                  Grid.Column="2"
+                  Command="{Binding PageCommand, Source={x:Reference Root}}"
+                  CommandParameter="ToggleFilters"
+                  HorizontalOptions="End"
+                  Style="{StaticResource TextAdorner}"
+                  Text="{Binding ToggleFiltersButtonName, Source={x:Reference Root}}" />
+            </Grid>
+
+            <!--  Filters panel. Fades via FadeVisibilityBehavior instead of snapping like a
+                 plain IsVisible binding would.  -->
+            <Grid
+                x:Name="FiltersPanel"
+                HorizontalOptions="Fill">
+              <Grid.Behaviors>
+                <behaviors:FadeVisibilityBehavior Duration="500" IsVisible="{Binding IsFiltersVisible, Source={x:Reference Root}}" />
+              </Grid.Behaviors>
+
+              <components:PersonFilterFieldsView Filter="{Binding Filter, Source={x:Reference Root}}" />
+            </Grid>
+
+            <!--  Relatives list  -->
+            <CollectionView
+                x:Name="RelativesView"
+                ItemsSource="{Binding Relatives, Source={x:Reference Root}}"
+                SelectionMode="Single"
+                SizeChanged="OnPersonPhotoOrRelativesSizeChanged"
+                VerticalScrollBarVisibility="Always">
+              <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" />
+              </CollectionView.ItemsLayout>
+
+              <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="components:RelativeRow">
+                  <components:RelativeRowView
+                      SelectCommand="{Binding Path=PageCommand, Source={x:Reference Root}}"
+                      Style="{StaticResource HoverSubItem}" />
+                </DataTemplate>
+              </CollectionView.ItemTemplate>
+            </CollectionView>
+          </VerticalStackLayout>
         </Grid>
       </ScrollView>
     </components:PageLayout.Body>

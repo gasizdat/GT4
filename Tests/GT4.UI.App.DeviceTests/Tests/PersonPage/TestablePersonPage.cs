@@ -30,7 +30,8 @@ internal sealed class TestablePersonPage : PersonPage
     [FromKeyedServices(DataCategory.PersonGedcomTags)]
     IDataConverter gedcomConverter,
     IAlertService alertService,
-    INavigationService navigationService)
+    INavigationService navigationService,
+    IBiologicalSexFormatter biologicalSexFormatter)
     : base(
       serviceProvider,
       cancellationTokenProvider,
@@ -41,7 +42,8 @@ internal sealed class TestablePersonPage : PersonPage
       textConverter,
       gedcomConverter,
       alertService,
-      navigationService)
+      navigationService,
+      biologicalSexFormatter)
   {
   }
 
