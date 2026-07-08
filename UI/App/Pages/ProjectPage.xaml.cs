@@ -37,9 +37,8 @@ public partial class ProjectPage : ContentPage
   private long? _ProjectRevision;
   private readonly FilteredObservableCollection<FamilyInfoItem> _Families = new();
   private readonly PersonInfoFilter _Filter;
+  private readonly FilterPanelController _FilterPanel;
   private bool _FamiliesLoaded;
-  private bool _FilterDataLoaded;
-  private bool _IsFiltersVisible;
 
   public ProjectPage(
     INameTypeFormatter nameTypeFormatter,
@@ -71,6 +70,11 @@ public partial class ProjectPage : ContentPage
     _Filter = new PersonInfoFilter(biologicalSexFormatter);
     _Filter.Changed += (_, _) => UpdateFamilies();
     _Filter.PropertyChanged += (_, e) => OnPropertyChanged(e.PropertyName);
+
+    _FilterPanel = new FilterPanelController(
+      _Filter, _CancellationTokenProvider, _CurrentProjectProvider, _AlertService,
+      () => [.. _Families.AllItems.SelectMany(f => f.AllPersons).DistinctBy(p => p.Id)]);
+    _FilterPanel.PropertyChanged += (_, e) => OnPropertyChanged(e.PropertyName);
 
     // Set once: family visibility is re-evaluated via _Families.Update() (through UpdateFamilies),
     // not by reassigning this predicate.
@@ -129,36 +133,6 @@ public partial class ProjectPage : ContentPage
     SafeTask.Run(OnLoadFamiliesAsync, _AlertService);
   }
 
-  // Marital status needs a relatives lookup that no other part of this page's data requires, so it
-  // is fetched lazily -- only once the filter panel is actually opened -- reusing the persons already
-  // loaded into _Families (flattened here, on the main thread, before handing off to the background
-  // fetch) rather than fetching it unconditionally for every visit to this page.
-  private void EnsureFilterDataLoaded()
-  {
-    if (_FilterDataLoaded)
-    {
-      return;
-    }
-    _FilterDataLoaded = true;
-
-    var allPersons = _Families.AllItems.SelectMany(f => f.AllPersons).DistinctBy(p => p.Id).ToArray();
-
-    async Task LoadFilterDataAsync()
-    {
-      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-      var (marriedIds, minYear, maxYear) = await PersonInfoFilter.FetchMarriedAndYearBoundsAsync(
-        allPersons, _CurrentProjectProvider.Project.Relatives, token);
-
-      await SafeTask.RunOnMainThread(() =>
-      {
-        _Filter.SetMarriedIds(marriedIds);
-        _Filter.SetYearBounds(minYear, maxYear);
-      }, _AlertService);
-    }
-
-    SafeTask.Run(LoadFilterDataAsync, _AlertService);
-  }
-
   // Loops AllItems, not the currently-visible Items: a family hidden by the current filters must
   // still get its inner filter refreshed in case it becomes visible again.
   private void UpdateFamilies()
@@ -175,28 +149,15 @@ public partial class ProjectPage : ContentPage
 
   public PersonInfoFilter Filter => _Filter;
 
-  public bool IsAnyFilterActive => _Filter.IsAnyFilterActive;
+  public bool IsAnyFilterActive => _FilterPanel.IsAnyFilterActive;
 
   public bool IsFiltersVisible
   {
-    get => _IsFiltersVisible;
-    set
-    {
-      _IsFiltersVisible = value;
-      OnPropertyChanged(nameof(IsFiltersVisible));
-      OnPropertyChanged(nameof(ToggleFiltersButtonName));
-
-      if (value)
-      {
-        EnsureFilterDataLoaded();
-      }
-    }
+    get => _FilterPanel.IsFiltersVisible;
+    set => _FilterPanel.IsFiltersVisible = value;
   }
 
-  public string ToggleFiltersButtonName =>
-    string.Format(UIStrings.BtnNameFilters_1, IsFiltersVisible ? "🔼" : "🔽");
-
-  private void OnClearFilters() => _Filter.Clear();
+  public string ToggleFiltersButtonName => _FilterPanel.ToggleFiltersButtonName;
 
   public string RemoveProjectToolbarItemName =>
     string.Format(UIStrings.MenuItemNameRemove_1, _CurrentProjectProvider.Info.Name);
@@ -313,7 +274,7 @@ public partial class ProjectPage : ContentPage
         break;
 
       case string commandName when commandName == "ClearFilters":
-        OnClearFilters();
+        _FilterPanel.ClearFilters();
         break;
 
       case string commandName when commandName == "ToggleFilters":

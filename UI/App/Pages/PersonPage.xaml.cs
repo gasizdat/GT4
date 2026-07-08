@@ -36,9 +36,8 @@ public partial class PersonPage : ContentPage
   private PersonPageSmartLayout _SmartLayout = new();
   private bool _ExpandAll = false;
   private readonly PersonInfoFilter _Filter;
+  private readonly FilterPanelController _FilterPanel;
   private RelativeInfo[] _AllRoots = [];
-  private bool _FilterDataLoaded;
-  private bool _IsFiltersVisible;
 
   public PersonPage(
     IServiceProvider serviceProvider,
@@ -73,6 +72,11 @@ public partial class PersonPage : ContentPage
     _Filter.Changed += (_, _) => RefreshRelatives();
     _Filter.PropertyChanged += (_, e) => OnPropertyChanged(e.PropertyName);
 
+    _FilterPanel = new FilterPanelController(
+      _Filter, _CancellationTokenProvider, _CurrentProjectProvider, _AlertService,
+      () => _AllRoots);
+    _FilterPanel.PropertyChanged += (_, e) => OnPropertyChanged(e.PropertyName);
+
     InitializeComponent();
   }
 
@@ -85,7 +89,7 @@ public partial class PersonPage : ContentPage
   public void ShowPersonInfo(Person person, bool addToNavigation)
   {
     ExpandAll = false;
-    _FilterDataLoaded = false;
+    _FilterPanel.ResetFilterData();
     Task.Run(async () => await GetPersonDataAsync(person, addToNavigation));
   }
 
@@ -108,26 +112,15 @@ public partial class PersonPage : ContentPage
 
   public PersonInfoFilter Filter => _Filter;
 
-  public bool IsAnyFilterActive => _Filter.IsAnyFilterActive;
+  public bool IsAnyFilterActive => _FilterPanel.IsAnyFilterActive;
 
   public bool IsFiltersVisible
   {
-    get => _IsFiltersVisible;
-    set
-    {
-      _IsFiltersVisible = value;
-      OnPropertyChanged(nameof(IsFiltersVisible));
-      OnPropertyChanged(nameof(ToggleFiltersButtonName));
-
-      if (value)
-      {
-        EnsureFilterDataLoaded();
-      }
-    }
+    get => _FilterPanel.IsFiltersVisible;
+    set => _FilterPanel.IsFiltersVisible = value;
   }
 
-  public string ToggleFiltersButtonName =>
-    string.Format(UIStrings.BtnNameFilters_1, IsFiltersVisible ? "🔼" : "🔽");
+  public string ToggleFiltersButtonName => _FilterPanel.ToggleFiltersButtonName;
 
   // Only the top-level relatives (spouse/parents/siblings/children/step-*) are filtered; once a
   // matching root is expanded, its own descendants show unfiltered -- the tree is fetched lazily
@@ -135,33 +128,6 @@ public partial class PersonPage : ContentPage
   // against interactively (mirrors how a family with no matching persons is hidden wholesale on
   // ProjectPage/FamilyPage, rather than reaching into it for a matching grandchild).
   private void RefreshRelatives() => _Relatives.SetRoots(_AllRoots.Where(r => _Filter.Matches(r)), _PersonFullInfo.BirthDate);
-
-  // Marital status needs a relatives lookup that no other part of this page's data requires, so it
-  // is fetched lazily -- only once the filter panel is actually opened -- reusing the roots list the
-  // main load already gathered, rather than fetching it unconditionally for every person visited.
-  private void EnsureFilterDataLoaded()
-  {
-    if (_FilterDataLoaded)
-    {
-      return;
-    }
-    _FilterDataLoaded = true;
-
-    async Task LoadFilterDataAsync()
-    {
-      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-      var (marriedIds, minYear, maxYear) = await PersonInfoFilter.FetchMarriedAndYearBoundsAsync(
-        _AllRoots, _CurrentProjectProvider.Project.Relatives, token);
-
-      await SafeTask.RunOnMainThread(() =>
-      {
-        _Filter.SetMarriedIds(marriedIds);
-        _Filter.SetYearBounds(minYear, maxYear);
-      }, _AlertService);
-    }
-
-    SafeTask.Run(LoadFilterDataAsync, _AlertService);
-  }
 
   public ICommand PageCommand => _PageCommand;
 
@@ -458,7 +424,7 @@ public partial class PersonPage : ContentPage
         ShowPersonInfo(_PersonFullInfo, false);
         break;
       case string commandName when commandName == "ClearFilters":
-        _Filter.Clear();
+        _FilterPanel.ClearFilters();
         break;
       case string commandName when commandName == "ToggleFilters":
         IsFiltersVisible = !IsFiltersVisible;

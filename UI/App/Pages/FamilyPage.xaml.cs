@@ -21,11 +21,10 @@ public partial class FamilyPage : ContentPage
   private readonly INavigationService _NavigationService;
   private readonly FilteredObservableCollection<PersonInfo> _Persons = new();
   private readonly PersonInfoFilter _Filter;
+  private readonly FilterPanelController _FilterPanel;
   private bool _PersonsLoaded;
-  private bool _FilterDataLoaded;
   private Name? _FamilyName = null;
   private double _PersonItemMinimalWidth;
-  private bool _IsFiltersVisible;
 
   public FamilyPage(
     IServiceProvider serviceProvider,
@@ -51,6 +50,11 @@ public partial class FamilyPage : ContentPage
     _Filter.PropertyChanged += (_, e) => OnPropertyChanged(e.PropertyName);
     _Persons.Filter = PersonMatches;
 
+    _FilterPanel = new FilterPanelController(
+      _Filter, _CancellationTokenProvider, _CurrentProjectProvider, _AlertService,
+      () => [.. _Persons.AllItems]);
+    _FilterPanel.PropertyChanged += (_, e) => OnPropertyChanged(e.PropertyName);
+
     MemberItemTappedCommand = new SafeCommand<PersonInfo>(OnOpenPerson, _AlertService);
     PageCommand = new SafeCommand(OnPageCommand, _AlertService);
 
@@ -64,7 +68,7 @@ public partial class FamilyPage : ContentPage
     {
       _FamilyName = value;
       _PersonsLoaded = false;
-      _FilterDataLoaded = false;
+      _FilterPanel.ResetFilterData();
       OnPropertyChanged(nameof(Persons));
       OnPropertyChanged(nameof(FamilyName));
       OnPropertyChanged(nameof(RemoveFamilyToolbarItemName));
@@ -82,60 +86,17 @@ public partial class FamilyPage : ContentPage
 
   public PersonInfoFilter Filter => _Filter;
 
-  public bool IsAnyFilterActive => _Filter.IsAnyFilterActive;
+  public bool IsAnyFilterActive => _FilterPanel.IsAnyFilterActive;
 
   public bool IsFiltersVisible
   {
-    get => _IsFiltersVisible;
-    set
-    {
-      _IsFiltersVisible = value;
-      OnPropertyChanged(nameof(IsFiltersVisible));
-      OnPropertyChanged(nameof(ToggleFiltersButtonName));
-
-      if (value)
-      {
-        EnsureFilterDataLoaded();
-      }
-    }
+    get => _FilterPanel.IsFiltersVisible;
+    set => _FilterPanel.IsFiltersVisible = value;
   }
 
-  public string ToggleFiltersButtonName =>
-    string.Format(UIStrings.BtnNameFilters_1, IsFiltersVisible ? "🔼" : "🔽");
+  public string ToggleFiltersButtonName => _FilterPanel.ToggleFiltersButtonName;
 
   private bool PersonMatches(FilteredObservableCollection<PersonInfo> _, PersonInfo person) => _Filter.Matches(person);
-
-  // Marital status needs a relatives lookup that no other part of this page's data requires, so it
-  // is fetched lazily -- only once the filter panel is actually opened -- reusing the persons already
-  // loaded into _Persons (snapshotted here, on the main thread, before handing off to the background
-  // fetch) rather than fetching it unconditionally for every visit to this page.
-  private void EnsureFilterDataLoaded()
-  {
-    if (_FilterDataLoaded)
-    {
-      return;
-    }
-    _FilterDataLoaded = true;
-
-    // Snapshot to a detached array now (AllItems exposes the live internal list) so a later mutation
-    // -- e.g. OnCreatePerson -- can't change what this fetch is computed against mid-flight.
-    var allPersons = _Persons.AllItems.ToArray();
-
-    async Task LoadFilterDataAsync()
-    {
-      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-      var (marriedIds, minYear, maxYear) = await PersonInfoFilter.FetchMarriedAndYearBoundsAsync(
-        allPersons, _CurrentProjectProvider.Project.Relatives, token);
-
-      await SafeTask.RunOnMainThread(() =>
-      {
-        _Filter.SetMarriedIds(marriedIds);
-        _Filter.SetYearBounds(minYear, maxYear);
-      }, _AlertService);
-    }
-
-    SafeTask.Run(LoadFilterDataAsync, _AlertService);
-  }
 
   public ICollection<PersonInfo> Persons
   {
@@ -267,7 +228,7 @@ public partial class FamilyPage : ContentPage
         break;
 
       case string commandName when commandName == "ClearFilters":
-        _Filter.Clear();
+        _FilterPanel.ClearFilters();
         break;
 
       case string commandName when commandName == "ToggleFilters":
