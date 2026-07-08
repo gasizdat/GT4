@@ -247,18 +247,34 @@ public class PersonPageTests
       timeoutMessage: "The relatives row never grew taller than the photo.");
     var maxTranslation = page.RelativesListForTest.Height - page.PersonPhotoForTest.Height;
 
-    await MainThread.InvokeOnMainThreadAsync(() => page.BodyScrollForTest.ScrollToAsync(0, 40, false));
-    await Poll.UntilAsync(
-      () => Task.FromResult(page.PersonPhotoForTest.TranslationY),
-      translation => translation >= 40,
-      timeoutMessage: "The photo did not track a scroll within its row's bounds.");
+    // The native ScrollViewer occasionally isn't ready to honor ChangeView on the first call right
+    // after a layout pass (observed as ScrollToAsync silently not moving anything, CI-only so far) --
+    // re-issuing the scroll until it actually takes hold is more robust than trusting a single call.
+    async Task ScrollUntilAsync(double y, Func<double, bool> isReady, string timeoutMessage)
+    {
+      var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
+      while (true)
+      {
+        await MainThread.InvokeOnMainThreadAsync(() => page.BodyScrollForTest.ScrollToAsync(0, y, false));
+        try
+        {
+          await Poll.UntilAsync(
+            () => Task.FromResult(page.PersonPhotoForTest.TranslationY),
+            isReady,
+            timeout: TimeSpan.FromMilliseconds(500),
+            timeoutMessage: timeoutMessage);
+          return;
+        }
+        catch (TimeoutException) when (DateTime.UtcNow < deadline)
+        {
+        }
+      }
+    }
+
+    await ScrollUntilAsync(40, translation => translation >= 40, "The photo did not track a scroll within its row's bounds.");
     Assert.Equal(40, page.PersonPhotoForTest.TranslationY);
 
-    await MainThread.InvokeOnMainThreadAsync(() => page.BodyScrollForTest.ScrollToAsync(0, 100_000, false));
-    await Poll.UntilAsync(
-      () => Task.FromResult(page.PersonPhotoForTest.TranslationY),
-      translation => translation >= maxTranslation,
-      timeoutMessage: "The photo did not stop at the bottom of its row once scrolled past it.");
+    await ScrollUntilAsync(100_000, translation => translation >= maxTranslation, "The photo did not stop at the bottom of its row once scrolled past it.");
     Assert.Equal(maxTranslation, page.PersonPhotoForTest.TranslationY);
   }
 
