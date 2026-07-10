@@ -66,7 +66,6 @@ public partial class FamilyPage : ContentPage
     {
       _FamilyName = value;
       _PersonsLoaded = false;
-      FilterView.ResetFilterData();
       OnPropertyChanged(nameof(Persons));
       OnPropertyChanged(nameof(FamilyName));
       OnPropertyChanged(nameof(RemoveFamilyToolbarItemName));
@@ -106,6 +105,9 @@ public partial class FamilyPage : ContentPage
         {
           _Persons.Clear();
           _Persons.AddRange(persons);
+          // Only after the new persons land: with the panel open, ResetFilterData re-fetches
+          // immediately, snapshotting the page's current person set.
+          FilterView.ResetFilterData();
         }, _AlertService);
       }
 

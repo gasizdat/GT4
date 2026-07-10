@@ -86,7 +86,6 @@ public partial class PersonPage : ContentPage
   public void ShowPersonInfo(Person person, bool addToNavigation)
   {
     ExpandAll = false;
-    FilterView.ResetFilterData();
     Task.Run(async () => await GetPersonDataAsync(person, addToNavigation));
   }
 
@@ -362,6 +361,9 @@ public partial class PersonPage : ContentPage
     _Photos = photos;
     _Biography = CombineBiography(bio, gedcomDetails);
     _AllRoots = roots;
+    // Only after the new roots land: with the panel open, ResetFilterData re-fetches immediately,
+    // snapshotting the page's current person set.
+    FilterView.ResetFilterData();
 
     RefreshRelatives();
 

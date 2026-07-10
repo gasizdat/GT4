@@ -92,9 +92,19 @@ public partial class PersonFilterView : ContentView
 
   public bool IsAnyFilterActive => _Filter.IsAnyFilterActive;
 
-  /// <summary>Forces the next filter-panel open to re-fetch marital status/year bounds, e.g. after
-  /// the page navigates to a different person/family whose person set has changed.</summary>
-  public void ResetFilterData() => _FilterDataLoaded = false;
+  /// <summary>Re-fetches marital status/year bounds, e.g. after the page navigates to a different
+  /// person/family whose person set has changed: immediately if the panel is currently open,
+  /// otherwise on its next open. An immediate re-fetch snapshots the persons right away, so call
+  /// this after the page's new person set has landed, not when the navigation merely starts.</summary>
+  public void ResetFilterData()
+  {
+    _FilterDataLoaded = false;
+
+    if (_IsFiltersVisible)
+    {
+      EnsureFilterDataLoaded();
+    }
+  }
 
   public bool IsFiltersVisible
   {

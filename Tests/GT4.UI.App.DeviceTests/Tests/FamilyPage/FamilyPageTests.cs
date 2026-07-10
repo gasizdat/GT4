@@ -88,6 +88,39 @@ public class FamilyPageTests
   }
 
   [Fact]
+  public async Task Navigating_to_another_family_while_the_filter_panel_is_open_refetches_filter_data()
+  {
+    var services = new TestServices();
+    var ivanov = N(5, "Ivanov", NameType.FamilyName);
+    var petrov = N(6, "Petrov", NameType.FamilyName);
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosByNameAsync(ivanov, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([P(1, "Anna")]);
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosByNameAsync(petrov, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([P(2, "Boris")]);
+    var page = await CreatePageAsync(services);
+    await page.ReloadPersonsAsync(() => page.FamilyName = ivanov);
+    await page.WaitForFilterDataAsync();
+    var loadsBefore = page.FilterDataLoads;
+
+    // The panel stays open across the navigation, so IsFiltersVisible never flips -- the re-fetch
+    // must come from ResetFilterData itself once the new family's persons have landed.
+    await page.ReloadPersonsAsync(() => page.FamilyName = petrov);
+
+    await Poll.UntilAsync(
+      () => Task.FromResult(page.FilterDataLoads),
+      loads => loads > loadsBefore,
+      timeoutMessage: "Filter data was not re-fetched after navigating with the panel open.");
+
+    services.Relatives.Verify(
+      r => r.GetRelativesForPersonsAsync(
+        It.Is<Person[]>(persons => persons.Length == 1 && persons[0].Id == 2),
+        It.IsAny<CancellationToken>()),
+      Times.Once());
+  }
+
+  [Fact]
   public async Task Persons_reports_non_teardown_exceptions_via_AlertService()
   {
     var services = new TestServices();

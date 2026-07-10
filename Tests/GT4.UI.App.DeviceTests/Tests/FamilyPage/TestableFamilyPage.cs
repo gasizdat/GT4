@@ -64,6 +64,11 @@ internal sealed class TestableFamilyPage : FamilyPage
   /// </summary>
   public int CompletedLoads => _CompletedLoads;
 
+  /// <summary>How many lazy filter-data fetches have landed. Poll this directly to observe a
+  /// re-fetch that must happen without touching IsFiltersVisible (setting it, even to its current
+  /// value, triggers a fetch itself and would mask the behavior under test).</summary>
+  public int FilterDataLoads => _FilterDataLoads;
+
   /// <summary>
   /// Runs <paramref name="interact"/>, waits for a Persons load completion after that point
   /// (CompletedLoads is snapshotted right before <paramref name="interact"/>, so an earlier
