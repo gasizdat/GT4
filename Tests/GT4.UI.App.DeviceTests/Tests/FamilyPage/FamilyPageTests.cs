@@ -61,7 +61,8 @@ public class FamilyPageTests
       .ReturnsAsync(unsorted);
     var page = await CreatePageAsync(services);
 
-    var persons = await page.ReloadPersonsAsync(() => page.FamilyName = familyName);
+    await MainThread.InvokeOnMainThreadAsync(() => page.FamilyName = familyName);
+    var persons = await MainThread.InvokeOnMainThreadAsync(() => page.Persons.ToArray());
 
     Assert.Equal(["Anna", "Boris", "Viktor"], persons.Select(p => p.DisplayName));
   }

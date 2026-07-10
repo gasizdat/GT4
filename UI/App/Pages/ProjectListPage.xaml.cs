@@ -62,7 +62,7 @@ public partial class ProjectListPage : ContentPage
   public async void OnProjectSelected(object sender, SelectionChangedEventArgs e)
   {
     // async void event handler: an escaped exception is unobserved and crashes the app, so guard it.
-    async Task OnNavigateAsync()
+    try
     {
       switch (e.CurrentSelection.FirstOrDefault())
       {
@@ -81,8 +81,14 @@ public partial class ProjectListPage : ContentPage
           }
       }
     }
-
-    await SafeTask.GuardAsync(OnNavigateAsync, _AlertService);
+    catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
+    {
+      System.Diagnostics.Debug.WriteLine(ex);
+    }
+    catch (Exception ex)
+    {
+      await _AlertService.ShowErrorAsync(ex);
+    }
   }
 
   protected override void OnNavigatedTo(NavigatedToEventArgs args)

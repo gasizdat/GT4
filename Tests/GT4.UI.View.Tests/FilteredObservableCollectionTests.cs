@@ -1,6 +1,5 @@
 using FluentAssertions;
 using GT4.UI.Utils;
-using System.Collections.Specialized;
 using Xunit;
 
 namespace GT4.UI.View.Tests;
@@ -142,83 +141,6 @@ public class FilteredObservableCollectionTests
     collection.AddRange([1, 2, 3, 4, 5]);
 
     collection.Count.Should().Be(3);
-  }
-
-  [Fact]
-  public void Update_RemovesStaleItemsWithoutResetting()
-  {
-    var threshold = 0;
-    var collection = new FilteredObservableCollection<int>();
-    collection.Filter = (_, item) => item > threshold;
-    collection.AddRange([1, 2, 3, 4, 5]);
-
-    var events = new List<NotifyCollectionChangedEventArgs>();
-    collection.Items.CollectionChanged += (_, e) => events.Add(e);
-
-    threshold = 3;
-    collection.Update();
-
-    events.Should().NotContain(e => e.Action == NotifyCollectionChangedAction.Reset);
-    // Removals are raised highest-index-first (implementation detail of the backward removal pass),
-    // so compare as a set rather than asserting a specific order.
-    events.SelectMany(e => e.OldItems?.Cast<int>() ?? []).Should().BeEquivalentTo([1, 2, 3]);
-    events.SelectMany(e => e.NewItems?.Cast<int>() ?? []).Should().BeEmpty();
-    collection.Items.Should().Equal(4, 5);
-  }
-
-  [Fact]
-  public void Update_InsertsNewlyMatchingItemsWithoutTouchingExisting()
-  {
-    var showAll = false;
-    var collection = new FilteredObservableCollection<int>();
-    collection.Filter = (_, item) => showAll || item > 2;
-    collection.AddRange([1, 2, 3, 4]);
-
-    var touchedItems = new List<int>();
-    collection.Items.CollectionChanged += (_, e) =>
-    {
-      touchedItems.AddRange(e.OldItems?.Cast<int>() ?? []);
-      touchedItems.AddRange(e.NewItems?.Cast<int>() ?? []);
-    };
-
-    showAll = true;
-    collection.Update();
-
-    touchedItems.Should().Equal(1, 2);
-    collection.Items.Should().Equal(1, 2, 3, 4);
-  }
-
-  [Fact]
-  public void Update_LeavesUnaffectedItemsOutOfAnyEvent()
-  {
-    var threshold = 0;
-    var collection = new FilteredObservableCollection<int>();
-    collection.Filter = (_, item) => item > threshold;
-    collection.AddRange([1, 2, 3, 4, 5]);
-
-    var touchedItems = new List<int>();
-    collection.Items.CollectionChanged += (_, e) =>
-    {
-      touchedItems.AddRange(e.OldItems?.Cast<int>() ?? []);
-      touchedItems.AddRange(e.NewItems?.Cast<int>() ?? []);
-    };
-
-    threshold = 3;
-    collection.Update();
-
-    touchedItems.Should().NotContain(4);
-    touchedItems.Should().NotContain(5);
-  }
-
-  [Fact]
-  public void AllItems_ReflectsFullSourceRegardlessOfFilter()
-  {
-    var collection = new FilteredObservableCollection<int>();
-    collection.Filter = (_, item) => item > 2;
-    collection.AddRange([1, 2, 3, 4]);
-
-    collection.Items.Should().Equal(3, 4);
-    collection.AllItems.Should().Equal(1, 2, 3, 4);
   }
 
   [Fact]

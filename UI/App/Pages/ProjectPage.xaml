@@ -3,7 +3,6 @@
     x:Class="GT4.UI.Pages.ProjectPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:behaviors="clr-namespace:GT4.UI.Behaviors"
     xmlns:components="clr-namespace:GT4.UI.Components"
     xmlns:dto="clr-namespace:GT4.Core.Project.Dto;assembly=GT4.Core.Project"
     xmlns:items="clr-namespace:GT4.UI.Items"
@@ -56,121 +55,9 @@
 
   <components:PageLayout>
     <components:PageLayout.Header>
-      <Grid
-          ColumnDefinitions="Auto, *, Auto"
-          HorizontalOptions="Fill"
-          RowDefinitions="Auto, Auto"
-          VerticalOptions="Start">
-
-        <!--  Row 0 - Title + filters toggle  -->
-        <Label
-            Grid.Column="0"
-            Style="{StaticResource PageSubtitle}"
-            Text="{x:Static resources:UIStrings.HintFamiliesPage}" />
-
-        <Button
-            x:Name="ClearFiltersButton"
-            Grid.Column="1"
-            Command="{Binding PageCommand, Source={x:Reference Root}}"
-            CommandParameter="ClearFilters"
-            HorizontalOptions="End"
-            Style="{StaticResource DeleteAdorner}"
-            ToolTipProperties.Text="{x:Static resources:UIStrings.BtnNameClearFilters}"
-            VerticalOptions="Center">
-          <Button.Behaviors>
-            <behaviors:FadeVisibilityBehavior Duration="500" IsVisible="{Binding IsAnyFilterActive, Source={x:Reference Root}}" />
-          </Button.Behaviors>
-        </Button>
-
-        <Button
-            Grid.Column="2"
-            Command="{Binding PageCommand, Source={x:Reference Root}}"
-            CommandParameter="ToggleFilters"
-            HorizontalOptions="End"
-            Style="{StaticResource TextAdorner}"
-            Text="{Binding ToggleFiltersButtonName, Source={x:Reference Root}}" />
-
-        <!--  Row 1 - Filters panel. Fades via FadeVisibilityBehavior instead of snapping like a
-             plain IsVisible binding would.  -->
-        <Grid
-            x:Name="FiltersPanel"
-            Grid.Row="1"
-            Grid.ColumnSpan="3"
-            ColumnDefinitions="Auto, Auto, *"
-            HorizontalOptions="Fill"
-            RowDefinitions="Auto, Auto, Auto, Auto">
-
-          <Grid.Behaviors>
-            <behaviors:FadeVisibilityBehavior Duration="500" IsVisible="{Binding IsFiltersVisible, Source={x:Reference Root}}" />
-          </Grid.Behaviors>
-
-          <!--  Row 0 - Name search  -->
-          <Label
-              Grid.Row="0"
-              Grid.Column="0"
-              Style="{StaticResource FieldName}"
-              Text="{x:Static resources:UIStrings.FieldSearchText}" />
-
-          <Entry
-              Grid.Row="0"
-              Grid.Column="1"
-              Grid.ColumnSpan="2"
-              HorizontalOptions="Fill"
-              Placeholder="{x:Static resources:UIStrings.HintNameFilterWildcard}"
-              Style="{StaticResource FieldValue}"
-              Text="{Binding NameFilter, Source={x:Reference Root}}" />
-
-          <!--  Row 1 - Sex / marital status  -->
-          <Label
-              Grid.Row="1"
-              Grid.Column="0"
-              Style="{StaticResource FieldName}"
-              Text="{x:Static resources:UIStrings.FieldFilterSex}" />
-
-          <Picker
-              Grid.Row="1"
-              Grid.Column="1"
-              ItemsSource="{Binding SexFilterLabels, Source={x:Reference Root}}"
-              SelectedIndex="{Binding SexFilterIndex, Source={x:Reference Root}}"
-              Style="{StaticResource FieldValue}" />
-
-          <Picker
-              Grid.Row="1"
-              Grid.Column="2"
-              ItemsSource="{Binding MaritalStatusFilterLabels, Source={x:Reference Root}}"
-              SelectedIndex="{Binding MaritalStatusFilterIndex, Source={x:Reference Root}}"
-              Style="{StaticResource FieldValue}" />
-
-          <!--  Row 2 - Year filter toggle  -->
-          <Label
-              Grid.Row="2"
-              Grid.Column="0"
-              Style="{StaticResource FieldName}"
-              Text="{x:Static resources:UIStrings.FieldYear}" />
-
-          <Switch
-              Grid.Row="2"
-              Grid.Column="1"
-              IsToggled="{Binding IsYearFilterEnabled, Source={x:Reference Root}}" />
-
-          <Label
-              Grid.Row="2"
-              Grid.Column="2"
-              HorizontalOptions="End"
-              Style="{StaticResource FieldValue}"
-              Text="{Binding SelectedYear, Source={x:Reference Root}, StringFormat='{0:F0}'}" />
-
-          <!--  Row 3 - Year slider  -->
-          <Slider
-              Grid.Row="3"
-              Grid.ColumnSpan="3"
-              IsEnabled="{Binding IsYearFilterEnabled, Source={x:Reference Root}}"
-              Maximum="{Binding MaxYear, Source={x:Reference Root}}"
-              Minimum="{Binding MinYear, Source={x:Reference Root}}"
-              Value="{Binding SelectedYear, Source={x:Reference Root}}" />
-        </Grid>
-
-      </Grid>
+      <Label
+          Style="{StaticResource PageSubtitle}"
+          Text="{x:Static resources:UIStrings.HintFamiliesPage}" />
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>

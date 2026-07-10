@@ -37,7 +37,7 @@ internal static class SafeTask
       _ => false
     };
 
-  public static async Task GuardAsync(Func<Task> work, IAlertService alertService)
+  private static async Task GuardAsync(Func<Task> work, IAlertService alertService)
   {
     try
     {
@@ -53,7 +53,7 @@ internal static class SafeTask
     }
   }
 
-  public static void Guard(Action work, IAlertService alertService)
+  private static void Guard(Action work, IAlertService alertService)
   {
     try
     {
