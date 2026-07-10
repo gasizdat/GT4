@@ -2,7 +2,6 @@ using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Utils;
-using GT4.UI.Utils.Formatters;
 using Moq;
 using Xunit;
 
@@ -12,12 +11,7 @@ public class PersonFilterTests
 {
   private static readonly Date UnknownDate = Date.Create(null, null, null, DateStatus.Unknown);
 
-  private static PersonFilter CreateFilter()
-  {
-    var formatter = new Mock<IBiologicalSexFormatter>();
-    formatter.Setup(f => f.ToString(It.IsAny<BiologicalSex?>())).Returns((BiologicalSex? s) => s?.ToString() ?? "?");
-    return new PersonFilter(formatter.Object);
-  }
+  private static PersonFilter CreateFilter() => new();
 
   private static PersonInfo Person(
     int id, string name = "Name", BiologicalSex sex = BiologicalSex.Unknown, Date? birthDate = null, Date? deathDate = null) =>

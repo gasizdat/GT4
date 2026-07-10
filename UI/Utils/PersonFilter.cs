@@ -1,8 +1,6 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
-using GT4.UI.Resources;
-using GT4.UI.Utils.Formatters;
 
 namespace GT4.UI.Utils;
 
@@ -16,32 +14,12 @@ namespace GT4.UI.Utils;
 /// </summary>
 public sealed class PersonFilter
 {
+  // Index 0 = "any"; the view's picker ItemsSource label order must match.
   private static readonly BiologicalSex?[] SexFilterValues = [null, BiologicalSex.Male, BiologicalSex.Female, BiologicalSex.Unknown];
   private static readonly bool?[] MaritalStatusFilterValues = [null, true, false];
 
   private int _SelectedYear;
   private HashSet<int> _MarriedIds = [];
-
-  public PersonFilter(IBiologicalSexFormatter biologicalSexFormatter)
-  {
-    SexFilterLabels =
-    [
-      UIStrings.FieldFilterAny,
-      biologicalSexFormatter.ToString(BiologicalSex.Male),
-      biologicalSexFormatter.ToString(BiologicalSex.Female),
-      biologicalSexFormatter.ToString(BiologicalSex.Unknown),
-    ];
-    MaritalStatusFilterLabels =
-    [
-      UIStrings.FieldFilterAny,
-      UIStrings.FieldMaritalStatusMarried,
-      UIStrings.FieldMaritalStatusSingle,
-    ];
-  }
-
-  public string[] SexFilterLabels { get; }
-
-  public string[] MaritalStatusFilterLabels { get; }
 
   public string NameFilter { get; set; } = string.Empty;
 

@@ -12,11 +12,13 @@ namespace GT4.UI.Components;
 /// the filter state itself (a <see cref="PersonFilter"/> it owns), including the lazy marital-status/
 /// year-bounds fetch. Host pages call <see cref="Initialize"/> right after their InitializeComponent,
 /// subscribe to <see cref="Changed"/> to re-run their filter predicate, and call <see cref="Matches"/>
-/// from it; nothing may touch the filter before Initialize runs.
+/// from it. The filter itself exists from construction, so <see cref="Matches"/> is safe even for a
+/// page load racing ahead of Initialize on a background thread; only opening the panel requires
+/// Initialize to have run.
 /// </summary>
 public partial class PersonFilterView : ContentView
 {
-  private PersonFilter _Filter = default!;
+  private readonly PersonFilter _Filter = new();
   private ICancellationTokenProvider _CancellationTokenProvider = default!;
   private ICurrentProjectProvider _CurrentProjectProvider = default!;
   private IAlertService _AlertService = default!;
@@ -51,17 +53,28 @@ public partial class PersonFilterView : ContentView
     IAlertService alertService,
     Func<Person[]> snapshotPersons)
   {
-    _Filter = new PersonFilter(biologicalSexFormatter);
     _CancellationTokenProvider = cancellationTokenProvider;
     _CurrentProjectProvider = currentProjectProvider;
     _AlertService = alertService;
     _SnapshotPersons = snapshotPersons;
 
-    // Assigning ItemsSource fires SelectedIndexChanged (with platform-dependent index
+    // Label order must match PersonFilter's SexFilterValues/MaritalStatusFilterValues (index 0 =
+    // "any"). Assigning ItemsSource fires SelectedIndexChanged (with platform-dependent index
     // normalization), so it runs under the same guard as any other programmatic control write.
     _Syncing = true;
-    SexFilterPicker.ItemsSource = _Filter.SexFilterLabels;
-    MaritalStatusFilterPicker.ItemsSource = _Filter.MaritalStatusFilterLabels;
+    SexFilterPicker.ItemsSource = new[]
+    {
+      UIStrings.FieldFilterAny,
+      biologicalSexFormatter.ToString(BiologicalSex.Male),
+      biologicalSexFormatter.ToString(BiologicalSex.Female),
+      biologicalSexFormatter.ToString(BiologicalSex.Unknown),
+    };
+    MaritalStatusFilterPicker.ItemsSource = new[]
+    {
+      UIStrings.FieldFilterAny,
+      UIStrings.FieldMaritalStatusMarried,
+      UIStrings.FieldMaritalStatusSingle,
+    };
     _Syncing = false;
 
     SyncControls();
