@@ -47,7 +47,7 @@ public sealed class RelativeTree
 
   public async Task ToggleAsync(RelativeRow row)
   {
-    if (row.IsBusy)
+    if (row.IsBusy || row.Issue == RelativeRowIssueType.Loop)
     {
       return;
     }
@@ -83,14 +83,53 @@ public sealed class RelativeTree
       return;
     }
 
+    // Backend data is expected to be a DAG, but a corrupt GEDCOM import (or a bug upstream) can
+    // still produce an actual relationship cycle -- a person listed as their own ancestor or
+    // descendant. Without this guard, expanding such a person keeps re-inserting the same subtree
+    // forever. A person legitimately appearing twice via two different branches (e.g. cousin
+    // marriage sharing a great-grandparent) also hits this map; comparing Generation against the
+    // first sighting tells the two cases apart. Generation is a signed Parent(+1)/Child(-1) hop
+    // count, so it is path-independent for any internally consistent family graph -- it always
+    // comes out the same no matter which branch reached the person. Consanguinity is NOT
+    // path-independent (it also counts collateral/sideways distance), so an unequal-degree cousin
+    // marriage can legitimately give the same person two different Consanguinity values with zero
+    // contradiction in the data -- comparing it here would flag that as a false-positive Loop.
+    var visitedIds = new Dictionary<int, RelativeInfo>();
+
     try
     {
       while (true)
       {
-        var next = await MainThread.InvokeOnMainThreadAsync(() => _Rows.FirstOrDefault(r => !r.IsExpanded));
+        // Rows already flagged as a loop are permanently excluded here: they never become
+        // IsExpanded (ToggleAsync refuses to expand them), so without this they'd be re-selected
+        // and re-flagged forever.
+        var next = await MainThread.InvokeOnMainThreadAsync(() =>
+          _Rows.FirstOrDefault(r => !r.IsExpanded && r.Issue != RelativeRowIssueType.Loop));
         if (next is null)
         {
           break;
+        }
+
+        if (!visitedIds.TryAdd(next.Relative.Id, next.Relative))
+        {
+          var earlierAddedRelative = visitedIds[next.Relative.Id];
+          if (earlierAddedRelative.Generation == next.Relative.Generation)
+          {
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+              next.Issue = RelativeRowIssueType.MultipleConnections;
+              next.IssueMessage = UIStrings.HintRelativeMultipleConnections;
+            });
+          }
+          else
+          {
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+              next.Issue = RelativeRowIssueType.Loop;
+              next.IssueMessage = UIStrings.HintRelativeLoopDetected;
+            });
+            continue;
+          }
         }
 
         await ToggleAsync(next);
