@@ -206,7 +206,7 @@
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>
-      <ScrollView x:Name="BodyScrollView" Scrolled="OnBodyScrolled">
+      <ScrollView>
         <Grid
             ColumnDefinitions="Auto, *"
             RowDefinitions="Auto, Auto, Auto">
@@ -226,7 +226,6 @@
                                                Phone=200}" />
           </Border>
           <components:ImagePresenter
-              x:Name="PersonPhoto"
               Grid.Row="{Binding Path=SmartLayout.Image.Row, Source={x:Reference Root}}"
               Grid.RowSpan="{Binding Path=SmartLayout.Image.RowSpan, Source={x:Reference Root}}"
               Grid.Column="{Binding Path=SmartLayout.Image.Column, Source={x:Reference Root}}"
@@ -234,18 +233,15 @@
               Margin="{Thickness Right={StaticResource PageContentSpacing}}"
               ImageSources="{Binding Photos, Source={x:Reference Root}}"
               ImageStyle="{StaticResource PhotoStyle}"
-              SizeChanged="OnPersonPhotoOrRelativesSizeChanged"
               VerticalOptions="Start" />
 
           <CollectionView
-              x:Name="RelativesView"
               Grid.Row="{Binding Path=SmartLayout.Relatives.Row, Source={x:Reference Root}}"
               Grid.RowSpan="{Binding Path=SmartLayout.Relatives.RowSpan, Source={x:Reference Root}}"
               Grid.Column="{Binding Path=SmartLayout.Relatives.Column, Source={x:Reference Root}}"
               Grid.ColumnSpan="{Binding Path=SmartLayout.Relatives.ColumnSpan, Source={x:Reference Root}}"
               ItemsSource="{Binding Relatives, Source={x:Reference Root}}"
               SelectionMode="Single"
-              SizeChanged="OnPersonPhotoOrRelativesSizeChanged"
               VerticalScrollBarVisibility="Always">
             <CollectionView.ItemsLayout>
               <LinearItemsLayout Orientation="Vertical" />

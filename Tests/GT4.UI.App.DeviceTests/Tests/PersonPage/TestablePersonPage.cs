@@ -1,7 +1,6 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
-using GT4.UI.Components;
 using GT4.UI.Pages;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
@@ -48,14 +47,6 @@ internal sealed class TestablePersonPage : PersonPage
   public int CompletedLoads => _CompletedLoads;
 
   public Task InvokePageCommandAsync(object parameter) => OnPageCommand(parameter);
-
-  public void ForceSizeAllocated(double width, double height) => OnSizeAllocated(width, height);
-
-  public ScrollView BodyScrollForTest => BodyScroll;
-
-  public ImagePresenter PersonPhotoForTest => PersonPhotoView;
-
-  public CollectionView RelativesListForTest => RelativesListView;
 
   protected override void OnPropertyChanged([CallerMemberName] string? propertyName = null)
   {
