@@ -25,38 +25,18 @@
 
     <Grid
         x:Name="ContentRoot"
-        ColumnDefinitions="Auto, *, Auto"
-        RowDefinitions="Auto, Auto">
-
-
-      <Label
-          Grid.Row="0"
-          Grid.Column="0"
-          IsVisible="{Binding HasIssue}"
-          Text="{Binding IssueIcon}" />
-
-      <Label
-          Grid.Row="0"
-          Grid.Column="1"
-          Grid.ColumnSpan="2"
-          IsVisible="{Binding HasIssue}"
-          LineBreakMode="WordWrap"
-          Style="{StaticResource FieldValue}"
-          Text="{Binding IssueMessage}" />
+        ColumnDefinitions="*, Auto">
 
       <components:RelativeInfoView
           x:Name="Info"
-          Grid.Row="1"
           Grid.Column="0"
-          Grid.ColumnSpan="2"
           NameFormat="CommonPersonName"
           PersonBirthDate="{Binding PersonBirthDate}"
           Relative="{Binding Relative}"
           SelectCommand="{Binding SelectCommand, Source={x:Reference Root}}" />
 
       <Button
-          Grid.Row="1"
-          Grid.Column="2"
+          Grid.Column="1"
           Command="{Binding ToggleCommand}"
           HeightRequest="{StaticResource MoreBtnSize}"
           Style="{StaticResource EmojiAdorner}"

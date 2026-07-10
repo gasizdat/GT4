@@ -813,12 +813,6 @@ FN - род</value>
   <data name="AlertTextKinshipUnfoldingAborted" xml:space="preserve">
     <value>Операция заняла больше времени, чем ожидалось. Некоторые уровни родства остались нераскрытыми. Вы можете развернуть их вручную</value>
   </data>
-  <data name="HintRelativeLoopDetected" xml:space="preserve">
-    <value>Обнаружена петля родства: этот человек указан своим же предком или потомком, поэтому узел не был развёрнут.</value>
-  </data>
-  <data name="HintRelativeMultipleConnections" xml:space="preserve">
-    <value>Этот человек связан с семьёй более чем одним родством.</value>
-  </data>
   <data name="FieldFontScale" xml:space="preserve">
     <value>Размер текста</value>
   </data>
