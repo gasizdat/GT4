@@ -61,8 +61,7 @@ public class FamilyPageTests
       .ReturnsAsync(unsorted);
     var page = await CreatePageAsync(services);
 
-    await MainThread.InvokeOnMainThreadAsync(() => page.FamilyName = familyName);
-    var persons = await MainThread.InvokeOnMainThreadAsync(() => page.Persons.ToArray());
+    var persons = await page.ReloadPersonsAsync(() => page.FamilyName = familyName);
 
     Assert.Equal(["Anna", "Boris", "Viktor"], persons.Select(p => p.DisplayName));
   }
@@ -85,6 +84,13 @@ public class FamilyPageTests
     await MainThread.InvokeOnMainThreadAsync(() => page.FamilyName = familyName);
     var persons = await MainThread.InvokeOnMainThreadAsync(() => page.Persons.ToArray());
 
+    // The background fetch throws asynchronously, so the alert can still be in flight once the
+    // lines above return -- wait for it instead of racing SafeTask.Run's completion.
+    await Poll.UntilAsync(
+      () => Task.FromResult(services.AlertService.Invocations.Count),
+      count => count > 0,
+      timeoutMessage: "Load failure was not reported.");
+
     Assert.Empty(persons);
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.AtLeastOnce());
   }
@@ -104,6 +110,14 @@ public class FamilyPageTests
 
     await MainThread.InvokeOnMainThreadAsync(() => page.FamilyName = familyName);
     var persons = await MainThread.InvokeOnMainThreadAsync(() => page.Persons.ToArray());
+
+    // No positive signal to poll for here -- a swallowed exception leaves nothing observable.
+    // Prove the negative over a window instead of a single check right after triggering it.
+    await Poll.ConfirmNeverAsync(
+      () => Task.FromResult(services.AlertService.Invocations.Count),
+      count => count > 0,
+      TimeSpan.FromMilliseconds(300),
+      failureMessage: "The project-teardown race was not swallowed as expected.");
 
     Assert.Empty(persons);
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());

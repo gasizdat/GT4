@@ -53,29 +53,17 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
 
         async Task UpdateContentAsync()
         {
-          try
-          {
-            using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
-            var content = await _DataConverter.ToObjectAsync(Info, token);
+          using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
+          var content = await _DataConverter.ToObjectAsync(Info, token);
 
-            MainThread.BeginInvokeOnMainThread(() =>
-            {
-              _Content = content;
-              OnContentChanged();
-            });
-          }
-          catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
+          MainThread.BeginInvokeOnMainThread(() =>
           {
-            // The project was closed underneath us (e.g. the app is backgrounding). Nothing to surface.
-            System.Diagnostics.Debug.WriteLine(ex);
-          }
-          catch (Exception ex)
-          {
-            await _AlertService.ShowErrorAsync(ex);
-          }
+            _Content = content;
+            OnContentChanged();
+          });
         }
 
-        Task.Run(UpdateContentAsync);
+        SafeTask.Run(UpdateContentAsync, _AlertService);
       }
       return _Content;
     }
