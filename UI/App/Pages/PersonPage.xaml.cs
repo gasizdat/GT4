@@ -35,6 +35,7 @@ public partial class PersonPage : ContentPage
   private string _Biography = string.Empty;
   private PersonPageSmartLayout _SmartLayout = new();
   private bool _ExpandAll = false;
+  private RelativeInfo[] _AllRoots = [];
 
   public PersonPage(
     IServiceProvider serviceProvider,
@@ -48,7 +49,8 @@ public partial class PersonPage : ContentPage
     [FromKeyedServices(DataCategory.PersonGedcomTags)]
     IDataConverter gedcomConverter,
     IAlertService alertService,
-    INavigationService navigationService
+    INavigationService navigationService,
+    IBiologicalSexFormatter biologicalSexFormatter
     )
   {
     _ServiceProvider = serviceProvider;
@@ -65,7 +67,21 @@ public partial class PersonPage : ContentPage
     _Relatives = new RelativeTree(_CurrentProjectProvider, _CancellationTokenProvider, _AlertService);
 
     InitializeComponent();
+
+    FilterView.Initialize(
+      biologicalSexFormatter, 
+      _CancellationTokenProvider, 
+      _CurrentProjectProvider, 
+      _AlertService,
+      () => _AllRoots);
+    FilterView.Changed += (_, _) => RefreshRelatives();
   }
+
+  protected ScrollView BodyScroll => BodyScrollView;
+
+  protected ImagePresenter PersonPhotoView => PersonPhoto;
+
+  protected CollectionView RelativesListView => RelativesView;
 
   public void ShowPersonInfo(Person person, bool addToNavigation)
   {
@@ -87,8 +103,15 @@ public partial class PersonPage : ContentPage
 
   public string ToggleAllButtonName => ExpandAll ? "⏫" : "⏬";
 
-  public string ToggleAllMenuItemName => 
+  public string ToggleAllMenuItemName =>
     string.Format(ExpandAll ? UIStrings.MenuItemCollapseAll_1 : UIStrings.MenuItemExpandAll_1, ToggleAllButtonName);
+
+  // Only the top-level relatives (spouse/parents/siblings/children/step-*) are filtered; once a
+  // matching root is expanded, its own descendants show unfiltered -- the tree is fetched lazily
+  // from the DB level by level, so there is no retained unfiltered set at deeper levels to re-filter
+  // against interactively (mirrors how a family with no matching persons is hidden wholesale on
+  // ProjectPage/FamilyPage, rather than reaching into it for a matching grandchild).
+  private void RefreshRelatives() => _Relatives.SetRoots(_AllRoots.Where(r => FilterView.Matches(r)), _PersonFullInfo.BirthDate);
 
   public ICommand PageCommand => _PageCommand;
 
@@ -208,7 +231,35 @@ public partial class PersonPage : ContentPage
         Biography: new GridLayout(Column: 0, ColumnSpan: 2, Row: 1, RowSpan: 1));
     }
     OnPropertyChanged(nameof(SmartLayout));
+    UpdatePersonPhotoStickyPosition();
   }
+
+  // In the wide (landscape) layout the photo and the relatives list share the same auto-sized grid
+  // row, which grows to fit however many relatives there are. Left alone, the photo scrolls away with
+  // the rest of that row as soon as the relatives list is taller than the viewport. Instead, pin the
+  // photo to the top of the viewport by counter-translating it with the scroll offset, but only up to
+  // the point where its bottom edge reaches the bottom of that shared row -- beyond that it scrolls
+  // away normally with the rest of the row, so it never escapes its own grid cell.
+  private void UpdatePersonPhotoStickyPosition(double scrollY = -1)
+  {
+    if (scrollY < 0)
+    {
+      scrollY = BodyScrollView.ScrollY;
+    }
+
+    if (_SmartLayout.Image.Row != _SmartLayout.Relatives.Row || PersonPhoto.Height <= 0 || RelativesView.Height <= 0)
+    {
+      PersonPhoto.TranslationY = 0;
+      return;
+    }
+
+    var maxTranslation = Math.Max(0, RelativesView.Height - PersonPhoto.Height);
+    PersonPhoto.TranslationY = Math.Clamp(scrollY, 0, maxTranslation);
+  }
+
+  private void OnBodyScrolled(object? sender, ScrolledEventArgs e) => UpdatePersonPhotoStickyPosition(e.ScrollY);
+
+  private void OnPersonPhotoOrRelativesSizeChanged(object? sender, EventArgs e) => UpdatePersonPhotoStickyPosition();
 
   private async Task GetPersonDataAsync(Person person, bool addToNavigation)
   {
@@ -222,6 +273,12 @@ public partial class PersonPage : ContentPage
       var bioTask = _TextConverter.ToObjectAsync(personFullInfo.Biography, token);
       var gedcomTask = _GedcomConverter.ToObjectAsync(personFullInfo.GedcomData, token);
       await Task.WhenAll(parentsTasks, stepChildrenTasks, bioTask, gedcomTask);
+
+      var parents = parentsTasks.Result;
+      var stepChildren = stepChildrenTasks.Result;
+      var relativesProvider = project.RelativesProvider;
+      var siblings = relativesProvider.GetSiblings(personFullInfo, parents);
+      var roots = AssembleRoots(personFullInfo, parents, siblings, stepChildren, relativesProvider);
 
       byte[][] photos;
 
@@ -247,8 +304,7 @@ public partial class PersonPage : ContentPage
       // UpdateUI touches the project document again on the UI thread; SafeTask.RunOnMainThread keeps
       // an escaped exception (e.g. the project closed while backgrounding) from going unobserved.
       _ = SafeTask.RunOnMainThread(() => UpdateUI(personFullInfo,
-                                                  parentsTasks.Result,
-                                                  stepChildrenTasks.Result,
+                                                  roots,
                                                   photos, bioTask.Result as string,
                                                   gedcomTask.Result as string,
                                                   addToNavigation), _AlertService);
@@ -268,24 +324,17 @@ public partial class PersonPage : ContentPage
     }
   }
 
-  public void UpdateUI(PersonFullInfo personFullInfo,
-                       Parents parents,
-                       RelativeInfo[] stepChildren,
-                       byte[][] photos,
-                       string? bio,
-                       string? gedcomDetails,
-                       bool addToNavigation)
+  private static RelativeInfo[] AssembleRoots(
+    PersonFullInfo personFullInfo,
+    Parents parents,
+    Siblings siblings,
+    RelativeInfo[] stepChildren,
+    IRelativesProvider relativesProvider)
   {
-    var relativesProvider = _CurrentProjectProvider.Project.RelativesProvider;
-    var siblings = relativesProvider.GetSiblings(personFullInfo, parents);
-    _PersonFullInfo = personFullInfo;
-    _Photos = photos;
-    _Biography = CombineBiography(bio, gedcomDetails);
-
     var roots = new List<RelativeInfo>();
     void Add(IEnumerable<RelativeInfo> relatives) => roots.AddRange(relatives.OrderBy(r => r.BiologicalSex));
 
-    Add(_PersonFullInfo.RelativeInfos.Where(r => r.Type == RelationshipType.Spouse));
+    Add(personFullInfo.RelativeInfos.Where(r => r.Type == RelationshipType.Spouse));
     Add(parents.Native);
     Add(parents.Adoptive);
     Add(parents.Step);
@@ -298,7 +347,25 @@ public partial class PersonPage : ContentPage
     Add(relativesProvider.GetAdoptiveChildren(personFullInfo.RelativeInfos));
     Add(stepChildren);
 
-    _Relatives.SetRoots(roots, _PersonFullInfo.BirthDate);
+    return [.. roots];
+  }
+
+  public void UpdateUI(PersonFullInfo personFullInfo,
+                       RelativeInfo[] roots,
+                       byte[][] photos,
+                       string? bio,
+                       string? gedcomDetails,
+                       bool addToNavigation)
+  {
+    _PersonFullInfo = personFullInfo;
+    _Photos = photos;
+    _Biography = CombineBiography(bio, gedcomDetails);
+    _AllRoots = roots;
+    // Only after the new roots land: with the panel open, ResetFilterData re-fetches immediately,
+    // snapshotting the page's current person set.
+    FilterView.ResetFilterData();
+
+    RefreshRelatives();
 
     this.RefreshView();
 
@@ -310,12 +377,22 @@ public partial class PersonPage : ContentPage
 
   private void AddToNavigation(PersonInfo personInfo)
   {
+    var personInfoCopy = new PersonInfo(personInfo, names: personInfo.Names, mainPhoto: personInfo.MainPhoto);
+
+    // Re-showing the person already selected in history (e.g. after editing it) must update that
+    // entry in place; otherwise every edit/refresh of the current person pushes a duplicate.
+    if (_NavigationIndex >= 0 && _NavigationHistory[_NavigationIndex].Id == personInfoCopy.Id)
+    {
+      _NavigationHistory[_NavigationIndex] = personInfoCopy;
+      OnPropertyChanged(nameof(CurrentPerson));
+      return;
+    }
+
     var newIndex = _NavigationIndex + 1;
     while (newIndex < _NavigationHistory.Count)
     {
       _NavigationHistory.RemoveAt(newIndex);
     }
-    var personInfoCopy = new PersonInfo(personInfo, names: personInfo.Names, mainPhoto: personInfo.MainPhoto);
     _NavigationHistory.Add(personInfoCopy);
     CurrentPerson = personInfoCopy;
   }

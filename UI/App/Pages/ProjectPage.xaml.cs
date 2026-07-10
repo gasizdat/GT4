@@ -7,6 +7,7 @@ using GT4.UI.Items;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
+using System.Collections.ObjectModel;
 using System.Text;
 using System.Windows.Input;
 
@@ -34,6 +35,8 @@ public partial class ProjectPage : ContentPage
   private readonly INavigationService _NavigationService;
 
   private long? _ProjectRevision;
+  private readonly FilteredObservableCollection<FamilyInfoItem> _Families = new();
+  private bool _FamiliesLoaded;
 
   public ProjectPage(
     INameTypeFormatter nameTypeFormatter,
@@ -47,7 +50,8 @@ public partial class ProjectPage : ContentPage
     IGedcomExporter exporter,
     IGedcomImporter importer,
     IAlertService alertService,
-    INavigationService navigationService
+    INavigationService navigationService,
+    IBiologicalSexFormatter biologicalSexFormatter
     )
   {
     _NameTypeFormatter = nameTypeFormatter;
@@ -61,40 +65,81 @@ public partial class ProjectPage : ContentPage
     _AlertService = alertService;
     _NavigationService = navigationService;
 
+    // Set once: family visibility is re-evaluated via _Families.Update() (through UpdateFamilies),
+    // not by reassigning this predicate.
+    _Families.Filter = (_, family) => family.HasVisiblePersons;
+
     PageCommand = new SafeCommand(OnPageCommand, _AlertService);
     InitializeComponent();
+
+    FilterView.Initialize(
+      biologicalSexFormatter, 
+      _CancellationTokenProvider, 
+      _CurrentProjectProvider, 
+      _AlertService,
+      () => [.. _Families.AllItems.SelectMany(f => f.AllPersons).DistinctBy(p => p.Id)]);
+    FilterView.Changed += (_, _) => UpdateFamilies();
   }
 
-  public ICollection<FamilyInfoItem> Families
+  public ObservableCollection<FamilyInfoItem> Families
   {
     get
     {
-      try
-      {
-        using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-        var ret = _CurrentProjectProvider
-          .Project
-          .FamilyManager
-          .GetFamiliesAsync(token)
-          .Result
-          .Select(name => new FamilyInfoItem(name, GetFamilyPersons(name, token)))
-          .OrderBy(item => item.Info, _NameComparer)
-          .ToList();
-
-        return ret;
-      }
-      catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
-      {
-        // The project was closed underneath us (e.g. the app is backgrounding). Nothing to surface.
-        System.Diagnostics.Debug.WriteLine(ex);
-        return [];
-      }
-      catch (Exception ex)
-      {
-        _ = _AlertService.ShowErrorAsync(ex);
-        return [];
-      }
+      EnsureFamiliesLoaded();
+      return _Families.Items;
     }
+  }
+
+  private void EnsureFamiliesLoaded()
+  {
+    if (_FamiliesLoaded)
+    {
+      return;
+    }
+    _FamiliesLoaded = true;
+    _Families.Clear();
+
+    async Task OnLoadFamiliesAsync()
+    {
+      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      var project = _CurrentProjectProvider.Project;
+      _ProjectRevision = project.ProjectRevision;
+
+      var persons = await project
+          .PersonManager
+          .GetPersonInfosAsync(selectMainPhoto: true, token);
+      var familyNames = await project
+          .FamilyManager
+          .GetFamiliesAsync(token);
+      var personsByFamilyNameId = persons
+        .SelectMany(person => person.Names.Select(name => (NameId: name.Id, Person: person)))
+        .ToLookup(x => x.NameId, x => x.Person);
+
+      var familyPersons = familyNames
+        .Select(name => (Family: name, Persons: personsByFamilyNameId[name.Id].OrderBy(item => item, _PersonInfoComparer).ToArray()))
+        .ToList();
+
+      var families = familyPersons
+        .Select(f => new FamilyInfoItem(f.Family, f.Persons, (_, person) => FilterView.Matches(person)))
+        .OrderBy(item => item.Info, _NameComparer)
+        .ToList();
+
+      await SafeTask.RunOnMainThread(() => _Families.AddRange(families), _AlertService);
+    }
+
+    SafeTask.Run(OnLoadFamiliesAsync, _AlertService);
+  }
+
+  // Loops AllItems, not the currently-visible Items: a family hidden by the current filters must
+  // still get its inner filter refreshed in case it becomes visible again.
+  private void UpdateFamilies()
+  {
+    foreach (var family in _Families.AllItems)
+    {
+      family.Update();
+    }
+
+    _Families.Update();
   }
 
   public string RemoveProjectToolbarItemName =>
@@ -105,21 +150,15 @@ public partial class ProjectPage : ContentPage
 
   public async void OnFamilySelected(object sender, SelectionChangedEventArgs e)
   {
-    // async void event handler: an escaped exception is unobserved and crashes the app, so guard it.
-    try
+    if (e.CurrentSelection.FirstOrDefault() is FamilyInfoItem item)
     {
-      if (e.CurrentSelection.FirstOrDefault() is FamilyInfoItem item)
+      async Task GoToFamilyAsync()
       {
-        await _NavigationService.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = item.Info });
+        var route = UIRoutes.GetRoute<FamilyPage>();
+        await _NavigationService.GoToAsync(route, true, new() { ["FamilyName"] = item.Info });
       }
-    }
-    catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
-    {
-      System.Diagnostics.Debug.WriteLine(ex);
-    }
-    catch (Exception ex)
-    {
-      await _AlertService.ShowErrorAsync(ex);
+
+      await SafeTask.GuardAsync(GoToFamilyAsync, _AlertService);
     }
   }
 
@@ -186,33 +225,18 @@ public partial class ProjectPage : ContentPage
   {
     base.OnNavigatedTo(args);
 
-    try
+    void OnRefresh()
     {
       var projectRevision = _CurrentProjectProvider.Project.ProjectRevision;
       if (projectRevision != _ProjectRevision)
       {
         _ProjectRevision = projectRevision;
+        _FamiliesLoaded = false;
         this.RefreshView();
       }
     }
-    catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
-    {
-      // Navigating in just as the project closes (e.g. backgrounding). Skip the revision refresh.
-      System.Diagnostics.Debug.WriteLine(ex);
-    }
-  }
 
-  private PersonInfo[] GetFamilyPersons(Name name, CancellationToken token)
-  {
-    var project = _CurrentProjectProvider.Project;
-    _ProjectRevision = project.ProjectRevision;
-
-    return project
-      .PersonManager
-      .GetPersonInfosByNameAsync(name: name, selectMainPhoto: true, token)
-      .Result
-      .OrderBy(item => item, _PersonInfoComparer)
-      .ToArray();
+    SafeTask.Guard(OnRefresh, _AlertService);
   }
 
   protected async Task OnPageCommand(object obj)
@@ -228,6 +252,7 @@ public partial class ProjectPage : ContentPage
         break;
 
       case string commandName when commandName == "Refresh":
+        _FamiliesLoaded = false;
         this.RefreshView();
         break;
 
@@ -358,6 +383,7 @@ public partial class ProjectPage : ContentPage
       await Navigation.PopModalAsync();
     }
 
+    _FamiliesLoaded = false;
     this.RefreshView();
   }
 

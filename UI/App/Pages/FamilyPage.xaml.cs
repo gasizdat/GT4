@@ -4,8 +4,8 @@ using GT4.Core.Utils;
 using GT4.UI.Dialogs;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
-using GT4.UI.Utils.Comparers;
 using GT4.UI.Utils.Formatters;
+using System.Collections.ObjectModel;
 using System.Windows.Input;
 
 namespace GT4.UI.Pages;
@@ -19,6 +19,8 @@ public partial class FamilyPage : ContentPage
   private readonly IComparer<PersonInfo> _PersonInfoComparer;
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
+  private readonly FilteredObservableCollection<PersonInfo> _Persons = new();
+  private bool _PersonsLoaded;
   private Name? _FamilyName = null;
   private double _PersonItemMinimalWidth;
 
@@ -30,7 +32,8 @@ public partial class FamilyPage : ContentPage
     IComparer<PersonInfo>? personInfoComparerByShortNames,
     IComparer<PersonInfo> personInfoComparer,
     IAlertService alertService,
-    INavigationService navigationService
+    INavigationService navigationService,
+    IBiologicalSexFormatter biologicalSexFormatter
     )
   {
     _ServiceProvider = serviceProvider;
@@ -40,10 +43,20 @@ public partial class FamilyPage : ContentPage
     _AlertService = alertService;
     _NavigationService = navigationService;
 
+    _Persons.Filter = (_, person) => FilterView.Matches(person);
+
     MemberItemTappedCommand = new SafeCommand<PersonInfo>(OnOpenPerson, _AlertService);
     PageCommand = new SafeCommand(OnPageCommand, _AlertService);
 
     InitializeComponent();
+
+    FilterView.Initialize(
+      biologicalSexFormatter, 
+      _CancellationTokenProvider, 
+      _CurrentProjectProvider, 
+      _AlertService,
+      () => [.. _Persons.AllItems]);
+    FilterView.Changed += (_, _) => _Persons.Update();
   }
 
   public Name? FamilyName
@@ -52,6 +65,7 @@ public partial class FamilyPage : ContentPage
     set
     {
       _FamilyName = value;
+      _PersonsLoaded = false;
       OnPropertyChanged(nameof(Persons));
       OnPropertyChanged(nameof(FamilyName));
       OnPropertyChanged(nameof(RemoveFamilyToolbarItemName));
@@ -73,33 +87,37 @@ public partial class FamilyPage : ContentPage
     {
       if (FamilyName is null)
       {
-        return [];
+        return _Persons.Items;
       }
+      var familyName = FamilyName;
 
-      try
+      async Task ListPersonsAsync(Name familyName)
       {
         using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-        var ret = _CurrentProjectProvider
-          .Project
+        var project = _CurrentProjectProvider.Project;
+        var persons = await project
           .PersonManager
-          .GetPersonInfosByNameAsync(name: FamilyName, selectMainPhoto: true, token)
-          .Result
-          .OrderBy(item => item, _PersonInfoComparer)
-          .ToList();
+          .GetPersonInfosByNameAsync(name: familyName, selectMainPhoto: true, token);
 
-        return ret;
+        persons = [.. persons.OrderBy(item => item, _PersonInfoComparer)];
+
+        await SafeTask.RunOnMainThread(() =>
+        {
+          _Persons.Clear();
+          _Persons.AddRange(persons);
+          // Only after the new persons land: with the panel open, ResetFilterData re-fetches
+          // immediately, snapshotting the page's current person set.
+          FilterView.ResetFilterData();
+        }, _AlertService);
       }
-      catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
+
+      if (!_PersonsLoaded)
       {
-        // The project was closed underneath us (e.g. the app is backgrounding). Nothing to surface.
-        System.Diagnostics.Debug.WriteLine(ex);
-        return Enumerable.Empty<PersonInfo>().ToList();
+        _PersonsLoaded = true;
+        SafeTask.Run(() => ListPersonsAsync(familyName), _AlertService);
       }
-      catch (Exception ex)
-      {
-        _ = _AlertService.ShowErrorAsync(ex);
-        return Enumerable.Empty<PersonInfo>().ToList();
-      }
+
+      return _Persons.Items;
     }
   }
 
@@ -159,12 +177,14 @@ public partial class FamilyPage : ContentPage
       .FamilyManager
       .SetUpPersonFamily(info, _FamilyName);
 
-    await _CurrentProjectProvider
+    var newPerson = await _CurrentProjectProvider
       .Project
       .PersonManager
       .AddPersonAsync(person, token);
 
-    OnPropertyChanged(nameof(Persons));
+    var updated = _Persons.AllItems.Append(newPerson).OrderBy(p => p, _PersonInfoComparer).ToArray();
+    _Persons.Clear();
+    _Persons.AddRange(updated);
   }
 
   protected async Task OnOpenPerson(PersonInfo familyMember)

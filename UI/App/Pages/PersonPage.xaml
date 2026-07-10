@@ -206,7 +206,9 @@
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>
-      <ScrollView>
+      <ScrollView
+          x:Name="BodyScrollView"
+          Scrolled="OnBodyScrolled">
         <Grid
             ColumnDefinitions="Auto, *"
             RowDefinitions="Auto, Auto, Auto">
@@ -226,6 +228,7 @@
                                                Phone=200}" />
           </Border>
           <components:ImagePresenter
+              x:Name="PersonPhoto"
               Grid.Row="{Binding Path=SmartLayout.Image.Row, Source={x:Reference Root}}"
               Grid.RowSpan="{Binding Path=SmartLayout.Image.RowSpan, Source={x:Reference Root}}"
               Grid.Column="{Binding Path=SmartLayout.Image.Column, Source={x:Reference Root}}"
@@ -233,28 +236,38 @@
               Margin="{Thickness Right={StaticResource PageContentSpacing}}"
               ImageSources="{Binding Photos, Source={x:Reference Root}}"
               ImageStyle="{StaticResource PhotoStyle}"
+              SizeChanged="OnPersonPhotoOrRelativesSizeChanged"
               VerticalOptions="Start" />
 
-          <CollectionView
+          <VerticalStackLayout
               Grid.Row="{Binding Path=SmartLayout.Relatives.Row, Source={x:Reference Root}}"
               Grid.RowSpan="{Binding Path=SmartLayout.Relatives.RowSpan, Source={x:Reference Root}}"
               Grid.Column="{Binding Path=SmartLayout.Relatives.Column, Source={x:Reference Root}}"
-              Grid.ColumnSpan="{Binding Path=SmartLayout.Relatives.ColumnSpan, Source={x:Reference Root}}"
-              ItemsSource="{Binding Relatives, Source={x:Reference Root}}"
-              SelectionMode="Single"
-              VerticalScrollBarVisibility="Always">
-            <CollectionView.ItemsLayout>
-              <LinearItemsLayout Orientation="Vertical" />
-            </CollectionView.ItemsLayout>
+              Grid.ColumnSpan="{Binding Path=SmartLayout.Relatives.ColumnSpan, Source={x:Reference Root}}">
 
-            <CollectionView.ItemTemplate>
-              <DataTemplate x:DataType="components:RelativeRow">
-                <components:RelativeRowView
-                    SelectCommand="{Binding Path=PageCommand, Source={x:Reference Root}}"
-                    Style="{StaticResource HoverSubItem}" />
-              </DataTemplate>
-            </CollectionView.ItemTemplate>
-          </CollectionView>
+            <!--  Filters toggle + panel  -->
+            <components:PersonFilterView x:Name="FilterView" />
+
+            <!--  Relatives list  -->
+            <CollectionView
+                x:Name="RelativesView"
+                ItemsSource="{Binding Relatives, Source={x:Reference Root}}"
+                SelectionMode="Single"
+                SizeChanged="OnPersonPhotoOrRelativesSizeChanged"
+                VerticalScrollBarVisibility="Always">
+              <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" />
+              </CollectionView.ItemsLayout>
+
+              <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="components:RelativeRow">
+                  <components:RelativeRowView
+                      SelectCommand="{Binding Path=PageCommand, Source={x:Reference Root}}"
+                      Style="{StaticResource HoverSubItem}" />
+                </DataTemplate>
+              </CollectionView.ItemTemplate>
+            </CollectionView>
+          </VerticalStackLayout>
         </Grid>
       </ScrollView>
     </components:PageLayout.Body>

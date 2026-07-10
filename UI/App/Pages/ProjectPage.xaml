@@ -55,9 +55,7 @@
 
   <components:PageLayout>
     <components:PageLayout.Header>
-      <Label
-          Style="{StaticResource PageSubtitle}"
-          Text="{x:Static resources:UIStrings.HintFamiliesPage}" />
+      <components:PersonFilterView x:Name="FilterView" HeaderText="{x:Static resources:UIStrings.HintFamiliesPage}" />
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>
