@@ -61,6 +61,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Import a GEDCOM file into {0}? People that match an existing person are merged; the rest are added..
+        /// </summary>
+        public static string AlertImportGedcomConfirm_1 {
+            get {
+                return ResourceManager.GetString("AlertImportGedcomConfirm_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Are you really want to delete {0}?.
         /// </summary>
         public static string AlertTextDeleteConfirmationText_1 {
@@ -69,87 +78,6 @@ namespace GT4.UI.Resources {
             }
         }
         
-        /// <summary>
-        ///   Looks up a localized string similar to 📥 Import from GEDCOM.
-        /// </summary>
-        public static string MenuItemImportGedcom {
-            get {
-                return ResourceManager.GetString("MenuItemImportGedcom", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 📤 Export to GEDCOM.
-        /// </summary>
-        public static string MenuItemExportGedcom {
-            get {
-                return ResourceManager.GetString("MenuItemExportGedcom", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Import a GEDCOM file into {0}? People that match an existing person are merged; the rest are added.
-        /// </summary>
-        public static string AlertImportGedcomConfirm_1 {
-            get {
-                return ResourceManager.GetString("AlertImportGedcomConfirm_1", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Select a GEDCOM file.
-        /// </summary>
-        public static string FileDialogSelectGedcom {
-            get {
-                return ResourceManager.GetString("FileDialogSelectGedcom", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Imported from GEDCOM.
-        /// </summary>
-        public static string HintImportedFromGedcom {
-            get {
-                return ResourceManager.GetString("HintImportedFromGedcom", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Importing GEDCOM.
-        /// </summary>
-        public static string TitleGedcomImportDialog {
-            get {
-                return ResourceManager.GetString("TitleGedcomImportDialog", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Importing the file. This may take a while….
-        /// </summary>
-        public static string HintGedcomImportInProgress {
-            get {
-                return ResourceManager.GetString("HintGedcomImportInProgress", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Cancelling….
-        /// </summary>
-        public static string HintGedcomImportCancelling {
-            get {
-                return ResourceManager.GetString("HintGedcomImportCancelling", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Export GEDCOM.
-        /// </summary>
-        public static string ShareGedcomTitle {
-            get {
-                return ResourceManager.GetString("ShareGedcomTitle", resourceCulture);
-            }
-        }
-
         /// <summary>
         ///   Looks up a localized string similar to The operation took longer than expected. Some kinship levels remained folded. You can unfold them manually..
         /// </summary>
@@ -287,6 +215,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Clear filters.
+        /// </summary>
+        public static string BtnNameClearFilters {
+            get {
+                return ResourceManager.GetString("BtnNameClearFilters", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Create a Family.
         /// </summary>
         public static string BtnNameCreateFamily {
@@ -319,6 +256,15 @@ namespace GT4.UI.Resources {
         public static string BtnNameCreateName_1 {
             get {
                 return ResourceManager.GetString("BtnNameCreateName_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} Filters.
+        /// </summary>
+        public static string BtnNameFilters_1 {
+            get {
+                return ResourceManager.GetString("BtnNameFilters_1", resourceCulture);
             }
         }
         
@@ -596,6 +542,24 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Any.
+        /// </summary>
+        public static string FieldFilterAny {
+            get {
+                return ResourceManager.GetString("FieldFilterAny", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Sex.
+        /// </summary>
+        public static string FieldFilterSex {
+            get {
+                return ResourceManager.GetString("FieldFilterSex", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to First name.
         /// </summary>
         public static string FieldFirstName {
@@ -668,6 +632,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Additional details.
+        /// </summary>
+        public static string FieldGedcomDetails {
+            get {
+                return ResourceManager.GetString("FieldGedcomDetails", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Last name.
         /// </summary>
         public static string FieldLastName {
@@ -691,6 +664,24 @@ namespace GT4.UI.Resources {
         public static string FieldLastNameMaleEntry {
             get {
                 return ResourceManager.GetString("FieldLastNameMaleEntry", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Married.
+        /// </summary>
+        public static string FieldMaritalStatusMarried {
+            get {
+                return ResourceManager.GetString("FieldMaritalStatusMarried", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Single.
+        /// </summary>
+        public static string FieldMaritalStatusSingle {
+            get {
+                return ResourceManager.GetString("FieldMaritalStatusSingle", resourceCulture);
             }
         }
         
@@ -880,11 +871,479 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Select a GEDCOM file.
+        /// </summary>
+        public static string FileDialogSelectGedcom {
+            get {
+                return ResourceManager.GetString("FileDialogSelectGedcom", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Select pictures.
         /// </summary>
         public static string FileDialogSelectPictures {
             get {
                 return ResourceManager.GetString("FileDialogSelectPictures", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Address.
+        /// </summary>
+        public static string GedcomTagADDR {
+            get {
+                return ResourceManager.GetString("GedcomTagADDR", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Adoption.
+        /// </summary>
+        public static string GedcomTagADOP {
+            get {
+                return ResourceManager.GetString("GedcomTagADOP", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Age.
+        /// </summary>
+        public static string GedcomTagAGE {
+            get {
+                return ResourceManager.GetString("GedcomTagAGE", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Agency.
+        /// </summary>
+        public static string GedcomTagAGNC {
+            get {
+                return ResourceManager.GetString("GedcomTagAGNC", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Baptism.
+        /// </summary>
+        public static string GedcomTagBAPM {
+            get {
+                return ResourceManager.GetString("GedcomTagBAPM", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Birth.
+        /// </summary>
+        public static string GedcomTagBIRT {
+            get {
+                return ResourceManager.GetString("GedcomTagBIRT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Burial.
+        /// </summary>
+        public static string GedcomTagBURI {
+            get {
+                return ResourceManager.GetString("GedcomTagBURI", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Call number.
+        /// </summary>
+        public static string GedcomTagCALN {
+            get {
+                return ResourceManager.GetString("GedcomTagCALN", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cause.
+        /// </summary>
+        public static string GedcomTagCAUS {
+            get {
+                return ResourceManager.GetString("GedcomTagCAUS", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Census.
+        /// </summary>
+        public static string GedcomTagCENS {
+            get {
+                return ResourceManager.GetString("GedcomTagCENS", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Last changed.
+        /// </summary>
+        public static string GedcomTagCHAN {
+            get {
+                return ResourceManager.GetString("GedcomTagCHAN", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Christening.
+        /// </summary>
+        public static string GedcomTagCHR {
+            get {
+                return ResourceManager.GetString("GedcomTagCHR", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Confirmation.
+        /// </summary>
+        public static string GedcomTagCONF {
+            get {
+                return ResourceManager.GetString("GedcomTagCONF", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cremation.
+        /// </summary>
+        public static string GedcomTagCREM {
+            get {
+                return ResourceManager.GetString("GedcomTagCREM", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Data.
+        /// </summary>
+        public static string GedcomTagDATA {
+            get {
+                return ResourceManager.GetString("GedcomTagDATA", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Date.
+        /// </summary>
+        public static string GedcomTagDATE {
+            get {
+                return ResourceManager.GetString("GedcomTagDATE", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Death.
+        /// </summary>
+        public static string GedcomTagDEAT {
+            get {
+                return ResourceManager.GetString("GedcomTagDEAT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Description.
+        /// </summary>
+        public static string GedcomTagDSCR {
+            get {
+                return ResourceManager.GetString("GedcomTagDSCR", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Education.
+        /// </summary>
+        public static string GedcomTagEDUC {
+            get {
+                return ResourceManager.GetString("GedcomTagEDUC", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Email.
+        /// </summary>
+        public static string GedcomTagEMAIL {
+            get {
+                return ResourceManager.GetString("GedcomTagEMAIL", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Emigration.
+        /// </summary>
+        public static string GedcomTagEMIG {
+            get {
+                return ResourceManager.GetString("GedcomTagEMIG", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Event.
+        /// </summary>
+        public static string GedcomTagEVEN {
+            get {
+                return ResourceManager.GetString("GedcomTagEVEN", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to File.
+        /// </summary>
+        public static string GedcomTagFILE {
+            get {
+                return ResourceManager.GetString("GedcomTagFILE", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Format.
+        /// </summary>
+        public static string GedcomTagFORM {
+            get {
+                return ResourceManager.GetString("GedcomTagFORM", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Graduation.
+        /// </summary>
+        public static string GedcomTagGRAD {
+            get {
+                return ResourceManager.GetString("GedcomTagGRAD", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Immigration.
+        /// </summary>
+        public static string GedcomTagIMMI {
+            get {
+                return ResourceManager.GetString("GedcomTagIMMI", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Latitude.
+        /// </summary>
+        public static string GedcomTagLATI {
+            get {
+                return ResourceManager.GetString("GedcomTagLATI", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Longitude.
+        /// </summary>
+        public static string GedcomTagLONG {
+            get {
+                return ResourceManager.GetString("GedcomTagLONG", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Coordinates.
+        /// </summary>
+        public static string GedcomTagMAP {
+            get {
+                return ResourceManager.GetString("GedcomTagMAP", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Name.
+        /// </summary>
+        public static string GedcomTagNAME {
+            get {
+                return ResourceManager.GetString("GedcomTagNAME", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Nationality.
+        /// </summary>
+        public static string GedcomTagNATI {
+            get {
+                return ResourceManager.GetString("GedcomTagNATI", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Naturalization.
+        /// </summary>
+        public static string GedcomTagNATU {
+            get {
+                return ResourceManager.GetString("GedcomTagNATU", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Nickname.
+        /// </summary>
+        public static string GedcomTagNICK {
+            get {
+                return ResourceManager.GetString("GedcomTagNICK", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Note.
+        /// </summary>
+        public static string GedcomTagNOTE {
+            get {
+                return ResourceManager.GetString("GedcomTagNOTE", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Media.
+        /// </summary>
+        public static string GedcomTagOBJE {
+            get {
+                return ResourceManager.GetString("GedcomTagOBJE", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Occupation.
+        /// </summary>
+        public static string GedcomTagOCCU {
+            get {
+                return ResourceManager.GetString("GedcomTagOCCU", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Ordination.
+        /// </summary>
+        public static string GedcomTagORDN {
+            get {
+                return ResourceManager.GetString("GedcomTagORDN", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Page.
+        /// </summary>
+        public static string GedcomTagPAGE {
+            get {
+                return ResourceManager.GetString("GedcomTagPAGE", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Phone.
+        /// </summary>
+        public static string GedcomTagPHON {
+            get {
+                return ResourceManager.GetString("GedcomTagPHON", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Place.
+        /// </summary>
+        public static string GedcomTagPLAC {
+            get {
+                return ResourceManager.GetString("GedcomTagPLAC", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Probate.
+        /// </summary>
+        public static string GedcomTagPROB {
+            get {
+                return ResourceManager.GetString("GedcomTagPROB", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Property.
+        /// </summary>
+        public static string GedcomTagPROP {
+            get {
+                return ResourceManager.GetString("GedcomTagPROP", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Religion.
+        /// </summary>
+        public static string GedcomTagRELI {
+            get {
+                return ResourceManager.GetString("GedcomTagRELI", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Residence.
+        /// </summary>
+        public static string GedcomTagRESI {
+            get {
+                return ResourceManager.GetString("GedcomTagRESI", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Retirement.
+        /// </summary>
+        public static string GedcomTagRETI {
+            get {
+                return ResourceManager.GetString("GedcomTagRETI", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Role.
+        /// </summary>
+        public static string GedcomTagROLE {
+            get {
+                return ResourceManager.GetString("GedcomTagROLE", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Source.
+        /// </summary>
+        public static string GedcomTagSOUR {
+            get {
+                return ResourceManager.GetString("GedcomTagSOUR", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Text.
+        /// </summary>
+        public static string GedcomTagTEXT {
+            get {
+                return ResourceManager.GetString("GedcomTagTEXT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Title.
+        /// </summary>
+        public static string GedcomTagTITL {
+            get {
+                return ResourceManager.GetString("GedcomTagTITL", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Type.
+        /// </summary>
+        public static string GedcomTagTYPE {
+            get {
+                return ResourceManager.GetString("GedcomTagTYPE", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Will.
+        /// </summary>
+        public static string GedcomTagWILL {
+            get {
+                return ResourceManager.GetString("GedcomTagWILL", resourceCulture);
             }
         }
         
@@ -916,6 +1375,42 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cancelling….
+        /// </summary>
+        public static string HintGedcomImportCancelling {
+            get {
+                return ResourceManager.GetString("HintGedcomImportCancelling", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Importing the file. This may take a while….
+        /// </summary>
+        public static string HintGedcomImportInProgress {
+            get {
+                return ResourceManager.GetString("HintGedcomImportInProgress", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Imported from GEDCOM.
+        /// </summary>
+        public static string HintImportedFromGedcom {
+            get {
+                return ResourceManager.GetString("HintImportedFromGedcom", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Name contains… (* and ? wildcards supported).
+        /// </summary>
+        public static string HintNameFilterWildcard {
+            get {
+                return ResourceManager.GetString("HintNameFilterWildcard", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to You can add, edit or delete the names of any person..
         /// </summary>
         public static string HintNamesPage {
@@ -941,7 +1436,25 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("HintProjectRevisionsPage", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Relationship loop detected: this person is listed as their own ancestor or descendant, so it was not expanded..
+        /// </summary>
+        public static string HintRelativeLoopDetected {
+            get {
+                return ResourceManager.GetString("HintRelativeLoopDetected", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This person connects to the family through more than one relationship..
+        /// </summary>
+        public static string HintRelativeMultipleConnections {
+            get {
+                return ResourceManager.GetString("HintRelativeMultipleConnections", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Relatives.
         /// </summary>
@@ -970,6 +1483,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 📤 Export to GEDCOM.
+        /// </summary>
+        public static string MenuItemExportGedcom {
+            get {
+                return ResourceManager.GetString("MenuItemExportGedcom", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 👪 To family: {0}.
         /// </summary>
         public static string MenuItemGotoFamily_1 {
@@ -993,6 +1515,15 @@ namespace GT4.UI.Resources {
         public static string MenuItemGoToRevisions {
             get {
                 return ResourceManager.GetString("MenuItemGoToRevisions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 📥 Import from GEDCOM.
+        /// </summary>
+        public static string MenuItemImportGedcom {
+            get {
+                return ResourceManager.GetString("MenuItemImportGedcom", resourceCulture);
             }
         }
         
@@ -1951,6 +2482,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Export GEDCOM.
+        /// </summary>
+        public static string ShareGedcomTitle {
+            get {
+                return ResourceManager.GetString("ShareGedcomTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Format of names of persons of the family.
         /// </summary>
         public static string ShortPersonNameFormat {
@@ -2010,6 +2550,15 @@ namespace GT4.UI.Resources {
         public static string TitleFamilyTreePage_1 {
             get {
                 return ResourceManager.GetString("TitleFamilyTreePage_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Importing GEDCOM.
+        /// </summary>
+        public static string TitleGedcomImportDialog {
+            get {
+                return ResourceManager.GetString("TitleGedcomImportDialog", resourceCulture);
             }
         }
         
@@ -2163,69 +2712,6 @@ namespace GT4.UI.Resources {
         public static string TxtPlaceholderPtojectName {
             get {
                 return ResourceManager.GetString("TxtPlaceholderPtojectName", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Any.
-        /// </summary>
-        public static string FieldFilterAny {
-            get {
-                return ResourceManager.GetString("FieldFilterAny", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Sex.
-        /// </summary>
-        public static string FieldFilterSex {
-            get {
-                return ResourceManager.GetString("FieldFilterSex", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Married.
-        /// </summary>
-        public static string FieldMaritalStatusMarried {
-            get {
-                return ResourceManager.GetString("FieldMaritalStatusMarried", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Single.
-        /// </summary>
-        public static string FieldMaritalStatusSingle {
-            get {
-                return ResourceManager.GetString("FieldMaritalStatusSingle", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Name contains… (* and ? wildcards supported).
-        /// </summary>
-        public static string HintNameFilterWildcard {
-            get {
-                return ResourceManager.GetString("HintNameFilterWildcard", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Clear filters.
-        /// </summary>
-        public static string BtnNameClearFilters {
-            get {
-                return ResourceManager.GetString("BtnNameClearFilters", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to {0} Filters.
-        /// </summary>
-        public static string BtnNameFilters_1 {
-            get {
-                return ResourceManager.GetString("BtnNameFilters_1", resourceCulture);
             }
         }
     }

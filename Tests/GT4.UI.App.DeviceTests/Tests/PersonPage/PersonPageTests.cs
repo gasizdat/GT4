@@ -64,6 +64,27 @@ public class PersonPageTests
   }
 
   [Fact]
+  public async Task MaritalStatusData_is_not_fetched_until_the_filter_panel_is_shown()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson();
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+    services.Relatives.Verify(
+      r => r.GetRelativesForPersonsAsync(It.IsAny<Person[]>(), It.IsAny<CancellationToken>()),
+      Times.Never());
+
+    await page.WaitForFilterDataAsync();
+    services.Relatives.Verify(
+      r => r.GetRelativesForPersonsAsync(It.IsAny<Person[]>(), It.IsAny<CancellationToken>()),
+      Times.Once());
+  }
+
+  [Fact]
   public async Task Loading_reports_non_teardown_exceptions_and_navigates_back()
   {
     var services = new TestServices();
