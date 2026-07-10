@@ -813,6 +813,12 @@ FN - род</value>
   <data name="AlertTextKinshipUnfoldingAborted" xml:space="preserve">
     <value>Операция заняла больше времени, чем ожидалось. Некоторые уровни родства остались нераскрытыми. Вы можете развернуть их вручную</value>
   </data>
+  <data name="HintRelativeLoopDetected" xml:space="preserve">
+    <value>Обнаружена петля родства: этот человек указан своим же предком или потомком, поэтому узел не был развёрнут.</value>
+  </data>
+  <data name="HintRelativeMultipleConnections" xml:space="preserve">
+    <value>Этот человек связан с семьёй более чем одним родством.</value>
+  </data>
   <data name="FieldFontScale" xml:space="preserve">
     <value>Размер текста</value>
   </data>
@@ -980,5 +986,26 @@ FN - род</value>
   </data>
   <data name="GedcomTagCHAN" xml:space="preserve">
     <value>Изменено</value>
+  </data>
+  <data name="FieldFilterAny" xml:space="preserve">
+    <value>Любой</value>
+  </data>
+  <data name="FieldFilterSex" xml:space="preserve">
+    <value>Пол</value>
+  </data>
+  <data name="FieldMaritalStatusMarried" xml:space="preserve">
+    <value>В браке</value>
+  </data>
+  <data name="FieldMaritalStatusSingle" xml:space="preserve">
+    <value>Не в браке</value>
+  </data>
+  <data name="HintNameFilterWildcard" xml:space="preserve">
+    <value>Имя содержит… (поддерживаются подстановочные знаки * и ?)</value>
+  </data>
+  <data name="BtnNameClearFilters" xml:space="preserve">
+    <value>Сбросить фильтры</value>
+  </data>
+  <data name="BtnNameFilters_1" xml:space="preserve">
+    <value>{0} Фильтры</value>
   </data>
 </root>

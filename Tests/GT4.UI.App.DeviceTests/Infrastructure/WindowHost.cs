@@ -44,6 +44,14 @@ internal static class WindowHost
 
     await MainThread.InvokeOnMainThreadAsync(() => window.Page = page);
 
+    // The swap only queues native realization; a modal push racing in before the page's platform
+    // view exists dies with "PlatformView cannot be null here" (observed as a CI-only flake), so
+    // don't hand the page back until the native view has materialized.
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => page.Handler?.PlatformView),
+      platformView => platformView is not null,
+      timeoutMessage: "The attached page's native view never materialized.");
+
     return new Attachment(window, originalPage);
   }
 }

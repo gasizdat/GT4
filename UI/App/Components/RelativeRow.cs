@@ -16,7 +16,11 @@ public sealed class RelativeRow : INotifyPropertyChanged
 {
   private const string ExpandSymbol = "🔽";
   private const string CollapseSymbol = "­­­­⏫­";
+  private const string LoopIcon = "⚠️♾️";
+  private const string MultipleConnectionsIcon = "ℹ️";
   private bool _IsExpanded;
+  private RelativeRowIssueType _Issue;
+  private string? _IssueMessage;
 
   public RelativeRow(
     RelativeInfo relative,
@@ -70,6 +74,46 @@ public sealed class RelativeRow : INotifyPropertyChanged
   }
 
   public string MoreBtnName => IsExpanded ? CollapseSymbol : ExpandSymbol;
+
+  /// <summary>Set once by RelativeTree when it detects a loop or a legitimate multiple-connections
+  /// case while unfolding this row's ancestry; <see cref="RelativeRowIssueType.None"/> otherwise.</summary>
+  public RelativeRowIssueType Issue
+  {
+    get => _Issue;
+    set
+    {
+      if (_Issue != value)
+      {
+        _Issue = value;
+        OnPropertyChanged();
+        OnPropertyChanged(nameof(HasIssue));
+        OnPropertyChanged(nameof(IssueIcon));
+      }
+    }
+  }
+
+  /// <summary>Human-readable explanation shown next to <see cref="IssueIcon"/> when <see cref="HasIssue"/>.</summary>
+  public string? IssueMessage
+  {
+    get => _IssueMessage;
+    set
+    {
+      if (_IssueMessage != value)
+      {
+        _IssueMessage = value;
+        OnPropertyChanged();
+      }
+    }
+  }
+
+  public bool HasIssue => Issue != RelativeRowIssueType.None;
+
+  public string IssueIcon => Issue switch
+  {
+    RelativeRowIssueType.Loop => LoopIcon,
+    RelativeRowIssueType.MultipleConnections => MultipleConnectionsIcon,
+    _ => string.Empty
+  };
 
   public event PropertyChangedEventHandler? PropertyChanged;
 
