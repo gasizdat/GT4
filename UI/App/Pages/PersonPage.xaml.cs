@@ -35,6 +35,7 @@ public partial class PersonPage : ContentPage
   private string _Biography = string.Empty;
   private PersonPageSmartLayout _SmartLayout = new();
   private bool _ExpandAll = false;
+  private RelativeInfo[] _AllRoots = [];
 
   public PersonPage(
     IServiceProvider serviceProvider,
@@ -48,7 +49,8 @@ public partial class PersonPage : ContentPage
     [FromKeyedServices(DataCategory.PersonGedcomTags)]
     IDataConverter gedcomConverter,
     IAlertService alertService,
-    INavigationService navigationService
+    INavigationService navigationService,
+    IBiologicalSexFormatter biologicalSexFormatter
     )
   {
     _ServiceProvider = serviceProvider;
@@ -65,6 +67,14 @@ public partial class PersonPage : ContentPage
     _Relatives = new RelativeTree(_CurrentProjectProvider, _CancellationTokenProvider, _AlertService);
 
     InitializeComponent();
+
+    FilterView.Initialize(
+      biologicalSexFormatter, 
+      _CancellationTokenProvider, 
+      _CurrentProjectProvider, 
+      _AlertService,
+      () => _AllRoots);
+    FilterView.Changed += (_, _) => RefreshRelatives();
   }
 
   protected ScrollView BodyScroll => BodyScrollView;
@@ -93,8 +103,15 @@ public partial class PersonPage : ContentPage
 
   public string ToggleAllButtonName => ExpandAll ? "⏫" : "⏬";
 
-  public string ToggleAllMenuItemName => 
+  public string ToggleAllMenuItemName =>
     string.Format(ExpandAll ? UIStrings.MenuItemCollapseAll_1 : UIStrings.MenuItemExpandAll_1, ToggleAllButtonName);
+
+  // Only the top-level relatives (spouse/parents/siblings/children/step-*) are filtered; once a
+  // matching root is expanded, its own descendants show unfiltered -- the tree is fetched lazily
+  // from the DB level by level, so there is no retained unfiltered set at deeper levels to re-filter
+  // against interactively (mirrors how a family with no matching persons is hidden wholesale on
+  // ProjectPage/FamilyPage, rather than reaching into it for a matching grandchild).
+  private void RefreshRelatives() => _Relatives.SetRoots(_AllRoots.Where(r => FilterView.Matches(r)), _PersonFullInfo.BirthDate);
 
   public ICommand PageCommand => _PageCommand;
 
@@ -257,6 +274,12 @@ public partial class PersonPage : ContentPage
       var gedcomTask = _GedcomConverter.ToObjectAsync(personFullInfo.GedcomData, token);
       await Task.WhenAll(parentsTasks, stepChildrenTasks, bioTask, gedcomTask);
 
+      var parents = parentsTasks.Result;
+      var stepChildren = stepChildrenTasks.Result;
+      var relativesProvider = project.RelativesProvider;
+      var siblings = relativesProvider.GetSiblings(personFullInfo, parents);
+      var roots = AssembleRoots(personFullInfo, parents, siblings, stepChildren, relativesProvider);
+
       byte[][] photos;
 
       if (personFullInfo.MainPhoto is null)
@@ -281,8 +304,7 @@ public partial class PersonPage : ContentPage
       // UpdateUI touches the project document again on the UI thread; SafeTask.RunOnMainThread keeps
       // an escaped exception (e.g. the project closed while backgrounding) from going unobserved.
       _ = SafeTask.RunOnMainThread(() => UpdateUI(personFullInfo,
-                                                  parentsTasks.Result,
-                                                  stepChildrenTasks.Result,
+                                                  roots,
                                                   photos, bioTask.Result as string,
                                                   gedcomTask.Result as string,
                                                   addToNavigation), _AlertService);
@@ -302,24 +324,17 @@ public partial class PersonPage : ContentPage
     }
   }
 
-  public void UpdateUI(PersonFullInfo personFullInfo,
-                       Parents parents,
-                       RelativeInfo[] stepChildren,
-                       byte[][] photos,
-                       string? bio,
-                       string? gedcomDetails,
-                       bool addToNavigation)
+  private static RelativeInfo[] AssembleRoots(
+    PersonFullInfo personFullInfo,
+    Parents parents,
+    Siblings siblings,
+    RelativeInfo[] stepChildren,
+    IRelativesProvider relativesProvider)
   {
-    var relativesProvider = _CurrentProjectProvider.Project.RelativesProvider;
-    var siblings = relativesProvider.GetSiblings(personFullInfo, parents);
-    _PersonFullInfo = personFullInfo;
-    _Photos = photos;
-    _Biography = CombineBiography(bio, gedcomDetails);
-
     var roots = new List<RelativeInfo>();
     void Add(IEnumerable<RelativeInfo> relatives) => roots.AddRange(relatives.OrderBy(r => r.BiologicalSex));
 
-    Add(_PersonFullInfo.RelativeInfos.Where(r => r.Type == RelationshipType.Spouse));
+    Add(personFullInfo.RelativeInfos.Where(r => r.Type == RelationshipType.Spouse));
     Add(parents.Native);
     Add(parents.Adoptive);
     Add(parents.Step);
@@ -332,7 +347,25 @@ public partial class PersonPage : ContentPage
     Add(relativesProvider.GetAdoptiveChildren(personFullInfo.RelativeInfos));
     Add(stepChildren);
 
-    _Relatives.SetRoots(roots, _PersonFullInfo.BirthDate);
+    return [.. roots];
+  }
+
+  public void UpdateUI(PersonFullInfo personFullInfo,
+                       RelativeInfo[] roots,
+                       byte[][] photos,
+                       string? bio,
+                       string? gedcomDetails,
+                       bool addToNavigation)
+  {
+    _PersonFullInfo = personFullInfo;
+    _Photos = photos;
+    _Biography = CombineBiography(bio, gedcomDetails);
+    _AllRoots = roots;
+    // Only after the new roots land: with the panel open, ResetFilterData re-fetches immediately,
+    // snapshotting the page's current person set.
+    FilterView.ResetFilterData();
+
+    RefreshRelatives();
 
     this.RefreshView();
 

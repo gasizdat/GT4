@@ -19,7 +19,7 @@ public partial class FamilyPage : ContentPage
   private readonly IComparer<PersonInfo> _PersonInfoComparer;
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
-  private readonly ObservableCollection<PersonInfo> _Persons = new();
+  private readonly FilteredObservableCollection<PersonInfo> _Persons = new();
   private bool _PersonsLoaded;
   private Name? _FamilyName = null;
   private double _PersonItemMinimalWidth;
@@ -32,7 +32,8 @@ public partial class FamilyPage : ContentPage
     IComparer<PersonInfo>? personInfoComparerByShortNames,
     IComparer<PersonInfo> personInfoComparer,
     IAlertService alertService,
-    INavigationService navigationService
+    INavigationService navigationService,
+    IBiologicalSexFormatter biologicalSexFormatter
     )
   {
     _ServiceProvider = serviceProvider;
@@ -42,10 +43,20 @@ public partial class FamilyPage : ContentPage
     _AlertService = alertService;
     _NavigationService = navigationService;
 
+    _Persons.Filter = (_, person) => FilterView.Matches(person);
+
     MemberItemTappedCommand = new SafeCommand<PersonInfo>(OnOpenPerson, _AlertService);
     PageCommand = new SafeCommand(OnPageCommand, _AlertService);
 
     InitializeComponent();
+
+    FilterView.Initialize(
+      biologicalSexFormatter, 
+      _CancellationTokenProvider, 
+      _CurrentProjectProvider, 
+      _AlertService,
+      () => [.. _Persons.AllItems]);
+    FilterView.Changed += (_, _) => _Persons.Update();
   }
 
   public Name? FamilyName
@@ -76,26 +87,27 @@ public partial class FamilyPage : ContentPage
     {
       if (FamilyName is null)
       {
-        return _Persons;
+        return _Persons.Items;
       }
       var familyName = FamilyName;
 
       async Task ListPersonsAsync(Name familyName)
       {
         using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-        var persons = await _CurrentProjectProvider
-          .Project
+        var project = _CurrentProjectProvider.Project;
+        var persons = await project
           .PersonManager
           .GetPersonInfosByNameAsync(name: familyName, selectMainPhoto: true, token);
 
         persons = [.. persons.OrderBy(item => item, _PersonInfoComparer)];
+
         await SafeTask.RunOnMainThread(() =>
         {
           _Persons.Clear();
-          foreach (var person in persons)
-          {
-            _Persons.Add(person);
-          }
+          _Persons.AddRange(persons);
+          // Only after the new persons land: with the panel open, ResetFilterData re-fetches
+          // immediately, snapshotting the page's current person set.
+          FilterView.ResetFilterData();
         }, _AlertService);
       }
 
@@ -105,7 +117,7 @@ public partial class FamilyPage : ContentPage
         SafeTask.Run(() => ListPersonsAsync(familyName), _AlertService);
       }
 
-      return _Persons;
+      return _Persons.Items;
     }
   }
 
@@ -170,8 +182,9 @@ public partial class FamilyPage : ContentPage
       .PersonManager
       .AddPersonAsync(person, token);
 
-    var insertAt = _Persons.TakeWhile(p => _PersonInfoComparer.Compare(p, newPerson) <= 0).Count();
-    _Persons.Insert(insertAt, newPerson);
+    var updated = _Persons.AllItems.Append(newPerson).OrderBy(p => p, _PersonInfoComparer).ToArray();
+    _Persons.Clear();
+    _Persons.AddRange(updated);
   }
 
   protected async Task OnOpenPerson(PersonInfo familyMember)

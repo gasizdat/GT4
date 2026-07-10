@@ -67,6 +67,60 @@ public class FamilyPageTests
   }
 
   [Fact]
+  public async Task MaritalStatusData_is_not_fetched_until_the_filter_panel_is_shown()
+  {
+    var services = new TestServices();
+    var familyName = N(5, "Ivanov", NameType.FamilyName);
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosByNameAsync(familyName, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([P(1, "Anna")]);
+    var page = await CreatePageAsync(services);
+
+    await page.ReloadPersonsAsync(() => page.FamilyName = familyName);
+    services.Relatives.Verify(
+      r => r.GetRelativesForPersonsAsync(It.IsAny<Person[]>(), It.IsAny<CancellationToken>()),
+      Times.Never());
+
+    await page.WaitForFilterDataAsync();
+    services.Relatives.Verify(
+      r => r.GetRelativesForPersonsAsync(It.IsAny<Person[]>(), It.IsAny<CancellationToken>()),
+      Times.Once());
+  }
+
+  [Fact]
+  public async Task Navigating_to_another_family_while_the_filter_panel_is_open_refetches_filter_data()
+  {
+    var services = new TestServices();
+    var ivanov = N(5, "Ivanov", NameType.FamilyName);
+    var petrov = N(6, "Petrov", NameType.FamilyName);
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosByNameAsync(ivanov, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([P(1, "Anna")]);
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosByNameAsync(petrov, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([P(2, "Boris")]);
+    var page = await CreatePageAsync(services);
+    await page.ReloadPersonsAsync(() => page.FamilyName = ivanov);
+    await page.WaitForFilterDataAsync();
+    var loadsBefore = page.FilterDataLoads;
+
+    // The panel stays open across the navigation, so IsFiltersVisible never flips -- the re-fetch
+    // must come from ResetFilterData itself once the new family's persons have landed.
+    await page.ReloadPersonsAsync(() => page.FamilyName = petrov);
+
+    await Poll.UntilAsync(
+      () => Task.FromResult(page.FilterDataLoads),
+      loads => loads > loadsBefore,
+      timeoutMessage: "Filter data was not re-fetched after navigating with the panel open.");
+
+    services.Relatives.Verify(
+      r => r.GetRelativesForPersonsAsync(
+        It.Is<Person[]>(persons => persons.Length == 1 && persons[0].Id == 2),
+        It.IsAny<CancellationToken>()),
+      Times.Once());
+  }
+
+  [Fact]
   public async Task Persons_reports_non_teardown_exceptions_via_AlertService()
   {
     var services = new TestServices();
@@ -183,6 +237,12 @@ public class FamilyPageTests
     services.FamilyManager
       .Setup(f => f.SetUpPersonFamily(It.IsAny<PersonFullInfo>(), familyName))
       .Returns(personWithFamily);
+    // AddPersonAsync returns the persisted person; an unconfigured call would default to null,
+    // which FamilyPage now sorts into place through PersonFilter's predicate (the old plain
+    // ObservableCollection.Insert never exercised a predicate, so this gap was previously silent).
+    services.PersonManager
+      .Setup(p => p.AddPersonAsync(personWithFamily, It.IsAny<CancellationToken>()))
+      .ReturnsAsync(personWithFamily);
     var page = await CreatePageAsync(services);
     await MainThread.InvokeOnMainThreadAsync(() => page.FamilyName = familyName);
 

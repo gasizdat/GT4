@@ -34,25 +34,26 @@ public class PersonLifetimeMatcherTests
   }
 
   [Fact]
-  public void BirthKnown_KnownDeadUnknownDate_GuessesTwentyYearsAfterBirth()
+  public void BirthKnown_KnownDeadUnknownDate_MatchesWithinMaximumLifeExpectancyFromBirth()
   {
     var birth = Known(1900);
     var unknownDeath = Unknown;
 
     PersonLifetimeMatcher.IsAliveInYear(birth, unknownDeath, 1900).Should().BeTrue();
-    PersonLifetimeMatcher.IsAliveInYear(birth, unknownDeath, 1920).Should().BeTrue();
-    PersonLifetimeMatcher.IsAliveInYear(birth, unknownDeath, 1921).Should().BeFalse();
+    PersonLifetimeMatcher.IsAliveInYear(birth, unknownDeath, 2000).Should().BeTrue();
+    PersonLifetimeMatcher.IsAliveInYear(birth, unknownDeath, 2020).Should().BeTrue();
+    PersonLifetimeMatcher.IsAliveInYear(birth, unknownDeath, 2021).Should().BeFalse();
     PersonLifetimeMatcher.IsAliveInYear(birth, unknownDeath, 1899).Should().BeFalse();
   }
 
   [Fact]
-  public void UnknownBirth_KnownDeath_GuessesTwentyYearsBeforeDeath()
+  public void UnknownBirth_KnownDeath_MatchesWithinMaximumLifeExpectancyBeforeDeath()
   {
     var death = Known(2000);
 
     PersonLifetimeMatcher.IsAliveInYear(Unknown, death, 2000).Should().BeTrue();
-    PersonLifetimeMatcher.IsAliveInYear(Unknown, death, 1980).Should().BeTrue();
-    PersonLifetimeMatcher.IsAliveInYear(Unknown, death, 1979).Should().BeFalse();
+    PersonLifetimeMatcher.IsAliveInYear(Unknown, death, 1880).Should().BeTrue();
+    PersonLifetimeMatcher.IsAliveInYear(Unknown, death, 1879).Should().BeFalse();
     PersonLifetimeMatcher.IsAliveInYear(Unknown, death, 2001).Should().BeFalse();
   }
 

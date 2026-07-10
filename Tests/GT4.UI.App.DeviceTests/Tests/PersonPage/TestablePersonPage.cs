@@ -3,6 +3,7 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Components;
 using GT4.UI.Pages;
+using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
 using System.Runtime.CompilerServices;
@@ -17,6 +18,7 @@ namespace GT4.UI.DeviceTests;
 internal sealed class TestablePersonPage : PersonPage
 {
   private int _CompletedLoads;
+  private int _FilterDataLoads;
 
   public TestablePersonPage(
     IServiceProvider serviceProvider,
@@ -30,7 +32,8 @@ internal sealed class TestablePersonPage : PersonPage
     [FromKeyedServices(DataCategory.PersonGedcomTags)]
     IDataConverter gedcomConverter,
     IAlertService alertService,
-    INavigationService navigationService)
+    INavigationService navigationService,
+    IBiologicalSexFormatter biologicalSexFormatter)
     : base(
       serviceProvider,
       cancellationTokenProvider,
@@ -41,9 +44,16 @@ internal sealed class TestablePersonPage : PersonPage
       textConverter,
       gedcomConverter,
       alertService,
-      navigationService)
+      navigationService,
+      biologicalSexFormatter)
   {
+    // FilterDataLoaded fires exactly once per lazy fetch, after SetMarriedIds/SetYearBounds have
+    // been applied on the main thread.
+    FilterView = this.FindByName<PersonFilterView>("FilterView");
+    FilterView.FilterDataLoaded += (_, _) => _FilterDataLoads++;
   }
+
+  public PersonFilterView FilterView { get; }
 
   public int CompletedLoads => _CompletedLoads;
 
@@ -56,6 +66,22 @@ internal sealed class TestablePersonPage : PersonPage
   public ImagePresenter PersonPhotoForTest => PersonPhotoView;
 
   public CollectionView RelativesListForTest => RelativesListView;
+
+  /// <summary>
+  /// Opens the filter panel (if not already open) and waits for the resulting lazy marital-status
+  /// fetch + year-bounds computation to land on the filter.
+  /// </summary>
+  public async Task WaitForFilterDataAsync(TimeSpan? timeout = null)
+  {
+    var loadsBefore = _FilterDataLoads;
+    await MainThread.InvokeOnMainThreadAsync(() => FilterView.IsFiltersVisible = true);
+
+    await Poll.UntilAsync(
+      () => Task.FromResult(_FilterDataLoads),
+      loads => loads > loadsBefore,
+      timeout ?? TimeSpan.FromSeconds(10),
+      "Filter data did not finish loading; check the TestServices mock setup.");
+  }
 
   protected override void OnPropertyChanged([CallerMemberName] string? propertyName = null)
   {

@@ -1,6 +1,7 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.Components;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Pages;
@@ -44,26 +45,25 @@ public class ProjectPageTests
 
     Assert.NotNull(page.PageCommand);
     Assert.Empty(page.Families);
-    Assert.False(page.IsFiltersVisible);
+    Assert.False(page.FilterView.IsFiltersVisible);
   }
 
   [Fact]
-  public async Task ToggleFilters_command_shows_and_hides_the_filters_panel()
+  public async Task ToggleFilters_button_shows_and_hides_the_filters_panel()
   {
     var page = await CreatePageAsync(new TestServices());
     await using var window = await WindowHost.AttachAsync(page);
-    Assert.False(page.IsFiltersVisible);
+    Assert.False(page.FilterView.IsFiltersVisible);
 
-    // Setting IsFiltersVisible cascades into FadeVisibilityBehavior touching native UI, so this
-    // must run on the UI thread; unlike the modal-dialog commands, there's nothing to drive in
-    // between, so the started task is awaited right away.
-    var openTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("ToggleFilters"));
-    await openTask;
-    Assert.True(page.IsFiltersVisible);
+    // Clicking cascades into FadeVisibilityBehavior touching native UI, so it must run on the UI
+    // thread.
+    var toggleButton = page.FilterView.FindByName<Button>("ToggleFiltersButton");
 
-    var closeTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("ToggleFilters"));
-    await closeTask;
-    Assert.False(page.IsFiltersVisible);
+    await MainThread.InvokeOnMainThreadAsync(toggleButton.SendClicked);
+    Assert.True(page.FilterView.IsFiltersVisible);
+
+    await MainThread.InvokeOnMainThreadAsync(toggleButton.SendClicked);
+    Assert.False(page.FilterView.IsFiltersVisible);
   }
 
   [Fact]
@@ -272,33 +272,32 @@ public class ProjectPageTests
   // logic worth pinning.
 
   [Fact]
-  public async Task ToggleFilters_command_fades_the_real_filters_panel_in_and_out()
+  public async Task ToggleFilters_button_fades_the_real_filters_panel_in_and_out()
   {
-    // The fade is not awaited by ToggleFilters: setting IsFiltersVisible raises PropertyChanged
-    // synchronously, but FadeVisibilityBehavior's reaction to it is an async void animation that
-    // keeps running after the property set returns -- so the command's own task completes well
-    // before the 500ms fade does. Poll for the fade's own end state rather than assuming the
-    // command's completion implies the animation's.
+    // The fade is not awaited by the toggle click: it flips IsFiltersVisible synchronously, but
+    // FadeVisibilityBehavior's reaction to it is an async void animation that keeps running after
+    // the click handler returns -- so the click completes well before the 500ms fade does. Poll for
+    // the fade's own end state rather than assuming the click's completion implies the animation's.
     var page = await CreatePageAsync(new TestServices());
     await using var window = await WindowHost.AttachAsync(page);
 
-    var panel = await MainThread.InvokeOnMainThreadAsync(() => page.FindByName<Grid>("FiltersPanel"));
+    var panel = await MainThread.InvokeOnMainThreadAsync(() => page.FilterView.FindByName<Grid>("FiltersPanel"));
     await MainThread.InvokeOnMainThreadAsync(() =>
     {
       Assert.False(panel.IsVisible);
       Assert.Equal(0, panel.Opacity);
     });
 
-    var openTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("ToggleFilters"));
-    await openTask;
+    var toggleButton = page.FilterView.FindByName<Button>("ToggleFiltersButton");
+
+    await MainThread.InvokeOnMainThreadAsync(toggleButton.SendClicked);
     await Poll.UntilAsync(
       () => MainThread.InvokeOnMainThreadAsync(() => panel.Opacity),
       opacity => opacity == 1,
       timeoutMessage: "The filters panel did not finish fading in.");
     await MainThread.InvokeOnMainThreadAsync(() => Assert.True(panel.IsVisible));
 
-    var closeTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("ToggleFilters"));
-    await closeTask;
+    await MainThread.InvokeOnMainThreadAsync(toggleButton.SendClicked);
     await Poll.UntilAsync(
       () => MainThread.InvokeOnMainThreadAsync(() => panel.IsVisible),
       isVisible => !isVisible,
@@ -311,14 +310,15 @@ public class ProjectPageTests
     var page = await CreatePageAsync(new TestServices());
     await using var window = await WindowHost.AttachAsync(page);
 
-    var clearButton = await MainThread.InvokeOnMainThreadAsync(() => page.FindByName<Button>("ClearFiltersButton"));
+    var clearButton = await MainThread.InvokeOnMainThreadAsync(() => page.FilterView.FindByName<Button>("ClearFiltersButton"));
     await MainThread.InvokeOnMainThreadAsync(() =>
     {
       Assert.False(clearButton.IsVisible);
       Assert.Equal(0, clearButton.Opacity);
     });
 
-    await MainThread.InvokeOnMainThreadAsync(() => page.NameFilter = "John");
+    var nameEntry = page.FilterView.FindByName<Entry>("NameFilterEntry");
+    await MainThread.InvokeOnMainThreadAsync(() => nameEntry.Text = "John");
     await Poll.UntilAsync(
       () => MainThread.InvokeOnMainThreadAsync(() => clearButton.Opacity),
       opacity => opacity == 1,
@@ -327,10 +327,9 @@ public class ProjectPageTests
 
     // The panel was never opened in this test -- proves the button's visibility no longer
     // depends on IsFiltersVisible.
-    await MainThread.InvokeOnMainThreadAsync(() => Assert.False(page.IsFiltersVisible));
+    await MainThread.InvokeOnMainThreadAsync(() => Assert.False(page.FilterView.IsFiltersVisible));
 
-    var clearTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("ClearFilters"));
-    await clearTask;
+    await MainThread.InvokeOnMainThreadAsync(clearButton.SendClicked);
     await Poll.UntilAsync(
       () => MainThread.InvokeOnMainThreadAsync(() => clearButton.IsVisible),
       isVisible => !isVisible,
@@ -349,7 +348,8 @@ public class ProjectPageTests
     var page = await CreatePageAsync(services);
     await page.WaitForFamiliesAsync();
 
-    await MainThread.InvokeOnMainThreadAsync(() => page.NameFilter = "J*n");
+    var nameEntry = page.FilterView.FindByName<Entry>("NameFilterEntry");
+    await MainThread.InvokeOnMainThreadAsync(() => nameEntry.Text = "J*n");
     var families = await MainThread.InvokeOnMainThreadAsync(() => page.Families.ToArray());
 
     var family = Assert.Single(families);
@@ -368,11 +368,12 @@ public class ProjectPageTests
     var page = await CreatePageAsync(services);
     await page.WaitForFamiliesAsync();
 
-    await MainThread.InvokeOnMainThreadAsync(() => page.NameFilter = "John");
+    var nameEntry = page.FilterView.FindByName<Entry>("NameFilterEntry");
+    await MainThread.InvokeOnMainThreadAsync(() => nameEntry.Text = "John");
     var filtered = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
     Assert.Single(filtered);
 
-    await MainThread.InvokeOnMainThreadAsync(() => page.NameFilter = "");
+    await MainThread.InvokeOnMainThreadAsync(() => nameEntry.Text = "");
     var restored = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
     Assert.Equal(2, restored.Count);
   }
@@ -388,15 +389,16 @@ public class ProjectPageTests
     var page = await CreatePageAsync(services);
     await page.WaitForFamiliesAsync();
 
-    await MainThread.InvokeOnMainThreadAsync(() => page.SexFilterIndex = 1); // Male
+    var sexPicker = page.FilterView.FindByName<Picker>("SexFilterPicker");
+    await MainThread.InvokeOnMainThreadAsync(() => sexPicker.SelectedIndex = 1); // Male
     var maleOnly = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
     Assert.Equal(["John"], maleOnly.Select(p => p.DisplayName));
 
-    await MainThread.InvokeOnMainThreadAsync(() => page.SexFilterIndex = 2); // Female
+    await MainThread.InvokeOnMainThreadAsync(() => sexPicker.SelectedIndex = 2); // Female
     var femaleOnly = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
     Assert.Equal(["Jane"], femaleOnly.Select(p => p.DisplayName));
 
-    await MainThread.InvokeOnMainThreadAsync(() => page.SexFilterIndex = 0); // Any
+    await MainThread.InvokeOnMainThreadAsync(() => sexPicker.SelectedIndex = 0); // Any
     var everyone = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
     Assert.Equal(2, everyone.Count);
   }
@@ -414,14 +416,38 @@ public class ProjectPageTests
       .ReturnsAsync(new Dictionary<int, Relative[]> { [1] = [new Relative(2, default, null, BiologicalSex.Female, RelationshipType.Spouse, null)] });
     var page = await CreatePageAsync(services);
     await page.WaitForFamiliesAsync();
+    // Marital status is fetched lazily, the first time the filter panel is shown, not up front.
+    await page.WaitForFilterDataAsync();
 
-    await MainThread.InvokeOnMainThreadAsync(() => page.MaritalStatusFilterIndex = 1); // Married
+    var maritalPicker = page.FilterView.FindByName<Picker>("MaritalStatusFilterPicker");
+    await MainThread.InvokeOnMainThreadAsync(() => maritalPicker.SelectedIndex = 1); // Married
     var married = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
     Assert.Equal(["John"], married.Select(p => p.DisplayName));
 
-    await MainThread.InvokeOnMainThreadAsync(() => page.MaritalStatusFilterIndex = 2); // Single
+    await MainThread.InvokeOnMainThreadAsync(() => maritalPicker.SelectedIndex = 2); // Single
     var single = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
     Assert.Equal(["Jane"], single.Select(p => p.DisplayName));
+  }
+
+  [Fact]
+  public async Task MaritalStatusData_is_not_fetched_until_the_filter_panel_is_shown()
+  {
+    var services = new TestServices();
+    var family = N(1, "Ivanov", NameType.FamilyName);
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([family]);
+    services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([InFamily(P(1, "John"), family)]);
+    var page = await CreatePageAsync(services);
+
+    await page.WaitForFamiliesAsync();
+    services.Relatives.Verify(
+      r => r.GetRelativesForPersonsAsync(It.IsAny<Person[]>(), It.IsAny<CancellationToken>()),
+      Times.Never());
+
+    await page.WaitForFilterDataAsync();
+    services.Relatives.Verify(
+      r => r.GetRelativesForPersonsAsync(It.IsAny<Person[]>(), It.IsAny<CancellationToken>()),
+      Times.Once());
   }
 
   [Fact]
@@ -440,15 +466,21 @@ public class ProjectPageTests
     var beforeFilter = loaded.Single().Persons;
     Assert.Equal(2, beforeFilter.Count);
 
+    // The slider clamps its Value to its bounds, which stay at the default [0, 1] until the lazy
+    // filter-data fetch widens them -- so the years below are only settable after this.
+    await page.WaitForFilterDataAsync();
+
+    var yearSwitch = page.FilterView.FindByName<Switch>("YearFilterSwitch");
+    var yearSlider = page.FilterView.FindByName<Slider>("YearSlider");
     await MainThread.InvokeOnMainThreadAsync(() =>
     {
-      page.IsYearFilterEnabled = true;
-      page.SelectedYear = 1975;
+      yearSwitch.IsToggled = true;
+      yearSlider.Value = 1975;
     });
     var withinRange = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
     Assert.Equal(["John"], withinRange.Select(p => p.DisplayName));
 
-    await MainThread.InvokeOnMainThreadAsync(() => page.SelectedYear = 2010);
+    await MainThread.InvokeOnMainThreadAsync(() => yearSlider.Value = 2010);
     var outsideRange = await MainThread.InvokeOnMainThreadAsync(() => page.Families.ToArray());
     Assert.Empty(outsideRange);
   }
@@ -464,18 +496,23 @@ public class ProjectPageTests
     var page = await CreatePageAsync(services);
     await page.WaitForFamiliesAsync();
 
+    var nameEntry = page.FilterView.FindByName<Entry>("NameFilterEntry");
+    var sexPicker = page.FilterView.FindByName<Picker>("SexFilterPicker");
+    var maritalPicker = page.FilterView.FindByName<Picker>("MaritalStatusFilterPicker");
+    var yearSwitch = page.FilterView.FindByName<Switch>("YearFilterSwitch");
     await MainThread.InvokeOnMainThreadAsync(() =>
     {
-      page.NameFilter = "John";
-      page.SexFilterIndex = 1;
-      page.MaritalStatusFilterIndex = 1;
-      page.IsYearFilterEnabled = true;
+      nameEntry.Text = "John";
+      sexPicker.SelectedIndex = 1;
+      maritalPicker.SelectedIndex = 1;
+      yearSwitch.IsToggled = true;
     });
 
-    await page.InvokePageCommandAsync("ClearFilters");
+    var clearButton = page.FilterView.FindByName<Button>("ClearFiltersButton");
+    await MainThread.InvokeOnMainThreadAsync(clearButton.SendClicked);
 
     var state = await MainThread.InvokeOnMainThreadAsync(() =>
-      (page.NameFilter, page.SexFilterIndex, page.MaritalStatusFilterIndex, page.IsYearFilterEnabled));
+      (nameEntry.Text, sexPicker.SelectedIndex, maritalPicker.SelectedIndex, yearSwitch.IsToggled));
     Assert.Equal((string.Empty, 0, 0, false), state);
 
     var everyone = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
@@ -486,17 +523,19 @@ public class ProjectPageTests
   public async Task IsAnyFilterActive_reflects_filter_state_independently_of_panel_visibility()
   {
     var page = await CreatePageAsync(new TestServices());
-    Assert.False(page.IsAnyFilterActive);
+    Assert.False(page.FilterView.IsAnyFilterActive);
 
-    await MainThread.InvokeOnMainThreadAsync(() => page.NameFilter = "John");
-    Assert.True(page.IsAnyFilterActive);
+    var nameEntry = page.FilterView.FindByName<Entry>("NameFilterEntry");
+    await MainThread.InvokeOnMainThreadAsync(() => nameEntry.Text = "John");
+    Assert.True(page.FilterView.IsAnyFilterActive);
 
     // Closing the panel must not hide the "a filter is active" signal.
-    await MainThread.InvokeOnMainThreadAsync(() => page.IsFiltersVisible = false);
-    Assert.True(page.IsAnyFilterActive);
+    await MainThread.InvokeOnMainThreadAsync(() => page.FilterView.IsFiltersVisible = false);
+    Assert.True(page.FilterView.IsAnyFilterActive);
 
-    await page.InvokePageCommandAsync("ClearFilters");
-    Assert.False(page.IsAnyFilterActive);
+    var clearButton = page.FilterView.FindByName<Button>("ClearFiltersButton");
+    await MainThread.InvokeOnMainThreadAsync(clearButton.SendClicked);
+    Assert.False(page.FilterView.IsAnyFilterActive);
   }
 
   [Fact]
@@ -510,7 +549,8 @@ public class ProjectPageTests
     var page = await CreatePageAsync(services);
 
     var before = await MainThread.InvokeOnMainThreadAsync(() => page.Families);
-    await MainThread.InvokeOnMainThreadAsync(() => page.NameFilter = "John");
+    var nameEntry = page.FilterView.FindByName<Entry>("NameFilterEntry");
+    await MainThread.InvokeOnMainThreadAsync(() => nameEntry.Text = "John");
     var after = page.Families;
 
     Assert.Same(before, after);
@@ -539,7 +579,8 @@ public class ProjectPageTests
 
     // Petrov's one member (Mark, Male) matches this filter both before and after, so nothing about
     // Petrov should change; Ivanov (John Male, Jane Female) does lose a member.
-    await MainThread.InvokeOnMainThreadAsync(() => page.SexFilterIndex = 1);
+    var sexPicker = page.FilterView.FindByName<Picker>("SexFilterPicker");
+    await MainThread.InvokeOnMainThreadAsync(() => sexPicker.SelectedIndex = 1);
 
     var ivanovAfter = page.Families.Single(f => f.Info.Value == "Ivanov");
     Assert.Equal(["John"], ivanovAfter.Persons.Select(p => p.DisplayName));

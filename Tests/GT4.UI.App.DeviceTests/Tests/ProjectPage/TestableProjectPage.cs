@@ -2,8 +2,10 @@ using GT4.Core.Gedcom.Abstraction;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.Components;
 using GT4.UI.Items;
 using GT4.UI.Pages;
+using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
 using System.Collections.Specialized;
 
@@ -16,6 +18,7 @@ namespace GT4.UI.DeviceTests;
 internal sealed class TestableProjectPage : ProjectPage
 {
   private int _CompletedLoads;
+  private int _FilterDataLoads;
 
   public TestableProjectPage(
     INameTypeFormatter nameTypeFormatter,
@@ -59,7 +62,14 @@ internal sealed class TestableProjectPage : ProjectPage
         _CompletedLoads++;
       }
     };
+
+    // FilterDataLoaded fires exactly once per lazy fetch, after SetMarriedIds/SetYearBounds have
+    // been applied on the main thread.
+    FilterView = this.FindByName<PersonFilterView>("FilterView");
+    FilterView.FilterDataLoaded += (_, _) => _FilterDataLoads++;
   }
+
+  public PersonFilterView FilterView { get; }
 
   public Task InvokePageCommandAsync(object parameter) => OnPageCommand(parameter);
 
@@ -90,5 +100,22 @@ internal sealed class TestableProjectPage : ProjectPage
       "Families did not finish loading; check the TestServices mock setup.");
 
     return await MainThread.InvokeOnMainThreadAsync(() => Families.ToArray());
+  }
+
+  /// <summary>
+  /// Opens the filter panel (if not already open) and waits for the resulting lazy marital-status
+  /// fetch + year-bounds computation to land on the filter. Mirrors WaitForFamiliesAsync's level-triggered
+  /// counter so it is safe even if a prior open already finished the fetch before this is called.
+  /// </summary>
+  public async Task WaitForFilterDataAsync(TimeSpan? timeout = null)
+  {
+    var loadsBefore = _FilterDataLoads;
+    await MainThread.InvokeOnMainThreadAsync(() => FilterView.IsFiltersVisible = true);
+
+    await Poll.UntilAsync(
+      () => Task.FromResult(_FilterDataLoads),
+      loads => loads > loadsBefore,
+      timeout ?? TimeSpan.FromSeconds(10),
+      "Filter data did not finish loading; check the TestServices mock setup.");
   }
 }
