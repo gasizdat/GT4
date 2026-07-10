@@ -163,7 +163,10 @@ public class PersonPageTests
     var commandTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("EditPerson"));
     var dialog = await ModalDialogHarness.WaitForModalAsync<CreateOrUpdatePersonDialog>(page);
 
-    await MainThread.InvokeOnMainThreadAsync(() =>
+    // Wait for the reload the update triggers, not just the command: PersonInfo = info starts it
+    // fire-and-forget, and leaving it in flight lets it race the window restore below into a
+    // main-thread wedge that hangs the whole run (observed on CI).
+    await WaitForLoadAsync(page, services, () =>
     {
       dialog.BirthDate = Date.Create(1990, 5, 1, DateStatus.WellKnown);
       dialog.DialogCommand.Execute("CreatePersonCommand");
