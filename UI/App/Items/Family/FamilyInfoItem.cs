@@ -1,16 +1,27 @@
-﻿using GT4.Core.Project.Dto;
+using GT4.Core.Project.Dto;
+using GT4.UI.Utils;
+using System.Collections.ObjectModel;
 
 namespace GT4.UI.Items;
 
 public class FamilyInfoItem : CollectionItemBase<Name>
 {
-  private readonly PersonInfo[] _Persons;
+  private readonly FilteredObservableCollection<PersonInfo> _Persons = new();
+  private readonly int _TotalPersonsCount;
 
-  public FamilyInfoItem(Name familyName, PersonInfo[] persons)
+  public FamilyInfoItem(Name familyName, PersonInfo[] persons, ObservableCollectionFilterPredicate<PersonInfo>? personsFilter)
     : base(familyName, "family_stub.png")
   {
-    _Persons = persons;
+    _TotalPersonsCount = persons.Length;
+    _Persons.Filter = personsFilter;
+    _Persons.AddRange(persons);
   }
 
-  public PersonInfo[] Persons => _Persons;
+  public ObservableCollection<PersonInfo> Persons => _Persons.Items;
+
+  // A family that never had any members is left visible (e.g. one just created); a family that had
+  // members but none of them survive the current filter is what should be hidden.
+  public bool HasVisiblePersons => _TotalPersonsCount == 0 || _Persons.Items.Count > 0;
+
+  public void Update() => _Persons.Update();
 }

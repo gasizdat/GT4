@@ -206,7 +206,9 @@
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>
-      <ScrollView x:Name="BodyScrollView" Scrolled="OnBodyScrolled">
+      <ScrollView
+          x:Name="BodyScrollView"
+          Scrolled="OnBodyScrolled">
         <Grid
             ColumnDefinitions="Auto, *"
             RowDefinitions="Auto, Auto, Auto">
