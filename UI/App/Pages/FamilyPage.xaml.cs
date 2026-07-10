@@ -43,7 +43,7 @@ public partial class FamilyPage : ContentPage
     _AlertService = alertService;
     _NavigationService = navigationService;
 
-    _Persons.Filter = PersonMatches;
+    _Persons.Filter = (_, person) => FilterView.Matches(person);
 
     MemberItemTappedCommand = new SafeCommand<PersonInfo>(OnOpenPerson, _AlertService);
     PageCommand = new SafeCommand(OnPageCommand, _AlertService);
@@ -51,7 +51,10 @@ public partial class FamilyPage : ContentPage
     InitializeComponent();
 
     FilterView.Initialize(
-      biologicalSexFormatter, _CancellationTokenProvider, _CurrentProjectProvider, _AlertService,
+      biologicalSexFormatter, 
+      _CancellationTokenProvider, 
+      _CurrentProjectProvider, 
+      _AlertService,
       () => [.. _Persons.AllItems]);
     FilterView.Changed += (_, _) => _Persons.Update();
   }
@@ -78,8 +81,6 @@ public partial class FamilyPage : ContentPage
   public ICommand PageCommand { get; init; }
 
   public NameFormat PersonNamesFormat => NameFormat.ShortPersonName;
-
-  private bool PersonMatches(FilteredObservableCollection<PersonInfo> _, PersonInfo person) => FilterView.Matches(person);
 
   public ICollection<PersonInfo> Persons
   {

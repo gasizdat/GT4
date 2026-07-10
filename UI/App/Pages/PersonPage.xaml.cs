@@ -69,7 +69,10 @@ public partial class PersonPage : ContentPage
     InitializeComponent();
 
     FilterView.Initialize(
-      biologicalSexFormatter, _CancellationTokenProvider, _CurrentProjectProvider, _AlertService,
+      biologicalSexFormatter, 
+      _CancellationTokenProvider, 
+      _CurrentProjectProvider, 
+      _AlertService,
       () => _AllRoots);
     FilterView.Changed += (_, _) => RefreshRelatives();
   }

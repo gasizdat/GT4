@@ -73,7 +73,10 @@ public partial class ProjectPage : ContentPage
     InitializeComponent();
 
     FilterView.Initialize(
-      biologicalSexFormatter, _CancellationTokenProvider, _CurrentProjectProvider, _AlertService,
+      biologicalSexFormatter, 
+      _CancellationTokenProvider, 
+      _CurrentProjectProvider, 
+      _AlertService,
       () => [.. _Families.AllItems.SelectMany(f => f.AllPersons).DistinctBy(p => p.Id)]);
     FilterView.Changed += (_, _) => UpdateFamilies();
   }
@@ -117,7 +120,7 @@ public partial class ProjectPage : ContentPage
         .ToList();
 
       var families = familyPersons
-        .Select(f => new FamilyInfoItem(f.Family, f.Persons, PersonMatches))
+        .Select(f => new FamilyInfoItem(f.Family, f.Persons, (_, person) => FilterView.Matches(person)))
         .OrderBy(item => item.Info, _NameComparer)
         .ToList();
 
@@ -138,8 +141,6 @@ public partial class ProjectPage : ContentPage
 
     _Families.Update();
   }
-
-  private bool PersonMatches(FilteredObservableCollection<PersonInfo> _, PersonInfo person) => FilterView.Matches(person);
 
   public string RemoveProjectToolbarItemName =>
     string.Format(UIStrings.MenuItemNameRemove_1, _CurrentProjectProvider.Info.Name);
