@@ -67,6 +67,12 @@ public partial class PersonPage : ContentPage
     InitializeComponent();
   }
 
+  protected ScrollView BodyScroll => BodyScrollView;
+
+  protected ImagePresenter PersonPhotoView => PersonPhoto;
+
+  protected CollectionView RelativesListView => RelativesView;
+
   public void ShowPersonInfo(Person person, bool addToNavigation)
   {
     ExpandAll = false;
@@ -208,7 +214,35 @@ public partial class PersonPage : ContentPage
         Biography: new GridLayout(Column: 0, ColumnSpan: 2, Row: 1, RowSpan: 1));
     }
     OnPropertyChanged(nameof(SmartLayout));
+    UpdatePersonPhotoStickyPosition();
   }
+
+  // In the wide (landscape) layout the photo and the relatives list share the same auto-sized grid
+  // row, which grows to fit however many relatives there are. Left alone, the photo scrolls away with
+  // the rest of that row as soon as the relatives list is taller than the viewport. Instead, pin the
+  // photo to the top of the viewport by counter-translating it with the scroll offset, but only up to
+  // the point where its bottom edge reaches the bottom of that shared row -- beyond that it scrolls
+  // away normally with the rest of the row, so it never escapes its own grid cell.
+  private void UpdatePersonPhotoStickyPosition(double scrollY = -1)
+  {
+    if (scrollY < 0)
+    {
+      scrollY = BodyScrollView.ScrollY;
+    }
+
+    if (_SmartLayout.Image.Row != _SmartLayout.Relatives.Row || PersonPhoto.Height <= 0 || RelativesView.Height <= 0)
+    {
+      PersonPhoto.TranslationY = 0;
+      return;
+    }
+
+    var maxTranslation = Math.Max(0, RelativesView.Height - PersonPhoto.Height);
+    PersonPhoto.TranslationY = Math.Clamp(scrollY, 0, maxTranslation);
+  }
+
+  private void OnBodyScrolled(object? sender, ScrolledEventArgs e) => UpdatePersonPhotoStickyPosition(e.ScrollY);
+
+  private void OnPersonPhotoOrRelativesSizeChanged(object? sender, EventArgs e) => UpdatePersonPhotoStickyPosition();
 
   private async Task GetPersonDataAsync(Person person, bool addToNavigation)
   {
@@ -310,12 +344,22 @@ public partial class PersonPage : ContentPage
 
   private void AddToNavigation(PersonInfo personInfo)
   {
+    var personInfoCopy = new PersonInfo(personInfo, names: personInfo.Names, mainPhoto: personInfo.MainPhoto);
+
+    // Re-showing the person already selected in history (e.g. after editing it) must update that
+    // entry in place; otherwise every edit/refresh of the current person pushes a duplicate.
+    if (_NavigationIndex >= 0 && _NavigationHistory[_NavigationIndex].Id == personInfoCopy.Id)
+    {
+      _NavigationHistory[_NavigationIndex] = personInfoCopy;
+      OnPropertyChanged(nameof(CurrentPerson));
+      return;
+    }
+
     var newIndex = _NavigationIndex + 1;
     while (newIndex < _NavigationHistory.Count)
     {
       _NavigationHistory.RemoveAt(newIndex);
     }
-    var personInfoCopy = new PersonInfo(personInfo, names: personInfo.Names, mainPhoto: personInfo.MainPhoto);
     _NavigationHistory.Add(personInfoCopy);
     CurrentPerson = personInfoCopy;
   }

@@ -153,6 +153,29 @@ public class PersonPageTests
   }
 
   [Fact]
+  public async Task EditPerson_does_not_duplicate_the_current_navigation_history_entry()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson();
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+
+    await using var window = await WindowHost.AttachAsync(page);
+    var commandTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("EditPerson"));
+    var dialog = await ModalDialogHarness.WaitForModalAsync<CreateOrUpdatePersonDialog>(page);
+
+    await WaitForLoadAsync(page, services, () =>
+    {
+      dialog.BirthDate = Date.Create(1990, 5, 1, DateStatus.WellKnown);
+      dialog.DialogCommand.Execute("CreatePersonCommand");
+    });
+    await commandTask;
+
+    Assert.Equal(1, page.NavigationHistory.Count);
+  }
+
+  [Fact]
   public async Task EditPerson_cancelled_dialog_does_not_update()
   {
     var services = new TestServices();
@@ -169,6 +192,69 @@ public class PersonPageTests
     await commandTask;
 
     services.PersonManager.Verify(p => p.UpdatePersonAsync(It.IsAny<PersonFullInfo>(), It.IsAny<CancellationToken>()), Times.Never());
+  }
+
+  [Fact]
+  public async Task Wide_layout_keeps_the_photo_within_the_relatives_row_while_scrolling()
+  {
+    var services = new TestServices();
+    var longBiography = new Data(
+      Id: 0,
+      Content: System.Text.Encoding.UTF8.GetBytes(string.Concat(Enumerable.Repeat("Line of biography text.\n", 80))),
+      MimeType: System.Net.Mime.MediaTypeNames.Text.Plain,
+      Category: default);
+    var person = CreateSamplePerson() with { Biography = longBiography };
+    var children = Enumerable.Range(2, 6)
+      .Select(id => new RelativeInfo(
+        id, Date.Create(2015, 1, 1, DateStatus.WellKnown), null, BiologicalSex.Male, [], null,
+        RelationshipType.Child, null, Generation.Child, Consanguinity.Zero))
+      .ToArray();
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    services.RelativesProvider.Setup(r => r.GetChildren(It.IsAny<RelativeInfo[]>())).Returns(children);
+    var page = await CreatePageAsync(services);
+    await using var window = await WindowHost.AttachAsync(page);
+    // Wide enough to land the landscape layout (photo left, relatives right, sharing one grid row).
+    // Forced again after attaching/loading: attaching to the real window can trigger its own
+    // OnSizeAllocated off the actual (narrower) test-runner window, overriding the forced one.
+    await MainThread.InvokeOnMainThreadAsync(() => page.ForceSizeAllocated(2000, 800));
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+    await MainThread.InvokeOnMainThreadAsync(() => page.ForceSizeAllocated(2000, 800));
+
+    await Poll.UntilAsync(
+      () => Task.FromResult(page.RelativesListForTest.Height),
+      height => height > page.PersonPhotoForTest.Height,
+      timeoutMessage: "The relatives row never grew taller than the photo.");
+    var maxTranslation = page.RelativesListForTest.Height - page.PersonPhotoForTest.Height;
+
+    // The native ScrollViewer occasionally isn't ready to honor ChangeView on the first call right
+    // after a layout pass (observed as ScrollToAsync silently not moving anything, CI-only so far) --
+    // re-issuing the scroll until it actually takes hold is more robust than trusting a single call.
+    async Task ScrollUntilAsync(double y, Func<double, bool> isReady, string timeoutMessage)
+    {
+      var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
+      while (true)
+      {
+        await MainThread.InvokeOnMainThreadAsync(() => page.BodyScrollForTest.ScrollToAsync(0, y, false));
+        try
+        {
+          await Poll.UntilAsync(
+            () => Task.FromResult(page.PersonPhotoForTest.TranslationY),
+            isReady,
+            timeout: TimeSpan.FromMilliseconds(500),
+            timeoutMessage: timeoutMessage);
+          return;
+        }
+        catch (TimeoutException) when (DateTime.UtcNow < deadline)
+        {
+        }
+      }
+    }
+
+    await ScrollUntilAsync(40, translation => translation >= 40, "The photo did not track a scroll within its row's bounds.");
+    Assert.Equal(40, page.PersonPhotoForTest.TranslationY);
+
+    await ScrollUntilAsync(100_000, translation => translation >= maxTranslation, "The photo did not stop at the bottom of its row once scrolled past it.");
+    Assert.Equal(maxTranslation, page.PersonPhotoForTest.TranslationY);
   }
 
   [Fact]
