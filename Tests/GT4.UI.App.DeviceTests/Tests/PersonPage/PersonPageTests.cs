@@ -258,10 +258,8 @@ public class PersonPageTests
       var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
       while (true)
       {
-        // Only issue the request; never await ScrollToAsync's own task. Its completion is signaled
-        // by the native scroll-finished callback, and when the ScrollViewer ignores ChangeView (the
-        // very quirk this loop retries around) that callback never fires -- awaiting it wedged whole
-        // CI runs, stalling right after the test preceding this one in run order reported its pass.
+        // Fire-and-forget: when ChangeView is ignored, ScrollToAsync's task never resolves, so
+        // awaiting it here would block the retry below from ever running.
         await MainThread.InvokeOnMainThreadAsync(() =>
         {
           _ = page.BodyScrollForTest.ScrollToAsync(0, y, false);
