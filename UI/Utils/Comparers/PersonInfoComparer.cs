@@ -8,7 +8,7 @@ public class PersonInfoComparer : IComparer<PersonInfo>
   private readonly INameFormatter _NameFormatter;
   private readonly NameFormat _NameFormat;
 
-  public PersonInfoComparer(INameFormatter nameFormatter, NameFormat nameFormat = NameFormat.CommonPersonName)
+  public PersonInfoComparer(INameFormatter nameFormatter, [ServiceKey] NameFormat nameFormat = NameFormat.CommonPersonName)
   {
     _NameFormatter = nameFormatter;
     _NameFormat = nameFormat;

@@ -11,8 +11,8 @@ internal class DateFormatter : IDateFormatter
   private readonly ISettingEditor _ShortDateFormatSetting;
 
   public DateFormatter(
-    [FromKeyedServices(nameof(FullDateFormatSetting))] ISettingEditor fullDateFormatSetting,
-    [FromKeyedServices(nameof(ShortDateFormatSetting))] ISettingEditor shortDateFormatSetting)
+    [FromKeyedServices(DateFormatKind.Full)] ISettingEditor fullDateFormatSetting,
+    [FromKeyedServices(DateFormatKind.Short)] ISettingEditor shortDateFormatSetting)
   {
     _FullDateFormatSetting = fullDateFormatSetting;
     _ShortDateFormatSetting = shortDateFormatSetting;
