@@ -33,20 +33,10 @@ public static class ServiceCollectionExtensions
       .AddKeyedSingleton<ISettingEditor, PersonNameSetting>(NameFormat.FullPersonName)
       .AddKeyedSingleton<ISettingEditor, PersonNameSetting>(NameFormat.PersonInitials)
       .AddKeyedSingleton<ISettingEditor, PersonNameSetting>(NameFormat.ShortPersonName)
-      .AddKeyedSingleton<IComparer<PersonInfo>>(NameFormat.CommonPersonName, PersonInfoComparerFactory)
-      .AddKeyedSingleton<IComparer<PersonInfo>>(NameFormat.FullPersonName, PersonInfoComparerFactory)
-      .AddKeyedSingleton<IComparer<PersonInfo>>(NameFormat.ShortPersonName, PersonInfoComparerFactory)
-      .AddKeyedSingleton<IComparer<PersonInfo>>(NameFormat.PersonInitials, PersonInfoComparerFactory)
+      .AddKeyedSingleton<IComparer<PersonInfo>, PersonInfoComparer>(NameFormat.CommonPersonName)
+      .AddKeyedSingleton<IComparer<PersonInfo>, PersonInfoComparer>(NameFormat.FullPersonName)
+      .AddKeyedSingleton<IComparer<PersonInfo>, PersonInfoComparer>(NameFormat.ShortPersonName)
+      .AddKeyedSingleton<IComparer<PersonInfo>, PersonInfoComparer>(NameFormat.PersonInitials)
       ;
   }
-
-  private static PersonInfoComparer PersonInfoComparerFactory(IServiceProvider serviceProvider, object? key)
-  {
-    var nameFormatter = serviceProvider.GetRequiredService<INameFormatter>();
-    var nameFormat = (NameFormat)(key ?? throw new ArgumentNullException(nameof(key)));
-    var ret = new PersonInfoComparer(nameFormatter, nameFormat);
-
-    return ret;
-  }
-
 }
