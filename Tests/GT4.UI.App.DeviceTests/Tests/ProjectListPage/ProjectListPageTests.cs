@@ -50,7 +50,7 @@ public class ProjectListPageTests
     services.ProjectList.Setup(p => p.GetItemsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(unsorted);
     var page = await CreatePageAsync(services);
 
-    await MainThread.InvokeOnMainThreadAsync(page.InvokeUpdateProjectList);
+    await MainThread.InvokeOnMainThreadAsync(page.InvokeUpdateProjectListAsync);
     var projects = await MainThread.InvokeOnMainThreadAsync(() => page.Projects.ToArray());
 
     Assert.Equal(["Aksakov", "Pushkin", "Tolstoy"], projects.Select(p => p.Name));

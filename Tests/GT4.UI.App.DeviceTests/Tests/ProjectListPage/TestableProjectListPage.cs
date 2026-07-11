@@ -34,5 +34,5 @@ internal sealed class TestableProjectListPage : ProjectListPage
 
   public Task InvokePageCommandAsync(object parameter) => OnPageCommand(parameter);
 
-  public void InvokeUpdateProjectList() => UpdateProjectList();
+  public Task InvokeUpdateProjectListAsync() => UpdateProjectList();
 }
