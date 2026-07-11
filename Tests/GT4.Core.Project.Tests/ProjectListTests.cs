@@ -2,6 +2,7 @@ using FluentAssertions;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using Moq;
 using Xunit;
 
 namespace GT4.Core.Project.Tests;
@@ -127,6 +128,23 @@ public sealed class ProjectListTests : IDisposable
 
     items.Should().ContainSingle();
     items[0].Name.Should().StartWith("Error:");
+  }
+
+  [Fact]
+  public async Task GetItems_FolderEnumerationFailure_Propagates()
+  {
+    // A failure enumerating the projects folder itself (as opposed to a single broken project file,
+    // which GetProjectInfoAsync already turns into an error entry) must not be swallowed into an
+    // empty list - the caller needs to know listing failed.
+    var fileSystem = new Mock<IFileSystem>(MockBehavior.Strict);
+    fileSystem
+      .Setup(fs => fs.GetFiles(_storage.ProjectsRoot, $"*.{ProjectList.ProjectExtension}", true))
+      .Throws(new IOException("disk unavailable"));
+    var list = new ProjectList(_storage, fileSystem.Object);
+
+    var act = () => list.GetItemsAsync(Token);
+
+    await act.Should().ThrowAsync<IOException>();
   }
 
   [Fact]
