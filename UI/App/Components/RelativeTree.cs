@@ -1,5 +1,6 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
+using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
 using GT4.UI.Resources;
 using System.Collections.ObjectModel;
@@ -86,14 +87,8 @@ public sealed class RelativeTree
     // Backend data is expected to be a DAG, but a corrupt GEDCOM import (or a bug upstream) can
     // still produce an actual relationship cycle -- a person listed as their own ancestor or
     // descendant. Without this guard, expanding such a person keeps re-inserting the same subtree
-    // forever. A person legitimately appearing twice via two different branches (e.g. cousin
-    // marriage sharing a great-grandparent) also hits this map; comparing Generation against the
-    // first sighting tells the two cases apart. Generation is a signed Parent(+1)/Child(-1) hop
-    // count, so it is path-independent for any internally consistent family graph -- it always
-    // comes out the same no matter which branch reached the person. Consanguinity is NOT
-    // path-independent (it also counts collateral/sideways distance), so an unequal-degree cousin
-    // marriage can legitimately give the same person two different Consanguinity values with zero
-    // contradiction in the data -- comparing it here would flag that as a false-positive Loop.
+    // forever. IsMultipleConnectionsOf tells that apart from a person legitimately appearing twice
+    // via two different branches (e.g. cousin marriage sharing a great-grandparent).
     var visitedIds = new Dictionary<int, RelativeInfo>();
 
     try
@@ -113,7 +108,7 @@ public sealed class RelativeTree
         if (!visitedIds.TryAdd(next.Relative.Id, next.Relative))
         {
           var earlierAddedRelative = visitedIds[next.Relative.Id];
-          if (earlierAddedRelative.Generation == next.Relative.Generation)
+          if (next.Relative.IsMultipleConnectionsOf(earlierAddedRelative))
           {
             await MainThread.InvokeOnMainThreadAsync(() =>
             {

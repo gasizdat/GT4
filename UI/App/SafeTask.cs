@@ -21,6 +21,10 @@ internal static class SafeTask
   public static Task RunOnMainThread(Action work, IAlertService alertService) =>
     MainThread.InvokeOnMainThreadAsync(() => Guard(work, alertService));
 
+  /// <summary>Runs async <paramref name="work"/> on the UI thread, guarding against the teardown race.</summary>
+  public static Task RunOnMainThread(Func<Task> work, IAlertService alertService) =>
+    MainThread.InvokeOnMainThreadAsync(() => GuardAsync(work, alertService));
+
   /// <summary>
   /// True when the exception is the benign "the project was closed underneath us" race rather than a
   /// genuine failure. Use it in <c>catch ... when</c> clauses to swallow teardown noise quietly.

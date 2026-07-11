@@ -42,7 +42,7 @@ internal partial class TablePersonData : TableBase, ITablePersonData
 
   private async Task<Data> AddDataContentIfNotExist(Data data, CancellationToken token)
   {
-    if (data.Id == NonCommittedId)
+    if (data.Id == ElementId.NonCommittedId)
     {
       return await Document.Data.AddDataAsync(data.Content, data.MimeType, data.Category, token);
     }

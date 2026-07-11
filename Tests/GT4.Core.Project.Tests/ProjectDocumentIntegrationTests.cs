@@ -44,10 +44,10 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   private static readonly Date Birth = Date.Create(19800101, DateStatus.WellKnown);
 
   private Task<Person> AddBarePersonAsync(BiologicalSex sex = BiologicalSex.Male) =>
-    _doc.Persons.AddPersonAsync(new Person(TableBase.NonCommittedId, Birth, null, sex), Token);
+    _doc.Persons.AddPersonAsync(new Person(ElementId.NonCommittedId, Birth, null, sex), Token);
 
   private static Data NewData(DataCategory category, params byte[] content) =>
-    new(TableBase.NonCommittedId, content, "application/octet-stream", category);
+    new(ElementId.NonCommittedId, content, "application/octet-stream", category);
 
   [Fact]
   public async Task Metadata_RoundTripsNameAndDescription()
@@ -244,7 +244,7 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   public async Task Persons_AddGetUpdateRemove_RoundTrip()
   {
     var person = await AddBarePersonAsync(BiologicalSex.Female);
-    person.Id.Should().NotBe(TableBase.NonCommittedId);
+    person.Id.Should().NotBe(ElementId.NonCommittedId);
 
     var fetched = await _doc.Persons.TryGetPersonByIdAsync(person.Id, Token);
     fetched.Should().NotBeNull();
@@ -289,7 +289,7 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
     };
 
     var added = await _doc.PersonManager.AddPersonAsync(toAdd, Token);
-    added.Id.Should().NotBe(TableBase.NonCommittedId);
+    added.Id.Should().NotBe(ElementId.NonCommittedId);
 
     var full = await _doc.PersonManager.GetPersonFullInfoAsync(new Person(added.Id, Birth, null, BiologicalSex.Male), Token);
     full.Names.Select(n => n.Value).Should().Contain("John");
@@ -301,7 +301,7 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   public async Task PersonManager_GetPersonFullInfo_ForNonCommitted_Throws()
   {
     var act = () => _doc.PersonManager.GetPersonFullInfoAsync(
-      new Person(TableBase.NonCommittedId, Birth, null, BiologicalSex.Male), Token);
+      new Person(ElementId.NonCommittedId, Birth, null, BiologicalSex.Male), Token);
 
     await act.Should().ThrowAsync<ArgumentException>();
   }

@@ -168,7 +168,7 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
   public async Task PersonFields_NameSexBirthDeathAndBio_RoundTrip()
   {
     var name = await _source.Names.AddNameAsync("Solo", NameType.FirstName, null, Token);
-    var bio = new Data(TableBase.NonCommittedId, Encoding.UTF8.GetBytes("A short life story."), "text/plain", DataCategory.PersonBio);
+    var bio = new Data(ElementId.NonCommittedId, Encoding.UTF8.GetBytes("A short life story."), "text/plain", DataCategory.PersonBio);
     var info = PersonFullInfo.Empty with
     {
       BirthDate = Date.Create(18500304, DateStatus.WellKnown),
@@ -229,9 +229,9 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
   public async Task Photos_RoundTripAsEmbeddedObje()
   {
     var name = await _source.Names.AddNameAsync("Foto", NameType.FirstName, null, Token);
-    var main = new Data(TableBase.NonCommittedId, Encoding.UTF8.GetBytes("MAIN-IMAGE-BYTES"), "image/jpeg", DataCategory.PersonMainPhoto);
-    var extraOne = new Data(TableBase.NonCommittedId, Encoding.UTF8.GetBytes("EXTRA-ONE"), "image/png", DataCategory.PersonPhoto);
-    var extraTwo = new Data(TableBase.NonCommittedId, Encoding.UTF8.GetBytes("EXTRA-TWO"), "image/bmp", DataCategory.PersonPhoto);
+    var main = new Data(ElementId.NonCommittedId, Encoding.UTF8.GetBytes("MAIN-IMAGE-BYTES"), "image/jpeg", DataCategory.PersonMainPhoto);
+    var extraOne = new Data(ElementId.NonCommittedId, Encoding.UTF8.GetBytes("EXTRA-ONE"), "image/png", DataCategory.PersonPhoto);
+    var extraTwo = new Data(ElementId.NonCommittedId, Encoding.UTF8.GetBytes("EXTRA-TWO"), "image/bmp", DataCategory.PersonPhoto);
     var info = PersonFullInfo.Empty with
     {
       BirthDate = Year(1900),
@@ -273,7 +273,7 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     var bytes = new byte[4096];
     new Random(42).NextBytes(bytes);
     var name = await _source.Names.AddNameAsync("Big", NameType.FirstName, null, Token);
-    var main = new Data(TableBase.NonCommittedId, bytes, "image/jpeg", DataCategory.PersonMainPhoto);
+    var main = new Data(ElementId.NonCommittedId, bytes, "image/jpeg", DataCategory.PersonMainPhoto);
     var info = PersonFullInfo.Empty with
     {
       BirthDate = Year(1900),
@@ -299,7 +299,7 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     // A picked file can carry no content type, so Data.MimeType is null. Export must not invent a format,
     // and import must give it back as null rather than fabricating one.
     var name = await _source.Names.AddNameAsync("NoMime", NameType.FirstName, null, Token);
-    var main = new Data(TableBase.NonCommittedId, Encoding.UTF8.GetBytes("BYTES"), null, DataCategory.PersonMainPhoto);
+    var main = new Data(ElementId.NonCommittedId, Encoding.UTF8.GetBytes("BYTES"), null, DataCategory.PersonMainPhoto);
     var info = PersonFullInfo.Empty with
     {
       BirthDate = Year(1900),

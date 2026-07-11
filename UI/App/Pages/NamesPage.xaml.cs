@@ -274,11 +274,11 @@ public partial class NamesPage : ContentPage
         };
 
         using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-        var names = _CurrentProjectProvider
+        var nameList = await _CurrentProjectProvider
           .Project
           .Names
-          .GetNamesByTypeAsync(CurrentNameType.Type | nameDeclension, token)
-          .Result
+          .GetNamesByTypeAsync(CurrentNameType.Type | nameDeclension, token);
+        var names = nameList
           .OrderBy(name => name, _NameComparer)
           .ToArray();
 

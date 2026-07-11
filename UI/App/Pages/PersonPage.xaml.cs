@@ -290,7 +290,7 @@ public partial class PersonPage : ContentPage
         }
 
         using var readResourceToken = _CancellationTokenProvider.CreateShortOperationCancellationToken();
-        var defaultImageResourceName = GetDefaultImageResourceName(personFullInfo.BiologicalSex);
+        var defaultImageResourceName = ImageUtils.DefaultPhotoResourceName(personFullInfo.BiologicalSex);
         var defaultPhoto = await ImageUtils.ToBytesAsync(defaultImageResourceName, readResourceToken) ?? [];
         photos = [defaultPhoto];
       }
@@ -477,12 +477,4 @@ public partial class PersonPage : ContentPage
 
     PersonInfo = info;
   }
-
-  private static string GetDefaultImageResourceName(BiologicalSex biologicalSex) =>
-    biologicalSex switch
-    {
-      BiologicalSex.Male => "male_stub.png",
-      BiologicalSex.Female => "female_stub.png",
-      _ => "project_icon.png"
-    };
 }

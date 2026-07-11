@@ -1,9 +1,17 @@
-﻿using Microsoft.Maui.Graphics.Platform;
+﻿using GT4.Core.Project.Dto;
+using Microsoft.Maui.Graphics.Platform;
 
 namespace GT4.UI.Utils;
 
 public static class ImageUtils
 {
+  public static string DefaultPhotoResourceName(BiologicalSex biologicalSex) => biologicalSex switch
+  {
+    BiologicalSex.Male => "male_stub.png",
+    BiologicalSex.Female => "female_stub.png",
+    _ => "project_icon.png",
+  };
+
   private static readonly byte[] TransparentPng =
   {
     0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,

@@ -371,7 +371,7 @@ internal sealed class GedcomImporter : IGedcomImporter
   private static Data ToResidueData(IEnumerable<GedcomNode> roots)
   {
     var content = Encoding.UTF8.GetBytes(SerializeRoots(roots));
-    return new Data(TableBase.NonCommittedId, content, ResidueMimeType, DataCategory.PersonGedcomTags);
+    return new Data(ElementId.NonCommittedId, content, ResidueMimeType, DataCategory.PersonGedcomTags);
   }
 
   private static string SerializeRoots(IEnumerable<GedcomNode> roots) => string.Concat(roots.Select(Serialize));
@@ -482,10 +482,10 @@ internal sealed class GedcomImporter : IGedcomImporter
       return (null, []);
 
     var mainPhoto = photos.FirstOrDefault(p => p.Primary) ?? photos[0];
-    var main = new Data(TableBase.NonCommittedId, mainPhoto.Content, mainPhoto.MimeType, DataCategory.PersonMainPhoto);
+    var main = new Data(ElementId.NonCommittedId, mainPhoto.Content, mainPhoto.MimeType, DataCategory.PersonMainPhoto);
     var additional = photos
       .Where(p => !ReferenceEquals(p, mainPhoto))
-      .Select(p => new Data(TableBase.NonCommittedId, p.Content, p.MimeType, DataCategory.PersonPhoto))
+      .Select(p => new Data(ElementId.NonCommittedId, p.Content, p.MimeType, DataCategory.PersonPhoto))
       .ToArray();
     return (main, additional);
   }
@@ -644,7 +644,7 @@ internal sealed class GedcomImporter : IGedcomImporter
       return null;
 
     var content = Encoding.UTF8.GetBytes(text);
-    return new Data(TableBase.NonCommittedId, content, "text/plain", DataCategory.PersonBio);
+    return new Data(ElementId.NonCommittedId, content, "text/plain", DataCategory.PersonBio);
   }
 
   private static string? ResolveNote(string? value, IReadOnlyDictionary<string, string?> notesByXref)

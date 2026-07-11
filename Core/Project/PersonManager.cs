@@ -36,7 +36,7 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
 
   public async Task<PersonFullInfo> GetPersonFullInfoAsync(Person person, CancellationToken token)
   {
-    if (person.Id == NonCommittedId)
+    if (person.Id == ElementId.NonCommittedId)
     {
       throw new ArgumentException("person is not committed");
     }

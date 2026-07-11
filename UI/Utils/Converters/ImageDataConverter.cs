@@ -13,7 +13,7 @@ public class ImageDataConverter : IDataConverter
     var content = image is null ? null : await ImageUtils.ToBytesAsync(image, token);
 
     return content is null ? null : new Data(
-      Id: TableBase.NonCommittedId,
+      Id: ElementId.NonCommittedId,
       Content: content,
       MimeType: MimeTypeBmp,
       Category: default);
