@@ -60,7 +60,7 @@ public record class PersonFullInfo(
   }
 
   public static readonly PersonFullInfo Empty = new PersonFullInfo(
-    Id: TableBase.NonCommittedId,
+    Id: NonCommittedId,
     BirthDate: Date.Now,
     DeathDate: null,
     BiologicalSex: default,
