@@ -24,7 +24,7 @@ public partial class App : Application
   public App(
     ICancellationTokenProvider cancellationTokenProvider,
     ICurrentProjectProvider currentProjectProvider,
-    [FromKeyedServices("FontScaleSetting")]
+    [FromKeyedServices(SettingKeys.FontScale)]
     ISettingEditor? fontScaleSetting,
     FontScale fontScale,
     [FromKeyedServices(WellKnownActiveConfigurations.AppConfig)]
