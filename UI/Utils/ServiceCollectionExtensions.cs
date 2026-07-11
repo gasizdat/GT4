@@ -26,7 +26,7 @@ public static class ServiceCollectionExtensions
       .AddKeyedSingleton<IDataConverter, ImageDataConverter>(DataCategory.PersonPhoto)
       .AddKeyedSingleton<IDataConverter, ImageDataConverter>(DataCategory.PersonMainPhoto)
       .AddKeyedSingleton<IDataConverter, TextDataConverter>(DataCategory.PersonBio)
-      .AddKeyedSingleton<ISettingEditor, FontScaleSetting>(nameof(FontScaleSetting))
+      .AddKeyedSingleton<ISettingEditor, FontScaleSetting>(SettingKeys.FontScale)
       .AddKeyedSingleton<ISettingEditor, FullDateFormatSetting>(nameof(FullDateFormatSetting))
       .AddKeyedSingleton<ISettingEditor, ShortDateFormatSetting>(nameof(ShortDateFormatSetting))
       .AddKeyedSingleton<ISettingEditor, CommonPersonNameSetting>(NameFormat.CommonPersonName)
