@@ -30,19 +30,22 @@ internal sealed class PersonNameSetting : ISettingEditor
   public PersonNameSetting(
     IServiceProvider serviceProvider,
     IConfiguration configuration,
+    [FromKeyedServices(WellKnownActiveConfigurations.AppConfig)]
     IInteractiveConfiguration? interactiveConfiguration,
-    NameFormat nameFormat,
-    string formatSection,
-    string defaultFormat,
-    string displayName)
+    [ServiceKey] NameFormat nameFormat)
   {
     _ServiceProvider = serviceProvider;
     _Configuration = configuration;
     _InteractiveConfiguration = interactiveConfiguration;
     _NameFormat = nameFormat;
-    _FormatSection = formatSection;
-    _DefaultFormat = defaultFormat;
-    DisplayName = displayName;
+    (_FormatSection, _DefaultFormat, DisplayName) = nameFormat switch
+    {
+      NameFormat.CommonPersonName => ("NameFormatter.CommonPersonName", "FF PP LL", UIStrings.FieldCommonPersonNameFormat),
+      NameFormat.FullPersonName => ("NameFormatter.FullPersonName", "FF PP LL (FN)", UIStrings.FieldFullPersonNameFormat),
+      NameFormat.PersonInitials => ("NameFormatter.PersonInitialsSetting", "LL FF. PP.", UIStrings.FieldPersonInitialsFormat),
+      NameFormat.ShortPersonName => ("NameFormatter.ShortPersonNameSetting", "FF PP", UIStrings.ShortPersonNameFormat),
+      _ => throw new ArgumentOutOfRangeException(nameof(nameFormat), nameFormat, null)
+    };
   }
 
   public string DisplayName { get; }

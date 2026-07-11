@@ -25,11 +25,7 @@ public class DateFormatSettingTests
       sp?.Object ?? new Mock<IServiceProvider>().Object,
       config.Object,
       interactive?.Object,
-      "DateFormatter.FullDateFormat",
-      "DD MM YYYY",
-      displayName: "Display",
-      description: "Description",
-      exampleDate: Date.Now);
+      DateFormatKind.Full);
   }
 
   private static DateFormatSetting MakeShort(
@@ -43,11 +39,7 @@ public class DateFormatSettingTests
       sp?.Object ?? new Mock<IServiceProvider>().Object,
       config.Object,
       interactive?.Object,
-      "DateFormatter.ShortDateFormat",
-      "MM YYYY",
-      displayName: "Display",
-      description: "Description",
-      exampleDate: Date.Now with { Status = DateStatus.DayUnknown });
+      DateFormatKind.Short);
   }
 
   [Fact]

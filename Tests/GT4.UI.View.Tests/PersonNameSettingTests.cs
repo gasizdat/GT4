@@ -30,10 +30,7 @@ public class PersonNameSettingTests
       sp?.Object ?? new Mock<IServiceProvider>().Object,
       config.Object,
       interactive?.Object,
-      nameFormat,
-      formatSection,
-      defaultFormat,
-      displayName: "Display");
+      nameFormat);
   }
 
   [Theory]

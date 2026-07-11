@@ -1,4 +1,5 @@
 using GT4.Core.Utils;
+using GT4.UI.Resources;
 using GT4.UI.Utils.Formatters;
 using Microsoft.Extensions.Configuration;
 
@@ -16,21 +17,29 @@ internal sealed class DateFormatSetting : ISettingEditor
   public DateFormatSetting(
     IServiceProvider serviceProvider,
     IConfiguration configuration,
+    [FromKeyedServices(WellKnownActiveConfigurations.AppConfig)]
     IInteractiveConfiguration? interactiveConfiguration,
-    string formatSection,
-    string defaultFormat,
-    string displayName,
-    string description,
-    Date exampleDate)
+    [ServiceKey] DateFormatKind kind)
   {
     _ServiceProvider = serviceProvider;
     _Configuration = configuration;
     _InteractiveConfiguration = interactiveConfiguration;
-    _FormatSection = formatSection;
-    _DefaultFormat = defaultFormat;
-    DisplayName = displayName;
-    Description = description;
-    _ExampleDate = exampleDate;
+    (_FormatSection, _DefaultFormat, DisplayName, Description, _ExampleDate) = kind switch
+    {
+      DateFormatKind.Full => (
+        "DateFormatter.FullDateFormat", 
+        "DD MM YYYY",
+        UIStrings.FieldDateDisplayFormat, 
+        UIStrings.FieldDateDisplayFormatHint,
+        Date.Now),
+      DateFormatKind.Short => (
+        "DateFormatter.ShortDateFormat", 
+        "MM YYYY",
+        UIStrings.FieldShortDateDisplayFormat, 
+        UIStrings.FieldShortDateDisplayFormatHint,
+        Date.Now with { Status = DateStatus.DayUnknown }),
+      _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
+    };
   }
 
   public string Group => nameof(DateFormatter);

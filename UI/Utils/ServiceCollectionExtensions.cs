@@ -4,8 +4,6 @@ using GT4.UI.Utils.Comparers;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
 using GT4.UI.Utils.Settings;
-using GT4.UI.Resources;
-using Microsoft.Extensions.Configuration;
 
 namespace GT4.UI.Utils;
 
@@ -29,19 +27,12 @@ public static class ServiceCollectionExtensions
       .AddKeyedSingleton<IDataConverter, ImageDataConverter>(DataCategory.PersonMainPhoto)
       .AddKeyedSingleton<IDataConverter, TextDataConverter>(DataCategory.PersonBio)
       .AddKeyedSingleton<ISettingEditor, FontScaleSetting>(nameof(FontScaleSetting))
-      .AddKeyedSingleton<ISettingEditor>(DateFormatKind.Full, (sp, _) => DateFormatSettingFactory(
-        sp, "DateFormatter.FullDateFormat", "DD MM YYYY", UIStrings.FieldDateDisplayFormat, UIStrings.FieldDateDisplayFormatHint, Date.Now))
-      .AddKeyedSingleton<ISettingEditor>(DateFormatKind.Short, (sp, _) => DateFormatSettingFactory(
-        sp, "DateFormatter.ShortDateFormat", "MM YYYY", UIStrings.FieldShortDateDisplayFormat, UIStrings.FieldShortDateDisplayFormatHint,
-        Date.Now with { Status = DateStatus.DayUnknown }))
-      .AddKeyedSingleton<ISettingEditor>(NameFormat.CommonPersonName, (sp, _) => PersonNameSettingFactory(
-        sp, NameFormat.CommonPersonName, "NameFormatter.CommonPersonName", "FF PP LL", UIStrings.FieldCommonPersonNameFormat))
-      .AddKeyedSingleton<ISettingEditor>(NameFormat.FullPersonName, (sp, _) => PersonNameSettingFactory(
-        sp, NameFormat.FullPersonName, "NameFormatter.FullPersonName", "FF PP LL (FN)", UIStrings.FieldFullPersonNameFormat))
-      .AddKeyedSingleton<ISettingEditor>(NameFormat.PersonInitials, (sp, _) => PersonNameSettingFactory(
-        sp, NameFormat.PersonInitials, "NameFormatter.PersonInitialsSetting", "LL FF. PP.", UIStrings.FieldPersonInitialsFormat))
-      .AddKeyedSingleton<ISettingEditor>(NameFormat.ShortPersonName, (sp, _) => PersonNameSettingFactory(
-        sp, NameFormat.ShortPersonName, "NameFormatter.ShortPersonNameSetting", "FF PP", UIStrings.ShortPersonNameFormat))
+      .AddKeyedSingleton<ISettingEditor, DateFormatSetting>(DateFormatKind.Full)
+      .AddKeyedSingleton<ISettingEditor, DateFormatSetting>(DateFormatKind.Short)
+      .AddKeyedSingleton<ISettingEditor, PersonNameSetting>(NameFormat.CommonPersonName)
+      .AddKeyedSingleton<ISettingEditor, PersonNameSetting>(NameFormat.FullPersonName)
+      .AddKeyedSingleton<ISettingEditor, PersonNameSetting>(NameFormat.PersonInitials)
+      .AddKeyedSingleton<ISettingEditor, PersonNameSetting>(NameFormat.ShortPersonName)
       .AddKeyedSingleton<IComparer<PersonInfo>>(NameFormat.CommonPersonName, PersonInfoComparerFactory)
       .AddKeyedSingleton<IComparer<PersonInfo>>(NameFormat.FullPersonName, PersonInfoComparerFactory)
       .AddKeyedSingleton<IComparer<PersonInfo>>(NameFormat.ShortPersonName, PersonInfoComparerFactory)
@@ -58,21 +49,4 @@ public static class ServiceCollectionExtensions
     return ret;
   }
 
-  private static PersonNameSetting PersonNameSettingFactory(
-    IServiceProvider serviceProvider, NameFormat nameFormat, string formatSection, string defaultFormat, string displayName)
-  {
-    var configuration = serviceProvider.GetRequiredService<IConfiguration>();
-    var interactiveConfiguration = serviceProvider.GetKeyedService<IInteractiveConfiguration>(WellKnownActiveConfigurations.AppConfig);
-
-    return new PersonNameSetting(serviceProvider, configuration, interactiveConfiguration, nameFormat, formatSection, defaultFormat, displayName);
-  }
-
-  private static DateFormatSetting DateFormatSettingFactory(
-    IServiceProvider serviceProvider, string formatSection, string defaultFormat, string displayName, string description, Date exampleDate)
-  {
-    var configuration = serviceProvider.GetRequiredService<IConfiguration>();
-    var interactiveConfiguration = serviceProvider.GetKeyedService<IInteractiveConfiguration>(WellKnownActiveConfigurations.AppConfig);
-
-    return new DateFormatSetting(serviceProvider, configuration, interactiveConfiguration, formatSection, defaultFormat, displayName, description, exampleDate);
-  }
 }
