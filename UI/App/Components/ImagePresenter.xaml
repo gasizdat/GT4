@@ -38,5 +38,15 @@
         Opacity="0.2"
         Source="right_row.png"
         VerticalOptions="Center" />
+    <Label
+        BackgroundColor="#80000000"
+        HorizontalOptions="Fill"
+        HorizontalTextAlignment="Center"
+        InputTransparent="True"
+        IsVisible="{Binding ShowCurrentCaption, Source={x:Reference Root}}"
+        Padding="6,3"
+        Text="{Binding CurrentCaption, Source={x:Reference Root}}"
+        TextColor="White"
+        VerticalOptions="End" />
   </Grid>
 </ContentView>

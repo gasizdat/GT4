@@ -265,6 +265,43 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task TaggedPhoto_TitleSurvivesExportThenReimportThenReexport()
+  {
+    var name = await _source.Names.AddNameAsync("Tagged", NameType.FirstName, null, Token);
+    var residual = new GedcomNode { Tag = "OBJE" };
+    residual.Add(new GedcomNode { Tag = "TITL", Value = "Louis XIII par Rubens" });
+    var imageBytes = Encoding.UTF8.GetBytes("PORTRAIT-BYTES");
+    var content = GedcomPhotoResidue.Encode(imageBytes, residual);
+    var main = new Data(ElementId.NonCommittedId, content, "image/jpeg", DataCategory.PersonMainPhotoTagged);
+    var info = PersonFullInfo.Empty with
+    {
+      BirthDate = Year(1900),
+      Names = [name],
+      MainPhoto = main,
+    };
+    await _source.PersonManager.AddPersonAsync(info, Token);
+
+    var text = await ExportToTextAsync(_source);
+    text.Should().Contain("2 TITL Louis XIII par Rubens");
+    text.Should().Contain(Convert.ToBase64String(imageBytes));
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+
+    var person = (await reimported.Persons.GetPersonsAsync(Token)).Single();
+    var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, Token);
+
+    full.MainPhoto.Should().NotBeNull();
+    full.MainPhoto!.Category.Should().Be(DataCategory.PersonMainPhotoTagged);
+    GedcomPhotoResidue.ExtractImageBytes(full.MainPhoto.Content).Should().Equal(imageBytes);
+    (await GedcomPhotoResidue.ExtractTitleAsync(full.MainPhoto, Token)).Should().Be("Louis XIII par Rubens");
+
+    // A second export/reimport hop must still carry the title -- proves this isn't a one-shot fluke.
+    var reexportedText = await ExportToTextAsync(reimported);
+    reexportedText.Should().Contain("2 TITL Louis XIII par Rubens");
+  }
+
+  [Fact]
   public async Task Photo_LargePayloadChunksAcrossConcLinesAndRoundTrips()
   {
     // A real photo is multi-KB, so its base64 always exceeds the writer's per-line cap and is split across

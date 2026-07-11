@@ -1,5 +1,6 @@
 using GT4.Core.Project;
 using GT4.Core.Project.Dto;
+using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
 using GT4.UI.Utils.Converters;
 using System.ComponentModel;
@@ -83,12 +84,19 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
 
   public async Task<Data?> ToDataAsync()
   {
+    // Unmodified items are returned as-is: reconverting them would be a needless (and, for an
+    // image, lossy) round-trip, and for a tagged photo it would regenerate Content as plain bytes
+    // while Category still says tagged -- the exact desync that breaks the next load.
+    if (!_IsModified)
+      return Info;
+
     using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
     var ret = await _DataConverter.FromObjectAsync(_Content, token);
     if (ret is not null)
     {
-      var id = _IsModified ? ElementId.NonCommittedId : Info.Id;
-      ret = ret with { Id = id, Category = Info.Category };
+      // A freshly picked/replaced photo can never carry the old photo's tags, so a genuine
+      // modification must downgrade a tagged category to plain (a no-op for non-photo categories).
+      ret = ret with { Id = ElementId.NonCommittedId, Category = Info.Category.AsPlainPhoto() };
     }
 
     return ret;

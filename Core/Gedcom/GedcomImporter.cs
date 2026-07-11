@@ -2,6 +2,7 @@ using GT4.Core.Gedcom.Abstraction;
 using GT4.Core.Project;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
+using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
 using System.Text;
 
@@ -421,7 +422,14 @@ internal sealed class GedcomImporter : IGedcomImporter
   // A photo materialized once from an OBJE: an embedded BLOB decoded, or an external image FILE read off
   // disk. Holding the bytes here means the "can this load?" decision is made at selection time, so an OBJE
   // whose bytes cannot be obtained is simply absent from the set and falls through to residue.
-  private sealed record PhotoCandidate(GedcomNode Node, byte[] Content, string? MimeType, bool Primary);
+  // Residual is the OBJE's own unmodeled children (chiefly TITL), computed per-node rather than through
+  // the shared OwnedTagModeledChildren/consumedOwned machinery: that machinery assumes one occurrence per
+  // tag, but a person can have several OBJEs, each needing its own distinct residual tags preserved.
+  private sealed record PhotoCandidate(GedcomNode Node, byte[] Content, string? MimeType, bool Primary, GedcomNode? Residual);
+
+  // The OBJE sub-tags TryReadPhoto already reads; anything else (chiefly TITL) is residual.
+  private static readonly HashSet<string> ObjeModeledChildren =
+    [GedcomTags.Form, GedcomTags.Primary, GedcomTags.Blob, GedcomTags.File];
 
   /// <summary>
   /// The direct INDI <c>OBJE</c> photos GT4 can load, materialized to bytes in document order: an embedded
@@ -442,13 +450,15 @@ internal sealed class GedcomImporter : IGedcomImporter
     if (obje.Tag != GedcomTags.Object)
       return null;
 
+    var residual = ResidualNode(obje, ObjeModeledChildren);
+
     if (IsEmbeddedPhoto(obje))
     {
       try
       {
         var blob = Convert.FromBase64String(obje.ChildValue(GedcomTags.Blob)!);
         var mimeType = GedcomMedia.ToMimeType(obje.ChildValue(GedcomTags.Form));
-        return new PhotoCandidate(obje, blob, mimeType, IsPrimary(obje));
+        return new PhotoCandidate(obje, blob, mimeType, IsPrimary(obje), residual);
       }
       catch (FormatException)
       {
@@ -464,7 +474,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     {
       var content = System.IO.File.ReadAllBytes(path);
       var mime = GedcomMedia.ToMimeType(MediaForm(obje));
-      return new PhotoCandidate(obje, content, mime, IsPrimary(obje));
+      return new PhotoCandidate(obje, content, mime, IsPrimary(obje), residual);
     }
     catch (Exception e) when (e is IOException or UnauthorizedAccessException)
     {
@@ -482,12 +492,21 @@ internal sealed class GedcomImporter : IGedcomImporter
       return (null, []);
 
     var mainPhoto = photos.FirstOrDefault(p => p.Primary) ?? photos[0];
-    var main = new Data(ElementId.NonCommittedId, mainPhoto.Content, mainPhoto.MimeType, DataCategory.PersonMainPhoto);
+    var main = BuildPhotoData(mainPhoto, DataCategory.PersonMainPhoto);
     var additional = photos
       .Where(p => !ReferenceEquals(p, mainPhoto))
-      .Select(p => new Data(ElementId.NonCommittedId, p.Content, p.MimeType, DataCategory.PersonPhoto))
+      .Select(p => BuildPhotoData(p, DataCategory.PersonPhoto))
       .ToArray();
     return (main, additional);
+  }
+
+  private static Data BuildPhotoData(PhotoCandidate candidate, DataCategory plainCategory)
+  {
+    if (candidate.Residual is null)
+      return new Data(ElementId.NonCommittedId, candidate.Content, candidate.MimeType, plainCategory);
+
+    var content = GedcomPhotoResidue.Encode(candidate.Content, candidate.Residual);
+    return new Data(ElementId.NonCommittedId, content, candidate.MimeType, plainCategory.AsTaggedPhoto());
   }
 
   private static bool IsEmbeddedPhoto(GedcomNode node) =>

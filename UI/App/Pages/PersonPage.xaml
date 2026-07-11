@@ -234,6 +234,7 @@
               Grid.Column="{Binding Path=SmartLayout.Image.Column, Source={x:Reference Root}}"
               Grid.ColumnSpan="{Binding Path=SmartLayout.Image.ColumnSpan, Source={x:Reference Root}}"
               Margin="{Thickness Right={StaticResource PageContentSpacing}}"
+              Captions="{Binding Captions, Source={x:Reference Root}}"
               ImageSources="{Binding Photos, Source={x:Reference Root}}"
               ImageStyle="{StaticResource PhotoStyle}"
               SizeChanged="OnPersonPhotoOrRelativesSizeChanged"

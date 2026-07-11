@@ -294,6 +294,37 @@ public sealed class GedcomMergeImportTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task Matching_ExistingPhoto_IncomingTitledPortrait_StillFallsThroughToResidue()
+  {
+    // Same boundary as Matching_ExistingPhoto_PreservesIncomingPortraitAsResidue, but the incoming OBJE
+    // also carries a TITL: since the person already has a photo, the whole OBJE (TITL included) is
+    // preserved verbatim as residue -- it must not be treated as a tagged photo, because it was never
+    // consumed as a photo at all.
+    var firstBlob = Convert.ToBase64String(Encoding.UTF8.GetBytes("first-image"));
+    var first =
+      "0 @I1@ INDI\n1 NAME John /Smith/\n1 SEX M\n1 BIRT\n2 DATE 1 JAN 1850\n" +
+      $"1 OBJE\n2 FORM jpeg\n2 _PRIM Y\n2 BLOB {firstBlob}\n";
+    await using var document = await NewDocumentAsync();
+    await ImportAsync(document, Doc(first));
+
+    var secondBlob = Convert.ToBase64String(Encoding.UTF8.GetBytes("second-image"));
+    var second =
+      "0 @I1@ INDI\n1 NAME John /Smith/\n1 SEX M\n1 BIRT\n2 DATE 1 JAN 1850\n" +
+      $"1 OBJE\n2 TITL A second portrait\n2 FORM jpeg\n2 BLOB {secondBlob}\n";
+    await ImportAsync(document, Doc(second));
+
+    var infos = await PersonInfosAsync(document);
+    infos.Should().HaveCount(1);
+
+    var full = await document.PersonManager.GetPersonFullInfoAsync(infos.Single(), Token);
+    full.MainPhoto!.Category.Should().Be(DataCategory.PersonMainPhoto, "the original untitled photo is untouched");
+    Encoding.UTF8.GetString(full.MainPhoto.Content).Should().Be("first-image");
+    full.GedcomData.Should().NotBeNull();
+    var blob = Encoding.UTF8.GetString(full.GedcomData!.Content);
+    blob.Should().Contain("TITL A second portrait").And.Contain(secondBlob);
+  }
+
+  [Fact]
   public async Task Matching_ExistingPhotoAndResidue_FoldsIncomingPortraitAndTagsIntoBlob()
   {
     // John already has a photo and a residue blob. A second file brings a new portrait, the same OCCU and a

@@ -36,6 +36,18 @@ public class PersonPageTests
   private static Task WaitForLoadAsync(TestablePersonPage page, TestServices services, Action interact) =>
     LoadWait.UntilAsync(() => page.CompletedLoads, services, interact, "Person");
 
+  // Matches the [4-byte tag-length][UTF-8 GEDCOM tag text][image bytes] layout GedcomPhotoResidue
+  // encodes; hand-built here since Encode itself isn't visible outside Core.Gedcom.
+  private static byte[] BuildTaggedPhotoContent(string tagText, byte[] imageBytes)
+  {
+    var tagBytes = System.Text.Encoding.UTF8.GetBytes(tagText);
+    using var buffer = new MemoryStream();
+    buffer.Write(BitConverter.GetBytes(tagBytes.Length));
+    buffer.Write(tagBytes);
+    buffer.Write(imageBytes);
+    return buffer.ToArray();
+  }
+
   [Fact]
   public async Task Ctor_resolves_dependencies_and_defaults()
   {
@@ -60,6 +72,25 @@ public class PersonPageTests
 
     Assert.Equal(person.Id, page.PersonFullInfo.Id);
     Assert.NotEmpty(page.Photos);
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+  }
+
+  [Fact]
+  public async Task Loading_a_person_with_a_tagged_main_photo_surfaces_its_caption()
+  {
+    var services = new TestServices();
+    var content = BuildTaggedPhotoContent("0 OBJE\n1 TITL A caption\n", [1, 2, 3]);
+    var mainPhoto = new Data(10, content, "image/png", DataCategory.PersonMainPhotoTagged);
+    var person = CreateSamplePerson() with { MainPhoto = mainPhoto };
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+
+    Assert.Single(page.Photos);
+    Assert.Equal("A caption", Assert.Single(page.Captions));
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
 

@@ -142,6 +142,32 @@ public class CreateOrUpdatePersonDialogTests
   }
 
   [Fact]
+  public async Task SaveCommand_UntouchedTaggedMainPhoto_SurvivesByteForByte()
+  {
+    // Guards the _IsModified short-circuit in PersonDataItem.ToDataAsync + the .AsMainPhoto() fix in
+    // OnCreatePersonCommandAsync: saving without touching photos must not reconvert (which would
+    // silently regenerate Content as plain bytes) or collapse the category to plain.
+    var services = new TestServices();
+    var taggedPhoto = new Data(20, Content: [7, 7, 7], MimeType: "image/png", Category: DataCategory.PersonMainPhotoTagged);
+    var person = CreateSamplePerson() with { MainPhoto = taggedPhoto, AdditionalPhotos = [] };
+    var dialog = await CreateDialogAsync(services, person);
+
+    // Save is a no-op (treated as Cancel) unless something was modified; mark the dialog dirty via an
+    // unrelated field (re-picking the same sex) without touching any photo.
+    await MainThread.InvokeOnMainThreadAsync(() =>
+      dialog.BioSex = dialog.BiologicalSexes.Single(s => s.Info == BiologicalSex.Male));
+
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.DialogCommand.Execute("CreatePersonCommand"));
+    var saved = await dialog.Info;
+
+    Assert.NotNull(saved);
+    Assert.NotNull(saved.MainPhoto);
+    Assert.Equal(DataCategory.PersonMainPhotoTagged, saved.MainPhoto.Category);
+    Assert.Equal(taggedPhoto.Content, saved.MainPhoto.Content);
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+  }
+
+  [Fact]
   public async Task MovePhotoToRightCommand_on_the_last_item_reports_the_bounds_error()
   {
     var services = new TestServices();

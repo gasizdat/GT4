@@ -1,3 +1,4 @@
+using GT4.Core.Gedcom;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
@@ -32,6 +33,7 @@ public partial class PersonPage : ContentPage
   private int _NavigationIndex = -1;
   private PersonFullInfo _PersonFullInfo = PersonFullInfo.Empty;
   private ImageSource[] _Photos = [];
+  private string?[] _Captions = [];
   private string _Biography = string.Empty;
   private PersonPageSmartLayout _SmartLayout = new();
   private bool _ExpandAll = false;
@@ -162,6 +164,8 @@ public partial class PersonPage : ContentPage
 
   public ImageSource[] Photos => _Photos;
 
+  public string?[] Captions => _Captions;
+
   public PersonFullInfo PersonFullInfo => _PersonFullInfo;
 
   public PersonInfo PersonInfo
@@ -281,6 +285,7 @@ public partial class PersonPage : ContentPage
       var roots = AssembleRoots(personFullInfo, parents, siblings, stepChildren, relativesProvider);
 
       ImageSource[] photos;
+      string?[] captions;
 
       if (personFullInfo.MainPhoto is null)
       {
@@ -293,20 +298,25 @@ public partial class PersonPage : ContentPage
         var defaultImageResourceName = ImageUtils.DefaultPhotoResourceName(personFullInfo.BiologicalSex);
         var defaultPhoto = await ImageUtils.ToBytesAsync(defaultImageResourceName, readResourceToken) ?? [];
         photos = [ImageUtils.ImageFromBytes(defaultPhoto)];
+        captions = [null];
       }
       else
       {
         Data[] photoData = [personFullInfo.MainPhoto, ..personFullInfo.AdditionalPhotos];
         var defaultImageResourceName = ImageUtils.DefaultPhotoResourceName(personFullInfo.BiologicalSex);
         var fallback = ImageUtils.ImageFromRawResource(defaultImageResourceName);
-        photos = await Task.WhenAll(photoData.Select(data =>
+        var photosTask = Task.WhenAll(photoData.Select(data =>
           ImageUtils.ResolvePhotoAsync(_ServiceProvider, data, fallback, token)));
+        var captionsTask = Task.WhenAll(photoData.Select(data => GedcomPhotoResidue.ExtractTitleAsync(data, token)));
+        await Task.WhenAll(photosTask, captionsTask);
+        photos = photosTask.Result;
+        captions = captionsTask.Result;
       }
       // UpdateUI touches the project document again on the UI thread; SafeTask.RunOnMainThread keeps
       // an escaped exception (e.g. the project closed while backgrounding) from going unobserved.
       _ = SafeTask.RunOnMainThread(() => UpdateUI(personFullInfo,
                                                   roots,
-                                                  photos, bioTask.Result as string,
+                                                  photos, captions, bioTask.Result as string,
                                                   gedcomTask.Result as string,
                                                   addToNavigation), _AlertService);
     }
@@ -354,12 +364,14 @@ public partial class PersonPage : ContentPage
   public void UpdateUI(PersonFullInfo personFullInfo,
                        RelativeInfo[] roots,
                        ImageSource[] photos,
+                       string?[] captions,
                        string? bio,
                        string? gedcomDetails,
                        bool addToNavigation)
   {
     _PersonFullInfo = personFullInfo;
     _Photos = photos;
+    _Captions = captions;
     _Biography = CombineBiography(bio, gedcomDetails);
     _AllRoots = roots;
     // Only after the new roots land: with the panel open, ResetFilterData re-fetches immediately,
