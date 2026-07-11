@@ -9,7 +9,7 @@ namespace GT4.Core.Project;
 /// relatives list, this provider walks the raw parent/child/spouse links so the graph mirrors the
 /// stored pedigree directly.
 /// </summary>
-internal sealed class FamilyTreeProvider : TableBase, IFamilyTreeProvider
+internal sealed class FamilyTreeProvider : ProjectComponentBase, IFamilyTreeProvider
 {
   internal FamilyTreeProvider(IProjectDocument document)
     : base(document)
@@ -146,6 +146,4 @@ internal sealed class FamilyTreeProvider : TableBase, IFamilyTreeProvider
     var infos = await Document.PersonManager.GetPersonInfosAsync([person], selectMainPhoto: true, token);
     return infos.Single();
   }
-
-  internal override Task CreateAsync(CancellationToken token) => throw new NotSupportedException();
 }
