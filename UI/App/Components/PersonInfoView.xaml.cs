@@ -179,13 +179,7 @@ public partial class PersonInfoView : ContentView
     }
   }
 
-  private ImageSource GetDefaultImage()
-  {
-    return Person?.BiologicalSex switch
-    {
-      BiologicalSex.Male => ImageUtils.ImageFromRawResource("male_stub.png"),
-      BiologicalSex.Female => ImageUtils.ImageFromRawResource("female_stub.png"),
-      _ => ImageUtils.ImageFromRawResource("project_icon.png")
-    };
-  }
+  private ImageSource GetDefaultImage() => 
+    ImageUtils.ImageFromRawResource(
+      ImageUtils.DefaultPhotoResourceName(Person?.BiologicalSex ?? BiologicalSex.Unknown));
 }

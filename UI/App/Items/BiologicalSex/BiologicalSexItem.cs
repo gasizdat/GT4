@@ -1,4 +1,5 @@
 ﻿using GT4.Core.Project.Dto;
+using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
 
 namespace GT4.UI.Items;
@@ -8,7 +9,7 @@ public class BiologicalSexItem : CollectionItemBase<BiologicalSex>
   private readonly IBiologicalSexFormatter _BiologicalSexFormatter;
 
   public BiologicalSexItem(BiologicalSex biologicalSex, IBiologicalSexFormatter biologicalSexFormatter)
-    : base(biologicalSex, biologicalSex == BiologicalSex.Male ? "male_stub.png" : "female_stub.png")
+    : base(biologicalSex, ImageUtils.DefaultPhotoResourceName(biologicalSex))
   {
     _BiologicalSexFormatter = biologicalSexFormatter;
   }
