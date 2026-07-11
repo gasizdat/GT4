@@ -61,27 +61,26 @@ internal class DateFormatter : IDateFormatter
 
   protected string MonthToString(Date date)
   {
-    string ret;
     var month = date.Month;
+    var ret = month switch
+    {
+      1 => UIStrings.Month_01,
+      2 => UIStrings.Month_02,
+      3 => UIStrings.Month_03,
+      4 => UIStrings.Month_04,
+      5 => UIStrings.Month_05,
+      6 => UIStrings.Month_06,
+      7 => UIStrings.Month_07,
+      8 => UIStrings.Month_08,
+      9 => UIStrings.Month_09,
+      10 => UIStrings.Month_10,
+      11 => UIStrings.Month_11,
+      12 => UIStrings.Month_12,
+      _ => month.ToString(D2)
+    };
+
     if (Language.Current == Language.RU)
     {
-      ret = month switch
-      {
-        1 => UIStrings.Month_01,
-        2 => UIStrings.Month_02,
-        3 => UIStrings.Month_03,
-        4 => UIStrings.Month_04,
-        5 => UIStrings.Month_05,
-        6 => UIStrings.Month_06,
-        7 => UIStrings.Month_07,
-        8 => UIStrings.Month_08,
-        9 => UIStrings.Month_09,
-        10 => UIStrings.Month_10,
-        11 => UIStrings.Month_11,
-        12 => UIStrings.Month_12,
-        _ => month.ToString(D2)
-      };
-
       ret = ret.ToLower();
 
       if (date.Status == DateStatus.WellKnown)
@@ -89,25 +88,7 @@ internal class DateFormatter : IDateFormatter
         ret = MonthGenitiveRU(ret);
       }
     }
-    else
-    {
-      ret = month switch
-      {
-        1 => UIStrings.Month_01,
-        2 => UIStrings.Month_02,
-        3 => UIStrings.Month_03,
-        4 => UIStrings.Month_04,
-        5 => UIStrings.Month_05,
-        6 => UIStrings.Month_06,
-        7 => UIStrings.Month_07,
-        8 => UIStrings.Month_08,
-        9 => UIStrings.Month_09,
-        10 => UIStrings.Month_10,
-        11 => UIStrings.Month_11,
-        12 => UIStrings.Month_12,
-        _ => month.ToString(D2)
-      };
-    }
+
     return ret;
   }
 
