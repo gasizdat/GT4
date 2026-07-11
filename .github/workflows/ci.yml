@@ -9,6 +9,17 @@ jobs:
   test:
     runs-on: windows-latest
 
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: Tests\GT4.Core.Project.Tests\GT4.Core.Project.Tests.csproj
+            name: core-project
+          - project: Tests\GT4.UI.Utils.Tests\GT4.UI.Utils.Tests.csproj
+            name: ui-utils
+          - project: Tests\GT4.UI.View.Tests\GT4.UI.View.Tests.csproj
+            name: ui-view
+
     steps:
       - uses: actions/checkout@v5
         with:
@@ -19,22 +30,47 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
       - name: Build
-        run: |
-          dotnet build Tests\GT4.Core.Project.Tests\GT4.Core.Project.Tests.csproj --configuration Release
-          dotnet build Tests\GT4.UI.Utils.Tests\GT4.UI.Utils.Tests.csproj --configuration Release
-          dotnet build Tests\GT4.UI.View.Tests\GT4.UI.View.Tests.csproj --configuration Release
+        run: dotnet build ${{ matrix.project }} --configuration Release
 
-      - name: Test GT4.Core.Project
-        run: dotnet test Tests\GT4.Core.Project.Tests\GT4.Core.Project.Tests.csproj --no-build --configuration Release --logger "trx;LogFileName=core-project.trx" --collect "XPlat Code Coverage" --results-directory coverage
+      - name: Test
+        run: dotnet test ${{ matrix.project }} --no-build --configuration Release --logger "trx;LogFileName=${{ matrix.name }}.trx" --collect "XPlat Code Coverage" --results-directory coverage
 
-      - name: Test GT4.UI.Utils
+      - name: Upload coverage
         if: always()
-        run: dotnet test Tests\GT4.UI.Utils.Tests\GT4.UI.Utils.Tests.csproj --no-build --configuration Release --logger "trx;LogFileName=ui-utils.trx" --collect "XPlat Code Coverage" --results-directory coverage
+        uses: actions/upload-artifact@v6
+        with:
+          name: coverage-${{ matrix.name }}
+          path: coverage
 
-      - name: Test GT4.UI.View
-        if: always()
-        run: dotnet test Tests\GT4.UI.View.Tests\GT4.UI.View.Tests.csproj --no-build --configuration Release --logger "trx;LogFileName=ui-view.trx" --collect "XPlat Code Coverage" --results-directory coverage
+  test-device:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
 
       # Debug is unsupported for this project (see the note in its .csproj); must build/run Release.
       # No code coverage: the tests execute inside a separately-launched .exe that DeviceRunners
@@ -42,11 +78,9 @@ jobs:
       # run-tests-coverage.ps1 (local) does capture this via dotnet-coverage's process-tree attach
       # instead -- expect AppWinOnly's coverage numbers here to permanently differ from a local run.
       - name: Build GT4.UI.App.DeviceTests
-        if: always()
         run: dotnet build Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj --configuration Release --framework net10.0-windows10.0.19041.0
 
       - name: Test GT4.UI.App.DeviceTests
-        if: always()
         # The DeviceRunners CLI can exit 1 from a native WinUI teardown race (a window-class
         # unregister failure) after every test already passed and its own TRX was written -- and
         # separately, the vendor's MSBuild target checks for a hardcoded "test-results.trx" filename
@@ -109,21 +143,49 @@ jobs:
           }
           exit 0
 
-      - name: Generate coverage report
+      - name: Upload device test results
         if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: test-results-device
+          path: coverage\device-tests.trx
+
+  coverage-report:
+    needs: [test, test-device]
+    if: always()
+    runs-on: windows-latest
+
+    steps:
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Download coverage artifacts
+        uses: actions/download-artifact@v6
+        with:
+          pattern: coverage-*
+          path: coverage
+          merge-multiple: true
+
+      - name: Download device test results
+        uses: actions/download-artifact@v6
+        with:
+          name: test-results-device
+          path: coverage
+
+      - name: Generate coverage report
         run: |
           dotnet tool install --global dotnet-reportgenerator-globaltool
           reportgenerator -reports:coverage/**/coverage.cobertura.xml -targetdir:coverage/report -reporttypes:Html
 
       - name: Upload coverage report
-        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: coverage-report
           path: coverage/report
 
       - name: Upload test results
-        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: test-results
