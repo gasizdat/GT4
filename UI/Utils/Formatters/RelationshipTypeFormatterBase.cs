@@ -1,4 +1,5 @@
 ﻿using GT4.Core.Project.Dto;
+using GT4.UI.Resources;
 using System.Diagnostics.CodeAnalysis;
 
 namespace GT4.UI.Utils.Formatters.Detailed;
@@ -8,6 +9,9 @@ using Table = Dictionary<RelationshipType, RelationshipTypeTableRow>;
 
 internal abstract class RelationshipTypeFormatterBase
 {
+  private static readonly Generation _GreatnessStartLevel = new Generation(2);
+  private static readonly Generation _GreatnessMaxLevel = new Generation(4);
+
   private readonly RelationshipType _Type;
   private readonly BiologicalSex _Sex;
   private readonly Generation _Gen;
@@ -56,6 +60,35 @@ internal abstract class RelationshipTypeFormatterBase
   }
 
   protected abstract Converters GetConverters();
+
+  /// <summary>
+  /// Builds a "Great-grandparent"-style label by recursively wrapping <paramref name="main"/> in
+  /// <see cref="UIStrings.RelGreat_1"/>, falling back to a "N-Great-..." numeral form past
+  /// <see cref="_GreatnessMaxLevel"/>. This recursive-prefix idiom holds for En/Ru (and other
+  /// Germanic/Romance/Slavic-style languages), but is NOT a linguistic universal -- languages that
+  /// name each generation with a distinct word instead of a repeated prefix (e.g. Chinese
+  /// 曾祖父/高祖父, Hungarian dédapa/ükapa) can't reuse this method or its thresholds. A new language
+  /// formatter should confirm its own convention actually matches before calling AddGreatness;
+  /// otherwise write its own generation-naming logic instead of forcing this one to fit.
+  /// </summary>
+  protected string AddGreatness(string main)
+  {
+    var ret = main;
+    var generation = AbsGen - _GreatnessStartLevel;
+
+    if (generation > _GreatnessMaxLevel)
+    {
+      ret = $"{generation.Value}-{string.Format(UIStrings.RelGreat_1, ret)}";
+    }
+    else
+    {
+      while (generation-- > Generation.Zero)
+      {
+        ret = string.Format(UIStrings.RelGreat_1, ret);
+      }
+    }
+    return ret;
+  }
 
   public static bool IsRunningInTest
   {
