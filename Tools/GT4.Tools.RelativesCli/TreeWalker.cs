@@ -1,5 +1,6 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
+using GT4.Core.Project.Extensions;
 
 namespace GT4.Tools.RelativesCli;
 
@@ -28,7 +29,7 @@ public sealed record TreeIssue(
 /// (ExpandAllAsync) so it can run outside the MAUI app: repeatedly expand the first
 /// not-yet-expanded, not-yet-flagged-Loop row, inserting its children right after it (same
 /// pre-order traversal the UI's flattened Rows collection uses). A person-Id seen twice is
-/// classified by <see cref="RelativeTreeCycle.IsMultipleConnections"/>, the same rule the UI uses.
+/// classified by <see cref="RelativeInfoExtensions.IsMultipleConnectionsOf"/>, the same rule the UI uses.
 /// </summary>
 public sealed class TreeWalker(IRelativesProvider relativesProvider)
 {
@@ -60,7 +61,7 @@ public sealed class TreeWalker(IRelativesProvider relativesProvider)
       if (!visited.TryAdd(next.Info.Id, (next.Info, next.Path)))
       {
         var (firstInfo, firstPath) = visited[next.Info.Id];
-        var isMultipleConnections = RelativeTreeCycle.IsMultipleConnections(firstInfo, next.Info);
+        var isMultipleConnections = next.Info.IsMultipleConnectionsOf(firstInfo);
         next.Issue = isMultipleConnections ? TreeIssueType.MultipleConnections : TreeIssueType.Loop;
         issues.Add(new TreeIssue(
           next.Info.Id,

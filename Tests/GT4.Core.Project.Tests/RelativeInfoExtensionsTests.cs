@@ -1,6 +1,6 @@
 using FluentAssertions;
-using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
+using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
 using Xunit;
 
@@ -10,7 +10,7 @@ namespace GT4.Core.Project.Tests;
 /// Covers the Loop vs. MultipleConnections classification shared by
 /// <c>UI.App.Components.RelativeTree</c> and <c>Tools.RelativesCli</c>'s tree walker.
 /// </summary>
-public sealed class RelativeTreeCycleTests
+public sealed class RelativeInfoExtensionsTests
 {
   private static RelativeInfo MakeRelative(Generation generation, Consanguinity consanguinity) =>
     new RelativeInfo(
@@ -33,7 +33,7 @@ public sealed class RelativeTreeCycleTests
     var firstSighting = MakeRelative(Generation.Parent, Consanguinity.Sibling);
     var revisited = MakeRelative(Generation.Parent, Consanguinity.UncleAunt);
 
-    RelativeTreeCycle.IsMultipleConnections(firstSighting, revisited).Should().BeTrue();
+    revisited.IsMultipleConnectionsOf(firstSighting).Should().BeTrue();
   }
 
   [Fact]
@@ -42,6 +42,6 @@ public sealed class RelativeTreeCycleTests
     var firstSighting = MakeRelative(Generation.Parent, Consanguinity.Sibling);
     var revisited = MakeRelative(Generation.Child, Consanguinity.Sibling);
 
-    RelativeTreeCycle.IsMultipleConnections(firstSighting, revisited).Should().BeFalse();
+    revisited.IsMultipleConnectionsOf(firstSighting).Should().BeFalse();
   }
 }

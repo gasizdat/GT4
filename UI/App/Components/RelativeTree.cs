@@ -1,5 +1,6 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
+using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
 using GT4.UI.Resources;
 using System.Collections.ObjectModel;
@@ -86,8 +87,8 @@ public sealed class RelativeTree
     // Backend data is expected to be a DAG, but a corrupt GEDCOM import (or a bug upstream) can
     // still produce an actual relationship cycle -- a person listed as their own ancestor or
     // descendant. Without this guard, expanding such a person keeps re-inserting the same subtree
-    // forever. RelativeTreeCycle.IsMultipleConnections tells that apart from a person legitimately
-    // appearing twice via two different branches (e.g. cousin marriage sharing a great-grandparent).
+    // forever. IsMultipleConnectionsOf tells that apart from a person legitimately appearing twice
+    // via two different branches (e.g. cousin marriage sharing a great-grandparent).
     var visitedIds = new Dictionary<int, RelativeInfo>();
 
     try
@@ -107,7 +108,7 @@ public sealed class RelativeTree
         if (!visitedIds.TryAdd(next.Relative.Id, next.Relative))
         {
           var earlierAddedRelative = visitedIds[next.Relative.Id];
-          if (RelativeTreeCycle.IsMultipleConnections(earlierAddedRelative, next.Relative))
+          if (next.Relative.IsMultipleConnectionsOf(earlierAddedRelative))
           {
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
