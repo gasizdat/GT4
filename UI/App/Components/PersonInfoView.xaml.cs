@@ -8,12 +8,20 @@ namespace GT4.UI.Components;
 
 public partial class PersonInfoView : ContentView
 {
+  private readonly IServiceProvider _ServiceProvider;
+  private readonly ICancellationTokenProvider _CancellationTokenProvider;
+  private readonly IAlertService _AlertService;
   private readonly IDateSpanFormatter _DateSpanFormatter;
   private readonly IDateFormatter _DateFormatter;
   private readonly INameFormatter _NameFormatter;
+  private ImageSource? _PhotoSource;
+  private bool _PhotoReady;
 
   protected PersonInfoView(IServiceProvider serviceProvider)
   {
+    _ServiceProvider = serviceProvider;
+    _CancellationTokenProvider = serviceProvider.GetRequiredService<ICancellationTokenProvider>();
+    _AlertService = serviceProvider.GetRequiredService<IAlertService>();
     _DateSpanFormatter = serviceProvider.GetRequiredService<IDateSpanFormatter>();
     _DateFormatter = serviceProvider.GetRequiredService<IDateFormatter>();
     _NameFormatter = serviceProvider.GetRequiredService<INameFormatter>();
@@ -127,25 +135,51 @@ public partial class PersonInfoView : ContentView
       return personDates;
     }
   }
-  public ImageSource Photo => Person?.MainPhoto is null ? GetDefaultImage() : ImageUtils.ImageFromBytes(Person.MainPhoto.Content);
+  public ImageSource Photo
+  {
+    get
+    {
+      if (Person?.MainPhoto is not { } mainPhoto)
+      {
+        return GetDefaultImage();
+      }
+
+      if (!_PhotoReady)
+      {
+        _PhotoReady = true;
+
+        async Task UpdatePhotoAsync()
+        {
+          using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
+          var content = await ImageUtils.ResolvePhotoAsync(_ServiceProvider, mainPhoto, GetDefaultImage(), token);
+
+          MainThread.BeginInvokeOnMainThread(() =>
+          {
+            _PhotoSource = content;
+            OnPropertyChanged(nameof(Photo));
+          });
+        }
+
+        SafeTask.Run(UpdatePhotoAsync, _AlertService);
+      }
+
+      return _PhotoSource ?? GetDefaultImage();
+    }
+  }
 
   private static void OnPersonChanged(BindableObject obj, object oldValue, object newValue)
   {
     if (obj is PersonInfoView view && oldValue != newValue)
     {
+      view._PhotoReady = false;
+      view._PhotoSource = null;
       view.OnPropertyChanged(nameof(CommonName));
       view.OnPropertyChanged(nameof(LifeDates));
       view.OnPropertyChanged(nameof(Photo));
     }
   }
 
-  private ImageSource GetDefaultImage()
-  {
-    return Person?.BiologicalSex switch
-    {
-      BiologicalSex.Male => ImageUtils.ImageFromRawResource("male_stub.png"),
-      BiologicalSex.Female => ImageUtils.ImageFromRawResource("female_stub.png"),
-      _ => ImageUtils.ImageFromRawResource("project_icon.png")
-    };
-  }
+  private ImageSource GetDefaultImage() => 
+    ImageUtils.ImageFromRawResource(
+      ImageUtils.DefaultPhotoResourceName(Person?.BiologicalSex ?? BiologicalSex.Unknown));
 }
