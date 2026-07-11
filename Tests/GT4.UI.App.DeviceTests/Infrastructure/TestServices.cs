@@ -104,7 +104,7 @@ internal sealed class TestServices
     RelativesProvider.Setup(r => r.GetAdoptiveChildren(It.IsAny<RelativeInfo[]>())).Returns([]);
 
     // Same reasoning as GetNamesByTypeAsync above: ProjectListPage.UpdateProjectList loads in the
-    // background (well, blocks on it), so an unconfigured call must not fail invisibly.
+    // background, so an unconfigured call must not fail invisibly.
     ProjectList.Setup(p => p.GetItemsAsync(It.IsAny<CancellationToken>())).ReturnsAsync([]);
 
     // Same reasoning as PersonPage's collaborators above: FamilyTreePage.LoadAsync's pipeline needs

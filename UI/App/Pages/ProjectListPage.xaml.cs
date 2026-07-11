@@ -96,12 +96,11 @@ public partial class ProjectListPage : ContentPage
     }, _AlertService);
   }
 
-  protected void UpdateProjectList()
+  protected async Task UpdateProjectList()
   {
     using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-    var projects = _ProjectList
-      .GetItemsAsync(token)
-      .Result
+    var items = await _ProjectList.GetItemsAsync(token);
+    var projects = items
       .Select(projectInfo => new ProjectItem(projectInfo))
       .OrderBy(item => item.Info, _ProjectInfoComparer);
 
@@ -118,7 +117,7 @@ public partial class ProjectListPage : ContentPage
     {
       case string commandName when commandName == "Create":
         await OnCreateProject();
-        UpdateProjectList();
+        await UpdateProjectList();
         break;
       case string commandName when commandName == "ImportGedcom":
         await OnImportGedcom();
