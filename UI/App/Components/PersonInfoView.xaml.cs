@@ -2,18 +2,27 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
+using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
 
 namespace GT4.UI.Components;
 
 public partial class PersonInfoView : ContentView
 {
+  private readonly IServiceProvider _ServiceProvider;
+  private readonly ICancellationTokenProvider _CancellationTokenProvider;
+  private readonly IAlertService _AlertService;
   private readonly IDateSpanFormatter _DateSpanFormatter;
   private readonly IDateFormatter _DateFormatter;
   private readonly INameFormatter _NameFormatter;
+  private ImageSource? _PhotoSource;
+  private bool _PhotoReady;
 
   protected PersonInfoView(IServiceProvider serviceProvider)
   {
+    _ServiceProvider = serviceProvider;
+    _CancellationTokenProvider = serviceProvider.GetRequiredService<ICancellationTokenProvider>();
+    _AlertService = serviceProvider.GetRequiredService<IAlertService>();
     _DateSpanFormatter = serviceProvider.GetRequiredService<IDateSpanFormatter>();
     _DateFormatter = serviceProvider.GetRequiredService<IDateFormatter>();
     _NameFormatter = serviceProvider.GetRequiredService<INameFormatter>();
@@ -127,12 +136,45 @@ public partial class PersonInfoView : ContentView
       return personDates;
     }
   }
-  public ImageSource Photo => Person?.MainPhoto is null ? GetDefaultImage() : ImageUtils.ImageFromBytes(Person.MainPhoto.Content);
+  public ImageSource Photo
+  {
+    get
+    {
+      if (Person?.MainPhoto is not { } mainPhoto)
+      {
+        return GetDefaultImage();
+      }
+
+      if (!_PhotoReady)
+      {
+        _PhotoReady = true;
+
+        async Task UpdatePhotoAsync()
+        {
+          using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
+          var converter = _ServiceProvider.GetRequiredKeyedService<IDataConverter>(mainPhoto.Category);
+          var content = await converter.ToObjectAsync(mainPhoto, token);
+
+          MainThread.BeginInvokeOnMainThread(() =>
+          {
+            _PhotoSource = content as ImageSource;
+            OnPropertyChanged(nameof(Photo));
+          });
+        }
+
+        SafeTask.Run(UpdatePhotoAsync, _AlertService);
+      }
+
+      return _PhotoSource ?? GetDefaultImage();
+    }
+  }
 
   private static void OnPersonChanged(BindableObject obj, object oldValue, object newValue)
   {
     if (obj is PersonInfoView view && oldValue != newValue)
     {
+      view._PhotoReady = false;
+      view._PhotoSource = null;
       view.OnPropertyChanged(nameof(CommonName));
       view.OnPropertyChanged(nameof(LifeDates));
       view.OnPropertyChanged(nameof(Photo));

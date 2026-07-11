@@ -75,7 +75,7 @@ public partial class ImagePresenter : ContentView
 
       if (i < ImageSources.Length)
       {
-        _Images[i] = ImageUtils.ImageFromBytes(ImageSources[i]);
+        _Images[i] = ImageSources[i];
         _ImageOpacities[0] = _MaxOpacity;
       }
       else
@@ -155,7 +155,7 @@ public partial class ImagePresenter : ContentView
       {
         var sourceIndex = (_CurrentIndex + 1) % ImageSources.Length;
         _ImageOpacities[i] = _MinOpacity;
-        _Images[i] = ImageUtils.ImageFromBytes(ImageSources[sourceIndex]);
+        _Images[i] = ImageSources[sourceIndex];
 
         OnPropertyChanged(_ImageProperties[i]);
       }
@@ -274,9 +274,9 @@ public partial class ImagePresenter : ContentView
 
   public static readonly BindableProperty ImageSourcesProperty = BindableProperty.Create(
     nameof(ImageSources),
-    typeof(byte[][]),
+    typeof(ImageSource[]),
     typeof(ImagePresenter),
-    Array.Empty<byte[]>(),
+    Array.Empty<ImageSource>(),
     BindingMode.OneWay,
     null,
     OnBindablePropertyChanged);
@@ -287,9 +287,9 @@ public partial class ImagePresenter : ContentView
     set => SetValue(ImageStyleProperty, value);
   }
 
-  public byte[][] ImageSources
+  public ImageSource[] ImageSources
   {
-    get => (byte[][]?)GetValue(ImageSourcesProperty) ?? [];
+    get => (ImageSource[]?)GetValue(ImageSourcesProperty) ?? [];
     set => SetValue(ImageSourcesProperty, value);
   }
 

@@ -1,4 +1,3 @@
-using GT4.UI.Utils;
 using System.Windows.Input;
 
 namespace GT4.UI.Dialogs;
@@ -8,12 +7,9 @@ public partial class PhotoViewerDialog : ContentPage
   private readonly ImageSource[] _Photos;
   private readonly ICommand _CloseCommand;
 
-  public PhotoViewerDialog(byte[][] photos, IAlertService alertService)
+  public PhotoViewerDialog(ImageSource[] photos, IAlertService alertService)
   {
-    _Photos = (photos ?? [])
-      .Where(photo => photo.Length > 0)
-      .Select(ImageUtils.ImageFromBytes)
-      .ToArray();
+    _Photos = photos ?? [];
 
     _CloseCommand = new SafeCommand(OnCloseAsync, alertService);
 

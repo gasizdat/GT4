@@ -31,7 +31,7 @@ public partial class PersonPage : ContentPage
   private ObservableCollection<PersonInfo> _NavigationHistory = new();
   private int _NavigationIndex = -1;
   private PersonFullInfo _PersonFullInfo = PersonFullInfo.Empty;
-  private byte[][] _Photos = [];
+  private ImageSource[] _Photos = [];
   private string _Biography = string.Empty;
   private PersonPageSmartLayout _SmartLayout = new();
   private bool _ExpandAll = false;
@@ -160,7 +160,7 @@ public partial class PersonPage : ContentPage
 
   public ICollection Relatives => _Relatives.Rows;
 
-  public byte[][] Photos => _Photos;
+  public ImageSource[] Photos => _Photos;
 
   public PersonFullInfo PersonFullInfo => _PersonFullInfo;
 
@@ -280,7 +280,7 @@ public partial class PersonPage : ContentPage
       var siblings = relativesProvider.GetSiblings(personFullInfo, parents);
       var roots = AssembleRoots(personFullInfo, parents, siblings, stepChildren, relativesProvider);
 
-      byte[][] photos;
+      ImageSource[] photos;
 
       if (personFullInfo.MainPhoto is null)
       {
@@ -292,14 +292,14 @@ public partial class PersonPage : ContentPage
         using var readResourceToken = _CancellationTokenProvider.CreateShortOperationCancellationToken();
         var defaultImageResourceName = ImageUtils.DefaultPhotoResourceName(personFullInfo.BiologicalSex);
         var defaultPhoto = await ImageUtils.ToBytesAsync(defaultImageResourceName, readResourceToken) ?? [];
-        photos = [defaultPhoto];
+        photos = [ImageUtils.ImageFromBytes(defaultPhoto)];
       }
       else
       {
-        photos = [personFullInfo.MainPhoto.Content,
-                  ..personFullInfo
-                    .AdditionalPhotos
-                    .Select(photo => photo.Content)];
+        Data[] photoData = [personFullInfo.MainPhoto, ..personFullInfo.AdditionalPhotos];
+        var photoObjects = await Task.WhenAll(photoData.Select(data =>
+          _ServiceProvider.GetRequiredKeyedService<IDataConverter>(data.Category).ToObjectAsync(data, token)));
+        photos = photoObjects.Cast<ImageSource>().ToArray();
       }
       // UpdateUI touches the project document again on the UI thread; SafeTask.RunOnMainThread keeps
       // an escaped exception (e.g. the project closed while backgrounding) from going unobserved.
@@ -352,7 +352,7 @@ public partial class PersonPage : ContentPage
 
   public void UpdateUI(PersonFullInfo personFullInfo,
                        RelativeInfo[] roots,
-                       byte[][] photos,
+                       ImageSource[] photos,
                        string? bio,
                        string? gedcomDetails,
                        bool addToNavigation)
