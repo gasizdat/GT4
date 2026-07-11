@@ -9,33 +9,12 @@ using Table = Dictionary<RelationshipType, RelationshipTypeTableRow>;
 
 internal class RelationshipTypeFormatterEn : RelationshipTypeFormatterBase
 {
-  private readonly static Generation _GreatnessStartLevel = new Generation(2);
-  private readonly static Generation _GreatnessMaxLevel = new Generation(4);
   private readonly static Generation _RemovedMaxLevel = new Generation(3);
   private readonly static Consanguinity _ConsanguinityMaxLevel = new Consanguinity(4);
 
   public RelationshipTypeFormatterEn(RelationshipType type, BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
     : base(type, biologicalSex, generation, consanguinity)
   {
-  }
-
-  protected string AddGreatness(string main)
-  {
-    var ret = main;
-    var generation = AbsGen - _GreatnessStartLevel;
-
-    if (generation > _GreatnessMaxLevel)
-    {
-      ret = $"{generation.Value}-{string.Format(S.RelGreat_1, ret)}";
-    }
-    else
-    {
-      while (generation-- > Generation.Zero)
-      {
-        ret = string.Format(S.RelGreat_1, ret);
-      }
-    }
-    return ret;
   }
 
   protected string AddConsanguinity(string main, Consanguinity consanguinity)

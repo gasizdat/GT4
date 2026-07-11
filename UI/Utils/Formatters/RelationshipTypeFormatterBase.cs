@@ -1,4 +1,5 @@
 ﻿using GT4.Core.Project.Dto;
+using GT4.UI.Resources;
 using System.Diagnostics.CodeAnalysis;
 
 namespace GT4.UI.Utils.Formatters.Detailed;
@@ -8,6 +9,9 @@ using Table = Dictionary<RelationshipType, RelationshipTypeTableRow>;
 
 internal abstract class RelationshipTypeFormatterBase
 {
+  private static readonly Generation _GreatnessStartLevel = new Generation(2);
+  private static readonly Generation _GreatnessMaxLevel = new Generation(4);
+
   private readonly RelationshipType _Type;
   private readonly BiologicalSex _Sex;
   private readonly Generation _Gen;
@@ -56,6 +60,25 @@ internal abstract class RelationshipTypeFormatterBase
   }
 
   protected abstract Converters GetConverters();
+
+  protected string AddGreatness(string main)
+  {
+    var ret = main;
+    var generation = AbsGen - _GreatnessStartLevel;
+
+    if (generation > _GreatnessMaxLevel)
+    {
+      ret = $"{generation.Value}-{string.Format(UIStrings.RelGreat_1, ret)}";
+    }
+    else
+    {
+      while (generation-- > Generation.Zero)
+      {
+        ret = string.Format(UIStrings.RelGreat_1, ret);
+      }
+    }
+    return ret;
+  }
 
   public static bool IsRunningInTest
   {
