@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<!-- Diagnostic CLI for investigating relative-tree loops/multiple-connections against arbitrary
+		     project databases or GEDCOM files, without launching the MAUI app. Plain net10.0, no MAUI. -->
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\Core\Project\GT4.Core.Project.csproj" />
+		<ProjectReference Include="..\..\Core\Gedcom\GT4.Core.Gedcom.csproj" />
+	</ItemGroup>
+
+</Project>
