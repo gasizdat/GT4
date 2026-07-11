@@ -27,9 +27,8 @@ public sealed record TreeIssue(
 /// Ports the loop/multiple-connections detection from UI/App/Components/RelativeTree.cs
 /// (ExpandAllAsync) so it can run outside the MAUI app: repeatedly expand the first
 /// not-yet-expanded, not-yet-flagged-Loop row, inserting its children right after it (same
-/// pre-order traversal the UI's flattened Rows collection uses). A person-Id seen twice is a
-/// Loop if Generation/Consanguinity differ from the first sighting, or MultipleConnections
-/// (still expanded normally) if they match.
+/// pre-order traversal the UI's flattened Rows collection uses). A person-Id seen twice is
+/// classified by <see cref="RelativeTreeCycle.IsMultipleConnections"/>, the same rule the UI uses.
 /// </summary>
 public sealed class TreeWalker(IRelativesProvider relativesProvider)
 {
@@ -61,10 +60,8 @@ public sealed class TreeWalker(IRelativesProvider relativesProvider)
       if (!visited.TryAdd(next.Info.Id, (next.Info, next.Path)))
       {
         var (firstInfo, firstPath) = visited[next.Info.Id];
-        var sameCoordinates =
-          firstInfo.Generation == next.Info.Generation &&
-          firstInfo.Consanguinity == next.Info.Consanguinity;
-        next.Issue = sameCoordinates ? TreeIssueType.MultipleConnections : TreeIssueType.Loop;
+        var isMultipleConnections = RelativeTreeCycle.IsMultipleConnections(firstInfo, next.Info);
+        next.Issue = isMultipleConnections ? TreeIssueType.MultipleConnections : TreeIssueType.Loop;
         issues.Add(new TreeIssue(
           next.Info.Id,
           next.Info.DisplayName,
