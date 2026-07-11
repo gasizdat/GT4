@@ -1,9 +1,11 @@
 using GT4.Core.Gedcom;
+using GT4.Core.Gedcom.Abstraction;
 using GT4.Core.Project;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.Tools.RelativesCli;
+using Microsoft.Extensions.DependencyInjection;
 using System.Text;
 
 var token = CancellationToken.None;
@@ -26,13 +28,20 @@ static async Task<int> RunAsync(string[] args, CancellationToken token)
     return 1;
   }
 
+  var services = new ServiceCollection()
+    .AddDefaultProject()
+    .AddGedcom()
+    .BuildServiceProvider();
+  var documentFactory = services.GetRequiredService<IProjectDocumentFactory>();
+  var gedcomImporter = services.GetRequiredService<IGedcomImporter>();
+
   var argIndex = 0;
-  ProjectDocument document;
+  IProjectDocument document;
 
   switch (NextArg(args, ref argIndex))
   {
     case "--db":
-      document = await ProjectDocument.OpenAsync(NextArg(args, ref argIndex), token);
+      document = await documentFactory.OpenAsync(NextArg(args, ref argIndex), token);
       break;
 
     case "--gedcom":
@@ -45,10 +54,10 @@ static async Task<int> RunAsync(string[] args, CancellationToken token)
       }
       outPath ??= Path.Combine(Path.GetTempPath(), $"gt4_{Guid.NewGuid():N}.db");
 
-      document = await ProjectDocument.CreateNewAsync(outPath, Path.GetFileNameWithoutExtension(gedcomPath), token);
+      document = await documentFactory.CreateNewAsync(outPath, Path.GetFileNameWithoutExtension(gedcomPath), token);
       using (var reader = new StreamReader(gedcomPath, Encoding.UTF8))
       {
-        await new GedcomImporter().ImportAsync(document, reader, token, Path.GetDirectoryName(gedcomPath));
+        await gedcomImporter.ImportAsync(document, reader, token, Path.GetDirectoryName(gedcomPath));
       }
       Console.WriteLine($"Imported GEDCOM into: {outPath}");
       break;

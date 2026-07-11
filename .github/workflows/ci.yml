@@ -6,6 +6,36 @@ on:
   pull_request:
 
 jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      # Fast-fail gate: builds every non-mobile project in one shot (App.csproj and
+      # AppAndroidOnly.csproj are excluded via the filter -- they need Android/iOS/MacCatalyst
+      # workloads this runner doesn't have) so a break anywhere, including in projects no test
+      # job builds on its own (e.g. GT4.Tools.RelativesCli), is caught immediately. Runs
+      # independently of the test/test-device jobs below -- they keep restoring/building their
+      # own project so the concurrency from #38 is unaffected.
+      - name: Build solution
+        run: dotnet build GT4.CI.slnf --configuration Release
+
   test:
     runs-on: windows-latest
 
