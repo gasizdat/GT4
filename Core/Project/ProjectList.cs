@@ -73,23 +73,14 @@ internal class ProjectList : IProjectList
     if (_Items.TryGetTarget(out var items))
       return items;
 
-    try
-    {
-      var tasks = _FileSystem
-        .GetFiles(_Storage.ProjectsRoot, $"*.{ProjectExtension}", true)
-        .ToList()
-        .Select(path => GetProjectInfoAsync(path, token));
-      items = await Task.WhenAll(tasks);
+    var tasks = _FileSystem
+      .GetFiles(_Storage.ProjectsRoot, $"*.{ProjectExtension}", true)
+      .ToList()
+      .Select(path => GetProjectInfoAsync(path, token));
+    items = await Task.WhenAll(tasks);
 
-      _Items.SetTarget(items);
-      return items;
-    }
-    catch (Exception ex) when (ex is not OperationCanceledException)
-    {
-      // Enumerating the project folder failed (per-project open errors are already surfaced as error
-      // entries by GetProjectInfoAsync). Cancellation must still propagate.
-      return Array.Empty<ProjectInfo>();
-    }
+    _Items.SetTarget(items);
+    return items;
   }
 
   public async Task<ProjectHost> OpenAsync(FileDescription origin, CancellationToken token)
