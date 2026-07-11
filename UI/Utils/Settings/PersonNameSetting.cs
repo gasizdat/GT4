@@ -1,4 +1,4 @@
-﻿using GT4.Core.Project.Dto;
+using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Resources;
 using GT4.UI.Utils.Formatters;
@@ -6,9 +6,8 @@ using Microsoft.Extensions.Configuration;
 
 namespace GT4.UI.Utils.Settings;
 
-abstract class CommonPersonNameSettingBase
+internal sealed class PersonNameSetting : ISettingEditor
 {
-  private readonly NameFormat _NameFormat;
   private static PersonInfo _PersonInfo => new PersonInfo(
     Id: 0,
     BirthDate: Date.Now,
@@ -20,25 +19,33 @@ abstract class CommonPersonNameSettingBase
       new Name(Id: 0, UIStrings.NameLast, NameType.LastName, null),
       new Name(Id: 0, UIStrings.NameFamily, NameType.FamilyName, null) ],
       MainPhoto: null);
+
+  private readonly IServiceProvider _ServiceProvider;
   private readonly IConfiguration _Configuration;
   private readonly IInteractiveConfiguration? _InteractiveConfiguration;
-  private readonly IServiceProvider _ServiceProvider;
+  private readonly NameFormat _NameFormat;
+  private readonly string _FormatSection;
+  private readonly string _DefaultFormat;
 
-  protected CommonPersonNameSettingBase(
+  public PersonNameSetting(
     IServiceProvider serviceProvider,
     IConfiguration configuration,
     IInteractiveConfiguration? interactiveConfiguration,
-    NameFormat nameFormat)
+    NameFormat nameFormat,
+    string formatSection,
+    string defaultFormat,
+    string displayName)
   {
-    _NameFormat = nameFormat;
     _ServiceProvider = serviceProvider;
     _Configuration = configuration;
     _InteractiveConfiguration = interactiveConfiguration;
+    _NameFormat = nameFormat;
+    _FormatSection = formatSection;
+    _DefaultFormat = defaultFormat;
+    DisplayName = displayName;
   }
 
-  protected abstract string PersonNameFormatSection { get; }
-
-  protected abstract string DefaultPersonNameFormat { get; }
+  public string DisplayName { get; }
 
   public string Example => _ServiceProvider
     .GetRequiredService<INameFormatter>()
@@ -50,12 +57,12 @@ abstract class CommonPersonNameSettingBase
 
   public string Value
   {
-    get => _Configuration[PersonNameFormatSection] ?? DefaultPersonNameFormat;
-    set => _InteractiveConfiguration?.SetKey(PersonNameFormatSection, value);
+    get => _Configuration[_FormatSection] ?? _DefaultFormat;
+    set => _InteractiveConfiguration?.SetKey(_FormatSection, value);
   }
 
   public void ResetToDefault()
   {
-    _InteractiveConfiguration?.RemoveKey(PersonNameFormatSection);
+    _InteractiveConfiguration?.RemoveKey(_FormatSection);
   }
 }
