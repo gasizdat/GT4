@@ -297,9 +297,10 @@ public partial class PersonPage : ContentPage
       else
       {
         Data[] photoData = [personFullInfo.MainPhoto, ..personFullInfo.AdditionalPhotos];
-        var photoObjects = await Task.WhenAll(photoData.Select(data =>
-          _ServiceProvider.GetRequiredKeyedService<IDataConverter>(data.Category).ToObjectAsync(data, token)));
-        photos = photoObjects.Cast<ImageSource>().ToArray();
+        var defaultImageResourceName = ImageUtils.DefaultPhotoResourceName(personFullInfo.BiologicalSex);
+        var fallback = ImageUtils.ImageFromRawResource(defaultImageResourceName);
+        photos = await Task.WhenAll(photoData.Select(data =>
+          ImageUtils.ResolvePhotoAsync(_ServiceProvider, data, fallback, token)));
       }
       // UpdateUI touches the project document again on the UI thread; SafeTask.RunOnMainThread keeps
       // an escaped exception (e.g. the project closed while backgrounding) from going unobserved.

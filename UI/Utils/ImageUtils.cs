@@ -1,4 +1,5 @@
 ﻿using GT4.Core.Project.Dto;
+using GT4.UI.Utils.Converters;
 using Microsoft.Maui.Graphics.Platform;
 
 namespace GT4.UI.Utils;
@@ -57,6 +58,29 @@ public static class ImageUtils
 
   public static ImageSource ImageFromRawResource(string resourceName) =>
     ImageSource.FromStream(_ => FileSystem.OpenAppPackageFileAsync(resourceName));
+
+  /// <summary>
+  /// Resolves a photo through its category's keyed <see cref="IDataConverter"/>, falling back to
+  /// <paramref name="fallback"/> both when no converter is registered for the category (an older
+  /// build opening a project that has a category it doesn't know about) and when a registered
+  /// converter hands back something that isn't an <see cref="ImageSource"/>. Always returns
+  /// <paramref name="fallback"/> rather than null/skipping, so callers building an index-aligned
+  /// array alongside photos (e.g. a parallel captions array) keep their indices in sync.
+  /// </summary>
+  public static async Task<ImageSource> ResolvePhotoAsync(
+    IServiceProvider serviceProvider, Data data, ImageSource fallback, CancellationToken token)
+  {
+    var converter = serviceProvider.GetKeyedService<IDataConverter>(data.Category);
+    var resolved = converter is null ? null : await converter.ToObjectAsync(data, token);
+
+    if (resolved is ImageSource imageSource)
+    {
+      return imageSource;
+    }
+
+    System.Diagnostics.Debug.WriteLine($"No usable IDataConverter result for {data.Category}; using fallback image.");
+    return fallback;
+  }
 
   public static async Task<byte[]?> ToBytesAsync(ImageSource? source, CancellationToken token)
   {

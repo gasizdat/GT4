@@ -2,7 +2,6 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
-using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
 
 namespace GT4.UI.Components;
@@ -152,12 +151,11 @@ public partial class PersonInfoView : ContentView
         async Task UpdatePhotoAsync()
         {
           using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
-          var converter = _ServiceProvider.GetRequiredKeyedService<IDataConverter>(mainPhoto.Category);
-          var content = await converter.ToObjectAsync(mainPhoto, token);
+          var content = await ImageUtils.ResolvePhotoAsync(_ServiceProvider, mainPhoto, GetDefaultImage(), token);
 
           MainThread.BeginInvokeOnMainThread(() =>
           {
-            _PhotoSource = content as ImageSource;
+            _PhotoSource = content;
             OnPropertyChanged(nameof(Photo));
           });
         }
