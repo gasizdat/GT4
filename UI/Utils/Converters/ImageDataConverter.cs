@@ -1,5 +1,4 @@
-﻿using GT4.Core.Project;
-using GT4.Core.Project.Dto;
+﻿using GT4.Core.Project.Dto;
 
 namespace GT4.UI.Utils.Converters;
 
@@ -19,7 +18,7 @@ public class ImageDataConverter : IDataConverter
       Category: default);
   }
 
-  public Task<object?> ToObjectAsync(Data? data, CancellationToken token)
+  public virtual Task<object?> ToObjectAsync(Data? data, CancellationToken token)
   {
     return Task.FromResult<object?>(data is null ? null : ImageUtils.ImageFromBytes(data.Content));
   }
