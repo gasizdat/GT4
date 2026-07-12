@@ -164,4 +164,69 @@ public class RelativeTreeTests
     Assert.DoesNotContain(sharedRows, row => row.Issue == RelativeRowIssueType.Loop);
     Assert.Contains(sharedRows, row => row.Issue == RelativeRowIssueType.MultipleConnections);
   }
+
+  [Fact]
+  public async Task FilterRoots_preserves_the_expanded_subtree_of_a_root_that_still_matches()
+  {
+    var services = new TestServices();
+    var rootA = MakeRelative(1, "RootA", Generation.Parent);
+    var rootB = MakeRelative(2, "RootB", Generation.Parent);
+    var child = MakeRelative(3, "Child", Generation.Parent + Generation.Parent);
+    services.RelativesProvider
+      .Setup(r => r.GetRelativeInfosAsync(It.Is<RelativeInfo>(x => x.Id == rootA.Id), true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([child]);
+
+    var tree = CreateTree(services);
+    await MainThread.InvokeOnMainThreadAsync(() => tree.SetRoots([rootA, rootB], null));
+    var rootARow = tree.Rows.Single(r => r.Relative.Id == rootA.Id);
+    await tree.ToggleAsync(rootARow);
+    var childRowBefore = tree.Rows.Single(r => r.Relative.Id == child.Id);
+
+    // Simulates a filter that still matches rootA but no longer matches rootB.
+    await MainThread.InvokeOnMainThreadAsync(() => tree.FilterRoots([rootA], null));
+
+    Assert.Equal([rootA.Id, child.Id], tree.Rows.Select(r => r.Relative.Id));
+    Assert.Same(rootARow, tree.Rows.Single(r => r.Relative.Id == rootA.Id));
+    Assert.Same(childRowBefore, tree.Rows.Single(r => r.Relative.Id == child.Id));
+    Assert.True(rootARow.IsExpanded);
+  }
+
+  [Fact]
+  public async Task FilterRoots_drops_the_subtree_of_a_root_that_no_longer_matches()
+  {
+    var services = new TestServices();
+    var rootA = MakeRelative(1, "RootA", Generation.Parent);
+    var rootB = MakeRelative(2, "RootB", Generation.Parent);
+    var child = MakeRelative(3, "Child", Generation.Parent + Generation.Parent);
+    services.RelativesProvider
+      .Setup(r => r.GetRelativeInfosAsync(It.Is<RelativeInfo>(x => x.Id == rootA.Id), true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([child]);
+
+    var tree = CreateTree(services);
+    await MainThread.InvokeOnMainThreadAsync(() => tree.SetRoots([rootA, rootB], null));
+    var rootARow = tree.Rows.Single(r => r.Relative.Id == rootA.Id);
+    await tree.ToggleAsync(rootARow);
+
+    // Simulates a filter that no longer matches rootA (and therefore not its expanded child either).
+    await MainThread.InvokeOnMainThreadAsync(() => tree.FilterRoots([rootB], null));
+
+    Assert.Equal([rootB.Id], tree.Rows.Select(r => r.Relative.Id));
+  }
+
+  [Fact]
+  public async Task FilterRoots_adds_a_newly_matching_root_collapsed()
+  {
+    var services = new TestServices();
+    var rootA = MakeRelative(1, "RootA", Generation.Parent);
+    var rootB = MakeRelative(2, "RootB", Generation.Parent);
+
+    var tree = CreateTree(services);
+    await MainThread.InvokeOnMainThreadAsync(() => tree.SetRoots([rootA], null));
+
+    // Simulates a filter that starts matching rootB, which was never in the tree before.
+    await MainThread.InvokeOnMainThreadAsync(() => tree.FilterRoots([rootA, rootB], null));
+
+    Assert.Equal([rootA.Id, rootB.Id], tree.Rows.Select(r => r.Relative.Id));
+    Assert.False(tree.Rows.Single(r => r.Relative.Id == rootB.Id).IsExpanded);
+  }
 }

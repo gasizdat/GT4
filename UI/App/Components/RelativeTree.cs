@@ -46,6 +46,48 @@ public sealed class RelativeTree
     }
   }
 
+  /// <summary>Re-applies root-level filtering without discarding already-expanded subtrees: a root
+  /// that still matches keeps its row and everything expanded beneath it; a root that no longer
+  /// matches is dropped along with its subtree; a newly-matching root is added collapsed.
+  /// <paramref name="matchingRoots"/> arrives already ordered by the page.</summary>
+  public void FilterRoots(IEnumerable<RelativeInfo> matchingRoots, Date? personBirthDate)
+  {
+    var blocks = new Dictionary<int, List<RelativeRow>>();
+    for (var i = 0; i < _Rows.Count; i++)
+    {
+      if (_Rows[i].Depth != 0)
+      {
+        continue;
+      }
+
+      var block = new List<RelativeRow> { _Rows[i] };
+      var rootId = _Rows[i].Relative.Id;
+      while (i + 1 < _Rows.Count && _Rows[i + 1].Depth > 0)
+      {
+        block.Add(_Rows[++i]);
+      }
+      blocks[rootId] = block;
+    }
+
+    var ordered = matchingRoots.ToArray();
+    _Rows.Clear();
+    for (var i = 0; i < ordered.Length; i++)
+    {
+      if (blocks.Remove(ordered[i].Id, out var block))
+      {
+        foreach (var row in block)
+        {
+          _Rows.Add(row);
+        }
+      }
+      else
+      {
+        var isLast = i == ordered.Length - 1;
+        _Rows.Add(CreateRow(ordered[i], personBirthDate, depth: 0, isLast, ancestorContinues: []));
+      }
+    }
+  }
+
   public async Task ToggleAsync(RelativeRow row)
   {
     if (row.IsBusy || row.Issue == RelativeRowIssueType.Loop)
