@@ -1,6 +1,7 @@
 using GT4.Core.Gedcom.Abstraction;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
+using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
 using System.Text;
 
@@ -43,8 +44,8 @@ internal sealed class GedcomExporter : IGedcomExporter
     var infoById = personInfos.ToDictionary(p => p.Id);
     var biographies = await document.PersonData.GetPersonDataSetAsync(persons, DataCategory.PersonBio, token);
     var residues = await document.PersonData.GetPersonDataSetAsync(persons, DataCategory.PersonGedcomTags, token);
-    var mainPhotos = await document.PersonData.GetPersonDataSetAsync(persons, DataCategory.PersonMainPhoto, token);
-    var additionalPhotos = await document.PersonData.GetPersonDataSetAsync(persons, DataCategory.PersonPhoto, token);
+    var mainPhotos = await document.PersonData.GetMergedPhotoSetAsync(persons, DataCategory.PersonMainPhoto, token);
+    var additionalPhotos = await document.PersonData.GetMergedPhotoSetAsync(persons, DataCategory.PersonPhoto, token);
     var relatives = await document.Relatives.GetRelativesForPersonsAsync(persons, token);
 
     var families = BuildFamilies(relatives, personById);
@@ -302,10 +303,10 @@ internal sealed class GedcomExporter : IGedcomExporter
     var noteResidual = Residual(ownedResidual, GedcomTags.Note);
     AddNote(node, individual.Biography, noteResidual);
 
-    AddPhoto(node, individual.MainPhoto, primary: true);
+    await AddPhotoAsync(node, individual.MainPhoto, primary: true, token);
     foreach (var photo in individual.AdditionalPhotos)
     {
-      AddPhoto(node, photo, primary: false);
+      await AddPhotoAsync(node, photo, primary: false, token);
     }
 
     var spouseNodes = individual
@@ -393,12 +394,22 @@ internal sealed class GedcomExporter : IGedcomExporter
   /// Emits a GT4 photo as an embedded multimedia object: an <c>OBJE</c> carrying the format (from the
   /// MIME type), a <c>_PRIM Y</c> marker on the main photo, and the image bytes base64-encoded into a
   /// <c>BLOB</c> the writer auto-chunks across CONC lines. This is the form <see cref="GedcomImporter"/>
-  /// reads back, so photos round-trip self-contained inside the single .ged file.
+  /// reads back, so photos round-trip self-contained inside the single .ged file. A tagged photo's
+  /// residual children (chiefly <c>TITL</c>) are decoded and merged back onto the OBJE -- a per-node
+  /// merge-back, not the shared <see cref="PartitionResidue"/> bucket-by-tag mechanism, since several
+  /// independent photos each need their own distinct residual tags, not one pooled per-tag-name bucket.
   /// </summary>
-  private static void AddPhoto(GedcomNode individual, Data? photo, bool primary)
+  private static async Task AddPhotoAsync(GedcomNode individual, Data? photo, bool primary, CancellationToken token)
   {
     if (photo is null)
       return;
+
+    var imageBytes = photo.Content;
+    GedcomNode? residual = null;
+    if (photo.Category.IsTaggedPhoto())
+    {
+      (imageBytes, residual) = await GedcomPhotoResidue.DecodeAsync(photo.Content, token);
+    }
 
     var obje = new GedcomNode { Tag = GedcomTags.Object };
     var form = GedcomMedia.ToForm(photo.MimeType);
@@ -410,8 +421,12 @@ internal sealed class GedcomExporter : IGedcomExporter
     {
       obje.Add(new GedcomNode { Tag = GedcomTags.Primary, Value = GedcomTags.PrimaryYes });
     }
-    var base64 = Convert.ToBase64String(photo.Content);
+    var base64 = Convert.ToBase64String(imageBytes);
     obje.Add(new GedcomNode { Tag = GedcomTags.Blob, Value = base64 });
+    if (residual is not null)
+    {
+      obje.Add([.. residual.Children]);
+    }
     individual.Add(obje);
   }
 

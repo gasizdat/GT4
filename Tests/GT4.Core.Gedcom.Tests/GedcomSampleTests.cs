@@ -413,17 +413,24 @@ public sealed class GedcomSampleTests : IAsyncLifetime
       var person = (await document.Persons.GetPersonsAsync(Token)).Single();
       var full = await document.PersonManager.GetPersonFullInfoAsync(person, Token);
       full.MainPhoto.Should().NotBeNull();
-      full.MainPhoto!.Content.Should().Equal(mainBytes);
+      // The main OBJE carries a TITL, so it is consumed as a tagged photo: Content is a
+      // GedcomPhotoResidue envelope, not the raw image bytes directly.
+      full.MainPhoto!.Category.Should().Be(DataCategory.PersonMainPhotoTagged);
+      GedcomPhotoResidue.ExtractImageBytes(full.MainPhoto.Content).Should().Equal(mainBytes);
       full.MainPhoto.MimeType.Should().Be("image/png");
-      full.AdditionalPhotos.Should().ContainSingle().Which.Content.Should().Equal(extraBytes);
+      (await GedcomPhotoResidue.ExtractTitleAsync(full.MainPhoto, Token)).Should().Be("Portrait");
 
-      // The OBJEs were consumed as photos, so they are not also kept as opaque residue (the TITL caption is
-      // dropped — GT4 photos have no caption field; preserving it is a deferred follow-up).
+      // The extra OBJE has no TITL/extra tags, so it stays a plain photo.
+      var additionalPhoto = full.AdditionalPhotos.Should().ContainSingle().Which;
+      additionalPhoto.Category.Should().Be(DataCategory.PersonPhoto);
+      additionalPhoto.Content.Should().Equal(extraBytes);
+
+      // The OBJEs were consumed as photos, so they are not also kept as opaque residue.
       full.GedcomData.Should().BeNull();
 
-      // Export re-emits them self-contained as embedded BLOBs.
+      // Export re-emits them self-contained as embedded BLOBs, with the main photo's TITL restored.
       var text = await ExportToTextAsync(document);
-      text.Should().Contain("1 OBJE").And.Contain("2 FORM png").And.Contain("2 BLOB ");
+      text.Should().Contain("1 OBJE").And.Contain("2 FORM png").And.Contain("2 BLOB ").And.Contain("2 TITL Portrait");
       text.Should().NotContain("2 FILE");
     }
     finally

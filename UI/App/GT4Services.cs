@@ -25,9 +25,11 @@ public class GT4Services
       .AddCoreUtils()
       .AddDefaultProject()
       .AddGedcom()
-      // The GEDCOM residue converter lives here, not in AddUIUtils: it bridges to Core.Gedcom, and the
-      // leaf UI.Utils library must stay free of that feature dependency.
+      // These converters live here, not in AddUIUtils: they bridge to Core.Gedcom, and the leaf
+      // UI.Utils library must stay free of that feature dependency.
       .AddKeyedSingleton<IDataConverter, GedcomDataConverter>(DataCategory.PersonGedcomTags)
+      .AddKeyedSingleton<IDataConverter, PhotoTagDataConverter>(DataCategory.PersonMainPhotoTagged)
+      .AddKeyedSingleton<IDataConverter, PhotoTagDataConverter>(DataCategory.PersonPhotoTagged)
       .AddSingleton<IAlertService, RealAlertService>()
       .AddSingleton<INavigationService, RealNavigationService>();
   }

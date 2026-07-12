@@ -1,5 +1,6 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
+using GT4.Core.Project.Extensions;
 
 namespace GT4.Core.Project;
 
@@ -49,8 +50,8 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
     var ret = new PersonFullInfo(
       person: person,
       names: names.Result,
-      mainPhoto: personData.Result.SingleOrDefault(data => data.Category == DataCategory.PersonMainPhoto),
-      additionalPhotos: personData.Result.Where(data => data.Category == DataCategory.PersonPhoto).ToArray(),
+      mainPhoto: personData.Result.SingleOrDefault(data => data.Category.IsMainPhoto()),
+      additionalPhotos: personData.Result.Where(data => data.Category.IsAdditionalPhoto()).ToArray(),
       relativeInfos: relativeInfos.Result,
       biography: personData.Result.SingleOrDefault(data => data.Category == DataCategory.PersonBio),
       gedcomData: personData.Result.SingleOrDefault(data => data.Category == DataCategory.PersonGedcomTags));
@@ -73,7 +74,7 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
 
     var namesTask = Document.PersonNames.GetPersonNamesAsync(persons, token);
     var photosTask = selectMainPhoto
-      ? Document.PersonData.GetPersonDataSetAsync(persons, DataCategory.PersonMainPhoto, token)
+      ? Document.PersonData.GetMergedPhotoSetAsync(persons, DataCategory.PersonMainPhoto, token)
       : Task.FromResult<Dictionary<int, Data[]>>([]);
     await Task.WhenAll(namesTask, photosTask);
 
@@ -140,19 +141,21 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
   {
     using var transaction = await Document.BeginTransactionAsync(token);
 
-    // Ensure photo categories are consistent:
-    // If the person's main photo exists but is not marked as PersonMainPhoto,
-    // update it to PersonMainPhoto and mark all additional photos as PersonPhoto.
+    // Re-buckets every photo's main/additional category to match personFullInfo.MainPhoto,
+    // preserving each photo's tagged-vs-plain status.
     var mainPhotoId = personFullInfo.MainPhoto?.Id;
     if (mainPhotoId is not null)
     {
       var mainPhoto = await Document.Data.TryGetDataByIdAsync(mainPhotoId.Value, token);
-      if (mainPhoto is not null && mainPhoto.Category != DataCategory.PersonMainPhoto)
+      if (mainPhoto is not null)
       {
-        await Document.Data.UpdateCategoryAsync(mainPhoto, DataCategory.PersonMainPhoto, token);
-        foreach (var photo in personFullInfo.AdditionalPhotos)
+        if (!mainPhoto.Category.IsMainPhoto())
         {
-          await Document.Data.UpdateCategoryAsync(photo, DataCategory.PersonPhoto, token);
+          await Document.Data.UpdateCategoryAsync(mainPhoto, mainPhoto.Category.AsMainPhoto(), token);
+          foreach (var photo in personFullInfo.AdditionalPhotos)
+          {
+            await Document.Data.UpdateCategoryAsync(photo, photo.Category.AsAdditionalPhoto(), token);
+          }
         }
       }
     }

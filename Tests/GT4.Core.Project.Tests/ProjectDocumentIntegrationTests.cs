@@ -384,6 +384,34 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task PersonManager_UpdatePerson_PromotesMisCategorizedMainPhoto_PreservesTaggedness()
+  {
+    var photo = await _doc.Data.AddDataAsync([9, 9], "application/octet-stream", DataCategory.PersonPhotoTagged, Token);
+    var added = await _doc.PersonManager.AddPersonAsync(
+      PersonFullInfo.Empty with { BirthDate = Birth, BiologicalSex = BiologicalSex.Male }, Token);
+
+    var updated = ((PersonFullInfo)added) with { MainPhoto = photo };
+    await _doc.PersonManager.UpdatePersonAsync(updated, Token);
+
+    (await _doc.Data.TryGetDataByIdAsync(photo.Id, Token))!.Category.Should().Be(DataCategory.PersonMainPhotoTagged);
+  }
+
+  [Fact]
+  public async Task PersonManager_UpdatePerson_PromotesMisCategorizedMainPhoto_CorrectsAdditionalPhotosToo()
+  {
+    var mainPhoto = await _doc.Data.AddDataAsync([9, 9], "application/octet-stream", DataCategory.PersonPhoto, Token);
+    var staleAdditional = await _doc.Data.AddDataAsync([7, 7], "application/octet-stream", DataCategory.PersonMainPhoto, Token);
+    var added = await _doc.PersonManager.AddPersonAsync(
+      PersonFullInfo.Empty with { BirthDate = Birth, BiologicalSex = BiologicalSex.Male }, Token);
+
+    var updated = ((PersonFullInfo)added) with { MainPhoto = mainPhoto, AdditionalPhotos = [staleAdditional] };
+    await _doc.PersonManager.UpdatePersonAsync(updated, Token);
+
+    (await _doc.Data.TryGetDataByIdAsync(mainPhoto.Id, Token))!.Category.Should().Be(DataCategory.PersonMainPhoto);
+    (await _doc.Data.TryGetDataByIdAsync(staleAdditional.Id, Token))!.Category.Should().Be(DataCategory.PersonPhoto);
+  }
+
+  [Fact]
   public async Task RemovePerson_CascadesDependentRows()
   {
     var first = await _doc.Names.AddNameAsync("Cascade", NameType.FirstName, null, Token);

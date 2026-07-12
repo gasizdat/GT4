@@ -88,6 +88,7 @@ public partial class ImagePresenter : ContentView
     }
 
     _CurrentIndex = 0;
+    RaiseCaptionChanged();
     if (ImageSources.Length > 1)
     {
       UpdateStageTime();
@@ -97,6 +98,12 @@ public partial class ImagePresenter : ContentView
     {
       _CurrentState = State.Freeze;
     }
+  }
+
+  private void RaiseCaptionChanged()
+  {
+    OnPropertyChanged(nameof(CurrentCaption));
+    OnPropertyChanged(nameof(ShowCurrentCaption));
   }
 
   private void ShowImage()
@@ -163,6 +170,7 @@ public partial class ImagePresenter : ContentView
       OnPropertyChanged(_ImageOpacityProperties[i]);
     }
 
+    RaiseCaptionChanged();
     UpdateStageTime();
     _CurrentState = State.ShowImage;
   }
@@ -281,6 +289,17 @@ public partial class ImagePresenter : ContentView
     null,
     OnBindablePropertyChanged);
 
+  // Index-parallel to ImageSources: Captions[i] is the caption for ImageSources[i], or null when that
+  // photo has none (only a GEDCOM-imported photo with a preserved TITL has one).
+  public static readonly BindableProperty CaptionsProperty = BindableProperty.Create(
+    nameof(Captions),
+    typeof(string?[]),
+    typeof(ImagePresenter),
+    Array.Empty<string?>(),
+    BindingMode.OneWay,
+    null,
+    OnBindablePropertyChanged);
+
   public Style? ImageStyle
   {
     get => (Style?)GetValue(ImageStyleProperty);
@@ -292,6 +311,17 @@ public partial class ImagePresenter : ContentView
     get => (ImageSource[]?)GetValue(ImageSourcesProperty) ?? [];
     set => SetValue(ImageSourcesProperty, value);
   }
+
+  public string?[] Captions
+  {
+    get => (string?[]?)GetValue(CaptionsProperty) ?? [];
+    set => SetValue(CaptionsProperty, value);
+  }
+
+  public string? CurrentCaption =>
+    Captions.Length == 0 ? null : Captions[(int)(_CurrentIndex % Captions.Length)];
+
+  public bool ShowCurrentCaption => !string.IsNullOrEmpty(CurrentCaption);
 
   public TimeSpan ImageShowTime
   {

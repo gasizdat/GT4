@@ -1,5 +1,6 @@
 using GT4.Core.Project;
 using GT4.Core.Project.Dto;
+using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
 using GT4.UI.Utils.Converters;
 using System.ComponentModel;
@@ -83,12 +84,17 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
 
   public async Task<Data?> ToDataAsync()
   {
+    // Unmodified items skip reconversion, which would be lossy for a tagged photo.
+    if (!_IsModified)
+      return Info;
+
     using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
     var ret = await _DataConverter.FromObjectAsync(_Content, token);
     if (ret is not null)
     {
-      var id = _IsModified ? ElementId.NonCommittedId : Info.Id;
-      ret = ret with { Id = id, Category = Info.Category };
+      // A modified photo downgrades tagged -> plain; non-photo categories are untouched.
+      var category = Info.Category.IsPhoto() ? Info.Category.AsPlainPhoto() : Info.Category;
+      ret = ret with { Id = ElementId.NonCommittedId, Category = category };
     }
 
     return ret;

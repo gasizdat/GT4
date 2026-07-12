@@ -1,5 +1,6 @@
 using GT4.Core.Project;
 using GT4.Core.Project.Dto;
+using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
 using GT4.UI.Components;
 using GT4.UI.Items;
@@ -222,7 +223,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     var mainPhoto = photos?.FirstOrDefault();
     var additionalPhotos = photos?
       .Skip(1)
-      .Select(p => p with { Category = DataCategory.PersonPhoto })
+      .Select(p => p with { Category = p.Category.AsAdditionalPhoto() })
       .ToArray() ?? [];
     var person = new Person(
       Id: _PersonId ?? ElementId.NonCommittedId,
@@ -234,7 +235,10 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       names: _Names.Select(n => n.Info).ToArray(),
       additionalPhotos: additionalPhotos,
       relativeInfos: [.. _Relatives],
-      mainPhoto: mainPhoto is null ? null : mainPhoto with { Category = DataCategory.PersonMainPhoto },
+      // .AsMainPhoto()/.AsAdditionalPhoto() preserve tagged-vs-plain while fixing the main/additional
+      // bucket -- position 0 is authoritative regardless of each photo's category coming in, since
+      // reordering (MovePhotoToLeft/Right) doesn't itself update DataCategory.
+      mainPhoto: mainPhoto is null ? null : mainPhoto with { Category = mainPhoto.Category.AsMainPhoto() },
       biography: _Biography?.ToDataAsync().Result,
       gedcomData: _GedcomData);
 
