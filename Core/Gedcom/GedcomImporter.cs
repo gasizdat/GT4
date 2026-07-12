@@ -84,11 +84,8 @@ internal sealed class GedcomImporter : IGedcomImporter
   private readonly record struct PersonIdentity(string FirstName, string? FamilyName, Date? BirthDate);
 
   /// <summary>
-  /// Decides which incoming individuals fold into an existing person. A match needs a first name, the
-  /// identity to be unique among the existing persons, and unique among the incoming individuals too:
-  /// anything ambiguous on either side is left to import as a new person, so the import never collapses
-  /// two distinct people into one. The birth date is part of the identity but may be null, so undated
-  /// people still merge when their name alone is unique on both sides.
+  /// Decides which incoming individuals fold into an existing person, keyed on first name, family name
+  /// and birth date (undated matches only undated); anything ambiguous on either side imports as new.
   /// </summary>
   private static async Task<Dictionary<string, Match>> ResolveMatchesAsync(
     IProjectDocument document,
@@ -128,11 +125,9 @@ internal sealed class GedcomImporter : IGedcomImporter
   }
 
   /// <summary>
-  /// The relationship edges the reused persons already have, keyed exactly as the importer would insert
-  /// them (owner id, relative id, type, date). A duplicate edge cannot arise unless both endpoints are
-  /// reused, so only reused persons are read; wiring then skips any edge already in this set. This
-  /// matters because a child edge stores a null date, and SQLite treats null primary-key parts as
-  /// distinct, so the PRIMARY KEY would silently admit a duplicate instead of rejecting it.
+  /// The relationship edges the reused persons already have, so wiring can skip inserting a duplicate.
+  /// Explicit dedup is required because a child edge stores a null date, and SQLite treats null
+  /// primary-key parts as distinct, so the PRIMARY KEY alone would not reject the duplicate.
   /// </summary>
   private static async Task<HashSet<(int Owner, int Relative, RelationshipType Type, Date? Date)>> CollectExistingEdgesAsync(
     IProjectDocument document,
@@ -152,11 +147,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     return edges;
   }
 
-  /// <summary>
-  /// Fills only the fields a matched person is missing: bio, unmodeled-tag residue and photos are added
-  /// when absent, and a death date is set when the person has none. Populated values are never
-  /// overwritten, so folding a file into an existing tree can enrich a person but cannot lose data.
-  /// </summary>
+  /// <summary>Fills only the fields a matched person is missing; populated values are never overwritten.</summary>
   private static async Task GapFillAsync(
     IProjectDocument document,
     Match match,
@@ -169,9 +160,8 @@ internal sealed class GedcomImporter : IGedcomImporter
     var additions = new List<Data>();
 
     var photos = SelectPhotos(individual, mediaBasePath);
-    // Photos are added only when the person has none. When they are not added these OBJEs stay unconsumed,
-    // so an empty consumed set is passed to the residue: the incoming portrait is preserved verbatim as
-    // residue rather than dropped from both the photo set and the blob.
+    // Photos are added only when the person has none; otherwise these OBJEs stay unconsumed and fall
+    // through to residue instead of being dropped.
     var addingPhotos = full.MainPhoto is null && full.AdditionalPhotos.Length == 0;
     GedcomNode[] consumedNodes = addingPhotos ? photos.Select(p => p.Node).ToArray() : [];
 

@@ -54,8 +54,7 @@ internal static class GedcomReader
 
   private static (int Level, string? Xref, string Tag, string? Value)? ParseLine(string rawLine)
   {
-    // Only leading whitespace is stripped: a trailing space can be a significant part of a value that the
-    // writer split onto a CONC line exactly at a space, and trimming it would drop the space on round-trip.
+    // Only leading whitespace is stripped: a trailing space can be a significant, round-tripped part of the value.
     var line = rawLine.TrimStart();
     if (line.Length == 0)
       return null;
@@ -89,9 +88,8 @@ internal static class GedcomReader
   }
 
   /// <summary>
-  /// A leading <c>@xref@</c> right after the level is the record identifier; consumes it from
-  /// <paramref name="rest"/> and returns it. A pointer used as a value (e.g. <c>HUSB @I1@</c>) keeps its
-  /// <c>@</c> delimiters and stays in the value, so it is never mistaken for an identifier here.
+  /// Consumes a leading <c>@xref@</c> record identifier from <paramref name="rest"/>, if present. A
+  /// pointer used as a value (e.g. <c>HUSB @I1@</c>) is not leading, so it stays in the value untouched.
   /// </summary>
   private static string? TryTakeXref(ref string rest)
   {

@@ -25,8 +25,8 @@ internal static class GedcomMedia
     if (string.IsNullOrEmpty(form))
       return null;
 
-    // A form value that already carries a "/" is a full MIME type the export passed through verbatim (a
-    // non-image type), so it is returned as-is; a bare token is an image subtype to re-prefix.
+    // A form value already carrying a "/" is a full MIME type passed through verbatim; a bare token is
+    // an image subtype to re-prefix.
     return form.Contains('/') ? form : ImagePrefix + form;
   }
 }

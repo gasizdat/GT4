@@ -431,10 +431,8 @@ internal sealed class GedcomExporter : IGedcomExporter
   }
 
   /// <summary>
-  /// A birth date is only emitted when something is known; a death is emitted whenever a death date
-  /// exists at all (even with unknown precision), so the fact of death survives the round-trip. Any
-  /// preserved unmodeled sub-tags (a BIRT's PLAC/SOUR) are merged in after the DATE — and on their own keep
-  /// the event alive even when GT4 has no usable date, so they are not lost.
+  /// A birth is only emitted when something is known; a death is emitted whenever a death date exists at
+  /// all, even with unknown precision, so the fact of death survives the round-trip.
   /// </summary>
   private static void AddEvent(GedcomNode individual, string eventTag, Date? date, IReadOnlyList<GedcomNode> residual)
   {
@@ -443,8 +441,7 @@ internal sealed class GedcomExporter : IGedcomExporter
       return;
 
     var value = date.HasValue ? GedcomDate.ToGedcom(date.Value) : null;
-    // A birth with neither a usable date nor preserved sub-tags carries no information, so it is dropped; a
-    // death with no usable date still falls through to a bare DEAT so the fact of death survives.
+    // Only a birth with no usable date and no sub-tags is dropped here; a death still falls through.
     if (value is null && residual.Count == 0 && eventTag == GedcomTags.Birth)
       return;
 
