@@ -236,8 +236,8 @@ public partial class PersonFilterView : ContentView
         _Filter.SetYearBounds(minYear, maxYear);
 
         _Syncing = true;
-        // Maximum first: the slider starts at [0, 1] and the new maximum is always >= the current
-        // year, so this order never leaves Minimum > Maximum mid-update.
+        // Maximum first: ComputeYearBounds floors maxYear at the current year, which is >= the
+        // slider's initial Maximum of 1, so this order never leaves Minimum > Maximum mid-update.
         YearSlider.Maximum = maxYear;
         YearSlider.Minimum = minYear;
         YearSlider.Value = _Filter.SelectedYear;
