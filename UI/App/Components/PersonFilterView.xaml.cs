@@ -12,9 +12,8 @@ namespace GT4.UI.Components;
 /// the filter state itself (a <see cref="PersonFilter"/> it owns), including the lazy marital-status/
 /// year-bounds fetch. Host pages call <see cref="Initialize"/> right after their InitializeComponent,
 /// subscribe to <see cref="Changed"/> to re-run their filter predicate, and call <see cref="Matches"/>
-/// from it. The filter itself exists from construction, so <see cref="Matches"/> is safe even for a
-/// page load racing ahead of Initialize on a background thread; only opening the panel requires
-/// Initialize to have run.
+/// from it. The filter exists from construction, so <see cref="Matches"/> is safe even before
+/// Initialize has run; only opening the panel requires it.
 /// </summary>
 public partial class PersonFilterView : ContentView
 {
@@ -58,9 +57,9 @@ public partial class PersonFilterView : ContentView
     _AlertService = alertService;
     _SnapshotPersons = snapshotPersons;
 
-    // Label order must match PersonFilter's SexFilterValues/MaritalStatusFilterValues (index 0 =
-    // "any"). Assigning ItemsSource fires SelectedIndexChanged (with platform-dependent index
-    // normalization), so it runs under the same guard as any other programmatic control write.
+    // Label order must match PersonFilter's SexFilterValues/MaritalStatusFilterValues (index 0 = "any").
+    // Assigning ItemsSource fires SelectedIndexChanged, so it runs under the same guard as any other
+    // programmatic control write.
     _Syncing = true;
     SexFilterPicker.ItemsSource = new[]
     {
@@ -192,8 +191,7 @@ public partial class PersonFilterView : ContentView
     }
   }
 
-  /// <summary>Writes every control's value from the filter state. The single programmatic writer:
-  /// a missed control here would silently desync the UI from the filter.</summary>
+  /// <summary>Writes every control's value from the filter state; the single programmatic writer.</summary>
   private void SyncControls()
   {
     _Syncing = true;
@@ -213,10 +211,9 @@ public partial class PersonFilterView : ContentView
     Changed?.Invoke(this, EventArgs.Empty);
   }
 
-  // Marital status needs a relatives lookup that no other part of a page's data requires, so it is
-  // fetched lazily -- only once the filter panel is actually opened -- reusing the persons the page
-  // already has loaded (snapshotted via _SnapshotPersons, on the main thread, before handing off to
-  // the background fetch) rather than fetching it unconditionally for every visit to the page.
+  // Marital status needs a relatives lookup no other part of a page's data requires, so it is fetched
+  // lazily -- only once the filter panel is opened -- reusing the page's already-loaded persons
+  // (snapshotted synchronously before handing off to the background fetch).
   private void EnsureFilterDataLoaded()
   {
     if (_FilterDataLoaded)
