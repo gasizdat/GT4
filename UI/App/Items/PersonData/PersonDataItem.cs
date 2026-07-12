@@ -84,9 +84,9 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
 
   public async Task<Data?> ToDataAsync()
   {
-    // Unmodified items are returned as-is: reconverting them would be a needless (and, for an
-    // image, lossy) round-trip, and for a tagged photo it would regenerate Content as plain bytes
-    // while Category still says tagged -- the exact desync that breaks the next load.
+    // Unmodified items are returned as-is: reconverting a tagged photo would silently discard its
+    // preserved caption/TITL tags and downgrade it to plain even though nothing was actually edited --
+    // PhotoTagDataConverter's Content only ever holds the extracted image, never the residual tags.
     if (!_IsModified)
       return Info;
 
