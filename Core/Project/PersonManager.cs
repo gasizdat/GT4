@@ -141,11 +141,8 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
   {
     using var transaction = await Document.BeginTransactionAsync(token);
 
-    // Ensure photo categories are consistent: if the person's main photo exists but is not marked as
-    // main, correct its main/additional bucket for every photo. AsMainPhoto()/AsAdditionalPhoto()
-    // preserve each photo's tagged-vs-plain status (a tagged photo's Content is a GedcomPhotoResidue
-    // envelope, not raw bytes) rather than collapsing everything to the plain category, which would
-    // desync Category from Content and break the next load.
+    // Re-buckets every photo's main/additional category to match personFullInfo.MainPhoto,
+    // preserving each photo's tagged-vs-plain status.
     var mainPhotoId = personFullInfo.MainPhoto?.Id;
     if (mainPhotoId is not null)
     {

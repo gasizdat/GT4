@@ -6,14 +6,9 @@ using GT4.Core.Project.Dto;
 public static class PersonDataExtensions
 {
   /// <summary>
-  /// Fetches a photo slot (main or additional) for a set of persons, merging the plain and tagged
-  /// categories into one per-person array. The tagged category is derived from <paramref name="plainCategory"/>
-  /// via <see cref="DataCategoryExtensions.AsTaggedPhoto"/> rather than taken as a second parameter, so a
-  /// non-photo category (e.g. <see cref="DataCategory.PersonBio"/>) throws instead of silently merging
-  /// unrelated data, and the two categories can never be a mismatched pair. Concatenating (rather than
-  /// overwriting) is correct for both callers: a main photo is either plain or tagged, never both, so
-  /// concatenation degrades to the same result as an overwrite; additional photos can freely mix plain and
-  /// tagged rows for the same person.
+  /// Fetches a photo slot (main or additional), merging plain and tagged categories into one
+  /// per-person array. Concatenating rather than overwriting is safe for both callers: a main
+  /// photo is only ever one or the other, and additional photos can freely mix both.
   /// </summary>
   public static async Task<Dictionary<int, Data[]>> GetMergedPhotoSetAsync(
     this ITablePersonData personData, Person[] persons, DataCategory plainCategory, CancellationToken token)

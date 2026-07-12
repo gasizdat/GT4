@@ -84,9 +84,7 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
 
   public async Task<Data?> ToDataAsync()
   {
-    // Unmodified items are returned as-is: reconverting a tagged photo would silently discard its
-    // preserved caption/TITL tags and downgrade it to plain even though nothing was actually edited --
-    // PhotoTagDataConverter's Content only ever holds the extracted image, never the residual tags.
+    // Unmodified items skip reconversion, which would be lossy for a tagged photo.
     if (!_IsModified)
       return Info;
 
@@ -94,8 +92,7 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
     var ret = await _DataConverter.FromObjectAsync(_Content, token);
     if (ret is not null)
     {
-      // A freshly picked/replaced photo can never carry the old photo's tags, so a genuine
-      // modification must downgrade a tagged category to plain; non-photo categories are untouched.
+      // A modified photo downgrades tagged -> plain; non-photo categories are untouched.
       var category = Info.Category.IsPhoto() ? Info.Category.AsPlainPhoto() : Info.Category;
       ret = ret with { Id = ElementId.NonCommittedId, Category = category };
     }

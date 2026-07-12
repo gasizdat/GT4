@@ -2,11 +2,7 @@ namespace GT4.Core.Project.Extensions;
 
 using GT4.Core.Project.Dto;
 
-/// <summary>
-/// A photo's tagged-vs-plain category must be preserved whenever code reassigns its main-vs-additional
-/// bucket (see <see cref="AsMainPhoto"/>/<see cref="AsAdditionalPhoto"/>), or Category and Content
-/// desync and the wrong IDataConverter runs against it.
-/// </summary>
+/// <summary>Photo category helpers: tagged-vs-plain status must survive main-vs-additional reassignment.</summary>
 public static class DataCategoryExtensions
 {
   public static bool IsTaggedPhoto(this DataCategory category) =>
@@ -34,9 +30,7 @@ public static class DataCategoryExtensions
     _ => throw new ArgumentOutOfRangeException(nameof(category), category, "Not a photo category.")
   };
 
-  // A freshly picked/replaced photo can never carry the old photo's tags, so a content modification
-  // must downgrade tagged -> plain rather than preserve it. Callers must check IsPhoto() first --
-  // unlike IsMainPhoto/IsAdditionalPhoto, this has no sensible answer for a non-photo category.
+  // Always downgrades tagged -> plain; throws for non-photo categories.
   public static DataCategory AsPlainPhoto(this DataCategory category) => category switch
   {
     DataCategory.PersonMainPhotoTagged or DataCategory.PersonMainPhoto => DataCategory.PersonMainPhoto,

@@ -8,13 +8,7 @@ using Xunit;
 
 namespace GT4.UI.DeviceTests;
 
-/// <summary>
-/// Covers PersonDataItem.ToDataAsync's two correctness-sensitive branches: an untouched item must be
-/// returned as-is (no reconversion -- for a tagged photo, reconverting would silently regenerate
-/// Content as plain bytes while Category still said tagged), and a genuinely modified item must
-/// downgrade a tagged category to plain (DataCategoryExtensions.AsPlainPhoto), since a freshly
-/// converted result can never legitimately carry the old photo's tags.
-/// </summary>
+/// <summary>Covers PersonDataItem.ToDataAsync's untouched-vs-modified and tagged-vs-plain branches.</summary>
 public class PersonDataItemTests
 {
   private static ICancellationTokenProvider TokenProvider(TestServices services) =>
