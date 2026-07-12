@@ -46,12 +46,24 @@ public sealed class DataCategoryExtensionsTests
     category.AsMainPhoto().Should().Be(expected);
 
   [Theory]
+  [InlineData(DataCategory.PersonBio)]
+  [InlineData(DataCategory.PersonGedcomTags)]
+  public void AsMainPhoto_ThrowsForNonPhotoCategories(DataCategory category) =>
+    FluentActions.Invoking(() => category.AsMainPhoto()).Should().Throw<ArgumentOutOfRangeException>();
+
+  [Theory]
   [InlineData(DataCategory.PersonMainPhoto, DataCategory.PersonPhoto)]
   [InlineData(DataCategory.PersonPhoto, DataCategory.PersonPhoto)]
   [InlineData(DataCategory.PersonMainPhotoTagged, DataCategory.PersonPhotoTagged)]
   [InlineData(DataCategory.PersonPhotoTagged, DataCategory.PersonPhotoTagged)]
   public void AsAdditionalPhoto_PreservesTaggedness(DataCategory category, DataCategory expected) =>
     category.AsAdditionalPhoto().Should().Be(expected);
+
+  [Theory]
+  [InlineData(DataCategory.PersonBio)]
+  [InlineData(DataCategory.PersonGedcomTags)]
+  public void AsAdditionalPhoto_ThrowsForNonPhotoCategories(DataCategory category) =>
+    FluentActions.Invoking(() => category.AsAdditionalPhoto()).Should().Throw<ArgumentOutOfRangeException>();
 
   [Theory]
   [InlineData(DataCategory.PersonMainPhoto, DataCategory.PersonMainPhoto)]

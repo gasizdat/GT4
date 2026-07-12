@@ -20,11 +20,19 @@ public static class DataCategoryExtensions
 
   public static bool IsPhoto(this DataCategory category) => category.IsMainPhoto() || category.IsAdditionalPhoto();
 
-  public static DataCategory AsMainPhoto(this DataCategory category) =>
-    category.IsTaggedPhoto() ? DataCategory.PersonMainPhotoTagged : DataCategory.PersonMainPhoto;
+  public static DataCategory AsMainPhoto(this DataCategory category) => category switch
+  {
+    DataCategory.PersonMainPhotoTagged or DataCategory.PersonPhotoTagged => DataCategory.PersonMainPhotoTagged,
+    DataCategory.PersonMainPhoto or DataCategory.PersonPhoto => DataCategory.PersonMainPhoto,
+    _ => throw new ArgumentOutOfRangeException(nameof(category), category, "Not a photo category.")
+  };
 
-  public static DataCategory AsAdditionalPhoto(this DataCategory category) =>
-    category.IsTaggedPhoto() ? DataCategory.PersonPhotoTagged : DataCategory.PersonPhoto;
+  public static DataCategory AsAdditionalPhoto(this DataCategory category) => category switch
+  {
+    DataCategory.PersonMainPhotoTagged or DataCategory.PersonPhotoTagged => DataCategory.PersonPhotoTagged,
+    DataCategory.PersonMainPhoto or DataCategory.PersonPhoto => DataCategory.PersonPhoto,
+    _ => throw new ArgumentOutOfRangeException(nameof(category), category, "Not a photo category.")
+  };
 
   // A freshly picked/replaced photo can never carry the old photo's tags, so a content modification
   // must downgrade tagged -> plain rather than preserve it. Callers must check IsPhoto() first --
