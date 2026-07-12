@@ -28,10 +28,8 @@ internal static class SafeTask
   /// <summary>
   /// True when the exception is the benign "the project was closed underneath us" race rather than a
   /// genuine failure. Use it in <c>catch ... when</c> clauses to swallow teardown noise quietly.
-  /// Recurses into AggregateException because several call sites block on Task.Result, which wraps
-  /// the original exception rather than rethrowing it directly. Requires every inner exception to be
-  /// teardown-related (not just the first) so a genuine failure aggregated alongside a benign one is
-  /// still surfaced instead of silently swallowed.
+  /// Recurses into AggregateException (several call sites block on Task.Result, which wraps the
+  /// original exception) and requires every inner exception to qualify, not just one.
   /// </summary>
   public static bool IsProjectTeardown(Exception exception) =>
     exception switch

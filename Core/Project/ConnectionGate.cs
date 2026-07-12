@@ -7,12 +7,11 @@ namespace GT4.Core.Project;
 /// <see cref="NestedTransaction"/> it creates.
 /// <para>
 /// Closing is a drain: <see cref="Close"/>/<see cref="CloseAsync"/> mark the gate closed and then
-/// acquire it, which waits out the in-flight statement, open reader or active transaction. The
-/// document releases the gate again after the connection is shut so queued waiters wake up, observe
-/// <see cref="IsClosed"/> and fail with <see cref="ObjectDisposedException"/> instead of hanging or
-/// touching a closed connection. The semaphore itself is never disposed — disposing a
-/// <see cref="SemaphoreSlim"/> does not wake its waiters, and one without
-/// <see cref="SemaphoreSlim.AvailableWaitHandle"/> holds no unmanaged resources anyway.
+/// acquire it, waiting out the in-flight statement, open reader or active transaction; the document
+/// then releases the gate so queued waiters wake with <see cref="ObjectDisposedException"/> instead
+/// of hanging. The semaphore itself is never disposed: disposing a <see cref="SemaphoreSlim"/> does
+/// not wake its waiters, and one without <see cref="SemaphoreSlim.AvailableWaitHandle"/> holds no
+/// unmanaged resources anyway.
 /// </para>
 /// </summary>
 internal sealed class ConnectionGate

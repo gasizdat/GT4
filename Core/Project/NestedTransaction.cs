@@ -78,11 +78,9 @@ internal sealed class NestedTransaction : IProjectTransaction
   }
 
   /// <summary>
-  /// Commits this transaction. The body runs synchronously even though the method is awaitable: the
-  /// commit has to release the gate and hand the ambient back on the caller's own flow, which an
-  /// <c>await</c> would prevent (see <see cref="Complete"/>). It replaces the former synchronous
-  /// <c>Commit()</c> that blocked on <c>SetProjectRevisionAsync(...).GetAwaiter().GetResult()</c>; the
-  /// revision is now stamped with a direct synchronous write that cannot deadlock.
+  /// Commits this transaction. The body runs synchronously even though the method is awaitable: it
+  /// must release the gate and hand the ambient back on the caller's own flow, which an <c>await</c>
+  /// would prevent (see <see cref="Complete"/>).
   /// </summary>
   public Task CommitAsync(CancellationToken token)
   {
@@ -126,9 +124,7 @@ internal sealed class NestedTransaction : IProjectTransaction
       throw new InvalidOperationException($"The transaction '{_Name}' is not in a rollback-able state.");
     }
 
-    // Already torn down (e.g. a commit that threw mid-flight ran Complete(), disposing the real
-    // transaction): there is nothing left to roll back, and touching the disposed transaction would
-    // mask the original failure.
+    // Already torn down: nothing left to roll back, and touching it again would mask the original failure.
     if (_RolledBack || _Completed)
     {
       return;
@@ -160,10 +156,7 @@ internal sealed class NestedTransaction : IProjectTransaction
       return;
     }
 
-    // Roll back before flagging disposal, but only if the transaction hasn't already reached a terminal
-    // state. A CommitAsync that threw mid-flight has already run Complete(), which disposed (and thereby
-    // rolled back) the real transaction; calling Rollback() again would hit the disposed transaction and
-    // mask the original commit failure.
+    // Roll back only if the transaction hasn't already reached a terminal state.
     if (!_Completed)
     {
       Rollback();

@@ -8,10 +8,8 @@ namespace GT4.Core.Project;
 /// Created by <see cref="Abstraction.IProjectDocument.CreateCommand"/>. Set <see cref="CommandText"/>
 /// and <see cref="Parameters"/> as on a normal command, then call one of the <c>Execute*</c> methods.
 /// Execution is serialized through the shared <see cref="ConnectionGate"/>: when the calling
-/// async-flow owns the current transaction the command joins it and runs directly (the flow already
-/// holds the connection); otherwise it waits for exclusive access. The command is also (re)bound to
-/// the correct transaction at execution time, so it never uses a stale one that
-/// <see cref="SqliteConnection.CreateCommand"/> may have stamped at creation time.
+/// async-flow owns the current transaction the command joins it and runs directly; otherwise it waits
+/// for exclusive access. The command is also rebound to the correct transaction at execution time.
 /// </para>
 /// </summary>
 public sealed class ProjectCommand : IDisposable, IAsyncDisposable
@@ -42,10 +40,8 @@ public sealed class ProjectCommand : IDisposable, IAsyncDisposable
     RunGatedAsync(() => _Command.ExecuteScalarAsync(token), token);
 
   /// <summary>
-  /// Executes a reader. The returned <see cref="ProjectDataReader"/> is used like any reader and holds
-  /// the connection until it is disposed, so always consume it with <c>await using</c>. While it is
-  /// open no other flow can touch the connection, so do not start an independent database operation
-  /// before disposing it (that would deadlock); read what you need, dispose, then continue.
+  /// Executes a reader. The returned <see cref="ProjectDataReader"/> holds the connection until
+  /// disposed, so always consume it with <c>await using</c> before starting another database operation.
   /// </summary>
   public async Task<ProjectDataReader> ExecuteReaderAsync(CancellationToken token)
   {
