@@ -95,8 +95,9 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
     if (ret is not null)
     {
       // A freshly picked/replaced photo can never carry the old photo's tags, so a genuine
-      // modification must downgrade a tagged category to plain (a no-op for non-photo categories).
-      ret = ret with { Id = ElementId.NonCommittedId, Category = Info.Category.AsPlainPhoto() };
+      // modification must downgrade a tagged category to plain; non-photo categories are untouched.
+      var category = Info.Category.IsPhoto() ? Info.Category.AsPlainPhoto() : Info.Category;
+      ret = ret with { Id = ElementId.NonCommittedId, Category = category };
     }
 
     return ret;

@@ -61,12 +61,11 @@ public sealed class DataCategoryExtensionsTests
   public void AsPlainPhoto_AlwaysDowngradesToPlain(DataCategory category, DataCategory expected) =>
     category.AsPlainPhoto().Should().Be(expected);
 
-  [Fact]
-  public void AsPlainPhoto_LeavesNonPhotoCategoriesUnchanged()
-  {
-    DataCategory.PersonBio.AsPlainPhoto().Should().Be(DataCategory.PersonBio);
-    DataCategory.PersonGedcomTags.AsPlainPhoto().Should().Be(DataCategory.PersonGedcomTags);
-  }
+  [Theory]
+  [InlineData(DataCategory.PersonBio)]
+  [InlineData(DataCategory.PersonGedcomTags)]
+  public void AsPlainPhoto_ThrowsForNonPhotoCategories(DataCategory category) =>
+    FluentActions.Invoking(() => category.AsPlainPhoto()).Should().Throw<ArgumentOutOfRangeException>();
 
   [Theory]
   [InlineData(DataCategory.PersonMainPhoto, DataCategory.PersonMainPhotoTagged)]
@@ -76,10 +75,19 @@ public sealed class DataCategoryExtensionsTests
   public void AsTaggedPhoto_AlwaysUpgradesToTagged(DataCategory category, DataCategory expected) =>
     category.AsTaggedPhoto().Should().Be(expected);
 
-  [Fact]
-  public void AsTaggedPhoto_LeavesNonPhotoCategoriesUnchanged()
-  {
-    DataCategory.PersonBio.AsTaggedPhoto().Should().Be(DataCategory.PersonBio);
-    DataCategory.PersonGedcomTags.AsTaggedPhoto().Should().Be(DataCategory.PersonGedcomTags);
-  }
+  [Theory]
+  [InlineData(DataCategory.PersonBio)]
+  [InlineData(DataCategory.PersonGedcomTags)]
+  public void AsTaggedPhoto_ThrowsForNonPhotoCategories(DataCategory category) =>
+    FluentActions.Invoking(() => category.AsTaggedPhoto()).Should().Throw<ArgumentOutOfRangeException>();
+
+  [Theory]
+  [InlineData(DataCategory.PersonMainPhoto, true)]
+  [InlineData(DataCategory.PersonMainPhotoTagged, true)]
+  [InlineData(DataCategory.PersonPhoto, true)]
+  [InlineData(DataCategory.PersonPhotoTagged, true)]
+  [InlineData(DataCategory.PersonBio, false)]
+  [InlineData(DataCategory.PersonGedcomTags, false)]
+  public void IsPhoto_IdentifiesAnyOfTheFourPhotoCategories(DataCategory category, bool expected) =>
+    category.IsPhoto().Should().Be(expected);
 }

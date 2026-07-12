@@ -60,4 +60,20 @@ public class PersonDataItemTests
     Assert.NotNull(result);
     Assert.Equal(DataCategory.PersonPhoto, result.Category);
   }
+
+  [Fact]
+  public async Task ToDataAsync_ModifiedNonPhotoItem_LeavesCategoryUntouched()
+  {
+    // AsPlainPhoto() throws for non-photo categories, so ToDataAsync must guard with IsPhoto()
+    // before calling it -- this covers the branch that skips the guarded call entirely.
+    var services = new TestServices();
+    var original = new Data(10, [1, 2, 3], "text/plain", DataCategory.PersonBio);
+    var item = new PersonDataItem(original, new TextDataConverter(), TokenProvider(services), services.AlertService.Object);
+
+    item.Content = "updated biography";
+    var result = await item.ToDataAsync();
+
+    Assert.NotNull(result);
+    Assert.Equal(DataCategory.PersonBio, result.Category);
+  }
 }
