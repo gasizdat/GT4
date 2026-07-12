@@ -1,0 +1,39 @@
+using FluentAssertions;
+using Xunit;
+
+namespace GT4.Core.Gedcom.Tests;
+
+public sealed class GedcomMediaTests
+{
+  [Theory]
+  [InlineData(null)]
+  [InlineData("")]
+  public void ToForm_NullOrEmptyMimeType_ReturnsNull(string? mimeType) =>
+    GedcomMedia.ToForm(mimeType).Should().BeNull();
+
+  [Theory]
+  [InlineData("image/jpeg", "jpeg")]
+  [InlineData("image/bmp", "bmp")]
+  public void ToForm_ImageMimeType_StripsImagePrefix(string mimeType, string expected) =>
+    GedcomMedia.ToForm(mimeType).Should().Be(expected);
+
+  [Fact]
+  public void ToForm_NonImageMimeType_PassesThroughVerbatim() =>
+    GedcomMedia.ToForm("application/pdf").Should().Be("application/pdf");
+
+  [Theory]
+  [InlineData(null)]
+  [InlineData("")]
+  public void ToMimeType_NullOrEmptyForm_ReturnsNull(string? form) =>
+    GedcomMedia.ToMimeType(form).Should().BeNull();
+
+  [Theory]
+  [InlineData("jpeg", "image/jpeg")]
+  [InlineData("bmp", "image/bmp")]
+  public void ToMimeType_BareToken_AddsImagePrefix(string form, string expected) =>
+    GedcomMedia.ToMimeType(form).Should().Be(expected);
+
+  [Fact]
+  public void ToMimeType_FormAlreadyCarryingSlash_PassesThroughVerbatim() =>
+    GedcomMedia.ToMimeType("application/pdf").Should().Be("application/pdf");
+}

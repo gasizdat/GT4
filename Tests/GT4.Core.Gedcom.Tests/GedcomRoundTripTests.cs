@@ -213,6 +213,25 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task DeathWithUnknownDate_EmitsBareDeathEventAndSurvivesReimportAsUnknown()
+  {
+    // A DeathDate with Status.Unknown means "known dead, date not known" -- distinct from no DeathDate
+    // at all (LivingPerson_... above). Round-tripping must keep that distinction, not collapse it to alive.
+    await AddPersonAsync("Departed", BiologicalSex.Male, Year(1900), Date.Create(0, DateStatus.Unknown));
+
+    var text = await ExportToTextAsync(_source);
+    text.Should().Contain($"1 {GedcomTags.Death}");
+    text.Should().NotContain($"1 {GedcomTags.Death}\n2 {GedcomTags.Date}");
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+
+    var person = (await reimported.Persons.GetPersonsAsync(Token)).Single();
+    person.DeathDate.Should().NotBeNull();
+    person.DeathDate!.Value.Status.Should().Be(DateStatus.Unknown);
+  }
+
+  [Fact]
   public async Task Export_EmitsHeaderEnvelopeAndTrailer()
   {
     await AddPersonAsync("Lonely", BiologicalSex.Unknown, Year(1800));
