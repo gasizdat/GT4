@@ -74,7 +74,7 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
 
     var namesTask = Document.PersonNames.GetPersonNamesAsync(persons, token);
     var photosTask = selectMainPhoto
-      ? GetMainPhotosAsync(persons, token)
+      ? Document.PersonData.GetMergedPhotoSetAsync(persons, DataCategory.PersonMainPhoto, token)
       : Task.FromResult<Dictionary<int, Data[]>>([]);
     await Task.WhenAll(namesTask, photosTask);
 
@@ -84,22 +84,6 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
       photosTask.Result.TryGetValue(person.Id, out var photos);
       return new PersonInfo(person, names ?? [], photos?.FirstOrDefault());
     }).ToArray();
-  }
-
-  // A person's main photo is either plain (PersonMainPhoto) or tagged (PersonMainPhotoTagged), never
-  // both, so merging the two per-category fetches can never collide.
-  private async Task<Dictionary<int, Data[]>> GetMainPhotosAsync(Person[] persons, CancellationToken token)
-  {
-    var plainTask = Document.PersonData.GetPersonDataSetAsync(persons, DataCategory.PersonMainPhoto, token);
-    var taggedTask = Document.PersonData.GetPersonDataSetAsync(persons, DataCategory.PersonMainPhotoTagged, token);
-    await Task.WhenAll(plainTask, taggedTask);
-
-    var merged = new Dictionary<int, Data[]>(plainTask.Result);
-    foreach (var (personId, photos) in taggedTask.Result)
-    {
-      merged[personId] = photos;
-    }
-    return merged;
   }
 
   public async Task<PersonInfo[]> GetPersonInfosByNameAsync(Name name, bool selectMainPhoto, CancellationToken token)

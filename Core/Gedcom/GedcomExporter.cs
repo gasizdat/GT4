@@ -44,10 +44,8 @@ internal sealed class GedcomExporter : IGedcomExporter
     var infoById = personInfos.ToDictionary(p => p.Id);
     var biographies = await document.PersonData.GetPersonDataSetAsync(persons, DataCategory.PersonBio, token);
     var residues = await document.PersonData.GetPersonDataSetAsync(persons, DataCategory.PersonGedcomTags, token);
-    var mainPhotos = await GetPhotosByCategoriesAsync(
-      document, persons, DataCategory.PersonMainPhoto, DataCategory.PersonMainPhotoTagged, token);
-    var additionalPhotos = await GetPhotosByCategoriesAsync(
-      document, persons, DataCategory.PersonPhoto, DataCategory.PersonPhotoTagged, token);
+    var mainPhotos = await document.PersonData.GetMergedPhotoSetAsync(persons, DataCategory.PersonMainPhoto, token);
+    var additionalPhotos = await document.PersonData.GetMergedPhotoSetAsync(persons, DataCategory.PersonPhoto, token);
     var relatives = await document.Relatives.GetRelativesForPersonsAsync(persons, token);
 
     var families = BuildFamilies(relatives, personById);
@@ -58,24 +56,6 @@ internal sealed class GedcomExporter : IGedcomExporter
     WriteFamilies(writer, families);
     await WritePassthroughRecordsAsync(document, writer, token);
     GedcomWriter.Write(writer, new GedcomNode { Tag = GedcomTags.Trailer });
-  }
-
-  // A person's main photo is either plain or tagged, never both, so the merge below can only overwrite
-  // when a person is (correctly) absent from the other dictionary; additional photos can have any mix of
-  // plain and tagged rows, so the merge concatenates rather than overwrites.
-  private static async Task<Dictionary<int, Data[]>> GetPhotosByCategoriesAsync(
-    IProjectDocument document, Person[] persons, DataCategory plain, DataCategory tagged, CancellationToken token)
-  {
-    var plainTask = document.PersonData.GetPersonDataSetAsync(persons, plain, token);
-    var taggedTask = document.PersonData.GetPersonDataSetAsync(persons, tagged, token);
-    await Task.WhenAll(plainTask, taggedTask);
-
-    var merged = new Dictionary<int, Data[]>(plainTask.Result);
-    foreach (var (personId, photos) in taggedTask.Result)
-    {
-      merged[personId] = merged.TryGetValue(personId, out var existing) ? [.. existing, .. photos] : photos;
-    }
-    return merged;
   }
 
   /// <summary>

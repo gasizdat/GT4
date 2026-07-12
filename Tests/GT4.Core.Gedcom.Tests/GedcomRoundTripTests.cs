@@ -302,6 +302,47 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task AdditionalPhotos_MixOfPlainAndTagged_BothSurviveExportAndReimport()
+  {
+    // Exercises GedcomExporter.GetPhotosByCategoriesAsync's concatenation branch: a person present in
+    // both the PersonPhoto and PersonPhotoTagged dictionaries at once (one additional photo of each
+    // kind), not just the overwrite case where only one side has an entry.
+    var name = await _source.Names.AddNameAsync("Mixed", NameType.FirstName, null, Token);
+    var residual = new GedcomNode { Tag = "OBJE" };
+    residual.Add(new GedcomNode { Tag = "TITL", Value = "Family gathering" });
+    var taggedContent = GedcomPhotoResidue.Encode(Encoding.UTF8.GetBytes("TAGGED-EXTRA"), residual);
+    var main = new Data(ElementId.NonCommittedId, Encoding.UTF8.GetBytes("MAIN-IMAGE"), "image/jpeg", DataCategory.PersonMainPhoto);
+    var plainExtra = new Data(ElementId.NonCommittedId, Encoding.UTF8.GetBytes("PLAIN-EXTRA"), "image/png", DataCategory.PersonPhoto);
+    var taggedExtra = new Data(ElementId.NonCommittedId, taggedContent, "image/jpeg", DataCategory.PersonPhotoTagged);
+    var info = PersonFullInfo.Empty with
+    {
+      BirthDate = Year(1900),
+      Names = [name],
+      MainPhoto = main,
+      AdditionalPhotos = [plainExtra, taggedExtra],
+    };
+    await _source.PersonManager.AddPersonAsync(info, Token);
+
+    var text = await ExportToTextAsync(_source);
+    text.Should().Contain(Convert.ToBase64String(Encoding.UTF8.GetBytes("PLAIN-EXTRA")));
+    text.Should().Contain(Convert.ToBase64String(Encoding.UTF8.GetBytes("TAGGED-EXTRA")));
+    text.Should().Contain("2 TITL Family gathering");
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+
+    var person = (await reimported.Persons.GetPersonsAsync(Token)).Single();
+    var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, Token);
+
+    full.AdditionalPhotos.Should().HaveCount(2);
+    var plain = full.AdditionalPhotos.Should().ContainSingle(p => p.Category == DataCategory.PersonPhoto).Which;
+    Encoding.UTF8.GetString(plain.Content).Should().Be("PLAIN-EXTRA");
+    var tagged = full.AdditionalPhotos.Should().ContainSingle(p => p.Category == DataCategory.PersonPhotoTagged).Which;
+    GedcomPhotoResidue.ExtractImageBytes(tagged.Content).Should().Equal(Encoding.UTF8.GetBytes("TAGGED-EXTRA"));
+    (await GedcomPhotoResidue.ExtractTitleAsync(tagged, Token)).Should().Be("Family gathering");
+  }
+
+  [Fact]
   public async Task Photo_LargePayloadChunksAcrossConcLinesAndRoundTrips()
   {
     // A real photo is multi-KB, so its base64 always exceeds the writer's per-line cap and is split across
