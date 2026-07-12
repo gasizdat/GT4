@@ -168,10 +168,9 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
       var mainPhoto = await Document.Data.TryGetDataByIdAsync(mainPhotoId.Value, token);
       if (mainPhoto is not null)
       {
-        var correctCategory = mainPhoto.Category.AsMainPhoto();
-        if (mainPhoto.Category != correctCategory)
+        if (!mainPhoto.Category.IsMainPhoto())
         {
-          await Document.Data.UpdateCategoryAsync(mainPhoto, correctCategory, token);
+          await Document.Data.UpdateCategoryAsync(mainPhoto, mainPhoto.Category.AsMainPhoto(), token);
           foreach (var photo in personFullInfo.AdditionalPhotos)
           {
             await Document.Data.UpdateCategoryAsync(photo, photo.Category.AsAdditionalPhoto(), token);
