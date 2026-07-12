@@ -12,6 +12,12 @@ public static class DataCategoryExtensions
   public static bool IsTaggedPhoto(this DataCategory category) =>
     category is DataCategory.PersonMainPhotoTagged or DataCategory.PersonPhotoTagged;
 
+  public static bool IsMainPhoto(this DataCategory category) =>
+    category is DataCategory.PersonMainPhoto or DataCategory.PersonMainPhotoTagged;
+
+  public static bool IsAdditionalPhoto(this DataCategory category) =>
+    category is DataCategory.PersonPhoto or DataCategory.PersonPhotoTagged;
+
   public static DataCategory AsMainPhoto(this DataCategory category) =>
     category.IsTaggedPhoto() ? DataCategory.PersonMainPhotoTagged : DataCategory.PersonMainPhoto;
 

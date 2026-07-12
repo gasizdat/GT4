@@ -18,6 +18,26 @@ public sealed class DataCategoryExtensionsTests
     category.IsTaggedPhoto().Should().Be(expected);
 
   [Theory]
+  [InlineData(DataCategory.PersonMainPhoto, true)]
+  [InlineData(DataCategory.PersonMainPhotoTagged, true)]
+  [InlineData(DataCategory.PersonPhoto, false)]
+  [InlineData(DataCategory.PersonPhotoTagged, false)]
+  [InlineData(DataCategory.PersonBio, false)]
+  [InlineData(DataCategory.PersonGedcomTags, false)]
+  public void IsMainPhoto_IdentifiesPlainOrTaggedMainPhoto(DataCategory category, bool expected) =>
+    category.IsMainPhoto().Should().Be(expected);
+
+  [Theory]
+  [InlineData(DataCategory.PersonPhoto, true)]
+  [InlineData(DataCategory.PersonPhotoTagged, true)]
+  [InlineData(DataCategory.PersonMainPhoto, false)]
+  [InlineData(DataCategory.PersonMainPhotoTagged, false)]
+  [InlineData(DataCategory.PersonBio, false)]
+  [InlineData(DataCategory.PersonGedcomTags, false)]
+  public void IsAdditionalPhoto_IdentifiesPlainOrTaggedAdditionalPhoto(DataCategory category, bool expected) =>
+    category.IsAdditionalPhoto().Should().Be(expected);
+
+  [Theory]
   [InlineData(DataCategory.PersonMainPhoto, DataCategory.PersonMainPhoto)]
   [InlineData(DataCategory.PersonPhoto, DataCategory.PersonMainPhoto)]
   [InlineData(DataCategory.PersonMainPhotoTagged, DataCategory.PersonMainPhotoTagged)]

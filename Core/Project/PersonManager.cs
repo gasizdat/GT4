@@ -50,8 +50,8 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
     var ret = new PersonFullInfo(
       person: person,
       names: names.Result,
-      mainPhoto: personData.Result.SingleOrDefault(data => data.Category.AsPlainPhoto() == DataCategory.PersonMainPhoto),
-      additionalPhotos: personData.Result.Where(data => data.Category.AsPlainPhoto() == DataCategory.PersonPhoto).ToArray(),
+      mainPhoto: personData.Result.SingleOrDefault(data => data.Category.IsMainPhoto()),
+      additionalPhotos: personData.Result.Where(data => data.Category.IsAdditionalPhoto()).ToArray(),
       relativeInfos: relativeInfos.Result,
       biography: personData.Result.SingleOrDefault(data => data.Category == DataCategory.PersonBio),
       gedcomData: personData.Result.SingleOrDefault(data => data.Category == DataCategory.PersonGedcomTags));
