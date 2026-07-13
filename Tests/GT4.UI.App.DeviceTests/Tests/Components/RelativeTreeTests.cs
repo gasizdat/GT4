@@ -166,7 +166,7 @@ public class RelativeTreeTests
   }
 
   [Fact]
-  public async Task FilterRoots_preserves_the_expanded_subtree_of_a_root_that_still_matches()
+  public async Task SetFilter_preserves_the_expanded_subtree_of_a_root_that_still_matches()
   {
     var services = new TestServices();
     var rootA = MakeRelative(1, "RootA", Generation.Parent);
@@ -183,7 +183,7 @@ public class RelativeTreeTests
     var childRowBefore = tree.Rows.Single(r => r.Relative.Id == child.Id);
 
     // Simulates a filter that still matches rootA but no longer matches rootB.
-    await MainThread.InvokeOnMainThreadAsync(() => tree.FilterRoots([rootA], null));
+    await MainThread.InvokeOnMainThreadAsync(() => tree.SetFilter(r => r.Id == rootA.Id));
 
     Assert.Equal([rootA.Id, child.Id], tree.Rows.Select(r => r.Relative.Id));
     Assert.Same(rootARow, tree.Rows.Single(r => r.Relative.Id == rootA.Id));
@@ -192,7 +192,7 @@ public class RelativeTreeTests
   }
 
   [Fact]
-  public async Task FilterRoots_drops_the_subtree_of_a_root_that_no_longer_matches()
+  public async Task SetFilter_hides_the_subtree_of_a_root_that_no_longer_matches()
   {
     var services = new TestServices();
     var rootA = MakeRelative(1, "RootA", Generation.Parent);
@@ -208,23 +208,32 @@ public class RelativeTreeTests
     await tree.ToggleAsync(rootARow);
 
     // Simulates a filter that no longer matches rootA (and therefore not its expanded child either).
-    await MainThread.InvokeOnMainThreadAsync(() => tree.FilterRoots([rootB], null));
+    await MainThread.InvokeOnMainThreadAsync(() => tree.SetFilter(r => r.Id == rootB.Id));
 
     Assert.Equal([rootB.Id], tree.Rows.Select(r => r.Relative.Id));
+
+    // The hidden subtree is still there, expanded, underneath -- it reappears once rootA matches again.
+    await MainThread.InvokeOnMainThreadAsync(() => tree.SetFilter(r => true));
+
+    Assert.Equal([rootA.Id, child.Id, rootB.Id], tree.Rows.Select(r => r.Relative.Id));
+    Assert.True(rootARow.IsExpanded);
   }
 
   [Fact]
-  public async Task FilterRoots_adds_a_newly_matching_root_collapsed()
+  public async Task SetFilter_reveals_a_previously_hidden_root_still_collapsed()
   {
     var services = new TestServices();
     var rootA = MakeRelative(1, "RootA", Generation.Parent);
     var rootB = MakeRelative(2, "RootB", Generation.Parent);
 
     var tree = CreateTree(services);
-    await MainThread.InvokeOnMainThreadAsync(() => tree.SetRoots([rootA], null));
+    await MainThread.InvokeOnMainThreadAsync(() => tree.SetRoots([rootA, rootB], null));
+    await MainThread.InvokeOnMainThreadAsync(() => tree.SetFilter(r => r.Id == rootA.Id));
 
-    // Simulates a filter that starts matching rootB, which was never in the tree before.
-    await MainThread.InvokeOnMainThreadAsync(() => tree.FilterRoots([rootA, rootB], null));
+    Assert.Equal([rootA.Id], tree.Rows.Select(r => r.Relative.Id));
+
+    // Simulates a filter that starts matching rootB again.
+    await MainThread.InvokeOnMainThreadAsync(() => tree.SetFilter(r => true));
 
     Assert.Equal([rootA.Id, rootB.Id], tree.Rows.Select(r => r.Relative.Id));
     Assert.False(tree.Rows.Single(r => r.Relative.Id == rootB.Id).IsExpanded);

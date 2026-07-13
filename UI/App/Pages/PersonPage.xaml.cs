@@ -112,10 +112,10 @@ public partial class PersonPage : ContentPage
   // matching root is expanded, its own descendants show unfiltered -- the tree is fetched lazily
   // from the DB level by level, so there is no retained unfiltered set at deeper levels to re-filter
   // against interactively (mirrors how a family with no matching persons is hidden wholesale on
-  // ProjectPage/FamilyPage, rather than reaching into it for a matching grandchild). FilterRoots
-  // (rather than SetRoots) keeps already-expanded roots expanded across a filter change; a fresh
-  // person load goes through SetRoots directly in UpdateUI instead, since there is nothing to preserve.
-  private void RefreshRelatives() => _Relatives.FilterRoots(_AllRoots.Where(r => FilterView.Matches(r)), _PersonFullInfo.BirthDate);
+  // ProjectPage/FamilyPage, rather than reaching into it for a matching grandchild). RelativeTree
+  // keeps every fetched row in an untouched structural master and only hides/shows roots in its bound
+  // view, so a filter change can never disturb an already-expanded subtree.
+  private void RefreshRelatives() => _Relatives.SetFilter(r => FilterView.Matches(r));
 
   public ICommand PageCommand => _PageCommand;
 
@@ -380,9 +380,10 @@ public partial class PersonPage : ContentPage
     // snapshotting the page's current person set.
     FilterView.ResetFilterData();
 
-    // A full reset, not RefreshRelatives/FilterRoots: this is a new person, so the previous tree
-    // (if any) belongs to someone else and has nothing worth preserving.
-    _Relatives.SetRoots(_AllRoots.Where(r => FilterView.Matches(r)), _PersonFullInfo.BirthDate);
+    // A full reset: this is a new person, so the previous tree (if any) belongs to someone else and
+    // has nothing worth preserving. The currently active filter (if any) still applies -- SetRoots
+    // re-derives the view from it, same as any other filter re-application.
+    _Relatives.SetRoots(_AllRoots, _PersonFullInfo.BirthDate);
 
     this.RefreshView();
 
