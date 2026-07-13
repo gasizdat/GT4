@@ -2714,5 +2714,365 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("TxtPlaceholderPtojectName", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Statistics.
+        /// </summary>
+        public static string TitleStatisticsPage {
+            get {
+                return ResourceManager.GetString("TitleStatisticsPage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 📊 Statistics.
+        /// </summary>
+        public static string MenuItemGoToStatistics {
+            get {
+                return ResourceManager.GetString("MenuItemGoToStatistics", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Overview.
+        /// </summary>
+        public static string FieldStatOverview {
+            get {
+                return ResourceManager.GetString("FieldStatOverview", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Age.
+        /// </summary>
+        public static string FieldStatAge {
+            get {
+                return ResourceManager.GetString("FieldStatAge", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Birth years.
+        /// </summary>
+        public static string FieldStatBirthYears {
+            get {
+                return ResourceManager.GetString("FieldStatBirthYears", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Names.
+        /// </summary>
+        public static string FieldStatNames {
+            get {
+                return ResourceManager.GetString("FieldStatNames", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Data completeness.
+        /// </summary>
+        public static string FieldStatDataCompleteness {
+            get {
+                return ResourceManager.GetString("FieldStatDataCompleteness", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Relationships.
+        /// </summary>
+        public static string FieldStatRelationships {
+            get {
+                return ResourceManager.GetString("FieldStatRelationships", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Total persons.
+        /// </summary>
+        public static string FieldStatTotalPersons {
+            get {
+                return ResourceManager.GetString("FieldStatTotalPersons", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Total families.
+        /// </summary>
+        public static string FieldStatTotalFamilies {
+            get {
+                return ResourceManager.GetString("FieldStatTotalFamilies", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Men.
+        /// </summary>
+        public static string FieldStatMenCount {
+            get {
+                return ResourceManager.GetString("FieldStatMenCount", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Women.
+        /// </summary>
+        public static string FieldStatWomenCount {
+            get {
+                return ResourceManager.GetString("FieldStatWomenCount", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Unknown sex.
+        /// </summary>
+        public static string FieldStatUnknownSexCount {
+            get {
+                return ResourceManager.GetString("FieldStatUnknownSexCount", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Living now.
+        /// </summary>
+        public static string FieldStatLivingCount {
+            get {
+                return ResourceManager.GetString("FieldStatLivingCount", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Average lifespan.
+        /// </summary>
+        public static string FieldStatAverageLifespan {
+            get {
+                return ResourceManager.GetString("FieldStatAverageLifespan", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 95th percentile lifespan.
+        /// </summary>
+        public static string FieldStatLifespan95thPercentile {
+            get {
+                return ResourceManager.GetString("FieldStatLifespan95thPercentile", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Oldest living.
+        /// </summary>
+        public static string FieldStatOldestLiving {
+            get {
+                return ResourceManager.GetString("FieldStatOldestLiving", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Longest lifespan on record.
+        /// </summary>
+        public static string FieldStatLongestLifespan {
+            get {
+                return ResourceManager.GetString("FieldStatLongestLifespan", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Birth year span.
+        /// </summary>
+        public static string FieldStatBirthYearSpan {
+            get {
+                return ResourceManager.GetString("FieldStatBirthYearSpan", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Median birth year.
+        /// </summary>
+        public static string FieldStatMedianBirthYear {
+            get {
+                return ResourceManager.GetString("FieldStatMedianBirthYear", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Births by decade.
+        /// </summary>
+        public static string FieldStatBirthsByDecade {
+            get {
+                return ResourceManager.GetString("FieldStatBirthsByDecade", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Largest family.
+        /// </summary>
+        public static string FieldStatLargestFamily {
+            get {
+                return ResourceManager.GetString("FieldStatLargestFamily", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Single-member families.
+        /// </summary>
+        public static string FieldStatSingleMemberFamilies {
+            get {
+                return ResourceManager.GetString("FieldStatSingleMemberFamilies", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Top male first names.
+        /// </summary>
+        public static string FieldStatTopMaleFirstNames {
+            get {
+                return ResourceManager.GetString("FieldStatTopMaleFirstNames", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Top female first names.
+        /// </summary>
+        public static string FieldStatTopFemaleFirstNames {
+            get {
+                return ResourceManager.GetString("FieldStatTopFemaleFirstNames", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Incomplete birth dates.
+        /// </summary>
+        public static string FieldStatIncompleteBirthDates {
+            get {
+                return ResourceManager.GetString("FieldStatIncompleteBirthDates", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Photo coverage.
+        /// </summary>
+        public static string FieldStatPhotoCoverage {
+            get {
+                return ResourceManager.GetString("FieldStatPhotoCoverage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Isolated persons (no relatives).
+        /// </summary>
+        public static string FieldStatIsolatedPersons {
+            get {
+                return ResourceManager.GetString("FieldStatIsolatedPersons", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Marriages.
+        /// </summary>
+        public static string FieldStatMarriageCount {
+            get {
+                return ResourceManager.GetString("FieldStatMarriageCount", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Average children per parent.
+        /// </summary>
+        public static string FieldStatAverageChildren {
+            get {
+                return ResourceManager.GetString("FieldStatAverageChildren", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Most children.
+        /// </summary>
+        public static string FieldStatMostChildren {
+            get {
+                return ResourceManager.GetString("FieldStatMostChildren", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to —.
+        /// </summary>
+        public static string StatValueNone {
+            get {
+                return ResourceManager.GetString("StatValueNone", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} years.
+        /// </summary>
+        public static string StatValueYears_1 {
+            get {
+                return ResourceManager.GetString("StatValueYears_1", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} ({1} years).
+        /// </summary>
+        public static string StatValuePersonYears_2 {
+            get {
+                return ResourceManager.GetString("StatValuePersonYears_2", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0}–{1}.
+        /// </summary>
+        public static string StatValueYearRange_2 {
+            get {
+                return ResourceManager.GetString("StatValueYearRange_2", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} ({1}).
+        /// </summary>
+        public static string StatValueNameCount_2 {
+            get {
+                return ResourceManager.GetString("StatValueNameCount_2", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0}s: {1}.
+        /// </summary>
+        public static string StatValueDecadeCount_2 {
+            get {
+                return ResourceManager.GetString("StatValueDecadeCount_2", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} ({1} children).
+        /// </summary>
+        public static string StatValuePersonChildren_2 {
+            get {
+                return ResourceManager.GetString("StatValuePersonChildren_2", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} children.
+        /// </summary>
+        public static string StatValueChildrenAverage_1 {
+            get {
+                return ResourceManager.GetString("StatValueChildrenAverage_1", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} of {1}.
+        /// </summary>
+        public static string StatValueCoverage_2 {
+            get {
+                return ResourceManager.GetString("StatValueCoverage_2", resourceCulture);
+            }
+        }
     }
 }

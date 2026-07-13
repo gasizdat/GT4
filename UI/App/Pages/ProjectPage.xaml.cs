@@ -264,6 +264,10 @@ public partial class ProjectPage : ContentPage
         await _NavigationService.GoToAsync(UIRoutes.GetRoute<NamesPage>());
         break;
 
+      case string commandName when commandName == "GoToStatistics":
+        await _NavigationService.GoToAsync(UIRoutes.GetRoute<StatisticsPage>());
+        break;
+
       case string commandName when commandName == "ExportGedcom":
         await OnExportGedcom();
         break;

@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="GT4.UI.Pages.StatisticsPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:components="clr-namespace:GT4.UI.Components"
+    xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
+    x:Name="Root"
+    NavigatedTo="OnNavigatedTo"
+    Title="{x:Static resources:UIStrings.TitleStatisticsPage}">
+
+  <components:PageLayout>
+    <components:PageLayout.Body>
+      <ScrollView>
+        <VerticalStackLayout Spacing="{StaticResource PageContentSpacing}">
+
+          <Label Style="{StaticResource GroupTitle}" Text="{x:Static resources:UIStrings.FieldStatOverview}" />
+          <Grid ColumnDefinitions="Auto, *" ColumnSpacing="20">
+            <Label Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldName}" Text="{x:Static resources:UIStrings.FieldStatTotalPersons}" />
+            <Label Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding TotalPersonsText, Source={x:Reference Root}}" />
+          </Grid>
+          <Grid ColumnDefinitions="Auto, *" ColumnSpacing="20">
+            <Label Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldName}" Text="{x:Static resources:UIStrings.FieldStatTotalFamilies}" />
+            <Label Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding TotalFamiliesText, Source={x:Reference Root}}" />
+          </Grid>
+          <Grid ColumnDefinitions="Auto, *" ColumnSpacing="20">
+            <Label Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldName}" Text="{x:Static resources:UIStrings.FieldStatMenCount}" />
+            <Label Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding MenCountText, Source={x:Reference Root}}" />
+          </Grid>
+          <Grid ColumnDefinitions="Auto, *" ColumnSpacing="20">
+            <Label Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldName}" Text="{x:Static resources:UIStrings.FieldStatWomenCount}" />
+            <Label Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding WomenCountText, Source={x:Reference Root}}" />
+          </Grid>
+          <Grid ColumnDefinitions="Auto, *" ColumnSpacing="20">
+            <Label Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldName}" Text="{x:Static resources:UIStrings.FieldStatUnknownSexCount}" />
+            <Label Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding UnknownSexCountText, Source={x:Reference Root}}" />
+          </Grid>
+          <Grid ColumnDefinitions="Auto, *" ColumnSpacing="20">
+            <Label Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldName}" Text="{x:Static resources:UIStrings.FieldStatLivingCount}" />
+            <Label Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding LivingCountText, Source={x:Reference Root}}" />
+          </Grid>
+
+          <Label Style="{StaticResource GroupTitle}" Text="{x:Static resources:UIStrings.FieldStatAge}" />
+          <Grid ColumnDefinitions="Auto, *" ColumnSpacing="20">
+            <Label Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldName}" Text="{x:Static resources:UIStrings.FieldStatAverageLifespan}" />
+            <Label Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding AverageLifespanText, Source={x:Reference Root}}" />
+          </Grid>
+          <Grid ColumnDefinitions="Auto, *" ColumnSpacing="20">
+            <Label Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldName}" Text="{x:Static resources:UIStrings.FieldStatLifespan95thPercentile}" />
+            <Label Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding Lifespan95thPercentileText, Source={x:Reference Root}}" />
+          </Grid>
+          <Grid ColumnDefinitions="Auto, *" ColumnSpacing="20">
+            <Label Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldName}" Text="{x:Static resources:UIStrings.FieldStatOldestLiving}" />
+            <Label Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding OldestLivingText, Source={x:Reference Root}}" />
+          </Grid>
+          <Grid ColumnDefinitions="Auto, *" ColumnSpacing="20">
+            <Label Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldName}" Text="{x:Static resources:UIStrings.FieldStatLongestLifespan}" />
+            <Label Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding LongestLifespanText, Source={x:Reference Root}}" />
+          </Grid>
+
+          <Label Style="{StaticResource GroupTitle}" Text="{x:Static resources:UIStrings.FieldStatBirthYears}" />
+          <Grid ColumnDefinitions="Auto, *" ColumnSpacing="20">
+            <Label Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldName}" Text="{x:Static resources:UIStrings.FieldStatBirthYearSpan}" />
+            <Label Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding BirthYearSpanText, Source={x:Reference Root}}" />
+          </Grid>
+          <Grid ColumnDefinitions="Auto, *" ColumnSpacing="20">
+            <Label Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldName}" Text="{x:Static resources:UIStrings.FieldStatMedianBirthYear}" />
+            <Label Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding MedianBirthYearText, Source={x:Reference Root}}" />
+          </Grid>
+          <Grid ColumnDefinitions="Auto, *" ColumnSpacing="20">
+            <Label Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldName}" Text="{x:Static resources:UIStrings.FieldStatBirthsByDecade}" />
+            <Label Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding BirthsByDecadeText, Source={x:Reference Root}}" LineBreakMode="WordWrap" />
+          </Grid>
+
+          <Label Style="{StaticResource GroupTitle}" Text="{x:Static resources:UIStrings.FieldStatNames}" />
+          <Grid ColumnDefinitions="Auto, *" ColumnSpacing="20">
+            <Label Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldName}" Text="{x:Static resources:UIStrings.FieldStatLargestFamily}" />
+            <Label Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding LargestFamilyText, Source={x:Reference Root}}" />
+          </Grid>
+          <Grid ColumnDefinitions="Auto, *" ColumnSpacing="20">
+            <Label Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldName}" Text="{x:Static resources:UIStrings.FieldStatSingleMemberFamilies}" />
+            <Label Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding SingleMemberFamiliesText, Source={x:Reference Root}}" LineBreakMode="WordWrap" />
+          </Grid>
+          <Grid ColumnDefinitions="Auto, *" ColumnSpacing="20">
+            <Label Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldName}" Text="{x:Static resources:UIStrings.FieldStatTopMaleFirstNames}" />
+            <Label Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding TopMaleFirstNamesText, Source={x:Reference Root}}" LineBreakMode="WordWrap" />
+          </Grid>
+          <Grid ColumnDefinitions="Auto, *" ColumnSpacing="20">
+            <Label Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldName}" Text="{x:Static resources:UIStrings.FieldStatTopFemaleFirstNames}" />
+            <Label Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding TopFemaleFirstNamesText, Source={x:Reference Root}}" LineBreakMode="WordWrap" />
+          </Grid>
+
+          <Label Style="{StaticResource GroupTitle}" Text="{x:Static resources:UIStrings.FieldStatDataCompleteness}" />
+          <Grid ColumnDefinitions="Auto, *" ColumnSpacing="20">
+            <Label Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldName}" Text="{x:Static resources:UIStrings.FieldStatIncompleteBirthDates}" />
+            <Label Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding IncompleteBirthDateCountText, Source={x:Reference Root}}" />
+          </Grid>
+          <Grid ColumnDefinitions="Auto, *" ColumnSpacing="20">
+            <Label Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldName}" Text="{x:Static resources:UIStrings.FieldStatPhotoCoverage}" />
+            <Label Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding PhotoCoverageText, Source={x:Reference Root}}" />
+          </Grid>
+          <Grid ColumnDefinitions="Auto, *" ColumnSpacing="20">
+            <Label Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldName}" Text="{x:Static resources:UIStrings.FieldStatIsolatedPersons}" />
+            <Label Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding IsolatedPersonCountText, Source={x:Reference Root}}" />
+          </Grid>
+
+          <Label Style="{StaticResource GroupTitle}" Text="{x:Static resources:UIStrings.FieldStatRelationships}" />
+          <Grid ColumnDefinitions="Auto, *" ColumnSpacing="20">
+            <Label Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldName}" Text="{x:Static resources:UIStrings.FieldStatMarriageCount}" />
+            <Label Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding MarriageCountText, Source={x:Reference Root}}" />
+          </Grid>
+          <Grid ColumnDefinitions="Auto, *" ColumnSpacing="20">
+            <Label Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldName}" Text="{x:Static resources:UIStrings.FieldStatAverageChildren}" />
+            <Label Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding AverageChildrenText, Source={x:Reference Root}}" />
+          </Grid>
+          <Grid ColumnDefinitions="Auto, *" ColumnSpacing="20">
+            <Label Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldName}" Text="{x:Static resources:UIStrings.FieldStatMostChildren}" />
+            <Label Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding MostChildrenText, Source={x:Reference Root}}" />
+          </Grid>
+
+        </VerticalStackLayout>
+      </ScrollView>
+    </components:PageLayout.Body>
+  </components:PageLayout>
+
+</ContentPage>
