@@ -3,6 +3,7 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
+using GT4.UI.Utils.Formatters;
 
 namespace GT4.UI.Pages;
 
@@ -11,6 +12,7 @@ public partial class StatisticsPage : ContentPage
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly IAlertService _AlertService;
+  private readonly INameFormatter _NameFormatter;
 
   private ProjectStatistics _Statistics = ProjectStatistics.Empty;
   private long? _ProjectRevision;
@@ -19,11 +21,13 @@ public partial class StatisticsPage : ContentPage
   public StatisticsPage(
     ICurrentProjectProvider currentProjectProvider,
     ICancellationTokenProvider cancellationTokenProvider,
-    IAlertService alertService)
+    IAlertService alertService,
+    INameFormatter nameFormatter)
   {
     _CurrentProjectProvider = currentProjectProvider;
     _CancellationTokenProvider = cancellationTokenProvider;
     _AlertService = alertService;
+    _NameFormatter = nameFormatter;
 
     InitializeComponent();
   }
@@ -81,8 +85,10 @@ public partial class StatisticsPage : ContentPage
   private static string FormatYears(double? years) =>
     years is { } value ? string.Format(UIStrings.StatValueYears_1, value.ToString("F1")) : UIStrings.StatValueNone;
 
-  private static string FormatPersonYears(PersonInfo? person, int? years) =>
-    person is not null ? string.Format(UIStrings.StatValuePersonYears_2, person.DisplayName, years) : UIStrings.StatValueNone;
+  private string FormatPersonYears(PersonInfo? person, int? years) =>
+    person is not null
+      ? string.Format(UIStrings.StatValuePersonYears_2, _NameFormatter.ToString(person, NameFormat.CommonPersonName), years)
+      : UIStrings.StatValueNone;
 
   private static string FormatNameCounts((string Name, int Count)[] items) =>
     items.Length > 0
@@ -142,6 +148,6 @@ public partial class StatisticsPage : ContentPage
     : UIStrings.StatValueNone;
 
   public string MostChildrenText => Statistics.MostChildrenPerson is { } person
-    ? string.Format(UIStrings.StatValuePersonChildren_2, person.DisplayName, Statistics.MostChildrenCount)
+    ? string.Format(UIStrings.StatValuePersonChildren_2, _NameFormatter.ToString(person, NameFormat.CommonPersonName), Statistics.MostChildrenCount)
     : UIStrings.StatValueNone;
 }
