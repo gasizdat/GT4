@@ -119,7 +119,7 @@ public partial class StatisticsPage : ContentPage
   public string MedianBirthYearText => Statistics.MedianBirthYear?.ToString() ?? UIStrings.StatValueNone;
 
   public string BirthsByDecadeText => Statistics.BirthsByDecade.Length > 0
-    ? string.Join(", ", Statistics.BirthsByDecade.Select(d => string.Format(UIStrings.StatValueDecadeCount_2, d.Decade, d.Count)))
+    ? string.Join("\n", Statistics.BirthsByDecade.Select(d => string.Format(UIStrings.StatValueDecadeCount_2, d.Decade, d.Count)))
     : UIStrings.StatValueNone;
 
   public string LargestFamilyText => FormatNameCount(Statistics.LargestFamilyName, Statistics.LargestFamilySize);
