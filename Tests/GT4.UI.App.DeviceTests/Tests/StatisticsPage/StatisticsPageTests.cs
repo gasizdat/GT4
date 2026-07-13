@@ -1,6 +1,7 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.Utils.Formatters;
 using Moq;
 using Xunit;
 
@@ -60,6 +61,35 @@ public class StatisticsPageTests
     Assert.Equal(1, statistics.UnknownSexCount);
     Assert.Equal("3", page.TotalPersonsText);
     Assert.Equal("Smith (2)", page.TopLargestFamiliesText);
+  }
+
+  [Fact]
+  public async Task OldestLivingText_and_MostChildrenText_format_names_via_INameFormatter_not_DisplayName()
+  {
+    var services = new TestServices();
+    var currentYear = Date.Now.Year;
+    var firstName = N(1, "John", NameType.FirstName);
+    var lastName = N(2, "Smith", NameType.LastName);
+    // LastName is stored before FirstName: PersonInfo.DisplayName would naively join Names in
+    // array order ("Smith John"), while INameFormatter's CommonPersonName template ("FF PP LL")
+    // always renders first name before last name regardless of storage order. This divergence is
+    // what makes the assertions below actually catch a regression back to .DisplayName.
+    var person = P(1, birthDate: Date.Create(currentYear - 40, 1, 1, DateStatus.WellKnown), names: [lastName, firstName]);
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([person]);
+    services.Relatives
+      .Setup(r => r.GetRelativesForPersonsAsync(It.IsAny<Person[]>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new Dictionary<int, Relative[]> { [person.Id] = [new Relative(P(2), RelationshipType.Child, null)] });
+    var page = await CreatePageAsync(services);
+    await page.WaitForFirstLoadAsync();
+
+    var nameFormatter = services.Provider.GetRequiredService<INameFormatter>();
+    var expectedName = nameFormatter.ToString(person, NameFormat.CommonPersonName);
+
+    Assert.Equal(string.Format(Resources.UIStrings.StatValuePersonYears_2, expectedName, 40), page.OldestLivingText);
+    Assert.Equal(string.Format(Resources.UIStrings.StatValuePersonChildren_2, expectedName, 1), page.MostChildrenText);
+    Assert.DoesNotContain("Smith John", page.OldestLivingText);
   }
 
   [Fact]
