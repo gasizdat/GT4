@@ -24,7 +24,7 @@ public class RelativeConnectorsDrawableTests
       Generation.Parent,
       Consanguinity.Zero);
     var isLast = ancestorContinues.Length == 0 || !ancestorContinues[^1];
-    return new RelativeRow(relative, null, depth, isLast, ancestorContinues, new Command(() => { }));
+    return new RelativeRow(relative, relative, null, depth, isLast, ancestorContinues, new Command(() => { }));
   }
 
   [Fact]

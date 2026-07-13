@@ -25,6 +25,7 @@ public class RelativeRowTests
   private static RelativeRow CreateRow(ICommand? toggleCommand = null) =>
     new(
       MakeRelative(1),
+      MakeRelative(1),
       Date.Create(1970, 1, 1, DateStatus.WellKnown),
       depth: 2,
       isLast: true,
@@ -35,13 +36,15 @@ public class RelativeRowTests
   public void Ctor_stores_every_argument_as_is()
   {
     var relative = MakeRelative(1);
+    var rootRelative = MakeRelative(2);
     var birthDate = Date.Create(1970, 1, 1, DateStatus.WellKnown);
     var ancestorContinues = new[] { true, false };
     var toggleCommand = new Command(() => { });
 
-    var row = new RelativeRow(relative, birthDate, depth: 2, isLast: true, ancestorContinues, toggleCommand);
+    var row = new RelativeRow(relative, rootRelative, birthDate, depth: 2, isLast: true, ancestorContinues, toggleCommand);
 
     Assert.Same(relative, row.Relative);
+    Assert.Same(rootRelative, row.RootRelative);
     Assert.Equal(birthDate, row.PersonBirthDate);
     Assert.Equal(2, row.Depth);
     Assert.True(row.IsLast);

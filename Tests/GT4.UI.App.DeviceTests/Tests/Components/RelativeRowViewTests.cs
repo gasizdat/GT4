@@ -32,7 +32,7 @@ public class RelativeRowViewTests
       null,
       Generation.Parent,
       Consanguinity.Zero);
-    return new RelativeRow(relative, null, depth, isLast: true, ancestorContinues, new Command(() => { }));
+    return new RelativeRow(relative, relative, null, depth, isLast: true, ancestorContinues, new Command(() => { }));
   }
 
   [Fact]

@@ -40,10 +40,10 @@ public class FilteredObservableCollection<T> : ICollection<T>, ICollection
   public object SyncRoot => _Items;
 
   // A positional remove-then-insert merge, not a full diff: unaffected items raise no
-  // CollectionChanged event. This is only correct because _Items is never reordered in place (only
-  // Add/AddRange append to it, and Clear wipes it), which guarantees two filter passes always agree
-  // on the relative order of any item present in both. Do not add a method that reorders _Items
-  // without revisiting this.
+  // CollectionChanged event. This is only correct because _Items is never reordered in place --
+  // Add/AddRange/InsertRange only add, RemoveRange only removes a contiguous run, and Clear wipes it
+  // -- which guarantees two filter passes always agree on the relative order of any item present in
+  // both. Do not add a method that reorders _Items without revisiting this.
   public void Update()
   {
     var matched = _Items.Where(item => _Filter?.Invoke(this, item) == true).ToList();
@@ -81,6 +81,22 @@ public class FilteredObservableCollection<T> : ICollection<T>, ICollection
   public void AddRange(IEnumerable<T> collection)
   {
     _Items.AddRange(collection);
+    Update();
+  }
+
+  // Master-relative index -- lets a consumer that maintains its own positional structure over
+  // AllItems (e.g. a flattened tree) find where an item sits regardless of what the filter hides.
+  public int IndexOf(T item) => _Items.IndexOf(item);
+
+  public void InsertRange(int index, IEnumerable<T> items)
+  {
+    _Items.InsertRange(index, items);
+    Update();
+  }
+
+  public void RemoveRange(int index, int count)
+  {
+    _Items.RemoveRange(index, count);
     Update();
   }
 

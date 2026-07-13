@@ -24,6 +24,7 @@ public sealed class RelativeRow : INotifyPropertyChanged
 
   public RelativeRow(
     RelativeInfo relative,
+    RelativeInfo rootRelative,
     Date? personBirthDate,
     int depth,
     bool isLast,
@@ -31,6 +32,7 @@ public sealed class RelativeRow : INotifyPropertyChanged
     ICommand toggleCommand)
   {
     Relative = relative;
+    RootRelative = rootRelative;
     PersonBirthDate = personBirthDate;
     Depth = depth;
     IsLast = isLast;
@@ -39,6 +41,11 @@ public sealed class RelativeRow : INotifyPropertyChanged
   }
 
   public RelativeInfo Relative { get; }
+
+  /// <summary>The depth-0 ancestor this row descends from (itself, when <see cref="Depth"/> is 0).
+  /// Lets the relatives filter test one row and decide visibility for its whole subtree without
+  /// walking the tree.</summary>
+  public RelativeInfo RootRelative { get; }
 
   /// <summary>Birth date of the tree-parent this row was expanded from; drives the Parent date rule.</summary>
   public Date? PersonBirthDate { get; }

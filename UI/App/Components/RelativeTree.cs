@@ -3,6 +3,7 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
 using GT4.UI.Resources;
+using GT4.UI.Utils;
 using System.Collections.ObjectModel;
 
 namespace GT4.UI.Components;
@@ -21,15 +22,11 @@ public sealed class RelativeTree
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly IAlertService _AlertService;
 
-  // The structural master: every fetched row, regardless of whether the current filter shows it.
-  // Expand/Collapse/SetRoots only ever touch this one, so a filter change can never disturb an
+  // Every fetched row lives here, regardless of whether the current filter shows it -- AllItems is
+  // the structural master Expand/Collapse/SetRoots index into, Items is the filtered view the page
+  // binds to. A filter change only touches the Items projection, so it can never disturb an
   // already-expanded subtree.
-  private readonly ObservableCollection<RelativeRow> _Rows = new();
-
-  // The view bound by the page: a filtered projection of _Rows, re-derived by ApplyFilter.
-  private readonly ObservableCollection<RelativeRow> _VisibleRows = new();
-
-  private Func<RelativeInfo, bool> _FilterPredicate = _ => true;
+  private readonly FilteredObservableCollection<RelativeRow> _Rows = new();
 
   public RelativeTree(
     ICurrentProjectProvider currentProjectProvider,
@@ -39,69 +36,32 @@ public sealed class RelativeTree
     _CurrentProjectProvider = currentProjectProvider;
     _CancellationTokenProvider = cancellationTokenProvider;
     _AlertService = alertService;
+    _Rows.Filter = (_, _) => true;
   }
 
-  public ObservableCollection<RelativeRow> Rows => _VisibleRows;
+  public ObservableCollection<RelativeRow> Rows => _Rows.Items;
 
   /// <summary>Replaces the top-level rows. <paramref name="roots"/> arrives already ordered by the
   /// page and unfiltered -- the current filter (see <see cref="SetFilter"/>) decides what's visible.</summary>
   public void SetRoots(IEnumerable<RelativeInfo> roots, Date? personBirthDate)
   {
-    _Rows.Clear();
     var ordered = roots.ToArray();
+    var built = new RelativeRow[ordered.Length];
     for (var i = 0; i < ordered.Length; i++)
     {
       var isLast = i == ordered.Length - 1;
-      _Rows.Add(CreateRow(ordered[i], personBirthDate, depth: 0, isLast, ancestorContinues: []));
+      built[i] = CreateRow(ordered[i], ordered[i], personBirthDate, depth: 0, isLast, ancestorContinues: []);
     }
-    ApplyFilter();
+    _Rows.Clear();
+    _Rows.AddRange(built);
   }
 
   /// <summary>Sets which roots are visible and re-applies it immediately. A root that stops matching
   /// is merely hidden, not dropped -- its expanded subtree (if any) reappears as-is the moment it
-  /// matches again. Only roots are tested; once a root is visible, its already-fetched descendants
-  /// show unfiltered.</summary>
-  public void SetFilter(Func<RelativeInfo, bool> predicate)
-  {
-    _FilterPredicate = predicate;
-    ApplyFilter();
-  }
-
-  /// <summary>Re-derives <see cref="Rows"/> from the structural master and the current filter, with a
-  /// minimal insert/remove diff (mirroring <see cref="GT4.UI.Utils.FilteredObservableCollection{T}.Update"/>)
-  /// so a recycling CollectionView keeps scroll position and item identity across a refilter.</summary>
-  private void ApplyFilter()
-  {
-    var visible = new List<RelativeRow>(_Rows.Count);
-    var rootVisible = true;
-    foreach (var row in _Rows)
-    {
-      if (row.Depth == 0)
-      {
-        rootVisible = _FilterPredicate(row.Relative);
-      }
-      if (rootVisible)
-      {
-        visible.Add(row);
-      }
-    }
-
-    var visibleSet = new HashSet<RelativeRow>(visible);
-    for (var i = _VisibleRows.Count - 1; i >= 0; i--)
-    {
-      if (!visibleSet.Contains(_VisibleRows[i]))
-      {
-        _VisibleRows.RemoveAt(i);
-      }
-    }
-    for (var i = 0; i < visible.Count; i++)
-    {
-      if (i >= _VisibleRows.Count || !ReferenceEquals(_VisibleRows[i], visible[i]))
-      {
-        _VisibleRows.Insert(i, visible[i]);
-      }
-    }
-  }
+  /// matches again. Only a row's <see cref="RelativeRow.RootRelative"/> is tested, so a root's
+  /// already-fetched descendants show unfiltered once it's visible.</summary>
+  public void SetFilter(Func<RelativeInfo, bool> predicate) =>
+    _Rows.Filter = (_, row) => predicate(row.RootRelative);
 
   public async Task ToggleAsync(RelativeRow row)
   {
@@ -156,7 +116,7 @@ public sealed class RelativeTree
         // IsExpanded (ToggleAsync refuses to expand them), so without this they'd be re-selected
         // and re-flagged forever.
         var next = await MainThread.InvokeOnMainThreadAsync(() =>
-          _Rows.FirstOrDefault(r => !r.IsExpanded && r.Issue != RelativeRowIssueType.Loop));
+          _Rows.AllItems.FirstOrDefault(r => !r.IsExpanded && r.Issue != RelativeRowIssueType.Loop));
         if (next is null)
         {
           break;
@@ -214,16 +174,16 @@ public sealed class RelativeTree
     }
 
     var ordered = children.OrderBy(r => r.BiologicalSex).ToArray();
+    var newRows = new RelativeRow[ordered.Length];
     for (var i = 0; i < ordered.Length; i++)
     {
       var isLast = i == ordered.Length - 1;
       bool[] ancestorContinues = [.. row.AncestorContinues, !isLast];
-      var child = CreateRow(ordered[i], row.Relative.BirthDate, row.Depth + 1, isLast, ancestorContinues);
-      _Rows.Insert(index + 1 + i, child);
+      newRows[i] = CreateRow(ordered[i], row.RootRelative, row.Relative.BirthDate, row.Depth + 1, isLast, ancestorContinues);
     }
+    _Rows.InsertRange(index + 1, newRows);
 
     row.IsExpanded = true;
-    ApplyFilter();
   }
 
   private void Collapse(RelativeRow row)
@@ -234,34 +194,34 @@ public sealed class RelativeTree
       return;
     }
 
-    while (index + 1 < _Rows.Count && _Rows[index + 1].Depth > row.Depth)
+    var removeCount = 0;
+    while (index + 1 + removeCount < _Rows.AllItems.Count && _Rows.AllItems[index + 1 + removeCount].Depth > row.Depth)
     {
-      _Rows[index + 1].IsExpanded = false;
-      _Rows.RemoveAt(index + 1);
+      _Rows.AllItems[index + 1 + removeCount].IsExpanded = false;
+      removeCount++;
+    }
+    if (removeCount > 0)
+    {
+      _Rows.RemoveRange(index + 1, removeCount);
     }
 
     row.IsExpanded = false;
-    ApplyFilter();
   }
 
   private void CollapseAll()
   {
-    for (var i = _Rows.Count - 1; i >= 0; i--)
+    var roots = _Rows.AllItems.Where(r => r.Depth == 0).ToArray();
+    foreach (var root in roots)
     {
-      if (_Rows[i].Depth > 0)
-      {
-        _Rows.RemoveAt(i);
-      }
-      else
-      {
-        _Rows[i].IsExpanded = false;
-      }
+      root.IsExpanded = false;
     }
-    ApplyFilter();
+    _Rows.Clear();
+    _Rows.AddRange(roots);
   }
 
   private RelativeRow CreateRow(
     RelativeInfo relative,
+    RelativeInfo rootRelative,
     Date? personBirthDate,
     int depth,
     bool isLast,
@@ -269,7 +229,7 @@ public sealed class RelativeTree
   {
     RelativeRow? row = null;
     var toggleCommand = new SafeCommand(() => ToggleAsync(row!), _AlertService);
-    row = new RelativeRow(relative, personBirthDate, depth, isLast, ancestorContinues, toggleCommand);
+    row = new RelativeRow(relative, rootRelative, personBirthDate, depth, isLast, ancestorContinues, toggleCommand);
     return row;
   }
 }
