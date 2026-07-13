@@ -59,7 +59,7 @@ public class StatisticsPageTests
     Assert.Equal(1, statistics.WomenCount);
     Assert.Equal(1, statistics.UnknownSexCount);
     Assert.Equal("3", page.TotalPersonsText);
-    Assert.Equal("Smith (2)", page.LargestFamilyText);
+    Assert.Equal("Smith (2)", page.TopLargestFamiliesText);
   }
 
   [Fact]

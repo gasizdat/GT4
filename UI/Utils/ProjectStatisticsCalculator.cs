@@ -22,8 +22,7 @@ public record class ProjectStatistics(
   (int Decade, int Count)[] BirthsByDecade,
   (string Name, int Count)[] TopMaleFirstNames,
   (string Name, int Count)[] TopFemaleFirstNames,
-  string? LargestFamilyName,
-  int LargestFamilySize,
+  (string Name, int Count)[] TopLargestFamilies,
   string[] SingleMemberFamilyNames,
   int IncompleteBirthDateCount,
   int PhotoCoverageCount,
@@ -45,6 +44,7 @@ public record class ProjectStatistics(
 public static class ProjectStatisticsCalculator
 {
   private const int TopNameCount = 5;
+  private const int TopFamilyCount = 5;
   private const int SingleMemberFamilyPreviewCount = 5;
 
   private static bool HasKnownBirthYear(PersonInfo person) => person.BirthDate.Status != DateStatus.Unknown;
@@ -94,7 +94,11 @@ public static class ProjectStatisticsCalculator
       .Select(name => (Name: name, Count: personsByFamilyNameId[name.Id].Count()))
       .ToList();
     var usedFamilies = familyMemberCounts.Where(f => f.Count > 0).ToList();
-    var largestFamily = usedFamilies.OrderByDescending(f => f.Count).FirstOrDefault();
+    var topLargestFamilies = usedFamilies
+      .OrderByDescending(f => f.Count)
+      .Take(TopFamilyCount)
+      .Select(f => (Name: f.Name.Value, f.Count))
+      .ToArray();
 
     var livingPersons = persons.Where(p => PersonLifetimeMatcher.IsAliveInYear(p, currentYear)).ToList();
 
@@ -161,8 +165,7 @@ public static class ProjectStatisticsCalculator
       BirthsByDecade: birthsByDecade,
       TopMaleFirstNames: TopFirstNames(persons, BiologicalSex.Male),
       TopFemaleFirstNames: TopFirstNames(persons, BiologicalSex.Female),
-      LargestFamilyName: largestFamily.Name?.Value,
-      LargestFamilySize: largestFamily.Count,
+      TopLargestFamilies: topLargestFamilies,
       SingleMemberFamilyNames: [.. usedFamilies.Where(f => f.Count == 1).Select(f => f.Name.Value).Take(SingleMemberFamilyPreviewCount)],
       IncompleteBirthDateCount: incompleteBirthDateCount,
       PhotoCoverageCount: photoCoverageCount,

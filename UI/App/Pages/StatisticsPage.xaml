@@ -206,7 +206,7 @@
               Grid.Row="17"
               Grid.Column="1"
               Style="{StaticResource FieldValueWordWrap}"
-              Text="{Binding LargestFamilyText, Source={x:Reference Root}}" />
+              Text="{Binding TopLargestFamiliesText, Source={x:Reference Root}}" />
           <Label
               Grid.Row="18"
               Grid.Column="0"

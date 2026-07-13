@@ -1072,7 +1072,7 @@ FN - family name</value>
     <value>Births by decade</value>
   </data>
   <data name="FieldStatLargestFamily" xml:space="preserve">
-    <value>Largest family</value>
+    <value>Largest families</value>
   </data>
   <data name="FieldStatSingleMemberFamilies" xml:space="preserve">
     <value>Single-member families</value>

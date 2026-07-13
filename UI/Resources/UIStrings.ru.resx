@@ -1072,7 +1072,7 @@ FN - род</value>
     <value>Рождения по десятилетиям</value>
   </data>
   <data name="FieldStatLargestFamily" xml:space="preserve">
-    <value>Самая большая семья</value>
+    <value>Самые большие семьи</value>
   </data>
   <data name="FieldStatSingleMemberFamilies" xml:space="preserve">
     <value>Семьи с одним человеком</value>

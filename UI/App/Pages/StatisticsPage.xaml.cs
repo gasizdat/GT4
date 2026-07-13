@@ -84,9 +84,6 @@ public partial class StatisticsPage : ContentPage
   private static string FormatPersonYears(PersonInfo? person, int? years) =>
     person is not null ? string.Format(UIStrings.StatValuePersonYears_2, person.DisplayName, years) : UIStrings.StatValueNone;
 
-  private static string FormatNameCount(string? name, int count) =>
-    name is not null ? string.Format(UIStrings.StatValueNameCount_2, name, count) : UIStrings.StatValueNone;
-
   private static string FormatNameCounts((string Name, int Count)[] items) =>
     items.Length > 0
       ? string.Join(", ", items.Select(item => string.Format(UIStrings.StatValueNameCount_2, item.Name, item.Count)))
@@ -122,7 +119,7 @@ public partial class StatisticsPage : ContentPage
     ? string.Join("\n", Statistics.BirthsByDecade.Select(d => string.Format(UIStrings.StatValueDecadeCount_2, d.Decade, d.Count)))
     : UIStrings.StatValueNone;
 
-  public string LargestFamilyText => FormatNameCount(Statistics.LargestFamilyName, Statistics.LargestFamilySize);
+  public string TopLargestFamiliesText => FormatNameCounts(Statistics.TopLargestFamilies);
 
   public string SingleMemberFamiliesText => Statistics.SingleMemberFamilyNames.Length > 0
     ? string.Join(", ", Statistics.SingleMemberFamilyNames)

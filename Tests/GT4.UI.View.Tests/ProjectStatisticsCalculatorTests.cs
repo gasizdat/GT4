@@ -68,7 +68,7 @@ public class ProjectStatisticsCalculatorTests
   }
 
   [Fact]
-  public void LargestFamilyName_and_SingleMemberFamilyNames_are_derived_from_attached_person_counts()
+  public void TopLargestFamilies_and_SingleMemberFamilyNames_are_derived_from_attached_person_counts()
   {
     var big = Family(100, "Big");
     var small = Family(101, "Small");
@@ -81,9 +81,22 @@ public class ProjectStatisticsCalculatorTests
 
     var stats = Compute(persons, familyNames: [big, small]);
 
-    Assert.Equal("Big", stats.LargestFamilyName);
-    Assert.Equal(2, stats.LargestFamilySize);
+    Assert.Equal([("Big", 2), ("Small", 1)], stats.TopLargestFamilies);
     Assert.Equal(["Small"], stats.SingleMemberFamilyNames);
+  }
+
+  [Fact]
+  public void TopLargestFamilies_is_capped_at_five_largest()
+  {
+    var families = Enumerable.Range(0, 7).Select(i => Family(100 + i, $"Family{i}")).ToArray();
+    var persons = families
+      .SelectMany((family, index) => Enumerable.Range(0, index + 1).Select(i => Person(index * 10 + i, names: [family])))
+      .ToArray();
+
+    var stats = Compute(persons, familyNames: families);
+
+    Assert.Equal(5, stats.TopLargestFamilies.Length);
+    Assert.Equal(["Family6", "Family5", "Family4", "Family3", "Family2"], stats.TopLargestFamilies.Select(f => f.Name));
   }
 
   [Fact]
