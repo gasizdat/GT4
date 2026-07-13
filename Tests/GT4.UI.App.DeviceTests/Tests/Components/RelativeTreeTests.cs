@@ -166,7 +166,7 @@ public class RelativeTreeTests
   }
 
   [Fact]
-  public async Task SetFilter_preserves_the_expanded_subtree_of_a_root_that_still_matches()
+  public async Task SetFilter_hides_a_non_matching_child_even_when_its_root_still_matches()
   {
     var services = new TestServices();
     var rootA = MakeRelative(1, "RootA", Generation.Parent);
@@ -182,17 +182,26 @@ public class RelativeTreeTests
     await tree.ToggleAsync(rootARow);
     var childRowBefore = tree.Rows.Single(r => r.Relative.Id == child.Id);
 
-    // Simulates a filter that still matches rootA but no longer matches rootB.
+    // Simulates a filter that still matches rootA but not the child itself (nor rootB).
     await MainThread.InvokeOnMainThreadAsync(() => tree.SetFilter(r => r.Id == rootA.Id));
 
-    Assert.Equal([rootA.Id, child.Id], tree.Rows.Select(r => r.Relative.Id));
+    // No cascade: the child hides on its own lack of a match, even though its still-visible root
+    // matches and the child is still expanded underneath it.
+    Assert.Equal([rootA.Id], tree.Rows.Select(r => r.Relative.Id));
     Assert.Same(rootARow, tree.Rows.Single(r => r.Relative.Id == rootA.Id));
-    Assert.Same(childRowBefore, tree.Rows.Single(r => r.Relative.Id == child.Id));
     Assert.True(rootARow.IsExpanded);
+
+    // The hidden child reappears, unchanged and still expanded in place, once it matches again.
+    await MainThread.InvokeOnMainThreadAsync(() => tree.SetFilter(r => true));
+
+    Assert.Equal([rootA.Id, child.Id, rootB.Id], tree.Rows.Select(r => r.Relative.Id));
+    Assert.Same(childRowBefore, tree.Rows.Single(r => r.Relative.Id == child.Id));
+    // rootA (the only ancestor) is shown, so the child's connector must draw its trunk up to it.
+    Assert.Equal([true], childRowBefore.AncestorVisible);
   }
 
   [Fact]
-  public async Task SetFilter_hides_the_subtree_of_a_root_that_no_longer_matches()
+  public async Task SetFilter_hides_a_root_and_its_equally_non_matching_child_together()
   {
     var services = new TestServices();
     var rootA = MakeRelative(1, "RootA", Generation.Parent);
@@ -207,16 +216,43 @@ public class RelativeTreeTests
     var rootARow = tree.Rows.Single(r => r.Relative.Id == rootA.Id);
     await tree.ToggleAsync(rootARow);
 
-    // Simulates a filter that no longer matches rootA (and therefore not its expanded child either).
+    // Neither rootA nor child matches this filter (only rootB's id does).
     await MainThread.InvokeOnMainThreadAsync(() => tree.SetFilter(r => r.Id == rootB.Id));
 
     Assert.Equal([rootB.Id], tree.Rows.Select(r => r.Relative.Id));
 
-    // The hidden subtree is still there, expanded, underneath -- it reappears once rootA matches again.
+    // Both reappear, expanded in place, once they match again -- hiding never touched the structure.
     await MainThread.InvokeOnMainThreadAsync(() => tree.SetFilter(r => true));
 
     Assert.Equal([rootA.Id, child.Id, rootB.Id], tree.Rows.Select(r => r.Relative.Id));
     Assert.True(rootARow.IsExpanded);
+  }
+
+  [Fact]
+  public async Task SetFilter_shows_a_matching_child_even_when_its_root_does_not_match()
+  {
+    var services = new TestServices();
+    var rootA = MakeRelative(1, "RootA", Generation.Parent);
+    var rootB = MakeRelative(2, "RootB", Generation.Parent);
+    var child = MakeRelative(3, "Child", Generation.Parent + Generation.Parent);
+    services.RelativesProvider
+      .Setup(r => r.GetRelativeInfosAsync(It.Is<RelativeInfo>(x => x.Id == rootA.Id), true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([child]);
+
+    var tree = CreateTree(services);
+    await MainThread.InvokeOnMainThreadAsync(() => tree.SetRoots([rootA, rootB], null));
+    var rootARow = tree.Rows.Single(r => r.Relative.Id == rootA.Id);
+    await tree.ToggleAsync(rootARow);
+    var childRow = tree.Rows.Single(r => r.Relative.Id == child.Id);
+
+    // rootA itself does not match, so it stays hidden -- only its already-expanded child, which does
+    // match, reappears. No cascade in either direction.
+    await MainThread.InvokeOnMainThreadAsync(() => tree.SetFilter(r => r.Id == child.Id));
+
+    Assert.Equal([child.Id], tree.Rows.Select(r => r.Relative.Id));
+    // rootA (the child's only ancestor) is hidden, so the child's connector must not draw a trunk line
+    // up to it -- there is no row there to connect to.
+    Assert.Equal([false], childRow.AncestorVisible);
   }
 
   [Fact]

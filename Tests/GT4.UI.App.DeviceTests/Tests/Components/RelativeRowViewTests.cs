@@ -32,7 +32,10 @@ public class RelativeRowViewTests
       null,
       Generation.Parent,
       Consanguinity.Zero);
-    return new RelativeRow(relative, relative, null, depth, isLast: true, ancestorContinues, new Command(() => { }));
+    var ancestorVisible = new bool[ancestorContinues.Length];
+    Array.Fill(ancestorVisible, true);
+    return new RelativeRow(
+      relative, null, depth, isLast: true, ancestorContinues, shouldShow: true, ancestorVisible, new Command(() => { }));
   }
 
   [Fact]

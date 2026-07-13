@@ -40,8 +40,10 @@ public sealed class RelativeConnectorsDrawable : IDrawable
       var x = (float)(k * Indent) + half;
       if (k < ownColumn)
       {
-        // Inherited ancestor trunk passing straight through this row.
-        if (row.AncestorContinues[k])
+        // Inherited ancestor trunk passing straight through this row -- only when that ancestor is
+        // itself currently shown. A filtered-out ancestor has no row rendered above to connect to, so
+        // drawing its trunk would just be a stray line in empty space.
+        if (row.AncestorContinues[k] && row.AncestorVisible[k])
         {
           canvas.DrawLine(x, 0, x, dirtyRect.Height);
         }

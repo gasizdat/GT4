@@ -28,6 +28,8 @@ public sealed class RelativeTree
   // already-expanded subtree.
   private readonly FilteredObservableCollection<RelativeRow> _Rows = new();
 
+  private Func<RelativeInfo, bool> _Predicate = _ => true;
+
   public RelativeTree(
     ICurrentProjectProvider currentProjectProvider,
     ICancellationTokenProvider cancellationTokenProvider,
@@ -36,7 +38,7 @@ public sealed class RelativeTree
     _CurrentProjectProvider = currentProjectProvider;
     _CancellationTokenProvider = cancellationTokenProvider;
     _AlertService = alertService;
-    _Rows.Filter = (_, _) => true;
+    _Rows.Filter = (_, row) => row.ShouldShow;
   }
 
   public ObservableCollection<RelativeRow> Rows => _Rows.Items;
@@ -50,18 +52,36 @@ public sealed class RelativeTree
     for (var i = 0; i < ordered.Length; i++)
     {
       var isLast = i == ordered.Length - 1;
-      built[i] = CreateRow(ordered[i], ordered[i], personBirthDate, depth: 0, isLast, ancestorContinues: []);
+      built[i] = CreateRow(ordered[i], parent: null, personBirthDate, depth: 0, isLast, ancestorContinues: []);
     }
     _Rows.Clear();
     _Rows.AddRange(built);
   }
 
-  /// <summary>Sets which roots are visible and re-applies it immediately. A root that stops matching
-  /// is merely hidden, not dropped -- its expanded subtree (if any) reappears as-is the moment it
-  /// matches again. Only a row's <see cref="RelativeRow.RootRelative"/> is tested, so a root's
-  /// already-fetched descendants show unfiltered once it's visible.</summary>
-  public void SetFilter(Func<RelativeInfo, bool> predicate) =>
-    _Rows.Filter = (_, row) => predicate(row.RootRelative);
+  /// <summary>Sets which rows are visible and re-applies it immediately. Every row, at any depth, is
+  /// tested against its own relative -- a non-matching row stays hidden even when its parent matches
+  /// (an already-expanded subtree is no exception) or when a deeper descendant of its own matches. A
+  /// hidden row is not dropped, only its visibility toggles: it stays exactly as expanded/collapsed as
+  /// it was, and reappears as-is the moment it matches again.</summary>
+  public void SetFilter(Func<RelativeInfo, bool> predicate)
+  {
+    _Predicate = predicate;
+    RecomputeVisibility();
+    _Rows.Update();
+  }
+
+  // Walks the structural master top-to-bottom (it's a depth-first pre-order flatten, so every row's
+  // Parent was already visited and recomputed by the time we reach it) rebuilding ShouldShow and
+  // AncestorVisible for every row against the current predicate, via the same parent-based formula
+  // CreateRow uses for a freshly expanded row.
+  private void RecomputeVisibility()
+  {
+    foreach (var row in _Rows.AllItems)
+    {
+      row.AncestorVisible = AncestorVisibleFor(row.Parent);
+      row.ShouldShow = _Predicate(row.Relative);
+    }
+  }
 
   public async Task ToggleAsync(RelativeRow row)
   {
@@ -179,7 +199,7 @@ public sealed class RelativeTree
     {
       var isLast = i == ordered.Length - 1;
       bool[] ancestorContinues = [.. row.AncestorContinues, !isLast];
-      newRows[i] = CreateRow(ordered[i], row.RootRelative, row.Relative.BirthDate, row.Depth + 1, isLast, ancestorContinues);
+      newRows[i] = CreateRow(ordered[i], row, row.Relative.BirthDate, row.Depth + 1, isLast, ancestorContinues);
     }
     _Rows.InsertRange(index + 1, newRows);
 
@@ -221,7 +241,7 @@ public sealed class RelativeTree
 
   private RelativeRow CreateRow(
     RelativeInfo relative,
-    RelativeInfo rootRelative,
+    RelativeRow? parent,
     Date? personBirthDate,
     int depth,
     bool isLast,
@@ -229,7 +249,12 @@ public sealed class RelativeTree
   {
     RelativeRow? row = null;
     var toggleCommand = new SafeCommand(() => ToggleAsync(row!), _AlertService);
-    row = new RelativeRow(relative, rootRelative, personBirthDate, depth, isLast, ancestorContinues, toggleCommand);
+    var shouldShow = _Predicate(relative);
+    row = new RelativeRow(
+      relative, personBirthDate, depth, isLast, ancestorContinues, shouldShow, AncestorVisibleFor(parent), toggleCommand, parent);
     return row;
   }
+
+  private static bool[] AncestorVisibleFor(RelativeRow? parent) =>
+    parent is null ? [] : [.. parent.AncestorVisible, parent.ShouldShow];
 }

@@ -22,30 +22,31 @@ public sealed class RelativeRow : INotifyPropertyChanged
   private RelativeRowIssueType _Issue;
   private string? _IssueMessage;
 
+  private bool[] _AncestorVisible;
+
   public RelativeRow(
     RelativeInfo relative,
-    RelativeInfo rootRelative,
     Date? personBirthDate,
     int depth,
     bool isLast,
     bool[] ancestorContinues,
-    ICommand toggleCommand)
+    bool shouldShow,
+    bool[] ancestorVisible,
+    ICommand toggleCommand,
+    RelativeRow? parent = null)
   {
     Relative = relative;
-    RootRelative = rootRelative;
     PersonBirthDate = personBirthDate;
     Depth = depth;
     IsLast = isLast;
     AncestorContinues = ancestorContinues;
+    ShouldShow = shouldShow;
+    _AncestorVisible = ancestorVisible;
     ToggleCommand = toggleCommand;
+    Parent = parent;
   }
 
   public RelativeInfo Relative { get; }
-
-  /// <summary>The depth-0 ancestor this row descends from (itself, when <see cref="Depth"/> is 0).
-  /// Lets the relatives filter test one row and decide visibility for its whole subtree without
-  /// walking the tree.</summary>
-  public RelativeInfo RootRelative { get; }
 
   /// <summary>Birth date of the tree-parent this row was expanded from; drives the Parent date rule.</summary>
   public Date? PersonBirthDate { get; }
@@ -54,12 +55,40 @@ public sealed class RelativeRow : INotifyPropertyChanged
 
   public bool IsLast { get; }
 
+  /// <summary>The row this one was expanded from; null for a top-level root. Purely structural -- lets
+  /// <see cref="RelativeTree"/> derive a row's <see cref="AncestorVisible"/> straight from its parent's,
+  /// instead of re-deriving the same fact from <see cref="Depth"/> positions in the flattened list.</summary>
+  public RelativeRow? Parent { get; }
+
   /// <summary>
   /// Length <see cref="Depth"/>. For each column <c>k</c>, whether that column's sibling trunk runs on
   /// past this row. The last entry is this row's own column (<c>== !IsLast</c>); earlier entries are
   /// inherited ancestor trunks.
   /// </summary>
   public bool[] AncestorContinues { get; }
+
+  /// <summary>Whether this row's own relative currently matches the active filter -- no cascade in
+  /// either direction: a matching ancestor does not pull in a non-matching descendant, and a matching
+  /// descendant does not pull in a non-matching ancestor. Recomputed by <see cref="RelativeTree"/>
+  /// whenever the filter or the tree structure changes; backs <see cref="RelativeTree.Rows"/>'s
+  /// visibility directly.</summary>
+  public bool ShouldShow { get; set; }
+
+  /// <summary>
+  /// Length <see cref="Depth"/>, parallel to <see cref="AncestorContinues"/>: for each ancestor column
+  /// <c>k</c>, whether that ancestor currently has <see cref="ShouldShow"/> set. A non-matching
+  /// ancestor stays hidden even when a deeper descendant matches, so its trunk column must not draw --
+  /// there is no visible row above to connect it to.
+  /// </summary>
+  public bool[] AncestorVisible
+  {
+    get => _AncestorVisible;
+    set
+    {
+      _AncestorVisible = value;
+      OnPropertyChanged();
+    }
+  }
 
   public ICommand ToggleCommand { get; }
 
