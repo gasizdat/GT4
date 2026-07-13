@@ -1008,4 +1008,124 @@ FN - family name</value>
   <data name="BtnNameFilters_1" xml:space="preserve">
     <value>{0} Filters</value>
   </data>
+  <data name="TitleStatisticsPage" xml:space="preserve">
+    <value>Statistics</value>
+  </data>
+  <data name="MenuItemGoToStatistics" xml:space="preserve">
+    <value>📊 Statistics</value>
+  </data>
+  <data name="FieldStatOverview" xml:space="preserve">
+    <value>Overview</value>
+  </data>
+  <data name="FieldStatAge" xml:space="preserve">
+    <value>Age</value>
+  </data>
+  <data name="FieldStatBirthYears" xml:space="preserve">
+    <value>Birth years</value>
+  </data>
+  <data name="FieldStatNames" xml:space="preserve">
+    <value>Names</value>
+  </data>
+  <data name="FieldStatDataCompleteness" xml:space="preserve">
+    <value>Data completeness</value>
+  </data>
+  <data name="FieldStatRelationships" xml:space="preserve">
+    <value>Relationships</value>
+  </data>
+  <data name="FieldStatTotalPersons" xml:space="preserve">
+    <value>Total persons</value>
+  </data>
+  <data name="FieldStatTotalFamilies" xml:space="preserve">
+    <value>Total families</value>
+  </data>
+  <data name="FieldStatMenCount" xml:space="preserve">
+    <value>Men</value>
+  </data>
+  <data name="FieldStatWomenCount" xml:space="preserve">
+    <value>Women</value>
+  </data>
+  <data name="FieldStatUnknownSexCount" xml:space="preserve">
+    <value>Unknown sex</value>
+  </data>
+  <data name="FieldStatLivingCount" xml:space="preserve">
+    <value>Living now</value>
+  </data>
+  <data name="FieldStatAverageLifespan" xml:space="preserve">
+    <value>Average lifespan</value>
+  </data>
+  <data name="FieldStatLifespan95thPercentile" xml:space="preserve">
+    <value>95th percentile lifespan</value>
+  </data>
+  <data name="FieldStatOldestLiving" xml:space="preserve">
+    <value>Oldest living</value>
+  </data>
+  <data name="FieldStatLongestLifespan" xml:space="preserve">
+    <value>Longest lifespan on record</value>
+  </data>
+  <data name="FieldStatBirthYearSpan" xml:space="preserve">
+    <value>Birth year span</value>
+  </data>
+  <data name="FieldStatMedianBirthYear" xml:space="preserve">
+    <value>Median birth year</value>
+  </data>
+  <data name="FieldStatBirthsByDecade" xml:space="preserve">
+    <value>Births by decade</value>
+  </data>
+  <data name="FieldStatLargestFamily" xml:space="preserve">
+    <value>Largest families</value>
+  </data>
+  <data name="FieldStatSingleMemberFamilies" xml:space="preserve">
+    <value>Single-member families</value>
+  </data>
+  <data name="FieldStatTopMaleFirstNames" xml:space="preserve">
+    <value>Top male first names</value>
+  </data>
+  <data name="FieldStatTopFemaleFirstNames" xml:space="preserve">
+    <value>Top female first names</value>
+  </data>
+  <data name="FieldStatIncompleteBirthDates" xml:space="preserve">
+    <value>Incomplete birth dates</value>
+  </data>
+  <data name="FieldStatPhotoCoverage" xml:space="preserve">
+    <value>Photo coverage</value>
+  </data>
+  <data name="FieldStatIsolatedPersons" xml:space="preserve">
+    <value>Isolated persons (no relatives)</value>
+  </data>
+  <data name="FieldStatMarriageCount" xml:space="preserve">
+    <value>Marriages</value>
+  </data>
+  <data name="FieldStatAverageChildren" xml:space="preserve">
+    <value>Average children per parent</value>
+  </data>
+  <data name="FieldStatMostChildren" xml:space="preserve">
+    <value>Most children</value>
+  </data>
+  <data name="StatValueNone" xml:space="preserve">
+    <value>—</value>
+  </data>
+  <data name="StatValueYears_1" xml:space="preserve">
+    <value>{0} years</value>
+  </data>
+  <data name="StatValuePersonYears_2" xml:space="preserve">
+    <value>{0} ({1} years)</value>
+  </data>
+  <data name="StatValueYearRange_2" xml:space="preserve">
+    <value>{0}–{1}</value>
+  </data>
+  <data name="StatValueNameCount_2" xml:space="preserve">
+    <value>{0} ({1})</value>
+  </data>
+  <data name="StatValueDecadeCount_2" xml:space="preserve">
+    <value>{0}s: {1}</value>
+  </data>
+  <data name="StatValuePersonChildren_2" xml:space="preserve">
+    <value>{0} ({1} children)</value>
+  </data>
+  <data name="StatValueCoverage_2" xml:space="preserve">
+    <value>{0} of {1}</value>
+  </data>
+  <data name="StatValueChildrenAverage_1" xml:space="preserve">
+    <value>{0} children</value>
+  </data>
 </root>

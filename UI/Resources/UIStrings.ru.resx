@@ -1008,4 +1008,124 @@ FN - род</value>
   <data name="BtnNameFilters_1" xml:space="preserve">
     <value>{0} Фильтры</value>
   </data>
+  <data name="TitleStatisticsPage" xml:space="preserve">
+    <value>Статистика</value>
+  </data>
+  <data name="MenuItemGoToStatistics" xml:space="preserve">
+    <value>📊 Статистика</value>
+  </data>
+  <data name="FieldStatOverview" xml:space="preserve">
+    <value>Обзор</value>
+  </data>
+  <data name="FieldStatAge" xml:space="preserve">
+    <value>Возраст</value>
+  </data>
+  <data name="FieldStatBirthYears" xml:space="preserve">
+    <value>Годы рождения</value>
+  </data>
+  <data name="FieldStatNames" xml:space="preserve">
+    <value>Имена</value>
+  </data>
+  <data name="FieldStatDataCompleteness" xml:space="preserve">
+    <value>Полнота данных</value>
+  </data>
+  <data name="FieldStatRelationships" xml:space="preserve">
+    <value>Связи</value>
+  </data>
+  <data name="FieldStatTotalPersons" xml:space="preserve">
+    <value>Всего персон</value>
+  </data>
+  <data name="FieldStatTotalFamilies" xml:space="preserve">
+    <value>Всего семей</value>
+  </data>
+  <data name="FieldStatMenCount" xml:space="preserve">
+    <value>Мужчины</value>
+  </data>
+  <data name="FieldStatWomenCount" xml:space="preserve">
+    <value>Женщины</value>
+  </data>
+  <data name="FieldStatUnknownSexCount" xml:space="preserve">
+    <value>Пол неизвестен</value>
+  </data>
+  <data name="FieldStatLivingCount" xml:space="preserve">
+    <value>Живы сейчас</value>
+  </data>
+  <data name="FieldStatAverageLifespan" xml:space="preserve">
+    <value>Средняя продолжительность жизни</value>
+  </data>
+  <data name="FieldStatLifespan95thPercentile" xml:space="preserve">
+    <value>95-й процентиль продолжительности жизни</value>
+  </data>
+  <data name="FieldStatOldestLiving" xml:space="preserve">
+    <value>Самый старший из живых</value>
+  </data>
+  <data name="FieldStatLongestLifespan" xml:space="preserve">
+    <value>Самая долгая жизнь по записям</value>
+  </data>
+  <data name="FieldStatBirthYearSpan" xml:space="preserve">
+    <value>Диапазон годов рождения</value>
+  </data>
+  <data name="FieldStatMedianBirthYear" xml:space="preserve">
+    <value>Медианный год рождения</value>
+  </data>
+  <data name="FieldStatBirthsByDecade" xml:space="preserve">
+    <value>Рождения по десятилетиям</value>
+  </data>
+  <data name="FieldStatLargestFamily" xml:space="preserve">
+    <value>Самые большие семьи</value>
+  </data>
+  <data name="FieldStatSingleMemberFamilies" xml:space="preserve">
+    <value>Семьи с одним человеком</value>
+  </data>
+  <data name="FieldStatTopMaleFirstNames" xml:space="preserve">
+    <value>Популярные мужские имена</value>
+  </data>
+  <data name="FieldStatTopFemaleFirstNames" xml:space="preserve">
+    <value>Популярные женские имена</value>
+  </data>
+  <data name="FieldStatIncompleteBirthDates" xml:space="preserve">
+    <value>Неполные даты рождения</value>
+  </data>
+  <data name="FieldStatPhotoCoverage" xml:space="preserve">
+    <value>Наличие фото</value>
+  </data>
+  <data name="FieldStatIsolatedPersons" xml:space="preserve">
+    <value>Персоны без связей</value>
+  </data>
+  <data name="FieldStatMarriageCount" xml:space="preserve">
+    <value>Браки</value>
+  </data>
+  <data name="FieldStatAverageChildren" xml:space="preserve">
+    <value>Среднее число детей на родителя</value>
+  </data>
+  <data name="FieldStatMostChildren" xml:space="preserve">
+    <value>Больше всего детей</value>
+  </data>
+  <data name="StatValueNone" xml:space="preserve">
+    <value>—</value>
+  </data>
+  <data name="StatValueYears_1" xml:space="preserve">
+    <value>{0} лет</value>
+  </data>
+  <data name="StatValuePersonYears_2" xml:space="preserve">
+    <value>{0} ({1} лет)</value>
+  </data>
+  <data name="StatValueYearRange_2" xml:space="preserve">
+    <value>{0}–{1}</value>
+  </data>
+  <data name="StatValueNameCount_2" xml:space="preserve">
+    <value>{0} ({1})</value>
+  </data>
+  <data name="StatValueDecadeCount_2" xml:space="preserve">
+    <value>{0}-е: {1}</value>
+  </data>
+  <data name="StatValuePersonChildren_2" xml:space="preserve">
+    <value>{0} ({1} детей)</value>
+  </data>
+  <data name="StatValueChildrenAverage_1" xml:space="preserve">
+    <value>{0} детей</value>
+  </data>
+  <data name="StatValueCoverage_2" xml:space="preserve">
+    <value>{0} из {1}</value>
+  </data>
 </root>

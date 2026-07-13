@@ -128,6 +128,7 @@ internal sealed class TestServices
     services.AddSingleton<ProjectRevisionsPage>();
     services.AddSingleton<TestableFamilyTreePage>();
     services.AddSingleton<SettingsPage>();
+    services.AddSingleton<TestableStatisticsPage>();
     Provider = services.BuildServiceProvider();
   }
 }
