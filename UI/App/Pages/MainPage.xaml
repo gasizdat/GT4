@@ -55,42 +55,6 @@
             Style="{StaticResource FieldValue}"
             Text="{Binding AppVersion, Source={x:Reference Root}}" />
 
-        <!--  TODO: Temporary code for testing — to be removed before production.  -->
-        <VerticalStackLayout IsVisible="Hidden">
-          <Button
-              HeightRequest="20"
-              Style="{StaticResource DeleteAdorner}"
-              WidthRequest="20" />
-          <Label
-              Style="{StaticResource PageTitle}"
-              Text="PageTitle" />
-          <Label
-              Style="{StaticResource PageSubtitle}"
-              Text="PageSubtitle" />
-          <Label
-              Style="{StaticResource GroupTitle}"
-              Text="GroupTitle" />
-          <Label
-              Style="{StaticResource GroupSubtitle}"
-              Text="GroupSubtitle" />
-          <Label
-              Style="{StaticResource CardTitle}"
-              Text="CardTitle" />
-          <Label
-              Style="{StaticResource CardSubtitle}"
-              Text="CardSubtitle" />
-          <Label
-              Style="{StaticResource CardContent}"
-              Text="CardContent" />
-          <Label
-              Style="{StaticResource FieldName}"
-              Text="FieldName" />
-          <Label
-              Style="{StaticResource FieldValue}"
-              Text="FieldValue" />
-
-        </VerticalStackLayout>
-
       </VerticalStackLayout>
     </components:PageLayout.Body>
 
