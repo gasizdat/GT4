@@ -2905,7 +2905,7 @@ namespace GT4.UI.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Largest family.
+        ///   Looks up a localized string similar to Largest families.
         /// </summary>
         public static string FieldStatLargestFamily {
             get {
