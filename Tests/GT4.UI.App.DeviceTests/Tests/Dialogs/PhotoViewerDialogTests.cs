@@ -1,3 +1,4 @@
+using GT4.UI.Abstraction;
 using GT4.UI.Dialogs;
 using GT4.UI.Utils;
 using Xunit;
