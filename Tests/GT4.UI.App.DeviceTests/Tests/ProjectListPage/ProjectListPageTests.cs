@@ -2,6 +2,7 @@ using GT4.Core.Project;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Dialogs;
+using GT4.UI.Items;
 using GT4.UI.Pages;
 using Moq;
 using Xunit;
@@ -12,9 +13,8 @@ namespace GT4.UI.DeviceTests;
 /// <summary>
 /// Covers ProjectListPage against a real MAUI runtime with a mocked Core. PageCommand("Create")
 /// pushes a modal CreateOrUpdateProjectDialog, driven through WindowHost/ModalDialogHarness.
-/// OnProjectSelected is not covered (SelectionChangedEventArgs has no accessible constructor, same
-/// as ProjectPage.OnFamilySelected); ImportGedcom is not covered (FilePicker is an external
-/// dependency, same rationale as ProjectPage.ExportGedcom/ImportGedcom).
+/// ImportGedcom is not covered (FilePicker is an external dependency, same rationale as
+/// ProjectPage.ExportGedcom/ImportGedcom).
 /// </summary>
 public class ProjectListPageTests
 {
@@ -100,6 +100,24 @@ public class ProjectListPageTests
 
     services.ProjectList.Verify(
       p => p.CreateAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never());
+  }
+
+  [Fact]
+  public async Task SelectProject_opens_it_navigates_and_clears_selection()
+  {
+    var services = new TestServices();
+    var info = P("Pushkin");
+    services.CurrentProjectProvider
+      .Setup(p => p.OpenAsync(info, It.IsAny<CancellationToken>()))
+      .Returns(Task.CompletedTask);
+    var page = await CreatePageAsync(services);
+    var projectItem = new ProjectItem(info);
+
+    await page.InvokeProjectSelectedAsync(projectItem);
+
+    services.CurrentProjectProvider.Verify(p => p.OpenAsync(info, It.IsAny<CancellationToken>()), Times.Once());
+    services.NavigationService.Verify(n => n.GoToAsync($"{typeof(ProjectPage).Namespace}/{typeof(ProjectPage).Name}"), Times.Once());
+    Assert.Null(page.SelectedProject);
   }
 
   [Fact]
