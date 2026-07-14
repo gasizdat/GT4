@@ -59,15 +59,12 @@ public sealed class RelativeTree
     _Rows.AddRange(built);
   }
 
-  /// <summary>Sets which rows are visible and re-applies it immediately. Every row, at any depth, is
-  /// tested against its own relative -- a non-matching row stays hidden even when its parent matches
-  /// (an already-expanded subtree is no exception) or when a deeper descendant of its own matches. A
-  /// hidden row is not dropped, only its visibility toggles: it stays exactly as expanded/collapsed as
-  /// it was, and reappears as-is the moment it matches again. <paramref name="isActive"/> is whether a
-  /// filter is currently configured in the UI at all (e.g. <c>PersonFilterView.IsAnyFilterActive</c>),
-  /// not whether <paramref name="predicate"/> actually excludes anything right now -- it flows onto
-  /// every row's <see cref="RelativeRow.IsFilterActive"/>, and while true, rows render as a plain list
-  /// (see that property) regardless of how many of them the predicate currently hides.</summary>
+  /// <summary>Sets which rows are visible and re-applies it immediately. Each row is tested against
+  /// its own relative only, independent of ancestors or descendants; a hidden row keeps its expand
+  /// state and reappears as-is once it matches again. <paramref name="isActive"/> reflects whether a
+  /// filter is configured in the UI at all (e.g. <c>PersonFilterView.IsAnyFilterActive</c>), not
+  /// whether <paramref name="predicate"/> currently excludes anything -- see
+  /// <see cref="RelativeRow.IsFilterActive"/>.</summary>
   public void SetFilter(bool isActive, Func<RelativeInfo, bool> predicate)
   {
     _IsFilterActive = isActive;

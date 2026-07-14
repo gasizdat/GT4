@@ -76,10 +76,8 @@ public partial class RelativeRowView : ContentView
     Connectors.Invalidate();
   }
 
-  // A row can stay bound to the same view across a filter change (FilteredObservableCollection only
-  // raises events for rows whose own visibility changed) while whether a filter is active at all still
-  // flips, which both the indentation and the connector trunk lines need to react to -- see
-  // RelativeRow.IsFilterActive.
+  // A recycled view can stay bound to the same row across a filter change (FilteredObservableCollection
+  // only raises events for rows whose own visibility changed), so react to IsFilterActive explicitly.
   private void OnRowPropertyChanged(object? sender, PropertyChangedEventArgs e)
   {
     if (e.PropertyName == nameof(RelativeRow.IsFilterActive))
@@ -89,8 +87,6 @@ public partial class RelativeRowView : ContentView
     }
   }
 
-  // Indentation, like the connector lines, only describes an accurate tree while the full,
-  // unfiltered set of rows is on screen -- see RelativeRow.IsFilterActive.
   private void UpdateIndentMargin(RelativeRow? row)
   {
     var depth = row is null || row.IsFilterActive ? 0 : row.Depth;
