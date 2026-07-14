@@ -605,7 +605,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Scale the size of all text in the application. You can use zooming gesture to increase or decrease the scale of the text size.
+        ///   Looks up a localized string similar to Scale the size of all text in the application by entering the desired percentage above..
         /// </summary>
         public static string FieldFontScaleHintIOS {
             get {

@@ -832,7 +832,7 @@ FN - family name</value>
     <value>Scale the size of all text in the application. You can use zooming gesture to increase or decrease the scale of the text size</value>
   </data>
   <data name="FieldFontScaleHintIOS" xml:space="preserve">
-    <value>Scale the size of all text in the application. You can use zooming gesture to increase or decrease the scale of the text size</value>
+    <value>Scale the size of all text in the application by entering the desired percentage above.</value>
   </data>
   <data name="FieldGedcomDetails" xml:space="preserve">
     <value>Additional details</value>
