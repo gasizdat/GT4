@@ -4,10 +4,9 @@ namespace GT4.UI.Components;
 /// Strokes one relatives-tree row's connector lines onto its <see cref="GraphicsView"/>: a full-height
 /// pass-through for every ancestor column whose sibling trunk continues, plus this row's own elbow
 /// (vertical down to the photo centre, horizontal across to the content, and on past the centre when
-/// the row has a later sibling). Draws nothing while <see cref="RelativeRow.IsFilterActive"/> is set,
-/// since a filtered tree's hidden rows would make the lines inaccurate. Every coordinate derives from
-/// <see cref="Row"/> and <see cref="PhotoCenterY"/>, so a recycled row can never keep another node's
-/// lines.
+/// the row has a later sibling). Draws nothing while <see cref="RelativeRow.IsFilterActive"/> is set.
+/// Every coordinate derives from <see cref="Row"/> and <see cref="PhotoCenterY"/>, so a recycled row
+/// can never keep another node's lines.
 /// </summary>
 public sealed class RelativeConnectorsDrawable : IDrawable
 {
@@ -42,7 +41,6 @@ public sealed class RelativeConnectorsDrawable : IDrawable
       var x = (float)(k * Indent) + half;
       if (k < ownColumn)
       {
-        // Inherited ancestor trunk passing straight through this row.
         if (row.AncestorContinues[k])
         {
           canvas.DrawLine(x, 0, x, dirtyRect.Height);

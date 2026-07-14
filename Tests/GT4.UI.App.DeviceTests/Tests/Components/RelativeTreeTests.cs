@@ -306,4 +306,23 @@ public class RelativeTreeTests
     Assert.False(rootARow.IsFilterActive);
     Assert.False(childRow.IsFilterActive);
   }
+
+  [Fact]
+  public async Task SetRoots_applies_the_currently_active_filter_to_a_freshly_built_tree()
+  {
+    var services = new TestServices();
+    var rootA = MakeRelative(1, "RootA", Generation.Parent);
+    var rootB = MakeRelative(2, "RootB", Generation.Parent);
+
+    var tree = CreateTree(services);
+    await MainThread.InvokeOnMainThreadAsync(() => tree.SetRoots([rootA, rootB], null));
+    await MainThread.InvokeOnMainThreadAsync(() => tree.SetFilter(true, r => r.Id == rootA.Id));
+
+    // Simulates navigating to a different person: SetRoots rebuilds the tree from scratch, but the
+    // filter already configured for the page must still apply to the freshly built rows.
+    await MainThread.InvokeOnMainThreadAsync(() => tree.SetRoots([rootA, rootB], null));
+
+    Assert.Equal([rootA.Id], tree.Rows.Select(r => r.Relative.Id));
+    Assert.True(tree.Rows.Single(r => r.Relative.Id == rootA.Id).IsFilterActive);
+  }
 }

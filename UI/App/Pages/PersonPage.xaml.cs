@@ -108,11 +108,6 @@ public partial class PersonPage : ContentPage
   public string ToggleAllMenuItemName =>
     string.Format(ExpandAll ? UIStrings.MenuItemCollapseAll_1 : UIStrings.MenuItemExpandAll_1, ToggleAllButtonName);
 
-  // Every already-fetched relative, at any depth, is tested against the filter strictly on its own
-  // merits -- a matching root does not pull its non-matching descendants along, and a non-matching
-  // ancestor does not hide a matching descendant. RelativeTree keeps every fetched row in an untouched
-  // structural master and only hides/shows rows in its bound view, so a filter change can never
-  // disturb an already-expanded subtree's structure, only which of its rows are currently visible.
   private void RefreshRelatives() => _Relatives.SetFilter(FilterView.IsAnyFilterActive, r => FilterView.Matches(r));
 
   public ICommand PageCommand => _PageCommand;
@@ -378,9 +373,6 @@ public partial class PersonPage : ContentPage
     // snapshotting the page's current person set.
     FilterView.ResetFilterData();
 
-    // A full reset: this is a new person, so the previous tree (if any) belongs to someone else and
-    // has nothing worth preserving. The currently active filter (if any) still applies -- SetRoots
-    // re-derives the view from it, same as any other filter re-application.
     _Relatives.SetRoots(_AllRoots, _PersonFullInfo.BirthDate);
 
     this.RefreshView();
