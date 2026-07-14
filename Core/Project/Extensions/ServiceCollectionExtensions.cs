@@ -1,7 +1,8 @@
-﻿using GT4.Core.Project.Abstraction;
+﻿using GT4.Core.Project;
+using GT4.Core.Project.Abstraction;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace GT4.Core.Project;
+namespace GT4.Core.Project.Extensions;
 
 public static class ServiceCollectionExtensions
 {

@@ -7,6 +7,7 @@ using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
+using GT4.UI.Utils.Extensions;
 using GT4.UI.Utils.Formatters;
 using System.Collections.ObjectModel;
 using System.Text;

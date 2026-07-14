@@ -5,7 +5,7 @@ using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
 using GT4.UI.Utils.Settings;
 
-namespace GT4.UI.Utils;
+namespace GT4.UI.Utils.Extensions;
 
 public static class ServiceCollectionExtensions
 {

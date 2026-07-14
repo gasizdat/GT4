@@ -4,6 +4,7 @@ using GT4.UI.Abstraction;
 using GT4.UI.Items;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
+using GT4.UI.Utils.Extensions;
 using System.Windows.Input;
 
 namespace GT4.UI.Pages;

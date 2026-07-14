@@ -1,6 +1,7 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using GT4.Core.Utils;
+using Microsoft.Extensions.Configuration;
 
-namespace GT4.Core.Utils;
+namespace GT4.Core.Utils.Extensions;
 
 public static class ConfigurationExtensions
 {
