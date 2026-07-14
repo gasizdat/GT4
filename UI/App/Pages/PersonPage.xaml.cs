@@ -113,7 +113,7 @@ public partial class PersonPage : ContentPage
   // ancestor does not hide a matching descendant. RelativeTree keeps every fetched row in an untouched
   // structural master and only hides/shows rows in its bound view, so a filter change can never
   // disturb an already-expanded subtree's structure, only which of its rows are currently visible.
-  private void RefreshRelatives() => _Relatives.SetFilter(r => FilterView.Matches(r));
+  private void RefreshRelatives() => _Relatives.SetFilter(FilterView.IsAnyFilterActive, r => FilterView.Matches(r));
 
   public ICommand PageCommand => _PageCommand;
 

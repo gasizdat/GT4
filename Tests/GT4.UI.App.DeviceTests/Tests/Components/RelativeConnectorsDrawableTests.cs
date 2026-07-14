@@ -15,7 +15,7 @@ namespace GT4.UI.DeviceTests;
 /// </summary>
 public class RelativeConnectorsDrawableTests
 {
-  private static RelativeRow MakeRow(int depth, bool[] ancestorContinues, bool[]? ancestorVisible = null)
+  private static RelativeRow MakeRow(int depth, bool[] ancestorContinues, bool isFilterActive = false)
   {
     var relative = new RelativeInfo(
       new PersonInfo(1, Date.Create(2000, 1, 1, DateStatus.WellKnown), null, BiologicalSex.Male, [], null),
@@ -24,9 +24,8 @@ public class RelativeConnectorsDrawableTests
       Generation.Parent,
       Consanguinity.Zero);
     var isLast = ancestorContinues.Length == 0 || !ancestorContinues[^1];
-    ancestorVisible ??= [.. Enumerable.Repeat(true, ancestorContinues.Length)];
     return new RelativeRow(
-      relative, null, depth, isLast, ancestorContinues, shouldShow: true, ancestorVisible, new Command(() => { }));
+      relative, null, depth, isLast, ancestorContinues, shouldShow: true, isFilterActive, new Command(() => { }));
   }
 
   [Fact]
@@ -126,23 +125,21 @@ public class RelativeConnectorsDrawableTests
   }
 
   [Fact]
-  public void An_inherited_ancestor_column_draws_nothing_when_that_ancestor_is_filtered_out()
+  public void Draw_does_nothing_while_a_filter_is_active()
   {
-    var canvas = new Mock<ICanvas>();
+    var canvas = new Mock<ICanvas>(MockBehavior.Strict);
     var drawable = new RelativeConnectorsDrawable
     {
-      // Column 0's trunk continues structurally, but that ancestor is hidden by the current filter --
-      // there is no row above to connect the line to, so it must not draw.
-      Row = MakeRow(2, [true, false], ancestorVisible: [false, true]),
+      // A filtered tree can hide any ancestor or sibling, which would make these lines inaccurate, so
+      // no connector draws at all while filtering -- regardless of what AncestorContinues says.
+      Row = MakeRow(2, [true, false], isFilterActive: true),
       PhotoCenterY = 25,
       Indent = 20,
     };
 
     drawable.Draw(canvas.Object, new RectF(0, 0, 100, 100));
 
-    canvas.Verify(c => c.DrawLine(It.IsAny<float>(), It.IsAny<float>(), It.IsAny<float>(), It.IsAny<float>()), Times.Exactly(2));
-    canvas.Verify(c => c.DrawLine(30, 0, 30, 25), Times.Once());
-    canvas.Verify(c => c.DrawLine(30, 25, 40, 25), Times.Once());
+    canvas.VerifyNoOtherCalls();
   }
 
   [Fact]

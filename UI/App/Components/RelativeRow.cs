@@ -22,7 +22,7 @@ public sealed class RelativeRow : INotifyPropertyChanged
   private RelativeRowIssueType _Issue;
   private string? _IssueMessage;
 
-  private bool[] _AncestorVisible;
+  private bool _IsFilterActive;
 
   public RelativeRow(
     RelativeInfo relative,
@@ -31,9 +31,8 @@ public sealed class RelativeRow : INotifyPropertyChanged
     bool isLast,
     bool[] ancestorContinues,
     bool shouldShow,
-    bool[] ancestorVisible,
-    ICommand toggleCommand,
-    RelativeRow? parent = null)
+    bool isFilterActive,
+    ICommand toggleCommand)
   {
     Relative = relative;
     PersonBirthDate = personBirthDate;
@@ -41,9 +40,8 @@ public sealed class RelativeRow : INotifyPropertyChanged
     IsLast = isLast;
     AncestorContinues = ancestorContinues;
     ShouldShow = shouldShow;
-    _AncestorVisible = ancestorVisible;
+    _IsFilterActive = isFilterActive;
     ToggleCommand = toggleCommand;
-    Parent = parent;
   }
 
   public RelativeInfo Relative { get; }
@@ -55,15 +53,11 @@ public sealed class RelativeRow : INotifyPropertyChanged
 
   public bool IsLast { get; }
 
-  /// <summary>The row this one was expanded from; null for a top-level root. Purely structural -- lets
-  /// <see cref="RelativeTree"/> derive a row's <see cref="AncestorVisible"/> straight from its parent's,
-  /// instead of re-deriving the same fact from <see cref="Depth"/> positions in the flattened list.</summary>
-  public RelativeRow? Parent { get; }
-
   /// <summary>
   /// Length <see cref="Depth"/>. For each column <c>k</c>, whether that column's sibling trunk runs on
   /// past this row. The last entry is this row's own column (<c>== !IsLast</c>); earlier entries are
-  /// inherited ancestor trunks.
+  /// inherited ancestor trunks. Only meaningful while <see cref="IsFilterActive"/> is false -- filtering
+  /// can hide any ancestor or sibling, which would make these positions stale.
   /// </summary>
   public bool[] AncestorContinues { get; }
 
@@ -74,19 +68,23 @@ public sealed class RelativeRow : INotifyPropertyChanged
   /// visibility directly.</summary>
   public bool ShouldShow { get; set; }
 
-  /// <summary>
-  /// Length <see cref="Depth"/>, parallel to <see cref="AncestorContinues"/>: for each ancestor column
-  /// <c>k</c>, whether that ancestor currently has <see cref="ShouldShow"/> set. A non-matching
-  /// ancestor stays hidden even when a deeper descendant matches, so its trunk column must not draw --
-  /// there is no visible row above to connect it to.
-  /// </summary>
-  public bool[] AncestorVisible
+  /// <summary>Whether a relatives filter is currently configured in the UI -- independent of whether
+  /// that filter actually excludes any particular row right now. Indentation and connector trunk lines
+  /// only make sense against the full, unfiltered tree, so both are suppressed the moment filtering is
+  /// turned on and the visible rows render as a plain list, even if the current criteria happen to
+  /// match everything. Set uniformly across every row by <see cref="RelativeTree"/>, whether or not this
+  /// particular row's own <see cref="ShouldShow"/> changed, so a row that stays bound to the same
+  /// recycled view still learns to redraw.</summary>
+  public bool IsFilterActive
   {
-    get => _AncestorVisible;
+    get => _IsFilterActive;
     set
     {
-      _AncestorVisible = value;
-      OnPropertyChanged();
+      if (_IsFilterActive != value)
+      {
+        _IsFilterActive = value;
+        OnPropertyChanged();
+      }
     }
   }
 

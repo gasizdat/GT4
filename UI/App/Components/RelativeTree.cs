@@ -29,6 +29,7 @@ public sealed class RelativeTree
   private readonly FilteredObservableCollection<RelativeRow> _Rows = new();
 
   private Func<RelativeInfo, bool> _Predicate = _ => true;
+  private bool _IsFilterActive;
 
   public RelativeTree(
     ICurrentProjectProvider currentProjectProvider,
@@ -52,7 +53,7 @@ public sealed class RelativeTree
     for (var i = 0; i < ordered.Length; i++)
     {
       var isLast = i == ordered.Length - 1;
-      built[i] = CreateRow(ordered[i], parent: null, personBirthDate, depth: 0, isLast, ancestorContinues: []);
+      built[i] = CreateRow(ordered[i], personBirthDate, depth: 0, isLast, ancestorContinues: []);
     }
     _Rows.Clear();
     _Rows.AddRange(built);
@@ -62,23 +63,24 @@ public sealed class RelativeTree
   /// tested against its own relative -- a non-matching row stays hidden even when its parent matches
   /// (an already-expanded subtree is no exception) or when a deeper descendant of its own matches. A
   /// hidden row is not dropped, only its visibility toggles: it stays exactly as expanded/collapsed as
-  /// it was, and reappears as-is the moment it matches again.</summary>
-  public void SetFilter(Func<RelativeInfo, bool> predicate)
+  /// it was, and reappears as-is the moment it matches again. <paramref name="isActive"/> is whether a
+  /// filter is currently configured in the UI at all (e.g. <c>PersonFilterView.IsAnyFilterActive</c>),
+  /// not whether <paramref name="predicate"/> actually excludes anything right now -- it flows onto
+  /// every row's <see cref="RelativeRow.IsFilterActive"/>, and while true, rows render as a plain list
+  /// (see that property) regardless of how many of them the predicate currently hides.</summary>
+  public void SetFilter(bool isActive, Func<RelativeInfo, bool> predicate)
   {
+    _IsFilterActive = isActive;
     _Predicate = predicate;
     RecomputeVisibility();
     _Rows.Update();
   }
 
-  // Walks the structural master top-to-bottom (it's a depth-first pre-order flatten, so every row's
-  // Parent was already visited and recomputed by the time we reach it) rebuilding ShouldShow and
-  // AncestorVisible for every row against the current predicate, via the same parent-based formula
-  // CreateRow uses for a freshly expanded row.
   private void RecomputeVisibility()
   {
     foreach (var row in _Rows.AllItems)
     {
-      row.AncestorVisible = AncestorVisibleFor(row.Parent);
+      row.IsFilterActive = _IsFilterActive;
       row.ShouldShow = _Predicate(row.Relative);
     }
   }
@@ -199,7 +201,7 @@ public sealed class RelativeTree
     {
       var isLast = i == ordered.Length - 1;
       bool[] ancestorContinues = [.. row.AncestorContinues, !isLast];
-      newRows[i] = CreateRow(ordered[i], row, row.Relative.BirthDate, row.Depth + 1, isLast, ancestorContinues);
+      newRows[i] = CreateRow(ordered[i], row.Relative.BirthDate, row.Depth + 1, isLast, ancestorContinues);
     }
     _Rows.InsertRange(index + 1, newRows);
 
@@ -241,7 +243,6 @@ public sealed class RelativeTree
 
   private RelativeRow CreateRow(
     RelativeInfo relative,
-    RelativeRow? parent,
     Date? personBirthDate,
     int depth,
     bool isLast,
@@ -250,11 +251,7 @@ public sealed class RelativeTree
     RelativeRow? row = null;
     var toggleCommand = new SafeCommand(() => ToggleAsync(row!), _AlertService);
     var shouldShow = _Predicate(relative);
-    row = new RelativeRow(
-      relative, personBirthDate, depth, isLast, ancestorContinues, shouldShow, AncestorVisibleFor(parent), toggleCommand, parent);
+    row = new RelativeRow(relative, personBirthDate, depth, isLast, ancestorContinues, shouldShow, _IsFilterActive, toggleCommand);
     return row;
   }
-
-  private static bool[] AncestorVisibleFor(RelativeRow? parent) =>
-    parent is null ? [] : [.. parent.AncestorVisible, parent.ShouldShow];
 }

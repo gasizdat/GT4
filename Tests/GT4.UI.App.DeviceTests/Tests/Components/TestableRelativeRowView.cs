@@ -7,4 +7,6 @@ internal sealed class TestableRelativeRowView : RelativeRowView
   public RelativeConnectorsDrawable ConnectorsDrawableForTest => ConnectorsDrawable;
 
   public RelativeInfoView InfoViewForTest => InfoView;
+
+  public Thickness ContentMarginForTest => ContentMargin;
 }

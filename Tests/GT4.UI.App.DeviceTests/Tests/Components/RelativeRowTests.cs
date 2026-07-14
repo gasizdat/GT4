@@ -30,7 +30,7 @@ public class RelativeRowTests
       isLast: true,
       ancestorContinues: [true, false],
       shouldShow: true,
-      ancestorVisible: [true, false],
+      isFilterActive: false,
       toggleCommand ?? new Command(() => { }));
 
   [Fact]
@@ -39,11 +39,10 @@ public class RelativeRowTests
     var relative = MakeRelative(1);
     var birthDate = Date.Create(1970, 1, 1, DateStatus.WellKnown);
     var ancestorContinues = new[] { true, false };
-    var ancestorVisible = new[] { true, false };
     var toggleCommand = new Command(() => { });
 
     var row = new RelativeRow(
-      relative, birthDate, depth: 2, isLast: true, ancestorContinues, shouldShow: true, ancestorVisible, toggleCommand);
+      relative, birthDate, depth: 2, isLast: true, ancestorContinues, shouldShow: true, isFilterActive: true, toggleCommand);
 
     Assert.Same(relative, row.Relative);
     Assert.Equal(birthDate, row.PersonBirthDate);
@@ -51,7 +50,7 @@ public class RelativeRowTests
     Assert.True(row.IsLast);
     Assert.Same(ancestorContinues, row.AncestorContinues);
     Assert.True(row.ShouldShow);
-    Assert.Same(ancestorVisible, row.AncestorVisible);
+    Assert.True(row.IsFilterActive);
     Assert.Same(toggleCommand, row.ToggleCommand);
     Assert.False(row.IsExpanded);
   }
@@ -91,6 +90,30 @@ public class RelativeRowTests
     row.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
 
     row.IsExpanded = true;
+
+    Assert.Empty(raised);
+  }
+
+  [Fact]
+  public void IsFilterActive_change_raises_PropertyChanged()
+  {
+    var row = CreateRow();
+    var raised = new List<string?>();
+    row.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+
+    row.IsFilterActive = true;
+
+    Assert.Equal(["IsFilterActive"], raised);
+  }
+
+  [Fact]
+  public void Setting_IsFilterActive_to_its_current_value_raises_nothing()
+  {
+    var row = CreateRow();
+    var raised = new List<string?>();
+    row.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+
+    row.IsFilterActive = false;
 
     Assert.Empty(raised);
   }
