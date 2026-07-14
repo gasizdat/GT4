@@ -108,12 +108,12 @@ public partial class PersonPage : ContentPage
   public string ToggleAllMenuItemName =>
     string.Format(ExpandAll ? UIStrings.MenuItemCollapseAll_1 : UIStrings.MenuItemExpandAll_1, ToggleAllButtonName);
 
-  // Only the top-level relatives (spouse/parents/siblings/children/step-*) are filtered; once a
-  // matching root is expanded, its own descendants show unfiltered -- the tree is fetched lazily
-  // from the DB level by level, so there is no retained unfiltered set at deeper levels to re-filter
-  // against interactively (mirrors how a family with no matching persons is hidden wholesale on
-  // ProjectPage/FamilyPage, rather than reaching into it for a matching grandchild).
-  private void RefreshRelatives() => _Relatives.SetRoots(_AllRoots.Where(r => FilterView.Matches(r)), _PersonFullInfo.BirthDate);
+  // Every already-fetched relative, at any depth, is tested against the filter strictly on its own
+  // merits -- a matching root does not pull its non-matching descendants along, and a non-matching
+  // ancestor does not hide a matching descendant. RelativeTree keeps every fetched row in an untouched
+  // structural master and only hides/shows rows in its bound view, so a filter change can never
+  // disturb an already-expanded subtree's structure, only which of its rows are currently visible.
+  private void RefreshRelatives() => _Relatives.SetFilter(FilterView.IsAnyFilterActive, r => FilterView.Matches(r));
 
   public ICommand PageCommand => _PageCommand;
 
@@ -378,7 +378,10 @@ public partial class PersonPage : ContentPage
     // snapshotting the page's current person set.
     FilterView.ResetFilterData();
 
-    RefreshRelatives();
+    // A full reset: this is a new person, so the previous tree (if any) belongs to someone else and
+    // has nothing worth preserving. The currently active filter (if any) still applies -- SetRoots
+    // re-derives the view from it, same as any other filter re-application.
+    _Relatives.SetRoots(_AllRoots, _PersonFullInfo.BirthDate);
 
     this.RefreshView();
 

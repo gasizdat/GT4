@@ -22,12 +22,16 @@ public sealed class RelativeRow : INotifyPropertyChanged
   private RelativeRowIssueType _Issue;
   private string? _IssueMessage;
 
+  private bool _IsFilterActive;
+
   public RelativeRow(
     RelativeInfo relative,
     Date? personBirthDate,
     int depth,
     bool isLast,
     bool[] ancestorContinues,
+    bool shouldShow,
+    bool isFilterActive,
     ICommand toggleCommand)
   {
     Relative = relative;
@@ -35,6 +39,8 @@ public sealed class RelativeRow : INotifyPropertyChanged
     Depth = depth;
     IsLast = isLast;
     AncestorContinues = ancestorContinues;
+    ShouldShow = shouldShow;
+    _IsFilterActive = isFilterActive;
     ToggleCommand = toggleCommand;
   }
 
@@ -50,9 +56,37 @@ public sealed class RelativeRow : INotifyPropertyChanged
   /// <summary>
   /// Length <see cref="Depth"/>. For each column <c>k</c>, whether that column's sibling trunk runs on
   /// past this row. The last entry is this row's own column (<c>== !IsLast</c>); earlier entries are
-  /// inherited ancestor trunks.
+  /// inherited ancestor trunks. Only meaningful while <see cref="IsFilterActive"/> is false -- filtering
+  /// can hide any ancestor or sibling, which would make these positions stale.
   /// </summary>
   public bool[] AncestorContinues { get; }
+
+  /// <summary>Whether this row's own relative currently matches the active filter -- no cascade in
+  /// either direction: a matching ancestor does not pull in a non-matching descendant, and a matching
+  /// descendant does not pull in a non-matching ancestor. Recomputed by <see cref="RelativeTree"/>
+  /// whenever the filter or the tree structure changes; backs <see cref="RelativeTree.Rows"/>'s
+  /// visibility directly.</summary>
+  public bool ShouldShow { get; set; }
+
+  /// <summary>Whether a relatives filter is currently configured in the UI -- independent of whether
+  /// that filter actually excludes any particular row right now. Indentation and connector trunk lines
+  /// only make sense against the full, unfiltered tree, so both are suppressed the moment filtering is
+  /// turned on and the visible rows render as a plain list, even if the current criteria happen to
+  /// match everything. Set uniformly across every row by <see cref="RelativeTree"/>, whether or not this
+  /// particular row's own <see cref="ShouldShow"/> changed, so a row that stays bound to the same
+  /// recycled view still learns to redraw.</summary>
+  public bool IsFilterActive
+  {
+    get => _IsFilterActive;
+    set
+    {
+      if (_IsFilterActive != value)
+      {
+        _IsFilterActive = value;
+        OnPropertyChanged();
+      }
+    }
+  }
 
   public ICommand ToggleCommand { get; }
 

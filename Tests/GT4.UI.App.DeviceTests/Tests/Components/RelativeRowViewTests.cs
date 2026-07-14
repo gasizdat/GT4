@@ -24,7 +24,7 @@ public class RelativeRowViewTests
     return await MainThread.InvokeOnMainThreadAsync(() => new TestableRelativeRowView());
   }
 
-  private static RelativeRow MakeRow(int depth, bool[] ancestorContinues)
+  private static RelativeRow MakeRow(int depth, bool[] ancestorContinues, bool isFilterActive = false)
   {
     var relative = new RelativeInfo(
       new PersonInfo(1, Date.Create(2000, 1, 1, DateStatus.WellKnown), null, BiologicalSex.Male, [], null),
@@ -32,7 +32,8 @@ public class RelativeRowViewTests
       null,
       Generation.Parent,
       Consanguinity.Zero);
-    return new RelativeRow(relative, null, depth, isLast: true, ancestorContinues, new Command(() => { }));
+    return new RelativeRow(
+      relative, null, depth, isLast: true, ancestorContinues, shouldShow: true, isFilterActive, new Command(() => { }));
   }
 
   [Fact]
@@ -44,6 +45,39 @@ public class RelativeRowViewTests
     await MainThread.InvokeOnMainThreadAsync(() => view.BindingContext = row);
 
     Assert.Same(row, view.ConnectorsDrawableForTest.Row);
+  }
+
+  [Fact]
+  public async Task Setting_BindingContext_indents_by_depth_when_no_filter_is_active()
+  {
+    var view = await CreateViewAsync();
+
+    await MainThread.InvokeOnMainThreadAsync(() => view.BindingContext = MakeRow(2, [true, false], isFilterActive: false));
+
+    Assert.True(view.ContentMarginForTest.Left > 0);
+  }
+
+  [Fact]
+  public async Task Setting_BindingContext_drops_indentation_when_a_filter_is_active()
+  {
+    var view = await CreateViewAsync();
+
+    await MainThread.InvokeOnMainThreadAsync(() => view.BindingContext = MakeRow(2, [true, false], isFilterActive: true));
+
+    Assert.Equal(0, view.ContentMarginForTest.Left);
+  }
+
+  [Fact]
+  public async Task Row_becoming_filter_active_after_binding_drops_its_indentation()
+  {
+    var view = await CreateViewAsync();
+    var row = MakeRow(2, [true, false]);
+    await MainThread.InvokeOnMainThreadAsync(() => view.BindingContext = row);
+    Assert.True(view.ContentMarginForTest.Left > 0);
+
+    await MainThread.InvokeOnMainThreadAsync(() => row.IsFilterActive = true);
+
+    Assert.Equal(0, view.ContentMarginForTest.Left);
   }
 
   [Fact]
