@@ -404,7 +404,13 @@ public partial class PersonPage : ContentPage
       _NavigationHistory.RemoveAt(newIndex);
     }
     _NavigationHistory.Add(personInfoCopy);
-    CurrentPerson = personInfoCopy;
+
+    // Not routed through the CurrentPerson setter: its data was just fetched by the caller of
+    // AddToNavigation, so re-entering ShowPersonInfo here would re-run the whole fetch pipeline for
+    // the same person a second time. OnNextPerson still goes through the setter, which does need a
+    // fresh fetch for an already-visited (lightweight) history entry.
+    _NavigationIndex = newIndex;
+    OnPropertyChanged(nameof(CurrentPerson));
   }
 
   protected async Task OnPageCommand(object obj)

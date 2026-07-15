@@ -1,6 +1,8 @@
 using GT4.Core.Project.Dto;
 using GT4.UI.Converters;
 using GT4.UI.Utils.Converters;
+using Microsoft.Extensions.Http;
+using Moq;
 using System.Text;
 using Xunit;
 
@@ -37,7 +39,7 @@ public class PhotoTagDataConverterTests
   [Fact]
   public async Task ToObjectAsync_returns_null_for_a_null_photo()
   {
-    var result = await new PhotoTagDataConverter().ToObjectAsync(null, CancellationToken.None);
+    var result = await new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>()).ToObjectAsync(null, CancellationToken.None);
 
     Assert.Null(result);
   }
@@ -49,7 +51,7 @@ public class PhotoTagDataConverterTests
     var content = BuildEnvelope("0 OBJE\n1 TITL A caption\n", image);
     var photo = new Data(1, content, "image/png", DataCategory.PersonMainPhotoTagged);
 
-    var result = await new PhotoTagDataConverter().ToObjectAsync(photo, CancellationToken.None);
+    var result = await new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>()).ToObjectAsync(photo, CancellationToken.None);
 
     var imageSource = Assert.IsAssignableFrom<ImageSource>(result);
     Assert.Equal(image, await ReadBytesAsync(imageSource));
@@ -62,8 +64,8 @@ public class PhotoTagDataConverterTests
     var taggedPhoto = new Data(1, BuildEnvelope("0 OBJE\n1 TITL X\n", image), "image/png", DataCategory.PersonMainPhotoTagged);
     var plainPhoto = new Data(2, image, "image/png", DataCategory.PersonMainPhoto);
 
-    var taggedResult = await new PhotoTagDataConverter().ToObjectAsync(taggedPhoto, CancellationToken.None);
-    var plainResult = await new ImageDataConverter().ToObjectAsync(plainPhoto, CancellationToken.None);
+    var taggedResult = await new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>()).ToObjectAsync(taggedPhoto, CancellationToken.None);
+    var plainResult = await new ImageDataConverter(Mock.Of<IHttpClientFactory>()).ToObjectAsync(plainPhoto, CancellationToken.None);
 
     var taggedBytes = await ReadBytesAsync(Assert.IsAssignableFrom<ImageSource>(taggedResult));
     var plainBytes = await ReadBytesAsync(Assert.IsAssignableFrom<ImageSource>(plainResult));
@@ -73,7 +75,7 @@ public class PhotoTagDataConverterTests
   [Fact]
   public async Task FromObjectAsync_returns_null_for_null_input()
   {
-    var result = await new PhotoTagDataConverter().FromObjectAsync(null, CancellationToken.None);
+    var result = await new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>()).FromObjectAsync(null, CancellationToken.None);
 
     Assert.Null(result);
   }
@@ -88,8 +90,8 @@ public class PhotoTagDataConverterTests
     // real file from the test host's working directory.
     var image = GT4.UI.Utils.ImageUtils.ImageFromBytes([1, 2, 3, 4]);
 
-    var taggedResult = await new PhotoTagDataConverter().FromObjectAsync(image, CancellationToken.None);
-    var plainResult = await new ImageDataConverter().FromObjectAsync(image, CancellationToken.None);
+    var taggedResult = await new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>()).FromObjectAsync(image, CancellationToken.None);
+    var plainResult = await new ImageDataConverter(Mock.Of<IHttpClientFactory>()).FromObjectAsync(image, CancellationToken.None);
 
     Assert.NotNull(taggedResult);
     Assert.NotNull(plainResult);

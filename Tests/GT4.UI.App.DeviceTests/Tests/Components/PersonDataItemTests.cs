@@ -4,6 +4,8 @@ using GT4.UI.Converters;
 using GT4.UI.Items;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
+using Microsoft.Extensions.Http;
+using Moq;
 using Xunit;
 
 namespace GT4.UI.DeviceTests;
@@ -19,7 +21,7 @@ public class PersonDataItemTests
   {
     var services = new TestServices();
     var original = new Data(10, [1, 2, 3], "image/png", DataCategory.PersonMainPhotoTagged);
-    var item = new PersonDataItem(original, new PhotoTagDataConverter(), TokenProvider(services), services.AlertService.Object);
+    var item = new PersonDataItem(original, new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>()), TokenProvider(services), services.AlertService.Object);
 
     var result = await item.ToDataAsync();
 
@@ -31,7 +33,7 @@ public class PersonDataItemTests
   {
     var services = new TestServices();
     var original = new Data(10, [1, 2, 3], "image/png", DataCategory.PersonMainPhotoTagged);
-    var item = new PersonDataItem(original, new PhotoTagDataConverter(), TokenProvider(services), services.AlertService.Object);
+    var item = new PersonDataItem(original, new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>()), TokenProvider(services), services.AlertService.Object);
 
     item.Content = ImageUtils.ImageFromBytes([9, 9, 9]);
     var result = await item.ToDataAsync();
@@ -46,7 +48,7 @@ public class PersonDataItemTests
   {
     var services = new TestServices();
     var original = new Data(10, [1, 2, 3], "image/png", DataCategory.PersonPhoto);
-    var item = new PersonDataItem(original, new ImageDataConverter(), TokenProvider(services), services.AlertService.Object);
+    var item = new PersonDataItem(original, new ImageDataConverter(Mock.Of<IHttpClientFactory>()), TokenProvider(services), services.AlertService.Object);
 
     item.Content = ImageUtils.ImageFromBytes([9, 9, 9]);
     var result = await item.ToDataAsync();

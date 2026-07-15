@@ -43,7 +43,7 @@
     <components:PageLayout.Body>
       <CollectionView
           ItemsSource="{Binding Projects, Source={x:Reference Root}}"
-          SelectionChanged="OnProjectSelected"
+          SelectedItem="{Binding SelectedProject, Source={x:Reference Root}}"
           SelectionMode="Single">
 
         <CollectionView.ItemTemplate>

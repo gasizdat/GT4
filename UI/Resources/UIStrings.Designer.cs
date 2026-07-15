@@ -605,6 +605,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Scale the size of all text in the application. You can use zooming gesture to increase or decrease the scale of the text size.
+        /// </summary>
+        public static string FieldFontScaleHintIOS {
+            get {
+                return ResourceManager.GetString("FieldFontScaleHintIOS", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Scale the size of all text in the application. You can use the Cmd + +/-/0 hotkeys to increase, decrease, or reset the current font size scale..
         /// </summary>
         public static string FieldFontScaleHintMac {
