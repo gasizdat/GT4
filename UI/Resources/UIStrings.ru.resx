@@ -831,6 +831,9 @@ FN - род</value>
   <data name="FieldFontScaleHintAndroid" xml:space="preserve">
     <value>Масштаб всего текста в приложении. Вы можете использовать жест масштабирования, чтобы увеличить или уменьшить масштабирование размера текста </value>
   </data>
+  <data name="FieldFontScaleHintIOS" xml:space="preserve">
+    <value>Масштаб всего текста в приложении. Вы можете использовать жест масштабирования, чтобы увеличить или уменьшить масштабирование размера текста </value>
+  </data>
   <data name="FieldGedcomDetails" xml:space="preserve">
     <value>Дополнительные сведения</value>
   </data>

@@ -43,8 +43,7 @@ internal class FontScaleSetting : ISettingEditor
 #elif MACCATALYST
     UIStrings.FieldFontScaleHintMac;
 #elif IOS
-    // TODO we do not support IOS yet.
-    string.Empty;
+    UIStrings.FieldFontScaleHintIOS;
 #else 
 # error  Platform Not Supported;
 #endif
