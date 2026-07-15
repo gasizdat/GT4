@@ -1,7 +1,8 @@
+using GT4.Core.Gedcom;
 using GT4.Core.Gedcom.Abstraction;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace GT4.Core.Gedcom;
+namespace GT4.Core.Gedcom.Extensions;
 
 public static class ServiceCollectionExtensions
 {

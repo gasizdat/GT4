@@ -1,6 +1,8 @@
 using FluentAssertions;
 using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
+using GT4.Core.Utils.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 

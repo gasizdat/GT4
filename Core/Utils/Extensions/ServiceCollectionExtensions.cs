@@ -1,7 +1,8 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using GT4.Core.Utils;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace GT4.Core.Utils;
+namespace GT4.Core.Utils.Extensions;
 
 public static class ServiceCollectionExtensions
 {

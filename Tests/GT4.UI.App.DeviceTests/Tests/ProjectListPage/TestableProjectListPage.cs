@@ -3,6 +3,7 @@ using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
+using GT4.UI.Items;
 using GT4.UI.Pages;
 
 namespace GT4.UI.DeviceTests;
@@ -36,4 +37,6 @@ internal sealed class TestableProjectListPage : ProjectListPage
   public Task InvokePageCommandAsync(object parameter) => OnPageCommand(parameter);
 
   public Task InvokeUpdateProjectListAsync() => UpdateProjectList();
+
+  public Task InvokeProjectSelectedAsync(ProjectItem projectItem) => OnProjectSelectedAsync(projectItem);
 }

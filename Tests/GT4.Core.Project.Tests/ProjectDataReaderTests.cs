@@ -90,6 +90,28 @@ public sealed class ProjectDataReaderTests : IAsyncLifetime
     // The sync `using` above disposes through Dispose(bool), releasing the gate.
   }
 
+  /// <summary>
+  /// Confirms the self-deadlock risk documented on <see cref="ProjectCommand.ExecuteReaderAsync"/>:
+  /// a reader opened outside a transaction holds the connection gate until disposed, so a second
+  /// gated call on the *same flow* can never be released by anyone and must be cancelled externally.
+  /// </summary>
+  [Fact]
+  public async Task NestedReadOnSameFlow_WithoutTransaction_SelfDeadlocks()
+  {
+    using var outerCommand = _doc.CreateCommand();
+    outerCommand.CommandText = Query;
+    await using var outerReader = await outerCommand.ExecuteReaderAsync(Token);
+    (await outerReader.ReadAsync(Token)).Should().BeTrue();
+
+    using var innerCommand = _doc.CreateCommand();
+    innerCommand.CommandText = Query;
+    using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(200));
+
+    var act = () => innerCommand.ExecuteReaderAsync(cts.Token);
+
+    await act.Should().ThrowAsync<OperationCanceledException>();
+  }
+
   [Fact]
   public async Task AsyncAccessors_AndAsyncDispose()
   {

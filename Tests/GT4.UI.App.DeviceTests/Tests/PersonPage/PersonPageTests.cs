@@ -95,6 +95,32 @@ public class PersonPageTests
   }
 
   [Fact]
+  public async Task Opening_a_new_person_fetches_its_data_exactly_once()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson();
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+
+    // AddToNavigation used to route a freshly-appended entry through the CurrentPerson setter,
+    // re-triggering the whole fetch pipeline for the person that had just finished loading. Confirm
+    // it settles at exactly one completed load, not two, over a grace window rather than a single
+    // check right after the first load (a regression could land the second load slightly later).
+    await Poll.ConfirmNeverAsync(
+      () => Task.FromResult(page.CompletedLoads),
+      loads => loads > 1,
+      TimeSpan.FromMilliseconds(300),
+      failureMessage: "Opening a new person re-ran the fetch pipeline more than once.");
+    Assert.Equal(1, page.CompletedLoads);
+    services.PersonManager.Verify(
+      p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()), Times.Once());
+  }
+
+  [Fact]
   public async Task MaritalStatusData_is_not_fetched_until_the_filter_panel_is_shown()
   {
     var services = new TestServices();
