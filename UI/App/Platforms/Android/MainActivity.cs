@@ -126,20 +126,17 @@ namespace GT4
       var isDocumentUri = DocumentsContract.IsDocumentUri(this, uri);
       var hasPersistableGrant = intent.Flags.HasFlag(ActivityFlags.GrantPersistableUriPermission);
 
-      if (!isDocumentUri || !hasPersistableGrant)
+      if (isDocumentUri && hasPersistableGrant)
       {
-        Task.Run(() => ImportProjectAsync(uri));
-      }
-      else
-      {
+        // Persist the grant so the URI stays accessible across process restarts, but the import
+        // itself is a one-shot read: nothing here differs from the non-persistable path.
         var takeFlags = intent.Flags & (ActivityFlags.GrantReadUriPermission |
                                         ActivityFlags.GrantWriteUriPermission |
                                         ActivityFlags.GrantPersistableUriPermission);
         ContentResolver?.TakePersistableUriPermission(uri, takeFlags);
-
-        // TODO remove the else section or implement it
-        throw new NotImplementedException(nameof(HandleOpenIntentIfAny));
       }
+
+      Task.Run(() => ImportProjectAsync(uri));
     }
   }
 }
