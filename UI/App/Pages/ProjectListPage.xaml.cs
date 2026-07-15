@@ -33,6 +33,7 @@ public partial class ProjectListPage : ContentPage
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
   private readonly ObservableCollection<ProjectItem> _Projects = new();
+  private ProjectItem? _SelectedProject;
 
   public ProjectListPage(
     ICancellationTokenProvider cancellationTokenProvider,
@@ -60,30 +61,31 @@ public partial class ProjectListPage : ContentPage
 
   public ICommand PageCommand => _PageCommand;
 
-  public async void OnProjectSelected(object sender, SelectionChangedEventArgs e)
+  public ProjectItem? SelectedProject
   {
-    // async void event handler: an escaped exception is unobserved and crashes the app, so guard it.
-    async Task OnNavigateAsync()
+    get => _SelectedProject;
+    set
     {
-      switch (e.CurrentSelection.FirstOrDefault())
-      {
-        case ProjectItem projectItem:
-          {
-            using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-            await _CurrentProjectProvider.OpenAsync(projectItem.Info, token);
-            await _NavigationService.GoToAsync(UIRoutes.GetRoute<ProjectPage>());
+      if (_SelectedProject == value)
+        return;
 
-            // TODO not so good approach
-            if (sender is SelectableItemsView view)
-            {
-              view.SelectedItem = null;
-            }
-            break;
-          }
+      _SelectedProject = value;
+      OnPropertyChanged();
+
+      if (value is not null)
+      {
+        _ = SafeTask.GuardAsync(() => OnProjectSelectedAsync(value), _AlertService);
       }
     }
+  }
 
-    await SafeTask.GuardAsync(OnNavigateAsync, _AlertService);
+  protected async Task OnProjectSelectedAsync(ProjectItem projectItem)
+  {
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    await _CurrentProjectProvider.OpenAsync(projectItem.Info, token);
+    await _NavigationService.GoToAsync(UIRoutes.GetRoute<ProjectPage>());
+
+    SelectedProject = null;
   }
 
   protected override void OnNavigatedTo(NavigatedToEventArgs args)
