@@ -9,6 +9,7 @@ using GT4.UI.Utils.Formatters;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
+using GT4.UI.Utils.Extensions;
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.Windows.Input;

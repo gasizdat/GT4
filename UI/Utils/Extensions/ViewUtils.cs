@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-namespace GT4.UI.Utils;
+namespace GT4.UI.Utils.Extensions;
 
 public static class ViewUtils
 {

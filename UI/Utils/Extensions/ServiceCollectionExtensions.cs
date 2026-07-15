@@ -6,7 +6,7 @@ using GT4.UI.Utils.Formatters;
 using GT4.UI.Utils.Settings;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace GT4.UI.Utils;
+namespace GT4.UI.Utils.Extensions;
 
 public static class ServiceCollectionExtensions
 {
