@@ -2,6 +2,7 @@ using GT4.Core.Gedcom;
 using GT4.Core.Project.Dto;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
+using Microsoft.Extensions.Http;
 
 namespace GT4.UI.Converters;
 
@@ -17,6 +18,10 @@ namespace GT4.UI.Converters;
 /// </summary>
 public sealed class PhotoTagDataConverter : ImageDataConverter, IDataConverter
 {
+  public PhotoTagDataConverter(IHttpClientFactory httpClientFactory) : base(httpClientFactory)
+  {
+  }
+
   public override Task<object?> ToObjectAsync(Data? data, CancellationToken token)
   {
     if (data is null)

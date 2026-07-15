@@ -1,5 +1,6 @@
 ﻿using GT4.Core.Project.Dto;
 using GT4.UI.Utils.Converters;
+using Microsoft.Extensions.Http;
 using Microsoft.Maui.Graphics.Platform;
 
 namespace GT4.UI.Utils;
@@ -82,7 +83,7 @@ public static class ImageUtils
     return fallback;
   }
 
-  public static async Task<byte[]?> ToBytesAsync(ImageSource? source, CancellationToken token)
+  public static async Task<byte[]?> ToBytesAsync(ImageSource? source, IHttpClientFactory httpClientFactory, CancellationToken token)
   {
     if (source == null)
     {
@@ -91,8 +92,7 @@ public static class ImageUtils
 
     var httpStreamReaderAsync = async (Uri uri, CancellationToken token) =>
     {
-      // TODO switch to HTTP Client provider
-      using var http = new HttpClient();
+      using var http = httpClientFactory.CreateClient();
       return await http.GetStreamAsync(uri, token).ConfigureAwait(false);
     };
 
