@@ -699,6 +699,21 @@ DD - номер дня (01-31)</value>
 MM - номер месяца (01-12)
 MMM - название месяца (январь - декабрь)</value>
   </data>
+  <data name="FieldDateSpanDisplayFormat" xml:space="preserve">
+    <value>Формат отображения полного возраста/периода</value>
+  </data>
+  <data name="FieldDateSpanDisplayFormatHint" xml:space="preserve">
+    <value>YEARS - количество лет (например, «25 лет»)
+MONTHS - количество месяцев (например, «3 месяца»)
+DAYS - количество дней (например, «15 дней»)</value>
+  </data>
+  <data name="FieldShortDateSpanDisplayFormat" xml:space="preserve">
+    <value>Формат отображения краткого возраста/периода</value>
+  </data>
+  <data name="FieldShortDateSpanDisplayFormatHint" xml:space="preserve">
+    <value>YEARS - количество лет (например, «25 лет»)
+MONTHS - количество месяцев (например, «3 месяца»)</value>
+  </data>
   <data name="FieldPersonNameFormatHint" xml:space="preserve">
     <value>FF - имя,                                  FF. - инициал имени
 PP - отчество,                        PP. - инициал отчества

@@ -486,7 +486,46 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("FieldDateDisplayFormatHint", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Full age/span display format.
+        /// </summary>
+        public static string FieldDateSpanDisplayFormat {
+            get {
+                return ResourceManager.GetString("FieldDateSpanDisplayFormat", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to YEARS - years count (e.g. &quot;25 years&quot;)
+        ///MONTHS - months count (e.g. &quot;3 months&quot;)
+        ///DAYS - days count (e.g. &quot;15 days&quot;).
+        /// </summary>
+        public static string FieldDateSpanDisplayFormatHint {
+            get {
+                return ResourceManager.GetString("FieldDateSpanDisplayFormatHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Short age/span display format.
+        /// </summary>
+        public static string FieldShortDateSpanDisplayFormat {
+            get {
+                return ResourceManager.GetString("FieldShortDateSpanDisplayFormat", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to YEARS - years count (e.g. &quot;25 years&quot;)
+        ///MONTHS - months count (e.g. &quot;3 months&quot;).
+        /// </summary>
+        public static string FieldShortDateSpanDisplayFormatHint {
+            get {
+                return ResourceManager.GetString("FieldShortDateSpanDisplayFormatHint", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Date entered.
         /// </summary>
