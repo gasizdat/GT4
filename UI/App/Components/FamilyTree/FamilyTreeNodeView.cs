@@ -54,9 +54,6 @@ public sealed class FamilyTreeNodeView : ContentView
       Content = image,
     };
 
-    // TODO: FontScale.DefaultFactor is applied only at the node creation stage.
-    // This will not affect the font size when it changes while the graph is displayed on the page.
-    // Shall be fixed in the next release.
     var name = new Label
     {
       Text = displayName,
@@ -74,6 +71,15 @@ public sealed class FamilyTreeNodeView : ContentView
       HorizontalOptions = LayoutOptions.Center,
       Children = { ring, name },
     };
+
+    if (fontScale is not null)
+    {
+      void OnFontScaleChanged(object? sender, EventArgs e) =>
+        name.FontSize = FontSizeBase * zoomScale * fontScale.CurrentFactor;
+
+      fontScale.Changed += OnFontScaleChanged;
+      Unloaded += (_, _) => fontScale.Changed -= OnFontScaleChanged;
+    }
   }
 
   private static Color GetColor(string resourceKey, Color fallback) =>

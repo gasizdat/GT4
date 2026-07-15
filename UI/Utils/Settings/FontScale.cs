@@ -39,6 +39,10 @@ public sealed class FontScale
   // views receive this instance through their construction and read the factor directly.
   public double CurrentFactor { get; private set; } = DefaultFactor;
 
+  // Lets the same code-built views react live to a factor change instead of only reading
+  // CurrentFactor once at construction.
+  public event EventHandler? Changed;
+
   // Cache the device-resolved base sizes, then apply the persisted factor. Must be called after the
   // application resources (Styles.xaml) have been merged — i.e. after App.InitializeComponent.
   public void Initialize()
@@ -68,15 +72,15 @@ public sealed class FontScale
     CurrentFactor = factor ?? DefaultFactor;
 
     var resources = Application.Current?.Resources;
-    if (resources is null)
+    if (resources is not null)
     {
-      return;
+      foreach (var (key, baseSize) in _BaseSizes)
+      {
+        resources[key] = baseSize * CurrentFactor;
+      }
     }
 
-    foreach (var (key, baseSize) in _BaseSizes)
-    {
-      resources[key] = baseSize * CurrentFactor;
-    }
+    Changed?.Invoke(this, EventArgs.Empty);
   }
 
   public void Apply(string? factorInPercent)

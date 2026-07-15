@@ -139,6 +139,18 @@ public class FamilyTreeNodeViewTests
   }
 
   [Fact]
+  public async Task The_label_font_size_updates_live_when_FontScale_changes()
+  {
+    var fontScale = new FontScale();
+    var node = await CreateNodeAsync(zoomScale: 1.0, fontScale: fontScale);
+
+    await MainThread.InvokeOnMainThreadAsync(() => fontScale.Apply(1.5));
+
+    var (_, name) = GetParts(node);
+    Assert.Equal(12 * 1.0 * 1.5, name.FontSize);
+  }
+
+  [Fact]
   public async Task Stack_spacing_scales_with_zoomScale()
   {
     var node = await CreateNodeAsync(zoomScale: 3.0);
