@@ -128,6 +128,33 @@ public sealed class ProjectDocumentConcurrencyTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task RootTransactions_BackToBackFromManyThreads_NeverOverlapAsync()
+  {
+    // Coverage for #58: NestedTransaction.Complete() used to release the gate before disposing the
+    // just-committed SqliteTransaction, letting the next queued flow's BeginTransaction touch the
+    // connection while the previous one was still tearing down (observed in CI as a flaky "cannot start
+    // a transaction within a transaction"). The race window is a handful of CPU instructions wide, so
+    // even many back-to-back rounds here are not guaranteed to reproduce it on every machine/CI run --
+    // this raises the odds without pretending to be a deterministic regression guard.
+    var token = TestContext.Current.CancellationToken;
+    const int threads = 16;
+    const int roundsPerThread = 50;
+
+    RunConcurrently(threads, async i =>
+    {
+      for (var round = 0; round < roundsPerThread; round++)
+      {
+        using var transaction = await _doc.BeginTransactionAsync(token);
+        await _doc.Names.AddNameAsync($"backtoback_{i}_{round}", NameType.FamilyName, null, token);
+        await transaction.CommitAsync(token);
+      }
+    });
+
+    var values = await AllNameValuesAsync(token);
+    values.Where(v => v.StartsWith("backtoback_")).Should().HaveCount(threads * roundsPerThread);
+  }
+
+  [Fact]
   public async Task ConcurrentReadsAndWrites_StayConsistentAsync()
   {
     var token = TestContext.Current.CancellationToken;

@@ -185,11 +185,21 @@ internal sealed class NestedTransaction : IProjectTransaction
     }
 
     _Completed = true;
-    _Document.LeaveTransaction(this);
 
-    if (IsRoot)
+    // Dispose before releasing the gate: the next queued flow's BeginTransaction becomes runnable the
+    // instant the gate is released, so disposing after would let it touch the connection while this
+    // transaction is still tearing down (observed as spurious SQLite/ADO.NET "already in a transaction"
+    // errors under load). The try/finally keeps that order without leaking the gate if Dispose throws.
+    try
     {
-      _DbTransaction!.Dispose();
+      if (IsRoot)
+      {
+        _DbTransaction!.Dispose();
+      }
+    }
+    finally
+    {
+      _Document.LeaveTransaction(this);
     }
   }
 
