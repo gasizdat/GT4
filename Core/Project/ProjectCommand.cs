@@ -42,6 +42,8 @@ public sealed class ProjectCommand : IDisposable, IAsyncDisposable
   /// <summary>
   /// Executes a reader. The returned <see cref="ProjectDataReader"/> holds the connection until
   /// disposed, so always consume it with <c>await using</c> before starting another database operation.
+  /// Outside a transaction, a second gated call on the same async-flow before this one is disposed
+  /// self-deadlocks: only the flow holding the gate can release it, and it would be the one blocked.
   /// </summary>
   public async Task<ProjectDataReader> ExecuteReaderAsync(CancellationToken token)
   {
