@@ -16,8 +16,12 @@ namespace GT4.UI.Converters;
 /// gets downgraded from tagged to plain by PersonDataItem.ToDataAsync (DataCategoryExtensions.AsPlainPhoto).
 /// Lives in UI.App (not UI.Utils) because unwrapping the residue envelope needs Core.Gedcom.
 /// </summary>
-public sealed class PhotoTagDataConverter(IHttpClientFactory httpClientFactory) : ImageDataConverter(httpClientFactory), IDataConverter
+public sealed class PhotoTagDataConverter : ImageDataConverter, IDataConverter
 {
+  public PhotoTagDataConverter(IHttpClientFactory httpClientFactory) : base(httpClientFactory)
+  {
+  }
+
   public override Task<object?> ToObjectAsync(Data? data, CancellationToken token)
   {
     if (data is null)
