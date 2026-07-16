@@ -120,6 +120,10 @@
   <data name="AlertTextDeleteConfirmationText_1" xml:space="preserve">
     <value>Вы действительно хотите удалить {0}?</value>
   </data>
+  <data name="AlertTextRemoveFamilyConfirmationText_2" xml:space="preserve">
+    <value>Вы действительно хотите удалить {0}? Указанные ниже персоны потеряют эту фамилию: 
+{1}.</value>
+  </data>
   <data name="AlertTitleInfo" xml:space="preserve">
     <value>ℹ️ Информация</value>
   </data>
@@ -1140,10 +1144,10 @@ FN - род</value>
   <data name="StatValuePersonChildren_2" xml:space="preserve">
     <value>{0} ({1} детей)</value>
   </data>
-  <data name="StatValueChildrenAverage_1" xml:space="preserve">
-    <value>{0} детей</value>
-  </data>
   <data name="StatValueCoverage_2" xml:space="preserve">
     <value>{0} из {1}</value>
+  </data>
+  <data name="StatValueChildrenAverage_1" xml:space="preserve">
+    <value>{0} детей</value>
   </data>
 </root>

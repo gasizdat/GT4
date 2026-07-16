@@ -29,7 +29,8 @@ internal sealed class TestableFamilyPage : FamilyPage
     IComparer<PersonInfo> personInfoComparer,
     IAlertService alertService,
     INavigationService navigationService,
-    IBiologicalSexFormatter biologicalSexFormatter)
+    IBiologicalSexFormatter biologicalSexFormatter,
+    INameFormatter nameFormatter)
     : base(
       serviceProvider,
       cancellationTokenProvider,
@@ -38,7 +39,8 @@ internal sealed class TestableFamilyPage : FamilyPage
       personInfoComparer,
       alertService,
       navigationService,
-      biologicalSexFormatter)
+      biologicalSexFormatter,
+      nameFormatter)
   {
     // Persons returns the same ObservableCollection instance for the page's whole lifetime (even
     // across a FamilyName change), so a single subscription made up front -- before FamilyName is
