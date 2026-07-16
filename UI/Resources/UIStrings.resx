@@ -699,6 +699,21 @@ DD - day number (01-31)</value>
 MM - month number (01-12)
 MMM - month name (January - December)</value>
   </data>
+  <data name="FieldDateSpanDisplayFormat" xml:space="preserve">
+    <value>Full age/span display format</value>
+  </data>
+  <data name="FieldDateSpanDisplayFormatHint" xml:space="preserve">
+    <value>YEARS - years count (e.g. "25 years")
+MONTHS - months count (e.g. "3 months")
+DAYS - days count (e.g. "15 days")</value>
+  </data>
+  <data name="FieldShortDateSpanDisplayFormat" xml:space="preserve">
+    <value>Short age/span display format</value>
+  </data>
+  <data name="FieldShortDateSpanDisplayFormatHint" xml:space="preserve">
+    <value>YEARS - years count (e.g. "25 years")
+MONTHS - months count (e.g. "3 months")</value>
+  </data>
   <data name="FieldPersonNameFormatHint" xml:space="preserve">
     <value>FF - first name,              FF. - first name initial
 PP - patronymic,          PP. - patronymic initial

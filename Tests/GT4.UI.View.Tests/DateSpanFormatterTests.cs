@@ -2,13 +2,25 @@ using FluentAssertions;
 using GT4.Core.Utils;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
+using Moq;
 using Xunit;
 
 namespace GT4.UI.View.Tests;
 
 public class DateSpanFormatterTests
 {
-  private readonly DateSpanFormatter _formatter = new();
+  private static DateSpanFormatter Create(string fullFormat = "YEARS MONTHS DAYS", string shortFormat = "YEARS MONTHS")
+  {
+    var full = new Mock<ISettingEditor>();
+    full.SetupGet(s => s.Value).Returns(fullFormat);
+
+    var shortFmt = new Mock<ISettingEditor>();
+    shortFmt.SetupGet(s => s.Value).Returns(shortFormat);
+
+    return new DateSpanFormatter(full.Object, shortFmt.Object);
+  }
+
+  private readonly DateSpanFormatter _formatter = Create();
 
   private static void SetEn() => Language.Current = Language.EN;
   private static void SetRu() => Language.Current = Language.RU;
@@ -194,5 +206,29 @@ public class DateSpanFormatterTests
     SetEn();
     var span = WellKnown(0, 0, 0);
     _formatter.ToString(span).Should().Be("unknown");
+  }
+
+  [Fact]
+  public void WellKnown_CustomFullTemplate_ReordersAndAddsLiterals()
+  {
+    SetEn();
+    var span = WellKnown(25, 3, 15);
+    Create(fullFormat: "DAYS, MONTHS, YEARS").ToString(span).Should().Be("15 days, 3 months, 25 years");
+  }
+
+  [Fact]
+  public void WellKnown_FullTemplateOmittingAToken_DropsThatComponent()
+  {
+    SetEn();
+    var span = WellKnown(25, 3, 15);
+    Create(fullFormat: "YEARS, DAYS").ToString(span).Should().Be("25 years, 15 days");
+  }
+
+  [Fact]
+  public void DayUnknown_CustomShortTemplate_ReordersComponents()
+  {
+    SetEn();
+    var span = DayUnknown(5, 6);
+    Create(shortFormat: "MONTHS of YEARS").ToString(span).Should().Be("6 months of 5 years");
   }
 }

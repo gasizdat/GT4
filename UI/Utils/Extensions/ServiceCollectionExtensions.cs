@@ -31,6 +31,8 @@ public static class ServiceCollectionExtensions
       .AddKeyedSingleton<ISettingEditor, FontScaleSetting>(SettingKeys.FontScale)
       .AddKeyedSingleton<ISettingEditor, DateFormatSetting>(DateFormatKind.Full)
       .AddKeyedSingleton<ISettingEditor, DateFormatSetting>(DateFormatKind.Short)
+      .AddKeyedSingleton<ISettingEditor, DateSpanFormatSetting>(DateSpanFormatKind.Full)
+      .AddKeyedSingleton<ISettingEditor, DateSpanFormatSetting>(DateSpanFormatKind.Short)
       .AddKeyedSingleton<ISettingEditor, PersonNameSetting>(NameFormat.CommonPersonName)
       .AddKeyedSingleton<ISettingEditor, PersonNameSetting>(NameFormat.FullPersonName)
       .AddKeyedSingleton<ISettingEditor, PersonNameSetting>(NameFormat.PersonInitials)

@@ -1,22 +1,35 @@
 ﻿using GT4.Core.Utils;
 using GT4.UI.Resources;
+using GT4.UI.Utils.Settings;
 
 namespace GT4.UI.Utils.Formatters;
 
 internal class DateSpanFormatter : IDateSpanFormatter
 {
+  private readonly ISettingEditor _FullDateSpanFormatSetting;
+  private readonly ISettingEditor _ShortDateSpanFormatSetting;
+
+  public DateSpanFormatter(
+    [FromKeyedServices(DateSpanFormatKind.Full)] ISettingEditor fullDateSpanFormatSetting,
+    [FromKeyedServices(DateSpanFormatKind.Short)] ISettingEditor shortDateSpanFormatSetting)
+  {
+    _FullDateSpanFormatSetting = fullDateSpanFormatSetting;
+    _ShortDateSpanFormatSetting = shortDateSpanFormatSetting;
+  }
+
   public string ToString(DateSpan? dateSpan)
   {
-    // TODO use configuration
-
     string ret = string.Empty;
 
     if (dateSpan.HasValue)
     {
+      var years = () => YearsFormat(dateSpan.Value.Years);
+      var months = () => MonthsFormat(dateSpan.Value.Months);
+      var days = () => DaysFormat(dateSpan.Value.Days);
       ret = dateSpan.Value.Status switch
       {
-        DateStatus.WellKnown => $"{YearsFormat(dateSpan.Value.Years)} {MonthsFormat(dateSpan.Value.Months)} {DaysFormat(dateSpan.Value.Days)}",
-        DateStatus.DayUnknown => $"{YearsFormat(dateSpan.Value.Years)} {MonthsFormat(dateSpan.Value.Months)}",
+        DateStatus.WellKnown => Interpolate(_FullDateSpanFormatSetting.Value, years, months, days),
+        DateStatus.DayUnknown => Interpolate(_ShortDateSpanFormatSetting.Value, years, months, days),
         DateStatus.MonthUnknown => YearsFormat(dateSpan.Value.Years),
         DateStatus.YearApproximate when dateSpan.Value.Years == 0 => string.Empty,
         DateStatus.YearApproximate => string.Format(UIStrings.DateStatusYearApproximate_1, YearsFormat(dateSpan.Value.Years)),
@@ -25,6 +38,16 @@ internal class DateSpanFormatter : IDateSpanFormatter
     }
 
     return string.IsNullOrWhiteSpace(ret) ? UIStrings.DateStatusUnknown : ret;
+  }
+
+  private static string Interpolate(string format, Func<string> years, Func<string> months, Func<string> days)
+  {
+    return TemplateInterpolator.Format(format, new Dictionary<string, Func<string>>()
+    {
+      { "YEARS", years },
+      { "MONTHS", months },
+      { "DAYS", days },
+    });
   }
 
   protected static string TwoLetterISOLanguageName =>
