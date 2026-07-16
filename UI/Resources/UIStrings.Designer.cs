@@ -88,12 +88,11 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Are you really want to delete {0}? The following persons will lose this family name: 
-        ///{1}..
+        ///   Looks up a localized string similar to Are you really want to delete {0}? All persons in this family will lose this family name..
         /// </summary>
-        public static string AlertTextRemoveFamilyConfirmationText_2 {
+        public static string AlertTextRemoveFamilyConfirmationText_1 {
             get {
-                return ResourceManager.GetString("AlertTextRemoveFamilyConfirmationText_2", resourceCulture);
+                return ResourceManager.GetString("AlertTextRemoveFamilyConfirmationText_1", resourceCulture);
             }
         }
         

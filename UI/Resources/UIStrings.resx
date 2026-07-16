@@ -120,9 +120,8 @@
   <data name="AlertTextDeleteConfirmationText_1" xml:space="preserve">
     <value>Are you really want to delete {0}?</value>
   </data>
-  <data name="AlertTextRemoveFamilyConfirmationText_2" xml:space="preserve">
-    <value>Are you really want to delete {0}? The following persons will lose this family name: 
-{1}.</value>
+  <data name="AlertTextRemoveFamilyConfirmationText_1" xml:space="preserve">
+    <value>Are you really want to delete {0}? All persons in this family will lose this family name.</value>
   </data>
   <data name="AlertTitleInfo" xml:space="preserve">
     <value>ℹ️ Info</value>

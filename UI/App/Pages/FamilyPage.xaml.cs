@@ -21,7 +21,6 @@ public partial class FamilyPage : ContentPage
   private readonly IComparer<PersonInfo> _PersonInfoComparer;
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
-  private readonly INameFormatter _NameFormatter;
   private readonly FilteredObservableCollection<PersonInfo> _Persons = new();
   private bool _PersonsLoaded;
   private Name? _FamilyName = null;
@@ -36,8 +35,7 @@ public partial class FamilyPage : ContentPage
     IComparer<PersonInfo> personInfoComparer,
     IAlertService alertService,
     INavigationService navigationService,
-    IBiologicalSexFormatter biologicalSexFormatter,
-    INameFormatter nameFormatter
+    IBiologicalSexFormatter biologicalSexFormatter
     )
   {
     _ServiceProvider = serviceProvider;
@@ -46,7 +44,6 @@ public partial class FamilyPage : ContentPage
     _PersonInfoComparer = personInfoComparerByShortNames ?? personInfoComparer;
     _AlertService = alertService;
     _NavigationService = navigationService;
-    _NameFormatter = nameFormatter;
 
     _Persons.Filter = (_, person) => FilterView.Matches(person);
 
@@ -150,25 +147,13 @@ public partial class FamilyPage : ContentPage
       return;
     }
 
-    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-
-    var affectedPersons = await _CurrentProjectProvider
-      .Project
-      .PersonManager
-      .GetPersonInfosByNameAsync(_FamilyName, selectMainPhoto: false, token);
-
-    var confirmationText = affectedPersons.Length == 0
-      ? string.Format(UIStrings.AlertTextDeleteConfirmationText_1, _FamilyName.Value)
-      : string.Format(
-          UIStrings.AlertTextRemoveFamilyConfirmationText_2,
-          _FamilyName.Value,
-          string.Join("\n", affectedPersons.Select(person => _NameFormatter.ToString(person, NameFormat.ShortPersonName))));
-
+    var confirmationText = string.Format(UIStrings.AlertTextRemoveFamilyConfirmationText_1, _FamilyName.Value);
     if (!await _AlertService.ShowConfirmationAsync(confirmationText))
     {
       return;
     }
 
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
     await _CurrentProjectProvider
       .Project
       .FamilyManager

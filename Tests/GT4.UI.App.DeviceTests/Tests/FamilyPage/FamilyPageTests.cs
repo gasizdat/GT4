@@ -194,27 +194,7 @@ public class FamilyPageTests
   }
 
   [Fact]
-  public async Task RemoveFamily_confirmation_lists_the_affected_persons()
-  {
-    var services = new TestServices();
-    var familyName = N(5, "Ivanov", NameType.FamilyName);
-    services.PersonManager
-      .Setup(p => p.GetPersonInfosByNameAsync(familyName, false, It.IsAny<CancellationToken>()))
-      .ReturnsAsync([P(1, "Anna"), P(2, "Boris")]);
-    services.AlertService.Setup(a => a.ShowConfirmationAsync(It.IsAny<string>())).ReturnsAsync(true);
-    var page = await CreatePageAsync(services);
-    await MainThread.InvokeOnMainThreadAsync(() => page.FamilyName = familyName);
-
-    await page.InvokePageCommandAsync("RemoveFamily");
-
-    services.AlertService.Verify(
-      a => a.ShowConfirmationAsync(It.Is<string>(text => text.Contains("Anna") && text.Contains("Boris"))),
-      Times.Once());
-    services.FamilyManager.Verify(f => f.RemoveFamilyAsync(familyName, It.IsAny<CancellationToken>()), Times.Once());
-  }
-
-  [Fact]
-  public async Task RemoveFamily_confirmation_falls_back_to_the_generic_text_when_no_persons_are_affected()
+  public async Task RemoveFamily_shows_a_generic_confirmation()
   {
     var services = new TestServices();
     var familyName = N(5, "Ivanov", NameType.FamilyName);
@@ -225,8 +205,11 @@ public class FamilyPageTests
     await page.InvokePageCommandAsync("RemoveFamily");
 
     services.AlertService.Verify(
-      a => a.ShowConfirmationAsync(string.Format(UIStrings.AlertTextDeleteConfirmationText_1, "Ivanov")),
+      a => a.ShowConfirmationAsync(string.Format(UIStrings.AlertTextRemoveFamilyConfirmationText_1, "Ivanov")),
       Times.Once());
+    services.PersonManager.Verify(
+      p => p.GetPersonInfosByNameAsync(It.IsAny<Name>(), false, It.IsAny<CancellationToken>()),
+      Times.Never());
   }
 
   [Fact]
