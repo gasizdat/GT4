@@ -79,6 +79,11 @@
         Text="{Binding EditPersonToolbarItemName, Source={x:Reference Root}}" />
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="MoveToFamily"
+        Order="Secondary"
+        Text="{x:Static resources:UIStrings.MenuItemNameMoveToFamily}" />
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="Refresh"
         Order="Secondary"
         Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />

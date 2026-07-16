@@ -120,6 +120,12 @@
   <data name="AlertTextDeleteConfirmationText_1" xml:space="preserve">
     <value>Вы действительно хотите удалить {0}?</value>
   </data>
+  <data name="AlertTextMoveToFamilyConfirmationText_2" xml:space="preserve">
+    <value>Переместить {0} в семью {1}?</value>
+  </data>
+  <data name="AlertTextNoOtherFamiliesToMoveTo" xml:space="preserve">
+    <value>Нет других семей, в которые можно переместить.</value>
+  </data>
   <data name="AlertTextRemoveFamilyConfirmationText_1" xml:space="preserve">
     <value>Вы действительно хотите удалить {0}? Все персоны в этой семье потеряют эту фамилию.</value>
   </data>
@@ -304,6 +310,9 @@
   <data name="FieldFamilyName" xml:space="preserve">
     <value>Родовое имя</value>
   </data>
+  <data name="TitleSelectFamilyDialog" xml:space="preserve">
+    <value>Выбрать семью</value>
+  </data>
   <data name="TitleSelectNameDialog" xml:space="preserve">
     <value>Выбрать имя</value>
   </data>
@@ -372,6 +381,9 @@
   </data>
   <data name="MenuItemNameEdit_1" xml:space="preserve">
     <value>🖋️ Править '{0}'</value>
+  </data>
+  <data name="MenuItemNameMoveToFamily" xml:space="preserve">
+    <value>👪↔️ Переместить в другую семью</value>
   </data>
   <data name="Month_01" xml:space="preserve">
     <value>Январь</value>

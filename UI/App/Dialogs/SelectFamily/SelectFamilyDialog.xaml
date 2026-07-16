@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="GT4.UI.Dialogs.SelectFamilyDialog"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:components="clr-namespace:GT4.UI.Components"
+    xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
+    x:Name="Root">
+
+  <components:PageLayout>
+    <components:PageLayout.Header>
+      <Label
+          Style="{StaticResource PageTitle}"
+          Text="{x:Static resources:UIStrings.TitleSelectFamilyDialog}" />
+    </components:PageLayout.Header>
+
+    <components:PageLayout.Body>
+      <Grid
+          Padding="20"
+          HorizontalOptions="Fill"
+          RowDefinitions="*"
+          VerticalOptions="Start">
+
+        <CollectionView
+            x:Name="FamiliesCollectionView"
+            Grid.Row="0"
+            HorizontalOptions="Fill"
+            ItemsSource="{Binding Families, Source={x:Reference Root}}"
+            SelectedItem="{Binding CurrentFamily, Source={x:Reference Root}}"
+            SelectionMode="Single">
+          <CollectionView.ItemTemplate>
+            <DataTemplate>
+              <Label
+                  Padding="{StaticResource CollectionItemsVerticalPadding}"
+                  HorizontalOptions="Fill"
+                  HorizontalTextAlignment="Start"
+                  Style="{StaticResource FieldValue}"
+                  Text="{Binding Value}" />
+            </DataTemplate>
+          </CollectionView.ItemTemplate>
+        </CollectionView>
+
+      </Grid>
+    </components:PageLayout.Body>
+
+    <components:PageLayout.Footer>
+      <Button
+          Clicked="OnSelectFamilyBtn"
+          FontSize="{DynamicResource ActionButtonTextSize}"
+          HorizontalOptions="Fill"
+          Text="{Binding DialogButtonName, Source={x:Reference Root}}" />
+    </components:PageLayout.Footer>
+  </components:PageLayout>
+</ContentPage>

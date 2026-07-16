@@ -7,6 +7,7 @@ public interface IFamilyManager
   Task<Name> AddFamilyAsync(string familyName, string maleLastName, string femaleLastName, CancellationToken token);
   Task<Name[]> GetFamiliesAsync(CancellationToken token);
   Task<Name[]> GetRequiredNames(Name familyName, PersonInfo personInfo, CancellationToken token);
+  Task<TPerson> MoveToFamilyAsync<TPerson>(TPerson person, Name newFamilyName, CancellationToken token) where TPerson : PersonInfo;
   Task RemoveFamilyAsync(Name familyName, CancellationToken token);
   TPerson SetUpPersonFamily<TPerson>(TPerson person, Name familyName) where TPerson : PersonInfo;
   Task UpdateFamilyAsync(Name familyName, Name? maleLastName, Name? femaleLastName, CancellationToken token);

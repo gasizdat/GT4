@@ -54,6 +54,23 @@ internal class FamilyManager : ProjectComponentBase, IFamilyManager
     await Document.Names.RemoveNameWithSubnamesAsync(familyName, token);
   }
 
+  public async Task<TPerson> MoveToFamilyAsync<TPerson>(TPerson person, Name newFamilyName, CancellationToken token) where TPerson : PersonInfo
+  {
+    if (newFamilyName.Type != NameType.FamilyName)
+    {
+      throw new ArgumentException($"{nameof(newFamilyName)} does not contain a family name");
+    }
+
+    var namesWithoutOldFamily = person.Names
+      .Where(name => name.Type != NameType.FamilyName && (name.Type & NameType.LastName) == 0)
+      .ToArray();
+
+    var stripped = person with { Names = namesWithoutOldFamily };
+    var requiredNames = await GetRequiredNames(newFamilyName, stripped, token);
+
+    return stripped with { Names = [.. namesWithoutOldFamily, .. requiredNames] };
+  }
+
   public async Task<Name[]> GetRequiredNames(Name familyName, PersonInfo personInfo, CancellationToken token)
   {
     var lastNameType = personInfo.BiologicalSex switch

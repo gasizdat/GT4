@@ -88,6 +88,24 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Move {0} to the {1} family?.
+        /// </summary>
+        public static string AlertTextMoveToFamilyConfirmationText_2 {
+            get {
+                return ResourceManager.GetString("AlertTextMoveToFamilyConfirmationText_2", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to There are no other families to move to..
+        /// </summary>
+        public static string AlertTextNoOtherFamiliesToMoveTo {
+            get {
+                return ResourceManager.GetString("AlertTextNoOtherFamiliesToMoveTo", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Unable to add name for the &apos;{0}&apos; biological sex.
         /// </summary>
         public static string AlertTextUnableToAddNameForTheSexSelected_1 {
@@ -1621,6 +1639,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 👪↔️ Move to family.
+        /// </summary>
+        public static string MenuItemNameMoveToFamily {
+            get {
+                return ResourceManager.GetString("MenuItemNameMoveToFamily", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Open {0}.
         /// </summary>
         public static string MenuItemNameOpenPerson_1 {
@@ -2646,6 +2673,15 @@ namespace GT4.UI.Resources {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to Select a family.
+        /// </summary>
+        public static string TitleSelectFamilyDialog {
+            get {
+                return ResourceManager.GetString("TitleSelectFamilyDialog", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Select a name.
         /// </summary>

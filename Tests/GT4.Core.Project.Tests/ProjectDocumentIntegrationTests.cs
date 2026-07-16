@@ -241,6 +241,59 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task MoveToFamilyAsync_SwapsFamilyAndDeclinedLastName()
+  {
+    var familyA = await _doc.FamilyManager.AddFamilyAsync("Ivanov", "Ivanov", "Ivanova", Token);
+    var familyB = await _doc.FamilyManager.AddFamilyAsync("Petrov", "Petrov", "Petrova", Token);
+    var first = await _doc.Names.AddFirstMaleNameAsync("John", null, null, Token);
+
+    var toAdd = PersonFullInfo.Empty with
+    {
+      BirthDate = Birth,
+      BiologicalSex = BiologicalSex.Male,
+      Names = [first, familyA],
+    };
+    var added = await _doc.PersonManager.AddPersonAsync(toAdd, Token);
+    var withFamilyA = await _doc.PersonManager.GetPersonFullInfoAsync(
+      new Person(added.Id, Birth, null, BiologicalSex.Male), Token);
+    withFamilyA.Names.Should().Contain(n => n.Value == "Ivanov" && n.Type == NameType.FamilyName);
+    withFamilyA.Names.Should().Contain(n => n.Value == "Ivanov" && n.Type == (NameType.LastName | NameType.MaleDeclension));
+
+    var moved = await _doc.FamilyManager.MoveToFamilyAsync(withFamilyA, familyB, Token);
+    await _doc.PersonManager.UpdatePersonAsync(moved, Token);
+
+    var withFamilyB = await _doc.PersonManager.GetPersonFullInfoAsync(
+      new Person(added.Id, Birth, null, BiologicalSex.Male), Token);
+    withFamilyB.Names.Should().Contain(n => n.Value == "Petrov" && n.Type == NameType.FamilyName);
+    withFamilyB.Names.Should().Contain(n => n.Value == "Petrov" && n.Type == (NameType.LastName | NameType.MaleDeclension));
+    withFamilyB.Names.Should().NotContain(n => n.Value == "Ivanov");
+    withFamilyB.Names.Should().Contain(n => n.Value == "John");
+  }
+
+  [Fact]
+  public async Task MoveToFamilyAsync_PersonWithNoFamily_AttachesNewFamily()
+  {
+    var family = await _doc.FamilyManager.AddFamilyAsync("Sidorov", "Sidorov", "Sidorova", Token);
+    var person = new PersonInfo(new Person(1, Birth, null, BiologicalSex.Female), [], null);
+
+    var moved = await _doc.FamilyManager.MoveToFamilyAsync(person, family, Token);
+
+    moved.Names.Should().Contain(n => n.Value == "Sidorov" && n.Type == NameType.FamilyName);
+    moved.Names.Should().Contain(n => n.Value == "Sidorova" && n.Type == (NameType.LastName | NameType.FemaleDeclension));
+  }
+
+  [Fact]
+  public async Task MoveToFamilyAsync_NonFamilyName_Throws()
+  {
+    var notFamily = new Name(1, "First", NameType.FirstName, null);
+    var person = new PersonInfo(new Person(1, Birth, null, BiologicalSex.Male), [], null);
+
+    var act = () => _doc.FamilyManager.MoveToFamilyAsync(person, notFamily, Token);
+
+    await act.Should().ThrowAsync<ArgumentException>();
+  }
+
+  [Fact]
   public async Task Persons_AddGetUpdateRemove_RoundTrip()
   {
     var person = await AddBarePersonAsync(BiologicalSex.Female);
@@ -295,6 +348,39 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
     full.Names.Select(n => n.Value).Should().Contain("John");
     // GetRequiredNames added the male last name in addition to the explicit family name.
     full.Names.Count(n => n.Value == "Smith").Should().BeGreaterThanOrEqualTo(1);
+  }
+
+  [Fact]
+  public async Task PersonManager_UpdatePerson_SwappingFamilyName_AttachesRequiredLastName()
+  {
+    var familyA = await _doc.FamilyManager.AddFamilyAsync("Kuznetsov", "Kuznetsov", "Kuznetsova", Token);
+    var familyB = await _doc.FamilyManager.AddFamilyAsync("Volkov", "Volkov", "Volkova", Token);
+    var first = await _doc.Names.AddFirstMaleNameAsync("Ivan", null, null, Token);
+
+    var toAdd = PersonFullInfo.Empty with
+    {
+      BirthDate = Birth,
+      BiologicalSex = BiologicalSex.Male,
+      Names = [first, familyA],
+    };
+    var added = await _doc.PersonManager.AddPersonAsync(toAdd, Token);
+    var withFamilyA = await _doc.PersonManager.GetPersonFullInfoAsync(
+      new Person(added.Id, Birth, null, BiologicalSex.Male), Token);
+
+    // Simulates the generic Names editor: only the FamilyName is swapped, the matching declined
+    // LastName is not supplied by the caller (the same gap AddPersonAsync fills via
+    // GetRequiredNames, that UpdatePersonAsync must fill too).
+    var withSwappedFamily = withFamilyA with
+    {
+      Names = [.. withFamilyA.Names.Where(n => n.Value != "Kuznetsov"), familyB],
+    };
+    await _doc.PersonManager.UpdatePersonAsync(withSwappedFamily, Token);
+
+    var updated = await _doc.PersonManager.GetPersonFullInfoAsync(
+      new Person(added.Id, Birth, null, BiologicalSex.Male), Token);
+    updated.Names.Should().Contain(n => n.Value == "Volkov" && n.Type == NameType.FamilyName);
+    updated.Names.Should().Contain(n => n.Value == "Volkov" && n.Type == (NameType.LastName | NameType.MaleDeclension));
+    updated.Names.Should().NotContain(n => n.Value == "Kuznetsov");
   }
 
   [Fact]

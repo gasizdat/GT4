@@ -141,6 +141,13 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
   {
     using var transaction = await Document.BeginTransactionAsync(token);
 
+    var familyName = personFullInfo.Names.SingleOrDefault(name => name.Type == NameType.FamilyName);
+    if (familyName is not null)
+    {
+      var requiredFamilyNames = await Document.FamilyManager.GetRequiredNames(familyName, personFullInfo, token);
+      personFullInfo = personFullInfo with { Names = [.. personFullInfo.Names, .. requiredFamilyNames] };
+    }
+
     // Re-buckets every photo's main/additional category to match personFullInfo.MainPhoto,
     // preserving each photo's tagged-vs-plain status.
     var mainPhotoId = personFullInfo.MainPhoto?.Id;

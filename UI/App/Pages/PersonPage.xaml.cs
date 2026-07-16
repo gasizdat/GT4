@@ -423,6 +423,9 @@ public partial class PersonPage : ContentPage
       case string commandName when commandName == "EditPerson":
         await OnPersonEditAsync();
         break;
+      case string commandName when commandName == "MoveToFamily":
+        await OnPersonMoveToFamilyAsync();
+        break;
       case string commandName when commandName == "Refresh":
         ShowPersonInfo(_PersonFullInfo, false);
         break;
@@ -492,5 +495,42 @@ public partial class PersonPage : ContentPage
       .UpdatePersonAsync(info, token);
 
     PersonInfo = info;
+  }
+
+  private async Task OnPersonMoveToFamilyAsync()
+  {
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    var project = _CurrentProjectProvider.Project;
+    var families = await project.FamilyManager.GetFamiliesAsync(token);
+    var currentFamilyId = FamilyName?.Id;
+    var candidates = families.Where(family => family.Id != currentFamilyId).ToArray();
+
+    if (candidates.Length == 0)
+    {
+      await _AlertService.ShowWarningAsync(UIStrings.AlertTextNoOtherFamiliesToMoveTo);
+      return;
+    }
+
+    var dialog = new SelectFamilyDialog(candidates, _ServiceProvider.GetRequiredService<IComparer<Name>>());
+    await Navigation.PushModalAsync(dialog);
+    var newFamily = await dialog.Family;
+    await Navigation.PopModalAsync();
+
+    if (newFamily is null)
+    {
+      return;
+    }
+
+    var confirmed = await _AlertService.ShowConfirmationAsync(
+      string.Format(UIStrings.AlertTextMoveToFamilyConfirmationText_2, ShortName, newFamily.Value));
+    if (!confirmed)
+    {
+      return;
+    }
+
+    var updated = await project.FamilyManager.MoveToFamilyAsync(_PersonFullInfo, newFamily, token);
+    await project.PersonManager.UpdatePersonAsync(updated, token);
+
+    PersonInfo = updated;
   }
 }
