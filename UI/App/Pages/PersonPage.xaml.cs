@@ -505,13 +505,7 @@ public partial class PersonPage : ContentPage
     var currentFamilyId = FamilyName?.Id;
     var candidates = families.Where(family => family.Id != currentFamilyId).ToArray();
 
-    if (candidates.Length == 0)
-    {
-      await _AlertService.ShowWarningAsync(UIStrings.AlertTextNoOtherFamiliesToMoveTo);
-      return;
-    }
-
-    var dialog = new SelectFamilyDialog(candidates, _ServiceProvider.GetRequiredService<IComparer<Name>>());
+    var dialog = new SelectFamilyDialog(candidates, _ServiceProvider);
     await Navigation.PushModalAsync(dialog);
     var newFamily = await dialog.Family;
     await Navigation.PopModalAsync();

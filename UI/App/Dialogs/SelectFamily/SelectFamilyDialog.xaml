@@ -17,13 +17,31 @@
     <components:PageLayout.Body>
       <Grid
           Padding="20"
+          ColumnDefinitions="Auto, *"
           HorizontalOptions="Fill"
-          RowDefinitions="*"
+          RowDefinitions="Auto, *, Auto, Auto"
+          RowSpacing="10"
           VerticalOptions="Start">
+
+        <Label
+            Grid.Row="0"
+            Grid.Column="0"
+            Style="{StaticResource FieldName}"
+            Text="{x:Static resources:UIStrings.FieldSearchText}" />
+
+        <Entry
+            Grid.Row="0"
+            Grid.Column="1"
+            HorizontalOptions="Fill"
+            Placeholder="{x:Static resources:UIStrings.HintNameFilterWildcard}"
+            Style="{StaticResource FieldValue}"
+            Text="{Binding FilterText, Source={x:Reference Root}}" />
 
         <CollectionView
             x:Name="FamiliesCollectionView"
-            Grid.Row="0"
+            Grid.Row="1"
+            Grid.Column="0"
+            Grid.ColumnSpan="2"
             HorizontalOptions="Fill"
             ItemsSource="{Binding Families, Source={x:Reference Root}}"
             SelectedItem="{Binding CurrentFamily, Source={x:Reference Root}}"
@@ -40,12 +58,28 @@
           </CollectionView.ItemTemplate>
         </CollectionView>
 
+        <Button
+            Grid.Row="2"
+            Grid.Column="0"
+            Grid.ColumnSpan="2"
+            Command="{Binding DialogCommand, Source={x:Reference Root}}"
+            CommandParameter="AddFamily"
+            HorizontalOptions="Fill"
+            Style="{StaticResource AddAdorner}" />
+
+        <!--  TODO. Investigate why this placeholder is required so the addorner button doesn't get crop  -->
+        <Border
+            Grid.Row="3"
+            MinimumHeightRequest="{StaticResource AddornerButtonEmojiSize}"
+            StrokeThickness="0" />
+
       </Grid>
     </components:PageLayout.Body>
 
     <components:PageLayout.Footer>
       <Button
-          Clicked="OnSelectFamilyBtn"
+          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+          CommandParameter="SelectFamily"
           FontSize="{DynamicResource ActionButtonTextSize}"
           HorizontalOptions="Fill"
           Text="{Binding DialogButtonName, Source={x:Reference Root}}" />

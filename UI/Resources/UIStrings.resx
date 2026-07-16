@@ -123,9 +123,6 @@
   <data name="AlertTextMoveToFamilyConfirmationText_2" xml:space="preserve">
     <value>Move {0} to the {1} family?</value>
   </data>
-  <data name="AlertTextNoOtherFamiliesToMoveTo" xml:space="preserve">
-    <value>There are no other families to move to.</value>
-  </data>
   <data name="AlertTextRemoveFamilyConfirmationText_1" xml:space="preserve">
     <value>Are you really want to delete {0}? All persons in this family will lose this family name.</value>
   </data>

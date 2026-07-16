@@ -97,15 +97,6 @@ namespace GT4.UI.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to There are no other families to move to..
-        /// </summary>
-        public static string AlertTextNoOtherFamiliesToMoveTo {
-            get {
-                return ResourceManager.GetString("AlertTextNoOtherFamiliesToMoveTo", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to Unable to add name for the &apos;{0}&apos; biological sex.
         /// </summary>
         public static string AlertTextUnableToAddNameForTheSexSelected_1 {
