@@ -3,6 +3,7 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Dialogs;
 using GT4.UI.Pages;
+using GT4.UI.Resources;
 using Moq;
 using Xunit;
 
@@ -190,6 +191,25 @@ public class FamilyPageTests
 
     services.FamilyManager.Verify(f => f.RemoveFamilyAsync(familyName, It.IsAny<CancellationToken>()), Times.Once());
     services.NavigationService.Verify(n => n.GoToAsync("..", true), Times.Once());
+  }
+
+  [Fact]
+  public async Task RemoveFamily_shows_a_generic_confirmation()
+  {
+    var services = new TestServices();
+    var familyName = N(5, "Ivanov", NameType.FamilyName);
+    services.AlertService.Setup(a => a.ShowConfirmationAsync(It.IsAny<string>())).ReturnsAsync(true);
+    var page = await CreatePageAsync(services);
+    await MainThread.InvokeOnMainThreadAsync(() => page.FamilyName = familyName);
+
+    await page.InvokePageCommandAsync("RemoveFamily");
+
+    services.AlertService.Verify(
+      a => a.ShowConfirmationAsync(string.Format(UIStrings.AlertTextRemoveFamilyConfirmationText_1, "Ivanov")),
+      Times.Once());
+    services.PersonManager.Verify(
+      p => p.GetPersonInfosByNameAsync(It.IsAny<Name>(), false, It.IsAny<CancellationToken>()),
+      Times.Never());
   }
 
   [Fact]

@@ -52,8 +52,6 @@ internal class FamilyManager : ProjectComponentBase, IFamilyManager
       throw new ArgumentException("The provided name is not a family name.", nameof(familyName));
 
     await Document.Names.RemoveNameWithSubnamesAsync(familyName, token);
-
-    //TODO : Remove related persons or handle them appropriately
   }
 
   public async Task<Name[]> GetRequiredNames(Name familyName, PersonInfo personInfo, CancellationToken token)

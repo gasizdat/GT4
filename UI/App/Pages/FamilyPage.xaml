@@ -36,7 +36,9 @@
   <components:PageLayout>
 
     <components:PageLayout.Header>
-      <components:PersonFilterView x:Name="FilterView" HeaderText="{x:Static resources:UIStrings.HintFamilyPage}" />
+      <components:PersonFilterView
+          x:Name="FilterView"
+          HeaderText="{x:Static resources:UIStrings.HintFamilyPage}" />
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>

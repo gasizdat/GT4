@@ -3122,5 +3122,14 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("StatValueCoverage_2", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Are you really want to delete {0}? All persons in this family will lose this family name..
+        /// </summary>
+        public static string AlertTextRemoveFamilyConfirmationText_1 {
+            get {
+                return ResourceManager.GetString("AlertTextRemoveFamilyConfirmationText_1", resourceCulture);
+            }
+        }
     }
 }

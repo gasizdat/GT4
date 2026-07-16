@@ -142,11 +142,13 @@ public partial class FamilyPage : ContentPage
 
   private async Task OnDeleteFamily()
   {
-    var canDelete = _FamilyName is not null &&
-       await _AlertService.ShowConfirmationAsync(
-         string.Format(UIStrings.AlertTextDeleteConfirmationText_1, _FamilyName.Value));
+    if (_FamilyName is null)
+    {
+      return;
+    }
 
-    if (!canDelete)
+    var confirmationText = string.Format(UIStrings.AlertTextRemoveFamilyConfirmationText_1, _FamilyName.Value);
+    if (!await _AlertService.ShowConfirmationAsync(confirmationText))
     {
       return;
     }
@@ -155,7 +157,7 @@ public partial class FamilyPage : ContentPage
     await _CurrentProjectProvider
       .Project
       .FamilyManager
-      .RemoveFamilyAsync(_FamilyName!, token);
+      .RemoveFamilyAsync(_FamilyName, token);
 
     await _NavigationService.GoToAsync("..", true);
   }
