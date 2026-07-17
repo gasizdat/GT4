@@ -13,9 +13,6 @@ namespace GT4.UI.Dialogs;
 public partial class SelectNameDialog : ContentPage
 {
   private readonly TaskCompletionSource<Name?> _Info = new(null);
-  // Kept as a locator deliberately: this dialog's only caller doesn't otherwise hold these
-  // dependencies, so converting to typed params would just relocate the GetRequiredService calls
-  // into the caller rather than remove them.
   private readonly IServiceProvider _ServiceProvider;
   private readonly INameTypeFormatter _NameTypeFormatter;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
