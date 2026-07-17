@@ -250,4 +250,39 @@ public class CreateOrUpdatePersonDialogTests
 
     Assert.Contains(dialog.Names, item => item.Info.Id == newPatronymic.Id);
   }
+
+  [Fact]
+  public async Task EditNameCommand_filters_SelectNameDialog_to_the_edited_names_own_type()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson() with
+    {
+      Names = [N(1, "Ivan", NameType.FirstName | NameType.MaleDeclension), N(2, "Ivanovich", NameType.Patronymic | NameType.MaleDeclension)]
+    };
+    var updatedPatronymic = N(9, "Petrovich", NameType.Patronymic | NameType.MaleDeclension);
+    services.Names
+      .Setup(n => n.GetNamesByTypeAsync(NameType.Patronymic | NameType.MaleDeclension, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([updatedPatronymic]);
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    var dialog = await MainThread.InvokeOnMainThreadAsync(
+      () => new TestableCreateOrUpdatePersonDialog(person, services.Provider));
+    var patronymic = dialog.Names.Single(n => n.Info.Type == (NameType.Patronymic | NameType.MaleDeclension));
+
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var editTask = await MainThreadTask.StartAsync(() => dialog.InvokeEditPersonNameAsync(patronymic));
+    var selectDialog = await ModalDialogHarness.WaitForModalAsync<SelectNameDialog>(dialog);
+
+    // The dialog is filtered to the edited name's own type: no other type to switch to.
+    var onlyType = Assert.Single(selectDialog.NameTypes);
+    Assert.Equal(NameType.Patronymic | NameType.MaleDeclension, onlyType.Type);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      selectDialog.CurrentName = selectDialog.Names!.Single(n => n.Info.Id == updatedPatronymic.Id);
+      selectDialog.OnSelectName();
+    });
+    await editTask;
+
+    Assert.Contains(dialog.Names, item => item.Info.Id == updatedPatronymic.Id);
+  }
 }

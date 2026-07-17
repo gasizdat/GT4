@@ -275,7 +275,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
   }
 
-  private async Task OnEditPersonNameAsync(NameInfoItem nameInfoItem)
+  protected async Task OnEditPersonNameAsync(NameInfoItem nameInfoItem)
   {
     var dialog = new SelectNameDialog(
       biologicalSex: _BiologicalSex?.Info ?? BiologicalSex.Unknown,
