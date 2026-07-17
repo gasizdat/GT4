@@ -70,8 +70,6 @@ public class AndroidFileSystem : IFileSystem
 
   private sealed class MediaStoreFileSystem : IFileSystem
   {
-    const string AndroidPathSeparator = "/";
-
     public string ToPath(DirectoryDescription directoryDescription) =>
       throw new ArgumentException($"{nameof(directoryDescription)} should be internal");
 
@@ -179,20 +177,6 @@ public class AndroidFileSystem : IFileSystem
       return ret;
     }
 
-    private static string EnsureTrailingSlash(string path) =>
-      string.IsNullOrEmpty(path) ? path : (path.EndsWith(AndroidPathSeparator) ? path : path + AndroidPathSeparator);
-
-    // Escape % and _ (special in LIKE) and backslashes; keep slashes as-is.
-    private static string EscapeForLike(string path) =>
-      path.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
-
-    private static string ToLikePattern(string path)
-    {
-      // turn simple wildcards into SQL LIKE, escaping others
-      var escaped = EscapeForLike(path);
-      return escaped.Replace("*", "%").Replace("?", "_");
-    }
-
     private static bool ResourceExists(Android.Net.Uri uri)
     {
       try
@@ -228,18 +212,18 @@ public class AndroidFileSystem : IFileSystem
       if (recursive)
       {
         query.Add($"{MediaStore.IMediaColumns.RelativePath} LIKE ? ESCAPE '\\'");
-        args.Add($"{EnsureTrailingSlash(GetRelativePath(directoryDescription))}%");
+        args.Add($"{MediaStorePatterns.EnsureTrailingSlash(GetRelativePath(directoryDescription))}%");
       }
       else
       {
         query.Add($"{MediaStore.IMediaColumns.RelativePath}=?");
-        args.Add(EnsureTrailingSlash(GetRelativePath(directoryDescription)));
+        args.Add(MediaStorePatterns.EnsureTrailingSlash(GetRelativePath(directoryDescription)));
       }
 
       if (!string.IsNullOrWhiteSpace(searchPattern) && searchPattern != "*")
       {
         query.Add($"{MediaStore.IMediaColumns.DisplayName} LIKE ? ESCAPE '\\'");
-        args.Add(ToLikePattern(searchPattern));
+        args.Add(MediaStorePatterns.ToLikePattern(searchPattern));
       }
 
       AddLiveItemFilters(query);
@@ -264,7 +248,7 @@ public class AndroidFileSystem : IFileSystem
           continue;
         }
 
-        IEnumerable<string> chunks = relativePath?.Split(AndroidPathSeparator) ?? [];
+        IEnumerable<string> chunks = relativePath?.Split(MediaStorePatterns.PathSeparator) ?? [];
         if (chunks.FirstOrDefault() == GetAndroidRoot(directoryDescription))
         {
           chunks = chunks.Skip(1);
@@ -318,7 +302,7 @@ public class AndroidFileSystem : IFileSystem
       };
       var args = new List<string>
       {
-        EnsureTrailingSlash(GetRelativePath(fileDescription.Directory)),
+        MediaStorePatterns.EnsureTrailingSlash(GetRelativePath(fileDescription.Directory)),
         fileDescription.FileName
       };
       AddLiveItemFilters(query);
