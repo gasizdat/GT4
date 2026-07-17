@@ -299,7 +299,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   private async Task OnBirthDateSetupAsync()
   {
-    var dialog = new SelectDateDialog(date: BirthDate, dateFormatter: _DateFormatter);
+    var dialog = new SelectDateDialog(date: BirthDate, dateFormatter: _DateFormatter, alertService: _AlertService);
 
     await Navigation.PushModalAsync(dialog);
     var date = await dialog.Info;
@@ -315,7 +315,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   {
     var dialog = new SelectDateDialog(
       date: DeathDate,
-      dateFormatter: _DateFormatter);
+      dateFormatter: _DateFormatter,
+      alertService: _AlertService);
 
     await Navigation.PushModalAsync(dialog);
     var date = await dialog.Info;
@@ -421,7 +422,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   {
     var dialog = new SelectDateDialog(
       date: relative.Date,
-      dateFormatter: _DateFormatter);
+      dateFormatter: _DateFormatter,
+      alertService: _AlertService);
 
     await Navigation.PushModalAsync(dialog);
     var date = await dialog.Info;

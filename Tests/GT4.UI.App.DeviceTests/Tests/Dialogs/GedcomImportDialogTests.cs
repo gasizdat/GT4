@@ -3,8 +3,8 @@ using Xunit;
 namespace GT4.UI.DeviceTests;
 
 /// <summary>
-/// Covers GedcomImportDialog directly: it has no service dependencies at all (just the importing
-/// project's name and a CancellationTokenSource), so it's constructed with no TestServices needed.
+/// Covers GedcomImportDialog directly: its only service dependency is the IAlertService behind the
+/// cancel command, so it's constructed straight from a TestServices mock.
 /// The actual import (ProjectPage/ProjectListPage's OnImportGedcom) is out of scope -- FilePicker is
 /// an external dependency -- but the cancellation UI this dialog owns is self-contained and testable.
 /// </summary>
@@ -13,7 +13,8 @@ public class GedcomImportDialogTests
   private static async Task<TestableGedcomImportDialog> CreateDialogAsync()
   {
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
-    return await MainThread.InvokeOnMainThreadAsync(() => new TestableGedcomImportDialog("My Tree"));
+    var services = new TestServices();
+    return await MainThread.InvokeOnMainThreadAsync(() => new TestableGedcomImportDialog("My Tree", services.AlertService.Object));
   }
 
   [Fact]
@@ -28,11 +29,11 @@ public class GedcomImportDialogTests
   }
 
   [Fact]
-  public async Task OnCancelBtn_cancels_the_token_and_updates_status()
+  public async Task DialogCommand_cancels_the_token_and_updates_status()
   {
     var dialog = await CreateDialogAsync();
 
-    dialog.OnCancelBtn(dialog, EventArgs.Empty);
+    dialog.DialogCommand.Execute(null);
 
     Assert.False(dialog.CanCancel);
     Assert.Equal(Resources.UIStrings.HintGedcomImportCancelling, dialog.StatusText);
@@ -40,12 +41,12 @@ public class GedcomImportDialogTests
   }
 
   [Fact]
-  public async Task OnCancelBtn_is_idempotent()
+  public async Task DialogCommand_is_idempotent()
   {
     var dialog = await CreateDialogAsync();
 
-    dialog.OnCancelBtn(dialog, EventArgs.Empty);
-    var exception = Record.Exception(() => dialog.OnCancelBtn(dialog, EventArgs.Empty));
+    dialog.DialogCommand.Execute(null);
+    var exception = Record.Exception(() => dialog.DialogCommand.Execute(null));
 
     Assert.Null(exception);
   }

@@ -74,7 +74,7 @@ public class ProjectListPageTests
     {
       dialog.ProjectName = "New Tree";
       dialog.ProjectDescription = "A description";
-      dialog.OnCreateProjectBtn(dialog, EventArgs.Empty);
+      dialog.DialogCommand.Execute(null);
     });
     await commandTask;
 
@@ -93,9 +93,9 @@ public class ProjectListPageTests
     var commandTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("Create"));
     var dialog = await ModalDialogHarness.WaitForModalAsync<CreateOrUpdateProjectDialog>(page);
 
-    // Leaving ProjectName empty makes the dialog's own OnCreateProjectBtn produce Name ==
+    // Leaving ProjectName empty makes the dialog's own command produce Name ==
     // string.Empty, which ProjectListPage treats as cancelled.
-    await MainThread.InvokeOnMainThreadAsync(() => dialog.OnCreateProjectBtn(dialog, EventArgs.Empty));
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.DialogCommand.Execute(null));
     await commandTask;
 
     services.ProjectList.Verify(

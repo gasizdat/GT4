@@ -89,7 +89,7 @@
 
     <components:PageLayout.Footer>
       <Button
-          Clicked="OnCreateFamilyBtn"
+          Command="{Binding DialogCommand, Source={x:Reference Root}}"
           FontSize="{DynamicResource ActionButtonTextSize}"
           HorizontalOptions="Fill"
           Text="{Binding DialogButtonName, Source={x:Reference Root}}" />

@@ -7,7 +7,8 @@ namespace GT4.UI.DeviceTests;
 
 /// <summary>
 /// Covers SelectDateDialog directly: it has no IServiceProvider/navigation dependency at all, just
-/// a real (unmocked) IDateFormatter, so it's constructed straight from TestServices' real container.
+/// a real (unmocked) IDateFormatter and the mocked IAlertService behind its command, so it's
+/// constructed straight from TestServices.
 /// The switch cascade rules (YearSwitch/MonthSwitch/DaySwitch/ApproximateSwitch) are the page's own
 /// non-obvious logic and the main thing worth pinning here.
 /// </summary>
@@ -17,7 +18,7 @@ public class SelectDateDialogTests
   {
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
     var dateFormatter = services.Provider.GetRequiredService<IDateFormatter>();
-    return await MainThread.InvokeOnMainThreadAsync(() => new SelectDateDialog(date, dateFormatter));
+    return await MainThread.InvokeOnMainThreadAsync(() => new SelectDateDialog(date, dateFormatter, services.AlertService.Object));
   }
 
   [Fact]
@@ -89,7 +90,7 @@ public class SelectDateDialogTests
     var dialog = await CreateDialogAsync(new TestServices(), null);
     await MainThread.InvokeOnMainThreadAsync(() => dialog.Year = "-2");
 
-    await MainThread.InvokeOnMainThreadAsync(() => dialog.OnSelectDateBtn(dialog, EventArgs.Empty));
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.DialogCommand.Execute(null));
     var result = await dialog.Info;
 
     Assert.Equal(Date.Create(-2, 1, 1, DateStatus.MonthUnknown), result);
@@ -155,18 +156,18 @@ public class SelectDateDialogTests
   }
 
   [Fact]
-  public async Task OnSelectDateBtn_returns_null_when_not_ready()
+  public async Task DialogCommand_returns_null_when_not_ready()
   {
     var dialog = await CreateDialogAsync(new TestServices(), null);
 
-    await MainThread.InvokeOnMainThreadAsync(() => dialog.OnSelectDateBtn(dialog, EventArgs.Empty));
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.DialogCommand.Execute(null));
     var result = await dialog.Info;
 
     Assert.Null(result);
   }
 
   [Fact]
-  public async Task OnSelectDateBtn_returns_the_selected_date_once_touched()
+  public async Task DialogCommand_returns_the_selected_date_once_touched()
   {
     var dialog = await CreateDialogAsync(new TestServices(), null);
     await MainThread.InvokeOnMainThreadAsync(() =>
@@ -178,7 +179,7 @@ public class SelectDateDialogTests
       dialog.Day = dialog.Days[9];
     });
 
-    await MainThread.InvokeOnMainThreadAsync(() => dialog.OnSelectDateBtn(dialog, EventArgs.Empty));
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.DialogCommand.Execute(null));
     var result = await dialog.Info;
 
     Assert.Equal(Date.Create(1990, 3, 10, DateStatus.WellKnown), result);

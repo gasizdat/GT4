@@ -62,7 +62,7 @@ public partial class SelectNameDialog : ContentPage
         break;
       case Name nameInfo:
         await CreateOrUpdateNameDialog.UpdateNameAsync(
-          nameInfo, _CurrentProjectProvider, _CancellationTokenProvider, _NameTypeFormatter, Navigation);
+          nameInfo, _CurrentProjectProvider, _CancellationTokenProvider, _NameTypeFormatter, _AlertService, Navigation);
         Names = null;
         CurrentName = Names?.SingleOrDefault(n => n.Info.Id == nameInfo.Id);
         break;
@@ -156,7 +156,7 @@ public partial class SelectNameDialog : ContentPage
         return;
     }
 
-    var dialog = new CreateOrUpdateNameDialog(dialogNameType, _NameTypeFormatter);
+    var dialog = new CreateOrUpdateNameDialog(dialogNameType, _NameTypeFormatter, _AlertService);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;

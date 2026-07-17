@@ -385,7 +385,7 @@ public class FamilyPageTests
       dialog.GeneralName = "Petrov";
       dialog.MaleName = "Petrov";
       dialog.FemaleName = "Petrova";
-      dialog.OnCreateFamilyBtn(dialog, EventArgs.Empty);
+      dialog.DialogCommand.Execute(null);
     });
     await commandTask;
 

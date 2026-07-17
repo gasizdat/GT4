@@ -1,7 +1,9 @@
 using GT4.Core.Utils;
+using GT4.UI.Abstraction;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
+using System.Windows.Input;
 
 namespace GT4.UI.Dialogs;
 
@@ -10,6 +12,7 @@ public partial class SelectDateDialog : ContentPage
   private const string D2 = "D2";
 
   private readonly IDateFormatter _DateFormatter;
+  private readonly ICommand _DialogCommand;
   private readonly TaskCompletionSource<Date?> _Info = new(null);
   private readonly string[] _Months = GetMonths();
   private readonly string[] _Days = GetDays();
@@ -22,9 +25,10 @@ public partial class SelectDateDialog : ContentPage
   private bool _DaySwitch = false;
   private bool _NotReady = true;
 
-  public SelectDateDialog(Date? date, IDateFormatter dateFormatter)
+  public SelectDateDialog(Date? date, IDateFormatter dateFormatter, IAlertService alertService)
   {
     _DateFormatter = dateFormatter;
+    _DialogCommand = new SafeCommand(OnSelectDate, alertService);
     if (date.HasValue)
     {
       var signedYear = date.Value.Sign < 0 ? -date.Value.Year : date.Value.Year;
@@ -274,7 +278,9 @@ public partial class SelectDateDialog : ContentPage
 
   public Task<Date?> Info => _Info.Task;
 
-  public void OnSelectDateBtn(object sender, EventArgs e)
+  public ICommand DialogCommand => _DialogCommand;
+
+  private void OnSelectDate()
   {
     _Info.SetResult(_NotReady ? null : Date);
   }

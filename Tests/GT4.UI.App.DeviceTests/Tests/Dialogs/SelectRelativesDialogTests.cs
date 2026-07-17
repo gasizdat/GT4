@@ -68,7 +68,7 @@ public class SelectRelativesDialogTests
     await MainThread.InvokeOnMainThreadAsync(() =>
     {
       dateDialog.Year = "1990";
-      dateDialog.OnSelectDateBtn(dateDialog, EventArgs.Empty);
+      dateDialog.DialogCommand.Execute(null);
     });
     await commandTask;
 

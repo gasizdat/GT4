@@ -5,6 +5,7 @@ using GT4.UI.Abstraction;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
+using System.Windows.Input;
 
 namespace GT4.UI.Components;
 
@@ -23,6 +24,7 @@ public partial class PersonFilterView : ContentView
   private ICurrentProjectProvider _CurrentProjectProvider = default!;
   private IAlertService _AlertService = default!;
   private Func<Person[]> _SnapshotPersons = default!;
+  private ICommand _FilterCommand = default!;
   private bool _FilterDataLoaded;
   private bool _IsFiltersVisible;
   private bool _Syncing;
@@ -57,6 +59,10 @@ public partial class PersonFilterView : ContentView
     _CurrentProjectProvider = currentProjectProvider;
     _AlertService = alertService;
     _SnapshotPersons = snapshotPersons;
+    // The XAML button bindings were evaluated in InitializeComponent, before the IAlertService the
+    // command needs was available; notify so they re-resolve.
+    _FilterCommand = new SafeCommand(OnFilterCommand, _AlertService);
+    OnPropertyChanged(nameof(FilterCommand));
 
     // Label order must match PersonFilter's SexFilterValues/MaritalStatusFilterValues (index 0 = "any").
     // Assigning ItemsSource fires SelectedIndexChanged, so it runs under the same guard as any other
@@ -87,6 +93,8 @@ public partial class PersonFilterView : ContentView
   /// <summary>Raised after the lazy marital-status/year-bounds fetch has been applied, on the main
   /// thread. The load-completion signal.</summary>
   public event EventHandler? FilterDataLoaded;
+
+  public ICommand FilterCommand => _FilterCommand;
 
   public bool Matches(PersonInfo person) => _Filter.Matches(person);
 
@@ -125,13 +133,19 @@ public partial class PersonFilterView : ContentView
   private void UpdateToggleText() =>
     ToggleFiltersButton.Text = string.Format(UIStrings.BtnNameFilters_1, _IsFiltersVisible ? "🔼" : "🔽");
 
-  private void OnToggleFiltersClicked(object? sender, EventArgs e) => IsFiltersVisible = !IsFiltersVisible;
-
-  private void OnClearFiltersClicked(object? sender, EventArgs e)
+  private void OnFilterCommand(object obj)
   {
-    _Filter.Clear();
-    SyncControls();
-    RaiseChanged();
+    switch (obj)
+    {
+      case string commandName when commandName == "ToggleFiltersCommand":
+        IsFiltersVisible = !IsFiltersVisible;
+        break;
+      case string commandName when commandName == "ClearFiltersCommand":
+        _Filter.Clear();
+        SyncControls();
+        RaiseChanged();
+        break;
+    }
   }
 
   private void OnNameFilterChanged(object? sender, TextChangedEventArgs e)

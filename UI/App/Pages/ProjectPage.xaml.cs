@@ -309,7 +309,7 @@ public partial class ProjectPage : ContentPage
 
   private async Task OnEditProject()
   {
-    var dialog = new CreateOrUpdateProjectDialog(_CurrentProjectProvider.Info);
+    var dialog = new CreateOrUpdateProjectDialog(_CurrentProjectProvider.Info, _AlertService);
 
     await Navigation.PushModalAsync(dialog);
     var projectInfo = await dialog.ProjectInfo;
@@ -332,7 +332,7 @@ public partial class ProjectPage : ContentPage
 
   private async Task OnCreateFamily()
   {
-    var dialog = new CreateOrUpdateNameDialog(NameType.FamilyName, _NameTypeFormatter);
+    var dialog = new CreateOrUpdateNameDialog(NameType.FamilyName, _NameTypeFormatter, _AlertService);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;
@@ -383,7 +383,7 @@ public partial class ProjectPage : ContentPage
     if (!await _AlertService.ShowConfirmationAsync(confirmText))
       return;
 
-    var dialog = new GedcomImportDialog(_CurrentProjectProvider.Info.Name);
+    var dialog = new GedcomImportDialog(_CurrentProjectProvider.Info.Name, _AlertService);
     await Navigation.PushModalAsync(dialog);
     try
     {

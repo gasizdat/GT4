@@ -262,7 +262,7 @@ public class NamesPageTests
       dialog.GeneralName = "Ivanov";
       dialog.MaleName = "Ivan";
       dialog.FemaleName = "Ivanova";
-      dialog.OnCreateFamilyBtn(dialog, EventArgs.Empty);
+      dialog.DialogCommand.Execute(null);
     });
     await addTask;
 
@@ -299,7 +299,7 @@ public class NamesPageTests
       dialog.GeneralName = "Ivan";
       dialog.MaleName = "Ivanovich";
       dialog.FemaleName = "Ivanovna";
-      dialog.OnCreateFamilyBtn(dialog, EventArgs.Empty);
+      dialog.DialogCommand.Execute(null);
     });
     await addTask;
 
@@ -338,7 +338,7 @@ public class NamesPageTests
     await MainThread.InvokeOnMainThreadAsync(() =>
     {
       dialog.GeneralName = "Anna";
-      dialog.OnCreateFamilyBtn(dialog, EventArgs.Empty);
+      dialog.DialogCommand.Execute(null);
     });
     await addTask;
 
@@ -361,7 +361,7 @@ public class NamesPageTests
     var dialog = await ModalDialogHarness.WaitForModalAsync<CreateOrUpdateNameDialog>(page);
 
     // No fields touched: dialog.NotReady stays true, so confirming completes the awaited Info with null.
-    await MainThread.InvokeOnMainThreadAsync(() => dialog.OnCreateFamilyBtn(dialog, EventArgs.Empty));
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.DialogCommand.Execute(null));
     await addTask;
 
     services.FamilyManager.Verify(
@@ -390,7 +390,7 @@ public class NamesPageTests
       dialog.GeneralName = "Petrov";
       dialog.MaleName = "Petrov";
       dialog.FemaleName = "Petrova";
-      dialog.OnCreateFamilyBtn(dialog, EventArgs.Empty);
+      dialog.DialogCommand.Execute(null);
     });
     await editTask;
 
@@ -417,7 +417,7 @@ public class NamesPageTests
     await MainThread.InvokeOnMainThreadAsync(() =>
     {
       dialog.GeneralName = "Sidorov-Updated";
-      dialog.OnCreateFamilyBtn(dialog, EventArgs.Empty);
+      dialog.DialogCommand.Execute(null);
     });
     await editTask;
 

@@ -137,7 +137,7 @@ public class SelectNameDialogTests
       nameDialog.GeneralName = "Petrov";
       nameDialog.MaleName = "Petrov";
       nameDialog.FemaleName = "Petrova";
-      nameDialog.OnCreateFamilyBtn(nameDialog, EventArgs.Empty);
+      nameDialog.DialogCommand.Execute(null);
     });
     await addTask;
 
@@ -166,7 +166,7 @@ public class SelectNameDialogTests
       nameDialog.GeneralName = "Petrov";
       nameDialog.MaleName = "Petrov";
       nameDialog.FemaleName = "Petrova";
-      nameDialog.OnCreateFamilyBtn(nameDialog, EventArgs.Empty);
+      nameDialog.DialogCommand.Execute(null);
     });
     await addTask;
 
@@ -197,7 +197,7 @@ public class SelectNameDialogTests
       nameDialog.GeneralName = "Petr";
       nameDialog.MaleName = "Petrovich";
       nameDialog.FemaleName = "Petrovna";
-      nameDialog.OnCreateFamilyBtn(nameDialog, EventArgs.Empty);
+      nameDialog.DialogCommand.Execute(null);
     });
     await addTask;
 

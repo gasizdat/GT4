@@ -231,6 +231,7 @@ public partial class FamilyPage : ContentPage
           _CurrentProjectProvider,
           _CancellationTokenProvider,
           _ServiceProvider.GetRequiredService<INameTypeFormatter>(),
+          _AlertService,
           Navigation);
         break;
 

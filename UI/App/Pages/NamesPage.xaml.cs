@@ -75,7 +75,7 @@ public partial class NamesPage : ContentPage
   {
     if (obj is Name name)
     {
-      await CreateOrUpdateNameDialog.UpdateNameAsync(name, _CurrentProjectProvider, _CancellationTokenProvider, _NameTypeFormatter, Navigation);
+      await CreateOrUpdateNameDialog.UpdateNameAsync(name, _CurrentProjectProvider, _CancellationTokenProvider, _NameTypeFormatter, _AlertService, Navigation);
       RequestUpdateNames(name);
     }
   }
@@ -138,7 +138,7 @@ public partial class NamesPage : ContentPage
       _ => throw new ApplicationException(nameof(OnPageCommandAsync))
     };
 
-    var dialog = new CreateOrUpdateNameDialog(nameType, _NameTypeFormatter);
+    var dialog = new CreateOrUpdateNameDialog(nameType, _NameTypeFormatter, _AlertService);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;
