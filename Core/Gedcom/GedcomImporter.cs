@@ -12,6 +12,13 @@ internal sealed class GedcomImporter : IGedcomImporter
 {
   private const string ResidueMimeType = "application/x-gedcom";
 
+  private readonly IGedcomMediaReader _MediaReader;
+
+  public GedcomImporter(IGedcomMediaReader mediaReader)
+  {
+    _MediaReader = mediaReader;
+  }
+
   public async Task ImportAsync(IProjectDocument document, TextReader reader, CancellationToken token, string? mediaBasePath = null)
   {
     var records = await GedcomReader.ReadAsync(reader, token);
@@ -148,7 +155,7 @@ internal sealed class GedcomImporter : IGedcomImporter
   }
 
   /// <summary>Fills only the fields a matched person is missing; populated values are never overwritten.</summary>
-  private static async Task GapFillAsync(
+  private async Task GapFillAsync(
     IProjectDocument document,
     Match match,
     GedcomNode individual,
@@ -282,7 +289,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     return string.Equals(pedigree, GedcomTags.AdoptedPedigree, StringComparison.OrdinalIgnoreCase);
   }
 
-  private static async Task<Person> ImportIndividualAsync(
+  private async Task<Person> ImportIndividualAsync(
     IProjectDocument document,
     GedcomNode individual,
     IReadOnlyDictionary<string, string?> notesByXref,
@@ -428,14 +435,14 @@ internal sealed class GedcomImporter : IGedcomImporter
   /// unreadable FILE, or a corrupt BLOB — is dropped from the set and survives as residue instead, so a
   /// single bad image never aborts the all-or-nothing import.
   /// </summary>
-  private static PhotoCandidate[] SelectPhotos(GedcomNode individual, string? mediaBasePath) =>
+  private PhotoCandidate[] SelectPhotos(GedcomNode individual, string? mediaBasePath) =>
     individual.Children
       .Select(o => TryReadPhoto(o, mediaBasePath))
       .Where(p => p is not null)
       .Select(p => p!)
       .ToArray();
 
-  private static PhotoCandidate? TryReadPhoto(GedcomNode obje, string? mediaBasePath)
+  private PhotoCandidate? TryReadPhoto(GedcomNode obje, string? mediaBasePath)
   {
     if (obje.Tag != GedcomTags.Object)
       return null;
@@ -460,16 +467,12 @@ internal sealed class GedcomImporter : IGedcomImporter
     if (path is null)
       return null;
 
-    try
-    {
-      var content = System.IO.File.ReadAllBytes(path);
-      var mime = GedcomMedia.ToMimeType(MediaForm(obje));
-      return new PhotoCandidate(obje, content, mime, IsPrimary(obje), residual);
-    }
-    catch (Exception e) when (e is IOException or UnauthorizedAccessException)
-    {
+    var content = _MediaReader.TryRead(path);
+    if (content is null)
       return null;
-    }
+
+    var mime = GedcomMedia.ToMimeType(MediaForm(obje));
+    return new PhotoCandidate(obje, content, mime, IsPrimary(obje), residual);
   }
 
   /// <summary>
@@ -506,10 +509,10 @@ internal sealed class GedcomImporter : IGedcomImporter
     string.Equals(obje.ChildValue(GedcomTags.Primary), GedcomTags.PrimaryYes, StringComparison.OrdinalIgnoreCase);
 
   /// <summary>
-  /// The on-disk path of an <c>OBJE</c>'s external image <c>FILE</c> when it resolves under
-  /// <paramref name="mediaBasePath"/> and is an image, else null. A relative reference is taken relative to
-  /// the base path; an absolute one is used as-is. Only image media is loaded, so a non-image FILE (a PDF
-  /// scan) is left as residue.
+  /// The resolved path of an <c>OBJE</c>'s external image <c>FILE</c>, else null. A relative reference is
+  /// taken relative to <paramref name="mediaBasePath"/>; an absolute one is used as-is. Only image media is
+  /// loaded, so a non-image FILE (a PDF scan) is left as residue. Whether the path is actually readable is
+  /// the media reader's concern.
   /// </summary>
   private static string? ExternalImagePath(GedcomNode obje, string? mediaBasePath)
   {
@@ -521,8 +524,7 @@ internal sealed class GedcomImporter : IGedcomImporter
       return null;
 
     var normalized = fileRef.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
-    var path = Path.IsPathRooted(normalized) ? normalized : Path.Combine(mediaBasePath, normalized);
-    return System.IO.File.Exists(path) ? path : null;
+    return Path.IsPathRooted(normalized) ? normalized : Path.Combine(mediaBasePath, normalized);
   }
 
   // GEDCOM 5.5.1 nests FORM under FILE; the older 5.5 form sits directly under OBJE. Read either.
