@@ -1,4 +1,5 @@
 using GT4.Core.Project.Dto;
+using GT4.UI.Resources;
 using GT4.UI.Utils;
 using System.Collections.ObjectModel;
 
@@ -16,6 +17,13 @@ public class FamilyInfoItem : CollectionItemBase<Name>
     _Persons.Filter = personsFilter;
     _Persons.AddRange(persons);
   }
+
+  // Sentinel family for persons that have no FamilyName-typed name; Id 0 never collides with a
+  // real name because SQLite rowids start at 1.
+  public static Name NoFamilyName { get; } = new(0, UIStrings.FamilyNameNoFamily, NameType.FamilyName, null);
+
+  public static bool HasNoFamily(PersonInfo person) =>
+    !person.Names.Any(name => name.Type.HasFlag(NameType.FamilyName));
 
   public ObservableCollection<PersonInfo> Persons => _Persons.Items;
 

@@ -75,9 +75,9 @@ public partial class ProjectPage : ContentPage
     InitializeComponent();
 
     FilterView.Initialize(
-      biologicalSexFormatter, 
-      _CancellationTokenProvider, 
-      _CurrentProjectProvider, 
+      biologicalSexFormatter,
+      _CancellationTokenProvider,
+      _CurrentProjectProvider,
       _AlertService,
       () => [.. _Families.AllItems.SelectMany(f => f.AllPersons).DistinctBy(p => p.Id)]);
     FilterView.Changed += (_, _) => UpdateFamilies();
@@ -118,13 +118,22 @@ public partial class ProjectPage : ContentPage
         .ToLookup(x => x.NameId, x => x.Person);
 
       var familyPersons = familyNames
-        .Select(name => (Family: name, Persons: personsByFamilyNameId[name.Id].OrderBy(item => item, _PersonInfoComparer).ToArray()))
+        .Select(name => (Family: name, Persons: personsByFamilyNameId[name.Id].OrderBy(item => item, _PersonInfoComparer)))
         .ToList();
 
       var families = familyPersons
-        .Select(f => new FamilyInfoItem(f.Family, f.Persons, (_, person) => FilterView.Matches(person)))
+        .Select(f => new FamilyInfoItem(f.Family, [.. f.Persons], (_, person) => FilterView.Matches(person)))
         .OrderBy(item => item.Info, _NameComparer)
         .ToList();
+
+      var familylessPersons = persons
+        .Where(FamilyInfoItem.HasNoFamily)
+        .OrderBy(item => item, _PersonInfoComparer)
+        .ToArray();
+      if (familylessPersons.Length > 0)
+      {
+        families.Add(new FamilyInfoItem(FamilyInfoItem.NoFamilyName, familylessPersons, (_, person) => FilterView.Matches(person)));
+      }
 
       await SafeTask.RunOnMainThread(() => _Families.AddRange(families), _AlertService);
     }

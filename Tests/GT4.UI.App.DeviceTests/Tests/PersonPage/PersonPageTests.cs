@@ -2,6 +2,7 @@ using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Dialogs;
+using GT4.UI.Items;
 using GT4.UI.Pages;
 using Moq;
 using Xunit;
@@ -377,6 +378,26 @@ public class PersonPageTests
         expectedRoute,
         true,
         It.Is<Dictionary<string, object>>(d => Equals(d["FamilyName"], expectedFamilyName))),
+      Times.Once());
+  }
+
+  [Fact]
+  public async Task GoToFamily_for_a_familyless_person_navigates_with_the_NoFamily_sentinel()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson() with { Names = [N(2, "Ivan", NameType.FirstName | NameType.MaleDeclension)] };
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+    var expectedRoute = $"{typeof(FamilyPage).Namespace}/{typeof(FamilyPage).Name}";
+
+    await page.InvokePageCommandAsync("GoToFamily");
+
+    services.NavigationService.Verify(
+      n => n.GoToAsync(
+        expectedRoute,
+        true,
+        It.Is<Dictionary<string, object>>(d => Equals(d["FamilyName"], FamilyInfoItem.NoFamilyName))),
       Times.Once());
   }
 

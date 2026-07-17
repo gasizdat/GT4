@@ -433,6 +433,9 @@
   <data name="BtnNameCreateFamily" xml:space="preserve">
     <value>Создать семью</value>
   </data>
+  <data name="FamilyNameNoFamily" xml:space="preserve">
+    <value>Без семьи</value>
+  </data>
   <data name="BtnNameUpdateName_1" xml:space="preserve">
     <value>Обновить {0}</value>
   </data>

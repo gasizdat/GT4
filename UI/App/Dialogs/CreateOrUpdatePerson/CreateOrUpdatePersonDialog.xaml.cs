@@ -254,9 +254,12 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       return;
     }
 
+    var alreadyInFamily = Names.SingleOrDefault(n => n.Info.Type.HasFlag(NameType.FamilyName)) is not null;
+    NameType[] familyName = alreadyInFamily ? [] : [NameType.FamilyName];
+
     var dialog = new SelectNameDialog(
       biologicalSex: biologicalSex,
-      nameType: null,
+      nameTypes: [NameType.FirstName, NameType.Patronymic, NameType.LastName, .. familyName],
       serviceProvider: _ServiceProvider
     );
 
@@ -279,7 +282,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   {
     var dialog = new SelectNameDialog(
       biologicalSex: _BiologicalSex?.Info ?? BiologicalSex.Unknown,
-      nameType: nameInfoItem.Info.Type,
+      nameTypes: [nameInfoItem.Info.Type],
       serviceProvider: _ServiceProvider
     );
 

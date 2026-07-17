@@ -5,6 +5,7 @@ using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Components;
 using GT4.UI.Dialogs;
+using GT4.UI.Items;
 using GT4.UI.Utils.Formatters;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
@@ -73,9 +74,9 @@ public partial class PersonPage : ContentPage
     InitializeComponent();
 
     FilterView.Initialize(
-      biologicalSexFormatter, 
-      _CancellationTokenProvider, 
-      _CurrentProjectProvider, 
+      biologicalSexFormatter,
+      _CancellationTokenProvider,
+      _CurrentProjectProvider,
       _AlertService,
       () => _AllRoots);
     FilterView.Changed += (_, _) => RefreshRelatives();
@@ -187,9 +188,10 @@ public partial class PersonPage : ContentPage
     return $"{bio}\n\n{gedcomDetails}";
   }
 
-  public Name? FamilyName => _PersonFullInfo.Names.SingleOrDefault(n => n.Type == NameType.FamilyName);
+  public Name FamilyName =>
+    _PersonFullInfo.Names.SingleOrDefault(n => n.Type == NameType.FamilyName, FamilyInfoItem.NoFamilyName);
 
-  public string GoToFamilyName => string.Format(UIStrings.MenuItemGotoFamily_1, FamilyName?.Value ?? string.Empty);
+  public string GoToFamilyName => string.Format(UIStrings.MenuItemGotoFamily_1, FamilyName.Value);
 
   public ICollection NavigationHistory => _NavigationHistory;
 
@@ -299,7 +301,7 @@ public partial class PersonPage : ContentPage
       }
       else
       {
-        Data[] photoData = [personFullInfo.MainPhoto, ..personFullInfo.AdditionalPhotos];
+        Data[] photoData = [personFullInfo.MainPhoto, .. personFullInfo.AdditionalPhotos];
         var defaultImageResourceName = ImageUtils.DefaultPhotoResourceName(personFullInfo.BiologicalSex);
         var fallback = ImageUtils.ImageFromRawResource(defaultImageResourceName);
         var photosTask = Task.WhenAll(photoData.Select(data =>
@@ -430,7 +432,7 @@ public partial class PersonPage : ContentPage
         await _NavigationService.GoToAsync(UIRoutes.GetRoute<MainPage>());
         break;
       case string commandName when commandName == "GoToFamily":
-        await _NavigationService.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = FamilyName! });
+        await _NavigationService.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = FamilyName });
         break;
       case string commandName when commandName == "GoToFamilyTree":
         // Shell matches the target's [QueryProperty] by exact runtime type, so hand it a plain

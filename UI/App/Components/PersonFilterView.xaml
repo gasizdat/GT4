@@ -7,10 +7,14 @@
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root">
 
-  <Grid HorizontalOptions="Fill" RowDefinitions="Auto, Auto">
+  <Grid
+      HorizontalOptions="Fill"
+      RowDefinitions="Auto, Auto">
 
     <!--  Row 0 - Header text + filters toggle  -->
-    <Grid Grid.Row="0" ColumnDefinitions="*, Auto, Auto">
+    <Grid
+        Grid.Row="0"
+        ColumnDefinitions="*, Auto, Auto">
       <Label
           Grid.Column="0"
           Style="{StaticResource PageSubtitle}"
@@ -25,7 +29,9 @@
           ToolTipProperties.Text="{x:Static resources:UIStrings.BtnNameClearFilters}"
           VerticalOptions="Center">
         <Button.Behaviors>
-          <behaviors:FadeVisibilityBehavior x:Name="ClearButtonFade" Duration="500" />
+          <behaviors:FadeVisibilityBehavior
+              x:Name="ClearButtonFade"
+              Duration="500" />
         </Button.Behaviors>
       </Button>
 
@@ -37,8 +43,10 @@
           Style="{StaticResource TextAdorner}" />
     </Grid>
 
-    <!--  Row 1 - Filter fields. Fades via FadeVisibilityBehavior instead of snapping like a plain
-         IsVisible binding would.  -->
+    <!--
+      Row 1 - Filter fields. Fades via FadeVisibilityBehavior instead of snapping like a plain
+      IsVisible binding would.
+    -->
     <Grid
         x:Name="FiltersPanel"
         Grid.Row="1"
@@ -47,7 +55,9 @@
         RowDefinitions="Auto, Auto, Auto, Auto">
 
       <Grid.Behaviors>
-        <behaviors:FadeVisibilityBehavior x:Name="FiltersPanelFade" Duration="500" />
+        <behaviors:FadeVisibilityBehavior
+            x:Name="FiltersPanelFade"
+            Duration="500" />
       </Grid.Behaviors>
 
       <!--  Row 0 - Name search  -->

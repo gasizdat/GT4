@@ -3,6 +3,7 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Dialogs;
+using GT4.UI.Items;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Extensions;
@@ -53,9 +54,9 @@ public partial class FamilyPage : ContentPage
     InitializeComponent();
 
     FilterView.Initialize(
-      biologicalSexFormatter, 
-      _CancellationTokenProvider, 
-      _CurrentProjectProvider, 
+      biologicalSexFormatter,
+      _CancellationTokenProvider,
+      _CurrentProjectProvider,
       _AlertService,
       () => [.. _Persons.AllItems]);
     FilterView.Changed += (_, _) => _Persons.Update();
@@ -72,6 +73,7 @@ public partial class FamilyPage : ContentPage
       OnPropertyChanged(nameof(FamilyName));
       OnPropertyChanged(nameof(RemoveFamilyToolbarItemName));
       OnPropertyChanged(nameof(EditFamilyToolbarItemName));
+      OnPropertyChanged(nameof(EnableFamilyChanges));
     }
   }
 
@@ -97,9 +99,20 @@ public partial class FamilyPage : ContentPage
       {
         using var token = _CancellationTokenProvider.CreateDbCancellationToken();
         var project = _CurrentProjectProvider.Project;
-        var persons = await project
-          .PersonManager
-          .GetPersonInfosByNameAsync(name: familyName, selectMainPhoto: true, token);
+        PersonInfo[] persons;
+        if (IsNoFamilyMode)
+        {
+          var allPersons = await project
+            .PersonManager
+            .GetPersonInfosAsync(selectMainPhoto: true, token);
+          persons = [.. allPersons.Where(FamilyInfoItem.HasNoFamily)];
+        }
+        else
+        {
+          persons = await project
+            .PersonManager
+            .GetPersonInfosByNameAsync(name: familyName, selectMainPhoto: true, token);
+        }
 
         persons = [.. persons.OrderBy(item => item, _PersonInfoComparer)];
 
@@ -129,6 +142,8 @@ public partial class FamilyPage : ContentPage
   public string EditFamilyToolbarItemName =>
     string.Format(UIStrings.MenuItemNameEdit_1, _FamilyName?.Value ?? string.Empty);
 
+  public bool EnableFamilyChanges => !IsNoFamilyMode;
+
   protected override void OnSizeAllocated(double width, double height)
   {
     const double PercentageOfWidth = 0.9;
@@ -139,6 +154,8 @@ public partial class FamilyPage : ContentPage
 
     OnPropertyChanged(nameof(PersonItemMinimalWidth));
   }
+
+  private bool IsNoFamilyMode => _FamilyName?.Id == FamilyInfoItem.NoFamilyName.Id;
 
   private async Task OnDeleteFamily()
   {
@@ -176,10 +193,14 @@ public partial class FamilyPage : ContentPage
     }
 
     using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-    var person = _CurrentProjectProvider
-      .Project
-      .FamilyManager
-      .SetUpPersonFamily(info, _FamilyName);
+    // In no-family mode the sentinel Name must not be attached to the person -- the new person is
+    // created family-less on purpose.
+    var person = IsNoFamilyMode
+      ? info
+      : _CurrentProjectProvider
+        .Project
+        .FamilyManager
+        .SetUpPersonFamily(info, _FamilyName);
 
     var newPerson = await _CurrentProjectProvider
       .Project
