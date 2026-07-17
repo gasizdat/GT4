@@ -9,7 +9,8 @@
        runtime path. -->
 
   <PropertyGroup>
-    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">net10.0-windows10.0.19041.0</TargetFrameworks>
+    <TargetFrameworks>net10.0-android</TargetFrameworks>
+    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net10.0-windows10.0.19041.0</TargetFrameworks>
     <OutputType>Exe</OutputType>
     <RootNamespace>GT4.UI.DeviceTests</RootNamespace>
     <UseMaui>true</UseMaui>
@@ -28,8 +29,10 @@
 
     <WindowsPackageType>None</WindowsPackageType>
     <CreateMSIXPackage>False</CreateMSIXPackage>
-    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
-    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <!-- Android minimum is 29 (not the app's 21): the AndroidFileSystem under test requires API 29+ -->
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">29.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
+    <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
   </PropertyGroup>
 
   <!-- This project only builds/runs in Release (see ErrorIfDebugConfiguration below), but debugging
@@ -63,11 +66,17 @@
     <PackageReference Include="FluentAssertions" Version="8.8.0" />
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
     <!-- Pages under test come from the real app assembly. Reference the unpackaged Windows head:
          the packaged App head bakes in the WindowsAppSDK DeploymentManager auto-initializer,
          which requires package identity and crashes this unpackaged test host at startup. -->
     <ProjectReference Include="..\..\UI\App\AppWinOnly.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+    <!-- The library head, not AppAndroidOnly: referencing a full Android app breaks on the
+         duplicate [Application] at manifest merge and on RID-specific runtimeconfig paths. -->
+    <ProjectReference Include="..\..\UI\App\AppAndroidLib.csproj" />
   </ItemGroup>
 
   <!-- The referenced project is itself a MAUI app, so its icon arrives both raw (MauiIcon) and
