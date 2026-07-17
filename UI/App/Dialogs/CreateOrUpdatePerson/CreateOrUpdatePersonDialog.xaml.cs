@@ -259,6 +259,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
     var dialog = new SelectNameDialog(
       biologicalSex: biologicalSex,
+      nameType: null,
       serviceProvider: _ServiceProvider
     );
 
@@ -281,6 +282,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   {
     var dialog = new SelectNameDialog(
       biologicalSex: _BiologicalSex?.Info ?? BiologicalSex.Unknown,
+      nameType: nameInfoItem.Info.Type,
       serviceProvider: _ServiceProvider
     );
 

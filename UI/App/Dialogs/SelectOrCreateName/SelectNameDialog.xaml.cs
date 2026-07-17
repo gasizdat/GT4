@@ -31,14 +31,18 @@ public partial class SelectNameDialog : ContentPage
 
   private bool _NotReady => _CurrentName is null;
 
-  public SelectNameDialog(BiologicalSex biologicalSex, IServiceProvider serviceProvider)
+  public SelectNameDialog(BiologicalSex biologicalSex, NameType? nameType, IServiceProvider serviceProvider)
   {
+    NameType[] allowedNameTypes = nameType is not null ?
+      [nameType.Value] :
+      [NameType.FirstName, NameType.Patronymic, NameType.LastName, NameType.FamilyName];
+
     _ServiceProvider = serviceProvider;
     _NameTypeFormatter = _ServiceProvider.GetRequiredService<INameTypeFormatter>();
     _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
     _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
     _NameComparer = _ServiceProvider.GetRequiredService<IComparer<Name>>();
-    _NameTypes = new((new[] { NameType.FirstName, NameType.Patronymic, NameType.LastName })
+    _NameTypes = new(allowedNameTypes
       .Select(type => new NameTypeInfoItem(_NameTypeFormatter.ToString(type), type)));
     _AlertService = _ServiceProvider.GetRequiredService<IAlertService>();
     _DialogCommand = new SafeCommand(OnDialogCommandAsync, _AlertService);
