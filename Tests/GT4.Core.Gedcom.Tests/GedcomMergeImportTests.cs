@@ -19,7 +19,7 @@ public sealed class GedcomMergeImportTests : IAsyncLifetime
 {
   private readonly List<string> _paths = [];
   private static CancellationToken Token => TestContext.Current.CancellationToken;
-  private readonly GedcomImporter _importer = new();
+  private readonly GedcomImporter _importer = new(new FileGedcomMediaReader());
 
   public ValueTask InitializeAsync() => ValueTask.CompletedTask;
 

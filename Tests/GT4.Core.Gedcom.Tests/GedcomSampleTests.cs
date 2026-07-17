@@ -1,4 +1,5 @@
 using FluentAssertions;
+using GT4.Core.Gedcom.Abstraction;
 using GT4.Core.Project;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
@@ -18,7 +19,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
 {
   private readonly List<string> _paths = [];
   private static CancellationToken Token => TestContext.Current.CancellationToken;
-  private readonly GedcomImporter _importer = new();
+  private readonly GedcomImporter _importer = new(new FileGedcomMediaReader());
   private readonly GedcomExporter _exporter = new();
 
   public ValueTask InitializeAsync() => ValueTask.CompletedTask;
@@ -440,6 +441,27 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task FileReferenceObje_ExternalImageIsReadThroughMediaReaderSeam()
+  {
+    // External media bytes come exclusively through IGedcomMediaReader: a substitute reader serves the
+    // image with no file on disk, and is asked for the FILE reference resolved against the base path.
+    var bytes = new byte[] { 4, 2 };
+    var reader = new StubMediaReader(bytes);
+    var importer = new GedcomImporter(reader);
+    var ged =
+      "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Foto /Test/\n1 SEX M\n" +
+      "1 OBJE\n2 FILE photos/main.png\n3 FORM png\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await importer.ImportAsync(document, new StringReader(ged), Token, "base");
+
+    var person = (await document.Persons.GetPersonsAsync(Token)).Single();
+    var full = await document.PersonManager.GetPersonFullInfoAsync(person, Token);
+    full.MainPhoto.Should().NotBeNull();
+    full.MainPhoto!.Content.Should().Equal(bytes);
+    reader.RequestedPath.Should().Be(Path.Combine("base", "photos", "main.png"));
+  }
+
+  [Fact]
   public async Task FileReferenceObje_NonImageStaysResidueEvenWithBasePath()
   {
     // A FILE that is not an image (a PDF scan) is never loaded into the photo set; it survives as residue
@@ -533,5 +555,16 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     var (spouses, parentChild) = await GedcomTestGraph.ExtractAsync(document, Token);
     spouses.Should().BeEmpty();
     parentChild.Should().BeEmpty();
+  }
+
+  private sealed class StubMediaReader(byte[] content) : IGedcomMediaReader
+  {
+    public string? RequestedPath { get; private set; }
+
+    public byte[]? TryRead(string path)
+    {
+      RequestedPath = path;
+      return content;
+    }
   }
 }

@@ -20,7 +20,7 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
   private static CancellationToken Token => TestContext.Current.CancellationToken;
 
   private readonly GedcomExporter _exporter = new();
-  private readonly GedcomImporter _importer = new();
+  private readonly GedcomImporter _importer = new(new FileGedcomMediaReader());
 
   public async ValueTask InitializeAsync()
   {

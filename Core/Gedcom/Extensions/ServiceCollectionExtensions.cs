@@ -9,6 +9,7 @@ public static class ServiceCollectionExtensions
   public static IServiceCollection AddGedcom(this IServiceCollection services)
   {
     return services
+      .AddSingleton<IGedcomMediaReader, FileGedcomMediaReader>()
       .AddSingleton<IGedcomImporter, GedcomImporter>()
       .AddSingleton<IGedcomExporter, GedcomExporter>();
   }
