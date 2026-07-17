@@ -69,6 +69,18 @@ public sealed class DateTests
   }
 
   [Fact]
+  public void Create_FromComponents_NegativeYear_IsBeforeCommonEra()
+  {
+    var date = Date.Create(-2, 1, 1, DateStatus.WellKnown);
+
+    date.Sign.Should().Be(-1);
+    date.Year.Should().Be(2);
+    date.Month.Should().Be(1);
+    date.Day.Should().Be(1);
+    date.Code.Should().Be(-20101);
+  }
+
+  [Fact]
   public void Create_FromDateTime_IsWellKnown()
   {
     var dt = new DateTime(1999, 12, 31);
