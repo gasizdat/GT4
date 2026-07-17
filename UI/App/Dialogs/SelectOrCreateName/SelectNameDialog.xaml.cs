@@ -38,7 +38,7 @@ public partial class SelectNameDialog : ContentPage
     _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
     _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
     _NameComparer = _ServiceProvider.GetRequiredService<IComparer<Name>>();
-    _NameTypes = new((new[] { NameType.FirstName, NameType.Patronymic, NameType.LastName })
+    _NameTypes = new((new[] { NameType.FirstName, NameType.Patronymic, NameType.LastName, NameType.FamilyName })
       .Select(type => new NameTypeInfoItem(_NameTypeFormatter.ToString(type), type)));
     _AlertService = _ServiceProvider.GetRequiredService<IAlertService>();
     _DialogCommand = new SafeCommand(OnDialogCommandAsync, _AlertService);
@@ -87,10 +87,13 @@ public partial class SelectNameDialog : ContentPage
       }
 
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      var queryType = CurrentNameType.Type == NameType.FamilyName
+        ? NameType.FamilyName
+        : CurrentNameType.Type | _NameDeclension;
       _Names = _CurrentProjectProvider
         .Project
         .Names
-        .GetNamesByTypeAsync(CurrentNameType.Type | _NameDeclension, token)
+        .GetNamesByTypeAsync(queryType, token)
         .Result
         .Select(name => new NameInfoItem(name, _NameTypeFormatter))
         .OrderBy(name => name.Info, _NameComparer)
@@ -150,6 +153,7 @@ public partial class SelectNameDialog : ContentPage
         dialogNameType = NameType.FirstName | _NameDeclension;
         break;
       case NameType.LastName:
+      case NameType.FamilyName:
         dialogNameType = NameType.FamilyName;
         break;
       default:

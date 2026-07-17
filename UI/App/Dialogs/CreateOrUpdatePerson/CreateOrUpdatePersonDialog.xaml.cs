@@ -272,17 +272,40 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       var index = lastNameWithTheSameType is null ? -1 : _Names.IndexOf(lastNameWithTheSameType);
       var item = new NameInfoItem(name, _NameTypeFormatter);
       _Names.Insert(index + 1, item);
+      DropFamiliesOtherThan(item);
 
       IsModified = true;
     }
   }
 
-  private async Task OnEditPersonNameAsync(NameInfoItem nameInfoItem)
+  // A person belongs to exactly one family: PersonManager reads their family off a single FamilyName
+  // entry and throws when it finds more. Since SelectNameDialog's family tab is reachable from both
+  // the add and the edit flow, a freshly picked family supersedes whichever one was there before
+  // rather than sitting alongside it.
+  private void DropFamiliesOtherThan(NameInfoItem picked)
+  {
+    if (picked.Info.Type != NameType.FamilyName)
+    {
+      return;
+    }
+
+    var superseded = _Names
+      .Where(item => item.Info.Type == NameType.FamilyName && !ReferenceEquals(item, picked))
+      .ToArray();
+
+    foreach (var family in superseded)
+    {
+      _Names.Remove(family);
+    }
+  }
+
+  protected async Task OnEditPersonNameAsync(NameInfoItem nameInfoItem)
   {
     var dialog = new SelectNameDialog(
       biologicalSex: _BiologicalSex?.Info ?? BiologicalSex.Unknown,
       serviceProvider: _ServiceProvider
     );
+    dialog.CurrentNameType = dialog.NameTypes.Single(t => t.Type == (nameInfoItem.Info.Type & NameType.NoDeclension));
 
     await Navigation.PushModalAsync(dialog);
     var name = await dialog.Name;
@@ -291,7 +314,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     if (name is not null)
     {
       var index = _Names.IndexOf(nameInfoItem);
-      _Names[index] = new NameInfoItem(name, _NameTypeFormatter);
+      var item = new NameInfoItem(name, _NameTypeFormatter);
+      _Names[index] = item;
+      DropFamiliesOtherThan(item);
     }
   }
 

@@ -26,7 +26,7 @@ public class SelectNameDialogTests
   {
     var dialog = await CreateDialogAsync(new TestServices());
 
-    Assert.Equal(3, dialog.NameTypes.Count);
+    Assert.Equal(4, dialog.NameTypes.Count);
     Assert.Equal(dialog.NameTypes.First(), dialog.CurrentNameType);
     Assert.Null(dialog.CurrentName);
     Assert.Equal(Resources.UIStrings.BtnNameCancel, dialog.DialogButtonName);
@@ -86,5 +86,59 @@ public class SelectNameDialogTests
     await MainThread.InvokeOnMainThreadAsync(() => dialog.CurrentName = item);
 
     Assert.Equal(Resources.UIStrings.BtnNameOk, dialog.DialogButtonName);
+  }
+
+  [Fact]
+  public async Task Names_loads_families_for_the_family_tab_without_declension()
+  {
+    var services = new TestServices();
+    var families = new[] { N(1, "Smith", NameType.FamilyName) };
+    services.Names
+      .Setup(n => n.GetNamesByTypeAsync(NameType.FamilyName, It.IsAny<CancellationToken>()))
+      .ReturnsAsync(families);
+    var dialog = await CreateDialogAsync(services, BiologicalSex.Male);
+
+    await MainThread.InvokeOnMainThreadAsync(
+      () => dialog.CurrentNameType = dialog.NameTypes.Single(t => t.Type == NameType.FamilyName));
+
+    Assert.Single(dialog.Names!);
+    Assert.Equal("Smith", dialog.Names!.Single().Info.Value);
+    services.Names.Verify(
+      n => n.GetNamesByTypeAsync(NameType.FamilyName | NameType.MaleDeclension, It.IsAny<CancellationToken>()),
+      Times.Never());
+  }
+
+  [Fact]
+  public async Task OnAddNameAsync_on_the_family_tab_creates_a_family_and_selects_it()
+  {
+    var services = new TestServices();
+    var addedFamily = N(10, "Ivanov", NameType.FamilyName);
+    services.FamilyManager
+      .Setup(f => f.AddFamilyAsync("Ivanov", "Ivan", "Ivanova", It.IsAny<CancellationToken>()))
+      .ReturnsAsync(addedFamily);
+    services.Names
+      .Setup(n => n.GetNamesByTypeAsync(NameType.FamilyName, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([addedFamily]);
+    var dialog = await CreateDialogAsync(services, BiologicalSex.Male);
+    await MainThread.InvokeOnMainThreadAsync(
+      () => dialog.CurrentNameType = dialog.NameTypes.Single(t => t.Type == NameType.FamilyName));
+
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var addTask = await MainThreadTask.StartAsync(dialog.OnAddNameAsync);
+    var createDialog = await ModalDialogHarness.WaitForModalAsync<CreateOrUpdateNameDialog>(dialog);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      createDialog.GeneralName = "Ivanov";
+      createDialog.MaleName = "Ivan";
+      createDialog.FemaleName = "Ivanova";
+      createDialog.OnCreateFamilyBtn(createDialog, EventArgs.Empty);
+    });
+    await addTask;
+
+    services.FamilyManager.Verify(
+      f => f.AddFamilyAsync("Ivanov", "Ivan", "Ivanova", It.IsAny<CancellationToken>()),
+      Times.Once());
+    Assert.Equal(addedFamily.Id, dialog.CurrentName!.Info.Id);
   }
 }

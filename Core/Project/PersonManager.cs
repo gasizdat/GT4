@@ -115,16 +115,32 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
     return await GetPersonInfosAsync(persons, selectMainPhoto, token);
   }
 
+  private async Task<PersonFullInfo> AttachFamilyIfChangedAsync(PersonFullInfo personFullInfo, CancellationToken token)
+  {
+    var newFamilyName = personFullInfo.Names.SingleOrDefault(name => name.Type == NameType.FamilyName);
+    if (newFamilyName is null)
+    {
+      return personFullInfo;
+    }
+
+    // A not-yet-committed person's Id can never match a persisted row, so this is always empty on
+    // create -- meaning AddPersonAsync still unconditionally attaches, while UpdatePersonAsync only
+    // rewrites Names (and disturbs their storage order) when the family actually changed.
+    var existingNames = await Document.PersonNames.GetPersonNamesAsync(personFullInfo, token);
+    var oldFamilyName = existingNames.SingleOrDefault(name => name.Type == NameType.FamilyName);
+    if (oldFamilyName?.Id == newFamilyName.Id)
+    {
+      return personFullInfo;
+    }
+
+    return await Document.FamilyManager.MoveToFamilyAsync(personFullInfo, newFamilyName, token);
+  }
+
   public async Task<PersonInfo> AddPersonAsync(PersonFullInfo personFullInfo, CancellationToken token)
   {
     using var transaction = await Document.BeginTransactionAsync(token);
 
-    var familyName = personFullInfo.Names.SingleOrDefault(name => name.Type == NameType.FamilyName);
-    if (familyName is not null)
-    {
-      var requiredFamilyNames = await Document.FamilyManager.GetRequiredNames(familyName, personFullInfo, token);
-      personFullInfo = personFullInfo with { Names = [.. personFullInfo.Names, .. requiredFamilyNames] };
-    }
+    personFullInfo = await AttachFamilyIfChangedAsync(personFullInfo, token);
     var person = await Document.Persons.AddPersonAsync(personFullInfo, token);
 
     // Sequential: writes inside a transaction must take turns on the single connection.
@@ -140,6 +156,8 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
   public async Task UpdatePersonAsync(PersonFullInfo personFullInfo, CancellationToken token)
   {
     using var transaction = await Document.BeginTransactionAsync(token);
+
+    personFullInfo = await AttachFamilyIfChangedAsync(personFullInfo, token);
 
     // Re-buckets every photo's main/additional category to match personFullInfo.MainPhoto,
     // preserving each photo's tagged-vs-plain status.

@@ -1,12 +1,13 @@
 using GT4.Core.Project.Dto;
 using GT4.UI.Dialogs;
+using GT4.UI.Items;
 
 namespace GT4.UI.DeviceTests;
 
 /// <summary>
-/// Exposes CreateOrUpdatePersonDialog's OnAddPersonNameAsync seam: it pushes a modal SelectNameDialog,
-/// so the test needs to await its own continuation rather than go through the public DialogCommand,
-/// whose Execute is fire-and-forget.
+/// Exposes CreateOrUpdatePersonDialog's OnAddPersonNameAsync/OnEditPersonNameAsync seams: they push a
+/// modal SelectNameDialog, so the test needs to await its own continuation rather than go through the
+/// public DialogCommand, whose Execute is fire-and-forget.
 /// </summary>
 internal sealed class TestableCreateOrUpdatePersonDialog : CreateOrUpdatePersonDialog
 {
@@ -16,4 +17,6 @@ internal sealed class TestableCreateOrUpdatePersonDialog : CreateOrUpdatePersonD
   }
 
   public Task InvokeAddPersonNameAsync() => OnAddPersonNameAsync();
+
+  public Task InvokeEditPersonNameAsync(NameInfoItem nameInfoItem) => OnEditPersonNameAsync(nameInfoItem);
 }

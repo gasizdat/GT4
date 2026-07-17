@@ -250,4 +250,111 @@ public class CreateOrUpdatePersonDialogTests
 
     Assert.Contains(dialog.Names, item => item.Info.Id == newPatronymic.Id);
   }
+
+  [Fact]
+  public async Task EditNameCommand_on_a_family_row_opens_the_family_tab_and_swaps_the_family()
+  {
+    var services = new TestServices();
+    var familyA = N(20, "Smith", NameType.FamilyName);
+    var familyB = N(21, "Jones", NameType.FamilyName);
+    var person = CreateSamplePerson() with
+    {
+      Names = [N(1, "Ivan", NameType.FirstName | NameType.MaleDeclension), familyA]
+    };
+    services.Names
+      .Setup(n => n.GetNamesByTypeAsync(NameType.FamilyName, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([familyB]);
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    var dialog = await MainThread.InvokeOnMainThreadAsync(
+      () => new TestableCreateOrUpdatePersonDialog(person, services.Provider));
+    var familyItem = dialog.Names.Single(item => item.Info.Type == NameType.FamilyName);
+
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var editTask = await MainThreadTask.StartAsync(() => dialog.InvokeEditPersonNameAsync(familyItem));
+    var selectDialog = await ModalDialogHarness.WaitForModalAsync<SelectNameDialog>(dialog);
+    Assert.Equal(NameType.FamilyName, selectDialog.CurrentNameType.Type);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      selectDialog.CurrentName = selectDialog.Names!.Single(n => n.Info.Id == familyB.Id);
+      selectDialog.OnSelectName();
+    });
+    await editTask;
+
+    Assert.Contains(dialog.Names, item => item.Info.Id == familyB.Id);
+    Assert.DoesNotContain(dialog.Names, item => item.Info.Id == familyA.Id);
+  }
+
+  [Fact]
+  public async Task AddNameCommand_picking_a_second_family_supersedes_the_first()
+  {
+    // A person belongs to exactly one family -- PersonManager's SingleOrDefault throws on a second
+    // FamilyName -- so the add flow must never leave two behind.
+    var services = new TestServices();
+    var familyA = N(20, "Smith", NameType.FamilyName);
+    var familyB = N(21, "Jones", NameType.FamilyName);
+    var person = CreateSamplePerson() with
+    {
+      Names = [N(1, "Ivan", NameType.FirstName | NameType.MaleDeclension), familyA]
+    };
+    services.Names
+      .Setup(n => n.GetNamesByTypeAsync(NameType.FamilyName, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([familyA, familyB]);
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    var dialog = await MainThread.InvokeOnMainThreadAsync(
+      () => new TestableCreateOrUpdatePersonDialog(person, services.Provider));
+
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var addTask = await MainThreadTask.StartAsync(dialog.InvokeAddPersonNameAsync);
+    var selectDialog = await ModalDialogHarness.WaitForModalAsync<SelectNameDialog>(dialog);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      selectDialog.CurrentNameType = selectDialog.NameTypes.Single(t => t.Type == NameType.FamilyName);
+      selectDialog.CurrentName = selectDialog.Names!.Single(n => n.Info.Id == familyB.Id);
+      selectDialog.OnSelectName();
+    });
+    await addTask;
+
+    Assert.Single(dialog.Names, item => item.Info.Type == NameType.FamilyName);
+    Assert.Contains(dialog.Names, item => item.Info.Id == familyB.Id);
+    Assert.DoesNotContain(dialog.Names, item => item.Info.Id == familyA.Id);
+    // The unrelated first name is untouched.
+    Assert.Contains(dialog.Names, item => item.Info.Value == "Ivan");
+  }
+
+  [Fact]
+  public async Task EditNameCommand_turning_a_non_family_row_into_a_family_supersedes_the_existing_one()
+  {
+    var services = new TestServices();
+    var familyA = N(20, "Smith", NameType.FamilyName);
+    var familyB = N(21, "Jones", NameType.FamilyName);
+    var person = CreateSamplePerson() with
+    {
+      Names = [N(1, "Ivan", NameType.FirstName | NameType.MaleDeclension), familyA]
+    };
+    services.Names
+      .Setup(n => n.GetNamesByTypeAsync(NameType.FamilyName, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([familyA, familyB]);
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    var dialog = await MainThread.InvokeOnMainThreadAsync(
+      () => new TestableCreateOrUpdatePersonDialog(person, services.Provider));
+    var firstNameItem = dialog.Names.Single(item => item.Info.Value == "Ivan");
+
+    await using var window = await WindowHost.AttachAsync(dialog);
+    // Edit opens on the row's own tab, but nothing stops the user switching to the family tab.
+    var editTask = await MainThreadTask.StartAsync(() => dialog.InvokeEditPersonNameAsync(firstNameItem));
+    var selectDialog = await ModalDialogHarness.WaitForModalAsync<SelectNameDialog>(dialog);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      selectDialog.CurrentNameType = selectDialog.NameTypes.Single(t => t.Type == NameType.FamilyName);
+      selectDialog.CurrentName = selectDialog.Names!.Single(n => n.Info.Id == familyB.Id);
+      selectDialog.OnSelectName();
+    });
+    await editTask;
+
+    Assert.Single(dialog.Names, item => item.Info.Type == NameType.FamilyName);
+    Assert.Contains(dialog.Names, item => item.Info.Id == familyB.Id);
+  }
 }

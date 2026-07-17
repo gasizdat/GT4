@@ -79,6 +79,24 @@ internal class FamilyManager : ProjectComponentBase, IFamilyManager
     return names.ToArray();
   }
 
+  public async Task<TPerson> MoveToFamilyAsync<TPerson>(TPerson person, Name newFamilyName, CancellationToken token)
+    where TPerson : PersonInfo
+  {
+    if (newFamilyName.Type != NameType.FamilyName)
+    {
+      throw new ArgumentException($"{nameof(newFamilyName)} does not contain a family name");
+    }
+
+    var namesWithoutOldFamily = person.Names
+      .Where(n => n.Type != NameType.FamilyName && (n.Type & NameType.LastName) == 0)
+      .ToArray();
+
+    var stripped = person with { Names = namesWithoutOldFamily };
+    var requiredNames = await GetRequiredNames(newFamilyName, stripped, token);
+
+    return stripped with { Names = [.. namesWithoutOldFamily, .. requiredNames] };
+  }
+
   public async Task UpdateFamilyAsync(Name familyName, Name? maleLastName, Name? femaleLastName, CancellationToken token)
   {
     if (familyName.ParentId is not null)
