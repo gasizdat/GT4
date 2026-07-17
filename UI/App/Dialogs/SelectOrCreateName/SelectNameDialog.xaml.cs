@@ -32,7 +32,7 @@ public partial class SelectNameDialog : ContentPage
   {
     NameType[] allowedNameTypes = nameType is not null ?
       [nameType.Value] :
-      [NameType.FirstName, NameType.Patronymic, NameType.LastName, NameType.FamilyName];
+      [NameType.FirstName, NameType.Patronymic, NameType.LastName];
 
     _ServiceProvider = serviceProvider;
     _NameTypeFormatter = _ServiceProvider.GetRequiredService<INameTypeFormatter>();
@@ -88,10 +88,13 @@ public partial class SelectNameDialog : ContentPage
       }
 
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      var queryType = CurrentNameType.Type == NameType.FamilyName
+        ? NameType.FamilyName
+        : CurrentNameType.Type | _NameDeclension;
       _Names = _CurrentProjectProvider
         .Project
         .Names
-        .GetNamesByTypeAsync(CurrentNameType.Type | _NameDeclension, token)
+        .GetNamesByTypeAsync(queryType, token)
         .Result
         .Select(name => new NameInfoItem(name, _NameTypeFormatter))
         .OrderBy(name => name.Info, _NameComparer)
@@ -151,6 +154,7 @@ public partial class SelectNameDialog : ContentPage
         dialogNameType = NameType.FirstName | _NameDeclension;
         break;
       case NameType.LastName:
+      case NameType.FamilyName:
         dialogNameType = NameType.FamilyName;
         break;
       default:
