@@ -7,13 +7,6 @@ namespace GT4.UI.Items;
 
 public class FamilyInfoItem : CollectionItemBase<Name>
 {
-  // Sentinel family for persons that have no FamilyName-typed name; Id 0 never collides with a
-  // real name because SQLite rowids start at 1.
-  public static Name NoFamilyName { get; } = new(0, UIStrings.FamilyNameNoFamily, NameType.FamilyName, null);
-
-  public static bool HasNoFamily(PersonInfo person) =>
-    !person.Names.Any(name => name.Type.HasFlag(NameType.FamilyName));
-
   private readonly FilteredObservableCollection<PersonInfo> _Persons = new();
   private readonly int _TotalPersonsCount;
 
@@ -24,6 +17,13 @@ public class FamilyInfoItem : CollectionItemBase<Name>
     _Persons.Filter = personsFilter;
     _Persons.AddRange(persons);
   }
+
+  // Sentinel family for persons that have no FamilyName-typed name; Id 0 never collides with a
+  // real name because SQLite rowids start at 1.
+  public static Name NoFamilyName { get; } = new(0, UIStrings.FamilyNameNoFamily, NameType.FamilyName, null);
+
+  public static bool HasNoFamily(PersonInfo person) =>
+    !person.Names.Any(name => name.Type.HasFlag(NameType.FamilyName));
 
   public ObservableCollection<PersonInfo> Persons => _Persons.Items;
 
