@@ -105,17 +105,7 @@ public class AndroidFileSystem : IFileSystem
       args.Add(ToLikePattern(searchPattern));
     }
 
-    query.Add($"{MediaStore.IMediaColumns.IsPending}=0");
-
-    // Exclude items scheduled for purge from Trash
-    // (DATE_EXPIRES is usually set for trashed items; use if you prefer)
-    query.Add($"{MediaStore.IMediaColumns.DateExpires} IS NULL");
-
-    if (Build.VERSION.SdkInt >= BuildVersionCodes.R) // API 30+
-    {
-      // Exclude pending & trashed     
-      query.Add($"{MediaStore.IMediaColumns.IsTrashed}=0");
-    }
+    AddLiveItemFilters(query);
 
     using var cursor = AndroidApplication.Context.ContentResolver?.Query(
       externalStorageUri,
@@ -155,6 +145,63 @@ public class AndroidFileSystem : IFileSystem
         MimeType: mimeType);
 
       ret[fileDescription] = uri;
+    }
+
+    return ret;
+#pragma warning restore CA1416
+  }
+
+  private static void AddLiveItemFilters(List<string> query)
+  {
+#pragma warning disable CA1416
+    query.Add($"{MediaStore.IMediaColumns.IsPending}=0");
+
+    // Exclude items scheduled for purge from Trash
+    // (DATE_EXPIRES is usually set for trashed items; use if you prefer)
+    query.Add($"{MediaStore.IMediaColumns.DateExpires} IS NULL");
+
+    if (Build.VERSION.SdkInt >= BuildVersionCodes.R) // API 30+
+    {
+      // Exclude pending & trashed
+      query.Add($"{MediaStore.IMediaColumns.IsTrashed}=0");
+    }
+#pragma warning restore CA1416
+  }
+
+  // For duplicate (RelativePath, DisplayName) rows the oldest live row wins, preserving the
+  // historical GetFilesUri dictionary-overwrite behavior under the DateModified DESC sort.
+  private static Android.Net.Uri? TryGetFileUri(FileDescription fileDescription)
+  {
+#pragma warning disable CA1416
+    var externalStorageUri = GetExternalStorageUri();
+    var query = new List<string>
+    {
+      $"{MediaStore.IMediaColumns.RelativePath}=?",
+      $"{MediaStore.IMediaColumns.DisplayName}=?"
+    };
+    var args = new List<string>
+    {
+      EnsureTrailingSlash(GetRelativePath(fileDescription.Directory)),
+      fileDescription.FileName
+    };
+    AddLiveItemFilters(query);
+
+    using var cursor = AndroidApplication.Context.ContentResolver?.Query(
+      externalStorageUri,
+      [IBaseColumns.Id],
+      string.Join(" AND ", query),
+      args.ToArray(),
+      $"{MediaStore.IMediaColumns.DateModified} DESC");
+
+    Android.Net.Uri? ret = null;
+    while (cursor?.MoveToNext() == true)
+    {
+      var documentId = cursor.GetLong(cursor.GetColumnIndexOrThrow(IBaseColumns.Id));
+      var uri = ContentUris.WithAppendedId(externalStorageUri, documentId);
+      if (ResourceExists(uri))
+      {
+        ret = uri;
+      }
     }
 
     return ret;
@@ -203,8 +250,8 @@ public class AndroidFileSystem : IFileSystem
       return;
     }
 
-    var uris = GetFilesUri(fileDescription.Directory, string.Empty, false);
-    if (uris.TryGetValue(fileDescription, out var uri))
+    var uri = TryGetFileUri(fileDescription);
+    if (uri is not null)
     {
       AndroidApplication.Context.ContentResolver?.Delete(uri, null, null);
     }
@@ -231,8 +278,8 @@ public class AndroidFileSystem : IFileSystem
 
     Stream outStream;
 
-    var uris = GetFilesUri(fileDescription.Directory, string.Empty, false);
-    if (uris.TryGetValue(fileDescription, out var uri))
+    var uri = TryGetFileUri(fileDescription);
+    if (uri is not null)
     {
       outStream = AndroidApplication.Context.ContentResolver?.OpenOutputStream(uri, "wt")
                     ?? throw new IOException("Failed to open output stream to write.");
@@ -262,8 +309,8 @@ public class AndroidFileSystem : IFileSystem
       return _DirectAccessFileSystem.OpenReadStream(fileDescription);
     }
 
-    var uris = GetFilesUri(fileDescription.Directory, string.Empty, false);
-    if (!uris.TryGetValue(fileDescription, out var uri))
+    var uri = TryGetFileUri(fileDescription);
+    if (uri is null)
     {
       throw new IOException($"The file {fileDescription} doesn't exist");
     }
@@ -303,10 +350,8 @@ public class AndroidFileSystem : IFileSystem
     {
       return _DirectAccessFileSystem.FileExists(fileDescription);
     }
-    var uris = GetFilesUri(fileDescription.Directory, string.Empty, false);
-
-    var ret = uris.TryGetValue(fileDescription, out var uri) && uri is not null;
-    return ret;
+    var uri = TryGetFileUri(fileDescription);
+    return uri is not null;
   }
 
   public DateTime GetLastWriteTime(FileDescription fileDescription)
