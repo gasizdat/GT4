@@ -20,8 +20,6 @@ internal class DateFormatter : IDateFormatter
 
   public string ToString(Date? date)
   {
-    // TODO Apply Date.Sign
-
     if (date.HasValue)
     {
       var year = () => YearToString(date.Value);
@@ -47,6 +45,10 @@ internal class DateFormatter : IDateFormatter
   protected static string YearToString(Date date)
   {
     var ret = date.Year.ToString();
+    if (date.Sign < 0)
+    {
+      ret = string.Format(UIStrings.DateEraBeforeChrist_1, ret);
+    }
 
     return ret;
   }

@@ -395,6 +395,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {0} B.C..
+        /// </summary>
+        public static string DateEraBeforeChrist_1 {
+            get {
+                return ResourceManager.GetString("DateEraBeforeChrist_1", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to not defined.
         /// </summary>
         public static string DateStatusNotDefined {

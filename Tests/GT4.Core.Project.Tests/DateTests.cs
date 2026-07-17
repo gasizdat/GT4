@@ -147,6 +147,26 @@ public sealed class DateTests
   }
 
   [Fact]
+  public void LessThan_BothBeforeCommonEra_LargerYearIsEarlier()
+  {
+    var earlier = Date.Create(-2000000, DateStatus.MonthUnknown); // 200 B.C.
+    var later = Date.Create(-1000000, DateStatus.MonthUnknown); // 100 B.C.
+
+    (earlier < later).Should().BeTrue();
+    (later < earlier).Should().BeFalse();
+  }
+
+  [Fact]
+  public void LessThan_SameYearBeforeCommonEra_MonthsRunForward()
+  {
+    var january = Date.Create(-500100, DateStatus.DayUnknown); // Jan 50 B.C.
+    var march = Date.Create(-500300, DateStatus.DayUnknown); // Mar 50 B.C.
+
+    (january < march).Should().BeTrue();
+    (march < january).Should().BeFalse();
+  }
+
+  [Fact]
   public void GreaterThan_IsTrue_OnlyWhenStrictlyLater()
   {
     var earlier = Date.Create(20200101, DateStatus.WellKnown);
@@ -247,6 +267,52 @@ public sealed class DateTests
     span.Months.Should().Be(0);
     span.Days.Should().Be(0);
     span.Status.Should().Be(status);
+  }
+
+  [Fact]
+  public void Difference_AcrossEraBoundary_HasNoYearZero()
+  {
+    var from = Date.Create(-20101, DateStatus.WellKnown); // 1 Jan 2 B.C.
+    var to = Date.Create(20101, DateStatus.WellKnown); // 1 Jan 2 A.D.
+
+    var span = to - from;
+
+    // 2 B.C. -> 1 B.C. -> 1 A.D. -> 2 A.D.
+    span.Years.Should().Be(3);
+    span.Months.Should().Be(0);
+    span.Days.Should().Be(0);
+  }
+
+  [Fact]
+  public void Difference_BothBeforeCommonEra_ReturnsYearGap()
+  {
+    var from = Date.Create(-2000000, DateStatus.MonthUnknown); // 200 B.C.
+    var to = Date.Create(-1000000, DateStatus.MonthUnknown); // 100 B.C.
+
+    var span = to - from;
+
+    span.Years.Should().Be(100);
+  }
+
+  [Fact]
+  public void Difference_BothBeforeCommonEra_BorrowsMonths()
+  {
+    var from = Date.Create(-1000300, DateStatus.DayUnknown); // Mar 100 B.C.
+    var to = Date.Create(-500100, DateStatus.DayUnknown); // Jan 50 B.C.
+
+    var span = to - from;
+
+    span.Years.Should().Be(49);
+    span.Months.Should().Be(10);
+  }
+
+  [Fact]
+  public void Difference_SwapsOperands_AcrossEraBoundary()
+  {
+    var from = Date.Create(-20101, DateStatus.WellKnown);
+    var to = Date.Create(20101, DateStatus.WellKnown);
+
+    (from - to).Should().Be(to - from);
   }
 
   [Fact]
