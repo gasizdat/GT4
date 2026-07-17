@@ -54,9 +54,9 @@ public partial class FamilyPage : ContentPage
     InitializeComponent();
 
     FilterView.Initialize(
-      biologicalSexFormatter, 
-      _CancellationTokenProvider, 
-      _CurrentProjectProvider, 
+      biologicalSexFormatter,
+      _CancellationTokenProvider,
+      _CurrentProjectProvider,
       _AlertService,
       () => [.. _Persons.AllItems]);
     FilterView.Changed += (_, _) => _Persons.Update();
@@ -68,15 +68,12 @@ public partial class FamilyPage : ContentPage
     set
     {
       _FamilyName = value;
-      if (IsNoFamilyMode)
-      {
-        RemoveFamilyActionToolbarItems();
-      }
       _PersonsLoaded = false;
       OnPropertyChanged(nameof(Persons));
       OnPropertyChanged(nameof(FamilyName));
       OnPropertyChanged(nameof(RemoveFamilyToolbarItemName));
       OnPropertyChanged(nameof(EditFamilyToolbarItemName));
+      OnPropertyChanged(nameof(EnableFamilyChanges));
     }
   }
 
@@ -108,7 +105,7 @@ public partial class FamilyPage : ContentPage
           var allPersons = await project
             .PersonManager
             .GetPersonInfosAsync(selectMainPhoto: true, token);
-          persons = allPersons.Where(FamilyInfoItem.HasNoFamily).ToArray();
+          persons = [.. allPersons.Where(FamilyInfoItem.HasNoFamily)];
         }
         else
         {
@@ -145,6 +142,8 @@ public partial class FamilyPage : ContentPage
   public string EditFamilyToolbarItemName =>
     string.Format(UIStrings.MenuItemNameEdit_1, _FamilyName?.Value ?? string.Empty);
 
+  public bool EnableFamilyChanges => !IsNoFamilyMode;
+
   protected override void OnSizeAllocated(double width, double height)
   {
     const double PercentageOfWidth = 0.9;
@@ -157,20 +156,6 @@ public partial class FamilyPage : ContentPage
   }
 
   private bool IsNoFamilyMode => _FamilyName?.Id == FamilyInfoItem.NoFamilyName.Id;
-
-  // The pseudo "No family" listing has no family name to remove or edit; MAUI toolbar items have no
-  // visibility binding, so they are dropped in code-behind.
-  private void RemoveFamilyActionToolbarItems()
-  {
-    var familyActions = ToolbarItems
-      .Where(item => item.CommandParameter is "RemoveFamily" or "EditFamily")
-      .ToArray();
-
-    foreach (var item in familyActions)
-    {
-      ToolbarItems.Remove(item);
-    }
-  }
 
   private async Task OnDeleteFamily()
   {

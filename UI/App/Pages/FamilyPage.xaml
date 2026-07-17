@@ -14,11 +14,13 @@
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="RemoveFamily"
+        IsEnabled="{Binding EnableFamilyChanges, Source={x:Reference Root}}"
         Order="Secondary"
         Text="{Binding RemoveFamilyToolbarItemName, Source={x:Reference Root}}" />
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="EditFamily"
+        IsEnabled="{Binding EnableFamilyChanges, Source={x:Reference Root}}"
         Order="Secondary"
         Text="{Binding EditFamilyToolbarItemName, Source={x:Reference Root}}" />
     <ToolbarItem
