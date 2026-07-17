@@ -80,22 +80,6 @@ public partial class FamilyPage : ContentPage
     }
   }
 
-  private bool IsNoFamilyMode => _FamilyName?.Id == FamilyInfoItem.NoFamilyName.Id;
-
-  // The pseudo "No family" listing has no family name to remove or edit; MAUI toolbar items have no
-  // visibility binding, so they are dropped in code-behind.
-  private void RemoveFamilyActionToolbarItems()
-  {
-    var familyActions = ToolbarItems
-      .Where(item => item.CommandParameter is "RemoveFamily" or "EditFamily")
-      .ToArray();
-
-    foreach (var item in familyActions)
-    {
-      ToolbarItems.Remove(item);
-    }
-  }
-
   public double PersonItemMinimalWidth => _PersonItemMinimalWidth;
 
   public ICommand MemberItemTappedCommand { get; init; }
@@ -170,6 +154,22 @@ public partial class FamilyPage : ContentPage
     _PersonItemMinimalWidth = width * PercentageOfWidth / ItemsPerRow;
 
     OnPropertyChanged(nameof(PersonItemMinimalWidth));
+  }
+
+  private bool IsNoFamilyMode => _FamilyName?.Id == FamilyInfoItem.NoFamilyName.Id;
+
+  // The pseudo "No family" listing has no family name to remove or edit; MAUI toolbar items have no
+  // visibility binding, so they are dropped in code-behind.
+  private void RemoveFamilyActionToolbarItems()
+  {
+    var familyActions = ToolbarItems
+      .Where(item => item.CommandParameter is "RemoveFamily" or "EditFamily")
+      .ToArray();
+
+    foreach (var item in familyActions)
+    {
+      ToolbarItems.Remove(item);
+    }
   }
 
   private async Task OnDeleteFamily()
