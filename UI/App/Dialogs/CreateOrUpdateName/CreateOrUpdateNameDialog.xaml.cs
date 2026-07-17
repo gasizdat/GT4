@@ -1,9 +1,11 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.Abstraction;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
+using System.Windows.Input;
 
 namespace GT4.UI.Dialogs;
 
@@ -14,6 +16,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   private readonly NameType _NameType;
   private readonly TaskCompletionSource<FamilyInfo?> _Info = new(null);
   private readonly string _DialogButtonName;
+  private readonly ICommand _DialogCommand;
   private string _GeneralName = string.Empty;
   private string _MaleName = string.Empty;
   private string _FemaleName = string.Empty;
@@ -38,10 +41,11 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     }
   }
 
-  public CreateOrUpdateNameDialog(NameType nameType, INameTypeFormatter nameTypeFormatter)
+  public CreateOrUpdateNameDialog(NameType nameType, INameTypeFormatter nameTypeFormatter, IAlertService alertService)
   {
     var nameTypeName = nameTypeFormatter.ToString(nameType);
     _DialogButtonName = string.Format(UIStrings.BtnNameCreateName_1, nameTypeName);
+    _DialogCommand = new SafeCommand(OnCreateFamily, alertService);
 
     switch (nameType)
     {
@@ -66,8 +70,8 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     IsModified = false;
   }
 
-  public CreateOrUpdateNameDialog(Name name, Name? maleName, Name? femaleName, INameTypeFormatter nameTypeFormatter)
-    : this(name.Type, nameTypeFormatter)
+  public CreateOrUpdateNameDialog(Name name, Name? maleName, Name? femaleName, INameTypeFormatter nameTypeFormatter, IAlertService alertService)
+    : this(name.Type, nameTypeFormatter, alertService)
   {
     var nameTypeName = nameTypeFormatter.ToString(name.Type);
     _DialogButtonName = string.Format(UIStrings.BtnNameUpdateName_1, nameTypeName);
@@ -242,7 +246,9 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     }
   }
 
-  public void OnCreateFamilyBtn(object sender, EventArgs e)
+  public ICommand DialogCommand => _DialogCommand;
+
+  private void OnCreateFamily()
   {
     _Info.SetResult(NotReady ? null : new(GeneralName, ShowDeclensionNames ? MaleName : string.Empty, ShowDeclensionNames ? FemaleName : string.Empty));
   }
@@ -254,6 +260,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     ICurrentProjectProvider currentProjectProvider,
     ICancellationTokenProvider cancellationTokenProvider,
     INameTypeFormatter nameTypeFormatter,
+    IAlertService alertService,
     INavigation navigation)
   {
     async Task<NamesGroup> GetNameWithSubnames()
@@ -294,7 +301,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
       };
     var focusGenericName = isOrphanDeclension ||
       name.Type.HasFlag(NameType.FirstName) || name.Type.HasFlag(NameType.FamilyName);
-    var dialog = new CreateOrUpdateNameDialog(names.FirstName, names.MaleName, names.FemaleName, nameTypeFormatter)
+    var dialog = new CreateOrUpdateNameDialog(names.FirstName, names.MaleName, names.FemaleName, nameTypeFormatter, alertService)
     {
       FocusGenericName = focusGenericName,
       FocusMaleName = !focusGenericName && name.Type.HasFlag(NameType.MaleDeclension),

@@ -219,7 +219,7 @@ public class ProjectPageTests
     {
       dialog.ProjectName = "Renamed Project";
       dialog.ProjectDescription = "New description";
-      dialog.OnCreateProjectBtn(dialog, EventArgs.Empty);
+      dialog.DialogCommand.Execute(null);
     });
     await commandTask;
 
@@ -239,12 +239,12 @@ public class ProjectPageTests
     var commandTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("EditProject"));
     var dialog = await ModalDialogHarness.WaitForModalAsync<CreateOrUpdateProjectDialog>(page);
 
-    // Clearing the name makes the dialog's own OnCreateProjectBtn produce Name == string.Empty,
+    // Clearing the name makes the dialog's own command produce Name == string.Empty,
     // which ProjectPage treats as cancelled.
     await MainThread.InvokeOnMainThreadAsync(() =>
     {
       dialog.ProjectName = "";
-      dialog.OnCreateProjectBtn(dialog, EventArgs.Empty);
+      dialog.DialogCommand.Execute(null);
     });
     await commandTask;
 
@@ -267,7 +267,7 @@ public class ProjectPageTests
       dialog.GeneralName = "Ivanov";
       dialog.MaleName = "Ivan";
       dialog.FemaleName = "Ivanova";
-      dialog.OnCreateFamilyBtn(dialog, EventArgs.Empty);
+      dialog.DialogCommand.Execute(null);
     });
     await commandTask;
 
@@ -286,7 +286,7 @@ public class ProjectPageTests
     var commandTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("CreateFamily"));
     var dialog = await ModalDialogHarness.WaitForModalAsync<CreateOrUpdateNameDialog>(page);
 
-    await MainThread.InvokeOnMainThreadAsync(() => dialog.OnCreateFamilyBtn(dialog, EventArgs.Empty));
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.DialogCommand.Execute(null));
     await commandTask;
 
     services.FamilyManager.Verify(

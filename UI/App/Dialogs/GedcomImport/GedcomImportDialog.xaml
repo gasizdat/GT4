@@ -40,7 +40,7 @@
 
     <components:PageLayout.Footer>
       <Button
-          Clicked="OnCancelBtn"
+          Command="{Binding DialogCommand, Source={x:Reference Root}}"
           FontSize="{DynamicResource ActionButtonTextSize}"
           HorizontalOptions="Fill"
           IsEnabled="{Binding CanCancel, Source={x:Reference Root}}"

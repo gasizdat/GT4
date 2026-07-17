@@ -137,7 +137,7 @@ public partial class ProjectListPage : ContentPage
 
   private async Task OnCreateProject()
   {
-    var dialog = new CreateOrUpdateProjectDialog(null);
+    var dialog = new CreateOrUpdateProjectDialog(null, _AlertService);
 
     await Navigation.PushModalAsync(dialog);
     var projectInfo = await dialog.ProjectInfo;
@@ -165,7 +165,7 @@ public partial class ProjectListPage : ContentPage
     var name = Path.GetFileNameWithoutExtension(file.FileName);
     var description = UIStrings.HintImportedFromGedcom;
 
-    var dialog = new GedcomImportDialog(name);
+    var dialog = new GedcomImportDialog(name, _AlertService);
     await Navigation.PushModalAsync(dialog);
     ProjectInfo? info = null;
     try

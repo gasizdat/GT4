@@ -82,7 +82,7 @@ public partial class SelectRelativesDialog : ContentPage
 
   private async Task OnRelationshipDateSetupAsync()
   {
-    var dialog = new SelectDateDialog(date: _RelationshipDate, dateFormatter: _DateFormatter);
+    var dialog = new SelectDateDialog(date: _RelationshipDate, dateFormatter: _DateFormatter, alertService: _AlertService);
 
     await Navigation.PushModalAsync(dialog);
     var date = await dialog.Info;

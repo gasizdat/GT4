@@ -23,7 +23,8 @@
       <Button
           x:Name="ClearFiltersButton"
           Grid.Column="1"
-          Clicked="OnClearFiltersClicked"
+          Command="{Binding FilterCommand, Source={x:Reference Root}}"
+          CommandParameter="ClearFiltersCommand"
           HorizontalOptions="End"
           Style="{StaticResource DeleteAdorner}"
           ToolTipProperties.Text="{x:Static resources:UIStrings.BtnNameClearFilters}"
@@ -38,7 +39,8 @@
       <Button
           x:Name="ToggleFiltersButton"
           Grid.Column="2"
-          Clicked="OnToggleFiltersClicked"
+          Command="{Binding FilterCommand, Source={x:Reference Root}}"
+          CommandParameter="ToggleFiltersCommand"
           HorizontalOptions="End"
           Style="{StaticResource TextAdorner}" />
     </Grid>

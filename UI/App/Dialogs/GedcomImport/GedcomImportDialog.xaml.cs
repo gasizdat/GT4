@@ -1,4 +1,6 @@
+using GT4.UI.Abstraction;
 using GT4.UI.Resources;
+using System.Windows.Input;
 
 namespace GT4.UI.Dialogs;
 
@@ -7,11 +9,13 @@ namespace GT4.UI.Dialogs;
 public partial class GedcomImportDialog : ContentPage
 {
   private readonly CancellationTokenSource _Cancellation = new();
+  private readonly ICommand _DialogCommand;
   private bool _Cancelling;
 
-  public GedcomImportDialog(string importingProjectName)
+  public GedcomImportDialog(string importingProjectName, IAlertService alertService)
   {
     ImportingProjectName = importingProjectName;
+    _DialogCommand = new SafeCommand(Cancel, alertService);
     InitializeComponent();
   }
 
@@ -25,7 +29,7 @@ public partial class GedcomImportDialog : ContentPage
     ? UIStrings.HintGedcomImportCancelling
     : UIStrings.HintGedcomImportInProgress;
 
-  public void OnCancelBtn(object sender, EventArgs e) => Cancel();
+  public ICommand DialogCommand => _DialogCommand;
 
   // The hardware back button would otherwise dismiss the modal and leave the import running headless;
   // route it to cancellation and swallow the dismissal.
