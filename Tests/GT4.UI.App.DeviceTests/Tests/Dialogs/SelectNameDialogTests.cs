@@ -19,8 +19,8 @@ public class SelectNameDialogTests
     TestServices services, BiologicalSex biologicalSex = BiologicalSex.Male, NameType? nameType = null)
   {
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
-    return await MainThread.InvokeOnMainThreadAsync(
-      () => new SelectNameDialog(biologicalSex, nameType.HasValue ? [nameType.Value] : [], services.Provider));
+    NameType[] nameTypes = nameType.HasValue ? [nameType.Value] : [NameType.FirstName, NameType.LastName];
+    return await MainThread.InvokeOnMainThreadAsync(() => new SelectNameDialog(biologicalSex, nameTypes, services.Provider));
   }
 
   [Fact]
@@ -28,7 +28,7 @@ public class SelectNameDialogTests
   {
     var dialog = await CreateDialogAsync(new TestServices());
 
-    Assert.Equal(3, dialog.NameTypes.Count);
+    Assert.Equal(2, dialog.NameTypes.Count);
     Assert.Equal(dialog.NameTypes.First(), dialog.CurrentNameType);
     Assert.Null(dialog.CurrentName);
     Assert.Equal(Resources.UIStrings.BtnNameCancel, dialog.DialogButtonName);

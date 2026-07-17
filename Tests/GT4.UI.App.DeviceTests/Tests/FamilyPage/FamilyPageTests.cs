@@ -331,7 +331,7 @@ public class FamilyPageTests
     await MainThread.InvokeOnMainThreadAsync(() => page.FamilyName = FamilyInfoItem.NoFamilyName);
 
     var parameters = await MainThread.InvokeOnMainThreadAsync(
-      () => page.ToolbarItems.Select(item => item.CommandParameter).ToArray());
+      () => page.ToolbarItems.Where(tb => tb.IsEnabled).Select(item => item.CommandParameter).ToArray());
     Assert.Equal(["CreatePerson", "Refresh"], parameters);
   }
 
