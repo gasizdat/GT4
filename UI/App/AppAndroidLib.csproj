@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+	  <TargetFrameworks>net10.0-android</TargetFrameworks>
+  </PropertyGroup>
+
+  <Import Project="AppCommon.props" />
+
+  <!-- Library head for the Android device-test host: it needs the app's pages as an assembly,
+       not an installable app. The app's own MainActivity/MainApplication must not be compiled in,
+       or Android's manifest merge fails on the duplicate [Application] with the test host's. -->
+  <PropertyGroup>
+	  <OutputType>Library</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+	  <Compile Remove="Platforms\**" />
+  </ItemGroup>
+
+</Project>
