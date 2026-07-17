@@ -19,7 +19,8 @@ public class SelectNameDialogTests
     TestServices services, BiologicalSex biologicalSex = BiologicalSex.Male, NameType? nameType = null)
   {
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
-    return await MainThread.InvokeOnMainThreadAsync(() => new SelectNameDialog(biologicalSex, nameType, services.Provider));
+    return await MainThread.InvokeOnMainThreadAsync(
+      () => new SelectNameDialog(biologicalSex, nameType.HasValue ? [nameType.Value] : [], services.Provider));
   }
 
   [Fact]
