@@ -92,6 +92,27 @@ public class CreateOrUpdatePersonDialogTests
   }
 
   [Fact]
+  public async Task RemoveNameCommand_does_not_remove_a_FamilyName_even_when_invoked_directly()
+  {
+    // The delete adorner's IsVisible={Binding CanBeRemoved} hides the button for a FamilyName, but
+    // that's a view-layer guard only; the command handler itself must also refuse, since any other
+    // caller of DialogCommand (as this test does) bypasses the hidden button entirely.
+    var familyName = N(2, "Ivanov", NameType.FamilyName);
+    var person = CreateSamplePerson() with
+    {
+      Names = [N(1, "Ivan", NameType.FirstName | NameType.MaleDeclension), familyName]
+    };
+    var dialog = await CreateDialogAsync(new TestServices(), person);
+    var name = dialog.Names.Single(n => n.Info.Type == NameType.FamilyName);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+      dialog.DialogCommand.Execute(Adorner("RemoveNameCommand", name)));
+
+    Assert.Contains(dialog.Names, item => item.Info.Id == familyName.Id);
+    Assert.Equal(Resources.UIStrings.BtnNameCancel, dialog.DialogButtonName);
+  }
+
+  [Fact]
   public async Task MoveNameDownCommand_reorders_names()
   {
     var services = new TestServices();

@@ -145,7 +145,7 @@ public partial class SelectNameDialog : ContentPage
   public async Task OnAddNameAsync()
   {
     NameType dialogNameType;
-    switch (_CurrentNameType.Type)
+    switch (_CurrentNameType.Type & NameType.NoDeclension)
     {
       case NameType.Patronymic:
         dialogNameType = NameType.FirstName | NameType.MaleDeclension;

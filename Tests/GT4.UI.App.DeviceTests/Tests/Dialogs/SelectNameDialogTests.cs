@@ -173,4 +173,34 @@ public class SelectNameDialogTests
       f => f.AddFamilyAsync("Petrov", "Petrov", "Petrova", It.IsAny<CancellationToken>()), Times.Once());
     Assert.Equal(newFamily.Id, dialog.CurrentName?.Info.Id);
   }
+
+  [Fact]
+  public async Task OnAddNameAsync_when_current_type_carries_a_declension_bit_still_creates_a_name()
+  {
+    // Edit mode (CreateOrUpdatePersonDialog.OnEditPersonNameAsync) filters this dialog to the
+    // edited name's own stored type, which always carries a declension bit (e.g.
+    // FirstName|MaleDeclension) -- OnAddNameAsync must strip that bit before switching on it, or it
+    // silently falls through to `default: return` and the Add button becomes a no-op.
+    var services = new TestServices();
+    var newFirstName = N(7, "Petr", NameType.FirstName | NameType.MaleDeclension);
+    services.Names
+      .Setup(n => n.AddFirstMaleNameAsync("Petr", "Petrovich", "Petrovna", It.IsAny<CancellationToken>()))
+      .ReturnsAsync(newFirstName);
+    var dialog = await CreateDialogAsync(services, nameType: NameType.FirstName | NameType.MaleDeclension);
+    await using var window = await WindowHost.AttachAsync(dialog);
+
+    var addTask = await MainThreadTask.StartAsync(dialog.OnAddNameAsync);
+    var nameDialog = await ModalDialogHarness.WaitForModalAsync<CreateOrUpdateNameDialog>(dialog);
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      nameDialog.GeneralName = "Petr";
+      nameDialog.MaleName = "Petrovich";
+      nameDialog.FemaleName = "Petrovna";
+      nameDialog.OnCreateFamilyBtn(nameDialog, EventArgs.Empty);
+    });
+    await addTask;
+
+    services.Names.Verify(
+      n => n.AddFirstMaleNameAsync("Petr", "Petrovich", "Petrovna", It.IsAny<CancellationToken>()), Times.Once());
+  }
 }

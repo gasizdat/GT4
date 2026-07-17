@@ -482,7 +482,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         await OnEditPersonNameAsync(name);
         IsModified = true;
         break;
-      case AdornerCommandParameter adorner when adorner.CommandName == "RemoveNameCommand" && adorner.Element is NameInfoItem name:
+      case AdornerCommandParameter adorner when adorner.CommandName == "RemoveNameCommand" && adorner.Element is NameInfoItem { CanBeRemoved: true } name:
         _Names.Remove(name);
         IsModified = true;
         break;
