@@ -80,6 +80,58 @@ public class ProjectPageTests
   }
 
   [Fact]
+  public async Task Familyless_persons_are_grouped_into_a_No_family_pseudo_card_shown_last()
+  {
+    var services = new TestServices();
+    var ivanov = N(1, "Ivanov", NameType.FamilyName);
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([ivanov]);
+    services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([InFamily(P(1, "John"), ivanov), P(2, "Orphan")]);
+    var page = await CreatePageAsync(services);
+
+    var families = await page.WaitForFamiliesAsync();
+
+    Assert.Equal(["Ivanov", FamilyInfoItem.NoFamilyName.Value], families.Select(f => f.Info.Value));
+    Assert.Equal(FamilyInfoItem.NoFamilyName, families[^1].Info);
+    Assert.Equal(["Orphan"], families[^1].Persons.Select(p => p.DisplayName));
+  }
+
+  [Fact]
+  public async Task No_family_pseudo_card_is_absent_when_every_person_has_a_family()
+  {
+    var services = new TestServices();
+    var ivanov = N(1, "Ivanov", NameType.FamilyName);
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([ivanov]);
+    services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([InFamily(P(1, "John"), ivanov)]);
+    var page = await CreatePageAsync(services);
+
+    var families = await page.WaitForFamiliesAsync();
+
+    var family = Assert.Single(families);
+    Assert.Equal("Ivanov", family.Info.Value);
+  }
+
+  [Fact]
+  public async Task No_family_pseudo_card_is_hidden_when_the_filter_excludes_all_its_persons()
+  {
+    var services = new TestServices();
+    var ivanov = N(1, "Ivanov", NameType.FamilyName);
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([ivanov]);
+    services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([InFamily(P(1, "John"), ivanov), P(2, "Orphan")]);
+    var page = await CreatePageAsync(services);
+    await page.WaitForFamiliesAsync();
+
+    var nameEntry = page.FilterView.FindByName<Entry>("NameFilterEntry");
+    await MainThread.InvokeOnMainThreadAsync(() => nameEntry.Text = "John");
+    var families = await MainThread.InvokeOnMainThreadAsync(() => page.Families.ToArray());
+
+    var family = Assert.Single(families);
+    Assert.Equal("Ivanov", family.Info.Value);
+  }
+
+  [Fact]
   public async Task Families_reports_non_teardown_exceptions_via_AlertService()
   {
     var services = new TestServices();

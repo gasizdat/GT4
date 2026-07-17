@@ -433,6 +433,9 @@ genealogy tree and enjoy!</value>
   <data name="BtnNameCreateFamily" xml:space="preserve">
     <value>Create a Family</value>
   </data>
+  <data name="FamilyNameNoFamily" xml:space="preserve">
+    <value>No family</value>
+  </data>
   <data name="BtnNameUpdateName_1" xml:space="preserve">
     <value>Update the {0}</value>
   </data>

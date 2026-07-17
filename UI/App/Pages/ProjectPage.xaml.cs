@@ -126,6 +126,15 @@ public partial class ProjectPage : ContentPage
         .OrderBy(item => item.Info, _NameComparer)
         .ToList();
 
+      var familylessPersons = persons
+        .Where(FamilyInfoItem.HasNoFamily)
+        .OrderBy(item => item, _PersonInfoComparer)
+        .ToArray();
+      if (familylessPersons.Length > 0)
+      {
+        families.Add(new FamilyInfoItem(FamilyInfoItem.NoFamilyName, familylessPersons, (_, person) => FilterView.Matches(person)));
+      }
+
       await SafeTask.RunOnMainThread(() => _Families.AddRange(families), _AlertService);
     }
 

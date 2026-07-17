@@ -2,6 +2,7 @@ using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Dialogs;
+using GT4.UI.Items;
 using GT4.UI.Pages;
 using GT4.UI.Resources;
 using Moq;
@@ -20,6 +21,8 @@ public class FamilyPageTests
 
   private static PersonInfo P(int id, string firstName) =>
     new(id, default(Date), null, BiologicalSex.Male, [N(id * 100, firstName, NameType.FirstName)], null);
+
+  private static PersonInfo InFamily(PersonInfo person, Name family) => person with { Names = [.. person.Names, family] };
 
   private static async Task<TestableFamilyPage> CreatePageAsync(TestServices services)
   {
@@ -299,6 +302,65 @@ public class FamilyPageTests
 
     services.PersonManager.Verify(
       p => p.AddPersonAsync(It.IsAny<PersonFullInfo>(), It.IsAny<CancellationToken>()), Times.Never());
+  }
+
+  [Fact]
+  public async Task NoFamily_mode_lists_only_persons_without_a_family_name()
+  {
+    var services = new TestServices();
+    var ivanov = N(5, "Ivanov", NameType.FamilyName);
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([P(1, "Anna"), InFamily(P(2, "Boris"), ivanov)]);
+    var page = await CreatePageAsync(services);
+
+    var persons = await page.ReloadPersonsAsync(() => page.FamilyName = FamilyInfoItem.NoFamilyName);
+
+    Assert.Equal(["Anna"], persons.Select(p => p.DisplayName));
+    services.PersonManager.Verify(
+      p => p.GetPersonInfosByNameAsync(It.IsAny<Name>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()),
+      Times.Never());
+  }
+
+  [Fact]
+  public async Task NoFamily_mode_drops_the_remove_and_edit_family_toolbar_items()
+  {
+    var page = await CreatePageAsync(new TestServices());
+    Assert.Equal(4, page.ToolbarItems.Count);
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.FamilyName = FamilyInfoItem.NoFamilyName);
+
+    var parameters = await MainThread.InvokeOnMainThreadAsync(
+      () => page.ToolbarItems.Select(item => item.CommandParameter).ToArray());
+    Assert.Equal(["CreatePerson", "Refresh"], parameters);
+  }
+
+  [Fact]
+  public async Task CreatePerson_in_NoFamily_mode_persists_the_person_without_family_setup()
+  {
+    var services = new TestServices();
+    services.PersonManager
+      .Setup(p => p.AddPersonAsync(It.IsAny<PersonFullInfo>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync((PersonFullInfo info, CancellationToken _) => info);
+    var page = await CreatePageAsync(services);
+    await MainThread.InvokeOnMainThreadAsync(() => page.FamilyName = FamilyInfoItem.NoFamilyName);
+
+    await using var window = await WindowHost.AttachAsync(page);
+    var commandTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("CreatePerson"));
+    var dialog = await ModalDialogHarness.WaitForModalAsync<CreateOrUpdatePersonDialog>(page);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      dialog.BioSex = dialog.BiologicalSexes.Single(s => s.Info == BiologicalSex.Female);
+      dialog.BirthDate = Date.Create(2000, 1, 1, DateStatus.WellKnown);
+      dialog.DialogCommand.Execute("CreatePersonCommand");
+    });
+    await commandTask;
+
+    services.FamilyManager.Verify(
+      f => f.SetUpPersonFamily(It.IsAny<PersonFullInfo>(), It.IsAny<Name>()), Times.Never());
+    services.PersonManager.Verify(
+      p => p.AddPersonAsync(It.IsAny<PersonFullInfo>(), It.IsAny<CancellationToken>()), Times.Once());
   }
 
   [Fact]

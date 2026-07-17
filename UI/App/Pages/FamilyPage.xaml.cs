@@ -3,6 +3,7 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Dialogs;
+using GT4.UI.Items;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Extensions;
@@ -67,11 +68,31 @@ public partial class FamilyPage : ContentPage
     set
     {
       _FamilyName = value;
+      if (IsNoFamilyMode)
+      {
+        RemoveFamilyActionToolbarItems();
+      }
       _PersonsLoaded = false;
       OnPropertyChanged(nameof(Persons));
       OnPropertyChanged(nameof(FamilyName));
       OnPropertyChanged(nameof(RemoveFamilyToolbarItemName));
       OnPropertyChanged(nameof(EditFamilyToolbarItemName));
+    }
+  }
+
+  private bool IsNoFamilyMode => _FamilyName?.Id == FamilyInfoItem.NoFamilyName.Id;
+
+  // The pseudo "No family" listing has no family name to remove or edit; MAUI toolbar items have no
+  // visibility binding, so they are dropped in code-behind.
+  private void RemoveFamilyActionToolbarItems()
+  {
+    var familyActions = ToolbarItems
+      .Where(item => item.CommandParameter is "RemoveFamily" or "EditFamily")
+      .ToArray();
+
+    foreach (var item in familyActions)
+    {
+      ToolbarItems.Remove(item);
     }
   }
 
@@ -97,9 +118,20 @@ public partial class FamilyPage : ContentPage
       {
         using var token = _CancellationTokenProvider.CreateDbCancellationToken();
         var project = _CurrentProjectProvider.Project;
-        var persons = await project
-          .PersonManager
-          .GetPersonInfosByNameAsync(name: familyName, selectMainPhoto: true, token);
+        PersonInfo[] persons;
+        if (IsNoFamilyMode)
+        {
+          var allPersons = await project
+            .PersonManager
+            .GetPersonInfosAsync(selectMainPhoto: true, token);
+          persons = allPersons.Where(FamilyInfoItem.HasNoFamily).ToArray();
+        }
+        else
+        {
+          persons = await project
+            .PersonManager
+            .GetPersonInfosByNameAsync(name: familyName, selectMainPhoto: true, token);
+        }
 
         persons = [.. persons.OrderBy(item => item, _PersonInfoComparer)];
 
@@ -176,10 +208,14 @@ public partial class FamilyPage : ContentPage
     }
 
     using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-    var person = _CurrentProjectProvider
-      .Project
-      .FamilyManager
-      .SetUpPersonFamily(info, _FamilyName);
+    // In no-family mode the sentinel Name must not be attached to the person -- the new person is
+    // created family-less on purpose.
+    var person = IsNoFamilyMode
+      ? info
+      : _CurrentProjectProvider
+        .Project
+        .FamilyManager
+        .SetUpPersonFamily(info, _FamilyName);
 
     var newPerson = await _CurrentProjectProvider
       .Project
