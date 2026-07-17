@@ -15,4 +15,5 @@ public class NameInfoItem : CollectionItemBase<Name>
 
   public string Value => Info.Value;
   public string Type => _NameTypeFormatter.ToString(Info.Type);
+  public bool CanBeRemoved => Info.Type != NameType.FamilyName;
 }

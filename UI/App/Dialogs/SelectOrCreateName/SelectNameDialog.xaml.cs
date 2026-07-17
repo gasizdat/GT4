@@ -13,9 +13,6 @@ namespace GT4.UI.Dialogs;
 public partial class SelectNameDialog : ContentPage
 {
   private readonly TaskCompletionSource<Name?> _Info = new(null);
-  // Kept as a locator deliberately: this dialog's only caller doesn't otherwise hold these
-  // dependencies, so converting to typed params would just relocate the GetRequiredService calls
-  // into the caller rather than remove them.
   private readonly IServiceProvider _ServiceProvider;
   private readonly INameTypeFormatter _NameTypeFormatter;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
@@ -31,14 +28,18 @@ public partial class SelectNameDialog : ContentPage
 
   private bool _NotReady => _CurrentName is null;
 
-  public SelectNameDialog(BiologicalSex biologicalSex, IServiceProvider serviceProvider)
+  public SelectNameDialog(BiologicalSex biologicalSex, NameType? nameType, IServiceProvider serviceProvider)
   {
+    NameType[] allowedNameTypes = nameType is not null ?
+      [nameType.Value] :
+      [NameType.FirstName, NameType.Patronymic, NameType.LastName];
+
     _ServiceProvider = serviceProvider;
     _NameTypeFormatter = _ServiceProvider.GetRequiredService<INameTypeFormatter>();
     _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
     _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
     _NameComparer = _ServiceProvider.GetRequiredService<IComparer<Name>>();
-    _NameTypes = new((new[] { NameType.FirstName, NameType.Patronymic, NameType.LastName })
+    _NameTypes = new(allowedNameTypes
       .Select(type => new NameTypeInfoItem(_NameTypeFormatter.ToString(type), type)));
     _AlertService = _ServiceProvider.GetRequiredService<IAlertService>();
     _DialogCommand = new SafeCommand(OnDialogCommandAsync, _AlertService);
@@ -87,10 +88,13 @@ public partial class SelectNameDialog : ContentPage
       }
 
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      var queryType = CurrentNameType.Type == NameType.FamilyName
+        ? NameType.FamilyName
+        : CurrentNameType.Type | _NameDeclension;
       _Names = _CurrentProjectProvider
         .Project
         .Names
-        .GetNamesByTypeAsync(CurrentNameType.Type | _NameDeclension, token)
+        .GetNamesByTypeAsync(queryType, token)
         .Result
         .Select(name => new NameInfoItem(name, _NameTypeFormatter))
         .OrderBy(name => name.Info, _NameComparer)
@@ -141,7 +145,7 @@ public partial class SelectNameDialog : ContentPage
   public async Task OnAddNameAsync()
   {
     NameType dialogNameType;
-    switch (_CurrentNameType.Type)
+    switch (_CurrentNameType.Type & NameType.NoDeclension)
     {
       case NameType.Patronymic:
         dialogNameType = NameType.FirstName | NameType.MaleDeclension;
@@ -150,6 +154,7 @@ public partial class SelectNameDialog : ContentPage
         dialogNameType = NameType.FirstName | _NameDeclension;
         break;
       case NameType.LastName:
+      case NameType.FamilyName:
         dialogNameType = NameType.FamilyName;
         break;
       default:

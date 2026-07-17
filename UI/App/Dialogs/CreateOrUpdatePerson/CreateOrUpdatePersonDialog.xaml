@@ -280,6 +280,7 @@
                           Grid.RowSpan="2"
                           Grid.Column="4"
                           Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          IsVisible="{Binding CanBeRemoved}"
                           Style="{StaticResource DeleteAdorner}"
                           VerticalOptions="Center">
 

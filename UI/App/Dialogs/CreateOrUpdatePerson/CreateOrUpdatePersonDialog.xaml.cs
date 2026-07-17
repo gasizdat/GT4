@@ -21,9 +21,6 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private readonly INameFormatter _NameFormatter;
   private readonly IDateFormatter _DateFormatter;
   private readonly IComparer<PersonInfo> _PersonInfoComparer;
-  // Kept as a locator deliberately: this dialog's only caller doesn't otherwise hold these
-  // dependencies, so converting to typed params would just relocate the GetRequiredService calls
-  // into the caller rather than remove them.
   private readonly IServiceProvider _ServiceProvider;
   private readonly IAlertService _AlertService;
   private readonly ICommand _DialogCommand;
@@ -259,6 +256,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
     var dialog = new SelectNameDialog(
       biologicalSex: biologicalSex,
+      nameType: null,
       serviceProvider: _ServiceProvider
     );
 
@@ -277,10 +275,11 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
   }
 
-  private async Task OnEditPersonNameAsync(NameInfoItem nameInfoItem)
+  protected async Task OnEditPersonNameAsync(NameInfoItem nameInfoItem)
   {
     var dialog = new SelectNameDialog(
       biologicalSex: _BiologicalSex?.Info ?? BiologicalSex.Unknown,
+      nameType: nameInfoItem.Info.Type,
       serviceProvider: _ServiceProvider
     );
 
@@ -483,7 +482,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         await OnEditPersonNameAsync(name);
         IsModified = true;
         break;
-      case AdornerCommandParameter adorner when adorner.CommandName == "RemoveNameCommand" && adorner.Element is NameInfoItem name:
+      case AdornerCommandParameter adorner when adorner.CommandName == "RemoveNameCommand" && adorner.Element is NameInfoItem { CanBeRemoved: true } name:
         _Names.Remove(name);
         IsModified = true;
         break;
