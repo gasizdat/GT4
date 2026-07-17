@@ -190,6 +190,9 @@ genealogy tree and enjoy!</value>
   <data name="HintFamilyPage" xml:space="preserve">
     <value>Open family member or create a new one</value>
   </data>
+  <data name="DateEraBeforeChrist_1" xml:space="preserve">
+    <value>{0} B.C.</value>
+  </data>
   <data name="DateStatusYearApproximate_1" xml:space="preserve">
     <value>about {0}</value>
   </data>

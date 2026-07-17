@@ -190,6 +190,9 @@
   <data name="HintFamilyPage" xml:space="preserve">
     <value>Выбрать представителя рода или создать нового</value>
   </data>
+  <data name="DateEraBeforeChrist_1" xml:space="preserve">
+    <value>{0} до н. э.</value>
+  </data>
   <data name="DateStatusYearApproximate_1" xml:space="preserve">
     <value>около {0}</value>
   </data>

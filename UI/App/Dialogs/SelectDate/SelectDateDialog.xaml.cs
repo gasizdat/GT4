@@ -27,7 +27,8 @@ public partial class SelectDateDialog : ContentPage
     _DateFormatter = dateFormatter;
     if (date.HasValue)
     {
-      _Year = NormalizeYear(date.Value.Year);
+      var signedYear = date.Value.Sign < 0 ? -date.Value.Year : date.Value.Year;
+      _Year = NormalizeYear(signedYear);
       _Month = NormalizeMonth(date.Value.Month);
       _Day = NormalizeDay(_Year, _Month, date.Value.Day);
 

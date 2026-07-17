@@ -7,6 +7,15 @@ public struct Date
   private const int MonthsInYear = 12;
   private const int UndefinedValue = 0;
 
+  // There is no year 0: 1 B.C. is followed directly by 1 A.D., so B.C. year N is astronomical year 1-N.
+  private int SignedYear => Sign < 0 ? 1 - Year : Year;
+
+  // Monotonic in calendar time, unlike Code whose Sign factor flips month/day ordering for B.C. dates.
+  private int SequenceCode =>
+    (Status >= DateStatus.DayUnknown ? UndefinedValue : Day) +
+    (Status >= DateStatus.MonthUnknown ? UndefinedValue : (Digit * Month)) +
+    (Status >= DateStatus.Unknown ? UndefinedValue : (Digit * Digit * SignedYear));
+
   public static Date Create(int code, DateStatus status)
   {
     var absCode = Math.Abs(code);
@@ -22,7 +31,9 @@ public struct Date
 
   public static Date Create(int? year, int? month, int? day, DateStatus status)
   {
-    var code = (year ?? 0) * Digit * Digit + (month ?? 0) * Digit + (day ?? 0);
+    var yearValue = year ?? 0;
+    var magnitude = Math.Abs(yearValue) * Digit * Digit + (month ?? 0) * Digit + (day ?? 0);
+    var code = yearValue < 0 ? -magnitude : magnitude;
     return Create(code, status);
   }
 
@@ -57,9 +68,9 @@ public struct Date
       return a.Sign < b.Sign;
     }
 
-    if (a.Code != b.Code)
+    if (a.SequenceCode != b.SequenceCode)
     {
-      return a.Code < b.Code;
+      return a.SequenceCode < b.SequenceCode;
     }
 
     // Same calendar point but differing certainty: break the tie by status so the order is total and
@@ -101,11 +112,10 @@ public struct Date
         return new DateSpan(Years: UndefinedValue, Months: UndefinedValue, Days: UndefinedValue, Status: worstStatus);
       case DateStatus.YearApproximate:
       case DateStatus.MonthUnknown:
-        return new DateSpan(Years: to.Year - from.Year, Months: UndefinedValue, Days: UndefinedValue, Status: worstStatus);
+        return new DateSpan(Years: to.SignedYear - from.SignedYear, Months: UndefinedValue, Days: UndefinedValue, Status: worstStatus);
       case DateStatus.DayUnknown:
         {
-          // TODO check with different signs
-          var years = to.Year - from.Year;
+          var years = to.SignedYear - from.SignedYear;
           var months = to.Month - from.Month;
           if (int.IsNegative(months))
           {
@@ -116,8 +126,7 @@ public struct Date
         }
       case DateStatus.WellKnown:
         {
-          // TODO check with different signs
-          var years = to.Year - from.Year;
+          var years = to.SignedYear - from.SignedYear;
           var months = to.Month - from.Month;
           var days = to.Day - from.Day;
           if (int.IsNegative(days))

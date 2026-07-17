@@ -139,6 +139,30 @@ public class DateFormatterTests
     Create(shortFormat: "MMM YYYY").ToString(date).Should().StartWith(expectedName);
   }
 
+  [Fact]
+  public void BeforeCommonEra_YearGetsSuffix()
+  {
+    SetEn();
+    var date = Date.Create(-1000000, DateStatus.MonthUnknown);
+    Create().ToString(date).Should().Be("100 B.C.");
+  }
+
+  [Fact]
+  public void RU_BeforeCommonEra_YearGetsLocalizedSuffix()
+  {
+    SetRu();
+    var date = Date.Create(-1000000, DateStatus.MonthUnknown);
+    Create().ToString(date).Should().Be("100 до н. э.");
+  }
+
+  [Fact]
+  public void BeforeCommonEra_FullDate_SuffixFollowsYear()
+  {
+    SetEn();
+    var date = Date.Create(-440315, DateStatus.WellKnown);
+    Create(fullFormat: "DD MMM YYYY").ToString(date).Should().Be("15 March 44 B.C.");
+  }
+
   [Theory]
   [InlineData(5, "5")]
   [InlineData(50, "50")]

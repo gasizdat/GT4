@@ -75,6 +75,27 @@ public class SelectDateDialogTests
   }
 
   [Fact]
+  public async Task Ctor_with_a_BeforeCommonEra_date_shows_the_negative_year()
+  {
+    var date = Date.Create(-100, 0, 0, DateStatus.MonthUnknown);
+    var dialog = await CreateDialogAsync(new TestServices(), date);
+
+    Assert.Equal("-100", dialog.Year);
+  }
+
+  [Fact]
+  public async Task Entering_a_negative_year_returns_a_BeforeCommonEra_date()
+  {
+    var dialog = await CreateDialogAsync(new TestServices(), null);
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.Year = "-2");
+
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.OnSelectDateBtn(dialog, EventArgs.Empty));
+    var result = await dialog.Info;
+
+    Assert.Equal(Date.Create(-2, 1, 1, DateStatus.MonthUnknown), result);
+  }
+
+  [Fact]
   public async Task Changing_a_field_marks_the_dialog_ready()
   {
     var dialog = await CreateDialogAsync(new TestServices(), null);
