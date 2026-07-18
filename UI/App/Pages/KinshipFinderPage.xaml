@@ -87,13 +87,16 @@
             Style="{StaticResource FieldName}"
             Text="{x:Static resources:UIStrings.FieldKinshipSummary}" />
 
-        <components:RelativeInfoView
+        <components:CardView
             Grid.Row="1"
+            Margin="{Thickness Bottom={StaticResource PageContentSpacing}}"
             HorizontalOptions="Center"
-            IsVisible="{Binding HasChain, Source={x:Reference Root}}"
-            NameFormat="FullPersonName"
-            Relative="{Binding Summary, Source={x:Reference Root}}"
-            SelectCommand="{Binding PageCommand, Source={x:Reference Root}}" />
+            IsVisible="{Binding HasChain, Source={x:Reference Root}}">
+          <components:RelativeInfoView
+              NameFormat="FullPersonName"
+              Relative="{Binding Summary, Source={x:Reference Root}}"
+              SelectCommand="{Binding PageCommand, Source={x:Reference Root}}" />
+        </components:CardView>
 
         <Label
             Grid.Row="2"
@@ -114,10 +117,12 @@
 
           <CollectionView.ItemTemplate>
             <DataTemplate x:DataType="dto:RelativeInfo">
-              <components:RelativeInfoView
-                  NameFormat="FullPersonName"
-                  Relative="{Binding .}"
-                  SelectCommand="{Binding PageCommand, Source={x:Reference Root}}" />
+              <components:CardView Margin="{Thickness Bottom={StaticResource PageContentSpacing}}">
+                <components:RelativeInfoView
+                    NameFormat="FullPersonName"
+                    Relative="{Binding .}"
+                    SelectCommand="{Binding PageCommand, Source={x:Reference Root}}" />
+              </components:CardView>
             </DataTemplate>
           </CollectionView.ItemTemplate>
         </CollectionView>
