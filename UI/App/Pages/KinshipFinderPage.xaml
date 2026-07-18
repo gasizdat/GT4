@@ -71,48 +71,57 @@
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>
-      <VerticalStackLayout Spacing="{StaticResource PageContentSpacing}">
+      <!--  The chain CollectionView needs a bounded row (the trailing *) to get a viewport of its
+            own and scroll internally: a VerticalStackLayout sizes to its content instead, so the
+            list would just overflow the page with no scrollbar.  -->
+      <Grid RowDefinitions="Auto, Auto, Auto, *" RowSpacing="{StaticResource PageContentSpacing}">
         <Label
+            Grid.Row="0"
             HorizontalOptions="Center"
             IsVisible="{Binding ShowNotFound, Source={x:Reference Root}}"
             Style="{StaticResource FieldValue}"
             Text="{x:Static resources:UIStrings.MsgKinshipNotFound}" />
 
-        <VerticalStackLayout IsVisible="{Binding HasChain, Source={x:Reference Root}}" Spacing="{StaticResource PageContentSpacing}">
+        <!--  The endpoint-to-endpoint relationship (e.g. "grandfather"), shown distinctly from the
+              connecting chain below it.  -->
+        <Label
+            Grid.Row="0"
+            HorizontalTextAlignment="Center"
+            IsVisible="{Binding HasChain, Source={x:Reference Root}}"
+            Style="{StaticResource FieldName}"
+            Text="{x:Static resources:UIStrings.FieldKinshipSummary}" />
 
-          <!--  The endpoint-to-endpoint relationship (e.g. "grandfather"), shown distinctly from the
-                connecting chain below it.  -->
-          <Label
-              HorizontalTextAlignment="Center"
-              Style="{StaticResource FieldName}"
-              Text="{x:Static resources:UIStrings.FieldKinshipSummary}" />
+        <components:RelativeInfoView
+            Grid.Row="1"
+            HorizontalOptions="Center"
+            IsVisible="{Binding HasChain, Source={x:Reference Root}}"
+            NameFormat="FullPersonName"
+            Relative="{Binding Summary, Source={x:Reference Root}}" />
 
-          <components:RelativeInfoView
-              HorizontalOptions="Center"
-              NameFormat="FullPersonName"
-              Relative="{Binding Summary, Source={x:Reference Root}}" />
+        <Label
+            Grid.Row="2"
+            HorizontalTextAlignment="Center"
+            IsVisible="{Binding HasChain, Source={x:Reference Root}}"
+            Style="{StaticResource FieldName}"
+            Text="{x:Static resources:UIStrings.FieldKinshipChain}" />
 
-          <Label
-              HorizontalTextAlignment="Center"
-              Style="{StaticResource FieldName}"
-              Text="{x:Static resources:UIStrings.FieldKinshipChain}" />
+        <CollectionView
+            Grid.Row="3"
+            HorizontalOptions="Center"
+            IsVisible="{Binding HasChain, Source={x:Reference Root}}"
+            ItemsSource="{Binding Chain, Source={x:Reference Root}}">
 
-          <CollectionView
-              HorizontalOptions="Center"
-              ItemsSource="{Binding Chain, Source={x:Reference Root}}">
+          <CollectionView.ItemsLayout>
+            <LinearItemsLayout Orientation="Vertical" />
+          </CollectionView.ItemsLayout>
 
-            <CollectionView.ItemsLayout>
-              <LinearItemsLayout Orientation="Vertical" />
-            </CollectionView.ItemsLayout>
-
-            <CollectionView.ItemTemplate>
-              <DataTemplate x:DataType="dto:RelativeInfo">
-                <components:RelativeInfoView NameFormat="FullPersonName" Relative="{Binding .}" />
-              </DataTemplate>
-            </CollectionView.ItemTemplate>
-          </CollectionView>
-        </VerticalStackLayout>
-      </VerticalStackLayout>
+          <CollectionView.ItemTemplate>
+            <DataTemplate x:DataType="dto:RelativeInfo">
+              <components:RelativeInfoView NameFormat="FullPersonName" Relative="{Binding .}" />
+            </DataTemplate>
+          </CollectionView.ItemTemplate>
+        </CollectionView>
+      </Grid>
     </components:PageLayout.Body>
   </components:PageLayout>
 </ContentPage>
