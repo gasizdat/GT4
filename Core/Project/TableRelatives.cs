@@ -74,13 +74,13 @@ internal class TableRelatives : TableBase, ITableRelatives
     return new Relative(new Person(id, birthDate, deathDate, biologicalSex), actualType, date);
   }
 
-  public TableRelatives(IProjectDocument document) : base(document)
+  public TableRelatives(IProjectConnection connection) : base(connection)
   {
   }
 
   internal override async Task CreateAsync(CancellationToken token)
   {
-    using var command = Document.CreateCommand();
+    using var command = Connection.CreateCommand();
 
     command.CommandText = """
       CREATE TABLE IF NOT EXISTS Relatives (
@@ -101,7 +101,7 @@ internal class TableRelatives : TableBase, ITableRelatives
   {
     var relatives = new List<Relative>();
 
-    using (var command = Document.CreateCommand())
+    using (var command = Connection.CreateCommand())
     {
       command.CommandText = """
         SELECT r.RelativeId, r.Type, r.Date, r.DateStatus,
@@ -117,7 +117,7 @@ internal class TableRelatives : TableBase, ITableRelatives
         relatives.Add(CreateRelativeFromRow(reader, forwardLink: true));
     }
 
-    using (var command = Document.CreateCommand())
+    using (var command = Connection.CreateCommand())
     {
       command.CommandText = """
         SELECT r.PersonId, r.Type, r.Date, r.DateStatus,
@@ -145,7 +145,7 @@ internal class TableRelatives : TableBase, ITableRelatives
     var inClause = string.Join(",", personIds);
     var buckets = personIds.ToDictionary(id => id, _ => new List<Relative>());
 
-    using (var command = Document.CreateCommand())
+    using (var command = Connection.CreateCommand())
     {
       command.CommandText = $"""
         SELECT r.RelativeId, r.Type, r.Date, r.DateStatus,
@@ -165,7 +165,7 @@ internal class TableRelatives : TableBase, ITableRelatives
       }
     }
 
-    using (var command = Document.CreateCommand())
+    using (var command = Connection.CreateCommand())
     {
       command.CommandText = $"""
         SELECT r.PersonId, r.Type, r.Date, r.DateStatus,
@@ -190,12 +190,12 @@ internal class TableRelatives : TableBase, ITableRelatives
 
   public async Task AddRelativesAsync(Person person, Relative[] relatives, CancellationToken token)
   {
-    using var transaction = await Document.BeginTransactionAsync(token);
+    using var transaction = await Connection.BeginTransactionAsync(token);
 
     // Sequential: writes inside a transaction must take turns on the single connection.
     foreach (var relative in relatives)
     {
-      using var command = Document.CreateCommand();
+      using var command = Connection.CreateCommand();
       command.CommandText = """
         INSERT INTO Relatives (PersonId, RelativeId, Type, Date, DateStatus)
         VALUES (@personId, @relativeId, @type, @date, @dateStatus);
@@ -213,7 +213,7 @@ internal class TableRelatives : TableBase, ITableRelatives
     var newRelatives = relatives.ToDictionary(r => r.Id, r => r);
     var remainedRelatives = new HashSet<int>();
 
-    using var transaction = await Document.BeginTransactionAsync(token);
+    using var transaction = await Connection.BeginTransactionAsync(token);
 
     // Sequential: writes inside a transaction must take turns on the single connection.
     foreach (var oldRelative in oldRelatives)
@@ -224,7 +224,7 @@ internal class TableRelatives : TableBase, ITableRelatives
         continue;
       }
 
-      using var command = Document.CreateCommand();
+      using var command = Connection.CreateCommand();
 
       command.CommandText = """
         DELETE FROM Relatives

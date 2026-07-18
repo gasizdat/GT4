@@ -9,13 +9,13 @@ internal class TableMetadata : TableBase, ITableMetadata
   private const string ProjectDescription = "description";
   private const string RevisionKey = "revision";
 
-  public TableMetadata(IProjectDocument document) : base(document)
+  public TableMetadata(IProjectConnection connection) : base(connection)
   {
   }
 
   internal override async Task CreateAsync(CancellationToken token)
   {
-    using var command = Document.CreateCommand();
+    using var command = Connection.CreateCommand();
     command.CommandText = """
     CREATE TABLE IF NOT EXISTS Metadata (
       Id TEXT PRIMARY KEY, 
@@ -27,7 +27,7 @@ internal class TableMetadata : TableBase, ITableMetadata
 
   private ProjectCommand CreateAddCommand<TData>(string id, TData data)
   {
-    var command = Document.CreateCommand();
+    var command = Connection.CreateCommand();
     command.CommandText = """
       INSERT OR REPLACE INTO Metadata 
           (Id, Data) 
@@ -40,7 +40,7 @@ internal class TableMetadata : TableBase, ITableMetadata
 
   public async Task AddAsync<TData>(string id, TData data, CancellationToken token)
   {
-    using var transaction = await Document.BeginTransactionAsync(token);
+    using var transaction = await Connection.BeginTransactionAsync(token);
     using var command = CreateAddCommand(id, data);
     await command.ExecuteNonQueryAsync(token);
     await transaction.CommitAsync(token);
@@ -48,7 +48,7 @@ internal class TableMetadata : TableBase, ITableMetadata
 
   public async Task<TData?> GetAsync<TData>(string id, CancellationToken token)
   {
-    using var command = Document.CreateCommand();
+    using var command = Connection.CreateCommand();
     command.CommandText = "SELECT Data FROM Metadata WHERE Id=@id;";
     command.Parameters.Add(new SqliteParameter("@id", id));
     var result = await command.ExecuteScalarAsync(token);
@@ -62,7 +62,7 @@ internal class TableMetadata : TableBase, ITableMetadata
   /// </summary>
   public async Task<TData[]> GetByPrefixAsync<TData>(string prefix, CancellationToken token)
   {
-    using var command = Document.CreateCommand();
+    using var command = Connection.CreateCommand();
     command.CommandText = "SELECT Data FROM Metadata WHERE Id LIKE @prefix ORDER BY Id;";
     command.Parameters.AddWithValue("@prefix", prefix + "%");
 

@@ -16,13 +16,13 @@ internal class TableData : TableBase, ITableData
     return new Data(Id: id, Content: content, MimeType: mimeType, Category: category);
   }
 
-  public TableData(IProjectDocument document) : base(document)
+  public TableData(IProjectConnection connection) : base(connection)
   {
   }
 
   internal override async Task CreateAsync(CancellationToken token)
   {
-    using var command = Document.CreateCommand();
+    using var command = Connection.CreateCommand();
 
     command.CommandText = """
       CREATE TABLE IF NOT EXISTS Data (
@@ -41,7 +41,7 @@ internal class TableData : TableBase, ITableData
     {
       return null;
     }
-    using var command = Document.CreateCommand();
+    using var command = Connection.CreateCommand();
 
     command.CommandText = """
       SELECT Id, Value, MimeType, Category
@@ -56,8 +56,8 @@ internal class TableData : TableBase, ITableData
 
   public async Task<Data> AddDataAsync(byte[] content, string? mimeType, DataCategory dataCategory, CancellationToken token)
   {
-    using var transaction = await Document.BeginTransactionAsync(token);
-    using var command = Document.CreateCommand();
+    using var transaction = await Connection.BeginTransactionAsync(token);
+    using var command = Connection.CreateCommand();
     command.CommandText = """
       INSERT INTO Data (Value, MimeType, Category)
       VALUES (@value, @mimeType, @category)
@@ -76,8 +76,8 @@ internal class TableData : TableBase, ITableData
 
   public async Task RemoveDataAsync(Data data, CancellationToken token)
   {
-    using var transaction = await Document.BeginTransactionAsync(token);
-    using var command = Document.CreateCommand();
+    using var transaction = await Connection.BeginTransactionAsync(token);
+    using var command = Connection.CreateCommand();
     command.CommandText = """
       DELETE FROM Data
       WHERE Id=@id;
@@ -89,8 +89,8 @@ internal class TableData : TableBase, ITableData
 
   public async Task UpdateCategoryAsync(Data data, DataCategory dataCategory, CancellationToken token)
   {
-    using var transaction = await Document.BeginTransactionAsync(token);
-    using var command = Document.CreateCommand();
+    using var transaction = await Connection.BeginTransactionAsync(token);
+    using var command = Connection.CreateCommand();
     command.CommandText = """
       UPDATE Data
       SET Category=@category
