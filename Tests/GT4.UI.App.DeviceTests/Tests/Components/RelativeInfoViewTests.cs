@@ -200,8 +200,43 @@ public class RelativeInfoViewTests
       nameof(view.ShowDate),
       nameof(view.RelationshipDate),
       nameof(view.RelationTypeName),
+      nameof(view.HasBloodShare),
+      nameof(view.BloodShareText),
     };
     Assert.Equal(expected, raised);
+  }
+
+  [Fact]
+  public async Task HasBloodShare_is_false_and_BloodShareText_is_empty_when_there_is_no_Relative()
+  {
+    var (view, _) = await CreateViewAsync();
+
+    Assert.False(view.HasBloodShare);
+    Assert.Equal(string.Empty, view.BloodShareText);
+  }
+
+  [Fact]
+  public async Task HasBloodShare_is_false_for_a_relation_that_carries_no_blood()
+  {
+    var (view, _) = await CreateViewAsync();
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+      view.Relative = MakeRelative(RelationshipType.Spouse, WellKnownDate, generation: Generation.Zero, consanguinity: Consanguinity.Zero));
+
+    Assert.False(view.HasBloodShare);
+    Assert.Equal(string.Empty, view.BloodShareText);
+  }
+
+  [Fact]
+  public async Task BloodShareText_reports_the_coefficient_for_a_blood_relation()
+  {
+    var (view, _) = await CreateViewAsync();
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+      view.Relative = MakeRelative(RelationshipType.Parent, WellKnownDate, generation: Generation.Parent, consanguinity: Consanguinity.Zero));
+
+    Assert.True(view.HasBloodShare);
+    Assert.Equal("🩸 50%", view.BloodShareText);
   }
 
   [Fact]

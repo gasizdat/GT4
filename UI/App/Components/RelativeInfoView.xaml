@@ -7,7 +7,7 @@
     x:Name="Root">
 
   <Grid
-      ColumnDefinitions=" *, Auto"
+      ColumnDefinitions=" *, Auto, Auto"
       RowDefinitions="Auto, Auto">
 
     <Label
@@ -21,6 +21,14 @@
     <Label
         Grid.Row="0"
         Grid.Column="1"
+        IsVisible="{Binding HasBloodShare, Source={x:Reference Root}}"
+        Style="{StaticResource FieldValue}"
+        Text="{Binding BloodShareText, Source={x:Reference Root}}"
+        VerticalOptions="Start" />
+
+    <Label
+        Grid.Row="0"
+        Grid.Column="2"
         IsVisible="{Binding ShowDate, Source={x:Reference Root}}"
         Style="{StaticResource FieldValue}"
         Text="{Binding RelationshipDate, Source={x:Reference Root}}"
@@ -29,7 +37,7 @@
     <components:PersonInfoView
         Grid.Row="1"
         Grid.Column="0"
-        Grid.ColumnSpan="2"
+        Grid.ColumnSpan="3"
         DatesLabelStyle="{StaticResource FieldValue}"
         NameFormat="{Binding NameFormat, Source={x:Reference Root}}"
         NameLabelStyle="{StaticResource FieldName}"

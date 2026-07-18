@@ -1,5 +1,7 @@
 using GT4.Core.Project.Dto;
+using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
+using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Extensions;
 using GT4.UI.Utils.Formatters;
@@ -130,6 +132,14 @@ public partial class RelativeInfoView : ContentView
       Relative.BiologicalSex,
       Relative.Generation,
       Relative.Consanguinity);
+
+  private double? BloodShare => Relative?.GetBloodShare();
+
+  public bool HasBloodShare => BloodShare.HasValue;
+
+  public string BloodShareText => BloodShare is { } share
+    ? string.Format(UIStrings.RelBloodShare_1, Math.Round(share * 100, 2))
+    : string.Empty;
 
   private static void OnRelativeInfoChanged(BindableObject obj, object oldValue, object newValue)
   {
