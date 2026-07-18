@@ -361,6 +361,12 @@ genealogy tree and enjoy!</value>
   <data name="FieldNotSelected" xml:space="preserve">
     <value>Not selected</value>
   </data>
+  <data name="FieldKinshipSummary" xml:space="preserve">
+    <value>Relationship</value>
+  </data>
+  <data name="FieldKinshipChain" xml:space="preserve">
+    <value>Connecting relatives</value>
+  </data>
   <data name="TitleSelectDateDialog" xml:space="preserve">
     <value>Select date</value>
   </data>

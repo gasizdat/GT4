@@ -361,6 +361,12 @@
   <data name="FieldNotSelected" xml:space="preserve">
     <value>Не выбран</value>
   </data>
+  <data name="FieldKinshipSummary" xml:space="preserve">
+    <value>Родство</value>
+  </data>
+  <data name="FieldKinshipChain" xml:space="preserve">
+    <value>Связующие родственники</value>
+  </data>
   <data name="TitleSelectDateDialog" xml:space="preserve">
     <value>Выбрать дату</value>
   </data>

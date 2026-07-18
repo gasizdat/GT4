@@ -107,5 +107,10 @@ public partial class KinshipFinderPage : ContentPage
 
   public bool HasChain => Chain.Length > 0;
 
+  // The chain's last node already carries the cumulative relationship of PersonTo to PersonFrom
+  // (RelativesProvider accumulates Generation/Consanguinity across the whole walk), so it doubles as
+  // the endpoint-to-endpoint summary the issue asks for -- no separate computation needed.
+  public RelativeInfo? Summary => HasChain ? Chain[^1] : null;
+
   public bool ShowNotFound => _Searched && !HasChain;
 }

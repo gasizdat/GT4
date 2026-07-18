@@ -71,30 +71,48 @@
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>
-      <Grid>
+      <VerticalStackLayout Spacing="{StaticResource PageContentSpacing}">
         <Label
             HorizontalOptions="Center"
             IsVisible="{Binding ShowNotFound, Source={x:Reference Root}}"
             Style="{StaticResource FieldValue}"
-            Text="{x:Static resources:UIStrings.MsgKinshipNotFound}"
-            VerticalOptions="Start" />
+            Text="{x:Static resources:UIStrings.MsgKinshipNotFound}" />
 
-        <CollectionView
-            HorizontalOptions="Center"
-            IsVisible="{Binding HasChain, Source={x:Reference Root}}"
-            ItemsSource="{Binding Chain, Source={x:Reference Root}}">
+        <VerticalStackLayout IsVisible="{Binding HasChain, Source={x:Reference Root}}" Spacing="{StaticResource PageContentSpacing}">
 
-          <CollectionView.ItemsLayout>
-            <LinearItemsLayout Orientation="Vertical" />
-          </CollectionView.ItemsLayout>
+          <!--  The endpoint-to-endpoint relationship (e.g. "grandfather"), shown distinctly from the
+                connecting chain below it.  -->
+          <Label
+              HorizontalTextAlignment="Center"
+              Style="{StaticResource FieldName}"
+              Text="{x:Static resources:UIStrings.FieldKinshipSummary}" />
 
-          <CollectionView.ItemTemplate>
-            <DataTemplate x:DataType="dto:RelativeInfo">
-              <components:RelativeInfoView NameFormat="FullPersonName" Relative="{Binding .}" />
-            </DataTemplate>
-          </CollectionView.ItemTemplate>
-        </CollectionView>
-      </Grid>
+          <components:RelativeInfoView
+              HorizontalOptions="Center"
+              NameFormat="FullPersonName"
+              Relative="{Binding Summary, Source={x:Reference Root}}" />
+
+          <Label
+              HorizontalTextAlignment="Center"
+              Style="{StaticResource FieldName}"
+              Text="{x:Static resources:UIStrings.FieldKinshipChain}" />
+
+          <CollectionView
+              HorizontalOptions="Center"
+              ItemsSource="{Binding Chain, Source={x:Reference Root}}">
+
+            <CollectionView.ItemsLayout>
+              <LinearItemsLayout Orientation="Vertical" />
+            </CollectionView.ItemsLayout>
+
+            <CollectionView.ItemTemplate>
+              <DataTemplate x:DataType="dto:RelativeInfo">
+                <components:RelativeInfoView NameFormat="FullPersonName" Relative="{Binding .}" />
+              </DataTemplate>
+            </CollectionView.ItemTemplate>
+          </CollectionView>
+        </VerticalStackLayout>
+      </VerticalStackLayout>
     </components:PageLayout.Body>
   </components:PageLayout>
 </ContentPage>

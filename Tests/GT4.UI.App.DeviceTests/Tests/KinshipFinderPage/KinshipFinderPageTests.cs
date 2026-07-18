@@ -84,6 +84,9 @@ public class KinshipFinderPageTests
     Assert.False(page.ShowNotFound);
     Assert.Single(page.Chain);
     Assert.Equal(personTo.Id, page.Chain[0].Id);
+    Assert.NotNull(page.Summary);
+    Assert.Equal(personTo.Id, page.Summary!.Id);
+    Assert.Equal(RelationshipType.Parent, page.Summary.Type);
   }
 
   [Fact]

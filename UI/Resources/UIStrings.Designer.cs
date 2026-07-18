@@ -494,6 +494,24 @@ namespace GT4.UI.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Relationship.
+        /// </summary>
+        public static string FieldKinshipSummary {
+            get {
+                return ResourceManager.GetString("FieldKinshipSummary", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Connecting relatives.
+        /// </summary>
+        public static string FieldKinshipChain {
+            get {
+                return ResourceManager.GetString("FieldKinshipChain", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Format of names of relatives.
         /// </summary>
         public static string FieldCommonPersonNameFormat {
