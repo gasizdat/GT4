@@ -228,6 +228,19 @@ public class RelativeInfoViewTests
   }
 
   [Fact]
+  public async Task BloodShareText_formats_a_fractional_percentage_using_the_current_culture()
+  {
+    var (view, _) = await CreateViewAsync();
+
+    // First cousin: Consanguinity.UncleAunt reached via a Child hop -> 12.5%.
+    await MainThread.InvokeOnMainThreadAsync(() =>
+      view.Relative = MakeRelative(RelationshipType.Child, WellKnownDate, generation: Generation.Zero, consanguinity: Consanguinity.UncleAunt));
+
+    var expected = string.Format(GT4.UI.Resources.UIStrings.RelBloodShare_1, 12.5);
+    Assert.Equal(expected, view.BloodShareText);
+  }
+
+  [Fact]
   public async Task BloodShareText_reports_the_coefficient_for_a_blood_relation()
   {
     var (view, _) = await CreateViewAsync();
