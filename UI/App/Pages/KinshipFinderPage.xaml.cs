@@ -17,7 +17,7 @@ public partial class KinshipFinderPage : ContentPage
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly IAlertService _AlertService;
   private readonly INameFormatter _NameFormatter;
-  private readonly IServiceProvider _ServiceProvider;
+  private readonly IComparer<PersonInfo> _PersonInfoComparer;
   private readonly INavigationService _NavigationService;
   private readonly ICommand _PageCommand;
 
@@ -28,7 +28,7 @@ public partial class KinshipFinderPage : ContentPage
 
   private async Task PickPersonAsync(Action<PersonInfo> assign)
   {
-    var dialog = new SelectPersonDialog(_ServiceProvider);
+    var dialog = new SelectPersonDialog(_CancellationTokenProvider, _CurrentProjectProvider, _PersonInfoComparer, _AlertService);
     await Navigation.PushModalAsync(dialog);
     var person = await dialog.Info;
     await Navigation.PopModalAsync();
@@ -84,14 +84,14 @@ public partial class KinshipFinderPage : ContentPage
     ICancellationTokenProvider cancellationTokenProvider,
     IAlertService alertService,
     INameFormatter nameFormatter,
-    IServiceProvider serviceProvider,
+    IComparer<PersonInfo> personInfoComparer,
     INavigationService navigationService)
   {
     _CurrentProjectProvider = currentProjectProvider;
     _CancellationTokenProvider = cancellationTokenProvider;
     _AlertService = alertService;
     _NameFormatter = nameFormatter;
-    _ServiceProvider = serviceProvider;
+    _PersonInfoComparer = personInfoComparer;
     _NavigationService = navigationService;
     _PageCommand = new SafeCommand(OnPageCommand, _AlertService);
 

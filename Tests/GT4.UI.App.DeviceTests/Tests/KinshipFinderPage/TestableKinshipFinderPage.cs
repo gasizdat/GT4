@@ -1,4 +1,5 @@
 using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Pages;
@@ -18,9 +19,9 @@ internal sealed class TestableKinshipFinderPage : KinshipFinderPage
     ICancellationTokenProvider cancellationTokenProvider,
     IAlertService alertService,
     INameFormatter nameFormatter,
-    IServiceProvider serviceProvider,
+    IComparer<PersonInfo> personInfoComparer,
     INavigationService navigationService)
-    : base(currentProjectProvider, cancellationTokenProvider, alertService, nameFormatter, serviceProvider, navigationService)
+    : base(currentProjectProvider, cancellationTokenProvider, alertService, nameFormatter, personInfoComparer, navigationService)
   {
   }
 
