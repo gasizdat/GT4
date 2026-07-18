@@ -1,0 +1,13 @@
+{
+  "solution": {
+    "path": "GT4.sln",
+    "projects": [
+      "Core\\Project\\GT4.Core.Project.csproj",
+      "Core\\Utils\\GT4.Core.Utils.csproj",
+      "Core\\Gedcom\\GT4.Core.Gedcom.csproj",
+      "UI\\Resources\\GT4.UI.Resources.csproj",
+      "UI\\Utils\\GT4.UI.Utils.csproj",
+      "UI\\App\\AppAndroidOnly.csproj"
+    ]
+  }
+}
