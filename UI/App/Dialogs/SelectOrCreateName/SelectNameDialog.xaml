@@ -82,7 +82,11 @@
             HorizontalOptions="Fill"
             Style="{StaticResource AddAdorner}" />
 
-        <!--  TODO. Investigate why this placeholder is required so the addorner button doesn't get crop  -->
+        <!--  Sacrificial last row: the Grid resolves the star row before the native Picker/Button
+              report their real heights, so the row stack overruns the Grid's frame and the
+              bottom row gets clipped (upstream MAUI measure bug; Fill alignment and
+              InvalidateMeasure don't help). This empty Border takes the clipping instead of the
+              Add button above.  -->
         <Border
             Grid.Row="3"
             MinimumHeightRequest="{StaticResource AddornerButtonEmojiSize}"
