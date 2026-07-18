@@ -15,4 +15,5 @@ public interface IProjectDocument : IProjectConnection, IAsyncDisposable, IDispo
   ITableRelatives Relatives { get; }
   IRelativesProvider RelativesProvider { get; }
   IFamilyTreeProvider FamilyTreeProvider { get; }
+  IKinshipFinder KinshipFinder { get; }
 }

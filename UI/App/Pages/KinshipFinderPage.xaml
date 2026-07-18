@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="GT4.UI.Pages.KinshipFinderPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:components="clr-namespace:GT4.UI.Components"
+    xmlns:dto="clr-namespace:GT4.Core.Project.Dto;assembly=GT4.Core.Project"
+    xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
+    x:Name="Root"
+    Title="{x:Static resources:UIStrings.TitleKinshipFinderPage}">
+
+  <components:PageLayout>
+    <components:PageLayout.Header>
+      <Grid
+          ColumnDefinitions="Auto, *, Auto"
+          ColumnSpacing="{StaticResource PageContentSpacing}"
+          RowDefinitions="Auto, Auto"
+          RowSpacing="{StaticResource PageContentSpacing}">
+
+        <!--  Row 0 - First person  -->
+        <Label
+            Grid.Row="0"
+            Grid.Column="0"
+            Style="{StaticResource FieldName}"
+            Text="{x:Static resources:UIStrings.FieldKinshipPersonFrom}" />
+
+        <Label
+            Grid.Row="0"
+            Grid.Column="1"
+            Style="{StaticResource FieldValue}"
+            Text="{Binding PersonFromName, Source={x:Reference Root}}" />
+
+        <Button
+            Grid.Row="0"
+            Grid.Column="2"
+            Command="{Binding PageCommand, Source={x:Reference Root}}"
+            CommandParameter="PickPersonFrom"
+            Text="{x:Static resources:UIStrings.BtnNameChoosePerson}" />
+
+        <!--  Row 1 - Second person  -->
+        <Label
+            Grid.Row="1"
+            Grid.Column="0"
+            Style="{StaticResource FieldName}"
+            Text="{x:Static resources:UIStrings.FieldKinshipPersonTo}" />
+
+        <Label
+            Grid.Row="1"
+            Grid.Column="1"
+            Style="{StaticResource FieldValue}"
+            Text="{Binding PersonToName, Source={x:Reference Root}}" />
+
+        <Button
+            Grid.Row="1"
+            Grid.Column="2"
+            Command="{Binding PageCommand, Source={x:Reference Root}}"
+            CommandParameter="PickPersonTo"
+            Text="{x:Static resources:UIStrings.BtnNameChoosePerson}" />
+
+      </Grid>
+    </components:PageLayout.Header>
+
+    <components:PageLayout.Body>
+      <!--
+        The chain CollectionView needs a bounded row (the trailing *) to get a viewport of its
+        own and scroll internally: a VerticalStackLayout sizes to its content instead, so the
+        list would just overflow the page with no scrollbar.
+      -->
+      <Grid
+          RowDefinitions="Auto, Auto, Auto, *"
+          RowSpacing="{StaticResource PageContentSpacing}">
+        <Label
+            Grid.Row="0"
+            HorizontalOptions="Center"
+            IsVisible="{Binding ShowNotFound, Source={x:Reference Root}}"
+            Style="{StaticResource FieldValue}"
+            Text="{x:Static resources:UIStrings.MsgKinshipNotFound}" />
+
+        <!--
+          The endpoint-to-endpoint relationship (e.g. "grandfather"), shown distinctly from the
+          connecting chain below it.
+        -->
+        <Label
+            Grid.Row="0"
+            HorizontalTextAlignment="Center"
+            IsVisible="{Binding HasChain, Source={x:Reference Root}}"
+            Style="{StaticResource FieldName}"
+            Text="{x:Static resources:UIStrings.FieldKinshipSummary}" />
+
+        <components:CardView
+            Grid.Row="1"
+            Margin="{Thickness Bottom={StaticResource PageContentSpacing}}"
+            HorizontalOptions="Center"
+            IsVisible="{Binding HasChain, Source={x:Reference Root}}">
+          <components:RelativeInfoView
+              NameFormat="FullPersonName"
+              Relative="{Binding Summary, Source={x:Reference Root}}"
+              SelectCommand="{Binding PageCommand, Source={x:Reference Root}}" />
+        </components:CardView>
+
+        <Label
+            Grid.Row="2"
+            HorizontalTextAlignment="Center"
+            IsVisible="{Binding HasChain, Source={x:Reference Root}}"
+            Style="{StaticResource FieldName}"
+            Text="{x:Static resources:UIStrings.FieldKinshipChain}" />
+
+        <CollectionView
+            Grid.Row="3"
+            HorizontalOptions="Center"
+            IsVisible="{Binding HasChain, Source={x:Reference Root}}"
+            ItemsSource="{Binding Chain, Source={x:Reference Root}}">
+
+          <CollectionView.ItemsLayout>
+            <LinearItemsLayout Orientation="Vertical" />
+          </CollectionView.ItemsLayout>
+
+          <CollectionView.ItemTemplate>
+            <DataTemplate x:DataType="dto:RelativeInfo">
+              <components:CardView Margin="{Thickness Bottom={StaticResource PageContentSpacing}}">
+                <components:RelativeInfoView
+                    NameFormat="FullPersonName"
+                    Relative="{Binding .}"
+                    SelectCommand="{Binding PageCommand, Source={x:Reference Root}}" />
+              </components:CardView>
+            </DataTemplate>
+          </CollectionView.ItemTemplate>
+        </CollectionView>
+      </Grid>
+    </components:PageLayout.Body>
+  </components:PageLayout>
+</ContentPage>

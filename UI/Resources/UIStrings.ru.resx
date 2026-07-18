@@ -352,6 +352,21 @@
   <data name="FieldBiologicalSex" xml:space="preserve">
     <value>Пол</value>
   </data>
+  <data name="FieldKinshipPersonFrom" xml:space="preserve">
+    <value>Первый человек</value>
+  </data>
+  <data name="FieldKinshipPersonTo" xml:space="preserve">
+    <value>Второй человек</value>
+  </data>
+  <data name="FieldNotSelected" xml:space="preserve">
+    <value>Не выбран</value>
+  </data>
+  <data name="FieldKinshipSummary" xml:space="preserve">
+    <value>Родство</value>
+  </data>
+  <data name="FieldKinshipChain" xml:space="preserve">
+    <value>Связующие родственники</value>
+  </data>
   <data name="TitleSelectDateDialog" xml:space="preserve">
     <value>Выбрать дату</value>
   </data>
@@ -414,6 +429,12 @@
   </data>
   <data name="TitleSelectRelativesDialog" xml:space="preserve">
     <value>Выбрать родственников</value>
+  </data>
+  <data name="TitleSelectPersonDialog" xml:space="preserve">
+    <value>Выбрать человека</value>
+  </data>
+  <data name="TitleKinshipFinderPage" xml:space="preserve">
+    <value>Поиск родства</value>
   </data>
   <data name="FieldRelationshipStartDate" xml:space="preserve">
     <value>Начало отношений</value>
@@ -1044,6 +1065,9 @@ FN - род</value>
   <data name="MenuItemGoToStatistics" xml:space="preserve">
     <value>📊 Статистика</value>
   </data>
+  <data name="MenuItemGoToKinshipFinder" xml:space="preserve">
+    <value>🩸 Поиск родства</value>
+  </data>
   <data name="FieldStatOverview" xml:space="preserve">
     <value>Обзор</value>
   </data>
@@ -1133,6 +1157,12 @@ FN - род</value>
   </data>
   <data name="StatValueNone" xml:space="preserve">
     <value>—</value>
+  </data>
+  <data name="MsgKinshipNotFound" xml:space="preserve">
+    <value>Известное родство между этими людьми не найдено.</value>
+  </data>
+  <data name="BtnNameChoosePerson" xml:space="preserve">
+    <value>Выбрать…</value>
   </data>
   <data name="StatValueYears_1" xml:space="preserve">
     <value>{0} лет</value>

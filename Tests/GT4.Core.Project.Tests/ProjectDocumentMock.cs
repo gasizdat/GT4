@@ -18,7 +18,6 @@ internal class ProjectDocumentMock : IProjectDocument
   private Mock<ITablePersonNames> _TablePersonNamesMock = new(MockBehavior.Strict);
   private Mock<ITablePersons> _TablePersonsMock = new(MockBehavior.Strict);
   private Mock<ITableRelatives> _TableRelativesMock = new(MockBehavior.Strict);
-  private Mock<IRelativesProvider> _RelativesProviderMock = new(MockBehavior.Strict);
   private IDictionary<int, PersonFullInfo> _Persons = new Dictionary<int, PersonFullInfo>();
   private IDictionary<int, IList<Relative>> _Relatives = new Dictionary<int, IList<Relative>>();
 
@@ -122,10 +121,12 @@ internal class ProjectDocumentMock : IProjectDocument
 
   public ITableRelatives Relatives => _TableRelativesMock.Object;
 
-  public IRelativesProvider RelativesProvider => _RelativesProviderMock.Object;
+  // Real providers over the mocked tables: tests exercise the actual graph-walking logic.
+  public IRelativesProvider RelativesProvider => new RelativesProvider(this);
 
-  // A real provider over the mocked tables: tests exercise the actual graph-walking logic.
   public IFamilyTreeProvider FamilyTreeProvider => new FamilyTreeProvider(this);
+
+  public IKinshipFinder KinshipFinder => new KinshipFinder(this);
 
   public Task<IProjectTransaction> BeginTransactionAsync(CancellationToken token)
   {

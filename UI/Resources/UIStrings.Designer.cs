@@ -465,7 +465,52 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("FieldBiologicalSex", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to First person.
+        /// </summary>
+        public static string FieldKinshipPersonFrom {
+            get {
+                return ResourceManager.GetString("FieldKinshipPersonFrom", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Second person.
+        /// </summary>
+        public static string FieldKinshipPersonTo {
+            get {
+                return ResourceManager.GetString("FieldKinshipPersonTo", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Not selected.
+        /// </summary>
+        public static string FieldNotSelected {
+            get {
+                return ResourceManager.GetString("FieldNotSelected", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Relationship.
+        /// </summary>
+        public static string FieldKinshipSummary {
+            get {
+                return ResourceManager.GetString("FieldKinshipSummary", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Connecting relatives.
+        /// </summary>
+        public static string FieldKinshipChain {
+            get {
+                return ResourceManager.GetString("FieldKinshipChain", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Format of names of relatives.
         /// </summary>
@@ -2690,7 +2735,25 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("TitleSelectRelativesDialog", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Select person.
+        /// </summary>
+        public static string TitleSelectPersonDialog {
+            get {
+                return ResourceManager.GetString("TitleSelectPersonDialog", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Kinship finder.
+        /// </summary>
+        public static string TitleKinshipFinderPage {
+            get {
+                return ResourceManager.GetString("TitleKinshipFinderPage", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Application settings.
         /// </summary>
@@ -2805,6 +2868,15 @@ namespace GT4.UI.Resources {
         public static string MenuItemGoToStatistics {
             get {
                 return ResourceManager.GetString("MenuItemGoToStatistics", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 🩸 Kinship finder.
+        /// </summary>
+        public static string MenuItemGoToKinshipFinder {
+            get {
+                return ResourceManager.GetString("MenuItemGoToKinshipFinder", resourceCulture);
             }
         }
 
@@ -3075,6 +3147,24 @@ namespace GT4.UI.Resources {
         public static string StatValueNone {
             get {
                 return ResourceManager.GetString("StatValueNone", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to No known relationship found between these two people..
+        /// </summary>
+        public static string MsgKinshipNotFound {
+            get {
+                return ResourceManager.GetString("MsgKinshipNotFound", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Choose….
+        /// </summary>
+        public static string BtnNameChoosePerson {
+            get {
+                return ResourceManager.GetString("BtnNameChoosePerson", resourceCulture);
             }
         }
 

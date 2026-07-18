@@ -26,6 +26,7 @@ internal sealed class TestServices
   public Mock<ITableRelatives> Relatives { get; } = new();
   public Mock<ITablePersons> Persons { get; } = new();
   public Mock<IFamilyTreeProvider> FamilyTreeProvider { get; } = new();
+  public Mock<IKinshipFinder> KinshipFinder { get; } = new();
   public Mock<IAlertService> AlertService { get; } = new();
   public Mock<INavigationService> NavigationService { get; } = new();
   public IServiceProvider Provider { get; }
@@ -46,6 +47,7 @@ internal sealed class TestServices
     Project.SetupGet(p => p.Relatives).Returns(Relatives.Object);
     Project.SetupGet(p => p.Persons).Returns(Persons.Object);
     Project.SetupGet(p => p.FamilyTreeProvider).Returns(FamilyTreeProvider.Object);
+    Project.SetupGet(p => p.KinshipFinder).Returns(KinshipFinder.Object);
     Project.Setup(p => p.BeginTransactionAsync(It.IsAny<CancellationToken>())).ReturnsAsync(Transaction.Object);
 
     CurrentProjectProvider.SetupGet(p => p.Project).Returns(Project.Object);
@@ -130,6 +132,7 @@ internal sealed class TestServices
     services.AddSingleton<TestableFamilyTreePage>();
     services.AddSingleton<SettingsPage>();
     services.AddSingleton<TestableStatisticsPage>();
+    services.AddSingleton<TestableKinshipFinderPage>();
     Provider = services.BuildServiceProvider();
   }
 }
