@@ -147,11 +147,6 @@ internal class ProjectDocumentMock : IProjectDocument
     throw new NotImplementedException();
   }
 
-  public void UpdateRevision()
-  {
-    throw new NotImplementedException();
-  }
-
   public PersonFullInfo CreatePerson(BiologicalSex sex = BiologicalSex.Unknown)
   {
     lock (_fixture)
