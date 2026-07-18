@@ -532,6 +532,9 @@
   <data name="RelGreat_1" xml:space="preserve">
     <value>Пра-{0}</value>
   </data>
+  <data name="RelBloodShare_1" xml:space="preserve">
+    <value>🩸 {0}%</value>
+  </data>
   <data name="RelUncle" xml:space="preserve">
     <value>Дядя</value>
   </data>

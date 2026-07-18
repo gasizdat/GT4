@@ -532,6 +532,9 @@ genealogy tree and enjoy!</value>
   <data name="RelGreat_1" xml:space="preserve">
     <value>Great-{0}</value>
   </data>
+  <data name="RelBloodShare_1" xml:space="preserve">
+    <value>🩸 {0}%</value>
+  </data>
   <data name="RelUncle" xml:space="preserve">
     <value>Uncle</value>
   </data>
