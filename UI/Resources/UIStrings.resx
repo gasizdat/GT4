@@ -1164,9 +1164,6 @@ FN - family name</value>
   <data name="BtnNameChoosePerson" xml:space="preserve">
     <value>Choose…</value>
   </data>
-  <data name="BtnNameFindKinship" xml:space="preserve">
-    <value>Find relationship</value>
-  </data>
   <data name="StatValueYears_1" xml:space="preserve">
     <value>{0} years</value>
   </data>

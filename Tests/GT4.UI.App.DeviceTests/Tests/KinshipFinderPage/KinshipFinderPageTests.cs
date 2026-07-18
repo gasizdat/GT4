@@ -41,27 +41,28 @@ public class KinshipFinderPageTests
 
     Assert.Equal(Resources.UIStrings.FieldNotSelected, page.PersonFromName);
     Assert.Equal(Resources.UIStrings.FieldNotSelected, page.PersonToName);
-    Assert.False(page.CanFind);
     Assert.False(page.HasChain);
     Assert.False(page.ShowNotFound);
   }
 
   [Fact]
-  public async Task Picking_both_people_enables_Find()
+  public async Task Picking_both_people_finds_nothing_by_default()
   {
     var services = new TestServices();
     var page = await CreatePageAsync(services);
 
     await using var window = await WindowHost.AttachAsync(page);
     await PickPersonAsync(page, "PickPersonFrom", P(1));
-    Assert.False(page.CanFind);
+    Assert.False(page.HasChain);
+    Assert.False(page.ShowNotFound);
 
     await PickPersonAsync(page, "PickPersonTo", P(2));
-    Assert.True(page.CanFind);
+    Assert.False(page.HasChain);
+    Assert.True(page.ShowNotFound);
   }
 
   [Fact]
-  public async Task Find_populates_the_chain_from_KinshipFinder()
+  public async Task Picking_the_second_person_auto_populates_the_chain_from_KinshipFinder()
   {
     var services = new TestServices();
     var personFrom = P(1);
@@ -78,7 +79,6 @@ public class KinshipFinderPageTests
     await using var window = await WindowHost.AttachAsync(page);
     await PickPersonAsync(page, "PickPersonFrom", personFrom);
     await PickPersonAsync(page, "PickPersonTo", personTo);
-    await MainThread.InvokeOnMainThreadAsync(() => page.InvokePageCommandAsync("Find"));
 
     Assert.True(page.HasChain);
     Assert.False(page.ShowNotFound);
@@ -90,7 +90,7 @@ public class KinshipFinderPageTests
   }
 
   [Fact]
-  public async Task Find_shows_not_found_when_KinshipFinder_returns_no_path()
+  public async Task Picking_the_second_person_shows_not_found_when_KinshipFinder_returns_no_path()
   {
     var services = new TestServices();
     var personFrom = P(1);
@@ -103,7 +103,6 @@ public class KinshipFinderPageTests
     await using var window = await WindowHost.AttachAsync(page);
     await PickPersonAsync(page, "PickPersonFrom", personFrom);
     await PickPersonAsync(page, "PickPersonTo", personTo);
-    await MainThread.InvokeOnMainThreadAsync(() => page.InvokePageCommandAsync("Find"));
 
     Assert.False(page.HasChain);
     Assert.True(page.ShowNotFound);

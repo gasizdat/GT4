@@ -3169,15 +3169,6 @@ namespace GT4.UI.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Find relationship.
-        /// </summary>
-        public static string BtnNameFindKinship {
-            get {
-                return ResourceManager.GetString("BtnNameFindKinship", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to {0} years.
         /// </summary>
         public static string StatValueYears_1 {

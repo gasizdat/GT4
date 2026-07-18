@@ -37,7 +37,11 @@ public partial class KinshipFinderPage : ContentPage
       assign(person);
       _Chain = null;
       _Searched = false;
-      this.RefreshView();
+
+      if (_PersonFrom is not null && _PersonTo is not null)
+        await FindAsync();
+      else
+        this.RefreshView();
     }
   }
 
@@ -66,10 +70,6 @@ public partial class KinshipFinderPage : ContentPage
 
       case string commandName when commandName == "PickPersonTo":
         await PickPersonAsync(person => _PersonTo = person);
-        break;
-
-      case string commandName when commandName == "Find":
-        await FindAsync();
         break;
     }
   }
@@ -100,8 +100,6 @@ public partial class KinshipFinderPage : ContentPage
   public string PersonToName => _PersonTo is not null
     ? _NameFormatter.ToString(_PersonTo, NameFormat.CommonPersonName)
     : UIStrings.FieldNotSelected;
-
-  public bool CanFind => _PersonFrom is not null && _PersonTo is not null;
 
   public RelativeInfo[] Chain => _Chain ?? [];
 

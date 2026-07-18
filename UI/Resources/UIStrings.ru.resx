@@ -1164,9 +1164,6 @@ FN - род</value>
   <data name="BtnNameChoosePerson" xml:space="preserve">
     <value>Выбрать…</value>
   </data>
-  <data name="BtnNameFindKinship" xml:space="preserve">
-    <value>Найти родство</value>
-  </data>
   <data name="StatValueYears_1" xml:space="preserve">
     <value>{0} лет</value>
   </data>
