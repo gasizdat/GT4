@@ -61,10 +61,14 @@
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>
-      <!--  The chain CollectionView needs a bounded row (the trailing *) to get a viewport of its
-            own and scroll internally: a VerticalStackLayout sizes to its content instead, so the
-            list would just overflow the page with no scrollbar.  -->
-      <Grid RowDefinitions="Auto, Auto, Auto, *" RowSpacing="{StaticResource PageContentSpacing}">
+      <!--
+        The chain CollectionView needs a bounded row (the trailing *) to get a viewport of its
+        own and scroll internally: a VerticalStackLayout sizes to its content instead, so the
+        list would just overflow the page with no scrollbar.
+      -->
+      <Grid
+          RowDefinitions="Auto, Auto, Auto, *"
+          RowSpacing="{StaticResource PageContentSpacing}">
         <Label
             Grid.Row="0"
             HorizontalOptions="Center"
@@ -72,8 +76,10 @@
             Style="{StaticResource FieldValue}"
             Text="{x:Static resources:UIStrings.MsgKinshipNotFound}" />
 
-        <!--  The endpoint-to-endpoint relationship (e.g. "grandfather"), shown distinctly from the
-              connecting chain below it.  -->
+        <!--
+          The endpoint-to-endpoint relationship (e.g. "grandfather"), shown distinctly from the
+          connecting chain below it.
+        -->
         <Label
             Grid.Row="0"
             HorizontalTextAlignment="Center"
