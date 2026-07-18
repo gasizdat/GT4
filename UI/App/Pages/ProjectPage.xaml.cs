@@ -387,11 +387,15 @@ public partial class ProjectPage : ContentPage
     if (!await _AlertService.ShowConfirmationAsync(confirmText))
       return;
 
+    using var reader = await GedcomImportEncoding.ResolveReaderAsync(file, Navigation, _AlertService);
+    if (reader is null)
+      return;
+
     var dialog = new GedcomImportDialog(_CurrentProjectProvider.Info.Name, _AlertService);
     await Navigation.PushModalAsync(dialog);
     try
     {
-      await Task.Run(() => RunImportAsync(file, dialog.Token));
+      await Task.Run(() => RunImportAsync(file, reader, dialog.Token));
     }
     catch (OperationCanceledException)
     {
@@ -406,10 +410,8 @@ public partial class ProjectPage : ContentPage
     this.RefreshView();
   }
 
-  private async Task RunImportAsync(FileResult file, CancellationToken token)
+  private async Task RunImportAsync(FileResult file, TextReader reader, CancellationToken token)
   {
-    using var stream = await file.OpenReadAsync();
-    using var reader = new StreamReader(stream, Encoding.UTF8);
     var mediaBasePath = MediaBasePath(file);
     await _Importer.ImportAsync(_CurrentProjectProvider.Project, reader, token, mediaBasePath);
   }

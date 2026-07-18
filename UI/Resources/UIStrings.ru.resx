@@ -706,6 +706,15 @@
   <data name="HintGedcomImportCancelling" xml:space="preserve">
     <value>Отмена…</value>
   </data>
+  <data name="TitleSelectEncodingDialog" xml:space="preserve">
+    <value>Выбор кодировки текста</value>
+  </data>
+  <data name="HintGedcomDeclaredCharset_1" xml:space="preserve">
+    <value>Этот файл GEDCOM объявляет кодировку "{0}", которая неоднозначна. Выберите кодовую страницу, в которой на самом деле записан текст.</value>
+  </data>
+  <data name="FieldCodepage" xml:space="preserve">
+    <value>Кодовая страница</value>
+  </data>
   <data name="ShareGedcomTitle" xml:space="preserve">
     <value>Экспорт GEDCOM</value>
   </data>

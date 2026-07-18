@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="GT4.UI.Dialogs.SelectEncodingDialog"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:components="clr-namespace:GT4.UI.Components"
+    xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
+    x:Name="Root">
+
+  <components:PageLayout>
+    <components:PageLayout.Header>
+      <Label
+          Style="{StaticResource PageTitle}"
+          Text="{x:Static resources:UIStrings.TitleSelectEncodingDialog}" />
+    </components:PageLayout.Header>
+
+    <components:PageLayout.Body>
+      <Grid
+          ColumnDefinitions="Auto, *"
+          ColumnSpacing="{StaticResource PageContentSpacing}"
+          RowDefinitions="Auto, Auto"
+          RowSpacing="{StaticResource PageContentSpacing}">
+
+        <Label
+            Grid.Row="0"
+            Grid.Column="0"
+            Grid.ColumnSpan="2"
+            HorizontalTextAlignment="Center"
+            Style="{StaticResource FieldValue}"
+            Text="{Binding DeclaredCharsetHint, Source={x:Reference Root}}" />
+
+        <Label
+            Grid.Row="1"
+            Grid.Column="0"
+            Style="{StaticResource FieldName}"
+            Text="{x:Static resources:UIStrings.FieldCodepage}" />
+
+        <Picker
+            Grid.Row="1"
+            Grid.Column="1"
+            HorizontalOptions="Fill"
+            ItemDisplayBinding="{Binding .}"
+            ItemsSource="{Binding CodepageNames, Source={x:Reference Root}}"
+            SelectedItem="{Binding SelectedCodepageName, Source={x:Reference Root}}" />
+      </Grid>
+    </components:PageLayout.Body>
+
+    <components:PageLayout.Footer>
+      <Button
+          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+          FontSize="{DynamicResource ActionButtonTextSize}"
+          HorizontalOptions="Fill"
+          Text="{Binding DialogButtonName, Source={x:Reference Root}}" />
+    </components:PageLayout.Footer>
+  </components:PageLayout>
+</ContentPage>

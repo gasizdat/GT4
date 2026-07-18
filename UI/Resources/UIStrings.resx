@@ -706,6 +706,15 @@ genealogy tree and enjoy!</value>
   <data name="HintGedcomImportCancelling" xml:space="preserve">
     <value>Cancelling…</value>
   </data>
+  <data name="TitleSelectEncodingDialog" xml:space="preserve">
+    <value>Select text encoding</value>
+  </data>
+  <data name="HintGedcomDeclaredCharset_1" xml:space="preserve">
+    <value>This GEDCOM file declares the "{0}" charset, which is ambiguous. Pick the codepage its text was actually written in.</value>
+  </data>
+  <data name="FieldCodepage" xml:space="preserve">
+    <value>Codepage</value>
+  </data>
   <data name="ShareGedcomTitle" xml:space="preserve">
     <value>Export GEDCOM</value>
   </data>

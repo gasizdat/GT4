@@ -9,7 +9,6 @@ using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Extensions;
 using System.Collections.ObjectModel;
-using System.Text;
 using System.Windows.Input;
 
 namespace GT4.UI.Pages;
@@ -162,6 +161,10 @@ public partial class ProjectListPage : ContentPage
     if (file is null)
       return;
 
+    using var reader = await GedcomImportEncoding.ResolveReaderAsync(file, Navigation, _AlertService);
+    if (reader is null)
+      return;
+
     var name = Path.GetFileNameWithoutExtension(file.FileName);
     var description = UIStrings.HintImportedFromGedcom;
 
@@ -170,7 +173,7 @@ public partial class ProjectListPage : ContentPage
     ProjectInfo? info = null;
     try
     {
-      info = await Task.Run(() => RunImportAsync(file, name, description, dialog.Token));
+      info = await Task.Run(() => RunImportAsync(file, reader, name, description, dialog.Token));
     }
     catch (OperationCanceledException)
     {
@@ -193,13 +196,11 @@ public partial class ProjectListPage : ContentPage
   // dialog's cancellation token rather than a short-lived DB token. Any failure — a user cancellation or a
   // malformed file — deletes the freshly created project shell and rethrows, so nothing is left behind; the
   // caller turns cancellation into a quiet no-op and lets real errors surface through SafeCommand.
-  private async Task<ProjectInfo> RunImportAsync(FileResult file, string name, string description, CancellationToken token)
+  private async Task<ProjectInfo> RunImportAsync(FileResult file, TextReader reader, string name, string description, CancellationToken token)
   {
     var host = await _ProjectList.CreateAsync(name, description, token);
     try
     {
-      using var stream = await file.OpenReadAsync();
-      using var reader = new StreamReader(stream, Encoding.UTF8);
       var mediaBasePath = string.IsNullOrEmpty(file.FullPath) ? null : Path.GetDirectoryName(file.FullPath);
       await _Importer.ImportAsync(host.Project!, reader, token, mediaBasePath);
 
