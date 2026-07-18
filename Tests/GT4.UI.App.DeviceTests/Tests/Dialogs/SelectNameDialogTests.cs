@@ -1,4 +1,5 @@
 using GT4.Core.Project.Dto;
+using GT4.UI.Components;
 using GT4.UI.Dialogs;
 using Moq;
 using Xunit;
@@ -117,6 +118,38 @@ public class SelectNameDialogTests
     services.Names.Verify(
       n => n.GetNamesByTypeAsync(It.Is<NameType>(t => t != NameType.FamilyName), It.IsAny<CancellationToken>()),
       Times.Never());
+  }
+
+  [Fact]
+  public async Task Add_button_is_not_clipped_when_the_names_list_overflows_the_page()
+  {
+    // Pins the sacrificial spacer row in SelectNameDialog.xaml: without it, the grid's row stack
+    // overruns the grid frame and the Add button is the row that gets clipped.
+    var services = new TestServices();
+    var names = Enumerable
+      .Range(1, 80)
+      .Select(i => N(i, $"Name{i:D3}", NameType.FirstName | NameType.MaleDeclension))
+      .ToArray();
+    services.Names
+      .Setup(n => n.GetNamesByTypeAsync(NameType.FirstName | NameType.MaleDeclension, It.IsAny<CancellationToken>()))
+      .ReturnsAsync(names);
+    var dialog = await CreateDialogAsync(services, BiologicalSex.Male);
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var layout = (PageLayout)dialog.Content;
+    var bodyGrid = (Grid)layout.Body;
+    var addButton = bodyGrid.Children.OfType<Button>().Single();
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => addButton.Frame.Height),
+      height => height > 0,
+      timeoutMessage: "The Add button never got a frame.");
+    await Task.Delay(500); // the overrun only appears once the native controls report their real sizes
+
+    var (buttonBottom, gridHeight) = await MainThread.InvokeOnMainThreadAsync(
+      () => (addButton.Frame.Bottom, bodyGrid.Frame.Height));
+
+    Assert.True(
+      buttonBottom <= gridHeight,
+      $"The Add button (bottom {buttonBottom}) overruns the body grid frame ({gridHeight}) and gets clipped.");
   }
 
   [Fact]
