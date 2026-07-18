@@ -71,7 +71,7 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     _TablePersonNames = new(this);
     _TableData = new(this);
     _TableRelatives = new(this);
-    _TablePersonData = new(this);
+    _TablePersonData = new(this, _TableData);
     _FamilyManager = new(this);
     _PersonManager = new(this);
     _RelativesProvider = new(this);

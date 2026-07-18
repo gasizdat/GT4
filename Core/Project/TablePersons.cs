@@ -8,13 +8,13 @@ internal partial class TablePersons : TableBase, ITablePersons
 {
   private readonly WeakReference<Dictionary<int, Person>?> _Items = new(null);
 
-  public TablePersons(IProjectDocument document) : base(document)
+  public TablePersons(IProjectConnection connection) : base(connection)
   {
   }
 
   internal override async Task CreateAsync(CancellationToken token)
   {
-    using var command = Document.CreateCommand();
+    using var command = Connection.CreateCommand();
     command.CommandText = """
       CREATE TABLE IF NOT EXISTS Persons (
         Id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -51,7 +51,7 @@ internal partial class TablePersons : TableBase, ITablePersons
     if (_Items.TryGetTarget(out var items))
       return [.. items.Values];
 
-    using var command = Document.CreateCommand();
+    using var command = Connection.CreateCommand();
 
     command.CommandText = """
       SELECT Id, BirthDate, BirthDateStatus, DeathDate, DeathDateStatus, BiologicalSex
@@ -75,7 +75,7 @@ internal partial class TablePersons : TableBase, ITablePersons
     if (_Items.TryGetTarget(out var items))
       return items.TryGetValue(personId, out var cached) ? cached : null;
 
-    using var command = Document.CreateCommand();
+    using var command = Connection.CreateCommand();
 
     command.CommandText = """
       SELECT Id, BirthDate, BirthDateStatus, DeathDate, DeathDateStatus, BiologicalSex
@@ -90,8 +90,8 @@ internal partial class TablePersons : TableBase, ITablePersons
 
   public async Task<Person> AddPersonAsync(Person person, CancellationToken token)
   {
-    using var transaction = await Document.BeginTransactionAsync(token);
-    using var command = Document.CreateCommand();
+    using var transaction = await Connection.BeginTransactionAsync(token);
+    using var command = Connection.CreateCommand();
     command.CommandText = """
       INSERT INTO Persons (BirthDate, BirthDateStatus, DeathDate, DeathDateStatus, BiologicalSex)
       VALUES (@birthDate, @birthDateStatus, @deathDate, @deathDateStatus, @biologicalSex)
@@ -113,8 +113,8 @@ internal partial class TablePersons : TableBase, ITablePersons
 
   public async Task UpdatePersonAsync(Person person, CancellationToken token)
   {
-    using var transaction = await Document.BeginTransactionAsync(token);
-    using var command = Document.CreateCommand();
+    using var transaction = await Connection.BeginTransactionAsync(token);
+    using var command = Connection.CreateCommand();
     command.CommandText = """
       UPDATE Persons
       SET BirthDate=@birthDate, BirthDateStatus=@birthDateStatus, DeathDate=@deathDate, DeathDateStatus=@deathDateStatus, BiologicalSex=@biologicalSex
@@ -134,8 +134,8 @@ internal partial class TablePersons : TableBase, ITablePersons
 
   public async Task RemovePersonAsync(Person person, CancellationToken token)
   {
-    using var transaction = await Document.BeginTransactionAsync(token);
-    using var command = Document.CreateCommand();
+    using var transaction = await Connection.BeginTransactionAsync(token);
+    using var command = Connection.CreateCommand();
     command.CommandText = """
       DELETE FROM Persons
       WHERE Id=@id;

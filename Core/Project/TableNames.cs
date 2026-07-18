@@ -17,13 +17,13 @@ internal class TableNames : TableBase, ITableNames
     return name;
   }
 
-  public TableNames(IProjectDocument document) : base(document)
+  public TableNames(IProjectConnection connection) : base(connection)
   {
   }
 
   internal override async Task CreateAsync(CancellationToken token)
   {
-    using var command = Document.CreateCommand();
+    using var command = Connection.CreateCommand();
 
     command.CommandText = """
       CREATE TABLE IF NOT EXISTS Names (
@@ -42,7 +42,7 @@ internal class TableNames : TableBase, ITableNames
 
   public async Task<Name[]> GetNamesByTypeAsync(NameType nameType, CancellationToken token)
   {
-    using var command = Document.CreateCommand();
+    using var command = Connection.CreateCommand();
 
     if (nameType == NameType.AllNames)
     {
@@ -80,7 +80,7 @@ internal class TableNames : TableBase, ITableNames
     {
       return null;
     }
-    using var command = Document.CreateCommand();
+    using var command = Connection.CreateCommand();
 
     command.CommandText = """
       SELECT Id, Value, Type, ParentId
@@ -100,7 +100,7 @@ internal class TableNames : TableBase, ITableNames
       return null;
     }
 
-    using var command = Document.CreateCommand();
+    using var command = Connection.CreateCommand();
     command.CommandText = """
       SELECT t1.Id, t1.Value, t1.Type, t1.ParentId
       FROM Names AS t1
@@ -120,8 +120,8 @@ internal class TableNames : TableBase, ITableNames
 
   public async Task<Name> AddNameAsync(string value, NameType type, Name? parent, CancellationToken token)
   {
-    using var transaction = await Document.BeginTransactionAsync(token);
-    using var command = Document.CreateCommand();
+    using var transaction = await Connection.BeginTransactionAsync(token);
+    using var command = Connection.CreateCommand();
     command.CommandText = """
       INSERT INTO Names (Value, Type, ParentId)
       VALUES (@value, @type, @parentId)
@@ -140,7 +140,7 @@ internal class TableNames : TableBase, ITableNames
 
   public async Task<Name> AddFirstMaleNameAsync(string firstName, string? malePatronymic, string? femalePatronymic, CancellationToken token)
   {
-    using var transaction = await Document.BeginTransactionAsync(token);
+    using var transaction = await Connection.BeginTransactionAsync(token);
     var name = await AddNameAsync(firstName, NameType.FirstName | NameType.MaleDeclension, null, token);
 
     // Sequential: writes inside a transaction must run one at a time on the single connection.
@@ -165,8 +165,8 @@ internal class TableNames : TableBase, ITableNames
 
   public async Task UpdateName(Name name, CancellationToken token)
   {
-    using var transaction = await Document.BeginTransactionAsync(token);
-    using var command = Document.CreateCommand();
+    using var transaction = await Connection.BeginTransactionAsync(token);
+    using var command = Connection.CreateCommand();
     command.CommandText = """
       UPDATE Names
       SET Value=@value
@@ -180,8 +180,8 @@ internal class TableNames : TableBase, ITableNames
 
   public async Task RemoveNameWithSubnamesAsync(Name name, CancellationToken token)
   {
-    using var transaction = await Document.BeginTransactionAsync(token);
-    using var command = Document.CreateCommand();
+    using var transaction = await Connection.BeginTransactionAsync(token);
+    using var command = Connection.CreateCommand();
     command.CommandText = """
       DELETE FROM Names
       WHERE Id=@id OR ParentId=@id;

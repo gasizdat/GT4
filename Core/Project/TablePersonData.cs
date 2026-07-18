@@ -7,13 +7,13 @@ namespace GT4.Core.Project;
 
 internal partial class TablePersonData : TableBase, ITablePersonData
 {
-  public TablePersonData(IProjectDocument document) : base(document)
-  {
-  }
+  private readonly ITableData _Data;
+
+  public TablePersonData(IProjectConnection connection, ITableData data) : base(connection) => _Data = data;
 
   internal override async Task CreateAsync(CancellationToken token)
   {
-    using var command = Document.CreateCommand();
+    using var command = Connection.CreateCommand();
     command.CommandText = """
       CREATE TABLE IF NOT EXISTS PersonData (
         PersonId INTEGER NOT NULL,
@@ -44,7 +44,7 @@ internal partial class TablePersonData : TableBase, ITablePersonData
   {
     if (data.Id == ElementId.NonCommittedId)
     {
-      return await Document.Data.AddDataAsync(data.Content, data.MimeType, data.Category, token);
+      return await _Data.AddDataAsync(data.Content, data.MimeType, data.Category, token);
     }
 
     return data;
@@ -52,7 +52,7 @@ internal partial class TablePersonData : TableBase, ITablePersonData
 
   public async Task<Data[]> GetPersonDataSetAsync(Person person, DataCategory? category, CancellationToken token)
   {
-    using var command = Document.CreateCommand();
+    using var command = Connection.CreateCommand();
 
     if (category.HasValue)
     {
@@ -93,7 +93,7 @@ internal partial class TablePersonData : TableBase, ITablePersonData
       return [];
 
     var inClause = string.Join(",", persons.Select(p => p.Id));
-    using var command = Document.CreateCommand();
+    using var command = Connection.CreateCommand();
 
     if (category.HasValue)
     {
@@ -132,13 +132,13 @@ internal partial class TablePersonData : TableBase, ITablePersonData
 
   public async Task AddPersonDataSetAsync(Person person, Data[] dataSet, CancellationToken token)
   {
-    using var transaction = await Document.BeginTransactionAsync(token);
+    using var transaction = await Connection.BeginTransactionAsync(token);
 
     // Add person data one at a time to preserve the data order.
     foreach (var data in dataSet)
     {
       var dataId = (await AddDataContentIfNotExist(data, token)).Id;
-      using var command = Document.CreateCommand();
+      using var command = Connection.CreateCommand();
 
       command.CommandText = """
         INSERT INTO PersonData (PersonId, DataId)
@@ -153,8 +153,8 @@ internal partial class TablePersonData : TableBase, ITablePersonData
 
   public async Task UpdatePersonDataSetAsync(Person person, Data[] dataSet, CancellationToken token)
   {
-    using var transaction = await Document.BeginTransactionAsync(token);
-    using var command = Document.CreateCommand();
+    using var transaction = await Connection.BeginTransactionAsync(token);
+    using var command = Connection.CreateCommand();
     command.CommandText = """
       DELETE FROM PersonData
       WHERE PersonId=@personId;
@@ -181,7 +181,7 @@ internal partial class TablePersonData : TableBase, ITablePersonData
       return;
     }
 
-    using var transaction = await Document.BeginTransactionAsync(token);
+    using var transaction = await Connection.BeginTransactionAsync(token);
     if (newData is not null)
     {
       newData = await AddDataContentIfNotExist(newData, token);
@@ -202,8 +202,8 @@ internal partial class TablePersonData : TableBase, ITablePersonData
 
   public async Task RemovePersonDataAsync(Person person, Data data, CancellationToken token)
   {
-    using var transaction = await Document.BeginTransactionAsync(token);
-    using var command = Document.CreateCommand();
+    using var transaction = await Connection.BeginTransactionAsync(token);
+    using var command = Connection.CreateCommand();
     command.CommandText = """
       DELETE FROM PersonData
       WHERE PersonId=@personId AND DataId=@dataId;
@@ -214,7 +214,7 @@ internal partial class TablePersonData : TableBase, ITablePersonData
 
     try
     {
-      await Document.Data.RemoveDataAsync(data, token);
+      await _Data.RemoveDataAsync(data, token);
     }
     catch (SqliteException)
     {

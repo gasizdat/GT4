@@ -4,11 +4,11 @@ using System.Data.Common;
 
 namespace GT4.Core.Project;
 
-public abstract class TableBase : ProjectComponentBase
+public abstract class TableBase
 {
-  protected TableBase(IProjectDocument document) : base(document)
-  {
-  }
+  protected TableBase(IProjectConnection connection) => Connection = connection;
+
+  internal IProjectConnection Connection { get; init; }
 
   protected static int? TryGetInteger(DbDataReader reader, int ordinal) =>
     reader.IsDBNull(ordinal) ? null : reader.GetInt32(ordinal);

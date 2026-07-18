@@ -17,13 +17,13 @@ internal partial class TablePersonNames : TableBase, ITablePersonNames
     return name;
   }
 
-  public TablePersonNames(IProjectDocument document) : base(document)
+  public TablePersonNames(IProjectConnection connection) : base(connection)
   {
   }
 
   internal override async Task CreateAsync(CancellationToken token)
   {
-    using var command = Document.CreateCommand();
+    using var command = Connection.CreateCommand();
     command.CommandText = """
       CREATE TABLE IF NOT EXISTS PersonNames (
           PersonId INTEGER NOT NULL,
@@ -37,7 +37,7 @@ internal partial class TablePersonNames : TableBase, ITablePersonNames
 
   public async Task<Name[]> GetPersonNamesAsync(Person person, CancellationToken token)
   {
-    using var command = Document.CreateCommand();
+    using var command = Connection.CreateCommand();
 
     command.CommandText = """
       SELECT n.Id, n.Value, n.Type, n.ParentId
@@ -64,7 +64,7 @@ internal partial class TablePersonNames : TableBase, ITablePersonNames
       return [];
 
     var inClause = string.Join(",", persons.Select(p => p.Id));
-    using var command = Document.CreateCommand();
+    using var command = Connection.CreateCommand();
     command.CommandText = $"""
       SELECT n.Id, n.Value, n.Type, n.ParentId, pn.PersonId
       FROM Names n
@@ -88,12 +88,12 @@ internal partial class TablePersonNames : TableBase, ITablePersonNames
 
   public async Task AddPersonNamesAsync(Person person, Name[] names, CancellationToken token)
   {
-    using var transaction = await Document.BeginTransactionAsync(token);
+    using var transaction = await Connection.BeginTransactionAsync(token);
 
     // Add person name one at a time to preserve the name order.
     foreach (var name in names)
     {
-      using var command = Document.CreateCommand();
+      using var command = Connection.CreateCommand();
       command.CommandText = """
         INSERT INTO PersonNames (PersonId, NameId)
         VALUES (@personId, @nameId);
@@ -111,9 +111,9 @@ internal partial class TablePersonNames : TableBase, ITablePersonNames
   {
     var oldNames = await GetPersonNamesAsync(person, token);
 
-    using var transaction = await Document.BeginTransactionAsync(token);
+    using var transaction = await Connection.BeginTransactionAsync(token);
     {
-      using var command = Document.CreateCommand();
+      using var command = Connection.CreateCommand();
 
       command.CommandText = """
         DELETE FROM PersonNames
