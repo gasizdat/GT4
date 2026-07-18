@@ -18,6 +18,7 @@ public partial class KinshipFinderPage : ContentPage
   private readonly IAlertService _AlertService;
   private readonly INameFormatter _NameFormatter;
   private readonly IServiceProvider _ServiceProvider;
+  private readonly INavigationService _NavigationService;
   private readonly ICommand _PageCommand;
 
   private PersonInfo? _PersonFrom;
@@ -71,6 +72,10 @@ public partial class KinshipFinderPage : ContentPage
       case string commandName when commandName == "PickPersonTo":
         await PickPersonAsync(person => _PersonTo = person);
         break;
+
+      case RelativeInfo relativeInfo:
+        await _NavigationService.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { ["PersonInfo"] = (PersonInfo)relativeInfo });
+        break;
     }
   }
 
@@ -79,13 +84,15 @@ public partial class KinshipFinderPage : ContentPage
     ICancellationTokenProvider cancellationTokenProvider,
     IAlertService alertService,
     INameFormatter nameFormatter,
-    IServiceProvider serviceProvider)
+    IServiceProvider serviceProvider,
+    INavigationService navigationService)
   {
     _CurrentProjectProvider = currentProjectProvider;
     _CancellationTokenProvider = cancellationTokenProvider;
     _AlertService = alertService;
     _NameFormatter = nameFormatter;
     _ServiceProvider = serviceProvider;
+    _NavigationService = navigationService;
     _PageCommand = new SafeCommand(OnPageCommand, _AlertService);
 
     InitializeComponent();

@@ -1,6 +1,7 @@
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Dialogs;
+using GT4.UI.Pages;
 using Moq;
 using Xunit;
 
@@ -106,5 +107,24 @@ public class KinshipFinderPageTests
 
     Assert.False(page.HasChain);
     Assert.True(page.ShowNotFound);
+  }
+
+  [Fact]
+  public async Task Tapping_a_chain_entry_navigates_to_PersonPage()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+    var personTo = P(2);
+    var relative = new RelativeInfo(personTo, RelationshipType.Parent, null, Generation.Parent, Consanguinity.Zero);
+    var expectedRoute = $"{typeof(PersonPage).Namespace}/{typeof(PersonPage).Name}";
+
+    await page.InvokePageCommandAsync(relative);
+
+    services.NavigationService.Verify(
+      n => n.GoToAsync(
+        expectedRoute,
+        true,
+        It.Is<Dictionary<string, object>>(d => ((PersonInfo)d["PersonInfo"]).Id == personTo.Id)),
+      Times.Once());
   }
 }

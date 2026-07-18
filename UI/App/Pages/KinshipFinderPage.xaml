@@ -86,7 +86,8 @@
             HorizontalOptions="Center"
             IsVisible="{Binding HasChain, Source={x:Reference Root}}"
             NameFormat="FullPersonName"
-            Relative="{Binding Summary, Source={x:Reference Root}}" />
+            Relative="{Binding Summary, Source={x:Reference Root}}"
+            SelectCommand="{Binding PageCommand, Source={x:Reference Root}}" />
 
         <Label
             Grid.Row="2"
@@ -107,7 +108,10 @@
 
           <CollectionView.ItemTemplate>
             <DataTemplate x:DataType="dto:RelativeInfo">
-              <components:RelativeInfoView NameFormat="FullPersonName" Relative="{Binding .}" />
+              <components:RelativeInfoView
+                  NameFormat="FullPersonName"
+                  Relative="{Binding .}"
+                  SelectCommand="{Binding PageCommand, Source={x:Reference Root}}" />
             </DataTemplate>
           </CollectionView.ItemTemplate>
         </CollectionView>

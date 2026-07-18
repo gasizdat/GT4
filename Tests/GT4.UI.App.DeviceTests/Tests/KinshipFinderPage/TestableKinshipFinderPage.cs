@@ -18,8 +18,9 @@ internal sealed class TestableKinshipFinderPage : KinshipFinderPage
     ICancellationTokenProvider cancellationTokenProvider,
     IAlertService alertService,
     INameFormatter nameFormatter,
-    IServiceProvider serviceProvider)
-    : base(currentProjectProvider, cancellationTokenProvider, alertService, nameFormatter, serviceProvider)
+    IServiceProvider serviceProvider,
+    INavigationService navigationService)
+    : base(currentProjectProvider, cancellationTokenProvider, alertService, nameFormatter, serviceProvider, navigationService)
   {
   }
 
