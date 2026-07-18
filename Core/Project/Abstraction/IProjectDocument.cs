@@ -1,6 +1,6 @@
 ﻿namespace GT4.Core.Project.Abstraction;
 
-public interface IProjectDocument : IAsyncDisposable, IDisposable
+public interface IProjectDocument : IProjectConnection, IAsyncDisposable, IDisposable
 {
   const string MimeType = "application/gt4;storage=sqlite";
   long ProjectRevision { get; }
@@ -15,15 +15,6 @@ public interface IProjectDocument : IAsyncDisposable, IDisposable
   ITableRelatives Relatives { get; }
   IRelativesProvider RelativesProvider { get; }
   IFamilyTreeProvider FamilyTreeProvider { get; }
-
-  Task<IProjectTransaction> BeginTransactionAsync(CancellationToken token);
-
-  /// <summary>
-  /// Creates a command bound to the single underlying connection. Configure it and call one of its
-  /// <c>Execute*</c> methods, which serialize access to the connection and bind the command to the
-  /// current transaction automatically.
-  /// </summary>
-  ProjectCommand CreateCommand();
 
   void UpdateRevision();
 }

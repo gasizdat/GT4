@@ -5,7 +5,7 @@ namespace GT4.Core.Project;
 /// <summary>
 /// A SQLite command that executes itself safely against the document's single connection.
 /// <para>
-/// Created by <see cref="Abstraction.IProjectDocument.CreateCommand"/>. Set <see cref="CommandText"/>
+/// Created by <see cref="Abstraction.IProjectConnection.CreateCommand"/>. Set <see cref="CommandText"/>
 /// and <see cref="Parameters"/> as on a normal command, then call one of the <c>Execute*</c> methods.
 /// Execution is serialized through the shared <see cref="ConnectionGate"/>: when the calling
 /// async-flow owns the current transaction the command joins it and runs directly; otherwise it waits
