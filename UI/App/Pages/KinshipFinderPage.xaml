@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="GT4.UI.Pages.KinshipFinderPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:components="clr-namespace:GT4.UI.Components"
+    xmlns:dto="clr-namespace:GT4.Core.Project.Dto;assembly=GT4.Core.Project"
+    xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
+    x:Name="Root"
+    Title="{x:Static resources:UIStrings.TitleKinshipFinderPage}">
+
+  <components:PageLayout>
+    <components:PageLayout.Header>
+      <Grid
+          ColumnDefinitions="Auto, *, Auto"
+          ColumnSpacing="{StaticResource PageContentSpacing}"
+          RowDefinitions="Auto, Auto, Auto"
+          RowSpacing="{StaticResource PageContentSpacing}">
+
+        <!--  Row 0 - First person  -->
+        <Label
+            Grid.Row="0"
+            Grid.Column="0"
+            Style="{StaticResource FieldName}"
+            Text="{x:Static resources:UIStrings.FieldKinshipPersonFrom}" />
+
+        <Label
+            Grid.Row="0"
+            Grid.Column="1"
+            Style="{StaticResource FieldValue}"
+            Text="{Binding PersonFromName, Source={x:Reference Root}}" />
+
+        <Button
+            Grid.Row="0"
+            Grid.Column="2"
+            Command="{Binding PageCommand, Source={x:Reference Root}}"
+            CommandParameter="PickPersonFrom"
+            Text="{x:Static resources:UIStrings.BtnNameChoosePerson}" />
+
+        <!--  Row 1 - Second person  -->
+        <Label
+            Grid.Row="1"
+            Grid.Column="0"
+            Style="{StaticResource FieldName}"
+            Text="{x:Static resources:UIStrings.FieldKinshipPersonTo}" />
+
+        <Label
+            Grid.Row="1"
+            Grid.Column="1"
+            Style="{StaticResource FieldValue}"
+            Text="{Binding PersonToName, Source={x:Reference Root}}" />
+
+        <Button
+            Grid.Row="1"
+            Grid.Column="2"
+            Command="{Binding PageCommand, Source={x:Reference Root}}"
+            CommandParameter="PickPersonTo"
+            Text="{x:Static resources:UIStrings.BtnNameChoosePerson}" />
+
+        <!--  Row 2 - Find  -->
+        <Button
+            Grid.Row="2"
+            Grid.Column="0"
+            Grid.ColumnSpan="3"
+            Command="{Binding PageCommand, Source={x:Reference Root}}"
+            CommandParameter="Find"
+            IsEnabled="{Binding CanFind, Source={x:Reference Root}}"
+            Text="{x:Static resources:UIStrings.BtnNameFindKinship}" />
+
+      </Grid>
+    </components:PageLayout.Header>
+
+    <components:PageLayout.Body>
+      <Grid>
+        <Label
+            HorizontalOptions="Center"
+            IsVisible="{Binding ShowNotFound, Source={x:Reference Root}}"
+            Style="{StaticResource FieldValue}"
+            Text="{x:Static resources:UIStrings.MsgKinshipNotFound}"
+            VerticalOptions="Start" />
+
+        <CollectionView
+            HorizontalOptions="Center"
+            IsVisible="{Binding HasChain, Source={x:Reference Root}}"
+            ItemsSource="{Binding Chain, Source={x:Reference Root}}">
+
+          <CollectionView.ItemsLayout>
+            <LinearItemsLayout Orientation="Vertical" />
+          </CollectionView.ItemsLayout>
+
+          <CollectionView.ItemTemplate>
+            <DataTemplate x:DataType="dto:RelativeInfo">
+              <components:RelativeInfoView NameFormat="FullPersonName" Relative="{Binding .}" />
+            </DataTemplate>
+          </CollectionView.ItemTemplate>
+        </CollectionView>
+      </Grid>
+    </components:PageLayout.Body>
+  </components:PageLayout>
+</ContentPage>

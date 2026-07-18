@@ -352,6 +352,15 @@ genealogy tree and enjoy!</value>
   <data name="FieldBiologicalSex" xml:space="preserve">
     <value>Biological sex</value>
   </data>
+  <data name="FieldKinshipPersonFrom" xml:space="preserve">
+    <value>First person</value>
+  </data>
+  <data name="FieldKinshipPersonTo" xml:space="preserve">
+    <value>Second person</value>
+  </data>
+  <data name="FieldNotSelected" xml:space="preserve">
+    <value>Not selected</value>
+  </data>
   <data name="TitleSelectDateDialog" xml:space="preserve">
     <value>Select date</value>
   </data>
@@ -414,6 +423,12 @@ genealogy tree and enjoy!</value>
   </data>
   <data name="TitleSelectRelativesDialog" xml:space="preserve">
     <value>Select relatives</value>
+  </data>
+  <data name="TitleSelectPersonDialog" xml:space="preserve">
+    <value>Select person</value>
+  </data>
+  <data name="TitleKinshipFinderPage" xml:space="preserve">
+    <value>Kinship finder</value>
   </data>
   <data name="FieldRelationshipStartDate" xml:space="preserve">
     <value>Start date</value>
@@ -1044,6 +1059,9 @@ FN - family name</value>
   <data name="MenuItemGoToStatistics" xml:space="preserve">
     <value>📊 Statistics</value>
   </data>
+  <data name="MenuItemGoToKinshipFinder" xml:space="preserve">
+    <value>🩸 Kinship finder</value>
+  </data>
   <data name="FieldStatOverview" xml:space="preserve">
     <value>Overview</value>
   </data>
@@ -1133,6 +1151,15 @@ FN - family name</value>
   </data>
   <data name="StatValueNone" xml:space="preserve">
     <value>—</value>
+  </data>
+  <data name="MsgKinshipNotFound" xml:space="preserve">
+    <value>No known relationship found between these two people.</value>
+  </data>
+  <data name="BtnNameChoosePerson" xml:space="preserve">
+    <value>Choose…</value>
+  </data>
+  <data name="BtnNameFindKinship" xml:space="preserve">
+    <value>Find relationship</value>
   </data>
   <data name="StatValueYears_1" xml:space="preserve">
     <value>{0} years</value>

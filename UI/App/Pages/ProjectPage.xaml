@@ -38,6 +38,11 @@
         Text="{x:Static resources:UIStrings.MenuItemGoToStatistics}" />
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="GoToKinshipFinder"
+        Order="Secondary"
+        Text="{x:Static resources:UIStrings.MenuItemGoToKinshipFinder}" />
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="ImportGedcom"
         Order="Secondary"
         Text="{x:Static resources:UIStrings.MenuItemImportGedcom}" />
