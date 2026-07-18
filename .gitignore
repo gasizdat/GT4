@@ -10,3 +10,6 @@ obj
 /Core/Gedcom/unsupported-tags.md
 /Tests/GT4.UI.App.DeviceTests/test-results/
 /coverage/
+
+# Visual Studio per-user settings
+*.user

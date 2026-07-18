@@ -1,0 +1,11 @@
+<Project>
+	<!-- Three app heads (App, AppWinOnly, AppAndroidOnly) share this folder. Without per-head
+	     intermediate paths their NuGet restores overwrite the same obj\project.assets.json, making
+	     every build depend on which head was restored last (NETSDK1005). -->
+	<PropertyGroup>
+		<BaseIntermediateOutputPath>obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+		<MSBuildProjectExtensionsPath>$(BaseIntermediateOutputPath)</MSBuildProjectExtensionsPath>
+		<!-- The default excludes only cover this head's own obj subfolder; keep the siblings' out too -->
+		<DefaultItemExcludes>$(DefaultItemExcludes);obj\**</DefaultItemExcludes>
+	</PropertyGroup>
+</Project>
