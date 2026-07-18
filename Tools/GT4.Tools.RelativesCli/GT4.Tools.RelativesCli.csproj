@@ -14,4 +14,8 @@
 		<ProjectReference Include="..\..\Core\Gedcom\GT4.Core.Gedcom.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<InternalsVisibleTo Include="GT4.Tools.RelativesCli.Tests" />
+	</ItemGroup>
+
 </Project>

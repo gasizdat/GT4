@@ -13,6 +13,7 @@
       "Tests\\GT4.UI.View.Tests\\GT4.UI.View.Tests.csproj",
       "Tests\\GT4.Core.Gedcom.Tests\\GT4.Core.Gedcom.Tests.csproj",
       "Tests\\GT4.UI.App.DeviceTests\\GT4.UI.App.DeviceTests.csproj",
+      "Tests\\GT4.Tools.RelativesCli.Tests\\GT4.Tools.RelativesCli.Tests.csproj",
       "Tools\\GT4.Tools.RelativesCli\\GT4.Tools.RelativesCli.csproj"
     ]
   }
