@@ -8,6 +8,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <MauiEnableXamlCBindingWithSourceCompilation>false</MauiEnableXamlCBindingWithSourceCompilation>
+    <!-- XC0022/XC0025 suggest compiled bindings (x:DataType) on every binding; compilation with
+         Source is deliberately off above, so neither is actionable without a project-wide effort. -->
+    <NoWarn>$(NoWarn);XC0022;XC0025</NoWarn>
 
     <!-- Display name -->
     <ApplicationTitle>GT4</ApplicationTitle>

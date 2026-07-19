@@ -1,0 +1,20 @@
+{
+  "solution": {
+    "path": "GT4.sln",
+    "projects": [
+      "Core\\Project\\GT4.Core.Project.csproj",
+      "Core\\Utils\\GT4.Core.Utils.csproj",
+      "Core\\Gedcom\\GT4.Core.Gedcom.csproj",
+      "UI\\App\\AppWinOnly.csproj",
+      "UI\\Resources\\GT4.UI.Resources.csproj",
+      "UI\\Utils\\GT4.UI.Utils.csproj",
+      "Tests\\GT4.Core.Project.Tests\\GT4.Core.Project.Tests.csproj",
+      "Tests\\GT4.UI.Utils.Tests\\GT4.UI.Utils.Tests.csproj",
+      "Tests\\GT4.UI.View.Tests\\GT4.UI.View.Tests.csproj",
+      "Tests\\GT4.Core.Gedcom.Tests\\GT4.Core.Gedcom.Tests.csproj",
+      "Tests\\GT4.Tools.RelativesCli.Tests\\GT4.Tools.RelativesCli.Tests.csproj",
+      "Tools\\GT4.Tools.RelativesCli\\GT4.Tools.RelativesCli.csproj",
+      "Tests\\GT4.UI.App.DeviceTests\\GT4.UI.App.DeviceTests.csproj"
+    ]
+  }
+}
