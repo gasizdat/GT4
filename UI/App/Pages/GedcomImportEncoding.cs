@@ -31,6 +31,15 @@ public sealed class GedcomImportEncoding
       bytes = buffer.ToArray();
     }
 
+    return await ResolveReaderFromBytesAsync(bytes, navigation);
+  }
+
+  // Split out from ResolveReaderAsync so detection, the codepage prompt and decoding are testable without
+  // FileResult: its OpenReadAsync isn't virtual and its path-based constructor doesn't produce a working
+  // instance on Windows (it reads an internal StorageFile the constructor never populates), so there is no
+  // way to feed it in-memory bytes from a test.
+  internal async Task<TextReader?> ResolveReaderFromBytesAsync(byte[] bytes, INavigation navigation)
+  {
     var charset = GedcomCharset.Detect(bytes);
     var encoding = charset.Encoding;
     if (charset.NeedsCodepage)
