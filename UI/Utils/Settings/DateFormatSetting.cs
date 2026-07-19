@@ -7,7 +7,7 @@ namespace GT4.UI.Utils.Settings;
 
 internal sealed class DateFormatSetting : ISettingEditor
 {
-  private readonly IServiceProvider _ServiceProvider;
+  private readonly DateFormatterResolver _DateFormatterResolver;
   private readonly IConfiguration _Configuration;
   private readonly IInteractiveConfiguration? _InteractiveConfiguration;
   private readonly string _FormatSection;
@@ -15,13 +15,13 @@ internal sealed class DateFormatSetting : ISettingEditor
   private readonly Date _ExampleDate;
 
   public DateFormatSetting(
-    IServiceProvider serviceProvider,
+    DateFormatterResolver dateFormatterResolver,
     IConfiguration configuration,
     [FromKeyedServices(WellKnownActiveConfigurations.AppConfig)]
     IInteractiveConfiguration? interactiveConfiguration,
     [ServiceKey] DateFormatKind kind)
   {
-    _ServiceProvider = serviceProvider;
+    _DateFormatterResolver = dateFormatterResolver;
     _Configuration = configuration;
     _InteractiveConfiguration = interactiveConfiguration;
     (_FormatSection, _DefaultFormat, DisplayName, Description, _ExampleDate) = kind switch
@@ -48,9 +48,7 @@ internal sealed class DateFormatSetting : ISettingEditor
 
   public string Description { get; }
 
-  public string Example => _ServiceProvider
-    .GetRequiredService<IDateFormatter>()
-    .ToString(_ExampleDate);
+  public string Example => _DateFormatterResolver().ToString(_ExampleDate);
 
   public string Value
   {

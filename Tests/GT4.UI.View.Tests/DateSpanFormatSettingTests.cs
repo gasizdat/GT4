@@ -17,12 +17,12 @@ public class DateSpanFormatSettingTests
   private static DateSpanFormatSetting MakeFull(
     string? configuredValue = null,
     Mock<IInteractiveConfiguration>? interactive = null,
-    Mock<IServiceProvider>? sp = null)
+    DateSpanFormatterResolver? resolver = null)
   {
     var config = new Mock<IConfiguration>();
     config.SetupGet(c => c["DateSpanFormatter.FullDateSpanFormat"]).Returns(configuredValue);
     return new DateSpanFormatSetting(
-      sp?.Object ?? new Mock<IServiceProvider>().Object,
+      resolver ?? (() => new Mock<IDateSpanFormatter>().Object),
       config.Object,
       interactive?.Object,
       DateSpanFormatKind.Full);
@@ -31,12 +31,12 @@ public class DateSpanFormatSettingTests
   private static DateSpanFormatSetting MakeShort(
     string? configuredValue = null,
     Mock<IInteractiveConfiguration>? interactive = null,
-    Mock<IServiceProvider>? sp = null)
+    DateSpanFormatterResolver? resolver = null)
   {
     var config = new Mock<IConfiguration>();
     config.SetupGet(c => c["DateSpanFormatter.ShortDateSpanFormat"]).Returns(configuredValue);
     return new DateSpanFormatSetting(
-      sp?.Object ?? new Mock<IServiceProvider>().Object,
+      resolver ?? (() => new Mock<IDateSpanFormatter>().Object),
       config.Object,
       interactive?.Object,
       DateSpanFormatKind.Short);
@@ -103,10 +103,7 @@ public class DateSpanFormatSettingTests
     var formatter = new Mock<IDateSpanFormatter>();
     formatter.Setup(f => f.ToString(It.IsAny<DateSpan?>())).Returns("25 years 3 months 15 days");
 
-    var sp = new Mock<IServiceProvider>();
-    sp.Setup(s => s.GetService(typeof(IDateSpanFormatter))).Returns(formatter.Object);
-
-    _ = MakeFull(sp: sp).Example;
+    _ = MakeFull(resolver: () => formatter.Object).Example;
 
     formatter.Verify(f => f.ToString(It.Is<DateSpan?>(d => d.HasValue && d.Value.Status == DateStatus.WellKnown)), Times.Once);
   }
@@ -151,10 +148,7 @@ public class DateSpanFormatSettingTests
     var formatter = new Mock<IDateSpanFormatter>();
     formatter.Setup(f => f.ToString(It.IsAny<DateSpan?>())).Returns("5 years 6 months");
 
-    var sp = new Mock<IServiceProvider>();
-    sp.Setup(s => s.GetService(typeof(IDateSpanFormatter))).Returns(formatter.Object);
-
-    _ = MakeShort(sp: sp).Example;
+    _ = MakeShort(resolver: () => formatter.Object).Example;
 
     formatter.Verify(f => f.ToString(It.Is<DateSpan?>(d => d.HasValue && d.Value.Status == DateStatus.DayUnknown)), Times.Once);
   }

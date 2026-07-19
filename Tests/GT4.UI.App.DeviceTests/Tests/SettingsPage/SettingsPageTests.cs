@@ -4,12 +4,12 @@ using Xunit;
 namespace GT4.UI.DeviceTests;
 
 /// <summary>
-/// SettingsPage gathers every keyed ISettingEditor registration via
-/// serviceProvider.GetKeyedServices(KeyedService.AnyKey) -- a "gather all" query, not the
-/// one-dependency-at-a-time service-locator pattern the other pages moved off of (see
-/// feedback_di_constructor_injection), so it keeps its raw IServiceProvider constructor and needs no
-/// protected-seam subclass. All ten real ISettingEditor implementations are exercised as-is
-/// (unmocked), since grouping/ordering real settings is the actual behavior being covered.
+/// SettingsPage gathers every keyed ISettingEditor registration via a SettingEditorsResolver
+/// delegate (GT4.UI.Utils.Settings), itself backed by GetKeyedServices(KeyedService.AnyKey) --
+/// a "gather all" query with no typed DI equivalent, registered once in
+/// ServiceCollectionExtensions.AddUIUtils rather than resolved ad hoc. All ten real
+/// ISettingEditor implementations are exercised as-is (unmocked), since grouping/ordering real
+/// settings is the actual behavior being covered.
 /// </summary>
 public class SettingsPageTests
 {

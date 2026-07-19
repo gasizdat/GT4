@@ -22,12 +22,12 @@ public class PersonNameSettingTests
     string defaultFormat,
     string? configuredValue = null,
     Mock<IInteractiveConfiguration>? interactive = null,
-    Mock<IServiceProvider>? sp = null)
+    NameFormatterResolver? resolver = null)
   {
     var config = new Mock<IConfiguration>();
     config.SetupGet(c => c[formatSection]).Returns(configuredValue);
     return new PersonNameSetting(
-      sp?.Object ?? new Mock<IServiceProvider>().Object,
+      resolver ?? (() => new Mock<INameFormatter>().Object),
       config.Object,
       interactive?.Object,
       nameFormat);
@@ -102,10 +102,7 @@ public class PersonNameSettingTests
     var formatter = new Mock<INameFormatter>();
     formatter.Setup(f => f.ToString(It.IsAny<PersonInfo>(), It.IsAny<NameFormat>())).Returns("John Smith");
 
-    var sp = new Mock<IServiceProvider>();
-    sp.Setup(s => s.GetService(typeof(INameFormatter))).Returns(formatter.Object);
-
-    _ = Make(nameFormat, section, defaultFormat, sp: sp).Example;
+    _ = Make(nameFormat, section, defaultFormat, resolver: () => formatter.Object).Example;
 
     formatter.Verify(f => f.ToString(It.IsAny<PersonInfo>(), nameFormat), Times.Once);
   }

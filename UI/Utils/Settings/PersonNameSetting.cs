@@ -20,7 +20,7 @@ internal sealed class PersonNameSetting : ISettingEditor
       new Name(Id: 0, UIStrings.NameFamily, NameType.FamilyName, null) ],
       MainPhoto: null);
 
-  private readonly IServiceProvider _ServiceProvider;
+  private readonly NameFormatterResolver _NameFormatterResolver;
   private readonly IConfiguration _Configuration;
   private readonly IInteractiveConfiguration? _InteractiveConfiguration;
   private readonly NameFormat _NameFormat;
@@ -28,13 +28,13 @@ internal sealed class PersonNameSetting : ISettingEditor
   private readonly string _DefaultFormat;
 
   public PersonNameSetting(
-    IServiceProvider serviceProvider,
+    NameFormatterResolver nameFormatterResolver,
     IConfiguration configuration,
     [FromKeyedServices(WellKnownActiveConfigurations.AppConfig)]
     IInteractiveConfiguration? interactiveConfiguration,
     [ServiceKey] NameFormat nameFormat)
   {
-    _ServiceProvider = serviceProvider;
+    _NameFormatterResolver = nameFormatterResolver;
     _Configuration = configuration;
     _InteractiveConfiguration = interactiveConfiguration;
     _NameFormat = nameFormat;
@@ -50,9 +50,7 @@ internal sealed class PersonNameSetting : ISettingEditor
 
   public string DisplayName { get; }
 
-  public string Example => _ServiceProvider
-    .GetRequiredService<INameFormatter>()
-    .ToString(_PersonInfo, _NameFormat);
+  public string Example => _NameFormatterResolver().ToString(_PersonInfo, _NameFormat);
 
   public string Description => UIStrings.FieldPersonNameFormatHint;
 

@@ -1,3 +1,5 @@
+using GT4.Core.Utils;
+
 namespace GT4.UI.Utils.Settings;
 
 /// <summary>
@@ -12,3 +14,8 @@ public static class SettingKeys
   public const string FontScale = nameof(FontScaleSetting);
   public const string BackgroundAnimation = nameof(BackgroundAnimationSetting);
 }
+
+/// <summary>Resolves every registered <see cref="ISettingEditor"/> regardless of key -- the typed
+/// equivalent of <c>GetKeyedServices(KeyedService.AnyKey)</c>, kept out of consumers like
+/// <c>SettingsPage</c>.</summary>
+public delegate IEnumerable<ISettingEditor> SettingEditorsResolver();

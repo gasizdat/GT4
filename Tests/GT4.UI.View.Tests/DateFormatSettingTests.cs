@@ -17,12 +17,12 @@ public class DateFormatSettingTests
   private static DateFormatSetting MakeFull(
     string? configuredValue = null,
     Mock<IInteractiveConfiguration>? interactive = null,
-    Mock<IServiceProvider>? sp = null)
+    DateFormatterResolver? resolver = null)
   {
     var config = new Mock<IConfiguration>();
     config.SetupGet(c => c["DateFormatter.FullDateFormat"]).Returns(configuredValue);
     return new DateFormatSetting(
-      sp?.Object ?? new Mock<IServiceProvider>().Object,
+      resolver ?? (() => new Mock<IDateFormatter>().Object),
       config.Object,
       interactive?.Object,
       DateFormatKind.Full);
@@ -31,12 +31,12 @@ public class DateFormatSettingTests
   private static DateFormatSetting MakeShort(
     string? configuredValue = null,
     Mock<IInteractiveConfiguration>? interactive = null,
-    Mock<IServiceProvider>? sp = null)
+    DateFormatterResolver? resolver = null)
   {
     var config = new Mock<IConfiguration>();
     config.SetupGet(c => c["DateFormatter.ShortDateFormat"]).Returns(configuredValue);
     return new DateFormatSetting(
-      sp?.Object ?? new Mock<IServiceProvider>().Object,
+      resolver ?? (() => new Mock<IDateFormatter>().Object),
       config.Object,
       interactive?.Object,
       DateFormatKind.Short);
@@ -103,10 +103,7 @@ public class DateFormatSettingTests
     var formatter = new Mock<IDateFormatter>();
     formatter.Setup(f => f.ToString(It.IsAny<Date?>())).Returns("01 Jan 2025");
 
-    var sp = new Mock<IServiceProvider>();
-    sp.Setup(s => s.GetService(typeof(IDateFormatter))).Returns(formatter.Object);
-
-    _ = MakeFull(sp: sp).Example;
+    _ = MakeFull(resolver: () => formatter.Object).Example;
 
     formatter.Verify(f => f.ToString(It.Is<Date?>(d => d.HasValue && d.Value.Status == DateStatus.WellKnown)), Times.Once);
   }
@@ -151,10 +148,7 @@ public class DateFormatSettingTests
     var formatter = new Mock<IDateFormatter>();
     formatter.Setup(f => f.ToString(It.IsAny<Date?>())).Returns("Jan 2025");
 
-    var sp = new Mock<IServiceProvider>();
-    sp.Setup(s => s.GetService(typeof(IDateFormatter))).Returns(formatter.Object);
-
-    _ = MakeShort(sp: sp).Example;
+    _ = MakeShort(resolver: () => formatter.Object).Example;
 
     formatter.Verify(f => f.ToString(It.Is<Date?>(d => d.HasValue && d.Value.Status == DateStatus.DayUnknown)), Times.Once);
   }
