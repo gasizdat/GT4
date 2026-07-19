@@ -1,0 +1,9 @@
+{
+  "solution": {
+    "path": "GT4.sln",
+    "projects": [
+      "UI\\App\\AppWinOnly.csproj",
+      "Tests\\GT4.UI.App.DeviceTests\\GT4.UI.App.DeviceTests.csproj"
+    ]
+  }
+}

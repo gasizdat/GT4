@@ -7,7 +7,6 @@
       "Core\\Gedcom\\GT4.Core.Gedcom.csproj",
       "UI\\Resources\\GT4.UI.Resources.csproj",
       "UI\\Utils\\GT4.UI.Utils.csproj",
-      "UI\\App\\AppWinOnly.csproj",
       "Tests\\GT4.Core.Project.Tests\\GT4.Core.Project.Tests.csproj",
       "Tests\\GT4.UI.Utils.Tests\\GT4.UI.Utils.Tests.csproj",
       "Tests\\GT4.UI.View.Tests\\GT4.UI.View.Tests.csproj",

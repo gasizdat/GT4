@@ -36,13 +36,13 @@ jobs:
       - name: Build solution
         run: dotnet build GT4.CI.slnf --configuration Release
 
-      # GT4.UI.App.DeviceTests is multi-targeted (net10.0-android + net10.0-windows...) and is
-      # excluded from the slnf above for that reason: an unscoped build there would also compile
-      # its android TFM, which nothing in CI tests (android device tests only run on physical
-      # hardware) and which just slows this gate down. Scope to windows only, matching the
-      # --framework usage in the test-device job below.
-      - name: Build GT4.UI.App.DeviceTests (windows)
-        run: dotnet build Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj --configuration Release --framework net10.0-windows10.0.19041.0
+      # AppWinOnly and GT4.UI.App.DeviceTests both conditionally target
+      # net10.0-windows10.0.19041.0 in addition to other TFMs, so they're split into their own
+      # filter and built with --framework: an unscoped build of DeviceTests here would also compile
+      # its net10.0-android TFM, which nothing in CI tests (android device tests only run on
+      # physical hardware) and which just slows this gate down.
+      - name: Build solution (windows)
+        run: dotnet build GT4.CI.Windows.slnf --configuration Release --framework net10.0-windows10.0.19041.0
 
   test:
     runs-on: windows-latest
