@@ -39,6 +39,7 @@ public class GT4Services
       .AddSingleton<INavigationService, NavigationService>()
       .AddSingleton<GedcomImportEncoding>()
       .AddTransient<DataConverterResolver>(sp => category => sp.GetRequiredKeyedService<IDataConverter>(category))
+      .AddTransient<OptionalDataConverterResolver>(sp => category => sp.GetKeyedService<IDataConverter>(category))
       .AddTransient<SelectNameDialog.Factory>()
       .AddTransient<SelectRelativesDialog.Factory>()
       .AddTransient<CreateOrUpdatePersonDialog.Factory>();

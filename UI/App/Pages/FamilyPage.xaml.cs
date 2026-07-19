@@ -29,7 +29,6 @@ public partial class FamilyPage : ContentPage
   private double _PersonItemMinimalWidth;
 
   public FamilyPage(
-    IServiceProvider serviceProvider,
     ICancellationTokenProvider cancellationTokenProvider,
     ICurrentProjectProvider currentProjectProvider,
     [FromKeyedServices(NameFormat.ShortPersonName)]

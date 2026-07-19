@@ -22,7 +22,6 @@ internal sealed class TestableFamilyPage : FamilyPage
   private int _FilterDataLoads;
 
   public TestableFamilyPage(
-    IServiceProvider serviceProvider,
     ICancellationTokenProvider cancellationTokenProvider,
     ICurrentProjectProvider currentProjectProvider,
     [FromKeyedServices(NameFormat.ShortPersonName)]
@@ -34,7 +33,6 @@ internal sealed class TestableFamilyPage : FamilyPage
     INameTypeFormatter nameTypeFormatter,
     CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory)
     : base(
-      serviceProvider,
       cancellationTokenProvider,
       currentProjectProvider,
       personInfoComparerByShortNames,

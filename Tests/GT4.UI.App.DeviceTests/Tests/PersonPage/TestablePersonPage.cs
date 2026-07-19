@@ -23,7 +23,6 @@ internal sealed class TestablePersonPage : PersonPage
   private int _FilterDataLoads;
 
   public TestablePersonPage(
-    IServiceProvider serviceProvider,
     ICancellationTokenProvider cancellationTokenProvider,
     ICurrentProjectProvider currentProjectProvider,
     IDateSpanFormatter dateSpanFormatter,
@@ -33,12 +32,12 @@ internal sealed class TestablePersonPage : PersonPage
     IDataConverter textConverter,
     [FromKeyedServices(DataCategory.PersonGedcomTags)]
     IDataConverter gedcomConverter,
+    OptionalDataConverterResolver dataConverterResolver,
     IAlertService alertService,
     INavigationService navigationService,
     IBiologicalSexFormatter biologicalSexFormatter,
     CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory)
     : base(
-      serviceProvider,
       cancellationTokenProvider,
       currentProjectProvider,
       dateSpanFormatter,
@@ -46,6 +45,7 @@ internal sealed class TestablePersonPage : PersonPage
       nameFormatter,
       textConverter,
       gedcomConverter,
+      dataConverterResolver,
       alertService,
       navigationService,
       biologicalSexFormatter,
