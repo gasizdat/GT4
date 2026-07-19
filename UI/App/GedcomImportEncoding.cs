@@ -2,7 +2,7 @@ using GT4.Core.Gedcom;
 using GT4.UI.Abstraction;
 using GT4.UI.Dialogs;
 
-namespace GT4.UI.Pages;
+namespace GT4.UI;
 
 // Shared by ProjectListPage and ProjectPage: both let the user pick a GEDCOM file to import and need the
 // same declared-charset detection and (when ambiguous) codepage prompt before the file can be decoded.
