@@ -10,6 +10,8 @@ using System.Windows.Input;
 
 namespace GT4.UI.Dialogs;
 
+public delegate SelectNameDialog SelectNameDialogFactory(BiologicalSex biologicalSex, NameType[] nameTypes);
+
 public partial class SelectNameDialog : ContentPage
 {
   private readonly TaskCompletionSource<Name?> _Info = new(null);
