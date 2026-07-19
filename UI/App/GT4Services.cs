@@ -1,13 +1,9 @@
-using GT4.Core.Gedcom;
 using GT4.Core.Gedcom.Extensions;
-using GT4.Core.Project;
 using GT4.Core.Project.Dto;
 using GT4.Core.Project.Extensions;
-using GT4.Core.Utils;
 using GT4.Core.Utils.Extensions;
 using GT4.UI.Abstraction;
 using GT4.UI.Converters;
-using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Extensions;
 using Microsoft.Extensions.Configuration;
@@ -36,7 +32,8 @@ public class GT4Services
       .AddKeyedSingleton<IDataConverter, PhotoTagDataConverter>(DataCategory.PersonMainPhotoTagged)
       .AddKeyedSingleton<IDataConverter, PhotoTagDataConverter>(DataCategory.PersonPhotoTagged)
       .AddSingleton<IAlertService, AlertService>()
-      .AddSingleton<INavigationService, NavigationService>();
+      .AddSingleton<INavigationService, NavigationService>()
+      .AddSingleton<GedcomImportEncoding>();
   }
 
   public static IServiceProvider Provider =>

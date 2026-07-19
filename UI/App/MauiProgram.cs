@@ -1,6 +1,7 @@
 ﻿using GT4.UI.Utils;
 using GT4.UI.Utils.Settings;
 using Microsoft.Extensions.Logging;
+using System.Text;
 
 namespace GT4.UI;
 
@@ -8,6 +9,9 @@ public static class MauiProgram
 {
   public static MauiApp CreateMauiApp()
   {
+    // Needed for GEDCOM imports that resolve a legacy codepage (e.g. Windows-1251) for an ANSI-declared file.
+    Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
     var builder = MauiApp.CreateBuilder();
     builder
         .UseMauiApp<App>()

@@ -33,6 +33,7 @@ public partial class ProjectPage : ContentPage
   private readonly IProjectList _ProjectList;
   private readonly IGedcomExporter _Exporter;
   private readonly IGedcomImporter _Importer;
+  private readonly GedcomImportEncoding _GedcomImportEncoding;
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
 
@@ -51,6 +52,7 @@ public partial class ProjectPage : ContentPage
     IProjectList projectList,
     IGedcomExporter exporter,
     IGedcomImporter importer,
+    GedcomImportEncoding gedcomImportEncoding,
     IAlertService alertService,
     INavigationService navigationService,
     IBiologicalSexFormatter biologicalSexFormatter
@@ -64,6 +66,7 @@ public partial class ProjectPage : ContentPage
     _ProjectList = projectList;
     _Exporter = exporter;
     _Importer = importer;
+    _GedcomImportEncoding = gedcomImportEncoding;
     _AlertService = alertService;
     _NavigationService = navigationService;
 
@@ -387,11 +390,15 @@ public partial class ProjectPage : ContentPage
     if (!await _AlertService.ShowConfirmationAsync(confirmText))
       return;
 
+    using var reader = await _GedcomImportEncoding.ResolveReaderAsync(file, Navigation);
+    if (reader is null)
+      return;
+
     var dialog = new GedcomImportDialog(_CurrentProjectProvider.Info.Name, _AlertService);
     await Navigation.PushModalAsync(dialog);
     try
     {
-      await Task.Run(() => RunImportAsync(file, dialog.Token));
+      await Task.Run(() => RunImportAsync(file, reader, dialog.Token));
     }
     catch (OperationCanceledException)
     {
@@ -406,10 +413,8 @@ public partial class ProjectPage : ContentPage
     this.RefreshView();
   }
 
-  private async Task RunImportAsync(FileResult file, CancellationToken token)
+  private async Task RunImportAsync(FileResult file, TextReader reader, CancellationToken token)
   {
-    using var stream = await file.OpenReadAsync();
-    using var reader = new StreamReader(stream, Encoding.UTF8);
     var mediaBasePath = MediaBasePath(file);
     await _Importer.ImportAsync(_CurrentProjectProvider.Project, reader, token, mediaBasePath);
   }

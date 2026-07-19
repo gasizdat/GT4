@@ -21,6 +21,7 @@ internal sealed class TestableProjectListPage : ProjectListPage
     IComparer<ProjectInfo> projectInfoComparer,
     IProjectList projectList,
     IGedcomImporter importer,
+    GedcomImportEncoding gedcomImportEncoding,
     IAlertService alertService,
     INavigationService navigationService)
     : base(
@@ -29,6 +30,7 @@ internal sealed class TestableProjectListPage : ProjectListPage
       projectInfoComparer,
       projectList,
       importer,
+      gedcomImportEncoding,
       alertService,
       navigationService)
   {

@@ -933,7 +933,16 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("FieldSearchText", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Codepage.
+        /// </summary>
+        public static string FieldCodepage {
+            get {
+                return ResourceManager.GetString("FieldCodepage", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Select.
         /// </summary>
@@ -1493,7 +1502,16 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("HintGedcomImportCancelling", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to This GEDCOM file declares the "{0}" charset, which is ambiguous. Pick the codepage its text was actually written in..
+        /// </summary>
+        public static string HintGedcomDeclaredCharset_1 {
+            get {
+                return ResourceManager.GetString("HintGedcomDeclaredCharset_1", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Importing the file. This may take a while….
         /// </summary>
@@ -2742,6 +2760,15 @@ namespace GT4.UI.Resources {
         public static string TitleSelectPersonDialog {
             get {
                 return ResourceManager.GetString("TitleSelectPersonDialog", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Select text encoding.
+        /// </summary>
+        public static string TitleSelectEncodingDialog {
+            get {
+                return ResourceManager.GetString("TitleSelectEncodingDialog", resourceCulture);
             }
         }
 

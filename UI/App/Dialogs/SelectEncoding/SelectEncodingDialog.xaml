@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="GT4.UI.Dialogs.SelectEncodingDialog"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:components="clr-namespace:GT4.UI.Components"
+    xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
+    x:Name="Root">
+
+  <components:PageLayout>
+    <components:PageLayout.Header>
+      <Label
+          Style="{StaticResource PageTitle}"
+          Text="{x:Static resources:UIStrings.TitleSelectEncodingDialog}" />
+    </components:PageLayout.Header>
+
+    <components:PageLayout.Body>
+      <Grid
+          ColumnDefinitions="Auto, *"
+          ColumnSpacing="{StaticResource PageContentSpacing}"
+          RowDefinitions="Auto, *"
+          RowSpacing="{StaticResource PageContentSpacing}">
+
+        <Label
+            Style="{StaticResource FieldName}"
+            Text="{x:Static resources:UIStrings.FieldCodepage}" />
+
+        <Label
+            Grid.Row="0"
+            Grid.Column="1"
+            Grid.ColumnSpan="2"
+            HorizontalTextAlignment="Center"
+            Style="{StaticResource FieldValue}"
+            Text="{Binding DeclaredCharsetHint, Source={x:Reference Root}}" />
+
+        <CollectionView
+            Grid.Row="1"
+            Grid.Column="0"
+            Grid.ColumnSpan="2"
+            HorizontalOptions="Fill"
+            ItemsSource="{Binding Encodings, Source={x:Reference Root}}"
+            SelectedItem="{Binding SelectedEncoding, Source={x:Reference Root}}"
+            SelectionMode="Single">
+
+          <CollectionView.ItemTemplate>
+            <DataTemplate>
+              <Grid
+                  Padding="{StaticResource CollectionItemsVerticalPadding}"
+                  ColumnDefinitions="30, Auto, Auto, Auto"
+                  RowDefinitions="Auto"
+                  Style="{StaticResource HoverItem}">
+                <Label
+                    Grid.Column="1"
+                    Style="{StaticResource FieldName}"
+                    Text="{Binding DisplayName}" />
+                <Label
+                    Grid.Column="2"
+                    Style="{StaticResource FieldValue}"
+                    Text=" - " />
+                <Label
+                    Grid.Column="3"
+                    Style="{StaticResource FieldValue}"
+                    Text="{Binding Name}" />
+              </Grid>
+            </DataTemplate>
+          </CollectionView.ItemTemplate>
+
+        </CollectionView>
+      </Grid>
+    </components:PageLayout.Body>
+
+    <components:PageLayout.Footer>
+      <Button
+          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+          FontSize="{DynamicResource ActionButtonTextSize}"
+          HorizontalOptions="Fill"
+          Text="{Binding DialogButtonName, Source={x:Reference Root}}" />
+    </components:PageLayout.Footer>
+  </components:PageLayout>
+</ContentPage>
