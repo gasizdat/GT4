@@ -16,12 +16,13 @@ namespace GT4.UI.Pages;
 [QueryProperty(nameof(FamilyName), "FamilyName")]
 public partial class FamilyPage : ContentPage
 {
-  private readonly IServiceProvider _ServiceProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IComparer<PersonInfo> _PersonInfoComparer;
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
+  private readonly INameTypeFormatter _NameTypeFormatter;
+  private readonly CreateOrUpdatePersonDialogFactory _CreateOrUpdatePersonDialogFactory;
   private readonly FilteredObservableCollection<PersonInfo> _Persons = new();
   private bool _PersonsLoaded;
   private Name? _FamilyName = null;
@@ -36,15 +37,18 @@ public partial class FamilyPage : ContentPage
     IComparer<PersonInfo> personInfoComparer,
     IAlertService alertService,
     INavigationService navigationService,
-    IBiologicalSexFormatter biologicalSexFormatter
+    IBiologicalSexFormatter biologicalSexFormatter, 
+    INameTypeFormatter nameTypeFormatter,
+    CreateOrUpdatePersonDialogFactory createOrUpdatePersonDialogFactory
     )
   {
-    _ServiceProvider = serviceProvider;
     _CancellationTokenProvider = cancellationTokenProvider;
     _CurrentProjectProvider = currentProjectProvider;
     _PersonInfoComparer = personInfoComparerByShortNames ?? personInfoComparer;
     _AlertService = alertService;
     _NavigationService = navigationService;
+    _NameTypeFormatter = nameTypeFormatter;
+    _CreateOrUpdatePersonDialogFactory = createOrUpdatePersonDialogFactory;
 
     _Persons.Filter = (_, person) => FilterView.Matches(person);
 
@@ -181,7 +185,7 @@ public partial class FamilyPage : ContentPage
 
   private async Task OnCreatePerson()
   {
-    var dialog = _ServiceProvider.GetRequiredService<CreateOrUpdatePersonDialogFactory>()(null);
+    var dialog = _CreateOrUpdatePersonDialogFactory(null);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;
@@ -230,7 +234,7 @@ public partial class FamilyPage : ContentPage
           FamilyName!,
           _CurrentProjectProvider,
           _CancellationTokenProvider,
-          _ServiceProvider.GetRequiredService<INameTypeFormatter>(),
+          _NameTypeFormatter,
           _AlertService,
           Navigation);
         break;
