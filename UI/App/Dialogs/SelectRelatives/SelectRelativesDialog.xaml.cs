@@ -94,19 +94,22 @@ public partial class SelectRelativesDialog : ContentPage
     }
   }
 
-  // serviceProvider is kept as a locator deliberately: this dialog's only caller doesn't otherwise
-  // hold these dependencies, so converting to typed params would just relocate the
-  // GetRequiredService calls into the caller rather than remove them.
-  public SelectRelativesDialog(BiologicalSex? biologicalSex, Relative[] existingRelatives, IServiceProvider serviceProvider)
+  public SelectRelativesDialog(
+    BiologicalSex? biologicalSex,
+    Relative[] existingRelatives,
+    ICancellationTokenProvider cancellationTokenProvider,
+    ICurrentProjectProvider currentProjectProvider,
+    IDateFormatter dateFormatter,
+    IComparer<PersonInfo> personInfoComparer,
+    IAlertService alertService,
+    IBiologicalSexFormatter biologicalSexFormatter,
+    IRelationshipTypeFormatter relationshipTypeFormatter)
   {
-    var biologicalSexFormatter = serviceProvider.GetRequiredService<IBiologicalSexFormatter>();
-    var relationshipTypeFormatter = serviceProvider.GetRequiredService<IRelationshipTypeFormatter>();
-
-    _CancellationTokenProvider = serviceProvider.GetRequiredService<ICancellationTokenProvider>();
-    _CurrentProjectProvider = serviceProvider.GetRequiredService<ICurrentProjectProvider>();
-    _DateFormatter = serviceProvider.GetRequiredService<IDateFormatter>();
-    _PersonInfoComparer = serviceProvider.GetRequiredService<IComparer<PersonInfo>>();
-    _AlertService = serviceProvider.GetRequiredService<IAlertService>();
+    _CancellationTokenProvider = cancellationTokenProvider;
+    _CurrentProjectProvider = currentProjectProvider;
+    _DateFormatter = dateFormatter;
+    _PersonInfoComparer = personInfoComparer;
+    _AlertService = alertService;
     _DialogCommand = new SafeCommand(OnDialogCommand, _AlertService);
     _ProjectRevision = _CurrentProjectProvider.Project.ProjectRevision;
     _BiologicalSexes = new[] { BiologicalSex.Male, BiologicalSex.Female, BiologicalSex.Unknown }

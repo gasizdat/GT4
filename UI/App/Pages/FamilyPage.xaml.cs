@@ -181,7 +181,7 @@ public partial class FamilyPage : ContentPage
 
   private async Task OnCreatePerson()
   {
-    var dialog = new CreateOrUpdatePersonDialog(null, _ServiceProvider);
+    var dialog = _ServiceProvider.GetRequiredService<Func<PersonFullInfo?, CreateOrUpdatePersonDialog>>()(null);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;

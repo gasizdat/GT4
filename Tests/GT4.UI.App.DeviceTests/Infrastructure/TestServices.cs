@@ -2,7 +2,10 @@ using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
+using GT4.UI.Dialogs;
 using GT4.UI.Pages;
+using GT4.UI.Utils.Converters;
+using GT4.UI.Utils.Formatters;
 using Moq;
 
 namespace GT4.UI.DeviceTests;
@@ -133,6 +136,32 @@ internal sealed class TestServices
     services.AddSingleton<SettingsPage>();
     services.AddSingleton<TestableStatisticsPage>();
     services.AddSingleton<TestableKinshipFinderPage>();
+    // Testable*Dialog subclasses mirror the base dialog's own factory registration in GT4Services --
+    // see issue #122 -- since the base type's factory produces the base type, not the test subclass.
+    services.AddTransient<Func<PersonFullInfo?, TestableCreateOrUpdatePersonDialog>>(sp =>
+      person => new TestableCreateOrUpdatePersonDialog(
+        person,
+        sp.GetRequiredService<ICancellationTokenProvider>(),
+        sp.GetRequiredService<IBiologicalSexFormatter>(),
+        sp.GetRequiredService<INameTypeFormatter>(),
+        sp.GetRequiredService<INameFormatter>(),
+        sp.GetRequiredService<IDateFormatter>(),
+        sp.GetRequiredService<IComparer<PersonInfo>>(),
+        sp.GetRequiredService<IAlertService>(),
+        sp.GetRequiredService<Func<DataCategory, IDataConverter>>(),
+        sp.GetRequiredService<Func<BiologicalSex, NameType[], SelectNameDialog>>(),
+        sp.GetRequiredService<Func<BiologicalSex?, Relative[], SelectRelativesDialog>>()));
+    services.AddTransient<Func<BiologicalSex?, Relative[], TestableSelectRelativesDialog>>(sp =>
+      (biologicalSex, existingRelatives) => new TestableSelectRelativesDialog(
+        biologicalSex,
+        existingRelatives,
+        sp.GetRequiredService<ICancellationTokenProvider>(),
+        sp.GetRequiredService<ICurrentProjectProvider>(),
+        sp.GetRequiredService<IDateFormatter>(),
+        sp.GetRequiredService<IComparer<PersonInfo>>(),
+        sp.GetRequiredService<IAlertService>(),
+        sp.GetRequiredService<IBiologicalSexFormatter>(),
+        sp.GetRequiredService<IRelationshipTypeFormatter>()));
     Provider = services.BuildServiceProvider();
   }
 }

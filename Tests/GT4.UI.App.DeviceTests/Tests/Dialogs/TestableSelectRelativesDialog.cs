@@ -1,5 +1,9 @@
+using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
+using GT4.Core.Utils;
+using GT4.UI.Abstraction;
 using GT4.UI.Dialogs;
+using GT4.UI.Utils.Formatters;
 
 namespace GT4.UI.DeviceTests;
 
@@ -10,8 +14,26 @@ namespace GT4.UI.DeviceTests;
 /// </summary>
 internal sealed class TestableSelectRelativesDialog : SelectRelativesDialog
 {
-  public TestableSelectRelativesDialog(BiologicalSex? biologicalSex, Relative[] existingRelatives, IServiceProvider serviceProvider)
-    : base(biologicalSex, existingRelatives, serviceProvider)
+  public TestableSelectRelativesDialog(
+    BiologicalSex? biologicalSex,
+    Relative[] existingRelatives,
+    ICancellationTokenProvider cancellationTokenProvider,
+    ICurrentProjectProvider currentProjectProvider,
+    IDateFormatter dateFormatter,
+    IComparer<PersonInfo> personInfoComparer,
+    IAlertService alertService,
+    IBiologicalSexFormatter biologicalSexFormatter,
+    IRelationshipTypeFormatter relationshipTypeFormatter)
+    : base(
+        biologicalSex,
+        existingRelatives,
+        cancellationTokenProvider,
+        currentProjectProvider,
+        dateFormatter,
+        personInfoComparer,
+        alertService,
+        biologicalSexFormatter,
+        relationshipTypeFormatter)
   {
   }
 
