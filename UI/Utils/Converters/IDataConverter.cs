@@ -7,3 +7,5 @@ public interface IDataConverter
   Task<Data?> FromObjectAsync(object? data, CancellationToken token);
   Task<object?> ToObjectAsync(Data? data, CancellationToken token);
 }
+
+public delegate IDataConverter DataConverterResolver(DataCategory category);

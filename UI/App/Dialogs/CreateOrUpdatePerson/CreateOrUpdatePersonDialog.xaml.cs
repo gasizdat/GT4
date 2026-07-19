@@ -13,6 +13,8 @@ using System.Windows.Input;
 
 namespace GT4.UI.Dialogs;
 
+public delegate CreateOrUpdatePersonDialog CreateOrUpdatePersonDialogFactory(PersonFullInfo? person);
+
 public partial class CreateOrUpdatePersonDialog : ContentPage
 {
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
@@ -22,9 +24,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private readonly IDateFormatter _DateFormatter;
   private readonly IComparer<PersonInfo> _PersonInfoComparer;
   private readonly IAlertService _AlertService;
-  private readonly Func<DataCategory, IDataConverter> _DataConverterFactory;
-  private readonly Func<BiologicalSex, NameType[], SelectNameDialog> _SelectNameDialogFactory;
-  private readonly Func<BiologicalSex?, Relative[], SelectRelativesDialog> _SelectRelativesDialogFactory;
+  private readonly DataConverterResolver _DataConverterFactory;
+  private readonly SelectNameDialogFactory _SelectNameDialogFactory;
+  private readonly SelectRelativesDialogFactory _SelectRelativesDialogFactory;
   private readonly ICommand _DialogCommand;
   private readonly string _SaveButtonName;
   private readonly ObservableCollection<PersonDataItem> _Photos = new();
@@ -50,9 +52,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     IDateFormatter dateFormatter,
     IComparer<PersonInfo> personInfoComparer,
     IAlertService alertService,
-    Func<DataCategory, IDataConverter> dataConverterFactory,
-    Func<BiologicalSex, NameType[], SelectNameDialog> selectNameDialogFactory,
-    Func<BiologicalSex?, Relative[], SelectRelativesDialog> selectRelativesDialogFactory)
+    DataConverterResolver dataConverterFactory,
+    SelectNameDialogFactory selectNameDialogFactory,
+    SelectRelativesDialogFactory selectRelativesDialogFactory)
   {
     _CancellationTokenProvider = cancellationTokenProvider;
     _BiologicalSexFormatter = biologicalSexFormatter;
