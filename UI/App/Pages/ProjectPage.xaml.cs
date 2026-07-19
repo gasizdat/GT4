@@ -33,6 +33,7 @@ public partial class ProjectPage : ContentPage
   private readonly IProjectList _ProjectList;
   private readonly IGedcomExporter _Exporter;
   private readonly IGedcomImporter _Importer;
+  private readonly GedcomImportEncoding _GedcomImportEncoding;
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
 
@@ -51,6 +52,7 @@ public partial class ProjectPage : ContentPage
     IProjectList projectList,
     IGedcomExporter exporter,
     IGedcomImporter importer,
+    GedcomImportEncoding gedcomImportEncoding,
     IAlertService alertService,
     INavigationService navigationService,
     IBiologicalSexFormatter biologicalSexFormatter
@@ -64,6 +66,7 @@ public partial class ProjectPage : ContentPage
     _ProjectList = projectList;
     _Exporter = exporter;
     _Importer = importer;
+    _GedcomImportEncoding = gedcomImportEncoding;
     _AlertService = alertService;
     _NavigationService = navigationService;
 
@@ -387,7 +390,7 @@ public partial class ProjectPage : ContentPage
     if (!await _AlertService.ShowConfirmationAsync(confirmText))
       return;
 
-    using var reader = await GedcomImportEncoding.ResolveReaderAsync(file, Navigation, _AlertService);
+    using var reader = await _GedcomImportEncoding.ResolveReaderAsync(file, Navigation);
     if (reader is null)
       return;
 

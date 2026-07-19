@@ -7,14 +7,21 @@ namespace GT4.UI.Pages;
 
 // Shared by ProjectListPage and ProjectPage: both let the user pick a GEDCOM file to import and need the
 // same declared-charset detection and (when ambiguous) codepage prompt before the file can be decoded.
-internal static class GedcomImportEncoding
+public sealed class GedcomImportEncoding
 {
+  private readonly IAlertService _AlertService;
+
+  public GedcomImportEncoding(IAlertService alertService)
+  {
+    _AlertService = alertService;
+  }
+
   /// <summary>
   /// Reads <paramref name="file"/> once, resolves the encoding its declared <c>CHAR</c> header calls for,
   /// prompting the user for a codepage when that value is ambiguous (e.g. <c>ANSI</c>), and returns a reader
   /// over its content. Returns null if the user cancelled the codepage prompt.
   /// </summary>
-  public static async Task<TextReader?> ResolveReaderAsync(FileResult file, INavigation navigation, IAlertService alertService)
+  public async Task<TextReader?> ResolveReaderAsync(FileResult file, INavigation navigation)
   {
     byte[] bytes;
     using (var stream = await file.OpenReadAsync())
@@ -28,7 +35,7 @@ internal static class GedcomImportEncoding
     var encoding = charset.Encoding;
     if (charset.NeedsCodepage)
     {
-      var dialog = new SelectEncodingDialog(charset.DeclaredValue!, alertService);
+      var dialog = new SelectEncodingDialog(charset.DeclaredValue!, _AlertService);
       await navigation.PushModalAsync(dialog);
       encoding = await dialog.Info;
       await navigation.PopModalAsync();

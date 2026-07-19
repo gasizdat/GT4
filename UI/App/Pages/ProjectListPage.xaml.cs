@@ -30,6 +30,7 @@ public partial class ProjectListPage : ContentPage
   private readonly ICommand _PageCommand;
   private readonly IProjectList _ProjectList;
   private readonly IGedcomImporter _Importer;
+  private readonly GedcomImportEncoding _GedcomImportEncoding;
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
   private readonly ObservableCollection<ProjectItem> _Projects = new();
@@ -41,6 +42,7 @@ public partial class ProjectListPage : ContentPage
     IComparer<ProjectInfo> projectInfoComparer,
     IProjectList projectList,
     IGedcomImporter importer,
+    GedcomImportEncoding gedcomImportEncoding,
     IAlertService alertService,
     INavigationService navigationService
     )
@@ -50,6 +52,7 @@ public partial class ProjectListPage : ContentPage
     _ProjectInfoComparer = projectInfoComparer;
     _ProjectList = projectList;
     _Importer = importer;
+    _GedcomImportEncoding = gedcomImportEncoding;
     _AlertService = alertService;
     _NavigationService = navigationService;
     _PageCommand = new SafeCommand(OnPageCommand, _AlertService);
@@ -161,7 +164,7 @@ public partial class ProjectListPage : ContentPage
     if (file is null)
       return;
 
-    using var reader = await GedcomImportEncoding.ResolveReaderAsync(file, Navigation, _AlertService);
+    using var reader = await _GedcomImportEncoding.ResolveReaderAsync(file, Navigation);
     if (reader is null)
       return;
 

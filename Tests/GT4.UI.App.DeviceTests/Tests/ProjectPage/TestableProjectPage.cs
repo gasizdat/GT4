@@ -32,6 +32,7 @@ internal sealed class TestableProjectPage : ProjectPage
     IProjectList projectList,
     IGedcomExporter exporter,
     IGedcomImporter importer,
+    GedcomImportEncoding gedcomImportEncoding,
     IAlertService alertService,
     INavigationService navigationService,
     IBiologicalSexFormatter biologicalSexFormatter)
@@ -45,6 +46,7 @@ internal sealed class TestableProjectPage : ProjectPage
       projectList,
       exporter,
       importer,
+      gedcomImportEncoding,
       alertService,
       navigationService,
       biologicalSexFormatter)
