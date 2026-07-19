@@ -1,6 +1,6 @@
 using DeviceRunners.UITesting;
 using DeviceRunners.VisualRunners;
-using GT4.UI.Components;
+using GT4.UI.Utils.Settings;
 
 namespace GT4.UI.DeviceTests;
 
@@ -29,9 +29,9 @@ public static class MauiProgram
     Environment.Exit(1);
 #endif
 
-    // See PageLayout.AnimateBackground: rapid page churn during test navigation crashes Android's
-    // native GIF decoder.
-    PageLayout.AnimateBackground = false;
+    // See BackgroundAnimation.InitialIsEnabled: rapid page churn during test navigation crashes
+    // Android's native GIF decoder.
+    BackgroundAnimation.InitialIsEnabled = false;
 
     var builder = MauiApp.CreateBuilder();
     builder

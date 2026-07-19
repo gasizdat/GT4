@@ -10,4 +10,5 @@ namespace GT4.UI.Utils.Settings;
 public static class SettingKeys
 {
   public const string FontScale = nameof(FontScaleSetting);
+  public const string BackgroundAnimation = nameof(BackgroundAnimationSetting);
 }

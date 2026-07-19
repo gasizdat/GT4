@@ -3,7 +3,6 @@
     x:Class="GT4.UI.Components.PageLayout"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:components="clr-namespace:GT4.UI.Components"
     x:Name="Root">
 
   <ContentView.Resources>
@@ -37,7 +36,7 @@
     <Image
         Grid.RowSpan="3"
         Aspect="AspectFill"
-        IsAnimationPlaying="{x:Static components:PageLayout.AnimateBackground}"
+        IsAnimationPlaying="{Binding Animation.IsEnabled, Source={x:Reference Root}}"
         Opacity="0.3"
         Source="tree_bg.gif" />
 

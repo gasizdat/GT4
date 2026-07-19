@@ -458,6 +458,24 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Background animation.
+        /// </summary>
+        public static string FieldBackgroundAnimation {
+            get {
+                return ResourceManager.GetString("FieldBackgroundAnimation", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Whether the animated tree background on every page plays. Enter True or False..
+        /// </summary>
+        public static string FieldBackgroundAnimationHint {
+            get {
+                return ResourceManager.GetString("FieldBackgroundAnimationHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Biological sex.
         /// </summary>
         public static string FieldBiologicalSex {

@@ -891,6 +891,12 @@ FN - род</value>
   <data name="FieldFontScaleHintIOS" xml:space="preserve">
     <value>Масштаб всего текста в приложении. Вы можете использовать жест масштабирования, чтобы увеличить или уменьшить масштабирование размера текста </value>
   </data>
+  <data name="FieldBackgroundAnimation" xml:space="preserve">
+    <value>Анимация фона</value>
+  </data>
+  <data name="FieldBackgroundAnimationHint" xml:space="preserve">
+    <value>Воспроизводится ли анимированный фон с деревом на каждой странице. Введите True или False.</value>
+  </data>
   <data name="FieldGedcomDetails" xml:space="preserve">
     <value>Дополнительные сведения</value>
   </data>

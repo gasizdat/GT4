@@ -27,6 +27,9 @@ public partial class App : Application
     [FromKeyedServices(SettingKeys.FontScale)]
     ISettingEditor? fontScaleSetting,
     FontScale fontScale,
+    [FromKeyedServices(SettingKeys.BackgroundAnimation)]
+    ISettingEditor? backgroundAnimationSetting,
+    BackgroundAnimation backgroundAnimation,
     [FromKeyedServices(WellKnownActiveConfigurations.AppConfig)]
     IInteractiveConfiguration? appConfiguration)
   {
@@ -43,6 +46,7 @@ public partial class App : Application
 
     fontScale.Initialize();
     fontScale.Apply(fontScaleSetting?.Value);
+    backgroundAnimation.Apply(backgroundAnimationSetting?.Value);
 
 #if ANDROID
     Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific.Application.UseWindowSoftInputModeAdjust(
