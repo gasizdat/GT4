@@ -37,44 +37,44 @@ public sealed class GedcomCharsetTests : IAsyncLifetime
   }
 
   [Fact]
-  public void Detect_Utf8Bom_ReturnsUtf8WithoutPrompting()
+  public async Task Detect_Utf8Bom_ReturnsUtf8WithoutPromptingAsync()
   {
     var bytes = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(Header("UTF-8"))).ToArray();
 
-    var result = GedcomCharset.Detect(bytes);
+    var result = await Detect(bytes);
 
     result.NeedsCodepage.Should().BeFalse();
     result.Encoding.Should().Be(Encoding.UTF8);
   }
 
   [Fact]
-  public void Detect_Utf16LeBom_ReturnsUnicode()
+  public async Task Detect_Utf16LeBom_ReturnsUnicodeAsync()
   {
     var bytes = Encoding.Unicode.GetPreamble().Concat(Encoding.Unicode.GetBytes(Header("UNICODE"))).ToArray();
 
-    var result = GedcomCharset.Detect(bytes);
+    var result = await Detect(bytes);
 
     result.NeedsCodepage.Should().BeFalse();
     result.Encoding.Should().Be(Encoding.Unicode);
   }
 
   [Fact]
-  public void Detect_Utf16BeBom_ReturnsBigEndianUnicode()
+  public async Task Detect_Utf16BeBom_ReturnsBigEndianUnicodeAsync()
   {
     var bytes = Encoding.BigEndianUnicode.GetPreamble().Concat(Encoding.BigEndianUnicode.GetBytes(Header("UNICODE"))).ToArray();
 
-    var result = GedcomCharset.Detect(bytes);
+    var result = await Detect(bytes);
 
     result.NeedsCodepage.Should().BeFalse();
     result.Encoding.Should().Be(Encoding.BigEndianUnicode);
   }
 
   [Fact]
-  public void Detect_CharLikeLineAfterHeader_IsIgnored()
+  public async Task Detect_CharLikeLineAfterHeader_IsIgnoredAsync()
   {
     // CHAR is only ever meaningful as a level-1 child of HEAD; a same-shaped line belonging to a later
-    // record must not be mistaken for it. Pins the scan bound in FindDeclaredCharset (stops at the second
-    // level-0 line) rather than scanning the whole file for a "1 CHAR " prefix anywhere in it.
+    // record must not be mistaken for it. Pins the scan bound in FindDeclaredCharsetAsync (stops at the
+    // second level-0 line) rather than scanning arbitrarily far into the file for a "1 CHAR " prefix.
     var ged =
       """
       0 HEAD
@@ -84,43 +84,52 @@ public sealed class GedcomCharsetTests : IAsyncLifetime
       0 TRLR
       """;
 
-    var result = GedcomCharset.Detect(Encoding.UTF8.GetBytes(ged));
+    var result = await Detect(Encoding.UTF8.GetBytes(ged));
 
     result.NeedsCodepage.Should().BeFalse();
     result.Encoding.Should().Be(Encoding.UTF8);
   }
 
   [Fact]
-  public void Detect_DeclaredUtf8NoBom_ReturnsUtf8()
+  public async Task Detect_DeclaredUtf8NoBom_ReturnsUtf8Async()
   {
-    var result = GedcomCharset.Detect(Encoding.UTF8.GetBytes(Header("UTF-8")));
+    var result = await Detect(Encoding.UTF8.GetBytes(Header("UTF-8")));
 
     result.NeedsCodepage.Should().BeFalse();
     result.Encoding.Should().Be(Encoding.UTF8);
   }
 
   [Fact]
-  public void Detect_DeclaredAscii_ReturnsAscii()
+  public async Task Detect_DeclaredAscii_ReturnsAsciiAsync()
   {
-    var result = GedcomCharset.Detect(Encoding.UTF8.GetBytes(Header("ASCII")));
+    var result = await Detect(Encoding.UTF8.GetBytes(Header("ASCII")));
 
     result.NeedsCodepage.Should().BeFalse();
     result.Encoding.Should().Be(Encoding.ASCII);
   }
 
   [Fact]
-  public void Detect_MissingCharLine_DefaultsToUtf8()
+  public async Task Detect_MissingCharLine_DefaultsToUtf8Async()
   {
-    var result = GedcomCharset.Detect(Encoding.UTF8.GetBytes("0 HEAD\n0 TRLR"));
+    var result = await Detect(Encoding.UTF8.GetBytes("0 HEAD\n0 TRLR"));
 
     result.NeedsCodepage.Should().BeFalse();
     result.Encoding.Should().Be(Encoding.UTF8);
   }
 
   [Fact]
-  public void Detect_DeclaredAnsi_NeedsCodepage()
+  public async Task Detect_EmptyFile_DefaultsToUtf8Async()
   {
-    var result = GedcomCharset.Detect(Encoding.UTF8.GetBytes(Header("ANSI")));
+    var result = await Detect([]);
+
+    result.NeedsCodepage.Should().BeFalse();
+    result.Encoding.Should().Be(Encoding.UTF8);
+  }
+
+  [Fact]
+  public async Task Detect_DeclaredAnsi_NeedsCodepageAsync()
+  {
+    var result = await Detect(Encoding.UTF8.GetBytes(Header("ANSI")));
 
     result.NeedsCodepage.Should().BeTrue();
     result.Encoding.Should().BeNull();
@@ -128,11 +137,11 @@ public sealed class GedcomCharsetTests : IAsyncLifetime
   }
 
   [Fact]
-  public void Detect_DeclaredAnsel_Throws()
+  public async Task Detect_DeclaredAnsel_ThrowsAsync()
   {
-    var act = () => GedcomCharset.Detect(Encoding.UTF8.GetBytes(Header("ANSEL")));
+    var act = () => Detect(Encoding.UTF8.GetBytes(Header("ANSEL")));
 
-    act.Should().Throw<NotSupportedException>();
+    await act.Should().ThrowAsync<NotSupportedException>();
   }
 
   [Fact]
@@ -152,7 +161,7 @@ public sealed class GedcomCharsetTests : IAsyncLifetime
 
     // This is the path GedcomImportEncoding drives in the app: detect first (confirms the file needs a
     // codepage prompt), then decode with the codepage the user picked and hand the result to the importer.
-    var result = GedcomCharset.Detect(bytes);
+    var result = await Detect(bytes);
     result.NeedsCodepage.Should().BeTrue();
 
     var path = Path.Combine(Path.GetTempPath(), $"gt4_charset_{Guid.NewGuid():N}.db");
@@ -164,6 +173,8 @@ public sealed class GedcomCharsetTests : IAsyncLifetime
     var byName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
     byName.Should().ContainKey("Рюрик Новгородский");
   }
+
+  private static Task<GedcomCharsetResult> Detect(byte[] bytes) => GedcomCharset.DetectAsync(new MemoryStream(bytes), Token);
 
   private static string Header(string charset) => string.Format(HeaderTemplate, charset);
 }
