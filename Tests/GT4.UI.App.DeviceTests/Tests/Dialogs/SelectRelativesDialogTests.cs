@@ -19,7 +19,7 @@ public class SelectRelativesDialogTests
   {
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
     return await MainThread.InvokeOnMainThreadAsync(
-      () => services.Provider.GetRequiredService<TestableSelectRelativesDialogFactory>()(biologicalSex, existingRelatives ?? []));
+      () => services.Provider.GetRequiredService<TestableSelectRelativesDialog.Factory>().Create(biologicalSex, existingRelatives ?? []));
   }
 
   [Fact]

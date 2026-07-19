@@ -38,7 +38,7 @@ public class CreateOrUpdatePersonDialogTests
   {
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
     return await MainThread.InvokeOnMainThreadAsync(
-      () => services.Provider.GetRequiredService<CreateOrUpdatePersonDialogFactory>()(person));
+      () => services.Provider.GetRequiredService<CreateOrUpdatePersonDialog.Factory>().Create(person));
   }
 
   private static AdornerCommandParameter Adorner(string commandName, object element) =>
@@ -256,7 +256,7 @@ public class CreateOrUpdatePersonDialogTests
       .ReturnsAsync([newPatronymic]);
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
     var dialog = await MainThread.InvokeOnMainThreadAsync(
-      () => services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialogFactory>()(CreateSamplePerson()));
+      () => services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialog.Factory>().Create(CreateSamplePerson()));
 
     await using var window = await WindowHost.AttachAsync(dialog);
     var addTask = await MainThreadTask.StartAsync(dialog.InvokeAddPersonNameAsync);
@@ -287,7 +287,7 @@ public class CreateOrUpdatePersonDialogTests
       .ReturnsAsync([updatedPatronymic]);
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
     var dialog = await MainThread.InvokeOnMainThreadAsync(
-      () => services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialogFactory>()(person));
+      () => services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialog.Factory>().Create(person));
     var patronymic = dialog.Names.Single(n => n.Info.Type == (NameType.Patronymic | NameType.MaleDeclension));
 
     await using var window = await WindowHost.AttachAsync(dialog);

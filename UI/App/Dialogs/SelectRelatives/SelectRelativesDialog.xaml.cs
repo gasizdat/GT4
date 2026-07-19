@@ -11,15 +11,22 @@ using System.Windows.Input;
 
 namespace GT4.UI.Dialogs;
 
-public delegate SelectRelativesDialog SelectRelativesDialogFactory(BiologicalSex? biologicalSex, Relative[] existingRelatives);
-
 public partial class SelectRelativesDialog : ContentPage
 {
-  private readonly ICancellationTokenProvider _CancellationTokenProvider;
-  private readonly ICurrentProjectProvider _CurrentProjectProvider;
-  private readonly IDateFormatter _DateFormatter;
-  private readonly IComparer<PersonInfo> _PersonInfoComparer;
-  private readonly IAlertService _AlertService;
+  public record class Factory(
+    ICancellationTokenProvider CancellationTokenProvider,
+    ICurrentProjectProvider CurrentProjectProvider,
+    IDateFormatter DateFormatter,
+    IComparer<PersonInfo> PersonInfoComparer,
+    IAlertService AlertService,
+    IBiologicalSexFormatter BiologicalSexFormatter,
+    IRelationshipTypeFormatter RelationshipTypeFormatter)
+  {
+    public SelectRelativesDialog Create(BiologicalSex? biologicalSex, Relative[] existingRelatives) => 
+      new SelectRelativesDialog(this, biologicalSex, existingRelatives);
+  }
+
+  private readonly Factory _Factory;
   private readonly BiologicalSexItem[] _BiologicalSexes;
   private readonly RelationshipTypeItem[] _RelationshipTypes;
   private readonly FilteredObservableCollection<PersonInfo> _Persons = new();
@@ -84,7 +91,10 @@ public partial class SelectRelativesDialog : ContentPage
 
   private async Task OnRelationshipDateSetupAsync()
   {
-    var dialog = new SelectDateDialog(date: _RelationshipDate, dateFormatter: _DateFormatter, alertService: _AlertService);
+    var dialog = new SelectDateDialog(
+      date: _RelationshipDate,
+      dateFormatter: _Factory.DateFormatter,
+      alertService: _Factory.AlertService);
 
     await Navigation.PushModalAsync(dialog);
     var date = await dialog.Info;
@@ -96,26 +106,16 @@ public partial class SelectRelativesDialog : ContentPage
     }
   }
 
-  public SelectRelativesDialog(
+  protected SelectRelativesDialog(
+    Factory factory,
     BiologicalSex? biologicalSex,
-    Relative[] existingRelatives,
-    ICancellationTokenProvider cancellationTokenProvider,
-    ICurrentProjectProvider currentProjectProvider,
-    IDateFormatter dateFormatter,
-    IComparer<PersonInfo> personInfoComparer,
-    IAlertService alertService,
-    IBiologicalSexFormatter biologicalSexFormatter,
-    IRelationshipTypeFormatter relationshipTypeFormatter)
+    Relative[] existingRelatives)
   {
-    _CancellationTokenProvider = cancellationTokenProvider;
-    _CurrentProjectProvider = currentProjectProvider;
-    _DateFormatter = dateFormatter;
-    _PersonInfoComparer = personInfoComparer;
-    _AlertService = alertService;
-    _DialogCommand = new SafeCommand(OnDialogCommand, _AlertService);
-    _ProjectRevision = _CurrentProjectProvider.Project.ProjectRevision;
+    _Factory = factory;
+    _DialogCommand = new SafeCommand(OnDialogCommand, _Factory.AlertService);
+    _ProjectRevision = _Factory.CurrentProjectProvider.Project.ProjectRevision;
     _BiologicalSexes = new[] { BiologicalSex.Male, BiologicalSex.Female, BiologicalSex.Unknown }
-      .Select(sex => new BiologicalSexItem(sex, biologicalSexFormatter))
+      .Select(sex => new BiologicalSexItem(sex, _Factory.BiologicalSexFormatter))
       .ToArray();
     _BiologicalSex = _BiologicalSexes.SingleOrDefault(i => i.Info == biologicalSex, _BiologicalSexes[2]);
     _ExistingRelatives = existingRelatives;
@@ -125,7 +125,7 @@ public partial class SelectRelativesDialog : ContentPage
         RelationshipType.Spouse,
         RelationshipType.AdoptiveParent,
         RelationshipType.AdoptiveChild }
-      .Select(type => new RelationshipTypeItem(type, relationshipTypeFormatter))
+      .Select(type => new RelationshipTypeItem(type, _Factory.RelationshipTypeFormatter))
       .ToArray();
     _RelationshipType = _RelationshipTypes.First();
     _SelectedItems.CollectionChanged += (_, _) => OnPropertyChanged(nameof(DialogButtonName));
@@ -166,8 +166,8 @@ public partial class SelectRelativesDialog : ContentPage
     {
       async Task AddPersonInfoItemsAsync()
       {
-        using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-        var persons = await _CurrentProjectProvider
+        using var token = _Factory.CancellationTokenProvider.CreateDbCancellationToken();
+        var persons = await _Factory.CurrentProjectProvider
           .Project
           .PersonManager
           .GetPersonInfosAsync(selectMainPhoto: false, token);
@@ -175,12 +175,12 @@ public partial class SelectRelativesDialog : ContentPage
         var items = persons
           .Where(p =>
           {
-            using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+            using var token = _Factory.CancellationTokenProvider.CreateDbCancellationToken();
             foreach (var relative in _ExistingRelatives)
             {
               if (relative.Type == RelationshipType.Parent)
               {
-                var hasCommonAncestors = _CurrentProjectProvider
+                var hasCommonAncestors = _Factory.CurrentProjectProvider
                   .Project
                   .Relatives
                   .HasCommonAncestorsAsync(p, relative, token)
@@ -198,14 +198,14 @@ public partial class SelectRelativesDialog : ContentPage
 
             return true;
           })
-          .OrderBy(item => item, _PersonInfoComparer);
+          .OrderBy(item => item, _Factory.PersonInfoComparer);
 
         MainThread.BeginInvokeOnMainThread(() => _Persons.AddRange(items));
       }
 
-      if (_Persons.Count == 0 || _ProjectRevision != _CurrentProjectProvider.Project.ProjectRevision)
+      if (_Persons.Count == 0 || _ProjectRevision != _Factory.CurrentProjectProvider.Project.ProjectRevision)
       {
-        SafeTask.Run(AddPersonInfoItemsAsync, _AlertService);
+        SafeTask.Run(AddPersonInfoItemsAsync, _Factory.AlertService);
       }
 
       return _Persons.Items;

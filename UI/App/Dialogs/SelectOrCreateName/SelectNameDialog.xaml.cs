@@ -10,16 +10,21 @@ using System.Windows.Input;
 
 namespace GT4.UI.Dialogs;
 
-public delegate SelectNameDialog SelectNameDialogFactory(BiologicalSex biologicalSex, NameType[] nameTypes);
-
 public partial class SelectNameDialog : ContentPage
 {
+  public record class Factory(
+    INameTypeFormatter NameTypeFormatter,
+    ICurrentProjectProvider CurrentProjectProvider,
+    ICancellationTokenProvider CancellationTokenProvider,
+    IComparer<Name> NameComparer,
+    IAlertService AlertService)
+  {
+    public SelectNameDialog Create(BiologicalSex biologicalSex, NameType[] nameTypes) =>
+      new SelectNameDialog(this, biologicalSex, nameTypes);
+  }
+
+  private readonly Factory _Factory;
   private readonly TaskCompletionSource<Name?> _Info = new(null);
-  private readonly INameTypeFormatter _NameTypeFormatter;
-  private readonly ICurrentProjectProvider _CurrentProjectProvider;
-  private readonly ICancellationTokenProvider _CancellationTokenProvider;
-  private readonly IComparer<Name> _NameComparer;
-  private readonly IAlertService _AlertService;
   private readonly ObservableCollection<NameTypeInfoItem> _NameTypes;
   private readonly ICommand _DialogCommand;
   private ICollection<NameInfoItem>? _Names;
@@ -29,22 +34,14 @@ public partial class SelectNameDialog : ContentPage
 
   private bool _NotReady => _CurrentName is null;
 
-  public SelectNameDialog(
+  protected SelectNameDialog(
+    Factory factory,
     BiologicalSex biologicalSex,
-    NameType[] nameTypes,
-    INameTypeFormatter nameTypeFormatter,
-    ICurrentProjectProvider currentProjectProvider,
-    ICancellationTokenProvider cancellationTokenProvider,
-    IComparer<Name> nameComparer,
-    IAlertService alertService)
+    NameType[] nameTypes)
   {
-    _NameTypeFormatter = nameTypeFormatter;
-    _CurrentProjectProvider = currentProjectProvider;
-    _CancellationTokenProvider = cancellationTokenProvider;
-    _NameComparer = nameComparer;
-    _NameTypes = new(nameTypes.Select(type => new NameTypeInfoItem(_NameTypeFormatter.ToString(type), type)));
-    _AlertService = alertService;
-    _DialogCommand = new SafeCommand(OnDialogCommandAsync, _AlertService);
+    _Factory = factory;
+    _NameTypes = new(nameTypes.Select(type => new NameTypeInfoItem(_Factory.NameTypeFormatter.ToString(type), type)));
+    _DialogCommand = new SafeCommand(OnDialogCommandAsync, _Factory.AlertService);
     _CurrentNameType = _NameTypes.First();
 
     _NameDeclension = biologicalSex switch
@@ -69,7 +66,12 @@ public partial class SelectNameDialog : ContentPage
         break;
       case Name nameInfo:
         await CreateOrUpdateNameDialog.UpdateNameAsync(
-          nameInfo, _CurrentProjectProvider, _CancellationTokenProvider, _NameTypeFormatter, _AlertService, Navigation);
+          nameInfo,
+          _Factory.CurrentProjectProvider,
+          _Factory.CancellationTokenProvider,
+          _Factory.NameTypeFormatter,
+          _Factory.AlertService,
+          Navigation);
         Names = null;
         CurrentName = Names?.SingleOrDefault(n => n.Info.Id == nameInfo.Id);
         break;
@@ -89,17 +91,17 @@ public partial class SelectNameDialog : ContentPage
         return _Names;
       }
 
-      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      using var token = _Factory.CancellationTokenProvider.CreateDbCancellationToken();
       var queryType = CurrentNameType.Type == NameType.FamilyName
         ? NameType.FamilyName
         : CurrentNameType.Type | _NameDeclension;
-      _Names = _CurrentProjectProvider
+      _Names = _Factory.CurrentProjectProvider
         .Project
         .Names
         .GetNamesByTypeAsync(queryType, token)
         .Result
-        .Select(name => new NameInfoItem(name, _NameTypeFormatter))
-        .OrderBy(name => name.Info, _NameComparer)
+        .Select(name => new NameInfoItem(name, _Factory.NameTypeFormatter))
+        .OrderBy(name => name.Info, _Factory.NameComparer)
         .ToArray();
 
       return _Names;
@@ -163,7 +165,7 @@ public partial class SelectNameDialog : ContentPage
         return;
     }
 
-    var dialog = new CreateOrUpdateNameDialog(dialogNameType, _NameTypeFormatter, _AlertService);
+    var dialog = new CreateOrUpdateNameDialog(dialogNameType, _Factory.NameTypeFormatter, _Factory.AlertService);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;
@@ -172,8 +174,8 @@ public partial class SelectNameDialog : ContentPage
     if (info is null)
       return;
 
-    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-    var project = _CurrentProjectProvider.Project;
+    using var token = _Factory.CancellationTokenProvider.CreateDbCancellationToken();
+    var project = _Factory.CurrentProjectProvider.Project;
     var name = dialogNameType switch
     {
       NameType.FamilyName =>

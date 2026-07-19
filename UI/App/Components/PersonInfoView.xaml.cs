@@ -3,29 +3,30 @@ using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
+using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
 
 namespace GT4.UI.Components;
 
 public partial class PersonInfoView : ContentView
 {
-  private readonly IServiceProvider _ServiceProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly IAlertService _AlertService;
   private readonly IDateSpanFormatter _DateSpanFormatter;
   private readonly IDateFormatter _DateFormatter;
   private readonly INameFormatter _NameFormatter;
+  private readonly OptionalDataConverterResolver _DataConverterResolver;
   private ImageSource? _PhotoSource;
   private bool _PhotoReady;
 
   protected PersonInfoView(IServiceProvider serviceProvider)
   {
-    _ServiceProvider = serviceProvider;
     _CancellationTokenProvider = serviceProvider.GetRequiredService<ICancellationTokenProvider>();
     _AlertService = serviceProvider.GetRequiredService<IAlertService>();
     _DateSpanFormatter = serviceProvider.GetRequiredService<IDateSpanFormatter>();
     _DateFormatter = serviceProvider.GetRequiredService<IDateFormatter>();
     _NameFormatter = serviceProvider.GetRequiredService<INameFormatter>();
+    _DataConverterResolver = serviceProvider.GetRequiredService<OptionalDataConverterResolver>();
     InitializeComponent();
   }
 
@@ -152,7 +153,7 @@ public partial class PersonInfoView : ContentView
         async Task UpdatePhotoAsync()
         {
           using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
-          var content = await ImageUtils.ResolvePhotoAsync(_ServiceProvider, mainPhoto, GetDefaultImage(), token);
+          var content = await ImageUtils.ResolvePhotoAsync(_DataConverterResolver, mainPhoto, GetDefaultImage(), token);
 
           MainThread.BeginInvokeOnMainThread(() =>
           {

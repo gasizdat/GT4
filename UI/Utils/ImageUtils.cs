@@ -69,9 +69,9 @@ public static class ImageUtils
   /// array alongside photos (e.g. a parallel captions array) keep their indices in sync.
   /// </summary>
   public static async Task<ImageSource> ResolvePhotoAsync(
-    IServiceProvider serviceProvider, Data data, ImageSource fallback, CancellationToken token)
+    OptionalDataConverterResolver dataConverterResolver, Data data, ImageSource fallback, CancellationToken token)
   {
-    var converter = serviceProvider.GetKeyedService<IDataConverter>(data.Category);
+    var converter = dataConverterResolver(data.Category);
     var resolved = converter is null ? null : await converter.ToObjectAsync(data, token);
 
     if (resolved is ImageSource imageSource)

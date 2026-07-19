@@ -9,8 +9,6 @@ using GT4.UI.Utils.Formatters;
 
 namespace GT4.UI.DeviceTests;
 
-internal delegate TestableCreateOrUpdatePersonDialog TestableCreateOrUpdatePersonDialogFactory(PersonFullInfo? person);
-
 /// <summary>
 /// Exposes CreateOrUpdatePersonDialog's OnAddPersonNameAsync/OnEditPersonNameAsync seams: both push a
 /// modal SelectNameDialog, so the test needs to await its own continuation rather than go through the
@@ -18,30 +16,35 @@ internal delegate TestableCreateOrUpdatePersonDialog TestableCreateOrUpdatePerso
 /// </summary>
 internal sealed class TestableCreateOrUpdatePersonDialog : CreateOrUpdatePersonDialog
 {
-  public TestableCreateOrUpdatePersonDialog(
-    PersonFullInfo? person,
-    ICancellationTokenProvider cancellationTokenProvider,
-    IBiologicalSexFormatter biologicalSexFormatter,
-    INameTypeFormatter nameTypeFormatter,
-    INameFormatter nameFormatter,
-    IDateFormatter dateFormatter,
-    IComparer<PersonInfo> personInfoComparer,
-    IAlertService alertService,
-    DataConverterResolver dataConverterFactory,
-    SelectNameDialogFactory selectNameDialogFactory,
-    SelectRelativesDialogFactory selectRelativesDialogFactory)
-    : base(
-        person,
-        cancellationTokenProvider,
-        biologicalSexFormatter,
-        nameTypeFormatter,
-        nameFormatter,
-        dateFormatter,
-        personInfoComparer,
-        alertService,
-        dataConverterFactory,
-        selectNameDialogFactory,
-        selectRelativesDialogFactory)
+  public new record class Factory(
+    ICancellationTokenProvider CancellationTokenProvider,
+    IBiologicalSexFormatter BiologicalSexFormatter,
+    INameTypeFormatter NameTypeFormatter,
+    INameFormatter NameFormatter,
+    IDateFormatter DateFormatter,
+    IComparer<PersonInfo> PersonInfoComparer,
+    IAlertService AlertService,
+    DataConverterResolver DataConverterFactory,
+    SelectNameDialog.Factory SelectNameDialogFactory,
+    SelectRelativesDialog.Factory SelectRelativesDialogFactory) 
+    : CreateOrUpdatePersonDialog.Factory(
+      CancellationTokenProvider,
+      BiologicalSexFormatter,
+      NameTypeFormatter,
+      NameFormatter,
+      DateFormatter,
+      PersonInfoComparer,
+      AlertService,
+      DataConverterFactory,
+      SelectNameDialogFactory,
+      SelectRelativesDialogFactory)
+  {
+    public new TestableCreateOrUpdatePersonDialog Create(PersonFullInfo? person) =>
+      new TestableCreateOrUpdatePersonDialog(this, person);
+  }
+
+  public TestableCreateOrUpdatePersonDialog(TestableCreateOrUpdatePersonDialog.Factory factory, PersonFullInfo? person)
+    : base(factory, person)
   {
   }
 

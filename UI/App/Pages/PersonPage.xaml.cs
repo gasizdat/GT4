@@ -20,7 +20,6 @@ namespace GT4.UI.Pages;
 [QueryProperty(nameof(PersonInfo), "PersonInfo")]
 public partial class PersonPage : ContentPage
 {
-  private readonly IServiceProvider _ServiceProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IDateSpanFormatter _DateSpanFormatter;
@@ -28,11 +27,12 @@ public partial class PersonPage : ContentPage
   private readonly INameFormatter _NameFormatter;
   private readonly IDataConverter _TextConverter;
   private readonly IDataConverter _GedcomConverter;
+  private readonly OptionalDataConverterResolver _DataConverterResolver;
   private readonly ICommand _PageCommand;
   private readonly RelativeTree _Relatives;
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
-  private readonly CreateOrUpdatePersonDialogFactory _CreateOrUpdatePersonDialogFactory;
+  private readonly CreateOrUpdatePersonDialog.Factory _CreateOrUpdatePersonDialogFactory;
   private ObservableCollection<PersonInfo> _NavigationHistory = new();
   private int _NavigationIndex = -1;
   private PersonFullInfo _PersonFullInfo = PersonFullInfo.Empty;
@@ -44,7 +44,6 @@ public partial class PersonPage : ContentPage
   private RelativeInfo[] _AllRoots = [];
 
   public PersonPage(
-    IServiceProvider serviceProvider,
     ICancellationTokenProvider cancellationTokenProvider,
     ICurrentProjectProvider currentProjectProvider,
     IDateSpanFormatter dateSpanFormatter,
@@ -54,13 +53,13 @@ public partial class PersonPage : ContentPage
     IDataConverter textConverter,
     [FromKeyedServices(DataCategory.PersonGedcomTags)]
     IDataConverter gedcomConverter,
+    OptionalDataConverterResolver dataConverterResolver,
     IAlertService alertService,
     INavigationService navigationService,
     IBiologicalSexFormatter biologicalSexFormatter,
-    CreateOrUpdatePersonDialogFactory createOrUpdatePersonDialogFactory
+    CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory
     )
   {
-    _ServiceProvider = serviceProvider;
     _CancellationTokenProvider = cancellationTokenProvider;
     _CurrentProjectProvider = currentProjectProvider;
     _DateSpanFormatter = dateSpanFormatter;
@@ -68,6 +67,7 @@ public partial class PersonPage : ContentPage
     _NameFormatter = nameFormatter;
     _TextConverter = textConverter;
     _GedcomConverter = gedcomConverter;
+    _DataConverterResolver = dataConverterResolver;
     _AlertService = alertService;
     _NavigationService = navigationService;
     _CreateOrUpdatePersonDialogFactory = createOrUpdatePersonDialogFactory;
@@ -308,7 +308,7 @@ public partial class PersonPage : ContentPage
         var defaultImageResourceName = ImageUtils.DefaultPhotoResourceName(personFullInfo.BiologicalSex);
         var fallback = ImageUtils.ImageFromRawResource(defaultImageResourceName);
         var photosTask = Task.WhenAll(photoData.Select(data =>
-          ImageUtils.ResolvePhotoAsync(_ServiceProvider, data, fallback, token)));
+          ImageUtils.ResolvePhotoAsync(_DataConverterResolver, data, fallback, token)));
         var captionsTask = Task.WhenAll(photoData.Select(data => GedcomPhotoResidue.ExtractTitleAsync(data, token)));
         await Task.WhenAll(photosTask, captionsTask);
         photos = photosTask.Result;
@@ -480,7 +480,7 @@ public partial class PersonPage : ContentPage
 
   private async Task OnPersonEditAsync()
   {
-    var dialog = _CreateOrUpdatePersonDialogFactory(_PersonFullInfo);
+    var dialog = _CreateOrUpdatePersonDialogFactory.Create(_PersonFullInfo);
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;
     await Navigation.PopModalAsync();
