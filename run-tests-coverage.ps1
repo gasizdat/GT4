@@ -17,6 +17,11 @@ $repoRoot = $PSScriptRoot
 $coverageDir = Join-Path $repoRoot 'coverage'
 $toolsPath = Join-Path $env:USERPROFILE '.dotnet\tools'
 
+# Force English output regardless of OS locale: DOTNET_CLI_UI_LANGUAGE covers the dotnet CLI itself,
+# VSLANG (an LCID, 1033 = en-US) covers MSBuild/Roslyn satellite resources.
+$env:DOTNET_CLI_UI_LANGUAGE = 'en'
+$env:VSLANG = '1033'
+
 if (Test-Path $coverageDir) { Remove-Item $coverageDir -Recurse -Force }
 New-Item -ItemType Directory -Path $coverageDir | Out-Null
 
@@ -34,19 +39,23 @@ if ($env:PATH -notlike "*$toolsPath*") { $env:PATH = "$env:PATH;$toolsPath" }
 
 Write-Host "`n=== GT4.Core.Project.Tests ===" -ForegroundColor Cyan
 dotnet test (Join-Path $repoRoot 'Tests\GT4.Core.Project.Tests\GT4.Core.Project.Tests.csproj') `
-  --configuration Release --collect "XPlat Code Coverage" --results-directory $coverageDir
+  --configuration Release --collect "XPlat Code Coverage" --results-directory $coverageDir `
+  --logger "console;verbosity=detailed"
 
 Write-Host "`n=== GT4.Core.Gedcom.Tests ===" -ForegroundColor Cyan
 dotnet test (Join-Path $repoRoot 'Tests\GT4.Core.Gedcom.Tests\GT4.Core.Gedcom.Tests.csproj') `
-  --configuration Release --collect "XPlat Code Coverage" --results-directory $coverageDir
+  --configuration Release --collect "XPlat Code Coverage" --results-directory $coverageDir `
+  --logger "console;verbosity=detailed"
 
 Write-Host "`n=== GT4.UI.Utils.Tests ===" -ForegroundColor Cyan
 dotnet test (Join-Path $repoRoot 'Tests\GT4.UI.Utils.Tests\GT4.UI.Utils.Tests.csproj') `
-  --configuration Release --collect "XPlat Code Coverage" --results-directory $coverageDir
+  --configuration Release --collect "XPlat Code Coverage" --results-directory $coverageDir `
+  --logger "console;verbosity=detailed"
 
 Write-Host "`n=== GT4.UI.View.Tests ===" -ForegroundColor Cyan
 dotnet test (Join-Path $repoRoot 'Tests\GT4.UI.View.Tests\GT4.UI.View.Tests.csproj') `
-  --configuration Release --collect "XPlat Code Coverage" --results-directory $coverageDir
+  --configuration Release --collect "XPlat Code Coverage" --results-directory $coverageDir `
+  --logger "console;verbosity=detailed"
 
 # coverlet's in-process collector never sees this project's tests: DeviceRunners launches
 # AppWinOnly.exe as a separate process and drives it over TCP. dotnet-coverage attaches across the

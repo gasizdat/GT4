@@ -29,6 +29,12 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+
+# Force English output regardless of OS locale: DOTNET_CLI_UI_LANGUAGE covers the dotnet CLI itself,
+# VSLANG (an LCID, 1033 = en-US) covers MSBuild/Roslyn satellite resources.
+$env:DOTNET_CLI_UI_LANGUAGE = 'en'
+$env:VSLANG = '1033'
+
 $repoRoot = $PSScriptRoot
 $project = Join-Path $repoRoot 'Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj'
 $apk = Join-Path $repoRoot 'Tests\GT4.UI.App.DeviceTests\bin\Release\net10.0-android\com.gasizdat.gt4.devicetests-Signed.apk'
