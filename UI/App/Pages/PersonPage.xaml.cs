@@ -32,6 +32,7 @@ public partial class PersonPage : ContentPage
   private readonly RelativeTree _Relatives;
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
+  private readonly CreateOrUpdatePersonDialogFactory _CreateOrUpdatePersonDialogFactory;
   private ObservableCollection<PersonInfo> _NavigationHistory = new();
   private int _NavigationIndex = -1;
   private PersonFullInfo _PersonFullInfo = PersonFullInfo.Empty;
@@ -55,7 +56,8 @@ public partial class PersonPage : ContentPage
     IDataConverter gedcomConverter,
     IAlertService alertService,
     INavigationService navigationService,
-    IBiologicalSexFormatter biologicalSexFormatter
+    IBiologicalSexFormatter biologicalSexFormatter,
+    CreateOrUpdatePersonDialogFactory createOrUpdatePersonDialogFactory
     )
   {
     _ServiceProvider = serviceProvider;
@@ -68,6 +70,7 @@ public partial class PersonPage : ContentPage
     _GedcomConverter = gedcomConverter;
     _AlertService = alertService;
     _NavigationService = navigationService;
+    _CreateOrUpdatePersonDialogFactory = createOrUpdatePersonDialogFactory;
     _PageCommand = new SafeCommand(OnPageCommand, _AlertService);
     _Relatives = new RelativeTree(_CurrentProjectProvider, _CancellationTokenProvider, _AlertService);
 
@@ -477,7 +480,7 @@ public partial class PersonPage : ContentPage
 
   private async Task OnPersonEditAsync()
   {
-    var dialog = _ServiceProvider.GetRequiredService<Func<PersonFullInfo?, CreateOrUpdatePersonDialog>>()(_PersonFullInfo);
+    var dialog = _CreateOrUpdatePersonDialogFactory(_PersonFullInfo);
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;
     await Navigation.PopModalAsync();

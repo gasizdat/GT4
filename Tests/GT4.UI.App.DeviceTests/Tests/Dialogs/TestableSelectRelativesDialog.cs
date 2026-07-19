@@ -7,6 +7,8 @@ using GT4.UI.Utils.Formatters;
 
 namespace GT4.UI.DeviceTests;
 
+internal delegate TestableSelectRelativesDialog TestableSelectRelativesDialogFactory(BiologicalSex? biologicalSex, Relative[] existingRelatives);
+
 /// <summary>
 /// Exposes SelectRelativesDialog's OnDialogCommand seam: EditRelationshipDateCommand pushes a modal
 /// SelectDateDialog, so the test needs to await its own continuation rather than go through the

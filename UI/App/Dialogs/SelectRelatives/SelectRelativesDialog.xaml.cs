@@ -11,6 +11,8 @@ using System.Windows.Input;
 
 namespace GT4.UI.Dialogs;
 
+public delegate SelectRelativesDialog SelectRelativesDialogFactory(BiologicalSex? biologicalSex, Relative[] existingRelatives);
+
 public partial class SelectRelativesDialog : ContentPage
 {
   private readonly ICancellationTokenProvider _CancellationTokenProvider;

@@ -9,6 +9,8 @@ using GT4.UI.Utils.Formatters;
 
 namespace GT4.UI.DeviceTests;
 
+internal delegate TestableCreateOrUpdatePersonDialog TestableCreateOrUpdatePersonDialogFactory(PersonFullInfo? person);
+
 /// <summary>
 /// Exposes CreateOrUpdatePersonDialog's OnAddPersonNameAsync/OnEditPersonNameAsync seams: both push a
 /// modal SelectNameDialog, so the test needs to await its own continuation rather than go through the
@@ -25,9 +27,9 @@ internal sealed class TestableCreateOrUpdatePersonDialog : CreateOrUpdatePersonD
     IDateFormatter dateFormatter,
     IComparer<PersonInfo> personInfoComparer,
     IAlertService alertService,
-    Func<DataCategory, IDataConverter> dataConverterFactory,
-    Func<BiologicalSex, NameType[], SelectNameDialog> selectNameDialogFactory,
-    Func<BiologicalSex?, Relative[], SelectRelativesDialog> selectRelativesDialogFactory)
+    DataConverterResolver dataConverterFactory,
+    SelectNameDialogFactory selectNameDialogFactory,
+    SelectRelativesDialogFactory selectRelativesDialogFactory)
     : base(
         person,
         cancellationTokenProvider,

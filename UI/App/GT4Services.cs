@@ -38,12 +38,8 @@ public class GT4Services
       .AddSingleton<IAlertService, AlertService>()
       .AddSingleton<INavigationService, NavigationService>()
       .AddSingleton<GedcomImportEncoding>()
-      // Modal dialogs are one-shot and some callers open the same dialog type repeatedly over their
-      // own lifetime, so each is resolved fresh per open through a factory delegate rather than
-      // injected as a singleton/transient instance -- see issue #122.
-      .AddTransient<Func<DataCategory, IDataConverter>>(sp =>
-        category => sp.GetRequiredKeyedService<IDataConverter>(category))
-      .AddTransient<Func<BiologicalSex, NameType[], SelectNameDialog>>(sp =>
+      .AddTransient<DataConverterResolver>(sp => category => sp.GetRequiredKeyedService<IDataConverter>(category))
+      .AddTransient<SelectNameDialogFactory>(sp =>
         (biologicalSex, nameTypes) => new SelectNameDialog(
           biologicalSex,
           nameTypes,
@@ -52,7 +48,7 @@ public class GT4Services
           sp.GetRequiredService<ICancellationTokenProvider>(),
           sp.GetRequiredService<IComparer<Name>>(),
           sp.GetRequiredService<IAlertService>()))
-      .AddTransient<Func<BiologicalSex?, Relative[], SelectRelativesDialog>>(sp =>
+      .AddTransient<SelectRelativesDialogFactory>(sp =>
         (biologicalSex, existingRelatives) => new SelectRelativesDialog(
           biologicalSex,
           existingRelatives,
@@ -63,7 +59,7 @@ public class GT4Services
           sp.GetRequiredService<IAlertService>(),
           sp.GetRequiredService<IBiologicalSexFormatter>(),
           sp.GetRequiredService<IRelationshipTypeFormatter>()))
-      .AddTransient<Func<PersonFullInfo?, CreateOrUpdatePersonDialog>>(sp =>
+      .AddTransient<CreateOrUpdatePersonDialogFactory>(sp =>
         person => new CreateOrUpdatePersonDialog(
           person,
           sp.GetRequiredService<ICancellationTokenProvider>(),
@@ -73,9 +69,9 @@ public class GT4Services
           sp.GetRequiredService<IDateFormatter>(),
           sp.GetRequiredService<IComparer<PersonInfo>>(),
           sp.GetRequiredService<IAlertService>(),
-          sp.GetRequiredService<Func<DataCategory, IDataConverter>>(),
-          sp.GetRequiredService<Func<BiologicalSex, NameType[], SelectNameDialog>>(),
-          sp.GetRequiredService<Func<BiologicalSex?, Relative[], SelectRelativesDialog>>()));
+          sp.GetRequiredService<DataConverterResolver>(),
+          sp.GetRequiredService<SelectNameDialogFactory>(),
+          sp.GetRequiredService<SelectRelativesDialogFactory>()));
   }
 
   public static IServiceProvider Provider =>
