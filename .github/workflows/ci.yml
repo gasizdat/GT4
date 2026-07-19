@@ -36,6 +36,14 @@ jobs:
       - name: Build solution
         run: dotnet build GT4.CI.slnf --configuration Release
 
+      # AppWinOnly and GT4.UI.App.DeviceTests both conditionally target
+      # net10.0-windows10.0.19041.0 in addition to other TFMs, so they're split into their own
+      # filter and built with --framework: an unscoped build of DeviceTests here would also compile
+      # its net10.0-android TFM, which nothing in CI tests (android device tests only run on
+      # physical hardware) and which just slows this gate down.
+      - name: Build solution (windows)
+        run: dotnet build GT4.CI.Windows.slnf --configuration Release --framework net10.0-windows10.0.19041.0
+
   test:
     runs-on: windows-latest
 
