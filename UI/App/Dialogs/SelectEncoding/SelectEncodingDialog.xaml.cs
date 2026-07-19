@@ -6,26 +6,18 @@ using System.Windows.Input;
 namespace GT4.UI.Dialogs;
 
 // Shown when a GEDCOM import declares an ambiguous charset (e.g. "ANSI") that cannot be resolved to a single
-// codepage from the file alone. The curated list below covers the codepages GEDCOM's legacy "ANSI" charset
-// has commonly meant in practice; anything outside it is a case for a full ANSEL decoder, not this dialog.
+// codepage from the file alone; ANSEL is a case for a full ANSEL decoder, not this dialog.
 public partial class SelectEncodingDialog : ContentPage
 {
-  private static readonly (string Name, int CodePage)[] Codepages =
-  [
-    ("Windows-1252 (Western European)", 1252),
-    ("Windows-1251 (Cyrillic)", 1251),
-    ("Windows-1250 (Central European)", 1250),
-    ("Windows-1253 (Greek)", 1253),
-    ("Windows-1254 (Turkish)", 1254),
-    ("Windows-1257 (Baltic)", 1257),
-    ("ISO-8859-1 (Latin-1)", 28591),
-    ("KOI8-R (Russian)", 20866),
-  ];
+  private static readonly EncodingInfo[] SortedEncodings = Encoding.GetEncodings()
+    .OrderBy(enc => enc.DisplayName)
+    .ThenBy(enc => enc.Name)
+    .ToArray();
 
   private readonly string _DeclaredCharset;
   private readonly ICommand _DialogCommand;
   private readonly TaskCompletionSource<Encoding?> _Info = new(null);
-  private string? _SelectedCodepageName;
+  private EncodingInfo? _SelectedEncoding;
 
   public SelectEncodingDialog(string declaredCharset, IAlertService alertService)
   {
@@ -36,20 +28,20 @@ public partial class SelectEncodingDialog : ContentPage
 
   public string DeclaredCharsetHint => string.Format(UIStrings.HintGedcomDeclaredCharset_1, _DeclaredCharset);
 
-  public string[] CodepageNames => Codepages.Select(c => c.Name).ToArray();
+  public EncodingInfo[] Encodings => SortedEncodings;
 
-  public string? SelectedCodepageName
+  public EncodingInfo? SelectedEncoding
   {
-    get => _SelectedCodepageName;
+    get => _SelectedEncoding;
     set
     {
-      _SelectedCodepageName = value;
-      OnPropertyChanged(nameof(SelectedCodepageName));
+      _SelectedEncoding = value;
+      OnPropertyChanged(nameof(SelectedEncoding));
       OnPropertyChanged(nameof(DialogButtonName));
     }
   }
 
-  public string DialogButtonName => _SelectedCodepageName is not null ? UIStrings.BtnNameOk : UIStrings.BtnNameCancel;
+  public string DialogButtonName => _SelectedEncoding is not null ? UIStrings.BtnNameOk : UIStrings.BtnNameCancel;
 
   public Task<Encoding?> Info => _Info.Task;
 
@@ -57,7 +49,6 @@ public partial class SelectEncodingDialog : ContentPage
 
   private void OnSelectEncoding()
   {
-    var codePage = Codepages.FirstOrDefault(c => c.Name == _SelectedCodepageName).CodePage;
-    _Info.SetResult(_SelectedCodepageName is null ? null : Encoding.GetEncoding(codePage));
+    _Info.SetResult(_SelectedEncoding?.GetEncoding());
   }
 }

@@ -18,30 +18,54 @@
       <Grid
           ColumnDefinitions="Auto, *"
           ColumnSpacing="{StaticResource PageContentSpacing}"
-          RowDefinitions="Auto, Auto"
+          RowDefinitions="Auto, *"
           RowSpacing="{StaticResource PageContentSpacing}">
 
         <Label
+            Style="{StaticResource FieldName}"
+            Text="{x:Static resources:UIStrings.FieldCodepage}" />
+
+        <Label
             Grid.Row="0"
-            Grid.Column="0"
+            Grid.Column="1"
             Grid.ColumnSpan="2"
             HorizontalTextAlignment="Center"
             Style="{StaticResource FieldValue}"
             Text="{Binding DeclaredCharsetHint, Source={x:Reference Root}}" />
 
-        <Label
+        <CollectionView
             Grid.Row="1"
             Grid.Column="0"
-            Style="{StaticResource FieldName}"
-            Text="{x:Static resources:UIStrings.FieldCodepage}" />
-
-        <Picker
-            Grid.Row="1"
-            Grid.Column="1"
+            Grid.ColumnSpan="2"
             HorizontalOptions="Fill"
-            ItemDisplayBinding="{Binding .}"
-            ItemsSource="{Binding CodepageNames, Source={x:Reference Root}}"
-            SelectedItem="{Binding SelectedCodepageName, Source={x:Reference Root}}" />
+            ItemsSource="{Binding Encodings, Source={x:Reference Root}}"
+            SelectedItem="{Binding SelectedEncoding, Source={x:Reference Root}}"
+            SelectionMode="Single">
+
+          <CollectionView.ItemTemplate>
+            <DataTemplate>
+              <Grid
+                  Padding="{StaticResource CollectionItemsVerticalPadding}"
+                  ColumnDefinitions="30, Auto, Auto, Auto"
+                  RowDefinitions="Auto"
+                  Style="{StaticResource HoverItem}">
+                <Label
+                    Grid.Column="1"
+                    Style="{StaticResource FieldName}"
+                    Text="{Binding DisplayName}" />
+                <Label
+                    Grid.Column="2"
+                    Style="{StaticResource FieldValue}"
+                    Text=" - " />
+                <Label
+                    Grid.Column="3"
+                    Style="{StaticResource FieldValue}"
+                    Text="{Binding Name}" />
+              </Grid>
+            </DataTemplate>
+          </CollectionView.ItemTemplate>
+
+        </CollectionView>
       </Grid>
     </components:PageLayout.Body>
 
