@@ -8,6 +8,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <MauiEnableXamlCBindingWithSourceCompilation>false</MauiEnableXamlCBindingWithSourceCompilation>
+    <!-- XC0025 fires on every Source= binding because compilation with Source is deliberately off above. -->
+    <NoWarn>$(NoWarn);XC0025</NoWarn>
 
     <!-- Display name -->
     <ApplicationTitle>GT4</ApplicationTitle>
