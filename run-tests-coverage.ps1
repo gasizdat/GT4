@@ -34,19 +34,23 @@ if ($env:PATH -notlike "*$toolsPath*") { $env:PATH = "$env:PATH;$toolsPath" }
 
 Write-Host "`n=== GT4.Core.Project.Tests ===" -ForegroundColor Cyan
 dotnet test (Join-Path $repoRoot 'Tests\GT4.Core.Project.Tests\GT4.Core.Project.Tests.csproj') `
-  --configuration Release --collect "XPlat Code Coverage" --results-directory $coverageDir
+  --configuration Release --collect "XPlat Code Coverage" --results-directory $coverageDir `
+  --logger "console;verbosity=detailed"
 
 Write-Host "`n=== GT4.Core.Gedcom.Tests ===" -ForegroundColor Cyan
 dotnet test (Join-Path $repoRoot 'Tests\GT4.Core.Gedcom.Tests\GT4.Core.Gedcom.Tests.csproj') `
-  --configuration Release --collect "XPlat Code Coverage" --results-directory $coverageDir
+  --configuration Release --collect "XPlat Code Coverage" --results-directory $coverageDir `
+  --logger "console;verbosity=detailed"
 
 Write-Host "`n=== GT4.UI.Utils.Tests ===" -ForegroundColor Cyan
 dotnet test (Join-Path $repoRoot 'Tests\GT4.UI.Utils.Tests\GT4.UI.Utils.Tests.csproj') `
-  --configuration Release --collect "XPlat Code Coverage" --results-directory $coverageDir
+  --configuration Release --collect "XPlat Code Coverage" --results-directory $coverageDir `
+  --logger "console;verbosity=detailed"
 
 Write-Host "`n=== GT4.UI.View.Tests ===" -ForegroundColor Cyan
 dotnet test (Join-Path $repoRoot 'Tests\GT4.UI.View.Tests\GT4.UI.View.Tests.csproj') `
-  --configuration Release --collect "XPlat Code Coverage" --results-directory $coverageDir
+  --configuration Release --collect "XPlat Code Coverage" --results-directory $coverageDir `
+  --logger "console;verbosity=detailed"
 
 # coverlet's in-process collector never sees this project's tests: DeviceRunners launches
 # AppWinOnly.exe as a separate process and drives it over TCP. dotnet-coverage attaches across the
@@ -58,7 +62,8 @@ $deviceCoverageFile = Join-Path $coverageDir 'device-tests.cobertura.xml'
 $deviceTestArgs = @(
   'test', (Join-Path $repoRoot 'Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj'),
   '--configuration', 'Release',
-  '--framework', 'net10.0-windows10.0.19041.0'
+  '--framework', 'net10.0-windows10.0.19041.0',
+  '--logger', 'console;verbosity=detailed'
 )
 dotnet-coverage collect --output $deviceCoverageFile --output-format cobertura -- dotnet @deviceTestArgs
 
