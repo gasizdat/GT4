@@ -891,6 +891,12 @@ FN - family name</value>
   <data name="FieldFontScaleHintIOS" xml:space="preserve">
     <value>Scale the size of all text in the application. You can use zooming gesture to increase or decrease the scale of the text size</value>
   </data>
+  <data name="FieldBackgroundAnimation" xml:space="preserve">
+    <value>Background animation</value>
+  </data>
+  <data name="FieldBackgroundAnimationHint" xml:space="preserve">
+    <value>Whether the animated tree background on every page plays. Enter True or False.</value>
+  </data>
   <data name="FieldGedcomDetails" xml:space="preserve">
     <value>Additional details</value>
   </data>

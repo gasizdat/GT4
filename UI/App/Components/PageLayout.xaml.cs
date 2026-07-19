@@ -1,17 +1,21 @@
+using GT4.UI.Utils.Settings;
+
 namespace GT4.UI.Components;
 
 public partial class PageLayout : ContentView
 {
-  // Set to false by GT4.UI.App.DeviceTests before the app starts: rapid page churn during test
-  // navigation races Android's native GIF decoder against page teardown, crashing the process
-  // (native "Pure virtual function called" abort in AnimatedImageDrawable, not catchable in
-  // managed code). Not an issue for real usage, so only tests disable it.
-  public static bool AnimateBackground { get; set; } = true;
-
-  public PageLayout()
+  public PageLayout(IServiceProvider serviceProvider)
   {
+    Animation = serviceProvider.GetRequiredService<BackgroundAnimation>();
     InitializeComponent();
   }
+
+  public PageLayout()
+    : this(GT4Services.Provider)
+  {
+  }
+
+  public BackgroundAnimation Animation { get; }
 
 
   public static readonly BindableProperty HeaderProperty =
