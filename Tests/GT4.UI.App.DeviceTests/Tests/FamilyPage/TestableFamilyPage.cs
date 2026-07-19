@@ -32,7 +32,7 @@ internal sealed class TestableFamilyPage : FamilyPage
     INavigationService navigationService,
     IBiologicalSexFormatter biologicalSexFormatter,
     INameTypeFormatter nameTypeFormatter,
-    CreateOrUpdatePersonDialogFactory createOrUpdatePersonDialogFactory)
+    CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory)
     : base(
       serviceProvider,
       cancellationTokenProvider,

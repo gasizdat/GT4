@@ -138,30 +138,8 @@ internal sealed class TestServices
     services.AddSingleton<TestableKinshipFinderPage>();
     // Testable*Dialog subclasses mirror the base dialog's own factory registration in GT4Services --
     // see issue #122 -- since the base type's factory produces the base type, not the test subclass.
-    services.AddTransient<TestableCreateOrUpdatePersonDialogFactory>(sp =>
-      person => new TestableCreateOrUpdatePersonDialog(
-        person,
-        sp.GetRequiredService<ICancellationTokenProvider>(),
-        sp.GetRequiredService<IBiologicalSexFormatter>(),
-        sp.GetRequiredService<INameTypeFormatter>(),
-        sp.GetRequiredService<INameFormatter>(),
-        sp.GetRequiredService<IDateFormatter>(),
-        sp.GetRequiredService<IComparer<PersonInfo>>(),
-        sp.GetRequiredService<IAlertService>(),
-        sp.GetRequiredService<DataConverterResolver>(),
-        sp.GetRequiredService<SelectNameDialogFactory>(),
-        sp.GetRequiredService<SelectRelativesDialogFactory>()));
-    services.AddTransient<TestableSelectRelativesDialogFactory>(sp =>
-      (biologicalSex, existingRelatives) => new TestableSelectRelativesDialog(
-        biologicalSex,
-        existingRelatives,
-        sp.GetRequiredService<ICancellationTokenProvider>(),
-        sp.GetRequiredService<ICurrentProjectProvider>(),
-        sp.GetRequiredService<IDateFormatter>(),
-        sp.GetRequiredService<IComparer<PersonInfo>>(),
-        sp.GetRequiredService<IAlertService>(),
-        sp.GetRequiredService<IBiologicalSexFormatter>(),
-        sp.GetRequiredService<IRelationshipTypeFormatter>()));
+    services.AddTransient<TestableCreateOrUpdatePersonDialog.Factory>();
+    services.AddTransient<TestableSelectRelativesDialog.Factory>();
     Provider = services.BuildServiceProvider();
   }
 }

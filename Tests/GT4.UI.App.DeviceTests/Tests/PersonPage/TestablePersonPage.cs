@@ -36,7 +36,7 @@ internal sealed class TestablePersonPage : PersonPage
     IAlertService alertService,
     INavigationService navigationService,
     IBiologicalSexFormatter biologicalSexFormatter,
-    CreateOrUpdatePersonDialogFactory createOrUpdatePersonDialogFactory)
+    CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory)
     : base(
       serviceProvider,
       cancellationTokenProvider,

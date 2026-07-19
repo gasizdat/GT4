@@ -32,7 +32,7 @@ public partial class PersonPage : ContentPage
   private readonly RelativeTree _Relatives;
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
-  private readonly CreateOrUpdatePersonDialogFactory _CreateOrUpdatePersonDialogFactory;
+  private readonly CreateOrUpdatePersonDialog.Factory _CreateOrUpdatePersonDialogFactory;
   private ObservableCollection<PersonInfo> _NavigationHistory = new();
   private int _NavigationIndex = -1;
   private PersonFullInfo _PersonFullInfo = PersonFullInfo.Empty;
@@ -57,7 +57,7 @@ public partial class PersonPage : ContentPage
     IAlertService alertService,
     INavigationService navigationService,
     IBiologicalSexFormatter biologicalSexFormatter,
-    CreateOrUpdatePersonDialogFactory createOrUpdatePersonDialogFactory
+    CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory
     )
   {
     _ServiceProvider = serviceProvider;
@@ -480,7 +480,7 @@ public partial class PersonPage : ContentPage
 
   private async Task OnPersonEditAsync()
   {
-    var dialog = _CreateOrUpdatePersonDialogFactory(_PersonFullInfo);
+    var dialog = _CreateOrUpdatePersonDialogFactory.Create(_PersonFullInfo);
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;
     await Navigation.PopModalAsync();

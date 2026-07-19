@@ -39,39 +39,9 @@ public class GT4Services
       .AddSingleton<INavigationService, NavigationService>()
       .AddSingleton<GedcomImportEncoding>()
       .AddTransient<DataConverterResolver>(sp => category => sp.GetRequiredKeyedService<IDataConverter>(category))
-      .AddTransient<SelectNameDialogFactory>(sp =>
-        (biologicalSex, nameTypes) => new SelectNameDialog(
-          biologicalSex,
-          nameTypes,
-          sp.GetRequiredService<INameTypeFormatter>(),
-          sp.GetRequiredService<ICurrentProjectProvider>(),
-          sp.GetRequiredService<ICancellationTokenProvider>(),
-          sp.GetRequiredService<IComparer<Name>>(),
-          sp.GetRequiredService<IAlertService>()))
-      .AddTransient<SelectRelativesDialogFactory>(sp =>
-        (biologicalSex, existingRelatives) => new SelectRelativesDialog(
-          biologicalSex,
-          existingRelatives,
-          sp.GetRequiredService<ICancellationTokenProvider>(),
-          sp.GetRequiredService<ICurrentProjectProvider>(),
-          sp.GetRequiredService<IDateFormatter>(),
-          sp.GetRequiredService<IComparer<PersonInfo>>(),
-          sp.GetRequiredService<IAlertService>(),
-          sp.GetRequiredService<IBiologicalSexFormatter>(),
-          sp.GetRequiredService<IRelationshipTypeFormatter>()))
-      .AddTransient<CreateOrUpdatePersonDialogFactory>(sp =>
-        person => new CreateOrUpdatePersonDialog(
-          person,
-          sp.GetRequiredService<ICancellationTokenProvider>(),
-          sp.GetRequiredService<IBiologicalSexFormatter>(),
-          sp.GetRequiredService<INameTypeFormatter>(),
-          sp.GetRequiredService<INameFormatter>(),
-          sp.GetRequiredService<IDateFormatter>(),
-          sp.GetRequiredService<IComparer<PersonInfo>>(),
-          sp.GetRequiredService<IAlertService>(),
-          sp.GetRequiredService<DataConverterResolver>(),
-          sp.GetRequiredService<SelectNameDialogFactory>(),
-          sp.GetRequiredService<SelectRelativesDialogFactory>()));
+      .AddTransient<SelectNameDialog.Factory>()
+      .AddTransient<SelectRelativesDialog.Factory>()
+      .AddTransient<CreateOrUpdatePersonDialog.Factory>();
   }
 
   public static IServiceProvider Provider =>

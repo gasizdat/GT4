@@ -22,7 +22,7 @@ public partial class FamilyPage : ContentPage
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
   private readonly INameTypeFormatter _NameTypeFormatter;
-  private readonly CreateOrUpdatePersonDialogFactory _CreateOrUpdatePersonDialogFactory;
+  private readonly CreateOrUpdatePersonDialog.Factory _CreateOrUpdatePersonDialogFactory;
   private readonly FilteredObservableCollection<PersonInfo> _Persons = new();
   private bool _PersonsLoaded;
   private Name? _FamilyName = null;
@@ -39,7 +39,7 @@ public partial class FamilyPage : ContentPage
     INavigationService navigationService,
     IBiologicalSexFormatter biologicalSexFormatter, 
     INameTypeFormatter nameTypeFormatter,
-    CreateOrUpdatePersonDialogFactory createOrUpdatePersonDialogFactory
+    CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory
     )
   {
     _CancellationTokenProvider = cancellationTokenProvider;
@@ -185,7 +185,7 @@ public partial class FamilyPage : ContentPage
 
   private async Task OnCreatePerson()
   {
-    var dialog = _CreateOrUpdatePersonDialogFactory(null);
+    var dialog = _CreateOrUpdatePersonDialogFactory.Create(null);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;

@@ -13,20 +13,25 @@ using System.Windows.Input;
 
 namespace GT4.UI.Dialogs;
 
-public delegate CreateOrUpdatePersonDialog CreateOrUpdatePersonDialogFactory(PersonFullInfo? person);
-
 public partial class CreateOrUpdatePersonDialog : ContentPage
 {
-  private readonly ICancellationTokenProvider _CancellationTokenProvider;
-  private readonly IBiologicalSexFormatter _BiologicalSexFormatter;
-  private readonly INameTypeFormatter _NameTypeFormatter;
-  private readonly INameFormatter _NameFormatter;
-  private readonly IDateFormatter _DateFormatter;
-  private readonly IComparer<PersonInfo> _PersonInfoComparer;
-  private readonly IAlertService _AlertService;
-  private readonly DataConverterResolver _DataConverterFactory;
-  private readonly SelectNameDialogFactory _SelectNameDialogFactory;
-  private readonly SelectRelativesDialogFactory _SelectRelativesDialogFactory;
+  public record class Factory(
+    ICancellationTokenProvider CancellationTokenProvider,
+    IBiologicalSexFormatter BiologicalSexFormatter,
+    INameTypeFormatter NameTypeFormatter,
+    INameFormatter NameFormatter,
+    IDateFormatter DateFormatter,
+    IComparer<PersonInfo> PersonInfoComparer,
+    IAlertService AlertService,
+    DataConverterResolver DataConverterFactory,
+    SelectNameDialog.Factory SelectNameDialogFactory,
+    SelectRelativesDialog.Factory SelectRelativesDialogFactory)
+  {
+    public CreateOrUpdatePersonDialog Create(PersonFullInfo? person) =>
+      new CreateOrUpdatePersonDialog(this, person);
+  }
+
+  private readonly Factory _Factory;
   private readonly ICommand _DialogCommand;
   private readonly string _SaveButtonName;
   private readonly ObservableCollection<PersonDataItem> _Photos = new();
@@ -43,34 +48,14 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private bool _IsModified;
   private bool _NotReady => _BiologicalSex is null || _BirthDate is null || !_IsModified;
 
-  public CreateOrUpdatePersonDialog(
-    PersonFullInfo? person,
-    ICancellationTokenProvider cancellationTokenProvider,
-    IBiologicalSexFormatter biologicalSexFormatter,
-    INameTypeFormatter nameTypeFormatter,
-    INameFormatter nameFormatter,
-    IDateFormatter dateFormatter,
-    IComparer<PersonInfo> personInfoComparer,
-    IAlertService alertService,
-    DataConverterResolver dataConverterFactory,
-    SelectNameDialogFactory selectNameDialogFactory,
-    SelectRelativesDialogFactory selectRelativesDialogFactory)
+  protected CreateOrUpdatePersonDialog(Factory factory, PersonFullInfo? person)
   {
-    _CancellationTokenProvider = cancellationTokenProvider;
-    _BiologicalSexFormatter = biologicalSexFormatter;
-    _NameTypeFormatter = nameTypeFormatter;
-    _NameFormatter = nameFormatter;
-    _DateFormatter = dateFormatter;
-    _PersonInfoComparer = personInfoComparer;
-    _AlertService = alertService;
-    _DataConverterFactory = dataConverterFactory;
-    _SelectNameDialogFactory = selectNameDialogFactory;
-    _SelectRelativesDialogFactory = selectRelativesDialogFactory;
-    _DialogCommand = new SafeCommand(OnDialogCommand, _AlertService);
+    _Factory = factory;
+    _DialogCommand = new SafeCommand(OnDialogCommand, _Factory.AlertService);
     _SaveButtonName = person is null ? UIStrings.BtnNameCreateFamilyPerson : UIStrings.BtnNameUpdateFamilyPerson;
-    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, _BiologicalSexFormatter));
-    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Female, _BiologicalSexFormatter));
-    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Unknown, _BiologicalSexFormatter));
+    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, _Factory.BiologicalSexFormatter));
+    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Female, _Factory.BiologicalSexFormatter));
+    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Unknown, _Factory.BiologicalSexFormatter));
     _BiologicalSex = _BiologicalSexes.FirstOrDefault(i => i.Info == person?.BiologicalSex);
 
     UpdatePersonInformation(person);
@@ -85,9 +70,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   {
     var ret = new PersonDataItem(
       data: data,
-      _DataConverterFactory(dataCategory),
-      _CancellationTokenProvider,
-      _AlertService);
+      _Factory.DataConverterFactory(dataCategory),
+      _Factory.CancellationTokenProvider,
+      _Factory.AlertService);
 
     return ret;
   }
@@ -107,7 +92,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       _GedcomData = person.GedcomData;
       var names = person
         .Names
-        .Select(name => new NameInfoItem(name, _NameTypeFormatter))
+        .Select(name => new NameInfoItem(name, _Factory.NameTypeFormatter))
         .GroupBy(item => item.Info.Type & NameType.NoDeclension)
         .OrderBy(group => group.Key)
         .SelectMany(item => item);
@@ -133,15 +118,15 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
         _ => new PersonDataItem(
               dataCategory: DataCategory.PersonBio,
-              _DataConverterFactory(DataCategory.PersonBio),
-              _CancellationTokenProvider,
-              _AlertService)
+              _Factory.DataConverterFactory(DataCategory.PersonBio),
+              _Factory.CancellationTokenProvider,
+              _Factory.AlertService)
       };
       _Biography.PropertyChanged += (_, _) => IsModified = _Biography.IsModified;
 
       var relatives = person
         .RelativeInfos
-        .OrderBy(item => item, _PersonInfoComparer);
+        .OrderBy(item => item, _Factory.PersonInfoComparer);
       foreach (var relative in relatives)
       {
         _Relatives.Add(relative);
@@ -149,7 +134,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
     catch (Exception ex)
     {
-      _ = _AlertService.ShowErrorAsync(ex);
+      _ = _Factory.AlertService.ShowErrorAsync(ex);
     }
   }
 
@@ -179,7 +164,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     get
     {
       var dummyPersonInfo = PersonFullInfo.Empty with { Names = _Names.Select(item => item.Info).ToArray() };
-      return _NameFormatter.ToString(dummyPersonInfo, NameFormat.FullPersonName);
+      return _Factory.NameFormatter.ToString(dummyPersonInfo, NameFormat.FullPersonName);
     }
   }
 
@@ -266,15 +251,15 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     if (biologicalSex == BiologicalSex.Unknown)
     {
       var message = string.Format(UIStrings.AlertTextUnableToAddNameForTheSexSelected_1,
-        _BiologicalSexFormatter.ToString(_BiologicalSex?.Info));
-      await _AlertService.ShowWarningAsync(message);
+        _Factory.BiologicalSexFormatter.ToString(_BiologicalSex?.Info));
+      await _Factory.AlertService.ShowWarningAsync(message);
       return;
     }
 
     var alreadyInFamily = Names.SingleOrDefault(n => n.Info.Type.HasFlag(NameType.FamilyName)) is not null;
     NameType[] familyName = alreadyInFamily ? [] : [NameType.FamilyName];
 
-    var dialog = _SelectNameDialogFactory(
+    var dialog = _Factory.SelectNameDialogFactory.Create(
       biologicalSex,
       [NameType.FirstName, NameType.Patronymic, NameType.LastName, .. familyName]);
 
@@ -286,7 +271,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     {
       var lastNameWithTheSameType = _Names.LastOrDefault(item => item?.Info.Type == name.Type, null);
       var index = lastNameWithTheSameType is null ? -1 : _Names.IndexOf(lastNameWithTheSameType);
-      var item = new NameInfoItem(name, _NameTypeFormatter);
+      var item = new NameInfoItem(name, _Factory.NameTypeFormatter);
       _Names.Insert(index + 1, item);
 
       IsModified = true;
@@ -295,7 +280,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   protected async Task OnEditPersonNameAsync(NameInfoItem nameInfoItem)
   {
-    var dialog = _SelectNameDialogFactory(
+    var dialog = _Factory.SelectNameDialogFactory.Create(
       _BiologicalSex?.Info ?? BiologicalSex.Unknown,
       [nameInfoItem.Info.Type]);
 
@@ -306,13 +291,16 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     if (name is not null)
     {
       var index = _Names.IndexOf(nameInfoItem);
-      _Names[index] = new NameInfoItem(name, _NameTypeFormatter);
+      _Names[index] = new NameInfoItem(name, _Factory.NameTypeFormatter);
     }
   }
 
   private async Task OnBirthDateSetupAsync()
   {
-    var dialog = new SelectDateDialog(date: BirthDate, dateFormatter: _DateFormatter, alertService: _AlertService);
+    var dialog = new SelectDateDialog(
+      date: BirthDate,
+      dateFormatter: _Factory.DateFormatter,
+      alertService: _Factory.AlertService);
 
     await Navigation.PushModalAsync(dialog);
     var date = await dialog.Info;
@@ -328,8 +316,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   {
     var dialog = new SelectDateDialog(
       date: DeathDate,
-      dateFormatter: _DateFormatter,
-      alertService: _AlertService);
+      dateFormatter: _Factory.DateFormatter,
+      alertService: _Factory.AlertService);
 
     await Navigation.PushModalAsync(dialog);
     var date = await dialog.Info;
@@ -412,7 +400,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   private async Task OnAddRelationshipAsync()
   {
-    var dialog = _SelectRelativesDialogFactory(_BiologicalSex?.Info, [.. Relatives]);
+    var dialog = _Factory.SelectRelativesDialogFactory.Create(_BiologicalSex?.Info, [.. Relatives]);
 
     await Navigation.PushModalAsync(dialog);
     var result = await dialog.Info;
@@ -432,8 +420,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   {
     var dialog = new SelectDateDialog(
       date: relative.Date,
-      dateFormatter: _DateFormatter,
-      alertService: _AlertService);
+      dateFormatter: _Factory.DateFormatter,
+      alertService: _Factory.AlertService);
 
     await Navigation.PushModalAsync(dialog);
     var date = await dialog.Info;
