@@ -13,7 +13,6 @@ namespace GT4.UI.Dialogs;
 public partial class SelectNameDialog : ContentPage
 {
   private readonly TaskCompletionSource<Name?> _Info = new(null);
-  private readonly IServiceProvider _ServiceProvider;
   private readonly INameTypeFormatter _NameTypeFormatter;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
@@ -28,15 +27,21 @@ public partial class SelectNameDialog : ContentPage
 
   private bool _NotReady => _CurrentName is null;
 
-  public SelectNameDialog(BiologicalSex biologicalSex, NameType[] nameTypes, IServiceProvider serviceProvider)
+  public SelectNameDialog(
+    BiologicalSex biologicalSex,
+    NameType[] nameTypes,
+    INameTypeFormatter nameTypeFormatter,
+    ICurrentProjectProvider currentProjectProvider,
+    ICancellationTokenProvider cancellationTokenProvider,
+    IComparer<Name> nameComparer,
+    IAlertService alertService)
   {
-    _ServiceProvider = serviceProvider;
-    _NameTypeFormatter = _ServiceProvider.GetRequiredService<INameTypeFormatter>();
-    _CurrentProjectProvider = _ServiceProvider.GetRequiredService<ICurrentProjectProvider>();
-    _CancellationTokenProvider = _ServiceProvider.GetRequiredService<ICancellationTokenProvider>();
-    _NameComparer = _ServiceProvider.GetRequiredService<IComparer<Name>>();
+    _NameTypeFormatter = nameTypeFormatter;
+    _CurrentProjectProvider = currentProjectProvider;
+    _CancellationTokenProvider = cancellationTokenProvider;
+    _NameComparer = nameComparer;
     _NameTypes = new(nameTypes.Select(type => new NameTypeInfoItem(_NameTypeFormatter.ToString(type), type)));
-    _AlertService = _ServiceProvider.GetRequiredService<IAlertService>();
+    _AlertService = alertService;
     _DialogCommand = new SafeCommand(OnDialogCommandAsync, _AlertService);
     _CurrentNameType = _NameTypes.First();
 

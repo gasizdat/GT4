@@ -21,7 +21,8 @@ public class SelectNameDialogTests
   {
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
     NameType[] nameTypes = nameType.HasValue ? [nameType.Value] : [NameType.FirstName, NameType.LastName];
-    return await MainThread.InvokeOnMainThreadAsync(() => new SelectNameDialog(biologicalSex, nameTypes, services.Provider));
+    return await MainThread.InvokeOnMainThreadAsync(
+      () => services.Provider.GetRequiredService<Func<BiologicalSex, NameType[], SelectNameDialog>>()(biologicalSex, nameTypes));
   }
 
   [Fact]

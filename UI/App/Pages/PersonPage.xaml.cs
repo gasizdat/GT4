@@ -477,7 +477,7 @@ public partial class PersonPage : ContentPage
 
   private async Task OnPersonEditAsync()
   {
-    var dialog = new CreateOrUpdatePersonDialog(_PersonFullInfo, _ServiceProvider);
+    var dialog = _ServiceProvider.GetRequiredService<Func<PersonFullInfo?, CreateOrUpdatePersonDialog>>()(_PersonFullInfo);
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;
     await Navigation.PopModalAsync();
