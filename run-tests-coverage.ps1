@@ -17,6 +17,11 @@ $repoRoot = $PSScriptRoot
 $coverageDir = Join-Path $repoRoot 'coverage'
 $toolsPath = Join-Path $env:USERPROFILE '.dotnet\tools'
 
+# Force English output regardless of OS locale: DOTNET_CLI_UI_LANGUAGE covers the dotnet CLI itself,
+# VSLANG (an LCID, 1033 = en-US) covers MSBuild/Roslyn satellite resources.
+$env:DOTNET_CLI_UI_LANGUAGE = 'en'
+$env:VSLANG = '1033'
+
 if (Test-Path $coverageDir) { Remove-Item $coverageDir -Recurse -Force }
 New-Item -ItemType Directory -Path $coverageDir | Out-Null
 
