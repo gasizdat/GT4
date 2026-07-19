@@ -11,13 +11,9 @@ public static class GedcomCharset
   private const string CharsetLinePrefix = "1 " + GedcomTags.Charset + " ";
 
   /// <summary>
-  /// Detects the encoding to use for <paramref name="stream"/> by reading it line by line -- never more of
-  /// it than the header, regardless of how large the rest of the file is (e.g. embedded photo BLOBs). A
-  /// byte-order mark always wins; otherwise the declared <c>CHAR</c> value is consulted. <c>ANSI</c> (and any
-  /// other unrecognized value) cannot be resolved to a single codepage from the file alone, so
-  /// <see cref="GedcomCharsetResult.NeedsCodepage"/> is set instead of guessing and silently mangling the
-  /// text. <c>ANSEL</c> is GEDCOM's own 8-bit encoding, not a Windows codepage picker can offer, and decoding
-  /// it is unsupported for now.
+  /// Detects the encoding to use for <paramref name="stream"/>, reading only its header. A byte-order mark
+  /// always wins over the declared <c>CHAR</c> value; an unresolvable value (e.g. <c>ANSI</c>) sets
+  /// <see cref="GedcomCharsetResult.NeedsCodepage"/> instead of guessing.
   /// </summary>
   public static async Task<GedcomCharsetResult> DetectAsync(Stream stream, CancellationToken token = default)
   {

@@ -6,18 +6,12 @@ using Xunit;
 namespace GT4.UI.DeviceTests;
 
 /// <summary>
-/// Covers the non-prompt paths of GedcomImportEncoding's detect-and-decode logic (declared/BOM charsets
-/// that resolve without asking the user, and the ANSEL failure) through the internal Func&lt;Task&lt;Stream&gt;&gt;
-/// overload of ResolveReaderAsync, the seam split out of the FileResult overload for exactly this:
-/// FileResult.OpenReadAsync isn't virtual and its path-based constructor doesn't produce a working instance
-/// on Windows, so the FileResult-reading half isn't unit-testable at all. The codepage-prompt branch needs a
-/// live SelectEncodingDialog and isn't covered here -- see #122.
+/// Covers GedcomImportEncoding's non-prompt paths (declared/BOM charsets, ANSEL failure) via the internal
+/// Func&lt;Task&lt;Stream&gt;&gt; overload. The codepage-prompt branch needs a live SelectEncodingDialog -- see #122.
 /// </summary>
 public sealed class GedcomImportEncodingTests
 {
-  // A fresh MemoryStream per call, mirroring FileResult.OpenReadAsync's real behaviour of opening the file
-  // from the start every time (verified empirically: both Windows and Android read from a re-openable file
-  // path, never a single-use stream).
+  // Fresh MemoryStream per call, mirroring FileResult.OpenReadAsync opening the file anew each time.
   private static Func<Task<Stream>> OpenStream(byte[] bytes) => () => Task.FromResult<Stream>(new MemoryStream(bytes));
 
   [Fact]
