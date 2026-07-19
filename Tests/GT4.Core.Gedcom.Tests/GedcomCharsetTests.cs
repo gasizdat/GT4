@@ -70,6 +70,27 @@ public sealed class GedcomCharsetTests : IAsyncLifetime
   }
 
   [Fact]
+  public void Detect_CharLikeLineAfterHeader_IsIgnored()
+  {
+    // CHAR is only ever meaningful as a level-1 child of HEAD; a same-shaped line belonging to a later
+    // record must not be mistaken for it. Pins the scan bound in FindDeclaredCharset (stops at the second
+    // level-0 line) rather than scanning the whole file for a "1 CHAR " prefix anywhere in it.
+    var ged =
+      """
+      0 HEAD
+      1 SOUR GT4
+      0 @S1@ SOUR
+      1 CHAR ANSI
+      0 TRLR
+      """;
+
+    var result = GedcomCharset.Detect(Encoding.UTF8.GetBytes(ged));
+
+    result.NeedsCodepage.Should().BeFalse();
+    result.Encoding.Should().Be(Encoding.UTF8);
+  }
+
+  [Fact]
   public void Detect_DeclaredUtf8NoBom_ReturnsUtf8()
   {
     var result = GedcomCharset.Detect(Encoding.UTF8.GetBytes(Header("UTF-8")));

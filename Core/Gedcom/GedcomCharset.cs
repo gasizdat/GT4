@@ -48,16 +48,31 @@ public static class GedcomCharset
     return null;
   }
 
-  // Read as Latin-1: a lossless 1-byte-per-char decode of the raw bytes, safe for locating an ASCII header
-  // line regardless of what the (still-unknown) body encoding turns out to be.
+  // CHAR is a required level-1 child of HEAD, and HEAD is always the file's first record, so it cannot
+  // legally appear at or after the second level-0 line. That bounds the scan to the header (a handful of
+  // short lines) regardless of how large the rest of the file is (e.g. embedded photo BLOBs). Each line is
+  // decoded as Latin-1 -- a lossless 1-byte-per-char mapping, safe for locating an ASCII header line
+  // regardless of what the (still-unknown) body encoding turns out to be -- one short line at a time rather
+  // than materializing the whole file as a string up front.
   private static string? FindDeclaredCharset(byte[] bytes)
   {
-    var text = Encoding.Latin1.GetString(bytes);
-    foreach (var line in text.Split('\n'))
+    var remaining = bytes.AsSpan();
+    var topLevelLines = 0;
+    while (!remaining.IsEmpty)
     {
-      var trimmed = line.TrimStart().TrimEnd('\r');
-      if (trimmed.StartsWith(CharsetLinePrefix, StringComparison.Ordinal))
-        return trimmed[CharsetLinePrefix.Length..];
+      var newlineIndex = remaining.IndexOf((byte)'\n');
+      var lineBytes = newlineIndex < 0 ? remaining : remaining[..newlineIndex];
+      remaining = newlineIndex < 0 ? [] : remaining[(newlineIndex + 1)..];
+
+      if (lineBytes.Length > 0 && lineBytes[^1] == (byte)'\r')
+        lineBytes = lineBytes[..^1];
+
+      var line = Encoding.Latin1.GetString(lineBytes).TrimStart();
+      if (line.StartsWith(CharsetLinePrefix, StringComparison.Ordinal))
+        return line[CharsetLinePrefix.Length..];
+
+      if (line.StartsWith("0 ", StringComparison.Ordinal) && ++topLevelLines > 1)
+        return null;
     }
 
     return null;
