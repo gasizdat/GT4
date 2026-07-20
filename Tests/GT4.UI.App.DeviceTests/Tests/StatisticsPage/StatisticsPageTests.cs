@@ -133,6 +133,10 @@ public class StatisticsPageTests
     await page.WaitForFirstLoadAsync();
     var monitor = (ProjectRevisionMonitor)services.Provider.GetRequiredService<IProjectRevisionMonitor>();
     await using var window = await WindowHost.AttachAsync(page);
+    // Loaded (where the page subscribes to RevisionChanged) can fire after the native view merely
+    // exists, so wait for the subscription itself before checking -- otherwise CheckRevision can land
+    // before anyone is listening and the revision change is silently missed.
+    await Poll.UntilAsync(() => Task.FromResult(monitor.SubscriberCount), count => count > 0, timeoutMessage: "The page never subscribed to RevisionChanged.");
     services.Project.SetupGet(p => p.ProjectRevision).Returns(42);
 
     await page.ReloadStatisticsAsync(monitor.CheckRevision);
@@ -149,6 +153,7 @@ public class StatisticsPageTests
     await page.WaitForFirstLoadAsync();
     var monitor = (ProjectRevisionMonitor)services.Provider.GetRequiredService<IProjectRevisionMonitor>();
     var window = await WindowHost.AttachAsync(page);
+    await Poll.UntilAsync(() => Task.FromResult(monitor.SubscriberCount), count => count > 0, timeoutMessage: "The page never subscribed to RevisionChanged.");
     await window.DisposeAsync();
     var callsBefore = services.PersonManager.Invocations.Count(i => i.Method.Name == nameof(IPersonManager.GetPersonInfosAsync));
     services.Project.SetupGet(p => p.ProjectRevision).Returns(43);
