@@ -45,6 +45,7 @@
 
       </Button>
       <Button
+          Margin="{Thickness Right={StaticResource PageContentSpacing}}"
           Command="{Binding Command, Source={x:Reference Root}}"
           CommandParameter="Tab1"
           Text="{x:Static resources:UIStrings.BtnNameMarkdownView}">
@@ -65,11 +66,17 @@
           </DataTrigger>
         </Button.Triggers>
       </Button>
+      <Button
+          Command="{Binding Command, Source={x:Reference Root}}"
+          CommandParameter="InsertLink"
+          IsVisible="{Binding DisplayEditor, Source={x:Reference Root}}"
+          Text="{x:Static resources:UIStrings.BtnNameInsertPersonLink}" />
     </HorizontalStackLayout>
 
     <!--  Content  -->
     <Grid Grid.Row="1">
       <Editor
+          x:Name="TextEditor"
           AutoSize="TextChanges"
           HorizontalOptions="Fill"
           IsVisible="{Binding DisplayEditor, Source={x:Reference Root}}"

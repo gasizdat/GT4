@@ -32,6 +32,10 @@ public partial class MarkdownView : ContentView
 
   public string HtmlContent => BuildHtmlDocument();
 
+  // Raised instead of navigating when a rendered [Name](person:123) link is tapped; the host page owns
+  // person lookup/navigation, so this view stays free of any project or navigation dependency.
+  public event EventHandler<int>? PersonLinkTapped;
+
   private static void OnMarkdownChanged(BindableObject obj, object oldValue, object newValue)
   {
     if (obj is MarkdownView view && oldValue != newValue)
@@ -42,9 +46,16 @@ public partial class MarkdownView : ContentView
 
   // A tapped link (the Google Maps coordinate reference, a mailto/tel in a bio) opens in the external app
   // rather than navigating inside the display WebView; everything else (the initial content load) proceeds
-  // untouched.
+  // untouched. A person-link is neither: it's handled in-app via PersonLinkTapped.
   private async void OnWebViewNavigating(object sender, WebNavigatingEventArgs e)
   {
+    if (TryParsePersonLink(e.Url, out var personId))
+    {
+      e.Cancel = true;
+      PersonLinkTapped?.Invoke(this, personId);
+      return;
+    }
+
     if (!IsExternalLink(e.Url))
       return;
 
@@ -65,6 +76,15 @@ public partial class MarkdownView : ContentView
   private static bool IsExternalLink(string url) =>
     Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
     uri.Scheme is not ("about" or "data" or "file");
+
+  // "person:" is a custom opaque scheme (like "mailto:"); Uri's hierarchical-URI members (Host, AbsolutePath)
+  // aren't reliable for it, so the id is taken directly from the string instead of through Uri.
+  private static bool TryParsePersonLink(string url, out int personId)
+  {
+    const string prefix = "person:";
+    personId = 0;
+    return url.StartsWith(prefix, StringComparison.Ordinal) && int.TryParse(url.AsSpan(prefix.Length), out personId);
+  }
 
   private async void OnWebViewNavigated(object sender, WebNavigatedEventArgs e)
   {

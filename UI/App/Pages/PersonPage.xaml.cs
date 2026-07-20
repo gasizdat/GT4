@@ -267,6 +267,20 @@ public partial class PersonPage : ContentPage
 
   private void OnPersonPhotoOrRelativesSizeChanged(object? sender, EventArgs e) => UpdatePersonPhotoStickyPosition();
 
+  private void OnPersonLinkTapped(object? sender, int personId) =>
+    SafeTask.Run(() => NavigateToPersonLinkAsync(personId), _AlertService);
+
+  // A dangling link (the referenced person was since deleted) is simply inert.
+  protected async Task NavigateToPersonLinkAsync(int personId)
+  {
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    var person = await _CurrentProjectProvider.Project.Persons.TryGetPersonByIdAsync(personId, token);
+    if (person is not null)
+    {
+      ShowPersonInfo(person, true);
+    }
+  }
+
   private async Task GetPersonDataAsync(Person person, bool addToNavigation)
   {
     try

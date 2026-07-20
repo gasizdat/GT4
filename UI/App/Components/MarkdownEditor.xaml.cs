@@ -45,6 +45,10 @@ public partial class MarkdownEditor : ContentView
 
   public bool DisplayHtmlView => _TabIndex == 1;
 
+  // Raised when the "Link a Person" button is tapped; the host page owns person lookup/selection, so this
+  // view stays free of any project dependency. The host calls InsertLink back once a person is chosen.
+  public event EventHandler? InsertLinkRequested;
+
   public int TabIndex
   {
     get => _TabIndex;
@@ -61,6 +65,14 @@ public partial class MarkdownEditor : ContentView
   }
 
   public ICommand Command => _Command;
+
+  public void InsertLink(string displayName, int personId)
+  {
+    var linkText = $"[{displayName}](person:{personId})";
+    var cursor = Math.Clamp(TextEditor.CursorPosition, 0, Markdown?.Length ?? 0);
+    Markdown = (Markdown ?? string.Empty).Insert(cursor, linkText);
+    TextEditor.CursorPosition = cursor + linkText.Length;
+  }
 
   private static void OnMarkdownChanged(BindableObject obj, object oldValue, object newValue)
   {
@@ -87,6 +99,9 @@ public partial class MarkdownEditor : ContentView
         break;
       case string commandName when commandName == "Tab1":
         TabIndex = 1;
+        break;
+      case string commandName when commandName == "InsertLink":
+        InsertLinkRequested?.Invoke(this, EventArgs.Empty);
         break;
     }
   }

@@ -303,7 +303,16 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("BtnNameMarkdownView", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Link a Person.
+        /// </summary>
+        public static string BtnNameInsertPersonLink {
+            get {
+                return ResourceManager.GetString("BtnNameInsertPersonLink", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to No.
         /// </summary>

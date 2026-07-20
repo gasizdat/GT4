@@ -225,7 +225,8 @@
                 BackgroundColor="Transparent"
                 Markdown="{Binding Biography, Source={x:Reference Root}, Mode=OneWay}"
                 MinimumHeightRequest="{OnIdiom Default=300,
-                                               Phone=200}" />
+                                               Phone=200}"
+                PersonLinkTapped="OnPersonLinkTapped" />
           </Border>
           <components:ImagePresenter
               x:Name="PersonPhoto"

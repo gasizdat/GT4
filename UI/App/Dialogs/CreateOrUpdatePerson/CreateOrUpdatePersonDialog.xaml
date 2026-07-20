@@ -470,8 +470,10 @@
                   Text="{x:Static resources:UIStrings.FieldPersonBiography}" />
 
               <components:MarkdownEditor
+                  x:Name="BiographyEditor"
                   Grid.Row="1"
                   Grid.Column="0"
+                  InsertLinkRequested="OnInsertLinkRequested"
                   Markdown="{Binding Biography.Content, Source={x:Reference Root}}"
                   MinimumHeightRequest="{StaticResource MinBioHeight}"
                   Placeholder="{x:Static resources:UIStrings.TxtPlaceholderBiography}" />
