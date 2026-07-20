@@ -36,8 +36,8 @@ public partial class ProjectPage : ContentPage
   private readonly GedcomImportEncoding _GedcomImportEncoding;
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
+  private readonly IProjectRevisionMonitor _ProjectRevisionMonitor;
 
-  private long? _ProjectRevision;
   private readonly FilteredObservableCollection<FamilyInfoItem> _Families = new();
   private bool _FamiliesLoaded;
 
@@ -55,7 +55,8 @@ public partial class ProjectPage : ContentPage
     GedcomImportEncoding gedcomImportEncoding,
     IAlertService alertService,
     INavigationService navigationService,
-    IBiologicalSexFormatter biologicalSexFormatter
+    IBiologicalSexFormatter biologicalSexFormatter,
+    IProjectRevisionMonitor projectRevisionMonitor
     )
   {
     _NameTypeFormatter = nameTypeFormatter;
@@ -69,6 +70,7 @@ public partial class ProjectPage : ContentPage
     _GedcomImportEncoding = gedcomImportEncoding;
     _AlertService = alertService;
     _NavigationService = navigationService;
+    _ProjectRevisionMonitor = projectRevisionMonitor;
 
     // Set once: family visibility is re-evaluated via _Families.Update() (through UpdateFamilies),
     // not by reassigning this predicate.
@@ -84,6 +86,8 @@ public partial class ProjectPage : ContentPage
       _AlertService,
       () => [.. _Families.AllItems.SelectMany(f => f.AllPersons).DistinctBy(p => p.Id)]);
     FilterView.Changed += (_, _) => UpdateFamilies();
+    Loaded += (_, _) => _ProjectRevisionMonitor.RevisionChanged += OnRevisionChanged;
+    Unloaded += (_, _) => _ProjectRevisionMonitor.RevisionChanged -= OnRevisionChanged;
   }
 
   public ObservableCollection<FamilyInfoItem> Families
@@ -108,7 +112,6 @@ public partial class ProjectPage : ContentPage
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
       var project = _CurrentProjectProvider.Project;
-      _ProjectRevision = project.ProjectRevision;
 
       var persons = await project
           .PersonManager
@@ -239,19 +242,16 @@ public partial class ProjectPage : ContentPage
   {
     base.OnNavigatedTo(args);
 
-    void OnRefresh()
-    {
-      var projectRevision = _CurrentProjectProvider.Project.ProjectRevision;
-      if (projectRevision != _ProjectRevision)
-      {
-        _ProjectRevision = projectRevision;
-        _FamiliesLoaded = false;
-        this.RefreshView();
-      }
-    }
-
-    SafeTask.Guard(OnRefresh, _AlertService);
+    SafeTask.Guard(Refresh, _AlertService);
   }
+
+  private void Refresh()
+  {
+    _FamiliesLoaded = false;
+    this.RefreshView();
+  }
+
+  private void OnRevisionChanged(object? sender, EventArgs e) => SafeTask.Guard(Refresh, _AlertService);
 
   protected async Task OnPageCommand(object obj)
   {
@@ -351,10 +351,12 @@ public partial class ProjectPage : ContentPage
     }
 
     using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-    var family = await _CurrentProjectProvider
+    await _CurrentProjectProvider
       .Project
       .FamilyManager
       .AddFamilyAsync(familyName: info.Name, maleLastName: info.MaleName, femaleLastName: info.FemaleName, token);
+
+    Refresh();
   }
 
   // Exports the open project to a GEDCOM file in the cache directory and hands it to the OS share sheet,
