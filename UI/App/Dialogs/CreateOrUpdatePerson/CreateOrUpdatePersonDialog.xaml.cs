@@ -417,8 +417,6 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
   }
 
-  private void OnInsertLinkRequested(object? sender, EventArgs e) => _DialogCommand.Execute("InsertLinkCommand");
-
   protected async Task OnInsertLinkAsync()
   {
     var dialog = _Factory.SelectPersonDialogFactory.Create();
@@ -479,7 +477,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       case string commandName when commandName == "AddRelationship":
         await OnAddRelationshipAsync();
         break;
-      case string commandName when commandName == "InsertLinkCommand":
+      case string commandName when commandName == "InsertPersonLinkCommand":
         await OnInsertLinkAsync();
         break;
       case string commandName when commandName == "UndefinedBirthDateCommand":

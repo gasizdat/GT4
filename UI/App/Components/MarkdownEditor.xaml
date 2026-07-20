@@ -67,8 +67,8 @@
         </Button.Triggers>
       </Button>
       <Button
-          Command="{Binding Command, Source={x:Reference Root}}"
-          CommandParameter="InsertLink"
+          Command="{Binding InsertLinkCommand, Source={x:Reference Root}}"
+          CommandParameter="InsertPersonLinkCommand"
           IsVisible="{Binding DisplayEditor, Source={x:Reference Root}}"
           Text="{x:Static resources:UIStrings.BtnNameInsertPersonLink}" />
     </HorizontalStackLayout>

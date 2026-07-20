@@ -473,7 +473,7 @@
                   x:Name="BiographyEditor"
                   Grid.Row="1"
                   Grid.Column="0"
-                  InsertLinkRequested="OnInsertLinkRequested"
+                  InsertLinkCommand="{Binding DialogCommand, Source={x:Reference Root}}"
                   Markdown="{Binding Biography.Content, Source={x:Reference Root}}"
                   MinimumHeightRequest="{StaticResource MinBioHeight}"
                   Placeholder="{x:Static resources:UIStrings.TxtPlaceholderBiography}" />
