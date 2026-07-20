@@ -14,6 +14,7 @@ internal sealed class ProjectRevisionMonitor : IProjectRevisionMonitor
   private readonly WeakEventManager _EventManager = new();
   private readonly IDispatcherTimer _Timer;
   private long? _LastRevision;
+  private int _SubscriberCount;
 
   public ProjectRevisionMonitor(ICurrentProjectProvider currentProjectProvider)
   {
@@ -26,14 +27,38 @@ internal sealed class ProjectRevisionMonitor : IProjectRevisionMonitor
     _Timer.Interval = TimeSpan.FromSeconds(1);
     _Timer.IsRepeating = true;
     _Timer.Tick += (_, _) => CheckRevision();
-    _Timer.Start();
   }
 
+  // Ticking only while at least one page is actually listening keeps an idle app (or, incidentally, a
+  // test run that constructs many of these) from accumulating live timers. A WeakEventManager
+  // subscriber can be collected without ever calling remove, so this count can only overshoot the true
+  // number of live handlers -- worst case the timer keeps running a little longer than strictly
+  // necessary, never less, so it never masks a real change.
   public event EventHandler RevisionChanged
   {
-    add => _EventManager.AddEventHandler(value);
-    remove => _EventManager.RemoveEventHandler(value);
+    add
+    {
+      _EventManager.AddEventHandler(value);
+      if (Interlocked.Increment(ref _SubscriberCount) == 1)
+      {
+        _Timer.Start();
+      }
+    }
+    remove
+    {
+      _EventManager.RemoveEventHandler(value);
+      if (Interlocked.Decrement(ref _SubscriberCount) == 0)
+      {
+        _Timer.Stop();
+      }
+    }
   }
+
+  // Test seam (InternalsVisibleTo GT4.UI.App.DeviceTests): a page's own subscription only becomes
+  // active once its Loaded event has actually fired, which can lag behind its native view merely
+  // existing -- a test must wait for this before calling CheckRevision, or the check can land before
+  // anyone is listening.
+  internal int SubscriberCount => _SubscriberCount;
 
   // Also the test seam (InternalsVisibleTo GT4.UI.App.DeviceTests) -- tests call this directly instead
   // of waiting on the real timer.
