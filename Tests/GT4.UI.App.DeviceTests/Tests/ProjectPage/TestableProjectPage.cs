@@ -57,9 +57,9 @@ internal sealed class TestableProjectPage : ProjectPage
     // "Refresh" command and OnNavigatedTo) reflectively raises OnPropertyChanged for every one of
     // ProjectPage's own public properties regardless of whether a load actually ran, so any
     // PropertyChanged-based signal fires the instant RefreshView() is called -- well before the
-    // background fetch it kicks off actually finishes. EnsureFamiliesLoaded's eager _Families.Clear()
-    // (synchronous, before the fetch starts) fires a Reset action; only the later _Families.AddRange
-    // on fetch completion fires Add actions, so filtering to Add isolates genuine data arrival.
+    // background fetch it kicks off actually finishes. EnsureFamiliesLoaded's Clear+AddRange both
+    // happen together on fetch completion (a Reset immediately followed by an Add), so filtering to
+    // Add isolates genuine data arrival from that earlier RefreshView() noise.
     ((INotifyCollectionChanged)Families).CollectionChanged += (_, e) =>
     {
       if (e.Action == NotifyCollectionChangedAction.Add)

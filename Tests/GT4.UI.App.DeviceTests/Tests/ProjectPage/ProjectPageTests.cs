@@ -328,6 +328,47 @@ public class ProjectPageTests
   }
 
   [Fact]
+  public async Task A_second_Refresh_landing_during_an_in_flight_load_does_not_duplicate_families()
+  {
+    // EnsureFamiliesLoaded used to Clear() eagerly (before the fetch started) and AddRange only on
+    // completion, so a Refresh() landing mid-fetch (now reachable via unconditional OnNavigatedTo,
+    // OnCreateFamily, or the revision monitor) started a second overlapping load whose completion
+    // appended on top of the first's, duplicating every card. The first GetFamiliesAsync call here
+    // blocks until released, so InvokeNavigatedTo's own reload is guaranteed to start and finish while
+    // it's still in flight.
+    var services = new TestServices();
+    var firstCallGate = new TaskCompletionSource();
+    var firstCallStarted = new TaskCompletionSource();
+    var callCount = 0;
+    services.FamilyManager
+      .Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>()))
+      .Returns(async () =>
+      {
+        if (Interlocked.Increment(ref callCount) == 1)
+        {
+          firstCallStarted.SetResult();
+          await firstCallGate.Task;
+        }
+        return [N(1, "Ivanov", NameType.FamilyName)];
+      });
+    var page = await CreatePageAsync(services);
+    await firstCallStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+    await MainThread.InvokeOnMainThreadAsync(page.InvokeNavigatedTo);
+    firstCallGate.SetResult();
+
+    // Both the initial load and the reload triggered by InvokeNavigatedTo must land before asserting --
+    // WaitForFamiliesAsync alone is satisfied by the first of the two, which could race this assertion.
+    await Poll.UntilAsync(
+      () => Task.FromResult(page.CompletedLoads),
+      loads => loads >= 2,
+      timeoutMessage: "Both overlapping loads never completed.");
+
+    var families = await MainThread.InvokeOnMainThreadAsync(() => page.Families.ToArray());
+    Assert.Single(families);
+  }
+
+  [Fact]
   public async Task OnNavigatedTo_always_reloads_even_when_the_project_revision_is_unchanged()
   {
     var services = new TestServices();

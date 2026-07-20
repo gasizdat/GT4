@@ -106,7 +106,6 @@ public partial class ProjectPage : ContentPage
       return;
     }
     _FamiliesLoaded = true;
-    _Families.Clear();
 
     async Task OnLoadFamiliesAsync()
     {
@@ -141,7 +140,16 @@ public partial class ProjectPage : ContentPage
         families.Add(new FamilyInfoItem(FamilyInfoItem.NoFamilyName, familylessPersons, (_, person) => FilterView.Matches(person)));
       }
 
-      await SafeTask.RunOnMainThread(() => _Families.AddRange(families), _AlertService);
+      // Clear and AddRange happen together in this one main-thread continuation, not eagerly when the
+      // load starts: a Refresh() landing while this load is still in flight (unconditional OnNavigatedTo,
+      // OnCreateFamily, or the revision monitor can all trigger one) re-enters EnsureFamiliesLoaded and
+      // starts a second overlapping load. Splitting Clear from AddRange let both loads' completions
+      // append on top of each other, duplicating every card; last-writer-wins here does not.
+      await SafeTask.RunOnMainThread(() =>
+      {
+        _Families.Clear();
+        _Families.AddRange(families);
+      }, _AlertService);
     }
 
     SafeTask.Run(OnLoadFamiliesAsync, _AlertService);
