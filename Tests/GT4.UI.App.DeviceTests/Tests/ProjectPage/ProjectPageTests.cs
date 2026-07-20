@@ -1,6 +1,8 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI;
+using GT4.UI.Abstraction;
 using GT4.UI.Components;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
@@ -292,6 +294,96 @@ public class ProjectPageTests
     services.FamilyManager.Verify(
       f => f.AddFamilyAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
       Times.Never());
+  }
+
+  [Fact]
+  public async Task CreateFamily_modal_refreshes_the_families_list_without_navigating_away()
+  {
+    var services = new TestServices();
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>()))
+      .ReturnsAsync([N(1, "Ivanov", NameType.FamilyName)]);
+    var page = await CreatePageAsync(services);
+    await page.WaitForFamiliesAsync();
+
+    await using var window = await WindowHost.AttachAsync(page);
+    var commandTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("CreateFamily"));
+    var dialog = await ModalDialogHarness.WaitForModalAsync<CreateOrUpdateNameDialog>(page);
+    var loadsBefore = page.CompletedLoads;
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>()))
+      .ReturnsAsync([N(1, "Ivanov", NameType.FamilyName), N(2, "Petrov", NameType.FamilyName)]);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      dialog.GeneralName = "Petrov";
+      dialog.MaleName = "Petr";
+      dialog.FemaleName = "Petrova";
+      dialog.DialogCommand.Execute(null);
+    });
+    await commandTask;
+
+    await Poll.UntilAsync(
+      () => Task.FromResult(page.CompletedLoads),
+      loads => loads > loadsBefore,
+      timeoutMessage: "Creating a family did not refresh the families list.");
+  }
+
+  [Fact]
+  public async Task OnNavigatedTo_always_reloads_even_when_the_project_revision_is_unchanged()
+  {
+    var services = new TestServices();
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>()))
+      .ReturnsAsync([N(1, "Ivanov", NameType.FamilyName)]);
+    var page = await CreatePageAsync(services);
+    await page.WaitForFamiliesAsync();
+    var loadsBefore = page.CompletedLoads;
+
+    await MainThread.InvokeOnMainThreadAsync(page.InvokeNavigatedTo);
+
+    await Poll.UntilAsync(
+      () => Task.FromResult(page.CompletedLoads),
+      loads => loads > loadsBefore,
+      timeoutMessage: "OnNavigatedTo did not reload despite an unchanged revision.");
+  }
+
+  [Fact]
+  public async Task RevisionChanged_reloads_while_the_page_is_loaded()
+  {
+    var services = new TestServices();
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>()))
+      .ReturnsAsync([N(1, "Ivanov", NameType.FamilyName)]);
+    var page = await CreatePageAsync(services);
+    await page.WaitForFamiliesAsync();
+    var monitor = (ProjectRevisionMonitor)services.Provider.GetRequiredService<IProjectRevisionMonitor>();
+    await using var window = await WindowHost.AttachAsync(page);
+    var loadsBefore = page.CompletedLoads;
+    services.Project.SetupGet(p => p.ProjectRevision).Returns(42);
+
+    await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
+
+    await Poll.UntilAsync(
+      () => Task.FromResult(page.CompletedLoads),
+      loads => loads > loadsBefore,
+      timeoutMessage: "RevisionChanged did not reload the page while it was loaded.");
+  }
+
+  [Fact]
+  public async Task RevisionChanged_does_not_reload_after_the_page_is_unloaded()
+  {
+    var services = new TestServices();
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>()))
+      .ReturnsAsync([N(1, "Ivanov", NameType.FamilyName)]);
+    var page = await CreatePageAsync(services);
+    await page.WaitForFamiliesAsync();
+    var monitor = (ProjectRevisionMonitor)services.Provider.GetRequiredService<IProjectRevisionMonitor>();
+    var window = await WindowHost.AttachAsync(page);
+    await window.DisposeAsync();
+    var loadsBefore = page.CompletedLoads;
+    services.Project.SetupGet(p => p.ProjectRevision).Returns(43);
+
+    await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
+    await Task.Delay(200);
+
+    Assert.Equal(loadsBefore, page.CompletedLoads);
   }
 
   [Fact]

@@ -35,7 +35,8 @@ internal sealed class TestableProjectPage : ProjectPage
     GedcomImportEncoding gedcomImportEncoding,
     IAlertService alertService,
     INavigationService navigationService,
-    IBiologicalSexFormatter biologicalSexFormatter)
+    IBiologicalSexFormatter biologicalSexFormatter,
+    IProjectRevisionMonitor projectRevisionMonitor)
     : base(
       nameTypeFormatter,
       cancellationTokenProvider,
@@ -49,7 +50,8 @@ internal sealed class TestableProjectPage : ProjectPage
       gedcomImportEncoding,
       alertService,
       navigationService,
-      biologicalSexFormatter)
+      biologicalSexFormatter,
+      projectRevisionMonitor)
   {
     // Families is bound to CollectionChanged, not PropertyChanged: RefreshView() (used by the
     // "Refresh" command and OnNavigatedTo) reflectively raises OnPropertyChanged for every one of
@@ -75,6 +77,10 @@ internal sealed class TestableProjectPage : ProjectPage
   public PersonFilterView FilterView { get; }
 
   public Task InvokePageCommandAsync(object parameter) => OnPageCommand(parameter);
+
+  // OnNavigatedTo never reads its NavigatedToEventArgs, and that type has no accessible test-side
+  // constructor, so null stands in for it here.
+  public void InvokeNavigatedTo() => OnNavigatedTo(null!);
 
   /// <summary>
   /// How many background families loads have added items to the underlying collection. A
