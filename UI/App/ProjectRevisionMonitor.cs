@@ -39,17 +39,28 @@ internal sealed class ProjectRevisionMonitor : IProjectRevisionMonitor
   // of waiting on the real timer.
   internal void CheckRevision()
   {
-    if (!_CurrentProjectProvider.HasCurrentProject)
+    // HasCurrentProject and Project are two separate locked reads on ICurrentProjectProvider, so a
+    // project close landing between them would otherwise throw ProjectNotOpenedException out of this
+    // tick handler once a second -- swallow it exactly like the teardown race everywhere else in the
+    // app, rather than let an unhandled exception escape a timer callback.
+    try
+    {
+      if (!_CurrentProjectProvider.HasCurrentProject)
+      {
+        _LastRevision = null;
+        return;
+      }
+
+      var revision = _CurrentProjectProvider.Project.ProjectRevision;
+      if (_LastRevision != revision)
+      {
+        _LastRevision = revision;
+        _EventManager.HandleEvent(this, EventArgs.Empty, nameof(RevisionChanged));
+      }
+    }
+    catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
     {
       _LastRevision = null;
-      return;
-    }
-
-    var revision = _CurrentProjectProvider.Project.ProjectRevision;
-    if (_LastRevision != revision)
-    {
-      _LastRevision = revision;
-      _EventManager.HandleEvent(this, EventArgs.Empty, nameof(RevisionChanged));
     }
   }
 }
