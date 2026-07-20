@@ -54,14 +54,12 @@ internal sealed class ProjectRevisionMonitor : IProjectRevisionMonitor
     }
   }
 
-  // Test seam (InternalsVisibleTo GT4.UI.App.DeviceTests): a page's own subscription only becomes
-  // active once its Loaded event has actually fired, which can lag behind its native view merely
-  // existing -- a test must wait for this before calling CheckRevision, or the check can land before
-  // anyone is listening.
+  // Test seams (InternalsVisibleTo GT4.UI.App.DeviceTests). SubscriberCount: a page's subscription only
+  // becomes active once its Loaded event has actually fired, which can lag behind its native view
+  // merely existing -- a test must wait for this before calling CheckRevision, or the check can land
+  // before anyone is listening.
   internal int SubscriberCount => _SubscriberCount;
 
-  // Also the test seam (InternalsVisibleTo GT4.UI.App.DeviceTests) -- tests call this directly instead
-  // of waiting on the real timer.
   internal void CheckRevision()
   {
     // HasCurrentProject and Project are two separate locked reads on ICurrentProjectProvider, so a

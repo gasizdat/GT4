@@ -355,9 +355,7 @@ public class ProjectPageTests
     await page.WaitForFamiliesAsync();
     var monitor = (ProjectRevisionMonitor)services.Provider.GetRequiredService<IProjectRevisionMonitor>();
     await using var window = await WindowHost.AttachAsync(page);
-    // Loaded (where the page subscribes to RevisionChanged) can fire after the native view merely
-    // exists, so wait for the subscription itself before checking -- otherwise CheckRevision can land
-    // before anyone is listening and the revision change is silently missed.
+    // See ProjectRevisionMonitor.SubscriberCount: Loaded can lag behind the native view existing.
     await Poll.UntilAsync(() => Task.FromResult(monitor.SubscriberCount), count => count > 0, timeoutMessage: "The page never subscribed to RevisionChanged.");
     var loadsBefore = page.CompletedLoads;
     services.Project.SetupGet(p => p.ProjectRevision).Returns(42);

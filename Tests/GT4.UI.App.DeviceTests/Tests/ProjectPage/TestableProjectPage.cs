@@ -78,8 +78,7 @@ internal sealed class TestableProjectPage : ProjectPage
 
   public Task InvokePageCommandAsync(object parameter) => OnPageCommand(parameter);
 
-  // OnNavigatedTo never reads its NavigatedToEventArgs, and that type has no accessible test-side
-  // constructor, so null stands in for it here.
+  // NavigatedToEventArgs has no accessible test-side constructor and OnNavigatedTo never reads it.
   public void InvokeNavigatedTo() => OnNavigatedTo(null!);
 
   /// <summary>
