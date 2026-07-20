@@ -43,13 +43,6 @@ public static class ServiceCollectionExtensions
       .AddKeyedSingleton<IComparer<PersonInfo>, PersonInfoComparer>(NameFormat.FullPersonName)
       .AddKeyedSingleton<IComparer<PersonInfo>, PersonInfoComparer>(NameFormat.ShortPersonName)
       .AddKeyedSingleton<IComparer<PersonInfo>, PersonInfoComparer>(NameFormat.PersonInitials)
-      // Lazy resolvers, not direct constructor injection: DateFormatSetting/DateSpanFormatSetting/
-      // PersonNameSetting need the matching formatter only inside their Example getter, and the
-      // formatters themselves depend on these same keyed settings -- a direct dependency would be a
-      // construction-time cycle.
-      .AddTransient<DateFormatterResolver>(sp => sp.GetRequiredService<IDateFormatter>)
-      .AddTransient<DateSpanFormatterResolver>(sp => sp.GetRequiredService<IDateSpanFormatter>)
-      .AddTransient<NameFormatterResolver>(sp => sp.GetRequiredService<INameFormatter>)
       .AddTransient<SettingEditorsResolver>(sp => () => sp.GetKeyedServices<ISettingEditor>(KeyedService.AnyKey))
       ;
   }

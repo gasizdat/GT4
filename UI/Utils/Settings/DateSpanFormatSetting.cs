@@ -7,7 +7,6 @@ namespace GT4.UI.Utils.Settings;
 
 internal sealed class DateSpanFormatSetting : ISettingEditor
 {
-  private readonly DateSpanFormatterResolver _DateSpanFormatterResolver;
   private readonly IConfiguration _Configuration;
   private readonly IInteractiveConfiguration? _InteractiveConfiguration;
   private readonly string _FormatSection;
@@ -15,13 +14,11 @@ internal sealed class DateSpanFormatSetting : ISettingEditor
   private readonly DateSpan _ExampleSpan;
 
   public DateSpanFormatSetting(
-    DateSpanFormatterResolver dateSpanFormatterResolver,
     IConfiguration configuration,
     [FromKeyedServices(WellKnownActiveConfigurations.AppConfig)]
     IInteractiveConfiguration? interactiveConfiguration,
     [ServiceKey] DateSpanFormatKind kind)
   {
-    _DateSpanFormatterResolver = dateSpanFormatterResolver;
     _Configuration = configuration;
     _InteractiveConfiguration = interactiveConfiguration;
     (_FormatSection, _DefaultFormat, DisplayName, Description, _ExampleSpan) = kind switch
@@ -48,7 +45,7 @@ internal sealed class DateSpanFormatSetting : ISettingEditor
 
   public string Description { get; }
 
-  public string Example => _DateSpanFormatterResolver().ToString(_ExampleSpan);
+  public string Example => DateSpanFormatter.Format(Value, _ExampleSpan);
 
   public string Value
   {

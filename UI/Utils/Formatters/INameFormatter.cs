@@ -6,5 +6,3 @@ public interface INameFormatter
 {
   string ToString(PersonInfo personInfo, NameFormat format);
 }
-
-public delegate INameFormatter NameFormatterResolver();

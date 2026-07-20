@@ -71,6 +71,15 @@ public class NameFormatter : INameFormatter
       _ => throw new ArgumentException(nameof(format))
     };
 
+    return Format(template, personInfo);
+  }
+
+  /// <summary>Applies an arbitrary format template to a person, independent of any configured
+  /// setting. Stateless, so callers that already hold the template they want (e.g. a setting
+  /// previewing its own configured value) don't need an <see cref="INameFormatter"/> instance to use
+  /// it.</summary>
+  public static string Format(string template, PersonInfo personInfo)
+  {
     string GetNames(NameType nameType)
     {
       var ret = string.Join(_PartsDelimiter, [.. GetNameParts(personInfo, nameType).Select(GetNameValue)]);

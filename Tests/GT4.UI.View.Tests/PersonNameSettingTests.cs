@@ -1,5 +1,4 @@
 using FluentAssertions;
-using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Utils.Formatters;
 using GT4.UI.Utils.Settings;
@@ -21,13 +20,11 @@ public class PersonNameSettingTests
     string formatSection,
     string defaultFormat,
     string? configuredValue = null,
-    Mock<IInteractiveConfiguration>? interactive = null,
-    NameFormatterResolver? resolver = null)
+    Mock<IInteractiveConfiguration>? interactive = null)
   {
     var config = new Mock<IConfiguration>();
     config.SetupGet(c => c[formatSection]).Returns(configuredValue);
     return new PersonNameSetting(
-      resolver ?? (() => new Mock<INameFormatter>().Object),
       config.Object,
       interactive?.Object,
       nameFormat);
@@ -97,13 +94,9 @@ public class PersonNameSettingTests
   [Theory]
   [InlineData(NameFormat.CommonPersonName, "NameFormatter.CommonPersonName", "FF PP LL")]
   [InlineData(NameFormat.FullPersonName, "NameFormatter.FullPersonName", "FF PP LL (FN)")]
-  public void Example_CallsNameFormatterWithConfiguredNameFormat(NameFormat nameFormat, string section, string defaultFormat)
+  public void Example_AppliesConfiguredValueAsFormat(NameFormat nameFormat, string section, string defaultFormat)
   {
-    var formatter = new Mock<INameFormatter>();
-    formatter.Setup(f => f.ToString(It.IsAny<PersonInfo>(), It.IsAny<NameFormat>())).Returns("John Smith");
-
-    _ = Make(nameFormat, section, defaultFormat, resolver: () => formatter.Object).Example;
-
-    formatter.Verify(f => f.ToString(It.IsAny<PersonInfo>(), nameFormat), Times.Once);
+    Make(nameFormat, section, defaultFormat, configuredValue: "no placeholders here")
+      .Example.Should().Be("no placeholders here");
   }
 }

@@ -23,13 +23,10 @@ internal class DateSpanFormatter : IDateSpanFormatter
 
     if (dateSpan.HasValue)
     {
-      var years = () => YearsFormat(dateSpan.Value.Years);
-      var months = () => MonthsFormat(dateSpan.Value.Months);
-      var days = () => DaysFormat(dateSpan.Value.Days);
       ret = dateSpan.Value.Status switch
       {
-        DateStatus.WellKnown => Interpolate(_FullDateSpanFormatSetting.Value, years, months, days),
-        DateStatus.DayUnknown => Interpolate(_ShortDateSpanFormatSetting.Value, years, months, days),
+        DateStatus.WellKnown => Format(_FullDateSpanFormatSetting.Value, dateSpan.Value),
+        DateStatus.DayUnknown => Format(_ShortDateSpanFormatSetting.Value, dateSpan.Value),
         DateStatus.MonthUnknown => YearsFormat(dateSpan.Value.Years),
         DateStatus.YearApproximate when dateSpan.Value.Years == 0 => string.Empty,
         DateStatus.YearApproximate => string.Format(UIStrings.DateStatusYearApproximate_1, YearsFormat(dateSpan.Value.Years)),
@@ -40,8 +37,14 @@ internal class DateSpanFormatter : IDateSpanFormatter
     return string.IsNullOrWhiteSpace(ret) ? UIStrings.DateStatusUnknown : ret;
   }
 
-  private static string Interpolate(string format, Func<string> years, Func<string> months, Func<string> days)
+  /// <summary>Applies an arbitrary format string to a date span, independent of any configured
+  /// setting. Stateless, so callers that already hold the format they want (e.g. a setting previewing
+  /// its own configured value) don't need an <see cref="IDateSpanFormatter"/> instance to use it.</summary>
+  public static string Format(string format, DateSpan dateSpan)
   {
+    var years = () => YearsFormat(dateSpan.Years);
+    var months = () => MonthsFormat(dateSpan.Months);
+    var days = () => DaysFormat(dateSpan.Days);
     return TemplateInterpolator.Format(format, new Dictionary<string, Func<string>>()
     {
       { "YEARS", years },

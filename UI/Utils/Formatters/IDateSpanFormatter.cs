@@ -6,5 +6,3 @@ public interface IDateSpanFormatter
 {
   string ToString(DateSpan? dateSpan);
 }
-
-public delegate IDateSpanFormatter DateSpanFormatterResolver();

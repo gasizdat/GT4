@@ -20,24 +20,19 @@ internal sealed class PersonNameSetting : ISettingEditor
       new Name(Id: 0, UIStrings.NameFamily, NameType.FamilyName, null) ],
       MainPhoto: null);
 
-  private readonly NameFormatterResolver _NameFormatterResolver;
   private readonly IConfiguration _Configuration;
   private readonly IInteractiveConfiguration? _InteractiveConfiguration;
-  private readonly NameFormat _NameFormat;
   private readonly string _FormatSection;
   private readonly string _DefaultFormat;
 
   public PersonNameSetting(
-    NameFormatterResolver nameFormatterResolver,
     IConfiguration configuration,
     [FromKeyedServices(WellKnownActiveConfigurations.AppConfig)]
     IInteractiveConfiguration? interactiveConfiguration,
     [ServiceKey] NameFormat nameFormat)
   {
-    _NameFormatterResolver = nameFormatterResolver;
     _Configuration = configuration;
     _InteractiveConfiguration = interactiveConfiguration;
-    _NameFormat = nameFormat;
     (_FormatSection, _DefaultFormat, DisplayName) = nameFormat switch
     {
       NameFormat.CommonPersonName => ("NameFormatter.CommonPersonName", "FF PP LL", UIStrings.FieldCommonPersonNameFormat),
@@ -50,7 +45,7 @@ internal sealed class PersonNameSetting : ISettingEditor
 
   public string DisplayName { get; }
 
-  public string Example => _NameFormatterResolver().ToString(_PersonInfo, _NameFormat);
+  public string Example => NameFormatter.Format(Value, _PersonInfo);
 
   public string Description => UIStrings.FieldPersonNameFormatHint;
 

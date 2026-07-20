@@ -1,6 +1,5 @@
 using FluentAssertions;
 using GT4.Core.Utils;
-using GT4.UI.Utils.Formatters;
 using GT4.UI.Utils.Settings;
 using Microsoft.Extensions.Configuration;
 using Moq;
@@ -16,13 +15,11 @@ public class DateFormatSettingTests
 {
   private static DateFormatSetting MakeFull(
     string? configuredValue = null,
-    Mock<IInteractiveConfiguration>? interactive = null,
-    DateFormatterResolver? resolver = null)
+    Mock<IInteractiveConfiguration>? interactive = null)
   {
     var config = new Mock<IConfiguration>();
     config.SetupGet(c => c["DateFormatter.FullDateFormat"]).Returns(configuredValue);
     return new DateFormatSetting(
-      resolver ?? (() => new Mock<IDateFormatter>().Object),
       config.Object,
       interactive?.Object,
       DateFormatKind.Full);
@@ -30,13 +27,11 @@ public class DateFormatSettingTests
 
   private static DateFormatSetting MakeShort(
     string? configuredValue = null,
-    Mock<IInteractiveConfiguration>? interactive = null,
-    DateFormatterResolver? resolver = null)
+    Mock<IInteractiveConfiguration>? interactive = null)
   {
     var config = new Mock<IConfiguration>();
     config.SetupGet(c => c["DateFormatter.ShortDateFormat"]).Returns(configuredValue);
     return new DateFormatSetting(
-      resolver ?? (() => new Mock<IDateFormatter>().Object),
       config.Object,
       interactive?.Object,
       DateFormatKind.Short);
@@ -98,14 +93,9 @@ public class DateFormatSettingTests
   }
 
   [Fact]
-  public void Full_Example_CallsDateFormatterWithWellKnownDate()
+  public void Full_Example_AppliesConfiguredValueAsFormat()
   {
-    var formatter = new Mock<IDateFormatter>();
-    formatter.Setup(f => f.ToString(It.IsAny<Date?>())).Returns("01 Jan 2025");
-
-    _ = MakeFull(resolver: () => formatter.Object).Example;
-
-    formatter.Verify(f => f.ToString(It.Is<Date?>(d => d.HasValue && d.Value.Status == DateStatus.WellKnown)), Times.Once);
+    MakeFull(configuredValue: "no placeholders here").Example.Should().Be("no placeholders here");
   }
 
   [Fact]
@@ -143,13 +133,8 @@ public class DateFormatSettingTests
   }
 
   [Fact]
-  public void Short_Example_CallsDateFormatterWithDayUnknownDate()
+  public void Short_Example_AppliesConfiguredValueAsFormat()
   {
-    var formatter = new Mock<IDateFormatter>();
-    formatter.Setup(f => f.ToString(It.IsAny<Date?>())).Returns("Jan 2025");
-
-    _ = MakeShort(resolver: () => formatter.Object).Example;
-
-    formatter.Verify(f => f.ToString(It.Is<Date?>(d => d.HasValue && d.Value.Status == DateStatus.DayUnknown)), Times.Once);
+    MakeShort(configuredValue: "no placeholders here").Example.Should().Be("no placeholders here");
   }
 }

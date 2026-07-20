@@ -6,5 +6,3 @@ public interface IDateFormatter
 {
   string ToString(Date? date);
 }
-
-public delegate IDateFormatter DateFormatterResolver();
