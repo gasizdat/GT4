@@ -22,13 +22,12 @@ internal class DateFormatter : IDateFormatter
   {
     if (date.HasValue)
     {
-      var year = () => YearToString(date.Value);
       return date.Value.Status switch
       {
         DateStatus.WellKnown => Format(_FullDateFormatSetting.Value, date.Value),
         DateStatus.DayUnknown => Format(_ShortDateFormatSetting.Value, date.Value),
-        DateStatus.MonthUnknown => year(),
-        DateStatus.YearApproximate => string.Format(UIStrings.DateStatusYearApproximate_1, year()),
+        DateStatus.MonthUnknown => YearToString(date.Value),
+        DateStatus.YearApproximate => string.Format(UIStrings.DateStatusYearApproximate_1, YearToString(date.Value)),
         DateStatus.Unknown => UIStrings.DateStatusUnknown,
         _ => $"⚠ Unexpected DateStatus={date.Value.Status}"
       };
