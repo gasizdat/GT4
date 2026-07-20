@@ -349,6 +349,40 @@ public class PersonPageTests
   }
 
   [Fact]
+  public async Task PersonLinkTapped_navigates_to_the_referenced_person()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson();
+    var linkedPerson = CreateSamplePerson() with { Id = 2 };
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.Is<Person>(x => x.Id == 1), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.Is<Person>(x => x.Id == 2), It.IsAny<CancellationToken>())).ReturnsAsync(linkedPerson);
+    services.Persons.Setup(p => p.TryGetPersonByIdAsync(2, It.IsAny<CancellationToken>())).ReturnsAsync(linkedPerson);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+
+    await WaitForLoadAsync(page, services, () => page.InvokePersonLinkTappedAsync(2));
+
+    Assert.Equal(linkedPerson.Id, page.PersonFullInfo.Id);
+  }
+
+  [Fact]
+  public async Task PersonLinkTapped_with_a_dangling_id_is_inert()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson();
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    services.Persons.Setup(p => p.TryGetPersonByIdAsync(999, It.IsAny<CancellationToken>())).ReturnsAsync((Person?)null);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+    var loadsBefore = page.CompletedLoads;
+
+    await page.InvokePersonLinkTappedAsync(999);
+
+    Assert.Equal(loadsBefore, page.CompletedLoads);
+    Assert.Equal(person.Id, page.PersonFullInfo.Id);
+  }
+
+  [Fact]
   public async Task GoToHome_navigates_to_MainPage()
   {
     var services = new TestServices();

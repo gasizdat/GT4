@@ -29,6 +29,12 @@ public partial class MarkdownEditor : ContentView
   public static readonly BindableProperty PlaceholderProperty =
     BindableProperty.Create(nameof(Placeholder), typeof(string), typeof(MarkdownView), default, BindingMode.OneWay, null, OnPlaceholderChanged);
 
+  // The host page owns link insertion (person lookup/selection, and whatever other link types it
+  // supports), so this view stays free of any project dependency: the "Link a Person" button (and any
+  // future link-type button) executes the host's own command directly, keyed by CommandParameter.
+  public static readonly BindableProperty InsertLinkCommandProperty =
+    BindableProperty.Create(nameof(InsertLinkCommand), typeof(ICommand), typeof(MarkdownEditor));
+
   public string? Markdown
   {
     get => (string?)GetValue(MarkdownProperty);
@@ -39,6 +45,12 @@ public partial class MarkdownEditor : ContentView
   {
     get => (string?)GetValue(PlaceholderProperty);
     set => SetValue(PlaceholderProperty, value);
+  }
+
+  public ICommand? InsertLinkCommand
+  {
+    get => (ICommand?)GetValue(InsertLinkCommandProperty);
+    set => SetValue(InsertLinkCommandProperty, value);
   }
 
   public bool DisplayEditor => _TabIndex == 0;
@@ -61,6 +73,14 @@ public partial class MarkdownEditor : ContentView
   }
 
   public ICommand Command => _Command;
+
+  public void InsertLink(string displayName, int personId)
+  {
+    var linkText = $"[{displayName}](person:{personId})";
+    var cursor = Math.Clamp(TextEditor.CursorPosition, 0, Markdown?.Length ?? 0);
+    Markdown = (Markdown ?? string.Empty).Insert(cursor, linkText);
+    TextEditor.CursorPosition = cursor + linkText.Length;
+  }
 
   private static void OnMarkdownChanged(BindableObject obj, object oldValue, object newValue)
   {

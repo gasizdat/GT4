@@ -63,6 +63,8 @@ internal sealed class TestablePersonPage : PersonPage
 
   public Task InvokePageCommandAsync(object parameter) => OnPageCommand(parameter);
 
+  public Task InvokePersonLinkTappedAsync(int personId) => NavigateToPersonLinkAsync(personId);
+
   public void ForceSizeAllocated(double width, double height) => OnSizeAllocated(width, height);
 
   public ScrollView BodyScrollForTest => BodyScroll;

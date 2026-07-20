@@ -25,7 +25,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     IAlertService AlertService,
     DataConverterResolver DataConverterFactory,
     SelectNameDialog.Factory SelectNameDialogFactory,
-    SelectRelativesDialog.Factory SelectRelativesDialogFactory)
+    SelectRelativesDialog.Factory SelectRelativesDialogFactory,
+    SelectPersonDialog.Factory SelectPersonDialogFactory)
   {
     public CreateOrUpdatePersonDialog Create(PersonFullInfo? person) =>
       new CreateOrUpdatePersonDialog(this, person);
@@ -416,6 +417,21 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
   }
 
+  protected async Task OnInsertLinkAsync()
+  {
+    var dialog = _Factory.SelectPersonDialogFactory.Create();
+
+    await Navigation.PushModalAsync(dialog);
+    var person = await dialog.Info;
+    await Navigation.PopModalAsync();
+
+    if (person is not null)
+    {
+      var displayName = _Factory.NameFormatter.ToString(person, NameFormat.CommonPersonName);
+      BiographyEditor.InsertLink(displayName, person.Id);
+    }
+  }
+
   private async Task OnEditRelationshipAsync(RelativeInfo relative)
   {
     var dialog = new SelectDateDialog(
@@ -460,6 +476,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         break;
       case string commandName when commandName == "AddRelationship":
         await OnAddRelationshipAsync();
+        break;
+      case string commandName when commandName == "InsertPersonLinkCommand":
+        await OnInsertLinkAsync();
         break;
       case string commandName when commandName == "UndefinedBirthDateCommand":
         SetUndefinedBirthDate();

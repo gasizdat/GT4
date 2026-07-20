@@ -196,6 +196,28 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task Biography_PersonLinkSyntax_RoundTrips()
+  {
+    var name = await _source.Names.AddNameAsync("Solo", NameType.FirstName, null, Token);
+    var bio = new Data(
+      ElementId.NonCommittedId,
+      Encoding.UTF8.GetBytes("See [Jane Doe](person:123) for details."),
+      "text/plain",
+      DataCategory.PersonBio);
+    var info = PersonFullInfo.Empty with { Names = [name], Biography = bio };
+    await _source.PersonManager.AddPersonAsync(info, Token);
+
+    var text = await ExportToTextAsync(_source);
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+
+    var person = (await reimported.Persons.GetPersonsAsync(Token)).Single();
+    var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, Token);
+
+    Encoding.UTF8.GetString(full.Biography!.Content).Should().Be("See [Jane Doe](person:123) for details.");
+  }
+
+  [Fact]
   public async Task LivingPerson_HasNoDeathEventAndStaysAliveOnReimport()
   {
     // A person with no death date is alive: export must not emit a bare DEAT for them, or reimport would

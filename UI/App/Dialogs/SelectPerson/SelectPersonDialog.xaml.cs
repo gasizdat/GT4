@@ -10,6 +10,16 @@ namespace GT4.UI.Dialogs;
 
 public partial class SelectPersonDialog : ContentPage
 {
+  public record class Factory(
+    ICancellationTokenProvider CancellationTokenProvider,
+    ICurrentProjectProvider CurrentProjectProvider,
+    IComparer<PersonInfo> PersonInfoComparer,
+    IAlertService AlertService)
+  {
+    public SelectPersonDialog Create() =>
+      new SelectPersonDialog(CancellationTokenProvider, CurrentProjectProvider, PersonInfoComparer, AlertService);
+  }
+
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IComparer<PersonInfo> _PersonInfoComparer;

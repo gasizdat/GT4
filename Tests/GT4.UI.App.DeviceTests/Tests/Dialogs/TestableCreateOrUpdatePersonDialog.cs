@@ -26,7 +26,8 @@ internal sealed class TestableCreateOrUpdatePersonDialog : CreateOrUpdatePersonD
     IAlertService AlertService,
     DataConverterResolver DataConverterFactory,
     SelectNameDialog.Factory SelectNameDialogFactory,
-    SelectRelativesDialog.Factory SelectRelativesDialogFactory) 
+    SelectRelativesDialog.Factory SelectRelativesDialogFactory,
+    SelectPersonDialog.Factory SelectPersonDialogFactory)
     : CreateOrUpdatePersonDialog.Factory(
       CancellationTokenProvider,
       BiologicalSexFormatter,
@@ -37,7 +38,8 @@ internal sealed class TestableCreateOrUpdatePersonDialog : CreateOrUpdatePersonD
       AlertService,
       DataConverterFactory,
       SelectNameDialogFactory,
-      SelectRelativesDialogFactory)
+      SelectRelativesDialogFactory,
+      SelectPersonDialogFactory)
   {
     public new TestableCreateOrUpdatePersonDialog Create(PersonFullInfo? person) =>
       new TestableCreateOrUpdatePersonDialog(this, person);
@@ -51,4 +53,6 @@ internal sealed class TestableCreateOrUpdatePersonDialog : CreateOrUpdatePersonD
   public Task InvokeAddPersonNameAsync() => OnAddPersonNameAsync();
 
   public Task InvokeEditPersonNameAsync(NameInfoItem name) => OnEditPersonNameAsync(name);
+
+  public Task InvokeInsertLinkAsync() => OnInsertLinkAsync();
 }

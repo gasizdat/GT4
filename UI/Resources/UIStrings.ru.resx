@@ -798,6 +798,9 @@ FN - род</value>
   <data name="BtnNameMarkdownView" xml:space="preserve">
     <value>Вид</value>
   </data>
+  <data name="BtnNameInsertPersonLink" xml:space="preserve">
+    <value>Ссылка на персону</value>
+  </data>
   <data name="FieldRevision_1" xml:space="preserve">
     <value>Ревизия: {0}</value>
   </data>

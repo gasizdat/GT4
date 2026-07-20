@@ -42,6 +42,7 @@ public class GT4Services
       .AddTransient<OptionalDataConverterResolver>(sp => category => sp.GetKeyedService<IDataConverter>(category))
       .AddTransient<SelectNameDialog.Factory>()
       .AddTransient<SelectRelativesDialog.Factory>()
+      .AddTransient<SelectPersonDialog.Factory>()
       .AddTransient<CreateOrUpdatePersonDialog.Factory>();
   }
 

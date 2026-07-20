@@ -274,6 +274,39 @@ public class CreateOrUpdatePersonDialogTests
   }
 
   [Fact]
+  public async Task InsertLinkCommand_inserts_a_person_link_via_SelectPersonDialog()
+  {
+    var services = new TestServices();
+    var linkedPerson = new PersonInfo(
+      2, Date.Create(1950, 1, 1, DateStatus.WellKnown), null, BiologicalSex.Male,
+      [N(1, "Petrov", NameType.LastName), N(2, "Petr", NameType.FirstName | NameType.MaleDeclension)], null);
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosAsync(false, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([linkedPerson]);
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    var dialog = await MainThread.InvokeOnMainThreadAsync(
+      () => services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialog.Factory>().Create(CreateSamplePerson()));
+
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var insertTask = await MainThreadTask.StartAsync(dialog.InvokeInsertLinkAsync);
+    var selectDialog = await ModalDialogHarness.WaitForModalAsync<SelectPersonDialog>(dialog);
+
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => selectDialog.Persons.Count()),
+      count => count > 0,
+      timeoutMessage: "SelectPersonDialog's person list never loaded.");
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      selectDialog.SelectedPerson = selectDialog.Persons.Single(p => p.Id == linkedPerson.Id);
+      selectDialog.DialogCommand.Execute("SelectPersonCommand");
+    });
+    await insertTask;
+
+    Assert.Equal("[Petr  Petrov](person:2)", dialog.Biography!.Content);
+  }
+
+  [Fact]
   public async Task EditNameCommand_filters_SelectNameDialog_to_the_edited_names_own_type()
   {
     var services = new TestServices();

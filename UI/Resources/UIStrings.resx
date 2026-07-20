@@ -798,6 +798,9 @@ FN - family name</value>
   <data name="BtnNameMarkdownView" xml:space="preserve">
     <value>View</value>
   </data>
+  <data name="BtnNameInsertPersonLink" xml:space="preserve">
+    <value>Link a Person</value>
+  </data>
   <data name="FieldRevision_1" xml:space="preserve">
     <value>Revision: {0}</value>
   </data>
