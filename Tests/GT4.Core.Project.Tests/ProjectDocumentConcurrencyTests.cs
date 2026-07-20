@@ -1,5 +1,6 @@
 using FluentAssertions;
 using GT4.Core.Project.Dto;
+using Microsoft.Data.Sqlite;
 using System.Collections.Concurrent;
 using Xunit;
 
@@ -396,6 +397,22 @@ public sealed class ProjectDocumentConcurrencyTests : IAsyncLifetime
     await using var reader = await select.ExecuteReaderAsync(token);
     (await reader.ReadAsync(token)).Should().BeTrue();
     reader.GetString(0).Should().Be("raw_command");
+  }
+
+  [Fact]
+  public async Task ExecuteReaderAsync_FailsOutsideTransaction_ReleasesGateBeforeThrowing()
+  {
+    // A failed reader open outside a transaction must still release the gate it acquired, or every
+    // later flow would be stuck waiting behind it forever.
+    var token = TestContext.Current.CancellationToken;
+    using var bad = _doc.CreateCommand();
+    bad.CommandText = "SELECT * FROM NoSuchTable;";
+
+    var act = async () => await bad.ExecuteReaderAsync(token);
+    await act.Should().ThrowAsync<SqliteException>();
+
+    await _doc.Names.AddNameAsync("after_failed_reader", NameType.FamilyName, null, token);
+    (await AllNameValuesAsync(token)).Should().Contain("after_failed_reader");
   }
 
   [Fact]

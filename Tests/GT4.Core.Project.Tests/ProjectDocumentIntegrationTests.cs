@@ -85,6 +85,18 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task Metadata_GetByPrefixAsync_ReturnsMatchingKeysOrderedById()
+  {
+    await _doc.Metadata.AddAsync("gedcom.b", "second", Token);
+    await _doc.Metadata.AddAsync("gedcom.a", "first", Token);
+    await _doc.Metadata.AddAsync("other", "unrelated", Token);
+
+    var values = await _doc.Metadata.GetByPrefixAsync<string>("gedcom.", Token);
+
+    values.Should().Equal("first", "second");
+  }
+
+  [Fact]
   public async Task AddFamily_CreatesFamilyWithGenderedLastNames()
   {
     var family = await _doc.FamilyManager.AddFamilyAsync("Smith", "Smith", "Smithova", Token);
