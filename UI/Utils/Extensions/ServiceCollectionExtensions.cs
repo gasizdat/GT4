@@ -43,6 +43,7 @@ public static class ServiceCollectionExtensions
       .AddKeyedSingleton<IComparer<PersonInfo>, PersonInfoComparer>(NameFormat.FullPersonName)
       .AddKeyedSingleton<IComparer<PersonInfo>, PersonInfoComparer>(NameFormat.ShortPersonName)
       .AddKeyedSingleton<IComparer<PersonInfo>, PersonInfoComparer>(NameFormat.PersonInitials)
+      .AddTransient<SettingEditorsResolver>(sp => () => sp.GetKeyedServices<ISettingEditor>(KeyedService.AnyKey))
       ;
   }
 }

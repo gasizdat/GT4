@@ -1,6 +1,5 @@
 using FluentAssertions;
 using GT4.Core.Utils;
-using GT4.UI.Utils.Formatters;
 using GT4.UI.Utils.Settings;
 using Microsoft.Extensions.Configuration;
 using Moq;
@@ -16,13 +15,11 @@ public class DateSpanFormatSettingTests
 {
   private static DateSpanFormatSetting MakeFull(
     string? configuredValue = null,
-    Mock<IInteractiveConfiguration>? interactive = null,
-    Mock<IServiceProvider>? sp = null)
+    Mock<IInteractiveConfiguration>? interactive = null)
   {
     var config = new Mock<IConfiguration>();
     config.SetupGet(c => c["DateSpanFormatter.FullDateSpanFormat"]).Returns(configuredValue);
     return new DateSpanFormatSetting(
-      sp?.Object ?? new Mock<IServiceProvider>().Object,
       config.Object,
       interactive?.Object,
       DateSpanFormatKind.Full);
@@ -30,13 +27,11 @@ public class DateSpanFormatSettingTests
 
   private static DateSpanFormatSetting MakeShort(
     string? configuredValue = null,
-    Mock<IInteractiveConfiguration>? interactive = null,
-    Mock<IServiceProvider>? sp = null)
+    Mock<IInteractiveConfiguration>? interactive = null)
   {
     var config = new Mock<IConfiguration>();
     config.SetupGet(c => c["DateSpanFormatter.ShortDateSpanFormat"]).Returns(configuredValue);
     return new DateSpanFormatSetting(
-      sp?.Object ?? new Mock<IServiceProvider>().Object,
       config.Object,
       interactive?.Object,
       DateSpanFormatKind.Short);
@@ -98,17 +93,15 @@ public class DateSpanFormatSettingTests
   }
 
   [Fact]
-  public void Full_Example_CallsDateSpanFormatterWithWellKnownSpan()
+  public void Full_Example_AppliesConfiguredValueAsFormat()
   {
-    var formatter = new Mock<IDateSpanFormatter>();
-    formatter.Setup(f => f.ToString(It.IsAny<DateSpan?>())).Returns("25 years 3 months 15 days");
+    MakeFull(configuredValue: "no placeholders here").Example.Should().Be("no placeholders here");
+  }
 
-    var sp = new Mock<IServiceProvider>();
-    sp.Setup(s => s.GetService(typeof(IDateSpanFormatter))).Returns(formatter.Object);
-
-    _ = MakeFull(sp: sp).Example;
-
-    formatter.Verify(f => f.ToString(It.Is<DateSpan?>(d => d.HasValue && d.Value.Status == DateStatus.WellKnown)), Times.Once);
+  [Fact]
+  public void Full_Example_SubstitutesTheExampleSpan()
+  {
+    MakeFull(configuredValue: "YEARS").Example.Should().Contain("25");
   }
 
   [Fact]
@@ -146,16 +139,14 @@ public class DateSpanFormatSettingTests
   }
 
   [Fact]
-  public void Short_Example_CallsDateSpanFormatterWithDayUnknownSpan()
+  public void Short_Example_AppliesConfiguredValueAsFormat()
   {
-    var formatter = new Mock<IDateSpanFormatter>();
-    formatter.Setup(f => f.ToString(It.IsAny<DateSpan?>())).Returns("5 years 6 months");
+    MakeShort(configuredValue: "no placeholders here").Example.Should().Be("no placeholders here");
+  }
 
-    var sp = new Mock<IServiceProvider>();
-    sp.Setup(s => s.GetService(typeof(IDateSpanFormatter))).Returns(formatter.Object);
-
-    _ = MakeShort(sp: sp).Example;
-
-    formatter.Verify(f => f.ToString(It.Is<DateSpan?>(d => d.HasValue && d.Value.Status == DateStatus.DayUnknown)), Times.Once);
+  [Fact]
+  public void Short_Example_SubstitutesTheExampleSpan()
+  {
+    MakeShort(configuredValue: "YEARS").Example.Should().Contain("5");
   }
 }

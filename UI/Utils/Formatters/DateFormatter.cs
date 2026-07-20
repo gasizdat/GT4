@@ -22,16 +22,12 @@ internal class DateFormatter : IDateFormatter
   {
     if (date.HasValue)
     {
-      var year = () => YearToString(date.Value);
-      var month = () => MonthToString(date.Value);
-      var monthNumber = () => MonthToNumber(date.Value);
-      var day = () => DayToString(date.Value);
       return date.Value.Status switch
       {
-        DateStatus.WellKnown => ToString(_FullDateFormatSetting.Value, year, month, monthNumber, day),
-        DateStatus.DayUnknown => ToString(_ShortDateFormatSetting.Value, year, month, monthNumber, day),
-        DateStatus.MonthUnknown => year(),
-        DateStatus.YearApproximate => string.Format(UIStrings.DateStatusYearApproximate_1, year()),
+        DateStatus.WellKnown => Format(_FullDateFormatSetting.Value, date.Value),
+        DateStatus.DayUnknown => Format(_ShortDateFormatSetting.Value, date.Value),
+        DateStatus.MonthUnknown => YearToString(date.Value),
+        DateStatus.YearApproximate => string.Format(UIStrings.DateStatusYearApproximate_1, YearToString(date.Value)),
         DateStatus.Unknown => UIStrings.DateStatusUnknown,
         _ => $"⚠ Unexpected DateStatus={date.Value.Status}"
       };
@@ -40,6 +36,14 @@ internal class DateFormatter : IDateFormatter
     {
       return UIStrings.DateStatusNotDefined;
     }
+  }
+
+  /// <summary>Applies an arbitrary format string to a date, independent of any configured setting.
+  /// Stateless, so callers that already hold the format they want (e.g. a setting previewing its own
+  /// configured value) don't need an <see cref="IDateFormatter"/> instance to use it.</summary>
+  public static string Format(string format, Date date)
+  {
+    return ToString(format, () => YearToString(date), () => MonthToString(date), () => MonthToNumber(date), () => DayToString(date));
   }
 
   protected static string YearToString(Date date)
@@ -52,7 +56,7 @@ internal class DateFormatter : IDateFormatter
 
     return ret;
   }
-  protected string MonthToNumber(Date date)
+  protected static string MonthToNumber(Date date)
   {
     string ret;
     var month = date.Month;
@@ -61,7 +65,7 @@ internal class DateFormatter : IDateFormatter
     return ret;
   }
 
-  protected string MonthToString(Date date)
+  protected static string MonthToString(Date date)
   {
     var month = date.Month;
     var ret = month switch
