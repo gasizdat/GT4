@@ -37,9 +37,6 @@ internal class DateSpanFormatter : IDateSpanFormatter
     return string.IsNullOrWhiteSpace(ret) ? UIStrings.DateStatusUnknown : ret;
   }
 
-  /// <summary>Applies an arbitrary format string to a date span, independent of any configured
-  /// setting. Stateless, so callers that already hold the format they want (e.g. a setting previewing
-  /// its own configured value) don't need an <see cref="IDateSpanFormatter"/> instance to use it.</summary>
   public static string Format(string format, DateSpan dateSpan)
   {
     var years = () => YearsFormat(dateSpan.Years);
