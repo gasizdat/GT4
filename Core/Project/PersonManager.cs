@@ -52,11 +52,11 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
       person: person,
       names: names.Result,
       mainPhoto: personData.Result.SingleOrDefault(data => data.Category.IsMainPhoto()),
-      additionalPhotos: personData.Result.Where(data => data.Category.IsAdditionalPhoto()).ToArray(),
+      additionalPhotos: [.. personData.Result.Where(data => data.Category.IsAdditionalPhoto())],
       relativeInfos: relativeInfos.Result,
       biography: personData.Result.SingleOrDefault(data => data.Category == DataCategory.PersonBio),
       gedcomData: personData.Result.SingleOrDefault(data => data.Category == DataCategory.PersonGedcomTags),
-      attachments: personData.Result.Where(data => data.Category.IsAttachment()).ToArray());
+      attachments: [.. personData.Result.Where(data => data.Category.IsAttachment())]);
 
     return ret;
   }

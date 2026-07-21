@@ -313,7 +313,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     var biography = BuildBiography(individual, notesByXref);
     var photos = SelectPhotos(individual, mediaBasePath);
     var attachments = SelectAttachments(individual, mediaBasePath);
-    var consumedNodes = photos.Select(p => p.Node).Concat(attachments.Select(a => a.Node)).ToArray();
+    GedcomNode[] consumedNodes = [.. photos.Select(p => p.Node), .. attachments.Select(a => a.Node)];
     var (mainPhoto, additionalPhotos) = BuildPhotos(photos);
 
     var toAdd = PersonFullInfo.Empty with
@@ -324,7 +324,7 @@ internal sealed class GedcomImporter : IGedcomImporter
       Names = names,
       MainPhoto = mainPhoto,
       AdditionalPhotos = additionalPhotos,
-      Attachments = attachments.Select(BuildAttachmentData).ToArray(),
+      Attachments = [.. attachments.Select(BuildAttachmentData)],
       Biography = biography,
       GedcomData = BuildResidueData(individual, consumedNodes),
     };
@@ -572,11 +572,12 @@ internal sealed class GedcomImporter : IGedcomImporter
   /// through to residue, exactly like an unreadable photo.
   /// </summary>
   private AttachmentCandidate[] SelectAttachments(GedcomNode individual, string? mediaBasePath) =>
-    individual.Children
+  [
+    .. individual.Children
       .Select(o => TryReadAttachment(o, mediaBasePath))
       .Where(a => a is not null)
       .Select(a => a!)
-      .ToArray();
+  ];
 
   private AttachmentCandidate? TryReadAttachment(GedcomNode obje, string? mediaBasePath)
   {
