@@ -16,9 +16,6 @@ public sealed class ProjectRevisionMonitorTests
       () => (ProjectRevisionMonitor)services.Provider.GetRequiredService<IProjectRevisionMonitor>());
   }
 
-  // Subscribing primes the baseline to whatever the revision already is -- a page that just subscribed
-  // already has current data, so the very next check must not treat "baseline just got seeded" as a
-  // change worth a redundant refresh.
   [Fact]
   public async Task CheckRevision_DoesNotFire_OnTheFirstCheckAfterSubscribing_WhenTheRevisionIsUnchanged()
   {

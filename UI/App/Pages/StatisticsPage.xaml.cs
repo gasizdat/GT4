@@ -75,10 +75,8 @@ public partial class StatisticsPage : ContentPage
 
   private void OnRevisionChanged(object? sender, EventArgs e) => Refresh();
 
-  // No XAML element binds to Statistics directly (the bound properties are the formatted *Text
-  // ones derived from it), so re-reading it here -- rather than only flagging it and hoping
-  // something else re-reads it -- is what actually restarts the load; LoadStatisticsAsync's own
-  // RefreshView() on completion is what then updates the bound text properties.
+  // No XAML element binds to Statistics directly -- re-reading it here is what actually restarts
+  // the load, not just flagging _UpdateStatistics and hoping something else re-reads it.
   private void Refresh()
   {
     _UpdateStatistics = true;

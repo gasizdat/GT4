@@ -112,9 +112,6 @@ public class StatisticsPageTests
   [Fact]
   public async Task OnNavigatedTo_always_reloads_even_when_the_project_revision_is_unchanged()
   {
-    // The whole point of #138: a commit landing after OnNavigatedTo samples the revision but before
-    // the next navigation must not be missed, so navigation no longer gates the reload on a revision
-    // compare at all -- it always refreshes.
     var services = new TestServices();
     var page = await CreatePageAsync(services);
     await page.WaitForFirstLoadAsync();
@@ -133,7 +130,6 @@ public class StatisticsPageTests
     await page.WaitForFirstLoadAsync();
     var monitor = (ProjectRevisionMonitor)services.Provider.GetRequiredService<IProjectRevisionMonitor>();
     await using var window = await WindowHost.AttachAsync(page);
-    // See ProjectRevisionMonitor.SubscriberCount: Loaded can lag behind the native view existing.
     await Poll.UntilAsync(() => Task.FromResult(monitor.SubscriberCount), count => count > 0, timeoutMessage: "The page never subscribed to RevisionChanged.");
     services.Project.SetupGet(p => p.ProjectRevision).Returns(42);
 

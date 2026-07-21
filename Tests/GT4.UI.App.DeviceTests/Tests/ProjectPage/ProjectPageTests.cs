@@ -330,9 +330,6 @@ public class ProjectPageTests
   [Fact]
   public async Task A_second_Refresh_landing_during_an_in_flight_load_does_not_duplicate_families()
   {
-    // Pins EnsureFamiliesLoaded's Clear+AddRange fix. The first GetFamiliesAsync call blocks until
-    // released, so InvokeNavigatedTo's own reload is guaranteed to start and finish while it's still
-    // in flight.
     var services = new TestServices();
     var firstCallGate = new TaskCompletionSource();
     var firstCallStarted = new TaskCompletionSource();
@@ -393,7 +390,6 @@ public class ProjectPageTests
     await page.WaitForFamiliesAsync();
     var monitor = (ProjectRevisionMonitor)services.Provider.GetRequiredService<IProjectRevisionMonitor>();
     await using var window = await WindowHost.AttachAsync(page);
-    // See ProjectRevisionMonitor.SubscriberCount: Loaded can lag behind the native view existing.
     await Poll.UntilAsync(() => Task.FromResult(monitor.SubscriberCount), count => count > 0, timeoutMessage: "The page never subscribed to RevisionChanged.");
     var loadsBefore = page.CompletedLoads;
     services.Project.SetupGet(p => p.ProjectRevision).Returns(42);

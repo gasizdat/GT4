@@ -3,11 +3,10 @@ using GT4.UI.Abstraction;
 
 namespace GT4.UI;
 
-// Polls ProjectRevision (an in-memory Interlocked.Read, no I/O) once a second so a page that's already
-// open catches a commit made elsewhere -- OnNavigatedTo alone only catches changes made before the page
-// was opened. RevisionChanged is WeakEventManager-backed: pages are effectively transient (a new
-// instance per Shell navigation) while this monitor is an app-lifetime singleton, so a plain event
-// subscription without disciplined unsubscribe would leak one page per navigation.
+// Polls ProjectRevision once a second so an already-open page catches a commit made elsewhere --
+// OnNavigatedTo alone only catches changes made before the page opened. WeakEventManager-backed: pages
+// are effectively transient (new instance per Shell navigation) but this monitor is an app-lifetime
+// singleton, so a plain event subscription would leak one page per navigation.
 internal sealed class ProjectRevisionMonitor : IProjectRevisionMonitor
 {
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
@@ -29,11 +28,9 @@ internal sealed class ProjectRevisionMonitor : IProjectRevisionMonitor
     _Timer.Tick += (_, _) => CheckRevision();
   }
 
-  // Ticking only while at least one page is actually listening keeps an idle app (or, incidentally, a
-  // test run that constructs many of these) from accumulating live timers. A WeakEventManager
-  // subscriber can be collected without ever calling remove, so this count can only overshoot the true
-  // number of live handlers -- worst case the timer keeps running a little longer than strictly
-  // necessary, never less, so it never masks a real change.
+  // Runs only while at least one page is listening, so an idle app doesn't tick forever. A
+  // WeakEventManager subscriber can be collected without ever calling remove, so this count can only
+  // overshoot the true number of live handlers -- never masks a real change.
   public event EventHandler RevisionChanged
   {
     add
@@ -41,10 +38,7 @@ internal sealed class ProjectRevisionMonitor : IProjectRevisionMonitor
       _EventManager.AddEventHandler(value);
       if (Interlocked.Increment(ref _SubscriberCount) == 1)
       {
-        // A fresh (or renewed, after a quiet period with nobody listening) subscriber already has
-        // current data -- from its own load, or from an unconditional OnNavigatedTo. Baseline to
-        // whatever the revision already is now, so the first tick doesn't see a spurious change and
-        // fire a redundant refresh; only a genuine change from this point on should fire.
+        // Seed the baseline so a subscriber's first tick doesn't see a spurious change.
         PrimeLastRevision();
         _Timer.Start();
       }
@@ -59,10 +53,8 @@ internal sealed class ProjectRevisionMonitor : IProjectRevisionMonitor
     }
   }
 
-  // Test seams (InternalsVisibleTo GT4.UI.App.DeviceTests). SubscriberCount: a page's subscription only
-  // becomes active once its Loaded event has actually fired, which can lag behind its native view
-  // merely existing -- a test must wait for this before calling CheckRevision, or the check can land
-  // before anyone is listening.
+  // A page's Loaded event can fire after its native view already exists -- tests must wait for this
+  // before calling CheckRevision, or the check can land before anyone is listening.
   internal int SubscriberCount => _SubscriberCount;
 
   internal void CheckRevision()
