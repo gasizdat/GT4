@@ -36,7 +36,6 @@ public partial class ProjectPage : ContentPage
   private readonly GedcomImportEncoding _GedcomImportEncoding;
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
-  private readonly IProjectRevisionMonitor _ProjectRevisionMonitor;
 
   private readonly FilteredObservableCollection<FamilyInfoItem> _Families = new();
   private bool _FamiliesLoaded;
@@ -70,7 +69,6 @@ public partial class ProjectPage : ContentPage
     _GedcomImportEncoding = gedcomImportEncoding;
     _AlertService = alertService;
     _NavigationService = navigationService;
-    _ProjectRevisionMonitor = projectRevisionMonitor;
 
     // Set once: family visibility is re-evaluated via _Families.Update() (through UpdateFamilies),
     // not by reassigning this predicate.
@@ -86,8 +84,8 @@ public partial class ProjectPage : ContentPage
       _AlertService,
       () => [.. _Families.AllItems.SelectMany(f => f.AllPersons).DistinctBy(p => p.Id)]);
     FilterView.Changed += (_, _) => UpdateFamilies();
-    Loaded += (_, _) => _ProjectRevisionMonitor.RevisionChanged += OnRevisionChanged;
-    Unloaded += (_, _) => _ProjectRevisionMonitor.RevisionChanged -= OnRevisionChanged;
+    Loaded += (_, _) => projectRevisionMonitor.RevisionChanged += OnRevisionChanged;
+    Unloaded += (_, _) => projectRevisionMonitor.RevisionChanged -= OnRevisionChanged;
   }
 
   public ObservableCollection<FamilyInfoItem> Families

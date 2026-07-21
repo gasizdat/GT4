@@ -15,7 +15,6 @@ public partial class StatisticsPage : ContentPage
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly IAlertService _AlertService;
   private readonly INameFormatter _NameFormatter;
-  private readonly IProjectRevisionMonitor _ProjectRevisionMonitor;
 
   private ProjectStatistics _Statistics = ProjectStatistics.Empty;
   private bool _UpdateStatistics = true;
@@ -31,11 +30,10 @@ public partial class StatisticsPage : ContentPage
     _CancellationTokenProvider = cancellationTokenProvider;
     _AlertService = alertService;
     _NameFormatter = nameFormatter;
-    _ProjectRevisionMonitor = projectRevisionMonitor;
 
     InitializeComponent();
-    Loaded += (_, _) => _ProjectRevisionMonitor.RevisionChanged += OnRevisionChanged;
-    Unloaded += (_, _) => _ProjectRevisionMonitor.RevisionChanged -= OnRevisionChanged;
+    Loaded += (_, _) => projectRevisionMonitor.RevisionChanged += OnRevisionChanged;
+    Unloaded += (_, _) => projectRevisionMonitor.RevisionChanged -= OnRevisionChanged;
   }
 
   // The single trigger for the (lazy, async) load: every display property below reads Statistics, so
