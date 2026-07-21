@@ -5,12 +5,14 @@ using GT4.Core.Project.Extensions;
 namespace GT4.Core.Gedcom;
 
 /// <summary>
-/// Stores a photo's own residual GEDCOM tags (chiefly <c>TITL</c>, the caption) alongside its raw
-/// bytes, for photos whose <see cref="DataCategory"/> is <see cref="DataCategory.PersonMainPhotoTagged"/>/
-/// <see cref="DataCategory.PersonPhotoTagged"/>. Layout: <c>[4-byte tag-length][UTF-8
-/// GedcomWriter-serialized residual node][raw photo bytes]</c>. There is no magic-byte marker to sniff --
-/// <see cref="DataCategoryExtensions.IsTaggedPhoto"/> on the category alone decides whether a photo's
-/// <c>Content</c> uses this layout at all, so the shape is never ambiguous.
+/// Stores a photo's or attachment's own residual GEDCOM tags (a photo's chiefly <c>TITL</c>, the caption;
+/// an attachment's <c>FILE</c>, the original filename) alongside its raw bytes, for photos whose
+/// <see cref="DataCategory"/> is <see cref="DataCategory.PersonMainPhotoTagged"/>/
+/// <see cref="DataCategory.PersonPhotoTagged"/>, and for every <see cref="DataCategory.PersonAttachment"/>.
+/// Layout: <c>[4-byte tag-length][UTF-8 GedcomWriter-serialized residual node][raw bytes]</c>. There is no
+/// magic-byte marker to sniff -- the category alone (<see cref="DataCategoryExtensions.IsTaggedPhoto"/> or
+/// <see cref="DataCategoryExtensions.IsAttachment"/>) decides whether a <c>Content</c> uses this layout at
+/// all, so the shape is never ambiguous.
 /// </summary>
 public static class GedcomPhotoResidue
 {
@@ -52,5 +54,14 @@ public static class GedcomPhotoResidue
 
     var (_, residual) = await DecodeAsync(photo.Content, token);
     return residual.ChildValue(GedcomTags.Title);
+  }
+
+  public static async Task<string?> ExtractFileNameAsync(Data? attachment, CancellationToken token)
+  {
+    if (attachment is null || !attachment.Category.IsAttachment())
+      return null;
+
+    var (_, residual) = await DecodeAsync(attachment.Content, token);
+    return residual.ChildValue(GedcomTags.File);
   }
 }

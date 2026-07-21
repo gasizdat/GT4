@@ -33,6 +33,7 @@ internal sealed class GedcomExporter : IGedcomExporter
     Data? Residue,
     Data? MainPhoto,
     Data[] AdditionalPhotos,
+    Data[] Attachments,
     string[] SpouseFamilies,
     (string Xref, bool Adopted)[] ChildFamilies);
 
@@ -46,10 +47,11 @@ internal sealed class GedcomExporter : IGedcomExporter
     var residues = await document.PersonData.GetPersonDataSetAsync(persons, DataCategory.PersonGedcomTags, token);
     var mainPhotos = await document.PersonData.GetMergedPhotoSetAsync(persons, DataCategory.PersonMainPhoto, token);
     var additionalPhotos = await document.PersonData.GetMergedPhotoSetAsync(persons, DataCategory.PersonPhoto, token);
+    var attachments = await document.PersonData.GetPersonDataSetAsync(persons, DataCategory.PersonAttachment, token);
     var relatives = await document.Relatives.GetRelativesForPersonsAsync(persons, token);
 
     var families = BuildFamilies(relatives, personById);
-    var individuals = BuildIndividuals(persons, infoById, biographies, residues, mainPhotos, additionalPhotos, families);
+    var individuals = BuildIndividuals(persons, infoById, biographies, residues, mainPhotos, additionalPhotos, attachments, families);
 
     WriteHeader(writer);
     await WriteIndividualsAsync(writer, individuals, token);
@@ -225,6 +227,7 @@ internal sealed class GedcomExporter : IGedcomExporter
     Dictionary<int, Data[]> residues,
     Dictionary<int, Data[]> mainPhotos,
     Dictionary<int, Data[]> additionalPhotos,
+    Dictionary<int, Data[]> attachments,
     Family[] families)
   {
     var spouseFamilies = new Dictionary<int, List<string>>();
@@ -247,9 +250,10 @@ internal sealed class GedcomExporter : IGedcomExporter
       var residue = residues.GetValueOrDefault(person.Id)?.FirstOrDefault();
       var mainPhoto = mainPhotos.GetValueOrDefault(person.Id)?.FirstOrDefault();
       var morePhotos = additionalPhotos.GetValueOrDefault(person.Id) ?? [];
+      var personAttachments = attachments.GetValueOrDefault(person.Id) ?? [];
       var spouses = spouseFamilies.GetValueOrDefault(person.Id)?.ToArray() ?? [];
       var children = childFamilies.GetValueOrDefault(person.Id)?.ToArray() ?? [];
-      individuals.Add(new Individual(person, info, biography, residue, mainPhoto, morePhotos, spouses, children));
+      individuals.Add(new Individual(person, info, biography, residue, mainPhoto, morePhotos, personAttachments, spouses, children));
     }
     return [.. individuals];
   }
@@ -307,6 +311,10 @@ internal sealed class GedcomExporter : IGedcomExporter
     foreach (var photo in individual.AdditionalPhotos)
     {
       await AddPhotoAsync(node, photo, primary: false, token);
+    }
+    foreach (var attachment in individual.Attachments)
+    {
+      await AddAttachmentAsync(node, attachment, token);
     }
 
     var spouseNodes = individual
@@ -427,6 +435,28 @@ internal sealed class GedcomExporter : IGedcomExporter
     {
       obje.Add([.. residual.Children]);
     }
+    individual.Add(obje);
+  }
+
+  /// <summary>
+  /// Emits a GT4 attachment as an embedded multimedia object, mirroring <see cref="AddPhotoAsync"/> minus
+  /// the <c>_PRIM</c> marker (attachments have no main/additional concept). An attachment's <c>Content</c>
+  /// is always a <see cref="GedcomPhotoResidue"/> envelope, so it is always decoded and its residual
+  /// (chiefly <c>FILE</c>, the original filename) merged back onto the regenerated OBJE.
+  /// </summary>
+  private static async Task AddAttachmentAsync(GedcomNode individual, Data attachment, CancellationToken token)
+  {
+    var (bytes, residual) = await GedcomPhotoResidue.DecodeAsync(attachment.Content, token);
+
+    var obje = new GedcomNode { Tag = GedcomTags.Object };
+    var form = GedcomMedia.ToForm(attachment.MimeType);
+    if (form is not null)
+    {
+      obje.Add(new GedcomNode { Tag = GedcomTags.Form, Value = form });
+    }
+    var base64 = Convert.ToBase64String(bytes);
+    obje.Add(new GedcomNode { Tag = GedcomTags.Blob, Value = base64 });
+    obje.Add([.. residual.Children]);
     individual.Add(obje);
   }
 

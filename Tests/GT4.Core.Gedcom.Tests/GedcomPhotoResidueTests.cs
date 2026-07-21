@@ -74,4 +74,37 @@ public sealed class GedcomPhotoResidueTests
 
     title.Should().BeNull();
   }
+
+  [Fact]
+  public async Task ExtractFileNameAsync_ReturnsTheFileValue()
+  {
+    byte[] file = [1];
+    var content = GedcomPhotoResidue.Encode(file, Residual(("FILE", "scan.pdf")));
+    var attachment = new Data(1, content, "application/pdf", DataCategory.PersonAttachment);
+
+    var fileName = await GedcomPhotoResidue.ExtractFileNameAsync(attachment, _Token);
+
+    fileName.Should().Be("scan.pdf");
+  }
+
+  [Fact]
+  public async Task ExtractFileNameAsync_ReturnsNullForANonAttachmentCategory_WithoutAttemptingToParse()
+  {
+    // Deliberately not a valid encoded envelope: if ExtractFileNameAsync attempted to parse this as one,
+    // it would either throw or return garbage. A non-attachment category must short-circuit before that.
+    byte[] notAnEnvelope = [0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10];
+    var photo = new Data(1, notAnEnvelope, "image/jpeg", DataCategory.PersonMainPhoto);
+
+    var fileName = await GedcomPhotoResidue.ExtractFileNameAsync(photo, _Token);
+
+    fileName.Should().BeNull();
+  }
+
+  [Fact]
+  public async Task ExtractFileNameAsync_ReturnsNullForANullAttachment()
+  {
+    var fileName = await GedcomPhotoResidue.ExtractFileNameAsync(null, _Token);
+
+    fileName.Should().BeNull();
+  }
 }

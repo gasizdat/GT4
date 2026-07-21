@@ -167,10 +167,16 @@ internal sealed class GedcomImporter : IGedcomImporter
     var additions = new List<Data>();
 
     var photos = SelectPhotos(individual, mediaBasePath);
-    // Photos are added only when the person has none; otherwise these OBJEs stay unconsumed and fall
-    // through to residue instead of being dropped.
+    var attachments = SelectAttachments(individual, mediaBasePath);
+    // Photos/attachments are added only when the person has none of that kind; otherwise these OBJEs stay
+    // unconsumed and fall through to residue instead of being dropped.
     var addingPhotos = full.MainPhoto is null && full.AdditionalPhotos.Length == 0;
-    GedcomNode[] consumedNodes = addingPhotos ? photos.Select(p => p.Node).ToArray() : [];
+    var addingAttachments = full.Attachments.Length == 0;
+    GedcomNode[] consumedNodes =
+    [
+      .. (addingPhotos ? photos.Select(p => p.Node) : []),
+      .. (addingAttachments ? attachments.Select(a => a.Node) : [])
+    ];
 
     if (full.Biography is null)
     {
@@ -191,6 +197,11 @@ internal sealed class GedcomImporter : IGedcomImporter
       if (mainPhoto is not null)
         additions.Add(mainPhoto);
       additions.AddRange(additionalPhotos);
+    }
+
+    if (addingAttachments)
+    {
+      additions.AddRange(attachments.Select(BuildAttachmentData));
     }
 
     if (additions.Count > 0)
@@ -301,7 +312,8 @@ internal sealed class GedcomImporter : IGedcomImporter
     var names = await BuildNamesAsync(document, individual, sex, nameCache, token);
     var biography = BuildBiography(individual, notesByXref);
     var photos = SelectPhotos(individual, mediaBasePath);
-    var photoNodes = photos.Select(p => p.Node).ToArray();
+    var attachments = SelectAttachments(individual, mediaBasePath);
+    var consumedNodes = photos.Select(p => p.Node).Concat(attachments.Select(a => a.Node)).ToArray();
     var (mainPhoto, additionalPhotos) = BuildPhotos(photos);
 
     var toAdd = PersonFullInfo.Empty with
@@ -312,8 +324,9 @@ internal sealed class GedcomImporter : IGedcomImporter
       Names = names,
       MainPhoto = mainPhoto,
       AdditionalPhotos = additionalPhotos,
+      Attachments = attachments.Select(BuildAttachmentData).ToArray(),
       Biography = biography,
-      GedcomData = BuildResidueData(individual, photoNodes),
+      GedcomData = BuildResidueData(individual, consumedNodes),
     };
 
     var added = await document.PersonManager.AddPersonAsync(toAdd, token);
@@ -448,13 +461,17 @@ internal sealed class GedcomImporter : IGedcomImporter
       return null;
 
     var residual = ResidualNode(obje, ObjeModeledChildren);
+    var form = MediaForm(obje);
 
-    if (IsEmbeddedPhoto(obje))
+    // An embedded BLOB with an explicit non-image FORM (e.g. "pdf") is not a photo -- TryReadAttachment
+    // claims it instead. A BLOB with no FORM at all keeps the legacy default of being treated as an image,
+    // so the two passes partition every embedded OBJE without ever both claiming it.
+    if (HasEmbeddedBlob(obje) && (form is null || IsImageMedia(form, string.Empty)))
     {
       try
       {
         var blob = Convert.FromBase64String(obje.ChildValue(GedcomTags.Blob)!);
-        var mimeType = GedcomMedia.ToMimeType(obje.ChildValue(GedcomTags.Form));
+        var mimeType = GedcomMedia.ToMimeType(form);
         return new PhotoCandidate(obje, blob, mimeType, IsPrimary(obje), residual);
       }
       catch (FormatException)
@@ -502,25 +519,35 @@ internal sealed class GedcomImporter : IGedcomImporter
     return new Data(ElementId.NonCommittedId, content, candidate.MimeType, plainCategory.AsTaggedPhoto());
   }
 
-  private static bool IsEmbeddedPhoto(GedcomNode node) =>
+  private static bool HasEmbeddedBlob(GedcomNode node) =>
     node.Tag == GedcomTags.Object && !string.IsNullOrWhiteSpace(node.ChildValue(GedcomTags.Blob));
 
   private static bool IsPrimary(GedcomNode obje) =>
     string.Equals(obje.ChildValue(GedcomTags.Primary), GedcomTags.PrimaryYes, StringComparison.OrdinalIgnoreCase);
 
   /// <summary>
-  /// The resolved path of an <c>OBJE</c>'s external image <c>FILE</c>, else null. A relative reference is
-  /// taken relative to <paramref name="mediaBasePath"/>; an absolute one is used as-is. Only image media is
-  /// loaded, so a non-image FILE (a PDF scan) is left as residue. Whether the path is actually readable is
-  /// the media reader's concern.
+  /// The resolved path of an <c>OBJE</c>'s external image <c>FILE</c>, else null (a non-image FILE is left
+  /// for <see cref="TryReadAttachment"/> instead). Whether the path is actually readable is the media
+  /// reader's concern.
   /// </summary>
   private static string? ExternalImagePath(GedcomNode obje, string? mediaBasePath)
+  {
+    var fileRef = obje.ChildValue(GedcomTags.File);
+    if (string.IsNullOrWhiteSpace(fileRef) || !IsImageMedia(MediaForm(obje), fileRef))
+      return null;
+
+    return ExternalFilePath(obje, mediaBasePath);
+  }
+
+  /// <summary>The resolved path of an <c>OBJE</c>'s external <c>FILE</c>, regardless of media kind; a
+  /// relative reference is taken relative to <paramref name="mediaBasePath"/>, an absolute one used as-is.</summary>
+  private static string? ExternalFilePath(GedcomNode obje, string? mediaBasePath)
   {
     if (mediaBasePath is null || obje.Tag != GedcomTags.Object)
       return null;
 
     var fileRef = obje.ChildValue(GedcomTags.File);
-    if (string.IsNullOrWhiteSpace(fileRef) || !IsImageMedia(MediaForm(obje), fileRef))
+    if (string.IsNullOrWhiteSpace(fileRef))
       return null;
 
     var normalized = fileRef.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
@@ -531,20 +558,76 @@ internal sealed class GedcomImporter : IGedcomImporter
   private static string? MediaForm(GedcomNode obje) =>
     obje.Child(GedcomTags.File)?.ChildValue(GedcomTags.Form) ?? obje.ChildValue(GedcomTags.Form);
 
-  // Image subtypes GT4 will load as a photo, matched against either the OBJE FORM token or the FILE
-  // extension. A non-image FORM (e.g. "pdf") must not match: GedcomMedia.ToMimeType blindly prefixes
-  // "image/" to any token, so the form is checked against this set rather than through that mapping.
-  private static readonly HashSet<string> ImageForms =
-    new(StringComparer.OrdinalIgnoreCase) { "jpg", "jpeg", "png", "gif", "bmp", "tif", "tiff", "webp" };
+  // An attachment's own modeled fields: FORM/PRIMARY/BLOB are regenerated from the stored Data on export.
+  // FILE is deliberately left in the residual -- unlike a photo, an attachment needs its original filename
+  // preserved, and the residual is exactly what GedcomPhotoResidue.ExtractFileNameAsync reads back.
+  private static readonly HashSet<string> AttachmentModeledChildren = [GedcomTags.Form, GedcomTags.Primary, GedcomTags.Blob];
+
+  private sealed record AttachmentCandidate(GedcomNode Node, byte[] Content, string? MimeType, GedcomNode Residual);
+
+  /// <summary>
+  /// The direct INDI <c>OBJE</c> non-photo attachments GT4 can load, materialized to bytes: an embedded
+  /// base64 <c>BLOB</c>, or an external <c>FILE</c> reference that resolves under <paramref name="mediaBasePath"/>.
+  /// An image-shaped OBJE is left to <see cref="SelectPhotos"/>; one whose bytes cannot be obtained falls
+  /// through to residue, exactly like an unreadable photo.
+  /// </summary>
+  private AttachmentCandidate[] SelectAttachments(GedcomNode individual, string? mediaBasePath) =>
+    individual.Children
+      .Select(o => TryReadAttachment(o, mediaBasePath))
+      .Where(a => a is not null)
+      .Select(a => a!)
+      .ToArray();
+
+  private AttachmentCandidate? TryReadAttachment(GedcomNode obje, string? mediaBasePath)
+  {
+    if (obje.Tag != GedcomTags.Object)
+      return null;
+
+    var form = MediaForm(obje);
+    byte[]? content;
+    if (HasEmbeddedBlob(obje))
+    {
+      // Mirrors TryReadPhoto's embedded-blob gate: only an explicit non-image FORM makes this an
+      // attachment, so a FORM-less BLOB (which TryReadPhoto claims as a photo) is never also claimed here.
+      if (form is null || IsImageMedia(form, string.Empty))
+        return null;
+
+      try
+      {
+        content = Convert.FromBase64String(obje.ChildValue(GedcomTags.Blob)!);
+      }
+      catch (FormatException)
+      {
+        return null;
+      }
+    }
+    else
+    {
+      if (IsImageMedia(form, obje.ChildValue(GedcomTags.File) ?? string.Empty))
+        return null;
+
+      var path = ExternalFilePath(obje, mediaBasePath);
+      content = path is null ? null : _MediaReader.TryRead(path);
+    }
+    if (content is null)
+      return null;
+
+    var mime = GedcomMedia.ToMimeType(form);
+    var residual = ResidualNode(obje, AttachmentModeledChildren) ?? new GedcomNode { Tag = GedcomTags.Object };
+    return new AttachmentCandidate(obje, content, mime, residual);
+  }
+
+  private static Data BuildAttachmentData(AttachmentCandidate candidate) =>
+    new(ElementId.NonCommittedId, GedcomPhotoResidue.Encode(candidate.Content, candidate.Residual), candidate.MimeType, DataCategory.PersonAttachment);
 
   private static bool IsImageMedia(string? form, string fileRef)
   {
     var token = form?.Trim();
-    if (token is not null && (ImageForms.Contains(token) || token.StartsWith("image/", StringComparison.OrdinalIgnoreCase)))
+    if (token is not null && (GedcomMedia.ImageForms.Contains(token) || token.StartsWith("image/", StringComparison.OrdinalIgnoreCase)))
       return true;
 
     var extension = Path.GetExtension(fileRef).TrimStart('.');
-    return ImageForms.Contains(extension);
+    return GedcomMedia.ImageForms.Contains(extension);
   }
 
   /// <summary>

@@ -354,6 +354,30 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task EmbeddedObje_NonImageFormImportsBlobAsAttachmentOnly()
+  {
+    // An embedded BLOB with an explicit non-image FORM (a PDF, base64'd inline) must be claimed by the
+    // attachment pass alone -- never also picked up as a (broken) photo.
+    var blob = Convert.ToBase64String(Encoding.UTF8.GetBytes("%PDF-tiny"));
+    var ged =
+      "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Foto /Test/\n1 SEX M\n" +
+      $"1 OBJE\n2 FORM pdf\n2 FILE scan.pdf\n2 BLOB {blob}\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var person = (await document.Persons.GetPersonsAsync(Token)).Single();
+    var full = await document.PersonManager.GetPersonFullInfoAsync(person, Token);
+    full.MainPhoto.Should().BeNull();
+    full.AdditionalPhotos.Should().BeEmpty();
+    full.GedcomData.Should().BeNull();
+
+    var attachment = full.Attachments.Should().ContainSingle().Which;
+    attachment.MimeType.Should().Be("application/pdf");
+    Encoding.UTF8.GetString(GedcomPhotoResidue.ExtractImageBytes(attachment.Content)).Should().Be("%PDF-tiny");
+    (await GedcomPhotoResidue.ExtractFileNameAsync(attachment, Token)).Should().Be("scan.pdf");
+  }
+
+  [Fact]
   public async Task MultipleEmbeddedPhotos_FirstBecomesMainWhenNonePrimary()
   {
     var first = Convert.ToBase64String(Encoding.UTF8.GetBytes("first"));
@@ -462,13 +486,14 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
-  public async Task FileReferenceObje_NonImageStaysResidueEvenWithBasePath()
+  public async Task FileReferenceObje_NonImageLoadsAsAttachmentWhenBasePathGiven()
   {
-    // A FILE that is not an image (a PDF scan) is never loaded into the photo set; it survives as residue
-    // even when the base path is known and the file exists on disk.
+    // A FILE that is not an image (a PDF scan) is never loaded into the photo set; instead it is loaded
+    // into the attachment set when the base path is known and the file exists on disk.
     var mediaDir = Path.Combine(Path.GetTempPath(), $"gt4_media_{Guid.NewGuid():N}");
     Directory.CreateDirectory(mediaDir);
-    await File.WriteAllBytesAsync(Path.Combine(mediaDir, "scan.pdf"), new byte[] { 0 }, Token);
+    var scanBytes = new byte[] { 0x25, 0x50, 0x44, 0x46 };
+    await File.WriteAllBytesAsync(Path.Combine(mediaDir, "scan.pdf"), scanBytes, Token);
     try
     {
       var ged =
@@ -480,12 +505,34 @@ public sealed class GedcomSampleTests : IAsyncLifetime
       var person = (await document.Persons.GetPersonsAsync(Token)).Single();
       var full = await document.PersonManager.GetPersonFullInfoAsync(person, Token);
       full.MainPhoto.Should().BeNull();
-      full.GedcomData.Should().NotBeNull();
+      full.GedcomData.Should().BeNull();
+
+      var attachment = full.Attachments.Should().ContainSingle().Which;
+      attachment.MimeType.Should().Be("application/pdf");
+      GedcomPhotoResidue.ExtractImageBytes(attachment.Content).Should().Equal(scanBytes);
+      (await GedcomPhotoResidue.ExtractFileNameAsync(attachment, Token)).Should().Be("scan.pdf");
     }
     finally
     {
       Directory.Delete(mediaDir, recursive: true);
     }
+  }
+
+  [Fact]
+  public async Task FileReferenceObje_NonImageStaysResidueWithoutBasePath()
+  {
+    // Without a base path, a non-image FILE has no bytes GT4 can obtain either as a photo or an
+    // attachment, so it survives verbatim as residue -- exactly like FileReferenceObje_FallsBackToResidue.
+    var ged =
+      "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Foto /Test/\n1 SEX M\n" +
+      "1 OBJE\n2 FILE scan.pdf\n3 FORM pdf\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var person = (await document.Persons.GetPersonsAsync(Token)).Single();
+    var full = await document.PersonManager.GetPersonFullInfoAsync(person, Token);
+    full.Attachments.Should().BeEmpty();
+    full.GedcomData.Should().NotBeNull();
   }
 
   [Fact]

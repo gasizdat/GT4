@@ -32,7 +32,8 @@ public class CreateOrUpdatePersonDialogTests
     AdditionalPhotos: [Photo(11), Photo(12)],
     RelativeInfos: [],
     Biography: null,
-    GedcomData: null);
+    GedcomData: null,
+    Attachments: []);
 
   private static async Task<CreateOrUpdatePersonDialog> CreateDialogAsync(TestServices services, PersonFullInfo? person)
   {

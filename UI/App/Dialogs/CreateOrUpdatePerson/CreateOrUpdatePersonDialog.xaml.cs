@@ -46,6 +46,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private BiologicalSexItem? _BiologicalSex;
   private PersonDataItem? _Biography;
   private Data? _GedcomData;
+  private Data[] _Attachments = [];
   private bool _IsModified;
   private bool _NotReady => _BiologicalSex is null || _BirthDate is null || !_IsModified;
 
@@ -91,6 +92,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       _BirthDate = person.BirthDate;
       _DeathDate = person.DeathDate;
       _GedcomData = person.GedcomData;
+      _Attachments = person.Attachments;
       var names = person
         .Names
         .Select(name => new NameInfoItem(name, _Factory.NameTypeFormatter))
@@ -241,7 +243,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       // reordering (MovePhotoToLeft/Right) doesn't itself update DataCategory.
       mainPhoto: mainPhoto is null ? null : mainPhoto with { Category = mainPhoto.Category.AsMainPhoto() },
       biography: _Biography?.ToDataAsync().Result,
-      gedcomData: _GedcomData);
+      gedcomData: _GedcomData,
+      attachments: _Attachments);
 
     _Info.SetResult(result);
   }

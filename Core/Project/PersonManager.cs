@@ -21,6 +21,7 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
     }
 
     personDataSet.AddRange(personFullInfo.AdditionalPhotos);
+    personDataSet.AddRange(personFullInfo.Attachments);
 
     if (personFullInfo.Biography is not null)
     {
@@ -54,7 +55,8 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
       additionalPhotos: personData.Result.Where(data => data.Category.IsAdditionalPhoto()).ToArray(),
       relativeInfos: relativeInfos.Result,
       biography: personData.Result.SingleOrDefault(data => data.Category == DataCategory.PersonBio),
-      gedcomData: personData.Result.SingleOrDefault(data => data.Category == DataCategory.PersonGedcomTags));
+      gedcomData: personData.Result.SingleOrDefault(data => data.Category == DataCategory.PersonGedcomTags),
+      attachments: personData.Result.Where(data => data.Category.IsAttachment()).ToArray());
 
     return ret;
   }
