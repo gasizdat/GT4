@@ -13,5 +13,8 @@ public enum DataCategory
   // Main photo whose Content is a GedcomPhotoResidue envelope (residual OBJE tags + image bytes)
   PersonMainPhotoTagged = 5,
   // Additional photo whose Content is a GedcomPhotoResidue envelope (residual OBJE tags + image bytes)
-  PersonPhotoTagged = 6
+  PersonPhotoTagged = 6,
+  // Non-photo file attachment (PDF, document scan, ...); Content is always a GedcomPhotoResidue envelope
+  // carrying the original filename (the OBJE's FILE tag, kept in the residual) alongside the raw bytes
+  PersonAttachment = 7
 }

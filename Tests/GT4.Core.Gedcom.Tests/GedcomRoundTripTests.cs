@@ -440,6 +440,48 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     Encoding.UTF8.GetString(full.MainPhoto.Content).Should().Be("BYTES");
   }
 
+  [Fact]
+  public async Task Attachment_FileNameAndBytesSurviveExportThenReimportThenReexport()
+  {
+    var name = await _source.Names.AddNameAsync("Scan", NameType.FirstName, null, Token);
+    var residual = new GedcomNode { Tag = "OBJE" };
+    residual.Add(new GedcomNode { Tag = "FILE", Value = "birth-certificate.pdf" });
+    var fileBytes = Encoding.UTF8.GetBytes("PDF-BYTES");
+    var content = GedcomPhotoResidue.Encode(fileBytes, residual);
+    var attachment = new Data(ElementId.NonCommittedId, content, "application/pdf", DataCategory.PersonAttachment);
+    var info = PersonFullInfo.Empty with
+    {
+      BirthDate = Year(1900),
+      Names = [name],
+      Attachments = [attachment],
+    };
+    await _source.PersonManager.AddPersonAsync(info, Token);
+
+    var text = await ExportToTextAsync(_source);
+    text.Should().Contain("1 OBJE").And.Contain("2 FORM pdf").And.Contain("2 FILE birth-certificate.pdf").And.Contain("2 BLOB ");
+    text.Should().NotContain("_PRIM");
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+
+    var person = (await reimported.Persons.GetPersonsAsync(Token)).Single();
+    var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, Token);
+
+    // The attachment's embedded BLOB must not also be picked up as a (broken) photo.
+    full.MainPhoto.Should().BeNull();
+    full.AdditionalPhotos.Should().BeEmpty();
+
+    var reimportedAttachment = full.Attachments.Should().ContainSingle().Which;
+    reimportedAttachment.Category.Should().Be(DataCategory.PersonAttachment);
+    reimportedAttachment.MimeType.Should().Be("application/pdf");
+    GedcomPhotoResidue.ExtractImageBytes(reimportedAttachment.Content).Should().Equal(fileBytes);
+    (await GedcomPhotoResidue.ExtractFileNameAsync(reimportedAttachment, Token)).Should().Be("birth-certificate.pdf");
+
+    // A second export/reimport hop must still carry the filename -- proves this isn't a one-shot fluke.
+    var reexportedText = await ExportToTextAsync(reimported);
+    reexportedText.Should().Contain("2 FILE birth-certificate.pdf");
+  }
+
   private async Task<string> ExportToTextAsync(ProjectDocument document)
   {
     var writer = new StringWriter();

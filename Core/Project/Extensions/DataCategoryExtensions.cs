@@ -16,6 +16,8 @@ public static class DataCategoryExtensions
 
   public static bool IsPhoto(this DataCategory category) => category.IsMainPhoto() || category.IsAdditionalPhoto();
 
+  public static bool IsAttachment(this DataCategory category) => category == DataCategory.PersonAttachment;
+
   public static DataCategory AsMainPhoto(this DataCategory category) => category switch
   {
     DataCategory.PersonMainPhotoTagged or DataCategory.PersonPhotoTagged => DataCategory.PersonMainPhotoTagged,
