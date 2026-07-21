@@ -330,12 +330,9 @@ public class ProjectPageTests
   [Fact]
   public async Task A_second_Refresh_landing_during_an_in_flight_load_does_not_duplicate_families()
   {
-    // EnsureFamiliesLoaded used to Clear() eagerly (before the fetch started) and AddRange only on
-    // completion, so a Refresh() landing mid-fetch (now reachable via unconditional OnNavigatedTo,
-    // OnCreateFamily, or the revision monitor) started a second overlapping load whose completion
-    // appended on top of the first's, duplicating every card. The first GetFamiliesAsync call here
-    // blocks until released, so InvokeNavigatedTo's own reload is guaranteed to start and finish while
-    // it's still in flight.
+    // Pins EnsureFamiliesLoaded's Clear+AddRange fix. The first GetFamiliesAsync call blocks until
+    // released, so InvokeNavigatedTo's own reload is guaranteed to start and finish while it's still
+    // in flight.
     var services = new TestServices();
     var firstCallGate = new TaskCompletionSource();
     var firstCallStarted = new TaskCompletionSource();
