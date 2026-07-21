@@ -413,11 +413,21 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
   }
 
-  private async Task OnAddAttachmentAsync()
+  private async Task OnAddOrUpdateAttachmentAsync(PersonDataItem? attachment)
   {
     var pickOptions = new PickOptions { PickerTitle = UIStrings.FileDialogSelectAttachment };
-    var files = await FilePicker.Default.PickMultipleAsync(pickOptions);
-    var results = files?.Where(f => f is not null).Select(r => r!).ToArray();
+    IEnumerable<FileResult>? results;
+    if (attachment is null)
+    {
+      var files = await FilePicker.Default.PickMultipleAsync(pickOptions);
+      results = files?.Where(f => f is not null).Select(r => r!);
+    }
+    else
+    {
+      var result = await FilePicker.Default.PickAsync(pickOptions);
+      results = result is null ? null : [result];
+    }
+
     if (results is null)
     {
       return;
@@ -435,9 +445,19 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         using var token = _Factory.CancellationTokenProvider.CreateShortOperationCancellationToken();
         var pick = new AttachmentPick(FromStream(content.Stream.Result), content.FileName, content.MimeType);
         var attachmentAsset = await converter.FromObjectAsync(pick, token);
-        if (attachmentAsset is not null)
+        if (attachmentAsset is null)
         {
-          _Attachments.Add(GetPersonData(attachmentAsset, DataCategory.PersonAttachment));
+          continue;
+        }
+
+        var item = GetPersonData(attachmentAsset, DataCategory.PersonAttachment);
+        if (attachment is not null)
+        {
+          _Attachments[_Attachments.IndexOf(attachment)] = item;
+        }
+        else
+        {
+          _Attachments.Add(item);
         }
       }
 
@@ -529,7 +549,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         await OnAddOrUpdatePhotoAsync(null);
         break;
       case string commandName when commandName == "AddAttachmentCommand":
-        await OnAddAttachmentAsync();
+        await OnAddOrUpdateAttachmentAsync(null);
         break;
       case string commandName when commandName == "AddRelationship":
         await OnAddRelationshipAsync();
@@ -556,6 +576,19 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "MovePhotoToRightCommand" && adorner.Element is PersonDataItem photo:
         MoveItem(_Photos, photo, 1);
+        break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "EditAttachmentCommand" && adorner.Element is PersonDataItem attachment:
+        await OnAddOrUpdateAttachmentAsync(attachment);
+        break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "RemoveAttachmentCommand" && adorner.Element is PersonDataItem attachment:
+        _Attachments.Remove(attachment);
+        IsModified = true;
+        break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "MoveAttachmentUpCommand" && adorner.Element is PersonDataItem attachment:
+        MoveItem(_Attachments, attachment, -1);
+        break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "MoveAttachmentDownCommand" && adorner.Element is PersonDataItem attachment:
+        MoveItem(_Attachments, attachment, 1);
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "EditNameCommand" && adorner.Element is NameInfoItem name:
         await OnEditPersonNameAsync(name);

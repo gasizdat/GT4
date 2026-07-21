@@ -23,6 +23,9 @@ public class CreateOrUpdatePersonDialogTests
 
   private static Data Photo(int id) => new(id, Content: [1, 2, 3], MimeType: "image/png", Category: DataCategory.PersonPhoto);
 
+  private static Data Attachment(int id, string fileName = "scan.pdf") => new(
+    id, Content: GedcomPhotoResidue.EncodeAttachment([1, 2, 3], fileName), MimeType: "application/pdf", Category: DataCategory.PersonAttachment);
+
   private static PersonFullInfo CreateSamplePerson() => new(
     Id: 1,
     BirthDate: Date.Create(2000, 1, 1, DateStatus.WellKnown),
@@ -218,6 +221,51 @@ public class CreateOrUpdatePersonDialogTests
     Assert.Equal(DataCategory.PersonAttachment, savedAttachment.Category);
     Assert.Equal(attachment.Content, savedAttachment.Content);
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+  }
+
+  [Fact]
+  public async Task RemoveAttachmentCommand_removes_the_attachment_and_marks_modified()
+  {
+    var person = CreateSamplePerson() with { Attachments = [Attachment(30), Attachment(31)] };
+    var dialog = await CreateDialogAsync(new TestServices(), person);
+    var attachment = dialog.Attachments.ElementAt(0);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+      dialog.DialogCommand.Execute(Adorner("RemoveAttachmentCommand", attachment)));
+
+    await WaitForAsync(() => dialog.Attachments.Count, count => count == 1, "RemoveAttachmentCommand did not remove the attachment.");
+    Assert.DoesNotContain(attachment, dialog.Attachments);
+  }
+
+  [Fact]
+  public async Task MoveAttachmentDownCommand_reorders_attachments()
+  {
+    var person = CreateSamplePerson() with { Attachments = [Attachment(30, "first.pdf"), Attachment(31, "second.pdf")] };
+    var dialog = await CreateDialogAsync(new TestServices(), person);
+    var first = dialog.Attachments.ElementAt(0);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+      dialog.DialogCommand.Execute(Adorner("MoveAttachmentDownCommand", first)));
+
+    await WaitForAsync(() => dialog.Attachments.ToArray(), items => items.Length == 2 && items[1] == first,
+      "MoveAttachmentDownCommand did not reorder the attachment.");
+  }
+
+  [Fact]
+  public async Task MoveAttachmentUpCommand_on_the_first_item_reports_the_bounds_error()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson() with { Attachments = [Attachment(30)] };
+    var dialog = await CreateDialogAsync(services, person);
+    var attachment = dialog.Attachments.Single();
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+      dialog.DialogCommand.Execute(Adorner("MoveAttachmentUpCommand", attachment)));
+
+    await WaitForAsync(
+      () => services.AlertService.Invocations.Count, count => count > 0,
+      "MoveAttachmentUpCommand did not report the bounds error.");
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<ApplicationException>()), Times.Once());
   }
 
   [Fact]
