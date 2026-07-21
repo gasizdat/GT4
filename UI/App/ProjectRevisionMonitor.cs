@@ -41,6 +41,11 @@ internal sealed class ProjectRevisionMonitor : IProjectRevisionMonitor
       _EventManager.AddEventHandler(value);
       if (Interlocked.Increment(ref _SubscriberCount) == 1)
       {
+        // A fresh (or renewed, after a quiet period with nobody listening) subscriber already has
+        // current data -- from its own load, or from an unconditional OnNavigatedTo. Baseline to
+        // whatever the revision already is now, so the first tick doesn't see a spurious change and
+        // fire a redundant refresh; only a genuine change from this point on should fire.
+        PrimeLastRevision();
         _Timer.Start();
       }
     }
@@ -80,6 +85,18 @@ internal sealed class ProjectRevisionMonitor : IProjectRevisionMonitor
         _LastRevision = revision;
         _EventManager.HandleEvent(this, EventArgs.Empty, nameof(RevisionChanged));
       }
+    }
+    catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
+    {
+      _LastRevision = null;
+    }
+  }
+
+  private void PrimeLastRevision()
+  {
+    try
+    {
+      _LastRevision = _CurrentProjectProvider.HasCurrentProject ? _CurrentProjectProvider.Project.ProjectRevision : null;
     }
     catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
     {

@@ -407,6 +407,25 @@ public class ProjectPageTests
   }
 
   [Fact]
+  public async Task RevisionChanged_does_not_reload_on_the_first_tick_after_subscribing_when_the_revision_is_unchanged()
+  {
+    var services = new TestServices();
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>()))
+      .ReturnsAsync([N(1, "Ivanov", NameType.FamilyName)]);
+    var page = await CreatePageAsync(services);
+    await page.WaitForFamiliesAsync();
+    var monitor = (ProjectRevisionMonitor)services.Provider.GetRequiredService<IProjectRevisionMonitor>();
+    await using var window = await WindowHost.AttachAsync(page);
+    await Poll.UntilAsync(() => Task.FromResult(monitor.SubscriberCount), count => count > 0, timeoutMessage: "The page never subscribed to RevisionChanged.");
+    var loadsBefore = page.CompletedLoads;
+
+    await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
+    await Task.Delay(200);
+
+    Assert.Equal(loadsBefore, page.CompletedLoads);
+  }
+
+  [Fact]
   public async Task RevisionChanged_does_not_reload_after_the_page_is_unloaded()
   {
     var services = new TestServices();

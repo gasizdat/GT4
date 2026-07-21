@@ -16,8 +16,11 @@ public sealed class ProjectRevisionMonitorTests
       () => (ProjectRevisionMonitor)services.Provider.GetRequiredService<IProjectRevisionMonitor>());
   }
 
+  // Subscribing primes the baseline to whatever the revision already is -- a page that just subscribed
+  // already has current data, so the very next check must not treat "baseline just got seeded" as a
+  // change worth a redundant refresh.
   [Fact]
-  public async Task CheckRevision_FiresOnce_WhenTheRevisionFirstBecomesKnown()
+  public async Task CheckRevision_DoesNotFire_OnTheFirstCheckAfterSubscribing_WhenTheRevisionIsUnchanged()
   {
     var services = new TestServices();
     var monitor = await CreateMonitorAsync(services);
@@ -26,7 +29,7 @@ public sealed class ProjectRevisionMonitorTests
 
     await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
 
-    Assert.Equal(1, fireCount);
+    Assert.Equal(0, fireCount);
   }
 
   [Fact]
@@ -36,6 +39,7 @@ public sealed class ProjectRevisionMonitorTests
     var monitor = await CreateMonitorAsync(services);
     var fireCount = 0;
     monitor.RevisionChanged += (_, _) => fireCount++;
+    services.Project.SetupGet(p => p.ProjectRevision).Returns(99);
     await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
 
     await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
@@ -50,9 +54,10 @@ public sealed class ProjectRevisionMonitorTests
     var monitor = await CreateMonitorAsync(services);
     var fireCount = 0;
     monitor.RevisionChanged += (_, _) => fireCount++;
-    await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
     services.Project.SetupGet(p => p.ProjectRevision).Returns(99);
+    await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
 
+    services.Project.SetupGet(p => p.ProjectRevision).Returns(100);
     await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
 
     Assert.Equal(2, fireCount);
