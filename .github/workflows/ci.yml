@@ -119,61 +119,51 @@ jobs:
         run: dotnet build Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj --configuration Release --framework net10.0-windows10.0.19041.0
 
       - name: Test GT4.UI.App.DeviceTests
-        # The DeviceRunners CLI can exit non-zero from a native WinUI teardown race (the spawned
-        # test-host process dying after every test already passed) -- observed both as a window-class
-        # unregister failure (exit -1) and, separately, as the CLI's TCP link to that process being
-        # reset (exit 1, "Unable to read data from the transport connection"). Matching those exact
-        # messages is brittle -- a new wording is a new failure mode by definition -- so this trusts the
-        # TRX's own pass/fail counters instead, which are ground truth for "did a test actually fail"
-        # regardless of how the process exited. The vendor's MSBuild target separately checks a
-        # hardcoded "test-results.trx" filename instead of the "device-tests.trx" our --logger arg
-        # produces, so it always reports "no TRX written" even when one exists -- ignored here since we
-        # check the real path ourselves.
-        #
-        # Output streams live via the pipeline below so a real hang still shows progress in the Actions
-        # log; only the CLI's own ##[error] annotation lines are held back, since whether to keep or
-        # strip them depends on the TRX check below that only runs after the process exits (an
-        # already-printed GitHub error annotation can't be un-printed).
+        # The DeviceRunners CLI can exit non-zero from a native WinUI teardown race -- the spawned
+        # test-host process dying, sometimes after every test already passed, sometimes mid-run -- and
+        # the exact symptom varies (a window-class unregister failure, a reset TCP link, ...). There is
+        # no reliable way to tell from one run's output alone whether a crash left real tests unexecuted,
+        # so this does not try to guess: it just retries the whole attempt. A TRX with any failed test is
+        # trusted immediately as a real failure (never retried past); a crash that recorded zero failures
+        # is retried, since a genuine bug reproduces on retry while a flaky teardown race usually doesn't.
         run: |
-          $trxPath = "coverage\device-tests.trx"
-          if (Test-Path $trxPath) { Remove-Item $trxPath -Force }
-          $heldBackLines = @()
-          & dotnet test Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj --no-build --configuration Release --framework net10.0-windows10.0.19041.0 --logger "trx;LogFileName=device-tests.trx" --results-directory coverage | ForEach-Object {
-            if ($_ -match '##\[error\]') {
-              $heldBackLines += $_
+          $maxAttempts = 3
+          $success = $false
+          for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+            Write-Host "=== Device test attempt $attempt of $maxAttempts ==="
+            $trxPath = "coverage\device-tests.trx"
+            if (Test-Path $trxPath) { Remove-Item $trxPath -Force }
+
+            & dotnet test Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj --no-build --configuration Release --framework net10.0-windows10.0.19041.0 --logger "trx;LogFileName=device-tests.trx" --results-directory coverage
+            $exitCode = $LASTEXITCODE
+
+            if (Test-Path $trxPath) {
+              [xml]$trx = Get-Content $trxPath
+              $failed = [int]$trx.TestRun.ResultSummary.Counters.failed
+              $total = [int]$trx.TestRun.ResultSummary.Counters.total
+              Write-Host "Attempt $attempt`: $total total, $failed failed (exit code $exitCode)."
+
+              if ($failed -gt 0) {
+                Write-Host "Real test failure recorded -- not retrying."
+                exit 1
+              }
             } else {
-              Write-Host $_
+              Write-Host "Attempt $attempt`: no TRX produced (exit code $exitCode)."
+            }
+
+            if ($exitCode -eq 0) {
+              $success = $true
+              break
+            }
+
+            if ($attempt -lt $maxAttempts) {
+              Write-Host "::warning::Device test attempt $attempt exited non-zero (exit code $exitCode) with no failed tests recorded -- retrying."
             }
           }
-          $exitCode = $LASTEXITCODE
 
-          if (-not (Test-Path $trxPath)) {
-            $heldBackLines | ForEach-Object { Write-Host $_ }
-            Write-Host "No TRX produced (exit code $exitCode)."
+          if (-not $success) {
+            Write-Host "Device tests did not complete cleanly after $maxAttempts attempts."
             exit 1
-          }
-
-          [xml]$trx = Get-Content $trxPath
-          $failed = [int]$trx.TestRun.ResultSummary.Counters.failed
-          $total = [int]$trx.TestRun.ResultSummary.Counters.total
-
-          Write-Host "$total total, $failed failed (exit code $exitCode)."
-
-          if ($failed -gt 0) {
-            $heldBackLines | ForEach-Object { Write-Host $_ }
-            exit 1
-          }
-          if ($exitCode -ne 0 -and $total -eq 0) {
-            $heldBackLines | ForEach-Object { Write-Host $_ }
-            Write-Host "CLI exited non-zero (exit code $exitCode) and no tests ran; treating as failure."
-            exit 1
-          }
-          if ($exitCode -ne 0) {
-            # Every test that ran passed (TRX ground truth), so the non-zero exit is the spawned
-            # test-host process dying during its own teardown, not a real test failure. Surface it as a
-            # warning -- not silently -- so a recurring/worsening pattern stays visible in run history.
-            Write-Host "::warning::All $total tests passed but the CLI exited non-zero (exit code $exitCode) -- treating as a known device-runner teardown race, not a failure."
-            $heldBackLines | ForEach-Object { Write-Host ($_ -replace '##\[error\]', '') }
           }
           exit 0
 
