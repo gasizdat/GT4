@@ -482,6 +482,40 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     reexportedText.Should().Contain("2 FILE birth-certificate.pdf");
   }
 
+  [Fact]
+  public async Task Attachment_BuiltViaEncodeAttachment_SurvivesExportThenReimportAsAnAttachmentNotAPhoto()
+  {
+    // Mirrors what the UI file picker does: a freshly picked file, never previously round-tripped through
+    // GEDCOM, so its envelope is synthesized via EncodeAttachment rather than carrying an imported residual.
+    var name = await _source.Names.AddNameAsync("Scan", NameType.FirstName, null, Token);
+    var fileBytes = Encoding.UTF8.GetBytes("PDF-BYTES");
+    var content = GedcomPhotoResidue.EncodeAttachment(fileBytes, "deed.pdf");
+    var attachment = new Data(ElementId.NonCommittedId, content, "application/pdf", DataCategory.PersonAttachment);
+    var info = PersonFullInfo.Empty with
+    {
+      BirthDate = Year(1900),
+      Names = [name],
+      Attachments = [attachment],
+    };
+    await _source.PersonManager.AddPersonAsync(info, Token);
+
+    var text = await ExportToTextAsync(_source);
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+
+    var person = (await reimported.Persons.GetPersonsAsync(Token)).Single();
+    var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, Token);
+
+    // A non-null, non-image MimeType is what keeps this an attachment on reimport rather than a photo --
+    // a null or image-shaped MimeType here would emit no/an image FORM and reclassify as a photo instead.
+    full.MainPhoto.Should().BeNull();
+    var reimportedAttachment = full.Attachments.Should().ContainSingle().Which;
+    reimportedAttachment.Category.Should().Be(DataCategory.PersonAttachment);
+    GedcomPhotoResidue.ExtractImageBytes(reimportedAttachment.Content).Should().Equal(fileBytes);
+    (await GedcomPhotoResidue.ExtractFileNameAsync(reimportedAttachment, Token)).Should().Be("deed.pdf");
+  }
+
   private async Task<string> ExportToTextAsync(ProjectDocument document)
   {
     var writer = new StringWriter();

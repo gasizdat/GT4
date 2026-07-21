@@ -107,4 +107,16 @@ public sealed class GedcomPhotoResidueTests
 
     fileName.Should().BeNull();
   }
+
+  [Fact]
+  public async Task EncodeAttachment_RoundTripsBytesAndTheGivenFileName()
+  {
+    byte[] file = [9, 8, 7];
+
+    var content = GedcomPhotoResidue.EncodeAttachment(file, "scan.pdf");
+    var attachment = new Data(1, content, "application/pdf", DataCategory.PersonAttachment);
+
+    GedcomPhotoResidue.ExtractImageBytes(content).Should().Equal(file);
+    (await GedcomPhotoResidue.ExtractFileNameAsync(attachment, _Token)).Should().Be("scan.pdf");
+  }
 }

@@ -262,6 +262,15 @@ genealogy tree and enjoy!</value>
   <data name="FieldPersonBiography" xml:space="preserve">
     <value>Biography</value>
   </data>
+  <data name="FieldPersonAttachments" xml:space="preserve">
+    <value>Attachments</value>
+  </data>
+  <data name="BtnNameAddPersonAttachment" xml:space="preserve">
+    <value>Add attachment</value>
+  </data>
+  <data name="BtnNameOpenAttachment" xml:space="preserve">
+    <value>Open</value>
+  </data>
   <data name="RelMother" xml:space="preserve">
     <value>Mother</value>
   </data>
@@ -384,6 +393,9 @@ genealogy tree and enjoy!</value>
   </data>
   <data name="FileDialogSelectPictures" xml:space="preserve">
     <value>Select pictures</value>
+  </data>
+  <data name="FileDialogSelectAttachment" xml:space="preserve">
+    <value>Select file</value>
   </data>
   <data name="MenuItemNameRemove_1" xml:space="preserve">
     <value>❌ Remove '{0}'</value>

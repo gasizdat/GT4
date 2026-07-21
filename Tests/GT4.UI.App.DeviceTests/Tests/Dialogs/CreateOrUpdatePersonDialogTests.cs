@@ -1,3 +1,4 @@
+using GT4.Core.Gedcom;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
@@ -188,6 +189,34 @@ public class CreateOrUpdatePersonDialogTests
     Assert.NotNull(saved.MainPhoto);
     Assert.Equal(DataCategory.PersonMainPhotoTagged, saved.MainPhoto.Category);
     Assert.Equal(taggedPhoto.Content, saved.MainPhoto.Content);
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+  }
+
+  [Fact]
+  public async Task SaveCommand_UntouchedAttachment_SurvivesByteForByte()
+  {
+    // Guards the ObservableCollection<PersonDataItem>/ToDataAsync materialization added for
+    // attachments: saving without touching them must not reconvert or drop the attachment.
+    var services = new TestServices();
+    var content = GedcomPhotoResidue.EncodeAttachment([4, 5, 6], "deed.pdf");
+    var attachment = new Data(30, Content: content, MimeType: "application/pdf", Category: DataCategory.PersonAttachment);
+    var person = CreateSamplePerson() with { Attachments = [attachment] };
+    var dialog = await CreateDialogAsync(services, person);
+
+    Assert.Single(dialog.Attachments);
+
+    // Save is a no-op (treated as Cancel) unless something was modified; mark the dialog dirty via an
+    // unrelated field (re-picking the same sex) without touching the attachment.
+    await MainThread.InvokeOnMainThreadAsync(() =>
+      dialog.BioSex = dialog.BiologicalSexes.Single(s => s.Info == BiologicalSex.Male));
+
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.DialogCommand.Execute("CreatePersonCommand"));
+    var saved = await dialog.Info;
+
+    Assert.NotNull(saved);
+    var savedAttachment = Assert.Single(saved.Attachments);
+    Assert.Equal(DataCategory.PersonAttachment, savedAttachment.Category);
+    Assert.Equal(attachment.Content, savedAttachment.Content);
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
 

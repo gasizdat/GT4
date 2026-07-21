@@ -163,6 +163,48 @@
             </Grid>
           </Border>
 
+          <!--  Attachments  -->
+          <Border Style="{StaticResource CardBorderStyle}">
+            <Grid
+                ColumnDefinitions="*, Auto"
+                RowDefinitions="Auto, *, Auto">
+
+              <Label
+                  Grid.Row="0"
+                  Grid.Column="0"
+                  Grid.ColumnSpan="2"
+                  Style="{StaticResource GroupTitle}"
+                  Text="{x:Static resources:UIStrings.FieldPersonAttachments}" />
+
+              <CollectionView
+                  Grid.Row="1"
+                  Grid.Column="0"
+                  Grid.ColumnSpan="2"
+                  ItemsSource="{Binding Attachments, Source={x:Reference Root}}"
+                  SelectionMode="Single">
+
+                <CollectionView.ItemTemplate>
+                  <DataTemplate>
+                    <Label
+                        Padding="{StaticResource CollectionItemsVerticalPadding}"
+                        Style="{StaticResource FieldValue}"
+                        Text="{Binding Content}" />
+                  </DataTemplate>
+                </CollectionView.ItemTemplate>
+              </CollectionView>
+
+              <Button
+                  Grid.Row="2"
+                  Grid.Column="0"
+                  Grid.ColumnSpan="2"
+                  Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                  CommandParameter="AddAttachmentCommand"
+                  HorizontalOptions="Fill"
+                  Style="{StaticResource TextAdorner}"
+                  Text="{x:Static resources:UIStrings.BtnNameAddPersonAttachment}" />
+            </Grid>
+          </Border>
+
           <!--  Biological Sex  -->
           <Border Style="{StaticResource CardBorderStyle}">
             <Grid

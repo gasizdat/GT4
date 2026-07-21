@@ -4,6 +4,7 @@ using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Components;
+using GT4.UI.Converters;
 using GT4.UI.Items;
 using GT4.UI.Resources;
 using GT4.UI.Utils.Converters;
@@ -36,6 +37,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private readonly ICommand _DialogCommand;
   private readonly string _SaveButtonName;
   private readonly ObservableCollection<PersonDataItem> _Photos = new();
+  private readonly ObservableCollection<PersonDataItem> _Attachments = new();
   private readonly ObservableCollection<NameInfoItem> _Names = new();
   private readonly ObservableCollection<RelativeInfo> _Relatives = new();
   private readonly ObservableCollection<BiologicalSexItem> _BiologicalSexes = new();
@@ -46,7 +48,6 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private BiologicalSexItem? _BiologicalSex;
   private PersonDataItem? _Biography;
   private Data? _GedcomData;
-  private Data[] _Attachments = [];
   private bool _IsModified;
   private bool _NotReady => _BiologicalSex is null || _BirthDate is null || !_IsModified;
 
@@ -92,7 +93,6 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       _BirthDate = person.BirthDate;
       _DeathDate = person.DeathDate;
       _GedcomData = person.GedcomData;
-      _Attachments = person.Attachments;
       var names = person
         .Names
         .Select(name => new NameInfoItem(name, _Factory.NameTypeFormatter))
@@ -113,6 +113,11 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       foreach (var photo in person.AdditionalPhotos)
       {
         _Photos.Add(GetPersonData(photo, photo.Category));
+      }
+
+      foreach (var attachment in person.Attachments)
+      {
+        _Attachments.Add(GetPersonData(attachment, DataCategory.PersonAttachment));
       }
 
       _Biography = person.Biography switch
@@ -153,6 +158,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   public ICommand DialogCommand => _DialogCommand;
 
   public ICollection<PersonDataItem> Photos => _Photos;
+
+  public ICollection<PersonDataItem> Attachments => _Attachments;
 
   public ICollection<NameInfoItem> Names => _Names;
 
@@ -222,6 +229,10 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     var photos = (await Task.WhenAll(_Photos.Select(photo => photo.ToDataAsync())))
       .Where(data => data is not null)
       .Select(data => data!);
+    var attachments = (await Task.WhenAll(_Attachments.Select(attachment => attachment.ToDataAsync())))
+      .Where(data => data is not null)
+      .Select(data => data!)
+      .ToArray();
 
     var mainPhoto = photos?.FirstOrDefault();
     var additionalPhotos = photos?
@@ -244,7 +255,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       mainPhoto: mainPhoto is null ? null : mainPhoto with { Category = mainPhoto.Category.AsMainPhoto() },
       biography: _Biography?.ToDataAsync().Result,
       gedcomData: _GedcomData,
-      attachments: _Attachments);
+      attachments: attachments);
 
     _Info.SetResult(result);
   }
@@ -402,6 +413,46 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
   }
 
+  private async Task OnAddAttachmentAsync()
+  {
+    var pickOptions = new PickOptions { PickerTitle = UIStrings.FileDialogSelectAttachment };
+    var files = await FilePicker.Default.PickMultipleAsync(pickOptions);
+    var results = files?.Where(f => f is not null).Select(r => r!).ToArray();
+    if (results is null)
+    {
+      return;
+    }
+
+    var converter = _Factory.DataConverterFactory(DataCategory.PersonAttachment);
+    IEnumerable<Stream>? streams = null;
+    try
+    {
+      var filesContent = results.Select(file => (Stream: file.OpenReadAsync(), file.FileName, MimeType: file.ContentType)).ToArray();
+      streams = await Task.WhenAll(filesContent.Select(file => file.Stream));
+
+      foreach (var content in filesContent)
+      {
+        using var token = _Factory.CancellationTokenProvider.CreateShortOperationCancellationToken();
+        var pick = new AttachmentPick(FromStream(content.Stream.Result), content.FileName, content.MimeType);
+        var attachmentAsset = await converter.FromObjectAsync(pick, token);
+        if (attachmentAsset is not null)
+        {
+          _Attachments.Add(GetPersonData(attachmentAsset, DataCategory.PersonAttachment));
+        }
+      }
+
+      IsModified = true;
+    }
+    finally
+    {
+      foreach (var stream in streams ?? [])
+      {
+        stream.Close();
+        stream.Dispose();
+      }
+    }
+  }
+
   private async Task OnAddRelationshipAsync()
   {
     var dialog = _Factory.SelectRelativesDialogFactory.Create(_BiologicalSex?.Info, [.. Relatives]);
@@ -476,6 +527,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         break;
       case string commandName when commandName == "AddPhotoCommand":
         await OnAddOrUpdatePhotoAsync(null);
+        break;
+      case string commandName when commandName == "AddAttachmentCommand":
+        await OnAddAttachmentAsync();
         break;
       case string commandName when commandName == "AddRelationship":
         await OnAddRelationshipAsync();

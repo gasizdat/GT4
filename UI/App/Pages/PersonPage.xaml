@@ -213,21 +213,57 @@
             ColumnDefinitions="Auto, *"
             RowDefinitions="Auto, Auto, Auto">
 
-          <Border
+          <VerticalStackLayout
               Grid.Row="{Binding Path=SmartLayout.Biography.Row, Source={x:Reference Root}}"
               Grid.RowSpan="{Binding Path=SmartLayout.Biography.RowSpan, Source={x:Reference Root}}"
               Grid.Column="{Binding Path=SmartLayout.Biography.Column, Source={x:Reference Root}}"
-              Grid.ColumnSpan="{Binding Path=SmartLayout.Biography.ColumnSpan, Source={x:Reference Root}}"
-              IsVisible="{Binding ShowBiography, Source={x:Reference Root}}">
+              Grid.ColumnSpan="{Binding Path=SmartLayout.Biography.ColumnSpan, Source={x:Reference Root}}">
 
-            <components:MarkdownView
-                Margin="-1"
-                BackgroundColor="Transparent"
-                Markdown="{Binding Biography, Source={x:Reference Root}, Mode=OneWay}"
-                MinimumHeightRequest="{OnIdiom Default=300,
-                                               Phone=200}"
-                PersonLinkTapped="OnPersonLinkTapped" />
-          </Border>
+            <Border IsVisible="{Binding ShowBiography, Source={x:Reference Root}}">
+              <components:MarkdownView
+                  Margin="-1"
+                  BackgroundColor="Transparent"
+                  Markdown="{Binding Biography, Source={x:Reference Root}, Mode=OneWay}"
+                  MinimumHeightRequest="{OnIdiom Default=300,
+                                                 Phone=200}"
+                  PersonLinkTapped="OnPersonLinkTapped" />
+            </Border>
+
+            <Border IsVisible="{Binding ShowAttachments, Source={x:Reference Root}}">
+              <VerticalStackLayout>
+                <Label
+                    Style="{StaticResource GroupTitle}"
+                    Text="{x:Static resources:UIStrings.FieldPersonAttachments}" />
+
+                <CollectionView
+                    ItemsSource="{Binding Attachments, Source={x:Reference Root}}"
+                    SelectionMode="Single">
+                  <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                      <Grid
+                          Padding="{StaticResource CollectionItemsVerticalPadding}"
+                          ColumnDefinitions="*, Auto"
+                          Style="{StaticResource HoverSubItem}">
+
+                        <Label
+                            Grid.Column="0"
+                            Style="{StaticResource FieldValue}"
+                            Text="{Binding FileName}"
+                            VerticalOptions="Center" />
+
+                        <Button
+                            Grid.Column="1"
+                            Command="{Binding Path=PageCommand, Source={x:Reference Root}}"
+                            CommandParameter="{Binding .}"
+                            Text="{x:Static resources:UIStrings.BtnNameOpenAttachment}" />
+
+                      </Grid>
+                    </DataTemplate>
+                  </CollectionView.ItemTemplate>
+                </CollectionView>
+              </VerticalStackLayout>
+            </Border>
+          </VerticalStackLayout>
           <components:ImagePresenter
               x:Name="PersonPhoto"
               Grid.Row="{Binding Path=SmartLayout.Image.Row, Source={x:Reference Root}}"
