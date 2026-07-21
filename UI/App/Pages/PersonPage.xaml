@@ -242,21 +242,16 @@
                     <DataTemplate>
                       <Grid
                           Padding="{StaticResource CollectionItemsVerticalPadding}"
-                          ColumnDefinitions="*, Auto"
                           Style="{StaticResource HoverSubItem}">
+                        <Grid.GestureRecognizers>
+                          <TapGestureRecognizer
+                              Command="{Binding Path=PageCommand, Source={x:Reference Root}}"
+                              CommandParameter="{Binding .}" />
+                        </Grid.GestureRecognizers>
 
                         <Label
-                            Grid.Column="0"
                             Style="{StaticResource FieldValue}"
-                            Text="{Binding FileName}"
-                            VerticalOptions="Center" />
-
-                        <Button
-                            Grid.Column="1"
-                            Command="{Binding Path=PageCommand, Source={x:Reference Root}}"
-                            CommandParameter="{Binding .}"
-                            Text="{x:Static resources:UIStrings.BtnNameOpenAttachment}" />
-
+                            Text="{Binding FileName}" />
                       </Grid>
                     </DataTemplate>
                   </CollectionView.ItemTemplate>

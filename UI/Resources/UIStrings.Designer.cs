@@ -341,15 +341,6 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Open.
-        /// </summary>
-        public static string BtnNameOpenAttachment {
-            get {
-                return ResourceManager.GetString("BtnNameOpenAttachment", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to Open or Create.
         /// </summary>
         public static string BtnNameOpenOrCreateProject {
