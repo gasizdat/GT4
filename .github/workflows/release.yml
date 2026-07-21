@@ -1,0 +1,62 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Guard release branch
+        shell: pwsh
+        run: |
+          if ("${{ github.ref }}" -notmatch '^refs/heads/release/') {
+            Write-Error "This workflow only runs from release/* branches (got '${{ github.ref }}')."
+            exit 1
+          }
+
+      # Full history, not the default shallow clone: AppCommon.props' SetBuildNumber target runs
+      # `git rev-list --count HEAD` to derive the build number, which needs the whole commit graph.
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      # AppCommon.props derives Version from VersionPrefix plus the commit count (see SetBuildNumber
+      # target); reading it back here keeps the release tag in sync with what gets baked into the
+      # published binary instead of duplicating that logic.
+      - name: Read app version
+        id: version
+        run: |
+          $version = dotnet build UI\App\AppWinOnly.csproj --configuration Release --framework net10.0-windows10.0.19041.0 -t:Build -getProperty:Version
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Publish Windows build
+        run: |
+          dotnet publish UI\App\AppWinOnly.csproj --configuration Release --framework net10.0-windows10.0.19041.0 --output publish\win-x64
+
+      - name: Zip published output
+        shell: pwsh
+        run: Compress-Archive -Path publish\win-x64\* -DestinationPath GT4-${{ steps.version.outputs.version }}-win-x64.zip
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v${{ steps.version.outputs.version }}" "GT4-${{ steps.version.outputs.version }}-win-x64.zip" --title "v${{ steps.version.outputs.version }}" --generate-notes --target "${{ github.sha }}"
