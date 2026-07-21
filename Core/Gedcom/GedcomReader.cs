@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace GT4.Core.Gedcom;
 
 /// <summary>
@@ -12,6 +14,9 @@ internal static class GedcomReader
     var roots = new List<GedcomNode>();
     // The most recent node seen at each level; a node attaches under the node one level shallower.
     var openNodes = new Dictionary<int, GedcomNode>();
+    // Continuations accumulate here instead of via repeated string concatenation, which is quadratic
+    // for records with many CONC/CONT lines; flushed into GedcomNode.Value once reading completes.
+    var continuations = new Dictionary<GedcomNode, StringBuilder>();
 
     string? line;
     while ((line = await reader.ReadLineAsync(token)) != null)
@@ -24,7 +29,7 @@ internal static class GedcomReader
 
       if (tag is GedcomTags.Concatenation or GedcomTags.Continuation)
       {
-        AppendContinuation(openNodes, level, tag, value);
+        AppendContinuation(openNodes, continuations, level, tag, value);
         continue;
       }
 
@@ -40,16 +45,25 @@ internal static class GedcomReader
       openNodes[level] = node;
     }
 
+    foreach (var (node, builder) in continuations)
+      node.Value = builder.ToString();
+
     return [.. roots];
   }
 
-  private static void AppendContinuation(Dictionary<int, GedcomNode> openNodes, int level, string tag, string? value)
+  private static void AppendContinuation(Dictionary<int, GedcomNode> openNodes, Dictionary<GedcomNode, StringBuilder> continuations, int level, string tag, string? value)
   {
     if (!openNodes.TryGetValue(level - 1, out var owner))
       return;
 
+    if (!continuations.TryGetValue(owner, out var builder))
+    {
+      builder = new StringBuilder(owner.Value ?? string.Empty);
+      continuations[owner] = builder;
+    }
+
     var separator = tag == GedcomTags.Continuation ? "\n" : string.Empty;
-    owner.Value = (owner.Value ?? string.Empty) + separator + (value ?? string.Empty);
+    builder.Append(separator).Append(value);
   }
 
   private static (int Level, string? Xref, string Tag, string? Value)? ParseLine(string rawLine)
