@@ -35,7 +35,8 @@ internal sealed class TestableProjectPage : ProjectPage
     GedcomImportEncoding gedcomImportEncoding,
     IAlertService alertService,
     INavigationService navigationService,
-    IBiologicalSexFormatter biologicalSexFormatter)
+    IBiologicalSexFormatter biologicalSexFormatter,
+    IProjectRevisionMonitor projectRevisionMonitor)
     : base(
       nameTypeFormatter,
       cancellationTokenProvider,
@@ -49,15 +50,16 @@ internal sealed class TestableProjectPage : ProjectPage
       gedcomImportEncoding,
       alertService,
       navigationService,
-      biologicalSexFormatter)
+      biologicalSexFormatter,
+      projectRevisionMonitor)
   {
     // Families is bound to CollectionChanged, not PropertyChanged: RefreshView() (used by the
     // "Refresh" command and OnNavigatedTo) reflectively raises OnPropertyChanged for every one of
     // ProjectPage's own public properties regardless of whether a load actually ran, so any
     // PropertyChanged-based signal fires the instant RefreshView() is called -- well before the
-    // background fetch it kicks off actually finishes. EnsureFamiliesLoaded's eager _Families.Clear()
-    // (synchronous, before the fetch starts) fires a Reset action; only the later _Families.AddRange
-    // on fetch completion fires Add actions, so filtering to Add isolates genuine data arrival.
+    // background fetch it kicks off actually finishes. EnsureFamiliesLoaded's Clear+AddRange both
+    // happen together on fetch completion (a Reset immediately followed by an Add), so filtering to
+    // Add isolates genuine data arrival from that earlier RefreshView() noise.
     ((INotifyCollectionChanged)Families).CollectionChanged += (_, e) =>
     {
       if (e.Action == NotifyCollectionChangedAction.Add)
@@ -75,6 +77,9 @@ internal sealed class TestableProjectPage : ProjectPage
   public PersonFilterView FilterView { get; }
 
   public Task InvokePageCommandAsync(object parameter) => OnPageCommand(parameter);
+
+  // NavigatedToEventArgs has no accessible test-side constructor and OnNavigatedTo never reads it.
+  public void InvokeNavigatedTo() => OnNavigatedTo(null!);
 
   /// <summary>
   /// How many background families loads have added items to the underlying collection. A

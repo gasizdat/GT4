@@ -17,14 +17,14 @@ public partial class StatisticsPage : ContentPage
   private readonly INameFormatter _NameFormatter;
 
   private ProjectStatistics _Statistics = ProjectStatistics.Empty;
-  private long? _ProjectRevision;
   private bool _UpdateStatistics = true;
 
   public StatisticsPage(
     ICurrentProjectProvider currentProjectProvider,
     ICancellationTokenProvider cancellationTokenProvider,
     IAlertService alertService,
-    INameFormatter nameFormatter)
+    INameFormatter nameFormatter,
+    IProjectRevisionMonitor projectRevisionMonitor)
   {
     _CurrentProjectProvider = currentProjectProvider;
     _CancellationTokenProvider = cancellationTokenProvider;
@@ -32,6 +32,8 @@ public partial class StatisticsPage : ContentPage
     _NameFormatter = nameFormatter;
 
     InitializeComponent();
+    Loaded += (_, _) => projectRevisionMonitor.RevisionChanged += OnRevisionChanged;
+    Unloaded += (_, _) => projectRevisionMonitor.RevisionChanged -= OnRevisionChanged;
   }
 
   // The single trigger for the (lazy, async) load: every display property below reads Statistics, so
@@ -55,7 +57,6 @@ public partial class StatisticsPage : ContentPage
   {
     using var token = _CancellationTokenProvider.CreateDbCancellationToken();
     var project = _CurrentProjectProvider.Project;
-    _ProjectRevision = project.ProjectRevision;
 
     var persons = await project.PersonManager.GetPersonInfosAsync(selectMainPhoto: true, token);
     var familyNames = await project.FamilyManager.GetFamiliesAsync(token);
@@ -70,18 +71,16 @@ public partial class StatisticsPage : ContentPage
     }, _AlertService);
   }
 
-  protected void OnNavigatedTo(object sender, NavigatedToEventArgs e)
+  protected void OnNavigatedTo(object sender, NavigatedToEventArgs e) => Refresh();
+
+  private void OnRevisionChanged(object? sender, EventArgs e) => Refresh();
+
+  // No XAML element binds to Statistics directly -- re-reading it here is what actually restarts
+  // the load, not just flagging _UpdateStatistics and hoping something else re-reads it.
+  private void Refresh()
   {
-    var projectRevision = _CurrentProjectProvider.Project.ProjectRevision;
-    if (projectRevision != _ProjectRevision)
-    {
-      // No XAML element binds to Statistics directly (the bound properties are the formatted *Text
-      // ones derived from it), so re-reading it here -- rather than only flagging it and hoping
-      // something else re-reads it -- is what actually restarts the load; LoadStatisticsAsync's own
-      // RefreshView() on completion is what then updates the bound text properties.
-      _UpdateStatistics = true;
-      _ = Statistics;
-    }
+    _UpdateStatistics = true;
+    _ = Statistics;
   }
 
   private static string FormatYears(double? years) =>

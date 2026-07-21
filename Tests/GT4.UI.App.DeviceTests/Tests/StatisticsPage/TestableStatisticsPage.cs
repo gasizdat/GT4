@@ -22,8 +22,9 @@ internal sealed class TestableStatisticsPage : StatisticsPage
     ICurrentProjectProvider currentProjectProvider,
     ICancellationTokenProvider cancellationTokenProvider,
     IAlertService alertService,
-    INameFormatter nameFormatter)
-    : base(currentProjectProvider, cancellationTokenProvider, alertService, nameFormatter)
+    INameFormatter nameFormatter,
+    IProjectRevisionMonitor projectRevisionMonitor)
+    : base(currentProjectProvider, cancellationTokenProvider, alertService, nameFormatter, projectRevisionMonitor)
   {
   }
 
@@ -39,8 +40,7 @@ internal sealed class TestableStatisticsPage : StatisticsPage
     }
   }
 
-  // OnNavigatedTo never reads its NavigatedToEventArgs (it only checks ProjectRevision), and that
-  // type has no accessible test-side constructor, so null stands in for it here.
+  // NavigatedToEventArgs has no accessible test-side constructor and OnNavigatedTo never reads it.
   public void InvokeNavigatedTo() => OnNavigatedTo(this, null!);
 
   /// <summary>

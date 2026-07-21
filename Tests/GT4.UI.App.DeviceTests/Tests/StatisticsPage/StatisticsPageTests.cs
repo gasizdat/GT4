@@ -1,6 +1,8 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI;
+using GT4.UI.Abstraction;
 using GT4.UI.Utils.Formatters;
 using Moq;
 using Xunit;
@@ -108,14 +110,50 @@ public class StatisticsPageTests
   }
 
   [Fact]
-  public async Task OnNavigatedTo_does_not_reload_when_the_project_revision_is_unchanged()
+  public async Task OnNavigatedTo_always_reloads_even_when_the_project_revision_is_unchanged()
   {
     var services = new TestServices();
     var page = await CreatePageAsync(services);
     await page.WaitForFirstLoadAsync();
-    var callsBefore = services.PersonManager.Invocations.Count(i => i.Method.Name == nameof(IPersonManager.GetPersonInfosAsync));
 
-    await MainThread.InvokeOnMainThreadAsync(page.InvokeNavigatedTo);
+    var statistics = await page.ReloadStatisticsAsync(page.InvokeNavigatedTo);
+
+    var callsAfter = services.PersonManager.Invocations.Count(i => i.Method.Name == nameof(IPersonManager.GetPersonInfosAsync));
+    Assert.True(callsAfter >= 2);
+  }
+
+  [Fact]
+  public async Task RevisionChanged_reloads_while_the_page_is_loaded()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+    await page.WaitForFirstLoadAsync();
+    var monitor = (ProjectRevisionMonitor)services.Provider.GetRequiredService<IProjectRevisionMonitor>();
+    await using var window = await WindowHost.AttachAsync(page);
+    await Poll.UntilAsync(() => Task.FromResult(monitor.SubscriberCount), count => count > 0, timeoutMessage: "The page never subscribed to RevisionChanged.");
+    services.Project.SetupGet(p => p.ProjectRevision).Returns(42);
+
+    await page.ReloadStatisticsAsync(monitor.CheckRevision);
+
+    var callsAfter = services.PersonManager.Invocations.Count(i => i.Method.Name == nameof(IPersonManager.GetPersonInfosAsync));
+    Assert.True(callsAfter >= 2);
+  }
+
+  [Fact]
+  public async Task RevisionChanged_does_not_reload_after_the_page_is_unloaded()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+    await page.WaitForFirstLoadAsync();
+    var monitor = (ProjectRevisionMonitor)services.Provider.GetRequiredService<IProjectRevisionMonitor>();
+    var window = await WindowHost.AttachAsync(page);
+    await Poll.UntilAsync(() => Task.FromResult(monitor.SubscriberCount), count => count > 0, timeoutMessage: "The page never subscribed to RevisionChanged.");
+    await window.DisposeAsync();
+    var callsBefore = services.PersonManager.Invocations.Count(i => i.Method.Name == nameof(IPersonManager.GetPersonInfosAsync));
+    services.Project.SetupGet(p => p.ProjectRevision).Returns(43);
+
+    await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
+    await Task.Delay(200);
 
     var callsAfter = services.PersonManager.Invocations.Count(i => i.Method.Name == nameof(IPersonManager.GetPersonInfosAsync));
     Assert.Equal(callsBefore, callsAfter);
