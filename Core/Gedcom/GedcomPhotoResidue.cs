@@ -20,7 +20,8 @@ public static class GedcomPhotoResidue
   /// OBJE to carry residual tags from, so a <c>FILE</c> node holding the file's own name is synthesized.</summary>
   public static byte[] EncodeAttachment(byte[] fileBytes, string fileName)
   {
-    var residual = new GedcomNode { Tag = GedcomTags.Object }.Add(new GedcomNode { Tag = GedcomTags.File, Value = fileName });
+    var fileNode = new GedcomNode { Tag = GedcomTags.File, Value = fileName };
+    var residual = new GedcomNode { Tag = GedcomTags.Object }.Add(fileNode);
     return Encode(fileBytes, residual);
   }
 

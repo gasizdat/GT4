@@ -351,6 +351,18 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     return ret.ToArray();
   }
 
+  private static async Task<IEnumerable<FileResult>?> PickFilesAsync(PickOptions pickOptions, bool allowMultiple)
+  {
+    if (allowMultiple)
+    {
+      var files = await FilePicker.Default.PickMultipleAsync(pickOptions);
+      return files?.Where(f => f is not null).Select(r => r!);
+    }
+
+    var result = await FilePicker.Default.PickAsync(pickOptions);
+    return result is null ? null : [result];
+  }
+
   private async Task OnAddOrUpdatePhotoAsync(PersonDataItem? photo)
   {
     var pickOptions = new PickOptions
@@ -358,18 +370,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       PickerTitle = UIStrings.FileDialogSelectPictures,
       FileTypes = FilePickerFileType.Images
     };
-    IEnumerable<FileResult>? results;
-    if (photo is null)
-    {
-      var files = await FilePicker.Default.PickMultipleAsync(pickOptions);
-      results = files?.Where(f => f is not null).Select(r => r!);
-    }
-    else
-    {
-      var result = await FilePicker.Default.PickAsync(pickOptions);
-      results = result is null ? null : [result];
-    }
-
+    var results = await PickFilesAsync(pickOptions, allowMultiple: photo is null);
     if (results is null)
     {
       return;
@@ -416,18 +417,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private async Task OnAddOrUpdateAttachmentAsync(PersonDataItem? attachment)
   {
     var pickOptions = new PickOptions { PickerTitle = UIStrings.FileDialogSelectAttachment };
-    IEnumerable<FileResult>? results;
-    if (attachment is null)
-    {
-      var files = await FilePicker.Default.PickMultipleAsync(pickOptions);
-      results = files?.Where(f => f is not null).Select(r => r!);
-    }
-    else
-    {
-      var result = await FilePicker.Default.PickAsync(pickOptions);
-      results = result is null ? null : [result];
-    }
-
+    var results = await PickFilesAsync(pickOptions, allowMultiple: attachment is null);
     if (results is null)
     {
       return;
@@ -440,9 +430,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       var filesContent = results.Select(file => (Stream: file.OpenReadAsync(), file.FileName, MimeType: file.ContentType)).ToArray();
       streams = await Task.WhenAll(filesContent.Select(file => file.Stream));
 
+      using var token = _Factory.CancellationTokenProvider.CreateShortOperationCancellationToken();
       foreach (var content in filesContent)
       {
-        using var token = _Factory.CancellationTokenProvider.CreateShortOperationCancellationToken();
         var pick = new AttachmentPick(FromStream(content.Stream.Result), content.FileName, content.MimeType);
         var attachmentAsset = await converter.FromObjectAsync(pick, token);
         if (attachmentAsset is null)
