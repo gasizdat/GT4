@@ -179,6 +179,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Add attachment.
+        /// </summary>
+        public static string BtnNameAddPersonAttachment {
+            get {
+                return ResourceManager.GetString("BtnNameAddPersonAttachment", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Add name.
         /// </summary>
         public static string BtnNameAddPersonName {
@@ -860,6 +869,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Attachments.
+        /// </summary>
+        public static string FieldPersonAttachments {
+            get {
+                return ResourceManager.GetString("FieldPersonAttachments", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Biography.
         /// </summary>
         public static string FieldPersonBiography {
@@ -1017,6 +1035,15 @@ namespace GT4.UI.Resources {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to Select file.
+        /// </summary>
+        public static string FileDialogSelectAttachment {
+            get {
+                return ResourceManager.GetString("FileDialogSelectAttachment", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Select a GEDCOM file.
         /// </summary>

@@ -163,6 +163,109 @@
             </Grid>
           </Border>
 
+          <!--  Attachments  -->
+          <Border Style="{StaticResource CardBorderStyle}">
+            <Grid
+                ColumnDefinitions="*, Auto"
+                RowDefinitions="Auto, *, Auto">
+
+              <Label
+                  Grid.Row="0"
+                  Grid.Column="0"
+                  Grid.ColumnSpan="2"
+                  Style="{StaticResource GroupTitle}"
+                  Text="{x:Static resources:UIStrings.FieldPersonAttachments}" />
+
+              <CollectionView
+                  Grid.Row="1"
+                  Grid.Column="0"
+                  Grid.ColumnSpan="2"
+                  ItemsSource="{Binding Attachments, Source={x:Reference Root}}"
+                  SelectionMode="Single">
+
+                <CollectionView.ItemTemplate>
+                  <DataTemplate>
+                    <Grid
+                        x:Name="PersonAttachment"
+                        Padding="{StaticResource CollectionItemsVerticalPadding}"
+                        ColumnDefinitions="*, Auto, Auto, Auto, Auto"
+                        Style="{StaticResource HoverItem}">
+
+                      <Label
+                          Grid.Column="0"
+                          Style="{StaticResource FieldValue}"
+                          Text="{Binding Content}"
+                          VerticalOptions="Center" />
+
+                      <Button
+                          Grid.Column="1"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource UpAdorner}"
+                          VerticalOptions="Center">
+
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="MoveAttachmentUpCommand"
+                              Element="{Binding Source={x:Reference PersonAttachment}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
+
+                      <Button
+                          Grid.Column="2"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource DownAdorner}"
+                          VerticalOptions="Center">
+
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="MoveAttachmentDownCommand"
+                              Element="{Binding Source={x:Reference PersonAttachment}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
+
+                      <Button
+                          Grid.Column="3"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource EditAdorner}"
+                          VerticalOptions="Center">
+
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="EditAttachmentCommand"
+                              Element="{Binding Source={x:Reference PersonAttachment}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
+
+                      <Button
+                          Grid.Column="4"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource DeleteAdorner}"
+                          VerticalOptions="Center">
+
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="RemoveAttachmentCommand"
+                              Element="{Binding Source={x:Reference PersonAttachment}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
+
+                    </Grid>
+                  </DataTemplate>
+                </CollectionView.ItemTemplate>
+              </CollectionView>
+
+              <Button
+                  Grid.Row="2"
+                  Grid.Column="0"
+                  Grid.ColumnSpan="2"
+                  Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                  CommandParameter="AddAttachmentCommand"
+                  HorizontalOptions="Fill"
+                  Style="{StaticResource TextAdorner}"
+                  Text="{x:Static resources:UIStrings.BtnNameAddPersonAttachment}" />
+            </Grid>
+          </Border>
+
           <!--  Biological Sex  -->
           <Border Style="{StaticResource CardBorderStyle}">
             <Grid

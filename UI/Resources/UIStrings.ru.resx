@@ -262,6 +262,12 @@
   <data name="FieldPersonBiography" xml:space="preserve">
     <value>Биография</value>
   </data>
+  <data name="FieldPersonAttachments" xml:space="preserve">
+    <value>Вложения</value>
+  </data>
+  <data name="BtnNameAddPersonAttachment" xml:space="preserve">
+    <value>Добавить вложение</value>
+  </data>
   <data name="RelMother" xml:space="preserve">
     <value>Мать</value>
   </data>
@@ -384,6 +390,9 @@
   </data>
   <data name="FileDialogSelectPictures" xml:space="preserve">
     <value>Выбрать изображения</value>
+  </data>
+  <data name="FileDialogSelectAttachment" xml:space="preserve">
+    <value>Выбрать файл</value>
   </data>
   <data name="MenuItemNameRemove_1" xml:space="preserve">
     <value>❌ Удалить '{0}'</value>

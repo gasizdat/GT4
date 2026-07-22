@@ -35,6 +35,7 @@ public class GT4Services
       .AddKeyedSingleton<IDataConverter, GedcomDataConverter>(DataCategory.PersonGedcomTags)
       .AddKeyedSingleton<IDataConverter, PhotoTagDataConverter>(DataCategory.PersonMainPhotoTagged)
       .AddKeyedSingleton<IDataConverter, PhotoTagDataConverter>(DataCategory.PersonPhotoTagged)
+      .AddKeyedSingleton<IDataConverter, AttachmentDataConverter>(DataCategory.PersonAttachment)
       .AddSingleton<IAlertService, AlertService>()
       .AddSingleton<INavigationService, NavigationService>()
       .AddSingleton<IProjectRevisionMonitor, ProjectRevisionMonitor>()

@@ -367,7 +367,7 @@ public partial class ProjectPage : ContentPage
   // which lets the user save or send it. GEDCOM 5.5.1 is UTF-8, written without a BOM.
   private async Task OnExportGedcom()
   {
-    var fileName = SanitizeFileName(_CurrentProjectProvider.Info.Name) + ".ged";
+    var fileName = FileNameUtils.Sanitize(_CurrentProjectProvider.Info.Name, "project") + ".ged";
     var path = Path.Combine(FileSystem.CacheDirectory, fileName);
 
     await using (var writer = new StreamWriter(path, false, new UTF8Encoding(false)))
@@ -431,10 +431,4 @@ public partial class ProjectPage : ContentPage
   private static string? MediaBasePath(FileResult file) =>
     string.IsNullOrEmpty(file.FullPath) ? null : Path.GetDirectoryName(file.FullPath);
 
-  private static string SanitizeFileName(string name)
-  {
-    var invalid = Path.GetInvalidFileNameChars();
-    var sanitized = new string(name.Select(c => invalid.Contains(c) ? '_' : c).ToArray());
-    return string.IsNullOrWhiteSpace(sanitized) ? "project" : sanitized;
-  }
 }

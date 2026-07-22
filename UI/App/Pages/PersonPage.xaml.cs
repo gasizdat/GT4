@@ -38,6 +38,7 @@ public partial class PersonPage : ContentPage
   private PersonFullInfo _PersonFullInfo = PersonFullInfo.Empty;
   private ImageSource[] _Photos = [];
   private string?[] _Captions = [];
+  private AttachmentInfo[] _Attachments = [];
   private string _Biography = string.Empty;
   private PersonPageSmartLayout _SmartLayout = new();
   private bool _ExpandAll = false;
@@ -167,6 +168,10 @@ public partial class PersonPage : ContentPage
 
   public string?[] Captions => _Captions;
 
+  public AttachmentInfo[] Attachments => _Attachments;
+
+  public bool ShowAttachments => _Attachments.Length != 0;
+
   public PersonFullInfo PersonFullInfo => _PersonFullInfo;
 
   public PersonInfo PersonInfo
@@ -281,6 +286,18 @@ public partial class PersonPage : ContentPage
     }
   }
 
+  // attachment.FileName is often a full original path -- a common artifact of GEDCOM imports.
+  private async Task OnOpenAttachmentAsync(AttachmentInfo attachment)
+  {
+    using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
+    var fileName = FileNameUtils.Sanitize(attachment.FileName, "attachment");
+    var path = Path.Combine(FileSystem.CacheDirectory, fileName);
+    var bytes = GedcomPhotoResidue.ExtractImageBytes(attachment.Data.Content);
+    await File.WriteAllBytesAsync(path, bytes, token);
+
+    await Launcher.Default.OpenAsync(new OpenFileRequest(fileName, new ReadOnlyFile(path)));
+  }
+
   private async Task GetPersonDataAsync(Person person, bool addToNavigation)
   {
     try
@@ -292,7 +309,9 @@ public partial class PersonPage : ContentPage
       var stepChildrenTasks = project.RelativesProvider.GetStepChildrenAsync(personFullInfo.RelativeInfos, token);
       var bioTask = _TextConverter.ToObjectAsync(personFullInfo.Biography, token);
       var gedcomTask = _GedcomConverter.ToObjectAsync(personFullInfo.GedcomData, token);
-      await Task.WhenAll(parentsTasks, stepChildrenTasks, bioTask, gedcomTask);
+      var attachmentNamesTask = Task.WhenAll(
+        personFullInfo.Attachments.Select(data => GedcomPhotoResidue.ExtractFileNameAsync(data, token)));
+      await Task.WhenAll(parentsTasks, stepChildrenTasks, bioTask, gedcomTask, attachmentNamesTask);
 
       var parents = parentsTasks.Result;
       var stepChildren = stepChildrenTasks.Result;
@@ -328,11 +347,16 @@ public partial class PersonPage : ContentPage
         photos = photosTask.Result;
         captions = captionsTask.Result;
       }
+
+      var attachments = personFullInfo.Attachments
+        .Zip(attachmentNamesTask.Result, (data, fileName) => new AttachmentInfo(fileName ?? string.Empty, data))
+        .ToArray();
+
       // UpdateUI touches the project document again on the UI thread; SafeTask.RunOnMainThread keeps
       // an escaped exception (e.g. the project closed while backgrounding) from going unobserved.
       _ = SafeTask.RunOnMainThread(() => UpdateUI(personFullInfo,
                                                   roots,
-                                                  photos, captions, bioTask.Result as string,
+                                                  photos, captions, attachments, bioTask.Result as string,
                                                   gedcomTask.Result as string,
                                                   addToNavigation), _AlertService);
     }
@@ -381,6 +405,7 @@ public partial class PersonPage : ContentPage
                        RelativeInfo[] roots,
                        ImageSource[] photos,
                        string?[] captions,
+                       AttachmentInfo[] attachments,
                        string? bio,
                        string? gedcomDetails,
                        bool addToNavigation)
@@ -388,6 +413,7 @@ public partial class PersonPage : ContentPage
     _PersonFullInfo = personFullInfo;
     _Photos = photos;
     _Captions = captions;
+    _Attachments = attachments;
     _Biography = CombineBiography(bio, gedcomDetails);
     _AllRoots = roots;
     // Only after the new roots land: with the panel open, ResetFilterData re-fetches immediately,
@@ -461,6 +487,9 @@ public partial class PersonPage : ContentPage
       case RelativeInfo relativeInfo:
         ShowPersonInfo(relativeInfo, true);
         break;
+      case AttachmentInfo attachment:
+        await OnOpenAttachmentAsync(attachment);
+        break;
       case string commandName when commandName == "PreviousPerson":
         OnNextPerson(-1);
         break;
@@ -513,3 +542,5 @@ public partial class PersonPage : ContentPage
     PersonInfo = info;
   }
 }
+
+public sealed record AttachmentInfo(string FileName, Data Data);

@@ -16,6 +16,15 @@ namespace GT4.Core.Gedcom;
 /// </summary>
 public static class GedcomPhotoResidue
 {
+  /// <summary>Builds a brand-new attachment's envelope from a freshly picked file -- there is no existing
+  /// OBJE to carry residual tags from, so a <c>FILE</c> node holding the file's own name is synthesized.</summary>
+  public static byte[] EncodeAttachment(byte[] fileBytes, string fileName)
+  {
+    var fileNode = new GedcomNode { Tag = GedcomTags.File, Value = fileName };
+    var residual = new GedcomNode { Tag = GedcomTags.Object }.Add(fileNode);
+    return Encode(fileBytes, residual);
+  }
+
   internal static byte[] Encode(byte[] imageBytes, GedcomNode residual)
   {
     var tagWriter = new StringWriter();

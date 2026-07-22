@@ -1,3 +1,4 @@
+using GT4.Core.Gedcom;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
@@ -21,6 +22,9 @@ public class CreateOrUpdatePersonDialogTests
   private static Name N(int id, string value, NameType type) => new(id, value, type, null);
 
   private static Data Photo(int id) => new(id, Content: [1, 2, 3], MimeType: "image/png", Category: DataCategory.PersonPhoto);
+
+  private static Data Attachment(int id, string fileName = "scan.pdf") => new(
+    id, Content: GedcomPhotoResidue.EncodeAttachment([1, 2, 3], fileName), MimeType: "application/pdf", Category: DataCategory.PersonAttachment);
 
   private static PersonFullInfo CreateSamplePerson() => new(
     Id: 1,
@@ -189,6 +193,79 @@ public class CreateOrUpdatePersonDialogTests
     Assert.Equal(DataCategory.PersonMainPhotoTagged, saved.MainPhoto.Category);
     Assert.Equal(taggedPhoto.Content, saved.MainPhoto.Content);
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+  }
+
+  [Fact]
+  public async Task SaveCommand_UntouchedAttachment_SurvivesByteForByte()
+  {
+    // Guards the ObservableCollection<PersonDataItem>/ToDataAsync materialization added for
+    // attachments: saving without touching them must not reconvert or drop the attachment.
+    var services = new TestServices();
+    var content = GedcomPhotoResidue.EncodeAttachment([4, 5, 6], "deed.pdf");
+    var attachment = new Data(30, Content: content, MimeType: "application/pdf", Category: DataCategory.PersonAttachment);
+    var person = CreateSamplePerson() with { Attachments = [attachment] };
+    var dialog = await CreateDialogAsync(services, person);
+
+    Assert.Single(dialog.Attachments);
+
+    // Save is a no-op (treated as Cancel) unless something was modified; mark the dialog dirty via an
+    // unrelated field (re-picking the same sex) without touching the attachment.
+    await MainThread.InvokeOnMainThreadAsync(() =>
+      dialog.BioSex = dialog.BiologicalSexes.Single(s => s.Info == BiologicalSex.Male));
+
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.DialogCommand.Execute("CreatePersonCommand"));
+    var saved = await dialog.Info;
+
+    Assert.NotNull(saved);
+    var savedAttachment = Assert.Single(saved.Attachments);
+    Assert.Equal(DataCategory.PersonAttachment, savedAttachment.Category);
+    Assert.Equal(attachment.Content, savedAttachment.Content);
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+  }
+
+  [Fact]
+  public async Task RemoveAttachmentCommand_removes_the_attachment_and_marks_modified()
+  {
+    var person = CreateSamplePerson() with { Attachments = [Attachment(30), Attachment(31)] };
+    var dialog = await CreateDialogAsync(new TestServices(), person);
+    var attachment = dialog.Attachments.ElementAt(0);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+      dialog.DialogCommand.Execute(Adorner("RemoveAttachmentCommand", attachment)));
+
+    await WaitForAsync(() => dialog.Attachments.Count, count => count == 1, "RemoveAttachmentCommand did not remove the attachment.");
+    Assert.DoesNotContain(attachment, dialog.Attachments);
+  }
+
+  [Fact]
+  public async Task MoveAttachmentDownCommand_reorders_attachments()
+  {
+    var person = CreateSamplePerson() with { Attachments = [Attachment(30, "first.pdf"), Attachment(31, "second.pdf")] };
+    var dialog = await CreateDialogAsync(new TestServices(), person);
+    var first = dialog.Attachments.ElementAt(0);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+      dialog.DialogCommand.Execute(Adorner("MoveAttachmentDownCommand", first)));
+
+    await WaitForAsync(() => dialog.Attachments.ToArray(), items => items.Length == 2 && items[1] == first,
+      "MoveAttachmentDownCommand did not reorder the attachment.");
+  }
+
+  [Fact]
+  public async Task MoveAttachmentUpCommand_on_the_first_item_reports_the_bounds_error()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson() with { Attachments = [Attachment(30)] };
+    var dialog = await CreateDialogAsync(services, person);
+    var attachment = dialog.Attachments.Single();
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+      dialog.DialogCommand.Execute(Adorner("MoveAttachmentUpCommand", attachment)));
+
+    await WaitForAsync(
+      () => services.AlertService.Invocations.Count, count => count > 0,
+      "MoveAttachmentUpCommand did not report the bounds error.");
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<ApplicationException>()), Times.Once());
   }
 
   [Fact]
