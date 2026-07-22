@@ -483,6 +483,44 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task Attachment_WithImageMimeType_SurvivesExportThenReimportAsAnAttachmentNotAPhoto()
+  {
+    // An attachment whose underlying file happens to be an image (e.g. a scanned photo saved as a
+    // generic attachment rather than via the photo picker) is indistinguishable from a real photo by
+    // FORM/FILE alone -- the _ATTACH marker is what keeps it classified as an attachment on reimport.
+    var name = await _source.Names.AddNameAsync("Scan", NameType.FirstName, null, Token);
+    var residual = new GedcomNode { Tag = "OBJE" };
+    residual.Add(new GedcomNode { Tag = "FILE", Value = "scan.png" });
+    var fileBytes = Encoding.UTF8.GetBytes("PNG-BYTES");
+    var content = GedcomPhotoResidue.Encode(fileBytes, residual);
+    var attachment = new Data(ElementId.NonCommittedId, content, "image/png", DataCategory.PersonAttachment);
+    var info = PersonFullInfo.Empty with
+    {
+      BirthDate = Year(1900),
+      Names = [name],
+      Attachments = [attachment],
+    };
+    await _source.PersonManager.AddPersonAsync(info, Token);
+
+    var text = await ExportToTextAsync(_source);
+    text.Should().Contain("_ATTACH Y");
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+
+    var person = (await reimported.Persons.GetPersonsAsync(Token)).Single();
+    var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, Token);
+
+    full.MainPhoto.Should().BeNull();
+    full.AdditionalPhotos.Should().BeEmpty();
+    var reimportedAttachment = full.Attachments.Should().ContainSingle().Which;
+    reimportedAttachment.Category.Should().Be(DataCategory.PersonAttachment);
+    reimportedAttachment.MimeType.Should().Be("image/png");
+    GedcomPhotoResidue.ExtractImageBytes(reimportedAttachment.Content).Should().Equal(fileBytes);
+    (await GedcomPhotoResidue.ExtractFileNameAsync(reimportedAttachment, Token)).Should().Be("scan.png");
+  }
+
+  [Fact]
   public async Task Attachment_BuiltViaEncodeAttachment_SurvivesExportThenReimportAsAnAttachmentNotAPhoto()
   {
     // Mirrors what the UI file picker does: a freshly picked file, never previously round-tripped through

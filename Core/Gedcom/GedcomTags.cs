@@ -42,8 +42,12 @@ internal static class GedcomTags
   public const string File = "FILE";
   public const string Primary = "_PRIM";
   public const string Title = "TITL";
+  // Marks an OBJE as a GT4 attachment rather than a photo, so an image-typed attachment (e.g. a
+  // scanned JPEG) is not reclassified as a photo on reimport -- FORM/FILE alone can't tell them apart.
+  public const string Attachment = "_ATTACH";
 
-  // The _PRIM value marking the OBJE that GT4 treats as the person's main (profile) photo.
+  // The _PRIM/_ATTACH value marking the OBJE that GT4 treats as the person's main (profile) photo,
+  // respectively as an attachment.
   public const string PrimaryYes = "Y";
 
   public const string Concatenation = "CONC";

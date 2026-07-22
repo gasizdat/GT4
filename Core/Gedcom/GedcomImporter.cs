@@ -460,6 +460,9 @@ internal sealed class GedcomImporter : IGedcomImporter
     if (obje.Tag != GedcomTags.Object)
       return null;
 
+    if (IsAttachmentMarked(obje))
+      return null;
+
     var residual = ResidualNode(obje, ObjeModeledChildren);
     var form = MediaForm(obje);
 
@@ -525,6 +528,11 @@ internal sealed class GedcomImporter : IGedcomImporter
   private static bool IsPrimary(GedcomNode obje) =>
     string.Equals(obje.ChildValue(GedcomTags.Primary), GedcomTags.PrimaryYes, StringComparison.OrdinalIgnoreCase);
 
+  // Marks an OBJE GT4 itself exported as an attachment, so an image-typed attachment is not reclassified
+  // as a photo on reimport; absent on GEDCOM from other tools, which still partition by image-ness alone.
+  private static bool IsAttachmentMarked(GedcomNode obje) =>
+    string.Equals(obje.ChildValue(GedcomTags.Attachment), GedcomTags.PrimaryYes, StringComparison.OrdinalIgnoreCase);
+
   /// <summary>
   /// The resolved path of an <c>OBJE</c>'s external image <c>FILE</c>, else null (a non-image FILE is left
   /// for <see cref="TryReadAttachment"/> instead). Whether the path is actually readable is the media
@@ -561,7 +569,8 @@ internal sealed class GedcomImporter : IGedcomImporter
   // An attachment's own modeled fields: FORM/PRIMARY/BLOB are regenerated from the stored Data on export.
   // FILE is deliberately left in the residual -- unlike a photo, an attachment needs its original filename
   // preserved, and the residual is exactly what GedcomPhotoResidue.ExtractFileNameAsync reads back.
-  private static readonly HashSet<string> AttachmentModeledChildren = [GedcomTags.Form, GedcomTags.Primary, GedcomTags.Blob];
+  private static readonly HashSet<string> AttachmentModeledChildren =
+    [GedcomTags.Form, GedcomTags.Primary, GedcomTags.Blob, GedcomTags.Attachment];
 
   private sealed record AttachmentCandidate(GedcomNode Node, byte[] Content, string? MimeType, GedcomNode Residual);
 
@@ -585,12 +594,14 @@ internal sealed class GedcomImporter : IGedcomImporter
       return null;
 
     var form = MediaForm(obje);
+    var marked = IsAttachmentMarked(obje);
     byte[]? content;
     if (HasEmbeddedBlob(obje))
     {
       // Mirrors TryReadPhoto's embedded-blob gate: only an explicit non-image FORM makes this an
       // attachment, so a FORM-less BLOB (which TryReadPhoto claims as a photo) is never also claimed here.
-      if (form is null || IsImageMedia(form, string.Empty))
+      // A _ATTACH marker (GT4's own export) overrides the image-ness check either way.
+      if (!marked && (form is null || IsImageMedia(form, string.Empty)))
         return null;
 
       try
@@ -604,7 +615,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     }
     else
     {
-      if (IsImageMedia(form, obje.ChildValue(GedcomTags.File) ?? string.Empty))
+      if (!marked && IsImageMedia(form, obje.ChildValue(GedcomTags.File) ?? string.Empty))
         return null;
 
       var path = ExternalFilePath(obje, mediaBasePath);
