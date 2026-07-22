@@ -440,9 +440,11 @@ internal sealed class GedcomExporter : IGedcomExporter
 
   /// <summary>
   /// Emits a GT4 attachment as an embedded multimedia object, mirroring <see cref="AddPhotoAsync"/> minus
-  /// the <c>_PRIM</c> marker (attachments have no main/additional concept). An attachment's <c>Content</c>
-  /// is always a <see cref="GedcomPhotoResidue"/> envelope, so it is always decoded and its residual
-  /// (chiefly <c>FILE</c>, the original filename) merged back onto the regenerated OBJE.
+  /// the <c>_PRIM</c> marker (attachments have no main/additional concept) and plus a <c>_ATTACH Y</c>
+  /// marker, so an image-typed attachment (indistinguishable from a photo by FORM alone) still imports
+  /// back as an attachment. An attachment's <c>Content</c> is always a <see cref="GedcomPhotoResidue"/>
+  /// envelope, so it is always decoded and its residual (chiefly <c>FILE</c>, the original filename)
+  /// merged back onto the regenerated OBJE.
   /// </summary>
   private static async Task AddAttachmentAsync(GedcomNode individual, Data attachment, CancellationToken token)
   {
@@ -454,6 +456,7 @@ internal sealed class GedcomExporter : IGedcomExporter
     {
       obje.Add(new GedcomNode { Tag = GedcomTags.Form, Value = form });
     }
+    obje.Add(new GedcomNode { Tag = GedcomTags.Attachment, Value = GedcomTags.PrimaryYes });
     var base64 = Convert.ToBase64String(bytes);
     obje.Add(new GedcomNode { Tag = GedcomTags.Blob, Value = base64 });
     obje.Add([.. residual.Children]);
