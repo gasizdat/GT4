@@ -2,9 +2,7 @@ namespace GT4.UI.Utils;
 
 public static class FileNameUtils
 {
-  // Strips every character invalid in a Windows/Android/iOS file name -- including path separators and
-  // drive letters -- so a GEDCOM FILE value (often a full original path) can't escape the directory it's
-  // written into.
+  // Replacing invalid characters keeps the result from escaping the directory it's later combined into.
   public static string Sanitize(string name, string fallback)
   {
     var invalid = Path.GetInvalidFileNameChars();

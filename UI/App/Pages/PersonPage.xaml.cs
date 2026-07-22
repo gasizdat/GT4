@@ -286,10 +286,7 @@ public partial class PersonPage : ContentPage
     }
   }
 
-  // Writes the attachment's bytes to the cache directory and hands the path to the OS, which picks
-  // whatever app it associates with the file. The FILE name is often a full original path (frequent in
-  // GEDCOM imports), so it's sanitized before being combined into the cache path -- otherwise a rooted
-  // or ".."-bearing name could escape the cache directory instead of just naming a file inside it.
+  // attachment.FileName is often a full original path -- a common artifact of GEDCOM imports.
   private async Task OnOpenAttachmentAsync(AttachmentInfo attachment)
   {
     using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();

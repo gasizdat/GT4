@@ -545,8 +545,6 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     var person = (await reimported.Persons.GetPersonsAsync(Token)).Single();
     var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, Token);
 
-    // A non-null, non-image MimeType is what keeps this an attachment on reimport rather than a photo --
-    // a null or image-shaped MimeType here would emit no/an image FORM and reclassify as a photo instead.
     full.MainPhoto.Should().BeNull();
     var reimportedAttachment = full.Attachments.Should().ContainSingle().Which;
     reimportedAttachment.Category.Should().Be(DataCategory.PersonAttachment);

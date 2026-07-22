@@ -51,8 +51,6 @@ public class AttachmentDataConverterTests
   [Fact]
   public async Task FromObjectAsync_falls_back_to_octet_stream_when_the_picker_reports_no_content_type()
   {
-    // A null/empty MimeType would emit no FORM on export, which reimports as a photo instead of an
-    // attachment -- so a picked file with no usable content type still must not stay null here.
     var pick = new AttachmentPick([1], "unknown.bin", null);
 
     var result = await new AttachmentDataConverter().FromObjectAsync(pick, CancellationToken.None);
