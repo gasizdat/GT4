@@ -386,6 +386,46 @@ public sealed class GedcomMergeImportTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task Matching_ExistingPhoto_MultiFileEventObje_SurfacesAttachmentAndKeepsSkippedPhotoInResidue()
+  {
+    // The no-silent-loss boundary for the multi-file split under gap-fill: John already has a photo, and a
+    // matched re-import brings a nested OBJE holding a jpg scan and a pdf transcription. The split turns it
+    // into two single-file OBJEs, so gap-fill (which already has a photo, but no attachment) consumes the
+    // pdf as an attachment while the jpg is not consumed -- it must still survive verbatim in residue, never
+    // silently dropped, and the consumed pdf must not also linger in residue.
+    var photoBlob = Convert.ToBase64String(Encoding.UTF8.GetBytes("existing-photo"));
+    var first =
+      "0 @I1@ INDI\n1 NAME John /Smith/\n1 SEX M\n1 BIRT\n2 DATE 1 JAN 1850\n" +
+      $"1 OBJE\n2 FORM jpeg\n2 _PRIM Y\n2 BLOB {photoBlob}\n";
+    await using var document = await NewDocumentAsync();
+    await ImportAsync(document, Doc(first));
+
+    var mediaDir = Path.Combine(Path.GetTempPath(), $"gt4_merge_media_{Guid.NewGuid():N}");
+    Directory.CreateDirectory(Path.Combine(mediaDir, "actes"));
+    await File.WriteAllBytesAsync(Path.Combine(mediaDir, "actes", "scan.jpg"), [1, 2, 3], Token);
+    await File.WriteAllBytesAsync(Path.Combine(mediaDir, "actes", "transcript.pdf"), [0x25, 0x50, 0x44, 0x46], Token);
+    try
+    {
+      var second = Doc(
+        "0 @I1@ INDI\n1 NAME John /Smith/\n1 SEX M\n1 BIRT\n2 DATE 1 JAN 1850\n2 SOUR @S1@\n" +
+        "3 OBJE\n4 TITL Acte\n4 FILE actes/scan.jpg\n5 FORM jpg\n4 FILE actes/transcript.pdf\n5 FORM pdf\n");
+      await _importer.ImportAsync(document, new StringReader(second), Token, mediaDir);
+
+      var full = await document.PersonManager.GetPersonFullInfoAsync((await PersonInfosAsync(document)).Single(), Token);
+      Encoding.UTF8.GetString(full.MainPhoto!.Content).Should().Be("existing-photo");
+      GedcomPhotoResidue.ExtractImageBytes(full.Attachments.Should().ContainSingle().Which.Content).Should().Equal([0x25, 0x50, 0x44, 0x46]);
+
+      var residue = Encoding.UTF8.GetString(full.GedcomData!.Content);
+      residue.Should().Contain("actes/scan.jpg", "the skipped photo file must survive rather than be dropped");
+      residue.Should().NotContain("actes/transcript.pdf", "the consumed attachment must not also linger in residue");
+    }
+    finally
+    {
+      Directory.Delete(mediaDir, recursive: true);
+    }
+  }
+
+  [Fact]
   public async Task ReimportingMarriedCouple_DoesNotDuplicateSpouseEdge()
   {
     var file = Doc(

@@ -395,6 +395,118 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task NestedObjeUnderEventSour_IsDiscoveredAsAttachmentAndNotDuplicatedOnExport()
+  {
+    // Mirrors issue #148: a certificate scan nested three levels deep, under BIRT -> SOUR, rather than a
+    // direct INDI child -- previously invisible to SelectAttachments and only ever surfacing as opaque residue.
+    var blob = Convert.ToBase64String(Encoding.UTF8.GetBytes("baptism-cert"));
+    var ged =
+      "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n" +
+      "1 BIRT\n2 DATE 5 SEP 1638\n2 SOUR @S1@\n3 DATA\n4 TEXT Parish register\n3 OBJE\n4 FORM pdf\n" +
+      $"4 BLOB {blob}\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var person = (await document.Persons.GetPersonsAsync(Token)).Single();
+    var full = await document.PersonManager.GetPersonFullInfoAsync(person, Token);
+
+    var attachment = full.Attachments.Should().ContainSingle().Which;
+    Encoding.UTF8.GetString(GedcomPhotoResidue.ExtractImageBytes(attachment.Content)).Should().Be("baptism-cert");
+
+    // The BIRT's other unmodeled content (the SOUR citation itself, its DATA/TEXT) still round-trips; only
+    // the consumed OBJE is pruned out, so it must not also survive inside the BIRT's residue -- otherwise
+    // export would emit it a second time.
+    var text = await ExportToTextAsync(document);
+    text.Should().Contain("2 SOUR @S1@").And.Contain("4 TEXT Parish register");
+    (text.Split("BLOB").Length - 1).Should().Be(1);
+  }
+
+  [Fact]
+  public async Task NestedObjeUnderEventSour_ImageIsDiscoveredAsPhoto()
+  {
+    // Same nesting as above, but an image-shaped OBJE is claimed by SelectPhotos instead of SelectAttachments.
+    var blob = Convert.ToBase64String(Encoding.UTF8.GetBytes("baptism-photo"));
+    var ged =
+      "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n" +
+      "1 BIRT\n2 DATE 5 SEP 1638\n2 SOUR @S1@\n3 OBJE\n4 FORM jpeg\n" +
+      $"4 BLOB {blob}\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var person = (await document.Persons.GetPersonsAsync(Token)).Single();
+    var full = await document.PersonManager.GetPersonFullInfoAsync(person, Token);
+    full.MainPhoto.Should().NotBeNull();
+    Encoding.UTF8.GetString(full.MainPhoto!.Content).Should().Be("baptism-photo");
+  }
+
+  [Fact]
+  public async Task MultiFileObjeUnderEventSour_SplitsIntoPhotoAndAttachmentAndStaysStableOnReExport()
+  {
+    // The Bourbon baptism shape: one OBJE under BIRT -> SOUR references two files sharing one TITL -- a jpg
+    // scan and a pdf transcription. Both must surface (jpg as photo, pdf as attachment), and a re-export
+    // must not grow the media on a second round-trip (the shared TITL is copied onto each split object, so
+    // this pins that the duplication is stable rather than compounding).
+    var mediaDir = Path.Combine(Path.GetTempPath(), $"gt4_media_{Guid.NewGuid():N}");
+    Directory.CreateDirectory(Path.Combine(mediaDir, "actes"));
+    var scanBytes = new byte[] { 1, 2, 3 };
+    var pdfBytes = new byte[] { 0x25, 0x50, 0x44, 0x46 };
+    await File.WriteAllBytesAsync(Path.Combine(mediaDir, "actes", "scan.jpg"), scanBytes, Token);
+    await File.WriteAllBytesAsync(Path.Combine(mediaDir, "actes", "transcript.pdf"), pdfBytes, Token);
+    try
+    {
+      var ged =
+        "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n" +
+        "1 BIRT\n2 DATE 5 SEP 1638\n2 SOUR @S1@\n3 OBJE\n4 TITL Acte de Bapteme\n" +
+        "4 FILE actes/scan.jpg\n5 FORM jpg\n4 FILE actes/transcript.pdf\n5 FORM pdf\n0 TRLR\n";
+      await using var document = await NewDocumentAsync();
+      await _importer.ImportAsync(document, new StringReader(ged), Token, mediaDir);
+
+      var person = (await document.Persons.GetPersonsAsync(Token)).Single();
+      var full = await document.PersonManager.GetPersonFullInfoAsync(person, Token);
+
+      // The jpg surfaces as a photo, carrying the shared TITL; the pdf surfaces as an attachment.
+      full.MainPhoto.Should().NotBeNull();
+      GedcomPhotoResidue.ExtractImageBytes(full.MainPhoto!.Content).Should().Equal(scanBytes);
+      (await GedcomPhotoResidue.ExtractTitleAsync(full.MainPhoto, Token)).Should().Be("Acte de Bapteme");
+      var attachment = full.Attachments.Should().ContainSingle().Which;
+      GedcomPhotoResidue.ExtractImageBytes(attachment.Content).Should().Equal(pdfBytes);
+      (await GedcomPhotoResidue.ExtractFileNameAsync(attachment, Token)).Should().Be("actes/transcript.pdf");
+
+      // Round-trip stability: export, reimport that export, export again -- the media count must not grow.
+      var firstExport = await ExportToTextAsync(document);
+      await using var roundTrip = await NewDocumentAsync();
+      await _importer.ImportAsync(roundTrip, new StringReader(firstExport), Token);
+      var secondExport = await ExportToTextAsync(roundTrip);
+      firstExport.Split("2 BLOB").Length.Should().Be(3);
+      secondExport.Split("2 BLOB").Length.Should().Be(firstExport.Split("2 BLOB").Length);
+    }
+    finally
+    {
+      Directory.Delete(mediaDir, recursive: true);
+    }
+  }
+
+  [Fact]
+  public async Task NestedEventPhoto_DoesNotDisplaceTopLevelPortraitAsMain()
+  {
+    // The direct-INDI portrait must stay the main photo even when an event carries its own nested photo:
+    // DescendantsWithTag yields direct children before nested ones, so the portrait is photos[0].
+    var portrait = Convert.ToBase64String(Encoding.UTF8.GetBytes("portrait"));
+    var eventPhoto = Convert.ToBase64String(Encoding.UTF8.GetBytes("event-scan"));
+    var ged =
+      "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n" +
+      $"1 OBJE\n2 FORM jpeg\n2 BLOB {portrait}\n" +
+      $"1 BIRT\n2 SOUR @S1@\n3 OBJE\n4 FORM jpeg\n4 BLOB {eventPhoto}\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var person = (await document.Persons.GetPersonsAsync(Token)).Single();
+    var full = await document.PersonManager.GetPersonFullInfoAsync(person, Token);
+    Encoding.UTF8.GetString(full.MainPhoto!.Content).Should().Be("portrait");
+    Encoding.UTF8.GetString(full.AdditionalPhotos.Should().ContainSingle().Which.Content).Should().Be("event-scan");
+  }
+
+  [Fact]
   public async Task FileReferenceObje_FallsBackToResidue()
   {
     // A third-party OBJE that points at an external FILE has no bytes GT4 can load, so it is not a photo;
