@@ -559,8 +559,18 @@ internal sealed class GedcomImporter : IGedcomImporter
       return null;
 
     var normalized = fileRef.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
-    return Path.IsPathRooted(normalized) ? normalized : Path.Combine(mediaBasePath, normalized);
+    return IsRootedOnAnyPlatform(fileRef) ? normalized : Path.Combine(mediaBasePath, normalized);
   }
+
+  // Path.IsPathRooted only recognizes the current OS's own rooting rules (Windows: drive letter, UNC, or a
+  // bare leading separator; POSIX: leading '/' only), so a GEDCOM authored on one platform and imported on
+  // the other would otherwise have its absolute FILE reference misjoined under mediaBasePath instead of
+  // being recognized as absolute.
+  internal static bool IsRootedOnAnyPlatform(string fileRef) =>
+    Path.IsPathRooted(fileRef) ||
+    fileRef.StartsWith('/') ||
+    fileRef.StartsWith('\\') ||
+    (fileRef.Length >= 2 && fileRef[1] == ':' && char.IsAsciiLetter(fileRef[0]));
 
   // GEDCOM 5.5.1 nests FORM under FILE; the older 5.5 form sits directly under OBJE. Read either.
   private static string? MediaForm(GedcomNode obje) =>

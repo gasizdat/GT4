@@ -485,6 +485,34 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     reader.RequestedPath.Should().Be(Path.Combine("base", "photos", "main.png"));
   }
 
+  [Theory]
+  [InlineData("/home/user/main.png")]
+  [InlineData(@"C:\Photos\main.png")]
+  [InlineData(@"\\server\share\main.png")]
+  [InlineData(@"\folder\main.png")]
+  public void IsRootedOnAnyPlatform_RecognizesAbsolutePathsFromEitherOsFamily(string fileRef)
+  {
+    GedcomImporter.IsRootedOnAnyPlatform(fileRef).Should().BeTrue();
+  }
+
+  [Theory]
+  [InlineData(@"C:\Photos\main.png")]
+  [InlineData(@"\\server\share\main.png")]
+  public void IsRootedOnAnyPlatform_CatchesWindowsStylePathsAPosixOnlyRootCheckWouldMiss(string fileRef)
+  {
+    // Path.IsPathRooted on a POSIX runtime (Android/iOS/Mac) only recognizes a leading '/', which is exactly
+    // what these Windows-authored references lack -- this is the gap that made ExternalFilePath misjoin them
+    // under mediaBasePath when GT4 imports a Windows-authored GEDCOM while running on POSIX.
+    fileRef.StartsWith('/').Should().BeFalse();
+    GedcomImporter.IsRootedOnAnyPlatform(fileRef).Should().BeTrue();
+  }
+
+  [Theory]
+  [InlineData("photos/main.png")]
+  [InlineData(@"photos\main.png")]
+  public void IsRootedOnAnyPlatform_RelativePathsAreNotRooted(string fileRef) =>
+    GedcomImporter.IsRootedOnAnyPlatform(fileRef).Should().BeFalse();
+
   [Fact]
   public async Task FileReferenceObje_NonImageLoadsAsAttachmentWhenBasePathGiven()
   {
