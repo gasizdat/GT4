@@ -57,6 +57,8 @@ jobs:
             name: ui-utils
           - project: Tests\GT4.UI.View.Tests\GT4.UI.View.Tests.csproj
             name: ui-view
+          - project: Tests\GT4.Core.Gedcom.Tests\GT4.Core.Gedcom.Tests.csproj
+            name: core-gedcom
 
     steps:
       - uses: actions/checkout@v5
