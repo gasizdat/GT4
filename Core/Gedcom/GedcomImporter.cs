@@ -29,11 +29,12 @@ internal sealed class GedcomImporter : IGedcomImporter
     var individuals = records.Where(r => r.Tag == GedcomTags.Individual).ToArray();
     var families = records.Where(r => r.Tag == GedcomTags.Family).ToArray();
 
-    // A source may pack several files under one OBJE; GT4 models one file per media object, so each is
-    // normalized up front into single-file OBJEs before any photo/attachment/residue pass runs.
-    foreach (var individual in individuals)
+    // A source may pack several files under one OBJE; GT4 models one file per media object, so each -- on
+    // an individual or nested in a family's marriage record -- is normalized up front into single-file OBJEs
+    // before any photo/attachment/residue pass runs.
+    foreach (var record in individuals.Concat(families))
     {
-      SplitMultiFileObjects(individual);
+      SplitMultiFileObjects(record);
     }
 
     // A child's tie to a family is adoptive when its FAMC link carries "PEDI adopted"; that lives on the
@@ -81,6 +82,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     foreach (var family in families)
     {
       await ImportFamilyAsync(document, family, personByXref, adoptedLinks, existingEdges, token);
+      await ImportFamilyMediaAsync(document, family, personByXref, matches, mediaBasePath, token);
     }
 
     await ImportPassthroughRecordsAsync(document, records, token);
@@ -861,6 +863,73 @@ internal sealed class GedcomImporter : IGedcomImporter
         await document.Relatives.AddRelativesAsync(parent, childRelatives, token);
       }
     }
+  }
+
+  /// <summary>
+  /// Surfaces media nested in a family record -- chiefly a marriage certificate under
+  /// <c>MARR -> SOUR -> OBJE</c> -- on the couple. GT4 has no family entity that holds attachments and
+  /// rebuilds FAM records from the edge graph on export, so a family-nested OBJE is otherwise dropped
+  /// entirely, not even kept as residue. Each file is committed once and linked to both resolved spouses, so
+  /// the bytes are shared rather than duplicated. Photos land as additional, never a spouse's main portrait.
+  /// A matched spouse that already carries byte-identical content (a re-import of the same source) is
+  /// skipped, mirroring the INDI gap-fill dedup.
+  /// </summary>
+  private async Task ImportFamilyMediaAsync(
+    IProjectDocument document,
+    GedcomNode family,
+    IReadOnlyDictionary<string, Person> personByXref,
+    IReadOnlyDictionary<string, Match> matches,
+    string? mediaBasePath,
+    CancellationToken token)
+  {
+    var husbandXref = family.ChildValue(GedcomTags.Husband);
+    var wifeXref = family.ChildValue(GedcomTags.Wife);
+    var candidates = new[]
+    {
+      (Xref: husbandXref, Person: Resolve(husbandXref, personByXref)),
+      (Xref: wifeXref, Person: Resolve(wifeXref, personByXref)),
+    };
+    var spouses = candidates.Where(spouse => spouse.Person is not null).ToArray();
+    if (spouses.Length == 0)
+      return;
+
+    var photos = SelectPhotos(family, mediaBasePath);
+    var attachments = SelectAttachments(family, mediaBasePath);
+    Data[] media =
+    [
+      .. photos.Select(photo => BuildPhotoData(photo, DataCategory.PersonPhoto)),
+      .. attachments.Select(BuildAttachmentData),
+    ];
+
+    foreach (var data in media)
+    {
+      var targets = spouses.Where(spouse => !AlreadyHasContent(spouse.Xref, matches, data.Content)).ToArray();
+      if (targets.Length == 0)
+        continue;
+
+      var committed = await document.Data.AddDataAsync(data.Content, data.MimeType, data.Category, token);
+      foreach (var target in targets)
+      {
+        await document.PersonData.AddPersonDataSetAsync(target.Person!, [committed], token);
+      }
+    }
+  }
+
+  /// <summary>
+  /// Whether a matched spouse already carries a photo or attachment with byte-identical content, so a
+  /// re-import of the same source does not add the family media a second time. A spouse imported fresh in
+  /// this run has no match entry and so never suppresses the media.
+  /// </summary>
+  private static bool AlreadyHasContent(string? xref, IReadOnlyDictionary<string, Match> matches, byte[] content)
+  {
+    if (xref is null || !matches.TryGetValue(xref, out var match))
+      return false;
+
+    var full = match.Full;
+    var existing = full.AdditionalPhotos.Concat(full.Attachments);
+    if (full.MainPhoto is not null)
+      existing = existing.Prepend(full.MainPhoto);
+    return existing.Any(data => data.Content.SequenceEqual(content));
   }
 
   private static Date? ParseSpouseDate(GedcomNode marriage)

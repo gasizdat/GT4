@@ -507,6 +507,144 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task MarriageRecordObje_SurfacesOnBothSpousesSharingOneDataRow()
+  {
+    // A marriage certificate (jpg scan + pdf transcription) sits under the FAM record's MARR -> SOUR -> OBJE.
+    // It is about the couple, and GT4 has no couple entity, so it surfaces on both spouses. FAM records are
+    // rebuilt from the edge graph on export and carry no residue, so previously these files were dropped
+    // entirely -- not even preserved verbatim like an unconsumed INDI OBJE. The bytes are stored once and
+    // linked to both spouses (a shared Data row), never a spouse's main/profile photo.
+    var mediaDir = Path.Combine(Path.GetTempPath(), $"gt4_media_{Guid.NewGuid():N}");
+    Directory.CreateDirectory(Path.Combine(mediaDir, "actes"));
+    var scanBytes = new byte[] { 1, 2, 3 };
+    var pdfBytes = new byte[] { 0x25, 0x50, 0x44, 0x46 };
+    await File.WriteAllBytesAsync(Path.Combine(mediaDir, "actes", "mariage.jpg"), scanBytes, Token);
+    await File.WriteAllBytesAsync(Path.Combine(mediaDir, "actes", "mariage.pdf"), pdfBytes, Token);
+    try
+    {
+      var ged =
+        "0 HEAD\n1 CHAR UTF-8\n" +
+        "0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n" +
+        "0 @I2@ INDI\n1 NAME Marie /Antoinette/\n1 SEX F\n" +
+        "0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n" +
+        "1 MARR\n2 DATE 16 MAY 1770\n2 SOUR @S1@\n3 OBJE\n4 TITL Acte de mariage\n" +
+        "4 FILE actes/mariage.jpg\n5 FORM jpg\n4 FILE actes/mariage.pdf\n5 FORM pdf\n0 TRLR\n";
+      await using var document = await NewDocumentAsync();
+      await _importer.ImportAsync(document, new StringReader(ged), Token, mediaDir);
+
+      var byName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
+      var louisFull = await document.PersonManager.GetPersonFullInfoAsync(byName["Louis Bourbon"], Token);
+      var marieFull = await document.PersonManager.GetPersonFullInfoAsync(byName["Marie Antoinette"], Token);
+
+      // The jpg surfaces as an additional photo on both (never the main portrait), carrying the shared TITL;
+      // the pdf as an attachment on both.
+      louisFull.MainPhoto.Should().BeNull();
+      marieFull.MainPhoto.Should().BeNull();
+      var louisPhoto = louisFull.AdditionalPhotos.Should().ContainSingle().Which;
+      var mariePhoto = marieFull.AdditionalPhotos.Should().ContainSingle().Which;
+      GedcomPhotoResidue.ExtractImageBytes(louisPhoto.Content).Should().Equal(scanBytes);
+      (await GedcomPhotoResidue.ExtractTitleAsync(louisPhoto, Token)).Should().Be("Acte de mariage");
+      var louisAttach = louisFull.Attachments.Should().ContainSingle().Which;
+      var marieAttach = marieFull.Attachments.Should().ContainSingle().Which;
+      GedcomPhotoResidue.ExtractImageBytes(louisAttach.Content).Should().Equal(pdfBytes);
+      (await GedcomPhotoResidue.ExtractFileNameAsync(marieAttach, Token)).Should().Be("actes/mariage.pdf");
+
+      // Shared, not duplicated: the same Data row backs both spouses (same Id), so the bytes live once.
+      louisPhoto.Id.Should().Be(mariePhoto.Id);
+      louisAttach.Id.Should().Be(marieAttach.Id);
+
+      // Export emits each spouse's media as its own INDI-level OBJE, so a round-trip de-shares the row into
+      // two -- but stays bounded: the media count must not grow on a further hop.
+      var firstExport = await ExportToTextAsync(document);
+      await using var roundTrip = await NewDocumentAsync();
+      await _importer.ImportAsync(roundTrip, new StringReader(firstExport), Token);
+      var secondExport = await ExportToTextAsync(roundTrip);
+      firstExport.Split("2 BLOB").Length.Should().Be(5);
+      secondExport.Split("2 BLOB").Length.Should().Be(firstExport.Split("2 BLOB").Length);
+    }
+    finally
+    {
+      Directory.Delete(mediaDir, recursive: true);
+    }
+  }
+
+  [Fact]
+  public async Task MarriageRecordObje_ReimportedFromSameSource_IsNotDuplicated()
+  {
+    // Re-importing the same source into a populated project must not add the marriage media a second time:
+    // the undated spouses match on re-import, and the shared row is recognized as already present (the
+    // encode is deterministic across imports). This is the gap-fill dedup the INDI path also guards.
+    var mediaDir = Path.Combine(Path.GetTempPath(), $"gt4_media_{Guid.NewGuid():N}");
+    Directory.CreateDirectory(Path.Combine(mediaDir, "actes"));
+    await File.WriteAllBytesAsync(Path.Combine(mediaDir, "actes", "mariage.jpg"), new byte[] { 1, 2, 3 }, Token);
+    await File.WriteAllBytesAsync(Path.Combine(mediaDir, "actes", "mariage.pdf"), new byte[] { 0x25, 0x50, 0x44, 0x46 }, Token);
+    try
+    {
+      var ged =
+        "0 HEAD\n1 CHAR UTF-8\n" +
+        "0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n" +
+        "0 @I2@ INDI\n1 NAME Marie /Antoinette/\n1 SEX F\n" +
+        "0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n1 MARR\n2 DATE 16 MAY 1770\n2 SOUR @S1@\n3 OBJE\n" +
+        "4 FILE actes/mariage.jpg\n5 FORM jpg\n4 FILE actes/mariage.pdf\n5 FORM pdf\n0 TRLR\n";
+      await using var document = await NewDocumentAsync();
+      await _importer.ImportAsync(document, new StringReader(ged), Token, mediaDir);
+      var firstByName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
+      var firstLouis = await document.PersonManager.GetPersonFullInfoAsync(firstByName["Louis Bourbon"], Token);
+      var photoId = firstLouis.AdditionalPhotos.Should().ContainSingle().Which.Id;
+
+      await _importer.ImportAsync(document, new StringReader(ged), Token, mediaDir);
+
+      var byName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
+      byName.Should().HaveCount(2);
+      var louis = await document.PersonManager.GetPersonFullInfoAsync(byName["Louis Bourbon"], Token);
+      louis.AdditionalPhotos.Should().ContainSingle().Which.Id.Should().Be(photoId);
+      louis.Attachments.Should().ContainSingle();
+    }
+    finally
+    {
+      Directory.Delete(mediaDir, recursive: true);
+    }
+  }
+
+  [Fact]
+  public async Task MarriageRecordObje_ReachesMatchedSpousesThatHaveNoMediaYet()
+  {
+    // The tree-merge case: both spouses already exist from a prior media-less import. They match on the
+    // second import but carry none of this media, so the certificate must still reach them -- the dedup keys
+    // on content, not on whether the spouse is newly created, so a matched-but-empty spouse is not skipped.
+    var mediaDir = Path.Combine(Path.GetTempPath(), $"gt4_media_{Guid.NewGuid():N}");
+    Directory.CreateDirectory(Path.Combine(mediaDir, "actes"));
+    await File.WriteAllBytesAsync(Path.Combine(mediaDir, "actes", "mariage.jpg"), new byte[] { 1, 2, 3 }, Token);
+    try
+    {
+      var head = "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n" +
+                 "0 @I2@ INDI\n1 NAME Marie /Antoinette/\n1 SEX F\n0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n1 MARR\n2 DATE 16 MAY 1770\n";
+      var gedNoMedia = head + "0 TRLR\n";
+      var gedWithMedia = head + "2 SOUR @S1@\n3 OBJE\n4 FILE actes/mariage.jpg\n5 FORM jpg\n0 TRLR\n";
+
+      await using var document = await NewDocumentAsync();
+      await _importer.ImportAsync(document, new StringReader(gedNoMedia), Token, mediaDir);
+      var before = await GedcomTestGraph.PersonsByNameAsync(document, Token);
+      var louisBefore = await document.PersonManager.GetPersonFullInfoAsync(before["Louis Bourbon"], Token);
+      louisBefore.AdditionalPhotos.Should().BeEmpty();
+
+      await _importer.ImportAsync(document, new StringReader(gedWithMedia), Token, mediaDir);
+
+      var byName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
+      byName.Should().HaveCount(2);
+      var louis = await document.PersonManager.GetPersonFullInfoAsync(byName["Louis Bourbon"], Token);
+      var marie = await document.PersonManager.GetPersonFullInfoAsync(byName["Marie Antoinette"], Token);
+      var louisPhoto = louis.AdditionalPhotos.Should().ContainSingle().Which;
+      var mariePhoto = marie.AdditionalPhotos.Should().ContainSingle().Which;
+      louisPhoto.Id.Should().Be(mariePhoto.Id);
+    }
+    finally
+    {
+      Directory.Delete(mediaDir, recursive: true);
+    }
+  }
+
+  [Fact]
   public async Task FileReferenceObje_FallsBackToResidue()
   {
     // A third-party OBJE that points at an external FILE has no bytes GT4 can load, so it is not a photo;
