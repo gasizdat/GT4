@@ -518,6 +518,10 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     reimportedAttachment.MimeType.Should().Be("image/png");
     GedcomPhotoResidue.ExtractImageBytes(reimportedAttachment.Content).Should().Equal(fileBytes);
     (await GedcomPhotoResidue.ExtractFileNameAsync(reimportedAttachment, Token)).Should().Be("scan.png");
+
+    // A second export/reimport hop must not duplicate the _ATTACH marker into the residue.
+    var reexportedText = await ExportToTextAsync(reimported);
+    reexportedText.Should().Contain("_ATTACH Y", Exactly.Once());
   }
 
   [Fact]
