@@ -22,5 +22,9 @@ internal sealed class GedcomNode
 
   public IEnumerable<GedcomNode> ChildrenWithTag(string tag) => Children.Where(c => c.Tag == tag);
 
+  /// <summary>Every node carrying <paramref name="tag"/> anywhere in the subtree, at any depth.</summary>
+  public IEnumerable<GedcomNode> DescendantsWithTag(string tag) =>
+    Children.Where(child => child.Tag == tag).Concat(Children.SelectMany(child => child.DescendantsWithTag(tag)));
+
   public string? ChildValue(string tag) => Child(tag)?.Value;
 }

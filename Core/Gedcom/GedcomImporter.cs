@@ -29,6 +29,13 @@ internal sealed class GedcomImporter : IGedcomImporter
     var individuals = records.Where(r => r.Tag == GedcomTags.Individual).ToArray();
     var families = records.Where(r => r.Tag == GedcomTags.Family).ToArray();
 
+    // A source may pack several files under one OBJE; GT4 models one file per media object, so each is
+    // normalized up front into single-file OBJEs before any photo/attachment/residue pass runs.
+    foreach (var individual in individuals)
+    {
+      SplitMultiFileObjects(individual);
+    }
+
     // A child's tie to a family is adoptive when its FAMC link carries "PEDI adopted"; that lives on the
     // individual, so it is collected up front and consulted while wiring each family's children.
     var adoptedLinks = CollectAdoptedLinks(individuals);
@@ -358,31 +365,70 @@ internal sealed class GedcomImporter : IGedcomImporter
     var consumedOwned = new HashSet<string>();
     foreach (var child in individual.Children)
     {
-      // OBJEs consumed into the person's photo set by BuildPhotos are excluded here to avoid storing them a
-      // second time as opaque residue. An OBJE that was not consumed — unreadable, or skipped because the
-      // person already had a photo — is absent from this set and so survives verbatim as residue.
+      // OBJEs consumed into the person's photo/attachment set are excluded here to avoid storing them a
+      // second time as opaque residue -- PruneConsumed strips them out wherever they are nested (e.g. under
+      // an event's SOUR), since SelectPhotos/SelectAttachments can consume an OBJE at any depth, not just a
+      // direct INDI child. An OBJE that was not consumed -- unreadable, or skipped because the person
+      // already had a photo -- is absent from consumedPhotoNodes and so survives verbatim as residue.
       // FullyOwnedTags are regenerated from the edge graph, so neither they nor their sub-tags are preserved.
       if (consumedPhotoNodes.Contains(child) || GedcomMapping.FullyOwnedTags.Contains(child.Tag))
         continue;
 
-      if (GedcomMapping.OwnedTagModeledChildren.TryGetValue(child.Tag, out var modeled) && consumedOwned.Add(child.Tag))
-      {
-        var residual = ResidualNode(child, modeled);
-        if (residual is not null)
-          roots.Add(residual);
-      }
-      else
-      {
-        roots.Add(child);
-      }
+      var candidate = GedcomMapping.OwnedTagModeledChildren.TryGetValue(child.Tag, out var modeled) && consumedOwned.Add(child.Tag)
+        ? ResidualNode(child, modeled)
+        : child;
+      var pruned = candidate is null ? null : PruneConsumed(candidate, consumedPhotoNodes);
+      if (pruned is not null)
+        roots.Add(pruned);
     }
     return roots;
+  }
+
+  /// <summary>A copy of <paramref name="node"/> with every node in <paramref name="consumed"/> removed from
+  /// the subtree, or <c>null</c> when <paramref name="node"/> itself is consumed.</summary>
+  private static GedcomNode? PruneConsumed(GedcomNode node, GedcomNode[] consumed)
+  {
+    if (consumed.Contains(node))
+      return null;
+
+    var pruned = new GedcomNode { Tag = node.Tag, Xref = node.Xref, Value = node.Value };
+    foreach (var prunedChild in node.Children.Select(child => PruneConsumed(child, consumed)).Where(child => child is not null))
+      pruned.Add(prunedChild!);
+    return pruned;
   }
 
   private static Data ToResidueData(IEnumerable<GedcomNode> roots)
   {
     var content = Encoding.UTF8.GetBytes(SerializeRoots(roots));
     return new Data(ElementId.NonCommittedId, content, ResidueMimeType, DataCategory.PersonGedcomTags);
+  }
+
+  /// <summary>
+  /// Rewrites every multi-<c>FILE</c> <c>OBJE</c> in the subtree in place into one single-<c>FILE</c> OBJE
+  /// per <c>FILE</c>, each carrying a copy of the object's shared non-FILE children (chiefly <c>TITL</c>).
+  /// GT4 models one file per media object, so this lets the single-file photo/attachment passes surface a
+  /// source that packs several files under one OBJE. The shared tags are duplicated across the split objects,
+  /// so a re-export does not reproduce the source's grouping -- an accepted, lossless trade. It is stable:
+  /// GT4 always emits single-file OBJEs, so a later round-trip has nothing left to split.
+  /// </summary>
+  private static void SplitMultiFileObjects(GedcomNode node)
+  {
+    foreach (var child in node.Children)
+      SplitMultiFileObjects(child);
+
+    var normalized = node.Children.SelectMany(SplitObject).ToArray();
+    node.Children.Clear();
+    node.Children.AddRange(normalized);
+  }
+
+  private static IEnumerable<GedcomNode> SplitObject(GedcomNode obje)
+  {
+    var files = obje.Tag == GedcomTags.Object ? obje.ChildrenWithTag(GedcomTags.File).ToArray() : [];
+    if (files.Length <= 1)
+      return [obje];
+
+    var shared = obje.Children.Where(child => child.Tag != GedcomTags.File).ToArray();
+    return files.Select(file => new GedcomNode { Tag = GedcomTags.Object }.Add([.. shared, file]));
   }
 
   private static string SerializeRoots(IEnumerable<GedcomNode> roots) => string.Concat(roots.Select(Serialize));
@@ -442,14 +488,15 @@ internal sealed class GedcomImporter : IGedcomImporter
     [GedcomTags.Form, GedcomTags.Primary, GedcomTags.Blob, GedcomTags.File];
 
   /// <summary>
-  /// The direct INDI <c>OBJE</c> photos GT4 can load, materialized to bytes in document order: an embedded
+  /// Every <c>OBJE</c> photo GT4 can load, anywhere in the individual's subtree (a direct INDI child or one
+  /// nested under an event's <c>SOUR</c> citation), materialized to bytes in document order: an embedded
   /// base64 <c>BLOB</c>, or an external <c>FILE</c> image reference that resolves under
   /// <paramref name="mediaBasePath"/>. An OBJE whose bytes cannot be obtained — a non-image, an unfound or
   /// unreadable FILE, or a corrupt BLOB — is dropped from the set and survives as residue instead, so a
   /// single bad image never aborts the all-or-nothing import.
   /// </summary>
   private PhotoCandidate[] SelectPhotos(GedcomNode individual, string? mediaBasePath) =>
-    individual.Children
+    individual.DescendantsWithTag(GedcomTags.Object)
       .Select(o => TryReadPhoto(o, mediaBasePath))
       .Where(p => p is not null)
       .Select(p => p!)
@@ -575,14 +622,15 @@ internal sealed class GedcomImporter : IGedcomImporter
   private sealed record AttachmentCandidate(GedcomNode Node, byte[] Content, string? MimeType, GedcomNode Residual);
 
   /// <summary>
-  /// The direct INDI <c>OBJE</c> non-photo attachments GT4 can load, materialized to bytes: an embedded
+  /// Every <c>OBJE</c> non-photo attachment GT4 can load, anywhere in the individual's subtree (a direct
+  /// INDI child or one nested under an event's <c>SOUR</c> citation), materialized to bytes: an embedded
   /// base64 <c>BLOB</c>, or an external <c>FILE</c> reference that resolves under <paramref name="mediaBasePath"/>.
   /// An image-shaped OBJE is left to <see cref="SelectPhotos"/>; one whose bytes cannot be obtained falls
   /// through to residue, exactly like an unreadable photo.
   /// </summary>
   private AttachmentCandidate[] SelectAttachments(GedcomNode individual, string? mediaBasePath) =>
   [
-    .. individual.Children
+    .. individual.DescendantsWithTag(GedcomTags.Object)
       .Select(o => TryReadAttachment(o, mediaBasePath))
       .Where(a => a is not null)
       .Select(a => a!)
