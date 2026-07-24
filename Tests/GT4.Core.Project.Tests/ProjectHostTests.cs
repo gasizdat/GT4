@@ -3,6 +3,7 @@ using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using Moq;
+using System.Globalization;
 using Xunit;
 
 namespace GT4.Core.Project.Tests;
@@ -27,7 +28,7 @@ public sealed class ProjectHostTests
   public ProjectHostTests()
   {
     _fs.AddFile(_origin);
-    _doc.SetupGet(d => d.ProjectRevision).Returns(() => _revision);
+    _doc.SetupGet(d => d.ProjectRevision).Returns(() => _revision.ToString(CultureInfo.InvariantCulture));
     _doc.Setup(d => d.Dispose());
     _doc.Setup(d => d.DisposeAsync()).Returns(ValueTask.CompletedTask);
   }

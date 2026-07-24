@@ -392,7 +392,7 @@ public class ProjectPageTests
     await using var window = await WindowHost.AttachAsync(page);
     await Poll.UntilAsync(() => Task.FromResult(monitor.SubscriberCount), count => count > 0, timeoutMessage: "The page never subscribed to RevisionChanged.");
     var loadsBefore = page.CompletedLoads;
-    services.Project.SetupGet(p => p.ProjectRevision).Returns(42);
+    services.Project.SetupGet(p => p.ProjectRevision).Returns("42");
 
     await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
 
@@ -434,7 +434,7 @@ public class ProjectPageTests
     await Poll.UntilAsync(() => Task.FromResult(monitor.SubscriberCount), count => count > 0, timeoutMessage: "The page never subscribed to RevisionChanged.");
     await window.DisposeAsync();
     var loadsBefore = page.CompletedLoads;
-    services.Project.SetupGet(p => p.ProjectRevision).Returns(43);
+    services.Project.SetupGet(p => p.ProjectRevision).Returns("43");
 
     await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
     await Task.Delay(200);

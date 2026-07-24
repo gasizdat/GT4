@@ -101,7 +101,7 @@ internal class ProjectDocumentMock : IProjectDocument
 
   public int GetNewId() => Interlocked.Add(ref _Id, 100);
 
-  public long ProjectRevision => throw new NotImplementedException();
+  public string ProjectRevision => throw new NotImplementedException();
 
   public ITableData Data => _TableDataMock.Object;
 

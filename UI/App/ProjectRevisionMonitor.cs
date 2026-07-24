@@ -12,7 +12,7 @@ internal sealed class ProjectRevisionMonitor : IProjectRevisionMonitor
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly WeakEventManager _EventManager = new();
   private readonly IDispatcherTimer _Timer;
-  private long? _LastRevision;
+  private string? _LastRevision;
   private int _SubscriberCount;
 
   public ProjectRevisionMonitor(ICurrentProjectProvider currentProjectProvider)
@@ -65,9 +65,12 @@ internal sealed class ProjectRevisionMonitor : IProjectRevisionMonitor
     // app, rather than let an unhandled exception escape a timer callback.
     try
     {
+      // Keep the baseline across the close/reopen window. App background/foreground closes and reopens
+      // the project, but ProjectRevision is a persisted counter -- stable for an unchanged project --
+      // so holding the last value lets an untouched reopen stay quiet while a genuine change made while
+      // closed still fires. (Nulling it here, as this once did, false-fired on every resume.)
       if (!_CurrentProjectProvider.HasCurrentProject)
       {
-        _LastRevision = null;
         return;
       }
 
@@ -80,7 +83,8 @@ internal sealed class ProjectRevisionMonitor : IProjectRevisionMonitor
     }
     catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
     {
-      _LastRevision = null;
+      // Teardown mid-tick: leave the baseline intact; the reopened project reports the same persisted
+      // revision when nothing changed.
     }
   }
 

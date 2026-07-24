@@ -28,7 +28,7 @@ public partial class SelectPersonDialog : ContentPage
   private readonly TaskCompletionSource<PersonInfo?> _Info = new(null);
   private readonly ICommand _DialogCommand;
 
-  private long _ProjectRevision;
+  private string? _ProjectRevision;
   private string _NameFilter = string.Empty;
   private PersonInfo? _SelectedPerson;
 

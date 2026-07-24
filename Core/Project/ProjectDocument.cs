@@ -49,7 +49,11 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   private readonly object _CommandLock = new();
 
   private long _TransactionNo = 0;
-  private long _ProjectRevision = Environment.TickCount64;
+  // A monotonic write counter, persisted in the Metadata table and reseeded from it on open so the
+  // revision is stable across a close/reopen when nothing was written (a fresh tick seed made every
+  // reopen look changed). Exposed as a string via ProjectRevision; advanced by UpdateRevision after
+  // each committed root transaction.
+  private long _ProjectRevision = 0;
   private volatile bool _Disposed = false;
   private int _DisposeStarted = 0;
 
@@ -101,6 +105,18 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     await pragma.ExecuteNonQueryAsync(token);
   }
 
+  private async Task LoadRevisionAsync(CancellationToken token)
+  {
+    // Seed the counter from the persisted revision so it survives a close/reopen. A project written
+    // before the counter format (a legacy timestamp) or with no revision yet won't parse -- start at
+    // 0 and let the first commit migrate the stored value.
+    var persisted = await _TableMetadata.GetProjectRevisionAsync(token);
+    if (long.TryParse(persisted, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value))
+    {
+      Interlocked.Exchange(ref _ProjectRevision, value);
+    }
+  }
+
   private async Task InitNewDBAsync(CancellationToken token)
   {
     CheckForDisposed();
@@ -132,7 +148,7 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   public IRelativesProvider RelativesProvider => _RelativesProvider;
   public IFamilyTreeProvider FamilyTreeProvider => _FamilyTreeProvider;
   public IKinshipFinder KinshipFinder => _KinshipFinder;
-  public long ProjectRevision => Interlocked.Read(ref _ProjectRevision);
+  public string ProjectRevision => Interlocked.Read(ref _ProjectRevision).ToString(CultureInfo.InvariantCulture);
 
   public void UpdateRevision()
   {
@@ -140,6 +156,11 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     // still stamp the revision, so the host flushes the cache back to the origin.
     Interlocked.Increment(ref _ProjectRevision);
   }
+
+  // The value the next committed root transaction will stamp -- one ahead of the current counter,
+  // matching UpdateRevision's increment. Peeked (not advanced) so a rolled-back transaction leaves
+  // the revision untouched; the committing flow owns the gate, so no other write can interleave.
+  internal string NextRevision() => (Interlocked.Read(ref _ProjectRevision) + 1).ToString(CultureInfo.InvariantCulture);
 
   internal SqliteConnection Connection => _Connection;
 
@@ -221,6 +242,7 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   {
     var ret = new ProjectDocument(path, SqliteOpenMode.ReadWrite);
     await ret.OpenAsync(token);
+    await ret.LoadRevisionAsync(token);
 
     return ret;
   }

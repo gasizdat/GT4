@@ -35,7 +35,7 @@ public sealed class CurrentProjectProviderTests
   private ProjectHost CreateHost()
   {
     var doc = new Mock<IProjectDocument>(MockBehavior.Loose);
-    doc.SetupGet(d => d.ProjectRevision).Returns(1);
+    doc.SetupGet(d => d.ProjectRevision).Returns("1");
     doc.Setup(d => d.DisposeAsync()).Returns(ValueTask.CompletedTask);
     doc.Setup(d => d.Dispose());
     var host = new ProjectHost(_fs, _origin, _cache) { Project = doc.Object };

@@ -37,7 +37,7 @@ public partial class SelectRelativesDialog : ContentPage
 
   private BiologicalSexItem _BiologicalSex;
   private RelationshipTypeItem _RelationshipType;
-  private long _ProjectRevision;
+  private string? _ProjectRevision;
   private Date? _RelationshipDate;
   private string _NameFilter = string.Empty;
 

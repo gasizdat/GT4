@@ -1,6 +1,7 @@
 using FluentAssertions;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using System.Globalization;
 using Xunit;
 
 namespace GT4.Core.Project.Tests;
@@ -793,10 +794,11 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   public void Write_BumpsProjectRevision()
   {
     // The revision is a monotonic counter, so every stamp strictly advances it.
-    var before = _doc.ProjectRevision;
+    var before = long.Parse(_doc.ProjectRevision, CultureInfo.InvariantCulture);
 
     _doc.UpdateRevision();
 
-    _doc.ProjectRevision.Should().BeGreaterThan(before);
+    var after = long.Parse(_doc.ProjectRevision, CultureInfo.InvariantCulture);
+    after.Should().BeGreaterThan(before);
   }
 }
