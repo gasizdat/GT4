@@ -108,7 +108,6 @@ public class FamilyTreePageTests
     await MainThread.InvokeOnMainThreadAsync(() => page.PersonInfo = P(1, "Ivan"));
     await firstBuildStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
-    // A commit + navigation starts a fresh rebuild while the first build is still gated.
     services.CurrentProjectProvider.SetupGet(p => p.Info).Returns(TestServices.SampleProjectInfo with { Revision = 1 });
     await MainThread.InvokeOnMainThreadAsync(page.InvokeNavigatedTo);
     await Poll.UntilAsync(
@@ -116,8 +115,6 @@ public class FamilyTreePageTests
       count => count >= 2,
       timeoutMessage: "The revision-change rebuild never started.");
 
-    // Release the older build so it resolves last. Local-capture detects it began at the pre-commit
-    // revision and reissues a third build; a field-compare guard would render its stale tree and stop.
     firstBuildGate.SetResult();
     await Poll.UntilAsync(
       () => Task.FromResult(page.CompletedLoads),

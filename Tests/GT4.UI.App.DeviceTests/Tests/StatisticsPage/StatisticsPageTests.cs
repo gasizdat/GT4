@@ -131,8 +131,6 @@ public class StatisticsPageTests
     var page = await CreatePageAsync(services);
     await firstFetchStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
-    // The revision advances while the first fetch is still in flight, so the data it is about to
-    // apply is already stale -- the guard must drop it and reissue the load rather than show P(1).
     services.CurrentProjectProvider.SetupGet(p => p.Info).Returns(TestServices.SampleProjectInfo with { Revision = 1 });
     firstFetchGate.SetResult();
 
@@ -160,21 +158,17 @@ public class StatisticsPageTests
         {
           firstFetchStarted.SetResult();
           await firstFetchGate.Task;
-          return [P(1)];             // the stale result the first (gated) load will produce
+          return [P(1)];
         }
-        return [P(1), P(2), P(3)];   // every later load sees the committed data
+        return [P(1), P(2), P(3)];
       });
     var page = await CreatePageAsync(services);
     await firstFetchStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
-    // A commit + navigation starts and completes a second, fresh load while the first is still gated.
     services.CurrentProjectProvider.SetupGet(p => p.Info).Returns(TestServices.SampleProjectInfo with { Revision = 1 });
     var reloaded = await page.ReloadStatisticsAsync(page.InvokeNavigatedTo);
     Assert.Equal(3, reloaded.TotalPersons);
 
-    // Only now release the older load so it resolves last. A field-compare guard would see the field
-    // already advanced to revision 1 and apply P(1); local-capture detects the load began at the
-    // pre-commit revision and discards it, so the fresh result must survive.
     var loadsAfterReload = page.CompletedLoads;
     firstFetchGate.SetResult();
     await Poll.UntilAsync(

@@ -140,9 +140,8 @@ public partial class ProjectPage : ContentPage
 
       // Clear and AddRange together, not eagerly when the load starts: an overlapping second load
       // (Refresh() can re-enter this while one is in flight) would otherwise append onto a stale,
-      // already-cleared collection and duplicate every card. Compare against startInfo, not the
-      // _LastProjectInfo field: an interleaving Refresh() re-primes the field, so only the revision
-      // this load began at reliably detects a commit that landed while it was fetching.
+      // already-cleared collection and duplicate every card. Compare startInfo (this load's start
+      // revision), not the _LastProjectInfo field a concurrent Refresh() may have already advanced.
       await SafeTask.RunOnMainThread(() =>
       {
         if (startInfo != _CurrentProjectProvider.Info)
