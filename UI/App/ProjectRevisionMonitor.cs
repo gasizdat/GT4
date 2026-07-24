@@ -13,6 +13,7 @@ internal sealed class ProjectRevisionMonitor : IProjectRevisionMonitor
   private readonly WeakEventManager _EventManager = new();
   private readonly IDispatcherTimer _Timer;
   private long? _LastRevision;
+  private IProjectDocument? _LastProject;
   private int _SubscriberCount;
 
   public ProjectRevisionMonitor(ICurrentProjectProvider currentProjectProvider)
@@ -68,10 +69,26 @@ internal sealed class ProjectRevisionMonitor : IProjectRevisionMonitor
       if (!_CurrentProjectProvider.HasCurrentProject)
       {
         _LastRevision = null;
+        _LastProject = null;
         return;
       }
 
-      var revision = _CurrentProjectProvider.Project.ProjectRevision;
+      var project = _CurrentProjectProvider.Project;
+
+      // App background/foreground closes and reopens the project, building a fresh ProjectDocument
+      // whose ProjectRevision reseeds from a tick count -- so a straight revision compare false-fires
+      // on every resume even when nothing was written. Rebaseline against the instance instead: a
+      // document the monitor hasn't seen is a new baseline, not a change (a genuine write bumps
+      // ProjectRevision on the *same* instance and still fires). Keying on the instance rather than a
+      // null baseline also survives a fast reopen that leaves no close-window tick to null it out.
+      if (!ReferenceEquals(project, _LastProject))
+      {
+        _LastProject = project;
+        _LastRevision = project.ProjectRevision;
+        return;
+      }
+
+      var revision = project.ProjectRevision;
       if (_LastRevision != revision)
       {
         _LastRevision = revision;
@@ -81,6 +98,7 @@ internal sealed class ProjectRevisionMonitor : IProjectRevisionMonitor
     catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
     {
       _LastRevision = null;
+      _LastProject = null;
     }
   }
 
@@ -88,11 +106,21 @@ internal sealed class ProjectRevisionMonitor : IProjectRevisionMonitor
   {
     try
     {
-      _LastRevision = _CurrentProjectProvider.HasCurrentProject ? _CurrentProjectProvider.Project.ProjectRevision : null;
+      if (_CurrentProjectProvider.HasCurrentProject)
+      {
+        _LastProject = _CurrentProjectProvider.Project;
+        _LastRevision = _LastProject.ProjectRevision;
+      }
+      else
+      {
+        _LastProject = null;
+        _LastRevision = null;
+      }
     }
     catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
     {
       _LastRevision = null;
+      _LastProject = null;
     }
   }
 }

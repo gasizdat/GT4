@@ -1,4 +1,6 @@
+using GT4.Core.Project.Abstraction;
 using GT4.UI.Abstraction;
+using Moq;
 using Xunit;
 
 namespace GT4.UI.DeviceTests;
@@ -74,8 +76,11 @@ public sealed class ProjectRevisionMonitorTests
     Assert.Equal(0, fireCount);
   }
 
+  // App background/foreground closes then reopens the same project. Even though the reopened document
+  // reseeds ProjectRevision to a fresh value, the monitor must treat it as a new baseline and stay
+  // quiet -- the pre-fix behavior fired here and forced a full page reload on every resume (#153).
   [Fact]
-  public async Task CheckRevision_FiresExactlyOnce_WhenAProjectOpensAfterNoneWasOpen()
+  public async Task CheckRevision_DoesNotFire_WhenTheProjectReopensAfterBeingClosed()
   {
     var services = new TestServices();
     services.CurrentProjectProvider.SetupGet(p => p.HasCurrentProject).Returns(false);
@@ -88,6 +93,29 @@ public sealed class ProjectRevisionMonitorTests
     await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
     await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
 
-    Assert.Equal(1, fireCount);
+    Assert.Equal(0, fireCount);
+  }
+
+  // A fast reopen can leave no close-window tick to reset the baseline: the monitor sees a brand-new
+  // ProjectDocument instance while HasCurrentProject never observably went false. Keying rebaseline on
+  // the instance -- not on a null baseline -- keeps it quiet even then.
+  [Fact]
+  public async Task CheckRevision_DoesNotFire_WhenTheProjectInstanceIsSwappedWithoutAClosedTick()
+  {
+    var services = new TestServices();
+    services.Project.SetupGet(p => p.ProjectRevision).Returns(99);
+    var monitor = await CreateMonitorAsync(services);
+    var fireCount = 0;
+    monitor.RevisionChanged += (_, _) => fireCount++;
+
+    // A fresh document whose reseeded revision differs from the old baseline -- a revision-only
+    // compare would fire on 99 != 7.
+    var reopened = new Mock<IProjectDocument>();
+    reopened.SetupGet(p => p.ProjectRevision).Returns(7);
+    services.CurrentProjectProvider.SetupGet(p => p.Project).Returns(reopened.Object);
+    await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
+    await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
+
+    Assert.Equal(0, fireCount);
   }
 }
