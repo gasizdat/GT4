@@ -801,4 +801,32 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
     var after = long.Parse(_doc.ProjectRevision, CultureInfo.InvariantCulture);
     after.Should().BeGreaterThan(before);
   }
+
+  [Fact]
+  public async Task ProjectRevision_IsStable_AcrossCloseAndReopen_WhenNothingIsWritten()
+  {
+    // The invariant #153's fix rests on: reopening an untouched project reports the identical
+    // revision (a fresh tick seed made every reopen look changed, which false-fired the monitor).
+    var before = _doc.ProjectRevision;
+
+    await _doc.DisposeAsync();
+    _doc = await ProjectDocument.OpenAsync(_path, Token);
+
+    _doc.ProjectRevision.Should().Be(before);
+  }
+
+  [Fact]
+  public async Task ProjectRevision_AdvancesAndPersists_AcrossReopen_AfterAWrite()
+  {
+    // A write while open must survive the close: the reopened project reads a strictly greater
+    // revision from the Metadata table, proving the NextRevision/persist/reseed round-trip.
+    var before = long.Parse(_doc.ProjectRevision, CultureInfo.InvariantCulture);
+
+    await AddBarePersonAsync();
+    await _doc.DisposeAsync();
+    _doc = await ProjectDocument.OpenAsync(_path, Token);
+
+    var after = long.Parse(_doc.ProjectRevision, CultureInfo.InvariantCulture);
+    after.Should().BeGreaterThan(before);
+  }
 }
