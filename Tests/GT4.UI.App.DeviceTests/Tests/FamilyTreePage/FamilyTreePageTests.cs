@@ -87,6 +87,48 @@ public class FamilyTreePageTests
   }
 
   [Fact]
+  public async Task An_older_tree_build_finishing_last_reissues_instead_of_rendering_stale()
+  {
+    var services = new TestServices();
+    var firstBuildStarted = new TaskCompletionSource();
+    var firstBuildGate = new TaskCompletionSource();
+    var buildCount = 0;
+    services.FamilyTreeProvider
+      .Setup(f => f.BuildAsync(It.IsAny<Person>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+      .Returns(async () =>
+      {
+        if (Interlocked.Increment(ref buildCount) == 1)
+        {
+          firstBuildStarted.SetResult();
+          await firstBuildGate.Task;
+        }
+        return FamilyTree.Empty;
+      });
+    var page = await CreatePageAsync(services);
+    await MainThread.InvokeOnMainThreadAsync(() => page.PersonInfo = P(1, "Ivan"));
+    await firstBuildStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+    // A commit + navigation starts a fresh rebuild while the first build is still gated.
+    services.CurrentProjectProvider.SetupGet(p => p.Info).Returns(TestServices.SampleProjectInfo with { Revision = 1 });
+    await MainThread.InvokeOnMainThreadAsync(page.InvokeNavigatedTo);
+    await Poll.UntilAsync(
+      () => Task.FromResult(Volatile.Read(ref buildCount)),
+      count => count >= 2,
+      timeoutMessage: "The revision-change rebuild never started.");
+
+    // Release the older build so it resolves last. Local-capture detects it began at the pre-commit
+    // revision and reissues a third build; a field-compare guard would render its stale tree and stop.
+    firstBuildGate.SetResult();
+    await Poll.UntilAsync(
+      () => Task.FromResult(page.CompletedLoads),
+      loads => loads >= 1,
+      timeoutMessage: "The tree builds never drained.");
+
+    Assert.Equal(3, Volatile.Read(ref buildCount));
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+  }
+
+  [Fact]
   public async Task TappingTheCenterNode_navigates_to_PersonPage()
   {
     var services = new TestServices();
