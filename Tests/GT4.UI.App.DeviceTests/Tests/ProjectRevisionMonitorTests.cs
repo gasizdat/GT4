@@ -36,7 +36,7 @@ public sealed class ProjectRevisionMonitorTests
     var monitor = await CreateMonitorAsync(services);
     var fireCount = 0;
     monitor.RevisionChanged += (_, _) => fireCount++;
-    services.Project.SetupGet(p => p.ProjectRevision).Returns(99);
+    services.Project.SetupGet(p => p.ProjectRevision).Returns(99L);
     await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
 
     await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
@@ -51,10 +51,10 @@ public sealed class ProjectRevisionMonitorTests
     var monitor = await CreateMonitorAsync(services);
     var fireCount = 0;
     monitor.RevisionChanged += (_, _) => fireCount++;
-    services.Project.SetupGet(p => p.ProjectRevision).Returns(99);
+    services.Project.SetupGet(p => p.ProjectRevision).Returns(99L);
     await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
 
-    services.Project.SetupGet(p => p.ProjectRevision).Returns(100);
+    services.Project.SetupGet(p => p.ProjectRevision).Returns(100L);
     await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
 
     Assert.Equal(2, fireCount);
@@ -74,18 +74,44 @@ public sealed class ProjectRevisionMonitorTests
     Assert.Equal(0, fireCount);
   }
 
+  // #153: app background/foreground closes then reopens the project. Because ProjectRevision is a
+  // persisted counter, an untouched reopen reports the same value, so the monitor must keep its
+  // baseline across the no-project window and stay quiet -- the pre-fix code nulled the baseline and
+  // false-fired here, forcing a full page reload on every resume.
   [Fact]
-  public async Task CheckRevision_FiresExactlyOnce_WhenAProjectOpensAfterNoneWasOpen()
+  public async Task CheckRevision_DoesNotFire_WhenTheProjectReopensUnchanged()
   {
     var services = new TestServices();
-    services.CurrentProjectProvider.SetupGet(p => p.HasCurrentProject).Returns(false);
+    services.Project.SetupGet(p => p.ProjectRevision).Returns(5L);
     var monitor = await CreateMonitorAsync(services);
     var fireCount = 0;
     monitor.RevisionChanged += (_, _) => fireCount++;
+
+    services.CurrentProjectProvider.SetupGet(p => p.HasCurrentProject).Returns(false);
     await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
     services.CurrentProjectProvider.SetupGet(p => p.HasCurrentProject).Returns(true);
-
     await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
+    await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
+
+    Assert.Equal(0, fireCount);
+  }
+
+  // The flip side of preserving the baseline: a genuine change committed while the project was closed
+  // still advances the persisted counter, so the first tick after reopen must fire. (The monitor-only
+  // rebaseline this replaced would have suppressed this.)
+  [Fact]
+  public async Task CheckRevision_Fires_WhenTheProjectChangedWhileClosed()
+  {
+    var services = new TestServices();
+    services.Project.SetupGet(p => p.ProjectRevision).Returns(5L);
+    var monitor = await CreateMonitorAsync(services);
+    var fireCount = 0;
+    monitor.RevisionChanged += (_, _) => fireCount++;
+
+    services.CurrentProjectProvider.SetupGet(p => p.HasCurrentProject).Returns(false);
+    await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
+    services.Project.SetupGet(p => p.ProjectRevision).Returns(6L);
+    services.CurrentProjectProvider.SetupGet(p => p.HasCurrentProject).Returns(true);
     await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
 
     Assert.Equal(1, fireCount);

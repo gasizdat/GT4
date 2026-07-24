@@ -58,7 +58,7 @@ public partial class CreateOrUpdateProjectDialog : ContentPage
     _Info.SetResult(new ProjectInfo(
       Description: _ProjectDescription,
       Name: _ProjectName,
-      Revision: string.Empty,
+      Revision: null,
       Origin: default!));
   }
 }

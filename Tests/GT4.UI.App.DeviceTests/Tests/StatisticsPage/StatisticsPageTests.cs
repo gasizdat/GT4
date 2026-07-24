@@ -101,7 +101,7 @@ public class StatisticsPageTests
     var page = await CreatePageAsync(services);
     await page.WaitForFirstLoadAsync();
     var callsBefore = services.PersonManager.Invocations.Count(i => i.Method.Name == nameof(IPersonManager.GetPersonInfosAsync));
-    services.Project.SetupGet(p => p.ProjectRevision).Returns(42);
+    services.Project.SetupGet(p => p.ProjectRevision).Returns(42L);
 
     await page.ReloadStatisticsAsync(page.InvokeNavigatedTo);
 
@@ -131,7 +131,7 @@ public class StatisticsPageTests
     var monitor = (ProjectRevisionMonitor)services.Provider.GetRequiredService<IProjectRevisionMonitor>();
     await using var window = await WindowHost.AttachAsync(page);
     await Poll.UntilAsync(() => Task.FromResult(monitor.SubscriberCount), count => count > 0, timeoutMessage: "The page never subscribed to RevisionChanged.");
-    services.Project.SetupGet(p => p.ProjectRevision).Returns(42);
+    services.Project.SetupGet(p => p.ProjectRevision).Returns(42L);
 
     await page.ReloadStatisticsAsync(monitor.CheckRevision);
 
@@ -150,7 +150,7 @@ public class StatisticsPageTests
     await Poll.UntilAsync(() => Task.FromResult(monitor.SubscriberCount), count => count > 0, timeoutMessage: "The page never subscribed to RevisionChanged.");
     await window.DisposeAsync();
     var callsBefore = services.PersonManager.Invocations.Count(i => i.Method.Name == nameof(IPersonManager.GetPersonInfosAsync));
-    services.Project.SetupGet(p => p.ProjectRevision).Returns(43);
+    services.Project.SetupGet(p => p.ProjectRevision).Returns(43L);
 
     await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
     await Task.Delay(200);

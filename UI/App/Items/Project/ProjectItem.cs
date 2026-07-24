@@ -14,8 +14,9 @@ public class ProjectItem : CollectionItemBase<ProjectInfo>
 
   public string Name => Info.Name;
 
-  public string Revision => string.IsNullOrWhiteSpace(Info.Revision) 
-    ? string.Empty 
+  // The counter starts at 1, so null or the initial value means "no revision".
+  public string Revision => Info.Revision is null or ProjectInfo.InitialRevision
+    ? string.Empty
     : string.Format(UIStrings.FieldRevision_1, Info.Revision);
 
   public bool DescriptionVisible => !string.IsNullOrWhiteSpace(Description);

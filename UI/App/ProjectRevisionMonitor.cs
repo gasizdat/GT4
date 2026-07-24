@@ -65,9 +65,10 @@ internal sealed class ProjectRevisionMonitor : IProjectRevisionMonitor
     // app, rather than let an unhandled exception escape a timer callback.
     try
     {
+      // Deliberately keeps the baseline across the no-project (close/reopen) window: ProjectRevision is
+      // a persisted counter, so an untouched reopen stays quiet while a change made while closed fires.
       if (!_CurrentProjectProvider.HasCurrentProject)
       {
-        _LastRevision = null;
         return;
       }
 
@@ -80,7 +81,7 @@ internal sealed class ProjectRevisionMonitor : IProjectRevisionMonitor
     }
     catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
     {
-      _LastRevision = null;
+      // Teardown mid-tick: leave the baseline intact for the reopen.
     }
   }
 

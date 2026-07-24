@@ -1,6 +1,5 @@
 using GT4.Core.Project.Abstraction;
 using Microsoft.Data.Sqlite;
-using System.Globalization;
 
 namespace GT4.Core.Project;
 
@@ -97,10 +96,9 @@ internal sealed class NestedTransaction : IProjectTransaction
       {
         // Synchronous write on purpose (see method summary): awaiting here would hand the ambient back
         // on a continuation the caller can't observe; a direct synchronous write cannot deadlock.
-        var newRevision = DateTime.Now.ToString(CultureInfo.InvariantCulture);
-        _Document.Metadata.SetProjectRevision(newRevision);
+        var newRevision = _Document.Metadata.UpdateProjectRevision();
         _DbTransaction!.Commit();
-        _Document.UpdateRevision();
+        _Document.SetRevision(newRevision);
       }
       else
       {

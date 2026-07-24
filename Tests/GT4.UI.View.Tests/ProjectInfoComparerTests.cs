@@ -14,7 +14,7 @@ public class ProjectInfoComparerTests
     new(new DirectoryDescription(Environment.SpecialFolder.Personal, []), "file.db", null);
 
   private static ProjectInfo MakeProject(string name, string description = "") =>
-    new(name, description, string.Empty, AnyFile());
+    new(name, description, null, AnyFile());
 
   [Fact]
   public void Compare_AlphabeticalOrder_NegativeForLesser()

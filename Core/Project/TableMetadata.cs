@@ -1,4 +1,5 @@
 ﻿using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Dto;
 using Microsoft.Data.Sqlite;
 
 namespace GT4.Core.Project;
@@ -79,17 +80,23 @@ internal class TableMetadata : TableBase, ITableMetadata
 
   public Task<string?> GetProjectDescriptionAsync(CancellationToken token) => GetAsync<string>(ProjectDescription, token);
 
-  public Task<string?> GetProjectRevisionAsync(CancellationToken token) => GetAsync<string>(RevisionKey, token);
+  public async Task<long?> GetProjectRevisionAsync(CancellationToken token) =>
+    await GetAsync<object>(RevisionKey, token) as long? ?? ProjectInfo.InitialRevision;
 
   public Task SetProjectNameAsync(string value, CancellationToken token) => AddAsync(ProjectName, value, token);
 
   public Task SetProjectDescriptionAsync(string value, CancellationToken token) => AddAsync(ProjectDescription, value, token);
 
-  public Task SetProjectRevisionAsync(string value, CancellationToken token) => AddAsync(RevisionKey, value, token);
-
-  public void SetProjectRevision(string value)
+  public long UpdateProjectRevision()
   {
-    using var command = CreateAddCommand(RevisionKey, value);
-    command.ExecuteNonQuery();
+    // A first commit (no row) or a legacy string value is folded in by the CAST, migrating it forward.
+    using var command = Connection.CreateCommand();
+    command.CommandText = """
+      INSERT INTO Metadata (Id, Data) VALUES (@id, 1)
+      ON CONFLICT(Id) DO UPDATE SET Data = CAST(Data AS INTEGER) + 1
+      RETURNING Data;
+      """;
+    command.Parameters.AddWithValue("@id", RevisionKey);
+    return Convert.ToInt64(command.ExecuteScalar());
   }
 }

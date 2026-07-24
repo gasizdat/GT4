@@ -242,13 +242,6 @@ public partial class ProjectPage : ContentPage
     }
   }
 
-  protected override void OnNavigatedTo(NavigatedToEventArgs args)
-  {
-    base.OnNavigatedTo(args);
-
-    SafeTask.Guard(Refresh, _AlertService);
-  }
-
   private void Refresh()
   {
     _FamiliesLoaded = false;
