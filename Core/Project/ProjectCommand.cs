@@ -88,11 +88,6 @@ public sealed class ProjectCommand : IDisposable, IAsyncDisposable
     return _Command.ExecuteNonQuery();
   }
 
-  /// <summary>
-  /// Synchronous counterpart to <see cref="ExecuteScalarAsync"/>, for the same commit-time revision
-  /// stamping as <see cref="ExecuteNonQuery"/>: runs on the caller's own flow, requires an active
-  /// transaction, and does not take the gate.
-  /// </summary>
   internal object? ExecuteScalar()
   {
     var ambient = _Gate.Current

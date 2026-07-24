@@ -15,8 +15,8 @@ internal class ProjectList : IProjectList
 
   private async Task<ProjectInfo> GetProjectInfoAsync(IProjectDocument project, CancellationToken token)
   {
-    // Sequential, not Task.WhenAll: the reads differ in result type now, and the single-connection gate
-    // serializes them onto one connection regardless, so nothing is lost.
+    // Sequential, not Task.WhenAll: the single-connection gate serializes these onto one connection, so
+    // WhenAll buys nothing.
     var name = await project.Metadata.GetProjectNameAsync(token);
     var description = await project.Metadata.GetProjectDescriptionAsync(token);
     var revision = await project.Metadata.GetProjectRevisionAsync(token);

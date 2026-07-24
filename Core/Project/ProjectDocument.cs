@@ -48,9 +48,8 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   private readonly object _CommandLock = new();
 
   private long _TransactionNo = 0;
-  // Cache of the persisted revision counter (owned and atomically incremented by the Metadata table).
-  // Seeded from the table on open and refreshed from each commit's returned value, so it is stable
-  // across a close/reopen when nothing was written -- a fresh tick seed made every reopen look changed.
+  // Cache of the persisted revision counter (owned by the Metadata table); reseeded from it on open so
+  // it is stable across a close/reopen.
   private long _ProjectRevision = 0;
   private volatile bool _Disposed = false;
   private int _DisposeStarted = 0;
@@ -105,8 +104,6 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
 
   private async Task LoadRevisionAsync(CancellationToken token)
   {
-    // Seed the cache from the persisted revision so it survives a close/reopen. A legacy or absent
-    // value reads as 0 (see GetProjectRevisionAsync) and migrates to the counter on the first commit.
     var persisted = await _TableMetadata.GetProjectRevisionAsync(token);
     Interlocked.Exchange(ref _ProjectRevision, persisted ?? 0);
   }

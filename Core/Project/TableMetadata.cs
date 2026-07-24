@@ -79,17 +79,8 @@ internal class TableMetadata : TableBase, ITableMetadata
 
   public Task<string?> GetProjectDescriptionAsync(CancellationToken token) => GetAsync<string>(ProjectDescription, token);
 
-  // CAST in SQL, not a C# cast: a project written before the counter format holds a legacy timestamp
-  // string here, which would throw on a boxed string->long cast. CAST yields 0 for such a value (and
-  // the row is absent -> null) until the first commit migrates it forward.
-  public async Task<long?> GetProjectRevisionAsync(CancellationToken token)
-  {
-    using var command = Connection.CreateCommand();
-    command.CommandText = "SELECT CAST(Data AS INTEGER) FROM Metadata WHERE Id=@id;";
-    command.Parameters.AddWithValue("@id", RevisionKey);
-    var result = await command.ExecuteScalarAsync(token);
-    return result is null or DBNull ? null : Convert.ToInt64(result);
-  }
+  public async Task<long?> GetProjectRevisionAsync(CancellationToken token) =>
+    await GetAsync<object>(RevisionKey, token) as long? ?? 0;
 
   public Task SetProjectNameAsync(string value, CancellationToken token) => AddAsync(ProjectName, value, token);
 
@@ -97,8 +88,7 @@ internal class TableMetadata : TableBase, ITableMetadata
 
   public long UpdateProjectRevision()
   {
-    // Atomically bump the persisted revision counter and return the new value. CAST of a missing row
-    // (first commit) or a legacy non-numeric revision yields 0, so both migrate forward to 1.
+    // A first commit (no row) or a legacy string value is folded in by the CAST, migrating it forward.
     using var command = Connection.CreateCommand();
     command.CommandText = """
       INSERT INTO Metadata (Id, Data) VALUES (@id, 1)
