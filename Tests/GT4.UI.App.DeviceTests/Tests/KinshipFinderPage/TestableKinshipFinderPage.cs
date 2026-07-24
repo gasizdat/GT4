@@ -26,4 +26,7 @@ internal sealed class TestableKinshipFinderPage : KinshipFinderPage
   }
 
   public Task InvokePageCommandAsync(object parameter) => OnPageCommand(parameter);
+
+  // NavigatedToEventArgs has no accessible test-side constructor and OnNavigatedTo never reads it.
+  public void InvokeNavigatedTo() => OnNavigatedTo(null!);
 }

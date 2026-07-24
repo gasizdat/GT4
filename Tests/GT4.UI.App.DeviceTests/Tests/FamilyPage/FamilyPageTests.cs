@@ -71,6 +71,41 @@ public class FamilyPageTests
   }
 
   [Fact]
+  public async Task OnNavigatedTo_reloads_members_when_the_project_revision_changed()
+  {
+    var services = new TestServices();
+    var familyName = N(5, "Ivanov", NameType.FamilyName);
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosByNameAsync(familyName, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([P(1, "Anna")]);
+    var page = await CreatePageAsync(services);
+    await page.ReloadPersonsAsync(() => page.FamilyName = familyName);
+    services.CurrentProjectProvider.SetupGet(p => p.Info).Returns(TestServices.SampleProjectInfo with { Revision = 1 });
+
+    var persons = await page.ReloadPersonsAsync(page.InvokeNavigatedTo);
+
+    Assert.Equal(["Anna"], persons.Select(p => p.DisplayName));
+  }
+
+  [Fact]
+  public async Task OnNavigatedTo_does_not_reload_when_the_project_revision_is_unchanged()
+  {
+    var services = new TestServices();
+    var familyName = N(5, "Ivanov", NameType.FamilyName);
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosByNameAsync(familyName, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([P(1, "Anna")]);
+    var page = await CreatePageAsync(services);
+    await page.ReloadPersonsAsync(() => page.FamilyName = familyName);
+    var loadsBefore = page.CompletedLoads;
+
+    await MainThread.InvokeOnMainThreadAsync(page.InvokeNavigatedTo);
+    await Task.Delay(200);
+
+    Assert.Equal(loadsBefore, page.CompletedLoads);
+  }
+
+  [Fact]
   public async Task MaritalStatusData_is_not_fetched_until_the_filter_panel_is_shown()
   {
     var services = new TestServices();

@@ -1,7 +1,6 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
-using GT4.UI;
 using GT4.UI.Abstraction;
 using GT4.UI.Components;
 using GT4.UI.Dialogs;
@@ -348,6 +347,8 @@ public class ProjectPageTests
     var page = await CreatePageAsync(services);
     await firstCallStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
+    // A bumped revision is what makes OnNavigatedTo reload; without it the compare is a no-op.
+    services.CurrentProjectProvider.SetupGet(p => p.Info).Returns(TestServices.SampleProjectInfo with { Revision = 1 });
     await MainThread.InvokeOnMainThreadAsync(page.InvokeNavigatedTo);
     firstCallGate.SetResult();
 
@@ -363,7 +364,26 @@ public class ProjectPageTests
   }
 
   [Fact]
-  public async Task OnNavigatedTo_always_reloads_even_when_the_project_revision_is_unchanged()
+  public async Task OnNavigatedTo_reloads_when_the_project_revision_changed()
+  {
+    var services = new TestServices();
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>()))
+      .ReturnsAsync([N(1, "Ivanov", NameType.FamilyName)]);
+    var page = await CreatePageAsync(services);
+    await page.WaitForFamiliesAsync();
+    var loadsBefore = page.CompletedLoads;
+    services.CurrentProjectProvider.SetupGet(p => p.Info).Returns(TestServices.SampleProjectInfo with { Revision = 1 });
+
+    await MainThread.InvokeOnMainThreadAsync(page.InvokeNavigatedTo);
+
+    await Poll.UntilAsync(
+      () => Task.FromResult(page.CompletedLoads),
+      loads => loads > loadsBefore,
+      timeoutMessage: "OnNavigatedTo did not reload after the revision changed.");
+  }
+
+  [Fact]
+  public async Task OnNavigatedTo_does_not_reload_when_the_project_revision_is_unchanged()
   {
     var services = new TestServices();
     services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>()))
@@ -373,70 +393,6 @@ public class ProjectPageTests
     var loadsBefore = page.CompletedLoads;
 
     await MainThread.InvokeOnMainThreadAsync(page.InvokeNavigatedTo);
-
-    await Poll.UntilAsync(
-      () => Task.FromResult(page.CompletedLoads),
-      loads => loads > loadsBefore,
-      timeoutMessage: "OnNavigatedTo did not reload despite an unchanged revision.");
-  }
-
-  [Fact]
-  public async Task RevisionChanged_reloads_while_the_page_is_loaded()
-  {
-    var services = new TestServices();
-    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>()))
-      .ReturnsAsync([N(1, "Ivanov", NameType.FamilyName)]);
-    var page = await CreatePageAsync(services);
-    await page.WaitForFamiliesAsync();
-    var monitor = (ProjectRevisionMonitor)services.Provider.GetRequiredService<IProjectRevisionMonitor>();
-    await using var window = await WindowHost.AttachAsync(page);
-    await Poll.UntilAsync(() => Task.FromResult(monitor.SubscriberCount), count => count > 0, timeoutMessage: "The page never subscribed to RevisionChanged.");
-    var loadsBefore = page.CompletedLoads;
-    services.Project.SetupGet(p => p.ProjectRevision).Returns(42L);
-
-    await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
-
-    await Poll.UntilAsync(
-      () => Task.FromResult(page.CompletedLoads),
-      loads => loads > loadsBefore,
-      timeoutMessage: "RevisionChanged did not reload the page while it was loaded.");
-  }
-
-  [Fact]
-  public async Task RevisionChanged_does_not_reload_on_the_first_tick_after_subscribing_when_the_revision_is_unchanged()
-  {
-    var services = new TestServices();
-    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>()))
-      .ReturnsAsync([N(1, "Ivanov", NameType.FamilyName)]);
-    var page = await CreatePageAsync(services);
-    await page.WaitForFamiliesAsync();
-    var monitor = (ProjectRevisionMonitor)services.Provider.GetRequiredService<IProjectRevisionMonitor>();
-    await using var window = await WindowHost.AttachAsync(page);
-    await Poll.UntilAsync(() => Task.FromResult(monitor.SubscriberCount), count => count > 0, timeoutMessage: "The page never subscribed to RevisionChanged.");
-    var loadsBefore = page.CompletedLoads;
-
-    await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
-    await Task.Delay(200);
-
-    Assert.Equal(loadsBefore, page.CompletedLoads);
-  }
-
-  [Fact]
-  public async Task RevisionChanged_does_not_reload_after_the_page_is_unloaded()
-  {
-    var services = new TestServices();
-    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>()))
-      .ReturnsAsync([N(1, "Ivanov", NameType.FamilyName)]);
-    var page = await CreatePageAsync(services);
-    await page.WaitForFamiliesAsync();
-    var monitor = (ProjectRevisionMonitor)services.Provider.GetRequiredService<IProjectRevisionMonitor>();
-    var window = await WindowHost.AttachAsync(page);
-    await Poll.UntilAsync(() => Task.FromResult(monitor.SubscriberCount), count => count > 0, timeoutMessage: "The page never subscribed to RevisionChanged.");
-    await window.DisposeAsync();
-    var loadsBefore = page.CompletedLoads;
-    services.Project.SetupGet(p => p.ProjectRevision).Returns(43L);
-
-    await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
     await Task.Delay(200);
 
     Assert.Equal(loadsBefore, page.CompletedLoads);

@@ -58,6 +58,7 @@ public partial class FamilyTreePage : ContentPage
   private double _PanStartScrollY;
   private double _ZoomScale = 1.0;
   private int _LoadOperationsCount = 0;
+  private ProjectInfo? _LastProjectInfo;
 
   // Where to park the viewport after a (re)build.
   private enum ViewTarget { Center, Top, Bottom }
@@ -92,6 +93,7 @@ public partial class FamilyTreePage : ContentPage
     var pan = new PanGestureRecognizer();
     pan.PanUpdated += OnCanvasPan;
     Canvas.GestureRecognizers.Add(pan);
+    _LastProjectInfo = _CurrentProjectProvider.Info;
 
 #if DEBUG
     AddDiagnosticToolbarItems();
@@ -233,6 +235,20 @@ public partial class FamilyTreePage : ContentPage
     var center = _Center;
     SetLoadInProgress();
     _ = SafeTask.Run(() => LoadAsync(center), _AlertService);
+  }
+
+  // See ProjectPage.OnNavigatedTo: node views are cached and never auto-reload (see ClearRenderCache),
+  // so an edit made on the person subpage this navigates to must rebuild the tree on the way back.
+  protected override void OnNavigatedTo(NavigatedToEventArgs args)
+  {
+    base.OnNavigatedTo(args);
+    var info = _CurrentProjectProvider.Info;
+    if (_LastProjectInfo != info)
+    {
+      _LastProjectInfo = info;
+      ClearRenderCache();
+      Reload(ViewTarget.Center);
+    }
   }
 
   private async Task LoadAsync(Person center)

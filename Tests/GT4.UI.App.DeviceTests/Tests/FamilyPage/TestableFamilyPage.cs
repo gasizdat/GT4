@@ -61,6 +61,9 @@ internal sealed class TestableFamilyPage : FamilyPage
 
   public Task InvokeOpenPersonAsync(PersonInfo familyMember) => OnOpenPerson(familyMember);
 
+  // NavigatedToEventArgs has no accessible test-side constructor and OnNavigatedTo never reads it.
+  public void InvokeNavigatedTo() => OnNavigatedTo(null!);
+
   /// <summary>
   /// How many Clear()/Add() batches a background Persons load has performed on the underlying
   /// collection. A level-triggered counter, unlike a one-shot event subscription, can't miss a

@@ -1,3 +1,4 @@
+using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Dialogs;
@@ -107,6 +108,56 @@ public class KinshipFinderPageTests
 
     Assert.False(page.HasChain);
     Assert.True(page.ShowNotFound);
+  }
+
+  [Fact]
+  public async Task OnNavigatedTo_recomputes_the_chain_when_the_project_revision_changed()
+  {
+    var services = new TestServices();
+    var personFrom = P(1);
+    var personTo = P(2);
+    var relative = new RelativeInfo(personTo, RelationshipType.Parent, null, Generation.Parent, Consanguinity.Zero);
+    services.KinshipFinder
+      .Setup(k => k.FindPathAsync(It.IsAny<Person>(), It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync([relative]);
+    var page = await CreatePageAsync(services);
+
+    await using var window = await WindowHost.AttachAsync(page);
+    await PickPersonAsync(page, "PickPersonFrom", personFrom);
+    await PickPersonAsync(page, "PickPersonTo", personTo);
+    var callsBefore = services.KinshipFinder.Invocations.Count(i => i.Method.Name == nameof(IKinshipFinder.FindPathAsync));
+    services.CurrentProjectProvider.SetupGet(p => p.Info).Returns(TestServices.SampleProjectInfo with { Revision = 1 });
+
+    await MainThread.InvokeOnMainThreadAsync(page.InvokeNavigatedTo);
+
+    await Poll.UntilAsync(
+      () => Task.FromResult(services.KinshipFinder.Invocations.Count(i => i.Method.Name == nameof(IKinshipFinder.FindPathAsync))),
+      calls => calls > callsBefore,
+      timeoutMessage: "OnNavigatedTo did not recompute the chain after the revision changed.");
+  }
+
+  [Fact]
+  public async Task OnNavigatedTo_does_not_recompute_when_the_project_revision_is_unchanged()
+  {
+    var services = new TestServices();
+    var personFrom = P(1);
+    var personTo = P(2);
+    var relative = new RelativeInfo(personTo, RelationshipType.Parent, null, Generation.Parent, Consanguinity.Zero);
+    services.KinshipFinder
+      .Setup(k => k.FindPathAsync(It.IsAny<Person>(), It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync([relative]);
+    var page = await CreatePageAsync(services);
+
+    await using var window = await WindowHost.AttachAsync(page);
+    await PickPersonAsync(page, "PickPersonFrom", personFrom);
+    await PickPersonAsync(page, "PickPersonTo", personTo);
+    var callsBefore = services.KinshipFinder.Invocations.Count(i => i.Method.Name == nameof(IKinshipFinder.FindPathAsync));
+
+    await MainThread.InvokeOnMainThreadAsync(page.InvokeNavigatedTo);
+    await Task.Delay(200);
+
+    var callsAfter = services.KinshipFinder.Invocations.Count(i => i.Method.Name == nameof(IKinshipFinder.FindPathAsync));
+    Assert.Equal(callsBefore, callsAfter);
   }
 
   [Fact]

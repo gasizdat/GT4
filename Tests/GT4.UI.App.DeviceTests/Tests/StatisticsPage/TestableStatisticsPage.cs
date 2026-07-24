@@ -22,9 +22,8 @@ internal sealed class TestableStatisticsPage : StatisticsPage
     ICurrentProjectProvider currentProjectProvider,
     ICancellationTokenProvider cancellationTokenProvider,
     IAlertService alertService,
-    INameFormatter nameFormatter,
-    IProjectRevisionMonitor projectRevisionMonitor)
-    : base(currentProjectProvider, cancellationTokenProvider, alertService, nameFormatter, projectRevisionMonitor)
+    INameFormatter nameFormatter)
+    : base(currentProjectProvider, cancellationTokenProvider, alertService, nameFormatter)
   {
   }
 

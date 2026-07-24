@@ -117,7 +117,10 @@ internal class CurrentProjectProvider : ICurrentProjectProvider
     {
       lock (_Sync)
       {
-        return _Info ?? ThrowProjectNotOpened<ProjectInfo>();
+        var info = _Info ?? ThrowProjectNotOpened<ProjectInfo>();
+        // Carry the live counter so callers can detect a mutation by value-comparing Info. Falls back
+        // to the stored revision while no host is open, keeping the getter usable across close/reopen.
+        return info with { Revision = _ProjectHost?.Project?.ProjectRevision ?? info.Revision };
       }
     }
   }

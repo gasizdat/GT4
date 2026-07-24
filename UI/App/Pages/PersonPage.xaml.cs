@@ -43,6 +43,7 @@ public partial class PersonPage : ContentPage
   private PersonPageSmartLayout _SmartLayout = new();
   private bool _ExpandAll = false;
   private RelativeInfo[] _AllRoots = [];
+  private ProjectInfo? _LastProjectInfo;
 
   public PersonPage(
     ICancellationTokenProvider cancellationTokenProvider,
@@ -84,6 +85,7 @@ public partial class PersonPage : ContentPage
       _AlertService,
       () => _AllRoots);
     FilterView.Changed += (_, _) => RefreshRelatives();
+    _LastProjectInfo = _CurrentProjectProvider.Info;
   }
 
   protected ScrollView BodyScroll => BodyScrollView;
@@ -266,6 +268,19 @@ public partial class PersonPage : ContentPage
 
     var maxTranslation = Math.Max(0, RelativesView.Height - PersonPhoto.Height);
     PersonPhoto.TranslationY = Math.Clamp(scrollY, 0, maxTranslation);
+  }
+
+  // See ProjectPage.OnNavigatedTo: returning from a subpage (family, tree, another person) that
+  // committed an edit must re-fetch the current person's data.
+  protected override void OnNavigatedTo(NavigatedToEventArgs args)
+  {
+    base.OnNavigatedTo(args);
+    var info = _CurrentProjectProvider.Info;
+    if (_LastProjectInfo != info)
+    {
+      _LastProjectInfo = info;
+      ShowPersonInfo(_PersonFullInfo, false);
+    }
   }
 
   private void OnBodyScrolled(object? sender, ScrolledEventArgs e) => UpdatePersonPhotoStickyPosition(e.ScrollY);

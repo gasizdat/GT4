@@ -65,6 +65,9 @@ internal sealed class TestablePersonPage : PersonPage
 
   public Task InvokePersonLinkTappedAsync(int personId) => NavigateToPersonLinkAsync(personId);
 
+  // NavigatedToEventArgs has no accessible test-side constructor and OnNavigatedTo never reads it.
+  public void InvokeNavigatedTo() => OnNavigatedTo(null!);
+
   public void ForceSizeAllocated(double width, double height) => OnSizeAllocated(width, height);
 
   public ScrollView BodyScrollForTest => BodyScroll;

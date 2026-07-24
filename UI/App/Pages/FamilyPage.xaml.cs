@@ -27,6 +27,7 @@ public partial class FamilyPage : ContentPage
   private bool _PersonsLoaded;
   private Name? _FamilyName = null;
   private double _PersonItemMinimalWidth;
+  private ProjectInfo? _LastProjectInfo;
 
   public FamilyPage(
     ICancellationTokenProvider cancellationTokenProvider,
@@ -63,6 +64,7 @@ public partial class FamilyPage : ContentPage
       _AlertService,
       () => [.. _Persons.AllItems]);
     FilterView.Changed += (_, _) => _Persons.Update();
+    _LastProjectInfo = _CurrentProjectProvider.Info;
   }
 
   public Name? FamilyName
@@ -156,6 +158,20 @@ public partial class FamilyPage : ContentPage
     _PersonItemMinimalWidth = width * PercentageOfWidth / ItemsPerRow;
 
     OnPropertyChanged(nameof(PersonItemMinimalWidth));
+  }
+
+  // See ProjectPage.OnNavigatedTo: an edit committed on the person subpage this list navigates to must
+  // reload its members on the way back.
+  protected override void OnNavigatedTo(NavigatedToEventArgs args)
+  {
+    base.OnNavigatedTo(args);
+    var info = _CurrentProjectProvider.Info;
+    if (_LastProjectInfo != info)
+    {
+      _LastProjectInfo = info;
+      _PersonsLoaded = false;
+      OnPropertyChanged(nameof(Persons));
+    }
   }
 
   private bool IsNoFamilyMode => _FamilyName?.Id == FamilyInfoItem.NoFamilyName.Id;

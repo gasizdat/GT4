@@ -39,6 +39,7 @@ public partial class ProjectPage : ContentPage
 
   private readonly FilteredObservableCollection<FamilyInfoItem> _Families = new();
   private bool _FamiliesLoaded;
+  private ProjectInfo? _LastProjectInfo;
 
   public ProjectPage(
     INameTypeFormatter nameTypeFormatter,
@@ -54,8 +55,7 @@ public partial class ProjectPage : ContentPage
     GedcomImportEncoding gedcomImportEncoding,
     IAlertService alertService,
     INavigationService navigationService,
-    IBiologicalSexFormatter biologicalSexFormatter,
-    IProjectRevisionMonitor projectRevisionMonitor
+    IBiologicalSexFormatter biologicalSexFormatter
     )
   {
     _NameTypeFormatter = nameTypeFormatter;
@@ -84,8 +84,7 @@ public partial class ProjectPage : ContentPage
       _AlertService,
       () => [.. _Families.AllItems.SelectMany(f => f.AllPersons).DistinctBy(p => p.Id)]);
     FilterView.Changed += (_, _) => UpdateFamilies();
-    Loaded += (_, _) => projectRevisionMonitor.RevisionChanged += OnRevisionChanged;
-    Unloaded += (_, _) => projectRevisionMonitor.RevisionChanged -= OnRevisionChanged;
+    _LastProjectInfo = _CurrentProjectProvider.Info;
   }
 
   public ObservableCollection<FamilyInfoItem> Families
@@ -248,7 +247,18 @@ public partial class ProjectPage : ContentPage
     this.RefreshView();
   }
 
-  private void OnRevisionChanged(object? sender, EventArgs e) => SafeTask.Guard(Refresh, _AlertService);
+  // Catches a change committed on a subpage: returning here re-navigates, so compare the live project
+  // revision (carried on Info) against the snapshot taken when this page last loaded its data.
+  protected override void OnNavigatedTo(NavigatedToEventArgs args)
+  {
+    base.OnNavigatedTo(args);
+    var info = _CurrentProjectProvider.Info;
+    if (_LastProjectInfo != info)
+    {
+      _LastProjectInfo = info;
+      Refresh();
+    }
+  }
 
   protected async Task OnPageCommand(object obj)
   {
