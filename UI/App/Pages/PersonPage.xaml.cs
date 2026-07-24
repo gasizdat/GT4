@@ -275,12 +275,16 @@ public partial class PersonPage : ContentPage
   protected override void OnNavigatedTo(NavigatedToEventArgs args)
   {
     base.OnNavigatedTo(args);
-    var info = _CurrentProjectProvider.Info;
-    if (_LastProjectInfo != info)
+    if (_LastProjectInfo != _CurrentProjectProvider.Info)
     {
-      _LastProjectInfo = info;
-      ShowPersonInfo(_PersonFullInfo, false);
+      Refresh();
     }
+  }
+
+  private void Refresh()
+  {
+    _LastProjectInfo = _CurrentProjectProvider.Info;
+    ShowPersonInfo(_PersonFullInfo, false);
   }
 
   private void OnBodyScrolled(object? sender, ScrolledEventArgs e) => UpdatePersonPhotoStickyPosition(e.ScrollY);
@@ -428,6 +432,12 @@ public partial class PersonPage : ContentPage
                        string? gedcomDetails,
                        bool addToNavigation)
   {
+    if (_LastProjectInfo != _CurrentProjectProvider.Info)
+    {
+      Refresh();
+      return;
+    }
+
     _PersonFullInfo = personFullInfo;
     _Photos = photos;
     _Captions = captions;

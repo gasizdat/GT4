@@ -242,13 +242,17 @@ public partial class FamilyTreePage : ContentPage
   protected override void OnNavigatedTo(NavigatedToEventArgs args)
   {
     base.OnNavigatedTo(args);
-    var info = _CurrentProjectProvider.Info;
-    if (_LastProjectInfo != info)
+    if (_LastProjectInfo != _CurrentProjectProvider.Info)
     {
-      _LastProjectInfo = info;
-      ClearRenderCache();
-      Reload(ViewTarget.Center);
+      Refresh();
     }
+  }
+
+  private void Refresh()
+  {
+    _LastProjectInfo = _CurrentProjectProvider.Info;
+    ClearRenderCache();
+    Reload(ViewTarget.Center);
   }
 
   private async Task LoadAsync(Person center)
@@ -278,7 +282,16 @@ public partial class FamilyTreePage : ContentPage
         node => node.Node.Id,
         node => _NameFormatter.ToString(node.Node.Person, NameFormat.ShortPersonName));
 
-      await SafeTask.RunOnMainThread(() => Render(tree.CenterId, layout, names, zoom), _AlertService);
+      await SafeTask.RunOnMainThread(() =>
+      {
+        if (_LastProjectInfo != _CurrentProjectProvider.Info)
+        {
+          Refresh();
+          return;
+        }
+
+        Render(tree.CenterId, layout, names, zoom);
+      }, _AlertService);
     }
     finally
     {

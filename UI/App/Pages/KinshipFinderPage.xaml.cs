@@ -57,6 +57,12 @@ public partial class KinshipFinderPage : ContentPage
     using var token = _CancellationTokenProvider.CreateDbCancellationToken();
     var chain = await _CurrentProjectProvider.Project.KinshipFinder.FindPathAsync(_PersonFrom, _PersonTo, token);
 
+    if (_LastProjectInfo != _CurrentProjectProvider.Info)
+    {
+      Refresh();
+      return;
+    }
+
     _Chain = chain;
     _Searched = true;
     this.RefreshView();
@@ -105,12 +111,16 @@ public partial class KinshipFinderPage : ContentPage
   protected override void OnNavigatedTo(NavigatedToEventArgs args)
   {
     base.OnNavigatedTo(args);
-    var info = _CurrentProjectProvider.Info;
-    if (_LastProjectInfo != info)
+    if (_LastProjectInfo != _CurrentProjectProvider.Info)
     {
-      _LastProjectInfo = info;
-      _ = SafeTask.GuardAsync(FindAsync, _AlertService);
+      Refresh();
     }
+  }
+
+  private void Refresh()
+  {
+    _LastProjectInfo = _CurrentProjectProvider.Info;
+    _ = SafeTask.GuardAsync(FindAsync, _AlertService);
   }
 
   public ICommand PageCommand => _PageCommand;

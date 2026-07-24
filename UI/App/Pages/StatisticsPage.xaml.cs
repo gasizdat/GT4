@@ -65,6 +65,12 @@ public partial class StatisticsPage : ContentPage
 
     await SafeTask.RunOnMainThread(() =>
     {
+      if (_LastProjectInfo != _CurrentProjectProvider.Info)
+      {
+        Refresh();
+        return;
+      }
+
       _Statistics = statistics;
       this.RefreshView();
     }, _AlertService);
@@ -73,10 +79,8 @@ public partial class StatisticsPage : ContentPage
   // See ProjectPage.OnNavigatedTo: reload only when a change was committed since this page last loaded.
   protected void OnNavigatedTo(object sender, NavigatedToEventArgs e)
   {
-    var info = _CurrentProjectProvider.Info;
-    if (_LastProjectInfo != info)
+    if (_LastProjectInfo != _CurrentProjectProvider.Info)
     {
-      _LastProjectInfo = info;
       Refresh();
     }
   }
@@ -85,6 +89,7 @@ public partial class StatisticsPage : ContentPage
   // the load, not just flagging _UpdateStatistics and hoping something else re-reads it.
   private void Refresh()
   {
+    _LastProjectInfo = _CurrentProjectProvider.Info;
     _UpdateStatistics = true;
     _ = Statistics;
   }
