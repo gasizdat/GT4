@@ -12,7 +12,8 @@ public interface ITableMetadata
   Task SetProjectNameAsync(string value, CancellationToken token);
   Task SetProjectRevisionAsync(string value, CancellationToken token);
 
-  // Synchronous by design: NestedTransaction.CommitAsync stamps the revision on commit and must not
-  // await here, or the AsyncLocal ambient transaction would be stranded on a continuation.
-  internal void SetProjectRevision(string value);
+  // Atomically increments the persisted revision counter and returns the new value. Synchronous by
+  // design: NestedTransaction.CommitAsync stamps the revision on commit and must not await here, or
+  // the AsyncLocal ambient transaction would be stranded on a continuation.
+  internal string UpdateProjectRevision();
 }

@@ -791,12 +791,12 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   }
 
   [Fact]
-  public void Write_BumpsProjectRevision()
+  public async Task Write_BumpsProjectRevision()
   {
-    // The revision is a monotonic counter, so every stamp strictly advances it.
+    // The revision is a monotonic counter, so every committed write strictly advances it.
     var before = long.Parse(_doc.ProjectRevision, CultureInfo.InvariantCulture);
 
-    _doc.UpdateRevision();
+    await AddBarePersonAsync();
 
     var after = long.Parse(_doc.ProjectRevision, CultureInfo.InvariantCulture);
     after.Should().BeGreaterThan(before);
@@ -819,7 +819,7 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   public async Task ProjectRevision_AdvancesAndPersists_AcrossReopen_AfterAWrite()
   {
     // A write while open must survive the close: the reopened project reads a strictly greater
-    // revision from the Metadata table, proving the NextRevision/persist/reseed round-trip.
+    // revision from the Metadata table, proving the atomic-increment/persist/reseed round-trip.
     var before = long.Parse(_doc.ProjectRevision, CultureInfo.InvariantCulture);
 
     await AddBarePersonAsync();

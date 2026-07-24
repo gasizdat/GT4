@@ -87,9 +87,18 @@ internal class TableMetadata : TableBase, ITableMetadata
 
   public Task SetProjectRevisionAsync(string value, CancellationToken token) => AddAsync(RevisionKey, value, token);
 
-  public void SetProjectRevision(string value)
+  public string UpdateProjectRevision()
   {
-    using var command = CreateAddCommand(RevisionKey, value);
-    command.ExecuteNonQuery();
+    // Atomically bump the persisted revision counter and return the new value. CAST of a missing row
+    // (first commit) or a legacy non-numeric revision yields 0, so both migrate forward to 1. Kept as
+    // TEXT so GetProjectRevisionAsync's string read stays valid.
+    using var command = Connection.CreateCommand();
+    command.CommandText = """
+      INSERT INTO Metadata (Id, Data) VALUES (@id, '1')
+      ON CONFLICT(Id) DO UPDATE SET Data = CAST(CAST(Data AS INTEGER) + 1 AS TEXT)
+      RETURNING Data;
+      """;
+    command.Parameters.AddWithValue("@id", RevisionKey);
+    return (string)command.ExecuteScalar()!;
   }
 }
