@@ -12,7 +12,7 @@ internal sealed class ProjectRevisionMonitor : IProjectRevisionMonitor
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly WeakEventManager _EventManager = new();
   private readonly IDispatcherTimer _Timer;
-  private string? _LastRevision;
+  private long? _LastRevision;
   private int _SubscriberCount;
 
   public ProjectRevisionMonitor(ICurrentProjectProvider currentProjectProvider)

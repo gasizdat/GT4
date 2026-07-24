@@ -7,13 +7,12 @@ public interface ITableMetadata
   Task<TData[]> GetByPrefixAsync<TData>(string prefix, CancellationToken token);
   Task<string?> GetProjectDescriptionAsync(CancellationToken token);
   Task<string?> GetProjectNameAsync(CancellationToken token);
-  Task<string?> GetProjectRevisionAsync(CancellationToken token);
+  Task<long?> GetProjectRevisionAsync(CancellationToken token);
   Task SetProjectDescriptionAsync(string value, CancellationToken token);
   Task SetProjectNameAsync(string value, CancellationToken token);
-  Task SetProjectRevisionAsync(string value, CancellationToken token);
 
   // Atomically increments the persisted revision counter and returns the new value. Synchronous by
   // design: NestedTransaction.CommitAsync stamps the revision on commit and must not await here, or
   // the AsyncLocal ambient transaction would be stranded on a continuation.
-  internal string UpdateProjectRevision();
+  internal long UpdateProjectRevision();
 }

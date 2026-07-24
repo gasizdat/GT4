@@ -15,15 +15,16 @@ internal class ProjectList : IProjectList
 
   private async Task<ProjectInfo> GetProjectInfoAsync(IProjectDocument project, CancellationToken token)
   {
-    var results = await Task.WhenAll(
-        project.Metadata.GetProjectNameAsync(token),
-        project.Metadata.GetProjectDescriptionAsync(token),
-        project.Metadata.GetProjectRevisionAsync(token));
+    // Sequential, not Task.WhenAll: the reads differ in result type now, and the single-connection gate
+    // serializes them onto one connection regardless, so nothing is lost.
+    var name = await project.Metadata.GetProjectNameAsync(token);
+    var description = await project.Metadata.GetProjectDescriptionAsync(token);
+    var revision = await project.Metadata.GetProjectRevisionAsync(token);
 
     return new ProjectInfo(
-      Revision: results[2] ?? string.Empty,
-      Description: results[1] ?? string.Empty,
-      Name: results[0] ?? throw new DataException($"There is no name stored in the project"),
+      Revision: revision,
+      Description: description ?? string.Empty,
+      Name: name ?? throw new DataException($"There is no name stored in the project"),
       Origin: default!
     );
   }
@@ -41,7 +42,7 @@ internal class ProjectList : IProjectList
     catch (Exception ex)
     {
       return new ProjectInfo(
-        Revision: string.Empty,
+        Revision: null,
         Description: ex.ToString(),
         Name: $"Error: {ex.Message}",
         Origin: origin

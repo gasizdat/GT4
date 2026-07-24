@@ -25,7 +25,7 @@ public sealed class CurrentProjectProviderTests
   public CurrentProjectProviderTests()
   {
     _fs.AddFile(_origin);
-    _info = new ProjectInfo("Tree", "Desc", "rev", _origin);
+    _info = new ProjectInfo("Tree", "Desc", 1L, _origin);
 
     _list
       .Setup(l => l.OpenAsync(It.IsAny<FileDescription>(), It.IsAny<CancellationToken>()))
@@ -35,7 +35,7 @@ public sealed class CurrentProjectProviderTests
   private ProjectHost CreateHost()
   {
     var doc = new Mock<IProjectDocument>(MockBehavior.Loose);
-    doc.SetupGet(d => d.ProjectRevision).Returns("1");
+    doc.SetupGet(d => d.ProjectRevision).Returns(1L);
     doc.Setup(d => d.DisposeAsync()).Returns(ValueTask.CompletedTask);
     doc.Setup(d => d.Dispose());
     var host = new ProjectHost(_fs, _origin, _cache) { Project = doc.Object };

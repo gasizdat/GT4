@@ -36,7 +36,7 @@ public sealed class ProjectRevisionMonitorTests
     var monitor = await CreateMonitorAsync(services);
     var fireCount = 0;
     monitor.RevisionChanged += (_, _) => fireCount++;
-    services.Project.SetupGet(p => p.ProjectRevision).Returns("99");
+    services.Project.SetupGet(p => p.ProjectRevision).Returns(99L);
     await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
 
     await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
@@ -51,10 +51,10 @@ public sealed class ProjectRevisionMonitorTests
     var monitor = await CreateMonitorAsync(services);
     var fireCount = 0;
     monitor.RevisionChanged += (_, _) => fireCount++;
-    services.Project.SetupGet(p => p.ProjectRevision).Returns("99");
+    services.Project.SetupGet(p => p.ProjectRevision).Returns(99L);
     await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
 
-    services.Project.SetupGet(p => p.ProjectRevision).Returns("100");
+    services.Project.SetupGet(p => p.ProjectRevision).Returns(100L);
     await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
 
     Assert.Equal(2, fireCount);
@@ -82,7 +82,7 @@ public sealed class ProjectRevisionMonitorTests
   public async Task CheckRevision_DoesNotFire_WhenTheProjectReopensUnchanged()
   {
     var services = new TestServices();
-    services.Project.SetupGet(p => p.ProjectRevision).Returns("5");
+    services.Project.SetupGet(p => p.ProjectRevision).Returns(5L);
     var monitor = await CreateMonitorAsync(services);
     var fireCount = 0;
     monitor.RevisionChanged += (_, _) => fireCount++;
@@ -103,14 +103,14 @@ public sealed class ProjectRevisionMonitorTests
   public async Task CheckRevision_Fires_WhenTheProjectChangedWhileClosed()
   {
     var services = new TestServices();
-    services.Project.SetupGet(p => p.ProjectRevision).Returns("5");
+    services.Project.SetupGet(p => p.ProjectRevision).Returns(5L);
     var monitor = await CreateMonitorAsync(services);
     var fireCount = 0;
     monitor.RevisionChanged += (_, _) => fireCount++;
 
     services.CurrentProjectProvider.SetupGet(p => p.HasCurrentProject).Returns(false);
     await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
-    services.Project.SetupGet(p => p.ProjectRevision).Returns("6");
+    services.Project.SetupGet(p => p.ProjectRevision).Returns(6L);
     services.CurrentProjectProvider.SetupGet(p => p.HasCurrentProject).Returns(true);
     await MainThread.InvokeOnMainThreadAsync(monitor.CheckRevision);
 

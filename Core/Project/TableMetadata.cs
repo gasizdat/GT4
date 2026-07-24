@@ -79,26 +79,33 @@ internal class TableMetadata : TableBase, ITableMetadata
 
   public Task<string?> GetProjectDescriptionAsync(CancellationToken token) => GetAsync<string>(ProjectDescription, token);
 
-  public Task<string?> GetProjectRevisionAsync(CancellationToken token) => GetAsync<string>(RevisionKey, token);
+  // CAST in SQL, not a C# cast: a project written before the counter format holds a legacy timestamp
+  // string here, which would throw on a boxed string->long cast. CAST yields 0 for such a value (and
+  // the row is absent -> null) until the first commit migrates it forward.
+  public async Task<long?> GetProjectRevisionAsync(CancellationToken token)
+  {
+    using var command = Connection.CreateCommand();
+    command.CommandText = "SELECT CAST(Data AS INTEGER) FROM Metadata WHERE Id=@id;";
+    command.Parameters.AddWithValue("@id", RevisionKey);
+    var result = await command.ExecuteScalarAsync(token);
+    return result is null or DBNull ? null : Convert.ToInt64(result);
+  }
 
   public Task SetProjectNameAsync(string value, CancellationToken token) => AddAsync(ProjectName, value, token);
 
   public Task SetProjectDescriptionAsync(string value, CancellationToken token) => AddAsync(ProjectDescription, value, token);
 
-  public Task SetProjectRevisionAsync(string value, CancellationToken token) => AddAsync(RevisionKey, value, token);
-
-  public string UpdateProjectRevision()
+  public long UpdateProjectRevision()
   {
     // Atomically bump the persisted revision counter and return the new value. CAST of a missing row
-    // (first commit) or a legacy non-numeric revision yields 0, so both migrate forward to 1. Kept as
-    // TEXT so GetProjectRevisionAsync's string read stays valid.
+    // (first commit) or a legacy non-numeric revision yields 0, so both migrate forward to 1.
     using var command = Connection.CreateCommand();
     command.CommandText = """
-      INSERT INTO Metadata (Id, Data) VALUES (@id, '1')
-      ON CONFLICT(Id) DO UPDATE SET Data = CAST(CAST(Data AS INTEGER) + 1 AS TEXT)
+      INSERT INTO Metadata (Id, Data) VALUES (@id, 1)
+      ON CONFLICT(Id) DO UPDATE SET Data = CAST(Data AS INTEGER) + 1
       RETURNING Data;
       """;
     command.Parameters.AddWithValue("@id", RevisionKey);
-    return (string)command.ExecuteScalar()!;
+    return Convert.ToInt64(command.ExecuteScalar());
   }
 }

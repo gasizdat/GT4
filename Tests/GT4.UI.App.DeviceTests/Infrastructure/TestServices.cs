@@ -37,7 +37,7 @@ internal sealed class TestServices
   public static readonly ProjectInfo SampleProjectInfo = new(
     Name: "Sample Project",
     Description: "",
-    Revision: "",
+    Revision: null,
     Origin: new FileDescription(new DirectoryDescription(Environment.SpecialFolder.MyDocuments, []), "sample.gt4", null));
 
   public TestServices()

@@ -12,7 +12,7 @@ public class ProjectHost : IAsyncDisposable, IDisposable
   private readonly FileDescription _Origin;
   private readonly FileDescription _Cache;
   private readonly object _Sync = new();
-  private string? _ProjectRevision;
+  private long? _ProjectRevision;
   private IProjectDocument? _Project = null;
 
   public ProjectHost(IFileSystem fileSystem, FileDescription origin, FileDescription cache)
@@ -49,7 +49,7 @@ public class ProjectHost : IAsyncDisposable, IDisposable
   public void Dispose()
   {
     IProjectDocument project;
-    string? openedRevision;
+    long? openedRevision;
     lock (_Sync)
     {
       if (_Project is null)
@@ -78,7 +78,7 @@ public class ProjectHost : IAsyncDisposable, IDisposable
   public async ValueTask DisposeAsync()
   {
     IProjectDocument project;
-    string? openedRevision;
+    long? openedRevision;
     lock (_Sync)
     {
       if (_Project is null)

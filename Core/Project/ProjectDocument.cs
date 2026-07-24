@@ -51,7 +51,7 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   // Cache of the persisted revision counter (owned and atomically incremented by the Metadata table).
   // Seeded from the table on open and refreshed from each commit's returned value, so it is stable
   // across a close/reopen when nothing was written -- a fresh tick seed made every reopen look changed.
-  private volatile string? _ProjectRevision;
+  private long _ProjectRevision = 0;
   private volatile bool _Disposed = false;
   private int _DisposeStarted = 0;
 
@@ -105,9 +105,10 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
 
   private async Task LoadRevisionAsync(CancellationToken token)
   {
-    // Seed the cache from the persisted revision so it survives a close/reopen. A legacy timestamp
-    // value is kept as-is (stable across reopen) and migrates to the counter on the first commit.
-    _ProjectRevision = await _TableMetadata.GetProjectRevisionAsync(token);
+    // Seed the cache from the persisted revision so it survives a close/reopen. A legacy or absent
+    // value reads as 0 (see GetProjectRevisionAsync) and migrates to the counter on the first commit.
+    var persisted = await _TableMetadata.GetProjectRevisionAsync(token);
+    Interlocked.Exchange(ref _ProjectRevision, persisted ?? 0);
   }
 
   private async Task InitNewDBAsync(CancellationToken token)
@@ -141,13 +142,13 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   public IRelativesProvider RelativesProvider => _RelativesProvider;
   public IFamilyTreeProvider FamilyTreeProvider => _FamilyTreeProvider;
   public IKinshipFinder KinshipFinder => _KinshipFinder;
-  public string ProjectRevision => _ProjectRevision ?? "0";
+  public long ProjectRevision => Interlocked.Read(ref _ProjectRevision);
 
-  public void SetRevision(string revision)
+  public void SetRevision(long revision)
   {
     // Deliberately no disposed check: a transaction committing while a dispose drains the gate must
     // still record the revision, so the host flushes the cache back to the origin.
-    _ProjectRevision = revision;
+    Interlocked.Exchange(ref _ProjectRevision, revision);
   }
 
   internal SqliteConnection Connection => _Connection;
