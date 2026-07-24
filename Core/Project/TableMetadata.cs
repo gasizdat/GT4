@@ -1,4 +1,5 @@
 ﻿using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Dto;
 using Microsoft.Data.Sqlite;
 
 namespace GT4.Core.Project;
@@ -80,7 +81,7 @@ internal class TableMetadata : TableBase, ITableMetadata
   public Task<string?> GetProjectDescriptionAsync(CancellationToken token) => GetAsync<string>(ProjectDescription, token);
 
   public async Task<long?> GetProjectRevisionAsync(CancellationToken token) =>
-    await GetAsync<object>(RevisionKey, token) as long? ?? 0;
+    await GetAsync<object>(RevisionKey, token) as long? ?? ProjectInfo.InitialRevision;
 
   public Task SetProjectNameAsync(string value, CancellationToken token) => AddAsync(ProjectName, value, token);
 

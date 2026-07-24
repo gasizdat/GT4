@@ -7,5 +7,8 @@ public record class ProjectInfo(
   string Description,
   long? Revision,
   FileDescription Origin
-);
+)
+{
+  public const long InitialRevision = 0;
+}
 

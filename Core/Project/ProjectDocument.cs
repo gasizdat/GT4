@@ -1,4 +1,5 @@
 using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Dto;
 using Microsoft.Data.Sqlite;
 
 namespace GT4.Core.Project;
@@ -50,7 +51,7 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   private long _TransactionNo = 0;
   // Cache of the persisted revision counter (owned by the Metadata table); reseeded from it on open so
   // it is stable across a close/reopen.
-  private long _ProjectRevision = 0;
+  private long _ProjectRevision = ProjectInfo.InitialRevision;
   private volatile bool _Disposed = false;
   private int _DisposeStarted = 0;
 
@@ -105,7 +106,7 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   private async Task LoadRevisionAsync(CancellationToken token)
   {
     var persisted = await _TableMetadata.GetProjectRevisionAsync(token);
-    Interlocked.Exchange(ref _ProjectRevision, persisted ?? 0);
+    Interlocked.Exchange(ref _ProjectRevision, persisted ?? ProjectInfo.InitialRevision);
   }
 
   private async Task InitNewDBAsync(CancellationToken token)
