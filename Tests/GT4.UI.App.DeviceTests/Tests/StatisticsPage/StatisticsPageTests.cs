@@ -110,6 +110,42 @@ public class StatisticsPageTests
   }
 
   [Fact]
+  public async Task A_commit_landing_mid_fetch_discards_the_stale_load_and_reissues_it()
+  {
+    var services = new TestServices();
+    var firstFetchStarted = new TaskCompletionSource();
+    var firstFetchGate = new TaskCompletionSource();
+    var callCount = 0;
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+      .Returns(async () =>
+      {
+        if (Interlocked.Increment(ref callCount) == 1)
+        {
+          firstFetchStarted.SetResult();
+          await firstFetchGate.Task;
+          return [P(1)];
+        }
+        return [P(1), P(2), P(3)];
+      });
+    var page = await CreatePageAsync(services);
+    await firstFetchStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+    // The revision advances while the first fetch is still in flight, so the data it is about to
+    // apply is already stale -- the guard must drop it and reissue the load rather than show P(1).
+    services.CurrentProjectProvider.SetupGet(p => p.Info).Returns(TestServices.SampleProjectInfo with { Revision = 1 });
+    firstFetchGate.SetResult();
+
+    await Poll.UntilAsync(
+      () => Task.FromResult(page.CompletedLoads),
+      loads => loads >= 1,
+      timeoutMessage: "The reissued statistics load never completed.");
+
+    var statistics = await MainThread.InvokeOnMainThreadAsync(() => page.Statistics);
+    Assert.Equal(3, statistics.TotalPersons);
+  }
+
+  [Fact]
   public async Task OnNavigatedTo_does_not_reload_when_the_project_revision_is_unchanged()
   {
     var services = new TestServices();
