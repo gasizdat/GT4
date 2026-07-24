@@ -146,6 +146,47 @@ public class StatisticsPageTests
   }
 
   [Fact]
+  public async Task An_older_load_finishing_last_does_not_overwrite_a_fresher_reload()
+  {
+    var services = new TestServices();
+    var firstFetchStarted = new TaskCompletionSource();
+    var firstFetchGate = new TaskCompletionSource();
+    var callCount = 0;
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+      .Returns(async () =>
+      {
+        if (Interlocked.Increment(ref callCount) == 1)
+        {
+          firstFetchStarted.SetResult();
+          await firstFetchGate.Task;
+          return [P(1)];             // the stale result the first (gated) load will produce
+        }
+        return [P(1), P(2), P(3)];   // every later load sees the committed data
+      });
+    var page = await CreatePageAsync(services);
+    await firstFetchStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+    // A commit + navigation starts and completes a second, fresh load while the first is still gated.
+    services.CurrentProjectProvider.SetupGet(p => p.Info).Returns(TestServices.SampleProjectInfo with { Revision = 1 });
+    var reloaded = await page.ReloadStatisticsAsync(page.InvokeNavigatedTo);
+    Assert.Equal(3, reloaded.TotalPersons);
+
+    // Only now release the older load so it resolves last. A field-compare guard would see the field
+    // already advanced to revision 1 and apply P(1); local-capture detects the load began at the
+    // pre-commit revision and discards it, so the fresh result must survive.
+    var loadsAfterReload = page.CompletedLoads;
+    firstFetchGate.SetResult();
+    await Poll.UntilAsync(
+      () => Task.FromResult(page.CompletedLoads),
+      loads => loads > loadsAfterReload,
+      timeoutMessage: "The older load never resolved.");
+
+    var settled = await MainThread.InvokeOnMainThreadAsync(() => page.Statistics);
+    Assert.Equal(3, settled.TotalPersons);
+  }
+
+  [Fact]
   public async Task OnNavigatedTo_does_not_reload_when_the_project_revision_is_unchanged()
   {
     var services = new TestServices();

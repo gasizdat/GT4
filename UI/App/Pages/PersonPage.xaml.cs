@@ -326,6 +326,7 @@ public partial class PersonPage : ContentPage
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
       var project = _CurrentProjectProvider.Project;
+      var startInfo = _CurrentProjectProvider.Info;
       var personFullInfo = await project.PersonManager.GetPersonFullInfoAsync(person, token);
       var parentsTasks = project.RelativesProvider.GetParentsAsync(personFullInfo.RelativeInfos, token);
       var stepChildrenTasks = project.RelativesProvider.GetStepChildrenAsync(personFullInfo.RelativeInfos, token);
@@ -376,11 +377,20 @@ public partial class PersonPage : ContentPage
 
       // UpdateUI touches the project document again on the UI thread; SafeTask.RunOnMainThread keeps
       // an escaped exception (e.g. the project closed while backgrounding) from going unobserved.
-      _ = SafeTask.RunOnMainThread(() => UpdateUI(personFullInfo,
-                                                  roots,
-                                                  photos, captions, attachments, bioTask.Result as string,
-                                                  gedcomTask.Result as string,
-                                                  addToNavigation), _AlertService);
+      _ = SafeTask.RunOnMainThread(() =>
+      {
+        if (startInfo != _CurrentProjectProvider.Info)
+        {
+          Refresh();
+          return;
+        }
+
+        UpdateUI(personFullInfo,
+                 roots,
+                 photos, captions, attachments, bioTask.Result as string,
+                 gedcomTask.Result as string,
+                 addToNavigation);
+      }, _AlertService);
     }
     catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
     {
@@ -432,12 +442,6 @@ public partial class PersonPage : ContentPage
                        string? gedcomDetails,
                        bool addToNavigation)
   {
-    if (_LastProjectInfo != _CurrentProjectProvider.Info)
-    {
-      Refresh();
-      return;
-    }
-
     _PersonFullInfo = personFullInfo;
     _Photos = photos;
     _Captions = captions;

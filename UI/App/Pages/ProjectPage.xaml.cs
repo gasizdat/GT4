@@ -108,6 +108,7 @@ public partial class ProjectPage : ContentPage
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
       var project = _CurrentProjectProvider.Project;
+      var startInfo = _CurrentProjectProvider.Info;
 
       var persons = await project
           .PersonManager
@@ -139,10 +140,12 @@ public partial class ProjectPage : ContentPage
 
       // Clear and AddRange together, not eagerly when the load starts: an overlapping second load
       // (Refresh() can re-enter this while one is in flight) would otherwise append onto a stale,
-      // already-cleared collection and duplicate every card.
+      // already-cleared collection and duplicate every card. Compare against startInfo, not the
+      // _LastProjectInfo field: an interleaving Refresh() re-primes the field, so only the revision
+      // this load began at reliably detects a commit that landed while it was fetching.
       await SafeTask.RunOnMainThread(() =>
       {
-        if (_LastProjectInfo != _CurrentProjectProvider.Info)
+        if (startInfo != _CurrentProjectProvider.Info)
         {
           Refresh();
           return;

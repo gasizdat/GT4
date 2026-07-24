@@ -260,6 +260,7 @@ public partial class FamilyTreePage : ContentPage
     try
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      var startInfo = _CurrentProjectProvider.Info;
       var tree = await _CurrentProjectProvider
         .Project
         .FamilyTreeProvider
@@ -284,7 +285,7 @@ public partial class FamilyTreePage : ContentPage
 
       await SafeTask.RunOnMainThread(() =>
       {
-        if (_LastProjectInfo != _CurrentProjectProvider.Info)
+        if (startInfo != _CurrentProjectProvider.Info)
         {
           Refresh();
           return;

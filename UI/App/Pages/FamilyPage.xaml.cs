@@ -102,6 +102,7 @@ public partial class FamilyPage : ContentPage
       {
         using var token = _CancellationTokenProvider.CreateDbCancellationToken();
         var project = _CurrentProjectProvider.Project;
+        var startInfo = _CurrentProjectProvider.Info;
         PersonInfo[] persons;
         if (IsNoFamilyMode)
         {
@@ -121,7 +122,7 @@ public partial class FamilyPage : ContentPage
 
         await SafeTask.RunOnMainThread(() =>
         {
-          if (_LastProjectInfo != _CurrentProjectProvider.Info)
+          if (startInfo != _CurrentProjectProvider.Info)
           {
             Refresh();
             return;
