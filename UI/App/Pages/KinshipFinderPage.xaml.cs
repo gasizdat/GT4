@@ -55,14 +55,7 @@ public partial class KinshipFinderPage : ContentPage
     }
 
     using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-    var startInfo = _CurrentProjectProvider.Info;
     var chain = await _CurrentProjectProvider.Project.KinshipFinder.FindPathAsync(_PersonFrom, _PersonTo, token);
-
-    if (startInfo != _CurrentProjectProvider.Info)
-    {
-      Refresh();
-      return;
-    }
 
     _Chain = chain;
     _Searched = true;

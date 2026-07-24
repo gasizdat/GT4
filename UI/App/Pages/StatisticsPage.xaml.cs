@@ -56,7 +56,6 @@ public partial class StatisticsPage : ContentPage
   {
     using var token = _CancellationTokenProvider.CreateDbCancellationToken();
     var project = _CurrentProjectProvider.Project;
-    var startInfo = _CurrentProjectProvider.Info;
 
     var persons = await project.PersonManager.GetPersonInfosAsync(selectMainPhoto: true, token);
     var familyNames = await project.FamilyManager.GetFamiliesAsync(token);
@@ -66,12 +65,6 @@ public partial class StatisticsPage : ContentPage
 
     await SafeTask.RunOnMainThread(() =>
     {
-      if (startInfo != _CurrentProjectProvider.Info)
-      {
-        Refresh();
-        return;
-      }
-
       _Statistics = statistics;
       this.RefreshView();
     }, _AlertService);

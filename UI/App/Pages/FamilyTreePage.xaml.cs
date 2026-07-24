@@ -260,7 +260,6 @@ public partial class FamilyTreePage : ContentPage
     try
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-      var startInfo = _CurrentProjectProvider.Info;
       var tree = await _CurrentProjectProvider
         .Project
         .FamilyTreeProvider
@@ -283,16 +282,7 @@ public partial class FamilyTreePage : ContentPage
         node => node.Node.Id,
         node => _NameFormatter.ToString(node.Node.Person, NameFormat.ShortPersonName));
 
-      await SafeTask.RunOnMainThread(() =>
-      {
-        if (startInfo != _CurrentProjectProvider.Info)
-        {
-          Refresh();
-          return;
-        }
-
-        Render(tree.CenterId, layout, names, zoom);
-      }, _AlertService);
+      await SafeTask.RunOnMainThread(() => Render(tree.CenterId, layout, names, zoom), _AlertService);
     }
     finally
     {
