@@ -142,6 +142,12 @@ public partial class ProjectPage : ContentPage
       // already-cleared collection and duplicate every card.
       await SafeTask.RunOnMainThread(() =>
       {
+        if (_LastProjectInfo != _CurrentProjectProvider.Info)
+        {
+          Refresh();
+          return;
+        }
+
         _Families.Clear();
         _Families.AddRange(families);
       }, _AlertService);
@@ -243,6 +249,7 @@ public partial class ProjectPage : ContentPage
 
   private void Refresh()
   {
+    _LastProjectInfo = _CurrentProjectProvider.Info;
     _FamiliesLoaded = false;
     this.RefreshView();
   }
@@ -252,10 +259,8 @@ public partial class ProjectPage : ContentPage
   protected override void OnNavigatedTo(NavigatedToEventArgs args)
   {
     base.OnNavigatedTo(args);
-    var info = _CurrentProjectProvider.Info;
-    if (_LastProjectInfo != info)
+    if (_LastProjectInfo != _CurrentProjectProvider.Info)
     {
-      _LastProjectInfo = info;
       Refresh();
     }
   }
@@ -273,8 +278,7 @@ public partial class ProjectPage : ContentPage
         break;
 
       case string commandName when commandName == "Refresh":
-        _FamiliesLoaded = false;
-        this.RefreshView();
+        Refresh();
         break;
 
       case string commandName when commandName == "CreateFamily":
@@ -418,8 +422,7 @@ public partial class ProjectPage : ContentPage
       await Navigation.PopModalAsync();
     }
 
-    _FamiliesLoaded = false;
-    this.RefreshView();
+    Refresh();
   }
 
   private async Task RunImportAsync(FileResult file, TextReader reader, CancellationToken token)
