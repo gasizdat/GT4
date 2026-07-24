@@ -313,6 +313,9 @@ public partial class PersonPage : ContentPage
     await Launcher.Default.OpenAsync(new OpenFileRequest(fileName, new ReadOnlyFile(path)));
   }
 
+  private async Task OnGotoFamilyAsync() =>
+    await _NavigationService.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = FamilyName });
+
   private async Task GetPersonDataAsync(Person person, bool addToNavigation)
   {
     try
@@ -490,7 +493,7 @@ public partial class PersonPage : ContentPage
         await _NavigationService.GoToAsync(UIRoutes.GetRoute<MainPage>());
         break;
       case string commandName when commandName == "GoToFamily":
-        await _NavigationService.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = FamilyName });
+        await OnGotoFamilyAsync();
         break;
       case string commandName when commandName == "GoToFamilyTree":
         // Shell matches the target's [QueryProperty] by exact runtime type, so hand it a plain
@@ -534,6 +537,8 @@ public partial class PersonPage : ContentPage
       .Project
       .Persons
       .RemovePersonAsync(_PersonFullInfo, token);
+
+    await OnGotoFamilyAsync();
   }
 
   private async Task OnPersonEditAsync()
