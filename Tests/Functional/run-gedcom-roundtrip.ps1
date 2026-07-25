@@ -32,7 +32,7 @@
 param(
   [string]$SamplesRoot,
   [string[]]$Samples = @('sample-kennedy\kennedy.ged', 'sample-bourbon\bourbon.ged'),
-  [hashtable]$FidelityExclusions = @{ 'sample-bourbon\bourbon.ged' = 'issues #172, #173, #174' },
+  [hashtable]$FidelityExclusions = @{ 'sample-bourbon\bourbon.ged' = 'issues #172, #173, #174, #175, #176' },
   [string]$WorkDir,
   [switch]$KeepArtifacts
 )
