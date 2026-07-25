@@ -37,6 +37,14 @@ internal static class GedcomMapping
     || string.IsNullOrWhiteSpace(modeledChild.Value)
     || GedcomDate.Parse(modeledChild.Value).Status != DateStatus.Unknown;
 
+  /// <summary>
+  /// Whether an owned tag's own value states something GT4 has no field for. Only an event carries such a
+  /// value — in practice the <c>Y</c> asserting it happened when nothing else about it is known; every other
+  /// owned tag's value does ride in the model, as a SEX letter, a NOTE's text, a NAME rebuilt from its parts.
+  /// </summary>
+  public static bool IsEventAssertion(GedcomNode owned) =>
+    owned.Tag is GedcomTags.Birth or GedcomTags.Death && !string.IsNullOrWhiteSpace(owned.Value);
+
   public static string SexLetter(BiologicalSex sex) => sex switch
   {
     BiologicalSex.Male => "M",

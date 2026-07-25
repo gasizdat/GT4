@@ -314,6 +314,40 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task EventAssertion_KeptAsResidueAndReEmittedVerbatim()
+  {
+    // "1 DEAT Y" asserts the event happened with nothing else known -- a statement GT4 has no field for, so
+    // the value belongs to the owned tag's residue. Export merges it back onto the one regenerated event:
+    // GT4 already emits a bare "1 DEAT" for a dateless death, so a standalone replay would double the tag.
+    const string ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME Louis /Capet/\n1 SEX M\n" +
+      "1 BIRT Y\n2 TYPE Avec les cités de Lamballe\n" +
+      "1 DEAT Y\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var person = (await document.Persons.GetPersonsAsync(Token)).Single();
+    person.DeathDate!.Value.Status.Should().Be(DateStatus.Unknown);
+
+    var residue = await document.PersonData.GetPersonDataSetAsync(person, DataCategory.PersonGedcomTags, Token);
+    var blob = Encoding.UTF8.GetString(residue.Single().Content);
+    blob.Should().Contain("BIRT Y").And.Contain("TYPE Avec les cités de Lamballe").And.Contain("DEAT Y");
+
+    var text = await ExportToTextAsync(document);
+    text.Should().Contain("1 BIRT Y").And.Contain("2 TYPE Avec les cités de Lamballe").And.Contain("1 DEAT Y");
+    var lines = text.Split('\n');
+    lines.Count(line => line.StartsWith("1 BIRT", StringComparison.Ordinal)).Should().Be(1);
+    lines.Count(line => line.StartsWith("1 DEAT", StringComparison.Ordinal)).Should().Be(1);
+
+    // A second hop keeps them: the residue is rebuilt from the export, not just carried once.
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    var reexported = await ExportToTextAsync(reimported);
+    reexported.Should().Be(text);
+  }
+
+  [Fact]
   public async Task RepeatedOwnedTag_SecondNameAndNoteSurviveRoundTrip()
   {
     // GT4 consumes only the first NAME (identity) and first NOTE (biography); a second of either has no slot

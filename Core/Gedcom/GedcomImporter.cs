@@ -489,21 +489,22 @@ internal sealed class GedcomImporter : IGedcomImporter
   }
 
   /// <summary>
-  /// A copy of an owned node carrying only the children GT4 does not model — the node's value and modeled
-  /// sub-tags are dropped since those ride in the GT4 model, bar one <see cref="GedcomMapping.IsCarriedByModel"/>
-  /// rejects — or <c>null</c> when nothing unmodeled remains (a DATE-only BIRT yields no residue). The source
-  /// node is never mutated: <see cref="ParseEventDate"/> and <see cref="BuildNamesAsync"/> still read the live
-  /// DATE/GIVN/SURN off it.
+  /// A copy of an owned node carrying only what GT4 does not model — its value and modeled sub-tags are
+  /// dropped since those ride in the GT4 model, bar the ones <see cref="GedcomMapping.IsCarriedByModel"/> and
+  /// <see cref="GedcomMapping.IsEventAssertion"/> reject — or <c>null</c> when nothing unmodeled remains (a
+  /// DATE-only BIRT yields no residue). The source node is never mutated: <see cref="ParseEventDate"/> and
+  /// <see cref="BuildNamesAsync"/> still read the live DATE/GIVN/SURN off it.
   /// </summary>
   private static GedcomNode? ResidualNode(GedcomNode owned, HashSet<string> modeled)
   {
-    var residual = new GedcomNode { Tag = owned.Tag };
+    var assertion = GedcomMapping.IsEventAssertion(owned) ? owned.Value : null;
+    var residual = new GedcomNode { Tag = owned.Tag, Value = assertion };
     foreach (var child in owned.Children)
     {
       if (!modeled.Contains(child.Tag) || !GedcomMapping.IsCarriedByModel(child))
         residual.Add(child);
     }
-    return residual.Children.Count > 0 ? residual : null;
+    return residual.Children.Count > 0 || assertion is not null ? residual : null;
   }
 
   // A photo materialized once from an OBJE: an embedded BLOB decoded, or an external image FILE read off

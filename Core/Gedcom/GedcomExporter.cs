@@ -373,8 +373,13 @@ internal sealed class GedcomExporter : IGedcomExporter
     sexNode.Add([.. sexResidual]);
     node.Add(sexNode);
 
-    AddEvent(node, GedcomTags.Birth, person.BirthDate, Residual(ownedResidual, GedcomTags.Birth));
-    AddEvent(node, GedcomTags.Death, person.DeathDate, Residual(ownedResidual, GedcomTags.Death));
+    var birthResidual = Residual(ownedResidual, GedcomTags.Birth);
+    var birthAssertion = Assertion(ownedResidual, GedcomTags.Birth);
+    AddEvent(node, GedcomTags.Birth, person.BirthDate, birthAssertion, birthResidual);
+
+    var deathResidual = Residual(ownedResidual, GedcomTags.Death);
+    var deathAssertion = Assertion(ownedResidual, GedcomTags.Death);
+    AddEvent(node, GedcomTags.Death, person.DeathDate, deathAssertion, deathResidual);
 
     var noteResidual = Residual(ownedResidual, GedcomTags.Note);
     AddNote(node, individual.Biography, noteResidual);
@@ -420,38 +425,44 @@ internal sealed class GedcomExporter : IGedcomExporter
   }
 
   /// <summary>
-  /// Splits the residue forest into the residual children of owned tags (keyed by that tag, to be merged
-  /// back into the regenerated node) and the fully-unmodeled roots (re-attached to the INDI verbatim).
+  /// Splits the residue forest into one merged residual per owned tag (keyed by that tag, to be merged back
+  /// into the regenerated node) and the fully-unmodeled roots (re-attached to the INDI verbatim).
   /// </summary>
-  private static (Dictionary<string, List<GedcomNode>> Owned, List<GedcomNode> Other) PartitionResidue(GedcomNode[] roots)
+  private static (Dictionary<string, GedcomNode> Owned, List<GedcomNode> Other) PartitionResidue(GedcomNode[] roots)
   {
-    var owned = new Dictionary<string, List<GedcomNode>>();
+    var owned = new Dictionary<string, GedcomNode>();
     var other = new List<GedcomNode>();
     foreach (var root in roots)
     {
-      // A genuine residual (value-less, only unmodeled children) merges back into the regenerated owned node;
-      // a root still carrying a value or a modeled child the model holds is a repeated owned tag, standalone.
+      // A genuine residual (only unmodeled children, and no value beyond an event assertion) merges back into
+      // the regenerated owned node; a root still carrying a value or a modeled child the model holds is a
+      // repeated owned tag, standalone.
       if (!GedcomMapping.OwnedTagModeledChildren.TryGetValue(root.Tag, out var modeled) || !IsGenuineResidual(root, modeled))
       {
         other.Add(root);
         continue;
       }
 
-      if (!owned.TryGetValue(root.Tag, out var list))
+      if (!owned.TryGetValue(root.Tag, out var merged))
       {
-        owned[root.Tag] = list = [];
+        owned[root.Tag] = merged = new GedcomNode { Tag = root.Tag };
       }
-      list.AddRange(root.Children);
+      merged.Value ??= root.Value;
+      merged.Add([.. root.Children]);
     }
     return (owned, other);
   }
 
   private static bool IsGenuineResidual(GedcomNode root, HashSet<string> modeled) =>
-    root.Value is null
+    (root.Value is null || GedcomMapping.IsEventAssertion(root))
     && root.Children.All(child => !modeled.Contains(child.Tag) || !GedcomMapping.IsCarriedByModel(child));
 
-  private static IReadOnlyList<GedcomNode> Residual(Dictionary<string, List<GedcomNode>> owned, string tag) =>
-    owned.TryGetValue(tag, out var list) ? list : [];
+  private static IReadOnlyList<GedcomNode> Residual(Dictionary<string, GedcomNode> owned, string tag) =>
+    owned.TryGetValue(tag, out var merged) ? merged.Children : [];
+
+  /// <summary>The <c>Y</c> an event asserted with, kept as residue because the GT4 model cannot state it.</summary>
+  private static string? Assertion(Dictionary<string, GedcomNode> owned, string tag) =>
+    owned.GetValueOrDefault(tag)?.Value;
 
   /// <summary>
   /// Emits the biography NOTE with any preserved unmodeled NOTE sub-tags merged under it. Emits nothing when
@@ -540,18 +551,18 @@ internal sealed class GedcomExporter : IGedcomExporter
   /// A birth is only emitted when something is known; a death is emitted whenever a death date exists at
   /// all, even with unknown precision, so the fact of death survives the round-trip.
   /// </summary>
-  private static void AddEvent(GedcomNode individual, string eventTag, Date? date, IReadOnlyList<GedcomNode> residual)
+  private static void AddEvent(GedcomNode individual, string eventTag, Date? date, string? assertion, IReadOnlyList<GedcomNode> residual)
   {
-    // No date and no preserved sub-tags means the event was never recorded: emit nothing.
-    if (date is null && residual.Count == 0)
+    // No date, no assertion and no preserved sub-tags means the event was never recorded: emit nothing.
+    if (date is null && assertion is null && residual.Count == 0)
       return;
 
     var value = date.HasValue ? GedcomDate.ToGedcom(date.Value) : null;
-    // Only a birth with no usable date and no sub-tags is dropped here; a death still falls through.
-    if (value is null && residual.Count == 0 && eventTag == GedcomTags.Birth)
+    // Only a birth with no usable date and nothing preserved is dropped here; a death still falls through.
+    if (value is null && assertion is null && residual.Count == 0 && eventTag == GedcomTags.Birth)
       return;
 
-    var eventNode = new GedcomNode { Tag = eventTag };
+    var eventNode = new GedcomNode { Tag = eventTag, Value = assertion };
     if (value is not null)
     {
       eventNode.Add(new GedcomNode { Tag = GedcomTags.Date, Value = value });
