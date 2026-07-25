@@ -6,8 +6,8 @@ namespace GT4.Core.Gedcom;
 
 /// <summary>
 /// Stores a photo's or attachment's own residual GEDCOM tags (a photo's chiefly <c>TITL</c>, the caption;
-/// an attachment's <c>FILE</c>, the original filename) alongside its raw bytes, for photos whose
-/// <see cref="DataCategory"/> is <see cref="DataCategory.PersonMainPhotoTagged"/>/
+/// an attachment's <c>FILE</c>, the original filename, plus its own <c>TITL</c>) alongside its raw bytes,
+/// for photos whose <see cref="DataCategory"/> is <see cref="DataCategory.PersonMainPhotoTagged"/>/
 /// <see cref="DataCategory.PersonPhotoTagged"/>, and for every <see cref="DataCategory.PersonAttachment"/>.
 /// Layout: <c>[4-byte tag-length][UTF-8 GedcomWriter-serialized residual node][raw bytes]</c>. There is no
 /// magic-byte marker to sniff -- the category alone (<see cref="DataCategoryExtensions.IsTaggedPhoto"/> or
@@ -56,12 +56,13 @@ public static class GedcomPhotoResidue
     return content[(sizeof(int) + tagLength)..];
   }
 
-  public static async Task<string?> ExtractTitleAsync(Data? photo, CancellationToken token)
+  /// <summary>An imported OBJE's <c>TITL</c> -- a photo's caption, or an attachment's document title.</summary>
+  public static async Task<string?> ExtractTitleAsync(Data? data, CancellationToken token)
   {
-    if (photo is null || !photo.Category.IsTaggedPhoto())
+    if (data is null || (!data.Category.IsTaggedPhoto() && !data.Category.IsAttachment()))
       return null;
 
-    var (_, residual) = await DecodeAsync(photo.Content, token);
+    var (_, residual) = await DecodeAsync(data.Content, token);
     return residual.ChildValue(GedcomTags.Title);
   }
 

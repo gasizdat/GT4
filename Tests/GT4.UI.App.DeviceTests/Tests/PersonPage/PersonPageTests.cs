@@ -132,6 +132,47 @@ public class PersonPageTests
   }
 
   [Fact]
+  public async Task Loading_a_person_with_a_titled_attachment_shows_the_title_over_the_file_name()
+  {
+    var services = new TestServices();
+    var content = BuildTaggedPhotoContent("0 OBJE\n1 FILE actes/scan.pdf\n1 TITL Acte de Bapteme\n", [1, 2, 3]);
+    var attachment = new Data(20, content, "application/pdf", DataCategory.PersonAttachment);
+    var person = CreateSamplePerson() with { Attachments = [attachment] };
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+
+    var info = Assert.Single(page.Attachments);
+    Assert.Equal("Acte de Bapteme", info.Title);
+    Assert.Equal("Acte de Bapteme", info.DisplayName);
+    Assert.Equal("actes/scan.pdf", info.FileName);
+    Assert.True(info.ShowFileName);
+  }
+
+  [Fact]
+  public async Task Loading_a_person_with_an_untitled_attachment_falls_back_to_the_file_name_alone()
+  {
+    var services = new TestServices();
+    var content = BuildTaggedPhotoContent("0 OBJE\n1 FILE deed.pdf\n", [1, 2, 3]);
+    var attachment = new Data(21, content, "application/pdf", DataCategory.PersonAttachment);
+    var person = CreateSamplePerson() with { Attachments = [attachment] };
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+
+    var info = Assert.Single(page.Attachments);
+    Assert.Null(info.Title);
+    Assert.Equal("deed.pdf", info.DisplayName);
+    Assert.False(info.ShowFileName);
+  }
+
+  [Fact]
   public async Task Opening_a_new_person_fetches_its_data_exactly_once()
   {
     var services = new TestServices();

@@ -55,6 +55,18 @@ public sealed class GedcomPhotoResidueTests
   }
 
   [Fact]
+  public async Task ExtractTitleAsync_ReturnsTheTitlValueForAnAttachment()
+  {
+    byte[] file = [1];
+    var content = GedcomPhotoResidue.Encode(file, Residual(("FILE", "actes/scan.pdf"), ("TITL", "Acte de Bapteme")));
+    var attachment = new Data(1, content, "application/pdf", DataCategory.PersonAttachment);
+
+    var title = await GedcomPhotoResidue.ExtractTitleAsync(attachment, _Token);
+
+    title.Should().Be("Acte de Bapteme");
+  }
+
+  [Fact]
   public async Task ExtractTitleAsync_ReturnsNullForAPlainCategoryPhoto_WithoutAttemptingToParse()
   {
     // Deliberately not a valid encoded envelope: if ExtractTitleAsync attempted to parse this as one, it

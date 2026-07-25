@@ -249,9 +249,17 @@
                               CommandParameter="{Binding .}" />
                         </Grid.GestureRecognizers>
 
-                        <Label
-                            Style="{StaticResource FieldValue}"
-                            Text="{Binding FileName}" />
+                        <VerticalStackLayout>
+                          <Label
+                              Style="{StaticResource FieldValue}"
+                              Text="{Binding DisplayName}" />
+                          <!--  An imported title displaces the file name as the row's label; the file name stays as the subline, since a shared title can cover several files.  -->
+                          <Label
+                              IsVisible="{Binding ShowFileName}"
+                              Opacity="0.6"
+                              Style="{StaticResource FieldValue}"
+                              Text="{Binding FileName}" />
+                        </VerticalStackLayout>
                       </Grid>
                     </DataTemplate>
                   </CollectionView.ItemTemplate>
