@@ -1,6 +1,7 @@
 using FluentAssertions;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using Microsoft.Data.Sqlite;
 using Xunit;
 
 namespace GT4.Core.Project.Tests;
@@ -62,11 +63,13 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   [Fact]
   public async Task Metadata_Revision_IsAutoStampedOnEveryCommit()
   {
-    // Each root commit writes a best-effort "revision" marker, so an explicitly set value is
-    // immediately superseded by the commit's own stamp.
-    await _doc.Metadata.SetProjectRevisionAsync("ignored", Token);
+    // Each root commit atomically advances the persisted "revision" counter.
+    var before = await _doc.Metadata.GetProjectRevisionAsync(Token);
 
-    (await _doc.Metadata.GetProjectRevisionAsync(Token)).Should().NotBeNullOrEmpty();
+    await AddBarePersonAsync();
+
+    var after = await _doc.Metadata.GetProjectRevisionAsync(Token);
+    after.Should().BeGreaterThan(before ?? 0);
   }
 
   [Fact]
@@ -790,13 +793,62 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   }
 
   [Fact]
-  public void Write_BumpsProjectRevision()
+  public async Task Write_BumpsProjectRevision()
   {
-    // The revision is a monotonic counter, so every stamp strictly advances it.
+    // The revision is a monotonic counter, so every committed write strictly advances it.
     var before = _doc.ProjectRevision;
 
-    _doc.UpdateRevision();
+    await AddBarePersonAsync();
 
     _doc.ProjectRevision.Should().BeGreaterThan(before);
+  }
+
+  [Fact]
+  public async Task ProjectRevision_IsStable_AcrossCloseAndReopen_WhenNothingIsWritten()
+  {
+    // The invariant #153's fix rests on: reopening an untouched project reports the identical
+    // revision (a fresh tick seed made every reopen look changed, which false-fired the monitor).
+    var before = _doc.ProjectRevision;
+
+    await _doc.DisposeAsync();
+    _doc = await ProjectDocument.OpenAsync(_path, Token);
+
+    _doc.ProjectRevision.Should().Be(before);
+  }
+
+  [Fact]
+  public async Task ProjectRevision_AdvancesAndPersists_AcrossReopen_AfterAWrite()
+  {
+    // A write while open must survive the close: the reopened project reads a strictly greater
+    // revision from the Metadata table, proving the atomic-increment/persist/reseed round-trip.
+    var before = _doc.ProjectRevision;
+
+    await AddBarePersonAsync();
+    await _doc.DisposeAsync();
+    _doc = await ProjectDocument.OpenAsync(_path, Token);
+
+    _doc.ProjectRevision.Should().BeGreaterThan(before);
+  }
+
+  [Fact]
+  public async Task ProjectRevision_HandlesALegacyStringStoredValue_WithoutThrowing_AndMigratesOnWrite()
+  {
+    // Projects written before the counter format hold a timestamp string in the revision row. The
+    // CAST-on-read must accept that -- a C# string->long cast would throw and brick every existing
+    // project on open -- and the first commit must migrate it forward to a monotonic integer.
+    await _doc.DisposeAsync();
+    await using (var raw = new SqliteConnection($"Data Source={_path}"))
+    {
+      await raw.OpenAsync(Token);
+      using var command = raw.CreateCommand();
+      command.CommandText = "UPDATE Metadata SET Data = '07/24/2026 14:30:15' WHERE Id = 'revision';";
+      await command.ExecuteNonQueryAsync(Token);
+    }
+
+    _doc = await ProjectDocument.OpenAsync(_path, Token);
+    var legacy = _doc.ProjectRevision;
+
+    await AddBarePersonAsync();
+    _doc.ProjectRevision.Should().BeGreaterThan(legacy);
   }
 }

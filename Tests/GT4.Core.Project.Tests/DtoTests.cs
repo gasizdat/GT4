@@ -147,9 +147,9 @@ public sealed class DtoTests
   {
     var origin = new FileDescription(
       new DirectoryDescription(Environment.SpecialFolder.MyDocuments, ["p"]), "a.gt4", null);
-    var info = new ProjectInfo("Name", "Desc", "rev1", origin);
+    var info = new ProjectInfo("Name", "Desc", 1L, origin);
 
     info.Should().Be(info with { });
-    (info with { Revision = "rev2" }).Should().NotBe(info);
+    (info with { Revision = 2L }).Should().NotBe(info);
   }
 }

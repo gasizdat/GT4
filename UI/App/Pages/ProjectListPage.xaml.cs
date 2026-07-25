@@ -207,7 +207,7 @@ public partial class ProjectListPage : ContentPage
       var mediaBasePath = string.IsNullOrEmpty(file.FullPath) ? null : Path.GetDirectoryName(file.FullPath);
       await _Importer.ImportAsync(host.Project!, reader, token, mediaBasePath);
 
-      var revision = await host.Project!.Metadata.GetProjectRevisionAsync(token) ?? string.Empty;
+      var revision = await host.Project!.Metadata.GetProjectRevisionAsync(token);
       await host.DisposeAsync();
       return new ProjectInfo(Revision: revision, Description: description, Name: name, Origin: host.Origin);
     }

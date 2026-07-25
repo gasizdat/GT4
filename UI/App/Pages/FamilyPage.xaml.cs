@@ -27,6 +27,7 @@ public partial class FamilyPage : ContentPage
   private bool _PersonsLoaded;
   private Name? _FamilyName = null;
   private double _PersonItemMinimalWidth;
+  private ProjectInfo? _LastProjectInfo;
 
   public FamilyPage(
     ICancellationTokenProvider cancellationTokenProvider,
@@ -36,7 +37,7 @@ public partial class FamilyPage : ContentPage
     IComparer<PersonInfo> personInfoComparer,
     IAlertService alertService,
     INavigationService navigationService,
-    IBiologicalSexFormatter biologicalSexFormatter, 
+    IBiologicalSexFormatter biologicalSexFormatter,
     INameTypeFormatter nameTypeFormatter,
     CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory
     )
@@ -63,6 +64,7 @@ public partial class FamilyPage : ContentPage
       _AlertService,
       () => [.. _Persons.AllItems]);
     FilterView.Changed += (_, _) => _Persons.Update();
+    _LastProjectInfo = _CurrentProjectProvider.Info;
   }
 
   public Name? FamilyName
@@ -70,13 +72,11 @@ public partial class FamilyPage : ContentPage
     get => _FamilyName;
     set
     {
-      _FamilyName = value;
-      _PersonsLoaded = false;
-      OnPropertyChanged(nameof(Persons));
-      OnPropertyChanged(nameof(FamilyName));
-      OnPropertyChanged(nameof(RemoveFamilyToolbarItemName));
-      OnPropertyChanged(nameof(EditFamilyToolbarItemName));
-      OnPropertyChanged(nameof(EnableFamilyChanges));
+      if (_FamilyName?.Id != value?.Id)
+      {
+        _FamilyName = value;
+        Refresh();
+      }
     }
   }
 
@@ -102,6 +102,7 @@ public partial class FamilyPage : ContentPage
       {
         using var token = _CancellationTokenProvider.CreateDbCancellationToken();
         var project = _CurrentProjectProvider.Project;
+        var startInfo = _CurrentProjectProvider.Info;
         PersonInfo[] persons;
         if (IsNoFamilyMode)
         {
@@ -121,10 +122,14 @@ public partial class FamilyPage : ContentPage
 
         await SafeTask.RunOnMainThread(() =>
         {
+          if (startInfo != _CurrentProjectProvider.Info)
+          {
+            Refresh();
+            return;
+          }
+
           _Persons.Clear();
           _Persons.AddRange(persons);
-          // Only after the new persons land: with the panel open, ResetFilterData re-fetches
-          // immediately, snapshotting the page's current person set.
           FilterView.ResetFilterData();
         }, _AlertService);
       }
@@ -156,6 +161,22 @@ public partial class FamilyPage : ContentPage
     _PersonItemMinimalWidth = width * PercentageOfWidth / ItemsPerRow;
 
     OnPropertyChanged(nameof(PersonItemMinimalWidth));
+  }
+
+  private void Refresh()
+  {
+    _LastProjectInfo = _CurrentProjectProvider.Info;
+    _PersonsLoaded = false;
+    this.RefreshView();
+  }
+
+  protected override void OnNavigatedTo(NavigatedToEventArgs args)
+  {
+    base.OnNavigatedTo(args);
+    if (_LastProjectInfo != _CurrentProjectProvider.Info)
+    {
+      Refresh();
+    }
   }
 
   private bool IsNoFamilyMode => _FamilyName?.Id == FamilyInfoItem.NoFamilyName.Id;
@@ -205,14 +226,12 @@ public partial class FamilyPage : ContentPage
         .FamilyManager
         .SetUpPersonFamily(info, _FamilyName);
 
-    var newPerson = await _CurrentProjectProvider
+    await _CurrentProjectProvider
       .Project
       .PersonManager
       .AddPersonAsync(person, token);
 
-    var updated = _Persons.AllItems.Append(newPerson).OrderBy(p => p, _PersonInfoComparer).ToArray();
-    _Persons.Clear();
-    _Persons.AddRange(updated);
+    Refresh();
   }
 
   protected async Task OnOpenPerson(PersonInfo familyMember)
@@ -243,7 +262,7 @@ public partial class FamilyPage : ContentPage
         break;
 
       case string commandName when commandName == "Refresh":
-        this.RefreshView();
+        Refresh();
         break;
     }
   }

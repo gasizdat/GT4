@@ -77,6 +77,42 @@ public class PersonPageTests
   }
 
   [Fact]
+  public async Task OnNavigatedTo_refetches_the_current_person_when_the_project_revision_changed()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson();
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+    var loadsBefore = page.CompletedLoads;
+    services.CurrentProjectProvider.SetupGet(p => p.Info).Returns(TestServices.SampleProjectInfo with { Revision = 1 });
+
+    await WaitForLoadAsync(page, services, page.InvokeNavigatedTo);
+
+    Assert.True(page.CompletedLoads > loadsBefore);
+  }
+
+  [Fact]
+  public async Task OnNavigatedTo_does_not_refetch_when_the_project_revision_is_unchanged()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson();
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+    var loadsBefore = page.CompletedLoads;
+
+    await MainThread.InvokeOnMainThreadAsync(page.InvokeNavigatedTo);
+    await Task.Delay(200);
+
+    Assert.Equal(loadsBefore, page.CompletedLoads);
+  }
+
+  [Fact]
   public async Task Loading_a_person_with_a_tagged_main_photo_surfaces_its_caption()
   {
     var services = new TestServices();

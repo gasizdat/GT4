@@ -35,8 +35,7 @@ internal sealed class TestableProjectPage : ProjectPage
     GedcomImportEncoding gedcomImportEncoding,
     IAlertService alertService,
     INavigationService navigationService,
-    IBiologicalSexFormatter biologicalSexFormatter,
-    IProjectRevisionMonitor projectRevisionMonitor)
+    IBiologicalSexFormatter biologicalSexFormatter)
     : base(
       nameTypeFormatter,
       cancellationTokenProvider,
@@ -50,8 +49,7 @@ internal sealed class TestableProjectPage : ProjectPage
       gedcomImportEncoding,
       alertService,
       navigationService,
-      biologicalSexFormatter,
-      projectRevisionMonitor)
+      biologicalSexFormatter)
   {
     // Families is bound to CollectionChanged, not PropertyChanged: RefreshView() (used by the
     // "Refresh" command and OnNavigatedTo) reflectively raises OnPropertyChanged for every one of

@@ -21,7 +21,7 @@ public class ProjectListPageTests
   private static ProjectInfo P(string name, string description = "") => new(
     Name: name,
     Description: description,
-    Revision: "",
+    Revision: null,
     Origin: new FileDescription(new DirectoryDescription(Environment.SpecialFolder.MyDocuments, []), $"{name}.gt4", null));
 
   private static ProjectHost CreateHost(ProjectInfo info) =>

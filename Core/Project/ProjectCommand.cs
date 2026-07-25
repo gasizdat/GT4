@@ -88,6 +88,14 @@ public sealed class ProjectCommand : IDisposable, IAsyncDisposable
     return _Command.ExecuteNonQuery();
   }
 
+  internal object? ExecuteScalar()
+  {
+    var ambient = _Gate.Current
+      ?? throw new InvalidOperationException("ExecuteScalar requires an active transaction on the calling flow.");
+    _Command.Transaction = ambient.RootDbTransaction;
+    return _Command.ExecuteScalar();
+  }
+
   private async Task<T> RunGatedAsync<T>(Func<Task<T>> run, CancellationToken token)
   {
     var ambient = _Gate.Current;

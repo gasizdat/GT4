@@ -25,6 +25,7 @@ public partial class KinshipFinderPage : ContentPage
   private PersonInfo? _PersonTo;
   private RelativeInfo[]? _Chain;
   private bool _Searched;
+  private ProjectInfo? _LastProjectInfo;
 
   private async Task PickPersonAsync(Action<PersonInfo> assign)
   {
@@ -96,6 +97,24 @@ public partial class KinshipFinderPage : ContentPage
     _PageCommand = new SafeCommand(OnPageCommand, _AlertService);
 
     InitializeComponent();
+    _LastProjectInfo = _CurrentProjectProvider.Info;
+  }
+
+  // See ProjectPage.OnNavigatedTo: the found chain shows person data that a visited-and-edited subpage
+  // can change, so recompute it on return. FindAsync no-ops until both endpoints are picked.
+  protected override void OnNavigatedTo(NavigatedToEventArgs args)
+  {
+    base.OnNavigatedTo(args);
+    if (_LastProjectInfo != _CurrentProjectProvider.Info)
+    {
+      Refresh();
+    }
+  }
+
+  private void Refresh()
+  {
+    _LastProjectInfo = _CurrentProjectProvider.Info;
+    _ = SafeTask.GuardAsync(FindAsync, _AlertService);
   }
 
   public ICommand PageCommand => _PageCommand;

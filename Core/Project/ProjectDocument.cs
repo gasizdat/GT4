@@ -1,6 +1,6 @@
 using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Dto;
 using Microsoft.Data.Sqlite;
-using System.Globalization;
 
 namespace GT4.Core.Project;
 
@@ -49,7 +49,9 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   private readonly object _CommandLock = new();
 
   private long _TransactionNo = 0;
-  private long _ProjectRevision = Environment.TickCount64;
+  // Cache of the persisted revision counter (owned by the Metadata table); reseeded from it on open so
+  // it is stable across a close/reopen.
+  private long _ProjectRevision = ProjectInfo.InitialRevision;
   private volatile bool _Disposed = false;
   private int _DisposeStarted = 0;
 
@@ -101,6 +103,12 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     await pragma.ExecuteNonQueryAsync(token);
   }
 
+  private async Task LoadRevisionAsync(CancellationToken token)
+  {
+    var persisted = await _TableMetadata.GetProjectRevisionAsync(token);
+    Interlocked.Exchange(ref _ProjectRevision, persisted ?? ProjectInfo.InitialRevision);
+  }
+
   private async Task InitNewDBAsync(CancellationToken token)
   {
     CheckForDisposed();
@@ -134,11 +142,11 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   public IKinshipFinder KinshipFinder => _KinshipFinder;
   public long ProjectRevision => Interlocked.Read(ref _ProjectRevision);
 
-  public void UpdateRevision()
+  public void SetRevision(long revision)
   {
     // Deliberately no disposed check: a transaction committing while a dispose drains the gate must
-    // still stamp the revision, so the host flushes the cache back to the origin.
-    Interlocked.Increment(ref _ProjectRevision);
+    // still record the revision, so the host flushes the cache back to the origin.
+    Interlocked.Exchange(ref _ProjectRevision, revision);
   }
 
   internal SqliteConnection Connection => _Connection;
@@ -221,6 +229,7 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   {
     var ret = new ProjectDocument(path, SqliteOpenMode.ReadWrite);
     await ret.OpenAsync(token);
+    await ret.LoadRevisionAsync(token);
 
     return ret;
   }

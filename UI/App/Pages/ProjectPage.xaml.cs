@@ -39,6 +39,7 @@ public partial class ProjectPage : ContentPage
 
   private readonly FilteredObservableCollection<FamilyInfoItem> _Families = new();
   private bool _FamiliesLoaded;
+  private ProjectInfo? _LastProjectInfo;
 
   public ProjectPage(
     INameTypeFormatter nameTypeFormatter,
@@ -54,8 +55,7 @@ public partial class ProjectPage : ContentPage
     GedcomImportEncoding gedcomImportEncoding,
     IAlertService alertService,
     INavigationService navigationService,
-    IBiologicalSexFormatter biologicalSexFormatter,
-    IProjectRevisionMonitor projectRevisionMonitor
+    IBiologicalSexFormatter biologicalSexFormatter
     )
   {
     _NameTypeFormatter = nameTypeFormatter;
@@ -84,8 +84,7 @@ public partial class ProjectPage : ContentPage
       _AlertService,
       () => [.. _Families.AllItems.SelectMany(f => f.AllPersons).DistinctBy(p => p.Id)]);
     FilterView.Changed += (_, _) => UpdateFamilies();
-    Loaded += (_, _) => projectRevisionMonitor.RevisionChanged += OnRevisionChanged;
-    Unloaded += (_, _) => projectRevisionMonitor.RevisionChanged -= OnRevisionChanged;
+    _LastProjectInfo = _CurrentProjectProvider.Info;
   }
 
   public ObservableCollection<FamilyInfoItem> Families
@@ -109,6 +108,7 @@ public partial class ProjectPage : ContentPage
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
       var project = _CurrentProjectProvider.Project;
+      var startInfo = _CurrentProjectProvider.Info;
 
       var persons = await project
           .PersonManager
@@ -140,9 +140,16 @@ public partial class ProjectPage : ContentPage
 
       // Clear and AddRange together, not eagerly when the load starts: an overlapping second load
       // (Refresh() can re-enter this while one is in flight) would otherwise append onto a stale,
-      // already-cleared collection and duplicate every card.
+      // already-cleared collection and duplicate every card. Compare startInfo (this load's start
+      // revision), not the _LastProjectInfo field a concurrent Refresh() may have already advanced.
       await SafeTask.RunOnMainThread(() =>
       {
+        if (startInfo != _CurrentProjectProvider.Info)
+        {
+          Refresh();
+          return;
+        }
+
         _Families.Clear();
         _Families.AddRange(families);
       }, _AlertService);
@@ -242,20 +249,23 @@ public partial class ProjectPage : ContentPage
     }
   }
 
-  protected override void OnNavigatedTo(NavigatedToEventArgs args)
-  {
-    base.OnNavigatedTo(args);
-
-    SafeTask.Guard(Refresh, _AlertService);
-  }
-
   private void Refresh()
   {
+    _LastProjectInfo = _CurrentProjectProvider.Info;
     _FamiliesLoaded = false;
     this.RefreshView();
   }
 
-  private void OnRevisionChanged(object? sender, EventArgs e) => SafeTask.Guard(Refresh, _AlertService);
+  // Catches a change committed on a subpage: returning here re-navigates, so compare the live project
+  // revision (carried on Info) against the snapshot taken when this page last loaded its data.
+  protected override void OnNavigatedTo(NavigatedToEventArgs args)
+  {
+    base.OnNavigatedTo(args);
+    if (_LastProjectInfo != _CurrentProjectProvider.Info)
+    {
+      Refresh();
+    }
+  }
 
   protected async Task OnPageCommand(object obj)
   {
@@ -270,8 +280,7 @@ public partial class ProjectPage : ContentPage
         break;
 
       case string commandName when commandName == "Refresh":
-        _FamiliesLoaded = false;
-        this.RefreshView();
+        Refresh();
         break;
 
       case string commandName when commandName == "CreateFamily":
@@ -415,8 +424,7 @@ public partial class ProjectPage : ContentPage
       await Navigation.PopModalAsync();
     }
 
-    _FamiliesLoaded = false;
-    this.RefreshView();
+    Refresh();
   }
 
   private async Task RunImportAsync(FileResult file, TextReader reader, CancellationToken token)

@@ -38,6 +38,9 @@ internal sealed class TestableFamilyTreePage : FamilyTreePage
 
   public Task InvokePageCommandAsync(object parameter) => OnPageCommand(parameter);
 
+  // NavigatedToEventArgs has no accessible test-side constructor and OnNavigatedTo never reads it.
+  public void InvokeNavigatedTo() => OnNavigatedTo(null!);
+
   protected override void OnPropertyChanged([CallerMemberName] string? propertyName = null)
   {
     base.OnPropertyChanged(propertyName);

@@ -18,13 +18,13 @@ public partial class StatisticsPage : ContentPage
 
   private ProjectStatistics _Statistics = ProjectStatistics.Empty;
   private bool _UpdateStatistics = true;
+  private ProjectInfo? _LastProjectInfo;
 
   public StatisticsPage(
     ICurrentProjectProvider currentProjectProvider,
     ICancellationTokenProvider cancellationTokenProvider,
     IAlertService alertService,
-    INameFormatter nameFormatter,
-    IProjectRevisionMonitor projectRevisionMonitor)
+    INameFormatter nameFormatter)
   {
     _CurrentProjectProvider = currentProjectProvider;
     _CancellationTokenProvider = cancellationTokenProvider;
@@ -32,8 +32,7 @@ public partial class StatisticsPage : ContentPage
     _NameFormatter = nameFormatter;
 
     InitializeComponent();
-    Loaded += (_, _) => projectRevisionMonitor.RevisionChanged += OnRevisionChanged;
-    Unloaded += (_, _) => projectRevisionMonitor.RevisionChanged -= OnRevisionChanged;
+    _LastProjectInfo = _CurrentProjectProvider.Info;
   }
 
   // The single trigger for the (lazy, async) load: every display property below reads Statistics, so
@@ -71,14 +70,20 @@ public partial class StatisticsPage : ContentPage
     }, _AlertService);
   }
 
-  protected void OnNavigatedTo(object sender, NavigatedToEventArgs e) => Refresh();
-
-  private void OnRevisionChanged(object? sender, EventArgs e) => Refresh();
+  // See ProjectPage.OnNavigatedTo: reload only when a change was committed since this page last loaded.
+  protected void OnNavigatedTo(object sender, NavigatedToEventArgs e)
+  {
+    if (_LastProjectInfo != _CurrentProjectProvider.Info)
+    {
+      Refresh();
+    }
+  }
 
   // No XAML element binds to Statistics directly -- re-reading it here is what actually restarts
   // the load, not just flagging _UpdateStatistics and hoping something else re-reads it.
   private void Refresh()
   {
+    _LastProjectInfo = _CurrentProjectProvider.Info;
     _UpdateStatistics = true;
     _ = Statistics;
   }

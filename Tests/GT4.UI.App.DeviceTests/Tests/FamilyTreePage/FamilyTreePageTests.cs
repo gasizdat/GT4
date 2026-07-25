@@ -56,6 +56,37 @@ public class FamilyTreePageTests
   }
 
   [Fact]
+  public async Task OnNavigatedTo_rebuilds_the_tree_when_the_project_revision_changed()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+    var center = P(1, "Ivan");
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    var loadsBefore = page.CompletedLoads;
+    services.CurrentProjectProvider.SetupGet(p => p.Info).Returns(TestServices.SampleProjectInfo with { Revision = 1 });
+
+    await WaitForLoadAsync(page, services, page.InvokeNavigatedTo);
+
+    Assert.True(page.CompletedLoads > loadsBefore);
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+  }
+
+  [Fact]
+  public async Task OnNavigatedTo_does_not_rebuild_when_the_project_revision_is_unchanged()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+    var center = P(1, "Ivan");
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    var loadsBefore = page.CompletedLoads;
+
+    await MainThread.InvokeOnMainThreadAsync(page.InvokeNavigatedTo);
+    await Task.Delay(200);
+
+    Assert.Equal(loadsBefore, page.CompletedLoads);
+  }
+
+  [Fact]
   public async Task TappingTheCenterNode_navigates_to_PersonPage()
   {
     var services = new TestServices();

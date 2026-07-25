@@ -43,6 +43,7 @@ public partial class PersonPage : ContentPage
   private PersonPageSmartLayout _SmartLayout = new();
   private bool _ExpandAll = false;
   private RelativeInfo[] _AllRoots = [];
+  private ProjectInfo? _LastProjectInfo;
 
   public PersonPage(
     ICancellationTokenProvider cancellationTokenProvider,
@@ -84,6 +85,7 @@ public partial class PersonPage : ContentPage
       _AlertService,
       () => _AllRoots);
     FilterView.Changed += (_, _) => RefreshRelatives();
+    _LastProjectInfo = _CurrentProjectProvider.Info;
   }
 
   protected ScrollView BodyScroll => BodyScrollView;
@@ -268,6 +270,23 @@ public partial class PersonPage : ContentPage
     PersonPhoto.TranslationY = Math.Clamp(scrollY, 0, maxTranslation);
   }
 
+  // See ProjectPage.OnNavigatedTo: returning from a subpage (family, tree, another person) that
+  // committed an edit must re-fetch the current person's data.
+  protected override void OnNavigatedTo(NavigatedToEventArgs args)
+  {
+    base.OnNavigatedTo(args);
+    if (_LastProjectInfo != _CurrentProjectProvider.Info)
+    {
+      Refresh();
+    }
+  }
+
+  private void Refresh()
+  {
+    _LastProjectInfo = _CurrentProjectProvider.Info;
+    ShowPersonInfo(_PersonFullInfo, false);
+  }
+
   private void OnBodyScrolled(object? sender, ScrolledEventArgs e) => UpdatePersonPhotoStickyPosition(e.ScrollY);
 
   private void OnPersonPhotoOrRelativesSizeChanged(object? sender, EventArgs e) => UpdatePersonPhotoStickyPosition();
@@ -298,12 +317,16 @@ public partial class PersonPage : ContentPage
     await Launcher.Default.OpenAsync(new OpenFileRequest(fileName, new ReadOnlyFile(path)));
   }
 
+  private async Task OnGotoFamilyAsync() =>
+    await _NavigationService.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = FamilyName });
+
   private async Task GetPersonDataAsync(Person person, bool addToNavigation)
   {
     try
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
       var project = _CurrentProjectProvider.Project;
+      var startInfo = _CurrentProjectProvider.Info;
       var personFullInfo = await project.PersonManager.GetPersonFullInfoAsync(person, token);
       var parentsTasks = project.RelativesProvider.GetParentsAsync(personFullInfo.RelativeInfos, token);
       var stepChildrenTasks = project.RelativesProvider.GetStepChildrenAsync(personFullInfo.RelativeInfos, token);
@@ -354,11 +377,20 @@ public partial class PersonPage : ContentPage
 
       // UpdateUI touches the project document again on the UI thread; SafeTask.RunOnMainThread keeps
       // an escaped exception (e.g. the project closed while backgrounding) from going unobserved.
-      _ = SafeTask.RunOnMainThread(() => UpdateUI(personFullInfo,
-                                                  roots,
-                                                  photos, captions, attachments, bioTask.Result as string,
-                                                  gedcomTask.Result as string,
-                                                  addToNavigation), _AlertService);
+      _ = SafeTask.RunOnMainThread(() =>
+      {
+        if (startInfo != _CurrentProjectProvider.Info)
+        {
+          Refresh();
+          return;
+        }
+
+        UpdateUI(personFullInfo,
+                 roots,
+                 photos, captions, attachments, bioTask.Result as string,
+                 gedcomTask.Result as string,
+                 addToNavigation);
+      }, _AlertService);
     }
     catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
     {
@@ -475,7 +507,7 @@ public partial class PersonPage : ContentPage
         await _NavigationService.GoToAsync(UIRoutes.GetRoute<MainPage>());
         break;
       case string commandName when commandName == "GoToFamily":
-        await _NavigationService.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = FamilyName });
+        await OnGotoFamilyAsync();
         break;
       case string commandName when commandName == "GoToFamilyTree":
         // Shell matches the target's [QueryProperty] by exact runtime type, so hand it a plain
@@ -519,6 +551,8 @@ public partial class PersonPage : ContentPage
       .Project
       .Persons
       .RemovePersonAsync(_PersonFullInfo, token);
+
+    await OnGotoFamilyAsync();
   }
 
   private async Task OnPersonEditAsync()

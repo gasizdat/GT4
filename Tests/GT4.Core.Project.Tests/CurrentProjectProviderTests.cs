@@ -21,11 +21,12 @@ public sealed class CurrentProjectProviderTests
   private readonly FileDescription _cache = new(Dir, "version-current.gt4", null);
   private readonly Mock<IProjectList> _list = new(MockBehavior.Strict);
   private readonly ProjectInfo _info;
+  private Mock<IProjectDocument> _lastDoc = new(MockBehavior.Loose);
 
   public CurrentProjectProviderTests()
   {
     _fs.AddFile(_origin);
-    _info = new ProjectInfo("Tree", "Desc", "rev", _origin);
+    _info = new ProjectInfo("Tree", "Desc", 1L, _origin);
 
     _list
       .Setup(l => l.OpenAsync(It.IsAny<FileDescription>(), It.IsAny<CancellationToken>()))
@@ -35,9 +36,10 @@ public sealed class CurrentProjectProviderTests
   private ProjectHost CreateHost()
   {
     var doc = new Mock<IProjectDocument>(MockBehavior.Loose);
-    doc.SetupGet(d => d.ProjectRevision).Returns(1);
+    doc.SetupGet(d => d.ProjectRevision).Returns(1L);
     doc.Setup(d => d.DisposeAsync()).Returns(ValueTask.CompletedTask);
     doc.Setup(d => d.Dispose());
+    _lastDoc = doc;
     var host = new ProjectHost(_fs, _origin, _cache) { Project = doc.Object };
     return host;
   }
@@ -67,6 +69,19 @@ public sealed class CurrentProjectProviderTests
     provider.Info.Should().Be(_info);
     provider.Revisions.Should().NotBeNull();
     _list.Verify(l => l.OpenAsync(_origin, It.IsAny<CancellationToken>()), Times.Once);
+  }
+
+  [Fact]
+  public async Task Info_CarriesTheLiveProjectRevision()
+  {
+    var provider = new CurrentProjectProvider(_list.Object);
+    await provider.OpenAsync(_info, Token);
+
+    // A commit since open advances the document's counter; Info must surface the live value so callers
+    // can detect the change by value-comparing Info, not the stale open-time revision.
+    _lastDoc.SetupGet(d => d.ProjectRevision).Returns(7L);
+
+    provider.Info.Revision.Should().Be(7L);
   }
 
   [Fact]
