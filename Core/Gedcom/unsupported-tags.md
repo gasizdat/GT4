@@ -154,9 +154,14 @@ couples for 6 invented marriages and moves nothing.
 
 Closing the gap needs a model that separates "married" from "partnered" — a
 distinct relationship kind, or a marriage flag on the edge — so the exporter
-knows whether to write `MARR`. Until then the loss is pinned by the round-trip
-harness (`Tests/Functional/run-gedcom-roundtrip.ps1`), which holds bourbon to an
-exact difference count under issue #172.
+knows whether to write `MARR`. That was costed and declined: it does clear the
+class, but a new kind of relationship runs through kinship, filtering,
+statistics, the family tree and both localizations, which is disproportionate to
+the records it recovers. Nor can the couple be salvaged from elsewhere in the
+file: the exporter already rebuilds a family from any pair sharing a child, and
+these records have no child to rebuild from. So the loss stands, pinned by the
+round-trip harness (`Tests/Functional/run-gedcom-roundtrip.ps1`), which holds
+bourbon to an exact difference count under issue #172.
 
 FAM sub-tags
 
