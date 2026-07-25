@@ -19,7 +19,9 @@
   Directory holding the sample repositories. Defaults to gedcom-samples beside the GT4 checkout.
 
 .PARAMETER Samples
-  Sample paths relative to SamplesRoot. Each must exist, or the run fails.
+  Sample paths relative to SamplesRoot. Each must exist, or the run fails. UTF-8 files only: the CLI
+  reads and writes UTF-8 without consulting the declared charset, so an ANSEL sample would be
+  mis-decoded rather than rejected (see issue #123).
 
 .PARAMETER FidelityExclusions
   Samples checked for stability only, with the issue that keeps them from passing fidelity.
@@ -71,10 +73,12 @@ if (-not $WorkDir) {
 New-Item -ItemType Directory -Force -Path $WorkDir | Out-Null
 
 # The CLI returns 2 for "the files differ" and 1 for anything that went wrong, so a broken invocation is
-# never mistaken for a clean difference report.
+# never mistaken for a clean difference report. stderr is deliberately not redirected into $output:
+# under $ErrorActionPreference = 'Stop', "2>&1" on a native exe turns its error lines into a terminating
+# NativeCommandError, which would kill the run instead of reporting the failed sample.
 function Invoke-Cli {
   param([string[]]$CliArgs)
-  $output = & $cli @CliArgs 2>&1
+  $output = & $cli @CliArgs
   return @{ ExitCode = $LASTEXITCODE; Output = $output }
 }
 
@@ -85,6 +89,17 @@ foreach ($sample in $Samples) {
   $name = [System.IO.Path]::GetFileNameWithoutExtension($sample)
   $source = Join-Path $SamplesRoot $sample
   Write-Host "`n=== $name ===" -ForegroundColor Cyan
+
+  # Without this, a sample that parses to nothing at all would compare equal to the nothing it exports
+  # and report PASS -- a parse regression would look like perfect fidelity.
+  $individuals = @(Select-String -Path $source -Pattern '^0 @.+@ INDI').Count
+  if ($individuals -eq 0) {
+    Write-Host "  no INDI records read from $source." -ForegroundColor Red
+    $results += [pscustomobject]@{ Sample = $name; Stability = 'ERROR'; Fidelity = '-' }
+    $failed = $true
+    continue
+  }
+  Write-Host "  $individuals individuals in the source." -ForegroundColor DarkGray
 
   $firstGed = Join-Path $WorkDir "$name.1.ged"
   $secondGed = Join-Path $WorkDir "$name.2.ged"
@@ -145,7 +160,7 @@ foreach ($sample in $Samples) {
 Write-Host "`n=== GEDCOM round-trip summary ===" -ForegroundColor Cyan
 $results | Format-Table -AutoSize | Out-String | Write-Host
 
-if ($KeepArtifacts) {
+if ($KeepArtifacts -or $failed) {
   Write-Host "Artifacts kept in $WorkDir"
 } else {
   Remove-Item $WorkDir -Recurse -Force
