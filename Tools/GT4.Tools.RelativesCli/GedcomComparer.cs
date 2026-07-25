@@ -21,6 +21,10 @@ internal readonly record struct GedcomDifference(GedcomDifferenceKind Kind, stri
 /// and regenerates the FAM records from GT4's edge graph, so nothing that identifies a record survives:
 /// individuals are matched on content (and, where that is ambiguous, on the company they keep) and the
 /// relationships are then compared in that matched space, never as FAM records.
+///
+/// Anything else export derives rather than copies is likewise compared as what it means, not as what it
+/// says: a NAME value rebuilt from GIVN/SURN, a NOTE pointer inlined into a biography, a date collapsed
+/// through <see cref="GedcomDate"/>, a resolved photo re-encoded from a FILE reference to a BLOB.
 /// </summary>
 internal static class GedcomComparer
 {
@@ -52,7 +56,7 @@ internal static class GedcomComparer
   /// </summary>
   private static void MatchIndividuals(Side left, Side right, List<GedcomDifference> differences)
   {
-    var buckets = BuildBuckets(left, right, individual => individual.Key);
+    var buckets = BuildBuckets(left, right);
     var nextMatchId = 0;
     foreach (var (leftGroup, rightGroup) in buckets)
     {
@@ -149,9 +153,9 @@ internal static class GedcomComparer
   }
 
   /// <summary>
-  /// Compares what each matched individual's own tags say. FAMS/FAMC and the FAM records themselves are
-  /// left to the edge comparison, OBJE to <see cref="CompareMedia"/>; everything else -- including every
-  /// unmodeled tag GT4 claims to keep as residue (PLAC, SOUR, OCCU, CHAN, ...) -- has to survive verbatim.
+  /// Every unmodeled tag GT4 claims to keep as residue (PLAC, SOUR, OCCU, CHAN, ...) has to survive
+  /// verbatim, which is what this checks. FAMS/FAMC go to the edge comparison and OBJE to
+  /// <see cref="CompareMedia"/> instead.
   /// </summary>
   private static void CompareContent(Side left, Side right, List<GedcomDifference> differences)
   {
@@ -170,8 +174,8 @@ internal static class GedcomComparer
 
   private static void CompareTags(Individual left, Individual right, Side leftSide, Side rightSide, List<GedcomDifference> differences)
   {
-    var leftTags = ContentTags(left.Node, leftSide.Notes);
-    var rightTags = ContentTags(right.Node, rightSide.Notes);
+    var leftTags = leftSide.ContentTags(left);
+    var rightTags = rightSide.ContentTags(right);
     foreach (var text in Surplus(leftTags, rightTags))
     {
       differences.Add(new GedcomDifference(GedcomDifferenceKind.Tag, left.Label, $"only in the first file: {text}"));
@@ -223,13 +227,13 @@ internal static class GedcomComparer
 
   /// <summary>
   /// The top-level records GT4 has no schema for but stores verbatim (submitter, submission, source,
-  /// repository). Whole records GT4 drops -- HEAD, top-level OBJE, NOTE inlined into a biography -- are
-  /// not compared: see unsupported-tags.md.
+  /// repository). The ones it drops outright -- HEAD, top-level OBJE, NOTE -- are not compared; see
+  /// unsupported-tags.md.
   /// </summary>
   private static void ComparePassthroughRecords(Side left, Side right, List<GedcomDifference> differences)
   {
-    var leftRecords = PassthroughRecords(left);
-    var rightRecords = PassthroughRecords(right);
+    var leftRecords = left.PassthroughRecords();
+    var rightRecords = right.PassthroughRecords();
     foreach (var record in Surplus(leftRecords, rightRecords))
     {
       differences.Add(new GedcomDifference(GedcomDifferenceKind.Record, record.Label, $"only in the first file: {record.Text}"));
@@ -240,24 +244,9 @@ internal static class GedcomComparer
     }
   }
 
-  private static Passthrough[] PassthroughRecords(Side side)
-  {
-    var records = side.Roots.Where(GedcomMetadata.IsPassthrough);
-    return records.Select(record => new Passthrough($"{record.Tag} {record.Xref}", Serialize(record, side.Notes))).ToArray();
-  }
-
-  private static string[] ContentTags(GedcomNode individual, IReadOnlyDictionary<string, string> notes)
-  {
-    var compared = individual.Children.Where(child => !StructuralTags.Contains(child.Tag));
-    var serialized = compared.Select(child => Serialize(child, notes));
-    return serialized.Where(text => text.Length > 0).ToArray();
-  }
-
   /// <summary>
-  /// A node as a canonical string. Children are sorted, so re-emission order is not a difference; an empty
-  /// node is nothing at all (a bare "1 BIRT" does not survive import and says nothing); OBJE is removed as
-  /// media; and the derived parts are replaced by what they mean -- a NAME value that export rebuilds from
-  /// GIVN/SURN, and a BIRT/DEAT date that import collapses through <see cref="GedcomDate"/>.
+  /// A node as a canonical string. Children are sorted, so re-emission order is not a difference, and an
+  /// empty node is nothing at all -- a bare "1 BIRT" says nothing and does not survive import.
   /// </summary>
   private static string Serialize(GedcomNode node, IReadOnlyDictionary<string, string> notes)
   {
@@ -411,7 +400,7 @@ internal static class GedcomComparer
         if (child is null || Unmatched(child))
           continue;
 
-        var adopted = side.IsAdopted(child, family.Xref);
+        var adopted = Side.IsAdopted(child, family.Xref);
         foreach (var parent in parents)
         {
           if (parent is null || Unmatched(parent))
@@ -441,32 +430,32 @@ internal static class GedcomComparer
     return $"{individual.Key}|{joined}";
   }
 
-  private static List<(List<Individual> Left, List<Individual> Right)> BuildBuckets(Side left, Side right, Func<Individual, string> key)
+  /// <summary>Individuals of both sides grouped by content key, so each group holds the candidates to pair.</summary>
+  private static List<(List<Individual> Left, List<Individual> Right)> BuildBuckets(Side left, Side right)
   {
     var buckets = new Dictionary<string, (List<Individual> Left, List<Individual> Right)>();
+
+    (List<Individual> Left, List<Individual> Right) Bucket(string key)
+    {
+      if (!buckets.TryGetValue(key, out var bucket))
+      {
+        bucket = (Left: [], Right: []);
+        buckets[key] = bucket;
+      }
+      return bucket;
+    }
+
     foreach (var individual in left.Individuals)
     {
-      var bucket = GetBucket(buckets, key(individual));
+      var bucket = Bucket(individual.Key);
       bucket.Left.Add(individual);
     }
     foreach (var individual in right.Individuals)
     {
-      var bucket = GetBucket(buckets, key(individual));
+      var bucket = Bucket(individual.Key);
       bucket.Right.Add(individual);
     }
     return [.. buckets.Values];
-  }
-
-  private static (List<Individual> Left, List<Individual> Right) GetBucket(
-    Dictionary<string, (List<Individual> Left, List<Individual> Right)> buckets,
-    string key)
-  {
-    if (buckets.TryGetValue(key, out var existing))
-      return existing;
-
-    var created = (Left: new List<Individual>(), Right: new List<Individual>());
-    buckets[key] = created;
-    return created;
   }
 
   private static void Pair(Individual left, Individual right, int matchId)
@@ -519,11 +508,21 @@ internal static class GedcomComparer
 
   private sealed class Side
   {
-    public required GedcomNode[] Roots { get; init; }
-    public required Individual[] Individuals { get; init; }
-    public required Family[] Families { get; init; }
-    public required Dictionary<string, Individual> ByXref { get; init; }
-    public required Dictionary<string, string> Notes { get; init; }
+    private readonly GedcomNode[] _roots;
+    private readonly Dictionary<string, Individual> _byXref;
+    private readonly Dictionary<string, string> _notes;
+
+    private Side(GedcomNode[] roots, Individual[] individuals, Family[] families, Dictionary<string, string> notes)
+    {
+      _roots = roots;
+      _byXref = individuals.ToDictionary(individual => individual.Xref);
+      _notes = notes;
+      Individuals = individuals;
+      Families = families;
+    }
+
+    public Individual[] Individuals { get; }
+    public Family[] Families { get; }
 
     public static Side Build(GedcomNode[] roots)
     {
@@ -531,15 +530,21 @@ internal static class GedcomComparer
         .Where(root => root.Tag == GedcomTags.Individual && root.Xref is not null)
         .Select(Describe)
         .ToArray();
-      var byXref = individuals.ToDictionary(individual => individual.Xref);
       var families = roots.Where(root => root.Tag == GedcomTags.Family).Select(ReadFamily).ToArray();
       var noteRecords = roots.Where(root => root.Tag == GedcomTags.Note && root.Xref is not null);
       var notes = noteRecords.ToDictionary(record => record.Xref!, record => record.Value ?? string.Empty);
 
-      var side = new Side { Roots = roots, Individuals = individuals, Families = families, ByXref = byXref, Notes = notes };
+      var side = new Side(roots, individuals, families, notes);
       side.LinkNeighbours();
-      side.CollectMedia(roots);
+      side.CollectMedia();
       return side;
+    }
+
+    public static bool IsAdopted(Individual child, string familyXref)
+    {
+      var links = child.Node.ChildrenWithTag(GedcomTags.FamilyChild);
+      var link = links.FirstOrDefault(node => node.Value == familyXref);
+      return link?.ChildValue(GedcomTags.Pedigree) == GedcomTags.AdoptedPedigree;
     }
 
     public Individual? Resolve(string? xref)
@@ -547,15 +552,21 @@ internal static class GedcomComparer
       if (xref is null)
         return null;
 
-      ByXref.TryGetValue(xref, out var individual);
+      _byXref.TryGetValue(xref, out var individual);
       return individual;
     }
 
-    public bool IsAdopted(Individual child, string familyXref)
+    public string[] ContentTags(Individual individual)
     {
-      var links = child.Node.ChildrenWithTag(GedcomTags.FamilyChild);
-      var link = links.FirstOrDefault(node => node.Value == familyXref);
-      return link?.ChildValue(GedcomTags.Pedigree) == GedcomTags.AdoptedPedigree;
+      var compared = individual.Node.Children.Where(child => !StructuralTags.Contains(child.Tag));
+      var serialized = compared.Select(child => Serialize(child, _notes));
+      return serialized.Where(text => text.Length > 0).ToArray();
+    }
+
+    public Passthrough[] PassthroughRecords()
+    {
+      var records = _roots.Where(GedcomMetadata.IsPassthrough);
+      return records.Select(record => new Passthrough($"{record.Tag} {record.Xref}", Serialize(record, _notes))).ToArray();
     }
 
     /// <summary>
@@ -563,17 +574,17 @@ internal static class GedcomComparer
     /// their events, or on a FAM they are a spouse in -- import lands all three on the person (#148), so
     /// they have to count on both sides for the comparison to line up.
     /// </summary>
-    private void CollectMedia(GedcomNode[] roots)
+    private void CollectMedia()
     {
       foreach (var individual in Individuals)
       {
         var owned = individual.Node.DescendantsWithTag(GedcomTags.Object);
-        individual.MediaTitles.AddRange(owned.SelectMany(MediaTitles));
+        individual.MediaTitles.AddRange(owned.SelectMany(TitlesOf));
       }
 
-      foreach (var family in roots.Where(root => root.Tag == GedcomTags.Family))
+      foreach (var family in _roots.Where(root => root.Tag == GedcomTags.Family))
       {
-        var media = family.DescendantsWithTag(GedcomTags.Object).SelectMany(MediaTitles).ToArray();
+        var media = family.DescendantsWithTag(GedcomTags.Object).SelectMany(TitlesOf).ToArray();
         if (media.Length == 0)
           continue;
 
@@ -588,7 +599,7 @@ internal static class GedcomComparer
     /// One title per referenced file: import splits a multi-FILE OBJE into one OBJE per file up front, so
     /// an OBJE naming two files is two media items on the other side.
     /// </summary>
-    private static IEnumerable<string> MediaTitles(GedcomNode media)
+    private static IEnumerable<string> TitlesOf(GedcomNode media)
     {
       var title = media.ChildValue(GedcomTags.Title) ?? "(untitled)";
       var files = media.ChildrenWithTag(GedcomTags.File).Count();
