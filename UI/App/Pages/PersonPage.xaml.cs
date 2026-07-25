@@ -320,6 +320,14 @@ public partial class PersonPage : ContentPage
   private async Task OnGotoFamilyAsync() =>
     await _NavigationService.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = FamilyName });
 
+  private static async Task<AttachmentInfo> ToAttachmentInfoAsync(Data data, CancellationToken token)
+  {
+    var fileName = await GedcomPhotoResidue.ExtractFileNameAsync(data, token);
+    var title = await GedcomPhotoResidue.ExtractTitleAsync(data, token);
+
+    return new AttachmentInfo(fileName ?? string.Empty, title, data);
+  }
+
   private async Task GetPersonDataAsync(Person person, bool addToNavigation)
   {
     try
@@ -332,9 +340,9 @@ public partial class PersonPage : ContentPage
       var stepChildrenTasks = project.RelativesProvider.GetStepChildrenAsync(personFullInfo.RelativeInfos, token);
       var bioTask = _TextConverter.ToObjectAsync(personFullInfo.Biography, token);
       var gedcomTask = _GedcomConverter.ToObjectAsync(personFullInfo.GedcomData, token);
-      var attachmentNamesTask = Task.WhenAll(
-        personFullInfo.Attachments.Select(data => GedcomPhotoResidue.ExtractFileNameAsync(data, token)));
-      await Task.WhenAll(parentsTasks, stepChildrenTasks, bioTask, gedcomTask, attachmentNamesTask);
+      var attachmentsTask = Task.WhenAll(
+        personFullInfo.Attachments.Select(data => ToAttachmentInfoAsync(data, token)));
+      await Task.WhenAll(parentsTasks, stepChildrenTasks, bioTask, gedcomTask, attachmentsTask);
 
       var parents = parentsTasks.Result;
       var stepChildren = stepChildrenTasks.Result;
@@ -371,9 +379,7 @@ public partial class PersonPage : ContentPage
         captions = captionsTask.Result;
       }
 
-      var attachments = personFullInfo.Attachments
-        .Zip(attachmentNamesTask.Result, (data, fileName) => new AttachmentInfo(fileName ?? string.Empty, data))
-        .ToArray();
+      var attachments = attachmentsTask.Result;
 
       // UpdateUI touches the project document again on the UI thread; SafeTask.RunOnMainThread keeps
       // an escaped exception (e.g. the project closed while backgrounding) from going unobserved.
@@ -577,4 +583,9 @@ public partial class PersonPage : ContentPage
   }
 }
 
-public sealed record AttachmentInfo(string FileName, Data Data);
+public sealed record AttachmentInfo(string FileName, string? Title, Data Data)
+{
+  public string DisplayName => string.IsNullOrWhiteSpace(Title) ? FileName : Title;
+
+  public bool ShowFileName => !string.IsNullOrWhiteSpace(Title);
+}
