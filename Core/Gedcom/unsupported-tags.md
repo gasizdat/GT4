@@ -175,6 +175,11 @@ only records above, and a lone HUSB or WIFE with no children (kennedy's `@F24@`)
 No record is regenerated for those, so there is nothing to merge their residue
 back onto and it stays dropped, along with the couple. Closing that needs #172.
 
+Because the key is the couple and the date, editing either in GT4 orphans the row
+it addressed: a re-dated marriage re-exports without the PLAC/SOUR it was imported
+with. Nothing keyed this way can be stable under edits — the alternative, pairing
+residue to marriages by position, misfiles them instead of dropping them.
+
 - DIV — Divorce.
 - DIVF — Divorce filed.
 - ENGA — Engagement.

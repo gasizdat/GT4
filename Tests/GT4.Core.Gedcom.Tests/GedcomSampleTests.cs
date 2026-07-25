@@ -461,6 +461,31 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task SingleParentFamilyResidue_IsKeyedByThatOneParent()
+  {
+    // A FAM with one parent and children is still regenerated on export, off a couple key with one id in it.
+    const string ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n" +
+      "0 @I2@ INDI\n1 NAME Marie /Bourbon/\n1 SEX F\n" +
+      "0 @F1@ FAM\n1 HUSB @I1@\n1 CHIL @I2@\n1 CHAN\n2 DATE 1 JAN 2020\n1 SOUR @S1@\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var byName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
+    var key = GedcomMetadata.FamilyKey(byName["Louis Bourbon"].Id, null);
+    (await document.Metadata.GetAsync<string>(key, Token)).Should().Contain("0 CHAN").And.Contain("0 SOUR @S1@");
+
+    var text = await ExportToTextAsync(document);
+    text.Should().Contain("1 CHAN").And.Contain("2 DATE 1 JAN 2020").And.Contain("1 SOUR @S1@");
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    var reexported = await ExportToTextAsync(reimported);
+    reexported.Should().Be(text);
+  }
+
+  [Fact]
   public async Task FamilyResidue_SurvivesASecondImportCarryingDifferentTags()
   {
     // The merge case: a second source describes the same couple with a different fact. The couple keys one
