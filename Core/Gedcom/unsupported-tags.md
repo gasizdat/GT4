@@ -180,6 +180,18 @@ it addressed: a re-dated marriage re-exports without the PLAC/SOUR it was import
 with. Nothing keyed this way can be stable under edits — the alternative, pairing
 residue to marriages by position, misfiles them instead of dropping them.
 
+Two consequences of keying by the couple rather than by the record:
+
+- Several FAM records naming the same couple are one family to GT4, so their
+  residue pools onto the single regenerated record — the `NOTE` of one and the
+  `CHAN` of another come out together. Nothing is lost; what is lost is the
+  statement that the source kept them apart, the same shape as several dateless
+  `MARR` events collapsing into one.
+- Residue is stored whenever either spouse resolves, whether or not the couple
+  ends up in an edge. A FAM of the dropped class above therefore leaves a row
+  nothing reads — dead weight in the project rather than a leak, and it would
+  start being read if #172 were ever closed.
+
 - DIV — Divorce.
 - DIVF — Divorce filed.
 - ENGA — Engagement.
