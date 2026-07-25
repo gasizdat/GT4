@@ -58,6 +58,26 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     return writer.ToString();
   }
 
+  // The attachment whose preserved FILE residual matches the given path -- lets a test pin one file when
+  // several attachments (a split multi-file OBJE, a couple's shared media) coexist on one person.
+  private static async Task<Data> AttachmentByFileAsync(Data[] attachments, string fileName)
+  {
+    foreach (var attachment in attachments)
+    {
+      if (await GedcomPhotoResidue.ExtractFileNameAsync(attachment, Token) == fileName)
+        return attachment;
+    }
+    throw new InvalidOperationException($"No attachment references {fileName}");
+  }
+
+  // ExtractTitleAsync only serves photo captions, so an attachment's preserved TITL is read off the
+  // envelope's residual directly.
+  private static async Task<string?> AttachmentTitleAsync(Data attachment)
+  {
+    var (_, residual) = await GedcomPhotoResidue.DecodeAsync(attachment.Content, Token);
+    return residual.ChildValue(GedcomTags.Title);
+  }
+
   private static StreamReader OpenSample(string fileName)
   {
     var assembly = Assembly.GetExecutingAssembly();
@@ -422,9 +442,10 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
-  public async Task NestedObjeUnderEventSour_ImageIsDiscoveredAsPhoto()
+  public async Task NestedObjeUnderEventSour_ImageIsDiscoveredAsAttachment()
   {
-    // Same nesting as above, but an image-shaped OBJE is claimed by SelectPhotos instead of SelectAttachments.
+    // Same nesting as above with an image-shaped OBJE: only a direct INDI-child OBJE is a portrait, so an
+    // image nested under an event is documentary and lands as an attachment, never a photo.
     var blob = Convert.ToBase64String(Encoding.UTF8.GetBytes("baptism-photo"));
     var ged =
       "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n" +
@@ -435,17 +456,19 @@ public sealed class GedcomSampleTests : IAsyncLifetime
 
     var person = (await document.Persons.GetPersonsAsync(Token)).Single();
     var full = await document.PersonManager.GetPersonFullInfoAsync(person, Token);
-    full.MainPhoto.Should().NotBeNull();
-    Encoding.UTF8.GetString(full.MainPhoto!.Content).Should().Be("baptism-photo");
+    full.MainPhoto.Should().BeNull();
+    full.AdditionalPhotos.Should().BeEmpty();
+    var attachment = full.Attachments.Should().ContainSingle().Which;
+    Encoding.UTF8.GetString(GedcomPhotoResidue.ExtractImageBytes(attachment.Content)).Should().Be("baptism-photo");
   }
 
   [Fact]
-  public async Task MultiFileObjeUnderEventSour_SplitsIntoPhotoAndAttachmentAndStaysStableOnReExport()
+  public async Task MultiFileObjeUnderEventSour_SplitsIntoTwoAttachmentsAndStaysStableOnReExport()
   {
     // The Bourbon baptism shape: one OBJE under BIRT -> SOUR references two files sharing one TITL -- a jpg
-    // scan and a pdf transcription. Both must surface (jpg as photo, pdf as attachment), and a re-export
-    // must not grow the media on a second round-trip (the shared TITL is copied onto each split object, so
-    // this pins that the duplication is stable rather than compounding).
+    // scan and a pdf transcription. Both are nested under an event, so both surface as attachments (never a
+    // photo), and a re-export must not grow the media on a second round-trip (the shared TITL is copied onto
+    // each split object, so this pins that the duplication is stable rather than compounding).
     var mediaDir = Path.Combine(Path.GetTempPath(), $"gt4_media_{Guid.NewGuid():N}");
     Directory.CreateDirectory(Path.Combine(mediaDir, "actes"));
     var scanBytes = new byte[] { 1, 2, 3 };
@@ -464,13 +487,15 @@ public sealed class GedcomSampleTests : IAsyncLifetime
       var person = (await document.Persons.GetPersonsAsync(Token)).Single();
       var full = await document.PersonManager.GetPersonFullInfoAsync(person, Token);
 
-      // The jpg surfaces as a photo, carrying the shared TITL; the pdf surfaces as an attachment.
-      full.MainPhoto.Should().NotBeNull();
-      GedcomPhotoResidue.ExtractImageBytes(full.MainPhoto!.Content).Should().Equal(scanBytes);
-      (await GedcomPhotoResidue.ExtractTitleAsync(full.MainPhoto, Token)).Should().Be("Acte de Bapteme");
-      var attachment = full.Attachments.Should().ContainSingle().Which;
-      GedcomPhotoResidue.ExtractImageBytes(attachment.Content).Should().Equal(pdfBytes);
-      (await GedcomPhotoResidue.ExtractFileNameAsync(attachment, Token)).Should().Be("actes/transcript.pdf");
+      // Both files land as attachments (never a photo); the jpg keeps the shared TITL.
+      full.MainPhoto.Should().BeNull();
+      full.AdditionalPhotos.Should().BeEmpty();
+      full.Attachments.Should().HaveCount(2);
+      var scan = await AttachmentByFileAsync(full.Attachments, "actes/scan.jpg");
+      GedcomPhotoResidue.ExtractImageBytes(scan.Content).Should().Equal(scanBytes);
+      (await AttachmentTitleAsync(scan)).Should().Be("Acte de Bapteme");
+      var transcript = await AttachmentByFileAsync(full.Attachments, "actes/transcript.pdf");
+      GedcomPhotoResidue.ExtractImageBytes(transcript.Content).Should().Equal(pdfBytes);
 
       // Round-trip stability: export, reimport that export, export again -- the media count must not grow.
       var firstExport = await ExportToTextAsync(document);
@@ -487,33 +512,36 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
-  public async Task NestedEventPhoto_DoesNotDisplaceTopLevelPortraitAsMain()
+  public async Task EventNestedImage_LandsAsAttachmentAndLeavesTopLevelPortraitAsMain()
   {
-    // The direct-INDI portrait must stay the main photo even when an event carries its own nested photo:
-    // DescendantsWithTag yields direct children before nested ones, so the portrait is photos[0].
+    // The Kennedy Herald-Tribune shape: a direct-INDI portrait plus an image OBJE nested under DEAT (a
+    // newspaper documenting the death, not a face). Only the direct child is a photo; the death document is
+    // an attachment, and the portrait is untouched as the main.
     var portrait = Convert.ToBase64String(Encoding.UTF8.GetBytes("portrait"));
-    var eventPhoto = Convert.ToBase64String(Encoding.UTF8.GetBytes("event-scan"));
+    var deathDocument = Convert.ToBase64String(Encoding.UTF8.GetBytes("herald-tribune"));
     var ged =
-      "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n" +
+      "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME John /Kennedy/\n1 SEX M\n" +
       $"1 OBJE\n2 FORM jpeg\n2 BLOB {portrait}\n" +
-      $"1 BIRT\n2 SOUR @S1@\n3 OBJE\n4 FORM jpeg\n4 BLOB {eventPhoto}\n0 TRLR\n";
+      $"1 DEAT\n2 DATE 22 NOV 1963\n2 OBJE\n3 FORM jpeg\n3 BLOB {deathDocument}\n0 TRLR\n";
     await using var document = await NewDocumentAsync();
     await _importer.ImportAsync(document, new StringReader(ged), Token);
 
     var person = (await document.Persons.GetPersonsAsync(Token)).Single();
     var full = await document.PersonManager.GetPersonFullInfoAsync(person, Token);
     Encoding.UTF8.GetString(full.MainPhoto!.Content).Should().Be("portrait");
-    Encoding.UTF8.GetString(full.AdditionalPhotos.Should().ContainSingle().Which.Content).Should().Be("event-scan");
+    full.AdditionalPhotos.Should().BeEmpty();
+    var attachment = full.Attachments.Should().ContainSingle().Which;
+    Encoding.UTF8.GetString(GedcomPhotoResidue.ExtractImageBytes(attachment.Content)).Should().Be("herald-tribune");
   }
 
   [Fact]
   public async Task MarriageRecordObje_SurfacesOnBothSpousesSharingOneDataRow()
   {
     // A marriage certificate (jpg scan + pdf transcription) sits under the FAM record's MARR -> SOUR -> OBJE.
-    // It is about the couple, and GT4 has no couple entity, so it surfaces on both spouses. FAM records are
-    // rebuilt from the edge graph on export and carry no residue, so previously these files were dropped
-    // entirely -- not even preserved verbatim like an unconsumed INDI OBJE. The bytes are stored once and
-    // linked to both spouses (a shared Data row), never a spouse's main/profile photo.
+    // It is about the couple, and GT4 has no couple entity, so it surfaces on both spouses. A family OBJE is
+    // documentary, so both files land as attachments (never a photo). FAM records are rebuilt from the edge
+    // graph on export and carry no residue, so previously these files were dropped entirely. The bytes are
+    // stored once and linked to both spouses (a shared Data row).
     var mediaDir = Path.Combine(Path.GetTempPath(), $"gt4_media_{Guid.NewGuid():N}");
     Directory.CreateDirectory(Path.Combine(mediaDir, "actes"));
     var scanBytes = new byte[] { 1, 2, 3 };
@@ -536,22 +564,24 @@ public sealed class GedcomSampleTests : IAsyncLifetime
       var louisFull = await document.PersonManager.GetPersonFullInfoAsync(byName["Louis Bourbon"], Token);
       var marieFull = await document.PersonManager.GetPersonFullInfoAsync(byName["Marie Antoinette"], Token);
 
-      // The jpg surfaces as an additional photo on both (never the main portrait), carrying the shared TITL;
-      // the pdf as an attachment on both.
+      // Both files land as attachments on both spouses (never a photo); the jpg keeps the shared TITL.
       louisFull.MainPhoto.Should().BeNull();
       marieFull.MainPhoto.Should().BeNull();
-      var louisPhoto = louisFull.AdditionalPhotos.Should().ContainSingle().Which;
-      var mariePhoto = marieFull.AdditionalPhotos.Should().ContainSingle().Which;
-      GedcomPhotoResidue.ExtractImageBytes(louisPhoto.Content).Should().Equal(scanBytes);
-      (await GedcomPhotoResidue.ExtractTitleAsync(louisPhoto, Token)).Should().Be("Acte de mariage");
-      var louisAttach = louisFull.Attachments.Should().ContainSingle().Which;
-      var marieAttach = marieFull.Attachments.Should().ContainSingle().Which;
-      GedcomPhotoResidue.ExtractImageBytes(louisAttach.Content).Should().Equal(pdfBytes);
-      (await GedcomPhotoResidue.ExtractFileNameAsync(marieAttach, Token)).Should().Be("actes/mariage.pdf");
+      louisFull.AdditionalPhotos.Should().BeEmpty();
+      marieFull.AdditionalPhotos.Should().BeEmpty();
+      louisFull.Attachments.Should().HaveCount(2);
+      marieFull.Attachments.Should().HaveCount(2);
+      var louisScan = await AttachmentByFileAsync(louisFull.Attachments, "actes/mariage.jpg");
+      var marieScan = await AttachmentByFileAsync(marieFull.Attachments, "actes/mariage.jpg");
+      GedcomPhotoResidue.ExtractImageBytes(louisScan.Content).Should().Equal(scanBytes);
+      (await AttachmentTitleAsync(louisScan)).Should().Be("Acte de mariage");
+      var louisPdf = await AttachmentByFileAsync(louisFull.Attachments, "actes/mariage.pdf");
+      var mariePdf = await AttachmentByFileAsync(marieFull.Attachments, "actes/mariage.pdf");
+      GedcomPhotoResidue.ExtractImageBytes(louisPdf.Content).Should().Equal(pdfBytes);
 
       // Shared, not duplicated: the same Data row backs both spouses (same Id), so the bytes live once.
-      louisPhoto.Id.Should().Be(mariePhoto.Id);
-      louisAttach.Id.Should().Be(marieAttach.Id);
+      louisScan.Id.Should().Be(marieScan.Id);
+      louisPdf.Id.Should().Be(mariePdf.Id);
 
       // Export emits each spouse's media as its own INDI-level OBJE, so a round-trip de-shares the row into
       // two -- but stays bounded: the media count must not grow on a further hop.
@@ -590,15 +620,16 @@ public sealed class GedcomSampleTests : IAsyncLifetime
       await _importer.ImportAsync(document, new StringReader(ged), Token, mediaDir);
       var firstByName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
       var firstLouis = await document.PersonManager.GetPersonFullInfoAsync(firstByName["Louis Bourbon"], Token);
-      var photoId = firstLouis.AdditionalPhotos.Should().ContainSingle().Which.Id;
+      var attachmentIds = firstLouis.Attachments.Select(a => a.Id).OrderBy(id => id).ToArray();
+      attachmentIds.Should().HaveCount(2);
 
       await _importer.ImportAsync(document, new StringReader(ged), Token, mediaDir);
 
       var byName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
       byName.Should().HaveCount(2);
       var louis = await document.PersonManager.GetPersonFullInfoAsync(byName["Louis Bourbon"], Token);
-      louis.AdditionalPhotos.Should().ContainSingle().Which.Id.Should().Be(photoId);
-      louis.Attachments.Should().ContainSingle();
+      louis.AdditionalPhotos.Should().BeEmpty();
+      louis.Attachments.Select(a => a.Id).OrderBy(id => id).Should().Equal(attachmentIds);
     }
     finally
     {
@@ -626,7 +657,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
       await _importer.ImportAsync(document, new StringReader(gedNoMedia), Token, mediaDir);
       var before = await GedcomTestGraph.PersonsByNameAsync(document, Token);
       var louisBefore = await document.PersonManager.GetPersonFullInfoAsync(before["Louis Bourbon"], Token);
-      louisBefore.AdditionalPhotos.Should().BeEmpty();
+      louisBefore.Attachments.Should().BeEmpty();
 
       await _importer.ImportAsync(document, new StringReader(gedWithMedia), Token, mediaDir);
 
@@ -634,9 +665,10 @@ public sealed class GedcomSampleTests : IAsyncLifetime
       byName.Should().HaveCount(2);
       var louis = await document.PersonManager.GetPersonFullInfoAsync(byName["Louis Bourbon"], Token);
       var marie = await document.PersonManager.GetPersonFullInfoAsync(byName["Marie Antoinette"], Token);
-      var louisPhoto = louis.AdditionalPhotos.Should().ContainSingle().Which;
-      var mariePhoto = marie.AdditionalPhotos.Should().ContainSingle().Which;
-      louisPhoto.Id.Should().Be(mariePhoto.Id);
+      var louisAttach = louis.Attachments.Should().ContainSingle().Which;
+      var marieAttach = marie.Attachments.Should().ContainSingle().Which;
+      louis.AdditionalPhotos.Should().BeEmpty();
+      louisAttach.Id.Should().Be(marieAttach.Id);
     }
     finally
     {
