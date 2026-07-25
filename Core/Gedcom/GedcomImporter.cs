@@ -818,6 +818,10 @@ internal sealed class GedcomImporter : IGedcomImporter
 
     // A MARR event is the marker of a real spouse edge: emit one spouse relationship per event (a couple
     // can have several, e.g. a remarriage). Co-parents with no MARR are intentionally left unmarried.
+    // A couple asserted by HUSB/WIFE alone is therefore dropped whole (issue #172) -- widening this rule
+    // cannot fix it, because the exporter writes a bare "1 MARR" for a dateless edge, so importing such a
+    // pair would assert a marriage the source never did. It needs a model that separates married from
+    // partnered; the round-trip harness pins the loss against bourbon until then.
     if (husband is not null && wife is not null)
     {
       var marriages = family.ChildrenWithTag(GedcomTags.Marriage).ToArray();
