@@ -27,6 +27,7 @@ internal static class Cli
       .BuildServiceProvider();
     var documentFactory = services.GetRequiredService<IProjectDocumentFactory>();
     var gedcomImporter = services.GetRequiredService<IGedcomImporter>();
+    var gedcomExporter = services.GetRequiredService<IGedcomExporter>();
 
     var argIndex = 0;
     IProjectDocument document;
@@ -80,6 +81,10 @@ internal static class Cli
 
         case "tree":
           await RunTreeAsync(document, int.Parse(NextArg(args, ref argIndex)), token);
+          break;
+
+        case "export":
+          await RunExportAsync(gedcomExporter, document, NextArg(args, ref argIndex), token);
           break;
 
         default:
@@ -172,6 +177,15 @@ internal static class Cli
     }
   }
 
+  private static async Task RunExportAsync(IGedcomExporter exporter, IProjectDocument document, string outPath, CancellationToken token)
+  {
+    await using (var writer = new StreamWriter(outPath, append: false, Encoding.UTF8))
+    {
+      await exporter.ExportAsync(document, writer, token);
+    }
+    Console.WriteLine($"Exported GEDCOM to: {outPath}");
+  }
+
   private static string NextArg(string[] args, ref int index)
   {
     if (index >= args.Length)
@@ -191,6 +205,7 @@ internal static class Cli
       Commands:
         find <query>          List persons whose name contains <query>.
         relatives <personId>  List the direct relatives of the given person.
+        export <path.ged>     Export the whole project as a GEDCOM 5.5.1 file.
         tree <personId>       Walk the full relative tree from the given person,
                                flagging Loop / MultipleConnections exactly like
                                the app's RelativeTree.ExpandAllAsync does.
