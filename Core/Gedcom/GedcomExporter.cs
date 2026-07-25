@@ -11,7 +11,8 @@ internal sealed class GedcomExporter : IGedcomExporter
 {
   /// <summary>
   /// A GEDCOM family reconstructed from GT4's pairwise edge graph: a husband/wife couple plus the
-  /// children that share exactly this pair of parents and the marriage dates between the couple.
+  /// children parented by exactly this pair and the marriage dates between the couple. A child with more
+  /// than two parents belongs to several of these -- see <see cref="SplitIntoCouples"/>.
   /// </summary>
   private sealed class Family
   {
@@ -76,6 +77,7 @@ internal sealed class GedcomExporter : IGedcomExporter
   private static Family[] BuildFamilies(Dictionary<int, Relative[]> relatives, Dictionary<int, Person> personById)
   {
     var edges = CollectEdges(relatives);
+    var couples = CollectCouples(edges.ParentEdges, edges.AdoptiveEdges, edges.SpouseDates);
 
     var byKey = new Dictionary<(int? Husband, int? Wife), Family>();
 
@@ -92,8 +94,8 @@ internal sealed class GedcomExporter : IGedcomExporter
 
     // Native and adoptive children of the same couple share one FAM; the per-child pedigree (recorded on
     // each child's FAMC link, not on the FAM) is what distinguishes them.
-    AddChildren(edges.ParentEdges, adopted: false, GetFamily);
-    AddChildren(edges.AdoptiveEdges, adopted: true, GetFamily);
+    AddChildren(edges.ParentEdges, adopted: false, couples, GetFamily);
+    AddChildren(edges.AdoptiveEdges, adopted: true, couples, GetFamily);
 
     foreach (var (pair, dates) in edges.SpouseDates)
     {
@@ -116,16 +118,86 @@ internal sealed class GedcomExporter : IGedcomExporter
   private static void AddChildren(
     HashSet<(int Child, int Parent)> edges,
     bool adopted,
+    HashSet<(int, int)> couples,
     Func<int[], Family> getFamily)
   {
-    var childrenByParents = edges
-      .GroupBy(e => e.Child)
-      .ToDictionary(g => g.Key, g => g.Select(e => e.Parent).Distinct().ToArray());
-
-    foreach (var (child, parents) in childrenByParents)
+    foreach (var (child, parents) in ParentsByChild(edges))
     {
-      getFamily(parents).Children.Add((child, adopted));
+      foreach (var couple in SplitIntoCouples(parents, couples))
+      {
+        getFamily(couple).Children.Add((child, adopted));
+      }
     }
+  }
+
+  private static Dictionary<int, int[]> ParentsByChild(HashSet<(int Child, int Parent)> edges) => edges
+    .GroupBy(e => e.Child)
+    .ToDictionary(g => g.Key, g => g.Select(e => e.Parent).Distinct().ToArray());
+
+  /// <summary>
+  /// The pairs GT4 can attest to: a stored spouse edge, or the complete parent set of some child. Held
+  /// both ways round, so a lookup needs no ordering convention.
+  /// </summary>
+  private static HashSet<(int, int)> CollectCouples(
+    HashSet<(int Child, int Parent)> parentEdges,
+    HashSet<(int Child, int Parent)> adoptiveEdges,
+    Dictionary<(int Low, int High), HashSet<Date?>> spouseDates)
+  {
+    var couples = new HashSet<(int, int)>();
+
+    void AddCouple(int first, int second)
+    {
+      couples.Add((first, second));
+      couples.Add((second, first));
+    }
+
+    foreach (var (low, high) in spouseDates.Keys)
+    {
+      AddCouple(low, high);
+    }
+
+    foreach (var edgeSet in new[] { parentEdges, adoptiveEdges })
+    {
+      var parentsByChild = ParentsByChild(edgeSet);
+      var pairs = parentsByChild.Values.Where(p => p.Length == 2);
+      foreach (var pair in pairs)
+      {
+        AddCouple(pair[0], pair[1]);
+      }
+    }
+
+    return couples;
+  }
+
+  /// <summary>
+  /// GEDCOM files a child under one FAM per parent couple, but GT4 stores parenthood as unpaired
+  /// child-parent edges, so with three or more parents which of them were couples is no longer recorded.
+  /// Parents that some other record attests as a couple stay paired; the rest each get a single-parent
+  /// family, which keeps every parent-child edge without asserting a couple the data never stated.
+  /// </summary>
+  private static IEnumerable<int[]> SplitIntoCouples(int[] parents, HashSet<(int, int)> couples)
+  {
+    if (parents.Length <= 2)
+    {
+      return [parents];
+    }
+
+    var unpaired = parents.OrderBy(id => id).ToList();
+    var groups = new List<int[]>();
+    while (unpaired.Count > 0)
+    {
+      var parent = unpaired[0];
+      unpaired.RemoveAt(0);
+      var partner = unpaired.FindIndex(id => couples.Contains((parent, id)));
+      if (partner < 0)
+      {
+        groups.Add([parent]);
+        continue;
+      }
+      groups.Add([parent, unpaired[partner]]);
+      unpaired.RemoveAt(partner);
+    }
+    return groups;
   }
 
   private static (HashSet<(int Child, int Parent)> ParentEdges,
