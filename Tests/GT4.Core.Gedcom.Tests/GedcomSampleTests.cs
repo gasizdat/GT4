@@ -284,6 +284,36 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task CalendarEscapeDate_KeptAsResidueAndReEmittedVerbatim()
+  {
+    // A date in a non-Gregorian calendar is unparseable for GT4, so it belongs to the owned tag's residue.
+    // The event itself is still modeled (a DEAT means "known dead"), so the residual DATE has to merge back
+    // under that one regenerated event rather than come out as a second, bare one.
+    const string ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME Louis /Capet/\n1 SEX M\n" +
+      "1 BIRT\n2 DATE @#DJULIAN@ 23 AUG 1754\n" +
+      "1 DEAT\n2 DATE @#DFRENCH R@ 2 PLUV 1\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var person = (await document.Persons.GetPersonsAsync(Token)).Single();
+    person.DeathDate!.Value.Status.Should().Be(DateStatus.Unknown);
+
+    var text = await ExportToTextAsync(document);
+    text.Should().Contain("2 DATE @#DJULIAN@ 23 AUG 1754").And.Contain("2 DATE @#DFRENCH R@ 2 PLUV 1");
+    var lines = text.Split('\n');
+    lines.Count(line => line.StartsWith("1 BIRT", StringComparison.Ordinal)).Should().Be(1);
+    lines.Count(line => line.StartsWith("1 DEAT", StringComparison.Ordinal)).Should().Be(1);
+
+    // A second hop keeps them: the residue is rebuilt from the export, not just carried once.
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    var reexported = await ExportToTextAsync(reimported);
+    reexported.Should().Be(text);
+  }
+
+  [Fact]
   public async Task RepeatedOwnedTag_SecondNameAndNoteSurviveRoundTrip()
   {
     // GT4 consumes only the first NAME (identity) and first NOTE (biography); a second of either has no slot
