@@ -8,6 +8,7 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    timeout-minutes: 10
 
     steps:
       - uses: actions/checkout@v5
@@ -46,6 +47,7 @@ jobs:
 
   test:
     runs-on: windows-latest
+    timeout-minutes: 10
 
     strategy:
       fail-fast: false
@@ -97,6 +99,7 @@ jobs:
 
   test-device:
     runs-on: windows-latest
+    timeout-minutes: 10
 
     steps:
       - uses: actions/checkout@v5
@@ -184,6 +187,7 @@ jobs:
     needs: [test, test-device]
     if: always()
     runs-on: windows-latest
+    timeout-minutes: 10
 
     steps:
       - name: Setup .NET 10

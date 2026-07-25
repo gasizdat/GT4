@@ -1,4 +1,5 @@
 using GT4.Core.Project.Dto;
+using GT4.Core.Utils;
 
 namespace GT4.Core.Gedcom;
 
@@ -25,6 +26,16 @@ internal static class GedcomMapping
   /// preserved nor captured as residue. Their only common sub-tag, PEDI, is already modeled.
   /// </summary>
   public static readonly HashSet<string> FullyOwnedTags = [GedcomTags.FamilyChild, GedcomTags.FamilySpouse];
+
+  /// <summary>
+  /// Whether a modeled sub-tag really rides in the GT4 model, and so needs no residue. A DATE stating
+  /// something <see cref="GedcomDate"/> cannot parse — a calendar escape such as <c>@#DFRENCH R@ 2 PLUV 1</c>
+  /// — does not; a valueless one has nothing to keep.
+  /// </summary>
+  public static bool IsCarriedByModel(GedcomNode modeledChild) =>
+    modeledChild.Tag != GedcomTags.Date
+    || string.IsNullOrWhiteSpace(modeledChild.Value)
+    || GedcomDate.Parse(modeledChild.Value).Status != DateStatus.Unknown;
 
   public static string SexLetter(BiologicalSex sex) => sex switch
   {
