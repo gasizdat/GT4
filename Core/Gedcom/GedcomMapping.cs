@@ -43,7 +43,7 @@ internal static class GedcomMapping
   /// owned tag's value does ride in the model, as a SEX letter, a NOTE's text, a NAME rebuilt from its parts.
   /// </summary>
   public static bool IsEventAssertion(GedcomNode owned) =>
-    owned.Tag is GedcomTags.Birth or GedcomTags.Death && !string.IsNullOrWhiteSpace(owned.Value);
+    owned.Tag is GedcomTags.Birth or GedcomTags.Death or GedcomTags.Marriage && !string.IsNullOrWhiteSpace(owned.Value);
 
   public static string SexLetter(BiologicalSex sex) => sex switch
   {

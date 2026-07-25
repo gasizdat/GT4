@@ -347,6 +347,168 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     reexported.Should().Be(text);
   }
 
+  // The couple's residue key, as the importer derived it from the two spouses it resolved.
+  private static async Task<string> FamilyKeyAsync(ProjectDocument document, string husband, string wife)
+  {
+    var byName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
+    return GedcomMetadata.FamilyKey(byName[husband].Id, byName[wife].Id);
+  }
+
+  private static async Task<GedcomNode[]> FamiliesInAsync(string text)
+  {
+    var records = await GedcomReader.ReadAsync(new StringReader(text), Token);
+    return [.. records.Where(record => record.Tag == GedcomTags.Family)];
+  }
+
+  [Fact]
+  public async Task UnmodeledFamilySubTags_PreservedAsResidueAndMergedOnExport()
+  {
+    // Issue #180: a FAM is regenerated wholesale from the edge graph, so everything it states beyond the
+    // couple and their children -- the marriage's place and source, the family's DIV/CHAN/NCHI -- used to be
+    // dropped. It has no xref that survives export, so the residue is keyed by the couple instead.
+    const string ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n" +
+      "0 @I2@ INDI\n1 NAME Marie /Antoinette/\n1 SEX F\n" +
+      "0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n" +
+      "1 MARR\n2 DATE 16 MAY 1770\n2 PLAC Versailles\n3 MAP\n4 LATI N48.80\n2 SOUR Acte de mariage\n2 TYPE Religious\n" +
+      "1 DIV\n2 DATE 1793\n1 NCHI 4\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var familyKey = await FamilyKeyAsync(document, "Louis Bourbon", "Marie Antoinette");
+    var familyBlob = await document.Metadata.GetAsync<string>(familyKey, Token);
+    familyBlob.Should().Contain("0 DIV").And.Contain("1 DATE 1793").And.Contain("0 NCHI 4");
+
+    // The marriage date rides on the spouse edge, so it keys the row rather than sitting in it.
+    var marriageKey = GedcomMetadata.MarriageKey(familyKey, Date.Create(1770, 5, 16, DateStatus.WellKnown));
+    var marriageBlob = await document.Metadata.GetAsync<string>(marriageKey, Token);
+    marriageBlob.Should().Contain("0 MARR").And.Contain("1 PLAC Versailles").And.Contain("2 MAP")
+        .And.Contain("3 LATI N48.80").And.Contain("1 SOUR Acte de mariage").And.Contain("1 TYPE Religious");
+    marriageBlob.Should().NotContain("DATE");
+
+    // Export merges them back under the one regenerated MARR and FAM -- no duplicated event.
+    var text = await ExportToTextAsync(document);
+    text.Should().Contain("2 DATE 16 MAY 1770").And.Contain("2 PLAC Versailles").And.Contain("3 MAP")
+        .And.Contain("4 LATI N48.80").And.Contain("2 SOUR Acte de mariage").And.Contain("2 TYPE Religious")
+        .And.Contain("1 DIV").And.Contain("2 DATE 1793").And.Contain("1 NCHI 4");
+    var lines = text.Split('\n');
+    lines.Count(line => line.StartsWith("1 MARR", StringComparison.Ordinal)).Should().Be(1);
+
+    // A second hop rebuilds the same residue from the export rather than merely carrying it once.
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    var reexported = await ExportToTextAsync(reimported);
+    reexported.Should().Be(text);
+  }
+
+  [Fact]
+  public async Task MarriageCalendarEscapeDateAndAssertion_KeptAsResidue()
+  {
+    // The FAM-side counterpart of issues #173 and #176: a date GT4 cannot parse leaves the spouse edge
+    // dateless, and a bare "MARR Y" states only that the marriage happened. Both are the marriage's own
+    // residue, and both have to merge back onto the single regenerated event.
+    const string ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n" +
+      "0 @I2@ INDI\n1 NAME Marie /Antoinette/\n1 SEX F\n" +
+      "0 @I3@ INDI\n1 NAME Anne /Autriche/\n1 SEX F\n" +
+      "0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n1 MARR\n2 DATE @#DJULIAN@ 14 SEP 1752\n2 PLAC Bordeaux\n" +
+      "0 @F2@ FAM\n1 HUSB @I1@\n1 WIFE @I3@\n1 MARR Y\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var text = await ExportToTextAsync(document);
+    text.Should().Contain("2 DATE @#DJULIAN@ 14 SEP 1752").And.Contain("2 PLAC Bordeaux").And.Contain("1 MARR Y");
+    var lines = text.Split('\n');
+    lines.Count(line => line.StartsWith("1 MARR", StringComparison.Ordinal)).Should().Be(2);
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    var reexported = await ExportToTextAsync(reimported);
+    reexported.Should().Be(text);
+  }
+
+  [Fact]
+  public async Task SeveralMarriagesOfOneCouple_EachKeepsItsOwnResidue()
+  {
+    // A couple can marry more than once, and GT4 holds one spouse edge per event. The date is the only thing
+    // in the model telling them apart, so it is what keys each event's residue -- a remarriage's place must
+    // not land on the first ceremony.
+    const string ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n" +
+      "0 @I2@ INDI\n1 NAME Marie /Antoinette/\n1 SEX F\n" +
+      "0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n" +
+      "1 MARR\n2 DATE 16 MAY 1770\n2 PLAC Versailles\n" +
+      "1 MARR\n2 DATE 4 AUG 1789\n2 PLAC Paris\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var text = await ExportToTextAsync(document);
+    var family = (await FamiliesInAsync(text)).Should().ContainSingle().Which;
+    var marriages = family.ChildrenWithTag(GedcomTags.Marriage).ToArray();
+    marriages.Should().HaveCount(2);
+
+    var byDate = marriages.ToDictionary(m => m.ChildValue(GedcomTags.Date)!, m => m.ChildValue("PLAC"));
+    byDate["16 MAY 1770"].Should().Be("Versailles");
+    byDate["4 AUG 1789"].Should().Be("Paris");
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    var reexported = await ExportToTextAsync(reimported);
+    reexported.Should().Be(text);
+  }
+
+  [Fact]
+  public async Task SingleParentFamilyResidue_IsKeyedByThatOneParent()
+  {
+    // A FAM with one parent and children is still regenerated on export, off a couple key with one id in it.
+    const string ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n" +
+      "0 @I2@ INDI\n1 NAME Marie /Bourbon/\n1 SEX F\n" +
+      "0 @F1@ FAM\n1 HUSB @I1@\n1 CHIL @I2@\n1 CHAN\n2 DATE 1 JAN 2020\n1 SOUR @S1@\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var byName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
+    var key = GedcomMetadata.FamilyKey(byName["Louis Bourbon"].Id, null);
+    (await document.Metadata.GetAsync<string>(key, Token)).Should().Contain("0 CHAN").And.Contain("0 SOUR @S1@");
+
+    var text = await ExportToTextAsync(document);
+    text.Should().Contain("1 CHAN").And.Contain("2 DATE 1 JAN 2020").And.Contain("1 SOUR @S1@");
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    var reexported = await ExportToTextAsync(reimported);
+    reexported.Should().Be(text);
+  }
+
+  [Fact]
+  public async Task FamilyResidue_SurvivesASecondImportCarryingDifferentTags()
+  {
+    // The merge case: a second source describes the same couple with a different fact. The couple keys one
+    // row, so the incoming tags have to fold into what is stored rather than replace it.
+    const string head =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n" +
+      "0 @I2@ INDI\n1 NAME Marie /Antoinette/\n1 SEX F\n" +
+      "0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n1 MARR\n2 DATE 16 MAY 1770\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(head + "2 PLAC Versailles\n1 NCHI 4\n0 TRLR\n"), Token);
+    await _importer.ImportAsync(document, new StringReader(head + "2 SOUR Acte de mariage\n1 DIV\n2 DATE 1793\n0 TRLR\n"), Token);
+
+    var byName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
+    byName.Should().HaveCount(2);
+
+    var text = await ExportToTextAsync(document);
+    text.Should().Contain("2 PLAC Versailles").And.Contain("2 SOUR Acte de mariage")
+        .And.Contain("1 NCHI 4").And.Contain("1 DIV");
+    var lines = text.Split('\n');
+    lines.Count(line => line.StartsWith("1 MARR", StringComparison.Ordinal)).Should().Be(1);
+  }
+
   [Fact]
   public async Task RepeatedOwnedTag_SecondNameAndNoteSurviveRoundTrip()
   {

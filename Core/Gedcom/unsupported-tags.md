@@ -4,14 +4,12 @@ The reader parses every line, so none of these fail an import — they are simpl
 not turned into GT4 data. Most still round-trip untouched: the "Preserved
 verbatim" records below, every unmodeled direct INDI sub-tag, and even the
 unmodeled *sub-details* of tags GT4 partially models (e.g. a PLAC or SOUR under
-BIRT) are stored as opaque residue and re-emitted on export — GT4 just never
-reads their values into its own data model. What is genuinely dropped is whole
-top-level OBJE records (and pointers to them), the original HEAD envelope
-(regenerated fresh by the exporter), everything under FAM beyond
-HUSB/WIFE/CHIL/MARR+DATE (FAM records are regenerated wholesale from the edge
-graph, so nothing else about them is preserved, not even as residue), and the
-couple itself when a FAM asserts one by HUSB/WIFE alone — see the per-section
-notes.
+BIRT or MARR) are stored as opaque residue and re-emitted on export — GT4 just
+never reads their values into its own data model. What is genuinely dropped is
+whole top-level OBJE records (and pointers to them), the original HEAD envelope
+(regenerated fresh by the exporter), and the couple itself when a FAM asserts one
+by HUSB/WIFE alone — which takes the rest of that FAM record with it, since the
+export has no regenerated record to put it back on. See the per-section notes.
 
 Preserved verbatim (passthrough)
 
@@ -50,12 +48,11 @@ file and round-trips through GT4 itself.
 
 Dropped — whole records
 
-- HEAD's own `SUBM` pointer, plus every FAM-level `SOUR` citation — the
-  references that point at the preserved records above are not kept there, so
-  those records re-export unreferenced. An INDI/event-level `SOUR` citation
-  (e.g. under `BIRT`) is different: it is preserved as residue like any other
-  unmodeled sub-tag (see "Sub-detail tags" below) and round-trips fine,
-  pointer included.
+- HEAD's own `SUBM` pointer — the reference that points at the preserved records
+  above is not kept there, so a record nothing else cites re-exports
+  unreferenced. A citation anywhere in an INDI or a FAM is different: it is
+  preserved as residue like any other unmodeled sub-tag (see "Sub-detail tags"
+  below) and round-trips fine, pointer included.
 
 Header children
 
@@ -164,6 +161,36 @@ round-trip harness (`Tests/Functional/run-gedcom-roundtrip.ps1`), which holds
 bourbon to an exact difference count under issue #172.
 
 FAM sub-tags
+
+Preserved verbatim (issue #180): a FAM record is regenerated wholesale from GT4's
+edge graph and its xref renumbered, so there is nothing to key its residue by but
+the couple itself. Every FAM child below is stored in the project Metadata table
+under a `gedcom-family.<id>[.<id>]` key and re-attached to the regenerated record
+on export; each `MARR`'s own unmodeled sub-tags (PLAC, SOUR, TYPE, a `Y`
+assertion, a DATE GT4 cannot parse) go under that key plus the marriage date,
+which is what distinguishes a couple's several marriages in the GT4 model.
+
+The exception is a FAM whose couple survives in no edge at all — the HUSB/WIFE-
+only records above, and a lone HUSB or WIFE with no children (kennedy's `@F24@`).
+No record is regenerated for those, so there is nothing to merge their residue
+back onto and it stays dropped, along with the couple. Closing that needs #172.
+
+Because the key is the couple and the date, editing either in GT4 orphans the row
+it addressed: a re-dated marriage re-exports without the PLAC/SOUR it was imported
+with. Nothing keyed this way can be stable under edits — the alternative, pairing
+residue to marriages by position, misfiles them instead of dropping them.
+
+Two consequences of keying by the couple rather than by the record:
+
+- Several FAM records naming the same couple are one family to GT4, so their
+  residue pools onto the single regenerated record — the `NOTE` of one and the
+  `CHAN` of another come out together. Nothing is lost; what is lost is the
+  statement that the source kept them apart, the same shape as several dateless
+  `MARR` events collapsing into one.
+- Residue is stored whenever either spouse resolves, whether or not the couple
+  ends up in an edge. A FAM of the dropped class above therefore leaves a row
+  nothing reads — dead weight in the project rather than a leak, and it would
+  start being read if #172 were ever closed.
 
 - DIV — Divorce.
 - DIVF — Divorce filed.
