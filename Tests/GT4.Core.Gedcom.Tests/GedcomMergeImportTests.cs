@@ -386,13 +386,12 @@ public sealed class GedcomMergeImportTests : IAsyncLifetime
   }
 
   [Fact]
-  public async Task Matching_ExistingPhoto_MultiFileEventObje_SurfacesAttachmentAndKeepsSkippedPhotoInResidue()
+  public async Task Matching_ExistingPhoto_MultiFileEventObje_SurfacesBothFilesAsAttachments()
   {
-    // The no-silent-loss boundary for the multi-file split under gap-fill: John already has a photo, and a
-    // matched re-import brings a nested OBJE holding a jpg scan and a pdf transcription. The split turns it
-    // into two single-file OBJEs, so gap-fill (which already has a photo, but no attachment) consumes the
-    // pdf as an attachment while the jpg is not consumed -- it must still survive verbatim in residue, never
-    // silently dropped, and the consumed pdf must not also linger in residue.
+    // Gap-fill for a matched person who already has a photo but no attachments: a re-import brings a nested
+    // OBJE (under BIRT -> SOUR) holding a jpg scan and a pdf transcription. Neither is a direct INDI child, so
+    // both are documentary and land as attachments -- the existing photo is untouched, and neither OBJE
+    // lingers in residue once consumed.
     var photoBlob = Convert.ToBase64String(Encoding.UTF8.GetBytes("existing-photo"));
     var first =
       "0 @I1@ INDI\n1 NAME John /Smith/\n1 SEX M\n1 BIRT\n2 DATE 1 JAN 1850\n" +
@@ -413,10 +412,14 @@ public sealed class GedcomMergeImportTests : IAsyncLifetime
 
       var full = await document.PersonManager.GetPersonFullInfoAsync((await PersonInfosAsync(document)).Single(), Token);
       Encoding.UTF8.GetString(full.MainPhoto!.Content).Should().Be("existing-photo");
-      GedcomPhotoResidue.ExtractImageBytes(full.Attachments.Should().ContainSingle().Which.Content).Should().Equal([0x25, 0x50, 0x44, 0x46]);
+      full.AdditionalPhotos.Should().BeEmpty();
+      full.Attachments.Should().HaveCount(2);
+      var attachmentBytes = full.Attachments.Select(a => GedcomPhotoResidue.ExtractImageBytes(a.Content)).ToList();
+      attachmentBytes.Should().ContainSingle(b => b.SequenceEqual(new byte[] { 1, 2, 3 }));
+      attachmentBytes.Should().ContainSingle(b => b.SequenceEqual(new byte[] { 0x25, 0x50, 0x44, 0x46 }));
 
       var residue = Encoding.UTF8.GetString(full.GedcomData!.Content);
-      residue.Should().Contain("actes/scan.jpg", "the skipped photo file must survive rather than be dropped");
+      residue.Should().NotContain("actes/scan.jpg", "the consumed attachment must not also linger in residue");
       residue.Should().NotContain("actes/transcript.pdf", "the consumed attachment must not also linger in residue");
     }
     finally

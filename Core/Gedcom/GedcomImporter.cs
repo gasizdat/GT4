@@ -176,14 +176,15 @@ internal sealed class GedcomImporter : IGedcomImporter
     var additions = new List<Data>();
 
     var photos = SelectPhotos(individual, mediaBasePath);
-    var attachments = SelectAttachments(individual, mediaBasePath);
+    GedcomNode[] photoNodes = [.. photos.Select(p => p.Node)];
+    var attachments = SelectAttachments(individual, photoNodes, mediaBasePath);
     // Photos/attachments are added only when the person has none of that kind; otherwise these OBJEs stay
     // unconsumed and fall through to residue instead of being dropped.
     var addingPhotos = full.MainPhoto is null && full.AdditionalPhotos.Length == 0;
     var addingAttachments = full.Attachments.Length == 0;
     GedcomNode[] consumedNodes =
     [
-      .. (addingPhotos ? photos.Select(p => p.Node) : []),
+      .. (addingPhotos ? photoNodes : []),
       .. (addingAttachments ? attachments.Select(a => a.Node) : [])
     ];
 
@@ -321,8 +322,9 @@ internal sealed class GedcomImporter : IGedcomImporter
     var names = await BuildNamesAsync(document, individual, sex, nameCache, token);
     var biography = BuildBiography(individual, notesByXref);
     var photos = SelectPhotos(individual, mediaBasePath);
-    var attachments = SelectAttachments(individual, mediaBasePath);
-    GedcomNode[] consumedNodes = [.. photos.Select(p => p.Node), .. attachments.Select(a => a.Node)];
+    GedcomNode[] photoNodes = [.. photos.Select(p => p.Node)];
+    var attachments = SelectAttachments(individual, photoNodes, mediaBasePath);
+    GedcomNode[] consumedNodes = [.. photoNodes, .. attachments.Select(a => a.Node)];
     var (mainPhoto, additionalPhotos) = BuildPhotos(photos);
 
     var toAdd = PersonFullInfo.Empty with
@@ -369,9 +371,9 @@ internal sealed class GedcomImporter : IGedcomImporter
     {
       // OBJEs consumed into the person's photo/attachment set are excluded here to avoid storing them a
       // second time as opaque residue -- PruneConsumed strips them out wherever they are nested (e.g. under
-      // an event's SOUR), since SelectPhotos/SelectAttachments can consume an OBJE at any depth, not just a
-      // direct INDI child. An OBJE that was not consumed -- unreadable, or skipped because the person
-      // already had a photo -- is absent from consumedPhotoNodes and so survives verbatim as residue.
+      // an event's SOUR), since SelectAttachments can consume an OBJE at any depth, not just a direct INDI
+      // child. An OBJE that was not consumed -- unreadable, or skipped because the person already had a
+      // photo -- is absent from consumedPhotoNodes and so survives verbatim as residue.
       // FullyOwnedTags are regenerated from the edge graph, so neither they nor their sub-tags are preserved.
       if (consumedPhotoNodes.Contains(child) || GedcomMapping.FullyOwnedTags.Contains(child.Tag))
         continue;
@@ -490,15 +492,15 @@ internal sealed class GedcomImporter : IGedcomImporter
     [GedcomTags.Form, GedcomTags.Primary, GedcomTags.Blob, GedcomTags.File];
 
   /// <summary>
-  /// Every <c>OBJE</c> photo GT4 can load, anywhere in the individual's subtree (a direct INDI child or one
-  /// nested under an event's <c>SOUR</c> citation), materialized to bytes in document order: an embedded
-  /// base64 <c>BLOB</c>, or an external <c>FILE</c> image reference that resolves under
-  /// <paramref name="mediaBasePath"/>. An OBJE whose bytes cannot be obtained — a non-image, an unfound or
-  /// unreadable FILE, or a corrupt BLOB — is dropped from the set and survives as residue instead, so a
-  /// single bad image never aborts the all-or-nothing import.
+  /// Every <c>OBJE</c> photo GT4 can load among the individual's <em>direct</em> children, materialized to
+  /// bytes in document order: an embedded base64 <c>BLOB</c>, or an external <c>FILE</c> image reference that
+  /// resolves under <paramref name="mediaBasePath"/>. Only a direct INDI child is a portrait; an OBJE nested
+  /// under an event is documentary and left for <see cref="SelectAttachments"/>. An OBJE whose bytes cannot
+  /// be obtained — a non-image, an unfound or unreadable FILE, or a corrupt BLOB — is likewise not a photo,
+  /// so a single bad image never aborts the all-or-nothing import.
   /// </summary>
   private PhotoCandidate[] SelectPhotos(GedcomNode individual, string? mediaBasePath) =>
-    individual.DescendantsWithTag(GedcomTags.Object)
+    individual.ChildrenWithTag(GedcomTags.Object)
       .Select(o => TryReadPhoto(o, mediaBasePath))
       .Where(p => p is not null)
       .Select(p => p!)
@@ -624,15 +626,17 @@ internal sealed class GedcomImporter : IGedcomImporter
   private sealed record AttachmentCandidate(GedcomNode Node, byte[] Content, string? MimeType, GedcomNode Residual);
 
   /// <summary>
-  /// Every <c>OBJE</c> non-photo attachment GT4 can load, anywhere in the individual's subtree (a direct
-  /// INDI child or one nested under an event's <c>SOUR</c> citation), materialized to bytes: an embedded
-  /// base64 <c>BLOB</c>, or an external <c>FILE</c> reference that resolves under <paramref name="mediaBasePath"/>.
-  /// An image-shaped OBJE is left to <see cref="SelectPhotos"/>; one whose bytes cannot be obtained falls
-  /// through to residue, exactly like an unreadable photo.
+  /// Every <c>OBJE</c> in the subtree not already claimed as a photo (<paramref name="photoNodes"/>),
+  /// materialized to an attachment: an embedded base64 <c>BLOB</c>, or an external <c>FILE</c> reference that
+  /// resolves under <paramref name="mediaBasePath"/>. Everything but a direct INDI-child portrait — a
+  /// non-image direct child, and any OBJE nested under an event or carried by a family — is documentary and
+  /// lands here regardless of format. One whose bytes cannot be obtained falls through to residue, like an
+  /// unreadable photo.
   /// </summary>
-  private AttachmentCandidate[] SelectAttachments(GedcomNode individual, string? mediaBasePath) =>
+  private AttachmentCandidate[] SelectAttachments(GedcomNode node, GedcomNode[] photoNodes, string? mediaBasePath) =>
   [
-    .. individual.DescendantsWithTag(GedcomTags.Object)
+    .. node.DescendantsWithTag(GedcomTags.Object)
+      .Where(o => !photoNodes.Contains(o))
       .Select(o => TryReadAttachment(o, mediaBasePath))
       .Where(a => a is not null)
       .Select(a => a!)
@@ -643,17 +647,9 @@ internal sealed class GedcomImporter : IGedcomImporter
     if (obje.Tag != GedcomTags.Object)
       return null;
 
-    var form = MediaForm(obje);
-    var marked = IsAttachmentMarked(obje);
     byte[]? content;
     if (HasEmbeddedBlob(obje))
     {
-      // Mirrors TryReadPhoto's embedded-blob gate: only an explicit non-image FORM makes this an
-      // attachment, so a FORM-less BLOB (which TryReadPhoto claims as a photo) is never also claimed here.
-      // A _ATTACH marker (GT4's own export) overrides the image-ness check either way.
-      if (!marked && (form is null || IsImageMedia(form, string.Empty)))
-        return null;
-
       try
       {
         content = Convert.FromBase64String(obje.ChildValue(GedcomTags.Blob)!);
@@ -665,16 +661,13 @@ internal sealed class GedcomImporter : IGedcomImporter
     }
     else
     {
-      if (!marked && IsImageMedia(form, obje.ChildValue(GedcomTags.File) ?? string.Empty))
-        return null;
-
       var path = ExternalFilePath(obje, mediaBasePath);
       content = path is null ? null : _MediaReader.TryRead(path);
     }
     if (content is null)
       return null;
 
-    var mime = GedcomMedia.ToMimeType(form);
+    var mime = GedcomMedia.ToMimeType(MediaForm(obje));
     var residual = ResidualNode(obje, AttachmentModeledChildren) ?? new GedcomNode { Tag = GedcomTags.Object };
     return new AttachmentCandidate(obje, content, mime, residual);
   }
@@ -866,13 +859,13 @@ internal sealed class GedcomImporter : IGedcomImporter
   }
 
   /// <summary>
-  /// Surfaces media nested in a family record -- chiefly a marriage certificate under
-  /// <c>MARR -> SOUR -> OBJE</c> -- on the couple. GT4 has no family entity that holds attachments and
-  /// rebuilds FAM records from the edge graph on export, so a family-nested OBJE is otherwise dropped
-  /// entirely, not even kept as residue. Each file is committed once and linked to both resolved spouses, so
-  /// the bytes are shared rather than duplicated. Photos land as additional, never a spouse's main portrait.
-  /// A matched spouse that already carries byte-identical content (a re-import of the same source) is
-  /// skipped, mirroring the INDI gap-fill dedup.
+  /// Surfaces media carried by a family record -- a couple photo, or a marriage certificate under
+  /// <c>MARR -> SOUR -> OBJE</c> -- on both spouses. A family OBJE is documentary rather than a portrait, so
+  /// every file lands as an attachment regardless of format. GT4 has no family entity that holds media and
+  /// rebuilds FAM records from the edge graph on export, so a family OBJE is otherwise dropped entirely, not
+  /// even kept as residue. Each file is committed once and linked to both resolved spouses, so the bytes are
+  /// shared rather than duplicated. A matched spouse that already carries byte-identical content (a re-import
+  /// of the same source) is skipped, mirroring the INDI gap-fill dedup.
   /// </summary>
   private async Task ImportFamilyMediaAsync(
     IProjectDocument document,
@@ -893,13 +886,8 @@ internal sealed class GedcomImporter : IGedcomImporter
     if (spouses.Length == 0)
       return;
 
-    var photos = SelectPhotos(family, mediaBasePath);
-    var attachments = SelectAttachments(family, mediaBasePath);
-    Data[] media =
-    [
-      .. photos.Select(photo => BuildPhotoData(photo, DataCategory.PersonPhoto)),
-      .. attachments.Select(BuildAttachmentData),
-    ];
+    var attachments = SelectAttachments(family, [], mediaBasePath);
+    Data[] media = [.. attachments.Select(BuildAttachmentData)];
 
     foreach (var data in media)
     {
