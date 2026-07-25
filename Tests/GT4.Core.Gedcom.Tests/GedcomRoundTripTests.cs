@@ -165,6 +165,52 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task ChildOfMoreThanTwoParents_KeepsEveryParentAndInventsNoCouple()
+  {
+    // The bourbon shape behind issue #174: a child recorded in two source families, so four parents. GT4
+    // stores them as four unpaired edges, and the exporter must not squeeze them into one husband/wife
+    // pair -- that both dropped two parents and emitted two men as a couple.
+    var father = await AddPersonAsync("Fa", BiologicalSex.Male, Year(1055));
+    var mother = await AddPersonAsync("Mo", BiologicalSex.Female, Year(1060));
+    var otherFather = await AddPersonAsync("Of", BiologicalSex.Male, Year(1050));
+    var otherMother = await AddPersonAsync("Om", BiologicalSex.Female, Year(1065));
+    var child = await AddPersonAsync("Ch", BiologicalSex.Male, Year(1100));
+    await AddChildAsync(child, father, mother, otherFather, otherMother);
+
+    // Fa+Mo are the complete parent set of another child, which is the only thing attesting them as a
+    // couple -- neither pair is married. Of+Om have no such evidence, so they must not be paired up.
+    var sibling = await AddPersonAsync("Si", BiologicalSex.Female, Year(1102));
+    await AddChildAsync(sibling, father, mother);
+
+    var expected = await GedcomTestGraph.ExtractAsync(_source, Token);
+
+    var text = await ExportToTextAsync(_source);
+
+    var records = await GedcomReader.ReadAsync(new StringReader(text), Token);
+    var families = records.Where(r => r.Tag == "FAM");
+
+    static string? Slot(GedcomNode family, string tag) => family.ChildrenWithTag(tag).SingleOrDefault()?.Value;
+
+    // The attested couple keeps both children; each unattested parent gets a family of their own, in the
+    // slot their sex calls for rather than whichever one was still free.
+    var couples = families.Select(f => $"{Slot(f, "HUSB")}+{Slot(f, "WIFE")}");
+    couples.Should().BeEquivalentTo(
+      $"@I{father.Id}@+@I{mother.Id}@",
+      $"@I{otherFather.Id}@+",
+      $"+@I{otherMother.Id}@");
+
+    var childRecord = records.Single(r => r.Xref == $"@I{child.Id}@");
+    childRecord.ChildrenWithTag("FAMC").Should().HaveCount(3);
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+
+    var actual = await GedcomTestGraph.ExtractAsync(reimported, Token);
+
+    actual.Should().BeEquivalentTo(expected);
+  }
+
+  [Fact]
   public async Task PersonFields_NameSexBirthDeathAndBio_RoundTrip()
   {
     var name = await _source.Names.AddNameAsync("Solo", NameType.FirstName, null, Token);

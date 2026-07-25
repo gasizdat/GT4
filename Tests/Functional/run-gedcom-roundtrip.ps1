@@ -10,7 +10,9 @@
                holds must be held identically on the second pass, whatever the first pass made of it.
     fidelity   original vs its first export, through "RelativesCli compare", which compares what the tags
                say rather than their text (xrefs are renumbered and FAM records regenerated on every
-               export, so nothing that identifies a record survives literally).
+               export, so nothing that identifies a record survives literally). A sample GT4 cannot yet
+               carry losslessly is held to an exact baseline count instead of to zero -- see
+               -FidelityBaselines.
 
   Samples live in a separate repository (gedcom-samples) that CI machines do not have: when it is missing
   the script reports a skip and exits 0.
@@ -23,8 +25,10 @@
   reads and writes UTF-8 without consulting the declared charset, so an ANSEL sample would be
   mis-decoded rather than rejected (see issue #123).
 
-.PARAMETER FidelityExclusions
-  Samples checked for stability only, with the issue that keeps them from passing fidelity.
+.PARAMETER FidelityBaselines
+  Samples that do not round-trip cleanly yet: how many differences are known and which issues they are
+  tracked under. The count is exact in both directions -- one more is a regression, one fewer means an
+  issue has been fixed and the baseline is now stale.
 
 .PARAMETER WorkDir
   Where the intermediate projects and exports go. Defaults to a new temp directory, removed on exit
@@ -34,7 +38,9 @@
 param(
   [string]$SamplesRoot,
   [string[]]$Samples = @('sample-kennedy\kennedy.ged', 'sample-bourbon\bourbon.ged'),
-  [hashtable]$FidelityExclusions = @{ 'sample-bourbon\bourbon.ged' = 'issues #172, #173, #174, #175, #176' },
+  [hashtable]$FidelityBaselines = @{
+    'sample-bourbon\bourbon.ged' = @{ Differences = 47; Issues = 'issues #172, #173, #175, #176' }
+  },
   [string]$WorkDir,
   [switch]$KeepArtifacts
 )
@@ -128,31 +134,37 @@ foreach ($sample in $Samples) {
     Write-Host "  stability: identical on the second pass." -ForegroundColor Green
   }
 
-  $excludedFor = $FidelityExclusions[$sample]
-  if ($excludedFor) {
-    Write-Host "  fidelity: skipped, known differences tracked in $excludedFor." -ForegroundColor Yellow
-    $results += [pscustomobject]@{ Sample = $name; Stability = $stability; Fidelity = "SKIP ($excludedFor)" }
+  $compare = Invoke-Cli @('compare', $source, $firstGed)
+  $baseline = $FidelityBaselines[$sample]
+  $expected = if ($baseline) { $baseline.Differences } else { 0 }
+
+  if ($compare.ExitCode -notin 0, 2) {
+    Write-Host "  fidelity: the comparison itself failed (exit $($compare.ExitCode))." -ForegroundColor Red
+    $compare.Output | ForEach-Object { Write-Host "    $_" }
+    $results += [pscustomobject]@{ Sample = $name; Stability = $stability; Fidelity = 'ERROR' }
+    $failed = $true
     continue
   }
 
-  $compare = Invoke-Cli @('compare', $source, $firstGed)
-  switch ($compare.ExitCode) {
-    0 {
-      Write-Host "  fidelity: no differences." -ForegroundColor Green
-      $fidelity = 'PASS'
+  # The CLI's own tally, rather than a count of output lines: a difference detail can span several lines.
+  $tally = $compare.Output | Where-Object { $_ -match '^(\d+) difference\(s\)' } | Select-Object -First 1
+  $actual = if ($tally -match '^(\d+)') { [int]$Matches[1] } else { 0 }
+
+  if ($actual -eq $expected -and $expected -eq 0) {
+    Write-Host "  fidelity: no differences." -ForegroundColor Green
+    $fidelity = 'PASS'
+  } elseif ($actual -eq $expected) {
+    Write-Host "  fidelity: $actual known differences, tracked in $($baseline.Issues)." -ForegroundColor Yellow
+    $fidelity = "BASELINE ($actual)"
+  } else {
+    if ($actual -gt $expected) {
+      Write-Host "  fidelity: $actual differences, $expected expected -- the round-trip lost or changed more than it did." -ForegroundColor Red
+    } else {
+      Write-Host "  fidelity: $actual differences, $expected expected -- fixed more than the baseline records; lower it." -ForegroundColor Red
     }
-    2 {
-      Write-Host "  fidelity: the round-trip lost or changed data." -ForegroundColor Red
-      $compare.Output | ForEach-Object { Write-Host "    $_" }
-      $fidelity = 'FAIL'
-      $failed = $true
-    }
-    default {
-      Write-Host "  fidelity: the comparison itself failed (exit $($compare.ExitCode))." -ForegroundColor Red
-      $compare.Output | ForEach-Object { Write-Host "    $_" }
-      $fidelity = 'ERROR'
-      $failed = $true
-    }
+    $compare.Output | ForEach-Object { Write-Host "    $_" }
+    $fidelity = 'FAIL'
+    $failed = $true
   }
   $results += [pscustomobject]@{ Sample = $name; Stability = $stability; Fidelity = $fidelity }
 }
