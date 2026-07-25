@@ -277,6 +277,166 @@ public sealed class GedcomComparerTests
     differences.Should().Contain(d => d.Kind == GedcomDifferenceKind.ExtraEdge);
   }
 
+  [Fact]
+  public async Task LostResidueTag_IsReported()
+  {
+    // OCCU is a tag GT4 models nothing of but promises to keep verbatim.
+    var withOccupation = Couple.Replace("""
+      1 NAME Robert /Williams/
+      """, """
+      1 NAME Robert /Williams/
+      1 OCCU Ambassador
+      """);
+
+    var differences = await CompareAsync(withOccupation, Couple);
+
+    differences.Should().ContainSingle()
+      .Which.Should().Match<GedcomDifference>(d => d.Kind == GedcomDifferenceKind.Tag && d.Detail.Contains("OCCU"));
+  }
+
+  [Fact]
+  public async Task NestedResidueChange_IsReported()
+  {
+    var moved = Couple.Replace("""
+      1 BIRT
+      2 DATE 2 OCT 1822
+      """, """
+      1 BIRT
+      2 DATE 2 OCT 1822
+      2 PLAC Elsewhere
+      """);
+
+    var differences = await CompareAsync(Couple, moved);
+
+    differences.Should().Contain(d => d.Kind == GedcomDifferenceKind.Tag);
+  }
+
+  [Fact]
+  public async Task NotePointerAndTheTextItPointsAt_AreTheSameNote()
+  {
+    var pointer = Couple
+      .Replace("0 TRLR", "0 @N1@ NOTE Kept a general store.\r\n0 TRLR")
+      .Replace("1 NAME Robert /Williams/", "1 NAME Robert /Williams/\r\n1 NOTE @N1@");
+    var inline = Couple.Replace("1 NAME Robert /Williams/", "1 NAME Robert /Williams/\r\n1 NOTE Kept a general store.");
+
+    var differences = await CompareAsync(pointer, inline);
+
+    differences.Should().BeEmpty();
+  }
+
+  [Fact]
+  public async Task EmptyEventNode_IsNotADifference()
+  {
+    // "1 BIRT" with nothing under it asserts nothing and does not survive import; bourbon has 85 of them.
+    var bare = Couple.Replace("1 NAME Mary /Wilson/", "1 NAME Mary /Wilson/\r\n1 BIRT");
+
+    var differences = await CompareAsync(bare, Couple);
+
+    differences.Should().BeEmpty();
+  }
+
+  [Fact]
+  public async Task DateGedcomStatesButGt4CannotHold_IsReportedRatherThanCollapsedToEqual()
+  {
+    // Both sides would canonicalize to nothing, which is exactly how silent loss gets certified as fidelity.
+    var republican = Couple.Replace("1 SEX F", """
+      1 SEX F
+      1 DEAT
+      2 DATE @#DFRENCH R@ 25 VEND 2
+      """);
+
+    var differences = await CompareAsync(republican, Couple);
+
+    differences.Should().ContainSingle()
+      .Which.Kind.Should().Be(GedcomDifferenceKind.NotRepresentable);
+  }
+
+  [Fact]
+  public async Task MultiFileMedia_MatchesTheSingleFileMediaItIsSplitInto()
+  {
+    var combined = Couple.Replace("""
+      1 NAME Robert /Williams/
+      """, """
+      1 NAME Robert /Williams/
+      1 OBJE
+      2 FILE photos/first.jpg
+      2 FILE photos/second.jpg
+      2 TITL Wedding
+      """);
+    var split = Couple.Replace("""
+      1 NAME Robert /Williams/
+      """, """
+      1 NAME Robert /Williams/
+      1 OBJE
+      2 FILE photos/first.jpg
+      2 TITL Wedding
+      1 OBJE
+      2 FILE photos/second.jpg
+      2 TITL Wedding
+      """);
+
+    var differences = await CompareAsync(combined, split);
+
+    differences.Should().BeEmpty();
+  }
+
+  [Fact]
+  public async Task EventNestedMedia_CountsAsThePersonsMedia()
+  {
+    var nested = Couple.Replace("""
+      1 BIRT
+      2 DATE 2 OCT 1822
+      """, """
+      1 BIRT
+      2 DATE 2 OCT 1822
+      2 OBJE
+      3 TITL Baptism record
+      """);
+    var surfaced = Couple.Replace("""
+      1 NAME Robert /Williams/
+      """, """
+      1 NAME Robert /Williams/
+      1 OBJE
+      2 TITL Baptism record
+      """);
+
+    var differences = await CompareAsync(nested, surfaced);
+
+    differences.Should().BeEmpty();
+  }
+
+  [Fact]
+  public async Task LostMedia_IsReported()
+  {
+    var withPhoto = Couple.Replace("""
+      1 NAME Robert /Williams/
+      """, """
+      1 NAME Robert /Williams/
+      1 OBJE
+      2 TITL Portrait
+      """);
+
+    var differences = await CompareAsync(withPhoto, Couple);
+
+    differences.Should().ContainSingle()
+      .Which.Should().Match<GedcomDifference>(d => d.Kind == GedcomDifferenceKind.Media && d.Detail.Contains("Portrait"));
+  }
+
+  [Fact]
+  public async Task LostPassthroughRecord_IsReported()
+  {
+    var withSource = Couple.Replace("0 TRLR", """
+      0 @S1@ SOUR
+      1 TITL Parish register
+      0 TRLR
+      """);
+
+    var differences = await CompareAsync(withSource, Couple);
+
+    differences.Should().ContainSingle()
+      .Which.Kind.Should().Be(GedcomDifferenceKind.Record);
+  }
+
   /// <summary>
   /// Two people with no name, no sex and no dates are indistinguishable by content; only the relatives they
   /// hang off tell them apart. bourbon has 21 such individuals, and getting this wrong turns one real

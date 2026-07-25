@@ -8,6 +8,10 @@ internal enum GedcomDifferenceKind
   MissingEdge,
   ExtraEdge,
   MarriageDate,
+  Tag,
+  Media,
+  NotRepresentable,
+  Record,
 }
 
 internal readonly record struct GedcomDifference(GedcomDifferenceKind Kind, string Subject, string Detail);
@@ -20,6 +24,11 @@ internal readonly record struct GedcomDifference(GedcomDifferenceKind Kind, stri
 /// </summary>
 internal static class GedcomComparer
 {
+  // Carried by the edge and media comparisons rather than as text: the family pointers say nothing the
+  // edges do not, and OBJE is re-encoded on export so it never compares literally.
+  private static readonly HashSet<string> StructuralTags =
+    [GedcomTags.FamilySpouse, GedcomTags.FamilyChild, GedcomTags.Object];
+
   public static async Task<GedcomDifference[]> CompareAsync(TextReader left, TextReader right, CancellationToken token)
   {
     var leftRoots = await GedcomReader.ReadAsync(left, token);
@@ -30,6 +39,8 @@ internal static class GedcomComparer
     var differences = new List<GedcomDifference>();
     MatchIndividuals(leftSide, rightSide, differences);
     CompareEdges(leftSide, rightSide, differences);
+    CompareContent(leftSide, rightSide, differences);
+    ComparePassthroughRecords(leftSide, rightSide, differences);
     return [.. differences];
   }
 
@@ -135,6 +146,230 @@ internal static class GedcomComparer
     {
       differences.Add(new GedcomDifference(GedcomDifferenceKind.ExtraEdge, edge.Label, $"{kind} edge only in the second file"));
     }
+  }
+
+  /// <summary>
+  /// Compares what each matched individual's own tags say. FAMS/FAMC and the FAM records themselves are
+  /// left to the edge comparison, OBJE to <see cref="CompareMedia"/>; everything else -- including every
+  /// unmodeled tag GT4 claims to keep as residue (PLAC, SOUR, OCCU, CHAN, ...) -- has to survive verbatim.
+  /// </summary>
+  private static void CompareContent(Side left, Side right, List<GedcomDifference> differences)
+  {
+    var counterparts = right.Individuals.Where(individual => !Unmatched(individual)).ToDictionary(individual => individual.MatchId);
+    foreach (var individual in left.Individuals)
+    {
+      if (Unmatched(individual))
+        continue;
+
+      var counterpart = counterparts[individual.MatchId];
+      ReportUnrepresentableDates(individual, counterpart, differences);
+      CompareTags(individual, counterpart, left, right, differences);
+      CompareMedia(individual, counterpart, differences);
+    }
+  }
+
+  private static void CompareTags(Individual left, Individual right, Side leftSide, Side rightSide, List<GedcomDifference> differences)
+  {
+    var leftTags = ContentTags(left.Node, leftSide.Notes);
+    var rightTags = ContentTags(right.Node, rightSide.Notes);
+    foreach (var text in Surplus(leftTags, rightTags))
+    {
+      differences.Add(new GedcomDifference(GedcomDifferenceKind.Tag, left.Label, $"only in the first file: {text}"));
+    }
+    foreach (var text in Surplus(rightTags, leftTags))
+    {
+      differences.Add(new GedcomDifference(GedcomDifferenceKind.Tag, left.Label, $"only in the second file: {text}"));
+    }
+  }
+
+  /// <summary>
+  /// Media is identified by its TITL, since export re-encodes a resolved external FILE reference as an
+  /// embedded BLOB and stops emitting the filename. Media nested under an event, or on a couple's FAM,
+  /// lands on the person, so it counts towards the person's set on both sides.
+  /// </summary>
+  private static void CompareMedia(Individual left, Individual right, List<GedcomDifference> differences)
+  {
+    foreach (var title in Surplus(left.MediaTitles, right.MediaTitles))
+    {
+      differences.Add(new GedcomDifference(GedcomDifferenceKind.Media, left.Label, $"media \"{title}\" only in the first file"));
+    }
+    foreach (var title in Surplus(right.MediaTitles, left.MediaTitles))
+    {
+      differences.Add(new GedcomDifference(GedcomDifferenceKind.Media, left.Label, $"media \"{title}\" only in the second file"));
+    }
+  }
+
+  /// <summary>
+  /// A date the source states but <see cref="GedcomDate"/> cannot parse -- a "@#DFRENCH R@ ..." calendar
+  /// escape, see issue #173 -- becomes nothing on import, and would otherwise compare equal to the nothing
+  /// on the other side, certifying the loss as fidelity.
+  /// </summary>
+  private static void ReportUnrepresentableDates(Individual left, Individual right, List<GedcomDifference> differences)
+  {
+    foreach (var tag in new[] { GedcomTags.Birth, GedcomTags.Death })
+    {
+      var raw = EventDateValue(left.Node, tag);
+      if (string.IsNullOrWhiteSpace(raw))
+        continue;
+
+      var canonical = CanonicalDate(raw);
+      var counterpart = EventDateValue(right.Node, tag);
+      if (canonical.Length > 0 || raw == counterpart)
+        continue;
+
+      differences.Add(new GedcomDifference(GedcomDifferenceKind.NotRepresentable, left.Label, $"{tag} date \"{raw}\" survives as \"{counterpart}\""));
+    }
+  }
+
+  /// <summary>
+  /// The top-level records GT4 has no schema for but stores verbatim (submitter, submission, source,
+  /// repository). Whole records GT4 drops -- HEAD, top-level OBJE, NOTE inlined into a biography -- are
+  /// not compared: see unsupported-tags.md.
+  /// </summary>
+  private static void ComparePassthroughRecords(Side left, Side right, List<GedcomDifference> differences)
+  {
+    var leftRecords = PassthroughRecords(left);
+    var rightRecords = PassthroughRecords(right);
+    foreach (var text in Surplus(leftRecords, rightRecords))
+    {
+      differences.Add(new GedcomDifference(GedcomDifferenceKind.Record, text, "only in the first file"));
+    }
+    foreach (var text in Surplus(rightRecords, leftRecords))
+    {
+      differences.Add(new GedcomDifference(GedcomDifferenceKind.Record, text, "only in the second file"));
+    }
+  }
+
+  private static string[] PassthroughRecords(Side side)
+  {
+    var records = side.Roots.Where(GedcomMetadata.IsPassthrough);
+    return records.Select(record => $"{record.Xref} {Serialize(record, side.Notes)}").ToArray();
+  }
+
+  private static string[] ContentTags(GedcomNode individual, IReadOnlyDictionary<string, string> notes)
+  {
+    var compared = individual.Children.Where(child => !StructuralTags.Contains(child.Tag));
+    var serialized = compared.Select(child => Serialize(child, notes));
+    return serialized.Where(text => text.Length > 0).ToArray();
+  }
+
+  /// <summary>
+  /// A node as a canonical string. Children are sorted, so re-emission order is not a difference; an empty
+  /// node is nothing at all (a bare "1 BIRT" does not survive import and says nothing); OBJE is removed as
+  /// media; and the derived parts are replaced by what they mean -- a NAME value that export rebuilds from
+  /// GIVN/SURN, and a BIRT/DEAT date that import collapses through <see cref="GedcomDate"/>.
+  /// </summary>
+  private static string Serialize(GedcomNode node, IReadOnlyDictionary<string, string> notes)
+  {
+    var parts = new List<string>();
+    foreach (var child in node.Children)
+    {
+      if (child.Tag == GedcomTags.Object || IsDerivedNamePart(node, child))
+        continue;
+
+      // A modeled date GT4 cannot parse becomes nothing on export, and ReportUnrepresentableDates already
+      // says so -- serializing the empty result would report the same loss a second time here.
+      var text = IsModeledDate(node, child) ? ModeledDate(child) : Serialize(child, notes);
+      if (text.Length > 0)
+      {
+        parts.Add(text);
+      }
+    }
+    parts.Sort(StringComparer.Ordinal);
+
+    var value = NodeValue(node, notes);
+    if (value.Length == 0 && parts.Count == 0)
+      return string.Empty;
+
+    var joined = string.Join("; ", parts);
+    return $"{node.Tag}={value}[{joined}]";
+  }
+
+  private static bool IsDerivedNamePart(GedcomNode parent, GedcomNode child) =>
+    parent.Tag == GedcomTags.Name && child.Tag is GedcomTags.Given or GedcomTags.Surname;
+
+  private static bool IsModeledDate(GedcomNode parent, GedcomNode child) =>
+    child.Tag == GedcomTags.Date && parent.Tag is GedcomTags.Birth or GedcomTags.Death;
+
+  private static string ModeledDate(GedcomNode date)
+  {
+    var canonical = CanonicalDate(date.Value);
+    return canonical.Length == 0 ? string.Empty : $"{GedcomTags.Date}={canonical}";
+  }
+
+  private static string NodeValue(GedcomNode node, IReadOnlyDictionary<string, string> notes)
+  {
+    if (node.Tag == GedcomTags.Note)
+      return ResolveNote(node.Value, notes);
+
+    if (node.Tag != GedcomTags.Name)
+      return (node.Value ?? string.Empty).Trim();
+
+    var (given, surname) = GedcomName.Parts(node);
+    var collapsedGiven = Collapse(given);
+    var collapsedSurname = Collapse(surname);
+    return collapsedGiven.Length == 0 && collapsedSurname.Length == 0 ? string.Empty : $"{collapsedGiven}|{collapsedSurname}";
+  }
+
+  /// <summary>
+  /// A NOTE carried as a pointer to a top-level record is the same note as one written inline -- import
+  /// pulls the record's text into the person's biography and export writes it out inline, so the pointer
+  /// never survives as such.
+  /// </summary>
+  private static string ResolveNote(string? value, IReadOnlyDictionary<string, string> notes)
+  {
+    var trimmed = (value ?? string.Empty).Trim();
+    if (notes.TryGetValue(trimmed, out var text))
+      return text.Trim();
+
+    return trimmed;
+  }
+
+  private static string? EventDateValue(GedcomNode individual, string tag)
+  {
+    var eventNode = individual.Child(tag);
+    return eventNode?.ChildValue(GedcomTags.Date);
+  }
+
+  /// <summary>What <paramref name="from"/> holds that <paramref name="against"/> does not, counting duplicates.</summary>
+  private static IEnumerable<string> Surplus(IEnumerable<string> from, IEnumerable<string> against)
+  {
+    var available = new Dictionary<string, int>();
+    foreach (var item in against)
+    {
+      available[item] = available.GetValueOrDefault(item) + 1;
+    }
+
+    foreach (var item in from)
+    {
+      var remaining = available.GetValueOrDefault(item);
+      if (remaining > 0)
+      {
+        available[item] = remaining - 1;
+        continue;
+      }
+      yield return item;
+    }
+  }
+
+  /// <summary>
+  /// A date as GT4 is able to hold it: the same collapse import applies, so a qualifier GT4 cannot express
+  /// ("BET x AND y") compares equal to the approximate year it becomes.
+  /// </summary>
+  private static string CanonicalDate(string? value)
+  {
+    var parsed = GedcomDate.Parse(value);
+    var rendered = GedcomDate.ToGedcom(parsed);
+    return rendered ?? string.Empty;
+  }
+
+  private static string Collapse(string? value)
+  {
+    if (string.IsNullOrWhiteSpace(value))
+      return string.Empty;
+
+    var tokens = value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+    return string.Join(' ', tokens);
   }
 
   /// <summary>
@@ -271,6 +506,7 @@ internal static class GedcomComparer
     public required string Key { get; init; }
     public required string Label { get; init; }
     public List<(string Role, string Xref)> Neighbours { get; } = [];
+    public List<string> MediaTitles { get; } = [];
     public int MatchId { get; set; } = -1;
   }
 
@@ -278,9 +514,11 @@ internal static class GedcomComparer
 
   private sealed class Side
   {
+    public required GedcomNode[] Roots { get; init; }
     public required Individual[] Individuals { get; init; }
     public required Family[] Families { get; init; }
     public required Dictionary<string, Individual> ByXref { get; init; }
+    public required Dictionary<string, string> Notes { get; init; }
 
     public static Side Build(GedcomNode[] roots)
     {
@@ -290,9 +528,12 @@ internal static class GedcomComparer
         .ToArray();
       var byXref = individuals.ToDictionary(individual => individual.Xref);
       var families = roots.Where(root => root.Tag == GedcomTags.Family).Select(ReadFamily).ToArray();
+      var noteRecords = roots.Where(root => root.Tag == GedcomTags.Note && root.Xref is not null);
+      var notes = noteRecords.ToDictionary(record => record.Xref!, record => record.Value ?? string.Empty);
 
-      var side = new Side { Individuals = individuals, Families = families, ByXref = byXref };
+      var side = new Side { Roots = roots, Individuals = individuals, Families = families, ByXref = byXref, Notes = notes };
       side.LinkNeighbours();
+      side.CollectMedia(roots);
       return side;
     }
 
@@ -310,6 +551,43 @@ internal static class GedcomComparer
       var links = child.Node.ChildrenWithTag(GedcomTags.FamilyChild);
       var link = links.FirstOrDefault(node => node.Value == familyXref);
       return link?.ChildValue(GedcomTags.Pedigree) == GedcomTags.AdoptedPedigree;
+    }
+
+    /// <summary>
+    /// Every OBJE a person owns, wherever the file put it: directly under the INDI, nested under one of
+    /// their events, or on a FAM they are a spouse in -- import lands all three on the person (#148), so
+    /// they have to count on both sides for the comparison to line up.
+    /// </summary>
+    private void CollectMedia(GedcomNode[] roots)
+    {
+      foreach (var individual in Individuals)
+      {
+        var owned = individual.Node.DescendantsWithTag(GedcomTags.Object);
+        individual.MediaTitles.AddRange(owned.SelectMany(MediaTitles));
+      }
+
+      foreach (var family in roots.Where(root => root.Tag == GedcomTags.Family))
+      {
+        var media = family.DescendantsWithTag(GedcomTags.Object).SelectMany(MediaTitles).ToArray();
+        if (media.Length == 0)
+          continue;
+
+        var husband = Resolve(family.ChildValue(GedcomTags.Husband));
+        var wife = Resolve(family.ChildValue(GedcomTags.Wife));
+        husband?.MediaTitles.AddRange(media);
+        wife?.MediaTitles.AddRange(media);
+      }
+    }
+
+    /// <summary>
+    /// One title per referenced file: import splits a multi-FILE OBJE into one OBJE per file up front, so
+    /// an OBJE naming two files is two media items on the other side.
+    /// </summary>
+    private static IEnumerable<string> MediaTitles(GedcomNode media)
+    {
+      var title = media.ChildValue(GedcomTags.Title) ?? "(untitled)";
+      var files = media.ChildrenWithTag(GedcomTags.File).Count();
+      return Enumerable.Repeat(title, Math.Max(1, files));
     }
 
     private void LinkNeighbours()
@@ -375,30 +653,8 @@ internal static class GedcomComparer
 
     private static string EventDate(GedcomNode individual, string tag)
     {
-      var eventNode = individual.Child(tag);
-      var raw = eventNode?.ChildValue(GedcomTags.Date);
+      var raw = EventDateValue(individual, tag);
       return CanonicalDate(raw);
-    }
-
-    /// <summary>
-    /// A date as GT4 is able to hold it: the same collapse import applies, so a qualifier GT4 cannot
-    /// express ("BET x AND y") compares equal to the approximate year it becomes. A date GT4 cannot parse
-    /// at all yields nothing on both sides -- that loss is reported separately, not through matching.
-    /// </summary>
-    private static string CanonicalDate(string? value)
-    {
-      var parsed = GedcomDate.Parse(value);
-      var rendered = GedcomDate.ToGedcom(parsed);
-      return rendered ?? string.Empty;
-    }
-
-    private static string Collapse(string? value)
-    {
-      if (string.IsNullOrWhiteSpace(value))
-        return string.Empty;
-
-      var tokens = value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
-      return string.Join(' ', tokens);
     }
   }
 }
