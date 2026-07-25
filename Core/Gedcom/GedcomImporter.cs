@@ -272,8 +272,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     if (nameNode is null)
       return (null, null);
 
-    var given = nameNode.ChildValue(GedcomTags.Given) ?? GivenFromValue(nameNode.Value);
-    var surname = nameNode.ChildValue(GedcomTags.Surname) ?? SurnameFromValue(nameNode.Value);
+    var (given, surname) = GedcomName.Parts(nameNode);
     var first = given?.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
     return (first, surname?.Trim());
   }
@@ -710,8 +709,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     if (nameNode is null)
       return [];
 
-    var given = nameNode.ChildValue(GedcomTags.Given) ?? GivenFromValue(nameNode.Value);
-    var surname = nameNode.ChildValue(GedcomTags.Surname) ?? SurnameFromValue(nameNode.Value);
+    var (given, surname) = GedcomName.Parts(nameNode);
     var declension = GedcomMapping.Declension(sex);
 
     var names = new List<Name>();
@@ -758,28 +756,6 @@ internal sealed class GedcomImporter : IGedcomImporter
     var name = await document.Names.AddNameAsync(value, type, parent, token);
     nameCache[key] = name;
     return name;
-  }
-
-  private static string? GivenFromValue(string? value)
-  {
-    if (string.IsNullOrEmpty(value))
-      return null;
-
-    var slash = value.IndexOf('/');
-    return (slash < 0 ? value : value[..slash]).Trim();
-  }
-
-  private static string? SurnameFromValue(string? value)
-  {
-    if (string.IsNullOrEmpty(value))
-      return null;
-
-    var open = value.IndexOf('/');
-    if (open < 0)
-      return null;
-
-    var close = value.IndexOf('/', open + 1);
-    return close < 0 ? null : value[(open + 1)..close].Trim();
   }
 
   private static Data? BuildBiography(GedcomNode individual, IReadOnlyDictionary<string, string?> notesByXref)

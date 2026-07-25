@@ -21,12 +21,21 @@ internal static class Cli
       return 1;
     }
 
+    if (args[0] == "compare")
+    {
+      var comparedIndex = 1;
+      var first = NextArg(args, ref comparedIndex);
+      var second = NextArg(args, ref comparedIndex);
+      return await RunCompareAsync(first, second, token);
+    }
+
     var services = new ServiceCollection()
       .AddDefaultProject()
       .AddGedcom()
       .BuildServiceProvider();
     var documentFactory = services.GetRequiredService<IProjectDocumentFactory>();
     var gedcomImporter = services.GetRequiredService<IGedcomImporter>();
+    var gedcomExporter = services.GetRequiredService<IGedcomExporter>();
 
     var argIndex = 0;
     IProjectDocument document;
@@ -80,6 +89,10 @@ internal static class Cli
 
         case "tree":
           await RunTreeAsync(document, int.Parse(NextArg(args, ref argIndex)), token);
+          break;
+
+        case "export":
+          await RunExportAsync(gedcomExporter, document, NextArg(args, ref argIndex), token);
           break;
 
         default:
@@ -172,6 +185,45 @@ internal static class Cli
     }
   }
 
+  /// <summary>Exit code 2 means "the files differ", kept distinct from the 1 every failure returns.</summary>
+  private static async Task<int> RunCompareAsync(string firstPath, string secondPath, CancellationToken token)
+  {
+    GedcomDifference[] differences;
+    using (var first = new StreamReader(firstPath, Encoding.UTF8))
+    using (var second = new StreamReader(secondPath, Encoding.UTF8))
+    {
+      differences = await GedcomComparer.CompareAsync(first, second, token);
+    }
+
+    foreach (var difference in differences)
+    {
+      Console.WriteLine($"[{difference.Kind}] {difference.Subject}: {difference.Detail}");
+    }
+
+    if (differences.Length == 0)
+    {
+      Console.WriteLine("No differences.");
+      return 0;
+    }
+
+    var counts = differences
+      .GroupBy(difference => difference.Kind)
+      .OrderByDescending(group => group.Count())
+      .Select(group => $"{group.Key}={group.Count()}");
+    var summary = string.Join(", ", counts);
+    Console.WriteLine($"{differences.Length} difference(s): {summary}");
+    return 2;
+  }
+
+  private static async Task RunExportAsync(IGedcomExporter exporter, IProjectDocument document, string outPath, CancellationToken token)
+  {
+    await using (var writer = new StreamWriter(outPath, append: false, Encoding.UTF8))
+    {
+      await exporter.ExportAsync(document, writer, token);
+    }
+    Console.WriteLine($"Exported GEDCOM to: {outPath}");
+  }
+
   private static string NextArg(string[] args, ref int index)
   {
     if (index >= args.Length)
@@ -187,13 +239,17 @@ internal static class Cli
       Usage:
         GT4.Tools.RelativesCli --db <path.db> <command> [args]
         GT4.Tools.RelativesCli --gedcom <path.ged> [--out <path.db>] <command> [args]
+        GT4.Tools.RelativesCli compare <first.ged> <second.ged>
 
       Commands:
         find <query>          List persons whose name contains <query>.
         relatives <personId>  List the direct relatives of the given person.
+        export <path.ged>     Export the whole project as a GEDCOM 5.5.1 file.
         tree <personId>       Walk the full relative tree from the given person,
                                flagging Loop / MultipleConnections exactly like
                                the app's RelativeTree.ExpandAllAsync does.
+
+      compare exits 2 when the two GEDCOM files differ, 0 when they agree.
       """);
   }
 }

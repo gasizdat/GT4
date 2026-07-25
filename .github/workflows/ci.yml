@@ -59,6 +59,10 @@ jobs:
             name: ui-view
           - project: Tests\GT4.Core.Gedcom.Tests\GT4.Core.Gedcom.Tests.csproj
             name: core-gedcom
+          # The GEDCOM round-trip comparer lives here; the functional script that drives it needs the
+          # separate gedcom-samples repository and so stays local-only (run-tests-coverage.ps1).
+          - project: Tests\GT4.Tools.RelativesCli.Tests\GT4.Tools.RelativesCli.Tests.csproj
+            name: tools-relatives-cli
 
     steps:
       - uses: actions/checkout@v5

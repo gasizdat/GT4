@@ -1,8 +1,8 @@
 <#
 .SYNOPSIS
-  Runs every test project (GT4.Core.Project.Tests, GT4.Core.Gedcom.Tests, GT4.UI.Utils.Tests,
-  GT4.UI.View.Tests, GT4.UI.App.DeviceTests) with code coverage and shows a combined HTML report at
-  the end.
+  Runs every test project (GT4.Core.Project.Tests, GT4.Core.Gedcom.Tests, GT4.Tools.RelativesCli.Tests,
+  GT4.UI.Utils.Tests, GT4.UI.View.Tests, GT4.UI.App.DeviceTests) with code coverage, then the GEDCOM
+  round-trip functional tests, and shows a combined HTML report at the end.
 
 .PARAMETER SkipOpen
   Don't launch the generated report in the default browser.
@@ -47,6 +47,11 @@ dotnet test (Join-Path $repoRoot 'Tests\GT4.Core.Gedcom.Tests\GT4.Core.Gedcom.Te
   --configuration Release --collect "XPlat Code Coverage" --results-directory $coverageDir `
   --logger "console;verbosity=detailed"
 
+Write-Host "`n=== GT4.Tools.RelativesCli.Tests ===" -ForegroundColor Cyan
+dotnet test (Join-Path $repoRoot 'Tests\GT4.Tools.RelativesCli.Tests\GT4.Tools.RelativesCli.Tests.csproj') `
+  --configuration Release --collect "XPlat Code Coverage" --results-directory $coverageDir `
+  --logger "console;verbosity=detailed"
+
 Write-Host "`n=== GT4.UI.Utils.Tests ===" -ForegroundColor Cyan
 dotnet test (Join-Path $repoRoot 'Tests\GT4.UI.Utils.Tests\GT4.UI.Utils.Tests.csproj') `
   --configuration Release --collect "XPlat Code Coverage" --results-directory $coverageDir `
@@ -71,6 +76,13 @@ $deviceTestArgs = @(
 )
 dotnet-coverage collect --output $deviceCoverageFile --output-format cobertura -- dotnet @deviceTestArgs
 
+# Not collected into the coverage report: this drives the built CLI over real sample files as separate
+# processes, and it skips itself when the gedcom-samples repository is not checked out next to GT4.
+# $ErrorActionPreference = 'Stop' does not trip on a script's non-zero exit, so check it explicitly.
+Write-Host "`n=== GEDCOM round-trip (functional) ===" -ForegroundColor Cyan
+& (Join-Path $repoRoot 'Tests\Functional\run-gedcom-roundtrip.ps1')
+$roundTripExit = $LASTEXITCODE
+
 Write-Host "`n=== Generating coverage report ===" -ForegroundColor Cyan
 $reportDir = Join-Path $coverageDir 'report'
 reportgenerator "-reports:$coverageDir\**\coverage.cobertura.xml;$deviceCoverageFile" `
@@ -85,4 +97,9 @@ if (Test-Path $summaryFile) {
 $indexFile = Join-Path $reportDir 'index.html'
 if (-not $SkipOpen -and (Test-Path $indexFile)) {
   Start-Process $indexFile
+}
+
+if ($roundTripExit -ne 0) {
+  Write-Host "`nGEDCOM round-trip functional tests failed." -ForegroundColor Red
+  exit $roundTripExit
 }
