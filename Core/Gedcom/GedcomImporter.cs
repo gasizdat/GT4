@@ -31,10 +31,12 @@ internal sealed class GedcomImporter : IGedcomImporter
 
     // A source may pack several files under one OBJE; GT4 models one file per media object, so each -- on
     // an individual or nested in a family's marriage record -- is normalized up front into single-file OBJEs
-    // before any photo/attachment/residue pass runs.
+    // before any photo/attachment/residue pass runs. NOTE pointers are inlined in the same sweep, so every
+    // pass below reads note text and none of them has to know about the top-level records.
     foreach (var record in individuals.Concat(families))
     {
       SplitMultiFileObjects(record);
+      InlineNotePointers(record, notesByXref);
     }
 
     // A child's tie to a family is adoptive when its FAMC link carries "PEDI adopted"; that lives on the
@@ -66,11 +68,11 @@ internal sealed class GedcomImporter : IGedcomImporter
       if (individual.Xref is not null && matches.TryGetValue(individual.Xref, out var match))
       {
         person = match.Existing;
-        await GapFillAsync(document, match, individual, notesByXref, mediaBasePath, token);
+        await GapFillAsync(document, match, individual, mediaBasePath, token);
       }
       else
       {
-        person = await ImportIndividualAsync(document, individual, notesByXref, nameCache, mediaBasePath, token);
+        person = await ImportIndividualAsync(document, individual, nameCache, mediaBasePath, token);
       }
 
       if (individual.Xref is not null)
@@ -168,7 +170,6 @@ internal sealed class GedcomImporter : IGedcomImporter
     IProjectDocument document,
     Match match,
     GedcomNode individual,
-    IReadOnlyDictionary<string, string?> notesByXref,
     string? mediaBasePath,
     CancellationToken token)
   {
@@ -190,7 +191,7 @@ internal sealed class GedcomImporter : IGedcomImporter
 
     if (full.Biography is null)
     {
-      var biography = BuildBiography(individual, notesByXref);
+      var biography = BuildBiography(individual);
       if (biography is not null)
         additions.Add(biography);
     }
@@ -312,14 +313,13 @@ internal sealed class GedcomImporter : IGedcomImporter
   private async Task<Person> ImportIndividualAsync(
     IProjectDocument document,
     GedcomNode individual,
-    IReadOnlyDictionary<string, string?> notesByXref,
     Dictionary<(string, NameType, int?), Name> nameCache,
     string? mediaBasePath,
     CancellationToken token)
   {
     var sex = GedcomMapping.ParseSex(individual.ChildValue(GedcomTags.Sex));
     var names = await BuildNamesAsync(document, individual, sex, nameCache, token);
-    var biography = BuildBiography(individual, notesByXref);
+    var biography = BuildBiography(individual);
     var photos = SelectPhotos(individual, mediaBasePath);
     GedcomNode[] photoNodes = [.. photos.Select(p => p.Node)];
     var attachments = SelectAttachments(individual, photoNodes, mediaBasePath);
@@ -422,6 +422,33 @@ internal sealed class GedcomImporter : IGedcomImporter
     var normalized = node.Children.SelectMany(SplitObject).ToArray();
     node.Children.Clear();
     node.Children.AddRange(normalized);
+  }
+
+  /// <summary>
+  /// Rewrites every <c>NOTE</c> pointer in the subtree in place into the text of the record it points at.
+  /// GT4 preserves no top-level NOTE record, so a pointer left in place would dangle wherever it is replayed
+  /// from -- a person's residue, a photo's residual tags. A pointer no record answers keeps its value.
+  /// </summary>
+  private static void InlineNotePointers(GedcomNode node, IReadOnlyDictionary<string, string?> notesByXref)
+  {
+    if (node.Tag == GedcomTags.Note)
+    {
+      node.Value = ResolveNote(node.Value, notesByXref) ?? node.Value;
+    }
+
+    foreach (var child in node.Children)
+    {
+      InlineNotePointers(child, notesByXref);
+    }
+  }
+
+  private static string? ResolveNote(string? value, IReadOnlyDictionary<string, string?> notesByXref)
+  {
+    if (value is null)
+      return null;
+
+    var isPointer = value.Length >= 2 && value[0] == '@' && value[^1] == '@';
+    return isPointer ? notesByXref.GetValueOrDefault(value) : value;
   }
 
   private static IEnumerable<GedcomNode> SplitObject(GedcomNode obje)
@@ -759,27 +786,14 @@ internal sealed class GedcomImporter : IGedcomImporter
     return name;
   }
 
-  private static Data? BuildBiography(GedcomNode individual, IReadOnlyDictionary<string, string?> notesByXref)
+  private static Data? BuildBiography(GedcomNode individual)
   {
     var noteNode = individual.Child(GedcomTags.Note);
-    if (noteNode is null)
+    if (string.IsNullOrEmpty(noteNode?.Value))
       return null;
 
-    var text = ResolveNote(noteNode.Value, notesByXref);
-    if (string.IsNullOrEmpty(text))
-      return null;
-
-    var content = Encoding.UTF8.GetBytes(text);
+    var content = Encoding.UTF8.GetBytes(noteNode.Value);
     return new Data(ElementId.NonCommittedId, content, "text/plain", DataCategory.PersonBio);
-  }
-
-  private static string? ResolveNote(string? value, IReadOnlyDictionary<string, string?> notesByXref)
-  {
-    if (value is null)
-      return null;
-
-    var isPointer = value.Length >= 2 && value[0] == '@' && value[^1] == '@';
-    return isPointer ? notesByXref.GetValueOrDefault(value) : value;
   }
 
   private static async Task ImportFamilyAsync(
