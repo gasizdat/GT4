@@ -74,7 +74,10 @@ $deviceTestArgs = @(
   '--configuration', 'Release',
   '--framework', 'net10.0-windows10.0.19041.0'
 )
+# A failing run still leaves a valid but empty cobertura file behind, so the report below stays
+# healthy-looking and only the exit code tells the difference.
 dotnet-coverage collect --output $deviceCoverageFile --output-format cobertura -- dotnet @deviceTestArgs
+$deviceTestsExit = $LASTEXITCODE
 
 # Not collected into the coverage report: this drives the built CLI over real sample files as separate
 # processes, and it skips itself when the gedcom-samples repository is not checked out next to GT4.
@@ -97,6 +100,11 @@ if (Test-Path $summaryFile) {
 $indexFile = Join-Path $reportDir 'index.html'
 if (-not $SkipOpen -and (Test-Path $indexFile)) {
   Start-Process $indexFile
+}
+
+if ($deviceTestsExit -ne 0) {
+  Write-Host "`nGT4.UI.App.DeviceTests failed." -ForegroundColor Red
+  exit $deviceTestsExit
 }
 
 if ($roundTripExit -ne 0) {
