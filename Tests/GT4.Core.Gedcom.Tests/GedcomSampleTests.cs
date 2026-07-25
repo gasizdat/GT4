@@ -343,6 +343,46 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task NotePointer_ResolvedToTextWhereverItSits()
+  {
+    // GT4 keeps no top-level NOTE record, so a pointer replayed out of residue would reference a record the
+    // export does not contain. Each one is resolved to the record's text at import instead, whether the
+    // pointer is consumed as a biography or preserved verbatim under a residual NAME or an unmodeled TITL.
+    const string ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME Henri /Capet/\n2 NOTE @N1@\n1 SEX M\n1 NOTE @N2@\n" +
+      "1 TITL Roi de France\n2 NOTE @N3@\n1 OCCU Roi\n2 NOTE @N9@\n" +
+      "0 @I2@ INDI\n1 NAME Louis /Capet/\n1 SEX M\n1 NOTE @N2@\n" +
+      "0 @N1@ NOTE Maison de Bourbon\n0 @N2@ NOTE Assassine par Francois Ravaillac\n" +
+      "0 @N3@ NOTE Pretendant a la couronne\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var byName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
+    foreach (var person in byName.Values)
+    {
+      var biography = await document.PersonData.GetPersonDataSetAsync(person, DataCategory.PersonBio, Token);
+      Encoding.UTF8.GetString(biography.Single().Content).Should().Be("Assassine par Francois Ravaillac");
+    }
+
+    var residue = await document.PersonData.GetPersonDataSetAsync(byName["Henri Capet"], DataCategory.PersonGedcomTags, Token);
+    var blob = Encoding.UTF8.GetString(residue.Single().Content);
+    // @N9@ answers to no record, so the pointer itself is all there is to keep.
+    blob.Should().Contain("NOTE Maison de Bourbon").And.Contain("NOTE Pretendant a la couronne")
+        .And.Contain("NOTE @N9@");
+
+    var text = await ExportToTextAsync(document);
+    text.Should().Contain("2 NOTE Maison de Bourbon").And.Contain("1 NOTE Assassine par Francois Ravaillac")
+        .And.Contain("2 NOTE Pretendant a la couronne").And.Contain("2 NOTE @N9@");
+    text.Should().NotContain("NOTE @N1@").And.NotContain("NOTE @N2@").And.NotContain("NOTE @N3@");
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    var reexported = await ExportToTextAsync(reimported);
+    reexported.Should().Be(text);
+  }
+
+  [Fact]
   public async Task UnmodeledIndividualSubTags_ProjectToFactsForDisplay()
   {
     await using var document = await ImportSampleAsync("residue.ged");
