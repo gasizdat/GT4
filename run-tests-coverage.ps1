@@ -69,15 +69,48 @@ dotnet test (Join-Path $repoRoot 'Tests\GT4.UI.View.Tests\GT4.UI.View.Tests.cspr
 # to permanently differ from what CI reports.
 Write-Host "`n=== GT4.UI.App.DeviceTests ===" -ForegroundColor Cyan
 $deviceCoverageFile = Join-Path $coverageDir 'device-tests.cobertura.xml'
+$deviceTrxFile = Join-Path $coverageDir 'device-tests.trx'
 $deviceTestArgs = @(
   'test', (Join-Path $repoRoot 'Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj'),
   '--configuration', 'Release',
-  '--framework', 'net10.0-windows10.0.19041.0'
+  '--framework', 'net10.0-windows10.0.19041.0',
+  '--logger', 'trx;LogFileName=device-tests.trx',
+  '--results-directory', $coverageDir
 )
-# A failing run still leaves a valid but empty cobertura file behind, so the report below stays
-# healthy-looking and only the exit code tells the difference.
-dotnet-coverage collect --output $deviceCoverageFile --output-format cobertura -- dotnet @deviceTestArgs
-$deviceTestsExit = $LASTEXITCODE
+
+# Retried the same way as ci.yml's test-device job: the DeviceRunners CLI can exit non-zero from a
+# native WinUI teardown race, sometimes after every test already passed, and one attempt's output
+# cannot tell that apart from a crash that left tests unexecuted - so the whole attempt is retried,
+# a genuine bug being the one that reproduces. A TRX recording a failed test is a real failure and
+# is never retried past.
+# Only the exit code distinguishes a failed run: each attempt overwrites the coverage file, and a
+# failing one still leaves a valid but empty cobertura behind that the report below merges happily.
+$maxAttempts = 3
+for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+  Write-Host "--- Device test attempt $attempt of $maxAttempts ---" -ForegroundColor Cyan
+  if (Test-Path $deviceTrxFile) { Remove-Item $deviceTrxFile -Force }
+
+  dotnet-coverage collect --output $deviceCoverageFile --output-format cobertura -- dotnet @deviceTestArgs
+  $deviceTestsExit = $LASTEXITCODE
+
+  if (Test-Path $deviceTrxFile) {
+    [xml]$trx = Get-Content $deviceTrxFile
+    $counters = $trx.TestRun.ResultSummary.Counters
+    Write-Host "Attempt $attempt`: $($counters.total) total, $($counters.failed) failed (exit code $deviceTestsExit)."
+    if ([int]$counters.failed -gt 0) {
+      Write-Host "Real test failure recorded -- not retrying." -ForegroundColor Red
+      break
+    }
+  } else {
+    Write-Host "Attempt $attempt`: no TRX produced (exit code $deviceTestsExit)."
+  }
+
+  if ($deviceTestsExit -eq 0) { break }
+
+  if ($attempt -lt $maxAttempts) {
+    Write-Host "Attempt $attempt exited non-zero with no failed test recorded -- retrying." -ForegroundColor Yellow
+  }
+}
 
 # Not collected into the coverage report: this drives the built CLI over real sample files as separate
 # processes, and it skips itself when the gedcom-samples repository is not checked out next to GT4.
