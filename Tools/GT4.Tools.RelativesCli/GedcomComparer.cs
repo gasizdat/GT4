@@ -230,20 +230,20 @@ internal static class GedcomComparer
   {
     var leftRecords = PassthroughRecords(left);
     var rightRecords = PassthroughRecords(right);
-    foreach (var text in Surplus(leftRecords, rightRecords))
+    foreach (var record in Surplus(leftRecords, rightRecords))
     {
-      differences.Add(new GedcomDifference(GedcomDifferenceKind.Record, text, "only in the first file"));
+      differences.Add(new GedcomDifference(GedcomDifferenceKind.Record, record.Label, $"only in the first file: {record.Text}"));
     }
-    foreach (var text in Surplus(rightRecords, leftRecords))
+    foreach (var record in Surplus(rightRecords, leftRecords))
     {
-      differences.Add(new GedcomDifference(GedcomDifferenceKind.Record, text, "only in the second file"));
+      differences.Add(new GedcomDifference(GedcomDifferenceKind.Record, record.Label, $"only in the second file: {record.Text}"));
     }
   }
 
-  private static string[] PassthroughRecords(Side side)
+  private static Passthrough[] PassthroughRecords(Side side)
   {
     var records = side.Roots.Where(GedcomMetadata.IsPassthrough);
-    return records.Select(record => $"{record.Xref} {Serialize(record, side.Notes)}").ToArray();
+    return records.Select(record => new Passthrough($"{record.Tag} {record.Xref}", Serialize(record, side.Notes))).ToArray();
   }
 
   private static string[] ContentTags(GedcomNode individual, IReadOnlyDictionary<string, string> notes)
@@ -332,9 +332,9 @@ internal static class GedcomComparer
   }
 
   /// <summary>What <paramref name="from"/> holds that <paramref name="against"/> does not, counting duplicates.</summary>
-  private static IEnumerable<string> Surplus(IEnumerable<string> from, IEnumerable<string> against)
+  private static IEnumerable<T> Surplus<T>(IEnumerable<T> from, IEnumerable<T> against) where T : notnull
   {
-    var available = new Dictionary<string, int>();
+    var available = new Dictionary<T, int>();
     foreach (var item in against)
     {
       available[item] = available.GetValueOrDefault(item) + 1;
@@ -477,7 +477,12 @@ internal static class GedcomComparer
 
   private static bool Unmatched(Individual individual) => individual.MatchId < 0;
 
-  /// <summary>A relationship expressed in matched-identity space, so it is comparable across the two files.</summary>
+  private readonly record struct Passthrough(string Label, string Text);
+
+  /// <summary>
+  /// A relationship expressed in matched-identity space, so it is comparable across the two files.
+  /// <see cref="Label"/> is for display only and stays out of equality.
+  /// </summary>
   private readonly record struct Edge(string Key, string Label)
   {
     public static Edge Between(Individual first, Individual second)
@@ -596,8 +601,14 @@ internal static class GedcomComparer
       {
         var husband = Resolve(family.Husband);
         var wife = Resolve(family.Wife);
-        husband?.Neighbours.Add(("S", family.Wife!));
-        wife?.Neighbours.Add(("S", family.Husband!));
+        if (husband is not null && family.Wife is not null)
+        {
+          husband.Neighbours.Add(("S", family.Wife));
+        }
+        if (wife is not null && family.Husband is not null)
+        {
+          wife.Neighbours.Add(("S", family.Husband));
+        }
         foreach (var childXref in family.Children)
         {
           var child = Resolve(childXref);
