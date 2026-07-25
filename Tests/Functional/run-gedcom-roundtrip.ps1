@@ -23,7 +23,10 @@
 .PARAMETER Samples
   Sample paths relative to SamplesRoot. Each must exist, or the run fails. UTF-8 files only: the CLI
   reads and writes UTF-8 without consulting the declared charset, so an ANSEL sample would be
-  mis-decoded rather than rejected (see issue #123).
+  mis-decoded rather than rejected (see issue #123). They are chosen for producer spread -- Ancestris,
+  Legacy, Personal Ancestral File and Family Tree Maker each shape their output differently -- with the
+  zero-difference ones carrying most of the weight: a clean gate catches a regression the moment it
+  appears, where a baselined sample only catches one big enough to move its count.
 
 .PARAMETER FidelityBaselines
   Samples that do not round-trip cleanly yet: how many differences are known and which issues they are
@@ -37,9 +40,16 @@
 [CmdletBinding()]
 param(
   [string]$SamplesRoot,
-  [string[]]$Samples = @('sample-kennedy\kennedy.ged', 'sample-bourbon\bourbon.ged'),
+  [string[]]$Samples = @(
+    'sample-kennedy\kennedy.ged',
+    'sample-bourbon\bourbon.ged',
+    'tudor\EnglishTudorRoyalFamily.ged',
+    'famous family trees\corporations\Cisco+Systems,+Inc.ged',
+    'famous family trees\royalty\Yuan+Dynasty.ged',
+    'pres\pres2020.ged'),
   [hashtable]$FidelityBaselines = @{
     'sample-bourbon\bourbon.ged' = @{ Differences = 34; Issues = 'issue #172' }
+    'pres\pres2020.ged'          = @{ Differences = 124; Issues = 'issue #172' }
   },
   [string]$WorkDir,
   [switch]$KeepArtifacts
