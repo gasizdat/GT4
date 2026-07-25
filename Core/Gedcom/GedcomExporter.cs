@@ -52,11 +52,12 @@ internal sealed class GedcomExporter : IGedcomExporter
     var relatives = await document.Relatives.GetRelativesForPersonsAsync(persons, token);
 
     var families = BuildFamilies(relatives, personById);
+    var familyResidues = await ReadFamilyResiduesAsync(document, families, token);
     var individuals = BuildIndividuals(persons, infoById, biographies, residues, mainPhotos, additionalPhotos, attachments, families);
 
     WriteHeader(writer);
     await WriteIndividualsAsync(writer, individuals, token);
-    WriteFamilies(writer, families);
+    WriteFamilies(writer, families, familyResidues);
     await WritePassthroughRecordsAsync(document, writer, token);
     GedcomWriter.Write(writer, new GedcomNode { Tag = GedcomTags.Trailer });
   }
@@ -643,11 +644,39 @@ internal sealed class GedcomExporter : IGedcomExporter
     return chosen.Select(n => n.Value);
   }
 
-  private static void WriteFamilies(TextWriter writer, Family[] families)
+  /// <summary>
+  /// The unmodeled FAM and MARR sub-tags import preserved, by the metadata key it stored each under. Gathered
+  /// up front from the families about to be written, so <see cref="WriteFamilies"/> stays synchronous like the
+  /// rest of the regeneration.
+  /// </summary>
+  private static async Task<Dictionary<string, GedcomNode[]>> ReadFamilyResiduesAsync(
+    IProjectDocument document,
+    Family[] families,
+    CancellationToken token)
+  {
+    var residues = new Dictionary<string, GedcomNode[]>();
+    foreach (var family in families)
+    {
+      var familyKey = GedcomMetadata.FamilyKey(family.HusbandId, family.WifeId);
+      var marriageKeys = family.MarriageDates.Select(date => GedcomMetadata.MarriageKey(familyKey, date));
+      foreach (var key in marriageKeys.Prepend(familyKey))
+      {
+        var text = await document.Metadata.GetAsync<string>(key, token);
+        if (text is not null)
+        {
+          residues[key] = await GedcomReader.ReadAsync(new StringReader(text), token);
+        }
+      }
+    }
+    return residues;
+  }
+
+  private static void WriteFamilies(TextWriter writer, Family[] families, Dictionary<string, GedcomNode[]> residues)
   {
     foreach (var family in families)
     {
       var node = new GedcomNode { Tag = GedcomTags.Family, Xref = family.Xref };
+      var familyKey = GedcomMetadata.FamilyKey(family.HusbandId, family.WifeId);
       if (family.HusbandId is not null)
       {
         node.Add(new GedcomNode { Tag = GedcomTags.Husband, Value = $"@I{family.HusbandId}@" });
@@ -658,23 +687,31 @@ internal sealed class GedcomExporter : IGedcomExporter
       }
       foreach (var date in family.MarriageDates)
       {
-        AddMarriage(node, date);
+        var marriageKey = GedcomMetadata.MarriageKey(familyKey, date);
+        AddMarriage(node, date, residues.GetValueOrDefault(marriageKey) ?? []);
       }
       foreach (var (childId, _) in family.Children)
       {
         node.Add(new GedcomNode { Tag = GedcomTags.Child, Value = $"@I{childId}@" });
       }
+      // Re-attach the fully-unmodeled FAM sub-tags after the regenerated links, as an INDI's are.
+      node.Add(residues.GetValueOrDefault(familyKey) ?? []);
       GedcomWriter.Write(writer, node);
     }
   }
 
-  private static void AddMarriage(GedcomNode family, Date? date)
+  private static void AddMarriage(GedcomNode family, Date? date, GedcomNode[] residual)
   {
     var marriage = new GedcomNode { Tag = GedcomTags.Marriage };
     var value = date.HasValue ? GedcomDate.ToGedcom(date.Value) : null;
     if (value is not null)
     {
       marriage.Add(new GedcomNode { Tag = GedcomTags.Date, Value = value });
+    }
+    foreach (var root in residual)
+    {
+      marriage.Value ??= root.Value;
+      marriage.Add([.. root.Children]);
     }
     family.Add(marriage);
   }
