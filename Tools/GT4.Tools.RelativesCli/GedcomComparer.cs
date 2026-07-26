@@ -33,6 +33,10 @@ internal static class GedcomComparer
   private static readonly HashSet<string> StructuralTags =
     [GedcomTags.FamilySpouse, GedcomTags.FamilyChild, GedcomTags.Object];
 
+  // A FAM's own links are the edges, compared as such by CompareEdges.
+  private static readonly HashSet<string> StructuralFamilyTags =
+    [GedcomTags.Husband, GedcomTags.Wife, GedcomTags.Child, GedcomTags.Object];
+
   public static async Task<GedcomDifference[]> CompareAsync(TextReader left, TextReader right, CancellationToken token)
   {
     var leftRoots = await GedcomReader.ReadAsync(left, token);
@@ -44,6 +48,7 @@ internal static class GedcomComparer
     MatchIndividuals(leftSide, rightSide, differences);
     CompareEdges(leftSide, rightSide, differences);
     CompareContent(leftSide, rightSide, differences);
+    CompareFamilyContent(leftSide, rightSide, differences);
     ComparePassthroughRecords(leftSide, rightSide, differences);
     return [.. differences];
   }
@@ -226,6 +231,92 @@ internal static class GedcomComparer
   }
 
   /// <summary>
+  /// What a couple's FAM records state beyond their links -- a MARR's PLAC/SOUR/TYPE, the family's
+  /// CHAN/DIV/ENGA/NCHI -- which export re-emits from the residue GT4 stored for the couple. A couple export
+  /// regenerated nothing for is skipped: the record is gone whole, which the edge comparison reports where
+  /// there was an edge to miss, and reading its tags would count that same loss once more per tag (#186).
+  /// </summary>
+  private static void CompareFamilyContent(Side left, Side right, List<GedcomDifference> differences)
+  {
+    var leftFamilies = FamilyContent(left);
+    var rightFamilies = FamilyContent(right);
+    foreach (var (couple, leftContent) in leftFamilies)
+    {
+      if (!rightFamilies.TryGetValue(couple, out var rightContent))
+        continue;
+
+      ReportLostMarriageDates(couple, leftContent, rightContent, differences);
+      foreach (var text in Surplus(leftContent.Tags, rightContent.Tags))
+      {
+        differences.Add(new GedcomDifference(GedcomDifferenceKind.Tag, couple.Label, $"only in the first file: {text}"));
+      }
+      foreach (var text in Surplus(rightContent.Tags, leftContent.Tags))
+      {
+        differences.Add(new GedcomDifference(GedcomDifferenceKind.Tag, couple.Label, $"only in the second file: {text}"));
+      }
+    }
+  }
+
+  /// <summary>
+  /// Each couple's FAM content pooled across every record naming them, since the source may spread a couple
+  /// over several FAM records where export regenerates exactly one. Pooled as a set because the residue GT4
+  /// stores is itself a set: two records stating the same CHAN come back as one.
+  /// </summary>
+  private static Dictionary<Edge, CoupleContent> FamilyContent(Side side)
+  {
+    var byCouple = new Dictionary<Edge, CoupleContent>();
+    foreach (var family in side.Families)
+    {
+      var couple = side.Couple(family);
+      if (couple is null)
+        continue;
+
+      var (key, spousePair) = couple.Value;
+      if (!byCouple.TryGetValue(key, out var content))
+      {
+        content = new CoupleContent(spousePair, [], []);
+        byCouple[key] = content;
+      }
+      content.Tags.UnionWith(side.FamilyContentTags(family));
+      content.MarriageDates.UnionWith(RawMarriageDates(family));
+    }
+    return byCouple;
+  }
+
+  private static IEnumerable<string> RawMarriageDates(Family family)
+  {
+    var marriages = family.Node.ChildrenWithTag(GedcomTags.Marriage);
+    var dates = marriages.Select(marriage => marriage.ChildValue(GedcomTags.Date));
+    return dates.Where(date => !string.IsNullOrWhiteSpace(date))!;
+  }
+
+  /// <summary>
+  /// The FAM counterpart of <see cref="ReportUnrepresentableDates"/>. A spouse pair has its dates compared
+  /// canonically by <see cref="CompareEdges"/>, so only one that canonicalizes to nothing needs saying here --
+  /// it would otherwise compare equal to its own loss. A single parent has no spouse edge and so no other
+  /// comparison at all, which is why every date of theirs is checked. Compared as the couple's whole set,
+  /// since export pools the MARR events the source spread over several records.
+  /// </summary>
+  private static void ReportLostMarriageDates(
+    Edge couple,
+    CoupleContent left,
+    CoupleContent right,
+    List<GedcomDifference> differences)
+  {
+    foreach (var raw in left.MarriageDates)
+    {
+      if (right.MarriageDates.Contains(raw))
+        continue;
+
+      var canonical = CanonicalDate(raw);
+      if (left.SpousePair && canonical.Length > 0)
+        continue;
+
+      differences.Add(new GedcomDifference(GedcomDifferenceKind.NotRepresentable, couple.Label, $"{GedcomTags.Marriage} date \"{raw}\" survives as nothing"));
+    }
+  }
+
+  /// <summary>
   /// The top-level records GT4 has no schema for but stores verbatim (submitter, submission, source,
   /// repository, multimedia). The ones it drops outright -- HEAD, NOTE -- are not compared; see
   /// unsupported-tags.md.
@@ -253,7 +344,9 @@ internal static class GedcomComparer
     var parts = new List<string>();
     foreach (var child in node.Children)
     {
-      if (child.Tag == GedcomTags.Object || IsDerivedNamePart(node, child))
+      // A marriage date rides on the spouse edge, where CompareFamilyContent leaves it: serializing it here
+      // too would report a lost one as both a MarriageDate and a Tag difference.
+      if (child.Tag == GedcomTags.Object || IsDerivedNamePart(node, child) || IsMarriageDate(node, child))
         continue;
 
       // A modeled date GT4 cannot parse becomes nothing on export, and ReportUnrepresentableDates already
@@ -279,6 +372,9 @@ internal static class GedcomComparer
 
   private static bool IsModeledDate(GedcomNode parent, GedcomNode child) =>
     child.Tag == GedcomTags.Date && parent.Tag is GedcomTags.Birth or GedcomTags.Death;
+
+  private static bool IsMarriageDate(GedcomNode parent, GedcomNode child) =>
+    child.Tag == GedcomTags.Date && parent.Tag == GedcomTags.Marriage;
 
   private static string ModeledDate(GedcomNode date)
   {
@@ -400,7 +496,7 @@ internal static class GedcomComparer
         if (child is null || Unmatched(child))
           continue;
 
-        var adopted = Side.IsAdopted(child, family.Xref);
+        var adopted = Side.IsAdopted(child, family.Node.Xref);
         foreach (var parent in parents)
         {
           if (parent is null || Unmatched(parent))
@@ -468,6 +564,8 @@ internal static class GedcomComparer
 
   private readonly record struct Passthrough(string Label, string Text);
 
+  private sealed record CoupleContent(bool SpousePair, HashSet<string> Tags, HashSet<string> MarriageDates);
+
   /// <summary>
   /// A relationship expressed in matched-identity space, so it is comparable across the two files.
   /// <see cref="Label"/> is for display only and stays out of equality.
@@ -480,6 +578,8 @@ internal static class GedcomComparer
       var key = $"{ordered.First.MatchId}+{ordered.Second.MatchId}";
       return new Edge(key, $"{ordered.First.Label} + {ordered.Second.Label}");
     }
+
+    public static Edge Of(Individual only) => new($"{only.MatchId}", only.Label);
 
     public static Edge From(Individual parent, Individual child, bool adopted)
     {
@@ -504,7 +604,7 @@ internal static class GedcomComparer
     public int MatchId { get; set; } = -1;
   }
 
-  private sealed record Family(string Xref, string? Husband, string? Wife, string[] Children, string[] MarriageDates);
+  private sealed record Family(GedcomNode Node, string? Husband, string? Wife, string[] Children, string[] MarriageDates);
 
   private sealed class Side
   {
@@ -540,7 +640,7 @@ internal static class GedcomComparer
       return side;
     }
 
-    public static bool IsAdopted(Individual child, string familyXref)
+    public static bool IsAdopted(Individual child, string? familyXref)
     {
       var links = child.Node.ChildrenWithTag(GedcomTags.FamilyChild);
       var link = links.FirstOrDefault(node => node.Value == familyXref);
@@ -556,17 +656,38 @@ internal static class GedcomComparer
       return individual;
     }
 
-    public string[] ContentTags(Individual individual)
+    public string[] ContentTags(Individual individual) => ContentTags(individual.Node, StructuralTags);
+
+    public string[] FamilyContentTags(Family family) => ContentTags(family.Node, StructuralFamilyTags);
+
+    /// <summary>
+    /// The couple export keys a FAM record by, in matched-identity space: ordered, so which spouse the source
+    /// called the husband is not a difference, and one id where the record names a single parent. Null when
+    /// neither spouse is matched, leaving nothing to key the record's content by.
+    /// </summary>
+    public (Edge Key, bool SpousePair)? Couple(Family family)
     {
-      var compared = individual.Node.Children.Where(child => !StructuralTags.Contains(child.Tag));
-      var serialized = compared.Select(child => Serialize(child, _notes));
-      return serialized.Where(text => text.Length > 0).ToArray();
+      var resolved = new[] { Resolve(family.Husband), Resolve(family.Wife) };
+      var spouses = resolved.Where(spouse => spouse is not null && !Unmatched(spouse)).ToArray();
+      return spouses.Length switch
+      {
+        2 => (Edge.Between(spouses[0]!, spouses[1]!), true),
+        1 => (Edge.Of(spouses[0]!), false),
+        _ => null,
+      };
     }
 
     public Passthrough[] PassthroughRecords()
     {
       var records = _roots.Where(GedcomMetadata.IsPassthrough);
       return records.Select(record => new Passthrough($"{record.Tag} {record.Xref}", Serialize(record, _notes))).ToArray();
+    }
+
+    private string[] ContentTags(GedcomNode record, HashSet<string> structural)
+    {
+      var compared = record.Children.Where(child => !structural.Contains(child.Tag));
+      var serialized = compared.Select(child => Serialize(child, _notes));
+      return serialized.Where(text => text.Length > 0).ToArray();
     }
 
     /// <summary>
@@ -666,7 +787,7 @@ internal static class GedcomComparer
         .Select(CanonicalDate)
         .ToArray();
       return new Family(
-        node.Xref ?? string.Empty,
+        node,
         node.ChildValue(GedcomTags.Husband),
         node.ChildValue(GedcomTags.Wife),
         children!,
