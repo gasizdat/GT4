@@ -612,14 +612,18 @@ internal sealed class GedcomImporter : IGedcomImporter
 
   /// <summary>
   /// Builds the photo data from the materialized candidates. The one marked <c>_PRIM Y</c> — or the first
-  /// when none is marked — becomes the main (profile) photo; the rest are additional.
+  /// when none is marked — becomes the main (profile) photo; the rest are additional. A photo the person
+  /// only points at is picked last: it is not re-emitted under the INDI, so making it the main one would
+  /// leave the export with no <c>_PRIM Y</c> at all and the next import free to choose differently.
   /// </summary>
   private static (Data? Main, Data[] Additional) BuildPhotos(PhotoCandidate[] photos)
   {
     if (photos.Length == 0)
       return (null, []);
 
-    var mainPhoto = photos.FirstOrDefault(p => p.Primary) ?? photos[0];
+    var own = photos.Where(p => p.Node.Xref is null).ToArray();
+    var candidates = own.Length > 0 ? own : photos;
+    var mainPhoto = candidates.FirstOrDefault(p => p.Primary) ?? candidates[0];
     var main = BuildPhotoData(mainPhoto, DataCategory.PersonMainPhoto);
     var additional = photos
       .Where(p => !ReferenceEquals(p, mainPhoto))

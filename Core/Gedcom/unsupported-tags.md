@@ -48,9 +48,11 @@ documentary and lands as an attachment. Such media is shown but deliberately
 whole among the passthrough records above, and the person's pointer to it
 survives in their residue, so the file carries the bytes once and a re-import
 derives the same media again. Not modelled either way: a `FAM`-level citation's
-media (a family's own inline `OBJE`s do reach both spouses), and an `OBJE` whose
+media (a family's own inline `OBJE`s do reach both spouses), an `OBJE` whose
 external `FILE` GT4 cannot resolve — the latter falls through to the INDI residue
-passthrough below, surviving verbatim but loaded as nothing.
+passthrough below, surviving verbatim but loaded as nothing — and the second and
+later `FILE`s of a multi-file top-level record, which is kept verbatim rather
+than split the way an inline multi-file `OBJE` is.
 The embedded `BLOB` form is non-conformant to strict GEDCOM 5.5.1 (which expects
 external FILE references); it is chosen so the export stays a single shareable
 file and round-trips through GT4 itself.

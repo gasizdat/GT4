@@ -1246,6 +1246,36 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task ReferencedMainPhotoBesideAnInlineOne_ExportsTheSameTwice()
+  {
+    var mediaDir = Path.Combine(Path.GetTempPath(), $"gt4_media_{Guid.NewGuid():N}");
+    Directory.CreateDirectory(Path.Combine(mediaDir, "photos"));
+    await File.WriteAllBytesAsync(Path.Combine(mediaDir, "photos", "robert.jpg"), new byte[] { 4, 5, 6 }, Token);
+    try
+    {
+      // The referenced portrait comes first, so it is the main photo -- and the one the export leaves out.
+      // Whatever it emits instead must survive its own re-import unchanged, or a round-trip never settles.
+      var ged =
+        "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Robert /Williams/\n1 SEX M\n1 OBJE @M1@\n" +
+        "1 OBJE\n2 FORM jpg\n2 BLOB AQID\n" +
+        "0 @M1@ OBJE\n1 FILE photos/robert.jpg\n2 FORM jpg\n0 TRLR\n";
+      await using var document = await NewDocumentAsync();
+      await _importer.ImportAsync(document, new StringReader(ged), Token, mediaDir);
+      var first = await ExportToTextAsync(document);
+
+      await using var reimported = await NewDocumentAsync();
+      await _importer.ImportAsync(reimported, new StringReader(first), Token, mediaDir);
+      var second = await ExportToTextAsync(reimported);
+
+      second.Should().Be(first);
+    }
+    finally
+    {
+      Directory.Delete(mediaDir, recursive: true);
+    }
+  }
+
+  [Fact]
   public async Task FileReferenceObje_FallsBackToResidue()
   {
     // A third-party OBJE that points at an external FILE has no bytes GT4 can load, so it is not a photo;
