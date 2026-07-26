@@ -67,6 +67,7 @@ internal sealed class GedcomImporter : IGedcomImporter
 
     var nameCache = existingNames.ToDictionary(n => (n.Value, n.Type, n.ParentId), n => n);
     var personByXref = new Dictionary<string, Person>();
+    var referencedMedia = new Dictionary<GedcomNode, Data>();
 
     foreach (var individual in individuals)
     {
@@ -74,11 +75,11 @@ internal sealed class GedcomImporter : IGedcomImporter
       if (individual.Xref is not null && matches.TryGetValue(individual.Xref, out var match))
       {
         person = match.Existing;
-        await GapFillAsync(document, match, individual, recordsByXref, mediaBasePath, token);
+        await GapFillAsync(document, match, individual, recordsByXref, referencedMedia, mediaBasePath, token);
       }
       else
       {
-        person = await ImportIndividualAsync(document, individual, nameCache, recordsByXref, mediaBasePath, token);
+        person = await ImportIndividualAsync(document, individual, nameCache, recordsByXref, referencedMedia, mediaBasePath, token);
       }
 
       if (individual.Xref is not null)
@@ -181,6 +182,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     Match match,
     GedcomNode individual,
     IReadOnlyDictionary<string, GedcomNode> recordsByXref,
+    Dictionary<GedcomNode, Data> referencedMedia,
     string? mediaBasePath,
     CancellationToken token)
   {
@@ -189,8 +191,8 @@ internal sealed class GedcomImporter : IGedcomImporter
 
     var photos = SelectPhotos(individual, recordsByXref, mediaBasePath);
     GedcomNode[] photoNodes = [.. photos.Select(p => p.Node)];
+    var attachments = SelectAttachments(individual, photoNodes, mediaBasePath);
     var referenced = SelectReferencedMedia(individual, photoNodes, recordsByXref, mediaBasePath);
-    AttachmentCandidate[] attachments = [.. SelectAttachments(individual, photoNodes, mediaBasePath), .. referenced];
     // Photos/attachments are added only when the person has none of that kind; otherwise these OBJEs stay
     // unconsumed and fall through to residue instead of being dropped.
     var addingPhotos = full.MainPhoto is null && full.AdditionalPhotos.Length == 0;
@@ -230,6 +232,11 @@ internal sealed class GedcomImporter : IGedcomImporter
     if (additions.Count > 0)
     {
       await document.PersonData.AddPersonDataSetAsync(match.Existing, [.. additions], token);
+    }
+
+    if (addingAttachments)
+    {
+      await AddReferencedMediaAsync(document, match.Existing, referenced, referencedMedia, token);
     }
 
     if (full.GedcomData is not null && incomingResidue.Count > 0)
@@ -327,6 +334,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     GedcomNode individual,
     Dictionary<(string, NameType, int?), Name> nameCache,
     IReadOnlyDictionary<string, GedcomNode> recordsByXref,
+    Dictionary<GedcomNode, Data> referencedMedia,
     string? mediaBasePath,
     CancellationToken token)
   {
@@ -335,10 +343,10 @@ internal sealed class GedcomImporter : IGedcomImporter
     var biography = BuildBiography(individual);
     var photos = SelectPhotos(individual, recordsByXref, mediaBasePath);
     GedcomNode[] photoNodes = [.. photos.Select(p => p.Node)];
+    var attachments = SelectAttachments(individual, photoNodes, mediaBasePath);
     var referenced = SelectReferencedMedia(individual, photoNodes, recordsByXref, mediaBasePath);
-    AttachmentCandidate[] attachments = [.. SelectAttachments(individual, photoNodes, mediaBasePath), .. referenced];
-    // Only nodes of the individual's own subtree can be consumed out of its residue. A referenced record's
-    // node never is: the pointer to it has to stay in the residue for the re-emitted record to be reachable.
+    // Only what the individual's own subtree holds is consumed out of its residue -- never a referenced
+    // record's node: the pointer to it has to stay there for the re-emitted record to be reachable.
     GedcomNode[] consumedNodes = [.. photoNodes, .. attachments.Select(a => a.Node)];
     var (mainPhoto, additionalPhotos) = BuildPhotos(photos);
 
@@ -356,7 +364,32 @@ internal sealed class GedcomImporter : IGedcomImporter
     };
 
     var added = await document.PersonManager.AddPersonAsync(toAdd, token);
-    return new Person(added.Id, added.BirthDate, added.DeathDate, added.BiologicalSex);
+    var person = new Person(added.Id, added.BirthDate, added.DeathDate, added.BiologicalSex);
+    await AddReferencedMediaAsync(document, person, referenced, referencedMedia, token);
+    return person;
+  }
+
+  /// <summary>
+  /// Links the media a person only points at, one shared <see cref="Data"/> row per referenced object: the
+  /// same source is commonly cited by many people, and the bytes behind it are the same bytes every time.
+  /// </summary>
+  private static async Task AddReferencedMediaAsync(
+    IProjectDocument document,
+    Person person,
+    AttachmentCandidate[] referenced,
+    Dictionary<GedcomNode, Data> committed,
+    CancellationToken token)
+  {
+    foreach (var candidate in referenced)
+    {
+      if (!committed.TryGetValue(candidate.Node, out var data))
+      {
+        var built = BuildAttachmentData(candidate);
+        data = await document.Data.AddDataAsync(built.Content, built.MimeType, built.Category, token);
+        committed[candidate.Node] = data;
+      }
+      await document.PersonData.AddPersonDataSetAsync(person, [data], token);
+    }
   }
 
   /// <summary>
@@ -738,16 +771,25 @@ internal sealed class GedcomImporter : IGedcomImporter
     IReadOnlyDictionary<string, GedcomNode> recordsByXref,
     string? mediaBasePath)
   {
-    var media = new List<GedcomNode>();
+    var media = new List<(GedcomNode Node, string RecordXref)>();
     CollectReferencedMedia(owner, recordsByXref, [], media);
-    return
-    [
-      .. media
-        .Where(o => !photoNodes.Contains(o))
-        .Select(o => TryReadAttachment(o, mediaBasePath))
-        .Where(a => a is not null)
-        .Select(a => a!)
-    ];
+
+    var candidates = new List<AttachmentCandidate>();
+    foreach (var (node, recordXref) in media)
+    {
+      if (photoNodes.Contains(node))
+        continue;
+
+      var candidate = TryReadAttachment(node, mediaBasePath);
+      if (candidate is null)
+        continue;
+
+      // Marked by the record it was reached through, not by its own xref: media inline inside a referenced
+      // SOUR has no xref of its own, and it is that record's re-emission that stands in for this copy.
+      candidate.Residual.Add(new GedcomNode { Tag = GedcomTags.ReferencedRecord, Value = recordXref });
+      candidates.Add(candidate);
+    }
+    return [.. candidates];
   }
 
   /// <summary>
@@ -759,19 +801,20 @@ internal sealed class GedcomImporter : IGedcomImporter
     GedcomNode node,
     IReadOnlyDictionary<string, GedcomNode> recordsByXref,
     HashSet<string> visited,
-    List<GedcomNode> media)
+    List<(GedcomNode Node, string RecordXref)> media)
   {
     foreach (var child in node.Children)
     {
       var target = ResolveRecord(child.Value, recordsByXref);
       if (target is not null && visited.Add(target.Xref!))
       {
+        var xref = target.Xref!;
         if (target.Tag == GedcomTags.Object)
         {
-          media.Add(target);
+          media.Add((target, xref));
         }
         var nested = target.DescendantsWithTag(GedcomTags.Object);
-        media.AddRange(nested);
+        media.AddRange(nested.Select(o => (o, xref)));
         CollectReferencedMedia(target, recordsByXref, visited, media);
       }
       CollectReferencedMedia(child, recordsByXref, visited, media);
@@ -808,12 +851,8 @@ internal sealed class GedcomImporter : IGedcomImporter
     return new AttachmentCandidate(obje, content, mime, residual);
   }
 
-  private static Data BuildAttachmentData(AttachmentCandidate candidate)
-  {
-    var residual = ReferencedResidual(candidate.Node, candidate.Residual)!;
-    var content = GedcomPhotoResidue.Encode(candidate.Content, residual);
-    return new Data(ElementId.NonCommittedId, content, candidate.MimeType, DataCategory.PersonAttachment);
-  }
+  private static Data BuildAttachmentData(AttachmentCandidate candidate) =>
+    new(ElementId.NonCommittedId, GedcomPhotoResidue.Encode(candidate.Content, candidate.Residual), candidate.MimeType, DataCategory.PersonAttachment);
 
   private static bool IsImageMedia(string? form, string fileRef)
   {

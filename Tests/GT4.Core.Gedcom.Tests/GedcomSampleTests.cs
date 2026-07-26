@@ -1181,9 +1181,10 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     await File.WriteAllBytesAsync(Path.Combine(mediaDir, "documents", "register.jpg"), new byte[] { 1, 2, 3 }, Token);
     try
     {
-      // The person owns this scan through two pointers: their birth cites @S1@, which references @M1@.
+      // Both people own this scan through two pointers: their birth cites @S1@, which references @M1@.
       var ged =
         "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Robert /Williams/\n1 SEX M\n1 BIRT\n2 DATE 2 OCT 1822\n2 SOUR @S1@\n" +
+        "0 @I2@ INDI\n1 NAME Sarah /Williams/\n1 SEX F\n1 BIRT\n2 DATE 4 JUN 1825\n2 SOUR @S1@\n" +
         "0 @S1@ SOUR\n1 TITL County Records\n1 OBJE @M1@\n" +
         "0 @M1@ OBJE\n1 FILE documents/register.jpg\n2 FORM jpg\n2 TITL Register, 1822\n0 TRLR\n";
       await using var document = await NewDocumentAsync();
@@ -1194,6 +1195,11 @@ public sealed class GedcomSampleTests : IAsyncLifetime
       var attachment = full.Attachments.Should().ContainSingle().Which;
       var fileName = await GedcomPhotoResidue.ExtractFileNameAsync(attachment, Token);
       fileName.Should().Be("documents/register.jpg");
+
+      // One row for the record, linked to everyone citing it, however many that is.
+      var sarah = await document.PersonManager.GetPersonFullInfoAsync(byName["Sarah Williams"], Token);
+      var sarahAttachment = sarah.Attachments.Should().ContainSingle().Which;
+      sarahAttachment.Id.Should().Be(attachment.Id);
 
       // Displayed, but not written back under the person: the record it was read from is re-emitted whole
       // and the citation reaching it survives in the residue, so the bytes are in the file exactly once.
