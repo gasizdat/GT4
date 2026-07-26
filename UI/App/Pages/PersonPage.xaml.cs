@@ -39,6 +39,7 @@ public partial class PersonPage : ContentPage
   private PersonFullInfo _PersonFullInfo = PersonFullInfo.Empty;
   private ImageSource[] _Photos = [];
   private string?[] _Captions = [];
+  private IReadOnlyDictionary<int, string> _MediaSources = new Dictionary<int, string>();
   private AttachmentInfo[] _Attachments = [];
   private string _Biography = string.Empty;
   private PersonPageSmartLayout _SmartLayout = new();
@@ -170,6 +171,8 @@ public partial class PersonPage : ContentPage
   public ImageSource[] Photos => _Photos;
 
   public string?[] Captions => _Captions;
+
+  public IReadOnlyDictionary<int, string> MediaSources => _MediaSources;
 
   public AttachmentInfo[] Attachments => _Attachments;
 
@@ -304,6 +307,19 @@ public partial class PersonPage : ContentPage
     }
   }
 
+  private void OnAttachmentLinkTapped(object? sender, int attachmentId) =>
+    SafeTask.Run(() => OpenAttachmentLinkAsync(attachmentId), _AlertService);
+
+  // A dangling link (the referenced attachment was since removed) is simply inert.
+  protected async Task OpenAttachmentLinkAsync(int attachmentId)
+  {
+    var attachment = _Attachments.FirstOrDefault(a => a.Data.Id == attachmentId);
+    if (attachment is not null)
+    {
+      await OnOpenAttachmentAsync(attachment);
+    }
+  }
+
   // attachment.FileName is often a full original path -- a common artifact of GEDCOM imports.
   private async Task OnOpenAttachmentAsync(AttachmentInfo attachment)
   {
@@ -378,6 +394,7 @@ public partial class PersonPage : ContentPage
 
       ImageSource[] photos;
       string?[] captions;
+      Data[] photoData;
 
       if (personFullInfo.MainPhoto is null)
       {
@@ -391,10 +408,11 @@ public partial class PersonPage : ContentPage
         var defaultPhoto = await ImageUtils.ToBytesAsync(defaultImageResourceName, readResourceToken) ?? [];
         photos = [ImageUtils.ImageFromBytes(defaultPhoto)];
         captions = [null];
+        photoData = [];
       }
       else
       {
-        Data[] photoData = [personFullInfo.MainPhoto, .. personFullInfo.AdditionalPhotos];
+        photoData = [personFullInfo.MainPhoto, .. personFullInfo.AdditionalPhotos];
         var defaultImageResourceName = ImageUtils.DefaultPhotoResourceName(personFullInfo.BiologicalSex);
         var fallback = ImageUtils.ImageFromRawResource(defaultImageResourceName);
         var photosTask = Task.WhenAll(photoData.Select(data =>
@@ -405,6 +423,7 @@ public partial class PersonPage : ContentPage
         captions = captionsTask.Result;
       }
 
+      var mediaSources = MediaSourceUtils.BuildMediaSources(photoData);
       var attachments = attachmentsTask.Result;
 
       // UpdateUI touches the project document again on the UI thread; SafeTask.RunOnMainThread keeps
@@ -419,7 +438,7 @@ public partial class PersonPage : ContentPage
 
         UpdateUI(personFullInfo,
                  roots,
-                 photos, captions, attachments, bioTask.Result as string,
+                 photos, captions, mediaSources, attachments, bioTask.Result as string,
                  gedcomTask.Result as string,
                  familyTask.Result,
                  addToNavigation);
@@ -470,6 +489,7 @@ public partial class PersonPage : ContentPage
                        RelativeInfo[] roots,
                        ImageSource[] photos,
                        string?[] captions,
+                       IReadOnlyDictionary<int, string> mediaSources,
                        AttachmentInfo[] attachments,
                        string? bio,
                        string? gedcomDetails,
@@ -479,6 +499,7 @@ public partial class PersonPage : ContentPage
     _PersonFullInfo = personFullInfo;
     _Photos = photos;
     _Captions = captions;
+    _MediaSources = mediaSources;
     _Attachments = attachments;
     _Biography = CombineBiography(bio, gedcomDetails, familyDetails);
     _AllRoots = roots;

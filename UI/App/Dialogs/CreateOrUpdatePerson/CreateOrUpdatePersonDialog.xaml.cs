@@ -1,3 +1,4 @@
+using GT4.Core.Gedcom;
 using GT4.Core.Project;
 using GT4.Core.Project.Dto;
 using GT4.Core.Project.Extensions;
@@ -27,7 +28,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     DataConverterResolver DataConverterFactory,
     SelectNameDialog.Factory SelectNameDialogFactory,
     SelectRelativesDialog.Factory SelectRelativesDialogFactory,
-    SelectPersonDialog.Factory SelectPersonDialogFactory)
+    SelectPersonDialog.Factory SelectPersonDialogFactory,
+    SelectMediaDialog.Factory SelectMediaDialogFactory)
   {
     public CreateOrUpdatePersonDialog Create(PersonFullInfo? person) =>
       new CreateOrUpdatePersonDialog(this, person);
@@ -48,6 +50,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private BiologicalSexItem? _BiologicalSex;
   private PersonDataItem? _Biography;
   private Data? _GedcomData;
+  private IReadOnlyDictionary<int, string>? _MediaSources;
   private bool _IsModified;
   private bool _NotReady => _BiologicalSex is null || _BirthDate is null || !_IsModified;
 
@@ -64,6 +67,11 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     UpdatePersonInformation(person);
 
     _Names.CollectionChanged += (_, _) => OnPropertyChanged(nameof(PersonFullName));
+    _Photos.CollectionChanged += (_, _) =>
+    {
+      _MediaSources = null;
+      OnPropertyChanged(nameof(MediaSources));
+    };
 
     InitializeComponent();
     IsModified = false;
@@ -158,6 +166,11 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   public ICommand DialogCommand => _DialogCommand;
 
   public ICollection<PersonDataItem> Photos => _Photos;
+
+  // Re-encoding every photo to base64 is expensive enough to cache rather than redo on every binding
+  // read; _Photos.CollectionChanged (above) is the only thing that can make this stale.
+  public IReadOnlyDictionary<int, string> MediaSources =>
+    _MediaSources ??= MediaSourceUtils.BuildMediaSources(_Photos.Select(photo => photo.Info));
 
   public ICollection<PersonDataItem> Attachments => _Attachments;
 
@@ -496,6 +509,40 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
   }
 
+  // Only a committed photo/attachment has a stable id a stored biography link can target -- one just
+  // picked in this same edit session has none yet (see PersonDataItem.ToDataAsync).
+  protected async Task OnInsertMediaLinkAsync()
+  {
+    using var token = _Factory.CancellationTokenProvider.CreateShortOperationCancellationToken();
+    var photos = _Photos.Select(photo => photo.Info).Where(data => data.Id != ElementId.NonCommittedId);
+    var attachments = _Attachments.Select(attachment => attachment.Info).Where(data => data.Id != ElementId.NonCommittedId);
+
+    var photoItems = await Task.WhenAll(photos.Select(async (data, index) =>
+    {
+      var caption = await GedcomPhotoResidue.ExtractTitleAsync(data, token);
+      return new MediaLinkItem(data.Id, IsPhoto: true, caption ?? string.Format(UIStrings.MediaLinkPhotoName_1, index + 1));
+    }));
+    var attachmentItems = await Task.WhenAll(attachments.Select(async data =>
+    {
+      var title = await GedcomPhotoResidue.ExtractTitleAsync(data, token);
+      var fileName = await GedcomPhotoResidue.ExtractFileNameAsync(data, token);
+      return new MediaLinkItem(data.Id, IsPhoto: false, string.IsNullOrWhiteSpace(title) ? fileName ?? string.Empty : title);
+    }));
+
+    var dialog = _Factory.SelectMediaDialogFactory.Create([.. photoItems, .. attachmentItems]);
+    await Navigation.PushModalAsync(dialog);
+    var picked = await dialog.Info;
+    await Navigation.PopModalAsync();
+
+    if (picked is not null)
+    {
+      if (picked.IsPhoto)
+        BiographyEditor.InsertMediaLink(picked.DisplayName, picked.Id);
+      else
+        BiographyEditor.InsertAttachmentLink(picked.DisplayName, picked.Id);
+    }
+  }
+
   private async Task OnEditRelationshipAsync(RelativeInfo relative)
   {
     var dialog = new SelectDateDialog(
@@ -546,6 +593,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         break;
       case string commandName when commandName == "InsertPersonLinkCommand":
         await OnInsertLinkAsync();
+        break;
+      case string commandName when commandName == "InsertMediaLinkCommand":
+        await OnInsertMediaLinkAsync();
         break;
       case string commandName when commandName == "UndefinedBirthDateCommand":
         SetUndefinedBirthDate();

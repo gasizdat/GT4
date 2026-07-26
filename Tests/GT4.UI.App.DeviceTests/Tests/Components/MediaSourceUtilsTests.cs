@@ -1,0 +1,51 @@
+using GT4.Core.Project.Dto;
+using GT4.UI.Converters;
+using Xunit;
+
+namespace GT4.UI.DeviceTests;
+
+public class MediaSourceUtilsTests
+{
+  // Matches the [4-byte tag-length][UTF-8 GEDCOM tag text][image bytes] layout GedcomPhotoResidue
+  // encodes; hand-built here since Encode itself isn't visible outside Core.Gedcom.
+  private static byte[] BuildTaggedPhotoContent(string tagText, byte[] imageBytes)
+  {
+    var tagBytes = System.Text.Encoding.UTF8.GetBytes(tagText);
+    using var buffer = new MemoryStream();
+    buffer.Write(BitConverter.GetBytes(tagBytes.Length));
+    buffer.Write(tagBytes);
+    buffer.Write(imageBytes);
+    return buffer.ToArray();
+  }
+
+  [Fact]
+  public void PlainPhoto_EncodesItsRawBytes()
+  {
+    var photo = new Data(1, [1, 2, 3], "image/png", DataCategory.PersonMainPhoto);
+
+    var sources = MediaSourceUtils.BuildMediaSources([photo]);
+
+    Assert.Equal($"data:image/png;base64,{Convert.ToBase64String([1, 2, 3])}", sources[1]);
+  }
+
+  [Fact]
+  public void TaggedPhoto_StripsTheResidueEnvelopeBeforeEncoding()
+  {
+    var content = BuildTaggedPhotoContent("0 OBJE\n1 TITL A caption\n", [4, 5, 6]);
+    var photo = new Data(2, content, "image/jpeg", DataCategory.PersonMainPhotoTagged);
+
+    var sources = MediaSourceUtils.BuildMediaSources([photo]);
+
+    Assert.Equal($"data:image/jpeg;base64,{Convert.ToBase64String([4, 5, 6])}", sources[2]);
+  }
+
+  [Fact]
+  public void NotYetSavedPhoto_IsExcluded()
+  {
+    var photo = new Data(ElementId.NonCommittedId, [1, 2, 3], "image/png", DataCategory.PersonMainPhoto);
+
+    var sources = MediaSourceUtils.BuildMediaSources([photo]);
+
+    Assert.Empty(sources);
+  }
+}

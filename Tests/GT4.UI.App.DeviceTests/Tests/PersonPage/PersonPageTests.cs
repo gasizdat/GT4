@@ -132,6 +132,25 @@ public class PersonPageTests
   }
 
   [Fact]
+  public async Task Loading_a_person_with_a_main_photo_populates_MediaSources()
+  {
+    var services = new TestServices();
+    var content = BuildTaggedPhotoContent("0 OBJE\n1 TITL A caption\n", [1, 2, 3]);
+    var mainPhoto = new Data(10, content, "image/png", DataCategory.PersonMainPhotoTagged);
+    var person = CreateSamplePerson() with { MainPhoto = mainPhoto };
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+
+    var entry = Assert.Single(page.MediaSources);
+    Assert.Equal(10, entry.Key);
+    Assert.Equal($"data:image/png;base64,{Convert.ToBase64String([1, 2, 3])}", entry.Value);
+  }
+
+  [Fact]
   public async Task Loading_a_person_with_a_titled_attachment_shows_the_title_over_the_file_name()
   {
     var services = new TestServices();
@@ -457,6 +476,20 @@ public class PersonPageTests
 
     Assert.Equal(loadsBefore, page.CompletedLoads);
     Assert.Equal(person.Id, page.PersonFullInfo.Id);
+  }
+
+  [Fact]
+  public async Task AttachmentLinkTapped_with_a_dangling_id_is_inert()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson();
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+
+    await page.InvokeAttachmentLinkTappedAsync(999);
+
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
 
   [Fact]

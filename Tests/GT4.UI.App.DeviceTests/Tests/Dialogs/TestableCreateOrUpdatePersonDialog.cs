@@ -27,7 +27,8 @@ internal sealed class TestableCreateOrUpdatePersonDialog : CreateOrUpdatePersonD
     DataConverterResolver DataConverterFactory,
     SelectNameDialog.Factory SelectNameDialogFactory,
     SelectRelativesDialog.Factory SelectRelativesDialogFactory,
-    SelectPersonDialog.Factory SelectPersonDialogFactory)
+    SelectPersonDialog.Factory SelectPersonDialogFactory,
+    SelectMediaDialog.Factory SelectMediaDialogFactory)
     : CreateOrUpdatePersonDialog.Factory(
       CancellationTokenProvider,
       BiologicalSexFormatter,
@@ -39,7 +40,8 @@ internal sealed class TestableCreateOrUpdatePersonDialog : CreateOrUpdatePersonD
       DataConverterFactory,
       SelectNameDialogFactory,
       SelectRelativesDialogFactory,
-      SelectPersonDialogFactory)
+      SelectPersonDialogFactory,
+      SelectMediaDialogFactory)
   {
     public new TestableCreateOrUpdatePersonDialog Create(PersonFullInfo? person) =>
       new TestableCreateOrUpdatePersonDialog(this, person);
@@ -55,4 +57,6 @@ internal sealed class TestableCreateOrUpdatePersonDialog : CreateOrUpdatePersonD
   public Task InvokeEditPersonNameAsync(NameInfoItem name) => OnEditPersonNameAsync(name);
 
   public Task InvokeInsertLinkAsync() => OnInsertLinkAsync();
+
+  public Task InvokeInsertMediaLinkAsync() => OnInsertMediaLinkAsync();
 }

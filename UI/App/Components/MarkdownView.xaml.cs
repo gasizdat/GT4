@@ -1,9 +1,12 @@
+using GT4.UI.Utils;
 using Markdig;
 
 namespace GT4.UI.Components;
 
 public partial class MarkdownView : ContentView
 {
+  private static readonly IReadOnlyDictionary<int, string> EmptyMediaSources = new Dictionary<int, string>();
+
   private readonly MarkdownPipeline _MarkdownPipeline;
 
   public MarkdownView()
@@ -24,10 +27,22 @@ public partial class MarkdownView : ContentView
   public static readonly BindableProperty MarkdownProperty =
     BindableProperty.Create(nameof(Markdown), typeof(string), typeof(MarkdownView), default, BindingMode.OneWay, null, OnMarkdownChanged);
 
+  // Host-supplied id-to-data-URI map for "![caption](media:id)" references; keeps this view free of any
+  // project dependency (the host already resolves photo bytes for its own display, e.g. PersonPage).
+  public static readonly BindableProperty MediaSourcesProperty =
+    BindableProperty.Create(nameof(MediaSources), typeof(IReadOnlyDictionary<int, string>), typeof(MarkdownView),
+      EmptyMediaSources, BindingMode.OneWay, null, OnMediaSourcesChanged);
+
   public string? Markdown
   {
     get => (string?)GetValue(MarkdownProperty);
     set => SetValue(MarkdownProperty, value);
+  }
+
+  public IReadOnlyDictionary<int, string> MediaSources
+  {
+    get => (IReadOnlyDictionary<int, string>)GetValue(MediaSourcesProperty);
+    set => SetValue(MediaSourcesProperty, value);
   }
 
   public string HtmlContent => BuildHtmlDocument();
@@ -36,7 +51,19 @@ public partial class MarkdownView : ContentView
   // person lookup/navigation, so this view stays free of any project or navigation dependency.
   public event EventHandler<int>? PersonLinkTapped;
 
+  // Raised instead of navigating when a rendered [Name](attachment:123) link is tapped; the host page owns
+  // opening the referenced attachment, same reason as PersonLinkTapped.
+  public event EventHandler<int>? AttachmentLinkTapped;
+
   private static void OnMarkdownChanged(BindableObject obj, object oldValue, object newValue)
+  {
+    if (obj is MarkdownView view && oldValue != newValue)
+    {
+      view.OnPropertyChanged(nameof(HtmlContent));
+    }
+  }
+
+  private static void OnMediaSourcesChanged(BindableObject obj, object oldValue, object newValue)
   {
     if (obj is MarkdownView view && oldValue != newValue)
     {
@@ -53,6 +80,13 @@ public partial class MarkdownView : ContentView
     {
       e.Cancel = true;
       PersonLinkTapped?.Invoke(this, personId);
+      return;
+    }
+
+    if (TryParseAttachmentLink(e.Url, out var attachmentId))
+    {
+      e.Cancel = true;
+      AttachmentLinkTapped?.Invoke(this, attachmentId);
       return;
     }
 
@@ -86,6 +120,13 @@ public partial class MarkdownView : ContentView
     return url.StartsWith(prefix, StringComparison.Ordinal) && int.TryParse(url.AsSpan(prefix.Length), out personId);
   }
 
+  private static bool TryParseAttachmentLink(string url, out int attachmentId)
+  {
+    const string prefix = "attachment:";
+    attachmentId = 0;
+    return url.StartsWith(prefix, StringComparison.Ordinal) && int.TryParse(url.AsSpan(prefix.Length), out attachmentId);
+  }
+
   private async void OnWebViewNavigated(object sender, WebNavigatedEventArgs e)
   {
     if (e.Result != WebNavigationResult.Success) return;
@@ -111,7 +152,8 @@ public partial class MarkdownView : ContentView
   private string BuildHtmlDocument()
   {
     string bodyHtml = Markdown is null ? string.Empty : Markdig.Markdown.ToHtml(Markdown, _MarkdownPipeline);
-    
+    bodyHtml = MediaLinkUtils.RewriteMediaSources(bodyHtml, MediaSources);
+
     // Keep styling inline so it works offline on all platforms.
     // AppThemeBinding isn't available inside HTML, so we choose neutral colors.
     return

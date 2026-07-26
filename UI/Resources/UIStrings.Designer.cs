@@ -323,6 +323,24 @@ namespace GT4.UI.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Link Media.
+        /// </summary>
+        public static string BtnNameInsertMediaLink {
+            get {
+                return ResourceManager.GetString("BtnNameInsertMediaLink", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Photo {0}.
+        /// </summary>
+        public static string MediaLinkPhotoName_1 {
+            get {
+                return ResourceManager.GetString("MediaLinkPhotoName_1", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to No.
         /// </summary>
         public static string BtnNameNo {
@@ -2868,6 +2886,15 @@ namespace GT4.UI.Resources {
         public static string TitleSelectPersonDialog {
             get {
                 return ResourceManager.GetString("TitleSelectPersonDialog", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Select media.
+        /// </summary>
+        public static string TitleSelectMediaDialog {
+            get {
+                return ResourceManager.GetString("TitleSelectMediaDialog", resourceCulture);
             }
         }
 

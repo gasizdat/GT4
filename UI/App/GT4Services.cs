@@ -44,6 +44,7 @@ public class GT4Services
       .AddTransient<SelectNameDialog.Factory>()
       .AddTransient<SelectRelativesDialog.Factory>()
       .AddTransient<SelectPersonDialog.Factory>()
+      .AddTransient<SelectMediaDialog.Factory>()
       .AddTransient<CreateOrUpdatePersonDialog.Factory>();
   }
 
