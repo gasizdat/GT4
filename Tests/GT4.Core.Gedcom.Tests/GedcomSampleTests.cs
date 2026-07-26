@@ -605,6 +605,57 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task FamilyResidue_ReadsBackFromEitherSpouseSideOfTheMarriage()
+  {
+    // Issue #196: a couple's residue is keyed by the pair and carried on neither person, so nothing
+    // reachable from an individual led to it and none of it was ever shown. It is read from one spouse's
+    // side, and the key is ordered, so whichever of them asks gets the same rows.
+    const string ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n" +
+      "0 @I2@ INDI\n1 NAME Marie /Antoinette/\n1 SEX F\n" +
+      "0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n" +
+      "1 MARR\n2 DATE 16 MAY 1770\n2 PLAC Versailles\n" +
+      "1 DIV\n2 DATE 1793\n1 NCHI 4\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var byName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
+    var louis = byName["Louis Bourbon"];
+    var marie = byName["Marie Antoinette"];
+    Date?[] dates = [Date.Create(1770, 5, 16, DateStatus.WellKnown)];
+
+    var fromHusband = await GedcomFamilyResidue.ReadAsync(document, louis.Id, marie.Id, "Marie", dates, Token);
+    fromHusband!.Value.Should().Be("Marie");
+    fromHusband.Children.Select(c => c.Tag).Should().BeEquivalentTo(["DIV", "NCHI", "MARR"]);
+
+    var marriage = fromHusband.Children.Single(c => c.Tag == GedcomTags.Marriage);
+    marriage.Children.Select(c => c.Value).Should().Contain("Versailles");
+
+    var fromWife = await GedcomFamilyResidue.ReadAsync(document, marie.Id, louis.Id, "Louis", dates, Token);
+    fromWife!.Children.Select(c => c.Tag).Should().BeEquivalentTo(fromHusband.Children.Select(c => c.Tag));
+  }
+
+  [Fact]
+  public async Task CoupleWithNothingBeyondTheirEdges_HasNoFamilyResidueToShow()
+  {
+    const string ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n" +
+      "0 @I2@ INDI\n1 NAME Marie /Antoinette/\n1 SEX F\n" +
+      "0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n1 MARR\n2 DATE 16 MAY 1770\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var byName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
+    Date?[] dates = [Date.Create(1770, 5, 16, DateStatus.WellKnown)];
+    var fact = await GedcomFamilyResidue.ReadAsync(
+      document, byName["Louis Bourbon"].Id, byName["Marie Antoinette"].Id, "Marie", dates, Token);
+
+    fact.Should().BeNull();
+  }
+
+  [Fact]
   public async Task SingleParentFamilyResidue_IsKeyedByThatOneParent()
   {
     // A FAM with one parent and children is still regenerated on export, off a couple key with one id in it.

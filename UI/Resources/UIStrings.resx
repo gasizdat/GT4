@@ -1065,6 +1065,24 @@ FN - family name</value>
   <data name="GedcomTagCHAN" xml:space="preserve">
     <value>Last changed</value>
   </data>
+  <data name="GedcomTagFAM" xml:space="preserve">
+    <value>Marriage with</value>
+  </data>
+  <data name="GedcomTagMARR" xml:space="preserve">
+    <value>Marriage</value>
+  </data>
+  <data name="GedcomTagDIV" xml:space="preserve">
+    <value>Divorce</value>
+  </data>
+  <data name="GedcomTagENGA" xml:space="preserve">
+    <value>Engagement</value>
+  </data>
+  <data name="GedcomTagNCHI" xml:space="preserve">
+    <value>Number of children</value>
+  </data>
+  <data name="FieldGedcomFamilyDetails" xml:space="preserve">
+    <value>Family details</value>
+  </data>
   <data name="FieldFilterAny" xml:space="preserve">
     <value>Any</value>
   </data>

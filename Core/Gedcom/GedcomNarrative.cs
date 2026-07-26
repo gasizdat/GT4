@@ -16,7 +16,16 @@ public static class GedcomNarrative
       return [];
 
     var text = Encoding.UTF8.GetString(residue.Content);
-    var roots = await GedcomReader.ReadAsync(new StringReader(text), token);
+    return await ParseTextAsync(text, token);
+  }
+
+  // A couple's residue is stored as Metadata text rather than in a blob, so it arrives already decoded.
+  internal static async Task<GedcomFact[]> ParseTextAsync(string? residue, CancellationToken token)
+  {
+    if (string.IsNullOrEmpty(residue))
+      return [];
+
+    var roots = await GedcomReader.ReadAsync(new StringReader(residue), token);
     return [.. roots.Select(ToFact)];
   }
 

@@ -786,6 +786,15 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("FieldGedcomDetails", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Family details.
+        /// </summary>
+        public static string FieldGedcomFamilyDetails {
+            get {
+                return ResourceManager.GetString("FieldGedcomFamilyDetails", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to Last name.
@@ -1216,6 +1225,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Divorce.
+        /// </summary>
+        public static string GedcomTagDIV {
+            get {
+                return ResourceManager.GetString("GedcomTagDIV", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Description.
         /// </summary>
         public static string GedcomTagDSCR {
@@ -1252,11 +1270,29 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Engagement.
+        /// </summary>
+        public static string GedcomTagENGA {
+            get {
+                return ResourceManager.GetString("GedcomTagENGA", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Event.
         /// </summary>
         public static string GedcomTagEVEN {
             get {
                 return ResourceManager.GetString("GedcomTagEVEN", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Marriage with.
+        /// </summary>
+        public static string GedcomTagFAM {
+            get {
+                return ResourceManager.GetString("GedcomTagFAM", resourceCulture);
             }
         }
         
@@ -1324,6 +1360,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Marriage.
+        /// </summary>
+        public static string GedcomTagMARR {
+            get {
+                return ResourceManager.GetString("GedcomTagMARR", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Name.
         /// </summary>
         public static string GedcomTagNAME {
@@ -1350,6 +1395,15 @@ namespace GT4.UI.Resources {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to Number of children.
+        /// </summary>
+        public static string GedcomTagNCHI {
+            get {
+                return ResourceManager.GetString("GedcomTagNCHI", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Nickname.
         /// </summary>

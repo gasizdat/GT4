@@ -4,6 +4,7 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Components;
+using GT4.UI.Converters;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Utils.Formatters;
@@ -188,14 +189,12 @@ public partial class PersonPage : ContentPage
   public bool ShowBiography => !string.IsNullOrWhiteSpace(_Biography);
 
   // The biography block doubles as the home for the read-only GEDCOM details: the stored bio first, then
-  // the rendered residual tags, so a person carrying only imported GEDCOM data still shows the block.
-  private static string CombineBiography(string? bio, string? gedcomDetails)
+  // the person's own residual tags, then their couples', so a person carrying only imported GEDCOM data
+  // still shows the block.
+  private static string CombineBiography(params string?[] sections)
   {
-    if (string.IsNullOrWhiteSpace(gedcomDetails))
-      return bio ?? string.Empty;
-    if (string.IsNullOrWhiteSpace(bio))
-      return gedcomDetails;
-    return $"{bio}\n\n{gedcomDetails}";
+    var present = sections.Where(section => !string.IsNullOrWhiteSpace(section));
+    return string.Join("\n\n", present);
   }
 
   public Name FamilyName =>
@@ -328,6 +327,32 @@ public partial class PersonPage : ContentPage
     return new AttachmentInfo(fileName ?? string.Empty, title, data);
   }
 
+  /// <summary>
+  /// A couple's preserved GEDCOM tags are keyed by the pair rather than carried on either person, so they
+  /// are gathered from the spouse relationships instead of arriving on <see cref="PersonFullInfo"/> the way
+  /// the person's own residue does. Several marriages to one spouse are one couple and one block.
+  /// </summary>
+  private async Task<string?> ReadFamilyDetailsAsync(IProjectDocument project, PersonFullInfo person, CancellationToken token)
+  {
+    var spouses = person.RelativeInfos.Where(r => r.Type == RelationshipType.Spouse);
+    var couples = spouses.GroupBy(spouse => spouse.Id);
+    var facts = new List<GedcomFact>();
+
+    foreach (var couple in couples)
+    {
+      var spouse = couple.First();
+      var name = _NameFormatter.ToString(spouse, NameFormat.ShortPersonName);
+      var dates = couple.Select(marriage => marriage.Date);
+      var fact = await GedcomFamilyResidue.ReadAsync(project, person.Id, couple.Key, name, dates, token);
+      if (fact is not null)
+      {
+        facts.Add(fact);
+      }
+    }
+
+    return GedcomDataConverter.RenderFamilies([.. facts]);
+  }
+
   private async Task GetPersonDataAsync(Person person, bool addToNavigation)
   {
     try
@@ -342,7 +367,8 @@ public partial class PersonPage : ContentPage
       var gedcomTask = _GedcomConverter.ToObjectAsync(personFullInfo.GedcomData, token);
       var attachmentsTask = Task.WhenAll(
         personFullInfo.Attachments.Select(data => ToAttachmentInfoAsync(data, token)));
-      await Task.WhenAll(parentsTasks, stepChildrenTasks, bioTask, gedcomTask, attachmentsTask);
+      var familyTask = ReadFamilyDetailsAsync(project, personFullInfo, token);
+      await Task.WhenAll(parentsTasks, stepChildrenTasks, bioTask, gedcomTask, attachmentsTask, familyTask);
 
       var parents = parentsTasks.Result;
       var stepChildren = stepChildrenTasks.Result;
@@ -395,6 +421,7 @@ public partial class PersonPage : ContentPage
                  roots,
                  photos, captions, attachments, bioTask.Result as string,
                  gedcomTask.Result as string,
+                 familyTask.Result,
                  addToNavigation);
       }, _AlertService);
     }
@@ -446,13 +473,14 @@ public partial class PersonPage : ContentPage
                        AttachmentInfo[] attachments,
                        string? bio,
                        string? gedcomDetails,
+                       string? familyDetails,
                        bool addToNavigation)
   {
     _PersonFullInfo = personFullInfo;
     _Photos = photos;
     _Captions = captions;
     _Attachments = attachments;
-    _Biography = CombineBiography(bio, gedcomDetails);
+    _Biography = CombineBiography(bio, gedcomDetails, familyDetails);
     _AllRoots = roots;
     // Only after the new roots land: with the panel open, ResetFilterData re-fetches immediately,
     // snapshotting the page's current person set.
