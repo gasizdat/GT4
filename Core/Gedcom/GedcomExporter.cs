@@ -581,7 +581,8 @@ internal sealed class GedcomExporter : IGedcomExporter
     var patronymics = SelectNames(info, NameType.Patronymic, sex);
     var surname = SelectName(info, NameType.LastName, sex);
 
-    if (given is null && surname is null)
+    // A nameless person still had a NAME line if it carried sub-tags, so re-emitting one is faithful.
+    if (given is null && surname is null && residual.Count == 0)
       return null;
 
     var givenParts = new List<string>();
