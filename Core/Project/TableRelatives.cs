@@ -141,7 +141,9 @@ internal class TableRelatives : TableBase, ITableRelatives
     if (persons.Length == 0)
       return [];
 
-    var personIds = persons.Select(p => p.Id);
+    // Distinct: a caller holding two relationships with one person names them once per relationship, and
+    // the buckets are per person.
+    var personIds = persons.Select(p => p.Id).Distinct();
     var inClause = string.Join(",", personIds);
     var buckets = personIds.ToDictionary(id => id, _ => new List<Relative>());
 

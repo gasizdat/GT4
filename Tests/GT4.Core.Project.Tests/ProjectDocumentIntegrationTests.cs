@@ -732,6 +732,20 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task GetRelativesForPersons_RepeatedPerson_BucketsThemOnce()
+  {
+    // A person holding two relationships with the same person (two marriages, say) reaches this method as
+    // a list naming that person twice -- PersonPage passes its spouse rows straight through.
+    var person = await AddBarePersonAsync();
+    var spouse = await AddBarePersonAsync();
+    await _doc.Relatives.AddRelativesAsync(person, [new Relative(spouse, RelationshipType.Spouse, null)], Token);
+
+    var result = await _doc.Relatives.GetRelativesForPersonsAsync([spouse, spouse], Token);
+
+    result[spouse.Id].Should().ContainSingle().Which.Id.Should().Be(person.Id);
+  }
+
+  [Fact]
   public async Task GetRelativesForPersons_AdoptiveRelationship_FlipsCorrectly()
   {
     var adoptiveParent = await AddBarePersonAsync();
