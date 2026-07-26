@@ -67,7 +67,7 @@ internal sealed class GedcomImporter : IGedcomImporter
 
     var nameCache = existingNames.ToDictionary(n => (n.Value, n.Type, n.ParentId), n => n);
     var personByXref = new Dictionary<string, Person>();
-    var referencedMedia = new Dictionary<GedcomNode, Data>();
+    var referencedMedia = new Dictionary<GedcomNode, ReferencedMedia>();
 
     foreach (var individual in individuals)
     {
@@ -93,8 +93,9 @@ internal sealed class GedcomImporter : IGedcomImporter
       // Read once for both passes: the media pass surfaces the files, the family pass has to know which
       // OBJEs they came from so the residue does not keep a second, opaque copy of them.
       var attachments = SelectAttachments(family, [], mediaBasePath);
+      var referenced = SelectReferencedMedia(family, [], recordsByXref, mediaBasePath);
       await ImportFamilyAsync(document, family, personByXref, adoptedLinks, existingEdges, attachments, token);
-      await ImportFamilyMediaAsync(document, family, personByXref, matches, attachments, token);
+      await ImportFamilyMediaAsync(document, family, personByXref, matches, attachments, referenced, referencedMedia, token);
     }
 
     await ImportPassthroughRecordsAsync(document, records, token);
@@ -182,7 +183,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     Match match,
     GedcomNode individual,
     IReadOnlyDictionary<string, GedcomNode> recordsByXref,
-    Dictionary<GedcomNode, Data> referencedMedia,
+    Dictionary<GedcomNode, ReferencedMedia> referencedMedia,
     string? mediaBasePath,
     CancellationToken token)
   {
@@ -334,7 +335,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     GedcomNode individual,
     Dictionary<(string, NameType, int?), Name> nameCache,
     IReadOnlyDictionary<string, GedcomNode> recordsByXref,
-    Dictionary<GedcomNode, Data> referencedMedia,
+    Dictionary<GedcomNode, ReferencedMedia> referencedMedia,
     string? mediaBasePath,
     CancellationToken token)
   {
@@ -370,26 +371,48 @@ internal sealed class GedcomImporter : IGedcomImporter
   }
 
   /// <summary>
-  /// Links the media a person only points at, one shared <see cref="Data"/> row per referenced object: the
-  /// same source is commonly cited by many people, and the bytes behind it are the same bytes every time.
+  /// Links the media a person only points at. The same source is commonly cited by a person and by the
+  /// family they are a spouse in, so a media object already linked to them is skipped: the row is shared,
+  /// and PersonData is unique on (person, data).
   /// </summary>
   private static async Task AddReferencedMediaAsync(
     IProjectDocument document,
     Person person,
     AttachmentCandidate[] referenced,
-    Dictionary<GedcomNode, Data> committed,
+    Dictionary<GedcomNode, ReferencedMedia> committed,
     CancellationToken token)
   {
     foreach (var candidate in referenced)
     {
-      if (!committed.TryGetValue(candidate.Node, out var data))
-      {
-        var built = BuildAttachmentData(candidate);
-        data = await document.Data.AddDataAsync(built.Content, built.MimeType, built.Category, token);
-        committed[candidate.Node] = data;
-      }
-      await document.PersonData.AddPersonDataSetAsync(person, [data], token);
+      var shared = await SharedReferencedRowAsync(document, candidate, committed, token);
+      if (!shared.LinkedPersons.Add(person.Id))
+        continue;
+
+      await document.PersonData.AddPersonDataSetAsync(person, [shared.Data], token);
     }
+  }
+
+  // One committed row per referenced media object, plus who it is already linked to.
+  private sealed record ReferencedMedia(Data Data, HashSet<int> LinkedPersons);
+
+  /// <summary>
+  /// The one <see cref="Data"/> row standing for a referenced media object, committed on first use: the same
+  /// source is commonly cited by many people, and the bytes behind it are the same bytes every time.
+  /// </summary>
+  private static async Task<ReferencedMedia> SharedReferencedRowAsync(
+    IProjectDocument document,
+    AttachmentCandidate candidate,
+    Dictionary<GedcomNode, ReferencedMedia> committed,
+    CancellationToken token)
+  {
+    if (committed.TryGetValue(candidate.Node, out var shared))
+      return shared;
+
+    var built = BuildAttachmentData(candidate);
+    var data = await document.Data.AddDataAsync(built.Content, built.MimeType, built.Category, token);
+    shared = new ReferencedMedia(data, []);
+    committed[candidate.Node] = shared;
+    return shared;
   }
 
   /// <summary>
@@ -1116,7 +1139,9 @@ internal sealed class GedcomImporter : IGedcomImporter
   /// every file lands as an attachment regardless of format. GT4 has no family entity that holds media, so
   /// each file is committed once and linked to both resolved spouses, sharing the bytes rather than
   /// duplicating them. A matched spouse that already carries byte-identical content (a re-import of the same
-  /// source) is skipped, mirroring the INDI gap-fill dedup.
+  /// source) is skipped, mirroring the INDI gap-fill dedup. Media the family only points at — a marriage
+  /// source citation naming a top-level record — reaches the spouses the same way, skipping whoever already
+  /// took it through a citation of their own.
   /// </summary>
   private static async Task ImportFamilyMediaAsync(
     IProjectDocument document,
@@ -1124,6 +1149,8 @@ internal sealed class GedcomImporter : IGedcomImporter
     IReadOnlyDictionary<string, Person> personByXref,
     IReadOnlyDictionary<string, Match> matches,
     AttachmentCandidate[] attachments,
+    AttachmentCandidate[] referenced,
+    Dictionary<GedcomNode, ReferencedMedia> referencedMedia,
     CancellationToken token)
   {
     var husbandXref = family.ChildValue(GedcomTags.Husband);
@@ -1149,6 +1176,18 @@ internal sealed class GedcomImporter : IGedcomImporter
       foreach (var target in targets)
       {
         await document.PersonData.AddPersonDataSetAsync(target.Person!, [committed], token);
+      }
+    }
+
+    foreach (var candidate in referenced)
+    {
+      var shared = await SharedReferencedRowAsync(document, candidate, referencedMedia, token);
+      foreach (var spouse in spouses)
+      {
+        if (AlreadyHasContent(spouse.Xref, matches, shared.Data.Content) || !shared.LinkedPersons.Add(spouse.Person!.Id))
+          continue;
+
+        await document.PersonData.AddPersonDataSetAsync(spouse.Person!, [shared.Data], token);
       }
     }
   }
