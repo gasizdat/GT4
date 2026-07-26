@@ -170,6 +170,15 @@ on export; each `MARR`'s own unmodeled sub-tags (PLAC, SOUR, TYPE, a `Y`
 assertion, a DATE GT4 cannot parse) go under that key plus the marriage date,
 which is what distinguishes a couple's several marriages in the GT4 model.
 
+A couple can hold only one edge per date, because the `Relatives` primary key
+spans the date column — and the column holds the date's code, not its status, so
+`1770` and `ABT 1770` are one key too. The first `MARR` of each code keeps the
+edge; a later one is preserved whole under the family key instead (issues #188
+and #194) and re-emitted after the regenerated `CHIL` links rather than beside
+the event it repeats. What that costs is the ordering, not the content — except
+that two repeats with byte-identical sub-tags merge into one, since the residue
+row folds a root it already carries so a re-import stays a no-op.
+
 The exception is a FAM whose couple survives in no edge at all — the HUSB/WIFE-
 only records above, and a lone HUSB or WIFE with no children (kennedy's `@F24@`).
 No record is regenerated for those, so there is nothing to merge their residue
@@ -185,8 +194,7 @@ Two consequences of keying by the couple rather than by the record:
 - Several FAM records naming the same couple are one family to GT4, so their
   residue pools onto the single regenerated record — the `NOTE` of one and the
   `CHAN` of another come out together. Nothing is lost; what is lost is the
-  statement that the source kept them apart, the same shape as several dateless
-  `MARR` events collapsing into one.
+  statement that the source kept them apart.
 - Residue is stored whenever either spouse resolves, whether or not the couple
   ends up in an edge. A FAM of the dropped class above therefore leaves a row
   nothing reads — dead weight in the project rather than a leak, and it would

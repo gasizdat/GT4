@@ -148,20 +148,21 @@ internal sealed class GedcomImporter : IGedcomImporter
   /// <summary>
   /// The relationship edges the reused persons already have, so wiring can skip inserting a duplicate.
   /// Explicit dedup is required because a child edge stores a null date, and SQLite treats null
-  /// primary-key parts as distinct, so the PRIMARY KEY alone would not reject the duplicate.
+  /// primary-key parts as distinct, so the PRIMARY KEY alone would not reject the duplicate. Held by the
+  /// date's code, which is all the key column carries: a stored 1770 and an incoming ABT 1770 are one row.
   /// </summary>
-  private static async Task<HashSet<(int Owner, int Relative, RelationshipType Type, Date? Date)>> CollectExistingEdgesAsync(
+  private static async Task<HashSet<(int Owner, int Relative, RelationshipType Type, int? Date)>> CollectExistingEdgesAsync(
     IProjectDocument document,
     IEnumerable<Match> matches,
     CancellationToken token)
   {
-    var edges = new HashSet<(int, int, RelationshipType, Date?)>();
+    var edges = new HashSet<(int, int, RelationshipType, int?)>();
     foreach (var match in matches)
     {
       var relatives = await document.Relatives.GetRelativesAsync(match.Existing, token);
       foreach (var relative in relatives)
       {
-        edges.Add((match.Existing.Id, relative.Id, relative.Type, relative.Date));
+        edges.Add((match.Existing.Id, relative.Id, relative.Type, relative.Date?.Code));
       }
     }
 
@@ -805,7 +806,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     GedcomNode family,
     IReadOnlyDictionary<string, Person> personByXref,
     HashSet<(string Child, string Family)> adoptedLinks,
-    HashSet<(int Owner, int Relative, RelationshipType Type, Date? Date)> existingEdges,
+    HashSet<(int Owner, int Relative, RelationshipType Type, int? Date)> existingEdges,
     AttachmentCandidate[] attachments,
     CancellationToken token)
   {
@@ -827,12 +828,19 @@ internal sealed class GedcomImporter : IGedcomImporter
     // cannot fix it, because the exporter writes a bare "1 MARR" for a dateless edge, so importing such a
     // pair would assert a marriage the source never did. It needs a model that separates married from
     // partnered; the round-trip harness pins the loss against bourbon until then.
+    var repeatedMarriages = Array.Empty<GedcomNode>();
     if (husband is not null && wife is not null)
     {
-      var marriages = family.ChildrenWithTag(GedcomTags.Marriage).ToArray();
+      // A stored spouse row is keyed by the date's code alone, so a couple can hold one edge per code: the
+      // first event of each code keeps the edge and any later one is preserved whole as family residue.
+      // Grouping by the Date would let two dates sharing a code but differing in status through, and the
+      // second insert would then break the primary key.
+      var byDate = family.ChildrenWithTag(GedcomTags.Marriage).GroupBy(m => ParseSpouseDate(m)?.Code).ToArray();
+      var marriages = byDate.Select(g => g.First()).ToArray();
+      repeatedMarriages = [.. byDate.SelectMany(g => g.Skip(1))];
       var spouses = marriages
         .Select(m => new Relative(wife, RelationshipType.Spouse, ParseSpouseDate(m)))
-        .Where(s => !existingEdges.Contains((husband.Id, s.Id, s.Type, s.Date)))
+        .Where(s => !existingEdges.Contains((husband.Id, s.Id, s.Type, s.Date?.Code)))
         .ToArray();
       if (spouses.Length > 0)
       {
@@ -842,7 +850,7 @@ internal sealed class GedcomImporter : IGedcomImporter
       await StoreMarriageResidueAsync(document, marriages, husband, wife, consumed, token);
     }
 
-    await StoreFamilyResidueAsync(document, family, husband, wife, consumed, token);
+    await StoreFamilyResidueAsync(document, family, husband, wife, repeatedMarriages, consumed, token);
 
     if (children.Length == 0)
       return;
@@ -854,7 +862,7 @@ internal sealed class GedcomImporter : IGedcomImporter
 
       var childRelatives = children
         .Select(c => new Relative(c.Person, c.Adopted ? RelationshipType.AdoptiveChild : RelationshipType.Child, null))
-        .Where(r => !existingEdges.Contains((parent.Id, r.Id, r.Type, r.Date)))
+        .Where(r => !existingEdges.Contains((parent.Id, r.Id, r.Type, r.Date?.Code)))
         .ToArray();
       if (childRelatives.Length > 0)
       {
@@ -864,7 +872,8 @@ internal sealed class GedcomImporter : IGedcomImporter
   }
 
   // The FAM children GT4 rebuilds from its edge graph, so they are neither modeled nor preserved here. MARR
-  // is excluded because its residue is kept per event instead, keyed by the marriage date.
+  // is excluded because the event GT4 models keeps its residue per event instead, keyed by the marriage
+  // date; only a repeat of a date already modeled is passed in whole.
   private static readonly HashSet<string> ModeledFamilyTags =
     [GedcomTags.Husband, GedcomTags.Wife, GedcomTags.Child, GedcomTags.Marriage];
 
@@ -873,14 +882,16 @@ internal sealed class GedcomImporter : IGedcomImporter
 
   /// <summary>
   /// Preserves what a FAM record states beyond the edges GT4 rebuilds it from -- its CHAN, SOUR, DIV, ENGA,
-  /// NCHI and the like -- keyed by the couple, since the source's xref is renumbered on every export. A
-  /// family neither spouse resolved for is regenerated by nothing, so there is no key to hang it on.
+  /// NCHI and the like, plus the MARR events no edge could be stored for -- keyed by the couple, since the
+  /// source's xref is renumbered on every export. A family neither spouse resolved for is regenerated by
+  /// nothing, so there is no key to hang it on.
   /// </summary>
   private static async Task StoreFamilyResidueAsync(
     IProjectDocument document,
     GedcomNode family,
     Person? husband,
     Person? wife,
+    GedcomNode[] repeatedMarriages,
     GedcomNode[] consumed,
     CancellationToken token)
   {
@@ -889,6 +900,7 @@ internal sealed class GedcomImporter : IGedcomImporter
 
     var roots = family.Children
       .Where(child => !ModeledFamilyTags.Contains(child.Tag))
+      .Concat(repeatedMarriages)
       .Select(child => PruneConsumed(child, consumed))
       .OfType<GedcomNode>()
       .ToArray();
