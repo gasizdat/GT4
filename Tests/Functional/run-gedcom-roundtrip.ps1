@@ -50,10 +50,8 @@ param(
     'famous family trees\royalty\Yuan+Dynasty.ged',
     'pres\pres2020.ged'),
   [hashtable]$FidelityBaselines = @{
-    'sample-bourbon\bourbon.ged'        = @{ Differences = 34; Issues = 'issue #172' }
-    'pres\pres2020.ged'                 = @{ Differences = 126; Issues = 'issues #172, #204' }
-    'tudor\EnglishTudorRoyalFamily.ged' = @{ Differences = 2; Issues = 'issue #204' }
-    'queen\Queen.ged'                   = @{ Differences = 699; Issues = 'issue #204' }
+    'sample-bourbon\bourbon.ged' = @{ Differences = 34; Issues = 'issue #172' }
+    'pres\pres2020.ged'          = @{ Differences = 124; Issues = 'issue #172' }
   },
   [string]$WorkDir,
   [switch]$KeepArtifacts
