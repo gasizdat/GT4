@@ -45,6 +45,9 @@ internal static class GedcomTags
   // Marks an OBJE as a GT4 attachment rather than a photo, so an image-typed attachment (e.g. a
   // scanned JPEG) is not reclassified as a photo on reimport -- FORM/FILE alone can't tell them apart.
   public const string Attachment = "_ATTACH";
+  // Names the top-level OBJE record a person's media was read from, for media they own only by pointing
+  // at it. Never written to a file: the exporter re-emits the record and skips the copy it marks.
+  public const string ReferencedRecord = "_REF";
 
   // The _PRIM/_ATTACH value marking the OBJE that GT4 treats as the person's main (profile) photo,
   // respectively as an attachment.

@@ -39,12 +39,18 @@ Photos (OBJE) — partially modeled
 An inline INDI `OBJE` carrying an embedded base64 `BLOB` is imported into GT4's
 photo model (the `_PRIM Y` one, or the first, becomes the main photo; the rest
 are additional) and re-exported the same way, so photos round-trip self-contained
-inside the single .ged file. NOT modeled: a top-level `0 @M1@ OBJE` record and
-the pointers to it — the record is kept verbatim as a passthrough record above,
-so a pointer left in the residue still resolves, but its file becomes no photo or
-attachment — and `OBJE`s that only reference an external `FILE` GT4 cannot
-resolve; those fall through to the INDI residue passthrough below, so they
-survive verbatim but are not loaded as photos.
+inside the single .ged file. An `OBJE` pointer is followed to the top-level
+record it names, and on through whatever that record points at in turn, so a
+person owns the media their subtree can reach: a direct INDI-child pointer is a
+portrait like any direct child, one reached through a `SOUR` citation is
+documentary and lands as an attachment. Such media is shown but deliberately
+**not** re-emitted under the person — the record it was read from is written out
+whole among the passthrough records above, and the person's pointer to it
+survives in their residue, so the file carries the bytes once and a re-import
+derives the same media again. Not modelled either way: a `FAM`-level citation's
+media (a family's own inline `OBJE`s do reach both spouses), and an `OBJE` whose
+external `FILE` GT4 cannot resolve — the latter falls through to the INDI residue
+passthrough below, surviving verbatim but loaded as nothing.
 The embedded `BLOB` form is non-conformant to strict GEDCOM 5.5.1 (which expects
 external FILE references); it is chosen so the export stays a single shareable
 file and round-trips through GT4 itself.
