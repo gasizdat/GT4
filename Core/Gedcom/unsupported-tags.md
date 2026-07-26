@@ -43,16 +43,16 @@ inside the single .ged file. An `OBJE` pointer is followed to the top-level
 record it names, and on through whatever that record points at in turn, so a
 person owns the media their subtree can reach: a direct INDI-child pointer is a
 portrait like any direct child, one reached through a `SOUR` citation is
-documentary and lands as an attachment. Such media is shown but deliberately
-**not** re-emitted under the person — the record it was read from is written out
-whole among the passthrough records above, and the person's pointer to it
-survives in their residue, so the file carries the bytes once and a re-import
-derives the same media again. Not modelled either way: a `FAM`-level citation's
-media (a family's own inline `OBJE`s do reach both spouses), an `OBJE` whose
-external `FILE` GT4 cannot resolve — the latter falls through to the INDI residue
-passthrough below, surviving verbatim but loaded as nothing — and the second and
-later `FILE`s of a multi-file top-level record, which is kept verbatim rather
-than split the way an inline multi-file `OBJE` is.
+documentary and lands as an attachment. A `FAM`-level citation reaches both
+spouses, as a family's own inline `OBJE`s do. Such media is shown but
+deliberately **not** re-emitted under the person — the record it was read from is
+written out whole among the passthrough records above, and the pointer to it
+survives in the residue, so the file carries the bytes once and a re-import
+derives the same media again. Not modelled either way: an `OBJE` whose external
+`FILE` GT4 cannot resolve — it falls through to the INDI residue passthrough
+below, surviving verbatim but loaded as nothing — and the second and later
+`FILE`s of a multi-file top-level record, which is kept verbatim rather than
+split the way an inline multi-file `OBJE` is.
 The embedded `BLOB` form is non-conformant to strict GEDCOM 5.5.1 (which expects
 external FILE references); it is chosen so the export stays a single shareable
 file and round-trips through GT4 itself.

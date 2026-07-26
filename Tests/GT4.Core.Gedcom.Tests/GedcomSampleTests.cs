@@ -1221,6 +1221,50 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task FamilyCitedObjectRecord_ReachesBothSpousesExactlyOnce()
+  {
+    var mediaDir = Path.Combine(Path.GetTempPath(), $"gt4_media_{Guid.NewGuid():N}");
+    Directory.CreateDirectory(Path.Combine(mediaDir, "actes"));
+    await File.WriteAllBytesAsync(Path.Combine(mediaDir, "actes", "mariage.jpg"), new byte[] { 1, 2, 3 }, Token);
+    try
+    {
+      // The couple's marriage cites @S1@, and so does Louis on his own: he must not end up with the
+      // certificate twice, and Marie -- who cites nothing herself -- must still get it.
+      var ged =
+        "0 HEAD\n1 CHAR UTF-8\n" +
+        "0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n1 BIRT\n2 DATE 23 AUG 1754\n2 SOUR @S1@\n" +
+        "0 @I2@ INDI\n1 NAME Marie /Antoinette/\n1 SEX F\n" +
+        "0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n1 MARR\n2 DATE 16 MAY 1770\n2 SOUR @S1@\n" +
+        "0 @S1@ SOUR\n1 TITL Registre\n1 OBJE @M1@\n" +
+        "0 @M1@ OBJE\n1 FILE actes/mariage.jpg\n2 FORM jpg\n0 TRLR\n";
+      await using var document = await NewDocumentAsync();
+      await _importer.ImportAsync(document, new StringReader(ged), Token, mediaDir);
+
+      var byName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
+      var louis = await document.PersonManager.GetPersonFullInfoAsync(byName["Louis Bourbon"], Token);
+      var marie = await document.PersonManager.GetPersonFullInfoAsync(byName["Marie Antoinette"], Token);
+      var louisAttachment = louis.Attachments.Should().ContainSingle().Which;
+      var marieAttachment = marie.Attachments.Should().ContainSingle().Which;
+      marieAttachment.Id.Should().Be(louisAttachment.Id);
+
+      // Re-importing the same source adds nothing: both spouses already carry those bytes.
+      await _importer.ImportAsync(document, new StringReader(ged), Token, mediaDir);
+      var reimportedLouis = await document.PersonManager.GetPersonFullInfoAsync(byName["Louis Bourbon"], Token);
+      var reimportedMarie = await document.PersonManager.GetPersonFullInfoAsync(byName["Marie Antoinette"], Token);
+      reimportedLouis.Attachments.Should().ContainSingle();
+      reimportedMarie.Attachments.Should().ContainSingle();
+
+      var text = await ExportToTextAsync(document);
+      text.Should().Contain("0 @M1@ OBJE").And.Contain("2 SOUR @S1@");
+      text.Should().NotContain(GedcomTags.Blob).And.NotContain(GedcomTags.ReferencedRecord);
+    }
+    finally
+    {
+      Directory.Delete(mediaDir, recursive: true);
+    }
+  }
+
+  [Fact]
   public async Task IndividualObjectPointer_ResolvesToThePersonsPhoto()
   {
     var mediaDir = Path.Combine(Path.GetTempPath(), $"gt4_media_{Guid.NewGuid():N}");
