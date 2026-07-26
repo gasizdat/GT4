@@ -569,6 +569,39 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     var family = (await FamiliesInAsync(text)).Should().ContainSingle().Which;
     var marriages = family.ChildrenWithTag(GedcomTags.Marriage).ToArray();
     marriages.Select(m => m.ChildValue(GedcomTags.Date)).Should().BeEquivalentTo(["1770", "ABT 1770"]);
+
+    // The repeat carries a DATE, the one sub-tag the modeled event owns, so its residue is the shape most
+    // at risk of being re-read as something other than what was stored.
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    var reexported = await ExportToTextAsync(reimported);
+    reexported.Should().Be(text);
+  }
+
+  [Fact]
+  public async Task MarriageMergedOntoAnEdgeDatedTheSameCode_AddsNoSecondEdge()
+  {
+    // The other half of #194: the screen that keeps a merge import from re-adding an edge the project
+    // already holds compares the date it stored, and the stored date is a code without its status -- so an
+    // incoming ABT 1770 has to recognize the 1770 already there or its insert breaks the primary key.
+    const string first =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n" +
+      "0 @I2@ INDI\n1 NAME Marie /Antoinette/\n1 SEX F\n" +
+      "0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n1 MARR\n2 DATE 1770\n0 TRLR\n";
+    const string second =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n" +
+      "0 @I2@ INDI\n1 NAME Marie /Antoinette/\n1 SEX F\n" +
+      "0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n1 MARR\n2 DATE ABT 1770\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(first), Token);
+    await _importer.ImportAsync(document, new StringReader(second), Token);
+
+    var text = await ExportToTextAsync(document);
+    var family = (await FamiliesInAsync(text)).Should().ContainSingle().Which;
+    var marriage = family.ChildrenWithTag(GedcomTags.Marriage).Should().ContainSingle().Which;
+    marriage.ChildValue(GedcomTags.Date).Should().Be("1770");
   }
 
   [Fact]

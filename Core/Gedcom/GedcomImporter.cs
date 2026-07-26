@@ -148,20 +148,21 @@ internal sealed class GedcomImporter : IGedcomImporter
   /// <summary>
   /// The relationship edges the reused persons already have, so wiring can skip inserting a duplicate.
   /// Explicit dedup is required because a child edge stores a null date, and SQLite treats null
-  /// primary-key parts as distinct, so the PRIMARY KEY alone would not reject the duplicate.
+  /// primary-key parts as distinct, so the PRIMARY KEY alone would not reject the duplicate. Held by the
+  /// date's code, which is all the key column carries: a stored 1770 and an incoming ABT 1770 are one row.
   /// </summary>
-  private static async Task<HashSet<(int Owner, int Relative, RelationshipType Type, Date? Date)>> CollectExistingEdgesAsync(
+  private static async Task<HashSet<(int Owner, int Relative, RelationshipType Type, int? Date)>> CollectExistingEdgesAsync(
     IProjectDocument document,
     IEnumerable<Match> matches,
     CancellationToken token)
   {
-    var edges = new HashSet<(int, int, RelationshipType, Date?)>();
+    var edges = new HashSet<(int, int, RelationshipType, int?)>();
     foreach (var match in matches)
     {
       var relatives = await document.Relatives.GetRelativesAsync(match.Existing, token);
       foreach (var relative in relatives)
       {
-        edges.Add((match.Existing.Id, relative.Id, relative.Type, relative.Date));
+        edges.Add((match.Existing.Id, relative.Id, relative.Type, relative.Date?.Code));
       }
     }
 
@@ -805,7 +806,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     GedcomNode family,
     IReadOnlyDictionary<string, Person> personByXref,
     HashSet<(string Child, string Family)> adoptedLinks,
-    HashSet<(int Owner, int Relative, RelationshipType Type, Date? Date)> existingEdges,
+    HashSet<(int Owner, int Relative, RelationshipType Type, int? Date)> existingEdges,
     AttachmentCandidate[] attachments,
     CancellationToken token)
   {
@@ -839,7 +840,7 @@ internal sealed class GedcomImporter : IGedcomImporter
       repeatedMarriages = [.. byDate.SelectMany(g => g.Skip(1))];
       var spouses = marriages
         .Select(m => new Relative(wife, RelationshipType.Spouse, ParseSpouseDate(m)))
-        .Where(s => !existingEdges.Contains((husband.Id, s.Id, s.Type, s.Date)))
+        .Where(s => !existingEdges.Contains((husband.Id, s.Id, s.Type, s.Date?.Code)))
         .ToArray();
       if (spouses.Length > 0)
       {
@@ -861,7 +862,7 @@ internal sealed class GedcomImporter : IGedcomImporter
 
       var childRelatives = children
         .Select(c => new Relative(c.Person, c.Adopted ? RelationshipType.AdoptiveChild : RelationshipType.Child, null))
-        .Where(r => !existingEdges.Contains((parent.Id, r.Id, r.Type, r.Date)))
+        .Where(r => !existingEdges.Contains((parent.Id, r.Id, r.Type, r.Date?.Code)))
         .ToArray();
       if (childRelatives.Length > 0)
       {
