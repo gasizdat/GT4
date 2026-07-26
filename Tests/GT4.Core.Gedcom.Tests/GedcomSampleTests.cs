@@ -683,6 +683,33 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task RepeatedValuelessEvent_StaysASecondEventInsteadOfPoolingItsSubTags()
+  {
+    // The sibling of RepeatedOwnedTag_SecondNameAndNoteSurviveRoundTrip, for a repeat that states nothing of
+    // its own: a second BIRT whose only children are unmodeled is indistinguishable from the first BIRT's
+    // residual by content alone, and pooling the two would claim one birth recorded twice over.
+    const string ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME Elizabeth /Tudor/\n1 SEX F\n" +
+      "1 BIRT\n2 DATE 7 SEP 1533\n2 RIN MH:IF1156\n" +
+      "1 BIRT\n2 RIN MH:IF2054\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var text = await ExportToTextAsync(document);
+    var lines = text.Split('\n');
+    lines.Count(line => line.StartsWith("1 BIRT", StringComparison.Ordinal)).Should().Be(2);
+    lines.Count(line => line.StartsWith("2 RIN MH:IF1156", StringComparison.Ordinal)).Should().Be(1);
+    lines.Count(line => line.StartsWith("2 RIN MH:IF2054", StringComparison.Ordinal)).Should().Be(1);
+
+    // The grouping is stable, not just preserved once: the second hop must not fold them back together.
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    var reexported = await ExportToTextAsync(reimported);
+    reexported.Should().Be(text);
+  }
+
+  [Fact]
   public async Task NotePointer_ResolvedToTextWhereverItSits()
   {
     // GT4 keeps no top-level NOTE record, so a pointer replayed out of residue would reference a record the
