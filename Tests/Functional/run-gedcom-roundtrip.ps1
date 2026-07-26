@@ -44,6 +44,7 @@ param(
     'sample-kennedy\kennedy.ged',
     'sample-bourbon\bourbon.ged',
     'tudor\EnglishTudorRoyalFamily.ged',
+    'ivar\IvarKingOfDublin.ged',
     'famous family trees\corporations\Cisco+Systems,+Inc.ged',
     'famous family trees\royalty\Yuan+Dynasty.ged',
     'pres\pres2020.ged'),

@@ -347,6 +347,39 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     reexported.Should().Be(text);
   }
 
+  [Fact]
+  public async Task NamelessPerson_KeepsTheSubTagsOfTheirEmptyName()
+  {
+    // A NAME with neither given name nor surname still is a NAME line, and it can carry unmodeled sub-tags.
+    // Export has no name parts to rebuild the node from, so the residual sub-tags are what keeps it alive.
+    const string ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME  //\n2 SOUR @S2@\n1 SEX F\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var text = await ExportToTextAsync(document);
+    text.Should().Contain("1 NAME").And.Contain("2 SOUR @S2@");
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    var reexported = await ExportToTextAsync(reimported);
+    reexported.Should().Be(text);
+  }
+
+  [Fact]
+  public async Task NamelessPersonWithNothingToKeep_EmitsNoName()
+  {
+    const string ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME  //\n1 SEX F\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var text = await ExportToTextAsync(document);
+    text.Should().NotContain("1 NAME");
+  }
+
   // The couple's residue key, as the importer derived it from the two spouses it resolved.
   private static async Task<string> FamilyKeyAsync(ProjectDocument document, string husband, string wife)
   {
