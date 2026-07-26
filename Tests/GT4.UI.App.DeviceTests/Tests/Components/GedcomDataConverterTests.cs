@@ -1,3 +1,4 @@
+using GT4.Core.Gedcom;
 using GT4.Core.Project.Dto;
 using GT4.UI.Converters;
 using GT4.UI.Resources;
@@ -36,6 +37,39 @@ public class GedcomDataConverterTests
     {
       UIStrings.Culture = previousCulture;
     }
+  }
+
+  private static string? RenderFamilies(params GedcomFact[] facts)
+  {
+    var previousCulture = UIStrings.Culture;
+    UIStrings.Culture = CultureInfo.InvariantCulture;
+    try
+    {
+      return GedcomDataConverter.RenderFamilies(facts);
+    }
+    finally
+    {
+      UIStrings.Culture = previousCulture;
+    }
+  }
+
+  [Fact]
+  public void RenderFamilies_returns_null_when_no_couple_had_anything_to_show()
+  {
+    Assert.Null(RenderFamilies());
+  }
+
+  [Fact]
+  public void RenderFamilies_heads_its_own_block_and_names_the_spouse()
+  {
+    var divorce = new GedcomFact("DIV", null, [new GedcomFact("DATE", "1793", [])]);
+    var couple = new GedcomFact("FAM", "Marie Antoinette", [divorce]);
+
+    var markdown = RenderFamilies(couple);
+
+    Assert.StartsWith("## Family details\n\n", markdown);
+    Assert.Contains("- **Marriage with**: Marie Antoinette\n", markdown);
+    Assert.Contains("  - Divorce\n    - Date: 1793\n", markdown);
   }
 
   [Fact]
