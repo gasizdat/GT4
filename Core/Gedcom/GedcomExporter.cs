@@ -480,6 +480,16 @@ internal sealed class GedcomExporter : IGedcomExporter
   }
 
   /// <summary>
+  /// Media the person owns only by pointing at it (<see cref="GedcomTags.ReferencedRecord"/>) is shown in GT4
+  /// but never re-emitted here: the top-level record it was read from is written out whole by
+  /// <see cref="WritePassthroughRecordsAsync"/>, and the person's own pointer to it survives in their residue,
+  /// so a copy under the INDI would duplicate the bytes the export already carries. A re-import derives it
+  /// again from the same record.
+  /// </summary>
+  private static bool IsReferenced(GedcomNode? residual) =>
+    residual?.Child(GedcomTags.ReferencedRecord) is not null;
+
+  /// <summary>
   /// Emits a GT4 photo as an embedded multimedia object: an <c>OBJE</c> carrying the format (from the
   /// MIME type), a <c>_PRIM Y</c> marker on the main photo, and the image bytes base64-encoded into a
   /// <c>BLOB</c> the writer auto-chunks across CONC lines. This is the form <see cref="GedcomImporter"/>
@@ -499,6 +509,8 @@ internal sealed class GedcomExporter : IGedcomExporter
     {
       (imageBytes, residual) = await GedcomPhotoResidue.DecodeAsync(photo.Content, token);
     }
+    if (IsReferenced(residual))
+      return;
 
     var obje = new GedcomNode { Tag = GedcomTags.Object };
     var form = GedcomMedia.ToForm(photo.MimeType);
@@ -530,6 +542,8 @@ internal sealed class GedcomExporter : IGedcomExporter
   private static async Task AddAttachmentAsync(GedcomNode individual, Data attachment, CancellationToken token)
   {
     var (bytes, residual) = await GedcomPhotoResidue.DecodeAsync(attachment.Content, token);
+    if (IsReferenced(residual))
+      return;
 
     var obje = new GedcomNode { Tag = GedcomTags.Object };
     var form = GedcomMedia.ToForm(attachment.MimeType);

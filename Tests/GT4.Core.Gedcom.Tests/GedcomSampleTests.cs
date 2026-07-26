@@ -1174,6 +1174,114 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task SourceCitedObjectRecord_ImportedAsAttachmentAndLeftToItsRecordOnExport()
+  {
+    var mediaDir = Path.Combine(Path.GetTempPath(), $"gt4_media_{Guid.NewGuid():N}");
+    Directory.CreateDirectory(Path.Combine(mediaDir, "documents"));
+    await File.WriteAllBytesAsync(Path.Combine(mediaDir, "documents", "register.jpg"), new byte[] { 1, 2, 3 }, Token);
+    try
+    {
+      // Both people own this scan through two pointers: their birth cites @S1@, which references @M1@.
+      var ged =
+        "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Robert /Williams/\n1 SEX M\n1 BIRT\n2 DATE 2 OCT 1822\n2 SOUR @S1@\n" +
+        "0 @I2@ INDI\n1 NAME Sarah /Williams/\n1 SEX F\n1 BIRT\n2 DATE 4 JUN 1825\n2 SOUR @S1@\n" +
+        "0 @S1@ SOUR\n1 TITL County Records\n1 OBJE @M1@\n" +
+        "0 @M1@ OBJE\n1 FILE documents/register.jpg\n2 FORM jpg\n2 TITL Register, 1822\n0 TRLR\n";
+      await using var document = await NewDocumentAsync();
+      await _importer.ImportAsync(document, new StringReader(ged), Token, mediaDir);
+
+      var byName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
+      var full = await document.PersonManager.GetPersonFullInfoAsync(byName["Robert Williams"], Token);
+      var attachment = full.Attachments.Should().ContainSingle().Which;
+      var fileName = await GedcomPhotoResidue.ExtractFileNameAsync(attachment, Token);
+      fileName.Should().Be("documents/register.jpg");
+
+      // One row for the record, linked to everyone citing it, however many that is.
+      var sarah = await document.PersonManager.GetPersonFullInfoAsync(byName["Sarah Williams"], Token);
+      var sarahAttachment = sarah.Attachments.Should().ContainSingle().Which;
+      sarahAttachment.Id.Should().Be(attachment.Id);
+
+      // Displayed, but not written back under the person: the record it was read from is re-emitted whole
+      // and the citation reaching it survives in the residue, so the bytes are in the file exactly once.
+      var text = await ExportToTextAsync(document);
+      text.Should().Contain("0 @M1@ OBJE").And.Contain("1 FILE documents/register.jpg").And.Contain("2 SOUR @S1@");
+      text.Should().NotContain(GedcomTags.Attachment).And.NotContain(GedcomTags.Blob).And.NotContain(GedcomTags.ReferencedRecord);
+
+      // Re-importing that export re-derives the same one attachment rather than accumulating a second.
+      await using var reimported = await NewDocumentAsync();
+      await _importer.ImportAsync(reimported, new StringReader(text), Token, mediaDir);
+      var reimportedByName = await GedcomTestGraph.PersonsByNameAsync(reimported, Token);
+      var reimportedFull = await reimported.PersonManager.GetPersonFullInfoAsync(reimportedByName["Robert Williams"], Token);
+      reimportedFull.Attachments.Should().ContainSingle();
+    }
+    finally
+    {
+      Directory.Delete(mediaDir, recursive: true);
+    }
+  }
+
+  [Fact]
+  public async Task IndividualObjectPointer_ResolvesToThePersonsPhoto()
+  {
+    var mediaDir = Path.Combine(Path.GetTempPath(), $"gt4_media_{Guid.NewGuid():N}");
+    Directory.CreateDirectory(Path.Combine(mediaDir, "photos"));
+    await File.WriteAllBytesAsync(Path.Combine(mediaDir, "photos", "robert.jpg"), new byte[] { 4, 5, 6 }, Token);
+    try
+    {
+      // A direct INDI child stays a portrait whether it names the file itself or points at the record that
+      // does -- the position decides, exactly as for an inline OBJE.
+      var ged =
+        "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Robert /Williams/\n1 SEX M\n1 OBJE @M1@\n" +
+        "0 @M1@ OBJE\n1 FILE photos/robert.jpg\n2 FORM jpg\n0 TRLR\n";
+      await using var document = await NewDocumentAsync();
+      await _importer.ImportAsync(document, new StringReader(ged), Token, mediaDir);
+
+      var byName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
+      var full = await document.PersonManager.GetPersonFullInfoAsync(byName["Robert Williams"], Token);
+      full.MainPhoto.Should().NotBeNull();
+      full.Attachments.Should().BeEmpty();
+
+      var text = await ExportToTextAsync(document);
+      text.Should().Contain("0 @M1@ OBJE").And.Contain("1 OBJE @M1@");
+      text.Should().NotContain(GedcomTags.Blob).And.NotContain(GedcomTags.ReferencedRecord);
+    }
+    finally
+    {
+      Directory.Delete(mediaDir, recursive: true);
+    }
+  }
+
+  [Fact]
+  public async Task ReferencedMainPhotoBesideAnInlineOne_ExportsTheSameTwice()
+  {
+    var mediaDir = Path.Combine(Path.GetTempPath(), $"gt4_media_{Guid.NewGuid():N}");
+    Directory.CreateDirectory(Path.Combine(mediaDir, "photos"));
+    await File.WriteAllBytesAsync(Path.Combine(mediaDir, "photos", "robert.jpg"), new byte[] { 4, 5, 6 }, Token);
+    try
+    {
+      // The referenced portrait comes first, so it is the main photo -- and the one the export leaves out.
+      // Whatever it emits instead must survive its own re-import unchanged, or a round-trip never settles.
+      var ged =
+        "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Robert /Williams/\n1 SEX M\n1 OBJE @M1@\n" +
+        "1 OBJE\n2 FORM jpg\n2 BLOB AQID\n" +
+        "0 @M1@ OBJE\n1 FILE photos/robert.jpg\n2 FORM jpg\n0 TRLR\n";
+      await using var document = await NewDocumentAsync();
+      await _importer.ImportAsync(document, new StringReader(ged), Token, mediaDir);
+      var first = await ExportToTextAsync(document);
+
+      await using var reimported = await NewDocumentAsync();
+      await _importer.ImportAsync(reimported, new StringReader(first), Token, mediaDir);
+      var second = await ExportToTextAsync(reimported);
+
+      second.Should().Be(first);
+    }
+    finally
+    {
+      Directory.Delete(mediaDir, recursive: true);
+    }
+  }
+
+  [Fact]
   public async Task FileReferenceObje_FallsBackToResidue()
   {
     // A third-party OBJE that points at an external FILE has no bytes GT4 can load, so it is not a photo;

@@ -29,6 +29,12 @@ internal sealed class GedcomImporter : IGedcomImporter
     var individuals = records.Where(r => r.Tag == GedcomTags.Individual).ToArray();
     var families = records.Where(r => r.Tag == GedcomTags.Family).ToArray();
 
+    // The records a person can reach by pointer. INDI and FAM are excluded: citing a person is not owning
+    // their media, and a family's own OBJEs already land on its spouses.
+    var recordsByXref = records
+      .Where(r => r.Xref is not null && r.Tag is not (GedcomTags.Individual or GedcomTags.Family))
+      .ToDictionary(r => r.Xref!, r => r);
+
     // A source may pack several files under one OBJE; GT4 models one file per media object, so each -- on
     // an individual or nested in a family's marriage record -- is normalized up front into single-file OBJEs
     // before any photo/attachment/residue pass runs. NOTE pointers are inlined in the same sweep, so every
@@ -61,6 +67,7 @@ internal sealed class GedcomImporter : IGedcomImporter
 
     var nameCache = existingNames.ToDictionary(n => (n.Value, n.Type, n.ParentId), n => n);
     var personByXref = new Dictionary<string, Person>();
+    var referencedMedia = new Dictionary<GedcomNode, Data>();
 
     foreach (var individual in individuals)
     {
@@ -68,11 +75,11 @@ internal sealed class GedcomImporter : IGedcomImporter
       if (individual.Xref is not null && matches.TryGetValue(individual.Xref, out var match))
       {
         person = match.Existing;
-        await GapFillAsync(document, match, individual, mediaBasePath, token);
+        await GapFillAsync(document, match, individual, recordsByXref, referencedMedia, mediaBasePath, token);
       }
       else
       {
-        person = await ImportIndividualAsync(document, individual, nameCache, mediaBasePath, token);
+        person = await ImportIndividualAsync(document, individual, nameCache, recordsByXref, referencedMedia, mediaBasePath, token);
       }
 
       if (individual.Xref is not null)
@@ -174,15 +181,18 @@ internal sealed class GedcomImporter : IGedcomImporter
     IProjectDocument document,
     Match match,
     GedcomNode individual,
+    IReadOnlyDictionary<string, GedcomNode> recordsByXref,
+    Dictionary<GedcomNode, Data> referencedMedia,
     string? mediaBasePath,
     CancellationToken token)
   {
     var full = match.Full;
     var additions = new List<Data>();
 
-    var photos = SelectPhotos(individual, mediaBasePath);
+    var photos = SelectPhotos(individual, recordsByXref, mediaBasePath);
     GedcomNode[] photoNodes = [.. photos.Select(p => p.Node)];
     var attachments = SelectAttachments(individual, photoNodes, mediaBasePath);
+    var referenced = SelectReferencedMedia(individual, photoNodes, recordsByXref, mediaBasePath);
     // Photos/attachments are added only when the person has none of that kind; otherwise these OBJEs stay
     // unconsumed and fall through to residue instead of being dropped.
     var addingPhotos = full.MainPhoto is null && full.AdditionalPhotos.Length == 0;
@@ -222,6 +232,11 @@ internal sealed class GedcomImporter : IGedcomImporter
     if (additions.Count > 0)
     {
       await document.PersonData.AddPersonDataSetAsync(match.Existing, [.. additions], token);
+    }
+
+    if (addingAttachments)
+    {
+      await AddReferencedMediaAsync(document, match.Existing, referenced, referencedMedia, token);
     }
 
     if (full.GedcomData is not null && incomingResidue.Count > 0)
@@ -318,15 +333,20 @@ internal sealed class GedcomImporter : IGedcomImporter
     IProjectDocument document,
     GedcomNode individual,
     Dictionary<(string, NameType, int?), Name> nameCache,
+    IReadOnlyDictionary<string, GedcomNode> recordsByXref,
+    Dictionary<GedcomNode, Data> referencedMedia,
     string? mediaBasePath,
     CancellationToken token)
   {
     var sex = GedcomMapping.ParseSex(individual.ChildValue(GedcomTags.Sex));
     var names = await BuildNamesAsync(document, individual, sex, nameCache, token);
     var biography = BuildBiography(individual);
-    var photos = SelectPhotos(individual, mediaBasePath);
+    var photos = SelectPhotos(individual, recordsByXref, mediaBasePath);
     GedcomNode[] photoNodes = [.. photos.Select(p => p.Node)];
     var attachments = SelectAttachments(individual, photoNodes, mediaBasePath);
+    var referenced = SelectReferencedMedia(individual, photoNodes, recordsByXref, mediaBasePath);
+    // Only what the individual's own subtree holds is consumed out of its residue -- never a referenced
+    // record's node: the pointer to it has to stay there for the re-emitted record to be reachable.
     GedcomNode[] consumedNodes = [.. photoNodes, .. attachments.Select(a => a.Node)];
     var (mainPhoto, additionalPhotos) = BuildPhotos(photos);
 
@@ -344,7 +364,32 @@ internal sealed class GedcomImporter : IGedcomImporter
     };
 
     var added = await document.PersonManager.AddPersonAsync(toAdd, token);
-    return new Person(added.Id, added.BirthDate, added.DeathDate, added.BiologicalSex);
+    var person = new Person(added.Id, added.BirthDate, added.DeathDate, added.BiologicalSex);
+    await AddReferencedMediaAsync(document, person, referenced, referencedMedia, token);
+    return person;
+  }
+
+  /// <summary>
+  /// Links the media a person only points at, one shared <see cref="Data"/> row per referenced object: the
+  /// same source is commonly cited by many people, and the bytes behind it are the same bytes every time.
+  /// </summary>
+  private static async Task AddReferencedMediaAsync(
+    IProjectDocument document,
+    Person person,
+    AttachmentCandidate[] referenced,
+    Dictionary<GedcomNode, Data> committed,
+    CancellationToken token)
+  {
+    foreach (var candidate in referenced)
+    {
+      if (!committed.TryGetValue(candidate.Node, out var data))
+      {
+        var built = BuildAttachmentData(candidate);
+        data = await document.Data.AddDataAsync(built.Content, built.MimeType, built.Category, token);
+        committed[candidate.Node] = data;
+      }
+      await document.PersonData.AddPersonDataSetAsync(person, [data], token);
+    }
   }
 
   /// <summary>
@@ -531,12 +576,32 @@ internal sealed class GedcomImporter : IGedcomImporter
   /// be obtained — a non-image, an unfound or unreadable FILE, or a corrupt BLOB — is likewise not a photo,
   /// so a single bad image never aborts the all-or-nothing import.
   /// </summary>
-  private PhotoCandidate[] SelectPhotos(GedcomNode individual, string? mediaBasePath) =>
+  private PhotoCandidate[] SelectPhotos(
+    GedcomNode individual,
+    IReadOnlyDictionary<string, GedcomNode> recordsByXref,
+    string? mediaBasePath) =>
     individual.ChildrenWithTag(GedcomTags.Object)
+      .Select(o => ResolveMedia(o, recordsByXref))
       .Select(o => TryReadPhoto(o, mediaBasePath))
       .Where(p => p is not null)
       .Select(p => p!)
       .ToArray();
+
+  /// <summary>The top-level <c>OBJE</c> record an <c>OBJE</c> pointer names, so the media passes read a
+  /// referenced object exactly as they read an inline one; a node that points at nothing stays itself.</summary>
+  private static GedcomNode ResolveMedia(GedcomNode obje, IReadOnlyDictionary<string, GedcomNode> recordsByXref)
+  {
+    var target = ResolveRecord(obje.Value, recordsByXref);
+    return target?.Tag == GedcomTags.Object ? target : obje;
+  }
+
+  private static GedcomNode? ResolveRecord(string? value, IReadOnlyDictionary<string, GedcomNode> recordsByXref)
+  {
+    if (value is null || value.Length < 2 || value[0] != '@' || value[^1] != '@')
+      return null;
+
+    return recordsByXref.GetValueOrDefault(value);
+  }
 
   private PhotoCandidate? TryReadPhoto(GedcomNode obje, string? mediaBasePath)
   {
@@ -580,14 +645,18 @@ internal sealed class GedcomImporter : IGedcomImporter
 
   /// <summary>
   /// Builds the photo data from the materialized candidates. The one marked <c>_PRIM Y</c> — or the first
-  /// when none is marked — becomes the main (profile) photo; the rest are additional.
+  /// when none is marked — becomes the main (profile) photo; the rest are additional. A photo the person
+  /// only points at is picked last: it is not re-emitted under the INDI, so making it the main one would
+  /// leave the export with no <c>_PRIM Y</c> at all and the next import free to choose differently.
   /// </summary>
   private static (Data? Main, Data[] Additional) BuildPhotos(PhotoCandidate[] photos)
   {
     if (photos.Length == 0)
       return (null, []);
 
-    var mainPhoto = photos.FirstOrDefault(p => p.Primary) ?? photos[0];
+    var own = photos.Where(p => p.Node.Xref is null).ToArray();
+    var candidates = own.Length > 0 ? own : photos;
+    var mainPhoto = candidates.FirstOrDefault(p => p.Primary) ?? candidates[0];
     var main = BuildPhotoData(mainPhoto, DataCategory.PersonMainPhoto);
     var additional = photos
       .Where(p => !ReferenceEquals(p, mainPhoto))
@@ -598,11 +667,27 @@ internal sealed class GedcomImporter : IGedcomImporter
 
   private static Data BuildPhotoData(PhotoCandidate candidate, DataCategory plainCategory)
   {
-    if (candidate.Residual is null)
+    var residual = ReferencedResidual(candidate.Node, candidate.Residual);
+    if (residual is null)
       return new Data(ElementId.NonCommittedId, candidate.Content, candidate.MimeType, plainCategory);
 
-    var content = GedcomPhotoResidue.Encode(candidate.Content, candidate.Residual);
+    var content = GedcomPhotoResidue.Encode(candidate.Content, residual);
     return new Data(ElementId.NonCommittedId, content, candidate.MimeType, plainCategory.AsTaggedPhoto());
+  }
+
+  /// <summary>
+  /// Marks media read from a top-level record — the only media that carries an xref — with the record it came
+  /// from, so export re-emits that record alone instead of a second copy under the person. The marker needs a
+  /// residual to live in, so a referenced object that has no residual tags of its own gets an empty one, which
+  /// is also what moves the photo to its tagged category.
+  /// </summary>
+  private static GedcomNode? ReferencedResidual(GedcomNode media, GedcomNode? residual)
+  {
+    if (media.Xref is null)
+      return residual;
+
+    var marked = residual ?? new GedcomNode { Tag = GedcomTags.Object };
+    return marked.Add(new GedcomNode { Tag = GedcomTags.ReferencedRecord, Value = media.Xref });
   }
 
   private static bool HasEmbeddedBlob(GedcomNode node) =>
@@ -673,6 +758,68 @@ internal sealed class GedcomImporter : IGedcomImporter
       .Where(a => a is not null)
       .Select(a => a!)
   ];
+
+  /// <summary>
+  /// Media a person owns only by pointing at it: the <c>OBJE</c>s inside every top-level record their subtree
+  /// references — a <c>SOUR</c> citation's scan, and whatever that record references in turn. Documentary by
+  /// position like any OBJE that is not a direct INDI child, so it lands as an attachment; one already claimed
+  /// as a portrait through <paramref name="photoNodes"/> is not taken a second time.
+  /// </summary>
+  private AttachmentCandidate[] SelectReferencedMedia(
+    GedcomNode owner,
+    GedcomNode[] photoNodes,
+    IReadOnlyDictionary<string, GedcomNode> recordsByXref,
+    string? mediaBasePath)
+  {
+    var media = new List<(GedcomNode Node, string RecordXref)>();
+    CollectReferencedMedia(owner, recordsByXref, [], media);
+
+    var candidates = new List<AttachmentCandidate>();
+    foreach (var (node, recordXref) in media)
+    {
+      if (photoNodes.Contains(node))
+        continue;
+
+      var candidate = TryReadAttachment(node, mediaBasePath);
+      if (candidate is null)
+        continue;
+
+      // Marked by the record it was reached through, not by its own xref: media inline inside a referenced
+      // SOUR has no xref of its own, and it is that record's re-emission that stands in for this copy.
+      candidate.Residual.Add(new GedcomNode { Tag = GedcomTags.ReferencedRecord, Value = recordXref });
+      candidates.Add(candidate);
+    }
+    return [.. candidates];
+  }
+
+  /// <summary>
+  /// Follows the pointers out of a subtree and out of every record they reach, collecting the <c>OBJE</c>s met
+  /// on the way. The visited set stops a reference cycle, and keeps a record cited twice by the same person
+  /// from yielding its media twice.
+  /// </summary>
+  private static void CollectReferencedMedia(
+    GedcomNode node,
+    IReadOnlyDictionary<string, GedcomNode> recordsByXref,
+    HashSet<string> visited,
+    List<(GedcomNode Node, string RecordXref)> media)
+  {
+    foreach (var child in node.Children)
+    {
+      var target = ResolveRecord(child.Value, recordsByXref);
+      if (target is not null && visited.Add(target.Xref!))
+      {
+        var xref = target.Xref!;
+        if (target.Tag == GedcomTags.Object)
+        {
+          media.Add((target, xref));
+        }
+        var nested = target.DescendantsWithTag(GedcomTags.Object);
+        media.AddRange(nested.Select(o => (o, xref)));
+        CollectReferencedMedia(target, recordsByXref, visited, media);
+      }
+      CollectReferencedMedia(child, recordsByXref, visited, media);
+    }
+  }
 
   private AttachmentCandidate? TryReadAttachment(GedcomNode obje, string? mediaBasePath)
   {
