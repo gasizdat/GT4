@@ -494,6 +494,84 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task SeveralDatelessMarriagesOfOneCouple_StayApartAsFamilyResidue()
+  {
+    // Issue #188: a spouse edge is told apart only by its date, so a couple's second dateless MARR has no
+    // edge to ride on and used to merge its sub-tags onto the first event. It is kept whole in the family's
+    // residue instead, which re-emits it as the second event the source stated.
+    const string ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n" +
+      "0 @I2@ INDI\n1 NAME Marie /Antoinette/\n1 SEX F\n" +
+      "0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n" +
+      "1 MARR\n2 RIN MH:FF411\n" +
+      "1 MARR\n2 RIN MH:FF412\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var text = await ExportToTextAsync(document);
+    var family = (await FamiliesInAsync(text)).Should().ContainSingle().Which;
+    var marriages = family.ChildrenWithTag(GedcomTags.Marriage).ToArray();
+    marriages.Should().HaveCount(2);
+    marriages.Select(m => m.ChildValue("RIN")).Should().BeEquivalentTo(["MH:FF411", "MH:FF412"]);
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    var reexported = await ExportToTextAsync(reimported);
+    reexported.Should().Be(text);
+  }
+
+  [Fact]
+  public async Task SameDatedMarriagesOfOneCouple_ImportInsteadOfBreakingThePrimaryKey()
+  {
+    // Issue #194: a civil ceremony and a religious one on the same day is routine, and the second edge used
+    // to abort the whole import on the Relatives primary key. Only the first is modeled now; the second is
+    // family residue, which is also what keeps its TYPE.
+    const string ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n" +
+      "0 @I2@ INDI\n1 NAME Marie /Antoinette/\n1 SEX F\n" +
+      "0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n" +
+      "1 MARR\n2 DATE 16 MAY 1770\n2 TYPE civil\n" +
+      "1 MARR\n2 DATE 16 MAY 1770\n2 TYPE religious\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var text = await ExportToTextAsync(document);
+    var family = (await FamiliesInAsync(text)).Should().ContainSingle().Which;
+    var marriages = family.ChildrenWithTag(GedcomTags.Marriage).ToArray();
+    marriages.Select(m => m.ChildValue(GedcomTags.Date)).Should().AllBe("16 MAY 1770");
+    marriages.Select(m => m.ChildValue("TYPE")).Should().BeEquivalentTo(["civil", "religious"]);
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    var reexported = await ExportToTextAsync(reimported);
+    reexported.Should().Be(text);
+  }
+
+  [Fact]
+  public async Task MarriagesSharingADateCodeButNotItsStatus_AreStillOneEdge()
+  {
+    // "1770" and "ABT 1770" are different dates to GT4 but the same Date column, and the primary key spans
+    // the column rather than the status -- so telling the events apart by the parsed date would let both
+    // reach the insert and the second would break the key.
+    const string ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n" +
+      "0 @I2@ INDI\n1 NAME Marie /Antoinette/\n1 SEX F\n" +
+      "0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n" +
+      "1 MARR\n2 DATE 1770\n" +
+      "1 MARR\n2 DATE ABT 1770\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var text = await ExportToTextAsync(document);
+    var family = (await FamiliesInAsync(text)).Should().ContainSingle().Which;
+    var marriages = family.ChildrenWithTag(GedcomTags.Marriage).ToArray();
+    marriages.Select(m => m.ChildValue(GedcomTags.Date)).Should().BeEquivalentTo(["1770", "ABT 1770"]);
+  }
+
+  [Fact]
   public async Task SingleParentFamilyResidue_IsKeyedByThatOneParent()
   {
     // A FAM with one parent and children is still regenerated on export, off a couple key with one id in it.
