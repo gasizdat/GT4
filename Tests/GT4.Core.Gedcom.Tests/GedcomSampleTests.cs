@@ -494,6 +494,51 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task SeveralDatelessMarriagesOfOneCouple_StayApart()
+  {
+    // GT4 holds one spouse edge per MARR, dateless ones included -- what pooled them was the exporter
+    // reading the edges as a set of dates. Each event keeps its own residue rather than both landing on one.
+    const string ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n" +
+      "0 @I2@ INDI\n1 NAME Marie /Antoinette/\n1 SEX F\n" +
+      "0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n1 MARR\n2 RIN MH:FF411\n1 MARR\n2 RIN MH:FF412\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var text = await ExportToTextAsync(document);
+    var lines = text.Split('\n');
+    lines.Count(line => line.StartsWith("1 MARR", StringComparison.Ordinal)).Should().Be(2);
+    lines.Count(line => line.StartsWith("2 RIN MH:FF411", StringComparison.Ordinal)).Should().Be(1);
+    lines.Count(line => line.StartsWith("2 RIN MH:FF412", StringComparison.Ordinal)).Should().Be(1);
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    var reexported = await ExportToTextAsync(reimported);
+    reexported.Should().Be(text);
+  }
+
+  [Fact]
+  public async Task MoreDatelessMarriageResiduesThanEdges_AllLandOnTheLastEvent()
+  {
+    // A merge import keeps every marriage residue but adds no edge for one it already holds, so the couple
+    // can end up with more residues than events. The leftovers ride on the last event rather than vanish.
+    const string head =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n" +
+      "0 @I2@ INDI\n1 NAME Marie /Antoinette/\n1 SEX F\n" +
+      "0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n1 MARR\n2 RIN MH:FF411\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(head + "0 TRLR\n"), Token);
+    await _importer.ImportAsync(document, new StringReader(head + "1 MARR\n2 RIN MH:FF412\n0 TRLR\n"), Token);
+
+    var text = await ExportToTextAsync(document);
+    var lines = text.Split('\n');
+    lines.Count(line => line.StartsWith("1 MARR", StringComparison.Ordinal)).Should().Be(1);
+    text.Should().Contain("2 RIN MH:FF411").And.Contain("2 RIN MH:FF412");
+  }
+
+  [Fact]
   public async Task SingleParentFamilyResidue_IsKeyedByThatOneParent()
   {
     // A FAM with one parent and children is still regenerated on export, off a couple key with one id in it.

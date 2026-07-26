@@ -142,7 +142,7 @@ internal sealed class GedcomExporter : IGedcomExporter
   private static HashSet<(int, int)> CollectCouples(
     HashSet<(int Child, int Parent)> parentEdges,
     HashSet<(int Child, int Parent)> adoptiveEdges,
-    Dictionary<(int Low, int High), HashSet<Date?>> spouseDates)
+    Dictionary<(int Low, int High), List<Date?>> spouseDates)
   {
     var couples = new HashSet<(int, int)>();
 
@@ -203,12 +203,12 @@ internal sealed class GedcomExporter : IGedcomExporter
 
   private static (HashSet<(int Child, int Parent)> ParentEdges,
                   HashSet<(int Child, int Parent)> AdoptiveEdges,
-                  Dictionary<(int Low, int High), HashSet<Date?>> SpouseDates) CollectEdges(
+                  Dictionary<(int Low, int High), List<Date?>> SpouseDates) CollectEdges(
     Dictionary<int, Relative[]> relatives)
   {
     var parentEdges = new HashSet<(int Child, int Parent)>();
     var adoptiveEdges = new HashSet<(int Child, int Parent)>();
-    var spouseDates = new Dictionary<(int Low, int High), HashSet<Date?>>();
+    var spouseDates = new Dictionary<(int Low, int High), List<Date?>>();
 
     foreach (var (ownerId, ownerRelatives) in relatives)
     {
@@ -229,8 +229,11 @@ internal sealed class GedcomExporter : IGedcomExporter
           case RelationshipType.AdoptiveChild:
             adoptiveEdges.Add((relative.Id, ownerId));
             break;
-          case RelationshipType.Spouse:
-            var pair = ownerId < relative.Id ? (ownerId, relative.Id) : (relative.Id, ownerId);
+          // Each stored row appears in both spouses' lists (forward from one, backward from the other), so
+          // it is counted from the lower id alone: taking both sides would double every marriage, and
+          // folding the sides into a set would merge a couple's several dateless marriages into one.
+          case RelationshipType.Spouse when ownerId < relative.Id:
+            var pair = (ownerId, relative.Id);
             if (!spouseDates.TryGetValue(pair, out var dates))
             {
               spouseDates[pair] = dates = [];
@@ -686,10 +689,21 @@ internal sealed class GedcomExporter : IGedcomExporter
       {
         node.Add(new GedcomNode { Tag = GedcomTags.Wife, Value = $"@I{family.WifeId}@" });
       }
+      var eventCounts = family.MarriageDates.CountBy(date => GedcomMetadata.MarriageKey(familyKey, date));
+      var eventCountByKey = eventCounts.ToDictionary();
+      var emitted = new Dictionary<string, int>();
       foreach (var date in family.MarriageDates)
       {
         var marriageKey = GedcomMetadata.MarriageKey(familyKey, date);
-        AddMarriage(node, date, residues.GetValueOrDefault(marriageKey) ?? []);
+        var roots = residues.GetValueOrDefault(marriageKey) ?? [];
+        var index = emitted.GetValueOrDefault(marriageKey);
+        emitted[marriageKey] = index + 1;
+        // The events sharing a key are dateless repeats of one couple, and their residuals were stored in
+        // the same order, so the nth event takes the nth residual. The last one also takes whatever is left
+        // over, since a merge import can leave more residuals than GT4 kept edges.
+        var isLast = index + 1 == eventCountByKey[marriageKey];
+        var residual = isLast ? roots.Skip(index) : roots.Skip(index).Take(1);
+        AddMarriage(node, date, [.. residual]);
       }
       foreach (var (childId, _) in family.Children)
       {
