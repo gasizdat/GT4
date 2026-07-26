@@ -1,5 +1,6 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
+using GT4.Core.Utils;
 using System.Collections.Concurrent;
 
 namespace GT4.Core.Project;
@@ -211,18 +212,21 @@ internal class TableRelatives : TableBase, ITableRelatives
 
   public async Task UpdateRelativesAsync(Person person, Relative[] relatives, CancellationToken token)
   {
+    static (int, RelationshipType, Date?) RelativeKey(Relative relative) => (relative.Id, relative.Type, relative.Date);
+
     var oldRelatives = await GetRelativesAsync(person, token);
-    var newRelatives = relatives.ToDictionary(r => r.Id, r => r);
-    var remainedRelatives = new HashSet<int>();
+    var newRelatives = relatives.Select(RelativeKey).ToHashSet();
+    var remainedRelatives = new HashSet<(int, RelationshipType, Date?)>();
 
     using var transaction = await Connection.BeginTransactionAsync(token);
 
     // Sequential: writes inside a transaction must take turns on the single connection.
     foreach (var oldRelative in oldRelatives)
     {
-      if (newRelatives.TryGetValue(oldRelative.Id, out var newRelative) && newRelative.Date == oldRelative.Date)
+      var oldKey = RelativeKey(oldRelative);
+      if (newRelatives.Contains(oldKey))
       {
-        remainedRelatives.Add(oldRelative.Id);
+        remainedRelatives.Add(oldKey);
         continue;
       }
 
@@ -243,7 +247,8 @@ internal class TableRelatives : TableBase, ITableRelatives
       }
     }
 
-    await AddRelativesAsync(person, relatives.Where(r => !remainedRelatives.Contains(r.Id)).ToArray(), token);
+    var added = relatives.Where(r => !remainedRelatives.Contains(RelativeKey(r))).DistinctBy(RelativeKey);
+    await AddRelativesAsync(person, [.. added], token);
 
     await transaction.CommitAsync(token);
   }

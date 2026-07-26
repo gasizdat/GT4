@@ -732,6 +732,76 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task UpdateRelatives_TwoRelationshipsWithOnePerson_SurviveARepeatedSave()
+  {
+    // A couple can marry more than once, so the same person appears twice in the relatives being saved.
+    // Both rows have to survive re-saving the person unchanged, which is what the person editor does.
+    var person = await AddBarePersonAsync();
+    var spouse = await AddBarePersonAsync();
+    var dated = Date.Create(1770, 5, 16, DateStatus.WellKnown);
+    Relative[] marriages =
+      [new Relative(spouse, RelationshipType.Spouse, dated), new Relative(spouse, RelationshipType.Spouse, null)];
+
+    await _doc.Relatives.UpdateRelativesAsync(person, marriages, Token);
+    await _doc.Relatives.UpdateRelativesAsync(person, marriages, Token);
+
+    var relatives = await _doc.Relatives.GetRelativesAsync(person, Token);
+    relatives.Should().HaveCount(2);
+    relatives.Select(r => r.Date).Should().BeEquivalentTo([dated, (Date?)null]);
+  }
+
+  [Theory]
+  [InlineData(true)]
+  [InlineData(false)]
+  public async Task UpdateRelatives_RepeatedRelativeInfo_IsStoredOnce(bool dated)
+  {
+    // PersonManager saves RelativeInfo rows, and each carries its own names and photo -- fields the stored
+    // row knows nothing about, so two rows describing one relationship are only duplicates by what the
+    // table keys them on. Dated, storing both violates the primary key; dateless, SQLite takes both and
+    // the person page then fails to load on the duplicate.
+    var person = await AddBarePersonAsync();
+    var spouse = await AddBarePersonAsync();
+    Date? date = dated ? Date.Create(1770, 5, 16, DateStatus.WellKnown) : null;
+    var relative = new Relative(spouse, RelationshipType.Spouse, date);
+    RelativeInfo Info() =>
+      new(relative, [new Name(1, "Marie", NameType.FirstName, null)], null, Generation.Zero, Consanguinity.Zero);
+
+    await _doc.Relatives.UpdateRelativesAsync(person, [Info(), Info()], Token);
+
+    (await _doc.Relatives.GetRelativesAsync(person, Token)).Should().ContainSingle();
+  }
+
+  [Fact]
+  public async Task UpdateRelatives_RepeatedIdenticalRelationship_IsStoredOnce()
+  {
+    // Two rows identical down to the date are one row as far as the primary key is concerned, so the
+    // second must not reach the insert.
+    var person = await AddBarePersonAsync();
+    var spouse = await AddBarePersonAsync();
+    var dated = Date.Create(1770, 5, 16, DateStatus.WellKnown);
+
+    await _doc.Relatives.UpdateRelativesAsync(person,
+      [new Relative(spouse, RelationshipType.Spouse, dated), new Relative(spouse, RelationshipType.Spouse, dated)], Token);
+
+    (await _doc.Relatives.GetRelativesAsync(person, Token)).Should().ContainSingle();
+  }
+
+  [Fact]
+  public async Task UpdateRelatives_DroppingOneOfTwoRelationships_KeepsTheOther()
+  {
+    var person = await AddBarePersonAsync();
+    var spouse = await AddBarePersonAsync();
+    var dated = Date.Create(1770, 5, 16, DateStatus.WellKnown);
+
+    await _doc.Relatives.UpdateRelativesAsync(person,
+      [new Relative(spouse, RelationshipType.Spouse, dated), new Relative(spouse, RelationshipType.Spouse, null)], Token);
+    await _doc.Relatives.UpdateRelativesAsync(person, [new Relative(spouse, RelationshipType.Spouse, dated)], Token);
+
+    var relatives = await _doc.Relatives.GetRelativesAsync(person, Token);
+    relatives.Should().ContainSingle().Which.Date.Should().Be(dated);
+  }
+
+  [Fact]
   public async Task GetRelativesForPersons_RepeatedPerson_BucketsThemOnce()
   {
     // A person holding two relationships with the same person (two marriages, say) reaches this method as
