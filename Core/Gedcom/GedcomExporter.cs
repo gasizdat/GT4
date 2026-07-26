@@ -426,8 +426,8 @@ internal sealed class GedcomExporter : IGedcomExporter
   }
 
   /// <summary>
-  /// Splits the residue forest into one merged residual per owned tag (keyed by that tag, to be merged back
-  /// into the regenerated node) and the fully-unmodeled roots (re-attached to the INDI verbatim).
+  /// Splits the residue forest into the residual of each owned tag (keyed by that tag, to be merged back into
+  /// the regenerated node) and the fully-unmodeled roots (re-attached to the INDI verbatim).
   /// </summary>
   private static (Dictionary<string, GedcomNode> Owned, List<GedcomNode> Other) PartitionResidue(GedcomNode[] roots)
   {
@@ -435,21 +435,17 @@ internal sealed class GedcomExporter : IGedcomExporter
     var other = new List<GedcomNode>();
     foreach (var root in roots)
     {
-      // A genuine residual (only unmodeled children, and no value beyond an event assertion) merges back into
-      // the regenerated owned node; a root still carrying a value or a modeled child the model holds is a
-      // repeated owned tag, standalone.
-      if (!GedcomMapping.OwnedTagModeledChildren.TryGetValue(root.Tag, out var modeled) || !IsGenuineResidual(root, modeled))
+      // The importer strips the modeled children off the first occurrence of an owned tag and stores every
+      // later one whole, so only the first root of a tag belongs back under the regenerated node. A root
+      // still carrying a value or a modeled child is a repeated tag by its own content; a valueless repeat
+      // (two BIRTs, each with nothing but a RIN) is one only by its place in the residue.
+      var isResidual = GedcomMapping.OwnedTagModeledChildren.TryGetValue(root.Tag, out var modeled)
+        && IsGenuineResidual(root, modeled)
+        && owned.TryAdd(root.Tag, root);
+      if (!isResidual)
       {
         other.Add(root);
-        continue;
       }
-
-      if (!owned.TryGetValue(root.Tag, out var merged))
-      {
-        owned[root.Tag] = merged = new GedcomNode { Tag = root.Tag };
-      }
-      merged.Value ??= root.Value;
-      merged.Add([.. root.Children]);
     }
     return (owned, other);
   }
