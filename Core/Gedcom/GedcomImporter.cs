@@ -283,7 +283,7 @@ internal sealed class GedcomImporter : IGedcomImporter
   }
 
   /// <summary>
-  /// Preserves the unmodeled top-level records (submitter/submission/source/repository) verbatim in the
+  /// Preserves the unmodeled top-level records (submitter/submission/source/repository/multimedia) verbatim in the
   /// Metadata table so they survive a round-trip even though GT4 has no schema for them. See
   /// <see cref="GedcomMetadata"/> for the keying and the references that are intentionally not preserved.
   /// </summary>

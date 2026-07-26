@@ -227,7 +227,7 @@ internal static class GedcomComparer
 
   /// <summary>
   /// The top-level records GT4 has no schema for but stores verbatim (submitter, submission, source,
-  /// repository). The ones it drops outright -- HEAD, top-level OBJE, NOTE -- are not compared; see
+  /// repository, multimedia). The ones it drops outright -- HEAD, NOTE -- are not compared; see
   /// unsupported-tags.md.
   /// </summary>
   private static void ComparePassthroughRecords(Side left, Side right, List<GedcomDifference> differences)

@@ -192,14 +192,16 @@ public sealed class GedcomSampleTests : IAsyncLifetime
 
     // Each unmodeled top-level record is stashed verbatim, keyed by tag + xref. The two SOUR records prove
     // per-record keying: multiple records of the same tag coexist (the reason a single blob was rejected).
-    foreach (var key in new[] { "gedcom.SUBM.@U1@", "gedcom.SUBN.@N1@", "gedcom.SOUR.@S1@", "gedcom.SOUR.@S2@", "gedcom.REPO.@R1@" })
+    foreach (var key in new[] { "gedcom.SUBM.@U1@", "gedcom.SUBN.@N1@", "gedcom.SOUR.@S1@", "gedcom.SOUR.@S2@", "gedcom.REPO.@R1@", "gedcom.OBJE.@M1@" })
     {
       (await document.Metadata.GetAsync<string>(key, Token)).Should().NotBeNull();
     }
 
-    // The whole subtree is kept, so a cross-reference among passthrough records (SOUR -> REPO) survives.
+    // The whole subtree is kept, so a cross-reference among passthrough records (SOUR -> REPO, SOUR -> OBJE)
+    // survives -- and, the multimedia record being passthrough too, points at something still there.
     var source = await document.Metadata.GetAsync<string>("gedcom.SOUR.@S1@", Token);
-    source.Should().Contain("0 @S1@ SOUR").And.Contain("Madison County").And.Contain("1 REPO @R1@");
+    source.Should().Contain("0 @S1@ SOUR").And.Contain("Madison County")
+          .And.Contain("1 REPO @R1@").And.Contain("1 OBJE @M1@");
 
     // The person is still imported normally.
     var byName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
@@ -208,7 +210,8 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     // Export re-emits the records (both sources), and a fresh re-import stashes them again unchanged.
     var text = await ExportToTextAsync(document);
     text.Should().Contain("0 @U1@ SUBM").And.Contain("0 @N1@ SUBN")
-        .And.Contain("0 @S1@ SOUR").And.Contain("0 @S2@ SOUR").And.Contain("0 @R1@ REPO");
+        .And.Contain("0 @S1@ SOUR").And.Contain("0 @S2@ SOUR").And.Contain("0 @R1@ REPO")
+        .And.Contain("0 @M1@ OBJE").And.Contain("1 FILE documents/madison-county-register.jpg");
 
     // The event-level source citations are preserved as residue and merged back under the events, so the
     // BIRT's PAGE detail survives and still points at the re-emitted @S1@ record.

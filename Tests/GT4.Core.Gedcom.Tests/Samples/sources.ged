@@ -27,11 +27,16 @@
 2 SOUR @S2@
 0 @S1@ SOUR
 1 TITL Madison County Birth, Death, and Marriage Records
+1 OBJE @M1@
 1 REPO @R1@
 2 CALN 13B-1234.01
 0 @S2@ SOUR
 1 TITL Connecticut Death Index
 1 REPO @R1@
+0 @M1@ OBJE
+1 FILE documents/madison-county-register.jpg
+2 FORM jpg
+2 TITL Madison County Register, 1822
 0 @R1@ REPO
 1 NAME Family History Library
 1 ADDR

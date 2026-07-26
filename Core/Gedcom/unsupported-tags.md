@@ -6,10 +6,10 @@ verbatim" records below, every unmodeled direct INDI sub-tag, and even the
 unmodeled *sub-details* of tags GT4 partially models (e.g. a PLAC or SOUR under
 BIRT or MARR) are stored as opaque residue and re-emitted on export — GT4 just
 never reads their values into its own data model. What is genuinely dropped is
-whole top-level OBJE records (and pointers to them), the original HEAD envelope
-(regenerated fresh by the exporter), and the couple itself when a FAM asserts one
-by HUSB/WIFE alone — which takes the rest of that FAM record with it, since the
-export has no regenerated record to put it back on. See the per-section notes.
+the original HEAD envelope (regenerated fresh by the exporter) and the couple
+itself when a FAM asserts one by HUSB/WIFE alone — which takes the rest of that
+FAM record with it, since the export has no regenerated record to put it back
+on. See the per-section notes.
 
 Preserved verbatim (passthrough)
 
@@ -23,6 +23,7 @@ unreferenced; an INDI/event-level reference to them round-trips fine (see below)
 - SUBN — Submission: metadata for a submission to a lineage system (LDS).
 - SOUR (record) — Source: a citable document/record.
 - REPO — Repository: an archive or library that holds sources.
+- OBJE (record) — Multimedia: a file the rest of the document points at.
 
 Top-level NOTE records
 
@@ -38,10 +39,12 @@ Photos (OBJE) — partially modeled
 An inline INDI `OBJE` carrying an embedded base64 `BLOB` is imported into GT4's
 photo model (the `_PRIM Y` one, or the first, becomes the main photo; the rest
 are additional) and re-exported the same way, so photos round-trip self-contained
-inside the single .ged file. NOT modeled: top-level `0 @M1@ OBJE` records and
-pointer references to them, and `OBJE`s that only reference an external `FILE`
-(GT4 cannot resolve the bytes) — those FILE-ref OBJEs fall through to the INDI
-residue passthrough below, so they survive verbatim but are not loaded as photos.
+inside the single .ged file. NOT modeled: a top-level `0 @M1@ OBJE` record and
+the pointers to it — the record is kept verbatim as a passthrough record above,
+so a pointer left in the residue still resolves, but its file becomes no photo or
+attachment — and `OBJE`s that only reference an external `FILE` GT4 cannot
+resolve; those fall through to the INDI residue passthrough below, so they
+survive verbatim but are not loaded as photos.
 The embedded `BLOB` form is non-conformant to strict GEDCOM 5.5.1 (which expects
 external FILE references); it is chosen so the export stays a single shareable
 file and round-trips through GT4 itself.
