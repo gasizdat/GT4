@@ -690,6 +690,36 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task MarriageOfAFamilyNamingOneSpouse_IsKeptAsFamilyResidue()
+  {
+    // No couple means no spouse edge to carry the date and no marriage key to file the sub-tags under, so the
+    // event is not modeled here at all and stays with the family whole (issue #204).
+    const string ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n" +
+      "0 @I2@ INDI\n1 NAME Marie /Bourbon/\n1 SEX F\n" +
+      "0 @F1@ FAM\n1 HUSB @I1@\n1 CHIL @I2@\n1 MARR\n2 DATE 16 MAY 1770\n2 PLAC Versailles\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var byName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
+    var key = GedcomMetadata.FamilyKey(byName["Louis Bourbon"].Id, null);
+    var residue = await document.Metadata.GetAsync<string>(key, Token);
+    residue.Should().Contain("0 MARR").And.Contain("1 PLAC Versailles");
+
+    var text = await ExportToTextAsync(document);
+    text.Should().Contain("1 MARR").And.Contain("2 DATE 16 MAY 1770").And.Contain("2 PLAC Versailles");
+    // The family holds no marriage date of its own, so the residue's event is the only MARR written.
+    var written = text.Split('\n').Count(line => line.StartsWith("1 MARR"));
+    written.Should().Be(1);
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    var reexported = await ExportToTextAsync(reimported);
+    reexported.Should().Be(text);
+  }
+
+  [Fact]
   public async Task FamilyResidue_SurvivesASecondImportCarryingDifferentTags()
   {
     // The merge case: a second source describes the same couple with a different fact. The couple keys one

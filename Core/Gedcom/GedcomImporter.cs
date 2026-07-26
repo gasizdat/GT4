@@ -998,8 +998,14 @@ internal sealed class GedcomImporter : IGedcomImporter
     // cannot fix it, because the exporter writes a bare "1 MARR" for a dateless edge, so importing such a
     // pair would assert a marriage the source never did. It needs a model that separates married from
     // partnered; the round-trip harness pins the loss against bourbon until then.
-    var repeatedMarriages = Array.Empty<GedcomNode>();
-    if (husband is not null && wife is not null)
+    var residualMarriages = Array.Empty<GedcomNode>();
+    if (husband is null || wife is null)
+    {
+      // Without a couple there is no spouse edge, so no part of the event is modeled and none of it can be
+      // keyed by a marriage date: it goes to the family residue whole (issue #204).
+      residualMarriages = [.. family.ChildrenWithTag(GedcomTags.Marriage)];
+    }
+    else
     {
       // A stored spouse row is keyed by the date's code alone, so a couple can hold one edge per code: the
       // first event of each code keeps the edge and any later one is preserved whole as family residue.
@@ -1007,7 +1013,7 @@ internal sealed class GedcomImporter : IGedcomImporter
       // second insert would then break the primary key.
       var byDate = family.ChildrenWithTag(GedcomTags.Marriage).GroupBy(m => ParseSpouseDate(m)?.Code).ToArray();
       var marriages = byDate.Select(g => g.First()).ToArray();
-      repeatedMarriages = [.. byDate.SelectMany(g => g.Skip(1))];
+      residualMarriages = [.. byDate.SelectMany(g => g.Skip(1))];
       var spouses = marriages
         .Select(m => new Relative(wife, RelationshipType.Spouse, ParseSpouseDate(m)))
         .Where(s => !existingEdges.Contains((husband.Id, s.Id, s.Type, s.Date?.Code)))
@@ -1020,7 +1026,7 @@ internal sealed class GedcomImporter : IGedcomImporter
       await StoreMarriageResidueAsync(document, marriages, husband, wife, consumed, token);
     }
 
-    await StoreFamilyResidueAsync(document, family, husband, wife, repeatedMarriages, consumed, token);
+    await StoreFamilyResidueAsync(document, family, husband, wife, residualMarriages, consumed, token);
 
     if (children.Length == 0)
       return;
@@ -1043,7 +1049,8 @@ internal sealed class GedcomImporter : IGedcomImporter
 
   // The FAM children GT4 rebuilds from its edge graph, so they are neither modeled nor preserved here. MARR
   // is excluded because the event GT4 models keeps its residue per event instead, keyed by the marriage
-  // date; only a repeat of a date already modeled is passed in whole.
+  // date; the events no edge was stored for -- a repeat of a date already modeled, or any of them where the
+  // record names a single spouse -- are passed in whole.
   private static readonly HashSet<string> ModeledFamilyTags =
     [GedcomTags.Husband, GedcomTags.Wife, GedcomTags.Child, GedcomTags.Marriage];
 
@@ -1061,7 +1068,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     GedcomNode family,
     Person? husband,
     Person? wife,
-    GedcomNode[] repeatedMarriages,
+    GedcomNode[] residualMarriages,
     GedcomNode[] consumed,
     CancellationToken token)
   {
@@ -1070,7 +1077,7 @@ internal sealed class GedcomImporter : IGedcomImporter
 
     var roots = family.Children
       .Where(child => !ModeledFamilyTags.Contains(child.Tag))
-      .Concat(repeatedMarriages)
+      .Concat(residualMarriages)
       .Select(child => PruneConsumed(child, consumed))
       .OfType<GedcomNode>()
       .ToArray();
