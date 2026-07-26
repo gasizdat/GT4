@@ -346,7 +346,7 @@ public partial class PersonPage : ContentPage
       var fact = await GedcomFamilyResidue.ReadAsync(project, person.Id, couple.Key, name, dates, token);
       if (fact is not null)
       {
-        facts.Add(fact);
+        facts.Add(fact with { Value = $"[{fact.Value}](person:{couple.Key})" });
       }
     }
 
