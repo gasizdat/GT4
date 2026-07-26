@@ -504,7 +504,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
       "0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n" +
       "0 @I2@ INDI\n1 NAME Marie /Antoinette/\n1 SEX F\n" +
       "0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n" +
-      "1 MARR\n2 DATE 16 MAY 1770\n2 PLAC Versailles\n" +
+      "1 MARR\n2 DATE ABT 1770\n2 PLAC Versailles\n" +
       "1 DIV\n2 DATE 1793\n1 NCHI 4\n0 TRLR\n";
     await using var document = await NewDocumentAsync();
     await _importer.ImportAsync(document, new StringReader(ged), Token);
@@ -512,7 +512,11 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     var byName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
     var louis = byName["Louis Bourbon"];
     var marie = byName["Marie Antoinette"];
-    Date?[] dates = [Date.Create(1770, 5, 16, DateStatus.WellKnown)];
+
+    // The date comes back off the stored edge rather than being built here: the key is derived from it, so
+    // a date the row reconstructs differently from the one import parsed would address nothing.
+    var edges = await document.Relatives.GetRelativesAsync(louis, Token);
+    var dates = edges.Where(e => e.Type == RelationshipType.Spouse).Select(e => e.Date);
 
     var fromHusband = await GedcomFamilyResidue.ReadAsync(document, louis.Id, marie.Id, "Marie", dates, Token);
     fromHusband!.Value.Should().Be("Marie");
@@ -537,9 +541,11 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     await _importer.ImportAsync(document, new StringReader(ged), Token);
 
     var byName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
-    Date?[] dates = [Date.Create(1770, 5, 16, DateStatus.WellKnown)];
+    var louis = byName["Louis Bourbon"];
+    var edges = await document.Relatives.GetRelativesAsync(louis, Token);
+    var dates = edges.Select(edge => edge.Date);
     var fact = await GedcomFamilyResidue.ReadAsync(
-      document, byName["Louis Bourbon"].Id, byName["Marie Antoinette"].Id, "Marie", dates, Token);
+      document, louis.Id, byName["Marie Antoinette"].Id, "Marie", dates, Token);
 
     fact.Should().BeNull();
   }
