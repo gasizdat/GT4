@@ -27,13 +27,21 @@ public sealed class GedcomDataConverter : IDataConverter
   public async Task<object?> ToObjectAsync(Data? data, CancellationToken token)
   {
     var facts = await GedcomNarrative.ParseAsync(data, token);
-    return facts.Length == 0 ? null : Render(facts);
+    return facts.Length == 0 ? null : Render(facts, "FieldGedcomDetails", "Additional details");
   }
 
-  private static string Render(GedcomFact[] facts)
+  /// <summary>
+  /// Renders the couple-level residue <see cref="GedcomFamilyResidue"/> gathered, under a heading of its
+  /// own: the facts describe a marriage rather than the person, and each couple arrives already grouped
+  /// under a FAM fact naming the spouse.
+  /// </summary>
+  public static string? RenderFamilies(GedcomFact[] facts) =>
+    facts.Length == 0 ? null : Render(facts, "FieldGedcomFamilyDetails", "Family details");
+
+  private static string Render(GedcomFact[] facts, string titleKey, string titleFallback)
   {
     var builder = new StringBuilder();
-    var title = Localized("FieldGedcomDetails", "Additional details");
+    var title = Localized(titleKey, titleFallback);
     builder.Append("## ").Append(title).Append("\n\n");
     foreach (var fact in facts)
     {

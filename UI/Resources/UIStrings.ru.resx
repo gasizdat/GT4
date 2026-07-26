@@ -1065,6 +1065,24 @@ FN - род</value>
   <data name="GedcomTagCHAN" xml:space="preserve">
     <value>Изменено</value>
   </data>
+  <data name="GedcomTagFAM" xml:space="preserve">
+    <value>Брак с</value>
+  </data>
+  <data name="GedcomTagMARR" xml:space="preserve">
+    <value>Бракосочетание</value>
+  </data>
+  <data name="GedcomTagDIV" xml:space="preserve">
+    <value>Развод</value>
+  </data>
+  <data name="GedcomTagENGA" xml:space="preserve">
+    <value>Помолвка</value>
+  </data>
+  <data name="GedcomTagNCHI" xml:space="preserve">
+    <value>Количество детей</value>
+  </data>
+  <data name="FieldGedcomFamilyDetails" xml:space="preserve">
+    <value>Сведения о семье</value>
+  </data>
   <data name="FieldFilterAny" xml:space="preserve">
     <value>Любой</value>
   </data>
