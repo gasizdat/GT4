@@ -521,18 +521,12 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     var photos = _Photos.Select(photo => photo.Info).Where(data => data.Id != ElementId.NonCommittedId);
     var attachments = _Attachments.Select(attachment => attachment.Info).Where(data => data.Id != ElementId.NonCommittedId);
 
-    var photoItems = await Task.WhenAll(photos.Select(async (data, index) =>
-    {
-      var caption = await GedcomPhotoResidue.ExtractTitleAsync(data, token);
-      var displayName = caption ?? string.Format(UIStrings.MediaLinkPhotoName_1, index + 1);
-      return new MediaLinkItem(data.Id, MediaSourceUtils.IsInlineImage(data), displayName);
-    }));
+    var photoItems = await Task.WhenAll(photos.Select((data, index) =>
+      ToMediaLinkItemAsync(data, string.Format(UIStrings.MediaLinkPhotoName_1, index + 1), token)));
     var attachmentItems = await Task.WhenAll(attachments.Select(async data =>
     {
-      var title = await GedcomPhotoResidue.ExtractTitleAsync(data, token);
       var fileName = await GedcomPhotoResidue.ExtractFileNameAsync(data, token);
-      var displayName = string.IsNullOrWhiteSpace(title) ? fileName ?? string.Empty : title;
-      return new MediaLinkItem(data.Id, MediaSourceUtils.IsInlineImage(data), displayName);
+      return await ToMediaLinkItemAsync(data, fileName ?? string.Empty, token);
     }));
 
     var dialog = _Factory.SelectMediaDialogFactory.Create([.. photoItems, .. attachmentItems]);
@@ -547,6 +541,16 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       else
         BiographyEditor.InsertAttachmentLink(picked.DisplayName, picked.Id);
     }
+  }
+
+  // IsInlineImage must be the same predicate BuildMediaSources filters by: offering something the media
+  // map drops would insert an embed that renders as a broken image instead of a working link.
+  private static async Task<MediaLinkItem> ToMediaLinkItemAsync(Data data, string fallbackName, CancellationToken token)
+  {
+    var title = await GedcomPhotoResidue.ExtractTitleAsync(data, token);
+    var displayName = string.IsNullOrWhiteSpace(title) ? fallbackName : title;
+    var isInlineImage = MediaSourceUtils.IsInlineImage(data);
+    return new MediaLinkItem(data.Id, isInlineImage, displayName);
   }
 
   private async Task OnEditRelationshipAsync(RelativeInfo relative)

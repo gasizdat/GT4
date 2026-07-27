@@ -23,6 +23,14 @@ public class CreateOrUpdatePersonDialogTests
 
   private static Data Photo(int id) => new(id, Content: [1, 2, 3], MimeType: "image/png", Category: DataCategory.PersonPhoto);
 
+  // An imported OBJE whose TITL carries no text: the residue is there, the caption is not.
+  private static Data BlankCaptionPhoto(int id)
+  {
+    var tagBytes = System.Text.Encoding.UTF8.GetBytes("0 OBJE\n1 TITL\n");
+    byte[] content = [.. BitConverter.GetBytes(tagBytes.Length), .. tagBytes, 1, 2, 3];
+    return new(id, content, MimeType: "image/png", Category: DataCategory.PersonMainPhotoTagged);
+  }
+
   private static Data Attachment(int id, string fileName = "scan.pdf", string mimeType = "application/pdf") => new(
     id, Content: GedcomPhotoResidue.EncodeAttachment([1, 2, 3], fileName), MimeType: mimeType, Category: DataCategory.PersonAttachment);
 
@@ -432,6 +440,30 @@ public class CreateOrUpdatePersonDialogTests
   }
 
   [Fact]
+  public async Task InsertMediaLinkCommand_names_a_blank_captioned_photo_by_its_position()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson() with { MainPhoto = BlankCaptionPhoto(13), AdditionalPhotos = [] };
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    var dialog = await MainThread.InvokeOnMainThreadAsync(
+      () => services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialog.Factory>().Create(person));
+
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var insertTask = await MainThreadTask.StartAsync(dialog.InvokeInsertMediaLinkAsync);
+    var selectDialog = await ModalDialogHarness.WaitForModalAsync<SelectMediaDialog>(dialog);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      selectDialog.SelectedItem = selectDialog.Items.Single(i => i.Id == 13);
+      selectDialog.DialogCommand.Execute("SelectMediaCommand");
+    });
+    await insertTask;
+
+    var expectedCaption = string.Format(Resources.UIStrings.MediaLinkPhotoName_1, 1);
+    Assert.Equal($"![{expectedCaption}](media:13)", dialog.Biography!.Content);
+  }
+
+  [Fact]
   public async Task InsertMediaLinkCommand_inserts_an_attachment_link_using_its_file_name()
   {
     var services = new TestServices();
@@ -477,6 +509,29 @@ public class CreateOrUpdatePersonDialogTests
 
     Assert.Equal("![scan.jpg](media:21)", dialog.Biography!.Content);
     Assert.Contains(21, dialog.MediaSources.Keys);
+  }
+
+  // The picker and MediaSources must agree on what can be embedded: offering an embed the map drops
+  // renders a broken image, and dropping one the map holds wastes a working inline photo.
+  [Fact]
+  public async Task InsertMediaLinkCommand_offers_as_inline_exactly_what_MediaSources_can_render()
+  {
+    var services = new TestServices();
+    var attachments = new[] { Attachment(20, "scan.pdf"), Attachment(21, "scan.jpg", "image/jpeg") };
+    var person = CreateSamplePerson() with { Attachments = attachments };
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    var dialog = await MainThread.InvokeOnMainThreadAsync(
+      () => services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialog.Factory>().Create(person));
+
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var insertTask = await MainThreadTask.StartAsync(dialog.InvokeInsertMediaLinkAsync);
+    var selectDialog = await ModalDialogHarness.WaitForModalAsync<SelectMediaDialog>(dialog);
+    var inlineIds = selectDialog.Items.Where(item => item.IsInlineImage).Select(item => item.Id);
+
+    Assert.Equal(dialog.MediaSources.Keys.Order(), inlineIds.Order());
+
+    await MainThread.InvokeOnMainThreadAsync(() => selectDialog.DialogCommand.Execute("SelectMediaCommand"));
+    await insertTask;
   }
 
   [Fact]

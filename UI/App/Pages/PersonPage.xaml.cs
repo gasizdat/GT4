@@ -39,7 +39,7 @@ public partial class PersonPage : ContentPage
   private PersonFullInfo _PersonFullInfo = PersonFullInfo.Empty;
   private ImageSource[] _Photos = [];
   private string?[] _Captions = [];
-  private IReadOnlyDictionary<int, string> _MediaSources = new Dictionary<int, string>();
+  private IReadOnlyDictionary<int, string> _MediaSources = ReadOnlyDictionary<int, string>.Empty;
   private AttachmentInfo[] _Attachments = [];
   private string _Biography = string.Empty;
   private PersonPageSmartLayout _SmartLayout = new();

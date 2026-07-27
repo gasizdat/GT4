@@ -1,12 +1,11 @@
 using GT4.UI.Abstraction;
+using System.Collections.ObjectModel;
 using System.Windows.Input;
 
 namespace GT4.UI.Components;
 
 public partial class MarkdownEditor : ContentView
 {
-  private static readonly IReadOnlyDictionary<int, string> EmptyMediaSources = new Dictionary<int, string>();
-
   private readonly ICommand _Command;
   private int _TabIndex;
 
@@ -34,7 +33,7 @@ public partial class MarkdownEditor : ContentView
   // Forwarded to the inner preview MarkdownView so the "Markdown View" tab renders inserted media links
   // the same way the host's own display does.
   public static readonly BindableProperty MediaSourcesProperty =
-    BindableProperty.Create(nameof(MediaSources), typeof(IReadOnlyDictionary<int, string>), typeof(MarkdownEditor), EmptyMediaSources);
+    BindableProperty.Create(nameof(MediaSources), typeof(IReadOnlyDictionary<int, string>), typeof(MarkdownEditor), ReadOnlyDictionary<int, string>.Empty);
 
   // The host page owns link insertion (person lookup/selection, and whatever other link types it
   // supports), so this view stays free of any project dependency: the "Link a Person" button (and any

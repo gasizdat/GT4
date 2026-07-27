@@ -1,12 +1,11 @@
 using GT4.UI.Utils;
 using Markdig;
+using System.Collections.ObjectModel;
 
 namespace GT4.UI.Components;
 
 public partial class MarkdownView : ContentView
 {
-  private static readonly IReadOnlyDictionary<int, string> EmptyMediaSources = new Dictionary<int, string>();
-
   private readonly MarkdownPipeline _MarkdownPipeline;
 
   public MarkdownView()
@@ -31,7 +30,7 @@ public partial class MarkdownView : ContentView
   // project dependency (the host already resolves photo bytes for its own display, e.g. PersonPage).
   public static readonly BindableProperty MediaSourcesProperty =
     BindableProperty.Create(nameof(MediaSources), typeof(IReadOnlyDictionary<int, string>), typeof(MarkdownView),
-      EmptyMediaSources, BindingMode.OneWay, null, OnMediaSourcesChanged);
+      ReadOnlyDictionary<int, string>.Empty, BindingMode.OneWay, null, OnMediaSourcesChanged);
 
   public string? Markdown
   {
@@ -76,14 +75,14 @@ public partial class MarkdownView : ContentView
   // untouched. A person-link is neither: it's handled in-app via PersonLinkTapped.
   private async void OnWebViewNavigating(object sender, WebNavigatingEventArgs e)
   {
-    if (TryParsePersonLink(e.Url, out var personId))
+    if (TryParseLink(e.Url, "person:", out var personId))
     {
       e.Cancel = true;
       PersonLinkTapped?.Invoke(this, personId);
       return;
     }
 
-    if (TryParseAttachmentLink(e.Url, out var attachmentId))
+    if (TryParseLink(e.Url, "attachment:", out var attachmentId))
     {
       e.Cancel = true;
       AttachmentLinkTapped?.Invoke(this, attachmentId);
@@ -111,20 +110,12 @@ public partial class MarkdownView : ContentView
     Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
     uri.Scheme is not ("about" or "data" or "file");
 
-  // "person:" is a custom opaque scheme (like "mailto:"); Uri's hierarchical-URI members (Host, AbsolutePath)
-  // aren't reliable for it, so the id is taken directly from the string instead of through Uri.
-  private static bool TryParsePersonLink(string url, out int personId)
+  // "person:"/"attachment:" are custom opaque schemes (like "mailto:"); Uri's hierarchical-URI members
+  // (Host, AbsolutePath) aren't reliable for them, so the id is taken directly from the string.
+  private static bool TryParseLink(string url, string prefix, out int id)
   {
-    const string prefix = "person:";
-    personId = 0;
-    return url.StartsWith(prefix, StringComparison.Ordinal) && int.TryParse(url.AsSpan(prefix.Length), out personId);
-  }
-
-  private static bool TryParseAttachmentLink(string url, out int attachmentId)
-  {
-    const string prefix = "attachment:";
-    attachmentId = 0;
-    return url.StartsWith(prefix, StringComparison.Ordinal) && int.TryParse(url.AsSpan(prefix.Length), out attachmentId);
+    id = 0;
+    return url.StartsWith(prefix, StringComparison.Ordinal) && int.TryParse(url.AsSpan(prefix.Length), out id);
   }
 
   private async void OnWebViewNavigated(object sender, WebNavigatedEventArgs e)
