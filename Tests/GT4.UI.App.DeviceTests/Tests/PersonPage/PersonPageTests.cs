@@ -151,6 +151,27 @@ public class PersonPageTests
   }
 
   [Fact]
+  public async Task Loading_a_person_with_an_image_attachment_adds_it_to_MediaSources()
+  {
+    var services = new TestServices();
+    var scanContent = BuildTaggedPhotoContent("0 OBJE\n1 FILE scan.jpg\n", [4, 5, 6]);
+    var scan = new Data(22, scanContent, "image/jpeg", DataCategory.PersonAttachment);
+    var deedContent = BuildTaggedPhotoContent("0 OBJE\n1 FILE deed.pdf\n", [1, 2, 3]);
+    var deed = new Data(23, deedContent, "application/pdf", DataCategory.PersonAttachment);
+    var person = CreateSamplePerson() with { Attachments = [scan, deed] };
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+
+    var entry = Assert.Single(page.MediaSources);
+    Assert.Equal(22, entry.Key);
+    Assert.Equal($"data:image/jpeg;base64,{Convert.ToBase64String([4, 5, 6])}", entry.Value);
+  }
+
+  [Fact]
   public async Task Loading_a_person_with_a_titled_attachment_shows_the_title_over_the_file_name()
   {
     var services = new TestServices();
