@@ -241,6 +241,27 @@ public class CreateOrUpdatePersonDialogTests
   }
 
   [Fact]
+  public async Task RemoveAttachmentCommand_drops_the_attachment_from_MediaSources()
+  {
+    var person = CreateSamplePerson() with { Attachments = [Attachment(30, "scan.jpg", "image/jpeg")] };
+    var dialog = await CreateDialogAsync(new TestServices(), person);
+    var attachment = dialog.Attachments.ElementAt(0);
+    // Reading before the removal is what makes this a test: MediaSources is lazily cached, so an
+    // unpopulated cache would rebuild correctly even with the invalidation handler unsubscribed.
+    Assert.Contains(30, dialog.MediaSources.Keys);
+    var changedProperties = new List<string?>();
+    dialog.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+      dialog.DialogCommand.Execute(Adorner("RemoveAttachmentCommand", attachment)));
+
+    await WaitForAsync(() => dialog.Attachments.Count, count => count == 0, "RemoveAttachmentCommand did not remove the attachment.");
+    Assert.DoesNotContain(30, dialog.MediaSources.Keys);
+    // The cache reset fixes the value; only the notification makes the bound MarkdownView re-read it.
+    Assert.Contains(nameof(dialog.MediaSources), changedProperties);
+  }
+
+  [Fact]
   public async Task MoveAttachmentDownCommand_reorders_attachments()
   {
     var person = CreateSamplePerson() with { Attachments = [Attachment(30, "first.pdf"), Attachment(31, "second.pdf")] };

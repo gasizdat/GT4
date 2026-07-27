@@ -11,6 +11,12 @@ namespace GT4.UI.Converters;
 /// </summary>
 public static class MediaSourceUtils
 {
+  // An OBJE with no FORM imports as a photo with no MIME type, and an empty data-URI media type means
+  // text/plain (RFC 2397), which is never renderable. Every engine decodes an <img> by its bytes, so any
+  // image type serves; this labels the URI only, leaving the stored null MimeType (and its GEDCOM
+  // round-trip through GedcomMedia.ToForm) untouched.
+  private const string FallbackImageMimeType = System.Net.Mime.MediaTypeNames.Image.Png;
+
   // Only a committed photo has a stable id a stored "media:id" reference can target.
   public static IReadOnlyDictionary<int, string> BuildMediaSources(IEnumerable<Data> media) =>
     media
@@ -26,6 +32,7 @@ public static class MediaSourceUtils
   {
     var hasResidue = media.Category.IsTaggedPhoto() || media.Category.IsAttachment();
     var bytes = hasResidue ? GedcomPhotoResidue.ExtractImageBytes(media.Content) : media.Content;
-    return $"data:{media.MimeType};base64,{Convert.ToBase64String(bytes)}";
+    var mimeType = media.MimeType ?? FallbackImageMimeType;
+    return $"data:{mimeType};base64,{Convert.ToBase64String(bytes)}";
   }
 }

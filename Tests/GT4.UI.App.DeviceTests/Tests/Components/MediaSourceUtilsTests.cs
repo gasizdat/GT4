@@ -61,16 +61,14 @@ public class MediaSourceUtilsTests
     Assert.Empty(sources);
   }
 
-  // A GEDCOM OBJE with no FORM imports as a photo with no MIME type; it stays inlinable, so the data
-  // URI declares no media type and the rendering WebView is left to sniff the bytes.
   [Fact]
-  public void PhotoWithoutAMimeType_IsStillInlined()
+  public void PhotoWithoutAMimeType_IsLabelledAsPng()
   {
     var photo = new Data(5, [1, 2, 3], null, DataCategory.PersonPhoto);
 
     var sources = MediaSourceUtils.BuildMediaSources([photo]);
 
-    Assert.Equal($"data:;base64,{Convert.ToBase64String([1, 2, 3])}", sources[5]);
+    Assert.Equal($"data:image/png;base64,{Convert.ToBase64String([1, 2, 3])}", sources[5]);
   }
 
   [Fact]
