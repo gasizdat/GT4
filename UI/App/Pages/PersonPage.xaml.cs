@@ -423,7 +423,7 @@ public partial class PersonPage : ContentPage
         captions = captionsTask.Result;
       }
 
-      var mediaSources = MediaSourceUtils.BuildMediaSources(photoData);
+      var mediaSources = MediaSourceUtils.BuildMediaSources([.. photoData, .. personFullInfo.Attachments]);
       var attachments = attachmentsTask.Result;
 
       // UpdateUI touches the project document again on the UI thread; SafeTask.RunOnMainThread keeps

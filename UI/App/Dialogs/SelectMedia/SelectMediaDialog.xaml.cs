@@ -54,4 +54,4 @@ public partial class SelectMediaDialog : ContentPage
   }
 }
 
-public sealed record MediaLinkItem(int Id, bool IsPhoto, string DisplayName);
+public sealed record MediaLinkItem(int Id, bool IsInlineImage, string DisplayName);

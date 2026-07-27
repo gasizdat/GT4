@@ -12,14 +12,20 @@ namespace GT4.UI.Converters;
 public static class MediaSourceUtils
 {
   // Only a committed photo has a stable id a stored "media:id" reference can target.
-  public static IReadOnlyDictionary<int, string> BuildMediaSources(IEnumerable<Data> photos) =>
-    photos
-      .Where(photo => photo.Id != ElementId.NonCommittedId)
-      .ToDictionary(photo => photo.Id, ToDataUri);
+  public static IReadOnlyDictionary<int, string> BuildMediaSources(IEnumerable<Data> media) =>
+    media
+      .Where(item => item.Id != ElementId.NonCommittedId && IsInlineImage(item))
+      .ToDictionary(item => item.Id, ToDataUri);
 
-  private static string ToDataUri(Data photo)
+  // A photo is an image by construction (its MIME may even be null); an attachment only when its own
+  // MIME type says so -- an attached scan is just as renderable as a photo.
+  public static bool IsInlineImage(Data media) =>
+    media.Category.IsPhoto() || media.MimeType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) == true;
+
+  private static string ToDataUri(Data media)
   {
-    var bytes = photo.Category.IsTaggedPhoto() ? GedcomPhotoResidue.ExtractImageBytes(photo.Content) : photo.Content;
-    return $"data:{photo.MimeType};base64,{Convert.ToBase64String(bytes)}";
+    var hasResidue = media.Category.IsTaggedPhoto() || media.Category.IsAttachment();
+    var bytes = hasResidue ? GedcomPhotoResidue.ExtractImageBytes(media.Content) : media.Content;
+    return $"data:{media.MimeType};base64,{Convert.ToBase64String(bytes)}";
   }
 }

@@ -11,6 +11,7 @@ using GT4.UI.Resources;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Windows.Input;
 
 namespace GT4.UI.Dialogs;
@@ -67,14 +68,17 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     UpdatePersonInformation(person);
 
     _Names.CollectionChanged += (_, _) => OnPropertyChanged(nameof(PersonFullName));
-    _Photos.CollectionChanged += (_, _) =>
-    {
-      _MediaSources = null;
-      OnPropertyChanged(nameof(MediaSources));
-    };
+    _Photos.CollectionChanged += OnMediaCollectionChanged;
+    _Attachments.CollectionChanged += OnMediaCollectionChanged;
 
     InitializeComponent();
     IsModified = false;
+  }
+
+  private void OnMediaCollectionChanged(object? sender, NotifyCollectionChangedEventArgs args)
+  {
+    _MediaSources = null;
+    OnPropertyChanged(nameof(MediaSources));
   }
 
   private PersonDataItem GetPersonData(Data data, DataCategory dataCategory)
@@ -168,9 +172,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   public ICollection<PersonDataItem> Photos => _Photos;
 
   // Re-encoding every photo to base64 is expensive enough to cache rather than redo on every binding
-  // read; _Photos.CollectionChanged (above) is the only thing that can make this stale.
+  // read; the CollectionChanged handlers (above) are the only thing that can make this stale.
   public IReadOnlyDictionary<int, string> MediaSources =>
-    _MediaSources ??= MediaSourceUtils.BuildMediaSources(_Photos.Select(photo => photo.Info));
+    _MediaSources ??= MediaSourceUtils.BuildMediaSources(_Photos.Concat(_Attachments).Select(item => item.Info));
 
   public ICollection<PersonDataItem> Attachments => _Attachments;
 
@@ -520,13 +524,15 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     var photoItems = await Task.WhenAll(photos.Select(async (data, index) =>
     {
       var caption = await GedcomPhotoResidue.ExtractTitleAsync(data, token);
-      return new MediaLinkItem(data.Id, IsPhoto: true, caption ?? string.Format(UIStrings.MediaLinkPhotoName_1, index + 1));
+      var displayName = caption ?? string.Format(UIStrings.MediaLinkPhotoName_1, index + 1);
+      return new MediaLinkItem(data.Id, MediaSourceUtils.IsInlineImage(data), displayName);
     }));
     var attachmentItems = await Task.WhenAll(attachments.Select(async data =>
     {
       var title = await GedcomPhotoResidue.ExtractTitleAsync(data, token);
       var fileName = await GedcomPhotoResidue.ExtractFileNameAsync(data, token);
-      return new MediaLinkItem(data.Id, IsPhoto: false, string.IsNullOrWhiteSpace(title) ? fileName ?? string.Empty : title);
+      var displayName = string.IsNullOrWhiteSpace(title) ? fileName ?? string.Empty : title;
+      return new MediaLinkItem(data.Id, MediaSourceUtils.IsInlineImage(data), displayName);
     }));
 
     var dialog = _Factory.SelectMediaDialogFactory.Create([.. photoItems, .. attachmentItems]);
@@ -536,7 +542,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
     if (picked is not null)
     {
-      if (picked.IsPhoto)
+      if (picked.IsInlineImage)
         BiographyEditor.InsertMediaLink(picked.DisplayName, picked.Id);
       else
         BiographyEditor.InsertAttachmentLink(picked.DisplayName, picked.Id);

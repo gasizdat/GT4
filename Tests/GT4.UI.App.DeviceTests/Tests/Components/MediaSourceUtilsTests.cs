@@ -40,6 +40,38 @@ public class MediaSourceUtilsTests
   }
 
   [Fact]
+  public void ImageAttachment_IsInlinedLikeAPhoto()
+  {
+    var content = BuildTaggedPhotoContent("0 OBJE\n1 FILE scan.jpg\n", [7, 8, 9]);
+    var attachment = new Data(3, content, "image/jpeg", DataCategory.PersonAttachment);
+
+    var sources = MediaSourceUtils.BuildMediaSources([attachment]);
+
+    Assert.Equal($"data:image/jpeg;base64,{Convert.ToBase64String([7, 8, 9])}", sources[3]);
+  }
+
+  [Fact]
+  public void NonImageAttachment_IsExcluded()
+  {
+    var content = BuildTaggedPhotoContent("0 OBJE\n1 FILE scan.pdf\n", [7, 8, 9]);
+    var attachment = new Data(4, content, "application/pdf", DataCategory.PersonAttachment);
+
+    var sources = MediaSourceUtils.BuildMediaSources([attachment]);
+
+    Assert.Empty(sources);
+  }
+
+  [Fact]
+  public void PhotoWithoutAMimeType_IsStillInlined()
+  {
+    var photo = new Data(5, [1, 2, 3], null, DataCategory.PersonPhoto);
+
+    var sources = MediaSourceUtils.BuildMediaSources([photo]);
+
+    Assert.Single(sources);
+  }
+
+  [Fact]
   public void NotYetSavedPhoto_IsExcluded()
   {
     var photo = new Data(ElementId.NonCommittedId, [1, 2, 3], "image/png", DataCategory.PersonMainPhoto);

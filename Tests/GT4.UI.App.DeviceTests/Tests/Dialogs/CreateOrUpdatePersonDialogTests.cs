@@ -23,8 +23,8 @@ public class CreateOrUpdatePersonDialogTests
 
   private static Data Photo(int id) => new(id, Content: [1, 2, 3], MimeType: "image/png", Category: DataCategory.PersonPhoto);
 
-  private static Data Attachment(int id, string fileName = "scan.pdf") => new(
-    id, Content: GedcomPhotoResidue.EncodeAttachment([1, 2, 3], fileName), MimeType: "application/pdf", Category: DataCategory.PersonAttachment);
+  private static Data Attachment(int id, string fileName = "scan.pdf", string mimeType = "application/pdf") => new(
+    id, Content: GedcomPhotoResidue.EncodeAttachment([1, 2, 3], fileName), MimeType: mimeType, Category: DataCategory.PersonAttachment);
 
   private static PersonFullInfo CreateSamplePerson() => new(
     Id: 1,
@@ -431,6 +431,31 @@ public class CreateOrUpdatePersonDialogTests
     await insertTask;
 
     Assert.Equal("[scan.pdf](attachment:20)", dialog.Biography!.Content);
+  }
+
+  [Fact]
+  public async Task InsertMediaLinkCommand_inlines_an_image_attachment_as_a_media_link()
+  {
+    var services = new TestServices();
+    var attachment = Attachment(21, "scan.jpg", "image/jpeg");
+    var person = CreateSamplePerson() with { MainPhoto = null, AdditionalPhotos = [], Attachments = [attachment] };
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    var dialog = await MainThread.InvokeOnMainThreadAsync(
+      () => services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialog.Factory>().Create(person));
+
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var insertTask = await MainThreadTask.StartAsync(dialog.InvokeInsertMediaLinkAsync);
+    var selectDialog = await ModalDialogHarness.WaitForModalAsync<SelectMediaDialog>(dialog);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      selectDialog.SelectedItem = selectDialog.Items.Single(i => i.Id == 21);
+      selectDialog.DialogCommand.Execute("SelectMediaCommand");
+    });
+    await insertTask;
+
+    Assert.Equal("![scan.jpg](media:21)", dialog.Biography!.Content);
+    Assert.Contains(21, dialog.MediaSources.Keys);
   }
 
   [Fact]
