@@ -23,8 +23,16 @@ public class CreateOrUpdatePersonDialogTests
 
   private static Data Photo(int id) => new(id, Content: [1, 2, 3], MimeType: "image/png", Category: DataCategory.PersonPhoto);
 
-  private static Data Attachment(int id, string fileName = "scan.pdf") => new(
-    id, Content: GedcomPhotoResidue.EncodeAttachment([1, 2, 3], fileName), MimeType: "application/pdf", Category: DataCategory.PersonAttachment);
+  // An imported OBJE whose TITL carries no text: the residue is there, the caption is not.
+  private static Data BlankCaptionPhoto(int id)
+  {
+    var tagBytes = System.Text.Encoding.UTF8.GetBytes("0 OBJE\n1 TITL\n");
+    byte[] content = [.. BitConverter.GetBytes(tagBytes.Length), .. tagBytes, 1, 2, 3];
+    return new(id, content, MimeType: "image/png", Category: DataCategory.PersonMainPhotoTagged);
+  }
+
+  private static Data Attachment(int id, string fileName = "scan.pdf", string mimeType = "application/pdf") => new(
+    id, Content: GedcomPhotoResidue.EncodeAttachment([1, 2, 3], fileName), MimeType: mimeType, Category: DataCategory.PersonAttachment);
 
   private static PersonFullInfo CreateSamplePerson() => new(
     Id: 1,
@@ -176,7 +184,10 @@ public class CreateOrUpdatePersonDialogTests
     // OnCreatePersonCommandAsync: saving without touching photos must not reconvert (which would
     // silently regenerate Content as plain bytes) or collapse the category to plain.
     var services = new TestServices();
-    var taggedPhoto = new Data(20, Content: [7, 7, 7], MimeType: "image/png", Category: DataCategory.PersonMainPhotoTagged);
+    // MediaSources (bound for the biography's media-link picker) unwraps every tagged photo's residue
+    // envelope eagerly, so the fake content here must be shaped like one (a real zero-length-tag prefix)
+    // rather than bare image bytes.
+    var taggedPhoto = new Data(20, Content: [0, 0, 0, 0, 7, 7, 7], MimeType: "image/png", Category: DataCategory.PersonMainPhotoTagged);
     var person = CreateSamplePerson() with { MainPhoto = taggedPhoto, AdditionalPhotos = [] };
     var dialog = await CreateDialogAsync(services, person);
 
@@ -235,6 +246,27 @@ public class CreateOrUpdatePersonDialogTests
 
     await WaitForAsync(() => dialog.Attachments.Count, count => count == 1, "RemoveAttachmentCommand did not remove the attachment.");
     Assert.DoesNotContain(attachment, dialog.Attachments);
+  }
+
+  [Fact]
+  public async Task RemoveAttachmentCommand_drops_the_attachment_from_MediaSources()
+  {
+    var person = CreateSamplePerson() with { Attachments = [Attachment(30, "scan.jpg", "image/jpeg")] };
+    var dialog = await CreateDialogAsync(new TestServices(), person);
+    var attachment = dialog.Attachments.ElementAt(0);
+    // Reading before the removal is what makes this a test: MediaSources is lazily cached, so an
+    // unpopulated cache would rebuild correctly even with the invalidation handler unsubscribed.
+    Assert.Contains(30, dialog.MediaSources.Keys);
+    var changedProperties = new List<string?>();
+    dialog.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+      dialog.DialogCommand.Execute(Adorner("RemoveAttachmentCommand", attachment)));
+
+    await WaitForAsync(() => dialog.Attachments.Count, count => count == 0, "RemoveAttachmentCommand did not remove the attachment.");
+    Assert.DoesNotContain(30, dialog.MediaSources.Keys);
+    // The cache reset fixes the value; only the notification makes the bound MarkdownView re-read it.
+    Assert.Contains(nameof(dialog.MediaSources), changedProperties);
   }
 
   [Fact]
@@ -382,6 +414,124 @@ public class CreateOrUpdatePersonDialogTests
     await insertTask;
 
     Assert.Equal("[Petr  Petrov](person:2)", dialog.Biography!.Content);
+  }
+
+  [Fact]
+  public async Task InsertMediaLinkCommand_inserts_a_photo_link_via_SelectMediaDialog()
+  {
+    var services = new TestServices();
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    var dialog = await MainThread.InvokeOnMainThreadAsync(
+      () => services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialog.Factory>().Create(CreateSamplePerson()));
+
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var insertTask = await MainThreadTask.StartAsync(dialog.InvokeInsertMediaLinkAsync);
+    var selectDialog = await ModalDialogHarness.WaitForModalAsync<SelectMediaDialog>(dialog);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      selectDialog.SelectedItem = selectDialog.Items.Single(i => i.Id == 11);
+      selectDialog.DialogCommand.Execute("SelectMediaCommand");
+    });
+    await insertTask;
+
+    var expectedCaption = string.Format(Resources.UIStrings.MediaLinkPhotoName_1, 2);
+    Assert.Equal($"![{expectedCaption}](media:11)", dialog.Biography!.Content);
+  }
+
+  [Fact]
+  public async Task InsertMediaLinkCommand_names_a_blank_captioned_photo_by_its_position()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson() with { MainPhoto = BlankCaptionPhoto(13), AdditionalPhotos = [] };
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    var dialog = await MainThread.InvokeOnMainThreadAsync(
+      () => services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialog.Factory>().Create(person));
+
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var insertTask = await MainThreadTask.StartAsync(dialog.InvokeInsertMediaLinkAsync);
+    var selectDialog = await ModalDialogHarness.WaitForModalAsync<SelectMediaDialog>(dialog);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      selectDialog.SelectedItem = selectDialog.Items.Single(i => i.Id == 13);
+      selectDialog.DialogCommand.Execute("SelectMediaCommand");
+    });
+    await insertTask;
+
+    var expectedCaption = string.Format(Resources.UIStrings.MediaLinkPhotoName_1, 1);
+    Assert.Equal($"![{expectedCaption}](media:13)", dialog.Biography!.Content);
+  }
+
+  [Fact]
+  public async Task InsertMediaLinkCommand_inserts_an_attachment_link_using_its_file_name()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson() with { MainPhoto = null, AdditionalPhotos = [], Attachments = [Attachment(20, "scan.pdf")] };
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    var dialog = await MainThread.InvokeOnMainThreadAsync(
+      () => services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialog.Factory>().Create(person));
+
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var insertTask = await MainThreadTask.StartAsync(dialog.InvokeInsertMediaLinkAsync);
+    var selectDialog = await ModalDialogHarness.WaitForModalAsync<SelectMediaDialog>(dialog);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      selectDialog.SelectedItem = selectDialog.Items.Single(i => i.Id == 20);
+      selectDialog.DialogCommand.Execute("SelectMediaCommand");
+    });
+    await insertTask;
+
+    Assert.Equal("[scan.pdf](attachment:20)", dialog.Biography!.Content);
+  }
+
+  [Fact]
+  public async Task InsertMediaLinkCommand_inlines_an_image_attachment_as_a_media_link()
+  {
+    var services = new TestServices();
+    var attachment = Attachment(21, "scan.jpg", "image/jpeg");
+    var person = CreateSamplePerson() with { MainPhoto = null, AdditionalPhotos = [], Attachments = [attachment] };
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    var dialog = await MainThread.InvokeOnMainThreadAsync(
+      () => services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialog.Factory>().Create(person));
+
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var insertTask = await MainThreadTask.StartAsync(dialog.InvokeInsertMediaLinkAsync);
+    var selectDialog = await ModalDialogHarness.WaitForModalAsync<SelectMediaDialog>(dialog);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      selectDialog.SelectedItem = selectDialog.Items.Single(i => i.Id == 21);
+      selectDialog.DialogCommand.Execute("SelectMediaCommand");
+    });
+    await insertTask;
+
+    Assert.Equal("![scan.jpg](media:21)", dialog.Biography!.Content);
+    Assert.Contains(21, dialog.MediaSources.Keys);
+  }
+
+  // The picker and MediaSources must agree on what can be embedded: offering an embed the map drops
+  // renders a broken image, and dropping one the map holds wastes a working inline photo.
+  [Fact]
+  public async Task InsertMediaLinkCommand_offers_as_inline_exactly_what_MediaSources_can_render()
+  {
+    var services = new TestServices();
+    var attachments = new[] { Attachment(20, "scan.pdf"), Attachment(21, "scan.jpg", "image/jpeg") };
+    var person = CreateSamplePerson() with { Attachments = attachments };
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    var dialog = await MainThread.InvokeOnMainThreadAsync(
+      () => services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialog.Factory>().Create(person));
+
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var insertTask = await MainThreadTask.StartAsync(dialog.InvokeInsertMediaLinkAsync);
+    var selectDialog = await ModalDialogHarness.WaitForModalAsync<SelectMediaDialog>(dialog);
+    var inlineIds = selectDialog.Items.Where(item => item.IsInlineImage).Select(item => item.Id);
+
+    Assert.Equal(dialog.MediaSources.Keys.Order(), inlineIds.Order());
+
+    await MainThread.InvokeOnMainThreadAsync(() => selectDialog.DialogCommand.Execute("SelectMediaCommand"));
+    await insertTask;
   }
 
   [Fact]

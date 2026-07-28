@@ -67,10 +67,16 @@
         </Button.Triggers>
       </Button>
       <Button
+          Margin="{Thickness Right={StaticResource PageContentSpacing}}"
           Command="{Binding InsertLinkCommand, Source={x:Reference Root}}"
           CommandParameter="InsertPersonLinkCommand"
           IsVisible="{Binding DisplayEditor, Source={x:Reference Root}}"
           Text="{x:Static resources:UIStrings.BtnNameInsertPersonLink}" />
+      <Button
+          Command="{Binding InsertLinkCommand, Source={x:Reference Root}}"
+          CommandParameter="InsertMediaLinkCommand"
+          IsVisible="{Binding DisplayEditor, Source={x:Reference Root}}"
+          Text="{x:Static resources:UIStrings.BtnNameInsertMediaLink}" />
     </HorizontalStackLayout>
 
     <!--  Content  -->
@@ -88,6 +94,7 @@
           HorizontalOptions="Fill"
           IsVisible="{Binding DisplayHtmlView, Source={x:Reference Root}}"
           Markdown="{Binding Markdown, Source={x:Reference Root}}"
+          MediaSources="{Binding MediaSources, Source={x:Reference Root}}"
           VerticalOptions="Fill" />
     </Grid>
   </Grid>

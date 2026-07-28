@@ -1,4 +1,5 @@
 using GT4.UI.Abstraction;
+using System.Collections.ObjectModel;
 using System.Windows.Input;
 
 namespace GT4.UI.Components;
@@ -29,6 +30,11 @@ public partial class MarkdownEditor : ContentView
   public static readonly BindableProperty PlaceholderProperty =
     BindableProperty.Create(nameof(Placeholder), typeof(string), typeof(MarkdownView), default, BindingMode.OneWay, null, OnPlaceholderChanged);
 
+  // Forwarded to the inner preview MarkdownView so the "Markdown View" tab renders inserted media links
+  // the same way the host's own display does.
+  public static readonly BindableProperty MediaSourcesProperty =
+    BindableProperty.Create(nameof(MediaSources), typeof(IReadOnlyDictionary<int, string>), typeof(MarkdownEditor), ReadOnlyDictionary<int, string>.Empty);
+
   // The host page owns link insertion (person lookup/selection, and whatever other link types it
   // supports), so this view stays free of any project dependency: the "Link a Person" button (and any
   // future link-type button) executes the host's own command directly, keyed by CommandParameter.
@@ -45,6 +51,12 @@ public partial class MarkdownEditor : ContentView
   {
     get => (string?)GetValue(PlaceholderProperty);
     set => SetValue(PlaceholderProperty, value);
+  }
+
+  public IReadOnlyDictionary<int, string> MediaSources
+  {
+    get => (IReadOnlyDictionary<int, string>)GetValue(MediaSourcesProperty);
+    set => SetValue(MediaSourcesProperty, value);
   }
 
   public ICommand? InsertLinkCommand
@@ -74,12 +86,20 @@ public partial class MarkdownEditor : ContentView
 
   public ICommand Command => _Command;
 
-  public void InsertLink(string displayName, int personId)
+  public void InsertLink(string displayName, int personId) =>
+    InsertText($"[{displayName}](person:{personId})");
+
+  public void InsertMediaLink(string displayName, int mediaId) =>
+    InsertText($"![{displayName}](media:{mediaId})");
+
+  public void InsertAttachmentLink(string displayName, int attachmentId) =>
+    InsertText($"[{displayName}](attachment:{attachmentId})");
+
+  private void InsertText(string text)
   {
-    var linkText = $"[{displayName}](person:{personId})";
     var cursor = Math.Clamp(TextEditor.CursorPosition, 0, Markdown?.Length ?? 0);
-    Markdown = (Markdown ?? string.Empty).Insert(cursor, linkText);
-    TextEditor.CursorPosition = cursor + linkText.Length;
+    Markdown = (Markdown ?? string.Empty).Insert(cursor, text);
+    TextEditor.CursorPosition = cursor + text.Length;
   }
 
   private static void OnMarkdownChanged(BindableObject obj, object oldValue, object newValue)

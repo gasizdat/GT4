@@ -222,8 +222,10 @@
             <Border IsVisible="{Binding ShowBiography, Source={x:Reference Root}}">
               <components:MarkdownView
                   Margin="-1"
+                  AttachmentLinkTapped="OnAttachmentLinkTapped"
                   BackgroundColor="Transparent"
                   Markdown="{Binding Biography, Source={x:Reference Root}, Mode=OneWay}"
+                  MediaSources="{Binding MediaSources, Source={x:Reference Root}}"
                   MinimumHeightRequest="{OnIdiom Default=300,
                                                  Phone=200}"
                   PersonLinkTapped="OnPersonLinkTapped" />
