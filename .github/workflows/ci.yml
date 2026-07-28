@@ -101,6 +101,13 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 10
 
+    # The teardown race below scales with how long one attempt runs, so the suite is halved and each
+    # half retries on its own budget: a crash costs one shard's attempt instead of the whole run.
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+
     steps:
       - uses: actions/checkout@v5
         with:
@@ -127,7 +134,7 @@ jobs:
       - name: Build GT4.UI.App.DeviceTests
         run: dotnet build Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj --configuration Release --framework net10.0-windows10.0.19041.0
 
-      - name: Test GT4.UI.App.DeviceTests
+      - name: Test GT4.UI.App.DeviceTests (shard ${{ matrix.shard }})
         # The DeviceRunners CLI can exit non-zero from a native WinUI teardown race -- the spawned
         # test-host process dying, sometimes after every test already passed, sometimes mid-run -- and
         # the exact symptom varies (a window-class unregister failure, a reset TCP link, ...). There is
@@ -136,14 +143,29 @@ jobs:
         # trusted immediately as a real failure (never retried past); a crash that recorded zero failures
         # is retried, since a genuine bug reproduces on retry while a flaky teardown race usually doesn't.
         run: |
+          # Shard 1 is these classes and shard 2 is the complement, so a class added later always runs
+          # in shard 2 rather than silently going untested -- the split can drift in balance, never in
+          # coverage. Matching on "DeviceTests.<class>." keeps a name from also matching a longer one.
+          $shardOne = @(
+            'ProjectPageTests', 'PersonPageTests', 'CreateOrUpdatePersonDialogTests', 'FamilyPageTests',
+            'NamesPageTests', 'SelectDateDialogTests', 'FamilyTreePageTests', 'SelectNameDialogTests',
+            'KinshipFinderPageTests', 'ProjectRevisionsPageTests'
+          )
+          $shard = '${{ matrix.shard }}'
+          if ($shard -eq '1') {
+            $filter = ($shardOne | ForEach-Object { "FullyQualifiedName~DeviceTests.$_." }) -join '|'
+          } else {
+            $filter = ($shardOne | ForEach-Object { "FullyQualifiedName!~DeviceTests.$_." }) -join '&'
+          }
+
           $maxAttempts = 3
           $success = $false
           for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
-            Write-Host "=== Device test attempt $attempt of $maxAttempts ==="
-            $trxPath = "coverage\device-tests.trx"
+            Write-Host "=== Device test shard $shard attempt $attempt of $maxAttempts ==="
+            $trxPath = "coverage\device-tests-$shard.trx"
             if (Test-Path $trxPath) { Remove-Item $trxPath -Force }
 
-            & dotnet test Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj --no-build --configuration Release --framework net10.0-windows10.0.19041.0 --logger "trx;LogFileName=device-tests.trx" --results-directory coverage
+            & dotnet test Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj --no-build --configuration Release --framework net10.0-windows10.0.19041.0 --filter $filter --logger "trx;LogFileName=device-tests-$shard.trx" --results-directory coverage
             $exitCode = $LASTEXITCODE
 
             if (Test-Path $trxPath) {
@@ -166,12 +188,12 @@ jobs:
             }
 
             if ($attempt -lt $maxAttempts) {
-              Write-Host "::warning::Device test attempt $attempt exited non-zero (exit code $exitCode) with no failed tests recorded -- retrying."
+              Write-Host "::warning::Device test shard $shard attempt $attempt exited non-zero (exit code $exitCode) with no failed tests recorded -- retrying."
             }
           }
 
           if (-not $success) {
-            Write-Host "Device tests did not complete cleanly after $maxAttempts attempts."
+            Write-Host "Device test shard $shard did not complete cleanly after $maxAttempts attempts."
             exit 1
           }
           exit 0
@@ -180,8 +202,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: test-results-device
-          path: coverage\device-tests.trx
+          name: test-results-device-${{ matrix.shard }}
+          path: coverage\device-tests-${{ matrix.shard }}.trx
 
   coverage-report:
     needs: [test, test-device]
@@ -205,7 +227,8 @@ jobs:
       - name: Download device test results
         uses: actions/download-artifact@v8
         with:
-          name: test-results-device
+          pattern: test-results-device-*
+          merge-multiple: true
           path: coverage
 
       - name: Generate coverage report
