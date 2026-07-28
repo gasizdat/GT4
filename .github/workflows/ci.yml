@@ -137,18 +137,18 @@ jobs:
       - name: Test GT4.UI.App.DeviceTests (shard ${{ matrix.shard }})
         # The DeviceRunners CLI can exit non-zero from a native WinUI teardown race -- the spawned
         # test-host process dying, sometimes after every test already passed, sometimes mid-run -- and
-        # the exact symptom varies (a window-class unregister failure, a reset TCP link, ...). There is
-        # no reliable way to tell from one run's output alone whether a crash left real tests unexecuted,
-        # so this does not try to guess: it just retries the whole attempt. A TRX with any failed test is
-        # trusted immediately as a real failure (never retried past); a crash that recorded zero failures
-        # is retried, since a genuine bug reproduces on retry while a flaky teardown race usually doesn't.
+        # the exact symptom varies (a window-class unregister failure, a reset TCP link, ...). The two
+        # cases are told apart by the runner's own "Test run complete." line, which it prints only once
+        # the whole run has ended: with it, every test ran and a bad exit code is the host failing to
+        # exit, so the attempt is accepted; without it the run was cut short and is retried. A TRX with
+        # any failed test is a real failure and is never retried past.
         run: |
           # Shard 1 is these classes and shard 2 is the complement, so a class added later always runs
           # in shard 2 rather than silently going untested -- the split can drift in balance, never in
           # coverage. Matching on "DeviceTests.<class>." keeps a name from also matching a longer one.
-          # What the shards balance is WindowHost.AttachAsync, not test count: swapping the runner's
-          # Window.Page is what the teardown race rides on, so the classes that do it are dealt across
-          # both halves (24 attachments here, 20 there) instead of piling into one.
+          # The classes that attach a page to the runner's Window are spread across both halves rather
+          # than piled into one: they are where the host dies, and a shard made entirely of them fails
+          # every attempt. Balanced at 172 tests here, 165 there.
           $shardOne = @(
             'ProjectPageTests', 'PersonPageTests', 'NamesPageTests', 'SelectNameDialogTests',
             'PhotoViewerDialogTests', 'RelativeInfoViewTests', 'GedcomDataConverterTests',
@@ -168,25 +168,33 @@ jobs:
             Write-Host "=== Device test shard $shard attempt $attempt of $maxAttempts ==="
             $trxPath = "coverage\device-tests-$shard.trx"
             if (Test-Path $trxPath) { Remove-Item $trxPath -Force }
+            $logPath = "coverage\device-tests-$shard.log"
 
-            & dotnet test Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj --no-build --configuration Release --framework net10.0-windows10.0.19041.0 --filter $filter --logger "trx;LogFileName=device-tests-$shard.trx" --results-directory coverage
+            & dotnet test Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj --no-build --configuration Release --framework net10.0-windows10.0.19041.0 --filter $filter --logger "trx;LogFileName=device-tests-$shard.trx" --results-directory coverage 2>&1 | Tee-Object -FilePath $logPath
             $exitCode = $LASTEXITCODE
+            $ranToCompletion = Select-String -Path $logPath -Pattern 'Test run complete\.' -Quiet
 
             if (Test-Path $trxPath) {
               [xml]$trx = Get-Content $trxPath
               $failed = [int]$trx.TestRun.ResultSummary.Counters.failed
               $total = [int]$trx.TestRun.ResultSummary.Counters.total
-              Write-Host "Attempt $attempt`: $total total, $failed failed (exit code $exitCode)."
+              Write-Host "Attempt $attempt`: $total total, $failed failed (exit code $exitCode, ran to completion: $ranToCompletion)."
 
               if ($failed -gt 0) {
                 Write-Host "Real test failure recorded -- not retrying."
                 exit 1
               }
             } else {
-              Write-Host "Attempt $attempt`: no TRX produced (exit code $exitCode)."
+              Write-Host "Attempt $attempt`: no TRX produced (exit code $exitCode, ran to completion: $ranToCompletion)."
             }
 
             if ($exitCode -eq 0) {
+              $success = $true
+              break
+            }
+
+            if ($ranToCompletion -and (Test-Path $trxPath)) {
+              Write-Host "::warning::Device test shard $shard exited $exitCode after the run had already completed with no failures -- the host died on its way out, accepting the attempt."
               $success = $true
               break
             }
@@ -207,7 +215,11 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: test-results-device-${{ matrix.shard }}
-          path: coverage\device-tests-${{ matrix.shard }}.trx
+          # The console log travels with the TRX: which of the two teardown deaths happened is only
+          # visible there, and the TRX of an accepted attempt looks like any other passing run.
+          path: |
+            coverage\device-tests-${{ matrix.shard }}.trx
+            coverage\device-tests-${{ matrix.shard }}.log
 
   coverage-report:
     needs: [test, test-device]
