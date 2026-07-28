@@ -36,10 +36,13 @@ at is dropped with its text; so is any sub-structure of the record itself.
 
 Photos (OBJE) — partially modeled
 
-An inline INDI `OBJE` carrying an embedded base64 `BLOB` is imported into GT4's
-photo model (the `_PRIM Y` one, or the first, becomes the main photo; the rest
-are additional) and re-exported the same way, so photos round-trip self-contained
-inside the single .ged file. An `OBJE` pointer is followed to the top-level
+An inline INDI `OBJE` — carrying either an embedded base64 `BLOB` or an external
+`FILE` reference — is imported into GT4's photo model (the `_PRIM Y` one, or the
+first, becomes the main photo; the rest are additional). It is re-exported as a
+`FILE` reference: an export writes every photo and attachment as its own file
+under `media/<data id>/`, which is what strict GEDCOM 5.5.1 expects and what
+other tools can read. `BLOB` is still read on import — existing GT4 exports and
+5.5-era files from other tools use it — but never written. An `OBJE` pointer is followed to the top-level
 record it names, and on through whatever that record points at in turn, so a
 person owns the media their subtree can reach: a direct INDI-child pointer is a
 portrait like any direct child, one reached through a `SOUR` citation is
@@ -53,9 +56,16 @@ derives the same media again. Not modelled either way: an `OBJE` whose external
 below, surviving verbatim but loaded as nothing — and the second and later
 `FILE`s of a multi-file top-level record, which is kept verbatim rather than
 split the way an inline multi-file `OBJE` is.
-The embedded `BLOB` form is non-conformant to strict GEDCOM 5.5.1 (which expects
-external FILE references); it is chosen so the export stays a single shareable
-file and round-trips through GT4 itself.
+
+The exported `FILE` path is derived from the media row alone — the row's id names
+its folder, and the leaf is the original filename for an attachment or a
+synthesized one for a photo, which has none stored. The directory the file was
+originally read from is not reproduced. An export is therefore the .ged plus that
+`media/` tree; the app ships both as one `.ged.zip`, which it also accepts back
+on import. Media the person owns only by pointer (`_REF`) is the exception: it is
+not re-emitted under the person at all, so its bytes are not written out either —
+the passthrough record carrying it is re-emitted verbatim, `FILE` or `BLOB` as it
+was read.
 
 Dropped — whole records
 

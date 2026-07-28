@@ -1,3 +1,4 @@
+using GT4.Core.Gedcom;
 using GT4.Core.Gedcom.Abstraction;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
@@ -17,11 +18,12 @@ namespace GT4.UI.Pages;
 
 public partial class ProjectPage : ContentPage
 {
-  // GEDCOM has no standard MIME type: Windows filters on the ".ged" extension, while Android has none and
-  // falls back to any file. Mirrors the picker on the project list's fresh-import command.
+  // GEDCOM has no standard MIME type: Windows filters on the ".ged" extension (and ".zip", which is what an
+  // export produces), while Android has none and falls back to any file. Mirrors the picker on the project
+  // list's fresh-import command.
   private static readonly FilePickerFileType GedcomFileType = new(new Dictionary<DevicePlatform, IEnumerable<string>>
   {
-    [DevicePlatform.WinUI] = [".ged"],
+    [DevicePlatform.WinUI] = [".ged", ".zip"],
     [DevicePlatform.Android] = ["*/*"],
   });
 
@@ -372,17 +374,18 @@ public partial class ProjectPage : ContentPage
     Refresh();
   }
 
-  // Exports the open project to a GEDCOM file in the cache directory and hands it to the OS share sheet,
-  // which lets the user save or send it. GEDCOM 5.5.1 is UTF-8, written without a BOM.
+  // Exports the open project to a GEDCOM package in the cache directory and hands it to the OS share sheet,
+  // which lets the user save or send it. The media the document references travels beside the .ged rather
+  // than inside it, so the two are shared as one archive.
   private async Task OnExportGedcom()
   {
-    var fileName = FileNameUtils.Sanitize(_CurrentProjectProvider.Info.Name, "project") + ".ged";
-    var path = Path.Combine(FileSystem.CacheDirectory, fileName);
+    var name = FileNameUtils.Sanitize(_CurrentProjectProvider.Info.Name, "project");
+    var path = Path.Combine(FileSystem.CacheDirectory, name + GedcomPackage.ArchiveExtension);
 
-    await using (var writer = new StreamWriter(path, false, new UTF8Encoding(false)))
+    await using (var archive = new FileStream(path, FileMode.Create))
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-      await _Exporter.ExportAsync(_CurrentProjectProvider.Project, writer, token);
+      await GedcomPackage.WriteAsync(_Exporter, _CurrentProjectProvider.Project, archive, name + ".ged", token);
     }
 
     var request = new ShareFileRequest { Title = UIStrings.ShareGedcomTitle, File = new ShareFile(path) };
@@ -405,7 +408,8 @@ public partial class ProjectPage : ContentPage
     if (!await _AlertService.ShowConfirmationAsync(confirmText))
       return;
 
-    using var reader = await _GedcomImportEncoding.ResolveReaderAsync(file, Navigation);
+    using var source = await GedcomImportSource.OpenAsync(file, FileSystem.CacheDirectory);
+    using var reader = await _GedcomImportEncoding.ResolveReaderAsync(source.OpenStreamAsync, Navigation);
     if (reader is null)
       return;
 
@@ -413,7 +417,7 @@ public partial class ProjectPage : ContentPage
     await Navigation.PushModalAsync(dialog);
     try
     {
-      await Task.Run(() => RunImportAsync(file, reader, dialog.Token));
+      await Task.Run(() => RunImportAsync(source, reader, dialog.Token));
     }
     catch (OperationCanceledException)
     {
@@ -427,16 +431,6 @@ public partial class ProjectPage : ContentPage
     Refresh();
   }
 
-  private async Task RunImportAsync(FileResult file, TextReader reader, CancellationToken token)
-  {
-    var mediaBasePath = MediaBasePath(file);
-    await _Importer.ImportAsync(_CurrentProjectProvider.Project, reader, token, mediaBasePath);
-  }
-
-  // External OBJE FILE images are resolved relative to the picked .ged file's folder. On desktop FullPath is
-  // the real path; where it is unavailable (e.g. a mobile content URI) the importer simply finds no siblings
-  // and leaves those references as residue.
-  private static string? MediaBasePath(FileResult file) =>
-    string.IsNullOrEmpty(file.FullPath) ? null : Path.GetDirectoryName(file.FullPath);
-
+  private async Task RunImportAsync(GedcomImportSource source, TextReader reader, CancellationToken token) =>
+    await _Importer.ImportAsync(_CurrentProjectProvider.Project, reader, token, source.MediaBasePath);
 }

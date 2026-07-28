@@ -16,16 +16,13 @@ public sealed class GedcomImportEncoding
   }
 
   /// <summary>
-  /// Resolves the encoding <paramref name="file"/>'s declared <c>CHAR</c> header calls for, prompting the
-  /// user for a codepage when that value is ambiguous (e.g. <c>ANSI</c>), and returns a reader over its
-  /// content, or null if the user cancelled the codepage prompt.
+  /// Resolves the encoding the stream's declared <c>CHAR</c> header calls for, prompting the user for a
+  /// codepage when that value is ambiguous (e.g. <c>ANSI</c>), and returns a reader over its content, or
+  /// null if the user cancelled the codepage prompt. Takes an opener rather than the picked file: the
+  /// header is read once to detect, then the content reopened to decode, and a package's GEDCOM is not the
+  /// picked file at all.
   /// </summary>
-  public Task<TextReader?> ResolveReaderAsync(FileResult file, INavigation navigation) =>
-    ResolveReaderAsync(file.OpenReadAsync, navigation);
-
-  // Seam for testing without FileResult, whose OpenReadAsync isn't virtual and whose path-based
-  // constructor doesn't produce a working instance on Windows.
-  internal async Task<TextReader?> ResolveReaderAsync(Func<Task<Stream>> openStreamAsync, INavigation navigation)
+  public async Task<TextReader?> ResolveReaderAsync(Func<Task<Stream>> openStreamAsync, INavigation navigation)
   {
     GedcomCharsetResult charset;
     using (var headerStream = await openStreamAsync())
