@@ -569,7 +569,7 @@ internal sealed class GedcomExporter : IGedcomExporter
     IGedcomMediaWriter media,
     CancellationToken token)
   {
-    var form = GedcomMedia.ToForm(data.MimeType) ?? GedcomMedia.SniffForm(bytes);
+    var form = GedcomMedia.ResolveForm(data.MimeType, bytes);
     var path = MediaPath(data.Id, form, residual);
     await media.WriteAsync(path, bytes, token);
 

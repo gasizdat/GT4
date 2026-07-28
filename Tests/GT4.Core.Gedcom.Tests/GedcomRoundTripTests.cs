@@ -464,6 +464,36 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task Photo_OctetStreamMimeType_TakesItsFormFromTheBytes()
+  {
+    // The picker stamps application/octet-stream whenever it cannot name a type, so that MIME says nothing
+    // about the format. Exporting it verbatim would give the sidecar a FORM outside ImageForms, and the
+    // photo would come back from import as a plain attachment.
+    byte[] png = [0x89, (byte)'P', (byte)'N', (byte)'G', 0x0D, 0x0A, 0x1A, 0x0A];
+    var name = await _source.Names.AddNameAsync("Opaque", NameType.FirstName, null, Token);
+    var main = new Data(ElementId.NonCommittedId, png, "application/octet-stream", DataCategory.PersonMainPhoto);
+    var info = PersonFullInfo.Empty with
+    {
+      BirthDate = Year(1900),
+      Names = [name],
+      MainPhoto = main,
+    };
+    await _source.PersonManager.AddPersonAsync(info, Token);
+
+    var text = await ExportToTextAsync(_source);
+    text.Should().Contain("2 FILE media/").And.Contain("photo.png").And.Contain("3 FORM png");
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
+
+    var person = (await reimported.Persons.GetPersonsAsync(Token)).Single();
+    var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, Token);
+    full.MainPhoto.Should().NotBeNull();
+    full.MainPhoto!.MimeType.Should().Be("image/png");
+    full.MainPhoto.Content.Should().Equal(png);
+  }
+
+  [Fact]
   public async Task Photo_NullMimeTypeRoundTripsAsNull()
   {
     // A picked file can carry no content type, so Data.MimeType is null. Export must not invent a format,

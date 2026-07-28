@@ -1,3 +1,5 @@
+using System.Net.Mime;
+
 namespace GT4.Core.Gedcom;
 
 /// <summary>
@@ -16,6 +18,19 @@ internal static class GedcomMedia
   // either the OBJE FORM token or the FILE extension.
   public static readonly HashSet<string> ImageForms =
     new(StringComparer.OrdinalIgnoreCase) { "jpg", "jpeg", "png", "gif", "bmp", "tif", "tiff", "webp" };
+
+  /// <summary>
+  /// The form token to export stored media under. <c>application/octet-stream</c> is what the file picker
+  /// stamps when it cannot name a type, so it names no format either: the bytes are asked first and the
+  /// placeholder kept only when they say nothing.
+  /// </summary>
+  public static string? ResolveForm(string? mimeType, byte[] content)
+  {
+    if (string.Equals(mimeType, MediaTypeNames.Application.Octet, StringComparison.OrdinalIgnoreCase))
+      return SniffForm(content) ?? ToForm(mimeType);
+
+    return ToForm(mimeType) ?? SniffForm(content);
+  }
 
   public static string? ToForm(string? mimeType)
   {

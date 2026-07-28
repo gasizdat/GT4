@@ -5,6 +5,18 @@ namespace GT4.Core.Gedcom.Tests;
 
 public sealed class GedcomMediaTests
 {
+  private static readonly byte[] PngBytes = [0x89, (byte)'P', (byte)'N', (byte)'G', 0x0D, 0x0A, 0x1A, 0x0A];
+
+  [Fact]
+  public void ResolveForm_OctetStreamOverImageBytes_TakesTheFormFromTheBytes() =>
+    GedcomMedia.ResolveForm("application/octet-stream", PngBytes).Should().Be("png");
+
+  // Nothing else names the format, so the placeholder still has to yield a form -- dropping it would leave
+  // the sidecar extensionless and the OBJE without a FORM to reimport the MIME from.
+  [Fact]
+  public void ResolveForm_OctetStreamOverUnrecognizedBytes_KeepsThePlaceholderForm() =>
+    GedcomMedia.ResolveForm("application/octet-stream", [1, 2, 3]).Should().Be("octet-stream");
+
   [Theory]
   [InlineData(null)]
   [InlineData("")]
