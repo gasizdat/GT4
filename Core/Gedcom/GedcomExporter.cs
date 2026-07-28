@@ -41,9 +41,6 @@ internal sealed class GedcomExporter : IGedcomExporter
   // The folder every sidecar lives under, relative to the exported .ged.
   private const string MediaFolder = "media";
 
-  // The Windows invalid-filename set, a superset of every other platform's.
-  private static readonly HashSet<char> InvalidLeafChars = ['<', '>', ':', '"', '/', '\\', '|', '?', '*'];
-
   public async Task ExportAsync(IProjectDocument document, TextWriter writer, IGedcomMediaWriter media, CancellationToken token)
   {
     var persons = await document.Persons.GetPersonsAsync(token);
@@ -598,16 +595,12 @@ internal sealed class GedcomExporter : IGedcomExporter
     return $"{MediaFolder}/{id}/{leaf}";
   }
 
-  /// <summary>
-  /// The filename part of a stored reference, with everything a path could exploit removed. The invalid set
-  /// is spelled out rather than taken from <see cref="Path.GetInvalidFileNameChars"/>, which is narrower on
-  /// Unix -- the exported artifact must name the same files whatever platform wrote it.
-  /// </summary>
+  // A stored reference is whatever the tool that wrote it put there, which can be a full path from another
+  // machine; only its last segment names the sidecar.
   private static string SanitizeLeaf(string reference, string fallback)
   {
     var leaf = reference[(reference.LastIndexOfAny(['/', '\\']) + 1)..];
-    var sanitized = new string([.. leaf.Where(c => c >= ' ' && !InvalidLeafChars.Contains(c))]);
-    return sanitized.Trim('.').Length == 0 ? fallback : sanitized;
+    return FileNameUtils.Sanitize(leaf, fallback);
   }
 
   private static void AddResidualChildren(GedcomNode obje, GedcomNode? residual)
