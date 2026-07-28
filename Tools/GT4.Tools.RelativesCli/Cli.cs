@@ -215,11 +215,23 @@ internal static class Cli
     return 2;
   }
 
+  /// <summary>
+  /// A <c>.zip</c> target is packaged; a plain <c>.ged</c> is written with its media unpacked alongside, so
+  /// the result stays directly usable by <c>compare</c>.
+  /// </summary>
   private static async Task RunExportAsync(IGedcomExporter exporter, IProjectDocument document, string outPath, CancellationToken token)
   {
-    await using (var writer = new StreamWriter(outPath, append: false, Encoding.UTF8))
+    if (outPath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
     {
-      await exporter.ExportAsync(document, writer, token);
+      var entryName = Path.GetFileNameWithoutExtension(outPath);
+      await using var archive = new FileStream(outPath, FileMode.Create);
+      await GedcomPackage.WriteAsync(exporter, document, archive, entryName, token);
+    }
+    else
+    {
+      var media = new DirectoryGedcomMediaWriter(Path.GetDirectoryName(Path.GetFullPath(outPath))!);
+      await using var writer = new StreamWriter(outPath, append: false, Encoding.UTF8);
+      await exporter.ExportAsync(document, writer, media, token);
     }
     Console.WriteLine($"Exported GEDCOM to: {outPath}");
   }
@@ -244,7 +256,9 @@ internal static class Cli
       Commands:
         find <query>          List persons whose name contains <query>.
         relatives <personId>  List the direct relatives of the given person.
-        export <path.ged>     Export the whole project as a GEDCOM 5.5.1 file.
+        export <path.ged>     Export the whole project as a GEDCOM 5.5.1 file, with
+                               media written alongside it under media/. A .ged.zip
+                               target packages both into one archive instead.
         tree <personId>       Walk the full relative tree from the given person,
                                flagging Loop / MultipleConnections exactly like
                                the app's RelativeTree.ExpandAllAsync does.

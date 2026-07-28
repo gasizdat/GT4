@@ -22,6 +22,10 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
   private readonly GedcomExporter _exporter = new();
   private readonly GedcomImporter _importer = new(new FileGedcomMediaReader());
 
+  // Media travels beside the .ged rather than inside it, so an export and the re-import that reads it back
+  // share this folder -- it is what the exported OBJE FILE paths are relative to.
+  private readonly string _mediaPath = Path.Combine(Path.GetTempPath(), $"gt4_gedcom_media_{Guid.NewGuid():N}");
+
   public async ValueTask InitializeAsync()
   {
     _source = await NewDocumentAsync();
@@ -37,6 +41,7 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
   public async ValueTask DisposeAsync()
   {
     await _source.DisposeAsync();
+    try { Directory.Delete(_mediaPath, recursive: true); } catch { /* best-effort temp cleanup */ }
     foreach (var path in _paths)
     {
       foreach (var suffix in new[] { "", "-wal", "-shm", "-journal" })
@@ -126,7 +131,7 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     }
 
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
 
     var actual = await GedcomTestGraph.ExtractAsync(reimported, Token);
 
@@ -157,7 +162,7 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     text.Should().Contain($"2 {GedcomTags.Pedigree} {GedcomTags.AdoptedPedigree}");
 
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
 
     var actual = await GedcomTestGraph.ExtractAsync(reimported, Token);
 
@@ -203,7 +208,7 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     childRecord.ChildrenWithTag("FAMC").Should().HaveCount(3);
 
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
 
     var actual = await GedcomTestGraph.ExtractAsync(reimported, Token);
 
@@ -227,7 +232,7 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
 
     var text = await ExportToTextAsync(_source);
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
 
     var persons = await reimported.Persons.GetPersonsAsync(Token);
     var person = persons.Single();
@@ -255,7 +260,7 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
 
     var text = await ExportToTextAsync(_source);
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
 
     var person = (await reimported.Persons.GetPersonsAsync(Token)).Single();
     var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, Token);
@@ -274,7 +279,7 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     text.Should().NotContain($"1 {GedcomTags.Death}");
 
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
 
     var person = (await reimported.Persons.GetPersonsAsync(Token)).Single();
     person.DeathDate.Should().BeNull();
@@ -292,7 +297,7 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     text.Should().NotContain($"1 {GedcomTags.Death}\n2 {GedcomTags.Date}");
 
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
 
     var person = (await reimported.Persons.GetPersonsAsync(Token)).Single();
     person.DeathDate.Should().NotBeNull();
@@ -331,13 +336,13 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
 
     var text = await ExportToTextAsync(_source);
 
-    // Embedded and self-contained: OBJE with the format, the main photo marked primary, and the bytes
-    // base64-encoded into a BLOB — never raw binary.
-    text.Should().Contain("1 OBJE").And.Contain("2 FORM jpeg").And.Contain("2 _PRIM Y").And.Contain("2 BLOB ");
-    text.Should().Contain(Convert.ToBase64String(Encoding.UTF8.GetBytes("MAIN-IMAGE-BYTES")));
+    // An OBJE pointing at the sidecar file, format nested under FILE as 5.5.1 wants, main photo marked
+    // primary. The bytes are in the file, never in the document.
+    text.Should().Contain("1 OBJE").And.Contain("2 FILE media/").And.Contain("3 FORM jpeg").And.Contain("2 _PRIM Y");
+    text.Should().NotContain("BLOB");
 
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
 
     var person = (await reimported.Persons.GetPersonsAsync(Token)).Single();
     var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, Token);
@@ -370,10 +375,10 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
 
     var text = await ExportToTextAsync(_source);
     text.Should().Contain("2 TITL Louis XIII par Rubens");
-    text.Should().Contain(Convert.ToBase64String(imageBytes));
+    ExportedMedia().Should().ContainSingle(media => media.SequenceEqual(imageBytes));
 
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
 
     var person = (await reimported.Persons.GetPersonsAsync(Token)).Single();
     var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, Token);
@@ -411,12 +416,13 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     await _source.PersonManager.AddPersonAsync(info, Token);
 
     var text = await ExportToTextAsync(_source);
-    text.Should().Contain(Convert.ToBase64String(Encoding.UTF8.GetBytes("PLAIN-EXTRA")));
-    text.Should().Contain(Convert.ToBase64String(Encoding.UTF8.GetBytes("TAGGED-EXTRA")));
+    var media = ExportedMedia();
+    media.Should().ContainSingle(bytes => bytes.SequenceEqual(Encoding.UTF8.GetBytes("PLAIN-EXTRA")));
+    media.Should().ContainSingle(bytes => bytes.SequenceEqual(Encoding.UTF8.GetBytes("TAGGED-EXTRA")));
     text.Should().Contain("2 TITL Family gathering");
 
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
 
     var person = (await reimported.Persons.GetPersonsAsync(Token)).Single();
     var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, Token);
@@ -430,11 +436,10 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
   }
 
   [Fact]
-  public async Task Photo_LargePayloadChunksAcrossConcLinesAndRoundTrips()
+  public async Task Photo_LargePayloadRoundTripsByteForByte()
   {
-    // A real photo is multi-KB, so its base64 always exceeds the writer's per-line cap and is split across
-    // CONC continuation lines. This is the production path the small-payload tests never reach: it must
-    // chunk on write and reassemble byte-for-byte on read.
+    // A real photo is multi-KB of arbitrary binary. The sidecar carries it verbatim, so nothing about the
+    // size or the byte values may perturb it -- the production path the tiny-payload tests never reach.
     var bytes = new byte[4096];
     new Random(42).NextBytes(bytes);
     var name = await _source.Names.AddNameAsync("Big", NameType.FirstName, null, Token);
@@ -448,10 +453,10 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     await _source.PersonManager.AddPersonAsync(info, Token);
 
     var text = await ExportToTextAsync(_source);
-    text.Should().Contain("\n3 CONC ", "a multi-KB photo's base64 must be split across CONC lines");
+    ExportedMedia().Should().ContainSingle(media => media.SequenceEqual(bytes));
 
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
 
     var person = (await reimported.Persons.GetPersonsAsync(Token)).Single();
     var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, Token);
@@ -474,10 +479,13 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     await _source.PersonManager.AddPersonAsync(info, Token);
 
     var text = await ExportToTextAsync(_source);
-    text.Should().Contain("1 OBJE").And.Contain("2 BLOB ");
+
+    // Nothing names the format -- not the stored MIME, and not the bytes, which are not a real image. The
+    // sidecar therefore gets no extension and the OBJE no FORM, which is what import reads back as null.
+    text.Should().Contain("1 OBJE").And.Contain("2 FILE media/").And.NotContain("3 FORM");
 
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
 
     var person = (await reimported.Persons.GetPersonsAsync(Token)).Single();
     var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, Token);
@@ -504,16 +512,17 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     await _source.PersonManager.AddPersonAsync(info, Token);
 
     var text = await ExportToTextAsync(_source);
-    text.Should().Contain("1 OBJE").And.Contain("2 FORM pdf").And.Contain("2 FILE birth-certificate.pdf").And.Contain("2 BLOB ");
-    text.Should().NotContain("_PRIM");
+    // The stored filename is the sidecar's leaf, under the row's own folder -- one FILE, not two.
+    text.Should().Contain("1 OBJE").And.Contain("3 FORM pdf").And.MatchRegex(@"2 FILE media/\d+/birth-certificate\.pdf");
+    text.Should().NotContain("_PRIM").And.NotContain("BLOB");
 
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
 
     var person = (await reimported.Persons.GetPersonsAsync(Token)).Single();
     var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, Token);
 
-    // The attachment's embedded BLOB must not also be picked up as a (broken) photo.
+    // The attachment must not also be picked up as a (broken) photo.
     full.MainPhoto.Should().BeNull();
     full.AdditionalPhotos.Should().BeEmpty();
 
@@ -525,7 +534,7 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
 
     // A second export/reimport hop must still carry the filename -- proves this isn't a one-shot fluke.
     var reexportedText = await ExportToTextAsync(reimported);
-    reexportedText.Should().Contain("2 FILE birth-certificate.pdf");
+    reexportedText.Should().MatchRegex(@"2 FILE media/\d+/birth-certificate\.pdf");
   }
 
   [Fact]
@@ -552,7 +561,7 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     text.Should().Contain("_ATTACH Y");
 
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
 
     var person = (await reimported.Persons.GetPersonsAsync(Token)).Single();
     var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, Token);
@@ -590,7 +599,7 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     var text = await ExportToTextAsync(_source);
 
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
 
     var person = (await reimported.Persons.GetPersonsAsync(Token)).Single();
     var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, Token);
@@ -602,11 +611,91 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     (await GedcomPhotoResidue.ExtractFileNameAsync(reimportedAttachment, Token)).Should().Be("deed.pdf");
   }
 
+  [Fact]
+  public async Task Attachment_SurvivesTwoHopsWithoutSplittingIntoASecondOne()
+  {
+    // The stored FILE is the original filename and the emitted FILE is the sidecar path. Emitting both would
+    // make a multi-FILE OBJE, which import splits into one attachment per FILE -- one more on every hop.
+    var name = await _source.Names.AddNameAsync("Deed", NameType.FirstName, null, Token);
+    var content = GedcomPhotoResidue.EncodeAttachment(Encoding.UTF8.GetBytes("PDF-BYTES"), "deed.pdf");
+    var attachment = new Data(ElementId.NonCommittedId, content, "application/pdf", DataCategory.PersonAttachment);
+    var info = PersonFullInfo.Empty with
+    {
+      BirthDate = Year(1900),
+      Names = [name],
+      Attachments = [attachment],
+    };
+    await _source.PersonManager.AddPersonAsync(info, Token);
+
+    var first = await ExportToTextAsync(_source);
+    await using var once = await NewDocumentAsync();
+    await _importer.ImportAsync(once, new StringReader(first), Token, _mediaPath);
+
+    var second = await ExportToTextAsync(once);
+    await using var twice = await NewDocumentAsync();
+    await _importer.ImportAsync(twice, new StringReader(second), Token, _mediaPath);
+
+    var person = (await twice.Persons.GetPersonsAsync(Token)).Single();
+    var full = await twice.PersonManager.GetPersonFullInfoAsync(person, Token);
+    var survivor = full.Attachments.Should().ContainSingle().Which;
+    (await GedcomPhotoResidue.ExtractFileNameAsync(survivor, Token)).Should().Be("deed.pdf");
+  }
+
+  [Fact]
+  public async Task Media_SidecarPathsAreTheSameOnEveryExportOfTheSameDocument()
+  {
+    // Nothing about a sidecar's name may come from the clock, a GUID or enumeration order, or the exported
+    // document stops being comparable to the last one.
+    var name = await _source.Names.AddNameAsync("Stable", NameType.FirstName, null, Token);
+    var photo = new Data(ElementId.NonCommittedId, Encoding.UTF8.GetBytes("IMAGE"), "image/jpeg", DataCategory.PersonMainPhoto);
+    var content = GedcomPhotoResidue.EncodeAttachment(Encoding.UTF8.GetBytes("PDF"), "deed.pdf");
+    var attachment = new Data(ElementId.NonCommittedId, content, "application/pdf", DataCategory.PersonAttachment);
+    var info = PersonFullInfo.Empty with
+    {
+      BirthDate = Year(1900),
+      Names = [name],
+      MainPhoto = photo,
+      Attachments = [attachment],
+    };
+    await _source.PersonManager.AddPersonAsync(info, Token);
+
+    var first = await ExportToTextAsync(_source);
+    var second = await ExportToTextAsync(_source);
+
+    second.Should().Be(first);
+  }
+
+  [Fact]
+  public async Task Attachment_FileNameThatIsAPath_IsReducedToItsLeafInTheSidecarPath()
+  {
+    // An imported filename is whatever the other tool wrote: a full path, a traversal, characters no file
+    // system accepts. Only the leaf is kept, and the row's own folder is what keeps it from colliding.
+    var name = await _source.Names.AddNameAsync("Hostile", NameType.FirstName, null, Token);
+    var content = GedcomPhotoResidue.EncodeAttachment(Encoding.UTF8.GetBytes("PDF"), @"..\..\C:temp/re*port?.pdf");
+    var attachment = new Data(ElementId.NonCommittedId, content, "application/pdf", DataCategory.PersonAttachment);
+    var info = PersonFullInfo.Empty with
+    {
+      BirthDate = Year(1900),
+      Names = [name],
+      Attachments = [attachment],
+    };
+    await _source.PersonManager.AddPersonAsync(info, Token);
+
+    var text = await ExportToTextAsync(_source);
+
+    text.Should().MatchRegex(@"2 FILE media/\d+/report\.pdf");
+    ExportedMedia().Should().ContainSingle();
+  }
+
   private async Task<string> ExportToTextAsync(ProjectDocument document)
   {
     var writer = new StringWriter();
-    await _exporter.ExportAsync(document, writer, Token);
+    await _exporter.ExportAsync(document, writer, new DirectoryGedcomMediaWriter(_mediaPath), Token);
     return writer.ToString();
   }
+
+  // A photo's bytes no longer travel inside the document, so they are checked where they now live.
+  private byte[][] ExportedMedia() =>
+    [.. Directory.EnumerateFiles(_mediaPath, "*", SearchOption.AllDirectories).Select(File.ReadAllBytes)];
 
 }

@@ -871,7 +871,23 @@ internal sealed class GedcomImporter : IGedcomImporter
 
     var mime = GedcomMedia.ToMimeType(MediaForm(obje));
     var residual = ResidualNode(obje, AttachmentModeledChildren) ?? new GedcomNode { Tag = GedcomTags.Object };
+    KeepFileNameOnly(residual);
     return new AttachmentCandidate(obje, content, mime, residual);
+  }
+
+  /// <summary>
+  /// Narrows the preserved <c>FILE</c> to its filename: what an attachment needs from it is the name it
+  /// displays, and the directory part is the exporting tool's layout, not the document's. Replaced rather
+  /// than edited -- <see cref="ResidualNode"/> shares the source node, which stays live for other passes.
+  /// </summary>
+  private static void KeepFileNameOnly(GedcomNode residual)
+  {
+    var file = residual.Child(GedcomTags.File);
+    if (file?.Value is null)
+      return;
+
+    var name = file.Value[(file.Value.LastIndexOfAny(['/', '\\']) + 1)..];
+    residual.Children[residual.Children.IndexOf(file)] = new GedcomNode { Tag = GedcomTags.File, Value = name };
   }
 
   private static Data BuildAttachmentData(AttachmentCandidate candidate) =>
@@ -884,6 +900,12 @@ internal sealed class GedcomImporter : IGedcomImporter
       return true;
 
     var extension = Path.GetExtension(fileRef).TrimStart('.');
+
+    // Neither a FORM nor an extension declares the kind: the same legacy default a formless BLOB gets. It is
+    // also how a photo GT4 holds without a MIME type comes back, since export has nothing to name it with.
+    if (token is null && extension.Length == 0)
+      return true;
+
     return GedcomMedia.ImageForms.Contains(extension);
   }
 

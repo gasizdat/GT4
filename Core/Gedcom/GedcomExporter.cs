@@ -38,7 +38,13 @@ internal sealed class GedcomExporter : IGedcomExporter
     string[] SpouseFamilies,
     (string Xref, bool Adopted)[] ChildFamilies);
 
-  public async Task ExportAsync(IProjectDocument document, TextWriter writer, CancellationToken token)
+  // The folder every sidecar lives under, relative to the exported .ged.
+  private const string MediaFolder = "media";
+
+  // The Windows invalid-filename set, a superset of every other platform's.
+  private static readonly HashSet<char> InvalidLeafChars = ['<', '>', ':', '"', '/', '\\', '|', '?', '*'];
+
+  public async Task ExportAsync(IProjectDocument document, TextWriter writer, IGedcomMediaWriter media, CancellationToken token)
   {
     var persons = await document.Persons.GetPersonsAsync(token);
     var personById = persons.ToDictionary(p => p.Id);
@@ -56,7 +62,7 @@ internal sealed class GedcomExporter : IGedcomExporter
     var individuals = BuildIndividuals(persons, infoById, biographies, residues, mainPhotos, additionalPhotos, attachments, families);
 
     WriteHeader(writer);
-    await WriteIndividualsAsync(writer, individuals, token);
+    await WriteIndividualsAsync(writer, individuals, media, token);
     WriteFamilies(writer, families, familyResidues);
     await WritePassthroughRecordsAsync(document, writer, token);
     GedcomWriter.Write(writer, new GedcomNode { Tag = GedcomTags.Trailer });
@@ -284,11 +290,15 @@ internal sealed class GedcomExporter : IGedcomExporter
     GedcomWriter.Write(writer, header);
   }
 
-  private static async Task WriteIndividualsAsync(TextWriter writer, Individual[] individuals, CancellationToken token)
+  private static async Task WriteIndividualsAsync(
+    TextWriter writer,
+    Individual[] individuals,
+    IGedcomMediaWriter media,
+    CancellationToken token)
   {
     foreach (var individual in individuals)
     {
-      var node = await BuildIndividualAsync(individual, token);
+      var node = await BuildIndividualAsync(individual, media, token);
       GedcomWriter.Write(writer, node);
     }
   }
@@ -352,7 +362,10 @@ internal sealed class GedcomExporter : IGedcomExporter
     list.Add((xref, adopted));
   }
 
-  private static async Task<GedcomNode> BuildIndividualAsync(Individual individual, CancellationToken token)
+  private static async Task<GedcomNode> BuildIndividualAsync(
+    Individual individual,
+    IGedcomMediaWriter media,
+    CancellationToken token)
   {
     var person = individual.Person;
     var node = new GedcomNode { Tag = GedcomTags.Individual, Xref = $"@I{person.Id}@" };
@@ -385,14 +398,14 @@ internal sealed class GedcomExporter : IGedcomExporter
     var noteResidual = Residual(ownedResidual, GedcomTags.Note);
     AddNote(node, individual.Biography, noteResidual);
 
-    await AddPhotoAsync(node, individual.MainPhoto, primary: true, token);
+    await AddPhotoAsync(node, individual.MainPhoto, primary: true, media, token);
     foreach (var photo in individual.AdditionalPhotos)
     {
-      await AddPhotoAsync(node, photo, primary: false, token);
+      await AddPhotoAsync(node, photo, primary: false, media, token);
     }
     foreach (var attachment in individual.Attachments)
     {
-      await AddAttachmentAsync(node, attachment, token);
+      await AddAttachmentAsync(node, attachment, media, token);
     }
 
     var spouseNodes = individual
@@ -490,15 +503,19 @@ internal sealed class GedcomExporter : IGedcomExporter
     residual?.Child(GedcomTags.ReferencedRecord) is not null;
 
   /// <summary>
-  /// Emits a GT4 photo as an embedded multimedia object: an <c>OBJE</c> carrying the format (from the
-  /// MIME type), a <c>_PRIM Y</c> marker on the main photo, and the image bytes base64-encoded into a
-  /// <c>BLOB</c> the writer auto-chunks across CONC lines. This is the form <see cref="GedcomImporter"/>
-  /// reads back, so photos round-trip self-contained inside the single .ged file. A tagged photo's
-  /// residual children (chiefly <c>TITL</c>) are decoded and merged back onto the OBJE -- a per-node
-  /// merge-back, not the shared <see cref="PartitionResidue"/> bucket-by-tag mechanism, since several
-  /// independent photos each need their own distinct residual tags, not one pooled per-tag-name bucket.
+  /// Emits a GT4 photo as a multimedia object referencing an external file: an <c>OBJE</c> whose
+  /// <c>FILE</c> names the sidecar <see cref="BuildMediaObjectAsync"/> wrote, plus a <c>_PRIM Y</c> marker on
+  /// the main photo. A tagged photo's residual children (chiefly <c>TITL</c>) are decoded and merged back
+  /// onto the OBJE -- a per-node merge-back, not the shared <see cref="PartitionResidue"/> bucket-by-tag
+  /// mechanism, since several independent photos each need their own distinct residual tags, not one
+  /// pooled per-tag-name bucket.
   /// </summary>
-  private static async Task AddPhotoAsync(GedcomNode individual, Data? photo, bool primary, CancellationToken token)
+  private static async Task AddPhotoAsync(
+    GedcomNode individual,
+    Data? photo,
+    bool primary,
+    IGedcomMediaWriter media,
+    CancellationToken token)
   {
     if (photo is null)
       return;
@@ -512,50 +529,97 @@ internal sealed class GedcomExporter : IGedcomExporter
     if (IsReferenced(residual))
       return;
 
-    var obje = new GedcomNode { Tag = GedcomTags.Object };
-    var form = GedcomMedia.ToForm(photo.MimeType);
-    if (form is not null)
-    {
-      obje.Add(new GedcomNode { Tag = GedcomTags.Form, Value = form });
-    }
+    var obje = await BuildMediaObjectAsync(photo, imageBytes, residual, media, token);
     if (primary)
     {
       obje.Add(new GedcomNode { Tag = GedcomTags.Primary, Value = GedcomTags.PrimaryYes });
     }
-    var base64 = Convert.ToBase64String(imageBytes);
-    obje.Add(new GedcomNode { Tag = GedcomTags.Blob, Value = base64 });
-    if (residual is not null)
-    {
-      obje.Add([.. residual.Children]);
-    }
+    AddResidualChildren(obje, residual);
     individual.Add(obje);
   }
 
   /// <summary>
-  /// Emits a GT4 attachment as an embedded multimedia object, mirroring <see cref="AddPhotoAsync"/> minus
-  /// the <c>_PRIM</c> marker (attachments have no main/additional concept) and plus a <c>_ATTACH Y</c>
-  /// marker, so an image-typed attachment (indistinguishable from a photo by FORM alone) still imports
-  /// back as an attachment. An attachment's <c>Content</c> is always a <see cref="GedcomPhotoResidue"/>
-  /// envelope, so it is always decoded and its residual (chiefly <c>FILE</c>, the original filename)
-  /// merged back onto the regenerated OBJE.
+  /// Emits a GT4 attachment, mirroring <see cref="AddPhotoAsync"/> minus the <c>_PRIM</c> marker
+  /// (attachments have no main/additional concept) and plus a <c>_ATTACH Y</c> marker, so an image-typed
+  /// attachment (indistinguishable from a photo by FORM alone) still imports back as an attachment. An
+  /// attachment's <c>Content</c> is always a <see cref="GedcomPhotoResidue"/> envelope, so it is always
+  /// decoded and its residual merged back onto the regenerated OBJE.
   /// </summary>
-  private static async Task AddAttachmentAsync(GedcomNode individual, Data attachment, CancellationToken token)
+  private static async Task AddAttachmentAsync(
+    GedcomNode individual,
+    Data attachment,
+    IGedcomMediaWriter media,
+    CancellationToken token)
   {
     var (bytes, residual) = await GedcomPhotoResidue.DecodeAsync(attachment.Content, token);
     if (IsReferenced(residual))
       return;
 
-    var obje = new GedcomNode { Tag = GedcomTags.Object };
-    var form = GedcomMedia.ToForm(attachment.MimeType);
+    var obje = await BuildMediaObjectAsync(attachment, bytes, residual, media, token);
+    obje.Add(new GedcomNode { Tag = GedcomTags.Attachment, Value = GedcomTags.PrimaryYes });
+    AddResidualChildren(obje, residual);
+    individual.Add(obje);
+  }
+
+  /// <summary>
+  /// Writes the bytes out as their own file and returns the <c>OBJE</c> that points at it, with the format
+  /// nested under the <c>FILE</c> as GEDCOM 5.5.1 expects.
+  /// </summary>
+  private static async Task<GedcomNode> BuildMediaObjectAsync(
+    Data data,
+    byte[] bytes,
+    GedcomNode? residual,
+    IGedcomMediaWriter media,
+    CancellationToken token)
+  {
+    var form = GedcomMedia.ToForm(data.MimeType) ?? GedcomMedia.SniffForm(bytes);
+    var path = MediaPath(data.Id, form, residual);
+    await media.WriteAsync(path, bytes, token);
+
+    var file = new GedcomNode { Tag = GedcomTags.File, Value = path };
     if (form is not null)
     {
-      obje.Add(new GedcomNode { Tag = GedcomTags.Form, Value = form });
+      file.Add(new GedcomNode { Tag = GedcomTags.Form, Value = form });
     }
-    obje.Add(new GedcomNode { Tag = GedcomTags.Attachment, Value = GedcomTags.PrimaryYes });
-    var base64 = Convert.ToBase64String(bytes);
-    obje.Add(new GedcomNode { Tag = GedcomTags.Blob, Value = base64 });
-    obje.Add([.. residual.Children]);
-    individual.Add(obje);
+    return new GedcomNode { Tag = GedcomTags.Object }.Add(file);
+  }
+
+  /// <summary>
+  /// The sidecar path for one media row. The <see cref="Data.Id"/> folder is what makes the path unique, so
+  /// the leaf is free to stay the original filename the attachment displays; a photo has no stored name and
+  /// gets a synthesized one. Every part is a pure function of the stored row, so two exports of the same
+  /// document name the same files.
+  /// </summary>
+  private static string MediaPath(int id, string? form, GedcomNode? residual)
+  {
+    var extension = form is null ? string.Empty : "." + form;
+    var stored = residual?.ChildValue(GedcomTags.File);
+    var leaf = stored is null ? "photo" + extension : SanitizeLeaf(stored, "attachment" + extension);
+    return $"{MediaFolder}/{id}/{leaf}";
+  }
+
+  /// <summary>
+  /// The filename part of a stored reference, with everything a path could exploit removed. The invalid set
+  /// is spelled out rather than taken from <see cref="Path.GetInvalidFileNameChars"/>, which is narrower on
+  /// Unix -- the exported artifact must name the same files whatever platform wrote it.
+  /// </summary>
+  private static string SanitizeLeaf(string reference, string fallback)
+  {
+    var leaf = reference[(reference.LastIndexOfAny(['/', '\\']) + 1)..];
+    var sanitized = new string([.. leaf.Where(c => c >= ' ' && !InvalidLeafChars.Contains(c))]);
+    return sanitized.Trim('.').Length == 0 ? fallback : sanitized;
+  }
+
+  private static void AddResidualChildren(GedcomNode obje, GedcomNode? residual)
+  {
+    if (residual is null)
+      return;
+
+    // The residual FILE is the original filename, already carried by the sidecar path's leaf. Re-emitting it
+    // would make this a multi-FILE OBJE, which import splits into one attachment per FILE -- a duplicate more
+    // on every round-trip.
+    var children = residual.Children.Where(child => child.Tag != GedcomTags.File);
+    obje.Add([.. children]);
   }
 
   /// <summary>
