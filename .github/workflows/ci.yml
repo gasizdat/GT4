@@ -146,10 +146,14 @@ jobs:
           # Shard 1 is these classes and shard 2 is the complement, so a class added later always runs
           # in shard 2 rather than silently going untested -- the split can drift in balance, never in
           # coverage. Matching on "DeviceTests.<class>." keeps a name from also matching a longer one.
+          # What the shards balance is WindowHost.AttachAsync, not test count: swapping the runner's
+          # Window.Page is what the teardown race rides on, so the classes that do it are dealt across
+          # both halves (24 attachments here, 20 there) instead of piling into one.
           $shardOne = @(
-            'ProjectPageTests', 'PersonPageTests', 'CreateOrUpdatePersonDialogTests', 'FamilyPageTests',
-            'NamesPageTests', 'SelectDateDialogTests', 'FamilyTreePageTests', 'SelectNameDialogTests',
-            'KinshipFinderPageTests', 'ProjectRevisionsPageTests'
+            'ProjectPageTests', 'PersonPageTests', 'NamesPageTests', 'SelectNameDialogTests',
+            'PhotoViewerDialogTests', 'RelativeInfoViewTests', 'GedcomDataConverterTests',
+            'SelectDateDialogTests', 'FamilyTreeNodeViewTests', 'RelativeRowTests',
+            'FamilyTreeConnectorShapeTests', 'RelativeRowViewTests'
           )
           $shard = '${{ matrix.shard }}'
           if ($shard -eq '1') {
