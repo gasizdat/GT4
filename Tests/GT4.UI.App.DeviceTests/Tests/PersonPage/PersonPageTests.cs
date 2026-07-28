@@ -132,6 +132,56 @@ public class PersonPageTests
   }
 
   [Fact]
+  public async Task Media_a_spouse_shares_is_linked_from_the_family_details_block()
+  {
+    // The couple's own row -- one Data linked to both spouses -- is the only handle on what their family
+    // record carried, and the block must appear on it alone: this couple has no preserved FAM residue.
+    var services = new TestServices();
+    var content = BuildTaggedPhotoContent("0 OBJE\n1 FILE wedding.jpg\n1 TITL Their wedding\n", [1, 2, 3]);
+    var wedding = new Data(30, content, "image/jpeg", DataCategory.PersonAttachment);
+    var spouse = new PersonInfo(2, default(Date), null, BiologicalSex.Female, [N(3, "Anna", NameType.FirstName)], null);
+    var person = CreateSamplePerson() with
+    {
+      Attachments = [wedding],
+      RelativeInfos = [new RelativeInfo(spouse, RelationshipType.Spouse, null, Generation.Zero, Consanguinity.Zero)]
+    };
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(person);
+    services.PersonData
+      .Setup(p => p.GetPersonDataSetAsync(It.IsAny<Person[]>(), DataCategory.PersonAttachment, It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new Dictionary<int, Data[]> { [2] = [wedding] });
+    var page = await CreatePageAsync(services);
+
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+
+    Assert.Contains("[Their wedding](attachment:30)", page.Biography);
+    Assert.Contains("(person:2)", page.Biography);
+  }
+
+  [Fact]
+  public async Task Media_the_spouse_does_not_carry_is_left_out_of_the_family_details_block()
+  {
+    var services = new TestServices();
+    var content = BuildTaggedPhotoContent("0 OBJE\n1 FILE deed.pdf\n1 TITL A deed\n", [1, 2, 3]);
+    var deed = new Data(31, content, "application/pdf", DataCategory.PersonAttachment);
+    var spouse = new PersonInfo(2, default(Date), null, BiologicalSex.Female, [N(3, "Anna", NameType.FirstName)], null);
+    var person = CreateSamplePerson() with
+    {
+      Attachments = [deed],
+      RelativeInfos = [new RelativeInfo(spouse, RelationshipType.Spouse, null, Generation.Zero, Consanguinity.Zero)]
+    };
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+
+    Assert.DoesNotContain("attachment:31", page.Biography);
+  }
+
+  [Fact]
   public async Task Loading_a_person_with_a_main_photo_populates_MediaSources()
   {
     var services = new TestServices();

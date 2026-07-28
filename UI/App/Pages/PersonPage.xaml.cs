@@ -21,6 +21,11 @@ namespace GT4.UI.Pages;
 [QueryProperty(nameof(PersonInfo), "PersonInfo")]
 public partial class PersonPage : ContentPage
 {
+  // Spelled out rather than taken from GedcomTags, which is internal to Core.Gedcom -- the same way
+  // GedcomDataConverter names the tags it renders specially.
+  private const string FamilyTag = "FAM";
+  private const string MediaTag = "OBJE";
+
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IDateSpanFormatter _DateSpanFormatter;
@@ -346,12 +351,20 @@ public partial class PersonPage : ContentPage
   /// <summary>
   /// A couple's preserved GEDCOM tags are keyed by the pair rather than carried on either person, so they
   /// are gathered from the spouse relationships instead of arriving on <see cref="PersonFullInfo"/> the way
-  /// the person's own residue does. Several marriages to one spouse are one couple and one block.
+  /// the person's own residue does. Several marriages to one spouse are one couple and one block. The media
+  /// their family record carried joins that block as a link, so the documents about the marriage are reached
+  /// from the narrative about it and not only from the undifferentiated attachments list.
   /// </summary>
-  private async Task<string?> ReadFamilyDetailsAsync(IProjectDocument project, PersonFullInfo person, CancellationToken token)
+  private async Task<string?> ReadFamilyDetailsAsync(
+    IProjectDocument project,
+    PersonFullInfo person,
+    AttachmentInfo[] attachments,
+    CancellationToken token)
   {
     var spouses = person.RelativeInfos.Where(r => r.Type == RelationshipType.Spouse);
-    var couples = spouses.GroupBy(spouse => spouse.Id);
+    var couples = spouses.GroupBy(spouse => spouse.Id).ToArray();
+    Person[] spousePersons = [.. couples.Select(couple => couple.First())];
+    var spouseAttachments = await project.PersonData.GetPersonDataSetAsync(spousePersons, DataCategory.PersonAttachment, token);
     var facts = new List<GedcomFact>();
 
     foreach (var couple in couples)
@@ -359,14 +372,25 @@ public partial class PersonPage : ContentPage
       var spouse = couple.First();
       var name = _NameFormatter.ToString(spouse, NameFormat.ShortPersonName);
       var dates = couple.Select(marriage => marriage.Date);
-      var fact = await GedcomFamilyResidue.ReadAsync(project, person.Id, couple.Key, name, dates, token);
-      if (fact is not null)
+      var residue = await GedcomFamilyResidue.ReadAsync(project, person.Id, couple.Key, name, dates, token);
+      var theirs = spouseAttachments.GetValueOrDefault(couple.Key, []);
+      var media = await GedcomFamilyMedia.SelectSharedAsync(person.Attachments, theirs, token);
+      GedcomFact[] children = [.. residue?.Children ?? [], .. media.Select(data => ToMediaFact(data, attachments))];
+      if (children.Length == 0)
       {
-        facts.Add(fact with { Value = $"[{fact.Value}](person:{couple.Key})" });
+        continue;
       }
+
+      facts.Add(new GedcomFact(FamilyTag, $"[{name}](person:{couple.Key})", children));
     }
 
     return GedcomDataConverter.RenderFamilies([.. facts]);
+  }
+
+  private static GedcomFact ToMediaFact(Data media, AttachmentInfo[] attachments)
+  {
+    var info = attachments.First(attachment => attachment.Data.Id == media.Id);
+    return new GedcomFact(MediaTag, $"[{info.DisplayName}](attachment:{media.Id})", []);
   }
 
   private async Task GetPersonDataAsync(Person person, bool addToNavigation)
@@ -383,8 +407,11 @@ public partial class PersonPage : ContentPage
       var gedcomTask = _GedcomConverter.ToObjectAsync(personFullInfo.GedcomData, token);
       var attachmentsTask = Task.WhenAll(
         personFullInfo.Attachments.Select(data => ToAttachmentInfoAsync(data, token)));
-      var familyTask = ReadFamilyDetailsAsync(project, personFullInfo, token);
-      await Task.WhenAll(parentsTasks, stepChildrenTasks, bioTask, gedcomTask, attachmentsTask, familyTask);
+      await Task.WhenAll(parentsTasks, stepChildrenTasks, bioTask, gedcomTask, attachmentsTask);
+
+      // Sequenced after the attachments: a couple's media renders under the name the attachment row carries.
+      var attachments = attachmentsTask.Result;
+      var familyDetails = await ReadFamilyDetailsAsync(project, personFullInfo, attachments, token);
 
       var parents = parentsTasks.Result;
       var stepChildren = stepChildrenTasks.Result;
@@ -424,7 +451,6 @@ public partial class PersonPage : ContentPage
       }
 
       var mediaSources = MediaSourceUtils.BuildMediaSources([.. photoData, .. personFullInfo.Attachments]);
-      var attachments = attachmentsTask.Result;
 
       // UpdateUI touches the project document again on the UI thread; SafeTask.RunOnMainThread keeps
       // an escaped exception (e.g. the project closed while backgrounding) from going unobserved.
@@ -440,7 +466,7 @@ public partial class PersonPage : ContentPage
                  roots,
                  photos, captions, mediaSources, attachments, bioTask.Result as string,
                  gedcomTask.Result as string,
-                 familyTask.Result,
+                 familyDetails,
                  addToNavigation);
       }, _AlertService);
     }

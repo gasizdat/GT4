@@ -28,6 +28,7 @@ internal sealed class TestServices
   public Mock<IRelativesProvider> RelativesProvider { get; } = new();
   public Mock<ITableRelatives> Relatives { get; } = new();
   public Mock<ITablePersons> Persons { get; } = new();
+  public Mock<ITablePersonData> PersonData { get; } = new();
   public Mock<IFamilyTreeProvider> FamilyTreeProvider { get; } = new();
   public Mock<IKinshipFinder> KinshipFinder { get; } = new();
   public Mock<IAlertService> AlertService { get; } = new();
@@ -49,6 +50,7 @@ internal sealed class TestServices
     Project.SetupGet(p => p.RelativesProvider).Returns(RelativesProvider.Object);
     Project.SetupGet(p => p.Relatives).Returns(Relatives.Object);
     Project.SetupGet(p => p.Persons).Returns(Persons.Object);
+    Project.SetupGet(p => p.PersonData).Returns(PersonData.Object);
     Project.SetupGet(p => p.FamilyTreeProvider).Returns(FamilyTreeProvider.Object);
     Project.SetupGet(p => p.KinshipFinder).Returns(KinshipFinder.Object);
     Project.Setup(p => p.BeginTransactionAsync(It.IsAny<CancellationToken>())).ReturnsAsync(Transaction.Object);
@@ -106,6 +108,9 @@ internal sealed class TestServices
     RelativesProvider
       .Setup(r => r.GetSiblings(It.IsAny<Person>(), It.IsAny<Parents>()))
       .Returns(new Siblings([], [], [], [], []));
+    PersonData
+      .Setup(p => p.GetPersonDataSetAsync(It.IsAny<Person[]>(), It.IsAny<DataCategory?>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new Dictionary<int, Data[]>());
     RelativesProvider.Setup(r => r.GetChildren(It.IsAny<RelativeInfo[]>())).Returns([]);
     RelativesProvider.Setup(r => r.GetAdoptiveChildren(It.IsAny<RelativeInfo[]>())).Returns([]);
 
