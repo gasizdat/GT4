@@ -1295,6 +1295,60 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task FamilyMedia_SelectsTheCouplesSharedRowAndNotAPersonalAttachment()
+  {
+    // The Kennedy @F8@ shape: a couple photo on the FAM record, plus a document Louis owns alone. Both land
+    // as attachments in one undifferentiated list, so the person page tells them apart the only way the data
+    // allows -- the couple's row is the one the spouse carries too.
+    var couplePhoto = Convert.ToBase64String(Encoding.UTF8.GetBytes("couple"));
+    var personal = Convert.ToBase64String(Encoding.UTF8.GetBytes("testament"));
+    var ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      $"0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n1 OBJE\n2 FORM pdf\n2 BLOB {personal}\n" +
+      "0 @I2@ INDI\n1 NAME Marie /Antoinette/\n1 SEX F\n" +
+      "0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n1 MARR\n2 DATE 16 MAY 1770\n" +
+      $"1 OBJE\n2 FORM jpeg\n2 TITL Louis et Marie\n2 BLOB {couplePhoto}\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var byName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
+    var louis = await document.PersonManager.GetPersonFullInfoAsync(byName["Louis Bourbon"], Token);
+    var marie = await document.PersonManager.GetPersonFullInfoAsync(byName["Marie Antoinette"], Token);
+    louis.Attachments.Should().HaveCount(2);
+
+    var shared = await GedcomFamilyMedia.SelectSharedAsync(louis.Attachments, marie.Attachments, Token);
+    var media = shared.Should().ContainSingle().Which;
+    Encoding.UTF8.GetString(GedcomPhotoResidue.ExtractImageBytes(media.Content)).Should().Be("couple");
+    (await AttachmentTitleAsync(media)).Should().Be("Louis et Marie");
+  }
+
+  [Fact]
+  public async Task FamilyMedia_ExcludesASourceRecordBothSpousesMerelyCite()
+  {
+    // A referenced record is committed once and linked to everyone citing it, so two spouses citing the same
+    // register share that row without it saying anything about their marriage.
+    var scan = Convert.ToBase64String(Encoding.UTF8.GetBytes("register"));
+    var ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n1 BIRT\n2 DATE 23 AUG 1754\n2 SOUR @S1@\n" +
+      "0 @I2@ INDI\n1 NAME Marie /Antoinette/\n1 SEX F\n1 BIRT\n2 DATE 2 NOV 1755\n2 SOUR @S1@\n" +
+      "0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n1 MARR\n2 DATE 16 MAY 1770\n" +
+      "0 @S1@ SOUR\n1 TITL Registre\n1 OBJE @M1@\n" +
+      $"0 @M1@ OBJE\n1 FORM jpeg\n1 BLOB {scan}\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var byName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
+    var louis = await document.PersonManager.GetPersonFullInfoAsync(byName["Louis Bourbon"], Token);
+    var marie = await document.PersonManager.GetPersonFullInfoAsync(byName["Marie Antoinette"], Token);
+    var citation = louis.Attachments.Should().ContainSingle().Which;
+    marie.Attachments.Should().ContainSingle().Which.Id.Should().Be(citation.Id);
+
+    var shared = await GedcomFamilyMedia.SelectSharedAsync(louis.Attachments, marie.Attachments, Token);
+    shared.Should().BeEmpty();
+  }
+
+  [Fact]
   public async Task IndividualObjectPointer_ResolvesToThePersonsPhoto()
   {
     var mediaDir = Path.Combine(Path.GetTempPath(), $"gt4_media_{Guid.NewGuid():N}");
