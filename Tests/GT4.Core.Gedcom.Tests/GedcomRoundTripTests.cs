@@ -683,7 +683,7 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
 
     var text = await ExportToTextAsync(_source);
 
-    text.Should().MatchRegex(@"2 FILE media/\d+/report\.pdf");
+    text.Should().MatchRegex(@"2 FILE media/\d+/re_port_\.pdf");
     ExportedMedia().Should().ContainSingle();
   }
 
