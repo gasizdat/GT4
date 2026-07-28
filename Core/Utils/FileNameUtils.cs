@@ -2,9 +2,10 @@ namespace GT4.Core.Utils;
 
 public static class FileNameUtils
 {
-  // The Windows invalid-filename set, a superset of every other platform's. Spelled out rather than taken
-  // from Path.GetInvalidFileNameChars(), which on Unix is only '\0' and '/' -- a name produced here can
-  // travel to another machine, so it has to be valid everywhere regardless of where it was made.
+  // The printable half of the Windows invalid-filename set; Sanitize adds the control characters below it,
+  // and the two together are exactly what Path.GetInvalidFileNameChars() returns there. Spelled out rather
+  // than taken from that call, which on Unix returns only '\0' and '/' -- a name produced here can travel
+  // to another machine, so it has to be valid everywhere regardless of where it was made.
   private const string InvalidChars = "<>:\"/\\|?*";
 
   /// <summary>
