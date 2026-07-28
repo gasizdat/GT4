@@ -9,9 +9,12 @@ namespace GT4.UI.DeviceTests;
 /// Func&lt;Task&lt;Stream&gt;&gt; overload, since FileResult's path-based constructor does not produce a
 /// working instance on Windows.
 /// </summary>
-public sealed class GedcomImportSourceTests
+public sealed class GedcomImportSourceTests : IDisposable
 {
   private const string Gedcom = "0 HEAD\n1 CHAR UTF-8\n0 TRLR";
+
+  // One per test instance, so a test can assert on the root's contents without seeing another's.
+  private readonly string _Root = Path.Combine(Path.GetTempPath(), $"gt4_package_{Guid.NewGuid():N}");
 
   private static Func<Task<Stream>> OpenPackage(params (string Path, byte[] Content)[] entries) => () =>
   {
@@ -28,15 +31,13 @@ public sealed class GedcomImportSourceTests
     return Task.FromResult<Stream>(buffer);
   };
 
-  private static string TempRoot() => Path.Combine(Path.GetTempPath(), $"gt4_package_{Guid.NewGuid():N}");
-
   [Fact]
   public async Task UnpackAsync_ExposesTheGedcomAndTheFolderItsMediaResolvesAgainstAsync()
   {
     var image = new byte[] { 1, 2, 3 };
     var package = OpenPackage(("kennedy.ged", Encoding.UTF8.GetBytes(Gedcom)), ("media/7/photo.jpg", image));
 
-    using var source = await GedcomImportSource.UnpackAsync(package, TempRoot());
+    using var source = await GedcomImportSource.UnpackAsync(package, _Root);
 
     Assert.Equal("kennedy", source.Name);
     using var reader = new StreamReader(await source.OpenStreamAsync());
@@ -53,7 +54,7 @@ public sealed class GedcomImportSourceTests
     // The encoding pass reads the header, then reopens to decode the whole file.
     var package = OpenPackage(("kennedy.ged", Encoding.UTF8.GetBytes(Gedcom)));
 
-    using var source = await GedcomImportSource.UnpackAsync(package, TempRoot());
+    using var source = await GedcomImportSource.UnpackAsync(package, _Root);
 
     await using (var first = await source.OpenStreamAsync())
     {
@@ -67,10 +68,9 @@ public sealed class GedcomImportSourceTests
   public async Task UnpackAsync_LeavesNothingBehindOnDisposeAsync()
   {
     var package = OpenPackage(("kennedy.ged", Encoding.UTF8.GetBytes(Gedcom)));
-    var root = TempRoot();
 
     string extracted;
-    using (var source = await GedcomImportSource.UnpackAsync(package, root))
+    using (var source = await GedcomImportSource.UnpackAsync(package, _Root))
     {
       extracted = source.MediaBasePath!;
       Assert.True(Directory.Exists(extracted));
@@ -83,10 +83,11 @@ public sealed class GedcomImportSourceTests
   public async Task UnpackAsync_AnArchiveWithoutAGedcomFailsAndCleansUpAsync()
   {
     var package = OpenPackage(("notes.txt", Encoding.UTF8.GetBytes("nothing here")));
-    var root = TempRoot();
 
-    await Assert.ThrowsAsync<InvalidDataException>(() => GedcomImportSource.UnpackAsync(package, root));
+    await Assert.ThrowsAsync<InvalidDataException>(() => GedcomImportSource.UnpackAsync(package, _Root));
 
-    Assert.Empty(Directory.EnumerateFileSystemEntries(root));
+    Assert.Empty(Directory.EnumerateFileSystemEntries(_Root));
   }
+
+  public void Dispose() => Directory.Delete(_Root, recursive: true);
 }
