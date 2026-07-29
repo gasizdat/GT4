@@ -6,7 +6,9 @@
 .DESCRIPTION
   Two checks per sample, each strict in its own dimension:
 
-    stability  export(import(original)) vs export(import(that)) -- byte-identical. Everything the pipeline
+    stability  export(import(original)) vs export(import(that)) -- byte-identical modulo the media id in a
+               FILE path (media/<id>/...), which a fresh database is free to assign differently on each
+               pass and which GedcomComparer itself never compares literally. Everything else the pipeline
                holds must be held identically on the second pass, whatever the first pass made of it.
     fidelity   original vs its first export, through "RelativesCli compare", which compares what the tags
                say rather than their text (xrefs are renumbered and FAM records regenerated on every
@@ -132,8 +134,12 @@ foreach ($sample in $Samples) {
     continue
   }
 
-  $firstHash = (Get-FileHash $firstGed -Algorithm SHA256).Hash
-  $secondHash = (Get-FileHash $secondGed -Algorithm SHA256).Hash
+  # The media id is the one thing a fresh database is entitled to assign differently between the two
+  # passes; normalized away before hashing so stability still fails on anything else byte-for-byte.
+  $firstNormalized = (Get-Content $firstGed -Raw) -replace 'media/\d+/', 'media/#/'
+  $secondNormalized = (Get-Content $secondGed -Raw) -replace 'media/\d+/', 'media/#/'
+  $firstHash = [Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($firstNormalized)))
+  $secondHash = [Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($secondNormalized)))
   $stability = 'PASS'
   if ($firstHash -ne $secondHash) {
     $stability = 'FAIL'

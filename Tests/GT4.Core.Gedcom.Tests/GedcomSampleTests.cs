@@ -3,6 +3,7 @@ using GT4.Core.Gedcom.Abstraction;
 using GT4.Core.Project;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using System.IO.Compression;
 using System.Reflection;
 using System.Text;
 using Xunit;
@@ -22,10 +23,15 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   private readonly GedcomImporter _importer = new(new FileGedcomMediaReader());
   private readonly GedcomExporter _exporter = new();
 
+  // Media travels beside the .ged rather than inside it, so an export and the re-import that reads it back
+  // share this folder -- it is what the exported OBJE FILE paths are relative to.
+  private readonly string _mediaPath = Path.Combine(Path.GetTempPath(), $"gt4_gedcom_media_{Guid.NewGuid():N}");
+
   public ValueTask InitializeAsync() => ValueTask.CompletedTask;
 
   public ValueTask DisposeAsync()
   {
+    try { Directory.Delete(_mediaPath, recursive: true); } catch { /* best-effort temp cleanup */ }
     foreach (var path in _paths)
     {
       foreach (var suffix in new[] { "", "-wal", "-shm", "-journal" })
@@ -54,7 +60,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   private async Task<string> ExportToTextAsync(ProjectDocument document)
   {
     var writer = new StringWriter();
-    await _exporter.ExportAsync(document, writer, Token);
+    await _exporter.ExportAsync(document, writer, new DirectoryGedcomMediaWriter(_mediaPath), Token);
     return writer.ToString();
   }
 
@@ -218,7 +224,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     text.Should().Contain("2 SOUR @S1@").And.Contain("3 PAGE Sec. 2, p. 45");
 
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
     var repo = await reimported.Metadata.GetAsync<string>("gedcom.REPO.@R1@", Token);
     repo.Should().NotBeNull();
     repo.Should().Contain("Family History Library");
@@ -246,7 +252,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
 
     // A fresh round-trip of the exported text preserves them again unchanged.
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
     var reexported = await ExportToTextAsync(reimported);
     reexported.Should().Contain("1 OCCU Blacksmith").And.Contain("1 EVEN").And.Contain("2 TYPE Census");
   }
@@ -311,7 +317,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
 
     // A second hop keeps them: the residue is rebuilt from the export, not just carried once.
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
     var reexported = await ExportToTextAsync(reimported);
     reexported.Should().Be(text);
   }
@@ -345,7 +351,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
 
     // A second hop keeps them: the residue is rebuilt from the export, not just carried once.
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
     var reexported = await ExportToTextAsync(reimported);
     reexported.Should().Be(text);
   }
@@ -365,7 +371,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     text.Should().Contain("1 NAME").And.Contain("2 SOUR @S2@");
 
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
     var reexported = await ExportToTextAsync(reimported);
     reexported.Should().Be(text);
   }
@@ -433,7 +439,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
 
     // A second hop rebuilds the same residue from the export rather than merely carrying it once.
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
     var reexported = await ExportToTextAsync(reimported);
     reexported.Should().Be(text);
   }
@@ -460,7 +466,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     lines.Count(line => line.StartsWith("1 MARR", StringComparison.Ordinal)).Should().Be(2);
 
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
     var reexported = await ExportToTextAsync(reimported);
     reexported.Should().Be(text);
   }
@@ -491,7 +497,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     byDate["4 AUG 1789"].Should().Be("Paris");
 
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
     var reexported = await ExportToTextAsync(reimported);
     reexported.Should().Be(text);
   }
@@ -519,7 +525,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     marriages.Select(m => m.ChildValue("RIN")).Should().BeEquivalentTo(["MH:FF411", "MH:FF412"]);
 
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
     var reexported = await ExportToTextAsync(reimported);
     reexported.Should().Be(text);
   }
@@ -547,7 +553,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     marriages.Select(m => m.ChildValue("TYPE")).Should().BeEquivalentTo(["civil", "religious"]);
 
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
     var reexported = await ExportToTextAsync(reimported);
     reexported.Should().Be(text);
   }
@@ -576,7 +582,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     // The repeat carries a DATE, the one sub-tag the modeled event owns, so its residue is the shape most
     // at risk of being re-read as something other than what was stored.
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
     var reexported = await ExportToTextAsync(reimported);
     reexported.Should().Be(text);
   }
@@ -684,7 +690,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     text.Should().Contain("1 CHAN").And.Contain("2 DATE 1 JAN 2020").And.Contain("1 SOUR @S1@");
 
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
     var reexported = await ExportToTextAsync(reimported);
     reexported.Should().Be(text);
   }
@@ -714,7 +720,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     written.Should().Be(1);
 
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
     var reexported = await ExportToTextAsync(reimported);
     reexported.Should().Be(text);
   }
@@ -767,7 +773,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
         .And.Contain("1 NOTE A blacksmith.").And.Contain("1 NOTE Also a poet.");
 
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
     var reexported = await ExportToTextAsync(reimported);
     reexported.Should().Contain("1 NAME Johnny /Smith/").And.Contain("1 NOTE Also a poet.");
   }
@@ -794,7 +800,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
 
     // The grouping is stable, not just preserved once: the second hop must not fold them back together.
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
     var reexported = await ExportToTextAsync(reimported);
     reexported.Should().Be(text);
   }
@@ -834,7 +840,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     text.Should().NotContain("NOTE @N1@").And.NotContain("NOTE @N2@").And.NotContain("NOTE @N3@");
 
     await using var reimported = await NewDocumentAsync();
-    await _importer.ImportAsync(reimported, new StringReader(text), Token);
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
     var reexported = await ExportToTextAsync(reimported);
     reexported.Should().Be(text);
   }
@@ -965,7 +971,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     // export would emit it a second time.
     var text = await ExportToTextAsync(document);
     text.Should().Contain("2 SOUR @S1@").And.Contain("4 TEXT Parish register");
-    (text.Split("BLOB").Length - 1).Should().Be(1);
+    (text.Split("2 FILE").Length - 1).Should().Be(1);
   }
 
   [Fact]
@@ -1018,19 +1024,19 @@ public sealed class GedcomSampleTests : IAsyncLifetime
       full.MainPhoto.Should().BeNull();
       full.AdditionalPhotos.Should().BeEmpty();
       full.Attachments.Should().HaveCount(2);
-      var scan = await AttachmentByFileAsync(full.Attachments, "actes/scan.jpg");
+      var scan = await AttachmentByFileAsync(full.Attachments, "scan.jpg");
       GedcomPhotoResidue.ExtractImageBytes(scan.Content).Should().Equal(scanBytes);
       (await AttachmentTitleAsync(scan)).Should().Be("Acte de Bapteme");
-      var transcript = await AttachmentByFileAsync(full.Attachments, "actes/transcript.pdf");
+      var transcript = await AttachmentByFileAsync(full.Attachments, "transcript.pdf");
       GedcomPhotoResidue.ExtractImageBytes(transcript.Content).Should().Equal(pdfBytes);
 
       // Round-trip stability: export, reimport that export, export again -- the media count must not grow.
       var firstExport = await ExportToTextAsync(document);
       await using var roundTrip = await NewDocumentAsync();
-      await _importer.ImportAsync(roundTrip, new StringReader(firstExport), Token);
+      await _importer.ImportAsync(roundTrip, new StringReader(firstExport), Token, _mediaPath);
       var secondExport = await ExportToTextAsync(roundTrip);
-      firstExport.Split("2 BLOB").Length.Should().Be(3);
-      secondExport.Split("2 BLOB").Length.Should().Be(firstExport.Split("2 BLOB").Length);
+      firstExport.Split("2 FILE").Length.Should().Be(3);
+      secondExport.Split("2 FILE").Length.Should().Be(firstExport.Split("2 FILE").Length);
     }
     finally
     {
@@ -1098,12 +1104,12 @@ public sealed class GedcomSampleTests : IAsyncLifetime
       marieFull.AdditionalPhotos.Should().BeEmpty();
       louisFull.Attachments.Should().HaveCount(2);
       marieFull.Attachments.Should().HaveCount(2);
-      var louisScan = await AttachmentByFileAsync(louisFull.Attachments, "actes/mariage.jpg");
-      var marieScan = await AttachmentByFileAsync(marieFull.Attachments, "actes/mariage.jpg");
+      var louisScan = await AttachmentByFileAsync(louisFull.Attachments, "mariage.jpg");
+      var marieScan = await AttachmentByFileAsync(marieFull.Attachments, "mariage.jpg");
       GedcomPhotoResidue.ExtractImageBytes(louisScan.Content).Should().Equal(scanBytes);
       (await AttachmentTitleAsync(louisScan)).Should().Be("Acte de mariage");
-      var louisPdf = await AttachmentByFileAsync(louisFull.Attachments, "actes/mariage.pdf");
-      var mariePdf = await AttachmentByFileAsync(marieFull.Attachments, "actes/mariage.pdf");
+      var louisPdf = await AttachmentByFileAsync(louisFull.Attachments, "mariage.pdf");
+      var mariePdf = await AttachmentByFileAsync(marieFull.Attachments, "mariage.pdf");
       GedcomPhotoResidue.ExtractImageBytes(louisPdf.Content).Should().Equal(pdfBytes);
 
       // Shared, not duplicated: the same Data row backs both spouses (same Id), so the bytes live once.
@@ -1114,14 +1120,69 @@ public sealed class GedcomSampleTests : IAsyncLifetime
       // two -- but stays bounded: the media count must not grow on a further hop.
       var firstExport = await ExportToTextAsync(document);
       await using var roundTrip = await NewDocumentAsync();
-      await _importer.ImportAsync(roundTrip, new StringReader(firstExport), Token);
+      await _importer.ImportAsync(roundTrip, new StringReader(firstExport), Token, _mediaPath);
       var secondExport = await ExportToTextAsync(roundTrip);
-      firstExport.Split("2 BLOB").Length.Should().Be(5);
-      secondExport.Split("2 BLOB").Length.Should().Be(firstExport.Split("2 BLOB").Length);
+      firstExport.Split("2 FILE").Length.Should().Be(5);
+      secondExport.Split("2 FILE").Length.Should().Be(firstExport.Split("2 FILE").Length);
     }
     finally
     {
       Directory.Delete(mediaDir, recursive: true);
+    }
+  }
+
+  [Fact]
+  public async Task SharedAttachment_PackagedIntoAZip_ExtractsWithoutDuplicateEntries()
+  {
+    // The same scenario as MarriageRecordObje_SurfacesOnBothSpousesSharingOneDataRow -- a shared Data row,
+    // not referenced-record-marked, so both spouses' export reaches the media writer for it -- but through
+    // the actual production sink (GedcomPackage's zip) instead of a directory, where a duplicate write is a
+    // second entry of the same name rather than a harmless overwrite, and ZipFile.ExtractToDirectory throws
+    // on the second one unless the writer de-dupes.
+    var mediaDir = Path.Combine(Path.GetTempPath(), $"gt4_media_{Guid.NewGuid():N}");
+    Directory.CreateDirectory(Path.Combine(mediaDir, "actes"));
+    var scanBytes = new byte[] { 1, 2, 3 };
+    await File.WriteAllBytesAsync(Path.Combine(mediaDir, "actes", "mariage.jpg"), scanBytes, Token);
+    var extractDir = Path.Combine(Path.GetTempPath(), $"gt4_zip_extract_{Guid.NewGuid():N}");
+    try
+    {
+      var ged =
+        "0 HEAD\n1 CHAR UTF-8\n" +
+        "0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n" +
+        "0 @I2@ INDI\n1 NAME Marie /Antoinette/\n1 SEX F\n" +
+        "0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n" +
+        "1 MARR\n2 DATE 16 MAY 1770\n2 SOUR @S1@\n3 OBJE\n4 TITL Acte de mariage\n" +
+        "4 FILE actes/mariage.jpg\n5 FORM jpg\n0 TRLR\n";
+      await using var document = await NewDocumentAsync();
+      await _importer.ImportAsync(document, new StringReader(ged), Token, mediaDir);
+
+      using var zipBytes = new MemoryStream();
+      await GedcomPackage.WriteAsync(_exporter, document, zipBytes, "family.ged", Token);
+      zipBytes.Position = 0;
+
+      using (var archive = new ZipArchive(zipBytes, ZipArchiveMode.Read, leaveOpen: true))
+      {
+        // One entry per shared file, not one per owning spouse.
+        archive.Entries.Count(e => e.FullName.EndsWith("mariage.jpg")).Should().Be(1);
+      }
+
+      zipBytes.Position = 0;
+      var zipPath = Path.Combine(Path.GetTempPath(), $"gt4_zip_{Guid.NewGuid():N}.zip");
+      await File.WriteAllBytesAsync(zipPath, zipBytes.ToArray(), Token);
+      try
+      {
+        ZipFile.ExtractToDirectory(zipPath, extractDir);
+      }
+      finally
+      {
+        File.Delete(zipPath);
+      }
+    }
+    finally
+    {
+      Directory.Delete(mediaDir, recursive: true);
+      if (Directory.Exists(extractDir))
+        Directory.Delete(extractDir, recursive: true);
     }
   }
 
@@ -1224,7 +1285,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
       var full = await document.PersonManager.GetPersonFullInfoAsync(byName["Robert Williams"], Token);
       var attachment = full.Attachments.Should().ContainSingle().Which;
       var fileName = await GedcomPhotoResidue.ExtractFileNameAsync(attachment, Token);
-      fileName.Should().Be("documents/register.jpg");
+      fileName.Should().Be("register.jpg");
 
       // One row for the record, linked to everyone citing it, however many that is.
       var sarah = await document.PersonManager.GetPersonFullInfoAsync(byName["Sarah Williams"], Token);
@@ -1382,31 +1443,26 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   [Fact]
   public async Task ReferencedMainPhotoBesideAnInlineOne_ExportsTheSameTwice()
   {
-    var mediaDir = Path.Combine(Path.GetTempPath(), $"gt4_media_{Guid.NewGuid():N}");
-    Directory.CreateDirectory(Path.Combine(mediaDir, "photos"));
-    await File.WriteAllBytesAsync(Path.Combine(mediaDir, "photos", "robert.jpg"), new byte[] { 4, 5, 6 }, Token);
-    try
-    {
-      // The referenced portrait comes first, so it is the main photo -- and the one the export leaves out.
-      // Whatever it emits instead must survive its own re-import unchanged, or a round-trip never settles.
-      var ged =
-        "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Robert /Williams/\n1 SEX M\n1 OBJE @M1@\n" +
-        "1 OBJE\n2 FORM jpg\n2 BLOB AQID\n" +
-        "0 @M1@ OBJE\n1 FILE photos/robert.jpg\n2 FORM jpg\n0 TRLR\n";
-      await using var document = await NewDocumentAsync();
-      await _importer.ImportAsync(document, new StringReader(ged), Token, mediaDir);
-      var first = await ExportToTextAsync(document);
+    // The sample's own media shares the export's folder: the round-trip has to resolve both the referenced
+    // record's original FILE and the sidecar the export writes for the inline photo, against one base path.
+    Directory.CreateDirectory(Path.Combine(_mediaPath, "photos"));
+    await File.WriteAllBytesAsync(Path.Combine(_mediaPath, "photos", "robert.jpg"), new byte[] { 4, 5, 6 }, Token);
 
-      await using var reimported = await NewDocumentAsync();
-      await _importer.ImportAsync(reimported, new StringReader(first), Token, mediaDir);
-      var second = await ExportToTextAsync(reimported);
+    // The referenced portrait comes first, so it is the main photo -- and the one the export leaves out.
+    // Whatever it emits instead must survive its own re-import unchanged, or a round-trip never settles.
+    var ged =
+      "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Robert /Williams/\n1 SEX M\n1 OBJE @M1@\n" +
+      "1 OBJE\n2 FORM jpg\n2 BLOB AQID\n" +
+      "0 @M1@ OBJE\n1 FILE photos/robert.jpg\n2 FORM jpg\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token, _mediaPath);
+    var first = await ExportToTextAsync(document);
 
-      second.Should().Be(first);
-    }
-    finally
-    {
-      Directory.Delete(mediaDir, recursive: true);
-    }
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(first), Token, _mediaPath);
+    var second = await ExportToTextAsync(reimported);
+
+    second.Should().Be(first);
   }
 
   [Fact]
@@ -1468,10 +1524,11 @@ public sealed class GedcomSampleTests : IAsyncLifetime
       // The OBJEs were consumed as photos, so they are not also kept as opaque residue.
       full.GedcomData.Should().BeNull();
 
-      // Export re-emits them self-contained as embedded BLOBs, with the main photo's TITL restored.
+      // Export re-emits them as sidecar references under GT4's own layout -- not the paths they were read
+      // from -- with the main photo's TITL restored.
       var text = await ExportToTextAsync(document);
-      text.Should().Contain("1 OBJE").And.Contain("2 FORM png").And.Contain("2 BLOB ").And.Contain("2 TITL Portrait");
-      text.Should().NotContain("2 FILE");
+      text.Should().Contain("1 OBJE").And.Contain("3 FORM png").And.Contain("2 FILE media/").And.Contain("2 TITL Portrait");
+      text.Should().NotContain("photos/");
     }
     finally
     {

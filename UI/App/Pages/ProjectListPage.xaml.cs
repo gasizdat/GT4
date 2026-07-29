@@ -15,12 +15,12 @@ namespace GT4.UI.Pages;
 
 public partial class ProjectListPage : ContentPage
 {
-  // GEDCOM has no standard MIME type: Windows filters on the ".ged" extension, while Android has none, so
-  // it falls back to any file. A picked file always lands in a brand-new project, so this only governs
-  // which files are easy to select.
+  // GEDCOM has no standard MIME type: Windows filters on the ".ged" extension (and ".zip", which is what an
+  // export produces), while Android has none, so it falls back to any file. A picked file always lands in a
+  // brand-new project, so this only governs which files are easy to select.
   private static readonly FilePickerFileType GedcomFileType = new(new Dictionary<DevicePlatform, IEnumerable<string>>
   {
-    [DevicePlatform.WinUI] = [".ged"],
+    [DevicePlatform.WinUI] = [".ged", ".zip"],
     [DevicePlatform.Android] = ["*/*"],
   });
 
@@ -164,11 +164,12 @@ public partial class ProjectListPage : ContentPage
     if (file is null)
       return;
 
-    using var reader = await _GedcomImportEncoding.ResolveReaderAsync(file, Navigation);
+    using var source = await GedcomImportSource.OpenAsync(file, FileSystem.CacheDirectory);
+    using var reader = await _GedcomImportEncoding.ResolveReaderAsync(source.OpenStreamAsync, Navigation);
     if (reader is null)
       return;
 
-    var name = Path.GetFileNameWithoutExtension(file.FileName);
+    var name = source.Name;
     var description = UIStrings.HintImportedFromGedcom;
 
     var dialog = new GedcomImportDialog(name, _AlertService);
@@ -176,7 +177,7 @@ public partial class ProjectListPage : ContentPage
     ProjectInfo? info = null;
     try
     {
-      info = await Task.Run(() => RunImportAsync(file, reader, name, description, dialog.Token));
+      info = await Task.Run(() => RunImportAsync(source, reader, name, description, dialog.Token));
     }
     catch (OperationCanceledException)
     {
@@ -199,13 +200,12 @@ public partial class ProjectListPage : ContentPage
   // dialog's cancellation token rather than a short-lived DB token. Any failure — a user cancellation or a
   // malformed file — deletes the freshly created project shell and rethrows, so nothing is left behind; the
   // caller turns cancellation into a quiet no-op and lets real errors surface through SafeCommand.
-  private async Task<ProjectInfo> RunImportAsync(FileResult file, TextReader reader, string name, string description, CancellationToken token)
+  private async Task<ProjectInfo> RunImportAsync(GedcomImportSource source, TextReader reader, string name, string description, CancellationToken token)
   {
     var host = await _ProjectList.CreateAsync(name, description, token);
     try
     {
-      var mediaBasePath = string.IsNullOrEmpty(file.FullPath) ? null : Path.GetDirectoryName(file.FullPath);
-      await _Importer.ImportAsync(host.Project!, reader, token, mediaBasePath);
+      await _Importer.ImportAsync(host.Project!, reader, token, source.MediaBasePath);
 
       var revision = await host.Project!.Metadata.GetProjectRevisionAsync(token);
       await host.DisposeAsync();
