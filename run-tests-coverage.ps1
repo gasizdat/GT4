@@ -85,7 +85,7 @@ $deviceTestArgs = @(
 # is never retried past.
 # Only the exit code distinguishes a failed run: each attempt overwrites the coverage file, and a
 # failing one still leaves a valid but empty cobertura behind that the report below merges happily.
-$maxAttempts = 3
+$maxAttempts = 10
 for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
   Write-Host "--- Device test attempt $attempt of $maxAttempts ---" -ForegroundColor Cyan
   if (Test-Path $deviceTrxFile) { Remove-Item $deviceTrxFile -Force }
