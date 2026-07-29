@@ -3,6 +3,7 @@ using GT4.Core.Gedcom.Abstraction;
 using GT4.Core.Project;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using System.IO.Compression;
 using System.Reflection;
 using System.Text;
 using Xunit;
@@ -1127,6 +1128,61 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     finally
     {
       Directory.Delete(mediaDir, recursive: true);
+    }
+  }
+
+  [Fact]
+  public async Task SharedAttachment_PackagedIntoAZip_ExtractsWithoutDuplicateEntries()
+  {
+    // The same scenario as MarriageRecordObje_SurfacesOnBothSpousesSharingOneDataRow -- a shared Data row,
+    // not referenced-record-marked, so both spouses' export reaches the media writer for it -- but through
+    // the actual production sink (GedcomPackage's zip) instead of a directory, where a duplicate write is a
+    // second entry of the same name rather than a harmless overwrite, and ZipFile.ExtractToDirectory throws
+    // on the second one unless the writer de-dupes.
+    var mediaDir = Path.Combine(Path.GetTempPath(), $"gt4_media_{Guid.NewGuid():N}");
+    Directory.CreateDirectory(Path.Combine(mediaDir, "actes"));
+    var scanBytes = new byte[] { 1, 2, 3 };
+    await File.WriteAllBytesAsync(Path.Combine(mediaDir, "actes", "mariage.jpg"), scanBytes, Token);
+    var extractDir = Path.Combine(Path.GetTempPath(), $"gt4_zip_extract_{Guid.NewGuid():N}");
+    try
+    {
+      var ged =
+        "0 HEAD\n1 CHAR UTF-8\n" +
+        "0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n" +
+        "0 @I2@ INDI\n1 NAME Marie /Antoinette/\n1 SEX F\n" +
+        "0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n" +
+        "1 MARR\n2 DATE 16 MAY 1770\n2 SOUR @S1@\n3 OBJE\n4 TITL Acte de mariage\n" +
+        "4 FILE actes/mariage.jpg\n5 FORM jpg\n0 TRLR\n";
+      await using var document = await NewDocumentAsync();
+      await _importer.ImportAsync(document, new StringReader(ged), Token, mediaDir);
+
+      using var zipBytes = new MemoryStream();
+      await GedcomPackage.WriteAsync(_exporter, document, zipBytes, "family.ged", Token);
+      zipBytes.Position = 0;
+
+      using (var archive = new ZipArchive(zipBytes, ZipArchiveMode.Read, leaveOpen: true))
+      {
+        // One entry per shared file, not one per owning spouse.
+        archive.Entries.Count(e => e.FullName.EndsWith("mariage.jpg")).Should().Be(1);
+      }
+
+      zipBytes.Position = 0;
+      var zipPath = Path.Combine(Path.GetTempPath(), $"gt4_zip_{Guid.NewGuid():N}.zip");
+      await File.WriteAllBytesAsync(zipPath, zipBytes.ToArray(), Token);
+      try
+      {
+        ZipFile.ExtractToDirectory(zipPath, extractDir);
+      }
+      finally
+      {
+        File.Delete(zipPath);
+      }
+    }
+    finally
+    {
+      Directory.Delete(mediaDir, recursive: true);
+      if (Directory.Exists(extractDir))
+        Directory.Delete(extractDir, recursive: true);
     }
   }
 

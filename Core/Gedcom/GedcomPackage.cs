@@ -37,10 +37,18 @@ public static class GedcomPackage
     await writer.WriteAsync(text.ToString());
   }
 
+  // Media owned by more than one person (e.g. a marriage-record attachment linked to both spouses) is
+  // exported once per owner, so the same path can arrive twice; unlike a directory, a zip entry created
+  // twice under one name extracts as a broken archive rather than a harmless overwrite.
   private sealed class ZipGedcomMediaWriter(ZipArchive archive) : IGedcomMediaWriter
   {
+    private readonly HashSet<string> _written = new(StringComparer.Ordinal);
+
     public async Task WriteAsync(string relativePath, byte[] content, CancellationToken token)
     {
+      if (!_written.Add(relativePath))
+        return;
+
       var entry = archive.CreateEntry(relativePath);
       await using var stream = entry.Open();
       await stream.WriteAsync(content, token);
