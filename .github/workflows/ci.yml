@@ -162,6 +162,10 @@ jobs:
             $filter = ($shardOne | ForEach-Object { "FullyQualifiedName!~DeviceTests.$_." }) -join '&'
           }
 
+          # dotnet test creates this for the TRX, but the console log is tee'd into it from the very
+          # first line of the run, before that happens.
+          New-Item -ItemType Directory -Force -Path coverage | Out-Null
+
           $maxAttempts = 3
           $success = $false
           for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
