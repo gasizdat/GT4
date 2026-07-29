@@ -6,66 +6,10 @@ on:
   pull_request:
 
 jobs:
-  build:
-    runs-on: windows-latest
-    timeout-minutes: 10
-
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-
-      - name: Setup .NET 10
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: '10.0.x'
-
-      - name: Cache NuGet packages
-        uses: actions/cache@v6
-        with:
-          path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
-          restore-keys: |
-            nuget-${{ runner.os }}-
-
-      # Fast-fail gate: builds every non-mobile project in one shot (App.csproj and
-      # AppAndroidOnly.csproj are excluded via the filter -- they need Android/iOS/MacCatalyst
-      # workloads this runner doesn't have) so a break anywhere, including in projects no test
-      # job builds on its own (e.g. GT4.Tools.RelativesCli), is caught immediately. Runs
-      # independently of the test/test-device jobs below -- they keep restoring/building their
-      # own project so the concurrency from #38 is unaffected.
-      - name: Build solution
-        run: dotnet build GT4.CI.slnf --configuration Release
-
-      # AppWinOnly and GT4.UI.App.DeviceTests both conditionally target
-      # net10.0-windows10.0.19041.0 in addition to other TFMs, so they're split into their own
-      # filter and built with --framework: an unscoped build of DeviceTests here would also compile
-      # its net10.0-android TFM, which nothing in CI tests (android device tests only run on
-      # physical hardware) and which just slows this gate down.
-      - name: Build solution (windows)
-        run: dotnet build GT4.CI.Windows.slnf --configuration Release --framework net10.0-windows10.0.19041.0
-
   test:
     runs-on: windows-latest
     timeout-minutes: 10
 
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - project: Tests\GT4.Core.Project.Tests\GT4.Core.Project.Tests.csproj
-            name: core-project
-          - project: Tests\GT4.UI.Utils.Tests\GT4.UI.Utils.Tests.csproj
-            name: ui-utils
-          - project: Tests\GT4.UI.View.Tests\GT4.UI.View.Tests.csproj
-            name: ui-view
-          - project: Tests\GT4.Core.Gedcom.Tests\GT4.Core.Gedcom.Tests.csproj
-            name: core-gedcom
-          # The GEDCOM round-trip comparer lives here; the functional script that drives it needs the
-          # separate gedcom-samples repository and so stays local-only (run-tests-coverage.ps1).
-          - project: Tests\GT4.Tools.RelativesCli.Tests\GT4.Tools.RelativesCli.Tests.csproj
-            name: tools-relatives-cli
-
     steps:
       - uses: actions/checkout@v5
         with:
@@ -84,22 +28,51 @@ jobs:
           restore-keys: |
             nuget-${{ runner.os }}-
 
+      # Doubles as the fast-fail gate: the filter covers every non-mobile project (App.csproj and
+      # AppAndroidOnly.csproj are left out -- they need Android/iOS/MacCatalyst workloads this runner
+      # doesn't have), so a break anywhere is caught here, including in projects no test project
+      # references. Building once for all five test projects is why they share a job: each ran ~45s of
+      # setup and its own overlapping build when they had a runner apiece, for ~2 minutes of tests.
       - name: Build
-        run: dotnet build ${{ matrix.project }} --configuration Release
+        run: dotnet build GT4.CI.slnf --configuration Release
 
       - name: Test
-        run: dotnet test ${{ matrix.project }} --no-build --configuration Release --logger "trx;LogFileName=${{ matrix.name }}.trx" --collect "XPlat Code Coverage" --results-directory coverage
+        run: |
+          # One invocation per project rather than one over the whole filter: it costs a few seconds
+          # (measured 24s against 17s) and keeps each project's results in a TRX named after it.
+          $projects = [ordered]@{
+            'core-project' = 'Tests\GT4.Core.Project.Tests\GT4.Core.Project.Tests.csproj'
+            'ui-utils' = 'Tests\GT4.UI.Utils.Tests\GT4.UI.Utils.Tests.csproj'
+            'ui-view' = 'Tests\GT4.UI.View.Tests\GT4.UI.View.Tests.csproj'
+            'core-gedcom' = 'Tests\GT4.Core.Gedcom.Tests\GT4.Core.Gedcom.Tests.csproj'
+            # The GEDCOM round-trip comparer lives here; the functional script that drives it needs
+            # the separate gedcom-samples repository and so stays local-only (run-tests-coverage.ps1).
+            'tools-relatives-cli' = 'Tests\GT4.Tools.RelativesCli.Tests\GT4.Tools.RelativesCli.Tests.csproj'
+          }
+
+          # Every project runs even once one has failed, so a red build still reports all of them --
+          # what fail-fast: false gave when these were a matrix.
+          $failed = @()
+          foreach ($name in $projects.Keys) {
+            dotnet test $projects[$name] --no-build --configuration Release --logger "trx;LogFileName=$name.trx" --collect "XPlat Code Coverage" --results-directory coverage
+            if ($LASTEXITCODE -ne 0) { $failed += $name }
+          }
+
+          if ($failed) {
+            Write-Host "Failed: $($failed -join ', ')."
+            exit 1
+          }
 
       - name: Upload coverage
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: coverage-${{ matrix.name }}
+          name: coverage-tests
           path: coverage
 
   test-device:
     runs-on: windows-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v5
@@ -120,58 +93,107 @@ jobs:
             nuget-${{ runner.os }}-
 
       # Debug is unsupported for this project (see the note in its .csproj); must build/run Release.
-      # No code coverage: the tests execute inside a separately-launched .exe that DeviceRunners
-      # spawns and talks to over TCP, so coverlet's in-process collector never sees it.
-      # run-tests-coverage.ps1 (local) does capture this via dotnet-coverage's process-tree attach
-      # instead -- expect AppWinOnly's coverage numbers here to permanently differ from a local run.
+      # AppWinOnly and GT4.UI.App.DeviceTests both conditionally target net10.0-windows10.0.19041.0 in
+      # addition to other TFMs, so they get their own filter and --framework: an unscoped build would
+      # also compile DeviceTests' net10.0-android TFM, which nothing in CI tests (android device tests
+      # only run on physical hardware). Building the filter rather than the test project alone costs
+      # nothing here and gates AppWinOnly, which no other job compiles.
       - name: Build GT4.UI.App.DeviceTests
-        run: dotnet build Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj --configuration Release --framework net10.0-windows10.0.19041.0
+        run: dotnet build GT4.CI.Windows.slnf --configuration Release --framework net10.0-windows10.0.19041.0
 
       - name: Test GT4.UI.App.DeviceTests
         # The DeviceRunners CLI can exit non-zero from a native WinUI teardown race -- the spawned
         # test-host process dying, sometimes after every test already passed, sometimes mid-run -- and
-        # the exact symptom varies (a window-class unregister failure, a reset TCP link, ...). There is
-        # no reliable way to tell from one run's output alone whether a crash left real tests unexecuted,
-        # so this does not try to guess: it just retries the whole attempt. A TRX with any failed test is
-        # trusted immediately as a real failure (never retried past); a crash that recorded zero failures
-        # is retried, since a genuine bug reproduces on retry while a flaky teardown race usually doesn't.
+        # the exact symptom varies (a window-class unregister failure, a reset TCP link, ...). The two
+        # cases are told apart by the runner's own "Test run complete." line, which it prints only once
+        # the whole run has ended: with it, every test ran and a bad exit code is the host failing to
+        # exit, so the attempt is accepted; without it the run was cut short and is retried. A TRX with
+        # any failed test is a real failure and is never retried past.
         run: |
-          $maxAttempts = 3
-          $success = $false
-          for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
-            Write-Host "=== Device test attempt $attempt of $maxAttempts ==="
-            $trxPath = "coverage\device-tests.trx"
-            if (Test-Path $trxPath) { Remove-Item $trxPath -Force }
-
-            & dotnet test Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj --no-build --configuration Release --framework net10.0-windows10.0.19041.0 --logger "trx;LogFileName=device-tests.trx" --results-directory coverage
-            $exitCode = $LASTEXITCODE
-
-            if (Test-Path $trxPath) {
-              [xml]$trx = Get-Content $trxPath
-              $failed = [int]$trx.TestRun.ResultSummary.Counters.failed
-              $total = [int]$trx.TestRun.ResultSummary.Counters.total
-              Write-Host "Attempt $attempt`: $total total, $failed failed (exit code $exitCode)."
-
-              if ($failed -gt 0) {
-                Write-Host "Real test failure recorded -- not retrying."
-                exit 1
-              }
-            } else {
-              Write-Host "Attempt $attempt`: no TRX produced (exit code $exitCode)."
-            }
-
-            if ($exitCode -eq 0) {
-              $success = $true
-              break
-            }
-
-            if ($attempt -lt $maxAttempts) {
-              Write-Host "::warning::Device test attempt $attempt exited non-zero (exit code $exitCode) with no failed tests recorded -- retrying."
-            }
+          # The host dies only when a run realizes two or more WebView2 instances, and just two classes
+          # host a MarkdownView: measured over five runs each, everything else was clean 5/5 while these
+          # two crashed 5/5. So they run as their own invocation, last, and a retry costs their ~15s
+          # instead of the whole suite's. The complement is expressed as "not these", so a class added
+          # later joins the clean run rather than silently going untested -- and if it brings a third
+          # WebView with it, the crash shows up there and names itself. Matching on "DeviceTests.<class>."
+          # keeps a name from also matching a longer one.
+          $webViewClasses = @('CreateOrUpdatePersonDialogTests', 'PersonPageTests')
+          $sets = [ordered]@{
+            'rest' = ($webViewClasses | ForEach-Object { "FullyQualifiedName!~DeviceTests.$_." }) -join '&'
+            'webview' = ($webViewClasses | ForEach-Object { "FullyQualifiedName~DeviceTests.$_." }) -join '|'
           }
 
-          if (-not $success) {
-            Write-Host "Device tests did not complete cleanly after $maxAttempts attempts."
+          # dotnet test creates this for the TRX, but the console log is tee'd into it from the very
+          # first line of the run, before that happens.
+          New-Item -ItemType Directory -Force -Path coverage | Out-Null
+
+          # coverlet's in-process collector can't see AppWinOnly.exe -- DeviceRunners launches it as a
+          # separate process and drives it over TCP -- but dotnet-coverage's process-tree attach can, at
+          # no measurable cost on the rest set (measured: +0.1s on a 34s run) since it's dynamic
+          # instrumentation rather than coverlet's IL rewrite. Matches the collector run-tests-coverage.ps1
+          # uses locally. The webview set is excluded: measured 3/3 CI runs where wrapping it crashed the
+          # host mid-run (never reaching "Test run complete.", unlike its usual teardown-only race), so it
+          # keeps running uninstrumented and stays out of the coverage report, same as before this change.
+          dotnet tool install --global dotnet-coverage | Out-Null
+
+          $maxAttempts = 3
+          $failedSets = @()
+          foreach ($set in $sets.Keys) {
+            $filter = $sets[$set]
+            $success = $false
+            for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+              Write-Host "=== Device tests ($set) attempt $attempt of $maxAttempts ==="
+              $trxPath = "coverage\device-tests-$set.trx"
+              if (Test-Path $trxPath) { Remove-Item $trxPath -Force }
+              $logPath = "coverage\device-tests-$set.log"
+              $testArgs = @('test', 'Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj', '--no-build', '--configuration', 'Release', '--framework', 'net10.0-windows10.0.19041.0', '--filter', $filter, '--logger', "trx;LogFileName=device-tests-$set.trx", '--results-directory', 'coverage')
+
+              if ($set -eq 'webview') {
+                & dotnet @testArgs 2>&1 | Tee-Object -FilePath $logPath
+              } else {
+                $coveragePath = "coverage\device-tests-$set\coverage.cobertura.xml"
+                & dotnet-coverage collect --output $coveragePath --output-format cobertura -- dotnet @testArgs 2>&1 | Tee-Object -FilePath $logPath
+              }
+              $exitCode = $LASTEXITCODE
+              $ranToCompletion = Select-String -Path $logPath -Pattern 'Test run complete\.' -Quiet
+
+              if (Test-Path $trxPath) {
+                [xml]$trx = Get-Content $trxPath
+                $failed = [int]$trx.TestRun.ResultSummary.Counters.failed
+                $total = [int]$trx.TestRun.ResultSummary.Counters.total
+                Write-Host "Attempt $attempt`: $total total, $failed failed (exit code $exitCode, ran to completion: $ranToCompletion)."
+
+                if ($failed -gt 0) {
+                  Write-Host "Real test failure recorded -- not retrying."
+                  break
+                }
+              } else {
+                Write-Host "Attempt $attempt`: no TRX produced (exit code $exitCode, ran to completion: $ranToCompletion)."
+              }
+
+              if ($exitCode -eq 0) {
+                $success = $true
+                break
+              }
+
+              if ($ranToCompletion -and (Test-Path $trxPath)) {
+                Write-Host "::warning::Device tests ($set) exited $exitCode after the run had already completed with no failures -- the host died on its way out, accepting the attempt."
+                $success = $true
+                break
+              }
+
+              if ($attempt -lt $maxAttempts) {
+                Write-Host "::warning::Device tests ($set) attempt $attempt exited non-zero (exit code $exitCode) with no failed tests recorded -- retrying."
+              }
+            }
+
+            # Both sets always run, so one failing still reports the other rather than hiding it behind
+            # an early exit.
+            if (-not $success) { $failedSets += $set }
+          }
+
+          if ($failedSets) {
+            Write-Host "Device tests did not complete cleanly: $($failedSets -join ', ')."
             exit 1
           }
           exit 0
@@ -181,7 +203,12 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: test-results-device
-          path: coverage\device-tests.trx
+          # The console log travels with the TRX: which of the two teardown deaths happened is only
+          # visible there, and the TRX of an accepted attempt looks like any other passing run.
+          path: |
+            coverage\device-tests-*.trx
+            coverage\device-tests-*.log
+            coverage\device-tests-*\coverage.cobertura.xml
 
   coverage-report:
     needs: [test, test-device]
@@ -202,16 +229,23 @@ jobs:
           path: coverage
           merge-multiple: true
 
+      # Matched rather than named: this job runs even when test-device failed, and a failure before
+      # its test step leaves nothing to upload -- a missing name is a hard error here, a missing match
+      # is not, and the coverage that was collected still gets published.
       - name: Download device test results
         uses: actions/download-artifact@v8
         with:
-          name: test-results-device
+          pattern: test-results-device*
+          merge-multiple: true
           path: coverage
 
       - name: Generate coverage report
         run: |
           dotnet tool install --global dotnet-reportgenerator-globaltool
-          reportgenerator -reports:coverage/**/coverage.cobertura.xml -targetdir:coverage/report -reporttypes:Html
+          # dotnet-coverage's process-tree attach (device tests) sees the whole process, GT4.UI.App.DeviceTests
+          # included; coverlet (everything else) doesn't instrument the test assembly to begin with. The filter
+          # keeps both collectors' output to product code only, matching run-tests-coverage.ps1 locally.
+          reportgenerator -reports:coverage/**/coverage.cobertura.xml -targetdir:coverage/report -reporttypes:Html "-assemblyfilters:+GT4*;+AppWinOnly;-*Tests*"
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v6
