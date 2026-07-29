@@ -93,10 +93,6 @@ jobs:
             nuget-${{ runner.os }}-
 
       # Debug is unsupported for this project (see the note in its .csproj); must build/run Release.
-      # No code coverage: the tests execute inside a separately-launched .exe that DeviceRunners
-      # spawns and talks to over TCP, so coverlet's in-process collector never sees it.
-      # run-tests-coverage.ps1 (local) does capture this via dotnet-coverage's process-tree attach
-      # instead -- expect AppWinOnly's coverage numbers here to permanently differ from a local run.
       # AppWinOnly and GT4.UI.App.DeviceTests both conditionally target net10.0-windows10.0.19041.0 in
       # addition to other TFMs, so they get their own filter and --framework: an unscoped build would
       # also compile DeviceTests' net10.0-android TFM, which nothing in CI tests (android device tests
@@ -131,6 +127,12 @@ jobs:
           # first line of the run, before that happens.
           New-Item -ItemType Directory -Force -Path coverage | Out-Null
 
+          # coverlet's in-process collector can't see AppWinOnly.exe -- DeviceRunners launches it as a
+          # separate process and drives it over TCP -- but dotnet-coverage's process-tree attach can, at
+          # no measurable cost (measured: +0.1s on a 34s run) since it's dynamic instrumentation rather
+          # than coverlet's IL rewrite. Matches the collector run-tests-coverage.ps1 uses locally.
+          dotnet tool install --global dotnet-coverage | Out-Null
+
           $maxAttempts = 3
           $failedSets = @()
           foreach ($set in $sets.Keys) {
@@ -141,8 +143,9 @@ jobs:
               $trxPath = "coverage\device-tests-$set.trx"
               if (Test-Path $trxPath) { Remove-Item $trxPath -Force }
               $logPath = "coverage\device-tests-$set.log"
+              $coveragePath = "coverage\device-tests-$set\coverage.cobertura.xml"
 
-              & dotnet test Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj --no-build --configuration Release --framework net10.0-windows10.0.19041.0 --filter $filter --logger "trx;LogFileName=device-tests-$set.trx" --results-directory coverage 2>&1 | Tee-Object -FilePath $logPath
+              & dotnet-coverage collect --output $coveragePath --output-format cobertura -- dotnet test Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj --no-build --configuration Release --framework net10.0-windows10.0.19041.0 --filter $filter --logger "trx;LogFileName=device-tests-$set.trx" --results-directory coverage 2>&1 | Tee-Object -FilePath $logPath
               $exitCode = $LASTEXITCODE
               $ranToCompletion = Select-String -Path $logPath -Pattern 'Test run complete\.' -Quiet
 
@@ -197,6 +200,7 @@ jobs:
           path: |
             coverage\device-tests-*.trx
             coverage\device-tests-*.log
+            coverage\device-tests-*\coverage.cobertura.xml
 
   coverage-report:
     needs: [test, test-device]
@@ -230,7 +234,10 @@ jobs:
       - name: Generate coverage report
         run: |
           dotnet tool install --global dotnet-reportgenerator-globaltool
-          reportgenerator -reports:coverage/**/coverage.cobertura.xml -targetdir:coverage/report -reporttypes:Html
+          # dotnet-coverage's process-tree attach (device tests) sees the whole process, GT4.UI.App.DeviceTests
+          # included; coverlet (everything else) doesn't instrument the test assembly to begin with. The filter
+          # keeps both collectors' output to product code only, matching run-tests-coverage.ps1 locally.
+          reportgenerator -reports:coverage/**/coverage.cobertura.xml -targetdir:coverage/report -reporttypes:Html "-assemblyfilters:+GT4*;+AppWinOnly;-*Tests*"
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v6
