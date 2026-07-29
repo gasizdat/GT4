@@ -187,7 +187,8 @@ public class PersonPageTests
     var services = new TestServices();
     var content = BuildTaggedPhotoContent("0 OBJE\n1 TITL A caption\n", [1, 2, 3]);
     var mainPhoto = new Data(10, content, "image/png", DataCategory.PersonMainPhotoTagged);
-    var person = CreateSamplePerson() with { MainPhoto = mainPhoto };
+    var biography = new Data(0, System.Text.Encoding.UTF8.GetBytes("![caption](media:10)"), "text/plain", DataCategory.PersonBio);
+    var person = CreateSamplePerson() with { MainPhoto = mainPhoto, Biography = biography };
     services.PersonManager
       .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(person);
@@ -208,7 +209,8 @@ public class PersonPageTests
     var scan = new Data(22, scanContent, "image/jpeg", DataCategory.PersonAttachment);
     var deedContent = BuildTaggedPhotoContent("0 OBJE\n1 FILE deed.pdf\n", [1, 2, 3]);
     var deed = new Data(23, deedContent, "application/pdf", DataCategory.PersonAttachment);
-    var person = CreateSamplePerson() with { Attachments = [scan, deed] };
+    var biography = new Data(0, System.Text.Encoding.UTF8.GetBytes("![scan](media:22)"), "text/plain", DataCategory.PersonBio);
+    var person = CreateSamplePerson() with { Attachments = [scan, deed], Biography = biography };
     services.PersonManager
       .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(person);

@@ -450,7 +450,7 @@ public partial class PersonPage : ContentPage
         captions = captionsTask.Result;
       }
 
-      var mediaSources = MediaSourceUtils.BuildMediaSources([.. photoData, .. personFullInfo.Attachments]);
+      var mediaSources = MediaSourceUtils.BuildMediaSources([.. photoData, .. personFullInfo.Attachments], bioTask.Result as string);
 
       // UpdateUI touches the project document again on the UI thread; SafeTask.RunOnMainThread keeps
       // an escaped exception (e.g. the project closed while backgrounding) from going unobserved.

@@ -1,6 +1,7 @@
 using GT4.Core.Gedcom;
 using GT4.Core.Project.Dto;
 using GT4.Core.Project.Extensions;
+using GT4.UI.Utils;
 
 namespace GT4.UI.Converters;
 
@@ -17,11 +18,15 @@ public static class MediaSourceUtils
   // round-trip through GedcomMedia.ToForm) untouched.
   private const string FallbackImageMimeType = System.Net.Mime.MediaTypeNames.Image.Png;
 
-  // Only a committed photo has a stable id a stored "media:id" reference can target.
-  public static IReadOnlyDictionary<int, string> BuildMediaSources(IEnumerable<Data> media) =>
-    media
-      .Where(item => item.Id != ElementId.NonCommittedId && IsInlineImage(item))
+  // Only a committed photo has a stable id a stored "media:id" reference can target; encoding one the
+  // biography doesn't reference would just retain its bytes as a string for no reason (#211).
+  public static IReadOnlyDictionary<int, string> BuildMediaSources(IEnumerable<Data> media, string? biography)
+  {
+    var referencedIds = MediaLinkUtils.ExtractReferencedIds(biography);
+    return media
+      .Where(item => item.Id != ElementId.NonCommittedId && referencedIds.Contains(item.Id) && IsInlineImage(item))
       .ToDictionary(item => item.Id, ToDataUri);
+  }
 
   // A photo is an image by construction (its MIME may even be null); an attachment only when its own
   // MIME type says so -- an attached scan is just as renderable as a photo.
