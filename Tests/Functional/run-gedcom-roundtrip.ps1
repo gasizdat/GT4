@@ -138,8 +138,12 @@ foreach ($sample in $Samples) {
   # passes; normalized away before hashing so stability still fails on anything else byte-for-byte.
   $firstNormalized = (Get-Content $firstGed -Raw) -replace 'media/\d+/', 'media/#/'
   $secondNormalized = (Get-Content $secondGed -Raw) -replace 'media/\d+/', 'media/#/'
-  $firstHash = [Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($firstNormalized)))
-  $secondHash = [Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($secondNormalized)))
+  # SHA256.HashData and Convert.ToHexString are .NET 5+ only; Create()+ComputeHash and BitConverter.ToString
+  # (stripped of its "-" separators) keep this runnable under Windows PowerShell 5.1's .NET Framework.
+  $sha256 = [System.Security.Cryptography.SHA256]::Create()
+  $firstHash = [BitConverter]::ToString($sha256.ComputeHash([Text.Encoding]::UTF8.GetBytes($firstNormalized))) -replace '-', ''
+  $secondHash = [BitConverter]::ToString($sha256.ComputeHash([Text.Encoding]::UTF8.GetBytes($secondNormalized))) -replace '-', ''
+  $sha256.Dispose()
   $stability = 'PASS'
   if ($firstHash -ne $secondHash) {
     $stability = 'FAIL'
