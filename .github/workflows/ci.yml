@@ -129,8 +129,11 @@ jobs:
 
           # coverlet's in-process collector can't see AppWinOnly.exe -- DeviceRunners launches it as a
           # separate process and drives it over TCP -- but dotnet-coverage's process-tree attach can, at
-          # no measurable cost (measured: +0.1s on a 34s run) since it's dynamic instrumentation rather
-          # than coverlet's IL rewrite. Matches the collector run-tests-coverage.ps1 uses locally.
+          # no measurable cost on the rest set (measured: +0.1s on a 34s run) since it's dynamic
+          # instrumentation rather than coverlet's IL rewrite. Matches the collector run-tests-coverage.ps1
+          # uses locally. The webview set is excluded: measured 3/3 CI runs where wrapping it crashed the
+          # host mid-run (never reaching "Test run complete.", unlike its usual teardown-only race), so it
+          # keeps running uninstrumented and stays out of the coverage report, same as before this change.
           dotnet tool install --global dotnet-coverage | Out-Null
 
           $maxAttempts = 3
@@ -143,9 +146,14 @@ jobs:
               $trxPath = "coverage\device-tests-$set.trx"
               if (Test-Path $trxPath) { Remove-Item $trxPath -Force }
               $logPath = "coverage\device-tests-$set.log"
-              $coveragePath = "coverage\device-tests-$set\coverage.cobertura.xml"
+              $testArgs = @('test', 'Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj', '--no-build', '--configuration', 'Release', '--framework', 'net10.0-windows10.0.19041.0', '--filter', $filter, '--logger', "trx;LogFileName=device-tests-$set.trx", '--results-directory', 'coverage')
 
-              & dotnet-coverage collect --output $coveragePath --output-format cobertura -- dotnet test Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj --no-build --configuration Release --framework net10.0-windows10.0.19041.0 --filter $filter --logger "trx;LogFileName=device-tests-$set.trx" --results-directory coverage 2>&1 | Tee-Object -FilePath $logPath
+              if ($set -eq 'webview') {
+                & dotnet @testArgs 2>&1 | Tee-Object -FilePath $logPath
+              } else {
+                $coveragePath = "coverage\device-tests-$set\coverage.cobertura.xml"
+                & dotnet-coverage collect --output $coveragePath --output-format cobertura -- dotnet @testArgs 2>&1 | Tee-Object -FilePath $logPath
+              }
               $exitCode = $LASTEXITCODE
               $ranToCompletion = Select-String -Path $logPath -Pattern 'Test run complete\.' -Quiet
 
