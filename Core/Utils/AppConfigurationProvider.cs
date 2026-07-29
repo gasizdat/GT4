@@ -4,11 +4,20 @@ using System.Text.Json.Serialization;
 
 namespace GT4.Core.Utils;
 
-internal class AppConfigurationProvider : ConfigurationProvider, IInteractiveConfiguration
+internal partial class AppConfigurationProvider : ConfigurationProvider, IInteractiveConfiguration
 {
+  [JsonSourceGenerationOptions(
+    WriteIndented = true,
+    PropertyNameCaseInsensitive = true,
+    PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
+  [JsonSerializable(typeof(Dictionary<string, string?>))]
+  private partial class JsonContext : JsonSerializerContext
+  {
+  }
+
   private static readonly TimeSpan SaveDebounce = TimeSpan.FromSeconds(2);
 
-  private readonly JsonSerializerOptions _SerializationOptions;
   private readonly IFileSystem _FileSystem;
   private readonly IStorage _Storage;
   private bool _FlushRequested = false;
@@ -19,13 +28,6 @@ internal class AppConfigurationProvider : ConfigurationProvider, IInteractiveCon
   {
     _FileSystem = fileSystem;
     _Storage = storage;
-    _SerializationOptions = new()
-    {
-      WriteIndented = true,
-      PropertyNameCaseInsensitive = true,
-      PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-      DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-    };
   }
 
   protected FileDescription File =>
@@ -61,7 +63,7 @@ internal class AppConfigurationProvider : ConfigurationProvider, IInteractiveCon
       if (_FileSystem.FileExists(File))
       {
         using var stream = _FileSystem.OpenReadStream(File);
-        var data = JsonSerializer.Deserialize<Dictionary<string, string?>>(stream, _SerializationOptions);
+        var data = JsonSerializer.Deserialize(stream, JsonContext.Default.DictionaryStringString);
         if (data == null)
         {
           return;
@@ -111,7 +113,7 @@ internal class AppConfigurationProvider : ConfigurationProvider, IInteractiveCon
         try
         {
           using var stream = _FileSystem.OpenWriteStream(File);
-          JsonSerializer.Serialize(stream, Data, _SerializationOptions);
+          JsonSerializer.Serialize(stream, Data, JsonContext.Default.DictionaryStringString);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
         {
