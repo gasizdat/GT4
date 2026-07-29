@@ -5,6 +5,7 @@ using GT4.UI.Abstraction;
 using GT4.UI.Components;
 using GT4.UI.Dialogs;
 using Moq;
+using System.Text;
 using Xunit;
 
 namespace GT4.UI.DeviceTests;
@@ -33,6 +34,9 @@ public class CreateOrUpdatePersonDialogTests
 
   private static Data Attachment(int id, string fileName = "scan.pdf", string mimeType = "application/pdf") => new(
     id, Content: GedcomPhotoResidue.EncodeAttachment([1, 2, 3], fileName), MimeType: mimeType, Category: DataCategory.PersonAttachment);
+
+  private static Data Bio(string markdown) =>
+    new(ElementId.NonCommittedId, Encoding.UTF8.GetBytes(markdown), "text/plain", DataCategory.PersonBio);
 
   private static PersonFullInfo CreateSamplePerson() => new(
     Id: 1,
@@ -251,12 +255,18 @@ public class CreateOrUpdatePersonDialogTests
   [Fact]
   public async Task RemoveAttachmentCommand_drops_the_attachment_from_MediaSources()
   {
-    var person = CreateSamplePerson() with { Attachments = [Attachment(30, "scan.jpg", "image/jpeg")] };
+    var person = CreateSamplePerson() with
+    {
+      Attachments = [Attachment(30, "scan.jpg", "image/jpeg")],
+      Biography = Bio("![scan](media:30)")
+    };
     var dialog = await CreateDialogAsync(new TestServices(), person);
     var attachment = dialog.Attachments.ElementAt(0);
     // Reading before the removal is what makes this a test: MediaSources is lazily cached, so an
-    // unpopulated cache would rebuild correctly even with the invalidation handler unsubscribed.
-    Assert.Contains(30, dialog.MediaSources.Keys);
+    // unpopulated cache would rebuild correctly even with the invalidation handler unsubscribed. The
+    // biography text loads asynchronously, so poll rather than assert on the first read.
+    await WaitForAsync(() => dialog.MediaSources.Keys.Contains(30), found => found,
+      "MediaSources never picked up the referenced attachment.");
     var changedProperties = new List<string?>();
     dialog.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
 
@@ -518,7 +528,11 @@ public class CreateOrUpdatePersonDialogTests
   {
     var services = new TestServices();
     var attachments = new[] { Attachment(20, "scan.pdf"), Attachment(21, "scan.jpg", "image/jpeg") };
-    var person = CreateSamplePerson() with { Attachments = attachments };
+    // MediaSources only encodes what the biography references (#211), so every inline-capable id
+    // (the two default photos, main photo, and the jpeg attachment) needs a link up front for the
+    // picker's offer and MediaSources to agree.
+    var biography = Bio("![1](media:10) ![2](media:11) ![3](media:12) ![4](media:21)");
+    var person = CreateSamplePerson() with { Attachments = attachments, Biography = biography };
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
     var dialog = await MainThread.InvokeOnMainThreadAsync(
       () => services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialog.Factory>().Create(person));
@@ -526,9 +540,11 @@ public class CreateOrUpdatePersonDialogTests
     await using var window = await WindowHost.AttachAsync(dialog);
     var insertTask = await MainThreadTask.StartAsync(dialog.InvokeInsertMediaLinkAsync);
     var selectDialog = await ModalDialogHarness.WaitForModalAsync<SelectMediaDialog>(dialog);
-    var inlineIds = selectDialog.Items.Where(item => item.IsInlineImage).Select(item => item.Id);
+    var inlineIds = selectDialog.Items.Where(item => item.IsInlineImage).Select(item => item.Id).Order();
 
-    Assert.Equal(dialog.MediaSources.Keys.Order(), inlineIds.Order());
+    // The biography loads asynchronously, so poll rather than assert on the first read.
+    await WaitForAsync(() => dialog.MediaSources.Keys.Order(), keys => keys.SequenceEqual(inlineIds),
+      "MediaSources never matched the picker's inline offer.");
 
     await MainThread.InvokeOnMainThreadAsync(() => selectDialog.DialogCommand.Execute("SelectMediaCommand"));
     await insertTask;

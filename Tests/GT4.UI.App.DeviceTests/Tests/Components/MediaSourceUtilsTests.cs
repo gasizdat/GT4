@@ -23,7 +23,7 @@ public class MediaSourceUtilsTests
   {
     var photo = new Data(1, [1, 2, 3], "image/png", DataCategory.PersonMainPhoto);
 
-    var sources = MediaSourceUtils.BuildMediaSources([photo]);
+    var sources = MediaSourceUtils.BuildMediaSources([photo], "![caption](media:1)");
 
     Assert.Equal($"data:image/png;base64,{Convert.ToBase64String([1, 2, 3])}", sources[1]);
   }
@@ -34,7 +34,7 @@ public class MediaSourceUtilsTests
     var content = BuildTaggedPhotoContent("0 OBJE\n1 TITL A caption\n", [4, 5, 6]);
     var photo = new Data(2, content, "image/jpeg", DataCategory.PersonMainPhotoTagged);
 
-    var sources = MediaSourceUtils.BuildMediaSources([photo]);
+    var sources = MediaSourceUtils.BuildMediaSources([photo], "![caption](media:2)");
 
     Assert.Equal($"data:image/jpeg;base64,{Convert.ToBase64String([4, 5, 6])}", sources[2]);
   }
@@ -45,7 +45,7 @@ public class MediaSourceUtilsTests
     var content = BuildTaggedPhotoContent("0 OBJE\n1 FILE scan.jpg\n", [7, 8, 9]);
     var attachment = new Data(3, content, "image/jpeg", DataCategory.PersonAttachment);
 
-    var sources = MediaSourceUtils.BuildMediaSources([attachment]);
+    var sources = MediaSourceUtils.BuildMediaSources([attachment], "![scan](media:3)");
 
     Assert.Equal($"data:image/jpeg;base64,{Convert.ToBase64String([7, 8, 9])}", sources[3]);
   }
@@ -56,7 +56,7 @@ public class MediaSourceUtilsTests
     var content = BuildTaggedPhotoContent("0 OBJE\n1 FILE scan.pdf\n", [7, 8, 9]);
     var attachment = new Data(4, content, "application/pdf", DataCategory.PersonAttachment);
 
-    var sources = MediaSourceUtils.BuildMediaSources([attachment]);
+    var sources = MediaSourceUtils.BuildMediaSources([attachment], "![scan](media:4)");
 
     Assert.Empty(sources);
   }
@@ -66,7 +66,7 @@ public class MediaSourceUtilsTests
   {
     var photo = new Data(5, [1, 2, 3], null, DataCategory.PersonPhoto);
 
-    var sources = MediaSourceUtils.BuildMediaSources([photo]);
+    var sources = MediaSourceUtils.BuildMediaSources([photo], "![caption](media:5)");
 
     Assert.Equal($"data:image/png;base64,{Convert.ToBase64String([1, 2, 3])}", sources[5]);
   }
@@ -76,7 +76,17 @@ public class MediaSourceUtilsTests
   {
     var photo = new Data(ElementId.NonCommittedId, [1, 2, 3], "image/png", DataCategory.PersonMainPhoto);
 
-    var sources = MediaSourceUtils.BuildMediaSources([photo]);
+    var sources = MediaSourceUtils.BuildMediaSources([photo], null);
+
+    Assert.Empty(sources);
+  }
+
+  [Fact]
+  public void UnreferencedPhoto_IsExcluded()
+  {
+    var photo = new Data(6, [1, 2, 3], "image/png", DataCategory.PersonMainPhoto);
+
+    var sources = MediaSourceUtils.BuildMediaSources([photo], "No media reference here.");
 
     Assert.Empty(sources);
   }

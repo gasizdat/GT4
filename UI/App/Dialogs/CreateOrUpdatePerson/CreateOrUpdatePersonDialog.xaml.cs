@@ -142,7 +142,20 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
               _Factory.CancellationTokenProvider,
               _Factory.AlertService)
       };
-      _Biography.PropertyChanged += (_, _) => IsModified = _Biography.IsModified;
+      _Biography.PropertyChanged += (_, _) =>
+      {
+        IsModified = _Biography.IsModified;
+
+        // The initial async load bypasses the IsModified-setting setter (it mutates Content directly),
+        // so this fires with IsModified still false exactly once, when the biography text first becomes
+        // available to filter MediaSources by. Later edits go through the setter and must not
+        // re-trigger a re-encode on every keystroke.
+        if (!_Biography.IsModified)
+        {
+          _MediaSources = null;
+          OnPropertyChanged(nameof(MediaSources));
+        }
+      };
 
       var relatives = person
         .RelativeInfos
@@ -172,9 +185,11 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   public ICollection<PersonDataItem> Photos => _Photos;
 
   // Re-encoding every photo to base64 is expensive enough to cache rather than redo on every binding
-  // read; the CollectionChanged handlers (above) are the only thing that can make this stale.
+  // read; the CollectionChanged handlers (above) and the biography load/insert hooks (below) are the
+  // only things that can make this stale.
   public IReadOnlyDictionary<int, string> MediaSources =>
-    _MediaSources ??= MediaSourceUtils.BuildMediaSources(_Photos.Concat(_Attachments).Select(item => item.Info));
+    _MediaSources ??= MediaSourceUtils.BuildMediaSources(
+      _Photos.Concat(_Attachments).Select(item => item.Info), _Biography?.Content as string);
 
   public ICollection<PersonDataItem> Attachments => _Attachments;
 
@@ -537,7 +552,14 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     if (picked is not null)
     {
       if (picked.IsInlineImage)
+      {
         BiographyEditor.InsertMediaLink(picked.DisplayName, picked.Id);
+        // A newly-referenced photo/attachment may already sit in _Photos/_Attachments, so the
+        // CollectionChanged handlers never fire for it; the biography's own PropertyChanged handler
+        // above skips this (IsModified is now true), so invalidate here instead.
+        _MediaSources = null;
+        OnPropertyChanged(nameof(MediaSources));
+      }
       else
         BiographyEditor.InsertAttachmentLink(picked.DisplayName, picked.Id);
     }
