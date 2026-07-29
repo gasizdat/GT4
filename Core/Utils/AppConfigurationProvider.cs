@@ -4,18 +4,18 @@ using System.Text.Json.Serialization;
 
 namespace GT4.Core.Utils;
 
-[JsonSourceGenerationOptions(
-  WriteIndented = true,
-  PropertyNameCaseInsensitive = true,
-  PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
-  DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
-[JsonSerializable(typeof(Dictionary<string, string?>))]
-internal partial class AppConfigurationJsonContext : JsonSerializerContext
+internal partial class AppConfigurationProvider : ConfigurationProvider, IInteractiveConfiguration
 {
-}
+  [JsonSourceGenerationOptions(
+    WriteIndented = true,
+    PropertyNameCaseInsensitive = true,
+    PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
+  [JsonSerializable(typeof(Dictionary<string, string?>))]
+  private partial class JsonContext : JsonSerializerContext
+  {
+  }
 
-internal class AppConfigurationProvider : ConfigurationProvider, IInteractiveConfiguration
-{
   private static readonly TimeSpan SaveDebounce = TimeSpan.FromSeconds(2);
 
   private readonly IFileSystem _FileSystem;
@@ -63,7 +63,7 @@ internal class AppConfigurationProvider : ConfigurationProvider, IInteractiveCon
       if (_FileSystem.FileExists(File))
       {
         using var stream = _FileSystem.OpenReadStream(File);
-        var data = JsonSerializer.Deserialize(stream, AppConfigurationJsonContext.Default.DictionaryStringString);
+        var data = JsonSerializer.Deserialize(stream, JsonContext.Default.DictionaryStringString);
         if (data == null)
         {
           return;
@@ -113,7 +113,7 @@ internal class AppConfigurationProvider : ConfigurationProvider, IInteractiveCon
         try
         {
           using var stream = _FileSystem.OpenWriteStream(File);
-          JsonSerializer.Serialize(stream, Data, AppConfigurationJsonContext.Default.DictionaryStringString);
+          JsonSerializer.Serialize(stream, Data, JsonContext.Default.DictionaryStringString);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
         {
