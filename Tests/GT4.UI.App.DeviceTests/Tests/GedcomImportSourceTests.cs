@@ -89,5 +89,17 @@ public sealed class GedcomImportSourceTests : IDisposable
     Assert.Empty(Directory.EnumerateFileSystemEntries(_Root));
   }
 
+  [Fact]
+  public async Task UnpackAsync_NotAZipFailsAndCleansUpAsync()
+  {
+    // Distinct from the case above: extraction itself throws (before any .ged lookup happens), which is
+    // the failure mode the extraction directory must also survive without leaving anything behind.
+    Func<Task<Stream>> notAZip = () => Task.FromResult<Stream>(new MemoryStream(Encoding.UTF8.GetBytes("not a zip")));
+
+    await Assert.ThrowsAnyAsync<Exception>(() => GedcomImportSource.UnpackAsync(notAZip, _Root));
+
+    Assert.Empty(Directory.EnumerateFileSystemEntries(_Root));
+  }
+
   public void Dispose() => Directory.Delete(_Root, recursive: true);
 }

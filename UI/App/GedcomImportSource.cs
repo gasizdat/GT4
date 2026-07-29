@@ -42,31 +42,41 @@ public sealed class GedcomImportSource : IDisposable
   // Windows -- the same reason GedcomImportEncoding takes an opener rather than the picked file.
   internal static async Task<GedcomImportSource> UnpackAsync(Func<Task<Stream>> openStreamAsync, string tempRoot)
   {
+    // The staging file sits beside, not inside, the extraction directory: deleting extracted on any
+    // failure below is then always the same one recursive delete, with nothing left over to special-case.
+    var archivePath = Path.Combine(tempRoot, Path.GetRandomFileName());
     var extracted = Path.Combine(tempRoot, Path.GetRandomFileName());
-    var archivePath = Path.Combine(extracted, "package.zip");
     Directory.CreateDirectory(extracted);
 
-    // Copied to disk first: a picked stream need not be seekable, and ZipArchive requires it.
-    await using (var source = await openStreamAsync())
-    await using (var target = new FileStream(archivePath, FileMode.Create))
+    try
     {
-      await source.CopyToAsync(target);
-    }
-    ZipFile.ExtractToDirectory(archivePath, extracted);
-    File.Delete(archivePath);
+      // Copied to disk first: a picked stream need not be seekable, and ZipArchive requires it.
+      await using (var source = await openStreamAsync())
+      await using (var target = new FileStream(archivePath, FileMode.Create))
+      {
+        await source.CopyToAsync(target);
+      }
+      ZipFile.ExtractToDirectory(archivePath, extracted);
 
-    var gedcomPath = Directory.EnumerateFiles(extracted, "*.ged", SearchOption.AllDirectories).FirstOrDefault();
-    if (gedcomPath is null)
+      var gedcomPath = Directory.EnumerateFiles(extracted, "*.ged", SearchOption.AllDirectories).FirstOrDefault();
+      if (gedcomPath is null)
+        throw new InvalidDataException(UIStrings.AlertImportGedcomArchiveEmpty);
+
+      return new GedcomImportSource(
+        () => Task.FromResult<Stream>(File.OpenRead(gedcomPath)),
+        Path.GetDirectoryName(gedcomPath),
+        Path.GetFileNameWithoutExtension(gedcomPath),
+        extracted);
+    }
+    catch
     {
       Directory.Delete(extracted, recursive: true);
-      throw new InvalidDataException(UIStrings.AlertImportGedcomArchiveEmpty);
+      throw;
     }
-
-    return new GedcomImportSource(
-      () => Task.FromResult<Stream>(File.OpenRead(gedcomPath)),
-      Path.GetDirectoryName(gedcomPath),
-      Path.GetFileNameWithoutExtension(gedcomPath),
-      extracted);
+    finally
+    {
+      File.Delete(archivePath);
+    }
   }
 
   public void Dispose()
