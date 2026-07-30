@@ -42,7 +42,7 @@ public sealed class TreeWalker(IRelativesProvider relativesProvider)
     public TreeIssueType Issue { get; set; }
   }
 
-  public async Task<(IReadOnlyList<TreeNode> Nodes, IReadOnlyList<TreeIssue> Issues)> WalkAsync(
+  public async Task<(TreeNode[] Nodes, TreeIssue[] Issues)> WalkAsync(
     RelativeInfo[] roots,
     CancellationToken token)
   {
@@ -96,6 +96,6 @@ public sealed class TreeWalker(IRelativesProvider relativesProvider)
     }
 
     var nodes = rows.Select(r => new TreeNode(r.Info, r.Depth, r.Path, r.Issue)).ToArray();
-    return (nodes, issues);
+    return (nodes, [.. issues]);
   }
 }
