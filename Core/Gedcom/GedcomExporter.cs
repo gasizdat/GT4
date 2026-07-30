@@ -439,7 +439,7 @@ internal sealed class GedcomExporter : IGedcomExporter
   /// Splits the residue forest into the residual of each owned tag (keyed by that tag, to be merged back into
   /// the regenerated node) and the fully-unmodeled roots (re-attached to the INDI verbatim).
   /// </summary>
-  private static (Dictionary<string, GedcomNode> Owned, List<GedcomNode> Other) PartitionResidue(GedcomNode[] roots)
+  private static (Dictionary<string, GedcomNode> Owned, GedcomNode[] Other) PartitionResidue(GedcomNode[] roots)
   {
     var owned = new Dictionary<string, GedcomNode>();
     var other = new List<GedcomNode>();
@@ -457,7 +457,7 @@ internal sealed class GedcomExporter : IGedcomExporter
         other.Add(root);
       }
     }
-    return (owned, other);
+    return (owned, [.. other]);
   }
 
   private static bool IsGenuineResidual(GedcomNode root, HashSet<string> modeled) =>
