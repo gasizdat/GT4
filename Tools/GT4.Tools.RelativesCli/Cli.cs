@@ -167,7 +167,7 @@ internal static class Cli
         $"({node.Info.Type}, Gen={node.Info.Generation.Value}, Cons={node.Info.Consanguinity.Value}){marker}");
     }
 
-    if (issues.Count == 0)
+    if (issues.Length == 0)
     {
       return;
     }
