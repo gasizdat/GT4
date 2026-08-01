@@ -6,15 +6,6 @@ namespace GT4.Core.Project;
 
 internal class TableData : TableBase, ITableData
 {
-  private static Data CreateData(DbDataReader reader)
-  {
-    var id = reader.GetInt32(0);
-    var content = reader.GetFieldValue<byte[]>(1);
-    var mimeType = TryGetString(reader, 2);
-    var category = GetEnum<DataCategory>(reader, 3);
-
-    return new Data(Id: id, Content: content, MimeType: mimeType, Category: category);
-  }
 
   public TableData(IProjectConnection connection) : base(connection)
   {
@@ -100,5 +91,14 @@ internal class TableData : TableBase, ITableData
     command.Parameters.AddWithValue("@category", (int)dataCategory);
     await command.ExecuteNonQueryAsync(token);
     await transaction.CommitAsync(token);
+  }
+  private static Data CreateData(DbDataReader reader)
+  {
+    var id = reader.GetInt32(0);
+    var content = reader.GetFieldValue<byte[]>(1);
+    var mimeType = TryGetString(reader, 2);
+    var category = GetEnum<DataCategory>(reader, 3);
+
+    return new Data(Id: id, Content: content, MimeType: mimeType, Category: category);
   }
 }

@@ -11,31 +11,6 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
   {
   }
 
-  private static Data[] CombinePersonData(PersonFullInfo personFullInfo)
-  {
-    var personDataSet = new List<Data>();
-
-    if (personFullInfo.MainPhoto is not null)
-    {
-      personDataSet.Add(personFullInfo.MainPhoto);
-    }
-
-    personDataSet.AddRange(personFullInfo.AdditionalPhotos);
-    personDataSet.AddRange(personFullInfo.Attachments);
-
-    if (personFullInfo.Biography is not null)
-    {
-      personDataSet.Add(personFullInfo.Biography);
-    }
-
-    if (personFullInfo.GedcomData is not null)
-    {
-      personDataSet.Add(personFullInfo.GedcomData);
-    }
-
-    return personDataSet.ToArray();
-  }
-
   public async Task<PersonFullInfo> GetPersonFullInfoAsync(Person person, CancellationToken token)
   {
     if (person.Id == ElementId.NonCommittedId)
@@ -169,5 +144,30 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
     await Document.Relatives.UpdateRelativesAsync(personFullInfo, personFullInfo.RelativeInfos, token);
 
     await transaction.CommitAsync(token);
+  }
+
+  private static Data[] CombinePersonData(PersonFullInfo personFullInfo)
+  {
+    var personDataSet = new List<Data>();
+
+    if (personFullInfo.MainPhoto is not null)
+    {
+      personDataSet.Add(personFullInfo.MainPhoto);
+    }
+
+    personDataSet.AddRange(personFullInfo.AdditionalPhotos);
+    personDataSet.AddRange(personFullInfo.Attachments);
+
+    if (personFullInfo.Biography is not null)
+    {
+      personDataSet.Add(personFullInfo.Biography);
+    }
+
+    if (personFullInfo.GedcomData is not null)
+    {
+      personDataSet.Add(personFullInfo.GedcomData);
+    }
+
+    return personDataSet.ToArray();
   }
 }

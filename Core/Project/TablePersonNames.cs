@@ -6,16 +6,6 @@ namespace GT4.Core.Project;
 
 internal partial class TablePersonNames : TableBase, ITablePersonNames
 {
-  private static Name CreateNameFromRow(DbDataReader reader)
-  {
-    var name = new Name(
-      Id: reader.GetInt32(0),
-      Value: reader.GetString(1),
-      Type: GetEnum<NameType>(reader, 2),
-      ParentId: TryGetInteger(reader, 3));
-
-    return name;
-  }
 
   public TablePersonNames(IProjectConnection connection) : base(connection)
   {
@@ -127,5 +117,15 @@ internal partial class TablePersonNames : TableBase, ITablePersonNames
     await AddPersonNamesAsync(person, names, token);
 
     await transaction.CommitAsync(token);
+  }
+  private static Name CreateNameFromRow(DbDataReader reader)
+  {
+    var name = new Name(
+      Id: reader.GetInt32(0),
+      Value: reader.GetString(1),
+      Type: GetEnum<NameType>(reader, 2),
+      ParentId: TryGetInteger(reader, 3));
+
+    return name;
   }
 }

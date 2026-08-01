@@ -14,24 +14,9 @@ internal class CurrentProjectProvider : ICurrentProjectProvider
   private ProjectInfo? _Info = null;
   private ProjectHost? _ProjectHost = null;
 
-  [DoesNotReturn]
-  private T ThrowProjectNotOpened<T>()
-  {
-    throw new ProjectNotOpenedException();
-  }
-
   public CurrentProjectProvider(IProjectList projectList)
   {
     _ProjectList = projectList;
-  }
-
-  /// <summary>Returns the currently open host, or throws if no project is open.</summary>
-  private ProjectHost RequireHost()
-  {
-    lock (_Sync)
-    {
-      return _ProjectHost?.Project is not null ? _ProjectHost : ThrowProjectNotOpened<ProjectHost>();
-    }
   }
 
   public async Task OpenAsync(ProjectInfo info, CancellationToken token)
@@ -130,5 +115,20 @@ internal class CurrentProjectProvider : ICurrentProjectProvider
     // Snapshot the host under the lock, then enumerate revisions (which touches the filesystem)
     // outside it so the lock is not held during I/O.
     get => RequireHost().Revisions;
+  }
+
+  [DoesNotReturn]
+  private T ThrowProjectNotOpened<T>()
+  {
+    throw new ProjectNotOpenedException();
+  }
+
+  /// <summary>Returns the currently open host, or throws if no project is open.</summary>
+  private ProjectHost RequireHost()
+  {
+    lock (_Sync)
+    {
+      return _ProjectHost?.Project is not null ? _ProjectHost : ThrowProjectNotOpened<ProjectHost>();
+    }
   }
 }

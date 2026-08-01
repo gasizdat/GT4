@@ -28,24 +28,6 @@ internal partial class TablePersons : TableBase, ITablePersons
     await command.ExecuteNonQueryAsync(token);
   }
 
-  private static Person CreatePerson(DbDataReader reader)
-  {
-    var person = new Person
-    (
-      Id: reader.GetInt32(0),
-      BirthDate: GetDate(reader, 1, 2),
-      DeathDate: TryGetDate(reader, 3, 4),
-      BiologicalSex: GetEnum<BiologicalSex>(reader, 5)
-    );
-
-    return person;
-  }
-
-  private void InvalidateItems()
-  {
-    _Items.SetTarget(null);
-  }
-
   public async Task<Person[]> GetPersonsAsync(CancellationToken token)
   {
     if (_Items.TryGetTarget(out var items))
@@ -145,5 +127,23 @@ internal partial class TablePersons : TableBase, ITablePersons
     await transaction.CommitAsync(token);
 
     InvalidateItems();
+  }
+
+  private static Person CreatePerson(DbDataReader reader)
+  {
+    var person = new Person
+    (
+      Id: reader.GetInt32(0),
+      BirthDate: GetDate(reader, 1, 2),
+      DeathDate: TryGetDate(reader, 3, 4),
+      BiologicalSex: GetEnum<BiologicalSex>(reader, 5)
+    );
+
+    return person;
+  }
+
+  private void InvalidateItems()
+  {
+    _Items.SetTarget(null);
   }
 }

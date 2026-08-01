@@ -19,6 +19,36 @@ internal sealed class KinshipFinder : ProjectComponentBase, IKinshipFinder
   {
   }
 
+  public async Task<RelativeInfo[]?> FindPathAsync(Person source, Person target, CancellationToken token)
+  {
+    var roots = await GetRootsAsync(source, token);
+    var frontier = new Queue<RelativeInfo[]>(roots.Select(root => new[] { root }));
+    var visited = new HashSet<int>();
+
+    while (frontier.Count > 0)
+    {
+      var path = frontier.Dequeue();
+      var current = path[^1];
+      if (current.Id == target.Id)
+      {
+        return path;
+      }
+
+      if (!visited.Add(current.Id))
+      {
+        continue;
+      }
+
+      var children = await Document.RelativesProvider.GetRelativeInfosAsync(current, selectMainPhoto: true, token);
+      foreach (var child in children.Where(child => !visited.Contains(child.Id)))
+      {
+        frontier.Enqueue([.. path, child]);
+      }
+    }
+
+    return null;
+  }
+
   // Mirrors PersonPage.AssembleRoots: the subject's own siblings, in-laws and step-relations are not
   // part of RelativesProvider's raw Person-rooted expansion (that only surfaces direct parent/child/
   // spouse links) -- they are derived separately via GetParentsAsync/GetSiblings/GetStepChildrenAsync,
@@ -48,35 +78,5 @@ internal sealed class KinshipFinder : ProjectComponentBase, IKinshipFinder
       .. relativesProvider.GetAdoptiveChildren(personFullInfo.RelativeInfos),
       .. stepChildrenTask.Result
     ];
-  }
-
-  public async Task<RelativeInfo[]?> FindPathAsync(Person source, Person target, CancellationToken token)
-  {
-    var roots = await GetRootsAsync(source, token);
-    var frontier = new Queue<RelativeInfo[]>(roots.Select(root => new[] { root }));
-    var visited = new HashSet<int>();
-
-    while (frontier.Count > 0)
-    {
-      var path = frontier.Dequeue();
-      var current = path[^1];
-      if (current.Id == target.Id)
-      {
-        return path;
-      }
-
-      if (!visited.Add(current.Id))
-      {
-        continue;
-      }
-
-      var children = await Document.RelativesProvider.GetRelativeInfosAsync(current, selectMainPhoto: true, token);
-      foreach (var child in children.Where(child => !visited.Contains(child.Id)))
-      {
-        frontier.Enqueue([.. path, child]);
-      }
-    }
-
-    return null;
   }
 }
