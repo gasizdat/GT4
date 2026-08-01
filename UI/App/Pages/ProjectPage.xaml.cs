@@ -123,8 +123,7 @@ public partial class ProjectPage : ContentPage
         .ToLookup(x => x.NameId, x => x.Person);
 
       var familyPersons = familyNames
-        .Select(name => (Family: name, Persons: personsByFamilyNameId[name.Id].OrderBy(item => item, _PersonInfoComparer)))
-        .ToList();
+        .Select(name => (Family: name, Persons: personsByFamilyNameId[name.Id].OrderBy(item => item, _PersonInfoComparer)));
 
       var families = familyPersons
         .Select(f => new FamilyInfoItem(f.Family, [.. f.Persons], (_, person) => FilterView.Matches(person)))

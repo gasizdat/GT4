@@ -91,22 +91,21 @@ public static class ProjectStatisticsCalculator
       .SelectMany(person => person.Names.Select(name => (NameId: name.Id, Person: person)))
       .ToLookup(x => x.NameId, x => x.Person);
     var familyMemberCounts = familyNames
-      .Select(name => (Name: name, Count: personsByFamilyNameId[name.Id].Count()))
-      .ToList();
-    var usedFamilies = familyMemberCounts.Where(f => f.Count > 0).ToList();
+      .Select(name => (Name: name, Count: personsByFamilyNameId[name.Id].Count()));
+    var usedFamilies = familyMemberCounts.Where(f => f.Count > 0).ToArray();
     var topLargestFamilies = usedFamilies
       .OrderByDescending(f => f.Count)
       .Take(TopFamilyCount)
       .Select(f => (Name: f.Name.Value, f.Count))
       .ToArray();
 
-    var livingPersons = persons.Where(p => PersonLifetimeMatcher.IsAliveInYear(p, currentYear)).ToList();
+    var livingPersons = persons.Where(p => PersonLifetimeMatcher.IsAliveInYear(p, currentYear)).ToArray();
 
     var lifespans = persons
       .Where(p => HasKnownBirthYear(p) && HasKnownDeathYear(p))
       .Select(p => (Person: p, Years: (p.DeathDate!.Value - p.BirthDate).Years))
-      .ToList();
-    var sortedLifespans = lifespans.Select(x => x.Years).OrderBy(x => x).ToList();
+      .ToArray();
+    var sortedLifespans = lifespans.Select(x => x.Years).OrderBy(x => x).ToArray();
     var longestLifespan = lifespans.OrderByDescending(x => x.Years).FirstOrDefault();
 
     var oldestLiving = livingPersons
@@ -115,7 +114,7 @@ public static class ProjectStatisticsCalculator
       .OrderByDescending(x => x.Years)
       .FirstOrDefault();
 
-    var knownBirthYears = persons.Where(HasKnownBirthYear).Select(p => p.BirthDate.Year).OrderBy(y => y).ToList();
+    var knownBirthYears = persons.Where(HasKnownBirthYear).Select(p => p.BirthDate.Year).OrderBy(y => y).ToArray();
     var birthsByDecade = knownBirthYears
       .GroupBy(y => y / 10 * 10)
       .Select(g => (Decade: g.Key, Count: g.Count()))
@@ -143,24 +142,24 @@ public static class ProjectStatisticsCalculator
         ? rels.Count(r => r.Type is RelationshipType.Child or RelationshipType.AdoptiveChild)
         : 0))
       .Where(x => x.Count > 0)
-      .ToList();
+      .ToArray();
     var mostChildren = childCounts.OrderByDescending(x => x.Count).FirstOrDefault();
 
     return new ProjectStatistics(
       TotalPersons: persons.Length,
-      TotalFamilies: usedFamilies.Count,
+      TotalFamilies: usedFamilies.Length,
       MenCount: persons.Count(p => p.BiologicalSex == BiologicalSex.Male),
       WomenCount: persons.Count(p => p.BiologicalSex == BiologicalSex.Female),
       UnknownSexCount: persons.Count(p => p.BiologicalSex == BiologicalSex.Unknown),
-      LivingCount: livingPersons.Count,
-      AverageLifespanYears: lifespans.Count > 0 ? lifespans.Average(x => x.Years) : null,
+      LivingCount: livingPersons.Length,
+      AverageLifespanYears: lifespans.Length > 0 ? lifespans.Average(x => x.Years) : null,
       Lifespan95thPercentileYears: Percentile(sortedLifespans, 0.95),
       OldestLivingPerson: oldestLiving.Person,
       OldestLivingAgeYears: oldestLiving.Person is not null ? oldestLiving.Years : null,
       LongestLifespanPerson: longestLifespan.Person,
       LongestLifespanYears: longestLifespan.Person is not null ? longestLifespan.Years : null,
-      EarliestBirthYear: knownBirthYears.Count > 0 ? knownBirthYears[0] : null,
-      LatestBirthYear: knownBirthYears.Count > 0 ? knownBirthYears[^1] : null,
+      EarliestBirthYear: knownBirthYears.Length > 0 ? knownBirthYears[0] : null,
+      LatestBirthYear: knownBirthYears.Length > 0 ? knownBirthYears[^1] : null,
       MedianBirthYear: Median(knownBirthYears),
       BirthsByDecade: birthsByDecade,
       TopMaleFirstNames: TopFirstNames(persons, BiologicalSex.Male),
@@ -171,7 +170,7 @@ public static class ProjectStatisticsCalculator
       PhotoCoverageCount: photoCoverageCount,
       IsolatedPersonCount: isolatedPersonCount,
       MarriageCount: spousePairs.Count,
-      AverageChildrenPerParent: childCounts.Count > 0 ? childCounts.Average(x => x.Count) : null,
+      AverageChildrenPerParent: childCounts.Length > 0 ? childCounts.Average(x => x.Count) : null,
       MostChildrenPerson: mostChildren.Person,
       MostChildrenCount: mostChildren.Count
     );

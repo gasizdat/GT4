@@ -300,7 +300,7 @@ internal class RelativesProvider : ProjectComponentBase, IRelativesProvider
   public async Task<Parents> GetParentsAsync(RelativeInfo[] relativeInfos, CancellationToken token)
   {
     var parents = relativeInfos.Where(r => r.Type == RelationshipType.Parent).ToArray();
-    var adoptiveParents = relativeInfos.Where(r => r.Type == RelationshipType.AdoptiveParent).ToArray();
+    var adoptiveParents = relativeInfos.Where(r => r.Type == RelationshipType.AdoptiveParent);
     var combined = await GetRelativeFullInfosAsync([.. parents, .. adoptiveParents], token);
     var parentFullInfos = combined[..parents.Length];
     var adoptiveParentFullInfos = combined[parents.Length..];

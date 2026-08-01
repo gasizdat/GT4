@@ -107,16 +107,15 @@ internal sealed class GedcomExporter : IGedcomExporter
     }
 
     // Deterministic family order (and therefore @Fn@ numbering) for stable output and tests.
-    var ordered = byKey.Values
+    Family[] ordered = [.. byKey.Values
       .OrderBy(f => f.HusbandId ?? int.MaxValue)
-      .ThenBy(f => f.WifeId ?? int.MaxValue)
-      .ToList();
-    for (var i = 0; i < ordered.Count; i++)
+      .ThenBy(f => f.WifeId ?? int.MaxValue)];
+    for (var i = 0; i < ordered.Length; i++)
     {
       ordered[i].Xref = $"@F{i + 1}@";
       ordered[i].Children.Sort((a, b) => a.Id.CompareTo(b.Id));
     }
-    return [.. ordered];
+    return ordered;
   }
 
   private static void AddChildren(
@@ -264,7 +263,7 @@ internal sealed class GedcomExporter : IGedcomExporter
       .Select(id => personById[id])
       .OrderBy(p => SexRank(p.BiologicalSex))
       .ThenBy(p => p.Id)
-      .ToList();
+      .ToArray();
     return (ordered[0].Id, ordered[1].Id);
   }
 
@@ -688,8 +687,8 @@ internal sealed class GedcomExporter : IGedcomExporter
   /// </summary>
   private static string? SelectName(PersonInfo info, NameType baseType, BiologicalSex sex)
   {
-    var candidates = info.Names.Where(n => (n.Type & baseType) != 0).ToList();
-    if (candidates.Count == 0)
+    var candidates = info.Names.Where(n => (n.Type & baseType) != 0).ToArray();
+    if (candidates.Length == 0)
       return null;
 
     var wantedDeclension = GedcomMapping.Declension(sex);
@@ -705,10 +704,10 @@ internal sealed class GedcomExporter : IGedcomExporter
   /// </summary>
   private static IEnumerable<string> SelectNames(PersonInfo info, NameType baseType, BiologicalSex sex)
   {
-    var candidates = info.Names.Where(n => (n.Type & baseType) != 0).ToList();
+    var candidates = info.Names.Where(n => (n.Type & baseType) != 0);
     var wantedDeclension = GedcomMapping.Declension(sex);
-    var matching = candidates.Where(n => wantedDeclension == 0 || (n.Type & wantedDeclension) != 0).ToList();
-    var chosen = matching.Count > 0 ? matching : candidates;
+    var matching = candidates.Where(n => wantedDeclension == 0 || (n.Type & wantedDeclension) != 0);
+    var chosen = matching.Any() ? matching : candidates;
     return chosen.Select(n => n.Value);
   }
 
