@@ -89,11 +89,11 @@ public sealed class PersonFilter
       })
       .Where(y => y.HasValue)
       .Select(y => y!.Value)
-      .ToList();
+      .ToArray();
 
     var currentYear = Date.Now.Year;
-    var min = knownYears.Count > 0 ? knownYears.Min() : currentYear - FallbackYearsBack;
-    var max = Math.Max(knownYears.Count > 0 ? knownYears.Max() : currentYear, currentYear);
+    var min = knownYears.Length > 0 ? knownYears.Min() : currentYear - FallbackYearsBack;
+    var max = Math.Max(knownYears.Length > 0 ? knownYears.Max() : currentYear, currentYear);
 
     return (min, max);
   }

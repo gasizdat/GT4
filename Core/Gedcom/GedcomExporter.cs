@@ -263,7 +263,7 @@ internal sealed class GedcomExporter : IGedcomExporter
       .Select(id => personById[id])
       .OrderBy(p => SexRank(p.BiologicalSex))
       .ThenBy(p => p.Id)
-      .ToList();
+      .ToArray();
     return (ordered[0].Id, ordered[1].Id);
   }
 
@@ -687,8 +687,8 @@ internal sealed class GedcomExporter : IGedcomExporter
   /// </summary>
   private static string? SelectName(PersonInfo info, NameType baseType, BiologicalSex sex)
   {
-    var candidates = info.Names.Where(n => (n.Type & baseType) != 0).ToList();
-    if (candidates.Count == 0)
+    var candidates = info.Names.Where(n => (n.Type & baseType) != 0).ToArray();
+    if (candidates.Length == 0)
       return null;
 
     var wantedDeclension = GedcomMapping.Declension(sex);

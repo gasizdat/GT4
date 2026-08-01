@@ -46,7 +46,7 @@ public class FilteredObservableCollection<T> : ICollection<T>, ICollection
   // both. Do not add a method that reorders _Items without revisiting this.
   public void Update()
   {
-    var matched = _Items.Where(item => _Filter?.Invoke(this, item) == true).ToList();
+    var matched = _Items.Where(item => _Filter?.Invoke(this, item) == true).ToArray();
     var matchedSet = new HashSet<T>(matched);
 
     for (var i = _InnerCollection.Count - 1; i >= 0; i--)
@@ -57,7 +57,7 @@ public class FilteredObservableCollection<T> : ICollection<T>, ICollection
       }
     }
 
-    for (var i = 0; i < matched.Count; i++)
+    for (var i = 0; i < matched.Length; i++)
     {
       if (i >= _InnerCollection.Count || !EqualityComparer<T>.Default.Equals(_InnerCollection[i], matched[i]))
       {

@@ -181,8 +181,8 @@ public sealed class FamilyTreeLayout
       {
         if (seeded.Contains(id))
           continue;
-        var placed = adj[id].Where(n => seeded.Contains(n.Id)).ToList();
-        if (placed.Count == 0)
+        var placed = adj[id].Where(n => seeded.Contains(n.Id)).ToArray();
+        if (placed.Length == 0)
           continue;
         var totalW = placed.Sum(n => n.W);
         x[id] = placed.Sum(n => x[n.Id] * n.W) / totalW;
@@ -510,8 +510,8 @@ public sealed class FamilyTreeLayout
         continue;
       if (!parentsByChild.TryGetValue(node.Id, out var parents))
         continue;
-      var placed = parents.Where(x.ContainsKey).Select(p => x[p]).ToList();
-      if (placed.Count != 0)
+      var placed = parents.Where(x.ContainsKey).Select(p => x[p]).ToArray();
+      if (placed.Length != 0)
         x[node.Id] = placed.Average();
     }
   }
@@ -546,8 +546,8 @@ public sealed class FamilyTreeLayout
   {
     foreach (var row in nodesById.Values.GroupBy(n => n.Generation))
     {
-      var ordered = row.OrderBy(n => x[n.Id]).ThenBy(n => n.Id).ToList();
-      for (var i = 1; i < ordered.Count; i++)
+      var ordered = row.OrderBy(n => x[n.Id]).ThenBy(n => n.Id).ToArray();
+      for (var i = 1; i < ordered.Length; i++)
       {
         var minimum = x[ordered[i - 1].Id] + 1;
         if (x[ordered[i].Id] < minimum)
