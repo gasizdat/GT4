@@ -24,15 +24,15 @@ internal sealed class DateFormatSetting : ISettingEditor
     (_FormatSection, _DefaultFormat, DisplayName, Description, _ExampleDate) = kind switch
     {
       DateFormatKind.Full => (
-        "DateFormatter.FullDateFormat", 
+        "DateFormatter.FullDateFormat",
         "DD MM YYYY",
-        UIStrings.FieldDateDisplayFormat, 
+        UIStrings.FieldDateDisplayFormat,
         UIStrings.FieldDateDisplayFormatHint,
         Date.Now),
       DateFormatKind.Short => (
-        "DateFormatter.ShortDateFormat", 
+        "DateFormatter.ShortDateFormat",
         "MM YYYY",
-        UIStrings.FieldShortDateDisplayFormat, 
+        UIStrings.FieldShortDateDisplayFormat,
         UIStrings.FieldShortDateDisplayFormatHint,
         Date.Now with { Status = DateStatus.DayUnknown }),
       _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)

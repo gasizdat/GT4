@@ -9,7 +9,7 @@ namespace GT4.UI.Components;
 public class CardShadowDrawable : IDrawable
 {
   public float ShadowSpace { get; set; } = 8f;
-  
+
   public float ShadowBlure { get; set; } = 8f;
 
   public Color ShadowColor { get; set; } = Color.FromArgb("#40000000");
@@ -33,7 +33,7 @@ public class CardShadowDrawable : IDrawable
     outsideCard.AppendRoundedRectangle(card, CornerRadius);
     canvas.ClipPath(outsideCard, WindingMode.EvenOdd);
 
-    canvas.SetShadow(new SizeF(ShadowSpace/2f, ShadowSpace/2f), ShadowBlure, ShadowColor);
+    canvas.SetShadow(new SizeF(ShadowSpace / 2f, ShadowSpace / 2f), ShadowBlure, ShadowColor);
     canvas.FillColor = Colors.Black;
     canvas.FillPath(cardPath);
   }

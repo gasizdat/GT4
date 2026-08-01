@@ -337,7 +337,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
       {
         NameType.FamilyName => NameType.LastName,
         NameType.FirstName => NameType.Patronymic,
-        _=> throw new ApplicationException(nameof(UpdateNameAsync))
+        _ => throw new ApplicationException(nameof(UpdateNameAsync))
       } | NameType.MaleDeclension;
       tasks.Add(currentProjectProvider
           .Project

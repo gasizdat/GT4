@@ -16,7 +16,7 @@ internal class FileSystem : IFileSystem
     var relativeDirs = Path.GetDirectoryName(relativePath)?
       .Split(Path.PathSeparator)
       .Where(p => !string.IsNullOrWhiteSpace(p)) ?? [];
-    var directory = baseDir with { Path = [..baseDir.Path, ..relativeDirs] };
+    var directory = baseDir with { Path = [.. baseDir.Path, .. relativeDirs] };
 
     return new FileDescription(
       Directory: directory,

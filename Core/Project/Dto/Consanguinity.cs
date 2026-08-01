@@ -8,10 +8,10 @@ public record struct Consanguinity(int Value) : IEquatable<Consanguinity>, IComp
 
   public override int GetHashCode() => Value.GetHashCode();
 
-  public static Consanguinity operator +(Consanguinity left, Consanguinity right) => 
+  public static Consanguinity operator +(Consanguinity left, Consanguinity right) =>
     new Consanguinity(left.Value + right.Value);
 
-  public static Consanguinity operator -(Consanguinity left, Consanguinity right) => 
+  public static Consanguinity operator -(Consanguinity left, Consanguinity right) =>
     new Consanguinity(left.Value - right.Value);
 
   public static Consanguinity operator ++(Consanguinity left) => new Consanguinity(left.Value + 1);

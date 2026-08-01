@@ -94,17 +94,17 @@ internal static class GedcomDate
       case 1:
         return int.TryParse(tokens[0], out var yearOnly) ? (yearOnly, null, null) : null;
       case 2:
-      {
-        var month = MonthNumber(tokens[0]);
-        return month is not null && int.TryParse(tokens[1], out var year) ? (year, month, null) : null;
-      }
+        {
+          var month = MonthNumber(tokens[0]);
+          return month is not null && int.TryParse(tokens[1], out var year) ? (year, month, null) : null;
+        }
       case 3:
-      {
-        var month = MonthNumber(tokens[1]);
-        var hasDay = int.TryParse(tokens[0], out var day);
-        var hasYear = int.TryParse(tokens[2], out var year);
-        return month is not null && hasDay && hasYear ? (year, month, day) : null;
-      }
+        {
+          var month = MonthNumber(tokens[1]);
+          var hasDay = int.TryParse(tokens[0], out var day);
+          var hasYear = int.TryParse(tokens[2], out var year);
+          return month is not null && hasDay && hasYear ? (year, month, day) : null;
+        }
       default:
         return null;
     }

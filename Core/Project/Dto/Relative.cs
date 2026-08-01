@@ -13,11 +13,11 @@ public record class Relative(
 {
   public Relative(Person person, RelationshipType type, Date? date)
     : this(
-        person.Id, 
-        person.BirthDate, 
-        person.DeathDate, 
-        person.BiologicalSex, 
-        type, 
+        person.Id,
+        person.BirthDate,
+        person.DeathDate,
+        person.BiologicalSex,
+        type,
         date
   )
   {

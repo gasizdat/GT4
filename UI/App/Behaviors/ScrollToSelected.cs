@@ -4,10 +4,10 @@ public static class ScrollToSelected
 {
   public static readonly BindableProperty ScrollToItemProperty =
       BindableProperty.CreateAttached(
-          "ScrollToItem",           
-          typeof(object),           
-          typeof(ScrollToSelected), 
-          null,                     
+          "ScrollToItem",
+          typeof(object),
+          typeof(ScrollToSelected),
+          null,
           propertyChanged: OnScrollToItemChanged);
 
   public static object GetScrollToItem(BindableObject view) => view.GetValue(ScrollToItemProperty);

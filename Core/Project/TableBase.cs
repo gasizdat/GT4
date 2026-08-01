@@ -28,7 +28,7 @@ public abstract class TableBase
     {
       return new Date { Status = DateStatus.Unknown };
     }
-   
+
     return Date.Create(reader.GetInt32(dateOrdinal), status);
   }
 

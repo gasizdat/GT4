@@ -4,6 +4,7 @@ using GT4.Core.Project.Dto;
 using Moq;
 
 namespace GT4.Core.Project.Tests;
+
 internal class ProjectDocumentMock : IProjectDocument
 {
   private readonly Fixture _fixture = new();

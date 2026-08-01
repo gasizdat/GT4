@@ -8,7 +8,7 @@ public class CancellationTokenHost : IDisposable
 
   public CancellationTokenHost(TimeSpan timeout)
   {
-    _TokenSource = Debugger.IsAttached ? new() : new (timeout);
+    _TokenSource = Debugger.IsAttached ? new() : new(timeout);
   }
 
   public CancellationToken Token => _TokenSource.Token;
