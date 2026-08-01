@@ -172,7 +172,7 @@ public class AndroidFileSystem : IFileSystem
     {
       var chunks = new List<string>([GetAndroidRoot(directoryDescription)]);
       chunks.AddRange(directoryDescription.Path);
-      var ret = Path.Combine(chunks.ToArray());
+      var ret = Path.Combine([.. chunks]);
 
       return ret;
     }
@@ -232,7 +232,7 @@ public class AndroidFileSystem : IFileSystem
         externalStorageUri,
         projection,
         string.Join(" AND ", query),
-        args.ToArray(),
+        [.. args],
         sort);
 
       while (cursor?.MoveToNext() == true)
@@ -311,7 +311,7 @@ public class AndroidFileSystem : IFileSystem
         externalStorageUri,
         [IBaseColumns.Id],
         string.Join(" AND ", query),
-        args.ToArray(),
+        [.. args],
         $"{MediaStore.IMediaColumns.DateModified} DESC");
 
       Android.Net.Uri? ret = null;
