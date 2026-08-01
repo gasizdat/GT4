@@ -91,8 +91,7 @@ public static class ProjectStatisticsCalculator
       .SelectMany(person => person.Names.Select(name => (NameId: name.Id, Person: person)))
       .ToLookup(x => x.NameId, x => x.Person);
     var familyMemberCounts = familyNames
-      .Select(name => (Name: name, Count: personsByFamilyNameId[name.Id].Count()))
-      .ToList();
+      .Select(name => (Name: name, Count: personsByFamilyNameId[name.Id].Count()));
     var usedFamilies = familyMemberCounts.Where(f => f.Count > 0).ToList();
     var topLargestFamilies = usedFamilies
       .OrderByDescending(f => f.Count)
