@@ -1,0 +1,12 @@
+root = true
+
+[*.cs]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+
+csharp_style_var_for_built_in_types = true:suggestion
+
+# Two rules are deliberately absent because the code has not settled them yet:
+#   csharp_style_expression_bodied_methods - 195 arrow vs 69 block among eligible methods (#229)
+#   insert_final_newline                   - 55 of 262 files have no trailing newline (#233)
