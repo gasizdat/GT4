@@ -23,7 +23,7 @@ internal static class UIRoutes
 
   private static void AddRoute<TPage>()
   {
-    string route = GetRoute<TPage>();
+    var route = GetRoute<TPage>();
     Routing.RegisterRoute(route, typeof(TPage));
   }
 }

@@ -57,7 +57,7 @@ public partial class App : Application
 
   protected static void LogUnhandledException(object sender, UnhandledExceptionEventArgs e)
   {
-    string errorMessage = e.ExceptionObject switch
+    var errorMessage = e.ExceptionObject switch
     {
       Exception exception => exception.ToString(),
       _ => e.ExceptionObject.ToString() ?? "Undefined error"
