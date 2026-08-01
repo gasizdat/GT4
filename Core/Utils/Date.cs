@@ -7,15 +7,6 @@ public struct Date
   private const int MonthsInYear = 12;
   private const int UndefinedValue = 0;
 
-  // There is no year 0: 1 B.C. is followed directly by 1 A.D., so B.C. year N is astronomical year 1-N.
-  private int SignedYear => Sign < 0 ? 1 - Year : Year;
-
-  // Monotonic in calendar time, unlike Code whose Sign factor flips month/day ordering for B.C. dates.
-  private int SequenceCode =>
-    (Status >= DateStatus.DayUnknown ? UndefinedValue : Day) +
-    (Status >= DateStatus.MonthUnknown ? UndefinedValue : (Digit * Month)) +
-    (Status >= DateStatus.Unknown ? UndefinedValue : (Digit * Digit * SignedYear));
-
   public static Date Create(int code, DateStatus status)
   {
     var absCode = Math.Abs(code);
@@ -156,4 +147,13 @@ public struct Date
   {
     return HashCode.Combine(Code, Status);
   }
+
+  // There is no year 0: 1 B.C. is followed directly by 1 A.D., so B.C. year N is astronomical year 1-N.
+  private int SignedYear => Sign < 0 ? 1 - Year : Year;
+
+  // Monotonic in calendar time, unlike Code whose Sign factor flips month/day ordering for B.C. dates.
+  private int SequenceCode =>
+    (Status >= DateStatus.DayUnknown ? UndefinedValue : Day) +
+    (Status >= DateStatus.MonthUnknown ? UndefinedValue : (Digit * Month)) +
+    (Status >= DateStatus.Unknown ? UndefinedValue : (Digit * Digit * SignedYear));
 }

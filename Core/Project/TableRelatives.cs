@@ -7,73 +7,6 @@ namespace GT4.Core.Project;
 
 internal class TableRelatives : TableBase, ITableRelatives
 {
-  private static RelationshipType GetBackwardDirection(RelationshipType relationshipType)
-  {
-    var ret = relationshipType switch
-    {
-      RelationshipType.Child => RelationshipType.Parent,
-      RelationshipType.AdoptiveChild => RelationshipType.AdoptiveParent,
-      RelationshipType.Parent => RelationshipType.Child,
-      RelationshipType.AdoptiveParent => RelationshipType.AdoptiveChild,
-      _ => relationshipType
-    };
-
-    return ret;
-  }
-
-  private static bool IsBackwardDirection(Relative relative)
-  {
-    return relative.Type switch
-    {
-      RelationshipType.Child => true,
-      RelationshipType.AdoptiveChild => true,
-      _ => false
-    };
-  }
-
-  private static void AddCommandParameters(Person person, Relative relative, ProjectCommand command, bool? backward = null)
-  {
-    switch (relative.Type)
-    {
-      case RelationshipType.Parent:
-      case RelationshipType.Child:
-      case RelationshipType.Spouse:
-      case RelationshipType.AdoptiveParent:
-      case RelationshipType.AdoptiveChild:
-        break;
-      default:
-        throw new ArgumentException(nameof(relative.Type));
-    }
-
-    backward ??= IsBackwardDirection(relative);
-
-    if (backward.Value)
-    {
-      command.Parameters.AddWithValue("@personId", relative.Id);
-      command.Parameters.AddWithValue("@relativeId", person.Id);
-      command.Parameters.AddWithValue("@type", GetBackwardDirection(relative.Type));
-    }
-    else
-    {
-      command.Parameters.AddWithValue("@personId", person.Id);
-      command.Parameters.AddWithValue("@relativeId", relative.Id);
-      command.Parameters.AddWithValue("@type", relative.Type);
-    }
-    command.Parameters.AddWithValue("@date", relative.Date.HasValue ? relative.Date.Value.Code : DBNull.Value);
-    command.Parameters.AddWithValue("@dateStatus", relative.Date.HasValue ? relative.Date.Value.Status : DBNull.Value);
-  }
-
-  private static Relative CreateRelativeFromRow(System.Data.Common.DbDataReader reader, bool forwardLink)
-  {
-    var id = reader.GetInt32(0);
-    var type = GetEnum<RelationshipType>(reader, 1);
-    var date = TryGetDate(reader, 2, 3);
-    var birthDate = GetDate(reader, 4, 5);
-    var deathDate = TryGetDate(reader, 6, 7);
-    var biologicalSex = GetEnum<BiologicalSex>(reader, 8);
-    var actualType = forwardLink ? type : GetBackwardDirection(type);
-    return new Relative(new Person(id, birthDate, deathDate, biologicalSex), actualType, date);
-  }
 
   public TableRelatives(IProjectConnection connection) : base(connection)
   {
@@ -278,5 +211,72 @@ internal class TableRelatives : TableBase, ITableRelatives
       .FirstOrDefault();
 
     return firstIntersection != null;
+  }
+  private static RelationshipType GetBackwardDirection(RelationshipType relationshipType)
+  {
+    var ret = relationshipType switch
+    {
+      RelationshipType.Child => RelationshipType.Parent,
+      RelationshipType.AdoptiveChild => RelationshipType.AdoptiveParent,
+      RelationshipType.Parent => RelationshipType.Child,
+      RelationshipType.AdoptiveParent => RelationshipType.AdoptiveChild,
+      _ => relationshipType
+    };
+
+    return ret;
+  }
+
+  private static bool IsBackwardDirection(Relative relative)
+  {
+    return relative.Type switch
+    {
+      RelationshipType.Child => true,
+      RelationshipType.AdoptiveChild => true,
+      _ => false
+    };
+  }
+
+  private static void AddCommandParameters(Person person, Relative relative, ProjectCommand command, bool? backward = null)
+  {
+    switch (relative.Type)
+    {
+      case RelationshipType.Parent:
+      case RelationshipType.Child:
+      case RelationshipType.Spouse:
+      case RelationshipType.AdoptiveParent:
+      case RelationshipType.AdoptiveChild:
+        break;
+      default:
+        throw new ArgumentException(nameof(relative.Type));
+    }
+
+    backward ??= IsBackwardDirection(relative);
+
+    if (backward.Value)
+    {
+      command.Parameters.AddWithValue("@personId", relative.Id);
+      command.Parameters.AddWithValue("@relativeId", person.Id);
+      command.Parameters.AddWithValue("@type", GetBackwardDirection(relative.Type));
+    }
+    else
+    {
+      command.Parameters.AddWithValue("@personId", person.Id);
+      command.Parameters.AddWithValue("@relativeId", relative.Id);
+      command.Parameters.AddWithValue("@type", relative.Type);
+    }
+    command.Parameters.AddWithValue("@date", relative.Date.HasValue ? relative.Date.Value.Code : DBNull.Value);
+    command.Parameters.AddWithValue("@dateStatus", relative.Date.HasValue ? relative.Date.Value.Status : DBNull.Value);
+  }
+
+  private static Relative CreateRelativeFromRow(System.Data.Common.DbDataReader reader, bool forwardLink)
+  {
+    var id = reader.GetInt32(0);
+    var type = GetEnum<RelationshipType>(reader, 1);
+    var date = TryGetDate(reader, 2, 3);
+    var birthDate = GetDate(reader, 4, 5);
+    var deathDate = TryGetDate(reader, 6, 7);
+    var biologicalSex = GetEnum<BiologicalSex>(reader, 8);
+    var actualType = forwardLink ? type : GetBackwardDirection(type);
+    return new Relative(new Person(id, birthDate, deathDate, biologicalSex), actualType, date);
   }
 }

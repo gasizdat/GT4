@@ -62,19 +62,10 @@ internal sealed class NestedTransaction : IProjectTransaction
     return new(document, parent, name);
   }
 
-  private bool IsRoot => _DbTransaction is not null;
-
   internal NestedTransaction? Parent => _Parent;
 
   /// <summary>The real SQLite transaction at the root of this (possibly nested) transaction.</summary>
   internal SqliteTransaction RootDbTransaction => _DbTransaction ?? _Parent!.RootDbTransaction;
-
-  private static void ExecuteSimple(ProjectDocument document, string sql)
-  {
-    using var command = document.Connection.CreateCommand();
-    command.CommandText = sql;
-    command.ExecuteNonQuery();
-  }
 
   /// <summary>
   /// Commits this transaction. The body runs synchronously even though the method is awaitable: it
@@ -168,6 +159,15 @@ internal sealed class NestedTransaction : IProjectTransaction
   {
     Dispose();
     return ValueTask.CompletedTask;
+  }
+
+  private bool IsRoot => _DbTransaction is not null;
+
+  private static void ExecuteSimple(ProjectDocument document, string sql)
+  {
+    using var command = document.Connection.CreateCommand();
+    command.CommandText = sql;
+    command.ExecuteNonQuery();
   }
 
   /// <summary>

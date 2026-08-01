@@ -31,25 +31,6 @@ internal partial class TablePersonData : TableBase, ITablePersonData
     await command.ExecuteNonQueryAsync(token);
   }
 
-  private static Data CreateDataFromRow(DbDataReader reader)
-  {
-    return new Data(
-      Id: reader.GetInt32(0),
-      Content: reader.GetFieldValue<byte[]>(1),
-      MimeType: TryGetString(reader, 2),
-      Category: GetEnum<DataCategory>(reader, 3));
-  }
-
-  private async Task<Data> AddDataContentIfNotExist(Data data, CancellationToken token)
-  {
-    if (data.Id == ElementId.NonCommittedId)
-    {
-      return await _Data.AddDataAsync(data.Content, data.MimeType, data.Category, token);
-    }
-
-    return data;
-  }
-
   public async Task<Data[]> GetPersonDataSetAsync(Person person, DataCategory? category, CancellationToken token)
   {
     using var command = Connection.CreateCommand();
@@ -223,5 +204,24 @@ internal partial class TablePersonData : TableBase, ITablePersonData
     }
 
     await transaction.CommitAsync(token);
+  }
+
+  private static Data CreateDataFromRow(DbDataReader reader)
+  {
+    return new Data(
+      Id: reader.GetInt32(0),
+      Content: reader.GetFieldValue<byte[]>(1),
+      MimeType: TryGetString(reader, 2),
+      Category: GetEnum<DataCategory>(reader, 3));
+  }
+
+  private async Task<Data> AddDataContentIfNotExist(Data data, CancellationToken token)
+  {
+    if (data.Id == ElementId.NonCommittedId)
+    {
+      return await _Data.AddDataAsync(data.Content, data.MimeType, data.Category, token);
+    }
+
+    return data;
   }
 }

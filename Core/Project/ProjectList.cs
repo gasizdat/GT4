@@ -13,61 +13,13 @@ internal class ProjectList : IProjectList
   private readonly IFileSystem _FileSystem;
   private readonly WeakReference<ProjectInfo[]?> _Items = new(null);
 
-  private async Task<ProjectInfo> GetProjectInfoAsync(IProjectDocument project, CancellationToken token)
-  {
-    // Sequential, not Task.WhenAll: the single-connection gate serializes these onto one connection, so
-    // WhenAll buys nothing.
-    var name = await project.Metadata.GetProjectNameAsync(token);
-    var description = await project.Metadata.GetProjectDescriptionAsync(token);
-    var revision = await project.Metadata.GetProjectRevisionAsync(token);
-
-    return new ProjectInfo(
-      Revision: revision,
-      Description: description ?? string.Empty,
-      Name: name ?? throw new DataException($"There is no name stored in the project"),
-      Origin: default!
-    );
-  }
-
-  private async Task<ProjectInfo> GetProjectInfoAsync(FileDescription origin, CancellationToken token)
-  {
-    try
-    {
-      using var projectHost = await OpenAsync(origin, token);
-      using var project = projectHost.Project!;
-      var projectInfo = await GetProjectInfoAsync(project, token);
-
-      return projectInfo with { Origin = origin };
-    }
-    catch (Exception ex)
-    {
-      return new ProjectInfo(
-        Revision: null,
-        Description: ex.ToString(),
-        Name: $"Error: {ex.Message}",
-        Origin: origin
-      );
-    }
-  }
-
-  private static string GetUniqueProjectName(string prefix) =>
-    $"{prefix}-{DateTime.Now.ToLocalTime():yyyy∕MM∕dd-HH﹕mm﹕ss}.{ProjectExtension}";
-
-  private static bool CompareNames(string name1, string name2) =>
-    string.Equals(name1, name2, StringComparison.InvariantCultureIgnoreCase);
-
-  private void InvalidateItems()
-  {
-    _Items.SetTarget(null);
-  }
+  public readonly static string ProjectExtension = "gt4";
 
   public ProjectList(IStorage storage, IFileSystem fileSystem)
   {
     _Storage = storage;
     _FileSystem = fileSystem;
   }
-
-  public readonly static string ProjectExtension = "gt4";
 
   public async Task<ProjectInfo[]> GetItemsAsync(CancellationToken token)
   {
@@ -158,16 +110,6 @@ internal class ProjectList : IProjectList
     return Task.CompletedTask;
   }
 
-  private FileDescription GetCacheFileDescription(string projectName)
-  {
-    var projectNameWithoutExtension = Path.GetFileNameWithoutExtension(projectName);
-    var projectVersionsDir = _Storage.ProjectsCache with
-    {
-      Path = [.. _Storage.ProjectsCache.Path, projectNameWithoutExtension]
-    };
-    return new FileDescription(projectVersionsDir, GetUniqueProjectName("version"), IProjectDocument.MimeType);
-  }
-
   public DirectoryDescription GetProjectDirectoryByName(string projectName)
   {
     var directoryName = string.Join(string.Empty,
@@ -178,5 +120,63 @@ internal class ProjectList : IProjectList
     {
       Path = [.. _Storage.ProjectsRoot.Path, directoryName]
     };
+  }
+
+  private async Task<ProjectInfo> GetProjectInfoAsync(IProjectDocument project, CancellationToken token)
+  {
+    // Sequential, not Task.WhenAll: the single-connection gate serializes these onto one connection, so
+    // WhenAll buys nothing.
+    var name = await project.Metadata.GetProjectNameAsync(token);
+    var description = await project.Metadata.GetProjectDescriptionAsync(token);
+    var revision = await project.Metadata.GetProjectRevisionAsync(token);
+
+    return new ProjectInfo(
+      Revision: revision,
+      Description: description ?? string.Empty,
+      Name: name ?? throw new DataException($"There is no name stored in the project"),
+      Origin: default!
+    );
+  }
+
+  private async Task<ProjectInfo> GetProjectInfoAsync(FileDescription origin, CancellationToken token)
+  {
+    try
+    {
+      using var projectHost = await OpenAsync(origin, token);
+      using var project = projectHost.Project!;
+      var projectInfo = await GetProjectInfoAsync(project, token);
+
+      return projectInfo with { Origin = origin };
+    }
+    catch (Exception ex)
+    {
+      return new ProjectInfo(
+        Revision: null,
+        Description: ex.ToString(),
+        Name: $"Error: {ex.Message}",
+        Origin: origin
+      );
+    }
+  }
+
+  private static string GetUniqueProjectName(string prefix) =>
+    $"{prefix}-{DateTime.Now.ToLocalTime():yyyy∕MM∕dd-HH﹕mm﹕ss}.{ProjectExtension}";
+
+  private static bool CompareNames(string name1, string name2) =>
+    string.Equals(name1, name2, StringComparison.InvariantCultureIgnoreCase);
+
+  private void InvalidateItems()
+  {
+    _Items.SetTarget(null);
+  }
+
+  private FileDescription GetCacheFileDescription(string projectName)
+  {
+    var projectNameWithoutExtension = Path.GetFileNameWithoutExtension(projectName);
+    var projectVersionsDir = _Storage.ProjectsCache with
+    {
+      Path = [.. _Storage.ProjectsCache.Path, projectNameWithoutExtension]
+    };
+    return new FileDescription(projectVersionsDir, GetUniqueProjectName("version"), IProjectDocument.MimeType);
   }
 }

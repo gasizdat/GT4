@@ -26,19 +26,6 @@ internal class TableMetadata : TableBase, ITableMetadata
     await command.ExecuteNonQueryAsync(token);
   }
 
-  private ProjectCommand CreateAddCommand<TData>(string id, TData data)
-  {
-    var command = Connection.CreateCommand();
-    command.CommandText = """
-      INSERT OR REPLACE INTO Metadata 
-          (Id, Data) 
-          VALUES (@id, @data);
-      """;
-    command.Parameters.AddWithValue("@id", id);
-    command.Parameters.AddWithValue("@data", data);
-    return command;
-  }
-
   public async Task AddAsync<TData>(string id, TData data, CancellationToken token)
   {
     using var transaction = await Connection.BeginTransactionAsync(token);
@@ -98,5 +85,18 @@ internal class TableMetadata : TableBase, ITableMetadata
       """;
     command.Parameters.AddWithValue("@id", RevisionKey);
     return Convert.ToInt64(command.ExecuteScalar());
+  }
+
+  private ProjectCommand CreateAddCommand<TData>(string id, TData data)
+  {
+    var command = Connection.CreateCommand();
+    command.CommandText = """
+      INSERT OR REPLACE INTO Metadata 
+          (Id, Data) 
+          VALUES (@id, @data);
+      """;
+    command.Parameters.AddWithValue("@id", id);
+    command.Parameters.AddWithValue("@data", data);
+    return command;
   }
 }

@@ -6,16 +6,6 @@ namespace GT4.Core.Project;
 
 internal class TableNames : TableBase, ITableNames
 {
-  private static Name CreateName(DbDataReader reader)
-  {
-    var id = reader.GetInt32(0);
-    var value = reader.GetString(1);
-    var type = GetEnum<NameType>(reader, 2);
-    var parentId = TryGetInteger(reader, 3);
-    var name = new Name(Id: id, Value: value, Type: type, ParentId: parentId);
-
-    return name;
-  }
 
   public TableNames(IProjectConnection connection) : base(connection)
   {
@@ -189,5 +179,15 @@ internal class TableNames : TableBase, ITableNames
     command.Parameters.AddWithValue("@id", name.Id);
     await command.ExecuteNonQueryAsync(token);
     await transaction.CommitAsync(token);
+  }
+  private static Name CreateName(DbDataReader reader)
+  {
+    var id = reader.GetInt32(0);
+    var value = reader.GetString(1);
+    var type = GetEnum<NameType>(reader, 2);
+    var parentId = TryGetInteger(reader, 3);
+    var name = new Name(Id: id, Value: value, Type: type, ParentId: parentId);
+
+    return name;
   }
 }

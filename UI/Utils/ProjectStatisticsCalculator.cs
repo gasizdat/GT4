@@ -47,40 +47,6 @@ public static class ProjectStatisticsCalculator
   private const int TopFamilyCount = 5;
   private const int SingleMemberFamilyPreviewCount = 5;
 
-  private static bool HasKnownBirthYear(PersonInfo person) => person.BirthDate.Status != DateStatus.Unknown;
-
-  private static bool HasKnownDeathYear(PersonInfo person) => person.DeathDate is { Status: not DateStatus.Unknown };
-
-  private static double? Percentile(IReadOnlyList<int> sortedAscending, double fraction)
-  {
-    if (sortedAscending.Count == 0)
-      return null;
-
-    var index = Math.Clamp((int)Math.Ceiling(fraction * sortedAscending.Count) - 1, 0, sortedAscending.Count - 1);
-    return sortedAscending[index];
-  }
-
-  private static int? Median(IReadOnlyList<int> sortedAscending)
-  {
-    if (sortedAscending.Count == 0)
-      return null;
-
-    var mid = sortedAscending.Count / 2;
-    return sortedAscending.Count % 2 == 1
-      ? sortedAscending[mid]
-      : (int)Math.Round((sortedAscending[mid - 1] + sortedAscending[mid]) / 2.0);
-  }
-
-  private static (string Name, int Count)[] TopFirstNames(IEnumerable<PersonInfo> persons, BiologicalSex sex) =>
-    persons
-      .Where(p => p.BiologicalSex == sex)
-      .SelectMany(p => p.Names.Where(n => n.Type.HasFlag(NameType.FirstName)))
-      .GroupBy(n => n.Value)
-      .Select(g => (Name: g.Key, Count: g.Count()))
-      .OrderByDescending(x => x.Count)
-      .Take(TopNameCount)
-      .ToArray();
-
   public static ProjectStatistics Compute(
     PersonInfo[] persons, Name[] familyNames, IReadOnlyDictionary<int, Relative[]> relativesByPersonId)
   {
@@ -175,4 +141,38 @@ public static class ProjectStatisticsCalculator
       MostChildrenCount: mostChildren.Count
     );
   }
+
+  private static bool HasKnownBirthYear(PersonInfo person) => person.BirthDate.Status != DateStatus.Unknown;
+
+  private static bool HasKnownDeathYear(PersonInfo person) => person.DeathDate is { Status: not DateStatus.Unknown };
+
+  private static double? Percentile(IReadOnlyList<int> sortedAscending, double fraction)
+  {
+    if (sortedAscending.Count == 0)
+      return null;
+
+    var index = Math.Clamp((int)Math.Ceiling(fraction * sortedAscending.Count) - 1, 0, sortedAscending.Count - 1);
+    return sortedAscending[index];
+  }
+
+  private static int? Median(IReadOnlyList<int> sortedAscending)
+  {
+    if (sortedAscending.Count == 0)
+      return null;
+
+    var mid = sortedAscending.Count / 2;
+    return sortedAscending.Count % 2 == 1
+      ? sortedAscending[mid]
+      : (int)Math.Round((sortedAscending[mid - 1] + sortedAscending[mid]) / 2.0);
+  }
+
+  private static (string Name, int Count)[] TopFirstNames(IEnumerable<PersonInfo> persons, BiologicalSex sex) =>
+    persons
+      .Where(p => p.BiologicalSex == sex)
+      .SelectMany(p => p.Names.Where(n => n.Type.HasFlag(NameType.FirstName)))
+      .GroupBy(n => n.Value)
+      .Select(g => (Name: g.Key, Count: g.Count()))
+      .OrderByDescending(x => x.Count)
+      .Take(TopNameCount)
+      .ToArray();
 }

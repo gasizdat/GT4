@@ -74,15 +74,6 @@ public sealed class RelativeTree
     _Rows.Update();
   }
 
-  private void RecomputeVisibility()
-  {
-    foreach (var row in _Rows.AllItems)
-    {
-      row.IsFilterActive = _IsFilterActive;
-      row.ShouldShow = _Predicate(row.Relative);
-    }
-  }
-
   public async Task ToggleAsync(RelativeRow row)
   {
     if (row.IsBusy || row.Issue == RelativeRowIssueType.Loop)
@@ -182,6 +173,15 @@ public sealed class RelativeTree
           Interlocked.Exchange(ref _ShowingCancellationWarning, 0);
         }
       }
+    }
+  }
+
+  private void RecomputeVisibility()
+  {
+    foreach (var row in _Rows.AllItems)
+    {
+      row.IsFilterActive = _IsFilterActive;
+      row.ShouldShow = _Predicate(row.Relative);
     }
   }
 

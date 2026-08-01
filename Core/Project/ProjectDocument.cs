@@ -82,51 +82,6 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     _KinshipFinder = new(this);
   }
 
-  private void CheckForDisposed()
-  {
-    if (_Disposed)
-    {
-      throw new ObjectDisposedException(nameof(ProjectDocument));
-    }
-  }
-
-  private async Task OpenAsync(CancellationToken token)
-  {
-    CheckForDisposed();
-    await _Connection.OpenAsync(token);
-
-    // Foreign keys are off by default in SQLite and the setting is per-connection, so it must be
-    // enabled right after opening. Without it the schema's FOREIGN KEY / ON DELETE CASCADE clauses
-    // are ignored and removing a person or name would leave orphaned dependent rows.
-    using var pragma = _Connection.CreateCommand();
-    pragma.CommandText = "PRAGMA foreign_keys = ON;";
-    await pragma.ExecuteNonQueryAsync(token);
-  }
-
-  private async Task LoadRevisionAsync(CancellationToken token)
-  {
-    var persisted = await _TableMetadata.GetProjectRevisionAsync(token);
-    Interlocked.Exchange(ref _ProjectRevision, persisted ?? ProjectInfo.InitialRevision);
-  }
-
-  private async Task InitNewDBAsync(CancellationToken token)
-  {
-    CheckForDisposed();
-    using var transaction = await BeginTransactionAsync(token);
-
-    // Created sequentially: every statement must take its turn on the single connection, and a
-    // transaction is owned exclusively by its flow.
-    await _TableMetadata.CreateAsync(token);
-    await _TableNames.CreateAsync(token);
-    await _TablePersons.CreateAsync(token);
-    await _TablePersonNames.CreateAsync(token);
-    await _TableData.CreateAsync(token);
-    await _TableRelatives.CreateAsync(token);
-    await _TablePersonData.CreateAsync(token);
-
-    await transaction.CommitAsync(token);
-  }
-
   public ITableMetadata Metadata => _TableMetadata;
   public ITableNames Names => _TableNames;
   public ITablePersons Persons => _TablePersons;
@@ -234,15 +189,6 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     return ret;
   }
 
-  private void ThrowIfDisposingInsideTransaction()
-  {
-    if (_Gate.Current is not null)
-    {
-      throw new InvalidOperationException(
-        "Cannot dispose the document from a flow that owns an active transaction.");
-    }
-  }
-
   public async ValueTask DisposeAsync()
   {
     ThrowIfDisposingInsideTransaction();
@@ -269,5 +215,59 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     _Connection.Close();
     _Connection.Dispose();
     _Gate.Release();
+  }
+
+  private void CheckForDisposed()
+  {
+    if (_Disposed)
+    {
+      throw new ObjectDisposedException(nameof(ProjectDocument));
+    }
+  }
+
+  private async Task OpenAsync(CancellationToken token)
+  {
+    CheckForDisposed();
+    await _Connection.OpenAsync(token);
+
+    // Foreign keys are off by default in SQLite and the setting is per-connection, so it must be
+    // enabled right after opening. Without it the schema's FOREIGN KEY / ON DELETE CASCADE clauses
+    // are ignored and removing a person or name would leave orphaned dependent rows.
+    using var pragma = _Connection.CreateCommand();
+    pragma.CommandText = "PRAGMA foreign_keys = ON;";
+    await pragma.ExecuteNonQueryAsync(token);
+  }
+
+  private async Task LoadRevisionAsync(CancellationToken token)
+  {
+    var persisted = await _TableMetadata.GetProjectRevisionAsync(token);
+    Interlocked.Exchange(ref _ProjectRevision, persisted ?? ProjectInfo.InitialRevision);
+  }
+
+  private async Task InitNewDBAsync(CancellationToken token)
+  {
+    CheckForDisposed();
+    using var transaction = await BeginTransactionAsync(token);
+
+    // Created sequentially: every statement must take its turn on the single connection, and a
+    // transaction is owned exclusively by its flow.
+    await _TableMetadata.CreateAsync(token);
+    await _TableNames.CreateAsync(token);
+    await _TablePersons.CreateAsync(token);
+    await _TablePersonNames.CreateAsync(token);
+    await _TableData.CreateAsync(token);
+    await _TableRelatives.CreateAsync(token);
+    await _TablePersonData.CreateAsync(token);
+
+    await transaction.CommitAsync(token);
+  }
+
+  private void ThrowIfDisposingInsideTransaction()
+  {
+    if (_Gate.Current is not null)
+    {
+      throw new InvalidOperationException(
+        "Cannot dispose the document from a flow that owns an active transaction.");
+    }
   }
 }

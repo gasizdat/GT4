@@ -5,11 +5,6 @@ namespace GT4.UI.Utils;
 
 public static partial class MediaLinkUtils
 {
-  [GeneratedRegex("src=\"media:(\\d+)\"")]
-  private static partial Regex MediaSrcPattern();
-
-  [GeneratedRegex("media:(\\d+)")]
-  private static partial Regex MediaLinkPattern();
 
   // Rewrites the <img src="media:<id>"> destinations Markdig emits for a "![caption](media:id)" reference
   // into inline data URIs. An id absent from mediaSources (a dangling reference, or one belonging to
@@ -29,4 +24,9 @@ public static partial class MediaLinkUtils
     string.IsNullOrEmpty(markdown)
       ? ImmutableHashSet<int>.Empty
       : MediaLinkPattern().Matches(markdown).Select(match => int.Parse(match.Groups[1].Value)).ToHashSet();
+  [GeneratedRegex("src=\"media:(\\d+)\"")]
+  private static partial Regex MediaSrcPattern();
+
+  [GeneratedRegex("media:(\\d+)")]
+  private static partial Regex MediaLinkPattern();
 }

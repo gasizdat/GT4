@@ -96,6 +96,10 @@ public sealed class ProjectCommand : IDisposable, IAsyncDisposable
     return _Command.ExecuteScalar();
   }
 
+  public void Dispose() { lock (_CommandLock) { _Command.Dispose(); } }
+
+  public ValueTask DisposeAsync() { lock (_CommandLock) { _Command.Dispose(); } return ValueTask.CompletedTask; }
+
   private async Task<T> RunGatedAsync<T>(Func<Task<T>> run, CancellationToken token)
   {
     var ambient = _Gate.Current;
@@ -120,8 +124,4 @@ public sealed class ProjectCommand : IDisposable, IAsyncDisposable
       _Gate.Release();
     }
   }
-
-  public void Dispose() { lock (_CommandLock) { _Command.Dispose(); } }
-
-  public ValueTask DisposeAsync() { lock (_CommandLock) { _Command.Dispose(); } return ValueTask.CompletedTask; }
 }

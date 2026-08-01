@@ -8,17 +8,6 @@ namespace GT4.UI.Utils.Settings;
 
 internal sealed class PersonNameSetting : ISettingEditor
 {
-  private static PersonInfo _PersonInfo => new PersonInfo(
-    Id: 0,
-    BirthDate: Date.Now,
-    DeathDate: null,
-    BiologicalSex: BiologicalSex.Unknown,
-    Names: [
-      new Name(Id: 0, UIStrings.NameFirst, NameType.FirstName, null),
-      new Name(Id: 0, UIStrings.NamePatronymic, NameType.Patronymic, null),
-      new Name(Id: 0, UIStrings.NameLast, NameType.LastName, null),
-      new Name(Id: 0, UIStrings.NameFamily, NameType.FamilyName, null) ],
-      MainPhoto: null);
 
   private readonly IConfiguration _Configuration;
   private readonly IInteractiveConfiguration? _InteractiveConfiguration;
@@ -61,4 +50,15 @@ internal sealed class PersonNameSetting : ISettingEditor
   {
     _InteractiveConfiguration?.RemoveKey(_FormatSection);
   }
+  private static PersonInfo _PersonInfo => new PersonInfo(
+    Id: 0,
+    BirthDate: Date.Now,
+    DeathDate: null,
+    BiologicalSex: BiologicalSex.Unknown,
+    Names: [
+      new Name(Id: 0, UIStrings.NameFirst, NameType.FirstName, null),
+      new Name(Id: 0, UIStrings.NamePatronymic, NameType.Patronymic, null),
+      new Name(Id: 0, UIStrings.NameLast, NameType.LastName, null),
+      new Name(Id: 0, UIStrings.NameFamily, NameType.FamilyName, null) ],
+      MainPhoto: null);
 }

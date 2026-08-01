@@ -73,7 +73,6 @@ namespace GT4
     // UI thread, so applying the scale (which touches Application.Current.Resources) is safe here.
     private sealed class FontScaleGestureListener : ScaleGestureDetector.SimpleOnScaleGestureListener
     {
-      private static App? CurrentApp => Microsoft.Maui.Controls.Application.Current as App;
 
       public override bool OnScale(ScaleGestureDetector detector)
       {
@@ -82,6 +81,7 @@ namespace GT4
 
         return base.OnScale(detector);
       }
+      private static App? CurrentApp => Microsoft.Maui.Controls.Application.Current as App;
     }
 
     protected override void OnNewIntent(Intent? intent)
