@@ -65,7 +65,7 @@ internal partial class TablePersonData : TableBase, ITablePersonData
       result.Add(CreateDataFromRow(reader));
     }
 
-    return result.ToArray();
+    return [.. result];
   }
 
   public async Task<Dictionary<int, Data[]>> GetPersonDataSetAsync(Person[] persons, DataCategory? category, CancellationToken token)

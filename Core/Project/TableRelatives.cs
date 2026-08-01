@@ -67,7 +67,7 @@ internal class TableRelatives : TableBase, ITableRelatives
         relatives.Add(CreateRelativeFromRow(reader, forwardLink: false));
     }
 
-    return relatives.ToArray();
+    return [.. relatives];
   }
 
   public async Task<Dictionary<int, Relative[]>> GetRelativesForPersonsAsync(Person[] persons, CancellationToken token)

@@ -168,6 +168,6 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
       personDataSet.Add(personFullInfo.GedcomData);
     }
 
-    return personDataSet.ToArray();
+    return [.. personDataSet];
   }
 }
