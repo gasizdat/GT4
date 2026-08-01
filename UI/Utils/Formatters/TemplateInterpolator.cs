@@ -45,7 +45,7 @@ public class TemplateInterpolator
       }
     }
 
-    var ret = string.Format(template, replacementValues.ToArray());
+    var ret = string.Format(template, [.. replacementValues]);
     return ret;
   }
 
