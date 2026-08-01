@@ -1,6 +1,6 @@
 ---
 name: refactor-sweep
-description: How to run iterative code-consistency refactoring across GT4 - one production/test boundary per sweep, categories bundled into it, investigation before any edit. Use when asked for a refactor pass, a consistency cleanup, or before starting any multi-file refactor.
+description: How to run iterative code-consistency refactoring across GT4 - one production/test boundary per sweep, categories bundled into it, sites enumerated with the Roslyn code model (never grep) before any edit. Use when asked for a refactor pass, a consistency cleanup, or before starting any multi-file refactor.
 ---
 
 # Iterative refactoring in GT4
@@ -22,12 +22,23 @@ Categories, by contrast, are bundled by default: they're behavior-preserving and
 
 Before any edit:
 
-1. Survey the target boundary for candidate inconsistency categories with Grep/Glob — don't rely on memory of the codebase, it drifts.
+1. Survey the target boundary for candidate inconsistency categories with Grep/Glob — don't rely on memory of the codebase, it drifts. Grep's job ends here: it proposes what to look at, it never produces the site list.
 2. For each category found, determine: how many sites, which pattern(s) are competing, and which pattern should become canonical. Prefer whichever pattern already dominates the existing code, or the one most aligned with `surgical-change`'s "prefer the lighter mechanism" — don't invent a new pattern when one already wins.
 3. Check `gh label list` for a `refactoring` label; create it with `gh label create refactoring --color <hex> --description "Code-consistency refactor, tracked by refactor-sweep"` if missing.
-4. File one GitHub issue per category via `gh issue create --label refactoring`. Each issue states: the category, the target boundary (prod/test), the chosen canonical pattern with one concrete example site, and the full list of non-conforming sites (file:line).
+4. File one GitHub issue per category via `gh issue create --label refactoring`. Each issue states: the category, the target boundary (prod/test), the chosen canonical pattern with one concrete example site, and the full list of non-conforming sites (file:line) as produced by the code-model query, noting how many projects/documents it analyzed.
 
-Stop there. Don't start editing in the same turn as filing issues — the user should get to see the issue list before an agent spends edits on it.
+### Enumerate with the code model, never with grep
+
+The site list for a category comes from Roslyn. A category is a *shape* — a return type, a member kind, a mutation — and grep matches tokens, so it silently misses every spelling it didn't anticipate. Concretely: #222's grep survey found 3 of the 16 real sites for "List/IReadOnlyList as an unmutated return type", missing tuple-embedded returns, `Task<(...)>`-wrapped returns, and a local function (#224, #225).
+
+- Walk the **syntax** model for the declaration shape (`MethodDeclarationSyntax`, `LocalFunctionStatementSyntax`, `PropertyDeclarationSyntax`, …) so no spelling escapes. Expect it to over-enumerate — it surfaces shapes the category doesn't want, so triage the hits rather than assuming a query that returns more than you expected is broken. Use the **semantic** model wherever the rule depends on types or usage rather than syntax — "never mutated after it's returned" is a usage question and syntax alone cannot answer it.
+- **Assert completeness before trusting the output.** Always report the document count actually analyzed. A syntax-only walk needs nothing more. Once the query uses the semantic model, also confirm there are no unresolved-symbol diagnostics: a compilation with unresolved references returns *fewer* sites and looks exactly like a clean run — the same failure as the grep it replaced, with better provenance.
+- Getting the load right is the first step, not an afterthought. If opening the solution filter doesn't work, parse the boundary's `.cs` files and add `MetadataReference`s to the already-built `bin/Release/…` assemblies — same semantic model, no MSBuild dependency.
+- `GT4.Core.Utils` multi-targets (`net10.0;net10.0-android`), so it loads as two projects and yields each document twice. Dedup the site list or pin one target framework.
+- Run the query from the scratchpad, not the repo — it's throwaway, and nothing about it belongs in the product tree.
+- Where a built-in IDE analyzer already covers the category, enable it and read the build diagnostics instead: that enumerates *and* stops the inconsistency coming back.
+
+Stop after filing the issues. Don't start editing in the same turn — the user should get to see the issue list before an agent spends edits on it.
 
 ## Selecting the sweep
 
@@ -42,6 +53,7 @@ For the chosen issues:
 - Refactors are behavior-preserving by definition. If a listed site can't be converted without changing behavior, drop it from this pass and say so in the PR description rather than changing behavior silently.
 - Commit granularity: one commit per file or per tightly-related group of sites, `(~)` prefix on each. Keep each category's commits contiguous and never interleave two categories — with several categories in one PR, the commit list is what keeps review tractable. Don't squash a whole category into one commit.
 - Build and run the full affected test suite after the pass, before opening the PR. Since nothing should have changed behaviorally, existing tests are the regression check.
+- Re-run the enumeration query after the pass. It should return nothing but the sites you deliberately dropped — anything else means a site was edited into a different spelling rather than converted.
 
 ## Scope discipline
 
