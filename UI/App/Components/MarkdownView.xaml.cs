@@ -126,12 +126,12 @@ public partial class MarkdownView : ContentView
     await Task.Delay(100);
 
     // JavaScript to get the height of the body
-    string result = await InternalWebView.EvaluateJavaScriptAsync(
+    var result = await InternalWebView.EvaluateJavaScriptAsync(
         "Math.max(document.body.scrollHeight, document.body.offsetHeight, " +
         "document.documentElement.clientHeight, document.documentElement.scrollHeight, " +
         "document.documentElement.offsetHeight).toString()");
 
-    if (double.TryParse(result, out double height))
+    if (double.TryParse(result, out var height))
     {
       // Update the HeightRequest of the WebView
       // Note: You might need to add a small buffer (e.g., +20) 
@@ -142,7 +142,7 @@ public partial class MarkdownView : ContentView
 
   private string BuildHtmlDocument()
   {
-    string bodyHtml = Markdown is null ? string.Empty : Markdig.Markdown.ToHtml(Markdown, _MarkdownPipeline);
+    var bodyHtml = Markdown is null ? string.Empty : Markdig.Markdown.ToHtml(Markdown, _MarkdownPipeline);
     bodyHtml = MediaLinkUtils.RewriteMediaSources(bodyHtml, MediaSources);
 
     // Keep styling inline so it works offline on all platforms.

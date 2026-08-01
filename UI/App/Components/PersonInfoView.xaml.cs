@@ -100,7 +100,7 @@ public partial class PersonInfoView : ContentView
         return null;
       }
 
-      string personDates = string.Empty;
+      var personDates = string.Empty;
       var isDeathDateDisplayed = ShowDeathDate && Person.DeathDate.HasValue;
 
       if (Person.BirthDate.Status != DateStatus.Unknown || !isDeathDateDisplayed)
@@ -110,9 +110,9 @@ public partial class PersonInfoView : ContentView
 
       if (isDeathDateDisplayed)
       {
-        string deathDate = Person.DeathDate!.Value.Status == DateStatus.Unknown
-                           ? string.Empty
-                           : _DateFormatter.ToString(Person.DeathDate);
+        var deathDate = Person.DeathDate!.Value.Status == DateStatus.Unknown
+                        ? string.Empty
+                        : _DateFormatter.ToString(Person.DeathDate);
         deathDate = string.Format(UIStrings.PersonDeathMark_1, deathDate);
 
         if (personDates == string.Empty)
