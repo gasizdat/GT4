@@ -590,7 +590,7 @@ public sealed class FamilyTreeLayout
     return new FamilyTreeLayoutResult(layouts, connectors, new Size(width, height), centerTopLeft);
   }
 
-  private static List<FamilyTreeConnector> BuildConnectors(
+  private static FamilyTreeConnector[] BuildConnectors(
     FamilyTree tree,
     IReadOnlyDictionary<int, Rect> bounds,
     FamilyTreeLayoutMetrics metrics)
@@ -605,7 +605,7 @@ public sealed class FamilyTreeLayout
         : SpousePath(from, to);
       connectors.Add(new FamilyTreeConnector(edge.Relation, points));
     }
-    return connectors;
+    return [.. connectors];
   }
 
   private static PointF[] ParentChildPath(Rect parent, Rect child)

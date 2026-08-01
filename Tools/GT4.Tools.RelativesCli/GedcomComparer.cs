@@ -65,7 +65,7 @@ internal static class GedcomComparer
     var nextMatchId = 0;
     foreach (var (leftGroup, rightGroup) in buckets)
     {
-      if (leftGroup.Count == 1 && rightGroup.Count == 1)
+      if (leftGroup.Length == 1 && rightGroup.Length == 1)
       {
         Pair(leftGroup[0], rightGroup[0], nextMatchId++);
       }
@@ -527,7 +527,7 @@ internal static class GedcomComparer
   }
 
   /// <summary>Individuals of both sides grouped by content key, so each group holds the candidates to pair.</summary>
-  private static List<(List<Individual> Left, List<Individual> Right)> BuildBuckets(Side left, Side right)
+  private static (Individual[] Left, Individual[] Right)[] BuildBuckets(Side left, Side right)
   {
     var buckets = new Dictionary<string, (List<Individual> Left, List<Individual> Right)>();
 
@@ -551,7 +551,7 @@ internal static class GedcomComparer
       var bucket = Bucket(individual.Key);
       bucket.Right.Add(individual);
     }
-    return [.. buckets.Values];
+    return [.. buckets.Values.Select(bucket => ((Individual[])[.. bucket.Left], (Individual[])[.. bucket.Right]))];
   }
 
   private static void Pair(Individual left, Individual right, int matchId)

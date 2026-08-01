@@ -212,7 +212,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     }
 
     var incomingResidue = BuildResidueRoots(individual, consumedNodes);
-    if (full.GedcomData is null && incomingResidue.Count > 0)
+    if (full.GedcomData is null && incomingResidue.Length > 0)
     {
       additions.Add(ToResidueData(incomingResidue));
     }
@@ -240,7 +240,7 @@ internal sealed class GedcomImporter : IGedcomImporter
       await AddReferencedMediaAsync(document, match.Existing, referenced, referencedMedia, token);
     }
 
-    if (full.GedcomData is not null && incomingResidue.Count > 0)
+    if (full.GedcomData is not null && incomingResidue.Length > 0)
     {
       var merged = await MergeResidueAsync(full.GedcomData, incomingResidue, token);
       if (merged is not null)
@@ -425,7 +425,7 @@ internal sealed class GedcomImporter : IGedcomImporter
   private static Data? BuildResidueData(GedcomNode individual, GedcomNode[] consumedPhotoNodes)
   {
     var roots = BuildResidueRoots(individual, consumedPhotoNodes);
-    return roots.Count == 0 ? null : ToResidueData(roots);
+    return roots.Length == 0 ? null : ToResidueData(roots);
   }
 
   /// <summary>
@@ -434,7 +434,7 @@ internal sealed class GedcomImporter : IGedcomImporter
   /// owned tag whole. GT4's readers all take <c>Child(tag)</c>, so only the first occurrence is consumed into
   /// the model; a repeated <c>NAME</c>/<c>NOTE</c> keeps its value here and is re-emitted standalone on export.
   /// </summary>
-  private static List<GedcomNode> BuildResidueRoots(GedcomNode individual, GedcomNode[] consumedPhotoNodes)
+  private static GedcomNode[] BuildResidueRoots(GedcomNode individual, GedcomNode[] consumedPhotoNodes)
   {
     var roots = new List<GedcomNode>();
     var consumedOwned = new HashSet<string>();
@@ -456,7 +456,7 @@ internal sealed class GedcomImporter : IGedcomImporter
       if (pruned is not null)
         roots.Add(pruned);
     }
-    return roots;
+    return [.. roots];
   }
 
   /// <summary>A copy of <paramref name="node"/> with every node in <paramref name="consumed"/> removed from
@@ -547,7 +547,7 @@ internal sealed class GedcomImporter : IGedcomImporter
   /// blob, comparing <see cref="GedcomWriter"/>-serialized roots on both sides so reader/writer normalization
   /// never makes equal content look new. Returns null when nothing new survives, so a re-import writes nothing.
   /// </summary>
-  private static async Task<Data?> MergeResidueAsync(Data existing, List<GedcomNode> incoming, CancellationToken token)
+  private static async Task<Data?> MergeResidueAsync(Data existing, GedcomNode[] incoming, CancellationToken token)
   {
     var existingText = Encoding.UTF8.GetString(existing.Content);
     var existingRoots = await GedcomReader.ReadAsync(new StringReader(existingText), token);

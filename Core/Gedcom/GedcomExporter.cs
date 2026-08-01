@@ -439,7 +439,7 @@ internal sealed class GedcomExporter : IGedcomExporter
   /// Splits the residue forest into the residual of each owned tag (keyed by that tag, to be merged back into
   /// the regenerated node) and the fully-unmodeled roots (re-attached to the INDI verbatim).
   /// </summary>
-  private static (Dictionary<string, GedcomNode> Owned, List<GedcomNode> Other) PartitionResidue(GedcomNode[] roots)
+  private static (Dictionary<string, GedcomNode> Owned, GedcomNode[] Other) PartitionResidue(GedcomNode[] roots)
   {
     var owned = new Dictionary<string, GedcomNode>();
     var other = new List<GedcomNode>();
@@ -457,15 +457,15 @@ internal sealed class GedcomExporter : IGedcomExporter
         other.Add(root);
       }
     }
-    return (owned, other);
+    return (owned, [.. other]);
   }
 
   private static bool IsGenuineResidual(GedcomNode root, HashSet<string> modeled) =>
     (root.Value is null || GedcomMapping.IsEventAssertion(root))
     && root.Children.All(child => !modeled.Contains(child.Tag) || !GedcomMapping.IsCarriedByModel(child));
 
-  private static IReadOnlyList<GedcomNode> Residual(Dictionary<string, GedcomNode> owned, string tag) =>
-    owned.TryGetValue(tag, out var merged) ? merged.Children : [];
+  private static GedcomNode[] Residual(Dictionary<string, GedcomNode> owned, string tag) =>
+    owned.TryGetValue(tag, out var merged) ? [.. merged.Children] : [];
 
   /// <summary>The <c>Y</c> an event asserted with, kept as residue because the GT4 model cannot state it.</summary>
   private static string? Assertion(Dictionary<string, GedcomNode> owned, string tag) =>
