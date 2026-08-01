@@ -22,7 +22,7 @@ public partial class SelectRelativesDialog : ContentPage
     IBiologicalSexFormatter BiologicalSexFormatter,
     IRelationshipTypeFormatter RelationshipTypeFormatter)
   {
-    public SelectRelativesDialog Create(BiologicalSex? biologicalSex, Relative[] existingRelatives) => 
+    public SelectRelativesDialog Create(BiologicalSex? biologicalSex, Relative[] existingRelatives) =>
       new SelectRelativesDialog(this, biologicalSex, existingRelatives);
   }
 

@@ -9,6 +9,6 @@ public class ProjectRevisionItem : CollectionItemBase<ProjectRevision>
   {
   }
 
-  public string DateTimeText => 
+  public string DateTimeText =>
     $"{Info.DateTime.ToLocalTime().ToLongDateString()}, {Info.DateTime.ToLocalTime().ToLongTimeString()}";
 }

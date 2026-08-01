@@ -102,7 +102,7 @@ public partial class NameView : ContentView
 
   private async Task OnTogglePersonsAsync()
   {
-    if(!MainThread.IsMainThread)
+    if (!MainThread.IsMainThread)
     {
       throw new ApplicationException($"{nameof(OnTogglePersonsAsync)} should be called on the main thread.");
     }

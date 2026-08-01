@@ -20,13 +20,13 @@ public record class RelativeInfo(
 {
   public RelativeInfo(Relative relative, Name[] names, Data? mainPhoto, Generation generation, Consanguinity consanguinity)
     : this(
-        relative.Id, 
-        relative.BirthDate, 
-        relative.DeathDate, 
+        relative.Id,
+        relative.BirthDate,
+        relative.DeathDate,
         relative.BiologicalSex,
-        names, 
-        mainPhoto, 
-        relative.Type, 
+        names,
+        mainPhoto,
+        relative.Type,
         relative.Date,
         generation,
         consanguinity
@@ -35,12 +35,12 @@ public record class RelativeInfo(
   }
 
   public RelativeInfo(
-    Person person, 
-    Name[] names, 
-    Data? mainPhoto,  
-    RelationshipType type,  
-    Date? date, 
-    Generation generation, 
+    Person person,
+    Name[] names,
+    Data? mainPhoto,
+    RelationshipType type,
+    Date? date,
+    Generation generation,
     Consanguinity consanguinity)
     : this(
         person.Id,
@@ -50,7 +50,7 @@ public record class RelativeInfo(
         names,
         mainPhoto,
         type,
-        date, 
+        date,
         generation,
         consanguinity
   )
@@ -75,7 +75,7 @@ public record class RelativeInfo(
 
   [return: NotNullIfNotNull(nameof(relativeInfo))]
   public static implicit operator PersonInfo?(RelativeInfo? relativeInfo) =>
-    relativeInfo is null 
+    relativeInfo is null
     ? null
     : new PersonInfo(person: relativeInfo, names: relativeInfo.Names, mainPhoto: relativeInfo.MainPhoto);
 

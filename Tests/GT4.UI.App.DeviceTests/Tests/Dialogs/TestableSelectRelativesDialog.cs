@@ -21,7 +21,7 @@ internal sealed class TestableSelectRelativesDialog : SelectRelativesDialog
     IComparer<PersonInfo> PersonInfoComparer,
     IAlertService AlertService,
     IBiologicalSexFormatter BiologicalSexFormatter,
-    IRelationshipTypeFormatter RelationshipTypeFormatter) 
+    IRelationshipTypeFormatter RelationshipTypeFormatter)
     : SelectRelativesDialog.Factory(
       CancellationTokenProvider,
       CurrentProjectProvider,

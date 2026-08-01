@@ -5,8 +5,8 @@ namespace GT4.UI.Utils.Formatters;
 public interface IRelationshipTypeFormatter
 {
   string ToString(
-    RelationshipType type, 
-    BiologicalSex? biologicalSex, 
-    Generation? generation, 
+    RelationshipType type,
+    BiologicalSex? biologicalSex,
+    Generation? generation,
     Consanguinity? consanguinity);
 }

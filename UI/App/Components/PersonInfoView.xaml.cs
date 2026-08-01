@@ -181,7 +181,7 @@ public partial class PersonInfoView : ContentView
     }
   }
 
-  private ImageSource GetDefaultImage() => 
+  private ImageSource GetDefaultImage() =>
     ImageUtils.ImageFromRawResource(
       ImageUtils.DefaultPhotoResourceName(Person?.BiologicalSex ?? BiologicalSex.Unknown));
 }

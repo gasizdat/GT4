@@ -11,7 +11,7 @@ internal class AppConfigurationSource : IConfigurationSource
       .AddSingleton<IConfigurationProvider, AppConfigurationProvider>()
       .AddSingleton<IFileSystem, FileSystem>()
       .AddSingleton<IStorage, Storage>()
-      .BuildServiceProvider(); 
+      .BuildServiceProvider();
 
     return services.GetRequiredService<IConfigurationProvider>();
   }

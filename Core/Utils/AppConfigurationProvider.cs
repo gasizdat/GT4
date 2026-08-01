@@ -45,7 +45,7 @@ internal partial class AppConfigurationProvider : ConfigurationProvider, IIntera
         }
         finally
         {
-          Flush(); 
+          Flush();
           OnReload();
         }
       }

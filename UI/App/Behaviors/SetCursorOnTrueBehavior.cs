@@ -130,7 +130,7 @@ public sealed class SetCursorOnTrueBehavior : Behavior<InputView>
       {
         CursorPosition.Begin => 0,
         CursorPosition.Middle => _InputView.Text.Length / 2,
-        _=> _InputView.Text.Length
+        _ => _InputView.Text.Length
       };
       _InputView.CursorPosition = position;
 

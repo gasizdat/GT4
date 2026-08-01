@@ -6,7 +6,7 @@ namespace GT4.UI.Items;
 public class ProjectItem : CollectionItemBase<ProjectInfo>
 {
   public ProjectItem(ProjectInfo info)
-    : base (info, "project_icon.png")
+    : base(info, "project_icon.png")
   {
   }
 

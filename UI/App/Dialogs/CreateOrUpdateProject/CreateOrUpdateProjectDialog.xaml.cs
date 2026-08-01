@@ -34,7 +34,7 @@ public partial class CreateOrUpdateProjectDialog : ContentPage
 
   public Task<ProjectInfo> ProjectInfo => _Info.Task;
 
-  public string DialogButtonName => 
+  public string DialogButtonName =>
     string.IsNullOrWhiteSpace(_ProjectName) ? UIStrings.BtnNameCancel : _DialogButtonName;
 
   public string ProjectDescription

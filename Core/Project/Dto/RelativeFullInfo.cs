@@ -22,8 +22,8 @@ public record class RelativeFullInfo(
     : this(
         relative.Id,
         relative.BirthDate,
-        relative.DeathDate, 
-        relative.BiologicalSex, 
+        relative.DeathDate,
+        relative.BiologicalSex,
         relative.Names,
         relative.MainPhoto,
         relative.Type,

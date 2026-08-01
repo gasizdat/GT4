@@ -5,7 +5,7 @@ using GT4.UI.Utils.Settings;
 namespace GT4.UI.Utils.Formatters;
 
 internal class DateFormatter : IDateFormatter
-{  
+{
   private const string D2 = "D2";
   private readonly ISettingEditor _FullDateFormatSetting;
   private readonly ISettingEditor _ShortDateFormatSetting;

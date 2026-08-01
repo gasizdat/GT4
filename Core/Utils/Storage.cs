@@ -5,7 +5,7 @@ internal class Storage : IStorage
   private const string AppId = "{067F098F-8E7B-4DB9-ABEC-C3A70DAB49D9}";
   private const string AppName = "GT4";
 
-  public DirectoryDescription ProjectsCache => 
+  public DirectoryDescription ProjectsCache =>
     new DirectoryDescription(Root: Environment.SpecialFolder.ApplicationData, Path: [AppId, ".cache"]);
 
   public DirectoryDescription ProjectsRoot =>
