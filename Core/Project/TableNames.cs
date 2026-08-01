@@ -105,7 +105,7 @@ internal class TableNames : TableBase, ITableNames
       ret.Add(CreateName(reader));
     }
 
-    return ret.Count > 0 ? ret.ToArray() : null;
+    return ret.Count > 0 ? [.. ret] : null;
   }
 
   public async Task<Name> AddNameAsync(string value, NameType type, Name? parent, CancellationToken token)

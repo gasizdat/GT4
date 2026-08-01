@@ -45,7 +45,7 @@ internal partial class TablePersonNames : TableBase, ITablePersonNames
       names.Add(CreateNameFromRow(reader));
     }
 
-    return names.ToArray();
+    return [.. names];
   }
 
   public async Task<Dictionary<int, Name[]>> GetPersonNamesAsync(Person[] persons, CancellationToken token)

@@ -72,7 +72,7 @@ public partial class SelectDateDialog : ContentPage
       var monthName = UIStrings.ResourceManager.GetString($"Month_{monthNo}", UIStrings.Culture) ?? "??";
       ret.Add($"{monthNo} - {monthName}");
     }
-    return ret.ToArray();
+    return [.. ret];
   }
 
   private static string[] GetDays()
@@ -82,7 +82,7 @@ public partial class SelectDateDialog : ContentPage
     {
       ret.Add(i.ToString(D2));
     }
-    return ret.ToArray();
+    return [.. ret];
   }
 
   private void Refresh()

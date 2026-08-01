@@ -76,7 +76,7 @@ internal class FamilyManager : ProjectComponentBase, IFamilyManager
       names.Add(familyName);
     }
 
-    return names.ToArray();
+    return [.. names];
   }
 
   public async Task UpdateFamilyAsync(Name familyName, Name? maleLastName, Name? femaleLastName, CancellationToken token)
