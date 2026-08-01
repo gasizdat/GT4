@@ -17,11 +17,6 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
   private bool _IsReady = false;
   private bool _IsModified = false;
 
-  private void OnContentChanged()
-  {
-    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Content)));
-  }
-
   public PersonDataItem(Data data, IDataConverter dataConverter, ICancellationTokenProvider cancellationTokenProvider,
     IAlertService alertService)
     : base(data, string.Empty)
@@ -102,4 +97,9 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
   }
 
   public event PropertyChangedEventHandler? PropertyChanged;
+
+  private void OnContentChanged()
+  {
+    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Content)));
+  }
 }

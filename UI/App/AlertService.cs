@@ -8,7 +8,6 @@ namespace GT4.UI;
 // for every caller and protects the background-thread call sites (Task.Run catch blocks).
 internal sealed class AlertService : IAlertService
 {
-  private Shell CurrentShell => Shell.Current;
 
   public Task<bool> ShowConfirmationAsync(string confirmationText) =>
     MainThread.InvokeOnMainThreadAsync(() => CurrentShell.DisplayAlertAsync(
@@ -24,4 +23,5 @@ internal sealed class AlertService : IAlertService
   public Task ShowWarningAsync(string message) =>
     MainThread.InvokeOnMainThreadAsync(() =>
       CurrentShell.DisplayAlertAsync(UIStrings.AlertTitleWarning, message, UIStrings.BtnNameOk));
+  private Shell CurrentShell => Shell.Current;
 }
