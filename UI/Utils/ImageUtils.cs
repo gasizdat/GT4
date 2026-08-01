@@ -7,12 +7,6 @@ namespace GT4.UI.Utils;
 
 public static class ImageUtils
 {
-  public static string DefaultPhotoResourceName(BiologicalSex biologicalSex) => biologicalSex switch
-  {
-    BiologicalSex.Male => "male_stub.png",
-    BiologicalSex.Female => "female_stub.png",
-    _ => "project_icon.png",
-  };
 
   private static readonly byte[] TransparentPng =
   {
@@ -23,19 +17,12 @@ public static class ImageUtils
     0x01, 0x05, 0x01, 0x27, 0x23, 0xE3, 0x66, 0x66, 0x00, 0x00, 0x00, 0x00,
     0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
   };
-
-  private static async Task<byte[]?> ToBytesAsync(Stream? stream, CancellationToken token)
+  public static string DefaultPhotoResourceName(BiologicalSex biologicalSex) => biologicalSex switch
   {
-    if (stream is null)
-    {
-      return null;
-    }
-
-    using var ms = new MemoryStream();
-    await stream.CopyToAsync(ms, token).ConfigureAwait(false);
-
-    return ms.ToArray();
-  }
+    BiologicalSex.Male => "male_stub.png",
+    BiologicalSex.Female => "female_stub.png",
+    _ => "project_icon.png",
+  };
 
   public static ImageSource ImageFromBytes(byte[] data) =>
     ImageSource.FromStream(token => Task.Run<Stream>(() => new MemoryStream(data.Length > 0 ? data : TransparentPng), token));
@@ -120,6 +107,19 @@ public static class ImageUtils
   {
     using var stream = await FileSystem.OpenAppPackageFileAsync(resourceName);
     return await ToBytesAsync(stream, token);
+  }
+
+  private static async Task<byte[]?> ToBytesAsync(Stream? stream, CancellationToken token)
+  {
+    if (stream is null)
+    {
+      return null;
+    }
+
+    using var ms = new MemoryStream();
+    await stream.CopyToAsync(ms, token).ConfigureAwait(false);
+
+    return ms.ToArray();
   }
 
 }

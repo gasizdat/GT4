@@ -112,7 +112,7 @@ public class FilteredObservableCollection<T> : ICollection<T>, ICollection
 
   public IEnumerator<T> GetEnumerator() => _InnerCollection.GetEnumerator();
 
-  IEnumerator IEnumerable.GetEnumerator() => _InnerCollection.GetEnumerator();
-
   public void CopyTo(Array array, int index) => _InnerCollection.CopyTo((T[])array, index);
+
+  IEnumerator IEnumerable.GetEnumerator() => _InnerCollection.GetEnumerator();
 }
