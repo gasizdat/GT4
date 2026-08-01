@@ -19,7 +19,7 @@ internal class DateSpanFormatter : IDateSpanFormatter
 
   public string ToString(DateSpan? dateSpan)
   {
-    string ret = string.Empty;
+    var ret = string.Empty;
 
     if (dateSpan.HasValue)
     {

@@ -29,7 +29,7 @@ public class TemplateInterpolator
     var sortedReplacements = replacements.ToList();
     sortedReplacements.Sort((a, b) => b.Key.Length.CompareTo(a.Key.Length));
 
-    int placeholderIndex = 0;
+    var placeholderIndex = 0;
     List<string> replacementValues = [];
     foreach (var (key, valueGetter) in sortedReplacements)
     {
