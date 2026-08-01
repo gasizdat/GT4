@@ -9,7 +9,7 @@ The goal: converge the codebase on one consistent pattern per concern, a little 
 
 ## The unit of work is one boundary
 
-A "pass" fixes one or more consistency-issue categories (e.g. naming scheme, DI pattern, collection type usage, error-handling idiom, member ordering) within exactly one boundary:
+A "pass" fixes one or more consistency-issue categories (e.g. naming scheme, DI pattern, collection type usage, error-handling idiom, member ordering, comment hygiene) within exactly one boundary:
 
 - **Production**: `Core/`, `UI/` (excluding `Tests/`), `Tools/` (excluding its `.Tests` project).
 - **Test**: everything under `Tests/`.
@@ -35,6 +35,7 @@ The site list for a category comes from Roslyn. A category is a *shape* — a re
 - **Assert completeness before trusting the output.** Always report the document count actually analyzed. A syntax-only walk needs nothing more. Once the query uses the semantic model, also confirm there are no unresolved-symbol diagnostics: a compilation with unresolved references returns *fewer* sites and looks exactly like a clean run — the same failure as the grep it replaced, with better provenance.
 - Getting the load right is the first step, not an afterthought. If opening the solution filter doesn't work, parse the boundary's `.cs` files and add `MetadataReference`s to the already-built `bin/Release/…` assemblies — same semantic model, no MSBuild dependency.
 - `GT4.Core.Utils` multi-targets (`net10.0;net10.0-android`), so it loads as two projects and yields each document twice. Dedup the site list or pin one target framework.
+- Comments are trivia, not nodes: `DescendantNodes()` finds none of them and reports a clean zero (measured — 0 across 174 files in `Core/`, where `DescendantTrivia()` finds 604). Sweeping comment hygiene means `DescendantTrivia()` filtered to `SingleLineCommentTrivia`, `MultiLineCommentTrivia`, `SingleLineDocumentationCommentTrivia`, `MultiLineDocumentationCommentTrivia`. Classify per `surgical-change` (history / narration / claim / contract / rationale); only the last two survive.
 - Run the query from the scratchpad, not the repo — it's throwaway, and nothing about it belongs in the product tree.
 - Where a built-in IDE analyzer already covers the category, enable it and read the build diagnostics instead: that enumerates *and* stops the inconsistency coming back.
 
