@@ -2,28 +2,6 @@
 
 internal class FileSystem : IFileSystem
 {
-  private static void CreatePath(string path)
-  {
-    var parentDir = Path.GetDirectoryName(path);
-    if (parentDir is not null && !Directory.Exists(parentDir))
-      Directory.CreateDirectory(parentDir);
-  }
-
-  private FileDescription ToFileDescription(DirectoryDescription baseDir, string path)
-  {
-    var basePath = ToPath(baseDir);
-    var relativePath = Path.GetRelativePath(basePath, path);
-    var relativeDirs = Path.GetDirectoryName(relativePath)?
-      .Split(Path.PathSeparator)
-      .Where(p => !string.IsNullOrWhiteSpace(p)) ?? [];
-    var directory = baseDir with { Path = [.. baseDir.Path, .. relativeDirs] };
-
-    return new FileDescription(
-      Directory: directory,
-      Path.GetFileName(relativePath),
-      MimeType: null // TODO
-    );
-  }
 
   public string ToPath(DirectoryDescription directoryDescription)
   {
@@ -106,5 +84,27 @@ internal class FileSystem : IFileSystem
   {
     var path = ToPath(fileDescription);
     return File.GetLastWriteTime(path);
+  }
+  private static void CreatePath(string path)
+  {
+    var parentDir = Path.GetDirectoryName(path);
+    if (parentDir is not null && !Directory.Exists(parentDir))
+      Directory.CreateDirectory(parentDir);
+  }
+
+  private FileDescription ToFileDescription(DirectoryDescription baseDir, string path)
+  {
+    var basePath = ToPath(baseDir);
+    var relativePath = Path.GetRelativePath(basePath, path);
+    var relativeDirs = Path.GetDirectoryName(relativePath)?
+      .Split(Path.PathSeparator)
+      .Where(p => !string.IsNullOrWhiteSpace(p)) ?? [];
+    var directory = baseDir with { Path = [.. baseDir.Path, .. relativeDirs] };
+
+    return new FileDescription(
+      Directory: directory,
+      Path.GetFileName(relativePath),
+      MimeType: null // TODO
+    );
   }
 }
