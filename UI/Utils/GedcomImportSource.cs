@@ -1,7 +1,7 @@
 using GT4.UI.Resources;
 using System.IO.Compression;
 
-namespace GT4.UI;
+namespace GT4.UI.Utils;
 
 /// <summary>
 /// What an import needs from a picked file: a way to reopen its GEDCOM text, and the folder its external
