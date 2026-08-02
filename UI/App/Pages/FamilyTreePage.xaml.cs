@@ -1,10 +1,9 @@
-using GT4.Core.Gedcom;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
-using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Components.Genealogy;
+using GT4.UI.Converters;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
@@ -409,10 +408,7 @@ public partial class FamilyTreePage : ContentPage
       var person = node.Person;
       if (person.MainPhoto is { Content.Length: > 0 } photo)
       {
-        // A tagged photo's Content is a GedcomPhotoResidue envelope, not raw image bytes -- strip it
-        // first. This is a plain byte-slice, not a GEDCOM parse, so it costs nothing for the common
-        // (plain) case and needs no async detour here.
-        var imageBytes = photo.Category.IsTaggedPhoto() ? GedcomPhotoResidue.ExtractImageBytes(photo.Content) : photo.Content;
+        var imageBytes = MediaSourceUtils.PayloadBytes(photo);
         _ThumbnailCache.GetOrAdd(person.Id, _ => Downsize(imageBytes));
       }
     }

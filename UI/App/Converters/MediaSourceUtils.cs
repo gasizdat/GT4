@@ -33,11 +33,16 @@ public static class MediaSourceUtils
   public static bool IsInlineImage(Data media) =>
     media.Category.IsPhoto() || media.MimeType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) == true;
 
+  // A tagged photo or an attachment's Content is a GedcomPhotoResidue envelope, not raw bytes -- strip it
+  // first. Every other category stores raw bytes directly.
+  public static byte[] PayloadBytes(Data data) =>
+    data.Category.IsTaggedPhoto() || data.Category.IsAttachment()
+      ? GedcomPhotoResidue.ExtractImageBytes(data.Content)
+      : data.Content;
+
   private static string ToDataUri(Data media)
   {
-    var hasResidue = media.Category.IsTaggedPhoto() || media.Category.IsAttachment();
-    var bytes = hasResidue ? GedcomPhotoResidue.ExtractImageBytes(media.Content) : media.Content;
     var mimeType = media.MimeType ?? FallbackImageMimeType;
-    return $"data:{mimeType};base64,{Convert.ToBase64String(bytes)}";
+    return $"data:{mimeType};base64,{Convert.ToBase64String(PayloadBytes(media))}";
   }
 }
