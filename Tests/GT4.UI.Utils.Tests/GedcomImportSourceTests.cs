@@ -2,7 +2,7 @@ using System.IO.Compression;
 using System.Text;
 using Xunit;
 
-namespace GT4.UI.DeviceTests;
+namespace GT4.UI.Utils.Tests;
 
 /// <summary>
 /// Covers unpacking a .ged.zip -- what the app's own export produces -- via the internal
@@ -41,7 +41,7 @@ public sealed class GedcomImportSourceTests : IDisposable
 
     Assert.Equal("kennedy", source.Name);
     using var reader = new StreamReader(await source.OpenStreamAsync());
-    Assert.Equal(Gedcom, (await reader.ReadToEndAsync()).ReplaceLineEndings("\n"));
+    Assert.Equal(Gedcom, (await reader.ReadToEndAsync(TestContext.Current.CancellationToken)).ReplaceLineEndings("\n"));
 
     // The media base path is what an OBJE FILE of "media/7/photo.jpg" is resolved against.
     var mediaPath = Path.Combine(source.MediaBasePath!, "media", "7", "photo.jpg");

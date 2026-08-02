@@ -6,7 +6,7 @@ namespace GT4.UI;
 // Alerts touch native views, so they must run on the UI thread. InvokeOnMainThreadAsync
 // runs the callback inline when we are already on the main thread, so wrapping is safe
 // for every caller and protects the background-thread call sites (Task.Run catch blocks).
-internal sealed class AlertService : IAlertService
+public sealed class AlertService : IAlertService
 {
 
   public Task<bool> ShowConfirmationAsync(string confirmationText) =>

@@ -1,8 +1,7 @@
 using GT4.Core.Project.Abstraction;
-using GT4.UI;
 using Xunit;
 
-namespace GT4.UI.DeviceTests;
+namespace GT4.UI.Utils.Tests;
 
 public sealed class SafeTaskTests
 {

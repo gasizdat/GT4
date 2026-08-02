@@ -6,13 +6,13 @@ namespace GT4.UI;
 /// <summary>
 /// Helpers for fire-and-forget background work that may touch the project document. The app lifecycle
 /// can close/dispose the document underneath such work — most visibly when Android backgrounds the
-/// app and <see cref="App"/> closes the current project — which surfaces as
+/// app and the <c>App</c> class closes the current project — which surfaces as
 /// <see cref="ObjectDisposedException"/> or <see cref="ProjectNotOpenedException"/>. Those are
 /// expected during teardown and swallowed quietly; any other failure is surfaced through the
 /// caller's <see cref="IAlertService"/>. Without this, an exception escaping a Task.Run or a
 /// posted continuation is unobserved and terminates the app.
 /// </summary>
-internal static class SafeTask
+public static class SafeTask
 {
   /// <summary>Runs <paramref name="work"/> on a background thread, guarding against the teardown race.</summary>
   public static Task Run(Func<Task> work, IAlertService alertService) =>
