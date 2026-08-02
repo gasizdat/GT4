@@ -1,5 +1,6 @@
 ﻿using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.Abstraction;
 using GT4.UI.Utils.Comparers;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
@@ -20,6 +21,7 @@ public static class ServiceCollectionExtensions
       .AddSingleton<IRelationshipTypeFormatter, RelationshipTypeFormatter>()
       .AddSingleton<INameTypeFormatter, NameTypeFormatter>()
       .AddSingleton<IBiologicalSexFormatter, BiologicalSexFormatter>()
+      .AddSingleton<INavigationService, NavigationService>()
       .AddSingleton<LanguageSetting>()
       .AddSingleton<FontScale>()
       .AddSingleton<BackgroundAnimation>()

@@ -2,7 +2,7 @@ using GT4.UI.Abstraction;
 
 namespace GT4.UI;
 
-public sealed class NavigationService : INavigationService
+internal sealed class NavigationService : INavigationService
 {
   public Task GoToAsync(string route) => Shell.Current.GoToAsync(route);
   public Task GoToAsync(string route, bool animate) => Shell.Current.GoToAsync(route, animate);
