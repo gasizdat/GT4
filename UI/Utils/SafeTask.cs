@@ -12,7 +12,7 @@ namespace GT4.UI;
 /// caller's <see cref="IAlertService"/>. Without this, an exception escaping a Task.Run or a
 /// posted continuation is unobserved and terminates the app.
 /// </summary>
-internal static class SafeTask
+public static class SafeTask
 {
   /// <summary>Runs <paramref name="work"/> on a background thread, guarding against the teardown race.</summary>
   public static Task Run(Func<Task> work, IAlertService alertService) =>
