@@ -110,90 +110,62 @@ jobs:
         # exit, so the attempt is accepted; without it the run was cut short and is retried. A TRX with
         # any failed test is a real failure and is never retried past.
         run: |
-          # The host dies only when a run realizes two or more WebView2 instances, and just two classes
-          # host a MarkdownView: measured over five runs each, everything else was clean 5/5 while these
-          # two crashed 5/5. So they run as their own invocation, last, and a retry costs their ~15s
-          # instead of the whole suite's. The complement is expressed as "not these", so a class added
-          # later joins the clean run rather than silently going untested -- and if it brings a third
-          # WebView with it, the crash shows up there and names itself. Matching on "DeviceTests.<class>."
-          # keeps a name from also matching a longer one.
-          $webViewClasses = @('CreateOrUpdatePersonDialogTests', 'PersonPageTests')
-          $sets = [ordered]@{
-            'rest' = ($webViewClasses | ForEach-Object { "FullyQualifiedName!~DeviceTests.$_." }) -join '&'
-            'webview' = ($webViewClasses | ForEach-Object { "FullyQualifiedName~DeviceTests.$_." }) -join '|'
-          }
-
           # dotnet test creates this for the TRX, but the console log is tee'd into it from the very
           # first line of the run, before that happens.
           New-Item -ItemType Directory -Force -Path coverage | Out-Null
 
           # coverlet's in-process collector can't see AppWinOnly.exe -- DeviceRunners launches it as a
           # separate process and drives it over TCP -- but dotnet-coverage's process-tree attach can, at
-          # no measurable cost on the rest set (measured: +0.1s on a 34s run) since it's dynamic
-          # instrumentation rather than coverlet's IL rewrite. Matches the collector run-tests-coverage.ps1
-          # uses locally. The webview set is excluded: measured 3/3 CI runs where wrapping it crashed the
-          # host mid-run (never reaching "Test run complete.", unlike its usual teardown-only race), so it
-          # keeps running uninstrumented and stays out of the coverage report, same as before this change.
+          # no measurable cost (measured: +0.1s on a 34s run) since it's dynamic instrumentation rather
+          # than coverlet's IL rewrite. Matches the collector run-tests-coverage.ps1 uses locally.
           dotnet tool install --global dotnet-coverage | Out-Null
 
+          $trxPath = "coverage\device-tests.trx"
+          $logPath = "coverage\device-tests.log"
+          $coveragePath = "coverage\device-tests\coverage.cobertura.xml"
+          $testArgs = @('test', 'Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj', '--no-build', '--configuration', 'Release', '--framework', 'net10.0-windows10.0.19041.0', '--logger', 'trx;LogFileName=device-tests.trx', '--results-directory', 'coverage')
+
           $maxAttempts = 3
-          $failedSets = @()
-          foreach ($set in $sets.Keys) {
-            $filter = $sets[$set]
-            $success = $false
-            for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
-              Write-Host "=== Device tests ($set) attempt $attempt of $maxAttempts ==="
-              $trxPath = "coverage\device-tests-$set.trx"
-              if (Test-Path $trxPath) { Remove-Item $trxPath -Force }
-              $logPath = "coverage\device-tests-$set.log"
-              $testArgs = @('test', 'Tests\GT4.UI.App.DeviceTests\GT4.UI.App.DeviceTests.csproj', '--no-build', '--configuration', 'Release', '--framework', 'net10.0-windows10.0.19041.0', '--filter', $filter, '--logger', "trx;LogFileName=device-tests-$set.trx", '--results-directory', 'coverage')
+          $success = $false
+          for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+            Write-Host "=== Device tests attempt $attempt of $maxAttempts ==="
+            if (Test-Path $trxPath) { Remove-Item $trxPath -Force }
+            & dotnet-coverage collect --output $coveragePath --output-format cobertura -- dotnet @testArgs 2>&1 | Tee-Object -FilePath $logPath
+            $exitCode = $LASTEXITCODE
+            $ranToCompletion = Select-String -Path $logPath -Pattern 'Test run complete\.' -Quiet
 
-              if ($set -eq 'webview') {
-                & dotnet @testArgs 2>&1 | Tee-Object -FilePath $logPath
-              } else {
-                $coveragePath = "coverage\device-tests-$set\coverage.cobertura.xml"
-                & dotnet-coverage collect --output $coveragePath --output-format cobertura -- dotnet @testArgs 2>&1 | Tee-Object -FilePath $logPath
-              }
-              $exitCode = $LASTEXITCODE
-              $ranToCompletion = Select-String -Path $logPath -Pattern 'Test run complete\.' -Quiet
+            if (Test-Path $trxPath) {
+              [xml]$trx = Get-Content $trxPath
+              $failed = [int]$trx.TestRun.ResultSummary.Counters.failed
+              $total = [int]$trx.TestRun.ResultSummary.Counters.total
+              Write-Host "Attempt $attempt`: $total total, $failed failed (exit code $exitCode, ran to completion: $ranToCompletion)."
 
-              if (Test-Path $trxPath) {
-                [xml]$trx = Get-Content $trxPath
-                $failed = [int]$trx.TestRun.ResultSummary.Counters.failed
-                $total = [int]$trx.TestRun.ResultSummary.Counters.total
-                Write-Host "Attempt $attempt`: $total total, $failed failed (exit code $exitCode, ran to completion: $ranToCompletion)."
-
-                if ($failed -gt 0) {
-                  Write-Host "Real test failure recorded -- not retrying."
-                  break
-                }
-              } else {
-                Write-Host "Attempt $attempt`: no TRX produced (exit code $exitCode, ran to completion: $ranToCompletion)."
-              }
-
-              if ($exitCode -eq 0) {
-                $success = $true
+              if ($failed -gt 0) {
+                Write-Host "Real test failure recorded -- not retrying."
                 break
               }
-
-              if ($ranToCompletion -and (Test-Path $trxPath)) {
-                Write-Host "::warning::Device tests ($set) exited $exitCode after the run had already completed with no failures -- the host died on its way out, accepting the attempt."
-                $success = $true
-                break
-              }
-
-              if ($attempt -lt $maxAttempts) {
-                Write-Host "::warning::Device tests ($set) attempt $attempt exited non-zero (exit code $exitCode) with no failed tests recorded -- retrying."
-              }
+            } else {
+              Write-Host "Attempt $attempt`: no TRX produced (exit code $exitCode, ran to completion: $ranToCompletion)."
             }
 
-            # Both sets always run, so one failing still reports the other rather than hiding it behind
-            # an early exit.
-            if (-not $success) { $failedSets += $set }
+            if ($exitCode -eq 0) {
+              $success = $true
+              break
+            }
+
+            if ($ranToCompletion -and (Test-Path $trxPath)) {
+              Write-Host "::warning::Device tests exited $exitCode after the run had already completed with no failures -- the host died on its way out, accepting the attempt."
+              $success = $true
+              break
+            }
+
+            if ($attempt -lt $maxAttempts) {
+              Write-Host "::warning::Device tests attempt $attempt exited non-zero (exit code $exitCode) with no failed tests recorded -- retrying."
+            }
           }
 
-          if ($failedSets) {
-            Write-Host "Device tests did not complete cleanly: $($failedSets -join ', ')."
+          if (-not $success) {
+            Write-Host "Device tests did not complete cleanly."
             exit 1
           }
           exit 0
@@ -203,12 +175,12 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: test-results-device
-          # The console log travels with the TRX: which of the two teardown deaths happened is only
-          # visible there, and the TRX of an accepted attempt looks like any other passing run.
+          # The console log travels with the TRX: whether the run was cut short or only died on its way
+          # out is only visible there, and the TRX of an accepted attempt looks like any other passing run.
           path: |
-            coverage\device-tests-*.trx
-            coverage\device-tests-*.log
-            coverage\device-tests-*\coverage.cobertura.xml
+            coverage\device-tests.trx
+            coverage\device-tests.log
+            coverage\device-tests\coverage.cobertura.xml
 
   coverage-report:
     needs: [test, test-device]
