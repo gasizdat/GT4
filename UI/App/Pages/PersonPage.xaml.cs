@@ -331,7 +331,7 @@ public partial class PersonPage : ContentPage
     using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
     var fileName = FileNameUtils.Sanitize(attachment.FileName, "attachment");
     var path = Path.Combine(FileSystem.CacheDirectory, fileName);
-    var bytes = GedcomPhotoResidue.ExtractImageBytes(attachment.Data.Content);
+    var bytes = MediaSourceUtils.PayloadBytes(attachment.Data);
     await File.WriteAllBytesAsync(path, bytes, token);
 
     await Launcher.Default.OpenAsync(new OpenFileRequest(fileName, new ReadOnlyFile(path)));
