@@ -42,6 +42,77 @@ public class MarkdownViewTests
   }
 
   [Fact]
+  public async Task MediaReference_WithNoRequestedWidth_KeepsItsNaturalSize()
+  {
+    var view = await CreateViewAsync("![A caption](media:11)", new Dictionary<int, byte[]> { [11] = [1, 2, 3] });
+
+    var image = Descendants(view).OfType<Image>().Single();
+
+    Assert.Equal(LayoutOptions.Start, image.HorizontalOptions);
+    Assert.IsNotType<Grid>(image.Parent);
+  }
+
+  [Fact]
+  public async Task MediaReference_WithATrailingPercentage_IsSizedToThatShareOfTheWidth()
+  {
+    var view = await CreateViewAsync("![A caption 25%](media:11)", new Dictionary<int, byte[]> { [11] = [1, 2, 3] });
+
+    var image = Descendants(view).OfType<Image>().Single();
+    var row = Assert.IsType<Grid>(image.Parent);
+
+    Assert.Equal(new GridLength(25, GridUnitType.Star), row.ColumnDefinitions[0].Width);
+    Assert.Equal(new GridLength(75, GridUnitType.Star), row.ColumnDefinitions[1].Width);
+  }
+
+  // The nested-image path renders the caption as text, so the size token has to be stripped there or
+  // it would show up on screen as "Grandpa 50%".
+  [Fact]
+  public async Task ImageInsideEmphasis_RendersItsCaptionWithoutTheSizeTokenOrALink()
+  {
+    var view = await CreateViewAsync("Look: *![Grandpa 50%](media:11)* here.", new Dictionary<int, byte[]> { [11] = [1, 2, 3] });
+
+    var caption = SpanWithText(view, "Grandpa");
+
+    Assert.Equal(FontAttributes.Italic, caption.FontAttributes);
+    Assert.Empty(caption.GestureRecognizers);
+  }
+
+  [Fact]
+  public async Task ImageUsedAsALinkLabel_TapsOnlyTheEnclosingLink()
+  {
+    var view = await CreateViewAsync("[![cap](media:11)](person:5)", new Dictionary<int, byte[]> { [11] = [1, 2, 3] });
+    var tapped = new List<int>();
+    view.PersonLinkTapped += (_, id) => tapped.Add(id);
+
+    var label = SpanWithText(view, "cap");
+    var recognizer = Assert.Single(label.GestureRecognizers);
+    Tap(label);
+
+    Assert.Equal("person:5", ((TapGestureRecognizer)recognizer).CommandParameter);
+    Assert.Equal([5], tapped);
+  }
+
+  [Fact]
+  public async Task InlineCode_IsGivenTheCodeBackground()
+  {
+    var view = await CreateViewAsync("Run `dotnet test` now.");
+
+    var code = SpanWithText(view, "dotnet test");
+
+    Assert.NotNull(code.BackgroundColor);
+  }
+
+  [Fact]
+  public async Task SoftLineBreak_IsRenderedAsASingleNewline()
+  {
+    var view = await CreateViewAsync("Line one\nLine two");
+
+    var texts = Descendants(view).OfType<Span>().Select(span => span.Text);
+
+    Assert.Equal(["Line one", "\n", "Line two"], texts);
+  }
+
+  [Fact]
   public async Task MediaReference_WithNoSuppliedBytes_RendersNoImage()
   {
     var view = await CreateViewAsync("![A caption](media:11)");

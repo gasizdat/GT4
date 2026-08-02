@@ -1,3 +1,4 @@
+using GT4.UI.Utils;
 using Markdig;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
@@ -148,6 +149,37 @@ public class MarkdownView : ContentView
     return rule;
   }
 
+  private static (int? WidthPercent, string Caption) DescriptionOf(LinkInline image)
+  {
+    var literals = image.OfType<LiteralInline>().Select(literal => literal.Content.ToString());
+    var description = string.Concat(literals);
+    return MediaLinkUtils.ParseImageDescription(description);
+  }
+
+  // Without a requested width an image keeps its natural size, shrinking only when it would overflow
+  // the column -- a thumbnail stays a thumbnail. A percentage is expressed as the star share of a
+  // two-column grid, which is the only exact way to size against the available width in MAUI.
+  private static View CreateImageView(ImageSource source, int? widthPercent)
+  {
+    var image = new Image { Source = source, Aspect = Aspect.AspectFit };
+    if (widthPercent is null)
+    {
+      image.HorizontalOptions = LayoutOptions.Start;
+      return image;
+    }
+
+    var row = new Grid
+    {
+      ColumnDefinitions =
+      {
+        new(new GridLength(widthPercent.Value, GridUnitType.Star)),
+        new(new GridLength(100 - widthPercent.Value, GridUnitType.Star)),
+      },
+    };
+    row.Add(image);
+    return row;
+  }
+
   private void Render()
   {
     var document = Markdig.Markdown.Parse(Markdown ?? string.Empty, Pipeline);
@@ -208,7 +240,8 @@ public class MarkdownView : ContentView
       var source = ResolveImage(image.Url);
       if (source is not null)
       {
-        views.Add(new Image { Source = source, Aspect = Aspect.AspectFit });
+        var description = DescriptionOf(image);
+        views.Add(CreateImageView(source, description.WidthPercent));
       }
     }
 
@@ -248,11 +281,21 @@ public class MarkdownView : ContentView
         break;
 
       case CodeInline code:
-        formatted.Spans.Add(CreateSpan(code.Content, style));
+        var codeSpan = CreateSpan(code.Content, style);
+        SetThemeColor(codeSpan, Span.BackgroundColorProperty, "SurfaceSubtle", "SurfaceSubtleDark");
+        formatted.Spans.Add(codeSpan);
         break;
 
       case LineBreakInline:
-        formatted.Spans.Add(CreateSpan(Environment.NewLine, style));
+        formatted.Spans.Add(CreateSpan("\n", style));
+        break;
+
+      // An image nested in emphasis or in a link can't become an Image view from inside a
+      // FormattedString, so its caption carries the content instead -- without the size token, which
+      // is markup rather than text.
+      case LinkInline { IsImage: true } image:
+        var caption = DescriptionOf(image);
+        formatted.Spans.Add(CreateSpan(caption.Caption, style));
         break;
 
       case LinkInline link:
