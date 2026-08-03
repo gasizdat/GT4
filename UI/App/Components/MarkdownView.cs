@@ -31,6 +31,7 @@ public class MarkdownView : ContentView
     .UseSoftlineBreakAsHardlineBreak()
     .Build();
 
+  private readonly Dictionary<byte[], Size?> _PixelSizes = new(ReferenceEqualityComparer.Instance);
   private readonly Command<string> _LinkCommand;
 
   public MarkdownView()
@@ -156,28 +157,41 @@ public class MarkdownView : ContentView
     return MediaLinkUtils.ParseImageDescription(description);
   }
 
-  // Without a requested width an image keeps its natural size, shrinking only when it would overflow
-  // the column -- a thumbnail stays a thumbnail. A percentage is expressed as the star share of a
-  // two-column grid, which is the only exact way to size against the available width in MAUI.
-  private static View CreateImageView(ImageSource source, int? widthPercent)
+  // MAUI derives an image's height from the width it was measured with and keeps that height when the
+  // arrange narrows the frame, so capping the width alone leaves the image floating in a frame as tall
+  // as the full-width one would have been. Sizing both axes from the host's own width is the only way
+  // to scale proportionally -- and it needs the pixel dimensions, so an image whose bytes this view
+  // doesn't hold (a remote one) keeps the plain full-width fit, requested percentage included.
+  private static View ScaledImage(ImageSource source, Size? pixelSize, int? widthPercent)
   {
     var image = new Image { Source = source, Aspect = Aspect.AspectFit };
-    if (widthPercent is null)
+    if (pixelSize is null)
     {
-      image.HorizontalOptions = LayoutOptions.Start;
       return image;
     }
 
-    var row = new Grid
+    image.HorizontalOptions = LayoutOptions.Start;
+    var host = new ContentView { Content = image };
+    host.SizeChanged += (_, _) => ScaleToHost(host, image, pixelSize.Value, widthPercent);
+    return host;
+  }
+
+  // Without a requested width an image keeps its pixel size, shrinking only when it would overflow the
+  // column -- a thumbnail stays a thumbnail. A percentage is taken as that share of the column, and is
+  // free to enlarge the image, since asking for one is explicit.
+  private static void ScaleToHost(ContentView host, Image image, Size pixelSize, int? widthPercent)
+  {
+    if (host.Width <= 0)
     {
-      ColumnDefinitions =
-      {
-        new(new GridLength(widthPercent.Value, GridUnitType.Star)),
-        new(new GridLength(100 - widthPercent.Value, GridUnitType.Star)),
-      },
-    };
-    row.Add(image);
-    return row;
+      return;
+    }
+
+    var width = widthPercent is null
+      ? Math.Min(pixelSize.Width, host.Width)
+      : host.Width * widthPercent.Value / 100.0;
+
+    image.WidthRequest = width;
+    image.HeightRequest = width * pixelSize.Height / pixelSize.Width;
   }
 
   private void Render()
@@ -237,11 +251,11 @@ public class MarkdownView : ContentView
         formatted = new FormattedString();
       }
 
-      var source = ResolveImage(image.Url);
-      if (source is not null)
+      var description = DescriptionOf(image);
+      var imageView = CreateImageView(image.Url, description.WidthPercent);
+      if (imageView is not null)
       {
-        var description = DescriptionOf(image);
-        views.Add(CreateImageView(source, description.WidthPercent));
+        views.Add(imageView);
       }
     }
 
@@ -376,7 +390,7 @@ public class MarkdownView : ContentView
 
   // An id with no entry (a dangling reference, or one belonging to another person) renders nothing
   // rather than a broken image.
-  private ImageSource? ResolveImage(string? url)
+  private View? CreateImageView(string? url, int? widthPercent)
   {
     if (url is null)
     {
@@ -385,12 +399,31 @@ public class MarkdownView : ContentView
 
     if (TryParseLink(url, "media:", out var mediaId))
     {
-      return MediaSources.TryGetValue(mediaId, out var bytes)
-        ? ImageSource.FromStream(() => new MemoryStream(bytes))
-        : null;
+      if (!MediaSources.TryGetValue(mediaId, out var bytes))
+      {
+        return null;
+      }
+
+      var stored = ImageSource.FromStream(() => new MemoryStream(bytes));
+      return ScaledImage(stored, PixelSizeOf(bytes), widthPercent);
     }
 
-    return Uri.TryCreate(url, UriKind.Absolute, out var uri) ? ImageSource.FromUri(uri) : null;
+    return Uri.TryCreate(url, UriKind.Absolute, out var uri)
+      ? ScaledImage(ImageSource.FromUri(uri), null, widthPercent)
+      : null;
+  }
+
+  // Keyed by the array itself rather than the media id: a photo replaced in place keeps its id, while
+  // the hit that matters -- the pair of renders one person load triggers -- shares the same arrays.
+  private Size? PixelSizeOf(byte[] bytes)
+  {
+    if (!_PixelSizes.TryGetValue(bytes, out var size))
+    {
+      size = ImageUtils.PixelSize(bytes);
+      _PixelSizes[bytes] = size;
+    }
+
+    return size;
   }
 
   // A person or attachment link is handled in-app through its event; anything else (the Google Maps

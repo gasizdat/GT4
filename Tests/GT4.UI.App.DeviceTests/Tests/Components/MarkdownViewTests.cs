@@ -5,6 +5,24 @@ namespace GT4.UI.DeviceTests;
 
 public class MarkdownViewTests
 {
+  private const double SamplePngWidth = 40;
+  private const double SamplePngHeight = 20;
+
+  // A 40x20 PNG: the sizing tests need real bytes, since the pixel dimensions drive the layout.
+  private static readonly byte[] SamplePng =
+  [
+    0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
+    0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x14, 0x08, 0x06, 0x00, 0x00, 0x00, 0xFF, 0x46, 0x7F,
+    0xBB, 0x00, 0x00, 0x00, 0x01, 0x73, 0x52, 0x47, 0x42, 0x00, 0xAE, 0xCE, 0x1C, 0xE9, 0x00, 0x00,
+    0x00, 0x04, 0x67, 0x41, 0x4D, 0x41, 0x00, 0x00, 0xB1, 0x8F, 0x0B, 0xFC, 0x61, 0x05, 0x00, 0x00,
+    0x00, 0x09, 0x70, 0x48, 0x59, 0x73, 0x00, 0x00, 0x0E, 0xC3, 0x00, 0x00, 0x0E, 0xC3, 0x01, 0xC7,
+    0x6F, 0xA8, 0x64, 0x00, 0x00, 0x00, 0x35, 0x49, 0x44, 0x41, 0x54, 0x48, 0x4B, 0xED, 0xCE, 0xA1,
+    0x01, 0x00, 0x00, 0x08, 0x80, 0x30, 0x8F, 0xF5, 0x25, 0xCF, 0xF4, 0x06, 0xED, 0x56, 0x8A, 0x81,
+    0xB0, 0x42, 0x22, 0xB2, 0x7A, 0x3E, 0x8B, 0x1B, 0xBE, 0x71, 0x90, 0x72, 0x90, 0x72, 0x90, 0x72,
+    0x90, 0x72, 0x90, 0x72, 0x90, 0x72, 0x90, 0x72, 0x90, 0x72, 0x90, 0x5A, 0x1E, 0x11, 0x0C, 0x28,
+    0xBD, 0x49, 0x70, 0x61, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82,
+  ];
+
   [Fact]
   public async Task PersonLink_RaisesPersonLinkTappedWithItsId()
   {
@@ -42,26 +60,29 @@ public class MarkdownViewTests
   }
 
   [Fact]
-  public async Task MediaReference_WithNoRequestedWidth_KeepsItsNaturalSize()
+  public async Task MediaReference_SmallerThanItsColumn_KeepsItsPixelSize()
   {
-    var view = await CreateViewAsync("![A caption](media:11)", new Dictionary<int, byte[]> { [11] = [1, 2, 3] });
+    var size = await RenderedImageSizeAsync("![A caption](media:11)", columnWidth: 300);
 
-    var image = Descendants(view).OfType<Image>().Single();
+    Assert.Equal(new Size(SamplePngWidth, SamplePngHeight), size);
+  }
 
-    Assert.Equal(LayoutOptions.Start, image.HorizontalOptions);
-    Assert.IsNotType<Grid>(image.Parent);
+  // The defect this replaced: capping the width alone left the image in a frame as tall as the
+  // full-width one, so it was clipped horizontally and floated in dead space below.
+  [Fact]
+  public async Task MediaReference_WiderThanItsColumn_ShrinksKeepingItsAspectRatio()
+  {
+    var size = await RenderedImageSizeAsync("![A caption](media:11)", columnWidth: 20);
+
+    Assert.Equal(new Size(20, 10), size);
   }
 
   [Fact]
-  public async Task MediaReference_WithATrailingPercentage_IsSizedToThatShareOfTheWidth()
+  public async Task MediaReference_WithATrailingPercentage_TakesThatShareOfItsColumn()
   {
-    var view = await CreateViewAsync("![A caption 25%](media:11)", new Dictionary<int, byte[]> { [11] = [1, 2, 3] });
+    var size = await RenderedImageSizeAsync("![A caption 50%](media:11)", columnWidth: 300);
 
-    var image = Descendants(view).OfType<Image>().Single();
-    var row = Assert.IsType<Grid>(image.Parent);
-
-    Assert.Equal(new GridLength(25, GridUnitType.Star), row.ColumnDefinitions[0].Width);
-    Assert.Equal(new GridLength(75, GridUnitType.Star), row.ColumnDefinitions[1].Width);
+    Assert.Equal(new Size(150, 75), size);
   }
 
   // The nested-image path renders the caption as text, so the size token has to be stripped there or
@@ -193,6 +214,31 @@ public class MarkdownViewTests
 
     Assert.Equal(["First", "Second"], texts);
     Assert.Equal(2, Descendants(view).OfType<Label>().Count(label => label.Text == "•"));
+  }
+
+  // Lays the view out inside a fixed-width column on a real window, so the assertions are about the
+  // size the image ends up drawn at rather than the layout properties asked for.
+  private static async Task<Size> RenderedImageSizeAsync(string markdown, double columnWidth)
+  {
+    var view = await CreateViewAsync(markdown, new Dictionary<int, byte[]> { [11] = SamplePng });
+    var page = await MainThread.InvokeOnMainThreadAsync(() => new ContentPage
+    {
+      Content = new VerticalStackLayout
+      {
+        WidthRequest = columnWidth,
+        HorizontalOptions = LayoutOptions.Start,
+        Children = { view },
+      },
+    });
+
+    await using var attachment = await WindowHost.AttachAsync(page);
+    var image = Descendants(view).OfType<Image>().Single();
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => image.Height),
+      height => height > 0,
+      timeoutMessage: "The image was never laid out.");
+
+    return await MainThread.InvokeOnMainThreadAsync(() => new Size(image.Width, image.Height));
   }
 
   private static Task<MarkdownView> CreateViewAsync(string markdown) =>

@@ -2,11 +2,13 @@
 using GT4.UI.Utils.Converters;
 using Microsoft.Extensions.Http;
 using Microsoft.Maui.Graphics.Platform;
+using System.Buffers.Binary;
 
 namespace GT4.UI.Utils;
 
 public static class ImageUtils
 {
+  private static readonly byte[] PngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
 
   private static readonly byte[] TransparentPng =
   {
@@ -42,6 +44,103 @@ public static class ImageUtils
     resized.Save(output);
 
     return output.ToArray();
+  }
+
+  /// <summary>
+  /// The image's own pixel dimensions read straight from its header, or null for anything malformed or
+  /// encoded some other way -- callers lay such an image out without an aspect ratio rather than failing
+  /// the render around it. Read rather than decoded on purpose: <c>PlatformImage.FromStream</c> yields
+  /// the same two numbers but costs ~110ms for a 12MP photo, on the UI thread, per image in a biography.
+  /// </summary>
+  public static Size? PixelSize(byte[] data)
+  {
+    var bytes = data.AsSpan();
+    Size? size = null;
+
+    if (bytes.StartsWith(PngSignature))
+    {
+      size = PngPixelSize(bytes);
+    }
+    else if (bytes.Length > 2 && bytes[0] == 0xFF && bytes[1] == 0xD8)
+    {
+      size = JpegPixelSize(bytes);
+    }
+    else if (bytes.StartsWith("GIF8"u8))
+    {
+      size = GifPixelSize(bytes);
+    }
+    else if (bytes.StartsWith("BM"u8))
+    {
+      size = BmpPixelSize(bytes);
+    }
+
+    return size is { Width: > 0, Height: > 0 } ? size : null;
+  }
+
+  private static Size? PngPixelSize(ReadOnlySpan<byte> bytes)
+  {
+    if (bytes.Length < 24 || !bytes[12..16].SequenceEqual("IHDR"u8))
+    {
+      return null;
+    }
+
+    var width = BinaryPrimitives.ReadUInt32BigEndian(bytes[16..]);
+    var height = BinaryPrimitives.ReadUInt32BigEndian(bytes[20..]);
+    return new Size(width, height);
+  }
+
+  // Segment-hop from the SOI to the start-of-frame that carries the dimensions. Anything unexpected on
+  // the way -- a missing marker, a length that wouldn't advance -- gives up rather than guessing.
+  private static Size? JpegPixelSize(ReadOnlySpan<byte> bytes)
+  {
+    for (var offset = 2; offset + 9 < bytes.Length;)
+    {
+      if (bytes[offset] != 0xFF)
+      {
+        return null;
+      }
+
+      var marker = bytes[offset + 1];
+      if (IsStartOfFrame(marker))
+      {
+        var height = BinaryPrimitives.ReadUInt16BigEndian(bytes[(offset + 5)..]);
+        var width = BinaryPrimitives.ReadUInt16BigEndian(bytes[(offset + 7)..]);
+        return new Size(width, height);
+      }
+
+      var length = BinaryPrimitives.ReadUInt16BigEndian(bytes[(offset + 2)..]);
+      if (length < 2)
+      {
+        return null;
+      }
+
+      offset += 2 + length;
+    }
+
+    return null;
+  }
+
+  // SOF0-SOF15 all carry the frame header; C4, C8 and CC sit in the same range but are the Huffman and
+  // arithmetic-coding tables instead.
+  private static bool IsStartOfFrame(byte marker) =>
+    marker is >= 0xC0 and <= 0xCF and not (0xC4 or 0xC8 or 0xCC);
+
+  private static Size? GifPixelSize(ReadOnlySpan<byte> bytes) =>
+    bytes.Length < 10
+      ? null
+      : new Size(BinaryPrimitives.ReadUInt16LittleEndian(bytes[6..]), BinaryPrimitives.ReadUInt16LittleEndian(bytes[8..]));
+
+  // A negative height is the top-down row order, not a size.
+  private static Size? BmpPixelSize(ReadOnlySpan<byte> bytes)
+  {
+    if (bytes.Length < 26)
+    {
+      return null;
+    }
+
+    var width = BinaryPrimitives.ReadInt32LittleEndian(bytes[18..]);
+    var height = BinaryPrimitives.ReadInt32LittleEndian(bytes[22..]);
+    return new Size(width, Math.Abs(height));
   }
 
   public static ImageSource ImageFromRawResource(string resourceName) =>
