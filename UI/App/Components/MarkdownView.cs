@@ -303,8 +303,8 @@ public class MarkdownView : ContentView
       // An image nested in emphasis or in a link can't become an Image view from inside a FormattedString,
       // so its caption stands in -- minus the size token, which is markup rather than text.
       case LinkInline { IsImage: true } image:
-        var caption = DescriptionOf(image);
-        formatted.Spans.Add(CreateSpan(caption.Caption, style));
+        var (_, caption) = DescriptionOf(image);
+        formatted.Spans.Add(CreateSpan(caption, style));
         break;
 
       case LinkInline link:
