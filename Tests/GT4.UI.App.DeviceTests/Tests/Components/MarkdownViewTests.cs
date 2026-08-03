@@ -101,6 +101,15 @@ public class MarkdownViewTests
     Assert.Equal(new Size(SamplePngWidth * 1.5, SamplePngHeight * 1.5), size);
   }
 
+  // The overflow is intentional, not a missed clamp -- a real biography card clips whatever spills past it.
+  [Fact]
+  public async Task MediaReference_EnlargedPastItsColumn_OverflowsRatherThanClamping()
+  {
+    var size = await RenderedImageSizeAsync("![A caption 150%](media:11)", columnWidth: 20);
+
+    Assert.Equal(new Size(30, 15), size);
+  }
+
   // The nested-image path renders the caption as text, so the size token has to be stripped there or
   // it would show up on screen as "Grandpa 50%".
   [Fact]
@@ -183,6 +192,17 @@ public class MarkdownViewTests
     var texts = Descendants(view).OfType<Span>().Select(span => span.Text);
 
     Assert.Equal(["A ", "marked", " word."], texts);
+  }
+
+  // A tag on its own line is CommonMark's HTML-block shape, distinct from the inline one above.
+  [Fact]
+  public async Task HandTypedHtmlBlocks_AreDroppedButTheirTextSurvives()
+  {
+    var view = await CreateViewAsync("<div>\nSome text\n</div>");
+
+    var texts = Descendants(view).OfType<Span>().Select(span => span.Text);
+
+    Assert.Equal(["\n", "Some text", "\n"], texts);
   }
 
   [Fact]
