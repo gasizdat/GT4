@@ -1,5 +1,5 @@
 using FluentAssertions;
-using GT4.UI.Utils;
+using System.Buffers.Binary;
 using Xunit;
 
 namespace GT4.UI.Utils.Tests;
@@ -8,16 +8,18 @@ namespace GT4.UI.Utils.Tests;
 // than images: each case is the shortest header that carries the two numbers.
 public class ImageUtilsTests
 {
+  private static readonly byte[] PngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+
   [Fact]
   public void Png_ReadsItsIhdrDimensions()
   {
     var png = new byte[24];
-    new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }.CopyTo(png, 0);
+    PngSignature.CopyTo(png, 0);
     "IHDR"u8.CopyTo(png.AsSpan(12));
     WriteBigEndian32(png.AsSpan(16), 1920);
     WriteBigEndian32(png.AsSpan(20), 1080);
 
-    MediaSize(png).Should().Be(new Size(1920, 1080));
+    PixelSizeOf(png).Should().Be(new Size(1920, 1080));
   }
 
   [Fact]
@@ -30,7 +32,7 @@ public class ImageUtilsTests
     WriteBigEndian16(frame.AsSpan(jpeg.Length), 3000);
     WriteBigEndian16(frame.AsSpan(jpeg.Length + 2), 4000);
 
-    MediaSize(frame).Should().Be(new Size(4000, 3000));
+    PixelSizeOf(frame).Should().Be(new Size(4000, 3000));
   }
 
   [Fact]
@@ -43,7 +45,7 @@ public class ImageUtilsTests
     WriteBigEndian16(frame.AsSpan(jpeg.Length), 480);
     WriteBigEndian16(frame.AsSpan(jpeg.Length + 2), 640);
 
-    MediaSize(frame).Should().Be(new Size(640, 480));
+    PixelSizeOf(frame).Should().Be(new Size(640, 480));
   }
 
   [Fact]
@@ -54,7 +56,7 @@ public class ImageUtilsTests
     BitConverter.GetBytes((ushort)320).CopyTo(gif, 6);
     BitConverter.GetBytes((ushort)240).CopyTo(gif, 8);
 
-    MediaSize(gif).Should().Be(new Size(320, 240));
+    PixelSizeOf(gif).Should().Be(new Size(320, 240));
   }
 
   [Fact]
@@ -65,7 +67,7 @@ public class ImageUtilsTests
     BitConverter.GetBytes(800).CopyTo(bmp, 18);
     BitConverter.GetBytes(-600).CopyTo(bmp, 22);
 
-    MediaSize(bmp).Should().Be(new Size(800, 600));
+    PixelSizeOf(bmp).Should().Be(new Size(800, 600));
   }
 
   [Theory]
@@ -83,13 +85,13 @@ public class ImageUtilsTests
   public void ZeroDimensions_AreNotASize()
   {
     var png = new byte[24];
-    new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }.CopyTo(png, 0);
+    PngSignature.CopyTo(png, 0);
     "IHDR"u8.CopyTo(png.AsSpan(12));
 
     ImageUtils.PixelSize(png).Should().BeNull();
   }
 
-  private static Size MediaSize(byte[] data)
+  private static Size PixelSizeOf(byte[] data)
   {
     var size = ImageUtils.PixelSize(data);
     size.Should().NotBeNull();
@@ -97,8 +99,8 @@ public class ImageUtilsTests
   }
 
   private static void WriteBigEndian32(Span<byte> target, uint value) =>
-    System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(target, value);
+    BinaryPrimitives.WriteUInt32BigEndian(target, value);
 
   private static void WriteBigEndian16(Span<byte> target, ushort value) =>
-    System.Buffers.Binary.BinaryPrimitives.WriteUInt16BigEndian(target, value);
+    BinaryPrimitives.WriteUInt16BigEndian(target, value);
 }
