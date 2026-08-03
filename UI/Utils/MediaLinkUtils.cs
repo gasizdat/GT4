@@ -13,8 +13,8 @@ public static partial class MediaLinkUtils
       : MediaLinkPattern().Matches(markdown).Select(match => int.Parse(match.Groups[1].Value)).ToHashSet();
 
   // A trailing percentage in an image's description -- "![Grandpa 50%](media:5)" -- asks for that share
-  // of the available width, and the rest of the description stays the caption. Any description ending
-  // in 1-100% reads as a size, so "Sale 50%" sizes the image rather than captioning it.
+  // of the width the image would otherwise take, and the rest of the description stays the caption. Any
+  // description ending in 1-299% reads as a size, so "Sale 50%" sizes the image rather than captioning it.
   public static (int? WidthPercent, string Caption) ParseImageDescription(string description)
   {
     var match = ImageWidthPattern().Match(description);
@@ -29,7 +29,7 @@ public static partial class MediaLinkUtils
   [GeneratedRegex("media:(\\d+)")]
   private static partial Regex MediaLinkPattern();
 
-  // The alternation is the whole range check: 100, or 1-99 with no leading zero; anything else stays caption.
-  [GeneratedRegex(@"(?:^|\s)(100|[1-9][0-9]?)%$")]
+  // The alternation is the whole range check: 100-299, or 1-99 with no leading zero; anything else stays caption.
+  [GeneratedRegex(@"(?:^|\s)([1-2][0-9]{2}|[1-9][0-9]?)%$")]
   private static partial Regex ImageWidthPattern();
 }

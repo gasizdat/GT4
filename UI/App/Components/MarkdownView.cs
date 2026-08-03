@@ -174,7 +174,7 @@ public class MarkdownView : ContentView
   }
 
   // Unasked, an image lays its pixel count out as device-independent units and shrinks only to fit the
-  // column; a percentage is that share of the column instead, and may enlarge, since asking is explicit.
+  // column; a percentage is that share of the same width, so it enlarges only when asked for over 100%.
   private static void ScaleToHost(ContentView host, Image image, Size pixelSize, int? widthPercent)
   {
     if (host.Width <= 0)
@@ -182,9 +182,10 @@ public class MarkdownView : ContentView
       return;
     }
 
+    var fitWidth = Math.Min(pixelSize.Width, host.Width);
     var width = widthPercent is null
-      ? Math.Min(pixelSize.Width, host.Width)
-      : host.Width * widthPercent.Value / 100.0;
+      ? fitWidth
+      : fitWidth * widthPercent.Value / 100.0;
 
     image.WidthRequest = width;
     image.HeightRequest = width * pixelSize.Height / pixelSize.Width;

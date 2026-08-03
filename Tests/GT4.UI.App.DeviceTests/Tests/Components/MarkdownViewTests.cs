@@ -78,11 +78,27 @@ public class MarkdownViewTests
   }
 
   [Fact]
-  public async Task MediaReference_WithATrailingPercentage_TakesThatShareOfItsColumn()
+  public async Task MediaReference_WithATrailingPercentage_TakesThatShareOfItsPixelSize()
   {
     var size = await RenderedImageSizeAsync("![A caption 50%](media:11)", columnWidth: 300);
 
-    Assert.Equal(new Size(150, 75), size);
+    Assert.Equal(new Size(SamplePngWidth / 2, SamplePngHeight / 2), size);
+  }
+
+  [Fact]
+  public async Task MediaReference_WiderThanItsColumn_TakesItsPercentageOfTheColumn()
+  {
+    var size = await RenderedImageSizeAsync("![A caption 50%](media:11)", columnWidth: 20);
+
+    Assert.Equal(new Size(10, 5), size);
+  }
+
+  [Fact]
+  public async Task MediaReference_WithAPercentageOverAHundred_GrowsPastItsPixelSize()
+  {
+    var size = await RenderedImageSizeAsync("![A caption 150%](media:11)", columnWidth: 300);
+
+    Assert.Equal(new Size(SamplePngWidth * 1.5, SamplePngHeight * 1.5), size);
   }
 
   // The nested-image path renders the caption as text, so the size token has to be stripped there or
