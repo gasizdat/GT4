@@ -331,22 +331,13 @@ public partial class PersonPage : ContentPage
     using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
     var fileName = FileNameUtils.Sanitize(attachment.FileName, "attachment");
     var path = Path.Combine(FileSystem.CacheDirectory, fileName);
-    var bytes = MediaSourceUtils.PayloadBytes(attachment.Data);
-    await File.WriteAllBytesAsync(path, bytes, token);
+    await File.WriteAllBytesAsync(path, attachment.Bytes, token);
 
     await Launcher.Default.OpenAsync(new OpenFileRequest(fileName, new ReadOnlyFile(path)));
   }
 
   private async Task OnGotoFamilyAsync() =>
     await _NavigationService.GoToAsync(UIRoutes.GetRoute<FamilyPage>(), true, new() { ["FamilyName"] = FamilyName });
-
-  private static async Task<AttachmentInfo> ToAttachmentInfoAsync(Data data, CancellationToken token)
-  {
-    var fileName = await GedcomPhotoResidue.ExtractFileNameAsync(data, token);
-    var title = await GedcomPhotoResidue.ExtractTitleAsync(data, token);
-
-    return new AttachmentInfo(fileName ?? string.Empty, title, data);
-  }
 
   /// <summary>
   /// A couple's preserved GEDCOM tags are keyed by the pair rather than carried on either person, so they
@@ -406,7 +397,7 @@ public partial class PersonPage : ContentPage
       var bioTask = _TextConverter.ToObjectAsync(personFullInfo.Biography, token);
       var gedcomTask = _GedcomConverter.ToObjectAsync(personFullInfo.GedcomData, token);
       var attachmentsTask = Task.WhenAll(
-        personFullInfo.Attachments.Select(data => ToAttachmentInfoAsync(data, token)));
+        personFullInfo.Attachments.Select(data => AttachmentInfo.CreateAsync(data, token)));
       await Task.WhenAll(parentsTasks, stepChildrenTasks, bioTask, gedcomTask, attachmentsTask);
 
       // Sequenced after the attachments: a couple's media renders under the name the attachment row carries.
@@ -656,11 +647,4 @@ public partial class PersonPage : ContentPage
 
     PersonInfo = info;
   }
-}
-
-public sealed record AttachmentInfo(string FileName, string? Title, Data Data)
-{
-  public string DisplayName => string.IsNullOrWhiteSpace(Title) ? FileName : Title;
-
-  public bool ShowFileName => !string.IsNullOrWhiteSpace(Title);
 }
