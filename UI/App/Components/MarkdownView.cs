@@ -31,7 +31,6 @@ public class MarkdownView : ContentView
     .UseSoftlineBreakAsHardlineBreak()
     .Build();
 
-  private readonly Dictionary<byte[], Size?> _PixelSizes = new(ReferenceEqualityComparer.Instance);
   private readonly Command<string> _LinkCommand;
 
   public MarkdownView()
@@ -176,9 +175,9 @@ public class MarkdownView : ContentView
     return host;
   }
 
-  // Without a requested width an image keeps its pixel size, shrinking only when it would overflow the
-  // column -- a thumbnail stays a thumbnail. A percentage is taken as that share of the column, and is
-  // free to enlarge the image, since asking for one is explicit.
+  // Without a requested width an image keeps its own size, shrinking only when it would overflow the
+  // column; its pixel count lays out as device-independent units, the same as an unstyled <img>. A
+  // percentage is that share of the column instead, and is free to enlarge, since asking is explicit.
   private static void ScaleToHost(ContentView host, Image image, Size pixelSize, int? widthPercent)
   {
     if (host.Width <= 0)
@@ -405,25 +404,12 @@ public class MarkdownView : ContentView
       }
 
       var stored = ImageSource.FromStream(() => new MemoryStream(bytes));
-      return ScaledImage(stored, PixelSizeOf(bytes), widthPercent);
+      return ScaledImage(stored, ImageUtils.PixelSize(bytes), widthPercent);
     }
 
     return Uri.TryCreate(url, UriKind.Absolute, out var uri)
       ? ScaledImage(ImageSource.FromUri(uri), null, widthPercent)
       : null;
-  }
-
-  // Keyed by the array itself rather than the media id: a photo replaced in place keeps its id, while
-  // the hit that matters -- the pair of renders one person load triggers -- shares the same arrays.
-  private Size? PixelSizeOf(byte[] bytes)
-  {
-    if (!_PixelSizes.TryGetValue(bytes, out var size))
-    {
-      size = ImageUtils.PixelSize(bytes);
-      _PixelSizes[bytes] = size;
-    }
-
-    return size;
   }
 
   // A person or attachment link is handled in-app through its event; anything else (the Google Maps
