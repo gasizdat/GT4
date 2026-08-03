@@ -1,6 +1,7 @@
 using GT4.UI.Abstraction;
 using GT4.UI.Dialogs;
 using GT4.UI.Utils;
+using GT4.UI.Utils.Converters;
 using System.Windows.Input;
 
 namespace GT4.UI.Components;
@@ -74,9 +75,9 @@ public partial class ImagePresenter : ContentView
     {
       _ImageOpacities[i] = _MinOpacity;
 
-      if (i < ImageSources.Length)
+      if (i < Photos.Length)
       {
-        _Images[i] = ImageSources[i];
+        _Images[i] = Photos[i].Source;
         _ImageOpacities[0] = _MaxOpacity;
       }
       else
@@ -90,7 +91,7 @@ public partial class ImagePresenter : ContentView
 
     _CurrentIndex = 0;
     RaiseCaptionChanged();
-    if (ImageSources.Length > 1)
+    if (Photos.Length > 1)
     {
       UpdateStageTime();
       _CurrentState = State.ShowImage;
@@ -161,9 +162,9 @@ public partial class ImagePresenter : ContentView
       }
       else
       {
-        var sourceIndex = (_CurrentIndex + 1) % ImageSources.Length;
+        var sourceIndex = (_CurrentIndex + 1) % Photos.Length;
         _ImageOpacities[i] = _MinOpacity;
-        _Images[i] = ImageSources[sourceIndex];
+        _Images[i] = Photos[sourceIndex].Source;
 
         OnPropertyChanged(_ImageProperties[i]);
       }
@@ -235,12 +236,13 @@ public partial class ImagePresenter : ContentView
 
   private async Task OnOpenViewerAsync()
   {
-    if (ImageSources.Length == 0)
+    if (Photos.Length == 0)
     {
       return;
     }
 
-    await Shell.Current.Navigation.PushModalAsync(new PhotoViewerDialog(ImageSources, _AlertService));
+    ImageSource[] sources = [.. Photos.Select(photo => photo.Source)];
+    await Shell.Current.Navigation.PushModalAsync(new PhotoViewerDialog(sources, _AlertService));
   }
 
   private void OnNextPicture(object obj)
@@ -281,22 +283,11 @@ public partial class ImagePresenter : ContentView
       typeof(Style),
       typeof(ImagePresenter));
 
-  public static readonly BindableProperty ImageSourcesProperty = BindableProperty.Create(
-    nameof(ImageSources),
-    typeof(ImageSource[]),
+  public static readonly BindableProperty PhotosProperty = BindableProperty.Create(
+    nameof(Photos),
+    typeof(PhotoInfo[]),
     typeof(ImagePresenter),
-    Array.Empty<ImageSource>(),
-    BindingMode.OneWay,
-    null,
-    OnBindablePropertyChanged);
-
-  // Index-parallel to ImageSources: Captions[i] is the caption for ImageSources[i], or null when that
-  // photo has none (only a GEDCOM-imported photo with a preserved TITL has one).
-  public static readonly BindableProperty CaptionsProperty = BindableProperty.Create(
-    nameof(Captions),
-    typeof(string?[]),
-    typeof(ImagePresenter),
-    Array.Empty<string?>(),
+    Array.Empty<PhotoInfo>(),
     BindingMode.OneWay,
     null,
     OnBindablePropertyChanged);
@@ -307,20 +298,14 @@ public partial class ImagePresenter : ContentView
     set => SetValue(ImageStyleProperty, value);
   }
 
-  public ImageSource[] ImageSources
+  public PhotoInfo[] Photos
   {
-    get => (ImageSource[]?)GetValue(ImageSourcesProperty) ?? [];
-    set => SetValue(ImageSourcesProperty, value);
-  }
-
-  public string?[] Captions
-  {
-    get => (string?[]?)GetValue(CaptionsProperty) ?? [];
-    set => SetValue(CaptionsProperty, value);
+    get => (PhotoInfo[]?)GetValue(PhotosProperty) ?? [];
+    set => SetValue(PhotosProperty, value);
   }
 
   public string? CurrentCaption =>
-    Captions.Length == 0 ? null : Captions[(int)(_CurrentIndex % Captions.Length)];
+    Photos.Length == 0 ? null : Photos[(int)(_CurrentIndex % Photos.Length)].Caption;
 
   public bool ShowCurrentCaption => !string.IsNullOrEmpty(CurrentCaption);
 
@@ -338,7 +323,7 @@ public partial class ImagePresenter : ContentView
 
   public bool ShowPrevNext
   {
-    get => ImageSources.Length > 1;
+    get => Photos.Length > 1;
   }
 
   public ImageSource Image1 => _Images[0];

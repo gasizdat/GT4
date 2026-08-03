@@ -42,8 +42,7 @@ public partial class PersonPage : ContentPage
   private ObservableCollection<PersonInfo> _NavigationHistory = new();
   private int _NavigationIndex = -1;
   private PersonFullInfo _PersonFullInfo = PersonFullInfo.Empty;
-  private ImageSource[] _Photos = [];
-  private string?[] _Captions = [];
+  private PhotoInfo[] _Photos = [];
   private IReadOnlyDictionary<int, byte[]> _MediaSources = ReadOnlyDictionary<int, byte[]>.Empty;
   private AttachmentInfo[] _Attachments = [];
   private string _Biography = string.Empty;
@@ -173,9 +172,7 @@ public partial class PersonPage : ContentPage
 
   public ICollection Relatives => _Relatives.Rows;
 
-  public ImageSource[] Photos => _Photos;
-
-  public string?[] Captions => _Captions;
+  public PhotoInfo[] Photos => _Photos;
 
   public IReadOnlyDictionary<int, byte[]> MediaSources => _MediaSources;
 
@@ -410,8 +407,7 @@ public partial class PersonPage : ContentPage
       var siblings = relativesProvider.GetSiblings(personFullInfo, parents);
       var roots = AssembleRoots(personFullInfo, parents, siblings, stepChildren, relativesProvider);
 
-      ImageSource[] photos;
-      string?[] captions;
+      PhotoInfo[] photos;
       Data[] photoData;
 
       if (personFullInfo.MainPhoto is null)
@@ -424,8 +420,8 @@ public partial class PersonPage : ContentPage
         using var readResourceToken = _CancellationTokenProvider.CreateShortOperationCancellationToken();
         var defaultImageResourceName = ImageUtils.DefaultPhotoResourceName(personFullInfo.BiologicalSex);
         var defaultPhoto = await ImageUtils.ToBytesAsync(defaultImageResourceName, readResourceToken) ?? [];
-        photos = [ImageUtils.ImageFromBytes(defaultPhoto)];
-        captions = [null];
+        var defaultSource = ImageUtils.ImageFromBytes(defaultPhoto);
+        photos = [new PhotoInfo(defaultSource, null)];
         photoData = [];
       }
       else
@@ -433,12 +429,8 @@ public partial class PersonPage : ContentPage
         photoData = [personFullInfo.MainPhoto, .. personFullInfo.AdditionalPhotos];
         var defaultImageResourceName = ImageUtils.DefaultPhotoResourceName(personFullInfo.BiologicalSex);
         var fallback = ImageUtils.ImageFromRawResource(defaultImageResourceName);
-        var photosTask = Task.WhenAll(photoData.Select(data =>
+        photos = await Task.WhenAll(photoData.Select(data =>
           ImageUtils.ResolvePhotoAsync(_DataConverterResolver, data, fallback, token)));
-        var captionsTask = Task.WhenAll(photoData.Select(data => GedcomPhotoResidue.ExtractTitleAsync(data, token)));
-        await Task.WhenAll(photosTask, captionsTask);
-        photos = photosTask.Result;
-        captions = captionsTask.Result;
       }
 
       var mediaSources = MediaSourceUtils.BuildMediaSources([.. photoData, .. personFullInfo.Attachments], bioTask.Result as string);
@@ -455,7 +447,7 @@ public partial class PersonPage : ContentPage
 
         UpdateUI(personFullInfo,
                  roots,
-                 photos, captions, mediaSources, attachments, bioTask.Result as string,
+                 photos, mediaSources, attachments, bioTask.Result as string,
                  gedcomTask.Result as string,
                  familyDetails,
                  addToNavigation);
@@ -504,8 +496,7 @@ public partial class PersonPage : ContentPage
 
   public void UpdateUI(PersonFullInfo personFullInfo,
                        RelativeInfo[] roots,
-                       ImageSource[] photos,
-                       string?[] captions,
+                       PhotoInfo[] photos,
                        IReadOnlyDictionary<int, byte[]> mediaSources,
                        AttachmentInfo[] attachments,
                        string? bio,
@@ -515,7 +506,6 @@ public partial class PersonPage : ContentPage
   {
     _PersonFullInfo = personFullInfo;
     _Photos = photos;
-    _Captions = captions;
     _MediaSources = mediaSources;
     _Attachments = attachments;
     _Biography = CombineBiography(bio, gedcomDetails, familyDetails);

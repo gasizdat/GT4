@@ -3,7 +3,7 @@ using Microsoft.Extensions.Http;
 
 namespace GT4.UI.Utils.Converters;
 
-public class ImageDataConverter : IDataConverter
+public sealed class ImageDataConverter : IDataConverter
 {
   const string MimeTypeBmp = System.Net.Mime.MediaTypeNames.Image.Bmp;
 
@@ -16,7 +16,7 @@ public class ImageDataConverter : IDataConverter
 
   public async Task<Data?> FromObjectAsync(object? data, CancellationToken token)
   {
-    var image = data as ImageSource;
+    var image = data is PhotoInfo photo ? photo.Source : null;
     var content = image is null ? null : await ImageUtils.ToBytesAsync(image, _HttpClientFactory, token);
 
     return content is null ? null : new Data(
@@ -26,8 +26,8 @@ public class ImageDataConverter : IDataConverter
       Category: default);
   }
 
-  public virtual Task<object?> ToObjectAsync(Data? data, CancellationToken token)
+  public Task<object?> ToObjectAsync(Data? data, CancellationToken token)
   {
-    return Task.FromResult<object?>(data is null ? null : ImageUtils.ImageFromBytes(data.Content));
+    return Task.FromResult<object?>(data is null ? null : new PhotoInfo(ImageUtils.ImageFromBytes(data.Content), null));
   }
 }

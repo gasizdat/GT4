@@ -93,7 +93,7 @@
                           Grid.RowSpan="3"
                           Grid.Column="0"
                           Grid.ColumnSpan="3"
-                          Source="{Binding Content}"
+                          Source="{Binding Content.Source}"
                           Style="{StaticResource PhotoPreviewStyle}" />
 
                       <Button

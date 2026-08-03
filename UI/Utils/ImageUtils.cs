@@ -81,26 +81,24 @@ public static class ImageUtils
     ImageSource.FromStream(_ => FileSystem.OpenAppPackageFileAsync(resourceName));
 
   /// <summary>
-  /// Resolves a photo through its category's keyed <see cref="IDataConverter"/>, falling back to
-  /// <paramref name="fallback"/> both when no converter is registered for the category (an older
-  /// build opening a project that has a category it doesn't know about) and when a registered
-  /// converter hands back something that isn't an <see cref="ImageSource"/>. Always returns
-  /// <paramref name="fallback"/> rather than null/skipping, so callers building an index-aligned
-  /// array alongside photos (e.g. a parallel captions array) keep their indices in sync.
+  /// Resolves a photo through its category's keyed <see cref="IDataConverter"/>, falling back to a
+  /// caption-less <paramref name="fallback"/> both when no converter is registered for the category (an
+  /// older build opening a project that has a category it doesn't know about) and when a registered
+  /// converter hands back something that isn't a <see cref="PhotoInfo"/>.
   /// </summary>
-  public static async Task<ImageSource> ResolvePhotoAsync(
+  public static async Task<PhotoInfo> ResolvePhotoAsync(
     OptionalDataConverterResolver dataConverterResolver, Data data, ImageSource fallback, CancellationToken token)
   {
     var converter = dataConverterResolver(data.Category);
     var resolved = converter is null ? null : await converter.ToObjectAsync(data, token);
 
-    if (resolved is ImageSource imageSource)
+    if (resolved is PhotoInfo photoInfo)
     {
-      return imageSource;
+      return photoInfo;
     }
 
     System.Diagnostics.Debug.WriteLine($"No usable IDataConverter result for {data.Category}; using fallback image.");
-    return fallback;
+    return new PhotoInfo(fallback, null);
   }
 
   public static async Task<byte[]?> ToBytesAsync(ImageSource? source, IHttpClientFactory httpClientFactory, CancellationToken token)

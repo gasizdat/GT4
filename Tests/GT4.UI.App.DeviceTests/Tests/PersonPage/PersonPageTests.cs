@@ -126,8 +126,8 @@ public class PersonPageTests
 
     await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
 
-    Assert.Single(page.Photos);
-    Assert.Equal("A caption", Assert.Single(page.Captions));
+    var photo = Assert.Single(page.Photos);
+    Assert.Equal("A caption", photo.Caption);
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
 
