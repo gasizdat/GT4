@@ -156,11 +156,9 @@ public class MarkdownView : ContentView
     return MediaLinkUtils.ParseImageDescription(description);
   }
 
-  // MAUI derives an image's height from the width it was measured with and keeps that height when the
-  // arrange narrows the frame, so capping the width alone leaves the image floating in a frame as tall
-  // as the full-width one would have been. Sizing both axes from the host's own width is the only way
-  // to scale proportionally -- and it needs the pixel dimensions, so an image whose bytes this view
-  // doesn't hold (a remote one) keeps the plain full-width fit, requested percentage included.
+  // MAUI keeps the height it measured a full-width image at, so capping the width alone leaves it in an
+  // over-tall frame: both axes have to come from the host's width. That needs the pixel dimensions, so a
+  // remote image -- whose bytes this view doesn't hold -- keeps the plain fit, percentage included.
   private static View ScaledImage(ImageSource source, Size? pixelSize, int? widthPercent)
   {
     var image = new Image { Source = source, Aspect = Aspect.AspectFit };
@@ -175,9 +173,8 @@ public class MarkdownView : ContentView
     return host;
   }
 
-  // Without a requested width an image keeps its own size, shrinking only when it would overflow the
-  // column; its pixel count lays out as device-independent units, the same as an unstyled <img>. A
-  // percentage is that share of the column instead, and is free to enlarge, since asking is explicit.
+  // Unasked, an image lays its pixel count out as device-independent units and shrinks only to fit the
+  // column; a percentage is that share of the column instead, and may enlarge, since asking is explicit.
   private static void ScaleToHost(ContentView host, Image image, Size pixelSize, int? widthPercent)
   {
     if (host.Width <= 0)
@@ -303,9 +300,8 @@ public class MarkdownView : ContentView
         formatted.Spans.Add(CreateSpan("\n", style));
         break;
 
-      // An image nested in emphasis or in a link can't become an Image view from inside a
-      // FormattedString, so its caption carries the content instead -- without the size token, which
-      // is markup rather than text.
+      // An image nested in emphasis or in a link can't become an Image view from inside a FormattedString,
+      // so its caption stands in -- minus the size token, which is markup rather than text.
       case LinkInline { IsImage: true } image:
         var caption = DescriptionOf(image);
         formatted.Spans.Add(CreateSpan(caption.Caption, style));

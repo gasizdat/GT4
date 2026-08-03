@@ -29,8 +29,7 @@ public static partial class MediaLinkUtils
   [GeneratedRegex("media:(\\d+)")]
   private static partial Regex MediaLinkPattern();
 
-  // The alternation is the whole range check: 100, or 1-99 with no leading zero. Anything else -- 0%,
-  // 150%, a percentage mid-description -- simply doesn't match and stays part of the caption.
+  // The alternation is the whole range check: 100, or 1-99 with no leading zero; anything else stays caption.
   [GeneratedRegex(@"(?:^|\s)(100|[1-9][0-9]?)%$")]
   private static partial Regex ImageWidthPattern();
 }

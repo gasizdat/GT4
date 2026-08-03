@@ -67,8 +67,8 @@ public class MarkdownViewTests
     Assert.Equal(new Size(SamplePngWidth, SamplePngHeight), size);
   }
 
-  // The defect this replaced: capping the width alone left the image in a frame as tall as the
-  // full-width one, so it was clipped horizontally and floated in dead space below.
+  // Capping the width alone clips the image horizontally and leaves it floating in a frame as tall as
+  // the full-width one would have been.
   [Fact]
   public async Task MediaReference_WiderThanItsColumn_ShrinksKeepingItsAspectRatio()
   {
