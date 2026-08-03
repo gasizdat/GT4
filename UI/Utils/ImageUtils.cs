@@ -77,6 +77,71 @@ public static class ImageUtils
     return size is { Width: > 0, Height: > 0 } ? size : null;
   }
 
+  public static ImageSource ImageFromRawResource(string resourceName) =>
+    ImageSource.FromStream(_ => FileSystem.OpenAppPackageFileAsync(resourceName));
+
+  /// <summary>
+  /// Resolves a photo through its category's keyed <see cref="IDataConverter"/>, falling back to
+  /// <paramref name="fallback"/> both when no converter is registered for the category (an older
+  /// build opening a project that has a category it doesn't know about) and when a registered
+  /// converter hands back something that isn't an <see cref="ImageSource"/>. Always returns
+  /// <paramref name="fallback"/> rather than null/skipping, so callers building an index-aligned
+  /// array alongside photos (e.g. a parallel captions array) keep their indices in sync.
+  /// </summary>
+  public static async Task<ImageSource> ResolvePhotoAsync(
+    OptionalDataConverterResolver dataConverterResolver, Data data, ImageSource fallback, CancellationToken token)
+  {
+    var converter = dataConverterResolver(data.Category);
+    var resolved = converter is null ? null : await converter.ToObjectAsync(data, token);
+
+    if (resolved is ImageSource imageSource)
+    {
+      return imageSource;
+    }
+
+    System.Diagnostics.Debug.WriteLine($"No usable IDataConverter result for {data.Category}; using fallback image.");
+    return fallback;
+  }
+
+  public static async Task<byte[]?> ToBytesAsync(ImageSource? source, IHttpClientFactory httpClientFactory, CancellationToken token)
+  {
+    if (source == null)
+    {
+      return null;
+    }
+
+    var httpStreamReaderAsync = async (Uri uri, CancellationToken token) =>
+    {
+      using var http = httpClientFactory.CreateClient();
+      return await http.GetStreamAsync(uri, token).ConfigureAwait(false);
+    };
+
+    Stream? stream = source switch
+    {
+      FileImageSource fileImageSource => File.OpenRead(fileImageSource.File),
+      StreamImageSource streamImageSource => await streamImageSource
+        .Stream(token)
+        .ConfigureAwait(false),
+      UriImageSource uriImageSource => await httpStreamReaderAsync(uriImageSource.Uri, token),
+      _ => throw new NotSupportedException("Unsupported stream type"),
+    };
+
+    if (stream == null)
+    {
+      throw new InvalidOperationException($"Could not obtain a stream from {source.GetType().Name}.");
+    }
+    using (stream)
+    {
+      return await ToBytesAsync(stream, token);
+    }
+  }
+
+  public static async Task<byte[]?> ToBytesAsync(string resourceName, CancellationToken token)
+  {
+    using var stream = await FileSystem.OpenAppPackageFileAsync(resourceName);
+    return await ToBytesAsync(stream, token);
+  }
+
   private static Size? PngPixelSize(ReadOnlySpan<byte> bytes)
   {
     if (bytes.Length < 24 || !bytes[12..16].SequenceEqual("IHDR"u8))
@@ -141,71 +206,6 @@ public static class ImageUtils
     var width = BinaryPrimitives.ReadInt32LittleEndian(bytes[18..]);
     var height = BinaryPrimitives.ReadInt32LittleEndian(bytes[22..]);
     return new Size(width, Math.Abs(height));
-  }
-
-  public static ImageSource ImageFromRawResource(string resourceName) =>
-    ImageSource.FromStream(_ => FileSystem.OpenAppPackageFileAsync(resourceName));
-
-  /// <summary>
-  /// Resolves a photo through its category's keyed <see cref="IDataConverter"/>, falling back to
-  /// <paramref name="fallback"/> both when no converter is registered for the category (an older
-  /// build opening a project that has a category it doesn't know about) and when a registered
-  /// converter hands back something that isn't an <see cref="ImageSource"/>. Always returns
-  /// <paramref name="fallback"/> rather than null/skipping, so callers building an index-aligned
-  /// array alongside photos (e.g. a parallel captions array) keep their indices in sync.
-  /// </summary>
-  public static async Task<ImageSource> ResolvePhotoAsync(
-    OptionalDataConverterResolver dataConverterResolver, Data data, ImageSource fallback, CancellationToken token)
-  {
-    var converter = dataConverterResolver(data.Category);
-    var resolved = converter is null ? null : await converter.ToObjectAsync(data, token);
-
-    if (resolved is ImageSource imageSource)
-    {
-      return imageSource;
-    }
-
-    System.Diagnostics.Debug.WriteLine($"No usable IDataConverter result for {data.Category}; using fallback image.");
-    return fallback;
-  }
-
-  public static async Task<byte[]?> ToBytesAsync(ImageSource? source, IHttpClientFactory httpClientFactory, CancellationToken token)
-  {
-    if (source == null)
-    {
-      return null;
-    }
-
-    var httpStreamReaderAsync = async (Uri uri, CancellationToken token) =>
-    {
-      using var http = httpClientFactory.CreateClient();
-      return await http.GetStreamAsync(uri, token).ConfigureAwait(false);
-    };
-
-    Stream? stream = source switch
-    {
-      FileImageSource fileImageSource => File.OpenRead(fileImageSource.File),
-      StreamImageSource streamImageSource => await streamImageSource
-        .Stream(token)
-        .ConfigureAwait(false),
-      UriImageSource uriImageSource => await httpStreamReaderAsync(uriImageSource.Uri, token),
-      _ => throw new NotSupportedException("Unsupported stream type"),
-    };
-
-    if (stream == null)
-    {
-      throw new InvalidOperationException($"Could not obtain a stream from {source.GetType().Name}.");
-    }
-    using (stream)
-    {
-      return await ToBytesAsync(stream, token);
-    }
-  }
-
-  public static async Task<byte[]?> ToBytesAsync(string resourceName, CancellationToken token)
-  {
-    using var stream = await FileSystem.OpenAppPackageFileAsync(resourceName);
-    return await ToBytesAsync(stream, token);
   }
 
   private static async Task<byte[]?> ToBytesAsync(Stream? stream, CancellationToken token)
