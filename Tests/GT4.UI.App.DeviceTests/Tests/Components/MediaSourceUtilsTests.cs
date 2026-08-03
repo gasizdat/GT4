@@ -36,24 +36,24 @@ public class MediaSourceUtilsTests
   }
 
   [Fact]
-  public void PlainPhoto_EncodesItsRawBytes()
+  public void PlainPhoto_ContributesItsRawBytes()
   {
     var photo = new Data(1, [1, 2, 3], "image/png", DataCategory.PersonMainPhoto);
 
     var sources = MediaSourceUtils.BuildMediaSources([photo], "![caption](media:1)");
 
-    Assert.Equal($"data:image/png;base64,{Convert.ToBase64String([1, 2, 3])}", sources[1]);
+    Assert.Equal(new byte[] { 1, 2, 3 }, sources[1]);
   }
 
   [Fact]
-  public void TaggedPhoto_StripsTheResidueEnvelopeBeforeEncoding()
+  public void TaggedPhoto_StripsTheResidueEnvelope()
   {
     var content = BuildTaggedPhotoContent("0 OBJE\n1 TITL A caption\n", [4, 5, 6]);
     var photo = new Data(2, content, "image/jpeg", DataCategory.PersonMainPhotoTagged);
 
     var sources = MediaSourceUtils.BuildMediaSources([photo], "![caption](media:2)");
 
-    Assert.Equal($"data:image/jpeg;base64,{Convert.ToBase64String([4, 5, 6])}", sources[2]);
+    Assert.Equal(new byte[] { 4, 5, 6 }, sources[2]);
   }
 
   [Fact]
@@ -64,7 +64,7 @@ public class MediaSourceUtilsTests
 
     var sources = MediaSourceUtils.BuildMediaSources([attachment], "![scan](media:3)");
 
-    Assert.Equal($"data:image/jpeg;base64,{Convert.ToBase64String([7, 8, 9])}", sources[3]);
+    Assert.Equal(new byte[] { 7, 8, 9 }, sources[3]);
   }
 
   [Fact]
@@ -79,13 +79,13 @@ public class MediaSourceUtilsTests
   }
 
   [Fact]
-  public void PhotoWithoutAMimeType_IsLabelledAsPng()
+  public void PhotoWithoutAMimeType_IsStillInlined()
   {
     var photo = new Data(5, [1, 2, 3], null, DataCategory.PersonPhoto);
 
     var sources = MediaSourceUtils.BuildMediaSources([photo], "![caption](media:5)");
 
-    Assert.Equal($"data:image/png;base64,{Convert.ToBase64String([1, 2, 3])}", sources[5]);
+    Assert.Equal(new byte[] { 1, 2, 3 }, sources[5]);
   }
 
   [Fact]

@@ -198,7 +198,7 @@ public class PersonPageTests
 
     var entry = Assert.Single(page.MediaSources);
     Assert.Equal(10, entry.Key);
-    Assert.Equal($"data:image/png;base64,{Convert.ToBase64String([1, 2, 3])}", entry.Value);
+    Assert.Equal(new byte[] { 1, 2, 3 }, entry.Value);
   }
 
   [Fact]
@@ -220,7 +220,7 @@ public class PersonPageTests
 
     var entry = Assert.Single(page.MediaSources);
     Assert.Equal(22, entry.Key);
-    Assert.Equal($"data:image/jpeg;base64,{Convert.ToBase64String([4, 5, 6])}", entry.Value);
+    Assert.Equal(new byte[] { 4, 5, 6 }, entry.Value);
   }
 
   [Fact]

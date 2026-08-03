@@ -33,7 +33,7 @@ public partial class MarkdownEditor : ContentView
   // Forwarded to the inner preview MarkdownView so the "Markdown View" tab renders inserted media links
   // the same way the host's own display does.
   public static readonly BindableProperty MediaSourcesProperty =
-    BindableProperty.Create(nameof(MediaSources), typeof(IReadOnlyDictionary<int, string>), typeof(MarkdownEditor), ReadOnlyDictionary<int, string>.Empty);
+    BindableProperty.Create(nameof(MediaSources), typeof(IReadOnlyDictionary<int, byte[]>), typeof(MarkdownEditor), ReadOnlyDictionary<int, byte[]>.Empty);
 
   // The host page owns link insertion (person lookup/selection, and whatever other link types it
   // supports), so this view stays free of any project dependency: the "Link a Person" button (and any
@@ -53,9 +53,9 @@ public partial class MarkdownEditor : ContentView
     set => SetValue(PlaceholderProperty, value);
   }
 
-  public IReadOnlyDictionary<int, string> MediaSources
+  public IReadOnlyDictionary<int, byte[]> MediaSources
   {
-    get => (IReadOnlyDictionary<int, string>)GetValue(MediaSourcesProperty);
+    get => (IReadOnlyDictionary<int, byte[]>)GetValue(MediaSourcesProperty);
     set => SetValue(MediaSourcesProperty, value);
   }
 
@@ -67,7 +67,7 @@ public partial class MarkdownEditor : ContentView
 
   public bool DisplayEditor => _TabIndex == 0;
 
-  public bool DisplayHtmlView => _TabIndex == 1;
+  public bool DisplayPreview => _TabIndex == 1;
 
   public int TabIndex
   {
@@ -79,7 +79,7 @@ public partial class MarkdownEditor : ContentView
         _TabIndex = value;
         OnPropertyChanged(nameof(TabIndex));
         OnPropertyChanged(nameof(DisplayEditor));
-        OnPropertyChanged(nameof(DisplayHtmlView));
+        OnPropertyChanged(nameof(DisplayPreview));
       }
     }
   }

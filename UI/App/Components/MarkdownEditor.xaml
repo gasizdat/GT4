@@ -52,14 +52,14 @@
 
         <Button.Triggers>
           <DataTrigger
-              Binding="{Binding DisplayHtmlView, Source={x:Reference Root}}"
+              Binding="{Binding DisplayPreview, Source={x:Reference Root}}"
               TargetType="Button"
               Value="False">
             <Setter Property="Style" Value="{StaticResource TabInectiveStyle}" />
           </DataTrigger>
 
           <DataTrigger
-              Binding="{Binding DisplayHtmlView, Source={x:Reference Root}}"
+              Binding="{Binding DisplayPreview, Source={x:Reference Root}}"
               TargetType="Button"
               Value="True">
             <Setter Property="Style" Value="{StaticResource TabActiveStyle}" />
@@ -92,7 +92,7 @@
 
       <components:MarkdownView
           HorizontalOptions="Fill"
-          IsVisible="{Binding DisplayHtmlView, Source={x:Reference Root}}"
+          IsVisible="{Binding DisplayPreview, Source={x:Reference Root}}"
           Markdown="{Binding Markdown, Source={x:Reference Root}}"
           MediaSources="{Binding MediaSources, Source={x:Reference Root}}"
           VerticalOptions="Fill" />

@@ -44,7 +44,7 @@ public partial class PersonPage : ContentPage
   private PersonFullInfo _PersonFullInfo = PersonFullInfo.Empty;
   private ImageSource[] _Photos = [];
   private string?[] _Captions = [];
-  private IReadOnlyDictionary<int, string> _MediaSources = ReadOnlyDictionary<int, string>.Empty;
+  private IReadOnlyDictionary<int, byte[]> _MediaSources = ReadOnlyDictionary<int, byte[]>.Empty;
   private AttachmentInfo[] _Attachments = [];
   private string _Biography = string.Empty;
   private PersonPageSmartLayout _SmartLayout = new();
@@ -177,7 +177,7 @@ public partial class PersonPage : ContentPage
 
   public string?[] Captions => _Captions;
 
-  public IReadOnlyDictionary<int, string> MediaSources => _MediaSources;
+  public IReadOnlyDictionary<int, byte[]> MediaSources => _MediaSources;
 
   public AttachmentInfo[] Attachments => _Attachments;
 
@@ -515,7 +515,7 @@ public partial class PersonPage : ContentPage
                        RelativeInfo[] roots,
                        ImageSource[] photos,
                        string?[] captions,
-                       IReadOnlyDictionary<int, string> mediaSources,
+                       IReadOnlyDictionary<int, byte[]> mediaSources,
                        AttachmentInfo[] attachments,
                        string? bio,
                        string? gedcomDetails,

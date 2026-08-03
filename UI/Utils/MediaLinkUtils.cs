@@ -5,28 +5,31 @@ namespace GT4.UI.Utils;
 
 public static partial class MediaLinkUtils
 {
-
-  // Rewrites the <img src="media:<id>"> destinations Markdig emits for a "![caption](media:id)" reference
-  // into inline data URIs. An id absent from mediaSources (a dangling reference, or one belonging to
-  // another person) is left as-is, so the image is simply left broken instead of throwing.
-  public static string RewriteMediaSources(string html, IReadOnlyDictionary<int, string> mediaSources)
-  {
-    if (mediaSources.Count == 0)
-      return html;
-
-    return MediaSrcPattern().Replace(html, match =>
-      mediaSources.TryGetValue(int.Parse(match.Groups[1].Value), out var dataUri) ? $"src=\"{dataUri}\"" : match.Value);
-  }
-
-  // The ids a "![caption](media:id)" reference could ever target, read off the raw markdown (not the
-  // rendered HTML) so callers can decide what's worth encoding before any rendering happens.
+  // The ids a "![caption](media:id)" reference could ever target, so callers can decide what's worth
+  // resolving before any rendering happens.
   public static IReadOnlySet<int> ExtractReferencedIds(string? markdown) =>
     string.IsNullOrEmpty(markdown)
       ? ImmutableHashSet<int>.Empty
       : MediaLinkPattern().Matches(markdown).Select(match => int.Parse(match.Groups[1].Value)).ToHashSet();
-  [GeneratedRegex("src=\"media:(\\d+)\"")]
-  private static partial Regex MediaSrcPattern();
+
+  // A trailing percentage in an image's description -- "![Grandpa 50%](media:5)" -- asks for that share
+  // of the width the image would otherwise take, and the rest of the description stays the caption. Any
+  // description ending in 1-299% reads as a size, so "Sale 50%" sizes the image rather than captioning it.
+  public static (int? WidthPercent, string Caption) ParseImageDescription(string description)
+  {
+    var match = ImageWidthPattern().Match(description);
+    if (!match.Success)
+    {
+      return (null, description);
+    }
+
+    return (int.Parse(match.Groups[1].Value), description[..match.Index]);
+  }
 
   [GeneratedRegex("media:(\\d+)")]
   private static partial Regex MediaLinkPattern();
+
+  // The alternation is the whole range check: 100-299, or 1-99 with no leading zero; anything else stays caption.
+  [GeneratedRegex(@"(?:^|\s)([1-2][0-9]{2}|[1-9][0-9]?)%$")]
+  private static partial Regex ImageWidthPattern();
 }

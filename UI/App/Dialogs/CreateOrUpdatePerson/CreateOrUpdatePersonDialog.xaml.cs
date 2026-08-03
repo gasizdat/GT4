@@ -51,7 +51,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private BiologicalSexItem? _BiologicalSex;
   private PersonDataItem? _Biography;
   private Data? _GedcomData;
-  private IReadOnlyDictionary<int, string>? _MediaSources;
+  private IReadOnlyDictionary<int, byte[]>? _MediaSources;
   private bool _IsModified;
   private bool _NotReady => _BiologicalSex is null || _BirthDate is null || !_IsModified;
 
@@ -184,10 +184,10 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   public ICollection<PersonDataItem> Photos => _Photos;
 
-  // Re-encoding every photo to base64 is expensive enough to cache rather than redo on every binding
-  // read; the CollectionChanged handlers (above) and the biography load/insert hooks (below) are the
-  // only things that can make this stale.
-  public IReadOnlyDictionary<int, string> MediaSources =>
+  // Re-scanning the biography and re-unwrapping every photo is expensive enough to cache rather than
+  // redo on every binding read; the CollectionChanged handlers (above) and the biography load/insert
+  // hooks (below) are the only things that can make this stale.
+  public IReadOnlyDictionary<int, byte[]> MediaSources =>
     _MediaSources ??= MediaSourceUtils.BuildMediaSources(
       _Photos.Concat(_Attachments).Select(item => item.Info), _Biography?.Content as string);
 
