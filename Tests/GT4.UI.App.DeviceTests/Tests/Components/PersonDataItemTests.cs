@@ -35,7 +35,7 @@ public class PersonDataItemTests
     var original = new Data(10, [1, 2, 3], "image/png", DataCategory.PersonMainPhotoTagged);
     var item = new PersonDataItem(original, new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>()), TokenProvider(services), services.AlertService.Object);
 
-    item.Content = ImageUtils.ImageFromBytes([9, 9, 9]);
+    item.Content = new PhotoInfo(ImageUtils.ImageFromBytes([9, 9, 9]), null);
     var result = await item.ToDataAsync();
 
     Assert.NotNull(result);
@@ -50,7 +50,7 @@ public class PersonDataItemTests
     var original = new Data(10, [1, 2, 3], "image/png", DataCategory.PersonPhoto);
     var item = new PersonDataItem(original, new ImageDataConverter(Mock.Of<IHttpClientFactory>()), TokenProvider(services), services.AlertService.Object);
 
-    item.Content = ImageUtils.ImageFromBytes([9, 9, 9]);
+    item.Content = new PhotoInfo(ImageUtils.ImageFromBytes([9, 9, 9]), null);
     var result = await item.ToDataAsync();
 
     Assert.NotNull(result);

@@ -153,11 +153,11 @@ public partial class PersonInfoView : ContentView
         async Task UpdatePhotoAsync()
         {
           using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
-          var content = await ImageUtils.ResolvePhotoAsync(_DataConverterResolver, mainPhoto, GetDefaultImage(), token);
+          var photo = await ImageUtils.ResolvePhotoAsync(_DataConverterResolver, mainPhoto, GetDefaultImage(), token);
 
           MainThread.BeginInvokeOnMainThread(() =>
           {
-            _PhotoSource = content;
+            _PhotoSource = photo.Source;
             OnPropertyChanged(nameof(Photo));
           });
         }

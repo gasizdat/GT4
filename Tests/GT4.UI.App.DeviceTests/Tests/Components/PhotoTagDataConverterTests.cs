@@ -12,8 +12,8 @@ namespace GT4.UI.DeviceTests;
 /// Covers PhotoTagDataConverter.ToObjectAsync against a hand-built GedcomPhotoResidue envelope (the
 /// internal Encode/DecodeAsync pair isn't visible from this assembly, so the envelope is constructed
 /// directly in the documented [4-byte tag-length][UTF-8 tags][image bytes] layout) -- proving a tagged
-/// photo decodes to just its image portion, matching what ImageDataConverter would produce for the
-/// same raw bytes.
+/// photo decodes to its image portion plus caption, with the image matching what ImageDataConverter
+/// would produce for the same raw bytes.
 /// </summary>
 public class PhotoTagDataConverterTests
 {
@@ -45,7 +45,7 @@ public class PhotoTagDataConverterTests
   }
 
   [Fact]
-  public async Task ToObjectAsync_decodes_just_the_image_portion()
+  public async Task ToObjectAsync_decodes_the_image_portion_and_caption()
   {
     byte[] image = [10, 20, 30, 40, 50];
     var content = BuildEnvelope("0 OBJE\n1 TITL A caption\n", image);
@@ -53,8 +53,9 @@ public class PhotoTagDataConverterTests
 
     var result = await new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>()).ToObjectAsync(photo, CancellationToken.None);
 
-    var imageSource = Assert.IsAssignableFrom<ImageSource>(result);
-    Assert.Equal(image, await ReadBytesAsync(imageSource));
+    var photoInfo = Assert.IsType<PhotoInfo>(result);
+    Assert.Equal(image, await ReadBytesAsync(photoInfo.Source));
+    Assert.Equal("A caption", photoInfo.Caption);
   }
 
   [Fact]
@@ -67,8 +68,8 @@ public class PhotoTagDataConverterTests
     var taggedResult = await new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>()).ToObjectAsync(taggedPhoto, CancellationToken.None);
     var plainResult = await new ImageDataConverter(Mock.Of<IHttpClientFactory>()).ToObjectAsync(plainPhoto, CancellationToken.None);
 
-    var taggedBytes = await ReadBytesAsync(Assert.IsAssignableFrom<ImageSource>(taggedResult));
-    var plainBytes = await ReadBytesAsync(Assert.IsAssignableFrom<ImageSource>(plainResult));
+    var taggedBytes = await ReadBytesAsync(Assert.IsType<PhotoInfo>(taggedResult).Source);
+    var plainBytes = await ReadBytesAsync(Assert.IsType<PhotoInfo>(plainResult).Source);
     Assert.Equal(plainBytes, taggedBytes);
   }
 
@@ -88,10 +89,10 @@ public class PhotoTagDataConverterTests
     // then downgrades the resulting Data's Category from tagged to plain. A StreamImageSource (built the
     // same way ImageUtils.ImageFromBytes does) is used so the conversion doesn't depend on resolving a
     // real file from the test host's working directory.
-    var image = GT4.UI.Utils.ImageUtils.ImageFromBytes([1, 2, 3, 4]);
+    var photo = new PhotoInfo(GT4.UI.Utils.ImageUtils.ImageFromBytes([1, 2, 3, 4]), null);
 
-    var taggedResult = await new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>()).FromObjectAsync(image, CancellationToken.None);
-    var plainResult = await new ImageDataConverter(Mock.Of<IHttpClientFactory>()).FromObjectAsync(image, CancellationToken.None);
+    var taggedResult = await new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>()).FromObjectAsync(photo, CancellationToken.None);
+    var plainResult = await new ImageDataConverter(Mock.Of<IHttpClientFactory>()).FromObjectAsync(photo, CancellationToken.None);
 
     Assert.NotNull(taggedResult);
     Assert.NotNull(plainResult);
