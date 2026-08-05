@@ -9,10 +9,7 @@ namespace GT4.UI;
 // attached to the native window's root content so they fire from any page regardless of focus.
 public partial class App
 {
-  partial void RegisterFontScaleHotkeys(Microsoft.Maui.Controls.Window window)
-  {
-    window.HandlerChanged += (_, _) => AttachAccelerators(window);
-  }
+  partial void RegisterFontScaleHotkeys(Microsoft.Maui.Controls.Window window) => window.HandlerChanged += (_, _) => AttachAccelerators(window);
 
   private void AttachAccelerators(Microsoft.Maui.Controls.Window window)
   {
