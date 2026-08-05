@@ -98,8 +98,5 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
 
   public event PropertyChangedEventHandler? PropertyChanged;
 
-  private void OnContentChanged()
-  {
-    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Content)));
-  }
+  private void OnContentChanged() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Content)));
 }
