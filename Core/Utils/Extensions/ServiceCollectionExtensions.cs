@@ -6,9 +6,8 @@ namespace GT4.Core.Utils.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-  public static IServiceCollection AddCoreUtils(this IServiceCollection services)
-  {
-    return services
+  public static IServiceCollection AddCoreUtils(this IServiceCollection services) =>
+    services
 #if ANDROID
       // Android scoped storage needs MediaStore; every other target uses direct file access.
       .AddSingleton<IFileSystem, AndroidFileSystem>()
@@ -17,7 +16,6 @@ public static class ServiceCollectionExtensions
 #endif
       .AddSingleton<IStorage, Storage>()
       .AddSingleton<ICancellationTokenProvider, CancellationTokenProvider>();
-  }
 
   public static IServiceCollection AddActiveConfigurations(this IServiceCollection services, IConfigurationRoot configurationRoot)
   {
