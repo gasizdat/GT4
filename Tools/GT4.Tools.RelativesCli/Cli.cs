@@ -245,8 +245,7 @@ internal static class Cli
     return args[index++];
   }
 
-  private static void PrintUsage()
-  {
+  private static void PrintUsage() =>
     Console.Error.WriteLine("""
       Usage:
         GT4.Tools.RelativesCli --db <path.db> <command> [args]
@@ -265,5 +264,4 @@ internal static class Cli
 
       compare exits 2 when the two GEDCOM files differ, 0 when they agree.
       """);
-  }
 }
