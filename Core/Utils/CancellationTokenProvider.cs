@@ -2,13 +2,7 @@
 
 internal class CancellationTokenProvider : ICancellationTokenProvider
 {
-  public CancellationTokenHost CreateDbCancellationToken()
-  {
-    return new CancellationTokenHost(TimeSpan.FromSeconds(5));
-  }
+  public CancellationTokenHost CreateDbCancellationToken() => new CancellationTokenHost(TimeSpan.FromSeconds(5));
 
-  public CancellationTokenHost CreateShortOperationCancellationToken()
-  {
-    return new CancellationTokenHost(TimeSpan.FromSeconds(10));
-  }
+  public CancellationTokenHost CreateShortOperationCancellationToken() => new CancellationTokenHost(TimeSpan.FromSeconds(10));
 }
