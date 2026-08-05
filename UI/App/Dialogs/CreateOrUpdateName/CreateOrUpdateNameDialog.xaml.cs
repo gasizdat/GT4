@@ -248,10 +248,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
 
   public ICommand DialogCommand => _DialogCommand;
 
-  private void OnCreateFamily()
-  {
-    _Info.SetResult(NotReady ? null : new(GeneralName, ShowDeclensionNames ? MaleName : string.Empty, ShowDeclensionNames ? FemaleName : string.Empty));
-  }
+  private void OnCreateFamily() => _Info.SetResult(NotReady ? null : new(GeneralName, ShowDeclensionNames ? MaleName : string.Empty, ShowDeclensionNames ? FemaleName : string.Empty));
 
   private record NamesGroup(Name FirstName, Name? MaleName, Name? FemaleName);
 
