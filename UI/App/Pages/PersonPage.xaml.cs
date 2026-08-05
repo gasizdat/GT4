@@ -97,7 +97,7 @@ public partial class PersonPage : ContentPage
   public void ShowPersonInfo(Person person, bool addToNavigation)
   {
     ExpandAll = false;
-    Task.Run(async () => await GetPersonDataAsync(person, addToNavigation));
+    SafeTask.Run(() => GetPersonDataAsync(person, addToNavigation), _AlertService);
   }
 
   public bool ExpandAll
@@ -355,34 +355,18 @@ public partial class PersonPage : ContentPage
       var relativesProvider = project.RelativesProvider;
       var siblings = relativesProvider.GetSiblings(personFullInfo, parents);
       var roots = AssembleRoots(personFullInfo, parents, siblings, stepChildren, relativesProvider);
-
-      PhotoInfo[] photos;
-      Data[] photoData;
-
-      if (personFullInfo.MainPhoto is null)
-      {
-        if (personFullInfo.AdditionalPhotos.Length != 0)
-        {
-          throw new ApplicationException("Person photos inconsistency");
-        }
-
-        using var readResourceToken = _CancellationTokenProvider.CreateShortOperationCancellationToken();
-        var defaultImageResourceName = ImageUtils.DefaultPhotoResourceName(personFullInfo.BiologicalSex);
-        var defaultPhoto = await ImageUtils.ToBytesAsync(defaultImageResourceName, readResourceToken) ?? [];
-        var defaultSource = ImageUtils.ImageFromBytes(defaultPhoto);
-        photos = [new PhotoInfo(defaultSource, null)];
-        photoData = [];
-      }
-      else
-      {
-        photoData = [personFullInfo.MainPhoto, .. personFullInfo.AdditionalPhotos];
-        var defaultImageResourceName = ImageUtils.DefaultPhotoResourceName(personFullInfo.BiologicalSex);
-        var fallback = ImageUtils.ImageFromRawResource(defaultImageResourceName);
-        photos = await Task.WhenAll(photoData.Select(data =>
-          ImageUtils.ResolvePhotoAsync(_DataConverterResolver, data, fallback, token)));
-      }
-
+      var (photos, photoData) = await LoadPhotosAsync(personFullInfo, token);
       var mediaSources = MediaSourceUtils.BuildMediaSources([.. photoData, .. personFullInfo.Attachments], bioTask.Result as string);
+      var data = new PersonPageData(
+        personFullInfo,
+        roots,
+        photos,
+        mediaSources,
+        attachments,
+        bioTask.Result as string,
+        gedcomTask.Result as string,
+        familyDetails,
+        addToNavigation);
 
       // UpdateUI touches the project document again on the UI thread; SafeTask.RunOnMainThread keeps
       // an escaped exception (e.g. the project closed while backgrounding) from going unobserved.
@@ -394,12 +378,7 @@ public partial class PersonPage : ContentPage
           return;
         }
 
-        UpdateUI(personFullInfo,
-                 roots,
-                 photos, mediaSources, attachments, bioTask.Result as string,
-                 gedcomTask.Result as string,
-                 familyDetails,
-                 addToNavigation);
+        UpdateUI(data);
       }, _AlertService);
     }
     catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
@@ -415,6 +394,31 @@ public partial class PersonPage : ContentPage
       await MainThread.InvokeOnMainThreadAsync(() => _NavigationService.GoToAsync("..", true));
       return;
     }
+  }
+
+  private async Task<(PhotoInfo[] Photos, Data[] PhotoData)> LoadPhotosAsync(PersonFullInfo personFullInfo, CancellationToken token)
+  {
+    if (personFullInfo.MainPhoto is null)
+    {
+      if (personFullInfo.AdditionalPhotos.Length != 0)
+      {
+        throw new ApplicationException("Person photos inconsistency");
+      }
+
+      using var readResourceToken = _CancellationTokenProvider.CreateShortOperationCancellationToken();
+      var defaultImageResourceName = ImageUtils.DefaultPhotoResourceName(personFullInfo.BiologicalSex);
+      var defaultPhoto = await ImageUtils.ToBytesAsync(defaultImageResourceName, readResourceToken) ?? [];
+      var defaultSource = ImageUtils.ImageFromBytes(defaultPhoto);
+      return ([new PhotoInfo(defaultSource, null)], []);
+    }
+
+    Data[] photoData = [personFullInfo.MainPhoto, .. personFullInfo.AdditionalPhotos];
+    var fallbackResourceName = ImageUtils.DefaultPhotoResourceName(personFullInfo.BiologicalSex);
+    var fallback = ImageUtils.ImageFromRawResource(fallbackResourceName);
+    var photos = await Task.WhenAll(photoData.Select(data =>
+      ImageUtils.ResolvePhotoAsync(_DataConverterResolver, data, fallback, token)));
+
+    return (photos, photoData);
   }
 
   private static RelativeInfo[] AssembleRoots(
@@ -443,22 +447,14 @@ public partial class PersonPage : ContentPage
     return [.. roots];
   }
 
-  public void UpdateUI(PersonFullInfo personFullInfo,
-                       RelativeInfo[] roots,
-                       PhotoInfo[] photos,
-                       IReadOnlyDictionary<int, byte[]> mediaSources,
-                       AttachmentInfo[] attachments,
-                       string? bio,
-                       string? gedcomDetails,
-                       string? familyDetails,
-                       bool addToNavigation)
+  private void UpdateUI(PersonPageData data)
   {
-    _PersonFullInfo = personFullInfo;
-    _Photos = photos;
-    _MediaSources = mediaSources;
-    _Attachments = attachments;
-    _Biography = CombineBiography(bio, gedcomDetails, familyDetails);
-    _AllRoots = roots;
+    _PersonFullInfo = data.PersonFullInfo;
+    _Photos = data.Photos;
+    _MediaSources = data.MediaSources;
+    _Attachments = data.Attachments;
+    _Biography = CombineBiography(data.Bio, data.GedcomDetails, data.FamilyDetails);
+    _AllRoots = data.Roots;
     // Only after the new roots land: with the panel open, ResetFilterData re-fetches immediately,
     // snapshotting the page's current person set.
     FilterView.ResetFilterData();
@@ -467,7 +463,7 @@ public partial class PersonPage : ContentPage
 
     this.RefreshView();
 
-    if (addToNavigation)
+    if (data.AddToNavigation)
     {
       AddToNavigation(_PersonFullInfo);
     }
