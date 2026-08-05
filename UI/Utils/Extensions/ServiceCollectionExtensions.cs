@@ -11,9 +11,8 @@ namespace GT4.UI.Utils.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-  public static IServiceCollection AddUIUtils(this IServiceCollection services)
-  {
-    return services
+  public static IServiceCollection AddUIUtils(this IServiceCollection services) =>
+    services
       .AddHttpClient()
       .AddSingleton<IDateFormatter, DateFormatter>()
       .AddSingleton<INameFormatter, NameFormatter>()
@@ -47,5 +46,4 @@ public static class ServiceCollectionExtensions
       .AddKeyedSingleton<IComparer<PersonInfo>, PersonInfoComparer>(NameFormat.PersonInitials)
       .AddTransient<SettingEditorsResolver>(sp => () => sp.GetKeyedServices<ISettingEditor>(KeyedService.AnyKey))
       ;
-  }
 }
