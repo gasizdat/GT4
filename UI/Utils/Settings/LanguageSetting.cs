@@ -29,8 +29,5 @@ public class LanguageSetting
     set => _InteractiveConfiguration?.SetKey(LanguageSection, value.Code);
   }
 
-  public void ResetToDefault()
-  {
-    _InteractiveConfiguration?.RemoveKey(LanguageSection);
-  }
+  public void ResetToDefault() => _InteractiveConfiguration?.RemoveKey(LanguageSection);
 }
