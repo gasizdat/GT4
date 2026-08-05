@@ -6,11 +6,9 @@ namespace GT4.Core.Gedcom.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-  public static IServiceCollection AddGedcom(this IServiceCollection services)
-  {
-    return services
+  public static IServiceCollection AddGedcom(this IServiceCollection services) =>
+    services
       .AddSingleton<IGedcomMediaReader, FileGedcomMediaReader>()
       .AddSingleton<IGedcomImporter, GedcomImporter>()
       .AddSingleton<IGedcomExporter, GedcomExporter>();
-  }
 }
