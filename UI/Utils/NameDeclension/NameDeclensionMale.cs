@@ -70,10 +70,7 @@ partial class NameDeclension
     return ret;
   }
 
-  private static string ToMalePatronymicEN(string firstName)
-  {
-    return firstName;
-  }
+  private static string ToMalePatronymicEN(string firstName) => firstName;
 
   private static string ToMaleLastNameRU(string familyName)
   {
