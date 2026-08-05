@@ -234,10 +234,7 @@ public partial class FamilyPage : ContentPage
     Refresh();
   }
 
-  protected async Task OnOpenPerson(PersonInfo familyMember)
-  {
-    await _NavigationService.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { ["PersonInfo"] = familyMember });
-  }
+  protected async Task OnOpenPerson(PersonInfo familyMember) => await _NavigationService.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { ["PersonInfo"] = familyMember });
 
   protected async Task OnPageCommand(object parameter)
   {
