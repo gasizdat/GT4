@@ -5,9 +5,8 @@ namespace GT4.UI.Utils.Formatters;
 
 internal class NameTypeFormatter : INameTypeFormatter
 {
-  public string ToString(NameType type)
-  {
-    return (type & NameType.NoDeclension) switch
+  public string ToString(NameType type) =>
+    (type & NameType.NoDeclension) switch
     {
       NameType.FirstName => UIStrings.FieldFirstName,
       NameType.LastName => UIStrings.FieldLastName,
@@ -15,5 +14,4 @@ internal class NameTypeFormatter : INameTypeFormatter
       NameType.FamilyName => UIStrings.FieldFamilyName,
       _ => string.Empty
     };
-  }
 }
