@@ -17,9 +17,7 @@ public static class PersonFamilyDetails
   /// <summary>
   /// A couple's preserved GEDCOM tags are keyed by the pair rather than carried on either person, so they
   /// are gathered from the spouse relationships instead of arriving on <see cref="PersonFullInfo"/> the way
-  /// the person's own residue does. Several marriages to one spouse are one couple and one block. The media
-  /// their family record carried joins that block as a link, so the documents about the marriage are reached
-  /// from the narrative about it and not only from the undifferentiated attachments list.
+  /// the person's own residue does. Several marriages to one spouse are one couple and one block.
   /// </summary>
   public static async Task<string?> ReadAsync(
     IProjectDocument project,
