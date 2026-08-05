@@ -49,8 +49,5 @@ public class TemplateInterpolator
     return ret;
   }
 
-  public static string Format(string template, IDictionary<string, string> replacements)
-  {
-    return Format(template, replacements.ToDictionary(k => k.Key, v => new Func<string>(() => v.Value)));
-  }
+  public static string Format(string template, IDictionary<string, string> replacements) => Format(template, replacements.ToDictionary(k => k.Key, v => new Func<string>(() => v.Value)));
 }
