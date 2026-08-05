@@ -45,10 +45,7 @@ public class NameFormatter : INameFormatter
     return names;
   }
 
-  protected static string GetNameValue(Name? name)
-  {
-    return name is not null ? name.Value : string.Empty;
-  }
+  protected static string GetNameValue(Name? name) => name is not null ? name.Value : string.Empty;
 
   protected static string[] GetNameParts(PersonInfo personInfo, NameType[] types)
   {
