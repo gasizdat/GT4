@@ -28,9 +28,8 @@ public struct Date
     return Create(code, status);
   }
 
-  public static Date Create(DateTime dateTime)
-  {
-    return new Date
+  public static Date Create(DateTime dateTime) =>
+    new Date
     {
       Sign = 1,
       Day = dateTime.Day,
@@ -38,7 +37,6 @@ public struct Date
       Year = dateTime.Year,
       Status = DateStatus.WellKnown
     };
-  }
 
   public int Sign { get; init; }
   public int Year { get; init; }
@@ -84,12 +82,10 @@ public struct Date
     return a.Code != b.Code || a.Status != b.Status;
   }
 
-  public static DateStatus GetWorstStatus(params Date[] dates)
-  {
-    return dates
+  public static DateStatus GetWorstStatus(params Date[] dates) =>
+    dates
       .Select(d => d.Status)
       .Max();
-  }
 
   public static DateSpan operator -(Date to, Date from)
   {
@@ -138,15 +134,9 @@ public struct Date
     }
   }
 
-  public override bool Equals(object? obj)
-  {
-    return obj is Date date ? this == date : false;
-  }
+  public override bool Equals(object? obj) => obj is Date date ? this == date : false;
 
-  public override int GetHashCode()
-  {
-    return HashCode.Combine(Code, Status);
-  }
+  public override int GetHashCode() => HashCode.Combine(Code, Status);
 
   // There is no year 0: 1 B.C. is followed directly by 1 A.D., so B.C. year N is astronomical year 1-N.
   private int SignedYear => Sign < 0 ? 1 - Year : Year;

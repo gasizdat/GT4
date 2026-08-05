@@ -53,12 +53,10 @@ public partial class CreateOrUpdateProjectDialog : ContentPage
     }
   }
 
-  private void OnCreateProject()
-  {
+  private void OnCreateProject() =>
     _Info.SetResult(new ProjectInfo(
       Description: _ProjectDescription,
       Name: _ProjectName,
       Revision: null,
       Origin: default!));
-  }
 }

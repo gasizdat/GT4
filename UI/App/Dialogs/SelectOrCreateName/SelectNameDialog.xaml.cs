@@ -195,8 +195,5 @@ public partial class SelectNameDialog : ContentPage
     CurrentName = Names?.SingleOrDefault(n => n.Info.Id == name.Id);
   }
 
-  public void OnSelectName()
-  {
-    _Info.SetResult(_NotReady ? null : _CurrentName?.Info);
-  }
+  public void OnSelectName() => _Info.SetResult(_NotReady ? null : _CurrentName?.Info);
 }

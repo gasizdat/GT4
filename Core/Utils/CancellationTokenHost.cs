@@ -14,8 +14,5 @@ public class CancellationTokenHost : IDisposable
   public CancellationToken Token => _TokenSource.Token;
   public static implicit operator CancellationToken(CancellationTokenHost cancellationTokenHost) => cancellationTokenHost.Token;
 
-  public void Dispose()
-  {
-    _TokenSource.Dispose();
-  }
+  public void Dispose() => _TokenSource.Dispose();
 }

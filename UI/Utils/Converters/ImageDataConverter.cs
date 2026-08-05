@@ -26,8 +26,5 @@ public sealed class ImageDataConverter : IDataConverter
       Category: default);
   }
 
-  public Task<object?> ToObjectAsync(Data? data, CancellationToken token)
-  {
-    return Task.FromResult<object?>(data is null ? null : new PhotoInfo(ImageUtils.ImageFromBytes(data.Content), null));
-  }
+  public Task<object?> ToObjectAsync(Data? data, CancellationToken token) => Task.FromResult<object?>(data is null ? null : new PhotoInfo(ImageUtils.ImageFromBytes(data.Content), null));
 }

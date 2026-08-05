@@ -165,10 +165,7 @@ internal class ProjectList : IProjectList
   private static bool CompareNames(string name1, string name2) =>
     string.Equals(name1, name2, StringComparison.InvariantCultureIgnoreCase);
 
-  private void InvalidateItems()
-  {
-    _Items.SetTarget(null);
-  }
+  private void InvalidateItems() => _Items.SetTarget(null);
 
   private FileDescription GetCacheFileDescription(string projectName)
   {

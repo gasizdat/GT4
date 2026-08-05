@@ -78,8 +78,5 @@ public partial class ProjectRevisionsPage : ContentPage
     .Revisions
     .Select(r => new ProjectRevisionItem(r));
 
-  private void OnNavigatedTo(object sender, NavigatedToEventArgs e)
-  {
-    OnPropertyChanged(nameof(Revisions));
-  }
+  private void OnNavigatedTo(object sender, NavigatedToEventArgs e) => OnPropertyChanged(nameof(Revisions));
 }

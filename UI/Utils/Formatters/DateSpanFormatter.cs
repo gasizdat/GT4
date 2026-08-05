@@ -56,40 +56,31 @@ internal class DateSpanFormatter : IDateSpanFormatter
   protected static string TwoLetterISOLanguageName =>
     System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
 
-  protected static string DaysFormat(int days)
-  {
-    return TwoLetterISOLanguageName switch
+  protected static string DaysFormat(int days) =>
+    TwoLetterISOLanguageName switch
     {
       _ when days == 0 => string.Empty,
       "ru" => RussianNumeralsDeclension(days, "{0} день", "{0} дня", "{0} дней"),
       _ => EnglishNumeralsDeclension(days, "{0} day", "{0} days")
     };
-  }
 
-  protected static string MonthsFormat(int months)
-  {
-    return TwoLetterISOLanguageName switch
+  protected static string MonthsFormat(int months) =>
+    TwoLetterISOLanguageName switch
     {
       _ when months == 0 => string.Empty,
       "ru" => RussianNumeralsDeclension(months, "{0} месяц", "{0} месяца", "{0} месяцев"),
       _ => EnglishNumeralsDeclension(months, "{0} month", "{0} months")
     };
-  }
 
-  protected static string YearsFormat(int years)
-  {
-    return TwoLetterISOLanguageName switch
+  protected static string YearsFormat(int years) =>
+    TwoLetterISOLanguageName switch
     {
       _ when years == 0 => string.Empty,
       "ru" => RussianNumeralsDeclension(years, "{0} год", "{0} года", "{0} лет"),
       _ => EnglishNumeralsDeclension(years, "{0} year", "{0} years")
     };
-  }
 
-  protected static string EnglishNumeralsDeclension(int value, string single, string many)
-  {
-    return string.Format(value == 1 ? single : many, value);
-  }
+  protected static string EnglishNumeralsDeclension(int value, string single, string many) => string.Format(value == 1 ? single : many, value);
 
   protected static string RussianNumeralsDeclension(int value, string single, string several, string many)
   {

@@ -97,12 +97,9 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   public IKinshipFinder KinshipFinder => _KinshipFinder;
   public long ProjectRevision => Interlocked.Read(ref _ProjectRevision);
 
-  public void SetRevision(long revision)
-  {
-    // Deliberately no disposed check: a transaction committing while a dispose drains the gate must
-    // still record the revision, so the host flushes the cache back to the origin.
-    Interlocked.Exchange(ref _ProjectRevision, revision);
-  }
+  // Deliberately no disposed check: a transaction committing while a dispose drains the gate must
+  // still record the revision, so the host flushes the cache back to the origin.
+  public void SetRevision(long revision) => Interlocked.Exchange(ref _ProjectRevision, revision);
 
   internal SqliteConnection Connection => _Connection;
 

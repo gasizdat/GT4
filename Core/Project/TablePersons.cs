@@ -142,8 +142,5 @@ internal partial class TablePersons : TableBase, ITablePersons
     return person;
   }
 
-  private void InvalidateItems()
-  {
-    _Items.SetTarget(null);
-  }
+  private void InvalidateItems() => _Items.SetTarget(null);
 }

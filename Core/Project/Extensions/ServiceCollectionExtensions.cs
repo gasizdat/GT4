@@ -6,11 +6,9 @@ namespace GT4.Core.Project.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-  public static IServiceCollection AddDefaultProject(this IServiceCollection services)
-  {
-    return services
+  public static IServiceCollection AddDefaultProject(this IServiceCollection services) =>
+    services
       .AddSingleton<IProjectList, ProjectList>()
       .AddSingleton<ICurrentProjectProvider, CurrentProjectProvider>()
       .AddSingleton<IProjectDocumentFactory, ProjectDocumentFactory>();
-  }
 }

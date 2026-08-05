@@ -5,13 +5,11 @@ namespace GT4.UI.Utils.Formatters;
 
 internal class BiologicalSexFormatter : IBiologicalSexFormatter
 {
-  public string ToString(BiologicalSex? biologicalSex)
-  {
-    return biologicalSex switch
+  public string ToString(BiologicalSex? biologicalSex) =>
+    biologicalSex switch
     {
       BiologicalSex.Male => UIStrings.BiologicalSexMale,
       BiologicalSex.Female => UIStrings.BiologicalSexFemale,
       _ => UIStrings.BiologicalSexUnknown
     };
-  }
 }

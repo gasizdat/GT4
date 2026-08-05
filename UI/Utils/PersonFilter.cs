@@ -59,10 +59,7 @@ public sealed class PersonFilter
   }
 
   /// <summary>Sets which persons (by Id) are married, e.g. from a lazily-fetched relatives lookup.</summary>
-  public void SetMarriedIds(IEnumerable<int> marriedIds)
-  {
-    _MarriedIds = [.. marriedIds];
-  }
+  public void SetMarriedIds(IEnumerable<int> marriedIds) => _MarriedIds = [.. marriedIds];
 
   public void Clear()
   {

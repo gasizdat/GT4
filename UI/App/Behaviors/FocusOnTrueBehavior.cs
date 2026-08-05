@@ -80,10 +80,7 @@ public sealed class FocusOnTrueBehavior : Behavior<VisualElement>
     TryFocusIfNeeded();
   }
 
-  void OnUnloaded(object? sender, EventArgs e)
-  {
-    _isLoaded = false;
-  }
+  void OnUnloaded(object? sender, EventArgs e) => _isLoaded = false;
 
   void TryFocusIfNeeded()
   {

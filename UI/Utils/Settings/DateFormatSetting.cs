@@ -53,8 +53,5 @@ internal sealed class DateFormatSetting : ISettingEditor
     set => _InteractiveConfiguration?.SetKey(_FormatSection, value);
   }
 
-  public void ResetToDefault()
-  {
-    _InteractiveConfiguration?.RemoveKey(_FormatSection);
-  }
+  public void ResetToDefault() => _InteractiveConfiguration?.RemoveKey(_FormatSection);
 }

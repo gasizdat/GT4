@@ -280,8 +280,5 @@ public partial class SelectDateDialog : ContentPage
 
   public ICommand DialogCommand => _DialogCommand;
 
-  private void OnSelectDate()
-  {
-    _Info.SetResult(_NotReady ? null : Date);
-  }
+  private void OnSelectDate() => _Info.SetResult(_NotReady ? null : Date);
 }

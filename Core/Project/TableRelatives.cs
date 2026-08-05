@@ -226,15 +226,13 @@ internal class TableRelatives : TableBase, ITableRelatives
     return ret;
   }
 
-  private static bool IsBackwardDirection(Relative relative)
-  {
-    return relative.Type switch
+  private static bool IsBackwardDirection(Relative relative) =>
+    relative.Type switch
     {
       RelationshipType.Child => true,
       RelationshipType.AdoptiveChild => true,
       _ => false
     };
-  }
 
   private static void AddCommandParameters(Person person, Relative relative, ProjectCommand command, bool? backward = null)
   {

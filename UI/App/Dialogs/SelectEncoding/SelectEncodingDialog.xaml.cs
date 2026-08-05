@@ -47,8 +47,5 @@ public partial class SelectEncodingDialog : ContentPage
 
   public ICommand DialogCommand => _DialogCommand;
 
-  private void OnSelectEncoding()
-  {
-    _Info.SetResult(_SelectedEncoding?.GetEncoding());
-  }
+  private void OnSelectEncoding() => _Info.SetResult(_SelectedEncoding?.GetEncoding());
 }

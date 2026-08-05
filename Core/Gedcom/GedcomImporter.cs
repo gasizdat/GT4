@@ -313,16 +313,14 @@ internal sealed class GedcomImporter : IGedcomImporter
     }
   }
 
-  private static HashSet<(string Child, string Family)> CollectAdoptedLinks(IEnumerable<GedcomNode> individuals)
-  {
-    return individuals
+  private static HashSet<(string Child, string Family)> CollectAdoptedLinks(IEnumerable<GedcomNode> individuals) =>
+    individuals
       .Where(individual => individual.Xref is not null)
       .SelectMany(individual => individual
         .ChildrenWithTag(GedcomTags.FamilyChild)
         .Where(familyChild => familyChild.Value is not null && IsAdoptedLink(familyChild))
         .Select(familyChild => (Child: individual.Xref!, Family: familyChild.Value!)))
       .ToHashSet();
-  }
 
   private static bool IsAdoptedLink(GedcomNode familyChild)
   {

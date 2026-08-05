@@ -13,13 +13,7 @@ public record class FileDescription(
   string? MimeType
 )
 {
-  public override int GetHashCode()
-  {
-    return HashCode.Combine(Directory.GetHashCode(), FileName.GetHashCode());
-  }
+  public override int GetHashCode() => HashCode.Combine(Directory.GetHashCode(), FileName.GetHashCode());
 
-  public virtual bool Equals(FileDescription? other)
-  {
-    return Directory == other?.Directory && FileName == other?.FileName;
-  }
+  public virtual bool Equals(FileDescription? other) => Directory == other?.Directory && FileName == other?.FileName;
 }
