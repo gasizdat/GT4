@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
 
 namespace GT4.UI.Utils;
 
@@ -7,8 +9,26 @@ public delegate bool ObservableCollectionFilterPredicate<T>(FilteredObservableCo
 
 public class FilteredObservableCollection<T> : ICollection<T>, ICollection
 {
+  // ObservableCollection<T> has no bulk-populate API, so an initial load (Clear then AddRange of N
+  // items) fires N individual Insert notifications. That's a per-row cost the CollectionView adapter
+  // pays on every page load. Populating from empty via this instead fires a single Reset.
+  private sealed class BulkObservableCollection<TItem> : ObservableCollection<TItem>
+  {
+    public void ReplaceAll(IEnumerable<TItem> items)
+    {
+      Items.Clear();
+      foreach (var item in items)
+      {
+        Items.Add(item);
+      }
+      OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
+      OnPropertyChanged(new PropertyChangedEventArgs("Item[]"));
+      OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+    }
+  }
+
   private readonly List<T> _Items = new();
-  private readonly ObservableCollection<T> _InnerCollection = new();
+  private readonly BulkObservableCollection<T> _InnerCollection = new();
   private ObservableCollectionFilterPredicate<T>? _Filter = null;
 
   public FilteredObservableCollection()
@@ -47,6 +67,13 @@ public class FilteredObservableCollection<T> : ICollection<T>, ICollection
   public void Update()
   {
     var matched = _Items.Where(item => _Filter?.Invoke(this, item) == true).ToArray();
+
+    if (_InnerCollection.Count == 0 && matched.Length > 0)
+    {
+      _InnerCollection.ReplaceAll(matched);
+      return;
+    }
+
     var matchedSet = new HashSet<T>(matched);
 
     for (var i = _InnerCollection.Count - 1; i >= 0; i--)

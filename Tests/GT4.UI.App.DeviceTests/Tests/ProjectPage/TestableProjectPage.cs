@@ -56,11 +56,12 @@ internal sealed class TestableProjectPage : ProjectPage
     // ProjectPage's own public properties regardless of whether a load actually ran, so any
     // PropertyChanged-based signal fires the instant RefreshView() is called -- well before the
     // background fetch it kicks off actually finishes. EnsureFamiliesLoaded's Clear+AddRange both
-    // happen together on fetch completion (a Reset immediately followed by an Add), so filtering to
-    // Add isolates genuine data arrival from that earlier RefreshView() noise.
+    // populate from empty, so both raise Reset (FilteredObservableCollection batches an
+    // empty-to-N population into one Reset instead of per-item Add); filtering to a non-empty
+    // Reset isolates genuine data arrival from the empty Reset the preceding Clear() raises.
     ((INotifyCollectionChanged)Families).CollectionChanged += (_, e) =>
     {
-      if (e.Action == NotifyCollectionChangedAction.Add)
+      if (e.Action == NotifyCollectionChangedAction.Reset && Families.Any())
       {
         _CompletedLoads++;
       }
@@ -83,7 +84,7 @@ internal sealed class TestableProjectPage : ProjectPage
   /// How many background families loads have added items to the underlying collection. A
   /// level-triggered counter, unlike a one-shot event subscription, can't miss a completion that
   /// lands before the caller starts waiting. Note: a reload that legitimately resolves to zero
-  /// families never fires an Add and so won't satisfy a wait -- not a concern for today's callers,
+  /// families never fires a non-empty Reset and so won't satisfy a wait -- not a concern for today's callers,
   /// which all mock a non-empty family list.
   /// </summary>
   public int CompletedLoads => _CompletedLoads;
