@@ -7,6 +7,4 @@ end_of_line = lf
 insert_final_newline = true
 
 csharp_style_var_for_built_in_types = true:suggestion
-
-# One rule is deliberately absent because the code has not settled it yet:
-#   csharp_style_expression_bodied_methods - 195 arrow vs 69 block among eligible methods (#229)
+csharp_style_expression_bodied_methods = true:suggestion
