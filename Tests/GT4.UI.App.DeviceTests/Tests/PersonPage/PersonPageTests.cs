@@ -160,6 +160,39 @@ public class PersonPageTests
   }
 
   [Fact]
+  public async Task Multiple_marriages_to_the_same_spouse_collapse_into_one_family_details_block()
+  {
+    var services = new TestServices();
+    var content = BuildTaggedPhotoContent("0 OBJE\n1 FILE wedding.jpg\n1 TITL Their wedding\n", [1, 2, 3]);
+    var wedding = new Data(30, content, "image/jpeg", DataCategory.PersonAttachment);
+    var spouse = new PersonInfo(2, default(Date), null, BiologicalSex.Female, [N(3, "Anna", NameType.FirstName)], null);
+    var firstMarriage = Date.Create(1990, 1, 1, DateStatus.WellKnown);
+    var secondMarriage = Date.Create(1995, 6, 1, DateStatus.WellKnown);
+    var person = CreateSamplePerson() with
+    {
+      Attachments = [wedding],
+      RelativeInfos =
+      [
+        new RelativeInfo(spouse, RelationshipType.Spouse, firstMarriage, Generation.Zero, Consanguinity.Zero),
+        new RelativeInfo(spouse, RelationshipType.Spouse, secondMarriage, Generation.Zero, Consanguinity.Zero)
+      ]
+    };
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(person);
+    services.PersonData
+      .Setup(p => p.GetPersonDataSetAsync(It.IsAny<Person[]>(), DataCategory.PersonAttachment, It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new Dictionary<int, Data[]> { [2] = [wedding] });
+    var page = await CreatePageAsync(services);
+
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+
+    var occurrences = page.Biography.Split("(person:2)").Length - 1;
+    Assert.Equal(1, occurrences);
+    Assert.Contains("[Their wedding](attachment:30)", page.Biography);
+  }
+
+  [Fact]
   public async Task Media_the_spouse_does_not_carry_is_left_out_of_the_family_details_block()
   {
     var services = new TestServices();
