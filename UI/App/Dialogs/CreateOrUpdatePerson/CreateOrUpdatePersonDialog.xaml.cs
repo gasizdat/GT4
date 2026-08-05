@@ -701,13 +701,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     IsModified = true;
   }
 
-  private void SetUndefinedBirthDate()
-  {
-    BirthDate = Date.Create(0, DateStatus.Unknown);
-  }
+  private void SetUndefinedBirthDate() => BirthDate = Date.Create(0, DateStatus.Unknown);
 
-  private void SetUndefinedDeathDate()
-  {
-    DeathDate = Date.Create(0, DateStatus.Unknown);
-  }
+  private void SetUndefinedDeathDate() => DeathDate = Date.Create(0, DateStatus.Unknown);
 }
