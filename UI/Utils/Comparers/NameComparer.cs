@@ -4,8 +4,5 @@ namespace GT4.UI.Utils.Comparers;
 
 public class NameComparer : IComparer<Name>
 {
-  public int Compare(Name? x, Name? y)
-  {
-    return x?.Value.CompareTo(y?.Value) ?? 0;
-  }
+  public int Compare(Name? x, Name? y) => x?.Value.CompareTo(y?.Value) ?? 0;
 }
