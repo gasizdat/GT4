@@ -3,17 +3,12 @@
 internal class FileSystem : IFileSystem
 {
 
-  public string ToPath(DirectoryDescription directoryDescription)
-  {
-    return Path.Combine(
+  public string ToPath(DirectoryDescription directoryDescription) =>
+    Path.Combine(
       Environment.GetFolderPath(directoryDescription.Root),
       Path.Combine(directoryDescription.Path));
-  }
 
-  public string ToPath(FileDescription fileDescription)
-  {
-    return Path.Combine(ToPath(fileDescription.Directory), fileDescription.FileName);
-  }
+  public string ToPath(FileDescription fileDescription) => Path.Combine(ToPath(fileDescription.Directory), fileDescription.FileName);
 
   public void RemoveFile(FileDescription fileDescription)
   {
@@ -75,10 +70,7 @@ internal class FileSystem : IFileSystem
     targetStream.Close();
   }
 
-  public bool FileExists(FileDescription FileExists)
-  {
-    return File.Exists(ToPath(FileExists));
-  }
+  public bool FileExists(FileDescription FileExists) => File.Exists(ToPath(FileExists));
 
   public DateTime GetLastWriteTime(FileDescription fileDescription)
   {
