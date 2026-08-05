@@ -102,10 +102,7 @@ public sealed class SetCursorOnTrueBehavior : Behavior<InputView>
     TrySetCursorIfNeeded();
   }
 
-  void OnUnloaded(object? sender, EventArgs e)
-  {
-    _IsLoaded = false;
-  }
+  void OnUnloaded(object? sender, EventArgs e) => _IsLoaded = false;
 
   void TrySetCursorIfNeeded()
   {
