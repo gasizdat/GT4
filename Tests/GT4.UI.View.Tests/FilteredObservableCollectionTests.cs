@@ -145,6 +145,21 @@ public class FilteredObservableCollectionTests
   }
 
   [Fact]
+  public void AddRange_InitialPopulation_RaisesSingleResetEvent()
+  {
+    var collection = new FilteredObservableCollection<int>();
+    collection.Filter = (_, _) => true;
+
+    var events = new List<NotifyCollectionChangedEventArgs>();
+    collection.Items.CollectionChanged += (_, e) => events.Add(e);
+
+    collection.AddRange([1, 2, 3, 4, 5]);
+
+    events.Should().ContainSingle().Which.Action.Should().Be(NotifyCollectionChangedAction.Reset);
+    collection.Items.Should().Equal(1, 2, 3, 4, 5);
+  }
+
+  [Fact]
   public void Update_RemovesStaleItemsWithoutResetting()
   {
     var threshold = 0;
