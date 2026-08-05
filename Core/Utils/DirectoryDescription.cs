@@ -13,9 +13,6 @@ public record class DirectoryDescription(Environment.SpecialFolder Root, string[
   }
 
 
-  public virtual bool Equals(DirectoryDescription? other)
-  {
-    return Root == other?.Root && Path.SequenceEqual(other.Path, StringComparer.Ordinal);
-  }
+  public virtual bool Equals(DirectoryDescription? other) => Root == other?.Root && Path.SequenceEqual(other.Path, StringComparer.Ordinal);
 
 }
