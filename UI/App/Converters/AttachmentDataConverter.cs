@@ -31,8 +31,5 @@ public sealed class AttachmentDataConverter : IDataConverter
     return Task.FromResult(ret);
   }
 
-  public async Task<object?> ToObjectAsync(Data? data, CancellationToken token)
-  {
-    return await GedcomPhotoResidue.ExtractFileNameAsync(data, token);
-  }
+  public async Task<object?> ToObjectAsync(Data? data, CancellationToken token) => await GedcomPhotoResidue.ExtractFileNameAsync(data, token);
 }
