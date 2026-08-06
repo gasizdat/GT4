@@ -161,13 +161,10 @@ public partial class PersonInfoView : ContentView
 
           MainThread.BeginInvokeOnMainThread(() =>
           {
-            // The view may have been recycled and disconnected while this was in flight (e.g.
-            // SafeBindableLayout removing it during a CollectionView cell recycle) -- applying a
-            // stale result to a torn-down view's bindable properties is unsafe. A reused (not
-            // disconnected) view can also have moved on to a different Person by the time this
-            // continuation runs -- SafeBindableLayout.Rebuild rebinds BindingContext on existing
-            // children rather than always disconnecting them, so Handler alone no longer proves
-            // this result is still for the Person that started this resolution.
+            // Handler is null if the view was disconnected (e.g. removed during a CollectionView
+            // recycle); generation catches a view that was instead reused for a different Person
+            // while this was in flight -- SafeBindableLayout.Rebuild rebinds BindingContext without
+            // disconnecting.
             if (Handler is null || generation != _PhotoGeneration)
             {
               return;
