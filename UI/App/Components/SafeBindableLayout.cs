@@ -109,12 +109,34 @@ public class SafeBindableLayout : FlexLayout
     });
   }
 
+  // A rebuild is triggered by ItemsSource being reassigned wholesale (a CollectionView cell
+  // recycling onto a different family, most often) rather than a granular diff, but the new source's
+  // items still map onto the same ItemTemplate -- so an existing child at index i can be repointed at
+  // the new item i via BindingContext instead of being torn down and recreated. Only the count
+  // difference (if any) goes through Insert/RemoveChildren. Reusing a child this way relies on
+  // PersonInfoView's own OnPersonChanged to reset its per-item state (photo, generation) when
+  // BindingContext moves on -- ItemTemplate never varies per item here, so every child is structurally
+  // interchangeable regardless of which item it was last bound to.
   private void Rebuild()
   {
-    RemoveChildren(0, Children.Count);
-    if (ItemsSource is not null)
+    var items = ItemsSource?.Cast<object>().ToList() ?? [];
+    var reused = Math.Min(Children.Count, items.Count);
+
+    for (var i = 0; i < reused; i++)
     {
-      InsertChildren(0, ItemsSource.Cast<object>().ToList());
+      if (Children[i] is BindableObject bindable)
+      {
+        bindable.BindingContext = items[i];
+      }
+    }
+
+    if (Children.Count > reused)
+    {
+      RemoveChildren(reused, Children.Count - reused);
+    }
+    else if (items.Count > reused)
+    {
+      InsertChildren(reused, items.Skip(reused).ToList());
     }
   }
 

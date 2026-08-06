@@ -19,6 +19,7 @@ public partial class PersonInfoView : ContentView
   private readonly DefaultImageCache _DefaultImageCache;
   private ImageSource? _PhotoSource;
   private bool _PhotoReady;
+  private int _PhotoGeneration;
 
   protected PersonInfoView(IServiceProvider serviceProvider)
   {
@@ -151,6 +152,7 @@ public partial class PersonInfoView : ContentView
       if (!_PhotoReady)
       {
         _PhotoReady = true;
+        var generation = _PhotoGeneration;
 
         async Task UpdatePhotoAsync()
         {
@@ -161,8 +163,12 @@ public partial class PersonInfoView : ContentView
           {
             // The view may have been recycled and disconnected while this was in flight (e.g.
             // SafeBindableLayout removing it during a CollectionView cell recycle) -- applying a
-            // stale result to a torn-down view's bindable properties is unsafe.
-            if (Handler is null)
+            // stale result to a torn-down view's bindable properties is unsafe. A reused (not
+            // disconnected) view can also have moved on to a different Person by the time this
+            // continuation runs -- SafeBindableLayout.Rebuild rebinds BindingContext on existing
+            // children rather than always disconnecting them, so Handler alone no longer proves
+            // this result is still for the Person that started this resolution.
+            if (Handler is null || generation != _PhotoGeneration)
             {
               return;
             }
@@ -183,6 +189,7 @@ public partial class PersonInfoView : ContentView
   {
     if (obj is PersonInfoView view && oldValue != newValue)
     {
+      view._PhotoGeneration++;
       view._PhotoReady = false;
       view._PhotoSource = null;
       view.OnPropertyChanged(nameof(CommonName));
