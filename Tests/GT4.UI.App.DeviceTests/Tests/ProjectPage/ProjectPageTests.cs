@@ -98,6 +98,26 @@ public class ProjectPageTests
   }
 
   [Fact]
+  public async Task Familyless_persons_beyond_the_cap_are_hidden_with_a_more_indicator()
+  {
+    const int orphanCount = FamilyInfoItem.MaxDisplayedPersons + 10;
+
+    var services = new TestServices();
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([]);
+    services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([.. Enumerable.Range(1, orphanCount).Select(i => P(i, $"Orphan{i}"))]);
+    var page = await CreatePageAsync(services);
+
+    var families = await page.WaitForFamiliesAsync();
+
+    var noFamily = Assert.Single(families);
+    Assert.Equal(FamilyInfoItem.MaxDisplayedPersons, noFamily.DisplayedPersons.Count);
+    Assert.Equal(orphanCount, noFamily.Persons.Count);
+    Assert.True(noFamily.HasMorePersons);
+    Assert.Equal(10, noFamily.HiddenPersonsCount);
+  }
+
+  [Fact]
   public async Task No_family_pseudo_card_is_absent_when_every_person_has_a_family()
   {
     var services = new TestServices();

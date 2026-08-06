@@ -689,6 +689,15 @@ namespace GT4.UI.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to +{0} more.
+        /// </summary>
+        public static string FamilyMorePersons_1 {
+            get {
+                return ResourceManager.GetString("FamilyMorePersons_1", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Family name.
         /// </summary>
         public static string FieldFamilyName {

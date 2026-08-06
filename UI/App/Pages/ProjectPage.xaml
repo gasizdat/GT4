@@ -85,7 +85,7 @@
               <Grid
                   ColumnDefinitions="Auto, *"
                   ColumnSpacing="10"
-                  RowDefinitions="Auto, Auto">
+                  RowDefinitions="Auto, Auto, Auto">
 
                 <Image
                     Grid.Row="0"
@@ -106,7 +106,7 @@
                     Grid.Column="0"
                     Grid.ColumnSpan="2"
                     Margin="{Thickness Left={StaticResource PhotoThumbWidth}}"
-                    ItemsSource="{Binding Persons}"
+                    ItemsSource="{Binding DisplayedPersons}"
                     Direction="Row"
                     SizeChanged="OnFamilyPersonsSizeChanged"
                     Wrap="Wrap">
@@ -123,6 +123,15 @@
                     </DataTemplate>
                   </components:SafeBindableLayout.ItemTemplate>
                 </components:SafeBindableLayout>
+
+                <Label
+                    Grid.Row="2"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="2"
+                    Margin="{Thickness Left={StaticResource PhotoThumbWidth}}"
+                    IsVisible="{Binding HasMorePersons}"
+                    Style="{StaticResource CardContent}"
+                    Text="{Binding MorePersonsText}" />
 
               </Grid>
             </components:CardView>
