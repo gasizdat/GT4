@@ -20,6 +20,10 @@ public partial class PersonInfoView : ContentView
   private ImageSource? _PhotoSource;
   private bool _PhotoReady;
 
+  // Largest configured PhotoStyle for this view is the default PhotoThumbStyle (64pt on Desktop);
+  // headroom above that covers high-DPI displays without decoding anywhere near a full-resolution photo.
+  private const float PhotoMaxDecodeSize = 200;
+
   protected PersonInfoView(IServiceProvider serviceProvider)
   {
     _CancellationTokenProvider = serviceProvider.GetRequiredService<ICancellationTokenProvider>();
@@ -156,6 +160,7 @@ public partial class PersonInfoView : ContentView
         {
           using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
           var photo = await ImageUtils.ResolvePhotoAsync(_DataConverterResolver, mainPhoto, GetDefaultImage(), token);
+          photo = await ImageUtils.DownsizedAsync(photo, PhotoMaxDecodeSize, token);
 
           MainThread.BeginInvokeOnMainThread(() =>
           {

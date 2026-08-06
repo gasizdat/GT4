@@ -101,6 +101,24 @@ public static class ImageUtils
     return new PhotoInfo(fallback, null);
   }
 
+  public static async Task<PhotoInfo> DownsizedAsync(PhotoInfo photo, float maxSize, CancellationToken token)
+  {
+    using var stream = await ((StreamImageSource)photo.Source).Stream(token);
+    using var buffer = new MemoryStream();
+    await stream.CopyToAsync(buffer, token);
+
+    try
+    {
+      return photo with { Source = ImageFromBytes(DownsizedPng(buffer.ToArray(), maxSize)) };
+    }
+    catch
+    {
+      // Keeps the caller on the full-resolution photo it already resolved rather than crashing it,
+      // same fallback FamilyTreePage.Downsize uses for the same decode.
+      return photo;
+    }
+  }
+
   public static async Task<byte[]?> ToBytesAsync(ImageSource? source, IHttpClientFactory httpClientFactory, CancellationToken token)
   {
     if (source == null)
