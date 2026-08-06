@@ -85,7 +85,7 @@
               <Grid
                   ColumnDefinitions="Auto, *"
                   ColumnSpacing="10"
-                  RowDefinitions="Auto, Auto">
+                  RowDefinitions="Auto, Auto, Auto">
 
                 <Image
                     Grid.Row="0"
@@ -101,17 +101,17 @@
                     Text="{Binding Info.Value}"
                     VerticalOptions="Start" />
 
-                <FlexLayout
+                <components:SafeBindableLayout
                     Grid.Row="1"
                     Grid.Column="0"
                     Grid.ColumnSpan="2"
                     Margin="{Thickness Left={StaticResource PhotoThumbWidth}}"
-                    BindableLayout.ItemsSource="{Binding Persons}"
+                    ItemsSource="{Binding DisplayedPersons}"
                     Direction="Row"
                     SizeChanged="OnFamilyPersonsSizeChanged"
                     Wrap="Wrap">
 
-                  <BindableLayout.ItemTemplate>
+                  <components:SafeBindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="dto:PersonInfo">
                       <components:PersonInfoView
                           NameFormat="{Binding PersonNamesFormat, Source={x:Reference Root}}"
@@ -121,8 +121,17 @@
                           ShowAge="False"
                           ShowDates="False" />
                     </DataTemplate>
-                  </BindableLayout.ItemTemplate>
-                </FlexLayout>
+                  </components:SafeBindableLayout.ItemTemplate>
+                </components:SafeBindableLayout>
+
+                <Label
+                    Grid.Row="2"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="2"
+                    Margin="{Thickness Left={StaticResource PhotoThumbWidth}}"
+                    IsVisible="{Binding HasMorePersons}"
+                    Style="{StaticResource CardContent}"
+                    Text="{Binding MorePersonsText}" />
 
               </Grid>
             </components:CardView>

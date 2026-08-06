@@ -16,6 +16,7 @@ public partial class PersonInfoView : ContentView
   private readonly IDateFormatter _DateFormatter;
   private readonly INameFormatter _NameFormatter;
   private readonly OptionalDataConverterResolver _DataConverterResolver;
+  private readonly DefaultImageCache _DefaultImageCache;
   private ImageSource? _PhotoSource;
   private bool _PhotoReady;
 
@@ -27,6 +28,7 @@ public partial class PersonInfoView : ContentView
     _DateFormatter = serviceProvider.GetRequiredService<IDateFormatter>();
     _NameFormatter = serviceProvider.GetRequiredService<INameFormatter>();
     _DataConverterResolver = serviceProvider.GetRequiredService<OptionalDataConverterResolver>();
+    _DefaultImageCache = serviceProvider.GetRequiredService<DefaultImageCache>();
     InitializeComponent();
   }
 
@@ -157,6 +159,14 @@ public partial class PersonInfoView : ContentView
 
           MainThread.BeginInvokeOnMainThread(() =>
           {
+            // The view may have been recycled and disconnected while this was in flight (e.g.
+            // SafeBindableLayout removing it during a CollectionView cell recycle) -- applying a
+            // stale result to a torn-down view's bindable properties is unsafe.
+            if (Handler is null)
+            {
+              return;
+            }
+
             _PhotoSource = photo.Source;
             OnPropertyChanged(nameof(Photo));
           });
@@ -182,6 +192,5 @@ public partial class PersonInfoView : ContentView
   }
 
   private ImageSource GetDefaultImage() =>
-    ImageUtils.ImageFromRawResource(
-      ImageUtils.DefaultPhotoResourceName(Person?.BiologicalSex ?? BiologicalSex.Unknown));
+    _DefaultImageCache.Get(ImageUtils.DefaultPhotoResourceName(Person?.BiologicalSex ?? BiologicalSex.Unknown));
 }

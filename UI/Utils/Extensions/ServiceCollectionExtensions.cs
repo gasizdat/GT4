@@ -24,6 +24,7 @@ public static class ServiceCollectionExtensions
       .AddSingleton<LanguageSetting>()
       .AddSingleton<FontScale>()
       .AddSingleton<BackgroundAnimation>()
+      .AddSingleton<DefaultImageCache>()
       .AddSingleton<IComparer<ProjectInfo>, ProjectInfoComparer>()
       .AddSingleton<IComparer<PersonInfo>, PersonInfoComparer>()
       .AddSingleton<IComparer<Name>, NameComparer>()
