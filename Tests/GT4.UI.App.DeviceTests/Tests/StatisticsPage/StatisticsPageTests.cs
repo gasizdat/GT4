@@ -42,7 +42,7 @@ public class StatisticsPageTests
     var services = new TestServices();
     var family = N(100, "Smith", NameType.FamilyName);
     services.PersonManager
-      .Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+      .Setup(p => p.GetPersonInfosWithPhotoMetadataAsync(It.IsAny<CancellationToken>()))
       .ReturnsAsync(
       [
         P(1, BiologicalSex.Male, names: [family]),
@@ -78,7 +78,7 @@ public class StatisticsPageTests
     // what makes the assertions below actually catch a regression back to .DisplayName.
     var person = P(1, birthDate: Date.Create(currentYear - 40, 1, 1, DateStatus.WellKnown), names: [lastName, firstName]);
     services.PersonManager
-      .Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+      .Setup(p => p.GetPersonInfosWithPhotoMetadataAsync(It.IsAny<CancellationToken>()))
       .ReturnsAsync([person]);
     services.Relatives
       .Setup(r => r.GetRelativesForPersonsAsync(It.IsAny<Person[]>(), It.IsAny<CancellationToken>()))
@@ -100,12 +100,12 @@ public class StatisticsPageTests
     var services = new TestServices();
     var page = await CreatePageAsync(services);
     await page.WaitForFirstLoadAsync();
-    var callsBefore = services.PersonManager.Invocations.Count(i => i.Method.Name == nameof(IPersonManager.GetPersonInfosAsync));
+    var callsBefore = services.PersonManager.Invocations.Count(i => i.Method.Name == nameof(IPersonManager.GetPersonInfosWithPhotoMetadataAsync));
     services.CurrentProjectProvider.SetupGet(p => p.Info).Returns(TestServices.SampleProjectInfo with { Revision = 42 });
 
     await page.ReloadStatisticsAsync(page.InvokeNavigatedTo);
 
-    var callsAfter = services.PersonManager.Invocations.Count(i => i.Method.Name == nameof(IPersonManager.GetPersonInfosAsync));
+    var callsAfter = services.PersonManager.Invocations.Count(i => i.Method.Name == nameof(IPersonManager.GetPersonInfosWithPhotoMetadataAsync));
     Assert.True(callsAfter > callsBefore);
   }
 

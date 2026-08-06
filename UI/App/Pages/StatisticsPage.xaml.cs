@@ -57,7 +57,7 @@ public partial class StatisticsPage : ContentPage
     using var token = _CancellationTokenProvider.CreateDbCancellationToken();
     var project = _CurrentProjectProvider.Project;
 
-    var persons = await project.PersonManager.GetPersonInfosAsync(selectMainPhoto: true, token);
+    var persons = await project.PersonManager.GetPersonInfosWithPhotoMetadataAsync(token);
     var familyNames = await project.FamilyManager.GetFamiliesAsync(token);
     var relativesByPersonId = await project.Relatives.GetRelativesForPersonsAsync(persons, token);
 

@@ -1,3 +1,4 @@
+using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
@@ -17,6 +18,7 @@ public partial class PersonInfoView : ContentView
   private readonly INameFormatter _NameFormatter;
   private readonly OptionalDataConverterResolver _DataConverterResolver;
   private readonly DefaultImageCache _DefaultImageCache;
+  private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private ImageSource? _PhotoSource;
   private bool _PhotoReady;
   private int _PhotoGeneration;
@@ -30,6 +32,7 @@ public partial class PersonInfoView : ContentView
     _NameFormatter = serviceProvider.GetRequiredService<INameFormatter>();
     _DataConverterResolver = serviceProvider.GetRequiredService<OptionalDataConverterResolver>();
     _DefaultImageCache = serviceProvider.GetRequiredService<DefaultImageCache>();
+    _CurrentProjectProvider = serviceProvider.GetRequiredService<ICurrentProjectProvider>();
     InitializeComponent();
   }
 
@@ -157,7 +160,14 @@ public partial class PersonInfoView : ContentView
         async Task UpdatePhotoAsync()
         {
           using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
-          var photo = await ImageUtils.ResolvePhotoAsync(_DataConverterResolver, mainPhoto, GetDefaultImage(), token);
+
+          // Empty Content means the page that loaded this Person fetched only the photo's Id (e.g.
+          // ProjectPage, to avoid decoding every person's BLOB up front) -- fetch the actual bytes now
+          // that this instance is realized and about to display them.
+          var photoData = mainPhoto.Content.Length == 0
+            ? await _CurrentProjectProvider.Project.Data.TryGetDataByIdAsync(mainPhoto.Id, token) ?? mainPhoto
+            : mainPhoto;
+          var photo = await ImageUtils.ResolvePhotoAsync(_DataConverterResolver, photoData, GetDefaultImage(), token);
 
           MainThread.BeginInvokeOnMainThread(() =>
           {

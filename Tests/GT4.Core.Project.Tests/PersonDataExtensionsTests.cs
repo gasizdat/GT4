@@ -69,4 +69,23 @@ public sealed class PersonDataExtensionsTests
 
     result.Should().BeEmpty();
   }
+
+  [Fact]
+  public async Task GetMergedPhotoMetadataSetAsync_PersonInBothSets_ConcatenatesPlainAndTaggedViaMetadataFetch()
+  {
+    var persons = new[] { MakePerson(1) };
+    var plain = new[] { MakePhoto(10, DataCategory.PersonMainPhoto) };
+    var tagged = new[] { MakePhoto(11, DataCategory.PersonMainPhotoTagged) };
+    var personData = new Mock<ITablePersonData>(MockBehavior.Strict);
+    personData
+      .Setup(p => p.GetPersonDataMetadataSetAsync(persons, DataCategory.PersonMainPhoto, Token))
+      .ReturnsAsync(new Dictionary<int, Data[]> { [1] = plain });
+    personData
+      .Setup(p => p.GetPersonDataMetadataSetAsync(persons, DataCategory.PersonMainPhotoTagged, Token))
+      .ReturnsAsync(new Dictionary<int, Data[]> { [1] = tagged });
+
+    var result = await personData.Object.GetMergedPhotoMetadataSetAsync(persons, DataCategory.PersonMainPhoto, Token);
+
+    result[1].Should().BeEquivalentTo(plain.Concat(tagged));
+  }
 }

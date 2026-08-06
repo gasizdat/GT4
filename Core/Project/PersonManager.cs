@@ -49,18 +49,22 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
     if (persons.Length == 0)
       return [];
 
-    var namesTask = Document.PersonNames.GetPersonNamesAsync(persons, token);
     var photosTask = selectMainPhoto
       ? Document.PersonData.GetMergedPhotoSetAsync(persons, DataCategory.PersonMainPhoto, token)
       : Task.FromResult<Dictionary<int, Data[]>>([]);
-    await Task.WhenAll(namesTask, photosTask);
+    return await BuildPersonInfosAsync(persons, photosTask, token);
+  }
 
-    return persons.Select(person =>
-    {
-      namesTask.Result.TryGetValue(person.Id, out var names);
-      photosTask.Result.TryGetValue(person.Id, out var photos);
-      return new PersonInfo(person, names ?? [], photos?.FirstOrDefault());
-    }).ToArray();
+  // Every person's main photo Id (but not its bytes) up front, e.g. for a page that displays only a
+  // bounded/visible subset of persons and resolves each one's photo content on demand when shown.
+  public async Task<PersonInfo[]> GetPersonInfosWithPhotoMetadataAsync(CancellationToken token)
+  {
+    var persons = await Document.Persons.GetPersonsAsync(token);
+    if (persons.Length == 0)
+      return [];
+
+    var photosTask = Document.PersonData.GetMergedPhotoMetadataSetAsync(persons, DataCategory.PersonMainPhoto, token);
+    return await BuildPersonInfosAsync(persons, photosTask, token);
   }
 
   public async Task<PersonInfo[]> GetPersonInfosByNameAsync(Name name, bool selectMainPhoto, CancellationToken token)
@@ -144,6 +148,19 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
     await Document.Relatives.UpdateRelativesAsync(personFullInfo, personFullInfo.RelativeInfos, token);
 
     await transaction.CommitAsync(token);
+  }
+
+  private async Task<PersonInfo[]> BuildPersonInfosAsync(Person[] persons, Task<Dictionary<int, Data[]>> photosTask, CancellationToken token)
+  {
+    var namesTask = Document.PersonNames.GetPersonNamesAsync(persons, token);
+    await Task.WhenAll(namesTask, photosTask);
+
+    return persons.Select(person =>
+    {
+      namesTask.Result.TryGetValue(person.Id, out var names);
+      photosTask.Result.TryGetValue(person.Id, out var photos);
+      return new PersonInfo(person, names ?? [], photos?.FirstOrDefault());
+    }).ToArray();
   }
 
   private static Data[] CombinePersonData(PersonFullInfo personFullInfo)

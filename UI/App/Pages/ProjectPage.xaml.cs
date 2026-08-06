@@ -114,7 +114,7 @@ public partial class ProjectPage : ContentPage
 
       var persons = await project
           .PersonManager
-          .GetPersonInfosAsync(selectMainPhoto: true, token);
+          .GetPersonInfosWithPhotoMetadataAsync(token);
       var familyNames = await project
           .FamilyManager
           .GetFamiliesAsync(token);

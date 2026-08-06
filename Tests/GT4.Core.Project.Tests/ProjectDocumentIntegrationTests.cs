@@ -363,6 +363,27 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task PersonManager_GetPersonInfosWithPhotoMetadata_CarriesIdWithoutContent()
+  {
+    var withPhoto = await _doc.PersonManager.AddPersonAsync(
+      PersonFullInfo.Empty with { BirthDate = Birth, BiologicalSex = BiologicalSex.Male, MainPhoto = NewData(DataCategory.PersonMainPhoto, 1, 2, 3) },
+      Token);
+    var withoutPhoto = await _doc.PersonManager.AddPersonAsync(
+      PersonFullInfo.Empty with { BirthDate = Birth, BiologicalSex = BiologicalSex.Female }, Token);
+    var committedPhotoId = (await _doc.PersonManager.GetPersonFullInfoAsync(
+      new Person(withPhoto.Id, Birth, null, BiologicalSex.Male), Token)).MainPhoto!.Id;
+
+    var infos = await _doc.PersonManager.GetPersonInfosWithPhotoMetadataAsync(Token);
+
+    var photoInfo = infos.Single(p => p.Id == withPhoto.Id);
+    photoInfo.MainPhoto.Should().NotBeNull();
+    photoInfo.MainPhoto!.Id.Should().Be(committedPhotoId);
+    photoInfo.MainPhoto!.Content.Should().BeEmpty();
+
+    infos.Single(p => p.Id == withoutPhoto.Id).MainPhoto.Should().BeNull();
+  }
+
+  [Fact]
   public async Task PersonManager_UpdatePerson_ReplacesNamesAndData()
   {
     var first = await _doc.Names.AddNameAsync("Initial", NameType.FirstName, null, Token);

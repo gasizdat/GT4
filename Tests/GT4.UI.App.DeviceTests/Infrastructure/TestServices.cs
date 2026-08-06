@@ -92,6 +92,12 @@ internal sealed class TestServices
       .Setup(p => p.GetPersonInfosAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync([]);
 
+    // ProjectPage.EnsureFamiliesLoaded and StatisticsPage.LoadStatisticsAsync both use this instead
+    // of the call above -- same "must not fail invisibly" reasoning.
+    PersonManager
+      .Setup(p => p.GetPersonInfosWithPhotoMetadataAsync(It.IsAny<CancellationToken>()))
+      .ReturnsAsync([]);
+
     // PersonPage.GetPersonDataAsync's whole pipeline needs every one of these non-null (a null Moq
     // default for a custom record/array causes an NRE that gets caught and reported through
     // IAlertService -- which reads as a mysterious timeout in the counter-based load wait, not an

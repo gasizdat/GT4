@@ -1,8 +1,10 @@
+using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Components;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
+using Moq;
 using System.Collections.ObjectModel;
 using Xunit;
 
@@ -178,5 +180,42 @@ public class PersonInfoViewLeakTests
     var photoAfterStaleContinuation = await MainThread.InvokeOnMainThreadAsync(() => view.Photo);
 
     Assert.Same(bobResolvedPhoto, photoAfterStaleContinuation);
+  }
+
+  // ProjectPage loads Person.MainPhoto via GetPersonInfosWithPhotoMetadataAsync, which carries the
+  // photo's Id but not its bytes (Content: []) -- a realized PersonInfoView must fetch the real
+  // content by Id before resolving, rather than treating the empty Content as "no photo".
+  [Fact]
+  public async Task Photo_with_metadata_only_MainPhoto_fetches_content_by_Id_before_resolving()
+  {
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+
+    var metadataOnlyPhoto = new Data(7, [], "image/png", DataCategory.PersonMainPhoto);
+    var fullPhoto = new Data(7, [1, 2, 3], "image/png", DataCategory.PersonMainPhoto);
+
+    var dataTable = new Mock<ITableData>();
+    dataTable.Setup(d => d.TryGetDataByIdAsync(7, It.IsAny<CancellationToken>())).ReturnsAsync(fullPhoto);
+    var projectDocument = new Mock<IProjectDocument>();
+    projectDocument.SetupGet(p => p.Data).Returns(dataTable.Object);
+    var currentProjectProvider = new Mock<ICurrentProjectProvider>();
+    currentProjectProvider.SetupGet(p => p.Project).Returns(projectDocument.Object);
+
+    var services = new ServiceCollection();
+    GT4Services.Add(services);
+    services.AddSingleton(currentProjectProvider.Object);
+    var provider = services.BuildServiceProvider();
+
+    var view = await MainThread.InvokeOnMainThreadAsync(() => new TestablePersonInfoView(provider));
+    var page = new ContentPage { Content = view };
+    await using var window = await WindowHost.AttachAsync(page);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      view.SetValue(PersonInfoView.PersonProperty, P(1, "Alice") with { MainPhoto = metadataOnlyPhoto });
+      _ = view.Photo;
+    });
+    await Task.Delay(300);
+
+    dataTable.Verify(d => d.TryGetDataByIdAsync(7, It.IsAny<CancellationToken>()), Times.Once);
   }
 }

@@ -86,7 +86,7 @@ public class ProjectPageTests
     var services = new TestServices();
     var ivanov = N(1, "Ivanov", NameType.FamilyName);
     services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([ivanov]);
-    services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+    services.PersonManager.Setup(p => p.GetPersonInfosWithPhotoMetadataAsync(It.IsAny<CancellationToken>()))
       .ReturnsAsync([InFamily(P(1, "John"), ivanov), P(2, "Orphan")]);
     var page = await CreatePageAsync(services);
 
@@ -104,7 +104,7 @@ public class ProjectPageTests
 
     var services = new TestServices();
     services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([]);
-    services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+    services.PersonManager.Setup(p => p.GetPersonInfosWithPhotoMetadataAsync(It.IsAny<CancellationToken>()))
       .ReturnsAsync([.. Enumerable.Range(1, orphanCount).Select(i => P(i, $"Orphan{i}"))]);
     var page = await CreatePageAsync(services);
 
@@ -123,7 +123,7 @@ public class ProjectPageTests
     var services = new TestServices();
     var ivanov = N(1, "Ivanov", NameType.FamilyName);
     services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([ivanov]);
-    services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+    services.PersonManager.Setup(p => p.GetPersonInfosWithPhotoMetadataAsync(It.IsAny<CancellationToken>()))
       .ReturnsAsync([InFamily(P(1, "John"), ivanov)]);
     var page = await CreatePageAsync(services);
 
@@ -139,7 +139,7 @@ public class ProjectPageTests
     var services = new TestServices();
     var ivanov = N(1, "Ivanov", NameType.FamilyName);
     services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([ivanov]);
-    services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+    services.PersonManager.Setup(p => p.GetPersonInfosWithPhotoMetadataAsync(It.IsAny<CancellationToken>()))
       .ReturnsAsync([InFamily(P(1, "John"), ivanov), P(2, "Orphan")]);
     var page = await CreatePageAsync(services);
     await page.WaitForFamiliesAsync();
@@ -519,7 +519,7 @@ public class ProjectPageTests
     var ivanov = N(1, "Ivanov", NameType.FamilyName);
     var petrov = N(2, "Petrov", NameType.FamilyName);
     services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([ivanov, petrov]);
-    services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+    services.PersonManager.Setup(p => p.GetPersonInfosWithPhotoMetadataAsync(It.IsAny<CancellationToken>()))
       .ReturnsAsync([InFamily(P(1, "John"), ivanov), InFamily(P(2, "Jane"), ivanov), InFamily(P(3, "Mark"), petrov)]);
     var page = await CreatePageAsync(services);
     await page.WaitForFamiliesAsync();
@@ -539,7 +539,7 @@ public class ProjectPageTests
     var services = new TestServices();
     var ivanov = N(1, "Ivanov", NameType.FamilyName);
     services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([ivanov]);
-    services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+    services.PersonManager.Setup(p => p.GetPersonInfosWithPhotoMetadataAsync(It.IsAny<CancellationToken>()))
       .ReturnsAsync([InFamily(P(1, "John"), ivanov), InFamily(P(2, "Jane"), ivanov)]);
     var page = await CreatePageAsync(services);
     await page.WaitForFamiliesAsync();
@@ -560,7 +560,7 @@ public class ProjectPageTests
     var services = new TestServices();
     var family = N(1, "Ivanov", NameType.FamilyName);
     services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([family]);
-    services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+    services.PersonManager.Setup(p => p.GetPersonInfosWithPhotoMetadataAsync(It.IsAny<CancellationToken>()))
       .ReturnsAsync([InFamily(P(1, "John", BiologicalSex.Male), family), InFamily(P(2, "Jane", BiologicalSex.Female), family)]);
     var page = await CreatePageAsync(services);
     await page.WaitForFamiliesAsync();
@@ -585,7 +585,7 @@ public class ProjectPageTests
     var services = new TestServices();
     var family = N(1, "Ivanov", NameType.FamilyName);
     services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([family]);
-    services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+    services.PersonManager.Setup(p => p.GetPersonInfosWithPhotoMetadataAsync(It.IsAny<CancellationToken>()))
       .ReturnsAsync([InFamily(P(1, "John"), family), InFamily(P(2, "Jane"), family)]);
     services.Relatives
       .Setup(r => r.GetRelativesForPersonsAsync(It.IsAny<Person[]>(), It.IsAny<CancellationToken>()))
@@ -611,7 +611,7 @@ public class ProjectPageTests
     var services = new TestServices();
     var family = N(1, "Ivanov", NameType.FamilyName);
     services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([family]);
-    services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+    services.PersonManager.Setup(p => p.GetPersonInfosWithPhotoMetadataAsync(It.IsAny<CancellationToken>()))
       .ReturnsAsync([InFamily(P(1, "John"), family)]);
     var page = await CreatePageAsync(services);
 
@@ -634,7 +634,7 @@ public class ProjectPageTests
     services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([family]);
     var bornKnown = InFamily(P(1, "John", birthDate: KnownYear(1950), deathDate: KnownYear(2000)), family);
     var noDatesAtAll = InFamily(P(2, "NoDates"), family);
-    services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+    services.PersonManager.Setup(p => p.GetPersonInfosWithPhotoMetadataAsync(It.IsAny<CancellationToken>()))
       .ReturnsAsync([bornKnown, noDatesAtAll]);
     var page = await CreatePageAsync(services);
 
@@ -667,7 +667,7 @@ public class ProjectPageTests
     var services = new TestServices();
     var family = N(1, "Ivanov", NameType.FamilyName);
     services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([family]);
-    services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+    services.PersonManager.Setup(p => p.GetPersonInfosWithPhotoMetadataAsync(It.IsAny<CancellationToken>()))
       .ReturnsAsync([InFamily(P(1, "John", BiologicalSex.Male), family), InFamily(P(2, "Jane", BiologicalSex.Female), family)]);
     var page = await CreatePageAsync(services);
     await page.WaitForFamiliesAsync();
@@ -720,7 +720,7 @@ public class ProjectPageTests
     var services = new TestServices();
     var family = N(1, "Ivanov", NameType.FamilyName);
     services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([family]);
-    services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+    services.PersonManager.Setup(p => p.GetPersonInfosWithPhotoMetadataAsync(It.IsAny<CancellationToken>()))
       .ReturnsAsync([InFamily(P(1, "John"), family), InFamily(P(2, "Jane"), family)]);
     var page = await CreatePageAsync(services);
 
@@ -739,7 +739,7 @@ public class ProjectPageTests
     var ivanov = N(1, "Ivanov", NameType.FamilyName);
     var petrov = N(2, "Petrov", NameType.FamilyName);
     services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([ivanov, petrov]);
-    services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+    services.PersonManager.Setup(p => p.GetPersonInfosWithPhotoMetadataAsync(It.IsAny<CancellationToken>()))
       .ReturnsAsync([
         InFamily(P(1, "John", BiologicalSex.Male), ivanov),
         InFamily(P(2, "Jane", BiologicalSex.Female), ivanov),
