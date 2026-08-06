@@ -71,11 +71,10 @@ public class FamilyInfoItemTests
     var raised = new List<string?>();
     family.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
 
-    // No change: still capped, same total membership -- ComputeDisplayedPersons produces a
-    // structurally-different-but-equivalent snapshot, so a refresh is still expected here (the
-    // class deliberately doesn't diff snapshot contents, only identity -- see FamilyInfoItem).
+    // No change: still capped, same membership and order -- ComputeDisplayedPersons reuses the
+    // existing snapshot, so no refresh is expected here.
     family.Update();
-    Assert.Contains(nameof(FamilyInfoItem.DisplayedPersons), raised);
+    Assert.DoesNotContain(nameof(FamilyInfoItem.DisplayedPersons), raised);
 
     raised.Clear();
     showAll = false;

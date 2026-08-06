@@ -17,7 +17,7 @@ public class FamilyInfoItem : CollectionItemBase<Name>, INotifyPropertyChanged
 
   private readonly FilteredObservableCollection<PersonInfo> _Persons = new();
   private readonly int _TotalPersonsCount;
-  private ObservableCollection<PersonInfo> _DisplayedPersons;
+  private ObservableCollection<PersonInfo> _DisplayedPersons = new();
 
   public FamilyInfoItem(Name familyName, PersonInfo[] persons, ObservableCollectionFilterPredicate<PersonInfo>? personsFilter)
     : base(familyName, "family_stub.png")
@@ -64,10 +64,23 @@ public class FamilyInfoItem : CollectionItemBase<Name>, INotifyPropertyChanged
     RefreshDisplayedPersons();
   }
 
-  private ObservableCollection<PersonInfo> ComputeDisplayedPersons() =>
-    _Persons.Items.Count <= MaxDisplayedPersons
-      ? _Persons.Items
-      : new ObservableCollection<PersonInfo>(_Persons.Items.Take(MaxDisplayedPersons));
+  private ObservableCollection<PersonInfo> ComputeDisplayedPersons()
+  {
+    if (_Persons.Items.Count <= MaxDisplayedPersons)
+    {
+      return _Persons.Items;
+    }
+
+    // FilterView has no debounce, so UpdateFamilies() re-runs Update() on every family on every
+    // keystroke. Reusing the existing snapshot when the visible top MaxDisplayedPersons is
+    // unchanged avoids rebinding SafeBindableLayout.ItemsSource -- which would otherwise force a
+    // full teardown/rebuild of every displayed card on every keystroke, even for a family the
+    // filter change didn't affect.
+    var capped = _Persons.Items.Take(MaxDisplayedPersons);
+    return _DisplayedPersons.Count == MaxDisplayedPersons && _DisplayedPersons.SequenceEqual(capped)
+      ? _DisplayedPersons
+      : new ObservableCollection<PersonInfo>(capped);
+  }
 
   private void RefreshDisplayedPersons()
   {
