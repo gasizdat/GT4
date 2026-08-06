@@ -10,29 +10,25 @@ namespace GT4.UI.Components;
 
 public partial class PersonInfoView : ContentView
 {
-  private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly IAlertService _AlertService;
   private readonly IDateSpanFormatter _DateSpanFormatter;
   private readonly IDateFormatter _DateFormatter;
   private readonly INameFormatter _NameFormatter;
   private readonly OptionalDataConverterResolver _DataConverterResolver;
   private readonly DefaultImageCache _DefaultImageCache;
+  private readonly PhotoCache _PhotoCache;
   private ImageSource? _PhotoSource;
   private bool _PhotoReady;
 
-  // Largest configured PhotoStyle for this view is the default PhotoThumbStyle (64pt on Desktop);
-  // headroom above that covers high-DPI displays without decoding anywhere near a full-resolution photo.
-  private const float PhotoMaxDecodeSize = 200;
-
   protected PersonInfoView(IServiceProvider serviceProvider)
   {
-    _CancellationTokenProvider = serviceProvider.GetRequiredService<ICancellationTokenProvider>();
     _AlertService = serviceProvider.GetRequiredService<IAlertService>();
     _DateSpanFormatter = serviceProvider.GetRequiredService<IDateSpanFormatter>();
     _DateFormatter = serviceProvider.GetRequiredService<IDateFormatter>();
     _NameFormatter = serviceProvider.GetRequiredService<INameFormatter>();
     _DataConverterResolver = serviceProvider.GetRequiredService<OptionalDataConverterResolver>();
     _DefaultImageCache = serviceProvider.GetRequiredService<DefaultImageCache>();
+    _PhotoCache = serviceProvider.GetRequiredService<PhotoCache>();
     InitializeComponent();
   }
 
@@ -158,9 +154,7 @@ public partial class PersonInfoView : ContentView
 
         async Task UpdatePhotoAsync()
         {
-          using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
-          var photo = await ImageUtils.ResolvePhotoAsync(_DataConverterResolver, mainPhoto, GetDefaultImage(), token);
-          photo = await ImageUtils.DownsizedAsync(photo, PhotoMaxDecodeSize, token);
+          var photo = await _PhotoCache.GetOrResolveAsync(_DataConverterResolver, mainPhoto, GetDefaultImage(), ImageUtils.PhotoMaxDecodeSize);
 
           MainThread.BeginInvokeOnMainThread(() =>
           {

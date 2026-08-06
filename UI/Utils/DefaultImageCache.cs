@@ -18,7 +18,7 @@ public sealed class DefaultImageCache
     {
       if (!_Cache.TryGetValue(resourceName, out var source))
       {
-        source = ImageUtils.ImageFromRawResource(resourceName);
+        source = ImageUtils.DownsizedImageFromRawResource(resourceName, ImageUtils.PhotoMaxDecodeSize);
         _Cache[resourceName] = source;
       }
       return source;

@@ -26,4 +26,18 @@ public class DefaultImageCacheTests
 
     Assert.NotSame(male, female);
   }
+
+  [Fact]
+  public async Task Get_ReturnsAStubDownsizedToPhotoMaxDecodeSize()
+  {
+    var cache = new DefaultImageCache();
+
+    var source = cache.Get("male_stub.png");
+
+    using var stream = await ((StreamImageSource)source).Stream(CancellationToken.None);
+    using var buffer = new MemoryStream();
+    await stream.CopyToAsync(buffer);
+    var size = ImageUtils.PixelSize(buffer.ToArray())!.Value;
+    Assert.True(Math.Max(size.Width, size.Height) <= ImageUtils.PhotoMaxDecodeSize);
+  }
 }

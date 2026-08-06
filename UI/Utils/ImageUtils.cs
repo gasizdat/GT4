@@ -8,6 +8,13 @@ namespace GT4.UI.Utils;
 
 public static class ImageUtils
 {
+  // Largest configured PhotoStyle a PersonInfoView uses is the default PhotoThumbStyle (64pt on
+  // Desktop); headroom above that covers high-DPI displays without decoding anywhere near full
+  // resolution. Shared by PersonInfoView's real photos and DefaultImageCache's stub images -- both
+  // display through the same PhotoStyle-bound Image control, so both pay per visible view (a shared
+  // ImageSource instance does not dedupe the decoded bitmap across bindings).
+  public const float PhotoMaxDecodeSize = 200;
+
   private static readonly byte[] PngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
 
   private static readonly byte[] TransparentPng =
@@ -79,6 +86,13 @@ public static class ImageUtils
 
   public static ImageSource ImageFromRawResource(string resourceName) =>
     ImageSource.FromStream(_ => FileSystem.OpenAppPackageFileAsync(resourceName));
+
+  public static ImageSource DownsizedImageFromRawResource(string resourceName, float maxSize) =>
+    ImageSource.FromStream(async token =>
+    {
+      var content = await ToBytesAsync(resourceName, token) ?? [];
+      return new MemoryStream(DownsizedPng(content, maxSize));
+    });
 
   /// <summary>
   /// Resolves a photo through its category's keyed <see cref="IDataConverter"/>, falling back to a
