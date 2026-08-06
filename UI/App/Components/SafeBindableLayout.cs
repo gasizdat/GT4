@@ -1,0 +1,121 @@
+using System.Collections;
+using System.Collections.Specialized;
+
+namespace GT4.UI.Components;
+
+// BindableLayout leaks every view it has ever generated when ItemsSource is reassigned to a
+// different collection instance -- confirmed via a WeakReference-tracked stress test (see
+// PersonInfoViewLeakTests): a CollectionView cell recycled onto a different data item rebinds a
+// nested BindableLayout to a new collection instance every time, and the old views are never
+// released. Mirrors ItemsSource via CollectionChanged instead, explicitly disconnecting each
+// removed child's platform handler, which a manual Children.Remove + DisconnectHandler proved
+// releases cleanly where BindableLayout's own removal path does not.
+public class SafeBindableLayout : FlexLayout
+{
+  private INotifyCollectionChanged? _SubscribedSource;
+
+  public static readonly BindableProperty ItemsSourceProperty = BindableProperty.Create(
+    nameof(ItemsSource), typeof(IEnumerable), typeof(SafeBindableLayout), null, propertyChanged: OnItemsSourceChanged);
+
+  public static readonly BindableProperty ItemTemplateProperty = BindableProperty.Create(
+    nameof(ItemTemplate), typeof(DataTemplate), typeof(SafeBindableLayout), propertyChanged: OnItemTemplateChanged);
+
+  public IEnumerable? ItemsSource
+  {
+    get => (IEnumerable?)GetValue(ItemsSourceProperty);
+    set => SetValue(ItemsSourceProperty, value);
+  }
+
+  public DataTemplate? ItemTemplate
+  {
+    get => (DataTemplate?)GetValue(ItemTemplateProperty);
+    set => SetValue(ItemTemplateProperty, value);
+  }
+
+  private static void OnItemsSourceChanged(BindableObject bindable, object oldValue, object newValue)
+  {
+    var layout = (SafeBindableLayout)bindable;
+
+    if (layout._SubscribedSource is not null)
+    {
+      layout._SubscribedSource.CollectionChanged -= layout.OnSourceCollectionChanged;
+    }
+
+    layout._SubscribedSource = newValue as INotifyCollectionChanged;
+    if (layout._SubscribedSource is not null)
+    {
+      layout._SubscribedSource.CollectionChanged += layout.OnSourceCollectionChanged;
+    }
+
+    layout.Rebuild();
+  }
+
+  // ItemsSource and ItemTemplate are independent bindable properties, so XAML (or an object
+  // initializer) can assign either one first -- e.g. an attribute on the opening tag is applied
+  // before a child property-element. Rebuilding on both changes keeps the layout correct regardless
+  // of assignment order, at the cost of one throwaway rebuild if both are set together.
+  private static void OnItemTemplateChanged(BindableObject bindable, object oldValue, object newValue) =>
+    ((SafeBindableLayout)bindable).Rebuild();
+
+  private void OnSourceCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+  {
+    switch (e.Action)
+    {
+      case NotifyCollectionChangedAction.Add:
+        InsertChildren(e.NewStartingIndex, e.NewItems!);
+        break;
+
+      case NotifyCollectionChangedAction.Remove:
+        RemoveChildren(e.OldStartingIndex, e.OldItems!.Count);
+        break;
+
+      // Reset, Replace, Move: none of these occur in FilteredObservableCollection's own diff (it
+      // only ever raises Add/Remove/Reset), but a full rebuild is a safe fallback for any of them.
+      default:
+        Rebuild();
+        break;
+    }
+  }
+
+  private void Rebuild()
+  {
+    RemoveChildren(0, Children.Count);
+    if (ItemsSource is not null)
+    {
+      InsertChildren(0, ItemsSource.Cast<object>().ToList());
+    }
+  }
+
+  private void InsertChildren(int startIndex, IList items)
+  {
+    if (ItemTemplate is not { } template)
+    {
+      return;
+    }
+
+    for (var i = 0; i < items.Count; i++)
+    {
+      if (template.CreateContent() is not View view)
+      {
+        continue;
+      }
+
+      view.BindingContext = items[i];
+      Children.Insert(startIndex + i, view);
+    }
+  }
+
+  private void RemoveChildren(int startIndex, int count)
+  {
+    for (var i = 0; i < count; i++)
+    {
+      var child = Children[startIndex];
+      Children.RemoveAt(startIndex);
+      if (child is BindableObject bindable)
+      {
+        bindable.BindingContext = null;
+      }
+      (child as VisualElement)?.Handler?.DisconnectHandler();
+    }
+  }
+}
