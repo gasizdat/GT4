@@ -13,6 +13,7 @@ namespace GT4.UI.Components;
 public class SafeBindableLayout : FlexLayout
 {
   private INotifyCollectionChanged? _SubscribedSource;
+  private bool _RebuildQueued;
 
   public static readonly BindableProperty ItemsSourceProperty = BindableProperty.Create(
     nameof(ItemsSource), typeof(IEnumerable), typeof(SafeBindableLayout), null, propertyChanged: OnItemsSourceChanged);
@@ -47,7 +48,7 @@ public class SafeBindableLayout : FlexLayout
       layout._SubscribedSource.CollectionChanged += layout.OnSourceCollectionChanged;
     }
 
-    layout.Rebuild();
+    layout.ScheduleRebuild();
   }
 
   // ItemsSource and ItemTemplate are independent bindable properties, so XAML (or an object
@@ -55,10 +56,18 @@ public class SafeBindableLayout : FlexLayout
   // before a child property-element. Rebuilding on both changes keeps the layout correct regardless
   // of assignment order, at the cost of one throwaway rebuild if both are set together.
   private static void OnItemTemplateChanged(BindableObject bindable, object oldValue, object newValue) =>
-    ((SafeBindableLayout)bindable).Rebuild();
+    ((SafeBindableLayout)bindable).ScheduleRebuild();
 
   private void OnSourceCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
   {
+    // A rebuild is already queued for the next dispatcher tick and will read ItemsSource fresh
+    // when it runs, so this event's effect is already captured by it -- applying it now would
+    // target Children indices from before that rebuild catches up.
+    if (_RebuildQueued)
+    {
+      return;
+    }
+
     switch (e.Action)
     {
       case NotifyCollectionChangedAction.Add:
@@ -72,9 +81,32 @@ public class SafeBindableLayout : FlexLayout
       // Reset, Replace, Move: none of these occur in FilteredObservableCollection's own diff (it
       // only ever raises Add/Remove/Reset), but a full rebuild is a safe fallback for any of them.
       default:
-        Rebuild();
+        ScheduleRebuild();
         break;
     }
+  }
+
+  // CollectionView reassigns ItemsSource synchronously from inside its own native cell-recycle
+  // callback (WinUI ItemsRepeater realizing/recycling an element). Rebuild() inserts/removes
+  // FlexLayout.Children, which creates/destroys native handlers synchronously too -- doing that
+  // from inside the platform's own callback stack risks an exception crossing the native ABI
+  // boundary uncaught, which WinRT reports as a fatal "stowed exception" (0xC000027B) rather than
+  // a catchable managed one. Deferring the actual mutation to the next dispatcher tick gets it off
+  // that call stack. Coalesced: rapid scrolling can reassign ItemsSource many times before the
+  // first deferred rebuild runs, and only the final state matters.
+  private void ScheduleRebuild()
+  {
+    if (_RebuildQueued)
+    {
+      return;
+    }
+
+    _RebuildQueued = true;
+    MainThread.BeginInvokeOnMainThread(() =>
+    {
+      _RebuildQueued = false;
+      Rebuild();
+    });
   }
 
   private void Rebuild()

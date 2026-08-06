@@ -159,6 +159,14 @@ public partial class PersonInfoView : ContentView
 
           MainThread.BeginInvokeOnMainThread(() =>
           {
+            // The view may have been recycled and disconnected while this was in flight (e.g.
+            // SafeBindableLayout removing it during a CollectionView cell recycle) -- applying a
+            // stale result to a torn-down view's bindable properties is unsafe.
+            if (Handler is null)
+            {
+              return;
+            }
+
             _PhotoSource = photo.Source;
             OnPropertyChanged(nameof(Photo));
           });
