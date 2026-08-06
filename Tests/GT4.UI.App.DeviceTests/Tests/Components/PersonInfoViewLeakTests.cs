@@ -2,6 +2,7 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Components;
 using GT4.UI.Utils;
+using GT4.UI.Utils.Converters;
 using System.Collections.ObjectModel;
 using Xunit;
 
@@ -112,5 +113,70 @@ public class PersonInfoViewLeakTests
 
     Assert.Same(janeViewBefore, janeViewAfter);
     Assert.Equal(2, childrenAfter.Count);
+  }
+
+  // Resolves data.Id == gatedDataId only once Release() is called; every other Data.Id resolves
+  // immediately. Models a photo resolution still in flight when SafeBindableLayout.Rebuild reuses the
+  // view for a different Person -- reuse means the view is never disconnected, so Handler alone can't
+  // tell UpdatePhotoAsync's continuation that its result is stale.
+  private sealed class GatedImageConverter(int gatedDataId) : IDataConverter
+  {
+    private readonly TaskCompletionSource _Gate = new();
+
+    public void Release() => _Gate.SetResult();
+
+    public Task<Data?> FromObjectAsync(object? data, CancellationToken token) => Task.FromResult<Data?>(null);
+
+    public async Task<object?> ToObjectAsync(Data? data, CancellationToken token)
+    {
+      if (data?.Id == gatedDataId)
+      {
+        await _Gate.Task;
+      }
+      return data is null ? null : new PhotoInfo(ImageUtils.ImageFromBytes(data.Content), null);
+    }
+  }
+
+  [Fact]
+  public async Task A_reused_views_stale_in_flight_resolution_does_not_overwrite_a_later_Person()
+  {
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+
+    var alicePhoto = new Data(1, [1, 2, 3], "image/png", DataCategory.PersonMainPhoto);
+    var bobPhoto = new Data(2, [4, 5, 6], "image/png", DataCategory.PersonMainPhoto);
+    var converter = new GatedImageConverter(gatedDataId: alicePhoto.Id);
+
+    var services = new ServiceCollection();
+    GT4Services.Add(services);
+    services.AddKeyedSingleton<IDataConverter>(DataCategory.PersonMainPhoto, converter);
+    var provider = services.BuildServiceProvider();
+
+    var view = await MainThread.InvokeOnMainThreadAsync(() => new TestablePersonInfoView(provider));
+    var page = new ContentPage { Content = view };
+    await using var window = await WindowHost.AttachAsync(page);
+
+    var alice = P(1, "Alice") with { MainPhoto = alicePhoto };
+    var bob = P(2, "Bob") with { MainPhoto = bobPhoto };
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      view.SetValue(PersonInfoView.PersonProperty, alice);
+      _ = view.Photo; // starts Alice's resolution, blocked on the gate
+    });
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      view.SetValue(PersonInfoView.PersonProperty, bob);
+      _ = view.Photo; // starts Bob's own (ungated) resolution
+    });
+    await Task.Delay(300); // let Bob's resolution complete
+    var bobResolvedPhoto = await MainThread.InvokeOnMainThreadAsync(() => view.Photo);
+
+    converter.Release();
+    await Task.Delay(300); // give Alice's now-unblocked continuation a chance to run
+
+    var photoAfterStaleContinuation = await MainThread.InvokeOnMainThreadAsync(() => view.Photo);
+
+    Assert.Same(bobResolvedPhoto, photoAfterStaleContinuation);
   }
 }

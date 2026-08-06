@@ -109,12 +109,30 @@ public class SafeBindableLayout : FlexLayout
     });
   }
 
+  // New items still map onto the same ItemTemplate, so an existing child can be repointed at a new
+  // item via BindingContext instead of torn down and recreated -- every child is structurally
+  // interchangeable. Relies on PersonInfoView.OnPersonChanged resetting per-item state (photo,
+  // generation) when BindingContext moves on.
   private void Rebuild()
   {
-    RemoveChildren(0, Children.Count);
-    if (ItemsSource is not null)
+    var items = ItemsSource?.Cast<object>().ToList() ?? [];
+    var reused = Math.Min(Children.Count, items.Count);
+
+    for (var i = 0; i < reused; i++)
     {
-      InsertChildren(0, ItemsSource.Cast<object>().ToList());
+      if (Children[i] is BindableObject bindable)
+      {
+        bindable.BindingContext = items[i];
+      }
+    }
+
+    if (Children.Count > reused)
+    {
+      RemoveChildren(reused, Children.Count - reused);
+    }
+    else if (items.Count > reused)
+    {
+      InsertChildren(reused, items.Skip(reused).ToList());
     }
   }
 
