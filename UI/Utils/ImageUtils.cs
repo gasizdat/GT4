@@ -134,12 +134,6 @@ public static class ImageUtils
     }
   }
 
-  public static async Task<byte[]?> ToBytesAsync(string resourceName, CancellationToken token)
-  {
-    using var stream = await FileSystem.OpenAppPackageFileAsync(resourceName);
-    return await ToBytesAsync(stream, token);
-  }
-
   private static Size? PngPixelSize(ReadOnlySpan<byte> bytes)
   {
     if (bytes.Length < 24 || !bytes[12..16].SequenceEqual("IHDR"u8))
