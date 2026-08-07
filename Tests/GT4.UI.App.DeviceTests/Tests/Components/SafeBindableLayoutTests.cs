@@ -52,6 +52,20 @@ public class SafeBindableLayoutTests
   }
 
   [Fact]
+  public async Task Rebuild_disconnects_removed_children_handlers()
+  {
+    var layout = await CreateAttachedLayoutAsync();
+
+    var before = await SetItemsAsync(layout, "A", "B");
+    var removed = Assert.IsType<Label>(before[1]);
+    Assert.NotNull(removed.Handler);
+
+    await SetItemsAsync(layout, "X");
+
+    Assert.Null(removed.Handler);
+  }
+
+  [Fact]
   public async Task Rebuild_reuses_the_overlap_and_adds_the_deficit_when_the_new_source_is_larger()
   {
     var layout = await CreateAttachedLayoutAsync();
