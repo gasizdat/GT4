@@ -269,10 +269,19 @@ public class MarkdownViewTests
 
     await using var attachment = await WindowHost.AttachAsync(page);
     var image = Descendants(view).OfType<Image>().Single();
+    
+    // Poll for both height and width > 0 to ensure layout has completed and sizing has been applied.
+    // The width must be non-zero to indicate that ScaleToHost has run, not just that the image has
+    // a default pixel size.
     await Poll.UntilAsync(
       () => MainThread.InvokeOnMainThreadAsync(() => image.Height),
       height => height > 0,
       timeoutMessage: "The image was never laid out.");
+    
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => image.Width),
+      width => width > 0,
+      timeoutMessage: "The image width was never set.");
 
     return await MainThread.InvokeOnMainThreadAsync(() => new Size(image.Width, image.Height));
   }
