@@ -162,9 +162,17 @@ public class SafeBindableLayout : FlexLayout
       var child = Children[startIndex];
 
       // Defensive disconnect: some platforms (notably Android) can hold native references longer
-      // than expected. Disconnect while still in the Children collection and again afterwards to
-      // maximize the chance native resources are released promptly.
-      (child as VisualElement)?.Handler?.DisconnectHandler();
+      // than expected. Attempt to disconnect while still in the Children collection, but some
+      // platform/handler implementations require the parent MauiContext to be available and will
+      // throw if it is not; swallow that specific failure and retry after removal.
+      try
+      {
+        (child as VisualElement)?.Handler?.DisconnectHandler();
+      }
+      catch (InvalidOperationException ex) when (ex.Message != null && ex.Message.Contains("MauiContext should have been set on parent"))
+      {
+        // Swallow and continue; we'll retry after removal.
+      }
 
       Children.RemoveAt(startIndex);
 
@@ -173,8 +181,16 @@ public class SafeBindableLayout : FlexLayout
         bindable.BindingContext = null;
       }
 
-      // Extra safety: disconnect again in case removal changed platform state.
-      (child as VisualElement)?.Handler?.DisconnectHandler();
+      // Extra safety: disconnect again in case removal changed platform state. Also swallow the
+      // same MauiContext-related InvalidOperationException if it occurs here.
+      try
+      {
+        (child as VisualElement)?.Handler?.DisconnectHandler();
+      }
+      catch (InvalidOperationException ex) when (ex.Message != null && ex.Message.Contains("MauiContext should have been set on parent"))
+      {
+        // Best-effort only; nothing more to do here.
+      }
     }
   }
 }
