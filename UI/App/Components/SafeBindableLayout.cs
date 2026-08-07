@@ -160,11 +160,20 @@ public class SafeBindableLayout : FlexLayout
     for (var i = 0; i < count; i++)
     {
       var child = Children[startIndex];
+
+      // Defensive disconnect: some platforms (notably Android) can hold native references longer
+      // than expected. Disconnect while still in the Children collection and again afterwards to
+      // maximize the chance native resources are released promptly.
+      (child as VisualElement)?.Handler?.DisconnectHandler();
+
       Children.RemoveAt(startIndex);
+
       if (child is BindableObject bindable)
       {
         bindable.BindingContext = null;
       }
+
+      // Extra safety: disconnect again in case removal changed platform state.
       (child as VisualElement)?.Handler?.DisconnectHandler();
     }
   }
