@@ -16,7 +16,6 @@ public partial class PersonInfoView : ContentView
   private readonly IDateFormatter _DateFormatter;
   private readonly INameFormatter _NameFormatter;
   private readonly OptionalDataConverterResolver _DataConverterResolver;
-  private readonly DefaultImageCache _DefaultImageCache;
   private ImageSource? _PhotoSource;
   private bool _PhotoReady;
   private int _PhotoGeneration;
@@ -29,7 +28,6 @@ public partial class PersonInfoView : ContentView
     _DateFormatter = serviceProvider.GetRequiredService<IDateFormatter>();
     _NameFormatter = serviceProvider.GetRequiredService<INameFormatter>();
     _DataConverterResolver = serviceProvider.GetRequiredService<OptionalDataConverterResolver>();
-    _DefaultImageCache = serviceProvider.GetRequiredService<DefaultImageCache>();
     InitializeComponent();
   }
 
@@ -196,5 +194,5 @@ public partial class PersonInfoView : ContentView
   }
 
   private ImageSource GetDefaultImage() =>
-    _DefaultImageCache.Get(ImageUtils.DefaultPhotoResourceName(Person?.BiologicalSex ?? BiologicalSex.Unknown));
+    ImageUtils.ImageFromRawResource(ImageUtils.DefaultPersonPhotoResourceName(Person?.BiologicalSex ?? BiologicalSex.Unknown));
 }
