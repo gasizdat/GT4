@@ -1,3 +1,4 @@
+using Microsoft.Maui;
 using GT4.UI.Components;
 using System.Collections.ObjectModel;
 using Xunit;
@@ -49,6 +50,21 @@ public class SafeBindableLayoutTests
     Assert.Single(after);
     Assert.Same(before[0], after[0]);
     Assert.Equal("X", ((Label)after[0]).BindingContext);
+  }
+
+  [Fact]
+  public async Task Rebuild_disconnects_removed_children_handlers()
+  {
+    var layout = await CreateAttachedLayoutAsync();
+
+    var before = await SetItemsAsync(layout, "A", "B");
+    var removed = Assert.IsType<Label>(before[1]);
+    var removedHandler = Assert.IsAssignableFrom<IElementHandler>(removed.Handler);
+
+    await SetItemsAsync(layout, "X");
+
+    Assert.Null(removedHandler.VirtualView);
+    Assert.Null(removed.Handler);
   }
 
   [Fact]
