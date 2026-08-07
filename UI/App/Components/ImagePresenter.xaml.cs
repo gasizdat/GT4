@@ -12,7 +12,7 @@ public partial class ImagePresenter : ContentView
   private const double _MinOpacity = 0.0;
   private const double _MaxOpacity = 1.0;
   private const int _ActiveImages = 2;
-  private static IDispatcherTimer _Timer;
+  private static IDispatcherTimer? _Timer;
   private static readonly TimeSpan _DefaultImageShowTime = TimeSpan.FromSeconds(5);
   private static readonly TimeSpan _DefaultImageFadeTime = TimeSpan.FromSeconds(2.5);
   private static readonly string[] _ImageProperties = [nameof(Image1), nameof(Image2)];
@@ -191,13 +191,20 @@ public partial class ImagePresenter : ContentView
     }
   }
 
-  static ImagePresenter()
+  private IDispatcherTimer GetTimer()
   {
+    if (_Timer is not null)
+    {
+      return _Timer;
+    }
+
     const double refreshInterval = 1.0 / _RefreshFPS;
-    _Timer = Shell.Current.Dispatcher.CreateTimer();
-    _Timer.Interval = TimeSpan.FromSeconds(refreshInterval);
-    _Timer.IsRepeating = true;
-    _Timer.Start();
+    var timer = Dispatcher.CreateTimer();
+    timer.Interval = TimeSpan.FromSeconds(refreshInterval);
+    timer.IsRepeating = true;
+    timer.Start();
+    _Timer = timer;
+    return timer;
   }
 
   protected ImagePresenter(IServiceProvider serviceProvider)
@@ -216,10 +223,17 @@ public partial class ImagePresenter : ContentView
     _Images = [.. images];
     Loaded += (_, _) =>
     {
+      var timer = GetTimer();
       Init();
-      _Timer.Tick += TimerTick;
+      timer.Tick += TimerTick;
     };
-    Unloaded += (_, _) => _Timer.Tick -= TimerTick;
+    Unloaded += (_, _) =>
+    {
+      if (_Timer is not null)
+      {
+        _Timer.Tick -= TimerTick;
+      }
+    };
     _Command = new SafeCommand(OnNextPicture, _AlertService);
     _OpenViewerCommand = new SafeCommand(OnOpenViewerAsync, _AlertService);
 
