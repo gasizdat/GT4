@@ -194,9 +194,12 @@ public class MarkdownView : ContentView
     }
 
     var fitWidth = Math.Min(pixelSize.Width, host.Width);
+    // Percentages are intended as a share of the image's own pixel width. Use the pixel width as
+    // the base when a percentage is supplied to avoid layout timing dependence on the host's
+    // measured width.
     var width = widthPercent is null
       ? fitWidth
-      : fitWidth * widthPercent.Value / 100.0;
+      : pixelSize.Width * widthPercent.Value / 100.0;
 
     image.WidthRequest = width;
     image.HeightRequest = width * pixelSize.Height / pixelSize.Width;
