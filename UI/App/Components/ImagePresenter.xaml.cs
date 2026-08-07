@@ -191,14 +191,9 @@ public partial class ImagePresenter : ContentView
     }
   }
 
-  static ImagePresenter()
-  {
-    const double refreshInterval = 1.0 / _RefreshFPS;
-    _Timer = Shell.Current.Dispatcher.CreateTimer();
-    _Timer.Interval = TimeSpan.FromSeconds(refreshInterval);
-    _Timer.IsRepeating = true;
-    _Timer.Start();
-  }
+  // Timer is created lazily on first Loaded event to avoid static initialization that
+  // depends on Shell.Current being available (which causes TypeInitializationException in
+  // some test environments). The timer is shared across instances.
 
   protected ImagePresenter(IServiceProvider serviceProvider)
   {
@@ -216,10 +211,40 @@ public partial class ImagePresenter : ContentView
     _Images = [.. images];
     Loaded += (_, _) =>
     {
+      // Ensure the shared timer exists and is started when the first presenter is loaded.
+      if (_Timer is null)
+      {
+        try
+        {
+          var timer = Shell.Current?.Dispatcher?.CreateTimer();
+          if (timer is not null)
+          {
+            timer.Interval = TimeSpan.FromSeconds(1.0 / _RefreshFPS);
+            timer.IsRepeating = true;
+            timer.Start();
+            _Timer = timer;
+          }
+        }
+        catch
+        {
+          // Best-effort: if Shell.Current isn't available yet or timer creation fails,
+          // leave _Timer null; Update() will be a no-op until timer exists.
+        }
+      }
+
       Init();
-      _Timer.Tick += TimerTick;
+      if (_Timer is not null)
+      {
+        _Timer.Tick += TimerTick;
+      }
     };
-    Unloaded += (_, _) => _Timer.Tick -= TimerTick;
+    Unloaded += (_, _) =>
+    {
+      if (_Timer is not null)
+      {
+        _Timer.Tick -= TimerTick;
+      }
+    };
     _Command = new SafeCommand(OnNextPicture, _AlertService);
     _OpenViewerCommand = new SafeCommand(OnOpenViewerAsync, _AlertService);
 
