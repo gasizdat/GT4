@@ -12,7 +12,7 @@ public partial class ImagePresenter : ContentView
   private const double _MinOpacity = 0.0;
   private const double _MaxOpacity = 1.0;
   private const int _ActiveImages = 2;
-  private static IDispatcherTimer _Timer;
+  private static IDispatcherTimer? _Timer;
   private static readonly TimeSpan _DefaultImageShowTime = TimeSpan.FromSeconds(5);
   private static readonly TimeSpan _DefaultImageFadeTime = TimeSpan.FromSeconds(2.5);
   private static readonly string[] _ImageProperties = [nameof(Image1), nameof(Image2)];
