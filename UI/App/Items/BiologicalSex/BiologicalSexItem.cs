@@ -9,7 +9,7 @@ public class BiologicalSexItem : CollectionItemBase<BiologicalSex>
   private readonly IBiologicalSexFormatter _BiologicalSexFormatter;
 
   public BiologicalSexItem(BiologicalSex biologicalSex, IBiologicalSexFormatter biologicalSexFormatter)
-    : base(biologicalSex, ImageUtils.DefaultPhotoResourceName(biologicalSex))
+    : base(biologicalSex, ImageUtils.DefaultPersonPhotoResourceName(biologicalSex))
   {
     _BiologicalSexFormatter = biologicalSexFormatter;
   }

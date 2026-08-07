@@ -196,5 +196,5 @@ public partial class PersonInfoView : ContentView
   }
 
   private ImageSource GetDefaultImage() =>
-    _DefaultImageCache.Get(ImageUtils.DefaultPhotoResourceName(Person?.BiologicalSex ?? BiologicalSex.Unknown));
+    _DefaultImageCache.Get(ImageUtils.DefaultPersonPhotoResourceName(Person?.BiologicalSex ?? BiologicalSex.Unknown));
 }

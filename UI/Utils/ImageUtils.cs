@@ -19,7 +19,7 @@ public static class ImageUtils
     0x01, 0x05, 0x01, 0x27, 0x23, 0xE3, 0x66, 0x66, 0x00, 0x00, 0x00, 0x00,
     0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
   };
-  public static string DefaultPhotoResourceName(BiologicalSex biologicalSex) => biologicalSex switch
+  public static string DefaultPersonPhotoResourceName(BiologicalSex biologicalSex) => biologicalSex switch
   {
     BiologicalSex.Male => "male_stub.png",
     BiologicalSex.Female => "female_stub.png",
