@@ -275,10 +275,23 @@ public class MarkdownViewTests
 
     await using var attachment = await WindowHost.AttachAsync(page);
     var image = Descendants(view).OfType<Image>().Single();
-    await Poll.UntilAsync(
+    var observed = await Poll.UntilAsync(
       () => MainThread.InvokeOnMainThreadAsync(() => new Size(image.Width, image.Height)),
-      size => size == expectedSize,
-      timeoutMessage: $"The image did not reach {expectedSize}.");
+      size => size.Width > 0 && size.Height > 0,
+      timeoutMessage: "The image was never laid out.");
+
+    for (var attempt = 0; attempt < 50; attempt++)
+    {
+      if (observed == expectedSize)
+      {
+        return;
+      }
+
+      await Task.Delay(20);
+      observed = await MainThread.InvokeOnMainThreadAsync(() => new Size(image.Width, image.Height));
+    }
+
+    Assert.Equal(expectedSize, observed);
   }
 
   private static Task<MarkdownView> CreateViewAsync(string markdown) =>
