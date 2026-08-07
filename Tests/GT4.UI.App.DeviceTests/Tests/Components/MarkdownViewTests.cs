@@ -62,9 +62,10 @@ public class MarkdownViewTests
   [Fact]
   public async Task MediaReference_SmallerThanItsColumn_KeepsItsPixelSize()
   {
-    var size = await RenderedImageSizeAsync("![A caption](media:11)", columnWidth: 300);
-
-    Assert.Equal(new Size(SamplePngWidth, SamplePngHeight), size);
+    await AssertRenderedImageSizeAsync(
+      "![A caption](media:11)",
+      columnWidth: 300,
+      new Size(SamplePngWidth, SamplePngHeight));
   }
 
   // Capping the width alone clips the image horizontally and leaves it floating in a frame as tall as
@@ -72,42 +73,47 @@ public class MarkdownViewTests
   [Fact]
   public async Task MediaReference_WiderThanItsColumn_ShrinksKeepingItsAspectRatio()
   {
-    var size = await RenderedImageSizeAsync("![A caption](media:11)", columnWidth: 20);
-
-    Assert.Equal(new Size(20, 10), size);
+    await AssertRenderedImageSizeAsync(
+      "![A caption](media:11)",
+      columnWidth: 20,
+      new Size(20, 10));
   }
 
   [Fact]
   public async Task MediaReference_WithATrailingPercentage_TakesThatShareOfItsPixelSize()
   {
-    var size = await RenderedImageSizeAsync("![A caption 50%](media:11)", columnWidth: 300);
-
-    Assert.Equal(new Size(SamplePngWidth / 2, SamplePngHeight / 2), size);
+    await AssertRenderedImageSizeAsync(
+      "![A caption 50%](media:11)",
+      columnWidth: 300,
+      new Size(SamplePngWidth / 2, SamplePngHeight / 2));
   }
 
   [Fact]
   public async Task MediaReference_WiderThanItsColumn_TakesItsPercentageOfTheColumn()
   {
-    var size = await RenderedImageSizeAsync("![A caption 50%](media:11)", columnWidth: 20);
-
-    Assert.Equal(new Size(10, 5), size);
+    await AssertRenderedImageSizeAsync(
+      "![A caption 50%](media:11)",
+      columnWidth: 20,
+      new Size(10, 5));
   }
 
   [Fact]
   public async Task MediaReference_WithAPercentageOverAHundred_GrowsPastItsPixelSize()
   {
-    var size = await RenderedImageSizeAsync("![A caption 150%](media:11)", columnWidth: 300);
-
-    Assert.Equal(new Size(SamplePngWidth * 1.5, SamplePngHeight * 1.5), size);
+    await AssertRenderedImageSizeAsync(
+      "![A caption 150%](media:11)",
+      columnWidth: 300,
+      new Size(SamplePngWidth * 1.5, SamplePngHeight * 1.5));
   }
 
   // The overflow is intentional, not a missed clamp -- a real biography card clips whatever spills past it.
   [Fact]
   public async Task MediaReference_EnlargedPastItsColumn_OverflowsRatherThanClamping()
   {
-    var size = await RenderedImageSizeAsync("![A caption 150%](media:11)", columnWidth: 20);
-
-    Assert.Equal(new Size(30, 15), size);
+    await AssertRenderedImageSizeAsync(
+      "![A caption 150%](media:11)",
+      columnWidth: 20,
+      new Size(30, 15));
   }
 
   // The nested-image path renders the caption as text, so the size token has to be stripped there or
@@ -254,7 +260,7 @@ public class MarkdownViewTests
 
   // Lays the view out inside a fixed-width column on a real window, so the assertions are about the
   // size the image ends up drawn at rather than the layout properties asked for.
-  private static async Task<Size> RenderedImageSizeAsync(string markdown, double columnWidth)
+  private static async Task AssertRenderedImageSizeAsync(string markdown, double columnWidth, Size expectedSize)
   {
     var view = await CreateViewAsync(markdown, new Dictionary<int, byte[]> { [11] = SamplePng });
     var page = await MainThread.InvokeOnMainThreadAsync(() => new ContentPage
@@ -269,12 +275,23 @@ public class MarkdownViewTests
 
     await using var attachment = await WindowHost.AttachAsync(page);
     var image = Descendants(view).OfType<Image>().Single();
-    await Poll.UntilAsync(
-      () => MainThread.InvokeOnMainThreadAsync(() => image.Height),
-      height => height > 0,
+    var observed = await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => new Size(image.Width, image.Height)),
+      size => size.Width > 0 && size.Height > 0,
       timeoutMessage: "The image was never laid out.");
 
-    return await MainThread.InvokeOnMainThreadAsync(() => new Size(image.Width, image.Height));
+    for (var attempt = 0; attempt < 50; attempt++)
+    {
+      if (observed == expectedSize)
+      {
+        return;
+      }
+
+      await Task.Delay(20);
+      observed = await MainThread.InvokeOnMainThreadAsync(() => new Size(image.Width, image.Height));
+    }
+
+    Assert.Equal(expectedSize, observed);
   }
 
   private static Task<MarkdownView> CreateViewAsync(string markdown) =>
