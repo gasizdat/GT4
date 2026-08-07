@@ -181,6 +181,12 @@ public class MarkdownView : ContentView
     image.HorizontalOptions = LayoutOptions.Start;
     var host = new ContentView { Content = image };
     host.SizeChanged += (_, _) => ScaleToHost(host, image, pixelSize.Value, widthPercent);
+    // Apply sizing immediately in case the host already has a measured width (avoids race where the
+    // SizeChanged handler runs later and the test reads the image size before scaling).
+    if (host.Width > 0)
+    {
+      ScaleToHost(host, image, pixelSize.Value, widthPercent);
+    }
     return host;
   }
 
