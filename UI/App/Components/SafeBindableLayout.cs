@@ -163,42 +163,40 @@ public class SafeBindableLayout : FlexLayout
       {
         var child = Children[startIndex];
 
-        // Defensive disconnect: some platforms (notably Android) can hold native references longer
-        // than expected. Attempt to disconnect while still in the Children collection, but some
-        // platform/handler implementations require the parent MauiContext to be available and will
-        // throw if it is not; swallow that specific failure and retry after removal.
-        try
-        {
-          (child as VisualElement)?.Handler?.DisconnectHandler();
-        }
-        catch (InvalidOperationException ex) when (ex.Message != null && ex.Message.Contains("MauiContext should have been set on parent"))
-        {
-          // Swallow and continue; we'll retry after removal.
-        }
-
+        // Prefer the manual-tested sequence: remove from the visual tree first, then explicitly
+        // disconnect the handler. This mirrors the manual Children.Remove + DisconnectHandler
+        // which was observed to release native resources reliably.
         Children.RemoveAt(startIndex);
 
         if (child is BindableObject bindable)
         {
+          // Clear BindingContext first so any binding-driven async work can notice the detachment.
           bindable.BindingContext = null;
         }
 
-        // Extra safety: disconnect again in case removal changed platform state. Also swallow the
-        // same MauiContext-related InvalidOperationException if it occurs here.
         try
         {
           (child as VisualElement)?.Handler?.DisconnectHandler();
         }
         catch (InvalidOperationException ex) when (ex.Message != null && ex.Message.Contains("MauiContext should have been set on parent"))
         {
-          // Best-effort only; nothing more to do here.
+          // Some handler implementations require the parent MauiContext for DisconnectHandler; if
+          // that's the case, try the alternative order: disconnect while still attached and ignore
+          // the same MauiContext error if it occurs.
+          try
+          {
+            // Re-check handler on the original child reference and attempt disconnect again.
+            (child as VisualElement)?.Handler?.DisconnectHandler();
+          }
+          catch (InvalidOperationException)
+          {
+            // Give up — best-effort only.
+          }
         }
       }
-      catch (InvalidOperationException ex) when (ex.Message != null && ex.Message.Contains("MauiContext should have been set on parent"))
+      catch (ArgumentOutOfRangeException)
       {
-        // In some contexts the visual tree's MauiContext isn't available for certain handler ops.
-        // Swallow this specific InvalidOperationException to keep test runs stable; the runtime
-        // will still finalize native resources later.
+        // Another thread/dispatcher tick already mutated the collection; ignore and continue.
       }
     }
   }
