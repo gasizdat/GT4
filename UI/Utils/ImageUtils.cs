@@ -21,9 +21,10 @@ public static class ImageUtils
   };
 
   // ImageSource.FromStream results have no stable identity MAUI's platform image cache can key on,
-  // so each call independently decodes -- caching by resource name lets repeated requests for the
-  // same default stub image (male/female/project icon) reuse one decode. These are static app
-  // assets that never change, so entries never need eviction.
+  // so caching by resource name avoids allocating a fresh wrapper per request for the handful of
+  // default stub images (male/female/project icon). This does not dedupe the decode itself -- each
+  // bound Image still decodes independently -- so it saves allocation churn, not decoded-image
+  // memory. These are static app assets that never change, so cached entries never need eviction.
   private static readonly ConcurrentDictionary<string, ImageSource> _ImageCache = new();
 
   public static string DefaultPersonPhotoResourceName(BiologicalSex biologicalSex) => biologicalSex switch
