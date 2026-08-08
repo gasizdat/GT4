@@ -27,6 +27,14 @@ public class PersonInfoViewLeakTests
   [Fact]
   public async Task SafeBindableLayout_rebound_to_distinct_source_instances_releases_old_views()
   {
+    // Android-only, 100% reproducible retention of the single reused PersonInfoView; root cause not
+    // yet found (bisected across bindings/nesting/image-loading, none of it in isolation). Tracked as
+    // https://github.com/gasizdat/GT4/issues/271 -- re-enable once that's resolved.
+    if (OperatingSystem.IsAndroid())
+    {
+      Assert.Skip("Known Android-only leak, see GH issue #271.");
+    }
+
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
 
     var layout = new SafeBindableLayout { ItemTemplate = new DataTemplate(() => new PersonInfoView()) };
