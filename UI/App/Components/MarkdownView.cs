@@ -183,7 +183,9 @@ public class MarkdownView : ContentView
     // On WinUI, growing WidthRequest on an already-arranged Image sticks at the old width (HeightRequest
     // keeps applying, flattening the image), so the up-front request has to be the widest this image will
     // ever need: the host's SizeChanged handler below then only ever shrinks it to fit a narrower column.
-    SetImageSize(image, pixelSize.Value, ScaledWidth(pixelSize.Value.Width, widthPercent));
+    var upFrontWidth = ScaledWidth(pixelSize.Value.Width, widthPercent);
+    Console.WriteLine($"[DIAG ScaledImage] pixelSize={pixelSize.Value} widthPercent={widthPercent} -> upFrontWidth={upFrontWidth}");
+    SetImageSize(image, pixelSize.Value, upFrontWidth);
 
     var host = new ContentView { Content = image };
     host.SizeChanged += (_, _) => ScaleToHost(host, image, pixelSize.Value, widthPercent);
@@ -200,7 +202,9 @@ public class MarkdownView : ContentView
     }
 
     var fitWidth = Math.Min(pixelSize.Width, host.Width);
-    SetImageSize(image, pixelSize, ScaledWidth(fitWidth, widthPercent));
+    var width = ScaledWidth(fitWidth, widthPercent);
+    Console.WriteLine($"[DIAG ScaleToHost] host.Width={host.Width} fitWidth={fitWidth} widthPercent={widthPercent} -> width={width} image.WidthRequest(before)={image.WidthRequest}");
+    SetImageSize(image, pixelSize, width);
   }
 
   private static double ScaledWidth(double baseWidth, int? widthPercent) =>
