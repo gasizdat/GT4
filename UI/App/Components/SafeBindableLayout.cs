@@ -160,12 +160,14 @@ public class SafeBindableLayout : FlexLayout
     for (var i = 0; i < count; i++)
     {
       var child = Children[startIndex];
+      // Android removal can clear child.Handler before the handler itself is disconnected.
+      var handler = (child as VisualElement)?.Handler;
       Children.RemoveAt(startIndex);
       if (child is BindableObject bindable)
       {
         bindable.BindingContext = null;
       }
-      (child as VisualElement)?.Handler?.DisconnectHandler();
+      handler?.DisconnectHandler();
     }
   }
 }

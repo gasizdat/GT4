@@ -1,16 +1,16 @@
 ﻿using GT4.Core.Project.Dto;
 using GT4.UI.Utils.Converters;
-using Microsoft.Extensions.Http;
 using Microsoft.Maui.Graphics.Platform;
 using System.Buffers.Binary;
+using System.Collections.Concurrent;
 
 namespace GT4.UI.Utils;
 
 public static class ImageUtils
 {
-  private static readonly byte[] PngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+  private static readonly byte[] _PngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
 
-  private static readonly byte[] TransparentPng =
+  private static readonly byte[] _TransparentPng =
   {
     0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
     0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
@@ -19,7 +19,10 @@ public static class ImageUtils
     0x01, 0x05, 0x01, 0x27, 0x23, 0xE3, 0x66, 0x66, 0x00, 0x00, 0x00, 0x00,
     0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
   };
-  public static string DefaultPhotoResourceName(BiologicalSex biologicalSex) => biologicalSex switch
+
+  private static readonly ConcurrentDictionary<string, ImageSource> _ResourceImageCache = new();
+
+  public static string DefaultPersonPhotoResourceName(BiologicalSex biologicalSex) => biologicalSex switch
   {
     BiologicalSex.Male => "male_stub.png",
     BiologicalSex.Female => "female_stub.png",
@@ -27,7 +30,7 @@ public static class ImageUtils
   };
 
   public static ImageSource ImageFromBytes(byte[] data) =>
-    ImageSource.FromStream(token => Task.Run<Stream>(() => new MemoryStream(data.Length > 0 ? data : TransparentPng), token));
+    ImageSource.FromStream(token => Task.Run<Stream>(() => new MemoryStream(data.Length > 0 ? data : _TransparentPng), token));
 
   /// <summary>
   /// Decodes <paramref name="data"/>, scales it so its longest side is <paramref name="maxSize"/> and
@@ -57,7 +60,7 @@ public static class ImageUtils
     var bytes = data.AsSpan();
     Size? size = null;
 
-    if (bytes.StartsWith(PngSignature))
+    if (bytes.StartsWith(_PngSignature))
     {
       size = PngPixelSize(bytes);
     }
@@ -77,9 +80,16 @@ public static class ImageUtils
     return size is { Width: > 0, Height: > 0 } ? size : null;
   }
 
-  public static ImageSource ImageFromRawResource(string resourceName) =>
-    ImageSource.FromStream(_ => FileSystem.OpenAppPackageFileAsync(resourceName));
+  public static ImageSource ImageFromRawResource(string resourceName)
+  {
+    if (!_ResourceImageCache.TryGetValue(resourceName, out var image))
+    {
+      image = ImageSource.FromStream(_ => FileSystem.OpenAppPackageFileAsync(resourceName));
+      _ResourceImageCache.TryAdd(resourceName, image);
+    }
 
+    return image;
+  }
   /// <summary>
   /// Resolves a photo through its category's keyed <see cref="IDataConverter"/>, falling back to a
   /// caption-less <paramref name="fallback"/> both when no converter is registered for the category (an
@@ -132,12 +142,6 @@ public static class ImageUtils
     {
       return await ToBytesAsync(stream, token);
     }
-  }
-
-  public static async Task<byte[]?> ToBytesAsync(string resourceName, CancellationToken token)
-  {
-    using var stream = await FileSystem.OpenAppPackageFileAsync(resourceName);
-    return await ToBytesAsync(stream, token);
   }
 
   private static Size? PngPixelSize(ReadOnlySpan<byte> bytes)

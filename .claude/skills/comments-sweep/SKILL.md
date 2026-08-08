@@ -22,7 +22,7 @@ Every comment is one of five:
 - **Narration** — restates the line, or walks control flow that is already plain. Make the code say it instead: rename, extract a named predicate, replace a magic value or boolean flag with an explicit domain concept. Then drop the comment. Don't extract something vague just to delete a comment — that relocates the confusion rather than removing it, and single-use logic doesn't want a helper.
 - **Behavioral claim** — an invariant, an edge case, a "this would silently break if". Pin it with a test, then shrink the comment to a one-line statement of the invariant.
 - **Contract** — public API docs, framework-required, generated, legal notices. Keep. Improve if inaccurate, but preserve what it promises.
-- **Rationale** — why this is necessary, what constraint forbids something simpler, what would break if it changed. Keep, rewritten to answer that question directly: an external API/platform constraint, a required ordering, a workaround for someone else's defect, a deliberate trade-off.
+- **Rationale** — why this is necessary, what constraint forbids something simpler, what would break if it changed. Before keeping it, check whether a more specific name already carries the constraint — a cache named for its key space needs no note about its bounds. If not, keep it, rewritten to answer that question directly: an external API/platform constraint, a required ordering, a workaround for someone else's defect, a deliberate trade-off.
 
 **The discriminator:** delete the comment and re-read the code. If a reader who can read identifiers and test names loses nothing, it was never load-bearing. Verbose *why* is still boilerplate — three lines justifying two lines of code usually wants to be one clause, or nothing.
 

@@ -6,11 +6,11 @@ using GT4.UI.Components;
 using GT4.UI.Converters;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
-using GT4.UI.Utils.Formatters;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Extensions;
+using GT4.UI.Utils.Formatters;
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
@@ -398,6 +398,9 @@ public partial class PersonPage : ContentPage
 
   private async Task<(PhotoInfo[] Photos, Data[] PhotoData)> LoadPhotosAsync(PersonFullInfo personFullInfo, CancellationToken token)
   {
+    var defaultPersonPhotoResourceName = ImageUtils.DefaultPersonPhotoResourceName(personFullInfo.BiologicalSex);
+    var defaultPersonPhoto = ImageUtils.ImageFromRawResource(defaultPersonPhotoResourceName);
+
     if (personFullInfo.MainPhoto is null)
     {
       if (personFullInfo.AdditionalPhotos.Length != 0)
@@ -406,17 +409,12 @@ public partial class PersonPage : ContentPage
       }
 
       using var readResourceToken = _CancellationTokenProvider.CreateShortOperationCancellationToken();
-      var defaultImageResourceName = ImageUtils.DefaultPhotoResourceName(personFullInfo.BiologicalSex);
-      var defaultPhoto = await ImageUtils.ToBytesAsync(defaultImageResourceName, readResourceToken) ?? [];
-      var defaultSource = ImageUtils.ImageFromBytes(defaultPhoto);
-      return ([new PhotoInfo(defaultSource, null)], []);
+      return ([new PhotoInfo(defaultPersonPhoto, null)], []);
     }
 
     Data[] photoData = [personFullInfo.MainPhoto, .. personFullInfo.AdditionalPhotos];
-    var fallbackResourceName = ImageUtils.DefaultPhotoResourceName(personFullInfo.BiologicalSex);
-    var fallback = ImageUtils.ImageFromRawResource(fallbackResourceName);
     var photos = await Task.WhenAll(photoData.Select(data =>
-      ImageUtils.ResolvePhotoAsync(_DataConverterResolver, data, fallback, token)));
+      ImageUtils.ResolvePhotoAsync(_DataConverterResolver, data, defaultPersonPhoto, token)));
 
     return (photos, photoData);
   }
