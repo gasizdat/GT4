@@ -2,7 +2,8 @@
 .SYNOPSIS
   Runs every test project (GT4.Core.Project.Tests, GT4.Core.Gedcom.Tests, GT4.Tools.RelativesCli.Tests,
   GT4.UI.Utils.Tests, GT4.UI.View.Tests, GT4.UI.App.DeviceTests) with code coverage, then the GEDCOM
-  round-trip functional tests, and shows a combined HTML report at the end.
+  round-trip functional tests, and shows a combined HTML report plus a consolidated pass/fail summary
+  at the end.
 
 .PARAMETER SkipOpen
   Don't launch the generated report in the default browser.
@@ -13,6 +14,10 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+# A failing `dotnet test`/`dotnet-coverage collect` must not abort the script before later projects
+# or the summary run at all: on PowerShell versions where this defaults true, 'Stop' above would turn
+# their nonzero exit into a terminating error. Exit codes are checked explicitly below instead.
+$PSNativeCommandUseErrorActionPreference = $false
 $repoRoot = $PSScriptRoot
 $coverageDir = Join-Path $repoRoot 'coverage'
 $toolsPath = Join-Path $env:USERPROFILE '.dotnet\tools'
@@ -33,34 +38,32 @@ function Install-GlobalToolIfMissing([string]$toolName) {
   }
 }
 
+function Get-TrxCounters([string]$trxPath) {
+  if (-not (Test-Path $trxPath)) { return $null }
+  [xml]$trx = Get-Content $trxPath
+  return $trx.TestRun.ResultSummary.Counters
+}
+
 Install-GlobalToolIfMissing 'dotnet-coverage'
 Install-GlobalToolIfMissing 'dotnet-reportgenerator-globaltool'
 if ($env:PATH -notlike "*$toolsPath*") { $env:PATH = "$env:PATH;$toolsPath" }
 
-Write-Host "`n=== GT4.Core.Project.Tests ===" -ForegroundColor Cyan
-dotnet test (Join-Path $repoRoot 'Tests\GT4.Core.Project.Tests\GT4.Core.Project.Tests.csproj') `
-  --configuration Release --collect "XPlat Code Coverage" --results-directory $coverageDir `
-  --logger "console;verbosity=detailed"
+$testProjects = [ordered]@{
+  'GT4.Core.Project.Tests'       = 'Tests\GT4.Core.Project.Tests\GT4.Core.Project.Tests.csproj'
+  'GT4.Core.Gedcom.Tests'        = 'Tests\GT4.Core.Gedcom.Tests\GT4.Core.Gedcom.Tests.csproj'
+  'GT4.Tools.RelativesCli.Tests' = 'Tests\GT4.Tools.RelativesCli.Tests\GT4.Tools.RelativesCli.Tests.csproj'
+  'GT4.UI.Utils.Tests'           = 'Tests\GT4.UI.Utils.Tests\GT4.UI.Utils.Tests.csproj'
+  'GT4.UI.View.Tests'            = 'Tests\GT4.UI.View.Tests\GT4.UI.View.Tests.csproj'
+}
 
-Write-Host "`n=== GT4.Core.Gedcom.Tests ===" -ForegroundColor Cyan
-dotnet test (Join-Path $repoRoot 'Tests\GT4.Core.Gedcom.Tests\GT4.Core.Gedcom.Tests.csproj') `
-  --configuration Release --collect "XPlat Code Coverage" --results-directory $coverageDir `
-  --logger "console;verbosity=detailed"
-
-Write-Host "`n=== GT4.Tools.RelativesCli.Tests ===" -ForegroundColor Cyan
-dotnet test (Join-Path $repoRoot 'Tests\GT4.Tools.RelativesCli.Tests\GT4.Tools.RelativesCli.Tests.csproj') `
-  --configuration Release --collect "XPlat Code Coverage" --results-directory $coverageDir `
-  --logger "console;verbosity=detailed"
-
-Write-Host "`n=== GT4.UI.Utils.Tests ===" -ForegroundColor Cyan
-dotnet test (Join-Path $repoRoot 'Tests\GT4.UI.Utils.Tests\GT4.UI.Utils.Tests.csproj') `
-  --configuration Release --collect "XPlat Code Coverage" --results-directory $coverageDir `
-  --logger "console;verbosity=detailed"
-
-Write-Host "`n=== GT4.UI.View.Tests ===" -ForegroundColor Cyan
-dotnet test (Join-Path $repoRoot 'Tests\GT4.UI.View.Tests\GT4.UI.View.Tests.csproj') `
-  --configuration Release --collect "XPlat Code Coverage" --results-directory $coverageDir `
-  --logger "console;verbosity=detailed"
+$testExitCodes = @{}
+foreach ($name in $testProjects.Keys) {
+  Write-Host "`n=== $name ===" -ForegroundColor Cyan
+  dotnet test (Join-Path $repoRoot $testProjects[$name]) `
+    --configuration Release --collect "XPlat Code Coverage" --results-directory $coverageDir `
+    --logger "console;verbosity=detailed" --logger "trx;LogFileName=$name.trx"
+  $testExitCodes[$name] = $LASTEXITCODE
+}
 
 # coverlet's in-process collector never sees this project's tests: DeviceRunners launches
 # AppWinOnly.exe as a separate process and drives it over TCP. dotnet-coverage attaches across the
@@ -93,9 +96,8 @@ for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
   dotnet-coverage collect --output $deviceCoverageFile --output-format cobertura -- dotnet @deviceTestArgs
   $deviceTestsExit = $LASTEXITCODE
 
-  if (Test-Path $deviceTrxFile) {
-    [xml]$trx = Get-Content $deviceTrxFile
-    $counters = $trx.TestRun.ResultSummary.Counters
+  $counters = Get-TrxCounters $deviceTrxFile
+  if ($counters) {
     Write-Host "Attempt $attempt`: $($counters.total) total, $($counters.failed) failed (exit code $deviceTestsExit)."
     if ([int]$counters.failed -gt 0) {
       Write-Host "Real test failure recorded -- not retrying." -ForegroundColor Red
@@ -130,9 +132,45 @@ if (Test-Path $summaryFile) {
   Get-Content $summaryFile
 }
 
+Write-Host "`n=== Test summary ===" -ForegroundColor Green
+$testSummary = foreach ($name in $testProjects.Keys) {
+  $counters = Get-TrxCounters (Join-Path $coverageDir "$name.trx")
+  [pscustomobject]@{
+    Project  = $name
+    Total    = if ($counters) { [int]$counters.total } else { 0 }
+    Passed   = if ($counters) { [int]$counters.passed } else { 0 }
+    Failed   = if ($counters) { [int]$counters.failed } else { 0 }
+    Skipped  = if ($counters) { [int]$counters.notExecuted } else { 0 }
+    ExitCode = $testExitCodes[$name]
+  }
+}
+$deviceCounters = Get-TrxCounters $deviceTrxFile
+$testSummary += [pscustomobject]@{
+  Project  = 'GT4.UI.App.DeviceTests'
+  Total    = if ($deviceCounters) { [int]$deviceCounters.total } else { 0 }
+  Passed   = if ($deviceCounters) { [int]$deviceCounters.passed } else { 0 }
+  Failed   = if ($deviceCounters) { [int]$deviceCounters.failed } else { 0 }
+  Skipped  = if ($deviceCounters) { [int]$deviceCounters.notExecuted } else { 0 }
+  ExitCode = $deviceTestsExit
+}
+$testSummary | Format-Table Project, Total, Passed, Failed, Skipped, ExitCode -AutoSize | Out-Host
+
+$grandTotal = ($testSummary | Measure-Object -Property Total -Sum).Sum
+$grandPassed = ($testSummary | Measure-Object -Property Passed -Sum).Sum
+$grandFailed = ($testSummary | Measure-Object -Property Failed -Sum).Sum
+$grandSkipped = ($testSummary | Measure-Object -Property Skipped -Sum).Sum
+$grandColor = if ($grandFailed -gt 0) { 'Red' } else { 'Green' }
+Write-Host "TOTAL: $grandTotal total, $grandPassed passed, $grandFailed failed, $grandSkipped skipped" -ForegroundColor $grandColor
+
 $indexFile = Join-Path $reportDir 'index.html'
 if (-not $SkipOpen -and (Test-Path $indexFile)) {
   Start-Process $indexFile
+}
+
+$failedProjects = @($testSummary | Where-Object { $_.Project -ne 'GT4.UI.App.DeviceTests' -and ($_.Failed -gt 0 -or $_.ExitCode -ne 0) })
+if ($failedProjects.Count -gt 0) {
+  Write-Host "`nOne or more test projects reported failures: $($failedProjects.Project -join ', ')" -ForegroundColor Red
+  exit 1
 }
 
 if ($deviceTestsExit -ne 0) {
