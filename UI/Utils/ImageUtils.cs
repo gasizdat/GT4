@@ -20,9 +20,7 @@ public static class ImageUtils
     0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
   };
 
-  // Never evicted: the key space is a fixed handful of static stub images (male/female/project
-  // icon) that never change.
-  private static readonly ConcurrentDictionary<string, ImageSource> _ImageCache = new();
+  private static readonly ConcurrentDictionary<string, ImageSource> _ResourceImageCache = new();
 
   public static string DefaultPersonPhotoResourceName(BiologicalSex biologicalSex) => biologicalSex switch
   {
@@ -84,10 +82,10 @@ public static class ImageUtils
 
   public static ImageSource ImageFromRawResource(string resourceName)
   {
-    if (!_ImageCache.TryGetValue(resourceName, out var image))
+    if (!_ResourceImageCache.TryGetValue(resourceName, out var image))
     {
       image = ImageSource.FromStream(_ => FileSystem.OpenAppPackageFileAsync(resourceName));
-      _ImageCache.TryAdd(resourceName, image);
+      _ResourceImageCache.TryAdd(resourceName, image);
     }
 
     return image;
