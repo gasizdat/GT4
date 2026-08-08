@@ -619,15 +619,15 @@ public partial class CreateOrUpdateNameDialog : ContentPage
           .Names
           .AddNameAsync(info.FemaleName, nameType, names.FirstName, token));
     }
+    await Task.WhenAll(tasks);
     if (name.Type == NameType.FamilyName)
     {
       Data[] familyDataSet = [.. info.Photos, .. info.Attachments];
-      tasks.Add(currentProjectProvider
+      await currentProjectProvider
           .Project
           .FamilyManager
-          .UpdateFamilyDataAsync(names.FirstName, familyDataSet, token));
+          .UpdateFamilyDataAsync(names.FirstName, familyDataSet, token);
     }
-    await Task.WhenAll(tasks);
     await transaction.CommitAsync(token);
   }
 }

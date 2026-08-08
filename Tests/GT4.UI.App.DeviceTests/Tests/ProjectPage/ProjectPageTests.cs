@@ -81,6 +81,31 @@ public class ProjectPageTests
   }
 
   [Fact]
+  public async Task Families_with_a_main_photo_show_it_as_the_card_icon()
+  {
+    var services = new TestServices();
+    var ivanov = N(1, "Ivanov", NameType.FamilyName);
+    var petrov = N(2, "Petrov", NameType.FamilyName);
+    var photoBytes = new byte[] { 1, 2, 3 };
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([ivanov, petrov]);
+    services.FamilyManager
+      .Setup(f => f.GetFamilyMainPhotosAsync(It.IsAny<Name[]>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new Dictionary<int, Data[]> { [ivanov.Id] = [new Data(1, photoBytes, "image/png", DataCategory.FamilyMainPhoto)] });
+    var page = await CreatePageAsync(services);
+
+    var families = await page.WaitForFamiliesAsync();
+
+    var withPhoto = families.Single(f => f.Info.Value == "Ivanov");
+    var withoutPhoto = families.Single(f => f.Info.Value == "Petrov");
+    var iconStream = Assert.IsType<StreamImageSource>(withPhoto.Icon);
+    await using var stream = await iconStream.Stream(CancellationToken.None);
+    using var buffer = new MemoryStream();
+    await stream.CopyToAsync(buffer);
+    Assert.Equal(photoBytes, buffer.ToArray());
+    Assert.IsType<StreamImageSource>(withoutPhoto.Icon);
+  }
+
+  [Fact]
   public async Task Familyless_persons_are_grouped_into_a_No_family_pseudo_card_shown_last()
   {
     var services = new TestServices();

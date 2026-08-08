@@ -1,3 +1,4 @@
+using GT4.Core.Gedcom;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
@@ -396,6 +397,30 @@ public class FamilyPageTests
       f => f.SetUpPersonFamily(It.IsAny<PersonFullInfo>(), It.IsAny<Name>()), Times.Never());
     services.PersonManager.Verify(
       p => p.AddPersonAsync(It.IsAny<PersonFullInfo>(), It.IsAny<CancellationToken>()), Times.Once());
+  }
+
+  [Fact]
+  public async Task Persons_loads_the_family_photo_and_attachments()
+  {
+    var services = new TestServices();
+    var familyName = N(5, "Ivanov", NameType.FamilyName);
+    var photo = new Data(1, Content: [1, 2, 3], MimeType: "image/png", Category: DataCategory.FamilyMainPhoto);
+    var attachment = new Data(
+      2, Content: GedcomPhotoResidue.EncodeAttachment([1, 2, 3], "deed.pdf"), MimeType: "application/pdf", Category: DataCategory.FamilyAttachment);
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosByNameAsync(familyName, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([P(1, "Anna")]);
+    services.FamilyManager
+      .Setup(f => f.GetFamilyDataAsync(familyName, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([photo, attachment]);
+    var page = await CreatePageAsync(services);
+
+    await page.ReloadPersonsAsync(() => page.FamilyName = familyName);
+
+    Assert.True(page.ShowPhotos);
+    Assert.Single(page.Photos);
+    Assert.True(page.ShowAttachments);
+    Assert.Equal("deed.pdf", page.Attachments.Single().FileName);
   }
 
   [Fact]
