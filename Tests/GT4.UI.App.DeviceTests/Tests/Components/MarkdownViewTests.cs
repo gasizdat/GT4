@@ -279,7 +279,7 @@ public class MarkdownViewTests
     // The platform snaps a requested DP size up to a whole device pixel before arranging it, so on a
     // density that doesn't divide evenly (e.g. 2.75x) the arranged size can land up to one device pixel
     // above what was asked for -- a real difference, not a settling race, so it never closes by polling.
-    var tolerance = 1.0 / DeviceDisplay.MainDisplayInfo.Density;
+    var tolerance = 1.0 / await MainThread.InvokeOnMainThreadAsync(() => DeviceDisplay.MainDisplayInfo.Density);
     var observed = await Poll.UntilAsync(
       () => MainThread.InvokeOnMainThreadAsync(() => new Size(image.Width, image.Height)),
       size => size.Width > 0 && size.Height > 0,
