@@ -20,6 +20,10 @@ public static class ImageUtils
     0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
   };
 
+  // ImageSource.FromStream results have no stable identity MAUI's platform image cache can key on,
+  // so each call independently decodes -- caching by resource name lets repeated requests for the
+  // same default stub image (male/female/project icon) reuse one decode. These are static app
+  // assets that never change, so entries never need eviction.
   private static readonly ConcurrentDictionary<string, ImageSource> _ImageCache = new();
 
   public static string DefaultPersonPhotoResourceName(BiologicalSex biologicalSex) => biologicalSex switch
