@@ -179,6 +179,12 @@ public class MarkdownView : ContentView
     }
 
     image.HorizontalOptions = LayoutOptions.Start;
+
+    // On WinUI, growing WidthRequest on an already-arranged Image sticks at the old width (HeightRequest
+    // keeps applying, flattening the image), so the up-front request has to be the widest this image will
+    // ever need: the host's SizeChanged handler below then only ever shrinks it to fit a narrower column.
+    SetImageSize(image, pixelSize.Value, ScaledWidth(pixelSize.Value.Width, widthPercent));
+
     var host = new ContentView { Content = image };
     host.SizeChanged += (_, _) => ScaleToHost(host, image, pixelSize.Value, widthPercent);
     return host;
@@ -194,10 +200,14 @@ public class MarkdownView : ContentView
     }
 
     var fitWidth = Math.Min(pixelSize.Width, host.Width);
-    var width = widthPercent is null
-      ? fitWidth
-      : fitWidth * widthPercent.Value / 100.0;
+    SetImageSize(image, pixelSize, ScaledWidth(fitWidth, widthPercent));
+  }
 
+  private static double ScaledWidth(double baseWidth, int? widthPercent) =>
+    widthPercent is null ? baseWidth : baseWidth * widthPercent.Value / 100.0;
+
+  private static void SetImageSize(Image image, Size pixelSize, double width)
+  {
     image.WidthRequest = width;
     image.HeightRequest = width * pixelSize.Height / pixelSize.Width;
   }
