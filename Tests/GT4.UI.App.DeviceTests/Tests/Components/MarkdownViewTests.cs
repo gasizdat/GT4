@@ -275,24 +275,29 @@ public class MarkdownViewTests
 
     await using var attachment = await WindowHost.AttachAsync(page);
     var image = Descendants(view).OfType<Image>().Single();
+
+    // The platform snaps a requested DP size up to a whole device pixel before arranging it, so on a
+    // density that doesn't divide evenly (e.g. 2.75x) the arranged size can land up to one device pixel
+    // above what was asked for -- a real difference, not a settling race, so it never closes by polling.
+    var tolerance = 1.0 / await MainThread.InvokeOnMainThreadAsync(() => DeviceDisplay.MainDisplayInfo.Density);
     var observed = await Poll.UntilAsync(
       () => MainThread.InvokeOnMainThreadAsync(() => new Size(image.Width, image.Height)),
       size => size.Width > 0 && size.Height > 0,
       timeoutMessage: "The image was never laid out.");
 
-    for (var attempt = 0; attempt < 50; attempt++)
+    for (var attempt = 0; attempt < 50 && !IsCloseTo(observed, expectedSize, tolerance); attempt++)
     {
-      if (observed == expectedSize)
-      {
-        return;
-      }
-
       await Task.Delay(20);
       observed = await MainThread.InvokeOnMainThreadAsync(() => new Size(image.Width, image.Height));
     }
 
-    Assert.Equal(expectedSize, observed);
+    Assert.True(
+      IsCloseTo(observed, expectedSize, tolerance),
+      $"Expected a size within {tolerance:F3} of {expectedSize}, but observed {observed}.");
   }
+
+  private static bool IsCloseTo(Size observed, Size expected, double tolerance) =>
+    Math.Abs(observed.Width - expected.Width) <= tolerance && Math.Abs(observed.Height - expected.Height) <= tolerance;
 
   private static Task<MarkdownView> CreateViewAsync(string markdown) =>
     CreateViewAsync(markdown, new Dictionary<int, byte[]>());
