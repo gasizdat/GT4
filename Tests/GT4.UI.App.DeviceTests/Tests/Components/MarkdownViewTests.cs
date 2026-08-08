@@ -285,27 +285,15 @@ public class MarkdownViewTests
       size => size.Width > 0 && size.Height > 0,
       timeoutMessage: "The image was never laid out.");
 
-    // DIAG: temporary trace of every polled sample, to tell "stuck from the first sample" apart from
-    // "was right, then reverted" -- remove once the CI-only failure is diagnosed.
-    var samples = new List<Size> { observed };
     for (var attempt = 0; attempt < 50 && !IsCloseTo(observed, expectedSize, tolerance); attempt++)
     {
       await Task.Delay(20);
       observed = await MainThread.InvokeOnMainThreadAsync(() => new Size(image.Width, image.Height));
-      samples.Add(observed);
     }
-
-    var diag = await MainThread.InvokeOnMainThreadAsync(() =>
-    {
-      var host = image.Parent as VisualElement;
-      return $"WidthRequest={image.WidthRequest} HeightRequest={image.HeightRequest} " +
-             $"Bounds={image.Bounds} host.Width={host?.Width} host.Height={host?.Height} " +
-             $"density={DeviceDisplay.MainDisplayInfo.Density} samples=[{string.Join(", ", samples)}]";
-    });
 
     Assert.True(
       IsCloseTo(observed, expectedSize, tolerance),
-      $"Expected a size within {tolerance:F3} of {expectedSize}, but observed {observed}. DIAG: {diag}");
+      $"Expected a size within {tolerance:F3} of {expectedSize}, but observed {observed}.");
   }
 
   private static bool IsCloseTo(Size observed, Size expected, double tolerance) =>
