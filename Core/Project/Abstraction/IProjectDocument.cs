@@ -9,6 +9,7 @@ public interface IProjectDocument : IProjectConnection, IAsyncDisposable, IDispo
   ITableMetadata Metadata { get; }
   ITableNames Names { get; }
   ITablePersonData PersonData { get; }
+  ITableNameData NameData { get; }
   IPersonManager PersonManager { get; }
   ITablePersonNames PersonNames { get; }
   ITablePersons Persons { get; }

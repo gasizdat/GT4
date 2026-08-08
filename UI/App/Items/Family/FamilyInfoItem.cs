@@ -17,12 +17,15 @@ public class FamilyInfoItem : CollectionItemBase<Name>, INotifyPropertyChanged
 
   private readonly FilteredObservableCollection<PersonInfo> _Persons = new();
   private readonly int _TotalPersonsCount;
+  private readonly Data? _MainPhoto;
   private ObservableCollection<PersonInfo> _DisplayedPersons = new();
 
-  public FamilyInfoItem(Name familyName, PersonInfo[] persons, ObservableCollectionFilterPredicate<PersonInfo>? personsFilter)
+  public FamilyInfoItem(
+    Name familyName, PersonInfo[] persons, ObservableCollectionFilterPredicate<PersonInfo>? personsFilter, Data? mainPhoto = null)
     : base(familyName, "family_stub.png")
   {
     _TotalPersonsCount = persons.Length;
+    _MainPhoto = mainPhoto;
     _Persons.Filter = personsFilter;
     _Persons.AddRange(persons);
     _DisplayedPersons = ComputeDisplayedPersons();
@@ -36,6 +39,8 @@ public class FamilyInfoItem : CollectionItemBase<Name>, INotifyPropertyChanged
     !person.Names.Any(name => name.Type.HasFlag(NameType.FamilyName));
 
   public event PropertyChangedEventHandler? PropertyChanged;
+
+  public override ImageSource Icon => _MainPhoto is null ? base.Icon : ImageUtils.ImageFromBytes(_MainPhoto.Content);
 
   public ObservableCollection<PersonInfo> Persons => _Persons.Items;
 

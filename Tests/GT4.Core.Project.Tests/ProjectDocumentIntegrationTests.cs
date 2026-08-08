@@ -47,6 +47,9 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   private Task<Person> AddBarePersonAsync(BiologicalSex sex = BiologicalSex.Male) =>
     _doc.Persons.AddPersonAsync(new Person(ElementId.NonCommittedId, Birth, null, sex), Token);
 
+  private Task<Name> AddBareFamilyNameAsync(string value = "Family") =>
+    _doc.Names.AddNameAsync(value, NameType.FamilyName, null, Token);
+
   private static Data NewData(DataCategory category, params byte[] content) =>
     new(ElementId.NonCommittedId, content, "application/octet-stream", category);
 
@@ -562,6 +565,115 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
     (await _doc.PersonData.GetPersonDataSetAsync(personA, null, Token)).Should().BeEmpty();
     (await _doc.PersonData.GetPersonDataSetAsync(personB, null, Token)).Should().ContainSingle();
     (await _doc.Data.TryGetDataByIdAsync(shared.Id, Token)).Should().NotBeNull();
+  }
+
+  [Fact]
+  public async Task NameData_AddGetUpdateRemove()
+  {
+    var family = await AddBareFamilyNameAsync();
+
+    await _doc.NameData.AddNameDataSetAsync(family, [NewData(DataCategory.FamilyPhoto, 1)], Token);
+    (await _doc.NameData.GetNameDataSetAsync(family, DataCategory.FamilyPhoto, Token)).Should().HaveCount(1);
+    (await _doc.NameData.GetNameDataSetAsync(family, null, Token)).Should().HaveCount(1);
+
+    await _doc.NameData.UpdateNameDataSetAsync(family, [NewData(DataCategory.FamilyAttachment, 2), NewData(DataCategory.FamilyPhoto, 3)], Token);
+    (await _doc.NameData.GetNameDataSetAsync(family, null, Token)).Should().HaveCount(2);
+
+    var attachment = (await _doc.NameData.GetNameDataSetAsync(family, DataCategory.FamilyAttachment, Token)).Single();
+    await _doc.NameData.RemoveNameDataAsync(family, attachment, Token);
+    (await _doc.NameData.GetNameDataSetAsync(family, DataCategory.FamilyAttachment, Token)).Should().BeEmpty();
+  }
+
+  [Fact]
+  public async Task NameData_UpdateSingleData_ReplacesPrevious()
+  {
+    var family = await AddBareFamilyNameAsync();
+    await _doc.NameData.UpdateNameDataAsync(family, NewData(DataCategory.FamilyMainPhoto, 1), DataCategory.FamilyMainPhoto, Token);
+    (await _doc.NameData.GetNameDataSetAsync(family, DataCategory.FamilyMainPhoto, Token)).Should().HaveCount(1);
+
+    // Replace with a different data; old one removed.
+    await _doc.NameData.UpdateNameDataAsync(family, NewData(DataCategory.FamilyMainPhoto, 2), DataCategory.FamilyMainPhoto, Token);
+    var set = await _doc.NameData.GetNameDataSetAsync(family, DataCategory.FamilyMainPhoto, Token);
+    set.Should().ContainSingle().Which.Content.Should().Equal(2);
+
+    // Clearing it removes everything in the category.
+    await _doc.NameData.UpdateNameDataAsync(family, null, DataCategory.FamilyMainPhoto, Token);
+    (await _doc.NameData.GetNameDataSetAsync(family, DataCategory.FamilyMainPhoto, Token)).Should().BeEmpty();
+  }
+
+  [Fact]
+  public async Task GetNameDataSetBatch_EmptyInput_ReturnsEmpty()
+  {
+    var result = await _doc.NameData.GetNameDataSetAsync([], null, Token);
+
+    result.Should().BeEmpty();
+  }
+
+  [Fact]
+  public async Task GetNameDataSetBatch_NoCategoryFilter_ReturnsAllData()
+  {
+    var familyA = await AddBareFamilyNameAsync("Ivanov");
+    var familyB = await AddBareFamilyNameAsync("Petrov");
+    await _doc.NameData.AddNameDataSetAsync(familyA, [NewData(DataCategory.FamilyMainPhoto, 1, 2)], Token);
+    await _doc.NameData.AddNameDataSetAsync(familyB, [NewData(DataCategory.FamilyAttachment, 3, 4)], Token);
+
+    var result = await _doc.NameData.GetNameDataSetAsync([familyA, familyB], null, Token);
+
+    result.Should().ContainKey(familyA.Id);
+    result.Should().ContainKey(familyB.Id);
+    result[familyA.Id].Should().ContainSingle().Which.Content.Should().Equal(1, 2);
+    result[familyB.Id].Should().ContainSingle().Which.Content.Should().Equal(3, 4);
+  }
+
+  [Fact]
+  public async Task RemoveNameData_KeepsSharedDataReferencedByAnotherName()
+  {
+    var shared = await _doc.Data.AddDataAsync([7, 7], "application/octet-stream", DataCategory.FamilyMainPhoto, Token);
+    var familyA = await AddBareFamilyNameAsync("Ivanov");
+    var familyB = await AddBareFamilyNameAsync("Petrov");
+    await _doc.NameData.AddNameDataSetAsync(familyA, [shared], Token);
+    await _doc.NameData.AddNameDataSetAsync(familyB, [shared], Token);
+
+    await _doc.NameData.RemoveNameDataAsync(familyA, shared, Token);
+
+    (await _doc.NameData.GetNameDataSetAsync(familyA, null, Token)).Should().BeEmpty();
+    (await _doc.NameData.GetNameDataSetAsync(familyB, null, Token)).Should().ContainSingle();
+    (await _doc.Data.TryGetDataByIdAsync(shared.Id, Token)).Should().NotBeNull();
+  }
+
+  [Fact]
+  public async Task RemoveNameData_KeepsDataStillReferencedByAPerson()
+  {
+    // A blob shared across the two owner tables (PersonData and NameData): unlinking it from the
+    // family must not touch the person's link, and vice versa -- RemoveNameDataAsync's "still in
+    // use" catch now has two possible owners, not just other rows in its own table.
+    var shared = await _doc.Data.AddDataAsync([9, 9], "application/octet-stream", DataCategory.PersonPhoto, Token);
+    var person = await AddBarePersonAsync();
+    var family = await AddBareFamilyNameAsync();
+    await _doc.PersonData.AddPersonDataSetAsync(person, [shared], Token);
+    await _doc.NameData.AddNameDataSetAsync(family, [shared], Token);
+
+    await _doc.NameData.RemoveNameDataAsync(family, shared, Token);
+
+    (await _doc.NameData.GetNameDataSetAsync(family, null, Token)).Should().BeEmpty();
+    (await _doc.PersonData.GetPersonDataSetAsync(person, null, Token)).Should().ContainSingle();
+    (await _doc.Data.TryGetDataByIdAsync(shared.Id, Token)).Should().NotBeNull();
+
+    await _doc.PersonData.RemovePersonDataAsync(person, shared, Token);
+
+    (await _doc.PersonData.GetPersonDataSetAsync(person, null, Token)).Should().BeEmpty();
+    (await _doc.Data.TryGetDataByIdAsync(shared.Id, Token)).Should().BeNull();
+  }
+
+  [Fact]
+  public async Task RemoveFamily_CascadesNameData()
+  {
+    var family = await AddBareFamilyNameAsync();
+    await _doc.NameData.AddNameDataSetAsync(family, [NewData(DataCategory.FamilyMainPhoto, 1)], Token);
+
+    await _doc.FamilyManager.RemoveFamilyAsync(family, Token);
+
+    (await _doc.NameData.GetNameDataSetAsync(family, null, Token)).Should().BeEmpty();
   }
 
   [Fact]

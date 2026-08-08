@@ -8,6 +8,7 @@ using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
+using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Extensions;
 using GT4.UI.Utils.Formatters;
 using System.Collections.ObjectModel;
@@ -38,6 +39,7 @@ public partial class ProjectPage : ContentPage
   private readonly GedcomImportEncoding _GedcomImportEncoding;
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
+  private readonly DataConverterResolver _DataConverterFactory;
 
   private readonly FilteredObservableCollection<FamilyInfoItem> _Families = new();
   private bool _FamiliesLoaded;
@@ -57,10 +59,12 @@ public partial class ProjectPage : ContentPage
     GedcomImportEncoding gedcomImportEncoding,
     IAlertService alertService,
     INavigationService navigationService,
-    IBiologicalSexFormatter biologicalSexFormatter
+    IBiologicalSexFormatter biologicalSexFormatter,
+    DataConverterResolver dataConverterFactory
     )
   {
     _NameTypeFormatter = nameTypeFormatter;
+    _DataConverterFactory = dataConverterFactory;
     _CancellationTokenProvider = cancellationTokenProvider;
     _CurrentProjectProvider = currentProjectProvider;
     _PersonInfoComparer = personInfoComparerByShortNames ?? personInfoComparer;
@@ -118,6 +122,9 @@ public partial class ProjectPage : ContentPage
       var familyNames = await project
           .FamilyManager
           .GetFamiliesAsync(token);
+      var familyMainPhotos = await project
+          .FamilyManager
+          .GetFamilyMainPhotosAsync(familyNames, token);
       var personsByFamilyNameId = persons
         .SelectMany(person => person.Names.Select(name => (NameId: name.Id, Person: person)))
         .ToLookup(x => x.NameId, x => x.Person);
@@ -126,7 +133,8 @@ public partial class ProjectPage : ContentPage
         .Select(name => (Family: name, Persons: personsByFamilyNameId[name.Id].OrderBy(item => item, _PersonInfoComparer)));
 
       var families = familyPersons
-        .Select(f => new FamilyInfoItem(f.Family, [.. f.Persons], (_, person) => FilterView.Matches(person)))
+        .Select(f => new FamilyInfoItem(
+          f.Family, [.. f.Persons], (_, person) => FilterView.Matches(person), familyMainPhotos.GetValueOrDefault(f.Family.Id)?.FirstOrDefault()))
         .OrderBy(item => item.Info, _NameComparer)
         .ToList();
 
@@ -353,7 +361,7 @@ public partial class ProjectPage : ContentPage
 
   private async Task OnCreateFamily()
   {
-    var dialog = new CreateOrUpdateNameDialog(NameType.FamilyName, _NameTypeFormatter, _AlertService);
+    var dialog = new CreateOrUpdateNameDialog(NameType.FamilyName, _NameTypeFormatter, _AlertService, _CancellationTokenProvider, _DataConverterFactory);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;
@@ -365,10 +373,19 @@ public partial class ProjectPage : ContentPage
     }
 
     using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-    await _CurrentProjectProvider
+    var familyName = await _CurrentProjectProvider
       .Project
       .FamilyManager
       .AddFamilyAsync(familyName: info.Name, maleLastName: info.MaleName, femaleLastName: info.FemaleName, token);
+
+    Data[] familyData = [.. info.Photos, .. info.Attachments];
+    if (familyData.Length > 0)
+    {
+      await _CurrentProjectProvider
+        .Project
+        .FamilyManager
+        .UpdateFamilyDataAsync(familyName, familyData, token);
+    }
 
     Refresh();
   }

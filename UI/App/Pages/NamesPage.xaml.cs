@@ -6,6 +6,7 @@ using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
+using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
@@ -26,6 +27,7 @@ public partial class NamesPage : ContentPage
   private readonly ICommand _PageCommand;
   private readonly IAlertService _AlertService;
   private readonly INameFormatter _NameFormatter;
+  private readonly DataConverterResolver _DataConverterFactory;
   private NameTypeInfoItem _CurrentNameType;
   private Name? _CurrentName;
   private int? _CurrentNameId;
@@ -40,7 +42,8 @@ public partial class NamesPage : ContentPage
     INameTypeFormatter nameTypeFormatter,
     IBiologicalSexFormatter biologicalSexFormatter,
     INameFormatter nameFormatter,
-    IAlertService alertService
+    IAlertService alertService,
+    DataConverterResolver dataConverterFactory
     )
   {
     var nameTypes = new[]
@@ -57,6 +60,7 @@ public partial class NamesPage : ContentPage
     _NameTypes = new(nameTypes.Select(type => new NameTypeInfoItem(nameTypeFormatter.ToString(type), type)));
     _AlertService = alertService;
     _NameFormatter = nameFormatter;
+    _DataConverterFactory = dataConverterFactory;
     _EditNameCommand = new SafeCommand(OnEditCommandAsync, _AlertService);
     _DeleteNameCommand = new SafeCommand(OnDeleteCommandAsync, _AlertService);
     _PageCommand = new SafeCommand(OnPageCommandAsync, _AlertService);
@@ -75,7 +79,7 @@ public partial class NamesPage : ContentPage
   {
     if (obj is Name name)
     {
-      await CreateOrUpdateNameDialog.UpdateNameAsync(name, _CurrentProjectProvider, _CancellationTokenProvider, _NameTypeFormatter, _AlertService, Navigation);
+      await CreateOrUpdateNameDialog.UpdateNameAsync(name, _CurrentProjectProvider, _CancellationTokenProvider, _NameTypeFormatter, _AlertService, Navigation, _DataConverterFactory);
       RequestUpdateNames(name);
     }
   }
@@ -138,7 +142,7 @@ public partial class NamesPage : ContentPage
       _ => throw new ApplicationException(nameof(OnPageCommandAsync))
     };
 
-    var dialog = new CreateOrUpdateNameDialog(nameType, _NameTypeFormatter, _AlertService);
+    var dialog = new CreateOrUpdateNameDialog(nameType, _NameTypeFormatter, _AlertService, _CancellationTokenProvider, _DataConverterFactory);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;
@@ -166,6 +170,15 @@ public partial class NamesPage : ContentPage
 
       _ => null
     };
+
+    if (addedName is not null && nameType == NameType.FamilyName)
+    {
+      Data[] familyData = [.. info.Photos, .. info.Attachments];
+      if (familyData.Length > 0)
+      {
+        await project.FamilyManager.UpdateFamilyDataAsync(addedName, familyData, token);
+      }
+    }
 
     if (addedName is null)
     {

@@ -16,5 +16,12 @@ public enum DataCategory
   PersonPhotoTagged = 6,
   // Non-photo file attachment (PDF, document scan, ...); Content is always a GedcomPhotoResidue envelope
   // carrying the original filename (the OBJE's FILE tag, kept in the residual) alongside the raw bytes
-  PersonAttachment = 7
+  PersonAttachment = 7,
+  // The main family (clan) photo used as a card icon
+  FamilyMainPhoto = 8,
+  // Additional family photo
+  FamilyPhoto = 9,
+  // Non-photo family file attachment; Content is always a GedcomPhotoResidue envelope carrying the
+  // original filename, the same as PersonAttachment
+  FamilyAttachment = 10
 }

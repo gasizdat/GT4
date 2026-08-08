@@ -10,7 +10,7 @@ public class AttachmentDataConverterTests
   [Fact]
   public async Task ToObjectAsync_returns_null_for_a_null_attachment()
   {
-    var result = await new AttachmentDataConverter().ToObjectAsync(null, CancellationToken.None);
+    var result = await new AttachmentDataConverter(DataCategory.PersonAttachment).ToObjectAsync(null, CancellationToken.None);
 
     Assert.Null(result);
   }
@@ -21,7 +21,7 @@ public class AttachmentDataConverterTests
     var content = GedcomPhotoResidue.EncodeAttachment([1, 2, 3], "deed.pdf");
     var attachment = new Data(1, content, "application/pdf", DataCategory.PersonAttachment);
 
-    var result = await new AttachmentDataConverter().ToObjectAsync(attachment, CancellationToken.None);
+    var result = await new AttachmentDataConverter(DataCategory.PersonAttachment).ToObjectAsync(attachment, CancellationToken.None);
 
     Assert.Equal("deed.pdf", result);
   }
@@ -29,7 +29,7 @@ public class AttachmentDataConverterTests
   [Fact]
   public async Task FromObjectAsync_returns_null_for_input_that_is_not_an_AttachmentPick()
   {
-    var result = await new AttachmentDataConverter().FromObjectAsync("not a pick", CancellationToken.None);
+    var result = await new AttachmentDataConverter(DataCategory.PersonAttachment).FromObjectAsync("not a pick", CancellationToken.None);
 
     Assert.Null(result);
   }
@@ -39,7 +39,7 @@ public class AttachmentDataConverterTests
   {
     var pick = new AttachmentPick([9, 8, 7], "scan.pdf", "application/pdf");
 
-    var result = await new AttachmentDataConverter().FromObjectAsync(pick, CancellationToken.None);
+    var result = await new AttachmentDataConverter(DataCategory.PersonAttachment).FromObjectAsync(pick, CancellationToken.None);
 
     Assert.NotNull(result);
     Assert.Equal(DataCategory.PersonAttachment, result.Category);
@@ -53,8 +53,18 @@ public class AttachmentDataConverterTests
   {
     var pick = new AttachmentPick([1], "unknown.bin", null);
 
-    var result = await new AttachmentDataConverter().FromObjectAsync(pick, CancellationToken.None);
+    var result = await new AttachmentDataConverter(DataCategory.PersonAttachment).FromObjectAsync(pick, CancellationToken.None);
 
     Assert.Equal("application/octet-stream", result?.MimeType);
+  }
+
+  [Fact]
+  public async Task FromObjectAsync_stamps_the_category_it_was_constructed_with()
+  {
+    var pick = new AttachmentPick([9, 8, 7], "scan.pdf", "application/pdf");
+
+    var result = await new AttachmentDataConverter(DataCategory.FamilyAttachment).FromObjectAsync(pick, CancellationToken.None);
+
+    Assert.Equal(DataCategory.FamilyAttachment, result?.Category);
   }
 }

@@ -3,6 +3,7 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Pages;
+using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
 using System.Runtime.CompilerServices;
 
@@ -24,7 +25,8 @@ internal sealed class TestableNamesPage : NamesPage
     INameTypeFormatter nameTypeFormatter,
     IBiologicalSexFormatter biologicalSexFormatter,
     INameFormatter nameFormatter,
-    IAlertService alertService)
+    IAlertService alertService,
+    DataConverterResolver dataConverterFactory)
     : base(
       currentProjectProvider,
       cancellationTokenProvider,
@@ -32,7 +34,8 @@ internal sealed class TestableNamesPage : NamesPage
       nameTypeFormatter,
       biologicalSexFormatter,
       nameFormatter,
-      alertService)
+      alertService,
+      dataConverterFactory)
   {
   }
 

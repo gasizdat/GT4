@@ -17,6 +17,12 @@ internal class FamilyManager : ProjectComponentBase, IFamilyManager
     return ret;
   }
 
+  public async Task<Dictionary<int, Data[]>> GetFamilyMainPhotosAsync(Name[] familyNames, CancellationToken token) =>
+    await Document.NameData.GetNameDataSetAsync(familyNames, DataCategory.FamilyMainPhoto, token);
+
+  public async Task<Data[]> GetFamilyDataAsync(Name familyName, CancellationToken token) =>
+    await Document.NameData.GetNameDataSetAsync(familyName, null, token);
+
   public TPerson SetUpPersonFamily<TPerson>(TPerson person, Name familyName) where TPerson : PersonInfo
   {
     if (familyName.Type != NameType.FamilyName)
@@ -111,4 +117,7 @@ internal class FamilyManager : ProjectComponentBase, IFamilyManager
 
     await transaction.CommitAsync(token);
   }
+
+  public async Task UpdateFamilyDataAsync(Name familyName, Data[] dataSet, CancellationToken token) =>
+    await Document.NameData.UpdateNameDataSetAsync(familyName, dataSet, token);
 }

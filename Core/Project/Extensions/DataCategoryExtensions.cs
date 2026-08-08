@@ -9,19 +9,21 @@ public static class DataCategoryExtensions
     category is DataCategory.PersonMainPhotoTagged or DataCategory.PersonPhotoTagged;
 
   public static bool IsMainPhoto(this DataCategory category) =>
-    category is DataCategory.PersonMainPhoto or DataCategory.PersonMainPhotoTagged;
+    category is DataCategory.PersonMainPhoto or DataCategory.PersonMainPhotoTagged or DataCategory.FamilyMainPhoto;
 
   public static bool IsAdditionalPhoto(this DataCategory category) =>
-    category is DataCategory.PersonPhoto or DataCategory.PersonPhotoTagged;
+    category is DataCategory.PersonPhoto or DataCategory.PersonPhotoTagged or DataCategory.FamilyPhoto;
 
   public static bool IsPhoto(this DataCategory category) => category.IsMainPhoto() || category.IsAdditionalPhoto();
 
-  public static bool IsAttachment(this DataCategory category) => category == DataCategory.PersonAttachment;
+  public static bool IsAttachment(this DataCategory category) =>
+    category is DataCategory.PersonAttachment or DataCategory.FamilyAttachment;
 
   public static DataCategory AsMainPhoto(this DataCategory category) => category switch
   {
     DataCategory.PersonMainPhotoTagged or DataCategory.PersonPhotoTagged => DataCategory.PersonMainPhotoTagged,
     DataCategory.PersonMainPhoto or DataCategory.PersonPhoto => DataCategory.PersonMainPhoto,
+    DataCategory.FamilyMainPhoto or DataCategory.FamilyPhoto => DataCategory.FamilyMainPhoto,
     _ => throw new ArgumentOutOfRangeException(nameof(category), category, "Not a photo category.")
   };
 
@@ -29,6 +31,7 @@ public static class DataCategoryExtensions
   {
     DataCategory.PersonMainPhotoTagged or DataCategory.PersonPhotoTagged => DataCategory.PersonPhotoTagged,
     DataCategory.PersonMainPhoto or DataCategory.PersonPhoto => DataCategory.PersonPhoto,
+    DataCategory.FamilyMainPhoto or DataCategory.FamilyPhoto => DataCategory.FamilyPhoto,
     _ => throw new ArgumentOutOfRangeException(nameof(category), category, "Not a photo category.")
   };
 

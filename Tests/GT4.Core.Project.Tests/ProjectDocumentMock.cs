@@ -15,6 +15,7 @@ internal class ProjectDocumentMock : IProjectDocument
   private Mock<ITableMetadata> _TableMetadataMock = new(MockBehavior.Strict);
   private Mock<ITableNames> _TableNamesMock = new(MockBehavior.Strict);
   private Mock<ITablePersonData> _TablePersonDataMock = new(MockBehavior.Strict);
+  private Mock<ITableNameData> _TableNameDataMock = new(MockBehavior.Strict);
   private Mock<IPersonManager> _PersonManagerMock = new(MockBehavior.Strict);
   private Mock<ITablePersonNames> _TablePersonNamesMock = new(MockBehavior.Strict);
   private Mock<ITablePersons> _TablePersonsMock = new(MockBehavior.Strict);
@@ -113,6 +114,8 @@ internal class ProjectDocumentMock : IProjectDocument
   public ITableNames Names => _TableNamesMock.Object;
 
   public ITablePersonData PersonData => _TablePersonDataMock.Object;
+
+  public ITableNameData NameData => _TableNameDataMock.Object;
 
   public IPersonManager PersonManager => _PersonManagerMock.Object;
 

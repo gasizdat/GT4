@@ -29,6 +29,8 @@ public static class ServiceCollectionExtensions
       .AddSingleton<IComparer<Name>, NameComparer>()
       .AddKeyedSingleton<IDataConverter, ImageDataConverter>(DataCategory.PersonPhoto)
       .AddKeyedSingleton<IDataConverter, ImageDataConverter>(DataCategory.PersonMainPhoto)
+      .AddKeyedSingleton<IDataConverter, ImageDataConverter>(DataCategory.FamilyPhoto)
+      .AddKeyedSingleton<IDataConverter, ImageDataConverter>(DataCategory.FamilyMainPhoto)
       .AddKeyedSingleton<IDataConverter, TextDataConverter>(DataCategory.PersonBio)
       .AddKeyedSingleton<ISettingEditor, FontScaleSetting>(SettingKeys.FontScale)
       .AddKeyedSingleton<ISettingEditor, BackgroundAnimationSetting>(SettingKeys.BackgroundAnimation)
