@@ -376,6 +376,7 @@ public partial class ProjectPage : ContentPage
     }
 
     using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    using var transaction = await _CurrentProjectProvider.Project.BeginTransactionAsync(token);
     var familyName = await _CurrentProjectProvider
       .Project
       .FamilyManager
@@ -389,6 +390,7 @@ public partial class ProjectPage : ContentPage
         .FamilyManager
         .UpdateFamilyDataAsync(familyName, familyData, token);
     }
+    await transaction.CommitAsync(token);
 
     Refresh();
   }

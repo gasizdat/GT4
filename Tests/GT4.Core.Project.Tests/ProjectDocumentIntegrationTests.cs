@@ -120,6 +120,22 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task AddFamilyThenUpdateFamilyData_RollBackOuterTransaction_UndoesBoth()
+  {
+    Name family;
+    using (var transaction = await _doc.BeginTransactionAsync(Token))
+    {
+      family = await _doc.FamilyManager.AddFamilyAsync("Rolled", "Rolled", "Rolledova", Token);
+      await _doc.FamilyManager.UpdateFamilyDataAsync(family, [NewData(DataCategory.FamilyMainPhoto, 1)], Token);
+      // Dispose without commit rolls back -- proves the name write and the media write now share one
+      // atomic unit (#278) rather than the name being able to commit without its media.
+    }
+
+    (await _doc.Names.TryGetNameByIdAsync(family.Id, Token)).Should().BeNull();
+    (await _doc.NameData.GetNameDataSetAsync(family, null, Token)).Should().BeEmpty();
+  }
+
+  [Fact]
   public async Task TryGetNameById_ReturnsNull_ForNullOrMissing()
   {
     (await _doc.Names.TryGetNameByIdAsync(null, Token)).Should().BeNull();

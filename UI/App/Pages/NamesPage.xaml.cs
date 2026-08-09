@@ -155,6 +155,7 @@ public partial class NamesPage : ContentPage
 
     var project = _CurrentProjectProvider.Project;
     using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    using var transaction = await project.BeginTransactionAsync(token);
     var addedName = nameType switch
     {
       NameType.FamilyName =>
@@ -171,7 +172,12 @@ public partial class NamesPage : ContentPage
       _ => null
     };
 
-    if (addedName is not null && nameType == NameType.FamilyName)
+    if (addedName is null)
+    {
+      return;
+    }
+
+    if (nameType == NameType.FamilyName)
     {
       Data[] familyData = [.. info.Photos, .. info.Attachments];
       if (familyData.Length > 0)
@@ -179,11 +185,7 @@ public partial class NamesPage : ContentPage
         await project.FamilyManager.UpdateFamilyDataAsync(addedName, familyData, token);
       }
     }
-
-    if (addedName is null)
-    {
-      return;
-    }
+    await transaction.CommitAsync(token);
 
     var names = await project.Names.TryGetNameWithSubnamesByIdAsync(addedName.Id, token);
     switch (_CurrentNameType.Type)

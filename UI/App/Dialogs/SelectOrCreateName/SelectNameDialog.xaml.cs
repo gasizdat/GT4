@@ -180,6 +180,7 @@ public partial class SelectNameDialog : ContentPage
 
     using var token = _Factory.CancellationTokenProvider.CreateDbCancellationToken();
     var project = _Factory.CurrentProjectProvider.Project;
+    using var transaction = await project.BeginTransactionAsync(token);
     var name = dialogNameType switch
     {
       NameType.FamilyName =>
@@ -204,6 +205,7 @@ public partial class SelectNameDialog : ContentPage
         await project.FamilyManager.UpdateFamilyDataAsync(name, familyData, token);
       }
     }
+    await transaction.CommitAsync(token);
 
     Names = null;
     CurrentName = Names?.SingleOrDefault(n => n.Info.Id == name.Id);
