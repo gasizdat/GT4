@@ -33,8 +33,7 @@ internal sealed class TestableFamilyPage : FamilyPage
     IBiologicalSexFormatter biologicalSexFormatter,
     INameTypeFormatter nameTypeFormatter,
     CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory,
-    OptionalDataConverterResolver dataConverterResolver,
-    DataConverterResolver dataConverterFactory)
+    DataConverterResolver dataConverterResolver)
     : base(
       cancellationTokenProvider,
       currentProjectProvider,
@@ -45,8 +44,7 @@ internal sealed class TestableFamilyPage : FamilyPage
       biologicalSexFormatter,
       nameTypeFormatter,
       createOrUpdatePersonDialogFactory,
-      dataConverterResolver,
-      dataConverterFactory)
+      dataConverterResolver)
   {
     // Persons returns the same ObservableCollection instance for the page's whole lifetime (even
     // across a FamilyName change), so a single subscription made up front -- before FamilyName is

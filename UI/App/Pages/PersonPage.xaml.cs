@@ -27,7 +27,7 @@ public partial class PersonPage : ContentPage
   private readonly INameFormatter _NameFormatter;
   private readonly IDataConverter _TextConverter;
   private readonly IDataConverter _GedcomConverter;
-  private readonly OptionalDataConverterResolver _OptionalDataConverterResolver;
+  private readonly DataConverterResolver _DataConverterResolver;
   private readonly ICommand _PageCommand;
   private readonly RelativeTree _Relatives;
   private readonly IAlertService _AlertService;
@@ -55,7 +55,7 @@ public partial class PersonPage : ContentPage
     IDataConverter textConverter,
     [FromKeyedServices(DataCategory.PersonGedcomTags)]
     IDataConverter gedcomConverter,
-    OptionalDataConverterResolver optionalDataConverterResolver,
+    DataConverterResolver dataConverterResolver,
     IAlertService alertService,
     INavigationService navigationService,
     IBiologicalSexFormatter biologicalSexFormatter,
@@ -69,7 +69,7 @@ public partial class PersonPage : ContentPage
     _NameFormatter = nameFormatter;
     _TextConverter = textConverter;
     _GedcomConverter = gedcomConverter;
-    _OptionalDataConverterResolver = optionalDataConverterResolver;
+    _DataConverterResolver = dataConverterResolver;
     _AlertService = alertService;
     _NavigationService = navigationService;
     _CreateOrUpdatePersonDialogFactory = createOrUpdatePersonDialogFactory;
@@ -414,7 +414,7 @@ public partial class PersonPage : ContentPage
 
     Data[] photoData = [personFullInfo.MainPhoto, .. personFullInfo.AdditionalPhotos];
     var photos = await Task.WhenAll(photoData.Select(data =>
-      ImageUtils.ResolvePhotoAsync(_OptionalDataConverterResolver, data, defaultPersonPhoto, token)));
+      ImageUtils.ResolvePhotoAsync(_DataConverterResolver, data, defaultPersonPhoto, token)));
 
     return (photos, photoData);
   }

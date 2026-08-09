@@ -32,7 +32,7 @@ internal sealed class TestablePersonPage : PersonPage
     IDataConverter textConverter,
     [FromKeyedServices(DataCategory.PersonGedcomTags)]
     IDataConverter gedcomConverter,
-    OptionalDataConverterResolver dataConverterResolver,
+    DataConverterResolver dataConverterResolver,
     IAlertService alertService,
     INavigationService navigationService,
     IBiologicalSexFormatter biologicalSexFormatter,

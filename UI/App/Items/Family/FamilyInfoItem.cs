@@ -22,7 +22,7 @@ public class FamilyInfoItem : CollectionItemBase<FamilyInfo>, INotifyPropertyCha
   private readonly int _TotalPersonsCount;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly IAlertService _AlertService;
-  private readonly OptionalDataConverterResolver _DataConverterResolver;
+  private readonly DataConverterResolver _DataConverterResolver;
   private ObservableCollection<PersonInfo> _DisplayedPersons = new();
   private ImageSource? _Icon;
   private bool _IconReady;
@@ -33,7 +33,7 @@ public class FamilyInfoItem : CollectionItemBase<FamilyInfo>, INotifyPropertyCha
     ObservableCollectionFilterPredicate<PersonInfo>? personsFilter,
     ICancellationTokenProvider cancellationTokenProvider,
     IAlertService alertService,
-    OptionalDataConverterResolver dataConverterResolver)
+    DataConverterResolver dataConverterResolver)
     : base(family, "family_stub.png")
   {
     _CancellationTokenProvider = cancellationTokenProvider;

@@ -15,7 +15,7 @@ public partial class PersonInfoView : ContentView
   private readonly IDateSpanFormatter _DateSpanFormatter;
   private readonly IDateFormatter _DateFormatter;
   private readonly INameFormatter _NameFormatter;
-  private readonly OptionalDataConverterResolver _DataConverterResolver;
+  private readonly DataConverterResolver _DataConverterResolver;
   private ImageSource? _PhotoSource;
   private bool _PhotoReady;
   private int _PhotoGeneration;
@@ -27,7 +27,7 @@ public partial class PersonInfoView : ContentView
     _DateSpanFormatter = serviceProvider.GetRequiredService<IDateSpanFormatter>();
     _DateFormatter = serviceProvider.GetRequiredService<IDateFormatter>();
     _NameFormatter = serviceProvider.GetRequiredService<INameFormatter>();
-    _DataConverterResolver = serviceProvider.GetRequiredService<OptionalDataConverterResolver>();
+    _DataConverterResolver = serviceProvider.GetRequiredService<DataConverterResolver>();
     InitializeComponent();
   }
 

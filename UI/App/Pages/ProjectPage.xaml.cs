@@ -39,7 +39,6 @@ public partial class ProjectPage : ContentPage
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
   private readonly DataConverterResolver _DataConverterResolver;
-  private readonly OptionalDataConverterResolver _OptionalDataConverterResolver;
 
   private readonly FilteredObservableCollection<FamilyInfoItem> _Families = new();
   private bool _FamiliesLoaded;
@@ -60,13 +59,11 @@ public partial class ProjectPage : ContentPage
     IAlertService alertService,
     INavigationService navigationService,
     IBiologicalSexFormatter biologicalSexFormatter,
-    DataConverterResolver dataConverterResolver,
-    OptionalDataConverterResolver optionalDataConverterResolver
+    DataConverterResolver dataConverterResolver
     )
   {
     _NameTypeFormatter = nameTypeFormatter;
     _DataConverterResolver = dataConverterResolver;
-    _OptionalDataConverterResolver = optionalDataConverterResolver;
     _CancellationTokenProvider = cancellationTokenProvider;
     _CurrentProjectProvider = currentProjectProvider;
     _PersonInfoComparer = personInfoComparerByShortNames ?? personInfoComparer;
@@ -134,7 +131,7 @@ public partial class ProjectPage : ContentPage
       var families = familyPersons
         .Select(f => new FamilyInfoItem(
           f.Family, [.. f.Persons], (_, person) => FilterView.Matches(person),
-          _CancellationTokenProvider, _AlertService, _OptionalDataConverterResolver))
+          _CancellationTokenProvider, _AlertService, _DataConverterResolver))
         .OrderBy(item => item.Info, _NameComparer)
         .ToList();
 
@@ -146,7 +143,7 @@ public partial class ProjectPage : ContentPage
       {
         families.Add(new FamilyInfoItem(
           new FamilyInfo(FamilyInfoItem.NoFamilyName, null), familylessPersons, (_, person) => FilterView.Matches(person),
-          _CancellationTokenProvider, _AlertService, _OptionalDataConverterResolver));
+          _CancellationTokenProvider, _AlertService, _DataConverterResolver));
       }
 
       // Clear and AddRange together, not eagerly when the load starts: an overlapping second load
