@@ -361,7 +361,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     IEnumerable<Stream>? streams = null;
     try
     {
-      var filesContent = results.Select(file => (Stream: file.OpenReadAsync(), MimeType: file.ContentType));
+      var filesContent = results.Select(file => (Stream: file.OpenReadAsync(), MimeType: file.ContentType)).ToArray();
       streams = await Task.WhenAll(filesContent.Select(file => file.Stream));
       var photoAssets = filesContent.Select(content =>
           new Data(
@@ -550,7 +550,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
       name.Type.HasFlag(NameType.FirstName) || name.Type.HasFlag(NameType.FamilyName);
 
     FamilyFullInfo? family = null;
-    if (name.Type == NameType.FamilyName)
+    if (names.FirstName.Type == NameType.FamilyName)
     {
       using var familyDataToken = cancellationTokenProvider.CreateDbCancellationToken();
       family = await currentProjectProvider.Project.FamilyManager.GetFamilyFullInfoAsync(names.FirstName, familyDataToken);
@@ -621,7 +621,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
           .AddNameAsync(info.FemaleName, nameType, names.FirstName, token));
     }
     await Task.WhenAll(tasks);
-    if (name.Type == NameType.FamilyName)
+    if (names.FirstName.Type == NameType.FamilyName)
     {
       Data[] familyDataSet = [.. info.Photos, .. info.Attachments];
       await currentProjectProvider
