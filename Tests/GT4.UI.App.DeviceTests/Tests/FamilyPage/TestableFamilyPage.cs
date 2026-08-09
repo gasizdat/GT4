@@ -6,6 +6,7 @@ using GT4.UI.Components;
 using GT4.UI.Dialogs;
 using GT4.UI.Pages;
 using GT4.UI.Utils;
+using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
 using System.Collections.Specialized;
 
@@ -31,7 +32,9 @@ internal sealed class TestableFamilyPage : FamilyPage
     INavigationService navigationService,
     IBiologicalSexFormatter biologicalSexFormatter,
     INameTypeFormatter nameTypeFormatter,
-    CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory)
+    CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory,
+    OptionalDataConverterResolver dataConverterResolver,
+    DataConverterResolver dataConverterFactory)
     : base(
       cancellationTokenProvider,
       currentProjectProvider,
@@ -41,7 +44,9 @@ internal sealed class TestableFamilyPage : FamilyPage
       navigationService,
       biologicalSexFormatter,
       nameTypeFormatter,
-      createOrUpdatePersonDialogFactory)
+      createOrUpdatePersonDialogFactory,
+      dataConverterResolver,
+      dataConverterFactory)
   {
     // Persons returns the same ObservableCollection instance for the page's whole lifetime (even
     // across a FamilyName change), so a single subscription made up front -- before FamilyName is

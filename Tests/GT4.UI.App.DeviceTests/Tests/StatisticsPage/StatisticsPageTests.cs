@@ -51,7 +51,7 @@ public class StatisticsPageTests
       ]);
     services.FamilyManager
       .Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>()))
-      .ReturnsAsync([family]);
+      .ReturnsAsync([new FamilyInfo(family, null)]);
     var page = await CreatePageAsync(services);
 
     var statistics = await page.WaitForFirstLoadAsync();

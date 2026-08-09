@@ -10,6 +10,34 @@
     x:Name="Root"
     Title="{Binding FamilyName.Value, Source={x:Reference Root}}">
 
+  <ContentPage.Resources>
+    <ResourceDictionary>
+
+      <OnIdiom
+          x:Key="PhotoHeight"
+          x:TypeArguments="x:Double"
+          Desktop="300"
+          Phone="100"
+          Tablet="140" />
+
+      <OnIdiom
+          x:Key="PhotoWidth"
+          x:TypeArguments="x:Double"
+          Desktop="300"
+          Phone="100"
+          Tablet="140" />
+
+      <Style x:Key="PhotoStyle" TargetType="Image">
+        <Setter Property="Aspect" Value="AspectFit" />
+        <Setter Property="HeightRequest" Value="{StaticResource PhotoHeight}" />
+        <Setter Property="WidthRequest" Value="{StaticResource PhotoWidth}" />
+        <Setter Property="HorizontalOptions" Value="Start" />
+        <Setter Property="VerticalOptions" Value="Center" />
+      </Style>
+
+    </ResourceDictionary>
+  </ContentPage.Resources>
+
   <ContentPage.ToolbarItems>
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
@@ -45,34 +73,80 @@
 
     <components:PageLayout.Body>
       <ScrollView>
-        <FlexLayout
-            AlignContent="Start"
-            AlignItems="Start"
-            BindableLayout.ItemsSource="{Binding Persons, Source={x:Reference Root}}"
-            Direction="Row"
-            Wrap="Wrap">
+        <VerticalStackLayout Spacing="{StaticResource PageContentSpacing}">
 
-          <BindableLayout.ItemTemplate>
-            <DataTemplate x:DataType="dto:PersonInfo">
-              <components:CardView
-                  FlexLayout.Grow="1"
-                  MinimumWidthRequest="{Binding Path=PersonItemMinimalWidth, Source={RelativeSource AncestorType={x:Type ContentPage}}}">
+          <Border IsVisible="{Binding ShowPhotos, Source={x:Reference Root}}">
+            <components:ImagePresenter
+                ImageStyle="{StaticResource PhotoStyle}"
+                Photos="{Binding Photos, Source={x:Reference Root}}" />
+          </Border>
 
-                <components:CardView.GestureRecognizers>
-                  <TapGestureRecognizer
-                      Command="{Binding Path=MemberItemTappedCommand, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
-                      CommandParameter="{Binding .}" />
-                </components:CardView.GestureRecognizers>
+          <Border IsVisible="{Binding ShowAttachments, Source={x:Reference Root}}">
+            <VerticalStackLayout>
+              <Label
+                  Style="{StaticResource GroupTitle}"
+                  Text="{x:Static resources:UIStrings.FieldFamilyAttachments}" />
 
-                <components:PersonInfoView
-                    DatesLabelStyle="{StaticResource FieldValue}"
-                    NameFormat="{Binding PersonNamesFormat, Source={x:Reference Root}}"
-                    NameLabelStyle="{StaticResource FieldName}"
-                    Person="{Binding .}" />
-              </components:CardView>
-            </DataTemplate>
-          </BindableLayout.ItemTemplate>
-        </FlexLayout>
+              <CollectionView
+                  ItemsSource="{Binding Attachments, Source={x:Reference Root}}"
+                  SelectionMode="Single">
+                <CollectionView.ItemTemplate>
+                  <DataTemplate>
+                    <Grid
+                        Padding="{StaticResource CollectionItemsVerticalPadding}"
+                        Style="{StaticResource HoverSubItem}">
+                      <Grid.GestureRecognizers>
+                        <TapGestureRecognizer
+                            Command="{Binding Path=PageCommand, Source={x:Reference Root}}"
+                            CommandParameter="{Binding .}" />
+                      </Grid.GestureRecognizers>
+
+                      <VerticalStackLayout>
+                        <Label
+                            Style="{StaticResource FieldValue}"
+                            Text="{Binding DisplayName}" />
+                        <Label
+                            IsVisible="{Binding ShowFileName}"
+                            Opacity="0.6"
+                            Style="{StaticResource FieldValue}"
+                            Text="{Binding FileName}" />
+                      </VerticalStackLayout>
+                    </Grid>
+                  </DataTemplate>
+                </CollectionView.ItemTemplate>
+              </CollectionView>
+            </VerticalStackLayout>
+          </Border>
+
+          <FlexLayout
+              AlignContent="Start"
+              AlignItems="Start"
+              BindableLayout.ItemsSource="{Binding Persons, Source={x:Reference Root}}"
+              Direction="Row"
+              Wrap="Wrap">
+
+            <BindableLayout.ItemTemplate>
+              <DataTemplate x:DataType="dto:PersonInfo">
+                <components:CardView
+                    FlexLayout.Grow="1"
+                    MinimumWidthRequest="{Binding Path=PersonItemMinimalWidth, Source={RelativeSource AncestorType={x:Type ContentPage}}}">
+
+                  <components:CardView.GestureRecognizers>
+                    <TapGestureRecognizer
+                        Command="{Binding Path=MemberItemTappedCommand, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
+                        CommandParameter="{Binding .}" />
+                  </components:CardView.GestureRecognizers>
+
+                  <components:PersonInfoView
+                      DatesLabelStyle="{StaticResource FieldValue}"
+                      NameFormat="{Binding PersonNamesFormat, Source={x:Reference Root}}"
+                      NameLabelStyle="{StaticResource FieldName}"
+                      Person="{Binding .}" />
+                </components:CardView>
+              </DataTemplate>
+            </BindableLayout.ItemTemplate>
+          </FlexLayout>
+        </VerticalStackLayout>
       </ScrollView>
     </components:PageLayout.Body>
     <components:PageLayout.Footer>

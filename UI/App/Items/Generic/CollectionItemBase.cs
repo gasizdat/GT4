@@ -15,5 +15,5 @@ public abstract class CollectionItemBase<TDto>
 
   public TDto Info => _Info;
 
-  public ImageSource Icon => ImageUtils.ImageFromRawResource(_ImageResource);
+  public virtual ImageSource Icon => ImageUtils.ImageFromRawResource(_ImageResource);
 }

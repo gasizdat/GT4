@@ -1,5 +1,6 @@
 ﻿using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
+using GT4.Core.Project.Extensions;
 
 namespace GT4.Core.Project;
 
@@ -10,11 +11,26 @@ internal class FamilyManager : ProjectComponentBase, IFamilyManager
   {
   }
 
-  public async Task<Name[]> GetFamiliesAsync(CancellationToken token)
+  public async Task<FamilyInfo[]> GetFamiliesAsync(CancellationToken token)
   {
-    var ret = await Document.Names.GetNamesByTypeAsync(NameType.FamilyName, token);
+    var familyNames = await Document.Names.GetNamesByTypeAsync(NameType.FamilyName, token);
+    if (familyNames.Length == 0)
+      return [];
 
-    return ret;
+    var photosByFamilyId = await Document.NameData.GetNameDataSetAsync(familyNames, DataCategory.FamilyMainPhoto, token);
+
+    return [.. familyNames.Select(name => new FamilyInfo(name, photosByFamilyId.GetValueOrDefault(name.Id)?.FirstOrDefault()))];
+  }
+
+  public async Task<FamilyFullInfo> GetFamilyFullInfoAsync(Name familyName, CancellationToken token)
+  {
+    var familyData = await Document.NameData.GetNameDataSetAsync(familyName, null, token);
+
+    return new FamilyFullInfo(
+      familyName,
+      mainPhoto: familyData.SingleOrDefault(data => data.Category.IsMainPhoto()),
+      additionalPhotos: [.. familyData.Where(data => data.Category.IsAdditionalPhoto())],
+      attachments: [.. familyData.Where(data => data.Category.IsAttachment())]);
   }
 
   public TPerson SetUpPersonFamily<TPerson>(TPerson person, Name familyName) where TPerson : PersonInfo
@@ -110,5 +126,19 @@ internal class FamilyManager : ProjectComponentBase, IFamilyManager
     }
 
     await transaction.CommitAsync(token);
+  }
+
+  public async Task UpdateFamilyDataAsync(Name familyName, Data[] dataSet, CancellationToken token)
+  {
+    // dataSet's Category is authoritative here (CreateOrUpdateNameDialog reassigns main/additional
+    // by final position, not add-time category), but AddDataContentIfNotExist skips already-committed
+    // rows, so it never persists a changed category on its own -- write it explicitly first, mirroring
+    // PersonManager.UpdatePersonAsync's re-bucketing.
+    foreach (var data in dataSet.Where(data => data.Id != ElementId.NonCommittedId))
+    {
+      await Document.Data.UpdateCategoryAsync(data, data.Category, token);
+    }
+
+    await Document.NameData.UpdateNameDataSetAsync(familyName, dataSet, token);
   }
 }

@@ -1,22 +1,34 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
+using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
+using GT4.UI.Components;
+using GT4.UI.Converters;
+using GT4.UI.Items;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
+using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
+using System.Collections.ObjectModel;
 using System.Windows.Input;
 
 namespace GT4.UI.Dialogs;
 
 public partial class CreateOrUpdateNameDialog : ContentPage
 {
-  public record FamilyInfo(string Name, string MaleName, string FemaleName);
+  public record FamilyInfo(string Name, string MaleName, string FemaleName, Data[] Photos, Data[] Attachments);
 
   private readonly NameType _NameType;
+  private readonly ICancellationTokenProvider _CancellationTokenProvider;
+  private readonly IAlertService _AlertService;
+  private readonly DataConverterResolver _DataConverterResolver;
   private readonly TaskCompletionSource<FamilyInfo?> _Info = new(null);
   private readonly string _DialogButtonName;
   private readonly ICommand _DialogCommand;
+  private readonly ICommand _MediaCommand;
+  private readonly ObservableCollection<PersonDataItem> _Photos = new();
+  private readonly ObservableCollection<PersonDataItem> _Attachments = new();
   private string _GeneralName = string.Empty;
   private string _MaleName = string.Empty;
   private string _FemaleName = string.Empty;
@@ -41,11 +53,20 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     }
   }
 
-  public CreateOrUpdateNameDialog(NameType nameType, INameTypeFormatter nameTypeFormatter, IAlertService alertService)
+  public CreateOrUpdateNameDialog(
+    NameType nameType,
+    INameTypeFormatter nameTypeFormatter,
+    IAlertService alertService,
+    ICancellationTokenProvider cancellationTokenProvider,
+    DataConverterResolver dataConverterResolver)
   {
+    _AlertService = alertService;
+    _CancellationTokenProvider = cancellationTokenProvider;
+    _DataConverterResolver = dataConverterResolver;
     var nameTypeName = nameTypeFormatter.ToString(nameType);
     _DialogButtonName = string.Format(UIStrings.BtnNameCreateName_1, nameTypeName);
     _DialogCommand = new SafeCommand(OnCreateFamily, alertService);
+    _MediaCommand = new SafeCommand(OnMediaCommand, alertService);
 
     switch (nameType)
     {
@@ -70,14 +91,36 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     IsModified = false;
   }
 
-  public CreateOrUpdateNameDialog(Name name, Name? maleName, Name? femaleName, INameTypeFormatter nameTypeFormatter, IAlertService alertService)
-    : this(name.Type, nameTypeFormatter, alertService)
+  public CreateOrUpdateNameDialog(
+    Name name,
+    Name? maleName,
+    Name? femaleName,
+    INameTypeFormatter nameTypeFormatter,
+    IAlertService alertService,
+    ICancellationTokenProvider cancellationTokenProvider,
+    DataConverterResolver dataConverterResolver,
+    FamilyFullInfo? family = null)
+    : this(name.Type, nameTypeFormatter, alertService, cancellationTokenProvider, dataConverterResolver)
   {
     var nameTypeName = nameTypeFormatter.ToString(name.Type);
     _DialogButtonName = string.Format(UIStrings.BtnNameUpdateName_1, nameTypeName);
     GeneralName = name.Value;
     MaleName = maleName?.Value ?? string.Empty;
     FemaleName = femaleName?.Value ?? string.Empty;
+
+    if (family?.MainPhoto is { } mainPhoto)
+    {
+      _Photos.Add(GetFamilyData(mainPhoto, mainPhoto.Category));
+    }
+    foreach (var data in family?.AdditionalPhotos ?? [])
+    {
+      _Photos.Add(GetFamilyData(data, data.Category));
+    }
+    foreach (var data in family?.Attachments ?? [])
+    {
+      _Attachments.Add(GetFamilyData(data, data.Category));
+    }
+
     IsModified = false;
 
     OnPropertyChanged(nameof(DialogTitle));
@@ -85,6 +128,14 @@ public partial class CreateOrUpdateNameDialog : ContentPage
 
   public bool ShowDeclensionNames =>
     _NameType == NameType.FamilyName || _NameType == (NameType.FirstName | NameType.MaleDeclension);
+
+  public bool ShowFamilyMedia => _NameType == NameType.FamilyName;
+
+  public ICollection<PersonDataItem> Photos => _Photos;
+
+  public ICollection<PersonDataItem> Attachments => _Attachments;
+
+  public ICommand MediaCommand => _MediaCommand;
 
   public string GeneralName
   {
@@ -248,7 +299,205 @@ public partial class CreateOrUpdateNameDialog : ContentPage
 
   public ICommand DialogCommand => _DialogCommand;
 
-  private void OnCreateFamily() => _Info.SetResult(NotReady ? null : new(GeneralName, ShowDeclensionNames ? MaleName : string.Empty, ShowDeclensionNames ? FemaleName : string.Empty));
+  private void OnCreateFamily()
+  {
+    if (NotReady)
+    {
+      _Info.SetResult(null);
+      return;
+    }
+
+    var photos = _Photos.Select(item => item.Info).ToArray();
+    var mainPhoto = photos.FirstOrDefault();
+    var additionalPhotos = photos.Skip(1).Select(photo => photo with { Category = photo.Category.AsAdditionalPhoto() });
+    // Position in _Photos (index 0 = main), not the category assigned at add time, is authoritative --
+    // MoveFamilyPhotoToLeft/Right reorders the collection without touching each item's DataCategory.
+    Data[] allPhotos = mainPhoto is null
+      ? [.. additionalPhotos]
+      : [mainPhoto with { Category = mainPhoto.Category.AsMainPhoto() }, .. additionalPhotos];
+
+    var name = GeneralName;
+    var maleName = ShowDeclensionNames ? MaleName : string.Empty;
+    var femaleName = ShowDeclensionNames ? FemaleName : string.Empty;
+    var attachments = _Attachments.Select(item => item.Info).ToArray();
+    _Info.SetResult(new(name, maleName, femaleName, allPhotos, attachments));
+  }
+
+  private PersonDataItem GetFamilyData(Data data, DataCategory dataCategory) =>
+    new(data, _DataConverterResolver(dataCategory), _CancellationTokenProvider, _AlertService);
+
+  private static byte[] FromStream(Stream stream)
+  {
+    using var ret = new MemoryStream();
+    stream.CopyTo(ret);
+    return ret.ToArray();
+  }
+
+  private static async Task<IEnumerable<FileResult>?> PickFilesAsync(PickOptions pickOptions, bool allowMultiple)
+  {
+    if (allowMultiple)
+    {
+      var files = await FilePicker.Default.PickMultipleAsync(pickOptions);
+      return files?.Where(f => f is not null).Select(r => r!);
+    }
+
+    var result = await FilePicker.Default.PickAsync(pickOptions);
+    return result is null ? null : [result];
+  }
+
+  private async Task OnAddOrUpdateFamilyPhotoAsync(PersonDataItem? photo)
+  {
+    var pickOptions = new PickOptions
+    {
+      PickerTitle = UIStrings.FileDialogSelectPictures,
+      FileTypes = FilePickerFileType.Images
+    };
+    var results = await PickFilesAsync(pickOptions, allowMultiple: photo is null);
+    if (results is null)
+    {
+      return;
+    }
+
+    IEnumerable<Stream>? streams = null;
+    try
+    {
+      var filesContent = results.Select(file => (Stream: file.OpenReadAsync(), MimeType: file.ContentType)).ToArray();
+      streams = await Task.WhenAll(filesContent.Select(file => file.Stream));
+      var photoAssets = filesContent.Select(content =>
+          new Data(
+            Id: ElementId.NonCommittedId,
+            Content: FromStream(content.Stream.Result),
+            MimeType: content.MimeType,
+            Category: default));
+
+      foreach (var photoAsset in photoAssets)
+      {
+        var category = _Photos.Count() == 0 ? DataCategory.FamilyMainPhoto : DataCategory.FamilyPhoto;
+        var item = GetFamilyData(photoAsset with { Category = category }, category);
+        if (photo is not null)
+        {
+          _Photos[_Photos.IndexOf(photo)] = item;
+        }
+        else
+        {
+          _Photos.Add(item);
+        }
+      }
+
+      IsModified = true;
+    }
+    finally
+    {
+      foreach (var stream in streams ?? [])
+      {
+        stream.Close();
+        stream.Dispose();
+      }
+    }
+  }
+
+  private async Task OnAddOrUpdateFamilyAttachmentAsync(PersonDataItem? attachment)
+  {
+    var pickOptions = new PickOptions { PickerTitle = UIStrings.FileDialogSelectAttachment };
+    var results = await PickFilesAsync(pickOptions, allowMultiple: attachment is null);
+    if (results is null)
+    {
+      return;
+    }
+
+    var converter = _DataConverterResolver(DataCategory.FamilyAttachment);
+    IEnumerable<Stream>? streams = null;
+    try
+    {
+      var filesContent = results.Select(file => (Stream: file.OpenReadAsync(), file.FileName, MimeType: file.ContentType)).ToArray();
+      streams = await Task.WhenAll(filesContent.Select(file => file.Stream));
+
+      using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
+      foreach (var content in filesContent)
+      {
+        var pick = new AttachmentPick(FromStream(content.Stream.Result), content.FileName, content.MimeType);
+        var attachmentAsset = await converter.FromObjectAsync(pick, token);
+        if (attachmentAsset is null)
+        {
+          continue;
+        }
+
+        var item = GetFamilyData(attachmentAsset, DataCategory.FamilyAttachment);
+        if (attachment is not null)
+        {
+          _Attachments[_Attachments.IndexOf(attachment)] = item;
+        }
+        else
+        {
+          _Attachments.Add(item);
+        }
+      }
+
+      IsModified = true;
+    }
+    finally
+    {
+      foreach (var stream in streams ?? [])
+      {
+        stream.Close();
+        stream.Dispose();
+      }
+    }
+  }
+
+  private void MoveItem<T>(ObservableCollection<T> collection, T item, int dIndex)
+  {
+    var oldIndex = collection.IndexOf(item);
+    var newIndex = oldIndex + dIndex;
+
+    if (newIndex < 0 || newIndex >= collection.Count)
+    {
+      throw new ApplicationException(UIStrings.ErrorTheBoundIsReached);
+    }
+
+    collection.Move(oldIndex, newIndex);
+    IsModified = true;
+  }
+
+  private async Task OnMediaCommand(object obj)
+  {
+    switch (obj)
+    {
+      case string commandName when commandName == "AddFamilyPhotoCommand":
+        await OnAddOrUpdateFamilyPhotoAsync(null);
+        break;
+      case string commandName when commandName == "AddFamilyAttachmentCommand":
+        await OnAddOrUpdateFamilyAttachmentAsync(null);
+        break;
+
+      case AdornerCommandParameter adorner when adorner.CommandName == "EditFamilyPhotoCommand" && adorner.Element is PersonDataItem photo:
+        await OnAddOrUpdateFamilyPhotoAsync(photo);
+        break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "RemoveFamilyPhotoCommand" && adorner.Element is PersonDataItem photo:
+        _Photos.Remove(photo);
+        IsModified = true;
+        break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "MoveFamilyPhotoToLeftCommand" && adorner.Element is PersonDataItem photo:
+        MoveItem(_Photos, photo, -1);
+        break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "MoveFamilyPhotoToRightCommand" && adorner.Element is PersonDataItem photo:
+        MoveItem(_Photos, photo, 1);
+        break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "EditFamilyAttachmentCommand" && adorner.Element is PersonDataItem attachment:
+        await OnAddOrUpdateFamilyAttachmentAsync(attachment);
+        break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "RemoveFamilyAttachmentCommand" && adorner.Element is PersonDataItem attachment:
+        _Attachments.Remove(attachment);
+        IsModified = true;
+        break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "MoveFamilyAttachmentUpCommand" && adorner.Element is PersonDataItem attachment:
+        MoveItem(_Attachments, attachment, -1);
+        break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "MoveFamilyAttachmentDownCommand" && adorner.Element is PersonDataItem attachment:
+        MoveItem(_Attachments, attachment, 1);
+        break;
+    }
+  }
 
   private record NamesGroup(Name FirstName, Name? MaleName, Name? FemaleName);
 
@@ -258,7 +507,8 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     ICancellationTokenProvider cancellationTokenProvider,
     INameTypeFormatter nameTypeFormatter,
     IAlertService alertService,
-    INavigation navigation)
+    INavigation navigation,
+    DataConverterResolver dataConverterResolver)
   {
     async Task<NamesGroup> GetNameWithSubnames()
     {
@@ -298,7 +548,16 @@ public partial class CreateOrUpdateNameDialog : ContentPage
       };
     var focusGenericName = isOrphanDeclension ||
       name.Type.HasFlag(NameType.FirstName) || name.Type.HasFlag(NameType.FamilyName);
-    var dialog = new CreateOrUpdateNameDialog(names.FirstName, names.MaleName, names.FemaleName, nameTypeFormatter, alertService)
+
+    FamilyFullInfo? family = null;
+    if (names.FirstName.Type == NameType.FamilyName)
+    {
+      using var familyDataToken = cancellationTokenProvider.CreateDbCancellationToken();
+      family = await currentProjectProvider.Project.FamilyManager.GetFamilyFullInfoAsync(names.FirstName, familyDataToken);
+    }
+
+    var dialog = new CreateOrUpdateNameDialog(
+      names.FirstName, names.MaleName, names.FemaleName, nameTypeFormatter, alertService, cancellationTokenProvider, dataConverterResolver, family)
     {
       FocusGenericName = focusGenericName,
       FocusMaleName = !focusGenericName && name.Type.HasFlag(NameType.MaleDeclension),
@@ -362,6 +621,14 @@ public partial class CreateOrUpdateNameDialog : ContentPage
           .AddNameAsync(info.FemaleName, nameType, names.FirstName, token));
     }
     await Task.WhenAll(tasks);
+    if (names.FirstName.Type == NameType.FamilyName)
+    {
+      Data[] familyDataSet = [.. info.Photos, .. info.Attachments];
+      await currentProjectProvider
+          .Project
+          .FamilyManager
+          .UpdateFamilyDataAsync(names.FirstName, familyDataSet, token);
+    }
     await transaction.CommitAsync(token);
   }
 }

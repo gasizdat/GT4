@@ -6,6 +6,7 @@ using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
+using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Extensions;
 using GT4.UI.Utils.Formatters;
 using System.Collections.ObjectModel;
@@ -23,11 +24,15 @@ public partial class FamilyPage : ContentPage
   private readonly INavigationService _NavigationService;
   private readonly INameTypeFormatter _NameTypeFormatter;
   private readonly CreateOrUpdatePersonDialog.Factory _CreateOrUpdatePersonDialogFactory;
+  private readonly OptionalDataConverterResolver _OptionalDataConverterResolver;
+  private readonly DataConverterResolver _DataConverterResolver;
   private readonly FilteredObservableCollection<PersonInfo> _Persons = new();
   private bool _PersonsLoaded;
   private Name? _FamilyName = null;
   private double _PersonItemMinimalWidth;
   private ProjectInfo? _LastProjectInfo;
+  private PhotoInfo[] _Photos = [];
+  private AttachmentInfo[] _Attachments = [];
 
   public FamilyPage(
     ICancellationTokenProvider cancellationTokenProvider,
@@ -39,7 +44,9 @@ public partial class FamilyPage : ContentPage
     INavigationService navigationService,
     IBiologicalSexFormatter biologicalSexFormatter,
     INameTypeFormatter nameTypeFormatter,
-    CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory
+    CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory,
+    OptionalDataConverterResolver optionalDataConverterResolver,
+    DataConverterResolver dataConverterResolver
     )
   {
     _CancellationTokenProvider = cancellationTokenProvider;
@@ -49,6 +56,8 @@ public partial class FamilyPage : ContentPage
     _NavigationService = navigationService;
     _NameTypeFormatter = nameTypeFormatter;
     _CreateOrUpdatePersonDialogFactory = createOrUpdatePersonDialogFactory;
+    _OptionalDataConverterResolver = optionalDataConverterResolver;
+    _DataConverterResolver = dataConverterResolver;
 
     _Persons.Filter = (_, person) => FilterView.Matches(person);
 
@@ -104,6 +113,10 @@ public partial class FamilyPage : ContentPage
         var project = _CurrentProjectProvider.Project;
         var startInfo = _CurrentProjectProvider.Info;
         PersonInfo[] persons;
+        // The sentinel "no family" bucket has no Name.Id of its own, so there is no family media to fetch.
+        var familyInfoTask = IsNoFamilyMode
+          ? Task.FromResult(new FamilyFullInfo(familyName, null, [], []))
+          : project.FamilyManager.GetFamilyFullInfoAsync(familyName, token);
         if (IsNoFamilyMode)
         {
           var allPersons = await project
@@ -119,6 +132,7 @@ public partial class FamilyPage : ContentPage
         }
 
         persons = [.. persons.OrderBy(item => item, _PersonInfoComparer)];
+        var (photos, attachments) = await LoadFamilyMediaAsync(await familyInfoTask, token);
 
         await SafeTask.RunOnMainThread(() =>
         {
@@ -130,7 +144,10 @@ public partial class FamilyPage : ContentPage
 
           _Persons.Clear();
           _Persons.AddRange(persons);
+          _Photos = photos;
+          _Attachments = attachments;
           FilterView.ResetFilterData();
+          this.RefreshView();
         }, _AlertService);
       }
 
@@ -143,6 +160,14 @@ public partial class FamilyPage : ContentPage
       return _Persons.Items;
     }
   }
+
+  public PhotoInfo[] Photos => _Photos;
+
+  public bool ShowPhotos => _Photos.Length != 0;
+
+  public AttachmentInfo[] Attachments => _Attachments;
+
+  public bool ShowAttachments => _Attachments.Length != 0;
 
   public string RemoveFamilyToolbarItemName =>
     string.Format(UIStrings.MenuItemNameRemove_1, _FamilyName?.Value ?? string.Empty);
@@ -180,6 +205,32 @@ public partial class FamilyPage : ContentPage
   }
 
   private bool IsNoFamilyMode => _FamilyName?.Id == FamilyInfoItem.NoFamilyName.Id;
+
+  private async Task<(PhotoInfo[] Photos, AttachmentInfo[] Attachments)> LoadFamilyMediaAsync(FamilyFullInfo familyInfo, CancellationToken token)
+  {
+    Data[] photoData = familyInfo.MainPhoto is null
+      ? [.. familyInfo.AdditionalPhotos]
+      : [familyInfo.MainPhoto, .. familyInfo.AdditionalPhotos];
+
+    var defaultFamilyPhoto = ImageUtils.ImageFromRawResource("family_stub.png");
+    var photos = await Task.WhenAll(photoData.Select(data =>
+      ImageUtils.ResolvePhotoAsync(_OptionalDataConverterResolver, data, defaultFamilyPhoto, token)));
+
+    var attachments = await Task.WhenAll(familyInfo.Attachments.Select(data => AttachmentInfo.CreateAsync(data, token)));
+
+    return (photos, attachments);
+  }
+
+  // attachment.FileName is often a full original path -- a common artifact of GEDCOM imports.
+  private async Task OnOpenAttachmentAsync(AttachmentInfo attachment)
+  {
+    using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
+    var fileName = FileNameUtils.Sanitize(attachment.FileName, "attachment");
+    var path = Path.Combine(FileSystem.CacheDirectory, fileName);
+    await File.WriteAllBytesAsync(path, attachment.Bytes, token);
+
+    await Launcher.Default.OpenAsync(new OpenFileRequest(fileName, new ReadOnlyFile(path)));
+  }
 
   private async Task OnDeleteFamily()
   {
@@ -251,7 +302,8 @@ public partial class FamilyPage : ContentPage
           _CancellationTokenProvider,
           _NameTypeFormatter,
           _AlertService,
-          Navigation);
+          Navigation,
+          _DataConverterResolver);
         break;
 
       case string commandName when commandName == "CreatePerson":
@@ -260,6 +312,10 @@ public partial class FamilyPage : ContentPage
 
       case string commandName when commandName == "Refresh":
         Refresh();
+        break;
+
+      case AttachmentInfo attachment:
+        await OnOpenAttachmentAsync(attachment);
         break;
     }
   }

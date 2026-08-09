@@ -6,6 +6,7 @@ using GT4.UI.Components;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Pages;
+using GT4.UI.Utils.Converters;
 using Moq;
 using Xunit;
 
@@ -20,6 +21,8 @@ namespace GT4.UI.DeviceTests;
 public class ProjectPageTests
 {
   private static Name N(int id, string value, NameType type) => new(id, value, type, null);
+
+  private static FamilyInfo FI(Name name, Data? mainPhoto = null) => new(name, mainPhoto);
 
   private static readonly Date UnknownDate = Date.Create(null, null, null, DateStatus.Unknown);
 
@@ -72,7 +75,7 @@ public class ProjectPageTests
   {
     var services = new TestServices();
     var unsorted = new[] { N(1, "Pushkin", NameType.FamilyName), N(2, "Aksakov", NameType.FamilyName), N(3, "Tolstoy", NameType.FamilyName) };
-    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(unsorted);
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([.. unsorted.Select(n => FI(n))]);
     var page = await CreatePageAsync(services);
 
     var families = await page.WaitForFamiliesAsync();
@@ -81,11 +84,46 @@ public class ProjectPageTests
   }
 
   [Fact]
+  public async Task Families_with_a_main_photo_show_it_as_the_card_icon()
+  {
+    var services = new TestServices();
+    var ivanov = N(1, "Ivanov", NameType.FamilyName);
+    var petrov = N(2, "Petrov", NameType.FamilyName);
+    var photoBytes = new byte[] { 1, 2, 3 };
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(
+      [FI(ivanov, new Data(1, photoBytes, "image/png", DataCategory.FamilyMainPhoto)), FI(petrov)]);
+    var page = await CreatePageAsync(services);
+
+    var families = await page.WaitForFamiliesAsync();
+
+    var withPhoto = families.Single(f => f.Info.Value == "Ivanov");
+    var withoutPhoto = families.Single(f => f.Info.Value == "Petrov");
+
+    // Icon now resolves through the FamilyMainPhoto IDataConverter in the background -- poll past
+    // the synchronous fallback it returns first rather than asserting on it directly.
+    var iconBytes = await Poll.UntilAsync(
+      () => ReadIconBytesAsync(withPhoto),
+      bytes => bytes.SequenceEqual(photoBytes),
+      timeoutMessage: "Family icon did not resolve to the main photo.");
+    Assert.Equal(photoBytes, iconBytes);
+    Assert.IsType<StreamImageSource>(withoutPhoto.Icon);
+  }
+
+  private static async Task<byte[]> ReadIconBytesAsync(FamilyInfoItem family)
+  {
+    var iconStream = Assert.IsType<StreamImageSource>(family.Icon);
+    await using var stream = await iconStream.Stream(CancellationToken.None);
+    using var buffer = new MemoryStream();
+    await stream.CopyToAsync(buffer);
+    return buffer.ToArray();
+  }
+
+  [Fact]
   public async Task Familyless_persons_are_grouped_into_a_No_family_pseudo_card_shown_last()
   {
     var services = new TestServices();
     var ivanov = N(1, "Ivanov", NameType.FamilyName);
-    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([ivanov]);
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([FI(ivanov)]);
     services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
       .ReturnsAsync([InFamily(P(1, "John"), ivanov), P(2, "Orphan")]);
     var page = await CreatePageAsync(services);
@@ -93,7 +131,7 @@ public class ProjectPageTests
     var families = await page.WaitForFamiliesAsync();
 
     Assert.Equal(["Ivanov", FamilyInfoItem.NoFamilyName.Value], families.Select(f => f.Info.Value));
-    Assert.Equal(FamilyInfoItem.NoFamilyName, families[^1].Info);
+    Assert.Equal(FI(FamilyInfoItem.NoFamilyName), families[^1].Info);
     Assert.Equal(["Orphan"], families[^1].Persons.Select(p => p.DisplayName));
   }
 
@@ -122,7 +160,7 @@ public class ProjectPageTests
   {
     var services = new TestServices();
     var ivanov = N(1, "Ivanov", NameType.FamilyName);
-    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([ivanov]);
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([FI(ivanov)]);
     services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
       .ReturnsAsync([InFamily(P(1, "John"), ivanov)]);
     var page = await CreatePageAsync(services);
@@ -138,7 +176,7 @@ public class ProjectPageTests
   {
     var services = new TestServices();
     var ivanov = N(1, "Ivanov", NameType.FamilyName);
-    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([ivanov]);
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([FI(ivanov)]);
     services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
       .ReturnsAsync([InFamily(P(1, "John"), ivanov), P(2, "Orphan")]);
     var page = await CreatePageAsync(services);
@@ -320,7 +358,7 @@ public class ProjectPageTests
   {
     var services = new TestServices();
     services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>()))
-      .ReturnsAsync([N(1, "Ivanov", NameType.FamilyName)]);
+      .ReturnsAsync([FI(N(1, "Ivanov", NameType.FamilyName))]);
     var page = await CreatePageAsync(services);
     await page.WaitForFamiliesAsync();
 
@@ -329,7 +367,7 @@ public class ProjectPageTests
     var dialog = await ModalDialogHarness.WaitForModalAsync<CreateOrUpdateNameDialog>(page);
     var loadsBefore = page.CompletedLoads;
     services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>()))
-      .ReturnsAsync([N(1, "Ivanov", NameType.FamilyName), N(2, "Petrov", NameType.FamilyName)]);
+      .ReturnsAsync([FI(N(1, "Ivanov", NameType.FamilyName)), FI(N(2, "Petrov", NameType.FamilyName))]);
 
     await MainThread.InvokeOnMainThreadAsync(() =>
     {
@@ -362,7 +400,7 @@ public class ProjectPageTests
           firstCallStarted.SetResult();
           await firstCallGate.Task;
         }
-        return [N(1, "Ivanov", NameType.FamilyName)];
+        return [FI(N(1, "Ivanov", NameType.FamilyName))];
       });
     var page = await CreatePageAsync(services);
     await firstCallStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
@@ -388,7 +426,7 @@ public class ProjectPageTests
   {
     var services = new TestServices();
     services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>()))
-      .ReturnsAsync([N(1, "Ivanov", NameType.FamilyName)]);
+      .ReturnsAsync([FI(N(1, "Ivanov", NameType.FamilyName))]);
     var page = await CreatePageAsync(services);
     await page.WaitForFamiliesAsync();
     var loadsBefore = page.CompletedLoads;
@@ -407,7 +445,7 @@ public class ProjectPageTests
   {
     var services = new TestServices();
     services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>()))
-      .ReturnsAsync([N(1, "Ivanov", NameType.FamilyName)]);
+      .ReturnsAsync([FI(N(1, "Ivanov", NameType.FamilyName))]);
     var page = await CreatePageAsync(services);
     await page.WaitForFamiliesAsync();
     var loadsBefore = page.CompletedLoads;
@@ -518,7 +556,7 @@ public class ProjectPageTests
     var services = new TestServices();
     var ivanov = N(1, "Ivanov", NameType.FamilyName);
     var petrov = N(2, "Petrov", NameType.FamilyName);
-    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([ivanov, petrov]);
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([FI(ivanov), FI(petrov)]);
     services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
       .ReturnsAsync([InFamily(P(1, "John"), ivanov), InFamily(P(2, "Jane"), ivanov), InFamily(P(3, "Mark"), petrov)]);
     var page = await CreatePageAsync(services);
@@ -538,7 +576,7 @@ public class ProjectPageTests
   {
     var services = new TestServices();
     var ivanov = N(1, "Ivanov", NameType.FamilyName);
-    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([ivanov]);
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([FI(ivanov)]);
     services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
       .ReturnsAsync([InFamily(P(1, "John"), ivanov), InFamily(P(2, "Jane"), ivanov)]);
     var page = await CreatePageAsync(services);
@@ -559,7 +597,7 @@ public class ProjectPageTests
   {
     var services = new TestServices();
     var family = N(1, "Ivanov", NameType.FamilyName);
-    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([family]);
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([FI(family)]);
     services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
       .ReturnsAsync([InFamily(P(1, "John", BiologicalSex.Male), family), InFamily(P(2, "Jane", BiologicalSex.Female), family)]);
     var page = await CreatePageAsync(services);
@@ -584,7 +622,7 @@ public class ProjectPageTests
   {
     var services = new TestServices();
     var family = N(1, "Ivanov", NameType.FamilyName);
-    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([family]);
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([FI(family)]);
     services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
       .ReturnsAsync([InFamily(P(1, "John"), family), InFamily(P(2, "Jane"), family)]);
     services.Relatives
@@ -610,7 +648,7 @@ public class ProjectPageTests
   {
     var services = new TestServices();
     var family = N(1, "Ivanov", NameType.FamilyName);
-    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([family]);
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([FI(family)]);
     services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
       .ReturnsAsync([InFamily(P(1, "John"), family)]);
     var page = await CreatePageAsync(services);
@@ -631,7 +669,7 @@ public class ProjectPageTests
   {
     var services = new TestServices();
     var family = N(1, "Ivanov", NameType.FamilyName);
-    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([family]);
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([FI(family)]);
     var bornKnown = InFamily(P(1, "John", birthDate: KnownYear(1950), deathDate: KnownYear(2000)), family);
     var noDatesAtAll = InFamily(P(2, "NoDates"), family);
     services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
@@ -666,7 +704,7 @@ public class ProjectPageTests
   {
     var services = new TestServices();
     var family = N(1, "Ivanov", NameType.FamilyName);
-    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([family]);
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([FI(family)]);
     services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
       .ReturnsAsync([InFamily(P(1, "John", BiologicalSex.Male), family), InFamily(P(2, "Jane", BiologicalSex.Female), family)]);
     var page = await CreatePageAsync(services);
@@ -719,7 +757,7 @@ public class ProjectPageTests
   {
     var services = new TestServices();
     var family = N(1, "Ivanov", NameType.FamilyName);
-    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([family]);
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([FI(family)]);
     services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
       .ReturnsAsync([InFamily(P(1, "John"), family), InFamily(P(2, "Jane"), family)]);
     var page = await CreatePageAsync(services);
@@ -738,7 +776,7 @@ public class ProjectPageTests
     var services = new TestServices();
     var ivanov = N(1, "Ivanov", NameType.FamilyName);
     var petrov = N(2, "Petrov", NameType.FamilyName);
-    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([ivanov, petrov]);
+    services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync([FI(ivanov), FI(petrov)]);
     services.PersonManager.Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
       .ReturnsAsync([
         InFamily(P(1, "John", BiologicalSex.Male), ivanov),
@@ -775,10 +813,14 @@ public class ProjectPageTests
     // FamilyInfoItem.Persons uses in ProjectPage.xaml's per-card FlexLayout, without needing a
     // full ProjectPage/CollectionView setup.
     var showOnlyFemale = false;
+    var services = new TestServices();
     var family = new FamilyInfoItem(
-      N(1, "Ivanov", NameType.FamilyName),
+      FI(N(1, "Ivanov", NameType.FamilyName)),
       [P(1, "John", BiologicalSex.Male), P(2, "Jane", BiologicalSex.Female)],
-      (_, p) => !showOnlyFemale || p.BiologicalSex == BiologicalSex.Female);
+      (_, p) => !showOnlyFemale || p.BiologicalSex == BiologicalSex.Female,
+      services.Provider.GetRequiredService<ICancellationTokenProvider>(),
+      services.AlertService.Object,
+      services.Provider.GetRequiredService<OptionalDataConverterResolver>());
 
     var flex = new FlexLayout();
     var template = new DataTemplate(() =>

@@ -7,6 +7,7 @@ using GT4.UI.Components;
 using GT4.UI.Items;
 using GT4.UI.Pages;
 using GT4.UI.Utils;
+using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
 using System.Collections.Specialized;
 
@@ -35,7 +36,9 @@ internal sealed class TestableProjectPage : ProjectPage
     GedcomImportEncoding gedcomImportEncoding,
     IAlertService alertService,
     INavigationService navigationService,
-    IBiologicalSexFormatter biologicalSexFormatter)
+    IBiologicalSexFormatter biologicalSexFormatter,
+    DataConverterResolver dataConverterResolver,
+    OptionalDataConverterResolver optionalDataConverterResolver)
     : base(
       nameTypeFormatter,
       cancellationTokenProvider,
@@ -49,7 +52,9 @@ internal sealed class TestableProjectPage : ProjectPage
       gedcomImportEncoding,
       alertService,
       navigationService,
-      biologicalSexFormatter)
+      biologicalSexFormatter,
+      dataConverterResolver,
+      optionalDataConverterResolver)
   {
     // Families is bound to CollectionChanged, not PropertyChanged: RefreshView() (used by the
     // "Refresh" command and OnNavigatedTo) reflectively raises OnPropertyChanged for every one of

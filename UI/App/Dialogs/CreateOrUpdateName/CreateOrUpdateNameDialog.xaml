@@ -9,6 +9,34 @@
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
     x:Name="Root">
 
+  <ContentPage.Resources>
+    <ResourceDictionary>
+
+      <OnIdiom
+          x:Key="FamilyPhotoHeight"
+          x:TypeArguments="x:Double"
+          Desktop="300"
+          Phone="100"
+          Tablet="140" />
+
+      <OnIdiom
+          x:Key="FamilyPhotoWidth"
+          x:TypeArguments="x:Double"
+          Desktop="300"
+          Phone="100"
+          Tablet="140" />
+
+      <Style x:Key="FamilyPhotoPreviewStyle" TargetType="Image">
+        <Setter Property="Aspect" Value="AspectFit" />
+        <Setter Property="HeightRequest" Value="{StaticResource FamilyPhotoHeight}" />
+        <Setter Property="WidthRequest" Value="{StaticResource FamilyPhotoWidth}" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+        <Setter Property="VerticalOptions" Value="Center" />
+      </Style>
+
+    </ResourceDictionary>
+  </ContentPage.Resources>
+
   <components:PageLayout>
     <components:PageLayout.Header>
       <Label
@@ -82,6 +110,212 @@
             </Entry.Behaviors>
 
           </Entry>
+
+          <Border IsVisible="{Binding ShowFamilyMedia, Source={x:Reference Root}}">
+            <Grid
+                ColumnDefinitions="*, Auto, Auto"
+                RowDefinitions="Auto, Auto">
+              <Label
+                  Grid.Row="0"
+                  Grid.Column="0"
+                  Grid.ColumnSpan="3"
+                  Style="{StaticResource GroupTitle}"
+                  Text="{x:Static resources:UIStrings.FieldPersonPhotos}" />
+              <CollectionView
+                  Grid.Row="1"
+                  Grid.Column="0"
+                  HorizontalScrollBarVisibility="Always"
+                  ItemsSource="{Binding Photos, Source={x:Reference Root}}"
+                  SelectionMode="Single">
+
+                <CollectionView.ItemsLayout>
+                  <LinearItemsLayout Orientation="Horizontal" />
+                </CollectionView.ItemsLayout>
+
+                <CollectionView.ItemTemplate>
+                  <DataTemplate>
+                    <Grid
+                        x:Name="FamilyPhoto"
+                        ColumnDefinitions="*, Auto, Auto"
+                        RowDefinitions="Auto, Auto, *"
+                        Style="{StaticResource HoverItem}">
+
+                      <Image
+                          Grid.Row="0"
+                          Grid.RowSpan="3"
+                          Grid.Column="0"
+                          Grid.ColumnSpan="3"
+                          Source="{Binding Content.Source}"
+                          Style="{StaticResource FamilyPhotoPreviewStyle}" />
+
+                      <Button
+                          Grid.Row="0"
+                          Grid.Column="1"
+                          Command="{Binding MediaCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource EditAdorner}">
+
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="EditFamilyPhotoCommand"
+                              Element="{Binding Source={x:Reference FamilyPhoto}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
+
+                      <Button
+                          Grid.Row="0"
+                          Grid.Column="2"
+                          Command="{Binding MediaCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource DeleteAdorner}">
+
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="RemoveFamilyPhotoCommand"
+                              Element="{Binding Source={x:Reference FamilyPhoto}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
+
+                      <Button
+                          Grid.Row="1"
+                          Grid.Column="1"
+                          Command="{Binding MediaCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource LeftAdorner}">
+
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="MoveFamilyPhotoToLeftCommand"
+                              Element="{Binding Source={x:Reference FamilyPhoto}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
+
+                      <Button
+                          Grid.Row="1"
+                          Grid.Column="2"
+                          Command="{Binding MediaCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource RightAdorner}">
+
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="MoveFamilyPhotoToRightCommand"
+                              Element="{Binding Source={x:Reference FamilyPhoto}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
+
+                    </Grid>
+                  </DataTemplate>
+                </CollectionView.ItemTemplate>
+              </CollectionView>
+              <Button
+                  Grid.Row="1"
+                  Grid.Column="1"
+                  Command="{Binding MediaCommand, Source={x:Reference Root}}"
+                  CommandParameter="AddFamilyPhotoCommand"
+                  HeightRequest="{StaticResource FamilyPhotoHeight}"
+                  Style="{StaticResource AddAdorner}" />
+
+            </Grid>
+          </Border>
+
+          <Border IsVisible="{Binding ShowFamilyMedia, Source={x:Reference Root}}">
+            <Grid
+                ColumnDefinitions="*, Auto"
+                RowDefinitions="Auto, *, Auto">
+
+              <Label
+                  Grid.Row="0"
+                  Grid.Column="0"
+                  Grid.ColumnSpan="2"
+                  Style="{StaticResource GroupTitle}"
+                  Text="{x:Static resources:UIStrings.FieldFamilyAttachments}" />
+
+              <CollectionView
+                  Grid.Row="1"
+                  Grid.Column="0"
+                  Grid.ColumnSpan="2"
+                  ItemsSource="{Binding Attachments, Source={x:Reference Root}}"
+                  SelectionMode="Single">
+
+                <CollectionView.ItemTemplate>
+                  <DataTemplate>
+                    <Grid
+                        x:Name="FamilyAttachment"
+                        Padding="{StaticResource CollectionItemsVerticalPadding}"
+                        ColumnDefinitions="*, Auto, Auto, Auto, Auto"
+                        Style="{StaticResource HoverItem}">
+
+                      <Label
+                          Grid.Column="0"
+                          Style="{StaticResource FieldValue}"
+                          Text="{Binding Content}"
+                          VerticalOptions="Center" />
+
+                      <Button
+                          Grid.Column="1"
+                          Command="{Binding MediaCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource UpAdorner}"
+                          VerticalOptions="Center">
+
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="MoveFamilyAttachmentUpCommand"
+                              Element="{Binding Source={x:Reference FamilyAttachment}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
+
+                      <Button
+                          Grid.Column="2"
+                          Command="{Binding MediaCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource DownAdorner}"
+                          VerticalOptions="Center">
+
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="MoveFamilyAttachmentDownCommand"
+                              Element="{Binding Source={x:Reference FamilyAttachment}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
+
+                      <Button
+                          Grid.Column="3"
+                          Command="{Binding MediaCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource EditAdorner}"
+                          VerticalOptions="Center">
+
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="EditFamilyAttachmentCommand"
+                              Element="{Binding Source={x:Reference FamilyAttachment}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
+
+                      <Button
+                          Grid.Column="4"
+                          Command="{Binding MediaCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource DeleteAdorner}"
+                          VerticalOptions="Center">
+
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="RemoveFamilyAttachmentCommand"
+                              Element="{Binding Source={x:Reference FamilyAttachment}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
+
+                    </Grid>
+                  </DataTemplate>
+                </CollectionView.ItemTemplate>
+              </CollectionView>
+
+              <Button
+                  Grid.Row="2"
+                  Grid.Column="0"
+                  Grid.ColumnSpan="2"
+                  Command="{Binding MediaCommand, Source={x:Reference Root}}"
+                  CommandParameter="AddFamilyAttachmentCommand"
+                  HorizontalOptions="Fill"
+                  Style="{StaticResource TextAdorner}"
+                  Text="{x:Static resources:UIStrings.BtnNameAddPersonAttachment}" />
+            </Grid>
+          </Border>
 
         </VerticalStackLayout>
       </ScrollView>

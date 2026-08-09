@@ -1,3 +1,4 @@
+using GT4.Core.Gedcom;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
@@ -396,6 +397,45 @@ public class FamilyPageTests
       f => f.SetUpPersonFamily(It.IsAny<PersonFullInfo>(), It.IsAny<Name>()), Times.Never());
     services.PersonManager.Verify(
       p => p.AddPersonAsync(It.IsAny<PersonFullInfo>(), It.IsAny<CancellationToken>()), Times.Once());
+  }
+
+  private static async Task<byte[]> ReadBytesAsync(ImageSource source)
+  {
+    var streamSource = Assert.IsType<StreamImageSource>(source);
+    await using var stream = await streamSource.Stream(CancellationToken.None);
+    using var buffer = new MemoryStream();
+    await stream.CopyToAsync(buffer);
+    return buffer.ToArray();
+  }
+
+  [Fact]
+  public async Task Persons_loads_the_family_photo_and_attachments()
+  {
+    var services = new TestServices();
+    var familyName = N(5, "Ivanov", NameType.FamilyName);
+    var mainPhotoBytes = new byte[] { 1, 2, 3 };
+    var additionalPhotoBytes = new byte[] { 4, 5, 6 };
+    var mainPhoto = new Data(1, Content: mainPhotoBytes, MimeType: "image/png", Category: DataCategory.FamilyMainPhoto);
+    var additionalPhoto = new Data(2, Content: additionalPhotoBytes, MimeType: "image/png", Category: DataCategory.FamilyPhoto);
+    var attachment = new Data(
+      3, Content: GedcomPhotoResidue.EncodeAttachment([1, 2, 3], "deed.pdf"), MimeType: "application/pdf", Category: DataCategory.FamilyAttachment);
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosByNameAsync(familyName, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([P(1, "Anna")]);
+    services.FamilyManager
+      .Setup(f => f.GetFamilyFullInfoAsync(familyName, It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new FamilyFullInfo(familyName, mainPhoto, [additionalPhoto], [attachment]));
+    var page = await CreatePageAsync(services);
+
+    await page.ReloadPersonsAsync(() => page.FamilyName = familyName);
+
+    Assert.True(page.ShowPhotos);
+    Assert.Equal(2, page.Photos.Length);
+    // Main photo must resolve first -- LoadFamilyMediaAsync's ordering, not display sort order.
+    Assert.Equal(mainPhotoBytes, await ReadBytesAsync(page.Photos[0].Source));
+    Assert.Equal(additionalPhotoBytes, await ReadBytesAsync(page.Photos[1].Source));
+    Assert.True(page.ShowAttachments);
+    Assert.Equal("deed.pdf", page.Attachments.Single().FileName);
   }
 
   [Fact]

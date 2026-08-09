@@ -2,6 +2,7 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Components;
 using GT4.UI.Items;
+using GT4.UI.Utils.Converters;
 using Xunit;
 
 namespace GT4.UI.DeviceTests;
@@ -33,12 +34,25 @@ public class ScrollCrashReproTests
   {
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
 
+    var services = new TestServices();
+    var cancellationTokenProvider = services.Provider.GetRequiredService<ICancellationTokenProvider>();
+    var dataConverterResolver = services.Provider.GetRequiredService<OptionalDataConverterResolver>();
     var families = Enumerable.Range(1, 60)
       .Select(i => new FamilyInfoItem(
-        N(i, $"Family{i}", NameType.FamilyName),
+        new FamilyInfo(N(i, $"Family{i}", NameType.FamilyName), new Data(i, [], "image/png", DataCategory.FamilyMainPhoto)),
         Enumerable.Range(1, 5).Select(j => P(i * 100 + j, $"Person{i}_{j}")).ToArray(),
-        (_, _) => true))
+        (_, _) => true,
+        cancellationTokenProvider, services.AlertService.Object, dataConverterResolver))
       .ToArray();
+
+    // Icon isn't bound in this stress harness (only Persons is), so a non-null MainPhoto alone
+    // wouldn't start the background load -- touch Icon on every card to kick it off, racing its
+    // MainThread.BeginInvokeOnMainThread completion against the scroll loop's recycling below, the
+    // same shape of race PersonInfoView.Photo already exercises via P()'s non-null MainPhoto.
+    foreach (var family in families)
+    {
+      _ = family.Icon;
+    }
 
     var template = new DataTemplate(() =>
     {

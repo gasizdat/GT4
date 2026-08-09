@@ -4,6 +4,7 @@ using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Items;
 using GT4.UI.Resources;
+using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
@@ -17,7 +18,8 @@ public partial class SelectNameDialog : ContentPage
     ICurrentProjectProvider CurrentProjectProvider,
     ICancellationTokenProvider CancellationTokenProvider,
     IComparer<Name> NameComparer,
-    IAlertService AlertService)
+    IAlertService AlertService,
+    DataConverterResolver DataConverterResolver)
   {
     public SelectNameDialog Create(BiologicalSex biologicalSex, NameType[] nameTypes) =>
       new SelectNameDialog(this, biologicalSex, nameTypes);
@@ -71,7 +73,8 @@ public partial class SelectNameDialog : ContentPage
           _Factory.CancellationTokenProvider,
           _Factory.NameTypeFormatter,
           _Factory.AlertService,
-          Navigation);
+          Navigation,
+          _Factory.DataConverterResolver);
         Names = null;
         CurrentName = Names?.SingleOrDefault(n => n.Info.Id == nameInfo.Id);
         break;
@@ -165,7 +168,8 @@ public partial class SelectNameDialog : ContentPage
         return;
     }
 
-    var dialog = new CreateOrUpdateNameDialog(dialogNameType, _Factory.NameTypeFormatter, _Factory.AlertService);
+    var dialog = new CreateOrUpdateNameDialog(
+      dialogNameType, _Factory.NameTypeFormatter, _Factory.AlertService, _Factory.CancellationTokenProvider, _Factory.DataConverterResolver);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;
@@ -191,6 +195,16 @@ public partial class SelectNameDialog : ContentPage
 
       _ => throw new ApplicationException(nameof(OnAddNameAsync))
     };
+
+    if (dialogNameType == NameType.FamilyName)
+    {
+      Data[] familyData = [.. info.Photos, .. info.Attachments];
+      if (familyData.Length > 0)
+      {
+        await project.FamilyManager.UpdateFamilyDataAsync(name, familyData, token);
+      }
+    }
+
     Names = null;
     CurrentName = Names?.SingleOrDefault(n => n.Info.Id == name.Id);
   }

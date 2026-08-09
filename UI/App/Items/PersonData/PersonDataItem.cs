@@ -1,4 +1,3 @@
-using GT4.Core.Project;
 using GT4.Core.Project.Dto;
 using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
@@ -88,8 +87,8 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
     var ret = await _DataConverter.FromObjectAsync(_Content, token);
     if (ret is not null)
     {
-      // A modified photo downgrades tagged -> plain; non-photo categories are untouched.
-      var category = Info.Category.IsPhoto() ? Info.Category.AsPlainPhoto() : Info.Category;
+      // A modified photo downgrades tagged -> plain; non-photo and already-plain categories are untouched.
+      var category = Info.Category.IsTaggedPhoto() ? Info.Category.AsPlainPhoto() : Info.Category;
       ret = ret with { Id = ElementId.NonCommittedId, Category = category };
     }
 

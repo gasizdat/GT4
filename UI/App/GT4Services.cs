@@ -36,6 +36,7 @@ public class GT4Services
       .AddKeyedSingleton<IDataConverter, PhotoTagDataConverter>(DataCategory.PersonMainPhotoTagged)
       .AddKeyedSingleton<IDataConverter, PhotoTagDataConverter>(DataCategory.PersonPhotoTagged)
       .AddKeyedSingleton<IDataConverter, AttachmentDataConverter>(DataCategory.PersonAttachment)
+      .AddKeyedSingleton<IDataConverter, AttachmentDataConverter>(DataCategory.FamilyAttachment)
       .AddSingleton<IAlertService, AlertService>()
       .AddSingleton<GedcomImportEncoding>()
       .AddTransient<DataConverterResolver>(sp => category => sp.GetRequiredKeyedService<IDataConverter>(category))

@@ -26,7 +26,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     IDateFormatter DateFormatter,
     IComparer<PersonInfo> PersonInfoComparer,
     IAlertService AlertService,
-    DataConverterResolver DataConverterFactory,
+    DataConverterResolver DataConverterResolver,
     SelectNameDialog.Factory SelectNameDialogFactory,
     SelectRelativesDialog.Factory SelectRelativesDialogFactory,
     SelectPersonDialog.Factory SelectPersonDialogFactory,
@@ -85,7 +85,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   {
     var ret = new PersonDataItem(
       data: data,
-      _Factory.DataConverterFactory(dataCategory),
+      _Factory.DataConverterResolver(dataCategory),
       _Factory.CancellationTokenProvider,
       _Factory.AlertService);
 
@@ -138,7 +138,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
         _ => new PersonDataItem(
               dataCategory: DataCategory.PersonBio,
-              _Factory.DataConverterFactory(DataCategory.PersonBio),
+              _Factory.DataConverterResolver(DataCategory.PersonBio),
               _Factory.CancellationTokenProvider,
               _Factory.AlertService)
       };
@@ -455,7 +455,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       return;
     }
 
-    var converter = _Factory.DataConverterFactory(DataCategory.PersonAttachment);
+    var converter = _Factory.DataConverterResolver(DataCategory.PersonAttachment);
     IEnumerable<Stream>? streams = null;
     try
     {

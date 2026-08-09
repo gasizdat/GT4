@@ -31,6 +31,7 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   private readonly TableData _TableData;
   private readonly TableRelatives _TableRelatives;
   private readonly TablePersonData _TablePersonData;
+  private readonly TableNameData _TableNameData;
   private readonly FamilyManager _FamilyManager;
   private readonly PersonManager _PersonManager;
   private readonly RelativesProvider _RelativesProvider;
@@ -75,6 +76,7 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     _TableData = new(this);
     _TableRelatives = new(this);
     _TablePersonData = new(this, _TableData);
+    _TableNameData = new(this, _TableData);
     _FamilyManager = new(this);
     _PersonManager = new(this);
     _RelativesProvider = new(this);
@@ -89,6 +91,7 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   public ITableData Data => _TableData;
   public ITableRelatives Relatives => _TableRelatives;
   public ITablePersonData PersonData => _TablePersonData;
+  public ITableNameData NameData => _TableNameData;
 
   public IFamilyManager FamilyManager => _FamilyManager;
   public IPersonManager PersonManager => _PersonManager;
@@ -255,6 +258,7 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     await _TableData.CreateAsync(token);
     await _TableRelatives.CreateAsync(token);
     await _TablePersonData.CreateAsync(token);
+    await _TableNameData.CreateAsync(token);
 
     await transaction.CommitAsync(token);
   }
