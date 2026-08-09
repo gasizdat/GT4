@@ -119,22 +119,18 @@ public partial class ProjectPage : ContentPage
       var persons = await project
           .PersonManager
           .GetPersonInfosAsync(selectMainPhoto: true, token);
-      var familyNames = await project
+      var familyInfos = await project
           .FamilyManager
           .GetFamiliesAsync(token);
-      var familyMainPhotos = await project
-          .FamilyManager
-          .GetFamilyMainPhotosAsync(familyNames, token);
       var personsByFamilyNameId = persons
         .SelectMany(person => person.Names.Select(name => (NameId: name.Id, Person: person)))
         .ToLookup(x => x.NameId, x => x.Person);
 
-      var familyPersons = familyNames
-        .Select(name => (Family: name, Persons: personsByFamilyNameId[name.Id].OrderBy(item => item, _PersonInfoComparer)));
+      var familyPersons = familyInfos
+        .Select(family => (Family: family, Persons: personsByFamilyNameId[family.Id].OrderBy(item => item, _PersonInfoComparer)));
 
       var families = familyPersons
-        .Select(f => new FamilyInfoItem(
-          f.Family, [.. f.Persons], (_, person) => FilterView.Matches(person), familyMainPhotos.GetValueOrDefault(f.Family.Id)?.FirstOrDefault()))
+        .Select(f => new FamilyInfoItem(f.Family, [.. f.Persons], (_, person) => FilterView.Matches(person)))
         .OrderBy(item => item.Info, _NameComparer)
         .ToList();
 
@@ -144,7 +140,7 @@ public partial class ProjectPage : ContentPage
         .ToArray();
       if (familylessPersons.Length > 0)
       {
-        families.Add(new FamilyInfoItem(FamilyInfoItem.NoFamilyName, familylessPersons, (_, person) => FilterView.Matches(person)));
+        families.Add(new FamilyInfoItem(new FamilyInfo(FamilyInfoItem.NoFamilyName, null), familylessPersons, (_, person) => FilterView.Matches(person)));
       }
 
       // Clear and AddRange together, not eagerly when the load starts: an overlapping second load
@@ -192,7 +188,11 @@ public partial class ProjectPage : ContentPage
       async Task GoToFamilyAsync()
       {
         var route = UIRoutes.GetRoute<FamilyPage>();
-        await _NavigationService.GoToAsync(route, true, new() { ["FamilyName"] = item.Info });
+        // Shell matches [QueryProperty] by exact runtime type, so hand it a plain Name -- passing
+        // the FamilyInfo subclass sends Shell down a Convert.ChangeType path that throws (same
+        // gotcha as PersonPage.xaml.cs's GoToFamilyTree).
+        var familyName = new Name(item.Info.Id, item.Info.Value, item.Info.Type, item.Info.ParentId);
+        await _NavigationService.GoToAsync(route, true, new() { ["FamilyName"] = familyName });
       }
 
       await SafeTask.GuardAsync(GoToFamilyAsync, _AlertService);

@@ -35,7 +35,7 @@ public class ScrollCrashReproTests
 
     var families = Enumerable.Range(1, 60)
       .Select(i => new FamilyInfoItem(
-        N(i, $"Family{i}", NameType.FamilyName),
+        new FamilyInfo(N(i, $"Family{i}", NameType.FamilyName), null),
         Enumerable.Range(1, 5).Select(j => P(i * 100 + j, $"Person{i}_{j}")).ToArray(),
         (_, _) => true))
       .ToArray();

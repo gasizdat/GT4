@@ -11,11 +11,15 @@ internal class FamilyManager : ProjectComponentBase, IFamilyManager
   {
   }
 
-  public async Task<Name[]> GetFamiliesAsync(CancellationToken token)
+  public async Task<FamilyInfo[]> GetFamiliesAsync(CancellationToken token)
   {
-    var ret = await Document.Names.GetNamesByTypeAsync(NameType.FamilyName, token);
+    var familyNames = await Document.Names.GetNamesByTypeAsync(NameType.FamilyName, token);
+    if (familyNames.Length == 0)
+      return [];
 
-    return ret;
+    var photosByFamilyId = await Document.NameData.GetNameDataSetAsync(familyNames, DataCategory.FamilyMainPhoto, token);
+
+    return [.. familyNames.Select(name => new FamilyInfo(name, photosByFamilyId.GetValueOrDefault(name.Id)?.FirstOrDefault()))];
   }
 
   public async Task<FamilyFullInfo> GetFamilyFullInfoAsync(Name familyName, CancellationToken token)
@@ -28,9 +32,6 @@ internal class FamilyManager : ProjectComponentBase, IFamilyManager
       additionalPhotos: [.. familyData.Where(data => data.Category.IsAdditionalPhoto())],
       attachments: [.. familyData.Where(data => data.Category.IsAttachment())]);
   }
-
-  public async Task<Dictionary<int, Data[]>> GetFamilyMainPhotosAsync(Name[] familyNames, CancellationToken token) =>
-    await Document.NameData.GetNameDataSetAsync(familyNames, DataCategory.FamilyMainPhoto, token);
 
   public TPerson SetUpPersonFamily<TPerson>(TPerson person, Name familyName) where TPerson : PersonInfo
   {

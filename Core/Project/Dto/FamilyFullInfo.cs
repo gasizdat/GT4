@@ -8,7 +8,7 @@ public record class FamilyFullInfo(
   Data? MainPhoto,
   Data[] AdditionalPhotos,
   Data[] Attachments
-) : Name(Id, Value, Type, ParentId)
+) : FamilyInfo(Id, Value, Type, ParentId, MainPhoto)
 {
   public FamilyFullInfo(Name name, Data? mainPhoto, Data[] additionalPhotos, Data[] attachments)
     : this(name.Id, name.Value, name.Type, name.ParentId, mainPhoto, additionalPhotos, attachments)
