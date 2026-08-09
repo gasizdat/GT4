@@ -21,7 +21,7 @@ public sealed class AttachmentDataConverter : IDataConverter
 
   private readonly DataCategory _Category;
 
-  public AttachmentDataConverter(DataCategory category) => _Category = category;
+  public AttachmentDataConverter([ServiceKey] DataCategory category) => _Category = category;
 
   public Task<Data?> FromObjectAsync(object? data, CancellationToken token)
   {
