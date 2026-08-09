@@ -12,7 +12,6 @@ using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Extensions;
 using GT4.UI.Utils.Formatters;
 using System.Collections.ObjectModel;
-using System.Text;
 using System.Windows.Input;
 
 namespace GT4.UI.Pages;
@@ -39,7 +38,7 @@ public partial class ProjectPage : ContentPage
   private readonly GedcomImportEncoding _GedcomImportEncoding;
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
-  private readonly DataConverterResolver _DataConverterFactory;
+  private readonly DataConverterResolver _DataConverterResolver;
 
   private readonly FilteredObservableCollection<FamilyInfoItem> _Families = new();
   private bool _FamiliesLoaded;
@@ -60,11 +59,11 @@ public partial class ProjectPage : ContentPage
     IAlertService alertService,
     INavigationService navigationService,
     IBiologicalSexFormatter biologicalSexFormatter,
-    DataConverterResolver dataConverterFactory
+    DataConverterResolver dataConverterResolver
     )
   {
     _NameTypeFormatter = nameTypeFormatter;
-    _DataConverterFactory = dataConverterFactory;
+    _DataConverterResolver = dataConverterResolver;
     _CancellationTokenProvider = cancellationTokenProvider;
     _CurrentProjectProvider = currentProjectProvider;
     _PersonInfoComparer = personInfoComparerByShortNames ?? personInfoComparer;
@@ -361,7 +360,7 @@ public partial class ProjectPage : ContentPage
 
   private async Task OnCreateFamily()
   {
-    var dialog = new CreateOrUpdateNameDialog(NameType.FamilyName, _NameTypeFormatter, _AlertService, _CancellationTokenProvider, _DataConverterFactory);
+    var dialog = new CreateOrUpdateNameDialog(NameType.FamilyName, _NameTypeFormatter, _AlertService, _CancellationTokenProvider, _DataConverterResolver);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;

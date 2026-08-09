@@ -24,8 +24,8 @@ public partial class FamilyPage : ContentPage
   private readonly INavigationService _NavigationService;
   private readonly INameTypeFormatter _NameTypeFormatter;
   private readonly CreateOrUpdatePersonDialog.Factory _CreateOrUpdatePersonDialogFactory;
-  private readonly OptionalDataConverterResolver _DataConverterResolver;
-  private readonly DataConverterResolver _DataConverterFactory;
+  private readonly OptionalDataConverterResolver _OptionalDataConverterResolver;
+  private readonly DataConverterResolver _DataConverterResolver;
   private readonly FilteredObservableCollection<PersonInfo> _Persons = new();
   private bool _PersonsLoaded;
   private Name? _FamilyName = null;
@@ -45,8 +45,8 @@ public partial class FamilyPage : ContentPage
     IBiologicalSexFormatter biologicalSexFormatter,
     INameTypeFormatter nameTypeFormatter,
     CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory,
-    OptionalDataConverterResolver dataConverterResolver,
-    DataConverterResolver dataConverterFactory
+    OptionalDataConverterResolver optionalDataConverterResolver,
+    DataConverterResolver dataConverterResolver
     )
   {
     _CancellationTokenProvider = cancellationTokenProvider;
@@ -56,8 +56,8 @@ public partial class FamilyPage : ContentPage
     _NavigationService = navigationService;
     _NameTypeFormatter = nameTypeFormatter;
     _CreateOrUpdatePersonDialogFactory = createOrUpdatePersonDialogFactory;
+    _OptionalDataConverterResolver = optionalDataConverterResolver;
     _DataConverterResolver = dataConverterResolver;
-    _DataConverterFactory = dataConverterFactory;
 
     _Persons.Filter = (_, person) => FilterView.Matches(person);
 
@@ -214,7 +214,7 @@ public partial class FamilyPage : ContentPage
 
     var defaultFamilyPhoto = ImageUtils.ImageFromRawResource("family_stub.png");
     var photos = await Task.WhenAll(photoData.Select(data =>
-      ImageUtils.ResolvePhotoAsync(_DataConverterResolver, data, defaultFamilyPhoto, token)));
+      ImageUtils.ResolvePhotoAsync(_OptionalDataConverterResolver, data, defaultFamilyPhoto, token)));
 
     var attachments = await Task.WhenAll(familyInfo.Attachments.Select(data => AttachmentInfo.CreateAsync(data, token)));
 
@@ -303,7 +303,7 @@ public partial class FamilyPage : ContentPage
           _NameTypeFormatter,
           _AlertService,
           Navigation,
-          _DataConverterFactory);
+          _DataConverterResolver);
         break;
 
       case string commandName when commandName == "CreatePerson":

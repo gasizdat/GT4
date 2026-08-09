@@ -22,7 +22,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   private readonly NameType _NameType;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly IAlertService _AlertService;
-  private readonly DataConverterResolver _DataConverterFactory;
+  private readonly DataConverterResolver _DataConverterResolver;
   private readonly TaskCompletionSource<FamilyInfo?> _Info = new(null);
   private readonly string _DialogButtonName;
   private readonly ICommand _DialogCommand;
@@ -58,11 +58,11 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     INameTypeFormatter nameTypeFormatter,
     IAlertService alertService,
     ICancellationTokenProvider cancellationTokenProvider,
-    DataConverterResolver dataConverterFactory)
+    DataConverterResolver dataConverterResolver)
   {
     _AlertService = alertService;
     _CancellationTokenProvider = cancellationTokenProvider;
-    _DataConverterFactory = dataConverterFactory;
+    _DataConverterResolver = dataConverterResolver;
     var nameTypeName = nameTypeFormatter.ToString(nameType);
     _DialogButtonName = string.Format(UIStrings.BtnNameCreateName_1, nameTypeName);
     _DialogCommand = new SafeCommand(OnCreateFamily, alertService);
@@ -98,9 +98,9 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     INameTypeFormatter nameTypeFormatter,
     IAlertService alertService,
     ICancellationTokenProvider cancellationTokenProvider,
-    DataConverterResolver dataConverterFactory,
+    DataConverterResolver dataConverterResolver,
     FamilyFullInfo? family = null)
-    : this(name.Type, nameTypeFormatter, alertService, cancellationTokenProvider, dataConverterFactory)
+    : this(name.Type, nameTypeFormatter, alertService, cancellationTokenProvider, dataConverterResolver)
   {
     var nameTypeName = nameTypeFormatter.ToString(name.Type);
     _DialogButtonName = string.Format(UIStrings.BtnNameUpdateName_1, nameTypeName);
@@ -324,7 +324,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   }
 
   private PersonDataItem GetFamilyData(Data data, DataCategory dataCategory) =>
-    new(data, _DataConverterFactory(dataCategory), _CancellationTokenProvider, _AlertService);
+    new(data, _DataConverterResolver(dataCategory), _CancellationTokenProvider, _AlertService);
 
   private static byte[] FromStream(Stream stream)
   {
@@ -405,7 +405,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
       return;
     }
 
-    var converter = _DataConverterFactory(DataCategory.FamilyAttachment);
+    var converter = _DataConverterResolver(DataCategory.FamilyAttachment);
     IEnumerable<Stream>? streams = null;
     try
     {
@@ -508,7 +508,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     INameTypeFormatter nameTypeFormatter,
     IAlertService alertService,
     INavigation navigation,
-    DataConverterResolver dataConverterFactory)
+    DataConverterResolver dataConverterResolver)
   {
     async Task<NamesGroup> GetNameWithSubnames()
     {
@@ -557,7 +557,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     }
 
     var dialog = new CreateOrUpdateNameDialog(
-      names.FirstName, names.MaleName, names.FemaleName, nameTypeFormatter, alertService, cancellationTokenProvider, dataConverterFactory, family)
+      names.FirstName, names.MaleName, names.FemaleName, nameTypeFormatter, alertService, cancellationTokenProvider, dataConverterResolver, family)
     {
       FocusGenericName = focusGenericName,
       FocusMaleName = !focusGenericName && name.Type.HasFlag(NameType.MaleDeclension),

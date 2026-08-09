@@ -27,7 +27,7 @@ public partial class NamesPage : ContentPage
   private readonly ICommand _PageCommand;
   private readonly IAlertService _AlertService;
   private readonly INameFormatter _NameFormatter;
-  private readonly DataConverterResolver _DataConverterFactory;
+  private readonly DataConverterResolver _DataConverterResolver;
   private NameTypeInfoItem _CurrentNameType;
   private Name? _CurrentName;
   private int? _CurrentNameId;
@@ -43,7 +43,7 @@ public partial class NamesPage : ContentPage
     IBiologicalSexFormatter biologicalSexFormatter,
     INameFormatter nameFormatter,
     IAlertService alertService,
-    DataConverterResolver dataConverterFactory
+    DataConverterResolver dataConverterResolver
     )
   {
     var nameTypes = new[]
@@ -60,7 +60,7 @@ public partial class NamesPage : ContentPage
     _NameTypes = new(nameTypes.Select(type => new NameTypeInfoItem(nameTypeFormatter.ToString(type), type)));
     _AlertService = alertService;
     _NameFormatter = nameFormatter;
-    _DataConverterFactory = dataConverterFactory;
+    _DataConverterResolver = dataConverterResolver;
     _EditNameCommand = new SafeCommand(OnEditCommandAsync, _AlertService);
     _DeleteNameCommand = new SafeCommand(OnDeleteCommandAsync, _AlertService);
     _PageCommand = new SafeCommand(OnPageCommandAsync, _AlertService);
@@ -79,7 +79,7 @@ public partial class NamesPage : ContentPage
   {
     if (obj is Name name)
     {
-      await CreateOrUpdateNameDialog.UpdateNameAsync(name, _CurrentProjectProvider, _CancellationTokenProvider, _NameTypeFormatter, _AlertService, Navigation, _DataConverterFactory);
+      await CreateOrUpdateNameDialog.UpdateNameAsync(name, _CurrentProjectProvider, _CancellationTokenProvider, _NameTypeFormatter, _AlertService, Navigation, _DataConverterResolver);
       RequestUpdateNames(name);
     }
   }
@@ -142,7 +142,7 @@ public partial class NamesPage : ContentPage
       _ => throw new ApplicationException(nameof(OnPageCommandAsync))
     };
 
-    var dialog = new CreateOrUpdateNameDialog(nameType, _NameTypeFormatter, _AlertService, _CancellationTokenProvider, _DataConverterFactory);
+    var dialog = new CreateOrUpdateNameDialog(nameType, _NameTypeFormatter, _AlertService, _CancellationTokenProvider, _DataConverterResolver);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;
