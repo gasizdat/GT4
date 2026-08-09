@@ -39,6 +39,7 @@ public partial class ProjectPage : ContentPage
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
   private readonly DataConverterResolver _DataConverterResolver;
+  private readonly OptionalDataConverterResolver _OptionalDataConverterResolver;
 
   private readonly FilteredObservableCollection<FamilyInfoItem> _Families = new();
   private bool _FamiliesLoaded;
@@ -59,11 +60,13 @@ public partial class ProjectPage : ContentPage
     IAlertService alertService,
     INavigationService navigationService,
     IBiologicalSexFormatter biologicalSexFormatter,
-    DataConverterResolver dataConverterResolver
+    DataConverterResolver dataConverterResolver,
+    OptionalDataConverterResolver optionalDataConverterResolver
     )
   {
     _NameTypeFormatter = nameTypeFormatter;
     _DataConverterResolver = dataConverterResolver;
+    _OptionalDataConverterResolver = optionalDataConverterResolver;
     _CancellationTokenProvider = cancellationTokenProvider;
     _CurrentProjectProvider = currentProjectProvider;
     _PersonInfoComparer = personInfoComparerByShortNames ?? personInfoComparer;
@@ -129,7 +132,9 @@ public partial class ProjectPage : ContentPage
         .Select(family => (Family: family, Persons: personsByFamilyNameId[family.Id].OrderBy(item => item, _PersonInfoComparer)));
 
       var families = familyPersons
-        .Select(f => new FamilyInfoItem(f.Family, [.. f.Persons], (_, person) => FilterView.Matches(person)))
+        .Select(f => new FamilyInfoItem(
+          f.Family, [.. f.Persons], (_, person) => FilterView.Matches(person),
+          _CancellationTokenProvider, _AlertService, _OptionalDataConverterResolver))
         .OrderBy(item => item.Info, _NameComparer)
         .ToList();
 
@@ -139,7 +144,9 @@ public partial class ProjectPage : ContentPage
         .ToArray();
       if (familylessPersons.Length > 0)
       {
-        families.Add(new FamilyInfoItem(new FamilyInfo(FamilyInfoItem.NoFamilyName, null), familylessPersons, (_, person) => FilterView.Matches(person)));
+        families.Add(new FamilyInfoItem(
+          new FamilyInfo(FamilyInfoItem.NoFamilyName, null), familylessPersons, (_, person) => FilterView.Matches(person),
+          _CancellationTokenProvider, _AlertService, _OptionalDataConverterResolver));
       }
 
       // Clear and AddRange together, not eagerly when the load starts: an overlapping second load

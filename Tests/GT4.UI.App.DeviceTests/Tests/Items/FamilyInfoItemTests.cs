@@ -1,6 +1,10 @@
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.Abstraction;
 using GT4.UI.Items;
+using GT4.UI.Utils;
+using GT4.UI.Utils.Converters;
+using Moq;
 using Xunit;
 
 namespace GT4.UI.DeviceTests;
@@ -18,10 +22,15 @@ public class FamilyInfoItemTests
 
   private static PersonInfo[] Persons(int count) => Enumerable.Range(1, count).Select(P).ToArray();
 
+  // None of these tests read Icon, so the photo-resolution collaborators only need to satisfy the
+  // constructor -- they're never invoked.
+  private static FamilyInfoItem NewFamily(FamilyInfo family, PersonInfo[] persons, ObservableCollectionFilterPredicate<PersonInfo>? filter) =>
+    new(family, persons, filter, Mock.Of<ICancellationTokenProvider>(), Mock.Of<IAlertService>(), _ => null);
+
   [Fact]
   public void Family_at_or_under_the_cap_shows_everyone_and_no_more_indicator()
   {
-    var family = new FamilyInfoItem(FI(N(1, "Ivanov", NameType.FamilyName)), Persons(FamilyInfoItem.MaxDisplayedPersons), (_, _) => true);
+    var family = NewFamily(FI(N(1, "Ivanov", NameType.FamilyName)), Persons(FamilyInfoItem.MaxDisplayedPersons), (_, _) => true);
 
     Assert.Same(family.Persons, family.DisplayedPersons);
     Assert.Equal(FamilyInfoItem.MaxDisplayedPersons, family.DisplayedPersons.Count);
@@ -33,7 +42,7 @@ public class FamilyInfoItemTests
   public void Family_over_the_cap_shows_only_the_cap_and_reports_the_rest_as_hidden()
   {
     const int total = FamilyInfoItem.MaxDisplayedPersons + 12;
-    var family = new FamilyInfoItem(FI(N(1, "Ivanov", NameType.FamilyName)), Persons(total), (_, _) => true);
+    var family = NewFamily(FI(N(1, "Ivanov", NameType.FamilyName)), Persons(total), (_, _) => true);
 
     Assert.Equal(FamilyInfoItem.MaxDisplayedPersons, family.DisplayedPersons.Count);
     Assert.True(family.HasMorePersons);
@@ -50,7 +59,7 @@ public class FamilyInfoItemTests
   {
     var showAll = false;
     const int total = FamilyInfoItem.MaxDisplayedPersons + 5;
-    var family = new FamilyInfoItem(FI(N(1, "Ivanov", NameType.FamilyName)), Persons(total), (_, p) => showAll || p.Id <= 10);
+    var family = NewFamily(FI(N(1, "Ivanov", NameType.FamilyName)), Persons(total), (_, p) => showAll || p.Id <= 10);
 
     Assert.False(family.HasMorePersons);
     Assert.Same(family.Persons, family.DisplayedPersons);
@@ -68,7 +77,7 @@ public class FamilyInfoItemTests
   {
     var showAll = true;
     const int total = FamilyInfoItem.MaxDisplayedPersons + 5;
-    var family = new FamilyInfoItem(FI(N(1, "Ivanov", NameType.FamilyName)), Persons(total), (_, _) => showAll);
+    var family = NewFamily(FI(N(1, "Ivanov", NameType.FamilyName)), Persons(total), (_, _) => showAll);
 
     var raised = new List<string?>();
     family.PropertyChanged += (_, e) => raised.Add(e.PropertyName);

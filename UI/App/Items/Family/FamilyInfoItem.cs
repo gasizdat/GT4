@@ -1,6 +1,9 @@
 using GT4.Core.Project.Dto;
+using GT4.Core.Utils;
+using GT4.UI.Abstraction;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
+using GT4.UI.Utils.Converters;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -17,11 +20,25 @@ public class FamilyInfoItem : CollectionItemBase<FamilyInfo>, INotifyPropertyCha
 
   private readonly FilteredObservableCollection<PersonInfo> _Persons = new();
   private readonly int _TotalPersonsCount;
+  private readonly ICancellationTokenProvider _CancellationTokenProvider;
+  private readonly IAlertService _AlertService;
+  private readonly OptionalDataConverterResolver _DataConverterResolver;
   private ObservableCollection<PersonInfo> _DisplayedPersons = new();
+  private ImageSource? _Icon;
+  private bool _IconReady;
 
-  public FamilyInfoItem(FamilyInfo family, PersonInfo[] persons, ObservableCollectionFilterPredicate<PersonInfo>? personsFilter)
+  public FamilyInfoItem(
+    FamilyInfo family,
+    PersonInfo[] persons,
+    ObservableCollectionFilterPredicate<PersonInfo>? personsFilter,
+    ICancellationTokenProvider cancellationTokenProvider,
+    IAlertService alertService,
+    OptionalDataConverterResolver dataConverterResolver)
     : base(family, "family_stub.png")
   {
+    _CancellationTokenProvider = cancellationTokenProvider;
+    _AlertService = alertService;
+    _DataConverterResolver = dataConverterResolver;
     _TotalPersonsCount = persons.Length;
     _Persons.Filter = personsFilter;
     _Persons.AddRange(persons);
@@ -37,7 +54,37 @@ public class FamilyInfoItem : CollectionItemBase<FamilyInfo>, INotifyPropertyCha
 
   public event PropertyChangedEventHandler? PropertyChanged;
 
-  public override ImageSource Icon => Info.MainPhoto is null ? base.Icon : ImageUtils.ImageFromBytes(Info.MainPhoto.Content);
+  public override ImageSource Icon
+  {
+    get
+    {
+      if (Info.MainPhoto is not { } mainPhoto)
+      {
+        return base.Icon;
+      }
+
+      if (!_IconReady)
+      {
+        _IconReady = true;
+
+        async Task UpdateIconAsync()
+        {
+          using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
+          var photo = await ImageUtils.ResolvePhotoAsync(_DataConverterResolver, mainPhoto, base.Icon, token);
+
+          MainThread.BeginInvokeOnMainThread(() =>
+          {
+            _Icon = photo.Source;
+            OnPropertyChanged(nameof(Icon));
+          });
+        }
+
+        SafeTask.Run(UpdateIconAsync, _AlertService);
+      }
+
+      return _Icon ?? base.Icon;
+    }
+  }
 
   public ObservableCollection<PersonInfo> Persons => _Persons.Items;
 

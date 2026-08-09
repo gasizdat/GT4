@@ -6,6 +6,7 @@ using GT4.UI.Components;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Pages;
+using GT4.UI.Utils.Converters;
 using Moq;
 using Xunit;
 
@@ -97,12 +98,24 @@ public class ProjectPageTests
 
     var withPhoto = families.Single(f => f.Info.Value == "Ivanov");
     var withoutPhoto = families.Single(f => f.Info.Value == "Petrov");
-    var iconStream = Assert.IsType<StreamImageSource>(withPhoto.Icon);
+
+    // Icon now resolves through the FamilyMainPhoto IDataConverter in the background -- poll past
+    // the synchronous fallback it returns first rather than asserting on it directly.
+    var iconBytes = await Poll.UntilAsync(
+      () => ReadIconBytesAsync(withPhoto),
+      bytes => bytes.SequenceEqual(photoBytes),
+      timeoutMessage: "Family icon did not resolve to the main photo.");
+    Assert.Equal(photoBytes, iconBytes);
+    Assert.IsType<StreamImageSource>(withoutPhoto.Icon);
+  }
+
+  private static async Task<byte[]> ReadIconBytesAsync(FamilyInfoItem family)
+  {
+    var iconStream = Assert.IsType<StreamImageSource>(family.Icon);
     await using var stream = await iconStream.Stream(CancellationToken.None);
     using var buffer = new MemoryStream();
     await stream.CopyToAsync(buffer);
-    Assert.Equal(photoBytes, buffer.ToArray());
-    Assert.IsType<StreamImageSource>(withoutPhoto.Icon);
+    return buffer.ToArray();
   }
 
   [Fact]
@@ -800,10 +813,14 @@ public class ProjectPageTests
     // FamilyInfoItem.Persons uses in ProjectPage.xaml's per-card FlexLayout, without needing a
     // full ProjectPage/CollectionView setup.
     var showOnlyFemale = false;
+    var services = new TestServices();
     var family = new FamilyInfoItem(
       FI(N(1, "Ivanov", NameType.FamilyName)),
       [P(1, "John", BiologicalSex.Male), P(2, "Jane", BiologicalSex.Female)],
-      (_, p) => !showOnlyFemale || p.BiologicalSex == BiologicalSex.Female);
+      (_, p) => !showOnlyFemale || p.BiologicalSex == BiologicalSex.Female,
+      services.Provider.GetRequiredService<ICancellationTokenProvider>(),
+      services.AlertService.Object,
+      services.Provider.GetRequiredService<OptionalDataConverterResolver>());
 
     var flex = new FlexLayout();
     var template = new DataTemplate(() =>
