@@ -1,5 +1,6 @@
 ﻿using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
+using GT4.Core.Project.Extensions;
 
 namespace GT4.Core.Project;
 
@@ -17,11 +18,19 @@ internal class FamilyManager : ProjectComponentBase, IFamilyManager
     return ret;
   }
 
+  public async Task<FamilyFullInfo> GetFamilyFullInfoAsync(Name familyName, CancellationToken token)
+  {
+    var familyData = await Document.NameData.GetNameDataSetAsync(familyName, null, token);
+
+    return new FamilyFullInfo(
+      familyName,
+      mainPhoto: familyData.SingleOrDefault(data => data.Category.IsMainPhoto()),
+      additionalPhotos: [.. familyData.Where(data => data.Category.IsAdditionalPhoto())],
+      attachments: [.. familyData.Where(data => data.Category.IsAttachment())]);
+  }
+
   public async Task<Dictionary<int, Data[]>> GetFamilyMainPhotosAsync(Name[] familyNames, CancellationToken token) =>
     await Document.NameData.GetNameDataSetAsync(familyNames, DataCategory.FamilyMainPhoto, token);
-
-  public async Task<Data[]> GetFamilyDataAsync(Name familyName, CancellationToken token) =>
-    await Document.NameData.GetNameDataSetAsync(familyName, null, token);
 
   public TPerson SetUpPersonFamily<TPerson>(TPerson person, Name familyName) where TPerson : PersonInfo
   {

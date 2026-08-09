@@ -70,11 +70,11 @@ internal sealed class TestServices
       .Setup(f => f.GetFamilyMainPhotosAsync(It.IsAny<Name[]>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(new Dictionary<int, Data[]>());
 
-    // FamilyPage.Persons also fetches the family's photo/attachment Data in the same background
+    // FamilyPage.Persons also fetches the family's photo/attachment data in the same background
     // load -- same "must not fail invisibly" reasoning.
     FamilyManager
-      .Setup(f => f.GetFamilyDataAsync(It.IsAny<Name>(), It.IsAny<CancellationToken>()))
-      .ReturnsAsync([]);
+      .Setup(f => f.GetFamilyFullInfoAsync(It.IsAny<Name>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync((Name name, CancellationToken _) => new FamilyFullInfo(name, null, [], []));
 
     // ProjectPage.Families also batches a marital-status lookup for every loaded person; an
     // unconfigured call must not fail invisibly through IAlertService either.

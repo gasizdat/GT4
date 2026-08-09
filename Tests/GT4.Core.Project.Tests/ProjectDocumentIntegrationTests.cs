@@ -677,6 +677,22 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task GetFamilyFullInfoAsync_BucketsMediaByCategory()
+  {
+    var family = await AddBareFamilyNameAsync();
+    await _doc.NameData.AddNameDataSetAsync(
+      family,
+      [NewData(DataCategory.FamilyMainPhoto, 1), NewData(DataCategory.FamilyPhoto, 2), NewData(DataCategory.FamilyAttachment, 3)],
+      Token);
+
+    var info = await _doc.FamilyManager.GetFamilyFullInfoAsync(family, Token);
+
+    info.MainPhoto!.Content.Should().Equal(1);
+    info.AdditionalPhotos.Should().ContainSingle().Which.Content.Should().Equal(2);
+    info.Attachments.Should().ContainSingle().Which.Content.Should().Equal(3);
+  }
+
+  [Fact]
   public async Task Relatives_Add_ResolvesBothDirections()
   {
     var parent = await AddBarePersonAsync();

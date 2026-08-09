@@ -99,7 +99,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     IAlertService alertService,
     ICancellationTokenProvider cancellationTokenProvider,
     DataConverterResolver dataConverterFactory,
-    Data[]? familyData = null)
+    FamilyFullInfo? family = null)
     : this(name.Type, nameTypeFormatter, alertService, cancellationTokenProvider, dataConverterFactory)
   {
     var nameTypeName = nameTypeFormatter.ToString(name.Type);
@@ -108,16 +108,17 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     MaleName = maleName?.Value ?? string.Empty;
     FemaleName = femaleName?.Value ?? string.Empty;
 
-    foreach (var data in familyData ?? [])
+    if (family?.MainPhoto is { } mainPhoto)
     {
-      if (data.Category.IsPhoto())
-      {
-        _Photos.Add(GetFamilyData(data, data.Category));
-      }
-      else if (data.Category.IsAttachment())
-      {
-        _Attachments.Add(GetFamilyData(data, data.Category));
-      }
+      _Photos.Add(GetFamilyData(mainPhoto, mainPhoto.Category));
+    }
+    foreach (var data in family?.AdditionalPhotos ?? [])
+    {
+      _Photos.Add(GetFamilyData(data, data.Category));
+    }
+    foreach (var data in family?.Attachments ?? [])
+    {
+      _Attachments.Add(GetFamilyData(data, data.Category));
     }
 
     IsModified = false;
@@ -548,15 +549,15 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     var focusGenericName = isOrphanDeclension ||
       name.Type.HasFlag(NameType.FirstName) || name.Type.HasFlag(NameType.FamilyName);
 
-    Data[] familyData = [];
+    FamilyFullInfo? family = null;
     if (name.Type == NameType.FamilyName)
     {
       using var familyDataToken = cancellationTokenProvider.CreateDbCancellationToken();
-      familyData = await currentProjectProvider.Project.FamilyManager.GetFamilyDataAsync(names.FirstName, familyDataToken);
+      family = await currentProjectProvider.Project.FamilyManager.GetFamilyFullInfoAsync(names.FirstName, familyDataToken);
     }
 
     var dialog = new CreateOrUpdateNameDialog(
-      names.FirstName, names.MaleName, names.FemaleName, nameTypeFormatter, alertService, cancellationTokenProvider, dataConverterFactory, familyData)
+      names.FirstName, names.MaleName, names.FemaleName, nameTypeFormatter, alertService, cancellationTokenProvider, dataConverterFactory, family)
     {
       FocusGenericName = focusGenericName,
       FocusMaleName = !focusGenericName && name.Type.HasFlag(NameType.MaleDeclension),

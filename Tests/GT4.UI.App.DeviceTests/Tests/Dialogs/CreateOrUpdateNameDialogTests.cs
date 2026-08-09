@@ -1,5 +1,6 @@
 using GT4.Core.Gedcom;
 using GT4.Core.Project.Dto;
+using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Components;
@@ -38,6 +39,13 @@ public class CreateOrUpdateNameDialogTests
   private static async Task<CreateOrUpdateNameDialog> CreateDialogAsync(TestServices services, Data[]? familyData = null)
   {
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    var family = familyData is null
+      ? null
+      : new FamilyFullInfo(
+          Family(),
+          familyData.SingleOrDefault(data => data.Category.IsMainPhoto()),
+          [.. familyData.Where(data => data.Category.IsAdditionalPhoto())],
+          [.. familyData.Where(data => data.Category.IsAttachment())]);
     return await MainThread.InvokeOnMainThreadAsync(() => new CreateOrUpdateNameDialog(
       Family(),
       MaleLastName(),
@@ -46,7 +54,7 @@ public class CreateOrUpdateNameDialogTests
       services.AlertService.Object,
       services.Provider.GetRequiredService<ICancellationTokenProvider>(),
       services.Provider.GetRequiredService<DataConverterResolver>(),
-      familyData));
+      family));
   }
 
   private static async Task<CreateOrUpdateNameDialog> CreateDialogForTypeAsync(TestServices services, NameType nameType)
@@ -81,6 +89,19 @@ public class CreateOrUpdateNameDialogTests
     Assert.Single(dialog.Photos);
     Assert.Single(dialog.Attachments);
     Assert.Equal(Resources.UIStrings.BtnNameCancel, dialog.DialogButtonName);
+  }
+
+  [Fact]
+  public async Task Ctor_seeds_the_main_photo_first_regardless_of_the_provided_order()
+  {
+    // The provided array puts the additional photo before the main photo (arbitrary DB row order);
+    // position 0 is authoritative for main-vs-additional at save time (see
+    // SaveCommand_reassigns_categories_by_final_position_not_add_time_category below), so the ctor
+    // must not just walk the array as given.
+    var dialog = await CreateDialogAsync(new TestServices(), [Photo(2, DataCategory.FamilyPhoto), Photo(1, DataCategory.FamilyMainPhoto)]);
+
+    Assert.Equal(1, dialog.Photos.ElementAt(0).Info.Id);
+    Assert.Equal(2, dialog.Photos.ElementAt(1).Info.Id);
   }
 
   [Fact]

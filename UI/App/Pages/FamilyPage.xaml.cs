@@ -1,6 +1,5 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
-using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Dialogs;
@@ -115,9 +114,9 @@ public partial class FamilyPage : ContentPage
         var startInfo = _CurrentProjectProvider.Info;
         PersonInfo[] persons;
         // The sentinel "no family" bucket has no Name.Id of its own, so there is no family media to fetch.
-        var familyDataTask = IsNoFamilyMode
-          ? Task.FromResult<Data[]>([])
-          : project.FamilyManager.GetFamilyDataAsync(familyName, token);
+        var familyInfoTask = IsNoFamilyMode
+          ? Task.FromResult(new FamilyFullInfo(familyName, null, [], []))
+          : project.FamilyManager.GetFamilyFullInfoAsync(familyName, token);
         if (IsNoFamilyMode)
         {
           var allPersons = await project
@@ -133,7 +132,7 @@ public partial class FamilyPage : ContentPage
         }
 
         persons = [.. persons.OrderBy(item => item, _PersonInfoComparer)];
-        var (photos, attachments) = await LoadFamilyMediaAsync(await familyDataTask, token);
+        var (photos, attachments) = await LoadFamilyMediaAsync(await familyInfoTask, token);
 
         await SafeTask.RunOnMainThread(() =>
         {
@@ -207,18 +206,17 @@ public partial class FamilyPage : ContentPage
 
   private bool IsNoFamilyMode => _FamilyName?.Id == FamilyInfoItem.NoFamilyName.Id;
 
-  private async Task<(PhotoInfo[] Photos, AttachmentInfo[] Attachments)> LoadFamilyMediaAsync(Data[] familyData, CancellationToken token)
+  private async Task<(PhotoInfo[] Photos, AttachmentInfo[] Attachments)> LoadFamilyMediaAsync(FamilyFullInfo familyInfo, CancellationToken token)
   {
-    var mainPhoto = familyData.SingleOrDefault(data => data.Category.IsMainPhoto());
-    var additionalPhotos = familyData.Where(data => data.Category.IsAdditionalPhoto());
-    Data[] photoData = mainPhoto is null ? [.. additionalPhotos] : [mainPhoto, .. additionalPhotos];
+    Data[] photoData = familyInfo.MainPhoto is null
+      ? [.. familyInfo.AdditionalPhotos]
+      : [familyInfo.MainPhoto, .. familyInfo.AdditionalPhotos];
 
     var defaultFamilyPhoto = ImageUtils.ImageFromRawResource("family_stub.png");
     var photos = await Task.WhenAll(photoData.Select(data =>
       ImageUtils.ResolvePhotoAsync(_DataConverterResolver, data, defaultFamilyPhoto, token)));
 
-    var attachmentData = familyData.Where(data => data.Category.IsAttachment());
-    var attachments = await Task.WhenAll(attachmentData.Select(data => AttachmentInfo.CreateAsync(data, token)));
+    var attachments = await Task.WhenAll(familyInfo.Attachments.Select(data => AttachmentInfo.CreateAsync(data, token)));
 
     return (photos, attachments);
   }
