@@ -323,8 +323,12 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     _Info.SetResult(new(name, maleName, femaleName, allPhotos, attachments));
   }
 
-  private PersonDataItem GetFamilyData(Data data, DataCategory dataCategory) =>
-    new(data, _DataConverterResolver(dataCategory), _CancellationTokenProvider, _AlertService);
+  private PersonDataItem GetFamilyData(Data data, DataCategory dataCategory)
+  {
+    var converter = _DataConverterResolver(dataCategory)
+      ?? throw new InvalidOperationException($"No IDataConverter registered for {dataCategory}.");
+    return new(data, converter, _CancellationTokenProvider, _AlertService);
+  }
 
   private static byte[] FromStream(Stream stream)
   {
@@ -405,7 +409,8 @@ public partial class CreateOrUpdateNameDialog : ContentPage
       return;
     }
 
-    var converter = _DataConverterResolver(DataCategory.FamilyAttachment);
+    var converter = _DataConverterResolver(DataCategory.FamilyAttachment)
+      ?? throw new InvalidOperationException($"No IDataConverter registered for {DataCategory.FamilyAttachment}.");
     IEnumerable<Stream>? streams = null;
     try
     {

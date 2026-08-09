@@ -97,7 +97,7 @@ public static class ImageUtils
   /// converter hands back something that isn't a <see cref="PhotoInfo"/>.
   /// </summary>
   public static async Task<PhotoInfo> ResolvePhotoAsync(
-    OptionalDataConverterResolver dataConverterResolver, Data data, ImageSource fallback, CancellationToken token)
+    DataConverterResolver dataConverterResolver, Data data, ImageSource fallback, CancellationToken token)
   {
     var converter = dataConverterResolver(data.Category);
     var resolved = converter is null ? null : await converter.ToObjectAsync(data, token);

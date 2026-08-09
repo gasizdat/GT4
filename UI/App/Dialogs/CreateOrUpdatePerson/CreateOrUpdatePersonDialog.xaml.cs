@@ -27,6 +27,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     IComparer<PersonInfo> PersonInfoComparer,
     IAlertService AlertService,
     DataConverterResolver DataConverterResolver,
+    [FromKeyedServices(DataCategory.PersonBio)] IDataConverter PersonBioConverter,
+    [FromKeyedServices(DataCategory.PersonAttachment)] IDataConverter PersonAttachmentConverter,
     SelectNameDialog.Factory SelectNameDialogFactory,
     SelectRelativesDialog.Factory SelectRelativesDialogFactory,
     SelectPersonDialog.Factory SelectPersonDialogFactory,
@@ -83,9 +85,11 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   private PersonDataItem GetPersonData(Data data, DataCategory dataCategory)
   {
+    var converter = _Factory.DataConverterResolver(dataCategory)
+      ?? throw new InvalidOperationException($"No IDataConverter registered for {dataCategory}.");
     var ret = new PersonDataItem(
       data: data,
-      _Factory.DataConverterResolver(dataCategory),
+      converter,
       _Factory.CancellationTokenProvider,
       _Factory.AlertService);
 
@@ -138,7 +142,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
         _ => new PersonDataItem(
               dataCategory: DataCategory.PersonBio,
-              _Factory.DataConverterResolver(DataCategory.PersonBio),
+              _Factory.PersonBioConverter,
               _Factory.CancellationTokenProvider,
               _Factory.AlertService)
       };
@@ -455,7 +459,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       return;
     }
 
-    var converter = _Factory.DataConverterResolver(DataCategory.PersonAttachment);
+    var converter = _Factory.PersonAttachmentConverter;
     IEnumerable<Stream>? streams = null;
     try
     {

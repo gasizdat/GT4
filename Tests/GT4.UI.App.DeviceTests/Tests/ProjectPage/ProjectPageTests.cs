@@ -820,7 +820,7 @@ public class ProjectPageTests
       (_, p) => !showOnlyFemale || p.BiologicalSex == BiologicalSex.Female,
       services.Provider.GetRequiredService<ICancellationTokenProvider>(),
       services.AlertService.Object,
-      services.Provider.GetRequiredService<OptionalDataConverterResolver>());
+      services.Provider.GetRequiredService<DataConverterResolver>());
 
     var flex = new FlexLayout();
     var template = new DataTemplate(() =>

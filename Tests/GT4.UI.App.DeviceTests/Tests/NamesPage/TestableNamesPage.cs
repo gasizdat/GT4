@@ -26,7 +26,7 @@ internal sealed class TestableNamesPage : NamesPage
     IBiologicalSexFormatter biologicalSexFormatter,
     INameFormatter nameFormatter,
     IAlertService alertService,
-    DataConverterResolver dataConverterFactory)
+    DataConverterResolver dataConverterResolver)
     : base(
       currentProjectProvider,
       cancellationTokenProvider,
@@ -35,7 +35,7 @@ internal sealed class TestableNamesPage : NamesPage
       biologicalSexFormatter,
       nameFormatter,
       alertService,
-      dataConverterFactory)
+      dataConverterResolver)
   {
   }
 

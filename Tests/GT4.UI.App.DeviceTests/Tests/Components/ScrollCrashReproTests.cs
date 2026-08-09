@@ -36,7 +36,7 @@ public class ScrollCrashReproTests
 
     var services = new TestServices();
     var cancellationTokenProvider = services.Provider.GetRequiredService<ICancellationTokenProvider>();
-    var dataConverterResolver = services.Provider.GetRequiredService<OptionalDataConverterResolver>();
+    var dataConverterResolver = services.Provider.GetRequiredService<DataConverterResolver>();
     var families = Enumerable.Range(1, 60)
       .Select(i => new FamilyInfoItem(
         new FamilyInfo(N(i, $"Family{i}", NameType.FamilyName), new Data(i, [], "image/png", DataCategory.FamilyMainPhoto)),
