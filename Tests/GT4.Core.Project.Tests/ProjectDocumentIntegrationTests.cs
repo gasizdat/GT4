@@ -693,6 +693,31 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task UpdateFamilyDataAsync_RebucketsCategoryOnAlreadyCommittedPhotos()
+  {
+    var family = await AddBareFamilyNameAsync();
+    await _doc.NameData.AddNameDataSetAsync(
+      family,
+      [NewData(DataCategory.FamilyMainPhoto, 1), NewData(DataCategory.FamilyPhoto, 2)],
+      Token);
+    var committed = await _doc.NameData.GetNameDataSetAsync(family, null, Token);
+    var wasMain = committed.Single(d => d.Category == DataCategory.FamilyMainPhoto);
+    var wasAdditional = committed.Single(d => d.Category == DataCategory.FamilyPhoto);
+
+    // Swap main <-> additional using the already-committed Data's Ids, mirroring what
+    // CreateOrUpdateNameDialog sends after the user reorders photos: position, not add-time
+    // category, decides which is main.
+    await _doc.FamilyManager.UpdateFamilyDataAsync(
+      family,
+      [wasAdditional with { Category = DataCategory.FamilyMainPhoto }, wasMain with { Category = DataCategory.FamilyPhoto }],
+      Token);
+
+    var info = await _doc.FamilyManager.GetFamilyFullInfoAsync(family, Token);
+    info.MainPhoto!.Content.Should().Equal(2);
+    info.AdditionalPhotos.Should().ContainSingle().Which.Content.Should().Equal(1);
+  }
+
+  [Fact]
   public async Task Relatives_Add_ResolvesBothDirections()
   {
     var parent = await AddBarePersonAsync();

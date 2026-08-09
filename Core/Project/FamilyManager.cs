@@ -128,6 +128,17 @@ internal class FamilyManager : ProjectComponentBase, IFamilyManager
     await transaction.CommitAsync(token);
   }
 
-  public async Task UpdateFamilyDataAsync(Name familyName, Data[] dataSet, CancellationToken token) =>
+  public async Task UpdateFamilyDataAsync(Name familyName, Data[] dataSet, CancellationToken token)
+  {
+    // dataSet's Category is authoritative here (CreateOrUpdateNameDialog reassigns main/additional
+    // by final position, not add-time category), but AddDataContentIfNotExist skips already-committed
+    // rows, so it never persists a changed category on its own -- write it explicitly first, mirroring
+    // PersonManager.UpdatePersonAsync's re-bucketing.
+    foreach (var data in dataSet.Where(data => data.Id != ElementId.NonCommittedId))
+    {
+      await Document.Data.UpdateCategoryAsync(data, data.Category, token);
+    }
+
     await Document.NameData.UpdateNameDataSetAsync(familyName, dataSet, token);
+  }
 }
