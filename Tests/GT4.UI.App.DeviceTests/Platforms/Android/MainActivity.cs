@@ -10,6 +10,7 @@ namespace GT4.UI.DeviceTests;
   Theme = "@style/Maui.SplashTheme",
   MainLauncher = true,
   LaunchMode = LaunchMode.SingleTask,
+  ScreenOrientation = ScreenOrientation.Portrait,
   ConfigurationChanges = ConfigChanges.ScreenSize
                        | ConfigChanges.Orientation
                        | ConfigChanges.UiMode
