@@ -87,19 +87,40 @@ public static class ImageUtils
       return image;
     }
 
-    image = maxSize.HasValue
-      ? ImageSource.FromStream(async _ =>
+    if (maxSize.HasValue)
+    {
+      image = ImageSource.FromStream(async _ =>
+      {
+        if (!_ResourceStreamCache.TryGetValue(cacheKey, out var data))
         {
-          if (!_ResourceStreamCache.TryGetValue(cacheKey, out var data))
-          {
-            using var originalStream = await FileSystem.OpenAppPackageFileAsync(resourceName);
-            data = DownsizedPngStream(originalStream, maxSize.Value);
-            _ResourceStreamCache.TryAdd(cacheKey, data);
-          }
+          using var originalStream = await FileSystem.OpenAppPackageFileAsync(resourceName);
+          data = DownsizedPngStream(originalStream, maxSize.Value);
+          _ResourceStreamCache.TryAdd(cacheKey, data);
+        }
 
-          return new MemoryStream(data);
-        })
-      : ImageSource.FromStream(_ => FileSystem.OpenAppPackageFileAsync(resourceName));
+        return new MemoryStream(data);
+      });
+    }
+    else
+    {
+      image = ImageSource.FromStream(async _ =>
+      {
+        if (!_ResourceStreamCache.TryGetValue(cacheKey, out var data))
+        {
+          using (var tempStream = new MemoryStream())
+          {
+            using (var originalStream = await FileSystem.OpenAppPackageFileAsync(resourceName))
+            {
+              originalStream.CopyTo(tempStream);
+            }
+            data = tempStream.ToArray();
+          }
+          _ResourceStreamCache.TryAdd(cacheKey, data);
+        }
+
+        return new MemoryStream(data);
+      });
+    }
 
     _ResourceImageCache.TryAdd(cacheKey, image);
 
@@ -163,7 +184,7 @@ public static class ImageUtils
   public static byte[] DownsizedPngStream(Stream input, float maxSize)
   {
     using var image = PlatformImage.FromStream(input);
-    using var resized = image.Downsize(maxSize);
+    using var resized = image.Downsize(maxSize, disposeOriginal: true);
     using var output = new MemoryStream();
     resized.Save(output);
 
