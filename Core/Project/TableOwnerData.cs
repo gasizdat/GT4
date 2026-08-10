@@ -31,14 +31,15 @@ internal abstract class TableOwnerData : TableBase
   internal override async Task CreateAsync(CancellationToken token)
   {
     using var command = Connection.CreateCommand();
+
+    // DataId is intentionally NOT cascaded: deleting the owner drops its data links (via
+    // _OwnerColumn), but a Data blob still referenced by another owner must NOT be deletable
+    // (RemoveDataAsync relies on this to detect "still in use").
     command.CommandText = $"""
       CREATE TABLE IF NOT EXISTS {_TableName} (
         {_OwnerColumn} INTEGER NOT NULL,
         DataId INTEGER NOT NULL,
         FOREIGN KEY({_OwnerColumn}) REFERENCES {_OwnerTable}(Id) ON DELETE CASCADE,
-        -- DataId is intentionally NOT cascaded: deleting the owner drops its data links (via
-        -- {_OwnerColumn}), but a Data blob still referenced by another owner must NOT be deletable
-        -- (RemoveDataAsync relies on this to detect "still in use").
         FOREIGN KEY(DataId) REFERENCES Data(Id)
       );
       """;
