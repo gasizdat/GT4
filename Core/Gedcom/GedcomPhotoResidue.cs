@@ -10,9 +10,8 @@ namespace GT4.Core.Gedcom;
 /// for photos whose <see cref="DataCategory"/> is <see cref="DataCategory.PersonMainPhotoTagged"/>/
 /// <see cref="DataCategory.PersonPhotoTagged"/>, and for every <see cref="DataCategory.PersonAttachment"/>.
 /// Layout: <c>[4-byte tag-length][UTF-8 GedcomWriter-serialized residual node][raw bytes]</c>. There is no
-/// magic-byte marker to sniff -- the category alone (<see cref="DataCategoryExtensions.IsTaggedPhoto"/> or
-/// <see cref="DataCategoryExtensions.IsAttachment"/>) decides whether a <c>Content</c> uses this layout at
-/// all, so the shape is never ambiguous.
+/// magic-byte marker to sniff -- the category alone (<see cref="DataCategoryExtensions.IsEnveloped"/>)
+/// decides whether a <c>Content</c> uses this layout at all, so the shape is never ambiguous.
 /// </summary>
 public static class GedcomPhotoResidue
 {
@@ -56,10 +55,14 @@ public static class GedcomPhotoResidue
     return content[(sizeof(int) + tagLength)..];
   }
 
+  /// <summary>Raw bytes regardless of category: unwraps an envelope, passes non-enveloped Content through.</summary>
+  public static byte[] PayloadBytes(Data data) =>
+    data.Category.IsEnveloped() ? ExtractImageBytes(data.Content) : data.Content;
+
   /// <summary>An imported OBJE's <c>TITL</c> -- a photo's caption, or an attachment's document title.</summary>
   public static async Task<string?> ExtractTitleAsync(Data? data, CancellationToken token)
   {
-    if (data is null || (!data.Category.IsTaggedPhoto() && !data.Category.IsAttachment()))
+    if (data is null || !data.Category.IsEnveloped())
       return null;
 
     var (_, residual) = await DecodeAsync(data.Content, token);

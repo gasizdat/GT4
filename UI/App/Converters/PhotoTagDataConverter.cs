@@ -35,7 +35,7 @@ public sealed class PhotoTagDataConverter : IDataConverter
     if (data is null)
       return null;
 
-    var imageBytes = GedcomPhotoResidue.ExtractImageBytes(data.Content);
+    var imageBytes = GedcomPhotoResidue.PayloadBytes(data);
     var caption = await GedcomPhotoResidue.ExtractTitleAsync(data, token);
     return new PhotoInfo(ImageUtils.ImageFromBytes(imageBytes), caption);
   }
