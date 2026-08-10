@@ -603,6 +603,26 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task PersonData_UpdateDataSet_ReclaimingADroppedBlob_KeepsItIfAnotherPersonStillHoldsIt()
+  {
+    // The same blob linked to two persons. Dropping it from personA's set must reclaim it there but
+    // leave the blob intact -- the foreign key blocks deletion while personB still references it,
+    // exactly like RemovePersonData_KeepsSharedDataReferencedByAnotherPerson below, but reached
+    // through UpdatePersonDataSetAsync's own reclaim path instead of RemovePersonDataAsync.
+    var shared = await _doc.Data.AddDataAsync([7, 7], "application/octet-stream", DataCategory.PersonPhoto, Token);
+    var personA = await AddBarePersonAsync();
+    var personB = await AddBarePersonAsync();
+    await _doc.PersonData.AddPersonDataSetAsync(personA, [shared], Token);
+    await _doc.PersonData.AddPersonDataSetAsync(personB, [shared], Token);
+
+    await _doc.PersonData.UpdatePersonDataSetAsync(personA, [], Token);
+
+    (await _doc.PersonData.GetPersonDataSetAsync(personA, null, Token)).Should().BeEmpty();
+    (await _doc.PersonData.GetPersonDataSetAsync(personB, null, Token)).Should().ContainSingle();
+    (await _doc.Data.TryGetDataByIdAsync(shared.Id, Token)).Should().NotBeNull();
+  }
+
+  [Fact]
   public async Task RemovePersonData_KeepsSharedDataReferencedByAnotherPerson()
   {
     // One Data blob linked to two persons. Removing it from one must unlink it there but leave the
