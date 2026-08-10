@@ -20,6 +20,7 @@ public static class ImageUtils
     0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
   };
 
+  private static readonly ConcurrentDictionary<string, byte[]> _ResourceStreamCache = new();
   private static readonly ConcurrentDictionary<string, ImageSource> _ResourceImageCache = new();
 
   public static string DefaultPersonPhotoResourceName(BiologicalSex biologicalSex) => biologicalSex switch
@@ -28,6 +29,8 @@ public static class ImageUtils
     BiologicalSex.Female => "female_stub.png",
     _ => "project_icon.png",
   };
+
+  public const int ThumbnailSize = 200;
 
   public static ImageSource ImageFromBytes(byte[] data) =>
     ImageSource.FromStream(token => Task.Run<Stream>(() => new MemoryStream(data.Length > 0 ? data : _TransparentPng), token));
@@ -38,15 +41,10 @@ public static class ImageUtils
   /// the image is only ever shown tiny (a family-tree node decodes its source to a ~60px circle, so the
   /// full-res decode is hundreds of times larger than needed).
   /// </summary>
-  public static byte[] DownsizedPng(byte[] data, float maxSize)
+  public static byte[] DownsizedPng(byte[] data, int maxSize)
   {
     using var input = new MemoryStream(data);
-    using var image = PlatformImage.FromStream(input);
-    using var resized = image.Downsize(maxSize);
-    using var output = new MemoryStream();
-    resized.Save(output);
-
-    return output.ToArray();
+    return DownsizedPngStream(input, maxSize);
   }
 
   /// <summary>
@@ -80,16 +78,34 @@ public static class ImageUtils
     return size is { Width: > 0, Height: > 0 } ? size : null;
   }
 
-  public static ImageSource ImageFromRawResource(string resourceName)
+  public static ImageSource ImageFromRawResource(string resourceName, int? maxSize)
   {
-    if (!_ResourceImageCache.TryGetValue(resourceName, out var image))
+    var cacheKey = maxSize.HasValue ? $"{resourceName}_{maxSize}" : resourceName;
+
+    if (_ResourceImageCache.TryGetValue(cacheKey, out var image))
     {
-      image = ImageSource.FromStream(_ => FileSystem.OpenAppPackageFileAsync(resourceName));
-      _ResourceImageCache.TryAdd(resourceName, image);
+      return image;
     }
+
+    image = maxSize.HasValue
+      ? ImageSource.FromStream(async _ =>
+        {
+          if (!_ResourceStreamCache.TryGetValue(cacheKey, out var data))
+          {
+            using var originalStream = await FileSystem.OpenAppPackageFileAsync(resourceName);
+            data = DownsizedPngStream(originalStream, maxSize.Value);
+            _ResourceStreamCache.TryAdd(cacheKey, data);
+          }
+
+          return new MemoryStream(data);
+        })
+      : ImageSource.FromStream(_ => FileSystem.OpenAppPackageFileAsync(resourceName));
+
+    _ResourceImageCache.TryAdd(cacheKey, image);
 
     return image;
   }
+
   /// <summary>
   /// Resolves a photo through its category's keyed <see cref="IDataConverter"/>, falling back to a
   /// caption-less <paramref name="fallback"/> both when no converter is registered for the category (an
@@ -142,6 +158,16 @@ public static class ImageUtils
     {
       return await ToBytesAsync(stream, token);
     }
+  }
+
+  public static byte[] DownsizedPngStream(Stream input, float maxSize)
+  {
+    using var image = PlatformImage.FromStream(input);
+    using var resized = image.Downsize(maxSize);
+    using var output = new MemoryStream();
+    resized.Save(output);
+
+    return output.ToArray();
   }
 
   private static Size? PngPixelSize(ReadOnlySpan<byte> bytes)

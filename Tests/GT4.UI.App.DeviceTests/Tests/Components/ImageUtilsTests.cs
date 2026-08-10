@@ -8,8 +8,8 @@ public class ImageUtilsTests
   [Fact]
   public void ImageFromRawResource_SameResourceName_ReturnsSameInstance()
   {
-    var first = ImageUtils.ImageFromRawResource("male_stub.png");
-    var second = ImageUtils.ImageFromRawResource("male_stub.png");
+    var first = ImageUtils.ImageFromRawResource("male_stub.png", null);
+    var second = ImageUtils.ImageFromRawResource("male_stub.png", null);
 
     Assert.Same(first, second);
   }
@@ -17,8 +17,8 @@ public class ImageUtilsTests
   [Fact]
   public void ImageFromRawResource_DifferentResourceNames_ReturnsDifferentInstances()
   {
-    var male = ImageUtils.ImageFromRawResource("male_stub.png");
-    var female = ImageUtils.ImageFromRawResource("female_stub.png");
+    var male = ImageUtils.ImageFromRawResource("male_stub.png", null);
+    var female = ImageUtils.ImageFromRawResource("female_stub.png", null);
 
     Assert.NotSame(male, female);
   }

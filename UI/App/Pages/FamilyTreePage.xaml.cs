@@ -35,7 +35,6 @@ public partial class FamilyTreePage : ContentPage
   // Small per-person photo thumbnails, decoded once off the UI thread; empty = decode failed, use stub.
   // Concurrent because overlapping loads (e.g. zoom while a load is in flight) decode into it in parallel.
   private readonly ConcurrentDictionary<int, byte[]> _ThumbnailCache = new();
-  private const float PhotoThumbnailSize = 200;
   private const double ConnectorLineWidth = 2;
   // Each "load more" click adds GenerationsPerLoad generations, up to this hard ceiling.
   private const int GenerationsPerLoad = 3;
@@ -396,7 +395,7 @@ public partial class FamilyTreePage : ContentPage
   private ImageSource ResolvePhoto(PersonInfo person) =>
     _ThumbnailCache.TryGetValue(person.Id, out var thumbnail) && thumbnail.Length > 0
       ? ImageUtils.ImageFromBytes(thumbnail)
-      : ImageUtils.ImageFromRawResource(ImageUtils.DefaultPersonPhotoResourceName(person.BiologicalSex));
+      : ImageUtils.ImageFromRawResource(ImageUtils.DefaultPersonPhotoResourceName(person.BiologicalSex), ImageUtils.ThumbnailSize);
 
   // A node only ever shows a ~60px circle, so keep a small thumbnail per person rather than decoding the
   // full-resolution source for every node (which, now that node views are retained, would pin gigabytes).
@@ -418,7 +417,7 @@ public partial class FamilyTreePage : ContentPage
   {
     try
     {
-      return ImageUtils.DownsizedPng(content, PhotoThumbnailSize);
+      return ImageUtils.DownsizedPng(content, ImageUtils.ThumbnailSize);
     }
     catch
     {

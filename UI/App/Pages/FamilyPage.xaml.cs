@@ -209,7 +209,7 @@ public partial class FamilyPage : ContentPage
       ? [.. familyInfo.AdditionalPhotos]
       : [familyInfo.MainPhoto, .. familyInfo.AdditionalPhotos];
 
-    var defaultFamilyPhoto = ImageUtils.ImageFromRawResource("family_stub.png");
+    var defaultFamilyPhoto = ImageUtils.ImageFromRawResource("family_stub.png", null);
     var photos = await Task.WhenAll(photoData.Select(data =>
       ImageUtils.ResolvePhotoAsync(_DataConverterResolver, data, defaultFamilyPhoto, token)));
 
