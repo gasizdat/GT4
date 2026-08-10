@@ -28,7 +28,7 @@ internal class FamilyManager : ProjectComponentBase, IFamilyManager
 
     return new FamilyFullInfo(
       familyName,
-      mainPhoto: familyData.SingleOrDefault(data => data.Category.IsMainPhoto()),
+      mainPhoto: familyData.FirstOrDefault(data => data.Category.IsMainPhoto()),
       additionalPhotos: [.. familyData.Where(data => data.Category.IsAdditionalPhoto())],
       attachments: [.. familyData.Where(data => data.Category.IsAttachment())]);
   }

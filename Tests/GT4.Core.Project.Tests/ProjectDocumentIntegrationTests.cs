@@ -364,6 +364,21 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task PersonManager_GetPersonFullInfo_WithDuplicateMainPhoto_DegradesInsteadOfThrowing()
+  {
+    var person = await AddBarePersonAsync();
+    await _doc.PersonData.AddPersonDataSetAsync(
+      person,
+      [NewData(DataCategory.PersonMainPhoto, 1), NewData(DataCategory.PersonMainPhoto, 2)],
+      Token);
+    (await _doc.PersonData.GetPersonDataSetAsync(person, DataCategory.PersonMainPhoto, Token)).Should().HaveCount(2);
+
+    var full = await _doc.PersonManager.GetPersonFullInfoAsync(person, Token);
+
+    full.MainPhoto!.Content.Should().Equal(1);
+  }
+
+  [Fact]
   public async Task PersonManager_GetPersonInfos_AllAndByArrayAndByName()
   {
     var first = await _doc.Names.AddNameAsync("Findme", NameType.FirstName, null, Token);
@@ -763,6 +778,21 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
     info.MainPhoto!.Content.Should().Equal(1);
     info.AdditionalPhotos.Should().ContainSingle().Which.Content.Should().Equal(2);
     info.Attachments.Should().ContainSingle().Which.Content.Should().Equal(3);
+  }
+
+  [Fact]
+  public async Task GetFamilyFullInfoAsync_WithDuplicateMainPhoto_DegradesInsteadOfThrowing()
+  {
+    var family = await AddBareFamilyNameAsync();
+    await _doc.NameData.AddNameDataSetAsync(
+      family,
+      [NewData(DataCategory.FamilyMainPhoto, 1), NewData(DataCategory.FamilyMainPhoto, 2)],
+      Token);
+    (await _doc.NameData.GetNameDataSetAsync(family, DataCategory.FamilyMainPhoto, Token)).Should().HaveCount(2);
+
+    var info = await _doc.FamilyManager.GetFamilyFullInfoAsync(family, Token);
+
+    info.MainPhoto!.Content.Should().Equal(1);
   }
 
   [Fact]

@@ -43,7 +43,7 @@ public class CreateOrUpdateNameDialogTests
       ? null
       : new FamilyFullInfo(
           Family(),
-          familyData.SingleOrDefault(data => data.Category.IsMainPhoto()),
+          familyData.FirstOrDefault(data => data.Category.IsMainPhoto()),
           [.. familyData.Where(data => data.Category.IsAdditionalPhoto())],
           [.. familyData.Where(data => data.Category.IsAttachment())]);
     return await MainThread.InvokeOnMainThreadAsync(() => new CreateOrUpdateNameDialog(
