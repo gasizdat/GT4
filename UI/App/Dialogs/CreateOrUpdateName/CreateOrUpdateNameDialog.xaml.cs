@@ -17,13 +17,13 @@ namespace GT4.UI.Dialogs;
 
 public partial class CreateOrUpdateNameDialog : ContentPage
 {
-  public record FamilyInfo(string Name, string MaleName, string FemaleName, Data[] Photos, Data[] Attachments);
+  public record Result(string Name, string MaleName, string FemaleName, Data[] Photos, Data[] Attachments);
 
   private readonly NameType _NameType;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly IAlertService _AlertService;
   private readonly DataConverterResolver _DataConverterResolver;
-  private readonly TaskCompletionSource<FamilyInfo?> _Info = new(null);
+  private readonly TaskCompletionSource<Result?> _Info = new(null);
   private readonly string _DialogButtonName;
   private readonly ICommand _DialogCommand;
   private readonly ICommand _MediaCommand;
@@ -252,7 +252,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     _ => string.Empty
   };
 
-  public Task<FamilyInfo?> Info => _Info.Task;
+  public Task<Result?> Info => _Info.Task;
 
   public string DialogButtonName => NotReady ? UIStrings.BtnNameCancel : _DialogButtonName;
 
