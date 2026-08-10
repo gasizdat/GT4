@@ -12,33 +12,11 @@
     <ResourceDictionary>
 
       <OnIdiom
-          x:Key="PhotoHeight"
-          x:TypeArguments="x:Double"
-          Desktop="300"
-          Phone="100"
-          Tablet="140" />
-
-      <OnIdiom
-          x:Key="PhotoWidth"
-          x:TypeArguments="x:Double"
-          Desktop="300"
-          Phone="100"
-          Tablet="140" />
-
-      <OnIdiom
           x:Key="MinBioHeight"
           x:TypeArguments="x:Double"
           Desktop="300"
           Phone="100"
           Tablet="140" />
-
-      <Style x:Key="PhotoPreviewStyle" TargetType="Image">
-        <Setter Property="Aspect" Value="AspectFit" />
-        <Setter Property="HeightRequest" Value="{StaticResource PhotoHeight}" />
-        <Setter Property="WidthRequest" Value="{StaticResource PhotoWidth}" />
-        <Setter Property="HorizontalOptions" Value="Center" />
-        <Setter Property="VerticalOptions" Value="Center" />
-      </Style>
 
       <Style x:Key="CardBorderStyle" TargetType="Border">
         <Setter Property="Margin" Value="{Thickness Bottom={StaticResource PageContentSpacing}}" />

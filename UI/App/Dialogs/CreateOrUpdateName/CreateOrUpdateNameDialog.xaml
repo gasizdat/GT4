@@ -9,34 +9,6 @@
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
     x:Name="Root">
 
-  <ContentPage.Resources>
-    <ResourceDictionary>
-
-      <OnIdiom
-          x:Key="FamilyPhotoHeight"
-          x:TypeArguments="x:Double"
-          Desktop="300"
-          Phone="100"
-          Tablet="140" />
-
-      <OnIdiom
-          x:Key="FamilyPhotoWidth"
-          x:TypeArguments="x:Double"
-          Desktop="300"
-          Phone="100"
-          Tablet="140" />
-
-      <Style x:Key="FamilyPhotoPreviewStyle" TargetType="Image">
-        <Setter Property="Aspect" Value="AspectFit" />
-        <Setter Property="HeightRequest" Value="{StaticResource FamilyPhotoHeight}" />
-        <Setter Property="WidthRequest" Value="{StaticResource FamilyPhotoWidth}" />
-        <Setter Property="HorizontalOptions" Value="Center" />
-        <Setter Property="VerticalOptions" Value="Center" />
-      </Style>
-
-    </ResourceDictionary>
-  </ContentPage.Resources>
-
   <components:PageLayout>
     <components:PageLayout.Header>
       <Label
@@ -146,7 +118,7 @@
                           Grid.Column="0"
                           Grid.ColumnSpan="3"
                           Source="{Binding Content.Source}"
-                          Style="{StaticResource FamilyPhotoPreviewStyle}" />
+                          Style="{StaticResource PhotoPreviewStyle}" />
 
                       <Button
                           Grid.Row="0"
@@ -209,7 +181,7 @@
                   Grid.Column="1"
                   Command="{Binding MediaCommand, Source={x:Reference Root}}"
                   CommandParameter="AddFamilyPhotoCommand"
-                  HeightRequest="{StaticResource FamilyPhotoHeight}"
+                  HeightRequest="{StaticResource PhotoHeight}"
                   Style="{StaticResource AddAdorner}" />
 
             </Grid>
@@ -225,7 +197,7 @@
                   Grid.Column="0"
                   Grid.ColumnSpan="2"
                   Style="{StaticResource GroupTitle}"
-                  Text="{x:Static resources:UIStrings.FieldFamilyAttachments}" />
+                  Text="{x:Static resources:UIStrings.FieldPersonAttachments}" />
 
               <CollectionView
                   Grid.Row="1"

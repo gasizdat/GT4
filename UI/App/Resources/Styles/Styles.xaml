@@ -33,6 +33,20 @@
       Tablet="32" />
 
   <OnIdiom
+      x:Key="PhotoHeight"
+      x:TypeArguments="x:Double"
+      Desktop="300"
+      Phone="100"
+      Tablet="140" />
+
+  <OnIdiom
+      x:Key="PhotoWidth"
+      x:TypeArguments="x:Double"
+      Desktop="300"
+      Phone="100"
+      Tablet="140" />
+
+  <OnIdiom
       x:Key="LabelTextSizeDefault"
       x:TypeArguments="x:Double"
       Desktop="16"
@@ -734,6 +748,14 @@
     <!--<Setter Property="Clip" Value="{EllipseGeometry Center={Point X=16, Y=16}, RadiusX=16, RadiusY=16}" />-->
     <Setter Property="HeightRequest" Value="{StaticResource PhotoCompactHeight}" />
     <Setter Property="WidthRequest" Value="{StaticResource PhotoCompactWidth}" />
+  </Style>
+
+  <Style x:Key="PhotoPreviewStyle" TargetType="Image">
+    <Setter Property="Aspect" Value="AspectFit" />
+    <Setter Property="HeightRequest" Value="{StaticResource PhotoHeight}" />
+    <Setter Property="WidthRequest" Value="{StaticResource PhotoWidth}" />
+    <Setter Property="HorizontalOptions" Value="Center" />
+    <Setter Property="VerticalOptions" Value="Center" />
   </Style>
 
   <SolidColorBrush x:Key="CardStroke" Color="{AppThemeBinding Light=#D0FFFFFF, Dark=#30FFFFFF}" />

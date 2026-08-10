@@ -698,15 +698,6 @@ namespace GT4.UI.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Attachments.
-        /// </summary>
-        public static string FieldFamilyAttachments {
-            get {
-                return ResourceManager.GetString("FieldFamilyAttachments", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to Family name.
         /// </summary>
         public static string FieldFamilyName {
