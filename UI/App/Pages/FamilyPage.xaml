@@ -13,20 +13,6 @@
   <ContentPage.Resources>
     <ResourceDictionary>
 
-      <OnIdiom
-          x:Key="PhotoHeight"
-          x:TypeArguments="x:Double"
-          Desktop="300"
-          Phone="100"
-          Tablet="140" />
-
-      <OnIdiom
-          x:Key="PhotoWidth"
-          x:TypeArguments="x:Double"
-          Desktop="300"
-          Phone="100"
-          Tablet="140" />
-
       <Style x:Key="PhotoStyle" TargetType="Image">
         <Setter Property="Aspect" Value="AspectFit" />
         <Setter Property="HeightRequest" Value="{StaticResource PhotoHeight}" />
@@ -85,7 +71,7 @@
             <VerticalStackLayout>
               <Label
                   Style="{StaticResource GroupTitle}"
-                  Text="{x:Static resources:UIStrings.FieldFamilyAttachments}" />
+                  Text="{x:Static resources:UIStrings.FieldPersonAttachments}" />
 
               <CollectionView
                   ItemsSource="{Binding Attachments, Source={x:Reference Root}}"

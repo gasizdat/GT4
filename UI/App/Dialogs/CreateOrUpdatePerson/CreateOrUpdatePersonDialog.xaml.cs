@@ -8,6 +8,7 @@ using GT4.UI.Components;
 using GT4.UI.Converters;
 using GT4.UI.Items;
 using GT4.UI.Resources;
+using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
 using System.Collections.ObjectModel;
@@ -380,25 +381,6 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
   }
 
-  private static byte[] FromStream(Stream stream)
-  {
-    using var ret = new MemoryStream();
-    stream.CopyTo(ret);
-    return ret.ToArray();
-  }
-
-  private static async Task<IEnumerable<FileResult>?> PickFilesAsync(PickOptions pickOptions, bool allowMultiple)
-  {
-    if (allowMultiple)
-    {
-      var files = await FilePicker.Default.PickMultipleAsync(pickOptions);
-      return files?.Where(f => f is not null).Select(r => r!);
-    }
-
-    var result = await FilePicker.Default.PickAsync(pickOptions);
-    return result is null ? null : [result];
-  }
-
   private async Task OnAddOrUpdatePhotoAsync(PersonDataItem? photo)
   {
     var pickOptions = new PickOptions
@@ -406,97 +388,68 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       PickerTitle = UIStrings.FileDialogSelectPictures,
       FileTypes = FilePickerFileType.Images
     };
-    var results = await PickFilesAsync(pickOptions, allowMultiple: photo is null);
+    var results = await FilePickUtils.PickFilesAsync(pickOptions, allowMultiple: photo is null);
     if (results is null)
     {
       return;
     }
 
-    IEnumerable<Stream>? streams = null;
-    try
-    {
-      var filesContent = results.Select(file => (Stream: file.OpenReadAsync(), MimeType: file.ContentType));
-      streams = await Task.WhenAll(filesContent.Select(file => file.Stream));
-      var photoAssets = filesContent.Select(content =>
-          new Data(
-            Id: ElementId.NonCommittedId,
-            Content: FromStream(content.Stream.Result),
-            MimeType: content.MimeType,
-            Category: default));
+    var photoAssets = results.Select(file =>
+        new Data(
+          Id: ElementId.NonCommittedId,
+          Content: file.Content,
+          MimeType: file.MimeType,
+          Category: default));
 
-      foreach (var photoAsset in photoAssets)
+    foreach (var photoAsset in photoAssets)
+    {
+      var category = _Photos.Count() == 0 ? DataCategory.PersonMainPhoto : DataCategory.PersonPhoto;
+      var item = GetPersonData(data: photoAsset with { Category = category }, category);
+      if (photo is not null)
       {
-        var category = _Photos.Count() == 0 ? DataCategory.PersonMainPhoto : DataCategory.PersonPhoto;
-        var item = GetPersonData(data: photoAsset with { Category = category }, category);
-        if (photo is not null)
-        {
-          _Photos[_Photos.IndexOf(photo)] = item;
-        }
-        else
-        {
-          _Photos.Add(item);
-        }
+        _Photos[_Photos.IndexOf(photo)] = item;
       }
-
-      IsModified = true;
-    }
-    finally
-    {
-      foreach (var stream in streams ?? [])
+      else
       {
-        stream.Close();
-        stream.Dispose();
+        _Photos.Add(item);
       }
     }
+
+    IsModified = true;
   }
 
   private async Task OnAddOrUpdateAttachmentAsync(PersonDataItem? attachment)
   {
     var pickOptions = new PickOptions { PickerTitle = UIStrings.FileDialogSelectAttachment };
-    var results = await PickFilesAsync(pickOptions, allowMultiple: attachment is null);
+    var results = await FilePickUtils.PickFilesAsync(pickOptions, allowMultiple: attachment is null);
     if (results is null)
     {
       return;
     }
 
     var converter = _Factory.PersonAttachmentConverter;
-    IEnumerable<Stream>? streams = null;
-    try
+    using var token = _Factory.CancellationTokenProvider.CreateShortOperationCancellationToken();
+    foreach (var file in results)
     {
-      var filesContent = results.Select(file => (Stream: file.OpenReadAsync(), file.FileName, MimeType: file.ContentType)).ToArray();
-      streams = await Task.WhenAll(filesContent.Select(file => file.Stream));
-
-      using var token = _Factory.CancellationTokenProvider.CreateShortOperationCancellationToken();
-      foreach (var content in filesContent)
+      var pick = new AttachmentPick(file.Content, file.FileName, file.MimeType);
+      var attachmentAsset = await converter.FromObjectAsync(pick, token);
+      if (attachmentAsset is null)
       {
-        var pick = new AttachmentPick(FromStream(content.Stream.Result), content.FileName, content.MimeType);
-        var attachmentAsset = await converter.FromObjectAsync(pick, token);
-        if (attachmentAsset is null)
-        {
-          continue;
-        }
-
-        var item = GetPersonData(attachmentAsset, DataCategory.PersonAttachment);
-        if (attachment is not null)
-        {
-          _Attachments[_Attachments.IndexOf(attachment)] = item;
-        }
-        else
-        {
-          _Attachments.Add(item);
-        }
+        continue;
       }
 
-      IsModified = true;
-    }
-    finally
-    {
-      foreach (var stream in streams ?? [])
+      var item = GetPersonData(attachmentAsset, DataCategory.PersonAttachment);
+      if (attachment is not null)
       {
-        stream.Close();
-        stream.Dispose();
+        _Attachments[_Attachments.IndexOf(attachment)] = item;
+      }
+      else
+      {
+        _Attachments.Add(item);
       }
     }
+
+    IsModified = true;
   }
 
   private async Task OnAddRelationshipAsync()

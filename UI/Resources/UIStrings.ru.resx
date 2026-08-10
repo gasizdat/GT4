@@ -472,9 +472,6 @@
   <data name="FamilyMorePersons_1" xml:space="preserve">
     <value>Ещё {0}</value>
   </data>
-  <data name="FieldFamilyAttachments" xml:space="preserve">
-    <value>Вложения</value>
-  </data>
   <data name="BtnNameUpdateName_1" xml:space="preserve">
     <value>Обновить {0}</value>
   </data>
