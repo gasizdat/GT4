@@ -19,23 +19,6 @@ public class MediaSourceUtilsTests
   }
 
   [Fact]
-  public void PayloadBytes_StripsTheEnvelopeForATaggedPhoto()
-  {
-    var content = BuildTaggedPhotoContent("0 OBJE\n1 TITL A caption\n", [4, 5, 6]);
-    var photo = new Data(2, content, "image/jpeg", DataCategory.PersonMainPhotoTagged);
-
-    Assert.Equal(new byte[] { 4, 5, 6 }, MediaSourceUtils.PayloadBytes(photo));
-  }
-
-  [Fact]
-  public void PayloadBytes_PassesThroughAPlainPhotosRawBytes()
-  {
-    var photo = new Data(1, [1, 2, 3], "image/png", DataCategory.PersonMainPhoto);
-
-    Assert.Equal(new byte[] { 1, 2, 3 }, MediaSourceUtils.PayloadBytes(photo));
-  }
-
-  [Fact]
   public void PlainPhoto_ContributesItsRawBytes()
   {
     var photo = new Data(1, [1, 2, 3], "image/png", DataCategory.PersonMainPhoto);

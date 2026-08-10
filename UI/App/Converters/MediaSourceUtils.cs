@@ -7,8 +7,8 @@ namespace GT4.UI.Converters;
 
 /// <summary>
 /// Builds the id-to-bytes map <see cref="Components.MarkdownView.MediaSources"/> uses to inline-render
-/// a <c>media:&lt;id&gt;</c> reference. Lives in UI.App (not UI.Utils) because unwrapping a tagged photo's
-/// residue envelope needs Core.Gedcom, same reason as <see cref="PhotoTagDataConverter"/>.
+/// a <c>media:&lt;id&gt;</c> reference. Lives in UI.App (not UI.Utils) because resolving a photo's raw
+/// payload needs Core.Gedcom, same reason as <see cref="PhotoTagDataConverter"/>.
 /// </summary>
 public static class MediaSourceUtils
 {
@@ -19,18 +19,11 @@ public static class MediaSourceUtils
     var referencedIds = MediaLinkUtils.ExtractReferencedIds(biography);
     return media
       .Where(item => item.Id != ElementId.NonCommittedId && referencedIds.Contains(item.Id) && IsInlineImage(item))
-      .ToDictionary(item => item.Id, PayloadBytes);
+      .ToDictionary(item => item.Id, GedcomPhotoResidue.PayloadBytes);
   }
 
   // A photo is an image by construction (its MIME may even be null); an attachment only when its own
   // MIME type says so -- an attached scan is just as renderable as a photo.
   public static bool IsInlineImage(Data media) =>
     media.Category.IsPhoto() || media.MimeType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) == true;
-
-  // A tagged photo or an attachment's Content is a GedcomPhotoResidue envelope, not raw bytes -- strip it
-  // first. Every other category stores raw bytes directly.
-  public static byte[] PayloadBytes(Data data) =>
-    data.Category.IsTaggedPhoto() || data.Category.IsAttachment()
-      ? GedcomPhotoResidue.ExtractImageBytes(data.Content)
-      : data.Content;
 }

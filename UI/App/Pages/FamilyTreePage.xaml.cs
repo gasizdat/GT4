@@ -1,9 +1,9 @@
+using GT4.Core.Gedcom;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Components.Genealogy;
-using GT4.UI.Converters;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
@@ -408,7 +408,7 @@ public partial class FamilyTreePage : ContentPage
       var person = node.Person;
       if (person.MainPhoto is { Content.Length: > 0 } photo)
       {
-        var imageBytes = MediaSourceUtils.PayloadBytes(photo);
+        var imageBytes = GedcomPhotoResidue.PayloadBytes(photo);
         _ThumbnailCache.GetOrAdd(person.Id, _ => Downsize(imageBytes));
       }
     }

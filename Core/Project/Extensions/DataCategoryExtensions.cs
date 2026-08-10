@@ -19,6 +19,8 @@ public static class DataCategoryExtensions
   public static bool IsAttachment(this DataCategory category) =>
     category is DataCategory.PersonAttachment or DataCategory.FamilyAttachment;
 
+  public static bool IsEnveloped(this DataCategory category) => category.IsTaggedPhoto() || category.IsAttachment();
+
   public static DataCategory AsMainPhoto(this DataCategory category) => category switch
   {
     DataCategory.PersonMainPhotoTagged or DataCategory.PersonPhotoTagged => DataCategory.PersonMainPhotoTagged,

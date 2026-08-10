@@ -43,6 +43,25 @@ public sealed class GedcomPhotoResidueTests
   }
 
   [Fact]
+  public void PayloadBytes_UnwrapsAnEnvelopedCategory()
+  {
+    byte[] image = [10, 20, 30, 40];
+    var content = GedcomPhotoResidue.Encode(image, Residual(("TITL", "A caption")));
+    var photo = new Data(1, content, "image/png", DataCategory.PersonMainPhotoTagged);
+
+    GedcomPhotoResidue.PayloadBytes(photo).Should().Equal(image);
+  }
+
+  [Fact]
+  public void PayloadBytes_PassesThroughANonEnvelopedCategoryUnchanged()
+  {
+    byte[] image = [10, 20, 30, 40];
+    var photo = new Data(1, image, "image/png", DataCategory.PersonMainPhoto);
+
+    GedcomPhotoResidue.PayloadBytes(photo).Should().Equal(image);
+  }
+
+  [Fact]
   public async Task ExtractTitleAsync_ReturnsTheTitlValue()
   {
     byte[] image = [1];
