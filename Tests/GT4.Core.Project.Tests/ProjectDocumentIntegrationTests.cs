@@ -529,6 +529,43 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task PersonData_UpdateDataSet_ReclaimsOrphanedBlob()
+  {
+    var person = await AddBarePersonAsync();
+    await _doc.PersonData.AddPersonDataSetAsync(person,
+      [NewData(DataCategory.PersonPhoto, 1), NewData(DataCategory.PersonPhoto, 2)], Token);
+    var current = await _doc.PersonData.GetPersonDataSetAsync(person, null, Token);
+    var kept = current[0];
+    var dropped = current[1];
+
+    await _doc.PersonData.UpdatePersonDataSetAsync(person, [kept], Token);
+
+    (await _doc.Data.TryGetDataByIdAsync(dropped.Id, Token)).Should().BeNull();
+  }
+
+  [Fact]
+  public async Task PersonData_UpdateDataSet_DroppingAPhoto_PreservesOtherCategories()
+  {
+    var person = await AddBarePersonAsync();
+    await _doc.PersonData.AddPersonDataSetAsync(person,
+      [
+        NewData(DataCategory.PersonPhoto, 1),
+        NewData(DataCategory.PersonPhoto, 2),
+        NewData(DataCategory.PersonBio, 3),
+        NewData(DataCategory.PersonGedcomTags, 4),
+      ], Token);
+    var current = await _doc.PersonData.GetPersonDataSetAsync(person, null, Token);
+    var keptPhoto = current.Single(d => d.Category == DataCategory.PersonPhoto && d.Content is [1]);
+    var bio = current.Single(d => d.Category == DataCategory.PersonBio);
+    var gedcom = current.Single(d => d.Category == DataCategory.PersonGedcomTags);
+
+    await _doc.PersonData.UpdatePersonDataSetAsync(person, [keptPhoto, bio, gedcom], Token);
+
+    (await _doc.PersonData.GetPersonDataSetAsync(person, DataCategory.PersonBio, Token)).Should().ContainSingle();
+    (await _doc.PersonData.GetPersonDataSetAsync(person, DataCategory.PersonGedcomTags, Token)).Should().ContainSingle();
+  }
+
+  [Fact]
   public async Task GetPersonDataSetBatch_EmptyInput_ReturnsEmpty()
   {
     var result = await _doc.PersonData.GetPersonDataSetAsync([], null, Token);
