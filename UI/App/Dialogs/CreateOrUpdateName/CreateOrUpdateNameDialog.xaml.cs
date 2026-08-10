@@ -343,42 +343,28 @@ public partial class CreateOrUpdateNameDialog : ContentPage
       return;
     }
 
-    IEnumerable<Stream>? streams = null;
-    try
-    {
-      var filesContent = results.Select(file => (Stream: file.OpenReadAsync(), MimeType: file.ContentType)).ToArray();
-      streams = await Task.WhenAll(filesContent.Select(file => file.Stream));
-      var photoAssets = filesContent.Select(content =>
-          new Data(
-            Id: ElementId.NonCommittedId,
-            Content: FilePickUtils.FromStream(content.Stream.Result),
-            MimeType: content.MimeType,
-            Category: default));
+    var photoAssets = results.Select(file =>
+        new Data(
+          Id: ElementId.NonCommittedId,
+          Content: file.Content,
+          MimeType: file.MimeType,
+          Category: default));
 
-      foreach (var photoAsset in photoAssets)
+    foreach (var photoAsset in photoAssets)
+    {
+      var category = _Photos.Count() == 0 ? DataCategory.FamilyMainPhoto : DataCategory.FamilyPhoto;
+      var item = GetFamilyData(photoAsset with { Category = category }, category);
+      if (photo is not null)
       {
-        var category = _Photos.Count() == 0 ? DataCategory.FamilyMainPhoto : DataCategory.FamilyPhoto;
-        var item = GetFamilyData(photoAsset with { Category = category }, category);
-        if (photo is not null)
-        {
-          _Photos[_Photos.IndexOf(photo)] = item;
-        }
-        else
-        {
-          _Photos.Add(item);
-        }
+        _Photos[_Photos.IndexOf(photo)] = item;
       }
-
-      IsModified = true;
-    }
-    finally
-    {
-      foreach (var stream in streams ?? [])
+      else
       {
-        stream.Close();
-        stream.Dispose();
+        _Photos.Add(item);
       }
     }
+
+    IsModified = true;
   }
 
   private async Task OnAddOrUpdateFamilyAttachmentAsync(PersonDataItem? attachment)
@@ -392,43 +378,28 @@ public partial class CreateOrUpdateNameDialog : ContentPage
 
     var converter = _DataConverterResolver(DataCategory.FamilyAttachment)
       ?? throw new InvalidOperationException($"No IDataConverter registered for {DataCategory.FamilyAttachment}.");
-    IEnumerable<Stream>? streams = null;
-    try
+    using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
+    foreach (var file in results)
     {
-      var filesContent = results.Select(file => (Stream: file.OpenReadAsync(), file.FileName, MimeType: file.ContentType)).ToArray();
-      streams = await Task.WhenAll(filesContent.Select(file => file.Stream));
-
-      using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
-      foreach (var content in filesContent)
+      var pick = new AttachmentPick(file.Content, file.FileName, file.MimeType);
+      var attachmentAsset = await converter.FromObjectAsync(pick, token);
+      if (attachmentAsset is null)
       {
-        var pick = new AttachmentPick(FilePickUtils.FromStream(content.Stream.Result), content.FileName, content.MimeType);
-        var attachmentAsset = await converter.FromObjectAsync(pick, token);
-        if (attachmentAsset is null)
-        {
-          continue;
-        }
-
-        var item = GetFamilyData(attachmentAsset, DataCategory.FamilyAttachment);
-        if (attachment is not null)
-        {
-          _Attachments[_Attachments.IndexOf(attachment)] = item;
-        }
-        else
-        {
-          _Attachments.Add(item);
-        }
+        continue;
       }
 
-      IsModified = true;
-    }
-    finally
-    {
-      foreach (var stream in streams ?? [])
+      var item = GetFamilyData(attachmentAsset, DataCategory.FamilyAttachment);
+      if (attachment is not null)
       {
-        stream.Close();
-        stream.Dispose();
+        _Attachments[_Attachments.IndexOf(attachment)] = item;
+      }
+      else
+      {
+        _Attachments.Add(item);
       }
     }
+
+    IsModified = true;
   }
 
   private void MoveItem<T>(ObservableCollection<T> collection, T item, int dIndex)

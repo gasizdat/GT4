@@ -394,42 +394,28 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       return;
     }
 
-    IEnumerable<Stream>? streams = null;
-    try
-    {
-      var filesContent = results.Select(file => (Stream: file.OpenReadAsync(), MimeType: file.ContentType)).ToArray();
-      streams = await Task.WhenAll(filesContent.Select(file => file.Stream));
-      var photoAssets = filesContent.Select(content =>
-          new Data(
-            Id: ElementId.NonCommittedId,
-            Content: FilePickUtils.FromStream(content.Stream.Result),
-            MimeType: content.MimeType,
-            Category: default));
+    var photoAssets = results.Select(file =>
+        new Data(
+          Id: ElementId.NonCommittedId,
+          Content: file.Content,
+          MimeType: file.MimeType,
+          Category: default));
 
-      foreach (var photoAsset in photoAssets)
+    foreach (var photoAsset in photoAssets)
+    {
+      var category = _Photos.Count() == 0 ? DataCategory.PersonMainPhoto : DataCategory.PersonPhoto;
+      var item = GetPersonData(data: photoAsset with { Category = category }, category);
+      if (photo is not null)
       {
-        var category = _Photos.Count() == 0 ? DataCategory.PersonMainPhoto : DataCategory.PersonPhoto;
-        var item = GetPersonData(data: photoAsset with { Category = category }, category);
-        if (photo is not null)
-        {
-          _Photos[_Photos.IndexOf(photo)] = item;
-        }
-        else
-        {
-          _Photos.Add(item);
-        }
+        _Photos[_Photos.IndexOf(photo)] = item;
       }
-
-      IsModified = true;
-    }
-    finally
-    {
-      foreach (var stream in streams ?? [])
+      else
       {
-        stream.Close();
-        stream.Dispose();
+        _Photos.Add(item);
       }
     }
+
+    IsModified = true;
   }
 
   private async Task OnAddOrUpdateAttachmentAsync(PersonDataItem? attachment)
@@ -442,43 +428,28 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
 
     var converter = _Factory.PersonAttachmentConverter;
-    IEnumerable<Stream>? streams = null;
-    try
+    using var token = _Factory.CancellationTokenProvider.CreateShortOperationCancellationToken();
+    foreach (var file in results)
     {
-      var filesContent = results.Select(file => (Stream: file.OpenReadAsync(), file.FileName, MimeType: file.ContentType)).ToArray();
-      streams = await Task.WhenAll(filesContent.Select(file => file.Stream));
-
-      using var token = _Factory.CancellationTokenProvider.CreateShortOperationCancellationToken();
-      foreach (var content in filesContent)
+      var pick = new AttachmentPick(file.Content, file.FileName, file.MimeType);
+      var attachmentAsset = await converter.FromObjectAsync(pick, token);
+      if (attachmentAsset is null)
       {
-        var pick = new AttachmentPick(FilePickUtils.FromStream(content.Stream.Result), content.FileName, content.MimeType);
-        var attachmentAsset = await converter.FromObjectAsync(pick, token);
-        if (attachmentAsset is null)
-        {
-          continue;
-        }
-
-        var item = GetPersonData(attachmentAsset, DataCategory.PersonAttachment);
-        if (attachment is not null)
-        {
-          _Attachments[_Attachments.IndexOf(attachment)] = item;
-        }
-        else
-        {
-          _Attachments.Add(item);
-        }
+        continue;
       }
 
-      IsModified = true;
-    }
-    finally
-    {
-      foreach (var stream in streams ?? [])
+      var item = GetPersonData(attachmentAsset, DataCategory.PersonAttachment);
+      if (attachment is not null)
       {
-        stream.Close();
-        stream.Dispose();
+        _Attachments[_Attachments.IndexOf(attachment)] = item;
+      }
+      else
+      {
+        _Attachments.Add(item);
       }
     }
+
+    IsModified = true;
   }
 
   private async Task OnAddRelationshipAsync()
