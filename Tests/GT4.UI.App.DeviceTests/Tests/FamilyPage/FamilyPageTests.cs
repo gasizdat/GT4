@@ -439,15 +439,18 @@ public class FamilyPageTests
   }
 
   [Fact]
-  public async Task EditFamily_updates_the_family_name()
+  public async Task EditFamily_updates_the_family_name_and_reloads()
   {
     var services = new TestServices();
     var familyName = N(5, "Ivanov", NameType.FamilyName);
     services.Names
       .Setup(n => n.TryGetNameWithSubnamesByIdAsync(familyName.Id, It.IsAny<CancellationToken>()))
       .ReturnsAsync([familyName]);
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosByNameAsync(familyName, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([P(1, "Anna")]);
     var page = await CreatePageAsync(services);
-    await MainThread.InvokeOnMainThreadAsync(() => page.FamilyName = familyName);
+    await page.ReloadPersonsAsync(() => page.FamilyName = familyName);
 
     await using var window = await WindowHost.AttachAsync(page);
     var commandTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("EditFamily"));
@@ -455,7 +458,9 @@ public class FamilyPageTests
 
     Assert.Equal("Ivanov", dialog.GeneralName);
 
-    await MainThread.InvokeOnMainThreadAsync(() =>
+    // ReloadPersonsAsync (not a plain Execute+await) is the point of this test: the EditFamily
+    // branch must call Refresh() after the dialog closes, or this hangs until Poll's timeout.
+    await page.ReloadPersonsAsync(() =>
     {
       dialog.GeneralName = "Petrov";
       dialog.MaleName = "Petrov";

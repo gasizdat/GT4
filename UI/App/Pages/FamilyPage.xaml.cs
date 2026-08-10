@@ -296,6 +296,7 @@ public partial class FamilyPage : ContentPage
           _AlertService,
           Navigation,
           _DataConverterResolver);
+        Refresh();
         break;
 
       case string commandName when commandName == "CreatePerson":
