@@ -26,7 +26,7 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
     var ret = new PersonFullInfo(
       person: person,
       names: names.Result,
-      mainPhoto: personData.Result.SingleOrDefault(data => data.Category.IsMainPhoto()),
+      mainPhoto: personData.Result.FirstOrDefault(data => data.Category.IsMainPhoto()),
       additionalPhotos: [.. personData.Result.Where(data => data.Category.IsAdditionalPhoto())],
       relativeInfos: relativeInfos.Result,
       biography: personData.Result.SingleOrDefault(data => data.Category == DataCategory.PersonBio),
