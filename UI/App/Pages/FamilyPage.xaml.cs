@@ -218,15 +218,10 @@ public partial class FamilyPage : ContentPage
     return (photos, attachments);
   }
 
-  // attachment.FileName is often a full original path -- a common artifact of GEDCOM imports.
   private async Task OnOpenAttachmentAsync(AttachmentInfo attachment)
   {
     using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
-    var fileName = FileNameUtils.Sanitize(attachment.FileName, "attachment");
-    var path = Path.Combine(FileSystem.CacheDirectory, fileName);
-    await File.WriteAllBytesAsync(path, attachment.Bytes, token);
-
-    await Launcher.Default.OpenAsync(new OpenFileRequest(fileName, new ReadOnlyFile(path)));
+    await attachment.OpenAsync(token);
   }
 
   private async Task OnDeleteFamily()

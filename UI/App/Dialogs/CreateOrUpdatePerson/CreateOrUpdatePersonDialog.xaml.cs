@@ -8,6 +8,7 @@ using GT4.UI.Components;
 using GT4.UI.Converters;
 using GT4.UI.Items;
 using GT4.UI.Resources;
+using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
 using System.Collections.ObjectModel;
@@ -380,25 +381,6 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
   }
 
-  private static byte[] FromStream(Stream stream)
-  {
-    using var ret = new MemoryStream();
-    stream.CopyTo(ret);
-    return ret.ToArray();
-  }
-
-  private static async Task<IEnumerable<FileResult>?> PickFilesAsync(PickOptions pickOptions, bool allowMultiple)
-  {
-    if (allowMultiple)
-    {
-      var files = await FilePicker.Default.PickMultipleAsync(pickOptions);
-      return files?.Where(f => f is not null).Select(r => r!);
-    }
-
-    var result = await FilePicker.Default.PickAsync(pickOptions);
-    return result is null ? null : [result];
-  }
-
   private async Task OnAddOrUpdatePhotoAsync(PersonDataItem? photo)
   {
     var pickOptions = new PickOptions
@@ -406,7 +388,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       PickerTitle = UIStrings.FileDialogSelectPictures,
       FileTypes = FilePickerFileType.Images
     };
-    var results = await PickFilesAsync(pickOptions, allowMultiple: photo is null);
+    var results = await FilePickUtils.PickFilesAsync(pickOptions, allowMultiple: photo is null);
     if (results is null)
     {
       return;
@@ -415,12 +397,12 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     IEnumerable<Stream>? streams = null;
     try
     {
-      var filesContent = results.Select(file => (Stream: file.OpenReadAsync(), MimeType: file.ContentType));
+      var filesContent = results.Select(file => (Stream: file.OpenReadAsync(), MimeType: file.ContentType)).ToArray();
       streams = await Task.WhenAll(filesContent.Select(file => file.Stream));
       var photoAssets = filesContent.Select(content =>
           new Data(
             Id: ElementId.NonCommittedId,
-            Content: FromStream(content.Stream.Result),
+            Content: FilePickUtils.FromStream(content.Stream.Result),
             MimeType: content.MimeType,
             Category: default));
 
@@ -453,7 +435,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private async Task OnAddOrUpdateAttachmentAsync(PersonDataItem? attachment)
   {
     var pickOptions = new PickOptions { PickerTitle = UIStrings.FileDialogSelectAttachment };
-    var results = await PickFilesAsync(pickOptions, allowMultiple: attachment is null);
+    var results = await FilePickUtils.PickFilesAsync(pickOptions, allowMultiple: attachment is null);
     if (results is null)
     {
       return;
@@ -469,7 +451,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       using var token = _Factory.CancellationTokenProvider.CreateShortOperationCancellationToken();
       foreach (var content in filesContent)
       {
-        var pick = new AttachmentPick(FromStream(content.Stream.Result), content.FileName, content.MimeType);
+        var pick = new AttachmentPick(FilePickUtils.FromStream(content.Stream.Result), content.FileName, content.MimeType);
         var attachmentAsset = await converter.FromObjectAsync(pick, token);
         if (attachmentAsset is null)
         {

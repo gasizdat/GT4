@@ -330,25 +330,6 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     return new(data, converter, _CancellationTokenProvider, _AlertService);
   }
 
-  private static byte[] FromStream(Stream stream)
-  {
-    using var ret = new MemoryStream();
-    stream.CopyTo(ret);
-    return ret.ToArray();
-  }
-
-  private static async Task<IEnumerable<FileResult>?> PickFilesAsync(PickOptions pickOptions, bool allowMultiple)
-  {
-    if (allowMultiple)
-    {
-      var files = await FilePicker.Default.PickMultipleAsync(pickOptions);
-      return files?.Where(f => f is not null).Select(r => r!);
-    }
-
-    var result = await FilePicker.Default.PickAsync(pickOptions);
-    return result is null ? null : [result];
-  }
-
   private async Task OnAddOrUpdateFamilyPhotoAsync(PersonDataItem? photo)
   {
     var pickOptions = new PickOptions
@@ -356,7 +337,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
       PickerTitle = UIStrings.FileDialogSelectPictures,
       FileTypes = FilePickerFileType.Images
     };
-    var results = await PickFilesAsync(pickOptions, allowMultiple: photo is null);
+    var results = await FilePickUtils.PickFilesAsync(pickOptions, allowMultiple: photo is null);
     if (results is null)
     {
       return;
@@ -370,7 +351,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
       var photoAssets = filesContent.Select(content =>
           new Data(
             Id: ElementId.NonCommittedId,
-            Content: FromStream(content.Stream.Result),
+            Content: FilePickUtils.FromStream(content.Stream.Result),
             MimeType: content.MimeType,
             Category: default));
 
@@ -403,7 +384,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   private async Task OnAddOrUpdateFamilyAttachmentAsync(PersonDataItem? attachment)
   {
     var pickOptions = new PickOptions { PickerTitle = UIStrings.FileDialogSelectAttachment };
-    var results = await PickFilesAsync(pickOptions, allowMultiple: attachment is null);
+    var results = await FilePickUtils.PickFilesAsync(pickOptions, allowMultiple: attachment is null);
     if (results is null)
     {
       return;
@@ -420,7 +401,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
       using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
       foreach (var content in filesContent)
       {
-        var pick = new AttachmentPick(FromStream(content.Stream.Result), content.FileName, content.MimeType);
+        var pick = new AttachmentPick(FilePickUtils.FromStream(content.Stream.Result), content.FileName, content.MimeType);
         var attachmentAsset = await converter.FromObjectAsync(pick, token);
         if (attachmentAsset is null)
         {
