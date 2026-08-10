@@ -5,7 +5,7 @@ using System.Data.Common;
 
 namespace GT4.Core.Project;
 
-internal abstract class TableOwnerData : TableBase
+internal abstract class TableOwnerData<TOwner> : TableBase where TOwner : ElementId
 {
   private readonly ITableData _Data;
   private readonly string _TableName;
@@ -49,7 +49,7 @@ internal abstract class TableOwnerData : TableBase
     await command.ExecuteNonQueryAsync(token);
   }
 
-  protected async Task<Data[]> GetDataSetAsync(int ownerId, DataCategory? category, CancellationToken token)
+  protected async Task<Data[]> GetDataSetAsync(TOwner owner, DataCategory? category, CancellationToken token)
   {
     using var command = Connection.CreateCommand();
 
@@ -74,7 +74,7 @@ internal abstract class TableOwnerData : TableBase
         ORDER BY od.ROWID;
         """;
     }
-    command.Parameters.AddWithValue("@ownerId", ownerId);
+    command.Parameters.AddWithValue("@ownerId", owner.Id);
 
     var result = new List<Data>();
     await using var reader = await command.ExecuteReaderAsync(token);
@@ -86,12 +86,12 @@ internal abstract class TableOwnerData : TableBase
     return [.. result];
   }
 
-  protected async Task<Dictionary<int, Data[]>> GetDataSetAsync(int[] ownerIds, DataCategory? category, CancellationToken token)
+  protected async Task<Dictionary<int, Data[]>> GetDataSetAsync(TOwner[] owners, DataCategory? category, CancellationToken token)
   {
-    if (ownerIds.Length == 0)
+    if (owners.Length == 0)
       return [];
 
-    var inClause = string.Join(",", ownerIds);
+    var inClause = string.Join(",", owners.Select(owner => owner.Id));
     using var command = Connection.CreateCommand();
 
     if (category.HasValue)
@@ -129,7 +129,7 @@ internal abstract class TableOwnerData : TableBase
     return buckets.ToDictionary(kv => kv.Key, kv => kv.Value.ToArray());
   }
 
-  protected async Task AddDataSetAsync(int ownerId, Data[] dataSet, CancellationToken token)
+  protected async Task AddDataSetAsync(TOwner owner, Data[] dataSet, CancellationToken token)
   {
     using var transaction = await Connection.BeginTransactionAsync(token);
 
@@ -143,16 +143,16 @@ internal abstract class TableOwnerData : TableBase
         INSERT INTO {_TableName} ({_OwnerColumn}, DataId)
         VALUES (@ownerId, @dataId);
         """;
-      command.Parameters.AddWithValue("@ownerId", ownerId);
+      command.Parameters.AddWithValue("@ownerId", owner.Id);
       command.Parameters.AddWithValue("@dataId", dataId);
       await command.ExecuteNonQueryAsync(token);
     }
     await transaction.CommitAsync(token);
   }
 
-  protected async Task UpdateDataSetAsync(int ownerId, Data[] dataSet, CancellationToken token)
+  protected async Task UpdateDataSetAsync(TOwner owner, Data[] dataSet, CancellationToken token)
   {
-    var current = await GetDataSetAsync(ownerId, null, token);
+    var current = await GetDataSetAsync(owner, null, token);
     var removed = current.Where(d => !dataSet.Any(n => n.Id == d.Id));
 
     using var transaction = await Connection.BeginTransactionAsync(token);
@@ -161,10 +161,10 @@ internal abstract class TableOwnerData : TableBase
       DELETE FROM {_TableName}
       WHERE {_OwnerColumn}=@ownerId;
       """;
-    command.Parameters.AddWithValue("@ownerId", ownerId);
+    command.Parameters.AddWithValue("@ownerId", owner.Id);
     await command.ExecuteNonQueryAsync(token);
 
-    await AddDataSetAsync(ownerId, dataSet, token);
+    await AddDataSetAsync(owner, dataSet, token);
 
     // Links are already gone (deleted above), so a removed blob's own link can no longer be the
     // reason RemoveDataAsync's FK check fails -- only a still-live link from another owner can.
@@ -184,9 +184,9 @@ internal abstract class TableOwnerData : TableBase
     await transaction.CommitAsync(token);
   }
 
-  protected async Task UpdateDataAsync(int ownerId, Data? newData, DataCategory dataCategory, CancellationToken token)
+  protected async Task UpdateDataAsync(TOwner owner, Data? newData, DataCategory dataCategory, CancellationToken token)
   {
-    var resource = await GetDataSetAsync(ownerId, dataCategory, token);
+    var resource = await GetDataSetAsync(owner, dataCategory, token);
     if (resource.Count() > 1)
     {
       throw new ArgumentException($"The data with category '{dataCategory}' has multiple items");
@@ -206,18 +206,18 @@ internal abstract class TableOwnerData : TableBase
 
     if (oldData is not null)
     {
-      await RemoveDataAsync(ownerId, oldData, token);
+      await RemoveDataAsync(owner, oldData, token);
     }
 
     if (newData is not null)
     {
-      await AddDataSetAsync(ownerId, [newData], token);
+      await AddDataSetAsync(owner, [newData], token);
     }
 
     await transaction.CommitAsync(token);
   }
 
-  protected async Task RemoveDataAsync(int ownerId, Data data, CancellationToken token)
+  protected async Task RemoveDataAsync(TOwner owner, Data data, CancellationToken token)
   {
     using var transaction = await Connection.BeginTransactionAsync(token);
     using var command = Connection.CreateCommand();
@@ -225,7 +225,7 @@ internal abstract class TableOwnerData : TableBase
       DELETE FROM {_TableName}
       WHERE {_OwnerColumn}=@ownerId AND DataId=@dataId;
       """;
-    command.Parameters.AddWithValue("@ownerId", ownerId);
+    command.Parameters.AddWithValue("@ownerId", owner.Id);
     command.Parameters.AddWithValue("@dataId", data.Id);
     await command.ExecuteNonQueryAsync(token);
 
