@@ -33,6 +33,7 @@ public partial class ProjectListPage : ContentPage
   private readonly GedcomImportEncoding _GedcomImportEncoding;
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
+  private readonly ImageUtils _ImageUtils;
   private readonly ObservableCollection<ProjectItem> _Projects = new();
   private ProjectItem? _SelectedProject;
 
@@ -44,7 +45,8 @@ public partial class ProjectListPage : ContentPage
     IGedcomImporter importer,
     GedcomImportEncoding gedcomImportEncoding,
     IAlertService alertService,
-    INavigationService navigationService
+    INavigationService navigationService,
+    ImageUtils imageUtils
     )
   {
     _CancellationTokenProvider = cancellationTokenProvider;
@@ -55,6 +57,7 @@ public partial class ProjectListPage : ContentPage
     _GedcomImportEncoding = gedcomImportEncoding;
     _AlertService = alertService;
     _NavigationService = navigationService;
+    _ImageUtils = imageUtils;
     _PageCommand = new SafeCommand(OnPageCommand, _AlertService);
 
     InitializeComponent();
@@ -107,7 +110,7 @@ public partial class ProjectListPage : ContentPage
     using var token = _CancellationTokenProvider.CreateDbCancellationToken();
     var items = await _ProjectList.GetItemsAsync(token);
     var projects = items
-      .Select(projectInfo => new ProjectItem(projectInfo))
+      .Select(projectInfo => new ProjectItem(projectInfo, _ImageUtils))
       .OrderBy(item => item.Info, _ProjectInfoComparer);
 
     _Projects.Clear();

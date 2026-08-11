@@ -33,7 +33,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     SelectNameDialog.Factory SelectNameDialogFactory,
     SelectRelativesDialog.Factory SelectRelativesDialogFactory,
     SelectPersonDialog.Factory SelectPersonDialogFactory,
-    SelectMediaDialog.Factory SelectMediaDialogFactory)
+    SelectMediaDialog.Factory SelectMediaDialogFactory,
+    ImageUtils ImageUtils)
   {
     public CreateOrUpdatePersonDialog Create(PersonFullInfo? person) =>
       new CreateOrUpdatePersonDialog(this, person);
@@ -63,9 +64,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     _Factory = factory;
     _DialogCommand = new SafeCommand(OnDialogCommand, _Factory.AlertService);
     _SaveButtonName = person is null ? UIStrings.BtnNameCreateFamilyPerson : UIStrings.BtnNameUpdateFamilyPerson;
-    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, _Factory.BiologicalSexFormatter));
-    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Female, _Factory.BiologicalSexFormatter));
-    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Unknown, _Factory.BiologicalSexFormatter));
+    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, _Factory.BiologicalSexFormatter, _Factory.ImageUtils));
+    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Female, _Factory.BiologicalSexFormatter, _Factory.ImageUtils));
+    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Unknown, _Factory.BiologicalSexFormatter, _Factory.ImageUtils));
     _BiologicalSex = _BiologicalSexes.FirstOrDefault(i => i.Info == person?.BiologicalSex);
 
     UpdatePersonInformation(person);
@@ -92,7 +93,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       data: data,
       converter,
       _Factory.CancellationTokenProvider,
-      _Factory.AlertService);
+      _Factory.AlertService, 
+      _Factory.ImageUtils);
 
     return ret;
   }
@@ -112,7 +114,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       _GedcomData = person.GedcomData;
       var names = person
         .Names
-        .Select(name => new NameInfoItem(name, _Factory.NameTypeFormatter))
+        .Select(name => new NameInfoItem(name, _Factory.NameTypeFormatter, _Factory.ImageUtils))
         .GroupBy(item => item.Info.Type & NameType.NoDeclension)
         .OrderBy(group => group.Key)
         .SelectMany(item => item);
@@ -145,7 +147,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
               dataCategory: DataCategory.PersonBio,
               _Factory.PersonBioConverter,
               _Factory.CancellationTokenProvider,
-              _Factory.AlertService)
+              _Factory.AlertService,
+              _Factory.ImageUtils)
       };
       _Biography.PropertyChanged += (_, _) =>
       {
@@ -323,7 +326,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     {
       var lastNameWithTheSameType = _Names.LastOrDefault(item => item?.Info.Type == name.Type, null);
       var index = lastNameWithTheSameType is null ? -1 : _Names.IndexOf(lastNameWithTheSameType);
-      var item = new NameInfoItem(name, _Factory.NameTypeFormatter);
+      var item = new NameInfoItem(name, _Factory.NameTypeFormatter, _Factory.ImageUtils);
       _Names.Insert(index + 1, item);
 
       IsModified = true;
@@ -343,7 +346,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     if (name is not null)
     {
       var index = _Names.IndexOf(nameInfoItem);
-      _Names[index] = new NameInfoItem(name, _Factory.NameTypeFormatter);
+      _Names[index] = new NameInfoItem(name, _Factory.NameTypeFormatter, _Factory.ImageUtils);
     }
   }
 

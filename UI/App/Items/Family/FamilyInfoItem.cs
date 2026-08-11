@@ -33,8 +33,9 @@ public class FamilyInfoItem : CollectionItemBase<FamilyInfo>, INotifyPropertyCha
     ObservableCollectionFilterPredicate<PersonInfo>? personsFilter,
     ICancellationTokenProvider cancellationTokenProvider,
     IAlertService alertService,
-    DataConverterResolver dataConverterResolver)
-    : base(family, "family_stub.png")
+    DataConverterResolver dataConverterResolver, 
+    ImageUtils imageUtils)
+    : base(family, "family_stub.png", imageUtils)
   {
     _CancellationTokenProvider = cancellationTokenProvider;
     _AlertService = alertService;

@@ -28,6 +28,7 @@ public partial class NamesPage : ContentPage
   private readonly IAlertService _AlertService;
   private readonly INameFormatter _NameFormatter;
   private readonly DataConverterResolver _DataConverterResolver;
+  private readonly ImageUtils _ImageUtils;
   private NameTypeInfoItem _CurrentNameType;
   private Name? _CurrentName;
   private int? _CurrentNameId;
@@ -43,7 +44,8 @@ public partial class NamesPage : ContentPage
     IBiologicalSexFormatter biologicalSexFormatter,
     INameFormatter nameFormatter,
     IAlertService alertService,
-    DataConverterResolver dataConverterResolver
+    DataConverterResolver dataConverterResolver,
+    ImageUtils imageUtils
     )
   {
     var nameTypes = new[]
@@ -61,15 +63,16 @@ public partial class NamesPage : ContentPage
     _AlertService = alertService;
     _NameFormatter = nameFormatter;
     _DataConverterResolver = dataConverterResolver;
+    _ImageUtils = imageUtils;
     _EditNameCommand = new SafeCommand(OnEditCommandAsync, _AlertService);
     _DeleteNameCommand = new SafeCommand(OnDeleteCommandAsync, _AlertService);
     _PageCommand = new SafeCommand(OnPageCommandAsync, _AlertService);
     _CurrentNameType = _NameTypes.First();
     _Names.Filter = NamesFilter;
 
-    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, biologicalSexFormatter));
-    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Female, biologicalSexFormatter));
-    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Unknown, biologicalSexFormatter));
+    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, biologicalSexFormatter, _ImageUtils));
+    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Female, biologicalSexFormatter, _ImageUtils));
+    _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Unknown, biologicalSexFormatter, _ImageUtils));
     _CurrentBiologicalSex = _BiologicalSexes.First();
 
     InitializeComponent();
@@ -79,7 +82,15 @@ public partial class NamesPage : ContentPage
   {
     if (obj is Name name)
     {
-      await CreateOrUpdateNameDialog.UpdateNameAsync(name, _CurrentProjectProvider, _CancellationTokenProvider, _NameTypeFormatter, _AlertService, Navigation, _DataConverterResolver);
+      await CreateOrUpdateNameDialog.UpdateNameAsync(
+        name, 
+        _CurrentProjectProvider, 
+        _CancellationTokenProvider, 
+        _NameTypeFormatter, 
+        _AlertService, 
+        Navigation, 
+        _DataConverterResolver, 
+        _ImageUtils);
       RequestUpdateNames(name);
     }
   }
@@ -142,7 +153,13 @@ public partial class NamesPage : ContentPage
       _ => throw new ApplicationException(nameof(OnPageCommandAsync))
     };
 
-    var dialog = new CreateOrUpdateNameDialog(nameType, _NameTypeFormatter, _AlertService, _CancellationTokenProvider, _DataConverterResolver);
+    var dialog = new CreateOrUpdateNameDialog(
+      nameType, 
+      _NameTypeFormatter, 
+      _AlertService, 
+      _CancellationTokenProvider, 
+      _DataConverterResolver, 
+      _ImageUtils);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;

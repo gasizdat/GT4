@@ -6,14 +6,16 @@ public abstract class CollectionItemBase<TDto>
 {
   private readonly TDto _Info;
   private readonly string _ImageResource;
+  private readonly ImageUtils _ImageUtils;
 
-  protected CollectionItemBase(TDto info, string imageResource)
+  protected CollectionItemBase(TDto info, string imageResource, ImageUtils imageUtils)
   {
-    _ImageResource = imageResource;
     _Info = info;
+    _ImageResource = imageResource;
+    _ImageUtils = imageUtils;
   }
 
   public TDto Info => _Info;
 
-  public virtual ImageSource Icon => ImageUtils.ImageFromRawResource(_ImageResource, ImageUtils.ThumbnailSize);
+  public virtual ImageSource Icon => _ImageUtils.ImageFromRawResource(_ImageResource, ImageUtils.ThumbnailSize);
 }

@@ -4,6 +4,7 @@ using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Items;
 using GT4.UI.Resources;
+using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
 using System.Collections.ObjectModel;
@@ -19,7 +20,8 @@ public partial class SelectNameDialog : ContentPage
     ICancellationTokenProvider CancellationTokenProvider,
     IComparer<Name> NameComparer,
     IAlertService AlertService,
-    DataConverterResolver DataConverterResolver)
+    DataConverterResolver DataConverterResolver,
+    ImageUtils ImageUtils)
   {
     public SelectNameDialog Create(BiologicalSex biologicalSex, NameType[] nameTypes) =>
       new SelectNameDialog(this, biologicalSex, nameTypes);
@@ -74,7 +76,8 @@ public partial class SelectNameDialog : ContentPage
           _Factory.NameTypeFormatter,
           _Factory.AlertService,
           Navigation,
-          _Factory.DataConverterResolver);
+          _Factory.DataConverterResolver,
+          _Factory.ImageUtils);
         Names = null;
         CurrentName = Names?.SingleOrDefault(n => n.Info.Id == nameInfo.Id);
         break;
@@ -103,7 +106,7 @@ public partial class SelectNameDialog : ContentPage
         .Names
         .GetNamesByTypeAsync(queryType, token)
         .Result
-        .Select(name => new NameInfoItem(name, _Factory.NameTypeFormatter))
+        .Select(name => new NameInfoItem(name, _Factory.NameTypeFormatter, _Factory.ImageUtils))
         .OrderBy(name => name.Info, _Factory.NameComparer)
         .ToArray();
 
@@ -169,7 +172,12 @@ public partial class SelectNameDialog : ContentPage
     }
 
     var dialog = new CreateOrUpdateNameDialog(
-      dialogNameType, _Factory.NameTypeFormatter, _Factory.AlertService, _Factory.CancellationTokenProvider, _Factory.DataConverterResolver);
+      dialogNameType, 
+      _Factory.NameTypeFormatter, 
+      _Factory.AlertService, 
+      _Factory.CancellationTokenProvider, 
+      _Factory.DataConverterResolver, 
+      _Factory.ImageUtils);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;

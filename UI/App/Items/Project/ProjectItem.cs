@@ -1,12 +1,13 @@
 ﻿using GT4.Core.Project.Dto;
 using GT4.UI.Resources;
+using GT4.UI.Utils;
 
 namespace GT4.UI.Items;
 
 public class ProjectItem : CollectionItemBase<ProjectInfo>
 {
-  public ProjectItem(ProjectInfo info)
-    : base(info, "project_icon.png")
+  public ProjectItem(ProjectInfo info, ImageUtils imageUtils)
+    : base(info, "project_icon.png", imageUtils)
   {
   }
 

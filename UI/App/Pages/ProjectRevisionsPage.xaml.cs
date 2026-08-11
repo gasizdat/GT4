@@ -15,17 +15,21 @@ public partial class ProjectRevisionsPage : ContentPage
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
+  private readonly ImageUtils _ImageUtils;
   private ProjectRevisionItem? _SelectedRevision;
 
-  public ProjectRevisionsPage(ICurrentProjectProvider currentProjectProvider,
+  public ProjectRevisionsPage(
+    ICurrentProjectProvider currentProjectProvider,
     ICancellationTokenProvider cancellationTokenProvider,
     IAlertService alertService,
-    INavigationService navigationService)
+    INavigationService navigationService,
+    ImageUtils imageUtils)
   {
     _CurrentProjectProvider = currentProjectProvider;
     _CancellationTokenProvider = cancellationTokenProvider;
     _AlertService = alertService;
     _NavigationService = navigationService;
+    _ImageUtils = imageUtils;
 
     InitializeComponent();
   }
@@ -76,7 +80,7 @@ public partial class ProjectRevisionsPage : ContentPage
 
   public IEnumerable<ProjectRevisionItem> Revisions => _CurrentProjectProvider
     .Revisions
-    .Select(r => new ProjectRevisionItem(r));
+    .Select(r => new ProjectRevisionItem(r, _ImageUtils));
 
   private void OnNavigatedTo(object sender, NavigatedToEventArgs e) => OnPropertyChanged(nameof(Revisions));
 }

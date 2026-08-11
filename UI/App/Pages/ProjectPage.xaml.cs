@@ -39,6 +39,7 @@ public partial class ProjectPage : ContentPage
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
   private readonly DataConverterResolver _DataConverterResolver;
+  private readonly ImageUtils _ImageUtils;
 
   private readonly FilteredObservableCollection<FamilyInfoItem> _Families = new();
   private bool _FamiliesLoaded;
@@ -59,7 +60,8 @@ public partial class ProjectPage : ContentPage
     IAlertService alertService,
     INavigationService navigationService,
     IBiologicalSexFormatter biologicalSexFormatter,
-    DataConverterResolver dataConverterResolver
+    DataConverterResolver dataConverterResolver,
+    ImageUtils imageUtils
     )
   {
     _NameTypeFormatter = nameTypeFormatter;
@@ -74,6 +76,7 @@ public partial class ProjectPage : ContentPage
     _GedcomImportEncoding = gedcomImportEncoding;
     _AlertService = alertService;
     _NavigationService = navigationService;
+    _ImageUtils = imageUtils;
 
     // Set once: family visibility is re-evaluated via _Families.Update() (through UpdateFamilies),
     // not by reassigning this predicate.
@@ -130,8 +133,13 @@ public partial class ProjectPage : ContentPage
 
       var families = familyPersons
         .Select(f => new FamilyInfoItem(
-          f.Family, [.. f.Persons], (_, person) => FilterView.Matches(person),
-          _CancellationTokenProvider, _AlertService, _DataConverterResolver))
+          f.Family, 
+          [.. f.Persons], 
+          (_, person) => FilterView.Matches(person),
+          _CancellationTokenProvider, 
+          _AlertService, 
+          _DataConverterResolver,
+          _ImageUtils))
         .OrderBy(item => item.Info, _NameComparer)
         .ToList();
 
@@ -142,8 +150,13 @@ public partial class ProjectPage : ContentPage
       if (familylessPersons.Length > 0)
       {
         families.Add(new FamilyInfoItem(
-          new FamilyInfo(FamilyInfoItem.NoFamilyName, null), familylessPersons, (_, person) => FilterView.Matches(person),
-          _CancellationTokenProvider, _AlertService, _DataConverterResolver));
+          new FamilyInfo(FamilyInfoItem.NoFamilyName, null), 
+          familylessPersons, 
+          (_, person) => FilterView.Matches(person),
+          _CancellationTokenProvider, 
+          _AlertService, 
+          _DataConverterResolver,
+          _ImageUtils));
       }
 
       // Clear and AddRange together, not eagerly when the load starts: an overlapping second load
@@ -364,7 +377,13 @@ public partial class ProjectPage : ContentPage
 
   private async Task OnCreateFamily()
   {
-    var dialog = new CreateOrUpdateNameDialog(NameType.FamilyName, _NameTypeFormatter, _AlertService, _CancellationTokenProvider, _DataConverterResolver);
+    var dialog = new CreateOrUpdateNameDialog(
+      NameType.FamilyName, 
+      _NameTypeFormatter, 
+      _AlertService, 
+      _CancellationTokenProvider, 
+      _DataConverterResolver,
+      _ImageUtils);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;

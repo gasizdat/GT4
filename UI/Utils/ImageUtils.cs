@@ -1,13 +1,15 @@
 ﻿using GT4.Core.Project.Dto;
 using GT4.UI.Utils.Converters;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Maui.Graphics.Platform;
 using System.Buffers.Binary;
-using System.Collections.Concurrent;
 
 namespace GT4.UI.Utils;
 
-public static class ImageUtils
+public class ImageUtils
 {
+  private readonly IMemoryCache _MemoryCache;
+
   private static readonly byte[] _PngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
 
   private static readonly byte[] _TransparentPng =
@@ -20,8 +22,10 @@ public static class ImageUtils
     0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
   };
 
-  private static readonly ConcurrentDictionary<string, byte[]> _ResourceStreamCache = new();
-  private static readonly ConcurrentDictionary<string, ImageSource> _ResourceImageCache = new();
+  public ImageUtils(IMemoryCache memoryCache)
+  {
+    _MemoryCache = memoryCache;
+  }
 
   public static string DefaultPersonPhotoResourceName(BiologicalSex biologicalSex) => biologicalSex switch
   {
@@ -78,54 +82,94 @@ public static class ImageUtils
     return size is { Width: > 0, Height: > 0 } ? size : null;
   }
 
-  public static ImageSource ImageFromRawResource(string resourceName, int? maxSize)
+  public ImageSource ImageFromRawResource(string resourceName, int? maxSize)
   {
-    var cacheKey = maxSize.HasValue ? $"{resourceName}_{maxSize}" : resourceName;
+    var cacheKeyPrefix = maxSize.HasValue ? $"{resourceName}_{maxSize}" : resourceName;
 
-    if (_ResourceImageCache.TryGetValue(cacheKey, out var image))
+    return _MemoryCache.GetOrCreate($"image_{cacheKeyPrefix}", entry =>
     {
-      return image;
-    }
-
-    if (maxSize.HasValue)
-    {
-      image = ImageSource.FromStream(async _ =>
+      entry.Size = 1;
+      return ImageSource.FromStream(async _ =>
       {
-        if (!_ResourceStreamCache.TryGetValue(cacheKey, out var data))
+        var data = _MemoryCache.GetOrCreate($"data_{cacheKeyPrefix}", async dataEntry =>
         {
-          using var originalStream = await FileSystem.OpenAppPackageFileAsync(resourceName);
-          data = DownsizedPngStream(originalStream, maxSize.Value);
-          _ResourceStreamCache.TryAdd(cacheKey, data);
-        }
-
-        return new MemoryStream(data);
-      });
-    }
-    else
-    {
-      image = ImageSource.FromStream(async _ =>
-      {
-        if (!_ResourceStreamCache.TryGetValue(cacheKey, out var data))
-        {
-          using (var tempStream = new MemoryStream())
+          byte[] bytes;
+          if (maxSize.HasValue)
           {
+            using var originalStream = await FileSystem.OpenAppPackageFileAsync(resourceName);
+            bytes = DownsizedPngStream(originalStream, maxSize.Value);
+          }
+          else
+          {
+            using var tempStream = new MemoryStream();
+
             using (var originalStream = await FileSystem.OpenAppPackageFileAsync(resourceName))
             {
               originalStream.CopyTo(tempStream);
             }
-            data = tempStream.ToArray();
+            bytes = tempStream.ToArray();
           }
-          _ResourceStreamCache.TryAdd(cacheKey, data);
-        }
 
-        return new MemoryStream(data);
+          dataEntry.Size = bytes.Length;
+          return bytes;
+        });
+
+        return new MemoryStream(data is null ? [] : await data);
       });
-    }
-
-    _ResourceImageCache.TryAdd(cacheKey, image);
-
-    return image;
+    })!;
   }
+
+  //public ImageSource ImageFromRawResource(string resourceName, int? maxSize)
+  //{
+  //  var cacheKeyPrefix = maxSize.HasValue ? $"{resourceName}_{maxSize}" : resourceName;
+  //  var imageCacheKey = $"image_{cacheKeyPrefix}";
+
+  //  if (_MemoryCache.TryGetValue(imageCacheKey, out var image) && image is not null)
+  //  {
+  //    return checked((ImageSource)image);
+  //  }
+
+  //  var dataCacheKey = $"data_{cacheKeyPrefix}";
+
+  //  if (maxSize.HasValue)
+  //  {
+  //    image = ImageSource.FromStream(async _ =>
+  //    {
+  //      if (!_MemoryCache.TryGetValue(dataCacheKey, out var data) || data is null)
+  //      {
+  //        using var originalStream = await FileSystem.OpenAppPackageFileAsync(resourceName);
+  //        data = DownsizedPngStream(originalStream, maxSize.Value);
+  //        _MemoryCache.Set(dataCacheKey, data);
+  //      }
+
+  //      return new MemoryStream(checked((byte[])data));
+  //    });
+  //  }
+  //  else
+  //  {
+  //    image = ImageSource.FromStream(async _ =>
+  //    {
+  //      if (!_MemoryCache.TryGetValue(dataCacheKey, out var data) || data is null)
+  //      {
+  //        using (var tempStream = new MemoryStream())
+  //        {
+  //          using (var originalStream = await FileSystem.OpenAppPackageFileAsync(resourceName))
+  //          {
+  //            originalStream.CopyTo(tempStream);
+  //          }
+  //          data = tempStream.ToArray();
+  //        }
+  //        _MemoryCache.Set(dataCacheKey, data);
+  //      }
+
+  //      return new MemoryStream(checked((byte[])data));
+  //    });
+  //  }
+
+  //  _MemoryCache.Set(imageCacheKey, image);
+
+  //  return checked((ImageSource)image);
+  //}
 
   /// <summary>
   /// Resolves a photo through its category's keyed <see cref="IDataConverter"/>, falling back to a

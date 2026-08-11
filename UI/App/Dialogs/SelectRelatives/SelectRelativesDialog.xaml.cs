@@ -20,7 +20,8 @@ public partial class SelectRelativesDialog : ContentPage
     IComparer<PersonInfo> PersonInfoComparer,
     IAlertService AlertService,
     IBiologicalSexFormatter BiologicalSexFormatter,
-    IRelationshipTypeFormatter RelationshipTypeFormatter)
+    IRelationshipTypeFormatter RelationshipTypeFormatter,
+    ImageUtils ImageUtils)
   {
     public SelectRelativesDialog Create(BiologicalSex? biologicalSex, Relative[] existingRelatives) =>
       new SelectRelativesDialog(this, biologicalSex, existingRelatives);
@@ -115,7 +116,7 @@ public partial class SelectRelativesDialog : ContentPage
     _DialogCommand = new SafeCommand(OnDialogCommand, _Factory.AlertService);
     _ProjectRevision = _Factory.CurrentProjectProvider.Project.ProjectRevision;
     _BiologicalSexes = new[] { BiologicalSex.Male, BiologicalSex.Female, BiologicalSex.Unknown }
-      .Select(sex => new BiologicalSexItem(sex, _Factory.BiologicalSexFormatter))
+      .Select(sex => new BiologicalSexItem(sex, _Factory.BiologicalSexFormatter, _Factory.ImageUtils))
       .ToArray();
     _BiologicalSex = _BiologicalSexes.SingleOrDefault(i => i.Info == biologicalSex, _BiologicalSexes[2]);
     _ExistingRelatives = existingRelatives;
@@ -125,7 +126,7 @@ public partial class SelectRelativesDialog : ContentPage
         RelationshipType.Spouse,
         RelationshipType.AdoptiveParent,
         RelationshipType.AdoptiveChild }
-      .Select(type => new RelationshipTypeItem(type, _Factory.RelationshipTypeFormatter))
+      .Select(type => new RelationshipTypeItem(type, _Factory.RelationshipTypeFormatter, _Factory.ImageUtils))
       .ToArray();
     _RelationshipType = _RelationshipTypes.First();
     _SelectedItems.CollectionChanged += (_, _) => OnPropertyChanged(nameof(DialogButtonName));

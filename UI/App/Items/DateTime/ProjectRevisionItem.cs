@@ -1,11 +1,12 @@
 ﻿using GT4.Core.Project.Dto;
+using GT4.UI.Utils;
 
 namespace GT4.UI.Items;
 
 public class ProjectRevisionItem : CollectionItemBase<ProjectRevision>
 {
-  public ProjectRevisionItem(ProjectRevision projectRevision)
-    : base(projectRevision, string.Empty)
+  public ProjectRevisionItem(ProjectRevision projectRevision, ImageUtils imageUtils)
+    : base(projectRevision, string.Empty, imageUtils)
   {
   }
 

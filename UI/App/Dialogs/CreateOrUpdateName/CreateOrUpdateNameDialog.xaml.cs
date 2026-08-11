@@ -23,6 +23,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly IAlertService _AlertService;
   private readonly DataConverterResolver _DataConverterResolver;
+  private readonly ImageUtils _ImageUtils;
   private readonly TaskCompletionSource<Result?> _Info = new(null);
   private readonly string _DialogButtonName;
   private readonly ICommand _DialogCommand;
@@ -58,11 +59,13 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     INameTypeFormatter nameTypeFormatter,
     IAlertService alertService,
     ICancellationTokenProvider cancellationTokenProvider,
-    DataConverterResolver dataConverterResolver)
+    DataConverterResolver dataConverterResolver,
+    ImageUtils imageUtils)
   {
     _AlertService = alertService;
     _CancellationTokenProvider = cancellationTokenProvider;
     _DataConverterResolver = dataConverterResolver;
+    _ImageUtils = imageUtils;
     var nameTypeName = nameTypeFormatter.ToString(nameType);
     _DialogButtonName = string.Format(UIStrings.BtnNameCreateName_1, nameTypeName);
     _DialogCommand = new SafeCommand(OnCreateFamily, alertService);
@@ -99,8 +102,9 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     IAlertService alertService,
     ICancellationTokenProvider cancellationTokenProvider,
     DataConverterResolver dataConverterResolver,
+    ImageUtils imageUtils,
     FamilyFullInfo? family = null)
-    : this(name.Type, nameTypeFormatter, alertService, cancellationTokenProvider, dataConverterResolver)
+    : this(name.Type, nameTypeFormatter, alertService, cancellationTokenProvider, dataConverterResolver, imageUtils)
   {
     var nameTypeName = nameTypeFormatter.ToString(name.Type);
     _DialogButtonName = string.Format(UIStrings.BtnNameUpdateName_1, nameTypeName);
@@ -327,7 +331,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   {
     var converter = _DataConverterResolver(dataCategory)
       ?? throw new InvalidOperationException($"No IDataConverter registered for {dataCategory}.");
-    return new(data, converter, _CancellationTokenProvider, _AlertService);
+    return new(data, converter, _CancellationTokenProvider, _AlertService, _ImageUtils);
   }
 
   private async Task OnAddOrUpdateFamilyPhotoAsync(PersonDataItem? photo)
@@ -465,7 +469,8 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     INameTypeFormatter nameTypeFormatter,
     IAlertService alertService,
     INavigation navigation,
-    DataConverterResolver dataConverterResolver)
+    DataConverterResolver dataConverterResolver, 
+    ImageUtils imageUtils)
   {
     async Task<NamesGroup> GetNameWithSubnames()
     {
@@ -514,7 +519,15 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     }
 
     var dialog = new CreateOrUpdateNameDialog(
-      names.FirstName, names.MaleName, names.FemaleName, nameTypeFormatter, alertService, cancellationTokenProvider, dataConverterResolver, family)
+      names.FirstName, 
+      names.MaleName, 
+      names.FemaleName, 
+      nameTypeFormatter, 
+      alertService, 
+      cancellationTokenProvider, 
+      dataConverterResolver, 
+      imageUtils,
+      family)
     {
       FocusGenericName = focusGenericName,
       FocusMaleName = !focusGenericName && name.Type.HasFlag(NameType.MaleDeclension),

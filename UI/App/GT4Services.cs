@@ -1,15 +1,12 @@
 using GT4.Core.Gedcom.Extensions;
-using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Project.Extensions;
-using GT4.Core.Utils;
 using GT4.Core.Utils.Extensions;
 using GT4.UI.Abstraction;
 using GT4.UI.Converters;
 using GT4.UI.Dialogs;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Extensions;
-using GT4.UI.Utils.Formatters;
 using Microsoft.Extensions.Configuration;
 
 namespace GT4.UI;
@@ -30,6 +27,7 @@ public class GT4Services
       .AddCoreUtils()
       .AddDefaultProject()
       .AddGedcom()
+      .AddMemoryCache(options => options.SizeLimit = 200 * 1024 * 1024)
       // These converters live here, not in AddUIUtils: they bridge to Core.Gedcom, and the leaf
       // UI.Utils library must stay free of that feature dependency.
       .AddKeyedSingleton<IDataConverter, GedcomDataConverter>(DataCategory.PersonGedcomTags)

@@ -9,7 +9,6 @@ using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Extensions;
 using GT4.UI.Utils.Formatters;
-using System.Collections.ObjectModel;
 using System.Windows.Input;
 
 namespace GT4.UI.Pages;
@@ -25,6 +24,7 @@ public partial class FamilyPage : ContentPage
   private readonly INameTypeFormatter _NameTypeFormatter;
   private readonly CreateOrUpdatePersonDialog.Factory _CreateOrUpdatePersonDialogFactory;
   private readonly DataConverterResolver _DataConverterResolver;
+  private readonly ImageUtils _ImageUtils;
   private readonly FilteredObservableCollection<PersonInfo> _Persons = new();
   private bool _PersonsLoaded;
   private Name? _FamilyName = null;
@@ -44,7 +44,8 @@ public partial class FamilyPage : ContentPage
     IBiologicalSexFormatter biologicalSexFormatter,
     INameTypeFormatter nameTypeFormatter,
     CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory,
-    DataConverterResolver dataConverterResolver
+    DataConverterResolver dataConverterResolver,
+    ImageUtils imageUtils
     )
   {
     _CancellationTokenProvider = cancellationTokenProvider;
@@ -55,6 +56,7 @@ public partial class FamilyPage : ContentPage
     _NameTypeFormatter = nameTypeFormatter;
     _CreateOrUpdatePersonDialogFactory = createOrUpdatePersonDialogFactory;
     _DataConverterResolver = dataConverterResolver;
+    _ImageUtils = imageUtils;
 
     _Persons.Filter = (_, person) => FilterView.Matches(person);
 
@@ -209,7 +211,7 @@ public partial class FamilyPage : ContentPage
       ? [.. familyInfo.AdditionalPhotos]
       : [familyInfo.MainPhoto, .. familyInfo.AdditionalPhotos];
 
-    var defaultFamilyPhoto = ImageUtils.ImageFromRawResource("family_stub.png", null);
+    var defaultFamilyPhoto = _ImageUtils.ImageFromRawResource("family_stub.png", null);
     var photos = await Task.WhenAll(photoData.Select(data =>
       ImageUtils.ResolvePhotoAsync(_DataConverterResolver, data, defaultFamilyPhoto, token)));
 
@@ -295,7 +297,8 @@ public partial class FamilyPage : ContentPage
           _NameTypeFormatter,
           _AlertService,
           Navigation,
-          _DataConverterResolver);
+          _DataConverterResolver,
+          _ImageUtils);
         Refresh();
         break;
 

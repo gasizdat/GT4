@@ -8,8 +8,8 @@ public class BiologicalSexItem : CollectionItemBase<BiologicalSex>
 {
   private readonly IBiologicalSexFormatter _BiologicalSexFormatter;
 
-  public BiologicalSexItem(BiologicalSex biologicalSex, IBiologicalSexFormatter biologicalSexFormatter)
-    : base(biologicalSex, ImageUtils.DefaultPersonPhotoResourceName(biologicalSex))
+  public BiologicalSexItem(BiologicalSex biologicalSex, IBiologicalSexFormatter biologicalSexFormatter, ImageUtils imageUtils)
+    : base(biologicalSex, ImageUtils.DefaultPersonPhotoResourceName(biologicalSex), imageUtils)
   {
     _BiologicalSexFormatter = biologicalSexFormatter;
   }

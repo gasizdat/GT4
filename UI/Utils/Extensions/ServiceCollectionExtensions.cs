@@ -27,6 +27,7 @@ public static class ServiceCollectionExtensions
       .AddSingleton<IComparer<ProjectInfo>, ProjectInfoComparer>()
       .AddSingleton<IComparer<PersonInfo>, PersonInfoComparer>()
       .AddSingleton<IComparer<Name>, NameComparer>()
+      .AddSingleton<ImageUtils>()
       .AddKeyedSingleton<IDataConverter, ImageDataConverter>(DataCategory.PersonPhoto)
       .AddKeyedSingleton<IDataConverter, ImageDataConverter>(DataCategory.PersonMainPhoto)
       .AddKeyedSingleton<IDataConverter, ImageDataConverter>(DataCategory.FamilyPhoto)

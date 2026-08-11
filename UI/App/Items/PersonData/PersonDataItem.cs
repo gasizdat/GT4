@@ -2,6 +2,7 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
+using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
 using System.ComponentModel;
 
@@ -16,23 +17,34 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
   private bool _IsReady = false;
   private bool _IsModified = false;
 
-  public PersonDataItem(Data data, IDataConverter dataConverter, ICancellationTokenProvider cancellationTokenProvider,
-    IAlertService alertService)
-    : base(data, string.Empty)
+  public PersonDataItem(
+    Data data, 
+    IDataConverter dataConverter, 
+    ICancellationTokenProvider cancellationTokenProvider,
+    IAlertService alertService, 
+    ImageUtils imageUtils)
+    : base(data, string.Empty, imageUtils)
   {
     _DataConverter = dataConverter;
     _CancellationTokenProvider = cancellationTokenProvider;
     _AlertService = alertService;
   }
 
-  public PersonDataItem(DataCategory dataCategory, IDataConverter dataConverter, ICancellationTokenProvider cancellationTokenProvider,
-    IAlertService alertService)
+  public PersonDataItem(
+    DataCategory dataCategory, 
+    IDataConverter dataConverter, 
+    ICancellationTokenProvider cancellationTokenProvider,
+    IAlertService alertService,
+    ImageUtils imageUtils)
     : this(new Data(
                Id: ElementId.NonCommittedId,
                Content: [],
                MimeType: null,
                Category: dataCategory),
-        dataConverter, cancellationTokenProvider, alertService)
+        dataConverter, 
+        cancellationTokenProvider, 
+        alertService,
+        imageUtils)
   {
     _DataConverter = dataConverter;
     _CancellationTokenProvider = cancellationTokenProvider;

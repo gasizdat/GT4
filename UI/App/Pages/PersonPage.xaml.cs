@@ -33,6 +33,7 @@ public partial class PersonPage : ContentPage
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
   private readonly CreateOrUpdatePersonDialog.Factory _CreateOrUpdatePersonDialogFactory;
+  private readonly ImageUtils _ImageUtils;
   private ObservableCollection<PersonInfo> _NavigationHistory = new();
   private int _NavigationIndex = -1;
   private PersonFullInfo _PersonFullInfo = PersonFullInfo.Empty;
@@ -59,7 +60,8 @@ public partial class PersonPage : ContentPage
     IAlertService alertService,
     INavigationService navigationService,
     IBiologicalSexFormatter biologicalSexFormatter,
-    CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory
+    CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory,
+    ImageUtils imageUtils
     )
   {
     _CancellationTokenProvider = cancellationTokenProvider;
@@ -73,6 +75,7 @@ public partial class PersonPage : ContentPage
     _AlertService = alertService;
     _NavigationService = navigationService;
     _CreateOrUpdatePersonDialogFactory = createOrUpdatePersonDialogFactory;
+    _ImageUtils = imageUtils;
     _PageCommand = new SafeCommand(OnPageCommand, _AlertService);
     _Relatives = new RelativeTree(_CurrentProjectProvider, _CancellationTokenProvider, _AlertService);
 
@@ -394,7 +397,7 @@ public partial class PersonPage : ContentPage
   private async Task<(PhotoInfo[] Photos, Data[] PhotoData)> LoadPhotosAsync(PersonFullInfo personFullInfo, CancellationToken token)
   {
     var defaultPersonPhotoResourceName = ImageUtils.DefaultPersonPhotoResourceName(personFullInfo.BiologicalSex);
-    var defaultPersonPhoto = ImageUtils.ImageFromRawResource(defaultPersonPhotoResourceName, null);
+    var defaultPersonPhoto = _ImageUtils.ImageFromRawResource(defaultPersonPhotoResourceName, null);
 
     if (personFullInfo.MainPhoto is null)
     {

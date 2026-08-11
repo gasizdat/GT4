@@ -28,6 +28,7 @@ public partial class FamilyTreePage : ContentPage
   private readonly FontScale? _FontScale;
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
+  private readonly ImageUtils _ImageUtils;
   // Reused across loads so an incremental "load more" updates the existing canvas instead of rebuilding
   // every node view; views that do leave the tree are disconnected to release their native resources.
   private readonly Dictionary<int, NodeEntry> _NodeCache = [];
@@ -70,7 +71,8 @@ public partial class FamilyTreePage : ContentPage
     INameFormatter nameFormatter,
     FontScale? fontScale,
     IAlertService alertService,
-    INavigationService navigationService
+    INavigationService navigationService,
+    ImageUtils imageUtils
   )
   {
     _CancellationTokenProvider = cancellationTokenProvider;
@@ -79,6 +81,7 @@ public partial class FamilyTreePage : ContentPage
     _FontScale = fontScale;
     _AlertService = alertService;
     _NavigationService = navigationService;
+    _ImageUtils = imageUtils;
     PageCommand = new SafeCommand(OnPageCommand, _AlertService);
 
     InitializeComponent();
@@ -395,7 +398,7 @@ public partial class FamilyTreePage : ContentPage
   private ImageSource ResolvePhoto(PersonInfo person) =>
     _ThumbnailCache.TryGetValue(person.Id, out var thumbnail) && thumbnail.Length > 0
       ? ImageUtils.ImageFromBytes(thumbnail)
-      : ImageUtils.ImageFromRawResource(ImageUtils.DefaultPersonPhotoResourceName(person.BiologicalSex), ImageUtils.ThumbnailSize);
+      : _ImageUtils.ImageFromRawResource(ImageUtils.DefaultPersonPhotoResourceName(person.BiologicalSex), ImageUtils.ThumbnailSize);
 
   // A node only ever shows a ~60px circle, so keep a small thumbnail per person rather than decoding the
   // full-resolution source for every node (which, now that node views are retained, would pin gigabytes).

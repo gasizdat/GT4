@@ -1,4 +1,5 @@
 ﻿using GT4.Core.Project.Dto;
+using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
 
 namespace GT4.UI.Items;
@@ -6,8 +7,8 @@ namespace GT4.UI.Items;
 public class RelationshipTypeItem : CollectionItemBase<RelationshipType>
 {
   private readonly string _Name;
-  public RelationshipTypeItem(RelationshipType type, IRelationshipTypeFormatter relationshipTypeFormatter)
-    : base(type, string.Empty)
+  public RelationshipTypeItem(RelationshipType type, IRelationshipTypeFormatter relationshipTypeFormatter, ImageUtils imageUtils)
+    : base(type, string.Empty, imageUtils)
   {
     _Name = relationshipTypeFormatter.ToString(type, null, null, null);
   }
