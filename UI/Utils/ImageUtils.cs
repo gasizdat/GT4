@@ -1,15 +1,16 @@
 ﻿using GT4.Core.Project.Dto;
 using GT4.UI.Utils.Converters;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Maui.Graphics.Platform;
 using System.Buffers.Binary;
-using System.Collections.Concurrent;
 
 namespace GT4.UI.Utils;
 
 public static class ImageUtils
 {
+  private const int CahceSizeLimit = 200 * 1024 * 1024; // 200 MB
+  private static readonly MemoryCache _MemoryCache = new MemoryCache(new MemoryCacheOptions { SizeLimit = CahceSizeLimit });
   private static readonly byte[] _PngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
-
   private static readonly byte[] _TransparentPng =
   {
     0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
@@ -19,9 +20,6 @@ public static class ImageUtils
     0x01, 0x05, 0x01, 0x27, 0x23, 0xE3, 0x66, 0x66, 0x00, 0x00, 0x00, 0x00,
     0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
   };
-
-  private static readonly ConcurrentDictionary<string, byte[]> _ResourceStreamCache = new();
-  private static readonly ConcurrentDictionary<string, ImageSource> _ResourceImageCache = new();
 
   public static string DefaultPersonPhotoResourceName(BiologicalSex biologicalSex) => biologicalSex switch
   {
@@ -80,51 +78,38 @@ public static class ImageUtils
 
   public static ImageSource ImageFromRawResource(string resourceName, int? maxSize)
   {
-    var cacheKey = maxSize.HasValue ? $"{resourceName}_{maxSize}" : resourceName;
+    var cacheKeyPrefix = maxSize.HasValue ? $"{resourceName}_{maxSize}" : resourceName;
 
-    if (_ResourceImageCache.TryGetValue(cacheKey, out var image))
+    return _MemoryCache.GetOrCreate($"image_{cacheKeyPrefix}", entry =>
     {
-      return image;
-    }
-
-    if (maxSize.HasValue)
+      entry.Size = 1;
+      return ImageSource.FromStream(async _ =>
     {
-      image = ImageSource.FromStream(async _ =>
+        var data = _MemoryCache.GetOrCreate($"data_{cacheKeyPrefix}", async dataEntry =>
       {
-        if (!_ResourceStreamCache.TryGetValue(cacheKey, out var data))
+          byte[] bytes;
+          if (maxSize.HasValue)
         {
           using var originalStream = await FileSystem.OpenAppPackageFileAsync(resourceName);
-          data = DownsizedPngStream(originalStream, maxSize.Value);
-          _ResourceStreamCache.TryAdd(cacheKey, data);
+            bytes = DownsizedPngStream(originalStream, maxSize.Value);
         }
-
-        return new MemoryStream(data);
-      });
-    }
     else
     {
-      image = ImageSource.FromStream(async _ =>
-      {
-        if (!_ResourceStreamCache.TryGetValue(cacheKey, out var data))
-        {
-          using (var tempStream = new MemoryStream())
-          {
+            using var tempStream = new MemoryStream();
             using (var originalStream = await FileSystem.OpenAppPackageFileAsync(resourceName))
             {
               originalStream.CopyTo(tempStream);
             }
-            data = tempStream.ToArray();
+            bytes = tempStream.ToArray();
           }
-          _ResourceStreamCache.TryAdd(cacheKey, data);
-        }
 
-        return new MemoryStream(data);
+          dataEntry.Size = bytes.Length;
+          return bytes;
       });
-    }
 
-    _ResourceImageCache.TryAdd(cacheKey, image);
-
-    return image;
+        return new MemoryStream(data is null ? [] : await data);
+      });
+    })!;
   }
 
   /// <summary>
@@ -134,7 +119,7 @@ public static class ImageUtils
   /// converter hands back something that isn't a <see cref="PhotoInfo"/>.
   /// </summary>
   public static async Task<PhotoInfo> ResolvePhotoAsync(
-    DataConverterResolver dataConverterResolver, Data data, ImageSource fallback, CancellationToken token)
+    DataConverterResolver dataConverterResolver, Data data, ImageSource fallback, CancellationToken token, int? maxSize)
   {
     var converter = dataConverterResolver(data.Category);
     var resolved = converter is null ? null : await converter.ToObjectAsync(data, token);
