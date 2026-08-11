@@ -84,17 +84,17 @@ public static class ImageUtils
     {
       entry.Size = 1;
       return ImageSource.FromStream(async _ =>
-    {
-        var data = _MemoryCache.GetOrCreate($"data_{cacheKeyPrefix}", async dataEntry =>
       {
+        var data = _MemoryCache.GetOrCreate($"data_{cacheKeyPrefix}", async dataEntry =>
+        {
           byte[] bytes;
           if (maxSize.HasValue)
-        {
-          using var originalStream = await FileSystem.OpenAppPackageFileAsync(resourceName);
+          {
+            using var originalStream = await FileSystem.OpenAppPackageFileAsync(resourceName);
             bytes = DownsizedPngStream(originalStream, maxSize.Value);
-        }
-    else
-    {
+          }
+          else
+          {
             using var tempStream = new MemoryStream();
             using (var originalStream = await FileSystem.OpenAppPackageFileAsync(resourceName))
             {
@@ -105,7 +105,7 @@ public static class ImageUtils
 
           dataEntry.Size = bytes.Length;
           return bytes;
-      });
+        });
 
         return new MemoryStream(data is null ? [] : await data);
       });
@@ -119,18 +119,36 @@ public static class ImageUtils
   /// converter hands back something that isn't a <see cref="PhotoInfo"/>.
   /// </summary>
   public static async Task<PhotoInfo> ResolvePhotoAsync(
-    DataConverterResolver dataConverterResolver, Data data, ImageSource fallback, CancellationToken token, int? maxSize)
+    DataConverterResolver dataConverterResolver, 
+    Data data, 
+    ImageSource fallback, 
+    CancellationToken token, 
+    int? maxSize)
   {
-    var converter = dataConverterResolver(data.Category);
-    var resolved = converter is null ? null : await converter.ToObjectAsync(data, token);
+    var cacheKeyPrefix = $"photo_{data.Id}";
+    var cacheKey = maxSize.HasValue ? $"{cacheKeyPrefix}_{maxSize}" : cacheKeyPrefix;
 
-    if (resolved is PhotoInfo photoInfo)
+    var ret = await _MemoryCache.GetOrCreateAsync(cacheKey, async entry =>
     {
-      return photoInfo;
-    }
+      entry.Size = 1;
 
-    System.Diagnostics.Debug.WriteLine($"No usable IDataConverter result for {data.Category}; using fallback image.");
-    return new PhotoInfo(fallback, null);
+      var converter = dataConverterResolver(data.Category);
+      var resolved = converter is null ? null : await converter.ToObjectAsync(data, token);
+
+      if (resolved is PhotoInfo photoInfo)
+      {
+        if (maxSize.HasValue)
+        {
+          // TODO Downsize photoInfo.Source
+        }
+        return photoInfo;
+      }
+
+      System.Diagnostics.Debug.WriteLine($"No usable IDataConverter result for {data.Category}; using fallback image.");
+      return new PhotoInfo(fallback, null);
+    });
+
+    return ret ?? new PhotoInfo(fallback, null);
   }
 
   public static async Task<byte[]?> ToBytesAsync(ImageSource? source, IHttpClientFactory httpClientFactory, CancellationToken token)
