@@ -12,7 +12,9 @@ public static class ImageUtils
   private const int CahceSizeLimit = 200 * 1024 * 1024; // 200 MB
   private static readonly MemoryCache _MemoryCache = new MemoryCache(new MemoryCacheOptions { SizeLimit = CahceSizeLimit });
   private static readonly byte[] _PngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
-
+  private static readonly byte[] _JpegSignature = [0xFF, 0xD8];
+  private static readonly byte[] _GifSignature = [.. "GIF8"u8];
+  private static readonly byte[] _BmpSignature = [.. "BM"u8];
 
   internal static readonly byte[] TransparentPngData =
   {
@@ -105,15 +107,15 @@ public static class ImageUtils
     {
       size = PngPixelSize(bytes);
     }
-    else if (bytes.Length > 2 && bytes[0] == 0xFF && bytes[1] == 0xD8)
+    else if (bytes.StartsWith(_JpegSignature))
     {
       size = JpegPixelSize(bytes);
     }
-    else if (bytes.StartsWith("GIF8"u8))
+    else if (bytes.StartsWith(_GifSignature))
     {
       size = GifPixelSize(bytes);
     }
-    else if (bytes.StartsWith("BM"u8))
+    else if (bytes.StartsWith(_BmpSignature))
     {
       size = BmpPixelSize(bytes);
     }
