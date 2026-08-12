@@ -89,7 +89,7 @@ public class PhotoTagDataConverterTests
     // then downgrades the resulting Data's Category from tagged to plain. A StreamImageSource (built the
     // same way ImageUtils.ImageFromBytes does) is used so the conversion doesn't depend on resolving a
     // real file from the test host's working directory.
-    var photo = new PhotoInfo(GT4.UI.Utils.ImageUtils.ImageFromBytes([1, 2, 3, 4]), null);
+    var photo = new PhotoInfo(GT4.UI.Utils.ImageUtils.ImageFromBytes(new ElementId(-1), [1, 2, 3, 4], null), null);
 
     var taggedResult = await new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>()).FromObjectAsync(photo, CancellationToken.None);
     var plainResult = await new ImageDataConverter(Mock.Of<IHttpClientFactory>()).FromObjectAsync(photo, CancellationToken.None);

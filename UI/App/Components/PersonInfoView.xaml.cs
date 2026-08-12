@@ -156,10 +156,10 @@ public partial class PersonInfoView : ContentView
         {
           using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
           var photo = await ImageUtils.ResolvePhotoAsync(
-            _DataConverterResolver, 
-            mainPhoto, 
-            GetDefaultImage(), 
-            token, 
+            _DataConverterResolver,
+            mainPhoto,
+            GetDefaultImage(),
+            token,
             ImageUtils.ThumbnailSize);
 
           MainThread.BeginInvokeOnMainThread(() =>

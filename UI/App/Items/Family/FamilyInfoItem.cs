@@ -71,10 +71,10 @@ public class FamilyInfoItem : CollectionItemBase<FamilyInfo>, INotifyPropertyCha
         {
           using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
           var photo = await ImageUtils.ResolvePhotoAsync(
-            _DataConverterResolver, 
-            mainPhoto, 
-            base.Icon, 
-            token, 
+            _DataConverterResolver,
+            mainPhoto,
+            base.Icon,
+            token,
             ImageUtils.ThumbnailSize);
 
           MainThread.BeginInvokeOnMainThread(() =>

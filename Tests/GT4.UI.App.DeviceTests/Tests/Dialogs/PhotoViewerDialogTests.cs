@@ -1,3 +1,4 @@
+using GT4.Core.Project.Dto;
 using GT4.UI.Abstraction;
 using GT4.UI.Dialogs;
 using GT4.UI.Utils;
@@ -42,7 +43,9 @@ public class PhotoViewerDialogTests
   {
     byte[] first = [1, 2, 3];
     byte[] second = [4, 5];
-    var dialog = await CreateDialogAsync(new TestServices(), [ImageUtils.ImageFromBytes(first), ImageUtils.ImageFromBytes(second)]);
+    var dialog = await CreateDialogAsync(
+      new TestServices(),
+      [ImageUtils.ImageFromBytes(new ElementId(-1), first, null), ImageUtils.ImageFromBytes(new ElementId(-2), second, null)]);
 
     Assert.Equal(2, dialog.Photos.Length);
     Assert.Equal(first, await ReadBytesAsync(dialog.Photos[0]));
@@ -53,7 +56,7 @@ public class PhotoViewerDialogTests
   public async Task CloseCommand_pops_the_dialog_off_the_modal_stack()
   {
     var services = new TestServices();
-    var dialog = await CreateDialogAsync(services, [ImageUtils.ImageFromBytes([1])]);
+    var dialog = await CreateDialogAsync(services, [ImageUtils.ImageFromBytes(new ElementId(-3), [1], null)]);
     var host = await MainThread.InvokeOnMainThreadAsync(() => new ContentPage());
     await using var window = await WindowHost.AttachAsync(host);
     await MainThread.InvokeOnMainThreadAsync(() => host.Navigation.PushModalAsync(dialog));

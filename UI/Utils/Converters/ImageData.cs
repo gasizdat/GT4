@@ -10,6 +10,6 @@ public record class ImageData(
   int? MaxSize) : Data(Id, Content, MimeType, Category)
 {
   public ImageData(Data source, int? maxSize)
-    : this (source.Id, source.Content, source.MimeType, source.Category, maxSize)
+    : this(source.Id, source.Content, source.MimeType, source.Category, maxSize)
   { }
 }

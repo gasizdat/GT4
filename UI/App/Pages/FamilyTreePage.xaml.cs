@@ -394,7 +394,7 @@ public partial class FamilyTreePage : ContentPage
 
   private ImageSource ResolvePhoto(PersonInfo person) =>
     _ThumbnailCache.TryGetValue(person.Id, out var thumbnail) && thumbnail.Length > 0
-      ? ImageUtils.ImageFromBytes(thumbnail)
+      ? ImageUtils.ImageFromBytes(new ElementId(person.Id), thumbnail, null)
       : ImageUtils.ImageFromRawResource(ImageUtils.DefaultPersonPhotoResourceName(person.BiologicalSex), ImageUtils.ThumbnailSize);
 
   // A node only ever shows a ~60px circle, so keep a small thumbnail per person rather than decoding the
