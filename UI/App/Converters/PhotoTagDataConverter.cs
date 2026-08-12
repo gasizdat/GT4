@@ -1,9 +1,7 @@
 using GT4.Core.Gedcom;
 using GT4.Core.Project.Dto;
-using GT4.UI.Utils;
+using GT4.UI.Abstraction;
 using GT4.UI.Utils.Converters;
-using GT4.UI.Utils.Dto;
-using Microsoft.Extensions.Http;
 
 namespace GT4.UI.Converters;
 
@@ -22,10 +20,12 @@ namespace GT4.UI.Converters;
 public sealed class PhotoTagDataConverter : IDataConverter
 {
   private readonly ImageDataConverter _ImageConverter;
+  private readonly IImageCache _ImageCache;
 
-  public PhotoTagDataConverter(IHttpClientFactory httpClientFactory)
+  public PhotoTagDataConverter(IHttpClientFactory httpClientFactory, IImageCache imageCache)
   {
-    _ImageConverter = new ImageDataConverter(httpClientFactory);
+    _ImageConverter = new ImageDataConverter(httpClientFactory, imageCache);
+    _ImageCache = imageCache;
   }
 
   public Task<Data?> FromObjectAsync(object? data, CancellationToken token) =>
@@ -34,12 +34,24 @@ public sealed class PhotoTagDataConverter : IDataConverter
   public async Task<object?> ToObjectAsync(Data? data, CancellationToken token)
   {
     if (data is null)
+    {
       return null;
+    }
 
-    var imageBytes = GedcomPhotoResidue.PayloadBytes(data);
+    ImageSource imageSource;
     var caption = await GedcomPhotoResidue.ExtractTitleAsync(data, token);
-    var maxSize = data is ImageData imageData ? imageData.MaxSize : null;
 
-    return new PhotoInfo(ImageUtils.ImageFromBytes(data, imageBytes, maxSize), caption);
+    if (data.Id == ElementId.NonCommittedId)
+    {
+      imageSource = ImageSource.FromStream(token =>
+        Task.Run<Stream>(() => new MemoryStream(GedcomPhotoResidue.PayloadBytes(data)), token));
+    }
+    else
+    {
+      var key = $"{nameof(PhotoTagDataConverter)}_{data.Id}";
+      imageSource = _ImageCache.GetImage(key, () => GedcomPhotoResidue.PayloadBytes(data));
+    }
+
+    return new PhotoInfo(imageSource, caption);
   }
 }
