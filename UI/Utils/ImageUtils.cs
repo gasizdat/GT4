@@ -34,9 +34,12 @@ public static class ImageUtils
   public static ImageSource TransparentImageStub =>
     ImageSource.FromStream(token => Task.Run<Stream>(() => new MemoryStream(_TransparentPng), token));
 
-  public static ImageSource ImageFromBytes(ElementId elementId, byte[] data, int? maxSize)
+  // Keyed on Data.Id, not the more general ElementId: Data.Id is a TableData AUTOINCREMENT row id, the
+  // only id space in this app guaranteed unique against every other cached entry. PersonInfo.Id etc. come
+  // from unrelated tables and can collide with it numerically, which would hand back another photo's bytes.
+  public static ImageSource ImageFromBytes(Data data, byte[] content, int? maxSize)
   {
-    if (data.Length == 0)
+    if (content.Length == 0)
     {
       return TransparentImageStub;
     }
@@ -44,12 +47,12 @@ public static class ImageUtils
     // A not-yet-committed Data (ElementId.NonCommittedId) doesn't identify a unique row -- every
     // unsaved photo in the app shares that Id, so caching by it would hand later photos the first
     // one's bytes. Decode straight through instead of caching.
-    if (elementId.Id == ElementId.NonCommittedId)
+    if (data.Id == ElementId.NonCommittedId)
     {
-      return ImageFromBytesUncached(data, maxSize);
+      return ImageFromBytesUncached(content, maxSize);
     }
 
-    var cacheKeySuffix = maxSize.HasValue ? $"{elementId.Id}_{maxSize}" : $"{elementId.Id}";
+    var cacheKeySuffix = maxSize.HasValue ? $"{data.Id}_{maxSize}" : $"{data.Id}";
 
     return _MemoryCache.GetOrCreate($"custom_image_{cacheKeySuffix}", entry =>
     {
@@ -58,7 +61,7 @@ public static class ImageUtils
       {
         var cachedData = _MemoryCache.GetOrCreate($"custom_data_{cacheKeySuffix}", async dataEntry =>
         {
-          var bytes = maxSize.HasValue ? DownsizedPng(data, maxSize.Value) : data;
+          var bytes = maxSize.HasValue ? DownsizedPng(content, maxSize.Value) : content;
 
           dataEntry.Size = bytes.Length;
           return bytes;
@@ -69,7 +72,9 @@ public static class ImageUtils
     })!;
   }
 
-  private static ImageSource ImageFromBytesUncached(byte[] data, int? maxSize) =>
+  // Decodes without going through the shared cache, for callers that either have no stable Data-backed
+  // id to key by (FamilyTreePage's person-keyed thumbnails) or already memoize the bytes themselves.
+  public static ImageSource ImageFromBytesUncached(byte[] data, int? maxSize) =>
     ImageSource.FromStream(token => Task.Run<Stream>(
       () => new MemoryStream(maxSize.HasValue ? DownsizedPng(data, maxSize.Value) : data), token));
 

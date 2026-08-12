@@ -392,9 +392,11 @@ public partial class FamilyTreePage : ContentPage
     return view;
   }
 
+  // Uncached: _ThumbnailCache already memoizes the downsized bytes per person, and person.Id isn't a
+  // Data.Id, so it can't safely key ImageUtils' own shared cache (see ImageFromBytes doc comment).
   private ImageSource ResolvePhoto(PersonInfo person) =>
     _ThumbnailCache.TryGetValue(person.Id, out var thumbnail) && thumbnail.Length > 0
-      ? ImageUtils.ImageFromBytes(new ElementId(person.Id), thumbnail, null)
+      ? ImageUtils.ImageFromBytesUncached(thumbnail, null)
       : ImageUtils.ImageFromRawResource(ImageUtils.DefaultPersonPhotoResourceName(person.BiologicalSex), ImageUtils.ThumbnailSize);
 
   // A node only ever shows a ~60px circle, so keep a small thumbnail per person rather than decoding the
