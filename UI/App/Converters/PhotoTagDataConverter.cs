@@ -2,6 +2,7 @@ using GT4.Core.Gedcom;
 using GT4.Core.Project.Dto;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
+using GT4.UI.Utils.Dto;
 using Microsoft.Extensions.Http;
 
 namespace GT4.UI.Converters;
@@ -37,6 +38,8 @@ public sealed class PhotoTagDataConverter : IDataConverter
 
     var imageBytes = GedcomPhotoResidue.PayloadBytes(data);
     var caption = await GedcomPhotoResidue.ExtractTitleAsync(data, token);
-    return new PhotoInfo(ImageUtils.ImageFromBytes(imageBytes), caption);
+    var maxSize = data is ImageData imageData ? imageData.MaxSize : null;
+
+    return new PhotoInfo(ImageUtils.ImageFromBytes(data, imageBytes, maxSize), caption);
   }
 }
