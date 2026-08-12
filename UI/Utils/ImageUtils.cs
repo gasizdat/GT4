@@ -36,29 +36,29 @@ public static class ImageUtils
 
   public static ImageSource ImageFromBytes(ElementId elementId, byte[] data, int? maxSize)
   {
+    if (data.Length == 0)
+    {
+      return TransparentImageStub;
+    }
+
+    // A not-yet-committed Data (ElementId.NonCommittedId) doesn't identify a unique row -- every
+    // unsaved photo in the app shares that Id, so caching by it would hand later photos the first
+    // one's bytes. Decode straight through instead of caching.
+    if (elementId.Id == ElementId.NonCommittedId)
+    {
+      return ImageFromBytesUncached(data, maxSize);
+    }
+
     var cacheKeySuffix = maxSize.HasValue ? $"{elementId.Id}_{maxSize}" : $"{elementId.Id}";
 
     return _MemoryCache.GetOrCreate($"custom_image_{cacheKeySuffix}", entry =>
     {
-      if (data.Length == 0)
-      {
-        return TransparentImageStub;
-      }
-
       entry.Size = 1;
       return ImageSource.FromStream(async _ =>
       {
         var cachedData = _MemoryCache.GetOrCreate($"custom_data_{cacheKeySuffix}", async dataEntry =>
         {
-          byte[] bytes;
-          if (maxSize.HasValue)
-          {
-            bytes = DownsizedPng(data, maxSize.Value);
-          }
-          else
-          {
-            bytes = data;
-          }
+          var bytes = maxSize.HasValue ? DownsizedPng(data, maxSize.Value) : data;
 
           dataEntry.Size = bytes.Length;
           return bytes;
@@ -68,6 +68,10 @@ public static class ImageUtils
       });
     })!;
   }
+
+  private static ImageSource ImageFromBytesUncached(byte[] data, int? maxSize) =>
+    ImageSource.FromStream(token => Task.Run<Stream>(
+      () => new MemoryStream(maxSize.HasValue ? DownsizedPng(data, maxSize.Value) : data), token));
 
   /// <summary>
   /// Decodes <paramref name="data"/>, scales it so its longest side is <paramref name="maxSize"/> and
