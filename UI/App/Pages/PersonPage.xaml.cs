@@ -409,7 +409,7 @@ public partial class PersonPage : ContentPage
 
     Data[] photoData = [personFullInfo.MainPhoto, .. personFullInfo.AdditionalPhotos];
     var photos = await Task.WhenAll(photoData.Select(data =>
-      ImageUtils.ResolvePhotoAsync(_DataConverterResolver, data, defaultPersonPhoto, token)));
+      ImageUtils.ResolvePhotoAsync(_DataConverterResolver, data, defaultPersonPhoto, token, null)));
 
     return (photos, photoData);
   }

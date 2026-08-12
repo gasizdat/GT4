@@ -1,15 +1,17 @@
 ﻿using GT4.Core.Project.Dto;
 using GT4.UI.Utils.Converters;
+using GT4.UI.Utils.Dto;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Maui.Graphics.Platform;
 using System.Buffers.Binary;
-using System.Collections.Concurrent;
 
 namespace GT4.UI.Utils;
 
 public static class ImageUtils
 {
+  private const int CahceSizeLimit = 200 * 1024 * 1024; // 200 MB
+  private static readonly MemoryCache _MemoryCache = new MemoryCache(new MemoryCacheOptions { SizeLimit = CahceSizeLimit });
   private static readonly byte[] _PngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
-
   private static readonly byte[] _TransparentPng =
   {
     0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
@@ -20,9 +22,6 @@ public static class ImageUtils
     0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
   };
 
-  private static readonly ConcurrentDictionary<string, byte[]> _ResourceStreamCache = new();
-  private static readonly ConcurrentDictionary<string, ImageSource> _ResourceImageCache = new();
-
   public static string DefaultPersonPhotoResourceName(BiologicalSex biologicalSex) => biologicalSex switch
   {
     BiologicalSex.Male => "male_stub.png",
@@ -32,8 +31,50 @@ public static class ImageUtils
 
   public const int ThumbnailSize = 200;
 
-  public static ImageSource ImageFromBytes(byte[] data) =>
-    ImageSource.FromStream(token => Task.Run<Stream>(() => new MemoryStream(data.Length > 0 ? data : _TransparentPng), token));
+  public static ImageSource TransparentImageStub =>
+    ImageSource.FromStream(token => Task.Run<Stream>(() => new MemoryStream(_TransparentPng), token));
+
+  // Keyed on Data.Id, not the more general ElementId: Data.Id is a TableData AUTOINCREMENT row id, the
+  // only id space in this app guaranteed unique against every other cached entry. PersonInfo.Id etc. come
+  // from unrelated tables and can collide with it numerically, which would hand back another photo's bytes.
+  public static ImageSource ImageFromBytes(Data data, byte[] content, int? maxSize)
+  {
+    if (content.Length == 0)
+    {
+      return TransparentImageStub;
+    }
+
+    // A not-yet-committed Data (ElementId.NonCommittedId) doesn't identify a unique row -- every
+    // unsaved photo in the app shares that Id, so caching by it would hand later photos the first
+    // one's bytes. Decode straight through instead of caching.
+    if (data.Id == ElementId.NonCommittedId)
+    {
+      return ImageFromBytesUncached(content, maxSize);
+    }
+
+    var cacheKeySuffix = maxSize.HasValue ? $"{data.Id}_{maxSize}" : $"{data.Id}";
+
+    return _MemoryCache.GetOrCreate($"custom_image_{cacheKeySuffix}", entry =>
+    {
+      entry.Size = 1;
+      return ImageSource.FromStream(async _ =>
+      {
+        var cachedData = _MemoryCache.GetOrCreate($"custom_data_{cacheKeySuffix}", async dataEntry =>
+        {
+          var bytes = maxSize.HasValue ? DownsizedPng(content, maxSize.Value) : content;
+
+          dataEntry.Size = bytes.Length;
+          return bytes;
+        });
+
+        return new MemoryStream(cachedData is null ? _TransparentPng : await cachedData);
+      });
+    })!;
+  }
+
+  private static ImageSource ImageFromBytesUncached(byte[] data, int? maxSize) =>
+    ImageSource.FromStream(token => Task.Run<Stream>(
+      () => new MemoryStream(maxSize.HasValue ? DownsizedPng(data, maxSize.Value) : data), token));
 
   /// <summary>
   /// Decodes <paramref name="data"/>, scales it so its longest side is <paramref name="maxSize"/> and
@@ -80,51 +121,38 @@ public static class ImageUtils
 
   public static ImageSource ImageFromRawResource(string resourceName, int? maxSize)
   {
-    var cacheKey = maxSize.HasValue ? $"{resourceName}_{maxSize}" : resourceName;
+    var cacheKeySuffix = maxSize.HasValue ? $"{resourceName}_{maxSize}" : resourceName;
 
-    if (_ResourceImageCache.TryGetValue(cacheKey, out var image))
+    return _MemoryCache.GetOrCreate($"image_{cacheKeySuffix}", entry =>
     {
-      return image;
-    }
-
-    if (maxSize.HasValue)
-    {
-      image = ImageSource.FromStream(async _ =>
+      entry.Size = 1;
+      return ImageSource.FromStream(async _ =>
       {
-        if (!_ResourceStreamCache.TryGetValue(cacheKey, out var data))
+        var cachedData = _MemoryCache.GetOrCreate($"data_{cacheKeySuffix}", async dataEntry =>
         {
-          using var originalStream = await FileSystem.OpenAppPackageFileAsync(resourceName);
-          data = DownsizedPngStream(originalStream, maxSize.Value);
-          _ResourceStreamCache.TryAdd(cacheKey, data);
-        }
-
-        return new MemoryStream(data);
-      });
-    }
-    else
-    {
-      image = ImageSource.FromStream(async _ =>
-      {
-        if (!_ResourceStreamCache.TryGetValue(cacheKey, out var data))
-        {
-          using (var tempStream = new MemoryStream())
+          byte[] bytes;
+          if (maxSize.HasValue)
           {
+            using var originalStream = await FileSystem.OpenAppPackageFileAsync(resourceName);
+            bytes = DownsizedPngStream(originalStream, maxSize.Value);
+          }
+          else
+          {
+            using var tempStream = new MemoryStream();
             using (var originalStream = await FileSystem.OpenAppPackageFileAsync(resourceName))
             {
               originalStream.CopyTo(tempStream);
             }
-            data = tempStream.ToArray();
+            bytes = tempStream.ToArray();
           }
-          _ResourceStreamCache.TryAdd(cacheKey, data);
-        }
 
-        return new MemoryStream(data);
+          dataEntry.Size = bytes.Length;
+          return bytes;
+        });
+
+        return new MemoryStream(cachedData is null ? [] : await cachedData);
       });
-    }
-
-    _ResourceImageCache.TryAdd(cacheKey, image);
-
-    return image;
+    })!;
   }
 
   /// <summary>
@@ -134,10 +162,14 @@ public static class ImageUtils
   /// converter hands back something that isn't a <see cref="PhotoInfo"/>.
   /// </summary>
   public static async Task<PhotoInfo> ResolvePhotoAsync(
-    DataConverterResolver dataConverterResolver, Data data, ImageSource fallback, CancellationToken token)
+    DataConverterResolver dataConverterResolver,
+    Data data,
+    ImageSource fallback,
+    CancellationToken token,
+    int? maxSize)
   {
     var converter = dataConverterResolver(data.Category);
-    var resolved = converter is null ? null : await converter.ToObjectAsync(data, token);
+    var resolved = converter is null ? null : await converter.ToObjectAsync(new ImageData(data, maxSize), token);
 
     if (resolved is PhotoInfo photoInfo)
     {

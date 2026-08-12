@@ -211,7 +211,7 @@ public partial class FamilyPage : ContentPage
 
     var defaultFamilyPhoto = ImageUtils.ImageFromRawResource("family_stub.png", null);
     var photos = await Task.WhenAll(photoData.Select(data =>
-      ImageUtils.ResolvePhotoAsync(_DataConverterResolver, data, defaultFamilyPhoto, token)));
+      ImageUtils.ResolvePhotoAsync(_DataConverterResolver, data, defaultFamilyPhoto, token, null)));
 
     var attachments = await Task.WhenAll(familyInfo.Attachments.Select(data => AttachmentInfo.CreateAsync(data, token)));
 

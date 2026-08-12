@@ -82,7 +82,7 @@ public partial class ImagePresenter : ContentView
       }
       else
       {
-        _Images[i] = ImageUtils.ImageFromBytes([]);
+        _Images[i] = ImageUtils.TransparentImageStub;
       }
 
       OnPropertyChanged(_ImageProperties[i]);
@@ -216,7 +216,7 @@ public partial class ImagePresenter : ContentView
     for (var i = 0; i < _ActiveImages; i++)
     {
       opacities.Add(_MaxOpacity);
-      images.Add(ImageUtils.ImageFromBytes([]));
+      images.Add(ImageUtils.TransparentImageStub);
     }
 
     _ImageOpacities = [.. opacities];
