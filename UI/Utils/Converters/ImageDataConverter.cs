@@ -45,7 +45,7 @@ public sealed class ImageDataConverter : IDataConverter
       var key = $"{nameof(ImageDataConverter)}_{data.Id}";
       imageSource = _ImageCache.GetImage(key, () => data.Content);
     }
-    
+
     return new PhotoInfo(imageSource, null);
   }
 }

@@ -13,6 +13,8 @@ namespace GT4.UI.DeviceTests;
 /// <summary>Covers PersonDataItem.ToDataAsync's untouched-vs-modified and tagged-vs-plain branches.</summary>
 public class PersonDataItemTests
 {
+  private const int CacheSizeLimit = 1024 * 1024;
+
   private static ICancellationTokenProvider TokenProvider(TestServices services) =>
     services.Provider.GetRequiredService<ICancellationTokenProvider>();
 
@@ -21,7 +23,7 @@ public class PersonDataItemTests
   {
     var services = new TestServices();
     var original = new Data(10, [1, 2, 3], "image/png", DataCategory.PersonMainPhotoTagged);
-    var item = new PersonDataItem(original, new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>()), TokenProvider(services), services.AlertService.Object);
+    var item = new PersonDataItem(original, new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>(), new ImageCache(CacheSizeLimit)), TokenProvider(services), services.AlertService.Object);
 
     var result = await item.ToDataAsync();
 
@@ -33,7 +35,7 @@ public class PersonDataItemTests
   {
     var services = new TestServices();
     var original = new Data(10, [1, 2, 3], "image/png", DataCategory.PersonMainPhotoTagged);
-    var item = new PersonDataItem(original, new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>()), TokenProvider(services), services.AlertService.Object);
+    var item = new PersonDataItem(original, new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>(), new ImageCache(CacheSizeLimit)), TokenProvider(services), services.AlertService.Object);
 
     item.Content = new PhotoInfo(ImageUtils.ImageFromBytes(original, [9, 9, 9], null), null);
     var result = await item.ToDataAsync();
@@ -48,7 +50,7 @@ public class PersonDataItemTests
   {
     var services = new TestServices();
     var original = new Data(10, [1, 2, 3], "image/png", DataCategory.PersonPhoto);
-    var item = new PersonDataItem(original, new ImageDataConverter(Mock.Of<IHttpClientFactory>()), TokenProvider(services), services.AlertService.Object);
+    var item = new PersonDataItem(original, new ImageDataConverter(Mock.Of<IHttpClientFactory>(), new ImageCache(CacheSizeLimit)), TokenProvider(services), services.AlertService.Object);
 
     item.Content = new PhotoInfo(ImageUtils.ImageFromBytes(original, [9, 9, 9], null), null);
     var result = await item.ToDataAsync();

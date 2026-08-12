@@ -1,6 +1,5 @@
 ﻿using GT4.Core.Project.Dto;
 using GT4.UI.Utils.Converters;
-using GT4.UI.Utils.Dto;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Maui.Graphics.Platform;
 using System.Buffers.Binary;
@@ -173,7 +172,7 @@ public static class ImageUtils
     int? maxSize)
   {
     var converter = dataConverterResolver(data.Category);
-    var resolved = converter is null ? null : await converter.ToObjectAsync(new ImageData(data, maxSize), token);
+    var resolved = converter is null ? null : await converter.ToObjectAsync(data, token);
 
     if (resolved is PhotoInfo photoInfo)
     {
