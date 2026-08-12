@@ -12,7 +12,9 @@ public static class ImageUtils
   private const int CahceSizeLimit = 200 * 1024 * 1024; // 200 MB
   private static readonly MemoryCache _MemoryCache = new MemoryCache(new MemoryCacheOptions { SizeLimit = CahceSizeLimit });
   private static readonly byte[] _PngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
-  private static readonly byte[] _TransparentPng =
+
+
+  internal static readonly byte[] TransparentPngData =
   {
     0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
     0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
@@ -32,7 +34,7 @@ public static class ImageUtils
   public const int ThumbnailSize = 200;
 
   public static ImageSource TransparentImageStub =>
-    ImageSource.FromStream(token => Task.Run<Stream>(() => new MemoryStream(_TransparentPng), token));
+    ImageSource.FromStream(token => Task.Run<Stream>(() => new MemoryStream(TransparentPngData), token));
 
   // Keyed on Data.Id, not the more general ElementId: Data.Id is a TableData AUTOINCREMENT row id, the
   // only id space in this app guaranteed unique against every other cached entry. PersonInfo.Id etc. come
@@ -67,7 +69,7 @@ public static class ImageUtils
           return bytes;
         });
 
-        return new MemoryStream(cachedData is null ? _TransparentPng : await cachedData);
+        return new MemoryStream(cachedData is null ? TransparentPngData : await cachedData);
       });
     })!;
   }
