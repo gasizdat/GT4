@@ -9,7 +9,6 @@ using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
 using GT4.UI.Utils.Settings;
 using Microsoft.Maui.Layouts;
-using System.Collections.Concurrent;
 using System.Windows.Input;
 using Path = Microsoft.Maui.Controls.Shapes.Path;
 
@@ -32,9 +31,6 @@ public partial class FamilyTreePage : ContentPage
   // every node view; views that do leave the tree are disconnected to release their native resources.
   private readonly Dictionary<int, NodeEntry> _NodeCache = [];
   private readonly List<Path> _ConnectorPool = [];
-  // Small per-person photo thumbnails, decoded once off the UI thread; empty = decode failed, use stub.
-  // Concurrent because overlapping loads (e.g. zoom while a load is in flight) decode into it in parallel.
-  private readonly ConcurrentDictionary<int, byte[]> _ThumbnailCache = new();
   private const double ConnectorLineWidth = 2;
   // Each "load more" click adds GenerationsPerLoad generations, up to this hard ceiling.
   private const int GenerationsPerLoad = 3;
@@ -275,7 +271,6 @@ public partial class FamilyTreePage : ContentPage
       };
 
       var layout = _Layout.Update(tree, scaledMetrics);
-      CacheThumbnails(tree);
       var names = layout.Nodes.ToDictionary(
         node => node.Node.Id,
         node => _NameFormatter.ToString(node.Node.Person, NameFormat.ShortPersonName));
@@ -392,40 +387,13 @@ public partial class FamilyTreePage : ContentPage
     return view;
   }
 
-  // Uncached: _ThumbnailCache already memoizes the downsized bytes per person, and person.Id isn't a
-  // Data.Id, so it can't safely key ImageUtils' own shared cache (see ImageFromBytes doc comment).
-  private ImageSource ResolvePhoto(PersonInfo person) =>
-    _ThumbnailCache.TryGetValue(person.Id, out var thumbnail) && thumbnail.Length > 0
-      ? ImageUtils.ImageFromBytesUncached(thumbnail, null)
+  private ImageSource ResolvePhoto(PersonInfo person)
+  {
+    var payload = person.MainPhoto is { } photo ? GedcomPhotoResidue.PayloadBytes(photo) : [];
+
+    return payload.Length > 0
+      ? ImageUtils.ImageFromBytes(person.MainPhoto!, payload, ImageUtils.ThumbnailSize)
       : ImageUtils.ImageFromRawResource(ImageUtils.DefaultPersonPhotoResourceName(person.BiologicalSex), ImageUtils.ThumbnailSize);
-
-  // A node only ever shows a ~60px circle, so keep a small thumbnail per person rather than decoding the
-  // full-resolution source for every node (which, now that node views are retained, would pin gigabytes).
-  // Decoded here off the UI thread, before Render runs.
-  private void CacheThumbnails(FamilyTree tree)
-  {
-    foreach (var node in tree.Nodes)
-    {
-      var person = node.Person;
-      if (person.MainPhoto is { Content.Length: > 0 } photo)
-      {
-        var imageBytes = GedcomPhotoResidue.PayloadBytes(photo);
-        _ThumbnailCache.GetOrAdd(person.Id, _ => Downsize(imageBytes));
-      }
-    }
-  }
-
-  private static byte[] Downsize(byte[] content)
-  {
-    try
-    {
-      return ImageUtils.DownsizedPng(content, ImageUtils.ThumbnailSize);
-    }
-    catch
-    {
-      // A photo that cannot be decoded falls back to the stub rather than failing the whole load.
-      return [];
-    }
   }
 
   private void RemoveNode(FamilyTreeNodeView view)
@@ -440,9 +408,9 @@ public partial class FamilyTreePage : ContentPage
     path.Handler?.DisconnectHandler();
   }
 
-  // Drop every reused view, connector and thumbnail so the next load rebuilds from current data. Refresh
-  // uses this: the page never auto-reloads, so the cached visuals would otherwise keep showing a person's
-  // name and photo as they were when first drawn, ignoring edits made since.
+  // Drop every reused view and connector so the next load rebuilds from current data. Refresh uses this:
+  // the page never auto-reloads, so the cached visuals would otherwise keep showing a person's name and
+  // photo as they were when first drawn, ignoring edits made since.
   private void ClearRenderCache()
   {
     foreach (var entry in _NodeCache.Values)
@@ -455,7 +423,6 @@ public partial class FamilyTreePage : ContentPage
     }
     _NodeCache.Clear();
     _ConnectorPool.Clear();
-    _ThumbnailCache.Clear();
   }
 
   private async Task PositionViewportAsync(Point centerTopLeft, double zoom)

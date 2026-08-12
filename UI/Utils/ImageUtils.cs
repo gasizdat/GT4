@@ -72,9 +72,7 @@ public static class ImageUtils
     })!;
   }
 
-  // Decodes without going through the shared cache, for callers that either have no stable Data-backed
-  // id to key by (FamilyTreePage's person-keyed thumbnails) or already memoize the bytes themselves.
-  public static ImageSource ImageFromBytesUncached(byte[] data, int? maxSize) =>
+  private static ImageSource ImageFromBytesUncached(byte[] data, int? maxSize) =>
     ImageSource.FromStream(token => Task.Run<Stream>(
       () => new MemoryStream(maxSize.HasValue ? DownsizedPng(data, maxSize.Value) : data), token));
 
