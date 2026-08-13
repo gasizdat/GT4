@@ -21,7 +21,7 @@ public static class GedcomFamilyMedia
 
     foreach (var attachment in attachments.Where(data => spouseIds.Contains(data.Id)))
     {
-      var (_, residual) = await GedcomPhotoResidue.DecodeAsync(attachment.Content, token);
+      var residual = await GedcomPhotoResidue.DecodeResidualAsync(attachment.Content, token);
       if (residual.Child(GedcomTags.ReferencedRecord) is null)
       {
         shared.Add(attachment);

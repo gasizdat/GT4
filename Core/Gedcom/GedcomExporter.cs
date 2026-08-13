@@ -520,7 +520,8 @@ internal sealed class GedcomExporter : IGedcomExporter
     GedcomNode? residual = null;
     if (photo.Category.IsTaggedPhoto())
     {
-      (imageBytes, residual) = await GedcomPhotoResidue.DecodeAsync(photo.Content, token);
+      imageBytes = GedcomPhotoResidue.ExtractImageBytes(photo.Content);
+      residual = await GedcomPhotoResidue.DecodeResidualAsync(photo.Content, token);
     }
     if (IsReferenced(residual))
       return;
@@ -547,7 +548,8 @@ internal sealed class GedcomExporter : IGedcomExporter
     IGedcomMediaWriter media,
     CancellationToken token)
   {
-    var (bytes, residual) = await GedcomPhotoResidue.DecodeAsync(attachment.Content, token);
+    var bytes = GedcomPhotoResidue.ExtractImageBytes(attachment.Content);
+    var residual = await GedcomPhotoResidue.DecodeResidualAsync(attachment.Content, token);
     if (IsReferenced(residual))
       return;
 

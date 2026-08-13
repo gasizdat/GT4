@@ -37,15 +37,17 @@ public static class GedcomPhotoResidue
     return buffer.ToArray();
   }
 
-  // Used by GedcomExporter, which needs the full node to re-attach its children onto a regenerated OBJE.
-  internal static async Task<(byte[] ImageBytes, GedcomNode Residual)> DecodeAsync(byte[] content, CancellationToken token)
+  // ExtractImageBytes covers the other half: a caller needing both parses this, then slices separately.
+  // Kept apart so a caller that only needs the residual (a caption, a filename, a shared-media check)
+  // never pays for slicing and copying the image bytes -- for a multi-MB photo, that copy costs far more
+  // than this parse.
+  internal static async Task<GedcomNode> DecodeResidualAsync(byte[] content, CancellationToken token)
   {
     var tagLength = BitConverter.ToInt32(content, 0);
     var tagText = Encoding.UTF8.GetString(content, sizeof(int), tagLength);
-    var imageBytes = content[(sizeof(int) + tagLength)..];
 
     var roots = await GedcomReader.ReadAsync(new StringReader(tagText), token);
-    return (imageBytes, roots[0]);
+    return roots[0];
   }
 
   /// <summary>Synchronous: just reads the length prefix and slices the remainder -- no GEDCOM parse at all.</summary>
@@ -65,7 +67,7 @@ public static class GedcomPhotoResidue
     if (data is null || !data.Category.IsEnveloped())
       return null;
 
-    var (_, residual) = await DecodeAsync(data.Content, token);
+    var residual = await DecodeResidualAsync(data.Content, token);
     return residual.ChildValue(GedcomTags.Title);
   }
 
@@ -74,7 +76,7 @@ public static class GedcomPhotoResidue
     if (attachment is null || !attachment.Category.IsAttachment())
       return null;
 
-    var (_, residual) = await DecodeAsync(attachment.Content, token);
+    var residual = await DecodeResidualAsync(attachment.Content, token);
     return residual.ChildValue(GedcomTags.File);
   }
 }
