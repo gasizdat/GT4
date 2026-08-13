@@ -1,5 +1,6 @@
 ﻿using GT4.Core.Project.Dto;
 using GT4.UI.Abstraction;
+using GT4.UI.Utils.Dto;
 
 namespace GT4.UI.Utils.Converters;
 
@@ -39,6 +40,11 @@ public sealed class ImageDataConverter : IDataConverter
     if (data.Id == ElementId.NonCommittedId)
     {
       imageSource = ImageSource.FromStream(token => Task.Run<Stream>(() => new MemoryStream(data.Content), token));
+    }
+    else if (data is ResizedImageData imageData)
+    {
+      var key = $"{nameof(ImageDataConverter)}_{data.Id}_{imageData.MaxSize}";
+      imageSource = _ImageCache.GetImage(key, () => ImageUtils.DownsizedPng(data.Content, imageData.MaxSize));
     }
     else
     {

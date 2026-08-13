@@ -393,23 +393,19 @@ public partial class PersonPage : ContentPage
 
   private async Task<(PhotoInfo[] Photos, Data[] PhotoData)> LoadPhotosAsync(PersonFullInfo personFullInfo, CancellationToken token)
   {
-    var defaultPersonPhotoResourceName = ImageUtils.DefaultPersonPhotoResourceName(personFullInfo.BiologicalSex);
-    var defaultPersonPhoto = ImageUtils.ImageFromRawResource(defaultPersonPhotoResourceName, null);
+    PhotoInfo getDefaultPhotoInfo() => new PhotoInfo(ImageUtils.ImageFromRawResource(
+      ImageUtils.DefaultPersonPhotoResourceName(personFullInfo.BiologicalSex), null), null);
 
     if (personFullInfo.MainPhoto is null)
     {
-      if (personFullInfo.AdditionalPhotos.Length != 0)
-      {
-        throw new ApplicationException("Person photos inconsistency");
-      }
-
       using var readResourceToken = _CancellationTokenProvider.CreateShortOperationCancellationToken();
-      return ([new PhotoInfo(defaultPersonPhoto, null)], []);
+      return ([getDefaultPhotoInfo()], []);
     }
 
     Data[] photoData = [personFullInfo.MainPhoto, .. personFullInfo.AdditionalPhotos];
-    var photos = await Task.WhenAll(photoData.Select(data =>
-      ImageUtils.ResolvePhotoAsync(_DataConverterResolver, data, defaultPersonPhoto, token, null)));
+    var photos = (await Task.WhenAll(photoData.Select(data => _DataConverterResolver(data.Category).ToObjectAsync(data, token))))
+        .Select(obj => obj is PhotoInfo photoInfo ? photoInfo : getDefaultPhotoInfo())
+        .ToArray();
 
     return (photos, photoData);
   }

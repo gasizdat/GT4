@@ -1,7 +1,9 @@
 using GT4.Core.Gedcom;
 using GT4.Core.Project.Dto;
 using GT4.UI.Abstraction;
+using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
+using GT4.UI.Utils.Dto;
 
 namespace GT4.UI.Converters;
 
@@ -45,6 +47,12 @@ public sealed class PhotoTagDataConverter : IDataConverter
     {
       imageSource = ImageSource.FromStream(token =>
         Task.Run<Stream>(() => new MemoryStream(GedcomPhotoResidue.PayloadBytes(data)), token));
+    }
+    else if (data is ResizedImageData imageData)
+    {
+      var key = $"{nameof(PhotoTagDataConverter)}_{data.Id}_{imageData.MaxSize}";
+      imageSource = _ImageCache.GetImage(key,
+        () => ImageUtils.DownsizedPng(GedcomPhotoResidue.PayloadBytes(data), imageData.MaxSize));
     }
     else
     {

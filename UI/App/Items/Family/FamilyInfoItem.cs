@@ -4,6 +4,7 @@ using GT4.UI.Abstraction;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
+using GT4.UI.Utils.Dto;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -70,16 +71,15 @@ public class FamilyInfoItem : CollectionItemBase<FamilyInfo>, INotifyPropertyCha
         async Task UpdateIconAsync()
         {
           using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
-          var photo = await ImageUtils.ResolvePhotoAsync(
-            _DataConverterResolver,
-            mainPhoto,
-            base.Icon,
-            token,
-            ImageUtils.ThumbnailSize);
+          var converter = _DataConverterResolver(mainPhoto.Category);
+          var resizedMainPhoto = new ResizedImageData(mainPhoto, ImageUtils.ThumbnailSize);
+          var photo = await converter.ToObjectAsync(resizedMainPhoto, token) is PhotoInfo photoInfo
+            ? photoInfo.Source
+            : base.Icon;
 
           MainThread.BeginInvokeOnMainThread(() =>
           {
-            _Icon = photo.Source;
+            _Icon = photo;
             OnPropertyChanged(nameof(Icon));
           });
         }

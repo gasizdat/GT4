@@ -8,8 +8,7 @@ namespace GT4.UI.Utils;
 
 public static class ImageUtils
 {
-  private const int CahceSizeLimit = 200 * 1024 * 1024; // 200 MB
-  private static readonly MemoryCache _MemoryCache = new MemoryCache(new MemoryCacheOptions { SizeLimit = CahceSizeLimit });
+  private static readonly MemoryCache _MemoryCache = new MemoryCache(new MemoryCacheOptions());
   private static readonly byte[] _PngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
   private static readonly byte[] _JpegSignature = [0xFF, 0xD8];
   private static readonly byte[] _GifSignature = [.. "GIF8"u8];
@@ -32,7 +31,7 @@ public static class ImageUtils
     _ => "project_icon.png",
   };
 
-  public const int ThumbnailSize = 200;
+  public const int ThumbnailSize = 100;
 
   public static ImageSource TransparentImageStub =>
     ImageSource.FromStream(token => Task.Run<Stream>(() => new MemoryStream(TransparentPngData), token));
@@ -47,12 +46,10 @@ public static class ImageUtils
       return TransparentImageStub;
     }
 
-    // A not-yet-committed Data (ElementId.NonCommittedId) doesn't identify a unique row -- every
-    // unsaved photo in the app shares that Id, so caching by it would hand later photos the first
-    // one's bytes. Decode straight through instead of caching.
     if (data.Id == ElementId.NonCommittedId)
     {
-      return ImageFromBytesUncached(content, maxSize);
+      return ImageSource.FromStream(token => Task.Run<Stream>(
+        () => new MemoryStream(maxSize.HasValue ? DownsizedPng(content, maxSize.Value) : content), token));
     }
 
     var cacheKeySuffix = maxSize.HasValue ? $"{data.Id}_{maxSize}" : $"{data.Id}";
@@ -74,10 +71,6 @@ public static class ImageUtils
       });
     })!;
   }
-
-  private static ImageSource ImageFromBytesUncached(byte[] data, int? maxSize) =>
-    ImageSource.FromStream(token => Task.Run<Stream>(
-      () => new MemoryStream(maxSize.HasValue ? DownsizedPng(data, maxSize.Value) : data), token));
 
   /// <summary>
   /// Decodes <paramref name="data"/>, scales it so its longest side is <paramref name="maxSize"/> and
@@ -158,31 +151,6 @@ public static class ImageUtils
     })!;
   }
 
-  /// <summary>
-  /// Resolves a photo through its category's keyed <see cref="IDataConverter"/>, falling back to a
-  /// caption-less <paramref name="fallback"/> both when no converter is registered for the category (an
-  /// older build opening a project that has a category it doesn't know about) and when a registered
-  /// converter hands back something that isn't a <see cref="PhotoInfo"/>.
-  /// </summary>
-  public static async Task<PhotoInfo> ResolvePhotoAsync(
-    DataConverterResolver dataConverterResolver,
-    Data data,
-    ImageSource fallback,
-    CancellationToken token,
-    int? maxSize)
-  {
-    var converter = dataConverterResolver(data.Category);
-    var resolved = converter is null ? null : await converter.ToObjectAsync(data, token);
-
-    if (resolved is PhotoInfo photoInfo)
-    {
-      return photoInfo;
-    }
-
-    System.Diagnostics.Debug.WriteLine($"No usable IDataConverter result for {data.Category}; using fallback image.");
-    return new PhotoInfo(fallback, null);
-  }
-
   public static async Task<byte[]?> ToBytesAsync(ImageSource? source, IHttpClientFactory httpClientFactory, CancellationToken token)
   {
     if (source == null)
@@ -216,7 +184,7 @@ public static class ImageUtils
     }
   }
 
-  public static byte[] DownsizedPngStream(Stream input, float maxSize)
+  private static byte[] DownsizedPngStream(Stream input, float maxSize)
   {
     using var image = PlatformImage.FromStream(input);
     using var resized = image.Downsize(maxSize, disposeOriginal: true);
