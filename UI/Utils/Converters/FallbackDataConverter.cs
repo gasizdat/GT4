@@ -11,9 +11,9 @@ internal class FallbackDataConverter : IDataConverter
   public Task<Data?> FromObjectAsync(object? data, CancellationToken token) =>
     throw new NotSupportedException($"No IDataConverter registered for {_Category}.");
 
-  public async Task<object?> ToObjectAsync(Data? data, CancellationToken token)
+  public Task<object?> ToObjectAsync(Data? data, CancellationToken token)
   {
     System.Diagnostics.Debug.WriteLine($"No IDataConverter registered for {_Category}; Data ID: {data?.Id}.");
-    return null;
+    return Task.FromResult<object?>(null);
   }
 }

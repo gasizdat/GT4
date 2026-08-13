@@ -29,11 +29,11 @@ public sealed class ImageDataConverter : IDataConverter
       Category: default);
   }
 
-  public async Task<object?> ToObjectAsync(Data? data, CancellationToken token)
+  public Task<object?> ToObjectAsync(Data? data, CancellationToken token)
   {
     if (data is null || data.Content.Length == 0)
     {
-      return null;
+      return Task.FromResult<object?>(null);
     }
 
     ImageSource imageSource;
@@ -52,6 +52,6 @@ public sealed class ImageDataConverter : IDataConverter
       imageSource = _ImageCache.GetImage(key, () => data.Content);
     }
 
-    return new PhotoInfo(imageSource, null);
+    return Task.FromResult<object?>(new PhotoInfo(imageSource, null));
   }
 }
