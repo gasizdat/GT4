@@ -1,7 +1,5 @@
-using GT4.Core.Project.Dto;
 using GT4.UI.Abstraction;
 using GT4.UI.Dialogs;
-using GT4.UI.Utils;
 using Xunit;
 
 namespace GT4.UI.DeviceTests;
@@ -46,8 +44,8 @@ public class PhotoViewerDialogTests
     var dialog = await CreateDialogAsync(
       new TestServices(),
       [
-        ImageUtils.ImageFromBytes(new Data(-1, first, null, DataCategory.PersonPhoto), first, null),
-        ImageUtils.ImageFromBytes(new Data(-2, second, null, DataCategory.PersonPhoto), second, null),
+        ImageSource.FromStream(() => new MemoryStream(first)),
+        ImageSource.FromStream(() => new MemoryStream(second)),
       ]);
 
     Assert.Equal(2, dialog.Photos.Length);
@@ -59,7 +57,7 @@ public class PhotoViewerDialogTests
   public async Task CloseCommand_pops_the_dialog_off_the_modal_stack()
   {
     var services = new TestServices();
-    var dialog = await CreateDialogAsync(services, [ImageUtils.ImageFromBytes(new Data(-3, [1], null, DataCategory.PersonPhoto), [1], null)]);
+    var dialog = await CreateDialogAsync(services, [ImageSource.FromStream(() => new MemoryStream([1]))]);
     var host = await MainThread.InvokeOnMainThreadAsync(() => new ContentPage());
     await using var window = await WindowHost.AttachAsync(host);
     await MainThread.InvokeOnMainThreadAsync(() => host.Navigation.PushModalAsync(dialog));

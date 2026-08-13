@@ -14,10 +14,7 @@ namespace GT4.UI.DeviceTests;
 /// internal Encode/DecodeAsync pair isn't visible from this assembly, so the envelope is constructed
 /// directly in the documented [4-byte tag-length][UTF-8 tags][image bytes] layout) -- proving a tagged
 /// photo decodes to its image portion plus caption, with the image matching what ImageDataConverter
-/// would produce for the same raw bytes. The Data id 104 used by FromObjectAsync_encodes_plain_bytes_
-/// like_ImageDataConverter is picked to be unique across the whole DeviceTests assembly:
-/// ImageUtils.ImageFromBytes caches by Data.Id in a static MemoryCache, so a call elsewhere with the
-/// same id would hand back cached bytes for the wrong photo.
+/// would produce for the same raw bytes.
 /// </summary>
 public class PhotoTagDataConverterTests
 {
@@ -97,12 +94,10 @@ public class PhotoTagDataConverterTests
   {
     // A modification can never legitimately carry the old photo's tags (no editable-caption UI in this
     // pass), so it must encode identically to the plain converter -- PersonDataItem.ToDataAsync is what
-    // then downgrades the resulting Data's Category from tagged to plain. A StreamImageSource (built the
-    // same way ImageUtils.ImageFromBytes does) is used so the conversion doesn't depend on resolving a
-    // real file from the test host's working directory.
+    // then downgrades the resulting Data's Category from tagged to plain. A StreamImageSource is used
+    // so the conversion doesn't depend on resolving a real file from the test host's working directory.
     byte[] bytes = [1, 2, 3, 4];
-    var data = new Data(104, bytes, null, DataCategory.PersonPhoto);
-    var photo = new PhotoInfo(ImageUtils.ImageFromBytes(data, bytes, null), null);
+    var photo = new PhotoInfo(ImageSource.FromStream(() => new MemoryStream(bytes)), null);
 
     var taggedResult = await new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>(), new ImageCache(CacheSizeLimit))
       .FromObjectAsync(photo, CancellationToken.None);

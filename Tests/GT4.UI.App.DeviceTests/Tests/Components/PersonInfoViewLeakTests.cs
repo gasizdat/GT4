@@ -141,7 +141,7 @@ public class PersonInfoViewLeakTests
       {
         await _Gate.Task;
       }
-      return data is null ? null : new PhotoInfo(ImageUtils.ImageFromBytes(data, data.Content, null), null);
+      return data is null ? null : new PhotoInfo(ImageSource.FromStream(() => new MemoryStream(data.Content)), null);
     }
   }
 

@@ -23,7 +23,8 @@ internal sealed class TestableProjectListPage : ProjectListPage
     IGedcomImporter importer,
     GedcomImportEncoding gedcomImportEncoding,
     IAlertService alertService,
-    INavigationService navigationService)
+    INavigationService navigationService,
+    IImageCache imageCache)
     : base(
       cancellationTokenProvider,
       currentProjectProvider,
@@ -32,7 +33,8 @@ internal sealed class TestableProjectListPage : ProjectListPage
       importer,
       gedcomImportEncoding,
       alertService,
-      navigationService)
+      navigationService,
+      imageCache)
   {
   }
 

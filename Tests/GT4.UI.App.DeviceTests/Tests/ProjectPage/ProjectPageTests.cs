@@ -6,6 +6,7 @@ using GT4.UI.Components;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Pages;
+using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
 using Moq;
 using Xunit;
@@ -83,29 +84,46 @@ public class ProjectPageTests
     Assert.Equal(["Aksakov", "Pushkin", "Tolstoy"], families.Select(f => f.Info.Value));
   }
 
+  // A minimal valid 1x1 PNG: the card icon now resolves through a ResizedImageData, which decodes
+  // and re-encodes the source bytes to build a thumbnail, so arbitrary non-image bytes would throw.
+  private static readonly byte[] ValidPngBytes =
+  [
+    0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
+    0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+    0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x05, 0xC4, 0x89, 0x00, 0x00, 0x00,
+    0x0A, 0x49, 0x44, 0x41, 0x54, 0x78, 0xDA, 0x63, 0x64, 0xF8, 0x0F, 0x00,
+    0x01, 0x05, 0x01, 0x27, 0x23, 0xE3, 0x66, 0x66, 0x00, 0x00, 0x00, 0x00,
+    0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
+  ];
+
   [Fact]
   public async Task Families_with_a_main_photo_show_it_as_the_card_icon()
   {
     var services = new TestServices();
     var ivanov = N(1, "Ivanov", NameType.FamilyName);
     var petrov = N(2, "Petrov", NameType.FamilyName);
-    var photoBytes = new byte[] { 1, 2, 3 };
     services.FamilyManager.Setup(f => f.GetFamiliesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(
-      [FI(ivanov, new Data(1, photoBytes, "image/png", DataCategory.FamilyMainPhoto)), FI(petrov)]);
+      [FI(ivanov, new Data(1, ValidPngBytes, "image/png", DataCategory.FamilyMainPhoto)), FI(petrov)]);
     var page = await CreatePageAsync(services);
 
     var families = await page.WaitForFamiliesAsync();
 
     var withPhoto = families.Single(f => f.Info.Value == "Ivanov");
     var withoutPhoto = families.Single(f => f.Info.Value == "Petrov");
+    var defaultIconBytes = await ReadIconBytesAsync(withoutPhoto);
 
-    // Icon now resolves through the FamilyMainPhoto IDataConverter in the background -- poll past
-    // the synchronous fallback it returns first rather than asserting on it directly.
+    // Icon now resolves through the FamilyMainPhoto IDataConverter in the background, which decodes
+    // and re-encodes the source into a thumbnail -- poll past the synchronous fallback (the same
+    // stub as withoutPhoto's) it returns first, rather than expecting the raw photo bytes back
+    // byte-for-byte.
     var iconBytes = await Poll.UntilAsync(
       () => ReadIconBytesAsync(withPhoto),
-      bytes => bytes.SequenceEqual(photoBytes),
+      bytes => !bytes.SequenceEqual(defaultIconBytes),
       timeoutMessage: "Family icon did not resolve to the main photo.");
-    Assert.Equal(photoBytes, iconBytes);
+    // A 1x1 source is already far under ThumbnailSize, so Downsize leaves it 1x1 -- distinguishing
+    // it from the ~100px stub confirms the resolved icon really is Ivanov's own photo, not just
+    // some decodable image.
+    Assert.Equal(new Size(1, 1), ImageUtils.PixelSize(iconBytes));
     Assert.IsType<StreamImageSource>(withoutPhoto.Icon);
   }
 
