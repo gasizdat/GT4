@@ -1,9 +1,7 @@
 using GT4.Core.Gedcom;
 using GT4.Core.Project.Dto;
 using GT4.UI.Abstraction;
-using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
-using GT4.UI.Utils.Dto;
 
 namespace GT4.UI.Converters;
 
@@ -22,13 +20,9 @@ namespace GT4.UI.Converters;
 public sealed class PhotoTagDataConverter : IDataConverter
 {
   private readonly ImageDataConverter _ImageConverter;
-  private readonly IImageCache _ImageCache;
 
-  public PhotoTagDataConverter(IHttpClientFactory httpClientFactory, IImageCache imageCache)
-  {
+  public PhotoTagDataConverter(IHttpClientFactory httpClientFactory, IImageCache imageCache) =>
     _ImageConverter = new ImageDataConverter(httpClientFactory, imageCache);
-    _ImageCache = imageCache;
-  }
 
   public Task<Data?> FromObjectAsync(object? data, CancellationToken token) =>
     _ImageConverter.FromObjectAsync(data, token);
@@ -40,26 +34,11 @@ public sealed class PhotoTagDataConverter : IDataConverter
       return null;
     }
 
-    ImageSource imageSource;
     var caption = await GedcomPhotoResidue.ExtractTitleAsync(data, token);
+    var unwrapped = data with { Content = GedcomPhotoResidue.PayloadBytes(data) };
 
-    if (data.Id == ElementId.NonCommittedId)
-    {
-      imageSource = ImageSource.FromStream(token =>
-        Task.Run<Stream>(() => new MemoryStream(GedcomPhotoResidue.PayloadBytes(data)), token));
-    }
-    else if (data is ResizedImageData imageData)
-    {
-      var key = $"{nameof(PhotoTagDataConverter)}_{data.Id}_{imageData.MaxSize}";
-      imageSource = _ImageCache.GetImage(key,
-        () => ImageUtils.DownsizedPng(GedcomPhotoResidue.PayloadBytes(data), imageData.MaxSize));
-    }
-    else
-    {
-      var key = $"{nameof(PhotoTagDataConverter)}_{data.Id}";
-      imageSource = _ImageCache.GetImage(key, () => GedcomPhotoResidue.PayloadBytes(data));
-    }
-
-    return new PhotoInfo(imageSource, caption);
+    return await _ImageConverter.ToObjectAsync(unwrapped, token) is PhotoInfo photoInfo
+      ? photoInfo with { Caption = caption }
+      : null;
   }
 }
