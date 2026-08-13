@@ -15,7 +15,7 @@ public static class ImageUtils
   private static readonly byte[] _GifSignature = [.. "GIF8"u8];
   private static readonly byte[] _BmpSignature = [.. "BM"u8];
 
-  internal static readonly byte[] TransparentPngData =
+  private static readonly byte[] TransparentPngData =
   {
     0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
     0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
@@ -84,34 +84,36 @@ public static class ImageUtils
   {
     var cacheKeySuffix = maxSize.HasValue ? $"{resourceName}_{maxSize}" : resourceName;
 
+    // Kept as one ImageSource per resource: Image.Source ignores a reference-equal assignment, and the
+    // callers are binding getters (PersonInfoView.Photo, CollectionItemBase.Icon) that re-read it on every
+    // list-cell rebind. Unlike a photo's, this closure holds only the resource name, so nothing is pinned
+    // by it -- the bytes it reads are counted by their own entry.
     return _MemoryCache.GetOrCreate($"image_{cacheKeySuffix}", entry =>
     {
       entry.Size = 1;
       return ImageSource.FromStream(async _ =>
       {
-        var cachedData = _MemoryCache.GetOrCreate($"data_{cacheKeySuffix}", async dataEntry =>
+        var dataKey = $"data_{cacheKeySuffix}";
+
+        if (!_MemoryCache.TryGetValue(dataKey, out byte[]? bytes))
         {
-          byte[] bytes;
+          using var originalStream = await FileSystem.OpenAppPackageFileAsync(resourceName);
+
           if (maxSize.HasValue)
           {
-            using var originalStream = await FileSystem.OpenAppPackageFileAsync(resourceName);
             bytes = DownsizedPngStream(originalStream, maxSize.Value);
           }
           else
           {
             using var tempStream = new MemoryStream();
-            using (var originalStream = await FileSystem.OpenAppPackageFileAsync(resourceName))
-            {
-              originalStream.CopyTo(tempStream);
-            }
+            originalStream.CopyTo(tempStream);
             bytes = tempStream.ToArray();
           }
 
-          dataEntry.Size = bytes.Length;
-          return bytes;
-        });
+          _MemoryCache.Set(dataKey, bytes, new MemoryCacheEntryOptions { Size = bytes.Length });
+        }
 
-        return new MemoryStream(cachedData is null ? [] : await cachedData);
+        return new MemoryStream(bytes!);
       });
     })!;
   }

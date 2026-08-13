@@ -5,38 +5,28 @@ namespace GT4.UI.Utils;
 
 public class ImageCache : IImageCache
 {
-  private readonly MemoryCache _Images;
-  private readonly MemoryCache _Bytes;
+  private readonly MemoryCache _Cache;
 
   public ImageCache(int sizeLimit)
   {
-    _Images = new(new MemoryCacheOptions());
-    _Bytes = new(new MemoryCacheOptions { SizeLimit = sizeLimit });
+    _Cache = new(new MemoryCacheOptions { SizeLimit = sizeLimit });
   }
 
+  // Resolved eagerly so the cached ImageSource closes over the bytes the caller asked for -- a thumbnail
+  // stays a thumbnail. Built over the provider instead, it would capture the source Data and keep a
+  // full-resolution photo alive for every cached thumbnail. Eager also makes entry.Size the entry's real
+  // cost, and keeps one ImageSource per key: Image.Source ignores a reference-equal assignment, so a fresh
+  // instance per call would reload the image on every list-cell rebind.
   public ImageSource GetImage(string key, Func<byte[]> dataProvider)
   {
-    return CacheExtensions.GetOrCreate(_Images, key, entry =>
+    return CacheExtensions.GetOrCreate(_Cache, key, entry =>
     {
-      entry.Size = 1;
-      return ImageSource.FromStream(async _ =>
-      {
-        var cachedData = CacheExtensions.GetOrCreate(_Bytes, key, async dataEntry =>
-        {
-          var bytes = dataProvider();
-          dataEntry.Size = bytes.Length;
+      var bytes = dataProvider();
+      entry.Size = bytes.Length;
 
-          return bytes;
-        });
-
-        return new MemoryStream(cachedData is null ? ImageUtils.TransparentPngData : await cachedData);
-      });
-    }) ?? ImageUtils.TransparentImageStub;
+      return ImageSource.FromStream(() => new MemoryStream(bytes));
+    })!;
   }
 
-  public void Clear()
-  {
-    _Bytes.Clear();
-    _Images.Clear();
-  }
+  public void Clear() => _Cache.Clear();
 }
