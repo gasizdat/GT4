@@ -27,8 +27,7 @@ public class GT4Services
       .AddCoreUtils()
       .AddDefaultProject()
       .AddGedcom()
-      // These converters live here, not in AddUIUtils: they bridge to Core.Gedcom, and the leaf
-      // UI.Utils library must stay free of that feature dependency.
+      .AddDataConverterResolver()
       .AddKeyedSingleton<IDataConverter, GedcomDataConverter>(DataCategory.PersonGedcomTags)
       .AddKeyedSingleton<IDataConverter, PhotoTagDataConverter>(DataCategory.PersonMainPhotoTagged)
       .AddKeyedSingleton<IDataConverter, PhotoTagDataConverter>(DataCategory.PersonPhotoTagged)
@@ -36,7 +35,6 @@ public class GT4Services
       .AddKeyedSingleton<IDataConverter, AttachmentDataConverter>(DataCategory.FamilyAttachment)
       .AddSingleton<IAlertService, AlertService>()
       .AddSingleton<GedcomImportEncoding>()
-      .AddTransient<DataConverterResolver>(sp => category => sp.GetKeyedService<IDataConverter>(category))
       .AddTransient<SelectNameDialog.Factory>()
       .AddTransient<SelectRelativesDialog.Factory>()
       .AddTransient<SelectPersonDialog.Factory>()

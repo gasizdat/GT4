@@ -86,8 +86,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   private PersonDataItem GetPersonData(Data data, DataCategory dataCategory)
   {
-    var converter = _Factory.DataConverterResolver(dataCategory)
-      ?? throw new InvalidOperationException($"No IDataConverter registered for {dataCategory}.");
+    var converter = _Factory.DataConverterResolver(dataCategory);
     var ret = new PersonDataItem(
       data: data,
       converter,

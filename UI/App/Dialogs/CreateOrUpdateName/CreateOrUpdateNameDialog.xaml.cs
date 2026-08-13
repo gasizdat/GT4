@@ -325,8 +325,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
 
   private PersonDataItem GetFamilyData(Data data, DataCategory dataCategory)
   {
-    var converter = _DataConverterResolver(dataCategory)
-      ?? throw new InvalidOperationException($"No IDataConverter registered for {dataCategory}.");
+    var converter = _DataConverterResolver(dataCategory);
     return new(data, converter, _CancellationTokenProvider, _AlertService);
   }
 
@@ -376,8 +375,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
       return;
     }
 
-    var converter = _DataConverterResolver(DataCategory.FamilyAttachment)
-      ?? throw new InvalidOperationException($"No IDataConverter registered for {DataCategory.FamilyAttachment}.");
+    var converter = _DataConverterResolver(DataCategory.FamilyAttachment);
     using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
     foreach (var file in results)
     {

@@ -50,4 +50,15 @@ public static class ServiceCollectionExtensions
       .AddKeyedSingleton<IComparer<PersonInfo>, PersonInfoComparer>(NameFormat.PersonInitials)
       .AddTransient<SettingEditorsResolver>(sp => () => sp.GetKeyedServices<ISettingEditor>(KeyedService.AnyKey))
       ;
+
+  public static IServiceCollection AddDataConverterResolver(this IServiceCollection services)
+  {
+    services
+      .AddSingleton<FallbackDataConverter>()
+      .AddSingleton<DataConverterResolver>(services =>
+        category => services.GetKeyedService<IDataConverter>(category) ??
+                    services.GetRequiredService<FallbackDataConverter>());
+
+    return services;
+  }
 }
