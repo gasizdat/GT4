@@ -27,7 +27,6 @@ public class GT4Services
       .AddCoreUtils()
       .AddDefaultProject()
       .AddGedcom()
-      .AddDataConverterResolver()
       .AddKeyedSingleton<IDataConverter, GedcomDataConverter>(DataCategory.PersonGedcomTags)
       .AddKeyedSingleton<IDataConverter, PhotoTagDataConverter>(DataCategory.PersonMainPhotoTagged)
       .AddKeyedSingleton<IDataConverter, PhotoTagDataConverter>(DataCategory.PersonPhotoTagged)
