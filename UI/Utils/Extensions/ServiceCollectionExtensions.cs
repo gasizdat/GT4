@@ -53,11 +53,8 @@ public static class ServiceCollectionExtensions
 
   public static IServiceCollection AddDataConverterResolver(this IServiceCollection services)
   {
-    services
-      .AddSingleton<FallbackDataConverter>()
-      .AddSingleton<DataConverterResolver>(services =>
-        category => services.GetKeyedService<IDataConverter>(category) ??
-                    services.GetRequiredService<FallbackDataConverter>());
+    services.AddSingleton<DataConverterResolver>(provider =>
+      category => provider.GetKeyedService<IDataConverter>(category) ?? new FallbackDataConverter(category));
 
     return services;
   }

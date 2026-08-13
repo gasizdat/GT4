@@ -4,10 +4,16 @@ namespace GT4.UI.Utils.Converters;
 
 internal class FallbackDataConverter : IDataConverter
 {
-  public Task<Data?> FromObjectAsync(object? data, CancellationToken token) => throw new NotSupportedException();
+  private readonly DataCategory _Category;
+
+  public FallbackDataConverter(DataCategory category) => _Category = category;
+
+  public Task<Data?> FromObjectAsync(object? data, CancellationToken token) =>
+    throw new NotSupportedException($"No IDataConverter registered for {_Category}.");
+
   public async Task<object?> ToObjectAsync(Data? data, CancellationToken token)
   {
-    System.Diagnostics.Debug.WriteLine($"No usable IDataConverter result for {data?.Category}, ID: {data?.Id}; applying fallback.");
+    System.Diagnostics.Debug.WriteLine($"No IDataConverter registered for {_Category}; Data ID: {data?.Id}.");
     return null;
   }
 }
