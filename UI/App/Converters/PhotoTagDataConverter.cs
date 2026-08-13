@@ -35,7 +35,7 @@ public sealed class PhotoTagDataConverter : IDataConverter
 
   public async Task<object?> ToObjectAsync(Data? data, CancellationToken token)
   {
-    if (data is null)
+    if (data is null || data.Content.Length == 0)
     {
       return null;
     }
