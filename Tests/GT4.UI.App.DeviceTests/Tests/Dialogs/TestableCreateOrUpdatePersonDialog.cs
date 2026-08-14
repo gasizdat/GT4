@@ -2,6 +2,7 @@ using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
+using GT4.UI.Converters;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Utils.Converters;
@@ -30,7 +31,8 @@ internal sealed class TestableCreateOrUpdatePersonDialog : CreateOrUpdatePersonD
     SelectNameDialog.Factory SelectNameDialogFactory,
     SelectRelativesDialog.Factory SelectRelativesDialogFactory,
     SelectPersonDialog.Factory SelectPersonDialogFactory,
-    SelectMediaDialog.Factory SelectMediaDialogFactory)
+    SelectMediaDialog.Factory SelectMediaDialogFactory,
+    InlineMediaProvider MediaProvider)
     : CreateOrUpdatePersonDialog.Factory(
       CancellationTokenProvider,
       BiologicalSexFormatter,
@@ -45,7 +47,8 @@ internal sealed class TestableCreateOrUpdatePersonDialog : CreateOrUpdatePersonD
       SelectNameDialogFactory,
       SelectRelativesDialogFactory,
       SelectPersonDialogFactory,
-      SelectMediaDialogFactory)
+      SelectMediaDialogFactory,
+      MediaProvider)
   {
     public new TestableCreateOrUpdatePersonDialog Create(PersonFullInfo? person) =>
       new TestableCreateOrUpdatePersonDialog(this, person);

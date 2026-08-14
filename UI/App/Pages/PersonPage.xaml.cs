@@ -33,11 +33,11 @@ public partial class PersonPage : ContentPage
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
   private readonly CreateOrUpdatePersonDialog.Factory _CreateOrUpdatePersonDialogFactory;
+  private readonly InlineMediaResolver _MediaResolver;
   private ObservableCollection<PersonInfo> _NavigationHistory = new();
   private int _NavigationIndex = -1;
   private PersonFullInfo _PersonFullInfo = PersonFullInfo.Empty;
   private PhotoInfo[] _Photos = [];
-  private IReadOnlyDictionary<int, byte[]> _MediaSources = ReadOnlyDictionary<int, byte[]>.Empty;
   private AttachmentInfo[] _Attachments = [];
   private string _Biography = string.Empty;
   private PersonPageSmartLayout _SmartLayout = new();
@@ -59,7 +59,8 @@ public partial class PersonPage : ContentPage
     IAlertService alertService,
     INavigationService navigationService,
     IBiologicalSexFormatter biologicalSexFormatter,
-    CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory
+    CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory,
+    InlineMediaProvider mediaProvider
     )
   {
     _CancellationTokenProvider = cancellationTokenProvider;
@@ -73,6 +74,7 @@ public partial class PersonPage : ContentPage
     _AlertService = alertService;
     _NavigationService = navigationService;
     _CreateOrUpdatePersonDialogFactory = createOrUpdatePersonDialogFactory;
+    _MediaResolver = mediaProvider.ResolveAsync;
     _PageCommand = new SafeCommand(OnPageCommand, _AlertService);
     _Relatives = new RelativeTree(_CurrentProjectProvider, _CancellationTokenProvider, _AlertService);
 
@@ -168,7 +170,7 @@ public partial class PersonPage : ContentPage
 
   public PhotoInfo[] Photos => _Photos;
 
-  public IReadOnlyDictionary<int, byte[]> MediaSources => _MediaSources;
+  public InlineMediaResolver MediaResolver => _MediaResolver;
 
   public AttachmentInfo[] Attachments => _Attachments;
 
@@ -338,11 +340,11 @@ public partial class PersonPage : ContentPage
       var bioTask = _TextConverter.ToObjectAsync(personFullInfo.Biography, token);
       var gedcomTask = _GedcomConverter.ToObjectAsync(personFullInfo.GedcomData, token);
       var attachmentsTask = Task.WhenAll(
-        personFullInfo.Attachments.Select(data => AttachmentInfo.CreateAsync(data, token)));
+        personFullInfo.Attachments.Select(data => _DataConverterResolver(data.Category).ToObjectAsync(data, token)));
       await Task.WhenAll(parentsTasks, stepChildrenTasks, bioTask, gedcomTask, attachmentsTask);
 
       // Sequenced after the attachments: a couple's media renders under the name the attachment row carries.
-      var attachments = attachmentsTask.Result;
+      var attachments = attachmentsTask.Result.OfType<AttachmentInfo>().ToArray();
       var familyDetails = await PersonFamilyDetails.ReadAsync(project, personFullInfo, attachments, _NameFormatter, token);
 
       var parents = parentsTasks.Result;
@@ -350,13 +352,11 @@ public partial class PersonPage : ContentPage
       var relativesProvider = project.RelativesProvider;
       var siblings = relativesProvider.GetSiblings(personFullInfo, parents);
       var roots = AssembleRoots(personFullInfo, parents, siblings, stepChildren, relativesProvider);
-      var (photos, photoData) = await LoadPhotosAsync(personFullInfo, token);
-      var mediaSources = MediaSourceUtils.BuildMediaSources([.. photoData, .. personFullInfo.Attachments], bioTask.Result as string);
+      var photos = await LoadPhotosAsync(personFullInfo, token);
       var data = new PersonPageData(
         personFullInfo,
         roots,
         photos,
-        mediaSources,
         attachments,
         bioTask.Result as string,
         gedcomTask.Result as string,
@@ -391,7 +391,7 @@ public partial class PersonPage : ContentPage
     }
   }
 
-  private async Task<(PhotoInfo[] Photos, Data[] PhotoData)> LoadPhotosAsync(PersonFullInfo personFullInfo, CancellationToken token)
+  private async Task<PhotoInfo[]> LoadPhotosAsync(PersonFullInfo personFullInfo, CancellationToken token)
   {
     PhotoInfo GetDefaultPhotoInfo() => new(ImageUtils.ImageFromRawResource(
       ImageUtils.DefaultPersonPhotoResourceName(personFullInfo.BiologicalSex), null), null);
@@ -410,7 +410,7 @@ public partial class PersonPage : ContentPage
       photos = [GetDefaultPhotoInfo()];
     }
 
-    return (photos, photoData);
+    return photos;
   }
 
   private static RelativeInfo[] AssembleRoots(
@@ -443,7 +443,6 @@ public partial class PersonPage : ContentPage
   {
     _PersonFullInfo = data.PersonFullInfo;
     _Photos = data.Photos;
-    _MediaSources = data.MediaSources;
     _Attachments = data.Attachments;
     _Biography = CombineBiography(data.Bio, data.GedcomDetails, data.FamilyDetails);
     _AllRoots = data.Roots;

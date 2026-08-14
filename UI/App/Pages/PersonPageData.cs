@@ -8,7 +8,6 @@ internal sealed record PersonPageData(
   PersonFullInfo PersonFullInfo,
   RelativeInfo[] Roots,
   PhotoInfo[] Photos,
-  IReadOnlyDictionary<int, byte[]> MediaSources,
   AttachmentInfo[] Attachments,
   string? Bio,
   string? GedcomDetails,

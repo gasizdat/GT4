@@ -32,6 +32,7 @@ public class GT4Services
       .AddKeyedSingleton<IDataConverter, PhotoTagDataConverter>(DataCategory.PersonPhotoTagged)
       .AddKeyedSingleton<IDataConverter, AttachmentDataConverter>(DataCategory.PersonAttachment)
       .AddKeyedSingleton<IDataConverter, AttachmentDataConverter>(DataCategory.FamilyAttachment)
+      .AddSingleton<InlineMediaProvider>()
       .AddSingleton<IAlertService, AlertService>()
       .AddSingleton<GedcomImportEncoding>()
       .AddTransient<SelectNameDialog.Factory>()

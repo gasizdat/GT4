@@ -94,7 +94,7 @@
           HorizontalOptions="Fill"
           IsVisible="{Binding DisplayPreview, Source={x:Reference Root}}"
           Markdown="{Binding Markdown, Source={x:Reference Root}}"
-          MediaSources="{Binding MediaSources, Source={x:Reference Root}}"
+          MediaResolver="{Binding MediaResolver, Source={x:Reference Root}}"
           VerticalOptions="Fill" />
     </Grid>
   </Grid>

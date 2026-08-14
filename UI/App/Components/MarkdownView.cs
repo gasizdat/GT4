@@ -3,7 +3,6 @@ using Markdig;
 using Markdig.Parsers;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
-using System.Collections.ObjectModel;
 
 namespace GT4.UI.Components;
 
@@ -30,6 +29,9 @@ public class MarkdownView : ContentView
   private static readonly MarkdownPipeline Pipeline = BuildPipeline();
 
   private readonly Command<string> _LinkCommand;
+  private readonly Dictionary<string, InlineMedia?> _ResolvedMedia = [];
+  private readonly HashSet<string> _ResolvingMedia = [];
+  private int _MediaGeneration;
 
   public MarkdownView()
   {
@@ -39,11 +41,13 @@ public class MarkdownView : ContentView
   public static readonly BindableProperty MarkdownProperty =
     BindableProperty.Create(nameof(Markdown), typeof(string), typeof(MarkdownView), default, BindingMode.OneWay, null, OnSourceChanged);
 
-  // Host-supplied id-to-bytes map for "![caption](media:id)" references; keeps this view free of any
-  // project dependency (the host already resolves photo bytes for its own display, e.g. PersonPage).
-  public static readonly BindableProperty MediaSourcesProperty =
-    BindableProperty.Create(nameof(MediaSources), typeof(IReadOnlyDictionary<int, byte[]>), typeof(MarkdownView),
-      ReadOnlyDictionary<int, byte[]>.Empty, BindingMode.OneWay, null, OnSourceChanged);
+  // Host-supplied lookup for the images the current Markdown points at, called once per distinct link.
+  // Inverting this -- asking the host per link rather than being handed a map -- is what lets a biography
+  // reference media the host never collected, and keeps this view unaware of a photo's bytes, its storage
+  // format, and which link schemes mean anything at all.
+  public static readonly BindableProperty MediaResolverProperty =
+    BindableProperty.Create(nameof(MediaResolver), typeof(InlineMediaResolver), typeof(MarkdownView),
+      null, BindingMode.OneWay, null, OnResolverChanged);
 
   public string? Markdown
   {
@@ -51,10 +55,10 @@ public class MarkdownView : ContentView
     set => SetValue(MarkdownProperty, value);
   }
 
-  public IReadOnlyDictionary<int, byte[]> MediaSources
+  public InlineMediaResolver? MediaResolver
   {
-    get => (IReadOnlyDictionary<int, byte[]>)GetValue(MediaSourcesProperty);
-    set => SetValue(MediaSourcesProperty, value);
+    get => (InlineMediaResolver?)GetValue(MediaResolverProperty);
+    set => SetValue(MediaResolverProperty, value);
   }
 
   // Raised instead of navigating when a rendered [Name](person:123) link is tapped; the host page owns
@@ -82,16 +86,125 @@ public class MarkdownView : ContentView
   {
     if (obj is MarkdownView view && oldValue != newValue)
     {
-      view.Render();
+      view.Refresh();
     }
   }
 
-  // "person:"/"attachment:"/"media:" are custom opaque schemes (like "mailto:"); Uri's hierarchical-URI
-  // members (Host, AbsolutePath) aren't reliable for them, so the id is taken directly from the string.
-  private static bool TryParseLink(string url, string prefix, out int id)
+  // Only a new resolver can invalidate what the old one returned; Markdown changing just references a
+  // different subset of the same media, which is why the memo below outlives an edit. The generation
+  // moves with the resolver and nothing else, so a batch the old one is still running lands on a
+  // generation that no longer matches and is dropped instead of filling the freshly cleared memo.
+  private static void OnResolverChanged(BindableObject obj, object oldValue, object newValue)
   {
-    id = 0;
-    return url.StartsWith(prefix, StringComparison.Ordinal) && int.TryParse(url.AsSpan(prefix.Length), out id);
+    if (obj is MarkdownView view && oldValue != newValue)
+    {
+      view._ResolvedMedia.Clear();
+      view._ResolvingMedia.Clear();
+      view._MediaGeneration++;
+      view.Refresh();
+    }
+  }
+
+  // Renders at once with whatever is already resolved, then re-renders once the misses arrive: the text
+  // of a biography does not wait on its images. Rebuilding the whole tree, rather than filling a
+  // placeholder in place, is what keeps ScaledImage's SizeChanged handler seeing a final pixel size.
+  // A miss already in flight is left alone -- an edit changes which links the text names, never what the
+  // resolver answers for one -- so typing in the editor doesn't reissue the lookups it's waiting on.
+  private void Refresh()
+  {
+    var document = Render();
+
+    var resolver = MediaResolver;
+    var referencedLinks = ReferencedLinks(document);
+    var pending = referencedLinks.Where(link => !_ResolvedMedia.ContainsKey(link) && !_ResolvingMedia.Contains(link)).ToArray();
+    if (resolver is null || pending.Length == 0)
+    {
+      return;
+    }
+
+    foreach (var link in pending)
+    {
+      _ResolvingMedia.Add(link);
+    }
+
+    _ = ResolveMediaAsync(resolver, pending, _MediaGeneration);
+  }
+
+  // Taken from the parsed document rather than matched in the raw text: only a link the renderer would
+  // actually turn into an image is worth a lookup, and an id-shaped run of characters in prose isn't one.
+  private static IEnumerable<string> ReferencedLinks(MarkdownDocument document)
+  {
+    var images = document.Descendants<LinkInline>().Where(link => link.IsImage);
+    var urls = images.Select(image => image.Url);
+    return urls.OfType<string>().Distinct();
+  }
+
+  // Sequential on purpose: every host resolves through the project's single gated connection, so issuing
+  // these together would only queue them.
+  private async Task ResolveMediaAsync(InlineMediaResolver resolver, string[] pending, int generation)
+  {
+    var resolved = new Dictionary<string, InlineMedia?>();
+    foreach (var link in pending)
+    {
+      try
+      {
+        resolved[link] = await resolver(link);
+      }
+      catch (Exception ex) when (ex is OperationCanceledException || SafeTask.IsProjectTeardown(ex))
+      {
+        // Deliberately left out of the batch, so the next refresh asks again: neither a cancelled lookup
+        // nor a project closed underneath one says anything about the link, and memoising either would
+        // keep an image the host merely timed out on -- or was backgrounded during -- blank for as long
+        // as this view lives.
+        System.Diagnostics.Debug.WriteLine(ex);
+      }
+      catch (Exception ex)
+      {
+        // Any other failure is the view's own "no image here" outcome -- it has no service to raise an
+        // alert through -- and is memoised so a keystroke doesn't re-query a link that isn't coming back.
+        System.Diagnostics.Debug.WriteLine(ex);
+        resolved[link] = null;
+      }
+    }
+
+    void Apply()
+    {
+      // Ahead of the staleness check: a link still marked as being resolved is one nothing would ever
+      // ask for again.
+      foreach (var link in pending)
+      {
+        _ResolvingMedia.Remove(link);
+      }
+
+      if (generation != _MediaGeneration)
+      {
+        return;
+      }
+
+      foreach (var entry in resolved)
+      {
+        _ResolvedMedia[entry.Key] = entry.Value;
+      }
+
+      Render();
+    }
+
+    try
+    {
+      await MainThread.InvokeOnMainThreadAsync(Apply);
+    }
+    catch (Exception ex)
+    {
+      // Nobody awaits this task, so an escaping exception would be swallowed anyway, minus the trace.
+      // Losing the marshal itself (a dispatcher gone during teardown) means Apply never ran and never
+      // dropped its in-flight marks, which nothing else would clear while the resolver stays the same
+      // -- and no main thread is left to race the cleanup with.
+      System.Diagnostics.Debug.WriteLine(ex);
+      foreach (var link in pending)
+      {
+        _ResolvingMedia.Remove(link);
+      }
+    }
   }
 
   private static Color ResourceColor(string key) => (Color)Application.Current!.Resources[key];
@@ -164,7 +277,7 @@ public class MarkdownView : ContentView
   {
     var literals = image.OfType<LiteralInline>().Select(literal => literal.Content.ToString());
     var description = string.Concat(literals);
-    return MediaLinkUtils.ParseImageDescription(description);
+    return MarkdownLinkUtils.ParseImageDescription(description);
   }
 
   // MAUI keeps the height it measured a full-width image at, so capping the width alone leaves it in an
@@ -202,10 +315,12 @@ public class MarkdownView : ContentView
     image.HeightRequest = width * pixelSize.Height / pixelSize.Width;
   }
 
-  private void Render()
+  // Hands back what it parsed so a refresh can read the referenced links off the same tree it just drew.
+  private MarkdownDocument Render()
   {
     var document = Markdig.Markdown.Parse(Markdown ?? string.Empty, Pipeline);
     Content = RenderContainer(document);
+    return document;
   }
 
   private View RenderContainer(ContainerBlock container)
@@ -395,8 +510,9 @@ public class MarkdownView : ContentView
     return row;
   }
 
-  // An id with no entry (a dangling reference, or one belonging to another person) renders nothing
-  // rather than a broken image.
+  // A link the resolver has not answered for yet, or answered nothing for, renders nothing at all rather
+  // than a broken image. Every image goes through the resolver, a URL included: without the dimensions
+  // it hands back, a percentage on one would have nothing to take its share of.
   private View? CreateImageView(string? url, int? widthPercent)
   {
     if (url is null)
@@ -404,19 +520,8 @@ public class MarkdownView : ContentView
       return null;
     }
 
-    if (TryParseLink(url, "media:", out var mediaId))
-    {
-      if (!MediaSources.TryGetValue(mediaId, out var bytes))
-      {
-        return null;
-      }
-
-      var stored = ImageSource.FromStream(() => new MemoryStream(bytes));
-      return ScaledImage(stored, ImageUtils.PixelSize(bytes), widthPercent);
-    }
-
-    return Uri.TryCreate(url, UriKind.Absolute, out var uri)
-      ? ScaledImage(ImageSource.FromUri(uri), null, widthPercent)
+    return _ResolvedMedia.GetValueOrDefault(url) is InlineMedia media
+      ? ScaledImage(media.Source, media.PixelSize, widthPercent)
       : null;
   }
 
@@ -424,13 +529,13 @@ public class MarkdownView : ContentView
   // coordinate reference, a mailto/tel in a bio) is handed to the OS by its own protocol.
   private async void OnLinkTapped(string url)
   {
-    if (TryParseLink(url, "person:", out var personId))
+    if (MarkdownLinkUtils.TryParsePersonId(url, out var personId))
     {
       PersonLinkTapped?.Invoke(this, personId);
       return;
     }
 
-    if (TryParseLink(url, "attachment:", out var attachmentId))
+    if (MarkdownLinkUtils.TryParseAttachmentId(url, out var attachmentId))
     {
       AttachmentLinkTapped?.Invoke(this, attachmentId);
       return;

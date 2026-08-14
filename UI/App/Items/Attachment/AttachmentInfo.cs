@@ -1,31 +1,25 @@
 using GT4.Core.Gedcom;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.Utils.Converters;
 
 namespace GT4.UI.Items;
 
-public sealed record AttachmentInfo(string FileName, string? Title, Data Data)
+// Image is set only for an attachment whose own MIME type says it renders as one: an attached scan is
+// embeddable in a biography just like a photo, and it stays in the attachment list either way.
+public sealed record AttachmentInfo(string FileName, string? Title, Data Data, PhotoInfo? Image = null)
 {
-  public static async Task<AttachmentInfo> CreateAsync(Data data, CancellationToken token)
-  {
-    var fileName = await GedcomPhotoResidue.ExtractFileNameAsync(data, token);
-    var title = await GedcomPhotoResidue.ExtractTitleAsync(data, token);
-
-    return new AttachmentInfo(fileName ?? string.Empty, title, data);
-  }
-
   public string DisplayName => string.IsNullOrWhiteSpace(Title) ? FileName : Title;
 
   public bool ShowFileName => !string.IsNullOrWhiteSpace(Title);
-
-  public byte[] Bytes => GedcomPhotoResidue.PayloadBytes(Data);
 
   // FileName is often a full original path -- a common artifact of GEDCOM imports.
   public async Task OpenAsync(CancellationToken token)
   {
     var fileName = FileNameUtils.Sanitize(FileName, "attachment");
     var path = Path.Combine(FileSystem.CacheDirectory, fileName);
-    await File.WriteAllBytesAsync(path, Bytes, token);
+    var bytes = GedcomPhotoResidue.ExtractImageBytes(Data.Content);
+    await File.WriteAllBytesAsync(path, bytes, token);
 
     await Launcher.Default.OpenAsync(new OpenFileRequest(fileName, new ReadOnlyFile(path)));
   }

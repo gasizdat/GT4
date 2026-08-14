@@ -1,4 +1,3 @@
-using GT4.Core.Gedcom;
 using GT4.Core.Project;
 using GT4.Core.Project.Dto;
 using GT4.Core.Project.Extensions;
@@ -12,7 +11,6 @@ using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.Windows.Input;
 
 namespace GT4.UI.Dialogs;
@@ -33,13 +31,15 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     SelectNameDialog.Factory SelectNameDialogFactory,
     SelectRelativesDialog.Factory SelectRelativesDialogFactory,
     SelectPersonDialog.Factory SelectPersonDialogFactory,
-    SelectMediaDialog.Factory SelectMediaDialogFactory)
+    SelectMediaDialog.Factory SelectMediaDialogFactory,
+    InlineMediaProvider MediaProvider)
   {
     public CreateOrUpdatePersonDialog Create(PersonFullInfo? person) =>
       new CreateOrUpdatePersonDialog(this, person);
   }
 
   private readonly Factory _Factory;
+  private readonly InlineMediaResolver _MediaResolver;
   private readonly ICommand _DialogCommand;
   private readonly string _SaveButtonName;
   private readonly ObservableCollection<PersonDataItem> _Photos = new();
@@ -54,13 +54,13 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private BiologicalSexItem? _BiologicalSex;
   private PersonDataItem? _Biography;
   private Data? _GedcomData;
-  private IReadOnlyDictionary<int, byte[]>? _MediaSources;
   private bool _IsModified;
   private bool _NotReady => _BiologicalSex is null || _BirthDate is null || !_IsModified;
 
   protected CreateOrUpdatePersonDialog(Factory factory, PersonFullInfo? person)
   {
     _Factory = factory;
+    _MediaResolver = factory.MediaProvider.ResolveAsync;
     _DialogCommand = new SafeCommand(OnDialogCommand, _Factory.AlertService);
     _SaveButtonName = person is null ? UIStrings.BtnNameCreateFamilyPerson : UIStrings.BtnNameUpdateFamilyPerson;
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, _Factory.BiologicalSexFormatter));
@@ -71,17 +71,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     UpdatePersonInformation(person);
 
     _Names.CollectionChanged += (_, _) => OnPropertyChanged(nameof(PersonFullName));
-    _Photos.CollectionChanged += OnMediaCollectionChanged;
-    _Attachments.CollectionChanged += OnMediaCollectionChanged;
 
     InitializeComponent();
     IsModified = false;
-  }
-
-  private void OnMediaCollectionChanged(object? sender, NotifyCollectionChangedEventArgs args)
-  {
-    _MediaSources = null;
-    OnPropertyChanged(nameof(MediaSources));
   }
 
   private PersonDataItem GetPersonData(Data data, DataCategory dataCategory)
@@ -146,20 +138,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
               _Factory.CancellationTokenProvider,
               _Factory.AlertService)
       };
-      _Biography.PropertyChanged += (_, _) =>
-      {
-        IsModified = _Biography.IsModified;
-
-        // The initial async load bypasses the IsModified-setting setter (it mutates Content directly),
-        // so this fires with IsModified still false exactly once, when the biography text first becomes
-        // available to filter MediaSources by. Later edits go through the setter and must not
-        // re-trigger a re-encode on every keystroke.
-        if (!_Biography.IsModified)
-        {
-          _MediaSources = null;
-          OnPropertyChanged(nameof(MediaSources));
-        }
-      };
+      _Biography.PropertyChanged += (_, _) => IsModified = _Biography.IsModified;
 
       var relatives = person
         .RelativeInfos
@@ -188,12 +167,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   public ICollection<PersonDataItem> Photos => _Photos;
 
-  // Re-scanning the biography and re-unwrapping every photo is expensive enough to cache rather than
-  // redo on every binding read; the CollectionChanged handlers (above) and the biography load/insert
-  // hooks (below) are the only things that can make this stale.
-  public IReadOnlyDictionary<int, byte[]> MediaSources =>
-    _MediaSources ??= MediaSourceUtils.BuildMediaSources(
-      _Photos.Concat(_Attachments).Select(item => item.Info), _Biography?.Content as string);
+  public InlineMediaResolver MediaResolver => _MediaResolver;
 
   public ICollection<PersonDataItem> Attachments => _Attachments;
 
@@ -489,11 +463,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
     var photoItems = await Task.WhenAll(photos.Select((data, index) =>
       ToMediaLinkItemAsync(data, string.Format(UIStrings.MediaLinkPhotoName_1, index + 1), token)));
-    var attachmentItems = await Task.WhenAll(attachments.Select(async data =>
-    {
-      var fileName = await GedcomPhotoResidue.ExtractFileNameAsync(data, token);
-      return await ToMediaLinkItemAsync(data, fileName ?? string.Empty, token);
-    }));
+    var attachmentItems = await Task.WhenAll(attachments.Select(data => ToMediaLinkItemAsync(data, string.Empty, token)));
 
     var dialog = _Factory.SelectMediaDialogFactory.Create([.. photoItems, .. attachmentItems]);
     await Navigation.PushModalAsync(dialog);
@@ -505,24 +475,24 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       if (picked.IsInlineImage)
       {
         BiographyEditor.InsertMediaLink(picked.DisplayName, picked.Id);
-        // A newly-referenced photo/attachment may already sit in _Photos/_Attachments, so the
-        // CollectionChanged handlers never fire for it; the biography's own PropertyChanged handler
-        // above skips this (IsModified is now true), so invalidate here instead.
-        _MediaSources = null;
-        OnPropertyChanged(nameof(MediaSources));
       }
       else
         BiographyEditor.InsertAttachmentLink(picked.DisplayName, picked.Id);
     }
   }
 
-  // IsInlineImage must be the same predicate BuildMediaSources filters by: offering something the media
-  // map drops would insert an embed that renders as a broken image instead of a working link.
-  private static async Task<MediaLinkItem> ToMediaLinkItemAsync(Data data, string fallbackName, CancellationToken token)
+  // IsInlineImage must be the same predicate the media resolver filters by: offering something the
+  // resolver rejects would insert an embed that renders as nothing instead of a working link.
+  private async Task<MediaLinkItem> ToMediaLinkItemAsync(Data data, string fallbackName, CancellationToken token)
   {
-    var title = await GedcomPhotoResidue.ExtractTitleAsync(data, token);
-    var displayName = string.IsNullOrWhiteSpace(title) ? fallbackName : title;
-    var isInlineImage = MediaSourceUtils.IsInlineImage(data);
+    var content = await _Factory.DataConverterResolver(data.Category).ToObjectAsync(data, token);
+    var displayName = content switch
+    {
+      PhotoInfo photo when !string.IsNullOrWhiteSpace(photo.Caption) => photo.Caption,
+      AttachmentInfo attachment => attachment.DisplayName,
+      _ => fallbackName
+    };
+    var isInlineImage = data.IsInlineImage();
     return new MediaLinkItem(data.Id, isInlineImage, displayName);
   }
 

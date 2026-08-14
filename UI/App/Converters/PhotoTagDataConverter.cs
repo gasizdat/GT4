@@ -43,7 +43,7 @@ public sealed class PhotoTagDataConverter : IDataConverter
     }
 
     var caption = await GedcomPhotoResidue.ExtractTitleAsync(data, token);
-    var unwrapped = data with { Content = GedcomPhotoResidue.PayloadBytes(data) };
+    var unwrapped = data with { Content = GedcomPhotoResidue.ExtractImageBytes(data.Content) };
 
     return await _ImageConverter.ToObjectAsync(unwrapped, token) is PhotoInfo photoInfo
       ? photoInfo with { Caption = caption }

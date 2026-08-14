@@ -286,8 +286,9 @@ public partial class FamilyTreePage : ContentPage
 
             if (person.MainPhoto is not null)
             {
-              var resizedMainPhoto = new ResizedImageData(person.MainPhoto, ImageUtils.ThumbnailSize);
-              return KeyValuePair.Create(person, _DataConverterResolver(person.MainPhoto.Category).ToObjectAsync(resizedMainPhoto, token));
+              var mainPhotoThumbnail = new ImageDataWithMaxSize(person.MainPhoto, ImageUtils.ThumbnailSize);
+              var converter = _DataConverterResolver(person.MainPhoto.Category);
+              return KeyValuePair.Create(person, converter.ToObjectAsync(mainPhotoThumbnail, token));
             }
 
             return KeyValuePair.Create(person, Task.FromResult<object?>(null));

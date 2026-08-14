@@ -157,8 +157,8 @@ public partial class PersonInfoView : ContentView
         {
           using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
           var converter = _DataConverterResolver(mainPhoto.Category);
-          var resizedMainPhoto = new ResizedImageData(mainPhoto, ImageUtils.ThumbnailSize);
-          var photo = await converter.ToObjectAsync(resizedMainPhoto, token) is PhotoInfo photoInfo
+          var mainPhotoThumbnail = new ImageDataWithMaxSize(mainPhoto, ImageUtils.ThumbnailSize);
+          var photo = await converter.ToObjectAsync(mainPhotoThumbnail, token) is PhotoInfo photoInfo
             ? photoInfo.Source
             : GetDefaultImage();
 

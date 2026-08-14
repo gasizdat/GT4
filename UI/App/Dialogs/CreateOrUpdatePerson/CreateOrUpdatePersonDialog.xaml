@@ -172,7 +172,7 @@
                       <Label
                           Grid.Column="0"
                           Style="{StaticResource FieldValue}"
-                          Text="{Binding Content}"
+                          Text="{Binding Content.DisplayName}"
                           VerticalOptions="Center" />
 
                       <Button
@@ -556,7 +556,7 @@
                   Grid.Column="0"
                   InsertLinkCommand="{Binding DialogCommand, Source={x:Reference Root}}"
                   Markdown="{Binding Biography.Content, Source={x:Reference Root}}"
-                  MediaSources="{Binding MediaSources, Source={x:Reference Root}}"
+                  MediaResolver="{Binding MediaResolver, Source={x:Reference Root}}"
                   MinimumHeightRequest="{StaticResource MinBioHeight}"
                   Placeholder="{x:Static resources:UIStrings.TxtPlaceholderBiography}" />
             </Grid>

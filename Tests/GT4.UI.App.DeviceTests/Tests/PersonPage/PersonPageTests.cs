@@ -215,45 +215,44 @@ public class PersonPageTests
   }
 
   [Fact]
-  public async Task Loading_a_person_with_a_main_photo_populates_MediaSources()
+  public async Task MediaResolver_resolves_a_main_photo_to_its_unwrapped_image()
   {
     var services = new TestServices();
     var content = BuildTaggedPhotoContent("0 OBJE\n1 TITL A caption\n", [1, 2, 3]);
     var mainPhoto = new Data(10, content, "image/png", DataCategory.PersonMainPhotoTagged);
-    var biography = new Data(0, System.Text.Encoding.UTF8.GetBytes("![caption](media:10)"), "text/plain", DataCategory.PersonBio);
-    var person = CreateSamplePerson() with { MainPhoto = mainPhoto, Biography = biography };
-    services.PersonManager
-      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
-      .ReturnsAsync(person);
+    services.Data
+      .Setup(table => table.TryGetDataByIdAsync(10, It.IsAny<CancellationToken>()))
+      .ReturnsAsync(mainPhoto);
     var page = await CreatePageAsync(services);
 
-    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+    var media = await page.MediaResolver("media:10");
 
-    var entry = Assert.Single(page.MediaSources);
-    Assert.Equal(10, entry.Key);
-    Assert.Equal(new byte[] { 1, 2, 3 }, entry.Value);
+    Assert.NotNull(media);
+    Assert.Equal(new byte[] { 1, 2, 3 }, await PhotoBytes.ReadAsync(media.Source));
   }
 
   [Fact]
-  public async Task Loading_a_person_with_an_image_attachment_adds_it_to_MediaSources()
+  public async Task MediaResolver_resolves_an_image_attachment_but_not_a_document_one()
   {
     var services = new TestServices();
     var scanContent = BuildTaggedPhotoContent("0 OBJE\n1 FILE scan.jpg\n", [4, 5, 6]);
     var scan = new Data(22, scanContent, "image/jpeg", DataCategory.PersonAttachment);
     var deedContent = BuildTaggedPhotoContent("0 OBJE\n1 FILE deed.pdf\n", [1, 2, 3]);
     var deed = new Data(23, deedContent, "application/pdf", DataCategory.PersonAttachment);
-    var biography = new Data(0, System.Text.Encoding.UTF8.GetBytes("![scan](media:22)"), "text/plain", DataCategory.PersonBio);
-    var person = CreateSamplePerson() with { Attachments = [scan, deed], Biography = biography };
-    services.PersonManager
-      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
-      .ReturnsAsync(person);
+    services.Data
+      .Setup(table => table.TryGetDataByIdAsync(22, It.IsAny<CancellationToken>()))
+      .ReturnsAsync(scan);
+    services.Data
+      .Setup(table => table.TryGetDataByIdAsync(23, It.IsAny<CancellationToken>()))
+      .ReturnsAsync(deed);
     var page = await CreatePageAsync(services);
 
-    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+    var scanMedia = await page.MediaResolver("media:22");
+    var deedMedia = await page.MediaResolver("media:23");
 
-    var entry = Assert.Single(page.MediaSources);
-    Assert.Equal(22, entry.Key);
-    Assert.Equal(new byte[] { 4, 5, 6 }, entry.Value);
+    Assert.NotNull(scanMedia);
+    Assert.Equal(new byte[] { 4, 5, 6 }, await PhotoBytes.ReadAsync(scanMedia.Source));
+    Assert.Null(deedMedia);
   }
 
   [Fact]

@@ -84,7 +84,7 @@ public class ProjectPageTests
     Assert.Equal(["Aksakov", "Pushkin", "Tolstoy"], families.Select(f => f.Info.Value));
   }
 
-  // A minimal valid 1x1 PNG: the card icon now resolves through a ResizedImageData, which decodes
+  // A minimal valid 1x1 PNG: the card icon now resolves through an ImageDataWithMaxSize, which decodes
   // and re-encodes the source bytes to build a thumbnail, so arbitrary non-image bytes would throw.
   private static readonly byte[] ValidPngBytes =
   [

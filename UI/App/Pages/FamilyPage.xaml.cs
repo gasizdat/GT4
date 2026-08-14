@@ -214,7 +214,9 @@ public partial class FamilyPage : ContentPage
       .Select(obj => obj is PhotoInfo photoInfo ? photoInfo : GetDefaultPhotoInfo())
       .ToArray();
 
-    var attachments = await Task.WhenAll(familyInfo.Attachments.Select(data => AttachmentInfo.CreateAsync(data, token)));
+    var attachments = (await Task.WhenAll(familyInfo.Attachments.Select(data => _DataConverterResolver(data.Category).ToObjectAsync(data, token))))
+      .OfType<AttachmentInfo>()
+      .ToArray();
 
     return (photos, attachments);
   }

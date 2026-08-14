@@ -1,5 +1,5 @@
 using GT4.UI.Abstraction;
-using System.Collections.ObjectModel;
+using GT4.UI.Utils;
 using System.Windows.Input;
 
 namespace GT4.UI.Components;
@@ -32,8 +32,8 @@ public partial class MarkdownEditor : ContentView
 
   // Forwarded to the inner preview MarkdownView so the "Markdown View" tab renders inserted media links
   // the same way the host's own display does.
-  public static readonly BindableProperty MediaSourcesProperty =
-    BindableProperty.Create(nameof(MediaSources), typeof(IReadOnlyDictionary<int, byte[]>), typeof(MarkdownEditor), ReadOnlyDictionary<int, byte[]>.Empty);
+  public static readonly BindableProperty MediaResolverProperty =
+    BindableProperty.Create(nameof(MediaResolver), typeof(InlineMediaResolver), typeof(MarkdownEditor), null);
 
   // The host page owns link insertion (person lookup/selection, and whatever other link types it
   // supports), so this view stays free of any project dependency: the "Link a Person" button (and any
@@ -53,10 +53,10 @@ public partial class MarkdownEditor : ContentView
     set => SetValue(PlaceholderProperty, value);
   }
 
-  public IReadOnlyDictionary<int, byte[]> MediaSources
+  public InlineMediaResolver? MediaResolver
   {
-    get => (IReadOnlyDictionary<int, byte[]>)GetValue(MediaSourcesProperty);
-    set => SetValue(MediaSourcesProperty, value);
+    get => (InlineMediaResolver?)GetValue(MediaResolverProperty);
+    set => SetValue(MediaResolverProperty, value);
   }
 
   public ICommand? InsertLinkCommand
@@ -86,14 +86,23 @@ public partial class MarkdownEditor : ContentView
 
   public ICommand Command => _Command;
 
-  public void InsertLink(string displayName, int personId) =>
-    InsertText($"[{displayName}](person:{personId})");
+  public void InsertLink(string displayName, int personId)
+  {
+    var url = MarkdownLinkUtils.PersonUrl(personId);
+    InsertText($"[{displayName}]({url})");
+  }
 
-  public void InsertMediaLink(string displayName, int mediaId) =>
-    InsertText($"![{displayName}](media:{mediaId})");
+  public void InsertMediaLink(string displayName, int mediaId)
+  {
+    var url = MarkdownLinkUtils.MediaUrl(mediaId);
+    InsertText($"![{displayName}]({url})");
+  }
 
-  public void InsertAttachmentLink(string displayName, int attachmentId) =>
-    InsertText($"[{displayName}](attachment:{attachmentId})");
+  public void InsertAttachmentLink(string displayName, int attachmentId)
+  {
+    var url = MarkdownLinkUtils.AttachmentUrl(attachmentId);
+    InsertText($"[{displayName}]({url})");
+  }
 
   private void InsertText(string text)
   {

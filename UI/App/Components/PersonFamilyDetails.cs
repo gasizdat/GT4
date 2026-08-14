@@ -3,6 +3,7 @@ using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.UI.Converters;
 using GT4.UI.Items;
+using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
 
 namespace GT4.UI.Components;
@@ -46,7 +47,8 @@ public static class PersonFamilyDetails
         continue;
       }
 
-      facts.Add(new GedcomFact(FamilyTag, $"[{name}](person:{couple.Key})", children));
+      var spouseUrl = MarkdownLinkUtils.PersonUrl(couple.Key);
+      facts.Add(new GedcomFact(FamilyTag, $"[{name}]({spouseUrl})", children));
     }
 
     return GedcomDataConverter.RenderFamilies([.. facts]);
@@ -55,6 +57,7 @@ public static class PersonFamilyDetails
   private static GedcomFact ToMediaFact(Data media, AttachmentInfo[] attachments)
   {
     var info = attachments.First(attachment => attachment.Data.Id == media.Id);
-    return new GedcomFact(MediaTag, $"[{info.DisplayName}](attachment:{media.Id})", []);
+    var url = MarkdownLinkUtils.AttachmentUrl(media.Id);
+    return new GedcomFact(MediaTag, $"[{info.DisplayName}]({url})", []);
   }
 }
