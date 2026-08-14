@@ -188,9 +188,8 @@ public class CreateOrUpdatePersonDialogTests
     // OnCreatePersonCommandAsync: saving without touching photos must not reconvert (which would
     // silently regenerate Content as plain bytes) or collapse the category to plain.
     var services = new TestServices();
-    // MediaSources (bound for the biography's media-link picker) unwraps every tagged photo's residue
-    // envelope eagerly, so the fake content here must be shaped like one (a real zero-length-tag prefix)
-    // rather than bare image bytes.
+    // PhotoTagDataConverter unwraps a tagged photo's residue envelope, so the fake content here must be
+    // shaped like one (a real zero-length-tag prefix) rather than bare image bytes.
     var taggedPhoto = new Data(20, Content: [0, 0, 0, 0, 7, 7, 7], MimeType: "image/png", Category: DataCategory.PersonMainPhotoTagged);
     var person = CreateSamplePerson() with { MainPhoto = taggedPhoto, AdditionalPhotos = [] };
     var dialog = await CreateDialogAsync(services, person);
