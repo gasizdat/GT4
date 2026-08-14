@@ -7,10 +7,17 @@ public static partial class MediaLinkUtils
 {
   // The ids a "![caption](media:id)" reference could ever target, so callers can decide what's worth
   // resolving before any rendering happens.
-  public static IReadOnlySet<int> ExtractReferencedIds(string? markdown) =>
-    string.IsNullOrEmpty(markdown)
-      ? ImmutableHashSet<int>.Empty
-      : MediaLinkPattern().Matches(markdown).Select(match => int.Parse(match.Groups[1].Value)).ToHashSet();
+  public static IReadOnlySet<int> ExtractReferencedIds(string? markdown)
+  {
+    if (string.IsNullOrEmpty(markdown))
+    {
+      return ImmutableHashSet<int>.Empty;
+    }
+
+    var matches = MediaLinkPattern().Matches(markdown);
+    var ids = matches.Select(match => ParseId(match.Groups[1].Value)).OfType<int>();
+    return ids.ToHashSet();
+  }
 
   // A trailing percentage in an image's description -- "![Grandpa 50%](media:5)" -- asks for that share
   // of the width the image would otherwise take, and the rest of the description stays the caption. Any
@@ -25,6 +32,11 @@ public static partial class MediaLinkUtils
 
     return (int.Parse(match.Groups[1].Value), description[..match.Index]);
   }
+
+  // A run of digits too long for an int is prose the user typed, not a link this app ever inserted --
+  // and MarkdownView reparses the whole biography on every keystroke, so a throw here would surface as
+  // an editor that dies mid-word rather than as a missing image.
+  private static int? ParseId(string value) => int.TryParse(value, out var id) ? id : null;
 
   [GeneratedRegex("media:(\\d+)")]
   private static partial Regex MediaLinkPattern();

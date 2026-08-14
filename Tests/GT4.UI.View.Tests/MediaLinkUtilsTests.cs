@@ -37,6 +37,16 @@ public class MediaLinkUtilsTests
     MediaLinkUtils.ExtractReferencedIds(string.Empty).Should().BeEmpty();
   }
 
+  // Typed prose, not a reference: MarkdownView re-extracts on every keystroke, so this has to come back
+  // empty rather than throw.
+  [Fact]
+  public void ExtractReferencedIds_AnIdTooLargeForAnInt_IsSkipped()
+  {
+    var ids = MediaLinkUtils.ExtractReferencedIds("![a](media:99999999999) and ![b](media:7)");
+
+    ids.Should().BeEquivalentTo([7]);
+  }
+
   [Theory]
   [InlineData("Grandpa 50%", 50, "Grandpa")]
   [InlineData("Grandpa 100%", 100, "Grandpa")]
