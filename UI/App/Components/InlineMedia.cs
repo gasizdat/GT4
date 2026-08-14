@@ -2,7 +2,7 @@ namespace GT4.UI.Components;
 
 /// <summary>
 /// An image <see cref="MarkdownView"/> inlines for a <c>media:&lt;id&gt;</c> reference. PixelSize is the
-/// image's own dimensions, which drive the layout -- it is null only when they could not be read, and
+/// image's own dimensions, which drive the layout -- it is null when the resolver has none to give, and
 /// such an image lays out fitted to its column rather than at its natural size.
 /// </summary>
 public sealed record InlineMedia(ImageSource Source, Size? PixelSize);

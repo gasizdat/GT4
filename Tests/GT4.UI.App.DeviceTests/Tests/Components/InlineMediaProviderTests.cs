@@ -48,8 +48,7 @@ public class InlineMediaProviderTests
       .ReturnsAsync((int? id, CancellationToken _) => stored.FirstOrDefault(item => item.Id == id));
 
     var tokenProvider = services.Provider.GetRequiredService<ICancellationTokenProvider>();
-    var provider = new InlineMediaProvider(
-      services.CurrentProjectProvider.Object, ConverterResolver(), tokenProvider, Mock.Of<IHttpClientFactory>());
+    var provider = new InlineMediaProvider(services.CurrentProjectProvider.Object, ConverterResolver(), tokenProvider);
 
     return provider.ResolveAsync;
   }
@@ -58,6 +57,18 @@ public class InlineMediaProviderTests
   {
     Assert.NotNull(media);
     return await PhotoBytes.ReadAsync(media.Source);
+  }
+
+  // Just the signature and the IHDR dimensions: ImageUtils.PixelSize reads only the header, so the rest
+  // of a real PNG would add nothing these tests could assert on.
+  private static byte[] PngHeader(int width, int height)
+  {
+    var png = new byte[24];
+    new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }.CopyTo(png, 0);
+    "IHDR"u8.CopyTo(png.AsSpan(12));
+    System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(png.AsSpan(16), (uint)width);
+    System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(png.AsSpan(20), (uint)height);
+    return png;
   }
 
   [Fact]
@@ -138,20 +149,30 @@ public class InlineMediaProviderTests
 
   // The layout MarkdownView applies to an inline image comes from these dimensions -- without them
   // every inline image falls back to a plain column-width fit, silently dropping the "50%" a biography
-  // can ask for. They are measured from the ImageSource, so a downsized one would report its own size.
+  // can ask for. The converter reads them off the header of the bytes it already holds, so nothing on
+  // this path copies an image to measure it.
   [Fact]
   public async Task InlinedPhoto_CarriesItsPixelSize()
   {
-    var png = new byte[24];
-    new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }.CopyTo(png, 0);
-    "IHDR"u8.CopyTo(png.AsSpan(12));
-    System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(png.AsSpan(16), 640);
-    System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(png.AsSpan(20), 480);
-    var photo = new Data(7, png, "image/png", DataCategory.PersonMainPhoto);
+    var photo = new Data(7, PngHeader(640, 480), "image/png", DataCategory.PersonMainPhoto);
 
     var media = await Resolver(photo)(7);
 
     Assert.NotNull(media);
     Assert.Equal(new Size(640, 480), media.PixelSize);
+  }
+
+  // The tagged path rebuilds its PhotoInfo to carry the caption, which is exactly where the dimensions
+  // would go missing -- and a GEDCOM import makes tagged photos the common case, not the exotic one.
+  [Fact]
+  public async Task InlinedTaggedPhoto_CarriesItsPixelSizeToo()
+  {
+    var content = BuildTaggedPhotoContent("0 OBJE\n1 TITL A caption\n", PngHeader(320, 240));
+    var photo = new Data(8, content, "image/jpeg", DataCategory.PersonPhotoTagged);
+
+    var media = await Resolver(photo)(8);
+
+    Assert.NotNull(media);
+    Assert.Equal(new Size(320, 240), media.PixelSize);
   }
 }

@@ -37,21 +37,26 @@ public sealed class ImageDataConverter : IDataConverter
     }
 
     ImageSource imageSource;
+    Size? pixelSize;
     if (data.Id == ElementId.NonCommittedId)
     {
       imageSource = ImageSource.FromStream(token => Task.Run<Stream>(() => new MemoryStream(data.Content), token));
+      pixelSize = ImageUtils.PixelSize(data.Content);
     }
     else if (data is ImageDataWithMaxSize imageData)
     {
       var key = $"{nameof(ImageDataConverter)}_{data.Id}_{imageData.MaxSize}";
       imageSource = _ImageCache.GetImage(key, () => ImageUtils.DownsizedPng(data.Content, imageData.MaxSize));
+      // What renders is a resize of these bytes, so their own dimensions would overstate it.
+      pixelSize = null;
     }
     else
     {
       var key = $"{nameof(ImageDataConverter)}_{data.Id}";
       imageSource = _ImageCache.GetImage(key, () => data.Content);
+      pixelSize = ImageUtils.PixelSize(data.Content);
     }
 
-    return Task.FromResult<object?>(new PhotoInfo(imageSource, null));
+    return Task.FromResult<object?>(new PhotoInfo(imageSource, null, pixelSize));
   }
 }
