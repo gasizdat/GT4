@@ -493,7 +493,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       AttachmentInfo attachment => attachment.DisplayName,
       _ => fallbackName
     };
-    var isInlineImage = MediaSourceUtils.IsInlineImage(data);
+    var isInlineImage = data.IsInlineImage();
     return new MediaLinkItem(data.Id, isInlineImage, displayName);
   }
 

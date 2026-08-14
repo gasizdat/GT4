@@ -1,4 +1,5 @@
 using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
 using GT4.UI.Components;
 using GT4.UI.Items;
@@ -39,7 +40,7 @@ public sealed class InlineMediaProvider
   {
     using var token = _TokenProvider.CreateShortOperationCancellationToken();
     var media = await _ProjectProvider.Project.Data.TryGetDataByIdAsync(mediaId, token);
-    if (media is null || !MediaSourceUtils.IsInlineImage(media))
+    if (media is null || !media.IsInlineImage())
     {
       return null;
     }

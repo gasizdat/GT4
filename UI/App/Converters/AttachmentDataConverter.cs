@@ -1,5 +1,6 @@
 using GT4.Core.Gedcom;
 using GT4.Core.Project.Dto;
+using GT4.Core.Project.Extensions;
 using GT4.UI.Abstraction;
 using GT4.UI.Items;
 using GT4.UI.Utils.Converters;
@@ -53,7 +54,7 @@ public sealed class AttachmentDataConverter : IDataConverter
 
     var fileName = await GedcomPhotoResidue.ExtractFileNameAsync(data, token);
     var title = await GedcomPhotoResidue.ExtractTitleAsync(data, token);
-    var image = MediaSourceUtils.IsInlineImage(data)
+    var image = data.IsInlineImage()
       ? await ToImageAsync(data, token)
       : null;
 
