@@ -1,6 +1,5 @@
 using GT4.UI.Components;
 using GT4.UI.Utils;
-using GT4.UI.Utils.Converters;
 using Xunit;
 
 namespace GT4.UI.DeviceTests;
@@ -128,7 +127,7 @@ public class MarkdownViewTests
   [Fact]
   public async Task ImageInsideEmphasis_RendersItsCaptionWithoutTheSizeTokenOrALink()
   {
-    var view = await CreateViewAsync("Look: *![Grandpa 50%](media:11)* here.", new Dictionary<int, byte[]> { [11] = [1, 2, 3] });
+    var view = await CreateViewAsync("Look: *![Grandpa 50%](media:11)* here.", new Dictionary<int, byte[]> { [11] = [1, 2, 3] }, expectedImages: 0);
 
     var caption = SpanWithText(view, "Grandpa");
 
@@ -139,7 +138,7 @@ public class MarkdownViewTests
   [Fact]
   public async Task ImageUsedAsALinkLabel_TapsOnlyTheEnclosingLink()
   {
-    var view = await CreateViewAsync("[![cap](media:11)](person:5)", new Dictionary<int, byte[]> { [11] = [1, 2, 3] });
+    var view = await CreateViewAsync("[![cap](media:11)](person:5)", new Dictionary<int, byte[]> { [11] = [1, 2, 3] }, expectedImages: 0);
     var tapped = new List<int>();
     view.PersonLinkTapped += (_, id) => tapped.Add(id);
 
@@ -171,12 +170,19 @@ public class MarkdownViewTests
     Assert.Equal(["Line one", "\n", "Line two"], texts);
   }
 
+  // The second reference is what makes this a test: the view renders its text before the resolver
+  // answers, so asserting on the first pass would pass even with resolution completely broken. Waiting
+  // for the resolvable image proves the unresolvable one was asked for and declined.
   [Fact]
-  public async Task MediaReference_WithNoSuppliedBytes_RendersNoImage()
+  public async Task MediaReference_TheResolverDeclines_RendersNoImageForIt()
   {
-    var view = await CreateViewAsync("![A caption](media:11)");
+    var view = await CreateViewAsync(
+      "![resolved](media:11) ![missing](media:12)",
+      new Dictionary<int, byte[]> { [11] = SamplePng });
 
-    Assert.Empty(Descendants(view).OfType<Image>());
+    var image = Descendants(view).OfType<Image>().Single();
+
+    Assert.IsType<StreamImageSource>(image.Source);
   }
 
   [Fact]
@@ -307,26 +313,44 @@ public class MarkdownViewTests
     Math.Abs(observed.Width - expected.Width) <= tolerance && Math.Abs(observed.Height - expected.Height) <= tolerance;
 
   private static Task<MarkdownView> CreateViewAsync(string markdown) =>
-    CreateViewAsync(markdown, new Dictionary<int, byte[]>());
+    CreateViewAsync(markdown, new Dictionary<int, byte[]>(), expectedImages: 0);
 
-  // The host hands the view images its converters already built; this mirrors what ImageDataConverter
-  // produces, so the layout assertions still run on real pixel dimensions read from real bytes.
-  private static async Task<MarkdownView> CreateViewAsync(string markdown, IReadOnlyDictionary<int, byte[]> mediaSources)
+  // Stands in for a host's resolver, measuring the same way MediaSourceUtils does, so the layout
+  // assertions still run on real pixel dimensions read from real bytes.
+  private static async Task<MarkdownView> CreateViewAsync(
+    string markdown, IReadOnlyDictionary<int, byte[]> mediaSources, int expectedImages = 1)
   {
-    static PhotoInfo ToPhoto(byte[] bytes)
+    InlineMediaResolver resolver = mediaId =>
     {
+      if (!mediaSources.TryGetValue(mediaId, out var bytes))
+      {
+        return Task.FromResult<InlineMedia?>(null);
+      }
+
       var source = ImageSource.FromStream(() => new MemoryStream(bytes));
       var pixelSize = ImageUtils.PixelSize(bytes);
-      return new PhotoInfo(source, null, pixelSize);
-    }
+      return Task.FromResult<InlineMedia?>(new InlineMedia(source, pixelSize));
+    };
 
-    var photos = mediaSources.ToDictionary(entry => entry.Key, entry => ToPhoto(entry.Value));
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
-    return await MainThread.InvokeOnMainThreadAsync(() => new MarkdownView
+    var view = await MainThread.InvokeOnMainThreadAsync(() => new MarkdownView
     {
       Markdown = markdown,
-      MediaSources = photos,
+      MediaResolver = resolver,
     });
+
+    // The view renders its text first and re-renders once the resolver answers, so anything asserting on
+    // a rendered image has to wait for that second pass rather than read the first one. Nested media
+    // (inside emphasis, or as a link label) renders as its caption instead, hence expectedImages: 0.
+    if (expectedImages > 0)
+    {
+      await Poll.UntilAsync(
+        () => MainThread.InvokeOnMainThreadAsync(() => Descendants(view).OfType<Image>().Count()),
+        rendered => rendered >= expectedImages,
+        timeoutMessage: "The resolved media never rendered.");
+    }
+
+    return view;
   }
 
   private static Span SpanWithText(MarkdownView view, string text)

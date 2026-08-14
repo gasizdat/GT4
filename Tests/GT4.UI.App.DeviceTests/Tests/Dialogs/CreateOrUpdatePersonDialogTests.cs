@@ -253,33 +253,6 @@ public class CreateOrUpdatePersonDialogTests
   }
 
   [Fact]
-  public async Task RemoveAttachmentCommand_drops_the_attachment_from_MediaSources()
-  {
-    var person = CreateSamplePerson() with
-    {
-      Attachments = [Attachment(30, "scan.jpg", "image/jpeg")],
-      Biography = Bio("![scan](media:30)")
-    };
-    var dialog = await CreateDialogAsync(new TestServices(), person);
-    var attachment = dialog.Attachments.ElementAt(0);
-    // Waiting for the map to hold the attachment before removing it is what makes this a test: an
-    // empty map would end up correct even with the reload handler unsubscribed.
-    await WaitForAsync(() => dialog.MediaSources.Keys.Contains(30), found => found,
-      "MediaSources never picked up the referenced attachment.");
-    var changedProperties = new List<string?>();
-    dialog.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
-
-    await MainThread.InvokeOnMainThreadAsync(() =>
-      dialog.DialogCommand.Execute(Adorner("RemoveAttachmentCommand", attachment)));
-
-    await WaitForAsync(() => dialog.Attachments.Count, count => count == 0, "RemoveAttachmentCommand did not remove the attachment.");
-    await WaitForAsync(() => dialog.MediaSources.Keys.Contains(30), found => !found,
-      "MediaSources still held the removed attachment.");
-    // The reload fixes the value; only the notification makes the bound MarkdownView re-read it.
-    Assert.Contains(nameof(dialog.MediaSources), changedProperties);
-  }
-
-  [Fact]
   public async Task MoveAttachmentDownCommand_reorders_attachments()
   {
     var person = CreateSamplePerson() with { Attachments = [Attachment(30, "first.pdf"), Attachment(31, "second.pdf")] };
@@ -502,6 +475,9 @@ public class CreateOrUpdatePersonDialogTests
     var services = new TestServices();
     var attachment = Attachment(21, "scan.jpg", "image/jpeg");
     var person = CreateSamplePerson() with { MainPhoto = null, AdditionalPhotos = [], Attachments = [attachment] };
+    services.Data
+      .Setup(table => table.TryGetDataByIdAsync(21, It.IsAny<CancellationToken>()))
+      .ReturnsAsync(attachment);
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
     var dialog = await MainThread.InvokeOnMainThreadAsync(
       () => services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialog.Factory>().Create(person));
@@ -518,22 +494,21 @@ public class CreateOrUpdatePersonDialogTests
     await insertTask;
 
     Assert.Equal("![scan.jpg](media:21)", dialog.Biography!.Content);
-    await WaitForAsync(() => dialog.MediaSources.Keys.Contains(21), found => found,
-      "MediaSources never picked up the just-inserted attachment.");
+    Assert.NotNull(await dialog.MediaResolver(21));
   }
 
-  // The picker and MediaSources must agree on what can be embedded: offering an embed the map drops
-  // renders a broken image, and dropping one the map holds wastes a working inline photo.
+  // The picker and the resolver must agree on what can be embedded: offering an embed the resolver
+  // rejects renders nothing, and withholding one it accepts wastes a working inline photo.
   [Fact]
-  public async Task InsertMediaLinkCommand_offers_as_inline_exactly_what_MediaSources_can_render()
+  public async Task InsertMediaLinkCommand_offers_as_inline_exactly_what_the_resolver_can_render()
   {
     var services = new TestServices();
     var attachments = new[] { Attachment(20, "scan.pdf"), Attachment(21, "scan.jpg", "image/jpeg") };
-    // MediaSources only encodes what the biography references (#211), so every inline-capable id
-    // (the two default photos, main photo, and the jpeg attachment) needs a link up front for the
-    // picker's offer and MediaSources to agree.
-    var biography = Bio("![1](media:10) ![2](media:11) ![3](media:12) ![4](media:21)");
-    var person = CreateSamplePerson() with { Attachments = attachments, Biography = biography };
+    var person = CreateSamplePerson() with { Attachments = attachments };
+    Data[] stored = [person.MainPhoto!, .. person.AdditionalPhotos, .. attachments];
+    services.Data
+      .Setup(table => table.TryGetDataByIdAsync(It.IsAny<int?>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync((int? id, CancellationToken _) => stored.FirstOrDefault(item => item.Id == id));
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
     var dialog = await MainThread.InvokeOnMainThreadAsync(
       () => services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialog.Factory>().Create(person));
@@ -541,11 +516,12 @@ public class CreateOrUpdatePersonDialogTests
     await using var window = await WindowHost.AttachAsync(dialog);
     var insertTask = await MainThreadTask.StartAsync(dialog.InvokeInsertMediaLinkAsync);
     var selectDialog = await ModalDialogHarness.WaitForModalAsync<SelectMediaDialog>(dialog);
-    var inlineIds = selectDialog.Items.Where(item => item.IsInlineImage).Select(item => item.Id).Order();
 
-    // The biography loads asynchronously, so poll rather than assert on the first read.
-    await WaitForAsync(() => dialog.MediaSources.Keys.Order(), keys => keys.SequenceEqual(inlineIds),
-      "MediaSources never matched the picker's inline offer.");
+    foreach (var item in selectDialog.Items)
+    {
+      var media = await dialog.MediaResolver(item.Id);
+      Assert.Equal(item.IsInlineImage, media is not null);
+    }
 
     await MainThread.InvokeOnMainThreadAsync(() => selectDialog.DialogCommand.Execute("SelectMediaCommand"));
     await insertTask;

@@ -1,4 +1,5 @@
 using GT4.Core.Project;
+using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
@@ -32,13 +33,16 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     SelectNameDialog.Factory SelectNameDialogFactory,
     SelectRelativesDialog.Factory SelectRelativesDialogFactory,
     SelectPersonDialog.Factory SelectPersonDialogFactory,
-    SelectMediaDialog.Factory SelectMediaDialogFactory)
+    SelectMediaDialog.Factory SelectMediaDialogFactory,
+    ICurrentProjectProvider CurrentProjectProvider,
+    IHttpClientFactory HttpClientFactory)
   {
     public CreateOrUpdatePersonDialog Create(PersonFullInfo? person) =>
       new CreateOrUpdatePersonDialog(this, person);
   }
 
   private readonly Factory _Factory;
+  private readonly InlineMediaResolver _MediaResolver;
   private readonly ICommand _DialogCommand;
   private readonly string _SaveButtonName;
   private readonly ObservableCollection<PersonDataItem> _Photos = new();
@@ -53,14 +57,16 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private BiologicalSexItem? _BiologicalSex;
   private PersonDataItem? _Biography;
   private Data? _GedcomData;
-  private IReadOnlyDictionary<int, PhotoInfo> _MediaSources = ReadOnlyDictionary<int, PhotoInfo>.Empty;
-  private int _MediaSourcesGeneration;
   private bool _IsModified;
   private bool _NotReady => _BiologicalSex is null || _BirthDate is null || !_IsModified;
 
   protected CreateOrUpdatePersonDialog(Factory factory, PersonFullInfo? person)
   {
     _Factory = factory;
+    // Held in a field, not rebuilt per binding read: MarkdownView keys its resolved-media cache on the
+    // delegate's identity, so a fresh one every render would re-query every image on every keystroke.
+    _MediaResolver = MediaSourceUtils.CreateResolver(
+      factory.CurrentProjectProvider, factory.DataConverterResolver, factory.CancellationTokenProvider, factory.HttpClientFactory);
     _DialogCommand = new SafeCommand(OnDialogCommand, _Factory.AlertService);
     _SaveButtonName = person is null ? UIStrings.BtnNameCreateFamilyPerson : UIStrings.BtnNameUpdateFamilyPerson;
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, _Factory.BiologicalSexFormatter));
@@ -71,41 +77,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     UpdatePersonInformation(person);
 
     _Names.CollectionChanged += (_, _) => OnPropertyChanged(nameof(PersonFullName));
-    _Photos.CollectionChanged += OnMediaCollectionChanged;
-    _Attachments.CollectionChanged += OnMediaCollectionChanged;
 
     InitializeComponent();
     IsModified = false;
-  }
-
-  private void OnMediaCollectionChanged(object? sender, NotifyCollectionChangedEventArgs args) => ReloadMediaSources();
-
-  // Each photo/attachment resolves through its own converter, so the map can only be filled
-  // asynchronously; the generation guard drops a reload that a later one has already superseded.
-  private void ReloadMediaSources()
-  {
-    var generation = ++_MediaSourcesGeneration;
-    var media = _Photos.Concat(_Attachments).Select(item => item.Info).ToArray();
-    var biography = _Biography?.Content as string;
-
-    async Task UpdateMediaSourcesAsync()
-    {
-      using var token = _Factory.CancellationTokenProvider.CreateShortOperationCancellationToken();
-      var sources = await MediaSourceUtils.BuildMediaSourcesAsync(_Factory.DataConverterResolver, media, biography, token);
-
-      MainThread.BeginInvokeOnMainThread(() =>
-      {
-        if (generation != _MediaSourcesGeneration)
-        {
-          return;
-        }
-
-        _MediaSources = sources;
-        OnPropertyChanged(nameof(MediaSources));
-      });
-    }
-
-    SafeTask.Run(UpdateMediaSourcesAsync, _Factory.AlertService);
   }
 
   private PersonDataItem GetPersonData(Data data, DataCategory dataCategory)
@@ -170,19 +144,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
               _Factory.CancellationTokenProvider,
               _Factory.AlertService)
       };
-      _Biography.PropertyChanged += (_, _) =>
-      {
-        IsModified = _Biography.IsModified;
-
-        // The initial async load bypasses the IsModified-setting setter (it mutates Content directly),
-        // so this fires with IsModified still false exactly once, when the biography text first becomes
-        // available to filter MediaSources by. Later edits go through the setter and must not
-        // re-trigger a re-encode on every keystroke.
-        if (!_Biography.IsModified)
-        {
-          ReloadMediaSources();
-        }
-      };
+      _Biography.PropertyChanged += (_, _) => IsModified = _Biography.IsModified;
 
       var relatives = person
         .RelativeInfos
@@ -211,9 +173,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   public ICollection<PersonDataItem> Photos => _Photos;
 
-  // Filled by ReloadMediaSources (above), which the CollectionChanged handlers and the biography
-  // load/insert hooks (below) are the only things that trigger.
-  public IReadOnlyDictionary<int, PhotoInfo> MediaSources => _MediaSources;
+  public InlineMediaResolver MediaResolver => _MediaResolver;
 
   public ICollection<PersonDataItem> Attachments => _Attachments;
 
@@ -521,18 +481,14 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       if (picked.IsInlineImage)
       {
         BiographyEditor.InsertMediaLink(picked.DisplayName, picked.Id);
-        // A newly-referenced photo/attachment may already sit in _Photos/_Attachments, so the
-        // CollectionChanged handlers never fire for it; the biography's own PropertyChanged handler
-        // above skips this (IsModified is now true), so reload here instead.
-        ReloadMediaSources();
       }
       else
         BiographyEditor.InsertAttachmentLink(picked.DisplayName, picked.Id);
     }
   }
 
-  // IsInlineImage must be the same predicate BuildMediaSources filters by: offering something the media
-  // map drops would insert an embed that renders as a broken image instead of a working link.
+  // IsInlineImage must be the same predicate the media resolver filters by: offering something the
+  // resolver rejects would insert an embed that renders as nothing instead of a working link.
   private async Task<MediaLinkItem> ToMediaLinkItemAsync(Data data, string fallbackName, CancellationToken token)
   {
     var content = await _Factory.DataConverterResolver(data.Category).ToObjectAsync(data, token);

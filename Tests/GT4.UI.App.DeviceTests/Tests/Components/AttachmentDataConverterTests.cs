@@ -48,7 +48,7 @@ public class AttachmentDataConverterTests
 
     var info = Assert.IsType<AttachmentInfo>(result);
     Assert.NotNull(info.Image);
-    Assert.Equal([9, 8, 7], await PhotoBytes.ReadAsync(info.Image));
+    Assert.Equal([9, 8, 7], await PhotoBytes.ReadAsync(info.Image.Source));
   }
 
   [Fact]

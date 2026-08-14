@@ -36,7 +36,8 @@ internal sealed class TestablePersonPage : PersonPage
     IAlertService alertService,
     INavigationService navigationService,
     IBiologicalSexFormatter biologicalSexFormatter,
-    CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory)
+    CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory,
+    IHttpClientFactory httpClientFactory)
     : base(
       cancellationTokenProvider,
       currentProjectProvider,
@@ -49,7 +50,8 @@ internal sealed class TestablePersonPage : PersonPage
       alertService,
       navigationService,
       biologicalSexFormatter,
-      createOrUpdatePersonDialogFactory)
+      createOrUpdatePersonDialogFactory,
+      httpClientFactory)
   {
     // FilterDataLoaded fires exactly once per lazy fetch, after SetMarriedIds/SetYearBounds have
     // been applied on the main thread.

@@ -223,7 +223,7 @@
               <components:MarkdownView
                   AttachmentLinkTapped="OnAttachmentLinkTapped"
                   Markdown="{Binding Biography, Source={x:Reference Root}, Mode=OneWay}"
-                  MediaSources="{Binding MediaSources, Source={x:Reference Root}}"
+                  MediaResolver="{Binding MediaResolver, Source={x:Reference Root}}"
                   PersonLinkTapped="OnPersonLinkTapped" />
             </Border>
 

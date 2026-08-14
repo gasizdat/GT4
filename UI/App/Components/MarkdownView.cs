@@ -1,10 +1,8 @@
 using GT4.UI.Utils;
-using GT4.UI.Utils.Converters;
 using Markdig;
 using Markdig.Parsers;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
-using System.Collections.ObjectModel;
 
 namespace GT4.UI.Components;
 
@@ -31,6 +29,8 @@ public class MarkdownView : ContentView
   private static readonly MarkdownPipeline Pipeline = BuildPipeline();
 
   private readonly Command<string> _LinkCommand;
+  private readonly Dictionary<int, InlineMedia?> _ResolvedMedia = [];
+  private int _MediaGeneration;
 
   public MarkdownView()
   {
@@ -40,11 +40,13 @@ public class MarkdownView : ContentView
   public static readonly BindableProperty MarkdownProperty =
     BindableProperty.Create(nameof(Markdown), typeof(string), typeof(MarkdownView), default, BindingMode.OneWay, null, OnSourceChanged);
 
-  // Host-supplied id-to-image map for "![caption](media:id)" references; the host resolves each one
-  // through its keyed data converter, so this view never sees a photo's bytes or its storage format.
-  public static readonly BindableProperty MediaSourcesProperty =
-    BindableProperty.Create(nameof(MediaSources), typeof(IReadOnlyDictionary<int, PhotoInfo>), typeof(MarkdownView),
-      ReadOnlyDictionary<int, PhotoInfo>.Empty, BindingMode.OneWay, null, OnSourceChanged);
+  // Host-supplied lookup for "![caption](media:id)" references, called only for an id the current
+  // Markdown actually names. Inverting this -- asking the host per id rather than being handed a map --
+  // is what lets a biography reference media the host never collected, and keeps this view unaware of
+  // both a photo's bytes and its storage format.
+  public static readonly BindableProperty MediaResolverProperty =
+    BindableProperty.Create(nameof(MediaResolver), typeof(InlineMediaResolver), typeof(MarkdownView),
+      null, BindingMode.OneWay, null, OnResolverChanged);
 
   public string? Markdown
   {
@@ -52,10 +54,10 @@ public class MarkdownView : ContentView
     set => SetValue(MarkdownProperty, value);
   }
 
-  public IReadOnlyDictionary<int, PhotoInfo> MediaSources
+  public InlineMediaResolver? MediaResolver
   {
-    get => (IReadOnlyDictionary<int, PhotoInfo>)GetValue(MediaSourcesProperty);
-    set => SetValue(MediaSourcesProperty, value);
+    get => (InlineMediaResolver?)GetValue(MediaResolverProperty);
+    set => SetValue(MediaResolverProperty, value);
   }
 
   // Raised instead of navigating when a rendered [Name](person:123) link is tapped; the host page owns
@@ -83,7 +85,89 @@ public class MarkdownView : ContentView
   {
     if (obj is MarkdownView view && oldValue != newValue)
     {
-      view.Render();
+      view.Refresh();
+    }
+  }
+
+  // Only a new resolver can invalidate what the old one returned; Markdown changing just references a
+  // different subset of the same media, which is why the memo below outlives an edit. A host that hands
+  // over a freshly built delegate on every render would defeat it, so each holds one in a field.
+  private static void OnResolverChanged(BindableObject obj, object oldValue, object newValue)
+  {
+    if (obj is MarkdownView view && oldValue != newValue)
+    {
+      view._ResolvedMedia.Clear();
+      view.Refresh();
+    }
+  }
+
+  // Renders at once with whatever is already resolved, then re-renders once the misses arrive: the text
+  // of a biography does not wait on its images. Rebuilding the whole tree, rather than filling a
+  // placeholder in place, is what keeps ScaledImage's SizeChanged handler seeing a final pixel size.
+  private void Refresh()
+  {
+    Render();
+
+    var resolver = MediaResolver;
+    var referencedIds = MediaLinkUtils.ExtractReferencedIds(Markdown);
+    var pending = referencedIds.Where(id => !_ResolvedMedia.ContainsKey(id)).ToArray();
+    if (resolver is null || pending.Length == 0)
+    {
+      return;
+    }
+
+    var generation = ++_MediaGeneration;
+    _ = ResolveMediaAsync(resolver, pending, generation);
+  }
+
+  // Sequential on purpose: every host resolves through the project's single gated connection, so issuing
+  // these together would only queue them. A failed lookup is cached as a miss like any other -- retrying
+  // it on the next keystroke would re-query a row that is not coming back.
+  private async Task ResolveMediaAsync(InlineMediaResolver resolver, int[] pending, int generation)
+  {
+    var resolved = new Dictionary<int, InlineMedia?>();
+    foreach (var mediaId in pending)
+    {
+      resolved[mediaId] = await ResolveOneAsync(resolver, mediaId);
+    }
+
+    void Apply()
+    {
+      if (generation != _MediaGeneration)
+      {
+        return;
+      }
+
+      foreach (var entry in resolved)
+      {
+        _ResolvedMedia[entry.Key] = entry.Value;
+      }
+
+      Render();
+    }
+
+    try
+    {
+      await MainThread.InvokeOnMainThreadAsync(Apply);
+    }
+    catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
+    {
+      System.Diagnostics.Debug.WriteLine(ex);
+    }
+  }
+
+  // An unrenderable reference is the view's own failure mode, whatever caused it, so every outcome
+  // collapses to "no image here" rather than to an alert this view has no service to raise.
+  private static async Task<InlineMedia?> ResolveOneAsync(InlineMediaResolver resolver, int mediaId)
+  {
+    try
+    {
+      return await resolver(mediaId);
+    }
+    catch (Exception ex)
+    {
+      System.Diagnostics.Debug.WriteLine(ex);
+      return null;
     }
   }
 
@@ -407,8 +491,8 @@ public class MarkdownView : ContentView
 
     if (TryParseLink(url, "media:", out var mediaId))
     {
-      return MediaSources.TryGetValue(mediaId, out var photo)
-        ? ScaledImage(photo.Source, photo.PixelSize, widthPercent)
+      return _ResolvedMedia.GetValueOrDefault(mediaId) is InlineMedia media
+        ? ScaledImage(media.Source, media.PixelSize, widthPercent)
         : null;
     }
 

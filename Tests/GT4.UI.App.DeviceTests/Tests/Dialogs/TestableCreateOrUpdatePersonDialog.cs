@@ -30,7 +30,9 @@ internal sealed class TestableCreateOrUpdatePersonDialog : CreateOrUpdatePersonD
     SelectNameDialog.Factory SelectNameDialogFactory,
     SelectRelativesDialog.Factory SelectRelativesDialogFactory,
     SelectPersonDialog.Factory SelectPersonDialogFactory,
-    SelectMediaDialog.Factory SelectMediaDialogFactory)
+    SelectMediaDialog.Factory SelectMediaDialogFactory,
+    ICurrentProjectProvider CurrentProjectProvider,
+    IHttpClientFactory HttpClientFactory)
     : CreateOrUpdatePersonDialog.Factory(
       CancellationTokenProvider,
       BiologicalSexFormatter,
@@ -45,7 +47,9 @@ internal sealed class TestableCreateOrUpdatePersonDialog : CreateOrUpdatePersonD
       SelectNameDialogFactory,
       SelectRelativesDialogFactory,
       SelectPersonDialogFactory,
-      SelectMediaDialogFactory)
+      SelectMediaDialogFactory,
+      CurrentProjectProvider,
+      HttpClientFactory)
   {
     public new TestableCreateOrUpdatePersonDialog Create(PersonFullInfo? person) =>
       new TestableCreateOrUpdatePersonDialog(this, person);

@@ -33,11 +33,11 @@ public partial class PersonPage : ContentPage
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
   private readonly CreateOrUpdatePersonDialog.Factory _CreateOrUpdatePersonDialogFactory;
+  private readonly InlineMediaResolver _MediaResolver;
   private ObservableCollection<PersonInfo> _NavigationHistory = new();
   private int _NavigationIndex = -1;
   private PersonFullInfo _PersonFullInfo = PersonFullInfo.Empty;
   private PhotoInfo[] _Photos = [];
-  private IReadOnlyDictionary<int, PhotoInfo> _MediaSources = ReadOnlyDictionary<int, PhotoInfo>.Empty;
   private AttachmentInfo[] _Attachments = [];
   private string _Biography = string.Empty;
   private PersonPageSmartLayout _SmartLayout = new();
@@ -59,7 +59,8 @@ public partial class PersonPage : ContentPage
     IAlertService alertService,
     INavigationService navigationService,
     IBiologicalSexFormatter biologicalSexFormatter,
-    CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory
+    CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory,
+    IHttpClientFactory httpClientFactory
     )
   {
     _CancellationTokenProvider = cancellationTokenProvider;
@@ -75,6 +76,10 @@ public partial class PersonPage : ContentPage
     _CreateOrUpdatePersonDialogFactory = createOrUpdatePersonDialogFactory;
     _PageCommand = new SafeCommand(OnPageCommand, _AlertService);
     _Relatives = new RelativeTree(_CurrentProjectProvider, _CancellationTokenProvider, _AlertService);
+    // Held in a field, not rebuilt per binding read: MarkdownView keys its resolved-media cache on the
+    // delegate's identity, so a fresh one every render would re-query every image on every keystroke.
+    _MediaResolver = MediaSourceUtils.CreateResolver(
+      _CurrentProjectProvider, _DataConverterResolver, _CancellationTokenProvider, httpClientFactory);
 
     InitializeComponent();
 
@@ -168,7 +173,7 @@ public partial class PersonPage : ContentPage
 
   public PhotoInfo[] Photos => _Photos;
 
-  public IReadOnlyDictionary<int, PhotoInfo> MediaSources => _MediaSources;
+  public InlineMediaResolver MediaResolver => _MediaResolver;
 
   public AttachmentInfo[] Attachments => _Attachments;
 
@@ -350,14 +355,11 @@ public partial class PersonPage : ContentPage
       var relativesProvider = project.RelativesProvider;
       var siblings = relativesProvider.GetSiblings(personFullInfo, parents);
       var roots = AssembleRoots(personFullInfo, parents, siblings, stepChildren, relativesProvider);
-      var (photos, photoData) = await LoadPhotosAsync(personFullInfo, token);
-      var mediaSources = await MediaSourceUtils.BuildMediaSourcesAsync(
-        _DataConverterResolver, [.. photoData, .. personFullInfo.Attachments], bioTask.Result as string, token);
+      var photos = await LoadPhotosAsync(personFullInfo, token);
       var data = new PersonPageData(
         personFullInfo,
         roots,
         photos,
-        mediaSources,
         attachments,
         bioTask.Result as string,
         gedcomTask.Result as string,
@@ -392,7 +394,7 @@ public partial class PersonPage : ContentPage
     }
   }
 
-  private async Task<(PhotoInfo[] Photos, Data[] PhotoData)> LoadPhotosAsync(PersonFullInfo personFullInfo, CancellationToken token)
+  private async Task<PhotoInfo[]> LoadPhotosAsync(PersonFullInfo personFullInfo, CancellationToken token)
   {
     PhotoInfo GetDefaultPhotoInfo() => new(ImageUtils.ImageFromRawResource(
       ImageUtils.DefaultPersonPhotoResourceName(personFullInfo.BiologicalSex), null), null);
@@ -411,7 +413,7 @@ public partial class PersonPage : ContentPage
       photos = [GetDefaultPhotoInfo()];
     }
 
-    return (photos, photoData);
+    return photos;
   }
 
   private static RelativeInfo[] AssembleRoots(
@@ -444,7 +446,6 @@ public partial class PersonPage : ContentPage
   {
     _PersonFullInfo = data.PersonFullInfo;
     _Photos = data.Photos;
-    _MediaSources = data.MediaSources;
     _Attachments = data.Attachments;
     _Biography = CombineBiography(data.Bio, data.GedcomDetails, data.FamilyDetails);
     _AllRoots = data.Roots;
