@@ -65,7 +65,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     _DataConverterResolver = dataConverterResolver;
     var nameTypeName = nameTypeFormatter.ToString(nameType);
     _DialogButtonName = string.Format(UIStrings.BtnNameCreateName_1, nameTypeName);
-    _DialogCommand = new SafeCommand(OnCreateFamily, alertService);
+    _DialogCommand = new SafeCommand(OnCreateFamilyAsync, alertService);
     _MediaCommand = new SafeCommand(OnMediaCommand, alertService);
 
     switch (nameType)
@@ -299,7 +299,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
 
   public ICommand DialogCommand => _DialogCommand;
 
-  private void OnCreateFamily()
+  private async Task OnCreateFamilyAsync()
   {
     if (NotReady)
     {
@@ -307,7 +307,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
       return;
     }
 
-    var photos = _Photos.Select(item => item.Info).ToArray();
+    var photos = await ToDataAsync(_Photos);
     var mainPhoto = photos.FirstOrDefault();
     var additionalPhotos = photos.Skip(1).Select(photo => photo with { Category = photo.Category.AsAdditionalPhoto() });
     // Position in _Photos (index 0 = main), not the category assigned at add time, is authoritative --
@@ -319,8 +319,14 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     var name = GeneralName;
     var maleName = ShowDeclensionNames ? MaleName : string.Empty;
     var femaleName = ShowDeclensionNames ? FemaleName : string.Empty;
-    var attachments = _Attachments.Select(item => item.Info).ToArray();
+    var attachments = await ToDataAsync(_Attachments);
     _Info.SetResult(new(name, maleName, femaleName, allPhotos, attachments));
+  }
+
+  private static async Task<Data[]> ToDataAsync(IEnumerable<PersonDataItem> items)
+  {
+    var data = await Task.WhenAll(items.Select(item => item.ToDataAsync()));
+    return [.. data.Where(item => item is not null).Select(item => item!)];
   }
 
   private PersonDataItem GetFamilyData(Data data, DataCategory dataCategory)
