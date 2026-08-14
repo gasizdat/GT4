@@ -17,8 +17,6 @@ namespace GT4.UI.Converters;
 /// </summary>
 public sealed class InlineMediaProvider
 {
-  private const string MediaScheme = "media:";
-
   private readonly ICurrentProjectProvider _ProjectProvider;
   private readonly DataConverterResolver _ConverterResolver;
   private readonly ICancellationTokenProvider _TokenProvider;
@@ -39,7 +37,7 @@ public sealed class InlineMediaProvider
   public async Task<InlineMedia?> ResolveAsync(string link)
   {
     using var token = _TokenProvider.CreateShortOperationCancellationToken();
-    if (MediaLinkUtils.TryParseLinkId(link, MediaScheme, out var mediaId))
+    if (MarkdownLinkUtils.TryParseMediaId(link, out var mediaId))
     {
       return await ProjectMediaAsync(mediaId, token);
     }

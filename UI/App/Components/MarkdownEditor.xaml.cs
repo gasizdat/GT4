@@ -1,4 +1,5 @@
 using GT4.UI.Abstraction;
+using GT4.UI.Utils;
 using System.Windows.Input;
 
 namespace GT4.UI.Components;
@@ -85,14 +86,23 @@ public partial class MarkdownEditor : ContentView
 
   public ICommand Command => _Command;
 
-  public void InsertLink(string displayName, int personId) =>
-    InsertText($"[{displayName}](person:{personId})");
+  public void InsertLink(string displayName, int personId)
+  {
+    var url = MarkdownLinkUtils.PersonUrl(personId);
+    InsertText($"[{displayName}]({url})");
+  }
 
-  public void InsertMediaLink(string displayName, int mediaId) =>
-    InsertText($"![{displayName}](media:{mediaId})");
+  public void InsertMediaLink(string displayName, int mediaId)
+  {
+    var url = MarkdownLinkUtils.MediaUrl(mediaId);
+    InsertText($"![{displayName}]({url})");
+  }
 
-  public void InsertAttachmentLink(string displayName, int attachmentId) =>
-    InsertText($"[{displayName}](attachment:{attachmentId})");
+  public void InsertAttachmentLink(string displayName, int attachmentId)
+  {
+    var url = MarkdownLinkUtils.AttachmentUrl(attachmentId);
+    InsertText($"[{displayName}]({url})");
+  }
 
   private void InsertText(string text)
   {

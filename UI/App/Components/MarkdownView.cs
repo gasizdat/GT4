@@ -277,7 +277,7 @@ public class MarkdownView : ContentView
   {
     var literals = image.OfType<LiteralInline>().Select(literal => literal.Content.ToString());
     var description = string.Concat(literals);
-    return MediaLinkUtils.ParseImageDescription(description);
+    return MarkdownLinkUtils.ParseImageDescription(description);
   }
 
   // MAUI keeps the height it measured a full-width image at, so capping the width alone leaves it in an
@@ -529,13 +529,13 @@ public class MarkdownView : ContentView
   // coordinate reference, a mailto/tel in a bio) is handed to the OS by its own protocol.
   private async void OnLinkTapped(string url)
   {
-    if (MediaLinkUtils.TryParseLinkId(url, "person:", out var personId))
+    if (MarkdownLinkUtils.TryParsePersonId(url, out var personId))
     {
       PersonLinkTapped?.Invoke(this, personId);
       return;
     }
 
-    if (MediaLinkUtils.TryParseLinkId(url, "attachment:", out var attachmentId))
+    if (MarkdownLinkUtils.TryParseAttachmentId(url, out var attachmentId))
     {
       AttachmentLinkTapped?.Invoke(this, attachmentId);
       return;
