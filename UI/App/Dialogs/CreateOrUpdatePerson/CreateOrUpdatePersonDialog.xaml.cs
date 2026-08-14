@@ -1,4 +1,3 @@
-using GT4.Core.Gedcom;
 using GT4.Core.Project;
 using GT4.Core.Project.Dto;
 using GT4.Core.Project.Extensions;
@@ -54,7 +53,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private BiologicalSexItem? _BiologicalSex;
   private PersonDataItem? _Biography;
   private Data? _GedcomData;
-  private IReadOnlyDictionary<int, byte[]>? _MediaSources;
+  private IReadOnlyDictionary<int, PhotoInfo> _MediaSources = ReadOnlyDictionary<int, PhotoInfo>.Empty;
+  private int _MediaSourcesGeneration;
   private bool _IsModified;
   private bool _NotReady => _BiologicalSex is null || _BirthDate is null || !_IsModified;
 
@@ -78,10 +78,34 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     IsModified = false;
   }
 
-  private void OnMediaCollectionChanged(object? sender, NotifyCollectionChangedEventArgs args)
+  private void OnMediaCollectionChanged(object? sender, NotifyCollectionChangedEventArgs args) => ReloadMediaSources();
+
+  // Each photo/attachment resolves through its own converter, so the map can only be filled
+  // asynchronously; the generation guard drops a reload that a later one has already superseded.
+  private void ReloadMediaSources()
   {
-    _MediaSources = null;
-    OnPropertyChanged(nameof(MediaSources));
+    var generation = ++_MediaSourcesGeneration;
+    var media = _Photos.Concat(_Attachments).Select(item => item.Info).ToArray();
+    var biography = _Biography?.Content as string;
+
+    async Task UpdateMediaSourcesAsync()
+    {
+      using var token = _Factory.CancellationTokenProvider.CreateShortOperationCancellationToken();
+      var sources = await MediaSourceUtils.BuildMediaSourcesAsync(_Factory.DataConverterResolver, media, biography, token);
+
+      MainThread.BeginInvokeOnMainThread(() =>
+      {
+        if (generation != _MediaSourcesGeneration)
+        {
+          return;
+        }
+
+        _MediaSources = sources;
+        OnPropertyChanged(nameof(MediaSources));
+      });
+    }
+
+    SafeTask.Run(UpdateMediaSourcesAsync, _Factory.AlertService);
   }
 
   private PersonDataItem GetPersonData(Data data, DataCategory dataCategory)
@@ -156,8 +180,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         // re-trigger a re-encode on every keystroke.
         if (!_Biography.IsModified)
         {
-          _MediaSources = null;
-          OnPropertyChanged(nameof(MediaSources));
+          ReloadMediaSources();
         }
       };
 
@@ -188,12 +211,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   public ICollection<PersonDataItem> Photos => _Photos;
 
-  // Re-scanning the biography and re-unwrapping every photo is expensive enough to cache rather than
-  // redo on every binding read; the CollectionChanged handlers (above) and the biography load/insert
-  // hooks (below) are the only things that can make this stale.
-  public IReadOnlyDictionary<int, byte[]> MediaSources =>
-    _MediaSources ??= MediaSourceUtils.BuildMediaSources(
-      _Photos.Concat(_Attachments).Select(item => item.Info), _Biography?.Content as string);
+  // Filled by ReloadMediaSources (above), which the CollectionChanged handlers and the biography
+  // load/insert hooks (below) are the only things that trigger.
+  public IReadOnlyDictionary<int, PhotoInfo> MediaSources => _MediaSources;
 
   public ICollection<PersonDataItem> Attachments => _Attachments;
 
@@ -489,11 +509,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
     var photoItems = await Task.WhenAll(photos.Select((data, index) =>
       ToMediaLinkItemAsync(data, string.Format(UIStrings.MediaLinkPhotoName_1, index + 1), token)));
-    var attachmentItems = await Task.WhenAll(attachments.Select(async data =>
-    {
-      var fileName = await GedcomPhotoResidue.ExtractFileNameAsync(data, token);
-      return await ToMediaLinkItemAsync(data, fileName ?? string.Empty, token);
-    }));
+    var attachmentItems = await Task.WhenAll(attachments.Select(data => ToMediaLinkItemAsync(data, string.Empty, token)));
 
     var dialog = _Factory.SelectMediaDialogFactory.Create([.. photoItems, .. attachmentItems]);
     await Navigation.PushModalAsync(dialog);
@@ -507,9 +523,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         BiographyEditor.InsertMediaLink(picked.DisplayName, picked.Id);
         // A newly-referenced photo/attachment may already sit in _Photos/_Attachments, so the
         // CollectionChanged handlers never fire for it; the biography's own PropertyChanged handler
-        // above skips this (IsModified is now true), so invalidate here instead.
-        _MediaSources = null;
-        OnPropertyChanged(nameof(MediaSources));
+        // above skips this (IsModified is now true), so reload here instead.
+        ReloadMediaSources();
       }
       else
         BiographyEditor.InsertAttachmentLink(picked.DisplayName, picked.Id);
@@ -518,10 +533,15 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   // IsInlineImage must be the same predicate BuildMediaSources filters by: offering something the media
   // map drops would insert an embed that renders as a broken image instead of a working link.
-  private static async Task<MediaLinkItem> ToMediaLinkItemAsync(Data data, string fallbackName, CancellationToken token)
+  private async Task<MediaLinkItem> ToMediaLinkItemAsync(Data data, string fallbackName, CancellationToken token)
   {
-    var title = await GedcomPhotoResidue.ExtractTitleAsync(data, token);
-    var displayName = string.IsNullOrWhiteSpace(title) ? fallbackName : title;
+    var content = await _Factory.DataConverterResolver(data.Category).ToObjectAsync(data, token);
+    var displayName = content switch
+    {
+      PhotoInfo photo when !string.IsNullOrWhiteSpace(photo.Caption) => photo.Caption,
+      AttachmentInfo attachment => attachment.DisplayName,
+      _ => fallbackName
+    };
     var isInlineImage = MediaSourceUtils.IsInlineImage(data);
     return new MediaLinkItem(data.Id, isInlineImage, displayName);
   }

@@ -1,4 +1,5 @@
 using GT4.UI.Utils;
+using GT4.UI.Utils.Converters;
 using Markdig;
 using Markdig.Parsers;
 using Markdig.Syntax;
@@ -39,11 +40,11 @@ public class MarkdownView : ContentView
   public static readonly BindableProperty MarkdownProperty =
     BindableProperty.Create(nameof(Markdown), typeof(string), typeof(MarkdownView), default, BindingMode.OneWay, null, OnSourceChanged);
 
-  // Host-supplied id-to-bytes map for "![caption](media:id)" references; keeps this view free of any
-  // project dependency (the host already resolves photo bytes for its own display, e.g. PersonPage).
+  // Host-supplied id-to-image map for "![caption](media:id)" references; the host resolves each one
+  // through its keyed data converter, so this view never sees a photo's bytes or its storage format.
   public static readonly BindableProperty MediaSourcesProperty =
-    BindableProperty.Create(nameof(MediaSources), typeof(IReadOnlyDictionary<int, byte[]>), typeof(MarkdownView),
-      ReadOnlyDictionary<int, byte[]>.Empty, BindingMode.OneWay, null, OnSourceChanged);
+    BindableProperty.Create(nameof(MediaSources), typeof(IReadOnlyDictionary<int, PhotoInfo>), typeof(MarkdownView),
+      ReadOnlyDictionary<int, PhotoInfo>.Empty, BindingMode.OneWay, null, OnSourceChanged);
 
   public string? Markdown
   {
@@ -51,9 +52,9 @@ public class MarkdownView : ContentView
     set => SetValue(MarkdownProperty, value);
   }
 
-  public IReadOnlyDictionary<int, byte[]> MediaSources
+  public IReadOnlyDictionary<int, PhotoInfo> MediaSources
   {
-    get => (IReadOnlyDictionary<int, byte[]>)GetValue(MediaSourcesProperty);
+    get => (IReadOnlyDictionary<int, PhotoInfo>)GetValue(MediaSourcesProperty);
     set => SetValue(MediaSourcesProperty, value);
   }
 
@@ -406,13 +407,9 @@ public class MarkdownView : ContentView
 
     if (TryParseLink(url, "media:", out var mediaId))
     {
-      if (!MediaSources.TryGetValue(mediaId, out var bytes))
-      {
-        return null;
-      }
-
-      var stored = ImageSource.FromStream(() => new MemoryStream(bytes));
-      return ScaledImage(stored, ImageUtils.PixelSize(bytes), widthPercent);
+      return MediaSources.TryGetValue(mediaId, out var photo)
+        ? ScaledImage(photo.Source, photo.PixelSize, widthPercent)
+        : null;
     }
 
     return Uri.TryCreate(url, UriKind.Absolute, out var uri)

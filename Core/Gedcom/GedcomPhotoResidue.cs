@@ -65,10 +65,6 @@ public static class GedcomPhotoResidue
     return content[(sizeof(int) + tagLength)..];
   }
 
-  /// <summary>Raw bytes regardless of category: unwraps an envelope, passes non-enveloped Content through.</summary>
-  public static byte[] PayloadBytes(Data data) =>
-    data.Category.IsEnveloped() ? ExtractImageBytes(data.Content) : data.Content;
-
   /// <summary>An imported OBJE's <c>TITL</c> -- a photo's caption, or an attachment's document title.</summary>
   public static async Task<string?> ExtractTitleAsync(Data? data, CancellationToken token)
   {

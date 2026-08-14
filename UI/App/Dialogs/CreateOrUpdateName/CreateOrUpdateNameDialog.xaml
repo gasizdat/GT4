@@ -217,7 +217,7 @@
                       <Label
                           Grid.Column="0"
                           Style="{StaticResource FieldValue}"
-                          Text="{Binding Content}"
+                          Text="{Binding Content.DisplayName}"
                           VerticalOptions="Center" />
 
                       <Button

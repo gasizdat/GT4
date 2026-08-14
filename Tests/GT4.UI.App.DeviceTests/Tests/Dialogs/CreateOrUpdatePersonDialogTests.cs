@@ -262,9 +262,8 @@ public class CreateOrUpdatePersonDialogTests
     };
     var dialog = await CreateDialogAsync(new TestServices(), person);
     var attachment = dialog.Attachments.ElementAt(0);
-    // Reading before the removal is what makes this a test: MediaSources is lazily cached, so an
-    // unpopulated cache would rebuild correctly even with the invalidation handler unsubscribed. The
-    // biography text loads asynchronously, so poll rather than assert on the first read.
+    // Waiting for the map to hold the attachment before removing it is what makes this a test: an
+    // empty map would end up correct even with the reload handler unsubscribed.
     await WaitForAsync(() => dialog.MediaSources.Keys.Contains(30), found => found,
       "MediaSources never picked up the referenced attachment.");
     var changedProperties = new List<string?>();
@@ -274,8 +273,9 @@ public class CreateOrUpdatePersonDialogTests
       dialog.DialogCommand.Execute(Adorner("RemoveAttachmentCommand", attachment)));
 
     await WaitForAsync(() => dialog.Attachments.Count, count => count == 0, "RemoveAttachmentCommand did not remove the attachment.");
-    Assert.DoesNotContain(30, dialog.MediaSources.Keys);
-    // The cache reset fixes the value; only the notification makes the bound MarkdownView re-read it.
+    await WaitForAsync(() => dialog.MediaSources.Keys.Contains(30), found => !found,
+      "MediaSources still held the removed attachment.");
+    // The reload fixes the value; only the notification makes the bound MarkdownView re-read it.
     Assert.Contains(nameof(dialog.MediaSources), changedProperties);
   }
 
@@ -518,7 +518,8 @@ public class CreateOrUpdatePersonDialogTests
     await insertTask;
 
     Assert.Equal("![scan.jpg](media:21)", dialog.Biography!.Content);
-    Assert.Contains(21, dialog.MediaSources.Keys);
+    await WaitForAsync(() => dialog.MediaSources.Keys.Contains(21), found => found,
+      "MediaSources never picked up the just-inserted attachment.");
   }
 
   // The picker and MediaSources must agree on what can be embedded: offering an embed the map drops

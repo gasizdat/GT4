@@ -37,7 +37,7 @@ public partial class PersonPage : ContentPage
   private int _NavigationIndex = -1;
   private PersonFullInfo _PersonFullInfo = PersonFullInfo.Empty;
   private PhotoInfo[] _Photos = [];
-  private IReadOnlyDictionary<int, byte[]> _MediaSources = ReadOnlyDictionary<int, byte[]>.Empty;
+  private IReadOnlyDictionary<int, PhotoInfo> _MediaSources = ReadOnlyDictionary<int, PhotoInfo>.Empty;
   private AttachmentInfo[] _Attachments = [];
   private string _Biography = string.Empty;
   private PersonPageSmartLayout _SmartLayout = new();
@@ -168,7 +168,7 @@ public partial class PersonPage : ContentPage
 
   public PhotoInfo[] Photos => _Photos;
 
-  public IReadOnlyDictionary<int, byte[]> MediaSources => _MediaSources;
+  public IReadOnlyDictionary<int, PhotoInfo> MediaSources => _MediaSources;
 
   public AttachmentInfo[] Attachments => _Attachments;
 
@@ -338,11 +338,11 @@ public partial class PersonPage : ContentPage
       var bioTask = _TextConverter.ToObjectAsync(personFullInfo.Biography, token);
       var gedcomTask = _GedcomConverter.ToObjectAsync(personFullInfo.GedcomData, token);
       var attachmentsTask = Task.WhenAll(
-        personFullInfo.Attachments.Select(data => AttachmentInfo.CreateAsync(data, token)));
+        personFullInfo.Attachments.Select(data => _DataConverterResolver(data.Category).ToObjectAsync(data, token)));
       await Task.WhenAll(parentsTasks, stepChildrenTasks, bioTask, gedcomTask, attachmentsTask);
 
       // Sequenced after the attachments: a couple's media renders under the name the attachment row carries.
-      var attachments = attachmentsTask.Result;
+      var attachments = attachmentsTask.Result.OfType<AttachmentInfo>().ToArray();
       var familyDetails = await PersonFamilyDetails.ReadAsync(project, personFullInfo, attachments, _NameFormatter, token);
 
       var parents = parentsTasks.Result;
@@ -351,7 +351,8 @@ public partial class PersonPage : ContentPage
       var siblings = relativesProvider.GetSiblings(personFullInfo, parents);
       var roots = AssembleRoots(personFullInfo, parents, siblings, stepChildren, relativesProvider);
       var (photos, photoData) = await LoadPhotosAsync(personFullInfo, token);
-      var mediaSources = MediaSourceUtils.BuildMediaSources([.. photoData, .. personFullInfo.Attachments], bioTask.Result as string);
+      var mediaSources = await MediaSourceUtils.BuildMediaSourcesAsync(
+        _DataConverterResolver, [.. photoData, .. personFullInfo.Attachments], bioTask.Result as string, token);
       var data = new PersonPageData(
         personFullInfo,
         roots,

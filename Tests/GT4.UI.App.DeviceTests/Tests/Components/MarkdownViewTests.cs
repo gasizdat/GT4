@@ -1,4 +1,6 @@
 using GT4.UI.Components;
+using GT4.UI.Utils;
+using GT4.UI.Utils.Converters;
 using Xunit;
 
 namespace GT4.UI.DeviceTests;
@@ -307,13 +309,23 @@ public class MarkdownViewTests
   private static Task<MarkdownView> CreateViewAsync(string markdown) =>
     CreateViewAsync(markdown, new Dictionary<int, byte[]>());
 
+  // The host hands the view images its converters already built; this mirrors what ImageDataConverter
+  // produces, so the layout assertions still run on real pixel dimensions read from real bytes.
   private static async Task<MarkdownView> CreateViewAsync(string markdown, IReadOnlyDictionary<int, byte[]> mediaSources)
   {
+    static PhotoInfo ToPhoto(byte[] bytes)
+    {
+      var source = ImageSource.FromStream(() => new MemoryStream(bytes));
+      var pixelSize = ImageUtils.PixelSize(bytes);
+      return new PhotoInfo(source, null, pixelSize);
+    }
+
+    var photos = mediaSources.ToDictionary(entry => entry.Key, entry => ToPhoto(entry.Value));
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
     return await MainThread.InvokeOnMainThreadAsync(() => new MarkdownView
     {
       Markdown = markdown,
-      MediaSources = mediaSources,
+      MediaSources = photos,
     });
   }
 
