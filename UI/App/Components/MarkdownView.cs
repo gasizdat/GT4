@@ -30,6 +30,7 @@ public class MarkdownView : ContentView
 
   private readonly Command<string> _LinkCommand;
   private readonly Dictionary<int, InlineMedia?> _ResolvedMedia = [];
+  private readonly HashSet<int> _ResolvingMedia = [];
   private int _MediaGeneration;
 
   public MarkdownView()
@@ -90,12 +91,16 @@ public class MarkdownView : ContentView
   }
 
   // Only a new resolver can invalidate what the old one returned; Markdown changing just references a
-  // different subset of the same media, which is why the memo below outlives an edit.
+  // different subset of the same media, which is why the memo below outlives an edit. The generation
+  // moves with the resolver and nothing else, so a batch the old one is still running lands on a
+  // generation that no longer matches and is dropped instead of filling the freshly cleared memo.
   private static void OnResolverChanged(BindableObject obj, object oldValue, object newValue)
   {
     if (obj is MarkdownView view && oldValue != newValue)
     {
       view._ResolvedMedia.Clear();
+      view._ResolvingMedia.Clear();
+      view._MediaGeneration++;
       view.Refresh();
     }
   }
@@ -103,20 +108,26 @@ public class MarkdownView : ContentView
   // Renders at once with whatever is already resolved, then re-renders once the misses arrive: the text
   // of a biography does not wait on its images. Rebuilding the whole tree, rather than filling a
   // placeholder in place, is what keeps ScaledImage's SizeChanged handler seeing a final pixel size.
+  // A miss already in flight is left alone -- an edit changes which ids the text names, never what the
+  // resolver answers for one -- so typing in the editor doesn't reissue the lookups it's waiting on.
   private void Refresh()
   {
     Render();
 
     var resolver = MediaResolver;
     var referencedIds = MediaLinkUtils.ExtractReferencedIds(Markdown);
-    var pending = referencedIds.Where(id => !_ResolvedMedia.ContainsKey(id)).ToArray();
+    var pending = referencedIds.Where(id => !_ResolvedMedia.ContainsKey(id) && !_ResolvingMedia.Contains(id)).ToArray();
     if (resolver is null || pending.Length == 0)
     {
       return;
     }
 
-    var generation = ++_MediaGeneration;
-    _ = ResolveMediaAsync(resolver, pending, generation);
+    foreach (var mediaId in pending)
+    {
+      _ResolvingMedia.Add(mediaId);
+    }
+
+    _ = ResolveMediaAsync(resolver, pending, _MediaGeneration);
   }
 
   // Sequential on purpose: every host resolves through the project's single gated connection, so issuing
@@ -149,6 +160,13 @@ public class MarkdownView : ContentView
 
     void Apply()
     {
+      // Ahead of the staleness check: an id still marked as being resolved is one nothing would ever
+      // ask for again.
+      foreach (var mediaId in pending)
+      {
+        _ResolvingMedia.Remove(mediaId);
+      }
+
       if (generation != _MediaGeneration)
       {
         return;

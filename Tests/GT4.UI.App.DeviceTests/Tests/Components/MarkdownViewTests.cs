@@ -215,6 +215,72 @@ public class MarkdownViewTests
     Assert.Equal(1, attempts);
   }
 
+  // Every keystroke in the biography editor re-renders the preview, and each lookup is a round-trip
+  // through the project's single gated connection -- so an id already in flight must not be reissued.
+  [Fact]
+  public async Task MediaReference_EditedWhileResolving_IsAskedOnlyOnce()
+  {
+    var attempts = 0;
+    var release = new TaskCompletionSource();
+    var view = await CreateViewAsync("![a](media:11)", async mediaId =>
+    {
+      attempts++;
+      await release.Task;
+      return new InlineMedia(ImageSource.FromStream(() => new MemoryStream(SamplePng)), null);
+    });
+
+    await Poll.UntilAsync(() => Task.FromResult(attempts), tried => tried >= 1, timeoutMessage: "The resolver was never called.");
+    await MainThread.InvokeOnMainThreadAsync(() => view.Markdown = "![a](media:11) plus");
+    await MainThread.InvokeOnMainThreadAsync(() => view.Markdown = "![a](media:11) plus more");
+    release.SetResult();
+
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => Descendants(view).OfType<Image>().Count()),
+      rendered => rendered == 1,
+      timeoutMessage: "The resolved media never rendered.");
+    Assert.Equal(1, attempts);
+  }
+
+  // The memo belongs to the resolver that filled it. The edit to text naming no media is what makes
+  // this bite: the refresh that follows the swap has nothing to resolve, so only the swap itself can
+  // fence off the batch the replaced resolver is still running.
+  [Fact]
+  public async Task MediaReference_ResolverReplacedWhileResolving_DiscardsTheReplacedOnesAnswer()
+  {
+    var release = new TaskCompletionSource();
+    var replacedAnswered = false;
+    var replacedSource = ImageSource.FromStream(() => new MemoryStream(SamplePng));
+    var currentSource = ImageSource.FromStream(() => new MemoryStream(SamplePng));
+    var view = await CreateViewAsync("![a](media:11)", async mediaId =>
+    {
+      await release.Task;
+      replacedAnswered = true;
+      return new InlineMedia(replacedSource, null);
+    });
+
+    await MainThread.InvokeOnMainThreadAsync(() => view.Markdown = "Nothing inlined here.");
+    await MainThread.InvokeOnMainThreadAsync(() =>
+      view.MediaResolver = mediaId => Task.FromResult<InlineMedia?>(new InlineMedia(currentSource, null)));
+
+    release.SetResult();
+    await Poll.UntilAsync(() => Task.FromResult(replacedAnswered), answered => answered, timeoutMessage: "The replaced resolver never answered.");
+
+    // The discarded batch applies on the main thread, so let a few dispatcher turns pass -- reading
+    // before it lands would pass even with its answer still being memoised.
+    for (var turn = 0; turn < 5; turn++)
+    {
+      await MainThread.InvokeOnMainThreadAsync(() => { });
+    }
+
+    await MainThread.InvokeOnMainThreadAsync(() => view.Markdown = "![a](media:11)");
+    var image = await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => Descendants(view).OfType<Image>().SingleOrDefault()),
+      rendered => rendered is not null,
+      timeoutMessage: "The media was never rendered again.");
+
+    Assert.Same(currentSource, image!.Source);
+  }
+
   [Fact]
   public async Task InlineCode_IsGivenTheCodeBackground()
   {
