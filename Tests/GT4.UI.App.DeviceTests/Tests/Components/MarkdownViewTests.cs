@@ -446,8 +446,8 @@ public class MarkdownViewTests
   private static Task<MarkdownView> CreateViewAsync(string markdown) =>
     CreateViewAsync(markdown, new Dictionary<int, byte[]>(), expectedImages: 0);
 
-  // Stands in for a host's resolver, reading the dimensions off the header the way the real one's
-  // converter does, so the layout assertions still run on real pixel dimensions from real bytes.
+  // Stands in for a host's resolver, measuring the same way InlineMediaProvider does, so the layout
+  // assertions still run on real pixel dimensions read from real bytes.
   private static async Task<MarkdownView> CreateViewAsync(
     string markdown, IReadOnlyDictionary<int, byte[]> mediaSources, int expectedImages = 1)
   {

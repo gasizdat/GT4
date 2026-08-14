@@ -3,6 +3,7 @@ using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
 using GT4.UI.Components;
 using GT4.UI.Items;
+using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
 
 namespace GT4.UI.Converters;
@@ -18,15 +19,18 @@ public sealed class InlineMediaProvider
   private readonly ICurrentProjectProvider _ProjectProvider;
   private readonly DataConverterResolver _ConverterResolver;
   private readonly ICancellationTokenProvider _TokenProvider;
+  private readonly IHttpClientFactory _HttpClientFactory;
 
   public InlineMediaProvider(
     ICurrentProjectProvider projectProvider,
     DataConverterResolver converterResolver,
-    ICancellationTokenProvider tokenProvider)
+    ICancellationTokenProvider tokenProvider,
+    IHttpClientFactory httpClientFactory)
   {
     _ProjectProvider = projectProvider;
     _ConverterResolver = converterResolver;
     _TokenProvider = tokenProvider;
+    _HttpClientFactory = httpClientFactory;
   }
 
   public async Task<InlineMedia?> ResolveAsync(int mediaId)
@@ -39,15 +43,24 @@ public sealed class InlineMediaProvider
     }
 
     var content = await _ConverterResolver(media.Category).ToObjectAsync(media, token);
-    var photo = content switch
+    var source = content switch
     {
-      PhotoInfo inlined => inlined,
-      AttachmentInfo attachment => attachment.Image,
+      PhotoInfo photo => photo.Source,
+      AttachmentInfo attachment => attachment.Image?.Source,
       _ => null
     };
 
-    // The dimensions come along from the converter, which read them off the header of the bytes it was
-    // already holding: MarkdownView is handed two numbers, never a payload.
-    return photo is null ? null : new InlineMedia(photo.Source, photo.PixelSize);
+    return source is null ? null : await MeasuredAsync(source, token);
+  }
+
+  // Measured from the ImageSource rather than from the stored Data: a converter may have downsized what
+  // it produced, and only the bytes actually being rendered carry the dimensions that lay it out. They
+  // are read here and dropped -- MarkdownView is handed two numbers, never a payload.
+  private async Task<InlineMedia> MeasuredAsync(ImageSource source, CancellationToken token)
+  {
+    var bytes = await ImageUtils.ToBytesAsync(source, _HttpClientFactory, token);
+    var pixelSize = bytes is null ? null : ImageUtils.PixelSize(bytes);
+
+    return new InlineMedia(source, pixelSize);
   }
 }
