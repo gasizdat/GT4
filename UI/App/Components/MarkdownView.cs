@@ -184,9 +184,17 @@ public class MarkdownView : ContentView
     {
       await MainThread.InvokeOnMainThreadAsync(Apply);
     }
-    catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
+    catch (Exception ex)
     {
+      // Nobody awaits this task, so an escaping exception would be swallowed anyway, minus the trace.
+      // Losing the marshal itself (a dispatcher gone during teardown) means Apply never ran and never
+      // dropped its in-flight marks, which nothing else would clear while the resolver stays the same
+      // -- and no main thread is left to race the cleanup with.
       System.Diagnostics.Debug.WriteLine(ex);
+      foreach (var mediaId in pending)
+      {
+        _ResolvingMedia.Remove(mediaId);
+      }
     }
   }
 
