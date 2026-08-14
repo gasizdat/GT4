@@ -1,3 +1,4 @@
+using GT4.Core.Gedcom;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Converters;
@@ -43,6 +44,22 @@ public class PersonDataItemTests
     Assert.NotNull(result);
     Assert.Equal(DataCategory.PersonMainPhoto, result.Category);
     Assert.Equal(ElementId.NonCommittedId, result.Id);
+  }
+
+  [Fact]
+  public async Task ToDataAsync_ModifiedTaggedItemWithCaption_StaysTagged()
+  {
+    var services = new TestServices();
+    var original = new Data(10, [1, 2, 3], "image/png", DataCategory.PersonMainPhotoTagged);
+    var item = new PersonDataItem(original, new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>(), new ImageCache(CacheSizeLimit)), TokenProvider(services), services.AlertService.Object);
+
+    item.Content = new PhotoInfo(ImageSource.FromStream(() => new MemoryStream([9, 9, 9])), "A caption");
+    var result = await item.ToDataAsync();
+
+    Assert.NotNull(result);
+    // Main-vs-additional is the item's to keep; the converter only decides tagged-vs-plain.
+    Assert.Equal(DataCategory.PersonMainPhotoTagged, result.Category);
+    Assert.Equal("A caption", await GedcomPhotoResidue.ExtractTitleAsync(result, CancellationToken.None));
   }
 
   [Fact]

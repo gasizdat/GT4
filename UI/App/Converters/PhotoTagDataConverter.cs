@@ -9,13 +9,13 @@ namespace GT4.UI.Converters;
 /// Decodes a tagged photo (<see cref="DataCategory.PersonMainPhotoTagged"/>/
 /// <see cref="DataCategory.PersonPhotoTagged"/>) into its image and caption, same output type as
 /// <see cref="ImageDataConverter"/> so every existing photo display call site needs no further change.
-/// Composes an <see cref="ImageDataConverter"/> rather than subclassing it: a modification can never
-/// legitimately carry the old photo's tags (there is no editable-caption UI in this pass), so
-/// FromObjectAsync must encode as plain image bytes exactly like ImageDataConverter would -- inheriting
-/// it would have ToObjectAsync return a captioned PhotoInfo that FromObjectAsync couldn't round-trip.
-/// The resulting Data's Category gets downgraded from tagged to plain by PersonDataItem.ToDataAsync
-/// (DataCategoryExtensions.AsPlainPhoto). Lives in UI.App (not UI.Utils) because unwrapping the residue
-/// envelope needs Core.Gedcom.
+/// Composes an <see cref="ImageDataConverter"/> rather than subclassing it: this converter owns the
+/// GedcomPhotoResidue envelope, the composed one owns bytes &lt;-&gt; ImageSource. A modification re-encodes
+/// the caption so it survives an edit, and signals the envelope by returning a tagged Category --
+/// PersonDataItem.ToDataAsync resolves that to main-vs-additional, and downgrades to plain when no
+/// caption came back. Only the caption is rebuilt: a PhotoInfo carries no other residual tag, so any
+/// other imported OBJE child is lost on modification. Lives in UI.App (not UI.Utils) because unwrapping
+/// the residue envelope needs Core.Gedcom.
 /// </summary>
 public sealed class PhotoTagDataConverter : IDataConverter
 {
@@ -24,8 +24,17 @@ public sealed class PhotoTagDataConverter : IDataConverter
   public PhotoTagDataConverter(IHttpClientFactory httpClientFactory, IImageCache imageCache) =>
     _ImageConverter = new ImageDataConverter(httpClientFactory, imageCache);
 
-  public Task<Data?> FromObjectAsync(object? data, CancellationToken token) =>
-    _ImageConverter.FromObjectAsync(data, token);
+  public async Task<Data?> FromObjectAsync(object? data, CancellationToken token)
+  {
+    var ret = await _ImageConverter.FromObjectAsync(data, token);
+    if (ret is null || data is not PhotoInfo photo || string.IsNullOrEmpty(photo.Caption))
+    {
+      return ret;
+    }
+
+    var content = GedcomPhotoResidue.EncodePhotoTitle(ret.Content, photo.Caption);
+    return ret with { Content = content, Category = DataCategory.PersonPhotoTagged };
+  }
 
   public async Task<object?> ToObjectAsync(Data? data, CancellationToken token)
   {

@@ -24,6 +24,15 @@ public static class GedcomPhotoResidue
     return Encode(fileBytes, residual);
   }
 
+  /// <summary>Rebuilds a photo's envelope around its caption alone -- all a UI edit can still supply once
+  /// the photo has been decoded to an image and a caption.</summary>
+  public static byte[] EncodePhotoTitle(byte[] imageBytes, string title)
+  {
+    var titleNode = new GedcomNode { Tag = GedcomTags.Title, Value = title };
+    var residual = new GedcomNode { Tag = GedcomTags.Object }.Add(titleNode);
+    return Encode(imageBytes, residual);
+  }
+
   internal static byte[] Encode(byte[] imageBytes, GedcomNode residual)
   {
     var tagWriter = new StringWriter();

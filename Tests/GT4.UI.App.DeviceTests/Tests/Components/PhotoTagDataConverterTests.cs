@@ -1,4 +1,5 @@
 using GT4.Core.Project.Dto;
+using GT4.Core.Project.Extensions;
 using GT4.UI.Converters;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
@@ -92,10 +93,10 @@ public class PhotoTagDataConverterTests
   [Fact]
   public async Task FromObjectAsync_encodes_plain_bytes_like_ImageDataConverter()
   {
-    // A modification can never legitimately carry the old photo's tags (no editable-caption UI in this
-    // pass), so it must encode identically to the plain converter -- PersonDataItem.ToDataAsync is what
-    // then downgrades the resulting Data's Category from tagged to plain. A StreamImageSource is used
-    // so the conversion doesn't depend on resolving a real file from the test host's working directory.
+    // With no caption there is nothing to envelope, so it must encode identically to the plain converter
+    // -- PersonDataItem.ToDataAsync is what then downgrades the Data's Category from tagged to plain. A
+    // StreamImageSource is used so the conversion doesn't depend on resolving a real file from the test
+    // host's working directory.
     byte[] bytes = [1, 2, 3, 4];
     var photo = new PhotoInfo(ImageSource.FromStream(() => new MemoryStream(bytes)), null);
 
@@ -108,5 +109,24 @@ public class PhotoTagDataConverterTests
     Assert.NotNull(plainResult);
     Assert.Equal(plainResult.Content, taggedResult.Content);
     Assert.Equal(plainResult.MimeType, taggedResult.MimeType);
+  }
+
+  [Fact]
+  public async Task FromObjectAsync_round_trips_a_caption_back_through_ToObjectAsync()
+  {
+    byte[] bytes = [1, 2, 3, 4];
+    var photo = new PhotoInfo(ImageSource.FromStream(() => new MemoryStream(bytes)), "A caption");
+    var converter = new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>(), new ImageCache(CacheSizeLimit));
+
+    var encoded = await converter.FromObjectAsync(photo, CancellationToken.None);
+    Assert.NotNull(encoded);
+    // The tagged Category is what tells PersonDataItem the Content is enveloped.
+    Assert.True(encoded.Category.IsTaggedPhoto());
+
+    var decoded = await converter.ToObjectAsync(encoded, CancellationToken.None);
+
+    var photoInfo = Assert.IsType<PhotoInfo>(decoded);
+    Assert.Equal("A caption", photoInfo.Caption);
+    Assert.Equal(bytes, await ReadBytesAsync(photoInfo.Source));
   }
 }
