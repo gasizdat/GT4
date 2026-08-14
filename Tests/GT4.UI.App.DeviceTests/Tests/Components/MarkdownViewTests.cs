@@ -54,7 +54,7 @@ public class MarkdownViewTests
   [Fact]
   public async Task MediaReference_RendersAnImageFromTheSuppliedBytes()
   {
-    var view = await CreateViewAsync("![A caption](media:11)", new Dictionary<int, byte[]> { [11] = [1, 2, 3] });
+    var view = await CreateViewAsync("![A caption](media:11)", new Dictionary<string, byte[]> { ["media:11"] = [1, 2, 3] });
 
     var image = Descendants(view).OfType<Image>().Single();
 
@@ -123,12 +123,24 @@ public class MarkdownViewTests
       new Size(30, 15));
   }
 
+  // A URL image scales like any other, which it could not while the view built its ImageSource itself:
+  // it had no dimensions for one, so the percentage was parsed, stripped from the caption and dropped.
+  [Fact]
+  public async Task RemoteImage_WithATrailingPercentage_TakesThatShareOfItsPixelSize()
+  {
+    await AssertRenderedImageSizeAsync(
+      "![A caption 50%](https://example.test/photo.png)",
+      columnWidth: 300,
+      new Size(SamplePngWidth / 2, SamplePngHeight / 2),
+      link: "https://example.test/photo.png");
+  }
+
   // The nested-image path renders the caption as text, so the size token has to be stripped there or
   // it would show up on screen as "Grandpa 50%".
   [Fact]
   public async Task ImageInsideEmphasis_RendersItsCaptionWithoutTheSizeTokenOrALink()
   {
-    var view = await CreateViewAsync("Look: *![Grandpa 50%](media:11)* here.", new Dictionary<int, byte[]> { [11] = [1, 2, 3] }, expectedImages: 0);
+    var view = await CreateViewAsync("Look: *![Grandpa 50%](media:11)* here.", new Dictionary<string, byte[]> { ["media:11"] = [1, 2, 3] }, expectedImages: 0);
 
     var caption = SpanWithText(view, "Grandpa");
 
@@ -139,7 +151,7 @@ public class MarkdownViewTests
   [Fact]
   public async Task ImageUsedAsALinkLabel_TapsOnlyTheEnclosingLink()
   {
-    var view = await CreateViewAsync("[![cap](media:11)](person:5)", new Dictionary<int, byte[]> { [11] = [1, 2, 3] }, expectedImages: 0);
+    var view = await CreateViewAsync("[![cap](media:11)](person:5)", new Dictionary<string, byte[]> { ["media:11"] = [1, 2, 3] }, expectedImages: 0);
     var tapped = new List<int>();
     view.PersonLinkTapped += (_, id) => tapped.Add(id);
 
@@ -309,7 +321,7 @@ public class MarkdownViewTests
   {
     var view = await CreateViewAsync(
       "![resolved](media:11) ![missing](media:12)",
-      new Dictionary<int, byte[]> { [11] = SamplePng });
+      new Dictionary<string, byte[]> { ["media:11"] = SamplePng });
 
     var image = Descendants(view).OfType<Image>().Single();
 
@@ -404,9 +416,9 @@ public class MarkdownViewTests
 
   // Lays the view out inside a fixed-width column on a real window, so the assertions are about the
   // size the image ends up drawn at rather than the layout properties asked for.
-  private static async Task AssertRenderedImageSizeAsync(string markdown, double columnWidth, Size expectedSize)
+  private static async Task AssertRenderedImageSizeAsync(string markdown, double columnWidth, Size expectedSize, string link = "media:11")
   {
-    var view = await CreateViewAsync(markdown, new Dictionary<int, byte[]> { [11] = SamplePng });
+    var view = await CreateViewAsync(markdown, new Dictionary<string, byte[]> { [link] = SamplePng });
     var page = await MainThread.InvokeOnMainThreadAsync(() => new ContentPage
     {
       Content = new VerticalStackLayout
@@ -444,16 +456,17 @@ public class MarkdownViewTests
     Math.Abs(observed.Width - expected.Width) <= tolerance && Math.Abs(observed.Height - expected.Height) <= tolerance;
 
   private static Task<MarkdownView> CreateViewAsync(string markdown) =>
-    CreateViewAsync(markdown, new Dictionary<int, byte[]>(), expectedImages: 0);
+    CreateViewAsync(markdown, new Dictionary<string, byte[]>(), expectedImages: 0);
 
-  // Stands in for a host's resolver, measuring the same way InlineMediaProvider does, so the layout
-  // assertions still run on real pixel dimensions read from real bytes.
+  // Stands in for a host's resolver, keyed by the whole link the way the real one is and measuring the
+  // same way InlineMediaProvider does, so the layout assertions run on real pixel dimensions read from
+  // real bytes -- for a URL exactly as for a "media:" id.
   private static async Task<MarkdownView> CreateViewAsync(
-    string markdown, IReadOnlyDictionary<int, byte[]> mediaSources, int expectedImages = 1)
+    string markdown, IReadOnlyDictionary<string, byte[]> mediaSources, int expectedImages = 1)
   {
-    InlineMediaResolver resolver = mediaId =>
+    InlineMediaResolver resolver = link =>
     {
-      if (!mediaSources.TryGetValue(mediaId, out var bytes))
+      if (!mediaSources.TryGetValue(link, out var bytes))
       {
         return Task.FromResult<InlineMedia?>(null);
       }

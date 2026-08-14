@@ -225,7 +225,7 @@ public class PersonPageTests
       .ReturnsAsync(mainPhoto);
     var page = await CreatePageAsync(services);
 
-    var media = await page.MediaResolver(10);
+    var media = await page.MediaResolver("media:10");
 
     Assert.NotNull(media);
     Assert.Equal(new byte[] { 1, 2, 3 }, await PhotoBytes.ReadAsync(media.Source));
@@ -247,8 +247,8 @@ public class PersonPageTests
       .ReturnsAsync(deed);
     var page = await CreatePageAsync(services);
 
-    var scanMedia = await page.MediaResolver(22);
-    var deedMedia = await page.MediaResolver(23);
+    var scanMedia = await page.MediaResolver("media:22");
+    var deedMedia = await page.MediaResolver("media:23");
 
     Assert.NotNull(scanMedia);
     Assert.Equal(new byte[] { 4, 5, 6 }, await PhotoBytes.ReadAsync(scanMedia.Source));

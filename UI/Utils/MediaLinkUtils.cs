@@ -1,22 +1,16 @@
-using System.Collections.Immutable;
 using System.Text.RegularExpressions;
 
 namespace GT4.UI.Utils;
 
 public static partial class MediaLinkUtils
 {
-  // The ids a "![caption](media:id)" reference could ever target, so callers can decide what's worth
-  // resolving before any rendering happens.
-  public static IReadOnlySet<int> ExtractReferencedIds(string? markdown)
+  // "person:"/"attachment:"/"media:" are custom opaque schemes (like "mailto:"). Uri parses them --
+  // scheme plus opaque payload -- but its hierarchical members (Host, AbsolutePath) aren't meaningful
+  // for them, so the id is taken directly from the string.
+  public static bool TryParseLinkId(string url, string scheme, out int id)
   {
-    if (string.IsNullOrEmpty(markdown))
-    {
-      return ImmutableHashSet<int>.Empty;
-    }
-
-    var matches = MediaLinkPattern().Matches(markdown);
-    var ids = matches.Select(match => ParseId(match.Groups[1].Value)).OfType<int>();
-    return ids.ToHashSet();
+    id = 0;
+    return url.StartsWith(scheme, StringComparison.Ordinal) && int.TryParse(url.AsSpan(scheme.Length), out id);
   }
 
   // A trailing percentage in an image's description -- "![Grandpa 50%](media:5)" -- asks for that share
@@ -32,14 +26,6 @@ public static partial class MediaLinkUtils
 
     return (int.Parse(match.Groups[1].Value), description[..match.Index]);
   }
-
-  // A run of digits too long for an int is prose the user typed, not a link this app ever inserted --
-  // and MarkdownView reparses the whole biography on every keystroke, so a throw here would surface as
-  // an editor that dies mid-word rather than as a missing image.
-  private static int? ParseId(string value) => int.TryParse(value, out var id) ? id : null;
-
-  [GeneratedRegex("media:(\\d+)")]
-  private static partial Regex MediaLinkPattern();
 
   // The alternation is the whole range check: 100-299, or 1-99 with no leading zero; anything else stays caption.
   [GeneratedRegex(@"(?:^|\s)([1-2][0-9]{2}|[1-9][0-9]?)%$")]

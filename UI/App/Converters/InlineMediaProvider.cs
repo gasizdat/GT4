@@ -9,13 +9,16 @@ using GT4.UI.Utils.Converters;
 namespace GT4.UI.Converters;
 
 /// <summary>
-/// Resolves the <c>media:&lt;id&gt;</c> references MarkdownView inlines. The id is looked up in the
-/// project rather than in whatever media a host happens to have loaded, so a biography can reference any
-/// image in the project; the image itself comes from the item's own keyed <see cref="IDataConverter"/>,
-/// so this never touches a photo's bytes.
+/// Resolves the image links MarkdownView inlines. A <c>media:&lt;id&gt;</c> id is looked up in the project
+/// rather than in whatever media a host happens to have loaded, so a biography can reference any image in
+/// the project; the image itself comes from the item's own keyed <see cref="IDataConverter"/>, so this
+/// never touches a photo's bytes. An http(s) link is measured through the same path, which is what lets a
+/// remote image be laid out at a size rather than merely fitted to its column.
 /// </summary>
 public sealed class InlineMediaProvider
 {
+  private const string MediaScheme = "media:";
+
   private readonly ICurrentProjectProvider _ProjectProvider;
   private readonly DataConverterResolver _ConverterResolver;
   private readonly ICancellationTokenProvider _TokenProvider;
@@ -33,9 +36,24 @@ public sealed class InlineMediaProvider
     _HttpClientFactory = httpClientFactory;
   }
 
-  public async Task<InlineMedia?> ResolveAsync(int mediaId)
+  public async Task<InlineMedia?> ResolveAsync(string link)
   {
     using var token = _TokenProvider.CreateShortOperationCancellationToken();
+    if (MediaLinkUtils.TryParseLinkId(link, MediaScheme, out var mediaId))
+    {
+      return await ProjectMediaAsync(mediaId, token);
+    }
+
+    // Every custom scheme in a biography ("media:", "person:", "attachment:") parses as an absolute Uri
+    // too, so http/https is checked rather than absoluteness -- handing "media:12345678901" to an
+    // HttpClient would throw on the scheme instead of rendering nothing.
+    var isAbsolute = Uri.TryCreate(link, UriKind.Absolute, out var uri);
+    var isRemote = isAbsolute && (uri!.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+    return isRemote ? await RemoteMediaAsync(uri!, token) : null;
+  }
+
+  private async Task<InlineMedia?> ProjectMediaAsync(int mediaId, CancellationToken token)
+  {
     var media = await _ProjectProvider.Project.Data.TryGetDataByIdAsync(mediaId, token);
     if (media is null || !media.IsInlineImage())
     {
@@ -51,6 +69,24 @@ public sealed class InlineMediaProvider
     };
 
     return source is null ? null : await MeasuredAsync(source, token);
+  }
+
+  // The platform loader fetches the image again to draw it -- and caches it -- so what this costs is one
+  // extra fetch, not a payload held in memory: the bytes are read for their header and dropped.
+  private async Task<InlineMedia> RemoteMediaAsync(Uri uri, CancellationToken token)
+  {
+    var source = ImageSource.FromUri(uri);
+    try
+    {
+      return await MeasuredAsync(source, token);
+    }
+    catch (HttpRequestException ex)
+    {
+      // An unreachable image still renders -- the platform loader makes its own attempt, and only the
+      // size is lost. Memoising the failure as "nothing here" would blank it on a passing network blip.
+      System.Diagnostics.Debug.WriteLine(ex);
+      return new InlineMedia(source, null);
+    }
   }
 
   // Measured from the ImageSource rather than from the stored Data: a converter may have downsized what

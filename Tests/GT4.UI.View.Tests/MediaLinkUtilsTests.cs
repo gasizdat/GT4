@@ -6,45 +6,28 @@ namespace GT4.UI.View.Tests;
 
 public class MediaLinkUtilsTests
 {
-  [Fact]
-  public void ExtractReferencedIds_FindsAMediaLink()
+  [Theory]
+  [InlineData("media:5", "media:", 5)]
+  [InlineData("person:123", "person:", 123)]
+  [InlineData("attachment:7", "attachment:", 7)]
+  public void TryParseLinkId_AMatchingScheme_YieldsItsId(string url, string scheme, int expected)
   {
-    var ids = MediaLinkUtils.ExtractReferencedIds("![caption](media:5)");
-
-    ids.Should().BeEquivalentTo([5]);
+    MediaLinkUtils.TryParseLinkId(url, scheme, out var id).Should().BeTrue();
+    id.Should().Be(expected);
   }
 
-  [Fact]
-  public void ExtractReferencedIds_FindsEachDistinctIdOnce()
+  // The last two are why this is TryParse and not Parse: an id too large for an int reaches it from
+  // anything a user can type into a biography.
+  [Theory]
+  [InlineData("media:5", "person:")]
+  [InlineData("https://example.test/a.png", "media:")]
+  [InlineData("media:", "media:")]
+  [InlineData("media:99999999999", "media:")]
+  [InlineData("media:12abc", "media:")]
+  public void TryParseLinkId_AnythingElse_YieldsNothing(string url, string scheme)
   {
-    var ids = MediaLinkUtils.ExtractReferencedIds("![a](media:1) and again ![a](media:1) and ![b](media:2)");
-
-    ids.Should().BeEquivalentTo([1, 2]);
-  }
-
-  [Fact]
-  public void ExtractReferencedIds_NoReferences_IsEmpty()
-  {
-    var ids = MediaLinkUtils.ExtractReferencedIds("Just some text, no links.");
-
-    ids.Should().BeEmpty();
-  }
-
-  [Fact]
-  public void ExtractReferencedIds_NullOrEmpty_IsEmpty()
-  {
-    MediaLinkUtils.ExtractReferencedIds(null).Should().BeEmpty();
-    MediaLinkUtils.ExtractReferencedIds(string.Empty).Should().BeEmpty();
-  }
-
-  // Typed prose, not a reference: MarkdownView re-extracts on every keystroke, so this has to come back
-  // empty rather than throw.
-  [Fact]
-  public void ExtractReferencedIds_AnIdTooLargeForAnInt_IsSkipped()
-  {
-    var ids = MediaLinkUtils.ExtractReferencedIds("![a](media:99999999999) and ![b](media:7)");
-
-    ids.Should().BeEquivalentTo([7]);
+    MediaLinkUtils.TryParseLinkId(url, scheme, out var id).Should().BeFalse();
+    id.Should().Be(0);
   }
 
   [Theory]

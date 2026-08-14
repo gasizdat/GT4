@@ -493,7 +493,7 @@ public class CreateOrUpdatePersonDialogTests
     await insertTask;
 
     Assert.Equal("![scan.jpg](media:21)", dialog.Biography!.Content);
-    Assert.NotNull(await dialog.MediaResolver(21));
+    Assert.NotNull(await dialog.MediaResolver("media:21"));
   }
 
   // The picker and the resolver must agree on what can be embedded: offering an embed the resolver
@@ -518,7 +518,7 @@ public class CreateOrUpdatePersonDialogTests
 
     foreach (var item in selectDialog.Items)
     {
-      var media = await dialog.MediaResolver(item.Id);
+      var media = await dialog.MediaResolver($"media:{item.Id}");
       Assert.Equal(item.IsInlineImage, media is not null);
     }
 
