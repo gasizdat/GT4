@@ -87,12 +87,26 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
     var ret = await _DataConverter.FromObjectAsync(_Content, token);
     if (ret is not null)
     {
-      // A modified photo downgrades tagged -> plain; non-photo and already-plain categories are untouched.
-      var category = Info.Category.IsTaggedPhoto() ? Info.Category.AsPlainPhoto() : Info.Category;
+      // A tagged Category coming back is the converter's signal that it re-encoded a residue envelope, and
+      // the two must never disagree: the category alone picks the converter that unwraps, so an enveloped
+      // Content stored as plain gets its tag bytes decoded as image bytes. Only main-vs-additional is ours.
+      var category = Info.Category;
+      if (ret.Category.IsTaggedPhoto())
+        category = category.AsTaggedPhoto();
+      else if (category.IsTaggedPhoto())
+        category = category.AsPlainPhoto();
+
       ret = ret with { Id = ElementId.NonCommittedId, Category = category };
     }
 
     return ret;
+  }
+
+  public static async Task<Data[]> ToDataAsync(IEnumerable<PersonDataItem> items)
+  {
+    var conversions = items.Select(item => item.ToDataAsync());
+    var data = await Task.WhenAll(conversions);
+    return [.. data.OfType<Data>()];
   }
 
   public event PropertyChangedEventHandler? PropertyChanged;

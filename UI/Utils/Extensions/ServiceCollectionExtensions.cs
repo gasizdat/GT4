@@ -10,6 +10,8 @@ namespace GT4.UI.Utils.Extensions;
 
 public static class ServiceCollectionExtensions
 {
+  private const int CacheSizeLimit = 200 * 1024 * 1024; // 200 MB
+
   public static IServiceCollection AddUIUtils(this IServiceCollection services) =>
     services
       .AddHttpClient()
@@ -26,6 +28,9 @@ public static class ServiceCollectionExtensions
       .AddSingleton<IComparer<ProjectInfo>, ProjectInfoComparer>()
       .AddSingleton<IComparer<PersonInfo>, PersonInfoComparer>()
       .AddSingleton<IComparer<Name>, NameComparer>()
+      .AddSingleton<IImageCache>(new ImageCache(CacheSizeLimit))
+      .AddSingleton<DataConverterResolver>(provider =>
+        category => provider.GetKeyedService<IDataConverter>(category) ?? new FallbackDataConverter(category))
       .AddKeyedSingleton<IDataConverter, ImageDataConverter>(DataCategory.PersonPhoto)
       .AddKeyedSingleton<IDataConverter, ImageDataConverter>(DataCategory.PersonMainPhoto)
       .AddKeyedSingleton<IDataConverter, ImageDataConverter>(DataCategory.FamilyPhoto)

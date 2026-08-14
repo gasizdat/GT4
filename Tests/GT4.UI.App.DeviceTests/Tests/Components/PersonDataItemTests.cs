@@ -1,3 +1,4 @@
+using GT4.Core.Gedcom;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Converters;
@@ -13,6 +14,8 @@ namespace GT4.UI.DeviceTests;
 /// <summary>Covers PersonDataItem.ToDataAsync's untouched-vs-modified and tagged-vs-plain branches.</summary>
 public class PersonDataItemTests
 {
+  private const int CacheSizeLimit = 1024 * 1024;
+
   private static ICancellationTokenProvider TokenProvider(TestServices services) =>
     services.Provider.GetRequiredService<ICancellationTokenProvider>();
 
@@ -21,7 +24,7 @@ public class PersonDataItemTests
   {
     var services = new TestServices();
     var original = new Data(10, [1, 2, 3], "image/png", DataCategory.PersonMainPhotoTagged);
-    var item = new PersonDataItem(original, new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>()), TokenProvider(services), services.AlertService.Object);
+    var item = new PersonDataItem(original, new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>(), new ImageCache(CacheSizeLimit)), TokenProvider(services), services.AlertService.Object);
 
     var result = await item.ToDataAsync();
 
@@ -33,9 +36,9 @@ public class PersonDataItemTests
   {
     var services = new TestServices();
     var original = new Data(10, [1, 2, 3], "image/png", DataCategory.PersonMainPhotoTagged);
-    var item = new PersonDataItem(original, new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>()), TokenProvider(services), services.AlertService.Object);
+    var item = new PersonDataItem(original, new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>(), new ImageCache(CacheSizeLimit)), TokenProvider(services), services.AlertService.Object);
 
-    item.Content = new PhotoInfo(ImageUtils.ImageFromBytes(original, [9, 9, 9], null), null);
+    item.Content = new PhotoInfo(ImageSource.FromStream(() => new MemoryStream([9, 9, 9])), null);
     var result = await item.ToDataAsync();
 
     Assert.NotNull(result);
@@ -44,13 +47,29 @@ public class PersonDataItemTests
   }
 
   [Fact]
+  public async Task ToDataAsync_ModifiedTaggedItemWithCaption_StaysTagged()
+  {
+    var services = new TestServices();
+    var original = new Data(10, [1, 2, 3], "image/png", DataCategory.PersonMainPhotoTagged);
+    var item = new PersonDataItem(original, new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>(), new ImageCache(CacheSizeLimit)), TokenProvider(services), services.AlertService.Object);
+
+    item.Content = new PhotoInfo(ImageSource.FromStream(() => new MemoryStream([9, 9, 9])), "A caption");
+    var result = await item.ToDataAsync();
+
+    Assert.NotNull(result);
+    // Main-vs-additional is the item's to keep; the converter only decides tagged-vs-plain.
+    Assert.Equal(DataCategory.PersonMainPhotoTagged, result.Category);
+    Assert.Equal("A caption", await GedcomPhotoResidue.ExtractTitleAsync(result, CancellationToken.None));
+  }
+
+  [Fact]
   public async Task ToDataAsync_ModifiedPlainItem_StaysPlain()
   {
     var services = new TestServices();
     var original = new Data(10, [1, 2, 3], "image/png", DataCategory.PersonPhoto);
-    var item = new PersonDataItem(original, new ImageDataConverter(Mock.Of<IHttpClientFactory>()), TokenProvider(services), services.AlertService.Object);
+    var item = new PersonDataItem(original, new ImageDataConverter(Mock.Of<IHttpClientFactory>(), new ImageCache(CacheSizeLimit)), TokenProvider(services), services.AlertService.Object);
 
-    item.Content = new PhotoInfo(ImageUtils.ImageFromBytes(original, [9, 9, 9], null), null);
+    item.Content = new PhotoInfo(ImageSource.FromStream(() => new MemoryStream([9, 9, 9])), null);
     var result = await item.ToDataAsync();
 
     Assert.NotNull(result);
@@ -60,8 +79,8 @@ public class PersonDataItemTests
   [Fact]
   public async Task ToDataAsync_ModifiedNonPhotoItem_LeavesCategoryUntouched()
   {
-    // AsPlainPhoto() throws for non-photo categories, so ToDataAsync must guard with IsPhoto()
-    // before calling it -- this covers the branch that skips the guarded call entirely.
+    // AsPlainPhoto() throws for non-photo categories, so ToDataAsync only reaches it behind an
+    // IsTaggedPhoto() test -- this covers the branch that skips the guarded call entirely.
     var services = new TestServices();
     var original = new Data(10, [1, 2, 3], "text/plain", DataCategory.PersonBio);
     var item = new PersonDataItem(original, new TextDataConverter(), TokenProvider(services), services.AlertService.Object);

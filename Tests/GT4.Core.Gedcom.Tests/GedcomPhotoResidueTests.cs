@@ -25,9 +25,9 @@ public sealed class GedcomPhotoResidueTests
     var residual = Residual(("TITL", "Louis XIII par Rubens"), ("NOTE", "scanned 2019"));
 
     var content = GedcomPhotoResidue.Encode(image, residual);
-    var (imageBytes, decodedResidual) = await GedcomPhotoResidue.DecodeAsync(content, _Token);
+    var decodedResidual = await GedcomPhotoResidue.DecodeResidualAsync(content, _Token);
 
-    imageBytes.Should().Equal(image);
+    GedcomPhotoResidue.ExtractImageBytes(content).Should().Equal(image);
     decodedResidual.Tag.Should().Be("OBJE");
     decodedResidual.ChildValue("TITL").Should().Be("Louis XIII par Rubens");
     decodedResidual.ChildValue("NOTE").Should().Be("scanned 2019");

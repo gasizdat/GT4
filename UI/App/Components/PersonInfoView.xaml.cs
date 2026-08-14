@@ -4,6 +4,7 @@ using GT4.UI.Abstraction;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
+using GT4.UI.Utils.Dto;
 using GT4.UI.Utils.Formatters;
 
 namespace GT4.UI.Components;
@@ -155,12 +156,11 @@ public partial class PersonInfoView : ContentView
         async Task UpdatePhotoAsync()
         {
           using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
-          var photo = await ImageUtils.ResolvePhotoAsync(
-            _DataConverterResolver,
-            mainPhoto,
-            GetDefaultImage(),
-            token,
-            ImageUtils.ThumbnailSize);
+          var converter = _DataConverterResolver(mainPhoto.Category);
+          var resizedMainPhoto = new ResizedImageData(mainPhoto, ImageUtils.ThumbnailSize);
+          var photo = await converter.ToObjectAsync(resizedMainPhoto, token) is PhotoInfo photoInfo
+            ? photoInfo.Source
+            : GetDefaultImage();
 
           MainThread.BeginInvokeOnMainThread(() =>
           {
@@ -173,7 +173,7 @@ public partial class PersonInfoView : ContentView
               return;
             }
 
-            _PhotoSource = photo.Source;
+            _PhotoSource = photo;
             OnPropertyChanged(nameof(Photo));
           });
         }

@@ -205,13 +205,14 @@ public partial class FamilyPage : ContentPage
 
   private async Task<(PhotoInfo[] Photos, AttachmentInfo[] Attachments)> LoadFamilyMediaAsync(FamilyFullInfo familyInfo, CancellationToken token)
   {
+    PhotoInfo GetDefaultPhotoInfo() => new(ImageUtils.ImageFromRawResource("family_stub.png", null), null);
+
     Data[] photoData = familyInfo.MainPhoto is null
       ? [.. familyInfo.AdditionalPhotos]
       : [familyInfo.MainPhoto, .. familyInfo.AdditionalPhotos];
-
-    var defaultFamilyPhoto = ImageUtils.ImageFromRawResource("family_stub.png", null);
-    var photos = await Task.WhenAll(photoData.Select(data =>
-      ImageUtils.ResolvePhotoAsync(_DataConverterResolver, data, defaultFamilyPhoto, token, null)));
+    var photos = (await Task.WhenAll(photoData.Select(data => _DataConverterResolver(data.Category).ToObjectAsync(data, token))))
+      .Select(obj => obj is PhotoInfo photoInfo ? photoInfo : GetDefaultPhotoInfo())
+      .ToArray();
 
     var attachments = await Task.WhenAll(familyInfo.Attachments.Select(data => AttachmentInfo.CreateAsync(data, token)));
 

@@ -1,5 +1,7 @@
 using GT4.Core.Project.Dto;
+using GT4.Core.Project.Extensions;
 using GT4.UI.Converters;
+using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
 using Microsoft.Extensions.Http;
 using Moq;
@@ -13,12 +15,12 @@ namespace GT4.UI.DeviceTests;
 /// internal Encode/DecodeAsync pair isn't visible from this assembly, so the envelope is constructed
 /// directly in the documented [4-byte tag-length][UTF-8 tags][image bytes] layout) -- proving a tagged
 /// photo decodes to its image portion plus caption, with the image matching what ImageDataConverter
-/// would produce for the same raw bytes. The Data ids here (101-104) are picked to be unique across the
-/// whole DeviceTests assembly: ImageUtils.ImageFromBytes caches by Data.Id in a static MemoryCache, so a
-/// call elsewhere with the same id would hand back cached bytes for the wrong photo.
+/// would produce for the same raw bytes.
 /// </summary>
 public class PhotoTagDataConverterTests
 {
+  private const int CacheSizeLimit = 1024 * 1024;
+
   private static byte[] BuildEnvelope(string tagText, byte[] imageBytes)
   {
     var tagBytes = Encoding.UTF8.GetBytes(tagText);
@@ -41,7 +43,8 @@ public class PhotoTagDataConverterTests
   [Fact]
   public async Task ToObjectAsync_returns_null_for_a_null_photo()
   {
-    var result = await new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>()).ToObjectAsync(null, CancellationToken.None);
+    var result = await new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>(), new ImageCache(CacheSizeLimit))
+      .ToObjectAsync(null, CancellationToken.None);
 
     Assert.Null(result);
   }
@@ -53,7 +56,8 @@ public class PhotoTagDataConverterTests
     var content = BuildEnvelope("0 OBJE\n1 TITL A caption\n", image);
     var photo = new Data(101, content, "image/png", DataCategory.PersonMainPhotoTagged);
 
-    var result = await new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>()).ToObjectAsync(photo, CancellationToken.None);
+    var result = await new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>(), new ImageCache(CacheSizeLimit))
+      .ToObjectAsync(photo, CancellationToken.None);
 
     var photoInfo = Assert.IsType<PhotoInfo>(result);
     Assert.Equal(image, await ReadBytesAsync(photoInfo.Source));
@@ -67,8 +71,10 @@ public class PhotoTagDataConverterTests
     var taggedPhoto = new Data(102, BuildEnvelope("0 OBJE\n1 TITL X\n", image), "image/png", DataCategory.PersonMainPhotoTagged);
     var plainPhoto = new Data(103, image, "image/png", DataCategory.PersonMainPhoto);
 
-    var taggedResult = await new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>()).ToObjectAsync(taggedPhoto, CancellationToken.None);
-    var plainResult = await new ImageDataConverter(Mock.Of<IHttpClientFactory>()).ToObjectAsync(plainPhoto, CancellationToken.None);
+    var taggedResult = await new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>(), new ImageCache(CacheSizeLimit))
+      .ToObjectAsync(taggedPhoto, CancellationToken.None);
+    var plainResult = await new ImageDataConverter(Mock.Of<IHttpClientFactory>(), new ImageCache(CacheSizeLimit))
+      .ToObjectAsync(plainPhoto, CancellationToken.None);
 
     var taggedBytes = await ReadBytesAsync(Assert.IsType<PhotoInfo>(taggedResult).Source);
     var plainBytes = await ReadBytesAsync(Assert.IsType<PhotoInfo>(plainResult).Source);
@@ -78,7 +84,8 @@ public class PhotoTagDataConverterTests
   [Fact]
   public async Task FromObjectAsync_returns_null_for_null_input()
   {
-    var result = await new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>()).FromObjectAsync(null, CancellationToken.None);
+    var result = await new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>(), new ImageCache(CacheSizeLimit))
+      .FromObjectAsync(null, CancellationToken.None);
 
     Assert.Null(result);
   }
@@ -86,21 +93,40 @@ public class PhotoTagDataConverterTests
   [Fact]
   public async Task FromObjectAsync_encodes_plain_bytes_like_ImageDataConverter()
   {
-    // A modification can never legitimately carry the old photo's tags (no editable-caption UI in this
-    // pass), so it must encode identically to the plain converter -- PersonDataItem.ToDataAsync is what
-    // then downgrades the resulting Data's Category from tagged to plain. A StreamImageSource (built the
-    // same way ImageUtils.ImageFromBytes does) is used so the conversion doesn't depend on resolving a
-    // real file from the test host's working directory.
+    // With no caption there is nothing to envelope, so it must encode identically to the plain converter
+    // -- PersonDataItem.ToDataAsync is what then downgrades the Data's Category from tagged to plain. A
+    // StreamImageSource is used so the conversion doesn't depend on resolving a real file from the test
+    // host's working directory.
     byte[] bytes = [1, 2, 3, 4];
-    var data = new Data(104, bytes, null, DataCategory.PersonPhoto);
-    var photo = new PhotoInfo(GT4.UI.Utils.ImageUtils.ImageFromBytes(data, bytes, null), null);
+    var photo = new PhotoInfo(ImageSource.FromStream(() => new MemoryStream(bytes)), null);
 
-    var taggedResult = await new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>()).FromObjectAsync(photo, CancellationToken.None);
-    var plainResult = await new ImageDataConverter(Mock.Of<IHttpClientFactory>()).FromObjectAsync(photo, CancellationToken.None);
+    var taggedResult = await new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>(), new ImageCache(CacheSizeLimit))
+      .FromObjectAsync(photo, CancellationToken.None);
+    var plainResult = await new ImageDataConverter(Mock.Of<IHttpClientFactory>(), new ImageCache(CacheSizeLimit))
+      .FromObjectAsync(photo, CancellationToken.None);
 
     Assert.NotNull(taggedResult);
     Assert.NotNull(plainResult);
     Assert.Equal(plainResult.Content, taggedResult.Content);
     Assert.Equal(plainResult.MimeType, taggedResult.MimeType);
+  }
+
+  [Fact]
+  public async Task FromObjectAsync_round_trips_a_caption_back_through_ToObjectAsync()
+  {
+    byte[] bytes = [1, 2, 3, 4];
+    var photo = new PhotoInfo(ImageSource.FromStream(() => new MemoryStream(bytes)), "A caption");
+    var converter = new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>(), new ImageCache(CacheSizeLimit));
+
+    var encoded = await converter.FromObjectAsync(photo, CancellationToken.None);
+    Assert.NotNull(encoded);
+    // The tagged Category is what tells PersonDataItem the Content is enveloped.
+    Assert.True(encoded.Category.IsTaggedPhoto());
+
+    var decoded = await converter.ToObjectAsync(encoded, CancellationToken.None);
+
+    var photoInfo = Assert.IsType<PhotoInfo>(decoded);
+    Assert.Equal("A caption", photoInfo.Caption);
+    Assert.Equal(bytes, await ReadBytesAsync(photoInfo.Source));
   }
 }

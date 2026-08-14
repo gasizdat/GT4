@@ -15,17 +15,20 @@ public partial class ProjectRevisionsPage : ContentPage
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
+  private readonly IImageCache _ImageCache;
   private ProjectRevisionItem? _SelectedRevision;
 
   public ProjectRevisionsPage(ICurrentProjectProvider currentProjectProvider,
     ICancellationTokenProvider cancellationTokenProvider,
     IAlertService alertService,
-    INavigationService navigationService)
+    INavigationService navigationService,
+    IImageCache imageCache)
   {
     _CurrentProjectProvider = currentProjectProvider;
     _CancellationTokenProvider = cancellationTokenProvider;
     _AlertService = alertService;
     _NavigationService = navigationService;
+    _ImageCache = imageCache;
 
     InitializeComponent();
   }
@@ -53,6 +56,11 @@ public partial class ProjectRevisionsPage : ContentPage
         {
           using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
           await _CurrentProjectProvider.RestoreRevisionAsync(SelectedRevision.Info, token);
+
+          // Restore reuses the pre-restore project's Data.Id space, which is what image cache keys are
+          // built from, so a cached entry could otherwise show a photo from a row that id now belongs to
+          // after the restore.
+          _ImageCache.Clear();
         }
 
         await _NavigationService.GoToAsync(UIRoutes.GetRoute<ProjectPage>());

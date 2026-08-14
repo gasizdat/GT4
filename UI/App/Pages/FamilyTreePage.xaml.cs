@@ -1,4 +1,3 @@
-using GT4.Core.Gedcom;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
@@ -6,6 +5,8 @@ using GT4.UI.Abstraction;
 using GT4.UI.Components.Genealogy;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
+using GT4.UI.Utils.Converters;
+using GT4.UI.Utils.Dto;
 using GT4.UI.Utils.Formatters;
 using GT4.UI.Utils.Settings;
 using Microsoft.Maui.Layouts;
@@ -27,6 +28,7 @@ public partial class FamilyTreePage : ContentPage
   private readonly FontScale? _FontScale;
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
+  private readonly DataConverterResolver _DataConverterResolver;
   // Reused across loads so an incremental "load more" updates the existing canvas instead of rebuilding
   // every node view; views that do leave the tree are disconnected to release their native resources.
   private readonly Dictionary<int, NodeEntry> _NodeCache = [];
@@ -66,7 +68,8 @@ public partial class FamilyTreePage : ContentPage
     INameFormatter nameFormatter,
     FontScale? fontScale,
     IAlertService alertService,
-    INavigationService navigationService
+    INavigationService navigationService,
+    DataConverterResolver dataConverterResolver
   )
   {
     _CancellationTokenProvider = cancellationTokenProvider;
@@ -75,6 +78,7 @@ public partial class FamilyTreePage : ContentPage
     _FontScale = fontScale;
     _AlertService = alertService;
     _NavigationService = navigationService;
+    _DataConverterResolver = dataConverterResolver;
     PageCommand = new SafeCommand(OnPageCommand, _AlertService);
 
     InitializeComponent();
@@ -274,8 +278,36 @@ public partial class FamilyTreePage : ContentPage
       var names = layout.Nodes.ToDictionary(
         node => node.Node.Id,
         node => _NameFormatter.ToString(node.Node.Person, NameFormat.ShortPersonName));
+      var photoTasks = layout
+        .Nodes
+        .Select(node =>
+          {
+            var person = node.Node.Person;
 
-      await SafeTask.RunOnMainThread(() => Render(tree.CenterId, layout, names, zoom), _AlertService);
+            if (person.MainPhoto is not null)
+            {
+              var resizedMainPhoto = new ResizedImageData(person.MainPhoto, ImageUtils.ThumbnailSize);
+              return KeyValuePair.Create(person, _DataConverterResolver(person.MainPhoto.Category).ToObjectAsync(resizedMainPhoto, token));
+            }
+
+            return KeyValuePair.Create(person, Task.FromResult<object?>(null));
+          })
+        .ToArray();
+      await Task.WhenAll(photoTasks.Select(t => t.Value));
+      var photos = photoTasks.ToDictionary(
+        t => t.Key.Id,
+        t =>
+        {
+          if (t.Value.Result is PhotoInfo photoInfo)
+          {
+            return photoInfo.Source;
+          }
+
+          var resourceName = ImageUtils.DefaultPersonPhotoResourceName(t.Key.BiologicalSex);
+          return ImageUtils.ImageFromRawResource(resourceName, ImageUtils.ThumbnailSize);
+        });
+
+      await SafeTask.RunOnMainThread(() => Render(tree.CenterId, layout, names, photos, zoom), _AlertService);
     }
     finally
     {
@@ -283,7 +315,7 @@ public partial class FamilyTreePage : ContentPage
     }
   }
 
-  private void Render(int centerId, FamilyTreeLayoutResult layout, IReadOnlyDictionary<int, string> names, double zoom)
+  private void Render(int centerId, FamilyTreeLayoutResult layout, IReadOnlyDictionary<int, string> names, IReadOnlyDictionary<int, ImageSource> photos, double zoom)
   {
 #if DEBUG
     // Diagnostic: split the "Layout cycle" crash between a content-size/texture limit and memory
@@ -302,7 +334,7 @@ public partial class FamilyTreePage : ContentPage
     // recreating hundreds of node views and connector shapes every time. Elements that do leave the
     // tree (surplus connectors, evicted nodes) are disconnected to release their native resources.
     UpdateConnectors(layout.Connectors, zoom);
-    UpdateNodes(layout.Nodes, centerId, names, zoom);
+    UpdateNodes(layout.Nodes, centerId, names, photos, zoom);
 
     // A "load more" button is offered only while the tree actually reaches the requested depth: if a
     // generation came back shorter than asked for, that direction has no more data to fetch.
@@ -347,7 +379,7 @@ public partial class FamilyTreePage : ContentPage
 
   // Node views are keyed by person id and kept alive across loads. A cached view is reused as long as
   // its size (zoom) and centre styling still match; mismatches force a single rebuild of that one view.
-  private void UpdateNodes(IReadOnlyList<FamilyTreeNodeLayout> nodes, int centerId, IReadOnlyDictionary<int, string> names, double zoom)
+  private void UpdateNodes(IReadOnlyList<FamilyTreeNodeLayout> nodes, int centerId, IReadOnlyDictionary<int, string> names, IReadOnlyDictionary<int, ImageSource> photos, double zoom)
   {
     var used = new HashSet<int>();
     foreach (var nodeLayout in nodes)
@@ -361,7 +393,7 @@ public partial class FamilyTreePage : ContentPage
         {
           RemoveNode(entry.View);
         }
-        var view = CreateNode(nodeLayout, names[person.Id], isCenter, zoom);
+        var view = CreateNode(nodeLayout, names[person.Id], photos[person.Id], isCenter, zoom);
         entry = new NodeEntry(view, zoom, isCenter);
         _NodeCache[person.Id] = entry;
       }
@@ -375,25 +407,15 @@ public partial class FamilyTreePage : ContentPage
     }
   }
 
-  private FamilyTreeNodeView CreateNode(FamilyTreeNodeLayout nodeLayout, string displayName, bool isCenter, double zoom)
+  private FamilyTreeNodeView CreateNode(FamilyTreeNodeLayout nodeLayout, string displayName, ImageSource photo, bool isCenter, double zoom)
   {
     var person = nodeLayout.Node.Person;
-    var photo = ResolvePhoto(person);
     var view = new FamilyTreeNodeView(
       photo, _FontScale, displayName, isCenter, nodeLayout.Bounds.Width, nodeLayout.Bounds.Height, zoom);
     view.GestureRecognizers.Add(new TapGestureRecognizer { Command = PageCommand, CommandParameter = person });
     AbsoluteLayout.SetLayoutFlags(view, AbsoluteLayoutFlags.None);
     Nodes.Children.Add(view);
     return view;
-  }
-
-  private ImageSource ResolvePhoto(PersonInfo person)
-  {
-    var payload = person.MainPhoto is { } photo ? GedcomPhotoResidue.PayloadBytes(photo) : [];
-
-    return payload.Length > 0
-      ? ImageUtils.ImageFromBytes(person.MainPhoto!, payload, ImageUtils.ThumbnailSize)
-      : ImageUtils.ImageFromRawResource(ImageUtils.DefaultPersonPhotoResourceName(person.BiologicalSex), ImageUtils.ThumbnailSize);
   }
 
   private void RemoveNode(FamilyTreeNodeView view)

@@ -166,4 +166,27 @@ public class CreateOrUpdateNameDialogTests
     Assert.Equal(DataCategory.FamilyMainPhoto, info.Photos.Single(p => p.Id == 2).Category);
     Assert.Equal(DataCategory.FamilyPhoto, info.Photos.Single(p => p.Id == 1).Category);
   }
+
+  [Fact]
+  public async Task SaveCommand_encodes_a_modified_photo_through_its_converter()
+  {
+    // Saving item.Info instead of ToDataAsync() would silently discard whatever the item's Content
+    // was edited to -- the converter is the only thing that turns an edited object back into Data.
+    var dialog = await CreateDialogAsync(new TestServices(), [Photo(1, DataCategory.FamilyMainPhoto)]);
+    var photo = dialog.Photos.Single();
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      photo.Content = new PhotoInfo(ImageSource.FromStream(() => new MemoryStream([9, 9, 9])), null);
+      dialog.GeneralName = "Petrov";
+    });
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.DialogCommand.Execute(null));
+    var info = await dialog.Info;
+
+    Assert.NotNull(info);
+    var saved = Assert.Single(info.Photos);
+    Assert.Equal<byte[]>([9, 9, 9], saved.Content);
+    // Reconverted content has no committed row behind it yet.
+    Assert.Equal(ElementId.NonCommittedId, saved.Id);
+  }
 }

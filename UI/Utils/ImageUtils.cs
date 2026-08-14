@@ -1,6 +1,4 @@
 ﻿using GT4.Core.Project.Dto;
-using GT4.UI.Utils.Converters;
-using GT4.UI.Utils.Dto;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Maui.Graphics.Platform;
 using System.Buffers.Binary;
@@ -9,10 +7,15 @@ namespace GT4.UI.Utils;
 
 public static class ImageUtils
 {
-  private const int CahceSizeLimit = 200 * 1024 * 1024; // 200 MB
-  private static readonly MemoryCache _MemoryCache = new MemoryCache(new MemoryCacheOptions { SizeLimit = CahceSizeLimit });
+  private const int StaticCacheSize = 10 * 1024 * 1024;
+
+  private static readonly MemoryCache _MemoryCache = new MemoryCache(new MemoryCacheOptions { SizeLimit = StaticCacheSize });
   private static readonly byte[] _PngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
-  private static readonly byte[] _TransparentPng =
+  private static readonly byte[] _JpegSignature = [0xFF, 0xD8];
+  private static readonly byte[] _GifSignature = [.. "GIF8"u8];
+  private static readonly byte[] _BmpSignature = [.. "BM"u8];
+
+  private static readonly byte[] TransparentPngData =
   {
     0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
     0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
@@ -29,52 +32,10 @@ public static class ImageUtils
     _ => "project_icon.png",
   };
 
-  public const int ThumbnailSize = 200;
+  public const int ThumbnailSize = 100;
 
   public static ImageSource TransparentImageStub =>
-    ImageSource.FromStream(token => Task.Run<Stream>(() => new MemoryStream(_TransparentPng), token));
-
-  // Keyed on Data.Id, not the more general ElementId: Data.Id is a TableData AUTOINCREMENT row id, the
-  // only id space in this app guaranteed unique against every other cached entry. PersonInfo.Id etc. come
-  // from unrelated tables and can collide with it numerically, which would hand back another photo's bytes.
-  public static ImageSource ImageFromBytes(Data data, byte[] content, int? maxSize)
-  {
-    if (content.Length == 0)
-    {
-      return TransparentImageStub;
-    }
-
-    // A not-yet-committed Data (ElementId.NonCommittedId) doesn't identify a unique row -- every
-    // unsaved photo in the app shares that Id, so caching by it would hand later photos the first
-    // one's bytes. Decode straight through instead of caching.
-    if (data.Id == ElementId.NonCommittedId)
-    {
-      return ImageFromBytesUncached(content, maxSize);
-    }
-
-    var cacheKeySuffix = maxSize.HasValue ? $"{data.Id}_{maxSize}" : $"{data.Id}";
-
-    return _MemoryCache.GetOrCreate($"custom_image_{cacheKeySuffix}", entry =>
-    {
-      entry.Size = 1;
-      return ImageSource.FromStream(async _ =>
-      {
-        var cachedData = _MemoryCache.GetOrCreate($"custom_data_{cacheKeySuffix}", async dataEntry =>
-        {
-          var bytes = maxSize.HasValue ? DownsizedPng(content, maxSize.Value) : content;
-
-          dataEntry.Size = bytes.Length;
-          return bytes;
-        });
-
-        return new MemoryStream(cachedData is null ? _TransparentPng : await cachedData);
-      });
-    })!;
-  }
-
-  private static ImageSource ImageFromBytesUncached(byte[] data, int? maxSize) =>
-    ImageSource.FromStream(token => Task.Run<Stream>(
-      () => new MemoryStream(maxSize.HasValue ? DownsizedPng(data, maxSize.Value) : data), token));
+    ImageSource.FromStream(token => Task.Run<Stream>(() => new MemoryStream(TransparentPngData), token));
 
   /// <summary>
   /// Decodes <paramref name="data"/>, scales it so its longest side is <paramref name="maxSize"/> and
@@ -103,15 +64,15 @@ public static class ImageUtils
     {
       size = PngPixelSize(bytes);
     }
-    else if (bytes.Length > 2 && bytes[0] == 0xFF && bytes[1] == 0xD8)
+    else if (bytes.StartsWith(_JpegSignature))
     {
       size = JpegPixelSize(bytes);
     }
-    else if (bytes.StartsWith("GIF8"u8))
+    else if (bytes.StartsWith(_GifSignature))
     {
       size = GifPixelSize(bytes);
     }
-    else if (bytes.StartsWith("BM"u8))
+    else if (bytes.StartsWith(_BmpSignature))
     {
       size = BmpPixelSize(bytes);
     }
@@ -123,61 +84,38 @@ public static class ImageUtils
   {
     var cacheKeySuffix = maxSize.HasValue ? $"{resourceName}_{maxSize}" : resourceName;
 
+    // Kept as one ImageSource per resource: Image.Source ignores a reference-equal assignment, and the
+    // callers are binding getters (PersonInfoView.Photo, CollectionItemBase.Icon) that re-read it on every
+    // list-cell rebind. Unlike a photo's, this closure holds only the resource name, so nothing is pinned
+    // by it -- the bytes it reads are counted by their own entry.
     return _MemoryCache.GetOrCreate($"image_{cacheKeySuffix}", entry =>
     {
       entry.Size = 1;
       return ImageSource.FromStream(async _ =>
       {
-        var cachedData = _MemoryCache.GetOrCreate($"data_{cacheKeySuffix}", async dataEntry =>
+        var dataKey = $"data_{cacheKeySuffix}";
+
+        if (!_MemoryCache.TryGetValue(dataKey, out byte[]? bytes))
         {
-          byte[] bytes;
+          using var originalStream = await FileSystem.OpenAppPackageFileAsync(resourceName);
+
           if (maxSize.HasValue)
           {
-            using var originalStream = await FileSystem.OpenAppPackageFileAsync(resourceName);
             bytes = DownsizedPngStream(originalStream, maxSize.Value);
           }
           else
           {
             using var tempStream = new MemoryStream();
-            using (var originalStream = await FileSystem.OpenAppPackageFileAsync(resourceName))
-            {
-              originalStream.CopyTo(tempStream);
-            }
+            originalStream.CopyTo(tempStream);
             bytes = tempStream.ToArray();
           }
 
-          dataEntry.Size = bytes.Length;
-          return bytes;
-        });
+          _MemoryCache.Set(dataKey, bytes, new MemoryCacheEntryOptions { Size = bytes.Length });
+        }
 
-        return new MemoryStream(cachedData is null ? [] : await cachedData);
+        return new MemoryStream(bytes!);
       });
     })!;
-  }
-
-  /// <summary>
-  /// Resolves a photo through its category's keyed <see cref="IDataConverter"/>, falling back to a
-  /// caption-less <paramref name="fallback"/> both when no converter is registered for the category (an
-  /// older build opening a project that has a category it doesn't know about) and when a registered
-  /// converter hands back something that isn't a <see cref="PhotoInfo"/>.
-  /// </summary>
-  public static async Task<PhotoInfo> ResolvePhotoAsync(
-    DataConverterResolver dataConverterResolver,
-    Data data,
-    ImageSource fallback,
-    CancellationToken token,
-    int? maxSize)
-  {
-    var converter = dataConverterResolver(data.Category);
-    var resolved = converter is null ? null : await converter.ToObjectAsync(new ImageData(data, maxSize), token);
-
-    if (resolved is PhotoInfo photoInfo)
-    {
-      return photoInfo;
-    }
-
-    System.Diagnostics.Debug.WriteLine($"No usable IDataConverter result for {data.Category}; using fallback image.");
-    return new PhotoInfo(fallback, null);
   }
 
   public static async Task<byte[]?> ToBytesAsync(ImageSource? source, IHttpClientFactory httpClientFactory, CancellationToken token)
@@ -213,7 +151,7 @@ public static class ImageUtils
     }
   }
 
-  public static byte[] DownsizedPngStream(Stream input, float maxSize)
+  private static byte[] DownsizedPngStream(Stream input, float maxSize)
   {
     using var image = PlatformImage.FromStream(input);
     using var resized = image.Downsize(maxSize, disposeOriginal: true);

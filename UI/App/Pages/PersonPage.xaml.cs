@@ -393,23 +393,22 @@ public partial class PersonPage : ContentPage
 
   private async Task<(PhotoInfo[] Photos, Data[] PhotoData)> LoadPhotosAsync(PersonFullInfo personFullInfo, CancellationToken token)
   {
-    var defaultPersonPhotoResourceName = ImageUtils.DefaultPersonPhotoResourceName(personFullInfo.BiologicalSex);
-    var defaultPersonPhoto = ImageUtils.ImageFromRawResource(defaultPersonPhotoResourceName, null);
+    PhotoInfo GetDefaultPhotoInfo() => new(ImageUtils.ImageFromRawResource(
+      ImageUtils.DefaultPersonPhotoResourceName(personFullInfo.BiologicalSex), null), null);
 
-    if (personFullInfo.MainPhoto is null)
+    Data[] photoData = personFullInfo.MainPhoto is null
+      ? [.. personFullInfo.AdditionalPhotos]
+      : [personFullInfo.MainPhoto, .. personFullInfo.AdditionalPhotos];
+    var photos = (await Task.WhenAll(photoData.Select(data => _DataConverterResolver(data.Category).ToObjectAsync(data, token))))
+      .Select(obj => obj is PhotoInfo photoInfo ? photoInfo : GetDefaultPhotoInfo())
+      .ToArray();
+
+    // PersonPage always shows one photo (unlike FamilyPage, which hides its panel instead), so a person
+    // with no photos at all still needs the biological-sex stub.
+    if (photos.Length == 0)
     {
-      if (personFullInfo.AdditionalPhotos.Length != 0)
-      {
-        throw new ApplicationException("Person photos inconsistency");
-      }
-
-      using var readResourceToken = _CancellationTokenProvider.CreateShortOperationCancellationToken();
-      return ([new PhotoInfo(defaultPersonPhoto, null)], []);
+      photos = [GetDefaultPhotoInfo()];
     }
-
-    Data[] photoData = [personFullInfo.MainPhoto, .. personFullInfo.AdditionalPhotos];
-    var photos = await Task.WhenAll(photoData.Select(data =>
-      ImageUtils.ResolvePhotoAsync(_DataConverterResolver, data, defaultPersonPhoto, token, null)));
 
     return (photos, photoData);
   }

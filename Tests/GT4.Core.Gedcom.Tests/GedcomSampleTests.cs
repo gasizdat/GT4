@@ -80,7 +80,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   // envelope's residual directly.
   private static async Task<string?> AttachmentTitleAsync(Data attachment)
   {
-    var (_, residual) = await GedcomPhotoResidue.DecodeAsync(attachment.Content, Token);
+    var residual = await GedcomPhotoResidue.DecodeResidualAsync(attachment.Content, Token);
     return residual.ChildValue(GedcomTags.Title);
   }
 

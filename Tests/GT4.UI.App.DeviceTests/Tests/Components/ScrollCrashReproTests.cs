@@ -22,9 +22,9 @@ public class ScrollCrashReproTests
 
   private static readonly Date UnknownDate = Date.Create(null, null, null, DateStatus.Unknown);
 
-  // A non-null MainPhoto routes PersonInfoView.Photo through the async SafeTask.Run/
-  // ResolvePhotoAsync path (empty content is fine -- ImageFromBytes falls back to a built-in
-  // transparent PNG for zero-length data; only reaching the async branch matters here).
+  // A non-null MainPhoto routes PersonInfoView.Photo through its async SafeTask.Run/UpdatePhotoAsync
+  // path (empty content is fine -- ImageDataConverter falls back to the default person image for
+  // zero-length data; only reaching the async branch matters here).
   private static PersonInfo P(int id, string firstName) =>
     new(id, UnknownDate, null, BiologicalSex.Male, [N(id * 100, firstName, NameType.FirstName)],
       new Data(id, [], "image/png", DataCategory.PersonMainPhoto));
