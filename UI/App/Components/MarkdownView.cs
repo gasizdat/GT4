@@ -90,8 +90,7 @@ public class MarkdownView : ContentView
   }
 
   // Only a new resolver can invalidate what the old one returned; Markdown changing just references a
-  // different subset of the same media, which is why the memo below outlives an edit. A host that hands
-  // over a freshly built delegate on every render would defeat it, so each holds one in a field.
+  // different subset of the same media, which is why the memo below outlives an edit.
   private static void OnResolverChanged(BindableObject obj, object oldValue, object newValue)
   {
     if (obj is MarkdownView view && oldValue != newValue)
@@ -481,8 +480,8 @@ public class MarkdownView : ContentView
     return row;
   }
 
-  // An id with no entry (a dangling reference, or one belonging to another person) renders nothing
-  // rather than a broken image.
+  // An id the resolver has not answered for yet, or answered nothing for, renders nothing at all rather
+  // than a broken image.
   private View? CreateImageView(string? url, int? widthPercent)
   {
     if (url is null)

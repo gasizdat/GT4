@@ -12,10 +12,7 @@ namespace GT4.UI.Converters;
 /// Resolves the <c>media:&lt;id&gt;</c> references MarkdownView inlines. The id is looked up in the
 /// project rather than in whatever media a host happens to have loaded, so a biography can reference any
 /// image in the project; the image itself comes from the item's own keyed <see cref="IDataConverter"/>,
-/// so this never touches a photo's bytes. Registered once as the app's <see cref="InlineMediaResolver"/>:
-/// MarkdownView caches what it resolved and drops that cache when the delegate changes, so handing out a
-/// freshly built one per host -- or worse, per binding read -- would re-query every image on every
-/// keystroke.
+/// so this never touches a photo's bytes.
 /// </summary>
 public sealed class InlineMediaProvider
 {
