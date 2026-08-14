@@ -130,11 +130,12 @@ public class MarkdownView : ContentView
       {
         resolved[mediaId] = await resolver(mediaId);
       }
-      catch (OperationCanceledException ex)
+      catch (Exception ex) when (ex is OperationCanceledException || SafeTask.IsProjectTeardown(ex))
       {
-        // Deliberately left out of the batch, so the next refresh asks again: a cancelled lookup says
-        // nothing about the id, and memoising it would keep an image the host merely timed out on
-        // blank for as long as this view lives.
+        // Deliberately left out of the batch, so the next refresh asks again: neither a cancelled lookup
+        // nor a project closed underneath one says anything about the id, and memoising either would keep
+        // an image the host merely timed out on -- or was backgrounded during -- blank for as long as
+        // this view lives.
         System.Diagnostics.Debug.WriteLine(ex);
       }
       catch (Exception ex)

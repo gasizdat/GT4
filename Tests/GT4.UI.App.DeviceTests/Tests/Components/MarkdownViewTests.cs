@@ -1,3 +1,4 @@
+using GT4.Core.Project.Abstraction;
 using GT4.UI.Components;
 using GT4.UI.Utils;
 using Xunit;
@@ -171,6 +172,29 @@ public class MarkdownViewTests
       () => MainThread.InvokeOnMainThreadAsync(() => Descendants(view).OfType<Image>().Count()),
       rendered => rendered == 1,
       timeoutMessage: "The cancelled media was never retried.");
+  }
+
+  // Same rule, other half: the project closing underneath a resolve in flight (Android backgrounding)
+  // is a fact about the app's lifecycle, not about the id.
+  [Fact]
+  public async Task MediaReference_ResolverHitTheProjectTeardown_IsAskedAgainOnTheNextEdit()
+  {
+    var attempts = 0;
+    var view = await CreateViewAsync("![a](media:11)", mediaId =>
+    {
+      attempts++;
+      return attempts == 1
+        ? throw new ProjectNotOpenedException()
+        : Task.FromResult<InlineMedia?>(new InlineMedia(ImageSource.FromStream(() => new MemoryStream(SamplePng)), null));
+    });
+
+    await Poll.UntilAsync(() => Task.FromResult(attempts), tried => tried >= 1, timeoutMessage: "The resolver was never called.");
+    await MainThread.InvokeOnMainThreadAsync(() => view.Markdown = "![a](media:11) and more");
+
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => Descendants(view).OfType<Image>().Count()),
+      rendered => rendered == 1,
+      timeoutMessage: "The media lost to the teardown was never retried.");
   }
 
   // The counterpart: an id the resolver answered for is settled, so editing must not re-query it.
