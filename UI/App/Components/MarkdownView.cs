@@ -121,14 +121,30 @@ public class MarkdownView : ContentView
   }
 
   // Sequential on purpose: every host resolves through the project's single gated connection, so issuing
-  // these together would only queue them. A failed lookup is cached as a miss like any other -- retrying
-  // it on the next keystroke would re-query a row that is not coming back.
+  // these together would only queue them.
   private async Task ResolveMediaAsync(InlineMediaResolver resolver, int[] pending, int generation)
   {
     var resolved = new Dictionary<int, InlineMedia?>();
     foreach (var mediaId in pending)
     {
-      resolved[mediaId] = await ResolveOneAsync(resolver, mediaId);
+      try
+      {
+        resolved[mediaId] = await resolver(mediaId);
+      }
+      catch (OperationCanceledException ex)
+      {
+        // Deliberately left out of the batch, so the next refresh asks again: a cancelled lookup says
+        // nothing about the id, and memoising it would keep an image the host merely timed out on
+        // blank for as long as this view lives.
+        System.Diagnostics.Debug.WriteLine(ex);
+      }
+      catch (Exception ex)
+      {
+        // Any other failure is the view's own "no image here" outcome -- it has no service to raise an
+        // alert through -- and is memoised so a keystroke doesn't re-query a row that isn't coming back.
+        System.Diagnostics.Debug.WriteLine(ex);
+        resolved[mediaId] = null;
+      }
     }
 
     void Apply()
@@ -153,21 +169,6 @@ public class MarkdownView : ContentView
     catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
     {
       System.Diagnostics.Debug.WriteLine(ex);
-    }
-  }
-
-  // An unrenderable reference is the view's own failure mode, whatever caused it, so every outcome
-  // collapses to "no image here" rather than to an alert this view has no service to raise.
-  private static async Task<InlineMedia?> ResolveOneAsync(InlineMediaResolver resolver, int mediaId)
-  {
-    try
-    {
-      return await resolver(mediaId);
-    }
-    catch (Exception ex)
-    {
-      System.Diagnostics.Debug.WriteLine(ex);
-      return null;
     }
   }
 

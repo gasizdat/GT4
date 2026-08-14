@@ -150,6 +150,47 @@ public class MarkdownViewTests
     Assert.Equal([5], tapped);
   }
 
+  // A cancelled lookup says nothing about the id -- the host's short-operation token can outrun a slow
+  // remote image -- so it must not be remembered as "this renders nothing".
+  [Fact]
+  public async Task MediaReference_ResolverCancelled_IsAskedAgainOnTheNextEdit()
+  {
+    var attempts = 0;
+    var view = await CreateViewAsync("![a](media:11)", mediaId =>
+    {
+      attempts++;
+      return attempts == 1
+        ? throw new OperationCanceledException()
+        : Task.FromResult<InlineMedia?>(new InlineMedia(ImageSource.FromStream(() => new MemoryStream(SamplePng)), null));
+    });
+
+    await Poll.UntilAsync(() => Task.FromResult(attempts), tried => tried >= 1, timeoutMessage: "The resolver was never called.");
+    await MainThread.InvokeOnMainThreadAsync(() => view.Markdown = "![a](media:11) and more");
+
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => Descendants(view).OfType<Image>().Count()),
+      rendered => rendered == 1,
+      timeoutMessage: "The cancelled media was never retried.");
+  }
+
+  // The counterpart: an id the resolver answered for is settled, so editing must not re-query it.
+  [Fact]
+  public async Task MediaReference_ResolvedToNothing_IsNotAskedAgain()
+  {
+    var attempts = 0;
+    var view = await CreateViewAsync("![a](media:11)", mediaId =>
+    {
+      attempts++;
+      return Task.FromResult<InlineMedia?>(null);
+    });
+
+    await Poll.UntilAsync(() => Task.FromResult(attempts), tried => tried >= 1, timeoutMessage: "The resolver was never called.");
+    await MainThread.InvokeOnMainThreadAsync(() => view.Markdown = "![a](media:11) and more");
+    await MainThread.InvokeOnMainThreadAsync(() => { });
+
+    Assert.Equal(1, attempts);
+  }
+
   [Fact]
   public async Task InlineCode_IsGivenTheCodeBackground()
   {
@@ -332,12 +373,7 @@ public class MarkdownViewTests
       return Task.FromResult<InlineMedia?>(new InlineMedia(source, pixelSize));
     };
 
-    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
-    var view = await MainThread.InvokeOnMainThreadAsync(() => new MarkdownView
-    {
-      Markdown = markdown,
-      MediaResolver = resolver,
-    });
+    var view = await CreateViewAsync(markdown, resolver);
 
     // The view renders its text first and re-renders once the resolver answers, so anything asserting on
     // a rendered image has to wait for that second pass rather than read the first one. Nested media
@@ -351,6 +387,16 @@ public class MarkdownViewTests
     }
 
     return view;
+  }
+
+  private static async Task<MarkdownView> CreateViewAsync(string markdown, InlineMediaResolver resolver)
+  {
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    return await MainThread.InvokeOnMainThreadAsync(() => new MarkdownView
+    {
+      Markdown = markdown,
+      MediaResolver = resolver,
+    });
   }
 
   private static Span SpanWithText(MarkdownView view, string text)
