@@ -3,6 +3,7 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Components;
+using GT4.UI.Converters;
 using GT4.UI.Dialogs;
 using GT4.UI.Pages;
 using GT4.UI.Utils;
@@ -37,7 +38,7 @@ internal sealed class TestablePersonPage : PersonPage
     INavigationService navigationService,
     IBiologicalSexFormatter biologicalSexFormatter,
     CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory,
-    IHttpClientFactory httpClientFactory)
+    InlineMediaProvider mediaProvider)
     : base(
       cancellationTokenProvider,
       currentProjectProvider,
@@ -51,7 +52,7 @@ internal sealed class TestablePersonPage : PersonPage
       navigationService,
       biologicalSexFormatter,
       createOrUpdatePersonDialogFactory,
-      httpClientFactory)
+      mediaProvider)
   {
     // FilterDataLoaded fires exactly once per lazy fetch, after SetMarriedIds/SetYearBounds have
     // been applied on the main thread.

@@ -1,5 +1,4 @@
 using GT4.Core.Project;
-using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
@@ -34,8 +33,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     SelectRelativesDialog.Factory SelectRelativesDialogFactory,
     SelectPersonDialog.Factory SelectPersonDialogFactory,
     SelectMediaDialog.Factory SelectMediaDialogFactory,
-    ICurrentProjectProvider CurrentProjectProvider,
-    IHttpClientFactory HttpClientFactory)
+    InlineMediaProvider MediaProvider)
   {
     public CreateOrUpdatePersonDialog Create(PersonFullInfo? person) =>
       new CreateOrUpdatePersonDialog(this, person);
@@ -63,10 +61,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   protected CreateOrUpdatePersonDialog(Factory factory, PersonFullInfo? person)
   {
     _Factory = factory;
-    // Held in a field, not rebuilt per binding read: MarkdownView keys its resolved-media cache on the
-    // delegate's identity, so a fresh one every render would re-query every image on every keystroke.
-    _MediaResolver = MediaSourceUtils.CreateResolver(
-      factory.CurrentProjectProvider, factory.DataConverterResolver, factory.CancellationTokenProvider, factory.HttpClientFactory);
+    _MediaResolver = factory.MediaProvider.ResolveAsync;
     _DialogCommand = new SafeCommand(OnDialogCommand, _Factory.AlertService);
     _SaveButtonName = person is null ? UIStrings.BtnNameCreateFamilyPerson : UIStrings.BtnNameUpdateFamilyPerson;
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, _Factory.BiologicalSexFormatter));

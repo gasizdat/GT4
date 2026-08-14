@@ -60,7 +60,7 @@ public partial class PersonPage : ContentPage
     INavigationService navigationService,
     IBiologicalSexFormatter biologicalSexFormatter,
     CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory,
-    IHttpClientFactory httpClientFactory
+    InlineMediaProvider mediaProvider
     )
   {
     _CancellationTokenProvider = cancellationTokenProvider;
@@ -74,12 +74,9 @@ public partial class PersonPage : ContentPage
     _AlertService = alertService;
     _NavigationService = navigationService;
     _CreateOrUpdatePersonDialogFactory = createOrUpdatePersonDialogFactory;
+    _MediaResolver = mediaProvider.ResolveAsync;
     _PageCommand = new SafeCommand(OnPageCommand, _AlertService);
     _Relatives = new RelativeTree(_CurrentProjectProvider, _CancellationTokenProvider, _AlertService);
-    // Held in a field, not rebuilt per binding read: MarkdownView keys its resolved-media cache on the
-    // delegate's identity, so a fresh one every render would re-query every image on every keystroke.
-    _MediaResolver = MediaSourceUtils.CreateResolver(
-      _CurrentProjectProvider, _DataConverterResolver, _CancellationTokenProvider, httpClientFactory);
 
     InitializeComponent();
 

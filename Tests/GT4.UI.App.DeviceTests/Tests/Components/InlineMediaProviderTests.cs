@@ -11,7 +11,7 @@ using Xunit;
 
 namespace GT4.UI.DeviceTests;
 
-public class MediaSourceUtilsTests
+public class InlineMediaProviderTests
 {
   private const int CacheSizeLimit = 1024 * 1024;
 
@@ -48,8 +48,10 @@ public class MediaSourceUtilsTests
       .ReturnsAsync((int? id, CancellationToken _) => stored.FirstOrDefault(item => item.Id == id));
 
     var tokenProvider = services.Provider.GetRequiredService<ICancellationTokenProvider>();
-    return MediaSourceUtils.CreateResolver(
+    var provider = new InlineMediaProvider(
       services.CurrentProjectProvider.Object, ConverterResolver(), tokenProvider, Mock.Of<IHttpClientFactory>());
+
+    return provider.ResolveAsync;
   }
 
   private static async Task<byte[]> ResolvedBytesAsync(InlineMedia? media)
