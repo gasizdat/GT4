@@ -11,11 +11,10 @@ namespace GT4.UI.Converters;
 /// <see cref="ImageDataConverter"/> so every existing photo display call site needs no further change.
 /// Composes an <see cref="ImageDataConverter"/> rather than subclassing it: this converter owns the
 /// GedcomPhotoResidue envelope, the composed one owns bytes &lt;-&gt; ImageSource. A modification re-encodes
-/// the caption so it survives an edit, and signals the envelope by returning a tagged Category --
-/// PersonDataItem.ToDataAsync resolves that to main-vs-additional, and downgrades to plain when no
-/// caption came back. Only the caption is rebuilt: a PhotoInfo carries no other residual tag, so any
-/// other imported OBJE child is lost on modification. Lives in UI.App (not UI.Utils) because unwrapping
-/// the residue envelope needs Core.Gedcom.
+/// the caption so it survives an edit, and returns a tagged Category to signal that the Content is
+/// enveloped. Only the caption is rebuilt: a PhotoInfo carries no other residual tag, so any other
+/// imported OBJE child is lost on modification. Lives in UI.App (not UI.Utils) because unwrapping the
+/// residue envelope needs Core.Gedcom.
 /// </summary>
 public sealed class PhotoTagDataConverter : IDataConverter
 {

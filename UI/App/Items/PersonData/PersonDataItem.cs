@@ -87,9 +87,9 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
     var ret = await _DataConverter.FromObjectAsync(_Content, token);
     if (ret is not null)
     {
-      // The converter signals a re-encoded residue envelope with a tagged Category; only main-vs-additional
-      // is ours to keep. Category and Content must never disagree -- the category alone picks the converter
-      // that unwraps, so an enveloped Content stored as plain gets its tag bytes decoded as image bytes.
+      // A tagged Category coming back is the converter's signal that it re-encoded a residue envelope, and
+      // the two must never disagree: the category alone picks the converter that unwraps, so an enveloped
+      // Content stored as plain gets its tag bytes decoded as image bytes. Only main-vs-additional is ours.
       var category = Info.Category;
       if (ret.Category.IsTaggedPhoto())
         category = category.AsTaggedPhoto();
@@ -100,6 +100,13 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
     }
 
     return ret;
+  }
+
+  public static async Task<Data[]> ToDataAsync(IEnumerable<PersonDataItem> items)
+  {
+    var conversions = items.Select(item => item.ToDataAsync());
+    var data = await Task.WhenAll(conversions);
+    return [.. data.OfType<Data>()];
   }
 
   public event PropertyChangedEventHandler? PropertyChanged;

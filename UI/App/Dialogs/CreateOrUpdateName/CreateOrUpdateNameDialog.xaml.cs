@@ -307,7 +307,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
       return;
     }
 
-    var photos = await ToDataAsync(_Photos);
+    var photos = await PersonDataItem.ToDataAsync(_Photos);
     var mainPhoto = photos.FirstOrDefault();
     var additionalPhotos = photos.Skip(1).Select(photo => photo with { Category = photo.Category.AsAdditionalPhoto() });
     // Position in _Photos (index 0 = main), not the category assigned at add time, is authoritative --
@@ -319,14 +319,8 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     var name = GeneralName;
     var maleName = ShowDeclensionNames ? MaleName : string.Empty;
     var femaleName = ShowDeclensionNames ? FemaleName : string.Empty;
-    var attachments = await ToDataAsync(_Attachments);
+    var attachments = await PersonDataItem.ToDataAsync(_Attachments);
     _Info.SetResult(new(name, maleName, femaleName, allPhotos, attachments));
-  }
-
-  private static async Task<Data[]> ToDataAsync(IEnumerable<PersonDataItem> items)
-  {
-    var data = await Task.WhenAll(items.Select(item => item.ToDataAsync()));
-    return [.. data.Where(item => item is not null).Select(item => item!)];
   }
 
   private PersonDataItem GetFamilyData(Data data, DataCategory dataCategory)

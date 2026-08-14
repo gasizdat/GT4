@@ -262,19 +262,14 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       return;
     }
 
-    var photos = (await Task.WhenAll(_Photos.Select(photo => photo.ToDataAsync())))
-      .Where(data => data is not null)
-      .Select(data => data!);
-    var attachments = (await Task.WhenAll(_Attachments.Select(attachment => attachment.ToDataAsync())))
-      .Where(data => data is not null)
-      .Select(data => data!)
-      .ToArray();
+    var photos = await PersonDataItem.ToDataAsync(_Photos);
+    var attachments = await PersonDataItem.ToDataAsync(_Attachments);
 
-    var mainPhoto = photos?.FirstOrDefault();
-    var additionalPhotos = photos?
+    var mainPhoto = photos.FirstOrDefault();
+    var additionalPhotos = photos
       .Skip(1)
       .Select(p => p with { Category = p.Category.AsAdditionalPhoto() })
-      .ToArray() ?? [];
+      .ToArray();
     var person = new Person(
       Id: _PersonId ?? ElementId.NonCommittedId,
       BirthDate: _BirthDate!.Value,
