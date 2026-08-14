@@ -41,7 +41,7 @@ public sealed class ImageDataConverter : IDataConverter
     {
       imageSource = ImageSource.FromStream(token => Task.Run<Stream>(() => new MemoryStream(data.Content), token));
     }
-    else if (data is ResizedImageData imageData)
+    else if (data is ImageDataWithMaxSize imageData)
     {
       var key = $"{nameof(ImageDataConverter)}_{data.Id}_{imageData.MaxSize}";
       imageSource = _ImageCache.GetImage(key, () => ImageUtils.DownsizedPng(data.Content, imageData.MaxSize));
