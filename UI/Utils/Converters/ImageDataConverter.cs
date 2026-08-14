@@ -53,7 +53,7 @@ public sealed class ImageDataConverter : IDataConverter
     }
 
     // A downsized Source keeps the ratio but not the width, so the stored bytes no longer describe it.
-    var pixelSize = data is ResizedImageData ? null : ImageUtils.PixelSize(data.Content);
+    var pixelSize = data is ImageDataWithMaxSize ? null : ImageUtils.PixelSize(data.Content);
     return Task.FromResult<object?>(new PhotoInfo(imageSource, null, pixelSize));
   }
 }
