@@ -13,6 +13,7 @@ internal static class UIRoutes
     AddRoute<PersonPage>();
     AddRoute<FamilyTreePage>();
     AddRoute<NamesPage>();
+    AddRoute<GalleryPage>();
     AddRoute<SettingsPage>();
     AddRoute<ProjectRevisionsPage>();
     AddRoute<StatisticsPage>();

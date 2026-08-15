@@ -33,6 +33,11 @@
         Text="{x:Static resources:UIStrings.MenuItemGoToNames}" />
     <ToolbarItem
         Command="{Binding PageCommand, Source={x:Reference Root}}"
+        CommandParameter="GoToGallery"
+        Order="Secondary"
+        Text="{x:Static resources:UIStrings.MenuItemGoToGallery}" />
+    <ToolbarItem
+        Command="{Binding PageCommand, Source={x:Reference Root}}"
         CommandParameter="GoToStatistics"
         Order="Secondary"
         Text="{x:Static resources:UIStrings.MenuItemGoToStatistics}" />

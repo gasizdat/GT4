@@ -303,6 +303,10 @@ public partial class ProjectPage : ContentPage
         await _NavigationService.GoToAsync(UIRoutes.GetRoute<NamesPage>());
         break;
 
+      case string commandName when commandName == "GoToGallery":
+        await _NavigationService.GoToAsync(UIRoutes.GetRoute<GalleryPage>());
+        break;
+
       case string commandName when commandName == "GoToStatistics":
         await _NavigationService.GoToAsync(UIRoutes.GetRoute<StatisticsPage>());
         break;

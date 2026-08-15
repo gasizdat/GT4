@@ -1648,6 +1648,15 @@ namespace GT4.UI.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to All photos and attachments of the project, with the persons and families they belong to..
+        /// </summary>
+        public static string HintGalleryPage {
+            get {
+                return ResourceManager.GetString("HintGalleryPage", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to This GEDCOM file declares the "{0}" charset, which is ambiguous. Pick the codepage its text was actually written in..
         /// </summary>
         public static string HintGedcomDeclaredCharset_1 {
@@ -1773,6 +1782,15 @@ namespace GT4.UI.Resources {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to 🖼 To Gallery.
+        /// </summary>
+        public static string MenuItemGoToGallery {
+            get {
+                return ResourceManager.GetString("MenuItemGoToGallery", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to 📝 To Names.
         /// </summary>
@@ -2835,6 +2853,15 @@ namespace GT4.UI.Resources {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to Gallery.
+        /// </summary>
+        public static string TitleGalleryPage {
+            get {
+                return ResourceManager.GetString("TitleGalleryPage", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Importing GEDCOM.
         /// </summary>
