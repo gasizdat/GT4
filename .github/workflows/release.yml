@@ -56,8 +56,9 @@ jobs:
         run: Compress-Archive -Path publish\win-x64\* -DestinationPath GT4-${{ steps.version.outputs.version }}-win-x64.zip
 
       # The Store re-signs every package it ingests, so this throwaway cert only needs to produce
-      # a validly signed MSIX -- it never needs to be trusted or to persist across runs. Its
-      # Subject must match Package.appxmanifest's Identity/@Publisher exactly.
+      # a validly signed MSIX -- it never needs to be trusted long-term. Its Subject must match
+      # Package.appxmanifest's Identity/@Publisher exactly. The public half is also published as
+      # a release asset so a direct (non-Store) sideload install can be trusted locally.
       - name: Create throwaway MSIX signing certificate
         id: cert
         shell: pwsh
@@ -81,8 +82,16 @@ jobs:
           Copy-Item $msix.FullName -Destination $dest
           "path=$dest" >> $env:GITHUB_OUTPUT
 
+      - name: Export MSIX signing certificate
+        id: cerfile
+        shell: pwsh
+        run: |
+          $dest = "GT4-${{ steps.version.outputs.version }}-win-x64.cer"
+          Export-Certificate -Cert "Cert:\CurrentUser\My\${{ steps.cert.outputs.thumbprint }}" -FilePath $dest | Out-Null
+          "path=$dest" >> $env:GITHUB_OUTPUT
+
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "v${{ steps.version.outputs.version }}" "GT4-${{ steps.version.outputs.version }}-win-x64.zip" "${{ steps.msix.outputs.path }}" --title "v${{ steps.version.outputs.version }}" --generate-notes --target "${{ github.sha }}"
+          gh release create "v${{ steps.version.outputs.version }}" "GT4-${{ steps.version.outputs.version }}-win-x64.zip" "${{ steps.msix.outputs.path }}" "${{ steps.cerfile.outputs.path }}" --title "v${{ steps.version.outputs.version }}" --generate-notes --target "${{ github.sha }}"
