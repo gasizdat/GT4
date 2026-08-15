@@ -70,14 +70,12 @@ internal abstract class RelationshipTypeFormatterBase
   /// <summary>
   /// Builds a "Great-grandparent"-style label by recursively wrapping <paramref name="main"/> in
   /// <see cref="UIStrings.RelGreat_1"/>, falling back to a "N-Great-..." numeral form past
-  /// <see cref="_GreatnessMaxLevel"/>. This recursive-prefix idiom holds for En/Ru (and other
-  /// Germanic/Romance/Slavic-style languages), but is NOT a linguistic universal -- languages that
-  /// name each generation with a distinct word instead of a repeated prefix (e.g. Chinese
-  /// 曾祖父/高祖父, Hungarian dédapa/ükapa) can't reuse this method or its thresholds. A new language
-  /// formatter should confirm its own convention actually matches before calling AddGreatness;
-  /// otherwise write its own generation-naming logic instead of forcing this one to fit.
+  /// <see cref="_GreatnessMaxLevel"/>. Repeating one prefix around the whole composed phrase is an
+  /// En/Ru convention rather than a universal one: Spanish names each level with its own prefix
+  /// bound to the kinship stem, so <see cref="RelationshipTypeFormatterEs"/> overrides this instead
+  /// of reusing it.
   /// </summary>
-  protected string AddGreatness(string main)
+  protected virtual string AddGreatness(string main)
   {
     var ret = main;
     var generation = AbsGen - _GreatnessStartLevel;

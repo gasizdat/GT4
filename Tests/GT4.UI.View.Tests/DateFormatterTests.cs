@@ -23,6 +23,7 @@ public class DateFormatterTests
   private static void SetEn() => Language.Current = Language.EN;
   private static void SetRu() => Language.Current = Language.RU;
   private static void SetDe() => Language.Current = Language.DE;
+  private static void SetEs() => Language.Current = Language.ES;
 
   [Fact]
   public void NullDate_ReturnsNotDefined()
@@ -150,6 +151,19 @@ public class DateFormatterTests
   public void DE_Months_MatchResourceStrings(int month, string expectedName)
   {
     SetDe();
+    var date = Date.Create(2000, month, 0, DateStatus.DayUnknown);
+    Create(shortFormat: "MMM YYYY").ToString(date).Should().StartWith(expectedName);
+  }
+
+  // Spanish month names are lowercase, and nothing in the formatter re-cases them.
+  [Theory]
+  [InlineData(1, "enero")]
+  [InlineData(3, "marzo")]
+  [InlineData(10, "octubre")]
+  [InlineData(12, "diciembre")]
+  public void ES_Months_MatchResourceStrings(int month, string expectedName)
+  {
+    SetEs();
     var date = Date.Create(2000, month, 0, DateStatus.DayUnknown);
     Create(shortFormat: "MMM YYYY").ToString(date).Should().StartWith(expectedName);
   }

@@ -25,6 +25,7 @@ public class DateSpanFormatterTests
   private static void SetEn() => Language.Current = Language.EN;
   private static void SetRu() => Language.Current = Language.RU;
   private static void SetDe() => Language.Current = Language.DE;
+  private static void SetEs() => Language.Current = Language.ES;
 
   private static DateSpan WellKnown(int years, int months, int days) =>
     new(years, months, days, DateStatus.WellKnown);
@@ -89,6 +90,36 @@ public class DateSpanFormatterTests
   public void DE_YearsMonthsAndDays(int years, int months, int days, string expected)
   {
     SetDe();
+    var span = WellKnown(years, months, days);
+    _formatter.ToString(span).Should().Be(expected);
+  }
+
+  [Fact]
+  public void ES_NullSpan_ReturnsUnknown()
+  {
+    SetEs();
+    _formatter.ToString(null).Should().Be("desconocido");
+  }
+
+  // Spanish declines like English rather than by last digit, so 11 and 21 take the plural.
+  [Theory]
+  [InlineData(1, "1 año")]
+  [InlineData(2, "2 años")]
+  [InlineData(11, "11 años")]
+  [InlineData(21, "21 años")]
+  public void ES_Years(int years, string expected)
+  {
+    SetEs();
+    var span = MonthUnknown(years);
+    _formatter.ToString(span).Should().Be(expected);
+  }
+
+  [Theory]
+  [InlineData(1, 1, 1, "1 año 1 mes 1 día")]
+  [InlineData(2, 3, 4, "2 años 3 meses 4 días")]
+  public void ES_YearsMonthsAndDays(int years, int months, int days, string expected)
+  {
+    SetEs();
     var span = WellKnown(years, months, days);
     _formatter.ToString(span).Should().Be(expected);
   }

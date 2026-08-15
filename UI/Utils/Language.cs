@@ -7,8 +7,9 @@ public record class Language(string Code, string Name)
   public static readonly Language EN = new Language("en", "English");
   public static readonly Language RU = new Language("ru", "Русский");
   public static readonly Language DE = new Language("de", "Deutsch");
+  public static readonly Language ES = new Language("es", "Español");
   public static readonly Language Default = EN;
-  public static readonly Language[] Languages = [EN, RU, DE];
+  public static readonly Language[] Languages = [EN, RU, DE, ES];
 
   public static Language Current
   {
