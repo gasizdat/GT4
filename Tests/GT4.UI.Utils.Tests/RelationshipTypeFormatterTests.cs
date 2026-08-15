@@ -246,11 +246,11 @@ public class RelationshipTypeFormatterTests
   [InlineData(0, 2, "Cousin oder Cousine")]
   [InlineData(0, 3, "Cousin oder Cousine zweiten Grades")]
   [InlineData(0, 56, "Cousin oder Cousine 55. Grades")]
-  [InlineData(1, 3, "Cousin oder Cousine, einmal entfernt")]
-  [InlineData(1, 4, "Cousin oder Cousine zweiten Grades, einmal entfernt")]
-  [InlineData(2, 4, "Cousin oder Cousine, zweimal entfernt")]
-  [InlineData(2, 5, "Cousin oder Cousine zweiten Grades, zweimal entfernt")]
-  [InlineData(15, 25, "Cousin oder Cousine 9. Grades, 15-mal entfernt")]
+  [InlineData(1, 3, "Cousin oder Cousine, eine Generation entfernt")]
+  [InlineData(1, 4, "Cousin oder Cousine zweiten Grades, eine Generation entfernt")]
+  [InlineData(2, 4, "Cousin oder Cousine, zwei Generationen entfernt")]
+  [InlineData(2, 5, "Cousin oder Cousine zweiten Grades, zwei Generationen entfernt")]
+  [InlineData(15, 25, "Cousin oder Cousine 9. Grades, 15 Generationen entfernt")]
   [InlineData(1, 1, "Unsupported or wrong relationship: Type=Child, Sex=Unknown, G1, C1")]
   public void DE_UnknownSex_Cousin(int generation, int consanguinity, string expected)
   {

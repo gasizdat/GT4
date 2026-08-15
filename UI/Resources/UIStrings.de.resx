@@ -632,13 +632,13 @@ Stammbaum und haben Sie Freude daran!</value>
     <value>Cousin oder Cousine</value>
   </data>
   <data name="Rel1Removed_en_1" xml:space="preserve">
-    <value>{0}, einmal entfernt</value>
+    <value>{0}, eine Generation entfernt</value>
   </data>
   <data name="Rel2Removed_en_1" xml:space="preserve">
-    <value>{0}, zweimal entfernt</value>
+    <value>{0}, zwei Generationen entfernt</value>
   </data>
   <data name="RelNRemoved_en_2" xml:space="preserve">
-    <value>{0}, {1}-mal entfernt</value>
+    <value>{0}, {1} Generationen entfernt</value>
   </data>
   <data name="RelInLawFemale" xml:space="preserve">
     <value>Schwiegermutter</value>
@@ -671,7 +671,7 @@ Stammbaum und haben Sie Freude daran!</value>
     <value>{0} zweiten Grades</value>
   </data>
   <data name="Rel3Removed_en_1" xml:space="preserve">
-    <value>{0}, dreimal entfernt</value>
+    <value>{0}, drei Generationen entfernt</value>
   </data>
   <data name="PersonDates_2" xml:space="preserve">
     <value>{0} - {1}</value>
