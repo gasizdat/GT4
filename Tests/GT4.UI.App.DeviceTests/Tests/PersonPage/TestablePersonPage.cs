@@ -5,6 +5,7 @@ using GT4.UI.Abstraction;
 using GT4.UI.Components;
 using GT4.UI.Converters;
 using GT4.UI.Dialogs;
+using GT4.UI.Items;
 using GT4.UI.Pages;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
@@ -69,6 +70,9 @@ internal sealed class TestablePersonPage : PersonPage
   public Task InvokePersonLinkTappedAsync(int personId) => NavigateToPersonLinkAsync(personId);
 
   public Task InvokeAttachmentLinkTappedAsync(int attachmentId) => OpenAttachmentLinkAsync(attachmentId);
+
+  // AttachmentInfo.OpenAsync launches a platform viewer, so the tap resolution is exercised on its own.
+  public Task<AttachmentInfo?> ResolveAttachmentAsync(int attachmentId) => TryResolveAttachmentAsync(attachmentId);
 
   // NavigatedToEventArgs has no accessible test-side constructor and OnNavigatedTo never reads it.
   public void InvokeNavigatedTo() => OnNavigatedTo(null!);
