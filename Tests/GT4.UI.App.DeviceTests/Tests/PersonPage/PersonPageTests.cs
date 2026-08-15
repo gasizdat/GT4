@@ -594,7 +594,45 @@ public class PersonPageTests
 
     await page.InvokeAttachmentLinkTappedAsync(999);
 
+    services.Data.Verify(table => table.TryGetDataByIdAsync(999, It.IsAny<CancellationToken>()), Times.Once());
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+  }
+
+  [Fact]
+  public async Task AttachmentLinkTapped_resolves_a_document_the_person_does_not_carry()
+  {
+    var services = new TestServices();
+    var content = BuildTaggedPhotoContent("0 OBJE\n1 FILE deed.pdf\n1 TITL Another deed\n", [1, 2, 3]);
+    var deed = new Data(40, content, "application/pdf", DataCategory.PersonAttachment);
+    services.Data
+      .Setup(table => table.TryGetDataByIdAsync(40, It.IsAny<CancellationToken>()))
+      .ReturnsAsync(deed);
+    var person = CreateSamplePerson();
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+
+    var attachment = await page.ResolveAttachmentAsync(40);
+
+    Assert.Empty(page.Attachments);
+    Assert.NotNull(attachment);
+    Assert.Equal("Another deed", attachment.Title);
+  }
+
+  [Fact]
+  public async Task AttachmentLinkTapped_with_an_id_naming_a_photo_is_inert()
+  {
+    var services = new TestServices();
+    var content = BuildTaggedPhotoContent("0 OBJE\n1 TITL A caption\n", [1, 2, 3]);
+    var mainPhoto = new Data(41, content, "image/png", DataCategory.PersonMainPhotoTagged);
+    services.Data
+      .Setup(table => table.TryGetDataByIdAsync(41, It.IsAny<CancellationToken>()))
+      .ReturnsAsync(mainPhoto);
+    var page = await CreatePageAsync(services);
+
+    var attachment = await page.ResolveAttachmentAsync(41);
+
+    Assert.Null(attachment);
   }
 
   [Fact]

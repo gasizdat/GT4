@@ -312,10 +312,24 @@ public partial class PersonPage : ContentPage
   protected async Task OpenAttachmentLinkAsync(int attachmentId)
   {
     var attachment = _Attachments.FirstOrDefault(a => a.Data.Id == attachmentId);
+    attachment ??= await TryResolveAttachmentAsync(attachmentId);
     if (attachment is not null)
     {
       await OnOpenAttachmentAsync(attachment);
     }
+  }
+
+  protected async Task<AttachmentInfo?> TryResolveAttachmentAsync(int attachmentId)
+  {
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    var data = await _CurrentProjectProvider.Project.Data.TryGetDataByIdAsync(attachmentId, token);
+    if (data is null)
+    {
+      return null;
+    }
+
+    var content = await _DataConverterResolver(data.Category).ToObjectAsync(data, token);
+    return content as AttachmentInfo;
   }
 
   private async Task OnOpenAttachmentAsync(AttachmentInfo attachment)
