@@ -694,6 +694,15 @@ genealogy tree and enjoy!</value>
   <data name="MenuItemGoToNames" xml:space="preserve">
     <value>📝 To Names</value>
   </data>
+  <data name="TitleGalleryPage" xml:space="preserve">
+    <value>Gallery</value>
+  </data>
+  <data name="HintGalleryPage" xml:space="preserve">
+    <value>All photos and attachments of the project, with the persons and families they belong to.</value>
+  </data>
+  <data name="MenuItemGoToGallery" xml:space="preserve">
+    <value>🖼 To Gallery</value>
+  </data>
   <data name="MenuItemImportGedcom" xml:space="preserve">
     <value>📥 Import from GEDCOM</value>
   </data>

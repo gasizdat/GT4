@@ -29,6 +29,7 @@ internal sealed class TestServices
   public Mock<ITableRelatives> Relatives { get; } = new();
   public Mock<ITablePersons> Persons { get; } = new();
   public Mock<ITablePersonData> PersonData { get; } = new();
+  public Mock<ITableNameData> NameData { get; } = new();
   public Mock<ITableData> Data { get; } = new();
   public Mock<IFamilyTreeProvider> FamilyTreeProvider { get; } = new();
   public Mock<IKinshipFinder> KinshipFinder { get; } = new();
@@ -52,6 +53,7 @@ internal sealed class TestServices
     Project.SetupGet(p => p.Relatives).Returns(Relatives.Object);
     Project.SetupGet(p => p.Persons).Returns(Persons.Object);
     Project.SetupGet(p => p.PersonData).Returns(PersonData.Object);
+    Project.SetupGet(p => p.NameData).Returns(NameData.Object);
     Project.SetupGet(p => p.Data).Returns(Data.Object);
     Project.SetupGet(p => p.FamilyTreeProvider).Returns(FamilyTreeProvider.Object);
     Project.SetupGet(p => p.KinshipFinder).Returns(KinshipFinder.Object);
@@ -119,6 +121,12 @@ internal sealed class TestServices
     PersonData
       .Setup(p => p.GetPersonDataSetAsync(It.IsAny<Person[]>(), It.IsAny<DataCategory?>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(new Dictionary<int, Data[]>());
+
+    // GalleryPage gathers every family's media in the same background load -- same "must not fail
+    // invisibly" reasoning as GetNamesByTypeAsync above.
+    NameData
+      .Setup(n => n.GetNameDataSetAsync(It.IsAny<Name[]>(), It.IsAny<DataCategory?>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new Dictionary<int, Data[]>());
     RelativesProvider.Setup(r => r.GetChildren(It.IsAny<RelativeInfo[]>())).Returns([]);
     RelativesProvider.Setup(r => r.GetAdoptiveChildren(It.IsAny<RelativeInfo[]>())).Returns([]);
 
@@ -139,6 +147,7 @@ internal sealed class TestServices
     services.AddSingleton(NavigationService.Object);
     services.AddSingleton(ProjectList.Object);
     services.AddSingleton<TestableNamesPage>();
+    services.AddSingleton<GalleryPage>();
     services.AddSingleton<TestableFamilyPage>();
     services.AddSingleton<TestableProjectPage>();
     services.AddSingleton<TestablePersonPage>();

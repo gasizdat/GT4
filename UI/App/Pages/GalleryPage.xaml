@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="GT4.UI.Pages.GalleryPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:components="clr-namespace:GT4.UI.Components"
+    xmlns:items="clr-namespace:GT4.UI.Items"
+    xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
+    x:Name="Root"
+    Title="{x:Static resources:UIStrings.TitleGalleryPage}">
+
+  <components:PageLayout>
+    <components:PageLayout.Header>
+      <Grid
+          Padding="20"
+          ColumnDefinitions="Auto, *"
+          HorizontalOptions="Fill"
+          RowDefinitions="Auto, Auto"
+          RowSpacing="10"
+          VerticalOptions="Start">
+
+        <!--  Row 0 - Title  -->
+        <Label
+            Grid.Row="0"
+            Grid.ColumnSpan="2"
+            Style="{StaticResource PageSubtitle}"
+            Text="{x:Static resources:UIStrings.HintGalleryPage}" />
+
+        <!--  Row 1 - Search  -->
+        <Label
+            Grid.Row="1"
+            Grid.Column="0"
+            Style="{StaticResource FieldName}"
+            Text="{x:Static resources:UIStrings.FieldSearchText}" />
+
+        <Entry
+            Grid.Row="1"
+            Grid.Column="1"
+            HorizontalOptions="Fill"
+            Style="{StaticResource FieldValue}"
+            Text="{Binding OwnerFilter, Source={x:Reference Root}}" />
+
+      </Grid>
+    </components:PageLayout.Header>
+
+    <components:PageLayout.Body>
+      <CollectionView
+          x:Name="GalleryCollectionView"
+          HorizontalOptions="Fill"
+          ItemsSource="{Binding Items, Source={x:Reference Root}}"
+          SelectionMode="None"
+          VerticalOptions="Start">
+
+        <CollectionView.ItemTemplate>
+          <DataTemplate x:DataType="items:GalleryDataItem">
+            <Grid
+                Padding="{Thickness Left={StaticResource PageContentSpacing},
+                                    Right={StaticResource PageContentSpacing}}"
+                ColumnDefinitions="Auto, *"
+                ColumnSpacing="10">
+
+              <Image
+                  Grid.Column="0"
+                  Source="{Binding Icon}"
+                  Style="{StaticResource PhotoThumbStyle}" />
+
+              <Label
+                  Grid.Column="1"
+                  Style="{StaticResource CardContent}"
+                  Text="{Binding Owners}"
+                  VerticalOptions="Center" />
+
+            </Grid>
+          </DataTemplate>
+        </CollectionView.ItemTemplate>
+
+      </CollectionView>
+    </components:PageLayout.Body>
+
+  </components:PageLayout>
+</ContentPage>
