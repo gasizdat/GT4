@@ -18,17 +18,9 @@ namespace GT4.UI.DeviceTests;
 /// </summary>
 public class GalleryPageTests
 {
-  // A minimal valid 1x1 PNG: an item's icon resolves through an ImageDataWithMaxSize, which decodes and
-  // re-encodes the source bytes to build a thumbnail, so arbitrary non-image bytes would throw.
-  private static readonly byte[] ValidPngBytes =
-  [
-    0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
-    0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
-    0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x05, 0xC4, 0x89, 0x00, 0x00, 0x00,
-    0x0A, 0x49, 0x44, 0x41, 0x54, 0x78, 0xDA, 0x63, 0x64, 0xF8, 0x0F, 0x00,
-    0x01, 0x05, 0x01, 0x27, 0x23, 0xE3, 0x66, 0x66, 0x00, 0x00, 0x00, 0x00,
-    0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
-  ];
+  // An item's icon resolves through an ImageDataWithMaxSize, which decodes and re-encodes the source
+  // bytes to build a thumbnail, so anything a platform decoder rejects would never resolve.
+  private static readonly byte[] ValidPngBytes = TestImages.ValidPng;
 
   private static Name N(int id, string value, NameType type) => new(id, value, type, null);
 
@@ -190,31 +182,38 @@ public class GalleryPageTests
     Assert.Equal(item.Owners, item.Title);
   }
 
+  // Both this page and SelectMediaDialog print Owners under the title, so an item whose title *is* its
+  // owners must not claim they are worth a second line -- that row would show the same name twice.
   [Fact]
-  public async Task Toggling_an_item_shows_and_hides_its_owners()
+  public async Task Owners_are_distinct_from_the_title_only_once_a_caption_resolves()
   {
     var services = new TestServices();
     var ivan = P(1, "Ivan");
     SetUpProject(
       services,
-      dataSet: [Photo(50, DataCategory.PersonPhoto)],
+      dataSet: [Photo(40, DataCategory.PersonPhoto), Attachment(41, "birth-certificate.pdf")],
       persons: [ivan],
-      personIdsByData: new() { [50] = [ivan.Id] });
+      personIdsByData: new() { [40] = [ivan.Id], [41] = [ivan.Id] });
     var page = await CreatePageAsync(services);
 
-    var items = await WaitForItemsAsync(page, 1);
-    var item = items.Single();
+    var items = await WaitForItemsAsync(page, 2);
+    var uncaptioned = items.Single(item => item.Info.Id == 40);
+    var named = items.Single(item => item.Info.Id == 41);
 
-    Assert.False(item.ShowOwners);
-    var collapsedBtnName = item.MoreBtnName;
+    // Reading Title is what starts the conversion the flag depends on -- HasDistinctOwners alone never
+    // asks for one, so polling it directly would spin against an item that was never told to resolve.
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => named.Title),
+      title => title != named.Owners,
+      timeoutMessage: "The attachment kept its owner fallback instead of resolving its file name.");
+    Assert.True(named.HasDistinctOwners);
 
-    await MainThread.InvokeOnMainThreadAsync(() => item.ToggleOwnersCommand.Execute(null));
-    Assert.True(item.ShowOwners);
-    Assert.NotEqual(collapsedBtnName, item.MoreBtnName);
-
-    await MainThread.InvokeOnMainThreadAsync(() => item.ToggleOwnersCommand.Execute(null));
-    Assert.False(item.ShowOwners);
-    Assert.Equal(collapsedBtnName, item.MoreBtnName);
+    await MainThread.InvokeOnMainThreadAsync(() => uncaptioned.Title);
+    await Poll.ConfirmNeverAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => uncaptioned.HasDistinctOwners),
+      distinct => distinct,
+      TimeSpan.FromSeconds(1),
+      "An uncaptioned photo claimed its owners were worth a line separate from its title.");
   }
 
   [Fact]

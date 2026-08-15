@@ -1,9 +1,12 @@
 using GT4.Core.Gedcom;
 using GT4.Core.Project.Dto;
+using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Components;
 using GT4.UI.Dialogs;
+using GT4.UI.Items;
+using GT4.UI.Utils.Formatters;
 using Moq;
 using System.Text;
 using Xunit;
@@ -60,6 +63,41 @@ public class CreateOrUpdatePersonDialogTests
 
   private static AdornerCommandParameter Adorner(string commandName, object element) =>
     new() { CommandName = commandName, Element = element };
+
+  private static PersonInfo P(int id, string firstName) =>
+    new(id, default(Date), null, BiologicalSex.Male, [N(id, firstName, NameType.FirstName | NameType.MaleDeclension)], null);
+
+  // The picker lists the project's Data table rather than the dialog's own edit buffers, so a media
+  // test has to stock the project the sweep reads -- what the edited person holds is only what the
+  // listing pins to the top of.
+  private static void SetUpProjectMedia(
+    TestServices services,
+    Data[] dataSet,
+    PersonInfo[]? persons = null,
+    Dictionary<int, int[]>? personIdsByData = null)
+  {
+    services.Data
+      .Setup(d => d.GetDataSetAsync(It.IsAny<CancellationToken>()))
+      .ReturnsAsync(dataSet);
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosAsync(false, It.IsAny<CancellationToken>()))
+      .ReturnsAsync(persons ?? []);
+    services.PersonData
+      .Setup(p => p.GetPersonIdsByDataAsync(It.IsAny<CancellationToken>()))
+      .ReturnsAsync(personIdsByData ?? []);
+  }
+
+  private static Task<GalleryDataItem[]> WaitForMediaAsync(SelectMediaDialog dialog, int expectedCount) =>
+    Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => dialog.Items.ToArray()),
+      items => items.Length == expectedCount,
+      timeoutMessage: $"SelectMediaDialog did not settle on {expectedCount} item(s); check the TestServices mock setup.");
+
+  private static string CommonName(TestServices services, PersonInfo person)
+  {
+    var formatter = services.Provider.GetRequiredService<INameFormatter>();
+    return formatter.ToString(person, NameFormat.CommonPersonName);
+  }
 
   /// <summary>
   /// DialogCommand.Execute is fire-and-forget (ICommand.Execute returns void), so even though
@@ -402,6 +440,12 @@ public class CreateOrUpdatePersonDialogTests
   public async Task InsertMediaLinkCommand_inserts_a_photo_link_via_SelectMediaDialog()
   {
     var services = new TestServices();
+    var ivan = P(1, "Ivan");
+    SetUpProjectMedia(
+      services,
+      dataSet: [Photo(10), Photo(11), Photo(12)],
+      persons: [ivan],
+      personIdsByData: new() { [10] = [ivan.Id], [11] = [ivan.Id], [12] = [ivan.Id] });
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
     var dialog = await MainThread.InvokeOnMainThreadAsync(
       () => services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialog.Factory>().Create(CreateSamplePerson()));
@@ -409,23 +453,31 @@ public class CreateOrUpdatePersonDialogTests
     await using var window = await WindowHost.AttachAsync(dialog);
     var insertTask = await MainThreadTask.StartAsync(dialog.InvokeInsertMediaLinkAsync);
     var selectDialog = await ModalDialogHarness.WaitForModalAsync<SelectMediaDialog>(dialog);
+    var items = await WaitForMediaAsync(selectDialog, 3);
 
     await MainThread.InvokeOnMainThreadAsync(() =>
     {
-      selectDialog.SelectedItem = selectDialog.Items.Single(i => i.Id == 11);
+      selectDialog.SelectedItem = items.Single(i => i.Info.Id == 11);
       selectDialog.DialogCommand.Execute("SelectMediaCommand");
     });
     await insertTask;
 
-    var expectedCaption = string.Format(Resources.UIStrings.MediaLinkPhotoName_1, 2);
-    Assert.Equal($"![{expectedCaption}](media:11)", dialog.Biography!.Content);
+    Assert.Equal($"![{CommonName(services, ivan)}](media:11)", dialog.Biography!.Content);
   }
 
+  // A photo whose caption is blank has nothing of its own to be named by; project-wide, the person it
+  // belongs to is the only label that still tells the user which photo they linked.
   [Fact]
-  public async Task InsertMediaLinkCommand_names_a_blank_captioned_photo_by_its_position()
+  public async Task InsertMediaLinkCommand_names_a_blank_captioned_photo_by_its_owner()
   {
     var services = new TestServices();
+    var ivan = P(1, "Ivan");
     var person = CreateSamplePerson() with { MainPhoto = BlankCaptionPhoto(13), AdditionalPhotos = [] };
+    SetUpProjectMedia(
+      services,
+      dataSet: [BlankCaptionPhoto(13)],
+      persons: [ivan],
+      personIdsByData: new() { [13] = [ivan.Id] });
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
     var dialog = await MainThread.InvokeOnMainThreadAsync(
       () => services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialog.Factory>().Create(person));
@@ -433,16 +485,16 @@ public class CreateOrUpdatePersonDialogTests
     await using var window = await WindowHost.AttachAsync(dialog);
     var insertTask = await MainThreadTask.StartAsync(dialog.InvokeInsertMediaLinkAsync);
     var selectDialog = await ModalDialogHarness.WaitForModalAsync<SelectMediaDialog>(dialog);
+    var items = await WaitForMediaAsync(selectDialog, 1);
 
     await MainThread.InvokeOnMainThreadAsync(() =>
     {
-      selectDialog.SelectedItem = selectDialog.Items.Single(i => i.Id == 13);
+      selectDialog.SelectedItem = items.Single(i => i.Info.Id == 13);
       selectDialog.DialogCommand.Execute("SelectMediaCommand");
     });
     await insertTask;
 
-    var expectedCaption = string.Format(Resources.UIStrings.MediaLinkPhotoName_1, 1);
-    Assert.Equal($"![{expectedCaption}](media:13)", dialog.Biography!.Content);
+    Assert.Equal($"![{CommonName(services, ivan)}](media:13)", dialog.Biography!.Content);
   }
 
   [Fact]
@@ -450,6 +502,7 @@ public class CreateOrUpdatePersonDialogTests
   {
     var services = new TestServices();
     var person = CreateSamplePerson() with { MainPhoto = null, AdditionalPhotos = [], Attachments = [Attachment(20, "scan.pdf")] };
+    SetUpProjectMedia(services, dataSet: [Attachment(20, "scan.pdf")]);
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
     var dialog = await MainThread.InvokeOnMainThreadAsync(
       () => services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialog.Factory>().Create(person));
@@ -457,10 +510,11 @@ public class CreateOrUpdatePersonDialogTests
     await using var window = await WindowHost.AttachAsync(dialog);
     var insertTask = await MainThreadTask.StartAsync(dialog.InvokeInsertMediaLinkAsync);
     var selectDialog = await ModalDialogHarness.WaitForModalAsync<SelectMediaDialog>(dialog);
+    var items = await WaitForMediaAsync(selectDialog, 1);
 
     await MainThread.InvokeOnMainThreadAsync(() =>
     {
-      selectDialog.SelectedItem = selectDialog.Items.Single(i => i.Id == 20);
+      selectDialog.SelectedItem = items.Single(i => i.Info.Id == 20);
       selectDialog.DialogCommand.Execute("SelectMediaCommand");
     });
     await insertTask;
@@ -474,6 +528,7 @@ public class CreateOrUpdatePersonDialogTests
     var services = new TestServices();
     var attachment = Attachment(21, "scan.jpg", "image/jpeg");
     var person = CreateSamplePerson() with { MainPhoto = null, AdditionalPhotos = [], Attachments = [attachment] };
+    SetUpProjectMedia(services, dataSet: [attachment]);
     services.Data
       .Setup(table => table.TryGetDataByIdAsync(21, It.IsAny<CancellationToken>()))
       .ReturnsAsync(attachment);
@@ -484,10 +539,11 @@ public class CreateOrUpdatePersonDialogTests
     await using var window = await WindowHost.AttachAsync(dialog);
     var insertTask = await MainThreadTask.StartAsync(dialog.InvokeInsertMediaLinkAsync);
     var selectDialog = await ModalDialogHarness.WaitForModalAsync<SelectMediaDialog>(dialog);
+    var items = await WaitForMediaAsync(selectDialog, 1);
 
     await MainThread.InvokeOnMainThreadAsync(() =>
     {
-      selectDialog.SelectedItem = selectDialog.Items.Single(i => i.Id == 21);
+      selectDialog.SelectedItem = items.Single(i => i.Info.Id == 21);
       selectDialog.DialogCommand.Execute("SelectMediaCommand");
     });
     await insertTask;
@@ -505,6 +561,7 @@ public class CreateOrUpdatePersonDialogTests
     var attachments = new[] { Attachment(20, "scan.pdf"), Attachment(21, "scan.jpg", "image/jpeg") };
     var person = CreateSamplePerson() with { Attachments = attachments };
     Data[] stored = [person.MainPhoto!, .. person.AdditionalPhotos, .. attachments];
+    SetUpProjectMedia(services, dataSet: stored);
     services.Data
       .Setup(table => table.TryGetDataByIdAsync(It.IsAny<int?>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync((int? id, CancellationToken _) => stored.FirstOrDefault(item => item.Id == id));
@@ -515,12 +572,109 @@ public class CreateOrUpdatePersonDialogTests
     await using var window = await WindowHost.AttachAsync(dialog);
     var insertTask = await MainThreadTask.StartAsync(dialog.InvokeInsertMediaLinkAsync);
     var selectDialog = await ModalDialogHarness.WaitForModalAsync<SelectMediaDialog>(dialog);
+    var items = await WaitForMediaAsync(selectDialog, stored.Length);
 
-    foreach (var item in selectDialog.Items)
+    foreach (var item in items)
     {
-      var media = await dialog.MediaResolver($"media:{item.Id}");
-      Assert.Equal(item.IsInlineImage, media is not null);
+      var media = await dialog.MediaResolver($"media:{item.Info.Id}");
+      Assert.Equal(item.Info.IsInlineImage(), media is not null);
     }
+
+    await MainThread.InvokeOnMainThreadAsync(() => selectDialog.DialogCommand.Execute("SelectMediaCommand"));
+    await insertTask;
+  }
+
+  // Issue #300: the picker is project-wide, so another person's photo is a link target too. The
+  // renderer already resolves any media id in the project, and the link is display-only either way.
+  [Fact]
+  public async Task InsertMediaLinkCommand_links_media_owned_by_another_person()
+  {
+    var services = new TestServices();
+    var ivan = P(1, "Ivan");
+    var petr = P(2, "Petr");
+    SetUpProjectMedia(
+      services,
+      dataSet: [Photo(10), Photo(30)],
+      persons: [ivan, petr],
+      personIdsByData: new() { [10] = [ivan.Id], [30] = [petr.Id] });
+    var person = CreateSamplePerson() with { MainPhoto = Photo(10), AdditionalPhotos = [] };
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    var dialog = await MainThread.InvokeOnMainThreadAsync(
+      () => services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialog.Factory>().Create(person));
+
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var insertTask = await MainThreadTask.StartAsync(dialog.InvokeInsertMediaLinkAsync);
+    var selectDialog = await ModalDialogHarness.WaitForModalAsync<SelectMediaDialog>(dialog);
+    var items = await WaitForMediaAsync(selectDialog, 2);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      selectDialog.SelectedItem = items.Single(i => i.Info.Id == 30);
+      selectDialog.DialogCommand.Execute("SelectMediaCommand");
+    });
+    await insertTask;
+
+    Assert.Equal($"![{CommonName(services, petr)}](media:30)", dialog.Biography!.Content);
+  }
+
+  // Project-wide candidates are only usable if the person being edited does not have to be hunted for
+  // among them.
+  [Fact]
+  public async Task InsertMediaLinkCommand_lists_the_edited_persons_media_first()
+  {
+    var services = new TestServices();
+    var ivan = P(1, "Ivan");
+    var petr = P(2, "Petr");
+    SetUpProjectMedia(
+      services,
+      dataSet: [Photo(30), Photo(31), Photo(12)],
+      persons: [ivan, petr],
+      personIdsByData: new() { [30] = [petr.Id], [31] = [petr.Id], [12] = [ivan.Id] });
+    var person = CreateSamplePerson() with { MainPhoto = null, AdditionalPhotos = [Photo(12)] };
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    var dialog = await MainThread.InvokeOnMainThreadAsync(
+      () => services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialog.Factory>().Create(person));
+
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var insertTask = await MainThreadTask.StartAsync(dialog.InvokeInsertMediaLinkAsync);
+    var selectDialog = await ModalDialogHarness.WaitForModalAsync<SelectMediaDialog>(dialog);
+    var items = await WaitForMediaAsync(selectDialog, 3);
+
+    Assert.Equal([12, 30, 31], items.Select(item => item.Info.Id).ToArray());
+
+    await MainThread.InvokeOnMainThreadAsync(() => selectDialog.DialogCommand.Execute("SelectMediaCommand"));
+    await insertTask;
+  }
+
+  // The search filters on owners, not on the row's title: a title is resolved lazily per rendered row,
+  // so filtering on it would decode every blob in the project on the first keystroke.
+  [Fact]
+  public async Task InsertMediaLinkCommand_filters_the_search_to_matching_owners()
+  {
+    var services = new TestServices();
+    var ivan = P(1, "Ivan");
+    var petr = P(2, "Petr");
+    SetUpProjectMedia(
+      services,
+      dataSet: [Photo(10), Photo(30)],
+      persons: [ivan, petr],
+      personIdsByData: new() { [10] = [ivan.Id], [30] = [petr.Id] });
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    var dialog = await MainThread.InvokeOnMainThreadAsync(
+      () => services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialog.Factory>().Create(CreateSamplePerson()));
+
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var insertTask = await MainThreadTask.StartAsync(dialog.InvokeInsertMediaLinkAsync);
+    var selectDialog = await ModalDialogHarness.WaitForModalAsync<SelectMediaDialog>(dialog);
+    await WaitForMediaAsync(selectDialog, 2);
+
+    var matched = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      selectDialog.OwnerFilter = "Petr";
+      return selectDialog.Items.ToArray();
+    });
+
+    Assert.Equal([30], matched.Select(item => item.Info.Id).ToArray());
 
     await MainThread.InvokeOnMainThreadAsync(() => selectDialog.DialogCommand.Execute("SelectMediaCommand"));
     await insertTask;

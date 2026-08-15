@@ -457,43 +457,45 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   // picked in this same edit session has none yet (see PersonDataItem.ToDataAsync).
   protected async Task OnInsertMediaLinkAsync()
   {
-    using var token = _Factory.CancellationTokenProvider.CreateShortOperationCancellationToken();
-    var photos = _Photos.Select(photo => photo.Info).Where(data => data.Id != ElementId.NonCommittedId);
-    var attachments = _Attachments.Select(attachment => attachment.Info).Where(data => data.Id != ElementId.NonCommittedId);
+    var photos = _Photos.Select(photo => photo.Info);
+    var attachments = _Attachments.Select(attachment => attachment.Info);
+    var ownMediaIds = photos.Concat(attachments).Select(data => data.Id).Where(id => id != ElementId.NonCommittedId);
 
-    var photoItems = await Task.WhenAll(photos.Select((data, index) =>
-      ToMediaLinkItemAsync(data, string.Format(UIStrings.MediaLinkPhotoName_1, index + 1), token)));
-    var attachmentItems = await Task.WhenAll(attachments.Select(data => ToMediaLinkItemAsync(data, string.Empty, token)));
-
-    var dialog = _Factory.SelectMediaDialogFactory.Create([.. photoItems, .. attachmentItems]);
+    var dialog = _Factory.SelectMediaDialogFactory.Create([.. ownMediaIds]);
     await Navigation.PushModalAsync(dialog);
     var picked = await dialog.Info;
     await Navigation.PopModalAsync();
 
-    if (picked is not null)
+    if (picked is null)
     {
-      if (picked.IsInlineImage)
-      {
-        BiographyEditor.InsertMediaLink(picked.DisplayName, picked.Id);
-      }
-      else
-        BiographyEditor.InsertAttachmentLink(picked.DisplayName, picked.Id);
+      return;
+    }
+
+    using var token = _Factory.CancellationTokenProvider.CreateShortOperationCancellationToken();
+    var media = picked.Info;
+    var displayName = await MediaLinkNameAsync(picked, token);
+    if (media.IsInlineImage())
+    {
+      BiographyEditor.InsertMediaLink(displayName, media.Id);
+    }
+    else
+    {
+      BiographyEditor.InsertAttachmentLink(displayName, media.Id);
     }
   }
 
-  // IsInlineImage must be the same predicate the media resolver filters by: offering something the
-  // resolver rejects would insert an embed that renders as nothing instead of a working link.
-  private async Task<MediaLinkItem> ToMediaLinkItemAsync(Data data, string fallbackName, CancellationToken token)
+  // The picked item's own Title resolves in the background, so it can still be unresolved here; the
+  // conversion is redone for the one item actually linked rather than read off a racing property.
+  private async Task<string> MediaLinkNameAsync(GalleryDataItem item, CancellationToken token)
   {
-    var content = await _Factory.DataConverterResolver(data.Category).ToObjectAsync(data, token);
-    var displayName = content switch
+    var media = item.Info;
+    var content = await _Factory.DataConverterResolver(media.Category).ToObjectAsync(media, token);
+    return content switch
     {
       PhotoInfo photo when !string.IsNullOrWhiteSpace(photo.Caption) => photo.Caption,
       AttachmentInfo attachment => attachment.DisplayName,
-      _ => fallbackName
+      _ => item.Owners
     };
-    var isInlineImage = data.IsInlineImage();
-    return new MediaLinkItem(data.Id, isInlineImage, displayName);
   }
 
   private async Task OnEditRelationshipAsync(RelativeInfo relative)

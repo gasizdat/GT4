@@ -4,21 +4,46 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:components="clr-namespace:GT4.UI.Components"
-    xmlns:dialogs="clr-namespace:GT4.UI.Dialogs"
+    xmlns:items="clr-namespace:GT4.UI.Items"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root">
 
   <components:PageLayout>
     <components:PageLayout.Header>
-      <Label
-          HorizontalTextAlignment="Center"
-          Style="{StaticResource PageTitle}"
-          Text="{x:Static resources:UIStrings.TitleSelectMediaDialog}" />
+      <Grid
+          ColumnDefinitions="Auto, *"
+          ColumnSpacing="{StaticResource PageContentSpacing}"
+          RowDefinitions="Auto, Auto"
+          RowSpacing="{StaticResource PageContentSpacing}">
+
+        <!--  Row 0 - Title  -->
+        <Label
+            Grid.Row="0"
+            Grid.Column="0"
+            Grid.ColumnSpan="2"
+            HorizontalTextAlignment="Center"
+            Style="{StaticResource PageTitle}"
+            Text="{x:Static resources:UIStrings.TitleSelectMediaDialog}" />
+
+        <!--  Row 1 - Search  -->
+        <Label
+            Grid.Row="1"
+            Grid.Column="0"
+            Style="{StaticResource FieldName}"
+            Text="{x:Static resources:UIStrings.FieldSearchText}" />
+
+        <Entry
+            Grid.Row="1"
+            Grid.Column="1"
+            HorizontalOptions="Fill"
+            Style="{StaticResource FieldValue}"
+            Text="{Binding OwnerFilter, Source={x:Reference Root}}" />
+      </Grid>
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>
       <CollectionView
-          HorizontalOptions="Center"
+          HorizontalOptions="Fill"
           ItemsSource="{Binding Items, Source={x:Reference Root}}"
           SelectedItem="{Binding SelectedItem, Source={x:Reference Root}}"
           SelectionMode="Single">
@@ -28,13 +53,38 @@
         </CollectionView.ItemsLayout>
 
         <CollectionView.ItemTemplate>
-          <DataTemplate x:DataType="dialogs:MediaLinkItem">
+          <DataTemplate x:DataType="items:GalleryDataItem">
             <Grid
                 Padding="{StaticResource CollectionItemsVerticalPadding}"
+                ColumnDefinitions="Auto, *"
+                ColumnSpacing="10"
+                RowDefinitions="Auto, Auto"
                 Style="{StaticResource HoverSubItem}">
+
+              <Image
+                  Grid.Row="0"
+                  Grid.RowSpan="2"
+                  Grid.Column="0"
+                  Source="{Binding Icon}"
+                  Style="{StaticResource PhotoThumbStyle}" />
+
               <Label
-                  Style="{StaticResource FieldValue}"
-                  Text="{Binding DisplayName}" />
+                  Grid.Row="0"
+                  Grid.Column="1"
+                  LineBreakMode="WordWrap"
+                  Style="{StaticResource CardTitle}"
+                  Text="{Binding Title}"
+                  VerticalOptions="End" />
+
+              <!--  Whose media this is: the only way to tell two identically captioned photos apart.  -->
+              <Label
+                  Grid.Row="1"
+                  Grid.Column="1"
+                  IsVisible="{Binding HasDistinctOwners}"
+                  LineBreakMode="WordWrap"
+                  Style="{StaticResource CardContent}"
+                  Text="{Binding Owners}"
+                  VerticalOptions="Start" />
             </Grid>
           </DataTemplate>
         </CollectionView.ItemTemplate>
