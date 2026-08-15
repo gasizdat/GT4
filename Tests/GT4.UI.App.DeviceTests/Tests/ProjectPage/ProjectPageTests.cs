@@ -487,6 +487,18 @@ public class ProjectPageTests
   }
 
   [Fact]
+  public async Task GoToGallery_navigates_to_GalleryPage()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+    var expectedRoute = $"{typeof(GalleryPage).Namespace}/{typeof(GalleryPage).Name}";
+
+    await page.InvokePageCommandAsync("GoToGallery");
+
+    services.NavigationService.Verify(n => n.GoToAsync(expectedRoute), Times.Once());
+  }
+
+  [Fact]
   public async Task GoToRevisions_navigates_to_ProjectRevisionsPage()
   {
     var services = new TestServices();
