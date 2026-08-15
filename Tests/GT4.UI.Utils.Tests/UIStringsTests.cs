@@ -92,4 +92,20 @@ public class UIStringsTests
     Assert.NotNull(stem);
     Assert.Contains(stem, composed, StringComparison.OrdinalIgnoreCase);
   }
+
+  // The Spanish formatter reads the letter before the placeholder to decide whether the prefix
+  // contracts with the stem, so a template that opened with its placeholder would throw.
+  [Theory]
+  [InlineData("RelGreat_1")]
+  [InlineData("RelGreat2_es_1")]
+  public void SpanishGenerationPrefixLeadsItsPlaceholder(string key)
+  {
+    var spanish = new CultureInfo(Language.ES.Code);
+    var template = UIStrings.ResourceManager.GetString(key, spanish);
+
+    Assert.NotNull(template);
+    var seam = template.IndexOf("{0}", StringComparison.Ordinal);
+
+    Assert.True(seam > 0, $"'{key}' must spell a prefix before its placeholder, but was '{template}'.");
+  }
 }
