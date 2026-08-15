@@ -19,6 +19,8 @@ public class PersonInfoViewLeakTests
 {
   private static Name N(int id, string value, NameType type) => new(id, value, type, null);
 
+  private const int MaxItemsPerCycle = 3;
+
   private static readonly Date UnknownDate = Date.Create(null, null, null, DateStatus.Unknown);
 
   private static PersonInfo P(int id, string firstName, BiologicalSex sex = BiologicalSex.Male) =>
@@ -51,7 +53,7 @@ public class PersonInfoViewLeakTests
       // FilteredObservableCollection<PersonInfo>. The item count varies so Rebuild takes its create
       // and remove paths as well as the reuse-in-place one -- releasing a removed view is what this
       // covers, and a constant count never removes anything.
-      var count = cycle % 3 + 1;
+      var count = cycle % MaxItemsPerCycle + 1;
       var persons = Enumerable.Range(0, count).Select(i => P(cycle * 10 + i, $"Person{cycle}_{i}"));
       var source = new ObservableCollection<PersonInfo>(persons);
 
@@ -94,8 +96,11 @@ public class PersonInfoViewLeakTests
     // Pins the premise itself: if Rebuild ever stops creating views -- as reuse-in-place made it do
     // for a constant item count -- the leak assertion below silently degenerates into tracking one
     // instance and proves nothing.
-    Assert.True(weakRefs.Count > 1,
-      $"Only {weakRefs.Count} distinct PersonInfoView created across 20 rebinds; Rebuild never took its create path.");
+    // Pins the premise itself: at most MaxItemsPerCycle views are ever attached at once, so a higher
+    // distinct count is what proves Rebuild both created and removed views instead of only reusing
+    // one in place -- the shape PR #263 quietly reduced this test to.
+    Assert.True(weakRefs.Count > MaxItemsPerCycle,
+      $"Only {weakRefs.Count} distinct PersonInfoView created across 20 rebinds; Rebuild never took its create/remove path.");
 
     Assert.True(aliveCount == 0,
       $"{aliveCount} of {weakRefs.Count} distinct PersonInfoView instances leaked via SafeBindableLayout. " +
