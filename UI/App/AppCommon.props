@@ -14,12 +14,17 @@
 
     <!-- Display name -->
     <ApplicationTitle>GT4</ApplicationTitle>
+    <!-- Must match the app name reserved in Partner Center. -->
+    <ApplicationTitle Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">Genealogy Tree</ApplicationTitle>
 
     <!-- App Identifier -->
     <ApplicationId>com.gasizdat.gt4</ApplicationId>
+    <!-- MSIX package identity must match the name reserved in Partner Center, which doesn't
+         follow the reverse-DNS convention used by the other platform identifiers above. -->
+    <ApplicationId Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">gasizdat.GenealogyTree</ApplicationId>
 
     <!-- Versions -->
-    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <ApplicationDisplayVersion>4.0</ApplicationDisplayVersion>
     <ApplicationVersion>1</ApplicationVersion>
 
 	  <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
