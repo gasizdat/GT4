@@ -59,7 +59,8 @@
                                     Bottom={StaticResource PageContentSpacing}}"
                 ColumnDefinitions="Auto, *, Auto, Auto"
                 ColumnSpacing="10"
-                RowDefinitions="Auto, Auto, Auto">
+                RowDefinitions="Auto, Auto, Auto, Auto"
+                Style="{StaticResource HoverSubItem}">
 
               <Grid.GestureRecognizers>
                 <TapGestureRecognizer
@@ -70,6 +71,7 @@
 
               <Image
                   Grid.Row="0"
+                  Grid.RowSpan="2"
                   Grid.Column="0"
                   Source="{Binding Icon}"
                   Style="{StaticResource PhotoThumbStyle}" />
@@ -80,7 +82,17 @@
                   LineBreakMode="WordWrap"
                   Style="{StaticResource CardContent}"
                   Text="{Binding Title}"
-                  VerticalOptions="Center" />
+                  VerticalOptions="End" />
+
+              <!--  Whose media this is: the only way to tell two identically captioned photos apart.  -->
+              <Label
+                  Grid.Row="1"
+                  Grid.Column="1"
+                  IsVisible="{Binding HasDistinctOwners}"
+                  LineBreakMode="WordWrap"
+                  Style="{StaticResource FieldName}"
+                  Text="{Binding Owners}"
+                  VerticalOptions="Start" />
 
               <Button
                   Grid.Row="0"
@@ -100,7 +112,7 @@
                   VerticalOptions="Start" />
 
               <components:SafeBindableLayout
-                  Grid.Row="1"
+                  Grid.Row="2"
                   Grid.Column="1"
                   Grid.ColumnSpan="3"
                   Direction="Column"
@@ -115,7 +127,7 @@
               </components:SafeBindableLayout>
 
               <components:SafeBindableLayout
-                  Grid.Row="2"
+                  Grid.Row="3"
                   Grid.Column="1"
                   Grid.ColumnSpan="3"
                   Direction="Column"

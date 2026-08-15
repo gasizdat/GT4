@@ -182,8 +182,8 @@ public class GalleryPageTests
     Assert.Equal(item.Owners, item.Title);
   }
 
-  // SelectMediaDialog prints Owners under the title, so an item whose title *is* its owners must not
-  // claim they are worth a second line -- that row would show the same name twice.
+  // Both this page and SelectMediaDialog print Owners under the title, so an item whose title *is* its
+  // owners must not claim they are worth a second line -- that row would show the same name twice.
   [Fact]
   public async Task Owners_are_distinct_from_the_title_only_once_a_caption_resolves()
   {
