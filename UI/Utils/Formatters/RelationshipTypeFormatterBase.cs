@@ -42,7 +42,7 @@ internal abstract class RelationshipTypeFormatterBase
     {
       var toString = GetConverter();
       var ret = toString();
-      ret = ret.Substring(0, 1) + ret.Substring(1).ToLower();
+      ret = Normalize(ret);
 
 #if DEBUG
       if (!IsRunningInTest)
@@ -60,6 +60,12 @@ internal abstract class RelationshipTypeFormatterBase
   }
 
   protected abstract Converters GetConverters();
+
+  /// <summary>
+  /// En/Ru tables and templates are written in sentence case, so the only capitals to remove are
+  /// the ones composition introduced ("Great-" + "Grandparent").
+  /// </summary>
+  protected virtual string Normalize(string composed) => composed.Substring(0, 1) + composed.Substring(1).ToLower();
 
   /// <summary>
   /// Builds a "Great-grandparent"-style label by recursively wrapping <paramref name="main"/> in

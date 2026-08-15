@@ -22,6 +22,7 @@ public class DateFormatterTests
 
   private static void SetEn() => Language.Current = Language.EN;
   private static void SetRu() => Language.Current = Language.RU;
+  private static void SetDe() => Language.Current = Language.DE;
 
   [Fact]
   public void NullDate_ReturnsNotDefined()
@@ -121,7 +122,7 @@ public class DateFormatterTests
 
   [Theory]
   [InlineData(1, "January")]
-  [InlineData(2, "Fabruary")]   // intentional typo preserved from resource
+  [InlineData(2, "February")]
   [InlineData(3, "March")]
   [InlineData(4, "April")]
   [InlineData(5, "May")]
@@ -135,6 +136,20 @@ public class DateFormatterTests
   public void EN_AllMonths_MatchResourceStrings(int month, string expectedName)
   {
     SetEn();
+    var date = Date.Create(2000, month, 0, DateStatus.DayUnknown);
+    Create(shortFormat: "MMM YYYY").ToString(date).Should().StartWith(expectedName);
+  }
+
+  // Month names come from the satellite assembly rather than the neutral resource, so this also
+  // covers that the de satellite is built and resolved through Language.Current.
+  [Theory]
+  [InlineData(1, "Januar")]
+  [InlineData(3, "März")]
+  [InlineData(10, "Oktober")]
+  [InlineData(12, "Dezember")]
+  public void DE_Months_MatchResourceStrings(int month, string expectedName)
+  {
+    SetDe();
     var date = Date.Create(2000, month, 0, DateStatus.DayUnknown);
     Create(shortFormat: "MMM YYYY").ToString(date).Should().StartWith(expectedName);
   }

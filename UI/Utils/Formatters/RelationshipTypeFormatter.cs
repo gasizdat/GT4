@@ -22,6 +22,10 @@ internal class RelationshipTypeFormatter : IRelationshipTypeFormatter
     {
       formatter = new RelationshipTypeFormatterRu(type, biologicalSex, generation, consanguinity);
     }
+    else if (Language.Current == Language.DE)
+    {
+      formatter = new RelationshipTypeFormatterDe(type, biologicalSex, generation, consanguinity);
+    }
     else
     {
       formatter = new RelationshipTypeFormatterEn(type, biologicalSex, generation, consanguinity);

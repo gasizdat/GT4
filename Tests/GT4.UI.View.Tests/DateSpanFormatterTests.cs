@@ -24,6 +24,7 @@ public class DateSpanFormatterTests
 
   private static void SetEn() => Language.Current = Language.EN;
   private static void SetRu() => Language.Current = Language.RU;
+  private static void SetDe() => Language.Current = Language.DE;
 
   private static DateSpan WellKnown(int years, int months, int days) =>
     new(years, months, days, DateStatus.WellKnown);
@@ -49,6 +50,47 @@ public class DateSpanFormatterTests
   {
     SetRu();
     _formatter.ToString(null).Should().Be("неизвестно");
+  }
+
+  [Fact]
+  public void DE_NullSpan_ReturnsUnknown()
+  {
+    SetDe();
+    _formatter.ToString(null).Should().Be("unbekannt");
+  }
+
+  // German declines like English -- singular at 1, plural otherwise -- unlike the Russian
+  // last-digit rule, so 11 and 21 take the same form as 2.
+  [Theory]
+  [InlineData(1, "1 Jahr")]
+  [InlineData(2, "2 Jahre")]
+  [InlineData(11, "11 Jahre")]
+  [InlineData(21, "21 Jahre")]
+  public void DE_Years(int years, string expected)
+  {
+    SetDe();
+    var span = MonthUnknown(years);
+    _formatter.ToString(span).Should().Be(expected);
+  }
+
+  [Theory]
+  [InlineData(1, 1, "1 Jahr 1 Monat")]
+  [InlineData(3, 2, "3 Jahre 2 Monate")]
+  public void DE_YearsAndMonths(int years, int months, string expected)
+  {
+    SetDe();
+    var span = DayUnknown(years, months);
+    _formatter.ToString(span).Should().Be(expected);
+  }
+
+  [Theory]
+  [InlineData(1, 1, 1, "1 Jahr 1 Monat 1 Tag")]
+  [InlineData(2, 3, 4, "2 Jahre 3 Monate 4 Tage")]
+  public void DE_YearsMonthsAndDays(int years, int months, int days, string expected)
+  {
+    SetDe();
+    var span = WellKnown(years, months, days);
+    _formatter.ToString(span).Should().Be(expected);
   }
 
   // English year declension: singular "year", plural "years"

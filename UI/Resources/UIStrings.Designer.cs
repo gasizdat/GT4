@@ -1900,7 +1900,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Fabruary.
+        ///   Looks up a localized string similar to February.
         /// </summary>
         public static string Month_02 {
             get {
@@ -2143,7 +2143,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0} trice removed .
+        ///   Looks up a localized string similar to {0} thrice removed.
         /// </summary>
         public static string Rel3Removed_en_1 {
             get {
@@ -2262,9 +2262,27 @@ namespace GT4.UI.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Cousin.
         /// </summary>
-        public static string RelCousin_en {
+        public static string RelCousinFemale {
             get {
-                return ResourceManager.GetString("RelCousin_en", resourceCulture);
+                return ResourceManager.GetString("RelCousinFemale", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Cousin.
+        /// </summary>
+        public static string RelCousinMale {
+            get {
+                return ResourceManager.GetString("RelCousinMale", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Cousin.
+        /// </summary>
+        public static string RelCousinUnknown {
+            get {
+                return ResourceManager.GetString("RelCousinUnknown", resourceCulture);
             }
         }
         
