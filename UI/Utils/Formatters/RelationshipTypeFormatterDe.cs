@@ -3,11 +3,10 @@ using GT4.Core.Project.Dto;
 namespace GT4.UI.Utils.Formatters.Detailed;
 
 /// <summary>
-/// German composes kinship exactly as English does -- the same generation grid, the same
-/// grand-/great- and "Nth cousin M times removed" constructions -- so only the wording and the
-/// casing differ. Deriving from <see cref="RelationshipTypeFormatterEn"/> is only valid on that
-/// basis: the converter grid is built from non-virtual method groups, so a language needing a
-/// different table must derive from <see cref="RelationshipTypeFormatterBase"/> as Ru does.
+/// German and English compose kinship over the same generation grid, so only wording and casing
+/// differ. That is the sole basis for deriving from <see cref="RelationshipTypeFormatterEn"/>: the
+/// grid is built from non-virtual method groups, so a language needing a different table must
+/// derive from <see cref="RelationshipTypeFormatterBase"/> as Ru does.
 /// </summary>
 internal class RelationshipTypeFormatterDe : RelationshipTypeFormatterEn
 {
@@ -18,9 +17,8 @@ internal class RelationshipTypeFormatterDe : RelationshipTypeFormatterEn
 
   /// <summary>
   /// German capitalizes every noun, so a capital opening a new word has to survive ("Cousine
-  /// zweiten Grades"), while the prefix templates concatenate into a single word whose interior
-  /// capital must not ("Ur" + "Großvater" -> "Urgroßvater"). Lowercasing only what follows a letter
-  /// separates the two cases.
+  /// zweiten Grades"), while the prefix templates concatenate into one word whose interior capital
+  /// must not ("Ur" + "Großvater" -> "Urgroßvater").
   /// </summary>
   protected override string Normalize(string composed)
   {

@@ -62,9 +62,8 @@ internal abstract class RelationshipTypeFormatterBase
   protected abstract Converters GetConverters();
 
   /// <summary>
-  /// Casing pass over the fully composed label. The default collapses everything after the first
-  /// character, which is what En/Ru need: their tables and templates are written in sentence case,
-  /// so only the capitals introduced by composition ("Great-" + "Grandparent") have to go.
+  /// En/Ru tables and templates are written in sentence case, so the only capitals to remove are
+  /// the ones composition introduced ("Great-" + "Grandparent").
   /// </summary>
   protected virtual string Normalize(string composed) => composed.Substring(0, 1) + composed.Substring(1).ToLower();
 
