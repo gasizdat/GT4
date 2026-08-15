@@ -57,9 +57,9 @@
                 Padding="{Thickness Left={StaticResource PageContentSpacing},
                                     Right={StaticResource PageContentSpacing},
                                     Bottom={StaticResource PageContentSpacing}}"
-                ColumnDefinitions="Auto, *, Auto, Auto"
+                ColumnDefinitions="Auto, *, Auto"
                 ColumnSpacing="10"
-                RowDefinitions="Auto, Auto, Auto, Auto"
+                RowDefinitions="Auto, Auto"
                 Style="{StaticResource HoverSubItem}">
 
               <Grid.GestureRecognizers>
@@ -80,7 +80,7 @@
                   Grid.Row="0"
                   Grid.Column="1"
                   LineBreakMode="WordWrap"
-                  Style="{StaticResource CardContent}"
+                  Style="{StaticResource CardTitle}"
                   Text="{Binding Title}"
                   VerticalOptions="End" />
 
@@ -90,7 +90,7 @@
                   Grid.Column="1"
                   IsVisible="{Binding HasDistinctOwners}"
                   LineBreakMode="WordWrap"
-                  Style="{StaticResource FieldName}"
+                  Style="{StaticResource CardContent}"
                   Text="{Binding Owners}"
                   VerticalOptions="Start" />
 
@@ -101,45 +101,6 @@
                   CommandParameter="{Binding .}"
                   Style="{StaticResource DeleteAdorner}"
                   VerticalOptions="Start" />
-
-              <Button
-                  Grid.Row="0"
-                  Grid.Column="3"
-                  Command="{Binding ToggleOwnersCommand}"
-                  IsVisible="{Binding HasOwners}"
-                  Style="{StaticResource EmojiAdorner}"
-                  Text="{Binding MoreBtnName}"
-                  VerticalOptions="Start" />
-
-              <components:SafeBindableLayout
-                  Grid.Row="2"
-                  Grid.Column="1"
-                  Grid.ColumnSpan="3"
-                  Direction="Column"
-                  IsVisible="{Binding ShowOwners}"
-                  ItemsSource="{Binding PersonNames}">
-
-                <components:SafeBindableLayout.ItemTemplate>
-                  <DataTemplate x:DataType="x:String">
-                    <Label Style="{StaticResource FieldValue}" Text="{Binding .}" />
-                  </DataTemplate>
-                </components:SafeBindableLayout.ItemTemplate>
-              </components:SafeBindableLayout>
-
-              <components:SafeBindableLayout
-                  Grid.Row="3"
-                  Grid.Column="1"
-                  Grid.ColumnSpan="3"
-                  Direction="Column"
-                  IsVisible="{Binding ShowOwners}"
-                  ItemsSource="{Binding FamilyNames}">
-
-                <components:SafeBindableLayout.ItemTemplate>
-                  <DataTemplate x:DataType="x:String">
-                    <Label Style="{StaticResource FieldName}" Text="{Binding .}" />
-                  </DataTemplate>
-                </components:SafeBindableLayout.ItemTemplate>
-              </components:SafeBindableLayout>
 
             </Grid>
           </DataTemplate>

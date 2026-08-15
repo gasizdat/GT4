@@ -8,7 +8,6 @@ using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Dto;
 using GT4.UI.Utils.Formatters;
 using System.ComponentModel;
-using System.Windows.Input;
 
 namespace GT4.UI.Items;
 
@@ -20,17 +19,12 @@ namespace GT4.UI.Items;
 /// </summary>
 public sealed class GalleryDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
 {
-  private const string ExpandSymbol = "🔽";
-  private const string CollapseSymbol = "­­­­⏫­";
-
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly IAlertService _AlertService;
   private readonly DataConverterResolver _DataConverterResolver;
   private ImageSource? _Icon;
   private string? _Caption;
   private bool _ContentRequested;
-  private bool _ShowOwners;
-  private string _MoreBtnName = ExpandSymbol;
 
   public GalleryDataItem(
     Data data,
@@ -50,7 +44,6 @@ public sealed class GalleryDataItem : CollectionItemBase<Data>, INotifyPropertyC
     _CancellationTokenProvider = cancellationTokenProvider;
     _AlertService = alertService;
     _DataConverterResolver = dataConverterResolver;
-    ToggleOwnersCommand = new SafeCommand(OnToggleOwners, alertService);
   }
 
   /// <summary>
@@ -111,8 +104,6 @@ public sealed class GalleryDataItem : CollectionItemBase<Data>, INotifyPropertyC
   /// <summary>Whether owners are worth a line of their own: Title already shows them when there is no caption.</summary>
   public bool HasDistinctOwners => HasOwners && !string.IsNullOrWhiteSpace(_Caption);
 
-  public ICommand ToggleOwnersCommand { get; }
-
   /// <summary>The stored caption or filename, falling back to whoever owns the item.</summary>
   public string Title
   {
@@ -131,22 +122,6 @@ public sealed class GalleryDataItem : CollectionItemBase<Data>, INotifyPropertyC
       return _Icon ?? base.Icon;
     }
   }
-
-  public bool ShowOwners
-  {
-    get => _ShowOwners;
-    private set
-    {
-      _ShowOwners = value;
-      _MoreBtnName = value ? CollapseSymbol : ExpandSymbol;
-      OnPropertyChanged(nameof(ShowOwners));
-      OnPropertyChanged(nameof(MoreBtnName));
-    }
-  }
-
-  public string MoreBtnName => _MoreBtnName;
-
-  private void OnToggleOwners() => ShowOwners = !ShowOwners;
 
   private void RequestContent()
   {

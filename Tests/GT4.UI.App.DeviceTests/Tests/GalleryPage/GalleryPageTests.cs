@@ -217,33 +217,6 @@ public class GalleryPageTests
   }
 
   [Fact]
-  public async Task Toggling_an_item_shows_and_hides_its_owners()
-  {
-    var services = new TestServices();
-    var ivan = P(1, "Ivan");
-    SetUpProject(
-      services,
-      dataSet: [Photo(50, DataCategory.PersonPhoto)],
-      persons: [ivan],
-      personIdsByData: new() { [50] = [ivan.Id] });
-    var page = await CreatePageAsync(services);
-
-    var items = await WaitForItemsAsync(page, 1);
-    var item = items.Single();
-
-    Assert.False(item.ShowOwners);
-    var collapsedBtnName = item.MoreBtnName;
-
-    await MainThread.InvokeOnMainThreadAsync(() => item.ToggleOwnersCommand.Execute(null));
-    Assert.True(item.ShowOwners);
-    Assert.NotEqual(collapsedBtnName, item.MoreBtnName);
-
-    await MainThread.InvokeOnMainThreadAsync(() => item.ToggleOwnersCommand.Execute(null));
-    Assert.False(item.ShowOwners);
-    Assert.Equal(collapsedBtnName, item.MoreBtnName);
-  }
-
-  [Fact]
   public async Task Deleting_an_item_drops_every_owner_link_and_the_row()
   {
     var services = new TestServices();
