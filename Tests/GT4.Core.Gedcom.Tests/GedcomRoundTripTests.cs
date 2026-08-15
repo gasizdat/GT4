@@ -268,6 +268,41 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     Encoding.UTF8.GetString(full.Biography!.Content).Should().Be("See [Jane Doe](person:123) for details.");
   }
 
+  // Issue #300: a biography may link media the person does not own. Export has to stay indifferent to
+  // that -- the link is NOTE text either way, and the OBJE belongs to whoever the photo is filed under.
+  [Fact]
+  public async Task Biography_MediaLinkToAnotherPersonsPhoto_ExportsAsTextWithoutAnObjeOfItsOwn()
+  {
+    var ownerName = await _source.Names.AddNameAsync("Fotograf", NameType.FirstName, null, Token);
+    var photo = new Data(ElementId.NonCommittedId, Encoding.UTF8.GetBytes("PORTRAIT-BYTES"), "image/jpeg", DataCategory.PersonMainPhoto);
+    var ownerInfo = PersonFullInfo.Empty with { Names = [ownerName], MainPhoto = photo };
+    var owner = await _source.PersonManager.AddPersonAsync(ownerInfo, Token);
+    var ownerFull = await _source.PersonManager.GetPersonFullInfoAsync(owner, Token);
+    var photoId = ownerFull.MainPhoto!.Id;
+
+    var authorName = await _source.Names.AddNameAsync("Biograf", NameType.FirstName, null, Token);
+    var link = $"![Portrait](media:{photoId})";
+    var bio = new Data(ElementId.NonCommittedId, Encoding.UTF8.GetBytes(link), "text/plain", DataCategory.PersonBio);
+    var authorInfo = PersonFullInfo.Empty with { Names = [authorName], Biography = bio };
+    await _source.PersonManager.AddPersonAsync(authorInfo, Token);
+
+    var text = await ExportToTextAsync(_source);
+
+    text.Should().Contain(link);
+    var emittedObjects = text.Split($"\n1 {GedcomTags.Object}").Length - 1;
+    emittedObjects.Should().Be(1);
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
+
+    var persons = await reimported.Persons.GetPersonsAsync(Token);
+    var infos = await reimported.PersonManager.GetPersonInfosAsync(persons, selectMainPhoto: false, Token);
+    var author = infos.Single(person => person.DisplayName == "Biograf");
+    var authorFull = await reimported.PersonManager.GetPersonFullInfoAsync(author, Token);
+
+    Encoding.UTF8.GetString(authorFull.Biography!.Content).Should().Be(link);
+  }
+
   [Fact]
   public async Task LivingPerson_HasNoDeathEventAndStaysAliveOnReimport()
   {

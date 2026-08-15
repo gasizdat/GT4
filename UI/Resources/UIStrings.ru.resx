@@ -831,9 +831,6 @@ FN - род</value>
   <data name="TitleSelectMediaDialog" xml:space="preserve">
     <value>Выбор медиа</value>
   </data>
-  <data name="MediaLinkPhotoName_1" xml:space="preserve">
-    <value>Фото {0}</value>
-  </data>
   <data name="FieldRevision_1" xml:space="preserve">
     <value>Ревизия: {0}</value>
   </data>

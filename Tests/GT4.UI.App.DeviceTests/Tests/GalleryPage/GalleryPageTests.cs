@@ -182,6 +182,40 @@ public class GalleryPageTests
     Assert.Equal(item.Owners, item.Title);
   }
 
+  // SelectMediaDialog prints Owners under the title, so an item whose title *is* its owners must not
+  // claim they are worth a second line -- that row would show the same name twice.
+  [Fact]
+  public async Task Owners_are_distinct_from_the_title_only_once_a_caption_resolves()
+  {
+    var services = new TestServices();
+    var ivan = P(1, "Ivan");
+    SetUpProject(
+      services,
+      dataSet: [Photo(40, DataCategory.PersonPhoto), Attachment(41, "birth-certificate.pdf")],
+      persons: [ivan],
+      personIdsByData: new() { [40] = [ivan.Id], [41] = [ivan.Id] });
+    var page = await CreatePageAsync(services);
+
+    var items = await WaitForItemsAsync(page, 2);
+    var uncaptioned = items.Single(item => item.Info.Id == 40);
+    var named = items.Single(item => item.Info.Id == 41);
+
+    // Reading Title is what starts the conversion the flag depends on -- HasDistinctOwners alone never
+    // asks for one, so polling it directly would spin against an item that was never told to resolve.
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => named.Title),
+      title => title != named.Owners,
+      timeoutMessage: "The attachment kept its owner fallback instead of resolving its file name.");
+    Assert.True(named.HasDistinctOwners);
+
+    await MainThread.InvokeOnMainThreadAsync(() => uncaptioned.Title);
+    await Poll.ConfirmNeverAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => uncaptioned.HasDistinctOwners),
+      distinct => distinct,
+      TimeSpan.FromSeconds(1),
+      "An uncaptioned photo claimed its owners were worth a line separate from its title.");
+  }
+
   [Fact]
   public async Task Toggling_an_item_shows_and_hides_its_owners()
   {

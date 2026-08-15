@@ -15,9 +15,7 @@ namespace GT4.UI.Pages;
 /// <summary>
 /// Lists every photo and attachment in the project against the persons and families that link it. The
 /// listing starts from the Data table rather than from its owners, so a row nothing links still shows up
-/// (and can be deleted from here). Both the sweep and the reverse lookups it is joined with are
-/// project-wide, so the whole gallery holds every media blob at once -- the eager materialization of
-/// #158, one page-load at a time.
+/// (and can be deleted from here).
 /// </summary>
 public partial class GalleryPage : ContentPage
 {
@@ -119,41 +117,15 @@ public partial class GalleryPage : ContentPage
       async Task AddGalleryItemsAsync()
       {
         using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-        var project = _CurrentProjectProvider.Project;
-        var dataSet = await project
-          .Data
-          .GetDataSetAsync(token);
-        var personIdsByData = await project
-          .PersonData
-          .GetPersonIdsByDataAsync(token);
-        var nameIdsByData = await project
-          .NameData
-          .GetNameIdsByDataAsync(token);
-        var persons = await project
-          .PersonManager
-          .GetPersonInfosAsync(selectMainPhoto: false, token);
-        var names = await project
-          .Names
-          .GetNamesByTypeAsync(NameType.AllNames, token);
+        var media = await GalleryDataItem.LoadProjectMediaAsync(
+          _CurrentProjectProvider.Project,
+          _NameFormatter,
+          _CancellationTokenProvider,
+          _AlertService,
+          _DataConverterResolver,
+          token);
 
-        var personsById = persons.ToDictionary(person => person.Id);
-        var namesById = names.ToDictionary(name => name.Id);
-
-        GalleryDataItem CreateItem(Data media)
-        {
-          var ownerPersonIds = personIdsByData.GetValueOrDefault(media.Id) ?? [];
-          var ownerNameIds = nameIdsByData.GetValueOrDefault(media.Id) ?? [];
-          PersonInfo[] owningPersons = [.. ownerPersonIds.Select(id => personsById[id])];
-          Name[] owningFamilies = [.. ownerNameIds.Select(id => namesById[id])];
-
-          return new(
-            media, owningPersons, owningFamilies, _NameFormatter,
-            _CancellationTokenProvider, _AlertService, _DataConverterResolver);
-        }
-
-        var items = dataSet
-          .Where(media => media.Category.IsPhoto() || media.Category.IsAttachment())
-          .Select(CreateItem)
+        var items = media
           .OrderBy(item => item.Owners, StringComparer.CurrentCulture)
           .ThenBy(item => item.Info.Id)
           .ToArray();

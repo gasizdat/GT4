@@ -68,7 +68,9 @@ persons).
 Both have a project-wide counterpart for a caller that is inventorying rather than viewing:
 `ITableData.GetDataSetAsync(...)` sweeps every `Data` row (including one no owner links, which the
 owner-scoped shape can never reach), and `GetPersonIdsByDataAsync`/`GetNameIdsByDataAsync` invert the
-junctions so a row can be resolved back to its owners. `GalleryPage` is the caller these exist for.
+junctions so a row can be resolved back to its owners. `GalleryPage` is the caller these exist for;
+`SelectMediaDialog` reads the same sweep through `GalleryDataItem.LoadProjectMediaAsync`, so a
+biography can link any media in the project, not only the edited person's.
 
 **Use the id-keyed shape when the caller doesn't yet know, or shouldn't need to know, whose data
 it's fetching** — `InlineMediaProvider` (see
