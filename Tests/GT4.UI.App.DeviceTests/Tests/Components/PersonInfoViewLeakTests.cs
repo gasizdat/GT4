@@ -27,9 +27,9 @@ public class PersonInfoViewLeakTests
   [Fact]
   public async Task SafeBindableLayout_rebound_to_distinct_source_instances_releases_old_views()
   {
-    // Android-only, 100% reproducible retention of the single reused PersonInfoView; root cause not
-    // yet found (bisected across bindings/nesting/image-loading, none of it in isolation). Tracked as
-    // https://github.com/gasizdat/GT4/issues/271 -- re-enable once that's resolved.
+    // Android-only, 100% reproducible retention of a PersonInfoView that was rebound while attached;
+    // root cause not yet found (bisected across bindings/nesting/image-loading, none of it in
+    // isolation). Tracked as https://github.com/gasizdat/GT4/issues/271 -- re-enable once resolved.
     if (OperatingSystem.IsAndroid())
     {
       Assert.Skip("Known Android-only leak, see GH issue #271.");
@@ -48,15 +48,27 @@ public class PersonInfoViewLeakTests
     for (var cycle = 0; cycle < 20; cycle++)
     {
       // A fresh collection instance per cycle mirrors production: each FamilyInfoItem owns its own
-      // FilteredObservableCollection<PersonInfo>.
-      var id = cycle;
-      var source = new ObservableCollection<PersonInfo>([P(id, $"Person{id}")]);
+      // FilteredObservableCollection<PersonInfo>. The item count varies so Rebuild takes its create
+      // and remove paths as well as the reuse-in-place one -- releasing a removed view is what this
+      // covers, and a constant count never removes anything.
+      var count = cycle % 3 + 1;
+      var persons = Enumerable.Range(0, count).Select(i => P(cycle * 10 + i, $"Person{cycle}_{i}"));
+      var source = new ObservableCollection<PersonInfo>(persons);
 
       await MainThread.InvokeOnMainThreadAsync(() => layout.ItemsSource = source);
 
-      var created = await MainThread.InvokeOnMainThreadAsync(() => layout.Children.Cast<PersonInfoView>().ToList());
-      weakRefs.AddRange(created.Select(v => new WeakReference(v)));
-      handlerStates.AddRange(created.Select(v => v.Handler is not null));
+      var children = await MainThread.InvokeOnMainThreadAsync(() => layout.Children.Cast<PersonInfoView>().ToList());
+      foreach (var child in children)
+      {
+        // Reuse-in-place hands the same instance back on later cycles; recording it once per cycle
+        // would report one retained view as many separate leaks.
+        var isRecorded = weakRefs.Any(r => ReferenceEquals(r.Target, child));
+        if (!isRecorded)
+        {
+          weakRefs.Add(new WeakReference(child));
+          handlerStates.Add(child.Handler is not null);
+        }
+      }
     }
 
     // Releases the final cycle's view too, so every one of the 20 created views is expected to be
@@ -79,8 +91,14 @@ public class PersonInfoViewLeakTests
 
     var hadHandlerCount = handlerStates.Count(h => h);
 
+    // Pins the premise itself: if Rebuild ever stops creating views -- as reuse-in-place made it do
+    // for a constant item count -- the leak assertion below silently degenerates into tracking one
+    // instance and proves nothing.
+    Assert.True(weakRefs.Count > 1,
+      $"Only {weakRefs.Count} distinct PersonInfoView created across 20 rebinds; Rebuild never took its create path.");
+
     Assert.True(aliveCount == 0,
-      $"{aliveCount} of {weakRefs.Count} PersonInfoView instances leaked via SafeBindableLayout. " +
+      $"{aliveCount} of {weakRefs.Count} distinct PersonInfoView instances leaked via SafeBindableLayout. " +
       $"{hadHandlerCount} of {handlerStates.Count} had a non-null Handler at creation time.");
   }
 
