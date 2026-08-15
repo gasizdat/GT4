@@ -17,6 +17,7 @@ public class RelationshipTypeFormatterTests
 
   private static void SetEn() => Language.Current = Language.EN;
   private static void SetRu() => Language.Current = Language.RU;
+  private static void SetDe() => Language.Current = Language.DE;
 
   [Theory]
   [InlineData(null, "Parent")]
@@ -54,6 +55,26 @@ public class RelationshipTypeFormatterTests
     Assert.Equal(expected, actual);
   }
 
+  // German builds generations by repeating the "Ur" prefix, so the composed label is a single word
+  // and the past-max fallback keeps the same numeral form En and Ru already use.
+  [Theory]
+  [InlineData(null, "Elternteil")]
+  [InlineData(1, "Elternteil")]
+  [InlineData(2, "Großelternteil")]
+  [InlineData(4, "Ururgroßelternteil")]
+  [InlineData(40, "38-Urgroßelternteil")]
+  public void DE_UnknownSex_Parent(int? generation, string expected)
+  {
+    SetDe();
+    var actual = _formatter.ToString(
+      RelationshipType.Parent,
+      BiologicalSex.Unknown,
+      ToGeneration(generation),
+      generation.HasValue ? Consanguinity.Zero : null);
+
+    Assert.Equal(expected, actual);
+  }
+
   [Theory]
   [InlineData(null, "Child")]
   [InlineData(-1, "Child")]
@@ -80,6 +101,23 @@ public class RelationshipTypeFormatterTests
   public void RU_UnknownSex_Child(int? generation, string expected)
   {
     SetRu();
+    var actual = _formatter.ToString(
+      RelationshipType.Child,
+      BiologicalSex.Unknown,
+      ToGeneration(generation),
+      Consanguinity.Zero);
+
+    Assert.Equal(expected, actual);
+  }
+
+  [Theory]
+  [InlineData(-1, "Kind")]
+  [InlineData(-2, "Enkelkind")]
+  [InlineData(-4, "Ururenkelkind")]
+  [InlineData(-15, "13-Urenkelkind")]
+  public void DE_UnknownSex_Child(int? generation, string expected)
+  {
+    SetDe();
     var actual = _formatter.ToString(
       RelationshipType.Child,
       BiologicalSex.Unknown,
@@ -136,6 +174,25 @@ public class RelationshipTypeFormatterTests
     Assert.Equal("Двоюродная пра-пра-бабушка", actual);
   }
 
+  // "Onkel oder Tante" is the case the shared En/Ru casing pass would have broken: German keeps the
+  // capital on every noun, so only the capitals introduced by prefixing may be folded away.
+  [Theory]
+  [InlineData(1, "Onkel oder Tante")]
+  [InlineData(2, "Großonkel oder Großtante")]
+  [InlineData(4, "Ururgroßonkel oder Großtante")]
+  [InlineData(14, "12-Urgroßonkel oder Großtante")]
+  public void DE_UnknownSex_UncleAunt(int generation, string expected)
+  {
+    SetDe();
+    var actual = _formatter.ToString(
+      RelationshipType.Sibling,
+      BiologicalSex.Unknown,
+      ToGeneration(generation),
+      ToConsanguinity(generation) + Consanguinity.Sibling);
+
+    Assert.Equal(expected, actual);
+  }
+
   [Theory]
   [InlineData(0, 2, "Cousin")]
   [InlineData(0, 3, "Second cousin")]
@@ -185,6 +242,60 @@ public class RelationshipTypeFormatterTests
     Assert.Equal(expected, actual);
   }
 
+  [Theory]
+  [InlineData(0, 2, "Cousin oder Cousine")]
+  [InlineData(0, 3, "Cousin oder Cousine zweiten Grades")]
+  [InlineData(0, 56, "Cousin oder Cousine 55. Grades")]
+  [InlineData(1, 3, "Cousin oder Cousine, einmal entfernt")]
+  [InlineData(1, 4, "Cousin oder Cousine zweiten Grades, einmal entfernt")]
+  [InlineData(2, 4, "Cousin oder Cousine, zweimal entfernt")]
+  [InlineData(2, 5, "Cousin oder Cousine zweiten Grades, zweimal entfernt")]
+  [InlineData(15, 25, "Cousin oder Cousine 9. Grades, 15-mal entfernt")]
+  [InlineData(1, 1, "Unsupported or wrong relationship: Type=Child, Sex=Unknown, G1, C1")]
+  public void DE_UnknownSex_Cousin(int generation, int consanguinity, string expected)
+  {
+    SetDe();
+    var actual = _formatter.ToString(
+      RelationshipType.Child,
+      BiologicalSex.Unknown,
+      ToGeneration(generation),
+      ToConsanguinity(consanguinity));
+
+    Assert.Equal(expected, actual);
+  }
+
+  // Unlike English, German genders the cousin term.
+  [Theory]
+  [InlineData(BiologicalSex.Female, "Cousine zweiten Grades")]
+  [InlineData(BiologicalSex.Male, "Cousin zweiten Grades")]
+  public void DE_Cousin_IsGendered(BiologicalSex sex, string expected)
+  {
+    SetDe();
+    var actual = _formatter.ToString(
+      RelationshipType.Child,
+      sex,
+      Generation.Zero,
+      ToConsanguinity(3));
+
+    Assert.Equal(expected, actual);
+  }
+
+  [Theory]
+  [InlineData(BiologicalSex.Female)]
+  [InlineData(BiologicalSex.Male)]
+  [InlineData(BiologicalSex.Unknown)]
+  public void EN_Cousin_StaysSexInvariant(BiologicalSex sex)
+  {
+    SetEn();
+    var actual = _formatter.ToString(
+      RelationshipType.Child,
+      sex,
+      Generation.Zero,
+      ToConsanguinity(3));
+
+    Assert.Equal("Second cousin", actual);
+  }
+
   // In-law parents: the relationship Type carries the spouse's sex
   // (Husband/Wife/Spouse), while the BiologicalSex argument is the in-law
   // parent's own sex (father-in-law vs mother-in-law).
@@ -232,6 +343,28 @@ public class RelationshipTypeFormatterTests
     Assert.Equal(expected, actual);
   }
 
+  [Theory]
+  [InlineData(RelationshipType.HusbandParent, BiologicalSex.Male, "Schwiegervater")]
+  [InlineData(RelationshipType.HusbandParent, BiologicalSex.Female, "Schwiegermutter")]
+  [InlineData(RelationshipType.HusbandParent, BiologicalSex.Unknown, "Schwiegerelternteil")]
+  [InlineData(RelationshipType.WifeParent, BiologicalSex.Male, "Schwiegervater")]
+  [InlineData(RelationshipType.WifeParent, BiologicalSex.Female, "Schwiegermutter")]
+  [InlineData(RelationshipType.WifeParent, BiologicalSex.Unknown, "Schwiegerelternteil")]
+  [InlineData(RelationshipType.SpouseParent, BiologicalSex.Male, "Schwiegervater")]
+  [InlineData(RelationshipType.SpouseParent, BiologicalSex.Female, "Schwiegermutter")]
+  [InlineData(RelationshipType.SpouseParent, BiologicalSex.Unknown, "Schwiegerelternteil")]
+  public void DE_InLawParent(RelationshipType type, BiologicalSex inLawSex, string expected)
+  {
+    SetDe();
+    var actual = _formatter.ToString(
+      type,
+      inLawSex,
+      Generation.Parent,
+      Consanguinity.Zero);
+
+    Assert.Equal(expected, actual);
+  }
+
   // A sibling's spouse (same generation, sibling consanguinity) is formatted
   // as a sibling-in-law, resolved by the spouse's own sex.
   [Theory]
@@ -266,6 +399,22 @@ public class RelationshipTypeFormatterTests
     Assert.Equal(expected, actual);
   }
 
+  [Theory]
+  [InlineData(BiologicalSex.Female, "Schwägerin")]
+  [InlineData(BiologicalSex.Male, "Schwager")]
+  [InlineData(BiologicalSex.Unknown, "Schwager oder Schwägerin")]
+  public void DE_SiblingSpouse(BiologicalSex spouseSex, string expected)
+  {
+    SetDe();
+    var actual = _formatter.ToString(
+      RelationshipType.Spouse,
+      spouseSex,
+      Generation.Zero,
+      Consanguinity.Sibling);
+
+    Assert.Equal(expected, actual);
+  }
+
   // A direct step-sibling (same generation, no consanguinity) is gendered by
   // the step-sibling's own sex.
   [Theory]
@@ -291,6 +440,24 @@ public class RelationshipTypeFormatterTests
   public void RU_StepSibling(BiologicalSex sex, string expected)
   {
     SetRu();
+    var actual = _formatter.ToString(
+      RelationshipType.StepSibling,
+      sex,
+      Generation.Zero,
+      Consanguinity.Zero);
+
+    Assert.Equal(expected, actual);
+  }
+
+  // "Stief" + "Bruder oder Schwester" exercises both halves of the German casing rule in one label:
+  // the prefixed noun folds, the one after the space does not.
+  [Theory]
+  [InlineData(BiologicalSex.Female, "Stiefschwester")]
+  [InlineData(BiologicalSex.Male, "Stiefbruder")]
+  [InlineData(BiologicalSex.Unknown, "Stiefbruder oder Schwester")]
+  public void DE_StepSibling(BiologicalSex sex, string expected)
+  {
+    SetDe();
     var actual = _formatter.ToString(
       RelationshipType.StepSibling,
       sex,

@@ -58,6 +58,14 @@ internal class RelationshipTypeFormatterEn : RelationshipTypeFormatterBase
     return ret;
   }
 
+  protected string Cousin()
+  {
+    var row = new Row(F: S.RelCousinFemale, M: S.RelCousinMale, U: S.RelCousinUnknown);
+    var ret = row.ToString(Sex);
+
+    return ret;
+  }
+
   protected string AddRemoved(string main)
   {
     var ret = main;
@@ -184,7 +192,7 @@ internal class RelationshipTypeFormatterEn : RelationshipTypeFormatterBase
   protected string DN_CM()
   {
     var consanguinity = Con - Consanguinity.Sibling;
-    var ret = S.RelCousin_en;
+    var ret = Cousin();
     ret = AddConsanguinity(ret, consanguinity);
     ret = AddRemoved(ret);
 
@@ -261,7 +269,7 @@ internal class RelationshipTypeFormatterEn : RelationshipTypeFormatterBase
     else
     {
       var consanguinity = Con - Consanguinity.Sibling - new Consanguinity(Gen.Value);
-      var ret = S.RelCousin_en;
+      var ret = Cousin();
       ret = AddConsanguinity(ret, consanguinity);
       ret = AddRemoved(ret);
 

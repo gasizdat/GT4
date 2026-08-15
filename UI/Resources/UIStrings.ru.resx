@@ -622,7 +622,13 @@
   <data name="RelNFemale_2" xml:space="preserve">
     <value>{0}-юродная {1}</value>
   </data>
-  <data name="RelCousin_en" xml:space="preserve">
+  <data name="RelCousinFemale" xml:space="preserve">
+    <value>-</value>
+  </data>
+  <data name="RelCousinMale" xml:space="preserve">
+    <value>-</value>
+  </data>
+  <data name="RelCousinUnknown" xml:space="preserve">
     <value>-</value>
   </data>
   <data name="Rel1Removed_en_1" xml:space="preserve">
