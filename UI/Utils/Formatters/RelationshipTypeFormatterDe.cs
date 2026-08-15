@@ -5,7 +5,9 @@ namespace GT4.UI.Utils.Formatters.Detailed;
 /// <summary>
 /// German composes kinship exactly as English does -- the same generation grid, the same
 /// grand-/great- and "Nth cousin M times removed" constructions -- so only the wording and the
-/// casing differ.
+/// casing differ. Deriving from <see cref="RelationshipTypeFormatterEn"/> is only valid on that
+/// basis: the converter grid is built from non-virtual method groups, so a language needing a
+/// different table must derive from <see cref="RelationshipTypeFormatterBase"/> as Ru does.
 /// </summary>
 internal class RelationshipTypeFormatterDe : RelationshipTypeFormatterEn
 {
