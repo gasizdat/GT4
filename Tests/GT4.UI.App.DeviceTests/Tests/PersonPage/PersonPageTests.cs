@@ -594,6 +594,7 @@ public class PersonPageTests
 
     await page.InvokeAttachmentLinkTappedAsync(999);
 
+    services.Data.Verify(table => table.TryGetDataByIdAsync(999, It.IsAny<CancellationToken>()), Times.Once());
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
 
