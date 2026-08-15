@@ -129,6 +129,30 @@ internal abstract class TableOwnerData<TOwner> : TableBase where TOwner : Elemen
     return buckets.ToDictionary(kv => kv.Key, kv => kv.Value.ToArray());
   }
 
+  // The inverse of GetDataSetAsync: every link in the table, keyed by the data rather than by the owner.
+  protected async Task<Dictionary<int, int[]>> GetDataOwnerIdsAsync(CancellationToken token)
+  {
+    using var command = Connection.CreateCommand();
+
+    command.CommandText = $"""
+      SELECT DataId, {_OwnerColumn}
+      FROM {_TableName}
+      ORDER BY ROWID;
+      """;
+
+    var buckets = new Dictionary<int, List<int>>();
+    await using var reader = await command.ExecuteReaderAsync(token);
+    while (await reader.ReadAsync(token))
+    {
+      var dataId = reader.GetInt32(0);
+      if (!buckets.TryGetValue(dataId, out var ownerIds))
+        buckets[dataId] = ownerIds = [];
+      ownerIds.Add(reader.GetInt32(1));
+    }
+
+    return buckets.ToDictionary(kv => kv.Key, kv => kv.Value.ToArray());
+  }
+
   protected async Task AddDataSetAsync(TOwner owner, Data[] dataSet, CancellationToken token)
   {
     using var transaction = await Connection.BeginTransactionAsync(token);

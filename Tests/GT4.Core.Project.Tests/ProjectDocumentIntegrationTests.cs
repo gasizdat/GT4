@@ -510,6 +510,42 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task Data_GetDataSet_ReturnsEveryRow_IncludingUnlinkedOnes()
+  {
+    var person = await AddBarePersonAsync();
+    await _doc.PersonData.AddPersonDataSetAsync(person, [NewData(DataCategory.PersonPhoto, 1)], Token);
+    var unlinked = await _doc.Data.AddDataAsync([2], "application/octet-stream", DataCategory.PersonAttachment, Token);
+
+    var dataSet = await _doc.Data.GetDataSetAsync(Token);
+
+    dataSet.Select(data => data.Content).Should().BeEquivalentTo([new byte[] { 1 }, new byte[] { 2 }]);
+    dataSet.Should().Contain(data => data.Id == unlinked.Id);
+  }
+
+  [Fact]
+  public async Task Data_GetIdsByData_MapsEachRowToEveryOwnerThatLinksIt()
+  {
+    var first = await AddBarePersonAsync();
+    var second = await AddBarePersonAsync(BiologicalSex.Female);
+    var family = await AddBareFamilyNameAsync();
+    await _doc.PersonData.AddPersonDataSetAsync(first, [NewData(DataCategory.PersonPhoto, 1)], Token);
+    var shared = (await _doc.PersonData.GetPersonDataSetAsync(first, null, Token)).Single();
+    // The same blob linked from a second person and from a family: the id-keyed view is the only one
+    // that shows all three links at once.
+    await _doc.PersonData.AddPersonDataSetAsync(second, [shared], Token);
+    await _doc.NameData.AddNameDataSetAsync(family, [shared], Token);
+    var unlinked = await _doc.Data.AddDataAsync([2], "application/octet-stream", DataCategory.PersonAttachment, Token);
+
+    var personIds = await _doc.PersonData.GetPersonIdsByDataAsync(Token);
+    var nameIds = await _doc.NameData.GetNameIdsByDataAsync(Token);
+
+    personIds[shared.Id].Should().Equal(first.Id, second.Id);
+    nameIds[shared.Id].Should().Equal(family.Id);
+    personIds.Should().NotContainKey(unlinked.Id);
+    nameIds.Should().NotContainKey(unlinked.Id);
+  }
+
+  [Fact]
   public async Task PersonData_AddGetUpdateRemove()
   {
     var person = await AddBarePersonAsync();

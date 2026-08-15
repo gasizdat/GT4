@@ -65,6 +65,11 @@ copied back," not "gone."
 `GetPersonDataSetAsync(Person, ...)` materializes everything belonging to one person (or a batch of
 persons).
 
+Both have a project-wide counterpart for a caller that is inventorying rather than viewing:
+`ITableData.GetDataSetAsync(...)` sweeps every `Data` row (including one no owner links, which the
+owner-scoped shape can never reach), and `GetPersonIdsByDataAsync`/`GetNameIdsByDataAsync` invert the
+junctions so a row can be resolved back to its owners. `GalleryPage` is the caller these exist for.
+
 **Use the id-keyed shape when the caller doesn't yet know, or shouldn't need to know, whose data
 it's fetching** — `InlineMediaProvider` (see
 [rendering-inversion.md](../principles/rendering-inversion.md)) resolves a `media:<id>` link this

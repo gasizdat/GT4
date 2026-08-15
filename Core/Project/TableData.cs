@@ -45,6 +45,26 @@ internal class TableData : TableBase, ITableData
     return (await reader.ReadAsync(token)) ? CreateData(reader) : null;
   }
 
+  public async Task<Data[]> GetDataSetAsync(CancellationToken token)
+  {
+    using var command = Connection.CreateCommand();
+
+    command.CommandText = """
+      SELECT Id, Value, MimeType, Category
+      FROM Data
+      ORDER BY Id;
+      """;
+
+    var result = new List<Data>();
+    await using var reader = await command.ExecuteReaderAsync(token);
+    while (await reader.ReadAsync(token))
+    {
+      result.Add(CreateData(reader));
+    }
+
+    return [.. result];
+  }
+
   public async Task<Data> AddDataAsync(byte[] content, string? mimeType, DataCategory dataCategory, CancellationToken token)
   {
     using var transaction = await Connection.BeginTransactionAsync(token);

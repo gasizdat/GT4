@@ -3,18 +3,21 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
+using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
+using System.Windows.Input;
 
 namespace GT4.UI.Pages;
 
 /// <summary>
-/// Lists every photo and attachment in the project against the persons and families that link it.
-/// Composed in memory from the per-owner data sets rather than from a project-wide query, which has two
-/// consequences: the listing holds every media blob of the project at once (the eager materialization of
-/// #158, project-wide), and a Data row no owner links is unreachable here, so it is not shown.
+/// Lists every photo and attachment in the project against the persons and families that link it. The
+/// listing starts from the Data table rather than from its owners, so a row nothing links still shows up
+/// (and can be deleted from here). Both the sweep and the reverse lookups it is joined with are
+/// project-wide, so the whole gallery holds every media blob at once -- the eager materialization of
+/// #158, one page-load at a time.
 /// </summary>
 public partial class GalleryPage : ContentPage
 {
@@ -24,6 +27,8 @@ public partial class GalleryPage : ContentPage
   private readonly IAlertService _AlertService;
   private readonly DataConverterResolver _DataConverterResolver;
   private readonly FilteredObservableCollection<GalleryDataItem> _Items = new();
+  private readonly ICommand _DeleteDataCommand;
+  private readonly ICommand _OpenDataCommand;
   private bool _UpdateItems = true;
   private string _OwnerFilter = string.Empty;
 
@@ -40,14 +45,72 @@ public partial class GalleryPage : ContentPage
     _NameFormatter = nameFormatter;
     _AlertService = alertService;
     _DataConverterResolver = dataConverterResolver;
+    _DeleteDataCommand = new SafeCommand(OnDeleteCommandAsync, _AlertService);
+    _OpenDataCommand = new SafeCommand(OnOpenCommandAsync, _AlertService);
     _Items.Filter = OwnersFilter;
 
     InitializeComponent();
   }
 
+  protected async Task OnDeleteCommandAsync(object obj)
+  {
+    if (obj is GalleryDataItem item)
+    {
+      var project = _CurrentProjectProvider.Project;
+      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      using var transaction = await project.BeginTransactionAsync(token);
+
+      foreach (var person in item.Persons)
+      {
+        await project.PersonData.RemovePersonDataAsync(person, item.Info, token);
+      }
+      foreach (var family in item.Families)
+      {
+        await project.NameData.RemoveNameDataAsync(family, item.Info, token);
+      }
+      // Dropping the last link already takes the row with it; an item nothing links has no such link.
+      await project.Data.RemoveDataAsync(item.Info, token);
+      await transaction.CommitAsync(token);
+
+      RequestUpdateItems();
+    }
+  }
+
+  protected async Task OnOpenCommandAsync(object obj)
+  {
+    if (obj is GalleryDataItem item)
+    {
+      using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
+      // Converted without a size cap, unlike the row's thumbnail: this is the full-resolution open.
+      var converter = _DataConverterResolver(item.Info.Category);
+      var content = await converter.ToObjectAsync(item.Info, token);
+
+      switch (content)
+      {
+        case AttachmentInfo attachment:
+          await attachment.OpenAsync(token);
+          break;
+
+        case PhotoInfo photo:
+          await Navigation.PushModalAsync(new PhotoViewerDialog([photo.Source], _AlertService));
+          break;
+      }
+    }
+  }
+
+  protected void RequestUpdateItems()
+  {
+    _UpdateItems = true;
+    OnPropertyChanged(nameof(Items));
+  }
+
   private bool OwnersFilter(FilteredObservableCollection<GalleryDataItem> _, GalleryDataItem item) =>
     string.IsNullOrEmpty(_OwnerFilter) ||
     item.Owners.Contains(_OwnerFilter, StringComparison.InvariantCultureIgnoreCase);
+
+  public ICommand DeleteDataCommand => _DeleteDataCommand;
+
+  public ICommand OpenDataCommand => _OpenDataCommand;
 
   public IEnumerable<GalleryDataItem> Items
   {
@@ -57,62 +120,39 @@ public partial class GalleryPage : ContentPage
       {
         using var token = _CancellationTokenProvider.CreateDbCancellationToken();
         var project = _CurrentProjectProvider.Project;
+        var dataSet = await project
+          .Data
+          .GetDataSetAsync(token);
+        var personIdsByData = await project
+          .PersonData
+          .GetPersonIdsByDataAsync(token);
+        var nameIdsByData = await project
+          .NameData
+          .GetNameIdsByDataAsync(token);
         var persons = await project
           .PersonManager
           .GetPersonInfosAsync(selectMainPhoto: false, token);
-        var personData = await project
-          .PersonData
-          .GetPersonDataSetAsync(persons, null, token);
-        var families = await project
+        var names = await project
           .Names
-          .GetNamesByTypeAsync(NameType.FamilyName, token);
-        var familyData = await project
-          .NameData
-          .GetNameDataSetAsync(families, null, token);
+          .GetNamesByTypeAsync(NameType.AllNames, token);
 
-        var media = new Dictionary<int, Data>();
-        var owners = new Dictionary<int, List<string>>();
+        var personsById = persons.ToDictionary(person => person.Id);
+        var namesById = names.ToDictionary(name => name.Id);
 
-        void Collect(Data data, string owner)
+        GalleryDataItem CreateItem(Data media)
         {
-          if (!data.Category.IsPhoto() && !data.Category.IsAttachment())
-          {
-            return;
-          }
+          var ownerPersonIds = personIdsByData.GetValueOrDefault(media.Id) ?? [];
+          var ownerNameIds = nameIdsByData.GetValueOrDefault(media.Id) ?? [];
+          PersonInfo[] owningPersons = [.. ownerPersonIds.Select(id => personsById[id])];
+          Name[] owningFamilies = [.. ownerNameIds.Select(id => namesById[id])];
 
-          media[data.Id] = data;
-          if (!owners.TryGetValue(data.Id, out var ownerNames))
-          {
-            owners[data.Id] = ownerNames = [];
-          }
-          ownerNames.Add(owner);
+          return new(
+            media, owningPersons, owningFamilies, _NameFormatter,
+            _CancellationTokenProvider, _AlertService, _DataConverterResolver);
         }
 
-        GalleryDataItem CreateItem(Data data)
-        {
-          var ownerNames = string.Join(", ", owners[data.Id]);
-          return new(data, ownerNames, _CancellationTokenProvider, _AlertService, _DataConverterResolver);
-        }
-
-        foreach (var person in persons)
-        {
-          var personName = _NameFormatter.ToString(person, NameFormat.CommonPersonName);
-          foreach (var data in personData.GetValueOrDefault(person.Id) ?? [])
-          {
-            Collect(data, personName);
-          }
-        }
-
-        foreach (var family in families)
-        {
-          foreach (var data in familyData.GetValueOrDefault(family.Id) ?? [])
-          {
-            Collect(data, family.Value);
-          }
-        }
-
-        var items = media
-          .Values
+        var items = dataSet
+          .Where(media => media.Category.IsPhoto() || media.Category.IsAttachment())
           .Select(CreateItem)
           .OrderBy(item => item.Owners, StringComparer.CurrentCulture)
           .ThenBy(item => item.Info.Id)

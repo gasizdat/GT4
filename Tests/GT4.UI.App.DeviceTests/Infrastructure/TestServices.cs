@@ -122,11 +122,19 @@ internal sealed class TestServices
       .Setup(p => p.GetPersonDataSetAsync(It.IsAny<Person[]>(), It.IsAny<DataCategory?>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(new Dictionary<int, Data[]>());
 
-    // GalleryPage gathers every family's media in the same background load -- same "must not fail
-    // invisibly" reasoning as GetNamesByTypeAsync above.
     NameData
       .Setup(n => n.GetNameDataSetAsync(It.IsAny<Name[]>(), It.IsAny<DataCategory?>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(new Dictionary<int, Data[]>());
+
+    // GalleryPage sweeps the whole Data table and both junctions in one background load -- same
+    // "must not fail invisibly" reasoning as GetNamesByTypeAsync above.
+    Data.Setup(d => d.GetDataSetAsync(It.IsAny<CancellationToken>())).ReturnsAsync([]);
+    PersonData
+      .Setup(p => p.GetPersonIdsByDataAsync(It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new Dictionary<int, int[]>());
+    NameData
+      .Setup(n => n.GetNameIdsByDataAsync(It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new Dictionary<int, int[]>());
     RelativesProvider.Setup(r => r.GetChildren(It.IsAny<RelativeInfo[]>())).Returns([]);
     RelativesProvider.Setup(r => r.GetAdoptiveChildren(It.IsAny<RelativeInfo[]>())).Returns([]);
 
@@ -147,7 +155,7 @@ internal sealed class TestServices
     services.AddSingleton(NavigationService.Object);
     services.AddSingleton(ProjectList.Object);
     services.AddSingleton<TestableNamesPage>();
-    services.AddSingleton<GalleryPage>();
+    services.AddSingleton<TestableGalleryPage>();
     services.AddSingleton<TestableFamilyPage>();
     services.AddSingleton<TestableProjectPage>();
     services.AddSingleton<TestablePersonPage>();
