@@ -435,7 +435,11 @@ public class MarkdownViewTests
     // The platform snaps a requested DP size up to a whole device pixel before arranging it, so on a
     // density that doesn't divide evenly (e.g. 2.75x) the arranged size can land up to one device pixel
     // above what was asked for -- a real difference, not a settling race, so it never closes by polling.
-    var tolerance = 1.0 / await MainThread.InvokeOnMainThreadAsync(() => DeviceDisplay.MainDisplayInfo.Density);
+    // Only one dimension is snapped and the aspect ratio then carries that error into the other, scaled:
+    // a 2:1 image snapped a pixel taller comes out two pixels wider, which one flat pixel would reject.
+    var density = await MainThread.InvokeOnMainThreadAsync(() => DeviceDisplay.MainDisplayInfo.Density);
+    var aspect = expectedSize.Width / expectedSize.Height;
+    var tolerance = new Size(Math.Max(1, aspect) / density, Math.Max(1, 1 / aspect) / density);
     var observed = await Poll.UntilAsync(
       () => MainThread.InvokeOnMainThreadAsync(() => new Size(image.Width, image.Height)),
       size => size.Width > 0 && size.Height > 0,
@@ -449,11 +453,12 @@ public class MarkdownViewTests
 
     Assert.True(
       IsCloseTo(observed, expectedSize, tolerance),
-      $"Expected a size within {tolerance:F3} of {expectedSize}, but observed {observed}.");
+      $"Expected a size within {tolerance.Width:F3}x{tolerance.Height:F3} of {expectedSize}, but observed {observed}.");
   }
 
-  private static bool IsCloseTo(Size observed, Size expected, double tolerance) =>
-    Math.Abs(observed.Width - expected.Width) <= tolerance && Math.Abs(observed.Height - expected.Height) <= tolerance;
+  private static bool IsCloseTo(Size observed, Size expected, Size tolerance) =>
+    Math.Abs(observed.Width - expected.Width) <= tolerance.Width &&
+    Math.Abs(observed.Height - expected.Height) <= tolerance.Height;
 
   private static Task<MarkdownView> CreateViewAsync(string markdown) =>
     CreateViewAsync(markdown, new Dictionary<string, byte[]>(), expectedImages: 0);

@@ -543,7 +543,11 @@ public class PersonPageTests
     }
 
     await ScrollUntilAsync(40, translation => translation >= 40, "The photo did not track a scroll within its row's bounds.");
-    Assert.Equal(40, page.PersonPhotoForTest.TranslationY);
+    // Against where the view actually stopped, not the offset it was asked for: the platform snaps a
+    // scroll to whole device pixels, so a request of 40 settles at 40.18 on a 2.8125-density screen.
+    // What the photo owes the scroll is that it mirrors it, which is exactly what UpdatePersonPhoto-
+    // StickyPosition clamps ScrollY into.
+    Assert.Equal(page.BodyScrollForTest.ScrollY, page.PersonPhotoForTest.TranslationY);
 
     await ScrollUntilAsync(100_000, translation => translation >= maxTranslation, "The photo did not stop at the bottom of its row once scrolled past it.");
     Assert.Equal(maxTranslation, page.PersonPhotoForTest.TranslationY);
