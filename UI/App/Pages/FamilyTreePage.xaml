@@ -16,7 +16,6 @@
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="OpenPerson"
-          Icon="👤"
           Text="{Binding OpenPersonToolbarItemName, Source={x:Reference Root}}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"

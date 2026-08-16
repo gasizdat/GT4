@@ -898,7 +898,7 @@ FN - family name</value>
     <value>Tap a relative to centre the tree on them</value>
   </data>
   <data name="MenuItemNameOpenPerson_1" xml:space="preserve">
-    <value>Open {0}</value>
+    <value>👤 Open {0}</value>
   </data>
   <data name="BtnNameLoadAncestors" xml:space="preserve">
     <value>▲ More ancestors</value>

@@ -898,7 +898,7 @@ FN - род</value>
     <value>Нажмите на родственника, чтобы поместить его в центр</value>
   </data>
   <data name="MenuItemNameOpenPerson_1" xml:space="preserve">
-    <value>Открыть {0}</value>
+    <value>👤 Открыть {0}</value>
   </data>
   <data name="BtnNameLoadAncestors" xml:space="preserve">
     <value>▲ Больше предков</value>

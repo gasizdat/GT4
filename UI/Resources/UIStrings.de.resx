@@ -898,7 +898,7 @@ FN - Familienname</value>
     <value>Tippen Sie auf einen Verwandten, um den Baum auf ihn auszurichten</value>
   </data>
   <data name="MenuItemNameOpenPerson_1" xml:space="preserve">
-    <value>{0} öffnen</value>
+    <value>👤 {0} öffnen</value>
   </data>
   <data name="BtnNameLoadAncestors" xml:space="preserve">
     <value>▲ Mehr Vorfahren</value>

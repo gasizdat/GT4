@@ -898,7 +898,7 @@ FN - nom de famille</value>
     <value>Touchez un proche pour centrer l'arbre sur lui</value>
   </data>
   <data name="MenuItemNameOpenPerson_1" xml:space="preserve">
-    <value>Ouvrir {0}</value>
+    <value>👤 Ouvrir {0}</value>
   </data>
   <data name="BtnNameLoadAncestors" xml:space="preserve">
     <value>▲ Plus d'ancêtres</value>
