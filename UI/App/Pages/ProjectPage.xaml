@@ -49,6 +49,10 @@
           Text="{x:Static resources:UIStrings.MenuItemGoToStatistics}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="GoToDateCalendar"
+          Text="{x:Static resources:UIStrings.MenuItemGoToDateCalendar}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="GoToKinshipFinder"
           Text="{x:Static resources:UIStrings.MenuItemGoToKinshipFinder}" />
       <items:PageMenuItem

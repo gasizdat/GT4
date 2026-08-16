@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="GT4.UI.Pages.DateCalendarPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:components="clr-namespace:GT4.UI.Components"
+    xmlns:items="clr-namespace:GT4.UI.Items"
+    xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
+    x:Name="Root"
+    Title="{x:Static resources:UIStrings.TitleDateCalendarPage}"
+    NavigatedTo="OnNavigatedTo">
+
+  <ContentPage.Resources>
+    <ResourceDictionary>
+      <Style x:Key="DateCalendarChip" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SurfaceSubtle}, Dark={StaticResource SurfaceSubtleDark}}" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+        <Setter Property="FontSize" Value="{DynamicResource LabelTextSizeDefault}" />
+        <Setter Property="CornerRadius" Value="14" />
+        <Setter Property="Padding" Value="12,6" />
+      </Style>
+      <Style x:Key="DateCalendarMonthNavButton" TargetType="Button">
+        <Setter Property="WidthRequest" Value="34" />
+        <Setter Property="HeightRequest" Value="34" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="CornerRadius" Value="17" />
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SurfaceSubtle}, Dark={StaticResource SurfaceSubtleDark}}" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+      </Style>
+      <Style x:Key="DateCalendarDayNumber" TargetType="Label">
+        <Setter Property="WidthRequest" Value="36" />
+        <Setter Property="HeightRequest" Value="36" />
+        <Setter Property="HorizontalTextAlignment" Value="Center" />
+        <Setter Property="VerticalTextAlignment" Value="Center" />
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SurfaceSubtle}, Dark={StaticResource SurfaceSubtleDark}}" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+      </Style>
+      <Style x:Key="DateCalendarMilestoneBadge" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 10" />
+        <Setter Property="Padding" Value="8,2" />
+        <Setter Property="HorizontalOptions" Value="End" />
+      </Style>
+    </ResourceDictionary>
+  </ContentPage.Resources>
+
+  <components:PageLayout>
+
+    <components:PageLayout.MenuItems>
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="Today"
+          Text="{x:Static resources:UIStrings.DateCalendarTodayButton}" />
+    </components:PageLayout.MenuItems>
+
+    <components:PageLayout.Header>
+      <VerticalStackLayout Spacing="{StaticResource PageContentSpacing}">
+
+        <Grid ColumnDefinitions="Auto, *, Auto" VerticalOptions="Center">
+          <Button
+              Grid.Column="0"
+              Command="{Binding PageCommand, Source={x:Reference Root}}"
+              CommandParameter="PrevMonth"
+              Style="{StaticResource DateCalendarMonthNavButton}"
+              Text="&#8249;" />
+          <Label
+              Grid.Column="1"
+              Style="{StaticResource GroupTitle}"
+              HorizontalTextAlignment="Center"
+              Text="{Binding MonthLabel, Source={x:Reference Root}}" />
+          <Button
+              Grid.Column="2"
+              Command="{Binding PageCommand, Source={x:Reference Root}}"
+              CommandParameter="NextMonth"
+              Style="{StaticResource DateCalendarMonthNavButton}"
+              Text="&#8250;" />
+        </Grid>
+
+        <FlexLayout Wrap="Wrap" JustifyContent="Center">
+          <Button
+              Command="{Binding PageCommand, Source={x:Reference Root}}"
+              CommandParameter="ToggleBirths"
+              Margin="4,0"
+              Text="{x:Static resources:UIStrings.DateCalendarFilterBirths}">
+            <Button.Style>
+              <Style TargetType="Button" BasedOn="{StaticResource DateCalendarChip}">
+                <Style.Triggers>
+                  <DataTrigger TargetType="Button" Binding="{Binding IsBirthsActive, Source={x:Reference Root}}" Value="True">
+                    <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
+                    <Setter Property="TextColor" Value="{StaticResource White}" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </Button.Style>
+          </Button>
+          <Button
+              Command="{Binding PageCommand, Source={x:Reference Root}}"
+              CommandParameter="ToggleDeaths"
+              Margin="4,0"
+              Text="{x:Static resources:UIStrings.DateCalendarFilterDeaths}">
+            <Button.Style>
+              <Style TargetType="Button" BasedOn="{StaticResource DateCalendarChip}">
+                <Style.Triggers>
+                  <DataTrigger TargetType="Button" Binding="{Binding IsDeathsActive, Source={x:Reference Root}}" Value="True">
+                    <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
+                    <Setter Property="TextColor" Value="{StaticResource White}" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </Button.Style>
+          </Button>
+          <Button
+              Command="{Binding PageCommand, Source={x:Reference Root}}"
+              CommandParameter="ToggleWeddings"
+              Margin="4,0"
+              Text="{x:Static resources:UIStrings.DateCalendarFilterWeddings}">
+            <Button.Style>
+              <Style TargetType="Button" BasedOn="{StaticResource DateCalendarChip}">
+                <Style.Triggers>
+                  <DataTrigger TargetType="Button" Binding="{Binding IsWeddingsActive, Source={x:Reference Root}}" Value="True">
+                    <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
+                    <Setter Property="TextColor" Value="{StaticResource White}" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </Button.Style>
+          </Button>
+          <Button
+              Command="{Binding PageCommand, Source={x:Reference Root}}"
+              CommandParameter="ToggleMilestoneOnly"
+              Margin="4,0"
+              Text="{x:Static resources:UIStrings.DateCalendarFilterMilestoneOnly}">
+            <Button.Style>
+              <Style TargetType="Button" BasedOn="{StaticResource DateCalendarChip}">
+                <Style.Triggers>
+                  <DataTrigger TargetType="Button" Binding="{Binding IsMilestoneOnly, Source={x:Reference Root}}" Value="True">
+                    <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
+                    <Setter Property="TextColor" Value="{StaticResource White}" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </Button.Style>
+          </Button>
+        </FlexLayout>
+
+      </VerticalStackLayout>
+    </components:PageLayout.Header>
+
+    <components:PageLayout.Body>
+      <ScrollView>
+        <VerticalStackLayout Spacing="{StaticResource PageContentSpacing}">
+
+          <VerticalStackLayout
+              BindableLayout.ItemsSource="{Binding DayGroups, Source={x:Reference Root}}"
+              Spacing="{StaticResource PageContentSpacing}">
+            <BindableLayout.ItemTemplate>
+              <DataTemplate x:DataType="items:DateCalendarDayItem">
+                <Grid ColumnDefinitions="Auto, *" ColumnSpacing="12">
+                  <Label Grid.Column="0" Text="{Binding Day}" VerticalOptions="Start">
+                    <Label.Style>
+                      <Style TargetType="Label" BasedOn="{StaticResource DateCalendarDayNumber}">
+                        <Style.Triggers>
+                          <DataTrigger TargetType="Label" Binding="{Binding IsToday}" Value="True">
+                            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                            <Setter Property="TextColor" Value="{StaticResource White}" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </Label.Style>
+                  </Label>
+
+                  <VerticalStackLayout
+                      Grid.Column="1"
+                      BindableLayout.ItemsSource="{Binding Entries}"
+                      Spacing="6">
+                    <BindableLayout.ItemTemplate>
+                      <DataTemplate x:DataType="items:DateCalendarEntryItem">
+                        <components:CardView>
+                          <Grid ColumnDefinitions="*, Auto" ColumnSpacing="8" Padding="10,6">
+                            <Label Grid.Column="0" Style="{StaticResource FieldValue}" Text="{Binding Text}" LineBreakMode="WordWrap" VerticalOptions="Center" />
+                            <Border Grid.Column="1" IsVisible="{Binding IsMilestone}" Style="{StaticResource DateCalendarMilestoneBadge}">
+                              <Label FontSize="{DynamicResource LabelTextSizeDefault}" TextColor="{StaticResource White}" Text="{x:Static resources:UIStrings.DateCalendarMilestoneBadge}" />
+                            </Border>
+                          </Grid>
+                        </components:CardView>
+                      </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                  </VerticalStackLayout>
+                </Grid>
+              </DataTemplate>
+            </BindableLayout.ItemTemplate>
+          </VerticalStackLayout>
+
+          <VerticalStackLayout IsVisible="{Binding IsDayUnknownVisible, Source={x:Reference Root}}" Spacing="6">
+            <Label Style="{StaticResource GroupTitle}" Text="{Binding DayUnknownHeaderText, Source={x:Reference Root}}" />
+            <VerticalStackLayout
+                BindableLayout.ItemsSource="{Binding DayUnknownEntries, Source={x:Reference Root}}"
+                Spacing="6">
+              <BindableLayout.ItemTemplate>
+                <DataTemplate x:DataType="items:DateCalendarEntryItem">
+                  <components:CardView>
+                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="8" Padding="10,6">
+                      <Label Grid.Column="0" Style="{StaticResource FieldValue}" Text="{Binding Text}" LineBreakMode="WordWrap" VerticalOptions="Center" />
+                      <Border Grid.Column="1" IsVisible="{Binding IsMilestone}" Style="{StaticResource DateCalendarMilestoneBadge}">
+                        <Label FontSize="{DynamicResource LabelTextSizeDefault}" TextColor="{StaticResource White}" Text="{x:Static resources:UIStrings.DateCalendarMilestoneBadge}" />
+                      </Border>
+                    </Grid>
+                  </components:CardView>
+                </DataTemplate>
+              </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+          </VerticalStackLayout>
+
+          <Label
+              IsVisible="{Binding IsEmptyStateVisible, Source={x:Reference Root}}"
+              Style="{StaticResource FieldValue}"
+              HorizontalTextAlignment="Center"
+              Text="{Binding EmptyStateText, Source={x:Reference Root}}" />
+
+          <Label
+              IsVisible="{Binding IsUnplaceableFootnoteVisible, Source={x:Reference Root}}"
+              Style="{StaticResource FieldValue}"
+              FontSize="{DynamicResource LabelTextSizeDefault}"
+              Text="{Binding UnplaceableFootnoteText, Source={x:Reference Root}}" />
+
+        </VerticalStackLayout>
+      </ScrollView>
+    </components:PageLayout.Body>
+
+  </components:PageLayout>
+
+</ContentPage>

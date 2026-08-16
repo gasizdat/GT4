@@ -166,6 +166,7 @@ internal sealed class TestServices
     services.AddSingleton<SettingsPage>();
     services.AddSingleton<TestableStatisticsPage>();
     services.AddSingleton<TestableKinshipFinderPage>();
+    services.AddSingleton<TestableDateCalendarPage>();
     // Testable*Dialog subclasses mirror the base dialog's own factory registration in GT4Services --
     // see issue #122 -- since the base type's factory produces the base type, not the test subclass.
     services.AddTransient<TestableCreateOrUpdatePersonDialog.Factory>();

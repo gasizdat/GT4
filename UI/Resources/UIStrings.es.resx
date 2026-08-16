@@ -1263,4 +1263,49 @@ FN - apellido familiar</value>
   <data name="StatValueChildrenAverage_1" xml:space="preserve">
     <value>{0} hijos</value>
   </data>
+  <data name="TitleDateCalendarPage" xml:space="preserve">
+    <value>Calendario</value>
+  </data>
+  <data name="HintDateCalendarPage" xml:space="preserve">
+    <value>Descubre quién nació, se casó o falleció en cada día del año.</value>
+  </data>
+  <data name="MenuItemGoToDateCalendar" xml:space="preserve">
+    <value>📅 Calendario</value>
+  </data>
+  <data name="DateCalendarTodayButton" xml:space="preserve">
+    <value>Hoy</value>
+  </data>
+  <data name="DateCalendarFilterBirths" xml:space="preserve">
+    <value>Nacimientos</value>
+  </data>
+  <data name="DateCalendarFilterDeaths" xml:space="preserve">
+    <value>Conmemoraciones</value>
+  </data>
+  <data name="DateCalendarFilterWeddings" xml:space="preserve">
+    <value>Aniversarios de boda</value>
+  </data>
+  <data name="DateCalendarFilterMilestoneOnly" xml:space="preserve">
+    <value>Solo hitos</value>
+  </data>
+  <data name="DateCalendarMilestoneBadge" xml:space="preserve">
+    <value>HITO</value>
+  </data>
+  <data name="DateCalendarBirthdayText_2" xml:space="preserve">
+    <value>{0} cumple {1} años</value>
+  </data>
+  <data name="DateCalendarDeathAnniversaryText_2" xml:space="preserve">
+    <value>{0} — fallecido/a hace {1} años</value>
+  </data>
+  <data name="DateCalendarWeddingAnniversaryText_3" xml:space="preserve">
+    <value>{0} y {1} — casados desde hace {2} años</value>
+  </data>
+  <data name="DateCalendarDayUnknownHeader_1" xml:space="preserve">
+    <value>En algún día de {0} — día exacto desconocido</value>
+  </data>
+  <data name="DateCalendarEmptyState_1" xml:space="preserve">
+    <value>No hay nacimientos, bodas ni conmemoraciones registrados para {0}.</value>
+  </data>
+  <data name="DateCalendarUnplaceableFootnote_1" xml:space="preserve">
+    <value>{0} fechas de nacimiento o defunción de este proyecto tienen un año registrado pero no un mes, por lo que no se pueden ubicar en el calendario.</value>
+  </data>
 </root>
