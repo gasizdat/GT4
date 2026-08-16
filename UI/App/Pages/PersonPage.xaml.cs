@@ -515,12 +515,6 @@ public partial class PersonPage : ContentPage
       case string commandName when commandName == "Refresh":
         ShowPersonInfo(_PersonFullInfo, false);
         break;
-      case string commandName when commandName == "GoToHome":
-        await _NavigationService.GoToAsync(UIRoutes.GetRoute<MainPage>());
-        break;
-      case string commandName when commandName == "GoToFamily":
-        await OnGotoFamilyAsync();
-        break;
       case string commandName when commandName == "GoToFamilyTree":
         // Shell matches the target's [QueryProperty] by exact runtime type, so hand it a plain
         // PersonInfo — passing the PersonFullInfo subclass sends Shell down a Convert.ChangeType path
