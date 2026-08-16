@@ -11,8 +11,8 @@
     x:Name="Root">
 
   <components:PageLayout
-      Hint="{x:Static resources:UIStrings.HintNamesPage}"
-      Title="{x:Static resources:UIStrings.TitleNamesPage}">
+      Title="{x:Static resources:UIStrings.TitleNamesPage}"
+      Hint="{x:Static resources:UIStrings.HintNamesPage}">
 
     <components:PageLayout.MenuItems>
       <items:PageMenuItem

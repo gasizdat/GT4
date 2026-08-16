@@ -43,12 +43,12 @@
     <components:PageLayout.MenuItems>
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
-          CommandParameter="GoToHome"
-          Text="{x:Static resources:UIStrings.TitleApp}" />
+          CommandParameter="RemovePerson"
+          Text="{Binding RemovePersonToolbarItemName, Source={x:Reference Root}}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
-          CommandParameter="GoToFamily"
-          Text="{Binding GoToFamilyName, Source={x:Reference Root}}" />
+          CommandParameter="EditPerson"
+          Text="{Binding EditPersonToolbarItemName, Source={x:Reference Root}}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="GoToFamilyTree"
@@ -57,14 +57,6 @@
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="ToggleAll"
           Text="{Binding ToggleAllMenuItemName, Source={x:Reference Root}}" />
-      <items:PageMenuItem
-          Command="{Binding PageCommand, Source={x:Reference Root}}"
-          CommandParameter="RemovePerson"
-          Text="{Binding RemovePersonToolbarItemName, Source={x:Reference Root}}" />
-      <items:PageMenuItem
-          Command="{Binding PageCommand, Source={x:Reference Root}}"
-          CommandParameter="EditPerson"
-          Text="{Binding EditPersonToolbarItemName, Source={x:Reference Root}}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="Refresh"

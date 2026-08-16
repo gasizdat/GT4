@@ -9,8 +9,8 @@
     x:Name="Root">
 
   <components:PageLayout
-      Hint="{x:Static resources:UIStrings.HintProjectPage}"
-      Title="{x:Static resources:UIStrings.TitleProjectPage}">
+      Title="{x:Static resources:UIStrings.TitleProjectPage}"
+      Hint="{x:Static resources:UIStrings.HintProjectPage}">
 
     <components:PageLayout.MenuItems>
       <items:PageMenuItem
@@ -23,12 +23,12 @@
           Text="{x:Static resources:UIStrings.MenuItemImportGedcom}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
-          CommandParameter="Refresh"
-          Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
-      <items:PageMenuItem
-          Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="Settings"
           Text="{x:Static resources:UIStrings.MenuItemNameSettings}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="Refresh"
+          Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
     </components:PageLayout.MenuItems>
 
     <components:PageLayout.Body>

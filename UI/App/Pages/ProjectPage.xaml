@@ -10,8 +10,8 @@
     x:Name="Root">
 
   <components:PageLayout
-      Hint="{x:Static resources:UIStrings.HintFamiliesPage}"
-      Title="{x:Static resources:UIStrings.TitleFamiliesPage}">
+      Title="{x:Static resources:UIStrings.TitleFamiliesPage}"
+      Hint="{x:Static resources:UIStrings.HintFamiliesPage}">
 
     <components:PageLayout.MenuItems>
 
@@ -29,6 +29,14 @@
           Text="{x:Static resources:UIStrings.MenuItemNameCreateFamily}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="ImportGedcom"
+          Text="{x:Static resources:UIStrings.MenuItemImportGedcom}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="ExportGedcom"
+          Text="{x:Static resources:UIStrings.MenuItemExportGedcom}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="GoToNames"
           Text="{x:Static resources:UIStrings.MenuItemGoToNames}" />
       <items:PageMenuItem
@@ -43,14 +51,6 @@
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="GoToKinshipFinder"
           Text="{x:Static resources:UIStrings.MenuItemGoToKinshipFinder}" />
-      <items:PageMenuItem
-          Command="{Binding PageCommand, Source={x:Reference Root}}"
-          CommandParameter="ImportGedcom"
-          Text="{x:Static resources:UIStrings.MenuItemImportGedcom}" />
-      <items:PageMenuItem
-          Command="{Binding PageCommand, Source={x:Reference Root}}"
-          CommandParameter="ExportGedcom"
-          Text="{x:Static resources:UIStrings.MenuItemExportGedcom}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="GoToRevisions"
