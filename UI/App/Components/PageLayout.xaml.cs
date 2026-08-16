@@ -156,9 +156,11 @@ public partial class PageLayout : ContentView
     set => SetValue(FooterProperty, value);
   }
 
-  public bool IsTopMenuVisible => _MenuItems.Count > 0 && Height >= 0 && Height > Width;
+  public bool IsMenuVisible => _MenuItems.Count > 0;
 
-  public bool IsSideMenuVisible => _MenuItems.Count > 0 && Height >= 0 && Height <= Width;
+  public bool IsTopMenuVisible => IsMenuVisible && Height >= 0 && Height > Width;
+
+  public bool IsSideMenuVisible => IsMenuVisible && Height >= 0 && Height <= Width;
 
   public bool IsTitleVisible => !string.IsNullOrWhiteSpace(Title);
 
