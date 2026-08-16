@@ -360,16 +360,19 @@ public class FamilyPageTests
   }
 
   [Fact]
-  public async Task NoFamily_mode_drops_the_remove_and_edit_family_menu_items()
+  public async Task NoFamily_mode_disables_the_remove_and_edit_family_menu_buttons()
   {
     var page = await CreatePageAsync(new TestServices());
-    var menuItems = ((PageLayout)page.Content).MenuItems.Cast<PageMenuItem>().ToArray();
-    Assert.Equal(4, menuItems.Length);
+    var layout = (PageLayout)page.Content;
+    await MainThread.InvokeOnMainThreadAsync(() => ((IView)layout).Arrange(new Rect(0, 0, 400, 800)));
+    var topMenu = layout.FindByName<FlexLayout>("TopMenu");
+    var buttons = topMenu.Children.OfType<Button>().ToArray();
+    Assert.Equal(4, buttons.Length);
 
     await MainThread.InvokeOnMainThreadAsync(() => page.FamilyName = FamilyInfoItem.NoFamilyName);
 
     var parameters = await MainThread.InvokeOnMainThreadAsync(
-      () => menuItems.Where(mi => mi.IsEnabled).Select(mi => mi.CommandParameter).ToArray());
+      () => buttons.Where(b => b.IsEnabled).Select(b => ((PageMenuItem)b.BindingContext!).CommandParameter).ToArray());
     Assert.Equal(["CreatePerson", "Refresh"], parameters);
   }
 

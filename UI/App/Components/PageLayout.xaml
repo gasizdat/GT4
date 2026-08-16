@@ -35,6 +35,7 @@
             CommandParameter="{Binding CommandParameter}"
             FontSize="{DynamicResource ActionButtonTextSize}"
             HorizontalOptions="Center"
+            IsEnabled="{Binding IsEnabled}"
             Style="{StaticResource EmojiAdorner}"
             Text="{Binding ButtonText}"
             ToolTipProperties.Text="{Binding ToolTipText}" />
