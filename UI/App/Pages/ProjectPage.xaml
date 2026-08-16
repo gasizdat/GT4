@@ -10,8 +10,8 @@
     x:Name="Root">
 
   <components:PageLayout
-      Title="{x:Static resources:UIStrings.TitleFamiliesPage}"
-      Hint="{x:Static resources:UIStrings.HintFamiliesPage}">
+      Hint="{x:Static resources:UIStrings.HintFamiliesPage}"
+      Title="{x:Static resources:UIStrings.TitleFamiliesPage}">
 
     <components:PageLayout.MenuItems>
 
