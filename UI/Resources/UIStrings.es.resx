@@ -118,563 +118,563 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AlertTextDeleteConfirmationText_1" xml:space="preserve">
-    <value>Вы действительно хотите удалить {0}?</value>
+    <value>¿Realmente desea eliminar {0}?</value>
   </data>
   <data name="AlertTextRemoveFamilyConfirmationText_1" xml:space="preserve">
-    <value>Вы действительно хотите удалить {0}? Все персоны в этой семье потеряют эту фамилию.</value>
+    <value>¿Realmente desea eliminar {0}? Todas las personas de esta familia perderán este apellido familiar.</value>
   </data>
   <data name="AlertTitleInfo" xml:space="preserve">
-    <value>ℹ️ Информация</value>
+    <value>ℹ️ Información</value>
   </data>
   <data name="AlertTitleConfirmation" xml:space="preserve">
-    <value>Подтверждение</value>
+    <value>Confirmación</value>
   </data>
   <data name="AlertTitleWarning" xml:space="preserve">
-    <value>⚠️ Предупреждение</value>
+    <value>⚠️ Advertencia</value>
   </data>
   <data name="AppGeneralName" xml:space="preserve">
-    <value>Генеалогическое древо (v.4)</value>
+    <value>Árbol Genealógico 4</value>
   </data>
   <data name="AppGeneralWelcomeTitle" xml:space="preserve">
-    <value>Создать свое собственное
-генеалогическое дерево</value>
+    <value>¡Cree su propio
+árbol genealógico y disfrútelo!</value>
   </data>
   <data name="BtnNameCancel" xml:space="preserve">
-    <value>Отмена</value>
+    <value>Cancelar</value>
   </data>
   <data name="BtnNameCreateGenealogyTree" xml:space="preserve">
-    <value>Создать генеалогическое дерево</value>
+    <value>Crear un árbol genealógico</value>
   </data>
   <data name="BtnNameNo" xml:space="preserve">
-    <value>Нет</value>
+    <value>No</value>
   </data>
   <data name="BtnNameOpenOrCreateProject" xml:space="preserve">
-    <value>Создать или открыть</value>
+    <value>Abrir o crear</value>
   </data>
   <data name="BtnNameYes" xml:space="preserve">
-    <value>Да</value>
+    <value>Sí</value>
   </data>
   <data name="HintProjectPage" xml:space="preserve">
-    <value>Открыть или создать новое</value>
+    <value>Abra uno existente o cree uno nuevo</value>
   </data>
   <data name="TitleProjectPage" xml:space="preserve">
-    <value>Генеалогическое дерево</value>
+    <value>Árbol genealógico</value>
   </data>
   <data name="AlertTitleError" xml:space="preserve">
-    <value>⛔ Ошибка</value>
+    <value>⛔ Error</value>
   </data>
   <data name="TitleCreateNewProjectDialog" xml:space="preserve">
-    <value>Создать генеалогическое дерево</value>
+    <value>Crear un árbol genealógico</value>
   </data>
   <data name="TxtPlaceholderPtojectName" xml:space="preserve">
-    <value>Добавить имя для нового генеалогического древа</value>
+    <value>Introduzca un nombre para el nuevo árbol genealógico</value>
   </data>
   <data name="TitleApp" xml:space="preserve">
-    <value>🏠 Домой</value>
+    <value>🏠 Inicio</value>
   </data>
   <data name="PkrLanguageHint" xml:space="preserve">
-    <value>🌐 Язык</value>
+    <value>🌐 Idioma</value>
   </data>
   <data name="TitleFamiliesPage" xml:space="preserve">
-    <value>Фамилии</value>
+    <value>Familias</value>
   </data>
   <data name="HintFamiliesPage" xml:space="preserve">
-    <value>Открыть или создать род</value>
+    <value>Abrir o crear una familia</value>
   </data>
   <data name="BtnNameRefreshAfterError" xml:space="preserve">
-    <value>Произошла ошибка. Повторить?</value>
+    <value>Se ha producido un error. ¿Actualizar?</value>
   </data>
   <data name="BtnNameOk" xml:space="preserve">
-    <value>OK</value>
+    <value>Aceptar</value>
   </data>
   <data name="HintFamilyPage" xml:space="preserve">
-    <value>Выбрать представителя рода или создать нового</value>
+    <value>Abra un miembro de la familia o cree uno nuevo</value>
   </data>
   <data name="DateEraBeforeChrist_1" xml:space="preserve">
-    <value>{0} до н. э.</value>
+    <value>{0} a. C.</value>
   </data>
   <data name="DateStatusYearApproximate_1" xml:space="preserve">
-    <value>около {0}</value>
+    <value>unos {0}</value>
   </data>
   <data name="DateStatusUnknown" xml:space="preserve">
-    <value>неизвестно</value>
+    <value>desconocido</value>
   </data>
   <data name="FieldDateOfBirth" xml:space="preserve">
-    <value>Дата рождения:</value>
+    <value>Fecha de nacimiento:</value>
   </data>
   <data name="FieldDateOfDeath" xml:space="preserve">
-    <value>Дата смерти:</value>
+    <value>Fecha de fallecimiento:</value>
   </data>
   <data name="FieldAge" xml:space="preserve">
-    <value>Возраст:</value>
+    <value>Edad:</value>
   </data>
   <data name="FieldFamilyNameEntry" xml:space="preserve">
-    <value>Название рода</value>
+    <value>Apellido familiar</value>
   </data>
   <data name="TxtPlaceholderFamilyName" xml:space="preserve">
-    <value>Добавить имя рода во множественном числе (например, Ивановы)</value>
+    <value>Introduzca un apellido familiar en plural (por ejemplo, los García)</value>
   </data>
   <data name="FieldLastNameMaleEntry" xml:space="preserve">
-    <value>Фамилия в мужском склонении</value>
+    <value>El apellido en declinación masculina</value>
   </data>
   <data name="FieldLastNameFemaleEntry" xml:space="preserve">
-    <value>Фамилия в женском склонении</value>
+    <value>El apellido en declinación femenina</value>
   </data>
   <data name="TxtPlaceholderLastNameFemale" xml:space="preserve">
-    <value>Добавить женскую фамилию (например, Иванова)</value>
+    <value>Introduzca el apellido femenino (por ejemplo, Sra. García)</value>
   </data>
   <data name="TxtPlaceholderProjectDescription" xml:space="preserve">
-    <value>Добавить описание для нового генеалогического древа</value>
+    <value>Introduzca una descripción para el nuevo árbol genealógico</value>
   </data>
   <data name="TxtPlaceholderLastNameMale" xml:space="preserve">
-    <value>Добавить мужскую фамилию (например, Иванов)</value>
+    <value>Introduzca el apellido masculino (Sr. García)</value>
   </data>
   <data name="BtnNameCreateFamilyPerson" xml:space="preserve">
-    <value>Создать персону</value>
+    <value>Crear una persona</value>
   </data>
   <data name="BtnNameUpdateFamilyPerson" xml:space="preserve">
-    <value>Обновите персону</value>
+    <value>Actualizar la persona</value>
   </data>
   <data name="DateStatusNotDefined" xml:space="preserve">
-    <value>не задано</value>
+    <value>sin definir</value>
   </data>
   <data name="FieldPersonPhotos" xml:space="preserve">
-    <value>Фотографии</value>
+    <value>Fotos</value>
   </data>
   <data name="BtnNameAddPersonPhoto" xml:space="preserve">
-    <value>Добавить фотографию</value>
+    <value>Añadir foto</value>
   </data>
   <data name="FieldPersonNames" xml:space="preserve">
-    <value>Имена</value>
+    <value>Nombres</value>
   </data>
   <data name="BtnNameAddPersonName" xml:space="preserve">
-    <value>Добавить имя</value>
+    <value>Añadir nombre</value>
   </data>
   <data name="FieldPersonDates" xml:space="preserve">
-    <value>Даты</value>
+    <value>Fechas</value>
   </data>
   <data name="FieldPersonRelationships" xml:space="preserve">
-    <value>Родственные связи</value>
+    <value>Parentescos</value>
   </data>
   <data name="BtnNameAddPersonRelationship" xml:space="preserve">
-    <value>Добавить родственную связь</value>
+    <value>Añadir parentesco</value>
   </data>
   <data name="FieldPersonBiography" xml:space="preserve">
-    <value>Биография</value>
+    <value>Biografía</value>
   </data>
   <data name="FieldPersonAttachments" xml:space="preserve">
-    <value>Вложения</value>
+    <value>Adjuntos</value>
   </data>
   <data name="BtnNameAddPersonAttachment" xml:space="preserve">
-    <value>Добавить вложение</value>
+    <value>Añadir adjunto</value>
   </data>
   <data name="RelMother" xml:space="preserve">
-    <value>Мать</value>
+    <value>Madre</value>
   </data>
   <data name="RelFather" xml:space="preserve">
-    <value>Отец</value>
+    <value>Padre</value>
   </data>
   <data name="RelAdoptiveMale_1" xml:space="preserve">
-    <value>Приемный {0}</value>
+    <value>{0} adoptivo</value>
   </data>
   <data name="RelAdoptiveFemale_1" xml:space="preserve">
-    <value>Приемная {0}</value>
+    <value>{0} adoptiva</value>
   </data>
   <data name="RelSpouse" xml:space="preserve">
-    <value>Супруг(а)</value>
+    <value>Cónyuge</value>
   </data>
   <data name="RelWife" xml:space="preserve">
-    <value>Жена</value>
+    <value>Esposa</value>
   </data>
   <data name="RelHusband" xml:space="preserve">
-    <value>Муж</value>
+    <value>Esposo</value>
   </data>
   <data name="RelSon" xml:space="preserve">
-    <value>Сын</value>
+    <value>Hijo</value>
   </data>
   <data name="RelDaughter" xml:space="preserve">
-    <value>Дочь</value>
+    <value>Hija</value>
   </data>
   <data name="RelChild" xml:space="preserve">
-    <value>Ребенок</value>
+    <value>Hijo o hija</value>
   </data>
   <data name="RelUnknown" xml:space="preserve">
-    <value>Неизвестно</value>
+    <value>Desconocido</value>
   </data>
   <data name="FieldFirstName" xml:space="preserve">
-    <value>Имя</value>
+    <value>Nombre</value>
   </data>
   <data name="FieldPatronymic" xml:space="preserve">
-    <value>Отчество</value>
+    <value>Patronímico</value>
   </data>
   <data name="FieldLastName" xml:space="preserve">
-    <value>Фамилия</value>
+    <value>Apellido</value>
   </data>
   <data name="FieldFamilyName" xml:space="preserve">
-    <value>Родовое имя</value>
+    <value>Apellido familiar</value>
   </data>
   <data name="TitleSelectNameDialog" xml:space="preserve">
-    <value>Выбрать имя</value>
+    <value>Seleccionar un nombre</value>
   </data>
   <data name="FieldSelectNameType" xml:space="preserve">
-    <value>Выбрать тип имени</value>
+    <value>Seleccione el tipo de nombre</value>
   </data>
   <data name="FieldSelectName" xml:space="preserve">
-    <value>Выбрать</value>
+    <value>Seleccionar</value>
   </data>
   <data name="FieldFirstNameMaleEntry" xml:space="preserve">
-    <value>Мужское имя</value>
+    <value>Nombre masculino</value>
   </data>
   <data name="FieldFirstNameFemaleEntry" xml:space="preserve">
-    <value>Женское имя</value>
+    <value>Nombre femenino</value>
   </data>
   <data name="FieldPatronymicMaleEntry" xml:space="preserve">
-    <value>Мужское отчество</value>
+    <value>Patronímico masculino</value>
   </data>
   <data name="FieldPatronymicFemaleEntry" xml:space="preserve">
-    <value>Женское отчество</value>
+    <value>Patronímico femenino</value>
   </data>
   <data name="TxtPlaceholderMaleName" xml:space="preserve">
-    <value>Добавить мужское имя</value>
+    <value>Introduzca un nombre masculino</value>
   </data>
   <data name="TxtPlaceholderFemaleName" xml:space="preserve">
-    <value>Добавить женское имя</value>
+    <value>Introduzca un nombre femenino</value>
   </data>
   <data name="TxtPlaceholderPatronymicMale" xml:space="preserve">
-    <value>Добавить мужское отчество</value>
+    <value>Introduzca un patronímico masculino</value>
   </data>
   <data name="TxtPlaceholderPatronymicFemale" xml:space="preserve">
-    <value>Добавить женское отчество</value>
+    <value>Introduzca un patronímico femenino</value>
   </data>
   <data name="BiologicalSexMale" xml:space="preserve">
-    <value>♂ Мужчина</value>
+    <value>♂ Hombre</value>
   </data>
   <data name="BiologicalSexFemale" xml:space="preserve">
-    <value>♀ Женщина</value>
+    <value>♀ Mujer</value>
   </data>
   <data name="BiologicalSexUnknown" xml:space="preserve">
-    <value>⚧️ Человек</value>
+    <value>⚧️ Persona</value>
   </data>
   <data name="FieldBiologicalSex" xml:space="preserve">
-    <value>Пол</value>
+    <value>Sexo biológico</value>
   </data>
   <data name="FieldKinshipPersonFrom" xml:space="preserve">
-    <value>Первый человек</value>
+    <value>Primera persona</value>
   </data>
   <data name="FieldKinshipPersonTo" xml:space="preserve">
-    <value>Второй человек</value>
+    <value>Segunda persona</value>
   </data>
   <data name="FieldNotSelected" xml:space="preserve">
-    <value>Не выбран</value>
+    <value>Sin seleccionar</value>
   </data>
   <data name="FieldKinshipSummary" xml:space="preserve">
-    <value>Родство</value>
+    <value>Parentesco</value>
   </data>
   <data name="FieldKinshipChain" xml:space="preserve">
-    <value>Связующие родственники</value>
+    <value>Parientes de enlace</value>
   </data>
   <data name="TitleSelectDateDialog" xml:space="preserve">
-    <value>Выбрать дату</value>
+    <value>Seleccionar fecha</value>
   </data>
   <data name="FieldYear" xml:space="preserve">
-    <value>Год</value>
+    <value>Año</value>
   </data>
   <data name="FieldMonth" xml:space="preserve">
-    <value>Месяц</value>
+    <value>Mes</value>
   </data>
   <data name="FieldDay" xml:space="preserve">
-    <value>День</value>
+    <value>Día</value>
   </data>
   <data name="FieldDateEntered" xml:space="preserve">
-    <value>Введенная дата</value>
+    <value>Fecha introducida</value>
   </data>
   <data name="FileDialogSelectPictures" xml:space="preserve">
-    <value>Выбрать изображения</value>
+    <value>Seleccionar imágenes</value>
   </data>
   <data name="FileDialogSelectAttachment" xml:space="preserve">
-    <value>Выбрать файл</value>
+    <value>Seleccionar archivo</value>
   </data>
   <data name="MenuItemNameRemove_1" xml:space="preserve">
-    <value>❌ Удалить '{0}'</value>
+    <value>❌ Eliminar «{0}»</value>
   </data>
   <data name="MenuItemNameEdit_1" xml:space="preserve">
-    <value>🖋️ Править '{0}'</value>
+    <value>🖋️ Editar «{0}»</value>
   </data>
   <data name="Month_01" xml:space="preserve">
-    <value>Январь</value>
+    <value>enero</value>
   </data>
   <data name="Month_02" xml:space="preserve">
-    <value>Февраль</value>
+    <value>febrero</value>
   </data>
   <data name="Month_03" xml:space="preserve">
-    <value>Март</value>
+    <value>marzo</value>
   </data>
   <data name="Month_04" xml:space="preserve">
-    <value>Апрель</value>
+    <value>abril</value>
   </data>
   <data name="Month_05" xml:space="preserve">
-    <value>Май</value>
+    <value>mayo</value>
   </data>
   <data name="Month_06" xml:space="preserve">
-    <value>Июнь</value>
+    <value>junio</value>
   </data>
   <data name="Month_07" xml:space="preserve">
-    <value>Июль</value>
+    <value>julio</value>
   </data>
   <data name="Month_08" xml:space="preserve">
-    <value>Август</value>
+    <value>agosto</value>
   </data>
   <data name="Month_09" xml:space="preserve">
-    <value>Сентябрь</value>
+    <value>septiembre</value>
   </data>
   <data name="Month_10" xml:space="preserve">
-    <value>Октябрь</value>
+    <value>octubre</value>
   </data>
   <data name="Month_11" xml:space="preserve">
-    <value>Ноябрь</value>
+    <value>noviembre</value>
   </data>
   <data name="Month_12" xml:space="preserve">
-    <value>Декабрь</value>
+    <value>diciembre</value>
   </data>
   <data name="TitleSelectRelativesDialog" xml:space="preserve">
-    <value>Выбрать родственников</value>
+    <value>Seleccionar parientes</value>
   </data>
   <data name="TitleSelectPersonDialog" xml:space="preserve">
-    <value>Выбрать человека</value>
+    <value>Seleccionar persona</value>
   </data>
   <data name="TitleKinshipFinderPage" xml:space="preserve">
-    <value>Поиск родства</value>
+    <value>Buscador de parentesco</value>
   </data>
   <data name="FieldRelationshipStartDate" xml:space="preserve">
-    <value>Начало отношений</value>
+    <value>Fecha de inicio</value>
   </data>
   <data name="TitleCreateOrUpdatePersonDialog" xml:space="preserve">
-    <value>Заполнить информацию о персоне</value>
+    <value>Complete la información de la persona</value>
   </data>
   <data name="FieldRelationshipType" xml:space="preserve">
-    <value>Вид родства</value>
+    <value>Tipo de parentesco</value>
   </data>
   <data name="RelParent" xml:space="preserve">
-    <value>Родитель</value>
+    <value>Progenitor</value>
   </data>
   <data name="RelAdoptiveInvariant_1" xml:space="preserve">
-    <value>Приемный {0}</value>
+    <value>{0} por adopción</value>
   </data>
   <data name="BtnNameUpdateGenealogyTree" xml:space="preserve">
-    <value>Обновить генеалогическое дерево</value>
+    <value>Actualizar el árbol genealógico</value>
   </data>
   <data name="BtnNameCreateFamily" xml:space="preserve">
-    <value>Создать семью</value>
+    <value>Crear una familia</value>
   </data>
   <data name="FamilyNameNoFamily" xml:space="preserve">
-    <value>Без семьи</value>
+    <value>Sin familia</value>
   </data>
   <data name="FamilyMorePersons_1" xml:space="preserve">
-    <value>Ещё {0}</value>
+    <value>+{0} más</value>
   </data>
   <data name="BtnNameUpdateName_1" xml:space="preserve">
-    <value>Обновить {0}</value>
+    <value>Actualizar {0}</value>
   </data>
   <data name="BtnNameCreateName_1" xml:space="preserve">
-    <value>Создать {0}</value>
+    <value>Crear {0}</value>
   </data>
   <data name="TitleCreateOrUpdateNameDialog_1" xml:space="preserve">
-    <value>Создать или обновить {0}</value>
+    <value>Crear o actualizar {0}</value>
   </data>
   <data name="MenuItemNameAddPerson" xml:space="preserve">
-    <value>➕ Создать персону</value>
+    <value>➕ Crear una persona</value>
   </data>
   <data name="MenuItemNameRefresh" xml:space="preserve">
-    <value>🔄️ Обновить</value>
+    <value>🔄️ Actualizar</value>
   </data>
   <data name="RelBrother" xml:space="preserve">
-    <value>Брат</value>
+    <value>Hermano</value>
   </data>
   <data name="RelSister" xml:space="preserve">
-    <value>Сестра</value>
+    <value>Hermana</value>
   </data>
   <data name="RelParental_1" xml:space="preserve">
-    <value>{0} по отцу</value>
+    <value>{0} por parte de padre</value>
   </data>
   <data name="RelMaternal_1" xml:space="preserve">
-    <value>{0} по матери</value>
+    <value>{0} por parte de madre</value>
   </data>
   <data name="RelSibling" xml:space="preserve">
-    <value>Брат или сестра</value>
+    <value>Hermano o hermana</value>
   </data>
   <data name="RelStepMale_1" xml:space="preserve">
-    <value>Сводный {0}</value>
+    <value>Hermanastro</value>
   </data>
   <data name="RelStepFemale_1" xml:space="preserve">
-    <value>Сводная {0}</value>
+    <value>Hermanastra</value>
   </data>
   <data name="RelStepInvariant_1" xml:space="preserve">
-    <value>Сводный {0}</value>
+    <value>Hermanastro o hermanastra</value>
   </data>
   <data name="RelStepFather" xml:space="preserve">
-    <value>Отчим</value>
+    <value>Padrastro</value>
   </data>
   <data name="RelStepMother" xml:space="preserve">
-    <value>Мачеха</value>
+    <value>Madrastra</value>
   </data>
   <data name="RelStepSon" xml:space="preserve">
-    <value>Пасынок</value>
+    <value>Hijastro</value>
   </data>
   <data name="RelStepDaughter" xml:space="preserve">
-    <value>Падчерица</value>
+    <value>Hijastra</value>
   </data>
   <data name="RelStepParent" xml:space="preserve">
-    <value>Отчим или мачеха</value>
+    <value>Padrastro o madrastra</value>
   </data>
   <data name="RelStepChild" xml:space="preserve">
-    <value>Пасынок или падчерица</value>
+    <value>Hijastro o hijastra</value>
   </data>
   <data name="MenuItemNameCreateGenealogyTree" xml:space="preserve">
-    <value>➕ Создать генеалогическое дерево</value>
+    <value>➕ Crear un árbol genealógico</value>
   </data>
   <data name="MenuItemNameCreateFamily" xml:space="preserve">
-    <value>➕ Создать семью</value>
+    <value>➕ Crear una familia</value>
   </data>
   <data name="RelGrandFather" xml:space="preserve">
-    <value>Дедушка</value>
+    <value>Abuelo</value>
   </data>
   <data name="RelGrandMother" xml:space="preserve">
-    <value>Бабушка</value>
+    <value>Abuela</value>
   </data>
   <data name="RelGrandParent" xml:space="preserve">
-    <value>Дедушка или бабушка</value>
+    <value>Abuelo o abuela</value>
   </data>
   <data name="RelDaughterInLaw" xml:space="preserve">
-    <value>Невестка</value>
+    <value>Nuera</value>
   </data>
   <data name="RelSonInLaw" xml:space="preserve">
-    <value>Зять</value>
+    <value>Yerno</value>
   </data>
   <data name="RelChildInLaw" xml:space="preserve">
-    <value>Супруг(а) ребенка</value>
+    <value>Yerno o nuera</value>
   </data>
   <data name="RelGrandSon" xml:space="preserve">
-    <value>Внук</value>
+    <value>Nieto</value>
   </data>
   <data name="RelGrandDaughter" xml:space="preserve">
-    <value>Внучка</value>
+    <value>Nieta</value>
   </data>
   <data name="RelGrandChild" xml:space="preserve">
-    <value>Внук или внучка</value>
+    <value>Nieto o nieta</value>
   </data>
   <data name="RelGreat_1" xml:space="preserve">
-    <value>Пра-{0}</value>
+    <value>Bis{0}</value>
   </data>
   <data name="RelGreat2_es_1" xml:space="preserve">
-    <value>-{0}</value>
+    <value>Tatara{0}</value>
   </data>
   <data name="RelBloodShare_1" xml:space="preserve">
     <value>🩸 {0}%</value>
   </data>
   <data name="RelUncle" xml:space="preserve">
-    <value>Дядя</value>
+    <value>Tío</value>
   </data>
   <data name="RelAunt" xml:space="preserve">
-    <value>Тётя</value>
+    <value>Tía</value>
   </data>
   <data name="RelUncleAunt" xml:space="preserve">
-    <value>Дядя или тётя</value>
+    <value>Tío o tía</value>
   </data>
   <data name="DateKnownApproximately" xml:space="preserve">
-    <value>Дата известна прилизительно</value>
+    <value>La fecha se conoce de forma aproximada</value>
   </data>
   <data name="RelGrandUncle_en" xml:space="preserve">
-    <value>-</value>
+    <value>Tío abuelo</value>
   </data>
   <data name="RelGrandAunt_en" xml:space="preserve">
-    <value>-</value>
+    <value>Tía abuela</value>
   </data>
   <data name="RelGrandUncleAunt_en" xml:space="preserve">
-    <value>-</value>
+    <value>Tío abuelo o tía abuela</value>
   </data>
   <data name="Rel2Male_1" xml:space="preserve">
-    <value>Двоюродный {0}</value>
+    <value>{0} de segundo grado</value>
   </data>
   <data name="Rel3Male_1" xml:space="preserve">
-    <value>Троюродный {0}</value>
+    <value>{0} de tercer grado</value>
   </data>
   <data name="Rel3Unknown_1" xml:space="preserve">
-    <value>Троюродный {0}</value>
+    <value>{0} de tercer grado</value>
   </data>
   <data name="Rel4Male_1" xml:space="preserve">
-    <value>Четвероюродный {0}</value>
+    <value>{0} de cuarto grado</value>
   </data>
   <data name="RelNMale_2" xml:space="preserve">
-    <value>{0}-юродный {1}</value>
+    <value>{1} de {0}.º grado</value>
   </data>
   <data name="Rel4Unknown_1" xml:space="preserve">
-    <value>Четвероюродный {0}</value>
+    <value>{0} de cuarto grado</value>
   </data>
   <data name="RelNUnknown_2" xml:space="preserve">
-    <value>{0}-юродный {1}</value>
+    <value>{1} de {0}.º grado</value>
   </data>
   <data name="Rel2Unknown_1" xml:space="preserve">
-    <value>Двоюродный {0}</value>
+    <value>{0} de segundo grado</value>
   </data>
   <data name="Rel3Female_1" xml:space="preserve">
-    <value>Троюродная {0}</value>
+    <value>{0} de tercer grado</value>
   </data>
   <data name="Rel4Female_1" xml:space="preserve">
-    <value>Четвероюродная {0}</value>
+    <value>{0} de cuarto grado</value>
   </data>
   <data name="RelNFemale_2" xml:space="preserve">
-    <value>{0}-юродная {1}</value>
+    <value>{1} de {0}.º grado</value>
   </data>
   <data name="RelCousinFemale" xml:space="preserve">
-    <value>-</value>
+    <value>Prima</value>
   </data>
   <data name="RelCousinMale" xml:space="preserve">
-    <value>-</value>
+    <value>Primo</value>
   </data>
   <data name="RelCousinUnknown" xml:space="preserve">
-    <value>-</value>
+    <value>Primo o prima</value>
   </data>
   <data name="Rel1Removed_en_1" xml:space="preserve">
-    <value>-{0}</value>
+    <value>{0}, una generación de diferencia</value>
   </data>
   <data name="Rel2Removed_en_1" xml:space="preserve">
-    <value>-{0}</value>
+    <value>{0}, dos generaciones de diferencia</value>
   </data>
   <data name="RelNRemoved_en_2" xml:space="preserve">
-    <value>-{0}{1}</value>
+    <value>{0}, {1} generaciones de diferencia</value>
   </data>
   <data name="RelInLawFemale" xml:space="preserve">
-    <value>Свойственница</value>
+    <value>Suegra</value>
   </data>
   <data name="RelInLawUnknown" xml:space="preserve">
-    <value>Свойственник</value>
+    <value>Suegro o suegra</value>
   </data>
   <data name="RelInLawMale" xml:space="preserve">
-    <value>Свойственник</value>
+    <value>Suegro</value>
   </data>
   <data name="RelNephew" xml:space="preserve">
-    <value>Племянник</value>
+    <value>Sobrino</value>
   </data>
   <data name="RelGrandNephew_en" xml:space="preserve">
-    <value>-</value>
+    <value>Sobrino nieto</value>
   </data>
   <data name="RelNiece" xml:space="preserve">
-    <value>Племянница</value>
+    <value>Sobrina</value>
   </data>
   <data name="RelGrandNiece_en" xml:space="preserve">
-    <value>-</value>
+    <value>Sobrina nieta</value>
   </data>
   <data name="RelNephewNiece" xml:space="preserve">
-    <value>Племянник или племянница</value>
+    <value>Sobrino o sobrina</value>
   </data>
   <data name="RelGrandNephewNiece_en" xml:space="preserve">
-    <value>-</value>
+    <value>Sobrino nieto o sobrina nieta</value>
   </data>
   <data name="Rel2Female_1" xml:space="preserve">
-    <value>Двоюродная {0}</value>
+    <value>{0} de segundo grado</value>
   </data>
   <data name="Rel3Removed_en_1" xml:space="preserve">
-    <value>-{0}</value>
+    <value>{0}, tres generaciones de diferencia</value>
   </data>
   <data name="PersonDates_2" xml:space="preserve">
     <value>{0} - {1}</value>
@@ -686,564 +686,564 @@
     <value>{0} ({1})</value>
   </data>
   <data name="PersonSinceBirthDay_1" xml:space="preserve">
-    <value>{0} со дня рождения</value>
+    <value>{0} desde el nacimiento</value>
   </data>
   <data name="AlertTextUnableToAddNameForTheSexSelected_1" xml:space="preserve">
-    <value>Невозможно выбрать имя для выбранного пола: {0}</value>
+    <value>No se puede añadir un nombre para el sexo biológico «{0}»</value>
   </data>
   <data name="MenuItemGotoFamily_1" xml:space="preserve">
-    <value>👪 К семье: {0}</value>
+    <value>👪 A la familia: {0}</value>
   </data>
   <data name="TitleNamesPage" xml:space="preserve">
-    <value>Имена</value>
+    <value>Nombres</value>
   </data>
   <data name="HintNamesPage" xml:space="preserve">
-    <value>Добавление, редактирование или удаление имени</value>
+    <value>Puede añadir, editar o eliminar los nombres de cualquier persona.</value>
   </data>
   <data name="MenuItemGoToNames" xml:space="preserve">
-    <value>📝 К именам</value>
+    <value>📝 A Nombres</value>
   </data>
   <data name="TitleGalleryPage" xml:space="preserve">
-    <value>Галерея</value>
+    <value>Galería</value>
   </data>
   <data name="HintGalleryPage" xml:space="preserve">
-    <value>Все фотографии и вложения проекта с персонами и семьями, к которым они относятся.</value>
+    <value>Todas las fotos y adjuntos del proyecto, con las personas y familias a las que pertenecen.</value>
   </data>
   <data name="MenuItemGoToGallery" xml:space="preserve">
-    <value>🖼 К галерее</value>
+    <value>🖼 A la Galería</value>
   </data>
   <data name="MenuItemImportGedcom" xml:space="preserve">
-    <value>📥 Импорт из GEDCOM</value>
+    <value>📥 Importar desde GEDCOM</value>
   </data>
   <data name="MenuItemExportGedcom" xml:space="preserve">
-    <value>📤 Экспорт в GEDCOM</value>
+    <value>📤 Exportar a GEDCOM</value>
   </data>
   <data name="AlertImportGedcomConfirm_1" xml:space="preserve">
-    <value>Импортировать файл GEDCOM в {0}? Совпадающие люди будут объединены, остальные добавлены.</value>
+    <value>¿Importar un archivo GEDCOM en {0}? Las personas que coincidan con una existente se fusionan; el resto se añaden.</value>
   </data>
   <data name="AlertImportGedcomArchiveEmpty" xml:space="preserve">
-    <value>В архиве нет файла GEDCOM.</value>
+    <value>Este archivo comprimido no contiene ningún archivo GEDCOM.</value>
   </data>
   <data name="FileDialogSelectGedcom" xml:space="preserve">
-    <value>Выберите файл GEDCOM</value>
+    <value>Seleccionar un archivo GEDCOM</value>
   </data>
   <data name="HintImportedFromGedcom" xml:space="preserve">
-    <value>Импортировано из GEDCOM</value>
+    <value>Importado desde GEDCOM</value>
   </data>
   <data name="TitleGedcomImportDialog" xml:space="preserve">
-    <value>Импорт GEDCOM</value>
+    <value>Importando GEDCOM</value>
   </data>
   <data name="HintGedcomImportInProgress" xml:space="preserve">
-    <value>Импорт файла. Это может занять некоторое время…</value>
+    <value>Importando el archivo. Esto puede tardar un rato…</value>
   </data>
   <data name="HintGedcomImportCancelling" xml:space="preserve">
-    <value>Отмена…</value>
+    <value>Cancelando…</value>
   </data>
   <data name="TitleSelectEncodingDialog" xml:space="preserve">
-    <value>Выбор кодировки текста</value>
+    <value>Seleccionar la codificación de texto</value>
   </data>
   <data name="HintGedcomDeclaredCharset_1" xml:space="preserve">
-    <value>Этот файл GEDCOM объявляет кодировку "{0}", которая неоднозначна. Выберите кодовую страницу, в которой на самом деле записан текст.</value>
+    <value>Este archivo GEDCOM declara el juego de caracteres «{0}», que es ambiguo. Elija la página de códigos en la que se escribió realmente su texto.</value>
   </data>
   <data name="FieldCodepage" xml:space="preserve">
-    <value>Кодовая страница</value>
+    <value>Página de códigos</value>
   </data>
   <data name="ShareGedcomTitle" xml:space="preserve">
-    <value>Экспорт GEDCOM</value>
+    <value>Exportar GEDCOM</value>
   </data>
   <data name="FieldSearchText" xml:space="preserve">
-    <value>Поиск</value>
+    <value>Buscar</value>
   </data>
   <data name="ErrorNameIsShared_2" xml:space="preserve">
-    <value>Как минимум следующие персоны носят имя {0}: {1}</value>
+    <value>Al menos las siguientes personas comparten el nombre {0}: {1}</value>
   </data>
   <data name="TitleSettingsPage" xml:space="preserve">
-    <value>Настройки приложения</value>
+    <value>Configuración de la aplicación</value>
   </data>
   <data name="FieldDateDisplayFormat" xml:space="preserve">
-    <value>Формат отображения полных дат</value>
+    <value>Formato de fecha completa</value>
   </data>
   <data name="FieldDateDisplayFormatHint" xml:space="preserve">
-    <value>YYYY - год
-MM - номер месяца (01-12)
-MMM - название месяца (январь - декабрь)
-DD - номер дня (01-31)</value>
+    <value>YYYY - año
+MM - número de mes (01-12)
+MMM - nombre del mes (enero - diciembre)
+DD - número de día (01-31)</value>
   </data>
   <data name="FieldShortDateDisplayFormatHint" xml:space="preserve">
-    <value>YYYY - год
-MM - номер месяца (01-12)
-MMM - название месяца (январь - декабрь)</value>
+    <value>YYYY - año
+MM - número de mes (01-12)
+MMM - nombre del mes (enero - diciembre)</value>
   </data>
   <data name="FieldDateSpanDisplayFormat" xml:space="preserve">
-    <value>Формат отображения полного возраста/периода</value>
+    <value>Formato completo de edad/intervalo</value>
   </data>
   <data name="FieldDateSpanDisplayFormatHint" xml:space="preserve">
-    <value>YEARS - количество лет (например, «25 лет»)
-MONTHS - количество месяцев (например, «3 месяца»)
-DAYS - количество дней (например, «15 дней»)</value>
+    <value>YEARS - número de años (p. ej. «25 años»)
+MONTHS - número de meses (p. ej. «3 meses»)
+DAYS - número de días (p. ej. «15 días»)</value>
   </data>
   <data name="FieldShortDateSpanDisplayFormat" xml:space="preserve">
-    <value>Формат отображения краткого возраста/периода</value>
+    <value>Formato corto de edad/intervalo</value>
   </data>
   <data name="FieldShortDateSpanDisplayFormatHint" xml:space="preserve">
-    <value>YEARS - количество лет (например, «25 лет»)
-MONTHS - количество месяцев (например, «3 месяца»)</value>
+    <value>YEARS - número de años (p. ej. «25 años»)
+MONTHS - número de meses (p. ej. «3 meses»)</value>
   </data>
   <data name="FieldPersonNameFormatHint" xml:space="preserve">
-    <value>FF - имя,                                  FF. - инициал имени
-PP - отчество,                        PP. - инициал отчества
-LL - фамилия,                        LL. - инициал фамилии
-FN - род</value>
+    <value>FF - nombre,                  FF. - inicial del nombre
+PP - patronímico,        PP. - inicial del patronímico
+LL - apellido,                  LL. - inicial del apellido
+FN - apellido familiar</value>
   </data>
   <data name="MenuItemNameSettings" xml:space="preserve">
-    <value>⚙️ Настройки</value>
+    <value>⚙️ Configuración</value>
   </data>
   <data name="FieldShortDateDisplayFormat" xml:space="preserve">
-    <value>Формат отображения коротких дат</value>
+    <value>Formato de fecha corta</value>
   </data>
   <data name="FieldCommonPersonNameFormat" xml:space="preserve">
-    <value>Формат имен родственников</value>
+    <value>Formato de los nombres de los parientes</value>
   </data>
   <data name="NameFirst" xml:space="preserve">
-    <value>Имя</value>
+    <value>Nombre</value>
   </data>
   <data name="NamePatronymic" xml:space="preserve">
-    <value>Отчество</value>
+    <value>Patronímico</value>
   </data>
   <data name="NameLast" xml:space="preserve">
-    <value>Фамилия</value>
+    <value>Apellido</value>
   </data>
   <data name="FieldFullPersonNameFormat" xml:space="preserve">
-    <value>Формат отображения полных имен</value>
+    <value>Formato del nombre completo</value>
   </data>
   <data name="FieldPersonInitialsFormat" xml:space="preserve">
-    <value>Формат имен в описаниях и истории</value>
+    <value>Formato del nombre en descripciones e historial</value>
   </data>
   <data name="ShortPersonNameFormat" xml:space="preserve">
-    <value>Формат имен персон рода</value>
+    <value>Formato de los nombres de las personas de la familia</value>
   </data>
   <data name="TxtPlaceholderBiography" xml:space="preserve">
-    <value>Добавьте биографию или историю из жизни...</value>
+    <value>Introduzca una biografía o historia de vida...</value>
   </data>
   <data name="BtnNameMarkdownEditor" xml:space="preserve">
-    <value>Редактор</value>
+    <value>Editor</value>
   </data>
   <data name="BtnNameMarkdownView" xml:space="preserve">
-    <value>Вид</value>
+    <value>Vista</value>
   </data>
   <data name="BtnNameInsertPersonLink" xml:space="preserve">
-    <value>Ссылка на персону</value>
+    <value>Enlazar una persona</value>
   </data>
   <data name="BtnNameInsertMediaLink" xml:space="preserve">
-    <value>Ссылка на медиа</value>
+    <value>Enlazar medios</value>
   </data>
   <data name="TitleSelectMediaDialog" xml:space="preserve">
-    <value>Выбор медиа</value>
+    <value>Seleccionar medios</value>
   </data>
   <data name="FieldRevision_1" xml:space="preserve">
-    <value>Ревизия: {0}</value>
+    <value>Revisión: {0}</value>
   </data>
   <data name="ErrorTheBoundIsReached" xml:space="preserve">
-    <value>Достигнута граница списка</value>
+    <value>Se ha alcanzado el límite de la colección.</value>
   </data>
   <data name="NameFamily" xml:space="preserve">
-    <value>Род</value>
+    <value>Familia</value>
   </data>
   <data name="MenuItemGoToRevisions" xml:space="preserve">
-    <value>🗓️ Ревизии</value>
+    <value>🗓️ Revisiones</value>
   </data>
   <data name="TitleProjectRevisionsPage" xml:space="preserve">
-    <value>Выбрать ревизию проекта</value>
+    <value>Seleccionar revisiones del proyecto</value>
   </data>
   <data name="HintProjectRevisionsPage" xml:space="preserve">
-    <value>Восстановить или удалить ревизию проекта</value>
+    <value>Restaurar o eliminar la revisión del proyecto</value>
   </data>
   <data name="BtnNameRestore_1" xml:space="preserve">
-    <value>Восстановить {0}</value>
+    <value>Restaurar {0}</value>
   </data>
   <data name="MenuItemExpandAll_1" xml:space="preserve">
-    <value>{0} Развернуть все</value>
+    <value>{0} Expandir todo</value>
   </data>
   <data name="MenuItemCollapseAll_1" xml:space="preserve">
-    <value>{0} Свернуть все</value>
+    <value>{0} Contraer todo</value>
   </data>
   <data name="RelHusbandsFather" xml:space="preserve">
-    <value>Свёкр</value>
+    <value>Suegro</value>
   </data>
   <data name="RelHusbandsMother" xml:space="preserve">
-    <value>Свекровь</value>
+    <value>Suegra</value>
   </data>
   <data name="RelWifesFather" xml:space="preserve">
-    <value>Тесть</value>
+    <value>Suegro</value>
   </data>
   <data name="RelWifesMother" xml:space="preserve">
-    <value>Тёща</value>
+    <value>Suegra</value>
   </data>
   <data name="RelBrothersWife" xml:space="preserve">
-    <value>Невестка</value>
+    <value>Cuñada</value>
   </data>
   <data name="RelSistersHusband" xml:space="preserve">
-    <value>Зять</value>
+    <value>Cuñado</value>
   </data>
   <data name="RelSiblingSpouse" xml:space="preserve">
-    <value>Супруг(а) сестры или брата</value>
+    <value>Cuñado o cuñada</value>
   </data>
   <data name="MenuItemNameFamilyTree" xml:space="preserve">
-    <value>🌳 Древо</value>
+    <value>🌳 Árbol familiar</value>
   </data>
   <data name="TitleFamilyTreePage_1" xml:space="preserve">
     <value>🌳 {0}</value>
   </data>
   <data name="HintFamilyTreePage" xml:space="preserve">
-    <value>Нажмите на родственника, чтобы поместить его в центр</value>
+    <value>Toque un pariente para centrar el árbol en él</value>
   </data>
   <data name="MenuItemNameOpenPerson_1" xml:space="preserve">
-    <value>Открыть {0}</value>
+    <value>Abrir {0}</value>
   </data>
   <data name="BtnNameLoadAncestors" xml:space="preserve">
-    <value>▲ Больше предков</value>
+    <value>▲ Más antepasados</value>
   </data>
   <data name="BtnNameLoadDescendants" xml:space="preserve">
-    <value>▼ Больше потомков</value>
+    <value>▼ Más descendientes</value>
   </data>
   <data name="LblRelatives" xml:space="preserve">
-    <value>Родственники</value>
+    <value>Parientes</value>
   </data>
   <data name="AlertTextKinshipUnfoldingAborted" xml:space="preserve">
-    <value>Операция заняла больше времени, чем ожидалось. Некоторые уровни родства остались нераскрытыми. Вы можете развернуть их вручную</value>
+    <value>La operación ha tardado más de lo esperado. Algunos niveles de parentesco han quedado plegados. Puede desplegarlos manualmente.</value>
   </data>
   <data name="HintRelativeLoopDetected" xml:space="preserve">
-    <value>Обнаружена петля родства: этот человек указан своим же предком или потомком, поэтому узел не был развёрнут.</value>
+    <value>Se ha detectado un bucle de parentesco: esta persona figura como antepasado o descendiente de sí misma, por lo que no se ha expandido.</value>
   </data>
   <data name="HintRelativeMultipleConnections" xml:space="preserve">
-    <value>Этот человек связан с семьёй более чем одним родством.</value>
+    <value>Esta persona se conecta con la familia mediante más de un parentesco.</value>
   </data>
   <data name="FieldFontScale" xml:space="preserve">
-    <value>Размер текста</value>
+    <value>Tamaño del texto</value>
   </data>
   <data name="FieldFontScaleHintWindows" xml:space="preserve">
-    <value>Масштаб всего текста в приложении. Вы можете использовать Ctrl+ +/-/0, чтобы увеличить, уменьшить или сбросить масштабирование размера текста </value>
+    <value>Escala el tamaño de todo el texto de la aplicación. Puede usar las teclas Ctrl + +/-/0 para aumentar, reducir o restablecer la escala actual del tamaño de fuente.</value>
   </data>
   <data name="FieldFontScaleHintMac" xml:space="preserve">
-    <value>Масштаб всего текста в приложении. Вы можете использовать Cmd+ +/-/0, чтобы увеличить, уменьшить или сбросить масштабирование размера текста </value>
+    <value>Escala el tamaño de todo el texto de la aplicación. Puede usar las teclas Cmd + +/-/0 para aumentar, reducir o restablecer la escala actual del tamaño de fuente.</value>
   </data>
   <data name="FieldFontScaleHintAndroid" xml:space="preserve">
-    <value>Масштаб всего текста в приложении. Вы можете использовать жест масштабирования, чтобы увеличить или уменьшить масштабирование размера текста </value>
+    <value>Escala el tamaño de todo el texto de la aplicación. Puede usar el gesto de zoom para aumentar o reducir la escala del tamaño del texto</value>
   </data>
   <data name="FieldFontScaleHintIOS" xml:space="preserve">
-    <value>Масштаб всего текста в приложении. Вы можете использовать жест масштабирования, чтобы увеличить или уменьшить масштабирование размера текста </value>
+    <value>Escala el tamaño de todo el texto de la aplicación. Puede usar el gesto de zoom para aumentar o reducir la escala del tamaño del texto</value>
   </data>
   <data name="FieldBackgroundAnimation" xml:space="preserve">
-    <value>Анимация фона</value>
+    <value>Animación de fondo</value>
   </data>
   <data name="FieldBackgroundAnimationHint" xml:space="preserve">
-    <value>Воспроизводится ли анимированный фон с деревом на каждой странице. Введите True или False.</value>
+    <value>Si se reproduce la animación del árbol de fondo en todas las páginas. Introduzca True o False.</value>
   </data>
   <data name="FieldGedcomDetails" xml:space="preserve">
-    <value>Дополнительные сведения</value>
+    <value>Detalles adicionales</value>
   </data>
   <data name="GedcomTagOCCU" xml:space="preserve">
-    <value>Род занятий</value>
+    <value>Ocupación</value>
   </data>
   <data name="GedcomTagRESI" xml:space="preserve">
-    <value>Место жительства</value>
+    <value>Residencia</value>
   </data>
   <data name="GedcomTagBURI" xml:space="preserve">
-    <value>Погребение</value>
+    <value>Entierro</value>
   </data>
   <data name="GedcomTagCREM" xml:space="preserve">
-    <value>Кремация</value>
+    <value>Cremación</value>
   </data>
   <data name="GedcomTagEVEN" xml:space="preserve">
-    <value>Событие</value>
+    <value>Evento</value>
   </data>
   <data name="GedcomTagCENS" xml:space="preserve">
-    <value>Перепись</value>
+    <value>Censo</value>
   </data>
   <data name="GedcomTagBAPM" xml:space="preserve">
-    <value>Крещение</value>
+    <value>Bautismo</value>
   </data>
   <data name="GedcomTagCHR" xml:space="preserve">
-    <value>Крещение младенца</value>
+    <value>Bautizo</value>
   </data>
   <data name="GedcomTagCONF" xml:space="preserve">
-    <value>Конфирмация</value>
+    <value>Confirmación</value>
   </data>
   <data name="GedcomTagORDN" xml:space="preserve">
-    <value>Рукоположение</value>
+    <value>Ordenación</value>
   </data>
   <data name="GedcomTagADOP" xml:space="preserve">
-    <value>Усыновление</value>
+    <value>Adopción</value>
   </data>
   <data name="GedcomTagEMIG" xml:space="preserve">
-    <value>Эмиграция</value>
+    <value>Emigración</value>
   </data>
   <data name="GedcomTagIMMI" xml:space="preserve">
-    <value>Иммиграция</value>
+    <value>Inmigración</value>
   </data>
   <data name="GedcomTagNATU" xml:space="preserve">
-    <value>Натурализация</value>
+    <value>Naturalización</value>
   </data>
   <data name="GedcomTagRETI" xml:space="preserve">
-    <value>Выход на пенсию</value>
+    <value>Jubilación</value>
   </data>
   <data name="GedcomTagPROB" xml:space="preserve">
-    <value>Утверждение завещания</value>
+    <value>Testamentaría</value>
   </data>
   <data name="GedcomTagWILL" xml:space="preserve">
-    <value>Завещание</value>
+    <value>Testamento</value>
   </data>
   <data name="GedcomTagGRAD" xml:space="preserve">
-    <value>Окончание учёбы</value>
+    <value>Graduación</value>
   </data>
   <data name="GedcomTagEDUC" xml:space="preserve">
-    <value>Образование</value>
+    <value>Educación</value>
   </data>
   <data name="GedcomTagRELI" xml:space="preserve">
-    <value>Религия</value>
+    <value>Religión</value>
   </data>
   <data name="GedcomTagNATI" xml:space="preserve">
-    <value>Национальность</value>
+    <value>Nacionalidad</value>
   </data>
   <data name="GedcomTagTITL" xml:space="preserve">
-    <value>Титул</value>
+    <value>Título</value>
   </data>
   <data name="GedcomTagPROP" xml:space="preserve">
-    <value>Имущество</value>
+    <value>Propiedad</value>
   </data>
   <data name="GedcomTagDSCR" xml:space="preserve">
-    <value>Описание</value>
+    <value>Descripción</value>
   </data>
   <data name="GedcomTagDATE" xml:space="preserve">
-    <value>Дата</value>
+    <value>Fecha</value>
   </data>
   <data name="GedcomTagPLAC" xml:space="preserve">
-    <value>Место</value>
+    <value>Lugar</value>
   </data>
   <data name="GedcomTagTYPE" xml:space="preserve">
-    <value>Тип</value>
+    <value>Tipo</value>
   </data>
   <data name="GedcomTagADDR" xml:space="preserve">
-    <value>Адрес</value>
+    <value>Dirección</value>
   </data>
   <data name="GedcomTagPHON" xml:space="preserve">
-    <value>Телефон</value>
+    <value>Teléfono</value>
   </data>
   <data name="GedcomTagEMAIL" xml:space="preserve">
-    <value>Электронная почта</value>
+    <value>Correo electrónico</value>
   </data>
   <data name="GedcomTagAGE" xml:space="preserve">
-    <value>Возраст</value>
+    <value>Edad</value>
   </data>
   <data name="GedcomTagAGNC" xml:space="preserve">
-    <value>Учреждение</value>
+    <value>Organismo</value>
   </data>
   <data name="GedcomTagCAUS" xml:space="preserve">
-    <value>Причина</value>
+    <value>Causa</value>
   </data>
   <data name="GedcomTagNOTE" xml:space="preserve">
-    <value>Примечание</value>
+    <value>Nota</value>
   </data>
   <data name="GedcomTagROLE" xml:space="preserve">
-    <value>Роль</value>
+    <value>Función</value>
   </data>
   <data name="GedcomTagBIRT" xml:space="preserve">
-    <value>Рождение</value>
+    <value>Nacimiento</value>
   </data>
   <data name="GedcomTagDEAT" xml:space="preserve">
-    <value>Смерть</value>
+    <value>Fallecimiento</value>
   </data>
   <data name="GedcomTagNAME" xml:space="preserve">
-    <value>Имя</value>
+    <value>Nombre</value>
   </data>
   <data name="GedcomTagNICK" xml:space="preserve">
-    <value>Прозвище</value>
+    <value>Apodo</value>
   </data>
   <data name="GedcomTagMAP" xml:space="preserve">
-    <value>Координаты</value>
+    <value>Coordenadas</value>
   </data>
   <data name="GedcomTagLATI" xml:space="preserve">
-    <value>Широта</value>
+    <value>Latitud</value>
   </data>
   <data name="GedcomTagLONG" xml:space="preserve">
-    <value>Долгота</value>
+    <value>Longitud</value>
   </data>
   <data name="GedcomTagSOUR" xml:space="preserve">
-    <value>Источник</value>
+    <value>Fuente</value>
   </data>
   <data name="GedcomTagDATA" xml:space="preserve">
-    <value>Данные</value>
+    <value>Datos</value>
   </data>
   <data name="GedcomTagTEXT" xml:space="preserve">
-    <value>Текст</value>
+    <value>Texto</value>
   </data>
   <data name="GedcomTagFILE" xml:space="preserve">
-    <value>Файл</value>
+    <value>Archivo</value>
   </data>
   <data name="GedcomTagOBJE" xml:space="preserve">
-    <value>Медиа</value>
+    <value>Medios</value>
   </data>
   <data name="GedcomTagCALN" xml:space="preserve">
-    <value>Шифр</value>
+    <value>Número de referencia</value>
   </data>
   <data name="GedcomTagPAGE" xml:space="preserve">
-    <value>Страница</value>
+    <value>Página</value>
   </data>
   <data name="GedcomTagFORM" xml:space="preserve">
-    <value>Формат</value>
+    <value>Formato</value>
   </data>
   <data name="GedcomTagCHAN" xml:space="preserve">
-    <value>Изменено</value>
+    <value>Última modificación</value>
   </data>
   <data name="GedcomTagFAM" xml:space="preserve">
-    <value>Брак с</value>
+    <value>Matrimonio con</value>
   </data>
   <data name="GedcomTagMARR" xml:space="preserve">
-    <value>Бракосочетание</value>
+    <value>Matrimonio</value>
   </data>
   <data name="GedcomTagDIV" xml:space="preserve">
-    <value>Развод</value>
+    <value>Divorcio</value>
   </data>
   <data name="GedcomTagENGA" xml:space="preserve">
-    <value>Помолвка</value>
+    <value>Compromiso</value>
   </data>
   <data name="GedcomTagNCHI" xml:space="preserve">
-    <value>Количество детей</value>
+    <value>Número de hijos</value>
   </data>
   <data name="FieldGedcomFamilyDetails" xml:space="preserve">
-    <value>Сведения о семье</value>
+    <value>Detalles de la familia</value>
   </data>
   <data name="FieldFilterAny" xml:space="preserve">
-    <value>Любой</value>
+    <value>Cualquiera</value>
   </data>
   <data name="FieldFilterSex" xml:space="preserve">
-    <value>Пол</value>
+    <value>Sexo</value>
   </data>
   <data name="FieldMaritalStatusMarried" xml:space="preserve">
-    <value>В браке</value>
+    <value>Casado</value>
   </data>
   <data name="FieldMaritalStatusSingle" xml:space="preserve">
-    <value>Не в браке</value>
+    <value>Soltero</value>
   </data>
   <data name="HintNameFilterWildcard" xml:space="preserve">
-    <value>Имя содержит… (поддерживаются подстановочные знаки * и ?)</value>
+    <value>El nombre contiene… (se admiten los comodines * y ?)</value>
   </data>
   <data name="BtnNameClearFilters" xml:space="preserve">
-    <value>Сбросить фильтры</value>
+    <value>Borrar filtros</value>
   </data>
   <data name="BtnNameFilters_1" xml:space="preserve">
-    <value>{0} Фильтры</value>
+    <value>{0} Filtros</value>
   </data>
   <data name="TitleStatisticsPage" xml:space="preserve">
-    <value>Статистика</value>
+    <value>Estadísticas</value>
   </data>
   <data name="MenuItemGoToStatistics" xml:space="preserve">
-    <value>📊 Статистика</value>
+    <value>📊 Estadísticas</value>
   </data>
   <data name="MenuItemGoToKinshipFinder" xml:space="preserve">
-    <value>🩸 Поиск родства</value>
+    <value>🩸 Buscador de parentesco</value>
   </data>
   <data name="FieldStatOverview" xml:space="preserve">
-    <value>Обзор</value>
+    <value>Resumen</value>
   </data>
   <data name="FieldStatAge" xml:space="preserve">
-    <value>Возраст</value>
+    <value>Edad</value>
   </data>
   <data name="FieldStatBirthYears" xml:space="preserve">
-    <value>Годы рождения</value>
+    <value>Años de nacimiento</value>
   </data>
   <data name="FieldStatNames" xml:space="preserve">
-    <value>Имена</value>
+    <value>Nombres</value>
   </data>
   <data name="FieldStatDataCompleteness" xml:space="preserve">
-    <value>Полнота данных</value>
+    <value>Integridad de los datos</value>
   </data>
   <data name="FieldStatRelationships" xml:space="preserve">
-    <value>Связи</value>
+    <value>Parentescos</value>
   </data>
   <data name="FieldStatTotalPersons" xml:space="preserve">
-    <value>Всего персон</value>
+    <value>Personas en total</value>
   </data>
   <data name="FieldStatTotalFamilies" xml:space="preserve">
-    <value>Всего семей</value>
+    <value>Familias en total</value>
   </data>
   <data name="FieldStatMenCount" xml:space="preserve">
-    <value>Мужчины</value>
+    <value>Hombres</value>
   </data>
   <data name="FieldStatWomenCount" xml:space="preserve">
-    <value>Женщины</value>
+    <value>Mujeres</value>
   </data>
   <data name="FieldStatUnknownSexCount" xml:space="preserve">
-    <value>Пол неизвестен</value>
+    <value>Sexo desconocido</value>
   </data>
   <data name="FieldStatLivingCount" xml:space="preserve">
-    <value>Живы сейчас</value>
+    <value>Vivos actualmente</value>
   </data>
   <data name="FieldStatAverageLifespan" xml:space="preserve">
-    <value>Средняя продолжительность жизни</value>
+    <value>Esperanza de vida media</value>
   </data>
   <data name="FieldStatLifespan95thPercentile" xml:space="preserve">
-    <value>95-й процентиль продолжительности жизни</value>
+    <value>Longevidad en el percentil 95</value>
   </data>
   <data name="FieldStatOldestLiving" xml:space="preserve">
-    <value>Самый старший из живых</value>
+    <value>Persona viva de más edad</value>
   </data>
   <data name="FieldStatLongestLifespan" xml:space="preserve">
-    <value>Самая долгая жизнь по записям</value>
+    <value>Mayor longevidad registrada</value>
   </data>
   <data name="FieldStatBirthYearSpan" xml:space="preserve">
-    <value>Диапазон годов рождения</value>
+    <value>Intervalo de años de nacimiento</value>
   </data>
   <data name="FieldStatMedianBirthYear" xml:space="preserve">
-    <value>Медианный год рождения</value>
+    <value>Año de nacimiento mediano</value>
   </data>
   <data name="FieldStatBirthsByDecade" xml:space="preserve">
-    <value>Рождения по десятилетиям</value>
+    <value>Nacimientos por década</value>
   </data>
   <data name="FieldStatLargestFamily" xml:space="preserve">
-    <value>Самые большие семьи</value>
+    <value>Familias más numerosas</value>
   </data>
   <data name="FieldStatSingleMemberFamilies" xml:space="preserve">
-    <value>Семьи с одним человеком</value>
+    <value>Familias de un solo miembro</value>
   </data>
   <data name="FieldStatTopMaleFirstNames" xml:space="preserve">
-    <value>Популярные мужские имена</value>
+    <value>Nombres masculinos más frecuentes</value>
   </data>
   <data name="FieldStatTopFemaleFirstNames" xml:space="preserve">
-    <value>Популярные женские имена</value>
+    <value>Nombres femeninos más frecuentes</value>
   </data>
   <data name="FieldStatIncompleteBirthDates" xml:space="preserve">
-    <value>Неполные даты рождения</value>
+    <value>Fechas de nacimiento incompletas</value>
   </data>
   <data name="FieldStatPhotoCoverage" xml:space="preserve">
-    <value>Наличие фото</value>
+    <value>Cobertura fotográfica</value>
   </data>
   <data name="FieldStatIsolatedPersons" xml:space="preserve">
-    <value>Персоны без связей</value>
+    <value>Personas aisladas (sin parientes)</value>
   </data>
   <data name="FieldStatMarriageCount" xml:space="preserve">
-    <value>Браки</value>
+    <value>Matrimonios</value>
   </data>
   <data name="FieldStatAverageChildren" xml:space="preserve">
-    <value>Среднее число детей на родителя</value>
+    <value>Media de hijos por progenitor</value>
   </data>
   <data name="FieldStatMostChildren" xml:space="preserve">
-    <value>Больше всего детей</value>
+    <value>Mayor número de hijos</value>
   </data>
   <data name="StatValueNone" xml:space="preserve">
     <value>—</value>
   </data>
   <data name="MsgKinshipNotFound" xml:space="preserve">
-    <value>Известное родство между этими людьми не найдено.</value>
+    <value>No se ha encontrado ningún parentesco conocido entre estas dos personas.</value>
   </data>
   <data name="BtnNameChoosePerson" xml:space="preserve">
-    <value>Выбрать…</value>
+    <value>Elegir…</value>
   </data>
   <data name="StatValueYears_1" xml:space="preserve">
-    <value>{0} лет</value>
+    <value>{0} años</value>
   </data>
   <data name="StatValuePersonYears_2" xml:space="preserve">
-    <value>{0} ({1} лет)</value>
+    <value>{0} ({1} años)</value>
   </data>
   <data name="StatValueYearRange_2" xml:space="preserve">
     <value>{0}–{1}</value>
@@ -1252,15 +1252,15 @@ FN - род</value>
     <value>{0} ({1})</value>
   </data>
   <data name="StatValueDecadeCount_2" xml:space="preserve">
-    <value>{0}-е: {1}</value>
+    <value>Años {0}: {1}</value>
   </data>
   <data name="StatValuePersonChildren_2" xml:space="preserve">
-    <value>{0} ({1} детей)</value>
+    <value>{0} ({1} hijos)</value>
   </data>
   <data name="StatValueCoverage_2" xml:space="preserve">
-    <value>{0} из {1}</value>
+    <value>{0} de {1}</value>
   </data>
   <data name="StatValueChildrenAverage_1" xml:space="preserve">
-    <value>{0} детей</value>
+    <value>{0} hijos</value>
   </data>
 </root>

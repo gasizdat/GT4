@@ -2431,6 +2431,15 @@ namespace GT4.UI.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to -{0}.
+        /// </summary>
+        public static string RelGreat2_es_1 {
+            get {
+                return ResourceManager.GetString("RelGreat2_es_1", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to 🩸 {0}%.
         /// </summary>
         public static string RelBloodShare_1 {
