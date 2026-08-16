@@ -9,8 +9,7 @@ using Table = Dictionary<RelationshipType, RelationshipTypeTableRow>;
 
 internal abstract class RelationshipTypeFormatterBase
 {
-  protected static readonly Generation GreatnessStartLevel = new Generation(2);
-
+  private static readonly Generation _GreatnessStartLevel = new Generation(2);
   private static readonly Generation _GreatnessMaxLevel = new Generation(4);
 
   private readonly RelationshipType _Type;
@@ -21,6 +20,7 @@ internal abstract class RelationshipTypeFormatterBase
   private readonly Converters _Converters;
   private static bool? _IsRunningInTest;
 
+  protected Generation GreatnessStartLevel => _GreatnessStartLevel;
   protected RelationshipType Type => _Type;
   protected BiologicalSex Sex => _Sex;
   protected Generation Gen => _Gen;
