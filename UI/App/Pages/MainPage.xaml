@@ -7,7 +7,7 @@
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root">
 
-  <components:PageLayout>
+  <components:PageLayout Title="{x:Static resources:UIStrings.TitleApp}">
     <components:PageLayout.Header>
       <HorizontalStackLayout
           HorizontalOptions="End"
