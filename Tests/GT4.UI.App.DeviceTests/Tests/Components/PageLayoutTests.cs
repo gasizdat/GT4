@@ -34,6 +34,17 @@ public class PageLayoutTests
   }
 
   [Fact]
+  public async Task Before_the_first_layout_pass_neither_menu_shows_even_with_items()
+  {
+    var layout = await CreateLayoutAsync();
+
+    await AddMenuItemAsync(layout);
+
+    Assert.False(layout.IsTopMenuVisible);
+    Assert.False(layout.IsSideMenuVisible);
+  }
+
+  [Fact]
   public async Task A_portrait_layout_puts_the_menu_on_top()
   {
     var layout = await CreateLayoutAsync();
@@ -84,7 +95,7 @@ public class PageLayoutTests
   }
 
   [Fact]
-  public async Task Adding_the_first_menu_item_reports_both_menu_flags_as_changed()
+  public async Task Adding_the_first_menu_item_reports_only_the_flag_that_actually_turned_on()
   {
     var layout = await CreateLayoutAsync();
     await ArrangeAsync(layout, 400, 800);
@@ -94,7 +105,7 @@ public class PageLayoutTests
     await AddMenuItemAsync(layout);
 
     Assert.Contains(nameof(PageLayout.IsTopMenuVisible), changed);
-    Assert.Contains(nameof(PageLayout.IsSideMenuVisible), changed);
+    Assert.DoesNotContain(nameof(PageLayout.IsSideMenuVisible), changed);
   }
 
   [Fact]

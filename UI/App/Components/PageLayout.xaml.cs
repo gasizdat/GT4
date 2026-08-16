@@ -1,3 +1,4 @@
+using GT4.UI.Items;
 using GT4.UI.Utils.Settings;
 using System.Collections.ObjectModel;
 
@@ -5,7 +6,9 @@ namespace GT4.UI.Components;
 
 public partial class PageLayout : ContentView
 {
-  private readonly ObservableCollection<MenuItem> _MenuItems = new();
+  private readonly ObservableCollection<PageMenuItem> _MenuItems = new();
+  private bool _IsTopMenuVisible;
+  private bool _IsSideMenuVisible;
 
 
   public PageLayout(IServiceProvider serviceProvider)
@@ -105,11 +108,23 @@ public partial class PageLayout : ContentView
 
   private void OnMenuPlacementChanged(object? sender, EventArgs e)
   {
-    OnPropertyChanged(nameof(IsTopMenuVisible));
-    OnPropertyChanged(nameof(IsSideMenuVisible));
+    var isTopMenuVisible = IsTopMenuVisible;
+    var isSideMenuVisible = IsSideMenuVisible;
+
+    if (isTopMenuVisible != _IsTopMenuVisible)
+    {
+      _IsTopMenuVisible = isTopMenuVisible;
+      OnPropertyChanged(nameof(IsTopMenuVisible));
+    }
+
+    if (isSideMenuVisible != _IsSideMenuVisible)
+    {
+      _IsSideMenuVisible = isSideMenuVisible;
+      OnPropertyChanged(nameof(IsSideMenuVisible));
+    }
   }
 
-  public ICollection<MenuItem> MenuItems => _MenuItems;
+  public ICollection<PageMenuItem> MenuItems => _MenuItems;
 
   public string Title
   {
@@ -141,11 +156,9 @@ public partial class PageLayout : ContentView
     set => SetValue(FooterProperty, value);
   }
 
-  public bool IsMenuVisible => _MenuItems.Any();
+  public bool IsTopMenuVisible => _MenuItems.Count > 0 && Height >= 0 && Height > Width;
 
-  public bool IsTopMenuVisible => IsMenuVisible && Height > Width;
-
-  public bool IsSideMenuVisible => IsMenuVisible && Height <= Width;
+  public bool IsSideMenuVisible => _MenuItems.Count > 0 && Height >= 0 && Height <= Width;
 
   public bool IsTitleVisible => !string.IsNullOrWhiteSpace(Title);
 
