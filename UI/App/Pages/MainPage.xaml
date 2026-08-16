@@ -32,10 +32,12 @@
     <components:PageLayout.Body>
       <VerticalStackLayout Spacing="{x:StaticResource PageContentSpacing}">
 
-        <!--Image
-            Aspect="AspectFit"
-            HeightRequest="200"
-            Source="gt4_logo.png" /-->
+        <!--
+          Image
+          Aspect="AspectFit"
+          HeightRequest="200"
+          Source="gt4_logo.png" /
+        -->
 
         <Label
             HorizontalOptions="Fill"

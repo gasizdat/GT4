@@ -3,6 +3,7 @@
     x:Class="GT4.UI.Components.PageLayout"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:items="clr-namespace:GT4.UI.Items"
     x:Name="Root">
 
   <ContentView.Resources>
@@ -32,32 +33,76 @@
 
   <Grid
       ColumnDefinitions="*"
-      RowDefinitions="Auto, *, Auto">
+      RowDefinitions="Auto, Auto, *, Auto">
     <Image
-        Grid.RowSpan="3"
+        Grid.RowSpan="4"
         Aspect="AspectFill"
         IsAnimationPlaying="{Binding Animation.IsEnabled, Source={x:Reference Root}}"
         Opacity="0.3"
         Source="tree_bg.gif" />
 
-    <!--  Header slot  -->
-    <ContentView
+    <!--  Title  -->
+    <Label
         Grid.Row="0"
         Grid.Column="0"
-        Padding="{StaticResource HeaderPadding}"
-        Content="{Binding Header, Source={x:Reference Root}}"
-        IsVisible="{Binding IsHeaderVisible, Source={x:Reference Root}}" />
+        Margin="{Thickness Left={StaticResource PageContentHorizontalPadding},
+                           Right={StaticResource PageContentHorizontalPadding}}"
+        IsVisible="{Binding IsTitleVisible, Source={x:Reference Root}}"
+        Style="{StaticResource PageTitle}"
+        Text="{Binding Title, Source={x:Reference Root}}" />
 
-    <!--  Body slot  -->
-    <ContentView
+    <!--  Header slot  -->
+    <Grid
         Grid.Row="1"
         Grid.Column="0"
+        Padding="{StaticResource HeaderPadding}"
+        RowDefinitions="*, Auto">
+
+      <FlexLayout
+          BindableLayout.ItemsSource="{Binding MenuItems, Source={x:Reference Root}}"
+          Direction="Row"
+          IsVisible="{Binding IsMenuVisible, Source={x:Reference Root}}"
+          Wrap="Wrap">
+
+        <BindableLayout.ItemTemplate>
+          <DataTemplate x:DataType="items:PageMenuItem">
+            <Grid RowDefinitions="Auto, Auto">
+              <Button
+                  Command="{Binding Command}"
+                  CommandParameter="{Binding CommandParameter}"
+                  HorizontalOptions="Center"
+                  Style="{StaticResource TextAdorner}"
+                  Text="{Binding ButtonText}"
+                  ToolTipProperties.Text="{Binding LabelText}" />
+              <Label
+                  Grid.Row="1"
+                  HorizontalOptions="Center"
+                  IsVisible="{OnIdiom Desktop=False, Default=True}"
+                  Style="{StaticResource FieldValue}"
+                  Text="{Binding LabelText}" />
+            </Grid>
+          </DataTemplate>
+        </BindableLayout.ItemTemplate>
+
+      </FlexLayout>
+      <ContentView
+          Grid.Row="1"
+          Content="{Binding Header, Source={x:Reference Root}}"
+          IsVisible="{Binding IsHeaderVisible, Source={x:Reference Root}}" />
+    </Grid>
+
+    <!--  Body slot  -->
+    <Grid
+        Grid.Row="2"
+        Grid.Column="0"
         Padding="{StaticResource BodyPadding}"
-        Content="{Binding Body, Source={x:Reference Root}}" />
+        ColumnDefinitions="*, Auto">
+      <ContentView Content="{Binding Body, Source={x:Reference Root}}" />
+    </Grid>
 
     <!--  Footer slot  -->
     <ContentView
-        Grid.Row="2"
+        Grid.Row="3"
         Grid.Column="0"
         Padding="{StaticResource FooterPadding}"
         Content="{Binding Footer, Source={x:Reference Root}}"
