@@ -898,7 +898,7 @@ FN - apellido familiar</value>
     <value>Toque un pariente para centrar el árbol en él</value>
   </data>
   <data name="MenuItemNameOpenPerson_1" xml:space="preserve">
-    <value>Abrir {0}</value>
+    <value>👤 Abrir {0}</value>
   </data>
   <data name="BtnNameLoadAncestors" xml:space="preserve">
     <value>▲ Más antepasados</value>

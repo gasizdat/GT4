@@ -6,39 +6,30 @@
     xmlns:components="clr-namespace:GT4.UI.Components"
     xmlns:items="clr-namespace:GT4.UI.Items"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
-    x:Name="Root"
-    Title="{x:Static resources:UIStrings.TitleProjectPage}">
+    x:Name="Root">
 
-  <ContentPage.ToolbarItems>
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="Create"
-        Order="Secondary"
-        Text="{x:Static resources:UIStrings.MenuItemNameCreateGenealogyTree}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="ImportGedcom"
-        Order="Secondary"
-        Text="{x:Static resources:UIStrings.MenuItemImportGedcom}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="Refresh"
-        Order="Secondary"
-        Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="Settings"
-        Order="Secondary"
-        Text="{x:Static resources:UIStrings.MenuItemNameSettings}" />
-  </ContentPage.ToolbarItems>
+  <components:PageLayout
+      Title="{x:Static resources:UIStrings.TitleProjectPage}"
+      Hint="{x:Static resources:UIStrings.HintProjectPage}">
 
-  <components:PageLayout>
-
-    <components:PageLayout.Header>
-      <Label
-          Style="{StaticResource PageSubtitle}"
-          Text="{x:Static resources:UIStrings.HintProjectPage}" />
-    </components:PageLayout.Header>
+    <components:PageLayout.MenuItems>
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="Create"
+          Text="{x:Static resources:UIStrings.MenuItemNameCreateGenealogyTree}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="ImportGedcom"
+          Text="{x:Static resources:UIStrings.MenuItemImportGedcom}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="Settings"
+          Text="{x:Static resources:UIStrings.MenuItemNameSettings}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="Refresh"
+          Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
+    </components:PageLayout.MenuItems>
 
     <components:PageLayout.Body>
       <CollectionView

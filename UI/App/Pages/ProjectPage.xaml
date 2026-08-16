@@ -7,70 +7,62 @@
     xmlns:dto="clr-namespace:GT4.Core.Project.Dto;assembly=GT4.Core.Project"
     xmlns:items="clr-namespace:GT4.UI.Items"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
-    x:Name="Root"
-    Title="{x:Static resources:UIStrings.TitleFamiliesPage}">
+    x:Name="Root">
 
-  <ContentPage.ToolbarItems>
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="RemoveProject"
-        Order="Secondary"
-        Text="{Binding RemoveProjectToolbarItemName, Source={x:Reference Root}}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="EditProject"
-        Order="Secondary"
-        Text="{Binding EditProjectToolbarItemName, Source={x:Reference Root}}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="CreateFamily"
-        Order="Secondary"
-        Text="{x:Static resources:UIStrings.MenuItemNameCreateFamily}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="GoToNames"
-        Order="Secondary"
-        Text="{x:Static resources:UIStrings.MenuItemGoToNames}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="GoToGallery"
-        Order="Secondary"
-        Text="{x:Static resources:UIStrings.MenuItemGoToGallery}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="GoToStatistics"
-        Order="Secondary"
-        Text="{x:Static resources:UIStrings.MenuItemGoToStatistics}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="GoToKinshipFinder"
-        Order="Secondary"
-        Text="{x:Static resources:UIStrings.MenuItemGoToKinshipFinder}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="ImportGedcom"
-        Order="Secondary"
-        Text="{x:Static resources:UIStrings.MenuItemImportGedcom}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="ExportGedcom"
-        Order="Secondary"
-        Text="{x:Static resources:UIStrings.MenuItemExportGedcom}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="GoToRevisions"
-        Order="Primary"
-        Text="{x:Static resources:UIStrings.MenuItemGoToRevisions}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="Refresh"
-        Order="Secondary"
-        Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
-  </ContentPage.ToolbarItems>
+  <components:PageLayout
+      Title="{x:Static resources:UIStrings.TitleFamiliesPage}"
+      Hint="{x:Static resources:UIStrings.HintFamiliesPage}">
 
-  <components:PageLayout>
+    <components:PageLayout.MenuItems>
+
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="RemoveProject"
+          Text="{Binding RemoveProjectToolbarItemName, Source={x:Reference Root}}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="EditProject"
+          Text="{Binding EditProjectToolbarItemName, Source={x:Reference Root}}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="CreateFamily"
+          Text="{x:Static resources:UIStrings.MenuItemNameCreateFamily}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="ImportGedcom"
+          Text="{x:Static resources:UIStrings.MenuItemImportGedcom}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="ExportGedcom"
+          Text="{x:Static resources:UIStrings.MenuItemExportGedcom}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="GoToNames"
+          Text="{x:Static resources:UIStrings.MenuItemGoToNames}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="GoToGallery"
+          Text="{x:Static resources:UIStrings.MenuItemGoToGallery}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="GoToStatistics"
+          Text="{x:Static resources:UIStrings.MenuItemGoToStatistics}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="GoToKinshipFinder"
+          Text="{x:Static resources:UIStrings.MenuItemGoToKinshipFinder}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="GoToRevisions"
+          Text="{x:Static resources:UIStrings.MenuItemGoToRevisions}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="Refresh"
+          Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
+    </components:PageLayout.MenuItems>
+
     <components:PageLayout.Header>
-      <components:PersonFilterView x:Name="FilterView" HeaderText="{x:Static resources:UIStrings.HintFamiliesPage}" />
+      <components:PersonFilterView x:Name="FilterView" />
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>
@@ -111,8 +103,8 @@
                     Grid.Column="0"
                     Grid.ColumnSpan="2"
                     Margin="{Thickness Left={StaticResource PhotoThumbWidth}}"
-                    ItemsSource="{Binding DisplayedPersons}"
                     Direction="Row"
+                    ItemsSource="{Binding DisplayedPersons}"
                     SizeChanged="OnFamilyPersonsSizeChanged"
                     Wrap="Wrap">
 

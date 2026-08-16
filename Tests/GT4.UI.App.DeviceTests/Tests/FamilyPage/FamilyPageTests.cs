@@ -2,6 +2,7 @@ using GT4.Core.Gedcom;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.Components;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Pages;
@@ -359,15 +360,19 @@ public class FamilyPageTests
   }
 
   [Fact]
-  public async Task NoFamily_mode_drops_the_remove_and_edit_family_toolbar_items()
+  public async Task NoFamily_mode_disables_the_remove_and_edit_family_menu_buttons()
   {
     var page = await CreatePageAsync(new TestServices());
-    Assert.Equal(4, page.ToolbarItems.Count);
+    var layout = (PageLayout)page.Content;
+    await MainThread.InvokeOnMainThreadAsync(() => ((IView)layout).Arrange(new Rect(0, 0, 400, 800)));
+    var topMenu = layout.FindByName<FlexLayout>("TopMenu");
+    var buttons = topMenu.Children.OfType<Button>().ToArray();
+    Assert.Equal(4, buttons.Length);
 
     await MainThread.InvokeOnMainThreadAsync(() => page.FamilyName = FamilyInfoItem.NoFamilyName);
 
     var parameters = await MainThread.InvokeOnMainThreadAsync(
-      () => page.ToolbarItems.Where(tb => tb.IsEnabled).Select(item => item.CommandParameter).ToArray());
+      () => buttons.Where(b => b.IsEnabled).Select(b => ((PageMenuItem)b.BindingContext!).CommandParameter).ToArray());
     Assert.Equal(["CreatePerson", "Refresh"], parameters);
   }
 

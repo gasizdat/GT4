@@ -201,8 +201,6 @@ public partial class PersonPage : ContentPage
   public Name FamilyName =>
     _PersonFullInfo.Names.SingleOrDefault(n => n.Type == NameType.FamilyName, FamilyInfoItem.NoFamilyName);
 
-  public string GoToFamilyName => string.Format(UIStrings.MenuItemGotoFamily_1, FamilyName.Value);
-
   public ICollection NavigationHistory => _NavigationHistory;
 
   public PersonInfo? CurrentPerson
@@ -514,12 +512,6 @@ public partial class PersonPage : ContentPage
         break;
       case string commandName when commandName == "Refresh":
         ShowPersonInfo(_PersonFullInfo, false);
-        break;
-      case string commandName when commandName == "GoToHome":
-        await _NavigationService.GoToAsync(UIRoutes.GetRoute<MainPage>());
-        break;
-      case string commandName when commandName == "GoToFamily":
-        await OnGotoFamilyAsync();
         break;
       case string commandName when commandName == "GoToFamilyTree":
         // Shell matches the target's [QueryProperty] by exact runtime type, so hand it a plain

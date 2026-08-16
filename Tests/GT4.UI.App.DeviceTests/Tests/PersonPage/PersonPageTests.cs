@@ -1,6 +1,7 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.Components;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Pages;
@@ -57,6 +58,24 @@ public class PersonPageTests
     Assert.NotNull(page.PageCommand);
     Assert.False(page.ExpandAll);
     Assert.Empty(page.Photos);
+  }
+
+  [Fact]
+  public async Task Menu_items_render_as_buttons_and_the_ToggleAll_caption_repaints_on_ExpandAll()
+  {
+    var page = await CreatePageAsync(new TestServices());
+    var layout = (PageLayout)page.Content;
+    await MainThread.InvokeOnMainThreadAsync(() => ((IView)layout).Arrange(new Rect(0, 0, 400, 800)));
+    var topMenu = layout.FindByName<FlexLayout>("TopMenu");
+    var buttons = topMenu.Children.OfType<Button>().ToArray();
+    Assert.Equal(5, buttons.Length);
+
+    var toggleButton = buttons.Single(b => (string)((PageMenuItem)b.BindingContext!).CommandParameter == "ToggleAll");
+    Assert.Equal("⏬", toggleButton.Text);
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.ExpandAll = true);
+
+    Assert.Equal("⏫", toggleButton.Text);
   }
 
   [Fact]
@@ -396,17 +415,45 @@ public class PersonPageTests
   }
 
   [Fact]
-  public async Task RemovePerson_removes_the_current_person()
+  public async Task RemovePerson_removes_the_current_person_and_navigates_to_its_family()
   {
     var services = new TestServices();
     var person = CreateSamplePerson();
     services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
     var page = await CreatePageAsync(services);
     await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+    var expectedRoute = $"{typeof(FamilyPage).Namespace}/{typeof(FamilyPage).Name}";
+    var expectedFamilyName = person.Names.Single(n => n.Type == NameType.FamilyName);
 
     await page.InvokePageCommandAsync("RemovePerson");
 
     services.Persons.Verify(p => p.RemovePersonAsync(person, It.IsAny<CancellationToken>()), Times.Once());
+    services.NavigationService.Verify(
+      n => n.GoToAsync(
+        expectedRoute,
+        true,
+        It.Is<Dictionary<string, object>>(d => Equals(d["FamilyName"], expectedFamilyName))),
+      Times.Once());
+  }
+
+  [Fact]
+  public async Task RemovePerson_for_a_familyless_person_navigates_with_the_NoFamily_sentinel()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson() with { Names = [N(2, "Ivan", NameType.FirstName | NameType.MaleDeclension)] };
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+    var expectedRoute = $"{typeof(FamilyPage).Namespace}/{typeof(FamilyPage).Name}";
+
+    await page.InvokePageCommandAsync("RemovePerson");
+
+    services.NavigationService.Verify(
+      n => n.GoToAsync(
+        expectedRoute,
+        true,
+        It.Is<Dictionary<string, object>>(d => Equals(d["FamilyName"], FamilyInfoItem.NoFamilyName))),
+      Times.Once());
   }
 
   [Fact]
@@ -637,59 +684,6 @@ public class PersonPageTests
     var attachment = await page.ResolveAttachmentAsync(41);
 
     Assert.Null(attachment);
-  }
-
-  [Fact]
-  public async Task GoToHome_navigates_to_MainPage()
-  {
-    var services = new TestServices();
-    var page = await CreatePageAsync(services);
-    var expectedRoute = $"{typeof(MainPage).Namespace}/{typeof(MainPage).Name}";
-
-    await page.InvokePageCommandAsync("GoToHome");
-
-    services.NavigationService.Verify(n => n.GoToAsync(expectedRoute), Times.Once());
-  }
-
-  [Fact]
-  public async Task GoToFamily_navigates_with_the_persons_family_name()
-  {
-    var services = new TestServices();
-    var person = CreateSamplePerson();
-    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
-    var page = await CreatePageAsync(services);
-    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
-    var expectedRoute = $"{typeof(FamilyPage).Namespace}/{typeof(FamilyPage).Name}";
-    var expectedFamilyName = person.Names.Single(n => n.Type == NameType.FamilyName);
-
-    await page.InvokePageCommandAsync("GoToFamily");
-
-    services.NavigationService.Verify(
-      n => n.GoToAsync(
-        expectedRoute,
-        true,
-        It.Is<Dictionary<string, object>>(d => Equals(d["FamilyName"], expectedFamilyName))),
-      Times.Once());
-  }
-
-  [Fact]
-  public async Task GoToFamily_for_a_familyless_person_navigates_with_the_NoFamily_sentinel()
-  {
-    var services = new TestServices();
-    var person = CreateSamplePerson() with { Names = [N(2, "Ivan", NameType.FirstName | NameType.MaleDeclension)] };
-    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
-    var page = await CreatePageAsync(services);
-    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
-    var expectedRoute = $"{typeof(FamilyPage).Namespace}/{typeof(FamilyPage).Name}";
-
-    await page.InvokePageCommandAsync("GoToFamily");
-
-    services.NavigationService.Verify(
-      n => n.GoToAsync(
-        expectedRoute,
-        true,
-        It.Is<Dictionary<string, object>>(d => Equals(d["FamilyName"], FamilyInfoItem.NoFamilyName))),
-      Times.Once());
   }
 
   [Fact]

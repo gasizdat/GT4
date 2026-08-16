@@ -35,19 +35,6 @@ public partial class PersonFilterView : ContentView
     UpdateToggleText();
   }
 
-  public static readonly BindableProperty HeaderTextProperty = BindableProperty.Create(
-    nameof(HeaderText),
-    typeof(string),
-    typeof(PersonFilterView),
-    default(string),
-    BindingMode.OneWay);
-
-  public string? HeaderText
-  {
-    get => (string?)GetValue(HeaderTextProperty);
-    set => SetValue(HeaderTextProperty, value);
-  }
-
   public void Initialize(
     IBiologicalSexFormatter biologicalSexFormatter,
     ICancellationTokenProvider cancellationTokenProvider,
