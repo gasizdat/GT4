@@ -254,6 +254,25 @@ public class RelationshipTypeFormatterTests
     Assert.Equal(expected, actual);
   }
 
+  // The descendant mirror of the case above, and the only one where a two-stem disjunction meets the
+  // seam that does not contract.
+  [Theory]
+  [InlineData(-2, "Sobrino nieto o sobrina nieta")]
+  [InlineData(-3, "Sobrino bisnieto o sobrina bisnieta")]
+  [InlineData(-4, "Sobrino tataranieto o sobrina tataranieta")]
+  [InlineData(-14, "12-sobrino tataranieto o sobrina tataranieta")]
+  public void ES_UnknownSex_GrandNephewNiece(int generation, string expected)
+  {
+    SetEs();
+    var actual = _formatter.ToString(
+      RelationshipType.Sibling,
+      BiologicalSex.Unknown,
+      ToGeneration(generation),
+      Consanguinity.Sibling);
+
+    Assert.Equal(expected, actual);
+  }
+
   [Theory]
   [InlineData(0, 2, "Cousin")]
   [InlineData(0, 3, "Second cousin")]
