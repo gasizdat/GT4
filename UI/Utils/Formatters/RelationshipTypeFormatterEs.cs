@@ -12,7 +12,6 @@ using S = UIStrings;
 /// </summary>
 internal class RelationshipTypeFormatterEs : RelationshipTypeFormatterEn
 {
-  private static readonly Generation _GreatnessStartLevel = new Generation(2);
   private static readonly Generation _NamedPrefixMaxLevel = new Generation(2);
 
   public RelationshipTypeFormatterEs(RelationshipType type, BiologicalSex? biologicalSex, Generation? generation, Consanguinity? consanguinity)
@@ -28,7 +27,7 @@ internal class RelationshipTypeFormatterEs : RelationshipTypeFormatterEn
   /// </summary>
   protected override string AddGreatness(string main)
   {
-    var depth = AbsGen - _GreatnessStartLevel;
+    var depth = AbsGen - GreatnessStartLevel;
 
     if (depth <= Generation.Zero)
     {
@@ -60,7 +59,7 @@ internal class RelationshipTypeFormatterEs : RelationshipTypeFormatterEn
   private static string Prefix(string template, string stem)
   {
     var seam = template.IndexOf("{0}", StringComparison.Ordinal);
-    var contracts = char.ToLower(template[seam - 1]) == char.ToLower(stem[0]);
+    var contracts = char.ToLowerInvariant(template[seam - 1]) == char.ToLowerInvariant(stem[0]);
     var tail = contracts ? stem.Substring(1) : stem;
     var ret = string.Format(template, tail);
 

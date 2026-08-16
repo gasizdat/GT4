@@ -9,7 +9,8 @@ using Table = Dictionary<RelationshipType, RelationshipTypeTableRow>;
 
 internal abstract class RelationshipTypeFormatterBase
 {
-  private static readonly Generation _GreatnessStartLevel = new Generation(2);
+  protected static readonly Generation GreatnessStartLevel = new Generation(2);
+
   private static readonly Generation _GreatnessMaxLevel = new Generation(4);
 
   private readonly RelationshipType _Type;
@@ -73,12 +74,12 @@ internal abstract class RelationshipTypeFormatterBase
   /// <see cref="_GreatnessMaxLevel"/>. Repeating one prefix around the whole composed phrase is an
   /// En/Ru convention rather than a universal one: Spanish names each level with its own prefix
   /// bound to the kinship stem, so <see cref="RelationshipTypeFormatterEs"/> overrides this instead
-  /// of reusing it.
+  /// of reusing it. Confirm a new language really does repeat one prefix before inheriting this.
   /// </summary>
   protected virtual string AddGreatness(string main)
   {
     var ret = main;
-    var generation = AbsGen - _GreatnessStartLevel;
+    var generation = AbsGen - GreatnessStartLevel;
 
     if (generation > _GreatnessMaxLevel)
     {
