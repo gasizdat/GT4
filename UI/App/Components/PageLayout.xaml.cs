@@ -11,9 +11,19 @@ public partial class PageLayout : ContentView
   public PageLayout(IServiceProvider serviceProvider)
   {
     Animation = serviceProvider.GetRequiredService<BackgroundAnimation>();
-    _MenuItems.CollectionChanged += (_, _) => OnPropertyChanged(nameof(IsMenuVisible));
+    SizeChanged += OnVisibilityChanged;
+    _MenuItems.CollectionChanged += OnVisibilityChanged;
 
     InitializeComponent();
+  }
+
+  private void OnVisibilityChanged(object? sender, EventArgs e)
+  {
+    OnPropertyChanged(nameof(TopMenuItems));
+    OnPropertyChanged(nameof(SideMenuItems));
+    OnPropertyChanged(nameof(IsMenuVisible));
+    OnPropertyChanged(nameof(IsTopMenuVisible));
+    OnPropertyChanged(nameof(IsSideMenuVisible));
   }
 
   public PageLayout()
@@ -32,6 +42,16 @@ public partial class PageLayout : ContentView
       BindingMode.OneWay,
       null,
       OnTitleChanged);
+
+  public static readonly BindableProperty HintProperty =
+    BindableProperty.Create(
+      nameof(Hint),
+      typeof(string),
+      typeof(PageLayout),
+      string.Empty,
+      BindingMode.OneWay,
+      null,
+      OnHintChanged);
 
   public static readonly BindableProperty HeaderProperty =
     BindableProperty.Create(
@@ -84,12 +104,30 @@ public partial class PageLayout : ContentView
     }
   }
 
+  private static void OnHintChanged(BindableObject bindableObject, object oldValue, object newValue)
+  {
+    if (bindableObject is PageLayout view && oldValue != newValue)
+    {
+      view.OnPropertyChanged(nameof(IsHintVisible));
+    }
+  }
+
   public ICollection<MenuItem> MenuItems => _MenuItems;
+
+  public ICollection<MenuItem> TopMenuItems => IsTopMenuVisible ? MenuItems : [];
+
+  public ICollection<MenuItem> SideMenuItems => IsSideMenuVisible ? MenuItems : [];
 
   public string Title
   {
     get => (string)GetValue(TitleProperty);
     set => SetValue(TitleProperty, value);
+  }
+
+  public string Hint
+  {
+    get => (string)GetValue(HintProperty);
+    set => SetValue(HintProperty, value);
   }
 
   public View Header
@@ -110,9 +148,15 @@ public partial class PageLayout : ContentView
     set => SetValue(FooterProperty, value);
   }
 
-  public bool IsMenuVisible => MenuItems.Any();
+  public bool IsMenuVisible => _MenuItems.Any();
+
+  public bool IsTopMenuVisible => IsMenuVisible && Width < Height;
+
+  public bool IsSideMenuVisible => IsMenuVisible && Width > Height;
 
   public bool IsTitleVisible => !string.IsNullOrWhiteSpace(Title);
+
+  public bool IsHintVisible => !string.IsNullOrWhiteSpace(Hint);
 
   public bool IsHeaderVisible => Header is not null;
 

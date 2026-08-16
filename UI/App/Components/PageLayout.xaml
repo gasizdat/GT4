@@ -33,9 +33,9 @@
 
   <Grid
       ColumnDefinitions="*"
-      RowDefinitions="Auto, Auto, *, Auto">
+      RowDefinitions="Auto, Auto, Auto, *, Auto">
     <Image
-        Grid.RowSpan="4"
+        Grid.RowSpan="5"
         Aspect="AspectFill"
         IsAnimationPlaying="{Binding Animation.IsEnabled, Source={x:Reference Root}}"
         Opacity="0.3"
@@ -51,40 +51,45 @@
         Style="{StaticResource PageTitle}"
         Text="{Binding Title, Source={x:Reference Root}}" />
 
+    <!--  Hint  -->
+    <Label
+        Grid.Row="1"
+        Grid.Column="0"
+        Margin="{Thickness Left={StaticResource PageContentHorizontalPadding},
+                           Right={StaticResource PageContentHorizontalPadding}}"
+        IsVisible="{Binding IsHintVisible, Source={x:Reference Root}}"
+        Style="{StaticResource PageSubtitle}"
+        Text="{Binding Hint, Source={x:Reference Root}}" />
+
     <!--  Header slot  -->
     <Grid
-        Grid.Row="1"
+        Grid.Row="2"
         Grid.Column="0"
         Padding="{StaticResource HeaderPadding}"
         RowDefinitions="*, Auto">
 
       <FlexLayout
-          BindableLayout.ItemsSource="{Binding MenuItems, Source={x:Reference Root}}"
+          BindableLayout.ItemsSource="{Binding TopMenuItems, Source={x:Reference Root}}"
           Direction="Row"
-          IsVisible="{Binding IsMenuVisible, Source={x:Reference Root}}"
+          HorizontalOptions="End"
+          IsVisible="{Binding IsTopMenuVisible, Source={x:Reference Root}}"
           Wrap="Wrap">
 
         <BindableLayout.ItemTemplate>
           <DataTemplate x:DataType="items:PageMenuItem">
-            <Grid RowDefinitions="Auto, Auto">
-              <Button
-                  Command="{Binding Command}"
-                  CommandParameter="{Binding CommandParameter}"
-                  HorizontalOptions="Center"
-                  Style="{StaticResource TextAdorner}"
-                  Text="{Binding ButtonText}"
-                  ToolTipProperties.Text="{Binding LabelText}" />
-              <Label
-                  Grid.Row="1"
-                  HorizontalOptions="Center"
-                  IsVisible="{OnIdiom Desktop=False, Default=True}"
-                  Style="{StaticResource FieldValue}"
-                  Text="{Binding LabelText}" />
-            </Grid>
+            <Button
+                Command="{Binding Command}"
+                CommandParameter="{Binding CommandParameter}"
+                FontSize="{DynamicResource ActionButtonTextSize}"
+                HorizontalOptions="Center"
+                Style="{StaticResource EmojiAdorner}"
+                Text="{Binding ButtonText}"
+                ToolTipProperties.Text="{Binding ToolTipText}" />
           </DataTemplate>
         </BindableLayout.ItemTemplate>
 
       </FlexLayout>
+
       <ContentView
           Grid.Row="1"
           Content="{Binding Header, Source={x:Reference Root}}"
@@ -93,16 +98,41 @@
 
     <!--  Body slot  -->
     <Grid
-        Grid.Row="2"
+        Grid.Row="3"
         Grid.Column="0"
         Padding="{StaticResource BodyPadding}"
         ColumnDefinitions="*, Auto">
+      
       <ContentView Content="{Binding Body, Source={x:Reference Root}}" />
+      
+      <FlexLayout
+          Grid.Column="1"
+          BindableLayout.ItemsSource="{Binding SideMenuItems, Source={x:Reference Root}}"
+          Direction="Column"
+          HorizontalOptions="End"
+          IsVisible="{Binding IsSideMenuVisible, Source={x:Reference Root}}"
+          Wrap="Wrap">
+
+        <BindableLayout.ItemTemplate>
+          <DataTemplate x:DataType="items:PageMenuItem">
+            <Button
+                Command="{Binding Command}"
+                CommandParameter="{Binding CommandParameter}"
+                FontSize="{DynamicResource ActionButtonTextSize}"
+                HorizontalOptions="Center"
+                Style="{StaticResource EmojiAdorner}"
+                Text="{Binding ButtonText}"
+                ToolTipProperties.Text="{Binding ToolTipText}" />
+          </DataTemplate>
+        </BindableLayout.ItemTemplate>
+
+      </FlexLayout>
+
     </Grid>
 
     <!--  Footer slot  -->
     <ContentView
-        Grid.Row="3"
+        Grid.Row="4"
         Grid.Column="0"
         Padding="{StaticResource FooterPadding}"
         Content="{Binding Footer, Source={x:Reference Root}}"

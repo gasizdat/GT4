@@ -9,66 +9,8 @@
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root">
 
-
-  <ContentPage.ToolbarItems>
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="RemoveProject"
-        Order="Secondary"
-        Text="{Binding RemoveProjectToolbarItemName, Source={x:Reference Root}}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="EditProject"
-        Order="Secondary"
-        Text="{Binding EditProjectToolbarItemName, Source={x:Reference Root}}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="CreateFamily"
-        Order="Secondary"
-        Text="{x:Static resources:UIStrings.MenuItemNameCreateFamily}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="GoToNames"
-        Order="Secondary"
-        Text="{x:Static resources:UIStrings.MenuItemGoToNames}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="GoToGallery"
-        Order="Secondary"
-        Text="{x:Static resources:UIStrings.MenuItemGoToGallery}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="GoToStatistics"
-        Order="Secondary"
-        Text="{x:Static resources:UIStrings.MenuItemGoToStatistics}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="GoToKinshipFinder"
-        Order="Secondary"
-        Text="{x:Static resources:UIStrings.MenuItemGoToKinshipFinder}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="ImportGedcom"
-        Order="Secondary"
-        Text="{x:Static resources:UIStrings.MenuItemImportGedcom}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="ExportGedcom"
-        Order="Secondary"
-        Text="{x:Static resources:UIStrings.MenuItemExportGedcom}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="GoToRevisions"
-        Order="Primary"
-        Text="{x:Static resources:UIStrings.MenuItemGoToRevisions}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="Refresh"
-        Order="Secondary"
-        Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
-  </ContentPage.ToolbarItems>
-
-  <components:PageLayout Title="{x:Static resources:UIStrings.TitleFamiliesPage}">
+  <components:PageLayout Title="{x:Static resources:UIStrings.TitleFamiliesPage}"
+                         Hint="{x:Static resources:UIStrings.HintFamiliesPage}">
 
     <components:PageLayout.MenuItems>
 
@@ -120,8 +62,7 @@
 
     <components:PageLayout.Header>
       <components:PersonFilterView
-          x:Name="FilterView"
-          HeaderText="{x:Static resources:UIStrings.HintFamiliesPage}" />
+          x:Name="FilterView"/>
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>

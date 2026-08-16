@@ -10,7 +10,7 @@ public class PageMenuItem : MenuItem
       return index > 0 ? Text.Substring(0, index) : "?";
     }
   }
-  public string LabelText
+  public string ToolTipText
   {
     get
     {
