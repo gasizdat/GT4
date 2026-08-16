@@ -312,7 +312,7 @@ public class RelationshipTypeFormatterTests
   }
 
   // "Grand-oncle ou grand-tante" is the one French term where the base greatness pass reaches only
-  // the first disjunct, the same shortfall German shows on "Ururgroßonkel oder Großtante".
+  // the first disjunct, the same shortfall German shows on "Ururgroßonkel oder Großtante" (#318).
   [Theory]
   [InlineData(1, "Oncle ou tante")]
   [InlineData(2, "Grand-oncle ou grand-tante")]

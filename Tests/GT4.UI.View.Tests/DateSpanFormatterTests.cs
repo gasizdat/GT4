@@ -125,11 +125,13 @@ public class DateSpanFormatterTests
     _formatter.ToString(span).Should().Be(expected);
   }
 
+  // One resource serves both an unknown date and an unknown age, so it stays in the unmarked
+  // masculine rather than agreeing with either.
   [Fact]
   public void FR_NullSpan_ReturnsUnknown()
   {
     SetFr();
-    _formatter.ToString(null).Should().Be("inconnue");
+    _formatter.ToString(null).Should().Be("inconnu");
   }
 
   [Theory]

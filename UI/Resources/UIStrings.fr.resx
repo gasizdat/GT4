@@ -197,7 +197,7 @@ arbre généalogique et profitez-en !</value>
     <value>vers {0}</value>
   </data>
   <data name="DateStatusUnknown" xml:space="preserve">
-    <value>inconnue</value>
+    <value>inconnu</value>
   </data>
   <data name="FieldDateOfBirth" xml:space="preserve">
     <value>Date de naissance :</value>
@@ -371,7 +371,7 @@ arbre généalogique et profitez-en !</value>
     <value>Lien de parenté</value>
   </data>
   <data name="FieldKinshipChain" xml:space="preserve">
-    <value>Parents intermédiaires</value>
+    <value>Proches intermédiaires</value>
   </data>
   <data name="TitleSelectDateDialog" xml:space="preserve">
     <value>Sélectionner une date</value>
@@ -437,7 +437,7 @@ arbre généalogique et profitez-en !</value>
     <value>décembre</value>
   </data>
   <data name="TitleSelectRelativesDialog" xml:space="preserve">
-    <value>Sélectionner des parents</value>
+    <value>Sélectionner des proches</value>
   </data>
   <data name="TitleSelectPersonDialog" xml:space="preserve">
     <value>Sélectionner une personne</value>
@@ -802,7 +802,7 @@ FN - nom de famille</value>
     <value>Format d'affichage de la date courte</value>
   </data>
   <data name="FieldCommonPersonNameFormat" xml:space="preserve">
-    <value>Format des noms des parents</value>
+    <value>Format des noms des proches</value>
   </data>
   <data name="NameFirst" xml:space="preserve">
     <value>Prénom</value>
@@ -895,7 +895,7 @@ FN - nom de famille</value>
     <value>🌳 {0}</value>
   </data>
   <data name="HintFamilyTreePage" xml:space="preserve">
-    <value>Touchez un parent pour centrer l'arbre sur lui</value>
+    <value>Touchez un proche pour centrer l'arbre sur lui</value>
   </data>
   <data name="MenuItemNameOpenPerson_1" xml:space="preserve">
     <value>Ouvrir {0}</value>
@@ -907,7 +907,7 @@ FN - nom de famille</value>
     <value>▼ Plus de descendants</value>
   </data>
   <data name="LblRelatives" xml:space="preserve">
-    <value>Parents</value>
+    <value>Proches</value>
   </data>
   <data name="AlertTextKinshipUnfoldingAborted" xml:space="preserve">
     <value>L'opération a pris plus de temps que prévu. Certains niveaux de parenté sont restés repliés. Vous pouvez les déplier manuellement.</value>
@@ -1219,7 +1219,7 @@ FN - nom de famille</value>
     <value>Couverture photographique</value>
   </data>
   <data name="FieldStatIsolatedPersons" xml:space="preserve">
-    <value>Personnes isolées (sans parents)</value>
+    <value>Personnes isolées (sans proches)</value>
   </data>
   <data name="FieldStatMarriageCount" xml:space="preserve">
     <value>Mariages</value>
