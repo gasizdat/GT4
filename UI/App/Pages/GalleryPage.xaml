@@ -84,6 +84,14 @@
                   Text="{Binding Title}"
                   VerticalOptions="End" />
 
+              <Button
+                  Grid.Row="0"
+                  Grid.Column="2"
+                  Command="{Binding DeleteDataCommand, Source={x:Reference Root}}"
+                  CommandParameter="{Binding .}"
+                  Style="{StaticResource DeleteAdorner}"
+                  VerticalOptions="Start" />
+
               <!--  Whose media this is: the only way to tell two identically captioned photos apart.  -->
               <Label
                   Grid.Row="1"
@@ -92,14 +100,6 @@
                   LineBreakMode="WordWrap"
                   Style="{StaticResource CardContent}"
                   Text="{Binding Owners}"
-                  VerticalOptions="Start" />
-
-              <Button
-                  Grid.Row="0"
-                  Grid.Column="2"
-                  Command="{Binding DeleteDataCommand, Source={x:Reference Root}}"
-                  CommandParameter="{Binding .}"
-                  Style="{StaticResource DeleteAdorner}"
                   VerticalOptions="Start" />
 
             </Grid>
