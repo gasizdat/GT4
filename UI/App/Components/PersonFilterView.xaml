@@ -11,15 +11,10 @@
       HorizontalOptions="Fill"
       RowDefinitions="Auto, Auto">
 
-    <!--  Row 0 - Header text + filters toggle  -->
+    <!--  Row 0 - Filters toggle  -->
     <Grid
         Grid.Row="0"
         ColumnDefinitions="*, Auto, Auto">
-      <Label
-          Grid.Column="0"
-          Style="{StaticResource PageSubtitle}"
-          Text="{Binding HeaderText, Source={x:Reference Root}}" />
-
       <Button
           x:Name="ClearFiltersButton"
           Grid.Column="1"
