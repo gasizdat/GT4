@@ -1,6 +1,7 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.Components;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Pages;
@@ -57,6 +58,24 @@ public class PersonPageTests
     Assert.NotNull(page.PageCommand);
     Assert.False(page.ExpandAll);
     Assert.Empty(page.Photos);
+  }
+
+  [Fact]
+  public async Task Menu_items_render_as_buttons_and_the_ToggleAll_caption_repaints_on_ExpandAll()
+  {
+    var page = await CreatePageAsync(new TestServices());
+    var layout = (PageLayout)page.Content;
+    await MainThread.InvokeOnMainThreadAsync(() => ((IView)layout).Arrange(new Rect(0, 0, 400, 800)));
+    var topMenu = layout.FindByName<FlexLayout>("TopMenu");
+    var buttons = topMenu.Children.OfType<Button>().ToArray();
+    Assert.Equal(7, buttons.Length);
+
+    var toggleButton = buttons.Single(b => (string)((PageMenuItem)b.BindingContext!).CommandParameter == "ToggleAll");
+    Assert.Equal("⏬", toggleButton.Text);
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.ExpandAll = true);
+
+    Assert.Equal("⏫", toggleButton.Text);
   }
 
   [Fact]

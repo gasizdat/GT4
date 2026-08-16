@@ -40,4 +40,19 @@ public class PageMenuItemTests
     Assert.Equal("👤", item.ButtonText);
     Assert.Equal("Open Ivan", item.ToolTipText);
   }
+
+  [Fact]
+  public void Changing_Text_repaints_ButtonText_and_ToolTipText()
+  {
+    var item = new PageMenuItem { Text = "📝 To Names" };
+    var changed = new List<string?>();
+    item.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+
+    item.Text = "🖋️ Edit";
+
+    Assert.Contains(nameof(PageMenuItem.ButtonText), changed);
+    Assert.Contains(nameof(PageMenuItem.ToolTipText), changed);
+    Assert.Equal("🖋️", item.ButtonText);
+    Assert.Equal("Edit", item.ToolTipText);
+  }
 }
