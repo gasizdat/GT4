@@ -201,8 +201,6 @@ public partial class PersonPage : ContentPage
   public Name FamilyName =>
     _PersonFullInfo.Names.SingleOrDefault(n => n.Type == NameType.FamilyName, FamilyInfoItem.NoFamilyName);
 
-  public string GoToFamilyName => string.Format(UIStrings.MenuItemGotoFamily_1, FamilyName.Value);
-
   public ICollection NavigationHistory => _NavigationHistory;
 
   public PersonInfo? CurrentPerson
