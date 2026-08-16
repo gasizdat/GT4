@@ -1,0 +1,1266 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AlertTextDeleteConfirmationText_1" xml:space="preserve">
+    <value>Voulez-vous vraiment supprimer {0} ?</value>
+  </data>
+  <data name="AlertTextRemoveFamilyConfirmationText_1" xml:space="preserve">
+    <value>Voulez-vous vraiment supprimer {0} ? Toutes les personnes de cette famille perdront ce nom de famille.</value>
+  </data>
+  <data name="AlertTitleInfo" xml:space="preserve">
+    <value>ℹ️ Information</value>
+  </data>
+  <data name="AlertTitleConfirmation" xml:space="preserve">
+    <value>Confirmation</value>
+  </data>
+  <data name="AlertTitleWarning" xml:space="preserve">
+    <value>⚠️ Avertissement</value>
+  </data>
+  <data name="AppGeneralName" xml:space="preserve">
+    <value>Arbre Généalogique 4</value>
+  </data>
+  <data name="AppGeneralWelcomeTitle" xml:space="preserve">
+    <value>Créez votre propre
+arbre généalogique et profitez-en !</value>
+  </data>
+  <data name="BtnNameCancel" xml:space="preserve">
+    <value>Annuler</value>
+  </data>
+  <data name="BtnNameCreateGenealogyTree" xml:space="preserve">
+    <value>Créer un arbre généalogique</value>
+  </data>
+  <data name="BtnNameNo" xml:space="preserve">
+    <value>Non</value>
+  </data>
+  <data name="BtnNameOpenOrCreateProject" xml:space="preserve">
+    <value>Ouvrir ou créer</value>
+  </data>
+  <data name="BtnNameYes" xml:space="preserve">
+    <value>Oui</value>
+  </data>
+  <data name="HintProjectPage" xml:space="preserve">
+    <value>Ouvrez-en un existant ou créez-en un nouveau</value>
+  </data>
+  <data name="TitleProjectPage" xml:space="preserve">
+    <value>Arbre généalogique</value>
+  </data>
+  <data name="AlertTitleError" xml:space="preserve">
+    <value>⛔ Erreur</value>
+  </data>
+  <data name="TitleCreateNewProjectDialog" xml:space="preserve">
+    <value>Créer un arbre généalogique</value>
+  </data>
+  <data name="TxtPlaceholderPtojectName" xml:space="preserve">
+    <value>Saisissez un nom pour le nouvel arbre généalogique</value>
+  </data>
+  <data name="TitleApp" xml:space="preserve">
+    <value>🏠 Accueil</value>
+  </data>
+  <data name="PkrLanguageHint" xml:space="preserve">
+    <value>🌐 Langue</value>
+  </data>
+  <data name="TitleFamiliesPage" xml:space="preserve">
+    <value>Familles</value>
+  </data>
+  <data name="HintFamiliesPage" xml:space="preserve">
+    <value>Ouvrir ou créer une famille</value>
+  </data>
+  <data name="BtnNameRefreshAfterError" xml:space="preserve">
+    <value>Une erreur s'est produite. Actualiser ?</value>
+  </data>
+  <data name="BtnNameOk" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="HintFamilyPage" xml:space="preserve">
+    <value>Ouvrez un membre de la famille ou créez-en un nouveau</value>
+  </data>
+  <data name="DateEraBeforeChrist_1" xml:space="preserve">
+    <value>{0} av. J.-C.</value>
+  </data>
+  <data name="DateStatusYearApproximate_1" xml:space="preserve">
+    <value>vers {0}</value>
+  </data>
+  <data name="DateStatusUnknown" xml:space="preserve">
+    <value>inconnue</value>
+  </data>
+  <data name="FieldDateOfBirth" xml:space="preserve">
+    <value>Date de naissance :</value>
+  </data>
+  <data name="FieldDateOfDeath" xml:space="preserve">
+    <value>Date de décès :</value>
+  </data>
+  <data name="FieldAge" xml:space="preserve">
+    <value>Âge :</value>
+  </data>
+  <data name="FieldFamilyNameEntry" xml:space="preserve">
+    <value>Nom de famille</value>
+  </data>
+  <data name="TxtPlaceholderFamilyName" xml:space="preserve">
+    <value>Saisissez un nom de famille au pluriel (par exemple, les Dupont)</value>
+  </data>
+  <data name="FieldLastNameMaleEntry" xml:space="preserve">
+    <value>Le nom au masculin</value>
+  </data>
+  <data name="FieldLastNameFemaleEntry" xml:space="preserve">
+    <value>Le nom au féminin</value>
+  </data>
+  <data name="TxtPlaceholderLastNameFemale" xml:space="preserve">
+    <value>Saisissez le nom féminin (par exemple, Mme Dupont)</value>
+  </data>
+  <data name="TxtPlaceholderProjectDescription" xml:space="preserve">
+    <value>Saisissez une description pour le nouvel arbre généalogique</value>
+  </data>
+  <data name="TxtPlaceholderLastNameMale" xml:space="preserve">
+    <value>Saisissez le nom masculin (M. Dupont)</value>
+  </data>
+  <data name="BtnNameCreateFamilyPerson" xml:space="preserve">
+    <value>Créer une personne</value>
+  </data>
+  <data name="BtnNameUpdateFamilyPerson" xml:space="preserve">
+    <value>Modifier la personne</value>
+  </data>
+  <data name="DateStatusNotDefined" xml:space="preserve">
+    <value>non définie</value>
+  </data>
+  <data name="FieldPersonPhotos" xml:space="preserve">
+    <value>Photos</value>
+  </data>
+  <data name="BtnNameAddPersonPhoto" xml:space="preserve">
+    <value>Ajouter une photo</value>
+  </data>
+  <data name="FieldPersonNames" xml:space="preserve">
+    <value>Noms</value>
+  </data>
+  <data name="BtnNameAddPersonName" xml:space="preserve">
+    <value>Ajouter un nom</value>
+  </data>
+  <data name="FieldPersonDates" xml:space="preserve">
+    <value>Dates</value>
+  </data>
+  <data name="FieldPersonRelationships" xml:space="preserve">
+    <value>Liens de parenté</value>
+  </data>
+  <data name="BtnNameAddPersonRelationship" xml:space="preserve">
+    <value>Ajouter un lien de parenté</value>
+  </data>
+  <data name="FieldPersonBiography" xml:space="preserve">
+    <value>Biographie</value>
+  </data>
+  <data name="FieldPersonAttachments" xml:space="preserve">
+    <value>Pièces jointes</value>
+  </data>
+  <data name="BtnNameAddPersonAttachment" xml:space="preserve">
+    <value>Ajouter une pièce jointe</value>
+  </data>
+  <data name="RelMother" xml:space="preserve">
+    <value>Mère</value>
+  </data>
+  <data name="RelFather" xml:space="preserve">
+    <value>Père</value>
+  </data>
+  <data name="RelAdoptiveMale_1" xml:space="preserve">
+    <value>{0} adoptif</value>
+  </data>
+  <data name="RelAdoptiveFemale_1" xml:space="preserve">
+    <value>{0} adoptive</value>
+  </data>
+  <data name="RelSpouse" xml:space="preserve">
+    <value>Conjoint</value>
+  </data>
+  <data name="RelWife" xml:space="preserve">
+    <value>Épouse</value>
+  </data>
+  <data name="RelHusband" xml:space="preserve">
+    <value>Époux</value>
+  </data>
+  <data name="RelSon" xml:space="preserve">
+    <value>Fils</value>
+  </data>
+  <data name="RelDaughter" xml:space="preserve">
+    <value>Fille</value>
+  </data>
+  <data name="RelChild" xml:space="preserve">
+    <value>Enfant</value>
+  </data>
+  <data name="RelUnknown" xml:space="preserve">
+    <value>Inconnu</value>
+  </data>
+  <data name="FieldFirstName" xml:space="preserve">
+    <value>Prénom</value>
+  </data>
+  <data name="FieldPatronymic" xml:space="preserve">
+    <value>Patronyme</value>
+  </data>
+  <data name="FieldLastName" xml:space="preserve">
+    <value>Nom</value>
+  </data>
+  <data name="FieldFamilyName" xml:space="preserve">
+    <value>Nom de famille</value>
+  </data>
+  <data name="TitleSelectNameDialog" xml:space="preserve">
+    <value>Sélectionner un nom</value>
+  </data>
+  <data name="FieldSelectNameType" xml:space="preserve">
+    <value>Sélectionnez le type de nom</value>
+  </data>
+  <data name="FieldSelectName" xml:space="preserve">
+    <value>Sélectionner</value>
+  </data>
+  <data name="FieldFirstNameMaleEntry" xml:space="preserve">
+    <value>Prénom masculin</value>
+  </data>
+  <data name="FieldFirstNameFemaleEntry" xml:space="preserve">
+    <value>Prénom féminin</value>
+  </data>
+  <data name="FieldPatronymicMaleEntry" xml:space="preserve">
+    <value>Patronyme masculin</value>
+  </data>
+  <data name="FieldPatronymicFemaleEntry" xml:space="preserve">
+    <value>Patronyme féminin</value>
+  </data>
+  <data name="TxtPlaceholderMaleName" xml:space="preserve">
+    <value>Saisissez un prénom masculin</value>
+  </data>
+  <data name="TxtPlaceholderFemaleName" xml:space="preserve">
+    <value>Saisissez un prénom féminin</value>
+  </data>
+  <data name="TxtPlaceholderPatronymicMale" xml:space="preserve">
+    <value>Saisissez un patronyme masculin</value>
+  </data>
+  <data name="TxtPlaceholderPatronymicFemale" xml:space="preserve">
+    <value>Saisissez un patronyme féminin</value>
+  </data>
+  <data name="BiologicalSexMale" xml:space="preserve">
+    <value>♂ Homme</value>
+  </data>
+  <data name="BiologicalSexFemale" xml:space="preserve">
+    <value>♀ Femme</value>
+  </data>
+  <data name="BiologicalSexUnknown" xml:space="preserve">
+    <value>⚧️ Personne</value>
+  </data>
+  <data name="FieldBiologicalSex" xml:space="preserve">
+    <value>Sexe biologique</value>
+  </data>
+  <data name="FieldKinshipPersonFrom" xml:space="preserve">
+    <value>Première personne</value>
+  </data>
+  <data name="FieldKinshipPersonTo" xml:space="preserve">
+    <value>Deuxième personne</value>
+  </data>
+  <data name="FieldNotSelected" xml:space="preserve">
+    <value>Non sélectionné</value>
+  </data>
+  <data name="FieldKinshipSummary" xml:space="preserve">
+    <value>Lien de parenté</value>
+  </data>
+  <data name="FieldKinshipChain" xml:space="preserve">
+    <value>Parents intermédiaires</value>
+  </data>
+  <data name="TitleSelectDateDialog" xml:space="preserve">
+    <value>Sélectionner une date</value>
+  </data>
+  <data name="FieldYear" xml:space="preserve">
+    <value>Année</value>
+  </data>
+  <data name="FieldMonth" xml:space="preserve">
+    <value>Mois</value>
+  </data>
+  <data name="FieldDay" xml:space="preserve">
+    <value>Jour</value>
+  </data>
+  <data name="FieldDateEntered" xml:space="preserve">
+    <value>Date saisie</value>
+  </data>
+  <data name="FileDialogSelectPictures" xml:space="preserve">
+    <value>Sélectionner des images</value>
+  </data>
+  <data name="FileDialogSelectAttachment" xml:space="preserve">
+    <value>Sélectionner un fichier</value>
+  </data>
+  <data name="MenuItemNameRemove_1" xml:space="preserve">
+    <value>❌ Supprimer « {0} »</value>
+  </data>
+  <data name="MenuItemNameEdit_1" xml:space="preserve">
+    <value>🖋️ Modifier « {0} »</value>
+  </data>
+  <data name="Month_01" xml:space="preserve">
+    <value>janvier</value>
+  </data>
+  <data name="Month_02" xml:space="preserve">
+    <value>février</value>
+  </data>
+  <data name="Month_03" xml:space="preserve">
+    <value>mars</value>
+  </data>
+  <data name="Month_04" xml:space="preserve">
+    <value>avril</value>
+  </data>
+  <data name="Month_05" xml:space="preserve">
+    <value>mai</value>
+  </data>
+  <data name="Month_06" xml:space="preserve">
+    <value>juin</value>
+  </data>
+  <data name="Month_07" xml:space="preserve">
+    <value>juillet</value>
+  </data>
+  <data name="Month_08" xml:space="preserve">
+    <value>août</value>
+  </data>
+  <data name="Month_09" xml:space="preserve">
+    <value>septembre</value>
+  </data>
+  <data name="Month_10" xml:space="preserve">
+    <value>octobre</value>
+  </data>
+  <data name="Month_11" xml:space="preserve">
+    <value>novembre</value>
+  </data>
+  <data name="Month_12" xml:space="preserve">
+    <value>décembre</value>
+  </data>
+  <data name="TitleSelectRelativesDialog" xml:space="preserve">
+    <value>Sélectionner des parents</value>
+  </data>
+  <data name="TitleSelectPersonDialog" xml:space="preserve">
+    <value>Sélectionner une personne</value>
+  </data>
+  <data name="TitleKinshipFinderPage" xml:space="preserve">
+    <value>Recherche de parenté</value>
+  </data>
+  <data name="FieldRelationshipStartDate" xml:space="preserve">
+    <value>Date de début</value>
+  </data>
+  <data name="TitleCreateOrUpdatePersonDialog" xml:space="preserve">
+    <value>Renseignez les informations de la personne</value>
+  </data>
+  <data name="FieldRelationshipType" xml:space="preserve">
+    <value>Type de lien de parenté</value>
+  </data>
+  <data name="RelParent" xml:space="preserve">
+    <value>Parent</value>
+  </data>
+  <data name="RelAdoptiveInvariant_1" xml:space="preserve">
+    <value>{0} par adoption</value>
+  </data>
+  <data name="BtnNameUpdateGenealogyTree" xml:space="preserve">
+    <value>Modifier l'arbre généalogique</value>
+  </data>
+  <data name="BtnNameCreateFamily" xml:space="preserve">
+    <value>Créer une famille</value>
+  </data>
+  <data name="FamilyNameNoFamily" xml:space="preserve">
+    <value>Sans famille</value>
+  </data>
+  <data name="FamilyMorePersons_1" xml:space="preserve">
+    <value>+{0} de plus</value>
+  </data>
+  <data name="BtnNameUpdateName_1" xml:space="preserve">
+    <value>Modifier {0}</value>
+  </data>
+  <data name="BtnNameCreateName_1" xml:space="preserve">
+    <value>Créer {0}</value>
+  </data>
+  <data name="TitleCreateOrUpdateNameDialog_1" xml:space="preserve">
+    <value>Créer ou modifier {0}</value>
+  </data>
+  <data name="MenuItemNameAddPerson" xml:space="preserve">
+    <value>➕ Créer une personne</value>
+  </data>
+  <data name="MenuItemNameRefresh" xml:space="preserve">
+    <value>🔄️ Actualiser</value>
+  </data>
+  <data name="RelBrother" xml:space="preserve">
+    <value>Frère</value>
+  </data>
+  <data name="RelSister" xml:space="preserve">
+    <value>Sœur</value>
+  </data>
+  <data name="RelParental_1" xml:space="preserve">
+    <value>Demi-{0} du côté du père</value>
+  </data>
+  <data name="RelMaternal_1" xml:space="preserve">
+    <value>Demi-{0} du côté de la mère</value>
+  </data>
+  <data name="RelSibling" xml:space="preserve">
+    <value>Frère ou sœur</value>
+  </data>
+  <data name="RelStepMale_1" xml:space="preserve">
+    <value>{0} par remariage</value>
+  </data>
+  <data name="RelStepFemale_1" xml:space="preserve">
+    <value>{0} par remariage</value>
+  </data>
+  <data name="RelStepInvariant_1" xml:space="preserve">
+    <value>{0} par remariage</value>
+  </data>
+  <data name="RelStepFather" xml:space="preserve">
+    <value>Beau-père (par remariage)</value>
+  </data>
+  <data name="RelStepMother" xml:space="preserve">
+    <value>Belle-mère (par remariage)</value>
+  </data>
+  <data name="RelStepSon" xml:space="preserve">
+    <value>Beau-fils (par remariage)</value>
+  </data>
+  <data name="RelStepDaughter" xml:space="preserve">
+    <value>Belle-fille (par remariage)</value>
+  </data>
+  <data name="RelStepParent" xml:space="preserve">
+    <value>Beau-père ou belle-mère (par remariage)</value>
+  </data>
+  <data name="RelStepChild" xml:space="preserve">
+    <value>Beau-fils ou belle-fille (par remariage)</value>
+  </data>
+  <data name="MenuItemNameCreateGenealogyTree" xml:space="preserve">
+    <value>➕ Créer un arbre généalogique</value>
+  </data>
+  <data name="MenuItemNameCreateFamily" xml:space="preserve">
+    <value>➕ Créer une famille</value>
+  </data>
+  <data name="RelGrandFather" xml:space="preserve">
+    <value>Grand-père</value>
+  </data>
+  <data name="RelGrandMother" xml:space="preserve">
+    <value>Grand-mère</value>
+  </data>
+  <data name="RelGrandParent" xml:space="preserve">
+    <value>Grand-parent</value>
+  </data>
+  <data name="RelDaughterInLaw" xml:space="preserve">
+    <value>Belle-fille</value>
+  </data>
+  <data name="RelSonInLaw" xml:space="preserve">
+    <value>Beau-fils</value>
+  </data>
+  <data name="RelChildInLaw" xml:space="preserve">
+    <value>Beau-fils ou belle-fille</value>
+  </data>
+  <data name="RelGrandSon" xml:space="preserve">
+    <value>Petit-fils</value>
+  </data>
+  <data name="RelGrandDaughter" xml:space="preserve">
+    <value>Petite-fille</value>
+  </data>
+  <data name="RelGrandChild" xml:space="preserve">
+    <value>Petit-enfant</value>
+  </data>
+  <data name="RelGreat_1" xml:space="preserve">
+    <value>Arrière-{0}</value>
+  </data>
+  <data name="RelGreat2_es_1" xml:space="preserve">
+    <value>-{0}</value>
+  </data>
+  <data name="RelBloodShare_1" xml:space="preserve">
+    <value>🩸 {0} %</value>
+  </data>
+  <data name="RelUncle" xml:space="preserve">
+    <value>Oncle</value>
+  </data>
+  <data name="RelAunt" xml:space="preserve">
+    <value>Tante</value>
+  </data>
+  <data name="RelUncleAunt" xml:space="preserve">
+    <value>Oncle ou tante</value>
+  </data>
+  <data name="DateKnownApproximately" xml:space="preserve">
+    <value>La date est connue de façon approximative</value>
+  </data>
+  <data name="RelGrandUncle_en" xml:space="preserve">
+    <value>Grand-oncle</value>
+  </data>
+  <data name="RelGrandAunt_en" xml:space="preserve">
+    <value>Grand-tante</value>
+  </data>
+  <data name="RelGrandUncleAunt_en" xml:space="preserve">
+    <value>Grand-oncle ou grand-tante</value>
+  </data>
+  <data name="Rel2Male_1" xml:space="preserve">
+    <value>{0} au deuxième degré</value>
+  </data>
+  <data name="Rel3Male_1" xml:space="preserve">
+    <value>{0} au troisième degré</value>
+  </data>
+  <data name="Rel3Unknown_1" xml:space="preserve">
+    <value>{0} au troisième degré</value>
+  </data>
+  <data name="Rel4Male_1" xml:space="preserve">
+    <value>{0} au quatrième degré</value>
+  </data>
+  <data name="RelNMale_2" xml:space="preserve">
+    <value>{1} au {0}e degré</value>
+  </data>
+  <data name="Rel4Unknown_1" xml:space="preserve">
+    <value>{0} au quatrième degré</value>
+  </data>
+  <data name="RelNUnknown_2" xml:space="preserve">
+    <value>{1} au {0}e degré</value>
+  </data>
+  <data name="Rel2Unknown_1" xml:space="preserve">
+    <value>{0} au deuxième degré</value>
+  </data>
+  <data name="Rel3Female_1" xml:space="preserve">
+    <value>{0} au troisième degré</value>
+  </data>
+  <data name="Rel4Female_1" xml:space="preserve">
+    <value>{0} au quatrième degré</value>
+  </data>
+  <data name="RelNFemale_2" xml:space="preserve">
+    <value>{1} au {0}e degré</value>
+  </data>
+  <data name="RelCousinFemale" xml:space="preserve">
+    <value>Cousine</value>
+  </data>
+  <data name="RelCousinMale" xml:space="preserve">
+    <value>Cousin</value>
+  </data>
+  <data name="RelCousinUnknown" xml:space="preserve">
+    <value>Cousin ou cousine</value>
+  </data>
+  <data name="Rel1Removed_en_1" xml:space="preserve">
+    <value>{0}, à une génération d'écart</value>
+  </data>
+  <data name="Rel2Removed_en_1" xml:space="preserve">
+    <value>{0}, à deux générations d'écart</value>
+  </data>
+  <data name="RelNRemoved_en_2" xml:space="preserve">
+    <value>{0}, à {1} générations d'écart</value>
+  </data>
+  <data name="RelInLawFemale" xml:space="preserve">
+    <value>Belle-mère</value>
+  </data>
+  <data name="RelInLawUnknown" xml:space="preserve">
+    <value>Beau-père ou belle-mère</value>
+  </data>
+  <data name="RelInLawMale" xml:space="preserve">
+    <value>Beau-père</value>
+  </data>
+  <data name="RelNephew" xml:space="preserve">
+    <value>Neveu</value>
+  </data>
+  <data name="RelGrandNephew_en" xml:space="preserve">
+    <value>Petit-neveu</value>
+  </data>
+  <data name="RelNiece" xml:space="preserve">
+    <value>Nièce</value>
+  </data>
+  <data name="RelGrandNiece_en" xml:space="preserve">
+    <value>Petite-nièce</value>
+  </data>
+  <data name="RelNephewNiece" xml:space="preserve">
+    <value>Neveu ou nièce</value>
+  </data>
+  <data name="RelGrandNephewNiece_en" xml:space="preserve">
+    <value>Petit-neveu ou petite-nièce</value>
+  </data>
+  <data name="Rel2Female_1" xml:space="preserve">
+    <value>{0} au deuxième degré</value>
+  </data>
+  <data name="Rel3Removed_en_1" xml:space="preserve">
+    <value>{0}, à trois générations d'écart</value>
+  </data>
+  <data name="PersonDates_2" xml:space="preserve">
+    <value>{0} - {1}</value>
+  </data>
+  <data name="PersonDeathMark_1" xml:space="preserve">
+    <value>† {0}</value>
+  </data>
+  <data name="PersonAge_2" xml:space="preserve">
+    <value>{0} ({1})</value>
+  </data>
+  <data name="PersonSinceBirthDay_1" xml:space="preserve">
+    <value>{0} depuis la naissance</value>
+  </data>
+  <data name="AlertTextUnableToAddNameForTheSexSelected_1" xml:space="preserve">
+    <value>Impossible d'ajouter un nom pour le sexe biologique « {0} »</value>
+  </data>
+  <data name="MenuItemGotoFamily_1" xml:space="preserve">
+    <value>👪 Vers la famille : {0}</value>
+  </data>
+  <data name="TitleNamesPage" xml:space="preserve">
+    <value>Noms</value>
+  </data>
+  <data name="HintNamesPage" xml:space="preserve">
+    <value>Vous pouvez ajouter, modifier ou supprimer les noms de n'importe quelle personne.</value>
+  </data>
+  <data name="MenuItemGoToNames" xml:space="preserve">
+    <value>📝 Vers les Noms</value>
+  </data>
+  <data name="TitleGalleryPage" xml:space="preserve">
+    <value>Galerie</value>
+  </data>
+  <data name="HintGalleryPage" xml:space="preserve">
+    <value>Toutes les photos et pièces jointes du projet, avec les personnes et les familles auxquelles elles appartiennent.</value>
+  </data>
+  <data name="MenuItemGoToGallery" xml:space="preserve">
+    <value>🖼 Vers la Galerie</value>
+  </data>
+  <data name="MenuItemImportGedcom" xml:space="preserve">
+    <value>📥 Importer depuis GEDCOM</value>
+  </data>
+  <data name="MenuItemExportGedcom" xml:space="preserve">
+    <value>📤 Exporter vers GEDCOM</value>
+  </data>
+  <data name="AlertImportGedcomConfirm_1" xml:space="preserve">
+    <value>Importer un fichier GEDCOM dans {0} ? Les personnes correspondant à une personne existante sont fusionnées ; les autres sont ajoutées.</value>
+  </data>
+  <data name="AlertImportGedcomArchiveEmpty" xml:space="preserve">
+    <value>Cette archive ne contient aucun fichier GEDCOM.</value>
+  </data>
+  <data name="FileDialogSelectGedcom" xml:space="preserve">
+    <value>Sélectionner un fichier GEDCOM</value>
+  </data>
+  <data name="HintImportedFromGedcom" xml:space="preserve">
+    <value>Importé depuis GEDCOM</value>
+  </data>
+  <data name="TitleGedcomImportDialog" xml:space="preserve">
+    <value>Importation GEDCOM</value>
+  </data>
+  <data name="HintGedcomImportInProgress" xml:space="preserve">
+    <value>Importation du fichier en cours. Cela peut prendre un moment…</value>
+  </data>
+  <data name="HintGedcomImportCancelling" xml:space="preserve">
+    <value>Annulation…</value>
+  </data>
+  <data name="TitleSelectEncodingDialog" xml:space="preserve">
+    <value>Sélectionner l'encodage du texte</value>
+  </data>
+  <data name="HintGedcomDeclaredCharset_1" xml:space="preserve">
+    <value>Ce fichier GEDCOM déclare le jeu de caractères « {0} », qui est ambigu. Choisissez la page de codes dans laquelle son texte a réellement été écrit.</value>
+  </data>
+  <data name="FieldCodepage" xml:space="preserve">
+    <value>Page de codes</value>
+  </data>
+  <data name="ShareGedcomTitle" xml:space="preserve">
+    <value>Exporter GEDCOM</value>
+  </data>
+  <data name="FieldSearchText" xml:space="preserve">
+    <value>Rechercher</value>
+  </data>
+  <data name="ErrorNameIsShared_2" xml:space="preserve">
+    <value>Au moins les personnes suivantes partagent le nom {0} : {1}</value>
+  </data>
+  <data name="TitleSettingsPage" xml:space="preserve">
+    <value>Paramètres de l'application</value>
+  </data>
+  <data name="FieldDateDisplayFormat" xml:space="preserve">
+    <value>Format d'affichage de la date complète</value>
+  </data>
+  <data name="FieldDateDisplayFormatHint" xml:space="preserve">
+    <value>YYYY - année
+MM - numéro du mois (01-12)
+MMM - nom du mois (janvier - décembre)
+DD - numéro du jour (01-31)</value>
+  </data>
+  <data name="FieldShortDateDisplayFormatHint" xml:space="preserve">
+    <value>YYYY - année
+MM - numéro du mois (01-12)
+MMM - nom du mois (janvier - décembre)</value>
+  </data>
+  <data name="FieldDateSpanDisplayFormat" xml:space="preserve">
+    <value>Format d'affichage complet de l'âge ou de la durée</value>
+  </data>
+  <data name="FieldDateSpanDisplayFormatHint" xml:space="preserve">
+    <value>YEARS - nombre d'années (p. ex. « 25 ans »)
+MONTHS - nombre de mois (p. ex. « 3 mois »)
+DAYS - nombre de jours (p. ex. « 15 jours »)</value>
+  </data>
+  <data name="FieldShortDateSpanDisplayFormat" xml:space="preserve">
+    <value>Format d'affichage court de l'âge ou de la durée</value>
+  </data>
+  <data name="FieldShortDateSpanDisplayFormatHint" xml:space="preserve">
+    <value>YEARS - nombre d'années (p. ex. « 25 ans »)
+MONTHS - nombre de mois (p. ex. « 3 mois »)</value>
+  </data>
+  <data name="FieldPersonNameFormatHint" xml:space="preserve">
+    <value>FF - prénom,                  FF. - initiale du prénom
+PP - patronyme,               PP. - initiale du patronyme
+LL - nom,                     LL. - initiale du nom
+FN - nom de famille</value>
+  </data>
+  <data name="MenuItemNameSettings" xml:space="preserve">
+    <value>⚙️ Paramètres</value>
+  </data>
+  <data name="FieldShortDateDisplayFormat" xml:space="preserve">
+    <value>Format d'affichage de la date courte</value>
+  </data>
+  <data name="FieldCommonPersonNameFormat" xml:space="preserve">
+    <value>Format des noms des parents</value>
+  </data>
+  <data name="NameFirst" xml:space="preserve">
+    <value>Prénom</value>
+  </data>
+  <data name="NamePatronymic" xml:space="preserve">
+    <value>Patronyme</value>
+  </data>
+  <data name="NameLast" xml:space="preserve">
+    <value>Nom</value>
+  </data>
+  <data name="FieldFullPersonNameFormat" xml:space="preserve">
+    <value>Format du nom complet</value>
+  </data>
+  <data name="FieldPersonInitialsFormat" xml:space="preserve">
+    <value>Format du nom dans les descriptions et l'historique</value>
+  </data>
+  <data name="ShortPersonNameFormat" xml:space="preserve">
+    <value>Format des noms des personnes de la famille</value>
+  </data>
+  <data name="TxtPlaceholderBiography" xml:space="preserve">
+    <value>Saisissez une biographie ou un récit de vie...</value>
+  </data>
+  <data name="BtnNameMarkdownEditor" xml:space="preserve">
+    <value>Éditeur</value>
+  </data>
+  <data name="BtnNameMarkdownView" xml:space="preserve">
+    <value>Aperçu</value>
+  </data>
+  <data name="BtnNameInsertPersonLink" xml:space="preserve">
+    <value>Lier une personne</value>
+  </data>
+  <data name="BtnNameInsertMediaLink" xml:space="preserve">
+    <value>Lier un média</value>
+  </data>
+  <data name="TitleSelectMediaDialog" xml:space="preserve">
+    <value>Sélectionner un média</value>
+  </data>
+  <data name="FieldRevision_1" xml:space="preserve">
+    <value>Révision : {0}</value>
+  </data>
+  <data name="ErrorTheBoundIsReached" xml:space="preserve">
+    <value>La limite de la collection a été atteinte.</value>
+  </data>
+  <data name="NameFamily" xml:space="preserve">
+    <value>Famille</value>
+  </data>
+  <data name="MenuItemGoToRevisions" xml:space="preserve">
+    <value>🗓️ Révisions</value>
+  </data>
+  <data name="TitleProjectRevisionsPage" xml:space="preserve">
+    <value>Sélectionner les révisions du projet</value>
+  </data>
+  <data name="HintProjectRevisionsPage" xml:space="preserve">
+    <value>Restaurer ou supprimer la révision du projet</value>
+  </data>
+  <data name="BtnNameRestore_1" xml:space="preserve">
+    <value>Restaurer {0}</value>
+  </data>
+  <data name="MenuItemExpandAll_1" xml:space="preserve">
+    <value>{0} Tout déplier</value>
+  </data>
+  <data name="MenuItemCollapseAll_1" xml:space="preserve">
+    <value>{0} Tout replier</value>
+  </data>
+  <data name="RelHusbandsFather" xml:space="preserve">
+    <value>Beau-père</value>
+  </data>
+  <data name="RelHusbandsMother" xml:space="preserve">
+    <value>Belle-mère</value>
+  </data>
+  <data name="RelWifesFather" xml:space="preserve">
+    <value>Beau-père</value>
+  </data>
+  <data name="RelWifesMother" xml:space="preserve">
+    <value>Belle-mère</value>
+  </data>
+  <data name="RelBrothersWife" xml:space="preserve">
+    <value>Belle-sœur</value>
+  </data>
+  <data name="RelSistersHusband" xml:space="preserve">
+    <value>Beau-frère</value>
+  </data>
+  <data name="RelSiblingSpouse" xml:space="preserve">
+    <value>Beau-frère ou belle-sœur</value>
+  </data>
+  <data name="MenuItemNameFamilyTree" xml:space="preserve">
+    <value>🌳 Arbre familial</value>
+  </data>
+  <data name="TitleFamilyTreePage_1" xml:space="preserve">
+    <value>🌳 {0}</value>
+  </data>
+  <data name="HintFamilyTreePage" xml:space="preserve">
+    <value>Touchez un parent pour centrer l'arbre sur lui</value>
+  </data>
+  <data name="MenuItemNameOpenPerson_1" xml:space="preserve">
+    <value>Ouvrir {0}</value>
+  </data>
+  <data name="BtnNameLoadAncestors" xml:space="preserve">
+    <value>▲ Plus d'ancêtres</value>
+  </data>
+  <data name="BtnNameLoadDescendants" xml:space="preserve">
+    <value>▼ Plus de descendants</value>
+  </data>
+  <data name="LblRelatives" xml:space="preserve">
+    <value>Parents</value>
+  </data>
+  <data name="AlertTextKinshipUnfoldingAborted" xml:space="preserve">
+    <value>L'opération a pris plus de temps que prévu. Certains niveaux de parenté sont restés repliés. Vous pouvez les déplier manuellement.</value>
+  </data>
+  <data name="HintRelativeLoopDetected" xml:space="preserve">
+    <value>Boucle de parenté détectée : cette personne figure comme son propre ancêtre ou descendant, elle n'a donc pas été dépliée.</value>
+  </data>
+  <data name="HintRelativeMultipleConnections" xml:space="preserve">
+    <value>Cette personne est reliée à la famille par plus d'un lien de parenté.</value>
+  </data>
+  <data name="FieldFontScale" xml:space="preserve">
+    <value>Taille du texte</value>
+  </data>
+  <data name="FieldFontScaleHintWindows" xml:space="preserve">
+    <value>Met à l'échelle la taille de tout le texte de l'application. Vous pouvez utiliser les raccourcis Ctrl + +/-/0 pour augmenter, réduire ou réinitialiser l'échelle actuelle de la taille de police.</value>
+  </data>
+  <data name="FieldFontScaleHintMac" xml:space="preserve">
+    <value>Met à l'échelle la taille de tout le texte de l'application. Vous pouvez utiliser les raccourcis Cmd + +/-/0 pour augmenter, réduire ou réinitialiser l'échelle actuelle de la taille de police.</value>
+  </data>
+  <data name="FieldFontScaleHintAndroid" xml:space="preserve">
+    <value>Met à l'échelle la taille de tout le texte de l'application. Vous pouvez utiliser le geste de zoom pour augmenter ou réduire l'échelle de la taille du texte</value>
+  </data>
+  <data name="FieldFontScaleHintIOS" xml:space="preserve">
+    <value>Met à l'échelle la taille de tout le texte de l'application. Vous pouvez utiliser le geste de zoom pour augmenter ou réduire l'échelle de la taille du texte</value>
+  </data>
+  <data name="FieldBackgroundAnimation" xml:space="preserve">
+    <value>Animation d'arrière-plan</value>
+  </data>
+  <data name="FieldBackgroundAnimationHint" xml:space="preserve">
+    <value>Indique si l'animation de l'arbre en arrière-plan est jouée sur chaque page. Saisissez True ou False.</value>
+  </data>
+  <data name="FieldGedcomDetails" xml:space="preserve">
+    <value>Détails supplémentaires</value>
+  </data>
+  <data name="GedcomTagOCCU" xml:space="preserve">
+    <value>Profession</value>
+  </data>
+  <data name="GedcomTagRESI" xml:space="preserve">
+    <value>Résidence</value>
+  </data>
+  <data name="GedcomTagBURI" xml:space="preserve">
+    <value>Inhumation</value>
+  </data>
+  <data name="GedcomTagCREM" xml:space="preserve">
+    <value>Crémation</value>
+  </data>
+  <data name="GedcomTagEVEN" xml:space="preserve">
+    <value>Événement</value>
+  </data>
+  <data name="GedcomTagCENS" xml:space="preserve">
+    <value>Recensement</value>
+  </data>
+  <data name="GedcomTagBAPM" xml:space="preserve">
+    <value>Baptême</value>
+  </data>
+  <data name="GedcomTagCHR" xml:space="preserve">
+    <value>Baptême d'enfant</value>
+  </data>
+  <data name="GedcomTagCONF" xml:space="preserve">
+    <value>Confirmation</value>
+  </data>
+  <data name="GedcomTagORDN" xml:space="preserve">
+    <value>Ordination</value>
+  </data>
+  <data name="GedcomTagADOP" xml:space="preserve">
+    <value>Adoption</value>
+  </data>
+  <data name="GedcomTagEMIG" xml:space="preserve">
+    <value>Émigration</value>
+  </data>
+  <data name="GedcomTagIMMI" xml:space="preserve">
+    <value>Immigration</value>
+  </data>
+  <data name="GedcomTagNATU" xml:space="preserve">
+    <value>Naturalisation</value>
+  </data>
+  <data name="GedcomTagRETI" xml:space="preserve">
+    <value>Retraite</value>
+  </data>
+  <data name="GedcomTagPROB" xml:space="preserve">
+    <value>Homologation du testament</value>
+  </data>
+  <data name="GedcomTagWILL" xml:space="preserve">
+    <value>Testament</value>
+  </data>
+  <data name="GedcomTagGRAD" xml:space="preserve">
+    <value>Diplôme</value>
+  </data>
+  <data name="GedcomTagEDUC" xml:space="preserve">
+    <value>Éducation</value>
+  </data>
+  <data name="GedcomTagRELI" xml:space="preserve">
+    <value>Religion</value>
+  </data>
+  <data name="GedcomTagNATI" xml:space="preserve">
+    <value>Nationalité</value>
+  </data>
+  <data name="GedcomTagTITL" xml:space="preserve">
+    <value>Titre</value>
+  </data>
+  <data name="GedcomTagPROP" xml:space="preserve">
+    <value>Propriété</value>
+  </data>
+  <data name="GedcomTagDSCR" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="GedcomTagDATE" xml:space="preserve">
+    <value>Date</value>
+  </data>
+  <data name="GedcomTagPLAC" xml:space="preserve">
+    <value>Lieu</value>
+  </data>
+  <data name="GedcomTagTYPE" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="GedcomTagADDR" xml:space="preserve">
+    <value>Adresse</value>
+  </data>
+  <data name="GedcomTagPHON" xml:space="preserve">
+    <value>Téléphone</value>
+  </data>
+  <data name="GedcomTagEMAIL" xml:space="preserve">
+    <value>Courriel</value>
+  </data>
+  <data name="GedcomTagAGE" xml:space="preserve">
+    <value>Âge</value>
+  </data>
+  <data name="GedcomTagAGNC" xml:space="preserve">
+    <value>Organisme</value>
+  </data>
+  <data name="GedcomTagCAUS" xml:space="preserve">
+    <value>Cause</value>
+  </data>
+  <data name="GedcomTagNOTE" xml:space="preserve">
+    <value>Note</value>
+  </data>
+  <data name="GedcomTagROLE" xml:space="preserve">
+    <value>Rôle</value>
+  </data>
+  <data name="GedcomTagBIRT" xml:space="preserve">
+    <value>Naissance</value>
+  </data>
+  <data name="GedcomTagDEAT" xml:space="preserve">
+    <value>Décès</value>
+  </data>
+  <data name="GedcomTagNAME" xml:space="preserve">
+    <value>Nom</value>
+  </data>
+  <data name="GedcomTagNICK" xml:space="preserve">
+    <value>Surnom</value>
+  </data>
+  <data name="GedcomTagMAP" xml:space="preserve">
+    <value>Coordonnées</value>
+  </data>
+  <data name="GedcomTagLATI" xml:space="preserve">
+    <value>Latitude</value>
+  </data>
+  <data name="GedcomTagLONG" xml:space="preserve">
+    <value>Longitude</value>
+  </data>
+  <data name="GedcomTagSOUR" xml:space="preserve">
+    <value>Source</value>
+  </data>
+  <data name="GedcomTagDATA" xml:space="preserve">
+    <value>Données</value>
+  </data>
+  <data name="GedcomTagTEXT" xml:space="preserve">
+    <value>Texte</value>
+  </data>
+  <data name="GedcomTagFILE" xml:space="preserve">
+    <value>Fichier</value>
+  </data>
+  <data name="GedcomTagOBJE" xml:space="preserve">
+    <value>Média</value>
+  </data>
+  <data name="GedcomTagCALN" xml:space="preserve">
+    <value>Numéro de référence</value>
+  </data>
+  <data name="GedcomTagPAGE" xml:space="preserve">
+    <value>Page</value>
+  </data>
+  <data name="GedcomTagFORM" xml:space="preserve">
+    <value>Format</value>
+  </data>
+  <data name="GedcomTagCHAN" xml:space="preserve">
+    <value>Dernière modification</value>
+  </data>
+  <data name="GedcomTagFAM" xml:space="preserve">
+    <value>Mariage avec</value>
+  </data>
+  <data name="GedcomTagMARR" xml:space="preserve">
+    <value>Mariage</value>
+  </data>
+  <data name="GedcomTagDIV" xml:space="preserve">
+    <value>Divorce</value>
+  </data>
+  <data name="GedcomTagENGA" xml:space="preserve">
+    <value>Fiançailles</value>
+  </data>
+  <data name="GedcomTagNCHI" xml:space="preserve">
+    <value>Nombre d'enfants</value>
+  </data>
+  <data name="FieldGedcomFamilyDetails" xml:space="preserve">
+    <value>Détails de la famille</value>
+  </data>
+  <data name="FieldFilterAny" xml:space="preserve">
+    <value>Tous</value>
+  </data>
+  <data name="FieldFilterSex" xml:space="preserve">
+    <value>Sexe</value>
+  </data>
+  <data name="FieldMaritalStatusMarried" xml:space="preserve">
+    <value>Marié</value>
+  </data>
+  <data name="FieldMaritalStatusSingle" xml:space="preserve">
+    <value>Célibataire</value>
+  </data>
+  <data name="HintNameFilterWildcard" xml:space="preserve">
+    <value>Le nom contient… (les jokers * et ? sont pris en charge)</value>
+  </data>
+  <data name="BtnNameClearFilters" xml:space="preserve">
+    <value>Effacer les filtres</value>
+  </data>
+  <data name="BtnNameFilters_1" xml:space="preserve">
+    <value>{0} Filtres</value>
+  </data>
+  <data name="TitleStatisticsPage" xml:space="preserve">
+    <value>Statistiques</value>
+  </data>
+  <data name="MenuItemGoToStatistics" xml:space="preserve">
+    <value>📊 Statistiques</value>
+  </data>
+  <data name="MenuItemGoToKinshipFinder" xml:space="preserve">
+    <value>🩸 Recherche de parenté</value>
+  </data>
+  <data name="FieldStatOverview" xml:space="preserve">
+    <value>Vue d'ensemble</value>
+  </data>
+  <data name="FieldStatAge" xml:space="preserve">
+    <value>Âge</value>
+  </data>
+  <data name="FieldStatBirthYears" xml:space="preserve">
+    <value>Années de naissance</value>
+  </data>
+  <data name="FieldStatNames" xml:space="preserve">
+    <value>Noms</value>
+  </data>
+  <data name="FieldStatDataCompleteness" xml:space="preserve">
+    <value>Exhaustivité des données</value>
+  </data>
+  <data name="FieldStatRelationships" xml:space="preserve">
+    <value>Liens de parenté</value>
+  </data>
+  <data name="FieldStatTotalPersons" xml:space="preserve">
+    <value>Nombre total de personnes</value>
+  </data>
+  <data name="FieldStatTotalFamilies" xml:space="preserve">
+    <value>Nombre total de familles</value>
+  </data>
+  <data name="FieldStatMenCount" xml:space="preserve">
+    <value>Hommes</value>
+  </data>
+  <data name="FieldStatWomenCount" xml:space="preserve">
+    <value>Femmes</value>
+  </data>
+  <data name="FieldStatUnknownSexCount" xml:space="preserve">
+    <value>Sexe inconnu</value>
+  </data>
+  <data name="FieldStatLivingCount" xml:space="preserve">
+    <value>Vivants actuellement</value>
+  </data>
+  <data name="FieldStatAverageLifespan" xml:space="preserve">
+    <value>Espérance de vie moyenne</value>
+  </data>
+  <data name="FieldStatLifespan95thPercentile" xml:space="preserve">
+    <value>Longévité au 95e centile</value>
+  </data>
+  <data name="FieldStatOldestLiving" xml:space="preserve">
+    <value>Personne vivante la plus âgée</value>
+  </data>
+  <data name="FieldStatLongestLifespan" xml:space="preserve">
+    <value>Plus grande longévité enregistrée</value>
+  </data>
+  <data name="FieldStatBirthYearSpan" xml:space="preserve">
+    <value>Étendue des années de naissance</value>
+  </data>
+  <data name="FieldStatMedianBirthYear" xml:space="preserve">
+    <value>Année de naissance médiane</value>
+  </data>
+  <data name="FieldStatBirthsByDecade" xml:space="preserve">
+    <value>Naissances par décennie</value>
+  </data>
+  <data name="FieldStatLargestFamily" xml:space="preserve">
+    <value>Familles les plus nombreuses</value>
+  </data>
+  <data name="FieldStatSingleMemberFamilies" xml:space="preserve">
+    <value>Familles à un seul membre</value>
+  </data>
+  <data name="FieldStatTopMaleFirstNames" xml:space="preserve">
+    <value>Prénoms masculins les plus fréquents</value>
+  </data>
+  <data name="FieldStatTopFemaleFirstNames" xml:space="preserve">
+    <value>Prénoms féminins les plus fréquents</value>
+  </data>
+  <data name="FieldStatIncompleteBirthDates" xml:space="preserve">
+    <value>Dates de naissance incomplètes</value>
+  </data>
+  <data name="FieldStatPhotoCoverage" xml:space="preserve">
+    <value>Couverture photographique</value>
+  </data>
+  <data name="FieldStatIsolatedPersons" xml:space="preserve">
+    <value>Personnes isolées (sans parents)</value>
+  </data>
+  <data name="FieldStatMarriageCount" xml:space="preserve">
+    <value>Mariages</value>
+  </data>
+  <data name="FieldStatAverageChildren" xml:space="preserve">
+    <value>Moyenne d'enfants par parent</value>
+  </data>
+  <data name="FieldStatMostChildren" xml:space="preserve">
+    <value>Plus grand nombre d'enfants</value>
+  </data>
+  <data name="StatValueNone" xml:space="preserve">
+    <value>—</value>
+  </data>
+  <data name="MsgKinshipNotFound" xml:space="preserve">
+    <value>Aucun lien de parenté connu n'a été trouvé entre ces deux personnes.</value>
+  </data>
+  <data name="BtnNameChoosePerson" xml:space="preserve">
+    <value>Choisir…</value>
+  </data>
+  <data name="StatValueYears_1" xml:space="preserve">
+    <value>{0} ans</value>
+  </data>
+  <data name="StatValuePersonYears_2" xml:space="preserve">
+    <value>{0} ({1} ans)</value>
+  </data>
+  <data name="StatValueYearRange_2" xml:space="preserve">
+    <value>{0}–{1}</value>
+  </data>
+  <data name="StatValueNameCount_2" xml:space="preserve">
+    <value>{0} ({1})</value>
+  </data>
+  <data name="StatValueDecadeCount_2" xml:space="preserve">
+    <value>Années {0} : {1}</value>
+  </data>
+  <data name="StatValuePersonChildren_2" xml:space="preserve">
+    <value>{0} ({1} enfants)</value>
+  </data>
+  <data name="StatValueCoverage_2" xml:space="preserve">
+    <value>{0} sur {1}</value>
+  </data>
+  <data name="StatValueChildrenAverage_1" xml:space="preserve">
+    <value>{0} enfants</value>
+  </data>
+</root>
