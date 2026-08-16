@@ -31,4 +31,13 @@ public class PageMenuItemTests
     Assert.Equal("?", item.ButtonText);
     Assert.Equal("Refresh", item.ToolTipText);
   }
+
+  [Fact]
+  public void An_explicit_icon_becomes_the_button_and_the_whole_caption_becomes_the_tooltip()
+  {
+    var item = new PageMenuItem { Icon = "👤", Text = "Open Ivan" };
+
+    Assert.Equal("👤", item.ButtonText);
+    Assert.Equal("Open Ivan", item.ToolTipText);
+  }
 }
