@@ -6,8 +6,8 @@ public class PageMenuItem : MenuItem
   {
     get
     {
-      var index = Text.IndexOf(' ');
-      return index > 0 ? Text.Substring(0, index) : "?";
+      var index = Text?.IndexOf(' ') ?? -1;
+      return index > 0 ? Text!.Substring(0, index) : "?";
     }
   }
 
@@ -15,8 +15,8 @@ public class PageMenuItem : MenuItem
   {
     get
     {
-      var index = Text.IndexOf(' ');
-      return index > 0 ? Text.Substring(index + 1) : Text;
+      var index = Text?.IndexOf(' ') ?? -1;
+      return index > 0 ? Text!.Substring(index + 1) : Text ?? string.Empty;
     }
   }
 
