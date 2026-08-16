@@ -9,6 +9,7 @@
     x:Name="Root">
 
   <components:PageLayout
+      x:Name="Layout"
       Hint="{x:Static resources:UIStrings.HintFamilyTreePage}"
       Title="{Binding PageTitle, Source={x:Reference Root}}">
 

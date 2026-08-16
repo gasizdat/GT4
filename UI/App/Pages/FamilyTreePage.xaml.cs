@@ -3,6 +3,7 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Components.Genealogy;
+using GT4.UI.Items;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
@@ -102,8 +103,8 @@ public partial class FamilyTreePage : ContentPage
   // Diagnostic-only affordances for stress-testing deep-tree rendering; never shipped in Release.
   private void AddDiagnosticToolbarItems()
   {
-    ToolbarItems.Add(new ToolbarItem { Text = "Load deep (diag)", Order = ToolbarItemOrder.Secondary, Command = PageCommand, CommandParameter = "LoadDeep" });
-    ToolbarItems.Add(new ToolbarItem { Text = "Auto-load incremental (diag)", Order = ToolbarItemOrder.Secondary, Command = PageCommand, CommandParameter = "AutoLoad" });
+    Layout.MenuItems.Add(new PageMenuItem { Text = "🧪 Load deep (diag)", Command = PageCommand, CommandParameter = "LoadDeep" });
+    Layout.MenuItems.Add(new PageMenuItem { Text = "🧪 Auto-load incremental (diag)", Command = PageCommand, CommandParameter = "AutoLoad" });
   }
 #endif
 
