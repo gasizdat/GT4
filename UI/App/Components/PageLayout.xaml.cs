@@ -11,19 +11,10 @@ public partial class PageLayout : ContentView
   public PageLayout(IServiceProvider serviceProvider)
   {
     Animation = serviceProvider.GetRequiredService<BackgroundAnimation>();
-    SizeChanged += OnVisibilityChanged;
-    _MenuItems.CollectionChanged += OnVisibilityChanged;
+    SizeChanged += OnMenuPlacementChanged;
+    _MenuItems.CollectionChanged += OnMenuPlacementChanged;
 
     InitializeComponent();
-  }
-
-  private void OnVisibilityChanged(object? sender, EventArgs e)
-  {
-    OnPropertyChanged(nameof(TopMenuItems));
-    OnPropertyChanged(nameof(SideMenuItems));
-    OnPropertyChanged(nameof(IsMenuVisible));
-    OnPropertyChanged(nameof(IsTopMenuVisible));
-    OnPropertyChanged(nameof(IsSideMenuVisible));
   }
 
   public PageLayout()
@@ -112,11 +103,13 @@ public partial class PageLayout : ContentView
     }
   }
 
+  private void OnMenuPlacementChanged(object? sender, EventArgs e)
+  {
+    OnPropertyChanged(nameof(IsTopMenuVisible));
+    OnPropertyChanged(nameof(IsSideMenuVisible));
+  }
+
   public ICollection<MenuItem> MenuItems => _MenuItems;
-
-  public ICollection<MenuItem> TopMenuItems => IsTopMenuVisible ? MenuItems : [];
-
-  public ICollection<MenuItem> SideMenuItems => IsSideMenuVisible ? MenuItems : [];
 
   public string Title
   {
@@ -150,9 +143,9 @@ public partial class PageLayout : ContentView
 
   public bool IsMenuVisible => _MenuItems.Any();
 
-  public bool IsTopMenuVisible => IsMenuVisible && Width < Height;
+  public bool IsTopMenuVisible => IsMenuVisible && Height > Width;
 
-  public bool IsSideMenuVisible => IsMenuVisible && Width > Height;
+  public bool IsSideMenuVisible => IsMenuVisible && Height <= Width;
 
   public bool IsTitleVisible => !string.IsNullOrWhiteSpace(Title);
 

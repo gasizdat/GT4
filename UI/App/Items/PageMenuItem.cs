@@ -10,12 +10,13 @@ public class PageMenuItem : MenuItem
       return index > 0 ? Text.Substring(0, index) : "?";
     }
   }
+
   public string ToolTipText
   {
     get
     {
       var index = Text.IndexOf(' ');
-      return index > 0 ? Text.Substring(index) : "?";
+      return index > 0 ? Text.Substring(index + 1) : Text;
     }
   }
 }

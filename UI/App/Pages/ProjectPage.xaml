@@ -9,60 +9,60 @@
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root">
 
-  <components:PageLayout Title="{x:Static resources:UIStrings.TitleFamiliesPage}"
-                         Hint="{x:Static resources:UIStrings.HintFamiliesPage}">
+  <components:PageLayout
+      Title="{x:Static resources:UIStrings.TitleFamiliesPage}"
+      Hint="{x:Static resources:UIStrings.HintFamiliesPage}">
 
     <components:PageLayout.MenuItems>
 
       <items:PageMenuItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="RemoveProject"
-        Text="{Binding RemoveProjectToolbarItemName, Source={x:Reference Root}}" />
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="RemoveProject"
+          Text="{Binding RemoveProjectToolbarItemName, Source={x:Reference Root}}" />
       <items:PageMenuItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="EditProject"
-        Text="{Binding EditProjectToolbarItemName, Source={x:Reference Root}}" />
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="EditProject"
+          Text="{Binding EditProjectToolbarItemName, Source={x:Reference Root}}" />
       <items:PageMenuItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="CreateFamily"
-        Text="{x:Static resources:UIStrings.MenuItemNameCreateFamily}" />
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="CreateFamily"
+          Text="{x:Static resources:UIStrings.MenuItemNameCreateFamily}" />
       <items:PageMenuItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="GoToNames"
-        Text="{x:Static resources:UIStrings.MenuItemGoToNames}" />
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="GoToNames"
+          Text="{x:Static resources:UIStrings.MenuItemGoToNames}" />
       <items:PageMenuItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="GoToGallery"
-        Text="{x:Static resources:UIStrings.MenuItemGoToGallery}" />
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="GoToGallery"
+          Text="{x:Static resources:UIStrings.MenuItemGoToGallery}" />
       <items:PageMenuItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="GoToStatistics"
-        Text="{x:Static resources:UIStrings.MenuItemGoToStatistics}" />
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="GoToStatistics"
+          Text="{x:Static resources:UIStrings.MenuItemGoToStatistics}" />
       <items:PageMenuItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="GoToKinshipFinder"
-        Text="{x:Static resources:UIStrings.MenuItemGoToKinshipFinder}" />
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="GoToKinshipFinder"
+          Text="{x:Static resources:UIStrings.MenuItemGoToKinshipFinder}" />
       <items:PageMenuItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="ImportGedcom"
-        Text="{x:Static resources:UIStrings.MenuItemImportGedcom}" />
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="ImportGedcom"
+          Text="{x:Static resources:UIStrings.MenuItemImportGedcom}" />
       <items:PageMenuItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="ExportGedcom"
-        Text="{x:Static resources:UIStrings.MenuItemExportGedcom}" />
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="ExportGedcom"
+          Text="{x:Static resources:UIStrings.MenuItemExportGedcom}" />
       <items:PageMenuItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="GoToRevisions"
-        Text="{x:Static resources:UIStrings.MenuItemGoToRevisions}" />
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="GoToRevisions"
+          Text="{x:Static resources:UIStrings.MenuItemGoToRevisions}" />
       <items:PageMenuItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="Refresh"
-        Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="Refresh"
+          Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
     </components:PageLayout.MenuItems>
 
     <components:PageLayout.Header>
-      <components:PersonFilterView
-          x:Name="FilterView"/>
+      <components:PersonFilterView x:Name="FilterView" />
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>

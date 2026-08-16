@@ -28,6 +28,17 @@
           Left="{StaticResource PageContentHorizontalPadding}"
           Right="{StaticResource PageContentHorizontalPadding}"
           Top="0" />
+
+      <DataTemplate x:Key="MenuItemTemplate" x:DataType="items:PageMenuItem">
+        <Button
+            Command="{Binding Command}"
+            CommandParameter="{Binding CommandParameter}"
+            FontSize="{DynamicResource ActionButtonTextSize}"
+            HorizontalOptions="Center"
+            Style="{StaticResource EmojiAdorner}"
+            Text="{Binding ButtonText}"
+            ToolTipProperties.Text="{Binding ToolTipText}" />
+      </DataTemplate>
     </ResourceDictionary>
   </ContentView.Resources>
 
@@ -69,26 +80,13 @@
         RowDefinitions="*, Auto">
 
       <FlexLayout
-          BindableLayout.ItemsSource="{Binding TopMenuItems, Source={x:Reference Root}}"
+          x:Name="TopMenu"
+          BindableLayout.ItemsSource="{Binding MenuItems, Source={x:Reference Root}}"
+          BindableLayout.ItemTemplate="{StaticResource MenuItemTemplate}"
           Direction="Row"
           HorizontalOptions="End"
           IsVisible="{Binding IsTopMenuVisible, Source={x:Reference Root}}"
-          Wrap="Wrap">
-
-        <BindableLayout.ItemTemplate>
-          <DataTemplate x:DataType="items:PageMenuItem">
-            <Button
-                Command="{Binding Command}"
-                CommandParameter="{Binding CommandParameter}"
-                FontSize="{DynamicResource ActionButtonTextSize}"
-                HorizontalOptions="Center"
-                Style="{StaticResource EmojiAdorner}"
-                Text="{Binding ButtonText}"
-                ToolTipProperties.Text="{Binding ToolTipText}" />
-          </DataTemplate>
-        </BindableLayout.ItemTemplate>
-
-      </FlexLayout>
+          Wrap="Wrap" />
 
       <ContentView
           Grid.Row="1"
@@ -102,31 +100,18 @@
         Grid.Column="0"
         Padding="{StaticResource BodyPadding}"
         ColumnDefinitions="*, Auto">
-      
+
       <ContentView Content="{Binding Body, Source={x:Reference Root}}" />
-      
+
       <FlexLayout
+          x:Name="SideMenu"
           Grid.Column="1"
-          BindableLayout.ItemsSource="{Binding SideMenuItems, Source={x:Reference Root}}"
+          BindableLayout.ItemsSource="{Binding MenuItems, Source={x:Reference Root}}"
+          BindableLayout.ItemTemplate="{StaticResource MenuItemTemplate}"
           Direction="Column"
           HorizontalOptions="End"
           IsVisible="{Binding IsSideMenuVisible, Source={x:Reference Root}}"
-          Wrap="Wrap">
-
-        <BindableLayout.ItemTemplate>
-          <DataTemplate x:DataType="items:PageMenuItem">
-            <Button
-                Command="{Binding Command}"
-                CommandParameter="{Binding CommandParameter}"
-                FontSize="{DynamicResource ActionButtonTextSize}"
-                HorizontalOptions="Center"
-                Style="{StaticResource EmojiAdorner}"
-                Text="{Binding ButtonText}"
-                ToolTipProperties.Text="{Binding ToolTipText}" />
-          </DataTemplate>
-        </BindableLayout.ItemTemplate>
-
-      </FlexLayout>
+          Wrap="Wrap" />
 
     </Grid>
 
