@@ -8,43 +8,37 @@
     xmlns:dto="clr-namespace:GT4.Core.Project.Dto;assembly=GT4.Core.Project"
     xmlns:items="clr-namespace:GT4.UI.Items"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
-    x:Name="Root"
-    Title="{x:Static resources:UIStrings.TitleNamesPage}">
+    x:Name="Root">
 
-  <ContentPage.ToolbarItems>
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="Refresh"
-        Order="Secondary"
-        Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
-  </ContentPage.ToolbarItems>
+  <components:PageLayout
+      Hint="{x:Static resources:UIStrings.HintNamesPage}"
+      Title="{x:Static resources:UIStrings.TitleNamesPage}">
 
-  <components:PageLayout>
+    <components:PageLayout.MenuItems>
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="Refresh"
+          Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
+    </components:PageLayout.MenuItems>
+
     <components:PageLayout.Header>
       <Grid
           Padding="20"
           ColumnDefinitions="Auto, Auto, *"
           HorizontalOptions="Fill"
-          RowDefinitions="Auto, Auto, *"
+          RowDefinitions="Auto, *"
           RowSpacing="10"
           VerticalOptions="Start">
 
-        <!--  Row 0 - Title  -->
+        <!--  Row 0 - Filters  -->
         <Label
             Grid.Row="0"
-            Grid.ColumnSpan="3"
-            Style="{StaticResource PageSubtitle}"
-            Text="{x:Static resources:UIStrings.HintNamesPage}" />
-
-        <!--  Row 1 - Filters  -->
-        <Label
-            Grid.Row="1"
             Grid.Column="0"
             Style="{StaticResource FieldName}"
             Text="{x:Static resources:UIStrings.FieldSelectName}" />
 
         <Picker
-            Grid.Row="1"
+            Grid.Row="0"
             Grid.Column="1"
             ItemDisplayBinding="{Binding Name}"
             ItemsSource="{Binding BiologicalSexes, Source={x:Reference Root}}"
@@ -52,22 +46,22 @@
             Style="{StaticResource FieldValue}" />
 
         <Picker
-            Grid.Row="1"
+            Grid.Row="0"
             Grid.Column="2"
             ItemDisplayBinding="{Binding TypeName}"
             ItemsSource="{Binding NameTypes, Source={x:Reference Root}}"
             SelectedItem="{Binding CurrentNameType, Source={x:Reference Root}}"
             Style="{StaticResource FieldValue}" />
 
-        <!--  Row 2 - Search  -->
+        <!--  Row 1 - Search  -->
         <Label
-            Grid.Row="2"
+            Grid.Row="1"
             Grid.Column="0"
             Style="{StaticResource FieldName}"
             Text="{x:Static resources:UIStrings.FieldSearchText}" />
 
         <Entry
-            Grid.Row="2"
+            Grid.Row="1"
             Grid.Column="1"
             Grid.ColumnSpan="2"
             HorizontalOptions="Fill"

@@ -2,6 +2,7 @@ using GT4.Core.Gedcom;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.Components;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Pages;
@@ -359,15 +360,16 @@ public class FamilyPageTests
   }
 
   [Fact]
-  public async Task NoFamily_mode_drops_the_remove_and_edit_family_toolbar_items()
+  public async Task NoFamily_mode_drops_the_remove_and_edit_family_menu_items()
   {
     var page = await CreatePageAsync(new TestServices());
-    Assert.Equal(4, page.ToolbarItems.Count);
+    var menuItems = ((PageLayout)page.Content).MenuItems.Cast<PageMenuItem>().ToArray();
+    Assert.Equal(4, menuItems.Length);
 
     await MainThread.InvokeOnMainThreadAsync(() => page.FamilyName = FamilyInfoItem.NoFamilyName);
 
     var parameters = await MainThread.InvokeOnMainThreadAsync(
-      () => page.ToolbarItems.Where(tb => tb.IsEnabled).Select(item => item.CommandParameter).ToArray());
+      () => menuItems.Where(mi => mi.IsEnabled).Select(mi => mi.CommandParameter).ToArray());
     Assert.Equal(["CreatePerson", "Refresh"], parameters);
   }
 

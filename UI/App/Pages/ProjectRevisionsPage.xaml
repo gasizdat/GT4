@@ -7,23 +7,18 @@
     xmlns:items="clr-namespace:GT4.UI.Items"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root"
-    Title="{x:Static resources:UIStrings.TitleProjectRevisionsPage}"
     NavigatedTo="OnNavigatedTo">
 
-  <ContentPage.ToolbarItems>
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="Refresh"
-        Order="Secondary"
-        Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
-  </ContentPage.ToolbarItems>
+  <components:PageLayout
+      Hint="{x:Static resources:UIStrings.HintProjectRevisionsPage}"
+      Title="{x:Static resources:UIStrings.TitleProjectRevisionsPage}">
 
-  <components:PageLayout>
-    <components:PageLayout.Header>
-      <Label
-          Style="{StaticResource PageSubtitle}"
-          Text="{x:Static resources:UIStrings.HintProjectRevisionsPage}" />
-    </components:PageLayout.Header>
+    <components:PageLayout.MenuItems>
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="Refresh"
+          Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
+    </components:PageLayout.MenuItems>
 
     <components:PageLayout.Body>
       <CollectionView

@@ -6,9 +6,9 @@
     xmlns:behaviors="clr-namespace:GT4.UI.Behaviors"
     xmlns:components="clr-namespace:GT4.UI.Components"
     xmlns:dto="clr-namespace:GT4.Core.Project.Dto;assembly=GT4.Core.Project"
+    xmlns:items="clr-namespace:GT4.UI.Items"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
-    x:Name="Root"
-    Title="{Binding ShortName, Source={x:Reference Root}}">
+    x:Name="Root">
 
   <ContentPage.Resources>
     <ResourceDictionary>
@@ -38,63 +38,39 @@
     </ResourceDictionary>
   </ContentPage.Resources>
 
-  <ContentPage.ToolbarItems>
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="GoToHome"
-        Order="Secondary"
-        Text="{x:Static resources:UIStrings.TitleApp}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="GoToFamily"
-        Order="Secondary"
-        Text="{Binding GoToFamilyName, Source={x:Reference Root}}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="GoToFamilyTree"
-        Order="Secondary"
-        Text="{x:Static resources:UIStrings.MenuItemNameFamilyTree}" />
-    <ToolbarItem
-        IsEnabled="False"
-        Order="Secondary"
-        Text="──────────────" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="ToggleAll"
-        Order="Secondary"
-        Text="{Binding ToggleAllMenuItemName, Source={x:Reference Root}}" />
-    <ToolbarItem
-        IsEnabled="False"
-        Order="Secondary"
-        Text="──────────────" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="RemovePerson"
-        Order="Secondary"
-        Text="{Binding RemovePersonToolbarItemName, Source={x:Reference Root}}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="EditPerson"
-        Order="Secondary"
-        Text="{Binding EditPersonToolbarItemName, Source={x:Reference Root}}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="Refresh"
-        Order="Secondary"
-        Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="ToggleAll"
-        Order="Primary"
-        Text="{Binding ToggleAllButtonName, Source={x:Reference Root}}" />
-    <ToolbarItem
-        Command="{Binding PageCommand, Source={x:Reference Root}}"
-        CommandParameter="GoToFamilyTree"
-        Order="Primary"
-        Text="🌳" />
-  </ContentPage.ToolbarItems>
+  <components:PageLayout Title="{Binding ShortName, Source={x:Reference Root}}">
 
-  <components:PageLayout>
+    <components:PageLayout.MenuItems>
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="GoToHome"
+          Text="{x:Static resources:UIStrings.TitleApp}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="GoToFamily"
+          Text="{Binding GoToFamilyName, Source={x:Reference Root}}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="GoToFamilyTree"
+          Text="{x:Static resources:UIStrings.MenuItemNameFamilyTree}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="ToggleAll"
+          Text="{Binding ToggleAllMenuItemName, Source={x:Reference Root}}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="RemovePerson"
+          Text="{Binding RemovePersonToolbarItemName, Source={x:Reference Root}}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="EditPerson"
+          Text="{Binding EditPersonToolbarItemName, Source={x:Reference Root}}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="Refresh"
+          Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
+    </components:PageLayout.MenuItems>
+
     <components:PageLayout.Header>
       <Grid
           ColumnDefinitions="Auto, *"
