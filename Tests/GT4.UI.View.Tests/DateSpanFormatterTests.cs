@@ -26,6 +26,7 @@ public class DateSpanFormatterTests
   private static void SetRu() => Language.Current = Language.RU;
   private static void SetDe() => Language.Current = Language.DE;
   private static void SetEs() => Language.Current = Language.ES;
+  private static void SetFr() => Language.Current = Language.FR;
 
   private static DateSpan WellKnown(int years, int months, int days) =>
     new(years, months, days, DateStatus.WellKnown);
@@ -120,6 +121,38 @@ public class DateSpanFormatterTests
   public void ES_YearsMonthsAndDays(int years, int months, int days, string expected)
   {
     SetEs();
+    var span = WellKnown(years, months, days);
+    _formatter.ToString(span).Should().Be(expected);
+  }
+
+  // One resource serves both an unknown date and an unknown age, so it stays in the unmarked
+  // masculine rather than agreeing with either.
+  [Fact]
+  public void FR_NullSpan_ReturnsUnknown()
+  {
+    SetFr();
+    _formatter.ToString(null).Should().Be("inconnu");
+  }
+
+  [Theory]
+  [InlineData(1, "1 an")]
+  [InlineData(2, "2 ans")]
+  [InlineData(11, "11 ans")]
+  [InlineData(21, "21 ans")]
+  public void FR_Years(int years, string expected)
+  {
+    SetFr();
+    var span = MonthUnknown(years);
+    _formatter.ToString(span).Should().Be(expected);
+  }
+
+  // "mois" is invariable, so the singular and plural forms of that component are the same word.
+  [Theory]
+  [InlineData(1, 1, 1, "1 an 1 mois 1 jour")]
+  [InlineData(2, 3, 4, "2 ans 3 mois 4 jours")]
+  public void FR_YearsMonthsAndDays(int years, int months, int days, string expected)
+  {
+    SetFr();
     var span = WellKnown(years, months, days);
     _formatter.ToString(span).Should().Be(expected);
   }

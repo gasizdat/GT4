@@ -24,6 +24,7 @@ public class DateFormatterTests
   private static void SetRu() => Language.Current = Language.RU;
   private static void SetDe() => Language.Current = Language.DE;
   private static void SetEs() => Language.Current = Language.ES;
+  private static void SetFr() => Language.Current = Language.FR;
 
   [Fact]
   public void NullDate_ReturnsNotDefined()
@@ -164,6 +165,18 @@ public class DateFormatterTests
   public void ES_Months_MatchResourceStrings(int month, string expectedName)
   {
     SetEs();
+    var date = Date.Create(2000, month, 0, DateStatus.DayUnknown);
+    Create(shortFormat: "MMM YYYY").ToString(date).Should().StartWith(expectedName);
+  }
+
+  [Theory]
+  [InlineData(1, "janvier")]
+  [InlineData(3, "mars")]
+  [InlineData(10, "octobre")]
+  [InlineData(12, "décembre")]
+  public void FR_Months_MatchResourceStrings(int month, string expectedName)
+  {
+    SetFr();
     var date = Date.Create(2000, month, 0, DateStatus.DayUnknown);
     Create(shortFormat: "MMM YYYY").ToString(date).Should().StartWith(expectedName);
   }

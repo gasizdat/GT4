@@ -66,6 +66,17 @@ public class UIStringsTests
     Assert.Equal(expected, actual);
   }
 
+  [Theory]
+  [InlineData("Month_03", "mars")]
+  [InlineData("RelGrandFather", "Grand-père")]
+  public void FrenchSatelliteResolves(string key, string expected)
+  {
+    var french = new CultureInfo(Language.FR.Code);
+    var actual = UIStrings.ResourceManager.GetString(key, french);
+
+    Assert.Equal(expected, actual);
+  }
+
   // The Spanish formatter names a generation by prefixing the grandparent/grandchild stem where it
   // sits inside the composed term. Rewording one of these so it no longer spells the stem leaves
   // every deeper generation rendering exactly like the shallowest, with nothing thrown.

@@ -19,6 +19,7 @@ public class RelationshipTypeFormatterTests
   private static void SetRu() => Language.Current = Language.RU;
   private static void SetDe() => Language.Current = Language.DE;
   private static void SetEs() => Language.Current = Language.ES;
+  private static void SetFr() => Language.Current = Language.FR;
 
   [Theory]
   [InlineData(null, "Parent")]
@@ -97,6 +98,26 @@ public class RelationshipTypeFormatterTests
     Assert.Equal(expected, actual);
   }
 
+  // French repeats one prefix around the whole phrase the way En and Ru do, so it inherits the base
+  // greatness pass unchanged; "arrière-" is what that prefix spells.
+  [Theory]
+  [InlineData(null, "Parent")]
+  [InlineData(1, "Parent")]
+  [InlineData(2, "Grand-parent")]
+  [InlineData(4, "Arrière-arrière-grand-parent")]
+  [InlineData(40, "38-arrière-grand-parent")]
+  public void FR_UnknownSex_Parent(int? generation, string expected)
+  {
+    SetFr();
+    var actual = _formatter.ToString(
+      RelationshipType.Parent,
+      BiologicalSex.Unknown,
+      ToGeneration(generation),
+      generation.HasValue ? Consanguinity.Zero : null);
+
+    Assert.Equal(expected, actual);
+  }
+
   [Theory]
   [InlineData(null, "Child")]
   [InlineData(-1, "Child")]
@@ -159,6 +180,23 @@ public class RelationshipTypeFormatterTests
   public void ES_UnknownSex_Child(int? generation, string expected)
   {
     SetEs();
+    var actual = _formatter.ToString(
+      RelationshipType.Child,
+      BiologicalSex.Unknown,
+      ToGeneration(generation),
+      Consanguinity.Zero);
+
+    Assert.Equal(expected, actual);
+  }
+
+  [Theory]
+  [InlineData(-1, "Enfant")]
+  [InlineData(-2, "Petit-enfant")]
+  [InlineData(-4, "Arrière-arrière-petit-enfant")]
+  [InlineData(-15, "13-arrière-petit-enfant")]
+  public void FR_UnknownSex_Child(int? generation, string expected)
+  {
+    SetFr();
     var actual = _formatter.ToString(
       RelationshipType.Child,
       BiologicalSex.Unknown,
@@ -273,6 +311,25 @@ public class RelationshipTypeFormatterTests
     Assert.Equal(expected, actual);
   }
 
+  // "Grand-oncle ou grand-tante" is the one French term where the base greatness pass reaches only
+  // the first disjunct, the same shortfall German shows on "Ururgroßonkel oder Großtante" (#318).
+  [Theory]
+  [InlineData(1, "Oncle ou tante")]
+  [InlineData(2, "Grand-oncle ou grand-tante")]
+  [InlineData(4, "Arrière-arrière-grand-oncle ou grand-tante")]
+  [InlineData(14, "12-arrière-grand-oncle ou grand-tante")]
+  public void FR_UnknownSex_UncleAunt(int generation, string expected)
+  {
+    SetFr();
+    var actual = _formatter.ToString(
+      RelationshipType.Sibling,
+      BiologicalSex.Unknown,
+      ToGeneration(generation),
+      ToConsanguinity(generation) + Consanguinity.Sibling);
+
+    Assert.Equal(expected, actual);
+  }
+
   [Theory]
   [InlineData(0, 2, "Cousin")]
   [InlineData(0, 3, "Second cousin")]
@@ -367,6 +424,30 @@ public class RelationshipTypeFormatterTests
     Assert.Equal(expected, actual);
   }
 
+  // French has no native counterpart to "removed" either, so the offset is spelled out in
+  // generations.
+  [Theory]
+  [InlineData(0, 2, "Cousin ou cousine")]
+  [InlineData(0, 3, "Cousin ou cousine au deuxième degré")]
+  [InlineData(0, 56, "Cousin ou cousine au 55e degré")]
+  [InlineData(1, 3, "Cousin ou cousine, à une génération d'écart")]
+  [InlineData(1, 4, "Cousin ou cousine au deuxième degré, à une génération d'écart")]
+  [InlineData(2, 4, "Cousin ou cousine, à deux générations d'écart")]
+  [InlineData(2, 5, "Cousin ou cousine au deuxième degré, à deux générations d'écart")]
+  [InlineData(15, 25, "Cousin ou cousine au 9e degré, à 15 générations d'écart")]
+  [InlineData(1, 1, "Unsupported or wrong relationship: Type=Child, Sex=Unknown, G1, C1")]
+  public void FR_UnknownSex_Cousin(int generation, int consanguinity, string expected)
+  {
+    SetFr();
+    var actual = _formatter.ToString(
+      RelationshipType.Child,
+      BiologicalSex.Unknown,
+      ToGeneration(generation),
+      ToConsanguinity(consanguinity));
+
+    Assert.Equal(expected, actual);
+  }
+
   // Unlike English, German genders the cousin term.
   [Theory]
   [InlineData(BiologicalSex.Female, "Cousine zweiten Grades")]
@@ -389,6 +470,21 @@ public class RelationshipTypeFormatterTests
   public void ES_Cousin_IsGendered(BiologicalSex sex, string expected)
   {
     SetEs();
+    var actual = _formatter.ToString(
+      RelationshipType.Child,
+      sex,
+      Generation.Zero,
+      ToConsanguinity(3));
+
+    Assert.Equal(expected, actual);
+  }
+
+  [Theory]
+  [InlineData(BiologicalSex.Female, "Cousine au deuxième degré")]
+  [InlineData(BiologicalSex.Male, "Cousin au deuxième degré")]
+  public void FR_Cousin_IsGendered(BiologicalSex sex, string expected)
+  {
+    SetFr();
     var actual = _formatter.ToString(
       RelationshipType.Child,
       sex,
@@ -505,6 +601,47 @@ public class RelationshipTypeFormatterTests
     Assert.Equal(expected, actual);
   }
 
+  [Theory]
+  [InlineData(RelationshipType.HusbandParent, BiologicalSex.Male, "Beau-père")]
+  [InlineData(RelationshipType.HusbandParent, BiologicalSex.Female, "Belle-mère")]
+  [InlineData(RelationshipType.HusbandParent, BiologicalSex.Unknown, "Beau-père ou belle-mère")]
+  [InlineData(RelationshipType.WifeParent, BiologicalSex.Male, "Beau-père")]
+  [InlineData(RelationshipType.WifeParent, BiologicalSex.Female, "Belle-mère")]
+  [InlineData(RelationshipType.WifeParent, BiologicalSex.Unknown, "Beau-père ou belle-mère")]
+  [InlineData(RelationshipType.SpouseParent, BiologicalSex.Male, "Beau-père")]
+  [InlineData(RelationshipType.SpouseParent, BiologicalSex.Female, "Belle-mère")]
+  [InlineData(RelationshipType.SpouseParent, BiologicalSex.Unknown, "Beau-père ou belle-mère")]
+  public void FR_InLawParent(RelationshipType type, BiologicalSex inLawSex, string expected)
+  {
+    SetFr();
+    var actual = _formatter.ToString(
+      type,
+      inLawSex,
+      Generation.Parent,
+      Consanguinity.Zero);
+
+    Assert.Equal(expected, actual);
+  }
+
+  // French says "beau-père" for both a father-in-law and a stepfather. The bare word is left to the
+  // in-law reading, which is the one an unqualified label carries in genealogical use, so the step
+  // rows have to spell the qualifier out to stay distinguishable.
+  [Theory]
+  [InlineData(BiologicalSex.Male, "Beau-père (par remariage)")]
+  [InlineData(BiologicalSex.Female, "Belle-mère (par remariage)")]
+  [InlineData(BiologicalSex.Unknown, "Beau-père ou belle-mère (par remariage)")]
+  public void FR_StepParent_StaysDistinctFromInLawParent(BiologicalSex sex, string expected)
+  {
+    SetFr();
+    var actual = _formatter.ToString(
+      RelationshipType.StepParent,
+      sex,
+      Generation.Parent,
+      Consanguinity.Zero);
+
+    Assert.Equal(expected, actual);
+  }
+
   // A sibling's spouse (same generation, sibling consanguinity) is formatted
   // as a sibling-in-law, resolved by the spouse's own sex.
   [Theory]
@@ -562,6 +699,22 @@ public class RelationshipTypeFormatterTests
   public void ES_SiblingSpouse(BiologicalSex spouseSex, string expected)
   {
     SetEs();
+    var actual = _formatter.ToString(
+      RelationshipType.Spouse,
+      spouseSex,
+      Generation.Zero,
+      Consanguinity.Sibling);
+
+    Assert.Equal(expected, actual);
+  }
+
+  [Theory]
+  [InlineData(BiologicalSex.Female, "Belle-sœur")]
+  [InlineData(BiologicalSex.Male, "Beau-frère")]
+  [InlineData(BiologicalSex.Unknown, "Beau-frère ou belle-sœur")]
+  public void FR_SiblingSpouse(BiologicalSex spouseSex, string expected)
+  {
+    SetFr();
     var actual = _formatter.ToString(
       RelationshipType.Spouse,
       spouseSex,
@@ -641,6 +794,42 @@ public class RelationshipTypeFormatterTests
     Assert.Equal(expected, actual);
   }
 
+  // "beau-frère" already means brother-in-law, so the French step-sibling rows qualify the plain
+  // sibling term instead of reusing it.
+  [Theory]
+  [InlineData(BiologicalSex.Female, "Sœur par remariage")]
+  [InlineData(BiologicalSex.Male, "Frère par remariage")]
+  [InlineData(BiologicalSex.Unknown, "Frère ou sœur par remariage")]
+  public void FR_StepSibling(BiologicalSex sex, string expected)
+  {
+    SetFr();
+    var actual = _formatter.ToString(
+      RelationshipType.StepSibling,
+      sex,
+      Generation.Zero,
+      Consanguinity.Zero);
+
+    Assert.Equal(expected, actual);
+  }
+
+  // One template serves all three sexes, so the parent it names has to sit in a phrase rather than
+  // in an adjective that would have to agree.
+  [Theory]
+  [InlineData(BiologicalSex.Female, "Demi-sœur du côté du père")]
+  [InlineData(BiologicalSex.Male, "Demi-frère du côté du père")]
+  [InlineData(BiologicalSex.Unknown, "Demi-frère ou sœur du côté du père")]
+  public void FR_SiblingByFather(BiologicalSex sex, string expected)
+  {
+    SetFr();
+    var actual = _formatter.ToString(
+      RelationshipType.SiblingByFather,
+      sex,
+      Generation.Zero,
+      Consanguinity.Zero);
+
+    Assert.Equal(expected, actual);
+  }
+
   // The adoptive adjective trails the noun in Spanish, so a prefix bound to the whole phrase would
   // land on "adoptivo" instead of the stem.
   [Theory]
@@ -649,6 +838,23 @@ public class RelationshipTypeFormatterTests
   public void ES_AdoptiveAncestor_KeepsTrailingAdjective(int generation, string expected)
   {
     SetEs();
+    var actual = _formatter.ToString(
+      RelationshipType.AdoptiveParent,
+      BiologicalSex.Male,
+      ToGeneration(generation),
+      Consanguinity.Zero);
+
+    Assert.Equal(expected, actual);
+  }
+
+  // French trails the adjective like Spanish but still prefixes the phrase, so both ends of the
+  // label move independently.
+  [Theory]
+  [InlineData(2, "Grand-père adoptif")]
+  [InlineData(4, "Arrière-arrière-grand-père adoptif")]
+  public void FR_AdoptiveAncestor_KeepsTrailingAdjective(int generation, string expected)
+  {
+    SetFr();
     var actual = _formatter.ToString(
       RelationshipType.AdoptiveParent,
       BiologicalSex.Male,

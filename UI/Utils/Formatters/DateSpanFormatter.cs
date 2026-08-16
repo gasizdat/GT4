@@ -60,6 +60,7 @@ internal class DateSpanFormatter : IDateSpanFormatter
       var language when language == Language.RU => RussianNumeralsDeclension(days, "{0} день", "{0} дня", "{0} дней"),
       var language when language == Language.DE => SingularPluralDeclension(days, "{0} Tag", "{0} Tage"),
       var language when language == Language.ES => SingularPluralDeclension(days, "{0} día", "{0} días"),
+      var language when language == Language.FR => SingularPluralDeclension(days, "{0} jour", "{0} jours"),
       _ => SingularPluralDeclension(days, "{0} day", "{0} days")
     };
 
@@ -70,6 +71,7 @@ internal class DateSpanFormatter : IDateSpanFormatter
       var language when language == Language.RU => RussianNumeralsDeclension(months, "{0} месяц", "{0} месяца", "{0} месяцев"),
       var language when language == Language.DE => SingularPluralDeclension(months, "{0} Monat", "{0} Monate"),
       var language when language == Language.ES => SingularPluralDeclension(months, "{0} mes", "{0} meses"),
+      var language when language == Language.FR => SingularPluralDeclension(months, "{0} mois", "{0} mois"),
       _ => SingularPluralDeclension(months, "{0} month", "{0} months")
     };
 
@@ -80,6 +82,7 @@ internal class DateSpanFormatter : IDateSpanFormatter
       var language when language == Language.RU => RussianNumeralsDeclension(years, "{0} год", "{0} года", "{0} лет"),
       var language when language == Language.DE => SingularPluralDeclension(years, "{0} Jahr", "{0} Jahre"),
       var language when language == Language.ES => SingularPluralDeclension(years, "{0} año", "{0} años"),
+      var language when language == Language.FR => SingularPluralDeclension(years, "{0} an", "{0} ans"),
       _ => SingularPluralDeclension(years, "{0} year", "{0} years")
     };
 
