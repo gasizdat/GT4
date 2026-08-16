@@ -25,8 +25,8 @@
   </ContentPage.Resources>
 
   <components:PageLayout
-      Hint="{x:Static resources:UIStrings.HintFamilyPage}"
-      Title="{Binding FamilyName.Value, Source={x:Reference Root}}">
+      Title="{Binding FamilyName.Value, Source={x:Reference Root}}"
+      Hint="{x:Static resources:UIStrings.HintFamilyPage}">
 
     <components:PageLayout.MenuItems>
       <items:PageMenuItem
