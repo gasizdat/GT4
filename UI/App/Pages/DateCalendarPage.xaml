@@ -19,9 +19,11 @@
         <Setter Property="Padding" Value="12,6" />
         <Setter Property="Margin" Value="4,0" />
       </Style>
-      <!-- A DataTrigger on this style's BackgroundColor/TextColor does not re-apply after a native
-           Windows Button click (MAUI/WinUI quirk); the active/inactive look is a whole Style swap
-           bound directly to a page property instead, which RefreshView already notifies reliably. -->
+      <!--
+        A DataTrigger on this style's BackgroundColor/TextColor does not re-apply after a native
+        Windows Button click (MAUI/WinUI quirk); the active/inactive look is a whole Style swap
+        bound directly to a page property instead, which RefreshView already notifies reliably.
+      -->
       <Style x:Key="DateCalendarChipActive" BasedOn="{StaticResource DateCalendarChip}" TargetType="Button">
         <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
         <Setter Property="TextColor" Value="{StaticResource White}" />
@@ -39,8 +41,13 @@
         <Setter Property="HeightRequest" Value="36" />
         <Setter Property="HorizontalTextAlignment" Value="Center" />
         <Setter Property="VerticalTextAlignment" Value="Center" />
-        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SurfaceSubtle}, Dark={StaticResource SurfaceSubtleDark}}" />
-        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="{StaticResource White}" />
+      </Style>
+      <Style x:Key="DateCalendarDayBadge" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 10" />
+        <Setter Property="Padding" Value="8,8" />
       </Style>
       <Style x:Key="DateCalendarMilestoneBadge" TargetType="Border">
         <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
@@ -54,6 +61,7 @@
           Left="{StaticResource PageContentSpacing}"
           Right="{StaticResource PageContentSpacing}"
           Top="{StaticResource PageContentVerticalPadding}" />
+      <x:Double x:Key="DateCalendarMonthLabelMinWidth">128</x:Double>
     </ResourceDictionary>
   </ContentPage.Resources>
 
@@ -70,25 +78,32 @@
       <VerticalStackLayout Spacing="{StaticResource PageContentSpacing}">
 
         <Grid
-            ColumnDefinitions="Auto, *, Auto"
+            ColumnDefinitions="Auto, Auto, Auto"
+            ColumnSpacing="{StaticResource PageContentSpacing}"
+            HorizontalOptions="Center"
             VerticalOptions="Center">
           <Button
               Grid.Column="0"
               Command="{Binding PageCommand, Source={x:Reference Root}}"
               CommandParameter="PrevMonth"
               Style="{StaticResource DateCalendarMonthNavButton}"
-              Text="&#8249;" />
+              Text="&#8249;"
+              VerticalOptions="Center" />
           <Label
               Grid.Column="1"
               HorizontalTextAlignment="Center"
+              MinimumWidthRequest="{StaticResource DateCalendarMonthLabelMinWidth}"
               Style="{StaticResource GroupTitle}"
-              Text="{Binding MonthLabel, Source={x:Reference Root}}" />
+              Text="{Binding MonthLabel, Source={x:Reference Root}}"
+              VerticalOptions="Fill"
+              VerticalTextAlignment="Center" />
           <Button
               Grid.Column="2"
               Command="{Binding PageCommand, Source={x:Reference Root}}"
               CommandParameter="NextMonth"
               Style="{StaticResource DateCalendarMonthNavButton}"
-              Text="&#8250;" />
+              Text="&#8250;"
+              VerticalOptions="Center" />
         </Grid>
 
         <FlexLayout
@@ -131,24 +146,25 @@
                 <Grid
                     ColumnDefinitions="Auto, *"
                     ColumnSpacing="{StaticResource PageContentSpacing}">
-                  <Label
-                      Grid.Column="0"
-                      Text="{Binding Day}"
-                      VerticalOptions="Start">
-                    <Label.Style>
-                      <Style BasedOn="{StaticResource DateCalendarDayNumber}" TargetType="Label">
+                  <Border VerticalOptions="Fill">
+                    <Border.Style>
+                      <Style BasedOn="{StaticResource DateCalendarDayBadge}" TargetType="Border">
                         <Style.Triggers>
                           <DataTrigger
                               Binding="{Binding IsToday}"
-                              TargetType="Label"
+                              TargetType="Border"
                               Value="True">
                             <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-                            <Setter Property="TextColor" Value="{StaticResource White}" />
                           </DataTrigger>
                         </Style.Triggers>
                       </Style>
-                    </Label.Style>
-                  </Label>
+                    </Border.Style>
+
+                    <Label
+                        Style="{StaticResource DateCalendarDayNumber}"
+                        Text="{Binding Day}"
+                        VerticalOptions="Start" />
+                  </Border>
 
                   <VerticalStackLayout
                       Grid.Column="1"
