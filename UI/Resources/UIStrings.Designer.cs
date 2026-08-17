@@ -440,6 +440,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {0} — {1} years since birth.
+        /// </summary>
+        public static string DateCalendarBirthdayDeceasedText_2 {
+            get {
+                return ResourceManager.GetString("DateCalendarBirthdayDeceasedText_2", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to {0} turns {1}.
         /// </summary>
         public static string DateCalendarBirthdayText_2 {
@@ -456,7 +465,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("DateCalendarDayUnknownHeader_1", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to {0} — {1} years since passing.
         /// </summary>
@@ -465,7 +474,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("DateCalendarDeathAnniversaryText_2", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to No births, weddings, or remembrances recorded for {0}..
         /// </summary>
@@ -474,7 +483,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("DateCalendarEmptyState_1", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Births.
         /// </summary>
@@ -483,7 +492,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("DateCalendarFilterBirths", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Remembrances.
         /// </summary>
@@ -492,7 +501,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("DateCalendarFilterDeaths", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Milestones only.
         /// </summary>
@@ -501,7 +510,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("DateCalendarFilterMilestoneOnly", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Anniversaries.
         /// </summary>
@@ -510,7 +519,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("DateCalendarFilterWeddings", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to MILESTONE.
         /// </summary>
@@ -519,16 +528,16 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("DateCalendarMilestoneBadge", resourceCulture);
             }
         }
-
+        
         /// <summary>
-        ///   Looks up a localized string similar to Today.
+        ///   Looks up a localized string similar to {0}Today.
         /// </summary>
-        public static string DateCalendarTodayButton {
+        public static string DateCalendarTodayButton_1 {
             get {
-                return ResourceManager.GetString("DateCalendarTodayButton", resourceCulture);
+                return ResourceManager.GetString("DateCalendarTodayButton_1", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to {0} birth or death dates in this project have a year on record but no month, so they can&apos;t be placed on the calendar..
         /// </summary>
@@ -537,7 +546,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("DateCalendarUnplaceableFootnote_1", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to {0} &amp; {1} — married {2} years.
         /// </summary>
@@ -546,7 +555,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("DateCalendarWeddingAnniversaryText_3", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to {0} B.C..
         /// </summary>
@@ -1997,7 +2006,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("HintDateCalendarPage", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Open or create family.
         /// </summary>
@@ -2161,6 +2170,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 🗓️ Calendar.
+        /// </summary>
+        public static string MenuItemGoToDateCalendar {
+            get {
+                return ResourceManager.GetString("MenuItemGoToDateCalendar", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 👪 To family: {0}.
         /// </summary>
         public static string MenuItemGotoFamily_1 {
@@ -2169,15 +2187,6 @@ namespace GT4.UI.Resources {
             }
         }
         
-        /// <summary>
-        ///   Looks up a localized string similar to 📅 Calendar.
-        /// </summary>
-        public static string MenuItemGoToDateCalendar {
-            get {
-                return ResourceManager.GetString("MenuItemGoToDateCalendar", resourceCulture);
-            }
-        }
-
         /// <summary>
         ///   Looks up a localized string similar to 🖼 To Gallery.
         /// </summary>
@@ -2206,7 +2215,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 🗓️ Revisions.
+        ///   Looks up a localized string similar to 📌 Revisions.
         /// </summary>
         public static string MenuItemGoToRevisions {
             get {
@@ -3374,7 +3383,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("TitleDateCalendarPage", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Families.
         /// </summary>

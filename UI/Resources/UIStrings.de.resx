@@ -850,7 +850,7 @@ FN - Familienname</value>
     <value>Familie</value>
   </data>
   <data name="MenuItemGoToRevisions" xml:space="preserve">
-    <value>🗓️ Revisionen</value>
+    <value>📌 Revisionen</value>
   </data>
   <data name="TitleProjectRevisionsPage" xml:space="preserve">
     <value>Projektrevisionen auswählen</value>
@@ -1270,10 +1270,10 @@ FN - Familienname</value>
     <value>Sehen Sie, wer an jedem Tag des Jahres geboren wurde, geheiratet hat oder verstorben ist.</value>
   </data>
   <data name="MenuItemGoToDateCalendar" xml:space="preserve">
-    <value>📅 Kalender</value>
+    <value>🗓️ Kalender</value>
   </data>
-  <data name="DateCalendarTodayButton" xml:space="preserve">
-    <value>Heute</value>
+  <data name="DateCalendarTodayButton_1" xml:space="preserve">
+    <value>{0} Heute</value>
   </data>
   <data name="DateCalendarFilterBirths" xml:space="preserve">
     <value>Geburtstage</value>
@@ -1292,6 +1292,9 @@ FN - Familienname</value>
   </data>
   <data name="DateCalendarBirthdayText_2" xml:space="preserve">
     <value>{0} wird {1} Jahre alt</value>
+  </data>
+  <data name="DateCalendarBirthdayDeceasedText_2" xml:space="preserve">
+    <value>{0} — vor {1} Jahren geboren</value>
   </data>
   <data name="DateCalendarDeathAnniversaryText_2" xml:space="preserve">
     <value>{0} — vor {1} Jahren verstorben</value>

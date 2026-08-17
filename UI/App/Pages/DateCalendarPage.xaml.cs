@@ -150,7 +150,9 @@ public partial class DateCalendarPage : ContentPage
   private string FormatEntryText(DateCalendarEntry entry) => entry.Type switch
   {
     DateCalendarEventType.Birth => string.Format(
-      UIStrings.DateCalendarBirthdayText_2, _NameFormatter.ToString(entry.Person, NameFormat.CommonPersonName), entry.Years),
+      entry.Person.DeathDate != null ? UIStrings.DateCalendarBirthdayDeceasedText_2 : UIStrings.DateCalendarBirthdayText_2,
+      _NameFormatter.ToString(entry.Person, NameFormat.CommonPersonName),
+      entry.Years),
     DateCalendarEventType.Death => string.Format(
       UIStrings.DateCalendarDeathAnniversaryText_2, _NameFormatter.ToString(entry.Person, NameFormat.CommonPersonName), entry.Years),
     DateCalendarEventType.Wedding => string.Format(
@@ -192,4 +194,6 @@ public partial class DateCalendarPage : ContentPage
   public bool IsWeddingsActive => _ActiveTypes.Contains(DateCalendarEventType.Wedding);
 
   public bool IsMilestoneOnly => _MilestoneOnly;
+
+  public string DateCalendarTodayButtonName => string.Format(UIStrings.DateCalendarTodayButton_1, Date.Now.Day);
 }

@@ -850,7 +850,7 @@ FN - apellido familiar</value>
     <value>Familia</value>
   </data>
   <data name="MenuItemGoToRevisions" xml:space="preserve">
-    <value>🗓️ Revisiones</value>
+    <value>📌 Revisiones</value>
   </data>
   <data name="TitleProjectRevisionsPage" xml:space="preserve">
     <value>Seleccionar revisiones del proyecto</value>
@@ -1270,10 +1270,10 @@ FN - apellido familiar</value>
     <value>Descubre quién nació, se casó o falleció en cada día del año.</value>
   </data>
   <data name="MenuItemGoToDateCalendar" xml:space="preserve">
-    <value>📅 Calendario</value>
+    <value>🗓️ Calendario</value>
   </data>
-  <data name="DateCalendarTodayButton" xml:space="preserve">
-    <value>Hoy</value>
+  <data name="DateCalendarTodayButton_1" xml:space="preserve">
+    <value>{0} Hoy</value>
   </data>
   <data name="DateCalendarFilterBirths" xml:space="preserve">
     <value>Nacimientos</value>
@@ -1292,6 +1292,9 @@ FN - apellido familiar</value>
   </data>
   <data name="DateCalendarBirthdayText_2" xml:space="preserve">
     <value>{0} cumple {1} años</value>
+  </data>
+  <data name="DateCalendarBirthdayDeceasedText_2" xml:space="preserve">
+    <value>{0} — nacido/a hace {1} años</value>
   </data>
   <data name="DateCalendarDeathAnniversaryText_2" xml:space="preserve">
     <value>{0} — fallecido/a hace {1} años</value>

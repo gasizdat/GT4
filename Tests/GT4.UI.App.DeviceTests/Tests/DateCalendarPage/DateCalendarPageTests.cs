@@ -3,6 +3,7 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI;
 using GT4.UI.Abstraction;
+using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
 using Moq;
@@ -18,8 +19,8 @@ public class DateCalendarPageTests
 {
   private static Name N(int id, string value, NameType type) => new(id, value, type, null);
 
-  private static PersonInfo P(int id, Date? birthDate = null, Name[]? names = null) =>
-    new(id, birthDate ?? Date.Create(null, null, null, DateStatus.Unknown), null, BiologicalSex.Unknown, names ?? [], null);
+  private static PersonInfo P(int id, Date? birthDate = null, Date? deathDate = null, Name[]? names = null) =>
+    new(id, birthDate ?? Date.Create(null, null, null, DateStatus.Unknown), deathDate, BiologicalSex.Unknown, names ?? [], null);
 
   private static async Task<TestableDateCalendarPage> CreatePageAsync(TestServices services)
   {
@@ -54,6 +55,28 @@ public class DateCalendarPageTests
     Assert.Equal(1, day.Day);
     var entry = Assert.Single(day.Entries);
     Assert.Equal(DateCalendarEventType.Birth, entry.Type);
+  }
+
+  [Fact]
+  public async Task Birthday_entry_for_a_deceased_person_uses_the_since_birth_phrasing_not_turns()
+  {
+    var services = new TestServices();
+    var currentYear = Date.Now.Year;
+    var birthDate = Date.Create(currentYear - 120, Date.Now.Month, 1, DateStatus.WellKnown);
+    var deathDate = Date.Create(currentYear - 55, 1, 1, DateStatus.WellKnown);
+    var person = P(1, birthDate: birthDate, deathDate: deathDate);
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosAsync(false, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([person]);
+    var page = await CreatePageAsync(services);
+
+    await page.WaitForFirstLoadAsync();
+
+    var nameFormatter = services.Provider.GetRequiredService<INameFormatter>();
+    var expectedName = nameFormatter.ToString(person, NameFormat.CommonPersonName);
+    var day = Assert.Single(page.DayGroups);
+    var entry = Assert.Single(day.Entries);
+    Assert.Equal(string.Format(UIStrings.DateCalendarBirthdayDeceasedText_2, expectedName, 120), entry.Text);
   }
 
   [Fact]

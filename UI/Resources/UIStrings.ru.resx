@@ -850,7 +850,7 @@ FN - род</value>
     <value>Род</value>
   </data>
   <data name="MenuItemGoToRevisions" xml:space="preserve">
-    <value>🗓️ Ревизии</value>
+    <value>📌 Ревизии</value>
   </data>
   <data name="TitleProjectRevisionsPage" xml:space="preserve">
     <value>Выбрать ревизию проекта</value>
@@ -1270,10 +1270,10 @@ FN - род</value>
     <value>Узнайте, кто родился, вступил в брак или скончался в этот день в разные годы.</value>
   </data>
   <data name="MenuItemGoToDateCalendar" xml:space="preserve">
-    <value>📅 Календарь</value>
+    <value>🗓️ Календарь</value>
   </data>
-  <data name="DateCalendarTodayButton" xml:space="preserve">
-    <value>Сегодня</value>
+  <data name="DateCalendarTodayButton_1" xml:space="preserve">
+    <value>{0} Сегодня</value>
   </data>
   <data name="DateCalendarFilterBirths" xml:space="preserve">
     <value>Дни рождения</value>
@@ -1292,6 +1292,9 @@ FN - род</value>
   </data>
   <data name="DateCalendarBirthdayText_2" xml:space="preserve">
     <value>{0}: исполняется {1} лет</value>
+  </data>
+  <data name="DateCalendarBirthdayDeceasedText_2" xml:space="preserve">
+    <value>{0} — {1} лет со дня рождения</value>
   </data>
   <data name="DateCalendarDeathAnniversaryText_2" xml:space="preserve">
     <value>{0} — {1} лет со дня смерти</value>
