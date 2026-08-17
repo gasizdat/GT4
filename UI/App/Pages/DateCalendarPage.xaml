@@ -6,6 +6,7 @@
     xmlns:components="clr-namespace:GT4.UI.Components"
     xmlns:items="clr-namespace:GT4.UI.Items"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
+    xmlns:utils="clr-namespace:GT4.UI.Utils;assembly=GT4.UI.Utils"
     x:Name="Root"
     NavigatedTo="OnNavigatedTo">
 
@@ -27,6 +28,28 @@
       <Style x:Key="DateCalendarChipActive" BasedOn="{StaticResource DateCalendarChip}" TargetType="Button">
         <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
         <Setter Property="TextColor" Value="{StaticResource White}" />
+      </Style>
+      <!--  Same whole-Style-swap technique as DateCalendarChip/Active above, for the type chips'  -->
+      <!--  Border chrome and Label text, which need to swap together in lockstep.  -->
+      <Style x:Key="DateCalendarTypeChip" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SurfaceSubtle}, Dark={StaticResource SurfaceSubtleDark}}" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 14" />
+        <Setter Property="Padding" Value="12,6" />
+        <Setter Property="Margin" Value="4,0" />
+      </Style>
+      <Style x:Key="DateCalendarTypeChipActive" BasedOn="{StaticResource DateCalendarTypeChip}" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
+      </Style>
+      <Style x:Key="DateCalendarTypeChipText" TargetType="Label">
+        <Setter Property="FontSize" Value="{DynamicResource LabelTextSizeDefault}" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+      </Style>
+      <Style x:Key="DateCalendarTypeChipTextActive" BasedOn="{StaticResource DateCalendarTypeChipText}" TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource White}" />
+      </Style>
+      <Style x:Key="DateCalendarTypeIndicator" TargetType="Border">
+        <Setter Property="WidthRequest" Value="4" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 2" />
       </Style>
       <Style x:Key="DateCalendarMonthNavButton" TargetType="Button">
         <Setter Property="WidthRequest" Value="34" />
@@ -109,21 +132,57 @@
         <FlexLayout
             JustifyContent="Center"
             Wrap="Wrap">
-          <Button
-              Command="{Binding PageCommand, Source={x:Reference Root}}"
-              CommandParameter="ToggleBirths"
-              Style="{Binding BirthsChipStyle, Source={x:Reference Root}}"
-              Text="{x:Static resources:UIStrings.DateCalendarFilterBirths}" />
-          <Button
-              Command="{Binding PageCommand, Source={x:Reference Root}}"
-              CommandParameter="ToggleDeaths"
-              Style="{Binding DeathsChipStyle, Source={x:Reference Root}}"
-              Text="{x:Static resources:UIStrings.DateCalendarFilterDeaths}" />
-          <Button
-              Command="{Binding PageCommand, Source={x:Reference Root}}"
-              CommandParameter="ToggleWeddings"
-              Style="{Binding WeddingsChipStyle, Source={x:Reference Root}}"
-              Text="{x:Static resources:UIStrings.DateCalendarFilterWeddings}" />
+          <Border Style="{Binding BirthsChipStyle, Source={x:Reference Root}}">
+            <Border.GestureRecognizers>
+              <TapGestureRecognizer
+                  Command="{Binding PageCommand, Source={x:Reference Root}}"
+                  CommandParameter="ToggleBirths" />
+            </Border.GestureRecognizers>
+            <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+              <Ellipse
+                  Fill="{StaticResource Birth}"
+                  HeightRequest="8"
+                  VerticalOptions="Center"
+                  WidthRequest="8" />
+              <Label
+                  Style="{Binding BirthsChipTextStyle, Source={x:Reference Root}}"
+                  Text="{x:Static resources:UIStrings.DateCalendarFilterBirths}" />
+            </HorizontalStackLayout>
+          </Border>
+          <Border Style="{Binding DeathsChipStyle, Source={x:Reference Root}}">
+            <Border.GestureRecognizers>
+              <TapGestureRecognizer
+                  Command="{Binding PageCommand, Source={x:Reference Root}}"
+                  CommandParameter="ToggleDeaths" />
+            </Border.GestureRecognizers>
+            <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+              <Ellipse
+                  Fill="{StaticResource Death}"
+                  HeightRequest="8"
+                  VerticalOptions="Center"
+                  WidthRequest="8" />
+              <Label
+                  Style="{Binding DeathsChipTextStyle, Source={x:Reference Root}}"
+                  Text="{x:Static resources:UIStrings.DateCalendarFilterDeaths}" />
+            </HorizontalStackLayout>
+          </Border>
+          <Border Style="{Binding WeddingsChipStyle, Source={x:Reference Root}}">
+            <Border.GestureRecognizers>
+              <TapGestureRecognizer
+                  Command="{Binding PageCommand, Source={x:Reference Root}}"
+                  CommandParameter="ToggleWeddings" />
+            </Border.GestureRecognizers>
+            <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+              <Ellipse
+                  Fill="{StaticResource Accent}"
+                  HeightRequest="8"
+                  VerticalOptions="Center"
+                  WidthRequest="8" />
+              <Label
+                  Style="{Binding WeddingsChipTextStyle, Source={x:Reference Root}}"
+                  Text="{x:Static resources:UIStrings.DateCalendarFilterWeddings}" />
+            </HorizontalStackLayout>
+          </Border>
           <Button
               Command="{Binding PageCommand, Source={x:Reference Root}}"
               CommandParameter="ToggleMilestoneOnly"
@@ -173,18 +232,56 @@
                     <BindableLayout.ItemTemplate>
                       <DataTemplate x:DataType="items:DateCalendarEntryItem">
                         <components:CardView>
+                          <components:CardView.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding PersonCommand, Source={x:Reference Root}}"
+                                CommandParameter="{Binding Person}" />
+                          </components:CardView.GestureRecognizers>
                           <Grid
                               Padding="{StaticResource DateCalendarEntryPadding}"
-                              ColumnDefinitions="*, Auto"
+                              ColumnDefinitions="Auto, Auto, *, Auto"
                               ColumnSpacing="{StaticResource PageContentSpacing}">
+                            <Border Grid.Column="0" VerticalOptions="Fill">
+                              <Border.Style>
+                                <Style BasedOn="{StaticResource DateCalendarTypeIndicator}" TargetType="Border">
+                                  <Style.Triggers>
+                                    <DataTrigger
+                                        Binding="{Binding Type}"
+                                        TargetType="Border"
+                                        Value="{x:Static utils:DateCalendarEventType.Birth}">
+                                      <Setter Property="BackgroundColor" Value="{StaticResource Birth}" />
+                                    </DataTrigger>
+                                    <DataTrigger
+                                        Binding="{Binding Type}"
+                                        TargetType="Border"
+                                        Value="{x:Static utils:DateCalendarEventType.Death}">
+                                      <Setter Property="BackgroundColor" Value="{StaticResource Death}" />
+                                    </DataTrigger>
+                                    <DataTrigger
+                                        Binding="{Binding Type}"
+                                        TargetType="Border"
+                                        Value="{x:Static utils:DateCalendarEventType.Wedding}">
+                                      <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
+                                    </DataTrigger>
+                                  </Style.Triggers>
+                                </Style>
+                              </Border.Style>
+                            </Border>
+                            <components:PersonInfoView
+                                Grid.Column="1"
+                                Person="{Binding Person}"
+                                PhotoStyle="{StaticResource PhotoCompactStyle}"
+                                ShowDates="False"
+                                ShowName="False"
+                                VerticalOptions="Center" />
                             <Label
-                                Grid.Column="0"
+                                Grid.Column="2"
                                 LineBreakMode="WordWrap"
                                 Style="{StaticResource FieldValue}"
                                 Text="{Binding Text}"
                                 VerticalOptions="Center" />
                             <Border
-                                Grid.Column="1"
+                                Grid.Column="3"
                                 IsVisible="{Binding IsMilestone}"
                                 Style="{StaticResource DateCalendarMilestoneBadge}">
                               <Label
@@ -214,18 +311,56 @@
               <BindableLayout.ItemTemplate>
                 <DataTemplate x:DataType="items:DateCalendarEntryItem">
                   <components:CardView>
+                    <components:CardView.GestureRecognizers>
+                      <TapGestureRecognizer
+                          Command="{Binding PersonCommand, Source={x:Reference Root}}"
+                          CommandParameter="{Binding Person}" />
+                    </components:CardView.GestureRecognizers>
                     <Grid
                         Padding="{StaticResource DateCalendarEntryPadding}"
-                        ColumnDefinitions="*, Auto"
+                        ColumnDefinitions="Auto, Auto, *, Auto"
                         ColumnSpacing="{StaticResource PageContentSpacing}">
+                      <Border Grid.Column="0" VerticalOptions="Fill">
+                        <Border.Style>
+                          <Style BasedOn="{StaticResource DateCalendarTypeIndicator}" TargetType="Border">
+                            <Style.Triggers>
+                              <DataTrigger
+                                  Binding="{Binding Type}"
+                                  TargetType="Border"
+                                  Value="{x:Static utils:DateCalendarEventType.Birth}">
+                                <Setter Property="BackgroundColor" Value="{StaticResource Birth}" />
+                              </DataTrigger>
+                              <DataTrigger
+                                  Binding="{Binding Type}"
+                                  TargetType="Border"
+                                  Value="{x:Static utils:DateCalendarEventType.Death}">
+                                <Setter Property="BackgroundColor" Value="{StaticResource Death}" />
+                              </DataTrigger>
+                              <DataTrigger
+                                  Binding="{Binding Type}"
+                                  TargetType="Border"
+                                  Value="{x:Static utils:DateCalendarEventType.Wedding}">
+                                <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </Border.Style>
+                      </Border>
+                      <components:PersonInfoView
+                          Grid.Column="1"
+                          Person="{Binding Person}"
+                          PhotoStyle="{StaticResource PhotoCompactStyle}"
+                          ShowDates="False"
+                          ShowName="False"
+                          VerticalOptions="Center" />
                       <Label
-                          Grid.Column="0"
+                          Grid.Column="2"
                           LineBreakMode="WordWrap"
                           Style="{StaticResource FieldValue}"
                           Text="{Binding Text}"
                           VerticalOptions="Center" />
                       <Border
-                          Grid.Column="1"
+                          Grid.Column="3"
                           IsVisible="{Binding IsMilestone}"
                           Style="{StaticResource DateCalendarMilestoneBadge}">
                         <Label

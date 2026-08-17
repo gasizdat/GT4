@@ -1,5 +1,6 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
+using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Items;
@@ -18,12 +19,16 @@ public partial class DateCalendarPage : ContentPage
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly IAlertService _AlertService;
   private readonly INameFormatter _NameFormatter;
+  private readonly INavigationService _NavigationService;
 
   private readonly HashSet<DateCalendarEventType> _ActiveTypes = [DateCalendarEventType.Birth, DateCalendarEventType.Death, DateCalendarEventType.Wedding];
   private PersonInfo[] _Persons = [];
   private Dictionary<int, Relative[]> _RelativesByPersonId = [];
+  private Dictionary<int, Data?> _MainPhotosByPersonId = [];
   private int _UnplaceableCount;
   private int _DisplayMonth = Date.Now.Month;
+  private int? _PhotosLoadedMonth;
+  private bool _PersonsLoaded;
   private bool _MilestoneOnly;
   private bool _UpdateData = true;
   private ProjectInfo? _LastProjectInfo;
@@ -32,19 +37,27 @@ public partial class DateCalendarPage : ContentPage
     ICurrentProjectProvider currentProjectProvider,
     ICancellationTokenProvider cancellationTokenProvider,
     IAlertService alertService,
-    INameFormatter nameFormatter)
+    INameFormatter nameFormatter,
+    INavigationService navigationService)
   {
     _CurrentProjectProvider = currentProjectProvider;
     _CancellationTokenProvider = cancellationTokenProvider;
     _AlertService = alertService;
     _NameFormatter = nameFormatter;
+    _NavigationService = navigationService;
 
     PageCommand = new SafeCommand(OnPageCommand, _AlertService);
+    PersonCommand = new SafeCommand<PersonInfo>(OnOpenPerson, _AlertService);
     InitializeComponent();
     _LastProjectInfo = _CurrentProjectProvider.Info;
   }
 
   public ICommand PageCommand { get; init; }
+
+  public ICommand PersonCommand { get; init; }
+
+  protected async Task OnOpenPerson(PersonInfo person) =>
+    await _NavigationService.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { ["PersonInfo"] = person });
 
   // The single trigger for the (lazy, async) load: every display property below reads through
   // CalendarMonth, following the same lazy-getter idiom as StatisticsPage.Statistics.
@@ -58,7 +71,9 @@ public partial class DateCalendarPage : ContentPage
         SafeTask.Run(LoadCalendarDataAsync, _AlertService);
       }
 
-      return DateCalendarCalculator.Compute(_Persons, _RelativesByPersonId, _DisplayMonth, Date.Now.Year);
+      var month = DateCalendarCalculator.Compute(_Persons, _RelativesByPersonId, _DisplayMonth, Date.Now.Year);
+      EnsureMonthPhotosLoaded(month);
+      return month;
     }
   }
 
@@ -76,6 +91,38 @@ public partial class DateCalendarPage : ContentPage
       _Persons = persons;
       _RelativesByPersonId = relativesByPersonId;
       _UnplaceableCount = unplaceableCount;
+      _PersonsLoaded = true;
+      this.RefreshView();
+    }, _AlertService);
+  }
+
+  // Bounded to the persons actually shown in the displayed month (typically a handful) rather than
+  // the whole project's main photos, since _Persons above is fetched unphotoed for every project
+  // member just to place calendar entries. Re-fetched on every month change (PrevMonth/NextMonth/
+  // Today), never on filter toggles alone: filtering only hides already-computed entries. Waits on
+  // _PersonsLoaded so the empty CalendarMonth returned before the base load lands doesn't get
+  // mistaken for "this month genuinely has no entries" and permanently skip the real fetch.
+  private void EnsureMonthPhotosLoaded(DateCalendarMonth month)
+  {
+    if (!_PersonsLoaded || _PhotosLoadedMonth == _DisplayMonth)
+      return;
+
+    _PhotosLoadedMonth = _DisplayMonth;
+    var persons = month.Days.SelectMany(d => d.Entries).Concat(month.DayUnknown).Select(e => e.Person).DistinctBy(p => p.Id).ToArray();
+    if (persons.Length > 0)
+    {
+      SafeTask.Run(() => LoadMonthPhotosAsync(persons), _AlertService);
+    }
+  }
+
+  private async Task LoadMonthPhotosAsync(PersonInfo[] persons)
+  {
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    var photosByPersonId = await _CurrentProjectProvider.Project.PersonData.GetMergedPhotoSetAsync(persons, DataCategory.PersonMainPhoto, token);
+
+    await SafeTask.RunOnMainThread(() =>
+    {
+      _MainPhotosByPersonId = photosByPersonId.ToDictionary(p => p.Key, p => p.Value.FirstOrDefault());
       this.RefreshView();
     }, _AlertService);
   }
@@ -93,6 +140,8 @@ public partial class DateCalendarPage : ContentPage
   {
     _LastProjectInfo = _CurrentProjectProvider.Info;
     _UpdateData = true;
+    _PersonsLoaded = false;
+    _PhotosLoadedMonth = null;
     this.RefreshView();
   }
 
@@ -164,7 +213,10 @@ public partial class DateCalendarPage : ContentPage
   };
 
   private DateCalendarEntryItem[] FormatEntries(IEnumerable<DateCalendarEntry> entries) =>
-    [.. entries.Where(PassesFilter).Select(e => new DateCalendarEntryItem(FormatEntryText(e), e.Type, e.IsMilestone))];
+    [.. entries.Where(PassesFilter).Select(e => new DateCalendarEntryItem(FormatEntryText(e), e.Type, e.IsMilestone, WithMainPhoto(e.Person)))];
+
+  private PersonInfo WithMainPhoto(PersonInfo person) =>
+    _MainPhotosByPersonId.TryGetValue(person.Id, out var photo) ? person with { MainPhoto = photo } : person;
 
   public string MonthLabel => CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(_DisplayMonth);
 
@@ -195,11 +247,17 @@ public partial class DateCalendarPage : ContentPage
 
   public bool IsMilestoneOnly => _MilestoneOnly;
 
-  public Style BirthsChipStyle => GetChipStyle(IsBirthsActive);
+  public Style BirthsChipStyle => GetTypeChipStyle(IsBirthsActive);
 
-  public Style DeathsChipStyle => GetChipStyle(IsDeathsActive);
+  public Style BirthsChipTextStyle => GetTypeChipTextStyle(IsBirthsActive);
 
-  public Style WeddingsChipStyle => GetChipStyle(IsWeddingsActive);
+  public Style DeathsChipStyle => GetTypeChipStyle(IsDeathsActive);
+
+  public Style DeathsChipTextStyle => GetTypeChipTextStyle(IsDeathsActive);
+
+  public Style WeddingsChipStyle => GetTypeChipStyle(IsWeddingsActive);
+
+  public Style WeddingsChipTextStyle => GetTypeChipTextStyle(IsWeddingsActive);
 
   public Style MilestoneOnlyChipStyle => GetChipStyle(IsMilestoneOnly);
 
@@ -207,6 +265,13 @@ public partial class DateCalendarPage : ContentPage
   // does not re-apply BackgroundColor/TextColor after a native Windows Button click) so RefreshView's
   // property-changed notification reliably swaps the whole style.
   private Style GetChipStyle(bool isActive) => (Style)Resources[isActive ? "DateCalendarChipActive" : "DateCalendarChip"];
+
+  // Same technique, applied to the type chips' Border chrome and Label text: the two need to swap
+  // together, so each gets its own resource pair rather than reusing DateCalendarChip/Active (which
+  // stays Button-targeted for the milestone-only chip above).
+  private Style GetTypeChipStyle(bool isActive) => (Style)Resources[isActive ? "DateCalendarTypeChipActive" : "DateCalendarTypeChip"];
+
+  private Style GetTypeChipTextStyle(bool isActive) => (Style)Resources[isActive ? "DateCalendarTypeChipTextActive" : "DateCalendarTypeChipText"];
 
   public string DateCalendarTodayButtonName => string.Format(UIStrings.DateCalendarTodayButton_1, Date.Now.Day);
 }

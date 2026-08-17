@@ -1,4 +1,5 @@
 using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Pages;
@@ -21,12 +22,17 @@ internal sealed class TestableDateCalendarPage : DateCalendarPage
     ICurrentProjectProvider currentProjectProvider,
     ICancellationTokenProvider cancellationTokenProvider,
     IAlertService alertService,
-    INameFormatter nameFormatter)
-    : base(currentProjectProvider, cancellationTokenProvider, alertService, nameFormatter)
+    INameFormatter nameFormatter,
+    INavigationService navigationService)
+    : base(currentProjectProvider, cancellationTokenProvider, alertService, nameFormatter, navigationService)
   {
   }
 
   public int CompletedLoads => _CompletedLoads;
+
+  // OnOpenPerson is normally reached only through PersonCommand, whose Execute is fire-and-forget
+  // (void) and can't be awaited by a test.
+  public Task InvokeOpenPersonAsync(PersonInfo person) => OnOpenPerson(person);
 
   protected override void OnPropertyChanged([CallerMemberName] string? propertyName = null)
   {

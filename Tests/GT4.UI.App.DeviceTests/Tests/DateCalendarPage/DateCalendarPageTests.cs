@@ -3,6 +3,7 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI;
 using GT4.UI.Abstraction;
+using GT4.UI.Pages;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
@@ -55,6 +56,67 @@ public class DateCalendarPageTests
     Assert.Equal(1, day.Day);
     var entry = Assert.Single(day.Entries);
     Assert.Equal(DateCalendarEventType.Birth, entry.Type);
+    Assert.Equal(person.Id, entry.Person.Id);
+  }
+
+  [Fact]
+  public async Task Loads_a_photo_only_for_the_person_shown_in_the_displayed_month_not_the_whole_project()
+  {
+    var services = new TestServices();
+    var currentYear = Date.Now.Year;
+    var shown = P(1, birthDate: Date.Create(currentYear - 40, Date.Now.Month, 1, DateStatus.WellKnown));
+    var elsewhere = P(2, birthDate: Date.Create(currentYear - 30, Date.Now.Month == 1 ? 2 : 1, 1, DateStatus.WellKnown));
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosAsync(false, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([shown, elsewhere]);
+    var page = await CreatePageAsync(services);
+    await page.WaitForFirstLoadAsync();
+
+    // The persons load and the month-scoped photo load each complete with their own RefreshView
+    // call, so CompletedLoads (which counts CalendarMonth's OnPropertyChanged notifications) reaches
+    // 2 once both have landed.
+    await Poll.UntilAsync(
+      () => Task.FromResult(page.CompletedLoads),
+      loads => loads >= 2,
+      TimeSpan.FromSeconds(10),
+      "Month photo fetch did not complete.");
+
+    services.PersonData.Verify(
+      p => p.GetPersonDataSetAsync(
+        It.Is<Person[]>(arr => arr.Length == 1 && arr[0].Id == shown.Id),
+        It.IsAny<DataCategory?>(),
+        It.IsAny<CancellationToken>()),
+      Times.AtLeastOnce());
+    services.PersonData.Verify(
+      p => p.GetPersonDataSetAsync(
+        It.Is<Person[]>(arr => arr.Any(x => x.Id == elsewhere.Id)),
+        It.IsAny<DataCategory?>(),
+        It.IsAny<CancellationToken>()),
+      Times.Never());
+  }
+
+  [Fact]
+  public async Task PersonCommand_navigates_to_PersonPage_with_the_tapped_persons_own_PersonInfo()
+  {
+    var services = new TestServices();
+    var currentYear = Date.Now.Year;
+    var person = P(1, birthDate: Date.Create(currentYear - 40, Date.Now.Month, 1, DateStatus.WellKnown));
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosAsync(false, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([person]);
+    var page = await CreatePageAsync(services);
+    await page.WaitForFirstLoadAsync();
+    var entry = Assert.Single(Assert.Single(page.DayGroups).Entries);
+    var expectedRoute = $"{typeof(PersonPage).Namespace}/{typeof(PersonPage).Name}";
+
+    await page.InvokeOpenPersonAsync(entry.Person);
+
+    services.NavigationService.Verify(
+      n => n.GoToAsync(
+        expectedRoute,
+        true,
+        It.Is<Dictionary<string, object>>(d => ReferenceEquals(d["PersonInfo"], entry.Person))),
+      Times.Once());
   }
 
   [Fact]
@@ -148,12 +210,12 @@ public class DateCalendarPageTests
     var page = await CreatePageAsync(services);
     await page.WaitForFirstLoadAsync();
     Assert.Single(page.DayGroups);
-    Assert.Same(page.Resources["DateCalendarChipActive"], page.BirthsChipStyle);
+    Assert.Same(page.Resources["DateCalendarTypeChipActive"], page.BirthsChipStyle);
 
     await MainThread.InvokeOnMainThreadAsync(() => page.PageCommand.Execute("ToggleBirths"));
 
     Assert.Empty(page.DayGroups);
-    Assert.Same(page.Resources["DateCalendarChip"], page.BirthsChipStyle);
+    Assert.Same(page.Resources["DateCalendarTypeChip"], page.BirthsChipStyle);
   }
 
   [Fact]
