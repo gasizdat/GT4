@@ -17,6 +17,7 @@
         <Setter Property="FontSize" Value="{DynamicResource LabelTextSizeDefault}" />
         <Setter Property="CornerRadius" Value="14" />
         <Setter Property="Padding" Value="12,6" />
+        <Setter Property="Margin" Value="4,0" />
       </Style>
       <!-- A DataTrigger on this style's BackgroundColor/TextColor does not re-apply after a native
            Windows Button click (MAUI/WinUI quirk); the active/inactive look is a whole Style swap
@@ -47,6 +48,12 @@
         <Setter Property="Padding" Value="8,2" />
         <Setter Property="HorizontalOptions" Value="End" />
       </Style>
+      <Thickness
+          x:Key="DateCalendarEntryPadding"
+          Bottom="{StaticResource PageContentVerticalPadding}"
+          Left="{StaticResource PageContentSpacing}"
+          Right="{StaticResource PageContentSpacing}"
+          Top="{StaticResource PageContentVerticalPadding}" />
     </ResourceDictionary>
   </ContentPage.Resources>
 
@@ -88,25 +95,21 @@
             JustifyContent="Center"
             Wrap="Wrap">
           <Button
-              Margin="4,0"
               Command="{Binding PageCommand, Source={x:Reference Root}}"
               CommandParameter="ToggleBirths"
               Style="{Binding BirthsChipStyle, Source={x:Reference Root}}"
               Text="{x:Static resources:UIStrings.DateCalendarFilterBirths}" />
           <Button
-              Margin="4,0"
               Command="{Binding PageCommand, Source={x:Reference Root}}"
               CommandParameter="ToggleDeaths"
               Style="{Binding DeathsChipStyle, Source={x:Reference Root}}"
               Text="{x:Static resources:UIStrings.DateCalendarFilterDeaths}" />
           <Button
-              Margin="4,0"
               Command="{Binding PageCommand, Source={x:Reference Root}}"
               CommandParameter="ToggleWeddings"
               Style="{Binding WeddingsChipStyle, Source={x:Reference Root}}"
               Text="{x:Static resources:UIStrings.DateCalendarFilterWeddings}" />
           <Button
-              Margin="4,0"
               Command="{Binding PageCommand, Source={x:Reference Root}}"
               CommandParameter="ToggleMilestoneOnly"
               Style="{Binding MilestoneOnlyChipStyle, Source={x:Reference Root}}"
@@ -127,7 +130,7 @@
               <DataTemplate x:DataType="items:DateCalendarDayItem">
                 <Grid
                     ColumnDefinitions="Auto, *"
-                    ColumnSpacing="12">
+                    ColumnSpacing="{StaticResource PageContentSpacing}">
                   <Label
                       Grid.Column="0"
                       Text="{Binding Day}"
@@ -150,14 +153,14 @@
                   <VerticalStackLayout
                       Grid.Column="1"
                       BindableLayout.ItemsSource="{Binding Entries}"
-                      Spacing="6">
+                      Spacing="{StaticResource PageContentSpacing}">
                     <BindableLayout.ItemTemplate>
                       <DataTemplate x:DataType="items:DateCalendarEntryItem">
                         <components:CardView>
                           <Grid
-                              Padding="10,6"
+                              Padding="{StaticResource DateCalendarEntryPadding}"
                               ColumnDefinitions="*, Auto"
-                              ColumnSpacing="8">
+                              ColumnSpacing="{StaticResource PageContentSpacing}">
                             <Label
                                 Grid.Column="0"
                                 LineBreakMode="WordWrap"
@@ -185,20 +188,20 @@
 
           <VerticalStackLayout
               IsVisible="{Binding IsDayUnknownVisible, Source={x:Reference Root}}"
-              Spacing="6">
+              Spacing="{StaticResource PageContentSpacing}">
             <Label
                 Style="{StaticResource GroupTitle}"
                 Text="{Binding DayUnknownHeaderText, Source={x:Reference Root}}" />
             <VerticalStackLayout
                 BindableLayout.ItemsSource="{Binding DayUnknownEntries, Source={x:Reference Root}}"
-                Spacing="6">
+                Spacing="{StaticResource PageContentSpacing}">
               <BindableLayout.ItemTemplate>
                 <DataTemplate x:DataType="items:DateCalendarEntryItem">
                   <components:CardView>
                     <Grid
-                        Padding="10,6"
+                        Padding="{StaticResource DateCalendarEntryPadding}"
                         ColumnDefinitions="*, Auto"
-                        ColumnSpacing="8">
+                        ColumnSpacing="{StaticResource PageContentSpacing}">
                       <Label
                           Grid.Column="0"
                           LineBreakMode="WordWrap"
