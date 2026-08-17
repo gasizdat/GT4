@@ -19,6 +19,13 @@
         <Setter Property="CornerRadius" Value="14" />
         <Setter Property="Padding" Value="12,6" />
       </Style>
+      <!-- A DataTrigger on this style's BackgroundColor/TextColor does not re-apply after a native
+           Windows Button click (MAUI/WinUI quirk); the active/inactive look is a whole Style swap
+           bound directly to a page property instead, which RefreshView already notifies reliably. -->
+      <Style x:Key="DateCalendarChipActive" BasedOn="{StaticResource DateCalendarChip}" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
+        <Setter Property="TextColor" Value="{StaticResource White}" />
+      </Style>
       <Style x:Key="DateCalendarMonthNavButton" TargetType="Button">
         <Setter Property="WidthRequest" Value="34" />
         <Setter Property="HeightRequest" Value="34" />
@@ -85,78 +92,26 @@
               Margin="4,0"
               Command="{Binding PageCommand, Source={x:Reference Root}}"
               CommandParameter="ToggleBirths"
-              Text="{x:Static resources:UIStrings.DateCalendarFilterBirths}">
-            <Button.Style>
-              <Style BasedOn="{StaticResource DateCalendarChip}" TargetType="Button">
-                <Style.Triggers>
-                  <DataTrigger
-                      Binding="{Binding IsBirthsActive, Source={x:Reference Root}}"
-                      TargetType="Button"
-                      Value="True">
-                    <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
-                    <Setter Property="TextColor" Value="{StaticResource White}" />
-                  </DataTrigger>
-                </Style.Triggers>
-              </Style>
-            </Button.Style>
-          </Button>
+              Style="{Binding BirthsChipStyle, Source={x:Reference Root}}"
+              Text="{x:Static resources:UIStrings.DateCalendarFilterBirths}" />
           <Button
               Margin="4,0"
               Command="{Binding PageCommand, Source={x:Reference Root}}"
               CommandParameter="ToggleDeaths"
-              Text="{x:Static resources:UIStrings.DateCalendarFilterDeaths}">
-            <Button.Style>
-              <Style BasedOn="{StaticResource DateCalendarChip}" TargetType="Button">
-                <Style.Triggers>
-                  <DataTrigger
-                      Binding="{Binding IsDeathsActive, Source={x:Reference Root}}"
-                      TargetType="Button"
-                      Value="True">
-                    <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
-                    <Setter Property="TextColor" Value="{StaticResource White}" />
-                  </DataTrigger>
-                </Style.Triggers>
-              </Style>
-            </Button.Style>
-          </Button>
+              Style="{Binding DeathsChipStyle, Source={x:Reference Root}}"
+              Text="{x:Static resources:UIStrings.DateCalendarFilterDeaths}" />
           <Button
               Margin="4,0"
               Command="{Binding PageCommand, Source={x:Reference Root}}"
               CommandParameter="ToggleWeddings"
-              Text="{x:Static resources:UIStrings.DateCalendarFilterWeddings}">
-            <Button.Style>
-              <Style BasedOn="{StaticResource DateCalendarChip}" TargetType="Button">
-                <Style.Triggers>
-                  <DataTrigger
-                      Binding="{Binding IsWeddingsActive, Source={x:Reference Root}}"
-                      TargetType="Button"
-                      Value="True">
-                    <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
-                    <Setter Property="TextColor" Value="{StaticResource White}" />
-                  </DataTrigger>
-                </Style.Triggers>
-              </Style>
-            </Button.Style>
-          </Button>
+              Style="{Binding WeddingsChipStyle, Source={x:Reference Root}}"
+              Text="{x:Static resources:UIStrings.DateCalendarFilterWeddings}" />
           <Button
               Margin="4,0"
               Command="{Binding PageCommand, Source={x:Reference Root}}"
               CommandParameter="ToggleMilestoneOnly"
-              Text="{x:Static resources:UIStrings.DateCalendarFilterMilestoneOnly}">
-            <Button.Style>
-              <Style BasedOn="{StaticResource DateCalendarChip}" TargetType="Button">
-                <Style.Triggers>
-                  <DataTrigger
-                      Binding="{Binding IsMilestoneOnly, Source={x:Reference Root}}"
-                      TargetType="Button"
-                      Value="True">
-                    <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
-                    <Setter Property="TextColor" Value="{StaticResource White}" />
-                  </DataTrigger>
-                </Style.Triggers>
-              </Style>
-            </Button.Style>
-          </Button>
+              Style="{Binding MilestoneOnlyChipStyle, Source={x:Reference Root}}"
+              Text="{x:Static resources:UIStrings.DateCalendarFilterMilestoneOnly}" />
         </FlexLayout>
 
       </VerticalStackLayout>

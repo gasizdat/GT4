@@ -195,5 +195,18 @@ public partial class DateCalendarPage : ContentPage
 
   public bool IsMilestoneOnly => _MilestoneOnly;
 
+  public Style BirthsChipStyle => GetChipStyle(IsBirthsActive);
+
+  public Style DeathsChipStyle => GetChipStyle(IsDeathsActive);
+
+  public Style WeddingsChipStyle => GetChipStyle(IsWeddingsActive);
+
+  public Style MilestoneOnlyChipStyle => GetChipStyle(IsMilestoneOnly);
+
+  // Bound directly to the Button's Style property (rather than a Style.Triggers DataTrigger, which
+  // does not re-apply BackgroundColor/TextColor after a native Windows Button click) so RefreshView's
+  // property-changed notification reliably swaps the whole style.
+  private Style GetChipStyle(bool isActive) => (Style)Resources[isActive ? "DateCalendarChipActive" : "DateCalendarChip"];
+
   public string DateCalendarTodayButtonName => string.Format(UIStrings.DateCalendarTodayButton_1, Date.Now.Day);
 }

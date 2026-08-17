@@ -148,10 +148,12 @@ public class DateCalendarPageTests
     var page = await CreatePageAsync(services);
     await page.WaitForFirstLoadAsync();
     Assert.Single(page.DayGroups);
+    Assert.Same(page.Resources["DateCalendarChipActive"], page.BirthsChipStyle);
 
     await MainThread.InvokeOnMainThreadAsync(() => page.PageCommand.Execute("ToggleBirths"));
 
     Assert.Empty(page.DayGroups);
+    Assert.Same(page.Resources["DateCalendarChip"], page.BirthsChipStyle);
   }
 
   [Fact]
