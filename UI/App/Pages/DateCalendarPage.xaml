@@ -12,41 +12,15 @@
 
   <ContentPage.Resources>
     <ResourceDictionary>
-      <Style x:Key="DateCalendarChip" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SurfaceSubtle}, Dark={StaticResource SurfaceSubtleDark}}" />
-        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
-        <Setter Property="FontSize" Value="{DynamicResource LabelTextSizeDefault}" />
-        <Setter Property="CornerRadius" Value="14" />
-        <Setter Property="Padding" Value="12,6" />
-        <Setter Property="Margin" Value="4,0" />
-      </Style>
-      <!--
-        A DataTrigger on this style's BackgroundColor/TextColor does not re-apply after a native
-        Windows Button click (MAUI/WinUI quirk); the active/inactive look is a whole Style swap
-        bound directly to a page property instead, which RefreshView already notifies reliably.
-      -->
-      <Style x:Key="DateCalendarChipActive" BasedOn="{StaticResource DateCalendarChip}" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
-        <Setter Property="TextColor" Value="{StaticResource White}" />
-      </Style>
-      <!--  Same whole-Style-swap technique as DateCalendarChip/Active above, for the type chips'  -->
-      <!--  Border chrome and Label text, which need to swap together in lockstep.  -->
       <Style x:Key="DateCalendarTypeChip" TargetType="Border">
         <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SurfaceSubtle}, Dark={StaticResource SurfaceSubtleDark}}" />
         <Setter Property="StrokeShape" Value="RoundRectangle 14" />
         <Setter Property="Padding" Value="12,6" />
         <Setter Property="Margin" Value="4,0" />
       </Style>
-      <Style x:Key="DateCalendarTypeChipActive" BasedOn="{StaticResource DateCalendarTypeChip}" TargetType="Border">
-        <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
-        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource PrimaryButtonHover}, Dark={StaticResource PrimaryDarkButtonHover}}" />
-      </Style>
       <Style x:Key="DateCalendarTypeChipText" TargetType="Label">
         <Setter Property="FontSize" Value="{DynamicResource LabelTextSizeDefault}" />
         <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
-      </Style>
-      <Style x:Key="DateCalendarTypeChipTextActive" BasedOn="{StaticResource DateCalendarTypeChipText}" TargetType="Label">
-        <Setter Property="TextColor" Value="{StaticResource White}" />
       </Style>
       <Style x:Key="DateCalendarTypeIndicator" TargetType="Border">
         <Setter Property="StrokeThickness" Value="0" />
@@ -137,7 +111,20 @@
                 Text="&#8250;"
                 VerticalOptions="Center" />
           </Grid>
-          <Border Style="{Binding BirthsChipStyle, Source={x:Reference Root}}">
+          <Border>
+            <Border.Style>
+              <Style BasedOn="{StaticResource DateCalendarTypeChip}" TargetType="Border">
+                <Style.Triggers>
+                  <DataTrigger
+                      Binding="{Binding IsBirthsActive, Source={x:Reference Root}}"
+                      TargetType="Border"
+                      Value="True">
+                    <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
+                    <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource PrimaryButtonHover}, Dark={StaticResource PrimaryDarkButtonHover}}" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </Border.Style>
             <Border.GestureRecognizers>
               <TapGestureRecognizer
                   Command="{Binding PageCommand, Source={x:Reference Root}}"
@@ -151,12 +138,36 @@
                   HeightRequest="8"
                   VerticalOptions="Center"
                   WidthRequest="8" />
-              <Label
-                  Style="{Binding BirthsChipTextStyle, Source={x:Reference Root}}"
-                  Text="{x:Static resources:UIStrings.DateCalendarFilterBirths}" />
+              <Label Text="{x:Static resources:UIStrings.DateCalendarFilterBirths}">
+                <Label.Style>
+                  <Style BasedOn="{StaticResource DateCalendarTypeChipText}" TargetType="Label">
+                    <Style.Triggers>
+                      <DataTrigger
+                          Binding="{Binding IsBirthsActive, Source={x:Reference Root}}"
+                          TargetType="Label"
+                          Value="True">
+                        <Setter Property="TextColor" Value="{StaticResource White}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Label.Style>
+              </Label>
             </HorizontalStackLayout>
           </Border>
-          <Border Style="{Binding DeathsChipStyle, Source={x:Reference Root}}">
+          <Border>
+            <Border.Style>
+              <Style BasedOn="{StaticResource DateCalendarTypeChip}" TargetType="Border">
+                <Style.Triggers>
+                  <DataTrigger
+                      Binding="{Binding IsDeathsActive, Source={x:Reference Root}}"
+                      TargetType="Border"
+                      Value="True">
+                    <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
+                    <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource PrimaryButtonHover}, Dark={StaticResource PrimaryDarkButtonHover}}" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </Border.Style>
             <Border.GestureRecognizers>
               <TapGestureRecognizer
                   Command="{Binding PageCommand, Source={x:Reference Root}}"
@@ -170,12 +181,36 @@
                   HeightRequest="8"
                   VerticalOptions="Center"
                   WidthRequest="8" />
-              <Label
-                  Style="{Binding DeathsChipTextStyle, Source={x:Reference Root}}"
-                  Text="{x:Static resources:UIStrings.DateCalendarFilterDeaths}" />
+              <Label Text="{x:Static resources:UIStrings.DateCalendarFilterDeaths}">
+                <Label.Style>
+                  <Style BasedOn="{StaticResource DateCalendarTypeChipText}" TargetType="Label">
+                    <Style.Triggers>
+                      <DataTrigger
+                          Binding="{Binding IsDeathsActive, Source={x:Reference Root}}"
+                          TargetType="Label"
+                          Value="True">
+                        <Setter Property="TextColor" Value="{StaticResource White}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Label.Style>
+              </Label>
             </HorizontalStackLayout>
           </Border>
-          <Border Style="{Binding WeddingsChipStyle, Source={x:Reference Root}}">
+          <Border>
+            <Border.Style>
+              <Style BasedOn="{StaticResource DateCalendarTypeChip}" TargetType="Border">
+                <Style.Triggers>
+                  <DataTrigger
+                      Binding="{Binding IsWeddingsActive, Source={x:Reference Root}}"
+                      TargetType="Border"
+                      Value="True">
+                    <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
+                    <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource PrimaryButtonHover}, Dark={StaticResource PrimaryDarkButtonHover}}" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </Border.Style>
             <Border.GestureRecognizers>
               <TapGestureRecognizer
                   Command="{Binding PageCommand, Source={x:Reference Root}}"
@@ -189,16 +224,58 @@
                   HeightRequest="8"
                   VerticalOptions="Center"
                   WidthRequest="8" />
-              <Label
-                  Style="{Binding WeddingsChipTextStyle, Source={x:Reference Root}}"
-                  Text="{x:Static resources:UIStrings.DateCalendarFilterWeddings}" />
+              <Label Text="{x:Static resources:UIStrings.DateCalendarFilterWeddings}">
+                <Label.Style>
+                  <Style BasedOn="{StaticResource DateCalendarTypeChipText}" TargetType="Label">
+                    <Style.Triggers>
+                      <DataTrigger
+                          Binding="{Binding IsWeddingsActive, Source={x:Reference Root}}"
+                          TargetType="Label"
+                          Value="True">
+                        <Setter Property="TextColor" Value="{StaticResource White}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Label.Style>
+              </Label>
             </HorizontalStackLayout>
           </Border>
-          <Button
-              Command="{Binding PageCommand, Source={x:Reference Root}}"
-              CommandParameter="ToggleMilestoneOnly"
-              Style="{Binding MilestoneOnlyChipStyle, Source={x:Reference Root}}"
-              Text="{x:Static resources:UIStrings.DateCalendarFilterMilestoneOnly}" />
+          <Border>
+            <Border.Style>
+              <Style BasedOn="{StaticResource DateCalendarTypeChip}" TargetType="Border">
+                <Style.Triggers>
+                  <DataTrigger
+                      Binding="{Binding IsMilestoneOnly, Source={x:Reference Root}}"
+                      TargetType="Border"
+                      Value="True">
+                    <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
+                    <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource PrimaryButtonHover}, Dark={StaticResource PrimaryDarkButtonHover}}" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </Border.Style>
+            <Border.GestureRecognizers>
+              <TapGestureRecognizer
+                  Command="{Binding PageCommand, Source={x:Reference Root}}"
+                  CommandParameter="ToggleMilestoneOnly" />
+            </Border.GestureRecognizers>
+            <Label
+                Text="{x:Static resources:UIStrings.DateCalendarFilterMilestoneOnly}"
+                VerticalOptions="Center">
+              <Label.Style>
+                <Style BasedOn="{StaticResource DateCalendarTypeChipText}" TargetType="Label">
+                  <Style.Triggers>
+                    <DataTrigger
+                        Binding="{Binding IsMilestoneOnly, Source={x:Reference Root}}"
+                        TargetType="Label"
+                        Value="True">
+                      <Setter Property="TextColor" Value="{StaticResource White}" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Label.Style>
+            </Label>
+          </Border>
         </FlexLayout>
 
       </VerticalStackLayout>

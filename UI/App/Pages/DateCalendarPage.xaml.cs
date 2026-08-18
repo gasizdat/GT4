@@ -247,31 +247,5 @@ public partial class DateCalendarPage : ContentPage
 
   public bool IsMilestoneOnly => _MilestoneOnly;
 
-  public Style BirthsChipStyle => GetTypeChipStyle(IsBirthsActive);
-
-  public Style BirthsChipTextStyle => GetTypeChipTextStyle(IsBirthsActive);
-
-  public Style DeathsChipStyle => GetTypeChipStyle(IsDeathsActive);
-
-  public Style DeathsChipTextStyle => GetTypeChipTextStyle(IsDeathsActive);
-
-  public Style WeddingsChipStyle => GetTypeChipStyle(IsWeddingsActive);
-
-  public Style WeddingsChipTextStyle => GetTypeChipTextStyle(IsWeddingsActive);
-
-  public Style MilestoneOnlyChipStyle => GetChipStyle(IsMilestoneOnly);
-
-  // Bound directly to the Button's Style property (rather than a Style.Triggers DataTrigger, which
-  // does not re-apply BackgroundColor/TextColor after a native Windows Button click) so RefreshView's
-  // property-changed notification reliably swaps the whole style.
-  private Style GetChipStyle(bool isActive) => (Style)Resources[isActive ? "DateCalendarChipActive" : "DateCalendarChip"];
-
-  // Same technique, applied to the type chips' Border chrome and Label text: the two need to swap
-  // together, so each gets its own resource pair rather than reusing DateCalendarChip/Active (which
-  // stays Button-targeted for the milestone-only chip above).
-  private Style GetTypeChipStyle(bool isActive) => (Style)Resources[isActive ? "DateCalendarTypeChipActive" : "DateCalendarTypeChip"];
-
-  private Style GetTypeChipTextStyle(bool isActive) => (Style)Resources[isActive ? "DateCalendarTypeChipTextActive" : "DateCalendarTypeChipText"];
-
   public string DateCalendarTodayButtonName => string.Format(UIStrings.DateCalendarTodayButton_1, Date.Now.Day);
 }

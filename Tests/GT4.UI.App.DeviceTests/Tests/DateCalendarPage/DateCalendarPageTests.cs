@@ -210,12 +210,15 @@ public class DateCalendarPageTests
     var page = await CreatePageAsync(services);
     await page.WaitForFirstLoadAsync();
     Assert.Single(page.DayGroups);
-    Assert.Same(page.Resources["DateCalendarTypeChipActive"], page.BirthsChipStyle);
+    Assert.True(page.IsBirthsActive);
 
     await MainThread.InvokeOnMainThreadAsync(() => page.PageCommand.Execute("ToggleBirths"));
 
     Assert.Empty(page.DayGroups);
-    Assert.Same(page.Resources["DateCalendarTypeChip"], page.BirthsChipStyle);
+    Assert.False(page.IsBirthsActive);
+    // The active/inactive chip color is now a Style.Triggers DataTrigger on IsBirthsActive rather
+    // than a page-computed Style, so it is not assertable from this headless harness -- verified
+    // visually instead (screenshot before/after toggle on Windows).
   }
 
   [Fact]
