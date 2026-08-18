@@ -22,7 +22,7 @@ internal abstract class RelationshipTypeFormatterBase
   private static bool? _IsRunningInTest;
 
   /// <summary>
-  /// The tables are what name the terms, so this only answers once <see cref="ToString"/> has run.
+  /// The tables are what name the terms, so this only answers once <see cref="ToString()"/> has run.
   /// </summary>
   public bool NeutralTermMissing => _NeutralTermMissing;
 
