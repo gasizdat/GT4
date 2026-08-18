@@ -14,6 +14,7 @@
     <ResourceDictionary>
       <Style x:Key="DateCalendarTypeChip" TargetType="Border">
         <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SurfaceSubtle}, Dark={StaticResource SurfaceSubtleDark}}" />
+        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource DateCalendarBorder}, Dark={StaticResource DateCalendarBorderDark}}" />
         <Setter Property="StrokeShape" Value="RoundRectangle 14" />
         <Setter Property="Padding" Value="12,6" />
         <Setter Property="Margin" Value="4,0" />
@@ -54,7 +55,7 @@
         <Setter Property="CornerRadius" Value="17" />
         <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SurfaceSubtle}, Dark={StaticResource SurfaceSubtleDark}}" />
         <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
-        <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource PrimaryButtonHover}, Dark={StaticResource PrimaryDarkButtonHover}}" />
+        <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource DateCalendarBorder}, Dark={StaticResource DateCalendarBorderDark}}" />
         <Setter Property="BorderWidth" Value="1" />
       </Style>
       <Style x:Key="DateCalendarDayNumber" TargetType="Label">
@@ -72,7 +73,7 @@
         <Setter Property="HorizontalOptions" Value="End" />
       </Style>
       <Style x:Key="DateCalendarMilestoneBadge" TargetType="Border">
-        <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource DateCalendarMilestoneBg}, Dark={StaticResource DateCalendarMilestoneBgDark}}" />
         <Setter Property="StrokeShape" Value="RoundRectangle 10" />
         <Setter Property="Padding" Value="8,2" />
         <Setter Property="HorizontalOptions" Value="End" />
@@ -139,8 +140,8 @@
                       Binding="{Binding IsBirthsActive, Source={x:Reference Root}}"
                       TargetType="Border"
                       Value="True">
-                    <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
-                    <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource PrimaryButtonHover}, Dark={StaticResource PrimaryDarkButtonHover}}" />
+                    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource DateCalendarBirthWash}, Dark={StaticResource DateCalendarBirthWashDark}}" />
+                    <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource Birth}, Dark={StaticResource BirthDark}}" />
                   </DataTrigger>
                 </Style.Triggers>
               </Style>
@@ -158,20 +159,9 @@
                   HeightRequest="8"
                   VerticalOptions="Center"
                   WidthRequest="8" />
-              <Label Text="{x:Static resources:UIStrings.DateCalendarFilterBirths}">
-                <Label.Style>
-                  <Style BasedOn="{StaticResource DateCalendarTypeChipText}" TargetType="Label">
-                    <Style.Triggers>
-                      <DataTrigger
-                          Binding="{Binding IsBirthsActive, Source={x:Reference Root}}"
-                          TargetType="Label"
-                          Value="True">
-                        <Setter Property="TextColor" Value="{StaticResource White}" />
-                      </DataTrigger>
-                    </Style.Triggers>
-                  </Style>
-                </Label.Style>
-              </Label>
+              <Label
+                  Style="{StaticResource DateCalendarTypeChipText}"
+                  Text="{x:Static resources:UIStrings.DateCalendarFilterBirths}" />
             </HorizontalStackLayout>
           </Border>
           <Border>
@@ -182,8 +172,8 @@
                       Binding="{Binding IsDeathsActive, Source={x:Reference Root}}"
                       TargetType="Border"
                       Value="True">
-                    <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
-                    <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource PrimaryButtonHover}, Dark={StaticResource PrimaryDarkButtonHover}}" />
+                    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource DateCalendarDeathWash}, Dark={StaticResource DateCalendarDeathWashDark}}" />
+                    <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource Death}, Dark={StaticResource DeathDark}}" />
                   </DataTrigger>
                 </Style.Triggers>
               </Style>
@@ -201,20 +191,9 @@
                   HeightRequest="8"
                   VerticalOptions="Center"
                   WidthRequest="8" />
-              <Label Text="{x:Static resources:UIStrings.DateCalendarFilterDeaths}">
-                <Label.Style>
-                  <Style BasedOn="{StaticResource DateCalendarTypeChipText}" TargetType="Label">
-                    <Style.Triggers>
-                      <DataTrigger
-                          Binding="{Binding IsDeathsActive, Source={x:Reference Root}}"
-                          TargetType="Label"
-                          Value="True">
-                        <Setter Property="TextColor" Value="{StaticResource White}" />
-                      </DataTrigger>
-                    </Style.Triggers>
-                  </Style>
-                </Label.Style>
-              </Label>
+              <Label
+                  Style="{StaticResource DateCalendarTypeChipText}"
+                  Text="{x:Static resources:UIStrings.DateCalendarFilterDeaths}" />
             </HorizontalStackLayout>
           </Border>
           <Border>
@@ -225,8 +204,8 @@
                       Binding="{Binding IsWeddingsActive, Source={x:Reference Root}}"
                       TargetType="Border"
                       Value="True">
-                    <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
-                    <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource PrimaryButtonHover}, Dark={StaticResource PrimaryDarkButtonHover}}" />
+                    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource DateCalendarWeddingWash}, Dark={StaticResource DateCalendarWeddingWashDark}}" />
+                    <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource Accent}, Dark={StaticResource AccentDark}}" />
                   </DataTrigger>
                 </Style.Triggers>
               </Style>
@@ -244,20 +223,9 @@
                   HeightRequest="8"
                   VerticalOptions="Center"
                   WidthRequest="8" />
-              <Label Text="{x:Static resources:UIStrings.DateCalendarFilterWeddings}">
-                <Label.Style>
-                  <Style BasedOn="{StaticResource DateCalendarTypeChipText}" TargetType="Label">
-                    <Style.Triggers>
-                      <DataTrigger
-                          Binding="{Binding IsWeddingsActive, Source={x:Reference Root}}"
-                          TargetType="Label"
-                          Value="True">
-                        <Setter Property="TextColor" Value="{StaticResource White}" />
-                      </DataTrigger>
-                    </Style.Triggers>
-                  </Style>
-                </Label.Style>
-              </Label>
+              <Label
+                  Style="{StaticResource DateCalendarTypeChipText}"
+                  Text="{x:Static resources:UIStrings.DateCalendarFilterWeddings}" />
             </HorizontalStackLayout>
           </Border>
           <Border>
@@ -268,8 +236,8 @@
                       Binding="{Binding IsMilestoneOnly, Source={x:Reference Root}}"
                       TargetType="Border"
                       Value="True">
-                    <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
-                    <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource PrimaryButtonHover}, Dark={StaticResource PrimaryDarkButtonHover}}" />
+                    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource DateCalendarMilestoneBg}, Dark={StaticResource DateCalendarMilestoneBgDark}}" />
+                    <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource DateCalendarMilestoneBg}, Dark={StaticResource DateCalendarMilestoneBgDark}}" />
                   </DataTrigger>
                 </Style.Triggers>
               </Style>
@@ -289,7 +257,7 @@
                         Binding="{Binding IsMilestoneOnly, Source={x:Reference Root}}"
                         TargetType="Label"
                         Value="True">
-                      <Setter Property="TextColor" Value="{StaticResource White}" />
+                      <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource DateCalendarMilestoneText}, Dark={StaticResource DateCalendarMilestoneTextDark}}" />
                     </DataTrigger>
                   </Style.Triggers>
                 </Style>
@@ -374,7 +342,7 @@
                                   FontSize="{DynamicResource LabelTextSizeDefault}"
                                   HorizontalTextAlignment="Center"
                                   Text="{x:Static resources:UIStrings.DateCalendarMilestoneBadge}"
-                                  TextColor="{StaticResource White}"
+                                  TextColor="{AppThemeBinding Light={StaticResource DateCalendarMilestoneText}, Dark={StaticResource DateCalendarMilestoneTextDark}}"
                                   VerticalTextAlignment="Center" />
                             </Border>
                           </Grid>
@@ -432,7 +400,7 @@
                         <Label
                             FontSize="{DynamicResource LabelTextSizeDefault}"
                             Text="{x:Static resources:UIStrings.DateCalendarMilestoneBadge}"
-                            TextColor="{StaticResource White}" />
+                            TextColor="{AppThemeBinding Light={StaticResource DateCalendarMilestoneText}, Dark={StaticResource DateCalendarMilestoneTextDark}}" />
                       </Border>
                     </Grid>
                   </components:CardView>
