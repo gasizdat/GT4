@@ -39,18 +39,17 @@ internal class RelationshipTypeFormatter : IRelationshipTypeFormatter
   private static string Format(RelationshipType type, BiologicalSex biologicalSex, Generation? generation, Consanguinity? consanguinity)
   {
     var formatter = Create(type, biologicalSex, generation, consanguinity);
+    var ret = formatter.ToString();
 
-    try
+    if (!formatter.NeutralTermMissing)
     {
-      return formatter.ToString();
+      return ret;
     }
-    catch (NeutralTermMissingException)
-    {
-      var male = Create(type, BiologicalSex.Male, generation, consanguinity);
-      var female = Create(type, BiologicalSex.Female, generation, consanguinity);
 
-      return formatter.Join(male.ToString(), female.ToString());
-    }
+    var male = Create(type, BiologicalSex.Male, generation, consanguinity);
+    var female = Create(type, BiologicalSex.Female, generation, consanguinity);
+
+    return formatter.Join(male.ToString(), female.ToString());
   }
 
   private static RelationshipTypeFormatterBase Create(RelationshipType type, BiologicalSex biologicalSex, Generation? generation, Consanguinity? consanguinity)

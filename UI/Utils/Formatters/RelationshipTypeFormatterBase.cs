@@ -18,7 +18,16 @@ internal abstract class RelationshipTypeFormatterBase
   private readonly Generation _AbsGen;
   private readonly Consanguinity _Con;
   private readonly Converters _Converters;
+  private bool _NeutralTermMissing;
   private static bool? _IsRunningInTest;
+
+  /// <summary>
+  /// Whether the terms this language spells for the relationship just formatted include no
+  /// unknown-sex one of its own, leaving the result of <see cref="ToString"/> to be replaced by a
+  /// <see cref="Join"/> of the two gendered labels. Only meaningful once <see cref="ToString"/> has
+  /// run, since the tables are what name the terms.
+  /// </summary>
+  public bool NeutralTermMissing => _NeutralTermMissing;
 
   protected Generation GreatnessStartLevel => _GreatnessStartLevel;
   protected RelationshipType Type => _Type;
@@ -46,7 +55,7 @@ internal abstract class RelationshipTypeFormatterBase
 
       return Normalize(ret);
     }
-    catch (Exception ex) when (ex is not NeutralTermMissingException)
+    catch (Exception ex)
     {
       return ex.Message;
     }
@@ -141,10 +150,7 @@ internal abstract class RelationshipTypeFormatterBase
     }
 
     var ret = row.ToString(Sex);
-    if (Sex == BiologicalSex.Unknown && ret == Join(row.M, row.F))
-    {
-      throw new NeutralTermMissingException();
-    }
+    _NeutralTermMissing |= Sex == BiologicalSex.Unknown && ret == Join(row.M, row.F);
 
     if (ret == string.Empty)
     {
