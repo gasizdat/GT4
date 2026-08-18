@@ -22,10 +22,7 @@ internal abstract class RelationshipTypeFormatterBase
   private static bool? _IsRunningInTest;
 
   /// <summary>
-  /// Whether the terms this language spells for the relationship just formatted include no
-  /// unknown-sex one of its own, leaving the result of <see cref="ToString"/> to be replaced by a
-  /// <see cref="Join"/> of the two gendered labels. Only meaningful once <see cref="ToString"/> has
-  /// run, since the tables are what name the terms.
+  /// The tables are what name the terms, so this only answers once <see cref="ToString"/> has run.
   /// </summary>
   public bool NeutralTermMissing => _NeutralTermMissing;
 
@@ -61,14 +58,6 @@ internal abstract class RelationshipTypeFormatterBase
     }
   }
 
-  /// <summary>
-  /// Joins the two gendered labels for a language with no unknown-sex term of its own. Both are
-  /// already complete, so every gendered part - the generation prefix, the consanguinity adjective -
-  /// is present on each side and agrees with it. A table's unknown-sex term is taken to be one of
-  /// those languages exactly when it reproduces this join, since then it says nothing the two
-  /// gendered terms do not; a distinct word ("Großelternteil") or a shortened one ("Grand uncle or
-  /// aunt") does, and is kept.
-  /// </summary>
   public string Join(string male, string female)
   {
     var joined = string.Format(UIStrings.RelDisjunction_2, male, female);
@@ -150,6 +139,9 @@ internal abstract class RelationshipTypeFormatterBase
     }
 
     var ret = row.ToString(Sex);
+    // An unknown-sex term that reproduces the join says nothing the two gendered terms do not, so
+    // it counts as the language having none; a distinct word ("Großelternteil") or a shortened one
+    // ("Grand uncle or aunt") does, and is kept.
     _NeutralTermMissing |= Sex == BiologicalSex.Unknown && ret == Join(row.M, row.F);
 
     if (ret == string.Empty)

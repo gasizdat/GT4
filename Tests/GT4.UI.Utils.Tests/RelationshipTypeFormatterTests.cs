@@ -272,8 +272,8 @@ public class RelationshipTypeFormatterTests
     Assert.Equal(expected, actual);
   }
 
-  // The case a prefix wrapped around the whole phrase would get wrong twice over: the stem sits in
-  // the middle of "tío abuelo", and the disjunction carries a second stem that must be prefixed too.
+  // The case a prefix wrapped around the whole label would get wrong: the stem sits in the middle
+  // of "tío abuelo".
   [Theory]
   [InlineData(1, "Tío o tía")]
   [InlineData(2, "Tío abuelo o tía abuela")]
@@ -292,8 +292,8 @@ public class RelationshipTypeFormatterTests
     Assert.Equal(expected, actual);
   }
 
-  // The descendant mirror of the case above, and the only one where a two-stem disjunction meets the
-  // seam that does not contract.
+  // The descendant mirror of the case above, where the prefix runs into the stem instead of
+  // contracting with it.
   [Theory]
   [InlineData(-2, "Sobrino nieto o sobrina nieta")]
   [InlineData(-3, "Sobrino bisnieto o sobrina bisnieta")]

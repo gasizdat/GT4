@@ -32,9 +32,9 @@ internal class RelationshipTypeFormatter : IRelationshipTypeFormatter
 
   /// <summary>
   /// Languages differ over which relationships they have an unknown-sex word for: German says
-  /// "Großelternteil" but has to spell out "Großonkel oder Großtante". Where the word is missing the
-  /// label is built from the two gendered ones, each formatted in full, so a prefix or an adjective
-  /// applied per sex lands on both halves rather than only the first.
+  /// "Großelternteil" but has to spell out "Großonkel oder Großtante". Where the word is missing,
+  /// building the label from two labels formatted in full is what puts a generation prefix and a
+  /// consanguinity adjective on both halves, each agreeing with the half it sits on.
   /// </summary>
   private static string Format(RelationshipType type, BiologicalSex biologicalSex, Generation? generation, Consanguinity? consanguinity)
   {
