@@ -311,6 +311,10 @@ public partial class ProjectPage : ContentPage
         await _NavigationService.GoToAsync(UIRoutes.GetRoute<StatisticsPage>());
         break;
 
+      case string commandName when commandName == "GoToDateCalendar":
+        await _NavigationService.GoToAsync(UIRoutes.GetRoute<DateCalendarPage>());
+        break;
+
       case string commandName when commandName == "GoToKinshipFinder":
         await _NavigationService.GoToAsync(UIRoutes.GetRoute<KinshipFinderPage>());
         break;

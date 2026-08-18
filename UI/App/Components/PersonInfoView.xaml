@@ -25,6 +25,7 @@
     <Label
         Grid.Row="0"
         Grid.Column="1"
+        IsVisible="{Binding ShowName, Source={x:Reference Root}}"
         Style="{Binding NameLabelStyle, Source={x:Reference Root}, TargetNullValue={StaticResource CardTitle}}"
         Text="{Binding CommonName, Source={x:Reference Root}}" />
 

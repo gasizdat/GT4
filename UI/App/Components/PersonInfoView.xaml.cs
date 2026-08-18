@@ -44,6 +44,9 @@ public partial class PersonInfoView : ContentView
   public static readonly BindableProperty ShowPhotoProperty =
     BindableProperty.Create(nameof(ShowPhoto), typeof(bool), typeof(PersonInfoView), true);
 
+  public static readonly BindableProperty ShowNameProperty =
+    BindableProperty.Create(nameof(ShowName), typeof(bool), typeof(PersonInfoView), true);
+
   public static readonly BindableProperty ShowDatesProperty =
     BindableProperty.Create(nameof(ShowDates), typeof(bool), typeof(PersonInfoView), true);
 
@@ -67,6 +70,7 @@ public partial class PersonInfoView : ContentView
 
   public PersonInfo? Person => (PersonInfo?)GetValue(PersonProperty);
   public bool ShowPhoto => (bool)GetValue(ShowPhotoProperty);
+  public bool ShowName => (bool)GetValue(ShowNameProperty);
   public bool ShowDates => (bool)GetValue(ShowDatesProperty);
   public bool ShowDeathDate => (bool)GetValue(ShowDeathDateProperty);
   public bool ShowAge => (bool)GetValue(ShowAgeProperty);

@@ -850,7 +850,7 @@ FN - family name</value>
     <value>Family</value>
   </data>
   <data name="MenuItemGoToRevisions" xml:space="preserve">
-    <value>🗓️ Revisions</value>
+    <value>📌 Revisions</value>
   </data>
   <data name="TitleProjectRevisionsPage" xml:space="preserve">
     <value>Select project revisions</value>
@@ -1262,5 +1262,53 @@ FN - family name</value>
   </data>
   <data name="StatValueChildrenAverage_1" xml:space="preserve">
     <value>{0} children</value>
+  </data>
+  <data name="TitleDateCalendarPage" xml:space="preserve">
+    <value>Date Calendar</value>
+  </data>
+  <data name="HintDateCalendarPage" xml:space="preserve">
+    <value>See who was born, married, or is remembered on each day of the year.</value>
+  </data>
+  <data name="MenuItemGoToDateCalendar" xml:space="preserve">
+    <value>🗓️ Calendar</value>
+  </data>
+  <data name="DateCalendarTodayButton_1" xml:space="preserve">
+    <value>{0} Today</value>
+  </data>
+  <data name="DateCalendarFilterBirths" xml:space="preserve">
+    <value>Births</value>
+  </data>
+  <data name="DateCalendarFilterDeaths" xml:space="preserve">
+    <value>Remembrances</value>
+  </data>
+  <data name="DateCalendarFilterWeddings" xml:space="preserve">
+    <value>Anniversaries</value>
+  </data>
+  <data name="DateCalendarFilterMilestoneOnly" xml:space="preserve">
+    <value>Milestones only</value>
+  </data>
+  <data name="DateCalendarMilestoneBadge" xml:space="preserve">
+    <value>MILESTONE</value>
+  </data>
+  <data name="DateCalendarBirthdayText_2" xml:space="preserve">
+    <value>{0} turns {1}</value>
+  </data>
+  <data name="DateCalendarBirthdayDeceasedText_2" xml:space="preserve">
+    <value>{0} — {1} years since birth</value>
+  </data>
+  <data name="DateCalendarDeathAnniversaryText_2" xml:space="preserve">
+    <value>{0} — {1} years since passing</value>
+  </data>
+  <data name="DateCalendarWeddingAnniversaryText_3" xml:space="preserve">
+    <value>{0} &amp; {1} — married {2} years</value>
+  </data>
+  <data name="DateCalendarDayUnknownHeader_1" xml:space="preserve">
+    <value>Sometime in {0} — exact day not recorded</value>
+  </data>
+  <data name="DateCalendarEmptyState_1" xml:space="preserve">
+    <value>No births, weddings, or remembrances recorded for {0}.</value>
+  </data>
+  <data name="DateCalendarUnplaceableFootnote_1" xml:space="preserve">
+    <value>{0} birth or death dates in this project have a year on record but no month, so they can't be placed on the calendar.</value>
   </data>
 </root>

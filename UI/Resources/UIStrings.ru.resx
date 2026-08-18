@@ -850,7 +850,7 @@ FN - род</value>
     <value>Род</value>
   </data>
   <data name="MenuItemGoToRevisions" xml:space="preserve">
-    <value>🗓️ Ревизии</value>
+    <value>📌 Ревизии</value>
   </data>
   <data name="TitleProjectRevisionsPage" xml:space="preserve">
     <value>Выбрать ревизию проекта</value>
@@ -1262,5 +1262,53 @@ FN - род</value>
   </data>
   <data name="StatValueChildrenAverage_1" xml:space="preserve">
     <value>{0} детей</value>
+  </data>
+  <data name="TitleDateCalendarPage" xml:space="preserve">
+    <value>Календарь</value>
+  </data>
+  <data name="HintDateCalendarPage" xml:space="preserve">
+    <value>Узнайте, кто родился, вступил в брак или скончался в этот день в разные годы.</value>
+  </data>
+  <data name="MenuItemGoToDateCalendar" xml:space="preserve">
+    <value>🗓️ Календарь</value>
+  </data>
+  <data name="DateCalendarTodayButton_1" xml:space="preserve">
+    <value>{0} Сегодня</value>
+  </data>
+  <data name="DateCalendarFilterBirths" xml:space="preserve">
+    <value>Дни рождения</value>
+  </data>
+  <data name="DateCalendarFilterDeaths" xml:space="preserve">
+    <value>Памятные даты</value>
+  </data>
+  <data name="DateCalendarFilterWeddings" xml:space="preserve">
+    <value>Годовщины свадьбы</value>
+  </data>
+  <data name="DateCalendarFilterMilestoneOnly" xml:space="preserve">
+    <value>Только юбилеи</value>
+  </data>
+  <data name="DateCalendarMilestoneBadge" xml:space="preserve">
+    <value>ЮБИЛЕЙ</value>
+  </data>
+  <data name="DateCalendarBirthdayText_2" xml:space="preserve">
+    <value>{0}: исполняется {1} лет</value>
+  </data>
+  <data name="DateCalendarBirthdayDeceasedText_2" xml:space="preserve">
+    <value>{0} — {1} лет со дня рождения</value>
+  </data>
+  <data name="DateCalendarDeathAnniversaryText_2" xml:space="preserve">
+    <value>{0} — {1} лет со дня смерти</value>
+  </data>
+  <data name="DateCalendarWeddingAnniversaryText_3" xml:space="preserve">
+    <value>{0} и {1} — в браке {2} лет</value>
+  </data>
+  <data name="DateCalendarDayUnknownHeader_1" xml:space="preserve">
+    <value>Где-то в {0} — точный день неизвестен</value>
+  </data>
+  <data name="DateCalendarEmptyState_1" xml:space="preserve">
+    <value>За {0} не зафиксировано рождений, свадеб или памятных дат.</value>
+  </data>
+  <data name="DateCalendarUnplaceableFootnote_1" xml:space="preserve">
+    <value>{0} дат рождения или смерти в этом проекте имеют известный год, но неизвестный месяц, поэтому их нельзя разместить в календаре.</value>
   </data>
 </root>
