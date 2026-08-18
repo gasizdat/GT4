@@ -26,6 +26,26 @@
         <Setter Property="StrokeThickness" Value="0" />
         <Setter Property="WidthRequest" Value="4" />
         <Setter Property="StrokeShape" Value="RoundRectangle 2" />
+        <Style.Triggers>
+          <DataTrigger
+              Binding="{Binding Type}"
+              TargetType="Border"
+              Value="{x:Static utils:DateCalendarEventType.Birth}">
+            <Setter Property="BackgroundColor" Value="{StaticResource Birth}" />
+          </DataTrigger>
+          <DataTrigger
+              Binding="{Binding Type}"
+              TargetType="Border"
+              Value="{x:Static utils:DateCalendarEventType.Death}">
+            <Setter Property="BackgroundColor" Value="{StaticResource Death}" />
+          </DataTrigger>
+          <DataTrigger
+              Binding="{Binding Type}"
+              TargetType="Border"
+              Value="{x:Static utils:DateCalendarEventType.Wedding}">
+            <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
+          </DataTrigger>
+        </Style.Triggers>
       </Style>
       <Style x:Key="DateCalendarMonthNavButton" TargetType="Button">
         <Setter Property="WidthRequest" Value="34" />
@@ -331,32 +351,8 @@
                               ColumnSpacing="{StaticResource PageContentSpacing}">
                             <Border
                                 Grid.Column="0"
-                                VerticalOptions="Fill">
-                              <Border.Style>
-                                <Style BasedOn="{StaticResource DateCalendarTypeIndicator}" TargetType="Border">
-                                  <Style.Triggers>
-                                    <DataTrigger
-                                        Binding="{Binding Type}"
-                                        TargetType="Border"
-                                        Value="{x:Static utils:DateCalendarEventType.Birth}">
-                                      <Setter Property="BackgroundColor" Value="{StaticResource Birth}" />
-                                    </DataTrigger>
-                                    <DataTrigger
-                                        Binding="{Binding Type}"
-                                        TargetType="Border"
-                                        Value="{x:Static utils:DateCalendarEventType.Death}">
-                                      <Setter Property="BackgroundColor" Value="{StaticResource Death}" />
-                                    </DataTrigger>
-                                    <DataTrigger
-                                        Binding="{Binding Type}"
-                                        TargetType="Border"
-                                        Value="{x:Static utils:DateCalendarEventType.Wedding}">
-                                      <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
-                                    </DataTrigger>
-                                  </Style.Triggers>
-                                </Style>
-                              </Border.Style>
-                            </Border>
+                                Style="{StaticResource DateCalendarTypeIndicator}"
+                                VerticalOptions="Fill" />
                             <components:PersonInfoView
                                 Grid.Column="1"
                                 Person="{Binding Person}"
@@ -414,32 +410,8 @@
                         ColumnSpacing="{StaticResource PageContentSpacing}">
                       <Border
                           Grid.Column="0"
-                          VerticalOptions="Fill">
-                        <Border.Style>
-                          <Style BasedOn="{StaticResource DateCalendarTypeIndicator}" TargetType="Border">
-                            <Style.Triggers>
-                              <DataTrigger
-                                  Binding="{Binding Type}"
-                                  TargetType="Border"
-                                  Value="{x:Static utils:DateCalendarEventType.Birth}">
-                                <Setter Property="BackgroundColor" Value="{StaticResource Birth}" />
-                              </DataTrigger>
-                              <DataTrigger
-                                  Binding="{Binding Type}"
-                                  TargetType="Border"
-                                  Value="{x:Static utils:DateCalendarEventType.Death}">
-                                <Setter Property="BackgroundColor" Value="{StaticResource Death}" />
-                              </DataTrigger>
-                              <DataTrigger
-                                  Binding="{Binding Type}"
-                                  TargetType="Border"
-                                  Value="{x:Static utils:DateCalendarEventType.Wedding}">
-                                <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
-                              </DataTrigger>
-                            </Style.Triggers>
-                          </Style>
-                        </Border.Style>
-                      </Border>
+                          Style="{StaticResource DateCalendarTypeIndicator}"
+                          VerticalOptions="Fill" />
                       <components:PersonInfoView
                           Grid.Column="1"
                           Person="{Binding Person}"
