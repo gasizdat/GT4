@@ -43,21 +43,28 @@ internal abstract class RelationshipTypeFormatterBase
     {
       var toString = GetConverter();
       var ret = toString();
-      ret = Normalize(ret);
 
-#if DEBUG
-      if (!IsRunningInTest)
-      {
-        ret = $"{ret} G{Gen.Value} C{Con.Value}";
-      }
-#endif
-
-      return ret;
+      return Normalize(ret);
     }
-    catch (Exception ex)
+    catch (Exception ex) when (ex is not NeutralTermMissingException)
     {
       return ex.Message;
     }
+  }
+
+  /// <summary>
+  /// Joins the two gendered labels for a language with no unknown-sex term of its own. Both are
+  /// already complete, so every gendered part - the generation prefix, the consanguinity adjective -
+  /// is present on each side and agrees with it. A table's unknown-sex term is taken to be one of
+  /// those languages exactly when it reproduces this join, since then it says nothing the two
+  /// gendered terms do not; a distinct word ("Großelternteil") or a shortened one ("Grand uncle or
+  /// aunt") does, and is kept.
+  /// </summary>
+  public string Join(string male, string female)
+  {
+    var joined = string.Format(UIStrings.RelDisjunction_2, male, female);
+
+    return Normalize(joined);
   }
 
   protected abstract Converters GetConverters();
@@ -134,6 +141,11 @@ internal abstract class RelationshipTypeFormatterBase
     }
 
     var ret = row.ToString(Sex);
+    if (Sex == BiologicalSex.Unknown && ret == Join(row.M, row.F))
+    {
+      throw new NeutralTermMissingException();
+    }
+
     if (ret == string.Empty)
     {
       if (!row.SubType.HasValue)

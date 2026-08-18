@@ -2872,6 +2872,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {0} or {1}.
+        /// </summary>
+        public static string RelDisjunction_2 {
+            get {
+                return ResourceManager.GetString("RelDisjunction_2", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Great-{0}.
         /// </summary>
         public static string RelGreat_1 {
