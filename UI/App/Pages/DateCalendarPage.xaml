@@ -63,7 +63,7 @@
         <Setter Property="HeightRequest" Value="36" />
         <Setter Property="HorizontalTextAlignment" Value="Center" />
         <Setter Property="VerticalTextAlignment" Value="Center" />
-        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SurfaceSubtle}, Dark={StaticResource SurfaceSubtleDark}}" />
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource SurfaceSubtleDark}}" />
         <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
       </Style>
       <Style x:Key="DateCalendarDayBadge" TargetType="Border">
