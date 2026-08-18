@@ -67,7 +67,7 @@
         <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
       </Style>
       <Style x:Key="DateCalendarDayBadge" TargetType="Border">
-        <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource DateCalendarBorder}, Dark={StaticResource DateCalendarBorderDark}}" />
         <Setter Property="StrokeShape" Value="RoundRectangle 10" />
         <Setter Property="Padding" Value="8,8" />
         <Setter Property="HorizontalOptions" Value="End" />
