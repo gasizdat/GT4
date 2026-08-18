@@ -24,9 +24,8 @@ internal class RelationshipTypeFormatterEs : RelationshipTypeFormatterEn
   /// so the stem is what gets rewritten: "tío abuelo" -> "tío bisabuelo", "abuelo o abuela" ->
   /// "bisabuelo o bisabuela", and the trailing adjective of "abuelo adoptivo" stays put. Every
   /// composed term reaching here must therefore spell one of the four stems.
-  /// <paramref name="femaleStem"/>/<paramref name="maleStem"/> are the base class's single-disjunct
-  /// stems (#318) and are ignored here: the loop below already prefixes every stem occurrence,
-  /// disjuncts included, so wiring them in would prefix those two stems twice.
+  /// The stem parameters are ignored: every occurrence is already prefixed, disjuncts included, so
+  /// wiring them in would prefix those two twice.
   /// </summary>
   protected override string AddGreatness(string main, string femaleStem = "", string maleStem = "")
   {

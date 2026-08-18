@@ -311,8 +311,6 @@ public class RelationshipTypeFormatterTests
     Assert.Equal(expected, actual);
   }
 
-  // German's grandnephew/niece disjunction repeats in full too, the same shape as "Großonkel oder
-  // Großtante" (#318).
   [Theory]
   [InlineData(-2, "Großneffe oder Großnichte")]
   [InlineData(-3, "Urgroßneffe oder Urgroßnichte")]
@@ -347,8 +345,6 @@ public class RelationshipTypeFormatterTests
     Assert.Equal(expected, actual);
   }
 
-  // "Grand-oncle ou grand-tante" is the French term whose disjunction repeats in full the way
-  // German's "Großonkel oder Großtante" does, so both halves gain the depth prefix (#318).
   [Theory]
   [InlineData(1, "Oncle ou tante")]
   [InlineData(2, "Grand-oncle ou grand-tante")]

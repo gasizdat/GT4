@@ -70,22 +70,16 @@ internal abstract class RelationshipTypeFormatterBase
   protected virtual string Normalize(string composed) => composed.Substring(0, 1) + composed.Substring(1).ToLower();
 
   /// <summary>
-  /// Builds a "Great-grandparent"-style label by wrapping <paramref name="main"/> in
-  /// <see cref="UIStrings.RelGreat_1"/> once per generation, falling back to a "N-Great-..." numeral
-  /// form past <see cref="_GreatnessMaxLevel"/>. Repeating one prefix around the whole composed
+  /// Builds a "Great-grandparent"-style label. Repeating one prefix around the whole composed
   /// phrase is an En/Ru convention rather than a universal one: Spanish names each level with its
   /// own prefix bound to the kinship stem, so <see cref="RelationshipTypeFormatterEs"/> overrides
   /// this instead of reusing it. Confirm a new language really does repeat one prefix before
   /// inheriting this.
   /// <para/>
-  /// When <paramref name="main"/> spells out both <paramref name="femaleStem"/> and
-  /// <paramref name="maleStem"/> in full (a disjunction like "Großonkel oder Großtante"), each stem
-  /// is depth-marked on its own so both sides gain the prefix instead of only the first (#318). That
-  /// includes the numeral used past <see cref="_GreatnessMaxLevel"/>: the prefix itself carries no
-  /// count ("Ur-"/"arrière-"/"Пра-" mean "one step further" at any depth), so the numeral is the only
-  /// place the depth is recorded and a disjunct without it reads as the shallow term. English elides
-  /// the second stem ("Grand uncle or aunt"), so the stems there never match in full and the phrase
-  /// is wrapped as one unit, unaffected.
+  /// Both stems are depth-marked separately, the numeral form included: the prefix carries no count
+  /// ("Ur-", "arrière-" and "Пра-" all mean "one step further" at any depth), so a disjunct left
+  /// without the numeral reads as the shallow term. English elides its second stem ("Grand uncle or
+  /// aunt"), so it never matches and is wrapped whole.
   /// </summary>
   protected virtual string AddGreatness(string main, string femaleStem = "", string maleStem = "")
   {
@@ -154,10 +148,9 @@ internal abstract class RelationshipTypeFormatterBase
   protected string ToString(Table table, out Row leaf) => ToString(table, null, out leaf);
 
   /// <summary>
-  /// Also hands back the leaf row whose F/M actually produced <c>ret</c>, even when <paramref
-  /// name="type"/> only redirects (<see cref="RelationshipTypeTableRow.SubType"/>) or composes
-  /// (e.g. "Adoptive {0}") into it. <see cref="AddGreatness(string, string, string)"/> needs those
-  /// stems to prefix a disjunction on both sides.
+  /// <paramref name="leaf"/> is the row that produced the string, which is not the one
+  /// <paramref name="type"/> selects when that row only redirects through
+  /// <see cref="RelationshipTypeTableRow.SubType"/> or composes ("Adoptive {0}") into another.
   /// </summary>
   protected string ToString(Table table, RelationshipType? type, out Row leaf)
   {
