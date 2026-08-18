@@ -562,6 +562,9 @@ Stammbaum und haben Sie Freude daran!</value>
   <data name="RelGrandChild" xml:space="preserve">
     <value>Enkelkind</value>
   </data>
+  <data name="RelDisjunction_2" xml:space="preserve">
+    <value>{0} oder {1}</value>
+  </data>
   <data name="RelGreat_1" xml:space="preserve">
     <value>Ur{0}</value>
   </data>

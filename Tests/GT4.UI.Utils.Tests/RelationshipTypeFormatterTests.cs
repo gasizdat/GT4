@@ -43,8 +43,8 @@ public class RelationshipTypeFormatterTests
   [InlineData(null, "Родитель")]
   [InlineData(1, "Родитель")]
   [InlineData(2, "Дедушка или бабушка")]
-  [InlineData(4, "Пра-пра-дедушка или бабушка")]
-  [InlineData(40, "38-пра-дедушка или бабушка")]
+  [InlineData(4, "Пра-пра-дедушка или пра-пра-бабушка")]
+  [InlineData(40, "38-пра-дедушка или 38-пра-бабушка")]
   public void RU_UnknownSex_Parent(int? generation, string expected)
   {
     SetRu();
@@ -85,7 +85,7 @@ public class RelationshipTypeFormatterTests
   [InlineData(2, "Abuelo o abuela")]
   [InlineData(3, "Bisabuelo o bisabuela")]
   [InlineData(4, "Tatarabuelo o tatarabuela")]
-  [InlineData(40, "38-tatarabuelo o tatarabuela")]
+  [InlineData(40, "38-tatarabuelo o 38-tatarabuela")]
   public void ES_UnknownSex_Parent(int? generation, string expected)
   {
     SetEs();
@@ -139,8 +139,8 @@ public class RelationshipTypeFormatterTests
   [Theory]
   [InlineData(-1, "Ребенок")]
   [InlineData(-2, "Внук или внучка")]
-  [InlineData(-4, "Пра-пра-внук или внучка")]
-  [InlineData(-55, "53-пра-внук или внучка")]
+  [InlineData(-4, "Пра-пра-внук или пра-пра-внучка")]
+  [InlineData(-55, "53-пра-внук или 53-пра-внучка")]
   public void RU_UnknownSex_Child(int? generation, string expected)
   {
     SetRu();
@@ -176,7 +176,7 @@ public class RelationshipTypeFormatterTests
   [InlineData(-2, "Nieto o nieta")]
   [InlineData(-3, "Bisnieto o bisnieta")]
   [InlineData(-4, "Tataranieto o tataranieta")]
-  [InlineData(-15, "13-tataranieto o tataranieta")]
+  [InlineData(-15, "13-tataranieto o 13-tataranieta")]
   public void ES_UnknownSex_Child(int? generation, string expected)
   {
     SetEs();
@@ -225,9 +225,9 @@ public class RelationshipTypeFormatterTests
 
   [Theory]
   [InlineData(1, "Дядя или тётя")]
-  [InlineData(2, "Двоюродный дедушка или бабушка")]
-  [InlineData(4, "Двоюродный пра-пра-дедушка или бабушка")]
-  [InlineData(14, "Двоюродный 12-пра-дедушка или бабушка")]
+  [InlineData(2, "Двоюродный дедушка или двоюродная бабушка")]
+  [InlineData(4, "Двоюродный пра-пра-дедушка или двоюродная пра-пра-бабушка")]
+  [InlineData(14, "Двоюродный 12-пра-дедушка или двоюродная 12-пра-бабушка")]
   public void RU_UnknownSex_UncleAunt(int generation, string expected)
   {
     SetRu();
@@ -258,8 +258,8 @@ public class RelationshipTypeFormatterTests
   [Theory]
   [InlineData(1, "Onkel oder Tante")]
   [InlineData(2, "Großonkel oder Großtante")]
-  [InlineData(4, "Ururgroßonkel oder Großtante")]
-  [InlineData(14, "12-Urgroßonkel oder Großtante")]
+  [InlineData(4, "Ururgroßonkel oder Ururgroßtante")]
+  [InlineData(14, "12-Urgroßonkel oder 12-Urgroßtante")]
   public void DE_UnknownSex_UncleAunt(int generation, string expected)
   {
     SetDe();
@@ -272,14 +272,14 @@ public class RelationshipTypeFormatterTests
     Assert.Equal(expected, actual);
   }
 
-  // The case a prefix wrapped around the whole phrase would get wrong twice over: the stem sits in
-  // the middle of "tío abuelo", and the disjunction carries a second stem that must be prefixed too.
+  // The case a prefix wrapped around the whole label would get wrong: the stem sits in the middle
+  // of "tío abuelo".
   [Theory]
   [InlineData(1, "Tío o tía")]
   [InlineData(2, "Tío abuelo o tía abuela")]
   [InlineData(3, "Tío bisabuelo o tía bisabuela")]
   [InlineData(4, "Tío tatarabuelo o tía tatarabuela")]
-  [InlineData(14, "12-tío tatarabuelo o tía tatarabuela")]
+  [InlineData(14, "12-tío tatarabuelo o 12-tía tatarabuela")]
   public void ES_UnknownSex_UncleAunt(int generation, string expected)
   {
     SetEs();
@@ -292,13 +292,13 @@ public class RelationshipTypeFormatterTests
     Assert.Equal(expected, actual);
   }
 
-  // The descendant mirror of the case above, and the only one where a two-stem disjunction meets the
-  // seam that does not contract.
+  // The descendant mirror of the case above, where the prefix runs into the stem instead of
+  // contracting with it.
   [Theory]
   [InlineData(-2, "Sobrino nieto o sobrina nieta")]
   [InlineData(-3, "Sobrino bisnieto o sobrina bisnieta")]
   [InlineData(-4, "Sobrino tataranieto o sobrina tataranieta")]
-  [InlineData(-14, "12-sobrino tataranieto o sobrina tataranieta")]
+  [InlineData(-14, "12-sobrino tataranieto o 12-sobrina tataranieta")]
   public void ES_UnknownSex_GrandNephewNiece(int generation, string expected)
   {
     SetEs();
@@ -316,8 +316,8 @@ public class RelationshipTypeFormatterTests
   [Theory]
   [InlineData(1, "Oncle ou tante")]
   [InlineData(2, "Grand-oncle ou grand-tante")]
-  [InlineData(4, "Arrière-arrière-grand-oncle ou grand-tante")]
-  [InlineData(14, "12-arrière-grand-oncle ou grand-tante")]
+  [InlineData(4, "Arrière-arrière-grand-oncle ou arrière-arrière-grand-tante")]
+  [InlineData(14, "12-arrière-grand-oncle ou 12-arrière-grand-tante")]
   public void FR_UnknownSex_UncleAunt(int generation, string expected)
   {
     SetFr();
@@ -353,19 +353,19 @@ public class RelationshipTypeFormatterTests
   }
 
   [Theory]
-  [InlineData(0, 2, "Двоюродный брат или сестра")]
-  [InlineData(0, 3, "Троюродный брат или сестра")]
-  [InlineData(0, 56, "56-юродный брат или сестра")]
-  [InlineData(1, 3, "Двоюродный дядя или тётя")]
-  [InlineData(1, 4, "Троюродный дядя или тётя")]
-  [InlineData(1, 12, "11-юродный дядя или тётя")]
-  [InlineData(2, 4, "Троюродный дедушка или бабушка")]
-  [InlineData(2, 5, "Четвероюродный дедушка или бабушка")]
-  [InlineData(2, 25, "24-юродный дедушка или бабушка")]
-  [InlineData(3, 5, "Троюродный пра-дедушка или бабушка")]
-  [InlineData(3, 7, "5-юродный пра-дедушка или бабушка")]
-  [InlineData(13, 16, "Четвероюродный 11-пра-дедушка или бабушка")]
-  [InlineData(10, 16, "7-юродный 8-пра-дедушка или бабушка")]
+  [InlineData(0, 2, "Двоюродный брат или двоюродная сестра")]
+  [InlineData(0, 3, "Троюродный брат или троюродная сестра")]
+  [InlineData(0, 56, "56-юродный брат или 56-юродная сестра")]
+  [InlineData(1, 3, "Двоюродный дядя или двоюродная тётя")]
+  [InlineData(1, 4, "Троюродный дядя или троюродная тётя")]
+  [InlineData(1, 12, "11-юродный дядя или 11-юродная тётя")]
+  [InlineData(2, 4, "Троюродный дедушка или троюродная бабушка")]
+  [InlineData(2, 5, "Четвероюродный дедушка или четвероюродная бабушка")]
+  [InlineData(2, 25, "24-юродный дедушка или 24-юродная бабушка")]
+  [InlineData(3, 5, "Троюродный пра-дедушка или троюродная пра-бабушка")]
+  [InlineData(3, 7, "5-юродный пра-дедушка или 5-юродная пра-бабушка")]
+  [InlineData(13, 16, "Четвероюродный 11-пра-дедушка или четвероюродная 11-пра-бабушка")]
+  [InlineData(10, 16, "7-юродный 8-пра-дедушка или 7-юродная 8-пра-бабушка")]
   [InlineData(11, 11, "Unsupported or wrong relationship: Type=Child, Sex=Unknown, G11, C11")]
   public void RU_UnknownSex_Cousin(int generation, int consanguinity, string expected)
   {
@@ -745,7 +745,7 @@ public class RelationshipTypeFormatterTests
   [Theory]
   [InlineData(BiologicalSex.Female, "Сводная сестра")]
   [InlineData(BiologicalSex.Male, "Сводный брат")]
-  [InlineData(BiologicalSex.Unknown, "Сводный брат или сестра")]
+  [InlineData(BiologicalSex.Unknown, "Сводный брат или сводная сестра")]
   public void RU_StepSibling(BiologicalSex sex, string expected)
   {
     SetRu();
@@ -763,7 +763,7 @@ public class RelationshipTypeFormatterTests
   [Theory]
   [InlineData(BiologicalSex.Female, "Stiefschwester")]
   [InlineData(BiologicalSex.Male, "Stiefbruder")]
-  [InlineData(BiologicalSex.Unknown, "Stiefbruder oder Schwester")]
+  [InlineData(BiologicalSex.Unknown, "Stiefbruder oder Stiefschwester")]
   public void DE_StepSibling(BiologicalSex sex, string expected)
   {
     SetDe();
@@ -799,7 +799,7 @@ public class RelationshipTypeFormatterTests
   [Theory]
   [InlineData(BiologicalSex.Female, "Sœur par remariage")]
   [InlineData(BiologicalSex.Male, "Frère par remariage")]
-  [InlineData(BiologicalSex.Unknown, "Frère ou sœur par remariage")]
+  [InlineData(BiologicalSex.Unknown, "Frère par remariage ou sœur par remariage")]
   public void FR_StepSibling(BiologicalSex sex, string expected)
   {
     SetFr();
@@ -817,7 +817,7 @@ public class RelationshipTypeFormatterTests
   [Theory]
   [InlineData(BiologicalSex.Female, "Demi-sœur du côté du père")]
   [InlineData(BiologicalSex.Male, "Demi-frère du côté du père")]
-  [InlineData(BiologicalSex.Unknown, "Demi-frère ou sœur du côté du père")]
+  [InlineData(BiologicalSex.Unknown, "Demi-frère du côté du père ou demi-sœur du côté du père")]
   public void FR_SiblingByFather(BiologicalSex sex, string expected)
   {
     SetFr();

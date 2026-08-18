@@ -18,7 +18,13 @@ internal abstract class RelationshipTypeFormatterBase
   private readonly Generation _AbsGen;
   private readonly Consanguinity _Con;
   private readonly Converters _Converters;
+  private bool _NeutralTermMissing;
   private static bool? _IsRunningInTest;
+
+  /// <summary>
+  /// The tables are what name the terms, so this only answers once <see cref="ToString()"/> has run.
+  /// </summary>
+  public bool NeutralTermMissing => _NeutralTermMissing;
 
   protected Generation GreatnessStartLevel => _GreatnessStartLevel;
   protected RelationshipType Type => _Type;
@@ -43,21 +49,20 @@ internal abstract class RelationshipTypeFormatterBase
     {
       var toString = GetConverter();
       var ret = toString();
-      ret = Normalize(ret);
 
-#if DEBUG
-      if (!IsRunningInTest)
-      {
-        ret = $"{ret} G{Gen.Value} C{Con.Value}";
-      }
-#endif
-
-      return ret;
+      return Normalize(ret);
     }
     catch (Exception ex)
     {
       return ex.Message;
     }
+  }
+
+  public string Join(string male, string female)
+  {
+    var joined = string.Format(UIStrings.RelDisjunction_2, male, female);
+
+    return Normalize(joined);
   }
 
   protected abstract Converters GetConverters();
@@ -134,6 +139,11 @@ internal abstract class RelationshipTypeFormatterBase
     }
 
     var ret = row.ToString(Sex);
+    // An unknown-sex term that reproduces the join says nothing the two gendered terms do not, so
+    // it counts as the language having none; a distinct word ("Großelternteil") or a shortened one
+    // ("Grand uncle or aunt") does, and is kept.
+    _NeutralTermMissing |= Sex == BiologicalSex.Unknown && ret == Join(row.M, row.F);
+
     if (ret == string.Empty)
     {
       if (!row.SubType.HasValue)

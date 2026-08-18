@@ -21,9 +21,9 @@ internal class RelationshipTypeFormatterEs : RelationshipTypeFormatterEn
 
   /// <summary>
   /// Spanish binds the generation prefix to the kinship stem rather than to the phrase around it,
-  /// so the stem is what gets rewritten: "tío abuelo" -> "tío bisabuelo", "abuelo o abuela" ->
-  /// "bisabuelo o bisabuela", and the trailing adjective of "abuelo adoptivo" stays put. Every
-  /// composed term reaching here must therefore spell one of the four stems.
+  /// so the stem is what gets rewritten: "tío abuelo" -> "tío bisabuelo", and the trailing adjective
+  /// of "abuelo adoptivo" stays put. Every composed term reaching here must therefore spell one of
+  /// the four stems.
   /// </summary>
   protected override string AddGreatness(string main)
   {

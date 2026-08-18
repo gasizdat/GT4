@@ -562,6 +562,9 @@ genealogy tree and enjoy!</value>
   <data name="RelGrandChild" xml:space="preserve">
     <value>Grandchild</value>
   </data>
+  <data name="RelDisjunction_2" xml:space="preserve">
+    <value>{0} or {1}</value>
+  </data>
   <data name="RelGreat_1" xml:space="preserve">
     <value>Great-{0}</value>
   </data>

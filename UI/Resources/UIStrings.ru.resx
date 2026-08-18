@@ -562,6 +562,9 @@
   <data name="RelGrandChild" xml:space="preserve">
     <value>Внук или внучка</value>
   </data>
+  <data name="RelDisjunction_2" xml:space="preserve">
+    <value>{0} или {1}</value>
+  </data>
   <data name="RelGreat_1" xml:space="preserve">
     <value>Пра-{0}</value>
   </data>

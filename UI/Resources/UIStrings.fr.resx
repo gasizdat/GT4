@@ -562,6 +562,9 @@ arbre généalogique et profitez-en !</value>
   <data name="RelGrandChild" xml:space="preserve">
     <value>Petit-enfant</value>
   </data>
+  <data name="RelDisjunction_2" xml:space="preserve">
+    <value>{0} ou {1}</value>
+  </data>
   <data name="RelGreat_1" xml:space="preserve">
     <value>Arrière-{0}</value>
   </data>

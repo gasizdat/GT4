@@ -562,6 +562,9 @@
   <data name="RelGrandChild" xml:space="preserve">
     <value>Nieto o nieta</value>
   </data>
+  <data name="RelDisjunction_2" xml:space="preserve">
+    <value>{0} o {1}</value>
+  </data>
   <data name="RelGreat_1" xml:space="preserve">
     <value>Bis{0}</value>
   </data>
