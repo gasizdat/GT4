@@ -82,7 +82,11 @@ internal abstract class RelationshipTypeFormatterBase
   /// <paramref name="maleStem"/> in full (a disjunction like "Großonkel oder Großtante"), each stem
   /// is wrapped on its own so both sides gain the depth prefix instead of only the first (#318).
   /// English elides the second stem ("Grand uncle or aunt"), so the stems there never match in full
-  /// and the phrase is wrapped as one unit, unaffected.
+  /// and the phrase is wrapped as one unit, unaffected. The numeral fallback past
+  /// <see cref="_GreatnessMaxLevel"/> is still applied once, to the whole phrase, the same as
+  /// <see cref="RelationshipTypeFormatterEn.AddConsanguinity"/> does for cousin degree: the prefix
+  /// itself is a generic "one step further" marker with no count, so the numeral scoping the whole
+  /// phrase once is the convention here, not a per-stem count.
   /// </summary>
   protected virtual string AddGreatness(string main, string femaleStem = "", string maleStem = "")
   {
