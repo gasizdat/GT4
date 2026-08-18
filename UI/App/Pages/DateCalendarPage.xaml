@@ -39,6 +39,7 @@
       </Style>
       <Style x:Key="DateCalendarTypeChipActive" BasedOn="{StaticResource DateCalendarTypeChip}" TargetType="Border">
         <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
+        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource PrimaryButtonHover}, Dark={StaticResource PrimaryDarkButtonHover}}" />
       </Style>
       <Style x:Key="DateCalendarTypeChipText" TargetType="Label">
         <Setter Property="FontSize" Value="{DynamicResource LabelTextSizeDefault}" />
@@ -48,6 +49,7 @@
         <Setter Property="TextColor" Value="{StaticResource White}" />
       </Style>
       <Style x:Key="DateCalendarTypeIndicator" TargetType="Border">
+        <Setter Property="StrokeThickness" Value="0" />
         <Setter Property="WidthRequest" Value="4" />
         <Setter Property="StrokeShape" Value="RoundRectangle 2" />
       </Style>
@@ -58,19 +60,22 @@
         <Setter Property="CornerRadius" Value="17" />
         <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SurfaceSubtle}, Dark={StaticResource SurfaceSubtleDark}}" />
         <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+        <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource PrimaryButtonHover}, Dark={StaticResource PrimaryDarkButtonHover}}" />
+        <Setter Property="BorderWidth" Value="1" />
       </Style>
       <Style x:Key="DateCalendarDayNumber" TargetType="Label">
         <Setter Property="WidthRequest" Value="36" />
         <Setter Property="HeightRequest" Value="36" />
         <Setter Property="HorizontalTextAlignment" Value="Center" />
         <Setter Property="VerticalTextAlignment" Value="Center" />
-        <Setter Property="BackgroundColor" Value="Transparent" />
-        <Setter Property="TextColor" Value="{StaticResource White}" />
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SurfaceSubtle}, Dark={StaticResource SurfaceSubtleDark}}" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
       </Style>
       <Style x:Key="DateCalendarDayBadge" TargetType="Border">
         <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
         <Setter Property="StrokeShape" Value="RoundRectangle 10" />
         <Setter Property="Padding" Value="8,8" />
+        <Setter Property="HorizontalOptions" Value="End" />
       </Style>
       <Style x:Key="DateCalendarMilestoneBadge" TargetType="Border">
         <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
@@ -100,45 +105,47 @@
     <components:PageLayout.Header>
       <VerticalStackLayout Spacing="{StaticResource PageContentSpacing}">
 
-        <Grid
-            ColumnDefinitions="Auto, Auto, Auto"
-            ColumnSpacing="{StaticResource PageContentSpacing}"
-            HorizontalOptions="Center"
-            VerticalOptions="Center">
-          <Button
-              Grid.Column="0"
-              Command="{Binding PageCommand, Source={x:Reference Root}}"
-              CommandParameter="PrevMonth"
-              Style="{StaticResource DateCalendarMonthNavButton}"
-              Text="&#8249;"
-              VerticalOptions="Center" />
-          <Label
-              Grid.Column="1"
-              HorizontalTextAlignment="Center"
-              MinimumWidthRequest="{StaticResource DateCalendarMonthLabelMinWidth}"
-              Style="{StaticResource GroupTitle}"
-              Text="{Binding MonthLabel, Source={x:Reference Root}}"
-              VerticalOptions="Fill"
-              VerticalTextAlignment="Center" />
-          <Button
-              Grid.Column="2"
-              Command="{Binding PageCommand, Source={x:Reference Root}}"
-              CommandParameter="NextMonth"
-              Style="{StaticResource DateCalendarMonthNavButton}"
-              Text="&#8250;"
-              VerticalOptions="Center" />
-        </Grid>
 
         <FlexLayout
             JustifyContent="Center"
             Wrap="Wrap">
+          <Grid
+              ColumnDefinitions="Auto, Auto, Auto"
+              ColumnSpacing="{StaticResource PageContentSpacing}"
+              HorizontalOptions="Center"
+              VerticalOptions="Center">
+            <Button
+                Grid.Column="0"
+                Command="{Binding PageCommand, Source={x:Reference Root}}"
+                CommandParameter="PrevMonth"
+                Style="{StaticResource DateCalendarMonthNavButton}"
+                Text="&#8249;"
+                VerticalOptions="Center" />
+            <Label
+                Grid.Column="1"
+                HorizontalTextAlignment="Center"
+                MinimumWidthRequest="{StaticResource DateCalendarMonthLabelMinWidth}"
+                Style="{StaticResource GroupTitle}"
+                Text="{Binding MonthLabel, Source={x:Reference Root}}"
+                VerticalOptions="Fill"
+                VerticalTextAlignment="Center" />
+            <Button
+                Grid.Column="2"
+                Command="{Binding PageCommand, Source={x:Reference Root}}"
+                CommandParameter="NextMonth"
+                Style="{StaticResource DateCalendarMonthNavButton}"
+                Text="&#8250;"
+                VerticalOptions="Center" />
+          </Grid>
           <Border Style="{Binding BirthsChipStyle, Source={x:Reference Root}}">
             <Border.GestureRecognizers>
               <TapGestureRecognizer
                   Command="{Binding PageCommand, Source={x:Reference Root}}"
                   CommandParameter="ToggleBirths" />
             </Border.GestureRecognizers>
-            <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+            <HorizontalStackLayout
+                Spacing="6"
+                VerticalOptions="Center">
               <Ellipse
                   Fill="{StaticResource Birth}"
                   HeightRequest="8"
@@ -155,7 +162,9 @@
                   Command="{Binding PageCommand, Source={x:Reference Root}}"
                   CommandParameter="ToggleDeaths" />
             </Border.GestureRecognizers>
-            <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+            <HorizontalStackLayout
+                Spacing="6"
+                VerticalOptions="Center">
               <Ellipse
                   Fill="{StaticResource Death}"
                   HeightRequest="8"
@@ -172,7 +181,9 @@
                   Command="{Binding PageCommand, Source={x:Reference Root}}"
                   CommandParameter="ToggleWeddings" />
             </Border.GestureRecognizers>
-            <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+            <HorizontalStackLayout
+                Spacing="6"
+                VerticalOptions="Center">
               <Ellipse
                   Fill="{StaticResource Accent}"
                   HeightRequest="8"
@@ -241,7 +252,9 @@
                               Padding="{StaticResource DateCalendarEntryPadding}"
                               ColumnDefinitions="Auto, Auto, *, Auto"
                               ColumnSpacing="{StaticResource PageContentSpacing}">
-                            <Border Grid.Column="0" VerticalOptions="Fill">
+                            <Border
+                                Grid.Column="0"
+                                VerticalOptions="Fill">
                               <Border.Style>
                                 <Style BasedOn="{StaticResource DateCalendarTypeIndicator}" TargetType="Border">
                                   <Style.Triggers>
@@ -286,8 +299,10 @@
                                 Style="{StaticResource DateCalendarMilestoneBadge}">
                               <Label
                                   FontSize="{DynamicResource LabelTextSizeDefault}"
+                                  HorizontalTextAlignment="Center"
                                   Text="{x:Static resources:UIStrings.DateCalendarMilestoneBadge}"
-                                  TextColor="{StaticResource White}" />
+                                  TextColor="{StaticResource White}"
+                                  VerticalTextAlignment="Center" />
                             </Border>
                           </Grid>
                         </components:CardView>
@@ -320,7 +335,9 @@
                         Padding="{StaticResource DateCalendarEntryPadding}"
                         ColumnDefinitions="Auto, Auto, *, Auto"
                         ColumnSpacing="{StaticResource PageContentSpacing}">
-                      <Border Grid.Column="0" VerticalOptions="Fill">
+                      <Border
+                          Grid.Column="0"
+                          VerticalOptions="Fill">
                         <Border.Style>
                           <Style BasedOn="{StaticResource DateCalendarTypeIndicator}" TargetType="Border">
                             <Style.Triggers>
