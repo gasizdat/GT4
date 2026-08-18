@@ -25,6 +25,10 @@ public static class MauiProgram
     builder.Logging.AddDebug();
 #endif
 
+#if WINDOWS
+    builder.ConfigureMauiHandlers(_ => CollectionViewScrollBarGutter.Register());
+#endif
+
     GT4Services.Add(builder.Services);
 
     var app = builder.Build();
