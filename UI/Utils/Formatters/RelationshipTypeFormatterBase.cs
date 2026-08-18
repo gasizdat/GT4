@@ -80,23 +80,27 @@ internal abstract class RelationshipTypeFormatterBase
   /// <para/>
   /// When <paramref name="main"/> spells out both <paramref name="femaleStem"/> and
   /// <paramref name="maleStem"/> in full (a disjunction like "Großonkel oder Großtante"), each stem
-  /// is wrapped on its own so both sides gain the depth prefix instead of only the first (#318).
-  /// English elides the second stem ("Grand uncle or aunt"), so the stems there never match in full
-  /// and the phrase is wrapped as one unit, unaffected.
+  /// is depth-marked on its own so both sides gain the prefix instead of only the first (#318),
+  /// including the numeral: past <see cref="_GreatnessMaxLevel"/> the prefix carries no count of its
+  /// own ("Ur-"/"arrière-"/"Пра-" all mean "one step further" regardless of depth), so the numeral is
+  /// the only place the actual depth is recorded and both disjuncts need it or one becomes
+  /// ambiguous. Spanish's per-stem terms ("tatarabuelo") already name their own depth, which is why
+  /// its numeral-once form loses nothing. English elides the second stem ("Grand uncle or aunt"), so
+  /// the stems there never match in full and the phrase is wrapped as one unit, unaffected.
   /// </summary>
   protected virtual string AddGreatness(string main, string femaleStem = "", string maleStem = "")
   {
     var generation = AbsGen - GreatnessStartLevel;
     var wraps = generation > _GreatnessMaxLevel ? 1 : Math.Max(generation.Value, 0);
 
-    string Wrap(string stem)
+    string Depth(string stem)
     {
       var wrapped = stem;
       for (var i = 0; i < wraps; i++)
       {
         wrapped = string.Format(UIStrings.RelGreat_1, wrapped);
       }
-      return wrapped;
+      return generation > _GreatnessMaxLevel ? $"{generation.Value}-{wrapped}" : wrapped;
     }
 
     var maleIndex = maleStem.Length > 0 ? main.IndexOf(maleStem, StringComparison.OrdinalIgnoreCase) : -1;
@@ -106,16 +110,11 @@ internal abstract class RelationshipTypeFormatterBase
 
     var ret = femaleIndex > maleIndex
       ? main.Substring(0, maleIndex)
-        + Wrap(maleStem)
+        + Depth(maleStem)
         + main.Substring(maleIndex + maleStem.Length, femaleIndex - maleIndex - maleStem.Length)
-        + Wrap(femaleStem)
+        + Depth(femaleStem)
         + main.Substring(femaleIndex + femaleStem.Length)
-      : Wrap(main);
-
-    if (generation > _GreatnessMaxLevel)
-    {
-      ret = $"{generation.Value}-{ret}";
-    }
+      : Depth(main);
 
     return ret;
   }

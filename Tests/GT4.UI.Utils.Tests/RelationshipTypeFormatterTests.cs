@@ -44,7 +44,7 @@ public class RelationshipTypeFormatterTests
   [InlineData(1, "Родитель")]
   [InlineData(2, "Дедушка или бабушка")]
   [InlineData(4, "Пра-пра-дедушка или пра-пра-бабушка")]
-  [InlineData(40, "38-пра-дедушка или пра-бабушка")]
+  [InlineData(40, "38-пра-дедушка или 38-пра-бабушка")]
   public void RU_UnknownSex_Parent(int? generation, string expected)
   {
     SetRu();
@@ -140,7 +140,7 @@ public class RelationshipTypeFormatterTests
   [InlineData(-1, "Ребенок")]
   [InlineData(-2, "Внук или внучка")]
   [InlineData(-4, "Пра-пра-внук или пра-пра-внучка")]
-  [InlineData(-55, "53-пра-внук или пра-внучка")]
+  [InlineData(-55, "53-пра-внук или 53-пра-внучка")]
   public void RU_UnknownSex_Child(int? generation, string expected)
   {
     SetRu();
@@ -227,7 +227,7 @@ public class RelationshipTypeFormatterTests
   [InlineData(1, "Дядя или тётя")]
   [InlineData(2, "Двоюродный дедушка или бабушка")]
   [InlineData(4, "Двоюродный пра-пра-дедушка или пра-пра-бабушка")]
-  [InlineData(14, "Двоюродный 12-пра-дедушка или пра-бабушка")]
+  [InlineData(14, "Двоюродный 12-пра-дедушка или 12-пра-бабушка")]
   public void RU_UnknownSex_UncleAunt(int generation, string expected)
   {
     SetRu();
@@ -259,7 +259,7 @@ public class RelationshipTypeFormatterTests
   [InlineData(1, "Onkel oder Tante")]
   [InlineData(2, "Großonkel oder Großtante")]
   [InlineData(4, "Ururgroßonkel oder Ururgroßtante")]
-  [InlineData(14, "12-Urgroßonkel oder Urgroßtante")]
+  [InlineData(14, "12-Urgroßonkel oder 12-Urgroßtante")]
   public void DE_UnknownSex_UncleAunt(int generation, string expected)
   {
     SetDe();
@@ -317,7 +317,7 @@ public class RelationshipTypeFormatterTests
   [InlineData(-2, "Großneffe oder Großnichte")]
   [InlineData(-3, "Urgroßneffe oder Urgroßnichte")]
   [InlineData(-4, "Ururgroßneffe oder Ururgroßnichte")]
-  [InlineData(-14, "12-Urgroßneffe oder Urgroßnichte")]
+  [InlineData(-14, "12-Urgroßneffe oder 12-Urgroßnichte")]
   public void DE_UnknownSex_GrandNephewNiece(int generation, string expected)
   {
     SetDe();
@@ -334,7 +334,7 @@ public class RelationshipTypeFormatterTests
   [InlineData(-2, "Petit-neveu ou petite-nièce")]
   [InlineData(-3, "Arrière-petit-neveu ou arrière-petite-nièce")]
   [InlineData(-4, "Arrière-arrière-petit-neveu ou arrière-arrière-petite-nièce")]
-  [InlineData(-14, "12-arrière-petit-neveu ou arrière-petite-nièce")]
+  [InlineData(-14, "12-arrière-petit-neveu ou 12-arrière-petite-nièce")]
   public void FR_UnknownSex_GrandNephewNiece(int generation, string expected)
   {
     SetFr();
@@ -353,7 +353,7 @@ public class RelationshipTypeFormatterTests
   [InlineData(1, "Oncle ou tante")]
   [InlineData(2, "Grand-oncle ou grand-tante")]
   [InlineData(4, "Arrière-arrière-grand-oncle ou arrière-arrière-grand-tante")]
-  [InlineData(14, "12-arrière-grand-oncle ou arrière-grand-tante")]
+  [InlineData(14, "12-arrière-grand-oncle ou 12-arrière-grand-tante")]
   public void FR_UnknownSex_UncleAunt(int generation, string expected)
   {
     SetFr();
@@ -400,8 +400,8 @@ public class RelationshipTypeFormatterTests
   [InlineData(2, 25, "24-юродный дедушка или бабушка")]
   [InlineData(3, 5, "Троюродный пра-дедушка или пра-бабушка")]
   [InlineData(3, 7, "5-юродный пра-дедушка или пра-бабушка")]
-  [InlineData(13, 16, "Четвероюродный 11-пра-дедушка или пра-бабушка")]
-  [InlineData(10, 16, "7-юродный 8-пра-дедушка или пра-бабушка")]
+  [InlineData(13, 16, "Четвероюродный 11-пра-дедушка или 11-пра-бабушка")]
+  [InlineData(10, 16, "7-юродный 8-пра-дедушка или 8-пра-бабушка")]
   [InlineData(11, 11, "Unsupported or wrong relationship: Type=Child, Sex=Unknown, G11, C11")]
   public void RU_UnknownSex_Cousin(int generation, int consanguinity, string expected)
   {
