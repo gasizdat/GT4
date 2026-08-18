@@ -80,27 +80,26 @@ internal abstract class RelationshipTypeFormatterBase
   /// <para/>
   /// When <paramref name="main"/> spells out both <paramref name="femaleStem"/> and
   /// <paramref name="maleStem"/> in full (a disjunction like "Großonkel oder Großtante"), each stem
-  /// is wrapped on its own so both sides gain the depth prefix instead of only the first (#318).
-  /// English elides the second stem ("Grand uncle or aunt"), so the stems there never match in full
-  /// and the phrase is wrapped as one unit, unaffected. The numeral fallback past
-  /// <see cref="_GreatnessMaxLevel"/> is still applied once, to the whole phrase, the same as
-  /// <see cref="RelationshipTypeFormatterEn.AddConsanguinity"/> does for cousin degree: the prefix
-  /// itself is a generic "one step further" marker with no count, so the numeral scoping the whole
-  /// phrase once is the convention here, not a per-stem count.
+  /// is depth-marked on its own so both sides gain the prefix instead of only the first (#318). That
+  /// includes the numeral used past <see cref="_GreatnessMaxLevel"/>: the prefix itself carries no
+  /// count ("Ur-"/"arrière-"/"Пра-" mean "one step further" at any depth), so the numeral is the only
+  /// place the depth is recorded and a disjunct without it reads as the shallow term. English elides
+  /// the second stem ("Grand uncle or aunt"), so the stems there never match in full and the phrase
+  /// is wrapped as one unit, unaffected.
   /// </summary>
   protected virtual string AddGreatness(string main, string femaleStem = "", string maleStem = "")
   {
     var generation = AbsGen - GreatnessStartLevel;
     var wraps = generation > _GreatnessMaxLevel ? 1 : Math.Max(generation.Value, 0);
 
-    string Wrap(string stem)
+    string Depth(string stem)
     {
       var wrapped = stem;
       for (var i = 0; i < wraps; i++)
       {
         wrapped = string.Format(UIStrings.RelGreat_1, wrapped);
       }
-      return wrapped;
+      return generation > _GreatnessMaxLevel ? $"{generation.Value}-{wrapped}" : wrapped;
     }
 
     var maleIndex = maleStem.Length > 0 ? main.IndexOf(maleStem, StringComparison.OrdinalIgnoreCase) : -1;
@@ -110,16 +109,11 @@ internal abstract class RelationshipTypeFormatterBase
 
     var ret = femaleIndex > maleIndex
       ? main.Substring(0, maleIndex)
-        + Wrap(maleStem)
+        + Depth(maleStem)
         + main.Substring(maleIndex + maleStem.Length, femaleIndex - maleIndex - maleStem.Length)
-        + Wrap(femaleStem)
+        + Depth(femaleStem)
         + main.Substring(femaleIndex + femaleStem.Length)
-      : Wrap(main);
-
-    if (generation > _GreatnessMaxLevel)
-    {
-      ret = $"{generation.Value}-{ret}";
-    }
+      : Depth(main);
 
     return ret;
   }
