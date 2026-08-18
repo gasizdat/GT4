@@ -144,8 +144,8 @@ internal class RelationshipTypeFormatterRu : RelationshipTypeFormatterBase
       [RelationshipType.AdoptiveChild] = new(F: S.RelAdoptiveFemale_1, M: S.RelAdoptiveMale_1, U: S.RelAdoptiveInvariant_1, RelationshipType.Child),
     };
 
-    var ret = ToString(table);
-    ret = AddGreatness(ret);
+    var ret = ToString(table, out var leaf);
+    ret = AddGreatness(ret, leaf.F, leaf.M);
 
     return ret;
   }
@@ -158,8 +158,8 @@ internal class RelationshipTypeFormatterRu : RelationshipTypeFormatterBase
       [RelationshipType.AdoptiveChild] = new(F: S.RelAdoptiveFemale_1, M: S.RelAdoptiveMale_1, U: S.RelAdoptiveInvariant_1, RelationshipType.Child),
     };
 
-    var ret = ToString(table);
-    ret = AddGreatness(ret);
+    var ret = ToString(table, out var leaf);
+    ret = AddGreatness(ret, leaf.F, leaf.M);
     ret = AddConsanguinity(ret, Con + Consanguinity.Sibling);
 
     return ret;
@@ -205,8 +205,8 @@ internal class RelationshipTypeFormatterRu : RelationshipTypeFormatterBase
       [RelationshipType.AdoptiveParent] = new(F: S.RelAdoptiveFemale_1, M: S.RelAdoptiveMale_1, U: S.RelAdoptiveInvariant_1, RelationshipType.Parent),
     };
 
-    var ret = ToString(table);
-    ret = AddGreatness(ret);
+    var ret = ToString(table, out var leaf);
+    ret = AddGreatness(ret, leaf.F, leaf.M);
 
     return ret;
   }
@@ -226,8 +226,8 @@ internal class RelationshipTypeFormatterRu : RelationshipTypeFormatterBase
       [RelationshipType.Spouse] = new(RelationshipType.Child),
     };
 
-    var ret = ToString(table);
-    ret = AddGreatness(ret);
+    var ret = ToString(table, out var leaf);
+    ret = AddGreatness(ret, leaf.F, leaf.M);
     ret = AddAncestorConsanguinity(ret);
 
     return ret;

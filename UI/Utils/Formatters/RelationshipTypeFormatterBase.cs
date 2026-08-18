@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace GT4.UI.Utils.Formatters.Detailed;
 
 using Converters = Func<string>[][];
+using Row = RelationshipTypeTableRow;
 using Table = Dictionary<RelationshipType, RelationshipTypeTableRow>;
 
 internal abstract class RelationshipTypeFormatterBase
@@ -69,29 +70,53 @@ internal abstract class RelationshipTypeFormatterBase
   protected virtual string Normalize(string composed) => composed.Substring(0, 1) + composed.Substring(1).ToLower();
 
   /// <summary>
-  /// Builds a "Great-grandparent"-style label by recursively wrapping <paramref name="main"/> in
-  /// <see cref="UIStrings.RelGreat_1"/>, falling back to a "N-Great-..." numeral form past
-  /// <see cref="_GreatnessMaxLevel"/>. Repeating one prefix around the whole composed phrase is an
-  /// En/Ru convention rather than a universal one: Spanish names each level with its own prefix
-  /// bound to the kinship stem, so <see cref="RelationshipTypeFormatterEs"/> overrides this instead
-  /// of reusing it. Confirm a new language really does repeat one prefix before inheriting this.
+  /// Builds a "Great-grandparent"-style label by wrapping <paramref name="main"/> in
+  /// <see cref="UIStrings.RelGreat_1"/> once per generation, falling back to a "N-Great-..." numeral
+  /// form past <see cref="_GreatnessMaxLevel"/>. Repeating one prefix around the whole composed
+  /// phrase is an En/Ru convention rather than a universal one: Spanish names each level with its
+  /// own prefix bound to the kinship stem, so <see cref="RelationshipTypeFormatterEs"/> overrides
+  /// this instead of reusing it. Confirm a new language really does repeat one prefix before
+  /// inheriting this.
+  /// <para/>
+  /// When <paramref name="main"/> spells out both <paramref name="femaleStem"/> and
+  /// <paramref name="maleStem"/> in full (a disjunction like "Großonkel oder Großtante"), each stem
+  /// is wrapped on its own so both sides gain the depth prefix instead of only the first (#318).
+  /// English elides the second stem ("Grand uncle or aunt"), so the stems there never match in full
+  /// and the phrase is wrapped as one unit, unaffected.
   /// </summary>
-  protected virtual string AddGreatness(string main)
+  protected virtual string AddGreatness(string main, string femaleStem = "", string maleStem = "")
   {
-    var ret = main;
     var generation = AbsGen - GreatnessStartLevel;
+    var wraps = generation > _GreatnessMaxLevel ? 1 : Math.Max(generation.Value, 0);
+
+    string Wrap(string stem)
+    {
+      var wrapped = stem;
+      for (var i = 0; i < wraps; i++)
+      {
+        wrapped = string.Format(UIStrings.RelGreat_1, wrapped);
+      }
+      return wrapped;
+    }
+
+    var maleIndex = maleStem.Length > 0 ? main.IndexOf(maleStem, StringComparison.OrdinalIgnoreCase) : -1;
+    var femaleIndex = maleIndex >= 0 && femaleStem.Length > 0
+      ? main.IndexOf(femaleStem, maleIndex + maleStem.Length, StringComparison.OrdinalIgnoreCase)
+      : -1;
+
+    var ret = femaleIndex > maleIndex
+      ? main.Substring(0, maleIndex)
+        + Wrap(maleStem)
+        + main.Substring(maleIndex + maleStem.Length, femaleIndex - maleIndex - maleStem.Length)
+        + Wrap(femaleStem)
+        + main.Substring(femaleIndex + femaleStem.Length)
+      : Wrap(main);
 
     if (generation > _GreatnessMaxLevel)
     {
-      ret = $"{generation.Value}-{string.Format(UIStrings.RelGreat_1, ret)}";
+      ret = $"{generation.Value}-{ret}";
     }
-    else
-    {
-      while (generation-- > Generation.Zero)
-      {
-        ret = string.Format(UIStrings.RelGreat_1, ret);
-      }
-    }
+
     return ret;
   }
 
@@ -126,7 +151,17 @@ internal abstract class RelationshipTypeFormatterBase
     return ret;
   }
 
-  protected string ToString(Table table, RelationshipType? type = null)
+  protected string ToString(Table table, RelationshipType? type = null) => ToString(table, type, out _);
+
+  protected string ToString(Table table, out Row leaf) => ToString(table, null, out leaf);
+
+  /// <summary>
+  /// Also hands back the leaf row whose F/M actually produced <c>ret</c>, even when <paramref
+  /// name="type"/> only redirects (<see cref="RelationshipTypeTableRow.SubType"/>) or composes
+  /// (e.g. "Adoptive {0}") into it. <see cref="AddGreatness(string, string, string)"/> needs those
+  /// stems to prefix a disjunction on both sides.
+  /// </summary>
+  protected string ToString(Table table, RelationshipType? type, out Row leaf)
   {
     if (!table.TryGetValue(type ?? Type, out var row))
     {
@@ -140,11 +175,15 @@ internal abstract class RelationshipTypeFormatterBase
       {
         Guard();
       }
-      ret = ToString(table, row.SubType.Value);
+      ret = ToString(table, row.SubType.Value, out leaf);
     }
     else if (row.SubType.HasValue)
     {
-      ret = string.Format(ret, ToString(table, row.SubType.Value));
+      ret = string.Format(ret, ToString(table, row.SubType.Value, out leaf));
+    }
+    else
+    {
+      leaf = row;
     }
 
     return ret;
