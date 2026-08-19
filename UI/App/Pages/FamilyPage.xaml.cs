@@ -28,7 +28,6 @@ public partial class FamilyPage : ContentPage
   private readonly FilteredObservableCollection<PersonInfo> _Persons = new();
   private bool _PersonsLoaded;
   private Name? _FamilyName = null;
-  private double _PersonItemMinimalWidth;
   private ProjectInfo? _LastProjectInfo;
   private PhotoInfo[] _Photos = [];
   private AttachmentInfo[] _Attachments = [];
@@ -85,8 +84,6 @@ public partial class FamilyPage : ContentPage
       }
     }
   }
-
-  public double PersonItemMinimalWidth => _PersonItemMinimalWidth;
 
   public ICommand MemberItemTappedCommand { get; init; }
 
@@ -173,17 +170,6 @@ public partial class FamilyPage : ContentPage
     string.Format(UIStrings.MenuItemNameEdit_1, _FamilyName?.Value ?? string.Empty);
 
   public bool EnableFamilyChanges => !IsNoFamilyMode;
-
-  protected override void OnSizeAllocated(double width, double height)
-  {
-    const double PercentageOfWidth = 0.9;
-    const int ItemsPerRow = 2;
-
-    base.OnSizeAllocated(width, height);
-    _PersonItemMinimalWidth = width * PercentageOfWidth / ItemsPerRow;
-
-    OnPropertyChanged(nameof(PersonItemMinimalWidth));
-  }
 
   private void Refresh()
   {

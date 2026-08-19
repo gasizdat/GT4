@@ -443,6 +443,87 @@ public class FamilyPageTests
     Assert.Equal("deed.pdf", page.Attachments.Single().FileName);
   }
 
+  private const int MembersBelowCrashThreshold = 100;
+
+  // Member heights must stay uneven; uniform ones stop the layout tests below discriminating.
+  private static async Task<TestableFamilyPage> ShowFamilyAsync(TestServices services, int memberCount, bool withMedia = false)
+  {
+    var familyName = N(5, "Ivanov", NameType.FamilyName);
+    if (withMedia)
+    {
+      var mainPhoto = new Data(1, TestImages.ValidPng, "image/png", DataCategory.FamilyMainPhoto);
+      var attachments = Enumerable.Range(1, 3)
+        .Select(i => new Data(10 + i, GedcomPhotoResidue.EncodeAttachment([1, 2, 3], $"deed{i}.pdf"), "application/pdf", DataCategory.FamilyAttachment));
+      services.FamilyManager
+        .Setup(f => f.GetFamilyFullInfoAsync(familyName, It.IsAny<CancellationToken>()))
+        .ReturnsAsync(new FamilyFullInfo(familyName, mainPhoto, [], [.. attachments]));
+    }
+
+    PersonInfo Tall(int id) => new(
+      id, Date.Create(1900 + id % 90, 3, 4, DateStatus.WellKnown), Date.Create(1980, 5, 6, DateStatus.WellKnown),
+      BiologicalSex.Female,
+      [N(id * 100, $"Ochen-Dlinnoe-Imya-Familia-Number-{id}-With-More-Parts", NameType.FirstName), familyName], null);
+    var members = Enumerable.Range(1, memberCount).Select(i => i % 3 == 0 ? Tall(i) : InFamily(P(i, $"P{i}"), familyName));
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosByNameAsync(familyName, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([.. members]);
+
+    var page = await CreatePageAsync(services);
+    var persons = await page.ReloadPersonsAsync(() => page.FamilyName = familyName);
+    Assert.Equal(memberCount, persons.Length);
+    return page;
+  }
+
+  [Fact]
+  public async Task Members_list_is_bounded_by_the_page_instead_of_growing_with_the_member_count()
+  {
+    var page = await ShowFamilyAsync(new TestServices(), MembersBelowCrashThreshold);
+    var membersView = page.FindByName<CollectionView>("MembersView");
+
+    await using var window = await WindowHost.AttachAsync(page);
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => membersView.Height),
+      height => height > 0,
+      timeoutMessage: "The members list never got arranged.");
+
+    var (membersHeight, pageHeight) = await MainThread.InvokeOnMainThreadAsync(() => (membersView.Height, page.Height));
+    Assert.True(
+      membersHeight <= pageHeight,
+      $"The members list is {membersHeight} tall inside a {pageHeight} page, so it sizes to its content rather than scrolling within a viewport of its own.");
+  }
+
+  [Fact]
+  public async Task Family_media_and_members_are_visible_together()
+  {
+    var page = await ShowFamilyAsync(new TestServices(), MembersBelowCrashThreshold, withMedia: true);
+    var membersView = page.FindByName<CollectionView>("MembersView");
+
+    await using var window = await WindowHost.AttachAsync(page);
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => membersView.Height),
+      height => height > 0,
+      timeoutMessage: "The members list is not visible on a family that has a photo and attachments.");
+
+    Assert.True(page.ShowPhotos);
+    Assert.True(page.ShowAttachments);
+  }
+
+  [Fact]
+  public async Task Opening_a_family_with_thousands_of_members_does_not_crash()
+  {
+    var services = new TestServices();
+    var page = await ShowFamilyAsync(services, 4952);
+
+    await using var window = await WindowHost.AttachAsync(page);
+    var membersView = page.FindByName<CollectionView>("MembersView");
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => membersView.Handler),
+      handler => handler is not null,
+      timeoutMessage: "The members list never got a handler.");
+
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+  }
+
   [Fact]
   public async Task EditFamily_updates_the_family_name_and_reloads()
   {
