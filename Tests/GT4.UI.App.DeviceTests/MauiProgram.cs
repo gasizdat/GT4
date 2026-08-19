@@ -48,7 +48,11 @@ public static class MauiProgram
         .AddXunit3());
 
 #if WINDOWS
-    builder.ConfigureMauiHandlers(_ => CollectionViewScrollBarGutter.Register());
+    builder.ConfigureMauiHandlers(_ =>
+    {
+      CollectionViewScrollBarGutter.Register();
+      ScrollViewScrollBarGutter.Register();
+    });
 #endif
 
     // Safety net for parameterless view ctors (NameView etc.) that resolve GT4Services.Provider
