@@ -443,6 +443,58 @@ public class FamilyPageTests
     Assert.Equal("deed.pdf", page.Attachments.Single().FileName);
   }
 
+  private static async Task<TestableFamilyPage> ShowNoFamilyMembersAsync(TestServices services, int memberCount)
+  {
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([.. Enumerable.Range(1, memberCount).Select(i => P(i, $"Person{i}"))]);
+    var page = await CreatePageAsync(services);
+
+    var persons = await page.ReloadPersonsAsync(() => page.FamilyName = FamilyInfoItem.NoFamilyName);
+    Assert.Equal(memberCount, persons.Length);
+    return page;
+  }
+
+  // The members list used to be a BindableLayout inside a ScrollView, which hands its child
+  // unlimited height: every member became a live CardView/PersonInfoView the moment the page was
+  // shown. 100 members is deliberately under the ~150 at which that crashed the process outright,
+  // so a regression fails this assertion cleanly instead of taking the whole run down with it.
+  [Fact]
+  public async Task Members_list_is_bounded_by_the_page_instead_of_growing_with_the_member_count()
+  {
+    var page = await ShowNoFamilyMembersAsync(new TestServices(), 100);
+    var membersView = page.FindByName<CollectionView>("MembersView");
+
+    await using var window = await WindowHost.AttachAsync(page);
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => membersView.Height),
+      height => height > 0,
+      timeoutMessage: "The members list never got arranged.");
+
+    var (membersHeight, pageHeight) = await MainThread.InvokeOnMainThreadAsync(() => (membersView.Height, page.Height));
+    Assert.True(
+      membersHeight <= pageHeight,
+      $"The members list is {membersHeight} tall inside a {pageHeight} page, so it sizes to its content rather than scrolling within a viewport of its own.");
+  }
+
+  // Guards the crash in its own right: on the pre-fix layout this killed the test host process
+  // rather than failing, so a regression shows up as a dead run instead of a red test.
+  [Fact]
+  public async Task Opening_a_family_with_thousands_of_members_does_not_crash()
+  {
+    var services = new TestServices();
+    var page = await ShowNoFamilyMembersAsync(services, 4952);
+
+    await using var window = await WindowHost.AttachAsync(page);
+    var membersView = page.FindByName<CollectionView>("MembersView");
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => membersView.Handler),
+      handler => handler is not null,
+      timeoutMessage: "The members list never got a handler.");
+
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+  }
+
   [Fact]
   public async Task EditFamily_updates_the_family_name_and_reloads()
   {
