@@ -443,6 +443,8 @@ public class FamilyPageTests
     Assert.Equal("deed.pdf", page.Attachments.Single().FileName);
   }
 
+  private const int MembersBelowCrashThreshold = 100;
+
   // Member heights must stay uneven; uniform ones stop the layout tests below discriminating.
   private static async Task<TestableFamilyPage> ShowFamilyAsync(TestServices services, int memberCount, bool withMedia = false)
   {
@@ -472,12 +474,10 @@ public class FamilyPageTests
     return page;
   }
 
-  // 100 stays under the count at which realizing every member kills the process, so a regression
-  // fails this assertion instead of the whole run.
   [Fact]
   public async Task Members_list_is_bounded_by_the_page_instead_of_growing_with_the_member_count()
   {
-    var page = await ShowFamilyAsync(new TestServices(), 100);
+    var page = await ShowFamilyAsync(new TestServices(), MembersBelowCrashThreshold);
     var membersView = page.FindByName<CollectionView>("MembersView");
 
     await using var window = await WindowHost.AttachAsync(page);
@@ -495,7 +495,7 @@ public class FamilyPageTests
   [Fact]
   public async Task Family_media_and_members_are_visible_together()
   {
-    var page = await ShowFamilyAsync(new TestServices(), 100, withMedia: true);
+    var page = await ShowFamilyAsync(new TestServices(), MembersBelowCrashThreshold, withMedia: true);
     var membersView = page.FindByName<CollectionView>("MembersView");
 
     await using var window = await WindowHost.AttachAsync(page);
@@ -508,7 +508,6 @@ public class FamilyPageTests
     Assert.True(page.ShowAttachments);
   }
 
-  // A regression takes the host process down rather than failing this assertion.
   [Fact]
   public async Task Opening_a_family_with_thousands_of_members_does_not_crash()
   {

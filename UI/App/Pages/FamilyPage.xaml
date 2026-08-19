@@ -54,10 +54,6 @@
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>
-      <!--
-        A ScrollView here, or a Grid row for the media, takes away the viewport this list needs
-        to virtualize, and a large family does not survive being realized in full.
-      -->
       <CollectionView
           x:Name="MembersView"
           ItemsSource="{Binding Persons, Source={x:Reference Root}}"
