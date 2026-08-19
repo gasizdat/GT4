@@ -1,5 +1,16 @@
 ﻿namespace GT4.Core.Utils;
 
+public enum SettingKind
+{
+  Text,
+  Boolean,
+  BoundedNumeric,
+}
+
+// Unit is the suffix Value carries, so an editor can read and write Value without knowing what the
+// setting measures.
+public sealed record SettingBounds(double Minimum, double Maximum, double Step, string Unit);
+
 public interface ISettingEditor
 {
   // The group to which this setting belongs.
@@ -17,6 +28,11 @@ public interface ISettingEditor
 
   // The current value of the setting.
   string Value { get; set; }
+
+  // Decides the control the setting is edited with.
+  SettingKind Kind => SettingKind.Text;
+
+  SettingBounds? Bounds => null;
 
   // Reset setting to default
   void ResetToDefault();

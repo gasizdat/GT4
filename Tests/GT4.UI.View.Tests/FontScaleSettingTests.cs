@@ -102,6 +102,30 @@ public class FontScaleSettingTests
   }
 
   [Fact]
+  public void Kind_IsBoundedNumeric()
+  {
+    Make().Kind.Should().Be(SettingKind.BoundedNumeric);
+  }
+
+  [Fact]
+  public void Bounds_AreTheFontScaleClampRangeAsPercentages()
+  {
+    // The editor's range has to be the range FontScale.Apply already clamps to, so the slider cannot
+    // offer a value the applier would silently pull back.
+    Make().Bounds.Should().Be(new SettingBounds(
+      100 * FontScale.MinFactor,
+      100 * FontScale.MaxFactor,
+      100 * FontScale.Step,
+      "%"));
+  }
+
+  [Fact]
+  public void Bounds_UnitMatchesTheSuffixOfThePersistedValue()
+  {
+    Make(configuredValue: "150%").Value.Should().EndWith(Make().Bounds!.Unit);
+  }
+
+  [Fact]
   public void ResetToDefault_CallsRemoveKeyWithFontScaleSection()
   {
     var interactive = new Mock<IInteractiveConfiguration>();

@@ -940,7 +940,7 @@ FN - nom de famille</value>
     <value>Animation d'arrière-plan</value>
   </data>
   <data name="FieldBackgroundAnimationHint" xml:space="preserve">
-    <value>Indique si l'animation de l'arbre en arrière-plan est jouée sur chaque page. Saisissez True ou False.</value>
+    <value>Indique si l'animation de l'arbre en arrière-plan est jouée sur chaque page.</value>
   </data>
   <data name="FieldGedcomDetails" xml:space="preserve">
     <value>Détails supplémentaires</value>

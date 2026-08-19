@@ -1,4 +1,6 @@
+using GT4.Core.Utils;
 using GT4.UI.Pages;
+using GT4.UI.Utils.Settings;
 using Xunit;
 
 namespace GT4.UI.DeviceTests;
@@ -27,6 +29,37 @@ public class SettingsPageTests
     var editors = page.SettingEditors.ToArray();
 
     Assert.Equal(10, editors.Length);
+  }
+
+  [Fact]
+  public async Task Every_registered_setting_declares_the_kind_its_Value_is_edited_as()
+  {
+    var page = await CreatePageAsync(new TestServices());
+
+    var kinds = page.SettingEditors.GroupBy(e => e.Kind).ToDictionary(g => g.Key, g => g.Count());
+
+    Assert.Equal(
+      new Dictionary<SettingKind, int>
+      {
+        // The eight format patterns, plus the font scale and the background animation.
+        [SettingKind.Text] = 8,
+        [SettingKind.BoundedNumeric] = 1,
+        [SettingKind.Boolean] = 1,
+      },
+      kinds);
+  }
+
+  [Fact]
+  public async Task The_only_bounded_setting_offers_exactly_the_range_FontScale_clamps_to()
+  {
+    var page = await CreatePageAsync(new TestServices());
+
+    var bounded = page.SettingEditors.Single(e => e.Kind == SettingKind.BoundedNumeric);
+
+    Assert.Equal(
+      new SettingBounds(100 * FontScale.MinFactor, 100 * FontScale.MaxFactor, 100 * FontScale.Step, "%"),
+      bounded.Bounds);
+    Assert.EndsWith(bounded.Bounds!.Unit, bounded.Value);
   }
 
   [Fact]

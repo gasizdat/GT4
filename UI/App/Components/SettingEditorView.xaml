@@ -37,8 +37,31 @@
           Style="{StaticResource FieldValue}"
           Text="{Binding Example, Source={x:Reference Root}}" />
       <Entry
+          x:Name="ValueEntry"
           Grid.Row="4"
+          IsVisible="{Binding IsText, Source={x:Reference Root}}"
           Text="{Binding Value, Source={x:Reference Root}}" />
+      <Switch
+          x:Name="ValueSwitch"
+          Grid.Row="4"
+          HorizontalOptions="Start"
+          IsToggled="{Binding BooleanValue, Source={x:Reference Root}}"
+          IsVisible="{Binding IsBoolean, Source={x:Reference Root}}" />
+      <Grid
+          Grid.Row="4"
+          ColumnDefinitions="*, Auto"
+          IsVisible="{Binding IsBounded, Source={x:Reference Root}}">
+        <Slider
+            x:Name="ValueSlider"
+            Maximum="{Binding ValueBounds.Maximum, Source={x:Reference Root}}"
+            Minimum="{Binding ValueBounds.Minimum, Source={x:Reference Root}}"
+            Value="{Binding NumericValue, Source={x:Reference Root}}" />
+        <Label
+            Grid.Column="1"
+            Style="{StaticResource FieldValue}"
+            Text="{Binding Value, Source={x:Reference Root}}"
+            VerticalOptions="Center" />
+      </Grid>
       <Button
           Grid.Row="4"
           Grid.Column="1"

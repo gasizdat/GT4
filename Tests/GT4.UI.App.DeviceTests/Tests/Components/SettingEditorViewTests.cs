@@ -1,15 +1,18 @@
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using Moq;
+using System.Globalization;
 using Xunit;
 
 namespace GT4.UI.DeviceTests;
 
 /// <summary>
 /// Covers SettingEditorView's own logic: the Editor bindable property cascades PropertyChanged for
-/// its four derived properties, Value's setter change-detects before writing through to the Editor,
-/// and ResetCommand delegates to Editor.ResetToDefault while routing failures through IAlertService
-/// (SafeCommand's own behavior, exercised here via the view's real command instance).
+/// its derived properties, the Editor's Kind selects exactly one of the three value controls,
+/// Boolean/BoundedNumeric values round-trip through the Value string, Value's setter change-detects
+/// before writing through to the Editor, and ResetCommand delegates to Editor.ResetToDefault while
+/// routing failures through IAlertService (SafeCommand's own behavior, exercised here via the view's
+/// real command instance).
 /// </summary>
 public class SettingEditorViewTests
 {
@@ -19,15 +22,23 @@ public class SettingEditorViewTests
     return await MainThread.InvokeOnMainThreadAsync(() => new TestableSettingEditorView(services.Provider));
   }
 
-  private static Mock<ISettingEditor> MakeEditor(string value = "current")
+  private static Mock<ISettingEditor> MakeEditor(
+    string value = "current",
+    SettingKind kind = SettingKind.Text,
+    SettingBounds? bounds = null)
   {
     var editor = new Mock<ISettingEditor>();
     editor.SetupGet(e => e.DisplayName).Returns("Display Name");
     editor.SetupGet(e => e.Description).Returns("Description");
     editor.SetupGet(e => e.Example).Returns("Example");
+    editor.SetupGet(e => e.Kind).Returns(kind);
+    editor.SetupGet(e => e.Bounds).Returns(bounds);
     editor.SetupProperty(e => e.Value, value);
     return editor;
   }
+
+  private static Mock<ISettingEditor> MakePercentEditor(string value) =>
+    MakeEditor(value, SettingKind.BoundedNumeric, new SettingBounds(75, 200, 5, "%"));
 
   // SettingEditorView.Editor only exposes a getter over its BindableProperty, so tests assign
   // through SetValue directly instead of through the (nonexistent) property setter.
@@ -46,7 +57,7 @@ public class SettingEditorViewTests
   }
 
   [Fact]
-  public async Task Setting_Editor_raises_PropertyChanged_for_itself_and_all_four_derived_properties()
+  public async Task Setting_Editor_raises_PropertyChanged_for_itself_and_all_derived_properties()
   {
     var view = await CreateViewAsync(new TestServices());
     var editor = MakeEditor();
@@ -56,8 +67,15 @@ public class SettingEditorViewTests
     await MainThread.InvokeOnMainThreadAsync(() => SetEditor(view, editor.Object));
 
     // BindableObject raises PropertyChanged for the bindable property itself ("Editor") before
-    // OnEditorPropertyChanged cascades the four derived ones.
-    Assert.Equal(["Editor", "Caption", "Description", "Example", "Value"], raised);
+    // OnEditorPropertyChanged cascades the derived ones. ValueBounds has to precede NumericValue:
+    // the slider coerces its value against the range it currently holds.
+    Assert.Equal(
+      [
+        "Editor", "Caption", "Description",
+        "IsText", "IsBoolean", "IsBounded", "ValueBounds",
+        "Value", "BooleanValue", "NumericValue", "Example"
+      ],
+      raised);
   }
 
   [Fact]
@@ -86,7 +104,7 @@ public class SettingEditorViewTests
     await MainThread.InvokeOnMainThreadAsync(() => view.Value = "new");
 
     Assert.Equal("new", editor.Object.Value);
-    Assert.Equal(["Value", "Example"], raised);
+    Assert.Equal(["Value", "BooleanValue", "NumericValue", "Example"], raised);
   }
 
   [Fact]
@@ -104,7 +122,7 @@ public class SettingEditorViewTests
   }
 
   [Fact]
-  public async Task ResetCommand_resets_the_Editor_and_raises_PropertyChanged_for_Value_and_Example()
+  public async Task ResetCommand_resets_the_Editor_and_raises_PropertyChanged_for_the_value_properties()
   {
     var services = new TestServices();
     var view = await CreateViewAsync(services);
@@ -116,8 +134,126 @@ public class SettingEditorViewTests
     await MainThread.InvokeOnMainThreadAsync(() => view.ResetCommand.Execute(null));
 
     editor.Verify(e => e.ResetToDefault(), Times.Once());
-    Assert.Equal(["Value", "Example"], raised);
+    Assert.Equal(["Value", "BooleanValue", "NumericValue", "Example"], raised);
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+  }
+
+  [Theory]
+  [InlineData(SettingKind.Text, "ValueEntry")]
+  [InlineData(SettingKind.Boolean, "ValueSwitch")]
+  [InlineData(SettingKind.BoundedNumeric, "ValueSlider")]
+  public async Task The_Editor_Kind_shows_exactly_one_value_control(SettingKind kind, string visibleControl)
+  {
+    var view = await CreateViewAsync(new TestServices());
+    var editor = MakeEditor("100%", kind, new SettingBounds(75, 200, 5, "%"));
+
+    await MainThread.InvokeOnMainThreadAsync(() => SetEditor(view, editor.Object));
+
+    var slider = view.FindByName<Slider>("ValueSlider");
+    var controls = new Dictionary<string, View>
+    {
+      ["ValueEntry"] = view.FindByName<Entry>("ValueEntry"),
+      ["ValueSwitch"] = view.FindByName<Switch>("ValueSwitch"),
+      // The slider shares its visibility with the value label wrapping it, so read the parent.
+      ["ValueSlider"] = (View)slider.Parent,
+    };
+    var visible = controls.Where(control => control.Value.IsVisible).Select(control => control.Key);
+
+    Assert.Equal([visibleControl], visible);
+  }
+
+  [Theory]
+  [InlineData("True", true)]
+  [InlineData("False", false)]
+  [InlineData("nonsense", false)]
+  public async Task A_Boolean_Editor_reads_its_Value_as_the_switch_state(string value, bool expected)
+  {
+    var view = await CreateViewAsync(new TestServices());
+    var editor = MakeEditor(value, SettingKind.Boolean);
+
+    await MainThread.InvokeOnMainThreadAsync(() => SetEditor(view, editor.Object));
+
+    Assert.Equal(expected, view.BooleanValue);
+    Assert.Equal(expected, view.FindByName<Switch>("ValueSwitch").IsToggled);
+  }
+
+  [Fact]
+  public async Task Toggling_the_switch_writes_the_Boolean_Editor_Value_back_as_True_or_False()
+  {
+    var view = await CreateViewAsync(new TestServices());
+    var editor = MakeEditor("False", SettingKind.Boolean);
+    await MainThread.InvokeOnMainThreadAsync(() => SetEditor(view, editor.Object));
+
+    await MainThread.InvokeOnMainThreadAsync(() => view.FindByName<Switch>("ValueSwitch").IsToggled = true);
+
+    Assert.Equal("True", editor.Object.Value);
+  }
+
+  [Fact]
+  public async Task A_BoundedNumeric_Editor_drives_the_slider_range_and_position_from_its_Value()
+  {
+    var view = await CreateViewAsync(new TestServices());
+    var editor = MakePercentEditor("150%");
+
+    await MainThread.InvokeOnMainThreadAsync(() => SetEditor(view, editor.Object));
+
+    var slider = view.FindByName<Slider>("ValueSlider");
+    Assert.Equal(75, slider.Minimum);
+    Assert.Equal(200, slider.Maximum);
+    Assert.Equal(150, slider.Value);
+  }
+
+  [Fact]
+  public async Task An_unparseable_BoundedNumeric_Value_falls_back_to_the_minimum()
+  {
+    var view = await CreateViewAsync(new TestServices());
+    var editor = MakePercentEditor("nonsense");
+
+    await MainThread.InvokeOnMainThreadAsync(() => SetEditor(view, editor.Object));
+
+    Assert.Equal(75, view.NumericValue);
+  }
+
+  [Theory]
+  [InlineData(137, "135%")]
+  [InlineData(138, "140%")]
+  [InlineData(200, "200%")]
+  public async Task Moving_the_slider_snaps_to_the_step_and_writes_the_Value_back_with_its_unit(
+    double dragged,
+    string expected)
+  {
+    var view = await CreateViewAsync(new TestServices());
+    var editor = MakePercentEditor("100%");
+    await MainThread.InvokeOnMainThreadAsync(() => SetEditor(view, editor.Object));
+
+    await MainThread.InvokeOnMainThreadAsync(() => view.FindByName<Slider>("ValueSlider").Value = dragged);
+
+    Assert.Equal(expected, editor.Object.Value);
+  }
+
+  [Fact]
+  public async Task A_fractional_BoundedNumeric_Value_round_trips_under_a_comma_decimal_culture()
+  {
+    var view = await CreateViewAsync(new TestServices());
+    var editor = MakeEditor("1.5x", SettingKind.BoundedNumeric, new SettingBounds(0.5, 2.5, 0.5, "x"));
+    await MainThread.InvokeOnMainThreadAsync(() => SetEditor(view, editor.Object));
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      var culture = CultureInfo.CurrentCulture;
+      CultureInfo.CurrentCulture = new CultureInfo("ru-RU");
+      try
+      {
+        Assert.Equal(1.5, view.NumericValue);
+        view.NumericValue = 2.5;
+      }
+      finally
+      {
+        CultureInfo.CurrentCulture = culture;
+      }
+    });
+
+    Assert.Equal("2.5x", editor.Object.Value);
   }
 
   [Fact]
