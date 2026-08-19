@@ -55,9 +55,8 @@
 
     <components:PageLayout.Body>
       <!--
-        A ScrollView around this list would hand it unlimited height, realizing every member at
-        once instead of virtualizing, which a large family does not survive. The media is the
-        list's Header for the same reason: a Grid row of its own starves the members of height.
+        A ScrollView here, or a Grid row for the media, takes away the viewport this list needs
+        to virtualize, and a large family does not survive being realized in full.
       -->
       <CollectionView
           x:Name="MembersView"
@@ -112,10 +111,7 @@
           </VerticalStackLayout>
         </CollectionView.Header>
 
-        <!--
-          Not a two-column GridItemsLayout: a grid row takes its tallest cell's height, and the
-          uneven rows a family of mixed name lengths produces crash WinUI outright.
-        -->
+        <!-- A GridItemsLayout row takes its tallest cell's height, and uneven rows crash WinUI. -->
         <CollectionView.ItemsLayout>
           <LinearItemsLayout Orientation="Vertical" />
         </CollectionView.ItemsLayout>

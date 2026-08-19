@@ -443,8 +443,7 @@ public class FamilyPageTests
     Assert.Equal("deed.pdf", page.Attachments.Single().FileName);
   }
 
-  // Members deliberately alternate short undated names with long dated ones: uniform heights
-  // would stop these tests discriminating the two-column layout that crashes on uneven rows.
+  // Member heights must stay uneven; uniform ones stop the layout tests below discriminating.
   private static async Task<TestableFamilyPage> ShowFamilyAsync(TestServices services, int memberCount, bool withMedia = false)
   {
     var familyName = N(5, "Ivanov", NameType.FamilyName);
@@ -473,8 +472,8 @@ public class FamilyPageTests
     return page;
   }
 
-  // 100 members is deliberately under the ~150 at which an unvirtualized list takes the process
-  // down, so a regression fails this assertion cleanly instead of killing the whole run.
+  // 100 stays under the count at which realizing every member kills the process, so a regression
+  // fails this assertion instead of the whole run.
   [Fact]
   public async Task Members_list_is_bounded_by_the_page_instead_of_growing_with_the_member_count()
   {
@@ -493,8 +492,6 @@ public class FamilyPageTests
       $"The members list is {membersHeight} tall inside a {pageHeight} page, so it sizes to its content rather than scrolling within a viewport of its own.");
   }
 
-  // Not trivially true: media given Grid rows of its own starved the members list to 0 tall,
-  // which reads as an empty page rather than as a failure.
   [Fact]
   public async Task Family_media_and_members_are_visible_together()
   {
@@ -511,8 +508,7 @@ public class FamilyPageTests
     Assert.True(page.ShowAttachments);
   }
 
-  // A regression here shows up as a dead run rather than a red test: realizing this many members
-  // takes the host process down instead of failing an assertion.
+  // A regression takes the host process down rather than failing this assertion.
   [Fact]
   public async Task Opening_a_family_with_thousands_of_members_does_not_crash()
   {
