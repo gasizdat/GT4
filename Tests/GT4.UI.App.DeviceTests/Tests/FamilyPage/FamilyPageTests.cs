@@ -443,26 +443,46 @@ public class FamilyPageTests
     Assert.Equal("deed.pdf", page.Attachments.Single().FileName);
   }
 
-  private static async Task<TestableFamilyPage> ShowNoFamilyMembersAsync(TestServices services, int memberCount)
+  // Every member card is a live CardView/PersonInfoView once realized, so the members list only
+  // survives a large family by virtualizing, which in turn needs a viewport of its own. Members
+  // alternate between a short undated name and a long dated one: uneven row heights are what a
+  // real family looks like, and they crash outright under a two-column GridItemsLayout.
+  private static async Task<TestableFamilyPage> ShowFamilyAsync(TestServices services, int memberCount, bool withMedia = false)
   {
-    services.PersonManager
-      .Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
-      .ReturnsAsync([.. Enumerable.Range(1, memberCount).Select(i => P(i, $"Person{i}"))]);
-    var page = await CreatePageAsync(services);
+    var familyName = N(5, "Ivanov", NameType.FamilyName);
+    if (withMedia)
+    {
+      var mainPhoto = new Data(1, TestImages.ValidPng, "image/png", DataCategory.FamilyMainPhoto);
+      var attachments = Enumerable.Range(1, 3)
+        .Select(i => new Data(10 + i, GedcomPhotoResidue.EncodeAttachment([1, 2, 3], $"deed{i}.pdf"), "application/pdf", DataCategory.FamilyAttachment));
+      services.FamilyManager
+        .Setup(f => f.GetFamilyFullInfoAsync(familyName, It.IsAny<CancellationToken>()))
+        .ReturnsAsync(new FamilyFullInfo(familyName, mainPhoto, [], [.. attachments]));
+    }
 
-    var persons = await page.ReloadPersonsAsync(() => page.FamilyName = FamilyInfoItem.NoFamilyName);
+    PersonInfo Tall(int id) => new(
+      id, Date.Create(1900 + id % 90, 3, 4, DateStatus.WellKnown), Date.Create(1980, 5, 6, DateStatus.WellKnown),
+      BiologicalSex.Female,
+      [N(id * 100, $"Ochen-Dlinnoe-Imya-Familia-Number-{id}-With-More-Parts", NameType.FirstName), familyName], null);
+    var members = Enumerable.Range(1, memberCount).Select(i => i % 3 == 0 ? Tall(i) : InFamily(P(i, $"P{i}"), familyName));
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosByNameAsync(familyName, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([.. members]);
+
+    var page = await CreatePageAsync(services);
+    var persons = await page.ReloadPersonsAsync(() => page.FamilyName = familyName);
     Assert.Equal(memberCount, persons.Length);
     return page;
   }
 
   // The members list used to be a BindableLayout inside a ScrollView, which hands its child
-  // unlimited height: every member became a live CardView/PersonInfoView the moment the page was
-  // shown. 100 members is deliberately under the ~150 at which that crashed the process outright,
-  // so a regression fails this assertion cleanly instead of taking the whole run down with it.
+  // unlimited height, so every member was realized the moment the page was shown. 100 members is
+  // deliberately under the ~150 at which that crashed the process outright, so a regression fails
+  // this assertion cleanly instead of taking the whole run down with it.
   [Fact]
   public async Task Members_list_is_bounded_by_the_page_instead_of_growing_with_the_member_count()
   {
-    var page = await ShowNoFamilyMembersAsync(new TestServices(), 100);
+    var page = await ShowFamilyAsync(new TestServices(), 100);
     var membersView = page.FindByName<CollectionView>("MembersView");
 
     await using var window = await WindowHost.AttachAsync(page);
@@ -477,13 +497,32 @@ public class FamilyPageTests
       $"The members list is {membersHeight} tall inside a {pageHeight} page, so it sizes to its content rather than scrolling within a viewport of its own.");
   }
 
+  // The family photo and attachments ride along as the list's Header. Giving them Grid rows of
+  // their own instead starves the members list: it measured 0 tall behind a photo and three
+  // attachments, showing an empty page for a family that has both.
+  [Fact]
+  public async Task Family_media_and_members_are_visible_together()
+  {
+    var page = await ShowFamilyAsync(new TestServices(), 100, withMedia: true);
+    var membersView = page.FindByName<CollectionView>("MembersView");
+
+    await using var window = await WindowHost.AttachAsync(page);
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => membersView.Height),
+      height => height > 0,
+      timeoutMessage: "The members list is not visible on a family that has a photo and attachments.");
+
+    Assert.True(page.ShowPhotos);
+    Assert.True(page.ShowAttachments);
+  }
+
   // Guards the crash in its own right: on the pre-fix layout this killed the test host process
   // rather than failing, so a regression shows up as a dead run instead of a red test.
   [Fact]
   public async Task Opening_a_family_with_thousands_of_members_does_not_crash()
   {
     var services = new TestServices();
-    var page = await ShowNoFamilyMembersAsync(services, 4952);
+    var page = await ShowFamilyAsync(services, 4952);
 
     await using var window = await WindowHost.AttachAsync(page);
     var membersView = page.FindByName<CollectionView>("MembersView");
