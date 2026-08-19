@@ -55,10 +55,9 @@
 
     <components:PageLayout.Body>
       <!--
-        The page's own scrolling belongs to this CollectionView, not to a ScrollView around it: a
-        ScrollView hands its child unlimited height, so every member would be realized at once,
-        which crashes outright past roughly 150 of them. The family media rides along as the
-        Header so it still scrolls away with the list instead of competing with it for height.
+        A ScrollView around this list would hand it unlimited height, realizing every member at
+        once instead of virtualizing, which a large family does not survive. The media is the
+        list's Header for the same reason: a Grid row of its own starves the members of height.
       -->
       <CollectionView
           x:Name="MembersView"
@@ -114,9 +113,8 @@
         </CollectionView.Header>
 
         <!--
-          One member per row, not a two-column GridItemsLayout: a grid row takes the height of its
-          tallest cell, and a family mixing short names with long ones (or dated with undated)
-          crashes WinUI outright on the resulting uneven rows.
+          Not a two-column GridItemsLayout: a grid row takes its tallest cell's height, and the
+          uneven rows a family of mixed name lengths produces crash WinUI outright.
         -->
         <CollectionView.ItemsLayout>
           <LinearItemsLayout Orientation="Vertical" />

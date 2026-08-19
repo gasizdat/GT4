@@ -443,10 +443,8 @@ public class FamilyPageTests
     Assert.Equal("deed.pdf", page.Attachments.Single().FileName);
   }
 
-  // Every member card is a live CardView/PersonInfoView once realized, so the members list only
-  // survives a large family by virtualizing, which in turn needs a viewport of its own. Members
-  // alternate between a short undated name and a long dated one: uneven row heights are what a
-  // real family looks like, and they crash outright under a two-column GridItemsLayout.
+  // Members deliberately alternate short undated names with long dated ones: uniform heights
+  // would stop these tests discriminating the two-column layout that crashes on uneven rows.
   private static async Task<TestableFamilyPage> ShowFamilyAsync(TestServices services, int memberCount, bool withMedia = false)
   {
     var familyName = N(5, "Ivanov", NameType.FamilyName);
@@ -475,10 +473,8 @@ public class FamilyPageTests
     return page;
   }
 
-  // The members list used to be a BindableLayout inside a ScrollView, which hands its child
-  // unlimited height, so every member was realized the moment the page was shown. 100 members is
-  // deliberately under the ~150 at which that crashed the process outright, so a regression fails
-  // this assertion cleanly instead of taking the whole run down with it.
+  // 100 members is deliberately under the ~150 at which an unvirtualized list takes the process
+  // down, so a regression fails this assertion cleanly instead of killing the whole run.
   [Fact]
   public async Task Members_list_is_bounded_by_the_page_instead_of_growing_with_the_member_count()
   {
@@ -497,9 +493,8 @@ public class FamilyPageTests
       $"The members list is {membersHeight} tall inside a {pageHeight} page, so it sizes to its content rather than scrolling within a viewport of its own.");
   }
 
-  // The family photo and attachments ride along as the list's Header. Giving them Grid rows of
-  // their own instead starves the members list: it measured 0 tall behind a photo and three
-  // attachments, showing an empty page for a family that has both.
+  // Not trivially true: media given Grid rows of its own starved the members list to 0 tall,
+  // which reads as an empty page rather than as a failure.
   [Fact]
   public async Task Family_media_and_members_are_visible_together()
   {
@@ -516,8 +511,8 @@ public class FamilyPageTests
     Assert.True(page.ShowAttachments);
   }
 
-  // Guards the crash in its own right: on the pre-fix layout this killed the test host process
-  // rather than failing, so a regression shows up as a dead run instead of a red test.
+  // A regression here shows up as a dead run rather than a red test: realizing this many members
+  // takes the host process down instead of failing an assertion.
   [Fact]
   public async Task Opening_a_family_with_thousands_of_members_does_not_crash()
   {
