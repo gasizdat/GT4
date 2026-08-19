@@ -1,6 +1,7 @@
 using GT4.Core.Utils;
 using GT4.UI.Pages;
 using GT4.UI.Utils.Settings;
+using System.Globalization;
 using Xunit;
 
 namespace GT4.UI.DeviceTests;
@@ -59,7 +60,14 @@ public class SettingsPageTests
     Assert.Equal(
       new SettingBounds(100 * FontScale.MinFactor, 100 * FontScale.MaxFactor, 100 * FontScale.Step, "%"),
       bounded.Bounds);
-    Assert.EndsWith(bounded.Bounds!.Unit, bounded.Value);
+    // The unit has to be the suffix the persisted Value actually carries, or the editor reads the
+    // percentage back as an unparseable string and falls to the minimum.
+    var unit = bounded.Bounds!.Unit;
+    var number = bounded.Value[..^unit.Length];
+    Assert.InRange(
+      double.Parse(number, CultureInfo.InvariantCulture),
+      bounded.Bounds.Minimum,
+      bounded.Bounds.Maximum);
   }
 
   [Fact]

@@ -108,6 +108,24 @@ public class SettingEditorViewTests
   }
 
   [Fact]
+  public async Task Consecutive_writes_each_reach_the_Editor()
+  {
+    // The controls' echo is suppressed only while the view pushes state into them: a write that
+    // follows that cascade must still land.
+    var view = await CreateViewAsync(new TestServices());
+    var editor = MakeEditor("first");
+    await MainThread.InvokeOnMainThreadAsync(() => SetEditor(view, editor.Object));
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      view.Value = "second";
+      view.Value = "third";
+    });
+
+    Assert.Equal("third", editor.Object.Value);
+  }
+
+  [Fact]
   public async Task Setting_Value_to_its_current_value_raises_nothing()
   {
     var view = await CreateViewAsync(new TestServices());
