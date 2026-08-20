@@ -1,10 +1,7 @@
 namespace GT4.UI.Utils.Settings;
 
-// Pins the app to the light or the dark palette, or lets it keep following the OS. Every
-// AppThemeBinding in the app resolves against Application.RequestedTheme, which UserAppTheme
-// overrides -- so this one property is the whole of applying a theme. A DI singleton (like
-// BackgroundAnimation) so ThemeSetting drives it when the user changes the setting and App calls
-// Apply once at startup with the persisted value.
+// UserAppTheme overrides Application.RequestedTheme, which every AppThemeBinding in the app resolves
+// against, so this one property is the whole of applying a theme.
 public sealed class Theme
 {
   public const AppTheme Default = AppTheme.Unspecified;
