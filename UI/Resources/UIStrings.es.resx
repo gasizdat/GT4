@@ -942,6 +942,21 @@ FN - apellido familiar</value>
   <data name="FieldBackgroundAnimationHint" xml:space="preserve">
     <value>Si se reproduce la animación del árbol de fondo en todas las páginas.</value>
   </data>
+  <data name="FieldTheme" xml:space="preserve">
+    <value>Tema</value>
+  </data>
+  <data name="FieldThemeHint" xml:space="preserve">
+    <value>Si la aplicación sigue la apariencia del sistema o se mantiene en la paleta clara u oscura.</value>
+  </data>
+  <data name="FieldThemeSystem" xml:space="preserve">
+    <value>Sistema</value>
+  </data>
+  <data name="FieldThemeLight" xml:space="preserve">
+    <value>Claro</value>
+  </data>
+  <data name="FieldThemeDark" xml:space="preserve">
+    <value>Oscuro</value>
+  </data>
   <data name="FieldGedcomDetails" xml:space="preserve">
     <value>Detalles adicionales</value>
   </data>

@@ -47,6 +47,14 @@
           HorizontalOptions="Start"
           IsToggled="{Binding BooleanValue, Source={x:Reference Root}}"
           IsVisible="{Binding IsBoolean, Source={x:Reference Root}}" />
+      <Picker
+          x:Name="ValuePicker"
+          Grid.Row="4"
+          HorizontalOptions="Start"
+          IsVisible="{Binding IsChoice, Source={x:Reference Root}}"
+          ItemDisplayBinding="{Binding Label}"
+          ItemsSource="{Binding ChoiceOptions, Source={x:Reference Root}}"
+          SelectedItem="{Binding ChoiceValue, Source={x:Reference Root}}" />
       <Grid
           Grid.Row="4"
           ColumnDefinitions="*, Auto"

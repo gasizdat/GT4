@@ -942,6 +942,21 @@ FN - nom de famille</value>
   <data name="FieldBackgroundAnimationHint" xml:space="preserve">
     <value>Indique si l'animation de l'arbre en arrière-plan est jouée sur chaque page.</value>
   </data>
+  <data name="FieldTheme" xml:space="preserve">
+    <value>Thème</value>
+  </data>
+  <data name="FieldThemeHint" xml:space="preserve">
+    <value>Indique si l'application suit l'apparence du système ou reste sur la palette claire ou sombre.</value>
+  </data>
+  <data name="FieldThemeSystem" xml:space="preserve">
+    <value>Système</value>
+  </data>
+  <data name="FieldThemeLight" xml:space="preserve">
+    <value>Clair</value>
+  </data>
+  <data name="FieldThemeDark" xml:space="preserve">
+    <value>Sombre</value>
+  </data>
   <data name="FieldGedcomDetails" xml:space="preserve">
     <value>Détails supplémentaires</value>
   </data>

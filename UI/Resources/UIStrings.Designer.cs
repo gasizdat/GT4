@@ -1459,6 +1459,51 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Theme.
+        /// </summary>
+        public static string FieldTheme {
+            get {
+                return ResourceManager.GetString("FieldTheme", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Dark.
+        /// </summary>
+        public static string FieldThemeDark {
+            get {
+                return ResourceManager.GetString("FieldThemeDark", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Whether the app follows the system appearance or stays on the light or the dark palette..
+        /// </summary>
+        public static string FieldThemeHint {
+            get {
+                return ResourceManager.GetString("FieldThemeHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Light.
+        /// </summary>
+        public static string FieldThemeLight {
+            get {
+                return ResourceManager.GetString("FieldThemeLight", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to System.
+        /// </summary>
+        public static string FieldThemeSystem {
+            get {
+                return ResourceManager.GetString("FieldThemeSystem", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Year.
         /// </summary>
         public static string FieldYear {
