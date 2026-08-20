@@ -3,6 +3,7 @@ using GT4.Core.Utils;
 using GT4.UI.Utils.Settings;
 using Microsoft.Extensions.Configuration;
 using Moq;
+using System.Globalization;
 using Xunit;
 
 namespace GT4.UI.View.Tests;
@@ -99,6 +100,30 @@ public class FontScaleSettingTests
     Make(interactive: interactive.Object, fontScale: null).Value = "150%";
 
     interactive.Verify(i => i.SetKey(FontScaleSection, Percent(FontScale.DefaultFactor)), Times.Once);
+  }
+
+  [Fact]
+  public void Kind_IsTheFontScaleClampRangeAsPercentages()
+  {
+    // The editor's range has to be the range FontScale.Apply already clamps to, so the slider cannot
+    // offer a value the applier would silently pull back.
+    Make().Kind.Should().Be(new SettingKind.BoundedNumeric(
+      100 * FontScale.MinFactor,
+      100 * FontScale.MaxFactor,
+      100 * FontScale.Step,
+      "%"));
+  }
+
+  [Fact]
+  public void Kind_UnitIsTheSuffixThePersistedValueCarries()
+  {
+    // Strip the declared unit and what is left has to be the number, or the editor reads the
+    // percentage back as an unparseable string and falls to the minimum.
+    var kind = (SettingKind.BoundedNumeric)Make().Kind;
+
+    var number = Make(configuredValue: "150%").Value[..^kind.Unit.Length];
+
+    double.Parse(number, CultureInfo.InvariantCulture).Should().Be(150);
   }
 
   [Fact]

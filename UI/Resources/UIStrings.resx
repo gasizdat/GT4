@@ -940,7 +940,7 @@ FN - family name</value>
     <value>Background animation</value>
   </data>
   <data name="FieldBackgroundAnimationHint" xml:space="preserve">
-    <value>Whether the animated tree background on every page plays. Enter True or False.</value>
+    <value>Whether the animated tree background on every page plays.</value>
   </data>
   <data name="FieldGedcomDetails" xml:space="preserve">
     <value>Additional details</value>

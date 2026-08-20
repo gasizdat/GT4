@@ -41,6 +41,8 @@ internal sealed class BackgroundAnimationSetting : ISettingEditor
     }
   }
 
+  public SettingKind Kind => new SettingKind.Boolean();
+
   public void ResetToDefault()
   {
     _InteractiveConfiguration?.RemoveKey(BackgroundAnimationSection);

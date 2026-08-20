@@ -1,3 +1,4 @@
+using GT4.Core.Utils;
 using GT4.UI.Pages;
 using Xunit;
 
@@ -27,6 +28,19 @@ public class SettingsPageTests
     var editors = page.SettingEditors.ToArray();
 
     Assert.Equal(10, editors.Length);
+  }
+
+  [Fact]
+  public async Task Every_registered_setting_declares_the_kind_its_Value_is_edited_as()
+  {
+    var page = await CreatePageAsync(new TestServices());
+
+    var kinds = page.SettingEditors.Select(e => e.Kind).ToArray();
+
+    // The eight format patterns, plus the background animation and the font scale.
+    Assert.Equal(8, kinds.OfType<SettingKind.Text>().Count());
+    Assert.Single(kinds.OfType<SettingKind.Boolean>());
+    Assert.Single(kinds.OfType<SettingKind.BoundedNumeric>());
   }
 
   [Fact]

@@ -940,7 +940,7 @@ FN - Familienname</value>
     <value>Hintergrundanimation</value>
   </data>
   <data name="FieldBackgroundAnimationHint" xml:space="preserve">
-    <value>Ob der animierte Baumhintergrund auf jeder Seite abgespielt wird. Geben Sie True oder False ein.</value>
+    <value>Ob der animierte Baumhintergrund auf jeder Seite abgespielt wird.</value>
   </data>
   <data name="FieldGedcomDetails" xml:space="preserve">
     <value>Zusätzliche Angaben</value>

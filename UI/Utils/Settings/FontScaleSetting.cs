@@ -62,6 +62,12 @@ internal class FontScaleSetting : ISettingEditor
     }
   }
 
+  public SettingKind Kind => new SettingKind.BoundedNumeric(
+    100 * FontScale.MinFactor,
+    100 * FontScale.MaxFactor,
+    100 * FontScale.Step,
+    "%");
+
   public void ResetToDefault()
   {
     _InteractiveConfiguration?.RemoveKey(FontScaleSection);

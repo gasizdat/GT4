@@ -940,7 +940,7 @@ FN - apellido familiar</value>
     <value>Animación de fondo</value>
   </data>
   <data name="FieldBackgroundAnimationHint" xml:space="preserve">
-    <value>Si se reproduce la animación del árbol de fondo en todas las páginas. Introduzca True o False.</value>
+    <value>Si se reproduce la animación del árbol de fondo en todas las páginas.</value>
   </data>
   <data name="FieldGedcomDetails" xml:space="preserve">
     <value>Detalles adicionales</value>

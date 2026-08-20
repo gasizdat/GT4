@@ -83,7 +83,7 @@ public partial class PersonInfoView : ContentView
   {
     get
     {
-      if (Person is null)
+      if (Person is null || !ShowName)
       {
         return null;
       }
@@ -101,7 +101,7 @@ public partial class PersonInfoView : ContentView
   {
     get
     {
-      if (Person is null)
+      if (Person is null || !ShowDates)
       {
         return null;
       }
