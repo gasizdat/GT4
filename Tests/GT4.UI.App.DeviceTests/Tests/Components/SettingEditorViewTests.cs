@@ -25,20 +25,20 @@ public class SettingEditorViewTests
   private static Mock<ISettingEditor> MakeEditor(
     string value = "current",
     SettingKind kind = SettingKind.Text,
-    SettingBounds? bounds = null)
+    ISettingMetadata? metadata = null)
   {
     var editor = new Mock<ISettingEditor>();
     editor.SetupGet(e => e.DisplayName).Returns("Display Name");
     editor.SetupGet(e => e.Description).Returns("Description");
     editor.SetupGet(e => e.Example).Returns("Example");
     editor.SetupGet(e => e.Kind).Returns(kind);
-    editor.SetupGet(e => e.Bounds).Returns(bounds);
+    editor.SetupGet(e => e.Metadata).Returns(metadata);
     editor.SetupProperty(e => e.Value, value);
     return editor;
   }
 
   private static Mock<ISettingEditor> MakePercentEditor(string value) =>
-    MakeEditor(value, SettingKind.BoundedNumeric, new SettingBounds(75, 200, 5, "%"));
+    MakeEditor(value, SettingKind.BoundedNumeric, new NumericSettingMetadata(75, 200, 5, "%"));
 
   // SettingEditorView.Editor only exposes a getter over its BindableProperty, so tests assign
   // through SetValue directly instead of through the (nonexistent) property setter.
@@ -67,12 +67,12 @@ public class SettingEditorViewTests
     await MainThread.InvokeOnMainThreadAsync(() => SetEditor(view, editor.Object));
 
     // BindableObject raises PropertyChanged for the bindable property itself ("Editor") before
-    // OnEditorPropertyChanged cascades the derived ones. ValueBounds has to precede NumericValue:
+    // OnEditorPropertyChanged cascades the derived ones. ValueMetadata has to precede NumericValue:
     // the slider coerces its value against the range it currently holds.
     Assert.Equal(
       [
         "Editor", "Caption", "Description",
-        "IsText", "IsBoolean", "IsBounded", "ValueBounds",
+        "IsText", "IsBoolean", "IsBounded", "ValueMetadata",
         "Value", "BooleanValue", "NumericValue", "Example"
       ],
       raised);
@@ -163,7 +163,7 @@ public class SettingEditorViewTests
   public async Task The_Editor_Kind_shows_exactly_one_value_control(SettingKind kind, string visibleControl)
   {
     var view = await CreateViewAsync(new TestServices());
-    var editor = MakeEditor("100%", kind, new SettingBounds(75, 200, 5, "%"));
+    var editor = MakeEditor("100%", kind, new NumericSettingMetadata(75, 200, 5, "%"));
 
     await MainThread.InvokeOnMainThreadAsync(() => SetEditor(view, editor.Object));
 
@@ -253,7 +253,10 @@ public class SettingEditorViewTests
   public async Task A_fractional_BoundedNumeric_Value_round_trips_under_a_comma_decimal_culture()
   {
     var view = await CreateViewAsync(new TestServices());
-    var editor = MakeEditor("1.5x", SettingKind.BoundedNumeric, new SettingBounds(0.5, 2.5, 0.5, "x"));
+    var editor = MakeEditor(
+      "1.5x",
+      SettingKind.BoundedNumeric,
+      new NumericSettingMetadata(0.5, 2.5, 0.5, "x"));
     await MainThread.InvokeOnMainThreadAsync(() => SetEditor(view, editor.Object));
 
     await MainThread.InvokeOnMainThreadAsync(() =>

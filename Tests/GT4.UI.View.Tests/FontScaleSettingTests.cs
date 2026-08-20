@@ -3,6 +3,7 @@ using GT4.Core.Utils;
 using GT4.UI.Utils.Settings;
 using Microsoft.Extensions.Configuration;
 using Moq;
+using System.Globalization;
 using Xunit;
 
 namespace GT4.UI.View.Tests;
@@ -108,11 +109,11 @@ public class FontScaleSettingTests
   }
 
   [Fact]
-  public void Bounds_AreTheFontScaleClampRangeAsPercentages()
+  public void Metadata_IsTheFontScaleClampRangeAsPercentages()
   {
     // The editor's range has to be the range FontScale.Apply already clamps to, so the slider cannot
     // offer a value the applier would silently pull back.
-    Make().Bounds.Should().Be(new SettingBounds(
+    Make().Metadata.Should().Be(new NumericSettingMetadata(
       100 * FontScale.MinFactor,
       100 * FontScale.MaxFactor,
       100 * FontScale.Step,
@@ -120,9 +121,15 @@ public class FontScaleSettingTests
   }
 
   [Fact]
-  public void Bounds_UnitMatchesTheSuffixOfThePersistedValue()
+  public void Metadata_UnitIsTheSuffixThePersistedValueCarries()
   {
-    Make(configuredValue: "150%").Value.Should().EndWith(Make().Bounds!.Unit);
+    // Strip the declared unit and what is left has to be the number, or the editor reads the
+    // percentage back as an unparseable string and falls to the minimum.
+    var metadata = (NumericSettingMetadata)Make().Metadata!;
+
+    var number = Make(configuredValue: "150%").Value[..^metadata.Unit.Length];
+
+    double.Parse(number, CultureInfo.InvariantCulture).Should().Be(150);
   }
 
   [Fact]

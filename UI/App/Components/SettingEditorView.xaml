@@ -53,8 +53,8 @@
           IsVisible="{Binding IsBounded, Source={x:Reference Root}}">
         <Slider
             x:Name="ValueSlider"
-            Maximum="{Binding ValueBounds.Maximum, Source={x:Reference Root}}"
-            Minimum="{Binding ValueBounds.Minimum, Source={x:Reference Root}}"
+            Maximum="{Binding ValueMetadata.Maximum, Source={x:Reference Root}}"
+            Minimum="{Binding ValueMetadata.Minimum, Source={x:Reference Root}}"
             Value="{Binding NumericValue, Source={x:Reference Root}}" />
         <Label
             Grid.Column="1"

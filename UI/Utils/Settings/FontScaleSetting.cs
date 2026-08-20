@@ -64,8 +64,11 @@ internal class FontScaleSetting : ISettingEditor
 
   public SettingKind Kind => SettingKind.BoundedNumeric;
 
-  public SettingBounds? Bounds =>
-    new(100 * FontScale.MinFactor, 100 * FontScale.MaxFactor, 100 * FontScale.Step, "%");
+  public ISettingMetadata? Metadata => new NumericSettingMetadata(
+    100 * FontScale.MinFactor,
+    100 * FontScale.MaxFactor,
+    100 * FontScale.Step,
+    "%");
 
   public void ResetToDefault()
   {

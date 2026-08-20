@@ -7,9 +7,14 @@ public enum SettingKind
   BoundedNumeric,
 }
 
+// Whatever a Kind needs beyond the Value string to drive its control. Which implementation an
+// editor carries follows from its Kind.
+public interface ISettingMetadata;
+
 // Unit is the suffix Value carries, so an editor can read and write Value without knowing what the
 // setting measures.
-public sealed record SettingBounds(double Minimum, double Maximum, double Step, string Unit);
+public sealed record NumericSettingMetadata(double Minimum, double Maximum, double Step, string Unit)
+  : ISettingMetadata;
 
 public interface ISettingEditor
 {
@@ -32,7 +37,7 @@ public interface ISettingEditor
   // Decides the control the setting is edited with.
   SettingKind Kind => SettingKind.Text;
 
-  SettingBounds? Bounds => null;
+  ISettingMetadata? Metadata => null;
 
   // Reset setting to default
   void ResetToDefault();

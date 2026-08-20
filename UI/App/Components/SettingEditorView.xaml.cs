@@ -8,7 +8,7 @@ namespace GT4.UI.Components;
 public partial class SettingEditorView : ContentView
 {
   // The slider is bound even while hidden, so a setting with no range still has to report a legal one.
-  private static readonly SettingBounds UnboundedRange = new(0, 1, 1, string.Empty);
+  private static readonly NumericSettingMetadata UnboundedRange = new(0, 1, 1, string.Empty);
 
   private readonly IAlertService _AlertService;
 
@@ -55,7 +55,7 @@ public partial class SettingEditorView : ContentView
       OnPropertyChanged(nameof(IsBoolean));
       OnPropertyChanged(nameof(IsBounded));
       // Before the value properties: the slider coerces its value against the range it currently has.
-      OnPropertyChanged(nameof(ValueBounds));
+      OnPropertyChanged(nameof(ValueMetadata));
       OnValueChanged();
     }
     finally
@@ -94,7 +94,8 @@ public partial class SettingEditorView : ContentView
 
   public bool IsBounded => Editor?.Kind == SettingKind.BoundedNumeric;
 
-  public SettingBounds ValueBounds => Editor?.Bounds ?? UnboundedRange;
+  public NumericSettingMetadata ValueMetadata =>
+    Editor?.Metadata as NumericSettingMetadata ?? UnboundedRange;
 
   public string Value
   {
@@ -121,19 +122,19 @@ public partial class SettingEditorView : ContentView
   {
     get
     {
-      var bounds = ValueBounds;
+      var metadata = ValueMetadata;
       var text = Value;
-      var number = text.EndsWith(bounds.Unit) ? text[..^bounds.Unit.Length] : text;
+      var number = text.EndsWith(metadata.Unit) ? text[..^metadata.Unit.Length] : text;
       return double.TryParse(number, NumberStyles.Number, CultureInfo.InvariantCulture, out var value)
         ? value
-        : bounds.Minimum;
+        : metadata.Minimum;
     }
     set
     {
-      var bounds = ValueBounds;
-      var steps = Math.Round(value / bounds.Step);
-      var snapped = bounds.Step * steps;
-      Value = snapped.ToString(CultureInfo.InvariantCulture) + bounds.Unit;
+      var metadata = ValueMetadata;
+      var steps = Math.Round(value / metadata.Step);
+      var snapped = metadata.Step * steps;
+      Value = snapped.ToString(CultureInfo.InvariantCulture) + metadata.Unit;
     }
   }
 

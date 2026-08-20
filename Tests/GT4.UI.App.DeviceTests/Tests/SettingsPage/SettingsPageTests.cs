@@ -1,7 +1,5 @@
 using GT4.Core.Utils;
 using GT4.UI.Pages;
-using GT4.UI.Utils.Settings;
-using System.Globalization;
 using Xunit;
 
 namespace GT4.UI.DeviceTests;
@@ -51,23 +49,17 @@ public class SettingsPageTests
   }
 
   [Fact]
-  public async Task The_only_bounded_setting_offers_exactly_the_range_FontScale_clamps_to()
+  public async Task Each_registered_setting_carries_the_metadata_its_kind_is_edited_through()
   {
     var page = await CreatePageAsync(new TestServices());
 
-    var bounded = page.SettingEditors.Single(e => e.Kind == SettingKind.BoundedNumeric);
+    var editors = page.SettingEditors.ToArray();
 
-    Assert.Equal(
-      new SettingBounds(100 * FontScale.MinFactor, 100 * FontScale.MaxFactor, 100 * FontScale.Step, "%"),
-      bounded.Bounds);
-    // The unit has to be the suffix the persisted Value actually carries, or the editor reads the
-    // percentage back as an unparseable string and falls to the minimum.
-    var unit = bounded.Bounds!.Unit;
-    var number = bounded.Value[..^unit.Length];
-    Assert.InRange(
-      double.Parse(number, CultureInfo.InvariantCulture),
-      bounded.Bounds.Minimum,
-      bounded.Bounds.Maximum);
+    var bounded = editors.Single(e => e.Kind == SettingKind.BoundedNumeric);
+    Assert.IsType<NumericSettingMetadata>(bounded.Metadata);
+    // No other kind has anything to say beyond its Value string yet.
+    var rest = editors.Where(e => e.Kind != SettingKind.BoundedNumeric);
+    Assert.All(rest, e => Assert.Null(e.Metadata));
   }
 
   [Fact]
