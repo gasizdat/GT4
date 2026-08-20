@@ -50,7 +50,7 @@
       <Grid
           Grid.Row="4"
           ColumnDefinitions="*, Auto"
-          IsVisible="{Binding IsBounded, Source={x:Reference Root}}">
+          IsVisible="{Binding IsBoundedNumeric, Source={x:Reference Root}}">
         <Slider
             x:Name="ValueSlider"
             Maximum="{Binding ValueMetadata.Maximum, Source={x:Reference Root}}"

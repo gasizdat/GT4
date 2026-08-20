@@ -22,23 +22,19 @@ public class SettingEditorViewTests
     return await MainThread.InvokeOnMainThreadAsync(() => new TestableSettingEditorView(services.Provider));
   }
 
-  private static Mock<ISettingEditor> MakeEditor(
-    string value = "current",
-    SettingKind kind = SettingKind.Text,
-    ISettingMetadata? metadata = null)
+  private static Mock<ISettingEditor> MakeEditor(string value = "current", SettingKind? kind = null)
   {
     var editor = new Mock<ISettingEditor>();
     editor.SetupGet(e => e.DisplayName).Returns("Display Name");
     editor.SetupGet(e => e.Description).Returns("Description");
     editor.SetupGet(e => e.Example).Returns("Example");
-    editor.SetupGet(e => e.Kind).Returns(kind);
-    editor.SetupGet(e => e.Metadata).Returns(metadata);
+    editor.SetupGet(e => e.Kind).Returns(kind ?? new SettingKind.Text());
     editor.SetupProperty(e => e.Value, value);
     return editor;
   }
 
   private static Mock<ISettingEditor> MakePercentEditor(string value) =>
-    MakeEditor(value, SettingKind.BoundedNumeric, new NumericSettingMetadata(75, 200, 5, "%"));
+    MakeEditor(value, new SettingKind.BoundedNumeric(75, 200, 5, "%"));
 
   // SettingEditorView.Editor only exposes a getter over its BindableProperty, so tests assign
   // through SetValue directly instead of through the (nonexistent) property setter.
@@ -156,14 +152,19 @@ public class SettingEditorViewTests
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
 
+  public static TheoryData<SettingKind, string> KindsAndTheirControls => new()
+  {
+    { new SettingKind.Text(), "ValueEntry" },
+    { new SettingKind.Boolean(), "ValueSwitch" },
+    { new SettingKind.BoundedNumeric(75, 200, 5, "%"), "ValueSlider" },
+  };
+
   [Theory]
-  [InlineData(SettingKind.Text, "ValueEntry")]
-  [InlineData(SettingKind.Boolean, "ValueSwitch")]
-  [InlineData(SettingKind.BoundedNumeric, "ValueSlider")]
+  [MemberData(nameof(KindsAndTheirControls))]
   public async Task The_Editor_Kind_shows_exactly_one_value_control(SettingKind kind, string visibleControl)
   {
     var view = await CreateViewAsync(new TestServices());
-    var editor = MakeEditor("100%", kind, new NumericSettingMetadata(75, 200, 5, "%"));
+    var editor = MakeEditor("100%", kind);
 
     await MainThread.InvokeOnMainThreadAsync(() => SetEditor(view, editor.Object));
 
@@ -187,7 +188,7 @@ public class SettingEditorViewTests
   public async Task A_Boolean_Editor_reads_its_Value_as_the_switch_state(string value, bool expected)
   {
     var view = await CreateViewAsync(new TestServices());
-    var editor = MakeEditor(value, SettingKind.Boolean);
+    var editor = MakeEditor(value, new SettingKind.Boolean());
 
     await MainThread.InvokeOnMainThreadAsync(() => SetEditor(view, editor.Object));
 
@@ -199,7 +200,7 @@ public class SettingEditorViewTests
   public async Task Toggling_the_switch_writes_the_Boolean_Editor_Value_back_as_True_or_False()
   {
     var view = await CreateViewAsync(new TestServices());
-    var editor = MakeEditor("False", SettingKind.Boolean);
+    var editor = MakeEditor("False", new SettingKind.Boolean());
     await MainThread.InvokeOnMainThreadAsync(() => SetEditor(view, editor.Object));
 
     await MainThread.InvokeOnMainThreadAsync(() => view.FindByName<Switch>("ValueSwitch").IsToggled = true);
@@ -253,10 +254,7 @@ public class SettingEditorViewTests
   public async Task A_fractional_BoundedNumeric_Value_round_trips_under_a_comma_decimal_culture()
   {
     var view = await CreateViewAsync(new TestServices());
-    var editor = MakeEditor(
-      "1.5x",
-      SettingKind.BoundedNumeric,
-      new NumericSettingMetadata(0.5, 2.5, 0.5, "x"));
+    var editor = MakeEditor("1.5x", new SettingKind.BoundedNumeric(0.5, 2.5, 0.5, "x"));
     await MainThread.InvokeOnMainThreadAsync(() => SetEditor(view, editor.Object));
 
     await MainThread.InvokeOnMainThreadAsync(() =>

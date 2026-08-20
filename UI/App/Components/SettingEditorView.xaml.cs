@@ -8,7 +8,7 @@ namespace GT4.UI.Components;
 public partial class SettingEditorView : ContentView
 {
   // The slider is bound even while hidden, so a setting with no range still has to report a legal one.
-  private static readonly NumericSettingMetadata UnboundedRange = new(0, 1, 1, string.Empty);
+  private static readonly SettingKind.BoundedNumeric UnboundedRange = new(0, 1, 1, string.Empty);
 
   private readonly IAlertService _AlertService;
 
@@ -53,7 +53,7 @@ public partial class SettingEditorView : ContentView
       OnPropertyChanged(nameof(Description));
       OnPropertyChanged(nameof(IsText));
       OnPropertyChanged(nameof(IsBoolean));
-      OnPropertyChanged(nameof(IsBounded));
+      OnPropertyChanged(nameof(IsBoundedNumeric));
       // Before the value properties: the slider coerces its value against the range it currently has.
       OnPropertyChanged(nameof(ValueMetadata));
       OnValueChanged();
@@ -88,14 +88,14 @@ public partial class SettingEditorView : ContentView
 
   public string Example => Editor?.Example ?? string.Empty;
 
-  public bool IsText => Editor?.Kind == SettingKind.Text;
+  public bool IsText => Editor?.Kind is SettingKind.Text;
 
-  public bool IsBoolean => Editor?.Kind == SettingKind.Boolean;
+  public bool IsBoolean => Editor?.Kind is SettingKind.Boolean;
 
-  public bool IsBounded => Editor?.Kind == SettingKind.BoundedNumeric;
+  public bool IsBoundedNumeric => Editor?.Kind is SettingKind.BoundedNumeric;
 
-  public NumericSettingMetadata ValueMetadata =>
-    Editor?.Metadata as NumericSettingMetadata ?? UnboundedRange;
+  public SettingKind.BoundedNumeric ValueMetadata =>
+    Editor?.Kind as SettingKind.BoundedNumeric ?? UnboundedRange;
 
   public string Value
   {

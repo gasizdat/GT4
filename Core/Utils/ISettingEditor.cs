@@ -1,20 +1,18 @@
 ﻿namespace GT4.Core.Utils;
 
-public enum SettingKind
+// What a setting's Value holds, together with whatever the control editing it needs beyond the
+// string itself.
+public abstract record SettingKind
 {
-  Text,
-  Boolean,
-  BoundedNumeric,
+  public sealed record Text : SettingKind;
+
+  public sealed record Boolean : SettingKind;
+
+  // Unit is the suffix Value carries, so an editor can read and write Value without knowing what
+  // the setting measures.
+  public sealed record BoundedNumeric(double Minimum, double Maximum, double Step, string Unit)
+    : SettingKind;
 }
-
-// Whatever a Kind needs beyond the Value string to drive its control. Which implementation an
-// editor carries follows from its Kind.
-public interface ISettingMetadata;
-
-// Unit is the suffix Value carries, so an editor can read and write Value without knowing what the
-// setting measures.
-public sealed record NumericSettingMetadata(double Minimum, double Maximum, double Step, string Unit)
-  : ISettingMetadata;
 
 public interface ISettingEditor
 {
@@ -35,9 +33,7 @@ public interface ISettingEditor
   string Value { get; set; }
 
   // Decides the control the setting is edited with.
-  SettingKind Kind => SettingKind.Text;
-
-  ISettingMetadata? Metadata => null;
+  SettingKind Kind => new SettingKind.Text();
 
   // Reset setting to default
   void ResetToDefault();

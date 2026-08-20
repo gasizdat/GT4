@@ -23,7 +23,7 @@ public class BackgroundAnimationSettingTests
   [Fact]
   public void Kind_IsBoolean()
   {
-    Make().Kind.Should().Be(SettingKind.Boolean);
+    Make().Kind.Should().Be(new SettingKind.Boolean());
   }
 
   [Fact]

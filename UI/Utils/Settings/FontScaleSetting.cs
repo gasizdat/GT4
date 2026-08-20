@@ -62,9 +62,7 @@ internal class FontScaleSetting : ISettingEditor
     }
   }
 
-  public SettingKind Kind => SettingKind.BoundedNumeric;
-
-  public ISettingMetadata? Metadata => new NumericSettingMetadata(
+  public SettingKind Kind => new SettingKind.BoundedNumeric(
     100 * FontScale.MinFactor,
     100 * FontScale.MaxFactor,
     100 * FontScale.Step,

@@ -103,17 +103,11 @@ public class FontScaleSettingTests
   }
 
   [Fact]
-  public void Kind_IsBoundedNumeric()
-  {
-    Make().Kind.Should().Be(SettingKind.BoundedNumeric);
-  }
-
-  [Fact]
-  public void Metadata_IsTheFontScaleClampRangeAsPercentages()
+  public void Kind_IsTheFontScaleClampRangeAsPercentages()
   {
     // The editor's range has to be the range FontScale.Apply already clamps to, so the slider cannot
     // offer a value the applier would silently pull back.
-    Make().Metadata.Should().Be(new NumericSettingMetadata(
+    Make().Kind.Should().Be(new SettingKind.BoundedNumeric(
       100 * FontScale.MinFactor,
       100 * FontScale.MaxFactor,
       100 * FontScale.Step,
@@ -121,13 +115,13 @@ public class FontScaleSettingTests
   }
 
   [Fact]
-  public void Metadata_UnitIsTheSuffixThePersistedValueCarries()
+  public void Kind_UnitIsTheSuffixThePersistedValueCarries()
   {
     // Strip the declared unit and what is left has to be the number, or the editor reads the
     // percentage back as an unparseable string and falls to the minimum.
-    var metadata = (NumericSettingMetadata)Make().Metadata!;
+    var kind = (SettingKind.BoundedNumeric)Make().Kind;
 
-    var number = Make(configuredValue: "150%").Value[..^metadata.Unit.Length];
+    var number = Make(configuredValue: "150%").Value[..^kind.Unit.Length];
 
     double.Parse(number, CultureInfo.InvariantCulture).Should().Be(150);
   }

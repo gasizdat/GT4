@@ -35,31 +35,12 @@ public class SettingsPageTests
   {
     var page = await CreatePageAsync(new TestServices());
 
-    var kinds = page.SettingEditors.GroupBy(e => e.Kind).ToDictionary(g => g.Key, g => g.Count());
+    var kinds = page.SettingEditors.Select(e => e.Kind).ToArray();
 
-    Assert.Equal(
-      new Dictionary<SettingKind, int>
-      {
-        // The eight format patterns, plus the font scale and the background animation.
-        [SettingKind.Text] = 8,
-        [SettingKind.BoundedNumeric] = 1,
-        [SettingKind.Boolean] = 1,
-      },
-      kinds);
-  }
-
-  [Fact]
-  public async Task Each_registered_setting_carries_the_metadata_its_kind_is_edited_through()
-  {
-    var page = await CreatePageAsync(new TestServices());
-
-    var editors = page.SettingEditors.ToArray();
-
-    var bounded = editors.Single(e => e.Kind == SettingKind.BoundedNumeric);
-    Assert.IsType<NumericSettingMetadata>(bounded.Metadata);
-    // No other kind has anything to say beyond its Value string yet.
-    var rest = editors.Where(e => e.Kind != SettingKind.BoundedNumeric);
-    Assert.All(rest, e => Assert.Null(e.Metadata));
+    // The eight format patterns, plus the background animation and the font scale.
+    Assert.Equal(8, kinds.OfType<SettingKind.Text>().Count());
+    Assert.Single(kinds.OfType<SettingKind.Boolean>());
+    Assert.Single(kinds.OfType<SettingKind.BoundedNumeric>());
   }
 
   [Fact]
