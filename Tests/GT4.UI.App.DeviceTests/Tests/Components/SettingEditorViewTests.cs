@@ -68,7 +68,7 @@ public class SettingEditorViewTests
     Assert.Equal(
       [
         "Editor", "Caption", "Description",
-        "IsText", "IsBoolean", "IsBounded", "ValueMetadata",
+        "IsText", "IsBoolean", "IsBoundedNumeric", "ValueMetadata",
         "Value", "BooleanValue", "NumericValue", "Example"
       ],
       raised);
