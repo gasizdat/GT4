@@ -322,6 +322,19 @@ public class SettingEditorViewTests
   }
 
   [Fact]
+  public async Task Resetting_a_Choice_Editor_moves_the_picker_onto_the_restored_option()
+  {
+    var view = await CreateViewAsync(new TestServices());
+    var editor = MakeChoiceEditor("Dark");
+    editor.Setup(e => e.ResetToDefault()).Callback(() => editor.Object.Value = "Unspecified");
+    await MainThread.InvokeOnMainThreadAsync(() => SetEditor(view, editor.Object));
+
+    await MainThread.InvokeOnMainThreadAsync(() => view.ResetCommand.Execute(null));
+
+    Assert.Equal(0, view.FindByName<Picker>("ValuePicker").SelectedIndex);
+  }
+
+  [Fact]
   public async Task A_non_Choice_Editor_leaves_the_picker_empty_without_rewriting_its_Value()
   {
     // The picker is bound even while hidden: an empty option list pushes a null selection back, and
