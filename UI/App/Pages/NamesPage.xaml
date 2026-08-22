@@ -12,6 +12,7 @@
 
   <components:PageLayout
       Title="{x:Static resources:UIStrings.TitleNamesPage}"
+      HasBackButton="True"
       Hint="{x:Static resources:UIStrings.HintNamesPage}">
 
     <components:PageLayout.MenuItems>

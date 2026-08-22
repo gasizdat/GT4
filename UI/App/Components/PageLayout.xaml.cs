@@ -1,4 +1,6 @@
+using GT4.UI.Abstraction;
 using GT4.UI.Items;
+using GT4.UI.Resources;
 using GT4.UI.Utils.Settings;
 using System.Collections.ObjectModel;
 
@@ -7,6 +9,7 @@ namespace GT4.UI.Components;
 public partial class PageLayout : ContentView
 {
   private readonly ObservableCollection<PageMenuItem> _MenuItems = new();
+  private readonly INavigationService _NavigationService;
   private bool _IsTopMenuVisible;
   private bool _IsSideMenuVisible;
 
@@ -14,6 +17,12 @@ public partial class PageLayout : ContentView
   public PageLayout(IServiceProvider serviceProvider)
   {
     Animation = serviceProvider.GetRequiredService<BackgroundAnimation>();
+    _NavigationService = serviceProvider.GetRequiredService<INavigationService>();
+
+    var alertService = serviceProvider.GetRequiredService<IAlertService>();
+    var backCommand = new SafeCommand(GoBackAsync, alertService);
+    BackItem = new PageMenuItem { Text = UIStrings.MenuItemNameBack, Command = backCommand };
+
     SizeChanged += OnMenuPlacementChanged;
     _MenuItems.CollectionChanged += OnMenuPlacementChanged;
 
@@ -26,6 +35,15 @@ public partial class PageLayout : ContentView
   }
 
   public BackgroundAnimation Animation { get; }
+
+  public PageMenuItem BackItem { get; }
+
+  public static readonly BindableProperty HasBackButtonProperty =
+    BindableProperty.Create(
+      nameof(HasBackButton),
+      typeof(bool),
+      typeof(PageLayout),
+      false);
 
   public static readonly BindableProperty TitleProperty =
     BindableProperty.Create(
@@ -124,7 +142,15 @@ public partial class PageLayout : ContentView
     }
   }
 
+  private Task GoBackAsync() => _NavigationService.GoToAsync("..", true);
+
   public ICollection<PageMenuItem> MenuItems => _MenuItems;
+
+  public bool HasBackButton
+  {
+    get => (bool)GetValue(HasBackButtonProperty);
+    set => SetValue(HasBackButtonProperty, value);
+  }
 
   public string Title
   {

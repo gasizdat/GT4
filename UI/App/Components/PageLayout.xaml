@@ -44,19 +44,35 @@
   </ContentView.Resources>
 
   <Grid
-      ColumnDefinitions="*"
+      ColumnDefinitions="Auto, *"
       RowDefinitions="Auto, Auto, Auto, *, Auto">
     <Image
         Grid.RowSpan="5"
+        Grid.ColumnSpan="2"
         Aspect="AspectFill"
         IsAnimationPlaying="{Binding Animation.IsEnabled, Source={x:Reference Root}}"
         Opacity="0.3"
         Source="tree_bg.gif" />
 
+    <!--  Back  -->
+    <Button
+        Grid.Row="0"
+        Grid.RowSpan="2"
+        Grid.Column="0"
+        Margin="{Thickness Left={StaticResource PageContentHorizontalPadding}}"
+        BindingContext="{Binding BackItem, Source={x:Reference Root}}"
+        Command="{Binding Command}"
+        FontSize="{DynamicResource ActionButtonTextSize}"
+        IsVisible="{Binding HasBackButton, Source={x:Reference Root}}"
+        Style="{StaticResource EmojiAdorner}"
+        Text="{Binding ButtonText}"
+        ToolTipProperties.Text="{Binding ToolTipText}"
+        VerticalOptions="Center" />
+
     <!--  Title  -->
     <Label
         Grid.Row="0"
-        Grid.Column="0"
+        Grid.Column="1"
         Margin="{Thickness Left={StaticResource PageContentHorizontalPadding},
                            Right={StaticResource PageContentHorizontalPadding}}"
         IsVisible="{Binding IsTitleVisible, Source={x:Reference Root}}"
@@ -66,7 +82,7 @@
     <!--  Hint  -->
     <Label
         Grid.Row="1"
-        Grid.Column="0"
+        Grid.Column="1"
         Margin="{Thickness Left={StaticResource PageContentHorizontalPadding},
                            Right={StaticResource PageContentHorizontalPadding}}"
         IsVisible="{Binding IsHintVisible, Source={x:Reference Root}}"
@@ -77,6 +93,7 @@
     <Grid
         Grid.Row="2"
         Grid.Column="0"
+        Grid.ColumnSpan="2"
         Padding="{StaticResource HeaderPadding}"
         RowDefinitions="*, Auto">
 
@@ -99,6 +116,7 @@
     <Grid
         Grid.Row="3"
         Grid.Column="0"
+        Grid.ColumnSpan="2"
         Padding="{StaticResource BodyPadding}"
         ColumnDefinitions="*, Auto">
 
@@ -120,6 +138,7 @@
     <ContentView
         Grid.Row="4"
         Grid.Column="0"
+        Grid.ColumnSpan="2"
         Padding="{StaticResource FooterPadding}"
         Content="{Binding Footer, Source={x:Reference Root}}"
         IsVisible="{Binding IsFooterVisible, Source={x:Reference Root}}" />

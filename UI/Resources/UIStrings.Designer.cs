@@ -2296,6 +2296,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ⬅️ Back.
+        /// </summary>
+        public static string MenuItemNameBack {
+            get {
+                return ResourceManager.GetString("MenuItemNameBack", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to ➕ Create a Family.
         /// </summary>
         public static string MenuItemNameCreateFamily {

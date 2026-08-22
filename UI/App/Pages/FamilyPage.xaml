@@ -26,6 +26,7 @@
 
   <components:PageLayout
       Title="{Binding FamilyName.Value, Source={x:Reference Root}}"
+      HasBackButton="True"
       Hint="{x:Static resources:UIStrings.HintFamilyPage}">
 
     <components:PageLayout.MenuItems>

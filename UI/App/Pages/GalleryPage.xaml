@@ -6,10 +6,11 @@
     xmlns:components="clr-namespace:GT4.UI.Components"
     xmlns:items="clr-namespace:GT4.UI.Items"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
-    x:Name="Root"
-    Title="{x:Static resources:UIStrings.TitleGalleryPage}">
+    x:Name="Root">
 
-  <components:PageLayout>
+  <components:PageLayout
+      HasBackButton="True"
+      Title="{x:Static resources:UIStrings.TitleGalleryPage}">
     <components:PageLayout.Header>
       <Grid
           Padding="20"
