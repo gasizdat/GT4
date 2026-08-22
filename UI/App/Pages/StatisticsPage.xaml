@@ -30,7 +30,7 @@
     </ResourceDictionary>
   </ContentPage.Resources>
 
-  <components:PageLayout x:Name="LayoutView">
+  <components:PageLayout IsLoading="{Binding Loading.IsLoading, Source={x:Reference Root}}">
     <components:PageLayout.Body>
       <ScrollView>
         <Grid

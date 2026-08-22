@@ -92,7 +92,7 @@ public partial class SelectPersonDialog : ContentPage
 
       if (_Persons.Count == 0 || _ProjectRevision != _CurrentProjectProvider.Project.ProjectRevision)
       {
-        LayoutView.RunLoad(_Persons.Count != 0, AddPersonInfoItemsAsync, _AlertService);
+        Loading.Run(_Persons.Count != 0, AddPersonInfoItemsAsync, _AlertService);
       }
 
       return _Persons.Items;
@@ -109,6 +109,8 @@ public partial class SelectPersonDialog : ContentPage
       OnPropertyChanged(nameof(DialogButtonName));
     }
   }
+
+  public PageLoading Loading { get; } = new();
 
   public string DialogButtonName => _SelectedPerson is not null ? UIStrings.BtnNameOk : UIStrings.BtnNameCancel;
 

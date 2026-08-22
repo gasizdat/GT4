@@ -64,20 +64,19 @@ public class FamilyTreePageTests
       .Setup(f => f.BuildAsync(It.IsAny<Person>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(new FamilyTree(center.Id, [new FamilyTreeNode(center, 0)], []));
     var page = await CreatePageAsync(services);
-    var layout = LoadingIndicator.Of(page);
 
     var isLoadingOnFirstBuild = await MainThread.InvokeOnMainThreadAsync(() =>
     {
       page.PersonInfo = center;
-      return layout.IsLoading;
+      return page.Loading.IsLoading;
     });
     Assert.True(isLoadingOnFirstBuild);
-    await LoadingIndicator.WaitUntilHiddenAsync(layout, "The indicator stayed on after the first build landed.");
+    await page.Loading.UntilIdleAsync("The indicator stayed on after the first build landed.");
 
     var isLoadingOnLoadMore = await MainThread.InvokeOnMainThreadAsync(() =>
     {
       _ = page.InvokePageCommandAsync("LoadAncestors");
-      return layout.IsLoading;
+      return page.Loading.IsLoading;
     });
 
     Assert.False(isLoadingOnLoadMore);

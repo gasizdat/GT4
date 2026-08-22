@@ -163,7 +163,7 @@ public partial class ProjectPage : ContentPage
       }, _AlertService);
     }
 
-    LayoutView.RunLoad(_Families.Count != 0, OnLoadFamiliesAsync, _AlertService);
+    Loading.Run(_Families.Count != 0, OnLoadFamiliesAsync, _AlertService);
   }
 
   // Loops AllItems, not the currently-visible Items: a family hidden by the current filters must
@@ -177,6 +177,8 @@ public partial class ProjectPage : ContentPage
 
     _Families.Update();
   }
+
+  public PageLoading Loading { get; } = new();
 
   public string RemoveProjectToolbarItemName =>
     string.Format(UIStrings.MenuItemNameRemove_1, _CurrentProjectProvider.Info.Name);

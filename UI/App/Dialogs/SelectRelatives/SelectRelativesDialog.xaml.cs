@@ -154,6 +154,8 @@ public partial class SelectRelativesDialog : ContentPage
     }
   }
 
+  public PageLoading Loading { get; } = new();
+
   public BiologicalSexItem[] BiologicalSexes => _BiologicalSexes;
 
   public RelationshipTypeItem RelType { get => _RelationshipType; set => _RelationshipType = value; }
@@ -205,7 +207,7 @@ public partial class SelectRelativesDialog : ContentPage
 
       if (_Persons.Count == 0 || _ProjectRevision != _Factory.CurrentProjectProvider.Project.ProjectRevision)
       {
-        LayoutView.RunLoad(_Persons.Count != 0, AddPersonInfoItemsAsync, _Factory.AlertService);
+        Loading.Run(_Persons.Count != 0, AddPersonInfoItemsAsync, _Factory.AlertService);
       }
 
       return _Persons.Items;

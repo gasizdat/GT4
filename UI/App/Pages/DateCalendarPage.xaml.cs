@@ -55,6 +55,8 @@ public partial class DateCalendarPage : ContentPage
     _LastProjectInfo = _CurrentProjectProvider.Info;
   }
 
+  public PageLoading Loading { get; } = new();
+
   public ICommand PageCommand { get; init; }
 
   public ICommand PersonCommand { get; init; }
@@ -71,7 +73,7 @@ public partial class DateCalendarPage : ContentPage
       if (_UpdateData)
       {
         _UpdateData = false;
-        LayoutView.RunLoad(_CalendarRendered, LoadCalendarDataAsync, _AlertService);
+        Loading.Run(_CalendarRendered, LoadCalendarDataAsync, _AlertService);
       }
 
       var month = DateCalendarCalculator.Compute(_Persons, _RelativesByPersonId, _DisplayMonth, Date.Now.Year);

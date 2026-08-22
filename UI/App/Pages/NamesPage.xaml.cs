@@ -254,6 +254,8 @@ public partial class NamesPage : ContentPage
     OnPropertyChanged(nameof(Names));
   }
 
+  public PageLoading Loading { get; } = new();
+
   public ICollection<BiologicalSexItem> BiologicalSexes => _BiologicalSexes;
 
   public BiologicalSexItem CurrentBiologicalSex
@@ -311,7 +313,7 @@ public partial class NamesPage : ContentPage
         _UpdateNames = false;
         // AddNameItemsAsync reads the project document on a background thread; SafeTask swallows the
         // teardown race (project closed while backgrounding) and surfaces any real failure.
-        LayoutView.RunLoad(_Names.Count != 0, AddNameItemsAsync, _AlertService);
+        Loading.Run(_Names.Count != 0, AddNameItemsAsync, _AlertService);
       }
 
       return _Names.Items;

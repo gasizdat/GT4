@@ -75,7 +75,7 @@ public partial class SelectMediaDialog : ContentPage
       if (_LoadItems)
       {
         _LoadItems = false;
-        LayoutView.RunLoad(_Items.Count != 0, AddMediaItemsAsync, _Factory.AlertService);
+        Loading.Run(_Items.Count != 0, AddMediaItemsAsync, _Factory.AlertService);
       }
 
       return _Items.Items;
@@ -104,6 +104,8 @@ public partial class SelectMediaDialog : ContentPage
       OnPropertyChanged(nameof(DialogButtonName));
     }
   }
+
+  public PageLoading Loading { get; } = new();
 
   public string DialogButtonName => _SelectedItem is not null ? UIStrings.BtnNameOk : UIStrings.BtnNameCancel;
 

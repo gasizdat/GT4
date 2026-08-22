@@ -99,7 +99,7 @@ public partial class PersonPage : ContentPage
   public void ShowPersonInfo(Person person, bool addToNavigation)
   {
     ExpandAll = false;
-    LayoutView.RunLoad(_PersonFullInfo is not null, () => GetPersonDataAsync(person, addToNavigation), _AlertService);
+    Loading.Run(_PersonFullInfo is not null, () => GetPersonDataAsync(person, addToNavigation), _AlertService);
   }
 
   public bool ExpandAll
@@ -113,6 +113,8 @@ public partial class PersonPage : ContentPage
       OnPropertyChanged(nameof(ToggleAllMenuItemName));
     }
   }
+
+  public PageLoading Loading { get; } = new();
 
   public string ToggleAllButtonName => ExpandAll ? "⏫" : "⏬";
 

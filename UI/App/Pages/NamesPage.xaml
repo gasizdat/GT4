@@ -11,9 +11,9 @@
     x:Name="Root">
 
   <components:PageLayout
-      x:Name="LayoutView"
       Title="{x:Static resources:UIStrings.TitleNamesPage}"
-      Hint="{x:Static resources:UIStrings.HintNamesPage}">
+      Hint="{x:Static resources:UIStrings.HintNamesPage}"
+      IsLoading="{Binding Loading.IsLoading, Source={x:Reference Root}}">
 
     <components:PageLayout.MenuItems>
       <items:PageMenuItem

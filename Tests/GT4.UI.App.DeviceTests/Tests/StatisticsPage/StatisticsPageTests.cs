@@ -129,7 +129,6 @@ public class StatisticsPageTests
   {
     var services = new TestServices();
     var page = await CreatePageAsync(services);
-    var layout = LoadingIndicator.Of(page);
     var statistics = await page.WaitForFirstLoadAsync();
     Assert.Equal(ProjectStatistics.Empty, statistics);
     services.CurrentProjectProvider.SetupGet(p => p.Info).Returns(TestServices.SampleProjectInfo with { Revision = 42 });
@@ -137,7 +136,7 @@ public class StatisticsPageTests
     var isLoading = await MainThread.InvokeOnMainThreadAsync(() =>
     {
       page.InvokeNavigatedTo();
-      return layout.IsLoading;
+      return page.Loading.IsLoading;
     });
 
     Assert.False(isLoading);

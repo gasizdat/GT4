@@ -257,14 +257,13 @@ public class DateCalendarPageTests
   {
     var services = new TestServices();
     var page = await CreatePageAsync(services);
-    var layout = LoadingIndicator.Of(page);
     await page.WaitForFirstLoadAsync();
     services.CurrentProjectProvider.SetupGet(p => p.Info).Returns(TestServices.SampleProjectInfo with { Revision = 42 });
 
     var isLoading = await MainThread.InvokeOnMainThreadAsync(() =>
     {
       page.InvokeNavigatedTo();
-      return layout.IsLoading;
+      return page.Loading.IsLoading;
     });
 
     Assert.False(isLoading);

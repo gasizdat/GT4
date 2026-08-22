@@ -106,6 +106,8 @@ public partial class GalleryPage : ContentPage
     string.IsNullOrEmpty(_OwnerFilter) ||
     item.Owners.Contains(_OwnerFilter, StringComparison.InvariantCultureIgnoreCase);
 
+  public PageLoading Loading { get; } = new();
+
   public ICommand DeleteDataCommand => _DeleteDataCommand;
 
   public ICommand OpenDataCommand => _OpenDataCommand;
@@ -140,7 +142,7 @@ public partial class GalleryPage : ContentPage
       if (_UpdateItems)
       {
         _UpdateItems = false;
-        LayoutView.RunLoad(_Items.Count != 0, AddGalleryItemsAsync, _AlertService);
+        Loading.Run(_Items.Count != 0, AddGalleryItemsAsync, _AlertService);
       }
 
       return _Items.Items;

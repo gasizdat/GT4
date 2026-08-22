@@ -38,6 +38,8 @@ public partial class StatisticsPage : ContentPage
     _LastProjectInfo = _CurrentProjectProvider.Info;
   }
 
+  public PageLoading Loading { get; } = new();
+
   // The single trigger for the (lazy, async) load: every display property below reads Statistics, so
   // whichever one XAML binds first kicks off the load, following the same lazy-getter idiom as
   // NamesPage.Names / ProjectPage.Families.
@@ -48,7 +50,7 @@ public partial class StatisticsPage : ContentPage
       if (_UpdateStatistics)
       {
         _UpdateStatistics = false;
-        LayoutView.RunLoad(_StatisticsLoaded, LoadStatisticsAsync, _AlertService);
+        Loading.Run(_StatisticsLoaded, LoadStatisticsAsync, _AlertService);
       }
 
       return _Statistics;

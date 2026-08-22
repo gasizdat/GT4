@@ -99,19 +99,18 @@ public class NamesPageTests
       .Setup(n => n.GetNamesByTypeAsync(It.IsAny<NameType>(), It.IsAny<CancellationToken>()))
       .Returns(() => gate.Task);
     var page = await CreatePageAsync(services);
-    var layout = LoadingIndicator.Of(page);
 
     // Reading Names inside the dispatch covers both orders: it starts the load if the page's own
     // CollectionView binding has not already done so, and is a no-op if it has.
     var isLoading = await MainThread.InvokeOnMainThreadAsync(() =>
     {
       _ = page.Names;
-      return layout.IsLoading;
+      return page.Loading.IsLoading;
     });
 
     Assert.True(isLoading);
     gate.SetResult([N(1, "Pushkin", NameType.FamilyName)]);
-    await LoadingIndicator.WaitUntilHiddenAsync(layout, "The indicator stayed on after the first load landed.");
+    await page.Loading.UntilIdleAsync("The indicator stayed on after the first load landed.");
   }
 
   [Fact]
@@ -122,7 +121,6 @@ public class NamesPageTests
       .Setup(n => n.GetNamesByTypeAsync(It.IsAny<NameType>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync([N(1, "Pushkin", NameType.FamilyName)]);
     var page = await CreatePageAsync(services);
-    var layout = LoadingIndicator.Of(page);
     var loaded = await page.ReloadNamesAsync(() => page.InvokeRequestUpdateNames());
     Assert.NotEmpty(loaded);
 
@@ -130,7 +128,7 @@ public class NamesPageTests
     {
       page.InvokeRequestUpdateNames();
       _ = page.Names;
-      return layout.IsLoading;
+      return page.Loading.IsLoading;
     });
 
     Assert.False(isLoading);

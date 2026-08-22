@@ -63,6 +63,8 @@ public partial class ProjectListPage : ContentPage
     InitializeComponent();
   }
 
+  public PageLoading Loading { get; } = new();
+
   public ICollection<ProjectItem> Projects => _Projects;
 
   public ICommand PageCommand => _PageCommand;
@@ -97,7 +99,7 @@ public partial class ProjectListPage : ContentPage
   protected override void OnNavigatedTo(NavigatedToEventArgs args)
   {
     base.OnNavigatedTo(args);
-    LayoutView.RunLoad(_Projects.Count != 0, async () =>
+    Loading.Run(_Projects.Count != 0, async () =>
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
       await _CurrentProjectProvider.CloseAsync(token);

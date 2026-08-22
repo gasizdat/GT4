@@ -1,7 +1,5 @@
-using GT4.UI.Abstraction;
 using GT4.UI.Components;
 using GT4.UI.Items;
-using Moq;
 using Xunit;
 
 namespace GT4.UI.DeviceTests;
@@ -143,71 +141,28 @@ public class PageLayoutTests
     Assert.True(layout.IsHintVisible);
   }
 
+  // The page-side flag bound in here is covered by PageLoadingTests.
   [Fact]
-  public async Task The_activity_indicator_tracks_IsLoading()
+  public async Task A_bound_loading_flag_drives_the_activity_indicator()
   {
     var layout = await CreateLayoutAsync();
+    var loading = new PageLoading();
     var indicator = layout.FindByName<ActivityIndicator>("LoadingIndicator");
+    var binding = new Binding(nameof(PageLoading.IsLoading), source: loading);
+    await MainThread.InvokeOnMainThreadAsync(() => layout.SetBinding(PageLayout.IsLoadingProperty, binding));
 
     Assert.False(layout.IsLoading);
     Assert.False(indicator.IsRunning);
     Assert.False(indicator.IsVisible);
 
-    await MainThread.InvokeOnMainThreadAsync(() => layout.IsLoading = true);
+    await MainThread.InvokeOnMainThreadAsync(() => loading.IsLoading = true);
+    Assert.True(layout.IsLoading);
     Assert.True(indicator.IsRunning);
     Assert.True(indicator.IsVisible);
 
-    await MainThread.InvokeOnMainThreadAsync(() => layout.IsLoading = false);
+    await MainThread.InvokeOnMainThreadAsync(() => loading.IsLoading = false);
+    Assert.False(layout.IsLoading);
     Assert.False(indicator.IsRunning);
     Assert.False(indicator.IsVisible);
-  }
-
-  [Fact]
-  public async Task A_load_that_starts_with_content_on_screen_never_shows_the_indicator()
-  {
-    var layout = await CreateLayoutAsync();
-    var alertService = new Mock<IAlertService>();
-    var release = new TaskCompletionSource();
-
-    var isLoading = await MainThread.InvokeOnMainThreadAsync(() =>
-    {
-      layout.RunLoad(hasContent: true, () => release.Task, alertService.Object);
-      return layout.IsLoading;
-    });
-
-    Assert.False(isLoading);
-    release.SetResult();
-    await LoadingIndicator.WaitUntilHiddenAsync(layout, "A load over existing content turned the indicator on.");
-  }
-
-  [Fact]
-  public async Task A_failed_load_still_hides_the_indicator()
-  {
-    var layout = await CreateLayoutAsync();
-    var alertService = new Mock<IAlertService>();
-
-    var isLoading = await MainThread.InvokeOnMainThreadAsync(() =>
-    {
-      layout.RunLoad(hasContent: false, () => Task.FromException(new InvalidOperationException()), alertService.Object);
-      return layout.IsLoading;
-    });
-
-    Assert.True(isLoading);
-    await LoadingIndicator.WaitUntilHiddenAsync(layout, "A failed load left the indicator spinning.");
-    alertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Once());
-  }
-
-  // SafeTask swallows this race silently, so nothing but the finally would ever clear the indicator.
-  [Fact]
-  public async Task A_load_lost_to_the_project_teardown_race_still_hides_the_indicator()
-  {
-    var layout = await CreateLayoutAsync();
-    var alertService = new Mock<IAlertService>();
-
-    await MainThread.InvokeOnMainThreadAsync(() =>
-      layout.RunLoad(hasContent: false, () => Task.FromException(new ObjectDisposedException("project")), alertService.Object));
-
-    await LoadingIndicator.WaitUntilHiddenAsync(layout, "A load lost to project teardown left the indicator spinning.");
-    alertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
 }

@@ -54,8 +54,8 @@ public partial class KinshipFinderPage : ContentPage
       return;
     }
 
-    // Not LayoutView.RunLoad: the search awaits on the UI thread, and RefreshView must stay there.
-    LayoutView.IsLoading = _Chain is null;
+    // Not Loading.Run: the search awaits on the UI thread, and RefreshView must stay there.
+    Loading.IsLoading = _Chain is null;
     try
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
@@ -67,7 +67,7 @@ public partial class KinshipFinderPage : ContentPage
     }
     finally
     {
-      LayoutView.IsLoading = false;
+      Loading.IsLoading = false;
     }
   }
 
@@ -125,6 +125,8 @@ public partial class KinshipFinderPage : ContentPage
     _LastProjectInfo = _CurrentProjectProvider.Info;
     _ = SafeTask.GuardAsync(FindAsync, _AlertService);
   }
+
+  public PageLoading Loading { get; } = new();
 
   public ICommand PageCommand => _PageCommand;
 

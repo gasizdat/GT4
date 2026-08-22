@@ -88,7 +88,9 @@
     </ResourceDictionary>
   </ContentPage.Resources>
 
-  <components:PageLayout x:Name="LayoutView" Title="{x:Static resources:UIStrings.TitleDateCalendarPage}">
+  <components:PageLayout
+      Title="{x:Static resources:UIStrings.TitleDateCalendarPage}"
+      IsLoading="{Binding Loading.IsLoading, Source={x:Reference Root}}">
 
     <components:PageLayout.MenuItems>
       <items:PageMenuItem
