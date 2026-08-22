@@ -50,42 +50,37 @@
     </ResourceDictionary>
   </ContentView.Resources>
 
-  <Grid
-      ColumnDefinitions="Auto, *"
-      RowDefinitions="Auto, Auto, Auto, *, Auto">
+  <!--  Single-column on purpose: MAUI sizes a star row to the whole grid, not to what its Auto rows
+        leave, as soon as a child spans columns, which pushes the footer off the page.  -->
+  <Grid RowDefinitions="Auto, Auto, Auto, *, Auto">
     <Image
         Grid.RowSpan="5"
-        Grid.ColumnSpan="2"
         Aspect="AspectFill"
         IsAnimationPlaying="{Binding Animation.IsEnabled, Source={x:Reference Root}}"
         Opacity="0.3"
         Source="tree_bg.gif" />
 
-    <!--  Back  -->
-    <Button
-        Grid.Row="0"
-        Grid.Column="0"
-        Margin="{Thickness Left={StaticResource PageContentHorizontalPadding}}"
-        BindingContext="{Binding BackItem, Source={x:Reference Root}}"
-        IsVisible="{Binding IsBackButtonVisible, Source={x:Reference Root}}"
-        Style="{StaticResource MenuButton}"
-        VerticalOptions="Center" />
+    <!--  Back and title  -->
+    <Grid Grid.Row="0" ColumnDefinitions="Auto, *">
+      <Button
+          Margin="{Thickness Left={StaticResource PageContentHorizontalPadding}}"
+          BindingContext="{Binding BackItem, Source={x:Reference Root}}"
+          IsVisible="{Binding IsBackButtonVisible, Source={x:Reference Root}}"
+          Style="{StaticResource MenuButton}"
+          VerticalOptions="Center" />
 
-    <!--  Title  -->
-    <Label
-        Grid.Row="0"
-        Grid.Column="1"
-        Margin="{Thickness Left={StaticResource PageContentHorizontalPadding},
-                           Right={StaticResource PageContentHorizontalPadding}}"
-        IsVisible="{Binding IsTitleVisible, Source={x:Reference Root}}"
-        Style="{StaticResource PageTitle}"
-        Text="{Binding Title, Source={x:Reference Root}}" />
+      <Label
+          Grid.Column="1"
+          Margin="{Thickness Left={StaticResource PageContentHorizontalPadding},
+                             Right={StaticResource PageContentHorizontalPadding}}"
+          IsVisible="{Binding IsTitleVisible, Source={x:Reference Root}}"
+          Style="{StaticResource PageTitle}"
+          Text="{Binding Title, Source={x:Reference Root}}" />
+    </Grid>
 
     <!--  Hint  -->
     <Label
         Grid.Row="1"
-        Grid.Column="0"
-        Grid.ColumnSpan="2"
         Margin="{Thickness Left={StaticResource PageContentHorizontalPadding},
                            Right={StaticResource PageContentHorizontalPadding}}"
         IsVisible="{Binding IsHintVisible, Source={x:Reference Root}}"
@@ -95,8 +90,6 @@
     <!--  Header slot  -->
     <Grid
         Grid.Row="2"
-        Grid.Column="0"
-        Grid.ColumnSpan="2"
         Padding="{StaticResource HeaderPadding}"
         RowDefinitions="*, Auto">
 
@@ -117,9 +110,8 @@
 
     <!--  Body slot  -->
     <Grid
+        x:Name="BodySlot"
         Grid.Row="3"
-        Grid.Column="0"
-        Grid.ColumnSpan="2"
         Padding="{StaticResource BodyPadding}"
         ColumnDefinitions="*, Auto">
 
@@ -140,7 +132,6 @@
     <ActivityIndicator
         x:Name="LoadingIndicator"
         Grid.Row="3"
-        Grid.Column="0"
         HorizontalOptions="Center"
         InputTransparent="True"
         IsRunning="{Binding Loading.IsLoading, Source={x:Reference Root}, FallbackValue=False}"
@@ -149,9 +140,8 @@
 
     <!--  Footer slot  -->
     <ContentView
+        x:Name="FooterSlot"
         Grid.Row="4"
-        Grid.Column="0"
-        Grid.ColumnSpan="2"
         Padding="{StaticResource FooterPadding}"
         Content="{Binding Footer, Source={x:Reference Root}}"
         IsVisible="{Binding IsFooterVisible, Source={x:Reference Root}}" />

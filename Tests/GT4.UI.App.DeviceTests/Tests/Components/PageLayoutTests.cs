@@ -27,10 +27,16 @@ public class PageLayoutTests
     return await MainThread.InvokeOnMainThreadAsync(() => services.Provider.GetRequiredService<T>());
   }
 
-  private static Button BackButton(PageLayout layout)
+  private static Grid TitleRow(PageLayout layout)
   {
     var grid = (Grid)layout.Content;
-    return grid.Children.OfType<Button>().Single();
+    return grid.Children.OfType<Grid>().First();
+  }
+
+  private static Button BackButton(PageLayout layout)
+  {
+    var titleRow = TitleRow(layout);
+    return titleRow.Children.OfType<Button>().Single();
   }
 
   // Whichever menu the current orientation put on screen holds the arranged button; the other is collapsed.
@@ -45,8 +51,8 @@ public class PageLayoutTests
 
   private static Label TitleLabel(PageLayout layout)
   {
-    var grid = (Grid)layout.Content;
-    return grid.Children.OfType<Label>().First();
+    var titleRow = TitleRow(layout);
+    return titleRow.Children.OfType<Label>().Single();
   }
 
   private static async Task<double> TitleOffsetAsync(bool hasBackButton)
@@ -69,6 +75,37 @@ public class PageLayoutTests
 
     // Beyond the title's own horizontal padding, so the result is what the back button's column adds.
     return frame.X - TitleLabel(layout).Margin.Left;
+  }
+
+  private static async Task<(double PageHeight, Rect Footer)> SlotFramesAsync(int menuItems, double bodyHeight)
+  {
+    var layout = await CreateLayoutAsync();
+    var footer = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      layout.Title = "Genealogy tree";
+      layout.Hint = "Open or create a family";
+      layout.Header = new BoxView { HeightRequest = 40 };
+      layout.Body = new BoxView { HeightRequest = bodyHeight };
+      var view = new BoxView { HeightRequest = 20 };
+      layout.Footer = view;
+      for (var item = 0; item < menuItems; item++)
+      {
+        layout.MenuItems.Add(new PageMenuItem { Text = $"🔄️ Refresh {item}" });
+      }
+
+      return view;
+    });
+
+    var page = await MainThread.InvokeOnMainThreadAsync(() => new ContentPage { Content = layout });
+    await using var window = await WindowHost.AttachAsync(page);
+
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => footer.Frame),
+      frame => frame.Width > 0,
+      timeoutMessage: "The footer was never arranged.");
+
+    var slot = layout.FindByName<ContentView>("FooterSlot");
+    return (layout.Height, slot.Frame);
   }
 
   private static Task ArrangeAsync(PageLayout layout, double width, double height) =>
@@ -355,6 +392,30 @@ public class PageLayoutTests
 
     Assert.True(layout.HasBackButton);
     Assert.Equal(ShowsBackButton, BackButton(layout).IsVisible);
+  }
+
+  // MAUI gives a grid's star row the whole grid's height, not what its Auto rows leave, once a child
+  // spans columns -- so the back button's own column cost the body slot its bounds, and with them the
+  // footer's place on the page and the viewport a list in the body needs to virtualize against.
+  [Fact]
+  public async Task A_body_taller_than_the_page_leaves_the_footer_on_it()
+  {
+    var frames = await SlotFramesAsync(menuItems: 0, bodyHeight: 3000);
+
+    Assert.True(
+      frames.Footer.Bottom <= frames.PageHeight,
+      $"The footer ends at {frames.Footer.Bottom} on a page {frames.PageHeight} tall.");
+  }
+
+  // The side menu shares the body slot, so an unbounded slot is also a menu that never has to wrap.
+  [Fact]
+  public async Task A_menu_too_long_for_the_body_slot_leaves_the_footer_on_the_page()
+  {
+    var frames = await SlotFramesAsync(menuItems: 12, bodyHeight: 50);
+
+    Assert.True(
+      frames.Footer.Bottom <= frames.PageHeight,
+      $"The footer ends at {frames.Footer.Bottom} on a page {frames.PageHeight} tall.");
   }
 
   [Fact]
