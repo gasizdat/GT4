@@ -13,7 +13,8 @@
   <components:PageLayout
       Title="{x:Static resources:UIStrings.TitleNamesPage}"
       HasBackButton="True"
-      Hint="{x:Static resources:UIStrings.HintNamesPage}">
+      Hint="{x:Static resources:UIStrings.HintNamesPage}"
+      Loading="{Binding Loading, Source={x:Reference Root}}">
 
     <components:PageLayout.MenuItems>
       <items:PageMenuItem

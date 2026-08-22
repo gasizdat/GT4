@@ -54,12 +54,21 @@ public partial class KinshipFinderPage : ContentPage
       return;
     }
 
-    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-    var chain = await _CurrentProjectProvider.Project.KinshipFinder.FindPathAsync(_PersonFrom, _PersonTo, token);
+    // Not Loading.Run: the search awaits on the UI thread, and RefreshView must stay there.
+    Loading.IsLoading = _Chain is null;
+    try
+    {
+      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      var chain = await _CurrentProjectProvider.Project.KinshipFinder.FindPathAsync(_PersonFrom, _PersonTo, token);
 
-    _Chain = chain;
-    _Searched = true;
-    this.RefreshView();
+      _Chain = chain;
+      _Searched = true;
+      this.RefreshView();
+    }
+    finally
+    {
+      Loading.IsLoading = false;
+    }
   }
 
   protected async Task OnPageCommand(object obj)
@@ -94,6 +103,7 @@ public partial class KinshipFinderPage : ContentPage
     _NameFormatter = nameFormatter;
     _PersonInfoComparer = personInfoComparer;
     _NavigationService = navigationService;
+    Loading = new PageLoading(_AlertService);
     _PageCommand = new SafeCommand(OnPageCommand, _AlertService);
 
     InitializeComponent();
@@ -116,6 +126,8 @@ public partial class KinshipFinderPage : ContentPage
     _LastProjectInfo = _CurrentProjectProvider.Info;
     _ = SafeTask.GuardAsync(FindAsync, _AlertService);
   }
+
+  public PageLoading Loading { get; }
 
   public ICommand PageCommand => _PageCommand;
 

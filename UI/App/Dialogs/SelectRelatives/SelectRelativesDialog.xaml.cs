@@ -112,6 +112,7 @@ public partial class SelectRelativesDialog : ContentPage
     Relative[] existingRelatives)
   {
     _Factory = factory;
+    Loading = new PageLoading(_Factory.AlertService);
     _DialogCommand = new SafeCommand(OnDialogCommand, _Factory.AlertService);
     _ProjectRevision = _Factory.CurrentProjectProvider.Project.ProjectRevision;
     _BiologicalSexes = new[] { BiologicalSex.Male, BiologicalSex.Female, BiologicalSex.Unknown }
@@ -153,6 +154,8 @@ public partial class SelectRelativesDialog : ContentPage
       _Persons.Update();
     }
   }
+
+  public PageLoading Loading { get; }
 
   public BiologicalSexItem[] BiologicalSexes => _BiologicalSexes;
 
@@ -205,7 +208,7 @@ public partial class SelectRelativesDialog : ContentPage
 
       if (_Persons.Count == 0 || _ProjectRevision != _Factory.CurrentProjectProvider.Project.ProjectRevision)
       {
-        SafeTask.Run(AddPersonInfoItemsAsync, _Factory.AlertService);
+        Loading.Run(_Persons.Count != 0, AddPersonInfoItemsAsync);
       }
 
       return _Persons.Items;

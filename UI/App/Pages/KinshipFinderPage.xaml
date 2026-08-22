@@ -10,6 +10,7 @@
 
   <components:PageLayout
       HasBackButton="True"
+      Loading="{Binding Loading, Source={x:Reference Root}}"
       Title="{x:Static resources:UIStrings.TitleKinshipFinderPage}">
     <components:PageLayout.Header>
       <Grid

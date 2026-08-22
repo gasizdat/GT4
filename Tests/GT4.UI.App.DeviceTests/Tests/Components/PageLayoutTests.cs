@@ -1,3 +1,4 @@
+using GT4.UI.Abstraction;
 using GT4.UI.Components;
 using GT4.UI.Items;
 using GT4.UI.Pages;
@@ -354,5 +355,51 @@ public class PageLayoutTests
 
     Assert.True(layout.HasBackButton);
     Assert.Equal(ShowsBackButton, BackButton(layout).IsVisible);
+  }
+
+  [Fact]
+  public async Task An_assigned_loading_flag_drives_the_activity_indicator()
+  {
+    var layout = await CreateLayoutAsync();
+    var alertService = new Mock<IAlertService>();
+    var loading = new PageLoading(alertService.Object);
+    var indicator = layout.FindByName<ActivityIndicator>("LoadingIndicator");
+    await MainThread.InvokeOnMainThreadAsync(() => layout.Loading = loading);
+
+    Assert.False(indicator.IsRunning);
+    Assert.False(indicator.IsVisible);
+
+    await MainThread.InvokeOnMainThreadAsync(() => loading.IsLoading = true);
+    Assert.True(indicator.IsRunning);
+    Assert.True(indicator.IsVisible);
+
+    await MainThread.InvokeOnMainThreadAsync(() => loading.IsLoading = false);
+    Assert.False(indicator.IsRunning);
+    Assert.False(indicator.IsVisible);
+  }
+
+  [Fact]
+  public async Task A_flag_already_set_shows_the_indicator_the_moment_it_is_assigned()
+  {
+    var layout = await CreateLayoutAsync();
+    var alertService = new Mock<IAlertService>();
+    var loading = new PageLoading(alertService.Object) { IsLoading = true };
+    var indicator = layout.FindByName<ActivityIndicator>("LoadingIndicator");
+
+    await MainThread.InvokeOnMainThreadAsync(() => layout.Loading = loading);
+
+    Assert.True(indicator.IsRunning);
+    Assert.True(indicator.IsVisible);
+  }
+
+  [Fact]
+  public async Task A_layout_left_without_a_loading_flag_keeps_the_indicator_hidden()
+  {
+    var layout = await CreateLayoutAsync();
+    var indicator = layout.FindByName<ActivityIndicator>("LoadingIndicator");
+
+    Assert.Null(layout.Loading);
+    Assert.False(indicator.IsRunning);
+    Assert.False(indicator.IsVisible);
   }
 }

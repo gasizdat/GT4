@@ -90,7 +90,8 @@
 
   <components:PageLayout
       Title="{x:Static resources:UIStrings.TitleDateCalendarPage}"
-      HasBackButton="True">
+      HasBackButton="True"
+      Loading="{Binding Loading, Source={x:Reference Root}}">
 
     <components:PageLayout.MenuItems>
       <items:PageMenuItem

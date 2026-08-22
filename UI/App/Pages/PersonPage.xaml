@@ -40,7 +40,8 @@
 
   <components:PageLayout
       Title="{Binding ShortName, Source={x:Reference Root}}"
-      HasBackButton="True">
+      HasBackButton="True"
+      Loading="{Binding Loading, Source={x:Reference Root}}">
 
     <components:PageLayout.MenuItems>
       <items:PageMenuItem

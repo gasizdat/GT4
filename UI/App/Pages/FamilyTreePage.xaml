@@ -9,10 +9,11 @@
     x:Name="Root">
 
   <components:PageLayout
-      x:Name="Layout"
+      x:Name="LayoutView"
       HasBackButton="True"
       Hint="{x:Static resources:UIStrings.HintFamilyTreePage}"
-      Title="{Binding PageTitle, Source={x:Reference Root}}">
+      Title="{Binding PageTitle, Source={x:Reference Root}}"
+      Loading="{Binding Loading, Source={x:Reference Root}}">
 
     <components:PageLayout.MenuItems>
       <items:PageMenuItem
@@ -88,10 +89,6 @@
               CommandParameter="ZoomIn"
               Style="{StaticResource ZoomIn}" />
         </HorizontalStackLayout>
-
-        <ActivityIndicator
-            HorizontalOptions="Center"
-            IsRunning="{Binding LoadInProgress, Source={x:Reference Root}}" />
       </Grid>
     </components:PageLayout.Body>
 

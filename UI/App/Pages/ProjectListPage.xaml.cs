@@ -58,10 +58,13 @@ public partial class ProjectListPage : ContentPage
     _AlertService = alertService;
     _NavigationService = navigationService;
     _ImageCache = imageCache;
+    Loading = new PageLoading(_AlertService);
     _PageCommand = new SafeCommand(OnPageCommand, _AlertService);
 
     InitializeComponent();
   }
+
+  public PageLoading Loading { get; }
 
   public ICollection<ProjectItem> Projects => _Projects;
 
@@ -97,13 +100,13 @@ public partial class ProjectListPage : ContentPage
   protected override void OnNavigatedTo(NavigatedToEventArgs args)
   {
     base.OnNavigatedTo(args);
-    _ = SafeTask.Run(async () =>
+    Loading.Run(_Projects.Count != 0, async () =>
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
       await _CurrentProjectProvider.CloseAsync(token);
       await SafeTask.RunOnMainThread(UpdateProjectList, _AlertService);
       _ImageCache.Clear();
-    }, _AlertService);
+    });
   }
 
   protected async Task UpdateProjectList()

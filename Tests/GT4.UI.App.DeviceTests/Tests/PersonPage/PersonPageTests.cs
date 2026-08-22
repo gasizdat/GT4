@@ -96,6 +96,54 @@ public class PersonPageTests
   }
 
   [Fact]
+  public async Task The_first_load_shows_the_indicator_until_the_person_arrives()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson();
+    var gate = new TaskCompletionSource<PersonFullInfo>();
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .Returns(() => gate.Task);
+    var page = await CreatePageAsync(services);
+
+    var isLoading = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      page.PersonInfo = person;
+      return page.Loading.IsLoading;
+    });
+
+    Assert.True(isLoading);
+    gate.SetResult(person);
+    await page.Loading.UntilIdleAsync("The indicator stayed on after the first person load landed.");
+  }
+
+  [Fact]
+  public async Task A_refresh_over_a_loaded_person_never_shows_the_indicator()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson();
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+    // Held open so the assertion reads the flag while the refresh is genuinely in flight.
+    var gate = new TaskCompletionSource<PersonFullInfo>(TaskCreationOptions.RunContinuationsAsynchronously);
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .Returns(() => gate.Task);
+
+    var isLoading = await MainThread.InvokeOnMainThreadAsync(async () =>
+    {
+      await page.InvokePageCommandAsync("Refresh");
+      return page.Loading.IsLoading;
+    });
+
+    Assert.False(isLoading);
+    await WaitForLoadAsync(page, services, () => gate.SetResult(person));
+  }
+
+  [Fact]
   public async Task OnNavigatedTo_refetches_the_current_person_when_the_project_revision_changed()
   {
     var services = new TestServices();

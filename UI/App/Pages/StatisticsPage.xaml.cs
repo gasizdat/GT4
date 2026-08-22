@@ -18,6 +18,9 @@ public partial class StatisticsPage : ContentPage
 
   private ProjectStatistics _Statistics = ProjectStatistics.Empty;
   private bool _UpdateStatistics = true;
+  // Not "_Statistics == ProjectStatistics.Empty": ProjectStatistics is a record, so an empty project
+  // compares equal to Empty even once loaded, and every refresh would re-show the indicator.
+  private bool _StatisticsLoaded;
   private ProjectInfo? _LastProjectInfo;
 
   public StatisticsPage(
@@ -31,9 +34,12 @@ public partial class StatisticsPage : ContentPage
     _AlertService = alertService;
     _NameFormatter = nameFormatter;
 
+    Loading = new PageLoading(_AlertService);
     InitializeComponent();
     _LastProjectInfo = _CurrentProjectProvider.Info;
   }
+
+  public PageLoading Loading { get; }
 
   // The single trigger for the (lazy, async) load: every display property below reads Statistics, so
   // whichever one XAML binds first kicks off the load, following the same lazy-getter idiom as
@@ -45,7 +51,7 @@ public partial class StatisticsPage : ContentPage
       if (_UpdateStatistics)
       {
         _UpdateStatistics = false;
-        SafeTask.Run(LoadStatisticsAsync, _AlertService);
+        Loading.Run(_StatisticsLoaded, LoadStatisticsAsync);
       }
 
       return _Statistics;
@@ -66,6 +72,7 @@ public partial class StatisticsPage : ContentPage
     await SafeTask.RunOnMainThread(() =>
     {
       _Statistics = statistics;
+      _StatisticsLoaded = true;
       this.RefreshView();
     }, _AlertService);
   }

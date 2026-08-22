@@ -85,6 +85,13 @@ public partial class PageLayout : ContentView
       typeof(PageLayout),
       default(View));
 
+  public static readonly BindableProperty LoadingProperty =
+    BindableProperty.Create(
+      nameof(Loading),
+      typeof(PageLoading),
+      typeof(PageLayout),
+      default(PageLoading));
+
   public static readonly BindableProperty FooterProperty =
     BindableProperty.Create(
       nameof(Footer),
@@ -185,6 +192,12 @@ public partial class PageLayout : ContentView
   {
     get => (View)GetValue(BodyProperty);
     set => SetValue(BodyProperty, value);
+  }
+
+  public PageLoading Loading
+  {
+    get => (PageLoading)GetValue(LoadingProperty);
+    set => SetValue(LoadingProperty, value);
   }
 
   public View Footer

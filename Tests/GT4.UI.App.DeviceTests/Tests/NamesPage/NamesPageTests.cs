@@ -91,6 +91,50 @@ public class NamesPageTests
   }
 
   [Fact]
+  public async Task The_first_load_shows_the_indicator_until_the_names_arrive()
+  {
+    var services = new TestServices();
+    var gate = new TaskCompletionSource<Name[]>();
+    services.Names
+      .Setup(n => n.GetNamesByTypeAsync(It.IsAny<NameType>(), It.IsAny<CancellationToken>()))
+      .Returns(() => gate.Task);
+    var page = await CreatePageAsync(services);
+
+    // Reading Names inside the dispatch covers both orders: it starts the load if the page's own
+    // CollectionView binding has not already done so, and is a no-op if it has.
+    var isLoading = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      _ = page.Names;
+      return page.Loading.IsLoading;
+    });
+
+    Assert.True(isLoading);
+    gate.SetResult([N(1, "Pushkin", NameType.FamilyName)]);
+    await page.Loading.UntilIdleAsync("The indicator stayed on after the first load landed.");
+  }
+
+  [Fact]
+  public async Task A_refresh_over_loaded_names_never_shows_the_indicator()
+  {
+    var services = new TestServices();
+    services.Names
+      .Setup(n => n.GetNamesByTypeAsync(It.IsAny<NameType>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync([N(1, "Pushkin", NameType.FamilyName)]);
+    var page = await CreatePageAsync(services);
+    var loaded = await page.ReloadNamesAsync(() => page.InvokeRequestUpdateNames());
+    Assert.NotEmpty(loaded);
+
+    var isLoading = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      page.InvokeRequestUpdateNames();
+      _ = page.Names;
+      return page.Loading.IsLoading;
+    });
+
+    Assert.False(isLoading);
+  }
+
+  [Fact]
   public async Task Setting_the_same_CurrentNameType_does_not_reload()
   {
     var services = new TestServices();
