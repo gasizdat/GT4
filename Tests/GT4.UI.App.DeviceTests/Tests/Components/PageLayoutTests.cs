@@ -30,6 +30,34 @@ public class PageLayoutTests
     return grid.Children.OfType<Button>().Single();
   }
 
+  private static Label TitleLabel(PageLayout layout)
+  {
+    var grid = (Grid)layout.Content;
+    return grid.Children.OfType<Label>().First();
+  }
+
+  private static async Task<double> TitleOffsetAsync(bool hasBackButton)
+  {
+    var services = new TestServices();
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    var layout = await MainThread.InvokeOnMainThreadAsync(() => new PageLayout(services.Provider)
+    {
+      Title = "Genealogy tree",
+      HasBackButton = hasBackButton,
+    });
+
+    var page = await MainThread.InvokeOnMainThreadAsync(() => new ContentPage { Content = layout });
+    await using var window = await WindowHost.AttachAsync(page);
+
+    var frame = await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => TitleLabel(layout).Frame),
+      frame => frame.Width > 0,
+      timeoutMessage: "The title was never arranged.");
+
+    // Beyond the title's own horizontal padding, so the result is what the back button's column adds.
+    return frame.X - TitleLabel(layout).Margin.Left;
+  }
+
   private static Task ArrangeAsync(PageLayout layout, double width, double height) =>
     MainThread.InvokeOnMainThreadAsync(() => ((IView)layout).Arrange(new Rect(0, 0, width, height)));
 
@@ -216,10 +244,42 @@ public class PageLayoutTests
     Assert.False(layout.HasBackButton);
   }
 
+  // The button lives in a column of its own, so a layout that doesn't ask for one -- every dialog,
+  // and the pages that carry no title -- must keep its header exactly where it was. Only a page
+  // attached to a real window measures a Button: detached, its handler never sizes the text.
   [Fact]
-  public async Task A_pushed_page_offers_a_way_back()
+  public async Task A_hidden_back_button_takes_no_room_from_the_title()
   {
-    var page = await CreatePageAsync<TestableProjectListPage>();
+    var withoutBack = await TitleOffsetAsync(hasBackButton: false);
+    var withBack = await TitleOffsetAsync(hasBackButton: true);
+
+    Assert.Equal(0, withoutBack);
+    Assert.True(withBack > 0, $"The back button claimed no width: title starts at {withBack}.");
+  }
+
+  public static TheoryData<Type> PushedPages =>
+  [
+    typeof(TestableDateCalendarPage),
+    typeof(TestableFamilyPage),
+    typeof(TestableFamilyTreePage),
+    typeof(TestableGalleryPage),
+    typeof(TestableKinshipFinderPage),
+    typeof(TestableNamesPage),
+    typeof(TestablePersonPage),
+    typeof(TestableProjectListPage),
+    typeof(TestableProjectPage),
+    typeof(TestableStatisticsPage),
+    typeof(ProjectRevisionsPage),
+    typeof(SettingsPage),
+  ];
+
+  [Theory]
+  [MemberData(nameof(PushedPages))]
+  public async Task Every_pushed_page_offers_a_way_back(Type pageType)
+  {
+    var services = new TestServices();
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    var page = await MainThread.InvokeOnMainThreadAsync(() => (ContentPage)services.Provider.GetRequiredService(pageType));
 
     var layout = (PageLayout)page.Content;
 
