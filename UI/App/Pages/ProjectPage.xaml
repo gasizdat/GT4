@@ -11,7 +11,8 @@
 
   <components:PageLayout
       Title="{x:Static resources:UIStrings.TitleFamiliesPage}"
-      Hint="{x:Static resources:UIStrings.HintFamiliesPage}">
+      Hint="{x:Static resources:UIStrings.HintFamiliesPage}"
+      Loading="{Binding Loading, Source={x:Reference Root}}">
 
     <components:PageLayout.MenuItems>
 

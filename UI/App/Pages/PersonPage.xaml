@@ -38,7 +38,9 @@
     </ResourceDictionary>
   </ContentPage.Resources>
 
-  <components:PageLayout Title="{Binding ShortName, Source={x:Reference Root}}">
+  <components:PageLayout
+      Title="{Binding ShortName, Source={x:Reference Root}}"
+      Loading="{Binding Loading, Source={x:Reference Root}}">
 
     <components:PageLayout.MenuItems>
       <items:PageMenuItem

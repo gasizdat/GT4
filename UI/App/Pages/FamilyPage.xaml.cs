@@ -57,6 +57,7 @@ public partial class FamilyPage : ContentPage
 
     _Persons.Filter = (_, person) => FilterView.Matches(person);
 
+    Loading = new PageLoading(_AlertService);
     MemberItemTappedCommand = new SafeCommand<PersonInfo>(OnOpenPerson, _AlertService);
     PageCommand = new SafeCommand(OnPageCommand, _AlertService);
 
@@ -84,6 +85,8 @@ public partial class FamilyPage : ContentPage
       }
     }
   }
+
+  public PageLoading Loading { get; }
 
   public ICommand MemberItemTappedCommand { get; init; }
 
@@ -148,7 +151,7 @@ public partial class FamilyPage : ContentPage
       if (!_PersonsLoaded)
       {
         _PersonsLoaded = true;
-        SafeTask.Run(() => ListPersonsAsync(familyName), _AlertService);
+        Loading.Run(_Persons.Count != 0, () => ListPersonsAsync(familyName));
       }
 
       return _Persons.Items;

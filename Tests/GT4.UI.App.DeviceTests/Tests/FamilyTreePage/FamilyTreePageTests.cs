@@ -56,6 +56,33 @@ public class FamilyTreePageTests
   }
 
   [Fact]
+  public async Task Only_the_build_over_an_empty_canvas_shows_the_indicator()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    services.FamilyTreeProvider
+      .Setup(f => f.BuildAsync(It.IsAny<Person>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new FamilyTree(center.Id, [new FamilyTreeNode(center, 0)], []));
+    var page = await CreatePageAsync(services);
+
+    var isLoadingOnFirstBuild = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      page.PersonInfo = center;
+      return page.Loading.IsLoading;
+    });
+    Assert.True(isLoadingOnFirstBuild);
+    await page.Loading.UntilIdleAsync("The indicator stayed on after the first build landed.");
+
+    var isLoadingOnLoadMore = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      _ = page.InvokePageCommandAsync("LoadAncestors");
+      return page.Loading.IsLoading;
+    });
+
+    Assert.False(isLoadingOnLoadMore);
+  }
+
+  [Fact]
   public async Task OnNavigatedTo_rebuilds_the_tree_when_the_project_revision_changed()
   {
     var services = new TestServices();
