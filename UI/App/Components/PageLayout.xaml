@@ -29,34 +29,52 @@
           Right="{StaticResource PageContentHorizontalPadding}"
           Top="0" />
 
-      <DataTemplate x:Key="MenuItemTemplate" x:DataType="items:PageMenuItem">
+      <Style x:Key="MenuButton" BasedOn="{StaticResource EmojiAdorner}" TargetType="Button">
+        <Setter Property="CommandParameter" Value="{Binding CommandParameter}" />
+        <Setter Property="Command" Value="{Binding Command}" />
+        <Setter Property="IsEnabled" Value="{Binding IsEnabled}" />
+        <Setter Property="Text" Value="{Binding ButtonText}" />
+        <Setter Property="ToolTipProperties.Text" Value="{Binding ToolTipText}" />
+      </Style>
+
+      <DataTemplate
+          x:Key="MenuItemTemplate"
+          x:DataType="items:PageMenuItem">
         <Button
-            Command="{Binding Command}"
-            CommandParameter="{Binding CommandParameter}"
             FontSize="{DynamicResource ActionButtonTextSize}"
+            HeightRequest="{DynamicResource MenuButtonSize}"
             HorizontalOptions="Center"
-            IsEnabled="{Binding IsEnabled}"
-            Style="{StaticResource EmojiAdorner}"
-            Text="{Binding ButtonText}"
-            ToolTipProperties.Text="{Binding ToolTipText}" />
+            Style="{StaticResource MenuButton}"
+            WidthRequest="{DynamicResource MenuButtonSize}" />
       </DataTemplate>
     </ResourceDictionary>
   </ContentView.Resources>
 
   <Grid
-      ColumnDefinitions="*"
+      ColumnDefinitions="Auto, *"
       RowDefinitions="Auto, Auto, Auto, *, Auto">
     <Image
         Grid.RowSpan="5"
+        Grid.ColumnSpan="2"
         Aspect="AspectFill"
         IsAnimationPlaying="{Binding Animation.IsEnabled, Source={x:Reference Root}}"
         Opacity="0.3"
         Source="tree_bg.gif" />
 
+    <!--  Back  -->
+    <Button
+        Grid.Row="0"
+        Grid.Column="0"
+        Margin="{Thickness Left={StaticResource PageContentHorizontalPadding}}"
+        BindingContext="{Binding BackItem, Source={x:Reference Root}}"
+        IsVisible="{Binding IsBackButtonVisible, Source={x:Reference Root}}"
+        Style="{StaticResource MenuButton}"
+        VerticalOptions="Center" />
+
     <!--  Title  -->
     <Label
         Grid.Row="0"
-        Grid.Column="0"
+        Grid.Column="1"
         Margin="{Thickness Left={StaticResource PageContentHorizontalPadding},
                            Right={StaticResource PageContentHorizontalPadding}}"
         IsVisible="{Binding IsTitleVisible, Source={x:Reference Root}}"
@@ -67,6 +85,7 @@
     <Label
         Grid.Row="1"
         Grid.Column="0"
+        Grid.ColumnSpan="2"
         Margin="{Thickness Left={StaticResource PageContentHorizontalPadding},
                            Right={StaticResource PageContentHorizontalPadding}}"
         IsVisible="{Binding IsHintVisible, Source={x:Reference Root}}"
@@ -77,13 +96,14 @@
     <Grid
         Grid.Row="2"
         Grid.Column="0"
+        Grid.ColumnSpan="2"
         Padding="{StaticResource HeaderPadding}"
         RowDefinitions="*, Auto">
 
       <FlexLayout
           x:Name="TopMenu"
-          BindableLayout.ItemsSource="{Binding MenuItems, Source={x:Reference Root}}"
           BindableLayout.ItemTemplate="{StaticResource MenuItemTemplate}"
+          BindableLayout.ItemsSource="{Binding MenuItems, Source={x:Reference Root}}"
           Direction="Row"
           HorizontalOptions="End"
           IsVisible="{Binding IsTopMenuVisible, Source={x:Reference Root}}"
@@ -99,6 +119,7 @@
     <Grid
         Grid.Row="3"
         Grid.Column="0"
+        Grid.ColumnSpan="2"
         Padding="{StaticResource BodyPadding}"
         ColumnDefinitions="*, Auto">
 
@@ -107,8 +128,8 @@
       <FlexLayout
           x:Name="SideMenu"
           Grid.Column="1"
-          BindableLayout.ItemsSource="{Binding MenuItems, Source={x:Reference Root}}"
           BindableLayout.ItemTemplate="{StaticResource MenuItemTemplate}"
+          BindableLayout.ItemsSource="{Binding MenuItems, Source={x:Reference Root}}"
           Direction="Column"
           HorizontalOptions="End"
           IsVisible="{Binding IsSideMenuVisible, Source={x:Reference Root}}"
@@ -130,6 +151,7 @@
     <ContentView
         Grid.Row="4"
         Grid.Column="0"
+        Grid.ColumnSpan="2"
         Padding="{StaticResource FooterPadding}"
         Content="{Binding Footer, Source={x:Reference Root}}"
         IsVisible="{Binding IsFooterVisible, Source={x:Reference Root}}" />

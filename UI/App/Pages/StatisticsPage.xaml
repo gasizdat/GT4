@@ -6,7 +6,6 @@
     xmlns:components="clr-namespace:GT4.UI.Components"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root"
-    Title="{x:Static resources:UIStrings.TitleStatisticsPage}"
     NavigatedTo="OnNavigatedTo">
 
   <ContentPage.Resources>
@@ -30,7 +29,10 @@
     </ResourceDictionary>
   </ContentPage.Resources>
 
-  <components:PageLayout Loading="{Binding Loading, Source={x:Reference Root}}">
+  <components:PageLayout
+      HasBackButton="True"
+      Loading="{Binding Loading, Source={x:Reference Root}}"
+      Title="{x:Static resources:UIStrings.TitleStatisticsPage}">
     <components:PageLayout.Body>
       <ScrollView>
         <Grid

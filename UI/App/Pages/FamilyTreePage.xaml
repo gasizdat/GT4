@@ -10,6 +10,7 @@
 
   <components:PageLayout
       x:Name="LayoutView"
+      HasBackButton="True"
       Hint="{x:Static resources:UIStrings.HintFamilyTreePage}"
       Title="{Binding PageTitle, Source={x:Reference Root}}"
       Loading="{Binding Loading, Source={x:Reference Root}}">

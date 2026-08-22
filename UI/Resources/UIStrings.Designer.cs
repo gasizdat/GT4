@@ -447,7 +447,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("DateCalendarBirthdayDeceasedText_2", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to {0} turns {1}.
         /// </summary>
@@ -456,7 +456,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("DateCalendarBirthdayText_2", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Sometime in {0} — exact day not recorded.
         /// </summary>
@@ -530,7 +530,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}Today.
+        ///   Looks up a localized string similar to {0} Today.
         /// </summary>
         public static string DateCalendarTodayButton_1 {
             get {
@@ -656,7 +656,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Whether the animated tree background on every page plays. Enter True or False..
+        ///   Looks up a localized string similar to Whether the animated tree background on every page plays..
         /// </summary>
         public static string FieldBackgroundAnimationHint {
             get {
@@ -1466,7 +1466,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("FieldTheme", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Dark.
         /// </summary>
@@ -1475,7 +1475,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("FieldThemeDark", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Whether the app follows the system appearance or stays on the light or the dark palette..
         /// </summary>
@@ -1484,7 +1484,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("FieldThemeHint", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Light.
         /// </summary>
@@ -1493,7 +1493,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("FieldThemeLight", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to System.
         /// </summary>
@@ -1502,7 +1502,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("FieldThemeSystem", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Year.
         /// </summary>
@@ -2296,6 +2296,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ❮ Back.
+        /// </summary>
+        public static string MenuItemNameBack {
+            get {
+                return ResourceManager.GetString("MenuItemNameBack", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to ➕ Create a Family.
         /// </summary>
         public static string MenuItemNameCreateFamily {
@@ -2800,6 +2809,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {0} or {1}.
+        /// </summary>
+        public static string RelDisjunction_2 {
+            get {
+                return ResourceManager.GetString("RelDisjunction_2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Father.
         /// </summary>
         public static string RelFather {
@@ -2916,15 +2934,6 @@ namespace GT4.UI.Resources {
             }
         }
         
-        /// <summary>
-        ///   Looks up a localized string similar to {0} or {1}.
-        /// </summary>
-        public static string RelDisjunction_2 {
-            get {
-                return ResourceManager.GetString("RelDisjunction_2", resourceCulture);
-            }
-        }
-
         /// <summary>
         ///   Looks up a localized string similar to Great-{0}.
         /// </summary>

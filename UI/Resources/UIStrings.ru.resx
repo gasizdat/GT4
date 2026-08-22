@@ -1329,4 +1329,7 @@ FN - род</value>
   <data name="DateCalendarUnplaceableFootnote_1" xml:space="preserve">
     <value>{0} дат рождения или смерти в этом проекте имеют известный год, но неизвестный месяц, поэтому их нельзя разместить в календаре.</value>
   </data>
+  <data name="MenuItemNameBack" xml:space="preserve">
+    <value>❮ Назад</value>
+  </data>
 </root>
