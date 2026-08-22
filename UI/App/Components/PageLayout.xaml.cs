@@ -43,7 +43,10 @@ public partial class PageLayout : ContentView
       nameof(HasBackButton),
       typeof(bool),
       typeof(PageLayout),
-      false);
+      false,
+      BindingMode.OneWay,
+      null,
+      OnHasBackButtonChanged);
 
   public static readonly BindableProperty TitleProperty =
     BindableProperty.Create(
@@ -91,6 +94,14 @@ public partial class PageLayout : ContentView
       BindingMode.OneWay,
       null,
       OnFooterChanged);
+
+  private static void OnHasBackButtonChanged(BindableObject bindableObject, object oldValue, object newValue)
+  {
+    if (bindableObject is PageLayout view && oldValue != newValue)
+    {
+      view.OnPropertyChanged(nameof(IsBackButtonVisible));
+    }
+  }
 
   private static void OnHeaderChanged(BindableObject bindableObject, object oldValue, object newValue)
   {
@@ -148,11 +159,7 @@ public partial class PageLayout : ContentView
 
   public bool HasBackButton
   {
-#if WINDOWS
-    get => false;
-#else
     get => (bool)GetValue(HasBackButtonProperty);
-#endif
     set => SetValue(HasBackButtonProperty, value);
   }
 
@@ -191,6 +198,9 @@ public partial class PageLayout : ContentView
   public bool IsTopMenuVisible => IsMenuVisible && Height >= 0 && Height > Width;
 
   public bool IsSideMenuVisible => IsMenuVisible && Height >= 0 && Height <= Width;
+
+  // Windows keeps Shell's own back arrow in the title bar even with NavBarIsVisible off.
+  public bool IsBackButtonVisible => HasBackButton && !OperatingSystem.IsWindows();
 
   public bool IsTitleVisible => !string.IsNullOrWhiteSpace(Title);
 

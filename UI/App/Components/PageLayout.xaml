@@ -67,7 +67,7 @@
         Grid.Column="0"
         Margin="{Thickness Left={StaticResource PageContentHorizontalPadding}}"
         BindingContext="{Binding BackItem, Source={x:Reference Root}}"
-        IsVisible="{Binding HasBackButton, Source={x:Reference Root}}"
+        IsVisible="{Binding IsBackButtonVisible, Source={x:Reference Root}}"
         Style="{StaticResource MenuButton}"
         VerticalOptions="Center" />
 

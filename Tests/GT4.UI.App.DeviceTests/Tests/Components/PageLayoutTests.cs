@@ -9,11 +9,7 @@ namespace GT4.UI.DeviceTests;
 
 public class PageLayoutTests
 {
-#if WINDOWS
-  private const bool HasBackButton = false;
-#else
-  private const bool HasBackButton = true;
-#endif
+  private static readonly bool ShowsBackButton = !OperatingSystem.IsWindows();
 
   private static Task<PageLayout> CreateLayoutAsync() => CreateLayoutAsync(new TestServices());
 
@@ -226,6 +222,20 @@ public class PageLayoutTests
     Assert.False(BackButton(layout).IsVisible);
   }
 
+  // The visibility the button binds to is computed, not stored, so only the flag's change callback
+  // repaints it -- and on Windows, where it stays hidden either way, nothing else would notice its loss.
+  [Fact]
+  public async Task Asking_for_a_back_button_reports_its_visibility_as_changed()
+  {
+    var layout = await CreateLayoutAsync();
+    var changed = new List<string?>();
+    layout.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+
+    await MainThread.InvokeOnMainThreadAsync(() => layout.HasBackButton = true);
+
+    Assert.Contains(nameof(PageLayout.IsBackButtonVisible), changed);
+  }
+
   [Fact]
   public async Task Asking_for_a_back_button_shows_it_with_its_glyph_and_tooltip()
   {
@@ -234,14 +244,14 @@ public class PageLayoutTests
     await MainThread.InvokeOnMainThreadAsync(() => layout.HasBackButton = true);
 
     var button = BackButton(layout);
-    Assert.Equal(HasBackButton, button.IsVisible);
+    Assert.Equal(ShowsBackButton, button.IsVisible);
     Assert.Equal(UIStrings.MenuItemNameBack, layout.BackItem.Text);
     Assert.Equal(layout.BackItem.ButtonText, button.Text);
     Assert.Equal(layout.BackItem.ToolTipText, ToolTipProperties.GetText(button));
   }
 
   // The Shell nav bar is switched off app-wide (Styles.xaml, TargetType="Page"), which is what makes
-  // the layout's own button the only in-app way back on Windows and Android alike.
+  // the layout's own button the only way back on Android. Windows keeps Shell's title-bar arrow.
   [Fact]
   public async Task A_page_hides_the_Shell_nav_bar()
   {
@@ -270,7 +280,14 @@ public class PageLayoutTests
     var withBack = await TitleOffsetAsync(hasBackButton: true);
 
     Assert.Equal(0, withoutBack);
-    Assert.True(HasBackButton == withBack > 0, $"The back button claimed no width: title starts at {withBack}.");
+
+    if (!ShowsBackButton)
+    {
+      Assert.Equal(0, withBack);
+      return;
+    }
+
+    Assert.True(withBack > 0, $"The back button claimed no width: title starts at {withBack}.");
   }
 
   // Both sides come from one token rather than one measuring the other: binding WidthRequest to Height
@@ -335,7 +352,7 @@ public class PageLayoutTests
 
     var layout = (PageLayout)page.Content;
 
-    Assert.Equal(HasBackButton, layout.HasBackButton);
-    Assert.Equal(HasBackButton, BackButton(layout).IsVisible);
+    Assert.True(layout.HasBackButton);
+    Assert.Equal(ShowsBackButton, BackButton(layout).IsVisible);
   }
 }
