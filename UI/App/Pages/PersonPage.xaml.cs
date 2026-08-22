@@ -100,7 +100,7 @@ public partial class PersonPage : ContentPage
   public void ShowPersonInfo(Person person, bool addToNavigation)
   {
     ExpandAll = false;
-    Loading.Run(_PersonFullInfo is not null, () => GetPersonDataAsync(person, addToNavigation));
+    Loading.Run(_PersonFullInfo.Id != ElementId.NonCommittedId, () => GetPersonDataAsync(person, addToNavigation));
   }
 
   public bool ExpandAll
