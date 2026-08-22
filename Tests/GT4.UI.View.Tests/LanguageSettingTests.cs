@@ -30,7 +30,7 @@ public class LanguageSettingTests
   [Fact]
   public void Value_WhenNotConfigured_FallsBackToCurrentLanguage()
   {
-    Language.Current = Language.EN;
+    TestLanguage.Use(Language.EN);
 
     Make().Value.Should().Be(Language.EN);
   }
@@ -38,7 +38,7 @@ public class LanguageSettingTests
   [Fact]
   public void Value_WhenConfiguredValueUnknown_FallsBackToCurrentLanguage()
   {
-    Language.Current = Language.EN;
+    TestLanguage.Use(Language.EN);
 
     Make(configuredValue: "zz").Value.Should().Be(Language.EN);
   }

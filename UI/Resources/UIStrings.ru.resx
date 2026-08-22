@@ -942,6 +942,21 @@ FN - род</value>
   <data name="FieldBackgroundAnimationHint" xml:space="preserve">
     <value>Воспроизводится ли анимированный фон с деревом на каждой странице.</value>
   </data>
+  <data name="FieldTheme" xml:space="preserve">
+    <value>Тема оформления</value>
+  </data>
+  <data name="FieldThemeHint" xml:space="preserve">
+    <value>Следует ли приложение системному оформлению или всегда использует светлую либо тёмную палитру.</value>
+  </data>
+  <data name="FieldThemeSystem" xml:space="preserve">
+    <value>Системная</value>
+  </data>
+  <data name="FieldThemeLight" xml:space="preserve">
+    <value>Светлая</value>
+  </data>
+  <data name="FieldThemeDark" xml:space="preserve">
+    <value>Тёмная</value>
+  </data>
   <data name="FieldGedcomDetails" xml:space="preserve">
     <value>Дополнительные сведения</value>
   </data>

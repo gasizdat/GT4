@@ -8,8 +8,8 @@ namespace GT4.UI.DeviceTests;
 
 /// <summary>
 /// Covers SettingEditorView's own logic: the Editor bindable property cascades PropertyChanged for
-/// its derived properties, the Editor's Kind selects exactly one of the three value controls,
-/// Boolean/BoundedNumeric values round-trip through the Value string, Value's setter change-detects
+/// its derived properties, the Editor's Kind selects exactly one of the four value controls,
+/// Boolean/BoundedNumeric/Choice values round-trip through the Value string, Value's setter change-detects
 /// before writing through to the Editor, and ResetCommand delegates to Editor.ResetToDefault while
 /// routing failures through IAlertService (SafeCommand's own behavior, exercised here via the view's
 /// real command instance).
@@ -35,6 +35,9 @@ public class SettingEditorViewTests
 
   private static Mock<ISettingEditor> MakePercentEditor(string value) =>
     MakeEditor(value, new SettingKind.BoundedNumeric(75, 200, 5, "%"));
+
+  private static Mock<ISettingEditor> MakeChoiceEditor(string value) =>
+    MakeEditor(value, new SettingKind.Choice([new("Unspecified", "System"), new("Dark", "Night")]));
 
   // SettingEditorView.Editor only exposes a getter over its BindableProperty, so tests assign
   // through SetValue directly instead of through the (nonexistent) property setter.
@@ -63,13 +66,14 @@ public class SettingEditorViewTests
     await MainThread.InvokeOnMainThreadAsync(() => SetEditor(view, editor.Object));
 
     // BindableObject raises PropertyChanged for the bindable property itself ("Editor") before
-    // OnEditorPropertyChanged cascades the derived ones. ValueMetadata has to precede NumericValue:
-    // the slider coerces its value against the range it currently holds.
+    // OnEditorPropertyChanged cascades the derived ones. ValueMetadata has to precede NumericValue
+    // and ChoiceOptions has to precede ChoiceValue: the slider coerces its value against the range
+    // it currently holds, and the picker its selection against the options it currently lists.
     Assert.Equal(
       [
         "Editor", "Caption", "Description",
-        "IsText", "IsBoolean", "IsBoundedNumeric", "ValueMetadata",
-        "Value", "BooleanValue", "NumericValue", "Example"
+        "IsText", "IsBoolean", "IsBoundedNumeric", "IsChoice", "ValueMetadata", "ChoiceOptions",
+        "Value", "BooleanValue", "NumericValue", "ChoiceValue", "Example"
       ],
       raised);
   }
@@ -100,7 +104,7 @@ public class SettingEditorViewTests
     await MainThread.InvokeOnMainThreadAsync(() => view.Value = "new");
 
     Assert.Equal("new", editor.Object.Value);
-    Assert.Equal(["Value", "BooleanValue", "NumericValue", "Example"], raised);
+    Assert.Equal(["Value", "BooleanValue", "NumericValue", "ChoiceValue", "Example"], raised);
   }
 
   [Fact]
@@ -148,7 +152,7 @@ public class SettingEditorViewTests
     await MainThread.InvokeOnMainThreadAsync(() => view.ResetCommand.Execute(null));
 
     editor.Verify(e => e.ResetToDefault(), Times.Once());
-    Assert.Equal(["Value", "BooleanValue", "NumericValue", "Example"], raised);
+    Assert.Equal(["Value", "BooleanValue", "NumericValue", "ChoiceValue", "Example"], raised);
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
 
@@ -157,6 +161,7 @@ public class SettingEditorViewTests
     { new SettingKind.Text(), "ValueEntry" },
     { new SettingKind.Boolean(), "ValueSwitch" },
     { new SettingKind.BoundedNumeric(75, 200, 5, "%"), "ValueSlider" },
+    { new SettingKind.Choice([new("100%", "One hundred percent")]), "ValuePicker" },
   };
 
   [Theory]
@@ -175,6 +180,7 @@ public class SettingEditorViewTests
       ["ValueSwitch"] = view.FindByName<Switch>("ValueSwitch"),
       // The slider shares its visibility with the value label wrapping it, so read the parent.
       ["ValueSlider"] = (View)slider.Parent,
+      ["ValuePicker"] = view.FindByName<Picker>("ValuePicker"),
     };
     var visible = controls.Where(control => control.Value.IsVisible).Select(control => control.Key);
 
@@ -273,6 +279,73 @@ public class SettingEditorViewTests
     });
 
     Assert.Equal("2.5x", editor.Object.Value);
+  }
+
+  [Fact]
+  public async Task A_Choice_Editor_fills_the_picker_with_the_option_labels_and_selects_its_Value()
+  {
+    var view = await CreateViewAsync(new TestServices());
+    var editor = MakeChoiceEditor("Dark");
+
+    await MainThread.InvokeOnMainThreadAsync(() => SetEditor(view, editor.Object));
+
+    var picker = view.FindByName<Picker>("ValuePicker");
+    Assert.Equal(["System", "Night"], picker.ItemsSource.Cast<SettingKind.Option>().Select(o => o.Label));
+    Assert.Equal(1, picker.SelectedIndex);
+  }
+
+  [Fact]
+  public async Task Picking_an_option_writes_its_Value_not_its_label_back_to_the_Editor()
+  {
+    var view = await CreateViewAsync(new TestServices());
+    var editor = MakeChoiceEditor("Dark");
+    await MainThread.InvokeOnMainThreadAsync(() => SetEditor(view, editor.Object));
+
+    await MainThread.InvokeOnMainThreadAsync(() => view.FindByName<Picker>("ValuePicker").SelectedIndex = 0);
+
+    Assert.Equal("Unspecified", editor.Object.Value);
+  }
+
+  [Fact]
+  public async Task A_Choice_Value_naming_no_option_leaves_the_picker_unselected_without_rewriting_it()
+  {
+    // A hand-edited config can name an option the setting no longer offers. The picker then echoes
+    // its empty selection back, which must not be mistaken for the user choosing something.
+    var view = await CreateViewAsync(new TestServices());
+    var editor = MakeChoiceEditor("Sepia");
+
+    await MainThread.InvokeOnMainThreadAsync(() => SetEditor(view, editor.Object));
+
+    Assert.Null(view.ChoiceValue);
+    Assert.Equal(-1, view.FindByName<Picker>("ValuePicker").SelectedIndex);
+    Assert.Equal("Sepia", editor.Object.Value);
+  }
+
+  [Fact]
+  public async Task Resetting_a_Choice_Editor_moves_the_picker_onto_the_restored_option()
+  {
+    var view = await CreateViewAsync(new TestServices());
+    var editor = MakeChoiceEditor("Dark");
+    editor.Setup(e => e.ResetToDefault()).Callback(() => editor.Object.Value = "Unspecified");
+    await MainThread.InvokeOnMainThreadAsync(() => SetEditor(view, editor.Object));
+
+    await MainThread.InvokeOnMainThreadAsync(() => view.ResetCommand.Execute(null));
+
+    Assert.Equal(0, view.FindByName<Picker>("ValuePicker").SelectedIndex);
+  }
+
+  [Fact]
+  public async Task A_non_Choice_Editor_leaves_the_picker_empty_without_rewriting_its_Value()
+  {
+    // The picker is bound even while hidden: an empty option list pushes a null selection back, and
+    // a Text setting's Value has to survive it.
+    var view = await CreateViewAsync(new TestServices());
+    var editor = MakeEditor("DD MM YYYY");
+
+    await MainThread.InvokeOnMainThreadAsync(() => SetEditor(view, editor.Object));
+
+    Assert.Empty(view.ChoiceOptions);
+    Assert.Equal("DD MM YYYY", editor.Object.Value);
   }
 
   [Fact]

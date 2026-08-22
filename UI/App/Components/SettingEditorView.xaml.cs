@@ -54,8 +54,11 @@ public partial class SettingEditorView : ContentView
       OnPropertyChanged(nameof(IsText));
       OnPropertyChanged(nameof(IsBoolean));
       OnPropertyChanged(nameof(IsBoundedNumeric));
-      // Before the value properties: the slider coerces its value against the range it currently has.
+      OnPropertyChanged(nameof(IsChoice));
+      // Before the value properties: the slider coerces its value against the range it currently
+      // has, and the picker its selection against the options it currently lists.
       OnPropertyChanged(nameof(ValueMetadata));
+      OnPropertyChanged(nameof(ChoiceOptions));
       OnValueChanged();
     }
     finally
@@ -72,6 +75,7 @@ public partial class SettingEditorView : ContentView
       OnPropertyChanged(nameof(Value));
       OnPropertyChanged(nameof(BooleanValue));
       OnPropertyChanged(nameof(NumericValue));
+      OnPropertyChanged(nameof(ChoiceValue));
       OnPropertyChanged(nameof(Example));
     }
     finally
@@ -94,8 +98,13 @@ public partial class SettingEditorView : ContentView
 
   public bool IsBoundedNumeric => Editor?.Kind is SettingKind.BoundedNumeric;
 
+  public bool IsChoice => Editor?.Kind is SettingKind.Choice;
+
   public SettingKind.BoundedNumeric ValueMetadata =>
     Editor?.Kind as SettingKind.BoundedNumeric ?? UnboundedRange;
+
+  public SettingKind.Option[] ChoiceOptions =>
+    (Editor?.Kind as SettingKind.Choice)?.Options ?? [];
 
   public string Value
   {
@@ -135,6 +144,24 @@ public partial class SettingEditorView : ContentView
       var steps = Math.Round(value / metadata.Step);
       var snapped = metadata.Step * steps;
       Value = snapped.ToString(CultureInfo.InvariantCulture) + metadata.Unit;
+    }
+  }
+
+  public SettingKind.Option? ChoiceValue
+  {
+    get
+    {
+      var options = ChoiceOptions;
+      return options.FirstOrDefault(o => o.Value == Value);
+    }
+    // While the options are empty -- every kind but a choice -- the picker has nothing to select and
+    // echoes back null, which is not a value any setting holds.
+    set
+    {
+      if (value is not null)
+      {
+        Value = value.Value;
+      }
     }
   }
 

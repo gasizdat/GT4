@@ -12,6 +12,12 @@ public abstract record SettingKind
   // the setting measures.
   public sealed record BoundedNumeric(double Minimum, double Maximum, double Step, string Unit)
     : SettingKind;
+
+  // Value is the invariant string persisted, Label the localized text the control shows -- a choice
+  // is the one kind whose Value is not fit to be read by the user.
+  public sealed record Option(string Value, string Label);
+
+  public sealed record Choice(Option[] Options) : SettingKind;
 }
 
 public interface ISettingEditor

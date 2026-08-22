@@ -10,8 +10,8 @@ public class BiologicalSexFormatterTests
 {
   private readonly BiologicalSexFormatter _formatter = new();
 
-  private static void SetEn() => Language.Current = Language.EN;
-  private static void SetRu() => Language.Current = Language.RU;
+  private static void SetEn() => TestLanguage.Use(Language.EN);
+  private static void SetRu() => TestLanguage.Use(Language.RU);
 
   [Theory]
   [InlineData(BiologicalSex.Male, "♂ Man")]
