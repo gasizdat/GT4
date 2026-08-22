@@ -20,11 +20,11 @@ public class DateFormatterTests
     return new DateFormatter(full.Object, shortFmt.Object);
   }
 
-  private static void SetEn() => Language.Current = Language.EN;
-  private static void SetRu() => Language.Current = Language.RU;
-  private static void SetDe() => Language.Current = Language.DE;
-  private static void SetEs() => Language.Current = Language.ES;
-  private static void SetFr() => Language.Current = Language.FR;
+  private static void SetEn() => TestLanguage.Use(Language.EN);
+  private static void SetRu() => TestLanguage.Use(Language.RU);
+  private static void SetDe() => TestLanguage.Use(Language.DE);
+  private static void SetEs() => TestLanguage.Use(Language.ES);
+  private static void SetFr() => TestLanguage.Use(Language.FR);
 
   [Fact]
   public void NullDate_ReturnsNotDefined()
