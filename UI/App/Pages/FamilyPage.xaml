@@ -47,6 +47,10 @@
           Text="{x:Static resources:UIStrings.MenuItemNameAddPerson}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="ToggleFilters"
+          Text="{x:Static resources:UIStrings.MenuItemNameFilters}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="Refresh"
           Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
     </components:PageLayout.MenuItems>

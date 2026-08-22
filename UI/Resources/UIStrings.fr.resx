@@ -1149,8 +1149,8 @@ FN - nom de famille</value>
   <data name="BtnNameClearFilters" xml:space="preserve">
     <value>Effacer les filtres</value>
   </data>
-  <data name="BtnNameFilters_1" xml:space="preserve">
-    <value>{0} Filtres</value>
+  <data name="MenuItemNameFilters" xml:space="preserve">
+    <value>🔍 Filtres</value>
   </data>
   <data name="TitleStatisticsPage" xml:space="preserve">
     <value>Statistiques</value>

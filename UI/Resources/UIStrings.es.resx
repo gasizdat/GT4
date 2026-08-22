@@ -1149,8 +1149,8 @@ FN - apellido familiar</value>
   <data name="BtnNameClearFilters" xml:space="preserve">
     <value>Borrar filtros</value>
   </data>
-  <data name="BtnNameFilters_1" xml:space="preserve">
-    <value>{0} Filtros</value>
+  <data name="MenuItemNameFilters" xml:space="preserve">
+    <value>🔍 Filtros</value>
   </data>
   <data name="TitleStatisticsPage" xml:space="preserve">
     <value>Estadísticas</value>

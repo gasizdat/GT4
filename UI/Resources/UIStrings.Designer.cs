@@ -296,11 +296,11 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0} Filters.
+        ///   Looks up a localized string similar to 🔍 Filters.
         /// </summary>
-        public static string BtnNameFilters_1 {
+        public static string MenuItemNameFilters {
             get {
-                return ResourceManager.GetString("BtnNameFilters_1", resourceCulture);
+                return ResourceManager.GetString("MenuItemNameFilters", resourceCulture);
             }
         }
         

@@ -11,10 +11,10 @@
       HorizontalOptions="Fill"
       RowDefinitions="Auto, Auto">
 
-    <!--  Row 0 - Filters toggle  -->
+    <!--  Row 0 - Clear filters  -->
     <Grid
         Grid.Row="0"
-        ColumnDefinitions="*, Auto, Auto">
+        ColumnDefinitions="*, Auto">
       <Button
           x:Name="ClearFiltersButton"
           Grid.Column="1"
@@ -30,14 +30,6 @@
               Duration="500" />
         </Button.Behaviors>
       </Button>
-
-      <Button
-          x:Name="ToggleFiltersButton"
-          Grid.Column="2"
-          Command="{Binding FilterCommand, Source={x:Reference Root}}"
-          CommandParameter="ToggleFiltersCommand"
-          HorizontalOptions="End"
-          Style="{StaticResource TextAdorner}" />
     </Grid>
 
     <!--

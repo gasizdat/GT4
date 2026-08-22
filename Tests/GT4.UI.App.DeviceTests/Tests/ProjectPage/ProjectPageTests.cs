@@ -54,20 +54,29 @@ public class ProjectPageTests
   }
 
   [Fact]
-  public async Task ToggleFilters_button_shows_and_hides_the_filters_panel()
+  public async Task ToggleFilters_menu_item_is_bound_to_the_page_command()
+  {
+    var page = await CreatePageAsync(new TestServices());
+
+    var layout = (PageLayout)page.Content;
+    var filterItem = layout.MenuItems.Single(item => (string?)item.CommandParameter == "ToggleFilters");
+
+    Assert.NotNull(filterItem.Command);
+  }
+
+  [Fact]
+  public async Task ToggleFilters_command_shows_and_hides_the_filters_panel()
   {
     var page = await CreatePageAsync(new TestServices());
     await using var window = await WindowHost.AttachAsync(page);
     Assert.False(page.FilterView.IsFiltersVisible);
 
-    // Clicking cascades into FadeVisibilityBehavior touching native UI, so it must run on the UI
+    // The flip cascades into FadeVisibilityBehavior touching native UI, so it must run on the UI
     // thread.
-    var toggleButton = page.FilterView.FindByName<Button>("ToggleFiltersButton");
-
-    await MainThread.InvokeOnMainThreadAsync(toggleButton.SendClicked);
+    await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("ToggleFilters"));
     Assert.True(page.FilterView.IsFiltersVisible);
 
-    await MainThread.InvokeOnMainThreadAsync(toggleButton.SendClicked);
+    await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("ToggleFilters"));
     Assert.False(page.FilterView.IsFiltersVisible);
   }
 
@@ -508,12 +517,12 @@ public class ProjectPageTests
   // logic worth pinning.
 
   [Fact]
-  public async Task ToggleFilters_button_fades_the_real_filters_panel_in_and_out()
+  public async Task ToggleFilters_command_fades_the_real_filters_panel_in_and_out()
   {
-    // The fade is not awaited by the toggle click: it flips IsFiltersVisible synchronously, but
+    // The fade is not awaited by the command: it flips IsFiltersVisible synchronously, but
     // FadeVisibilityBehavior's reaction to it is an async void animation that keeps running after
-    // the click handler returns -- so the click completes well before the 500ms fade does. Poll for
-    // the fade's own end state rather than assuming the click's completion implies the animation's.
+    // the command returns -- so the command completes well before the 500ms fade does. Poll for the
+    // fade's own end state rather than assuming the command's completion implies the animation's.
     var page = await CreatePageAsync(new TestServices());
     await using var window = await WindowHost.AttachAsync(page);
 
@@ -524,16 +533,14 @@ public class ProjectPageTests
       Assert.Equal(0, panel.Opacity);
     });
 
-    var toggleButton = page.FilterView.FindByName<Button>("ToggleFiltersButton");
-
-    await MainThread.InvokeOnMainThreadAsync(toggleButton.SendClicked);
+    await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("ToggleFilters"));
     await Poll.UntilAsync(
       () => MainThread.InvokeOnMainThreadAsync(() => panel.Opacity),
       opacity => opacity == 1,
       timeoutMessage: "The filters panel did not finish fading in.");
     await MainThread.InvokeOnMainThreadAsync(() => Assert.True(panel.IsVisible));
 
-    await MainThread.InvokeOnMainThreadAsync(toggleButton.SendClicked);
+    await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("ToggleFilters"));
     await Poll.UntilAsync(
       () => MainThread.InvokeOnMainThreadAsync(() => panel.IsVisible),
       isVisible => !isVisible,

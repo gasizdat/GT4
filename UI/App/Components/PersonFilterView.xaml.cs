@@ -10,9 +10,11 @@ using System.Windows.Input;
 namespace GT4.UI.Components;
 
 /// <summary>
-/// The self-contained person filter: header text, clear/toggle buttons, the fading fields panel, and
-/// the filter state itself (a <see cref="PersonFilter"/> it owns), including the lazy marital-status/
-/// year-bounds fetch. Host pages call <see cref="Initialize"/> right after their InitializeComponent,
+/// The self-contained person filter: the clear button, the fading fields panel, and the filter state
+/// itself (a <see cref="PersonFilter"/> it owns), including the lazy marital-status/year-bounds
+/// fetch. It carries no toggle affordance of its own: the panel opens and closes only through
+/// <see cref="IsFiltersVisible"/>, which the host page's menu drives.
+/// Host pages call <see cref="Initialize"/> right after their InitializeComponent,
 /// subscribe to <see cref="Changed"/> to re-run their filter predicate, and call <see cref="Matches"/>
 /// from it. The filter exists from construction, so <see cref="Matches"/> is safe even before
 /// Initialize has run; only opening the panel requires it.
@@ -32,7 +34,6 @@ public partial class PersonFilterView : ContentView
   public PersonFilterView()
   {
     InitializeComponent();
-    UpdateToggleText();
   }
 
   public void Initialize(
@@ -108,7 +109,6 @@ public partial class PersonFilterView : ContentView
     {
       _IsFiltersVisible = value;
       FiltersPanelFade.IsVisible = value;
-      UpdateToggleText();
 
       if (value)
       {
@@ -117,16 +117,10 @@ public partial class PersonFilterView : ContentView
     }
   }
 
-  private void UpdateToggleText() =>
-    ToggleFiltersButton.Text = string.Format(UIStrings.BtnNameFilters_1, _IsFiltersVisible ? "🔼" : "🔽");
-
   private void OnFilterCommand(object obj)
   {
     switch (obj)
     {
-      case string commandName when commandName == "ToggleFiltersCommand":
-        IsFiltersVisible = !IsFiltersVisible;
-        break;
       case string commandName when commandName == "ClearFiltersCommand":
         _Filter.Clear();
         SyncControls();

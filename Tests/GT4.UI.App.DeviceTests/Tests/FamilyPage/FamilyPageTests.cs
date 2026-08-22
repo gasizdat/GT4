@@ -44,6 +44,33 @@ public class FamilyPageTests
   }
 
   [Fact]
+  public async Task ToggleFilters_menu_item_is_bound_to_the_page_command()
+  {
+    var page = await CreatePageAsync(new TestServices());
+
+    var layout = (PageLayout)page.Content;
+    var filterItem = layout.MenuItems.Single(item => (string?)item.CommandParameter == "ToggleFilters");
+
+    Assert.NotNull(filterItem.Command);
+  }
+
+  [Fact]
+  public async Task ToggleFilters_command_shows_and_hides_the_filters_panel()
+  {
+    var page = await CreatePageAsync(new TestServices());
+    await using var window = await WindowHost.AttachAsync(page);
+    Assert.False(page.FilterView.IsFiltersVisible);
+
+    // The flip cascades into FadeVisibilityBehavior touching native UI, so it must run on the UI
+    // thread.
+    await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("ToggleFilters"));
+    Assert.True(page.FilterView.IsFiltersVisible);
+
+    await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("ToggleFilters"));
+    Assert.False(page.FilterView.IsFiltersVisible);
+  }
+
+  [Fact]
   public async Task Persons_is_empty_until_FamilyName_is_set()
   {
     var services = new TestServices();
@@ -367,13 +394,13 @@ public class FamilyPageTests
     await MainThread.InvokeOnMainThreadAsync(() => ((IView)layout).Arrange(new Rect(0, 0, 400, 800)));
     var topMenu = layout.FindByName<FlexLayout>("TopMenu");
     var buttons = topMenu.Children.OfType<Button>().ToArray();
-    Assert.Equal(4, buttons.Length);
+    Assert.Equal(5, buttons.Length);
 
     await MainThread.InvokeOnMainThreadAsync(() => page.FamilyName = FamilyInfoItem.NoFamilyName);
 
     var parameters = await MainThread.InvokeOnMainThreadAsync(
       () => buttons.Where(b => b.IsEnabled).Select(b => ((PageMenuItem)b.BindingContext!).CommandParameter).ToArray());
-    Assert.Equal(["CreatePerson", "Refresh"], parameters);
+    Assert.Equal(["CreatePerson", "ToggleFilters", "Refresh"], parameters);
   }
 
   [Fact]
