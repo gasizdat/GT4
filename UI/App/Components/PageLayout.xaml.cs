@@ -148,7 +148,11 @@ public partial class PageLayout : ContentView
 
   public bool HasBackButton
   {
+#if WINDOWS
+    get => false;
+#else
     get => (bool)GetValue(HasBackButtonProperty);
+#endif
     set => SetValue(HasBackButtonProperty, value);
   }
 

@@ -9,6 +9,12 @@ namespace GT4.UI.DeviceTests;
 
 public class PageLayoutTests
 {
+#if WINDOWS
+  private const bool HasBackButton = false;
+#else
+  private const bool HasBackButton = true;
+#endif
+
   private static Task<PageLayout> CreateLayoutAsync() => CreateLayoutAsync(new TestServices());
 
   private static async Task<PageLayout> CreateLayoutAsync(TestServices services)
@@ -228,7 +234,7 @@ public class PageLayoutTests
     await MainThread.InvokeOnMainThreadAsync(() => layout.HasBackButton = true);
 
     var button = BackButton(layout);
-    Assert.True(button.IsVisible);
+    Assert.Equal(HasBackButton, button.IsVisible);
     Assert.Equal(UIStrings.MenuItemNameBack, layout.BackItem.Text);
     Assert.Equal(layout.BackItem.ButtonText, button.Text);
     Assert.Equal(layout.BackItem.ToolTipText, ToolTipProperties.GetText(button));
@@ -264,7 +270,7 @@ public class PageLayoutTests
     var withBack = await TitleOffsetAsync(hasBackButton: true);
 
     Assert.Equal(0, withoutBack);
-    Assert.True(withBack > 0, $"The back button claimed no width: title starts at {withBack}.");
+    Assert.True(HasBackButton == withBack > 0, $"The back button claimed no width: title starts at {withBack}.");
   }
 
   // Both sides come from one token rather than one measuring the other: binding WidthRequest to Height
@@ -329,7 +335,7 @@ public class PageLayoutTests
 
     var layout = (PageLayout)page.Content;
 
-    Assert.True(layout.HasBackButton);
-    Assert.True(BackButton(layout).IsVisible);
+    Assert.Equal(HasBackButton, layout.HasBackButton);
+    Assert.Equal(HasBackButton, BackButton(layout).IsVisible);
   }
 }
