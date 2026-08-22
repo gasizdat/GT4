@@ -1330,6 +1330,6 @@ FN - Familienname</value>
     <value>{0} Geburts- oder Sterbedaten in diesem Projekt haben ein bekanntes Jahr, aber keinen bekannten Monat, und können daher nicht im Kalender platziert werden.</value>
   </data>
   <data name="MenuItemNameBack" xml:space="preserve">
-    <value>❮❮ Zurück</value>
+    <value>❮ Zurück</value>
   </data>
 </root>

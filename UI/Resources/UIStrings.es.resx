@@ -1330,6 +1330,6 @@ FN - apellido familiar</value>
     <value>{0} fechas de nacimiento o defunción de este proyecto tienen un año registrado pero no un mes, por lo que no se pueden ubicar en el calendario.</value>
   </data>
   <data name="MenuItemNameBack" xml:space="preserve">
-    <value>❮❮ Atrás</value>
+    <value>❮ Atrás</value>
   </data>
 </root>
