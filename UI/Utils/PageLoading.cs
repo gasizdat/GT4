@@ -5,8 +5,7 @@ namespace GT4.UI;
 
 /// <summary>
 /// The "a load is in flight and the page has nothing to show yet" flag behind PageLayout's activity
-/// indicator. A page owns one and binds the layout to it, the way BackgroundAnimation drives that
-/// same layout's background.
+/// indicator. A page owns one and binds the layout to it.
 /// </summary>
 public sealed class PageLoading : INotifyPropertyChanged
 {
@@ -34,11 +33,9 @@ public sealed class PageLoading : INotifyPropertyChanged
   }
 
   /// <summary>
-  /// Holds <see cref="IsLoading"/> for the duration of <paramref name="work"/>, unless the page
-  /// already has content on screen. <paramref name="hasContent"/> is read once, here, because the
-  /// load's apply step clears its collection before refilling it -- a recomputed check would see
-  /// that gap and flash the indicator on the very refresh it must skip. Clearing happens in a
-  /// finally, so a failed or silently-swallowed load cannot leave the indicator spinning.
+  /// <paramref name="hasContent"/> is a snapshot, not a live check: a load's apply step clears its
+  /// collection before refilling it, and a recomputed check would see that gap and flash the
+  /// indicator on the very refresh it must skip.
   /// </summary>
   public void Run(bool hasContent, Func<Task> work)
   {

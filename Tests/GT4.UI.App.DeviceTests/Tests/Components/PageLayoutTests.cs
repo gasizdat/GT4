@@ -143,7 +143,6 @@ public class PageLayoutTests
     Assert.True(layout.IsHintVisible);
   }
 
-  // The page-side flag bound in here is covered by PageLoadingTests.
   [Fact]
   public async Task A_bound_loading_flag_drives_the_activity_indicator()
   {
