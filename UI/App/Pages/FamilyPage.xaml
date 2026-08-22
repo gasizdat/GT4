@@ -25,6 +25,7 @@
   </ContentPage.Resources>
 
   <components:PageLayout
+      x:Name="LayoutView"
       Title="{Binding FamilyName.Value, Source={x:Reference Root}}"
       Hint="{x:Static resources:UIStrings.HintFamilyPage}">
 

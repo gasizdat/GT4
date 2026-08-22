@@ -92,7 +92,7 @@ public partial class SelectPersonDialog : ContentPage
 
       if (_Persons.Count == 0 || _ProjectRevision != _CurrentProjectProvider.Project.ProjectRevision)
       {
-        SafeTask.Run(AddPersonInfoItemsAsync, _AlertService);
+        LayoutView.RunLoad(_Persons.Count != 0, AddPersonInfoItemsAsync, _AlertService);
       }
 
       return _Persons.Items;

@@ -9,6 +9,7 @@
     x:Name="Root">
 
   <components:PageLayout
+      x:Name="LayoutView"
       Title="{x:Static resources:UIStrings.TitleProjectPage}"
       Hint="{x:Static resources:UIStrings.HintProjectPage}">
 

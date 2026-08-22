@@ -54,12 +54,21 @@ public partial class KinshipFinderPage : ContentPage
       return;
     }
 
-    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-    var chain = await _CurrentProjectProvider.Project.KinshipFinder.FindPathAsync(_PersonFrom, _PersonTo, token);
+    // Not LayoutView.RunLoad: the search awaits on the UI thread, and RefreshView must stay there.
+    LayoutView.IsLoading = _Chain is null;
+    try
+    {
+      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      var chain = await _CurrentProjectProvider.Project.KinshipFinder.FindPathAsync(_PersonFrom, _PersonTo, token);
 
-    _Chain = chain;
-    _Searched = true;
-    this.RefreshView();
+      _Chain = chain;
+      _Searched = true;
+      this.RefreshView();
+    }
+    finally
+    {
+      LayoutView.IsLoading = false;
+    }
   }
 
   protected async Task OnPageCommand(object obj)

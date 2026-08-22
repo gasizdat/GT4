@@ -148,7 +148,7 @@ public partial class FamilyPage : ContentPage
       if (!_PersonsLoaded)
       {
         _PersonsLoaded = true;
-        SafeTask.Run(() => ListPersonsAsync(familyName), _AlertService);
+        LayoutView.RunLoad(_Persons.Count != 0, () => ListPersonsAsync(familyName), _AlertService);
       }
 
       return _Persons.Items;

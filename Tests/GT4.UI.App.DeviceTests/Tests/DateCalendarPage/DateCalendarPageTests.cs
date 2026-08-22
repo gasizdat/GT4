@@ -249,4 +249,24 @@ public class DateCalendarPageTests
 
     Assert.Equal(loadsBefore, page.CompletedLoads);
   }
+
+  // Refresh resets _PersonsLoaded but leaves the previously loaded month rendered, so the load it
+  // starts is a refresh over visible content -- not a first build.
+  [Fact]
+  public async Task A_reload_over_a_rendered_month_never_shows_the_indicator()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+    var layout = LoadingIndicator.Of(page);
+    await page.WaitForFirstLoadAsync();
+    services.CurrentProjectProvider.SetupGet(p => p.Info).Returns(TestServices.SampleProjectInfo with { Revision = 42 });
+
+    var isLoading = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      page.InvokeNavigatedTo();
+      return layout.IsLoading;
+    });
+
+    Assert.False(isLoading);
+  }
 }

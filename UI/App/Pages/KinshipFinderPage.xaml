@@ -9,7 +9,7 @@
     x:Name="Root"
     Title="{x:Static resources:UIStrings.TitleKinshipFinderPage}">
 
-  <components:PageLayout>
+  <components:PageLayout x:Name="LayoutView">
     <components:PageLayout.Header>
       <Grid
           ColumnDefinitions="Auto, *, Auto"

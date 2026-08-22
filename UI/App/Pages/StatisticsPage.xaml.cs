@@ -18,6 +18,9 @@ public partial class StatisticsPage : ContentPage
 
   private ProjectStatistics _Statistics = ProjectStatistics.Empty;
   private bool _UpdateStatistics = true;
+  // Not "_Statistics == ProjectStatistics.Empty": ProjectStatistics is a record, so an empty project
+  // compares equal to Empty even once loaded, and every refresh would re-show the indicator.
+  private bool _StatisticsLoaded;
   private ProjectInfo? _LastProjectInfo;
 
   public StatisticsPage(
@@ -45,7 +48,7 @@ public partial class StatisticsPage : ContentPage
       if (_UpdateStatistics)
       {
         _UpdateStatistics = false;
-        SafeTask.Run(LoadStatisticsAsync, _AlertService);
+        LayoutView.RunLoad(_StatisticsLoaded, LoadStatisticsAsync, _AlertService);
       }
 
       return _Statistics;
@@ -66,6 +69,7 @@ public partial class StatisticsPage : ContentPage
     await SafeTask.RunOnMainThread(() =>
     {
       _Statistics = statistics;
+      _StatisticsLoaded = true;
       this.RefreshView();
     }, _AlertService);
   }

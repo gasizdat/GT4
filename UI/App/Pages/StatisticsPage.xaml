@@ -30,7 +30,7 @@
     </ResourceDictionary>
   </ContentPage.Resources>
 
-  <components:PageLayout>
+  <components:PageLayout x:Name="LayoutView">
     <components:PageLayout.Body>
       <ScrollView>
         <Grid

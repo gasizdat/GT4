@@ -116,6 +116,16 @@
 
     </Grid>
 
+    <ActivityIndicator
+        x:Name="LoadingIndicator"
+        Grid.Row="3"
+        Grid.Column="0"
+        HorizontalOptions="Center"
+        InputTransparent="True"
+        IsRunning="{Binding IsLoading, Source={x:Reference Root}}"
+        IsVisible="{Binding IsLoading, Source={x:Reference Root}}"
+        VerticalOptions="Center" />
+
     <!--  Footer slot  -->
     <ContentView
         Grid.Row="4"

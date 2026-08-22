@@ -29,6 +29,9 @@ public partial class DateCalendarPage : ContentPage
   private int _DisplayMonth = Date.Now.Month;
   private int? _PhotosLoadedMonth;
   private bool _PersonsLoaded;
+  // Not _PersonsLoaded, which Refresh resets: a refresh keeps the previously loaded month rendered
+  // (_Persons is replaced only once the new data lands), so the indicator must stay off.
+  private bool _CalendarRendered;
   private bool _MilestoneOnly;
   private bool _UpdateData = true;
   private ProjectInfo? _LastProjectInfo;
@@ -68,7 +71,7 @@ public partial class DateCalendarPage : ContentPage
       if (_UpdateData)
       {
         _UpdateData = false;
-        SafeTask.Run(LoadCalendarDataAsync, _AlertService);
+        LayoutView.RunLoad(_CalendarRendered, LoadCalendarDataAsync, _AlertService);
       }
 
       var month = DateCalendarCalculator.Compute(_Persons, _RelativesByPersonId, _DisplayMonth, Date.Now.Year);
@@ -92,6 +95,7 @@ public partial class DateCalendarPage : ContentPage
       _RelativesByPersonId = relativesByPersonId;
       _UnplaceableCount = unplaceableCount;
       _PersonsLoaded = true;
+      _CalendarRendered = true;
       this.RefreshView();
     }, _AlertService);
   }

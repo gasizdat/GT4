@@ -140,7 +140,7 @@ public partial class GalleryPage : ContentPage
       if (_UpdateItems)
       {
         _UpdateItems = false;
-        _ = SafeTask.Run(AddGalleryItemsAsync, _AlertService);
+        LayoutView.RunLoad(_Items.Count != 0, AddGalleryItemsAsync, _AlertService);
       }
 
       return _Items.Items;

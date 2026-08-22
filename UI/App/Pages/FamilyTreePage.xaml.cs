@@ -103,8 +103,8 @@ public partial class FamilyTreePage : ContentPage
   // Diagnostic-only affordances for stress-testing deep-tree rendering; never shipped in Release.
   private void AddDiagnosticToolbarItems()
   {
-    Layout.MenuItems.Add(new PageMenuItem { Text = "🧪 Load deep (diag)", Command = PageCommand, CommandParameter = "LoadDeep" });
-    Layout.MenuItems.Add(new PageMenuItem { Text = "🧪 Auto-load incremental (diag)", Command = PageCommand, CommandParameter = "AutoLoad" });
+    LayoutView.MenuItems.Add(new PageMenuItem { Text = "🧪 Load deep (diag)", Command = PageCommand, CommandParameter = "LoadDeep" });
+    LayoutView.MenuItems.Add(new PageMenuItem { Text = "🧪 Auto-load incremental (diag)", Command = PageCommand, CommandParameter = "AutoLoad" });
   }
 #endif
 
@@ -195,6 +195,8 @@ public partial class FamilyTreePage : ContentPage
   private void SetLoadInProgress()
   {
     _LoadOperationsCount++;
+    // An incremental "load more" leaves the tree on screen, so only the first build gets the indicator.
+    LayoutView.IsLoading = _NodeCache.Count == 0;
 
     OnPropertyChanged(nameof(LoadInProgress));
     OnPropertyChanged(nameof(CanLoadMoreAncestors));
@@ -204,6 +206,7 @@ public partial class FamilyTreePage : ContentPage
   private void ResetLoadInProgress()
   {
     _LoadOperationsCount = Math.Max(_LoadOperationsCount - 1, 0);
+    LayoutView.IsLoading = false;
 
     OnPropertyChanged(nameof(LoadInProgress));
     OnPropertyChanged(nameof(CanLoadMoreAncestors));

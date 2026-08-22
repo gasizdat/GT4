@@ -9,7 +9,7 @@
     x:Name="Root">
 
   <components:PageLayout
-      x:Name="Layout"
+      x:Name="LayoutView"
       Hint="{x:Static resources:UIStrings.HintFamilyTreePage}"
       Title="{Binding PageTitle, Source={x:Reference Root}}">
 
@@ -87,10 +87,6 @@
               CommandParameter="ZoomIn"
               Style="{StaticResource ZoomIn}" />
         </HorizontalStackLayout>
-
-        <ActivityIndicator
-            HorizontalOptions="Center"
-            IsRunning="{Binding LoadInProgress, Source={x:Reference Root}}" />
       </Grid>
     </components:PageLayout.Body>
 

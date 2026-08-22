@@ -97,7 +97,7 @@ public partial class ProjectListPage : ContentPage
   protected override void OnNavigatedTo(NavigatedToEventArgs args)
   {
     base.OnNavigatedTo(args);
-    _ = SafeTask.Run(async () =>
+    LayoutView.RunLoad(_Projects.Count != 0, async () =>
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
       await _CurrentProjectProvider.CloseAsync(token);

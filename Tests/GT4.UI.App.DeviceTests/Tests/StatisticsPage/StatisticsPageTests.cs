@@ -3,6 +3,7 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI;
 using GT4.UI.Abstraction;
+using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
 using Moq;
 using Xunit;
@@ -121,5 +122,24 @@ public class StatisticsPageTests
     await Task.Delay(200);
 
     Assert.Equal(loadsBefore, page.CompletedLoads);
+  }
+
+  [Fact]
+  public async Task A_reload_of_an_empty_project_never_shows_the_indicator()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+    var layout = LoadingIndicator.Of(page);
+    var statistics = await page.WaitForFirstLoadAsync();
+    Assert.Equal(ProjectStatistics.Empty, statistics);
+    services.CurrentProjectProvider.SetupGet(p => p.Info).Returns(TestServices.SampleProjectInfo with { Revision = 42 });
+
+    var isLoading = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      page.InvokeNavigatedTo();
+      return layout.IsLoading;
+    });
+
+    Assert.False(isLoading);
   }
 }

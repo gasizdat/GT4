@@ -205,7 +205,7 @@ public partial class SelectRelativesDialog : ContentPage
 
       if (_Persons.Count == 0 || _ProjectRevision != _Factory.CurrentProjectProvider.Project.ProjectRevision)
       {
-        SafeTask.Run(AddPersonInfoItemsAsync, _Factory.AlertService);
+        LayoutView.RunLoad(_Persons.Count != 0, AddPersonInfoItemsAsync, _Factory.AlertService);
       }
 
       return _Persons.Items;

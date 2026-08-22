@@ -1,3 +1,4 @@
+using GT4.UI.Abstraction;
 using GT4.UI.Items;
 using GT4.UI.Utils.Settings;
 using System.Collections.ObjectModel;
@@ -9,6 +10,7 @@ public partial class PageLayout : ContentView
   private readonly ObservableCollection<PageMenuItem> _MenuItems = new();
   private bool _IsTopMenuVisible;
   private bool _IsSideMenuVisible;
+  private bool _IsLoading;
 
 
   public PageLayout(IServiceProvider serviceProvider)
@@ -169,4 +171,43 @@ public partial class PageLayout : ContentView
   public bool IsHeaderVisible => Header is not null;
 
   public bool IsFooterVisible => Footer is not null;
+
+  public bool IsLoading
+  {
+    get => _IsLoading;
+    set
+    {
+      if (_IsLoading == value)
+      {
+        return;
+      }
+
+      _IsLoading = value;
+      OnPropertyChanged(nameof(IsLoading));
+    }
+  }
+
+  /// <summary>
+  /// Shows the body's activity indicator while <paramref name="work"/> runs, unless the body already
+  /// holds content. <paramref name="hasContent"/> is read once, here, because the load's apply step
+  /// clears its collection before refilling it -- a recomputed check would see that gap and flash the
+  /// indicator on the very refresh it must skip. Clearing happens in a finally, so a failed or
+  /// silently-swallowed load cannot leave the indicator spinning.
+  /// </summary>
+  public void RunLoad(bool hasContent, Func<Task> work, IAlertService alertService)
+  {
+    IsLoading = !hasContent;
+
+    _ = SafeTask.Run(async () =>
+    {
+      try
+      {
+        await work();
+      }
+      finally
+      {
+        await SafeTask.RunOnMainThread(() => IsLoading = false, alertService);
+      }
+    }, alertService);
+  }
 }

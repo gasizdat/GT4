@@ -163,7 +163,7 @@ public partial class ProjectPage : ContentPage
       }, _AlertService);
     }
 
-    SafeTask.Run(OnLoadFamiliesAsync, _AlertService);
+    LayoutView.RunLoad(_Families.Count != 0, OnLoadFamiliesAsync, _AlertService);
   }
 
   // Loops AllItems, not the currently-visible Items: a family hidden by the current filters must

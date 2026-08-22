@@ -99,7 +99,7 @@ public partial class PersonPage : ContentPage
   public void ShowPersonInfo(Person person, bool addToNavigation)
   {
     ExpandAll = false;
-    SafeTask.Run(() => GetPersonDataAsync(person, addToNavigation), _AlertService);
+    LayoutView.RunLoad(_PersonFullInfo is not null, () => GetPersonDataAsync(person, addToNavigation), _AlertService);
   }
 
   public bool ExpandAll
