@@ -1,5 +1,6 @@
 using FluentAssertions;
 using GT4.Core.Utils;
+using GT4.UI.Utils;
 using GT4.UI.Utils.Settings;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Maui.ApplicationModel;
@@ -28,6 +29,22 @@ public class ThemeSettingTests
     return choice.Options;
   }
 
+  private static SettingKind.Option[] OptionsIn(ISettingEditor setting, string language)
+  {
+    var culture = CultureInfo.CurrentUICulture;
+    CultureInfo.CurrentUICulture = new CultureInfo(language);
+    try
+    {
+      return OptionsOf(setting);
+    }
+    finally
+    {
+      CultureInfo.CurrentUICulture = culture;
+    }
+  }
+
+  public static TheoryData<string> Languages => new(Language.Languages.Select(l => l.Code));
+
   [Fact]
   public void Kind_OffersSystemLightAndDark()
   {
@@ -36,14 +53,16 @@ public class ThemeSettingTests
     values.Should().Equal(nameof(AppTheme.Unspecified), nameof(AppTheme.Light), nameof(AppTheme.Dark));
   }
 
-  // Value is the persisted string, not display text: the picker has to carry a separate label, and
-  // "Unspecified" must never reach the user.
-  [Fact]
-  public void Kind_LabelsEveryOptionWithSomethingOtherThanItsPersistedValue()
+  // Value is the persisted string, not display text: the picker carries a separate label so that
+  // "Unspecified" never reaches the user. The English labels of the other two options legitimately
+  // read the same as their persisted values, which is why only the label text itself is constrained.
+  [Theory]
+  [MemberData(nameof(Languages))]
+  public void Kind_NeverLabelsAnOptionWithUnspecified(string language)
   {
-    var options = OptionsOf(Make());
+    var options = OptionsIn(Make(), language);
 
-    options.Should().OnlyContain(o => o.Label.Length > 0 && o.Label != o.Value);
+    options.Should().OnlyContain(o => o.Label.Length > 0 && o.Label != nameof(AppTheme.Unspecified));
   }
 
   // The labels are read from UIStrings on every Kind access rather than cached once, so switching the
@@ -52,19 +71,10 @@ public class ThemeSettingTests
   public void Kind_RelabelsItsOptionsWhenTheUILanguageChanges()
   {
     var setting = Make();
-    var english = OptionsOf(setting).Select(o => o.Label).ToArray();
-    var culture = CultureInfo.CurrentUICulture;
+    var english = OptionsIn(setting, Language.EN.Code).Select(o => o.Label);
+    var german = OptionsIn(setting, Language.DE.Code).Select(o => o.Label);
 
-    CultureInfo.CurrentUICulture = new CultureInfo("de");
-    try
-    {
-      var german = OptionsOf(setting).Select(o => o.Label);
-      german.Should().NotEqual(english);
-    }
-    finally
-    {
-      CultureInfo.CurrentUICulture = culture;
-    }
+    german.Should().NotEqual(english);
   }
 
   [Theory]
