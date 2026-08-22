@@ -9,7 +9,7 @@
     x:Name="Root"
     Title="{x:Static resources:UIStrings.TitleGalleryPage}">
 
-  <components:PageLayout IsLoading="{Binding Loading.IsLoading, Source={x:Reference Root}}">
+  <components:PageLayout Loading="{Binding Loading, Source={x:Reference Root}}">
     <components:PageLayout.Header>
       <Grid
           Padding="20"

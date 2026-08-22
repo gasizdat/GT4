@@ -27,7 +27,7 @@
   <components:PageLayout
       Title="{Binding FamilyName.Value, Source={x:Reference Root}}"
       Hint="{x:Static resources:UIStrings.HintFamilyPage}"
-      IsLoading="{Binding Loading.IsLoading, Source={x:Reference Root}}">
+      Loading="{Binding Loading, Source={x:Reference Root}}">
 
     <components:PageLayout.MenuItems>
       <items:PageMenuItem

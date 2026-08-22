@@ -11,7 +11,7 @@
   <components:PageLayout
       Title="{x:Static resources:UIStrings.TitleProjectPage}"
       Hint="{x:Static resources:UIStrings.HintProjectPage}"
-      IsLoading="{Binding Loading.IsLoading, Source={x:Reference Root}}">
+      Loading="{Binding Loading, Source={x:Reference Root}}">
 
     <components:PageLayout.MenuItems>
       <items:PageMenuItem

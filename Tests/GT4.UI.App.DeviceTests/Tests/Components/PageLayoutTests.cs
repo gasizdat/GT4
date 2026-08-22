@@ -144,26 +144,47 @@ public class PageLayoutTests
   }
 
   [Fact]
-  public async Task A_bound_loading_flag_drives_the_activity_indicator()
+  public async Task An_assigned_loading_flag_drives_the_activity_indicator()
   {
     var layout = await CreateLayoutAsync();
     var alertService = new Mock<IAlertService>();
     var loading = new PageLoading(alertService.Object);
     var indicator = layout.FindByName<ActivityIndicator>("LoadingIndicator");
-    var binding = new Binding(nameof(PageLoading.IsLoading), source: loading);
-    await MainThread.InvokeOnMainThreadAsync(() => layout.SetBinding(PageLayout.IsLoadingProperty, binding));
+    await MainThread.InvokeOnMainThreadAsync(() => layout.Loading = loading);
 
-    Assert.False(layout.IsLoading);
     Assert.False(indicator.IsRunning);
     Assert.False(indicator.IsVisible);
 
     await MainThread.InvokeOnMainThreadAsync(() => loading.IsLoading = true);
-    Assert.True(layout.IsLoading);
     Assert.True(indicator.IsRunning);
     Assert.True(indicator.IsVisible);
 
     await MainThread.InvokeOnMainThreadAsync(() => loading.IsLoading = false);
-    Assert.False(layout.IsLoading);
+    Assert.False(indicator.IsRunning);
+    Assert.False(indicator.IsVisible);
+  }
+
+  [Fact]
+  public async Task A_flag_already_set_shows_the_indicator_the_moment_it_is_assigned()
+  {
+    var layout = await CreateLayoutAsync();
+    var alertService = new Mock<IAlertService>();
+    var loading = new PageLoading(alertService.Object) { IsLoading = true };
+    var indicator = layout.FindByName<ActivityIndicator>("LoadingIndicator");
+
+    await MainThread.InvokeOnMainThreadAsync(() => layout.Loading = loading);
+
+    Assert.True(indicator.IsRunning);
+    Assert.True(indicator.IsVisible);
+  }
+
+  [Fact]
+  public async Task A_layout_left_without_a_loading_flag_keeps_the_indicator_hidden()
+  {
+    var layout = await CreateLayoutAsync();
+    var indicator = layout.FindByName<ActivityIndicator>("LoadingIndicator");
+
+    Assert.Null(layout.Loading);
     Assert.False(indicator.IsRunning);
     Assert.False(indicator.IsVisible);
   }
