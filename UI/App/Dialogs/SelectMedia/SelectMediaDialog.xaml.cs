@@ -76,7 +76,7 @@ public partial class SelectMediaDialog : ContentPage
       if (_LoadItems)
       {
         _LoadItems = false;
-        Loading.Run(_Items.Count != 0, AddMediaItemsAsync);
+        Loading.Run(hasContent: false, AddMediaItemsAsync);
       }
 
       return _Items.Items;
