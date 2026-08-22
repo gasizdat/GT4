@@ -1330,6 +1330,6 @@ FN - nom de famille</value>
     <value>{0} dates de naissance ou de décès de ce projet ont une année connue mais aucun mois connu, elles ne peuvent donc pas être placées sur le calendrier.</value>
   </data>
   <data name="MenuItemNameBack" xml:space="preserve">
-    <value>⬅️ Retour</value>
+    <value>❮❮ Retour</value>
   </data>
 </root>

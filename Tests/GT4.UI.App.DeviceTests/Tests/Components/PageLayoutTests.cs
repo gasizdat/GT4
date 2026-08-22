@@ -30,6 +30,16 @@ public class PageLayoutTests
     return grid.Children.OfType<Button>().Single();
   }
 
+  // Whichever menu the current orientation put on screen holds the arranged button; the other is collapsed.
+  private static Rect MenuButtonFrame(PageLayout layout)
+  {
+    var topMenu = layout.FindByName<FlexLayout>("TopMenu");
+    var sideMenu = layout.FindByName<FlexLayout>("SideMenu");
+    var topButton = (Button)topMenu.Children.Single();
+    var sideButton = (Button)sideMenu.Children.Single();
+    return topButton.Frame.Width > sideButton.Frame.Width ? topButton.Frame : sideButton.Frame;
+  }
+
   private static Label TitleLabel(PageLayout layout)
   {
     var grid = (Grid)layout.Content;
@@ -255,6 +265,42 @@ public class PageLayoutTests
 
     Assert.Equal(0, withoutBack);
     Assert.True(withBack > 0, $"The back button claimed no width: title starts at {withBack}.");
+  }
+
+  // Both sides come from one token rather than one measuring the other: binding WidthRequest to Height
+  // feeds the width back into what measured it, and EmojiAdorner's WordWrap closes that loop. Nothing
+  // then keeps the token above the glyph it boxes, so the probe -- the same style and font size without
+  // the size requests -- measures what the glyph actually needs.
+  [Fact]
+  public async Task A_menu_button_is_square_and_clears_its_glyph()
+  {
+    var layout = await CreateLayoutAsync();
+    await AddMenuItemAsync(layout);
+    var probe = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      var button = new Button
+      {
+        Style = (Style)layout.Resources["MenuButton"],
+        BindingContext = layout.MenuItems.Single(),
+      };
+      button.SetDynamicResource(Button.FontSizeProperty, "ActionButtonTextSize");
+      layout.Body = button;
+      return button;
+    });
+
+    var page = await MainThread.InvokeOnMainThreadAsync(() => new ContentPage { Content = layout });
+    await using var window = await WindowHost.AttachAsync(page);
+
+    var glyph = await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => probe.Frame),
+      frame => frame.Width > 0,
+      timeoutMessage: "The probe button was never arranged.");
+    var box = await MainThread.InvokeOnMainThreadAsync(() => MenuButtonFrame(layout));
+
+    Assert.Equal(box.Height, box.Width);
+    Assert.True(
+      box.Width >= glyph.Width && box.Height >= glyph.Height,
+      $"The glyph needs {glyph.Width}x{glyph.Height} but its button is {box.Width}x{box.Height}.");
   }
 
   public static TheoryData<Type> PushedPages =>

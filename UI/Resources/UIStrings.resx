@@ -1330,6 +1330,6 @@ FN - family name</value>
     <value>{0} birth or death dates in this project have a year on record but no month, so they can't be placed on the calendar.</value>
   </data>
   <data name="MenuItemNameBack" xml:space="preserve">
-    <value>⬅️ Back</value>
+    <value>❮❮ Back</value>
   </data>
 </root>

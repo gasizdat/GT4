@@ -146,6 +146,14 @@
       Phone="25"
       Tablet="30" />
 
+  <!--  The square box a page-menu button occupies. Sized to clear its glyph at ActionButtonTextSize.  -->
+  <OnIdiom
+      x:Key="MenuButtonSize"
+      x:TypeArguments="x:Double"
+      Desktop="46"
+      Phone="40"
+      Tablet="46" />
+
   <OnIdiom
       x:Key="GroupTitleMarginBottom"
       x:TypeArguments="x:Double"
@@ -282,8 +290,8 @@
   <Style x:Key="EmojiAdorner" BasedOn="{StaticResource ChangeAdorner}" TargetType="Button">
     <Setter Property="Opacity" Value="0.5" />
     <Setter Property="LineBreakMode" Value="WordWrap" />
-    <Setter Property="MinimumHeightRequest" Value="{StaticResource AddornerButtonEmojiSize}" />
-    <Setter Property="MinimumWidthRequest" Value="{StaticResource AddornerButtonEmojiSize}" />
+    <Setter Property="MinimumHeightRequest" Value="{DynamicResource AddornerButtonEmojiSize}" />
+    <Setter Property="MinimumWidthRequest" Value="{DynamicResource AddornerButtonEmojiSize}" />
     <Setter Property="TextColor" Value="{StaticResource Tertiary}" />
   </Style>
 

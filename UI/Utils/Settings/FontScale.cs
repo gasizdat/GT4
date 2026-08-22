@@ -18,7 +18,8 @@ public sealed class FontScale
   // The increment applied by a single "zoom in"/"zoom out" step (e.g. the Ctrl +/- hotkeys).
   public const double Step = 0.05;
 
-  // Every resource key whose value is a font size. Keep in sync with the tokens in Styles.xaml.
+  // Every resource key whose value scales with the font: the font sizes themselves, plus the box a
+  // glyph button occupies, which has to grow with the glyph inside it. Keep in sync with Styles.xaml.
   private static readonly string[] ScaledKeys =
   [
     "LabelTextSizeDefault",
@@ -30,6 +31,8 @@ public sealed class FontScale
     "ActionButtonTextSize",
     "AdornerButtonTextSize",
     "InputControlTextSize",
+    "MenuButtonSize",
+    "AddornerButtonEmojiSize",
   ];
 
   private readonly Dictionary<string, double> _BaseSizes = new();
