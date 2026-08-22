@@ -110,7 +110,6 @@
 
     <!--  Body slot  -->
     <Grid
-        x:Name="BodySlot"
         Grid.Row="3"
         Padding="{StaticResource BodyPadding}"
         ColumnDefinitions="*, Auto">
