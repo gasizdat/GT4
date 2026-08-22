@@ -394,9 +394,6 @@ public class PageLayoutTests
     Assert.Equal(ShowsBackButton, BackButton(layout).IsVisible);
   }
 
-  // MAUI gives a grid's star row the whole grid's height, not what its Auto rows leave, once a child
-  // spans columns -- so the back button's own column cost the body slot its bounds, and with them the
-  // footer's place on the page and the viewport a list in the body needs to virtualize against.
   [Fact]
   public async Task A_body_taller_than_the_page_leaves_the_footer_on_it()
   {
@@ -407,7 +404,7 @@ public class PageLayoutTests
       $"The footer ends at {frames.Footer.Bottom} on a page {frames.PageHeight} tall.");
   }
 
-  // The side menu shares the body slot, so an unbounded slot is also a menu that never has to wrap.
+  // The side menu shares the body slot, so a menu too tall for it overflows the way a body does.
   [Fact]
   public async Task A_menu_too_long_for_the_body_slot_leaves_the_footer_on_the_page()
   {

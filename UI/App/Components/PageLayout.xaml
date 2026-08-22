@@ -50,8 +50,8 @@
     </ResourceDictionary>
   </ContentView.Resources>
 
-  <!--  Single-column on purpose: MAUI sizes a star row to the whole grid, not to what its Auto rows
-        leave, as soon as a child spans columns, which pushes the footer off the page.  -->
+  <!--  Single-column on purpose: MAUI sizes a star row to the whole grid rather than to the Auto
+        rows' leftover once a child spans columns.  -->
   <Grid RowDefinitions="Auto, Auto, Auto, *, Auto">
     <Image
         Grid.RowSpan="5"
