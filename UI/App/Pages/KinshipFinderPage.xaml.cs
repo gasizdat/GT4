@@ -103,6 +103,7 @@ public partial class KinshipFinderPage : ContentPage
     _NameFormatter = nameFormatter;
     _PersonInfoComparer = personInfoComparer;
     _NavigationService = navigationService;
+    Loading = new PageLoading(_AlertService);
     _PageCommand = new SafeCommand(OnPageCommand, _AlertService);
 
     InitializeComponent();
@@ -126,7 +127,7 @@ public partial class KinshipFinderPage : ContentPage
     _ = SafeTask.GuardAsync(FindAsync, _AlertService);
   }
 
-  public PageLoading Loading { get; } = new();
+  public PageLoading Loading { get; }
 
   public ICommand PageCommand => _PageCommand;
 

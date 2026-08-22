@@ -43,6 +43,7 @@ public partial class GalleryPage : ContentPage
     _NameFormatter = nameFormatter;
     _AlertService = alertService;
     _DataConverterResolver = dataConverterResolver;
+    Loading = new PageLoading(_AlertService);
     _DeleteDataCommand = new SafeCommand(OnDeleteCommandAsync, _AlertService);
     _OpenDataCommand = new SafeCommand(OnOpenCommandAsync, _AlertService);
     _Items.Filter = OwnersFilter;
@@ -106,7 +107,7 @@ public partial class GalleryPage : ContentPage
     string.IsNullOrEmpty(_OwnerFilter) ||
     item.Owners.Contains(_OwnerFilter, StringComparison.InvariantCultureIgnoreCase);
 
-  public PageLoading Loading { get; } = new();
+  public PageLoading Loading { get; }
 
   public ICommand DeleteDataCommand => _DeleteDataCommand;
 
@@ -142,7 +143,7 @@ public partial class GalleryPage : ContentPage
       if (_UpdateItems)
       {
         _UpdateItems = false;
-        Loading.Run(_Items.Count != 0, AddGalleryItemsAsync, _AlertService);
+        Loading.Run(_Items.Count != 0, AddGalleryItemsAsync);
       }
 
       return _Items.Items;

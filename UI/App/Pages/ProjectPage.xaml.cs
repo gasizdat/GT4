@@ -79,6 +79,7 @@ public partial class ProjectPage : ContentPage
     // not by reassigning this predicate.
     _Families.Filter = (_, family) => family.HasVisiblePersons;
 
+    Loading = new PageLoading(_AlertService);
     PageCommand = new SafeCommand(OnPageCommand, _AlertService);
     InitializeComponent();
 
@@ -163,7 +164,7 @@ public partial class ProjectPage : ContentPage
       }, _AlertService);
     }
 
-    Loading.Run(_Families.Count != 0, OnLoadFamiliesAsync, _AlertService);
+    Loading.Run(_Families.Count != 0, OnLoadFamiliesAsync);
   }
 
   // Loops AllItems, not the currently-visible Items: a family hidden by the current filters must
@@ -178,7 +179,7 @@ public partial class ProjectPage : ContentPage
     _Families.Update();
   }
 
-  public PageLoading Loading { get; } = new();
+  public PageLoading Loading { get; }
 
   public string RemoveProjectToolbarItemName =>
     string.Format(UIStrings.MenuItemNameRemove_1, _CurrentProjectProvider.Info.Name);

@@ -34,11 +34,12 @@ public partial class StatisticsPage : ContentPage
     _AlertService = alertService;
     _NameFormatter = nameFormatter;
 
+    Loading = new PageLoading(_AlertService);
     InitializeComponent();
     _LastProjectInfo = _CurrentProjectProvider.Info;
   }
 
-  public PageLoading Loading { get; } = new();
+  public PageLoading Loading { get; }
 
   // The single trigger for the (lazy, async) load: every display property below reads Statistics, so
   // whichever one XAML binds first kicks off the load, following the same lazy-getter idiom as
@@ -50,7 +51,7 @@ public partial class StatisticsPage : ContentPage
       if (_UpdateStatistics)
       {
         _UpdateStatistics = false;
-        Loading.Run(_StatisticsLoaded, LoadStatisticsAsync, _AlertService);
+        Loading.Run(_StatisticsLoaded, LoadStatisticsAsync);
       }
 
       return _Statistics;

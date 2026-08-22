@@ -10,7 +10,13 @@ namespace GT4.UI;
 /// </summary>
 public sealed class PageLoading : INotifyPropertyChanged
 {
+  private readonly IAlertService _AlertService;
   private bool _IsLoading;
+
+  public PageLoading(IAlertService alertService)
+  {
+    _AlertService = alertService;
+  }
 
   public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -34,7 +40,7 @@ public sealed class PageLoading : INotifyPropertyChanged
   /// that gap and flash the indicator on the very refresh it must skip. Clearing happens in a
   /// finally, so a failed or silently-swallowed load cannot leave the indicator spinning.
   /// </summary>
-  public void Run(bool hasContent, Func<Task> work, IAlertService alertService)
+  public void Run(bool hasContent, Func<Task> work)
   {
     IsLoading = !hasContent;
 
@@ -46,8 +52,8 @@ public sealed class PageLoading : INotifyPropertyChanged
       }
       finally
       {
-        await SafeTask.RunOnMainThread(() => IsLoading = false, alertService);
+        await SafeTask.RunOnMainThread(() => IsLoading = false, _AlertService);
       }
-    }, alertService);
+    }, _AlertService);
   }
 }

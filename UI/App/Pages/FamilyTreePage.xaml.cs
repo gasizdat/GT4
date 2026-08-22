@@ -80,6 +80,7 @@ public partial class FamilyTreePage : ContentPage
     _AlertService = alertService;
     _NavigationService = navigationService;
     _DataConverterResolver = dataConverterResolver;
+    Loading = new PageLoading(_AlertService);
     PageCommand = new SafeCommand(OnPageCommand, _AlertService);
 
     InitializeComponent();
@@ -129,7 +130,7 @@ public partial class FamilyTreePage : ContentPage
     }
   }
 
-  public PageLoading Loading { get; } = new();
+  public PageLoading Loading { get; }
 
   public ICommand PageCommand { get; }
 

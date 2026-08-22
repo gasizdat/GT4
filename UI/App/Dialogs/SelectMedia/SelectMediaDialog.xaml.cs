@@ -40,6 +40,7 @@ public partial class SelectMediaDialog : ContentPage
   {
     _Factory = factory;
     _OwnMediaIds = ownMediaIds;
+    Loading = new PageLoading(factory.AlertService);
     _DialogCommand = new SafeCommand(OnDialogCommand, factory.AlertService);
     _Items.Filter = OwnersFilter;
 
@@ -75,7 +76,7 @@ public partial class SelectMediaDialog : ContentPage
       if (_LoadItems)
       {
         _LoadItems = false;
-        Loading.Run(_Items.Count != 0, AddMediaItemsAsync, _Factory.AlertService);
+        Loading.Run(_Items.Count != 0, AddMediaItemsAsync);
       }
 
       return _Items.Items;
@@ -105,7 +106,7 @@ public partial class SelectMediaDialog : ContentPage
     }
   }
 
-  public PageLoading Loading { get; } = new();
+  public PageLoading Loading { get; }
 
   public string DialogButtonName => _SelectedItem is not null ? UIStrings.BtnNameOk : UIStrings.BtnNameCancel;
 

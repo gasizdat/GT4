@@ -56,6 +56,7 @@ public partial class SelectPersonDialog : ContentPage
     _CurrentProjectProvider = currentProjectProvider;
     _PersonInfoComparer = personInfoComparer;
     _AlertService = alertService;
+    Loading = new PageLoading(_AlertService);
     _DialogCommand = new SafeCommand(OnDialogCommand, _AlertService);
     _ProjectRevision = _CurrentProjectProvider.Project.ProjectRevision;
     _Persons.Filter = PersonFilter;
@@ -92,7 +93,7 @@ public partial class SelectPersonDialog : ContentPage
 
       if (_Persons.Count == 0 || _ProjectRevision != _CurrentProjectProvider.Project.ProjectRevision)
       {
-        Loading.Run(_Persons.Count != 0, AddPersonInfoItemsAsync, _AlertService);
+        Loading.Run(_Persons.Count != 0, AddPersonInfoItemsAsync);
       }
 
       return _Persons.Items;
@@ -110,7 +111,7 @@ public partial class SelectPersonDialog : ContentPage
     }
   }
 
-  public PageLoading Loading { get; } = new();
+  public PageLoading Loading { get; }
 
   public string DialogButtonName => _SelectedPerson is not null ? UIStrings.BtnNameOk : UIStrings.BtnNameCancel;
 

@@ -61,6 +61,7 @@ public partial class NamesPage : ContentPage
     _AlertService = alertService;
     _NameFormatter = nameFormatter;
     _DataConverterResolver = dataConverterResolver;
+    Loading = new PageLoading(_AlertService);
     _EditNameCommand = new SafeCommand(OnEditCommandAsync, _AlertService);
     _DeleteNameCommand = new SafeCommand(OnDeleteCommandAsync, _AlertService);
     _PageCommand = new SafeCommand(OnPageCommandAsync, _AlertService);
@@ -254,7 +255,7 @@ public partial class NamesPage : ContentPage
     OnPropertyChanged(nameof(Names));
   }
 
-  public PageLoading Loading { get; } = new();
+  public PageLoading Loading { get; }
 
   public ICollection<BiologicalSexItem> BiologicalSexes => _BiologicalSexes;
 
@@ -313,7 +314,7 @@ public partial class NamesPage : ContentPage
         _UpdateNames = false;
         // AddNameItemsAsync reads the project document on a background thread; SafeTask swallows the
         // teardown race (project closed while backgrounding) and surfaces any real failure.
-        Loading.Run(_Names.Count != 0, AddNameItemsAsync, _AlertService);
+        Loading.Run(_Names.Count != 0, AddNameItemsAsync);
       }
 
       return _Names.Items;

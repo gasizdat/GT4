@@ -75,6 +75,7 @@ public partial class PersonPage : ContentPage
     _NavigationService = navigationService;
     _CreateOrUpdatePersonDialogFactory = createOrUpdatePersonDialogFactory;
     _MediaResolver = mediaProvider.ResolveAsync;
+    Loading = new PageLoading(_AlertService);
     _PageCommand = new SafeCommand(OnPageCommand, _AlertService);
     _Relatives = new RelativeTree(_CurrentProjectProvider, _CancellationTokenProvider, _AlertService);
 
@@ -99,7 +100,7 @@ public partial class PersonPage : ContentPage
   public void ShowPersonInfo(Person person, bool addToNavigation)
   {
     ExpandAll = false;
-    Loading.Run(_PersonFullInfo is not null, () => GetPersonDataAsync(person, addToNavigation), _AlertService);
+    Loading.Run(_PersonFullInfo is not null, () => GetPersonDataAsync(person, addToNavigation));
   }
 
   public bool ExpandAll
@@ -114,7 +115,7 @@ public partial class PersonPage : ContentPage
     }
   }
 
-  public PageLoading Loading { get; } = new();
+  public PageLoading Loading { get; }
 
   public string ToggleAllButtonName => ExpandAll ? "⏫" : "⏬";
 

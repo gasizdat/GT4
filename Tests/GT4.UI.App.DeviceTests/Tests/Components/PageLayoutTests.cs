@@ -1,5 +1,7 @@
+using GT4.UI.Abstraction;
 using GT4.UI.Components;
 using GT4.UI.Items;
+using Moq;
 using Xunit;
 
 namespace GT4.UI.DeviceTests;
@@ -146,7 +148,8 @@ public class PageLayoutTests
   public async Task A_bound_loading_flag_drives_the_activity_indicator()
   {
     var layout = await CreateLayoutAsync();
-    var loading = new PageLoading();
+    var alertService = new Mock<IAlertService>();
+    var loading = new PageLoading(alertService.Object);
     var indicator = layout.FindByName<ActivityIndicator>("LoadingIndicator");
     var binding = new Binding(nameof(PageLoading.IsLoading), source: loading);
     await MainThread.InvokeOnMainThreadAsync(() => layout.SetBinding(PageLayout.IsLoadingProperty, binding));

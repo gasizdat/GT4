@@ -49,13 +49,14 @@ public partial class DateCalendarPage : ContentPage
     _NameFormatter = nameFormatter;
     _NavigationService = navigationService;
 
+    Loading = new PageLoading(_AlertService);
     PageCommand = new SafeCommand(OnPageCommand, _AlertService);
     PersonCommand = new SafeCommand<PersonInfo>(OnOpenPerson, _AlertService);
     InitializeComponent();
     _LastProjectInfo = _CurrentProjectProvider.Info;
   }
 
-  public PageLoading Loading { get; } = new();
+  public PageLoading Loading { get; }
 
   public ICommand PageCommand { get; init; }
 
@@ -73,7 +74,7 @@ public partial class DateCalendarPage : ContentPage
       if (_UpdateData)
       {
         _UpdateData = false;
-        Loading.Run(_CalendarRendered, LoadCalendarDataAsync, _AlertService);
+        Loading.Run(_CalendarRendered, LoadCalendarDataAsync);
       }
 
       var month = DateCalendarCalculator.Compute(_Persons, _RelativesByPersonId, _DisplayMonth, Date.Now.Year);
