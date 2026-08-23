@@ -10,8 +10,6 @@ namespace GT4.UI.DeviceTests;
 
 public class PageLayoutTests
 {
-  private static readonly bool ShowsBackButton = !OperatingSystem.IsWindows();
-
   private static Task<PageLayout> CreateLayoutAsync() => CreateLayoutAsync(new TestServices());
 
   private static async Task<PageLayout> CreateLayoutAsync(TestServices services)
@@ -280,7 +278,7 @@ public class PageLayoutTests
   }
 
   // The visibility the button binds to is computed, not stored, so only the flag's change callback
-  // repaints it -- and on Windows, where it stays hidden either way, nothing else would notice its loss.
+  // repaints it.
   [Fact]
   public async Task Asking_for_a_back_button_reports_its_visibility_as_changed()
   {
@@ -301,14 +299,15 @@ public class PageLayoutTests
     await MainThread.InvokeOnMainThreadAsync(() => layout.HasBackButton = true);
 
     var button = BackButton(layout);
-    Assert.Equal(ShowsBackButton, button.IsVisible);
+    Assert.True(button.IsVisible);
     Assert.Equal(UIStrings.MenuItemNameBack, layout.BackItem.Text);
     Assert.Equal(layout.BackItem.ButtonText, button.Text);
     Assert.Equal(layout.BackItem.ToolTipText, ToolTipProperties.GetText(button));
   }
 
-  // The Shell nav bar is switched off app-wide (Styles.xaml, TargetType="Page"), which is what makes
-  // the layout's own button the only way back on Android. Windows keeps Shell's title-bar arrow.
+  // The Shell nav bar is switched off app-wide (Styles.xaml, TargetType="Page"), and the WinUI
+  // renderer draws Shell's back arrow inside that same strip, so the layout's own button is the only
+  // way back on every platform.
   [Fact]
   public async Task A_page_hides_the_Shell_nav_bar()
   {
@@ -337,13 +336,6 @@ public class PageLayoutTests
     var withBack = await TitleOffsetAsync(hasBackButton: true);
 
     Assert.Equal(0, withoutBack);
-
-    if (!ShowsBackButton)
-    {
-      Assert.Equal(0, withBack);
-      return;
-    }
-
     Assert.True(withBack > 0, $"The back button claimed no width: title starts at {withBack}.");
   }
 
@@ -410,7 +402,7 @@ public class PageLayoutTests
     var layout = (PageLayout)page.Content;
 
     Assert.True(layout.HasBackButton);
-    Assert.Equal(ShowsBackButton, BackButton(layout).IsVisible);
+    Assert.True(BackButton(layout).IsVisible);
   }
 
   [Fact]

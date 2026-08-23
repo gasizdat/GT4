@@ -239,8 +239,7 @@ public partial class PageLayout : ContentView
 
   public bool IsSideMenuVisible => IsMenuVisible && Height >= 0 && Height <= Width;
 
-  // Windows keeps Shell's own back arrow in the title bar even with NavBarIsVisible off.
-  public bool IsBackButtonVisible => HasBackButton && !OperatingSystem.IsWindows();
+  public bool IsBackButtonVisible => HasBackButton;
 
   public bool IsTitleVisible => !string.IsNullOrWhiteSpace(Title);
 
