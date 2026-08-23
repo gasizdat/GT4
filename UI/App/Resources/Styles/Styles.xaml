@@ -303,6 +303,10 @@
     <Setter Property="Text" Value="❌" />
   </Style>
 
+  <Style x:Key="ClearAdorner" BasedOn="{StaticResource EmojiAdorner}" TargetType="Button">
+    <Setter Property="Text" Value="🆑" />
+  </Style>
+
   <Style x:Key="EditAdorner" BasedOn="{StaticResource EmojiAdorner}" TargetType="Button">
     <Setter Property="Text" Value="🖋️" />
   </Style>

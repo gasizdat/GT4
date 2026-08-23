@@ -61,6 +61,10 @@
           CommandParameter="ToggleAll"
           Text="{Binding ToggleAllMenuItemName, Source={x:Reference Root}}" />
       <items:PageMenuItem
+          Command="{Binding FilterCommand, Source={x:Reference FilterView}}"
+          CommandParameter="ToggleFiltersCommand"
+          Text="{x:Static resources:UIStrings.MenuItemNameFilters}" />
+      <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="Refresh"
           Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
@@ -254,7 +258,7 @@
               Grid.Column="{Binding Path=SmartLayout.Relatives.Column, Source={x:Reference Root}}"
               Grid.ColumnSpan="{Binding Path=SmartLayout.Relatives.ColumnSpan, Source={x:Reference Root}}">
 
-            <!--  Filters toggle + panel  -->
+            <!--  Filters panel  -->
             <components:PersonFilterView x:Name="FilterView" />
 
             <!--  Relatives list  -->

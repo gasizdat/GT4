@@ -1,6 +1,7 @@
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Components;
+using GT4.UI.Resources;
 using GT4.UI.Utils.Formatters;
 using Moq;
 using Xunit;
@@ -73,7 +74,98 @@ public sealed class PersonFilterViewTests
     Assert.Equal(string.Empty, nameEntry.Text);
     Assert.Equal(0, sexPicker.SelectedIndex);
     Assert.False(view.IsAnyFilterActive);
+    Assert.Empty(view.CurrentFilterSet);
     Assert.Equal(1, raised);
+  }
+
+  [Fact]
+  public async Task Initialize_LeavesEachPickerOnTheFilterAnyOption()
+  {
+    var view = await CreateViewAsync();
+    await InitializeAsync(view, new TestServices());
+
+    var sexPicker = view.FindByName<Picker>("SexFilterPicker");
+    var maritalPicker = view.FindByName<Picker>("MaritalStatusFilterPicker");
+
+    Assert.Equal(0, sexPicker.SelectedIndex);
+    Assert.Equal(0, maritalPicker.SelectedIndex);
+    Assert.Equal(0, view.SexFilterIndex);
+    Assert.Equal(0, view.MaritalStatusFilterIndex);
+  }
+
+  [Fact]
+  public async Task CurrentFilterSet_IsNonEmpty_ForEveryCriterionThatActivatesTheFilter()
+  {
+    Action<PersonFilterView>[] criteria =
+    [
+      view => view.NameFilter = "John",
+      view => view.SexFilterIndex = 1,
+      view => view.MaritalStatusFilterIndex = 1,
+      view => view.IsYearFilterEnabled = true,
+    ];
+
+    foreach (var applyCriterion in criteria)
+    {
+      var view = await CreateViewAsync();
+      await InitializeAsync(view, new TestServices());
+
+      await MainThread.InvokeOnMainThreadAsync(() => applyCriterion(view));
+
+      Assert.True(view.IsAnyFilterActive);
+      Assert.NotEmpty(view.CurrentFilterSet);
+    }
+  }
+
+  [Fact]
+  public async Task NameFilterEntry_ClearedToNull_DeactivatesTheFilter()
+  {
+    var view = await CreateViewAsync();
+    await InitializeAsync(view, new TestServices());
+    var nameEntry = view.FindByName<Entry>("NameFilterEntry");
+
+    await MainThread.InvokeOnMainThreadAsync(() => nameEntry.Text = "John");
+    await MainThread.InvokeOnMainThreadAsync(() => nameEntry.Text = null);
+
+    Assert.False(view.IsAnyFilterActive);
+    Assert.Empty(view.CurrentFilterSet);
+  }
+
+  [Fact]
+  public async Task SelectedYear_FractionalSliderValue_SnapsToTheWholeYear()
+  {
+    var view = await CreateViewAsync();
+    var services = new TestServices();
+    var person = new Person(1, Date.Create(1850, 1, 1, DateStatus.WellKnown), null, BiologicalSex.Male);
+    await InitializeAsync(view, services, () => [person]);
+    var loaded = new TaskCompletionSource();
+    view.FilterDataLoaded += (_, _) => loaded.SetResult();
+    await MainThread.InvokeOnMainThreadAsync(() => view.IsFiltersVisible = true);
+    await loaded.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+    var slider = view.FindByName<Slider>("YearSlider");
+    await MainThread.InvokeOnMainThreadAsync(() => slider.Value = 1975.4);
+
+    Assert.Equal("1975", view.SelectedYearText);
+    // The floored year is pushed back through the binding, so the slider settles on whole years.
+    Assert.Equal(1975, slider.Value);
+  }
+
+  [Fact]
+  public async Task CurrentFilterSet_NamesEachActiveCriterionWithItsSelectedValue()
+  {
+    var view = await CreateViewAsync();
+    var services = new TestServices();
+    await InitializeAsync(view, services);
+    var maleLabel = services.Provider.GetRequiredService<IBiologicalSexFormatter>().ToString(BiologicalSex.Male);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      view.NameFilter = "John";
+      view.SexFilterIndex = 1;
+    });
+
+    var expected = $"{UIStrings.FieldSearchText}: John; {UIStrings.FieldFilterSex}: {maleLabel}";
+    Assert.Equal(expected, view.CurrentFilterSet);
   }
 
   [Fact]
@@ -109,6 +201,10 @@ public sealed class PersonFilterViewTests
     var slider = view.FindByName<Slider>("YearSlider");
     Assert.Equal(1850, slider.Minimum);
     Assert.True(slider.Maximum >= DateTime.Now.Year);
+    // Widening the bounds clamps the slider's own Value up off 0 to the new minimum; the year the
+    // filter picked (its maximum) has to survive that.
+    Assert.Equal(slider.Maximum, slider.Value);
+    Assert.Equal(((int)slider.Maximum).ToString(), view.SelectedYearText);
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
 }

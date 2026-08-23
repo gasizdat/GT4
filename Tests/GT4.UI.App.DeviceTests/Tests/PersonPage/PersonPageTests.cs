@@ -68,7 +68,7 @@ public class PersonPageTests
     await MainThread.InvokeOnMainThreadAsync(() => ((IView)layout).Arrange(new Rect(0, 0, 400, 800)));
     var topMenu = layout.FindByName<FlexLayout>("TopMenu");
     var buttons = topMenu.Children.OfType<Button>().ToArray();
-    Assert.Equal(5, buttons.Length);
+    Assert.Equal(6, buttons.Length);
 
     var toggleButton = buttons.Single(b => (string)((PageMenuItem)b.BindingContext!).CommandParameter == "ToggleAll");
     Assert.Equal("⏬", toggleButton.Text);
@@ -76,6 +76,37 @@ public class PersonPageTests
     await MainThread.InvokeOnMainThreadAsync(() => page.ExpandAll = true);
 
     Assert.Equal("⏫", toggleButton.Text);
+  }
+
+  [Fact]
+  public async Task ToggleFilters_menu_item_is_bound_to_the_page_command()
+  {
+    var page = await CreatePageAsync(new TestServices());
+
+    var layout = (PageLayout)page.Content;
+    var filterItem = layout.MenuItems.Single(item => (string?)item.CommandParameter == "ToggleFiltersCommand");
+
+    Assert.NotNull(filterItem.Command);
+    Assert.Same(page.FilterView.FilterCommand, filterItem.Command);
+  }
+
+  [Fact]
+  public async Task ToggleFilters_command_shows_and_hides_the_filters_panel()
+  {
+    var page = await CreatePageAsync(new TestServices());
+    await using var window = await WindowHost.AttachAsync(page);
+    Assert.False(page.FilterView.IsFiltersVisible);
+
+    var layout = (PageLayout)page.Content;
+    var filterItem = layout.MenuItems.Single(item => (string?)item.CommandParameter == "ToggleFiltersCommand");
+
+    // The flip cascades into FadeVisibilityBehavior touching native UI, so it must run on the UI
+    // thread.
+    await MainThread.InvokeOnMainThreadAsync(() => filterItem.Command.Execute(filterItem.CommandParameter));
+    Assert.True(page.FilterView.IsFiltersVisible);
+
+    await MainThread.InvokeOnMainThreadAsync(() => filterItem.Command.Execute(filterItem.CommandParameter));
+    Assert.False(page.FilterView.IsFiltersVisible);
   }
 
   [Fact]

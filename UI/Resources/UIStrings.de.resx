@@ -1137,6 +1137,9 @@ FN - Familienname</value>
   <data name="FieldFilterSex" xml:space="preserve">
     <value>Geschlecht</value>
   </data>
+  <data name="FieldMaritalStatus" xml:space="preserve">
+    <value>Familienstand</value>
+  </data>
   <data name="FieldMaritalStatusMarried" xml:space="preserve">
     <value>Verheiratet</value>
   </data>
@@ -1149,8 +1152,8 @@ FN - Familienname</value>
   <data name="BtnNameClearFilters" xml:space="preserve">
     <value>Filter zurücksetzen</value>
   </data>
-  <data name="BtnNameFilters_1" xml:space="preserve">
-    <value>{0} Filter</value>
+  <data name="MenuItemNameFilters" xml:space="preserve">
+    <value>🔍 Filter</value>
   </data>
   <data name="TitleStatisticsPage" xml:space="preserve">
     <value>Statistik</value>
@@ -1331,5 +1334,8 @@ FN - Familienname</value>
   </data>
   <data name="MenuItemNameBack" xml:space="preserve">
     <value>❮ Zurück</value>
+  </data>
+  <data name="PersonFilterPart_2" xml:space="preserve">
+    <value>{0}: {1}</value>
   </data>
 </root>

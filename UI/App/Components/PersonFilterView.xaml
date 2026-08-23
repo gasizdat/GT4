@@ -7,37 +7,45 @@
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root">
 
+  <!--  The names are used only for the Device Tests purposes.  -->
+
   <Grid
       HorizontalOptions="Fill"
       RowDefinitions="Auto, Auto">
 
-    <!--  Row 0 - Filters toggle  -->
+    <!--  Row 0 - Active filters summary and the clear button  -->
     <Grid
         Grid.Row="0"
-        ColumnDefinitions="*, Auto, Auto">
+        ColumnDefinitions="*, Auto">
+
+      <Label
+          Grid.Column="0"
+          LineBreakMode="TailTruncation"
+          Style="{StaticResource FieldValue}"
+          Text="{Binding CurrentFilterSet, Source={x:Reference Root}}"
+          VerticalOptions="Center">
+        <Label.Behaviors>
+          <behaviors:FadeVisibilityBehavior
+              IsVisible="{Binding IsAnyFilterActive, Source={x:Reference Root}}"
+              Duration="500" />
+        </Label.Behaviors>
+      </Label>
+
       <Button
           x:Name="ClearFiltersButton"
           Grid.Column="1"
           Command="{Binding FilterCommand, Source={x:Reference Root}}"
           CommandParameter="ClearFiltersCommand"
           HorizontalOptions="End"
-          Style="{StaticResource DeleteAdorner}"
+          Style="{StaticResource ClearAdorner}"
           ToolTipProperties.Text="{x:Static resources:UIStrings.BtnNameClearFilters}"
           VerticalOptions="Center">
         <Button.Behaviors>
           <behaviors:FadeVisibilityBehavior
-              x:Name="ClearButtonFade"
+              IsVisible="{Binding IsAnyFilterActive, Source={x:Reference Root}}"
               Duration="500" />
         </Button.Behaviors>
       </Button>
-
-      <Button
-          x:Name="ToggleFiltersButton"
-          Grid.Column="2"
-          Command="{Binding FilterCommand, Source={x:Reference Root}}"
-          CommandParameter="ToggleFiltersCommand"
-          HorizontalOptions="End"
-          Style="{StaticResource TextAdorner}" />
     </Grid>
 
     <!--
@@ -53,7 +61,7 @@
 
       <Grid.Behaviors>
         <behaviors:FadeVisibilityBehavior
-            x:Name="FiltersPanelFade"
+            IsVisible="{Binding IsFiltersVisible, Source={x:Reference Root}}"
             Duration="500" />
       </Grid.Behaviors>
 
@@ -72,7 +80,7 @@
           HorizontalOptions="Fill"
           Placeholder="{x:Static resources:UIStrings.HintNameFilterWildcard}"
           Style="{StaticResource FieldValue}"
-          TextChanged="OnNameFilterChanged" />
+          Text="{Binding NameFilter, Source={x:Reference Root}}" />
 
       <!--  Row 1 - Sex / marital status  -->
       <Label
@@ -85,14 +93,16 @@
           x:Name="SexFilterPicker"
           Grid.Row="1"
           Grid.Column="1"
-          SelectedIndexChanged="OnSexFilterChanged"
+          ItemsSource="{Binding SexFilterLabels, Source={x:Reference Root}}"
+          SelectedIndex="{Binding SexFilterIndex, Source={x:Reference Root}}"
           Style="{StaticResource FieldValue}" />
 
       <Picker
           x:Name="MaritalStatusFilterPicker"
           Grid.Row="1"
           Grid.Column="2"
-          SelectedIndexChanged="OnMaritalStatusFilterChanged"
+          ItemsSource="{Binding MaritalStatusFilterLabels, Source={x:Reference Root}}"
+          SelectedIndex="{Binding MaritalStatusFilterIndex, Source={x:Reference Root}}"
           Style="{StaticResource FieldValue}" />
 
       <!--  Row 2 - Year filter toggle  -->
@@ -106,22 +116,24 @@
           x:Name="YearFilterSwitch"
           Grid.Row="2"
           Grid.Column="1"
-          Toggled="OnYearFilterToggled" />
+          IsToggled="{Binding IsYearFilterEnabled, Source={x:Reference Root}}" />
 
       <Label
-          x:Name="SelectedYearLabel"
           Grid.Row="2"
           Grid.Column="2"
           HorizontalOptions="End"
-          Style="{StaticResource FieldValue}" />
+          Style="{StaticResource FieldValue}"
+          Text="{Binding SelectedYearText, Source={x:Reference Root}}" />
 
-      <!--  Row 3 - Year slider  -->
+      <!--  Row 3 - Year slider. Maximum precedes Minimum so the range never inverts mid-update.  -->
       <Slider
           x:Name="YearSlider"
           Grid.Row="3"
           Grid.ColumnSpan="3"
-          IsEnabled="False"
-          ValueChanged="OnYearSliderChanged" />
+          IsEnabled="{Binding IsYearFilterEnabled, Source={x:Reference Root}}"
+          Maximum="{Binding MaxYear, Source={x:Reference Root}}"
+          Minimum="{Binding MinYear, Source={x:Reference Root}}"
+          Value="{Binding SelectedYear, Source={x:Reference Root}}" />
     </Grid>
   </Grid>
 </ContentView>
