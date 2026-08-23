@@ -328,6 +328,27 @@ public class PageLayoutTests
     Assert.False(Shell.GetNavBarIsVisible(page));
   }
 
+  // Windows draws Shell's own back arrow in the NavigationView chrome, not in the nav bar, so hiding
+  // the bar leaves it on screen beside PageLayout's button (measured 40x32 before this was switched
+  // off). Asserted through the toolbar Shell derives rather than the attached property the style
+  // sets, so it fails if Shell ever stops consuming the behaviour.
+  [Fact]
+  public async Task A_pushed_page_hides_the_Shell_back_button()
+  {
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    var shell = await MainThread.InvokeOnMainThreadAsync(() => new AppShell());
+    await using var window = await WindowHost.AttachAsync(shell);
+
+    await MainThread.InvokeOnMainThreadAsync(() => shell.Navigation.PushAsync(new ContentPage()));
+
+    var toolbar = await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => ((IToolbarElement)shell).Toolbar),
+      toolbar => toolbar is not null && shell.Navigation.NavigationStack.Count > 1,
+      timeoutMessage: "The pushed page never reached the Shell toolbar.");
+
+    Assert.False(toolbar!.BackButtonVisible);
+  }
+
   [Fact]
   public async Task MainPage_offers_no_way_back_because_it_is_the_root()
   {
