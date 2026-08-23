@@ -7,12 +7,10 @@
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root">
 
-  <components:PageLayout>
-    <components:PageLayout.Header>
-      <Label
-          Style="{StaticResource PageTitle}"
-          Text="{x:Static resources:UIStrings.TitleSelectEncodingDialog}" />
-    </components:PageLayout.Header>
+  <components:PageLayout
+      BackCommand="{Binding CancelCommand, Source={x:Reference Root}}"
+      HasBackButton="True"
+      Title="{x:Static resources:UIStrings.TitleSelectEncodingDialog}">
 
     <components:PageLayout.Body>
       <Grid

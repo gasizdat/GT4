@@ -8,32 +8,25 @@
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root">
 
-  <components:PageLayout Loading="{Binding Loading, Source={x:Reference Root}}">
+  <components:PageLayout
+      BackCommand="{Binding CancelCommand, Source={x:Reference Root}}"
+      HasBackButton="True"
+      Loading="{Binding Loading, Source={x:Reference Root}}"
+      Title="{x:Static resources:UIStrings.TitleSelectPersonDialog}">
+
     <components:PageLayout.Header>
       <Grid
           ColumnDefinitions="Auto, *"
           ColumnSpacing="{StaticResource PageContentSpacing}"
-          RowDefinitions="Auto, Auto"
+          RowDefinitions="Auto"
           RowSpacing="{StaticResource PageContentSpacing}">
 
-        <!--  Row 0 - Title  -->
         <Label
-            Grid.Row="0"
-            Grid.Column="0"
-            Grid.ColumnSpan="2"
-            HorizontalTextAlignment="Center"
-            Style="{StaticResource PageTitle}"
-            Text="{x:Static resources:UIStrings.TitleSelectPersonDialog}" />
-
-        <!--  Row 1 - Search  -->
-        <Label
-            Grid.Row="1"
             Grid.Column="0"
             Style="{StaticResource FieldName}"
             Text="{x:Static resources:UIStrings.FieldSearchText}" />
 
         <Entry
-            Grid.Row="1"
             Grid.Column="1"
             HorizontalOptions="Fill"
             Style="{StaticResource FieldValue}"

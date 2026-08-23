@@ -9,12 +9,10 @@
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
     x:Name="Root">
 
-  <components:PageLayout>
-    <components:PageLayout.Header>
-      <Label
-          Style="{StaticResource PageTitle}"
-          Text="{Binding DialogTitle, Source={x:Reference Root}}" />
-    </components:PageLayout.Header>
+  <components:PageLayout
+      BackCommand="{Binding CancelCommand, Source={x:Reference Root}}"
+      HasBackButton="True"
+      Title="{Binding DialogTitle, Source={x:Reference Root}}">
 
     <components:PageLayout.Body>
       <ScrollView>

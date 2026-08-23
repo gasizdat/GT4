@@ -27,6 +27,7 @@ public partial class SelectPersonDialog : ContentPage
   private readonly FilteredObservableCollection<PersonInfo> _Persons = new();
   private readonly TaskCompletionSource<PersonInfo?> _Info = new(null);
   private readonly ICommand _DialogCommand;
+  private readonly ICommand _CancelCommand;
 
   private long _ProjectRevision;
   private string _NameFilter = string.Empty;
@@ -40,11 +41,19 @@ public partial class SelectPersonDialog : ContentPage
   {
     if (obj is string commandName && commandName == "SelectPersonCommand")
     {
-      _Info.SetResult(_SelectedPerson);
+      _Info.TrySetResult(_SelectedPerson);
     }
 
     return Task.CompletedTask;
   }
+
+  protected override bool OnBackButtonPressed()
+  {
+    Cancel();
+    return true;
+  }
+
+  private void Cancel() => _Info.TrySetResult(null);
 
   public SelectPersonDialog(
     ICancellationTokenProvider cancellationTokenProvider,
@@ -58,6 +67,7 @@ public partial class SelectPersonDialog : ContentPage
     _AlertService = alertService;
     Loading = new PageLoading(_AlertService);
     _DialogCommand = new SafeCommand(OnDialogCommand, _AlertService);
+    _CancelCommand = new SafeCommand(Cancel, _AlertService);
     _ProjectRevision = _CurrentProjectProvider.Project.ProjectRevision;
     _Persons.Filter = PersonFilter;
 
@@ -118,4 +128,6 @@ public partial class SelectPersonDialog : ContentPage
   public Task<PersonInfo?> Info => _Info.Task;
 
   public ICommand DialogCommand => _DialogCommand;
+
+  public ICommand CancelCommand => _CancelCommand;
 }

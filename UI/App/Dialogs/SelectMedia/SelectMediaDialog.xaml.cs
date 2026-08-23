@@ -32,6 +32,7 @@ public partial class SelectMediaDialog : ContentPage
   private readonly FilteredObservableCollection<GalleryDataItem> _Items = new();
   private readonly TaskCompletionSource<GalleryDataItem?> _Info = new(null);
   private readonly ICommand _DialogCommand;
+  private readonly ICommand _CancelCommand;
   private bool _LoadItems = true;
   private string _OwnerFilter = string.Empty;
   private GalleryDataItem? _SelectedItem;
@@ -42,6 +43,7 @@ public partial class SelectMediaDialog : ContentPage
     _OwnMediaIds = ownMediaIds;
     Loading = new PageLoading(factory.AlertService);
     _DialogCommand = new SafeCommand(OnDialogCommand, factory.AlertService);
+    _CancelCommand = new SafeCommand(Cancel, factory.AlertService);
     _Items.Filter = OwnersFilter;
 
     InitializeComponent();
@@ -114,15 +116,25 @@ public partial class SelectMediaDialog : ContentPage
 
   public ICommand DialogCommand => _DialogCommand;
 
+  public ICommand CancelCommand => _CancelCommand;
+
   protected Task OnDialogCommand(object obj)
   {
     if (obj is string commandName && commandName == "SelectMediaCommand")
     {
-      _Info.SetResult(_SelectedItem);
+      _Info.TrySetResult(_SelectedItem);
     }
 
     return Task.CompletedTask;
   }
+
+  protected override bool OnBackButtonPressed()
+  {
+    Cancel();
+    return true;
+  }
+
+  private void Cancel() => _Info.TrySetResult(null);
 
   private bool OwnersFilter(FilteredObservableCollection<GalleryDataItem> collection, GalleryDataItem item) =>
     string.IsNullOrEmpty(_OwnerFilter) ||

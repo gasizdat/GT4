@@ -41,6 +41,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private readonly Factory _Factory;
   private readonly InlineMediaResolver _MediaResolver;
   private readonly ICommand _DialogCommand;
+  private readonly ICommand _CancelCommand;
   private readonly string _SaveButtonName;
   private readonly ObservableCollection<PersonDataItem> _Photos = new();
   private readonly ObservableCollection<PersonDataItem> _Attachments = new();
@@ -62,6 +63,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     _Factory = factory;
     _MediaResolver = factory.MediaProvider.ResolveAsync;
     _DialogCommand = new SafeCommand(OnDialogCommand, _Factory.AlertService);
+    _CancelCommand = new SafeCommand(Cancel, _Factory.AlertService);
     _SaveButtonName = person is null ? UIStrings.BtnNameCreateFamilyPerson : UIStrings.BtnNameUpdateFamilyPerson;
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Male, _Factory.BiologicalSexFormatter));
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Female, _Factory.BiologicalSexFormatter));
@@ -165,6 +167,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   public ICommand DialogCommand => _DialogCommand;
 
+  public ICommand CancelCommand => _CancelCommand;
+
   public ICollection<PersonDataItem> Photos => _Photos;
 
   public InlineMediaResolver MediaResolver => _MediaResolver;
@@ -228,11 +232,19 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   public string DialogButtonName => _NotReady ? UIStrings.BtnNameCancel : _SaveButtonName;
 
+  protected override bool OnBackButtonPressed()
+  {
+    Cancel();
+    return true;
+  }
+
+  private void Cancel() => _Info.TrySetResult(null);
+
   private async Task OnCreatePersonCommandAsync()
   {
     if (_NotReady)
     {
-      _Info.SetResult(null);
+      _Info.TrySetResult(null);
       return;
     }
 
@@ -262,7 +274,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       gedcomData: _GedcomData,
       attachments: attachments);
 
-    _Info.SetResult(result);
+    _Info.TrySetResult(result);
   }
 
   protected async Task OnAddPersonNameAsync()

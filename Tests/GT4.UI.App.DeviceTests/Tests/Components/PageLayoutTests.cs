@@ -251,6 +251,25 @@ public class PageLayoutTests
     services.NavigationService.Verify(n => n.GoToAsync("..", true), Times.Once());
   }
 
+  // A dialog never navigates: it completes the result task its caller awaits, so it supplies the
+  // action and PageLayout's own GoToAsync("..") must not run.
+  [Fact]
+  public async Task A_supplied_back_command_replaces_the_navigation_one()
+  {
+    var services = new TestServices();
+    var layout = await CreateLayoutAsync(services);
+    var invoked = false;
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      layout.BackCommand = new Command(() => invoked = true);
+      layout.BackItem.Command.Execute(null);
+    });
+
+    Assert.True(invoked);
+    services.NavigationService.Verify(n => n.GoToAsync(It.IsAny<string>(), It.IsAny<bool>()), Times.Never());
+  }
+
   [Fact]
   public async Task The_back_button_stays_hidden_until_a_page_asks_for_it()
   {
@@ -308,9 +327,9 @@ public class PageLayoutTests
     Assert.False(layout.HasBackButton);
   }
 
-  // The button lives in a column of its own, so a layout that doesn't ask for one -- every dialog,
-  // and the pages that carry no title -- must keep its header exactly where it was. Only a page
-  // attached to a real window measures a Button: detached, its handler never sizes the text.
+  // The button lives in a column of its own, so a layout that doesn't ask for one must keep its
+  // header exactly where it was. Only a page attached to a real window measures a Button: detached,
+  // its handler never sizes the text.
   [Fact]
   public async Task A_hidden_back_button_takes_no_room_from_the_title()
   {

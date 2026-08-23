@@ -29,6 +29,7 @@ public partial class SelectNameDialog : ContentPage
   private readonly TaskCompletionSource<Name?> _Info = new(null);
   private readonly ObservableCollection<NameTypeInfoItem> _NameTypes;
   private readonly ICommand _DialogCommand;
+  private readonly ICommand _CancelCommand;
   private ICollection<NameInfoItem>? _Names;
   private NameTypeInfoItem _CurrentNameType;
   private readonly NameType _NameDeclension;
@@ -44,6 +45,7 @@ public partial class SelectNameDialog : ContentPage
     _Factory = factory;
     _NameTypes = new(nameTypes.Select(type => new NameTypeInfoItem(_Factory.NameTypeFormatter.ToString(type), type)));
     _DialogCommand = new SafeCommand(OnDialogCommandAsync, _Factory.AlertService);
+    _CancelCommand = new SafeCommand(Cancel, _Factory.AlertService);
     _CurrentNameType = _NameTypes.First();
 
     _NameDeclension = biologicalSex switch
@@ -84,6 +86,8 @@ public partial class SelectNameDialog : ContentPage
   public ICollection<NameTypeInfoItem> NameTypes => _NameTypes;
 
   public ICommand DialogCommand => _DialogCommand;
+
+  public ICommand CancelCommand => _CancelCommand;
 
   public ICollection<NameInfoItem>? Names
   {
@@ -211,5 +215,13 @@ public partial class SelectNameDialog : ContentPage
     CurrentName = Names?.SingleOrDefault(n => n.Info.Id == name.Id);
   }
 
-  public void OnSelectName() => _Info.SetResult(_NotReady ? null : _CurrentName?.Info);
+  public void OnSelectName() => _Info.TrySetResult(_NotReady ? null : _CurrentName?.Info);
+
+  protected override bool OnBackButtonPressed()
+  {
+    Cancel();
+    return true;
+  }
+
+  private void Cancel() => _Info.TrySetResult(null);
 }
