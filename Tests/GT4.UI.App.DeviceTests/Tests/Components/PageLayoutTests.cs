@@ -268,6 +268,19 @@ public class PageLayoutTests
     services.NavigationService.Verify(n => n.GoToAsync(It.IsAny<string>(), It.IsAny<bool>()), Times.Never());
   }
 
+  // A dialog that dispatches off one generic command tells the cases apart by the parameter, so the
+  // rendered button has to carry BackItem's -- without it the back button is a silent no-op there.
+  [Fact]
+  public async Task The_back_button_hands_its_command_the_name_it_dispatches_on()
+  {
+    var layout = await CreateLayoutAsync();
+
+    await MainThread.InvokeOnMainThreadAsync(() => layout.HasBackButton = true);
+
+    var button = BackButton(layout);
+    Assert.Equal(layout.BackItem.CommandParameter, button.CommandParameter);
+  }
+
   [Fact]
   public async Task The_back_button_stays_hidden_until_a_page_asks_for_it()
   {

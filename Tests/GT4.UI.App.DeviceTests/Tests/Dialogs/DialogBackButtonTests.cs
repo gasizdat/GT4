@@ -137,9 +137,11 @@ public class DialogBackButtonTests
     var dialog = await CreateAsync(name);
     var layout = (PageLayout)dialog.Page.Content;
 
-    await MainThread.InvokeOnMainThreadAsync(() => layout.BackItem.Command.Execute(null));
+    // A command-name mismatch leaves the result task pending, so bound the wait to fail, not hang.
+    var backItem = layout.BackItem;
+    await MainThread.InvokeOnMainThreadAsync(() => backItem.Command.Execute(backItem.CommandParameter));
 
-    var result = await dialog.Result;
+    var result = await dialog.Result.WaitAsync(TimeSpan.FromSeconds(5));
     Assert.Equal(dialog.Cancelled, result);
   }
 

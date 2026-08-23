@@ -10,7 +10,7 @@
     x:Name="Root">
 
   <components:PageLayout
-      BackCommand="{Binding CancelCommand, Source={x:Reference Root}}"
+      BackCommand="{Binding DialogCommand, Source={x:Reference Root}}"
       HasBackButton="True"
       Title="{x:Static resources:UIStrings.TitleSelectNameDialog}">
 

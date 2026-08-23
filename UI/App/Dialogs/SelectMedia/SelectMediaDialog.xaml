@@ -9,7 +9,7 @@
     x:Name="Root">
 
   <components:PageLayout
-      BackCommand="{Binding CancelCommand, Source={x:Reference Root}}"
+      BackCommand="{Binding DialogCommand, Source={x:Reference Root}}"
       HasBackButton="True"
       Loading="{Binding Loading, Source={x:Reference Root}}"
       Title="{x:Static resources:UIStrings.TitleSelectMediaDialog}">

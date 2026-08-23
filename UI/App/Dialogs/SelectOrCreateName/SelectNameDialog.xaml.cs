@@ -2,6 +2,7 @@ using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
+using GT4.UI.Components;
 using GT4.UI.Items;
 using GT4.UI.Resources;
 using GT4.UI.Utils.Converters;
@@ -29,7 +30,6 @@ public partial class SelectNameDialog : ContentPage
   private readonly TaskCompletionSource<Name?> _Info = new(null);
   private readonly ObservableCollection<NameTypeInfoItem> _NameTypes;
   private readonly ICommand _DialogCommand;
-  private readonly ICommand _CancelCommand;
   private ICollection<NameInfoItem>? _Names;
   private NameTypeInfoItem _CurrentNameType;
   private readonly NameType _NameDeclension;
@@ -45,7 +45,6 @@ public partial class SelectNameDialog : ContentPage
     _Factory = factory;
     _NameTypes = new(nameTypes.Select(type => new NameTypeInfoItem(_Factory.NameTypeFormatter.ToString(type), type)));
     _DialogCommand = new SafeCommand(OnDialogCommandAsync, _Factory.AlertService);
-    _CancelCommand = new SafeCommand(Cancel, _Factory.AlertService);
     _CurrentNameType = _NameTypes.First();
 
     _NameDeclension = biologicalSex switch
@@ -68,6 +67,9 @@ public partial class SelectNameDialog : ContentPage
       case string commandName when commandName == "SelectName":
         OnSelectName();
         break;
+      case string commandName when commandName == PageLayout.GoBackCommandParameter:
+        Cancel();
+        break;
       case Name nameInfo:
         await CreateOrUpdateNameDialog.UpdateNameAsync(
           nameInfo,
@@ -86,8 +88,6 @@ public partial class SelectNameDialog : ContentPage
   public ICollection<NameTypeInfoItem> NameTypes => _NameTypes;
 
   public ICommand DialogCommand => _DialogCommand;
-
-  public ICommand CancelCommand => _CancelCommand;
 
   public ICollection<NameInfoItem>? Names
   {

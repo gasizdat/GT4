@@ -23,7 +23,12 @@ public partial class PageLayout : ContentView
 
     var alertService = serviceProvider.GetRequiredService<IAlertService>();
     _GoBackCommand = new SafeCommand(GoBackAsync, alertService);
-    BackItem = new PageMenuItem { Text = UIStrings.MenuItemNameBack, Command = _GoBackCommand };
+    BackItem = new PageMenuItem
+    {
+      Text = UIStrings.MenuItemNameBack,
+      Command = _GoBackCommand,
+      CommandParameter = GoBackCommandParameter
+    };
 
     SizeChanged += OnMenuPlacementChanged;
     _MenuItems.CollectionChanged += OnMenuPlacementChanged;
@@ -35,6 +40,9 @@ public partial class PageLayout : ContentView
     : this(GT4Services.Provider)
   {
   }
+
+  // A dialog binding BackCommand to its one generic command tells this case apart by the parameter.
+  public const string GoBackCommandParameter = "PageLayout.GoBackCommand";
 
   public BackgroundAnimation Animation { get; }
 

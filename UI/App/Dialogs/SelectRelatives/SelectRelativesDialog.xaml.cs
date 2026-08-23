@@ -2,6 +2,7 @@ using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
+using GT4.UI.Components;
 using GT4.UI.Items;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
@@ -33,7 +34,6 @@ public partial class SelectRelativesDialog : ContentPage
   private readonly ObservableCollection<object> _SelectedItems = [];
   private readonly TaskCompletionSource<RelativeInfo[]?> _Info = new(null);
   private readonly ICommand _DialogCommand;
-  private readonly ICommand _CancelCommand;
   private readonly Relative[] _ExistingRelatives;
 
   private BiologicalSexItem _BiologicalSex;
@@ -87,6 +87,9 @@ public partial class SelectRelativesDialog : ContentPage
 
         _Info.TrySetResult([.. relatives]);
         break;
+      case string commandName when commandName == PageLayout.GoBackCommandParameter:
+        Cancel();
+        break;
     }
   }
 
@@ -123,7 +126,6 @@ public partial class SelectRelativesDialog : ContentPage
     _Factory = factory;
     Loading = new PageLoading(_Factory.AlertService);
     _DialogCommand = new SafeCommand(OnDialogCommand, _Factory.AlertService);
-    _CancelCommand = new SafeCommand(Cancel, _Factory.AlertService);
     _ProjectRevision = _Factory.CurrentProjectProvider.Project.ProjectRevision;
     _BiologicalSexes = new[] { BiologicalSex.Male, BiologicalSex.Female, BiologicalSex.Unknown }
       .Select(sex => new BiologicalSexItem(sex, _Factory.BiologicalSexFormatter))
@@ -233,8 +235,6 @@ public partial class SelectRelativesDialog : ContentPage
   public Task<RelativeInfo[]?> Info => _Info.Task;
 
   public ICommand DialogCommand => _DialogCommand;
-
-  public ICommand CancelCommand => _CancelCommand;
 
   public Date? RelationshipDate
   {
