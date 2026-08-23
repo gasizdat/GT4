@@ -11,23 +11,37 @@
       HorizontalOptions="Fill"
       RowDefinitions="Auto, Auto">
 
-    <!--  Row 0 - Clear filters  -->
+    <!--  Row 0 - Active filters summary and the clear button  -->
     <Grid
         Grid.Row="0"
         ColumnDefinitions="*, Auto">
+
+      <Label
+          Grid.Column="0"
+          LineBreakMode="TailTruncation"
+          Style="{StaticResource FieldValue}"
+          Text="{Binding CurrentFilterSet, Source={x:Reference Root}}"
+          VerticalOptions="Center">
+        <Label.Behaviors>
+          <behaviors:FadeVisibilityBehavior
+              Duration="500"
+              IsVisible="{Binding IsAnyFilterActive, Source={x:Reference Root}}" />
+        </Label.Behaviors>
+      </Label>
+
       <Button
           x:Name="ClearFiltersButton"
           Grid.Column="1"
           Command="{Binding FilterCommand, Source={x:Reference Root}}"
           CommandParameter="ClearFiltersCommand"
           HorizontalOptions="End"
-          Style="{StaticResource DeleteAdorner}"
+          Style="{StaticResource ClearAdorner}"
           ToolTipProperties.Text="{x:Static resources:UIStrings.BtnNameClearFilters}"
           VerticalOptions="Center">
         <Button.Behaviors>
           <behaviors:FadeVisibilityBehavior
-              x:Name="ClearButtonFade"
-              Duration="500" />
+              Duration="500"
+              IsVisible="{Binding IsAnyFilterActive, Source={x:Reference Root}}" />
         </Button.Behaviors>
       </Button>
     </Grid>
@@ -45,8 +59,8 @@
 
       <Grid.Behaviors>
         <behaviors:FadeVisibilityBehavior
-            x:Name="FiltersPanelFade"
-            Duration="500" />
+            Duration="500"
+            IsVisible="{Binding IsFiltersVisible, Source={x:Reference Root}}" />
       </Grid.Behaviors>
 
       <!--  Row 0 - Name search  -->
@@ -57,14 +71,13 @@
           Text="{x:Static resources:UIStrings.FieldSearchText}" />
 
       <Entry
-          x:Name="NameFilterEntry"
           Grid.Row="0"
           Grid.Column="1"
           Grid.ColumnSpan="2"
           HorizontalOptions="Fill"
           Placeholder="{x:Static resources:UIStrings.HintNameFilterWildcard}"
           Style="{StaticResource FieldValue}"
-          TextChanged="OnNameFilterChanged" />
+          Text="{Binding NameFilter, Source={x:Reference Root}}" />
 
       <!--  Row 1 - Sex / marital status  -->
       <Label
@@ -77,14 +90,14 @@
           x:Name="SexFilterPicker"
           Grid.Row="1"
           Grid.Column="1"
-          SelectedIndexChanged="OnSexFilterChanged"
+          SelectedIndex="{Binding SexFilterIndex, Source={x:Reference Root}}"
           Style="{StaticResource FieldValue}" />
 
       <Picker
           x:Name="MaritalStatusFilterPicker"
           Grid.Row="1"
           Grid.Column="2"
-          SelectedIndexChanged="OnMaritalStatusFilterChanged"
+          SelectedIndex="{Binding MaritalStatusFilterIndex, Source={x:Reference Root}}"
           Style="{StaticResource FieldValue}" />
 
       <!--  Row 2 - Year filter toggle  -->
@@ -95,25 +108,24 @@
           Text="{x:Static resources:UIStrings.FieldYear}" />
 
       <Switch
-          x:Name="YearFilterSwitch"
           Grid.Row="2"
           Grid.Column="1"
-          Toggled="OnYearFilterToggled" />
+          IsToggled="{Binding IsYearFilterEnabled, Source={x:Reference Root}}" />
 
       <Label
-          x:Name="SelectedYearLabel"
           Grid.Row="2"
           Grid.Column="2"
           HorizontalOptions="End"
-          Style="{StaticResource FieldValue}" />
+          Style="{StaticResource FieldValue}"
+          Text="{Binding SelectedYearText, Source={x:Reference Root}}" />
 
       <!--  Row 3 - Year slider  -->
       <Slider
           x:Name="YearSlider"
           Grid.Row="3"
           Grid.ColumnSpan="3"
-          IsEnabled="False"
-          ValueChanged="OnYearSliderChanged" />
+          IsEnabled="{Binding IsYearFilterEnabled, Source={x:Reference Root}}"
+          Value="{Binding SelectedYear, Source={x:Reference Root}}" />
     </Grid>
   </Grid>
 </ContentView>

@@ -1137,6 +1137,9 @@ FN - род</value>
   <data name="FieldFilterSex" xml:space="preserve">
     <value>Пол</value>
   </data>
+  <data name="FieldMaritalStatus" xml:space="preserve">
+    <value>Семейное положение</value>
+  </data>
   <data name="FieldMaritalStatusMarried" xml:space="preserve">
     <value>В браке</value>
   </data>
@@ -1331,5 +1334,8 @@ FN - род</value>
   </data>
   <data name="MenuItemNameBack" xml:space="preserve">
     <value>❮ Назад</value>
+  </data>
+  <data name="PersonFilterPart_2" xml:space="preserve">
+    <value>{0}: {1}</value>
   </data>
 </root>

@@ -1137,6 +1137,9 @@ FN - apellido familiar</value>
   <data name="FieldFilterSex" xml:space="preserve">
     <value>Sexo</value>
   </data>
+  <data name="FieldMaritalStatus" xml:space="preserve">
+    <value>Estado civil</value>
+  </data>
   <data name="FieldMaritalStatusMarried" xml:space="preserve">
     <value>Casado</value>
   </data>
@@ -1331,5 +1334,8 @@ FN - apellido familiar</value>
   </data>
   <data name="MenuItemNameBack" xml:space="preserve">
     <value>❮ Atrás</value>
+  </data>
+  <data name="PersonFilterPart_2" xml:space="preserve">
+    <value>{0}: {1}</value>
   </data>
 </root>

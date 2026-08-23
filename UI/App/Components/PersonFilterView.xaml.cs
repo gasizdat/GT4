@@ -10,10 +10,12 @@ using System.Windows.Input;
 namespace GT4.UI.Components;
 
 /// <summary>
-/// The self-contained person filter: the clear button, the fading fields panel, and the filter state
-/// itself (a <see cref="PersonFilter"/> it owns), including the lazy marital-status/year-bounds
-/// fetch. It renders no toggle button of its own: the host page carries one in its PageLayout menu,
-/// bound to <see cref="FilterCommand"/> with "ToggleFiltersCommand".
+/// The self-contained person filter: the active-criteria summary, the clear button, the fading
+/// fields panel, and the filter state itself (a <see cref="PersonFilter"/> it owns), including the
+/// lazy marital-status/year-bounds fetch. Each field control binds two-way to a criterion property
+/// here, so the filter is the only place a criterion is written. It renders no toggle button of its
+/// own: the host page carries one in its PageLayout menu, bound to <see cref="FilterCommand"/>
+/// with "ToggleFiltersCommand".
 /// Host pages call <see cref="Initialize"/> right after their InitializeComponent,
 /// subscribe to <see cref="Changed"/> to re-run their filter predicate, and call <see cref="Matches"/>
 /// from it. The filter exists from construction, so <see cref="Matches"/> is safe even before
@@ -27,9 +29,10 @@ public partial class PersonFilterView : ContentView
   private IAlertService _AlertService = default!;
   private Func<Person[]> _SnapshotPersons = default!;
   private ICommand _FilterCommand = default!;
+  private string[] _SexFilterLabels = [];
+  private string[] _MaritalStatusFilterLabels = [];
   private bool _FilterDataLoaded;
   private bool _IsFiltersVisible;
-  private bool _Syncing;
 
   public PersonFilterView()
   {
@@ -53,25 +56,25 @@ public partial class PersonFilterView : ContentView
     OnPropertyChanged(nameof(FilterCommand));
 
     // Label order must match PersonFilter's SexFilterValues/MaritalStatusFilterValues (index 0 = "any").
-    // Assigning ItemsSource fires SelectedIndexChanged, so it runs under the same guard as any other
-    // programmatic control write.
-    _Syncing = true;
-    SexFilterPicker.ItemsSource = new[]
-    {
+    _SexFilterLabels =
+    [
       UIStrings.FieldFilterAny,
       biologicalSexFormatter.ToString(BiologicalSex.Male),
       biologicalSexFormatter.ToString(BiologicalSex.Female),
       biologicalSexFormatter.ToString(BiologicalSex.Unknown),
-    };
-    MaritalStatusFilterPicker.ItemsSource = new[]
-    {
+    ];
+    _MaritalStatusFilterLabels =
+    [
       UIStrings.FieldFilterAny,
       UIStrings.FieldMaritalStatusMarried,
       UIStrings.FieldMaritalStatusSingle,
-    };
-    _Syncing = false;
+    ];
+    SexFilterPicker.ItemsSource = _SexFilterLabels;
+    MaritalStatusFilterPicker.ItemsSource = _MaritalStatusFilterLabels;
 
-    SyncControls();
+    // A Picker drops its SelectedIndex to -1 when its ItemsSource is replaced, without telling the
+    // binding, so the filter's own index has to be pushed back out.
+    RaiseCriteriaChanged();
   }
 
   /// <summary>Raised whenever a filter criterion changes (or lazily-fetched filter data lands), so
@@ -87,6 +90,121 @@ public partial class PersonFilterView : ContentView
   public bool Matches(PersonInfo person) => _Filter.Matches(person);
 
   public bool IsAnyFilterActive => _Filter.IsAnyFilterActive;
+
+  /// <summary>Non-empty exactly when <see cref="IsAnyFilterActive"/> is true: every criterion that
+  /// one counts contributes a part.</summary>
+  public string CurrentFilterSet
+  {
+    get
+    {
+      var ret = new List<string>();
+
+      if (!string.IsNullOrEmpty(_Filter.NameFilter))
+      {
+        ret.Add(string.Format(UIStrings.PersonFilterPart_2, UIStrings.FieldSearchText, _Filter.NameFilter));
+      }
+
+      if (_Filter.SexFilterIndex > 0)
+      {
+        var sex = _SexFilterLabels[_Filter.SexFilterIndex];
+        ret.Add(string.Format(UIStrings.PersonFilterPart_2, UIStrings.FieldFilterSex, sex));
+      }
+
+      if (_Filter.MaritalStatusFilterIndex > 0)
+      {
+        var maritalStatus = _MaritalStatusFilterLabels[_Filter.MaritalStatusFilterIndex];
+        ret.Add(string.Format(UIStrings.PersonFilterPart_2, UIStrings.FieldMaritalStatus, maritalStatus));
+      }
+
+      if (_Filter.IsYearFilterEnabled)
+      {
+        ret.Add(string.Format(UIStrings.PersonFilterPart_2, UIStrings.FieldYear, SelectedYearText));
+      }
+
+      return string.Join("; ", ret);
+    }
+  }
+
+  public string NameFilter
+  {
+    get => _Filter.NameFilter;
+    set
+    {
+      if (_Filter.NameFilter == value)
+      {
+        return;
+      }
+
+      _Filter.NameFilter = value;
+      RaiseChanged();
+    }
+  }
+
+  public int SexFilterIndex
+  {
+    get => _Filter.SexFilterIndex;
+    set
+    {
+      if (_Filter.SexFilterIndex == value)
+      {
+        return;
+      }
+
+      _Filter.SexFilterIndex = value;
+      RaiseChanged();
+    }
+  }
+
+  public int MaritalStatusFilterIndex
+  {
+    get => _Filter.MaritalStatusFilterIndex;
+    set
+    {
+      if (_Filter.MaritalStatusFilterIndex == value)
+      {
+        return;
+      }
+
+      _Filter.MaritalStatusFilterIndex = value;
+      RaiseChanged();
+    }
+  }
+
+  public bool IsYearFilterEnabled
+  {
+    get => _Filter.IsYearFilterEnabled;
+    set
+    {
+      if (_Filter.IsYearFilterEnabled == value)
+      {
+        return;
+      }
+
+      _Filter.IsYearFilterEnabled = value;
+      RaiseChanged();
+    }
+  }
+
+  public double SelectedYear
+  {
+    get => _Filter.SelectedYear;
+    set
+    {
+      // The filter floors the value, so most of a drag's fractional updates are no-ops. Only the
+      // label is notified: pushing the floored year back into the slider would fight the drag.
+      var previousYear = _Filter.SelectedYear;
+      _Filter.SelectedYear = value;
+      if (_Filter.SelectedYear == previousYear)
+      {
+        return;
+      }
+
+      OnPropertyChanged(nameof(SelectedYearText));
+      RaiseChanged();
+    }
+  }
+
+  public string SelectedYearText => ((int)_Filter.SelectedYear).ToString();
 
   /// <summary>Re-fetches marital status/year bounds, e.g. after the page navigates to a different
   /// person/family whose person set has changed: immediately if the panel is currently open,
@@ -107,10 +225,15 @@ public partial class PersonFilterView : ContentView
     get => _IsFiltersVisible;
     set
     {
-      _IsFiltersVisible = value;
-      FiltersPanelFade.IsVisible = value;
+      if (_IsFiltersVisible == value)
+      {
+        return;
+      }
 
-      if (value)
+      _IsFiltersVisible = value;
+      OnPropertyChanged(nameof(IsFiltersVisible));
+
+      if (_IsFiltersVisible)
       {
         EnsureFilterDataLoaded();
       }
@@ -126,87 +249,28 @@ public partial class PersonFilterView : ContentView
         break;
       case string commandName when commandName == "ClearFiltersCommand":
         _Filter.Clear();
-        SyncControls();
+        RaiseCriteriaChanged();
         RaiseChanged();
         break;
     }
   }
 
-  private void OnNameFilterChanged(object? sender, TextChangedEventArgs e)
+  /// <summary>Pushes filter state the controls did not originate out to them. Each echoes the value
+  /// straight back through its two-way binding, which the criteria setters absorb as a no-op.</summary>
+  private void RaiseCriteriaChanged()
   {
-    if (_Syncing)
-    {
-      return;
-    }
-    _Filter.NameFilter = e.NewTextValue;
-    RaiseChanged();
-  }
-
-  private void OnSexFilterChanged(object? sender, EventArgs e)
-  {
-    if (_Syncing)
-    {
-      return;
-    }
-    _Filter.SexFilterIndex = SexFilterPicker.SelectedIndex;
-    RaiseChanged();
-  }
-
-  private void OnMaritalStatusFilterChanged(object? sender, EventArgs e)
-  {
-    if (_Syncing)
-    {
-      return;
-    }
-    _Filter.MaritalStatusFilterIndex = MaritalStatusFilterPicker.SelectedIndex;
-    RaiseChanged();
-  }
-
-  private void OnYearFilterToggled(object? sender, ToggledEventArgs e)
-  {
-    if (_Syncing)
-    {
-      return;
-    }
-    _Filter.IsYearFilterEnabled = e.Value;
-    YearSlider.IsEnabled = e.Value;
-    RaiseChanged();
-  }
-
-  private void OnYearSliderChanged(object? sender, ValueChangedEventArgs e)
-  {
-    if (_Syncing)
-    {
-      return;
-    }
-
-    // The filter floors the value, so most of a drag's fractional updates are no-ops.
-    var previousYear = _Filter.SelectedYear;
-    _Filter.SelectedYear = e.NewValue;
-    if (_Filter.SelectedYear != previousYear)
-    {
-      SelectedYearLabel.Text = ((int)_Filter.SelectedYear).ToString();
-      RaiseChanged();
-    }
-  }
-
-  /// <summary>Writes every control's value from the filter state; the single programmatic writer.</summary>
-  private void SyncControls()
-  {
-    _Syncing = true;
-    NameFilterEntry.Text = _Filter.NameFilter;
-    SexFilterPicker.SelectedIndex = _Filter.SexFilterIndex;
-    MaritalStatusFilterPicker.SelectedIndex = _Filter.MaritalStatusFilterIndex;
-    YearFilterSwitch.IsToggled = _Filter.IsYearFilterEnabled;
-    YearSlider.IsEnabled = _Filter.IsYearFilterEnabled;
-    YearSlider.Value = _Filter.SelectedYear;
-    SelectedYearLabel.Text = ((int)_Filter.SelectedYear).ToString();
-    _Syncing = false;
+    OnPropertyChanged(nameof(NameFilter));
+    OnPropertyChanged(nameof(SexFilterIndex));
+    OnPropertyChanged(nameof(MaritalStatusFilterIndex));
+    OnPropertyChanged(nameof(IsYearFilterEnabled));
+    OnPropertyChanged(nameof(SelectedYear));
+    OnPropertyChanged(nameof(SelectedYearText));
   }
 
   private void RaiseChanged()
   {
-    ClearButtonFade.IsVisible = _Filter.IsAnyFilterActive;
+    OnPropertyChanged(nameof(IsAnyFilterActive));
+    OnPropertyChanged(nameof(CurrentFilterSet));
     Changed?.Invoke(this, EventArgs.Empty);
   }
 
@@ -233,15 +297,16 @@ public partial class PersonFilterView : ContentView
       {
         _Filter.SetMarriedIds(marriedIds);
         _Filter.SetYearBounds(minYear, maxYear);
+        var selectedYear = _Filter.SelectedYear;
 
-        _Syncing = true;
         // Maximum first: ComputeYearBounds floors maxYear at the current year, which is >= the
         // slider's initial Maximum of 1, so this order never leaves Minimum > Maximum mid-update.
         YearSlider.Maximum = maxYear;
         YearSlider.Minimum = minYear;
-        YearSlider.Value = _Filter.SelectedYear;
-        SelectedYearLabel.Text = ((int)_Filter.SelectedYear).ToString();
-        _Syncing = false;
+        // Widening the bounds clamps the slider's own Value up off 0, and that clamp reaches the
+        // filter through the binding, so the year picked above is re-asserted after it.
+        _Filter.SelectedYear = selectedYear;
+        RaiseCriteriaChanged();
 
         RaiseChanged();
         FilterDataLoaded?.Invoke(this, EventArgs.Empty);

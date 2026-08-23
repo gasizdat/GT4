@@ -1137,6 +1137,9 @@ FN - family name</value>
   <data name="FieldFilterSex" xml:space="preserve">
     <value>Sex</value>
   </data>
+  <data name="FieldMaritalStatus" xml:space="preserve">
+    <value>Marital status</value>
+  </data>
   <data name="FieldMaritalStatusMarried" xml:space="preserve">
     <value>Married</value>
   </data>
@@ -1331,5 +1334,8 @@ FN - family name</value>
   </data>
   <data name="MenuItemNameBack" xml:space="preserve">
     <value>❮ Back</value>
+  </data>
+  <data name="PersonFilterPart_2" xml:space="preserve">
+    <value>{0}: {1}</value>
   </data>
 </root>
