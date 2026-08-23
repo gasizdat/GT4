@@ -2,6 +2,7 @@ using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
+using GT4.UI.Components;
 using GT4.UI.Items;
 using GT4.UI.Resources;
 using GT4.UI.Utils.Converters;
@@ -65,6 +66,9 @@ public partial class SelectNameDialog : ContentPage
         break;
       case string commandName when commandName == "SelectName":
         OnSelectName();
+        break;
+      case string commandName when commandName == PageLayout.GoBackCommandParameter:
+        Cancel();
         break;
       case Name nameInfo:
         await CreateOrUpdateNameDialog.UpdateNameAsync(
@@ -211,5 +215,13 @@ public partial class SelectNameDialog : ContentPage
     CurrentName = Names?.SingleOrDefault(n => n.Info.Id == name.Id);
   }
 
-  public void OnSelectName() => _Info.SetResult(_NotReady ? null : _CurrentName?.Info);
+  public void OnSelectName() => _Info.TrySetResult(_NotReady ? null : _CurrentName?.Info);
+
+  protected override bool OnBackButtonPressed()
+  {
+    Cancel();
+    return true;
+  }
+
+  private void Cancel() => _Info.TrySetResult(null);
 }

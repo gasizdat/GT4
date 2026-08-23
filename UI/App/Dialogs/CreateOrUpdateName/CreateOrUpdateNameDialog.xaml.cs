@@ -26,6 +26,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   private readonly TaskCompletionSource<Result?> _Info = new(null);
   private readonly string _DialogButtonName;
   private readonly ICommand _DialogCommand;
+  private readonly ICommand _CancelCommand;
   private readonly ICommand _MediaCommand;
   private readonly ObservableCollection<PersonDataItem> _Photos = new();
   private readonly ObservableCollection<PersonDataItem> _Attachments = new();
@@ -66,6 +67,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     var nameTypeName = nameTypeFormatter.ToString(nameType);
     _DialogButtonName = string.Format(UIStrings.BtnNameCreateName_1, nameTypeName);
     _DialogCommand = new SafeCommand(OnCreateFamilyAsync, alertService);
+    _CancelCommand = new SafeCommand(Cancel, alertService);
     _MediaCommand = new SafeCommand(OnMediaCommand, alertService);
 
     switch (nameType)
@@ -299,11 +301,21 @@ public partial class CreateOrUpdateNameDialog : ContentPage
 
   public ICommand DialogCommand => _DialogCommand;
 
+  public ICommand CancelCommand => _CancelCommand;
+
+  protected override bool OnBackButtonPressed()
+  {
+    Cancel();
+    return true;
+  }
+
+  private void Cancel() => _Info.TrySetResult(null);
+
   private async Task OnCreateFamilyAsync()
   {
     if (NotReady)
     {
-      _Info.SetResult(null);
+      _Info.TrySetResult(null);
       return;
     }
 
@@ -320,7 +332,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     var maleName = ShowDeclensionNames ? MaleName : string.Empty;
     var femaleName = ShowDeclensionNames ? FemaleName : string.Empty;
     var attachments = await PersonDataItem.ToDataAsync(_Attachments);
-    _Info.SetResult(new(name, maleName, femaleName, allPhotos, attachments));
+    _Info.TrySetResult(new(name, maleName, femaleName, allPhotos, attachments));
   }
 
   private PersonDataItem GetFamilyData(Data data, DataCategory dataCategory)

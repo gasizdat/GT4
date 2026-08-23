@@ -13,6 +13,7 @@ public partial class SelectDateDialog : ContentPage
 
   private readonly IDateFormatter _DateFormatter;
   private readonly ICommand _DialogCommand;
+  private readonly ICommand _CancelCommand;
   private readonly TaskCompletionSource<Date?> _Info = new(null);
   private readonly string[] _Months = GetMonths();
   private readonly string[] _Days = GetDays();
@@ -29,6 +30,7 @@ public partial class SelectDateDialog : ContentPage
   {
     _DateFormatter = dateFormatter;
     _DialogCommand = new SafeCommand(OnSelectDate, alertService);
+    _CancelCommand = new SafeCommand(Cancel, alertService);
     if (date.HasValue)
     {
       var signedYear = date.Value.Sign < 0 ? -date.Value.Year : date.Value.Year;
@@ -280,5 +282,15 @@ public partial class SelectDateDialog : ContentPage
 
   public ICommand DialogCommand => _DialogCommand;
 
-  private void OnSelectDate() => _Info.SetResult(_NotReady ? null : Date);
+  public ICommand CancelCommand => _CancelCommand;
+
+  protected override bool OnBackButtonPressed()
+  {
+    Cancel();
+    return true;
+  }
+
+  private void OnSelectDate() => _Info.TrySetResult(_NotReady ? null : Date);
+
+  private void Cancel() => _Info.TrySetResult(null);
 }

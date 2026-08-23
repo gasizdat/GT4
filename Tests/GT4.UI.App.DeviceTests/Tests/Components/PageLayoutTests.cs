@@ -10,8 +10,6 @@ namespace GT4.UI.DeviceTests;
 
 public class PageLayoutTests
 {
-  private static readonly bool ShowsBackButton = !OperatingSystem.IsWindows();
-
   private static Task<PageLayout> CreateLayoutAsync() => CreateLayoutAsync(new TestServices());
 
   private static async Task<PageLayout> CreateLayoutAsync(TestServices services)
@@ -55,7 +53,7 @@ public class PageLayoutTests
     return titleRow.Children.OfType<Label>().Single();
   }
 
-  private static async Task<double> TitleOffsetAsync(bool hasBackButton)
+  private static async Task<(double Offset, double ColumnSpacing)> TitleOffsetAsync(bool hasBackButton)
   {
     var services = new TestServices();
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
@@ -73,8 +71,7 @@ public class PageLayoutTests
       frame => frame.Width > 0,
       timeoutMessage: "The title was never arranged.");
 
-    // Beyond the title's own horizontal padding, so the result is what the back button's column adds.
-    return frame.X - TitleLabel(layout).Margin.Left;
+    return (frame.X, TitleRow(layout).ColumnSpacing);
   }
 
   private static async Task<(double PageHeight, Rect Footer)> SlotFramesAsync(int menuItems, double bodyHeight)
@@ -251,6 +248,38 @@ public class PageLayoutTests
     services.NavigationService.Verify(n => n.GoToAsync("..", true), Times.Once());
   }
 
+  // A dialog never navigates: it completes the result task its caller awaits, so it supplies the
+  // action and PageLayout's own GoToAsync("..") must not run.
+  [Fact]
+  public async Task A_supplied_back_command_replaces_the_navigation_one()
+  {
+    var services = new TestServices();
+    var layout = await CreateLayoutAsync(services);
+    var invoked = false;
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      layout.BackCommand = new Command(() => invoked = true);
+      layout.BackItem.Command.Execute(null);
+    });
+
+    Assert.True(invoked);
+    services.NavigationService.Verify(n => n.GoToAsync(It.IsAny<string>(), It.IsAny<bool>()), Times.Never());
+  }
+
+  // A dialog that dispatches off one generic command tells the cases apart by the parameter, so the
+  // rendered button has to carry BackItem's -- without it the back button is a silent no-op there.
+  [Fact]
+  public async Task The_back_button_hands_its_command_the_name_it_dispatches_on()
+  {
+    var layout = await CreateLayoutAsync();
+
+    await MainThread.InvokeOnMainThreadAsync(() => layout.HasBackButton = true);
+
+    var button = BackButton(layout);
+    Assert.Equal(layout.BackItem.CommandParameter, button.CommandParameter);
+  }
+
   [Fact]
   public async Task The_back_button_stays_hidden_until_a_page_asks_for_it()
   {
@@ -261,7 +290,7 @@ public class PageLayoutTests
   }
 
   // The visibility the button binds to is computed, not stored, so only the flag's change callback
-  // repaints it -- and on Windows, where it stays hidden either way, nothing else would notice its loss.
+  // repaints it.
   [Fact]
   public async Task Asking_for_a_back_button_reports_its_visibility_as_changed()
   {
@@ -282,20 +311,42 @@ public class PageLayoutTests
     await MainThread.InvokeOnMainThreadAsync(() => layout.HasBackButton = true);
 
     var button = BackButton(layout);
-    Assert.Equal(ShowsBackButton, button.IsVisible);
+    Assert.True(button.IsVisible);
     Assert.Equal(UIStrings.MenuItemNameBack, layout.BackItem.Text);
     Assert.Equal(layout.BackItem.ButtonText, button.Text);
     Assert.Equal(layout.BackItem.ToolTipText, ToolTipProperties.GetText(button));
   }
 
-  // The Shell nav bar is switched off app-wide (Styles.xaml, TargetType="Page"), which is what makes
-  // the layout's own button the only way back on Android. Windows keeps Shell's title-bar arrow.
+  // The Shell nav bar is switched off app-wide (Styles.xaml, TargetType="Page"), and the WinUI
+  // renderer draws Shell's back arrow inside that same strip, so the layout's own button is the only
+  // way back on every platform.
   [Fact]
   public async Task A_page_hides_the_Shell_nav_bar()
   {
     var page = await CreatePageAsync<MainPage>();
 
     Assert.False(Shell.GetNavBarIsVisible(page));
+  }
+
+  // Windows draws Shell's own back arrow in the NavigationView chrome, not in the nav bar, so hiding
+  // the bar leaves it on screen beside PageLayout's button (measured 40x32 before this was switched
+  // off). Asserted through the toolbar Shell derives rather than the attached property the style
+  // sets, so it fails if Shell ever stops consuming the behaviour.
+  [Fact]
+  public async Task A_pushed_page_hides_the_Shell_back_button()
+  {
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    var shell = await MainThread.InvokeOnMainThreadAsync(() => new AppShell());
+    await using var window = await WindowHost.AttachAsync(shell);
+
+    await MainThread.InvokeOnMainThreadAsync(() => shell.Navigation.PushAsync(new ContentPage()));
+
+    var toolbar = await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => ((IToolbarElement)shell).Toolbar),
+      toolbar => toolbar is not null && shell.Navigation.NavigationStack.Count > 1,
+      timeoutMessage: "The pushed page never reached the Shell toolbar.");
+
+    Assert.False(toolbar!.BackButtonVisible);
   }
 
   [Fact]
@@ -308,24 +359,17 @@ public class PageLayoutTests
     Assert.False(layout.HasBackButton);
   }
 
-  // The button lives in a column of its own, so a layout that doesn't ask for one -- every dialog,
-  // and the pages that carry no title -- must keep its header exactly where it was. Only a page
+  // The button lives in a column of its own, so hiding it costs the title only the row's spacing --
+  // MAUI keeps that between defined columns even once the Auto one collapses to nothing. Only a page
   // attached to a real window measures a Button: detached, its handler never sizes the text.
   [Fact]
   public async Task A_hidden_back_button_takes_no_room_from_the_title()
   {
-    var withoutBack = await TitleOffsetAsync(hasBackButton: false);
-    var withBack = await TitleOffsetAsync(hasBackButton: true);
+    var (withoutBack, columnSpacing) = await TitleOffsetAsync(hasBackButton: false);
+    var (withBack, _) = await TitleOffsetAsync(hasBackButton: true);
 
-    Assert.Equal(0, withoutBack);
-
-    if (!ShowsBackButton)
-    {
-      Assert.Equal(0, withBack);
-      return;
-    }
-
-    Assert.True(withBack > 0, $"The back button claimed no width: title starts at {withBack}.");
+    Assert.Equal(columnSpacing, withoutBack);
+    Assert.True(withBack > withoutBack, $"The back button claimed no width: title starts at {withBack}.");
   }
 
   // Both sides come from one token rather than one measuring the other: binding WidthRequest to Height
@@ -391,7 +435,7 @@ public class PageLayoutTests
     var layout = (PageLayout)page.Content;
 
     Assert.True(layout.HasBackButton);
-    Assert.Equal(ShowsBackButton, BackButton(layout).IsVisible);
+    Assert.True(BackButton(layout).IsVisible);
   }
 
   [Fact]

@@ -3,6 +3,7 @@ using GT4.UI.Items;
 using GT4.UI.Resources;
 using GT4.UI.Utils.Settings;
 using System.Collections.ObjectModel;
+using System.Windows.Input;
 
 namespace GT4.UI.Components;
 
@@ -10,6 +11,7 @@ public partial class PageLayout : ContentView
 {
   private readonly ObservableCollection<PageMenuItem> _MenuItems = new();
   private readonly INavigationService _NavigationService;
+  private readonly ICommand _GoBackCommand;
   private bool _IsTopMenuVisible;
   private bool _IsSideMenuVisible;
 
@@ -20,8 +22,13 @@ public partial class PageLayout : ContentView
     _NavigationService = serviceProvider.GetRequiredService<INavigationService>();
 
     var alertService = serviceProvider.GetRequiredService<IAlertService>();
-    var backCommand = new SafeCommand(GoBackAsync, alertService);
-    BackItem = new PageMenuItem { Text = UIStrings.MenuItemNameBack, Command = backCommand };
+    _GoBackCommand = new SafeCommand(GoBackAsync, alertService);
+    BackItem = new PageMenuItem
+    {
+      Text = UIStrings.MenuItemNameBack,
+      Command = _GoBackCommand,
+      CommandParameter = GoBackCommandParameter
+    };
 
     SizeChanged += OnMenuPlacementChanged;
     _MenuItems.CollectionChanged += OnMenuPlacementChanged;
@@ -33,6 +40,9 @@ public partial class PageLayout : ContentView
     : this(GT4Services.Provider)
   {
   }
+
+  // A dialog binding BackCommand to its one generic command tells this case apart by the parameter.
+  public const string GoBackCommandParameter = "PageLayout.GoBackCommand";
 
   public BackgroundAnimation Animation { get; }
 
@@ -47,6 +57,16 @@ public partial class PageLayout : ContentView
       BindingMode.OneWay,
       null,
       OnHasBackButtonChanged);
+
+  public static readonly BindableProperty BackCommandProperty =
+    BindableProperty.Create(
+      nameof(BackCommand),
+      typeof(ICommand),
+      typeof(PageLayout),
+      default(ICommand),
+      BindingMode.OneWay,
+      null,
+      OnBackCommandChanged);
 
   public static readonly BindableProperty TitleProperty =
     BindableProperty.Create(
@@ -110,6 +130,14 @@ public partial class PageLayout : ContentView
     }
   }
 
+  private static void OnBackCommandChanged(BindableObject bindableObject, object oldValue, object newValue)
+  {
+    if (bindableObject is PageLayout view)
+    {
+      view.BackItem.Command = newValue as ICommand ?? view._GoBackCommand;
+    }
+  }
+
   private static void OnHeaderChanged(BindableObject bindableObject, object oldValue, object newValue)
   {
     if (bindableObject is PageLayout view && oldValue != newValue)
@@ -170,6 +198,13 @@ public partial class PageLayout : ContentView
     set => SetValue(HasBackButtonProperty, value);
   }
 
+  // A dialog never navigates: it completes the result task its caller is awaiting, and the caller pops.
+  public ICommand BackCommand
+  {
+    get => (ICommand)GetValue(BackCommandProperty);
+    set => SetValue(BackCommandProperty, value);
+  }
+
   public string Title
   {
     get => (string)GetValue(TitleProperty);
@@ -212,8 +247,7 @@ public partial class PageLayout : ContentView
 
   public bool IsSideMenuVisible => IsMenuVisible && Height >= 0 && Height <= Width;
 
-  // Windows keeps Shell's own back arrow in the title bar even with NavBarIsVisible off.
-  public bool IsBackButtonVisible => HasBackButton && !OperatingSystem.IsWindows();
+  public bool IsBackButtonVisible => HasBackButton;
 
   public bool IsTitleVisible => !string.IsNullOrWhiteSpace(Title);
 

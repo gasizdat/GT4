@@ -8,47 +8,43 @@
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root">
 
-  <components:PageLayout Loading="{Binding Loading, Source={x:Reference Root}}">
+  <components:PageLayout
+      Title="{x:Static resources:UIStrings.TitleSelectRelativesDialog}"
+      BackCommand="{Binding DialogCommand, Source={x:Reference Root}}"
+      HasBackButton="True"
+      Loading="{Binding Loading, Source={x:Reference Root}}">
+
     <components:PageLayout.Header>
       <Grid
           ColumnDefinitions="Auto, *, Auto, Auto"
           ColumnSpacing="{StaticResource PageContentSpacing}"
-          RowDefinitions="Auto, Auto, Auto, Auto, Auto"
+          RowDefinitions="Auto, Auto, Auto, Auto"
           RowSpacing="{StaticResource PageContentSpacing}">
 
-        <!--  Row 0 - Title  -->
+        <!--  Row 0 - Search  -->
         <Label
             Grid.Row="0"
-            Grid.Column="0"
-            Grid.ColumnSpan="3"
-            HorizontalTextAlignment="Center"
-            Style="{StaticResource PageTitle}"
-            Text="{x:Static resources:UIStrings.TitleSelectRelativesDialog}" />
-
-        <!--  Row 1 - Search  -->
-        <Label
-            Grid.Row="1"
             Grid.Column="0"
             Style="{StaticResource FieldName}"
             Text="{x:Static resources:UIStrings.FieldSearchText}" />
 
         <Entry
-            Grid.Row="1"
+            Grid.Row="0"
             Grid.Column="1"
             Grid.ColumnSpan="3"
             HorizontalOptions="Fill"
             Style="{StaticResource FieldValue}"
             Text="{Binding NameFilter, Source={x:Reference Root}}" />
 
-        <!--  Row 2 - Biological Sex  -->
+        <!--  Row 1 - Biological Sex  -->
         <Label
-            Grid.Row="2"
+            Grid.Row="1"
             Grid.Column="0"
             Style="{StaticResource FieldName}"
             Text="{x:Static resources:UIStrings.FieldBiologicalSex}" />
 
         <Picker
-            Grid.Row="2"
+            Grid.Row="1"
             Grid.Column="1"
             Grid.ColumnSpan="3"
             ItemDisplayBinding="{Binding Name}"
@@ -56,15 +52,15 @@
             SelectedItem="{Binding BioSex, Source={x:Reference Root}}"
             Style="{StaticResource FieldValue}" />
 
-        <!--  Row 3 - Relationship Type  -->
+        <!--  Row 2 - Relationship Type  -->
         <Label
-            Grid.Row="3"
+            Grid.Row="2"
             Grid.Column="0"
             Style="{StaticResource FieldName}"
             Text="{x:Static resources:UIStrings.FieldRelationshipType}" />
 
         <Picker
-            Grid.Row="3"
+            Grid.Row="2"
             Grid.Column="1"
             Grid.ColumnSpan="3"
             ItemDisplayBinding="{Binding Name}"
@@ -72,23 +68,23 @@
             SelectedItem="{Binding RelType, Source={x:Reference Root}}"
             Style="{StaticResource FieldValue}" />
 
-        <!--  Row 4 - Relationship Date  -->
+        <!--  Row 3 - Relationship Date  -->
         <components:DateInfoView
-            Grid.Row="4"
+            Grid.Row="3"
             Grid.Column="0"
             Grid.ColumnSpan="2"
             Caption="{x:Static resources:UIStrings.FieldRelationshipStartDate}"
             Date="{Binding RelationshipDate, Source={x:Reference Root}}" />
 
         <Button
-            Grid.Row="4"
+            Grid.Row="3"
             Grid.Column="2"
             Command="{Binding DialogCommand, Source={x:Reference Root}}"
             CommandParameter="EditRelationshipDateCommand"
             Style="{StaticResource EditAdorner}" />
 
         <Button
-            Grid.Row="4"
+            Grid.Row="3"
             Grid.Column="3"
             Command="{Binding DialogCommand, Source={x:Reference Root}}"
             CommandParameter="RemoveRelationshipDateCommand"

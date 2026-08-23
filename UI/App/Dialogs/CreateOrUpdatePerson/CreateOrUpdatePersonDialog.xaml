@@ -25,12 +25,10 @@
     </ResourceDictionary>
   </ContentPage.Resources>
 
-  <components:PageLayout>
-    <components:PageLayout.Header>
-      <Label
-          Style="{StaticResource PageTitle}"
-          Text="{x:Static resources:UIStrings.TitleCreateOrUpdatePersonDialog}" />
-    </components:PageLayout.Header>
+  <components:PageLayout
+      Title="{x:Static resources:UIStrings.TitleCreateOrUpdatePersonDialog}"
+      BackCommand="{Binding DialogCommand, Source={x:Reference Root}}"
+      HasBackButton="True">
 
     <components:PageLayout.Body>
       <ScrollView>

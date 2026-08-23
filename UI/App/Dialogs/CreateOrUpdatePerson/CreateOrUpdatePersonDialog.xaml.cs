@@ -228,11 +228,19 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   public string DialogButtonName => _NotReady ? UIStrings.BtnNameCancel : _SaveButtonName;
 
+  protected override bool OnBackButtonPressed()
+  {
+    Cancel();
+    return true;
+  }
+
+  private void Cancel() => _Info.TrySetResult(null);
+
   private async Task OnCreatePersonCommandAsync()
   {
     if (_NotReady)
     {
-      _Info.SetResult(null);
+      _Info.TrySetResult(null);
       return;
     }
 
@@ -262,7 +270,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       gedcomData: _GedcomData,
       attachments: attachments);
 
-    _Info.SetResult(result);
+    _Info.TrySetResult(result);
   }
 
   protected async Task OnAddPersonNameAsync()
@@ -557,6 +565,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         break;
       case string commandName when commandName == "UndefinedDeathDateCommand":
         SetUndefinedDeathDate();
+        break;
+      case string commandName when commandName == PageLayout.GoBackCommandParameter:
+        Cancel();
         break;
 
       case AdornerCommandParameter adorner when adorner.CommandName == "EditPhotoCommand" && adorner.Element is PersonDataItem photo:

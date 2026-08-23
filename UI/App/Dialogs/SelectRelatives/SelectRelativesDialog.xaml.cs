@@ -2,6 +2,7 @@ using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
+using GT4.UI.Components;
 using GT4.UI.Items;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
@@ -84,10 +85,21 @@ public partial class SelectRelativesDialog : ContentPage
             generation: generation,
             consanguinity: Consanguinity.Zero));
 
-        _Info.SetResult([.. relatives]);
+        _Info.TrySetResult([.. relatives]);
+        break;
+      case string commandName when commandName == PageLayout.GoBackCommandParameter:
+        Cancel();
         break;
     }
   }
+
+  protected override bool OnBackButtonPressed()
+  {
+    Cancel();
+    return true;
+  }
+
+  private void Cancel() => _Info.TrySetResult(null);
 
   private async Task OnRelationshipDateSetupAsync()
   {

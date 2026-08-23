@@ -50,8 +50,10 @@
     </ResourceDictionary>
   </ContentView.Resources>
 
-  <!--  Single-column on purpose: MAUI sizes a star row to the whole grid rather than to the Auto
-        rows' leftover once a child spans columns.  -->
+  <!--
+    Single-column on purpose: MAUI sizes a star row to the whole grid rather than to the Auto
+    rows' leftover once a child spans columns.
+  -->
   <Grid RowDefinitions="Auto, Auto, Auto, *, Auto">
     <Image
         Grid.RowSpan="5"
@@ -61,7 +63,10 @@
         Source="tree_bg.gif" />
 
     <!--  Back and title  -->
-    <Grid Grid.Row="0" ColumnDefinitions="Auto, *">
+    <Grid
+        Grid.Row="0"
+        ColumnDefinitions="Auto, *"
+        ColumnSpacing="{StaticResource PageContentSpacing}">
       <Button
           Margin="{Thickness Left={StaticResource PageContentHorizontalPadding}}"
           BindingContext="{Binding BackItem, Source={x:Reference Root}}"
@@ -71,8 +76,7 @@
 
       <Label
           Grid.Column="1"
-          Margin="{Thickness Left={StaticResource PageContentHorizontalPadding},
-                             Right={StaticResource PageContentHorizontalPadding}}"
+          Margin="{Thickness Right={StaticResource PageContentHorizontalPadding}}"
           IsVisible="{Binding IsTitleVisible, Source={x:Reference Root}}"
           Style="{StaticResource PageTitle}"
           Text="{Binding Title, Source={x:Reference Root}}" />

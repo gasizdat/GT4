@@ -9,6 +9,7 @@ public partial class CreateOrUpdateProjectDialog : ContentPage
 {
   private readonly TaskCompletionSource<ProjectInfo> _Info = new();
   private readonly ICommand _DialogCommand;
+  private readonly ICommand _CancelCommand;
   private string _ProjectDescription = string.Empty;
   private string _ProjectName = string.Empty;
   private string _DialogButtonName;
@@ -27,10 +28,13 @@ public partial class CreateOrUpdateProjectDialog : ContentPage
     }
 
     _DialogCommand = new SafeCommand(OnCreateProject, alertService);
+    _CancelCommand = new SafeCommand(Cancel, alertService);
     InitializeComponent();
   }
 
   public ICommand DialogCommand => _DialogCommand;
+
+  public ICommand CancelCommand => _CancelCommand;
 
   public Task<ProjectInfo> ProjectInfo => _Info.Task;
 
@@ -53,10 +57,21 @@ public partial class CreateOrUpdateProjectDialog : ContentPage
     }
   }
 
-  private void OnCreateProject() =>
-    _Info.SetResult(new ProjectInfo(
-      Description: _ProjectDescription,
-      Name: _ProjectName,
+  protected override bool OnBackButtonPressed()
+  {
+    Cancel();
+    return true;
+  }
+
+  private void OnCreateProject() => Complete(_ProjectName, _ProjectDescription);
+
+  // The caller reads an empty Name as "cancelled", the same way the footer button reports it.
+  private void Cancel() => Complete(string.Empty, string.Empty);
+
+  private void Complete(string name, string description) =>
+    _Info.TrySetResult(new ProjectInfo(
+      Description: description,
+      Name: name,
       Revision: null,
       Origin: default!));
 }

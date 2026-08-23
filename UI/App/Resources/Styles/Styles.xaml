@@ -721,6 +721,17 @@
     <Setter Property="Padding" Value="0" />
     <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
     <Setter Property="Shell.NavBarIsVisible" Value="False" />
+
+    <!--
+      Windows draws Shell's back arrow in the NavigationView chrome rather than in the nav bar, so
+      hiding the bar leaves it on screen next to PageLayout's own button. Nothing binds through this
+      behaviour, so every page can share the one instance.
+    -->
+    <Setter Property="Shell.BackButtonBehavior">
+      <Setter.Value>
+        <BackButtonBehavior IsVisible="False" />
+      </Setter.Value>
+    </Setter>
   </Style>
 
   <Style ApplyToDerivedTypes="True" TargetType="Shell">

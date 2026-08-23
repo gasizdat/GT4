@@ -2,6 +2,7 @@ using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
+using GT4.UI.Components;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
 using System.Windows.Input;
@@ -38,13 +39,26 @@ public partial class SelectPersonDialog : ContentPage
 
   protected Task OnDialogCommand(object obj)
   {
-    if (obj is string commandName && commandName == "SelectPersonCommand")
+    switch (obj)
     {
-      _Info.SetResult(_SelectedPerson);
+      case string commandName when commandName == "SelectPersonCommand":
+        _Info.TrySetResult(_SelectedPerson);
+        break;
+      case string commandName when commandName == PageLayout.GoBackCommandParameter:
+        Cancel();
+        break;
     }
 
     return Task.CompletedTask;
   }
+
+  protected override bool OnBackButtonPressed()
+  {
+    Cancel();
+    return true;
+  }
+
+  private void Cancel() => _Info.TrySetResult(null);
 
   public SelectPersonDialog(
     ICancellationTokenProvider cancellationTokenProvider,

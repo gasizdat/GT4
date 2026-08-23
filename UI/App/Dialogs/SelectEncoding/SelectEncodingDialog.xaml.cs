@@ -16,6 +16,7 @@ public partial class SelectEncodingDialog : ContentPage
 
   private readonly string _DeclaredCharset;
   private readonly ICommand _DialogCommand;
+  private readonly ICommand _CancelCommand;
   private readonly TaskCompletionSource<Encoding?> _Info = new(null);
   private EncodingInfo? _SelectedEncoding;
 
@@ -23,6 +24,7 @@ public partial class SelectEncodingDialog : ContentPage
   {
     _DeclaredCharset = declaredCharset;
     _DialogCommand = new SafeCommand(OnSelectEncoding, alertService);
+    _CancelCommand = new SafeCommand(Cancel, alertService);
     InitializeComponent();
   }
 
@@ -47,5 +49,15 @@ public partial class SelectEncodingDialog : ContentPage
 
   public ICommand DialogCommand => _DialogCommand;
 
-  private void OnSelectEncoding() => _Info.SetResult(_SelectedEncoding?.GetEncoding());
+  public ICommand CancelCommand => _CancelCommand;
+
+  protected override bool OnBackButtonPressed()
+  {
+    Cancel();
+    return true;
+  }
+
+  private void OnSelectEncoding() => _Info.TrySetResult(_SelectedEncoding?.GetEncoding());
+
+  private void Cancel() => _Info.TrySetResult(null);
 }

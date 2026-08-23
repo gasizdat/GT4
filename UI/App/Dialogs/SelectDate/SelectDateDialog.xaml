@@ -7,32 +7,21 @@
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
     x:Name="Root">
 
-  <components:PageLayout>
-    <components:PageLayout.Header>
-      <Label
-          Style="{StaticResource PageTitle}"
-          Text="{x:Static resources:UIStrings.TitleSelectDateDialog}" />
-    </components:PageLayout.Header>
+  <components:PageLayout
+      Title="{x:Static resources:UIStrings.TitleSelectDateDialog}"
+      BackCommand="{Binding CancelCommand, Source={x:Reference Root}}"
+      HasBackButton="True">
 
     <components:PageLayout.Body>
       <ScrollView>
         <Grid
             ColumnDefinitions="Auto, *, Auto"
             ColumnSpacing="{x:StaticResource PageContentSpacing}"
-            RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto"
+            RowDefinitions="Auto, Auto, Auto, Auto, Auto"
             RowSpacing="{x:StaticResource PageContentSpacing}">
 
           <Label
               Grid.Row="0"
-              Grid.Column="0"
-              Grid.ColumnSpan="3"
-              HorizontalOptions="Fill"
-              HorizontalTextAlignment="Center"
-              Style="{StaticResource PageSubtitle}"
-              Text="{x:Static resources:UIStrings.TitleSelectDateDialog}" />
-
-          <Label
-              Grid.Row="1"
               Grid.Column="1"
               HorizontalOptions="Fill"
               HorizontalTextAlignment="End"
@@ -40,19 +29,19 @@
               Text="{x:Static resources:UIStrings.DateKnownApproximately}" />
 
           <Switch
-              Grid.Row="1"
+              Grid.Row="0"
               Grid.Column="2"
               IsToggled="{Binding ApproximateSwitch, Source={x:Reference Root}}" />
 
           <Label
-              Grid.Row="2"
+              Grid.Row="1"
               Grid.Column="0"
               Style="{StaticResource FieldName}"
               Text="{x:Static resources:UIStrings.FieldYear}" />
 
 
           <Entry
-              Grid.Row="2"
+              Grid.Row="1"
               Grid.Column="1"
               HorizontalOptions="Fill"
               Keyboard="Numeric"
@@ -60,18 +49,18 @@
               Text="{Binding Year, Source={x:Reference Root}}" />
 
           <Switch
-              Grid.Row="2"
+              Grid.Row="1"
               Grid.Column="2"
               IsToggled="{Binding YearSwitch, Source={x:Reference Root}}" />
 
           <Label
-              Grid.Row="3"
+              Grid.Row="2"
               Grid.Column="0"
               Style="{StaticResource FieldName}"
               Text="{x:Static resources:UIStrings.FieldMonth}" />
 
           <Picker
-              Grid.Row="3"
+              Grid.Row="2"
               Grid.Column="1"
               HorizontalOptions="Fill"
               ItemDisplayBinding="{Binding .}"
@@ -79,18 +68,18 @@
               SelectedItem="{Binding Month, Source={x:Reference Root}}" />
 
           <Switch
-              Grid.Row="3"
+              Grid.Row="2"
               Grid.Column="2"
               IsToggled="{Binding MonthSwitch, Source={x:Reference Root}}" />
 
           <Label
-              Grid.Row="4"
+              Grid.Row="3"
               Grid.Column="0"
               Style="{StaticResource FieldName}"
               Text="{x:Static resources:UIStrings.FieldDay}" />
 
           <Picker
-              Grid.Row="4"
+              Grid.Row="3"
               Grid.Column="1"
               HorizontalOptions="Fill"
               ItemDisplayBinding="{Binding .}"
@@ -98,18 +87,18 @@
               SelectedItem="{Binding Day, Source={x:Reference Root}}" />
 
           <Switch
-              Grid.Row="4"
+              Grid.Row="3"
               Grid.Column="2"
               IsToggled="{Binding DaySwitch, Source={x:Reference Root}}" />
 
           <Label
-              Grid.Row="5"
+              Grid.Row="4"
               Grid.Column="0"
               Style="{StaticResource FieldName}"
               Text="{x:Static resources:UIStrings.FieldDateEntered}" />
 
           <Label
-              Grid.Row="5"
+              Grid.Row="4"
               Grid.Column="1"
               Grid.ColumnSpan="2"
               Style="{StaticResource FieldValue}"
