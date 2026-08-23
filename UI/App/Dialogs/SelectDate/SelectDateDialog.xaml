@@ -8,9 +8,9 @@
     x:Name="Root">
 
   <components:PageLayout
+      Title="{x:Static resources:UIStrings.TitleSelectDateDialog}"
       BackCommand="{Binding CancelCommand, Source={x:Reference Root}}"
-      HasBackButton="True"
-      Title="{x:Static resources:UIStrings.TitleSelectDateDialog}">
+      HasBackButton="True">
 
     <components:PageLayout.Body>
       <ScrollView>

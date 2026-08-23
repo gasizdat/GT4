@@ -9,10 +9,10 @@
     x:Name="Root">
 
   <components:PageLayout
+      Title="{x:Static resources:UIStrings.TitleSelectRelativesDialog}"
       BackCommand="{Binding DialogCommand, Source={x:Reference Root}}"
       HasBackButton="True"
-      Loading="{Binding Loading, Source={x:Reference Root}}"
-      Title="{x:Static resources:UIStrings.TitleSelectRelativesDialog}">
+      Loading="{Binding Loading, Source={x:Reference Root}}">
 
     <components:PageLayout.Header>
       <Grid

@@ -8,9 +8,9 @@
     x:Name="Root">
 
   <components:PageLayout
+      Title="{x:Static resources:UIStrings.TitleSelectEncodingDialog}"
       BackCommand="{Binding CancelCommand, Source={x:Reference Root}}"
-      HasBackButton="True"
-      Title="{x:Static resources:UIStrings.TitleSelectEncodingDialog}">
+      HasBackButton="True">
 
     <components:PageLayout.Body>
       <Grid

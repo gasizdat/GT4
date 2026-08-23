@@ -10,9 +10,9 @@
     x:Name="Root">
 
   <components:PageLayout
+      Title="{x:Static resources:UIStrings.TitleSelectNameDialog}"
       BackCommand="{Binding DialogCommand, Source={x:Reference Root}}"
-      HasBackButton="True"
-      Title="{x:Static resources:UIStrings.TitleSelectNameDialog}">
+      HasBackButton="True">
 
     <components:PageLayout.Body>
       <Grid
@@ -80,11 +80,13 @@
             HorizontalOptions="Fill"
             Style="{StaticResource AddAdorner}" />
 
-        <!--  Sacrificial last row: the Grid resolves the star row before the native Picker/Button
-              report their real heights, so the row stack overruns the Grid's frame and the
-              bottom row gets clipped (upstream MAUI measure bug; Fill alignment and
-              InvalidateMeasure don't help). This empty Border takes the clipping instead of the
-              Add button above.  -->
+        <!--
+          Sacrificial last row: the Grid resolves the star row before the native Picker/Button
+          report their real heights, so the row stack overruns the Grid's frame and the
+          bottom row gets clipped (upstream MAUI measure bug; Fill alignment and
+          InvalidateMeasure don't help). This empty Border takes the clipping instead of the
+          Add button above.
+        -->
         <Border
             Grid.Row="3"
             MinimumHeightRequest="{StaticResource AddornerButtonEmojiSize}"
