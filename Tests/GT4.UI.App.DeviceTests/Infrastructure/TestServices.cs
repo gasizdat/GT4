@@ -1,3 +1,4 @@
+using GT4.Core.Gedcom.Abstraction;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
@@ -25,6 +26,7 @@ internal sealed class TestServices
   public Mock<IProjectTransaction> Transaction { get; } = new();
   public Mock<ITableMetadata> Metadata { get; } = new();
   public Mock<IProjectList> ProjectList { get; } = new();
+  public Mock<IGedcomImporter> Importer { get; } = new();
   public Mock<IRelativesProvider> RelativesProvider { get; } = new();
   public Mock<ITableRelatives> Relatives { get; } = new();
   public Mock<ITablePersons> Persons { get; } = new();
@@ -154,6 +156,7 @@ internal sealed class TestServices
     services.AddSingleton(AlertService.Object);
     services.AddSingleton(NavigationService.Object);
     services.AddSingleton(ProjectList.Object);
+    services.AddSingleton(Importer.Object);
     services.AddSingleton<TestableNamesPage>();
     services.AddSingleton<TestableGalleryPage>();
     services.AddSingleton<TestableFamilyPage>();

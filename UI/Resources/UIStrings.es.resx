@@ -148,14 +148,26 @@
   <data name="BtnNameNo" xml:space="preserve">
     <value>No</value>
   </data>
+  <data name="BtnNameOpenDemoProject" xml:space="preserve">
+    <value>Abrir el árbol de demostración</value>
+  </data>
   <data name="BtnNameOpenOrCreateProject" xml:space="preserve">
     <value>Abrir o crear</value>
   </data>
   <data name="BtnNameYes" xml:space="preserve">
     <value>Sí</value>
   </data>
+  <data name="HintDemoProject" xml:space="preserve">
+    <value>Un árbol de ejemplo para explorar: puede borrarlo sin problema</value>
+  </data>
   <data name="HintProjectPage" xml:space="preserve">
     <value>Abra uno existente o cree uno nuevo</value>
+  </data>
+  <data name="HintProjectPageEmpty" xml:space="preserve">
+    <value>Todavía no hay ningún árbol genealógico aquí. Cree el suyo o abra un árbol de demostración ya preparado para ver lo que hace la aplicación.</value>
+  </data>
+  <data name="TitleDemoProject" xml:space="preserve">
+    <value>Familia Brontë (demostración)</value>
   </data>
   <data name="TitleProjectPage" xml:space="preserve">
     <value>Árbol genealógico</value>

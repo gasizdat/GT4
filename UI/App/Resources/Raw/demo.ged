@@ -1,0 +1,210 @@
+0 HEAD
+1 SOUR GT4
+1 GEDC
+2 VERS 5.5.1
+2 FORM LINEAGE-LINKED
+1 CHAR UTF-8
+0 @I01@ INDI
+1 NAME Hugh /Brunty/
+2 GIVN Hugh
+2 SURN Brunty
+1 SEX M
+1 BIRT
+2 DATE 1755
+2 PLAC County Down, Ireland
+1 DEAT
+2 DATE ABT 1808
+1 FAMS @F03@
+0 @I02@ INDI
+1 NAME Eleanor /McClory/
+2 GIVN Eleanor
+2 SURN McClory
+1 SEX F
+1 BIRT
+2 DATE ABT 1755
+1 FAMS @F03@
+0 @I03@ INDI
+1 NAME Thomas /Branwell/
+2 GIVN Thomas
+2 SURN Branwell
+1 SEX M
+1 BIRT
+2 DATE 1746
+2 PLAC Penzance, Cornwall
+1 DEAT
+2 DATE 5 APR 1808
+2 PLAC Penzance, Cornwall
+1 FAMS @F04@
+0 @I04@ INDI
+1 NAME Anne /Carne/
+2 GIVN Anne
+2 SURN Carne
+1 SEX F
+1 BIRT
+2 DATE APR 1744
+1 DEAT
+2 DATE 19 DEC 1809
+2 PLAC Penzance, Cornwall
+1 FAMS @F04@
+0 @I05@ INDI
+1 NAME Patrick /Brontë/
+2 GIVN Patrick
+2 SURN Brontë
+1 SEX M
+1 BIRT
+2 DATE 17 MAR 1777
+2 PLAC County Down, Ireland
+1 DEAT
+2 DATE 7 JUN 1861
+2 PLAC Haworth, Yorkshire
+1 NOTE Curate of Haworth for forty-one years, and the father of the Brontë novelists. He outlived his wife and all six of their children.
+1 FAMC @F03@
+1 FAMS @F01@
+0 @I06@ INDI
+1 NAME Maria /Branwell/
+2 GIVN Maria
+2 SURN Branwell
+1 SEX F
+1 BIRT
+2 DATE 15 APR 1783
+2 PLAC Penzance, Cornwall
+1 DEAT
+2 DATE 15 SEP 1821
+2 PLAC Haworth, Yorkshire
+1 FAMC @F04@
+1 FAMS @F01@
+0 @I07@ INDI
+1 NAME Elizabeth /Branwell/
+2 GIVN Elizabeth
+2 SURN Branwell
+1 SEX F
+1 BIRT
+2 DATE 1776
+2 PLAC Penzance, Cornwall
+1 DEAT
+2 DATE 29 OCT 1842
+2 PLAC Haworth, Yorkshire
+1 NOTE Moved from Cornwall to Haworth to raise her sister's children after Maria's death.
+1 FAMC @F04@
+0 @I08@ INDI
+1 NAME Maria /Brontë/
+2 GIVN Maria
+2 SURN Brontë
+1 SEX F
+1 BIRT
+2 DATE 23 APR 1814
+2 PLAC Hightown, Yorkshire
+1 DEAT
+2 DATE 6 MAY 1825
+2 PLAC Haworth, Yorkshire
+1 FAMC @F01@
+0 @I09@ INDI
+1 NAME Elizabeth /Brontë/
+2 GIVN Elizabeth
+2 SURN Brontë
+1 SEX F
+1 BIRT
+2 DATE 8 FEB 1815
+2 PLAC Hightown, Yorkshire
+1 DEAT
+2 DATE 15 JUN 1825
+2 PLAC Haworth, Yorkshire
+1 FAMC @F01@
+0 @I10@ INDI
+1 NAME Charlotte /Brontë/
+2 GIVN Charlotte
+2 SURN Brontë
+1 SEX F
+1 BIRT
+2 DATE 21 APR 1816
+2 PLAC Thornton, Yorkshire
+1 DEAT
+2 DATE 31 MAR 1855
+2 PLAC Haworth, Yorkshire
+1 NOTE Author of Jane Eyre, Shirley and Villette, first published under the pen name Currer Bell.
+1 FAMC @F01@
+1 FAMS @F02@
+0 @I11@ INDI
+1 NAME Patrick Branwell /Brontë/
+2 GIVN Patrick Branwell
+2 SURN Brontë
+1 SEX M
+1 BIRT
+2 DATE 26 JUN 1817
+2 PLAC Thornton, Yorkshire
+1 DEAT
+2 DATE 24 SEP 1848
+2 PLAC Haworth, Yorkshire
+1 NOTE Painter and poet, whose group portrait of his three sisters hangs in the National Portrait Gallery.
+1 FAMC @F01@
+0 @I12@ INDI
+1 NAME Emily Jane /Brontë/
+2 GIVN Emily Jane
+2 SURN Brontë
+1 SEX F
+1 BIRT
+2 DATE 30 JUL 1818
+2 PLAC Thornton, Yorkshire
+1 DEAT
+2 DATE 19 DEC 1848
+2 PLAC Haworth, Yorkshire
+1 NOTE Author of Wuthering Heights, published under the pen name Ellis Bell.
+1 FAMC @F01@
+0 @I13@ INDI
+1 NAME Anne /Brontë/
+2 GIVN Anne
+2 SURN Brontë
+1 SEX F
+1 BIRT
+2 DATE 17 JAN 1820
+2 PLAC Thornton, Yorkshire
+1 DEAT
+2 DATE 28 MAY 1849
+2 PLAC Scarborough, Yorkshire
+1 NOTE Author of Agnes Grey and The Tenant of Wildfell Hall, published under the pen name Acton Bell.
+1 FAMC @F01@
+0 @I14@ INDI
+1 NAME Arthur Bell /Nicholls/
+2 GIVN Arthur Bell
+2 SURN Nicholls
+1 SEX M
+1 BIRT
+2 DATE 6 JAN 1819
+2 PLAC County Antrim, Ireland
+1 DEAT
+2 DATE 2 DEC 1906
+2 PLAC Banagher, Ireland
+1 FAMS @F02@
+0 @F01@ FAM
+1 HUSB @I05@
+1 WIFE @I06@
+1 MARR
+2 DATE 29 DEC 1812
+2 PLAC Guiseley, Yorkshire
+1 CHIL @I08@
+1 CHIL @I09@
+1 CHIL @I10@
+1 CHIL @I11@
+1 CHIL @I12@
+1 CHIL @I13@
+0 @F02@ FAM
+1 HUSB @I14@
+1 WIFE @I10@
+1 MARR
+2 DATE 29 JUN 1854
+2 PLAC Haworth, Yorkshire
+0 @F03@ FAM
+1 HUSB @I01@
+1 WIFE @I02@
+1 MARR
+2 DATE 1776
+1 CHIL @I05@
+0 @F04@ FAM
+1 HUSB @I03@
+1 WIFE @I04@
+1 MARR
+2 DATE 1768
+2 PLAC Penzance, Cornwall
+1 CHIL @I06@
+1 CHIL @I07@
+0 TRLR

@@ -148,14 +148,26 @@ genealogy tree and enjoy!</value>
   <data name="BtnNameNo" xml:space="preserve">
     <value>No</value>
   </data>
+  <data name="BtnNameOpenDemoProject" xml:space="preserve">
+    <value>Open the Demo Tree</value>
+  </data>
   <data name="BtnNameOpenOrCreateProject" xml:space="preserve">
     <value>Open or Create</value>
   </data>
   <data name="BtnNameYes" xml:space="preserve">
     <value>Yes</value>
   </data>
+  <data name="HintDemoProject" xml:space="preserve">
+    <value>A sample tree to explore — safe to delete</value>
+  </data>
   <data name="HintProjectPage" xml:space="preserve">
     <value>Open or create a new one</value>
+  </data>
+  <data name="HintProjectPageEmpty" xml:space="preserve">
+    <value>There are no genealogy trees here yet. Start your own, or open a ready-made demo tree to see what the app can do.</value>
+  </data>
+  <data name="TitleDemoProject" xml:space="preserve">
+    <value>Brontë Family (Demo)</value>
   </data>
   <data name="TitleProjectPage" xml:space="preserve">
     <value>Genealogy Tree</value>

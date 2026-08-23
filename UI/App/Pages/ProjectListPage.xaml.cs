@@ -9,12 +9,16 @@ using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Extensions;
 using System.Collections.ObjectModel;
+using System.Text;
 using System.Windows.Input;
 
 namespace GT4.UI.Pages;
 
 public partial class ProjectListPage : ContentPage
 {
+  // MauiAsset strips the "Resources\Raw" prefix from the logical name (see AppCommon.props).
+  private const string DemoGedcomAsset = "demo.ged";
+
   // GEDCOM has no standard MIME type: Windows filters on the ".ged" extension (and ".zip", which is what an
   // export produces), while Android has none, so it falls back to any file. A picked file always lands in a
   // brand-new project, so this only governs which files are easy to select.
@@ -59,6 +63,7 @@ public partial class ProjectListPage : ContentPage
     _NavigationService = navigationService;
     _ImageCache = imageCache;
     Loading = new PageLoading(_AlertService);
+    Loading.PropertyChanged += (_, _) => OnPropertyChanged(nameof(IsEmptyStateVisible));
     _PageCommand = new SafeCommand(OnPageCommand, _AlertService);
 
     InitializeComponent();
@@ -67,6 +72,11 @@ public partial class ProjectListPage : ContentPage
   public PageLoading Loading { get; }
 
   public ICollection<ProjectItem> Projects => _Projects;
+
+  public bool HasProjects => _Projects.Count != 0;
+
+  // "You have nothing" is only true once the list has been read, or the offer flashes over the spinner.
+  public bool IsEmptyStateVisible => !Loading.IsLoading && !HasProjects;
 
   public ICommand PageCommand => _PageCommand;
 
@@ -122,6 +132,9 @@ public partial class ProjectListPage : ContentPage
     {
       _Projects.Add(project);
     }
+
+    OnPropertyChanged(nameof(HasProjects));
+    OnPropertyChanged(nameof(IsEmptyStateVisible));
   }
 
   protected async Task OnPageCommand(object obj)
@@ -131,6 +144,9 @@ public partial class ProjectListPage : ContentPage
       case string commandName when commandName == "Create":
         await OnCreateProject();
         await UpdateProjectList();
+        break;
+      case string commandName when commandName == "Demo":
+        await OnOpenDemoProject();
         break;
       case string commandName when commandName == "ImportGedcom":
         await OnImportGedcom();
@@ -159,11 +175,6 @@ public partial class ProjectListPage : ContentPage
     await using var project = await _ProjectList.CreateAsync(projectInfo.Name, projectInfo.Description, token);
   }
 
-  // Imports a GEDCOM file into a fresh project. The importer can merge into a populated document, but from
-  // the project list there is nothing open to merge into, so each import deliberately gets its own new
-  // project; merging into an existing project is offered from ProjectPage instead. The import can be slow,
-  // so it runs on a background thread behind a modal that lets the user cancel it; on success the project
-  // is opened as current and we navigate straight into it.
   private async Task OnImportGedcom()
   {
     var pickOptions = new PickOptions { PickerTitle = UIStrings.FileDialogSelectGedcom, FileTypes = GedcomFileType };
@@ -176,15 +187,31 @@ public partial class ProjectListPage : ContentPage
     if (reader is null)
       return;
 
-    var name = source.Name;
-    var description = UIStrings.HintImportedFromGedcom;
+    await ImportIntoNewProjectAsync(reader, source.Name, UIStrings.HintImportedFromGedcom, source.MediaBasePath);
+  }
 
+  // The bundled file declares UTF-8, so it needs none of the charset detection a picked file goes through,
+  // and it carries no OBJE, so there is no media path to resolve its references against.
+  private async Task OnOpenDemoProject()
+  {
+    using var stream = await FileSystem.OpenAppPackageFileAsync(DemoGedcomAsset);
+    using var reader = new StreamReader(stream, Encoding.UTF8);
+    await ImportIntoNewProjectAsync(reader, UIStrings.TitleDemoProject, UIStrings.HintDemoProject, null);
+  }
+
+  // Imports GEDCOM text into a fresh project. The importer can merge into a populated document, but from
+  // the project list there is nothing open to merge into, so each import deliberately gets its own new
+  // project; merging into an existing project is offered from ProjectPage instead. The import can be slow,
+  // so it runs on a background thread behind a modal that lets the user cancel it; on success the project
+  // is opened as current and we navigate straight into it.
+  private async Task ImportIntoNewProjectAsync(TextReader reader, string name, string description, string? mediaBasePath)
+  {
     var dialog = new GedcomImportDialog(name, _AlertService);
     await Navigation.PushModalAsync(dialog);
     ProjectInfo? info = null;
     try
     {
-      info = await Task.Run(() => RunImportAsync(source, reader, name, description, dialog.Token));
+      info = await Task.Run(() => RunImportAsync(reader, name, description, mediaBasePath, dialog.Token));
     }
     catch (OperationCanceledException)
     {
@@ -207,12 +234,12 @@ public partial class ProjectListPage : ContentPage
   // dialog's cancellation token rather than a short-lived DB token. Any failure — a user cancellation or a
   // malformed file — deletes the freshly created project shell and rethrows, so nothing is left behind; the
   // caller turns cancellation into a quiet no-op and lets real errors surface through SafeCommand.
-  private async Task<ProjectInfo> RunImportAsync(GedcomImportSource source, TextReader reader, string name, string description, CancellationToken token)
+  private async Task<ProjectInfo> RunImportAsync(TextReader reader, string name, string description, string? mediaBasePath, CancellationToken token)
   {
     var host = await _ProjectList.CreateAsync(name, description, token);
     try
     {
-      await _Importer.ImportAsync(host.Project!, reader, token, source.MediaBasePath);
+      await _Importer.ImportAsync(host.Project!, reader, token, mediaBasePath);
 
       var revision = await host.Project!.Metadata.GetProjectRevisionAsync(token);
       await host.DisposeAsync();

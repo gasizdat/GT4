@@ -148,14 +148,26 @@ Stammbaum und haben Sie Freude daran!</value>
   <data name="BtnNameNo" xml:space="preserve">
     <value>Nein</value>
   </data>
+  <data name="BtnNameOpenDemoProject" xml:space="preserve">
+    <value>Demo-Stammbaum öffnen</value>
+  </data>
   <data name="BtnNameOpenOrCreateProject" xml:space="preserve">
     <value>Öffnen oder erstellen</value>
   </data>
   <data name="BtnNameYes" xml:space="preserve">
     <value>Ja</value>
   </data>
+  <data name="HintDemoProject" xml:space="preserve">
+    <value>Ein Beispielstammbaum zum Ausprobieren — kann bedenkenlos gelöscht werden</value>
+  </data>
   <data name="HintProjectPage" xml:space="preserve">
     <value>Ein Projekt öffnen oder ein neues erstellen</value>
+  </data>
+  <data name="HintProjectPageEmpty" xml:space="preserve">
+    <value>Hier gibt es noch keine Stammbäume. Legen Sie einen eigenen an oder öffnen Sie einen fertigen Demo-Stammbaum, um die App kennenzulernen.</value>
+  </data>
+  <data name="TitleDemoProject" xml:space="preserve">
+    <value>Familie Brontë (Demo)</value>
   </data>
   <data name="TitleProjectPage" xml:space="preserve">
     <value>Stammbaum</value>

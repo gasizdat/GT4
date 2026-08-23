@@ -25,6 +25,9 @@
 
     <ItemGroup>
         <EmbeddedResource Include="Samples\*.ged" />
+        <!-- The demo genealogy the app ships and offers on an empty project list, tested here rather
+             than copied: a fixture of its own would drift from what is actually shipped. -->
+        <EmbeddedResource Include="..\..\UI\App\Resources\Raw\demo.ged" Link="Samples\demo.ged" />
     </ItemGroup>
 
     <ItemGroup>
