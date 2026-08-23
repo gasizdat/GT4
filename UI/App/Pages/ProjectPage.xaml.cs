@@ -294,10 +294,6 @@ public partial class ProjectPage : ContentPage
         await OnEditProject();
         break;
 
-      case string commandName when commandName == "ToggleFilters":
-        FilterView.IsFiltersVisible = !FilterView.IsFiltersVisible;
-        break;
-
       case string commandName when commandName == "Refresh":
         Refresh();
         break;

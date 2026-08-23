@@ -59,9 +59,10 @@ public class ProjectPageTests
     var page = await CreatePageAsync(new TestServices());
 
     var layout = (PageLayout)page.Content;
-    var filterItem = layout.MenuItems.Single(item => (string?)item.CommandParameter == "ToggleFilters");
+    var filterItem = layout.MenuItems.Single(item => (string?)item.CommandParameter == "ToggleFiltersCommand");
 
     Assert.NotNull(filterItem.Command);
+    Assert.Same(page.FilterView.FilterCommand, filterItem.Command);
   }
 
   [Fact]
@@ -71,12 +72,15 @@ public class ProjectPageTests
     await using var window = await WindowHost.AttachAsync(page);
     Assert.False(page.FilterView.IsFiltersVisible);
 
+    var layout = (PageLayout)page.Content;
+    var filterItem = layout.MenuItems.Single(item => (string?)item.CommandParameter == "ToggleFiltersCommand");
+
     // The flip cascades into FadeVisibilityBehavior touching native UI, so it must run on the UI
     // thread.
-    await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("ToggleFilters"));
+    await MainThread.InvokeOnMainThreadAsync(() => filterItem.Command.Execute(filterItem.CommandParameter));
     Assert.True(page.FilterView.IsFiltersVisible);
 
-    await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("ToggleFilters"));
+    await MainThread.InvokeOnMainThreadAsync(() => filterItem.Command.Execute(filterItem.CommandParameter));
     Assert.False(page.FilterView.IsFiltersVisible);
   }
 
@@ -533,14 +537,17 @@ public class ProjectPageTests
       Assert.Equal(0, panel.Opacity);
     });
 
-    await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("ToggleFilters"));
+    var layout = (PageLayout)page.Content;
+    var filterItem = layout.MenuItems.Single(item => (string?)item.CommandParameter == "ToggleFiltersCommand");
+
+    await MainThread.InvokeOnMainThreadAsync(() => filterItem.Command.Execute(filterItem.CommandParameter));
     await Poll.UntilAsync(
       () => MainThread.InvokeOnMainThreadAsync(() => panel.Opacity),
       opacity => opacity == 1,
       timeoutMessage: "The filters panel did not finish fading in.");
     await MainThread.InvokeOnMainThreadAsync(() => Assert.True(panel.IsVisible));
 
-    await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("ToggleFilters"));
+    await MainThread.InvokeOnMainThreadAsync(() => filterItem.Command.Execute(filterItem.CommandParameter));
     await Poll.UntilAsync(
       () => MainThread.InvokeOnMainThreadAsync(() => panel.IsVisible),
       isVisible => !isVisible,

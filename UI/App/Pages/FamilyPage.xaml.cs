@@ -295,10 +295,6 @@ public partial class FamilyPage : ContentPage
         await OnCreatePerson();
         break;
 
-      case string commandName when commandName == "ToggleFilters":
-        FilterView.IsFiltersVisible = !FilterView.IsFiltersVisible;
-        break;
-
       case string commandName when commandName == "Refresh":
         Refresh();
         break;

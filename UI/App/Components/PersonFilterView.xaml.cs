@@ -12,8 +12,8 @@ namespace GT4.UI.Components;
 /// <summary>
 /// The self-contained person filter: the clear button, the fading fields panel, and the filter state
 /// itself (a <see cref="PersonFilter"/> it owns), including the lazy marital-status/year-bounds
-/// fetch. It carries no toggle affordance of its own: the panel opens and closes only through
-/// <see cref="IsFiltersVisible"/>, which the host page's menu drives.
+/// fetch. It renders no toggle button of its own: the host page carries one in its PageLayout menu,
+/// bound to <see cref="FilterCommand"/> with "ToggleFiltersCommand".
 /// Host pages call <see cref="Initialize"/> right after their InitializeComponent,
 /// subscribe to <see cref="Changed"/> to re-run their filter predicate, and call <see cref="Matches"/>
 /// from it. The filter exists from construction, so <see cref="Matches"/> is safe even before
@@ -121,6 +121,9 @@ public partial class PersonFilterView : ContentView
   {
     switch (obj)
     {
+      case string commandName when commandName == "ToggleFiltersCommand":
+        IsFiltersVisible = !IsFiltersVisible;
+        break;
       case string commandName when commandName == "ClearFiltersCommand":
         _Filter.Clear();
         SyncControls();

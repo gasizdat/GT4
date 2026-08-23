@@ -513,9 +513,6 @@ public partial class PersonPage : ContentPage
       case string commandName when commandName == "EditPerson":
         await OnPersonEditAsync();
         break;
-      case string commandName when commandName == "ToggleFilters":
-        FilterView.IsFiltersVisible = !FilterView.IsFiltersVisible;
-        break;
       case string commandName when commandName == "Refresh":
         ShowPersonInfo(_PersonFullInfo, false);
         break;

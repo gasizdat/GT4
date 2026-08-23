@@ -62,8 +62,8 @@
           CommandParameter="GoToRevisions"
           Text="{x:Static resources:UIStrings.MenuItemGoToRevisions}" />
       <items:PageMenuItem
-          Command="{Binding PageCommand, Source={x:Reference Root}}"
-          CommandParameter="ToggleFilters"
+          Command="{Binding FilterCommand, Source={x:Reference FilterView}}"
+          CommandParameter="ToggleFiltersCommand"
           Text="{x:Static resources:UIStrings.MenuItemNameFilters}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
