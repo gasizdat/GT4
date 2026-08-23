@@ -7,6 +7,8 @@
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root">
 
+  <!--  The names are used only for the Device Tests purposes.  -->
+
   <Grid
       HorizontalOptions="Fill"
       RowDefinitions="Auto, Auto">
@@ -24,8 +26,8 @@
           VerticalOptions="Center">
         <Label.Behaviors>
           <behaviors:FadeVisibilityBehavior
-              Duration="500"
-              IsVisible="{Binding IsAnyFilterActive, Source={x:Reference Root}}" />
+              IsVisible="{Binding IsAnyFilterActive, Source={x:Reference Root}}"
+              Duration="500" />
         </Label.Behaviors>
       </Label>
 
@@ -40,8 +42,8 @@
           VerticalOptions="Center">
         <Button.Behaviors>
           <behaviors:FadeVisibilityBehavior
-              Duration="500"
-              IsVisible="{Binding IsAnyFilterActive, Source={x:Reference Root}}" />
+              IsVisible="{Binding IsAnyFilterActive, Source={x:Reference Root}}"
+              Duration="500" />
         </Button.Behaviors>
       </Button>
     </Grid>
@@ -59,8 +61,8 @@
 
       <Grid.Behaviors>
         <behaviors:FadeVisibilityBehavior
-            Duration="500"
-            IsVisible="{Binding IsFiltersVisible, Source={x:Reference Root}}" />
+            IsVisible="{Binding IsFiltersVisible, Source={x:Reference Root}}"
+            Duration="500" />
       </Grid.Behaviors>
 
       <!--  Row 0 - Name search  -->
@@ -71,6 +73,7 @@
           Text="{x:Static resources:UIStrings.FieldSearchText}" />
 
       <Entry
+          x:Name="NameFilterEntry"
           Grid.Row="0"
           Grid.Column="1"
           Grid.ColumnSpan="2"
@@ -90,6 +93,7 @@
           x:Name="SexFilterPicker"
           Grid.Row="1"
           Grid.Column="1"
+          ItemsSource="{Binding SexFilterLabels, Source={x:Reference Root}}"
           SelectedIndex="{Binding SexFilterIndex, Source={x:Reference Root}}"
           Style="{StaticResource FieldValue}" />
 
@@ -97,6 +101,7 @@
           x:Name="MaritalStatusFilterPicker"
           Grid.Row="1"
           Grid.Column="2"
+          ItemsSource="{Binding MaritalStatusFilterLabels, Source={x:Reference Root}}"
           SelectedIndex="{Binding MaritalStatusFilterIndex, Source={x:Reference Root}}"
           Style="{StaticResource FieldValue}" />
 
@@ -108,6 +113,7 @@
           Text="{x:Static resources:UIStrings.FieldYear}" />
 
       <Switch
+          x:Name="YearFilterSwitch"
           Grid.Row="2"
           Grid.Column="1"
           IsToggled="{Binding IsYearFilterEnabled, Source={x:Reference Root}}" />
@@ -119,12 +125,14 @@
           Style="{StaticResource FieldValue}"
           Text="{Binding SelectedYearText, Source={x:Reference Root}}" />
 
-      <!--  Row 3 - Year slider  -->
+      <!--  Row 3 - Year slider. Maximum precedes Minimum so the range never inverts mid-update.  -->
       <Slider
           x:Name="YearSlider"
           Grid.Row="3"
           Grid.ColumnSpan="3"
           IsEnabled="{Binding IsYearFilterEnabled, Source={x:Reference Root}}"
+          Maximum="{Binding MaxYear, Source={x:Reference Root}}"
+          Minimum="{Binding MinYear, Source={x:Reference Root}}"
           Value="{Binding SelectedYear, Source={x:Reference Root}}" />
     </Grid>
   </Grid>

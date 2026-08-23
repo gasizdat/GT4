@@ -4,6 +4,7 @@ using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
+using GT4.UI.Utils.Extensions;
 using GT4.UI.Utils.Formatters;
 using System.Windows.Input;
 
@@ -53,7 +54,6 @@ public partial class PersonFilterView : ContentView
     // The XAML button bindings were evaluated in InitializeComponent, before the IAlertService the
     // command needs was available; notify so they re-resolve.
     _FilterCommand = new SafeCommand(OnFilterCommand, _AlertService);
-    OnPropertyChanged(nameof(FilterCommand));
 
     // Label order must match PersonFilter's SexFilterValues/MaritalStatusFilterValues (index 0 = "any").
     _SexFilterLabels =
@@ -69,12 +69,7 @@ public partial class PersonFilterView : ContentView
       UIStrings.FieldMaritalStatusMarried,
       UIStrings.FieldMaritalStatusSingle,
     ];
-    SexFilterPicker.ItemsSource = _SexFilterLabels;
-    MaritalStatusFilterPicker.ItemsSource = _MaritalStatusFilterLabels;
-
-    // A Picker drops its SelectedIndex to -1 when its ItemsSource is replaced, without telling the
-    // binding, so the filter's own index has to be pushed back out.
-    RaiseCriteriaChanged();
+    this.RefreshView();
   }
 
   /// <summary>Raised whenever a filter criterion changes (or lazily-fetched filter data lands), so
@@ -124,6 +119,10 @@ public partial class PersonFilterView : ContentView
       return string.Join("; ", ret);
     }
   }
+
+  public string[] SexFilterLabels => _SexFilterLabels;
+
+  public string[] MaritalStatusFilterLabels => _MaritalStatusFilterLabels;
 
   public string NameFilter
   {
@@ -181,17 +180,21 @@ public partial class PersonFilterView : ContentView
       }
 
       _Filter.IsYearFilterEnabled = value;
+
       RaiseChanged();
     }
   }
+
+  public double MaxYear => _Filter.MaxYear;
+
+  public double MinYear => _Filter.MinYear;
 
   public double SelectedYear
   {
     get => _Filter.SelectedYear;
     set
     {
-      // The filter floors the value, so most of a drag's fractional updates are no-ops. Only the
-      // label is notified: pushing the floored year back into the slider would fight the drag.
+      // The filter floors the value, so most of a drag's fractional updates are no-ops.
       var previousYear = _Filter.SelectedYear;
       _Filter.SelectedYear = value;
       if (_Filter.SelectedYear == previousYear)
@@ -199,7 +202,6 @@ public partial class PersonFilterView : ContentView
         return;
       }
 
-      OnPropertyChanged(nameof(SelectedYearText));
       RaiseChanged();
     }
   }
@@ -231,7 +233,7 @@ public partial class PersonFilterView : ContentView
       }
 
       _IsFiltersVisible = value;
-      OnPropertyChanged(nameof(IsFiltersVisible));
+      this.RefreshView();
 
       if (_IsFiltersVisible)
       {
@@ -249,28 +251,14 @@ public partial class PersonFilterView : ContentView
         break;
       case string commandName when commandName == "ClearFiltersCommand":
         _Filter.Clear();
-        RaiseCriteriaChanged();
         RaiseChanged();
         break;
     }
   }
 
-  /// <summary>Pushes filter state the controls did not originate out to them. Each echoes the value
-  /// straight back through its two-way binding, which the criteria setters absorb as a no-op.</summary>
-  private void RaiseCriteriaChanged()
-  {
-    OnPropertyChanged(nameof(NameFilter));
-    OnPropertyChanged(nameof(SexFilterIndex));
-    OnPropertyChanged(nameof(MaritalStatusFilterIndex));
-    OnPropertyChanged(nameof(IsYearFilterEnabled));
-    OnPropertyChanged(nameof(SelectedYear));
-    OnPropertyChanged(nameof(SelectedYearText));
-  }
-
   private void RaiseChanged()
   {
-    OnPropertyChanged(nameof(IsAnyFilterActive));
-    OnPropertyChanged(nameof(CurrentFilterSet));
+    this.RefreshView();
     Changed?.Invoke(this, EventArgs.Empty);
   }
 
@@ -299,15 +287,10 @@ public partial class PersonFilterView : ContentView
         _Filter.SetYearBounds(minYear, maxYear);
         var selectedYear = _Filter.SelectedYear;
 
-        // Maximum first: ComputeYearBounds floors maxYear at the current year, which is >= the
-        // slider's initial Maximum of 1, so this order never leaves Minimum > Maximum mid-update.
-        YearSlider.Maximum = maxYear;
-        YearSlider.Minimum = minYear;
-        // Widening the bounds clamps the slider's own Value up off 0, and that clamp reaches the
-        // filter through the binding, so the year picked above is re-asserted after it.
+        this.RefreshView();
+        // Pushing the widened bounds makes the slider clamp its own Value up off zero and carry that
+        // clamp back through the binding, so the year the bounds picked is restored after them.
         _Filter.SelectedYear = selectedYear;
-        RaiseCriteriaChanged();
-
         RaiseChanged();
         FilterDataLoaded?.Invoke(this, EventArgs.Empty);
       }, _AlertService);

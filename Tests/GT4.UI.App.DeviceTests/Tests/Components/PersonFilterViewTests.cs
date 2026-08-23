@@ -131,7 +131,7 @@ public sealed class PersonFilterViewTests
   }
 
   [Fact]
-  public async Task SelectedYear_FractionalSliderValue_FloorsTheLabelWithoutSnappingTheSlider()
+  public async Task SelectedYear_FractionalSliderValue_SnapsToTheWholeYear()
   {
     var view = await CreateViewAsync();
     var services = new TestServices();
@@ -146,8 +146,8 @@ public sealed class PersonFilterViewTests
     await MainThread.InvokeOnMainThreadAsync(() => slider.Value = 1975.4);
 
     Assert.Equal("1975", view.SelectedYearText);
-    // The floored year must not be pushed back into the slider: mid-drag that fights the gesture.
-    Assert.Equal(1975.4, slider.Value);
+    // The floored year is pushed back through the binding, so the slider settles on whole years.
+    Assert.Equal(1975, slider.Value);
   }
 
   [Fact]
