@@ -96,10 +96,10 @@
 
           <Button
               Command="{Binding PageCommand, Source={x:Reference Root}}"
-              CommandParameter="Create"
+              CommandParameter="ImportGedcom"
               FontSize="{DynamicResource ActionButtonTextSize}"
               HorizontalOptions="Fill"
-              Text="{x:Static resources:UIStrings.BtnNameCreateGenealogyTree}" />
+              Text="{x:Static resources:UIStrings.MenuItemImportGedcom}" />
 
         </VerticalStackLayout>
       </Grid>
@@ -111,7 +111,6 @@
           CommandParameter="Create"
           FontSize="{DynamicResource ActionButtonTextSize}"
           HorizontalOptions="Fill"
-          IsVisible="{Binding HasProjects, Source={x:Reference Root}}"
           Text="{x:Static resources:UIStrings.BtnNameCreateGenealogyTree}" />
     </components:PageLayout.Footer>
 

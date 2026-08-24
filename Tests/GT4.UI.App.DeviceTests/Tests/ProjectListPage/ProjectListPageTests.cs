@@ -124,13 +124,13 @@ public class ProjectListPageTests
   }
 
   [Fact]
-  public async Task Empty_list_offers_the_demo_and_drops_the_footer_button()
+  public async Task Empty_list_shows_the_empty_state()
   {
     var page = await CreatePageAsync(new TestServices());
 
     await MainThread.InvokeOnMainThreadAsync(page.InvokeUpdateProjectListAsync);
 
-    Assert.False(page.HasProjects);
+    Assert.Empty(page.Projects);
     Assert.True(page.IsEmptyStateVisible);
   }
 
@@ -143,7 +143,7 @@ public class ProjectListPageTests
 
     await MainThread.InvokeOnMainThreadAsync(page.InvokeUpdateProjectListAsync);
 
-    Assert.True(page.HasProjects);
+    Assert.Single(page.Projects);
     Assert.False(page.IsEmptyStateVisible);
   }
 

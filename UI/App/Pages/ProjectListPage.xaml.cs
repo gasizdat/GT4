@@ -73,10 +73,8 @@ public partial class ProjectListPage : ContentPage
 
   public ICollection<ProjectItem> Projects => _Projects;
 
-  public bool HasProjects => _Projects.Count != 0;
-
   // "You have nothing" is only true once the list has been read, or the offer flashes over the spinner.
-  public bool IsEmptyStateVisible => !Loading.IsLoading && !HasProjects;
+  public bool IsEmptyStateVisible => !Loading.IsLoading && _Projects.Count == 0;
 
   public ICommand PageCommand => _PageCommand;
 
@@ -133,7 +131,6 @@ public partial class ProjectListPage : ContentPage
       _Projects.Add(project);
     }
 
-    OnPropertyChanged(nameof(HasProjects));
     OnPropertyChanged(nameof(IsEmptyStateVisible));
   }
 
