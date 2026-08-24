@@ -91,6 +91,10 @@ public sealed class DemoGedcomTests : IAsyncLifetime
     var title = await GedcomPhotoResidue.ExtractTitleAsync(full.MainPhoto, Token);
     title.Should().Contain("Public domain, via Wikimedia Commons.");
 
+    // Named rather than merely counted: Charlotte's two portraits both credit Wikimedia, so only the
+    // artist tells whether _PRIM Y actually chose the profile photo or document order happened to.
+    title.Should().Contain("Richmond");
+
     // The images ride in as base64 BLOBs split across CONT lines. A fold that dropped or reordered a
     // line still decodes to plausible bytes and the importer would then drop the photo without a word,
     // so both JPEG markers are asserted: the whole image has to survive, not just its opening.
