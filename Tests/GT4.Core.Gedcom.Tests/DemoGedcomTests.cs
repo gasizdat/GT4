@@ -1,6 +1,7 @@
 using FluentAssertions;
 using GT4.Core.Project;
 using GT4.Core.Project.Dto;
+using GT4.Core.Project.Extensions;
 using System.Reflection;
 using System.Text;
 using Xunit;
@@ -68,5 +69,66 @@ public sealed class DemoGedcomTests : IAsyncLifetime
     var grandparents = await document.Relatives.GetRelativesAsync(byName["Patrick Brontë"], Token);
     grandparents.Count(relative => relative.Type == RelationshipType.Child).Should().Be(6);
     grandparents.Count(relative => relative.Type == RelationshipType.Parent).Should().Be(2);
+  }
+
+  [Fact]
+  public async Task Demo_CarriesPortraitsCreditingTheirSource()
+  {
+    // Six of the fourteen have a surviving likeness, and the rest deliberately have none: a tree where
+    // everyone has a portrait would never show what the app does with a person who has no photo.
+    await using var document = await ImportDemoAsync();
+
+    var persons = await document.Persons.GetPersonsAsync(Token);
+    var mainPhotos = await document.PersonData.GetMergedPhotoSetAsync(persons, DataCategory.PersonMainPhoto, Token);
+    mainPhotos.Count(entry => entry.Value.Length != 0).Should().Be(6);
+
+    var byName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
+    var full = await document.PersonManager.GetPersonFullInfoAsync(byName["Charlotte Brontë"], Token);
+
+    // Every OBJE carries a TITL crediting the work and its source, which is also what routes the photo
+    // to the tagged category and its Content into a GedcomPhotoResidue envelope.
+    full.MainPhoto!.Category.Should().Be(DataCategory.PersonMainPhotoTagged);
+    var title = await GedcomPhotoResidue.ExtractTitleAsync(full.MainPhoto, Token);
+    title.Should().Contain("Public domain, via Wikimedia Commons.");
+
+    // The images ride in as base64 BLOBs split across CONT lines. A fold that dropped or reordered a
+    // line still decodes to plausible bytes and the importer would then drop the photo without a word,
+    // so both JPEG markers are asserted: the whole image has to survive, not just its opening.
+    full.MainPhoto.MimeType.Should().Be("image/jpeg");
+    var image = GedcomPhotoResidue.ExtractImageBytes(full.MainPhoto.Content);
+    image.Take(2).Should().Equal((byte)0xFF, (byte)0xD8);
+    image.TakeLast(2).Should().Equal((byte)0xFF, (byte)0xD9);
+
+    // Charlotte is the one person carrying two portraits, so she is where _PRIM Y does any work.
+    full.AdditionalPhotos.Should().ContainSingle();
+
+    // Consumed OBJEs are pruned out of the residue. Were they not, the demo project would carry every
+    // portrait a second time, as base64 text, in the blob the person's unmodeled tags live in.
+    var residue = Encoding.UTF8.GetString(full.GedcomData!.Content);
+    residue.Should().NotContain(GedcomTags.Blob);
+  }
+
+  [Fact]
+  public async Task Demo_CarriesMarkdownBiographies()
+  {
+    // PersonPage renders a biography through MarkdownView, so the demo's are written as Markdown; what
+    // this pins is that GEDCOM line folding hands back the shape Markdig needs to parse.
+    await using var document = await ImportDemoAsync();
+
+    var persons = await document.Persons.GetPersonsAsync(Token);
+    var biographies = await document.PersonData.GetPersonDataSetAsync(persons, DataCategory.PersonBio, Token);
+    biographies.Count(entry => entry.Value.Length != 0).Should().Be(10);
+
+    var byName = await GedcomTestGraph.PersonsByNameAsync(document, Token);
+    var full = await document.PersonManager.GetPersonFullInfoAsync(byName["Patrick Brontë"], Token);
+    var text = Encoding.UTF8.GetString(full.Biography!.Content);
+
+    // An empty CONT contributes a newline and nothing else, so a paragraph break is written as two of
+    // them. The blank line is load-bearing: MarkdownView reads a lone newline as a hard line break.
+    text.Should().Contain("\n\nOrdained in 1806");
+
+    // CONC continues a line rather than breaking it, so a paragraph longer than one GEDCOM line comes
+    // back whole instead of splitting mid-sentence into two rendered lines.
+    text.Should().Contain("he entered his name in the new spelling he kept");
   }
 }
