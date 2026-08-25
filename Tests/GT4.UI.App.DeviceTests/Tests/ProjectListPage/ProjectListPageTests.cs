@@ -1,9 +1,11 @@
 using GT4.Core.Project;
+using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Pages;
+using GT4.UI.Resources;
 using Moq;
 using Xunit;
 using IFileSystem = GT4.Core.Utils.IFileSystem;
@@ -14,7 +16,8 @@ namespace GT4.UI.DeviceTests;
 /// Covers ProjectListPage against a real MAUI runtime with a mocked Core. PageCommand("Create")
 /// pushes a modal CreateOrUpdateProjectDialog, driven through WindowHost/ModalDialogHarness.
 /// ImportGedcom is not covered (FilePicker is an external dependency, same rationale as
-/// ProjectPage.ExportGedcom/ImportGedcom).
+/// ProjectPage.ExportGedcom/ImportGedcom); the demo project takes the same import path from a
+/// bundled asset instead, so it is.
 /// </summary>
 public class ProjectListPageTests
 {
@@ -118,6 +121,73 @@ public class ProjectListPageTests
     services.CurrentProjectProvider.Verify(p => p.OpenAsync(info, It.IsAny<CancellationToken>()), Times.Once());
     services.NavigationService.Verify(n => n.GoToAsync($"{typeof(ProjectPage).Namespace}/{typeof(ProjectPage).Name}"), Times.Once());
     Assert.Null(page.SelectedProject);
+  }
+
+  [Fact]
+  public async Task Empty_list_shows_the_empty_state()
+  {
+    var page = await CreatePageAsync(new TestServices());
+
+    await MainThread.InvokeOnMainThreadAsync(page.InvokeUpdateProjectListAsync);
+
+    Assert.Empty(page.Projects);
+    Assert.True(page.IsEmptyStateVisible);
+  }
+
+  [Fact]
+  public async Task Populated_list_hides_the_empty_state()
+  {
+    var services = new TestServices();
+    services.ProjectList.Setup(p => p.GetItemsAsync(It.IsAny<CancellationToken>())).ReturnsAsync([P("Pushkin")]);
+    var page = await CreatePageAsync(services);
+
+    await MainThread.InvokeOnMainThreadAsync(page.InvokeUpdateProjectListAsync);
+
+    Assert.Single(page.Projects);
+    Assert.False(page.IsEmptyStateVisible);
+  }
+
+  [Fact]
+  public async Task Empty_state_stays_hidden_until_the_list_has_been_read()
+  {
+    // An empty collection means "nothing to show" only after the load; during it the page knows nothing
+    // yet, and the offer would flash over the activity indicator on a machine that does have projects.
+    var page = await CreatePageAsync(new TestServices());
+
+    page.Loading.IsLoading = true;
+
+    Assert.False(page.IsEmptyStateVisible);
+  }
+
+  [Fact]
+  public async Task Demo_imports_the_bundled_gedcom_into_a_new_project_and_opens_it()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+    var host = CreateHost(P(UIStrings.TitleDemoProject, UIStrings.HintDemoProject));
+    host.Project = services.Project.Object;
+    services.ProjectList
+      .Setup(p => p.CreateAsync(UIStrings.TitleDemoProject, UIStrings.HintDemoProject, It.IsAny<CancellationToken>()))
+      .ReturnsAsync(host);
+    var imported = string.Empty;
+    services.Importer
+      .Setup(i => i.ImportAsync(It.IsAny<IProjectDocument>(), It.IsAny<TextReader>(), It.IsAny<CancellationToken>(), null))
+      .Returns((IProjectDocument _, TextReader reader, CancellationToken _, string? _) =>
+      {
+        imported = reader.ReadToEnd();
+        return Task.CompletedTask;
+      });
+
+    await using var window = await WindowHost.AttachAsync(page);
+    var commandTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("Demo"));
+    await commandTask;
+
+    // The asset is read out of the app package, so this also pins its logical name and its encoding.
+    Assert.Contains("1 NAME Charlotte /Brontë/", imported);
+    services.CurrentProjectProvider.Verify(
+      p => p.OpenAsync(It.IsAny<ProjectInfo>(), It.IsAny<CancellationToken>()), Times.Once());
+    services.NavigationService.Verify(
+      n => n.GoToAsync($"{typeof(ProjectPage).Namespace}/{typeof(ProjectPage).Name}"), Times.Once());
   }
 
   [Fact]

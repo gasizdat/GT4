@@ -148,14 +148,26 @@
   <data name="BtnNameNo" xml:space="preserve">
     <value>Нет</value>
   </data>
+  <data name="BtnNameOpenDemoProject" xml:space="preserve">
+    <value>Открыть демо-дерево</value>
+  </data>
   <data name="BtnNameOpenOrCreateProject" xml:space="preserve">
     <value>Создать или открыть</value>
   </data>
   <data name="BtnNameYes" xml:space="preserve">
     <value>Да</value>
   </data>
+  <data name="HintDemoProject" xml:space="preserve">
+    <value>Образец дерева для знакомства с приложением — можно смело удалить</value>
+  </data>
   <data name="HintProjectPage" xml:space="preserve">
     <value>Открыть или создать новое</value>
+  </data>
+  <data name="HintProjectPageEmpty" xml:space="preserve">
+    <value>Здесь пока нет ни одного генеалогического дерева. Создайте своё или откройте готовое демо-дерево, чтобы посмотреть возможности приложения.</value>
+  </data>
+  <data name="TitleDemoProject" xml:space="preserve">
+    <value>Семья Бронте (демо)</value>
   </data>
   <data name="TitleProjectPage" xml:space="preserve">
     <value>Генеалогическое дерево</value>

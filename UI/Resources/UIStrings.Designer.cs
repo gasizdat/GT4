@@ -368,6 +368,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Open the Demo Tree.
+        /// </summary>
+        public static string BtnNameOpenDemoProject {
+            get {
+                return ResourceManager.GetString("BtnNameOpenDemoProject", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Open or Create.
         /// </summary>
         public static string BtnNameOpenOrCreateProject {
@@ -2143,11 +2152,38 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to A sample tree to explore — safe to delete.
+        /// </summary>
+        public static string HintDemoProject {
+            get {
+                return ResourceManager.GetString("HintDemoProject", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Open or create a new one.
         /// </summary>
         public static string HintProjectPage {
             get {
                 return ResourceManager.GetString("HintProjectPage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to There are no genealogy trees here yet. Start your own, or open a ready-made demo tree to see what the app can do..
+        /// </summary>
+        public static string HintProjectPageEmpty {
+            get {
+                return ResourceManager.GetString("HintProjectPageEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Brontë Family (Demo).
+        /// </summary>
+        public static string TitleDemoProject {
+            get {
+                return ResourceManager.GetString("TitleDemoProject", resourceCulture);
             }
         }
         
