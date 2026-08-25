@@ -1,6 +1,7 @@
 ﻿using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using Microsoft.Data.Sqlite;
 using System.Data;
 
 namespace GT4.Core.Project;
@@ -14,6 +15,7 @@ internal class ProjectList : IProjectList
   private readonly WeakReference<ProjectInfo[]?> _Items = new(null);
   // The revision itself plus the SQLite sidecars a killed session can leave beside it.
   private readonly static string[] RevisionFileSuffixes = ["", "-journal", "-wal", "-shm"];
+  private const int SqliteCantOpen = 14;
 
   public readonly static string ProjectExtension = "gt4";
 
@@ -113,21 +115,40 @@ internal class ProjectList : IProjectList
   }
 
   /// <summary>
-  /// Drops the duplicate revisions killed sessions left behind in the cache. Must run with no project
-  /// open: the working cache of an open host is indistinguishable from a leftover here.
+  /// Drops the cache files killed sessions left behind: the ones SQLite cannot make a project out of,
+  /// and, of those it can, every revision but the newest at each revision counter. Must run with no
+  /// project open: the working cache of an open host is indistinguishable from a leftover here.
   /// </summary>
   public async Task SanitizeRevisionsAsync(CancellationToken token)
   {
-    var revisions = _FileSystem.GetFiles(_Storage.ProjectsCache, $"version-*.{ProjectExtension}", true);
-    // A cache file is a byte-for-byte copy of the origin, so duplicate leftovers share a length. Two
-    // equal-counter files that differ in size only cost a missed cleanup, never a deleted revision.
-    var candidates = revisions
-      .GroupBy(file => (file.Directory, Size: _FileSystem.GetFileSize(file)))
-      .Where(group => group.Count() > 1);
-
-    foreach (var group in candidates)
+    var files = _FileSystem.GetFiles(_Storage.ProjectsCache, $"version-*.{ProjectExtension}", true);
+    var identified = new List<(FileDescription File, DateTime LastWrite, long Size, long Revision)>();
+    foreach (var file in files)
     {
-      await RemoveDuplicateRevisionsAsync(group, token);
+      // Stat before opening: recovering a hot journal rewrites both.
+      var lastWrite = _FileSystem.GetLastWriteTime(file);
+      var size = _FileSystem.GetFileSize(file);
+      var revision = await TryReadRevisionAsync(file, token);
+      if (revision is null)
+      {
+        RemoveRevisionFiles(file);
+      }
+      else
+      {
+        identified.Add((file, lastWrite, size, revision.Value));
+      }
+    }
+
+    // A leftover whose counter matches no other holds a commit the origin never received, so it is a
+    // genuine restore point and survives. Size joins the key as a conservatism: a cache file is a
+    // byte-for-byte copy of the origin, so duplicate leftovers share a length, and an equal-counter
+    // pair that differs in size costs a missed cleanup rather than a deleted revision.
+    var duplicates = identified
+      .GroupBy(item => (item.File.Directory, item.Size, item.Revision))
+      .SelectMany(group => group.OrderByDescending(item => item.LastWrite).Skip(1));
+    foreach (var duplicate in duplicates)
+    {
+      RemoveRevisionFiles(duplicate.File);
     }
   }
 
@@ -180,39 +201,29 @@ internal class ProjectList : IProjectList
     }
   }
 
-  // A leftover whose counter matches no other holds a commit the origin never received, so it is a
-  // genuine restore point and survives.
-  private async Task RemoveDuplicateRevisionsAsync(IEnumerable<FileDescription> sameSize, CancellationToken token)
-  {
-    var identified = new List<(FileDescription File, DateTime LastWrite, long Revision)>();
-    foreach (var file in sameSize)
-    {
-      var lastWrite = _FileSystem.GetLastWriteTime(file);
-      var revision = await TryReadRevisionAsync(file, token);
-      if (revision is not null)
-      {
-        identified.Add((file, lastWrite, revision.Value));
-      }
-    }
-
-    var duplicates = identified
-      .GroupBy(item => item.Revision)
-      .SelectMany(group => group.OrderByDescending(item => item.LastWrite).Skip(1));
-    foreach (var duplicate in duplicates)
-    {
-      RemoveRevisionFiles(duplicate.File);
-    }
-  }
-
-  // A revision that cannot be opened has no counter to compare it by, so it is never a candidate.
+  // Null means SQLite rejected the file's content, which is the sweep's definition of garbage. A file
+  // it could not open at all is not: something else holds it, so it propagates and the next sweep
+  // retries it rather than deleting a revision a scanner happened to have open.
   private async Task<long?> TryReadRevisionAsync(FileDescription revision, CancellationToken token)
   {
+    var path = _FileSystem.ToPath(revision);
     try
     {
-      await using var project = await ProjectDocument.OpenReadOnlyAsync(_FileSystem.ToPath(revision), token);
+      await using var project = await ProjectDocument.OpenReadOnlyAsync(path, token);
       return project.ProjectRevision;
     }
-    catch (Exception ex) when (ex is not OperationCanceledException)
+    catch (SqliteException)
+    {
+      // Read-only cannot roll back a hot journal, and refusing one is indistinguishable here from
+      // refusing a corrupt file. The read-write retry recovers the first and only the first.
+    }
+
+    try
+    {
+      await using var project = await ProjectDocument.OpenAsync(path, token);
+      return project.ProjectRevision;
+    }
+    catch (SqliteException ex) when (ex.SqliteErrorCode != SqliteCantOpen)
     {
       return null;
     }

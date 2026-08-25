@@ -227,8 +227,18 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   private static async Task<ProjectDocument> OpenAsync(string path, SqliteOpenMode mode, CancellationToken token)
   {
     var ret = new ProjectDocument(path, mode);
-    await ret.OpenAsync(token);
-    await ret.LoadRevisionAsync(token);
+    try
+    {
+      // sqlite3_open_v2 succeeds for any readable path; the file is only rejected as a database once
+      // these read it, and by then the connection holds it against deletion.
+      await ret.OpenAsync(token);
+      await ret.LoadRevisionAsync(token);
+    }
+    catch
+    {
+      await ret.DisposeAsync();
+      throw;
+    }
 
     return ret;
   }

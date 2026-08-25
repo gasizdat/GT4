@@ -2,6 +2,7 @@ using FluentAssertions;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using Microsoft.Data.Sqlite;
 using Moq;
 using Xunit;
 
@@ -16,6 +17,8 @@ using IFileSystem = GT4.Core.Utils.IFileSystem;
 /// </summary>
 public sealed class ProjectListTests : IDisposable
 {
+  private static readonly byte[] JournalMagic = [0xd9, 0xd5, 0x05, 0xf9, 0x20, 0xa1, 0x63, 0xd7];
+
   private readonly string _root = Path.Combine(Path.GetTempPath(), $"gt4_list_{Guid.NewGuid():N}");
   private readonly DiskFileSystem _fs;
   private readonly TempStorage _storage = new();
@@ -72,6 +75,54 @@ public sealed class ProjectListTests : IDisposable
     _fs.Copy(source, revision);
     Touch(revision, lastWrite);
     return revision;
+  }
+
+  /// <summary>
+  /// Copies a project out from under an uncommitted transaction together with the rollback journal that
+  /// transaction is holding - the pair a session killed mid-write leaves behind.
+  /// </summary>
+  private async Task<FileDescription> SeedHotJournalRevisionAsync(string projectFolder, string fileName, FileDescription source)
+  {
+    var cache = CacheDirectory(projectFolder);
+    // Deliberately outside the version-*.gt4 pattern the sweep enumerates.
+    var live = new FileDescription(cache, $"live-{fileName}", IProjectDocument.MimeType);
+    var revision = new FileDescription(cache, fileName, IProjectDocument.MimeType);
+    _fs.Copy(source, live);
+
+    await using (var doc = await ProjectDocument.OpenAsync(_fs.ToPath(live), Token))
+    {
+      using var transaction = await doc.BeginTransactionAsync(Token);
+      await doc.Metadata.SetProjectDescriptionAsync("uncommitted", Token);
+      CopyLocked(live, revision);
+      CopyLocked(live with { FileName = $"{live.FileName}-journal" }, revision with { FileName = $"{revision.FileName}-journal" });
+      transaction.Rollback();
+    }
+
+    _fs.RemoveFile(live);
+
+    // SQLite leaves the journal's magic zeroed until it syncs the journal, and treats a journal whose
+    // first byte is zero as not hot - so an unsynced copy would still open read-only. Stamping the magic
+    // is what the commit-time sync does; the rest of the header is the one SQLite wrote, so the replay
+    // truncates the database back to the size it records and leaves it intact.
+    var journal = revision with { FileName = $"{revision.FileName}-journal" };
+    var journalPath = _fs.ToPath(journal);
+    using (var stream = new FileStream(journalPath, FileMode.Open, FileAccess.Write))
+    {
+      stream.Write(JournalMagic);
+    }
+
+    return revision;
+  }
+
+  // SQLite holds both the database and its journal open for writing, so the read must share that access.
+  private void CopyLocked(FileDescription from, FileDescription to)
+  {
+    var target = _fs.ToPath(to);
+    var targetDir = Path.GetDirectoryName(target)!;
+    Directory.CreateDirectory(targetDir);
+    using var source = new FileStream(_fs.ToPath(from), FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+    using var destination = File.Create(target);
+    source.CopyTo(destination);
   }
 
   private void Touch(FileDescription file, DateTime lastWrite) =>
@@ -252,7 +303,7 @@ public sealed class ProjectListTests : IDisposable
     var staleOlder = SeedRevision("Unflushed", "version-2.gt4", origin, new DateTime(2026, 2, 1));
     var staleNewer = SeedRevision("Unflushed", "version-3.gt4", origin, new DateTime(2026, 3, 1));
 
-    var list = new ProjectList(_storage, new DiskFileSystem(_root, uniformFileSize: true));
+    var list = new ProjectList(_storage, new DiskFileSystem(_root, _ => 0));
     await list.SanitizeRevisionsAsync(Token);
 
     _fs.FileExists(committed).Should().BeTrue();
@@ -280,6 +331,38 @@ public sealed class ProjectListTests : IDisposable
   }
 
   [Fact]
+  public async Task SanitizeRevisions_EqualCounterButDifferentSize_KeepsBoth()
+  {
+    // Size stays in the grouping key as a deliberate conservatism. Two equal-counter files that differ
+    // in length (a vacuum, a replayed journal) are the same logical state, but keeping both costs only a
+    // missed cleanup, where dropping the size would make the sweep delete on the counter alone.
+    var origin = await SeedProjectAsync("Resized", "d");
+    var older = SeedRevision("Resized", "version-1.gt4", origin, new DateTime(2026, 1, 1));
+    var newer = SeedRevision("Resized", "version-22.gt4", origin, new DateTime(2026, 2, 1));
+
+    var list = new ProjectList(_storage, new DiskFileSystem(_root, file => file.FileName.Length));
+    await list.SanitizeRevisionsAsync(Token);
+
+    _fs.FileExists(older).Should().BeTrue();
+    _fs.FileExists(newer).Should().BeTrue();
+  }
+
+  [Fact]
+  public async Task SanitizeRevisions_RevisionHeldOpenElsewhere_IsNotRemoved()
+  {
+    // SQLite reports a file it cannot open at all the same way it reports a corrupt one. Treating that
+    // as garbage would delete a sound revision that a backup or virus scanner merely had open.
+    var origin = await SeedProjectAsync("Locked", "d");
+    var revision = SeedRevision("Locked", "version-1.gt4", origin, new DateTime(2026, 1, 1));
+    using var hold = new FileStream(_fs.ToPath(revision), FileMode.Open, FileAccess.Read, FileShare.None);
+
+    var act = () => _list.SanitizeRevisionsAsync(Token);
+
+    await act.Should().ThrowAsync<SqliteException>();
+    _fs.FileExists(revision).Should().BeTrue();
+  }
+
+  [Fact]
   public async Task SanitizeRevisions_LeavesTheSurvivorsTimestampUntouched()
   {
     // RemoveRevisionAsync and RestoreRevisionAsync both reject a ProjectRevision whose recorded mtime no
@@ -295,22 +378,32 @@ public sealed class ProjectListTests : IDisposable
   }
 
   [Fact]
-  public async Task SanitizeRevisions_UnreadableRevisions_AreLeftAlone()
+  public async Task SanitizeRevisions_RevisionSqliteRejects_IsRemoved()
   {
-    // Same size, so both are opened - and neither yields a counter to be compared by.
-    var cache = CacheDirectory("Broken");
-    var first = new FileDescription(cache, "version-1.gt4", IProjectDocument.MimeType);
-    var second = new FileDescription(cache, "version-2.gt4", IProjectDocument.MimeType);
-    foreach (var junk in new[] { first, second })
-    {
-      using var stream = _fs.OpenWriteStream(junk);
-      stream.Write([1, 2, 3, 4], 0, 4);
-    }
+    // A lone file, so this also pins that garbage no longer has to share a size with anything to be
+    // collected: a session killed mid-copy leaves a truncated file whose length matches nothing.
+    var junk = new FileDescription(CacheDirectory("Broken"), "version-1.gt4", IProjectDocument.MimeType);
+    using (var stream = _fs.OpenWriteStream(junk)) stream.Write([1, 2, 3, 4], 0, 4);
 
     await _list.SanitizeRevisionsAsync(Token);
 
-    _fs.FileExists(first).Should().BeTrue();
-    _fs.FileExists(second).Should().BeTrue();
+    _fs.FileExists(junk).Should().BeFalse();
+  }
+
+  [Fact]
+  public async Task SanitizeRevisions_RevisionNeedingJournalReplay_IsRecoveredNotRemoved()
+  {
+    // The reason a file that fails to open is not garbage on that evidence alone: a read-only open
+    // cannot roll back a hot journal, so a revision holding real work looks exactly like a corrupt one
+    // until the read-write retry recovers it.
+    var origin = await SeedProjectAsync("Interrupted", "d");
+    var revision = await SeedHotJournalRevisionAsync("Interrupted", "version-1.gt4", origin);
+    var readOnly = () => ProjectDocument.OpenReadOnlyAsync(_fs.ToPath(revision), Token);
+    await readOnly.Should().ThrowAsync<SqliteException>();
+
+    await _list.SanitizeRevisionsAsync(Token);
+
+    _fs.FileExists(revision).Should().BeTrue();
   }
 
   [Fact]
@@ -355,9 +448,9 @@ internal sealed class TempStorage : IStorage
 /// A real-disk <see cref="IFileSystem"/> that maps every <see cref="DirectoryDescription"/> beneath a
 /// single temp root, so tests get genuine file/SQLite behaviour without writing to the user's folders.
 /// </summary>
-/// <param name="uniformFileSize">Reports every file as the same size, collapsing the revision sweep's
-/// size pre-filter so a test can prove the revision counter alone decides what survives.</param>
-internal sealed class DiskFileSystem(string root, bool uniformFileSize = false) : IFileSystem
+/// <param name="fileSize">Overrides the reported file size, so a test can drive the revision sweep's
+/// size grouping independently of what the files on disk actually weigh.</param>
+internal sealed class DiskFileSystem(string root, Func<FileDescription, long>? fileSize = null) : IFileSystem
 {
   public string ToPath(DirectoryDescription directory) =>
     Path.Combine(new[] { root, directory.Root.ToString() }.Concat(directory.Path).ToArray());
@@ -368,7 +461,7 @@ internal sealed class DiskFileSystem(string root, bool uniformFileSize = false) 
 
   public DateTime GetLastWriteTime(FileDescription file) => File.GetLastWriteTime(ToPath(file));
 
-  public long GetFileSize(FileDescription file) => uniformFileSize ? 0 : new FileInfo(ToPath(file)).Length;
+  public long GetFileSize(FileDescription file) => fileSize?.Invoke(file) ?? new FileInfo(ToPath(file)).Length;
 
   public Stream OpenWriteStream(FileDescription file)
   {
