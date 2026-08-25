@@ -13,4 +13,5 @@ public interface IFileSystem
   string ToPath(DirectoryDescription fileDescription);
   string ToPath(FileDescription fileDescription);
   DateTime GetLastWriteTime(FileDescription fileDescription);
+  long GetFileSize(FileDescription fileDescription);
 }

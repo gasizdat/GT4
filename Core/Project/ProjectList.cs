@@ -12,6 +12,8 @@ internal class ProjectList : IProjectList
   private readonly IStorage _Storage;
   private readonly IFileSystem _FileSystem;
   private readonly WeakReference<ProjectInfo[]?> _Items = new(null);
+  // The revision itself plus the SQLite sidecars a killed session can leave beside it.
+  private readonly static string[] RevisionFileSuffixes = ["", "-journal", "-wal", "-shm"];
 
   public readonly static string ProjectExtension = "gt4";
 
@@ -110,6 +112,28 @@ internal class ProjectList : IProjectList
     return Task.CompletedTask;
   }
 
+  /// <summary>
+  /// Drops the cache files a killed session left behind. A revision is only ever the leftover of a
+  /// session that did not dispose its <see cref="ProjectHost"/>, so a crash — including one during a
+  /// plain project-list load, which opens every project — accumulates snapshots of an unchanged tree.
+  /// Must run with no project open: the working cache of an open host is indistinguishable from a
+  /// leftover here.
+  /// </summary>
+  public async Task SanitizeRevisionsAsync(CancellationToken token)
+  {
+    var revisions = _FileSystem.GetFiles(_Storage.ProjectsCache, $"version-*.{ProjectExtension}", true);
+    // Size groups a project's revisions for free: the cache is a byte-for-byte copy of the origin, so
+    // duplicate leftovers share a length, and a revision of unique length is never opened at all.
+    var candidates = revisions
+      .GroupBy(file => (file.Directory, Size: _FileSystem.GetFileSize(file)))
+      .Where(group => group.Count() > 1);
+
+    foreach (var group in candidates)
+    {
+      await RemoveDuplicateRevisionsAsync(group, token);
+    }
+  }
+
   public DirectoryDescription GetProjectDirectoryByName(string projectName)
   {
     var directoryName = string.Join(string.Empty,
@@ -156,6 +180,54 @@ internal class ProjectList : IProjectList
         Name: $"Error: {ex.Message}",
         Origin: origin
       );
+    }
+  }
+
+  /// <summary>
+  /// Keeps the newest revision of each revision-counter group. A leftover whose counter matches no
+  /// other holds a commit the origin never received, so it is a genuine restore point and survives.
+  /// </summary>
+  private async Task RemoveDuplicateRevisionsAsync(IEnumerable<FileDescription> sameSize, CancellationToken token)
+  {
+    var identified = new List<(FileDescription File, DateTime LastWrite, long Revision)>();
+    foreach (var file in sameSize)
+    {
+      var lastWrite = _FileSystem.GetLastWriteTime(file);
+      var revision = await TryReadRevisionAsync(file, token);
+      if (revision is not null)
+      {
+        identified.Add((file, lastWrite, revision.Value));
+      }
+    }
+
+    var duplicates = identified
+      .GroupBy(item => item.Revision)
+      .SelectMany(group => group.OrderByDescending(item => item.LastWrite).Skip(1));
+    foreach (var duplicate in duplicates)
+    {
+      RemoveRevisionFiles(duplicate.File);
+    }
+  }
+
+  // A revision that cannot be opened has no counter to compare it by, so it is never a candidate.
+  private async Task<long?> TryReadRevisionAsync(FileDescription revision, CancellationToken token)
+  {
+    try
+    {
+      await using var project = await ProjectDocument.OpenReadOnlyAsync(_FileSystem.ToPath(revision), token);
+      return project.ProjectRevision;
+    }
+    catch (Exception ex) when (ex is not OperationCanceledException)
+    {
+      return null;
+    }
+  }
+
+  private void RemoveRevisionFiles(FileDescription revision)
+  {
+    foreach (var suffix in RevisionFileSuffixes)
+    {
+      _FileSystem.RemoveFile(revision with { FileName = revision.FileName + suffix });
     }
   }
 

@@ -61,6 +61,30 @@ public sealed class ProjectListTests : IDisposable
     return origin;
   }
 
+  private DirectoryDescription CacheDirectory(string projectFolder) =>
+    _storage.ProjectsCache with { Path = [.. _storage.ProjectsCache.Path, projectFolder] };
+
+  /// <summary>Copies a project file into the revision cache, the way a session that was killed before
+  /// disposing its <see cref="ProjectHost"/> leaves it behind.</summary>
+  private FileDescription SeedRevision(string projectFolder, string fileName, FileDescription source, DateTime lastWrite)
+  {
+    var revision = new FileDescription(CacheDirectory(projectFolder), fileName, IProjectDocument.MimeType);
+    _fs.Copy(source, revision);
+    Touch(revision, lastWrite);
+    return revision;
+  }
+
+  private void Touch(FileDescription file, DateTime lastWrite) =>
+    File.SetLastWriteTime(_fs.ToPath(file), lastWrite);
+
+  /// <summary>Commits an empty transaction, which stamps the next revision counter into the file.</summary>
+  private async Task BumpRevisionAsync(FileDescription revision)
+  {
+    await using var doc = await ProjectDocument.OpenAsync(_fs.ToPath(revision), Token);
+    using var transaction = await doc.BeginTransactionAsync(Token);
+    await transaction.CommitAsync(Token);
+  }
+
   [Fact]
   public async Task Create_PersistsProjectToOrigin_AndListsIt()
   {
@@ -201,6 +225,111 @@ public sealed class ProjectListTests : IDisposable
   }
 
   [Fact]
+  public async Task SanitizeRevisions_IdenticalLeftovers_KeepOnlyTheNewest()
+  {
+    var origin = await SeedProjectAsync("Crashy", "d");
+    var older = SeedRevision("Crashy", "version-1.gt4", origin, new DateTime(2026, 1, 1));
+    var middle = SeedRevision("Crashy", "version-2.gt4", origin, new DateTime(2026, 2, 1));
+    var newest = SeedRevision("Crashy", "version-3.gt4", origin, new DateTime(2026, 3, 1));
+
+    await _list.SanitizeRevisionsAsync(Token);
+
+    _fs.FileExists(newest).Should().BeTrue();
+    _fs.FileExists(middle).Should().BeFalse();
+    _fs.FileExists(older).Should().BeFalse();
+  }
+
+  [Fact]
+  public async Task SanitizeRevisions_LeftoverHoldingACommit_Survives()
+  {
+    // A crash after a commit but before dispose leaves a cache file whose counter ran ahead of the
+    // origin - the only copy of that work. Every file reports the same size here, so the revision
+    // counter is provably the only thing keeping it alive.
+    var origin = await SeedProjectAsync("Unflushed", "d");
+    var committed = SeedRevision("Unflushed", "version-1.gt4", origin, new DateTime(2026, 1, 1));
+    await BumpRevisionAsync(committed);
+    Touch(committed, new DateTime(2026, 1, 1));
+    var staleOlder = SeedRevision("Unflushed", "version-2.gt4", origin, new DateTime(2026, 2, 1));
+    var staleNewer = SeedRevision("Unflushed", "version-3.gt4", origin, new DateTime(2026, 3, 1));
+
+    var list = new ProjectList(_storage, new DiskFileSystem(_root, uniformFileSize: true));
+    await list.SanitizeRevisionsAsync(Token);
+
+    _fs.FileExists(committed).Should().BeTrue();
+    _fs.FileExists(staleNewer).Should().BeTrue();
+    _fs.FileExists(staleOlder).Should().BeFalse();
+  }
+
+  [Fact]
+  public async Task SanitizeRevisions_ComparesWithinOneProjectOnly()
+  {
+    // Both projects' leftovers are byte-identical, so grouping that ignored the project would collapse
+    // all four into one and leave a single survivor overall.
+    var origin = await SeedProjectAsync("Shared", "d");
+    var firstOlder = SeedRevision("ProjectA", "version-1.gt4", origin, new DateTime(2026, 1, 1));
+    var firstNewer = SeedRevision("ProjectA", "version-2.gt4", origin, new DateTime(2026, 2, 1));
+    var secondOlder = SeedRevision("ProjectB", "version-1.gt4", origin, new DateTime(2026, 1, 1));
+    var secondNewer = SeedRevision("ProjectB", "version-2.gt4", origin, new DateTime(2026, 2, 1));
+
+    await _list.SanitizeRevisionsAsync(Token);
+
+    _fs.FileExists(firstNewer).Should().BeTrue();
+    _fs.FileExists(secondNewer).Should().BeTrue();
+    _fs.FileExists(firstOlder).Should().BeFalse();
+    _fs.FileExists(secondOlder).Should().BeFalse();
+  }
+
+  [Fact]
+  public async Task SanitizeRevisions_LeavesTheSurvivorsTimestampUntouched()
+  {
+    // RemoveRevisionAsync and RestoreRevisionAsync both reject a ProjectRevision whose recorded mtime no
+    // longer matches the file, so reading a revision's counter must not perturb it.
+    var origin = await SeedProjectAsync("Untouched", "d");
+    var lastWrite = new DateTime(2026, 3, 1);
+    SeedRevision("Untouched", "version-1.gt4", origin, new DateTime(2026, 1, 1));
+    var newest = SeedRevision("Untouched", "version-2.gt4", origin, lastWrite);
+
+    await _list.SanitizeRevisionsAsync(Token);
+
+    _fs.GetLastWriteTime(newest).Should().Be(lastWrite);
+  }
+
+  [Fact]
+  public async Task SanitizeRevisions_UnreadableRevisions_AreLeftAlone()
+  {
+    // Same size, so both are opened - and neither yields a counter to be compared by.
+    var cache = CacheDirectory("Broken");
+    var first = new FileDescription(cache, "version-1.gt4", IProjectDocument.MimeType);
+    var second = new FileDescription(cache, "version-2.gt4", IProjectDocument.MimeType);
+    foreach (var junk in new[] { first, second })
+    {
+      using var stream = _fs.OpenWriteStream(junk);
+      stream.Write([1, 2, 3, 4], 0, 4);
+    }
+
+    await _list.SanitizeRevisionsAsync(Token);
+
+    _fs.FileExists(first).Should().BeTrue();
+    _fs.FileExists(second).Should().BeTrue();
+  }
+
+  [Fact]
+  public async Task SanitizeRevisions_RemovesTheSqliteSidecarsToo()
+  {
+    var origin = await SeedProjectAsync("Journaled", "d");
+    var older = SeedRevision("Journaled", "version-1.gt4", origin, new DateTime(2026, 1, 1));
+    SeedRevision("Journaled", "version-2.gt4", origin, new DateTime(2026, 2, 1));
+    // Truncated to zero on the last commit and never unlinked, which is what a killed session leaves.
+    var journal = older with { FileName = $"{older.FileName}-journal" };
+    using (var stream = _fs.OpenWriteStream(journal)) stream.Close();
+
+    await _list.SanitizeRevisionsAsync(Token);
+
+    _fs.FileExists(older).Should().BeFalse();
+    _fs.FileExists(journal).Should().BeFalse();
+  }
+
+  [Fact]
   public async Task Remove_NonExistentOrigin_IsANoOp()
   {
     var origin = await SeedProjectAsync("Survivor", "stays");
@@ -226,7 +355,9 @@ internal sealed class TempStorage : IStorage
 /// A real-disk <see cref="IFileSystem"/> that maps every <see cref="DirectoryDescription"/> beneath a
 /// single temp root, so tests get genuine file/SQLite behaviour without writing to the user's folders.
 /// </summary>
-internal sealed class DiskFileSystem(string root) : IFileSystem
+/// <param name="uniformFileSize">Reports every file as the same size, collapsing the revision sweep's
+/// size pre-filter so a test can prove the revision counter alone decides what survives.</param>
+internal sealed class DiskFileSystem(string root, bool uniformFileSize = false) : IFileSystem
 {
   public string ToPath(DirectoryDescription directory) =>
     Path.Combine(new[] { root, directory.Root.ToString() }.Concat(directory.Path).ToArray());
@@ -236,6 +367,8 @@ internal sealed class DiskFileSystem(string root) : IFileSystem
   public bool FileExists(FileDescription file) => File.Exists(ToPath(file));
 
   public DateTime GetLastWriteTime(FileDescription file) => File.GetLastWriteTime(ToPath(file));
+
+  public long GetFileSize(FileDescription file) => uniformFileSize ? 0 : new FileInfo(ToPath(file)).Length;
 
   public Stream OpenWriteStream(FileDescription file)
   {

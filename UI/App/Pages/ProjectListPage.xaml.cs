@@ -112,6 +112,9 @@ public partial class ProjectListPage : ContentPage
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
       await _CurrentProjectProvider.CloseAsync(token);
+      // The only point where nothing is open, so no live cache can be mistaken for a leftover — and it
+      // runs before the listing, which opens (and caches) every project again.
+      await _ProjectList.SanitizeRevisionsAsync(token);
       await SafeTask.RunOnMainThread(UpdateProjectList, _AlertService);
       _ImageCache.Clear();
     });
