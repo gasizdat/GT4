@@ -42,5 +42,7 @@ internal sealed class TestableProjectListPage : ProjectListPage
 
   public Task InvokeUpdateProjectListAsync() => UpdateProjectList();
 
+  public Task InvokeSanitizeRevisionsAsync(CancellationToken token) => SanitizeRevisions(token);
+
   public Task InvokeProjectSelectedAsync(ProjectItem projectItem) => OnProjectSelectedAsync(projectItem);
 }

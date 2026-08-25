@@ -160,6 +160,25 @@ public class ProjectListPageTests
   }
 
   [Fact]
+  public async Task Sanitize_failure_does_not_stop_the_listing()
+  {
+    // The revision sweep shares the listing's 5s DB token and is pure housekeeping: exhausting that
+    // budget, or tripping over a file another process holds, must never keep the project list from
+    // loading - which is the one screen the user cannot route around.
+    var services = new TestServices();
+    services.ProjectList
+      .Setup(p => p.SanitizeRevisionsAsync(It.IsAny<CancellationToken>()))
+      .ThrowsAsync(new OperationCanceledException());
+    services.ProjectList.Setup(p => p.GetItemsAsync(It.IsAny<CancellationToken>())).ReturnsAsync([P("Pushkin")]);
+    var page = await CreatePageAsync(services);
+
+    await page.InvokeSanitizeRevisionsAsync(CancellationToken.None);
+    await MainThread.InvokeOnMainThreadAsync(page.InvokeUpdateProjectListAsync);
+
+    Assert.Single(page.Projects);
+  }
+
+  [Fact]
   public async Task Demo_imports_the_bundled_gedcom_into_a_new_project_and_opens_it()
   {
     var services = new TestServices();
