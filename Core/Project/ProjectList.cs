@@ -113,17 +113,14 @@ internal class ProjectList : IProjectList
   }
 
   /// <summary>
-  /// Drops the cache files a killed session left behind. A revision is only ever the leftover of a
-  /// session that did not dispose its <see cref="ProjectHost"/>, so a crash — including one during a
-  /// plain project-list load, which opens every project — accumulates snapshots of an unchanged tree.
-  /// Must run with no project open: the working cache of an open host is indistinguishable from a
-  /// leftover here.
+  /// Drops the duplicate revisions killed sessions left behind in the cache. Must run with no project
+  /// open: the working cache of an open host is indistinguishable from a leftover here.
   /// </summary>
   public async Task SanitizeRevisionsAsync(CancellationToken token)
   {
     var revisions = _FileSystem.GetFiles(_Storage.ProjectsCache, $"version-*.{ProjectExtension}", true);
-    // Size groups a project's revisions for free: the cache is a byte-for-byte copy of the origin, so
-    // duplicate leftovers share a length, and a revision of unique length is never opened at all.
+    // A cache file is a byte-for-byte copy of the origin, so duplicate leftovers share a length. Two
+    // equal-counter files that differ in size only cost a missed cleanup, never a deleted revision.
     var candidates = revisions
       .GroupBy(file => (file.Directory, Size: _FileSystem.GetFileSize(file)))
       .Where(group => group.Count() > 1);
@@ -183,10 +180,8 @@ internal class ProjectList : IProjectList
     }
   }
 
-  /// <summary>
-  /// Keeps the newest revision of each revision-counter group. A leftover whose counter matches no
-  /// other holds a commit the origin never received, so it is a genuine restore point and survives.
-  /// </summary>
+  // A leftover whose counter matches no other holds a commit the origin never received, so it is a
+  // genuine restore point and survives.
   private async Task RemoveDuplicateRevisionsAsync(IEnumerable<FileDescription> sameSize, CancellationToken token)
   {
     var identified = new List<(FileDescription File, DateTime LastWrite, long Revision)>();

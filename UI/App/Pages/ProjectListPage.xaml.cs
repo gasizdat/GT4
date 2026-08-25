@@ -119,11 +119,9 @@ public partial class ProjectListPage : ContentPage
   }
 
   /// <summary>
-  /// Drops the cache files killed sessions left behind. This is the only moment no project is open, so
-  /// no live working cache can be mistaken for a leftover, and it must precede the listing, which opens
-  /// every project again. Housekeeping never blocks the list: exhausting the token's budget or tripping
-  /// over a file another process holds is swallowed, and because the sweep deletes as it goes, a backlog
-  /// is worked off over the next few visits.
+  /// The only moment no project is open, so no live working cache can be mistaken for a leftover, and it
+  /// must precede the listing, which opens every project again. Housekeeping never blocks the list: the
+  /// sweep deletes as it goes, so an interrupted one is worked off over the next few visits.
   /// </summary>
   protected async Task SanitizeRevisions(CancellationToken token)
   {

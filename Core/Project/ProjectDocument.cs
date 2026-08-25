@@ -183,8 +183,8 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   public static Task<ProjectDocument> OpenAsync(string path, CancellationToken token) =>
     OpenAsync(path, SqliteOpenMode.ReadWrite, token);
 
-  // Inspecting a file the caller intends to keep: a read-write open would touch its mtime and could
-  // leave a rollback journal beside it, both of which the revision sweep reads as identity.
+  // A read-write open touches the file's mtime and can leave a rollback journal beside it, both of
+  // which the revision sweep reads as identity.
   public static Task<ProjectDocument> OpenReadOnlyAsync(string path, CancellationToken token) =>
     OpenAsync(path, SqliteOpenMode.ReadOnly, token);
 
