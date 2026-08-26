@@ -184,4 +184,26 @@ public sealed class CurrentProjectProviderTests
     // Opened initially, then reopened after the restore.
     _list.Verify(l => l.OpenAsync(It.IsAny<FileDescription>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
   }
+
+  [Fact]
+  public async Task RestoreRevision_PredatingTheCurrentSchema_UpgradesItInsteadOfFailing()
+  {
+    // Every revision written before the schema changed restores as a file this build cannot query, and
+    // the restore leaves no project open to fall back to - so the reopen has to bring it up to date.
+    var provider = new CurrentProjectProvider(_list.Object);
+    await provider.OpenAsync(_info, Token);
+    var time = new DateTime(2026, 1, 1);
+    var revisionFile = new FileDescription(Dir, "version-old.gt4", null);
+    _fs.AddFile(revisionFile, time);
+    _list
+      .SetupSequence(l => l.OpenAsync(It.IsAny<FileDescription>(), It.IsAny<CancellationToken>()))
+      .ThrowsAsync(new ProjectSchemaOutdatedException(0, 1))
+      .ReturnsAsync(CreateHost);
+    _list.Setup(l => l.UpgradeAsync(_origin, It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+
+    await provider.RestoreRevisionAsync(new ProjectRevision(time, revisionFile), Token);
+
+    _list.Verify(l => l.UpgradeAsync(_origin, It.IsAny<CancellationToken>()), Times.Once);
+    provider.HasCurrentProject.Should().BeTrue();
+  }
 }

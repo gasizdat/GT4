@@ -61,7 +61,7 @@ internal class ProjectList : IProjectList
     await using var host = await OpenAnyVersionAsync(origin, token);
     var document = (ProjectDocument)host.Project!;
     // The migration commits, which stamps a new revision, so disposing the host flushes the upgraded
-    // cache back over the origin and keeps the pre-upgrade file as a revision to fall back on.
+    // cache back over the origin instead of discarding it.
     await document.UpgradeSchemaAsync(token);
   }
 

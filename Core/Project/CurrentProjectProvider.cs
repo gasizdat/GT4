@@ -1,5 +1,6 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
+using GT4.Core.Utils;
 using System.Diagnostics.CodeAnalysis;
 
 namespace GT4.Core.Project;
@@ -67,7 +68,7 @@ internal class CurrentProjectProvider : ICurrentProjectProvider
       info = _Info ?? ThrowProjectNotOpened<ProjectInfo>();
     }
 
-    var reopened = await _ProjectList.OpenAsync(origin: info.Origin, cancellationToken);
+    var reopened = await OpenUpgradedAsync(info.Origin, cancellationToken);
     lock (_Sync)
     {
       _ProjectHost = reopened;
@@ -115,6 +116,24 @@ internal class CurrentProjectProvider : ICurrentProjectProvider
     // Snapshot the host under the lock, then enumerate revisions (which touches the filesystem)
     // outside it so the lock is not held during I/O.
     get => RequireHost().Revisions;
+  }
+
+  /// <summary>
+  /// Opens a restored revision, migrating it first if it predates the current schema. Unlike opening a
+  /// project from the list this asks nothing: the user has already had the project overwritten with
+  /// this file, and refusing would leave them with one the app cannot query.
+  /// </summary>
+  private async Task<ProjectHost> OpenUpgradedAsync(FileDescription origin, CancellationToken cancellationToken)
+  {
+    try
+    {
+      return await _ProjectList.OpenAsync(origin, cancellationToken);
+    }
+    catch (ProjectSchemaOutdatedException)
+    {
+      await _ProjectList.UpgradeAsync(origin, cancellationToken);
+      return await _ProjectList.OpenAsync(origin, cancellationToken);
+    }
   }
 
   [DoesNotReturn]
