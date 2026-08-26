@@ -291,15 +291,20 @@ public class MarkdownView : ContentView
       return image;
     }
 
-    image.HorizontalOptions = LayoutOptions.Start;
-    var host = new ContentView { Content = image };
-    host.SizeChanged += (_, _) => ScaleToHost(host, image, pixelSize.Value, widthPercent);
+    // WinUI measures an Image against its own bitmap and half-applies a competing request -- it honours
+    // HeightRequest and takes the width from the pixels -- so the size goes on a wrapper that has no
+    // intrinsic size to compete with, and the image fills it.
+    var frame = new ContentView { Content = image, HorizontalOptions = LayoutOptions.Start };
+    SetFrameSize(frame, pixelSize.Value, ScaledWidth(pixelSize.Value.Width, widthPercent));
+
+    var host = new ContentView { Content = frame };
+    host.SizeChanged += (_, _) => ScaleToHost(host, frame, pixelSize.Value, widthPercent);
     return host;
   }
 
   // Unasked, an image lays its pixel count out as device-independent units and shrinks only to fit the
   // column; a percentage is that share of the same width, so it enlarges only when asked for over 100%.
-  private static void ScaleToHost(ContentView host, Image image, Size pixelSize, int? widthPercent)
+  private static void ScaleToHost(ContentView host, ContentView frame, Size pixelSize, int? widthPercent)
   {
     if (host.Width <= 0)
     {
@@ -307,12 +312,16 @@ public class MarkdownView : ContentView
     }
 
     var fitWidth = Math.Min(pixelSize.Width, host.Width);
-    var width = widthPercent is null
-      ? fitWidth
-      : fitWidth * widthPercent.Value / 100.0;
+    SetFrameSize(frame, pixelSize, ScaledWidth(fitWidth, widthPercent));
+  }
 
-    image.WidthRequest = width;
-    image.HeightRequest = width * pixelSize.Height / pixelSize.Width;
+  private static double ScaledWidth(double baseWidth, int? widthPercent) =>
+    widthPercent is null ? baseWidth : baseWidth * widthPercent.Value / 100.0;
+
+  private static void SetFrameSize(ContentView frame, Size pixelSize, double width)
+  {
+    frame.WidthRequest = width;
+    frame.HeightRequest = width * pixelSize.Height / pixelSize.Width;
   }
 
   // Hands back what it parsed so a refresh can read the referenced links off the same tree it just drew.
