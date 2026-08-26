@@ -11,4 +11,5 @@ public interface IProjectList
   Task<ProjectHost> OpenAsync(FileDescription origin, CancellationToken token);
   Task<ProjectInfo> ImportAsync(Stream content, CancellationToken token);
   Task RemoveAsync(FileDescription origin, CancellationToken token);
+  Task SanitizeRevisionsAsync(CancellationToken token);
 }

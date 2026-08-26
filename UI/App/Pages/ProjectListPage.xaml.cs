@@ -112,9 +112,26 @@ public partial class ProjectListPage : ContentPage
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
       await _CurrentProjectProvider.CloseAsync(token);
+      // Between the close and the listing that reopens everything: the only moment no live working cache
+      // can be mistaken for a leftover.
+      await SanitizeRevisions(token);
       await SafeTask.RunOnMainThread(UpdateProjectList, _AlertService);
       _ImageCache.Clear();
     });
+  }
+
+  protected async Task SanitizeRevisions(CancellationToken token)
+  {
+    try
+    {
+      await _ProjectList.SanitizeRevisionsAsync(token);
+    }
+    catch (Exception ex)
+    {
+      // Housekeeping never blocks the project list. The sweep deletes as it goes, so what a failed one
+      // leaves behind is worked off over the next few visits.
+      System.Diagnostics.Debug.WriteLine(ex);
+    }
   }
 
   protected async Task UpdateProjectList()

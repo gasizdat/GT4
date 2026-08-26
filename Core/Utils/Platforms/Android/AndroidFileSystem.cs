@@ -62,6 +62,9 @@ public class AndroidFileSystem : IFileSystem
   public DateTime GetLastWriteTime(FileDescription fileDescription) =>
     Select(fileDescription.Directory).GetLastWriteTime(fileDescription);
 
+  public long GetFileSize(FileDescription fileDescription) =>
+    Select(fileDescription.Directory).GetFileSize(fileDescription);
+
   private IFileSystem Select(DirectoryDescription directoryDescription) =>
     IsInternalStorage(directoryDescription) ? _DirectAccessFileSystem : _MediaStoreFileSystem;
 
@@ -150,6 +153,9 @@ public class AndroidFileSystem : IFileSystem
 
     public DateTime GetLastWriteTime(FileDescription fileDescription) =>
       throw new NotSupportedException(nameof(GetLastWriteTime));
+
+    public long GetFileSize(FileDescription fileDescription) =>
+      throw new NotSupportedException(nameof(GetFileSize));
 
     private static string GetAndroidRoot(DirectoryDescription directoryDescription)
     {

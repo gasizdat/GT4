@@ -180,14 +180,13 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     return ret;
   }
 
-  public static async Task<ProjectDocument> OpenAsync(string path, CancellationToken token)
-  {
-    var ret = new ProjectDocument(path, SqliteOpenMode.ReadWrite);
-    await ret.OpenAsync(token);
-    await ret.LoadRevisionAsync(token);
+  public static Task<ProjectDocument> OpenAsync(string path, CancellationToken token) =>
+    OpenAsync(path, SqliteOpenMode.ReadWrite, token);
 
-    return ret;
-  }
+  // A read-write open touches the file's mtime and can leave a rollback journal beside it, both of
+  // which the revision sweep reads as identity.
+  public static Task<ProjectDocument> OpenReadOnlyAsync(string path, CancellationToken token) =>
+    OpenAsync(path, SqliteOpenMode.ReadOnly, token);
 
   public async ValueTask DisposeAsync()
   {
@@ -223,6 +222,25 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     {
       throw new ObjectDisposedException(nameof(ProjectDocument));
     }
+  }
+
+  private static async Task<ProjectDocument> OpenAsync(string path, SqliteOpenMode mode, CancellationToken token)
+  {
+    var ret = new ProjectDocument(path, mode);
+    try
+    {
+      // sqlite3_open_v2 succeeds for any readable path; the file is only rejected as a database once
+      // these read it, and by then the connection holds it against deletion.
+      await ret.OpenAsync(token);
+      await ret.LoadRevisionAsync(token);
+    }
+    catch
+    {
+      await ret.DisposeAsync();
+      throw;
+    }
+
+    return ret;
   }
 
   private async Task OpenAsync(CancellationToken token)

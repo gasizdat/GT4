@@ -1,6 +1,7 @@
 ﻿using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using Microsoft.Data.Sqlite;
 using System.Data;
 
 namespace GT4.Core.Project;
@@ -12,6 +13,8 @@ internal class ProjectList : IProjectList
   private readonly IStorage _Storage;
   private readonly IFileSystem _FileSystem;
   private readonly WeakReference<ProjectInfo[]?> _Items = new(null);
+  private readonly static string[] RevisionFileSuffixes = ["", "-journal", "-wal", "-shm"];
+  private const int SqliteCantOpen = 14;
 
   public readonly static string ProjectExtension = "gt4";
 
@@ -110,6 +113,42 @@ internal class ProjectList : IProjectList
     return Task.CompletedTask;
   }
 
+  /// <summary>
+  /// Drops the cache files killed sessions left behind. Must run with no project open: the working
+  /// cache of an open host is indistinguishable from a leftover here.
+  /// </summary>
+  public async Task SanitizeRevisionsAsync(CancellationToken token)
+  {
+    var files = _FileSystem.GetFiles(_Storage.ProjectsCache, $"version-*.{ProjectExtension}", true);
+    var identified = new List<(FileDescription File, DateTime LastWrite, long Size, long Revision)>();
+    foreach (var file in files)
+    {
+      // Stat before opening: recovering a hot journal rewrites both.
+      var lastWrite = _FileSystem.GetLastWriteTime(file);
+      var size = _FileSystem.GetFileSize(file);
+      var revision = await TryReadRevisionAsync(file, token);
+      if (revision is null)
+      {
+        RemoveRevisionFiles(file);
+      }
+      else
+      {
+        identified.Add((file, lastWrite, size, revision.Value));
+      }
+    }
+
+    // An unmatched counter is a restore point: it holds a commit the origin never received. Size joins
+    // the key as a conservatism - an equal-counter pair that differs in length costs a missed cleanup,
+    // never a deleted revision.
+    var duplicates = identified
+      .GroupBy(item => (item.File.Directory, item.Size, item.Revision))
+      .SelectMany(group => group.OrderByDescending(item => item.LastWrite).Skip(1));
+    foreach (var duplicate in duplicates)
+    {
+      RemoveRevisionFiles(duplicate.File);
+    }
+  }
+
   public DirectoryDescription GetProjectDirectoryByName(string projectName)
   {
     var directoryName = string.Join(string.Empty,
@@ -156,6 +195,41 @@ internal class ProjectList : IProjectList
         Name: $"Error: {ex.Message}",
         Origin: origin
       );
+    }
+  }
+
+  // Null means SQLite rejected the file's content - the sweep's definition of garbage. A file it could
+  // not open at all propagates instead: something else holds it, and the next sweep retries it.
+  private async Task<long?> TryReadRevisionAsync(FileDescription revision, CancellationToken token)
+  {
+    var path = _FileSystem.ToPath(revision);
+    try
+    {
+      await using var project = await ProjectDocument.OpenReadOnlyAsync(path, token);
+      return project.ProjectRevision;
+    }
+    catch (SqliteException)
+    {
+      // Read-only cannot roll back a hot journal, and refusing one is indistinguishable here from
+      // refusing a corrupt file. The read-write retry recovers the first and only the first.
+    }
+
+    try
+    {
+      await using var project = await ProjectDocument.OpenAsync(path, token);
+      return project.ProjectRevision;
+    }
+    catch (SqliteException ex) when (ex.SqliteErrorCode != SqliteCantOpen)
+    {
+      return null;
+    }
+  }
+
+  private void RemoveRevisionFiles(FileDescription revision)
+  {
+    foreach (var suffix in RevisionFileSuffixes)
+    {
+      _FileSystem.RemoveFile(revision with { FileName = revision.FileName + suffix });
     }
   }
 

@@ -77,6 +77,13 @@ internal class FileSystem : IFileSystem
     var path = ToPath(fileDescription);
     return File.GetLastWriteTime(path);
   }
+
+  public long GetFileSize(FileDescription fileDescription)
+  {
+    var path = ToPath(fileDescription);
+    return new FileInfo(path).Length;
+  }
+
   private static void CreatePath(string path)
   {
     var parentDir = Path.GetDirectoryName(path);
