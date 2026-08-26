@@ -281,7 +281,7 @@ public class MarkdownView : ContentView
   }
 
   // MAUI keeps the height it measured a full-width image at, so capping the width alone leaves it in an
-  // over-tall frame: both axes have to come from the host's width. That needs the pixel dimensions, so a
+  // over-tall box: both axes have to come from the host's width. That needs the pixel dimensions, so a
   // remote image -- whose bytes this view doesn't hold -- keeps the plain fit, percentage included.
   private static View ScaledImage(ImageSource source, Size? pixelSize, int? widthPercent)
   {
