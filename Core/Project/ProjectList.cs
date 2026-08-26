@@ -13,7 +13,6 @@ internal class ProjectList : IProjectList
   private readonly IStorage _Storage;
   private readonly IFileSystem _FileSystem;
   private readonly WeakReference<ProjectInfo[]?> _Items = new(null);
-  // The revision itself plus the SQLite sidecars a killed session can leave beside it.
   private readonly static string[] RevisionFileSuffixes = ["", "-journal", "-wal", "-shm"];
   private const int SqliteCantOpen = 14;
 
@@ -115,9 +114,8 @@ internal class ProjectList : IProjectList
   }
 
   /// <summary>
-  /// Drops the cache files killed sessions left behind: the ones SQLite cannot make a project out of,
-  /// and, of those it can, every revision but the newest at each revision counter. Must run with no
-  /// project open: the working cache of an open host is indistinguishable from a leftover here.
+  /// Drops the cache files killed sessions left behind. Must run with no project open: the working
+  /// cache of an open host is indistinguishable from a leftover here.
   /// </summary>
   public async Task SanitizeRevisionsAsync(CancellationToken token)
   {
@@ -139,10 +137,9 @@ internal class ProjectList : IProjectList
       }
     }
 
-    // A leftover whose counter matches no other holds a commit the origin never received, so it is a
-    // genuine restore point and survives. Size joins the key as a conservatism: a cache file is a
-    // byte-for-byte copy of the origin, so duplicate leftovers share a length, and an equal-counter
-    // pair that differs in size costs a missed cleanup rather than a deleted revision.
+    // An unmatched counter is a restore point: it holds a commit the origin never received. Size joins
+    // the key as a conservatism - an equal-counter pair that differs in length costs a missed cleanup,
+    // never a deleted revision.
     var duplicates = identified
       .GroupBy(item => (item.File.Directory, item.Size, item.Revision))
       .SelectMany(group => group.OrderByDescending(item => item.LastWrite).Skip(1));
@@ -201,9 +198,8 @@ internal class ProjectList : IProjectList
     }
   }
 
-  // Null means SQLite rejected the file's content, which is the sweep's definition of garbage. A file
-  // it could not open at all is not: something else holds it, so it propagates and the next sweep
-  // retries it rather than deleting a revision a scanner happened to have open.
+  // Null means SQLite rejected the file's content - the sweep's definition of garbage. A file it could
+  // not open at all propagates instead: something else holds it, and the next sweep retries it.
   private async Task<long?> TryReadRevisionAsync(FileDescription revision, CancellationToken token)
   {
     var path = _FileSystem.ToPath(revision);

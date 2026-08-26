@@ -67,8 +67,7 @@ public sealed class ProjectListTests : IDisposable
   private DirectoryDescription CacheDirectory(string projectFolder) =>
     _storage.ProjectsCache with { Path = [.. _storage.ProjectsCache.Path, projectFolder] };
 
-  /// <summary>Copies a project file into the revision cache, the way a session that was killed before
-  /// disposing its <see cref="ProjectHost"/> leaves it behind.</summary>
+  /// <summary>Leaves a copy of the project in the revision cache, the way a killed session does.</summary>
   private FileDescription SeedRevision(string projectFolder, string fileName, FileDescription source, DateTime lastWrite)
   {
     var revision = new FileDescription(CacheDirectory(projectFolder), fileName, IProjectDocument.MimeType);
@@ -77,10 +76,8 @@ public sealed class ProjectListTests : IDisposable
     return revision;
   }
 
-  /// <summary>
-  /// Copies a project out from under an uncommitted transaction together with the rollback journal that
-  /// transaction is holding - the pair a session killed mid-write leaves behind.
-  /// </summary>
+  /// <summary>Copies a project out from under an uncommitted transaction together with the rollback
+  /// journal it holds - the pair a session killed mid-write leaves behind.</summary>
   private async Task<FileDescription> SeedHotJournalRevisionAsync(string projectFolder, string fileName, FileDescription source)
   {
     var cache = CacheDirectory(projectFolder);
@@ -100,10 +97,9 @@ public sealed class ProjectListTests : IDisposable
 
     _fs.RemoveFile(live);
 
-    // SQLite leaves the journal's magic zeroed until it syncs the journal, and treats a journal whose
-    // first byte is zero as not hot - so an unsynced copy would still open read-only. Stamping the magic
-    // is what the commit-time sync does; the rest of the header is the one SQLite wrote, so the replay
-    // truncates the database back to the size it records and leaves it intact.
+    // SQLite zeroes the journal's magic until it syncs, and treats a journal whose first byte is zero as
+    // not hot, so an unsynced copy would still open read-only. Stamping the magic is what the commit-time
+    // sync does; the rest of the header is SQLite's own, so the replay leaves the database intact.
     var journal = revision with { FileName = $"{revision.FileName}-journal" };
     var journalPath = _fs.ToPath(journal);
     using (var stream = new FileStream(journalPath, FileMode.Open, FileAccess.Write))
@@ -128,7 +124,6 @@ public sealed class ProjectListTests : IDisposable
   private void Touch(FileDescription file, DateTime lastWrite) =>
     File.SetLastWriteTime(_fs.ToPath(file), lastWrite);
 
-  /// <summary>Commits an empty transaction, which stamps the next revision counter into the file.</summary>
   private async Task BumpRevisionAsync(FileDescription revision)
   {
     await using var doc = await ProjectDocument.OpenAsync(_fs.ToPath(revision), Token);
@@ -293,9 +288,8 @@ public sealed class ProjectListTests : IDisposable
   [Fact]
   public async Task SanitizeRevisions_LeftoverHoldingACommit_Survives()
   {
-    // A crash after a commit but before dispose leaves a cache file whose counter ran ahead of the
-    // origin - the only copy of that work. Every file reports the same size here, so the revision
-    // counter is provably the only thing keeping it alive.
+    // Every file reports the same size here, so the revision counter is provably the only thing keeping
+    // the committed leftover alive.
     var origin = await SeedProjectAsync("Unflushed", "d");
     var committed = SeedRevision("Unflushed", "version-1.gt4", origin, new DateTime(2026, 1, 1));
     await BumpRevisionAsync(committed);
@@ -333,9 +327,7 @@ public sealed class ProjectListTests : IDisposable
   [Fact]
   public async Task SanitizeRevisions_EqualCounterButDifferentSize_KeepsBoth()
   {
-    // Size stays in the grouping key as a deliberate conservatism. Two equal-counter files that differ
-    // in length (a vacuum, a replayed journal) are the same logical state, but keeping both costs only a
-    // missed cleanup, where dropping the size would make the sweep delete on the counter alone.
+    // The size override is what makes the pair differ in length; equal counters alone would collapse it.
     var origin = await SeedProjectAsync("Resized", "d");
     var older = SeedRevision("Resized", "version-1.gt4", origin, new DateTime(2026, 1, 1));
     var newer = SeedRevision("Resized", "version-22.gt4", origin, new DateTime(2026, 2, 1));
@@ -350,8 +342,6 @@ public sealed class ProjectListTests : IDisposable
   [Fact]
   public async Task SanitizeRevisions_RevisionHeldOpenElsewhere_IsNotRemoved()
   {
-    // SQLite reports a file it cannot open at all the same way it reports a corrupt one. Treating that
-    // as garbage would delete a sound revision that a backup or virus scanner merely had open.
     var origin = await SeedProjectAsync("Locked", "d");
     var revision = SeedRevision("Locked", "version-1.gt4", origin, new DateTime(2026, 1, 1));
     using var hold = new FileStream(_fs.ToPath(revision), FileMode.Open, FileAccess.Read, FileShare.None);
@@ -365,8 +355,8 @@ public sealed class ProjectListTests : IDisposable
   [Fact]
   public async Task SanitizeRevisions_LeavesTheSurvivorsTimestampUntouched()
   {
-    // RemoveRevisionAsync and RestoreRevisionAsync both reject a ProjectRevision whose recorded mtime no
-    // longer matches the file, so reading a revision's counter must not perturb it.
+    // RemoveRevisionAsync and RestoreRevisionAsync reject a revision whose recorded mtime no longer
+    // matches the file, so reading a counter must not perturb it.
     var origin = await SeedProjectAsync("Untouched", "d");
     var lastWrite = new DateTime(2026, 3, 1);
     SeedRevision("Untouched", "version-1.gt4", origin, new DateTime(2026, 1, 1));
@@ -393,11 +383,9 @@ public sealed class ProjectListTests : IDisposable
   [Fact]
   public async Task SanitizeRevisions_RevisionNeedingJournalReplay_IsRecoveredNotRemoved()
   {
-    // The reason a file that fails to open is not garbage on that evidence alone: a read-only open
-    // cannot roll back a hot journal, so a revision holding real work looks exactly like a corrupt one
-    // until the read-write retry recovers it.
     var origin = await SeedProjectAsync("Interrupted", "d");
     var revision = await SeedHotJournalRevisionAsync("Interrupted", "version-1.gt4", origin);
+    // Probing read-only first is what proves the retry recovered the file, not that it opened all along.
     var readOnly = () => ProjectDocument.OpenReadOnlyAsync(_fs.ToPath(revision), Token);
     await readOnly.Should().ThrowAsync<SqliteException>();
 
@@ -448,8 +436,8 @@ internal sealed class TempStorage : IStorage
 /// A real-disk <see cref="IFileSystem"/> that maps every <see cref="DirectoryDescription"/> beneath a
 /// single temp root, so tests get genuine file/SQLite behaviour without writing to the user's folders.
 /// </summary>
-/// <param name="fileSize">Overrides the reported file size, so a test can drive the revision sweep's
-/// size grouping independently of what the files on disk actually weigh.</param>
+/// <param name="fileSize">Overrides the reported size, so a test can drive the sweep's size grouping
+/// independently of what the files on disk actually weigh.</param>
 internal sealed class DiskFileSystem(string root, Func<FileDescription, long>? fileSize = null) : IFileSystem
 {
   public string ToPath(DirectoryDescription directory) =>

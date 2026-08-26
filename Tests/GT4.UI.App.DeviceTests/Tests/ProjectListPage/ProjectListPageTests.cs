@@ -162,9 +162,8 @@ public class ProjectListPageTests
   [Fact]
   public async Task Sanitize_failure_does_not_stop_the_listing()
   {
-    // The revision sweep shares the listing's 5s DB token and is pure housekeeping: exhausting that
-    // budget, or tripping over a file another process holds, must never keep the project list from
-    // loading - which is the one screen the user cannot route around.
+    // The sweep shares the listing's 5s DB token and is unbounded, so exhausting that budget is a real
+    // failure mode - and the project list is the one screen the user cannot route around.
     var services = new TestServices();
     services.ProjectList
       .Setup(p => p.SanitizeRevisionsAsync(It.IsAny<CancellationToken>()))

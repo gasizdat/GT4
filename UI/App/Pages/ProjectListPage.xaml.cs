@@ -112,17 +112,14 @@ public partial class ProjectListPage : ContentPage
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
       await _CurrentProjectProvider.CloseAsync(token);
+      // Between the close and the listing that reopens everything: the only moment no live working cache
+      // can be mistaken for a leftover.
       await SanitizeRevisions(token);
       await SafeTask.RunOnMainThread(UpdateProjectList, _AlertService);
       _ImageCache.Clear();
     });
   }
 
-  /// <summary>
-  /// The only moment no project is open, so no live working cache can be mistaken for a leftover, and it
-  /// must precede the listing, which opens every project again. Housekeeping never blocks the list: the
-  /// sweep deletes as it goes, so an interrupted one is worked off over the next few visits.
-  /// </summary>
   protected async Task SanitizeRevisions(CancellationToken token)
   {
     try
@@ -131,6 +128,8 @@ public partial class ProjectListPage : ContentPage
     }
     catch (Exception ex)
     {
+      // Housekeeping never blocks the project list. The sweep deletes as it goes, so what a failed one
+      // leaves behind is worked off over the next few visits.
       System.Diagnostics.Debug.WriteLine(ex);
     }
   }
