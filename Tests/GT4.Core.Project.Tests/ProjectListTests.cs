@@ -348,6 +348,8 @@ public sealed class ProjectListTests : IDisposable
 
     var act = () => _list.SanitizeRevisionsAsync(Token);
 
+    // The throw is the point: the sweep deletes whatever yields no counter, so swallowing the failure
+    // here would delete a sound revision a backup or scanner merely had open.
     await act.Should().ThrowAsync<SqliteException>();
     _fs.FileExists(revision).Should().BeTrue();
   }
