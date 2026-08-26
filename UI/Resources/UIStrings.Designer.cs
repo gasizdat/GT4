@@ -97,6 +97,24 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to This project was created by an older version of the app. It has to be updated before it can be opened. Update it now?.
+        /// </summary>
+        public static string AlertTextProjectSchemaOutdated {
+            get {
+                return ResourceManager.GetString("AlertTextProjectSchemaOutdated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This project was created by a newer version of the app. Update the app to open it..
+        /// </summary>
+        public static string AlertTextProjectSchemaTooNew {
+            get {
+                return ResourceManager.GetString("AlertTextProjectSchemaTooNew", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Are you really want to delete {0}? All persons in this family will lose this family name..
         /// </summary>
         public static string AlertTextRemoveFamilyConfirmationText_1 {

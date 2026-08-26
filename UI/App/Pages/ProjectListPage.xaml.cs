@@ -98,10 +98,13 @@ public partial class ProjectListPage : ContentPage
 
   protected async Task OnProjectSelectedAsync(ProjectItem projectItem)
   {
-    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-    await _CurrentProjectProvider.OpenAsync(projectItem.Info, token);
-    await _NavigationService.GoToAsync(UIRoutes.GetRoute<ProjectPage>());
+    if (await TryOpenProjectAsync(projectItem.Info))
+    {
+      await _NavigationService.GoToAsync(UIRoutes.GetRoute<ProjectPage>());
+    }
 
+    // Cleared on every outcome, not just the successful one: the setter ignores a repeated value, so a
+    // row left selected after a declined upgrade could never be tapped again.
     SelectedProject = null;
   }
 
@@ -172,6 +175,35 @@ public partial class ProjectListPage : ContentPage
         await _NavigationService.GoToAsync(UIRoutes.GetRoute<SettingsPage>());
         break;
     }
+  }
+
+  // A project written by an older build has to be migrated before any query touches it; offer that
+  // instead of letting the mismatch surface as a raw SQLite error. False leaves the user on the list.
+  private async Task<bool> TryOpenProjectAsync(ProjectInfo info)
+  {
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    try
+    {
+      await _CurrentProjectProvider.OpenAsync(info, token);
+      return true;
+    }
+    catch (ProjectSchemaTooNewException)
+    {
+      await _AlertService.ShowWarningAsync(UIStrings.AlertTextProjectSchemaTooNew);
+      return false;
+    }
+    catch (ProjectSchemaOutdatedException)
+    {
+      var confirmed = await _AlertService.ShowConfirmationAsync(UIStrings.AlertTextProjectSchemaOutdated);
+      if (!confirmed)
+        return false;
+    }
+
+    // The upgrade rewrites the file, so it gets the longer budget rather than the per-query one.
+    using var upgradeToken = _CancellationTokenProvider.CreateShortOperationCancellationToken();
+    await _ProjectList.UpgradeAsync(info.Origin, upgradeToken);
+    await _CurrentProjectProvider.OpenAsync(info, upgradeToken);
+    return true;
   }
 
   private async Task OnCreateProject()

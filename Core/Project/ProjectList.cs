@@ -41,11 +41,28 @@ internal class ProjectList : IProjectList
 
   public async Task<ProjectHost> OpenAsync(FileDescription origin, CancellationToken token)
   {
-    var cache = GetCacheFileDescription(origin.FileName);
-    var host = new ProjectHost(_FileSystem, origin, cache);
-    host.Project = await ProjectDocument.OpenAsync(_FileSystem.ToPath(cache), token);
+    var host = await OpenAnyVersionAsync(origin, token);
+    var document = (ProjectDocument)host.Project!;
+    var fileVersion = document.SchemaVersion;
+    if (fileVersion == ProjectDocument.CurrentSchemaVersion)
+    {
+      return host;
+    }
 
-    return host;
+    // Disposing an unmodified host drops its cache copy, which would otherwise linger as a revision.
+    await host.DisposeAsync();
+    throw fileVersion < ProjectDocument.CurrentSchemaVersion
+      ? new ProjectSchemaOutdatedException(fileVersion, ProjectDocument.CurrentSchemaVersion)
+      : new ProjectSchemaTooNewException(fileVersion, ProjectDocument.CurrentSchemaVersion);
+  }
+
+  public async Task UpgradeAsync(FileDescription origin, CancellationToken token)
+  {
+    await using var host = await OpenAnyVersionAsync(origin, token);
+    var document = (ProjectDocument)host.Project!;
+    // The migration commits, which stamps a new revision, so disposing the host flushes the upgraded
+    // cache back over the origin and keeps the pre-upgrade file as a revision to fall back on.
+    await document.UpgradeSchemaAsync(token);
   }
 
   public async Task<ProjectHost> CreateAsync(string projectName, string projectDescription, CancellationToken token)
@@ -177,11 +194,24 @@ internal class ProjectList : IProjectList
     );
   }
 
+  /// <summary>
+  /// Opens a project regardless of its schema version, for the two callers that must tolerate a stale
+  /// one: the listing, which only reads the name a legacy file still holds, and the upgrade itself.
+  /// </summary>
+  private async Task<ProjectHost> OpenAnyVersionAsync(FileDescription origin, CancellationToken token)
+  {
+    var cache = GetCacheFileDescription(origin.FileName);
+    var host = new ProjectHost(_FileSystem, origin, cache);
+    host.Project = await ProjectDocument.OpenAsync(_FileSystem.ToPath(cache), token);
+
+    return host;
+  }
+
   private async Task<ProjectInfo> GetProjectInfoAsync(FileDescription origin, CancellationToken token)
   {
     try
     {
-      using var projectHost = await OpenAsync(origin, token);
+      using var projectHost = await OpenAnyVersionAsync(origin, token);
       using var project = projectHost.Project!;
       var projectInfo = await GetProjectInfoAsync(project, token);
 

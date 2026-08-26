@@ -1350,4 +1350,10 @@ FN - Familienname</value>
   <data name="PersonFilterPart_2" xml:space="preserve">
     <value>{0}: {1}</value>
   </data>
+  <data name="AlertTextProjectSchemaOutdated" xml:space="preserve">
+    <value>Dieses Projekt wurde mit einer älteren Version der App erstellt. Es muss vor dem Öffnen aktualisiert werden. Jetzt aktualisieren?</value>
+  </data>
+  <data name="AlertTextProjectSchemaTooNew" xml:space="preserve">
+    <value>Dieses Projekt wurde mit einer neueren Version der App erstellt. Aktualisieren Sie die App, um es zu öffnen.</value>
+  </data>
 </root>

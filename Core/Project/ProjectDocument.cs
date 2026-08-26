@@ -23,6 +23,17 @@ namespace GT4.Core.Project;
 /// </summary>
 internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDisposable
 {
+  // Ordered schema upgrades: step i brings a project from schema version i to i+1, so the version the
+  // running code expects is simply the number of steps. Append a step for every schema change; never
+  // reorder or drop one, or an old file would be handed to the wrong step.
+  private static readonly Func<ProjectDocument, CancellationToken, Task>[] _SchemaMigrations =
+  [
+    // 0 -> 1: files written before the version marker existed. NameData and its index shipped after the
+    // first release, so such a file can be missing them outright; every statement is CREATE ... IF NOT
+    // EXISTS, so a file that already has them is left untouched.
+    (document, token) => document.CreateTablesAsync(token),
+  ];
+
   private readonly SqliteConnection _Connection;
   private readonly TableMetadata _TableMetadata;
   private readonly TableNames _TableNames;
@@ -53,6 +64,7 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   // Cache of the persisted revision counter (owned by the Metadata table); reseeded from it on open so
   // it is stable across a close/reopen.
   private long _ProjectRevision = ProjectInfo.InitialRevision;
+  private int _SchemaVersion = 0;
   private volatile bool _Disposed = false;
   private int _DisposeStarted = 0;
 
@@ -104,9 +116,34 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   // still record the revision, so the host flushes the cache back to the origin.
   public void SetRevision(long revision) => Interlocked.Exchange(ref _ProjectRevision, revision);
 
+  internal static int CurrentSchemaVersion => _SchemaMigrations.Length;
+
   internal SqliteConnection Connection => _Connection;
 
+  internal int SchemaVersion => _SchemaVersion;
+
   internal long NextTransactionNo() => Interlocked.Increment(ref _TransactionNo);
+
+  /// <summary>
+  /// Applies every schema step this file has not seen yet, as one transaction: either the file ends up
+  /// at <see cref="CurrentSchemaVersion"/> or it is left exactly as it was.
+  /// </summary>
+  internal async Task UpgradeSchemaAsync(CancellationToken token)
+  {
+    CheckForDisposed();
+    using var transaction = await BeginTransactionAsync(token);
+
+    var version = _SchemaVersion;
+    while (version < CurrentSchemaVersion)
+    {
+      await _SchemaMigrations[version](this, token);
+      version++;
+    }
+    await SetSchemaVersionAsync(version, token);
+
+    await transaction.CommitAsync(token);
+    _SchemaVersion = version;
+  }
 
   /// <summary>Pops the ambient back to the enclosing transaction and releases the gate for a root.</summary>
   internal void LeaveTransaction(NestedTransaction transaction)
@@ -232,6 +269,9 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
       // sqlite3_open_v2 succeeds for any readable path; the file is only rejected as a database once
       // these read it, and by then the connection holds it against deletion.
       await ret.OpenAsync(token);
+      // Read before any table is touched: on a stale schema the revision query is exactly the kind of
+      // statement that would fail with a raw "no such column/table" instead of a version mismatch.
+      await ret.LoadSchemaVersionAsync(token);
       await ret.LoadRevisionAsync(token);
     }
     catch
@@ -267,6 +307,15 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     CheckForDisposed();
     using var transaction = await BeginTransactionAsync(token);
 
+    await CreateTablesAsync(token);
+    await SetSchemaVersionAsync(CurrentSchemaVersion, token);
+
+    await transaction.CommitAsync(token);
+    _SchemaVersion = CurrentSchemaVersion;
+  }
+
+  private async Task CreateTablesAsync(CancellationToken token)
+  {
     // Created sequentially: every statement must take its turn on the single connection, and a
     // transaction is owned exclusively by its flow.
     await _TableMetadata.CreateAsync(token);
@@ -277,8 +326,22 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     await _TableRelatives.CreateAsync(token);
     await _TablePersonData.CreateAsync(token);
     await _TableNameData.CreateAsync(token);
+  }
 
-    await transaction.CommitAsync(token);
+  private async Task LoadSchemaVersionAsync(CancellationToken token)
+  {
+    using var command = CreateCommand();
+    command.CommandText = "PRAGMA user_version;";
+    var stored = await command.ExecuteScalarAsync(token);
+    _SchemaVersion = Convert.ToInt32(stored);
+  }
+
+  private async Task SetSchemaVersionAsync(int version, CancellationToken token)
+  {
+    // PRAGMA takes no parameters; the value is an index into _SchemaMigrations, never user input.
+    using var command = CreateCommand();
+    command.CommandText = $"PRAGMA user_version = {version};";
+    await command.ExecuteNonQueryAsync(token);
   }
 
   private void ThrowIfDisposingInsideTransaction()
