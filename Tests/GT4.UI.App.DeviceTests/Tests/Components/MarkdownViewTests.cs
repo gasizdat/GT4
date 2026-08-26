@@ -102,11 +102,6 @@ public class MarkdownViewTests
   [Fact]
   public async Task MediaReference_WithAPercentageOverAHundred_GrowsPastItsPixelSize()
   {
-    // CI-only, intermittent: WinUI's arrange occasionally ignores WidthRequest for this one
-    // width/column combination. Three mechanisms ruled out with direct evidence (grow-after-arrange,
-    // stale host.Width, decode timing) -- see https://github.com/gasizdat/GT4/issues/274. Passes locally.
-    Assert.SkipWhen(Environment.GetEnvironmentVariable("GITHUB_ACTIONS") == "true", "CI-only WinUI arrange quirk, see GH issue #274 -- passes locally.");
-
     await AssertRenderedImageSizeAsync(
       "![A caption 150%](media:11)",
       columnWidth: 300,
@@ -451,9 +446,17 @@ public class MarkdownViewTests
       observed = await MainThread.InvokeOnMainThreadAsync(() => new Size(image.Width, image.Height));
     }
 
+    // Requested size and arranged size separately: only the pair tells a wrong request from an ignored one.
+    var diag = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      var host = image.Parent as VisualElement;
+      return $"WR={image.WidthRequest} HR={image.HeightRequest} bounds={image.Bounds} " +
+             $"host={host?.Width}x{host?.Height} density={density}";
+    });
+
     Assert.True(
       IsCloseTo(observed, expectedSize, tolerance),
-      $"Expected a size within {tolerance.Width:F3}x{tolerance.Height:F3} of {expectedSize}, but observed {observed}.");
+      $"Expected a size within {tolerance.Width:F3}x{tolerance.Height:F3} of {expectedSize}, but observed {observed}. DIAG {diag}");
   }
 
   private static bool IsCloseTo(Size observed, Size expected, Size tolerance) =>
