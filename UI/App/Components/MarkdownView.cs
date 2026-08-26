@@ -291,9 +291,8 @@ public class MarkdownView : ContentView
       return image;
     }
 
-    // WinUI measures an Image against its own bitmap and half-applies a competing request -- it honours
-    // HeightRequest and takes the width from the pixels -- so the size goes on a wrapper that has no
-    // intrinsic size to compete with, and the image fills it.
+    // WinUI measures an Image against its own bitmap and half-applies a competing size request -- height
+    // honoured, width taken from the pixels -- so the request goes on a wrapper with no intrinsic size.
     var frame = new ContentView { Content = image, HorizontalOptions = LayoutOptions.Start };
     SetFrameSize(frame, pixelSize.Value, ScaledWidth(pixelSize.Value.Width, widthPercent));
 

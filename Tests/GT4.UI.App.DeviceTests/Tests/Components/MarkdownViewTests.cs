@@ -446,8 +446,7 @@ public class MarkdownViewTests
       observed = await MainThread.InvokeOnMainThreadAsync(() => new Size(image.Width, image.Height));
     }
 
-    // A stuck arrange reports the requested size and the arranged one separately, which is the only way
-    // to tell WinUI ignoring a correct request apart from this code computing a wrong one.
+    // Requested size and arranged size separately: only the pair tells a wrong request from an ignored one.
     var diag = await MainThread.InvokeOnMainThreadAsync(() =>
     {
       var host = image.Parent as VisualElement;
