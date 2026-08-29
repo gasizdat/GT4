@@ -9,9 +9,10 @@ internal sealed class DateFormatSetting : ISettingEditor
 {
   private readonly IConfiguration _Configuration;
   private readonly IInteractiveConfiguration? _InteractiveConfiguration;
-  private readonly DateFormatKind _Kind;
   private readonly string _FormatSection;
   private readonly string _DefaultFormat;
+  private readonly Func<string> _DisplayName;
+  private readonly Func<string> _Description;
   private readonly Date _ExampleDate;
 
   public DateFormatSetting(
@@ -22,16 +23,21 @@ internal sealed class DateFormatSetting : ISettingEditor
   {
     _Configuration = configuration;
     _InteractiveConfiguration = interactiveConfiguration;
-    _Kind = kind;
-    (_FormatSection, _DefaultFormat, _ExampleDate) = kind switch
+    // The localized slots stay deferred: the container keeps the setting as a singleton across a
+    // language switch.
+    (_FormatSection, _DefaultFormat, _DisplayName, _Description, _ExampleDate) = kind switch
     {
       DateFormatKind.Full => (
         "DateFormatter.FullDateFormat",
         "DD MM YYYY",
+        (Func<string>)(() => UIStrings.FieldDateDisplayFormat),
+        (Func<string>)(() => UIStrings.FieldDateDisplayFormatHint),
         Date.Now),
       DateFormatKind.Short => (
         "DateFormatter.ShortDateFormat",
         "MM YYYY",
+        (Func<string>)(() => UIStrings.FieldShortDateDisplayFormat),
+        (Func<string>)(() => UIStrings.FieldShortDateDisplayFormatHint),
         Date.Now with { Status = DateStatus.DayUnknown }),
       _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
     };
@@ -39,18 +45,9 @@ internal sealed class DateFormatSetting : ISettingEditor
 
   public string Group => nameof(DateFormatter);
 
-  // Resolved per read: the container keeps the setting as a singleton across a language switch.
-  public string DisplayName => _Kind switch
-  {
-    DateFormatKind.Full => UIStrings.FieldDateDisplayFormat,
-    _ => UIStrings.FieldShortDateDisplayFormat
-  };
+  public string DisplayName => _DisplayName();
 
-  public string Description => _Kind switch
-  {
-    DateFormatKind.Full => UIStrings.FieldDateDisplayFormatHint,
-    _ => UIStrings.FieldShortDateDisplayFormatHint
-  };
+  public string Description => _Description();
 
   public string Example => DateFormatter.Format(Value, _ExampleDate);
 

@@ -11,9 +11,9 @@ internal sealed class PersonNameSetting : ISettingEditor
 
   private readonly IConfiguration _Configuration;
   private readonly IInteractiveConfiguration? _InteractiveConfiguration;
-  private readonly NameFormat _NameFormat;
   private readonly string _FormatSection;
   private readonly string _DefaultFormat;
+  private readonly Func<string> _DisplayName;
 
   public PersonNameSetting(
     IConfiguration configuration,
@@ -23,25 +23,19 @@ internal sealed class PersonNameSetting : ISettingEditor
   {
     _Configuration = configuration;
     _InteractiveConfiguration = interactiveConfiguration;
-    _NameFormat = nameFormat;
-    (_FormatSection, _DefaultFormat) = nameFormat switch
+    // The localized slot stays deferred: the container keeps the setting as a singleton across a
+    // language switch.
+    (_FormatSection, _DefaultFormat, _DisplayName) = nameFormat switch
     {
-      NameFormat.CommonPersonName => ("NameFormatter.CommonPersonName", "FF PP LL"),
-      NameFormat.FullPersonName => ("NameFormatter.FullPersonName", "FF PP LL (FN)"),
-      NameFormat.PersonInitials => ("NameFormatter.PersonInitialsSetting", "LL FF. PP."),
-      NameFormat.ShortPersonName => ("NameFormatter.ShortPersonNameSetting", "FF PP"),
+      NameFormat.CommonPersonName => ("NameFormatter.CommonPersonName", "FF PP LL", (Func<string>)(() => UIStrings.FieldCommonPersonNameFormat)),
+      NameFormat.FullPersonName => ("NameFormatter.FullPersonName", "FF PP LL (FN)", (Func<string>)(() => UIStrings.FieldFullPersonNameFormat)),
+      NameFormat.PersonInitials => ("NameFormatter.PersonInitialsSetting", "LL FF. PP.", (Func<string>)(() => UIStrings.FieldPersonInitialsFormat)),
+      NameFormat.ShortPersonName => ("NameFormatter.ShortPersonNameSetting", "FF PP", (Func<string>)(() => UIStrings.ShortPersonNameFormat)),
       _ => throw new ArgumentOutOfRangeException(nameof(nameFormat), nameFormat, null)
     };
   }
 
-  // Resolved per read: the container keeps the setting as a singleton across a language switch.
-  public string DisplayName => _NameFormat switch
-  {
-    NameFormat.CommonPersonName => UIStrings.FieldCommonPersonNameFormat,
-    NameFormat.FullPersonName => UIStrings.FieldFullPersonNameFormat,
-    NameFormat.PersonInitials => UIStrings.FieldPersonInitialsFormat,
-    _ => UIStrings.ShortPersonNameFormat
-  };
+  public string DisplayName => _DisplayName();
 
   public string Example => NameFormatter.Format(Value, _PersonInfo);
 

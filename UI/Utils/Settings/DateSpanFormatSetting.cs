@@ -9,9 +9,10 @@ internal sealed class DateSpanFormatSetting : ISettingEditor
 {
   private readonly IConfiguration _Configuration;
   private readonly IInteractiveConfiguration? _InteractiveConfiguration;
-  private readonly DateSpanFormatKind _Kind;
   private readonly string _FormatSection;
   private readonly string _DefaultFormat;
+  private readonly Func<string> _DisplayName;
+  private readonly Func<string> _Description;
   private readonly DateSpan _ExampleSpan;
 
   public DateSpanFormatSetting(
@@ -22,16 +23,21 @@ internal sealed class DateSpanFormatSetting : ISettingEditor
   {
     _Configuration = configuration;
     _InteractiveConfiguration = interactiveConfiguration;
-    _Kind = kind;
-    (_FormatSection, _DefaultFormat, _ExampleSpan) = kind switch
+    // The localized slots stay deferred: the container keeps the setting as a singleton across a
+    // language switch.
+    (_FormatSection, _DefaultFormat, _DisplayName, _Description, _ExampleSpan) = kind switch
     {
       DateSpanFormatKind.Full => (
         "DateSpanFormatter.FullDateSpanFormat",
         "YEARS MONTHS DAYS",
+        (Func<string>)(() => UIStrings.FieldDateSpanDisplayFormat),
+        (Func<string>)(() => UIStrings.FieldDateSpanDisplayFormatHint),
         new DateSpan(25, 3, 15, DateStatus.WellKnown)),
       DateSpanFormatKind.Short => (
         "DateSpanFormatter.ShortDateSpanFormat",
         "YEARS MONTHS",
+        (Func<string>)(() => UIStrings.FieldShortDateSpanDisplayFormat),
+        (Func<string>)(() => UIStrings.FieldShortDateSpanDisplayFormatHint),
         new DateSpan(5, 6, 0, DateStatus.DayUnknown)),
       _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
     };
@@ -39,18 +45,9 @@ internal sealed class DateSpanFormatSetting : ISettingEditor
 
   public string Group => nameof(DateSpanFormatter);
 
-  // Resolved per read: the container keeps the setting as a singleton across a language switch.
-  public string DisplayName => _Kind switch
-  {
-    DateSpanFormatKind.Full => UIStrings.FieldDateSpanDisplayFormat,
-    _ => UIStrings.FieldShortDateSpanDisplayFormat
-  };
+  public string DisplayName => _DisplayName();
 
-  public string Description => _Kind switch
-  {
-    DateSpanFormatKind.Full => UIStrings.FieldDateSpanDisplayFormatHint,
-    _ => UIStrings.FieldShortDateSpanDisplayFormatHint
-  };
+  public string Description => _Description();
 
   public string Example => DateSpanFormatter.Format(Value, _ExampleSpan);
 
