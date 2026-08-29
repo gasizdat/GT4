@@ -25,14 +25,15 @@ internal sealed class PersonNameSetting : ISettingEditor
     _InteractiveConfiguration = interactiveConfiguration;
     // The localized slot stays deferred: the container keeps the setting as a singleton across a
     // language switch.
-    (_FormatSection, _DefaultFormat, _DisplayName) = nameFormat switch
+    (string Section, string DefaultFormat, Func<string> DisplayName) parts = nameFormat switch
     {
-      NameFormat.CommonPersonName => ("NameFormatter.CommonPersonName", "FF PP LL", (Func<string>)(() => UIStrings.FieldCommonPersonNameFormat)),
-      NameFormat.FullPersonName => ("NameFormatter.FullPersonName", "FF PP LL (FN)", (Func<string>)(() => UIStrings.FieldFullPersonNameFormat)),
-      NameFormat.PersonInitials => ("NameFormatter.PersonInitialsSetting", "LL FF. PP.", (Func<string>)(() => UIStrings.FieldPersonInitialsFormat)),
-      NameFormat.ShortPersonName => ("NameFormatter.ShortPersonNameSetting", "FF PP", (Func<string>)(() => UIStrings.ShortPersonNameFormat)),
+      NameFormat.CommonPersonName => ("NameFormatter.CommonPersonName", "FF PP LL", () => UIStrings.FieldCommonPersonNameFormat),
+      NameFormat.FullPersonName => ("NameFormatter.FullPersonName", "FF PP LL (FN)", () => UIStrings.FieldFullPersonNameFormat),
+      NameFormat.PersonInitials => ("NameFormatter.PersonInitialsSetting", "LL FF. PP.", () => UIStrings.FieldPersonInitialsFormat),
+      NameFormat.ShortPersonName => ("NameFormatter.ShortPersonNameSetting", "FF PP", () => UIStrings.ShortPersonNameFormat),
       _ => throw new ArgumentOutOfRangeException(nameof(nameFormat), nameFormat, null)
     };
+    (_FormatSection, _DefaultFormat, _DisplayName) = parts;
   }
 
   public string DisplayName => _DisplayName();

@@ -25,22 +25,27 @@ internal sealed class DateFormatSetting : ISettingEditor
     _InteractiveConfiguration = interactiveConfiguration;
     // The localized slots stay deferred: the container keeps the setting as a singleton across a
     // language switch.
-    (_FormatSection, _DefaultFormat, _DisplayName, _Description, _ExampleDate) = kind switch
-    {
-      DateFormatKind.Full => (
-        "DateFormatter.FullDateFormat",
-        "DD MM YYYY",
-        (Func<string>)(() => UIStrings.FieldDateDisplayFormat),
-        (Func<string>)(() => UIStrings.FieldDateDisplayFormatHint),
-        Date.Now),
-      DateFormatKind.Short => (
-        "DateFormatter.ShortDateFormat",
-        "MM YYYY",
-        (Func<string>)(() => UIStrings.FieldShortDateDisplayFormat),
-        (Func<string>)(() => UIStrings.FieldShortDateDisplayFormatHint),
-        Date.Now with { Status = DateStatus.DayUnknown }),
-      _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
-    };
+    (string Section,
+      string DefaultFormat,
+      Func<string> DisplayName,
+      Func<string> Description,
+      Date ExampleDate) parts = kind switch
+      {
+        DateFormatKind.Full => (
+          "DateFormatter.FullDateFormat",
+          "DD MM YYYY",
+          () => UIStrings.FieldDateDisplayFormat,
+          () => UIStrings.FieldDateDisplayFormatHint,
+          Date.Now),
+        DateFormatKind.Short => (
+          "DateFormatter.ShortDateFormat",
+          "MM YYYY",
+          () => UIStrings.FieldShortDateDisplayFormat,
+          () => UIStrings.FieldShortDateDisplayFormatHint,
+          Date.Now with { Status = DateStatus.DayUnknown }),
+        _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
+      };
+    (_FormatSection, _DefaultFormat, _DisplayName, _Description, _ExampleDate) = parts;
   }
 
   public string Group => nameof(DateFormatter);

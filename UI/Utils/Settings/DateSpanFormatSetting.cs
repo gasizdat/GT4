@@ -25,22 +25,27 @@ internal sealed class DateSpanFormatSetting : ISettingEditor
     _InteractiveConfiguration = interactiveConfiguration;
     // The localized slots stay deferred: the container keeps the setting as a singleton across a
     // language switch.
-    (_FormatSection, _DefaultFormat, _DisplayName, _Description, _ExampleSpan) = kind switch
-    {
-      DateSpanFormatKind.Full => (
-        "DateSpanFormatter.FullDateSpanFormat",
-        "YEARS MONTHS DAYS",
-        (Func<string>)(() => UIStrings.FieldDateSpanDisplayFormat),
-        (Func<string>)(() => UIStrings.FieldDateSpanDisplayFormatHint),
-        new DateSpan(25, 3, 15, DateStatus.WellKnown)),
-      DateSpanFormatKind.Short => (
-        "DateSpanFormatter.ShortDateSpanFormat",
-        "YEARS MONTHS",
-        (Func<string>)(() => UIStrings.FieldShortDateSpanDisplayFormat),
-        (Func<string>)(() => UIStrings.FieldShortDateSpanDisplayFormatHint),
-        new DateSpan(5, 6, 0, DateStatus.DayUnknown)),
-      _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
-    };
+    (string Section,
+      string DefaultFormat,
+      Func<string> DisplayName,
+      Func<string> Description,
+      DateSpan ExampleSpan) parts = kind switch
+      {
+        DateSpanFormatKind.Full => (
+          "DateSpanFormatter.FullDateSpanFormat",
+          "YEARS MONTHS DAYS",
+          () => UIStrings.FieldDateSpanDisplayFormat,
+          () => UIStrings.FieldDateSpanDisplayFormatHint,
+          new DateSpan(25, 3, 15, DateStatus.WellKnown)),
+        DateSpanFormatKind.Short => (
+          "DateSpanFormatter.ShortDateSpanFormat",
+          "YEARS MONTHS",
+          () => UIStrings.FieldShortDateSpanDisplayFormat,
+          () => UIStrings.FieldShortDateSpanDisplayFormatHint,
+          new DateSpan(5, 6, 0, DateStatus.DayUnknown)),
+        _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
+      };
+    (_FormatSection, _DefaultFormat, _DisplayName, _Description, _ExampleSpan) = parts;
   }
 
   public string Group => nameof(DateSpanFormatter);
