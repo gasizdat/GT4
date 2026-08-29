@@ -1,6 +1,7 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.Abstraction;
 using GT4.UI.Pages;
 using GT4.UI.Utils.Settings;
 using Moq;
@@ -41,6 +42,9 @@ public class FamilyTreePageTests
     Assert.False(page.LoadInProgress);
     Assert.False(page.CanLoadMoreAncestors);
     Assert.False(page.CanLoadMoreDescendants);
+    // Dropping the interface would leave every zoom test below passing while App silently went back
+    // to rescaling the app font on this page.
+    Assert.IsAssignableFrom<IZoomablePage>(page);
   }
 
   [Fact]
@@ -263,6 +267,23 @@ public class FamilyTreePageTests
     await Task.Delay(200);
 
     Assert.Equal(loadsAtMinimum, page.CompletedLoads);
+  }
+
+  // App reaches the zoom target through Shell.Current.CurrentPage, and it is a pushed page it has to
+  // find there -- not the Shell's own content page.
+  [Fact]
+  public async Task A_pushed_tree_page_is_what_Shell_reports_as_the_current_page()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+    var shell = await MainThread.InvokeOnMainThreadAsync(
+      () => new Shell { Items = { new ShellContent { Content = new ContentPage() } } });
+    await using var attachment = await WindowHost.AttachAsync(shell);
+
+    await MainThread.InvokeOnMainThreadAsync(() => shell.Navigation.PushAsync(page));
+
+    var currentPage = await MainThread.InvokeOnMainThreadAsync(() => Shell.Current?.CurrentPage);
+    Assert.Same(page, currentPage);
   }
 
   [Fact]
