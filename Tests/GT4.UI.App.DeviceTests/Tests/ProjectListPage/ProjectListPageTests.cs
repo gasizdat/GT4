@@ -124,6 +124,92 @@ public class ProjectListPageTests
   }
 
   [Fact]
+  public async Task SelectProject_with_an_outdated_schema_upgrades_it_then_opens_it()
+  {
+    var services = new TestServices();
+    var info = P("Legacy");
+    services.CurrentProjectProvider
+      .SetupSequence(p => p.OpenAsync(info, It.IsAny<CancellationToken>()))
+      .ThrowsAsync(new ProjectSchemaOutdatedException(0, 1))
+      .Returns(Task.CompletedTask);
+    services.AlertService
+      .Setup(a => a.ShowConfirmationAsync(UIStrings.AlertTextProjectSchemaOutdated))
+      .ReturnsAsync(true);
+    var page = await CreatePageAsync(services);
+
+    await page.InvokeProjectSelectedAsync(new ProjectItem(info));
+
+    services.ProjectList.Verify(p => p.UpgradeAsync(info.Origin, It.IsAny<CancellationToken>()), Times.Once());
+    services.CurrentProjectProvider.Verify(p => p.OpenAsync(info, It.IsAny<CancellationToken>()), Times.Exactly(2));
+    services.NavigationService.Verify(n => n.GoToAsync($"{typeof(ProjectPage).Namespace}/{typeof(ProjectPage).Name}"), Times.Once());
+  }
+
+  [Fact]
+  public async Task SelectProject_with_a_declined_upgrade_clears_the_selection()
+  {
+    // Driven through the real setter, which ignores a repeated value: a row left selected after a
+    // decline could never be tapped a second time.
+    var services = new TestServices();
+    var info = P("Legacy");
+    services.CurrentProjectProvider
+      .Setup(p => p.OpenAsync(info, It.IsAny<CancellationToken>()))
+      .ThrowsAsync(new ProjectSchemaOutdatedException(0, 1));
+    services.AlertService
+      .Setup(a => a.ShowConfirmationAsync(UIStrings.AlertTextProjectSchemaOutdated))
+      .ReturnsAsync(false);
+    var page = await CreatePageAsync(services);
+    var projectItem = new ProjectItem(info);
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.SelectedProject = projectItem);
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => page.SelectedProject),
+      selected => selected is null,
+      timeoutMessage: "The declined project stayed selected.");
+
+    services.ProjectList.Verify(p => p.UpgradeAsync(It.IsAny<FileDescription>(), It.IsAny<CancellationToken>()), Times.Never());
+    services.NavigationService.Verify(n => n.GoToAsync(It.IsAny<string>()), Times.Never());
+  }
+
+  [Fact]
+  public async Task SelectProject_with_a_failing_open_clears_the_selection()
+  {
+    // The dead-row hazard a declined upgrade has, reached the other way: the alert reports the failure,
+    // but a row the setter still holds could never be tapped a second time.
+    var services = new TestServices();
+    var info = P("Broken");
+    services.CurrentProjectProvider
+      .Setup(p => p.OpenAsync(info, It.IsAny<CancellationToken>()))
+      .ThrowsAsync(new InvalidOperationException("The project could not be opened."));
+    var page = await CreatePageAsync(services);
+    var projectItem = new ProjectItem(info);
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.SelectedProject = projectItem);
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => page.SelectedProject),
+      selected => selected is null,
+      timeoutMessage: "The failed project stayed selected.");
+
+    services.NavigationService.Verify(n => n.GoToAsync(It.IsAny<string>()), Times.Never());
+  }
+
+  [Fact]
+  public async Task SelectProject_with_a_newer_schema_warns_instead_of_opening()
+  {
+    var services = new TestServices();
+    var info = P("FromTheFuture");
+    services.CurrentProjectProvider
+      .Setup(p => p.OpenAsync(info, It.IsAny<CancellationToken>()))
+      .ThrowsAsync(new ProjectSchemaTooNewException(99, 1));
+    var page = await CreatePageAsync(services);
+
+    await page.InvokeProjectSelectedAsync(new ProjectItem(info));
+
+    services.AlertService.Verify(a => a.ShowWarningAsync(UIStrings.AlertTextProjectSchemaTooNew), Times.Once());
+    services.ProjectList.Verify(p => p.UpgradeAsync(It.IsAny<FileDescription>(), It.IsAny<CancellationToken>()), Times.Never());
+    services.NavigationService.Verify(n => n.GoToAsync(It.IsAny<string>()), Times.Never());
+  }
+
+  [Fact]
   public async Task Empty_list_shows_the_empty_state()
   {
     var page = await CreatePageAsync(new TestServices());

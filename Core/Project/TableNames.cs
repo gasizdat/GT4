@@ -26,7 +26,7 @@ internal class TableNames : TableBase, ITableNames
       """;
     await command.ExecuteNonQueryAsync(token);
 
-    command.CommandText = "CREATE UNIQUE INDEX NamesValueType ON Names(Value, Type, ParentId);";
+    command.CommandText = "CREATE UNIQUE INDEX IF NOT EXISTS NamesValueType ON Names(Value, Type, ParentId);";
     await command.ExecuteNonQueryAsync(token);
   }
 

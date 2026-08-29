@@ -1350,4 +1350,10 @@ FN - nom de famille</value>
   <data name="PersonFilterPart_2" xml:space="preserve">
     <value>{0}: {1}</value>
   </data>
+  <data name="AlertTextProjectSchemaOutdated" xml:space="preserve">
+    <value>Ce projet a été créé avec une version plus ancienne de l'application. Il doit être mis à jour avant de pouvoir être ouvert. Le mettre à jour maintenant ?</value>
+  </data>
+  <data name="AlertTextProjectSchemaTooNew" xml:space="preserve">
+    <value>Ce projet a été créé avec une version plus récente de l'application. Mettez à jour l'application pour l'ouvrir.</value>
+  </data>
 </root>

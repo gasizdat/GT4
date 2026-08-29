@@ -1350,4 +1350,10 @@ FN - род</value>
   <data name="PersonFilterPart_2" xml:space="preserve">
     <value>{0}: {1}</value>
   </data>
+  <data name="AlertTextProjectSchemaOutdated" xml:space="preserve">
+    <value>Проект создан более старой версией приложения. Перед открытием его нужно обновить. Обновить сейчас?</value>
+  </data>
+  <data name="AlertTextProjectSchemaTooNew" xml:space="preserve">
+    <value>Проект создан более новой версией приложения. Чтобы открыть его, обновите приложение.</value>
+  </data>
 </root>

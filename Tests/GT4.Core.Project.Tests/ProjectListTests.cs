@@ -131,6 +131,32 @@ public sealed class ProjectListTests : IDisposable
     await transaction.CommitAsync(Token);
   }
 
+  private async Task RunSqlAsync(FileDescription file, string sql)
+  {
+    // Unpooled, or the handle outlives the connection and the next copy of the file fails.
+    await using var raw = new SqliteConnection($"Data Source={_fs.ToPath(file)};Pooling=False");
+    await raw.OpenAsync(Token);
+    using var command = raw.CreateCommand();
+    command.CommandText = sql;
+    await command.ExecuteNonQueryAsync(Token);
+  }
+
+  /// <summary>Rewinds a project to the schema of the first release: NameData shipped after it, and
+  /// nothing back then stamped a version.</summary>
+  private Task MakeLegacyAsync(FileDescription origin) =>
+    RunSqlAsync(origin, "DROP TABLE NameData; PRAGMA user_version = 0;");
+
+  private async Task<int> ReadSchemaVersionAsync(FileDescription file)
+  {
+    // Unpooled, or the handle outlives the connection and the next copy of the file fails.
+    await using var raw = new SqliteConnection($"Data Source={_fs.ToPath(file)};Pooling=False");
+    await raw.OpenAsync(Token);
+    using var command = raw.CreateCommand();
+    command.CommandText = "PRAGMA user_version;";
+    var stored = await command.ExecuteScalarAsync(Token);
+    return Convert.ToInt32(stored);
+  }
+
   [Fact]
   public async Task Create_PersistsProjectToOrigin_AndListsIt()
   {
@@ -170,6 +196,90 @@ public sealed class ProjectListTests : IDisposable
     await using var host = await _list.OpenAsync(origin, Token);
     host.Project.Should().NotBeNull();
     (await host.Project!.Metadata.GetProjectNameAsync(Token)).Should().Be("Openable");
+  }
+
+  [Fact]
+  public async Task Create_StampsTheCurrentSchemaVersion()
+  {
+    var origin = await SeedProjectAsync("Stamped", "d");
+
+    (await ReadSchemaVersionAsync(origin)).Should().Be(ProjectDocument.CurrentSchemaVersion);
+  }
+
+  [Fact]
+  public async Task Open_LegacySchemaFile_ThrowsOutdated_AndLeavesNoCacheBehind()
+  {
+    var origin = await SeedProjectAsync("Legacy", "d");
+    await MakeLegacyAsync(origin);
+
+    var act = () => _list.OpenAsync(origin, Token);
+
+    await act.Should().ThrowAsync<ProjectSchemaOutdatedException>();
+    // The rejected open had already copied the origin into the cache; left there it would resurface as
+    // a revision of a project the user never edited.
+    _fs.GetFiles(_storage.ProjectsCache, $"*.{ProjectList.ProjectExtension}", recursive: true).Should().BeEmpty();
+  }
+
+  [Fact]
+  public async Task GetItems_LegacySchemaFile_StillListsItByName()
+  {
+    // Listing only reads Metadata, which every version has, so an upgradable project must appear as
+    // itself rather than as an error entry the user cannot act on.
+    var origin = await SeedProjectAsync("Legacy", "The description");
+    await MakeLegacyAsync(origin);
+
+    var items = await _list.GetItemsAsync(Token);
+
+    items.Should().ContainSingle();
+    items[0].Name.Should().Be("Legacy");
+  }
+
+  [Fact]
+  public async Task Upgrade_LegacySchemaFile_RestoresTheMissingTable_AndStampsTheOrigin()
+  {
+    var origin = await SeedProjectAsync("Legacy", "The description");
+    await MakeLegacyAsync(origin);
+    await using (var stale = await ProjectDocument.OpenAsync(_fs.ToPath(origin), Token))
+    {
+      // The raw "no such table" this whole mechanism exists to keep away from the user.
+      var query = () => stale.NameData.GetNameIdsByDataAsync(Token);
+      await query.Should().ThrowAsync<SqliteException>();
+    }
+
+    await _list.UpgradeAsync(origin, Token);
+
+    // The migration runs on a cache copy, so this also pins that it is flushed back over the origin.
+    (await ReadSchemaVersionAsync(origin)).Should().Be(ProjectDocument.CurrentSchemaVersion);
+    await using var host = await _list.OpenAsync(origin, Token);
+    (await host.Project!.NameData.GetNameIdsByDataAsync(Token)).Should().BeEmpty();
+    (await host.Project!.Metadata.GetProjectNameAsync(Token)).Should().Be("Legacy");
+  }
+
+  [Fact]
+  public async Task Upgrade_UnstampedFileWithEveryTable_StampsItAndLeavesItIntact()
+  {
+    // The shape of every project written by the release that already had NameData: nothing back then
+    // stamped a version either, so it takes the same 0 -> 1 step with nothing left to create.
+    var origin = await SeedProjectAsync("Unstamped", "The description");
+    await RunSqlAsync(origin, "PRAGMA user_version = 0;");
+
+    await _list.UpgradeAsync(origin, Token);
+
+    (await ReadSchemaVersionAsync(origin)).Should().Be(ProjectDocument.CurrentSchemaVersion);
+    await using var host = await _list.OpenAsync(origin, Token);
+    (await host.Project!.Metadata.GetProjectNameAsync(Token)).Should().Be("Unstamped");
+    (await host.Project!.Metadata.GetProjectDescriptionAsync(Token)).Should().Be("The description");
+  }
+
+  [Fact]
+  public async Task Open_FutureSchemaFile_ThrowsTooNew()
+  {
+    var origin = await SeedProjectAsync("FromTheFuture", "d");
+    await RunSqlAsync(origin, $"PRAGMA user_version = {ProjectDocument.CurrentSchemaVersion + 1};");
+
+    var act = () => _list.OpenAsync(origin, Token);
+
+    await act.Should().ThrowAsync<ProjectSchemaTooNewException>();
   }
 
   [Fact]
