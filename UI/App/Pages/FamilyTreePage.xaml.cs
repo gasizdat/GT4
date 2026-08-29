@@ -17,7 +17,7 @@ using Path = Microsoft.Maui.Controls.Shapes.Path;
 namespace GT4.UI.Pages;
 
 [QueryProperty(nameof(PersonInfo), "PersonInfo")]
-public partial class FamilyTreePage : ContentPage
+public partial class FamilyTreePage : ContentPage, IZoomablePage
 {
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
@@ -42,6 +42,7 @@ public partial class FamilyTreePage : ContentPage
   private const double MinZoom = 0.4;
   private const double MaxZoom = 2.5;
   private const double ZoomStep = 0.25;
+  private const double DefaultZoom = 1.0;
 
   private Person? _Center;
   private string _CenterName = string.Empty;
@@ -53,7 +54,8 @@ public partial class FamilyTreePage : ContentPage
   private ViewTarget _ViewTarget = ViewTarget.Center;
   private double _PanStartScrollX;
   private double _PanStartScrollY;
-  private double _ZoomScale = 1.0;
+  private double _ZoomScale = DefaultZoom;
+  private double _PendingZoom;
   private int _LoadOperationsCount = 0;
   private ProjectInfo? _LastProjectInfo;
 
@@ -193,6 +195,41 @@ public partial class FamilyTreePage : ContentPage
   public bool LoadInProgress
   {
     get => _LoadOperationsCount != 0;
+  }
+
+  // The tree redraws in ZoomStep-sized jumps, far coarser than the deltas a pinch delivers, so bank
+  // them and step once per FontScale.Step accumulated.
+  public void Zoom(double delta)
+  {
+    _PendingZoom += delta;
+    if (Math.Abs(_PendingZoom) < FontScale.Step)
+    {
+      return;
+    }
+
+    var direction = Math.Sign(_PendingZoom);
+    _PendingZoom -= direction * FontScale.Step;
+    SetZoom(_ZoomScale + direction * ZoomStep);
+  }
+
+  public void ResetZoom()
+  {
+    _PendingZoom = 0;
+    SetZoom(DefaultZoom);
+  }
+
+  // Resizing the tree means rebuilding it, so a step that lands on the scale already shown is
+  // dropped: at either clamp every further step in that direction would otherwise reload for nothing.
+  private void SetZoom(double scale)
+  {
+    var clamped = Math.Clamp(scale, MinZoom, MaxZoom);
+    if (clamped == _ZoomScale)
+    {
+      return;
+    }
+
+    _ZoomScale = clamped;
+    Reload(ViewTarget.Center);
   }
 
   private void SetLoadInProgress()
@@ -514,13 +551,11 @@ public partial class FamilyTreePage : ContentPage
         break;
 
       case string command when command == "ZoomIn":
-        _ZoomScale = Math.Clamp(_ZoomScale + ZoomStep, MinZoom, MaxZoom);
-        Reload(ViewTarget.Center);
+        SetZoom(_ZoomScale + ZoomStep);
         break;
 
       case string command when command == "ZoomOut":
-        _ZoomScale = Math.Clamp(_ZoomScale - ZoomStep, MinZoom, MaxZoom);
-        Reload(ViewTarget.Center);
+        SetZoom(_ZoomScale - ZoomStep);
         break;
 
       case string command when command == "Refresh":

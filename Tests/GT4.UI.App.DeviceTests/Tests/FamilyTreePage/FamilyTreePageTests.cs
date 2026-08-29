@@ -2,6 +2,7 @@ using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Pages;
+using GT4.UI.Utils.Settings;
 using Moq;
 using Xunit;
 
@@ -211,5 +212,73 @@ public class FamilyTreePageTests
     services.FamilyTreeProvider.Verify(
       f => f.BuildAsync(center, It.IsAny<int>(), 5, It.IsAny<bool>(), It.IsAny<CancellationToken>()),
       Times.Once());
+  }
+
+  [Fact]
+  public async Task A_zoom_below_a_whole_step_leaves_the_tree_alone()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+    var center = P(1, "Ivan");
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    var loadsBefore = page.CompletedLoads;
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.Zoom(0.6 * FontScale.Step));
+    await Task.Delay(200);
+
+    Assert.Equal(loadsBefore, page.CompletedLoads);
+  }
+
+  [Fact]
+  public async Task Successive_partial_zooms_accumulate_into_one_step()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+    var center = P(1, "Ivan");
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    var loadsBefore = page.CompletedLoads;
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.Zoom(0.6 * FontScale.Step));
+    await WaitForLoadAsync(page, services, () => page.Zoom(0.6 * FontScale.Step));
+
+    Assert.True(page.CompletedLoads > loadsBefore);
+  }
+
+  [Fact]
+  public async Task Zooming_out_past_the_minimum_stops_reloading()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+    var center = P(1, "Ivan");
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+
+    // 1.0 -> 0.75 -> 0.5 -> 0.4 (MinZoom, clamped); each of those is a real change of scale.
+    for (var step = 0; step < 3; step++)
+    {
+      await WaitForLoadAsync(page, services, () => page.Zoom(-FontScale.Step));
+    }
+    var loadsAtMinimum = page.CompletedLoads;
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.Zoom(-FontScale.Step));
+    await Task.Delay(200);
+
+    Assert.Equal(loadsAtMinimum, page.CompletedLoads);
+  }
+
+  [Fact]
+  public async Task ResetZoom_reloads_a_zoomed_tree_but_not_one_already_at_the_default()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+    var center = P(1, "Ivan");
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    await WaitForLoadAsync(page, services, () => page.InvokePageCommandAsync("ZoomIn"));
+
+    await WaitForLoadAsync(page, services, page.ResetZoom);
+    var loadsAfterReset = page.CompletedLoads;
+    await MainThread.InvokeOnMainThreadAsync(page.ResetZoom);
+    await Task.Delay(200);
+
+    Assert.Equal(loadsAfterReset, page.CompletedLoads);
   }
 }

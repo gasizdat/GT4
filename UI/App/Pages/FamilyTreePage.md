@@ -61,9 +61,14 @@ between them, centred on a focal person.
      page never auto-reloads on its own.
 
 ## Zoom
-- `"ZoomIn"` / `"ZoomOut"` (`OnPageCommand`) step `_ZoomScale` by `ZoomStep`, clamped to
-  `[MinZoom, MaxZoom]`, then `Reload(ViewTarget.Center)` — a full reload, since every node/connector
-  size and the canvas itself depend on the scaled metrics.
+- `"ZoomIn"` / `"ZoomOut"` (`OnPageCommand`) step `_ZoomScale` by `ZoomStep` through `SetZoom`, which
+  clamps to `[MinZoom, MaxZoom]` and reloads (`ViewTarget.Center`) only when the scale actually
+  changed — a full reload, since every node/connector size and the canvas itself depend on the
+  scaled metrics.
+- The page implements `IZoomablePage`, so while it is the current page the app-wide zoom gesture
+  (Android pinch) and hotkeys (Ctrl/Cmd +/-, 0) drive the tree instead of the global font scale.
+  Those deltas come in font-scale units, so `Zoom` banks them in `_PendingZoom` and steps once per
+  `FontScale.Step` accumulated; `ResetZoom` returns to `DefaultZoom`.
 
 ## "Load more" affordances
 - `CanLoadMoreAncestors` / `CanLoadMoreDescendants` are bindable bools driving the top/bottom
