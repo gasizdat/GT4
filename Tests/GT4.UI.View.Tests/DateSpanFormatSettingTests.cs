@@ -1,5 +1,6 @@
 using FluentAssertions;
 using GT4.Core.Utils;
+using GT4.UI.Utils;
 using GT4.UI.Utils.Settings;
 using Microsoft.Extensions.Configuration;
 using Moq;
@@ -104,6 +105,22 @@ public class DateSpanFormatSettingTests
     MakeFull(configuredValue: "YEARS").Example.Should().Contain("25");
   }
 
+  // One instance across both languages: the container keeps every setting as a singleton, so text
+  // captured while it was built would survive the switch.
+  [Fact]
+  public void Full_DisplayNameAndDescription_ReresolveWhenTheUILanguageChanges()
+  {
+    var setting = MakeFull();
+    TestLanguage.Use(Language.EN);
+    var englishName = setting.DisplayName;
+    var englishDescription = setting.Description;
+
+    TestLanguage.Use(Language.DE);
+
+    setting.DisplayName.Should().NotBe(englishName);
+    setting.Description.Should().NotBe(englishDescription);
+  }
+
   [Fact]
   public void Short_Value_WhenNotConfigured_ReturnsDefault()
   {
@@ -148,5 +165,19 @@ public class DateSpanFormatSettingTests
   public void Short_Example_SubstitutesTheExampleSpan()
   {
     MakeShort(configuredValue: "YEARS").Example.Should().Contain("5");
+  }
+
+  [Fact]
+  public void Short_DisplayNameAndDescription_ReresolveWhenTheUILanguageChanges()
+  {
+    var setting = MakeShort();
+    TestLanguage.Use(Language.EN);
+    var englishName = setting.DisplayName;
+    var englishDescription = setting.Description;
+
+    TestLanguage.Use(Language.DE);
+
+    setting.DisplayName.Should().NotBe(englishName);
+    setting.Description.Should().NotBe(englishDescription);
   }
 }

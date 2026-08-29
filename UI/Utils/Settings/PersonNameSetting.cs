@@ -13,6 +13,7 @@ internal sealed class PersonNameSetting : ISettingEditor
   private readonly IInteractiveConfiguration? _InteractiveConfiguration;
   private readonly string _FormatSection;
   private readonly string _DefaultFormat;
+  private readonly Func<string> _DisplayName;
 
   public PersonNameSetting(
     IConfiguration configuration,
@@ -22,17 +23,20 @@ internal sealed class PersonNameSetting : ISettingEditor
   {
     _Configuration = configuration;
     _InteractiveConfiguration = interactiveConfiguration;
-    (_FormatSection, _DefaultFormat, DisplayName) = nameFormat switch
+    // The localized slot stays deferred: the container keeps the setting as a singleton across a
+    // language switch.
+    (string Section, string DefaultFormat, Func<string> DisplayName) parts = nameFormat switch
     {
-      NameFormat.CommonPersonName => ("NameFormatter.CommonPersonName", "FF PP LL", UIStrings.FieldCommonPersonNameFormat),
-      NameFormat.FullPersonName => ("NameFormatter.FullPersonName", "FF PP LL (FN)", UIStrings.FieldFullPersonNameFormat),
-      NameFormat.PersonInitials => ("NameFormatter.PersonInitialsSetting", "LL FF. PP.", UIStrings.FieldPersonInitialsFormat),
-      NameFormat.ShortPersonName => ("NameFormatter.ShortPersonNameSetting", "FF PP", UIStrings.ShortPersonNameFormat),
+      NameFormat.CommonPersonName => ("NameFormatter.CommonPersonName", "FF PP LL", () => UIStrings.FieldCommonPersonNameFormat),
+      NameFormat.FullPersonName => ("NameFormatter.FullPersonName", "FF PP LL (FN)", () => UIStrings.FieldFullPersonNameFormat),
+      NameFormat.PersonInitials => ("NameFormatter.PersonInitialsSetting", "LL FF. PP.", () => UIStrings.FieldPersonInitialsFormat),
+      NameFormat.ShortPersonName => ("NameFormatter.ShortPersonNameSetting", "FF PP", () => UIStrings.ShortPersonNameFormat),
       _ => throw new ArgumentOutOfRangeException(nameof(nameFormat), nameFormat, null)
     };
+    (_FormatSection, _DefaultFormat, _DisplayName) = parts;
   }
 
-  public string DisplayName { get; }
+  public string DisplayName => _DisplayName();
 
   public string Example => NameFormatter.Format(Value, _PersonInfo);
 

@@ -11,6 +11,8 @@ internal sealed class DateFormatSetting : ISettingEditor
   private readonly IInteractiveConfiguration? _InteractiveConfiguration;
   private readonly string _FormatSection;
   private readonly string _DefaultFormat;
+  private readonly Func<string> _DisplayName;
+  private readonly Func<string> _Description;
   private readonly Date _ExampleDate;
 
   public DateFormatSetting(
@@ -21,29 +23,36 @@ internal sealed class DateFormatSetting : ISettingEditor
   {
     _Configuration = configuration;
     _InteractiveConfiguration = interactiveConfiguration;
-    (_FormatSection, _DefaultFormat, DisplayName, Description, _ExampleDate) = kind switch
-    {
-      DateFormatKind.Full => (
-        "DateFormatter.FullDateFormat",
-        "DD MM YYYY",
-        UIStrings.FieldDateDisplayFormat,
-        UIStrings.FieldDateDisplayFormatHint,
-        Date.Now),
-      DateFormatKind.Short => (
-        "DateFormatter.ShortDateFormat",
-        "MM YYYY",
-        UIStrings.FieldShortDateDisplayFormat,
-        UIStrings.FieldShortDateDisplayFormatHint,
-        Date.Now with { Status = DateStatus.DayUnknown }),
-      _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
-    };
+    // The localized slots stay deferred: the container keeps the setting as a singleton across a
+    // language switch.
+    (string Section,
+      string DefaultFormat,
+      Func<string> DisplayName,
+      Func<string> Description,
+      Date ExampleDate) parts = kind switch
+      {
+        DateFormatKind.Full => (
+          "DateFormatter.FullDateFormat",
+          "DD MM YYYY",
+          () => UIStrings.FieldDateDisplayFormat,
+          () => UIStrings.FieldDateDisplayFormatHint,
+          Date.Now),
+        DateFormatKind.Short => (
+          "DateFormatter.ShortDateFormat",
+          "MM YYYY",
+          () => UIStrings.FieldShortDateDisplayFormat,
+          () => UIStrings.FieldShortDateDisplayFormatHint,
+          Date.Now with { Status = DateStatus.DayUnknown }),
+        _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
+      };
+    (_FormatSection, _DefaultFormat, _DisplayName, _Description, _ExampleDate) = parts;
   }
 
   public string Group => nameof(DateFormatter);
 
-  public string DisplayName { get; }
+  public string DisplayName => _DisplayName();
 
-  public string Description { get; }
+  public string Description => _Description();
 
   public string Example => DateFormatter.Format(Value, _ExampleDate);
 
