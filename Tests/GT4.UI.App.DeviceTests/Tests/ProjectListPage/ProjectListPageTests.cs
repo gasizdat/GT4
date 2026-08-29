@@ -171,6 +171,28 @@ public class ProjectListPageTests
   }
 
   [Fact]
+  public async Task SelectProject_with_a_failing_open_clears_the_selection()
+  {
+    // The dead-row hazard a declined upgrade has, reached the other way: the alert reports the failure,
+    // but a row the setter still holds could never be tapped a second time.
+    var services = new TestServices();
+    var info = P("Broken");
+    services.CurrentProjectProvider
+      .Setup(p => p.OpenAsync(info, It.IsAny<CancellationToken>()))
+      .ThrowsAsync(new InvalidOperationException("The project could not be opened."));
+    var page = await CreatePageAsync(services);
+    var projectItem = new ProjectItem(info);
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.SelectedProject = projectItem);
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => page.SelectedProject),
+      selected => selected is null,
+      timeoutMessage: "The failed project stayed selected.");
+
+    services.NavigationService.Verify(n => n.GoToAsync(It.IsAny<string>()), Times.Never());
+  }
+
+  [Fact]
   public async Task SelectProject_with_a_newer_schema_warns_instead_of_opening()
   {
     var services = new TestServices();

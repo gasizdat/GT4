@@ -256,6 +256,22 @@ public sealed class ProjectListTests : IDisposable
   }
 
   [Fact]
+  public async Task Upgrade_UnstampedFileWithEveryTable_StampsItAndLeavesItIntact()
+  {
+    // The shape of every project written by the release that already had NameData: nothing back then
+    // stamped a version either, so it takes the same 0 -> 1 step with nothing left to create.
+    var origin = await SeedProjectAsync("Unstamped", "The description");
+    await RunSqlAsync(origin, "PRAGMA user_version = 0;");
+
+    await _list.UpgradeAsync(origin, Token);
+
+    (await ReadSchemaVersionAsync(origin)).Should().Be(ProjectDocument.CurrentSchemaVersion);
+    await using var host = await _list.OpenAsync(origin, Token);
+    (await host.Project!.Metadata.GetProjectNameAsync(Token)).Should().Be("Unstamped");
+    (await host.Project!.Metadata.GetProjectDescriptionAsync(Token)).Should().Be("The description");
+  }
+
+  [Fact]
   public async Task Open_FutureSchemaFile_ThrowsTooNew()
   {
     var origin = await SeedProjectAsync("FromTheFuture", "d");

@@ -98,14 +98,19 @@ public partial class ProjectListPage : ContentPage
 
   protected async Task OnProjectSelectedAsync(ProjectItem projectItem)
   {
-    if (await TryOpenProjectAsync(projectItem.Info))
+    try
     {
-      await _NavigationService.GoToAsync(UIRoutes.GetRoute<ProjectPage>());
+      if (await TryOpenProjectAsync(projectItem.Info))
+      {
+        await _NavigationService.GoToAsync(UIRoutes.GetRoute<ProjectPage>());
+      }
     }
-
-    // Cleared on every outcome, not just the successful one: the setter ignores a repeated value, so a
-    // row left selected after a declined upgrade could never be tapped again.
-    SelectedProject = null;
+    finally
+    {
+      // The setter ignores a repeated value, so a row still selected after a declined upgrade - or
+      // after a failure the alert has already reported - could never be tapped again.
+      SelectedProject = null;
+    }
   }
 
   protected override void OnNavigatedTo(NavigatedToEventArgs args)
@@ -199,10 +204,13 @@ public partial class ProjectListPage : ContentPage
         return false;
     }
 
-    // The upgrade rewrites the file, so it gets the longer budget rather than the per-query one.
+    // The upgrade copies the whole file twice, so it gets the longer budget rather than the per-query
+    // one; the reopen behind it is an ordinary open and takes the ordinary budget.
     using var upgradeToken = _CancellationTokenProvider.CreateShortOperationCancellationToken();
     await _ProjectList.UpgradeAsync(info.Origin, upgradeToken);
-    await _CurrentProjectProvider.OpenAsync(info, upgradeToken);
+
+    using var reopenToken = _CancellationTokenProvider.CreateDbCancellationToken();
+    await _CurrentProjectProvider.OpenAsync(info, reopenToken);
     return true;
   }
 

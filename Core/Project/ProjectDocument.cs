@@ -125,8 +125,9 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
   internal long NextTransactionNo() => Interlocked.Increment(ref _TransactionNo);
 
   /// <summary>
-  /// Applies every schema step this file has not seen yet, as one transaction: either the file ends up
-  /// at <see cref="CurrentSchemaVersion"/> or it is left exactly as it was.
+  /// Applies the steps this file has not seen yet as one transaction, so a failure part-way leaves it
+  /// at the version it came in with. A file from a newer build keeps its version rather than being
+  /// downgraded.
   /// </summary>
   internal async Task UpgradeSchemaAsync(CancellationToken token)
   {
