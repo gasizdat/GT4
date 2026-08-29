@@ -11,6 +11,7 @@ internal sealed class PersonNameSetting : ISettingEditor
 
   private readonly IConfiguration _Configuration;
   private readonly IInteractiveConfiguration? _InteractiveConfiguration;
+  private readonly NameFormat _NameFormat;
   private readonly string _FormatSection;
   private readonly string _DefaultFormat;
 
@@ -22,17 +23,25 @@ internal sealed class PersonNameSetting : ISettingEditor
   {
     _Configuration = configuration;
     _InteractiveConfiguration = interactiveConfiguration;
-    (_FormatSection, _DefaultFormat, DisplayName) = nameFormat switch
+    _NameFormat = nameFormat;
+    (_FormatSection, _DefaultFormat) = nameFormat switch
     {
-      NameFormat.CommonPersonName => ("NameFormatter.CommonPersonName", "FF PP LL", UIStrings.FieldCommonPersonNameFormat),
-      NameFormat.FullPersonName => ("NameFormatter.FullPersonName", "FF PP LL (FN)", UIStrings.FieldFullPersonNameFormat),
-      NameFormat.PersonInitials => ("NameFormatter.PersonInitialsSetting", "LL FF. PP.", UIStrings.FieldPersonInitialsFormat),
-      NameFormat.ShortPersonName => ("NameFormatter.ShortPersonNameSetting", "FF PP", UIStrings.ShortPersonNameFormat),
+      NameFormat.CommonPersonName => ("NameFormatter.CommonPersonName", "FF PP LL"),
+      NameFormat.FullPersonName => ("NameFormatter.FullPersonName", "FF PP LL (FN)"),
+      NameFormat.PersonInitials => ("NameFormatter.PersonInitialsSetting", "LL FF. PP."),
+      NameFormat.ShortPersonName => ("NameFormatter.ShortPersonNameSetting", "FF PP"),
       _ => throw new ArgumentOutOfRangeException(nameof(nameFormat), nameFormat, null)
     };
   }
 
-  public string DisplayName { get; }
+  // Resolved per read: the container keeps the setting as a singleton across a language switch.
+  public string DisplayName => _NameFormat switch
+  {
+    NameFormat.CommonPersonName => UIStrings.FieldCommonPersonNameFormat,
+    NameFormat.FullPersonName => UIStrings.FieldFullPersonNameFormat,
+    NameFormat.PersonInitials => UIStrings.FieldPersonInitialsFormat,
+    _ => UIStrings.ShortPersonNameFormat
+  };
 
   public string Example => NameFormatter.Format(Value, _PersonInfo);
 

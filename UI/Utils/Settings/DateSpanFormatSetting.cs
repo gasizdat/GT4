@@ -9,6 +9,7 @@ internal sealed class DateSpanFormatSetting : ISettingEditor
 {
   private readonly IConfiguration _Configuration;
   private readonly IInteractiveConfiguration? _InteractiveConfiguration;
+  private readonly DateSpanFormatKind _Kind;
   private readonly string _FormatSection;
   private readonly string _DefaultFormat;
   private readonly DateSpan _ExampleSpan;
@@ -21,19 +22,16 @@ internal sealed class DateSpanFormatSetting : ISettingEditor
   {
     _Configuration = configuration;
     _InteractiveConfiguration = interactiveConfiguration;
-    (_FormatSection, _DefaultFormat, DisplayName, Description, _ExampleSpan) = kind switch
+    _Kind = kind;
+    (_FormatSection, _DefaultFormat, _ExampleSpan) = kind switch
     {
       DateSpanFormatKind.Full => (
         "DateSpanFormatter.FullDateSpanFormat",
         "YEARS MONTHS DAYS",
-        UIStrings.FieldDateSpanDisplayFormat,
-        UIStrings.FieldDateSpanDisplayFormatHint,
         new DateSpan(25, 3, 15, DateStatus.WellKnown)),
       DateSpanFormatKind.Short => (
         "DateSpanFormatter.ShortDateSpanFormat",
         "YEARS MONTHS",
-        UIStrings.FieldShortDateSpanDisplayFormat,
-        UIStrings.FieldShortDateSpanDisplayFormatHint,
         new DateSpan(5, 6, 0, DateStatus.DayUnknown)),
       _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
     };
@@ -41,9 +39,18 @@ internal sealed class DateSpanFormatSetting : ISettingEditor
 
   public string Group => nameof(DateSpanFormatter);
 
-  public string DisplayName { get; }
+  // Resolved per read: the container keeps the setting as a singleton across a language switch.
+  public string DisplayName => _Kind switch
+  {
+    DateSpanFormatKind.Full => UIStrings.FieldDateSpanDisplayFormat,
+    _ => UIStrings.FieldShortDateSpanDisplayFormat
+  };
 
-  public string Description { get; }
+  public string Description => _Kind switch
+  {
+    DateSpanFormatKind.Full => UIStrings.FieldDateSpanDisplayFormatHint,
+    _ => UIStrings.FieldShortDateSpanDisplayFormatHint
+  };
 
   public string Example => DateSpanFormatter.Format(Value, _ExampleSpan);
 

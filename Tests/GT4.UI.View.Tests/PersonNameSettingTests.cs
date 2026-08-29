@@ -1,5 +1,6 @@
 using FluentAssertions;
 using GT4.Core.Utils;
+using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
 using GT4.UI.Utils.Settings;
 using Microsoft.Extensions.Configuration;
@@ -98,5 +99,23 @@ public class PersonNameSettingTests
   {
     Make(nameFormat, section, defaultFormat, configuredValue: "no placeholders here")
       .Example.Should().Be("no placeholders here");
+  }
+
+  // One instance across both languages: the container keeps every setting as a singleton, so text
+  // captured while it was built would survive the switch.
+  [Theory]
+  [InlineData(NameFormat.CommonPersonName, "NameFormatter.CommonPersonName", "FF PP LL")]
+  [InlineData(NameFormat.FullPersonName, "NameFormatter.FullPersonName", "FF PP LL (FN)")]
+  [InlineData(NameFormat.PersonInitials, "NameFormatter.PersonInitialsSetting", "LL FF. PP.")]
+  [InlineData(NameFormat.ShortPersonName, "NameFormatter.ShortPersonNameSetting", "FF PP")]
+  public void DisplayName_ReresolvesWhenTheUILanguageChanges(NameFormat nameFormat, string section, string defaultFormat)
+  {
+    var setting = Make(nameFormat, section, defaultFormat);
+    TestLanguage.Use(Language.EN);
+    var englishName = setting.DisplayName;
+
+    TestLanguage.Use(Language.DE);
+
+    setting.DisplayName.Should().NotBe(englishName);
   }
 }
