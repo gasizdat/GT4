@@ -125,11 +125,10 @@ public class FamilyInfoItem : CollectionItemBase<FamilyInfo>, INotifyPropertyCha
       return _Persons.Items;
     }
 
-    // FilterView has no debounce, so UpdateFamilies() re-runs Update() on every family on every
-    // keystroke. Reusing the existing snapshot when the visible top MaxDisplayedPersons is
-    // unchanged avoids rebinding SafeBindableLayout.ItemsSource -- which would otherwise force a
-    // full teardown/rebuild of every displayed card on every keystroke, even for a family the
-    // filter change didn't affect.
+    // UpdateFamilies() re-runs Update() on every family for every filter change. Reusing the
+    // existing snapshot when the visible top MaxDisplayedPersons is unchanged avoids rebinding
+    // SafeBindableLayout.ItemsSource -- which would otherwise force a full teardown/rebuild of every
+    // displayed card, even for a family the filter change didn't affect.
     var capped = _Persons.Items.Take(MaxDisplayedPersons);
     return _DisplayedPersons.Count == MaxDisplayedPersons && _DisplayedPersons.SequenceEqual(capped)
       ? _DisplayedPersons

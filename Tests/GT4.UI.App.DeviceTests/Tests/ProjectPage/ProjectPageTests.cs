@@ -207,7 +207,10 @@ public class ProjectPageTests
 
     var nameEntry = page.FilterView.FindByName<Entry>("NameFilterEntry");
     await MainThread.InvokeOnMainThreadAsync(() => nameEntry.Text = "John");
-    var families = await MainThread.InvokeOnMainThreadAsync(() => page.Families.ToArray());
+    var families = await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => page.Families.ToArray()),
+      listed => listed.Length == 1,
+      timeoutMessage: "The no-family card was still listed after the name filter settled.");
 
     var family = Assert.Single(families);
     Assert.Equal("Ivanov", family.Info.Value);
@@ -600,7 +603,10 @@ public class ProjectPageTests
 
     var nameEntry = page.FilterView.FindByName<Entry>("NameFilterEntry");
     await MainThread.InvokeOnMainThreadAsync(() => nameEntry.Text = "J*n");
-    var families = await MainThread.InvokeOnMainThreadAsync(() => page.Families.ToArray());
+    var families = await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => page.Families.ToArray()),
+      listed => listed.Length == 1,
+      timeoutMessage: "The wildcard name filter did not settle to a single family.");
 
     var family = Assert.Single(families);
     Assert.Equal("Ivanov", family.Info.Value);
@@ -620,11 +626,17 @@ public class ProjectPageTests
 
     var nameEntry = page.FilterView.FindByName<Entry>("NameFilterEntry");
     await MainThread.InvokeOnMainThreadAsync(() => nameEntry.Text = "John");
-    var filtered = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
+    var filtered = await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons),
+      persons => persons.Count == 1,
+      timeoutMessage: "The name filter did not settle to the single match.");
     Assert.Single(filtered);
 
     await MainThread.InvokeOnMainThreadAsync(() => nameEntry.Text = "");
-    var restored = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
+    var restored = await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons),
+      persons => persons.Count == 2,
+      timeoutMessage: "Clearing the name filter did not restore everyone.");
     Assert.Equal(2, restored.Count);
   }
 
@@ -727,11 +739,19 @@ public class ProjectPageTests
       yearSwitch.IsToggled = true;
       yearSlider.Value = 1975;
     });
-    var withinRange = await MainThread.InvokeOnMainThreadAsync(() => page.Families.Single().Persons);
-    Assert.Equal(["John"], withinRange.Select(p => p.DisplayName));
+    // The switch applies at once on the year the slider still sits at (its maximum), which matches
+    // nobody -- so the list passes through empty before the selected year settles.
+    var withinRange = await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => page.Families.ToArray()),
+      listed => listed.Length == 1 && listed[0].Persons.Count == 1,
+      timeoutMessage: "The year filter did not settle on the selected year.");
+    Assert.Equal(["John"], withinRange.Single().Persons.Select(p => p.DisplayName));
 
     await MainThread.InvokeOnMainThreadAsync(() => yearSlider.Value = 2010);
-    var outsideRange = await MainThread.InvokeOnMainThreadAsync(() => page.Families.ToArray());
+    var outsideRange = await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => page.Families.ToArray()),
+      listed => listed.Length == 0,
+      timeoutMessage: "Moving the year past every lifetime did not empty the list.");
     Assert.Empty(outsideRange);
   }
 

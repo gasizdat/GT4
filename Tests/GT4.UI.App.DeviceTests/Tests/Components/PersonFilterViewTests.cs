@@ -207,4 +207,101 @@ public sealed class PersonFilterViewTests
     Assert.Equal(((int)slider.Maximum).ToString(), view.SelectedYearText);
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
+
+  [Fact]
+  public async Task NameFilterEntry_KeystrokesInQuickSuccession_RaiseChangedOnceWithTheSettledValue()
+  {
+    var view = await CreateViewAsync();
+    await InitializeAsync(view, new TestServices());
+    var nameEntry = view.FindByName<Entry>("NameFilterEntry");
+    var raised = new List<string>();
+    view.Changed += (_, _) => raised.Add(view.NameFilter);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      nameEntry.Text = "J";
+      nameEntry.Text = "Jo";
+      nameEntry.Text = "John";
+    });
+
+    // The summary tracks every keystroke; only the host-facing signal waits for the input to settle.
+    Assert.Equal($"{UIStrings.FieldSearchText}: John", view.CurrentFilterSet);
+    Assert.Empty(raised);
+
+    await Poll.UntilAsync(
+      () => Task.FromResult(raised.Count),
+      count => count > 0,
+      timeoutMessage: "The settled name filter never reached the host.");
+
+    Assert.Equal(["John"], raised);
+  }
+
+  [Fact]
+  public async Task YearSlider_DragAcrossManyYears_RaisesChangedOnceOnTheYearItSettlesOn()
+  {
+    var view = await CreateViewAsync();
+    var services = new TestServices();
+    var person = new Person(1, Date.Create(1850, 1, 1, DateStatus.WellKnown), null, BiologicalSex.Male);
+    await InitializeAsync(view, services, () => [person]);
+    var loaded = new TaskCompletionSource();
+    view.FilterDataLoaded += (_, _) => loaded.SetResult();
+    await MainThread.InvokeOnMainThreadAsync(() => view.IsFiltersVisible = true);
+    await loaded.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+    var slider = view.FindByName<Slider>("YearSlider");
+    var raised = new List<string>();
+    view.Changed += (_, _) => raised.Add(view.SelectedYearText);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      slider.Value = 1900;
+      slider.Value = 1901;
+      slider.Value = 1902;
+    });
+    Assert.Empty(raised);
+
+    await Poll.UntilAsync(
+      () => Task.FromResult(raised.Count),
+      count => count > 0,
+      timeoutMessage: "The settled year never reached the host.");
+
+    Assert.Equal(["1902"], raised);
+  }
+
+  [Fact]
+  public async Task SexFilterPicker_RaisesChangedImmediately()
+  {
+    var view = await CreateViewAsync();
+    await InitializeAsync(view, new TestServices());
+    var sexPicker = view.FindByName<Picker>("SexFilterPicker");
+    var raised = 0;
+    view.Changed += (_, _) => raised++;
+
+    await MainThread.InvokeOnMainThreadAsync(() => sexPicker.SelectedIndex = 1);
+
+    Assert.Equal(1, raised);
+  }
+
+  [Fact]
+  public async Task ClearFiltersButton_Click_SupersedesAPendingTextChange()
+  {
+    var view = await CreateViewAsync();
+    await InitializeAsync(view, new TestServices());
+    var nameEntry = view.FindByName<Entry>("NameFilterEntry");
+    var clearButton = view.FindByName<Button>("ClearFiltersButton");
+
+    await MainThread.InvokeOnMainThreadAsync(() => nameEntry.Text = "John");
+    var raised = 0;
+    view.Changed += (_, _) => raised++;
+
+    await MainThread.InvokeOnMainThreadAsync(clearButton.SendClicked);
+
+    // The cleared state must not be followed a beat later by the pass the typing had pending.
+    await Poll.ConfirmNeverAsync(
+      () => Task.FromResult(raised),
+      count => count > 1,
+      TimeSpan.FromSeconds(2),
+      "The superseded name-filter change was raised after the filters were cleared.");
+    Assert.Equal(1, raised);
+  }
 }

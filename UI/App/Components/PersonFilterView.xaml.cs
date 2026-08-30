@@ -24,7 +24,10 @@ namespace GT4.UI.Components;
 /// </summary>
 public partial class PersonFilterView : ContentView
 {
+  private static readonly TimeSpan InputSettleDelay = TimeSpan.FromSeconds(1);
+
   private readonly PersonFilter _Filter = new();
+  private IDispatcherTimer? _InputSettleTimer;
   private ICancellationTokenProvider _CancellationTokenProvider = default!;
   private ICurrentProjectProvider _CurrentProjectProvider = default!;
   private IAlertService _AlertService = default!;
@@ -73,7 +76,10 @@ public partial class PersonFilterView : ContentView
   }
 
   /// <summary>Raised whenever a filter criterion changes (or lazily-fetched filter data lands), so
-  /// the host page can re-run its filter predicate.</summary>
+  /// the host page can re-run its filter predicate. The two continuously-edited criteria -- the name
+  /// text and the year -- coalesce: each edit restarts a delay and only the settled value is raised,
+  /// so a host never repopulates its collection for an intermediate keystroke or slider position.
+  /// Every other criterion raises immediately.</summary>
   public event EventHandler? Changed;
 
   /// <summary>Raised after the lazy marital-status/year-bounds fetch has been applied, on the main
@@ -135,7 +141,7 @@ public partial class PersonFilterView : ContentView
       }
 
       _Filter.NameFilter = value;
-      RaiseChanged();
+      RaiseChangedWhenInputSettles();
     }
   }
 
@@ -202,7 +208,7 @@ public partial class PersonFilterView : ContentView
         return;
       }
 
-      RaiseChanged();
+      RaiseChangedWhenInputSettles();
     }
   }
 
@@ -256,10 +262,41 @@ public partial class PersonFilterView : ContentView
     }
   }
 
-  private void RaiseChanged()
+  // The criterion is already written, so Matches, the summary and the year readout stay live while
+  // the user is still typing or dragging; only the host page's re-filter waits for the input to
+  // settle. A settled value that arrives before the delay elapses (a picker, the clear button, the
+  // bounds fetch) supersedes the pending pass rather than queueing behind it.
+  private void RaiseChangedWhenInputSettles()
   {
     this.RefreshView();
+
+    var timer = GetInputSettleTimer();
+    timer.Stop();
+    timer.Start();
+  }
+
+  private void RaiseChanged()
+  {
+    // Cancel after RefreshView, not before: pushing widened year bounds makes the slider clamp its
+    // own Value back through the binding, which arms the timer from inside RefreshView itself.
+    this.RefreshView();
+    _InputSettleTimer?.Stop();
     Changed?.Invoke(this, EventArgs.Empty);
+  }
+
+  private IDispatcherTimer GetInputSettleTimer()
+  {
+    if (_InputSettleTimer is not null)
+    {
+      return _InputSettleTimer;
+    }
+
+    var timer = Dispatcher.CreateTimer();
+    timer.Interval = InputSettleDelay;
+    timer.IsRepeating = false;
+    timer.Tick += (_, _) => RaiseChanged();
+    _InputSettleTimer = timer;
+    return timer;
   }
 
   // Marital status needs a relatives lookup no other part of a page's data requires, so it is fetched
