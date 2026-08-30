@@ -67,8 +67,9 @@ between them, centred on a focal person.
   scaled metrics.
 - The page implements `IZoomablePage`, so while it is the current page the app-wide zoom gesture
   (Android pinch) and hotkeys (Ctrl/Cmd +/-, 0) drive the tree instead of the global font scale.
-  Those deltas come in font-scale units, so `Zoom` banks them in `_PendingZoom` and steps once per
-  `FontScale.Step` accumulated; `ResetZoom` returns to `DefaultZoom`.
+  A pinch calls `Zoom` continuously, so it paces in the time domain — one `ZoomStep` per
+  `ZoomIntervalMs` (300), in the sign of the delta, magnitude ignored. `ResetZoom` is unpaced (a
+  discrete command, not a gesture) and returns to `DefaultZoom`.
 
 ## "Load more" affordances
 - `CanLoadMoreAncestors` / `CanLoadMoreDescendants` are bindable bools driving the top/bottom

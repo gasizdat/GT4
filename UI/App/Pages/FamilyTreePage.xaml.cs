@@ -43,6 +43,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   private const double MaxZoom = 2.5;
   private const double ZoomStep = 0.25;
   private const double DefaultZoom = 1.0;
+  private const int ZoomIntervalMs = 300;
 
   private Person? _Center;
   private string _CenterName = string.Empty;
@@ -55,7 +56,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   private double _PanStartScrollX;
   private double _PanStartScrollY;
   private double _ZoomScale = DefaultZoom;
-  private double _PendingZoom;
+  private long _LastZoomTicks;
   private int _LoadOperationsCount = 0;
   private ProjectInfo? _LastProjectInfo;
 
@@ -197,25 +198,24 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     get => _LoadOperationsCount != 0;
   }
 
-  // A pinch delivers deltas far finer than ZoomStep, so bank them and step once per FontScale.Step.
+  // A pinch calls this continuously while the fingers move, and the delta it carries bears no useful
+  // relation to a ZoomStep, so pace the tree in time instead: one step per ZoomIntervalMs, in
+  // whichever direction the gesture is currently going.
   public void Zoom(double delta)
   {
-    _PendingZoom += delta;
-    if (Math.Abs(_PendingZoom) < FontScale.Step)
+    var ticks = Environment.TickCount64;
+    if (ticks - _LastZoomTicks < ZoomIntervalMs)
     {
       return;
     }
 
-    var direction = Math.Sign(_PendingZoom);
-    _PendingZoom -= direction * FontScale.Step;
+    _LastZoomTicks = ticks;
+    var direction = Math.Sign(delta);
     SetZoom(_ZoomScale + direction * ZoomStep);
   }
 
-  public void ResetZoom()
-  {
-    _PendingZoom = 0;
-    SetZoom(DefaultZoom);
-  }
+  // Deliberately not paced: this is a discrete command, never part of a gesture stream.
+  public void ResetZoom() => SetZoom(DefaultZoom);
 
   // Every scale change costs a full rebuild, so a step landing on the current scale is dropped;
   // without that, each further step against a clamp reloads for nothing.

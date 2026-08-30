@@ -18,7 +18,17 @@ namespace GT4.UI.DeviceTests;
 /// </summary>
 public class FamilyTreePageTests
 {
+  // Longer than the page's own pacing interval, so a step here is never refused for being too soon.
+  private const int PastZoomInterval = 400;
+
   private static Name N(int id, string value, NameType type) => new(id, value, type, null);
+
+  // Counting zoom steps has to go through the provider, not CompletedLoads: two loads that overlap
+  // share one in-progress counter and so report a single completion between them.
+  private static void VerifyBuilds(TestServices services, int expected) =>
+    services.FamilyTreeProvider.Verify(
+      f => f.BuildAsync(It.IsAny<Person>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()),
+      Times.Exactly(expected));
 
   private static PersonInfo P(int id, string firstName) =>
     new(id, Date.Create(2000, 1, 1, DateStatus.WellKnown), null, BiologicalSex.Male,
@@ -218,22 +228,42 @@ public class FamilyTreePageTests
   }
 
   [Fact]
-  public async Task A_zoom_below_a_whole_step_leaves_the_tree_alone()
+  public async Task A_second_zoom_inside_the_pacing_interval_is_dropped()
   {
     var services = new TestServices();
     var page = await CreatePageAsync(services);
     var center = P(1, "Ivan");
     await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
-    var loadsBefore = page.CompletedLoads;
 
-    await MainThread.InvokeOnMainThreadAsync(() => page.Zoom(0.6 * FontScale.Step));
+    await WaitForLoadAsync(page, services, () =>
+    {
+      page.Zoom(-FontScale.Step);
+      page.Zoom(-FontScale.Step);
+    });
     await Task.Delay(200);
 
-    Assert.Equal(loadsBefore, page.CompletedLoads);
+    // The initial build, plus one step for the pair.
+    VerifyBuilds(services, 2);
   }
 
   [Fact]
-  public async Task Successive_partial_zooms_accumulate_into_one_step()
+  public async Task A_zoom_after_the_pacing_interval_steps_again()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+    var center = P(1, "Ivan");
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    await WaitForLoadAsync(page, services, () => page.Zoom(-FontScale.Step));
+
+    await Task.Delay(PastZoomInterval);
+    await WaitForLoadAsync(page, services, () => page.Zoom(-FontScale.Step));
+
+    VerifyBuilds(services, 3);
+  }
+
+  // Pacing replaced the old accumulate-to-a-threshold rule: the delta now carries only a direction.
+  [Fact]
+  public async Task A_delta_far_below_a_whole_step_still_zooms()
   {
     var services = new TestServices();
     var page = await CreatePageAsync(services);
@@ -241,8 +271,7 @@ public class FamilyTreePageTests
     await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
     var loadsBefore = page.CompletedLoads;
 
-    await MainThread.InvokeOnMainThreadAsync(() => page.Zoom(0.6 * FontScale.Step));
-    await WaitForLoadAsync(page, services, () => page.Zoom(0.6 * FontScale.Step));
+    await WaitForLoadAsync(page, services, () => page.Zoom(-0.001 * FontScale.Step));
 
     Assert.True(page.CompletedLoads > loadsBefore);
   }
@@ -258,14 +287,16 @@ public class FamilyTreePageTests
     // 1.0 -> 0.75 -> 0.5 -> 0.4 (MinZoom, clamped); each of those is a real change of scale.
     for (var step = 0; step < 3; step++)
     {
+      await Task.Delay(PastZoomInterval);
       await WaitForLoadAsync(page, services, () => page.Zoom(-FontScale.Step));
     }
-    var loadsAtMinimum = page.CompletedLoads;
 
+    // Past the interval too, so the clamp is what refuses this one -- not the pacing.
+    await Task.Delay(PastZoomInterval);
     await MainThread.InvokeOnMainThreadAsync(() => page.Zoom(-FontScale.Step));
     await Task.Delay(200);
 
-    Assert.Equal(loadsAtMinimum, page.CompletedLoads);
+    VerifyBuilds(services, 4);
   }
 
   // App reaches the zoom target via Shell.Current.CurrentPage, which must find a pushed page there.
