@@ -5,11 +5,11 @@ using KeyboardAccelerator = Microsoft.UI.Xaml.Input.KeyboardAccelerator;
 
 namespace GT4.UI;
 
-// Windows-only: wire Ctrl +/- (and Ctrl 0 to reset) to the global font scale. Accelerators are
-// attached to the native window's root content so they fire from any page regardless of focus.
+// Windows-only: wire Ctrl +/- (and Ctrl 0 to reset) to zoom. Accelerators are attached to the
+// native window's root content so they fire from any page regardless of focus.
 public partial class App
 {
-  partial void RegisterFontScaleHotkeys(Microsoft.Maui.Controls.Window window) => window.HandlerChanged += (_, _) => AttachAccelerators(window);
+  partial void RegisterZoomHotkeys(Microsoft.Maui.Controls.Window window) => window.HandlerChanged += (_, _) => AttachAccelerators(window);
 
   private void AttachAccelerators(Microsoft.Maui.Controls.Window window)
   {
@@ -50,12 +50,12 @@ public partial class App
     root.KeyboardAcceleratorPlacementMode = Microsoft.UI.Xaml.Input.KeyboardAcceleratorPlacementMode.Hidden;
 
     // Both the main-row '='/'-' keys and the numpad +/- so either gesture works.
-    Add(root, VirtualKey.Add, () => StepFontScale(FontScale.Step));
-    Add(root, (VirtualKey)0xBB /* OemPlus '=' */, () => StepFontScale(FontScale.Step));
-    Add(root, VirtualKey.Subtract, () => StepFontScale(-FontScale.Step));
-    Add(root, (VirtualKey)0xBD /* OemMinus '-' */, () => StepFontScale(-FontScale.Step));
-    Add(root, VirtualKey.Number0, ResetFontScale);
-    Add(root, VirtualKey.NumberPad0, ResetFontScale);
+    Add(root, VirtualKey.Add, () => StepZoom(FontScale.Step));
+    Add(root, (VirtualKey)0xBB /* OemPlus '=' */, () => StepZoom(FontScale.Step));
+    Add(root, VirtualKey.Subtract, () => StepZoom(-FontScale.Step));
+    Add(root, (VirtualKey)0xBD /* OemMinus '-' */, () => StepZoom(-FontScale.Step));
+    Add(root, VirtualKey.Number0, ResetZoom);
+    Add(root, VirtualKey.NumberPad0, ResetZoom);
   }
 
   private static void Add(FrameworkElement root, VirtualKey key, Action action)

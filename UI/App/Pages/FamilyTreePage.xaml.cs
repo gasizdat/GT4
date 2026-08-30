@@ -17,12 +17,12 @@ using Path = Microsoft.Maui.Controls.Shapes.Path;
 namespace GT4.UI.Pages;
 
 [QueryProperty(nameof(PersonInfo), "PersonInfo")]
-public partial class FamilyTreePage : ContentPage
+public partial class FamilyTreePage : ContentPage, IZoomablePage
 {
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly INameFormatter _NameFormatter;
-  private readonly FamilyTreeLayoutMetrics _Metrics = new();
+  private readonly FamilyTreeLayoutMetrics _Metrics = new() { Margin = OverlayClearance };
   private readonly FamilyTreeLayout _Layout = new();
   private readonly Color _ParentChildColor;
   private readonly Color _SpouseColor;
@@ -42,6 +42,10 @@ public partial class FamilyTreePage : ContentPage
   private const double MinZoom = 0.4;
   private const double MaxZoom = 2.5;
   private const double ZoomStep = 0.25;
+  private const double DefaultZoom = 1.0;
+  private const int ZoomIntervalMs = 300;
+  // Sized to clear the tallest of the "load more" and zoom buttons pinned over the canvas.
+  private const double OverlayClearance = 72;
 
   private Person? _Center;
   private string _CenterName = string.Empty;
@@ -53,7 +57,8 @@ public partial class FamilyTreePage : ContentPage
   private ViewTarget _ViewTarget = ViewTarget.Center;
   private double _PanStartScrollX;
   private double _PanStartScrollY;
-  private double _ZoomScale = 1.0;
+  private double _ZoomScale = DefaultZoom;
+  private long _LastZoomTicks;
   private int _LoadOperationsCount = 0;
   private ProjectInfo? _LastProjectInfo;
 
@@ -195,6 +200,36 @@ public partial class FamilyTreePage : ContentPage
     get => _LoadOperationsCount != 0;
   }
 
+  // A pinch's delta bears no useful relation to a ZoomStep, so pace in time and use only its sign.
+  public void Zoom(double delta)
+  {
+    var ticks = Environment.TickCount64;
+    if (ticks - _LastZoomTicks < ZoomIntervalMs)
+    {
+      return;
+    }
+
+    _LastZoomTicks = ticks;
+    var direction = Math.Sign(delta);
+    SetZoom(_ZoomScale + direction * ZoomStep);
+  }
+
+  // Deliberately not paced: this is a discrete command, never part of a gesture stream.
+  public void ResetZoom() => SetZoom(DefaultZoom);
+
+  // A scale change costs a full rebuild, so repeated steps against a clamp must not reload.
+  private void SetZoom(double scale)
+  {
+    var clamped = Math.Clamp(scale, MinZoom, MaxZoom);
+    if (clamped == _ZoomScale)
+    {
+      return;
+    }
+
+    _ZoomScale = clamped;
+    Reload(ViewTarget.Center);
+  }
+
   private void SetLoadInProgress()
   {
     _LoadOperationsCount++;
@@ -277,7 +312,8 @@ public partial class FamilyTreePage : ContentPage
         NodeHeight = _Metrics.NodeHeight * zoom,
         HorizontalGap = _Metrics.HorizontalGap * zoom,
         VerticalGap = _Metrics.VerticalGap * zoom,
-        Margin = _Metrics.Margin * zoom,
+        // Not the zoom: this metric clears fixed-size overlays, so it tracks the font that sizes them.
+        Margin = _Metrics.Margin * (_FontScale?.CurrentFactor ?? FontScale.DefaultFactor),
         CornerRadius = _Metrics.CornerRadius * zoom,
       };
 
@@ -514,13 +550,11 @@ public partial class FamilyTreePage : ContentPage
         break;
 
       case string command when command == "ZoomIn":
-        _ZoomScale = Math.Clamp(_ZoomScale + ZoomStep, MinZoom, MaxZoom);
-        Reload(ViewTarget.Center);
+        SetZoom(_ZoomScale + ZoomStep);
         break;
 
       case string command when command == "ZoomOut":
-        _ZoomScale = Math.Clamp(_ZoomScale - ZoomStep, MinZoom, MaxZoom);
-        Reload(ViewTarget.Center);
+        SetZoom(_ZoomScale - ZoomStep);
         break;
 
       case string command when command == "Refresh":
