@@ -9,9 +9,8 @@ public delegate bool ObservableCollectionFilterPredicate<T>(FilteredObservableCo
 
 public class FilteredObservableCollection<T> : ICollection<T>, ICollection
 {
-  // ObservableCollection<T> has no bulk-populate API, so an initial load (Clear then AddRange of N
-  // items) fires N individual Insert notifications. That's a per-row cost the CollectionView adapter
-  // pays on every page load. Populating from empty via this instead fires a single Reset.
+  // ObservableCollection<T> has no bulk-populate API, so filling it item by item fires N separate
+  // Insert notifications. This fires a single Reset instead.
   private sealed class BulkObservableCollection<TItem> : ObservableCollection<TItem>
   {
     public void ReplaceAll(IEnumerable<TItem> items)
@@ -59,22 +58,26 @@ public class FilteredObservableCollection<T> : ICollection<T>, ICollection
 
   public object SyncRoot => _Items;
 
-  // A positional remove-then-insert merge, not a full diff: unaffected items raise no
-  // CollectionChanged event. This is only correct because _Items is never reordered in place --
+  // The positional merge is only correct because _Items is never reordered in place --
   // Add/AddRange/InsertRange only add, RemoveRange only removes a contiguous run, and Clear wipes it
-  // -- which guarantees two filter passes always agree on the relative order of any item present in
-  // both. Do not add a method that reorders _Items without revisiting this.
+  // -- so two filter passes always agree on the relative order of any item present in both. Do not
+  // add a method that reorders _Items without revisiting this.
   public void Update()
   {
     var matched = _Items.Where(item => _Filter?.Invoke(this, item) == true).ToArray();
+    var matchedSet = new HashSet<T>(matched);
+    var survivorsCount = _InnerCollection.Count(matchedSet.Contains);
+    var removalsCount = _InnerCollection.Count - survivorsCount;
+    var insertionsCount = matched.Length - survivorsCount;
+    var touchedCount = removalsCount + insertionsCount;
 
-    if (_InnerCollection.Count == 0 && matched.Length > 0)
+    // Ascending inserts land inside the CollectionView's realized viewport, so virtualization does
+    // not spare them: restoring N items one notification at a time costs N times what one Reset does.
+    if (touchedCount > survivorsCount)
     {
       _InnerCollection.ReplaceAll(matched);
       return;
     }
-
-    var matchedSet = new HashSet<T>(matched);
 
     for (var i = _InnerCollection.Count - 1; i >= 0; i--)
     {
