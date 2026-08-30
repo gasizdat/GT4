@@ -109,8 +109,6 @@ public sealed class SetCursorOnTrueBehavior : Behavior<InputView>
     if (!IsCursorSet)
       return;
 
-    // Reaching into an element not yet in the platform visual tree is undefined behaviour, and
-    // Loaded is what says it is in there.
     if (!_IsLoaded)
       return;
 

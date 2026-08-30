@@ -26,8 +26,8 @@ public static class ScrollToSelected
       }
       catch (Exception)
       {
-        // ScrollTo throws when the selection is not in ItemsSource, which a filter change makes
-        // routine; there is nothing to scroll to and nothing to report.
+        // Scrolling is cosmetic and this runs inside a binding update: a platform ScrollTo that
+        // objects to an item outside ItemsSource must not surface there.
       }
     }
   }
