@@ -262,7 +262,6 @@ public class FamilyTreePageTests
     VerifyBuilds(services, 3);
   }
 
-  // Pacing replaced the old accumulate-to-a-threshold rule: the delta now carries only a direction.
   [Fact]
   public async Task A_delta_far_below_a_whole_step_still_zooms()
   {
@@ -293,8 +292,7 @@ public class FamilyTreePageTests
     await Task.Delay(PastZoomInterval);
     await WaitForLoadAsync(page, services, () => page.Zoom(-FontScale.Step));
 
-    // One step out is 0.75x, and the canvas is one node between two gaps. Only the node may shrink:
-    // the gaps clear fixed-size buttons, so scaling them is what let the tree slide under those.
+    // One step out is 0.75x and the canvas is one node between two gaps, so only the node may shrink.
     var nodeHeight = new FamilyTreeLayoutMetrics().NodeHeight;
     Assert.Equal(heightAtFullZoom - (0.25 * nodeHeight), canvas.HeightRequest, precision: 3);
   }
@@ -336,6 +334,25 @@ public class FamilyTreePageTests
 
     var currentPage = await MainThread.InvokeOnMainThreadAsync(() => Shell.Current?.CurrentPage);
     Assert.Same(page, currentPage);
+  }
+
+  [Fact]
+  public async Task ResetZoom_is_not_held_off_by_a_zoom_that_just_happened()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+    var center = P(1, "Ivan");
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+
+    await WaitForLoadAsync(page, services, () =>
+    {
+      page.Zoom(-FontScale.Step);
+      page.ResetZoom();
+    });
+    await Task.Delay(200);
+
+    // The initial build, the step out, and the reset straight back -- the reset is not paced.
+    VerifyBuilds(services, 3);
   }
 
   [Fact]

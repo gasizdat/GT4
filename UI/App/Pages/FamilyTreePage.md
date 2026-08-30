@@ -25,7 +25,7 @@ between them, centred on a focal person.
   `FamilyTreeLayoutMetrics` dimension before layout and triggers a full `Reload` — except `Margin`,
   which is the `OverlayClearance` gap keeping the tree clear of the pinned "load more"/zoom buttons.
   Those are fixed-size overlays, so that one metric follows the font scale that sizes them, never the
-  zoom; scaling it with the zoom is what let the tree slide under the buttons at low zoom.
+  zoom.
 - `_LoadOperationsCount`: reentrant in-flight-load counter backing `LoadInProgress`; the load-more
   buttons disable while any load is running.
 - `_NodeCache` / `_ConnectorPool` / `_ThumbnailCache`: retained node views, pooled connector shapes,

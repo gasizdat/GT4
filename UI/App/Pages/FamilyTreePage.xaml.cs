@@ -44,8 +44,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   private const double ZoomStep = 0.25;
   private const double DefaultZoom = 1.0;
   private const int ZoomIntervalMs = 300;
-  // The "load more" and zoom buttons sit pinned over the canvas, so the tree needs an edge gap wide
-  // enough to clear the tallest of them.
+  // Sized to clear the tallest of the "load more" and zoom buttons pinned over the canvas.
   private const double OverlayClearance = 72;
 
   private Person? _Center;
@@ -201,9 +200,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     get => _LoadOperationsCount != 0;
   }
 
-  // A pinch calls this continuously while the fingers move, and the delta it carries bears no useful
-  // relation to a ZoomStep, so pace the tree in time instead: one step per ZoomIntervalMs, in
-  // whichever direction the gesture is currently going.
+  // A pinch's delta bears no useful relation to a ZoomStep, so pace in time and use only its sign.
   public void Zoom(double delta)
   {
     var ticks = Environment.TickCount64;
@@ -318,8 +315,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
         VerticalGap = _Metrics.VerticalGap * zoom,
         // Alone among the metrics this one clears fixed overlays rather than sizing the tree, so it
         // tracks the font that sizes those buttons instead of the zoom.
-        // Alone among the metrics this one clears fixed overlays rather than sizing the tree, so it
-        // tracks the font that sizes those buttons instead of the zoom.
+        // Not the zoom: this metric clears fixed-size overlays, so it tracks the font that sizes them.
         Margin = _Metrics.Margin * (_FontScale?.CurrentFactor ?? FontScale.DefaultFactor),
         CornerRadius = _Metrics.CornerRadius * zoom,
       };
