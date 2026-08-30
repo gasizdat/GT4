@@ -539,5 +539,35 @@ public class PageLayoutTests
     await MainThread.InvokeOnMainThreadAsync(() => loading.IsBusy = false);
     Assert.Null(await CursorShapeAsync());
   }
+
+  // A cursor set on the panel only reaches the screen where something inside it answers the hit test:
+  // WinUI resolves the shape by walking up from the element under the pointer, and over a gap with no
+  // hit-testable element the window's arrow wins instead.
+  [Fact]
+  public async Task The_middle_of_a_page_answers_the_hit_test_the_cursor_resolves_through()
+  {
+    var layout = await CreateLayoutAsync();
+    await MainThread.InvokeOnMainThreadAsync(() => layout.Body = new BoxView { HeightRequest = 200 });
+
+    var page = await MainThread.InvokeOnMainThreadAsync(() => new ContentPage { Content = layout });
+    await using var window = await WindowHost.AttachAsync(page);
+
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => layout.Frame),
+      frame => frame.Width > 0,
+      timeoutMessage: "The layout was never arranged.");
+
+    var hits = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      var panel = (WaitCursorPanel)layout.Handler!.PlatformView!;
+      var centre = new Windows.Foundation.Point(panel.ActualWidth / 2, panel.ActualHeight / 2);
+      var transform = panel.TransformToVisual(null);
+      var inHostCoordinates = transform.TransformPoint(centre);
+      var elements = Microsoft.UI.Xaml.Media.VisualTreeHelper.FindElementsInHostCoordinates(inHostCoordinates, panel);
+      return elements.Count();
+    });
+
+    Assert.True(hits > 0, "Nothing under the middle of the page answers the hit test, so no cursor resolves there.");
+  }
 #endif
 }
