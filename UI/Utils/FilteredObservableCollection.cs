@@ -9,9 +9,9 @@ public delegate bool ObservableCollectionFilterPredicate<T>(FilteredObservableCo
 
 public class FilteredObservableCollection<T> : ICollection<T>, ICollection
 {
-  // ObservableCollection<T> has no bulk-populate API, so an initial load (Clear then AddRange of N
-  // items) fires N individual Insert notifications. That's a per-row cost the CollectionView adapter
-  // pays on every page load. Populating from empty via this instead fires a single Reset.
+  // ObservableCollection<T> has no bulk-populate API, so filling it with N items fires N individual
+  // Insert notifications. That's a per-row cost the CollectionView adapter pays for each one.
+  // Populating via this instead fires a single Reset.
   private sealed class BulkObservableCollection<TItem> : ObservableCollection<TItem>
   {
     public void ReplaceAll(IEnumerable<TItem> items)
@@ -59,22 +59,29 @@ public class FilteredObservableCollection<T> : ICollection<T>, ICollection
 
   public object SyncRoot => _Items;
 
-  // A positional remove-then-insert merge, not a full diff: unaffected items raise no
-  // CollectionChanged event. This is only correct because _Items is never reordered in place --
-  // Add/AddRange/InsertRange only add, RemoveRange only removes a contiguous run, and Clear wipes it
-  // -- which guarantees two filter passes always agree on the relative order of any item present in
-  // both. Do not add a method that reorders _Items without revisiting this.
+  // Either a single Reset rebuild or a positional remove-then-insert merge that leaves unaffected
+  // items out of every notification. The merge is only correct because _Items is never reordered in
+  // place -- Add/AddRange/InsertRange only add, RemoveRange only removes a contiguous run, and Clear
+  // wipes it -- which guarantees two filter passes always agree on the relative order of any item
+  // present in both. Do not add a method that reorders _Items without revisiting this.
   public void Update()
   {
     var matched = _Items.Where(item => _Filter?.Invoke(this, item) == true).ToArray();
+    var matchedSet = new HashSet<T>(matched);
+    var survivorsCount = _InnerCollection.Count(matchedSet.Contains);
+    var removalsCount = _InnerCollection.Count - survivorsCount;
+    var insertionsCount = matched.Length - survivorsCount;
+    var touchedCount = removalsCount + insertionsCount;
 
-    if (_InnerCollection.Count == 0 && matched.Length > 0)
+    // Every granular notification costs the CollectionView adapter a layout pass, and the ascending
+    // insert pass lands each one inside the realized viewport -- so restoring N items one at a time
+    // realizes all N rather than a screenful. Once the merge would touch more positions than it
+    // leaves alone, rebuilding is cheaper than the diffing it saves.
+    if (touchedCount > survivorsCount)
     {
       _InnerCollection.ReplaceAll(matched);
       return;
     }
-
-    var matchedSet = new HashSet<T>(matched);
 
     for (var i = _InnerCollection.Count - 1; i >= 0; i--)
     {

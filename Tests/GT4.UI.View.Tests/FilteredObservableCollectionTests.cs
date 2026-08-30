@@ -165,7 +165,7 @@ public class FilteredObservableCollectionTests
     var threshold = 0;
     var collection = new FilteredObservableCollection<int>();
     collection.Filter = (_, item) => item > threshold;
-    collection.AddRange([1, 2, 3, 4, 5]);
+    collection.AddRange([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 
     var events = new List<NotifyCollectionChangedEventArgs>();
     collection.Items.CollectionChanged += (_, e) => events.Add(e);
@@ -178,7 +178,7 @@ public class FilteredObservableCollectionTests
     // so compare as a set rather than asserting a specific order.
     events.SelectMany(e => e.OldItems?.Cast<int>() ?? []).Should().BeEquivalentTo([1, 2, 3]);
     events.SelectMany(e => e.NewItems?.Cast<int>() ?? []).Should().BeEmpty();
-    collection.Items.Should().Equal(4, 5);
+    collection.Items.Should().Equal(4, 5, 6, 7, 8, 9, 10);
   }
 
   [Fact]
@@ -209,7 +209,7 @@ public class FilteredObservableCollectionTests
     var threshold = 0;
     var collection = new FilteredObservableCollection<int>();
     collection.Filter = (_, item) => item > threshold;
-    collection.AddRange([1, 2, 3, 4, 5]);
+    collection.AddRange([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 
     var touchedItems = new List<int>();
     collection.Items.CollectionChanged += (_, e) =>
@@ -223,6 +223,61 @@ public class FilteredObservableCollectionTests
 
     touchedItems.Should().NotContain(4);
     touchedItems.Should().NotContain(5);
+  }
+
+  [Fact]
+  public void Update_ClearingAFilterThatLeftItemsVisible_RaisesASingleReset()
+  {
+    var threshold = 0;
+    var collection = new FilteredObservableCollection<int>();
+    collection.Filter = (_, item) => item > threshold;
+    collection.AddRange(Enumerable.Range(1, 1000));
+
+    threshold = 999;
+    collection.Update();
+    collection.Items.Should().Equal(1000);
+
+    var events = new List<NotifyCollectionChangedEventArgs>();
+    collection.Items.CollectionChanged += (_, e) => events.Add(e);
+
+    threshold = 0;
+    collection.Update();
+
+    events.Should().ContainSingle().Which.Action.Should().Be(NotifyCollectionChangedAction.Reset);
+    collection.Items.Should().HaveCount(1000);
+  }
+
+  [Fact]
+  public void Update_NarrowingToAFewMatches_RaisesASingleReset()
+  {
+    var threshold = 0;
+    var collection = new FilteredObservableCollection<int>();
+    collection.Filter = (_, item) => item > threshold;
+    collection.AddRange(Enumerable.Range(1, 1000));
+
+    var events = new List<NotifyCollectionChangedEventArgs>();
+    collection.Items.CollectionChanged += (_, e) => events.Add(e);
+
+    threshold = 999;
+    collection.Update();
+
+    events.Should().ContainSingle().Which.Action.Should().Be(NotifyCollectionChangedAction.Reset);
+    collection.Items.Should().Equal(1000);
+  }
+
+  [Fact]
+  public void Update_NoChange_RaisesNoEvent()
+  {
+    var collection = new FilteredObservableCollection<int>();
+    collection.Filter = (_, _) => true;
+    collection.AddRange([1, 2, 3]);
+
+    var events = new List<NotifyCollectionChangedEventArgs>();
+    collection.Items.CollectionChanged += (_, e) => events.Add(e);
+
+    collection.Update();
+
+    events.Should().BeEmpty();
   }
 
   [Fact]
