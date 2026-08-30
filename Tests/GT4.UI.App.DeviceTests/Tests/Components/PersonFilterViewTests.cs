@@ -224,7 +224,6 @@ public sealed class PersonFilterViewTests
       nameEntry.Text = "John";
     });
 
-    // The summary tracks every keystroke; only the host-facing signal waits for the input to settle.
     Assert.Equal($"{UIStrings.FieldSearchText}: John", view.CurrentFilterSet);
     Assert.Empty(raised);
 
@@ -296,7 +295,6 @@ public sealed class PersonFilterViewTests
 
     await MainThread.InvokeOnMainThreadAsync(clearButton.SendClicked);
 
-    // The cleared state must not be followed a beat later by the pass the typing had pending.
     await Poll.ConfirmNeverAsync(
       () => Task.FromResult(raised),
       count => count > 1,

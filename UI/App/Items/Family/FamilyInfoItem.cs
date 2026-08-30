@@ -125,10 +125,8 @@ public class FamilyInfoItem : CollectionItemBase<FamilyInfo>, INotifyPropertyCha
       return _Persons.Items;
     }
 
-    // UpdateFamilies() re-runs Update() on every family for every filter change. Reusing the
-    // existing snapshot when the visible top MaxDisplayedPersons is unchanged avoids rebinding
-    // SafeBindableLayout.ItemsSource -- which would otherwise force a full teardown/rebuild of every
-    // displayed card, even for a family the filter change didn't affect.
+    // A fresh instance rebinds SafeBindableLayout.ItemsSource and tears down every displayed card,
+    // so an unchanged visible top reuses the existing snapshot.
     var capped = _Persons.Items.Take(MaxDisplayedPersons);
     return _DisplayedPersons.Count == MaxDisplayedPersons && _DisplayedPersons.SequenceEqual(capped)
       ? _DisplayedPersons

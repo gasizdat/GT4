@@ -76,10 +76,8 @@ public partial class PersonFilterView : ContentView
   }
 
   /// <summary>Raised whenever a filter criterion changes (or lazily-fetched filter data lands), so
-  /// the host page can re-run its filter predicate. The two continuously-edited criteria -- the name
-  /// text and the year -- coalesce: each edit restarts a delay and only the settled value is raised,
-  /// so a host never repopulates its collection for an intermediate keystroke or slider position.
-  /// Every other criterion raises immediately.</summary>
+  /// the host page can re-run its filter predicate. The name text and the year coalesce -- only the
+  /// value an edit settles on is raised; every other criterion raises immediately.</summary>
   public event EventHandler? Changed;
 
   /// <summary>Raised after the lazy marital-status/year-bounds fetch has been applied, on the main
@@ -262,10 +260,8 @@ public partial class PersonFilterView : ContentView
     }
   }
 
-  // The criterion is already written, so Matches, the summary and the year readout stay live while
-  // the user is still typing or dragging; only the host page's re-filter waits for the input to
-  // settle. A settled value that arrives before the delay elapses (a picker, the clear button, the
-  // bounds fetch) supersedes the pending pass rather than queueing behind it.
+  // The criterion is written synchronously, so Matches and the summary stay current mid-edit; only
+  // the host's re-filter waits for the input to settle.
   private void RaiseChangedWhenInputSettles()
   {
     this.RefreshView();
@@ -277,8 +273,6 @@ public partial class PersonFilterView : ContentView
 
   private void RaiseChanged()
   {
-    // Cancel after RefreshView, not before: pushing widened year bounds makes the slider clamp its
-    // own Value back through the binding, which arms the timer from inside RefreshView itself.
     this.RefreshView();
     _InputSettleTimer?.Stop();
     Changed?.Invoke(this, EventArgs.Empty);
