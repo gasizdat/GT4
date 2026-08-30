@@ -22,7 +22,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly INameFormatter _NameFormatter;
-  private readonly FamilyTreeLayoutMetrics _Metrics = new();
+  private readonly FamilyTreeLayoutMetrics _Metrics = new() { Margin = OverlayClearance };
   private readonly FamilyTreeLayout _Layout = new();
   private readonly Color _ParentChildColor;
   private readonly Color _SpouseColor;
@@ -44,6 +44,9 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   private const double ZoomStep = 0.25;
   private const double DefaultZoom = 1.0;
   private const int ZoomIntervalMs = 300;
+  // The "load more" and zoom buttons sit pinned over the canvas, so the tree needs an edge gap wide
+  // enough to clear the tallest of them.
+  private const double OverlayClearance = 72;
 
   private Person? _Center;
   private string _CenterName = string.Empty;
@@ -313,7 +316,11 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
         NodeHeight = _Metrics.NodeHeight * zoom,
         HorizontalGap = _Metrics.HorizontalGap * zoom,
         VerticalGap = _Metrics.VerticalGap * zoom,
-        Margin = _Metrics.Margin * zoom,
+        // Alone among the metrics this one clears fixed overlays rather than sizing the tree, so it
+        // tracks the font that sizes those buttons instead of the zoom.
+        // Alone among the metrics this one clears fixed overlays rather than sizing the tree, so it
+        // tracks the font that sizes those buttons instead of the zoom.
+        Margin = _Metrics.Margin * (_FontScale?.CurrentFactor ?? FontScale.DefaultFactor),
         CornerRadius = _Metrics.CornerRadius * zoom,
       };
 

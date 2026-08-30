@@ -3,6 +3,7 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Pages;
+using GT4.UI.Utils;
 using GT4.UI.Utils.Settings;
 using Moq;
 using Xunit;
@@ -274,6 +275,28 @@ public class FamilyTreePageTests
     await WaitForLoadAsync(page, services, () => page.Zoom(-0.001 * FontScale.Step));
 
     Assert.True(page.CompletedLoads > loadsBefore);
+  }
+
+  [Fact]
+  public async Task Zooming_out_keeps_the_gap_that_clears_the_pinned_buttons()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    services.FamilyTreeProvider
+      .Setup(f => f.BuildAsync(It.IsAny<Person>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new FamilyTree(center.Id, [new FamilyTreeNode(center, 0)], []));
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    var canvas = page.FindByName<Grid>("Canvas");
+    var heightAtFullZoom = canvas.HeightRequest;
+
+    await Task.Delay(PastZoomInterval);
+    await WaitForLoadAsync(page, services, () => page.Zoom(-FontScale.Step));
+
+    // One step out is 0.75x, and the canvas is one node between two gaps. Only the node may shrink:
+    // the gaps clear fixed-size buttons, so scaling them is what let the tree slide under those.
+    var nodeHeight = new FamilyTreeLayoutMetrics().NodeHeight;
+    Assert.Equal(heightAtFullZoom - (0.25 * nodeHeight), canvas.HeightRequest, precision: 3);
   }
 
   [Fact]

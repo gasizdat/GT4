@@ -22,7 +22,10 @@ between them, centred on a focal person.
 - `_ViewTarget` (Center/Top/Bottom): records where the viewport should park after a rebuild.
 - `_PanStartScrollX/Y`: scroll offsets captured at the start of a drag-pan.
 - `_ZoomScale`: current zoom factor (`MinZoom` 0.4–`MaxZoom` 2.5, `ZoomStep` 0.25), scales every
-  `FamilyTreeLayoutMetrics` dimension before layout and triggers a full `Reload`.
+  `FamilyTreeLayoutMetrics` dimension before layout and triggers a full `Reload` — except `Margin`,
+  which is the `OverlayClearance` gap keeping the tree clear of the pinned "load more"/zoom buttons.
+  Those are fixed-size overlays, so that one metric follows the font scale that sizes them, never the
+  zoom; scaling it with the zoom is what let the tree slide under the buttons at low zoom.
 - `_LoadOperationsCount`: reentrant in-flight-load counter backing `LoadInProgress`; the load-more
   buttons disable while any load is running.
 - `_NodeCache` / `_ConnectorPool` / `_ThumbnailCache`: retained node views, pooled connector shapes,
