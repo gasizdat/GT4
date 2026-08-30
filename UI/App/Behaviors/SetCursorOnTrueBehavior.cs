@@ -27,7 +27,6 @@ public sealed class SetCursorOnTrueBehavior : Behavior<InputView>
     set => SetValue(IsCursorSetProperty, value);
   }
 
-  // Optional: reset bound property back to false after focusing
   public static readonly BindableProperty AutoResetProperty =
       BindableProperty.Create(
           nameof(AutoReset),
@@ -69,11 +68,9 @@ public sealed class SetCursorOnTrueBehavior : Behavior<InputView>
 
     _InputView = inputView;
 
-    // Loaded occurs when element is constructed and added to platform visual tree [3](https://learn.microsoft.com/en-us/dotnet/api/microsoft.maui.controls.visualelement.loaded?view=net-maui-10.0)
     inputView.Loaded += OnLoaded;
     inputView.Unloaded += OnUnloaded;
 
-    // If already true (e.g., restored state), try focusing after attach
     TrySetCursorIfNeeded();
   }
 
@@ -112,15 +109,14 @@ public sealed class SetCursorOnTrueBehavior : Behavior<InputView>
     if (!IsCursorSet)
       return;
 
-    // Focus on unrealized/offscreen elements is undefined behavior [2](https://learn.microsoft.com/en-us/dotnet/api/microsoft.maui.controls.visualelement.focus?view=net-maui-10.0)
-    // Loaded means it's in the platform visual tree [3](https://learn.microsoft.com/en-us/dotnet/api/microsoft.maui.controls.visualelement.loaded?view=net-maui-10.0)
+    // Reaching into an element not yet in the platform visual tree is undefined behaviour, and
+    // Loaded is what says it is in there.
     if (!_IsLoaded)
       return;
 
     if (!_InputView.IsVisible || !_InputView.IsEnabled)
       return;
 
-    // Dispatch to UI thread / next UI tick
     _InputView.Dispatcher.Dispatch(() =>
     {
       var position = CursorPosition switch
@@ -132,7 +128,7 @@ public sealed class SetCursorOnTrueBehavior : Behavior<InputView>
       _InputView.CursorPosition = position;
 
       if (AutoReset)
-        IsCursorSet = false; // allows future refocus pulses
+        IsCursorSet = false;
     });
   }
 }

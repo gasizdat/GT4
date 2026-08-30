@@ -20,7 +20,6 @@ public sealed class FocusOnTrueBehavior : Behavior<VisualElement>
     set => SetValue(IsFocusedProperty, value);
   }
 
-  // Optional: reset bound property back to false after focusing
   public static readonly BindableProperty AutoResetProperty =
       BindableProperty.Create(
           nameof(AutoReset),
@@ -47,11 +46,9 @@ public sealed class FocusOnTrueBehavior : Behavior<VisualElement>
 
     _associated = bindable;
 
-    // Loaded occurs when element is constructed and added to platform visual tree [3](https://learn.microsoft.com/en-us/dotnet/api/microsoft.maui.controls.visualelement.loaded?view=net-maui-10.0)
     bindable.Loaded += OnLoaded;
     bindable.Unloaded += OnUnloaded;
 
-    // If already true (e.g., restored state), try focusing after attach
     TryFocusIfNeeded();
   }
 
@@ -90,22 +87,20 @@ public sealed class FocusOnTrueBehavior : Behavior<VisualElement>
     if (!IsFocused)
       return;
 
-    // Focus on unrealized/offscreen elements is undefined behavior [2](https://learn.microsoft.com/en-us/dotnet/api/microsoft.maui.controls.visualelement.focus?view=net-maui-10.0)
-    // Loaded means it's in the platform visual tree [3](https://learn.microsoft.com/en-us/dotnet/api/microsoft.maui.controls.visualelement.loaded?view=net-maui-10.0)
+    // Focusing an element not yet in the platform visual tree is undefined behaviour, and Loaded is
+    // what says it is in there.
     if (!_isLoaded)
       return;
 
     if (!_associated.IsVisible || !_associated.IsEnabled)
       return;
 
-    // Dispatch to UI thread / next UI tick
     _associated.Dispatcher.Dispatch(() =>
     {
-      // Attempts to set focus; returns true if keyboard focus was set [2](https://learn.microsoft.com/en-us/dotnet/api/microsoft.maui.controls.visualelement.focus?view=net-maui-10.0)
       var focused = _associated.Focus();
 
       if (focused && AutoReset)
-        IsFocused = false; // allows future refocus pulses
+        IsFocused = false;
     });
   }
 }

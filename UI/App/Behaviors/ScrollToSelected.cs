@@ -26,7 +26,8 @@ public static class ScrollToSelected
       }
       catch (Exception)
       {
-        // Item not found in ItemsSource; safely ignore or log as needed.
+        // ScrollTo throws when the selection is not in ItemsSource, which a filter change makes
+        // routine; there is nothing to scroll to and nothing to report.
       }
     }
   }
