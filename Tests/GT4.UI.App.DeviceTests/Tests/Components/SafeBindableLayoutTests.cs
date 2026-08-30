@@ -1,6 +1,8 @@
 using Microsoft.Maui;
 using GT4.UI.Components;
+using GT4.UI.Utils;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using Xunit;
 
 namespace GT4.UI.DeviceTests;
@@ -96,5 +98,30 @@ public class SafeBindableLayoutTests
     Assert.Equal(4, after.Count);
     Assert.Equal(reused, after.Take(3));
     Assert.Equal("W", ((Label)after[3]).BindingContext);
+  }
+
+  // A filter that hides most of a family's members makes FilteredObservableCollection rebuild with a
+  // single Reset instead of granular removals, which reaches Rebuild through the fallback branch.
+  [Fact]
+  public async Task A_source_reset_rebuilds_the_children_reusing_the_overlap()
+  {
+    var layout = await CreateAttachedLayoutAsync();
+    var visibleUpTo = 4;
+    var source = new FilteredObservableCollection<int> { Filter = (_, item) => item <= visibleUpTo };
+    source.AddRange([1, 2, 3, 4]);
+    await MainThread.InvokeOnMainThreadAsync(() => layout.ItemsSource = source.Items);
+    var before = await MainThread.InvokeOnMainThreadAsync(() => layout.Children.ToList());
+
+    var actions = new List<NotifyCollectionChangedAction>();
+    source.Items.CollectionChanged += (_, e) => actions.Add(e.Action);
+    visibleUpTo = 1;
+    await MainThread.InvokeOnMainThreadAsync(source.Update);
+    var after = await MainThread.InvokeOnMainThreadAsync(() => layout.Children.ToList());
+
+    Assert.Equal([NotifyCollectionChangedAction.Reset], actions);
+    Assert.Equal(4, before.Count);
+    Assert.Single(after);
+    Assert.Same(before[0], after[0]);
+    Assert.Equal(1, ((Label)after[0]).BindingContext);
   }
 }
