@@ -217,8 +217,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   // Deliberately not paced: this is a discrete command, never part of a gesture stream.
   public void ResetZoom() => SetZoom(DefaultZoom);
 
-  // Every scale change costs a full rebuild, so a step landing on the current scale is dropped;
-  // without that, each further step against a clamp reloads for nothing.
+  // A scale change costs a full rebuild, so repeated steps against a clamp must not reload.
   private void SetZoom(double scale)
   {
     var clamped = Math.Clamp(scale, MinZoom, MaxZoom);
@@ -313,8 +312,6 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
         NodeHeight = _Metrics.NodeHeight * zoom,
         HorizontalGap = _Metrics.HorizontalGap * zoom,
         VerticalGap = _Metrics.VerticalGap * zoom,
-        // Alone among the metrics this one clears fixed overlays rather than sizing the tree, so it
-        // tracks the font that sizes those buttons instead of the zoom.
         // Not the zoom: this metric clears fixed-size overlays, so it tracks the font that sizes them.
         Margin = _Metrics.Margin * (_FontScale?.CurrentFactor ?? FontScale.DefaultFactor),
         CornerRadius = _Metrics.CornerRadius * zoom,
