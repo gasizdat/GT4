@@ -7,11 +7,12 @@ using Xunit;
 
 namespace GT4.UI.DeviceTests;
 
-// Covers Rebuild's reuse-in-place strategy: a whole-source reassignment (the shape a CollectionView
-// cell recycling onto a different data item produces) rebinds existing children instead of always
-// tearing every one down, since ItemTemplate never varies per item and any child slot is therefore
-// interchangeable. PersonInfoViewLeakTests covers the companion leak-safety property (removed
-// children still release their platform handler).
+// Covers Rebuild's reuse-in-place strategy: a whole-source change -- a reassignment (the shape a
+// CollectionView cell recycling onto a different data item produces) or a Reset from the bound
+// collection -- rebinds existing children instead of always tearing every one down, since
+// ItemTemplate never varies per item and any child slot is therefore interchangeable.
+// PersonInfoViewLeakTests covers the companion leak-safety property (removed children still release
+// their platform handler).
 public class SafeBindableLayoutTests
 {
   private static async Task<SafeBindableLayout> CreateAttachedLayoutAsync()
@@ -100,8 +101,8 @@ public class SafeBindableLayoutTests
     Assert.Equal("W", ((Label)after[3]).BindingContext);
   }
 
-  // A filter that hides most of a family's members makes FilteredObservableCollection rebuild with a
-  // single Reset instead of granular removals, which reaches Rebuild through the fallback branch.
+  // The granular path ends on the same children, so without asserting the action too this would
+  // pass either way.
   [Fact]
   public async Task A_source_reset_rebuilds_the_children_reusing_the_overlap()
   {
