@@ -12,25 +12,25 @@ namespace GT4
     protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
 
     // The app delegate is the last link in the responder chain, so key commands declared here are
-    // global: Cmd +/- adjust the font scale and Cmd 0 resets it, mirroring the Windows Ctrl hotkeys.
+    // global: Cmd +/- zoom and Cmd 0 resets, mirroring the Windows Ctrl hotkeys.
     // NOTE: authored on Windows; not yet verified on a Mac build.
-    private readonly UIKeyCommand[] _FontScaleCommands =
+    private readonly UIKeyCommand[] _ZoomCommands =
     [
-        UIKeyCommand.Create("=", UIKeyModifierFlags.Command, new Selector("onFontScaleIncrease:")),
-            UIKeyCommand.Create("-", UIKeyModifierFlags.Command, new Selector("onFontScaleDecrease:")),
-            UIKeyCommand.Create("0", UIKeyModifierFlags.Command, new Selector("onFontScaleReset:")),
+        UIKeyCommand.Create("=", UIKeyModifierFlags.Command, new Selector("onZoomIn:")),
+            UIKeyCommand.Create("-", UIKeyModifierFlags.Command, new Selector("onZoomOut:")),
+            UIKeyCommand.Create("0", UIKeyModifierFlags.Command, new Selector("onZoomReset:")),
         ];
 
-    public override UIKeyCommand[] KeyCommands => _FontScaleCommands;
+    public override UIKeyCommand[] KeyCommands => _ZoomCommands;
 
-    [Export("onFontScaleIncrease:")]
-    public void OnFontScaleIncrease(UIKeyCommand command) => CurrentApp?.StepFontScale(FontScale.Step);
+    [Export("onZoomIn:")]
+    public void OnZoomIn(UIKeyCommand command) => CurrentApp?.StepZoom(FontScale.Step);
 
-    [Export("onFontScaleDecrease:")]
-    public void OnFontScaleDecrease(UIKeyCommand command) => CurrentApp?.StepFontScale(-FontScale.Step);
+    [Export("onZoomOut:")]
+    public void OnZoomOut(UIKeyCommand command) => CurrentApp?.StepZoom(-FontScale.Step);
 
-    [Export("onFontScaleReset:")]
-    public void OnFontScaleReset(UIKeyCommand command) => CurrentApp?.ResetFontScale();
+    [Export("onZoomReset:")]
+    public void OnZoomReset(UIKeyCommand command) => CurrentApp?.ResetZoom();
 
     private static App? CurrentApp => Microsoft.Maui.Controls.Application.Current as App;
   }

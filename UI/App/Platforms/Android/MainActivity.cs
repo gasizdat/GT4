@@ -52,13 +52,13 @@ namespace GT4
     protected override void OnCreate(Bundle? savedInstanceState)
     {
       base.OnCreate(savedInstanceState);
-      _ScaleDetector = new ScaleGestureDetector(this, new FontScaleGestureListener());
+      _ScaleDetector = new ScaleGestureDetector(this, new ZoomGestureListener());
       HandleOpenIntentIfAny(Intent);
     }
 
-    // Feed every touch to the scale detector so a two-finger pinch zooms the global font scale from
-    // any page. The detector only reacts to multi-touch, and we always forward the event, so normal
-    // single-finger scrolling and taps are untouched.
+    // Feed every touch to the scale detector so a two-finger pinch zooms from any page. The detector
+    // only reacts to multi-touch, and we always forward the event, so normal single-finger scrolling
+    // and taps are untouched.
     public override bool DispatchTouchEvent(MotionEvent? e)
     {
       if (e is not null)
@@ -69,15 +69,15 @@ namespace GT4
       return base.DispatchTouchEvent(e);
     }
 
-    // Bridges Android's pinch gesture to the shared App font-scale helpers. Touch dispatch runs on the
-    // UI thread, so applying the scale (which touches Application.Current.Resources) is safe here.
-    private sealed class FontScaleGestureListener : ScaleGestureDetector.SimpleOnScaleGestureListener
+    // Touch dispatch runs on the UI thread, so applying the scale (which touches the live visual
+    // tree) is safe here.
+    private sealed class ZoomGestureListener : ScaleGestureDetector.SimpleOnScaleGestureListener
     {
 
       public override bool OnScale(ScaleGestureDetector detector)
       {
         const double ScaleDebuffFactor = 0.1;
-        CurrentApp?.StepFontScale(ScaleDebuffFactor * (detector.ScaleFactor - 1));
+        CurrentApp?.StepZoom(ScaleDebuffFactor * (detector.ScaleFactor - 1));
 
         return base.OnScale(detector);
       }

@@ -22,7 +22,10 @@ between them, centred on a focal person.
 - `_ViewTarget` (Center/Top/Bottom): records where the viewport should park after a rebuild.
 - `_PanStartScrollX/Y`: scroll offsets captured at the start of a drag-pan.
 - `_ZoomScale`: current zoom factor (`MinZoom` 0.4–`MaxZoom` 2.5, `ZoomStep` 0.25), scales every
-  `FamilyTreeLayoutMetrics` dimension before layout and triggers a full `Reload`.
+  `FamilyTreeLayoutMetrics` dimension before layout and triggers a full `Reload` — except `Margin`,
+  which is the `OverlayClearance` gap keeping the tree clear of the pinned "load more"/zoom buttons.
+  Those are fixed-size overlays, so that one metric follows the font scale that sizes them, never the
+  zoom.
 - `_LoadOperationsCount`: reentrant in-flight-load counter backing `LoadInProgress`; the load-more
   buttons disable while any load is running.
 - `_NodeCache` / `_ConnectorPool` / `_ThumbnailCache`: retained node views, pooled connector shapes,
@@ -61,9 +64,15 @@ between them, centred on a focal person.
      page never auto-reloads on its own.
 
 ## Zoom
-- `"ZoomIn"` / `"ZoomOut"` (`OnPageCommand`) step `_ZoomScale` by `ZoomStep`, clamped to
-  `[MinZoom, MaxZoom]`, then `Reload(ViewTarget.Center)` — a full reload, since every node/connector
-  size and the canvas itself depend on the scaled metrics.
+- `"ZoomIn"` / `"ZoomOut"` (`OnPageCommand`) step `_ZoomScale` by `ZoomStep` through `SetZoom`, which
+  clamps to `[MinZoom, MaxZoom]` and reloads (`ViewTarget.Center`) only when the scale actually
+  changed — a full reload, since every node/connector size and the canvas itself depend on the
+  scaled metrics.
+- The page implements `IZoomablePage`, so while it is the current page the app-wide zoom gesture
+  (Android pinch) and hotkeys (Ctrl/Cmd +/-, 0) drive the tree instead of the global font scale.
+  A pinch calls `Zoom` continuously, so it paces in the time domain — one `ZoomStep` per
+  `ZoomIntervalMs` (300), in the sign of the delta, magnitude ignored. `ResetZoom` is unpaced (a
+  discrete command, not a gesture) and returns to `DefaultZoom`.
 
 ## "Load more" affordances
 - `CanLoadMoreAncestors` / `CanLoadMoreDescendants` are bindable bools driving the top/bottom

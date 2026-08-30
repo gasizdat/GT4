@@ -1,6 +1,7 @@
 ﻿using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.Abstraction;
 using GT4.UI.Utils.Settings;
 using Microsoft.Maui.Controls.Xaml.Diagnostics;
 using System.Globalization;
@@ -127,15 +128,21 @@ public partial class App : Application
     window.Activated += ReopenOnActivationAsync;
     window.Deactivated += async (_, _) => await CloseOnDeactivationAsync(saveLastOpenProject: true);
     window.Destroying += async (_, _) => await CloseOnDeactivationAsync(saveLastOpenProject: false);
-    RegisterFontScaleHotkeys(window);
+    RegisterZoomHotkeys(window);
     return window;
   }
 
   // Implemented per platform (Windows). On platforms without a keyboard this compiles away.
-  partial void RegisterFontScaleHotkeys(Window window);
+  partial void RegisterZoomHotkeys(Window window);
 
-  internal void StepFontScale(double delta)
+  internal void StepZoom(double delta)
   {
+    if (CurrentZoomablePage is { } page)
+    {
+      page.Zoom(delta);
+      return;
+    }
+
     if (_FontScaleSetting is null)
     {
       return;
@@ -145,7 +152,18 @@ public partial class App : Application
     _FontScaleSetting.Value = $"{newScaleFactor}%";
   }
 
-  internal void ResetFontScale() => _FontScaleSetting?.ResetToDefault();
+  internal void ResetZoom()
+  {
+    if (CurrentZoomablePage is { } page)
+    {
+      page.ResetZoom();
+      return;
+    }
+
+    _FontScaleSetting?.ResetToDefault();
+  }
+
+  private static IZoomablePage? CurrentZoomablePage => Shell.Current?.CurrentPage as IZoomablePage;
 
   private async void ReopenOnActivationAsync(object? sender, EventArgs e)
   {
