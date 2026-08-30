@@ -69,8 +69,8 @@ namespace GT4
       return base.DispatchTouchEvent(e);
     }
 
-    // Bridges Android's pinch gesture to the shared App zoom helpers. Touch dispatch runs on the UI
-    // thread, so applying the scale (which touches the live visual tree) is safe here.
+    // Touch dispatch runs on the UI thread, so applying the scale (which touches the live visual
+    // tree) is safe here.
     private sealed class ZoomGestureListener : ScaleGestureDetector.SimpleOnScaleGestureListener
     {
 

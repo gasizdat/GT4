@@ -197,8 +197,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     get => _LoadOperationsCount != 0;
   }
 
-  // The tree redraws in ZoomStep-sized jumps, far coarser than the deltas a pinch delivers, so bank
-  // them and step once per FontScale.Step accumulated.
+  // A pinch delivers deltas far finer than ZoomStep, so bank them and step once per FontScale.Step.
   public void Zoom(double delta)
   {
     _PendingZoom += delta;
@@ -218,8 +217,8 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     SetZoom(DefaultZoom);
   }
 
-  // Resizing the tree means rebuilding it, so a step that lands on the scale already shown is
-  // dropped: at either clamp every further step in that direction would otherwise reload for nothing.
+  // Every scale change costs a full rebuild, so a step landing on the current scale is dropped;
+  // without that, each further step against a clamp reloads for nothing.
   private void SetZoom(double scale)
   {
     var clamped = Math.Clamp(scale, MinZoom, MaxZoom);

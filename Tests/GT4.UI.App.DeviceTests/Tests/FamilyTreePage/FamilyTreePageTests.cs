@@ -42,8 +42,7 @@ public class FamilyTreePageTests
     Assert.False(page.LoadInProgress);
     Assert.False(page.CanLoadMoreAncestors);
     Assert.False(page.CanLoadMoreDescendants);
-    // Dropping the interface would leave every zoom test below passing while App silently went back
-    // to rescaling the app font on this page.
+    // Dropping the interface leaves every zoom test below green while App silently reverts to the font.
     Assert.IsAssignableFrom<IZoomablePage>(page);
   }
 
@@ -269,8 +268,7 @@ public class FamilyTreePageTests
     Assert.Equal(loadsAtMinimum, page.CompletedLoads);
   }
 
-  // App reaches the zoom target through Shell.Current.CurrentPage, and it is a pushed page it has to
-  // find there -- not the Shell's own content page.
+  // App reaches the zoom target via Shell.Current.CurrentPage, which must find a pushed page there.
   [Fact]
   public async Task A_pushed_tree_page_is_what_Shell_reports_as_the_current_page()
   {
