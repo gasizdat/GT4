@@ -10,7 +10,6 @@ namespace GT4.UI.Components;
 /// </summary>
 public partial class RelativeRowView : ContentView
 {
-  // Mirrors the former RelativesIndentation / PageContentSpacing OnIdiom resources.
   private static readonly double Indent = DeviceInfo.Idiom == DeviceIdiom.Phone ? 10 : 20;
   private static readonly double RowSpacing = DeviceInfo.Idiom == DeviceIdiom.Phone ? 5 : 10;
 

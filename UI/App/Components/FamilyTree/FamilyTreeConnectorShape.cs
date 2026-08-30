@@ -52,8 +52,8 @@ public static class FamilyTreeConnectorShape
     AbsoluteLayout.SetLayoutBounds(path, bounds);
   }
 
-  // Mirrors the former FamilyTreeConnectorsDrawable: round every interior vertex by coming up short of
-  // the corner, then sweeping through it with a quadratic whose control point is the corner itself.
+  // Rounds every interior vertex by coming up short of the corner, then sweeping through it with a
+  // quadratic whose control point is the corner itself.
   private static Geometry BuildGeometry(Point[] points, double radius)
   {
     var figure = new PathFigure { StartPoint = points[0] };
