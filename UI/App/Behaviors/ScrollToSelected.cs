@@ -26,7 +26,8 @@ public static class ScrollToSelected
       }
       catch (Exception)
       {
-        // Item not found in ItemsSource; safely ignore or log as needed.
+        // Scrolling is cosmetic and this runs inside a binding update: a platform ScrollTo that
+        // objects to an item outside ItemsSource must not surface there.
       }
     }
   }

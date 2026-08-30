@@ -40,23 +40,21 @@ public sealed class SafeCommand<T> : SafeCommand
     };
   }
 
+  // Null is a valid parameter only where T can hold it: a reference type or a Nullable<>.
   private static bool IsValidParameter([NotNullWhen(true)] object? o)
   {
     if (o != null)
     {
-      // The parameter isn't null, so we don't have to worry whether null is a valid option
       return o is T;
     }
 
     var t = typeof(T);
 
-    // The parameter is null. Is T Nullable?
     if (Nullable.GetUnderlyingType(t) != null)
     {
       return true;
     }
 
-    // Not a Nullable, if it's a value type then null is not valid
     return !t.IsValueType;
   }
 
