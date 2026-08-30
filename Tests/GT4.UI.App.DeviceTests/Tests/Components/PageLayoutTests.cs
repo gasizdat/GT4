@@ -5,6 +5,9 @@ using GT4.UI.Pages;
 using GT4.UI.Resources;
 using Moq;
 using Xunit;
+#if WINDOWS
+using Microsoft.UI.Input;
+#endif
 
 namespace GT4.UI.DeviceTests;
 
@@ -504,4 +507,37 @@ public class PageLayoutTests
     Assert.False(indicator.IsRunning);
     Assert.False(indicator.IsVisible);
   }
+
+#if WINDOWS
+  // The cursor has no cross-platform surface: only the WinUI panel the layout's own handler builds
+  // can carry one, so the assertion has to reach through to it.
+  [Fact]
+  public async Task Busy_work_puts_the_wait_cursor_on_the_page()
+  {
+    var layout = await CreateLayoutAsync();
+    var alertService = new Mock<IAlertService>();
+    var loading = new PageLoading(alertService.Object);
+    await MainThread.InvokeOnMainThreadAsync(() => layout.Loading = loading);
+
+    var page = await MainThread.InvokeOnMainThreadAsync(() => new ContentPage { Content = layout });
+    await using var window = await WindowHost.AttachAsync(page);
+
+    var panel = await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => layout.Handler?.PlatformView as WaitCursorPanel),
+      panel => panel is not null,
+      timeoutMessage: "The layout's native panel never materialized.");
+
+    // Reading the cursor is a WinUI call like any other: off the UI thread it throws RPC_E_WRONG_THREAD.
+    Task<InputSystemCursorShape?> CursorShapeAsync() =>
+      MainThread.InvokeOnMainThreadAsync(() => (panel!.CurrentCursor as InputSystemCursor)?.CursorShape);
+
+    Assert.Null(await CursorShapeAsync());
+
+    await MainThread.InvokeOnMainThreadAsync(() => loading.IsBusy = true);
+    Assert.Equal(InputSystemCursorShape.Wait, await CursorShapeAsync());
+
+    await MainThread.InvokeOnMainThreadAsync(() => loading.IsBusy = false);
+    Assert.Null(await CursorShapeAsync());
+  }
+#endif
 }

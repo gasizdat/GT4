@@ -14,7 +14,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-	  <Compile Remove="Platforms\**" />
+	  <Compile Remove="Platforms\Android\MainActivity.cs" />
+	  <Compile Remove="Platforms\Android\MainApplication.cs" />
   </ItemGroup>
 
 </Project>

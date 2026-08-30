@@ -3,6 +3,7 @@ using GT4.UI.Items;
 using GT4.UI.Resources;
 using GT4.UI.Utils.Settings;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Windows.Input;
 
 namespace GT4.UI.Components;
@@ -110,7 +111,10 @@ public partial class PageLayout : ContentView
       nameof(Loading),
       typeof(PageLoading),
       typeof(PageLayout),
-      default(PageLoading));
+      default(PageLoading),
+      BindingMode.OneWay,
+      null,
+      OnLoadingChanged);
 
   public static readonly BindableProperty FooterProperty =
     BindableProperty.Create(
@@ -135,6 +139,24 @@ public partial class PageLayout : ContentView
     if (bindableObject is PageLayout view)
     {
       view.BackItem.Command = newValue as ICommand ?? view._GoBackCommand;
+    }
+  }
+
+  // The wait cursor has no cross-platform binding target: only the platform handler can set it, and it
+  // reads Loading.IsBusy when told the property moved.
+  private static void OnLoadingChanged(BindableObject bindableObject, object oldValue, object newValue)
+  {
+    if (bindableObject is PageLayout view)
+    {
+      if (oldValue is PageLoading previous)
+      {
+        previous.PropertyChanged -= view.OnLoadingStateChanged;
+      }
+
+      if (newValue is PageLoading current)
+      {
+        current.PropertyChanged += view.OnLoadingStateChanged;
+      }
     }
   }
 
@@ -167,6 +189,14 @@ public partial class PageLayout : ContentView
     if (bindableObject is PageLayout view && oldValue != newValue)
     {
       view.OnPropertyChanged(nameof(IsHintVisible));
+    }
+  }
+
+  private void OnLoadingStateChanged(object? sender, PropertyChangedEventArgs e)
+  {
+    if (e.PropertyName == nameof(PageLoading.IsBusy))
+    {
+      Handler?.UpdateValue(nameof(Loading));
     }
   }
 

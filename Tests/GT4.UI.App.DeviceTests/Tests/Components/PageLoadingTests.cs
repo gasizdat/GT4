@@ -5,9 +5,9 @@ using Xunit;
 namespace GT4.UI.DeviceTests;
 
 /// <summary>
-/// Covers the flag a page hands to PageLayout's activity indicator. Runs as a device test rather
-/// than a plain unit test because Run's completion marshals through MainThread, which needs a live
-/// MAUI dispatcher.
+/// Covers the flags a page hands to PageLayout's activity indicator and wait cursor. Runs as a device
+/// test rather than a plain unit test because Run's completion marshals through MainThread, which needs
+/// a live MAUI dispatcher.
 /// </summary>
 public class PageLoadingTests
 {
@@ -23,6 +23,23 @@ public class PageLoadingTests
     Assert.False(loading.IsLoading);
     release.SetResult();
     await loading.UntilIdleAsync("A load over existing content raised the flag.");
+  }
+
+  // The wait cursor follows IsBusy, so it has to stay raised through the very refresh the indicator skips.
+  [Fact]
+  public async Task A_load_that_starts_with_content_on_screen_still_reports_busy()
+  {
+    var alertService = new Mock<IAlertService>();
+    var loading = new PageLoading(alertService.Object);
+    var release = new TaskCompletionSource();
+
+    loading.Run(hasContent: true, () => release.Task);
+
+    Assert.True(loading.IsBusy);
+
+    release.SetResult();
+    await loading.UntilIdleAsync("A load over existing content stayed busy.");
+    Assert.False(loading.IsBusy);
   }
 
   [Fact]

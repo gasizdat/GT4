@@ -25,11 +25,14 @@ public static class MauiProgram
     builder.Logging.AddDebug();
 #endif
 
-#if WINDOWS
-    builder.ConfigureMauiHandlers(_ =>
+#if WINDOWS || ANDROID
+    builder.ConfigureMauiHandlers(handlers =>
     {
+#if WINDOWS
       CollectionViewScrollBarGutter.Register();
       ScrollViewScrollBarGutter.Register();
+#endif
+      PageLayoutWaitCursor.Register(handlers);
     });
 #endif
 
