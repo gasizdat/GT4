@@ -94,6 +94,9 @@ public class NameFormatter : INameFormatter
       { "FN", () => GetNames(NameType.FamilyName)},
     });
 
-    return ret;
+    // A template spells every slot a person may have, so an absent name leaves its delimiters behind.
+    var parts = ret.Split(_PartsDelimiter, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    return string.Join(_PartsDelimiter, parts);
   }
 }

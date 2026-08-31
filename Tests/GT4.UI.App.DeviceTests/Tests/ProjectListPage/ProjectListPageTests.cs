@@ -240,7 +240,7 @@ public class ProjectListPageTests
     // yet, and the offer would flash over the activity indicator on a machine that does have projects.
     var page = await CreatePageAsync(new TestServices());
 
-    page.Loading.IsLoading = true;
+    page.Loading.Begin(hasContent: false);
 
     Assert.False(page.IsEmptyStateVisible);
   }

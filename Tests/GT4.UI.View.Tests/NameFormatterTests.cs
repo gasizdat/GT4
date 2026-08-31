@@ -87,24 +87,42 @@ public class NameFormatterTests
   }
 
   [Fact]
-  public void MissingPatronymic_ProducesExtraSpace()
+  public void MissingPatronymic_LeavesNoGap()
   {
     var formatter = CreateFormatter(commonTemplate: "FF PP LL");
     var person = Person(
       ("Anna", NameType.FirstName | NameType.FemaleDeclension),
       ("Ivanova", NameType.LastName | NameType.FemaleDeclension));
 
-    // PP is empty when no patronymic → two consecutive spaces remain in the output
-    formatter.ToString(person, NameFormat.CommonPersonName).Should().Be("Anna  Ivanova");
+    formatter.ToString(person, NameFormat.CommonPersonName).Should().Be("Anna Ivanova");
   }
 
   [Fact]
-  public void EmptyPerson_NoNames_OnlySpaces()
+  public void MissingLastName_LeavesNoTrailingSpace()
+  {
+    var formatter = CreateFormatter(commonTemplate: "FF PP LL");
+    var person = Person(("Jared", NameType.FirstName | NameType.MaleDeclension));
+
+    formatter.ToString(person, NameFormat.CommonPersonName).Should().Be("Jared");
+  }
+
+  [Fact]
+  public void EmptyPerson_NoNames_RendersNothing()
   {
     var formatter = CreateFormatter(commonTemplate: "FF PP LL");
     var person = Person();
 
-    formatter.ToString(person, NameFormat.CommonPersonName).Should().Be("  ");
+    formatter.ToString(person, NameFormat.CommonPersonName).Should().BeEmpty();
+  }
+
+  // Only the delimiters an empty slot left behind go; the ones the template spells stay.
+  [Fact]
+  public void MissingNameKeepsThePunctuationTheTemplateSpells()
+  {
+    var formatter = CreateFormatter(commonTemplate: "LL, FF");
+    var person = Person(("Jared", NameType.FirstName | NameType.MaleDeclension));
+
+    formatter.ToString(person, NameFormat.CommonPersonName).Should().Be(", Jared");
   }
 
   [Fact]

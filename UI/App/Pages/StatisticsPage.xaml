@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:components="clr-namespace:GT4.UI.Components"
+    xmlns:items="clr-namespace:GT4.UI.Items"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root"
     NavigatedTo="OnNavigatedTo">
@@ -26,17 +27,31 @@
       <Style x:Key="FieldValueWordWrap" BasedOn="{StaticResource FieldValue}" TargetType="Label">
         <Setter Property="LineBreakMode" Value="WordWrap" />
       </Style>
+      <Style x:Key="BirthDecadeName" BasedOn="{StaticResource FieldValue}" TargetType="Label">
+        <Setter Property="HorizontalTextAlignment" Value="End" />
+      </Style>
+      <Style x:Key="BirthDecadeBar" TargetType="Border">
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 2" />
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Accent}, Dark={StaticResource AccentDark}}" />
+        <Setter Property="Margin" Value="0,2" />
+        <Setter Property="VerticalOptions" Value="Fill" />
+      </Style>
+      <Style x:Key="BirthDecadeCount" BasedOn="{StaticResource FieldValue}" TargetType="Label">
+        <Setter Property="Margin" Value="6,0,0,0" />
+        <Setter Property="VerticalTextAlignment" Value="Center" />
+      </Style>
     </ResourceDictionary>
   </ContentPage.Resources>
 
   <components:PageLayout
+      Title="{x:Static resources:UIStrings.TitleStatisticsPage}"
       HasBackButton="True"
-      Loading="{Binding Loading, Source={x:Reference Root}}"
-      Title="{x:Static resources:UIStrings.TitleStatisticsPage}">
+      Loading="{Binding Loading, Source={x:Reference Root}}">
     <components:PageLayout.Body>
       <ScrollView>
         <Grid
-            ColumnDefinitions="Auto, *"
+            ColumnDefinitions="3*, 7*"
             ColumnSpacing="{StaticResource PageContentSpacing}"
             RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto"
             RowSpacing="{StaticResource PageContentSpacing}">
@@ -183,16 +198,52 @@
               Grid.Column="0"
               Style="{StaticResource FieldNameTop}"
               Text="{x:Static resources:UIStrings.FieldStatBirthsByDecade}" />
-          <ScrollView
+          <Grid
               Grid.Row="15"
-              Grid.Column="1"
-              HeightRequest="150"
-              VerticalScrollBarVisibility="Always">
-            <Editor
-                FontSize="{DynamicResource LabelTextSizeDefault}"
-                IsReadOnly="True"
-                Text="{Binding BirthsByDecadeText, Source={x:Reference Root}}" />
-          </ScrollView>
+              Grid.Column="1">
+            <!--  A row template measures its own Auto column against its own text, so every row binds to this one instead.  -->
+            <Label
+                x:Name="DecadeNameRuler"
+                Opacity="0"
+                Style="{StaticResource BirthDecadeName}"
+                Text="{Binding WidestDecadeName, Source={x:Reference Root}}"
+                VerticalOptions="Start" />
+            <VerticalStackLayout
+                x:Name="BirthsByDecadeChart"
+                BindableLayout.ItemsSource="{Binding BirthsByDecade, Source={x:Reference Root}}">
+              <BindableLayout.EmptyViewTemplate>
+                <DataTemplate>
+                  <Label
+                      Style="{StaticResource FieldValue}"
+                      Text="{x:Static resources:UIStrings.StatValueNone}" />
+                </DataTemplate>
+              </BindableLayout.EmptyViewTemplate>
+              <BindableLayout.ItemTemplate>
+                <DataTemplate x:DataType="items:BirthDecadeItem">
+                  <Grid
+                      ColumnDefinitions="Auto, *"
+                      ColumnSpacing="{StaticResource PageContentSpacing}">
+                    <Label
+                        Grid.Column="0"
+                        Style="{StaticResource BirthDecadeName}"
+                        Text="{Binding Decade}"
+                        WidthRequest="{Binding Source={x:Reference DecadeNameRuler}, Path=Width}" />
+                    <Grid
+                        Grid.Column="1"
+                        ColumnDefinitions="{Binding BarColumns}">
+                      <Border
+                          Grid.Column="0"
+                          Style="{StaticResource BirthDecadeBar}" />
+                      <Label
+                          Grid.Column="1"
+                          Style="{StaticResource BirthDecadeCount}"
+                          Text="{Binding Count}" />
+                    </Grid>
+                  </Grid>
+                </DataTemplate>
+              </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+          </Grid>
 
           <Label
               Grid.Row="16"

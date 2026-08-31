@@ -3412,11 +3412,11 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}s: {1}.
+        ///   Looks up a localized string similar to {0}s:.
         /// </summary>
-        public static string StatValueDecadeCount_2 {
+        public static string StatValueDecade_1 {
             get {
-                return ResourceManager.GetString("StatValueDecadeCount_2", resourceCulture);
+                return ResourceManager.GetString("StatValueDecade_1", resourceCulture);
             }
         }
         
