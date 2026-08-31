@@ -22,7 +22,7 @@ public sealed class PageLoading : INotifyPropertyChanged
   public bool IsLoading
   {
     get => _IsLoading;
-    set
+    private set
     {
       if (_IsLoading != value)
       {
@@ -37,9 +37,13 @@ public sealed class PageLoading : INotifyPropertyChanged
   /// collection before refilling it, and a recomputed check would see that gap and flash the
   /// indicator on the very refresh it must skip.
   /// </summary>
+  public void Begin(bool hasContent) => IsLoading = !hasContent;
+
+  public void End() => IsLoading = false;
+
   public void Run(bool hasContent, Func<Task> work)
   {
-    IsLoading = !hasContent;
+    Begin(hasContent);
 
     _ = SafeTask.Run(async () =>
     {
@@ -49,7 +53,7 @@ public sealed class PageLoading : INotifyPropertyChanged
       }
       finally
       {
-        await SafeTask.RunOnMainThread(() => IsLoading = false, _AlertService);
+        await SafeTask.RunOnMainThread(End, _AlertService);
       }
     }, _AlertService);
   }

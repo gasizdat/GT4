@@ -234,7 +234,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   {
     _LoadOperationsCount++;
     // An incremental "load more" leaves the tree on screen, so only the first build gets the indicator.
-    Loading.IsLoading = _NodeCache.Count == 0;
+    Loading.Begin(hasContent: _NodeCache.Count != 0);
 
     OnPropertyChanged(nameof(LoadInProgress));
     OnPropertyChanged(nameof(CanLoadMoreAncestors));
@@ -244,7 +244,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   private void ResetLoadInProgress()
   {
     _LoadOperationsCount = Math.Max(_LoadOperationsCount - 1, 0);
-    Loading.IsLoading = false;
+    Loading.End();
 
     OnPropertyChanged(nameof(LoadInProgress));
     OnPropertyChanged(nameof(CanLoadMoreAncestors));

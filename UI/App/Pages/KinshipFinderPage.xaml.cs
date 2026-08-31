@@ -55,7 +55,7 @@ public partial class KinshipFinderPage : ContentPage
     }
 
     // Not Loading.Run: the search awaits on the UI thread, and RefreshView must stay there.
-    Loading.IsLoading = _Chain is null;
+    Loading.Begin(hasContent: _Chain is not null);
     try
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
@@ -67,7 +67,7 @@ public partial class KinshipFinderPage : ContentPage
     }
     finally
     {
-      Loading.IsLoading = false;
+      Loading.End();
     }
   }
 

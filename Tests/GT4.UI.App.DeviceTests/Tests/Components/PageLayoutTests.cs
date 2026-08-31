@@ -471,11 +471,11 @@ public class PageLayoutTests
     Assert.False(indicator.IsRunning);
     Assert.False(indicator.IsVisible);
 
-    await MainThread.InvokeOnMainThreadAsync(() => loading.IsLoading = true);
+    await MainThread.InvokeOnMainThreadAsync(() => loading.Begin(hasContent: false));
     Assert.True(indicator.IsRunning);
     Assert.True(indicator.IsVisible);
 
-    await MainThread.InvokeOnMainThreadAsync(() => loading.IsLoading = false);
+    await MainThread.InvokeOnMainThreadAsync(loading.End);
     Assert.False(indicator.IsRunning);
     Assert.False(indicator.IsVisible);
   }
@@ -485,8 +485,9 @@ public class PageLayoutTests
   {
     var layout = await CreateLayoutAsync();
     var alertService = new Mock<IAlertService>();
-    var loading = new PageLoading(alertService.Object) { IsLoading = true };
+    var loading = new PageLoading(alertService.Object);
     var indicator = layout.FindByName<ActivityIndicator>("LoadingIndicator");
+    loading.Begin(hasContent: false);
 
     await MainThread.InvokeOnMainThreadAsync(() => layout.Loading = loading);
 
