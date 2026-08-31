@@ -12,6 +12,9 @@ namespace GT4.UI.Pages;
 
 public partial class StatisticsPage : ContentPage
 {
+  // Enough of the row for four digits at the default font size.
+  private const double MinBarShare = 0.12;
+
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly IAlertService _AlertService;
@@ -111,14 +114,14 @@ public partial class StatisticsPage : ContentPage
 
   private static BirthDecadeItem ToBirthDecadeItem((int Decade, int Count) births, int busiest)
   {
-    var filled = new GridLength(births.Count, GridUnitType.Star);
-    var rest = new GridLength(busiest - births.Count, GridUnitType.Star);
+    // The count is drawn inside its own bar, so a bar left strictly proportional would truncate the
+    // number it carries on the decades that have the least to show and most need it spelled out.
+    var floored = Math.Max(births.Count, busiest * MinBarShare);
+    var filled = new GridLength(floored, GridUnitType.Star);
+    var rest = new GridLength(busiest - floored, GridUnitType.Star);
     var barColumn = new ColumnDefinition(filled);
     var restColumn = new ColumnDefinition(rest);
-    // The count sits between the bar and the remainder so it follows the bar's end, and takes its
-    // width from Auto so the busiest decade -- whose remainder is zero wide -- still has room for it.
-    var countColumn = new ColumnDefinition(GridLength.Auto);
-    var columns = new ColumnDefinitionCollection(barColumn, countColumn, restColumn);
+    var columns = new ColumnDefinitionCollection(barColumn, restColumn);
     var decade = string.Format(UIStrings.StatValueDecade_1, births.Decade);
 
     return new BirthDecadeItem(decade, births.Count.ToString(), columns);
