@@ -126,10 +126,12 @@ public class StatisticsPageTests
     Assert.Equal("1", bars[0].Count);
     Assert.Equal("3", bars[1].Count);
     Assert.Equal(new GridLength(1, GridUnitType.Star), bars[0].BarColumns[0].Width);
-    Assert.Equal(new GridLength(2, GridUnitType.Star), bars[0].BarColumns[1].Width);
-    // The busiest decade fills its row, leaving nothing for the remainder column.
+    Assert.Equal(new GridLength(2, GridUnitType.Star), bars[0].BarColumns[2].Width);
+    // The busiest decade fills its row, leaving nothing for the remainder column -- which is why the
+    // count column between them is Auto rather than a share of what is left.
     Assert.Equal(new GridLength(3, GridUnitType.Star), bars[1].BarColumns[0].Width);
-    Assert.Equal(new GridLength(0, GridUnitType.Star), bars[1].BarColumns[1].Width);
+    Assert.Equal(new GridLength(0, GridUnitType.Star), bars[1].BarColumns[2].Width);
+    Assert.Equal(GridLength.Auto, bars[1].BarColumns[1].Width);
   }
 
   // The star widths only reach the screen through a bound Grid.ColumnDefinitions, which fails
@@ -149,8 +151,8 @@ public class StatisticsPageTests
     var barRow = (Grid)rows[0].Children[1];
     Assert.Equal(3, barRow.ColumnDefinitions.Count);
     Assert.Equal(new GridLength(1, GridUnitType.Star), barRow.ColumnDefinitions[0].Width);
-    Assert.Equal(new GridLength(2, GridUnitType.Star), barRow.ColumnDefinitions[1].Width);
-    Assert.Equal(GridLength.Auto, barRow.ColumnDefinitions[2].Width);
+    Assert.Equal(GridLength.Auto, barRow.ColumnDefinitions[1].Width);
+    Assert.Equal(new GridLength(2, GridUnitType.Star), barRow.ColumnDefinitions[2].Width);
   }
 
   // The boxed list this chart replaced rendered StatValueNone itself; nothing else in the row does,

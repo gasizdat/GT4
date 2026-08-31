@@ -219,7 +219,7 @@
                   <Grid Grid.Column="1" ColumnDefinitions="{Binding BarColumns}">
                     <Border Grid.Column="0" Style="{StaticResource BirthDecadeBar}" />
                     <Label
-                        Grid.Column="2"
+                        Grid.Column="1"
                         Style="{StaticResource BirthDecadeCount}"
                         Text="{Binding Count}" />
                   </Grid>

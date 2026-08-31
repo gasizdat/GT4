@@ -115,8 +115,10 @@ public partial class StatisticsPage : ContentPage
     var rest = new GridLength(busiest - births.Count, GridUnitType.Star);
     var barColumn = new ColumnDefinition(filled);
     var restColumn = new ColumnDefinition(rest);
+    // The count sits between the bar and the remainder so it follows the bar's end, and takes its
+    // width from Auto so the busiest decade -- whose remainder is zero wide -- still has room for it.
     var countColumn = new ColumnDefinition(GridLength.Auto);
-    var columns = new ColumnDefinitionCollection(barColumn, restColumn, countColumn);
+    var columns = new ColumnDefinitionCollection(barColumn, countColumn, restColumn);
     var decade = string.Format(UIStrings.StatValueDecade_1, births.Decade);
 
     return new BirthDecadeItem(decade, births.Count.ToString(), columns);
