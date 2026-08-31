@@ -115,8 +115,7 @@ public class NameFormatterTests
     formatter.ToString(person, NameFormat.CommonPersonName).Should().BeEmpty();
   }
 
-  // The delimiters that survive are the ones a template spells itself, not the ones left by an
-  // empty slot: a comma template must not lose its comma along with the missing name.
+  // Only the delimiters an empty slot left behind go; the ones the template spells stay.
   [Fact]
   public void MissingNameKeepsThePunctuationTheTemplateSpells()
   {

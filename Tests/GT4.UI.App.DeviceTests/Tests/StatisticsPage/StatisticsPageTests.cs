@@ -95,9 +95,8 @@ public class StatisticsPageTests
     Assert.DoesNotContain("Smith John", page.OldestLivingText);
   }
 
-  // One birth in the 900s against three in the 1910s: a bar that ignored the busiest decade and just
-  // filled its row would still pass the count assertions, and the two names differ in length, which
-  // is the case the shared name width exists for.
+  // One birth against three, under names of different lengths: uniform data would hide both a bar
+  // that ignored the busiest count and a name column measured per row.
   private static async Task<TestableStatisticsPage> CreatePageWithTwoDecadesAsync()
   {
     var services = new TestServices();
@@ -131,8 +130,7 @@ public class StatisticsPageTests
     Assert.Equal(new GridLength(3, GridUnitType.Star), bars[1].BarColumns[0].Width);
   }
 
-  // The count is drawn past the end of its bar, so the busiest bar must stop short of the row: left
-  // to fill it the number would have nowhere to go and would be clipped away.
+  // The count sits past the end of its bar, so a bar filling the row would leave it nowhere to go.
   [Fact]
   public async Task The_busiest_bar_still_leaves_room_for_its_own_count()
   {
@@ -142,15 +140,13 @@ public class StatisticsPageTests
 
     var gutter = bars[1].BarColumns[1].Width.Value;
     Assert.True(gutter > 0, "The busiest bar filled its row, leaving nothing for the count beside it.");
-    // Scaling every bar against one total is what keeps them comparable: the rows are equally wide,
-    // so a bar twice as long means twice as many births.
+    // Equally wide rows are what keep the bars comparable: twice the length, twice the births.
     var lonelyRow = bars[0].BarColumns[0].Width.Value + bars[0].BarColumns[1].Width.Value;
     var busiestRow = bars[1].BarColumns[0].Width.Value + gutter;
     Assert.Equal(busiestRow, lonelyRow, 6);
   }
 
-  // Each row carries its own name beside its own bar. Splitting them into parallel stacks let the
-  // two drift apart as soon as a bar row measured taller than its name.
+  // A name and its bar must share one row: laid out separately they drift as soon as one measures taller.
   [Fact]
   public async Task Every_decade_name_sits_in_the_row_of_its_own_bar()
   {
@@ -166,8 +162,7 @@ public class StatisticsPageTests
     Assert.Equal(page.BirthsByDecade.Select(b => b.Decade), names);
   }
 
-  // Every row takes its name width from this one rendered label, so a name column measured against
-  // a single row's own text -- which leaves each bar starting somewhere else -- stays impossible.
+  // Every row's name width comes from this label; measured per row, each bar would start elsewhere.
   [Fact]
   public async Task The_ruler_label_spells_the_longest_decade_name()
   {
@@ -199,8 +194,7 @@ public class StatisticsPageTests
     Assert.Equal(page.BirthsByDecade[0].BarColumns[1].Width, barRow.ColumnDefinitions[1].Width);
   }
 
-  // The boxed list this chart replaced rendered StatValueNone itself; nothing else in the row does,
-  // so a missing empty view leaves the cell blank while every neighbouring row still says "none".
+  // Nothing else in this row renders StatValueNone, so a missing empty view just leaves it blank.
   [Fact]
   public async Task An_empty_project_still_says_so_where_the_decade_bars_would_be()
   {

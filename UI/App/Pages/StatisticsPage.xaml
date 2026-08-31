@@ -201,10 +201,7 @@
           <Grid
               Grid.Row="15"
               Grid.Column="1">
-            <!--
-              A row template measures its own Auto column against its own text, so the widest name
-              is rendered once here and every row's name takes its width from this label instead.
-            -->
+            <!--  A row template measures its own Auto column against its own text, so every row binds to this one instead.  -->
             <Label
                 x:Name="DecadeNameRuler"
                 Opacity="0"

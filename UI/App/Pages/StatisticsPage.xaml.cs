@@ -114,8 +114,6 @@ public partial class StatisticsPage : ContentPage
 
   private static BirthDecadeItem ToBirthDecadeItem((int Decade, int Count) births, int busiest)
   {
-    // Every bar is scaled against the same total rather than against the busiest count itself, so
-    // the longest one stops short of the row's end and its count has somewhere to go.
     var total = busiest * (1 + CountGutterShare);
     var filled = new GridLength(births.Count, GridUnitType.Star);
     var rest = new GridLength(total - births.Count, GridUnitType.Star);
@@ -127,8 +125,7 @@ public partial class StatisticsPage : ContentPage
     return new BirthDecadeItem(decade, births.Count.ToString(), columns);
   }
 
-  // The name column is sized from this one rendered label rather than from each row's own text, so
-  // every bar starts on the same vertical line without the column claiming a share of the row.
+  // Rendered once to size the name column every row then binds to.
   public string WidestDecadeName
   {
     get
