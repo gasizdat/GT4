@@ -134,6 +134,24 @@ public class StatisticsPageTests
     Assert.Equal(GridLength.Auto, bars[1].BarColumns[1].Width);
   }
 
+  // The names and the bars are two stacks side by side so one Auto column measures every name at
+  // once; they only line up while both stacks hold a row per decade.
+  [Fact]
+  public async Task The_decade_names_stay_in_step_with_the_bars_beside_them()
+  {
+    var page = await CreatePageWithTwoDecadesAsync();
+
+    var names = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      var stack = page.FindByName<VerticalStackLayout>("BirthsByDecadeNames");
+      var labels = stack.Children.OfType<Label>();
+      return labels.Select(l => l.Text).ToArray();
+    });
+
+    Assert.Equal(2, names.Length);
+    Assert.Equal(page.BirthsByDecade.Select(b => b.Decade), names);
+  }
+
   // The star widths only reach the screen through a bound Grid.ColumnDefinitions, which fails
   // silently into an evenly split row if the binding stops resolving.
   [Fact]
@@ -148,7 +166,7 @@ public class StatisticsPageTests
     });
 
     Assert.Equal(2, rows.Length);
-    var barRow = (Grid)rows[0].Children[1];
+    var barRow = rows[0];
     Assert.Equal(3, barRow.ColumnDefinitions.Count);
     Assert.Equal(new GridLength(1, GridUnitType.Star), barRow.ColumnDefinitions[0].Width);
     Assert.Equal(GridLength.Auto, barRow.ColumnDefinitions[1].Width);
