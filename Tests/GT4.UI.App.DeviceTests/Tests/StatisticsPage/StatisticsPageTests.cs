@@ -126,37 +126,27 @@ public class StatisticsPageTests
     Assert.Equal(2, bars.Length);
     Assert.Equal("1", bars[0].Count);
     Assert.Equal("3", bars[1].Count);
+    // Each bar is its own count in stars, so the bars are exactly proportional to one another.
     Assert.Equal(new GridLength(1, GridUnitType.Star), bars[0].BarColumns[0].Width);
-    Assert.Equal(new GridLength(2, GridUnitType.Star), bars[0].BarColumns[1].Width);
-    // The busiest decade fills its row, leaving nothing for the remainder column.
     Assert.Equal(new GridLength(3, GridUnitType.Star), bars[1].BarColumns[0].Width);
-    Assert.Equal(new GridLength(0, GridUnitType.Star), bars[1].BarColumns[1].Width);
   }
 
-  // The count is drawn inside its own bar, so a strictly proportional bar truncates its number on
-  // exactly the decades whose bar shows nothing on its own.
+  // The count is drawn past the end of its bar, so the busiest bar must stop short of the row: left
+  // to fill it the number would have nowhere to go and would be clipped away.
   [Fact]
-  public async Task A_bar_never_shrinks_below_the_width_its_own_number_needs()
+  public async Task The_busiest_bar_still_leaves_room_for_its_own_count()
   {
-    var services = new TestServices();
-    var crowd = Enumerable.Range(2, 20).Select(id => P(id, birthDate: Date.Create(1910, 1, 1, DateStatus.WellKnown)));
-    PersonInfo[] persons = [P(1, birthDate: Date.Create(1900, 1, 1, DateStatus.WellKnown)), .. crowd];
-    services.PersonManager
-      .Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
-      .ReturnsAsync(persons);
-    var page = await CreatePageAsync(services);
-    await page.WaitForFirstLoadAsync();
+    var page = await CreatePageWithTwoDecadesAsync();
 
     var bars = page.BirthsByDecade;
 
-    Assert.Equal("1", bars[0].Count);
-    Assert.Equal("20", bars[1].Count);
-    var lonely = bars[0].BarColumns[0].Width.Value;
-    Assert.True(lonely > 1, $"One birth against twenty kept its proportional {lonely} star share.");
-    // Flooring the bar takes the width out of the remainder rather than off the end of the row, so
-    // the bars stay comparable to each other.
-    var row = lonely + bars[0].BarColumns[1].Width.Value;
-    Assert.Equal(bars[1].BarColumns[0].Width.Value, row, 6);
+    var gutter = bars[1].BarColumns[1].Width.Value;
+    Assert.True(gutter > 0, "The busiest bar filled its row, leaving nothing for the count beside it.");
+    // Scaling every bar against one total is what keeps them comparable: the rows are equally wide,
+    // so a bar twice as long means twice as many births.
+    var lonelyRow = bars[0].BarColumns[0].Width.Value + bars[0].BarColumns[1].Width.Value;
+    var busiestRow = bars[1].BarColumns[0].Width.Value + gutter;
+    Assert.Equal(busiestRow, lonelyRow, 6);
   }
 
   // Each row carries its own name beside its own bar. Splitting them into parallel stacks let the
@@ -206,7 +196,7 @@ public class StatisticsPageTests
     var barRow = (Grid)rows[0].Children[1];
     Assert.Equal(2, barRow.ColumnDefinitions.Count);
     Assert.Equal(new GridLength(1, GridUnitType.Star), barRow.ColumnDefinitions[0].Width);
-    Assert.Equal(new GridLength(2, GridUnitType.Star), barRow.ColumnDefinitions[1].Width);
+    Assert.Equal(page.BirthsByDecade[0].BarColumns[1].Width, barRow.ColumnDefinitions[1].Width);
   }
 
   // The boxed list this chart replaced rendered StatValueNone itself; nothing else in the row does,

@@ -38,10 +38,8 @@
         <Setter Property="VerticalOptions" Value="Fill" />
       </Style>
       <Style x:Key="BirthDecadeCount" BasedOn="{StaticResource FieldValue}" TargetType="Label">
-        <Setter Property="Margin" Value="6,0,6,0" />
-        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}" />
+        <Setter Property="Margin" Value="6,0,0,0" />
         <Setter Property="VerticalTextAlignment" Value="Center" />
-        <Setter Property="LineBreakMode" Value="TailTruncation" />
       </Style>
     </ResourceDictionary>
   </ContentPage.Resources>
@@ -240,9 +238,7 @@
                           Grid.Column="0"
                           Style="{StaticResource BirthDecadeBar}" />
                       <Label
-                          Grid.Column="0"
-                          HorizontalOptions="End"
-                          HorizontalTextAlignment="End"
+                          Grid.Column="1"
                           Style="{StaticResource BirthDecadeCount}"
                           Text="{Binding Count}" />
                     </Grid>

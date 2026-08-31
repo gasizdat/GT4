@@ -12,8 +12,8 @@ namespace GT4.UI.Pages;
 
 public partial class StatisticsPage : ContentPage
 {
-  // Enough of the row for four digits at the default font size.
-  private const double MinBarShare = 0.12;
+  // Kept past the end of the longest bar for its count to sit in, as a share of that bar.
+  private const double CountGutterShare = 0.1;
 
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
@@ -114,11 +114,11 @@ public partial class StatisticsPage : ContentPage
 
   private static BirthDecadeItem ToBirthDecadeItem((int Decade, int Count) births, int busiest)
   {
-    // The count is drawn inside its own bar, so a bar left strictly proportional would truncate the
-    // number it carries on the decades that have the least to show and most need it spelled out.
-    var floored = Math.Max(births.Count, busiest * MinBarShare);
-    var filled = new GridLength(floored, GridUnitType.Star);
-    var rest = new GridLength(busiest - floored, GridUnitType.Star);
+    // Every bar is scaled against the same total rather than against the busiest count itself, so
+    // the longest one stops short of the row's end and its count has somewhere to go.
+    var total = busiest * (1 + CountGutterShare);
+    var filled = new GridLength(births.Count, GridUnitType.Star);
+    var rest = new GridLength(total - births.Count, GridUnitType.Star);
     var barColumn = new ColumnDefinition(filled);
     var restColumn = new ColumnDefinition(rest);
     var columns = new ColumnDefinitionCollection(barColumn, restColumn);
