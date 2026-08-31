@@ -44,9 +44,9 @@
   </ContentPage.Resources>
 
   <components:PageLayout
+      Title="{x:Static resources:UIStrings.TitleStatisticsPage}"
       HasBackButton="True"
-      Loading="{Binding Loading, Source={x:Reference Root}}"
-      Title="{x:Static resources:UIStrings.TitleStatisticsPage}">
+      Loading="{Binding Loading, Source={x:Reference Root}}">
     <components:PageLayout.Body>
       <ScrollView>
         <Grid
@@ -204,20 +204,26 @@
               BindableLayout.ItemsSource="{Binding BirthsByDecade, Source={x:Reference Root}}">
             <BindableLayout.EmptyViewTemplate>
               <DataTemplate>
-                <Label Style="{StaticResource FieldValue}" Text="{x:Static resources:UIStrings.StatValueNone}" />
+                <Label
+                    Style="{StaticResource FieldValue}"
+                    Text="{x:Static resources:UIStrings.StatValueNone}" />
               </DataTemplate>
             </BindableLayout.EmptyViewTemplate>
             <BindableLayout.ItemTemplate>
               <DataTemplate x:DataType="items:BirthDecadeItem">
                 <Grid
-                    ColumnDefinitions="3*, 7*"
+                    ColumnDefinitions="Auto, *"
                     ColumnSpacing="{StaticResource PageContentSpacing}">
                   <Label
                       Grid.Column="0"
                       Style="{StaticResource BirthDecadeName}"
                       Text="{Binding Decade}" />
-                  <Grid Grid.Column="1" ColumnDefinitions="{Binding BarColumns}">
-                    <Border Grid.Column="0" Style="{StaticResource BirthDecadeBar}" />
+                  <Grid
+                      Grid.Column="1"
+                      ColumnDefinitions="{Binding BarColumns}">
+                    <Border
+                        Grid.Column="0"
+                        Style="{StaticResource BirthDecadeBar}" />
                     <Label
                         Grid.Column="1"
                         Style="{StaticResource BirthDecadeCount}"
