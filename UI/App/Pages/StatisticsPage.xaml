@@ -36,7 +36,7 @@
     <components:PageLayout.Body>
       <ScrollView>
         <Grid
-            ColumnDefinitions="Auto, *"
+            ColumnDefinitions="3*, 7*"
             ColumnSpacing="{StaticResource PageContentSpacing}"
             RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto"
             RowSpacing="{StaticResource PageContentSpacing}">
