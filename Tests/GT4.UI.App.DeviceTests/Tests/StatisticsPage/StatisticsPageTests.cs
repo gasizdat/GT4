@@ -95,6 +95,64 @@ public class StatisticsPageTests
     Assert.DoesNotContain("Smith John", page.OldestLivingText);
   }
 
+  // One birth in the 1900s against three in the 1910s, so a bar that ignored the busiest decade and
+  // just filled its row would still pass the count assertions.
+  private static async Task<TestableStatisticsPage> CreatePageWithTwoDecadesAsync()
+  {
+    var services = new TestServices();
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync(
+      [
+        P(1, birthDate: Date.Create(1900, 1, 1, DateStatus.WellKnown)),
+        P(2, birthDate: Date.Create(1910, 1, 1, DateStatus.WellKnown)),
+        P(3, birthDate: Date.Create(1911, 1, 1, DateStatus.WellKnown)),
+        P(4, birthDate: Date.Create(1912, 1, 1, DateStatus.WellKnown)),
+      ]);
+    var page = await CreatePageAsync(services);
+    await page.WaitForFirstLoadAsync();
+
+    return page;
+  }
+
+  [Fact]
+  public async Task Each_birth_decade_gets_a_bar_measured_against_the_busiest_one()
+  {
+    var page = await CreatePageWithTwoDecadesAsync();
+
+    var bars = page.BirthsByDecade;
+
+    Assert.Equal(2, bars.Length);
+    Assert.Equal("1", bars[0].Count);
+    Assert.Equal("3", bars[1].Count);
+    Assert.Equal(new GridLength(1, GridUnitType.Star), bars[0].BarColumns[0].Width);
+    Assert.Equal(new GridLength(2, GridUnitType.Star), bars[0].BarColumns[1].Width);
+    // The busiest decade fills its row, leaving nothing for the remainder column.
+    Assert.Equal(new GridLength(3, GridUnitType.Star), bars[1].BarColumns[0].Width);
+    Assert.Equal(new GridLength(0, GridUnitType.Star), bars[1].BarColumns[1].Width);
+  }
+
+  // The star widths only reach the screen through a bound Grid.ColumnDefinitions, which fails
+  // silently into an evenly split row if the binding stops resolving.
+  [Fact]
+  public async Task The_rendered_chart_takes_its_column_widths_from_the_bar_it_shows()
+  {
+    var page = await CreatePageWithTwoDecadesAsync();
+
+    var rows = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      var chart = page.FindByName<VerticalStackLayout>("BirthsByDecadeChart");
+      return chart.Children.OfType<Grid>().ToArray();
+    });
+
+    Assert.Equal(2, rows.Length);
+    var barRow = (Grid)rows[0].Children[1];
+    Assert.Equal(3, barRow.ColumnDefinitions.Count);
+    Assert.Equal(new GridLength(1, GridUnitType.Star), barRow.ColumnDefinitions[0].Width);
+    Assert.Equal(new GridLength(2, GridUnitType.Star), barRow.ColumnDefinitions[1].Width);
+    Assert.Equal(GridLength.Auto, barRow.ColumnDefinitions[2].Width);
+  }
+
   [Fact]
   public async Task OnNavigatedTo_reloads_when_the_project_revision_changed_since_the_last_load()
   {

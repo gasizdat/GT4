@@ -2,6 +2,7 @@ using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
+using GT4.UI.Items;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Extensions;
@@ -108,6 +109,19 @@ public partial class StatisticsPage : ContentPage
       ? string.Join(", ", items.Select(item => string.Format(UIStrings.StatValueNameCount_2, item.Name, item.Count)))
       : UIStrings.StatValueNone;
 
+  private static BirthDecadeItem ToBirthDecadeItem((int Decade, int Count) births, int busiest)
+  {
+    var filled = new GridLength(births.Count, GridUnitType.Star);
+    var rest = new GridLength(busiest - births.Count, GridUnitType.Star);
+    var barColumn = new ColumnDefinition(filled);
+    var restColumn = new ColumnDefinition(rest);
+    var countColumn = new ColumnDefinition(GridLength.Auto);
+    var columns = new ColumnDefinitionCollection(barColumn, restColumn, countColumn);
+    var decade = string.Format(UIStrings.StatValueDecade_1, births.Decade);
+
+    return new BirthDecadeItem(decade, births.Count.ToString(), columns);
+  }
+
   public string TotalPersonsText => Statistics.TotalPersons.ToString();
 
   public string TotalFamiliesText => Statistics.TotalFamilies.ToString();
@@ -134,9 +148,22 @@ public partial class StatisticsPage : ContentPage
 
   public string MedianBirthYearText => Statistics.MedianBirthYear?.ToString() ?? UIStrings.StatValueNone;
 
-  public string BirthsByDecadeText => Statistics.BirthsByDecade.Length > 0
-    ? string.Join("\n", Statistics.BirthsByDecade.Select(d => string.Format(UIStrings.StatValueDecadeCount_2, d.Decade, d.Count)))
-    : UIStrings.StatValueNone;
+  public BirthDecadeItem[] BirthsByDecade
+  {
+    get
+    {
+      var decades = Statistics.BirthsByDecade;
+
+      if (decades.Length == 0)
+      {
+        return [];
+      }
+
+      var busiest = decades.Max(d => d.Count);
+
+      return [.. decades.Select(d => ToBirthDecadeItem(d, busiest))];
+    }
+  }
 
   public string TopLargestFamiliesText => FormatNameCounts(Statistics.TopLargestFamilies);
 

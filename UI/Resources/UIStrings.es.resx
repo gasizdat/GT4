@@ -1284,8 +1284,8 @@ FN - apellido familiar</value>
   <data name="StatValueNameCount_2" xml:space="preserve">
     <value>{0} ({1})</value>
   </data>
-  <data name="StatValueDecadeCount_2" xml:space="preserve">
-    <value>Años {0}: {1}</value>
+  <data name="StatValueDecade_1" xml:space="preserve">
+    <value>Años {0}:</value>
   </data>
   <data name="StatValuePersonChildren_2" xml:space="preserve">
     <value>{0} ({1} hijos)</value>
