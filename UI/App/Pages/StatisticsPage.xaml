@@ -197,29 +197,19 @@
               Grid.Column="0"
               Style="{StaticResource FieldNameTop}"
               Text="{x:Static resources:UIStrings.FieldStatBirthsByDecade}" />
-          <!--
-            The decade names share one Auto column so they are measured together: a name column per
-            row sizes to its own text and leaves the bars starting at a different place on each row.
-          -->
-          <Grid
-              Grid.Row="15"
-              Grid.Column="1"
-              ColumnDefinitions="Auto, *"
-              ColumnSpacing="{StaticResource PageContentSpacing}">
-            <VerticalStackLayout
-                x:Name="BirthsByDecadeNames"
-                BindableLayout.ItemsSource="{Binding BirthsByDecade, Source={x:Reference Root}}">
-              <BindableLayout.ItemTemplate>
-                <DataTemplate x:DataType="items:BirthDecadeItem">
-                  <Label
-                      Style="{StaticResource BirthDecadeName}"
-                      Text="{Binding Decade}" />
-                </DataTemplate>
-              </BindableLayout.ItemTemplate>
-            </VerticalStackLayout>
+          <Grid Grid.Row="15" Grid.Column="1">
+            <!--
+              A row template measures its own Auto column against its own text, so the widest name
+              is rendered once here and every row's name takes its width from this label instead.
+            -->
+            <Label
+                x:Name="DecadeNameRuler"
+                Opacity="0"
+                Style="{StaticResource BirthDecadeName}"
+                Text="{Binding WidestDecadeName, Source={x:Reference Root}}"
+                VerticalOptions="Start" />
             <VerticalStackLayout
                 x:Name="BirthsByDecadeChart"
-                Grid.Column="1"
                 BindableLayout.ItemsSource="{Binding BirthsByDecade, Source={x:Reference Root}}">
               <BindableLayout.EmptyViewTemplate>
                 <DataTemplate>
@@ -230,14 +220,25 @@
               </BindableLayout.EmptyViewTemplate>
               <BindableLayout.ItemTemplate>
                 <DataTemplate x:DataType="items:BirthDecadeItem">
-                  <Grid ColumnDefinitions="{Binding BarColumns}">
-                    <Border
-                        Grid.Column="0"
-                        Style="{StaticResource BirthDecadeBar}" />
+                  <Grid
+                      ColumnDefinitions="Auto, *"
+                      ColumnSpacing="{StaticResource PageContentSpacing}">
                     <Label
+                        Grid.Column="0"
+                        Style="{StaticResource BirthDecadeName}"
+                        Text="{Binding Decade}"
+                        WidthRequest="{Binding Source={x:Reference DecadeNameRuler}, Path=Width}" />
+                    <Grid
                         Grid.Column="1"
-                        Style="{StaticResource BirthDecadeCount}"
-                        Text="{Binding Count}" />
+                        ColumnDefinitions="{Binding BarColumns}">
+                      <Border
+                          Grid.Column="0"
+                          Style="{StaticResource BirthDecadeBar}" />
+                      <Label
+                          Grid.Column="1"
+                          Style="{StaticResource BirthDecadeCount}"
+                          Text="{Binding Count}" />
+                    </Grid>
                   </Grid>
                 </DataTemplate>
               </BindableLayout.ItemTemplate>

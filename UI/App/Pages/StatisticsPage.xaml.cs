@@ -124,6 +124,17 @@ public partial class StatisticsPage : ContentPage
     return new BirthDecadeItem(decade, births.Count.ToString(), columns);
   }
 
+  // The name column is sized from this one rendered label rather than from each row's own text, so
+  // every bar starts on the same vertical line without the column claiming a share of the row.
+  public string WidestDecadeName
+  {
+    get
+    {
+      var widest = BirthsByDecade.MaxBy(b => b.Decade.Length);
+      return widest?.Decade ?? string.Empty;
+    }
+  }
+
   public string TotalPersonsText => Statistics.TotalPersons.ToString();
 
   public string TotalFamiliesText => Statistics.TotalFamilies.ToString();

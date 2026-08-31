@@ -95,8 +95,9 @@ public class StatisticsPageTests
     Assert.DoesNotContain("Smith John", page.OldestLivingText);
   }
 
-  // One birth in the 1900s against three in the 1910s, so a bar that ignored the busiest decade and
-  // just filled its row would still pass the count assertions.
+  // One birth in the 900s against three in the 1910s: a bar that ignored the busiest decade and just
+  // filled its row would still pass the count assertions, and the two names differ in length, which
+  // is the case the shared name width exists for.
   private static async Task<TestableStatisticsPage> CreatePageWithTwoDecadesAsync()
   {
     var services = new TestServices();
@@ -104,7 +105,7 @@ public class StatisticsPageTests
       .Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
       .ReturnsAsync(
       [
-        P(1, birthDate: Date.Create(1900, 1, 1, DateStatus.WellKnown)),
+        P(1, birthDate: Date.Create(900, 1, 1, DateStatus.WellKnown)),
         P(2, birthDate: Date.Create(1910, 1, 1, DateStatus.WellKnown)),
         P(3, birthDate: Date.Create(1911, 1, 1, DateStatus.WellKnown)),
         P(4, birthDate: Date.Create(1912, 1, 1, DateStatus.WellKnown)),
@@ -134,22 +135,34 @@ public class StatisticsPageTests
     Assert.Equal(GridLength.Auto, bars[1].BarColumns[1].Width);
   }
 
-  // The names and the bars are two stacks side by side so one Auto column measures every name at
-  // once; they only line up while both stacks hold a row per decade.
+  // Each row carries its own name beside its own bar. Splitting them into parallel stacks let the
+  // two drift apart as soon as a bar row measured taller than its name.
   [Fact]
-  public async Task The_decade_names_stay_in_step_with_the_bars_beside_them()
+  public async Task Every_decade_name_sits_in_the_row_of_its_own_bar()
   {
     var page = await CreatePageWithTwoDecadesAsync();
 
     var names = await MainThread.InvokeOnMainThreadAsync(() =>
     {
-      var stack = page.FindByName<VerticalStackLayout>("BirthsByDecadeNames");
-      var labels = stack.Children.OfType<Label>();
-      return labels.Select(l => l.Text).ToArray();
+      var chart = page.FindByName<VerticalStackLayout>("BirthsByDecadeChart");
+      var rows = chart.Children.OfType<Grid>();
+      return rows.Select(row => ((Label)row.Children[0]).Text).ToArray();
     });
 
-    Assert.Equal(2, names.Length);
     Assert.Equal(page.BirthsByDecade.Select(b => b.Decade), names);
+  }
+
+  // Every row takes its name width from this one rendered label, so a name column measured against
+  // a single row's own text -- which leaves each bar starting somewhere else -- stays impossible.
+  [Fact]
+  public async Task The_ruler_label_spells_the_longest_decade_name()
+  {
+    var page = await CreatePageWithTwoDecadesAsync();
+
+    var ruler = await MainThread.InvokeOnMainThreadAsync(() => page.FindByName<Label>("DecadeNameRuler").Text);
+
+    Assert.Equal(page.WidestDecadeName, ruler);
+    Assert.Equal(page.BirthsByDecade[1].Decade, ruler);
   }
 
   // The star widths only reach the screen through a bound Grid.ColumnDefinitions, which fails
@@ -166,7 +179,7 @@ public class StatisticsPageTests
     });
 
     Assert.Equal(2, rows.Length);
-    var barRow = rows[0];
+    var barRow = (Grid)rows[0].Children[1];
     Assert.Equal(3, barRow.ColumnDefinitions.Count);
     Assert.Equal(new GridLength(1, GridUnitType.Star), barRow.ColumnDefinitions[0].Width);
     Assert.Equal(GridLength.Auto, barRow.ColumnDefinitions[1].Width);
