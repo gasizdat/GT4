@@ -433,7 +433,7 @@ public class CreateOrUpdatePersonDialogTests
     });
     await insertTask;
 
-    Assert.Equal("[Petr  Petrov](person:2)", dialog.Biography!.Content);
+    Assert.Equal("[Petr Petrov](person:2)", dialog.Biography!.Content);
   }
 
   [Fact]

@@ -94,6 +94,10 @@ public class NameFormatter : INameFormatter
       { "FN", () => GetNames(NameType.FamilyName)},
     });
 
-    return ret;
+    // A template spells every slot a person may have, so one without a patronymic or a last name
+    // leaves the delimiters around the empty slots behind ("Jared   (962 years)").
+    var parts = ret.Split(_PartsDelimiter, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    return string.Join(_PartsDelimiter, parts);
   }
 }
