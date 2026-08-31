@@ -153,6 +153,24 @@ public class StatisticsPageTests
     Assert.Equal(GridLength.Auto, barRow.ColumnDefinitions[2].Width);
   }
 
+  // The boxed list this chart replaced rendered StatValueNone itself; nothing else in the row does,
+  // so a missing empty view leaves the cell blank while every neighbouring row still says "none".
+  [Fact]
+  public async Task An_empty_project_still_says_so_where_the_decade_bars_would_be()
+  {
+    var page = await CreatePageAsync(new TestServices());
+    await page.WaitForFirstLoadAsync();
+
+    var texts = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      var chart = page.FindByName<VerticalStackLayout>("BirthsByDecadeChart");
+      var labels = chart.Children.OfType<Label>();
+      return labels.Select(l => l.Text).ToArray();
+    });
+
+    Assert.Equal([Resources.UIStrings.StatValueNone], texts);
+  }
+
   [Fact]
   public async Task OnNavigatedTo_reloads_when_the_project_revision_changed_since_the_last_load()
   {
