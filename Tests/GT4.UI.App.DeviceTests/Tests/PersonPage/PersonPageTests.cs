@@ -401,6 +401,60 @@ public class PersonPageTests
   }
 
   [Fact]
+  public async Task Opening_a_person_with_no_biography_leaves_the_biography_tab()
+  {
+    var services = new TestServices();
+    var written = CreateSamplePerson() with { Biography = LongBiography() };
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(written);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = written);
+    await MainThread.InvokeOnMainThreadAsync(() => page.InvokePageCommandAsync("TabBiography"));
+    Assert.True(page.ShowBiographyTab);
+
+    var unwritten = CreateSamplePerson() with { Id = 2 };
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(unwritten);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = unwritten);
+
+    Assert.True(page.ShowRelativesTab);
+  }
+
+  // A lone Relatives tab offers no choice, so the strip is only worth its space once something else
+  // is there to switch to.
+  [Fact]
+  public async Task The_tab_strip_is_hidden_for_a_person_carrying_only_relatives()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson();
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+
+    Assert.False(page.ShowTabs);
+  }
+
+  [Fact]
+  public async Task The_tab_strip_appears_once_a_person_has_a_biography()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson() with { Biography = LongBiography() };
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+
+    Assert.True(page.ShowTabs);
+  }
+
+  [Fact]
   public async Task Loading_a_person_with_an_untitled_attachment_falls_back_to_the_file_name_alone()
   {
     var services = new TestServices();

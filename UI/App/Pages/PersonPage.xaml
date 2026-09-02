@@ -226,6 +226,7 @@
 
         <HorizontalStackLayout
             Grid.Row="0"
+            IsVisible="{Binding ShowTabs, Source={x:Reference Root}}"
             Margin="{Thickness Bottom={StaticResource PageContentVerticalPadding}}"
             Spacing="6">
 
@@ -257,7 +258,9 @@
             </Label>
           </Border>
 
-          <Border Style="{StaticResource PersonTab}">
+          <Border
+              IsVisible="{Binding ShowBiography, Source={x:Reference Root}}"
+              Style="{StaticResource PersonTab}">
             <Border.GestureRecognizers>
               <TapGestureRecognizer
                   Command="{Binding PageCommand, Source={x:Reference Root}}"
@@ -387,7 +390,7 @@
             Grid.Row="1"
             IsVisible="{Binding ShowBiographyTab, Source={x:Reference Root}}"
             VerticalScrollBarVisibility="Always">
-          <Border IsVisible="{Binding ShowBiography, Source={x:Reference Root}}">
+          <Border>
             <components:MarkdownView
                 AttachmentLinkTapped="OnAttachmentLinkTapped"
                 Markdown="{Binding Biography, Source={x:Reference Root}, Mode=OneWay}"

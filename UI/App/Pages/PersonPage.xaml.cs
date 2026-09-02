@@ -41,10 +41,18 @@ public partial class PersonPage : ContentPage
   private AttachmentInfo[] _Attachments = [];
   private string _Biography = string.Empty;
   private bool _IsNarrow = true;
-  private int _SelectedTab;
+  private PersonTab _SelectedTab;
   private bool _ExpandAll = false;
   private RelativeInfo[] _AllRoots = [];
   private ProjectInfo? _LastProjectInfo;
+
+  // Relatives first: it is the only one every person has, and so the one anything else falls back to.
+  private enum PersonTab
+  {
+    Relatives,
+    Biography,
+    Attachments
+  }
 
   public PersonPage(
     ICancellationTokenProvider cancellationTokenProvider,
@@ -192,20 +200,30 @@ public partial class PersonPage : ContentPage
     set => ShowPersonInfo(value, true);
   }
 
-  public bool ShowRelativesTab => _SelectedTab == 0;
+  public bool ShowRelativesTab => _SelectedTab == PersonTab.Relatives;
 
-  public bool ShowBiographyTab => _SelectedTab == 1;
+  public bool ShowBiographyTab => _SelectedTab == PersonTab.Biography;
 
-  public bool ShowAttachmentsTab => _SelectedTab == 2;
+  public bool ShowAttachmentsTab => _SelectedTab == PersonTab.Attachments;
+
+  /// <summary>Whether the strip is worth its space: with nothing beside the relatives there is no
+  /// choice to offer, only a lone tab that cannot be left.</summary>
+  public bool ShowTabs => ShowBiography || ShowAttachments;
 
   public bool IsNarrowLayout => _IsNarrow;
 
   public bool IsWideLayout => !_IsNarrow;
 
-
-  private void SelectTab(int index)
+  private bool IsTabAvailable(PersonTab tab) => tab switch
   {
-    _SelectedTab = index;
+    PersonTab.Biography => ShowBiography,
+    PersonTab.Attachments => ShowAttachments,
+    _ => true
+  };
+
+  private void SelectTab(PersonTab tab)
+  {
+    _SelectedTab = tab;
     OnPropertyChanged(nameof(ShowRelativesTab));
     OnPropertyChanged(nameof(ShowBiographyTab));
     OnPropertyChanged(nameof(ShowAttachmentsTab));
@@ -444,10 +462,10 @@ public partial class PersonPage : ContentPage
     _Attachments = data.Attachments;
     _Biography = CombineBiography(data.Bio, data.GedcomDetails, data.FamilyDetails);
     _AllRoots = data.Roots;
-    // The tab is hidden for a person carrying none, which would leave the body blank and unleavable.
-    if (!ShowAttachments && ShowAttachmentsTab)
+    // A tab is hidden for a person without its content, which would leave the body blank and unleavable.
+    if (!IsTabAvailable(_SelectedTab))
     {
-      SelectTab(0);
+      SelectTab(PersonTab.Relatives);
     }
 
     // Only after the new roots land: with the panel open, ResetFilterData re-fetches immediately,
@@ -525,13 +543,13 @@ public partial class PersonPage : ContentPage
         OnNextPerson(1);
         break;
       case string commandName when commandName == "TabRelatives":
-        SelectTab(0);
+        SelectTab(PersonTab.Relatives);
         break;
       case string commandName when commandName == "TabBiography":
-        SelectTab(1);
+        SelectTab(PersonTab.Biography);
         break;
       case string commandName when commandName == "TabAttachments":
-        SelectTab(2);
+        SelectTab(PersonTab.Attachments);
         break;
       case string commandName when commandName == "ToggleAll":
         ExpandAll = !ExpandAll;
