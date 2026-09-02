@@ -126,16 +126,12 @@ public partial class App : Application
   {
     var window = new Window(new AppShell());
 #if ANDROID || IOS
-    // Backgrounding can kill the process, so the project is closed on the way out -- which flushes its
-    // cache back to the origin -- and reopened on return.
+    // Backgrounding can kill the process, so the project must not stay open across it.
     window.Activated += ReopenOnActivationAsync;
     window.Deactivated += async (_, _) => await CloseOnDeactivationAsync(saveLastOpenProject: true);
 #else
-    // Deactivation on desktop is mere focus loss: alt-tab, or a native file picker, which deactivates
-    // the window before PickAsync returns. Closing the project on each one would copy the whole file
-    // out and back, so only the debounced settings are persisted here and the project is left open
-    // until the window is destroyed. A session killed before that leaves its cache behind, which
-    // ProjectList keeps as a restore point rather than sweeping.
+    // A desktop window deactivates on mere focus loss, including while a native file picker is up --
+    // before PickAsync returns -- so closing the project here would tear it down mid-operation.
     window.Deactivated += (_, _) => _AppConfiguration?.Flush();
 #endif
     window.Destroying += async (_, _) => await CloseOnDeactivationAsync(saveLastOpenProject: false);
