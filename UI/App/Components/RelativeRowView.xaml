@@ -21,12 +21,17 @@
 
     <GraphicsView
         x:Name="Connectors"
-        InputTransparent="True" />
+        HorizontalOptions="Start"
+        InputTransparent="True"
+        VerticalOptions="Start" />
 
+    <!--  Start, not Fill: stretched, its height would be LayoutRoot's, which is the max over both
+          children including the overlay that is sized from this one.  -->
     <Grid
         x:Name="ContentRoot"
         ColumnDefinitions="Auto, *, Auto"
-        RowDefinitions="Auto, Auto">
+        RowDefinitions="Auto, Auto"
+        VerticalOptions="Start">
 
 
       <Label

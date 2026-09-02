@@ -13,8 +13,9 @@ namespace GT4.UI.DeviceTests;
 /// in reaction to PersonInfoFrame itself, not any other property of that inner view. Reached through
 /// ConnectorsDrawable/InfoView, two protected read-only seams added for this test (the drawable and the
 /// embedded view are otherwise private XAML-named fields with no other public reflection of their
-/// state). OnLayoutSizeChanged is not covered: it only mirrors a real measured Width/Height into the
-/// drawable and needs an actual layout pass to observe non-default values, which isn't worth a seam.
+/// state). OnContentSizeChanged needs a real layout pass rather than a seam, so it is covered through
+/// the row's own measured height instead -- which is the thing that was wrong when it was sized from
+/// the row rather than from the content.
 /// </summary>
 public class RelativeRowViewTests
 {
@@ -100,6 +101,37 @@ public class RelativeRowViewTests
     await MainThread.InvokeOnMainThreadAsync(() => view.InfoViewForTest.PersonInfoFrame = new Rect(0, 0, 40, 100));
 
     Assert.Equal(50, view.ConnectorsDrawableForTest.PhotoCenterY);
+  }
+
+  // The overlay used to be sized from the Grid it sits in, which is as tall as its tallest child: the
+  // request fed itself and could only grow, so a row that had once been tall stayed tall and
+  // CollectionView handed that height to whatever it recycled the view onto next.
+  [Fact]
+  public async Task A_row_gives_back_the_height_its_content_no_longer_needs()
+  {
+    var view = await CreateViewAsync();
+    var row = MakeRow(1, [false]);
+    row.Issue = RelativeRowIssueType.Loop;
+    row.IssueMessage = string.Concat(Enumerable.Repeat("этот предок уже встречался в этой ветви, ", 20));
+    // Pinned on the row itself: only then is the issue message measured against a bound and wraps.
+    // The stack then sizes the row to what it asks for, as CollectionView does; a Grid would stretch it.
+    view.WidthRequest = 300;
+    var page = await MainThread.InvokeOnMainThreadAsync(
+      () => new ContentPage { Content = new VerticalStackLayout { Children = { view } } });
+
+    await using var window = await WindowHost.AttachAsync(page);
+    await MainThread.InvokeOnMainThreadAsync(() => view.BindingContext = row);
+    var tall = await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => view.Height),
+      height => height > 300,
+      timeoutMessage: "The wrapped issue message never made the row tall enough to test against.");
+
+    await MainThread.InvokeOnMainThreadAsync(() => row.Issue = RelativeRowIssueType.None);
+
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => view.Height),
+      height => height < tall,
+      timeoutMessage: "The row kept the height it was given before its content shrank.");
   }
 
   [Fact]
