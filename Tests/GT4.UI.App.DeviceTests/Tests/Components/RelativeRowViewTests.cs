@@ -103,6 +103,35 @@ public class RelativeRowViewTests
     Assert.Equal(50, view.ConnectorsDrawableForTest.PhotoCenterY);
   }
 
+  // A trunk that continues past this row has to reach the next one, so the overlay has to span the gap
+  // between them as well as the content: sized from the content height alone it stops short, and the
+  // line breaks once per row.
+  [Fact]
+  public async Task The_connector_overlay_spans_the_whole_row()
+  {
+    var view = await CreateViewAsync();
+    view.WidthRequest = 300;
+    var page = await MainThread.InvokeOnMainThreadAsync(
+      () => new ContentPage { Content = new VerticalStackLayout { Children = { view } } });
+
+    await using var window = await WindowHost.AttachAsync(page);
+    await MainThread.InvokeOnMainThreadAsync(() => view.BindingContext = MakeRow(2, [true, true]));
+
+    var frame = (Grid)view.Content;
+    var overlay = frame.Children.OfType<GraphicsView>().Single();
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => (Row: view.Height, Overlay: overlay.Height)),
+      heights => heights.Row > 0 && heights.Overlay > 0,
+      timeoutMessage: "The row never got arranged.");
+    // Settle rather than poll for the answer: applying the indent margin drives a second pass, and
+    // before it lands the row is as short as its content -- which is the state under test, so polling
+    // for the two to agree passes on the very defect it is meant to catch.
+    await Task.Delay(1000);
+
+    var (rowHeight, overlayHeight) = await MainThread.InvokeOnMainThreadAsync(() => (view.Height, overlay.Height));
+    Assert.Equal(rowHeight, overlayHeight, 0.5);
+  }
+
   // The overlay used to be sized from the Grid it sits in, which is as tall as its tallest child: the
   // request fed itself and could only grow, so a row that had once been tall stayed tall and
   // CollectionView handed that height to whatever it recycled the view onto next.

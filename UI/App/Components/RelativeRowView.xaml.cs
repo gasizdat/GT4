@@ -32,11 +32,13 @@ public partial class RelativeRowView : ContentView
 
   // A GraphicsView left to Fill inside a virtualized item measures to zero and loses the trunk lines,
   // so it needs an explicit size -- taken from the content and never from LayoutRoot, which is one
-  // cell as tall as the taller of the two and so would feed the overlay its own height back.
+  // cell as tall as the taller of the two and so would feed the overlay its own height back. The
+  // content's own margins are the indent and the gap to the next row, and a trunk that continues has
+  // to cross both.
   private void OnContentSizeChanged(object? sender, EventArgs e)
   {
     Connectors.WidthRequest = ContentRoot.Margin.Left + ContentRoot.Width;
-    Connectors.HeightRequest = ContentRoot.Height;
+    Connectors.HeightRequest = ContentRoot.Height + ContentRoot.Margin.Bottom;
     Connectors.Invalidate();
   }
 
