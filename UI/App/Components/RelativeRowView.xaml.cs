@@ -27,16 +27,18 @@ public partial class RelativeRowView : ContentView
     InitializeComponent();
     Connectors.Drawable = _Connectors;
     Info.PropertyChanged += OnInfoPropertyChanged;
-    LayoutRoot.SizeChanged += OnLayoutSizeChanged;
+    ContentRoot.SizeChanged += OnContentSizeChanged;
   }
 
-  // A GraphicsView relying on Fill inside a virtualized item often measures to zero height, which would
-  // drop the full-height trunk lines. Size it explicitly from the measured row instead (the same reason
-  // FamilyTreePage's connector GraphicsView is given an explicit size).
-  private void OnLayoutSizeChanged(object? sender, EventArgs e)
+  // A GraphicsView left to Fill inside a virtualized item measures to zero and loses the trunk lines,
+  // so it needs an explicit size -- taken from the content and never from LayoutRoot, which is one
+  // cell as tall as the taller of the two and so would feed the overlay its own height back. The
+  // content's own margins are the indent and the gap to the next row, and a trunk that continues has
+  // to cross both.
+  private void OnContentSizeChanged(object? sender, EventArgs e)
   {
-    Connectors.WidthRequest = LayoutRoot.Width;
-    Connectors.HeightRequest = LayoutRoot.Height;
+    Connectors.WidthRequest = ContentRoot.Margin.Left + ContentRoot.Width;
+    Connectors.HeightRequest = ContentRoot.Height + ContentRoot.Margin.Bottom;
     Connectors.Invalidate();
   }
 

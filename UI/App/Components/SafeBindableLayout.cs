@@ -87,7 +87,7 @@ public class SafeBindableLayout : FlexLayout
   }
 
   // CollectionView reassigns ItemsSource synchronously from inside its own native cell-recycle
-  // callback (WinUI ItemsRepeater realizing/recycling an element). Rebuild() inserts/removes
+  // callback (on Windows a WinUI ListView recycling a container). Rebuild() inserts/removes
   // FlexLayout.Children, which creates/destroys native handlers synchronously too -- doing that
   // from inside the platform's own callback stack risks an exception crossing the native ABI
   // boundary uncaught, which WinRT reports as a fatal "stowed exception" (0xC000027B) rather than

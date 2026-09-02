@@ -10,13 +10,12 @@
     <Grid.GestureRecognizers>
       <TapGestureRecognizer Command="{Binding OpenViewerCommand, Source={x:Reference Root}}" />
     </Grid.GestureRecognizers>
+    <!--  Aspect comes from the caller's style: a local value here would silently outrank it.  -->
     <Image
-        Aspect="AspectFill"
         Opacity="{Binding ImageOpacity1, Source={x:Reference Root}}"
         Source="{Binding Image1, Source={x:Reference Root}}"
         Style="{Binding ImageStyle, Source={x:Reference Root}, TargetNullValue={StaticResource PhotoThumbStyle}}" />
     <Image
-        Aspect="AspectFill"
         Opacity="{Binding ImageOpacity2, Source={x:Reference Root}}"
         Source="{Binding Image2, Source={x:Reference Root}}"
         Style="{Binding ImageStyle, Source={x:Reference Root}, TargetNullValue={StaticResource PhotoThumbStyle}}" />

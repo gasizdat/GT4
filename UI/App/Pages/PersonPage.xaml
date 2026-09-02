@@ -27,12 +27,42 @@
           Phone="187.5"
           Tablet="300" />
 
-      <Style x:Key="PhotoStyle" TargetType="Image">
-        <Setter Property="Aspect" Value="AspectFit" />
+      <!--
+        The height has to come from the host: WinUI honours a HeightRequest on an Image whatever the
+        layout decided, and Maximum*Request is inert on one (#274), so a picture given a height of
+        its own is painted over the header above it. AspectFill keeps the caption on the photo
+        rather than adrift in letterboxed slack.
+      -->
+      <Style x:Key="FittedPhotoStyle" TargetType="Image">
+        <Setter Property="Aspect" Value="AspectFill" />
+        <Setter Property="WidthRequest" Value="{StaticResource PhotoWidth}" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+        <Setter Property="VerticalOptions" Value="Fill" />
+      </Style>
+
+      <!--  Scrolling above the relatives there is no cell to be clamped to, so this one keeps a box.  -->
+      <Style x:Key="FixedPhotoStyle" TargetType="Image">
+        <Setter Property="Aspect" Value="AspectFill" />
         <Setter Property="HeightRequest" Value="{StaticResource PhotoHeight}" />
         <Setter Property="WidthRequest" Value="{StaticResource PhotoWidth}" />
         <Setter Property="HorizontalOptions" Value="Center" />
-        <Setter Property="VerticalOptions" Value="Center" />
+      </Style>
+
+      <!--
+        A Border rather than a Button: a DataTrigger on a native Button's colours does not
+        repaint on WinUI, which is what a tab strip needs to show which one is current.
+      -->
+      <Style x:Key="PersonTab" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SurfaceSubtle}, Dark={StaticResource SurfaceSubtleDark}}" />
+        <Setter Property="Padding" Value="12,6" />
+        <Setter Property="Stroke" Value="{StaticResource Primary}" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 14" />
+        <Setter Property="StrokeThickness" Value="1" />
+      </Style>
+
+      <Style x:Key="PersonTabText" TargetType="Label">
+        <Setter Property="FontSize" Value="{DynamicResource LabelTextSizeDefault}" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
       </Style>
 
     </ResourceDictionary>
@@ -72,13 +102,13 @@
 
     <components:PageLayout.Header>
       <Grid
-          ColumnDefinitions="Auto, *"
+          ColumnDefinitions="Auto, Auto, *"
           RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto">
 
         <Grid
             Grid.Row="0"
             Grid.Column="0"
-            Grid.ColumnSpan="2"
+            Grid.ColumnSpan="3"
             ColumnDefinitions="Auto, *, Auto">
 
           <Button
@@ -124,54 +154,64 @@
 
         </Grid>
 
+        <!--  The one region every tab keeps, so the biography and the attachments can show a photo at all.  -->
+        <components:ImagePresenter
+            Grid.Row="2"
+            Grid.RowSpan="5"
+            Grid.Column="0"
+            Margin="{Thickness Right={StaticResource PageContentSpacing}}"
+            ImageStyle="{StaticResource PhotoThumbStyle}"
+            Photos="{Binding HeaderPhoto, Source={x:Reference Root}}"
+            VerticalOptions="Start" />
+
         <Label
             Grid.Row="2"
-            Grid.Column="0"
+            Grid.Column="1"
             Grid.ColumnSpan="2"
             Style="{StaticResource CardSubtitle}"
             Text="{Binding FullName, Source={x:Reference Root}}" />
 
         <Label
             Grid.Row="3"
-            Grid.Column="0"
+            Grid.Column="1"
             Style="{StaticResource FieldName}"
             Text="{x:Static resources:UIStrings.FieldDateOfBirth}" />
 
         <Label
             Grid.Row="3"
-            Grid.Column="1"
+            Grid.Column="2"
             Style="{StaticResource FieldValue}"
             Text="{Binding BirthDate, Source={x:Reference Root}}" />
 
         <Label
             Grid.Row="4"
-            Grid.Column="0"
+            Grid.Column="1"
             IsVisible="{Binding ShowDeathDate, Source={x:Reference Root}}"
             Style="{StaticResource FieldName}"
             Text="{x:Static resources:UIStrings.FieldDateOfDeath}" />
 
         <Label
             Grid.Row="4"
-            Grid.Column="1"
+            Grid.Column="2"
             IsVisible="{Binding ShowDeathDate, Source={x:Reference Root}}"
             Style="{StaticResource FieldValue}"
             Text="{Binding DeathDate, Source={x:Reference Root}}" />
 
         <Label
             Grid.Row="5"
-            Grid.Column="0"
+            Grid.Column="1"
             Style="{StaticResource FieldName}"
             Text="{x:Static resources:UIStrings.FieldAge}" />
 
         <Label
             Grid.Row="5"
-            Grid.Column="1"
+            Grid.Column="2"
             Style="{StaticResource FieldValue}"
             Text="{Binding Age, Source={x:Reference Root}}" />
 
         <Label
             Grid.Row="6"
-            Grid.Column="0"
+            Grid.Column="1"
             Grid.ColumnSpan="2"
             IsVisible="{Binding ShowSinceBirth, Source={x:Reference Root}}"
             Style="{StaticResource FieldValue}"
@@ -181,93 +221,155 @@
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>
-      <ScrollView
-          x:Name="BodyScrollView"
-          Scrolled="OnBodyScrolled">
+      <!--  Three tabs, each owning the whole body, so nothing competes for height.  -->
+      <Grid RowDefinitions="Auto, *">
+
+        <HorizontalStackLayout
+            Grid.Row="0"
+            IsVisible="{Binding ShowTabs, Source={x:Reference Root}}"
+            Margin="{Thickness Bottom={StaticResource PageContentVerticalPadding}}"
+            Spacing="6">
+
+          <Border Style="{StaticResource PersonTab}">
+            <Border.GestureRecognizers>
+              <TapGestureRecognizer
+                  Command="{Binding PageCommand, Source={x:Reference Root}}"
+                  CommandParameter="TabRelatives" />
+            </Border.GestureRecognizers>
+            <Border.Triggers>
+              <DataTrigger
+                  Binding="{Binding ShowRelativesTab, Source={x:Reference Root}}"
+                  TargetType="Border"
+                  Value="True">
+                <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+              </DataTrigger>
+            </Border.Triggers>
+            <Label
+                Style="{StaticResource PersonTabText}"
+                Text="{x:Static resources:UIStrings.LblRelatives}">
+              <Label.Triggers>
+                <DataTrigger
+                    Binding="{Binding ShowRelativesTab, Source={x:Reference Root}}"
+                    TargetType="Label"
+                    Value="True">
+                  <Setter Property="TextColor" Value="{StaticResource White}" />
+                </DataTrigger>
+              </Label.Triggers>
+            </Label>
+          </Border>
+
+          <Border
+              IsVisible="{Binding ShowBiography, Source={x:Reference Root}}"
+              Style="{StaticResource PersonTab}">
+            <Border.GestureRecognizers>
+              <TapGestureRecognizer
+                  Command="{Binding PageCommand, Source={x:Reference Root}}"
+                  CommandParameter="TabBiography" />
+            </Border.GestureRecognizers>
+            <Border.Triggers>
+              <DataTrigger
+                  Binding="{Binding ShowBiographyTab, Source={x:Reference Root}}"
+                  TargetType="Border"
+                  Value="True">
+                <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+              </DataTrigger>
+            </Border.Triggers>
+            <Label
+                Style="{StaticResource PersonTabText}"
+                Text="{x:Static resources:UIStrings.FieldPersonBiography}">
+              <Label.Triggers>
+                <DataTrigger
+                    Binding="{Binding ShowBiographyTab, Source={x:Reference Root}}"
+                    TargetType="Label"
+                    Value="True">
+                  <Setter Property="TextColor" Value="{StaticResource White}" />
+                </DataTrigger>
+              </Label.Triggers>
+            </Label>
+          </Border>
+
+          <Border
+              IsVisible="{Binding ShowAttachments, Source={x:Reference Root}}"
+              Style="{StaticResource PersonTab}">
+            <Border.GestureRecognizers>
+              <TapGestureRecognizer
+                  Command="{Binding PageCommand, Source={x:Reference Root}}"
+                  CommandParameter="TabAttachments" />
+            </Border.GestureRecognizers>
+            <Border.Triggers>
+              <DataTrigger
+                  Binding="{Binding ShowAttachmentsTab, Source={x:Reference Root}}"
+                  TargetType="Border"
+                  Value="True">
+                <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+              </DataTrigger>
+            </Border.Triggers>
+            <Label
+                Style="{StaticResource PersonTabText}"
+                Text="{x:Static resources:UIStrings.FieldPersonAttachments}">
+              <Label.Triggers>
+                <DataTrigger
+                    Binding="{Binding ShowAttachmentsTab, Source={x:Reference Root}}"
+                    TargetType="Label"
+                    Value="True">
+                  <Setter Property="TextColor" Value="{StaticResource White}" />
+                </DataTrigger>
+              </Label.Triggers>
+            </Label>
+          </Border>
+
+        </HorizontalStackLayout>
+
+        <!--
+          A host on each side of the boundary rather than one moved across on every resize tick. The
+          hidden one costs nothing: ImagePresenter.Update returns while it is invisible.
+        -->
         <Grid
+            x:Name="RelativesTab"
+            Grid.Row="1"
             ColumnDefinitions="Auto, *"
-            RowDefinitions="Auto, Auto, Auto">
+            IsVisible="{Binding ShowRelativesTab, Source={x:Reference Root}}">
 
-          <VerticalStackLayout
-              Grid.Row="{Binding Path=SmartLayout.Biography.Row, Source={x:Reference Root}}"
-              Grid.RowSpan="{Binding Path=SmartLayout.Biography.RowSpan, Source={x:Reference Root}}"
-              Grid.Column="{Binding Path=SmartLayout.Biography.Column, Source={x:Reference Root}}"
-              Grid.ColumnSpan="{Binding Path=SmartLayout.Biography.ColumnSpan, Source={x:Reference Root}}">
-
-            <Border IsVisible="{Binding ShowBiography, Source={x:Reference Root}}">
-              <components:MarkdownView
-                  AttachmentLinkTapped="OnAttachmentLinkTapped"
-                  Markdown="{Binding Biography, Source={x:Reference Root}, Mode=OneWay}"
-                  MediaResolver="{Binding MediaResolver, Source={x:Reference Root}}"
-                  PersonLinkTapped="OnPersonLinkTapped" />
-            </Border>
-
-            <Border IsVisible="{Binding ShowAttachments, Source={x:Reference Root}}">
-              <VerticalStackLayout>
-                <Label
-                    Style="{StaticResource GroupTitle}"
-                    Text="{x:Static resources:UIStrings.FieldPersonAttachments}" />
-
-                <CollectionView
-                    ItemsSource="{Binding Attachments, Source={x:Reference Root}}"
-                    SelectionMode="Single">
-                  <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                      <Grid
-                          Padding="{StaticResource CollectionItemsVerticalPadding}"
-                          Style="{StaticResource HoverSubItem}">
-                        <Grid.GestureRecognizers>
-                          <TapGestureRecognizer
-                              Command="{Binding Path=PageCommand, Source={x:Reference Root}}"
-                              CommandParameter="{Binding .}" />
-                        </Grid.GestureRecognizers>
-
-                        <VerticalStackLayout>
-                          <Label
-                              Style="{StaticResource FieldValue}"
-                              Text="{Binding DisplayName}" />
-                          <!--  An imported title displaces the file name as the row's label; the file name stays as the subline, since a shared title can cover several files.  -->
-                          <Label
-                              IsVisible="{Binding ShowFileName}"
-                              Opacity="0.6"
-                              Style="{StaticResource FieldValue}"
-                              Text="{Binding FileName}" />
-                        </VerticalStackLayout>
-                      </Grid>
-                    </DataTemplate>
-                  </CollectionView.ItemTemplate>
-                </CollectionView>
-              </VerticalStackLayout>
-            </Border>
-          </VerticalStackLayout>
+          <!--
+            Stretched, not asked: RelativesTab is a star row, sized by the page and never by what is
+            inside it, which is the only reason a photo may take its height from its own parent here.
+            A request would also strand the caption, laid out against the request and not the cap.
+          -->
           <components:ImagePresenter
               x:Name="PersonPhoto"
-              Grid.Row="{Binding Path=SmartLayout.Image.Row, Source={x:Reference Root}}"
-              Grid.RowSpan="{Binding Path=SmartLayout.Image.RowSpan, Source={x:Reference Root}}"
-              Grid.Column="{Binding Path=SmartLayout.Image.Column, Source={x:Reference Root}}"
-              Grid.ColumnSpan="{Binding Path=SmartLayout.Image.ColumnSpan, Source={x:Reference Root}}"
+              Grid.Column="0"
               Margin="{Thickness Right={StaticResource PageContentSpacing}}"
-              ImageStyle="{StaticResource PhotoStyle}"
+              ImageStyle="{StaticResource FittedPhotoStyle}"
+              IsVisible="{Binding IsWideLayout, Source={x:Reference Root}}"
+              MaximumHeightRequest="{StaticResource PhotoHeight}"
               Photos="{Binding Photos, Source={x:Reference Root}}"
-              SizeChanged="OnPersonPhotoOrRelativesSizeChanged"
-              VerticalOptions="Start" />
+              VerticalOptions="Fill" />
 
-          <VerticalStackLayout
-              Grid.Row="{Binding Path=SmartLayout.Relatives.Row, Source={x:Reference Root}}"
-              Grid.RowSpan="{Binding Path=SmartLayout.Relatives.RowSpan, Source={x:Reference Root}}"
-              Grid.Column="{Binding Path=SmartLayout.Relatives.Column, Source={x:Reference Root}}"
-              Grid.ColumnSpan="{Binding Path=SmartLayout.Relatives.ColumnSpan, Source={x:Reference Root}}">
+          <Grid
+              Grid.Column="1"
+              RowDefinitions="Auto, *">
 
-            <!--  Filters panel  -->
-            <components:PersonFilterView x:Name="FilterView" />
+            <components:PersonFilterView
+                x:Name="FilterView"
+                Grid.Row="0" />
 
-            <!--  Relatives list  -->
             <CollectionView
                 x:Name="RelativesView"
+                Grid.Row="1"
                 ItemsSource="{Binding Relatives, Source={x:Reference Root}}"
                 SelectionMode="Single"
-                SizeChanged="OnPersonPhotoOrRelativesSizeChanged"
                 VerticalScrollBarVisibility="Always">
+
+              <!--  Narrow, the photo scrolls away with the list rather than splitting the body with it.  -->
+              <CollectionView.Header>
+                <components:ImagePresenter
+                    x:Name="ScrolledPersonPhoto"
+                    HorizontalOptions="Center"
+                    ImageStyle="{StaticResource FixedPhotoStyle}"
+                    IsVisible="{Binding IsNarrowLayout, Source={x:Reference Root}}"
+                    Photos="{Binding Photos, Source={x:Reference Root}}" />
+              </CollectionView.Header>
+
               <CollectionView.ItemsLayout>
                 <LinearItemsLayout Orientation="Vertical" />
               </CollectionView.ItemsLayout>
@@ -280,10 +382,57 @@
                 </DataTemplate>
               </CollectionView.ItemTemplate>
             </CollectionView>
-          </VerticalStackLayout>
+          </Grid>
         </Grid>
-      </ScrollView>
+
+        <ScrollView
+            x:Name="BiographyView"
+            Grid.Row="1"
+            IsVisible="{Binding ShowBiographyTab, Source={x:Reference Root}}"
+            VerticalScrollBarVisibility="Always">
+          <Border>
+            <components:MarkdownView
+                AttachmentLinkTapped="OnAttachmentLinkTapped"
+                Markdown="{Binding Biography, Source={x:Reference Root}, Mode=OneWay}"
+                MediaResolver="{Binding MediaResolver, Source={x:Reference Root}}"
+                PersonLinkTapped="OnPersonLinkTapped" />
+          </Border>
+        </ScrollView>
+
+        <CollectionView
+            Grid.Row="1"
+            IsVisible="{Binding ShowAttachmentsTab, Source={x:Reference Root}}"
+            ItemsSource="{Binding Attachments, Source={x:Reference Root}}"
+            SelectionMode="Single">
+          <CollectionView.ItemTemplate>
+            <DataTemplate>
+              <Grid
+                  Padding="{StaticResource CollectionItemsVerticalPadding}"
+                  Style="{StaticResource HoverSubItem}">
+                <Grid.GestureRecognizers>
+                  <TapGestureRecognizer
+                      Command="{Binding Path=PageCommand, Source={x:Reference Root}}"
+                      CommandParameter="{Binding .}" />
+                </Grid.GestureRecognizers>
+
+                <VerticalStackLayout>
+                  <Label
+                      Style="{StaticResource FieldValue}"
+                      Text="{Binding DisplayName}" />
+                  <Label
+                      IsVisible="{Binding ShowFileName}"
+                      Opacity="0.6"
+                      Style="{StaticResource FieldValue}"
+                      Text="{Binding FileName}" />
+                </VerticalStackLayout>
+              </Grid>
+            </DataTemplate>
+          </CollectionView.ItemTemplate>
+        </CollectionView>
+
+      </Grid>
     </components:PageLayout.Body>
 
   </components:PageLayout>
+
 </ContentPage>
