@@ -79,11 +79,11 @@ internal sealed class TestablePersonPage : PersonPage
 
   public void ForceSizeAllocated(double width, double height) => OnSizeAllocated(width, height);
 
-  public ScrollView BodyScrollForTest => BodyScroll;
-
   public ImagePresenter PersonPhotoForTest => PersonPhotoView;
 
   public CollectionView RelativesListForTest => RelativesListView;
+
+  public ScrollView BiographyForTest => BiographyScrollView;
 
   /// <summary>
   /// Opens the filter panel (if not already open) and waits for the resulting lazy marital-status

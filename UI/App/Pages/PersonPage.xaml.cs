@@ -40,7 +40,8 @@ public partial class PersonPage : ContentPage
   private PhotoInfo[] _Photos = [];
   private AttachmentInfo[] _Attachments = [];
   private string _Biography = string.Empty;
-  private PersonPageSmartLayout _SmartLayout = new();
+  private bool _IsNarrow = true;
+  private int _SelectedTab;
   private bool _ExpandAll = false;
   private RelativeInfo[] _AllRoots = [];
   private ProjectInfo? _LastProjectInfo;
@@ -91,11 +92,11 @@ public partial class PersonPage : ContentPage
     _LastProjectInfo = _CurrentProjectProvider.Info;
   }
 
-  protected ScrollView BodyScroll => BodyScrollView;
-
-  protected ImagePresenter PersonPhotoView => PersonPhoto;
+  protected ImagePresenter PersonPhotoView => _IsNarrow ? ScrolledPersonPhoto : PersonPhoto;
 
   protected CollectionView RelativesListView => RelativesView;
+
+  protected ScrollView BiographyScrollView => BiographyView;
 
   public void ShowPersonInfo(Person person, bool addToNavigation)
   {
@@ -173,6 +174,11 @@ public partial class PersonPage : ContentPage
 
   public PhotoInfo[] Photos => _Photos;
 
+  /// <summary>One photo, caption stripped: at thumbnail size ImagePresenter's caption bar and its
+  /// prev/next arrows are each wider than the picture, and each is suppressed by what it is given
+  /// here.</summary>
+  public PhotoInfo[] HeaderPhoto => _Photos.Length > 0 ? [_Photos[0] with { Caption = string.Empty }] : [];
+
   public InlineMediaResolver MediaResolver => _MediaResolver;
 
   public AttachmentInfo[] Attachments => _Attachments;
@@ -186,7 +192,24 @@ public partial class PersonPage : ContentPage
     set => ShowPersonInfo(value, true);
   }
 
-  public PersonPageSmartLayout SmartLayout => _SmartLayout;
+  public bool ShowRelativesTab => _SelectedTab == 0;
+
+  public bool ShowBiographyTab => _SelectedTab == 1;
+
+  public bool ShowAttachmentsTab => _SelectedTab == 2;
+
+  public bool IsNarrowLayout => _IsNarrow;
+
+  public bool IsWideLayout => !_IsNarrow;
+
+
+  private void SelectTab(int index)
+  {
+    _SelectedTab = index;
+    OnPropertyChanged(nameof(ShowRelativesTab));
+    OnPropertyChanged(nameof(ShowBiographyTab));
+    OnPropertyChanged(nameof(ShowAttachmentsTab));
+  }
 
   public string Biography => _Biography;
 
@@ -230,45 +253,9 @@ public partial class PersonPage : ContentPage
   {
     base.OnSizeAllocated(width, height);
     var widthInPixels = () => width * DeviceDisplay.Current.MainDisplayInfo.Density;
-    if (width < height || widthInPixels() < 900)
-    {
-      _SmartLayout = new PersonPageSmartLayout(
-        Image: new GridLayout(Column: 0, ColumnSpan: 2, Row: 0, RowSpan: 1),
-        Relatives: new GridLayout(Column: 0, ColumnSpan: 2, Row: 1, RowSpan: 1),
-        Biography: new GridLayout(Column: 0, ColumnSpan: 2, Row: 2, RowSpan: 1));
-    }
-    else
-    {
-      _SmartLayout = new PersonPageSmartLayout(
-        Image: new GridLayout(Column: 0, ColumnSpan: 1, Row: 0, RowSpan: 1),
-        Relatives: new GridLayout(Column: 1, ColumnSpan: 1, Row: 0, RowSpan: 1),
-        Biography: new GridLayout(Column: 0, ColumnSpan: 2, Row: 1, RowSpan: 1));
-    }
-    OnPropertyChanged(nameof(SmartLayout));
-    UpdatePersonPhotoStickyPosition();
-  }
-
-  // In the wide (landscape) layout the photo and the relatives list share the same auto-sized grid
-  // row, which grows to fit however many relatives there are. Left alone, the photo scrolls away with
-  // the rest of that row as soon as the relatives list is taller than the viewport. Instead, pin the
-  // photo to the top of the viewport by counter-translating it with the scroll offset, but only up to
-  // the point where its bottom edge reaches the bottom of that shared row -- beyond that it scrolls
-  // away normally with the rest of the row, so it never escapes its own grid cell.
-  private void UpdatePersonPhotoStickyPosition(double scrollY = -1)
-  {
-    if (scrollY < 0)
-    {
-      scrollY = BodyScrollView.ScrollY;
-    }
-
-    if (_SmartLayout.Image.Row != _SmartLayout.Relatives.Row || PersonPhoto.Height <= 0 || RelativesView.Height <= 0)
-    {
-      PersonPhoto.TranslationY = 0;
-      return;
-    }
-
-    var maxTranslation = Math.Max(0, RelativesView.Height - PersonPhoto.Height);
-    PersonPhoto.TranslationY = Math.Clamp(scrollY, 0, maxTranslation);
+    _IsNarrow = width < height || widthInPixels() < 900;
+    OnPropertyChanged(nameof(IsNarrowLayout));
+    OnPropertyChanged(nameof(IsWideLayout));
   }
 
   // See ProjectPage.OnNavigatedTo: returning from a subpage (family, tree, another person) that
@@ -287,10 +274,6 @@ public partial class PersonPage : ContentPage
     _LastProjectInfo = _CurrentProjectProvider.Info;
     ShowPersonInfo(_PersonFullInfo, false);
   }
-
-  private void OnBodyScrolled(object? sender, ScrolledEventArgs e) => UpdatePersonPhotoStickyPosition(e.ScrollY);
-
-  private void OnPersonPhotoOrRelativesSizeChanged(object? sender, EventArgs e) => UpdatePersonPhotoStickyPosition();
 
   private void OnPersonLinkTapped(object? sender, int personId) =>
     SafeTask.Run(() => NavigateToPersonLinkAsync(personId), _AlertService);
@@ -461,6 +444,12 @@ public partial class PersonPage : ContentPage
     _Attachments = data.Attachments;
     _Biography = CombineBiography(data.Bio, data.GedcomDetails, data.FamilyDetails);
     _AllRoots = data.Roots;
+    // The tab is hidden for a person carrying none, which would leave the body blank and unleavable.
+    if (!ShowAttachments && ShowAttachmentsTab)
+    {
+      SelectTab(0);
+    }
+
     // Only after the new roots land: with the panel open, ResetFilterData re-fetches immediately,
     // snapshotting the page's current person set.
     FilterView.ResetFilterData();
@@ -534,6 +523,15 @@ public partial class PersonPage : ContentPage
         break;
       case string commandName when commandName == "NextPerson":
         OnNextPerson(1);
+        break;
+      case string commandName when commandName == "TabRelatives":
+        SelectTab(0);
+        break;
+      case string commandName when commandName == "TabBiography":
+        SelectTab(1);
+        break;
+      case string commandName when commandName == "TabAttachments":
+        SelectTab(2);
         break;
       case string commandName when commandName == "ToggleAll":
         ExpandAll = !ExpandAll;

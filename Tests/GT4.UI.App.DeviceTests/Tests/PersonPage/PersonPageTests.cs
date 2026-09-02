@@ -374,6 +374,32 @@ public class PersonPageTests
     Assert.True(info.ShowFileName);
   }
 
+  // The attachments tab is hidden for a person carrying none, so a page left standing on it would
+  // show a blank body with no tab to leave by.
+  [Fact]
+  public async Task Opening_a_person_with_no_attachments_leaves_the_attachments_tab()
+  {
+    var services = new TestServices();
+    var content = BuildTaggedPhotoContent("0 OBJE\n1 FILE deed.pdf\n", [1, 2, 3]);
+    var attachment = new Data(22, content, "application/pdf", DataCategory.PersonAttachment);
+    var documented = CreateSamplePerson() with { Attachments = [attachment] };
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(documented);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = documented);
+    await MainThread.InvokeOnMainThreadAsync(() => page.InvokePageCommandAsync("TabAttachments"));
+    Assert.True(page.ShowAttachmentsTab);
+
+    var undocumented = CreateSamplePerson() with { Id = 2 };
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(undocumented);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = undocumented);
+
+    Assert.True(page.ShowRelativesTab);
+  }
+
   [Fact]
   public async Task Loading_a_person_with_an_untitled_attachment_falls_back_to_the_file_name_alone()
   {
@@ -603,81 +629,271 @@ public class PersonPageTests
     services.PersonManager.Verify(p => p.UpdatePersonAsync(It.IsAny<PersonFullInfo>(), It.IsAny<CancellationToken>()), Times.Never());
   }
 
-  [Fact]
-  public async Task Wide_layout_keeps_the_photo_within_the_relatives_row_while_scrolling()
-  {
-    // The CI runner's WinUI ScrollViewer occasionally never honors ChangeView for the whole test,
-    // not just its first call, so no retry budget makes this reliable there; it passes locally.
-    Assert.SkipWhen(Environment.GetEnvironmentVariable("GITHUB_ACTIONS") == "true", "CI-only native ScrollView ChangeView quirk -- passes locally.");
 
+  // Far below the count that killed the host on the old layout (100 relatives did, intermittently):
+  // an unbounded list is already unambiguous at 20 rows -- ~99px each against a 713px page -- so a
+  // regression stays a red test rather than a dead run. ExpandAll walks the whole connected
+  // relatives graph, so nothing bounds the real row count.
+  private const int RelativesBelowCrashThreshold = 20;
+
+  private static RelativeInfo Child(int id) => new(
+    id, Date.Create(2015, 1, 1, DateStatus.WellKnown), null, BiologicalSex.Male,
+    [N(id * 100, $"Child{id}", NameType.FirstName)], null,
+    RelationshipType.Child, null, Generation.Child, Consanguinity.Zero);
+
+  // ExpandAll opens the whole connected graph into one flat row list, so the count the view has to
+  // hold is bounded by the project, not by how many relatives the person has. The walk itself is
+  // RelativeTreeTests' concern; what PersonPage owes is surviving its result. On the old layout this
+  // killed the host somewhere above 100 rows.
+  [Fact]
+  public async Task A_graph_sized_row_count_renders_without_crashing()
+  {
+    const int GraphSize = 2000;
     var services = new TestServices();
-    var longBiography = new Data(
-      Id: 0,
-      Content: System.Text.Encoding.UTF8.GetBytes(string.Concat(Enumerable.Repeat("Line of biography text.\n", 80))),
-      MimeType: System.Net.Mime.MediaTypeNames.Text.Plain,
-      Category: default);
-    var person = CreateSamplePerson() with { Biography = longBiography };
-    var children = Enumerable.Range(2, 6)
-      .Select(id => new RelativeInfo(
-        id, Date.Create(2015, 1, 1, DateStatus.WellKnown), null, BiologicalSex.Male, [], null,
-        RelationshipType.Child, null, Generation.Child, Consanguinity.Zero))
-      .ToArray();
+    var person = CreateSamplePerson();
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    services.RelativesProvider
+      .Setup(r => r.GetChildren(It.IsAny<RelativeInfo[]>()))
+      .Returns(Enumerable.Range(2, GraphSize).Select(Child).ToArray());
+    var page = await CreatePageAsync(services);
+
+    await using var window = await WindowHost.AttachAsync(page);
+    await MainThread.InvokeOnMainThreadAsync(() => page.ForceSizeAllocated(400, 800));
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+    await MainThread.InvokeOnMainThreadAsync(() => page.ForceSizeAllocated(400, 800));
+
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => page.RelativesListForTest.Height),
+      listHeight => listHeight > 0,
+      timeoutMessage: "The relatives list never got arranged.");
+
+    var (relativesHeight, pageHeight, rowCount) = await MainThread.InvokeOnMainThreadAsync(
+      () => (page.RelativesListForTest.Height, page.Height, page.Relatives.Count));
+    Assert.Equal(GraphSize, rowCount);
+    Assert.True(
+      relativesHeight <= pageHeight,
+      $"The relatives list is {relativesHeight} tall inside a {pageHeight} page holding {rowCount} rows.");
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+  }
+
+  [Fact]
+  public Task Relatives_list_is_bounded_by_the_page_in_the_narrow_layout() =>
+    AssertRelativesListIsBoundedAsync(400, 800);
+
+  // The wide layout is where the photo sits beside the relatives, in the row that used to grow with
+  // them.
+  [Fact]
+  public Task Relatives_list_is_bounded_by_the_page_in_the_wide_layout() =>
+    AssertRelativesListIsBoundedAsync(2000, 800);
+
+  [Fact]
+  public Task A_long_biography_and_the_relatives_are_visible_together_in_the_narrow_layout() =>
+    AssertRelativesListIsBoundedAsync(400, 800, withBiography: true);
+
+  [Fact]
+  public Task A_long_biography_and_the_relatives_are_visible_together_in_the_wide_layout() =>
+    AssertRelativesListIsBoundedAsync(2000, 800, withBiography: true);
+
+  // A long one: the biography shares the body with the relatives, and an unbounded one starves the
+  // list to nothing instead of letting it scroll (see FamilyPage's Auto-row trap).
+  private static Data LongBiography() => new(
+    Id: 0,
+    Content: System.Text.Encoding.UTF8.GetBytes(string.Concat(Enumerable.Repeat("Line of biography text.\n", 200))),
+    MimeType: System.Net.Mime.MediaTypeNames.Text.Plain,
+    Category: default);
+
+  private static async Task AssertRelativesListIsBoundedAsync(double width, double height, bool withBiography = false)
+  {
+    var services = new TestServices();
+    var person = withBiography
+      ? CreateSamplePerson() with { Biography = LongBiography() }
+      : CreateSamplePerson();
+    var children = Enumerable.Range(2, RelativesBelowCrashThreshold).Select(Child).ToArray();
     services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
     services.RelativesProvider.Setup(r => r.GetChildren(It.IsAny<RelativeInfo[]>())).Returns(children);
     var page = await CreatePageAsync(services);
+
     await using var window = await WindowHost.AttachAsync(page);
-    // Wide enough to land the landscape layout (photo left, relatives right, sharing one grid row).
-    // Forced again after attaching/loading: attaching to the real window can trigger its own
-    // OnSizeAllocated off the actual (narrower) test-runner window, overriding the forced one.
-    await MainThread.InvokeOnMainThreadAsync(() => page.ForceSizeAllocated(2000, 800));
+    // Forced again after loading -- attaching to the real window raises its own OnSizeAllocated off
+    // the runner's actual size, overriding the forced one.
+    await MainThread.InvokeOnMainThreadAsync(() => page.ForceSizeAllocated(width, height));
     await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
-    await MainThread.InvokeOnMainThreadAsync(() => page.ForceSizeAllocated(2000, 800));
+    await MainThread.InvokeOnMainThreadAsync(() => page.ForceSizeAllocated(width, height));
 
     await Poll.UntilAsync(
-      () => Task.FromResult(page.RelativesListForTest.Height),
-      height => height > page.PersonPhotoForTest.Height,
-      timeoutMessage: "The relatives row never grew taller than the photo.");
-    var maxTranslation = page.RelativesListForTest.Height - page.PersonPhotoForTest.Height;
+      () => MainThread.InvokeOnMainThreadAsync(() => page.RelativesListForTest.Height),
+      listHeight => listHeight > 0,
+      timeoutMessage: "The relatives list never got arranged.");
 
-    // The native ScrollViewer occasionally isn't ready to honor ChangeView on the first call right
-    // after a layout pass (observed as ScrollToAsync silently not moving anything, CI-only so far) --
-    // re-issuing the scroll until it actually takes hold is more robust than trusting a single call.
-    async Task ScrollUntilAsync(double y, Func<double, bool> isReady, string timeoutMessage)
-    {
-      var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
-      while (true)
-      {
-        // Fire-and-forget: when ChangeView is ignored, ScrollToAsync's task never resolves, so
-        // awaiting it here would block the retry below from ever running.
-        await MainThread.InvokeOnMainThreadAsync(() =>
-        {
-          _ = page.BodyScrollForTest.ScrollToAsync(0, y, false);
-        });
-        try
-        {
-          await Poll.UntilAsync(
-            () => Task.FromResult(page.PersonPhotoForTest.TranslationY),
-            isReady,
-            timeout: TimeSpan.FromMilliseconds(500),
-            timeoutMessage: timeoutMessage);
-          return;
-        }
-        catch (TimeoutException) when (DateTime.UtcNow < deadline)
-        {
-        }
-      }
-    }
+    var (relativesHeight, pageHeight, rowCount) = await MainThread.InvokeOnMainThreadAsync(
+      () => (page.RelativesListForTest.Height, page.Height, page.Relatives.Count));
+    Assert.Equal(RelativesBelowCrashThreshold, rowCount);
+    AssertListFillsAViewport(relativesHeight, pageHeight, "");
 
-    await ScrollUntilAsync(40, translation => translation >= 40, "The photo did not track a scroll within its row's bounds.");
-    // Against where the view actually stopped, not the offset it was asked for: the platform snaps a
-    // scroll to whole device pixels, so a request of 40 settles at 40.18 on a 2.8125-density screen.
-    // What the photo owes the scroll is that it mirrors it, which is exactly what UpdatePersonPhoto-
-    // StickyPosition clamps ScrollY into.
-    Assert.Equal(page.BodyScrollForTest.ScrollY, page.PersonPhotoForTest.TranslationY);
-
-    await ScrollUntilAsync(100_000, translation => translation >= maxTranslation, "The photo did not stop at the bottom of its row once scrolled past it.");
-    Assert.Equal(maxTranslation, page.PersonPhotoForTest.TranslationY);
+    // The filter panel shares the body with the list, so showing it re-divides the space under a
+    // list that has already been measured against the old division.
+    await MainThread.InvokeOnMainThreadAsync(() => page.FilterView.IsFiltersVisible = true);
+    var heightWithFilters = await MainThread.InvokeOnMainThreadAsync(() => page.RelativesListForTest.Height);
+    AssertListFillsAViewport(heightWithFilters, pageHeight, " once the filter panel is shown");
   }
+
+  // The window the user reported it broken in.
+  [Fact]
+  public Task Every_region_stays_inside_its_parent_in_a_short_window() =>
+    AssertEveryRegionIsDrawnAsync(1423, 478);
+
+  [Fact]
+  public Task Every_region_stays_inside_its_parent_in_a_desktop_window() =>
+    AssertEveryRegionIsDrawnAsync(1424, 713);
+
+  [Fact]
+  public Task Every_region_stays_inside_its_parent_in_a_narrow_window() =>
+    AssertEveryRegionIsDrawnAsync(500, 900);
+
+  // WinUI draws an Image at whatever height it was asked for: a picture bigger than the box it was
+  // arranged into is not clipped, it is painted over the header above it, which is how a short
+  // landscape window lost its dates and its tab strip.
+  [Fact]
+  public Task The_photo_stays_inside_its_box_in_a_short_landscape_window() =>
+    AssertThePhotoStaysInsideItsBoxAsync(1030, 620);
+
+  [Fact]
+  public Task The_photo_stays_inside_its_box_in_a_very_short_landscape_window() =>
+    AssertThePhotoStaysInsideItsBoxAsync(1424, 478);
+
+  private static async Task AssertThePhotoStaysInsideItsBoxAsync(double windowWidth, double windowHeight)
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson() with { Biography = LongBiography() };
+    var children = Enumerable.Range(2, RelativesBelowCrashThreshold).Select(Child).ToArray();
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    services.RelativesProvider.Setup(r => r.GetChildren(It.IsAny<RelativeInfo[]>())).Returns(children);
+    var page = await CreatePageAsync(services);
+
+    await using var window = await WindowHost.AttachAsync(page);
+    var hostWindow = Application.Current!.Windows[0];
+    var (originalWidth, originalHeight) = (hostWindow.Width, hostWindow.Height);
+    try
+    {
+      await MainThread.InvokeOnMainThreadAsync(() =>
+      {
+        hostWindow.Width = windowWidth;
+        hostWindow.Height = windowHeight;
+      });
+      await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+      await Poll.UntilAsync(
+        () => MainThread.InvokeOnMainThreadAsync(() => page.PersonPhotoForTest.Height),
+        photoHeight => photoHeight > 0,
+        timeoutMessage: "The photo never got arranged with a height of its own.");
+
+      await MainThread.InvokeOnMainThreadAsync(() =>
+      {
+        var host = page.PersonPhotoForTest;
+        Assert.True(page.IsWideLayout, $"A {windowWidth}x{windowHeight} window should use the wide arrangement.");
+
+        var frame = (Grid)host.Content;
+        var pictures = frame.Children.OfType<Image>();
+        Assert.All(pictures, picture => Assert.True(
+          picture.Height <= host.Height + 0.5,
+          $"The photo is {picture.Height} tall inside a box only {host.Height} tall, so WinUI paints the overhang over the header."));
+      });
+    }
+    finally
+    {
+      await MainThread.InvokeOnMainThreadAsync(() =>
+      {
+        hostWindow.Width = originalWidth;
+        hostWindow.Height = originalHeight;
+      });
+    }
+  }
+
+  // Drives the real host window, not ForceSizeAllocated: that only flips the arrangement, and it is
+  // the geometry that broke -- the biography was arranged past the body's bottom edge, where MAUI
+  // puts a trailing Auto row whose grid holds both a star row and a column-spanning child.
+  private static async Task AssertEveryRegionIsDrawnAsync(double windowWidth, double windowHeight)
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson() with { Biography = LongBiography() };
+    var children = Enumerable.Range(2, RelativesBelowCrashThreshold).Select(Child).ToArray();
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    services.RelativesProvider.Setup(r => r.GetChildren(It.IsAny<RelativeInfo[]>())).Returns(children);
+    var page = await CreatePageAsync(services);
+
+    await using var window = await WindowHost.AttachAsync(page);
+    var hostWindow = Application.Current!.Windows[0];
+    var (originalWidth, originalHeight) = (hostWindow.Width, hostWindow.Height);
+    try
+    {
+      await MainThread.InvokeOnMainThreadAsync(() =>
+      {
+        hostWindow.Width = windowWidth;
+        hostWindow.Height = windowHeight;
+      });
+      await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+      await Poll.UntilAsync(
+        () => MainThread.InvokeOnMainThreadAsync(() => page.RelativesListForTest.Height),
+        relativesHeight => relativesHeight > 0,
+        timeoutMessage: "The relatives list never got arranged with a height of its own.");
+
+      await MainThread.InvokeOnMainThreadAsync(() =>
+      {
+        AssertIsDrawnInsideItsParent(page.RelativesListForTest, "relatives list");
+
+        // Narrow, the photo scrolls inside the list header, where being arranged past the parent's
+        // bottom edge is what scrolling means rather than a region going undrawn.
+        if (page.IsWideLayout)
+        {
+          AssertIsDrawnInsideItsParent(page.PersonPhotoForTest, "person photo");
+        }
+      });
+
+      // Each tab owns the whole body in turn, so the biography is only arranged once it is current.
+      await MainThread.InvokeOnMainThreadAsync(() => page.InvokePageCommandAsync("TabBiography"));
+      await Poll.UntilAsync(
+        () => MainThread.InvokeOnMainThreadAsync(() => page.BiographyForTest.Height),
+        biographyHeight => biographyHeight > 0,
+        timeoutMessage: "The biography never got arranged with a height of its own.");
+
+      await MainThread.InvokeOnMainThreadAsync(() => AssertIsDrawnInsideItsParent(page.BiographyForTest, "biography"));
+    }
+    finally
+    {
+      await MainThread.InvokeOnMainThreadAsync(() =>
+      {
+        hostWindow.Width = originalWidth;
+        hostWindow.Height = originalHeight;
+      });
+    }
+  }
+
+  // A region arranged past its parent's bottom edge is simply never drawn -- no clipping warning,
+  // no exception, just missing content.
+  private static void AssertIsDrawnInsideItsParent(View view, string name)
+  {
+    var parent = (View)view.Parent;
+    Assert.True(
+      view.Height > 0,
+      $"The {name} was arranged with no height at all inside a parent {parent.Height} tall.");
+    Assert.True(
+      view.Y + view.Height <= parent.Height + 0.5,
+      $"The {name} is arranged from {view.Y} to {view.Y + view.Height} inside a parent only {parent.Height} tall, so its bottom edge is off the page.");
+  }
+
+  // Both ends matter: too tall means it sized to its content and never virtualized, and near-zero
+  // means a sibling Auto row ate the space and the list renders empty.
+  private static void AssertListFillsAViewport(double relativesHeight, double pageHeight, string when)
+  {
+    Assert.True(
+      relativesHeight <= pageHeight,
+      $"The relatives list is {relativesHeight} tall inside a {pageHeight} page{when}, so it sizes to its content rather than scrolling within a viewport of its own.");
+    Assert.True(
+      relativesHeight >= RelativeRowHeightEstimate,
+      $"The relatives list is only {relativesHeight} tall inside a {pageHeight} page{when}, so it was starved of the space it needs to show even one row.");
+  }
+
+  // One row measured ~99px; a viewport worth keeping shows at least a couple.
+  private const double RelativeRowHeightEstimate = 200;
 
   [Fact]
   public async Task PersonLinkTapped_navigates_to_the_referenced_person()
