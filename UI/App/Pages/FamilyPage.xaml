@@ -14,7 +14,8 @@
     <ResourceDictionary>
 
       <Style x:Key="PhotoStyle" TargetType="Image">
-        <Setter Property="Aspect" Value="AspectFit" />
+        <!--  The box is a fixed size, so fitting a wide photo into it would leave most of it empty.  -->
+        <Setter Property="Aspect" Value="AspectFill" />
         <Setter Property="HeightRequest" Value="{StaticResource PhotoHeight}" />
         <Setter Property="WidthRequest" Value="{StaticResource PhotoWidth}" />
         <Setter Property="HorizontalOptions" Value="Start" />
