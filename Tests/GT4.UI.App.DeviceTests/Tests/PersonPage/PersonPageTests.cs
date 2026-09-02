@@ -770,28 +770,61 @@ public class PersonPageTests
     var page = await CreatePageAsync(services);
 
     await using var window = await WindowHost.AttachAsync(page);
-    // Forced again after loading -- attaching to the real window raises its own OnSizeAllocated off
-    // the runner's actual size, overriding the forced one.
-    await MainThread.InvokeOnMainThreadAsync(() => page.ForceSizeAllocated(width, height));
-    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
-    await MainThread.InvokeOnMainThreadAsync(() => page.ForceSizeAllocated(width, height));
+    var hostWindow = Application.Current!.Windows[0];
+    var (originalWidth, originalHeight) = (hostWindow.Width, hostWindow.Height);
+    // The arrangement comes from ForceSizeAllocated, but the space being divided comes from the real
+    // window -- and every sibling test in this class drives that window to a size of its own. Left to
+    // whatever they happen to leave behind, what counts as a starved list here is not this test's to say.
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      hostWindow.Width = HostWindowWidth;
+      hostWindow.Height = HostWindowHeight;
+    });
+    try
+    {
+      // Forced again after loading -- attaching to the real window raises its own OnSizeAllocated off
+      // the runner's actual size, overriding the forced one.
+      await MainThread.InvokeOnMainThreadAsync(() => page.ForceSizeAllocated(width, height));
+      await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+      await MainThread.InvokeOnMainThreadAsync(() => page.ForceSizeAllocated(width, height));
 
-    await Poll.UntilAsync(
-      () => MainThread.InvokeOnMainThreadAsync(() => page.RelativesListForTest.Height),
-      listHeight => listHeight > 0,
-      timeoutMessage: "The relatives list never got arranged.");
+      await Poll.UntilAsync(
+        () => MainThread.InvokeOnMainThreadAsync(() => page.RelativesListForTest.Height),
+        listHeight => listHeight > 0,
+        timeoutMessage: "The relatives list never got arranged.");
 
-    var (relativesHeight, pageHeight, rowCount) = await MainThread.InvokeOnMainThreadAsync(
-      () => (page.RelativesListForTest.Height, page.Height, page.Relatives.Count));
-    Assert.Equal(RelativesBelowCrashThreshold, rowCount);
-    AssertListFillsAViewport(relativesHeight, pageHeight, "");
+      var (relativesHeight, pageHeight, rowCount) = await MainThread.InvokeOnMainThreadAsync(
+        () => (page.RelativesListForTest.Height, page.Height, page.Relatives.Count));
+      Assert.Equal(RelativesBelowCrashThreshold, rowCount);
+      AssertListFillsAViewport(relativesHeight, pageHeight, "");
 
-    // The filter panel shares the body with the list, so showing it re-divides the space under a
-    // list that has already been measured against the old division.
-    await MainThread.InvokeOnMainThreadAsync(() => page.FilterView.IsFiltersVisible = true);
-    var heightWithFilters = await MainThread.InvokeOnMainThreadAsync(() => page.RelativesListForTest.Height);
-    AssertListFillsAViewport(heightWithFilters, pageHeight, " once the filter panel is shown");
+      // The filter panel shares the body with the list, so showing it re-divides the space under a
+      // list that has already been measured against the old division. Wait for it to take that space:
+      // read too early the list still reports its pre-filter height, and the assertion passes on a
+      // division that has not happened yet.
+      await MainThread.InvokeOnMainThreadAsync(() => page.FilterView.IsFiltersVisible = true);
+      await Poll.UntilAsync(
+        () => MainThread.InvokeOnMainThreadAsync(() => page.FilterView.Height),
+        filterHeight => filterHeight > 0,
+        timeoutMessage: "The filter panel never took any space, so the list was never re-divided.");
+
+      var heightWithFilters = await MainThread.InvokeOnMainThreadAsync(() => page.RelativesListForTest.Height);
+      AssertListFillsAViewport(heightWithFilters, pageHeight, " once the filter panel is shown");
+    }
+    finally
+    {
+      await MainThread.InvokeOnMainThreadAsync(() =>
+      {
+        hostWindow.Width = originalWidth;
+        hostWindow.Height = originalHeight;
+      });
+    }
   }
+
+  // Big enough that a starved list is this page's doing and not the window's; the short-window cases
+  // are the Every_region_stays_inside_its_parent_* tests, which drive the window themselves.
+  private const double HostWindowWidth = 1280;
+  private const double HostWindowHeight = 800;
 
   // The window the user reported it broken in.
   [Fact]
