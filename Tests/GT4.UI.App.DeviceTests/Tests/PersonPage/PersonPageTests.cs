@@ -740,16 +740,18 @@ public class PersonPageTests
   public Task Relatives_list_is_bounded_by_the_page_in_the_wide_layout() =>
     AssertRelativesListIsBoundedAsync(2000, 800);
 
+  // Same two windows again, for a person who also has a biography: that is what raises the tab strip,
+  // and the strip takes its space out of the same body the list has to stay bounded within.
   [Fact]
-  public Task A_long_biography_and_the_relatives_are_visible_together_in_the_narrow_layout() =>
+  public Task Relatives_list_is_bounded_beneath_the_tab_strip_in_the_narrow_layout() =>
     AssertRelativesListIsBoundedAsync(400, 800, withBiography: true);
 
   [Fact]
-  public Task A_long_biography_and_the_relatives_are_visible_together_in_the_wide_layout() =>
+  public Task Relatives_list_is_bounded_beneath_the_tab_strip_in_the_wide_layout() =>
     AssertRelativesListIsBoundedAsync(2000, 800, withBiography: true);
 
-  // A long one: the biography shares the body with the relatives, and an unbounded one starves the
-  // list to nothing instead of letting it scroll (see FamilyPage's Auto-row trap).
+  // Long enough that the tests which do open it have to scroll it rather than watch it size to its
+  // content; for the rest, having one at all is what puts the tab strip on screen.
   private static Data LongBiography() => new(
     Id: 0,
     Content: System.Text.Encoding.UTF8.GetBytes(string.Concat(Enumerable.Repeat("Line of biography text.\n", 200))),
