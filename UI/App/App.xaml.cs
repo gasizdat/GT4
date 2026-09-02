@@ -89,11 +89,7 @@ public partial class App : Application
         .Replace('\\', '-')
         .Replace('/', '-');
 
-      using var fileStream = File.OpenWrite(Path.Combine(logDir, logName));
-      using var writer = new StreamWriter(fileStream);
-      writer.Write(errorMessage);
-      fileStream.Flush();
-      fileStream.Close();
+      File.WriteAllText(Path.Combine(logDir, logName), errorMessage);
     }
     catch (Exception logFailure)
     {
