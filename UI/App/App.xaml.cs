@@ -121,8 +121,15 @@ public partial class App : Application
   protected override Window CreateWindow(IActivationState? activationState)
   {
     var window = new Window(new AppShell());
+#if ANDROID || IOS
+    // Backgrounding can kill the process, so the project must not stay open across it.
     window.Activated += ReopenOnActivationAsync;
     window.Deactivated += async (_, _) => await CloseOnDeactivationAsync(saveLastOpenProject: true);
+#else
+    // A desktop window deactivates on mere focus loss, including while a native file picker is up --
+    // before PickAsync returns -- so closing the project here would tear it down mid-operation.
+    window.Deactivated += (_, _) => _AppConfiguration?.Flush();
+#endif
     window.Destroying += async (_, _) => await CloseOnDeactivationAsync(saveLastOpenProject: false);
     RegisterZoomHotkeys(window);
     return window;
