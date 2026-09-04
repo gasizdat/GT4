@@ -258,8 +258,8 @@
   <Style x:Key="ChangeAdorner" TargetType="Button">
     <Setter Property="FontSize" Value="{DynamicResource AdornerButtonTextSize}" />
     <Setter Property="Padding" Value="0" />
-    <Setter Property="BorderColor" Value="{StaticResource Primary}" />
-    <Setter Property="BackgroundColor" Value="{StaticResource Translucent80}" />
+    <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Secondary}}" />
+    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Translucent80}, Dark={StaticResource Translucent50}}" />
     <Setter Property="BorderWidth" Value="1.5" />
     <Setter Property="HorizontalOptions" Value="Start" />
     <Setter Property="VerticalOptions" Value="Start" />
@@ -274,7 +274,7 @@
           <VisualState x:Name="PointerOver">
             <VisualState.Setters>
               <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource PrimaryDarkText}}" />
-              <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource SecondaryDarkText}}" />
+              <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource SecondaryDark}}" />
             </VisualState.Setters>
           </VisualState>
         </VisualStateGroup>

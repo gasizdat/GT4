@@ -24,9 +24,10 @@
   <Color x:Key="DateCalendarWeddingWash">#F1EEEA</Color>
   <Color x:Key="DateCalendarWeddingWashDark">#383229</Color>
   <Color x:Key="Primary">#1E4437</Color>
-  <Color x:Key="PrimaryDark">#86C5AE</Color>
+  <Color x:Key="PrimaryDark">#ac99ea</Color>
   <Color x:Key="PrimaryDarkText">#242424</Color>
   <Color x:Key="Secondary">#DFD8F7</Color>
+  <Color x:Key="SecondaryDark">#EEEEEE</Color>
   <Color x:Key="SecondaryDarkText">#9880e5</Color>
   <Color x:Key="SurfaceSubtle">#EAE7E0</Color>
   <Color x:Key="SurfaceSubtleDark">#353530</Color>
@@ -41,6 +42,7 @@
   <Color x:Key="OffBlack">#1f1f1f</Color>
   <Color x:Key="Translucent100">#00000000</Color>
   <Color x:Key="Translucent80">#33999999</Color>
+  <Color x:Key="Translucent50">#77FFFFFF</Color>
 
   <Color x:Key="Gray100">#E1E1E1</Color>
   <Color x:Key="Gray200">#C8C8C8</Color>
