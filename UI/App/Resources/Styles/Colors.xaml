@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <?xaml-comp compile="true" ?>
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
@@ -24,7 +24,7 @@
   <Color x:Key="DateCalendarWeddingWash">#F1EEEA</Color>
   <Color x:Key="DateCalendarWeddingWashDark">#383229</Color>
   <Color x:Key="Primary">#1E4437</Color>
-  <Color x:Key="PrimaryDark">#ac99ea</Color>
+  <Color x:Key="PrimaryDark">#86C5AE</Color>
   <Color x:Key="PrimaryDarkText">#242424</Color>
   <Color x:Key="Secondary">#DFD8F7</Color>
   <Color x:Key="SecondaryDarkText">#9880e5</Color>
