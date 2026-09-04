@@ -123,6 +123,21 @@ which is where settings, the project cache and crash logs go. Projects
 themselves live in Documents and are unaffected. An unpackaged run proves
 nothing about the packaged one.
 
+The signing certificate is self-signed, so Windows will not install the package
+until it is trusted. Both the `.cer` and the `.msix` are release assets:
+
+```powershell
+gh release download v<version> --pattern "*.msix" --pattern "*.cer"
+# elevated, once per certificate — each release mints a new one:
+Import-Certificate -FilePath GT4-<version>-win-x64.cer -CertStoreLocation Cert:\LocalMachine\TrustedPeople
+Add-AppxPackage -Path GT4-<version>-win-x64.msix
+Get-AppxPackage gasizdat.GenealogyTree | Select-Object Name, Version, InstallLocation
+```
+
+Uninstall with `Remove-AppxPackage` before installing the next one. Note that
+this removes the package container — settings and the project cache go with it,
+though the `.gt4` files in Documents do not.
+
 Then run the [Windows App Certification Kit](https://learn.microsoft.com/en-us/windows/uwp/debug-test-perf/windows-app-certification-kit)
 against the same package. It catches the manifest and packaging faults that
 otherwise come back as a certification failure days later.
