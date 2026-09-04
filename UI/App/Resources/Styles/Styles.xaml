@@ -250,7 +250,7 @@
             <VisualState.Setters>
               <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}" />
               <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ControlFillHover}, Dark={StaticResource ControlFillHoverDark}}" />
-              <Setter Property="BorderColor" Value="{StaticResource Primary}" />
+              <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Gray100}}" />
             </VisualState.Setters>
           </VisualState>
         </VisualStateGroup>
@@ -278,7 +278,7 @@
             <VisualState.Setters>
               <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}" />
               <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ControlFillHover}, Dark={StaticResource ControlFillHoverDark}}" />
-              <Setter Property="BorderColor" Value="{StaticResource Primary}" />
+              <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Gray100}}" />
             </VisualState.Setters>
           </VisualState>
         </VisualStateGroup>

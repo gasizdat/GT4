@@ -30,9 +30,7 @@
   <Color x:Key="DateCalendarWeddingWash">#F5EFE4</Color>
   <Color x:Key="DateCalendarWeddingWashDark">#3A3227</Color>
   <Color x:Key="Primary">#1E4437</Color>
-  <Color x:Key="PrimaryButtonHover">#16332A</Color>
   <Color x:Key="PrimaryDark">#7FC0A4</Color>
-  <Color x:Key="PrimaryDarkButtonHover">#9AD3BA</Color>
   <Color x:Key="PrimaryDarkText">#12241D</Color>
   <Color x:Key="Secondary">#D6E4DC</Color>
   <Color x:Key="SecondaryDark">#2E2C28</Color>
@@ -44,14 +42,14 @@
   <!--
     Interaction roles, authored as palette ink at an alpha rather than as flat surface colours: one
     value then reads correctly over the page, over a frosted-glass card and over a photo. Outline is
-    the whole affordance on an outlined control, so it clears 3:1 against every surface it touches.
-    Hover resolves to the same pale sage in both themes, so the ink over it needs no theme binding.
+    the whole affordance on a control at rest, so it clears 3:1 against every surface it touches.
+    Both hover fills are light enough for one dark ink, so the text over them needs no theme binding.
   -->
   <Color x:Key="ControlFill">#1A1E4437</Color>
-  <Color x:Key="ControlFillDark">#991E4437</Color>
+  <Color x:Key="ControlFillDark">#AF10161F</Color>
   <Color x:Key="ControlFillHover">#E0D6E4DC</Color>
-  <Color x:Key="ControlFillHoverDark">#E0C6DCD0</Color>
-  <Color x:Key="FieldFill">#DDFFFFFF</Color>
+  <Color x:Key="ControlFillHoverDark">#AAEEEEEE</Color>
+  <Color x:Key="FieldFill">#99FFFFFF</Color>
   <Color x:Key="FieldFillDark">#33FFFFFF</Color>
   <Color x:Key="Outline">#991E4437</Color>
   <Color x:Key="OutlineDark">#77E6E2D9</Color>
