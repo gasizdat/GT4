@@ -38,11 +38,7 @@
         Opacity="0.2"
         Source="right_row.png"
         VerticalOptions="Center" />
-    <!--
-      Capped against the picture: every host sizes this column by what is in it, so an uncapped
-      caption, which is a whole attribution line, measures wider than the photo and stretches the
-      pane to the text.
-    -->
+    <!--  Capped against the picture: hosts size this column by what it holds, so an uncapped caption stretches the pane.  -->
     <Label
         BackgroundColor="#80000000"
         HorizontalOptions="Fill"
