@@ -24,7 +24,8 @@
     <ApplicationId Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">gasizdat.GenealogyTree</ApplicationId>
 
     <!-- Versions -->
-    <ApplicationDisplayVersion>4.0</ApplicationDisplayVersion>
+    <VersionMajorMinor>4.0</VersionMajorMinor>
+    <ApplicationDisplayVersion>$(VersionMajorMinor)</ApplicationDisplayVersion>
     <ApplicationVersion>1</ApplicationVersion>
 
 	  <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
@@ -42,8 +43,7 @@
 
     <PropertyGroup>
       <BuildNumber>@(GitCommitCount)</BuildNumber>
-      <VersionPrefix>4.0</VersionPrefix>
-      <Version>$(VersionPrefix).$(BuildNumber).0</Version>
+      <Version>$(VersionMajorMinor).$(BuildNumber).0</Version>
 
       <AssemblyVersion>$(Version)</AssemblyVersion>
       <FileVersion>$(Version)</FileVersion>
@@ -57,7 +57,7 @@
          ApplicationVersion, and the Store rejects a package whose fourth field is not 0. Carrying
          the build number in the display version is what keeps that field free. -->
     <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
-      <ApplicationDisplayVersion>$(VersionPrefix).$(BuildNumber)</ApplicationDisplayVersion>
+      <ApplicationDisplayVersion>$(VersionMajorMinor).$(BuildNumber)</ApplicationDisplayVersion>
       <ApplicationVersion>0</ApplicationVersion>
     </PropertyGroup>
 

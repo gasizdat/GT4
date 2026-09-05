@@ -38,9 +38,9 @@ jobs:
           restore-keys: |
             nuget-${{ runner.os }}-
 
-      # AppCommon.props derives Version from VersionPrefix plus the commit count (see SetBuildNumber
-      # target); reading it back here keeps the release tag in sync with what gets baked into the
-      # published binary instead of duplicating that logic.
+      # AppCommon.props derives Version from VersionMajorMinor plus the commit count (see
+      # SetBuildNumber target); reading it back here keeps the release tag in sync with what gets
+      # baked into the published binary instead of duplicating that logic.
       - name: Read app version
         id: version
         run: |
