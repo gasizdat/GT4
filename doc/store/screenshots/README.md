@@ -2,10 +2,7 @@
 
 Thirteen 1920×1080 PNGs, captured from the **Release** Windows head
 (`UI/App/AppWinOnly.csproj`) at commit `7816ec9d`, in English, light theme, 100%
-text scale. The build they came from reported itself as `4.0.0.645`, under the
-version layout that shipped before the Store fix; `01-home.png` and
-`12-home-dark.png` print that string on screen, so re-shoot those two if either
-is submitted. The data is the bundled Brontë demo tree
+text scale. The data is the bundled Brontë demo tree
 (`UI/App/Resources/Raw/demo.ged`) — every portrait in it is a public-domain
 Wikimedia image, so nothing here is anyone's private research.
 
@@ -34,14 +31,36 @@ below are spares.
 | — | `11-settings.png` | *(spare)* Text size, theme and date formats are yours to set |
 | — | `12-home-dark.png` | *(spare)* Home in the dark palette |
 
-## Two things worth fixing before these go public
+## The whole set predates the shipping palette
 
-- **`13-family-tree-dark.png` is now stale**, not wrong-by-design: the pale
-  purple "More ancestors" button was the stock MAUI `PrimaryDark` in
-  `UI/App/Resources/Styles/Colors.xaml`, and that token is now the app's green
-  (`#86C5AE`, pinned by `ButtonPaletteTests`). Every dark-theme shot therefore
-  predates the palette — re-shoot `12-home-dark.png` and `13-family-tree-dark.png`
-  or leave both out.
+Re-shoot all thirteen before submitting any of them; do not pick survivors out
+of this set. Two PRs have landed on the palette since `7816ec9d` — #358 and
+#360 — and #360 re-tinted the entire neutral ramp warm (`Gray100` `#E1E1E1` →
+`#F1EEE7`, and so on down to `Gray950`), which reaches the text and borders of
+every screen.
+
+Two of the changes are large enough that a reader comparing an old shot to the
+app would notice them first:
+
+- **The tab strips**, in `04-person.png` and `05-biography.png` — Partner
+  Center slots 2 and 3. Both show the strip `PersonPage` declared inline, whose
+  active tab is a solid `Primary` pill with white text. #360 moved it into
+  `UI/App/Components/TabItemView.xaml`, where the active tab is a pale
+  `ControlFillHover` fill with dark `PrimaryDarkText` ink and a `Primary`
+  outline — near enough an inversion.
+- **The dark-theme shots.** `PrimaryDark` was the stock MAUI purple; it is the
+  app's green now (`#7FC0A4`), so `12-home-dark.png` and
+  `13-family-tree-dark.png` show a button colour the app no longer has.
+
+The light-theme `Accent` `#8B6F4E` did *not* move, so `07-statistics.png`'s
+decade bars are the one prominent block of colour here that still matches.
+
+## Also worth checking when you re-shoot
+
+- **`01-home.png` and `12-home-dark.png` print the version on screen**, centred
+  under the title. They read `(4.0.0.645)`, from the layout that shipped before
+  the Store fix moved the commit count into the build field. A re-shoot picks
+  the current number up on its own — just confirm it looks like `4.0.<count>.0`.
 - **`08-gallery.png`** is honest but text-heavy: every row is a Wikimedia
   attribution line, because that is what the demo file's `TITL` tags carry. It
   reads more like a credits list than a gallery. Consider dropping it, or

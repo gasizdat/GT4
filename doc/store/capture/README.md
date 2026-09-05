@@ -36,10 +36,11 @@ every click 7px right of where you aimed.
   the side-menu buttons in particular. WinUI wants a hover first, so `click.ps1`
   moves near the target, pauses, moves onto it, pauses, then presses.
 - **Park the cursor inside the window before shooting.** A hovered button
-  repaints in its hover colour (currently a stock-MAUI orange on the footer
-  buttons) and freezes that way in the shot. Moving the cursor *off* the window
-  entirely does not help: the last hovered control keeps its hover state.
-  `capture.ps1` parks on the title bar, which is outside the MAUI content.
+  repaints in its hover colour — `ControlFillHover`, a pale green wash with the
+  border going `Primary` — and freezes that way in the shot. Moving the cursor
+  *off* the window entirely does not help: the last hovered control keeps its
+  hover state. `capture.ps1` parks on the title bar, which is outside the MAUI
+  content.
 - **A `CollectionView` row that is already selected does not re-navigate** —
   selection, not tap, is what drives it. Select a different row first, then the
   one you want.

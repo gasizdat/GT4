@@ -15,12 +15,12 @@ the GitHub release with three assets — `.zip`, `.msix`, `.cer`.
 So a release branch carries no build configuration of its own. `release/rc-aug-15`
 was byte-for-byte the master tip it was cut from.
 
-`release/rc-sep-04` is the first to carry a commit of its own — this `doc/store`
-directory. Note the consequence: the build number is `git rev-list --count HEAD`,
-so that extra commit raises it by one over the master commit being shipped. Two
-release branches cut from the same master tip with a commit each would therefore
-claim the same version for different content. If that ever matters, put the
-documents on master instead.
+Keep it that way. The build number is `git rev-list --count HEAD`, so any commit
+on a release branch raises the version over the master commit actually being
+shipped, and two release branches cut from the same master tip with a commit
+each would claim one version for two different trees. `release/rc-sep-04` broke
+this once by carrying this `doc/store` directory; the directory lives on master
+now, and v4.0.652.0 was cut without adding anything to the branch.
 
 ```powershell
 git fetch origin
@@ -49,7 +49,9 @@ regardless of what `$(Version)` says. The props file therefore sets
 the Windows head only; Android keeps `4.0` and a version code of the count.
 
 Read the answer off the package, never off MSBuild's log line — they disagreed
-here, and the log line was the one that looked right.
+here, and the log line was the one that looked right. Reading
+`GT4-4.0.652.0-win-x64.msix` back out of the release confirms the layout holds:
+`Identity/@Version` is `4.0.652.0`, fourth field free.
 
 The trailing `.0` is not decoration. Microsoft's
 [app package requirements](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/app-package-requirements)
@@ -172,8 +174,8 @@ signed by a trusted CA: the Store re-signs every MSIX it accepts. The
 `runFullTrust` restricted capability is normal for a packaged desktop app; if the
 form asks for justification, it is "packaged Win32/WinUI desktop application".
 
-The package declares **`EN-US` only** — read out of a locally built
-`AppWinOnly_4.0.646.0_x64.msix`. The manifest asks for
+The package declares **`EN-US` only** — read out of the shipped
+`GT4-4.0.652.0-win-x64.msix`. The manifest asks for
 `<Resource Language="x-generate" />`, and the PRI build finds one language,
 because the five `UIStrings*.resx` files become .NET satellite assemblies, which
 MRT does not see. The app really does offer Russian, German, Spanish and French —
@@ -192,17 +194,16 @@ both files together when behaviour changes.
 - **Issue #281** — a GEDCOM export followed by a re-import silently loses family
   photos and attachments (person media survives). The listing copy is worded to
   avoid promising otherwise; see the exclusion in `claim-sources.md`.
-- **The dark-theme screenshots predate the palette.** `PrimaryDark` was the stock
-  MAUI purple until this release; buttons are green now, so
-  `12-home-dark.png` and `13-family-tree-dark.png` no longer show the shipping
-  app. `01-home.png` and `12-home-dark.png` additionally print the version on
-  screen in the old `4.0.0.645` layout. Re-shoot or omit those three.
-- **Still template purple**, at far lower visibility: `Secondary` /
-  `SecondaryDarkText` behind the adorner buttons' hover state, and `Tertiary` on
-  the emoji adorners. The orange button hover (`PrimaryButtonHover` `#EE5511`)
-  is *not* a leftover — commit `775dcab1` added it deliberately.
-- **Android's `colorPrimaryDark`** is the same purple, in
-  `Platforms/Android/Resources/values/colors.xml`. It is the status-bar colour,
-  where the name means "a darker Primary", not "Primary's dark-theme sibling" —
-  so it wants a *darker* green, not the value used here. Untouched: this release
-  is Windows-only and it cannot be verified without a device.
+- **The screenshots predate the palette** — all thirteen, not only the dark
+  ones. [screenshots/README.md](screenshots/README.md) has what moved and what
+  to watch for when re-shooting. This is the one thing still standing between
+  the release and a submission.
+
+The palette itself needs no inventory here any more. #358 and #360 cleared the
+last of the MAUI template colours, and what replaced them is pinned by the
+`*PaletteTests` in `Tests/GT4.UI.App.DeviceTests`: they resolve each token
+against a real `UserAppTheme`, composite it over its ground — the palette is
+authored as ink at an alpha, so a ratio taken from a token describes a colour
+that never reaches the screen — and assert 4.5:1 on text, 3:1 on everything
+else. A regression fails the device-test leg instead of waiting to be spotted in
+a screenshot.
