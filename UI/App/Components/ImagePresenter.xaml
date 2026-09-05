@@ -12,6 +12,7 @@
     </Grid.GestureRecognizers>
     <!--  Aspect comes from the caller's style: a local value here would silently outrank it.  -->
     <Image
+        x:Name="Picture"
         Opacity="{Binding ImageOpacity1, Source={x:Reference Root}}"
         Source="{Binding Image1, Source={x:Reference Root}}"
         Style="{Binding ImageStyle, Source={x:Reference Root}, TargetNullValue={StaticResource PhotoThumbStyle}}" />
@@ -37,12 +38,19 @@
         Opacity="0.2"
         Source="right_row.png"
         VerticalOptions="Center" />
+    <!--
+      Capped against the picture: every host sizes this column by what is in it, so an uncapped
+      caption, which is a whole attribution line, measures wider than the photo and stretches the
+      pane to the text.
+    -->
     <Label
         BackgroundColor="#80000000"
         HorizontalOptions="Fill"
         HorizontalTextAlignment="Center"
         InputTransparent="True"
         IsVisible="{Binding ShowCurrentCaption, Source={x:Reference Root}}"
+        LineBreakMode="WordWrap"
+        MaximumWidthRequest="{Binding Width, Source={x:Reference Picture}}"
         Padding="6,3"
         Text="{Binding CurrentCaption, Source={x:Reference Root}}"
         TextColor="White"
