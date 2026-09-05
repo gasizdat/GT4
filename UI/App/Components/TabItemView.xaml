@@ -5,10 +5,17 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     x:Name="Root">
 
+  <!--
+    A Border rather than a Button: a DataTrigger on a native Button's colours does not repaint on
+    WinUI, which is the one thing a tab strip needs.
+  -->
   <Border
-      x:Name="Chrome"
       Padding="12,6"
+      BackgroundColor="{AppThemeBinding Light={StaticResource ControlFill},
+                                        Dark={StaticResource ControlFillDark}}"
       MinimumHeightRequest="44"
+      Stroke="{AppThemeBinding Light={StaticResource Outline},
+                               Dark={StaticResource OutlineDark}}"
       StrokeShape="RoundRectangle 14"
       StrokeThickness="1.5"
       VerticalOptions="Center">
@@ -16,43 +23,41 @@
       <TapGestureRecognizer
           Command="{Binding Command, Source={x:Reference Root}}"
           CommandParameter="{Binding CommandParameter, Source={x:Reference Root}}" />
-      <PointerGestureRecognizer
-          PointerEntered="OnPointerEntered"
-          PointerExited="OnPointerExited" />
     </Border.GestureRecognizers>
 
-    <!--  A VisualState on the Border cannot reach this Label, so the ladder has to suit one colour.  -->
+    <Border.Triggers>
+      <DataTrigger
+          Binding="{Binding IsActive, Source={x:Reference Root}}"
+          TargetType="Border"
+          Value="True">
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ControlFillHover}, Dark={StaticResource ControlFillHoverDark}}" />
+        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Gray100}}" />
+      </DataTrigger>
+    </Border.Triggers>
+
+    <!--  Neither a Border setter nor a VisualState on it reaches this Label, so the ink repeats the binding.  -->
     <Label
         FontSize="{DynamicResource LabelTextSizeDefault}"
         Text="{Binding Text, Source={x:Reference Root}}"
-        TextColor="{AppThemeBinding Light={StaticResource MidnightBlue},
-                                    Dark={StaticResource White}}"
-        VerticalTextAlignment="Center" />
+        TextColor="{AppThemeBinding Light={StaticResource Tertiary}, Dark={StaticResource Gray100}}"
+        VerticalTextAlignment="Center">
+      <Label.Triggers>
+        <DataTrigger
+            Binding="{Binding IsActive, Source={x:Reference Root}}"
+            TargetType="Label"
+            Value="True">
+          <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}" />
+        </DataTrigger>
+      </Label.Triggers>
+    </Label>
 
-    <!--
-      A Border rather than a Button: a DataTrigger on a native Button's colours does not repaint on
-      WinUI, which is the one thing a tab strip needs. The three states then have to share a single
-      group, because a selection trigger and the platform's own PointerOver would both write
-      BackgroundColor, and whichever restored last would win the click - always made while hovering.
-    -->
     <VisualStateManager.VisualStateGroups>
       <VisualStateGroupList>
-        <VisualStateGroup x:Name="TabStates">
-          <VisualState x:Name="Inactive">
+        <VisualStateGroup x:Name="CommonStates">
+          <VisualState x:Name="Normal" />
+          <VisualState x:Name="PointerOver">
             <VisualState.Setters>
-              <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ControlFill}, Dark={StaticResource ControlFillDark}}" />
-              <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource Outline}, Dark={StaticResource OutlineDark}}" />
-            </VisualState.Setters>
-          </VisualState>
-          <VisualState x:Name="Hovered">
-            <VisualState.Setters>
-              <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource FieldFill}, Dark={StaticResource SurfaceSubtleDark}}" />
-              <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource Outline}, Dark={StaticResource OutlineDark}}" />
-            </VisualState.Setters>
-          </VisualState>
-          <VisualState x:Name="Active">
-            <VisualState.Setters>
-              <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray600}}" />
+              <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ControlFillHover}, Dark={StaticResource ControlFillHoverDark}}" />
               <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Gray100}}" />
             </VisualState.Setters>
           </VisualState>
