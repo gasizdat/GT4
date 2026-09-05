@@ -1,8 +1,10 @@
 # Store screenshots
 
 Thirteen 1920×1080 PNGs, captured from the **Release** Windows head
-(`UI/App/AppWinOnly.csproj`) at commit `7816ec9d`, in English, light theme, 100%
-text scale. The data is the bundled Brontë demo tree
+(`UI/App/AppWinOnly.csproj`) at `v4.0.652.0` (commit `24aa0264`) — the tag the
+shipped MSIX was built from, so the version the app prints on the home screen,
+`4.0.652.0`, is the one on the package being submitted. English, 100% text
+scale; light theme except `12` and `13`. The data is the bundled Brontë demo tree
 (`UI/App/Resources/Raw/demo.ged`) — every portrait in it is a public-domain
 Wikimedia image, so nothing here is anyone's private research.
 
@@ -31,40 +33,35 @@ below are spares.
 | — | `11-settings.png` | *(spare)* Text size, theme and date formats are yours to set |
 | — | `12-home-dark.png` | *(spare)* Home in the dark palette |
 
-## The whole set predates the shipping palette
+## Choices behind these shots
 
-Re-shoot all thirteen before submitting any of them; do not pick survivors out
-of this set. Two PRs have landed on the palette since `7816ec9d` — #358 and
-#360 — and #360 re-tinted the entire neutral ramp warm (`Gray100` `#E1E1E1` →
-`#F1EEE7`, and so on down to `Gray950`), which reaches the text and borders of
-every screen.
+Two of them are not what the app offers by default, and a re-shoot that skips
+them comes out visibly worse:
 
-Two of the changes are large enough that a reader comparing an old shot to the
-app would notice them first:
+- **`06-family-tree.png` and `13-family-tree-dark.png` have the *Relatives*
+  toggle on.** Off — the default — Charlotte's tree is her two parents and four
+  grandparents, because she had no children, and the lead Store screenshot ends
+  up looking like the app cannot draw a family. On, it shows all six Brontë
+  siblings and reads like a family tree.
+- **`10-date-calendar.png` is April, not the current month.** The calendar opens
+  on today, and most months of the demo tree are near-empty. April carries four
+  dated entries plus the *"Sometime in April — exact day not recorded"* section,
+  which is the only place the month-only-date handling is visible.
 
-- **The tab strips**, in `04-person.png` and `05-biography.png` — Partner
-  Center slots 2 and 3. Both show the strip `PersonPage` declared inline, whose
-  active tab is a solid `Primary` pill with white text. #360 moved it into
-  `UI/App/Components/TabItemView.xaml`, where the active tab is a pale
-  `ControlFillHover` fill with dark `PrimaryDarkText` ink and a `Primary`
-  outline — near enough an inversion.
-- **The dark-theme shots.** `PrimaryDark` was the stock MAUI purple; it is the
-  app's green now (`#7FC0A4`), so `12-home-dark.png` and
-  `13-family-tree-dark.png` show a button colour the app no longer has.
+`09-kinship-finder.png` pairs Hugh Brunty with his granddaughter Charlotte —
+far enough apart to show a connecting chain rather than a one-line answer, and
+the demo tree's longest blood relationship.
 
-The light-theme `Accent` `#8B6F4E` did *not* move, so `07-statistics.png`'s
-decade bars are the one prominent block of colour here that still matches.
+## Still worth fixing
 
-## Also worth checking when you re-shoot
-
-- **`01-home.png` and `12-home-dark.png` print the version on screen**, centred
-  under the title. They read `(4.0.0.645)`, from the layout that shipped before
-  the Store fix moved the commit count into the build field. A re-shoot picks
-  the current number up on its own — just confirm it looks like `4.0.<count>.0`.
 - **`08-gallery.png`** is honest but text-heavy: every row is a Wikimedia
   attribution line, because that is what the demo file's `TITL` tags carry. It
   reads more like a credits list than a gallery. Consider dropping it, or
   re-shooting the gallery against a tree with ordinary captions.
+- **`04-person.png` carries two breadcrumbs**, Charlotte and Patrick Branwell,
+  because the shot was taken after visiting both. One would be tidier. Harmless,
+  and arguably shows the navigation history, but worth knowing it was not
+  deliberate.
 
 ## Reproducing the set
 

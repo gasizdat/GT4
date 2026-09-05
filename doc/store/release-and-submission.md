@@ -196,12 +196,12 @@ both files together when behaviour changes.
 - **Issue #281** — a GEDCOM export followed by a re-import silently loses family
   photos and attachments (person media survives). The listing copy is worded to
   avoid promising otherwise; see the exclusion in `claim-sources.md`.
-- **The screenshots predate the palette** — all thirteen, not only the dark
-  ones. [screenshots/README.md](screenshots/README.md) has what moved and what
-  to watch for when re-shooting. This is the one thing still standing between
-  the release and a submission.
+The screenshots are no longer among these. All thirteen were re-shot at
+`v4.0.652.0`, so the set shows the package being submitted, down to the version
+string on the home screen — see [screenshots/README.md](screenshots/README.md)
+for the two settings a re-shoot has to turn on to match them.
 
-The palette itself needs no inventory here any more. #358 and #360 cleared the
+The palette needs no inventory here any more. #358 and #360 cleared the
 last of the MAUI template colours, and what replaced them is pinned by the
 `*PaletteTests` in `Tests/GT4.UI.App.DeviceTests`: they resolve each token
 against a real `UserAppTheme`, composite it over its ground — the palette is

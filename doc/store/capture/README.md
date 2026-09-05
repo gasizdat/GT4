@@ -28,6 +28,13 @@ captured image starts at the window origin, so image (x, y) maps to screen
 (windowRect.Left + x, windowRect.Top + y). Using the DWM frame origin here puts
 every click 7px right of where you aimed.
 
+**The window is placed at (0,0), and that is not cosmetic.** It is taller than a
+1080p screen, and `click.ps1` aims via `SetCursorPos`, which silently clamps to
+the desktop. Any offset pushes the same number of rows at the bottom out of
+reach — at (40,40) nothing below image y=1039 can be clicked, which includes the
+footer button every list page ends with. The click still reports success; it
+just lands somewhere else.
+
 ## Traps
 
 - **Release build only.** `PersonInfoView.CommonName` appends `" (Id: N)"` to
@@ -44,6 +51,13 @@ every click 7px right of where you aimed.
 - **A `CollectionView` row that is already selected does not re-navigate** —
   selection, not tap, is what drives it. Select a different row first, then the
   one you want.
+- **The person picker needs its footer button.** Clicking a row only selects it;
+  the footer changes from *Cancel* to *Ok*, and the choice is not committed
+  until that is pressed. Clicking the next *Choose…* instead leaves you in the
+  same picker with the wrong person selected.
+- **The chevrons flanking a person's photo move between people, not photos.**
+  They look like a carousel. Use the breadcrumb strip above the summary to get
+  back, or the shot ends up on a different person than the caption claims.
 - **The side-menu icons are unlabelled**, so their meaning comes from the order
   the page declares its `PageMenuItem`s in. Read the page's XAML, don't guess.
 - **Settings live in `%APPDATA%\{067F098F-…}\.config\appconfig.json`** — language,
@@ -59,10 +73,17 @@ drive, and the built-in demo tree is only offered when the project list is
 ```powershell
 dotnet build Tools\GT4.Tools.RelativesCli\GT4.Tools.RelativesCli.csproj -c Release
 Copy-Item UI\App\Resources\Raw\demo.ged "$env:TEMP\Brontë Family (Demo).ged"
+$root = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'GT4\_shots'
 dotnet Tools\GT4.Tools.RelativesCli\bin\Release\net10.0\GT4.Tools.RelativesCli.dll `
   --gedcom "$env:TEMP\Brontë Family (Demo).ged" `
-  --out "$env:USERPROFILE\Documents\GT4\_shots\Brontë Family (Demo).gt4" find Charlotte
+  --out "$root\Brontë Family (Demo).gt4" find Charlotte
 ```
+
+Resolve `MyDocuments` rather than assuming `$env:USERPROFILE\Documents`: that is
+what `Storage.ProjectsRoot` does, and with OneDrive's folder backup on it lands
+under `$env:USERPROFILE\OneDrive\Documents` instead. Writing to the literal path
+puts the project somewhere the app never scans, and the list simply comes up
+without it. The `_shots` subfolder is fine either way — `ProjectList` recurses.
 
 **The CLI does not persist the project name**, so the list shows a
 `DataException: There is no name stored in the project` card instead of a
@@ -73,6 +94,15 @@ project. Write the name yourself before opening it — `Metadata` is
 INSERT OR REPLACE INTO Metadata (Id, Data) VALUES ('name', 'Brontë Family (Demo)');
 ```
 
+**Write it as TEXT, not as bytes.** The column says `BLOB` and SQLite will store
+whatever you hand it, but `TableMetadata.GetAsync` casts the value straight to
+`string` — a UTF-8 `byte[]` gets you an `InvalidCastException` card in the
+project list where the project should be. The SQL literal above is right; a
+parameter bound to `Encoding.UTF8.GetBytes(name)` is not.
+
+Fixing the row is not enough on its own: the project list caches what it read,
+and its refresh button does not re-read the name. Restart the app.
+
 Any SQLite client will do. From PowerShell, `Microsoft.Data.Sqlite.dll` plus the
 `SQLitePCLRaw.*` assemblies from the CLI's output folder work, but the native
 `e_sqlite3.dll` is not copied there — take it from a test project's output
@@ -80,4 +110,7 @@ Any SQLite client will do. From PowerShell, `Microsoft.Data.Sqlite.dll` plus the
 one directory, `cd` into it, and call `[SQLitePCL.Batteries_V2]::Init()` first.
 
 Delete the project directory and its `%APPDATA%\{…}\.cache\<name>\` folder
-afterwards.
+afterwards, where `<name>` is the project's *file* name, not the name you wrote
+into `Metadata`. Leave the sibling cache folders alone: the app touches every
+one of them at startup while sweeping revisions, so a recent write time is not a
+sign one belongs to this run.
