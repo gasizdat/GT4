@@ -15,12 +15,14 @@ the GitHub release with three assets — `.zip`, `.msix`, `.cer`.
 So a release branch carries no build configuration of its own. `release/rc-aug-15`
 was byte-for-byte the master tip it was cut from.
 
-Keep it that way. The build number is `git rev-list --count HEAD`, so any commit
-on a release branch raises the version over the master commit actually being
-shipped, and two release branches cut from the same master tip with a commit
-each would claim one version for two different trees. `release/rc-sep-04` broke
-this once by carrying this `doc/store` directory; the directory lives on master
-now, and v4.0.652.0 was cut without adding anything to the branch.
+Keep it that way where you can. The build number is `git rev-list --count HEAD`,
+so every commit on a release branch raises the version over the master commit
+being shipped: v4.0.652.0 carries the code of a master tip whose own count is
+649, because this `doc/store` directory and its corrections sit on the branch.
+The version therefore names a release-branch commit, not a master one — and two
+release branches cut from the same master tip, each with a commit of its own,
+would claim one version for two different trees. If that ever gets in the way,
+move these documents to master.
 
 ```powershell
 git fetch origin
