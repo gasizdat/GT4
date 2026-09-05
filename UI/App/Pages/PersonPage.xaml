@@ -48,23 +48,6 @@
         <Setter Property="HorizontalOptions" Value="Center" />
       </Style>
 
-      <!--
-        A Border rather than a Button: a DataTrigger on a native Button's colours does not
-        repaint on WinUI, which is what a tab strip needs to show which one is current.
-      -->
-      <Style x:Key="PersonTab" TargetType="Border">
-        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SurfaceSubtle}, Dark={StaticResource SurfaceSubtleDark}}" />
-        <Setter Property="Padding" Value="12,6" />
-        <Setter Property="Stroke" Value="{StaticResource Primary}" />
-        <Setter Property="StrokeShape" Value="RoundRectangle 14" />
-        <Setter Property="StrokeThickness" Value="1" />
-      </Style>
-
-      <Style x:Key="PersonTabText" TargetType="Label">
-        <Setter Property="FontSize" Value="{DynamicResource LabelTextSizeDefault}" />
-        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
-      </Style>
-
     </ResourceDictionary>
   </ContentPage.Resources>
 
@@ -226,97 +209,29 @@
 
         <HorizontalStackLayout
             Grid.Row="0"
-            IsVisible="{Binding ShowTabs, Source={x:Reference Root}}"
             Margin="{Thickness Bottom={StaticResource PageContentVerticalPadding}}"
+            IsVisible="{Binding ShowTabs, Source={x:Reference Root}}"
             Spacing="6">
 
-          <Border Style="{StaticResource PersonTab}">
-            <Border.GestureRecognizers>
-              <TapGestureRecognizer
-                  Command="{Binding PageCommand, Source={x:Reference Root}}"
-                  CommandParameter="TabRelatives" />
-            </Border.GestureRecognizers>
-            <Border.Triggers>
-              <DataTrigger
-                  Binding="{Binding ShowRelativesTab, Source={x:Reference Root}}"
-                  TargetType="Border"
-                  Value="True">
-                <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-              </DataTrigger>
-            </Border.Triggers>
-            <Label
-                Style="{StaticResource PersonTabText}"
-                Text="{x:Static resources:UIStrings.LblRelatives}">
-              <Label.Triggers>
-                <DataTrigger
-                    Binding="{Binding ShowRelativesTab, Source={x:Reference Root}}"
-                    TargetType="Label"
-                    Value="True">
-                  <Setter Property="TextColor" Value="{StaticResource White}" />
-                </DataTrigger>
-              </Label.Triggers>
-            </Label>
-          </Border>
+          <components:TabItemView
+              Command="{Binding PageCommand, Source={x:Reference Root}}"
+              CommandParameter="TabRelatives"
+              IsActive="{Binding ShowRelativesTab, Source={x:Reference Root}}"
+              Text="{x:Static resources:UIStrings.LblRelatives}" />
 
-          <Border
+          <components:TabItemView
+              Command="{Binding PageCommand, Source={x:Reference Root}}"
+              CommandParameter="TabBiography"
+              IsActive="{Binding ShowBiographyTab, Source={x:Reference Root}}"
               IsVisible="{Binding ShowBiography, Source={x:Reference Root}}"
-              Style="{StaticResource PersonTab}">
-            <Border.GestureRecognizers>
-              <TapGestureRecognizer
-                  Command="{Binding PageCommand, Source={x:Reference Root}}"
-                  CommandParameter="TabBiography" />
-            </Border.GestureRecognizers>
-            <Border.Triggers>
-              <DataTrigger
-                  Binding="{Binding ShowBiographyTab, Source={x:Reference Root}}"
-                  TargetType="Border"
-                  Value="True">
-                <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-              </DataTrigger>
-            </Border.Triggers>
-            <Label
-                Style="{StaticResource PersonTabText}"
-                Text="{x:Static resources:UIStrings.FieldPersonBiography}">
-              <Label.Triggers>
-                <DataTrigger
-                    Binding="{Binding ShowBiographyTab, Source={x:Reference Root}}"
-                    TargetType="Label"
-                    Value="True">
-                  <Setter Property="TextColor" Value="{StaticResource White}" />
-                </DataTrigger>
-              </Label.Triggers>
-            </Label>
-          </Border>
+              Text="{x:Static resources:UIStrings.FieldPersonBiography}" />
 
-          <Border
+          <components:TabItemView
+              Command="{Binding PageCommand, Source={x:Reference Root}}"
+              CommandParameter="TabAttachments"
+              IsActive="{Binding ShowAttachmentsTab, Source={x:Reference Root}}"
               IsVisible="{Binding ShowAttachments, Source={x:Reference Root}}"
-              Style="{StaticResource PersonTab}">
-            <Border.GestureRecognizers>
-              <TapGestureRecognizer
-                  Command="{Binding PageCommand, Source={x:Reference Root}}"
-                  CommandParameter="TabAttachments" />
-            </Border.GestureRecognizers>
-            <Border.Triggers>
-              <DataTrigger
-                  Binding="{Binding ShowAttachmentsTab, Source={x:Reference Root}}"
-                  TargetType="Border"
-                  Value="True">
-                <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-              </DataTrigger>
-            </Border.Triggers>
-            <Label
-                Style="{StaticResource PersonTabText}"
-                Text="{x:Static resources:UIStrings.FieldPersonAttachments}">
-              <Label.Triggers>
-                <DataTrigger
-                    Binding="{Binding ShowAttachmentsTab, Source={x:Reference Root}}"
-                    TargetType="Label"
-                    Value="True">
-                  <Setter Property="TextColor" Value="{StaticResource White}" />
-                </DataTrigger>
-              </Label.Triggers>
-            </Label>
-          </Border>
+              Text="{x:Static resources:UIStrings.FieldPersonAttachments}" />
 
         </HorizontalStackLayout>
 
