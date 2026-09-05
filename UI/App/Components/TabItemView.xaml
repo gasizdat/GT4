@@ -8,15 +8,26 @@
   <Border
       x:Name="Chrome"
       Padding="12,6"
+      MinimumHeightRequest="44"
       StrokeShape="RoundRectangle 14"
-      StrokeThickness="1.5">
-
+      StrokeThickness="1.5"
+      VerticalOptions="Center">
     <Border.GestureRecognizers>
       <TapGestureRecognizer
           Command="{Binding Command, Source={x:Reference Root}}"
           CommandParameter="{Binding CommandParameter, Source={x:Reference Root}}" />
-      <PointerGestureRecognizer PointerEntered="OnPointerEntered" PointerExited="OnPointerExited" />
+      <PointerGestureRecognizer
+          PointerEntered="OnPointerEntered"
+          PointerExited="OnPointerExited" />
     </Border.GestureRecognizers>
+
+    <!--  A VisualState on the Border cannot reach this Label, so the ladder has to suit one colour.  -->
+    <Label
+        FontSize="{DynamicResource LabelTextSizeDefault}"
+        Text="{Binding Text, Source={x:Reference Root}}"
+        TextColor="{AppThemeBinding Light={StaticResource MidnightBlue},
+                                    Dark={StaticResource White}}"
+        VerticalTextAlignment="Center" />
 
     <!--
       A Border rather than a Button: a DataTrigger on a native Button's colours does not repaint on
@@ -48,12 +59,6 @@
         </VisualStateGroup>
       </VisualStateGroupList>
     </VisualStateManager.VisualStateGroups>
-
-    <!--  A VisualState on the Border cannot reach this Label, so the ladder has to suit one colour.  -->
-    <Label
-        FontSize="{DynamicResource LabelTextSizeDefault}"
-        Text="{Binding Text, Source={x:Reference Root}}"
-        TextColor="{AppThemeBinding Light={StaticResource MidnightBlue}, Dark={StaticResource White}}" />
   </Border>
 
 </ContentView>

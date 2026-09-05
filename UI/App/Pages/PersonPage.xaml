@@ -209,8 +209,8 @@
 
         <HorizontalStackLayout
             Grid.Row="0"
-            IsVisible="{Binding ShowTabs, Source={x:Reference Root}}"
             Margin="{Thickness Bottom={StaticResource PageContentVerticalPadding}}"
+            IsVisible="{Binding ShowTabs, Source={x:Reference Root}}"
             Spacing="6">
 
           <components:TabItemView
