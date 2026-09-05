@@ -2,7 +2,8 @@
 
 Written alongside [microsoft-store-listing-en.md](microsoft-store-listing-en.md)
 so a future edit can re-check a claim instead of re-deriving it. Verified against
-commit `7816ec9d`.
+`v4.0.652.0` (commit `24aa0264`), which is also where the screenshots two of the
+rows below cite were shot.
 
 | Claim | Source |
 |-------|--------|
