@@ -8,8 +8,7 @@
 
   <!--
     Accent, Birth and Death are painted without an AppThemeBinding (DateCalendarPage indicators), so
-    each has to clear 3:1 against both the light and the dark page. That caps how light or dark any
-    of the three may go.
+    each has to clear 3:1 against both page grounds.
   -->
   <Color x:Key="Accent">#8B6F4E</Color>
   <Color x:Key="AccentDark">#D8B37F</Color>
@@ -40,10 +39,9 @@
   <Color x:Key="Tertiary">#1D4034</Color>
 
   <!--
-    Interaction roles, authored as palette ink at an alpha rather than as flat surface colours: one
-    value then reads correctly over the page, over a frosted-glass card and over a photo. Outline is
-    the whole affordance on a control at rest, so it clears 3:1 against every surface it touches.
-    Both hover fills are light enough for one dark ink, so the text over them needs no theme binding.
+    Interaction roles, authored as palette ink at an alpha rather than as flat surface colours, so
+    one value reads correctly over the page, over a frosted-glass card and over a photo alike. Both
+    hover fills stay light enough for one dark ink, which is why that text is not theme-bound.
   -->
   <Color x:Key="ControlFill">#1A1E4437</Color>
   <Color x:Key="ControlFillDark">#AF10161F</Color>

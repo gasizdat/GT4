@@ -19,9 +19,10 @@
     </Border.GestureRecognizers>
 
     <!--
-      The three states share BackgroundColor, so they have to live in one group: a selection trigger
-      and the platform's own PointerOver state would both write it, and whichever restored last wins
-      after a click - which is always made with the pointer already over the tab.
+      A Border rather than a Button: a DataTrigger on a native Button's colours does not repaint on
+      WinUI, which is the one thing a tab strip needs. The three states then have to share a single
+      group, because a selection trigger and the platform's own PointerOver would both write
+      BackgroundColor, and whichever restored last would win the click - always made while hovering.
     -->
     <VisualStateManager.VisualStateGroups>
       <VisualStateGroupList>
@@ -48,6 +49,7 @@
       </VisualStateGroupList>
     </VisualStateManager.VisualStateGroups>
 
+    <!--  A VisualState on the Border cannot reach this Label, so the ladder has to suit one colour.  -->
     <Label
         FontSize="{DynamicResource LabelTextSizeDefault}"
         Text="{Binding Text, Source={x:Reference Root}}"

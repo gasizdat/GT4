@@ -2,9 +2,6 @@ using System.Windows.Input;
 
 namespace GT4.UI.Components;
 
-// One tab in a tab strip. The look is a three-step ladder — the active tab is the lightest and the
-// hovered one sits between it and the rest — which holds in both themes, so the caption keeps a
-// single colour per theme and only the chrome changes.
 public partial class TabItemView : ContentView
 {
   private bool _Hovered;
