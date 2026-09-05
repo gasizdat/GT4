@@ -51,7 +51,7 @@
     <Button
         Margin="16"
         Padding="0"
-        BackgroundColor="{StaticResource Translucent80}"
+        BackgroundColor="{StaticResource PhotoOverlayFill}"
         Command="{Binding CloseCommand, Source={x:Reference Root}}"
         CornerRadius="22"
         FontSize="20"

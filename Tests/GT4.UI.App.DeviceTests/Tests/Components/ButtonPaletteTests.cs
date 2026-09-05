@@ -4,54 +4,59 @@ using Xunit;
 namespace GT4.UI.DeviceTests;
 
 /// <summary>
-/// The implicit Button style binds its background per theme, and the dark half went unnoticed for the
-/// life of the app: it still pointed at the MAUI template's purple while the light half used the app's
-/// green. Resolving a real Button under a real UserAppTheme is the only check that sees what a user
-/// sees; reading the colour key alone would have passed throughout.
+/// Resolving a real Button under a real UserAppTheme is the only check that sees what a user sees: a
+/// theme-bound colour can point anywhere — the dark half once pointed at the MAUI template's purple
+/// for the life of the app — and reading the colour keys would pass regardless. The dark button is
+/// outlined, its body recessed almost into the page, so the border carries the whole affordance.
 /// </summary>
 public class ButtonPaletteTests
 {
-  private static async Task<Color> ResolveButtonBackgroundAsync(AppTheme theme)
-  {
-    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+  private const double TextContrast = 4.5;
+  private const double NonTextContrast = 3.0;
 
-    var application = Application.Current!;
-    var restore = application.UserAppTheme;
-    try
-    {
-      return await MainThread.InvokeOnMainThreadAsync(() =>
-      {
-        application.UserAppTheme = theme;
-        var button = new Button();
-        return button.BackgroundColor;
-      });
-    }
-    finally
-    {
-      await MainThread.InvokeOnMainThreadAsync(() => application.UserAppTheme = restore);
-    }
+  [Theory]
+  [InlineData(AppTheme.Light, "Normal")]
+  [InlineData(AppTheme.Light, "PointerOver")]
+  [InlineData(AppTheme.Dark, "Normal")]
+  [InlineData(AppTheme.Dark, "PointerOver")]
+  public async Task A_button_caption_is_legible_on_its_own_body(AppTheme theme, string state)
+  {
+    var chrome = await ResolveButtonChromeAsync(theme, state);
+    var body = ThemeContrast.Over(chrome.Background, chrome.Page);
+    var caption = ThemeContrast.Over(chrome.Text, body);
+    var ratio = ThemeContrast.Ratio(caption, body);
+
+    Assert.True(
+      ratio >= TextContrast,
+      $"{theme} {state} caption {caption.ToArgbHex()} on body {body.ToArgbHex()} is {ratio:F2}:1.");
   }
 
   [Theory]
   [InlineData(AppTheme.Light)]
   [InlineData(AppTheme.Dark)]
-  public async Task A_button_is_green_in_either_theme(AppTheme theme)
+  public async Task A_button_border_separates_from_the_page(AppTheme theme)
   {
-    var background = await ResolveButtonBackgroundAsync(theme);
+    var chrome = await ResolveButtonChromeAsync(theme, "Normal");
+    var border = ThemeContrast.Over(chrome.Border, chrome.Page);
+    var ratio = ThemeContrast.Ratio(border, chrome.Page);
 
     Assert.True(
-      background.Green > background.Red && background.Green > background.Blue,
-      $"{theme} button background {background.ToArgbHex()} is not in the app's green family.");
+      ratio >= NonTextContrast,
+      $"{theme} button border {border.ToArgbHex()} on page {chrome.Page.ToArgbHex()} is {ratio:F2}:1.");
   }
 
-  [Fact]
-  public async Task The_dark_button_is_a_lighter_green_than_the_light_one()
+  private static Task<ButtonChrome> ResolveButtonChromeAsync(AppTheme theme, string state)
   {
-    var light = await ResolveButtonBackgroundAsync(AppTheme.Light);
-    var dark = await ResolveButtonBackgroundAsync(AppTheme.Dark);
+    return ThemeContrast.UnderThemeAsync(theme, () =>
+    {
+      var button = new Button();
+      var moved = VisualStateManager.GoToState(button, state);
+      Assert.True(moved, $"the Button style has no visual state named {state}.");
 
-    Assert.True(
-      dark.GetLuminosity() > light.GetLuminosity(),
-      $"dark-theme button {dark.ToArgbHex()} must read as the lighter sibling of {light.ToArgbHex()}.");
+      var page = new ContentPage();
+      return new ButtonChrome(button.BackgroundColor, button.BorderColor, button.TextColor, page.BackgroundColor);
+    });
   }
+
+  private sealed record ButtonChrome(Color Background, Color Border, Color Text, Color Page);
 }
