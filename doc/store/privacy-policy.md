@@ -1,9 +1,9 @@
 # Privacy policy — Genealogy Tree
 
-*Draft. Publish this at a stable public URL and put that URL in Partner Center →
-Properties → Privacy policy URL. Fill in the contact address before publishing.*
+*Submitted as policy text directly in Partner Center → Properties, rather than a
+hosted URL, since the repo has no public domain to host it at.*
 
-*Last updated: 4 September 2026*
+*Last updated: 6 September 2026*
 
 ## The short version
 
@@ -79,6 +79,4 @@ with a new date at the top.
 
 ## Contact
 
-<!-- Replace with the address you are willing to publish; Partner Center also
-     requires a support contact and this can be the same one. -->
-Questions about this policy: **&lt;support address&gt;**
+Questions about this policy: **gasizdat@gmail.com**
