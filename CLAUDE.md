@@ -63,8 +63,9 @@ from the code.
   dictionaries the test host doesn't have), so lifecycle behavior gated on a real `App` instance is
   verified against the built binary, not a device test — that's a deliberate gap, not a missed one.
 - **MAUI derives the MSIX package version from `ApplicationDisplayVersion`+`ApplicationVersion`**,
-  not from `$(Version)` — the Store reserves version field 4 for its own use. `release.yml`'s
-  signing-certificate subject must track the `Publisher` identity (still the stock template GUID).
+  not from `$(Version)` — the Store reserves version field 4 for its own use.
+  `.github/workflows/release.yml`'s signing-certificate subject must track the `Publisher`
+  identity (still the stock template GUID).
 
 ## Don't re-derive stale snapshots
 
