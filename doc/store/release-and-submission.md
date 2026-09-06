@@ -17,8 +17,8 @@ was byte-for-byte the master tip it was cut from.
 
 Keep it that way where you can. The build number is `git rev-list --count HEAD`,
 so every commit on a release branch raises the version over the master commit
-being shipped: v4.0.652.0 carries the code of a master tip whose own count is
-649, because this `doc/store` directory and its corrections sit on the branch.
+being shipped: v4.0.656.0 carries the code of a master tip whose own count is
+650, because this `doc/store` directory and its corrections sit on the branch.
 The version therefore names a release-branch commit, not a master one — and two
 release branches cut from the same master tip, each with a commit of its own,
 would claim one version for two different trees. If that ever gets in the way,
@@ -52,8 +52,8 @@ the Windows head only; Android keeps `4.0` and a version code of the count.
 
 Read the answer off the package, never off MSBuild's log line — they disagreed
 here, and the log line was the one that looked right. Reading
-`GT4-4.0.652.0-win-x64.msix` back out of the release confirms the layout holds:
-`Identity/@Version` is `4.0.652.0`, fourth field free.
+`GT4-4.0.656.0-win-x64.msix` back out of the release confirms the layout holds:
+`Identity/@Version` is `4.0.656.0`, fourth field free.
 
 The trailing `.0` is not decoration. Microsoft's
 [app package requirements](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/app-package-requirements)
@@ -177,7 +177,7 @@ signed by a trusted CA: the Store re-signs every MSIX it accepts. The
 form asks for justification, it is "packaged Win32/WinUI desktop application".
 
 The package declares **`EN-US` only** — read out of the shipped
-`GT4-4.0.652.0-win-x64.msix`. The manifest asks for
+`GT4-4.0.656.0-win-x64.msix`. The manifest asks for
 `<Resource Language="x-generate" />`, and the PRI build finds one language,
 because the five `UIStrings*.resx` files become .NET satellite assemblies, which
 MRT does not see. The app really does offer Russian, German, Spanish and French —
@@ -196,10 +196,15 @@ both files together when behaviour changes.
 - **Issue #281** — a GEDCOM export followed by a re-import silently loses family
   photos and attachments (person media survives). The listing copy is worded to
   avoid promising otherwise; see the exclusion in `claim-sources.md`.
-The screenshots are no longer among these. All thirteen were re-shot at
-`v4.0.652.0`, so the set shows the package being submitted, down to the version
-string on the home screen — see [screenshots/README.md](screenshots/README.md)
-for the two settings a re-shoot has to turn on to match them.
+- **`04-person.png`** — the one screenshot still to re-shoot. It comes from
+  `v4.0.652.0` and shows the caption stretching the photo pane that #362 fixed;
+  `656` is the first build without it.
+
+The other twelve are settled. `01-home.png` and `12-home-dark.png` were shot at
+`v4.0.656.0`, so the version they print is the one on the package; nothing
+between the two tags can reach the remaining ten. See
+[screenshots/README.md](screenshots/README.md) for the split, and for the two
+settings a re-shoot has to turn on to match the set.
 
 The palette needs no inventory here any more. #358 and #360 cleared the
 last of the MAUI template colours, and what replaced them is pinned by the

@@ -39,6 +39,15 @@ just lands somewhere else.
 
 - **Release build only.** `PersonInfoView.CommonName` appends `" (Id: N)"` to
   every name under `#if DEBUG`.
+- **The session has to be unlocked, and the failure is silent.** `PrintWindow`
+  renders a window it does not own the foreground of, so `capture.ps1` keeps
+  working with the lock screen up while every click lands on `LockApp` instead.
+  Shots that need no input still come out right, which is what makes it look like
+  a click-targeting problem. `GetForegroundWindow` naming `LockApp` is the tell.
+  Posting `WM_LBUTTONDOWN` straight at the
+  `Microsoft.UI.Content.DesktopChildSiteBridge` child does not get around it —
+  WinUI 3 takes pointer input through the input site and ignores the legacy
+  message.
 - **A click that teleports onto a control is ignored** by the smaller targets —
   the side-menu buttons in particular. WinUI wants a hover first, so `click.ps1`
   moves near the target, pauses, moves onto it, pauses, then presses.

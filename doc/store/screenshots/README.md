@@ -1,16 +1,31 @@
 # Store screenshots
 
 Thirteen 1920×1080 PNGs, captured from the **Release** Windows head
-(`UI/App/AppWinOnly.csproj`) at `v4.0.652.0` (commit `24aa0264`) — the tag the
-shipped MSIX was built from, so the version the app prints on the home screen,
-`4.0.652.0`, is the one on the package being submitted. English, 100% text
-scale; light theme except `12` and `13`. The data is the bundled Brontë demo tree
+(`UI/App/AppWinOnly.csproj`), English, 100% text scale; light theme except `12`
+and `13`. The data is the bundled Brontë demo tree
 (`UI/App/Resources/Raw/demo.ged`) — every portrait in it is a public-domain
 Wikimedia image, so nothing here is anyone's private research.
 
 Release, not Debug, matters: `PersonInfoView.CommonName` appends `" (Id: N)"` to
 every displayed name under `#if DEBUG`, which would put a stray id after each
 name in the shots.
+
+## Which build each shot came from
+
+The package being submitted is `v4.0.656.0` (commit `6d588c18`). The set does not
+come from one build, and the split is deliberate rather than an oversight:
+
+- **`01-home.png` and `12-home-dark.png` — `v4.0.656.0`.** The home screen prints
+  the version, so a shot from any other build contradicts the package it is
+  submitted with.
+- **`04-person.png` — still `v4.0.652.0`, and not fit to submit.** It shows the
+  caption stretching the photo pane to the width of its text, which #362 fixed;
+  `656` is the first build without it. Re-shoot before submission.
+- **The other ten — `v4.0.652.0` (commit `24aa0264`).** The only code between the
+  two tags is that caption cap, and it reaches one pane: the photo on the person
+  page's Relatives tab. None of these ten can show it — the demo tree gives the
+  family page no photos, the biography tab is a different tab, and the gallery
+  never uses the component.
 
 ## Suggested Partner Center order and captions
 
