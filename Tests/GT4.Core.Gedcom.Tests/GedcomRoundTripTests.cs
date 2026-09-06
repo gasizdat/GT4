@@ -752,6 +752,63 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     ExportedMedia().Should().ContainSingle();
   }
 
+  [Fact]
+  public async Task FamilyMedia_MainPhotoAdditionalPhotoAndAttachment_SurviveExportAndReimport()
+  {
+    // Issue #281: a GT4 family (clan) name's own media -- distinct from a GEDCOM FAM (couple) -- had no
+    // representation in Core.Gedcom at all and was silently dropped by export.
+    var family = await _source.Names.AddNameAsync("Rurikovich", NameType.FamilyName, null, Token);
+    var mainPhoto = new Data(ElementId.NonCommittedId, Encoding.UTF8.GetBytes("CREST-BYTES"), "image/jpeg", DataCategory.FamilyMainPhoto);
+    var extraPhoto = new Data(ElementId.NonCommittedId, Encoding.UTF8.GetBytes("REUNION-BYTES"), "image/png", DataCategory.FamilyPhoto);
+    var attachmentContent = GedcomPhotoResidue.EncodeAttachment(Encoding.UTF8.GetBytes("DEED-BYTES"), "estate-deed.pdf");
+    var attachment = new Data(ElementId.NonCommittedId, attachmentContent, "application/pdf", DataCategory.FamilyAttachment);
+    await _source.NameData.AddNameDataSetAsync(family, [mainPhoto, extraPhoto, attachment], Token);
+
+    var text = await ExportToTextAsync(_source);
+    text.Should().Contain($"0 @FM1@ {GedcomTags.FamilyRecord}").And.Contain("1 NAME Rurikovich");
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
+
+    var families = await reimported.Names.GetNamesByTypeAsync(NameType.FamilyName, Token);
+    var reimportedFamily = families.Should().ContainSingle(n => n.Value == "Rurikovich").Which;
+    var familyData = await reimported.NameData.GetNameDataSetAsync(reimportedFamily, null, Token);
+
+    var reimportedMain = familyData.Should().ContainSingle(d => d.Category == DataCategory.FamilyMainPhoto).Which;
+    Encoding.UTF8.GetString(reimportedMain.Content).Should().Be("CREST-BYTES");
+
+    var reimportedExtra = familyData.Should().ContainSingle(d => d.Category == DataCategory.FamilyPhoto).Which;
+    Encoding.UTF8.GetString(reimportedExtra.Content).Should().Be("REUNION-BYTES");
+
+    var reimportedAttachment = familyData.Should().ContainSingle(d => d.Category == DataCategory.FamilyAttachment).Which;
+    GedcomPhotoResidue.ExtractImageBytes(reimportedAttachment.Content).Should().Equal(Encoding.UTF8.GetBytes("DEED-BYTES"));
+    (await GedcomPhotoResidue.ExtractFileNameAsync(reimportedAttachment, Token)).Should().Be("estate-deed.pdf");
+  }
+
+  [Fact]
+  public async Task FamilyMedia_ReusesTheSameFamilyNameAPersonsSurnameAlreadyCreated()
+  {
+    // GedcomImporter.BuildNamesAsync creates a family Name from a person's bare surname before the
+    // _FAML records are processed; the family record must key onto that same Name rather than a duplicate.
+    var name = await _source.Names.AddNameAsync("Romanov", NameType.FirstName, null, Token);
+    var family = await _source.Names.AddNameAsync("Kerensky", NameType.FamilyName, null, Token);
+    var lastName = await _source.Names.AddNameAsync("Kerensky", NameType.LastName, family, Token);
+    var info = PersonFullInfo.Empty with { BirthDate = Year(1900), Names = [name, family, lastName] };
+    await _source.PersonManager.AddPersonAsync(info, Token);
+    var mainPhoto = new Data(ElementId.NonCommittedId, Encoding.UTF8.GetBytes("CREST-BYTES"), "image/jpeg", DataCategory.FamilyMainPhoto);
+    await _source.NameData.AddNameDataSetAsync(family, [mainPhoto], Token);
+
+    var text = await ExportToTextAsync(_source);
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
+
+    var families = await reimported.Names.GetNamesByTypeAsync(NameType.FamilyName, Token);
+    var reimportedFamily = families.Should().ContainSingle(n => n.Value == "Kerensky").Which;
+    var familyData = await reimported.NameData.GetNameDataSetAsync(reimportedFamily, DataCategory.FamilyMainPhoto, Token);
+    familyData.Should().ContainSingle();
+  }
+
   private async Task<string> ExportToTextAsync(ProjectDocument document)
   {
     var writer = new StringWriter();

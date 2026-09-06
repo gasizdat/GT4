@@ -28,6 +28,7 @@ internal sealed class GedcomImporter : IGedcomImporter
 
     var individuals = records.Where(r => r.Tag == GedcomTags.Individual).ToArray();
     var families = records.Where(r => r.Tag == GedcomTags.Family).ToArray();
+    var familyRecords = records.Where(r => r.Tag == GedcomTags.FamilyRecord).ToArray();
 
     // The records a person can reach by pointer. INDI and FAM are excluded: citing a person is not owning
     // their media, and a family's own OBJEs already land on its spouses.
@@ -36,10 +37,11 @@ internal sealed class GedcomImporter : IGedcomImporter
       .ToDictionary(r => r.Xref!, r => r);
 
     // A source may pack several files under one OBJE; GT4 models one file per media object, so each -- on
-    // an individual or nested in a family's marriage record -- is normalized up front into single-file OBJEs
-    // before any photo/attachment/residue pass runs. NOTE pointers are inlined in the same sweep, so every
-    // pass below reads note text and none of them has to know about the top-level records.
-    foreach (var record in individuals.Concat(families))
+    // an individual, nested in a family's marriage record, or on a GT4 family-name record -- is normalized
+    // up front into single-file OBJEs before any photo/attachment/residue pass runs. NOTE pointers are
+    // inlined in the same sweep, so every pass below reads note text and none of them has to know about
+    // the top-level records.
+    foreach (var record in individuals.Concat(families).Concat(familyRecords))
     {
       SplitMultiFileObjects(record);
       InlineNotePointers(record, notesByXref);
@@ -96,6 +98,11 @@ internal sealed class GedcomImporter : IGedcomImporter
       var referenced = SelectReferencedMedia(family, [], recordsByXref, mediaBasePath);
       await ImportFamilyAsync(document, family, personByXref, adoptedLinks, existingEdges, attachments, token);
       await ImportFamilyMediaAsync(document, family, personByXref, matches, attachments, referenced, referencedMedia, token);
+    }
+
+    foreach (var familyRecord in familyRecords)
+    {
+      await ImportFamilyRecordAsync(document, familyRecord, recordsByXref, nameCache, mediaBasePath, token);
     }
 
     await ImportPassthroughRecordsAsync(document, records, token);
@@ -219,7 +226,7 @@ internal sealed class GedcomImporter : IGedcomImporter
 
     if (addingPhotos)
     {
-      var (mainPhoto, additionalPhotos) = BuildPhotos(photos);
+      var (mainPhoto, additionalPhotos) = BuildPhotos(photos, DataCategory.PersonMainPhoto, DataCategory.PersonPhoto);
       if (mainPhoto is not null)
         additions.Add(mainPhoto);
       additions.AddRange(additionalPhotos);
@@ -227,7 +234,7 @@ internal sealed class GedcomImporter : IGedcomImporter
 
     if (addingAttachments)
     {
-      additions.AddRange(attachments.Select(BuildAttachmentData));
+      additions.AddRange(attachments.Select(a => BuildAttachmentData(a, DataCategory.PersonAttachment)));
     }
 
     if (additions.Count > 0)
@@ -299,6 +306,44 @@ internal sealed class GedcomImporter : IGedcomImporter
   }
 
   /// <summary>
+  /// Imports one <see cref="GedcomTags.FamilyRecord"/> written by <see cref="GedcomExporter"/>: re-derives
+  /// the same GT4 family (clan) <c>Name</c> from its NAME the way a person's surname does in
+  /// <see cref="BuildNamesAsync"/> -- reusing <paramref name="nameCache"/> so a family already created from
+  /// a person's surname in this same import is reused rather than duplicated -- and commits its
+  /// photos/attachments to <see cref="ITableNameData"/> the way a person's land on <see cref="ITablePersonData"/>.
+  /// </summary>
+  private async Task ImportFamilyRecordAsync(
+    IProjectDocument document,
+    GedcomNode familyRecord,
+    IReadOnlyDictionary<string, GedcomNode> recordsByXref,
+    Dictionary<(string, NameType, int?), Name> nameCache,
+    string? mediaBasePath,
+    CancellationToken token)
+  {
+    var surname = familyRecord.ChildValue(GedcomTags.Name)?.Trim();
+    if (string.IsNullOrWhiteSpace(surname))
+      return;
+
+    var photos = SelectPhotos(familyRecord, recordsByXref, mediaBasePath);
+    var photoNodes = photos.Select(p => p.Node).ToArray();
+    var attachments = SelectAttachments(familyRecord, photoNodes, mediaBasePath);
+    var (mainPhoto, additionalPhotos) = BuildPhotos(photos, DataCategory.FamilyMainPhoto, DataCategory.FamilyPhoto);
+
+    var dataSet = new List<Data>();
+    if (mainPhoto is not null)
+    {
+      dataSet.Add(mainPhoto);
+    }
+    dataSet.AddRange(additionalPhotos);
+    dataSet.AddRange(attachments.Select(a => BuildAttachmentData(a, DataCategory.FamilyAttachment)));
+    if (dataSet.Count == 0)
+      return;
+
+    var family = await GetOrAddNameAsync(document, surname, NameType.FamilyName, null, nameCache, token);
+    await document.NameData.AddNameDataSetAsync(family, [.. dataSet], token);
+  }
+
+  /// <summary>
   /// Preserves the unmodeled top-level records (submitter/submission/source/repository/multimedia) verbatim in the
   /// Metadata table so they survive a round-trip even though GT4 has no schema for them. See
   /// <see cref="GedcomMetadata"/> for the keying and the references that are intentionally not preserved.
@@ -347,7 +392,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     // Only what the individual's own subtree holds is consumed out of its residue -- never a referenced
     // record's node: the pointer to it has to stay there for the re-emitted record to be reachable.
     GedcomNode[] consumedNodes = [.. photoNodes, .. attachments.Select(a => a.Node)];
-    var (mainPhoto, additionalPhotos) = BuildPhotos(photos);
+    var (mainPhoto, additionalPhotos) = BuildPhotos(photos, DataCategory.PersonMainPhoto, DataCategory.PersonPhoto);
 
     var toAdd = PersonFullInfo.Empty with
     {
@@ -357,7 +402,7 @@ internal sealed class GedcomImporter : IGedcomImporter
       Names = names,
       MainPhoto = mainPhoto,
       AdditionalPhotos = additionalPhotos,
-      Attachments = [.. attachments.Select(BuildAttachmentData)],
+      Attachments = [.. attachments.Select(a => BuildAttachmentData(a, DataCategory.PersonAttachment))],
       Biography = biography,
       GedcomData = BuildResidueData(individual, consumedNodes),
     };
@@ -406,7 +451,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     if (committed.TryGetValue(candidate.Node, out var shared))
       return shared;
 
-    var built = BuildAttachmentData(candidate);
+    var built = BuildAttachmentData(candidate, DataCategory.PersonAttachment);
     var data = await document.Data.AddDataAsync(built.Content, built.MimeType, built.Category, token);
     shared = new ReferencedMedia(data, []);
     committed[candidate.Node] = shared;
@@ -670,7 +715,7 @@ internal sealed class GedcomImporter : IGedcomImporter
   /// only points at is picked last: it is not re-emitted under the INDI, so making it the main one would
   /// leave the export with no <c>_PRIM Y</c> at all and the next import free to choose differently.
   /// </summary>
-  private static (Data? Main, Data[] Additional) BuildPhotos(PhotoCandidate[] photos)
+  private static (Data? Main, Data[] Additional) BuildPhotos(PhotoCandidate[] photos, DataCategory mainCategory, DataCategory additionalCategory)
   {
     if (photos.Length == 0)
       return (null, []);
@@ -678,10 +723,10 @@ internal sealed class GedcomImporter : IGedcomImporter
     var own = photos.Where(p => p.Node.Xref is null).ToArray();
     var candidates = own.Length > 0 ? own : photos;
     var mainPhoto = candidates.FirstOrDefault(p => p.Primary) ?? candidates[0];
-    var main = BuildPhotoData(mainPhoto, DataCategory.PersonMainPhoto);
+    var main = BuildPhotoData(mainPhoto, mainCategory);
     var additional = photos
       .Where(p => !ReferenceEquals(p, mainPhoto))
-      .Select(p => BuildPhotoData(p, DataCategory.PersonPhoto))
+      .Select(p => BuildPhotoData(p, additionalCategory))
       .ToArray();
     return (main, additional);
   }
@@ -888,8 +933,8 @@ internal sealed class GedcomImporter : IGedcomImporter
     residual.Children[residual.Children.IndexOf(file)] = new GedcomNode { Tag = GedcomTags.File, Value = name };
   }
 
-  private static Data BuildAttachmentData(AttachmentCandidate candidate) =>
-    new(ElementId.NonCommittedId, GedcomPhotoResidue.Encode(candidate.Content, candidate.Residual), candidate.MimeType, DataCategory.PersonAttachment);
+  private static Data BuildAttachmentData(AttachmentCandidate candidate, DataCategory category) =>
+    new(ElementId.NonCommittedId, GedcomPhotoResidue.Encode(candidate.Content, candidate.Residual), candidate.MimeType, category);
 
   private static bool IsImageMedia(string? form, string fileRef)
   {
@@ -1191,7 +1236,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     if (spouses.Length == 0)
       return;
 
-    Data[] media = [.. attachments.Select(BuildAttachmentData)];
+    Data[] media = [.. attachments.Select(a => BuildAttachmentData(a, DataCategory.PersonAttachment))];
 
     foreach (var data in media)
     {
