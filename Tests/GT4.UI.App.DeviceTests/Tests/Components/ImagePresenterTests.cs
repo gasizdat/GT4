@@ -79,7 +79,13 @@ public class ImagePresenterTests
   {
     var width = await PresenterWidthAsync("A photo");
 
-    Assert.Equal(PictureSize, width, 1);
+    // The platform snaps a requested DP size up to a whole device pixel before arranging it, so on a
+    // density that doesn't divide evenly (e.g. 2.8125x) the arranged size can land up to one device
+    // pixel above what was asked for -- a real difference, not a settling race.
+    var density = await MainThread.InvokeOnMainThreadAsync(() => DeviceDisplay.MainDisplayInfo.Density);
+    Assert.True(
+      Math.Abs(PictureSize - width) <= 1.0 / density,
+      $"Expected a width within one device pixel of {PictureSize}, but observed {width}.");
   }
 
   // Stacked rather than dropped straight into the page: a stack takes its width from what it holds,
