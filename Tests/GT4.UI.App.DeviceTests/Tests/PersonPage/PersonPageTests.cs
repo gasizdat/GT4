@@ -839,9 +839,11 @@ public class PersonPageTests
   public Task Every_region_stays_inside_its_parent_in_a_narrow_window() =>
     AssertEveryRegionIsDrawnAsync(500, 900);
 
+#if WINDOWS
   // WinUI draws an Image at whatever height it was asked for: a picture bigger than the box it was
   // arranged into is not clipped, it is painted over the header above it, which is how a short
-  // landscape window lost its dates and its tab strip.
+  // landscape window lost its dates and its tab strip. Windows-only: there is no window to resize on
+  // Android, so the simulated landscape window this pins never applies there.
   [Fact]
   public Task The_photo_stays_inside_its_box_in_a_short_landscape_window() =>
     AssertThePhotoStaysInsideItsBoxAsync(1030, 620);
@@ -896,6 +898,7 @@ public class PersonPageTests
       });
     }
   }
+#endif
 
   // Drives the real host window, not ForceSizeAllocated: that only flips the arrangement, and it is
   // the geometry that broke -- the biography was arranged past the body's bottom edge, where MAUI
