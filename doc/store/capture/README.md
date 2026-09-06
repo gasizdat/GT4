@@ -39,6 +39,11 @@ just lands somewhere else.
 
 - **Release build only.** `PersonInfoView.CommonName` appends `" (Id: N)"` to
   every name under `#if DEBUG`.
+- **Build from the released commit, not from the branch holding the shots.** The
+  version is `git rev-list --count HEAD`, so the commits that carry these PNGs and
+  this file each raise it: a build from the screenshot branch prints a version no
+  package will ever have. Check out `release/rc-sep-04` or the tag, build there,
+  then come back to commit the PNGs.
 - **The session has to be unlocked, and the failure is silent.** `PrintWindow`
   renders a window that does not own the foreground, so `capture.ps1` keeps
   producing plausible PNGs with the lock screen up while every click lands on
