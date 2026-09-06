@@ -36,15 +36,22 @@ from the code.
   `ImageDataWithMaxSize`; don't resurrect the old branch or design.
 - **Numeral-per-disjunct in the greatness-computation text** (issue #318) — tried, reverted, then
   restored; both arguments for "numeral once" were re-litigated once already, see PR #326.
+- **Skip desktop's close-on-`Deactivate` and flush cache→origin only on `Destroying`** (PR #356) —
+  closed unmerged: the file-picker churn/race it fixes is real but benign (reopen always wins the
+  race; `.Project` never throws). The fix regresses durability instead — `Destroying`'s cache→origin
+  copy is fire-and-forget and unverified to complete on a Task Manager kill, power loss, or
+  shutdown/logoff, so a session's edits could stop reaching the origin file entirely except via the
+  Revisions UI, which nothing prompts a user to check. A flush-on-`Deactivate`-without-closing
+  alternative was considered but is the same lever as the commit-driven foreground-flush design
+  above — needs a fresh design and a deliberate go-ahead, not a quiet resurrection.
 
 ## Platform traps worth knowing before you hit them
 
 - **Desktop `Window.Deactivated` fires on mere focus loss**, including while a native
-  `FilePicker.PickAsync` dialog is up and before it returns — measured ~130ms window. Wiring
-  desktop `Deactivated` to the same close-and-reopen handler mobile backgrounding needs causes
-  churn and a latent race on every file pick; desktop should only flush debounced settings there
-  and close the project on `Destroying` instead. (As of this writing that fix is on PR #356,
-  unmerged — check `UI/App/App.xaml.cs::CreateWindow` before relying on this being live.)
+  `FilePicker.PickAsync` dialog is up and before it returns — measured ~130ms window. This makes
+  every file pick close and reopen the project (mobile's backgrounding handler is wired to the same
+  event), but that's deliberate — see the PR #356 entry under Rejected designs for why the obvious
+  fix was rejected.
 - **A `TargetType=Label` style assigned directly to a custom `ContentView`** crashes only in
   Release (`InvalidCastException` to `ITextElement`) — pass label styling through bindable
   properties on the `ContentView` instead.
