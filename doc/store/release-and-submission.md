@@ -154,15 +154,16 @@ one. CI is unaffected — it starts from an empty `obj`.
 
 ## Submitting to the Store
 
-Partner Center walks five sections. Ours, and what still needs a decision:
+Partner Center walks five sections.
 
 **Pricing and availability** — free; markets; visibility. No blockers.
 
 **Properties**
-- Category: Lifestyle (or Productivity). Pick one and keep it.
-- Privacy policy URL: [privacy-policy.md](privacy-policy.md) is the text; it needs
-  a public URL before it can go in the form.
-- Support contact: an address the developer is willing to publish.
+- Category: Books + reference, subcategory Reference; secondary Productivity.
+- Privacy policy: the repo has no public domain to host a URL at, so
+  [privacy-policy.md](privacy-policy.md) goes in as policy text directly —
+  Partner Center accepts that in place of a URL.
+- Support contact: `gasizdat@gmail.com`.
 - Website: optional; the GitHub repository works.
 
 **Age ratings** — the IARC questionnaire. The honest answers are: no violence, no
