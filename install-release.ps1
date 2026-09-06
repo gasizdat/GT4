@@ -1,3 +1,5 @@
+# Runs as the calling user throughout; only the certificate import below elevates, in its own
+# process, so this needs no elevated shell to launch it.
 param(
   [string]$Version,
   [string]$DownloadDir = "$env:USERPROFILE\Downloads",
@@ -33,10 +35,13 @@ if (-not $MsixPath) { $MsixPath = Join-Path $DownloadDir "GT4-$Version-win-x64.m
 if (-not $CerPath) { $CerPath = Join-Path $DownloadDir "GT4-$Version-win-x64.cer" }
 
 if (-not (Test-Path $MsixPath) -or -not (Test-Path $CerPath)) {
+  New-Item -ItemType Directory -Force -Path $DownloadDir | Out-Null
   # --repo makes this independent of the caller's working directory: gh otherwise infers the
   # repository from the current directory's git remote, and has nothing to infer it from when
   # launched via -File from outside the repo (e.g. an elevated shell that opens elsewhere).
   gh release download "v$Version" --repo gasizdat/GT4 --pattern "*.msix" --pattern "*.cer" --dir $DownloadDir --clobber
+  if (-not (Test-Path $MsixPath)) { throw "expected asset not found after download: $MsixPath" }
+  if (-not (Test-Path $CerPath)) { throw "expected asset not found after download: $CerPath" }
 }
 
 # A fresh container, not an upgrade: Add-AppxPackage over an existing install reuses it, which
@@ -47,7 +52,10 @@ Get-AppxPackage gasizdat.GenealogyTree | ForEach-Object { Remove-AppxPackage -Pa
 # own throwaway certificate so it has to happen every time. Elevate only for this one command,
 # in its own process, rather than the whole script — gh and git need the calling user's own PATH
 # and credentials, which an elevated shell does not carry.
-$importCommand = "Import-Certificate -FilePath '$CerPath' -CertStoreLocation Cert:\LocalMachine\TrustedPeople"
+$certPathLiteral = "'" + ($CerPath -replace "'", "''") + "'"
+$importCommand = "`$cert = Get-PfxCertificate -FilePath $certPathLiteral; " +
+  "Get-ChildItem Cert:\LocalMachine\TrustedPeople | Where-Object { `$_.Subject -eq `$cert.Subject } | Remove-Item; " +
+  "Import-Certificate -FilePath $certPathLiteral -CertStoreLocation Cert:\LocalMachine\TrustedPeople"
 $encodedCommand = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($importCommand))
 $importProcess = Start-Process powershell.exe -ArgumentList '-NoProfile', '-EncodedCommand', $encodedCommand -Verb RunAs -Wait -PassThru
 if ($importProcess.ExitCode -ne 0) { throw "certificate import failed (exit code $($importProcess.ExitCode))" }
