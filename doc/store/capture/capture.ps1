@@ -37,7 +37,9 @@ if ($hwnd -eq [IntPtr]::Zero) { throw "process $ProcessId has no main window yet
 
 if ($Width -gt 0 -and $Height -gt 0) {
   [void][Win32Capture]::ShowWindow($hwnd, 9)   # SW_RESTORE
-  [void][Win32Capture]::MoveWindow($hwnd, 40, 40, $Width, $Height, $true)
+  # Origin, not an inset: click.ps1 aims through SetCursorPos, which clamps to the desktop, so any
+  # offset puts the bottom of a taller-than-screen window out of clicking reach.
+  [void][Win32Capture]::MoveWindow($hwnd, 0, 0, $Width, $Height, $true)
   Start-Sleep -Milliseconds 1200
 }
 

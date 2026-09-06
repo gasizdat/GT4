@@ -2,7 +2,9 @@
 
 Written alongside [microsoft-store-listing-en.md](microsoft-store-listing-en.md)
 so a future edit can re-check a claim instead of re-deriving it. Verified against
-commit `7816ec9d`.
+`v4.0.656.0` (commit `6d588c18`). The screenshots two of the rows below cite were
+shot at that tag or at `v4.0.652.0` — [their README](screenshots/README.md) says
+which came from which.
 
 | Claim | Source |
 |-------|--------|
