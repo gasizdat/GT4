@@ -324,22 +324,38 @@ internal sealed class GedcomImporter : IGedcomImporter
     if (string.IsNullOrWhiteSpace(surname))
       return;
 
+    var family = await GetOrAddNameAsync(document, surname, NameType.FamilyName, null, nameCache, token);
+
+    // A re-import into a project that already carries this family's media must not duplicate it --
+    // AddNameDataSetAsync is add-only, so the guard has to sit here, mirroring GapFillAsync's
+    // addingPhotos/addingAttachments on the person side.
+    var existing = await document.NameData.GetNameDataSetAsync(family, null, token);
+    var addingPhotos = !existing.Any(data => data.Category.IsPhoto());
+    var addingAttachments = !existing.Any(data => data.Category.IsAttachment());
+    if (!addingPhotos && !addingAttachments)
+      return;
+
     var photos = SelectPhotos(familyRecord, recordsByXref, mediaBasePath);
     var photoNodes = photos.Select(p => p.Node).ToArray();
     var attachments = SelectAttachments(familyRecord, photoNodes, mediaBasePath);
     var (mainPhoto, additionalPhotos) = BuildPhotos(photos, DataCategory.FamilyMainPhoto, DataCategory.FamilyPhoto);
 
     var dataSet = new List<Data>();
-    if (mainPhoto is not null)
+    if (addingPhotos)
     {
-      dataSet.Add(mainPhoto);
+      if (mainPhoto is not null)
+      {
+        dataSet.Add(mainPhoto);
+      }
+      dataSet.AddRange(additionalPhotos);
     }
-    dataSet.AddRange(additionalPhotos);
-    dataSet.AddRange(attachments.Select(a => BuildAttachmentData(a, DataCategory.FamilyAttachment)));
+    if (addingAttachments)
+    {
+      dataSet.AddRange(attachments.Select(a => BuildAttachmentData(a, DataCategory.FamilyAttachment)));
+    }
     if (dataSet.Count == 0)
       return;
 
-    var family = await GetOrAddNameAsync(document, surname, NameType.FamilyName, null, nameCache, token);
     await document.NameData.AddNameDataSetAsync(family, [.. dataSet], token);
   }
 
@@ -731,9 +747,15 @@ internal sealed class GedcomImporter : IGedcomImporter
     return (main, additional);
   }
 
+  // Only a person photo has a *Tagged counterpart to carry a residual (TITL, a referenced-record marker,
+  // ...) in -- plainCategory.AsTaggedPhoto() throws for anything else. A family photo's residual is
+  // therefore dropped rather than computed at all: a GT4-only extension record round-trips its own bytes
+  // and NAME, but not a hand-authored OBJE's unmodeled sub-tags.
+  private static readonly HashSet<DataCategory> TaggableCategories = [DataCategory.PersonMainPhoto, DataCategory.PersonPhoto];
+
   private static Data BuildPhotoData(PhotoCandidate candidate, DataCategory plainCategory)
   {
-    var residual = ReferencedResidual(candidate.Node, candidate.Residual);
+    var residual = TaggableCategories.Contains(plainCategory) ? ReferencedResidual(candidate.Node, candidate.Residual) : null;
     if (residual is null)
       return new Data(ElementId.NonCommittedId, candidate.Content, candidate.MimeType, plainCategory);
 
