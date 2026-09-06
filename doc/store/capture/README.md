@@ -40,14 +40,21 @@ just lands somewhere else.
 - **Release build only.** `PersonInfoView.CommonName` appends `" (Id: N)"` to
   every name under `#if DEBUG`.
 - **The session has to be unlocked, and the failure is silent.** `PrintWindow`
-  renders a window it does not own the foreground of, so `capture.ps1` keeps
-  working with the lock screen up while every click lands on `LockApp` instead.
-  Shots that need no input still come out right, which is what makes it look like
-  a click-targeting problem. `GetForegroundWindow` naming `LockApp` is the tell.
-  Posting `WM_LBUTTONDOWN` straight at the
-  `Microsoft.UI.Content.DesktopChildSiteBridge` child does not get around it —
+  renders a window that does not own the foreground, so `capture.ps1` keeps
+  producing plausible PNGs with the lock screen up while every click lands on
+  `LockApp` instead. `GetForegroundWindow` naming `LockApp` is the tell. Posting
+  `WM_LBUTTONDOWN` straight at the
+  `Microsoft.UI.Content.DesktopChildSiteBridge` child does not get around it:
   WinUI 3 takes pointer input through the input site and ignores the legacy
   message.
+- **A shot that needs no clicking is not safe from that either.** The app never
+  becomes active, so the title bar renders in its inactive grey and whatever holds
+  initial keyboard focus draws a focus ring — on the home screen, a black ring and
+  caret around the language picker. Both are invisible unless the shot is compared
+  against the rest of the set. **Diff every re-shot PNG against the one it
+  replaces and account for every changed region**, rather than checking the part
+  that was supposed to change: the home screen has no animation, so a clean
+  re-shoot differs only where the version string does.
 - **A click that teleports onto a control is ignored** by the smaller targets —
   the side-menu buttons in particular. WinUI wants a hover first, so `click.ps1`
   moves near the target, pauses, moves onto it, pauses, then presses.

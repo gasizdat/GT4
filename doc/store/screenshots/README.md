@@ -10,22 +10,24 @@ Release, not Debug, matters: `PersonInfoView.CommonName` appends `" (Id: N)"` to
 every displayed name under `#if DEBUG`, which would put a stray id after each
 name in the shots.
 
-## Which build each shot came from
+## Three of these still have to be re-shot
 
-The package being submitted is `v4.0.656.0` (commit `6d588c18`). The set does not
-come from one build, and the split is deliberate rather than an oversight:
+All thirteen come from `v4.0.652.0` (commit `24aa0264`). The package being
+submitted is `v4.0.656.0` (commit `6d588c18`), and three shots do not survive the
+gap:
 
-- **`01-home.png` and `12-home-dark.png` — `v4.0.656.0`.** The home screen prints
-  the version, so a shot from any other build contradicts the package it is
-  submitted with.
-- **`04-person.png` — still `v4.0.652.0`, and not fit to submit.** It shows the
-  caption stretching the photo pane to the width of its text, which #362 fixed;
-  `656` is the first build without it. Re-shoot before submission.
-- **The other ten — `v4.0.652.0` (commit `24aa0264`).** The only code between the
-  two tags is that caption cap, and it reaches one pane: the photo on the person
-  page's Relatives tab. None of these ten can show it — the demo tree gives the
-  family page no photos, the biography tab is a different tab, and the gallery
-  never uses the component.
+- **`01-home.png` and `12-home-dark.png`.** The home screen prints the version,
+  so a shot from any other build contradicts the package it ships with.
+- **`04-person.png`.** It shows the caption stretching the photo pane to the
+  width of its text, which #362 fixed; `656` is the first build without it.
+
+The other ten are good as they are. The only code between the two tags is that
+caption cap, and it reaches one pane: the photo on the person page's Relatives
+tab. None of the ten can show it — the demo tree gives the family page no photos,
+the biography tab is a different tab, and the gallery never uses the component.
+
+Re-shoot all three in one pass on an **unlocked** session; `capture/README.md`
+says why that is not optional even for the two that need no clicking.
 
 ## Suggested Partner Center order and captions
 

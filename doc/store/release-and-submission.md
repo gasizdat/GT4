@@ -196,15 +196,14 @@ both files together when behaviour changes.
 - **Issue #281** — a GEDCOM export followed by a re-import silently loses family
   photos and attachments (person media survives). The listing copy is worded to
   avoid promising otherwise; see the exclusion in `claim-sources.md`.
-- **`04-person.png`** — the one screenshot still to re-shoot. It comes from
-  `v4.0.652.0` and shows the caption stretching the photo pane that #362 fixed;
-  `656` is the first build without it.
+- **Three screenshots still to re-shoot.** The set is from `v4.0.652.0`;
+  `04-person.png` shows the caption stretching the photo pane that #362 fixed,
+  and `01-home.png` and `12-home-dark.png` print a version the package no longer
+  carries. The other ten are unaffected by anything between the two tags.
 
-The other twelve are settled. `01-home.png` and `12-home-dark.png` were shot at
-`v4.0.656.0`, so the version they print is the one on the package; nothing
-between the two tags can reach the remaining ten. See
-[screenshots/README.md](screenshots/README.md) for the split, and for the two
-settings a re-shoot has to turn on to match the set.
+See [screenshots/README.md](screenshots/README.md) for why only those three, and
+[capture/README.md](capture/README.md) for the settings a re-shoot has to turn on
+to match the set.
 
 The palette needs no inventory here any more. #358 and #360 cleared the
 last of the MAUI template colours, and what replaced them is pinned by the
