@@ -40,10 +40,11 @@ from the code.
 ## Platform traps worth knowing before you hit them
 
 - **Desktop `Window.Deactivated` fires on mere focus loss**, including while a native
-  `FilePicker.PickAsync` dialog is up and before it returns — measured ~130ms window. Treating it
-  like mobile backgrounding (close-and-reopen the project) causes churn and a latent race on every
-  file pick. Desktop only flushes debounced settings there; only `Destroying` closes the project.
-  See `UI/App/App.xaml.cs::CreateWindow`.
+  `FilePicker.PickAsync` dialog is up and before it returns — measured ~130ms window. Wiring
+  desktop `Deactivated` to the same close-and-reopen handler mobile backgrounding needs causes
+  churn and a latent race on every file pick; desktop should only flush debounced settings there
+  and close the project on `Destroying` instead. (As of this writing that fix is on PR #356,
+  unmerged — check `UI/App/App.xaml.cs::CreateWindow` before relying on this being live.)
 - **A `TargetType=Label` style assigned directly to a custom `ContentView`** crashes only in
   Release (`InvalidCastException` to `ITextElement`) — pass label styling through bindable
   properties on the `ContentView` instead.
