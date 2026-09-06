@@ -10,24 +10,22 @@ Release, not Debug, matters: `PersonInfoView.CommonName` appends `" (Id: N)"` to
 every displayed name under `#if DEBUG`, which would put a stray id after each
 name in the shots.
 
-## Three of these still have to be re-shot
+## Which build each shot came from
 
-All thirteen come from `v4.0.652.0` (commit `24aa0264`). The package being
-submitted is `v4.0.656.0` (commit `6d588c18`), and three shots do not survive the
-gap:
+The package being submitted is `v4.0.656.0` (commit `6d588c18`). Three shots come
+from it; the other ten are from `v4.0.652.0` (commit `24aa0264`), and that is not
+an oversight:
 
-- **`01-home.png` and `12-home-dark.png`.** The home screen prints the version,
-  so a shot from any other build contradicts the package it ships with.
-- **`04-person.png`.** It shows the caption stretching the photo pane to the
-  width of its text, which #362 fixed; `656` is the first build without it.
-
-The other ten are good as they are. The only code between the two tags is that
-caption cap, and it reaches one pane: the photo on the person page's Relatives
-tab. None of the ten can show it — the demo tree gives the family page no photos,
-the biography tab is a different tab, and the gallery never uses the component.
-
-Re-shoot all three in one pass on an **unlocked** session; `capture/README.md`
-says why that is not optional even for the two that need no clicking.
+- **`01-home.png` and `12-home-dark.png` — `656`.** The home screen prints the
+  version, so a shot from any other build contradicts the package it ships with.
+  Against their `652` predecessors these differ by 73 pixels each, all of them the
+  one glyph that changed.
+- **`04-person.png` — `656`.** At `652` the caption stretched the photo pane to
+  the width of its text; #362 capped it against the picture.
+- **The other ten — `652`.** The only code between the tags is that cap, and it
+  reaches one pane: the photo on the person page's Relatives tab. None of the ten
+  can show it — the demo tree gives the family page no photos, the biography tab
+  is a different tab, and the gallery never uses the component.
 
 ## Suggested Partner Center order and captions
 
@@ -75,10 +73,11 @@ the demo tree's longest blood relationship.
   attribution line, because that is what the demo file's `TITL` tags carry. It
   reads more like a credits list than a gallery. Consider dropping it, or
   re-shooting the gallery against a tree with ordinary captions.
-- **`04-person.png` carries two breadcrumbs**, Charlotte and Patrick Branwell,
-  because the shot was taken after visiting both. One would be tidier. Harmless,
-  and arguably shows the navigation history, but worth knowing it was not
-  deliberate.
+- **`04-person.png` catches one of two portraits.** The photo pane cycles, holding
+  each for about a second and a half; the shot is on the Armytage engraving, and
+  waiting one beat longer gives Branwell's colour painting instead. Either is
+  honest — capture during a settled beat, not mid-crossfade, and check the caption
+  belongs to the picture under it.
 
 ## Reproducing the set
 

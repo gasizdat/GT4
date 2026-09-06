@@ -53,13 +53,18 @@ just lands somewhere else.
   WinUI 3 takes pointer input through the input site and ignores the legacy
   message.
 - **A shot that needs no clicking is not safe from that either.** The app never
-  becomes active, so the title bar renders in its inactive grey and whatever holds
-  initial keyboard focus draws a focus ring — on the home screen, a black ring and
-  caret around the language picker. Both are invisible unless the shot is compared
-  against the rest of the set. **Diff every re-shot PNG against the one it
-  replaces and account for every changed region**, rather than checking the part
-  that was supposed to change: the home screen has no animation, so a clean
-  re-shoot differs only where the version string does.
+  becomes active, so its title bar renders in the inactive grey the rest of the
+  set does not have.
+- **Click somewhere inert before shooting a page you have not clicked on.**
+  Whatever holds initial keyboard focus draws a focus visual until a pointer
+  click retires it — on the home screen, a black ring and caret around the
+  language picker, which no other shot in the set has. Clicking the background at
+  (400, 620) clears it and lands on nothing.
+- **Diff every re-shot PNG against the one it replaces and account for every
+  changed region**, rather than checking only the part that was meant to change.
+  Both faults above sit outside the region you would think to inspect, and both
+  survived a crop check of the version line. The home screen has no animation, so
+  a clean re-shoot of it differs by 73 pixels: the single glyph in the version.
 - **A click that teleports onto a control is ignored** by the smaller targets —
   the side-menu buttons in particular. WinUI wants a hover first, so `click.ps1`
   moves near the target, pauses, moves onto it, pauses, then presses.
