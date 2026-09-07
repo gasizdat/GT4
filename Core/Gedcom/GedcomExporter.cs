@@ -61,8 +61,53 @@ internal sealed class GedcomExporter : IGedcomExporter
     WriteHeader(writer);
     await WriteIndividualsAsync(writer, individuals, media, token);
     WriteFamilies(writer, families, familyResidues);
+    await WriteFamilyRecordsAsync(document, writer, media, token);
     await WritePassthroughRecordsAsync(document, writer, token);
     GedcomWriter.Write(writer, new GedcomNode { Tag = GedcomTags.Trailer });
+  }
+
+  /// <summary>
+  /// Emits one <see cref="GedcomTags.FamilyRecord"/> per GT4 family (clan) name that carries media, keyed
+  /// by the family's bare NAME so <see cref="GedcomImporter"/> can re-derive the same <c>Name</c> row on
+  /// reimport instead of matching by xref. Reuses <see cref="AddPhotoAsync"/>/<see cref="AddAttachmentAsync"/>
+  /// verbatim: a family's main/additional photos and attachments are the same shape as a person's.
+  /// </summary>
+  private static async Task WriteFamilyRecordsAsync(
+    IProjectDocument document,
+    TextWriter writer,
+    IGedcomMediaWriter media,
+    CancellationToken token)
+  {
+    var familyNames = await document.Names.GetNamesByTypeAsync(NameType.FamilyName, token);
+    if (familyNames.Length == 0)
+      return;
+
+    var mainPhotos = await document.NameData.GetNameDataSetAsync(familyNames, DataCategory.FamilyMainPhoto, token);
+    var additionalPhotos = await document.NameData.GetNameDataSetAsync(familyNames, DataCategory.FamilyPhoto, token);
+    var attachments = await document.NameData.GetNameDataSetAsync(familyNames, DataCategory.FamilyAttachment, token);
+
+    var index = 0;
+    foreach (var name in familyNames.OrderBy(n => n.Id))
+    {
+      var mainPhoto = mainPhotos.GetValueOrDefault(name.Id)?.FirstOrDefault();
+      var morePhotos = additionalPhotos.GetValueOrDefault(name.Id) ?? [];
+      var familyAttachments = attachments.GetValueOrDefault(name.Id) ?? [];
+      if (mainPhoto is null && morePhotos.Length == 0 && familyAttachments.Length == 0)
+        continue;
+
+      var node = new GedcomNode { Tag = GedcomTags.FamilyRecord, Xref = $"@FM{++index}@" };
+      node.Add(new GedcomNode { Tag = GedcomTags.Name, Value = name.Value });
+      await AddPhotoAsync(node, mainPhoto, primary: true, media, token);
+      foreach (var photo in morePhotos)
+      {
+        await AddPhotoAsync(node, photo, primary: false, media, token);
+      }
+      foreach (var attachment in familyAttachments)
+      {
+        await AddAttachmentAsync(node, attachment, media, token);
+      }
+      GedcomWriter.Write(writer, node);
+    }
   }
 
   /// <summary>

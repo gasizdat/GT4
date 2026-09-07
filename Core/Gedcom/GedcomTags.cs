@@ -49,6 +49,11 @@ internal static class GedcomTags
   // at it. Never written to a file: the exporter re-emits the record and skips the copy it marks.
   public const string ReferencedRecord = "_REF";
 
+  // A GT4 extension record for a GT4 family (clan) name's own media -- not a GEDCOM FAM (couple), which
+  // a family name can span many of or none. Keyed by NAME rather than an INDI/FAM pointer, since that is
+  // how import re-derives the same family Name on reimport.
+  public const string FamilyRecord = "_FAML";
+
   // The _PRIM/_ATTACH value marking the OBJE that GT4 treats as the person's main (profile) photo,
   // respectively as an attachment.
   public const string PrimaryYes = "Y";
