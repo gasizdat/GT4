@@ -150,7 +150,7 @@ public class MarkdownView : ContentView
       {
         resolved[link] = await resolver(link);
       }
-      catch (Exception ex) when (ex is OperationCanceledException || SafeTask.IsProjectTeardown(ex))
+      catch (Exception ex) when (SafeTask.IsProjectTeardown(ex))
       {
         // Deliberately left out of the batch, so the next refresh asks again: neither a cancelled lookup
         // nor a project closed underneath one says anything about the link, and memoising either would

@@ -31,11 +31,14 @@ public static class SafeTask
   /// genuine failure. Use it in <c>catch ... when</c> clauses to swallow teardown noise quietly.
   /// Recurses into AggregateException (several call sites block on Task.Result, which wraps the
   /// original exception) and requires every inner exception to qualify, not just one.
+  /// Cancellation counts: every token here is a deadline or a teardown, so a cancelled operation
+  /// reports nothing a user could act on -- and surfacing it would push a modal alert onto the UI
+  /// thread from background work, which is fatal if it lands mid-layout (issue #370).
   /// </summary>
   public static bool IsProjectTeardown(Exception exception) =>
     exception switch
     {
-      ObjectDisposedException or ProjectNotOpenedException => true,
+      ObjectDisposedException or ProjectNotOpenedException or OperationCanceledException => true,
       AggregateException aggregate => aggregate.InnerExceptions.Count > 0 && aggregate.InnerExceptions.All(IsProjectTeardown),
       _ => false
     };
