@@ -152,10 +152,9 @@ public static class ImageUtils
     }
   }
 
-  // Decoded with SkiaSharp rather than MAUI's PlatformImage: on Windows PlatformImage is Win2D, so a
-  // decode off the UI thread creates WinRT objects there. That contends the process-wide ComWrappers
-  // lock with the UI thread's own platform-view creation, and because the UI thread is STA its
-  // contended wait pumps COM messages -- re-entering XAML mid-layout, which is fatal (issue #370).
+  // Not MAUI's PlatformImage: that is Win2D on Windows, so decoding off the UI thread creates WinRT
+  // objects whose ComWrappers contention makes the UI thread's own STA wait pump COM messages, which
+  // re-enters XAML mid-realize and kills the process (issue #370).
   private static byte[] DownsizedPngStream(Stream input, float maxSize)
   {
     using var data = SKData.Create(input);

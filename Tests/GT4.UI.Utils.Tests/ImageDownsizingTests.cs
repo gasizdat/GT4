@@ -4,8 +4,6 @@ using Xunit;
 
 namespace GT4.UI.Utils.Tests;
 
-// Separate from ImageUtilsTests, which reads headers rather than images: these decode and re-encode
-// real bitmaps, which is testable off a platform host only because the decode is SkiaSharp's.
 public class ImageDownsizingTests
 {
   [Fact]
@@ -28,8 +26,7 @@ public class ImageDownsizingTests
     PixelSizeOf(downsized).Should().Be(new Size(50, 100));
   }
 
-  // Nothing is gained by blowing a small image up to the thumbnail box -- the stub images shipped as
-  // raw resources are already smaller than it, and upscaling them would only cost memory.
+  // Upscaling to fill the box only costs memory; the stub resources are all smaller than it.
   [Fact]
   public void SmallerThanMaxSizeKeepsItsDimensions()
   {
