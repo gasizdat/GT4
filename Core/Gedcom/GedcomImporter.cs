@@ -326,9 +326,8 @@ internal sealed class GedcomImporter : IGedcomImporter
 
     var family = await GetOrAddNameAsync(document, surname, NameType.FamilyName, null, nameCache, token);
 
-    // A re-import into a project that already carries this family's media must not duplicate it --
-    // AddNameDataSetAsync is add-only, so the guard has to sit here, mirroring GapFillAsync's
-    // addingPhotos/addingAttachments on the person side.
+    // AddNameDataSetAsync is add-only, so a re-import must skip categories the family already has --
+    // mirrors GapFillAsync's addingPhotos/addingAttachments guard on the person side.
     var existing = await document.NameData.GetNameDataSetAsync(family, null, token);
     var addingPhotos = !existing.Any(data => data.Category.IsPhoto());
     var addingAttachments = !existing.Any(data => data.Category.IsAttachment());
@@ -747,10 +746,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     return (main, additional);
   }
 
-  // Only a person photo has a *Tagged counterpart to carry a residual (TITL, a referenced-record marker,
-  // ...) in -- plainCategory.AsTaggedPhoto() throws for anything else. A family photo's residual is
-  // therefore dropped rather than computed at all: a GT4-only extension record round-trips its own bytes
-  // and NAME, but not a hand-authored OBJE's unmodeled sub-tags.
+  // AsTaggedPhoto() throws for any category but these, so a family photo's residual is never computed.
   private static readonly HashSet<DataCategory> TaggableCategories = [DataCategory.PersonMainPhoto, DataCategory.PersonPhoto];
 
   private static Data BuildPhotoData(PhotoCandidate candidate, DataCategory plainCategory)
