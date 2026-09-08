@@ -9,9 +9,9 @@ namespace GT4.UI.DeviceTests;
 /// Covers FamilyTreeNodeView's code-built visual tree directly: the photo/ring/label sizing all scale
 /// with zoomScale, the centred node gets a thicker, differently-coloured ring and a bold label, and the
 /// label's font size additionally honours the injected FontScale (falling back to FontScale.DefaultFactor
-/// when null, since standalone usages outside the family tree page may not have one). GetColor's resource
-/// lookup is exercised against the app's real merged Colors.xaml (via TestStyles.EnsureLoaded), not a
-/// stub, since that's the actual lookup this view depends on.
+/// when null, since standalone usages outside the family tree page may not have one). ThemedColor's
+/// resource lookup is exercised against the app's real merged Colors.xaml (via TestStyles.EnsureLoaded),
+/// not a stub, since that's the actual lookup this view depends on.
 /// </summary>
 public class FamilyTreeNodeViewTests
 {

@@ -1,3 +1,4 @@
+using GT4.UI.Utils;
 using GT4.UI.Utils.Settings;
 using Microsoft.Maui.Controls.Shapes;
 
@@ -30,7 +31,7 @@ public sealed class FamilyTreeNodeView : ContentView
     HeightRequest = height;
 
     var photoSize = PhotoSizeBase * zoomScale;
-    var ringColor = GetColor(isCenter ? "Primary" : "Accent", isCenter ? Colors.DarkGreen : Color.FromArgb("#8B6F4E"));
+    var ringColor = ThemedColor.Resolve(isCenter ? "Primary" : "Accent", isCenter ? Colors.DarkGreen : Color.FromArgb("#8B6F4E"));
     var borderThikness = (isCenter ? CenterBorderThikness : BorderThikness) * zoomScale;
 
     var image = new Image
@@ -81,11 +82,4 @@ public sealed class FamilyTreeNodeView : ContentView
       Unloaded += (_, _) => fontScale.Changed -= OnFontScaleChanged;
     }
   }
-
-  private static Color GetColor(string resourceKey, Color fallback) =>
-    Application.Current?.Resources is { } resources
-    && resources.TryGetValue(resourceKey, out var value)
-    && value is Color color
-      ? color
-      : fallback;
 }

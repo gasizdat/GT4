@@ -24,8 +24,6 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   private readonly INameFormatter _NameFormatter;
   private readonly FamilyTreeLayoutMetrics _Metrics = new() { Margin = OverlayClearance };
   private readonly FamilyTreeLayout _Layout = new();
-  private readonly Color _ParentChildColor;
-  private readonly Color _SpouseColor;
   private readonly FontScale? _FontScale;
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
@@ -89,9 +87,6 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     PageCommand = new SafeCommand(OnPageCommand, _AlertService);
 
     InitializeComponent();
-
-    _ParentChildColor = GetColor("Primary", Color.FromArgb("#1E4437"));
-    _SpouseColor = GetColor("Accent", Color.FromArgb("#8B6F4E"));
 
     // Drag-to-pan: the ScrollView already handles wheel, scrollbars and touch flicks, but desktop
     // users expect to grab the canvas and drag it. Translate the pan delta into a scroll offset.
@@ -398,10 +393,12 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   private void UpdateConnectors(IReadOnlyList<FamilyTreeConnector> connectors, double zoom)
   {
     var cornerRadius = _Metrics.CornerRadius * zoom;
+    var parentChildColor = ThemedColor.Resolve("Primary", Color.FromArgb("#1E4437"));
+    var spouseColor = ThemedColor.Resolve("Accent", Color.FromArgb("#8B6F4E"));
     for (var i = 0; i < connectors.Count; i++)
     {
       var connector = connectors[i];
-      var color = connector.Relation == FamilyTreeRelation.Spouse ? _SpouseColor : _ParentChildColor;
+      var color = connector.Relation == FamilyTreeRelation.Spouse ? spouseColor : parentChildColor;
       if (i < _ConnectorPool.Count)
       {
         FamilyTreeConnectorShape.Update(_ConnectorPool[i], connector, cornerRadius, ConnectorLineWidth, color);
@@ -596,11 +593,4 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     }
   }
 #endif
-
-  private static Color GetColor(string resourceKey, Color fallback) =>
-    Application.Current?.Resources is { } resources
-    && resources.TryGetValue(resourceKey, out var value)
-    && value is Color color
-      ? color
-      : fallback;
 }
