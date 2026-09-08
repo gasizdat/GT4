@@ -419,7 +419,8 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   }
 
   // Node views are keyed by person id and kept alive across loads. A cached view is reused as long as
-  // its size (zoom) and centre styling still match; mismatches force a single rebuild of that one view.
+  // its size (zoom), centre styling and theme still match; mismatches force a single rebuild of that
+  // one view.
   private void UpdateNodes(IReadOnlyList<FamilyTreeNodeLayout> nodes, int centerId, IReadOnlyDictionary<int, string> names, IReadOnlyDictionary<int, ImageSource> photos, double zoom)
   {
     var theme = Application.Current?.RequestedTheme ?? AppTheme.Unspecified;
