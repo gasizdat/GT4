@@ -1,6 +1,6 @@
 ﻿using GT4.Core.Project.Dto;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Maui.Graphics.Platform;
+using SkiaSharp;
 using System.Buffers.Binary;
 
 namespace GT4.UI.Utils;
@@ -52,8 +52,9 @@ public static class ImageUtils
   /// <summary>
   /// The image's own pixel dimensions read straight from its header, or null for anything malformed or
   /// encoded some other way -- callers lay such an image out without an aspect ratio rather than failing
-  /// the render around it. Read rather than decoded on purpose: <c>PlatformImage.FromStream</c> yields
-  /// the same two numbers but costs ~110ms for a 12MP photo, on the UI thread, per image in a biography.
+  /// the render around it. Read rather than decoded on purpose: a full decode yields the same two numbers
+  /// but costs ~110ms for a 12MP photo (measured with MAUI's PlatformImage), on the UI thread, per image
+  /// in a biography.
   /// </summary>
   public static Size? PixelSize(byte[] data)
   {
@@ -151,14 +152,28 @@ public static class ImageUtils
     }
   }
 
+  // Decoded with SkiaSharp rather than MAUI's PlatformImage: on Windows PlatformImage is Win2D, so a
+  // decode off the UI thread creates WinRT objects there. That contends the process-wide ComWrappers
+  // lock with the UI thread's own platform-view creation, and because the UI thread is STA its
+  // contended wait pumps COM messages -- re-entering XAML mid-layout, which is fatal (issue #370).
   private static byte[] DownsizedPngStream(Stream input, float maxSize)
   {
-    using var image = PlatformImage.FromStream(input);
-    using var resized = image.Downsize(maxSize, disposeOriginal: true);
-    using var output = new MemoryStream();
-    resized.Save(output);
+    using var data = SKData.Create(input);
+    using var original = SKBitmap.Decode(data);
+    if (original is null)
+    {
+      throw new InvalidOperationException("Could not decode the image.");
+    }
 
-    return output.ToArray();
+    var longestSide = Math.Max(original.Width, original.Height);
+    var scale = Math.Min(1f, maxSize / longestSide);
+    var size = new SKImageInfo((int)Math.Round(original.Width * scale), (int)Math.Round(original.Height * scale));
+    var sampling = new SKSamplingOptions(SKCubicResampler.Mitchell);
+    using var resized = original.Resize(size, sampling);
+    using var image = SKImage.FromBitmap(resized);
+    using var encoded = image.Encode(SKEncodedImageFormat.Png, 100);
+
+    return encoded.ToArray();
   }
 
   private static Size? PngPixelSize(ReadOnlySpan<byte> bytes)

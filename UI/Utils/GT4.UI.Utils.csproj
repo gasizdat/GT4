@@ -24,6 +24,7 @@
 		<PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0" />
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="$(MauiVersion)" />
+		<PackageReference Include="SkiaSharp" Version="4.151.2" />
 		<ProjectReference Include="..\..\Core\Project\GT4.Core.Project.csproj" />
 		<ProjectReference Include="..\Resources\GT4.UI.Resources.csproj" />
 	</ItemGroup>
