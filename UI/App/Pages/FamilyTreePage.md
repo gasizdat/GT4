@@ -106,5 +106,7 @@ between them, centred on a focal person.
   (see `FamilyTreePageTests.cs`'s class remarks and the `#if DEBUG` `LoadDeep`/`AutoLoad` diagnostic
   commands in this page, added to reproduce it).
 - Corner radius comes from `FamilyTreeLayoutMetrics` (scaled by zoom); colors resolve from app
-  resources (`Primary` → parent-child, `Accent` → spouse) via the `GetColor` helper, with hard-coded
-  fallbacks (`#1E4437`, `#8B6F4E`).
+  resources (`Primary` → parent-child, `Accent` → spouse) via `ThemedColor.Resolve`, which switches
+  to the `...Dark` resource key under the dark theme, with hard-coded light-theme fallbacks
+  (`#1E4437`, `#8B6F4E`). Node rings resolve the same way. Cached node views and pooled connectors
+  are keyed on the resolved theme alongside zoom/centre state, so a theme change forces a rebuild.
