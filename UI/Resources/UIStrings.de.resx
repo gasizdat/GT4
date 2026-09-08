@@ -736,6 +736,9 @@ Stammbaum und haben Sie Freude daran!</value>
   <data name="MenuItemImport" xml:space="preserve">
     <value>📥 Importieren</value>
   </data>
+  <data name="MenuItemExport" xml:space="preserve">
+    <value>📤 Exportieren</value>
+  </data>
   <data name="MenuItemExportProjectFile" xml:space="preserve">
     <value>📤 Nach .gt4 exportieren</value>
   </data>
@@ -744,6 +747,9 @@ Stammbaum und haben Sie Freude daran!</value>
   </data>
   <data name="ShareProjectFileTitle" xml:space="preserve">
     <value>.gt4 exportieren</value>
+  </data>
+  <data name="TitleExportChoice" xml:space="preserve">
+    <value>Exportieren als…</value>
   </data>
   <data name="AlertImportGedcomConfirm_1" xml:space="preserve">
     <value>Eine GEDCOM-Datei in {0} importieren? Personen, die einer vorhandenen Person entsprechen, werden zusammengeführt; alle übrigen werden hinzugefügt.</value>

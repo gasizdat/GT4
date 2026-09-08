@@ -2267,7 +2267,16 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("MenuItemExpandAll_1", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to 📤 Export.
+        /// </summary>
+        public static string MenuItemExport {
+            get {
+                return ResourceManager.GetString("MenuItemExport", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to 📤 Export to GEDCOM.
         /// </summary>
@@ -3554,7 +3563,16 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("TitleDateCalendarPage", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Export as….
+        /// </summary>
+        public static string TitleExportChoice {
+            get {
+                return ResourceManager.GetString("TitleExportChoice", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Families.
         /// </summary>

@@ -322,12 +322,8 @@ public partial class ProjectPage : ContentPage
         await _NavigationService.GoToAsync(UIRoutes.GetRoute<KinshipFinderPage>());
         break;
 
-      case string commandName when commandName == "ExportGedcom":
-        await OnExportGedcom();
-        break;
-
-      case string commandName when commandName == "ExportProjectFile":
-        await OnExportProjectFile();
+      case string commandName when commandName == "Export":
+        await OnExport();
         break;
 
       case string commandName when commandName == "ImportGedcom":
@@ -408,6 +404,22 @@ public partial class ProjectPage : ContentPage
     await transaction.CommitAsync(token);
 
     Refresh();
+  }
+
+  private async Task OnExport()
+  {
+    var choice = await DisplayActionSheet(
+      UIStrings.TitleExportChoice, UIStrings.BtnNameCancel, null,
+      UIStrings.MenuItemExportGedcom, UIStrings.MenuItemExportProjectFile);
+
+    if (choice == UIStrings.MenuItemExportGedcom)
+    {
+      await OnExportGedcom();
+    }
+    else if (choice == UIStrings.MenuItemExportProjectFile)
+    {
+      await OnExportProjectFile();
+    }
   }
 
   // Exports the open project to a GEDCOM package in the cache directory and hands it to the OS share sheet,

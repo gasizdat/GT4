@@ -736,6 +736,9 @@ arbre généalogique et profitez-en !</value>
   <data name="MenuItemImport" xml:space="preserve">
     <value>📥 Importer</value>
   </data>
+  <data name="MenuItemExport" xml:space="preserve">
+    <value>📤 Exporter</value>
+  </data>
   <data name="MenuItemExportProjectFile" xml:space="preserve">
     <value>📤 Exporter vers .gt4</value>
   </data>
@@ -744,6 +747,9 @@ arbre généalogique et profitez-en !</value>
   </data>
   <data name="ShareProjectFileTitle" xml:space="preserve">
     <value>Exporter .gt4</value>
+  </data>
+  <data name="TitleExportChoice" xml:space="preserve">
+    <value>Exporter en tant que…</value>
   </data>
   <data name="AlertImportGedcomConfirm_1" xml:space="preserve">
     <value>Importer un fichier GEDCOM dans {0} ? Les personnes correspondant à une personne existante sont fusionnées ; les autres sont ajoutées.</value>

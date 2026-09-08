@@ -736,6 +736,9 @@
   <data name="MenuItemImport" xml:space="preserve">
     <value>📥 Importar</value>
   </data>
+  <data name="MenuItemExport" xml:space="preserve">
+    <value>📤 Exportar</value>
+  </data>
   <data name="MenuItemExportProjectFile" xml:space="preserve">
     <value>📤 Exportar a .gt4</value>
   </data>
@@ -744,6 +747,9 @@
   </data>
   <data name="ShareProjectFileTitle" xml:space="preserve">
     <value>Exportar .gt4</value>
+  </data>
+  <data name="TitleExportChoice" xml:space="preserve">
+    <value>Exportar como…</value>
   </data>
   <data name="AlertImportGedcomConfirm_1" xml:space="preserve">
     <value>¿Importar un archivo GEDCOM en {0}? Las personas que coincidan con una existente se fusionan; el resto se añaden.</value>
