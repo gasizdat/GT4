@@ -30,7 +30,7 @@
           <Grid>
             <Image
                 Aspect="AspectFill"
-                HeightRequest="{Binding Width, Source={x:Reference Root}}"
+                HeightRequest="{Binding Height, Source={x:Reference Root}}"
                 Opacity="{StaticResource BackgroundOpacity}"
                 Source="{Binding .}">
               <Image.GestureRecognizers>
@@ -40,7 +40,7 @@
             <Image
                 x:Name="MainPhoto"
                 Aspect="AspectFit"
-                HeightRequest="{Binding Width, Source={x:Reference Root}}"
+                HeightRequest="{Binding Height, Source={x:Reference Root}}"
                 InputTransparent="True"
                 Source="{Binding .}" />
           </Grid>
