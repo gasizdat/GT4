@@ -37,7 +37,13 @@ public class DateCalendarDayNumberStyleTests
   public async Task The_badge_still_measures_at_least_36x36_at_default_scale()
   {
     var style = await LoadStyleAsync();
-    var label = await MainThread.InvokeOnMainThreadAsync(() => new Label { Style = style, Text = "9" });
+    var label = await MainThread.InvokeOnMainThreadAsync(() => new Label
+    {
+      Style = style,
+      Text = "9",
+      HorizontalOptions = LayoutOptions.Start,
+      VerticalOptions = LayoutOptions.Start,
+    });
     var host = await MainThread.InvokeOnMainThreadAsync(() => new ContentPage { Content = label });
     await using var window = await WindowHost.AttachAsync(host);
 
