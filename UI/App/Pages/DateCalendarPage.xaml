@@ -59,8 +59,8 @@
         <Setter Property="BorderWidth" Value="1" />
       </Style>
       <Style x:Key="DateCalendarDayNumber" TargetType="Label">
-        <Setter Property="WidthRequest" Value="36" />
-        <Setter Property="HeightRequest" Value="36" />
+        <Setter Property="MinimumWidthRequest" Value="36" />
+        <Setter Property="MinimumHeightRequest" Value="36" />
         <Setter Property="HorizontalTextAlignment" Value="Center" />
         <Setter Property="VerticalTextAlignment" Value="Center" />
         <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource SurfaceSubtleDark}}" />

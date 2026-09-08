@@ -73,6 +73,12 @@ from the code.
   not from `$(Version)` — the Store reserves version field 4 for its own use.
   `.github/workflows/release.yml`'s signing-certificate subject must track the `Publisher`
   identity (still the stock template GUID).
+- **An implicit (unkeyed) `Style TargetType="X"` still applies under an explicit keyed `Style`**, for
+  any property the keyed style leaves unset — it's not all-or-nothing like WPF/UWP. Confirmed on
+  `DateCalendarDayNumber` (issue #377): the style sets no `FontSize`, yet its `Label` already tracked
+  `FontScale`'s live rescale of `LabelTextSizeDefault` through the app-wide implicit `Label` style.
+  Don't assume a keyed style with no `FontSize`/`TextColor`/etc. setter falls back to the platform
+  default — check what the implicit style for that `TargetType` already provides first.
 
 ## Don't re-derive stale snapshots
 
