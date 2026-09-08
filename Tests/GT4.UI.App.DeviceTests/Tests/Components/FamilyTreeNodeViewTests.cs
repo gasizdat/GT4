@@ -1,5 +1,6 @@
 using GT4.UI.Components.Genealogy;
 using GT4.UI.Utils.Settings;
+using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls.Shapes;
 using Xunit;
 
@@ -15,15 +16,18 @@ namespace GT4.UI.DeviceTests;
 /// </summary>
 public class FamilyTreeNodeViewTests
 {
-  private static async Task<FamilyTreeNodeView> CreateNodeAsync(
+  private static Task<FamilyTreeNodeView> CreateNodeAsync(
     bool isCenter = false,
     double zoomScale = 1.0,
     FontScale? fontScale = null,
-    string displayName = "Jane Doe")
+    string displayName = "Jane Doe",
+    AppTheme theme = AppTheme.Light)
   {
-    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
-    return await MainThread.InvokeOnMainThreadAsync(() =>
-      new FamilyTreeNodeView(ImageSource.FromFile("dummy.png"), fontScale, displayName, isCenter, width: 100, height: 120, zoomScale));
+    return ThemeContrast.UnderThemeAsync(theme, () =>
+    {
+      TestStyles.EnsureLoaded();
+      return new FamilyTreeNodeView(ImageSource.FromFile("dummy.png"), fontScale, displayName, isCenter, width: 100, height: 120, zoomScale);
+    });
   }
 
   private static (Border Ring, Label Name) GetParts(FamilyTreeNodeView node)
@@ -76,6 +80,24 @@ public class FamilyTreeNodeViewTests
     Assert.Equal(3, ring.StrokeThickness);
     Assert.Equal(Color.FromArgb("#1E4437"), ring.Stroke);
     Assert.Equal(60 + 3 * 2, ring.WidthRequest);
+  }
+
+  [Fact]
+  public async Task A_non_center_node_gets_the_dark_variant_of_the_Accent_ring_under_dark_theme()
+  {
+    var node = await CreateNodeAsync(isCenter: false, theme: AppTheme.Dark);
+
+    var (ring, _) = GetParts(node);
+    Assert.Equal(Color.FromArgb("#D8B37F"), ring.Stroke);
+  }
+
+  [Fact]
+  public async Task A_center_node_gets_the_dark_variant_of_the_Primary_ring_under_dark_theme()
+  {
+    var node = await CreateNodeAsync(isCenter: true, theme: AppTheme.Dark);
+
+    var (ring, _) = GetParts(node);
+    Assert.Equal(Color.FromArgb("#7FC0A4"), ring.Stroke);
   }
 
   [Fact]

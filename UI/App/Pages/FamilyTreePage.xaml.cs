@@ -63,8 +63,8 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   // Where to park the viewport after a (re)build.
   private enum ViewTarget { Center, Top, Bottom }
 
-  // A cached node view plus the size/centre state it was built for, so it can be reused while those hold.
-  private sealed record NodeEntry(FamilyTreeNodeView View, double Zoom, bool IsCenter);
+  // A cached node view plus the size/centre/theme state it was built for, so it can be reused while those hold.
+  private sealed record NodeEntry(FamilyTreeNodeView View, double Zoom, bool IsCenter, AppTheme Theme);
 
   public FamilyTreePage(
     ICancellationTokenProvider cancellationTokenProvider,
@@ -422,20 +422,21 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   // its size (zoom) and centre styling still match; mismatches force a single rebuild of that one view.
   private void UpdateNodes(IReadOnlyList<FamilyTreeNodeLayout> nodes, int centerId, IReadOnlyDictionary<int, string> names, IReadOnlyDictionary<int, ImageSource> photos, double zoom)
   {
+    var theme = Application.Current?.RequestedTheme ?? AppTheme.Unspecified;
     var used = new HashSet<int>();
     foreach (var nodeLayout in nodes)
     {
       var person = nodeLayout.Node.Person;
       used.Add(person.Id);
       var isCenter = person.Id == centerId;
-      if (!_NodeCache.TryGetValue(person.Id, out var entry) || entry.Zoom != zoom || entry.IsCenter != isCenter)
+      if (!_NodeCache.TryGetValue(person.Id, out var entry) || entry.Zoom != zoom || entry.IsCenter != isCenter || entry.Theme != theme)
       {
         if (entry is not null)
         {
           RemoveNode(entry.View);
         }
         var view = CreateNode(nodeLayout, names[person.Id], photos[person.Id], isCenter, zoom);
-        entry = new NodeEntry(view, zoom, isCenter);
+        entry = new NodeEntry(view, zoom, isCenter, theme);
         _NodeCache[person.Id] = entry;
       }
       AbsoluteLayout.SetLayoutBounds(entry.View, nodeLayout.Bounds);
