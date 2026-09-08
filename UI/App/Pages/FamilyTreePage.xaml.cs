@@ -24,8 +24,6 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   private readonly INameFormatter _NameFormatter;
   private readonly FamilyTreeLayoutMetrics _Metrics = new() { Margin = OverlayClearance };
   private readonly FamilyTreeLayout _Layout = new();
-  private readonly Color _ParentChildColor;
-  private readonly Color _SpouseColor;
   private readonly FontScale? _FontScale;
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
@@ -65,8 +63,8 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   // Where to park the viewport after a (re)build.
   private enum ViewTarget { Center, Top, Bottom }
 
-  // A cached node view plus the size/centre state it was built for, so it can be reused while those hold.
-  private sealed record NodeEntry(FamilyTreeNodeView View, double Zoom, bool IsCenter);
+  // A cached node view plus the size/centre/theme state it was built for, so it can be reused while those hold.
+  private sealed record NodeEntry(FamilyTreeNodeView View, double Zoom, bool IsCenter, AppTheme Theme);
 
   public FamilyTreePage(
     ICancellationTokenProvider cancellationTokenProvider,
@@ -89,9 +87,6 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     PageCommand = new SafeCommand(OnPageCommand, _AlertService);
 
     InitializeComponent();
-
-    _ParentChildColor = GetColor("Primary", Color.FromArgb("#1E4437"));
-    _SpouseColor = GetColor("Accent", Color.FromArgb("#8B6F4E"));
 
     // Drag-to-pan: the ScrollView already handles wheel, scrollbars and touch flicks, but desktop
     // users expect to grab the canvas and drag it. Translate the pan delta into a scroll offset.
@@ -398,10 +393,12 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   private void UpdateConnectors(IReadOnlyList<FamilyTreeConnector> connectors, double zoom)
   {
     var cornerRadius = _Metrics.CornerRadius * zoom;
+    var parentChildColor = ThemedColor.Resolve("Primary", Color.FromArgb("#1E4437"));
+    var spouseColor = ThemedColor.Resolve("Accent", Color.FromArgb("#8B6F4E"));
     for (var i = 0; i < connectors.Count; i++)
     {
       var connector = connectors[i];
-      var color = connector.Relation == FamilyTreeRelation.Spouse ? _SpouseColor : _ParentChildColor;
+      var color = connector.Relation == FamilyTreeRelation.Spouse ? spouseColor : parentChildColor;
       if (i < _ConnectorPool.Count)
       {
         FamilyTreeConnectorShape.Update(_ConnectorPool[i], connector, cornerRadius, ConnectorLineWidth, color);
@@ -422,23 +419,25 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   }
 
   // Node views are keyed by person id and kept alive across loads. A cached view is reused as long as
-  // its size (zoom) and centre styling still match; mismatches force a single rebuild of that one view.
+  // its size (zoom), centre styling and theme still match; mismatches force a single rebuild of that
+  // one view.
   private void UpdateNodes(IReadOnlyList<FamilyTreeNodeLayout> nodes, int centerId, IReadOnlyDictionary<int, string> names, IReadOnlyDictionary<int, ImageSource> photos, double zoom)
   {
+    var theme = Application.Current?.RequestedTheme ?? AppTheme.Unspecified;
     var used = new HashSet<int>();
     foreach (var nodeLayout in nodes)
     {
       var person = nodeLayout.Node.Person;
       used.Add(person.Id);
       var isCenter = person.Id == centerId;
-      if (!_NodeCache.TryGetValue(person.Id, out var entry) || entry.Zoom != zoom || entry.IsCenter != isCenter)
+      if (!_NodeCache.TryGetValue(person.Id, out var entry) || entry.Zoom != zoom || entry.IsCenter != isCenter || entry.Theme != theme)
       {
         if (entry is not null)
         {
           RemoveNode(entry.View);
         }
         var view = CreateNode(nodeLayout, names[person.Id], photos[person.Id], isCenter, zoom);
-        entry = new NodeEntry(view, zoom, isCenter);
+        entry = new NodeEntry(view, zoom, isCenter, theme);
         _NodeCache[person.Id] = entry;
       }
       AbsoluteLayout.SetLayoutBounds(entry.View, nodeLayout.Bounds);
@@ -596,11 +595,4 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     }
   }
 #endif
-
-  private static Color GetColor(string resourceKey, Color fallback) =>
-    Application.Current?.Resources is { } resources
-    && resources.TryGetValue(resourceKey, out var value)
-    && value is Color color
-      ? color
-      : fallback;
 }
