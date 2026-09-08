@@ -14,16 +14,14 @@ public partial class App
   // root content so they fire from any page regardless of focus.
   partial void RegisterZoomHotkeys(Microsoft.Maui.Controls.Window window) => window.HandlerChanged += (_, _) => AttachAccelerators(window);
 
-  // Mirrors MainActivity's HandleOpenIntentIfAny/ImportProjectAsync on Android: land a double-clicked
-  // .gt4 file as a new project and show the list. Runs once per process launch -- there is no
-  // OnNewIntent equivalent here, since a second double-click while running just opens a second
-  // instance (see issue #373).
+  // Mirrors MainActivity's Android handler: land a double-clicked .gt4 file as a new project and
+  // show the list. Runs once per launch -- there is no OnNewIntent equivalent here, since a second
+  // double-click while running just opens a second instance.
   //
-  // The activating path can arrive two ways depending on how this build was launched, and both are
-  // read rather than assumed: the unpackaged win-x64 build is registry-launched, so it comes as a
-  // plain argv entry; the MSIX build's manifest-declared file-type association is plausibly delivered
-  // through AppInstance's activation args instead, since this is a WinUI/Windows App SDK Application
-  // rather than a classic Win32 entry point.
+  // The activating path can arrive two ways, so both are read rather than assumed: the unpackaged
+  // build is registry-launched, so it comes as a plain argv entry; the MSIX build's manifest-declared
+  // association is expected to come through AppInstance's activation args instead, since this is a
+  // WinUI/Windows App SDK Application rather than a classic Win32 entry point.
   partial void HandleFileActivation() => _ = ImportActivationFileAsync();
 
   private async Task ImportActivationFileAsync()
