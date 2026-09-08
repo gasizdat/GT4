@@ -29,10 +29,9 @@ public class DateCalendarDayNumberStyleTests
     Assert.Equal(-1, label.HeightRequest);
   }
 
-  // MinimumWidthRequest has in-file precedent (DateCalendarMonthLabelMinWidth); MinimumHeightRequest
-  // does not. Confirms the swap still floors the badge at its original round size at 1.0x -- this is
-  // not a regression pin for the fix (a fixed 36 would pass here too), it's a check that trading
-  // HeightRequest for a minimum didn't shrink the common case while widening the scaled one.
+  // MinimumHeightRequest has no other precedent in this file (unlike MinimumWidthRequest, via
+  // DateCalendarMonthLabelMinWidth) -- guards that it still floors at 1.0x. Not a fix pin: a fixed
+  // 36 would pass here too.
   [Fact]
   public async Task The_badge_still_measures_at_least_36x36_at_default_scale()
   {
@@ -55,11 +54,9 @@ public class DateCalendarDayNumberStyleTests
     Assert.True(label.Width >= 36 && label.Height >= 36, $"Badge measured {label.Width}x{label.Height}.");
   }
 
-  // The style sets no FontSize, so the digit's size has to come from somewhere else tracking
-  // FontScale.Apply's live rescale of LabelTextSizeDefault (see FontScale.cs) -- confirms it does, so
-  // an explicit FontSize setter here would be redundant, not a second half of this fix. Resolving a
-  // live DynamicResource update needs a real Parent chain up to Application.Current, which a detached
-  // element does not have, so the label is attached via WindowHost.
+  // No FontSize setter here -- the implicit Label style already drives it from LabelTextSizeDefault
+  // (confirmed, not assumed), so an explicit setter would be redundant. WindowHost gives the label
+  // the Parent chain a live DynamicResource update needs; a detached element has none.
   [Fact]
   public async Task The_digit_already_tracks_LabelTextSizeDefault_via_the_implicit_Label_style()
   {
