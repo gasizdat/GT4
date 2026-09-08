@@ -21,12 +21,8 @@
           Text="{x:Static resources:UIStrings.MenuItemNameCreateGenealogyTree}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
-          CommandParameter="ImportGedcom"
-          Text="{x:Static resources:UIStrings.MenuItemImportGedcom}" />
-      <items:PageMenuItem
-          Command="{Binding PageCommand, Source={x:Reference Root}}"
-          CommandParameter="ImportProjectFile"
-          Text="{x:Static resources:UIStrings.MenuItemImportProjectFile}" />
+          CommandParameter="Import"
+          Text="{x:Static resources:UIStrings.MenuItemImport}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="Settings"
@@ -100,10 +96,10 @@
 
           <Button
               Command="{Binding PageCommand, Source={x:Reference Root}}"
-              CommandParameter="ImportGedcom"
+              CommandParameter="Import"
               FontSize="{DynamicResource ActionButtonTextSize}"
               HorizontalOptions="Fill"
-              Text="{x:Static resources:UIStrings.MenuItemImportGedcom}" />
+              Text="{x:Static resources:UIStrings.MenuItemImport}" />
 
         </VerticalStackLayout>
       </Grid>

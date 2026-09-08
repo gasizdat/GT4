@@ -733,14 +733,14 @@ genealogy tree and enjoy!</value>
   <data name="MenuItemExportGedcom" xml:space="preserve">
     <value>📤 Export to GEDCOM</value>
   </data>
-  <data name="MenuItemImportProjectFile" xml:space="preserve">
-    <value>📥 Import from .gt4</value>
+  <data name="MenuItemImport" xml:space="preserve">
+    <value>📥 Import</value>
   </data>
   <data name="MenuItemExportProjectFile" xml:space="preserve">
     <value>📤 Export to .gt4</value>
   </data>
-  <data name="FileDialogSelectProjectFile" xml:space="preserve">
-    <value>Select a .gt4 file</value>
+  <data name="FileDialogSelectImport" xml:space="preserve">
+    <value>Select a GEDCOM or .gt4 file</value>
   </data>
   <data name="ShareProjectFileTitle" xml:space="preserve">
     <value>Export .gt4</value>

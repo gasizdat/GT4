@@ -15,8 +15,8 @@ namespace GT4.UI.DeviceTests;
 /// <summary>
 /// Covers ProjectListPage against a real MAUI runtime with a mocked Core. PageCommand("Create")
 /// pushes a modal CreateOrUpdateProjectDialog, driven through WindowHost/ModalDialogHarness.
-/// ImportGedcom is not covered (FilePicker is an external dependency, same rationale as
-/// ProjectPage.ExportGedcom/ImportGedcom); the demo project takes the same import path from a
+/// PageCommand("Import") is not covered (FilePicker is an external dependency, same rationale as
+/// ProjectPage.ExportGedcom/ImportGedcom); the demo project takes the same GEDCOM import path from a
 /// bundled asset instead, so it is.
 /// </summary>
 public class ProjectListPageTests

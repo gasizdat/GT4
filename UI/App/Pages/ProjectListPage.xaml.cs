@@ -19,18 +19,12 @@ public partial class ProjectListPage : ContentPage
   // MauiAsset strips the "Resources\Raw" prefix from the logical name (see AppCommon.props).
   private const string DemoGedcomAsset = "demo.ged";
 
-  // GEDCOM has no standard MIME type: Windows filters on the ".ged" extension (and ".zip", which is what an
-  // export produces), while Android has none, so it falls back to any file. A picked file always lands in a
+  // Neither GEDCOM nor .gt4 has a MIME type Windows recognizes, so it filters on the three extensions
+  // directly; Android has none, so it falls back to any file. A picked file always lands in a
   // brand-new project, so this only governs which files are easy to select.
-  private static readonly FilePickerFileType GedcomFileType = new(new Dictionary<DevicePlatform, IEnumerable<string>>
+  private static readonly FilePickerFileType ImportFileType = new(new Dictionary<DevicePlatform, IEnumerable<string>>
   {
-    [DevicePlatform.WinUI] = [".ged", ".zip"],
-    [DevicePlatform.Android] = ["*/*"],
-  });
-
-  private static readonly FilePickerFileType ProjectFileType = new(new Dictionary<DevicePlatform, IEnumerable<string>>
-  {
-    [DevicePlatform.WinUI] = [".gt4"],
+    [DevicePlatform.WinUI] = [".ged", ".zip", ".gt4"],
     [DevicePlatform.Android] = ["*/*"],
   });
 
@@ -176,11 +170,8 @@ public partial class ProjectListPage : ContentPage
       case string commandName when commandName == "Demo":
         await OnOpenDemoProject();
         break;
-      case string commandName when commandName == "ImportGedcom":
-        await OnImportGedcom();
-        break;
-      case string commandName when commandName == "ImportProjectFile":
-        await OnImportProjectFile();
+      case string commandName when commandName == "Import":
+        await OnImport();
         break;
       case string commandName when commandName == "Refresh":
         this.RefreshView();
@@ -238,12 +229,23 @@ public partial class ProjectListPage : ContentPage
     await using var project = await _ProjectList.CreateAsync(projectInfo.Name, projectInfo.Description, token);
   }
 
-  private async Task OnImportGedcom()
+  // A .gt4 file lands as a new project via a plain copy, same as Android's file-association handler;
+  // anything else is parsed as GEDCOM.
+  private async Task OnImport()
   {
-    var pickOptions = new PickOptions { PickerTitle = UIStrings.FileDialogSelectGedcom, FileTypes = GedcomFileType };
+    var pickOptions = new PickOptions { PickerTitle = UIStrings.FileDialogSelectImport, FileTypes = ImportFileType };
     var file = await FilePicker.Default.PickAsync(pickOptions);
     if (file is null)
       return;
+
+    if (file.FileName.EndsWith(".gt4", StringComparison.OrdinalIgnoreCase))
+    {
+      using var stream = await file.OpenReadAsync();
+      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      await _ProjectList.ImportAsync(stream, token);
+      await UpdateProjectList();
+      return;
+    }
 
     using var source = await GedcomImportSource.OpenAsync(file, FileSystem.CacheDirectory);
     using var reader = await _GedcomImportEncoding.ResolveReaderAsync(source.OpenStreamAsync, Navigation);
@@ -251,22 +253,6 @@ public partial class ProjectListPage : ContentPage
       return;
 
     await ImportIntoNewProjectAsync(reader, source.Name, UIStrings.HintImportedFromGedcom, source.MediaBasePath);
-  }
-
-  // Lands a .gt4 file as a new project, same as Android's file-association handler -- a plain copy,
-  // not a GEDCOM parse, so there is no encoding or merge step.
-  private async Task OnImportProjectFile()
-  {
-    var pickOptions = new PickOptions { PickerTitle = UIStrings.FileDialogSelectProjectFile, FileTypes = ProjectFileType };
-    var file = await FilePicker.Default.PickAsync(pickOptions);
-    if (file is null)
-      return;
-
-    using var stream = await file.OpenReadAsync();
-    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-    await _ProjectList.ImportAsync(stream, token);
-
-    await UpdateProjectList();
   }
 
   // The bundled file declares UTF-8, so it needs none of the charset detection a picked file goes through,

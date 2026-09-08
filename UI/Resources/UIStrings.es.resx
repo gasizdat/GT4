@@ -733,14 +733,14 @@
   <data name="MenuItemExportGedcom" xml:space="preserve">
     <value>📤 Exportar a GEDCOM</value>
   </data>
-  <data name="MenuItemImportProjectFile" xml:space="preserve">
-    <value>📥 Importar desde .gt4</value>
+  <data name="MenuItemImport" xml:space="preserve">
+    <value>📥 Importar</value>
   </data>
   <data name="MenuItemExportProjectFile" xml:space="preserve">
     <value>📤 Exportar a .gt4</value>
   </data>
-  <data name="FileDialogSelectProjectFile" xml:space="preserve">
-    <value>Seleccionar un archivo .gt4</value>
+  <data name="FileDialogSelectImport" xml:space="preserve">
+    <value>Seleccionar un archivo GEDCOM o .gt4</value>
   </data>
   <data name="ShareProjectFileTitle" xml:space="preserve">
     <value>Exportar .gt4</value>

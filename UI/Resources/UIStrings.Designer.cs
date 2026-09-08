@@ -1556,22 +1556,22 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("FileDialogSelectGedcom", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Select a GEDCOM or .gt4 file.
+        /// </summary>
+        public static string FileDialogSelectImport {
+            get {
+                return ResourceManager.GetString("FileDialogSelectImport", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Select pictures.
         /// </summary>
         public static string FileDialogSelectPictures {
             get {
                 return ResourceManager.GetString("FileDialogSelectPictures", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Select a .gt4 file.
-        /// </summary>
-        public static string FileDialogSelectProjectFile {
-            get {
-                return ResourceManager.GetString("FileDialogSelectProjectFile", resourceCulture);
             }
         }
 
@@ -2350,20 +2350,20 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 📥 Import.
+        /// </summary>
+        public static string MenuItemImport {
+            get {
+                return ResourceManager.GetString("MenuItemImport", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to 📥 Import from GEDCOM.
         /// </summary>
         public static string MenuItemImportGedcom {
             get {
                 return ResourceManager.GetString("MenuItemImportGedcom", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 📥 Import from .gt4.
-        /// </summary>
-        public static string MenuItemImportProjectFile {
-            get {
-                return ResourceManager.GetString("MenuItemImportProjectFile", resourceCulture);
             }
         }
 
