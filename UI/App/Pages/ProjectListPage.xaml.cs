@@ -28,6 +28,12 @@ public partial class ProjectListPage : ContentPage
     [DevicePlatform.Android] = ["*/*"],
   });
 
+  private static readonly FilePickerFileType ProjectFileType = new(new Dictionary<DevicePlatform, IEnumerable<string>>
+  {
+    [DevicePlatform.WinUI] = [".gt4"],
+    [DevicePlatform.Android] = ["*/*"],
+  });
+
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IComparer<ProjectInfo> _ProjectInfoComparer;
@@ -173,6 +179,9 @@ public partial class ProjectListPage : ContentPage
       case string commandName when commandName == "ImportGedcom":
         await OnImportGedcom();
         break;
+      case string commandName when commandName == "ImportProjectFile":
+        await OnImportProjectFile();
+        break;
       case string commandName when commandName == "Refresh":
         this.RefreshView();
         break;
@@ -242,6 +251,22 @@ public partial class ProjectListPage : ContentPage
       return;
 
     await ImportIntoNewProjectAsync(reader, source.Name, UIStrings.HintImportedFromGedcom, source.MediaBasePath);
+  }
+
+  // Lands a .gt4 file as a new project, same as Android's file-association handler -- a plain copy,
+  // not a GEDCOM parse, so there is no encoding or merge step.
+  private async Task OnImportProjectFile()
+  {
+    var pickOptions = new PickOptions { PickerTitle = UIStrings.FileDialogSelectProjectFile, FileTypes = ProjectFileType };
+    var file = await FilePicker.Default.PickAsync(pickOptions);
+    if (file is null)
+      return;
+
+    using var stream = await file.OpenReadAsync();
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    await _ProjectList.ImportAsync(stream, token);
+
+    await UpdateProjectList();
   }
 
   // The bundled file declares UTF-8, so it needs none of the charset detection a picked file goes through,

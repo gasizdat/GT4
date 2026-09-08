@@ -1,15 +1,78 @@
+using GT4.UI.Pages;
 using GT4.UI.Utils.Settings;
 using Microsoft.UI.Xaml;
+using Microsoft.Windows.AppLifecycle;
+using Windows.ApplicationModel.Activation;
 using Windows.System;
 using KeyboardAccelerator = Microsoft.UI.Xaml.Input.KeyboardAccelerator;
 
 namespace GT4.UI;
 
-// Windows-only: wire Ctrl +/- (and Ctrl 0 to reset) to zoom. Accelerators are attached to the
-// native window's root content so they fire from any page regardless of focus.
 public partial class App
 {
+  // Wire Ctrl +/- (and Ctrl 0 to reset) to zoom. Accelerators are attached to the native window's
+  // root content so they fire from any page regardless of focus.
   partial void RegisterZoomHotkeys(Microsoft.Maui.Controls.Window window) => window.HandlerChanged += (_, _) => AttachAccelerators(window);
+
+  // Mirrors MainActivity's HandleOpenIntentIfAny/ImportProjectAsync on Android: land a double-clicked
+  // .gt4 file as a new project and show the list. Runs once per process launch -- there is no
+  // OnNewIntent equivalent here, since a second double-click while running just opens a second
+  // instance (see issue #373).
+  //
+  // The activating path can arrive two ways depending on how this build was launched, and both are
+  // read rather than assumed: the unpackaged win-x64 build is registry-launched, so it comes as a
+  // plain argv entry; the MSIX build's manifest-declared file-type association is plausibly delivered
+  // through AppInstance's activation args instead, since this is a WinUI/Windows App SDK Application
+  // rather than a classic Win32 entry point.
+  partial void HandleFileActivation() => _ = ImportActivationFileAsync();
+
+  private async Task ImportActivationFileAsync()
+  {
+    ProjectFileAssociation.EnsureRegisteredIfUnpackaged();
+
+    var path = GetActivationFilePath();
+    if (path is null)
+    {
+      return;
+    }
+
+    try
+    {
+      using var content = File.OpenRead(path);
+      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      await _ProjectList.ImportAsync(content, token);
+      await _NavigationService.GoToAsync(UIRoutes.GetRoute<ProjectListPage>());
+    }
+    catch (Exception ex)
+    {
+      // Same rationale as the other lifecycle handlers in App.xaml.cs: this runs during window
+      // creation, before any page exists to show an alert.
+      WriteErrorLog(ex.ToString());
+    }
+  }
+
+  private static string? GetActivationFilePath()
+  {
+    var args = Environment.GetCommandLineArgs();
+    if (args.Length == 2 && IsProjectFile(args[1]))
+    {
+      return args[1];
+    }
+
+    var activationArgs = AppInstance.GetCurrent().GetActivatedEventArgs();
+    if (activationArgs?.Kind == ExtendedActivationKind.File
+      && activationArgs.Data is FileActivatedEventArgs fileArgs
+      && fileArgs.Files.FirstOrDefault()?.Path is string activatedPath
+      && IsProjectFile(activatedPath))
+    {
+      return activatedPath;
+    }
+
+    return null;
+  }
+
+  private static bool IsProjectFile(string path) =>
+    string.Equals(Path.GetExtension(path), ".gt4", StringComparison.OrdinalIgnoreCase);
 
   private void AttachAccelerators(Microsoft.Maui.Controls.Window window)
   {

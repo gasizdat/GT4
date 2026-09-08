@@ -25,6 +25,10 @@
           Text="{x:Static resources:UIStrings.MenuItemImportGedcom}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="ImportProjectFile"
+          Text="{x:Static resources:UIStrings.MenuItemImportProjectFile}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="Settings"
           Text="{x:Static resources:UIStrings.MenuItemNameSettings}" />
       <items:PageMenuItem

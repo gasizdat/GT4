@@ -209,6 +209,17 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     return Task.FromResult<IProjectTransaction>(transaction);
   }
 
+  // VACUUM INTO takes no transaction and copies the live database page by page, so it needs no
+  // synchronization beyond CreateCommand's own gate wait -- unlike ProjectHost's cache/origin split,
+  // the result reflects every commit up to the moment this runs.
+  public async Task ExportSnapshotAsync(string destinationPath, CancellationToken token)
+  {
+    using var command = CreateCommand();
+    command.CommandText = "VACUUM INTO @path;";
+    command.Parameters.Add(new SqliteParameter("@path", destinationPath));
+    await command.ExecuteNonQueryAsync(token);
+  }
+
   public static async Task<ProjectDocument> CreateNewAsync(string path, string name, CancellationToken token)
   {
     var ret = new ProjectDocument(path, SqliteOpenMode.ReadWriteCreate);

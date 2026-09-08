@@ -1169,6 +1169,30 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task ExportSnapshotAsync_ProducesAnIndependentlyReadableCopy()
+  {
+    await _doc.Metadata.SetProjectNameAsync("Snapshot Source", Token);
+    await AddBarePersonAsync();
+
+    var exportPath = Path.Combine(Path.GetTempPath(), $"gt4_export_{Guid.NewGuid():N}.db");
+    try
+    {
+      await _doc.ExportSnapshotAsync(exportPath, Token);
+
+      await using var exported = await ProjectDocument.OpenReadOnlyAsync(exportPath, Token);
+      (await exported.Metadata.GetProjectNameAsync(Token)).Should().Be("Snapshot Source");
+      (await exported.Persons.GetPersonsAsync(Token)).Should().ContainSingle();
+    }
+    finally
+    {
+      foreach (var suffix in new[] { "", "-wal", "-shm", "-journal" })
+      {
+        try { File.Delete(exportPath + suffix); } catch { /* best-effort */ }
+      }
+    }
+  }
+
+  [Fact]
   public async Task Write_BumpsProjectRevision()
   {
     // The revision is a monotonic counter, so every committed write strictly advances it.

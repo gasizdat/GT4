@@ -326,6 +326,10 @@ public partial class ProjectPage : ContentPage
         await OnExportGedcom();
         break;
 
+      case string commandName when commandName == "ExportProjectFile":
+        await OnExportProjectFile();
+        break;
+
       case string commandName when commandName == "ImportGedcom":
         await OnImportGedcom();
         break;
@@ -421,6 +425,25 @@ public partial class ProjectPage : ContentPage
     }
 
     var request = new ShareFileRequest { Title = UIStrings.ShareGedcomTitle, File = new ShareFile(path) };
+    await Share.Default.RequestAsync(request);
+  }
+
+  // Exports the open project as a .gt4 snapshot via VACUUM INTO, which needs no transaction and
+  // reflects every commit made this session -- unlike the origin file, which ProjectHost only
+  // overwrites with the cache when the project closes.
+  private async Task OnExportProjectFile()
+  {
+    var name = FileNameUtils.Sanitize(_CurrentProjectProvider.Info.Name, "project");
+    var path = Path.Combine(FileSystem.CacheDirectory, name + ".gt4");
+    if (File.Exists(path))
+    {
+      File.Delete(path);
+    }
+
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    await _CurrentProjectProvider.Project.ExportSnapshotAsync(path, token);
+
+    var request = new ShareFileRequest { Title = UIStrings.ShareProjectFileTitle, File = new ShareFile(path) };
     await Share.Default.RequestAsync(request);
   }
 

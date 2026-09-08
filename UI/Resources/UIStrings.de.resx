@@ -733,6 +733,18 @@ Stammbaum und haben Sie Freude daran!</value>
   <data name="MenuItemExportGedcom" xml:space="preserve">
     <value>📤 Nach GEDCOM exportieren</value>
   </data>
+  <data name="MenuItemImportProjectFile" xml:space="preserve">
+    <value>📥 Aus .gt4 importieren</value>
+  </data>
+  <data name="MenuItemExportProjectFile" xml:space="preserve">
+    <value>📤 Nach .gt4 exportieren</value>
+  </data>
+  <data name="FileDialogSelectProjectFile" xml:space="preserve">
+    <value>.gt4-Datei auswählen</value>
+  </data>
+  <data name="ShareProjectFileTitle" xml:space="preserve">
+    <value>.gt4 exportieren</value>
+  </data>
   <data name="AlertImportGedcomConfirm_1" xml:space="preserve">
     <value>Eine GEDCOM-Datei in {0} importieren? Personen, die einer vorhandenen Person entsprechen, werden zusammengeführt; alle übrigen werden hinzugefügt.</value>
   </data>

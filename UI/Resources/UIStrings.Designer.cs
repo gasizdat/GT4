@@ -1565,7 +1565,16 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("FileDialogSelectPictures", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Select a .gt4 file.
+        /// </summary>
+        public static string FileDialogSelectProjectFile {
+            get {
+                return ResourceManager.GetString("FileDialogSelectProjectFile", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Address.
         /// </summary>
@@ -2267,7 +2276,16 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("MenuItemExportGedcom", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to 📤 Export to .gt4.
+        /// </summary>
+        public static string MenuItemExportProjectFile {
+            get {
+                return ResourceManager.GetString("MenuItemExportProjectFile", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to 🗓️ Calendar.
         /// </summary>
@@ -2339,7 +2357,16 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("MenuItemImportGedcom", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to 📥 Import from .gt4.
+        /// </summary>
+        public static string MenuItemImportProjectFile {
+            get {
+                return ResourceManager.GetString("MenuItemImportProjectFile", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to ➕ Create a Person.
         /// </summary>
@@ -3383,7 +3410,16 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("ShareGedcomTitle", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Export .gt4.
+        /// </summary>
+        public static string ShareProjectFileTitle {
+            get {
+                return ResourceManager.GetString("ShareProjectFileTitle", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Format of names of persons of the family.
         /// </summary>

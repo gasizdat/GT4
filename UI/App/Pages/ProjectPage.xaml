@@ -39,6 +39,10 @@
           Text="{x:Static resources:UIStrings.MenuItemExportGedcom}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="ExportProjectFile"
+          Text="{x:Static resources:UIStrings.MenuItemExportProjectFile}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="GoToNames"
           Text="{x:Static resources:UIStrings.MenuItemGoToNames}" />
       <items:PageMenuItem
