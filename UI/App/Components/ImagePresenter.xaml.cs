@@ -250,7 +250,7 @@ public partial class ImagePresenter : ContentView
 
   private async Task OnOpenViewerAsync()
   {
-    if (Photos.Length == 0)
+    if (Photos.Length == 0 || Photos.All(photo => photo.IsPlaceholder))
     {
       return;
     }

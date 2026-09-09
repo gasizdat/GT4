@@ -410,7 +410,7 @@ public partial class PersonPage : ContentPage
   private async Task<PhotoInfo[]> LoadPhotosAsync(PersonFullInfo personFullInfo, CancellationToken token)
   {
     PhotoInfo GetDefaultPhotoInfo() => new(ImageUtils.ImageFromRawResource(
-      ImageUtils.DefaultPersonPhotoResourceName(personFullInfo.BiologicalSex), null), null);
+      ImageUtils.DefaultPersonPhotoResourceName(personFullInfo.BiologicalSex), null), null, IsPlaceholder: true);
 
     Data[] photoData = personFullInfo.MainPhoto is null
       ? [.. personFullInfo.AdditionalPhotos]
