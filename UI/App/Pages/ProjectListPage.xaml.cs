@@ -229,8 +229,7 @@ public partial class ProjectListPage : ContentPage
     await using var project = await _ProjectList.CreateAsync(projectInfo.Name, projectInfo.Description, token);
   }
 
-  // A .gt4 file lands as a new project via a plain copy, same as Android's file-association handler;
-  // anything else is parsed as GEDCOM.
+  // A .gt4 file is a plain copy into a new project, matching Android's file-association handler.
   private async Task OnImport()
   {
     var pickOptions = new PickOptions { PickerTitle = UIStrings.FileDialogSelectImport, FileTypes = ImportFileType };
