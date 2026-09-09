@@ -19,11 +19,6 @@ public partial class App
   // Opens a double-clicked .gt4 file as the project it already is. Runs once per launch -- there is
   // no OnNewIntent equivalent here, since a second double-click while running just opens a second
   // instance.
-  //
-  // The activating path can arrive two ways, so both are read rather than assumed: the unpackaged
-  // build is registry-launched, so it comes as a plain argv entry; the MSIX build's manifest-declared
-  // association is expected to come through AppInstance's activation args instead, since this is a
-  // WinUI/Windows App SDK Application rather than a classic Win32 entry point.
   partial void HandleFileActivation(Microsoft.Maui.Controls.Window window)
   {
     ProjectFileAssociation.EnsureRegisteredIfUnpackaged();
@@ -34,9 +29,8 @@ public partial class App
       return;
     }
 
-    // Shell.Current is still null this early in CreateWindow (confirmed via a NullReferenceException
-    // out of GoToAsync when this ran unconditionally), so the navigation is deferred to the window's
-    // first Activated.
+    // Shell.Current is still null this early in CreateWindow, so the navigation is deferred to the
+    // window's first Activated.
     void OnActivated(object? sender, EventArgs e)
     {
       window.Activated -= OnActivated;
@@ -81,6 +75,10 @@ public partial class App
     await _NavigationService.GoToAsync(route);
   }
 
+  // The activating path can arrive two ways, so both are read rather than assumed: the unpackaged
+  // build is registry-launched, so it comes as a plain argv entry; the MSIX build's manifest-declared
+  // association is expected to come through AppInstance's activation args instead, since this is a
+  // WinUI/Windows App SDK Application rather than a classic Win32 entry point.
   private static string? GetActivationFilePath()
   {
     var args = Environment.GetCommandLineArgs();
