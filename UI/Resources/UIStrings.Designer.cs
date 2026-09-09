@@ -1556,7 +1556,16 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("FileDialogSelectGedcom", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Select a GEDCOM or .gt4 file.
+        /// </summary>
+        public static string FileDialogSelectImport {
+            get {
+                return ResourceManager.GetString("FileDialogSelectImport", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Select pictures.
         /// </summary>
@@ -1565,7 +1574,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("FileDialogSelectPictures", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Address.
         /// </summary>
@@ -2258,7 +2267,16 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("MenuItemExpandAll_1", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to 📤 Export.
+        /// </summary>
+        public static string MenuItemExport {
+            get {
+                return ResourceManager.GetString("MenuItemExport", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to 📤 Export to GEDCOM.
         /// </summary>
@@ -2267,7 +2285,16 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("MenuItemExportGedcom", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to 📤 Export to .gt4.
+        /// </summary>
+        public static string MenuItemExportProjectFile {
+            get {
+                return ResourceManager.GetString("MenuItemExportProjectFile", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to 🗓️ Calendar.
         /// </summary>
@@ -2332,6 +2359,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 📥 Import.
+        /// </summary>
+        public static string MenuItemImport {
+            get {
+                return ResourceManager.GetString("MenuItemImport", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to 📥 Import from GEDCOM.
         /// </summary>
         public static string MenuItemImportGedcom {
@@ -2339,7 +2375,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("MenuItemImportGedcom", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to ➕ Create a Person.
         /// </summary>
@@ -3383,7 +3419,16 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("ShareGedcomTitle", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Export .gt4.
+        /// </summary>
+        public static string ShareProjectFileTitle {
+            get {
+                return ResourceManager.GetString("ShareProjectFileTitle", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Format of names of persons of the family.
         /// </summary>
@@ -3518,7 +3563,16 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("TitleDateCalendarPage", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Export as….
+        /// </summary>
+        public static string TitleExportChoice {
+            get {
+                return ResourceManager.GetString("TitleExportChoice", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Families.
         /// </summary>

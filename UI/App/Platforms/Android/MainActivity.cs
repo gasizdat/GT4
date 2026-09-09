@@ -5,6 +5,7 @@ using Android.OS;
 using Android.Provider;
 using Android.Views;
 using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI;
 using GT4.UI.Abstraction;
@@ -92,21 +93,40 @@ namespace GT4
 
     private async Task ImportProjectAsync(Android.Net.Uri uri)
     {
+      var cancellationTokenProvider = _Services.GetRequiredService<ICancellationTokenProvider>();
+
+      ProjectInfo info;
       try
       {
         using var input = ContentResolver?.OpenInputStream(uri) ??
           throw new ApplicationException($"Unable to open provided URI {uri}");
 
-        using var token = _Services.GetRequiredService<ICancellationTokenProvider>().CreateDbCancellationToken();
-        await _Services.GetRequiredService<IProjectList>().ImportAsync(input, token);
+        using var importToken = cancellationTokenProvider.CreateDbCancellationToken();
+        info = await _Services.GetRequiredService<IProjectList>().ImportAsync(input, importToken);
+      }
+      catch (Exception ex)
+      {
+        await _Services.GetRequiredService<IAlertService>().ShowErrorAsync(ex);
+        return;
+      }
 
-        var navigationService = _Services.GetRequiredService<INavigationService>();
-        RunOnUiThread(() => _ = navigationService.GoToAsync(UIRoutes.GetRoute<ProjectListPage>()));
+      // A schema mismatch (e.g. a .gt4 from an older/newer GT4 install) leaves the import done but
+      // the project unopenable here; fall back to the list, where the now-visible project offers
+      // ProjectListPage's upgrade prompt on selection.
+      var route = UIRoutes.GetRoute<ProjectListPage>();
+      try
+      {
+        using var openToken = cancellationTokenProvider.CreateDbCancellationToken();
+        await _Services.GetRequiredService<ICurrentProjectProvider>().OpenAsync(info, openToken);
+        route = UIRoutes.GetRoute<ProjectPage>();
       }
       catch (Exception ex)
       {
         await _Services.GetRequiredService<IAlertService>().ShowErrorAsync(ex);
       }
+
+      var navigationService = _Services.GetRequiredService<INavigationService>();
+      RunOnUiThread(() => _ = navigationService.GoToAsync(route));
     }
 
     private void HandleOpenIntentIfAny(Intent? intent)

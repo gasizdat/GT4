@@ -733,6 +733,24 @@
   <data name="MenuItemExportGedcom" xml:space="preserve">
     <value>📤 Экспорт в GEDCOM</value>
   </data>
+  <data name="MenuItemImport" xml:space="preserve">
+    <value>📥 Импорт</value>
+  </data>
+  <data name="MenuItemExport" xml:space="preserve">
+    <value>📤 Экспорт</value>
+  </data>
+  <data name="MenuItemExportProjectFile" xml:space="preserve">
+    <value>📤 Экспорт в .gt4</value>
+  </data>
+  <data name="FileDialogSelectImport" xml:space="preserve">
+    <value>Выберите файл GEDCOM или .gt4</value>
+  </data>
+  <data name="ShareProjectFileTitle" xml:space="preserve">
+    <value>Экспорт .gt4</value>
+  </data>
+  <data name="TitleExportChoice" xml:space="preserve">
+    <value>Экспортировать как…</value>
+  </data>
   <data name="AlertImportGedcomConfirm_1" xml:space="preserve">
     <value>Импортировать файл GEDCOM в {0}? Совпадающие люди будут объединены, остальные добавлены.</value>
   </data>

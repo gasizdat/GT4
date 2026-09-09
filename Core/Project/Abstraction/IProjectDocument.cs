@@ -17,4 +17,6 @@ public interface IProjectDocument : IProjectConnection, IAsyncDisposable, IDispo
   IRelativesProvider RelativesProvider { get; }
   IFamilyTreeProvider FamilyTreeProvider { get; }
   IKinshipFinder KinshipFinder { get; }
+
+  Task ExportSnapshotAsync(string destinationPath, CancellationToken token);
 }

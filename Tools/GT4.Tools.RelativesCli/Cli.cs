@@ -221,7 +221,7 @@ internal static class Cli
   /// </summary>
   private static async Task RunExportAsync(IGedcomExporter exporter, IProjectDocument document, string outPath, CancellationToken token)
   {
-    if (outPath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+    if (string.Equals(Path.GetExtension(outPath), ProjectFileExtensions.ZipExtension, StringComparison.OrdinalIgnoreCase))
     {
       var entryName = Path.GetFileNameWithoutExtension(outPath);
       await using var archive = new FileStream(outPath, FileMode.Create);

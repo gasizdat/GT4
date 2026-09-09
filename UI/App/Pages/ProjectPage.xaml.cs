@@ -23,7 +23,7 @@ public partial class ProjectPage : ContentPage
   // list's fresh-import command.
   private static readonly FilePickerFileType GedcomFileType = new(new Dictionary<DevicePlatform, IEnumerable<string>>
   {
-    [DevicePlatform.WinUI] = [".ged", ".zip"],
+    [DevicePlatform.WinUI] = [ProjectFileExtensions.GedExtension, ProjectFileExtensions.ZipExtension],
     [DevicePlatform.Android] = ["*/*"],
   });
 
@@ -322,8 +322,8 @@ public partial class ProjectPage : ContentPage
         await _NavigationService.GoToAsync(UIRoutes.GetRoute<KinshipFinderPage>());
         break;
 
-      case string commandName when commandName == "ExportGedcom":
-        await OnExportGedcom();
+      case string commandName when commandName == "Export":
+        await OnExport();
         break;
 
       case string commandName when commandName == "ImportGedcom":
@@ -406,21 +406,56 @@ public partial class ProjectPage : ContentPage
     Refresh();
   }
 
+  private async Task OnExport()
+  {
+    var choice = await DisplayActionSheetAsync(
+      UIStrings.TitleExportChoice, UIStrings.BtnNameCancel, null,
+      UIStrings.MenuItemExportGedcom, UIStrings.MenuItemExportProjectFile);
+
+    if (choice == UIStrings.MenuItemExportGedcom)
+    {
+      await OnExportGedcom();
+    }
+    else if (choice == UIStrings.MenuItemExportProjectFile)
+    {
+      await OnExportProjectFile();
+    }
+  }
+
   // Exports the open project to a GEDCOM package in the cache directory and hands it to the OS share sheet,
   // which lets the user save or send it. The media the document references travels beside the .ged rather
   // than inside it, so the two are shared as one archive.
   private async Task OnExportGedcom()
   {
-    var name = FileNameUtils.Sanitize(_CurrentProjectProvider.Info.Name, "project");
-    var path = Path.Combine(FileSystem.CacheDirectory, name + GedcomPackage.ArchiveExtension);
+    var name = FileNameUtils.Sanitize(_CurrentProjectProvider.Info.Name, "project") + ProjectFileExtensions.GedExtension;
+    var path = Path.Combine(FileSystem.CacheDirectory, name + ProjectFileExtensions.ZipExtension);
 
     await using (var archive = new FileStream(path, FileMode.Create))
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-      await GedcomPackage.WriteAsync(_Exporter, _CurrentProjectProvider.Project, archive, name + ".ged", token);
+      await GedcomPackage.WriteAsync(_Exporter, _CurrentProjectProvider.Project, archive, name, token);
     }
 
     var request = new ShareFileRequest { Title = UIStrings.ShareGedcomTitle, File = new ShareFile(path) };
+    await Share.Default.RequestAsync(request);
+  }
+
+  // Exports the open project as a .gt4 snapshot via VACUUM INTO, which needs no transaction and
+  // reflects every commit made this session -- unlike the origin file, which ProjectHost only
+  // overwrites with the cache when the project closes.
+  private async Task OnExportProjectFile()
+  {
+    var name = FileNameUtils.Sanitize(_CurrentProjectProvider.Info.Name, "project");
+    var path = Path.Combine(FileSystem.CacheDirectory, name + ProjectFileExtensions.Gt4Extension);
+    if (File.Exists(path))
+    {
+      File.Delete(path);
+    }
+
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    await _CurrentProjectProvider.Project.ExportSnapshotAsync(path, token);
+
+    var request = new ShareFileRequest { Title = UIStrings.ShareProjectFileTitle, File = new ShareFile(path) };
     await Share.Default.RequestAsync(request);
   }
 

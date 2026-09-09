@@ -16,8 +16,8 @@ namespace GT4.UI.DeviceTests;
 /// <summary>
 /// Covers ProjectPage against a real MAUI runtime with a mocked Core. PageCommand("EditProject")
 /// and PageCommand("CreateFamily") push modal dialogs via Navigation; those flows are driven through
-/// WindowHost/ModalDialogHarness. ExportGedcom/ImportGedcom are out of scope -- they depend on
-/// FileSystem/Share/FilePicker platform APIs, not just Core.
+/// WindowHost/ModalDialogHarness. PageCommand("Export")/("ImportGedcom") are out of scope -- they
+/// depend on DisplayActionSheet/FileSystem/Share/FilePicker platform APIs, not just Core.
 /// </summary>
 public class ProjectPageTests
 {

@@ -12,6 +12,8 @@ public partial class App : Application
 {
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
+  private readonly IProjectList _ProjectList;
+  private readonly INavigationService _NavigationService;
   private readonly FontScale _FontScale;
   private readonly ISettingEditor? _FontScaleSetting;
   private readonly IInteractiveConfiguration? _AppConfiguration;
@@ -25,6 +27,8 @@ public partial class App : Application
   public App(
     ICancellationTokenProvider cancellationTokenProvider,
     ICurrentProjectProvider currentProjectProvider,
+    IProjectList projectList,
+    INavigationService navigationService,
     [FromKeyedServices(SettingKeys.FontScale)]
     ISettingEditor? fontScaleSetting,
     FontScale fontScale,
@@ -39,6 +43,8 @@ public partial class App : Application
   {
     _CancellationTokenProvider = cancellationTokenProvider;
     _CurrentProjectProvider = currentProjectProvider;
+    _ProjectList = projectList;
+    _NavigationService = navigationService;
     _FontScale = fontScale;
     _FontScaleSetting = fontScaleSetting;
     _AppConfiguration = appConfiguration;
@@ -125,11 +131,16 @@ public partial class App : Application
     window.Deactivated += async (_, _) => await CloseOnDeactivationAsync(saveLastOpenProject: true);
     window.Destroying += async (_, _) => await CloseOnDeactivationAsync(saveLastOpenProject: false);
     RegisterZoomHotkeys(window);
+    HandleFileActivation(window);
     return window;
   }
 
   // Implemented per platform (Windows). On platforms without a keyboard this compiles away.
   partial void RegisterZoomHotkeys(Window window);
+
+  // Implemented per platform (Windows, for double-clicking a .gt4 file). Android handles the
+  // equivalent through its own intent filter (MainActivity), not this hook.
+  partial void HandleFileActivation(Window window);
 
   internal void StepZoom(double delta)
   {

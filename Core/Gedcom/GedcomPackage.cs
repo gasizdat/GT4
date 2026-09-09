@@ -12,8 +12,6 @@ namespace GT4.Core.Gedcom;
 /// </summary>
 public static class GedcomPackage
 {
-  public const string ArchiveExtension = ".ged.zip";
-
   /// <summary>
   /// A zip in Create mode allows one open entry at a time, so the GEDCOM text is buffered and written last,
   /// after the media entries the export produced. The text is small -- media no longer travels inside it.

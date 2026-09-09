@@ -19,12 +19,12 @@ public partial class ProjectListPage : ContentPage
   // MauiAsset strips the "Resources\Raw" prefix from the logical name (see AppCommon.props).
   private const string DemoGedcomAsset = "demo.ged";
 
-  // GEDCOM has no standard MIME type: Windows filters on the ".ged" extension (and ".zip", which is what an
-  // export produces), while Android has none, so it falls back to any file. A picked file always lands in a
+  // Neither GEDCOM nor .gt4 has a MIME type Windows recognizes, so it filters on the three extensions
+  // directly; Android has none, so it falls back to any file. A picked file always lands in a
   // brand-new project, so this only governs which files are easy to select.
-  private static readonly FilePickerFileType GedcomFileType = new(new Dictionary<DevicePlatform, IEnumerable<string>>
+  private static readonly FilePickerFileType ImportFileType = new(new Dictionary<DevicePlatform, IEnumerable<string>>
   {
-    [DevicePlatform.WinUI] = [".ged", ".zip"],
+    [DevicePlatform.WinUI] = [ProjectFileExtensions.GedExtension, ProjectFileExtensions.ZipExtension, ProjectFileExtensions.Gt4Extension],
     [DevicePlatform.Android] = ["*/*"],
   });
 
@@ -170,8 +170,8 @@ public partial class ProjectListPage : ContentPage
       case string commandName when commandName == "Demo":
         await OnOpenDemoProject();
         break;
-      case string commandName when commandName == "ImportGedcom":
-        await OnImportGedcom();
+      case string commandName when commandName == "Import":
+        await OnImport();
         break;
       case string commandName when commandName == "Refresh":
         this.RefreshView();
@@ -229,12 +229,23 @@ public partial class ProjectListPage : ContentPage
     await using var project = await _ProjectList.CreateAsync(projectInfo.Name, projectInfo.Description, token);
   }
 
-  private async Task OnImportGedcom()
+  // A .gt4 file is a plain copy into a new project, matching Android's file-association handler.
+  private async Task OnImport()
   {
-    var pickOptions = new PickOptions { PickerTitle = UIStrings.FileDialogSelectGedcom, FileTypes = GedcomFileType };
+    var pickOptions = new PickOptions { PickerTitle = UIStrings.FileDialogSelectImport, FileTypes = ImportFileType };
     var file = await FilePicker.Default.PickAsync(pickOptions);
     if (file is null)
       return;
+
+    var extension = Path.GetExtension(file.FileName);
+    if (string.Equals(extension, ProjectFileExtensions.Gt4Extension, StringComparison.OrdinalIgnoreCase))
+    {
+      using var stream = await file.OpenReadAsync();
+      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      await _ProjectList.ImportAsync(stream, token);
+      await UpdateProjectList();
+      return;
+    }
 
     using var source = await GedcomImportSource.OpenAsync(file, FileSystem.CacheDirectory);
     using var reader = await _GedcomImportEncoding.ResolveReaderAsync(source.OpenStreamAsync, Navigation);

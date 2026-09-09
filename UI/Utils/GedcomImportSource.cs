@@ -1,3 +1,4 @@
+using GT4.Core.Project.Abstraction;
 using GT4.UI.Resources;
 using System.IO.Compression;
 
@@ -31,7 +32,7 @@ public sealed class GedcomImportSource : IDisposable
 
   public static async Task<GedcomImportSource> OpenAsync(FileResult file, string tempRoot)
   {
-    if (file.FileName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+    if (string.Equals(Path.GetExtension(file.FileName), ProjectFileExtensions.ZipExtension, StringComparison.OrdinalIgnoreCase))
       return await UnpackAsync(file.OpenReadAsync, tempRoot);
 
     var basePath = string.IsNullOrEmpty(file.FullPath) ? null : Path.GetDirectoryName(file.FullPath);
@@ -58,7 +59,7 @@ public sealed class GedcomImportSource : IDisposable
       }
       ZipFile.ExtractToDirectory(archivePath, extracted);
 
-      var gedcomPath = Directory.EnumerateFiles(extracted, "*.ged", SearchOption.AllDirectories).FirstOrDefault();
+      var gedcomPath = Directory.EnumerateFiles(extracted, "*" + ProjectFileExtensions.GedExtension, SearchOption.AllDirectories).FirstOrDefault();
       if (gedcomPath is null)
         throw new InvalidDataException(UIStrings.AlertImportGedcomArchiveEmpty);
 
