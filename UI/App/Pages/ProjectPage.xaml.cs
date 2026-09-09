@@ -1,5 +1,6 @@
 using GT4.Core.Gedcom;
 using GT4.Core.Gedcom.Abstraction;
+using GT4.Core.Project;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
@@ -23,7 +24,7 @@ public partial class ProjectPage : ContentPage
   // list's fresh-import command.
   private static readonly FilePickerFileType GedcomFileType = new(new Dictionary<DevicePlatform, IEnumerable<string>>
   {
-    [DevicePlatform.WinUI] = [GedcomPackage.FileExtension, GedcomPackage.ZipExtension],
+    [DevicePlatform.WinUI] = [ProjectFileExtensions.GedExtension, ProjectFileExtensions.ZipExtension],
     [DevicePlatform.Android] = ["*/*"],
   });
 
@@ -428,12 +429,12 @@ public partial class ProjectPage : ContentPage
   private async Task OnExportGedcom()
   {
     var name = FileNameUtils.Sanitize(_CurrentProjectProvider.Info.Name, "project");
-    var path = Path.Combine(FileSystem.CacheDirectory, name + GedcomPackage.ArchiveExtension);
+    var path = Path.Combine(FileSystem.CacheDirectory, name + ProjectFileExtensions.GedExtension + ProjectFileExtensions.ZipExtension);
 
     await using (var archive = new FileStream(path, FileMode.Create))
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-      await GedcomPackage.WriteAsync(_Exporter, _CurrentProjectProvider.Project, archive, name + GedcomPackage.FileExtension, token);
+      await GedcomPackage.WriteAsync(_Exporter, _CurrentProjectProvider.Project, archive, name + ProjectFileExtensions.GedExtension, token);
     }
 
     var request = new ShareFileRequest { Title = UIStrings.ShareGedcomTitle, File = new ShareFile(path) };

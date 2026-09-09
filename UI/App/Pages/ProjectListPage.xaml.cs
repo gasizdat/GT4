@@ -1,5 +1,5 @@
-using GT4.Core.Gedcom;
 using GT4.Core.Gedcom.Abstraction;
+using GT4.Core.Project;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
@@ -25,7 +25,7 @@ public partial class ProjectListPage : ContentPage
   // brand-new project, so this only governs which files are easy to select.
   private static readonly FilePickerFileType ImportFileType = new(new Dictionary<DevicePlatform, IEnumerable<string>>
   {
-    [DevicePlatform.WinUI] = [GedcomPackage.FileExtension, GedcomPackage.ZipExtension, IProjectDocument.FileExtension],
+    [DevicePlatform.WinUI] = [ProjectFileExtensions.GedExtension, ProjectFileExtensions.ZipExtension, IProjectDocument.FileExtension],
     [DevicePlatform.Android] = ["*/*"],
   });
 
