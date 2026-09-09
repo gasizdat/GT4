@@ -89,4 +89,44 @@ public sealed class GedcomDateTests
     GedcomDate.Parse("not a date").Status.Should().Be(DateStatus.Unknown);
     GedcomDate.Parse(null).Status.Should().Be(DateStatus.Unknown);
   }
+
+  [Fact]
+  public void GregorianEscape_IsStrippedAndParsesNormally()
+  {
+    var parsed = GedcomDate.Parse("@#DGREGORIAN@ 4 JUL 1776");
+
+    parsed.Should().Be(Date.Create(17760704, DateStatus.WellKnown));
+  }
+
+  [Theory]
+  // Louis XVI's execution: 2 Pluviose An I -- the epoch, not a leap boundary.
+  [InlineData("@#DFRENCH R@ 2 PLUV 1", 17930121)]
+  // Marie Antoinette's execution: 25 Vendemiaire An II.
+  [InlineData("@#DFRENCH R@ 25 VEND 2", 17931016)]
+  // An III is the calendar's first sextile year; its epoch shifts An IV's start by a day (23 rather than
+  // 22 September), the one place a fixed 30-day month count is not enough on its own.
+  [InlineData("@#DFRENCH R@ 1 VEND 4", 17950923)]
+  // Lowercase: GEDCOM data arrives from other people's exporters, not always uppercase.
+  [InlineData("@#dfrench r@ 2 pluv 1", 17930121)]
+  public void FrenchRepublicanEscape_ConvertsToGregorian(string text, int expectedCode)
+  {
+    var parsed = GedcomDate.Parse(text);
+
+    parsed.Should().Be(Date.Create(expectedCode, DateStatus.WellKnown));
+  }
+
+  [Fact]
+  public void FrenchRepublicanEscape_OutsideCalendarsOfficialUse_ReturnsUnknown()
+  {
+    GedcomDate.Parse("@#DFRENCH R@ 1 VEND 15").Status.Should().Be(DateStatus.Unknown);
+  }
+
+  [Theory]
+  [InlineData("@#DFRENCH R@ 2 PLUV 1")]
+  [InlineData("@#dfrench r@ 2 pluv 1")]
+  public void FrenchRepublicanEscape_IsAConvertedCalendarEvenThoughItNowParses(string text)
+  {
+    GedcomDate.Parse(text).Status.Should().Be(DateStatus.WellKnown);
+    GedcomDate.IsConvertedCalendar(text).Should().BeTrue();
+  }
 }

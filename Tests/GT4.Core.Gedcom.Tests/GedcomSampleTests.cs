@@ -295,9 +295,11 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   [Fact]
   public async Task CalendarEscapeDate_KeptAsResidueAndReEmittedVerbatim()
   {
-    // A date in a non-Gregorian calendar is unparseable for GT4, so it belongs to the owned tag's residue.
-    // The event itself is still modeled (a DEAT means "known dead"), so the residual DATE has to merge back
-    // under that one regenerated event rather than come out as a second, bare one.
+    // A Julian date is unparseable for GT4, so it belongs to the owned tag's residue. A French Republican
+    // date converts to its Gregorian equivalent for the model, but the model has no field to rebuild the
+    // original escaped form from, so it too stays in residue. Either way the event itself is still modeled
+    // (a DEAT means "known dead"), so the residual DATE has to merge back under that one regenerated event
+    // rather than come out as a second, bare one.
     const string ged =
       "0 HEAD\n1 CHAR UTF-8\n" +
       "0 @I1@ INDI\n1 NAME Louis /Capet/\n1 SEX M\n" +
@@ -307,7 +309,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     await _importer.ImportAsync(document, new StringReader(ged), Token);
 
     var person = (await document.Persons.GetPersonsAsync(Token)).Single();
-    person.DeathDate!.Value.Status.Should().Be(DateStatus.Unknown);
+    person.DeathDate!.Value.Should().Be(Date.Create(17930121, DateStatus.WellKnown));
 
     var text = await ExportToTextAsync(document);
     text.Should().Contain("2 DATE @#DJULIAN@ 23 AUG 1754").And.Contain("2 DATE @#DFRENCH R@ 2 PLUV 1");
@@ -320,6 +322,26 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
     var reexported = await ExportToTextAsync(reimported);
     reexported.Should().Be(text);
+  }
+
+  [Fact]
+  public async Task GregorianCalendarEscape_IsStrippedRatherThanKeptAsResidue()
+  {
+    // Unlike the non-Gregorian escapes above, "@#DGREGORIAN@" states nothing the model doesn't already
+    // capture, so it is dropped rather than round-tripped byte-for-byte -- a deliberate normalization, not
+    // an oversight.
+    const string ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME Louis /Capet/\n1 SEX M\n" +
+      "1 BIRT\n2 DATE @#DGREGORIAN@ 23 AUG 1754\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var person = (await document.Persons.GetPersonsAsync(Token)).Single();
+    person.BirthDate.Should().Be(Date.Create(17540823, DateStatus.WellKnown));
+
+    var text = await ExportToTextAsync(document);
+    text.Should().Contain("2 DATE 23 AUG 1754").And.NotContain("DGREGORIAN");
   }
 
   [Fact]

@@ -29,13 +29,14 @@ internal static class GedcomMapping
 
   /// <summary>
   /// Whether a modeled sub-tag really rides in the GT4 model, and so needs no residue. A DATE stating
-  /// something <see cref="GedcomDate"/> cannot parse — a calendar escape such as <c>@#DFRENCH R@ 2 PLUV 1</c>
-  /// — does not; a valueless one has nothing to keep.
+  /// something <see cref="GedcomDate"/> cannot parse — a calendar escape such as <c>@#DJULIAN@</c> — does
+  /// not; nor does one GT4 converts rather than reproduces verbatim, such as <c>@#DFRENCH R@ 2 PLUV 1</c>
+  /// (see <see cref="GedcomDate.IsConvertedCalendar"/>); a valueless one has nothing to keep.
   /// </summary>
   public static bool IsCarriedByModel(GedcomNode modeledChild) =>
     modeledChild.Tag != GedcomTags.Date
     || string.IsNullOrWhiteSpace(modeledChild.Value)
-    || GedcomDate.Parse(modeledChild.Value).Status != DateStatus.Unknown;
+    || (GedcomDate.Parse(modeledChild.Value).Status != DateStatus.Unknown && !GedcomDate.IsConvertedCalendar(modeledChild.Value));
 
   /// <summary>
   /// Whether an owned tag's own value states something GT4 has no field for. Only an event carries such a

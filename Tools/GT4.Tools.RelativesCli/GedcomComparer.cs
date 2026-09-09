@@ -209,7 +209,7 @@ internal static class GedcomComparer
   }
 
   /// <summary>
-  /// A date the source states but <see cref="GedcomDate"/> cannot parse -- a "@#DFRENCH R@ ..." calendar
+  /// A date the source states but <see cref="GedcomDate"/> cannot parse -- a "@#DJULIAN@ ..." calendar
   /// escape, see issue #173 -- becomes nothing on import, and would otherwise compare equal to the nothing
   /// on the other side, certifying the loss as fidelity.
   /// </summary>
