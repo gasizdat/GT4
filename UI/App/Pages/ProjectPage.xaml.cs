@@ -427,13 +427,13 @@ public partial class ProjectPage : ContentPage
   // than inside it, so the two are shared as one archive.
   private async Task OnExportGedcom()
   {
-    var name = FileNameUtils.Sanitize(_CurrentProjectProvider.Info.Name, "project");
-    var path = Path.Combine(FileSystem.CacheDirectory, name + ProjectFileExtensions.GedExtension + ProjectFileExtensions.ZipExtension);
+    var name = FileNameUtils.Sanitize(_CurrentProjectProvider.Info.Name, "project") + ProjectFileExtensions.GedExtension;
+    var path = Path.Combine(FileSystem.CacheDirectory, name + ProjectFileExtensions.ZipExtension);
 
     await using (var archive = new FileStream(path, FileMode.Create))
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-      await GedcomPackage.WriteAsync(_Exporter, _CurrentProjectProvider.Project, archive, name + ProjectFileExtensions.GedExtension, token);
+      await GedcomPackage.WriteAsync(_Exporter, _CurrentProjectProvider.Project, archive, name, token);
     }
 
     var request = new ShareFileRequest { Title = UIStrings.ShareGedcomTitle, File = new ShareFile(path) };
