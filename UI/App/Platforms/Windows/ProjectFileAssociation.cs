@@ -1,5 +1,6 @@
 using GT4.Core.Project.Abstraction;
 using Microsoft.Win32;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace GT4.UI;
@@ -15,6 +16,13 @@ internal static class ProjectFileAssociation
 
   public static void EnsureRegisteredIfUnpackaged()
   {
+#if DEBUG
+    if (Debugger.IsAttached)
+    {
+      return;
+    }
+#endif
+
     if (IsPackaged() || Environment.ProcessPath is not string exePath)
     {
       return;
