@@ -1,6 +1,5 @@
 using GT4.Core.Gedcom;
 using GT4.Core.Gedcom.Abstraction;
-using GT4.Core.Project;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;

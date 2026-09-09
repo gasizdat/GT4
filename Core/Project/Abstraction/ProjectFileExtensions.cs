@@ -1,4 +1,4 @@
-﻿namespace GT4.Core.Project;
+namespace GT4.Core.Project.Abstraction;
 
 public static class ProjectFileExtensions
 {
