@@ -131,7 +131,7 @@ public partial class App : Application
     window.Deactivated += async (_, _) => await CloseOnDeactivationAsync(saveLastOpenProject: true);
     window.Destroying += async (_, _) => await CloseOnDeactivationAsync(saveLastOpenProject: false);
     RegisterZoomHotkeys(window);
-    HandleFileActivation();
+    HandleFileActivation(window);
     return window;
   }
 
@@ -140,7 +140,7 @@ public partial class App : Application
 
   // Implemented per platform (Windows, for double-clicking a .gt4 file). Android handles the
   // equivalent through its own intent filter (MainActivity), not this hook.
-  partial void HandleFileActivation();
+  partial void HandleFileActivation(Window window);
 
   internal void StepZoom(double delta)
   {

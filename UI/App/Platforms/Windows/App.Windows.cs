@@ -24,9 +24,7 @@ public partial class App
   // build is registry-launched, so it comes as a plain argv entry; the MSIX build's manifest-declared
   // association is expected to come through AppInstance's activation args instead, since this is a
   // WinUI/Windows App SDK Application rather than a classic Win32 entry point.
-  partial void HandleFileActivation() => _ = ImportActivationFileAsync();
-
-  private async Task ImportActivationFileAsync()
+  partial void HandleFileActivation(Microsoft.Maui.Controls.Window window)
   {
     ProjectFileAssociation.EnsureRegisteredIfUnpackaged();
 
@@ -36,6 +34,20 @@ public partial class App
       return;
     }
 
+    // Shell.Current is still null this early in CreateWindow (confirmed via a NullReferenceException
+    // out of GoToAsync when this ran unconditionally), so the navigation is deferred to the window's
+    // first Activated.
+    void OnActivated(object? sender, EventArgs e)
+    {
+      window.Activated -= OnActivated;
+      _ = ImportActivationFileAsync(path);
+    }
+
+    window.Activated += OnActivated;
+  }
+
+  private async Task ImportActivationFileAsync(string path)
+  {
     ProjectInfo info;
     try
     {
@@ -45,8 +57,8 @@ public partial class App
     }
     catch (Exception ex)
     {
-      // Same rationale as the other lifecycle handlers in App.xaml.cs: this runs during window
-      // creation, before any page exists to show an alert.
+      // Same rationale as the other lifecycle handlers in App.xaml.cs: this is a fire-and-forget
+      // continuation off an event handler, with no request context to surface a failure to.
       WriteErrorLog(ex.ToString());
       return;
     }
