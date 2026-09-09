@@ -1,4 +1,5 @@
 using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Dto;
 using GT4.UI.Pages;
 using GT4.UI.Utils.Settings;
 using Microsoft.UI.Xaml;
@@ -15,9 +16,9 @@ public partial class App
   // root content so they fire from any page regardless of focus.
   partial void RegisterZoomHotkeys(Microsoft.Maui.Controls.Window window) => window.HandlerChanged += (_, _) => AttachAccelerators(window);
 
-  // Mirrors MainActivity's Android handler: land a double-clicked .gt4 file as a new project and
-  // show the list. Runs once per launch -- there is no OnNewIntent equivalent here, since a second
-  // double-click while running just opens a second instance.
+  // Opens a double-clicked .gt4 file as the project it already is. Runs once per launch -- there is
+  // no OnNewIntent equivalent here, since a second double-click while running just opens a second
+  // instance.
   //
   // The activating path can arrive two ways, so both are read rather than assumed: the unpackaged
   // build is registry-launched, so it comes as a plain argv entry; the MSIX build's manifest-declared
@@ -35,19 +36,37 @@ public partial class App
       return;
     }
 
+    ProjectInfo info;
     try
     {
       using var content = File.OpenRead(path);
-      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-      await _ProjectList.ImportAsync(content, token);
-      await _NavigationService.GoToAsync(UIRoutes.GetRoute<ProjectListPage>());
+      using var importToken = _CancellationTokenProvider.CreateDbCancellationToken();
+      info = await _ProjectList.ImportAsync(content, importToken);
     }
     catch (Exception ex)
     {
       // Same rationale as the other lifecycle handlers in App.xaml.cs: this runs during window
       // creation, before any page exists to show an alert.
       WriteErrorLog(ex.ToString());
+      return;
     }
+
+    // A schema mismatch (e.g. a .gt4 from an older/newer GT4 install) leaves the import done but
+    // the project unopenable here, with no page yet to run ProjectListPage's upgrade prompt; fall
+    // back to the list, where the now-visible project offers that prompt on selection.
+    var route = UIRoutes.GetRoute<ProjectListPage>();
+    try
+    {
+      using var openToken = _CancellationTokenProvider.CreateDbCancellationToken();
+      await _CurrentProjectProvider.OpenAsync(info, openToken);
+      route = UIRoutes.GetRoute<ProjectPage>();
+    }
+    catch (Exception ex)
+    {
+      WriteErrorLog(ex.ToString());
+    }
+
+    await _NavigationService.GoToAsync(route);
   }
 
   private static string? GetActivationFilePath()
