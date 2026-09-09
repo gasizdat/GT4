@@ -237,7 +237,8 @@ public partial class ProjectListPage : ContentPage
     if (file is null)
       return;
 
-    if (file.FileName.EndsWith(".gt4", StringComparison.OrdinalIgnoreCase))
+    var extension = Path.GetExtension(file.FileName);
+    if (string.Equals(extension, ".gt4", StringComparison.OrdinalIgnoreCase))
     {
       using var stream = await file.OpenReadAsync();
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
