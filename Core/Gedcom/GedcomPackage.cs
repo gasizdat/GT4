@@ -14,6 +14,8 @@ public static class GedcomPackage
 {
   public const string ArchiveExtension = ".ged.zip";
   public const string FileExtension = ".ged";
+  // Path.GetExtension and the OS file-picker both see only the last segment of ArchiveExtension.
+  public const string ZipExtension = ".zip";
 
   /// <summary>
   /// A zip in Create mode allows one open entry at a time, so the GEDCOM text is buffered and written last,

@@ -25,7 +25,7 @@ public partial class ProjectListPage : ContentPage
   // brand-new project, so this only governs which files are easy to select.
   private static readonly FilePickerFileType ImportFileType = new(new Dictionary<DevicePlatform, IEnumerable<string>>
   {
-    [DevicePlatform.WinUI] = [GedcomPackage.FileExtension, ".zip", IProjectDocument.FileExtension],
+    [DevicePlatform.WinUI] = [GedcomPackage.FileExtension, GedcomPackage.ZipExtension, IProjectDocument.FileExtension],
     [DevicePlatform.Android] = ["*/*"],
   });
 

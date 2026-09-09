@@ -23,7 +23,7 @@ public partial class ProjectPage : ContentPage
   // list's fresh-import command.
   private static readonly FilePickerFileType GedcomFileType = new(new Dictionary<DevicePlatform, IEnumerable<string>>
   {
-    [DevicePlatform.WinUI] = [GedcomPackage.FileExtension, ".zip"],
+    [DevicePlatform.WinUI] = [GedcomPackage.FileExtension, GedcomPackage.ZipExtension],
     [DevicePlatform.Android] = ["*/*"],
   });
 
