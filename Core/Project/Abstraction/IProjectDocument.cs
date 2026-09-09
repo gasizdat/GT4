@@ -3,6 +3,7 @@
 public interface IProjectDocument : IProjectConnection, IAsyncDisposable, IDisposable
 {
   const string MimeType = "application/gt4;storage=sqlite";
+  const string FileExtension = ".gt4";
   long ProjectRevision { get; }
   ITableData Data { get; }
   IFamilyManager FamilyManager { get; }

@@ -1,3 +1,4 @@
+using GT4.Core.Project.Abstraction;
 using Microsoft.Win32;
 using System.Runtime.InteropServices;
 
@@ -20,7 +21,7 @@ internal static class ProjectFileAssociation
     }
 
     var command = $"\"{exePath}\" \"%1\"";
-    using var extensionKey = Registry.CurrentUser.CreateSubKey(@"Software\Classes\.gt4");
+    using var extensionKey = Registry.CurrentUser.CreateSubKey($@"Software\Classes\{IProjectDocument.FileExtension}");
     using var commandKey = Registry.CurrentUser.OpenSubKey($@"Software\Classes\{ProgId}\shell\open\command");
     if ((string?)extensionKey.GetValue(null) == ProgId && (string?)commandKey?.GetValue(null) == command)
     {

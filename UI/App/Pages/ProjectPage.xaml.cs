@@ -23,7 +23,7 @@ public partial class ProjectPage : ContentPage
   // list's fresh-import command.
   private static readonly FilePickerFileType GedcomFileType = new(new Dictionary<DevicePlatform, IEnumerable<string>>
   {
-    [DevicePlatform.WinUI] = [".ged", ".zip"],
+    [DevicePlatform.WinUI] = [GedcomPackage.FileExtension, ".zip"],
     [DevicePlatform.Android] = ["*/*"],
   });
 
@@ -433,7 +433,7 @@ public partial class ProjectPage : ContentPage
     await using (var archive = new FileStream(path, FileMode.Create))
     {
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-      await GedcomPackage.WriteAsync(_Exporter, _CurrentProjectProvider.Project, archive, name + ".ged", token);
+      await GedcomPackage.WriteAsync(_Exporter, _CurrentProjectProvider.Project, archive, name + GedcomPackage.FileExtension, token);
     }
 
     var request = new ShareFileRequest { Title = UIStrings.ShareGedcomTitle, File = new ShareFile(path) };
@@ -446,7 +446,7 @@ public partial class ProjectPage : ContentPage
   private async Task OnExportProjectFile()
   {
     var name = FileNameUtils.Sanitize(_CurrentProjectProvider.Info.Name, "project");
-    var path = Path.Combine(FileSystem.CacheDirectory, name + ".gt4");
+    var path = Path.Combine(FileSystem.CacheDirectory, name + IProjectDocument.FileExtension);
     if (File.Exists(path))
     {
       File.Delete(path);

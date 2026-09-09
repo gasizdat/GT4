@@ -1,3 +1,4 @@
+using GT4.Core.Project.Abstraction;
 using GT4.UI.Pages;
 using GT4.UI.Utils.Settings;
 using Microsoft.UI.Xaml;
@@ -70,7 +71,7 @@ public partial class App
   }
 
   private static bool IsProjectFile(string path) =>
-    string.Equals(Path.GetExtension(path), ".gt4", StringComparison.OrdinalIgnoreCase);
+    string.Equals(Path.GetExtension(path), IProjectDocument.FileExtension, StringComparison.OrdinalIgnoreCase);
 
   private void AttachAccelerators(Microsoft.Maui.Controls.Window window)
   {

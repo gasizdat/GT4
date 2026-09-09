@@ -1,3 +1,4 @@
+using GT4.Core.Gedcom;
 using GT4.Core.Gedcom.Abstraction;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
@@ -24,7 +25,7 @@ public partial class ProjectListPage : ContentPage
   // brand-new project, so this only governs which files are easy to select.
   private static readonly FilePickerFileType ImportFileType = new(new Dictionary<DevicePlatform, IEnumerable<string>>
   {
-    [DevicePlatform.WinUI] = [".ged", ".zip", ".gt4"],
+    [DevicePlatform.WinUI] = [GedcomPackage.FileExtension, ".zip", IProjectDocument.FileExtension],
     [DevicePlatform.Android] = ["*/*"],
   });
 
@@ -238,7 +239,7 @@ public partial class ProjectListPage : ContentPage
       return;
 
     var extension = Path.GetExtension(file.FileName);
-    if (string.Equals(extension, ".gt4", StringComparison.OrdinalIgnoreCase))
+    if (string.Equals(extension, IProjectDocument.FileExtension, StringComparison.OrdinalIgnoreCase))
     {
       using var stream = await file.OpenReadAsync();
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();
