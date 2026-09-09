@@ -75,6 +75,27 @@ public class ImagePresenterTests
   }
 
   [Fact]
+  public async Task Tapping_an_all_placeholder_presenter_does_not_open_the_viewer()
+  {
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+
+    var page = new ContentPage();
+    await using var window = await WindowHost.AttachAsync(page);
+    var services = new TestServices();
+    var photo = new PhotoInfo(ImageSource.FromStream(() => new MemoryStream([1, 2, 3])), null, IsPlaceholder: true);
+    var presenter = await MainThread.InvokeOnMainThreadAsync(() => new TestableImagePresenter(services.Provider)
+    {
+      Photos = [photo],
+    });
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.Content = presenter);
+    await MainThread.InvokeOnMainThreadAsync(() => presenter.OpenViewerCommand.Execute(null));
+    await Task.Delay(200);
+
+    Assert.Empty(page.Navigation.ModalStack);
+  }
+
+  [Fact]
   public async Task The_picture_decides_the_presenters_width()
   {
     var width = await PresenterWidthAsync("A photo");

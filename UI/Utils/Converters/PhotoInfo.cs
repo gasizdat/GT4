@@ -1,3 +1,3 @@
 namespace GT4.UI.Utils.Converters;
 
-public sealed record PhotoInfo(ImageSource Source, string? Caption);
+public sealed record PhotoInfo(ImageSource Source, string? Caption, bool IsPlaceholder = false);
