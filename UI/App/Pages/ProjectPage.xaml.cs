@@ -408,7 +408,7 @@ public partial class ProjectPage : ContentPage
 
   private async Task OnExport()
   {
-    var choice = await DisplayActionSheet(
+    var choice = await DisplayActionSheetAsync(
       UIStrings.TitleExportChoice, UIStrings.BtnNameCancel, null,
       UIStrings.MenuItemExportGedcom, UIStrings.MenuItemExportProjectFile);
 
