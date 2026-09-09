@@ -71,7 +71,7 @@ public partial class App
   }
 
   private static bool IsProjectFile(string path) =>
-    string.Equals(Path.GetExtension(path), IProjectDocument.FileExtension, StringComparison.OrdinalIgnoreCase);
+    string.Equals(Path.GetExtension(path), ProjectFileExtensions.Gt4Extension, StringComparison.OrdinalIgnoreCase);
 
   private void AttachAccelerators(Microsoft.Maui.Controls.Window window)
   {

@@ -21,7 +21,7 @@ internal static class ProjectFileAssociation
     }
 
     var command = $"\"{exePath}\" \"%1\"";
-    using var extensionKey = Registry.CurrentUser.CreateSubKey($@"Software\Classes\{IProjectDocument.FileExtension}");
+    using var extensionKey = Registry.CurrentUser.CreateSubKey($@"Software\Classes\{ProjectFileExtensions.Gt4Extension}");
     using var commandKey = Registry.CurrentUser.OpenSubKey($@"Software\Classes\{ProgId}\shell\open\command");
     if ((string?)extensionKey.GetValue(null) == ProgId && (string?)commandKey?.GetValue(null) == command)
     {

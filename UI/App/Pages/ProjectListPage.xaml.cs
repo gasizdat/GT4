@@ -24,7 +24,7 @@ public partial class ProjectListPage : ContentPage
   // brand-new project, so this only governs which files are easy to select.
   private static readonly FilePickerFileType ImportFileType = new(new Dictionary<DevicePlatform, IEnumerable<string>>
   {
-    [DevicePlatform.WinUI] = [ProjectFileExtensions.GedExtension, ProjectFileExtensions.ZipExtension, IProjectDocument.FileExtension],
+    [DevicePlatform.WinUI] = [ProjectFileExtensions.GedExtension, ProjectFileExtensions.ZipExtension, ProjectFileExtensions.Gt4Extension],
     [DevicePlatform.Android] = ["*/*"],
   });
 
@@ -238,7 +238,7 @@ public partial class ProjectListPage : ContentPage
       return;
 
     var extension = Path.GetExtension(file.FileName);
-    if (string.Equals(extension, IProjectDocument.FileExtension, StringComparison.OrdinalIgnoreCase))
+    if (string.Equals(extension, ProjectFileExtensions.Gt4Extension, StringComparison.OrdinalIgnoreCase))
     {
       using var stream = await file.OpenReadAsync();
       using var token = _CancellationTokenProvider.CreateDbCancellationToken();

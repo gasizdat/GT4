@@ -446,7 +446,7 @@ public partial class ProjectPage : ContentPage
   private async Task OnExportProjectFile()
   {
     var name = FileNameUtils.Sanitize(_CurrentProjectProvider.Info.Name, "project");
-    var path = Path.Combine(FileSystem.CacheDirectory, name + IProjectDocument.FileExtension);
+    var path = Path.Combine(FileSystem.CacheDirectory, name + ProjectFileExtensions.Gt4Extension);
     if (File.Exists(path))
     {
       File.Delete(path);
