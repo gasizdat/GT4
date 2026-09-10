@@ -410,8 +410,8 @@ public sealed class GedcomComparerTests
   [Fact]
   public async Task FrenchRepublicanMarriageDate_ConvertsAndIsComparedAsAnOrdinaryDate()
   {
-    // Unlike Julian above, GT4 converts a French Republican date to its Gregorian equivalent, so it is a
-    // genuine date mismatch (MarriageDate) rather than an unrepresentable one.
+    // GT4 converts a French Republican date to its Gregorian equivalent, so it is a genuine date mismatch
+    // (MarriageDate) rather than an unrepresentable one.
     var republican = Couple.Replace("2 DATE DEC 1859", "2 DATE @#DFRENCH R@ 25 VEND 2");
     var undated = Couple
       .Replace("2 DATE DEC 1859\r\n", string.Empty)

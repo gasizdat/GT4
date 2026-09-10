@@ -124,7 +124,7 @@ public sealed class GedcomDateTests
   [Theory]
   [InlineData("@#DFRENCH R@ 2 PLUV 1")]
   [InlineData("@#dfrench r@ 2 pluv 1")]
-  public void FrenchRepublicanEscape_IsAConvertedCalendarEvenThoughItNowParses(string text)
+  public void FrenchRepublicanEscape_IsAConvertedCalendarEvenThoughItParses(string text)
   {
     GedcomDate.Parse(text).Status.Should().Be(DateStatus.WellKnown);
     GedcomDate.IsConvertedCalendar(text).Should().BeTrue();

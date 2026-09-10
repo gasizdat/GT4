@@ -27,8 +27,8 @@ internal static class GedcomDate
 
   // 1 Vendemiaire of Republican years I-XIV in the Gregorian calendar -- the only years the calendar was
   // ever in official use (22 September 1792 to 1 January 1806). Months 1-12 always run 30 days regardless
-  // of a sextile year, so only this epoch needs a leap-aware lookup; the complementary days (month 13, 5 or
-  // 6 days) are unmodeled -- no GT4 sample data carries one.
+  // of a sextile year, so only this epoch needs a leap-aware lookup; the complementary days (month 13) are
+  // unmodeled.
   private static readonly (int Year, int Month, int Day)[] FrenchRepublicanEpochs =
   [
     (1792, 9, 22), (1793, 9, 22), (1794, 9, 22), (1795, 9, 23), (1796, 9, 22), (1797, 9, 22), (1798, 9, 22),
@@ -38,7 +38,7 @@ internal static class GedcomDate
   /// <summary>
   /// Whether <paramref name="value"/> carries a calendar GT4 converts to Gregorian rather than reproduces
   /// verbatim -- its Gregorian equivalent is what the model stores, and the model has no field to rebuild
-  /// the original escaped form from, so it has to stay in residue even though <see cref="Parse"/> now reads it.
+  /// the original escaped form from, so it has to stay in residue even though <see cref="Parse"/> reads it.
   /// </summary>
   public static bool IsConvertedCalendar(string? value) =>
     value != null && value.Trim().ToUpperInvariant().StartsWith(FrenchRepublicanEscape, StringComparison.Ordinal);

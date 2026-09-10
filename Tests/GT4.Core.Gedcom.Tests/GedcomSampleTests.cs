@@ -295,11 +295,9 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   [Fact]
   public async Task CalendarEscapeDate_KeptAsResidueAndReEmittedVerbatim()
   {
-    // A Julian date is unparseable for GT4, so it belongs to the owned tag's residue. A French Republican
-    // date converts to its Gregorian equivalent for the model, but the model has no field to rebuild the
-    // original escaped form from, so it too stays in residue. Either way the event itself is still modeled
-    // (a DEAT means "known dead"), so the residual DATE has to merge back under that one regenerated event
-    // rather than come out as a second, bare one.
+    // Julian is unparseable and French Republican converts but still can't round-trip; either way the event
+    // itself is still modeled (a DEAT means "known dead"), so the residual DATE has to merge back under
+    // that one regenerated event rather than come out as a second, bare one.
     const string ged =
       "0 HEAD\n1 CHAR UTF-8\n" +
       "0 @I1@ INDI\n1 NAME Louis /Capet/\n1 SEX M\n" +
@@ -327,9 +325,8 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   [Fact]
   public async Task GregorianCalendarEscape_IsStrippedRatherThanKeptAsResidue()
   {
-    // Unlike the non-Gregorian escapes above, "@#DGREGORIAN@" states nothing the model doesn't already
-    // capture, so it is dropped rather than round-tripped byte-for-byte -- a deliberate normalization, not
-    // an oversight.
+    // "@#DGREGORIAN@" states nothing the model doesn't already capture, so it is dropped rather than
+    // round-tripped byte-for-byte -- a deliberate normalization, not an oversight.
     const string ged =
       "0 HEAD\n1 CHAR UTF-8\n" +
       "0 @I1@ INDI\n1 NAME Louis /Capet/\n1 SEX M\n" +
