@@ -12,6 +12,8 @@ public static class FrenchRepublicanCalendar
   private const int DaysPerMonth = 30;
   private const int MonthsPerYear = 12;
 
+  // Shared with GedcomDate's parser as the literal tokens GEDCOM text uses -- not a display string,
+  // so localizing it would break import of French Republican dates.
   public static readonly string[] MonthAbbreviations =
     ["VEND", "BRUM", "FRIM", "NIVO", "PLUV", "VENT", "GERM", "FLOR", "PRAI", "MESS", "THER", "FRUC"];
 

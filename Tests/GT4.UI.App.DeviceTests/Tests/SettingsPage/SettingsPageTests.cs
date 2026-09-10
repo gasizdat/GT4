@@ -37,8 +37,6 @@ public class SettingsPageTests
 
     var kinds = page.SettingEditors.Select(e => e.Kind).ToArray();
 
-    // The eight format patterns, plus the background animation, the font scale, the theme and the
-    // calendar.
     Assert.Equal(8, kinds.OfType<SettingKind.Text>().Count());
     Assert.Single(kinds.OfType<SettingKind.Boolean>());
     Assert.Single(kinds.OfType<SettingKind.BoundedNumeric>());

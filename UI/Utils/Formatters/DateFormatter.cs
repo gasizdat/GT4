@@ -11,6 +11,10 @@ internal class DateFormatter : IDateFormatter
   private readonly ISettingEditor _ShortDateFormatSetting;
   private readonly ISettingEditor _CalendarSetting;
 
+  // English transliteration regardless of UI language, matching FrenchRepublicanCalendar's
+  // abbreviations -- a calendar's own month names, unlike the Gregorian months above, aren't
+  // translated concepts.
+  //
   // Hebrew leap years insert Adar I before Adar II, shifting every later month's number up by one --
   // CalendarConversion.IsHebrewLeapYear picks which of the two arrays a given year reads from.
   private static readonly string[] HebrewMonthsCommon =
@@ -146,10 +150,9 @@ internal class DateFormatter : IDateFormatter
     return ret;
   }
 
-  // The setting can ask for a calendar whose range doesn't cover this particular date (each
-  // non-Gregorian calendar has one -- see CalendarConversion). Applied names what was actually used,
-  // which is what the label below shows: never the raw request, so a silent fallback still tells the
-  // user they're looking at a Gregorian date.
+  // Applied is what TryConvert actually used, which may fall back to Gregorian when the requested
+  // calendar can't represent this date -- labeling Applied rather than the request is what makes
+  // that fallback visible instead of silent.
   private string FormatWellKnown(Date date)
   {
     var (applied, year, month, day) = CalendarConversion.TryConvert(date, CalendarConversion.Parse(_CalendarSetting.Value));
@@ -160,9 +163,8 @@ internal class DateFormatter : IDateFormatter
     return WithCalendarLabel(text, applied);
   }
 
-  // A partial date (DayUnknown/MonthUnknown/YearApproximate) never converts -- see
-  // CalendarConversion.TryConvert -- but still needs the same "which calendar is this" label whenever
-  // the setting isn't Gregorian, or it would look identical to a converted date instead of a fallback.
+  // A partial date never converts, but still needs the label whenever the setting isn't Gregorian --
+  // otherwise it would read as a converted date rather than the Gregorian fallback it actually is.
   private string WithCalendarLabel(string text, DisplayCalendar applied) =>
     CalendarConversion.Parse(_CalendarSetting.Value) == DisplayCalendar.Gregorian
       ? text

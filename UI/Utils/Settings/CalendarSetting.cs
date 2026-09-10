@@ -46,8 +46,7 @@ internal sealed class CalendarSetting : ISettingEditor
 
   public void ResetToDefault() => _InteractiveConfiguration?.RemoveKey(CalendarSection);
 
-  // Rebuilt per read so the labels re-resolve after a language switch. Labels come from
-  // DateFormatter.CalendarLabel so the picker and the inline date suffix never drift apart.
+  // Rebuilt per read so the labels re-resolve after a language switch.
   private static SettingKind.Option[] Options =>
   [
     new(nameof(DisplayCalendar.Gregorian), DateFormatter.CalendarLabel(DisplayCalendar.Gregorian)),
