@@ -250,6 +250,9 @@
   <data name="DateStatusNotDefined" xml:space="preserve">
     <value>не задано</value>
   </data>
+  <data name="DateCalendarSuffix_1" xml:space="preserve">
+    <value>{0} ({1})</value>
+  </data>
   <data name="FieldPersonPhotos" xml:space="preserve">
     <value>Фотографии</value>
   </data>
@@ -986,6 +989,24 @@ FN - род</value>
   </data>
   <data name="FieldThemeDark" xml:space="preserve">
     <value>Тёмная</value>
+  </data>
+  <data name="FieldCalendar" xml:space="preserve">
+    <value>Календарь</value>
+  </data>
+  <data name="FieldCalendarHint" xml:space="preserve">
+    <value>В каком календаре отображаются даты. Хранение данных всегда остаётся григорианским, независимо от этого выбора.</value>
+  </data>
+  <data name="FieldCalendarGregorian" xml:space="preserve">
+    <value>Григорианский</value>
+  </data>
+  <data name="FieldCalendarJulian" xml:space="preserve">
+    <value>Юлианский</value>
+  </data>
+  <data name="FieldCalendarHebrew" xml:space="preserve">
+    <value>Еврейский</value>
+  </data>
+  <data name="FieldCalendarFrenchRepublican" xml:space="preserve">
+    <value>Французский республиканский</value>
   </data>
   <data name="FieldGedcomDetails" xml:space="preserve">
     <value>Дополнительные сведения</value>

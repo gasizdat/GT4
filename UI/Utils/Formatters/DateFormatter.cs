@@ -1,4 +1,4 @@
-﻿using GT4.Core.Utils;
+using GT4.Core.Utils;
 using GT4.UI.Resources;
 using GT4.UI.Utils.Settings;
 
@@ -9,13 +9,23 @@ internal class DateFormatter : IDateFormatter
   private const string D2 = "D2";
   private readonly ISettingEditor _FullDateFormatSetting;
   private readonly ISettingEditor _ShortDateFormatSetting;
+  private readonly ISettingEditor _CalendarSetting;
+
+  // Hebrew leap years insert Adar I before Adar II, shifting every later month's number up by one --
+  // CalendarConversion.IsHebrewLeapYear picks which of the two arrays a given year reads from.
+  private static readonly string[] HebrewMonthsCommon =
+    ["Tishrei", "Cheshvan", "Kislev", "Tevet", "Shevat", "Adar", "Nisan", "Iyar", "Sivan", "Tamuz", "Av", "Elul"];
+  private static readonly string[] HebrewMonthsLeap =
+    ["Tishrei", "Cheshvan", "Kislev", "Tevet", "Shevat", "Adar I", "Adar II", "Nisan", "Iyar", "Sivan", "Tamuz", "Av", "Elul"];
 
   public DateFormatter(
     [FromKeyedServices(DateFormatKind.Full)] ISettingEditor fullDateFormatSetting,
-    [FromKeyedServices(DateFormatKind.Short)] ISettingEditor shortDateFormatSetting)
+    [FromKeyedServices(DateFormatKind.Short)] ISettingEditor shortDateFormatSetting,
+    [FromKeyedServices(SettingKeys.Calendar)] ISettingEditor calendarSetting)
   {
     _FullDateFormatSetting = fullDateFormatSetting;
     _ShortDateFormatSetting = shortDateFormatSetting;
+    _CalendarSetting = calendarSetting;
   }
 
   public string ToString(Date? date)
@@ -24,7 +34,7 @@ internal class DateFormatter : IDateFormatter
     {
       return date.Value.Status switch
       {
-        DateStatus.WellKnown => Format(_FullDateFormatSetting.Value, date.Value),
+        DateStatus.WellKnown => FormatWellKnown(date.Value),
         DateStatus.DayUnknown => Format(_ShortDateFormatSetting.Value, date.Value),
         DateStatus.MonthUnknown => YearToString(date.Value),
         DateStatus.YearApproximate => string.Format(UIStrings.DateStatusYearApproximate_1, YearToString(date.Value)),
@@ -42,6 +52,15 @@ internal class DateFormatter : IDateFormatter
   /// Stateless, so callers that already hold the format they want (e.g. a setting previewing its own
   /// configured value) don't need an <see cref="IDateFormatter"/> instance to use it.</summary>
   public static string Format(string format, Date date) => ToString(format, () => YearToString(date), () => MonthToString(date), () => MonthToNumber(date), () => DayToString(date));
+
+  public static string CalendarLabel(DisplayCalendar calendar) => calendar switch
+  {
+    DisplayCalendar.Gregorian => UIStrings.FieldCalendarGregorian,
+    DisplayCalendar.Julian => UIStrings.FieldCalendarJulian,
+    DisplayCalendar.Hebrew => UIStrings.FieldCalendarHebrew,
+    DisplayCalendar.FrenchRepublican => UIStrings.FieldCalendarFrenchRepublican,
+    _ => throw new NotImplementedException($"DisplayCalendar={calendar}")
+  };
 
   protected static string YearToString(Date date)
   {
@@ -62,9 +81,10 @@ internal class DateFormatter : IDateFormatter
     return ret;
   }
 
-  protected static string MonthToString(Date date)
+  protected static string MonthToString(Date date) => MonthToString(date.Month, date.Status);
+
+  protected static string MonthToString(int month, DateStatus status)
   {
-    var month = date.Month;
     var ret = month switch
     {
       1 => UIStrings.Month_01,
@@ -86,7 +106,7 @@ internal class DateFormatter : IDateFormatter
     {
       ret = ret.ToLower();
 
-      if (date.Status == DateStatus.WellKnown)
+      if (status == DateStatus.WellKnown)
       {
         ret = MonthGenitiveRU(ret);
       }
@@ -125,4 +145,27 @@ internal class DateFormatter : IDateFormatter
 
     return ret;
   }
+
+  // The setting can ask for a calendar whose range doesn't cover this particular date (each
+  // non-Gregorian calendar has one -- see CalendarConversion). Applied names what was actually used,
+  // which is what the suffix below shows: never the raw request, so a silent fallback still tells the
+  // user they're looking at a Gregorian date.
+  private string FormatWellKnown(Date date)
+  {
+    var calendar = CalendarConversion.Parse(_CalendarSetting.Value);
+    var (applied, year, month, day) = CalendarConversion.TryConvert(date, calendar);
+    var text = applied == DisplayCalendar.Gregorian
+      ? Format(_FullDateFormatSetting.Value, date)
+      : ToString(_FullDateFormatSetting.Value, () => year.ToString(), () => MonthLabel(applied, year, month), () => month.ToString(D2), () => day.ToString(D2));
+
+    return calendar == DisplayCalendar.Gregorian ? text : string.Format(UIStrings.DateCalendarSuffix_1, text, CalendarLabel(applied));
+  }
+
+  private static string MonthLabel(DisplayCalendar applied, int year, int month) => applied switch
+  {
+    DisplayCalendar.Julian => MonthToString(month, DateStatus.WellKnown),
+    DisplayCalendar.Hebrew => (CalendarConversion.IsHebrewLeapYear(year) ? HebrewMonthsLeap : HebrewMonthsCommon)[month - 1],
+    DisplayCalendar.FrenchRepublican => FrenchRepublicanCalendar.MonthAbbreviations[month - 1],
+    _ => throw new NotImplementedException($"DisplayCalendar={applied}")
+  };
 }

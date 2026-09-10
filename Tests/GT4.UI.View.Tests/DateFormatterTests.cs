@@ -9,7 +9,7 @@ namespace GT4.UI.View.Tests;
 
 public class DateFormatterTests
 {
-  private static DateFormatter Create(string fullFormat = "DD MMM YYYY", string shortFormat = "MMM YYYY")
+  private static DateFormatter Create(string fullFormat = "DD MMM YYYY", string shortFormat = "MMM YYYY", string calendar = "Gregorian")
   {
     var full = new Mock<ISettingEditor>();
     full.SetupGet(s => s.Value).Returns(fullFormat);
@@ -17,7 +17,10 @@ public class DateFormatterTests
     var shortFmt = new Mock<ISettingEditor>();
     shortFmt.SetupGet(s => s.Value).Returns(shortFormat);
 
-    return new DateFormatter(full.Object, shortFmt.Object);
+    var calendarSetting = new Mock<ISettingEditor>();
+    calendarSetting.SetupGet(s => s.Value).Returns(calendar);
+
+    return new DateFormatter(full.Object, shortFmt.Object, calendarSetting.Object);
   }
 
   private static void SetEn() => TestLanguage.Use(Language.EN);
@@ -215,5 +218,56 @@ public class DateFormatterTests
     SetEn();
     var date = Date.Create(year, 6, 1, DateStatus.WellKnown);
     Create(fullFormat: "YYYY").ToString(date).Should().Be(expected);
+  }
+
+  [Fact]
+  public void WellKnown_GregorianCalendarSelected_NeverShowsALabel()
+  {
+    SetEn();
+    var date = Date.Create(2000, 1, 15, DateStatus.WellKnown);
+    Create(calendar: "Gregorian").ToString(date).Should().Be("15 January 2000");
+  }
+
+  // Orthodox/Julian New Year: 14 Jan (Gregorian) is 1 Jan in the Julian calendar in this era.
+  [Fact]
+  public void WellKnown_JulianCalendar_ConvertsAndLabelsTheDate()
+  {
+    SetEn();
+    var date = Date.Create(2000, 1, 14, DateStatus.WellKnown);
+    Create(calendar: "Julian").ToString(date).Should().Be("01 January 2000 (Julian)");
+  }
+
+  [Fact]
+  public void WellKnown_RU_JulianCalendar_MonthInGenitiveCase()
+  {
+    SetRu();
+    var date = Date.Create(2000, 1, 14, DateStatus.WellKnown);
+    Create(calendar: "Julian").ToString(date).Should().Be("01 января 2000 (Юлианский)");
+  }
+
+  // Documented on HebrewCalendar itself: 1 January 2001 is the sixth day of Tevet, 5761 AM.
+  [Fact]
+  public void WellKnown_HebrewCalendar_ConvertsAndLabelsTheDate()
+  {
+    SetEn();
+    var date = Date.Create(2001, 1, 1, DateStatus.WellKnown);
+    Create(calendar: "Hebrew").ToString(date).Should().Be("06 Tevet 5761 (Hebrew)");
+  }
+
+  // Bourbon oracle from #386.
+  [Fact]
+  public void WellKnown_FrenchRepublicanCalendar_ConvertsAndLabelsTheDate()
+  {
+    SetEn();
+    var date = Date.Create(1793, 1, 21, DateStatus.WellKnown);
+    Create(calendar: "FrenchRepublican").ToString(date).Should().Be("02 PLUV 1 (French Republican)");
+  }
+
+  [Fact]
+  public void WellKnown_NonGregorianCalendar_OutOfRange_FallsBackToGregorianAndLabelsIt()
+  {
+    SetEn();
+    var date = Date.Create(1850, 1, 1, DateStatus.WellKnown);
+    Create(calendar: "FrenchRepublican").ToString(date).Should().Be("01 January 1850 (Gregorian)");
   }
 }

@@ -250,6 +250,9 @@ genealogy tree and enjoy!</value>
   <data name="DateStatusNotDefined" xml:space="preserve">
     <value>not defined</value>
   </data>
+  <data name="DateCalendarSuffix_1" xml:space="preserve">
+    <value>{0} ({1})</value>
+  </data>
   <data name="FieldPersonPhotos" xml:space="preserve">
     <value>Photos</value>
   </data>
@@ -986,6 +989,24 @@ FN - family name</value>
   </data>
   <data name="FieldThemeDark" xml:space="preserve">
     <value>Dark</value>
+  </data>
+  <data name="FieldCalendar" xml:space="preserve">
+    <value>Calendar</value>
+  </data>
+  <data name="FieldCalendarHint" xml:space="preserve">
+    <value>Which calendar dates are displayed in. Storage stays Gregorian regardless of this choice.</value>
+  </data>
+  <data name="FieldCalendarGregorian" xml:space="preserve">
+    <value>Gregorian</value>
+  </data>
+  <data name="FieldCalendarJulian" xml:space="preserve">
+    <value>Julian</value>
+  </data>
+  <data name="FieldCalendarHebrew" xml:space="preserve">
+    <value>Hebrew</value>
+  </data>
+  <data name="FieldCalendarFrenchRepublican" xml:space="preserve">
+    <value>French Republican</value>
   </data>
   <data name="FieldGedcomDetails" xml:space="preserve">
     <value>Additional details</value>

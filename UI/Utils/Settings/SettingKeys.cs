@@ -14,6 +14,7 @@ public static class SettingKeys
   public const string FontScale = nameof(FontScaleSetting);
   public const string BackgroundAnimation = nameof(BackgroundAnimationSetting);
   public const string Theme = nameof(ThemeSetting);
+  public const string Calendar = nameof(CalendarSetting);
 }
 
 /// <summary>Resolves every registered <see cref="ISettingEditor"/> regardless of key -- the typed

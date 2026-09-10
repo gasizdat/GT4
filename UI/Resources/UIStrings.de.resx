@@ -250,6 +250,9 @@ Stammbaum und haben Sie Freude daran!</value>
   <data name="DateStatusNotDefined" xml:space="preserve">
     <value>nicht angegeben</value>
   </data>
+  <data name="DateCalendarSuffix_1" xml:space="preserve">
+    <value>{0} ({1})</value>
+  </data>
   <data name="FieldPersonPhotos" xml:space="preserve">
     <value>Fotos</value>
   </data>
@@ -986,6 +989,24 @@ FN - Familienname</value>
   </data>
   <data name="FieldThemeDark" xml:space="preserve">
     <value>Dunkel</value>
+  </data>
+  <data name="FieldCalendar" xml:space="preserve">
+    <value>Kalender</value>
+  </data>
+  <data name="FieldCalendarHint" xml:space="preserve">
+    <value>In welchem Kalender Daten angezeigt werden. Die Speicherung bleibt unabhängig von dieser Wahl immer gregorianisch.</value>
+  </data>
+  <data name="FieldCalendarGregorian" xml:space="preserve">
+    <value>Gregorianisch</value>
+  </data>
+  <data name="FieldCalendarJulian" xml:space="preserve">
+    <value>Julianisch</value>
+  </data>
+  <data name="FieldCalendarHebrew" xml:space="preserve">
+    <value>Hebräisch</value>
+  </data>
+  <data name="FieldCalendarFrenchRepublican" xml:space="preserve">
+    <value>Französisch-republikanisch</value>
   </data>
   <data name="FieldGedcomDetails" xml:space="preserve">
     <value>Zusätzliche Angaben</value>

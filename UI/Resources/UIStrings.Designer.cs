@@ -575,6 +575,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {0} ({1}).
+        /// </summary>
+        public static string DateCalendarSuffix_1 {
+            get {
+                return ResourceManager.GetString("DateCalendarSuffix_1", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to {0} B.C..
         /// </summary>
         public static string DateEraBeforeChrist_1 {
@@ -691,6 +700,60 @@ namespace GT4.UI.Resources {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to Calendar.
+        /// </summary>
+        public static string FieldCalendar {
+            get {
+                return ResourceManager.GetString("FieldCalendar", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to French Republican.
+        /// </summary>
+        public static string FieldCalendarFrenchRepublican {
+            get {
+                return ResourceManager.GetString("FieldCalendarFrenchRepublican", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Gregorian.
+        /// </summary>
+        public static string FieldCalendarGregorian {
+            get {
+                return ResourceManager.GetString("FieldCalendarGregorian", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Hebrew.
+        /// </summary>
+        public static string FieldCalendarHebrew {
+            get {
+                return ResourceManager.GetString("FieldCalendarHebrew", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Which calendar dates are displayed in. Storage stays Gregorian regardless of this choice..
+        /// </summary>
+        public static string FieldCalendarHint {
+            get {
+                return ResourceManager.GetString("FieldCalendarHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Julian.
+        /// </summary>
+        public static string FieldCalendarJulian {
+            get {
+                return ResourceManager.GetString("FieldCalendarJulian", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Codepage.
         /// </summary>
