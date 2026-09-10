@@ -8,7 +8,7 @@ namespace GT4.UI.DeviceTests;
 /// SettingsPage gathers every keyed ISettingEditor registration via a SettingEditorsResolver
 /// delegate (GT4.UI.Utils.Settings), itself backed by GetKeyedServices(KeyedService.AnyKey) --
 /// a "gather all" query with no typed DI equivalent, registered once in
-/// ServiceCollectionExtensions.AddUIUtils rather than resolved ad hoc. All eleven real
+/// ServiceCollectionExtensions.AddUIUtils rather than resolved ad hoc. All twelve real
 /// ISettingEditor implementations are exercised as-is (unmocked), since grouping/ordering real
 /// settings is the actual behavior being covered.
 /// </summary>
@@ -27,7 +27,7 @@ public class SettingsPageTests
 
     var editors = page.SettingEditors.ToArray();
 
-    Assert.Equal(11, editors.Length);
+    Assert.Equal(12, editors.Length);
   }
 
   [Fact]
@@ -37,11 +37,12 @@ public class SettingsPageTests
 
     var kinds = page.SettingEditors.Select(e => e.Kind).ToArray();
 
-    // The eight format patterns, plus the background animation, the font scale and the theme.
+    // The eight format patterns, plus the background animation, the font scale, the theme and the
+    // calendar.
     Assert.Equal(8, kinds.OfType<SettingKind.Text>().Count());
     Assert.Single(kinds.OfType<SettingKind.Boolean>());
     Assert.Single(kinds.OfType<SettingKind.BoundedNumeric>());
-    Assert.Single(kinds.OfType<SettingKind.Choice>());
+    Assert.Equal(2, kinds.OfType<SettingKind.Choice>().Count());
   }
 
   [Fact]
