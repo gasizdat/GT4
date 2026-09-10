@@ -396,6 +396,22 @@ public sealed class GedcomComparerTests
   [Fact]
   public async Task MarriageDateGedcomStatesButGt4CannotHold_IsReportedRatherThanCollapsedToEqual()
   {
+    var julian = Couple.Replace("2 DATE DEC 1859", "2 DATE @#DJULIAN@ 25 SEP 1752");
+    var undated = Couple
+      .Replace("2 DATE DEC 1859\r\n", string.Empty)
+      .Replace("2 DATE DEC 1859\n", string.Empty);
+
+    var differences = await CompareAsync(julian, undated);
+
+    differences.Should().ContainSingle()
+      .Which.Kind.Should().Be(GedcomDifferenceKind.NotRepresentable);
+  }
+
+  [Fact]
+  public async Task FrenchRepublicanMarriageDate_ConvertsAndIsComparedAsAnOrdinaryDate()
+  {
+    // GT4 converts a French Republican date to its Gregorian equivalent, so it is a genuine date mismatch
+    // (MarriageDate) rather than an unrepresentable one.
     var republican = Couple.Replace("2 DATE DEC 1859", "2 DATE @#DFRENCH R@ 25 VEND 2");
     var undated = Couple
       .Replace("2 DATE DEC 1859\r\n", string.Empty)
@@ -404,7 +420,7 @@ public sealed class GedcomComparerTests
     var differences = await CompareAsync(republican, undated);
 
     differences.Should().ContainSingle()
-      .Which.Kind.Should().Be(GedcomDifferenceKind.NotRepresentable);
+      .Which.Kind.Should().Be(GedcomDifferenceKind.MarriageDate);
   }
 
   [Fact]
@@ -435,13 +451,13 @@ public sealed class GedcomComparerTests
   public async Task DateGedcomStatesButGt4CannotHold_IsReportedRatherThanCollapsedToEqual()
   {
     // Both sides would canonicalize to nothing, which is exactly how silent loss gets certified as fidelity.
-    var republican = Couple.Replace("1 SEX F", """
+    var julian = Couple.Replace("1 SEX F", """
       1 SEX F
       1 DEAT
-      2 DATE @#DFRENCH R@ 25 VEND 2
+      2 DATE @#DJULIAN@ 25 SEP 1752
       """);
 
-    var differences = await CompareAsync(republican, Couple);
+    var differences = await CompareAsync(julian, Couple);
 
     differences.Should().ContainSingle()
       .Which.Kind.Should().Be(GedcomDifferenceKind.NotRepresentable);
