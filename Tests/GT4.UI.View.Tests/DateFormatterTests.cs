@@ -270,4 +270,56 @@ public class DateFormatterTests
     var date = Date.Create(1850, 1, 1, DateStatus.WellKnown);
     Create(calendar: "FrenchRepublican").ToString(date).Should().Be("01 January 1850 (Gregorian)");
   }
+
+  // hebcal.com converter, directly verified: Adar I and Adar II are distinct months (6 and 7) only in
+  // a leap year -- exactly the index a wrong leap-year array would get wrong.
+  [Fact]
+  public void WellKnown_HebrewLeapYear_AdarIAndAdarIIAreDistinctMonths()
+  {
+    SetEn();
+    Create(calendar: "Hebrew").ToString(Date.Create(2024, 2, 10, DateStatus.WellKnown)).Should().Be("01 Adar I 5784 (Hebrew)");
+    Create(calendar: "Hebrew").ToString(Date.Create(2024, 3, 11, DateStatus.WellKnown)).Should().Be("01 Adar II 5784 (Hebrew)");
+  }
+
+  // hebcal.com converter, directly verified: in a common year month 7 is Nisan, not Adar II -- the
+  // case that would catch collapsing the leap/common Hebrew month arrays into one.
+  [Fact]
+  public void WellKnown_HebrewCommonYear_MonthSevenIsNisanNotAdarII()
+  {
+    SetEn();
+    var date = Date.Create(2001, 4, 17, DateStatus.WellKnown);
+    Create(calendar: "Hebrew").ToString(date).Should().Be("24 Nisan 5761 (Hebrew)");
+  }
+
+  [Fact]
+  public void DayUnknown_NonGregorianCalendar_StillLabelsAsGregorian()
+  {
+    SetEn();
+    var date = Date.Create(2000, 3, 0, DateStatus.DayUnknown);
+    Create(shortFormat: "MMM YYYY", calendar: "Hebrew").ToString(date).Should().Be("March 2000 (Gregorian)");
+  }
+
+  [Fact]
+  public void MonthUnknown_NonGregorianCalendar_StillLabelsAsGregorian()
+  {
+    SetEn();
+    var date = Date.Create(1985, 0, 0, DateStatus.MonthUnknown);
+    Create(calendar: "Hebrew").ToString(date).Should().Be("1985 (Gregorian)");
+  }
+
+  [Fact]
+  public void YearApproximate_NonGregorianCalendar_StillLabelsAsGregorian()
+  {
+    SetEn();
+    var date = Date.Create(1990, 0, 0, DateStatus.YearApproximate);
+    Create(calendar: "Hebrew").ToString(date).Should().Be("about 1990 (Gregorian)");
+  }
+
+  [Fact]
+  public void Unknown_NonGregorianCalendar_HasNoLabel()
+  {
+    SetEn();
+    var date = Date.Create(0, 0, 0, DateStatus.Unknown);
+    Create(calendar: "Hebrew").ToString(date).Should().Be("unknown");
+  }
 }

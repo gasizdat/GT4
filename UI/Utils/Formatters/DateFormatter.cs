@@ -35,9 +35,9 @@ internal class DateFormatter : IDateFormatter
       return date.Value.Status switch
       {
         DateStatus.WellKnown => FormatWellKnown(date.Value),
-        DateStatus.DayUnknown => Format(_ShortDateFormatSetting.Value, date.Value),
-        DateStatus.MonthUnknown => YearToString(date.Value),
-        DateStatus.YearApproximate => string.Format(UIStrings.DateStatusYearApproximate_1, YearToString(date.Value)),
+        DateStatus.DayUnknown => WithCalendarLabel(Format(_ShortDateFormatSetting.Value, date.Value), DisplayCalendar.Gregorian),
+        DateStatus.MonthUnknown => WithCalendarLabel(YearToString(date.Value), DisplayCalendar.Gregorian),
+        DateStatus.YearApproximate => WithCalendarLabel(string.Format(UIStrings.DateStatusYearApproximate_1, YearToString(date.Value)), DisplayCalendar.Gregorian),
         DateStatus.Unknown => UIStrings.DateStatusUnknown,
         _ => $"⚠ Unexpected DateStatus={date.Value.Status}"
       };
@@ -148,18 +148,25 @@ internal class DateFormatter : IDateFormatter
 
   // The setting can ask for a calendar whose range doesn't cover this particular date (each
   // non-Gregorian calendar has one -- see CalendarConversion). Applied names what was actually used,
-  // which is what the suffix below shows: never the raw request, so a silent fallback still tells the
+  // which is what the label below shows: never the raw request, so a silent fallback still tells the
   // user they're looking at a Gregorian date.
   private string FormatWellKnown(Date date)
   {
-    var calendar = CalendarConversion.Parse(_CalendarSetting.Value);
-    var (applied, year, month, day) = CalendarConversion.TryConvert(date, calendar);
+    var (applied, year, month, day) = CalendarConversion.TryConvert(date, CalendarConversion.Parse(_CalendarSetting.Value));
     var text = applied == DisplayCalendar.Gregorian
       ? Format(_FullDateFormatSetting.Value, date)
       : ToString(_FullDateFormatSetting.Value, () => year.ToString(), () => MonthLabel(applied, year, month), () => month.ToString(D2), () => day.ToString(D2));
 
-    return calendar == DisplayCalendar.Gregorian ? text : string.Format(UIStrings.DateCalendarSuffix_1, text, CalendarLabel(applied));
+    return WithCalendarLabel(text, applied);
   }
+
+  // A partial date (DayUnknown/MonthUnknown/YearApproximate) never converts -- see
+  // CalendarConversion.TryConvert -- but still needs the same "which calendar is this" label whenever
+  // the setting isn't Gregorian, or it would look identical to a converted date instead of a fallback.
+  private string WithCalendarLabel(string text, DisplayCalendar applied) =>
+    CalendarConversion.Parse(_CalendarSetting.Value) == DisplayCalendar.Gregorian
+      ? text
+      : string.Format(UIStrings.DateCalendarSuffix_1, text, CalendarLabel(applied));
 
   private static string MonthLabel(DisplayCalendar applied, int year, int month) => applied switch
   {

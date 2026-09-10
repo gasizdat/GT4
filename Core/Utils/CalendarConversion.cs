@@ -28,6 +28,9 @@ public static class CalendarConversion
   public static DisplayCalendar Parse(string? calendar) =>
     Enum.TryParse<DisplayCalendar>(calendar, out var parsed) ? parsed : DisplayCalendar.Gregorian;
 
+  /// <summary>Assumes <paramref name="date"/> is <see cref="DateStatus.WellKnown"/> -- a partial date
+  /// (year/month only) has no single correct placement in another calendar, so callers convert only
+  /// full dates and render every other status in Gregorian.</summary>
   public static (DisplayCalendar Applied, int Year, int Month, int Day) TryConvert(Date date, DisplayCalendar target)
   {
     var fallback = (Applied: DisplayCalendar.Gregorian, date.Year, date.Month, date.Day);
