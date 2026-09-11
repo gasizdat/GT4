@@ -254,6 +254,20 @@ public class DateFormatterTests
     Create(calendar: "Hebrew").ToString(date).Should().Be("06 Tevet 5761 (Hebrew)");
   }
 
+  // Formats the same date under two languages in one test -- a static-field cache of the month
+  // names (rather than a live UIStrings read) would pass this only if RU happened to run first.
+  [Fact]
+  public void WellKnown_HebrewCalendar_MonthNameIsLocalized()
+  {
+    var date = Date.Create(2001, 1, 1, DateStatus.WellKnown);
+
+    SetEn();
+    Create(calendar: "Hebrew").ToString(date).Should().Be("06 Tevet 5761 (Hebrew)");
+
+    SetRu();
+    Create(calendar: "Hebrew").ToString(date).Should().Be("06 Тевет 5761 (Еврейский)");
+  }
+
   // Bourbon oracle from #386.
   [Fact]
   public void WellKnown_FrenchRepublicanCalendar_ConvertsAndLabelsTheDate()

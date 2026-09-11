@@ -451,6 +451,48 @@
   <data name="Month_12" xml:space="preserve">
     <value>diciembre</value>
   </data>
+  <data name="MonthHebrew_Tishrei" xml:space="preserve">
+    <value>Tishréi</value>
+  </data>
+  <data name="MonthHebrew_Cheshvan" xml:space="preserve">
+    <value>Jeshván</value>
+  </data>
+  <data name="MonthHebrew_Kislev" xml:space="preserve">
+    <value>Kislev</value>
+  </data>
+  <data name="MonthHebrew_Tevet" xml:space="preserve">
+    <value>Tevet</value>
+  </data>
+  <data name="MonthHebrew_Shevat" xml:space="preserve">
+    <value>Shevat</value>
+  </data>
+  <data name="MonthHebrew_Adar" xml:space="preserve">
+    <value>Adar</value>
+  </data>
+  <data name="MonthHebrew_AdarI" xml:space="preserve">
+    <value>Adar I</value>
+  </data>
+  <data name="MonthHebrew_AdarII" xml:space="preserve">
+    <value>Adar II</value>
+  </data>
+  <data name="MonthHebrew_Nisan" xml:space="preserve">
+    <value>Nisán</value>
+  </data>
+  <data name="MonthHebrew_Iyar" xml:space="preserve">
+    <value>Iyar</value>
+  </data>
+  <data name="MonthHebrew_Sivan" xml:space="preserve">
+    <value>Sivan</value>
+  </data>
+  <data name="MonthHebrew_Tamuz" xml:space="preserve">
+    <value>Tamuz</value>
+  </data>
+  <data name="MonthHebrew_Av" xml:space="preserve">
+    <value>Av</value>
+  </data>
+  <data name="MonthHebrew_Elul" xml:space="preserve">
+    <value>Elul</value>
+  </data>
   <data name="TitleSelectRelativesDialog" xml:space="preserve">
     <value>Seleccionar parientes</value>
   </data>

@@ -11,13 +11,21 @@ internal class DateFormatter : IDateFormatter
   private readonly ISettingEditor _ShortDateFormatSetting;
   private readonly ISettingEditor _CalendarSetting;
 
-  // English transliteration regardless of UI language, matching FrenchRepublicanCalendar's
-  // abbreviations -- a calendar's own month names, unlike the Gregorian months above, aren't
-  // translated concepts.
-  private static readonly string[] HebrewMonthsCommon =
-    ["Tishrei", "Cheshvan", "Kislev", "Tevet", "Shevat", "Adar", "Nisan", "Iyar", "Sivan", "Tamuz", "Av", "Elul"];
-  private static readonly string[] HebrewMonthsLeap =
-    ["Tishrei", "Cheshvan", "Kislev", "Tevet", "Shevat", "Adar I", "Adar II", "Nisan", "Iyar", "Sivan", "Tamuz", "Av", "Elul"];
+  private static string[] HebrewMonthsCommon =>
+  [
+    UIStrings.MonthHebrew_Tishrei, UIStrings.MonthHebrew_Cheshvan, UIStrings.MonthHebrew_Kislev,
+    UIStrings.MonthHebrew_Tevet, UIStrings.MonthHebrew_Shevat, UIStrings.MonthHebrew_Adar,
+    UIStrings.MonthHebrew_Nisan, UIStrings.MonthHebrew_Iyar, UIStrings.MonthHebrew_Sivan,
+    UIStrings.MonthHebrew_Tamuz, UIStrings.MonthHebrew_Av, UIStrings.MonthHebrew_Elul,
+  ];
+  private static string[] HebrewMonthsLeap =>
+  [
+    UIStrings.MonthHebrew_Tishrei, UIStrings.MonthHebrew_Cheshvan, UIStrings.MonthHebrew_Kislev,
+    UIStrings.MonthHebrew_Tevet, UIStrings.MonthHebrew_Shevat, UIStrings.MonthHebrew_AdarI,
+    UIStrings.MonthHebrew_AdarII, UIStrings.MonthHebrew_Nisan, UIStrings.MonthHebrew_Iyar,
+    UIStrings.MonthHebrew_Sivan, UIStrings.MonthHebrew_Tamuz, UIStrings.MonthHebrew_Av,
+    UIStrings.MonthHebrew_Elul,
+  ];
 
   public DateFormatter(
     [FromKeyedServices(DateFormatKind.Full)] ISettingEditor fullDateFormatSetting,
