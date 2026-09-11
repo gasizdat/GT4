@@ -13,10 +13,8 @@ internal class DateFormatter : IDateFormatter
 
   // English transliteration regardless of UI language, matching FrenchRepublicanCalendar's
   // abbreviations -- a calendar's own month names, unlike the Gregorian months above, aren't
-  // translated concepts.
-  //
-  // Hebrew leap years insert Adar I before Adar II, shifting every later month's number up by one --
-  // CalendarConversion.IsHebrewLeapYear picks which of the two arrays a given year reads from.
+  // translated concepts. Leap years insert Adar I before Adar II, shifting every later month's
+  // number up by one; CalendarConversion.IsHebrewLeapYear picks which array a given year reads from.
   private static readonly string[] HebrewMonthsCommon =
     ["Tishrei", "Cheshvan", "Kislev", "Tevet", "Shevat", "Adar", "Nisan", "Iyar", "Sivan", "Tamuz", "Av", "Elul"];
   private static readonly string[] HebrewMonthsLeap =
