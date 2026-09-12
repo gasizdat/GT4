@@ -1,14 +1,6 @@
 using System.Globalization;
 
-namespace GT4.Core.Utils;
-
-public enum DisplayCalendar
-{
-  Gregorian,
-  Julian,
-  Hebrew,
-  FrenchRepublican,
-}
+namespace GT4.Core.Utils.Calendars;
 
 /// <summary>
 /// Converts a stored (Gregorian) <see cref="Date"/> into another calendar for display, storage

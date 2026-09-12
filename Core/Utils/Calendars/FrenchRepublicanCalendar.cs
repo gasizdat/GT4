@@ -1,4 +1,4 @@
-namespace GT4.Core.Utils;
+namespace GT4.Core.Utils.Calendars;
 
 /// <summary>
 /// Gregorian &lt;-&gt; French Republican conversion, valid only for Republican years I-XIV -- the only

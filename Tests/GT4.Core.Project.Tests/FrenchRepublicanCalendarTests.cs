@@ -1,5 +1,5 @@
 using FluentAssertions;
-using GT4.Core.Utils;
+using GT4.Core.Utils.Calendars;
 using Xunit;
 
 namespace GT4.Core.Project.Tests;
