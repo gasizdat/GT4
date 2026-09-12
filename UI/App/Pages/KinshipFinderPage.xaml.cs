@@ -47,6 +47,14 @@ public partial class KinshipFinderPage : ContentPage
     }
   }
 
+  private async Task SwapPersonsAsync()
+  {
+    (_PersonFrom, _PersonTo) = (_PersonTo, _PersonFrom);
+    _Chain = null;
+    _Searched = false;
+    await FindAsync();
+  }
+
   private async Task FindAsync()
   {
     if (_PersonFrom is null || _PersonTo is null)
@@ -81,6 +89,10 @@ public partial class KinshipFinderPage : ContentPage
 
       case string commandName when commandName == "PickPersonTo":
         await PickPersonAsync(person => _PersonTo = person);
+        break;
+
+      case string commandName when commandName == "SwapPersons":
+        await SwapPersonsAsync();
         break;
 
       case RelativeInfo relativeInfo:
@@ -138,6 +150,8 @@ public partial class KinshipFinderPage : ContentPage
   public string PersonToName => _PersonTo is not null
     ? _NameFormatter.ToString(_PersonTo, NameFormat.CommonPersonName)
     : UIStrings.FieldNotSelected;
+
+  public bool CanSwapPersons => _PersonFrom is not null && _PersonTo is not null;
 
   public RelativeInfo[] Chain => _Chain ?? [];
 

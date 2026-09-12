@@ -64,6 +64,47 @@ public class KinshipFinderPageTests
   }
 
   [Fact]
+  public async Task CanSwapPersons_is_true_only_once_both_people_are_selected()
+  {
+    var page = await CreatePageAsync(new TestServices());
+    Assert.False(page.CanSwapPersons);
+
+    await using var window = await WindowHost.AttachAsync(page);
+    await PickPersonAsync(page, "PickPersonFrom", P(1));
+    Assert.False(page.CanSwapPersons);
+
+    await PickPersonAsync(page, "PickPersonTo", P(2));
+    Assert.True(page.CanSwapPersons);
+  }
+
+  [Fact]
+  public async Task SwapPersons_exchanges_the_selected_people_and_reruns_FindAsync()
+  {
+    var services = new TestServices();
+    var personFrom = P(1, names: [new Name(0, "Alice", NameType.FirstName, null)]);
+    var personTo = P(2, names: [new Name(0, "Bob", NameType.FirstName, null)]);
+    services.KinshipFinder
+      .Setup(k => k.FindPathAsync(It.IsAny<Person>(), It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync((RelativeInfo[]?)null);
+    var page = await CreatePageAsync(services);
+
+    await using var window = await WindowHost.AttachAsync(page);
+    await PickPersonAsync(page, "PickPersonFrom", personFrom);
+    await PickPersonAsync(page, "PickPersonTo", personTo);
+
+    await page.InvokePageCommandAsync("SwapPersons");
+
+    Assert.Equal("Bob", page.PersonFromName);
+    Assert.Equal("Alice", page.PersonToName);
+    services.KinshipFinder.Verify(
+      k => k.FindPathAsync(
+        It.Is<Person>(p => p.Id == personTo.Id),
+        It.Is<Person>(p => p.Id == personFrom.Id),
+        It.IsAny<CancellationToken>()),
+      Times.Once());
+  }
+
+  [Fact]
   public async Task Picking_the_second_person_auto_populates_the_chain_from_KinshipFinder()
   {
     var services = new TestServices();

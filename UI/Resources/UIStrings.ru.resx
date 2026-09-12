@@ -1473,4 +1473,7 @@ FN - род</value>
   <data name="AlertTextProjectSchemaTooNew" xml:space="preserve">
     <value>Проект создан более новой версией приложения. Чтобы открыть его, обновите приложение.</value>
   </data>
+  <data name="BtnNameSwapPersons" xml:space="preserve">
+    <value>Поменять</value>
+  </data>
 </root>
