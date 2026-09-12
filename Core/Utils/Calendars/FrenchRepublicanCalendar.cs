@@ -17,6 +17,14 @@ public static class FrenchRepublicanCalendar
   public static readonly string[] MonthAbbreviations =
     ["VEND", "BRUM", "FRIM", "NIVO", "PLUV", "VENT", "GERM", "FLOR", "PRAI", "MESS", "THER", "FRUC"];
 
+  // The display sibling of MonthAbbreviations above, kept as one French spelling for every UI
+  // language rather than localized per calendar setting.
+  public static readonly string[] MonthNames =
+  [
+    "Vendémiaire", "Brumaire", "Frimaire", "Nivôse", "Pluviôse", "Ventôse",
+    "Germinal", "Floréal", "Prairial", "Messidor", "Thermidor", "Fructidor",
+  ];
+
   // 1 Vendemiaire of Republican years I-XIV in the Gregorian calendar.
   private static readonly (int Year, int Month, int Day)[] Epochs =
   [

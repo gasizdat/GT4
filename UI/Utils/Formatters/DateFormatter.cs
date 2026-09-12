@@ -12,22 +12,6 @@ internal class DateFormatter : IDateFormatter
   private readonly ISettingEditor _ShortDateFormatSetting;
   private readonly ISettingEditor _CalendarSetting;
 
-  private static string[] HebrewMonthsCommon =>
-  [
-    UIStrings.MonthHebrew_Tishrei, UIStrings.MonthHebrew_Cheshvan, UIStrings.MonthHebrew_Kislev,
-    UIStrings.MonthHebrew_Tevet, UIStrings.MonthHebrew_Shevat, UIStrings.MonthHebrew_Adar,
-    UIStrings.MonthHebrew_Nisan, UIStrings.MonthHebrew_Iyar, UIStrings.MonthHebrew_Sivan,
-    UIStrings.MonthHebrew_Tamuz, UIStrings.MonthHebrew_Av, UIStrings.MonthHebrew_Elul,
-  ];
-  private static string[] HebrewMonthsLeap =>
-  [
-    UIStrings.MonthHebrew_Tishrei, UIStrings.MonthHebrew_Cheshvan, UIStrings.MonthHebrew_Kislev,
-    UIStrings.MonthHebrew_Tevet, UIStrings.MonthHebrew_Shevat, UIStrings.MonthHebrew_AdarI,
-    UIStrings.MonthHebrew_AdarII, UIStrings.MonthHebrew_Nisan, UIStrings.MonthHebrew_Iyar,
-    UIStrings.MonthHebrew_Sivan, UIStrings.MonthHebrew_Tamuz, UIStrings.MonthHebrew_Av,
-    UIStrings.MonthHebrew_Elul,
-  ];
-
   public DateFormatter(
     [FromKeyedServices(DateFormatKind.Full)] ISettingEditor fullDateFormatSetting,
     [FromKeyedServices(DateFormatKind.Short)] ISettingEditor shortDateFormatSetting,
@@ -42,16 +26,53 @@ internal class DateFormatter : IDateFormatter
   {
     if (date.HasValue)
     {
-      var requested = CalendarConversion.ToDisplayCalendar(_CalendarSetting.Value);
-      return date.Value.Status switch
+      string ret;
+      var requestedCalendar = CalendarConversion.ToDisplayCalendar(_CalendarSetting.Value);
+      var appliedCalendar = DisplayCalendar.Gregorian;
+
+      switch (date.Value.Status)
       {
-        DateStatus.WellKnown => FormatWellKnown(date.Value, requested),
-        DateStatus.DayUnknown => WithCalendarLabel(GregorianFormat(_ShortDateFormatSetting.Value, date.Value), requested, DisplayCalendar.Gregorian),
-        DateStatus.MonthUnknown => WithCalendarLabel(YearToString(date.Value), requested, DisplayCalendar.Gregorian),
-        DateStatus.YearApproximate => WithCalendarLabel(string.Format(UIStrings.DateStatusYearApproximate_1, YearToString(date.Value)), requested, DisplayCalendar.Gregorian),
-        DateStatus.Unknown => UIStrings.DateStatusUnknown,
-        _ => $"⚠ Unexpected DateStatus={date.Value.Status}"
-      };
+        case DateStatus.WellKnown:
+          var (applied, year, month, day) = CalendarConversion.TryConvert(date.Value, requestedCalendar);
+          var appliedDate = date.Value with { Year = year, Month = month, Day = day };
+          ret = ToString(
+            _FullDateFormatSetting.Value,
+            () => YearToString(appliedDate, applied),
+            () => MonthToString(appliedDate, applied),
+            () => MonthToNumber(appliedDate),
+            () => DayToString(appliedDate));
+          appliedCalendar = applied;
+          break;
+
+        case DateStatus.DayUnknown:
+          ret = GregorianFormat(_ShortDateFormatSetting.Value, date.Value);
+          break;
+
+        case DateStatus.MonthUnknown:
+          ret = YearToString(date.Value, DisplayCalendar.Gregorian);
+          break;
+
+        case DateStatus.YearApproximate:
+          ret = YearToString(date.Value, DisplayCalendar.Gregorian);
+          ret = string.Format(UIStrings.DateStatusYearApproximate_1, ret);
+          break;
+
+        case DateStatus.Unknown:
+          ret = UIStrings.DateStatusUnknown;
+          appliedCalendar = requestedCalendar;
+          break;
+
+        default:
+          ret = $"⚠ Unexpected DateStatus={date.Value.Status}";
+          break;
+      }
+
+      if (requestedCalendar != DisplayCalendar.Gregorian)
+      {
+        ret = string.Format(UIStrings.DateCalendarSuffix_1, ret, CalendarLabel(appliedCalendar));
+      }
+
+      return ret;
     }
     else
     {
@@ -61,7 +82,14 @@ internal class DateFormatter : IDateFormatter
 
   /// <summary>Stateless, so callers that already hold the format they want (e.g. a setting previewing
   /// its own configured value) don't need an <see cref="IDateFormatter"/> instance to use it.</summary>
-  public static string GregorianFormat(string format, Date date) => ToString(format, () => YearToString(date), () => MonthToString(date), () => MonthToNumber(date), () => DayToString(date));
+  public static string GregorianFormat(string format, Date date) =>
+    ToString(
+      format,
+      () => YearToString(date, DisplayCalendar.Gregorian),
+      () => MonthToString(date, DisplayCalendar.Gregorian),
+      () => MonthToNumber(date),
+      () => DayToString(date)
+    );
 
   public static string CalendarLabel(DisplayCalendar calendar) => calendar switch
   {
@@ -72,7 +100,21 @@ internal class DateFormatter : IDateFormatter
     _ => throw new NotImplementedException($"DisplayCalendar={calendar}")
   };
 
-  protected static string YearToString(Date date)
+  protected static string YearToString(Date date, DisplayCalendar displayCalendar)
+  {
+    var ret = displayCalendar switch
+    {
+      DisplayCalendar.Gregorian or
+      DisplayCalendar.Julian => GregorianYears(date),
+      DisplayCalendar.Hebrew or
+      DisplayCalendar.FrenchRepublican => NonGregorianYears(date),
+      _ => throw new NotImplementedException($"DisplayCalendar={displayCalendar}")
+    };
+
+    return ret;
+  }
+
+  protected static string GregorianYears(Date date)
   {
     var ret = date.Year.ToString();
     if (date.Sign < 0)
@@ -83,55 +125,113 @@ internal class DateFormatter : IDateFormatter
     return ret;
   }
 
-  protected static string MonthToNumber(Date date)
+  protected static string NonGregorianYears(Date date)
   {
-    string ret;
-    var month = date.Month;
-    ret = month.ToString(D2);
+    var ret = date.Year.ToString();
 
     return ret;
   }
 
-  protected static string MonthToString(Date date) => MonthToString(date.Month, date.Status);
-
-  protected static string MonthToString(int month, DateStatus status)
+  protected static string MonthToNumber(Date date)
   {
-    var ret = month switch
+    var month = date.Month;
+    var ret = month.ToString(D2);
+
+    return ret;
+  }
+
+  protected static string MonthToString(Date date, DisplayCalendar displayCalendar)
+  {
+    var monthNames = displayCalendar switch
     {
-      1 => UIStrings.Month_01,
-      2 => UIStrings.Month_02,
-      3 => UIStrings.Month_03,
-      4 => UIStrings.Month_04,
-      5 => UIStrings.Month_05,
-      6 => UIStrings.Month_06,
-      7 => UIStrings.Month_07,
-      8 => UIStrings.Month_08,
-      9 => UIStrings.Month_09,
-      10 => UIStrings.Month_10,
-      11 => UIStrings.Month_11,
-      12 => UIStrings.Month_12,
-      _ => month.ToString(D2)
+      DisplayCalendar.Gregorian or
+      DisplayCalendar.Julian => GregorianMonths,
+      DisplayCalendar.Hebrew => HebrewMonths(date),
+      DisplayCalendar.FrenchRepublican => FrenchRepublicanMonths,
+      _ => throw new NotImplementedException($"DisplayCalendar={displayCalendar}")
     };
+
+    if (date.Month < 1 || date.Month > monthNames.Length)
+    {
+      return MonthToNumber(date);
+    }
+
+    var monthName = monthNames[date.Month - 1];
 
     if (Language.Current == Language.RU)
     {
-      ret = ret.ToLower();
+      monthName = monthName.ToLower();
 
-      if (status == DateStatus.WellKnown)
+      if (date.Status == DateStatus.WellKnown)
       {
-        ret = MonthGenitiveRU(ret);
+        monthName = MonthGenitiveRU(monthName);
       }
     }
 
-    return ret;
+    return monthName;
   }
 
+  protected static string[] GregorianMonths =>
+    [
+      UIStrings.Month_01,
+      UIStrings.Month_02,
+      UIStrings.Month_03,
+      UIStrings.Month_04,
+      UIStrings.Month_05,
+      UIStrings.Month_06,
+      UIStrings.Month_07,
+      UIStrings.Month_08,
+      UIStrings.Month_09,
+      UIStrings.Month_10,
+      UIStrings.Month_11,
+      UIStrings.Month_12
+    ];
+
+  protected static string[] HebrewMonths(Date date) => CalendarConversion.IsHebrewLeapYear(date.Year) ?
+    [
+      UIStrings.MonthHebrew_Tishrei,
+      UIStrings.MonthHebrew_Cheshvan,
+      UIStrings.MonthHebrew_Kislev,
+      UIStrings.MonthHebrew_Tevet,
+      UIStrings.MonthHebrew_Shevat,
+      UIStrings.MonthHebrew_AdarI,
+      UIStrings.MonthHebrew_AdarII,
+      UIStrings.MonthHebrew_Nisan,
+      UIStrings.MonthHebrew_Iyar,
+      UIStrings.MonthHebrew_Sivan,
+      UIStrings.MonthHebrew_Tamuz,
+      UIStrings.MonthHebrew_Av,
+      UIStrings.MonthHebrew_Elul
+    ] :
+    [
+      UIStrings.MonthHebrew_Tishrei,
+      UIStrings.MonthHebrew_Cheshvan,
+      UIStrings.MonthHebrew_Kislev,
+      UIStrings.MonthHebrew_Tevet,
+      UIStrings.MonthHebrew_Shevat,
+      UIStrings.MonthHebrew_Adar,
+      UIStrings.MonthHebrew_Nisan,
+      UIStrings.MonthHebrew_Iyar,
+      UIStrings.MonthHebrew_Sivan,
+      UIStrings.MonthHebrew_Tamuz,
+      UIStrings.MonthHebrew_Av,
+      UIStrings.MonthHebrew_Elul,
+    ];
+
+  protected static string[] FrenchRepublicanMonths => FrenchRepublicanCalendar.MonthNames;
+
+  // Only a Cyrillic word takes a Russian genitive ending; Latin-script month names reach here too.
   protected static string MonthGenitiveRU(string month)
   {
+    if (month.Last() is not (>= 'а' and <= 'я' or 'ё'))
+    {
+      return month;
+    }
+
     var ret = month.Last() switch
     {
       'ь' or 'й' => month.Substring(0, month.Length - 1) + "я",
-      _ => month + "a"
+      _ => month + "а"
     };
 
     return ret;
@@ -156,32 +256,4 @@ internal class DateFormatter : IDateFormatter
 
     return ret;
   }
-
-  private string FormatWellKnown(Date date, DisplayCalendar requested)
-  {
-    var (applied, year, month, day) = CalendarConversion.TryConvert(date, requested);
-    var text = ToString(
-      _FullDateFormatSetting.Value,
-      () => applied == DisplayCalendar.Gregorian ? YearToString(date) : year.ToString(),
-      () => MonthLabel(applied, year, month),
-      () => month.ToString(D2),
-      () => day.ToString(D2));
-
-    return WithCalendarLabel(text, requested, applied);
-  }
-
-  // Suffixing on requested rather than applied is what makes a fallback to Gregorian visible instead
-  // of silent.
-  private static string WithCalendarLabel(string text, DisplayCalendar requested, DisplayCalendar applied) =>
-    requested == DisplayCalendar.Gregorian
-      ? text
-      : string.Format(UIStrings.DateCalendarSuffix_1, text, CalendarLabel(applied));
-
-  private static string MonthLabel(DisplayCalendar applied, int year, int month) => applied switch
-  {
-    DisplayCalendar.Gregorian or DisplayCalendar.Julian => MonthToString(month, DateStatus.WellKnown),
-    DisplayCalendar.Hebrew => (CalendarConversion.IsHebrewLeapYear(year) ? HebrewMonthsLeap : HebrewMonthsCommon)[month - 1],
-    DisplayCalendar.FrenchRepublican => FrenchRepublicanCalendar.MonthAbbreviations[month - 1],
-    _ => throw new NotImplementedException($"DisplayCalendar={applied}")
-  };
 }

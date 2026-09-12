@@ -265,7 +265,7 @@ public class DateFormatterTests
     Create(calendar: "Hebrew").ToString(date).Should().Be("06 Tevet 5761 (Hebrew)");
 
     SetRu();
-    Create(calendar: "Hebrew").ToString(date).Should().Be("06 Тевет 5761 (Еврейский)");
+    Create(calendar: "Hebrew").ToString(date).Should().Be("06 тевета 5761 (Еврейский)");
   }
 
   // Tevet (above) happens to be spelled identically in en/de/es/fr, so it can't catch a satellite
@@ -300,7 +300,27 @@ public class DateFormatterTests
   {
     SetEn();
     var date = Date.Create(1793, 1, 21, DateStatus.WellKnown);
-    Create(calendar: "FrenchRepublican").ToString(date).Should().Be("02 PLUV 1 (French Republican)");
+    Create(calendar: "FrenchRepublican").ToString(date).Should().Be("02 Pluviôse 1 (French Republican)");
+  }
+
+  // French Republican names are Latin script, not Cyrillic -- proves MonthGenitiveRU leaves them
+  // unchanged instead of appending a Cyrillic "а" onto a French word.
+  [Fact]
+  public void WellKnown_FrenchRepublicanCalendar_RU_DoesNotAppendCyrillicGenitive()
+  {
+    SetRu();
+    var date = Date.Create(1793, 1, 21, DateStatus.WellKnown);
+    Create(calendar: "FrenchRepublican").ToString(date).Should().Be("02 pluviôse 1 (Французский республиканский)");
+  }
+
+  // Adar I/Adar II end in a Latin numeral even in Russian resource strings ("Адар I") -- proves
+  // MonthGenitiveRU leaves the Latin suffix alone instead of producing "адар iа".
+  [Fact]
+  public void WellKnown_HebrewLeapYear_RU_AdarNamesKeepTheirLatinNumeralUnmangled()
+  {
+    SetRu();
+    Create(calendar: "Hebrew").ToString(Date.Create(2024, 2, 10, DateStatus.WellKnown)).Should().Be("01 адар i 5784 (Еврейский)");
+    Create(calendar: "Hebrew").ToString(Date.Create(2024, 3, 11, DateStatus.WellKnown)).Should().Be("01 адар ii 5784 (Еврейский)");
   }
 
   [Fact]
@@ -388,6 +408,6 @@ public class DateFormatterTests
   {
     SetEn();
     var date = Date.Create(0, 0, 0, DateStatus.Unknown);
-    Create(calendar: "Hebrew").ToString(date).Should().Be("unknown");
+    Create(calendar: "Hebrew").ToString(date).Should().Be("unknown (Hebrew)");
   }
 }
