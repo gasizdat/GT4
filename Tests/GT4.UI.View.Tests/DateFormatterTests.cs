@@ -303,14 +303,23 @@ public class DateFormatterTests
     Create(calendar: "FrenchRepublican").ToString(date).Should().Be("02 Pluviôse 1 (French Republican)");
   }
 
-  // French Republican names are Latin script, not Cyrillic -- proves MonthGenitiveRU leaves them
-  // unchanged instead of appending a Cyrillic "а" onto a French word.
   [Fact]
-  public void WellKnown_FrenchRepublicanCalendar_RU_DoesNotAppendCyrillicGenitive()
+  public void WellKnown_FrenchRepublicanCalendar_RU_MonthNameIsLocalizedAndInGenitiveCase()
   {
     SetRu();
     var date = Date.Create(1793, 1, 21, DateStatus.WellKnown);
-    Create(calendar: "FrenchRepublican").ToString(date).Should().Be("02 pluviôse 1 (Французский республиканский)");
+    Create(calendar: "FrenchRepublican").ToString(date).Should().Be("02 плювиоза 1 (Французский республиканский)");
+  }
+
+  // Prairial (fr/en/de) is Pradial in Spanish -- one of the few French Republican months whose
+  // Spanish spelling actually differs, so this is the case that would catch a satellite resx
+  // shipping the wrong value under the right key.
+  [Fact]
+  public void WellKnown_FrenchRepublicanCalendar_ES_MonthNameMatchesResourceString()
+  {
+    SetEs();
+    var date = Date.Create(1793, 5, 20, DateStatus.WellKnown);
+    Create(calendar: "FrenchRepublican").ToString(date).Should().Be("01 Pradial 1 (Republicano francés)");
   }
 
   // Adar I/Adar II end in a Latin numeral even in Russian resource strings ("Адар I") -- proves

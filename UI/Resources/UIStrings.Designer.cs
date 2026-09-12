@@ -2638,6 +2638,114 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Brumaire.
+        /// </summary>
+        public static string MonthFrenchRepublican_Brumaire {
+            get {
+                return ResourceManager.GetString("MonthFrenchRepublican_Brumaire", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Floréal.
+        /// </summary>
+        public static string MonthFrenchRepublican_Floreal {
+            get {
+                return ResourceManager.GetString("MonthFrenchRepublican_Floreal", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Frimaire.
+        /// </summary>
+        public static string MonthFrenchRepublican_Frimaire {
+            get {
+                return ResourceManager.GetString("MonthFrenchRepublican_Frimaire", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Fructidor.
+        /// </summary>
+        public static string MonthFrenchRepublican_Fructidor {
+            get {
+                return ResourceManager.GetString("MonthFrenchRepublican_Fructidor", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Germinal.
+        /// </summary>
+        public static string MonthFrenchRepublican_Germinal {
+            get {
+                return ResourceManager.GetString("MonthFrenchRepublican_Germinal", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Messidor.
+        /// </summary>
+        public static string MonthFrenchRepublican_Messidor {
+            get {
+                return ResourceManager.GetString("MonthFrenchRepublican_Messidor", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Nivôse.
+        /// </summary>
+        public static string MonthFrenchRepublican_Nivose {
+            get {
+                return ResourceManager.GetString("MonthFrenchRepublican_Nivose", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Pluviôse.
+        /// </summary>
+        public static string MonthFrenchRepublican_Pluviose {
+            get {
+                return ResourceManager.GetString("MonthFrenchRepublican_Pluviose", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Prairial.
+        /// </summary>
+        public static string MonthFrenchRepublican_Prairial {
+            get {
+                return ResourceManager.GetString("MonthFrenchRepublican_Prairial", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Thermidor.
+        /// </summary>
+        public static string MonthFrenchRepublican_Thermidor {
+            get {
+                return ResourceManager.GetString("MonthFrenchRepublican_Thermidor", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Vendémiaire.
+        /// </summary>
+        public static string MonthFrenchRepublican_Vendemiaire {
+            get {
+                return ResourceManager.GetString("MonthFrenchRepublican_Vendemiaire", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Ventôse.
+        /// </summary>
+        public static string MonthFrenchRepublican_Ventose {
+            get {
+                return ResourceManager.GetString("MonthFrenchRepublican_Ventose", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Adar.
         /// </summary>
         public static string MonthHebrew_Adar {

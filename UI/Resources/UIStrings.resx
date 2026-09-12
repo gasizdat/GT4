@@ -493,6 +493,42 @@ genealogy tree and enjoy!</value>
   <data name="MonthHebrew_Elul" xml:space="preserve">
     <value>Elul</value>
   </data>
+  <data name="MonthFrenchRepublican_Vendemiaire" xml:space="preserve">
+    <value>Vendémiaire</value>
+  </data>
+  <data name="MonthFrenchRepublican_Brumaire" xml:space="preserve">
+    <value>Brumaire</value>
+  </data>
+  <data name="MonthFrenchRepublican_Frimaire" xml:space="preserve">
+    <value>Frimaire</value>
+  </data>
+  <data name="MonthFrenchRepublican_Nivose" xml:space="preserve">
+    <value>Nivôse</value>
+  </data>
+  <data name="MonthFrenchRepublican_Pluviose" xml:space="preserve">
+    <value>Pluviôse</value>
+  </data>
+  <data name="MonthFrenchRepublican_Ventose" xml:space="preserve">
+    <value>Ventôse</value>
+  </data>
+  <data name="MonthFrenchRepublican_Germinal" xml:space="preserve">
+    <value>Germinal</value>
+  </data>
+  <data name="MonthFrenchRepublican_Floreal" xml:space="preserve">
+    <value>Floréal</value>
+  </data>
+  <data name="MonthFrenchRepublican_Prairial" xml:space="preserve">
+    <value>Prairial</value>
+  </data>
+  <data name="MonthFrenchRepublican_Messidor" xml:space="preserve">
+    <value>Messidor</value>
+  </data>
+  <data name="MonthFrenchRepublican_Thermidor" xml:space="preserve">
+    <value>Thermidor</value>
+  </data>
+  <data name="MonthFrenchRepublican_Fructidor" xml:space="preserve">
+    <value>Fructidor</value>
+  </data>
   <data name="TitleSelectRelativesDialog" xml:space="preserve">
     <value>Select relatives</value>
   </data>

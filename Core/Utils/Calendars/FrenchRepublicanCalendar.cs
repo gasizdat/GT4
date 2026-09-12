@@ -13,17 +13,10 @@ public static class FrenchRepublicanCalendar
   private const int MonthsPerYear = 12;
 
   // Shared with GedcomDate's parser as the literal tokens GEDCOM text uses -- not a display string,
-  // so localizing it would break import of French Republican dates.
+  // so localizing it would break import of French Republican dates. The localized display names
+  // live in UIStrings.MonthFrenchRepublican_* instead, same as Hebrew's month names.
   public static readonly string[] MonthAbbreviations =
     ["VEND", "BRUM", "FRIM", "NIVO", "PLUV", "VENT", "GERM", "FLOR", "PRAI", "MESS", "THER", "FRUC"];
-
-  // The display sibling of MonthAbbreviations above, kept as one French spelling for every UI
-  // language rather than localized per calendar setting.
-  public static readonly string[] MonthNames =
-  [
-    "Vendémiaire", "Brumaire", "Frimaire", "Nivôse", "Pluviôse", "Ventôse",
-    "Germinal", "Floréal", "Prairial", "Messidor", "Thermidor", "Fructidor",
-  ];
 
   // 1 Vendemiaire of Republican years I-XIV in the Gregorian calendar.
   private static readonly (int Year, int Month, int Day)[] Epochs =

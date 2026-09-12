@@ -218,7 +218,21 @@ internal class DateFormatter : IDateFormatter
       UIStrings.MonthHebrew_Elul,
     ];
 
-  protected static string[] FrenchRepublicanMonths => FrenchRepublicanCalendar.MonthNames;
+  protected static string[] FrenchRepublicanMonths =>
+  [
+    UIStrings.MonthFrenchRepublican_Vendemiaire,
+    UIStrings.MonthFrenchRepublican_Brumaire,
+    UIStrings.MonthFrenchRepublican_Frimaire,
+    UIStrings.MonthFrenchRepublican_Nivose,
+    UIStrings.MonthFrenchRepublican_Pluviose,
+    UIStrings.MonthFrenchRepublican_Ventose,
+    UIStrings.MonthFrenchRepublican_Germinal,
+    UIStrings.MonthFrenchRepublican_Floreal,
+    UIStrings.MonthFrenchRepublican_Prairial,
+    UIStrings.MonthFrenchRepublican_Messidor,
+    UIStrings.MonthFrenchRepublican_Thermidor,
+    UIStrings.MonthFrenchRepublican_Fructidor,
+  ];
 
   // Only a Cyrillic word takes a Russian genitive ending; Latin-script month names reach here too.
   protected static string MonthGenitiveRU(string month)
