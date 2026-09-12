@@ -314,8 +314,37 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     var lines = text.Split('\n');
     lines.Count(line => line.StartsWith("1 BIRT", StringComparison.Ordinal)).Should().Be(1);
     lines.Count(line => line.StartsWith("1 DEAT", StringComparison.Ordinal)).Should().Be(1);
+    // The French Republican date converts (unlike the unparseable Julian one), so a synthesized DATE from
+    // that converted value must not join the verbatim residual one under the same DEAT.
+    lines.Count(line => line.StartsWith("2 DATE", StringComparison.Ordinal)).Should().Be(2);
 
     // A second hop keeps them: the residue is rebuilt from the export, not just carried once.
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
+    var reexported = await ExportToTextAsync(reimported);
+    reexported.Should().Be(text);
+  }
+
+  [Fact]
+  public async Task MarriageConvertedCalendarDate_KeptAsResidueWithNoDuplicateDate()
+  {
+    // Issue #397: unlike the unparseable Julian date above, a French Republican MARR date converts (the
+    // spouse edge carries the Gregorian equivalent), so AddMarriage must not synthesize a second DATE from
+    // it alongside the verbatim residual one.
+    const string ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME Louis /Bourbon/\n1 SEX M\n" +
+      "0 @I2@ INDI\n1 NAME Marie /Antoinette/\n1 SEX F\n" +
+      "0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n1 MARR\n2 DATE @#DFRENCH R@ 2 PLUV 1\n0 TRLR\n";
+    await using var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged), Token);
+
+    var text = await ExportToTextAsync(document);
+    text.Should().Contain("2 DATE @#DFRENCH R@ 2 PLUV 1");
+    var lines = text.Split('\n');
+    lines.Count(line => line.StartsWith("1 MARR", StringComparison.Ordinal)).Should().Be(1);
+    lines.Count(line => line.StartsWith("2 DATE", StringComparison.Ordinal)).Should().Be(1);
+
     await using var reimported = await NewDocumentAsync();
     await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
     var reexported = await ExportToTextAsync(reimported);
