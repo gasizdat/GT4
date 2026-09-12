@@ -677,16 +677,21 @@ internal sealed class GedcomExporter : IGedcomExporter
       return;
 
     var eventNode = new GedcomNode { Tag = eventTag, Value = assertion };
-    // A residual DATE only occurs when the original was calendar-converted rather than carried by the
-    // model (GedcomMapping.IsCarriedByModel), so it is verbatim and authoritative -- synthesizing one from
-    // the converted value too would duplicate the line.
-    if (value is not null && !residual.Any(child => child.Tag == GedcomTags.Date))
+    if (value is not null && !HasVerbatimDate(residual))
     {
       eventNode.Add(new GedcomNode { Tag = GedcomTags.Date, Value = value });
     }
     eventNode.Add([.. residual]);
     individual.Add(eventNode);
   }
+
+  /// <summary>
+  /// A residual DATE occurs only when the original was not carried by the model
+  /// (<see cref="GedcomMapping.IsCarriedByModel"/>), so it is verbatim and authoritative -- synthesizing
+  /// one from the model's converted value alongside it would duplicate the line.
+  /// </summary>
+  private static bool HasVerbatimDate(IEnumerable<GedcomNode> residual) =>
+    residual.Any(child => child.Tag == GedcomTags.Date);
 
   private static GedcomNode? BuildName(PersonInfo? info, BiologicalSex sex, IReadOnlyList<GedcomNode> residual)
   {
@@ -821,9 +826,7 @@ internal sealed class GedcomExporter : IGedcomExporter
   {
     var marriage = new GedcomNode { Tag = GedcomTags.Marriage };
     var value = date.HasValue ? GedcomDate.ToGedcom(date.Value) : null;
-    // Same duplication hazard as AddEvent: a calendar-converted MARR date's verbatim DATE rides in the
-    // residual root's children, and takes precedence over synthesizing one from the converted value.
-    if (value is not null && !residual.Any(root => root.Children.Any(child => child.Tag == GedcomTags.Date)))
+    if (value is not null && !HasVerbatimDate(residual.SelectMany(root => root.Children)))
     {
       marriage.Add(new GedcomNode { Tag = GedcomTags.Date, Value = value });
     }
