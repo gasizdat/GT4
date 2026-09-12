@@ -1,4 +1,5 @@
 using GT4.Core.Utils;
+using GT4.Core.Utils.Calendars;
 
 namespace GT4.Core.Gedcom;
 
@@ -21,19 +22,6 @@ internal static class GedcomDate
 
   private const string GregorianEscape = "@#DGREGORIAN@";
   private const string FrenchRepublicanEscape = "@#DFRENCH R@";
-
-  private static readonly string[] FrenchRepublicanMonths =
-    ["VEND", "BRUM", "FRIM", "NIVO", "PLUV", "VENT", "GERM", "FLOR", "PRAI", "MESS", "THER", "FRUC"];
-
-  // 1 Vendemiaire of Republican years I-XIV in the Gregorian calendar -- the only years the calendar was
-  // ever in official use (22 September 1792 to 1 January 1806). Months 1-12 always run 30 days regardless
-  // of a sextile year, so only this epoch needs a leap-aware lookup; the complementary days (month 13) are
-  // unmodeled.
-  private static readonly (int Year, int Month, int Day)[] FrenchRepublicanEpochs =
-  [
-    (1792, 9, 22), (1793, 9, 22), (1794, 9, 22), (1795, 9, 23), (1796, 9, 22), (1797, 9, 22), (1798, 9, 22),
-    (1799, 9, 23), (1800, 9, 23), (1801, 9, 23), (1802, 9, 23), (1803, 9, 24), (1804, 9, 23), (1805, 9, 23),
-  ];
 
   /// <summary>
   /// Whether <paramref name="value"/> carries a calendar GT4 converts to Gregorian rather than reproduces
@@ -148,14 +136,13 @@ internal static class GedcomDate
       return unknown;
 
     var hasDay = int.TryParse(tokens[0], out var day);
-    var month = Array.IndexOf(FrenchRepublicanMonths, tokens[1]);
+    var month = Array.IndexOf(FrenchRepublicanCalendar.MonthAbbreviations, tokens[1]);
     var hasYear = int.TryParse(tokens[2], out var year);
-    if (!hasDay || day is < 1 or > 30 || month < 0 || !hasYear || year < 1 || year > FrenchRepublicanEpochs.Length)
+    if (!hasDay || !hasYear || month < 0)
       return unknown;
 
-    var epoch = FrenchRepublicanEpochs[year - 1];
-    var gregorian = new DateTime(epoch.Year, epoch.Month, epoch.Day).AddDays(month * 30 + day - 1);
-    return Date.Create(gregorian);
+    var gregorian = FrenchRepublicanCalendar.ToGregorian(year, month + 1, day);
+    return gregorian is null ? unknown : Date.Create(gregorian.Value);
   }
 
   private static int? MonthNumber(string token)

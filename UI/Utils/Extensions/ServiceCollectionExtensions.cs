@@ -40,6 +40,7 @@ public static class ServiceCollectionExtensions
       .AddKeyedSingleton<ISettingEditor, FontScaleSetting>(SettingKeys.FontScale)
       .AddKeyedSingleton<ISettingEditor, BackgroundAnimationSetting>(SettingKeys.BackgroundAnimation)
       .AddKeyedSingleton<ISettingEditor, ThemeSetting>(SettingKeys.Theme)
+      .AddKeyedSingleton<ISettingEditor, CalendarSetting>(SettingKeys.Calendar)
       .AddKeyedSingleton<ISettingEditor, DateFormatSetting>(DateFormatKind.Full)
       .AddKeyedSingleton<ISettingEditor, DateFormatSetting>(DateFormatKind.Short)
       .AddKeyedSingleton<ISettingEditor, DateSpanFormatSetting>(DateSpanFormatKind.Full)
