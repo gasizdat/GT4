@@ -123,14 +123,14 @@ public sealed class CalendarConversionTests
   [InlineData(null)]
   [InlineData("")]
   [InlineData("Sepia")]
-  public void Parse_UnrecognizedOrMissing_FallsBackToGregorian(string? value)
+  public void ToDisplayCalendar_UnrecognizedOrMissing_FallsBackToGregorian(string? value)
   {
-    CalendarConversion.Parse(value).Should().Be(DisplayCalendar.Gregorian);
+    CalendarConversion.ToDisplayCalendar(value).Should().Be(DisplayCalendar.Gregorian);
   }
 
   [Fact]
-  public void Parse_RecognizesEveryDisplayCalendar()
+  public void ToDisplayCalendar_RecognizesEveryDisplayCalendar()
   {
-    CalendarConversion.Parse(nameof(DisplayCalendar.Julian)).Should().Be(DisplayCalendar.Julian);
+    CalendarConversion.ToDisplayCalendar(nameof(DisplayCalendar.Julian)).Should().Be(DisplayCalendar.Julian);
   }
 }

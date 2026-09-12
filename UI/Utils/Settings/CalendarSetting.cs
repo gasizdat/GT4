@@ -36,7 +36,7 @@ internal sealed class CalendarSetting : ISettingEditor
 
   public string Value
   {
-    get => CalendarConversion.Parse(_Configuration[CalendarSection]).ToString();
+    get => CalendarConversion.ToDisplayCalendar(_Configuration[CalendarSection]).ToString();
     set => _InteractiveConfiguration?.SetKey(CalendarSection, value);
   }
 

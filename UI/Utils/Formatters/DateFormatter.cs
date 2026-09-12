@@ -82,6 +82,7 @@ internal class DateFormatter : IDateFormatter
 
     return ret;
   }
+
   protected static string MonthToNumber(Date date)
   {
     string ret;
@@ -161,7 +162,7 @@ internal class DateFormatter : IDateFormatter
   // that fallback visible instead of silent.
   private string FormatWellKnown(Date date)
   {
-    var (applied, year, month, day) = CalendarConversion.TryConvert(date, CalendarConversion.Parse(_CalendarSetting.Value));
+    var (applied, year, month, day) = CalendarConversion.TryConvert(date, CalendarConversion.ToDisplayCalendar(_CalendarSetting.Value));
     var text = applied == DisplayCalendar.Gregorian
       ? Format(_FullDateFormatSetting.Value, date)
       : ToString(_FullDateFormatSetting.Value, () => year.ToString(), () => MonthLabel(applied, year, month), () => month.ToString(D2), () => day.ToString(D2));
@@ -172,7 +173,7 @@ internal class DateFormatter : IDateFormatter
   // A partial date never converts, but still needs the label whenever the setting isn't Gregorian --
   // otherwise it would read as a converted date rather than the Gregorian fallback it actually is.
   private string WithCalendarLabel(string text, DisplayCalendar applied) =>
-    CalendarConversion.Parse(_CalendarSetting.Value) == DisplayCalendar.Gregorian
+    CalendarConversion.ToDisplayCalendar(_CalendarSetting.Value) == DisplayCalendar.Gregorian
       ? text
       : string.Format(UIStrings.DateCalendarSuffix_1, text, CalendarLabel(applied));
 

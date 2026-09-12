@@ -17,8 +17,8 @@ public static class CalendarConversion
   private static readonly HebrewCalendar Hebrew = new();
 
   /// <summary>A hand-edited config can name a calendar that is not one of the four offered.</summary>
-  public static DisplayCalendar Parse(string? calendar) =>
-    Enum.TryParse<DisplayCalendar>(calendar, out var parsed) ? parsed : DisplayCalendar.Gregorian;
+  public static DisplayCalendar ToDisplayCalendar(string? calendarType) =>
+    Enum.TryParse<DisplayCalendar>(calendarType, out var parsed) ? parsed : DisplayCalendar.Gregorian;
 
   /// <summary>Assumes <paramref name="date"/> is <see cref="DateStatus.WellKnown"/> -- a partial date
   /// (year/month only) has no single correct placement in another calendar, so callers convert only
