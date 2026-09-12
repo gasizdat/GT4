@@ -9,64 +9,71 @@
     x:Name="Root">
 
   <components:PageLayout
+      Title="{x:Static resources:UIStrings.TitleKinshipFinderPage}"
       HasBackButton="True"
-      Loading="{Binding Loading, Source={x:Reference Root}}"
-      Title="{x:Static resources:UIStrings.TitleKinshipFinderPage}">
+      Loading="{Binding Loading, Source={x:Reference Root}}">
     <components:PageLayout.Header>
       <Grid
-          ColumnDefinitions="Auto, *, Auto"
+          ColumnDefinitions="*, Auto, Auto"
           ColumnSpacing="{StaticResource PageContentSpacing}"
-          RowDefinitions="Auto, Auto, Auto"
+          RowDefinitions="Auto, Auto, Auto, Auto"
           RowSpacing="{StaticResource PageContentSpacing}">
 
-        <!--  Row 0 - First person  -->
+        <!--  First person  -->
         <Label
             Grid.Row="0"
             Grid.Column="0"
             Style="{StaticResource FieldName}"
             Text="{x:Static resources:UIStrings.FieldKinshipPersonFrom}" />
 
-        <Label
-            Grid.Row="0"
-            Grid.Column="1"
-            Style="{StaticResource FieldValue}"
-            Text="{Binding PersonFromName, Source={x:Reference Root}}" />
-
         <Button
             Grid.Row="0"
-            Grid.Column="2"
+            Grid.RowSpan="2"
+            Grid.Column="1"
             Command="{Binding PageCommand, Source={x:Reference Root}}"
             CommandParameter="PickPersonFrom"
-            Text="{x:Static resources:UIStrings.BtnNameChoosePerson}" />
-
-        <!--  Row 1 - Second person  -->
-        <Label
-            Grid.Row="1"
-            Grid.Column="0"
-            Style="{StaticResource FieldName}"
-            Text="{x:Static resources:UIStrings.FieldKinshipPersonTo}" />
-
-        <Label
-            Grid.Row="1"
-            Grid.Column="1"
-            Style="{StaticResource FieldValue}"
-            Text="{Binding PersonToName, Source={x:Reference Root}}" />
+            Text="{x:Static resources:UIStrings.BtnNameChoosePerson}"
+            VerticalOptions="Center" />
 
         <Button
-            Grid.Row="1"
-            Grid.Column="2"
-            Command="{Binding PageCommand, Source={x:Reference Root}}"
-            CommandParameter="PickPersonTo"
-            Text="{x:Static resources:UIStrings.BtnNameChoosePerson}" />
-
-        <!--  Row 2 - Swap the two selected persons  -->
-        <Button
-            Grid.Row="2"
+            Grid.Row="0"
+            Grid.RowSpan="4"
             Grid.Column="2"
             Command="{Binding PageCommand, Source={x:Reference Root}}"
             CommandParameter="SwapPersons"
             IsEnabled="{Binding CanSwapPersons, Source={x:Reference Root}}"
-            Text="{x:Static resources:UIStrings.BtnNameSwapPersons}" />
+            Style="{StaticResource TextAdorner}"
+            Text="⇅"
+            ToolTipProperties.Text="{x:Static resources:UIStrings.BtnNameSwapPersons}"
+            VerticalOptions="Center" />
+
+        <Label
+            Grid.Row="1"
+            Grid.Column="0"
+            Style="{StaticResource FieldValue}"
+            Text="{Binding PersonFromName, Source={x:Reference Root}}" />
+
+        <!--  Second person  -->
+        <Label
+            Grid.Row="2"
+            Grid.Column="0"
+            Style="{StaticResource FieldName}"
+            Text="{x:Static resources:UIStrings.FieldKinshipPersonTo}" />
+
+        <Button
+            Grid.Row="2"
+            Grid.RowSpan="2"
+            Grid.Column="1"
+            Command="{Binding PageCommand, Source={x:Reference Root}}"
+            CommandParameter="PickPersonTo"
+            Text="{x:Static resources:UIStrings.BtnNameChoosePerson}"
+            VerticalOptions="Center" />
+
+        <Label
+            Grid.Row="3"
+            Grid.Column="0"
+            Style="{StaticResource FieldValue}"
+            Text="{Binding PersonToName, Source={x:Reference Root}}" />
 
       </Grid>
     </components:PageLayout.Header>
