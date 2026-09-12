@@ -15,11 +15,16 @@ public class CalendarSettingTests
 
   private static CalendarSetting Make(
     string? configuredValue = null,
-    IInteractiveConfiguration? interactive = null)
+    IInteractiveConfiguration? interactive = null,
+    string fullDateFormat = "no placeholders here")
   {
     var config = new Mock<IConfiguration>();
     config.SetupGet(c => c[CalendarSection]).Returns(configuredValue);
-    return new CalendarSetting(config.Object, interactive);
+
+    var fullFormat = new Mock<ISettingEditor>();
+    fullFormat.SetupGet(s => s.Value).Returns(fullDateFormat);
+
+    return new CalendarSetting(config.Object, fullFormat.Object, interactive);
   }
 
   private static SettingKind.Option[] OptionsOf(ISettingEditor setting)
@@ -84,18 +89,32 @@ public class CalendarSettingTests
     Make(configured).Value.Should().Be(configured);
   }
 
-  // Example feeds the card's preview label, and every Value the getter can return has to name an
-  // option -- otherwise a hand-edited config would throw while the page builds.
+  // Year 1800 sits inside every non-Gregorian calendar's range (including French Republican's
+  // narrow 1792-1806 window), so the preview must carry the selected calendar's own label, not the
+  // out-of-range Gregorian fallback.
   [Theory]
-  [InlineData(null)]
-  [InlineData("Hebrew")]
-  [InlineData("Sepia")]
-  public void Example_ShowsTheSelectedOptionsLabel(string? configured)
+  [InlineData(null, "no placeholders here")]
+  [InlineData("Sepia", "no placeholders here")]
+  [InlineData("Julian", "no placeholders here (Julian)")]
+  [InlineData("Hebrew", "no placeholders here (Hebrew)")]
+  [InlineData("FrenchRepublican", "no placeholders here (French Republican)")]
+  public void Example_AppliesTheFormatAndLabelsNonGregorianCalendars(string? configured, string expected)
   {
-    var setting = Make(configured);
-    var selected = OptionsOf(setting).Single(o => o.Value == setting.Value);
+    TestLanguage.Use(Language.EN);
 
-    setting.Example.Should().Be(selected.Label);
+    Make(configured).Example.Should().Be(expected);
+  }
+
+  // A no-placeholder format proves the suffix logic but never that the preview actually renders a
+  // converted date -- 1800 lands in Hebrew year 5560 (Jan-Sep) or 5561 (late Sep-Dec) depending on
+  // Rosh Hashanah's date that year, never anything else, so BeOneOf still discriminates a fallback
+  // to Gregorian (which would read "1800") or a changed sentinel year.
+  [Fact]
+  public void Example_PreviewsTheDateInTheSelectedCalendar()
+  {
+    TestLanguage.Use(Language.EN);
+
+    Make("Hebrew", fullDateFormat: "YYYY").Example.Should().BeOneOf("5560 (Hebrew)", "5561 (Hebrew)");
   }
 
   [Fact]

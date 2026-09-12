@@ -11,14 +11,18 @@ internal sealed class CalendarSetting : ISettingEditor
 
   private readonly IConfiguration _Configuration;
   private readonly IInteractiveConfiguration? _InteractiveConfiguration;
+  private readonly DateFormatter _DateFormatter;
 
   public CalendarSetting(
     IConfiguration configuration,
+    [FromKeyedServices(DateFormatKind.Full)]
+    ISettingEditor fullDateFormatSetting,
     [FromKeyedServices(WellKnownActiveConfigurations.AppConfig)]
     IInteractiveConfiguration? interactiveConfiguration)
   {
     _Configuration = configuration;
     _InteractiveConfiguration = interactiveConfiguration;
+    _DateFormatter = new DateFormatter(fullDateFormatSetting, fullDateFormatSetting, this);
   }
 
   public string Group => nameof(DateFormatter);
@@ -27,14 +31,7 @@ internal sealed class CalendarSetting : ISettingEditor
 
   public string Description => UIStrings.FieldCalendarHint;
 
-  public string Example
-  {
-    get
-    {
-      var selected = Options.Single(o => o.Value == Value);
-      return selected.Label;
-    }
-  }
+  public string Example => _DateFormatter.ToString(Date.Now with { Year = 1800 });
 
   public string Value
   {
