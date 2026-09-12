@@ -677,7 +677,10 @@ internal sealed class GedcomExporter : IGedcomExporter
       return;
 
     var eventNode = new GedcomNode { Tag = eventTag, Value = assertion };
-    if (value is not null)
+    // A residual DATE only occurs when the original was calendar-converted rather than carried by the
+    // model (GedcomMapping.IsCarriedByModel), so it is verbatim and authoritative -- synthesizing one from
+    // the converted value too would duplicate the line.
+    if (value is not null && !residual.Any(child => child.Tag == GedcomTags.Date))
     {
       eventNode.Add(new GedcomNode { Tag = GedcomTags.Date, Value = value });
     }
@@ -818,7 +821,9 @@ internal sealed class GedcomExporter : IGedcomExporter
   {
     var marriage = new GedcomNode { Tag = GedcomTags.Marriage };
     var value = date.HasValue ? GedcomDate.ToGedcom(date.Value) : null;
-    if (value is not null)
+    // Same duplication hazard as AddEvent: a calendar-converted MARR date's verbatim DATE rides in the
+    // residual root's children, and takes precedence over synthesizing one from the converted value.
+    if (value is not null && !residual.Any(root => root.Children.Any(child => child.Tag == GedcomTags.Date)))
     {
       marriage.Add(new GedcomNode { Tag = GedcomTags.Date, Value = value });
     }
