@@ -237,13 +237,9 @@ internal class DateFormatter : IDateFormatter
   // Only a Cyrillic word takes a Russian genitive ending; Latin-script month names reach here too.
   protected static string MonthGenitiveRU(string month)
   {
-    if (month.Last() is not (>= 'а' and <= 'я' or 'ё'))
-    {
-      return month;
-    }
-
     var ret = month.Last() switch
     {
+      (< 'а' or > 'я') and not 'ё' => month,
       'ь' or 'й' => month.Substring(0, month.Length - 1) + "я",
       _ => month + "а"
     };
