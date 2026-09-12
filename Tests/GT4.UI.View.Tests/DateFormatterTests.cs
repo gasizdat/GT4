@@ -311,6 +311,16 @@ public class DateFormatterTests
     Create(calendar: "FrenchRepublican").ToString(date).Should().Be("01 January 1850 (Gregorian)");
   }
 
+  // A BC date always falls back to Gregorian, so it must show both the B.C. suffix and the
+  // "(Gregorian)" label together -- proving neither one crowds out the other.
+  [Fact]
+  public void WellKnown_BeforeCommonEra_NonGregorianCalendar_FallsBackAndKeepsTheEraSuffix()
+  {
+    SetEn();
+    var date = Date.Create(-440315, DateStatus.WellKnown);
+    Create(fullFormat: "DD MMM YYYY", calendar: "Hebrew").ToString(date).Should().Be("15 March 44 B.C. (Gregorian)");
+  }
+
   // hebcal.com converter, directly verified: Adar I and Adar II are distinct months (6 and 7) only in
   // a leap year -- exactly the index a wrong leap-year array would get wrong.
   [Fact]

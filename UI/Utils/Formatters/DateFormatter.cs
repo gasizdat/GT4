@@ -42,12 +42,13 @@ internal class DateFormatter : IDateFormatter
   {
     if (date.HasValue)
     {
+      var requested = CalendarConversion.ToDisplayCalendar(_CalendarSetting.Value);
       return date.Value.Status switch
       {
-        DateStatus.WellKnown => FormatWellKnown(date.Value),
-        DateStatus.DayUnknown => WithCalendarLabel(Format(_ShortDateFormatSetting.Value, date.Value), DisplayCalendar.Gregorian),
-        DateStatus.MonthUnknown => WithCalendarLabel(YearToString(date.Value), DisplayCalendar.Gregorian),
-        DateStatus.YearApproximate => WithCalendarLabel(string.Format(UIStrings.DateStatusYearApproximate_1, YearToString(date.Value)), DisplayCalendar.Gregorian),
+        DateStatus.WellKnown => FormatWellKnown(date.Value, requested),
+        DateStatus.DayUnknown => WithCalendarLabel(GregorianFormat(_ShortDateFormatSetting.Value, date.Value), requested, DisplayCalendar.Gregorian),
+        DateStatus.MonthUnknown => WithCalendarLabel(YearToString(date.Value), requested, DisplayCalendar.Gregorian),
+        DateStatus.YearApproximate => WithCalendarLabel(string.Format(UIStrings.DateStatusYearApproximate_1, YearToString(date.Value)), requested, DisplayCalendar.Gregorian),
         DateStatus.Unknown => UIStrings.DateStatusUnknown,
         _ => $"⚠ Unexpected DateStatus={date.Value.Status}"
       };
@@ -58,10 +59,9 @@ internal class DateFormatter : IDateFormatter
     }
   }
 
-  /// <summary>Applies an arbitrary format string to a date, independent of any configured setting.
-  /// Stateless, so callers that already hold the format they want (e.g. a setting previewing its own
-  /// configured value) don't need an <see cref="IDateFormatter"/> instance to use it.</summary>
-  public static string Format(string format, Date date) => ToString(format, () => YearToString(date), () => MonthToString(date), () => MonthToNumber(date), () => DayToString(date));
+  /// <summary>Stateless, so callers that already hold the format they want (e.g. a setting previewing
+  /// its own configured value) don't need an <see cref="IDateFormatter"/> instance to use it.</summary>
+  public static string GregorianFormat(string format, Date date) => ToString(format, () => YearToString(date), () => MonthToString(date), () => MonthToNumber(date), () => DayToString(date));
 
   public static string CalendarLabel(DisplayCalendar calendar) => calendar switch
   {
@@ -157,29 +157,29 @@ internal class DateFormatter : IDateFormatter
     return ret;
   }
 
-  // Applied is what TryConvert actually used, which may fall back to Gregorian when the requested
-  // calendar can't represent this date -- labeling Applied rather than the request is what makes
-  // that fallback visible instead of silent.
-  private string FormatWellKnown(Date date)
+  private string FormatWellKnown(Date date, DisplayCalendar requested)
   {
-    var (applied, year, month, day) = CalendarConversion.TryConvert(date, CalendarConversion.ToDisplayCalendar(_CalendarSetting.Value));
-    var text = applied == DisplayCalendar.Gregorian
-      ? Format(_FullDateFormatSetting.Value, date)
-      : ToString(_FullDateFormatSetting.Value, () => year.ToString(), () => MonthLabel(applied, year, month), () => month.ToString(D2), () => day.ToString(D2));
+    var (applied, year, month, day) = CalendarConversion.TryConvert(date, requested);
+    var text = ToString(
+      _FullDateFormatSetting.Value,
+      () => applied == DisplayCalendar.Gregorian ? YearToString(date) : year.ToString(),
+      () => MonthLabel(applied, year, month),
+      () => month.ToString(D2),
+      () => day.ToString(D2));
 
-    return WithCalendarLabel(text, applied);
+    return WithCalendarLabel(text, requested, applied);
   }
 
-  // A partial date never converts, but still needs the label whenever the setting isn't Gregorian --
-  // otherwise it would read as a converted date rather than the Gregorian fallback it actually is.
-  private string WithCalendarLabel(string text, DisplayCalendar applied) =>
-    CalendarConversion.ToDisplayCalendar(_CalendarSetting.Value) == DisplayCalendar.Gregorian
+  // Suffixing on requested rather than applied is what makes a fallback to Gregorian visible instead
+  // of silent.
+  private static string WithCalendarLabel(string text, DisplayCalendar requested, DisplayCalendar applied) =>
+    requested == DisplayCalendar.Gregorian
       ? text
       : string.Format(UIStrings.DateCalendarSuffix_1, text, CalendarLabel(applied));
 
   private static string MonthLabel(DisplayCalendar applied, int year, int month) => applied switch
   {
-    DisplayCalendar.Julian => MonthToString(month, DateStatus.WellKnown),
+    DisplayCalendar.Gregorian or DisplayCalendar.Julian => MonthToString(month, DateStatus.WellKnown),
     DisplayCalendar.Hebrew => (CalendarConversion.IsHebrewLeapYear(year) ? HebrewMonthsLeap : HebrewMonthsCommon)[month - 1],
     DisplayCalendar.FrenchRepublican => FrenchRepublicanCalendar.MonthAbbreviations[month - 1],
     _ => throw new NotImplementedException($"DisplayCalendar={applied}")

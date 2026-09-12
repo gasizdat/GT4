@@ -54,7 +54,7 @@ internal sealed class DateFormatSetting : ISettingEditor
 
   public string Description => _Description();
 
-  public string Example => DateFormatter.Format(Value, _ExampleDate);
+  public string Example => DateFormatter.GregorianFormat(Value, _ExampleDate);
 
   public string Value
   {
