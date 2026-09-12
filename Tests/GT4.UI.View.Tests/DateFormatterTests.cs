@@ -268,6 +268,32 @@ public class DateFormatterTests
     Create(calendar: "Hebrew").ToString(date).Should().Be("06 Тевет 5761 (Еврейский)");
   }
 
+  // Tevet (above) happens to be spelled identically in en/de/es/fr, so it can't catch a satellite
+  // resx shipping a wrong value under the right key -- Cheshvan differs across all four.
+  [Fact]
+  public void WellKnown_HebrewCalendar_DE_MonthNameMatchesResourceString()
+  {
+    SetDe();
+    var date = Date.Create(2000, 11, 1, DateStatus.WellKnown);
+    Create(calendar: "Hebrew").ToString(date).Should().Be("03 Cheschwan 5761 (Hebräisch)");
+  }
+
+  [Fact]
+  public void WellKnown_HebrewCalendar_ES_MonthNameMatchesResourceString()
+  {
+    SetEs();
+    var date = Date.Create(2000, 11, 1, DateStatus.WellKnown);
+    Create(calendar: "Hebrew").ToString(date).Should().Be("03 Jeshván 5761 (Hebreo)");
+  }
+
+  [Fact]
+  public void WellKnown_HebrewCalendar_FR_MonthNameMatchesResourceString()
+  {
+    SetFr();
+    var date = Date.Create(2000, 11, 1, DateStatus.WellKnown);
+    Create(calendar: "Hebrew").ToString(date).Should().Be("03 Heshvan 5761 (Hébraïque)");
+  }
+
   // Bourbon oracle from #386.
   [Fact]
   public void WellKnown_FrenchRepublicanCalendar_ConvertsAndLabelsTheDate()
@@ -303,6 +329,24 @@ public class DateFormatterTests
     SetEn();
     var date = Date.Create(2001, 4, 17, DateStatus.WellKnown);
     Create(calendar: "Hebrew").ToString(date).Should().Be("24 Nisan 5761 (Hebrew)");
+  }
+
+  // Elul is the last index of both HebrewMonths arrays -- 13 in a leap year, 12 in a common year --
+  // exactly the boundary an off-by-one or an array/leap-flag mismatch throws IndexOutOfRangeException on.
+  [Fact]
+  public void WellKnown_HebrewLeapYear_MonthThirteenIsElul()
+  {
+    SetEn();
+    var date = Date.Create(2024, 9, 4, DateStatus.WellKnown);
+    Create(calendar: "Hebrew").ToString(date).Should().Be("01 Elul 5784 (Hebrew)");
+  }
+
+  [Fact]
+  public void WellKnown_HebrewCommonYear_MonthTwelveIsElul()
+  {
+    SetEn();
+    var date = Date.Create(2001, 8, 20, DateStatus.WellKnown);
+    Create(calendar: "Hebrew").ToString(date).Should().Be("01 Elul 5761 (Hebrew)");
   }
 
   [Fact]
