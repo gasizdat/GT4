@@ -16,7 +16,7 @@
       <Grid
           ColumnDefinitions="Auto, *, Auto"
           ColumnSpacing="{StaticResource PageContentSpacing}"
-          RowDefinitions="Auto, Auto"
+          RowDefinitions="Auto, Auto, Auto"
           RowSpacing="{StaticResource PageContentSpacing}">
 
         <!--  Row 0 - First person  -->
@@ -58,6 +58,15 @@
             Command="{Binding PageCommand, Source={x:Reference Root}}"
             CommandParameter="PickPersonTo"
             Text="{x:Static resources:UIStrings.BtnNameChoosePerson}" />
+
+        <!--  Row 2 - Swap the two selected persons  -->
+        <Button
+            Grid.Row="2"
+            Grid.Column="2"
+            Command="{Binding PageCommand, Source={x:Reference Root}}"
+            CommandParameter="SwapPersons"
+            IsEnabled="{Binding CanSwapPersons, Source={x:Reference Root}}"
+            Text="{x:Static resources:UIStrings.BtnNameSwapPersons}" />
 
       </Grid>
     </components:PageLayout.Header>

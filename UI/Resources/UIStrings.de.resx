@@ -1473,4 +1473,7 @@ FN - Familienname</value>
   <data name="AlertTextProjectSchemaTooNew" xml:space="preserve">
     <value>Dieses Projekt wurde mit einer neueren Version der App erstellt. Aktualisieren Sie die App, um es zu öffnen.</value>
   </data>
+  <data name="BtnNameSwapPersons" xml:space="preserve">
+    <value>Tauschen</value>
+  </data>
 </root>

@@ -420,7 +420,16 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("BtnNameRestore_1", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Swap.
+        /// </summary>
+        public static string BtnNameSwapPersons {
+            get {
+                return ResourceManager.GetString("BtnNameSwapPersons", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Update the Person.
         /// </summary>

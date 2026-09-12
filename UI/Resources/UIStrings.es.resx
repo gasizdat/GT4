@@ -1473,4 +1473,7 @@ FN - apellido familiar</value>
   <data name="AlertTextProjectSchemaTooNew" xml:space="preserve">
     <value>Este proyecto se creó con una versión más reciente de la aplicación. Actualice la aplicación para abrirlo.</value>
   </data>
+  <data name="BtnNameSwapPersons" xml:space="preserve">
+    <value>Cambiar</value>
+  </data>
 </root>
