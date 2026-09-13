@@ -168,8 +168,11 @@ public sealed class PersonFilterViewTests
     Assert.Equal(expected, view.CurrentFilterSet);
   }
 
+  // The device-test runner is itself a desktop (WinUI) process, so this only pins the Desktop leg of
+  // the idiom gate (issue #398); the touch-idiom leg (no auto-focus) is a deliberate manual-check
+  // gap, the same shape as the other idiom-gated behavior documented in CLAUDE.md.
   [Fact]
-  public async Task IsFiltersVisible_SetTrue_FocusesTheNameFilterEntry()
+  public async Task IsFiltersVisible_SetTrue_FocusesTheNameFilterEntry_OnDesktop()
   {
     var view = await CreateViewAsync();
     await InitializeAsync(view, new TestServices());
@@ -182,7 +185,7 @@ public sealed class PersonFilterViewTests
     await Poll.UntilAsync(
       () => MainThread.InvokeOnMainThreadAsync(() => nameEntry.IsFocused),
       focused => focused,
-      timeoutMessage: "Revealing the filters panel did not focus the name filter entry.");
+      timeoutMessage: "Revealing the filters panel did not focus the name filter entry on a desktop idiom.");
   }
 
   [Fact]

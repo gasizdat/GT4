@@ -38,6 +38,23 @@ public class NamesPageTests
     Assert.NotNull(page.PageCommand);
   }
 
+  // The device-test runner is itself a desktop (WinUI) process, so this only pins the Desktop leg of
+  // the OnIdiom gate (issue #398); the touch-idiom leg (no auto-focus) is a deliberate manual-check
+  // gap, the same shape as the other idiom-gated behavior documented in CLAUDE.md.
+  [Fact]
+  public async Task Page_appearing_focuses_the_name_filter_entry_on_desktop()
+  {
+    var page = await CreatePageAsync(new TestServices());
+    var nameEntry = page.FindByName<Entry>("NameFilterEntry");
+
+    await using var window = await WindowHost.AttachAsync(page);
+
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => nameEntry.IsFocused),
+      focused => focused,
+      timeoutMessage: "The page did not focus its name filter entry on a desktop idiom.");
+  }
+
   [Fact]
   public async Task GetNamesAsync_sorts_with_the_registered_comparer()
   {

@@ -79,6 +79,23 @@ public class GalleryPageTests
     Assert.NotNull(page.OpenDataCommand);
   }
 
+  // The device-test runner is itself a desktop (WinUI) process, so this only pins the Desktop leg of
+  // the OnIdiom gate (issue #398); the touch-idiom leg (no auto-focus) is a deliberate manual-check
+  // gap, the same shape as the other idiom-gated behavior documented in CLAUDE.md.
+  [Fact]
+  public async Task Page_appearing_focuses_the_owner_filter_entry_on_desktop()
+  {
+    var page = await CreatePageAsync(new TestServices());
+    var ownerEntry = page.FindByName<Entry>("OwnerFilterEntry");
+
+    await using var window = await WindowHost.AttachAsync(page);
+
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => ownerEntry.IsFocused),
+      focused => focused,
+      timeoutMessage: "The page did not focus its owner filter entry on a desktop idiom.");
+  }
+
   [Fact]
   public async Task Every_data_row_is_listed_once_carrying_all_of_its_owners()
   {
