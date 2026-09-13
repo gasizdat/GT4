@@ -36,6 +36,7 @@ public partial class SelectMediaDialog : ContentPage
   private bool _LoadItems = true;
   private string _OwnerFilter = string.Empty;
   private GalleryDataItem? _SelectedItem;
+  private bool _FocusOwnerFilter = true;
 
   public SelectMediaDialog(Factory factory, int[] ownMediaIds)
   {
@@ -93,6 +94,19 @@ public partial class SelectMediaDialog : ContentPage
     {
       _OwnerFilter = value;
       _Items.Update();
+    }
+  }
+
+  public bool FocusOwnerFilter
+  {
+    get => _FocusOwnerFilter;
+    set
+    {
+      if (_FocusOwnerFilter != value)
+      {
+        _FocusOwnerFilter = value;
+        OnPropertyChanged(nameof(FocusOwnerFilter));
+      }
     }
   }
 

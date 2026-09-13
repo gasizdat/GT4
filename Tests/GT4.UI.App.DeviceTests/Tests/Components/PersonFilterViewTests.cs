@@ -169,6 +169,23 @@ public sealed class PersonFilterViewTests
   }
 
   [Fact]
+  public async Task IsFiltersVisible_SetTrue_FocusesTheNameFilterEntry()
+  {
+    var view = await CreateViewAsync();
+    await InitializeAsync(view, new TestServices());
+    var nameEntry = view.FindByName<Entry>("NameFilterEntry");
+    var page = new ContentPage { Content = view };
+
+    await using var window = await WindowHost.AttachAsync(page);
+    await MainThread.InvokeOnMainThreadAsync(() => view.IsFiltersVisible = true);
+
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => nameEntry.IsFocused),
+      focused => focused,
+      timeoutMessage: "Revealing the filters panel did not focus the name filter entry.");
+  }
+
+  [Fact]
   public async Task IsFiltersVisible_SetTrue_SnapshotsPersonsSynchronouslyBeforeTheBackgroundFetch()
   {
     var view = await CreateViewAsync();

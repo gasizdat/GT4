@@ -34,6 +34,7 @@ public partial class PersonFilterView : ContentView
   private string[] _MaritalStatusFilterLabels = [];
   private bool _FilterDataLoaded;
   private bool _IsFiltersVisible;
+  private bool _FocusNameFilter;
 
   public PersonFilterView()
   {
@@ -237,7 +238,21 @@ public partial class PersonFilterView : ContentView
 
       if (_IsFiltersVisible)
       {
+        FocusNameFilter = true;
         EnsureFilterDataLoaded();
+      }
+    }
+  }
+
+  public bool FocusNameFilter
+  {
+    get => _FocusNameFilter;
+    set
+    {
+      if (_FocusNameFilter != value)
+      {
+        _FocusNameFilter = value;
+        OnPropertyChanged(nameof(FocusNameFilter));
       }
     }
   }

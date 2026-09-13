@@ -41,6 +41,7 @@ public partial class SelectRelativesDialog : ContentPage
   private long _ProjectRevision;
   private Date? _RelationshipDate;
   private string _NameFilter = string.Empty;
+  private bool _FocusNameFilter = true;
 
   private bool PersonFilter(FilteredObservableCollection<PersonInfo> collection, PersonInfo personItem)
   {
@@ -154,6 +155,19 @@ public partial class SelectRelativesDialog : ContentPage
     {
       _NameFilter = value;
       _Persons.Update();
+    }
+  }
+
+  public bool FocusNameFilter
+  {
+    get => _FocusNameFilter;
+    set
+    {
+      if (_FocusNameFilter != value)
+      {
+        _FocusNameFilter = value;
+        OnPropertyChanged(nameof(FocusNameFilter));
+      }
     }
   }
 
