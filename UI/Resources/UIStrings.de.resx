@@ -1002,6 +1002,18 @@ FN - Familienname</value>
   <data name="RelSiblingSpouse" xml:space="preserve">
     <value>Schwager oder Schwägerin</value>
   </data>
+  <data name="RelHusbandsSister" xml:space="preserve">
+    <value>Schwägerin</value>
+  </data>
+  <data name="RelHusbandsBrother" xml:space="preserve">
+    <value>Schwager</value>
+  </data>
+  <data name="RelWifesSister" xml:space="preserve">
+    <value>Schwägerin</value>
+  </data>
+  <data name="RelWifesBrother" xml:space="preserve">
+    <value>Schwager</value>
+  </data>
   <data name="MenuItemNameFamilyTree" xml:space="preserve">
     <value>🌳 Stammbaum</value>
   </data>

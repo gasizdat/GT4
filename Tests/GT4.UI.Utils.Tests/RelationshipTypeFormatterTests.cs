@@ -623,6 +623,120 @@ public class RelationshipTypeFormatterTests
     Assert.Equal(expected, actual);
   }
 
+  // In-law siblings (#393): the relationship Type carries the spouse's sex (Husband/Wife/Spouse),
+  // while the BiologicalSex argument is the in-law sibling's own sex (brother- vs sister-in-law).
+  // Generation/Consanguinity are always Zero/Sibling: IsRelationshipSupported only unlocks
+  // Spouse->Sibling for one's own direct spouse.
+  [Theory]
+  [InlineData(RelationshipType.HusbandSibling, BiologicalSex.Male, "Brother-in-law")]
+  [InlineData(RelationshipType.HusbandSibling, BiologicalSex.Female, "Sister-in-law")]
+  [InlineData(RelationshipType.HusbandSibling, BiologicalSex.Unknown, "Sibling-in-law")]
+  [InlineData(RelationshipType.WifeSibling, BiologicalSex.Male, "Brother-in-law")]
+  [InlineData(RelationshipType.WifeSibling, BiologicalSex.Female, "Sister-in-law")]
+  [InlineData(RelationshipType.WifeSibling, BiologicalSex.Unknown, "Sibling-in-law")]
+  [InlineData(RelationshipType.SpouseSibling, BiologicalSex.Male, "Brother-in-law")]
+  [InlineData(RelationshipType.SpouseSibling, BiologicalSex.Female, "Sister-in-law")]
+  [InlineData(RelationshipType.SpouseSibling, BiologicalSex.Unknown, "Sibling-in-law")]
+  public void EN_InLawSibling(RelationshipType type, BiologicalSex inLawSex, string expected)
+  {
+    SetEn();
+    var actual = _formatter.ToString(
+      type,
+      inLawSex,
+      Generation.Zero,
+      Consanguinity.Sibling);
+
+    Assert.Equal(expected, actual);
+  }
+
+  [Theory]
+  [InlineData(RelationshipType.HusbandSibling, BiologicalSex.Male, "Деверь")]
+  [InlineData(RelationshipType.HusbandSibling, BiologicalSex.Female, "Золовка")]
+  [InlineData(RelationshipType.HusbandSibling, BiologicalSex.Unknown, "Свойственник")]
+  [InlineData(RelationshipType.WifeSibling, BiologicalSex.Male, "Шурин")]
+  [InlineData(RelationshipType.WifeSibling, BiologicalSex.Female, "Свояченица")]
+  [InlineData(RelationshipType.WifeSibling, BiologicalSex.Unknown, "Свойственник")]
+  [InlineData(RelationshipType.SpouseSibling, BiologicalSex.Male, "Свойственник")]
+  [InlineData(RelationshipType.SpouseSibling, BiologicalSex.Female, "Свойственница")]
+  [InlineData(RelationshipType.SpouseSibling, BiologicalSex.Unknown, "Свойственник")]
+  public void RU_InLawSibling(RelationshipType type, BiologicalSex inLawSex, string expected)
+  {
+    SetRu();
+    var actual = _formatter.ToString(
+      type,
+      inLawSex,
+      Generation.Zero,
+      Consanguinity.Sibling);
+
+    Assert.Equal(expected, actual);
+  }
+
+  [Theory]
+  [InlineData(RelationshipType.HusbandSibling, BiologicalSex.Male, "Schwager")]
+  [InlineData(RelationshipType.HusbandSibling, BiologicalSex.Female, "Schwägerin")]
+  [InlineData(RelationshipType.HusbandSibling, BiologicalSex.Unknown, "Schwager oder Schwägerin")]
+  [InlineData(RelationshipType.WifeSibling, BiologicalSex.Male, "Schwager")]
+  [InlineData(RelationshipType.WifeSibling, BiologicalSex.Female, "Schwägerin")]
+  [InlineData(RelationshipType.WifeSibling, BiologicalSex.Unknown, "Schwager oder Schwägerin")]
+  [InlineData(RelationshipType.SpouseSibling, BiologicalSex.Male, "Schwager")]
+  [InlineData(RelationshipType.SpouseSibling, BiologicalSex.Female, "Schwägerin")]
+  [InlineData(RelationshipType.SpouseSibling, BiologicalSex.Unknown, "Schwager oder Schwägerin")]
+  public void DE_InLawSibling(RelationshipType type, BiologicalSex inLawSex, string expected)
+  {
+    SetDe();
+    var actual = _formatter.ToString(
+      type,
+      inLawSex,
+      Generation.Zero,
+      Consanguinity.Sibling);
+
+    Assert.Equal(expected, actual);
+  }
+
+  [Theory]
+  [InlineData(RelationshipType.HusbandSibling, BiologicalSex.Male, "Cuñado")]
+  [InlineData(RelationshipType.HusbandSibling, BiologicalSex.Female, "Cuñada")]
+  [InlineData(RelationshipType.HusbandSibling, BiologicalSex.Unknown, "Cuñado o cuñada")]
+  [InlineData(RelationshipType.WifeSibling, BiologicalSex.Male, "Cuñado")]
+  [InlineData(RelationshipType.WifeSibling, BiologicalSex.Female, "Cuñada")]
+  [InlineData(RelationshipType.WifeSibling, BiologicalSex.Unknown, "Cuñado o cuñada")]
+  [InlineData(RelationshipType.SpouseSibling, BiologicalSex.Male, "Cuñado")]
+  [InlineData(RelationshipType.SpouseSibling, BiologicalSex.Female, "Cuñada")]
+  [InlineData(RelationshipType.SpouseSibling, BiologicalSex.Unknown, "Cuñado o cuñada")]
+  public void ES_InLawSibling(RelationshipType type, BiologicalSex inLawSex, string expected)
+  {
+    SetEs();
+    var actual = _formatter.ToString(
+      type,
+      inLawSex,
+      Generation.Zero,
+      Consanguinity.Sibling);
+
+    Assert.Equal(expected, actual);
+  }
+
+  [Theory]
+  [InlineData(RelationshipType.HusbandSibling, BiologicalSex.Male, "Beau-frère")]
+  [InlineData(RelationshipType.HusbandSibling, BiologicalSex.Female, "Belle-sœur")]
+  [InlineData(RelationshipType.HusbandSibling, BiologicalSex.Unknown, "Beau-frère ou belle-sœur")]
+  [InlineData(RelationshipType.WifeSibling, BiologicalSex.Male, "Beau-frère")]
+  [InlineData(RelationshipType.WifeSibling, BiologicalSex.Female, "Belle-sœur")]
+  [InlineData(RelationshipType.WifeSibling, BiologicalSex.Unknown, "Beau-frère ou belle-sœur")]
+  [InlineData(RelationshipType.SpouseSibling, BiologicalSex.Male, "Beau-frère")]
+  [InlineData(RelationshipType.SpouseSibling, BiologicalSex.Female, "Belle-sœur")]
+  [InlineData(RelationshipType.SpouseSibling, BiologicalSex.Unknown, "Beau-frère ou belle-sœur")]
+  public void FR_InLawSibling(RelationshipType type, BiologicalSex inLawSex, string expected)
+  {
+    SetFr();
+    var actual = _formatter.ToString(
+      type,
+      inLawSex,
+      Generation.Zero,
+      Consanguinity.Sibling);
+
+    Assert.Equal(expected, actual);
+  }
+
   // French says "beau-père" for both a father-in-law and a stepfather. The bare word is left to the
   // in-law reading, which is the one an unqualified label carries in genealogical use, so the step
   // rows have to spell the qualifier out to stay distinguishable.

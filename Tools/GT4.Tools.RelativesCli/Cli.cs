@@ -91,6 +91,10 @@ internal static class Cli
           await RunTreeAsync(document, int.Parse(NextArg(args, ref argIndex)), token);
           break;
 
+        case "kinship":
+          await RunKinshipAsync(document, int.Parse(NextArg(args, ref argIndex)), int.Parse(NextArg(args, ref argIndex)), token);
+          break;
+
         case "export":
           await RunExportAsync(gedcomExporter, document, NextArg(args, ref argIndex), token);
           break;
@@ -185,6 +189,33 @@ internal static class Cli
     }
   }
 
+  private static async Task RunKinshipAsync(IProjectDocument document, int sourceId, int targetId, CancellationToken token)
+  {
+    var source = await document.Persons.TryGetPersonByIdAsync(sourceId, token);
+    var target = await document.Persons.TryGetPersonByIdAsync(targetId, token);
+    if (source is null || target is null)
+    {
+      Console.Error.WriteLine($"No person with Id {(source is null ? sourceId : targetId)}.");
+      return;
+    }
+
+    foreach (var (fromLabel, from, to) in new[] { ("forward", source, target), ("reverse", target, source) })
+    {
+      var path = await document.KinshipFinder.FindPathAsync(from, to, token);
+      Console.WriteLine($"{fromLabel} ({from.Id} -> {to.Id}):");
+      if (path is null)
+      {
+        Console.WriteLine("  null");
+        continue;
+      }
+
+      foreach (var hop in path)
+      {
+        Console.WriteLine($"  {hop.Id,6}  {hop.DisplayName,-40}  {hop.Type,-16}  Gen={hop.Generation.Value,3}  Cons={hop.Consanguinity.Value,3}");
+      }
+    }
+  }
+
   /// <summary>Exit code 2 means "the files differ", kept distinct from the 1 every failure returns.</summary>
   private static async Task<int> RunCompareAsync(string firstPath, string secondPath, CancellationToken token)
   {
@@ -261,6 +292,8 @@ internal static class Cli
         tree <personId>       Walk the full relative tree from the given person,
                                flagging Loop / MultipleConnections exactly like
                                the app's RelativeTree.ExpandAllAsync does.
+        kinship <id1> <id2>   Print KinshipFinder's path in both directions, to
+                               check the two agree on the same pair of people.
 
       compare exits 2 when the two GEDCOM files differ, 0 when they agree.
       """);

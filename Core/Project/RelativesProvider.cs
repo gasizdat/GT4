@@ -288,6 +288,16 @@ internal class RelativesProvider : ProjectComponentBase, IRelativesProvider
       {
         RelationshipType.Parent or
         RelationshipType.AdoptiveParent => generation == Generation.Zero && consanguinity == Consanguinity.Zero,
+        RelationshipType.Sibling => generation == Generation.Zero && consanguinity == Consanguinity.Zero,
+        _ => false
+      },
+      // GetInLawType only remaps a Spouse node's own relatives, so this arm's Child hop already comes
+      // back as plain Child -- everything past it recurses through the Child->Child arm above.
+      RelationshipType.HusbandSibling or
+      RelationshipType.WifeSibling or
+      RelationshipType.SpouseSibling => relativeType switch
+      {
+        RelationshipType.Child => true,
         _ => false
       },
       _ => false
@@ -347,6 +357,13 @@ internal class RelativesProvider : ProjectComponentBase, IRelativesProvider
       RelationshipType.Spouse when generation == Generation.Zero => relativeType switch
       {
         RelationshipType.Parent => ++startGeneration,
+        _ => throw UnsupportedRelationshipException()
+      },
+      RelationshipType.HusbandSibling or
+      RelationshipType.WifeSibling or
+      RelationshipType.SpouseSibling => relativeType switch
+      {
+        RelationshipType.Child => --startGeneration,
         _ => throw UnsupportedRelationshipException()
       },
       _ => throw UnsupportedRelationshipException()

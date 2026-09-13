@@ -3367,6 +3367,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Brother-in-law.
+        /// </summary>
+        public static string RelHusbandsBrother {
+            get {
+                return ResourceManager.GetString("RelHusbandsBrother", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Father-in-law.
         /// </summary>
         public static string RelHusbandsFather {
@@ -3383,7 +3392,16 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("RelHusbandsMother", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Sister-in-law.
+        /// </summary>
+        public static string RelHusbandsSister {
+            get {
+                return ResourceManager.GetString("RelHusbandsSister", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to In-law.
         /// </summary>
@@ -3691,6 +3709,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Brother-in-law.
+        /// </summary>
+        public static string RelWifesBrother {
+            get {
+                return ResourceManager.GetString("RelWifesBrother", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Father-in-law.
         /// </summary>
         public static string RelWifesFather {
@@ -3698,7 +3725,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("RelWifesFather", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Mother-in-law.
         /// </summary>
@@ -3707,7 +3734,16 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("RelWifesMother", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Sister-in-law.
+        /// </summary>
+        public static string RelWifesSister {
+            get {
+                return ResourceManager.GetString("RelWifesSister", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Export GEDCOM.
         /// </summary>
