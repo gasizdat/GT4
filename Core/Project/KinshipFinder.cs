@@ -23,7 +23,11 @@ internal sealed class KinshipFinder : ProjectComponentBase, IKinshipFinder
   {
     var roots = await GetRootsAsync(source, token);
     var frontier = new Queue<RelativeInfo[]>(roots.Select(root => new[] { root }));
-    var visited = new HashSet<int>();
+    // Keyed by (Id, Type), not Id alone: which edges a node can be expanded through depends on the
+    // relationship type it was reached as (IsRelationshipSupported), so the same person reached first
+    // via a dead-end type (e.g. Parent) must not block a later, more permissive arrival (e.g. Child)
+    // at the same id -- that asymmetry made search direction affect reachability (#393).
+    var visited = new HashSet<(int Id, RelationshipType Type)>();
 
     while (frontier.Count > 0)
     {
@@ -34,13 +38,13 @@ internal sealed class KinshipFinder : ProjectComponentBase, IKinshipFinder
         return path;
       }
 
-      if (!visited.Add(current.Id))
+      if (!visited.Add((current.Id, current.Type)))
       {
         continue;
       }
 
       var children = await Document.RelativesProvider.GetRelativeInfosAsync(current, selectMainPhoto: true, token);
-      foreach (var child in children.Where(child => !visited.Contains(child.Id)))
+      foreach (var child in children.Where(child => !visited.Contains((child.Id, child.Type))))
       {
         frontier.Enqueue([.. path, child]);
       }

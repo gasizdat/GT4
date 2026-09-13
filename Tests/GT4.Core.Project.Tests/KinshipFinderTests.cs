@@ -139,6 +139,43 @@ public class KinshipFinderTests
   }
 
   [Fact]
+  public async Task FindPathAsync_AuntMarriesOwnNephew_SymmetricInBothDirections()
+  {
+    // Reproduces #393 with an ordinary (non-contradictory) tree -- an avuncular marriage, attested in
+    // real genealogies, is enough: `auntOrUncle` marries her own nephew `nephewSpouse` (grandfather's
+    // other child). Searching from `auntOrUncle`, her spouse root is enqueued before her sibling root
+    // (GetRootsAsync order), and expanding a Spouse-typed node maps the spouse's own parent -- here
+    // `grandfather` -- to an in-law type (HusbandParent/WifeParent), which IsRelationshipSupported
+    // treats as a dead end. Old code's `visited` set is keyed by id alone, so that dead-end arrival at
+    // `grandfather` blocks the later Sibling-typed arrival that could descend through `father` to
+    // `subject` -- even though nothing about the tree itself is asymmetric.
+    var ggFather = _documentMock.CreatePerson(BiologicalSex.Male);
+    var ggMother = _documentMock.CreatePerson(BiologicalSex.Female);
+    var greatGrandmother = _documentMock.CreatePerson();
+    var auntOrUncle = _documentMock.CreatePerson(BiologicalSex.Female);
+    var grandfather = _documentMock.CreatePerson();
+    var nephewSpouse = _documentMock.CreatePerson(BiologicalSex.Male);
+    var father = _documentMock.CreatePerson();
+    var subject = _documentMock.CreatePerson();
+    _documentMock.AddRelationship(greatGrandmother, ggFather, RelationshipType.Parent);
+    _documentMock.AddRelationship(greatGrandmother, ggMother, RelationshipType.Parent);
+    _documentMock.AddRelationship(auntOrUncle, ggFather, RelationshipType.Parent);
+    _documentMock.AddRelationship(auntOrUncle, ggMother, RelationshipType.Parent);
+    _documentMock.AddRelationship(grandfather, greatGrandmother, RelationshipType.Parent);
+    _documentMock.AddRelationship(nephewSpouse, grandfather, RelationshipType.Parent);
+    _documentMock.AddRelationship(auntOrUncle, nephewSpouse, RelationshipType.Spouse);
+    _documentMock.AddRelationship(father, grandfather, RelationshipType.Parent);
+    _documentMock.AddRelationship(subject, father, RelationshipType.Parent);
+
+    var forward = await Finder.FindPathAsync(subject, auntOrUncle, CancellationToken.None);
+    var reverse = await Finder.FindPathAsync(auntOrUncle, subject, CancellationToken.None);
+
+    forward.Should().NotBeNull();
+    reverse.Should().NotBeNull();
+    reverse!.Select(r => r.Id).Should().ContainInOrder(grandfather.Id, father.Id, subject.Id);
+  }
+
+  [Fact]
   public async Task FindPathAsync_Unrelated_ReturnsNull()
   {
     var personA = _documentMock.CreatePerson();
