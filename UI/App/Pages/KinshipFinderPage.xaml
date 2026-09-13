@@ -11,7 +11,8 @@
   <components:PageLayout
       Title="{x:Static resources:UIStrings.TitleKinshipFinderPage}"
       HasBackButton="True"
-      Loading="{Binding Loading, Source={x:Reference Root}}">
+      Loading="{Binding Loading, Source={x:Reference Root}}"
+      ShowsProjectName="True">
     <components:PageLayout.Header>
       <Grid
           ColumnDefinitions="*, Auto, Auto"

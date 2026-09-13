@@ -6,6 +6,7 @@ using GT4.UI.Components;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Pages;
+using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
 using Moq;
@@ -51,6 +52,21 @@ public class ProjectPageTests
     Assert.NotNull(page.PageCommand);
     Assert.Empty(page.Families);
     Assert.False(page.FilterView.IsFiltersVisible);
+  }
+
+  // PageLayout itself composes the displayed title from Title + the current project's name
+  // (PageLayoutTests covers that composition, including the no-project-open fallback); this only
+  // pins that ProjectPage's XAML opts in. DisplayTitle itself isn't asserted here: this page's
+  // PageLayout is realized by the XAML parser's own parameterless ctor, which resolves
+  // GT4Services.Provider rather than this test's mocked container.
+  [Fact]
+  public async Task PageLayout_is_opted_into_showing_the_current_project_name()
+  {
+    var page = await CreatePageAsync(new TestServices());
+
+    var layout = (PageLayout)page.Content;
+    Assert.True(layout.ShowsProjectName);
+    Assert.Equal(UIStrings.TitleFamiliesPage, layout.Title);
   }
 
   [Fact]

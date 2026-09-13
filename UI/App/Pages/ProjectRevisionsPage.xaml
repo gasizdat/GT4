@@ -10,9 +10,10 @@
     NavigatedTo="OnNavigatedTo">
 
   <components:PageLayout
+      Title="{x:Static resources:UIStrings.TitleProjectRevisionsPage}"
       HasBackButton="True"
       Hint="{x:Static resources:UIStrings.HintProjectRevisionsPage}"
-      Title="{x:Static resources:UIStrings.TitleProjectRevisionsPage}">
+      ShowsProjectName="True">
 
     <components:PageLayout.MenuItems>
       <items:PageMenuItem

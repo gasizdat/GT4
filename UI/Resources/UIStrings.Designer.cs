@@ -420,7 +420,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("BtnNameRestore_1", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Swap.
         /// </summary>
@@ -429,7 +429,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("BtnNameSwapPersons", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Update the Person.
         /// </summary>
@@ -4020,6 +4020,15 @@ namespace GT4.UI.Resources {
         public static string TitleStatisticsPage {
             get {
                 return ResourceManager.GetString("TitleStatisticsPage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} | {1}.
+        /// </summary>
+        public static string TitleWithProjectName_2 {
+            get {
+                return ResourceManager.GetString("TitleWithProjectName_2", resourceCulture);
             }
         }
         

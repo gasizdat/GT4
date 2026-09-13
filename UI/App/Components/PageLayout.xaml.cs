@@ -1,3 +1,4 @@
+using GT4.Core.Project.Abstraction;
 using GT4.UI.Abstraction;
 using GT4.UI.Items;
 using GT4.UI.Resources;
@@ -11,6 +12,7 @@ public partial class PageLayout : ContentView
 {
   private readonly ObservableCollection<PageMenuItem> _MenuItems = new();
   private readonly INavigationService _NavigationService;
+  private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly ICommand _GoBackCommand;
   private bool _IsTopMenuVisible;
   private bool _IsSideMenuVisible;
@@ -20,6 +22,7 @@ public partial class PageLayout : ContentView
   {
     Animation = serviceProvider.GetRequiredService<BackgroundAnimation>();
     _NavigationService = serviceProvider.GetRequiredService<INavigationService>();
+    _CurrentProjectProvider = serviceProvider.GetRequiredService<ICurrentProjectProvider>();
 
     var alertService = serviceProvider.GetRequiredService<IAlertService>();
     _GoBackCommand = new SafeCommand(GoBackAsync, alertService);
@@ -77,6 +80,16 @@ public partial class PageLayout : ContentView
       BindingMode.OneWay,
       null,
       OnTitleChanged);
+
+  public static readonly BindableProperty ShowsProjectNameProperty =
+    BindableProperty.Create(
+      nameof(ShowsProjectName),
+      typeof(bool),
+      typeof(PageLayout),
+      false,
+      BindingMode.OneWay,
+      null,
+      OnShowsProjectNameChanged);
 
   public static readonly BindableProperty HintProperty =
     BindableProperty.Create(
@@ -159,6 +172,15 @@ public partial class PageLayout : ContentView
     if (bindableObject is PageLayout view && oldValue != newValue)
     {
       view.OnPropertyChanged(nameof(IsTitleVisible));
+      view.OnPropertyChanged(nameof(DisplayTitle));
+    }
+  }
+
+  private static void OnShowsProjectNameChanged(BindableObject bindableObject, object oldValue, object newValue)
+  {
+    if (bindableObject is PageLayout view && oldValue != newValue)
+    {
+      view.OnPropertyChanged(nameof(DisplayTitle));
     }
   }
 
@@ -211,6 +233,14 @@ public partial class PageLayout : ContentView
     set => SetValue(TitleProperty, value);
   }
 
+  // Opts a page into having its Title stand in for a persistent "which project is this?"
+  // indicator (issue #395) without every such page composing the string itself.
+  public bool ShowsProjectName
+  {
+    get => (bool)GetValue(ShowsProjectNameProperty);
+    set => SetValue(ShowsProjectNameProperty, value);
+  }
+
   public string Hint
   {
     get => (string)GetValue(HintProperty);
@@ -248,6 +278,14 @@ public partial class PageLayout : ContentView
   public bool IsSideMenuVisible => IsMenuVisible && Height >= 0 && Height <= Width;
 
   public bool IsBackButtonVisible => HasBackButton;
+
+  // HasCurrentProject is a real gate, not a defensive one: a page's own PageLayout is realized by
+  // the XAML parser through the parameterless ctor above, which resolves GT4Services.Provider --
+  // the app-wide container, not necessarily whatever DI scope built the enclosing page -- so a
+  // test host with no project ever opened there hits this even though ShowsProjectName is true.
+  public string DisplayTitle => ShowsProjectName && _CurrentProjectProvider.HasCurrentProject
+    ? string.Format(UIStrings.TitleWithProjectName_2, Title, _CurrentProjectProvider.Info.Name)
+    : Title;
 
   public bool IsTitleVisible => !string.IsNullOrWhiteSpace(Title);
 

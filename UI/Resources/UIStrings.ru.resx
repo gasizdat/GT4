@@ -1476,4 +1476,7 @@ FN - род</value>
   <data name="BtnNameSwapPersons" xml:space="preserve">
     <value>Поменять</value>
   </data>
+  <data name="TitleWithProjectName_2" xml:space="preserve">
+    <value>{0} | {1}</value>
+  </data>
 </root>

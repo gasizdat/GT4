@@ -10,9 +10,10 @@
     x:Name="Root">
 
   <components:PageLayout
+      Title="{x:Static resources:UIStrings.TitleGalleryPage}"
       HasBackButton="True"
       Loading="{Binding Loading, Source={x:Reference Root}}"
-      Title="{x:Static resources:UIStrings.TitleGalleryPage}">
+      ShowsProjectName="True">
     <components:PageLayout.Header>
       <Grid
           Padding="20"

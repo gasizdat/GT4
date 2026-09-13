@@ -220,6 +220,68 @@ public class PageLayoutTests
   }
 
   [Fact]
+  public async Task DisplayTitle_matches_Title_when_ShowsProjectName_is_off()
+  {
+    var layout = await CreateLayoutAsync();
+
+    await MainThread.InvokeOnMainThreadAsync(() => layout.Title = "Names");
+
+    Assert.Equal("Names", layout.DisplayTitle);
+  }
+
+  [Fact]
+  public async Task DisplayTitle_folds_in_the_current_project_name_once_shown()
+  {
+    var services = new TestServices();
+    var layout = await CreateLayoutAsync(services);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      layout.Title = "Names";
+      layout.ShowsProjectName = true;
+    });
+
+    Assert.Equal(
+      string.Format(UIStrings.TitleWithProjectName_2, "Names", TestServices.SampleProjectInfo.Name),
+      layout.DisplayTitle);
+  }
+
+  // A page's own PageLayout is realized by the XAML parser's parameterless ctor, which resolves
+  // GT4Services.Provider -- the app-wide container, not necessarily the DI scope that built the
+  // page -- so ShowsProjectName must degrade to the bare title rather than throw when that
+  // provider's own project was never opened (regression: issue #395's first attempt threw
+  // ProjectNotOpenedException here instead).
+  [Fact]
+  public async Task DisplayTitle_falls_back_to_Title_when_no_project_is_open_even_though_shown()
+  {
+    var services = new TestServices();
+    services.CurrentProjectProvider.SetupGet(p => p.HasCurrentProject).Returns(false);
+    var layout = await CreateLayoutAsync(services);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      layout.Title = "Names";
+      layout.ShowsProjectName = true;
+    });
+
+    Assert.Equal("Names", layout.DisplayTitle);
+  }
+
+  // The label binds to DisplayTitle, not Title, so nothing repaints it unless this fires too.
+  [Fact]
+  public async Task Turning_on_ShowsProjectName_reports_DisplayTitle_as_changed()
+  {
+    var layout = await CreateLayoutAsync();
+    await MainThread.InvokeOnMainThreadAsync(() => layout.Title = "Names");
+    var changed = new List<string?>();
+    layout.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+
+    await MainThread.InvokeOnMainThreadAsync(() => layout.ShowsProjectName = true);
+
+    Assert.Contains(nameof(PageLayout.DisplayTitle), changed);
+  }
+
+  [Fact]
   public async Task The_hint_shows_only_once_it_holds_text()
   {
     var layout = await CreateLayoutAsync();

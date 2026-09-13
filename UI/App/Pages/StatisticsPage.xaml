@@ -47,7 +47,8 @@
   <components:PageLayout
       Title="{x:Static resources:UIStrings.TitleStatisticsPage}"
       HasBackButton="True"
-      Loading="{Binding Loading, Source={x:Reference Root}}">
+      Loading="{Binding Loading, Source={x:Reference Root}}"
+      ShowsProjectName="True">
     <components:PageLayout.Body>
       <ScrollView>
         <Grid
