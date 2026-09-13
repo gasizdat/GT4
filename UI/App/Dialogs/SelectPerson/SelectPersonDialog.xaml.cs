@@ -32,6 +32,7 @@ public partial class SelectPersonDialog : ContentPage
   private long _ProjectRevision;
   private string _NameFilter = string.Empty;
   private PersonInfo? _SelectedPerson;
+  private bool _FocusNameFilter = true;
 
   private bool PersonFilter(FilteredObservableCollection<PersonInfo> collection, PersonInfo personItem) =>
     string.IsNullOrEmpty(_NameFilter) ||
@@ -85,6 +86,19 @@ public partial class SelectPersonDialog : ContentPage
     {
       _NameFilter = value;
       _Persons.Update();
+    }
+  }
+
+  public bool FocusNameFilter
+  {
+    get => _FocusNameFilter;
+    set
+    {
+      if (_FocusNameFilter != value)
+      {
+        _FocusNameFilter = value;
+        OnPropertyChanged(nameof(FocusNameFilter));
+      }
     }
   }
 

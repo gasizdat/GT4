@@ -56,6 +56,20 @@ public class SelectRelativesDialogTests
   }
 
   [Fact]
+  public async Task Dialog_appearing_focuses_the_name_filter_entry()
+  {
+    var dialog = await CreateDialogAsync(new TestServices());
+    var nameEntry = dialog.FindByName<Entry>("NameFilterEntry");
+
+    await using var window = await WindowHost.AttachAsync(dialog);
+
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => nameEntry.IsFocused),
+      focused => focused,
+      timeoutMessage: "The dialog did not focus its name filter entry on appearing.");
+  }
+
+  [Fact]
   public async Task EditRelationshipDateCommand_modal_sets_the_relationship_date()
   {
     var services = new TestServices();
