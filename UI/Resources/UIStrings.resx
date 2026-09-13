@@ -1002,6 +1002,18 @@ FN - family name</value>
   <data name="RelSiblingSpouse" xml:space="preserve">
     <value>Sibling-in-law</value>
   </data>
+  <data name="RelHusbandsSister" xml:space="preserve">
+    <value>Sister-in-law</value>
+  </data>
+  <data name="RelHusbandsBrother" xml:space="preserve">
+    <value>Brother-in-law</value>
+  </data>
+  <data name="RelWifesSister" xml:space="preserve">
+    <value>Sister-in-law</value>
+  </data>
+  <data name="RelWifesBrother" xml:space="preserve">
+    <value>Brother-in-law</value>
+  </data>
   <data name="MenuItemNameFamilyTree" xml:space="preserve">
     <value>🌳 Family tree</value>
   </data>

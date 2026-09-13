@@ -1002,6 +1002,18 @@ FN - apellido familiar</value>
   <data name="RelSiblingSpouse" xml:space="preserve">
     <value>Cuñado o cuñada</value>
   </data>
+  <data name="RelHusbandsSister" xml:space="preserve">
+    <value>Cuñada</value>
+  </data>
+  <data name="RelHusbandsBrother" xml:space="preserve">
+    <value>Cuñado</value>
+  </data>
+  <data name="RelWifesSister" xml:space="preserve">
+    <value>Cuñada</value>
+  </data>
+  <data name="RelWifesBrother" xml:space="preserve">
+    <value>Cuñado</value>
+  </data>
   <data name="MenuItemNameFamilyTree" xml:space="preserve">
     <value>🌳 Árbol familiar</value>
   </data>

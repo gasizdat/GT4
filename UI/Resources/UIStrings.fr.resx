@@ -1002,6 +1002,18 @@ FN - nom de famille</value>
   <data name="RelSiblingSpouse" xml:space="preserve">
     <value>Beau-frère ou belle-sœur</value>
   </data>
+  <data name="RelHusbandsSister" xml:space="preserve">
+    <value>Belle-sœur</value>
+  </data>
+  <data name="RelHusbandsBrother" xml:space="preserve">
+    <value>Beau-frère</value>
+  </data>
+  <data name="RelWifesSister" xml:space="preserve">
+    <value>Belle-sœur</value>
+  </data>
+  <data name="RelWifesBrother" xml:space="preserve">
+    <value>Beau-frère</value>
+  </data>
   <data name="MenuItemNameFamilyTree" xml:space="preserve">
     <value>🌳 Arbre familial</value>
   </data>

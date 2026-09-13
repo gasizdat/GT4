@@ -288,7 +288,7 @@ internal class RelativesProvider : ProjectComponentBase, IRelativesProvider
       {
         RelationshipType.Parent or
         RelationshipType.AdoptiveParent => generation == Generation.Zero && consanguinity == Consanguinity.Zero,
-        RelationshipType.Sibling => true,
+        RelationshipType.Sibling => generation == Generation.Zero && consanguinity == Consanguinity.Zero,
         _ => false
       },
       // GetInLawType only remaps a Spouse node's own relatives, so this arm's Child hop already comes
