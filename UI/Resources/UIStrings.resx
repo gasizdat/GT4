@@ -1476,4 +1476,7 @@ FN - family name</value>
   <data name="BtnNameSwapPersons" xml:space="preserve">
     <value>Swap</value>
   </data>
+  <data name="TitleWithProjectName_2" xml:space="preserve">
+    <value>{0} | {1}</value>
+  </data>
 </root>

@@ -181,8 +181,6 @@ public partial class ProjectPage : ContentPage
 
   public PageLoading Loading { get; }
 
-  public string PageTitle => PageTitleFormatter.WithProjectName(UIStrings.TitleFamiliesPage, _CurrentProjectProvider.Info.Name);
-
   public string RemoveProjectToolbarItemName =>
     string.Format(UIStrings.MenuItemNameRemove_1, _CurrentProjectProvider.Info.Name);
 

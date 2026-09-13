@@ -45,7 +45,8 @@
   </ContentPage.Resources>
 
   <components:PageLayout
-      Title="{Binding PageTitle, Source={x:Reference Root}}"
+      Title="{x:Static resources:UIStrings.TitleStatisticsPage}"
+      ShowsProjectName="True"
       HasBackButton="True"
       Loading="{Binding Loading, Source={x:Reference Root}}">
     <components:PageLayout.Body>

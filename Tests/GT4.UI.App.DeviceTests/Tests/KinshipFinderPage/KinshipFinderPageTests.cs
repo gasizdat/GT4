@@ -1,7 +1,6 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
-using GT4.UI.Components;
 using GT4.UI.Dialogs;
 using GT4.UI.Pages;
 using Moq;
@@ -46,17 +45,6 @@ public class KinshipFinderPageTests
     Assert.Equal(Resources.UIStrings.FieldNotSelected, page.PersonToName);
     Assert.False(page.HasChain);
     Assert.False(page.ShowNotFound);
-  }
-
-  [Fact]
-  public async Task PageTitle_includes_the_current_project_name_and_is_bound_to_the_page_title()
-  {
-    var page = await CreatePageAsync(new TestServices());
-
-    Assert.Equal($"{Resources.UIStrings.TitleKinshipFinderPage} — {TestServices.SampleProjectInfo.Name}", page.PageTitle);
-
-    var layout = (PageLayout)page.Content;
-    Assert.Equal(page.PageTitle, layout.Title);
   }
 
   [Fact]

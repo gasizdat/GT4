@@ -5,7 +5,6 @@ using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
-using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
@@ -109,8 +108,6 @@ public partial class GalleryPage : ContentPage
     item.Owners.Contains(_OwnerFilter, StringComparison.InvariantCultureIgnoreCase);
 
   public PageLoading Loading { get; }
-
-  public string PageTitle => PageTitleFormatter.WithProjectName(UIStrings.TitleGalleryPage, _CurrentProjectProvider.Info.Name);
 
   public ICommand DeleteDataCommand => _DeleteDataCommand;
 

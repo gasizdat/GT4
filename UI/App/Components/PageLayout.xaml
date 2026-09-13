@@ -79,7 +79,7 @@
           Margin="{Thickness Right={StaticResource PageContentHorizontalPadding}}"
           IsVisible="{Binding IsTitleVisible, Source={x:Reference Root}}"
           Style="{StaticResource PageTitle}"
-          Text="{Binding Title, Source={x:Reference Root}}" />
+          Text="{Binding DisplayTitle, Source={x:Reference Root}}" />
     </Grid>
 
     <!--  Hint  -->

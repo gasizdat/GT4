@@ -12,7 +12,8 @@
   <components:PageLayout
       HasBackButton="True"
       Loading="{Binding Loading, Source={x:Reference Root}}"
-      Title="{Binding PageTitle, Source={x:Reference Root}}">
+      ShowsProjectName="True"
+      Title="{x:Static resources:UIStrings.TitleGalleryPage}">
     <components:PageLayout.Header>
       <Grid
           Padding="20"

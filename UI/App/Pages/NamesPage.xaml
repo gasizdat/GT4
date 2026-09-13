@@ -11,9 +11,10 @@
     x:Name="Root">
 
   <components:PageLayout
-      Title="{Binding PageTitle, Source={x:Reference Root}}"
+      Title="{x:Static resources:UIStrings.TitleNamesPage}"
       HasBackButton="True"
       Hint="{x:Static resources:UIStrings.HintNamesPage}"
+      ShowsProjectName="True"
       Loading="{Binding Loading, Source={x:Reference Root}}">
 
     <components:PageLayout.MenuItems>

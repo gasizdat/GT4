@@ -54,30 +54,19 @@ public class ProjectPageTests
     Assert.False(page.FilterView.IsFiltersVisible);
   }
 
+  // PageLayout itself composes the displayed title from Title + the current project's name
+  // (PageLayoutTests covers that composition, including the no-project-open fallback); this only
+  // pins that ProjectPage's XAML opts in. DisplayTitle itself isn't asserted here: this page's
+  // PageLayout is realized by the XAML parser's own parameterless ctor, which resolves
+  // GT4Services.Provider rather than this test's mocked container.
   [Fact]
-  public async Task PageTitle_includes_the_current_project_name_and_is_bound_to_the_page_title()
+  public async Task PageLayout_is_opted_into_showing_the_current_project_name()
   {
     var page = await CreatePageAsync(new TestServices());
 
-    Assert.Equal($"{UIStrings.TitleFamiliesPage} — {TestServices.SampleProjectInfo.Name}", page.PageTitle);
-
     var layout = (PageLayout)page.Content;
-    Assert.Equal(page.PageTitle, layout.Title);
-  }
-
-  [Fact]
-  public async Task OnNavigatedTo_refreshes_PageTitle_when_the_project_changed()
-  {
-    var services = new TestServices();
-    var page = await CreatePageAsync(services);
-    services.CurrentProjectProvider.SetupGet(p => p.Info)
-      .Returns(TestServices.SampleProjectInfo with { Name = "Other Project", Revision = 1 });
-
-    await MainThread.InvokeOnMainThreadAsync(page.InvokeNavigatedTo);
-
-    Assert.Equal($"{UIStrings.TitleFamiliesPage} — Other Project", page.PageTitle);
-    var layout = (PageLayout)page.Content;
-    Assert.Equal(page.PageTitle, layout.Title);
+    Assert.True(layout.ShowsProjectName);
+    Assert.Equal(UIStrings.TitleFamiliesPage, layout.Title);
   }
 
   [Fact]
