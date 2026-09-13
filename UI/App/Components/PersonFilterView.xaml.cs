@@ -238,8 +238,7 @@ public partial class PersonFilterView : ContentView
 
       if (_IsFiltersVisible)
       {
-        // Auto-focusing on a touch idiom would pop the soft keyboard over the list the panel filters.
-        FocusNameFilter = DeviceInfo.Idiom == DeviceIdiom.Desktop;
+        FocusNameFilter = true;
         EnsureFilterDataLoaded();
       }
     }
