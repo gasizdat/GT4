@@ -63,12 +63,19 @@
             Text="{x:Static resources:UIStrings.FieldSearchText}" />
 
         <Entry
+            x:Name="NameFilterEntry"
             Grid.Row="1"
             Grid.Column="1"
             Grid.ColumnSpan="2"
             HorizontalOptions="Fill"
             Style="{StaticResource FieldValue}"
-            Text="{Binding NameFilter, Source={x:Reference Root}}" />
+            Text="{Binding NameFilter, Source={x:Reference Root}}">
+
+          <Entry.Behaviors>
+            <behaviors:FocusOnTrueBehavior IsFocused="{OnIdiom Desktop=True, Default=False}" />
+          </Entry.Behaviors>
+
+        </Entry>
 
       </Grid>
     </components:PageLayout.Header>

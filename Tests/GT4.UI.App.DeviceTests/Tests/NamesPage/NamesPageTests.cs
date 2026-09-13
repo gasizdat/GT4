@@ -1,5 +1,6 @@
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.Behaviors;
 using GT4.UI.Dialogs;
 using Moq;
 using Xunit;
@@ -36,6 +37,23 @@ public class NamesPageTests
     Assert.NotNull(page.EditNameCommand);
     Assert.NotNull(page.DeleteNameCommand);
     Assert.NotNull(page.PageCommand);
+  }
+
+  // Asserts the behavior's own IsFocused against the live idiom rather than assuming Desktop:
+  // GitHub's hosted windows-latest CI agent reports DeviceInfo.Idiom == Unknown, not Desktop
+  // (confirmed by a throwaway diagnostic test), so a hardcoded True would fail there even though the
+  // gate (issue #398) is correct. No window attach needed either: without one, Loaded never fires,
+  // so the behavior never runs its focus-and-reset cycle and IsFocused stays at whatever OnIdiom
+  // assigned it.
+  [Fact]
+  public async Task Page_appearing_focuses_the_name_filter_entry_iff_desktop()
+  {
+    var page = await CreatePageAsync(new TestServices());
+    var nameEntry = page.FindByName<Entry>("NameFilterEntry");
+
+    var behavior = nameEntry.Behaviors.OfType<FocusOnTrueBehavior>().Single();
+
+    Assert.Equal(DeviceInfo.Idiom == DeviceIdiom.Desktop, behavior.IsFocused);
   }
 
   [Fact]

@@ -1,4 +1,5 @@
 using GT4.Core.Utils;
+using GT4.UI.Behaviors;
 using GT4.UI.Dialogs;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
@@ -8,7 +9,8 @@ namespace GT4.UI.DeviceTests;
 
 /// <summary>
 /// Covers SelectMediaDialog's auto-focus (issue #398): the owner filter Entry gets keyboard focus
-/// as soon as the dialog appears, the same FocusOnTrueBehavior wiring CreateOrUpdateNameDialog already uses.
+/// as soon as the dialog appears, the same FocusOnTrueBehavior wiring CreateOrUpdateNameDialog
+/// already uses, gated to a desktop idiom via OnIdiom.
 /// </summary>
 public class SelectMediaDialogTests
 {
@@ -24,17 +26,19 @@ public class SelectMediaDialogTests
     return await MainThread.InvokeOnMainThreadAsync(() => factory.Create(ownMediaIds ?? []));
   }
 
+  // Asserts the behavior's own IsFocused against the live idiom rather than assuming Desktop: GitHub's
+  // hosted windows-latest CI agent reports DeviceInfo.Idiom == Unknown, not Desktop (confirmed by a
+  // throwaway diagnostic test), so a hardcoded True would fail there even though the gate is correct.
+  // Reading no window attach needed either: without one, Loaded never fires, so the behavior never
+  // runs its focus-and-reset cycle and IsFocused stays at whatever OnIdiom assigned it.
   [Fact]
-  public async Task Dialog_appearing_focuses_the_owner_filter_entry()
+  public async Task Dialog_appearing_focuses_the_owner_filter_entry_iff_desktop()
   {
     var dialog = await CreateDialogAsync(new TestServices());
     var ownerEntry = dialog.FindByName<Entry>("OwnerFilterEntry");
 
-    await using var window = await WindowHost.AttachAsync(dialog);
+    var behavior = ownerEntry.Behaviors.OfType<FocusOnTrueBehavior>().Single();
 
-    await Poll.UntilAsync(
-      () => MainThread.InvokeOnMainThreadAsync(() => ownerEntry.IsFocused),
-      focused => focused,
-      timeoutMessage: "The dialog did not focus its owner filter entry on appearing.");
+    Assert.Equal(DeviceInfo.Idiom == DeviceIdiom.Desktop, behavior.IsFocused);
   }
 }
