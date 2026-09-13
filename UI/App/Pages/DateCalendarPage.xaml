@@ -346,7 +346,8 @@
                                   FontSize="{DynamicResource LabelTextSizeDefault}"
                                   HorizontalTextAlignment="Center"
                                   Text="{x:Static resources:UIStrings.DateCalendarMilestoneBadge}"
-                                  TextColor="{AppThemeBinding Light={StaticResource DateCalendarMilestoneText}, Dark={StaticResource DateCalendarMilestoneTextDark}}"
+                                  TextColor="{AppThemeBinding Light={StaticResource DateCalendarMilestoneText},
+                                                              Dark={StaticResource DateCalendarMilestoneTextDark}}"
                                   VerticalTextAlignment="Center" />
                             </Border>
                           </Grid>
@@ -404,7 +405,8 @@
                         <Label
                             FontSize="{DynamicResource LabelTextSizeDefault}"
                             Text="{x:Static resources:UIStrings.DateCalendarMilestoneBadge}"
-                            TextColor="{AppThemeBinding Light={StaticResource DateCalendarMilestoneText}, Dark={StaticResource DateCalendarMilestoneTextDark}}" />
+                            TextColor="{AppThemeBinding Light={StaticResource DateCalendarMilestoneText},
+                                                        Dark={StaticResource DateCalendarMilestoneTextDark}}" />
                       </Border>
                     </Grid>
                   </components:CardView>
