@@ -8,9 +8,7 @@ namespace GT4.Core.Project;
 /// expansion breadth-first from <c>source</c> until <c>target</c> is reached. Searching in the typed
 /// space (rather than the raw parent/child/spouse graph) guarantees every node on the returned chain
 /// already carries a nameable relationship to <c>source</c> -- the same one the UI's relatives list
-/// renders elsewhere. The cost is that a target reachable only through a spouse's blood family beyond
-/// their parents (e.g. a spouse's sibling) is reported as unrelated: <see cref="RelativesProvider"/>'s
-/// in-law expansion does not reach that far.
+/// renders elsewhere.
 /// </summary>
 internal sealed class KinshipFinder : ProjectComponentBase, IKinshipFinder
 {
