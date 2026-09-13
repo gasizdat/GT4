@@ -257,6 +257,8 @@ public partial class NamesPage : ContentPage
 
   public PageLoading Loading { get; }
 
+  public string PageTitle => PageTitleFormatter.WithProjectName(UIStrings.TitleNamesPage, _CurrentProjectProvider.Info.Name);
+
   public ICollection<BiologicalSexItem> BiologicalSexes => _BiologicalSexes;
 
   public BiologicalSexItem CurrentBiologicalSex

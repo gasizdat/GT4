@@ -141,6 +141,8 @@ public partial class KinshipFinderPage : ContentPage
 
   public PageLoading Loading { get; }
 
+  public string PageTitle => PageTitleFormatter.WithProjectName(UIStrings.TitleKinshipFinderPage, _CurrentProjectProvider.Info.Name);
+
   public ICommand PageCommand => _PageCommand;
 
   public string PersonFromName => _PersonFrom is not null

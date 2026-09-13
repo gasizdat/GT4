@@ -2,9 +2,11 @@ using GT4.Core.Gedcom;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Behaviors;
+using GT4.UI.Components;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Pages;
+using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
 using Moq;
@@ -78,6 +80,17 @@ public class GalleryPageTests
     Assert.Equal(string.Empty, page.OwnerFilter);
     Assert.NotNull(page.DeleteDataCommand);
     Assert.NotNull(page.OpenDataCommand);
+  }
+
+  [Fact]
+  public async Task PageTitle_includes_the_current_project_name_and_is_bound_to_the_page_title()
+  {
+    var page = await CreatePageAsync(new TestServices());
+
+    Assert.Equal($"{UIStrings.TitleGalleryPage} — {TestServices.SampleProjectInfo.Name}", page.PageTitle);
+
+    var layout = (PageLayout)page.Content;
+    Assert.Equal(page.PageTitle, layout.Title);
   }
 
   // Asserts the behavior's own IsFocused against the live idiom rather than assuming Desktop:

@@ -9,7 +9,7 @@
     x:Name="Root">
 
   <components:PageLayout
-      Title="{x:Static resources:UIStrings.TitleKinshipFinderPage}"
+      Title="{Binding PageTitle, Source={x:Reference Root}}"
       HasBackButton="True"
       Loading="{Binding Loading, Source={x:Reference Root}}">
     <components:PageLayout.Header>

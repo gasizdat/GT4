@@ -33,6 +33,8 @@ public partial class ProjectRevisionsPage : ContentPage
     InitializeComponent();
   }
 
+  public string PageTitle => PageTitleFormatter.WithProjectName(UIStrings.TitleProjectRevisionsPage, _CurrentProjectProvider.Info.Name);
+
   public ProjectRevisionItem? SelectedRevision
   {
     get => _SelectedRevision;

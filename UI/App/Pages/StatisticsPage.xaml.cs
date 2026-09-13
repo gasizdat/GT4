@@ -45,6 +45,8 @@ public partial class StatisticsPage : ContentPage
 
   public PageLoading Loading { get; }
 
+  public string PageTitle => PageTitleFormatter.WithProjectName(UIStrings.TitleStatisticsPage, _CurrentProjectProvider.Info.Name);
+
   // The single trigger for the (lazy, async) load: every display property below reads Statistics, so
   // whichever one XAML binds first kicks off the load, following the same lazy-getter idiom as
   // NamesPage.Names / ProjectPage.Families.

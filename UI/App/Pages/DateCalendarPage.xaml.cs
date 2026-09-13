@@ -58,6 +58,8 @@ public partial class DateCalendarPage : ContentPage
 
   public PageLoading Loading { get; }
 
+  public string PageTitle => PageTitleFormatter.WithProjectName(UIStrings.TitleDateCalendarPage, _CurrentProjectProvider.Info.Name);
+
   public ICommand PageCommand { get; init; }
 
   public ICommand PersonCommand { get; init; }

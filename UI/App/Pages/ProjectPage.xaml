@@ -10,9 +10,9 @@
     x:Name="Root">
 
   <components:PageLayout
-      Title="{x:Static resources:UIStrings.TitleFamiliesPage}"
+      Title="{Binding PageTitle, Source={x:Reference Root}}"
       HasBackButton="True"
-      Hint="{Binding ProjectName, Source={x:Reference Root}}"
+      Hint="{x:Static resources:UIStrings.HintFamiliesPage}"
       Loading="{Binding Loading, Source={x:Reference Root}}">
 
     <components:PageLayout.MenuItems>

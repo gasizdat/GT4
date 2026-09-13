@@ -6,6 +6,7 @@ using GT4.UI.Components;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Pages;
+using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
 using Moq;
@@ -54,18 +55,18 @@ public class ProjectPageTests
   }
 
   [Fact]
-  public async Task ProjectName_reflects_the_current_project_and_is_bound_to_the_page_hint()
+  public async Task PageTitle_includes_the_current_project_name_and_is_bound_to_the_page_title()
   {
     var page = await CreatePageAsync(new TestServices());
 
-    Assert.Equal(TestServices.SampleProjectInfo.Name, page.ProjectName);
+    Assert.Equal($"{UIStrings.TitleFamiliesPage} — {TestServices.SampleProjectInfo.Name}", page.PageTitle);
 
     var layout = (PageLayout)page.Content;
-    Assert.Equal(TestServices.SampleProjectInfo.Name, layout.Hint);
+    Assert.Equal(page.PageTitle, layout.Title);
   }
 
   [Fact]
-  public async Task OnNavigatedTo_refreshes_ProjectName_when_the_project_changed()
+  public async Task OnNavigatedTo_refreshes_PageTitle_when_the_project_changed()
   {
     var services = new TestServices();
     var page = await CreatePageAsync(services);
@@ -74,9 +75,9 @@ public class ProjectPageTests
 
     await MainThread.InvokeOnMainThreadAsync(page.InvokeNavigatedTo);
 
-    Assert.Equal("Other Project", page.ProjectName);
+    Assert.Equal($"{UIStrings.TitleFamiliesPage} — Other Project", page.PageTitle);
     var layout = (PageLayout)page.Content;
-    Assert.Equal("Other Project", layout.Hint);
+    Assert.Equal(page.PageTitle, layout.Title);
   }
 
   [Fact]
