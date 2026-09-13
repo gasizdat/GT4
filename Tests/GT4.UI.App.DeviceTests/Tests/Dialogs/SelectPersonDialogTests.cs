@@ -8,7 +8,8 @@ namespace GT4.UI.DeviceTests;
 
 /// <summary>
 /// Covers SelectPersonDialog's auto-focus (issue #398): the search Entry gets keyboard focus as
-/// soon as the dialog appears, the same FocusOnTrueBehavior wiring CreateOrUpdateNameDialog already uses.
+/// soon as the dialog appears, the same FocusOnTrueBehavior wiring CreateOrUpdateNameDialog already
+/// uses, gated to a desktop idiom via OnIdiom.
 /// </summary>
 public class SelectPersonDialogTests
 {
@@ -22,8 +23,11 @@ public class SelectPersonDialogTests
       services.AlertService.Object));
   }
 
+  // The device-test runner is itself a desktop (WinUI) process, so this only pins the Desktop leg
+  // of the OnIdiom gate; the touch-idiom leg (no auto-focus) is a deliberate manual-check gap, the
+  // same shape as the other idiom-gated behavior documented in CLAUDE.md.
   [Fact]
-  public async Task Dialog_appearing_focuses_the_name_filter_entry()
+  public async Task Dialog_appearing_focuses_the_name_filter_entry_on_desktop()
   {
     var dialog = await CreateDialogAsync(new TestServices());
     var nameEntry = dialog.FindByName<Entry>("NameFilterEntry");
@@ -33,6 +37,6 @@ public class SelectPersonDialogTests
     await Poll.UntilAsync(
       () => MainThread.InvokeOnMainThreadAsync(() => nameEntry.IsFocused),
       focused => focused,
-      timeoutMessage: "The dialog did not focus its name filter entry on appearing.");
+      timeoutMessage: "The dialog did not focus its name filter entry on a desktop idiom.");
   }
 }

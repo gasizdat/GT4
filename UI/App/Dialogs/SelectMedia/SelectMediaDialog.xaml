@@ -35,7 +35,7 @@
             Text="{Binding OwnerFilter, Source={x:Reference Root}}">
 
           <Entry.Behaviors>
-            <behaviors:FocusOnTrueBehavior IsFocused="{Binding FocusOwnerFilter, Source={x:Reference Root}}" />
+            <behaviors:FocusOnTrueBehavior IsFocused="{OnIdiom Desktop=True, Default=False}" />
           </Entry.Behaviors>
 
         </Entry>
