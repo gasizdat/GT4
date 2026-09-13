@@ -181,6 +181,8 @@ public partial class ProjectPage : ContentPage
 
   public PageLoading Loading { get; }
 
+  public string ProjectName => _CurrentProjectProvider.Info.Name;
+
   public string RemoveProjectToolbarItemName =>
     string.Format(UIStrings.MenuItemNameRemove_1, _CurrentProjectProvider.Info.Name);
 

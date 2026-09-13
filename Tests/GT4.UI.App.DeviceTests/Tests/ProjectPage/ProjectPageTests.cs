@@ -54,6 +54,32 @@ public class ProjectPageTests
   }
 
   [Fact]
+  public async Task ProjectName_reflects_the_current_project_and_is_bound_to_the_page_hint()
+  {
+    var page = await CreatePageAsync(new TestServices());
+
+    Assert.Equal(TestServices.SampleProjectInfo.Name, page.ProjectName);
+
+    var layout = (PageLayout)page.Content;
+    Assert.Equal(TestServices.SampleProjectInfo.Name, layout.Hint);
+  }
+
+  [Fact]
+  public async Task OnNavigatedTo_refreshes_ProjectName_when_the_project_changed()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+    services.CurrentProjectProvider.SetupGet(p => p.Info)
+      .Returns(TestServices.SampleProjectInfo with { Name = "Other Project", Revision = 1 });
+
+    await MainThread.InvokeOnMainThreadAsync(page.InvokeNavigatedTo);
+
+    Assert.Equal("Other Project", page.ProjectName);
+    var layout = (PageLayout)page.Content;
+    Assert.Equal("Other Project", layout.Hint);
+  }
+
+  [Fact]
   public async Task ToggleFilters_menu_item_is_bound_to_the_page_command()
   {
     var page = await CreatePageAsync(new TestServices());
