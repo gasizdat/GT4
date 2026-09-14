@@ -2,7 +2,8 @@
 <?xaml-comp compile="true" ?>
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:layouts="clr-namespace:Microsoft.Maui.Layouts;assembly=Microsoft.Maui">
 
   <OnIdiom
       x:Key="PhotoThumbHeight"
@@ -32,10 +33,19 @@
       Phone="24"
       Tablet="32" />
 
-  <!-- Fraction of a family card's row width given to each person chip's WidthRequest, so every
-       card's chips land on the same column x-offsets regardless of its own names' lengths (#394).
-       Varies by idiom because a screen-width-appropriate column count differs (fewer, wider columns
-       on Phone). -->
+  <!-- Fraction of a family card's row width per person chip, so every card's chips land on the same
+       column x-offsets regardless of its own names' lengths (#394). Varies by idiom because a
+       screen-width-appropriate column count differs (fewer, wider columns on Phone). Kept as two
+       resources with the same values, not one: FlexLayout.Basis (below) groups chips onto rows but
+       doesn't reach a chip's own Measure, so ChipWidthFractionConverter (bound to WidthRequest in
+       ProjectPage.xaml) reads the plain-double twin to actually constrain it. -->
+  <OnIdiom
+      x:Key="FamilyPersonChipBasis"
+      x:TypeArguments="layouts:FlexBasis"
+      Desktop="20%"
+      Phone="50%"
+      Tablet="33%" />
+
   <OnIdiom
       x:Key="FamilyPersonChipWidthFraction"
       x:TypeArguments="x:Double"
@@ -533,6 +543,16 @@
 
   <Style x:Key="FieldValue" BasedOn="{StaticResource ContentBase}" TargetType="Label">
     <Setter Property="FontSize" Value="{DynamicResource LabelTextSizeDefault}" />
+  </Style>
+
+  <!-- FieldValue, but clipped to one line instead of wrapping (#394): a family-card person chip's
+       FlexLayout.Basis sets the chip's own outer width but doesn't constrain the name Label's
+       Measure, so a name too long for its chip bled into the next one under plain FieldValue's
+       content-sized (HorizontalOptions=Start) Label. Fill makes the Label's own width track its
+       Grid column instead of its text, which TailTruncation then clips within. -->
+  <Style x:Key="FieldValueTruncated" BasedOn="{StaticResource FieldValue}" TargetType="Label">
+    <Setter Property="HorizontalOptions" Value="Fill" />
+    <Setter Property="LineBreakMode" Value="TailTruncation" />
   </Style>
 
   <Style TargetType="ListView">

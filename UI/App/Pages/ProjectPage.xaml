@@ -9,6 +9,10 @@
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root">
 
+  <ContentPage.Resources>
+    <components:ChipWidthFractionConverter x:Key="ChipWidthFractionConverter" />
+  </ContentPage.Resources>
+
   <components:PageLayout
       Title="{x:Static resources:UIStrings.TitleFamiliesPage}"
       HasBackButton="True"
@@ -110,24 +114,26 @@
                     VerticalOptions="Start" />
 
                 <components:SafeBindableLayout
+                    x:Name="PersonsRow"
                     Grid.Row="1"
                     Grid.Column="0"
                     Grid.ColumnSpan="2"
                     Margin="{Thickness Left={StaticResource PhotoThumbWidth}}"
                     Direction="Row"
                     ItemsSource="{Binding DisplayedPersons}"
-                    SizeChanged="OnFamilyPersonsSizeChanged"
                     Wrap="Wrap">
 
                   <components:SafeBindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="dto:PersonInfo">
                       <components:PersonInfoView
+                          FlexLayout.Basis="{StaticResource FamilyPersonChipBasis}"
                           NameFormat="{Binding PersonNamesFormat, Source={x:Reference Root}}"
-                          NameLabelStyle="{StaticResource FieldValue}"
+                          NameLabelStyle="{StaticResource FieldValueTruncated}"
                           Person="{Binding .}"
                           PhotoStyle="{StaticResource PhotoCompactStyle}"
                           ShowAge="False"
-                          ShowDates="False" />
+                          ShowDates="False"
+                          WidthRequest="{Binding Width, Source={x:Reference PersonsRow}, Converter={StaticResource ChipWidthFractionConverter}}" />
                     </DataTemplate>
                   </components:SafeBindableLayout.ItemTemplate>
                 </components:SafeBindableLayout>
