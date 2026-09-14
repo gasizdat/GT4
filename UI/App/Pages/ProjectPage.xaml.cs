@@ -11,6 +11,7 @@ using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Extensions;
 using GT4.UI.Utils.Formatters;
+using Microsoft.Maui.Layouts;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 
@@ -211,9 +212,13 @@ public partial class ProjectPage : ContentPage
 
   // Every family card's SafeBindableLayout gets the same available width (all cards share one
   // CollectionView column), so a fraction of it makes an equally-wide chip pitch card to card --
-  // unlike sizing from each card's own widest name, which drifted card to card (#394). WidthRequest,
-  // not FlexLayout.Basis, because Basis never reaches the child's Measure pass: a chip with a name
-  // longer than its share renders unclipped past its neighbour instead of wrapping.
+  // unlike sizing from each card's own widest name, which drifted card to card (#394). Both
+  // FlexLayout.Basis and WidthRequest are needed, not either alone (confirmed via device-test
+  // repro): with Basis left at its Auto default, setting only WidthRequest here -- reactively, after
+  // the row's first layout pass has already happened -- doesn't make FlexLayout redo its wrap-line
+  // grouping, so chips that should share a line each end up on their own (reproduces reliably at
+  // Phone's wider two-column fraction; narrower fractions can mask it). An explicit numeric Basis is
+  // what makes FlexLayout regroup; WidthRequest still does the actual clamp-and-wrap.
   private void OnFamilyPersonsSizeChanged(object? sender, EventArgs e)
   {
     if (sender is not FlexLayout flex || flex.Width <= 0)
@@ -229,9 +234,18 @@ public partial class ProjectPage : ContentPage
     {
       if (child is VisualElement element)
       {
+        FlexLayout.SetBasis(element, new FlexBasis((float)chipWidth, isRelative: false));
         element.WidthRequest = chipWidth;
       }
     }
+
+    OnPersonChipsResized(flex);
+  }
+
+  // Test seam: lets a subclass observe the real, rendered FlexLayout after each resize pass, since
+  // it lives inside a CollectionView cell a test can't otherwise reach from the page's own surface.
+  protected virtual void OnPersonChipsResized(FlexLayout flex)
+  {
   }
 
   private void Refresh()

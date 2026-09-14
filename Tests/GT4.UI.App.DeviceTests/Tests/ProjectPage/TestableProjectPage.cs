@@ -78,6 +78,14 @@ internal sealed class TestableProjectPage : ProjectPage
 
   public PersonFilterView FilterView { get; }
 
+  /// <summary>
+  /// The most recently resized family card's person-chip FlexLayout, for tests that need to inspect
+  /// real rendered geometry a CollectionView cell otherwise hides from the page's own surface.
+  /// </summary>
+  public FlexLayout? LastPersonChipsFlexLayout { get; private set; }
+
+  protected override void OnPersonChipsResized(FlexLayout flex) => LastPersonChipsFlexLayout = flex;
+
   public Task InvokePageCommandAsync(object parameter) => OnPageCommand(parameter);
 
   // NavigatedToEventArgs has no accessible test-side constructor and OnNavigatedTo never reads it.
