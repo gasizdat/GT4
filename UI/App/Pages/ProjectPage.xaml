@@ -116,12 +116,12 @@
                     Margin="{Thickness Left={StaticResource PhotoThumbWidth}}"
                     Direction="Row"
                     ItemsSource="{Binding DisplayedPersons}"
-                    SizeChanged="OnFamilyPersonsSizeChanged"
                     Wrap="Wrap">
 
                   <components:SafeBindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="dto:PersonInfo">
                       <components:PersonInfoView
+                          FlexLayout.Basis="{StaticResource FamilyPersonChipBasis}"
                           NameFormat="{Binding PersonNamesFormat, Source={x:Reference Root}}"
                           NameLabelStyle="{StaticResource FieldValue}"
                           Person="{Binding .}"
