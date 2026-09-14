@@ -209,6 +209,31 @@ public partial class ProjectPage : ContentPage
 
   public NameFormat PersonNamesFormat => NameFormat.ShortPersonName;
 
+  // Every family card's SafeBindableLayout gets the same available width (all cards share one
+  // CollectionView column), so a fraction of it makes an equally-wide chip pitch card to card --
+  // unlike sizing from each card's own widest name, which drifted card to card (#394). WidthRequest,
+  // not FlexLayout.Basis, because Basis never reaches the child's Measure pass: a chip with a name
+  // longer than its share renders unclipped past its neighbour instead of wrapping.
+  private void OnFamilyPersonsSizeChanged(object? sender, EventArgs e)
+  {
+    if (sender is not FlexLayout flex || flex.Width <= 0)
+    {
+      return;
+    }
+
+    var onIdiom = (OnIdiom<double>)Application.Current!.Resources["FamilyPersonChipWidthFraction"];
+    double fraction = onIdiom;
+    var chipWidth = flex.Width * fraction;
+
+    foreach (var child in flex.Children)
+    {
+      if (child is VisualElement element)
+      {
+        element.WidthRequest = chipWidth;
+      }
+    }
+  }
+
   private void Refresh()
   {
     _LastProjectInfo = _CurrentProjectProvider.Info;

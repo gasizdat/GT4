@@ -5,32 +5,33 @@ namespace GT4.UI.DeviceTests;
 
 /// <summary>
 /// Pins issue #394: a family card's person chips must land on the same column x-offsets as every
-/// other card's, regardless of how long each card's own names are. ProjectPage.xaml drives this by
-/// giving every chip the same FamilyPersonChipBasis (a FlexLayout.Basis fraction of the row), rather
-/// than sizing chips from the widest name in their own card.
+/// other card's, and a name too long for its chip must wrap rather than overlap the next chip.
+/// ProjectPage.xaml.cs's OnFamilyPersonsSizeChanged drives both by giving every chip the same
+/// fraction of the row's own width as its WidthRequest, rather than sizing chips from the widest
+/// name in their own card.
 /// </summary>
 public class FamilyPersonChipAlignmentTests
 {
-  private static async Task<(FlexLayout Row, Label First, Label Second)> CreateChipRowAsync(string firstText, string secondText)
+  // Narrow enough that these tests' own long sample names reliably exceed it, independent of
+  // whatever fraction Styles.xaml currently assigns each idiom.
+  private const double ChipWidthFraction = 0.5;
+
+  private static async Task<(FlexLayout Row, Label First, Label Second)> CreateChipRowAsync(
+    string firstText, string secondText, double rowWidth = 300)
   {
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
-    // The resource is stored as the raw OnIdiom<FlexBasis> wrapper; only its implicit conversion
-    // operator resolves it to the current device's FlexBasis, same as XAML consumption does.
-    var onIdiom = (OnIdiom<FlexBasis>)Application.Current!.Resources["FamilyPersonChipBasis"];
-    FlexBasis basis = onIdiom;
 
     return await MainThread.InvokeOnMainThreadAsync(() =>
     {
-      var first = new Label { Text = firstText };
-      var second = new Label { Text = secondText };
-      FlexLayout.SetBasis(first, basis);
-      FlexLayout.SetBasis(second, basis);
+      var chipWidth = rowWidth * ChipWidthFraction;
+      var first = new Label { Text = firstText, WidthRequest = chipWidth, LineBreakMode = LineBreakMode.WordWrap };
+      var second = new Label { Text = secondText, WidthRequest = chipWidth, LineBreakMode = LineBreakMode.WordWrap };
 
       var row = new FlexLayout
       {
         Direction = FlexDirection.Row,
         Wrap = FlexWrap.Wrap,
-        WidthRequest = 600,
+        WidthRequest = rowWidth,
         HorizontalOptions = LayoutOptions.Start,
       };
       row.Children.Add(first);
@@ -50,6 +51,19 @@ public class FamilyPersonChipAlignmentTests
       timeoutMessage: "The chip row never laid out.");
 
     return window;
+  }
+
+  [Fact]
+  public async Task FamilyPersonChipWidthFraction_resolves_to_a_fraction_for_the_current_idiom()
+  {
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+
+    // Stored as the raw OnIdiom<double> wrapper; only its implicit conversion operator resolves it
+    // to the current device's value -- a direct (double) cast throws InvalidCastException.
+    var onIdiom = (OnIdiom<double>)Application.Current!.Resources["FamilyPersonChipWidthFraction"];
+    double fraction = onIdiom;
+
+    Assert.InRange(fraction, 0.0, 1.0);
   }
 
   [Fact]
@@ -73,5 +87,19 @@ public class FamilyPersonChipAlignmentTests
     var longColumnX = longSecond.Bounds.X;
 
     Assert.Equal(shortColumnX, longColumnX);
+  }
+
+  // Regression: an earlier FlexLayout.Basis-based version of this fix aligned columns correctly but
+  // never constrained the chip's own Measure pass, so a name too long for its chip rendered past its
+  // own bounds and overlapped the next chip's photo/name instead of wrapping (observed on Android and
+  // Windows with real long names). WidthRequest is what actually constrains Measure.
+  [Fact]
+  public async Task A_name_too_long_for_its_chip_wraps_instead_of_overlapping_the_next_chip()
+  {
+    var (row, first, second) = await CreateChipRowAsync("Bridget, Katherine Alexandra", "Bo");
+    await using var window = await AttachAsync(row);
+
+    Assert.True(first.Bounds.Right <= second.Bounds.Left,
+      $"First chip (right edge {first.Bounds.Right}) overlapped the second chip (left edge {second.Bounds.Left}).");
   }
 }
