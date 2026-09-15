@@ -6,7 +6,7 @@
 
   <ItemGroup>
     <PackageVersion Include="AutoFixture" Version="4.18.1" />
-    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
+    <PackageVersion Include="coverlet.collector" Version="10.0.1" />
     <PackageVersion Include="DeviceRunners.Testing.Targets" Version="0.1.0-preview.12" />
     <PackageVersion Include="DeviceRunners.UITesting.Maui" Version="0.1.0-preview.12" />
     <PackageVersion Include="DeviceRunners.UITesting.Xunit3" Version="0.1.0-preview.12" />
