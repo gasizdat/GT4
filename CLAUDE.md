@@ -44,6 +44,15 @@ from the code.
   Revisions UI, which nothing prompts a user to check. A flush-on-`Deactivate`-without-closing
   alternative was considered but is the same lever as the commit-driven foreground-flush design
   above — needs a fresh design and a deliberate go-ahead, not a quiet resurrection.
+- **Vertical bar-per-decade histogram for the `StatisticsPage` births-by-decade chart** (issue
+  #391, `drafts/ai/issue-391-decade-histogram`, pushed but not merged) — built and visually tested
+  across several count placements (above the bar, overlaid on its own headroom, rotated inside its
+  bottom edge) against dense, medium, and sparse projects. Rejected: a bar-per-decade layout needs
+  horizontal room roughly proportional to how many distinct decades the data has, so it doesn't
+  hold up at portrait/phone width or on a project with many decades — axis labels and bar columns
+  get too narrow to stay readable, independent of which count placement is used. Needs a
+  substantially different visualization (scrollable/zoomable, or something other than one column
+  per decade) to revisit, not another placement tweak.
 
 ## Platform traps worth knowing before you hit them
 
