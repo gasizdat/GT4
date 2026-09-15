@@ -10,5 +10,6 @@ public static class ServiceCollectionExtensions
     services
       .AddSingleton<IProjectList, ProjectList>()
       .AddSingleton<ICurrentProjectProvider, CurrentProjectProvider>()
-      .AddSingleton<IProjectDocumentFactory, ProjectDocumentFactory>();
+      .AddSingleton<IProjectDocumentFactory, ProjectDocumentFactory>()
+      .AddSingleton<IMainPersonStore, MainPersonStore>();
 }

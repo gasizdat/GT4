@@ -124,6 +124,49 @@ public class ProjectListPageTests
   }
 
   [Fact]
+  public async Task SelectProject_with_a_main_person_also_navigates_to_them()
+  {
+    var services = new TestServices();
+    var info = P("Pushkin");
+    services.CurrentProjectProvider
+      .Setup(p => p.OpenAsync(info, It.IsAny<CancellationToken>()))
+      .Returns(Task.CompletedTask);
+    // OpenAsync's mock doesn't change what CurrentProjectProvider.Info returns afterward (fixed to
+    // TestServices.SampleProjectInfo), so the store lookup must key off that origin, not info.Origin.
+    services.MainPersonStore.Setup(s => s.Get(TestServices.SampleProjectInfo.Origin)).Returns(new MainPersonInfo(7, "Alexander"));
+    var person = new Person(7, Date.Now, null, BiologicalSex.Male);
+    var personInfo = new PersonInfo(person, [new Name(1, "Alexander", NameType.FirstName, null)], null);
+    services.Persons.Setup(p => p.TryGetPersonByIdAsync(7, It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    services.PersonManager
+      .Setup(m => m.GetPersonInfosAsync(new[] { person }, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([personInfo]);
+    var page = await CreatePageAsync(services);
+
+    await page.InvokeProjectSelectedAsync(new ProjectItem(info));
+
+    var expectedRoute = $"{typeof(PersonPage).Namespace}/{typeof(PersonPage).Name}";
+    services.NavigationService.Verify(
+      n => n.GoToAsync(expectedRoute, true, It.Is<Dictionary<string, object>>(d => Equals(d["PersonInfo"], personInfo))),
+      Times.Once());
+  }
+
+  [Fact]
+  public async Task UpdateProjectList_shows_the_main_person_badge_when_one_is_marked()
+  {
+    var services = new TestServices();
+    var info = P("Pushkin");
+    services.ProjectList.Setup(p => p.GetItemsAsync(It.IsAny<CancellationToken>())).ReturnsAsync([info]);
+    services.MainPersonStore.Setup(s => s.Get(info.Origin)).Returns(new MainPersonInfo(7, "Alexander"));
+    var page = await CreatePageAsync(services);
+
+    await MainThread.InvokeOnMainThreadAsync(page.InvokeUpdateProjectListAsync);
+    var project = await MainThread.InvokeOnMainThreadAsync(() => page.Projects.Single());
+
+    Assert.True(project.MainPersonVisible);
+    Assert.Equal(string.Format(UIStrings.FieldMainPerson_1, "Alexander"), project.MainPersonName);
+  }
+
+  [Fact]
   public async Task SelectProject_with_an_outdated_schema_upgrades_it_then_opens_it()
   {
     var services = new TestServices();

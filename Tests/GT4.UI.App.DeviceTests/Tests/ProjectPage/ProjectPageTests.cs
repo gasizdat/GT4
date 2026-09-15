@@ -520,6 +520,59 @@ public class ProjectPageTests
   }
 
   [Fact]
+  public async Task GoToMainPerson_navigates_to_the_resolved_main_person()
+  {
+    var services = new TestServices();
+    var person = new Person(7, UnknownDate, null, BiologicalSex.Male);
+    var personInfo = P(7, "Alexander");
+    services.MainPersonStore.Setup(s => s.Get(TestServices.SampleProjectInfo.Origin)).Returns(new MainPersonInfo(7, "Alexander"));
+    services.Persons.Setup(p => p.TryGetPersonByIdAsync(7, It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    services.PersonManager
+      .Setup(m => m.GetPersonInfosAsync(new[] { person }, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([personInfo]);
+    var page = await CreatePageAsync(services);
+    var expectedRoute = $"{typeof(PersonPage).Namespace}/{typeof(PersonPage).Name}";
+
+    await page.InvokePageCommandAsync("GoToMainPerson");
+
+    services.NavigationService.Verify(
+      n => n.GoToAsync(expectedRoute, true, It.Is<Dictionary<string, object>>(d => Equals(d["PersonInfo"], personInfo))),
+      Times.Once());
+  }
+
+  [Fact]
+  public async Task GoToMainPersonFamilyTree_navigates_to_FamilyTreePage_centered_on_the_main_person()
+  {
+    var services = new TestServices();
+    var person = new Person(7, UnknownDate, null, BiologicalSex.Male);
+    var personInfo = P(7, "Alexander");
+    services.MainPersonStore.Setup(s => s.Get(TestServices.SampleProjectInfo.Origin)).Returns(new MainPersonInfo(7, "Alexander"));
+    services.Persons.Setup(p => p.TryGetPersonByIdAsync(7, It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    services.PersonManager
+      .Setup(m => m.GetPersonInfosAsync(new[] { person }, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([personInfo]);
+    var page = await CreatePageAsync(services);
+    var expectedRoute = $"{typeof(FamilyTreePage).Namespace}/{typeof(FamilyTreePage).Name}";
+
+    await page.InvokePageCommandAsync("GoToMainPersonFamilyTree");
+
+    services.NavigationService.Verify(
+      n => n.GoToAsync(expectedRoute, true, It.Is<Dictionary<string, object>>(d => Equals(d["PersonInfo"], personInfo))),
+      Times.Once());
+  }
+
+  [Fact]
+  public async Task GoToMainPerson_withNoMainPersonMarked_doesNotNavigate()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+
+    await page.InvokePageCommandAsync("GoToMainPerson");
+
+    services.NavigationService.Verify(n => n.GoToAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<Dictionary<string, object>>()), Times.Never());
+  }
+
+  [Fact]
   public async Task GoToRevisions_navigates_to_ProjectRevisionsPage()
   {
     var services = new TestServices();

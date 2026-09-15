@@ -38,6 +38,8 @@ public partial class ProjectListPage : ContentPage
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
   private readonly IImageCache _ImageCache;
+  private readonly IMainPersonStore _MainPersonStore;
+  private readonly MainPersonResolver _MainPersonResolver;
   private readonly ObservableCollection<ProjectItem> _Projects = new();
   private ProjectItem? _SelectedProject;
 
@@ -50,7 +52,9 @@ public partial class ProjectListPage : ContentPage
     GedcomImportEncoding gedcomImportEncoding,
     IAlertService alertService,
     INavigationService navigationService,
-    IImageCache imageCache
+    IImageCache imageCache,
+    IMainPersonStore mainPersonStore,
+    MainPersonResolver mainPersonResolver
     )
   {
     _CancellationTokenProvider = cancellationTokenProvider;
@@ -62,6 +66,8 @@ public partial class ProjectListPage : ContentPage
     _AlertService = alertService;
     _NavigationService = navigationService;
     _ImageCache = imageCache;
+    _MainPersonStore = mainPersonStore;
+    _MainPersonResolver = mainPersonResolver;
     Loading = new PageLoading(_AlertService);
     Loading.PropertyChanged += (_, _) => OnPropertyChanged(nameof(IsEmptyStateVisible));
     _PageCommand = new SafeCommand(OnPageCommand, _AlertService);
@@ -103,6 +109,13 @@ public partial class ProjectListPage : ContentPage
       if (await TryOpenProjectAsync(projectItem.Info))
       {
         await _NavigationService.GoToAsync(UIRoutes.GetRoute<ProjectPage>());
+
+        using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+        var mainPerson = await _MainPersonResolver.TryResolveAsync(_CurrentProjectProvider.Info, _CurrentProjectProvider.Project, token);
+        if (mainPerson is not null)
+        {
+          await _NavigationService.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { ["PersonInfo"] = mainPerson });
+        }
       }
     }
     finally
@@ -147,7 +160,7 @@ public partial class ProjectListPage : ContentPage
     using var token = _CancellationTokenProvider.CreateDbCancellationToken();
     var items = await _ProjectList.GetItemsAsync(token);
     var projects = items
-      .Select(projectInfo => new ProjectItem(projectInfo))
+      .Select(projectInfo => new ProjectItem(projectInfo, _MainPersonStore.Get(projectInfo.Origin)))
       .OrderBy(item => item.Info, _ProjectInfoComparer);
 
     _Projects.Clear();

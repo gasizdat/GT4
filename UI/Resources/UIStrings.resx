@@ -1491,4 +1491,22 @@ FN - family name</value>
   <data name="TitleWithProjectName_2" xml:space="preserve">
     <value>{0} | {1}</value>
   </data>
+  <data name="MenuItemNameMarkAsMainPerson" xml:space="preserve">
+    <value>⭐ Mark as main person</value>
+  </data>
+  <data name="MenuItemNameUnmarkAsMainPerson" xml:space="preserve">
+    <value>⭐ Unmark as main person</value>
+  </data>
+  <data name="MenuItemGoToMainPerson" xml:space="preserve">
+    <value>⭐ Main person</value>
+  </data>
+  <data name="MenuItemGoToMainPersonFamilyTree" xml:space="preserve">
+    <value>🌳 Main person's family tree</value>
+  </data>
+  <data name="AlertTextMainPersonMissing" xml:space="preserve">
+    <value>The main person for this project could no longer be found, so it has been unmarked.</value>
+  </data>
+  <data name="FieldMainPerson_1" xml:space="preserve">
+    <value>⭐ {0}</value>
+  </data>
 </root>

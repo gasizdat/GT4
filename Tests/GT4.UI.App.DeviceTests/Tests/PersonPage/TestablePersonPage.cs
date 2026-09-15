@@ -27,6 +27,7 @@ internal sealed class TestablePersonPage : PersonPage
   public TestablePersonPage(
     ICancellationTokenProvider cancellationTokenProvider,
     ICurrentProjectProvider currentProjectProvider,
+    IMainPersonStore mainPersonStore,
     IDateSpanFormatter dateSpanFormatter,
     IDateFormatter dateFormatter,
     INameFormatter nameFormatter,
@@ -43,6 +44,7 @@ internal sealed class TestablePersonPage : PersonPage
     : base(
       cancellationTokenProvider,
       currentProjectProvider,
+      mainPersonStore,
       dateSpanFormatter,
       dateFormatter,
       nameFormatter,

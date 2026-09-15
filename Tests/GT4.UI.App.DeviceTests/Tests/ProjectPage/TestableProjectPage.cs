@@ -37,7 +37,8 @@ internal sealed class TestableProjectPage : ProjectPage
     IAlertService alertService,
     INavigationService navigationService,
     IBiologicalSexFormatter biologicalSexFormatter,
-    DataConverterResolver dataConverterResolver)
+    DataConverterResolver dataConverterResolver,
+    MainPersonResolver mainPersonResolver)
     : base(
       nameTypeFormatter,
       cancellationTokenProvider,
@@ -52,7 +53,8 @@ internal sealed class TestableProjectPage : ProjectPage
       alertService,
       navigationService,
       biologicalSexFormatter,
-      dataConverterResolver)
+      dataConverterResolver,
+      mainPersonResolver)
   {
     // Families is bound to CollectionChanged, not PropertyChanged: RefreshView() (used by the
     // "Refresh" command and OnNavigatedTo) reflectively raises OnPropertyChanged for every one of

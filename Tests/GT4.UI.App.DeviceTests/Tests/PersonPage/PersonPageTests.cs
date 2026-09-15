@@ -5,6 +5,7 @@ using GT4.UI.Components;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Pages;
+using GT4.UI.Resources;
 using Moq;
 using Xunit;
 
@@ -68,7 +69,7 @@ public class PersonPageTests
     await MainThread.InvokeOnMainThreadAsync(() => ((IView)layout).Arrange(new Rect(0, 0, 400, 800)));
     var topMenu = layout.FindByName<FlexLayout>("TopMenu");
     var buttons = topMenu.Children.OfType<Button>().ToArray();
-    Assert.Equal(6, buttons.Length);
+    Assert.Equal(7, buttons.Length);
 
     var toggleButton = buttons.Single(b => (string)((PageMenuItem)b.BindingContext!).CommandParameter == "ToggleAll");
     Assert.Equal("⏬", toggleButton.Text);
@@ -76,6 +77,28 @@ public class PersonPageTests
     await MainThread.InvokeOnMainThreadAsync(() => page.ExpandAll = true);
 
     Assert.Equal("⏫", toggleButton.Text);
+  }
+
+  [Fact]
+  public async Task ToggleMainPerson_marksThenUnmarksThePersonInTheStore()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson();
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+
+    Assert.Equal(UIStrings.MenuItemNameMarkAsMainPerson, page.MainPersonMenuItemName);
+
+    await page.InvokePageCommandAsync("ToggleMainPerson");
+
+    services.MainPersonStore.Verify(s => s.Set(TestServices.SampleProjectInfo.Origin, person.Id, person.DisplayName), Times.Once());
+    services.MainPersonStore.Setup(s => s.Get(TestServices.SampleProjectInfo.Origin)).Returns(new MainPersonInfo(person.Id, person.DisplayName));
+    Assert.Equal(UIStrings.MenuItemNameUnmarkAsMainPerson, page.MainPersonMenuItemName);
+
+    await page.InvokePageCommandAsync("ToggleMainPerson");
+
+    services.MainPersonStore.Verify(s => s.Clear(TestServices.SampleProjectInfo.Origin), Times.Once());
   }
 
   [Fact]

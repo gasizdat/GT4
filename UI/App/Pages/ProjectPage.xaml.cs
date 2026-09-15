@@ -39,6 +39,7 @@ public partial class ProjectPage : ContentPage
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
   private readonly DataConverterResolver _DataConverterResolver;
+  private readonly MainPersonResolver _MainPersonResolver;
 
   private readonly FilteredObservableCollection<FamilyInfoItem> _Families = new();
   private bool _FamiliesLoaded;
@@ -59,7 +60,8 @@ public partial class ProjectPage : ContentPage
     IAlertService alertService,
     INavigationService navigationService,
     IBiologicalSexFormatter biologicalSexFormatter,
-    DataConverterResolver dataConverterResolver
+    DataConverterResolver dataConverterResolver,
+    MainPersonResolver mainPersonResolver
     )
   {
     _NameTypeFormatter = nameTypeFormatter;
@@ -74,6 +76,7 @@ public partial class ProjectPage : ContentPage
     _GedcomImportEncoding = gedcomImportEncoding;
     _AlertService = alertService;
     _NavigationService = navigationService;
+    _MainPersonResolver = mainPersonResolver;
 
     // Set once: family visibility is re-evaluated via _Families.Update() (through UpdateFamilies),
     // not by reassigning this predicate.
@@ -267,6 +270,14 @@ public partial class ProjectPage : ContentPage
         await _NavigationService.GoToAsync(UIRoutes.GetRoute<KinshipFinderPage>());
         break;
 
+      case string commandName when commandName == "GoToMainPerson":
+        await OnGoToMainPersonAsync(centerFamilyTree: false);
+        break;
+
+      case string commandName when commandName == "GoToMainPersonFamilyTree":
+        await OnGoToMainPersonAsync(centerFamilyTree: true);
+        break;
+
       case string commandName when commandName == "Export":
         await OnExport();
         break;
@@ -316,6 +327,19 @@ public partial class ProjectPage : ContentPage
     await transaction.CommitAsync(token);
 
     await _NavigationService.GoToAsync("..", true);
+  }
+
+  private async Task OnGoToMainPersonAsync(bool centerFamilyTree)
+  {
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    var mainPerson = await _MainPersonResolver.TryResolveAsync(_CurrentProjectProvider.Info, _CurrentProjectProvider.Project, token);
+    if (mainPerson is null)
+    {
+      return;
+    }
+
+    var route = centerFamilyTree ? UIRoutes.GetRoute<FamilyTreePage>() : UIRoutes.GetRoute<PersonPage>();
+    await _NavigationService.GoToAsync(route, true, new() { ["PersonInfo"] = mainPerson });
   }
 
   private async Task OnCreateFamily()

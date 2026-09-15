@@ -22,6 +22,7 @@ public static class ServiceCollectionExtensions
       .AddSingleton<INameTypeFormatter, NameTypeFormatter>()
       .AddSingleton<IBiologicalSexFormatter, BiologicalSexFormatter>()
       .AddSingleton<INavigationService, NavigationService>()
+      .AddSingleton<MainPersonResolver>()
       .AddSingleton<LanguageSetting>()
       .AddSingleton<FontScale>()
       .AddSingleton<BackgroundAnimation>()

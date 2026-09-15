@@ -22,6 +22,7 @@ public partial class PersonPage : ContentPage
 {
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
+  private readonly IMainPersonStore _MainPersonStore;
   private readonly IDateSpanFormatter _DateSpanFormatter;
   private readonly IDateFormatter _DateFormatter;
   private readonly INameFormatter _NameFormatter;
@@ -57,6 +58,7 @@ public partial class PersonPage : ContentPage
   public PersonPage(
     ICancellationTokenProvider cancellationTokenProvider,
     ICurrentProjectProvider currentProjectProvider,
+    IMainPersonStore mainPersonStore,
     IDateSpanFormatter dateSpanFormatter,
     IDateFormatter dateFormatter,
     INameFormatter nameFormatter,
@@ -74,6 +76,7 @@ public partial class PersonPage : ContentPage
   {
     _CancellationTokenProvider = cancellationTokenProvider;
     _CurrentProjectProvider = currentProjectProvider;
+    _MainPersonStore = mainPersonStore;
     _DateSpanFormatter = dateSpanFormatter;
     _DateFormatter = dateFormatter;
     _NameFormatter = nameFormatter;
@@ -130,6 +133,10 @@ public partial class PersonPage : ContentPage
 
   public string ToggleAllMenuItemName =>
     string.Format(ExpandAll ? UIStrings.MenuItemCollapseAll_1 : UIStrings.MenuItemExpandAll_1, ToggleAllButtonName);
+
+  public string MainPersonMenuItemName => IsMainPerson ? UIStrings.MenuItemNameUnmarkAsMainPerson : UIStrings.MenuItemNameMarkAsMainPerson;
+
+  private bool IsMainPerson => _MainPersonStore.Get(_CurrentProjectProvider.Info.Origin)?.PersonId == _PersonFullInfo.Id;
 
   private void RefreshRelatives() => _Relatives.SetFilter(FilterView.IsAnyFilterActive, r => FilterView.Matches(r));
 
@@ -520,6 +527,9 @@ public partial class PersonPage : ContentPage
       case string commandName when commandName == "EditPerson":
         await OnPersonEditAsync();
         break;
+      case string commandName when commandName == "ToggleMainPerson":
+        OnToggleMainPerson();
+        break;
       case string commandName when commandName == "Refresh":
         ShowPersonInfo(_PersonFullInfo, false);
         break;
@@ -597,5 +607,20 @@ public partial class PersonPage : ContentPage
       .UpdatePersonAsync(info, token);
 
     PersonInfo = info;
+  }
+
+  private void OnToggleMainPerson()
+  {
+    var origin = _CurrentProjectProvider.Info.Origin;
+    if (IsMainPerson)
+    {
+      _MainPersonStore.Clear(origin);
+    }
+    else
+    {
+      _MainPersonStore.Set(origin, _PersonFullInfo.Id, _PersonFullInfo.DisplayName);
+    }
+
+    OnPropertyChanged(nameof(MainPersonMenuItemName));
   }
 }
