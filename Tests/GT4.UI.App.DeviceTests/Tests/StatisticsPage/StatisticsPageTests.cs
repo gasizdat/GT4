@@ -189,7 +189,7 @@ public class StatisticsPageTests
     Assert.Equal(2, groups.Length);
     var bars = (Grid)groups[0].Children[0];
     var barColumn = (Grid)bars.Children[0];
-    var barBox = (Grid)barColumn.Children[1];
+    var barBox = (Grid)barColumn.Children[0];
     Assert.Equal(2, barBox.RowDefinitions.Count);
     Assert.Equal(page.BirthsByDecade[0].Bars[0].BarRows[0].Height, barBox.RowDefinitions[0].Height);
     Assert.Equal(page.BirthsByDecade[0].Bars[0].BarRows[1].Height, barBox.RowDefinitions[1].Height);

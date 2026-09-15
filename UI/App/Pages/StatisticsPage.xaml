@@ -39,7 +39,7 @@
         <Setter Property="VerticalOptions" Value="Fill" />
       </Style>
       <Style x:Key="BirthDecadeCount" BasedOn="{StaticResource FieldValue}" TargetType="Label">
-        <Setter Property="Margin" Value="0,0,0,4" />
+        <Setter Property="Margin" Value="0,4,0,0" />
         <Setter Property="HorizontalTextAlignment" Value="Center" />
       </Style>
     </ResourceDictionary>
@@ -233,20 +233,23 @@
                         <Grid
                             Grid.Column="{Binding Column}"
                             RowDefinitions="Auto, Auto">
-                          <Label
-                              Grid.Row="0"
-                              Style="{StaticResource BirthDecadeCount}"
-                              Text="{Binding Count}" />
-                          <!--  The fixed height lives on this row alone, never on a row holding text, so
-                                FontScale growing the count/decade labels can't squeeze the bar area.  -->
+                          <!--  The fixed height lives on this row alone; BarRows are stars computed
+                                from the data, not an Auto row a bigger count/decade font could
+                                redistribute, so FontScale can't squeeze the bar area.  -->
                           <Grid
-                              Grid.Row="1"
-                              HeightRequest="120"
+                              Grid.Row="0"
+                              HeightRequest="300"
                               RowDefinitions="{Binding BarRows}">
                             <Border
                                 Grid.Row="1"
                                 Style="{StaticResource BirthDecadeBar}" />
                           </Grid>
+                          <!--  Its own Auto row below the bar, not layered over it: a row sized off
+                                the data (BarRows) gives the busiest bar's count zero space to sit in.  -->
+                          <Label
+                              Grid.Row="1"
+                              Style="{StaticResource BirthDecadeCount}"
+                              Text="{Binding Count}" />
                         </Grid>
                       </DataTemplate>
                     </BindableLayout.ItemTemplate>
