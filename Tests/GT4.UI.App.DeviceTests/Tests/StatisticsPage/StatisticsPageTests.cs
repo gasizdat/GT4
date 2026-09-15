@@ -95,8 +95,7 @@ public class StatisticsPageTests
     Assert.DoesNotContain("Smith John", page.OldestLivingText);
   }
 
-  // One birth against three, under names of different lengths: uniform data would hide both a bar
-  // that ignored the busiest count and a name column measured per row.
+  // One birth against three: uniform data would hide a bar that ignored the busiest count.
   private static async Task<TestableStatisticsPage> CreatePageWithTwoDecadesAsync()
   {
     var services = new TestServices();
@@ -120,78 +119,131 @@ public class StatisticsPageTests
   {
     var page = await CreatePageWithTwoDecadesAsync();
 
-    var bars = page.BirthsByDecade;
+    var groups = page.BirthsByDecade;
 
-    Assert.Equal(2, bars.Length);
-    Assert.Equal("1", bars[0].Count);
-    Assert.Equal("3", bars[1].Count);
+    Assert.Equal(2, groups.Length);
+    Assert.Equal("1", groups[0].Bars[0].Count);
+    Assert.Equal("3", groups[1].Bars[0].Count);
     // Each bar is its own count in stars, so the bars are exactly proportional to one another.
-    Assert.Equal(new GridLength(1, GridUnitType.Star), bars[0].BarColumns[0].Width);
-    Assert.Equal(new GridLength(3, GridUnitType.Star), bars[1].BarColumns[0].Width);
+    Assert.Equal(new GridLength(1, GridUnitType.Star), groups[0].Bars[0].BarRows[1].Height);
+    Assert.Equal(new GridLength(3, GridUnitType.Star), groups[1].Bars[0].BarRows[1].Height);
   }
 
-  // The count sits past the end of its bar, so a bar filling the row would leave it nowhere to go.
+  // The busiest bar's row above it is empty (nothing left to reserve), while a lonelier bar's rows
+  // still add up to the same total -- that equal total is what keeps bars comparable to one another.
   [Fact]
-  public async Task The_busiest_bar_still_leaves_room_for_its_own_count()
+  public async Task The_busiest_bar_fills_its_column_and_others_stay_proportional_to_it()
   {
     var page = await CreatePageWithTwoDecadesAsync();
 
-    var bars = page.BirthsByDecade;
+    var groups = page.BirthsByDecade;
 
-    var gutter = bars[1].BarColumns[1].Width.Value;
-    Assert.True(gutter > 0, "The busiest bar filled its row, leaving nothing for the count beside it.");
-    // Equally wide rows are what keep the bars comparable: twice the length, twice the births.
-    var lonelyRow = bars[0].BarColumns[0].Width.Value + bars[0].BarColumns[1].Width.Value;
-    var busiestRow = bars[1].BarColumns[0].Width.Value + gutter;
-    Assert.Equal(busiestRow, lonelyRow, 6);
+    Assert.Equal(new GridLength(0, GridUnitType.Star), groups[1].Bars[0].BarRows[0].Height);
+    var lonelyColumn = groups[0].Bars[0].BarRows[0].Height.Value + groups[0].Bars[0].BarRows[1].Height.Value;
+    var busiestColumn = groups[1].Bars[0].BarRows[0].Height.Value + groups[1].Bars[0].BarRows[1].Height.Value;
+    Assert.Equal(busiestColumn, lonelyColumn, 6);
   }
 
-  // A name and its bar must share one row: laid out separately they drift as soon as one measures taller.
+  // With one decade per group (below the label cap), each group's label still names its own decade.
   [Fact]
-  public async Task Every_decade_name_sits_in_the_row_of_its_own_bar()
+  public async Task Every_group_label_names_the_decade_it_starts_from()
   {
     var page = await CreatePageWithTwoDecadesAsync();
 
-    var names = await MainThread.InvokeOnMainThreadAsync(() =>
+    var groups = page.BirthsByDecade;
+
+    Assert.Equal(string.Format(Resources.UIStrings.StatValueDecade_1, 900), groups[0].Decade);
+    Assert.Equal(string.Format(Resources.UIStrings.StatValueDecade_1, 1910), groups[1].Decade);
+  }
+
+  // A group's label and its own bars must share one column: laid out separately they drift as soon
+  // as one column measures a different width than another.
+  [Fact]
+  public async Task Each_rendered_group_shows_its_own_label()
+  {
+    var page = await CreatePageWithTwoDecadesAsync();
+
+    var labels = await MainThread.InvokeOnMainThreadAsync(() =>
     {
-      var chart = page.FindByName<VerticalStackLayout>("BirthsByDecadeChart");
-      var rows = chart.Children.OfType<Grid>();
-      return rows.Select(row => ((Label)row.Children[0]).Text).ToArray();
+      var chart = page.FindByName<FlexLayout>("BirthsByDecadeChart");
+      var columns = chart.Children.OfType<Grid>();
+      return columns.Select(column => ((Label)column.Children[1]).Text).ToArray();
     });
 
-    Assert.Equal(page.BirthsByDecade.Select(b => b.Decade), names);
+    Assert.Equal(page.BirthsByDecade.Select(g => g.Decade), labels);
   }
 
-  // Every row's name width comes from this label; measured per row, each bar would start elsewhere.
+  // The star heights only reach the screen through a bound Grid.RowDefinitions, which fails
+  // silently into an evenly split column if the binding stops resolving.
   [Fact]
-  public async Task The_ruler_label_spells_the_longest_decade_name()
+  public async Task The_rendered_chart_takes_its_bar_heights_from_the_item_it_shows()
   {
     var page = await CreatePageWithTwoDecadesAsync();
 
-    var ruler = await MainThread.InvokeOnMainThreadAsync(() => page.FindByName<Label>("DecadeNameRuler").Text);
-
-    Assert.Equal(page.WidestDecadeName, ruler);
-    Assert.Equal(page.BirthsByDecade[1].Decade, ruler);
-  }
-
-  // The star widths only reach the screen through a bound Grid.ColumnDefinitions, which fails
-  // silently into an evenly split row if the binding stops resolving.
-  [Fact]
-  public async Task The_rendered_chart_takes_its_column_widths_from_the_bar_it_shows()
-  {
-    var page = await CreatePageWithTwoDecadesAsync();
-
-    var rows = await MainThread.InvokeOnMainThreadAsync(() =>
+    var groups = await MainThread.InvokeOnMainThreadAsync(() =>
     {
-      var chart = page.FindByName<VerticalStackLayout>("BirthsByDecadeChart");
+      var chart = page.FindByName<FlexLayout>("BirthsByDecadeChart");
       return chart.Children.OfType<Grid>().ToArray();
     });
 
-    Assert.Equal(2, rows.Length);
-    var barRow = (Grid)rows[0].Children[1];
-    Assert.Equal(2, barRow.ColumnDefinitions.Count);
-    Assert.Equal(new GridLength(1, GridUnitType.Star), barRow.ColumnDefinitions[0].Width);
-    Assert.Equal(page.BirthsByDecade[0].BarColumns[1].Width, barRow.ColumnDefinitions[1].Width);
+    Assert.Equal(2, groups.Length);
+    var bars = (Grid)groups[0].Children[0];
+    var barColumn = (Grid)bars.Children[0];
+    var barBox = (Grid)barColumn.Children[1];
+    Assert.Equal(2, barBox.RowDefinitions.Count);
+    Assert.Equal(page.BirthsByDecade[0].Bars[0].BarRows[0].Height, barBox.RowDefinitions[0].Height);
+    Assert.Equal(page.BirthsByDecade[0].Bars[0].BarRows[1].Height, barBox.RowDefinitions[1].Height);
+  }
+
+  // Structural presence in the tree isn't placement: a bar with a silently-unresolved Grid.Column
+  // binding would still show up in Children, just stacked in column 0 with every other bar.
+  [Fact]
+  public async Task Every_bar_in_a_group_lands_in_its_own_column()
+  {
+    var services = new TestServices();
+    var persons = Enumerable.Range(0, 12)
+      .Select(i => P(i + 1, birthDate: Date.Create(1900 + (i * 10), 1, 1, DateStatus.WellKnown)))
+      .ToArray();
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync(persons);
+    var page = await CreatePageAsync(services);
+    await page.WaitForFirstLoadAsync();
+
+    var groups = page.BirthsByDecade;
+    Assert.Equal(6, groups.Length);
+    Assert.Equal(2, groups[0].Bars.Length);
+
+    var columns = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      var chart = page.FindByName<FlexLayout>("BirthsByDecadeChart");
+      var firstGroup = (Grid)chart.Children[0];
+      var bars = (Grid)firstGroup.Children[0];
+      return bars.Children.Select(bar => Grid.GetColumn((Grid)bar)).ToArray();
+    });
+
+    Assert.Equal([0, 1], columns);
+  }
+
+  // Once there are more decades than the label cap, decades group together so each label's own
+  // column is wide enough to hold it, rather than crowding the x-axis with one label per decade.
+  [Fact]
+  public async Task Decades_group_together_once_there_are_more_of_them_than_the_label_cap()
+  {
+    var services = new TestServices();
+    var persons = Enumerable.Range(0, 10)
+      .Select(i => P(i + 1, birthDate: Date.Create(1900 + (i * 10), 1, 1, DateStatus.WellKnown)))
+      .ToArray();
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync(persons);
+    var page = await CreatePageAsync(services);
+    await page.WaitForFirstLoadAsync();
+
+    var groups = page.BirthsByDecade;
+
+    Assert.Equal(5, groups.Length);
+    Assert.All(groups, g => Assert.Equal(2, g.Bars.Length));
   }
 
   // Nothing else in this row renders StatValueNone, so a missing empty view just leaves it blank.
@@ -203,7 +255,7 @@ public class StatisticsPageTests
 
     var texts = await MainThread.InvokeOnMainThreadAsync(() =>
     {
-      var chart = page.FindByName<VerticalStackLayout>("BirthsByDecadeChart");
+      var chart = page.FindByName<FlexLayout>("BirthsByDecadeChart");
       var labels = chart.Children.OfType<Label>();
       return labels.Select(l => l.Text).ToArray();
     });

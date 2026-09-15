@@ -12,8 +12,8 @@ namespace GT4.UI.Pages;
 
 public partial class StatisticsPage : ContentPage
 {
-  // Kept past the end of the longest bar for its count to sit in, as a share of that bar.
-  private const double CountGutterShare = 0.1;
+  // Thin decade labels along the x-axis so a wide date range doesn't crowd them.
+  private const int MaxDecadeLabels = 8;
 
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
@@ -112,27 +112,26 @@ public partial class StatisticsPage : ContentPage
       ? string.Join(", ", items.Select(item => string.Format(UIStrings.StatValueNameCount_2, item.Name, item.Count)))
       : UIStrings.StatValueNone;
 
-  private static BirthDecadeItem ToBirthDecadeItem((int Decade, int Count) births, int busiest)
+  private static BirthDecadeItem ToBirthDecadeItem((int Decade, int Count) births, int busiest, int column)
   {
-    var total = busiest * (1 + CountGutterShare);
     var filled = new GridLength(births.Count, GridUnitType.Star);
-    var rest = new GridLength(total - births.Count, GridUnitType.Star);
-    var barColumn = new ColumnDefinition(filled);
-    var restColumn = new ColumnDefinition(rest);
-    var columns = new ColumnDefinitionCollection(barColumn, restColumn);
-    var decade = string.Format(UIStrings.StatValueDecade_1, births.Decade);
+    var rest = new GridLength(busiest - births.Count, GridUnitType.Star);
+    var restRow = new RowDefinition(rest);
+    var barRow = new RowDefinition(filled);
+    var rows = new RowDefinitionCollection(restRow, barRow);
 
-    return new BirthDecadeItem(decade, births.Count.ToString(), columns);
+    return new BirthDecadeItem(column, births.Count.ToString(), rows);
   }
 
-  // Rendered once to size the name column every row then binds to.
-  public string WidestDecadeName
+  // Grouping, not per-bar text, is what keeps a label's own cell wide enough to hold it: a group
+  // spans labelStep bars, so its cell grows with exactly the count that was shrinking a lone label.
+  private static BirthDecadeGroupItem ToBirthDecadeGroupItem((int Decade, int Count)[] group, int busiest)
   {
-    get
-    {
-      var widest = BirthsByDecade.MaxBy(b => b.Decade.Length);
-      return widest?.Decade ?? string.Empty;
-    }
+    var decade = string.Format(UIStrings.StatValueDecade_1, group[0].Decade);
+    var bars = group.Select((b, i) => ToBirthDecadeItem(b, busiest, i)).ToArray();
+    var columns = new ColumnDefinitionCollection([.. bars.Select(_ => new ColumnDefinition(GridLength.Star))]);
+
+    return new BirthDecadeGroupItem(decade, columns, bars);
   }
 
   public string TotalPersonsText => Statistics.TotalPersons.ToString();
@@ -161,7 +160,7 @@ public partial class StatisticsPage : ContentPage
 
   public string MedianBirthYearText => Statistics.MedianBirthYear?.ToString() ?? UIStrings.StatValueNone;
 
-  public BirthDecadeItem[] BirthsByDecade
+  public BirthDecadeGroupItem[] BirthsByDecade
   {
     get
     {
@@ -173,8 +172,9 @@ public partial class StatisticsPage : ContentPage
       }
 
       var busiest = decades.Max(d => d.Count);
+      var labelStep = Math.Max(1, (int)Math.Ceiling(decades.Length / (double)MaxDecadeLabels));
 
-      return [.. decades.Select(d => ToBirthDecadeItem(d, busiest))];
+      return [.. decades.Chunk(labelStep).Select(group => ToBirthDecadeGroupItem(group, busiest))];
     }
   }
 

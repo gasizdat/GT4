@@ -58,6 +58,14 @@ from the code.
 - **MAUI gives a star (`*`) row the whole grid once any child in that row spans columns** — a
   `ColumnSpan` on one cell can silently swallow a footer row or unbound a body slot that looked
   fine before the span was added.
+- **A `FlexLayout` sized by an outer `FlexLayout`'s own flex distribution never re-runs its
+  distribution at arrange** (confirmed on `StatisticsPage`'s births-by-decade histogram, issue
+  #391): a `FlexLayout` nested inside another `FlexLayout`-distributed cell measures its children
+  at their `FlexBasis` and stops there, so only the first child gets any width — the rest sit in
+  the visual tree at zero width, invisible but structurally present (`Children.Count` looks
+  correct). A `Grid` with bound `ColumnDefinitions` and a per-item `Grid.Column` binding doesn't
+  have this problem, since `Grid` redistributes stars from the actual arranged rect rather than a
+  cached measure-time result.
 - **A `GraphicsView` used for connector/edge drawing has a ~16384px GPU max-texture ceiling** — a
   tall enough content area (e.g. a deep family tree) crashes it; draw edges as per-item vector
   `Path` shapes instead of one big canvas.
