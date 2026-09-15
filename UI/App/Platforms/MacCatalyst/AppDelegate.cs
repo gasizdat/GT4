@@ -16,9 +16,9 @@ namespace GT4
     // NOTE: authored on Windows; not yet verified on a Mac build.
     private readonly UIKeyCommand[] _ZoomCommands =
     [
-        UIKeyCommand.Create("=", UIKeyModifierFlags.Command, new Selector("onZoomIn:")),
-            UIKeyCommand.Create("-", UIKeyModifierFlags.Command, new Selector("onZoomOut:")),
-            UIKeyCommand.Create("0", UIKeyModifierFlags.Command, new Selector("onZoomReset:")),
+        UIKeyCommand.Create((NSString)"=", UIKeyModifierFlags.Command, new Selector("onZoomIn:")),
+            UIKeyCommand.Create((NSString)"-", UIKeyModifierFlags.Command, new Selector("onZoomOut:")),
+            UIKeyCommand.Create((NSString)"0", UIKeyModifierFlags.Command, new Selector("onZoomReset:")),
         ];
 
     public override UIKeyCommand[] KeyCommands => _ZoomCommands;
