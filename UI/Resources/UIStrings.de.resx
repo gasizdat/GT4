@@ -1491,11 +1491,11 @@ FN - Familienname</value>
   <data name="TitleWithProjectName_2" xml:space="preserve">
     <value>{0} | {1}</value>
   </data>
-  <data name="MenuItemNameMarkAsMainPerson" xml:space="preserve">
-    <value>⭐ Als Hauptperson markieren</value>
+  <data name="MenuItemNameMarkAsMainPerson_1" xml:space="preserve">
+    <value>{0} Als Hauptperson markieren</value>
   </data>
-  <data name="MenuItemNameUnmarkAsMainPerson" xml:space="preserve">
-    <value>⭐ Markierung als Hauptperson entfernen</value>
+  <data name="MenuItemNameUnmarkAsMainPerson_1" xml:space="preserve">
+    <value>{0} Markierung als Hauptperson entfernen</value>
   </data>
   <data name="MenuItemGoToMainPerson" xml:space="preserve">
     <value>⭐ Hauptperson</value>

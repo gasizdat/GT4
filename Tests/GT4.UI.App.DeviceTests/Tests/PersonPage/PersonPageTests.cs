@@ -88,17 +88,47 @@ public class PersonPageTests
     var page = await CreatePageAsync(services);
     await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
 
-    Assert.Equal(UIStrings.MenuItemNameMarkAsMainPerson, page.MainPersonMenuItemName);
+    Assert.Equal(string.Format(UIStrings.MenuItemNameMarkAsMainPerson_1, "☆"), page.MainPersonMenuItemName);
 
     await page.InvokePageCommandAsync("ToggleMainPerson");
 
     services.MainPersonStore.Verify(s => s.Set(TestServices.SampleProjectInfo.Origin, person.Id, person.DisplayName), Times.Once());
     services.MainPersonStore.Setup(s => s.Get(TestServices.SampleProjectInfo.Origin)).Returns(new MainPersonInfo(person.Id, person.DisplayName));
-    Assert.Equal(UIStrings.MenuItemNameUnmarkAsMainPerson, page.MainPersonMenuItemName);
+    Assert.Equal(string.Format(UIStrings.MenuItemNameUnmarkAsMainPerson_1, "⭐"), page.MainPersonMenuItemName);
 
     await page.InvokePageCommandAsync("ToggleMainPerson");
 
     services.MainPersonStore.Verify(s => s.Clear(TestServices.SampleProjectInfo.Origin), Times.Once());
+  }
+
+  [Fact]
+  public async Task ToggleMainPerson_button_glyph_flips_from_outline_to_filled_star()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson();
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+
+    // A stateful fake, not a one-shot stub: the button glyph flips off the same OnPropertyChanged
+    // that fires synchronously inside OnToggleMainPerson, so Get must reflect the Set it just made.
+    MainPersonInfo? stored = null;
+    services.MainPersonStore
+      .Setup(s => s.Set(It.IsAny<FileDescription>(), It.IsAny<int>(), It.IsAny<string>()))
+      .Callback<FileDescription, int, string>((_, id, name) => stored = new MainPersonInfo(id, name));
+    services.MainPersonStore.Setup(s => s.Clear(It.IsAny<FileDescription>())).Callback<FileDescription>(_ => stored = null);
+    services.MainPersonStore.Setup(s => s.Get(It.IsAny<FileDescription>())).Returns(() => stored);
+
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+    var layout = (PageLayout)page.Content;
+    await MainThread.InvokeOnMainThreadAsync(() => ((IView)layout).Arrange(new Rect(0, 0, 400, 800)));
+    var topMenu = layout.FindByName<FlexLayout>("TopMenu");
+    var toggleButton = topMenu.Children.OfType<Button>()
+      .Single(b => (string)((PageMenuItem)b.BindingContext!).CommandParameter == "ToggleMainPerson");
+    Assert.Equal("☆", toggleButton.Text);
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.InvokePageCommandAsync("ToggleMainPerson"));
+
+    Assert.Equal("⭐", toggleButton.Text);
   }
 
   [Fact]

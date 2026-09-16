@@ -2539,11 +2539,11 @@ namespace GT4.UI.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to ⭐ Mark as main person.
+        ///   Looks up a localized string similar to {0} Mark as main person.
         /// </summary>
-        public static string MenuItemNameMarkAsMainPerson {
+        public static string MenuItemNameMarkAsMainPerson_1 {
             get {
-                return ResourceManager.GetString("MenuItemNameMarkAsMainPerson", resourceCulture);
+                return ResourceManager.GetString("MenuItemNameMarkAsMainPerson_1", resourceCulture);
             }
         }
 
@@ -2584,11 +2584,11 @@ namespace GT4.UI.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to ⭐ Unmark as main person.
+        ///   Looks up a localized string similar to {0} Unmark as main person.
         /// </summary>
-        public static string MenuItemNameUnmarkAsMainPerson {
+        public static string MenuItemNameUnmarkAsMainPerson_1 {
             get {
-                return ResourceManager.GetString("MenuItemNameUnmarkAsMainPerson", resourceCulture);
+                return ResourceManager.GetString("MenuItemNameUnmarkAsMainPerson_1", resourceCulture);
             }
         }
 

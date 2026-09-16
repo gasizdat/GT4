@@ -134,7 +134,9 @@ public partial class PersonPage : ContentPage
   public string ToggleAllMenuItemName =>
     string.Format(ExpandAll ? UIStrings.MenuItemCollapseAll_1 : UIStrings.MenuItemExpandAll_1, ToggleAllButtonName);
 
-  public string MainPersonMenuItemName => IsMainPerson ? UIStrings.MenuItemNameUnmarkAsMainPerson : UIStrings.MenuItemNameMarkAsMainPerson;
+  public string MainPersonMenuItemName => string.Format(
+    IsMainPerson ? UIStrings.MenuItemNameUnmarkAsMainPerson_1 : UIStrings.MenuItemNameMarkAsMainPerson_1,
+    IsMainPerson ? "⭐" : "☆");
 
   private bool IsMainPerson => _MainPersonStore.Get(_CurrentProjectProvider.Info.Origin)?.PersonId == _PersonFullInfo.Id;
 
