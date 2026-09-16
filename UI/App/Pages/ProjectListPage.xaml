@@ -69,22 +69,14 @@
                         Style="{StaticResource CardContent}"
                         Text="{Binding Revision}" />
 
-                    <FlexLayout
-                        AlignItems="Center"
-                        Direction="Row"
-                        IsVisible="{Binding MainPersonVisible}">
-
-                      <Image
-                          HeightRequest="20"
-                          Margin="0,0,4,0"
-                          Source="{Binding MainPersonPhoto}"
-                          WidthRequest="20" />
-
-                      <Label
-                          Style="{StaticResource CardContent}"
-                          Text="{Binding MainPersonName}" />
-
-                    </FlexLayout>
+                    <components:PersonInfoView
+                        IsVisible="{Binding MainPersonVisible}"
+                        NameFormat="CommonPersonName"
+                        NameLabelStyle="{StaticResource CardContent}"
+                        Person="{Binding MainPerson}"
+                        PhotoStyle="{StaticResource PhotoCompactStyle}"
+                        ShowAge="False"
+                        ShowDates="False" />
 
                   </VerticalStackLayout>
 

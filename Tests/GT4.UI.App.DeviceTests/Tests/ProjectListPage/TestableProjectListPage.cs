@@ -6,8 +6,6 @@ using GT4.UI.Abstraction;
 using GT4.UI.Items;
 using GT4.UI.Pages;
 using GT4.UI.Utils;
-using GT4.UI.Utils.Converters;
-using GT4.UI.Utils.Formatters;
 
 namespace GT4.UI.DeviceTests;
 
@@ -28,9 +26,7 @@ internal sealed class TestableProjectListPage : ProjectListPage
     IAlertService alertService,
     INavigationService navigationService,
     IImageCache imageCache,
-    MainPersonResolver mainPersonResolver,
-    INameFormatter nameFormatter,
-    DataConverterResolver dataConverterResolver)
+    MainPersonResolver mainPersonResolver)
     : base(
       cancellationTokenProvider,
       currentProjectProvider,
@@ -41,9 +37,7 @@ internal sealed class TestableProjectListPage : ProjectListPage
       alertService,
       navigationService,
       imageCache,
-      mainPersonResolver,
-      nameFormatter,
-      dataConverterResolver)
+      mainPersonResolver)
   {
   }
 

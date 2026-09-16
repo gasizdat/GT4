@@ -6,8 +6,6 @@ using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Pages;
 using GT4.UI.Resources;
-using GT4.UI.Utils.Converters;
-using GT4.UI.Utils.Formatters;
 using Moq;
 using Xunit;
 using IFileSystem = GT4.Core.Utils.IFileSystem;
@@ -32,16 +30,7 @@ public class ProjectListPageTests
   private static ProjectHost CreateHost(ProjectInfo info) =>
     new(Mock.Of<IFileSystem>(), info.Origin, info.Origin);
 
-  // INameFormatter/DataConverterResolver come from the app's real composition root (TestServices
-  // doesn't mock them), same as every other page's item construction in these tests.
-  private static ProjectItem CreateItem(TestServices services, ProjectInfo info, PersonInfo? mainPerson = null) =>
-    new(
-      info,
-      mainPerson,
-      services.Provider.GetRequiredService<INameFormatter>(),
-      services.Provider.GetRequiredService<ICancellationTokenProvider>(),
-      services.AlertService.Object,
-      services.Provider.GetRequiredService<DataConverterResolver>());
+  private static ProjectItem CreateItem(ProjectInfo info, PersonInfo? mainPerson = null) => new(info, mainPerson);
 
   private static async Task<TestableProjectListPage> CreatePageAsync(TestServices services)
   {
@@ -127,7 +116,7 @@ public class ProjectListPageTests
       .Setup(p => p.OpenAsync(info, It.IsAny<CancellationToken>()))
       .Returns(Task.CompletedTask);
     var page = await CreatePageAsync(services);
-    var projectItem = CreateItem(services, info);
+    var projectItem = CreateItem(info);
 
     await page.InvokeProjectSelectedAsync(projectItem);
 
@@ -155,7 +144,7 @@ public class ProjectListPageTests
       .ReturnsAsync([personInfo]);
     var page = await CreatePageAsync(services);
 
-    await page.InvokeProjectSelectedAsync(CreateItem(services, info));
+    await page.InvokeProjectSelectedAsync(CreateItem(info));
 
     var expectedRoute = $"{typeof(PersonPage).Namespace}/{typeof(PersonPage).Name}";
     services.NavigationService.Verify(
@@ -176,11 +165,8 @@ public class ProjectListPageTests
     await MainThread.InvokeOnMainThreadAsync(page.InvokeUpdateProjectListAsync);
     var project = await MainThread.InvokeOnMainThreadAsync(() => page.Projects.Single());
 
-    var nameFormatter = services.Provider.GetRequiredService<INameFormatter>();
-    var expectedName = nameFormatter.ToString(mainPerson, NameFormat.CommonPersonName);
-
     Assert.True(project.MainPersonVisible);
-    Assert.Equal(string.Format(UIStrings.FieldMainPerson_1, expectedName), project.MainPersonName);
+    Assert.Equal(mainPerson, project.MainPerson);
   }
 
   [Fact]
@@ -197,7 +183,7 @@ public class ProjectListPageTests
       .ReturnsAsync(true);
     var page = await CreatePageAsync(services);
 
-    await page.InvokeProjectSelectedAsync(CreateItem(services, info));
+    await page.InvokeProjectSelectedAsync(CreateItem(info));
 
     services.ProjectList.Verify(p => p.UpgradeAsync(info.Origin, It.IsAny<CancellationToken>()), Times.Once());
     services.CurrentProjectProvider.Verify(p => p.OpenAsync(info, It.IsAny<CancellationToken>()), Times.Exactly(2));
@@ -218,7 +204,7 @@ public class ProjectListPageTests
       .Setup(a => a.ShowConfirmationAsync(UIStrings.AlertTextProjectSchemaOutdated))
       .ReturnsAsync(false);
     var page = await CreatePageAsync(services);
-    var projectItem = CreateItem(services, info);
+    var projectItem = CreateItem(info);
 
     await MainThread.InvokeOnMainThreadAsync(() => page.SelectedProject = projectItem);
     await Poll.UntilAsync(
@@ -241,7 +227,7 @@ public class ProjectListPageTests
       .Setup(p => p.OpenAsync(info, It.IsAny<CancellationToken>()))
       .ThrowsAsync(new InvalidOperationException("The project could not be opened."));
     var page = await CreatePageAsync(services);
-    var projectItem = CreateItem(services, info);
+    var projectItem = CreateItem(info);
 
     await MainThread.InvokeOnMainThreadAsync(() => page.SelectedProject = projectItem);
     await Poll.UntilAsync(
@@ -262,7 +248,7 @@ public class ProjectListPageTests
       .ThrowsAsync(new ProjectSchemaTooNewException(99, 1));
     var page = await CreatePageAsync(services);
 
-    await page.InvokeProjectSelectedAsync(CreateItem(services, info));
+    await page.InvokeProjectSelectedAsync(CreateItem(info));
 
     services.AlertService.Verify(a => a.ShowWarningAsync(UIStrings.AlertTextProjectSchemaTooNew), Times.Once());
     services.ProjectList.Verify(p => p.UpgradeAsync(It.IsAny<FileDescription>(), It.IsAny<CancellationToken>()), Times.Never());

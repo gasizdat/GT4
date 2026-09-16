@@ -7,9 +7,7 @@ using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
-using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Extensions;
-using GT4.UI.Utils.Formatters;
 using System.Collections.ObjectModel;
 using System.Text;
 using System.Windows.Input;
@@ -41,8 +39,6 @@ public partial class ProjectListPage : ContentPage
   private readonly INavigationService _NavigationService;
   private readonly IImageCache _ImageCache;
   private readonly MainPersonResolver _MainPersonResolver;
-  private readonly INameFormatter _NameFormatter;
-  private readonly DataConverterResolver _DataConverterResolver;
   private readonly ObservableCollection<ProjectItem> _Projects = new();
   private ProjectItem? _SelectedProject;
 
@@ -56,9 +52,7 @@ public partial class ProjectListPage : ContentPage
     IAlertService alertService,
     INavigationService navigationService,
     IImageCache imageCache,
-    MainPersonResolver mainPersonResolver,
-    INameFormatter nameFormatter,
-    DataConverterResolver dataConverterResolver
+    MainPersonResolver mainPersonResolver
     )
   {
     _CancellationTokenProvider = cancellationTokenProvider;
@@ -71,8 +65,6 @@ public partial class ProjectListPage : ContentPage
     _NavigationService = navigationService;
     _ImageCache = imageCache;
     _MainPersonResolver = mainPersonResolver;
-    _NameFormatter = nameFormatter;
-    _DataConverterResolver = dataConverterResolver;
     Loading = new PageLoading(_AlertService);
     Loading.PropertyChanged += (_, _) => OnPropertyChanged(nameof(IsEmptyStateVisible));
     _PageCommand = new SafeCommand(OnPageCommand, _AlertService);
@@ -165,8 +157,7 @@ public partial class ProjectListPage : ContentPage
     using var token = _CancellationTokenProvider.CreateDbCancellationToken();
     var items = await _ProjectList.GetItemsAsync(token);
     var projects = items
-      .Select(projectInfo => new ProjectItem(
-        projectInfo, projectInfo.MainPerson, _NameFormatter, _CancellationTokenProvider, _AlertService, _DataConverterResolver))
+      .Select(projectInfo => new ProjectItem(projectInfo, projectInfo.MainPerson))
       .OrderBy(item => item.Info, _ProjectInfoComparer);
 
     _Projects.Clear();
