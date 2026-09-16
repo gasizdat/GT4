@@ -237,8 +237,8 @@ internal class ProjectList : IProjectList
   // Fails soft: a mark with no matching person (deleted since, or never valid) simply leaves the
   // listing without a badge -- the actual clear-and-warn cleanup is MainPersonResolver's job, run
   // only when the project is opened for real. This project is already open for its name/description,
-  // so resolving the live display name here costs one more query, not a second project open.
-  private async Task<MainPersonInfo?> TryResolveMainPersonAsync(IProjectDocument project, ProjectInfo projectInfo, CancellationToken token)
+  // so resolving the live PersonInfo here costs one more query, not a second project open.
+  private async Task<PersonInfo?> TryResolveMainPersonAsync(IProjectDocument project, ProjectInfo projectInfo, CancellationToken token)
   {
     var personId = _MainPersonStore.Get(projectInfo);
     if (personId is null)
@@ -252,8 +252,8 @@ internal class ProjectList : IProjectList
       return null;
     }
 
-    var infos = await project.PersonManager.GetPersonInfosAsync([person], selectMainPhoto: false, token);
-    return infos.Length > 0 ? new MainPersonInfo(infos[0].Id, infos[0].DisplayName) : null;
+    var infos = await project.PersonManager.GetPersonInfosAsync([person], selectMainPhoto: true, token);
+    return infos.Length > 0 ? infos[0] : null;
   }
 
   // Null means SQLite rejected the file's content - the sweep's definition of garbage. A file it could

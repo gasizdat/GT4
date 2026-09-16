@@ -69,10 +69,22 @@
                         Style="{StaticResource CardContent}"
                         Text="{Binding Revision}" />
 
-                    <Label
-                        IsVisible="{Binding MainPersonVisible}"
-                        Style="{StaticResource CardContent}"
-                        Text="{Binding MainPersonName}" />
+                    <FlexLayout
+                        AlignItems="Center"
+                        Direction="Row"
+                        IsVisible="{Binding MainPersonVisible}">
+
+                      <Image
+                          HeightRequest="20"
+                          Margin="0,0,4,0"
+                          Source="{Binding MainPersonPhoto}"
+                          WidthRequest="20" />
+
+                      <Label
+                          Style="{StaticResource CardContent}"
+                          Text="{Binding MainPersonName}" />
+
+                    </FlexLayout>
 
                   </VerticalStackLayout>
 

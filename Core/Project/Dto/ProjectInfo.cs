@@ -7,10 +7,8 @@ public record class ProjectInfo(
   string Description,
   long? Revision,
   FileDescription Origin,
-  MainPersonInfo? MainPerson = null
+  PersonInfo? MainPerson = null
 )
 {
   public const long InitialRevision = 0;
 }
-
-public record class MainPersonInfo(int PersonId, string DisplayName);

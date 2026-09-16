@@ -344,7 +344,9 @@ public sealed class ProjectListTests : IDisposable
     var items = await _list.GetItemsAsync(Token);
 
     items.Should().ContainSingle();
-    items[0].MainPerson.Should().Be(new MainPersonInfo(personId, "Ada"));
+    items[0].MainPerson.Should().NotBeNull();
+    items[0].MainPerson!.Id.Should().Be(personId);
+    items[0].MainPerson!.DisplayName.Should().Be("Ada");
   }
 
   [Fact]
