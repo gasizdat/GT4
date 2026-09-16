@@ -271,11 +271,11 @@ public partial class ProjectPage : ContentPage
         break;
 
       case string commandName when commandName == "GoToMainPerson":
-        await OnGoToMainPersonAsync(centerFamilyTree: false);
+        await OnGoToMainPersonAsync<PersonPage>();
         break;
 
       case string commandName when commandName == "GoToMainPersonFamilyTree":
-        await OnGoToMainPersonAsync(centerFamilyTree: true);
+        await OnGoToMainPersonAsync<FamilyTreePage>();
         break;
 
       case string commandName when commandName == "Export":
@@ -329,7 +329,7 @@ public partial class ProjectPage : ContentPage
     await _NavigationService.GoToAsync("..", true);
   }
 
-  private async Task OnGoToMainPersonAsync(bool centerFamilyTree)
+  private async Task OnGoToMainPersonAsync<TPage>() where TPage : ContentPage
   {
     using var token = _CancellationTokenProvider.CreateDbCancellationToken();
     var mainPerson = await _MainPersonResolver.TryResolveAsync(_CurrentProjectProvider.Info, _CurrentProjectProvider.Project, token);
@@ -338,7 +338,7 @@ public partial class ProjectPage : ContentPage
       return;
     }
 
-    var route = centerFamilyTree ? UIRoutes.GetRoute<FamilyTreePage>() : UIRoutes.GetRoute<PersonPage>();
+    var route = UIRoutes.GetRoute<TPage>();
     await _NavigationService.GoToAsync(route, true, new() { ["PersonInfo"] = mainPerson });
   }
 
