@@ -22,6 +22,7 @@ public class MainPersonResolverTests
   private sealed class Fixture
   {
     public Mock<IMainPersonStore> Store { get; } = new();
+    public Mock<IProjectList> ProjectList { get; } = new();
     public Mock<IAlertService> AlertService { get; } = new();
     public Mock<IProjectDocument> Document { get; } = new();
     public Mock<ITablePersons> Persons { get; } = new();
@@ -33,7 +34,7 @@ public class MainPersonResolverTests
       Document.SetupGet(d => d.PersonManager).Returns(PersonManager.Object);
     }
 
-    public MainPersonResolver Resolver => new(Store.Object, AlertService.Object);
+    public MainPersonResolver Resolver => new(Store.Object, ProjectList.Object, AlertService.Object);
   }
 
   [Fact]
@@ -64,6 +65,7 @@ public class MainPersonResolverTests
 
     result.Should().Be(personInfo);
     fixture.Store.Verify(s => s.Clear(It.IsAny<ProjectInfo>()), Times.Never);
+    fixture.ProjectList.Verify(p => p.InvalidateItems(), Times.Never);
   }
 
   [Fact]
@@ -77,6 +79,7 @@ public class MainPersonResolverTests
 
     result.Should().BeNull();
     fixture.Store.Verify(s => s.Clear(Project), Times.Once);
+    fixture.ProjectList.Verify(p => p.InvalidateItems(), Times.Once);
     fixture.AlertService.Verify(a => a.ShowWarningAsync(It.IsAny<string>()), Times.Once);
   }
 }
