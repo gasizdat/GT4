@@ -34,15 +34,15 @@ public sealed class MainPersonStoreTests
   }
 
   [Fact]
-  public void SetThenGet_RoundTripsIdAndDisplayName()
+  public void SetThenGet_RoundTripsId()
   {
     var (store, root) = NewStore();
     try
     {
       var project = Project("sample.gt4");
-      store.Set(project, 42, "Ada Lovelace");
+      store.Set(project, 42);
 
-      store.Get(project).Should().Be(new MainPersonInfo(42, "Ada Lovelace"));
+      store.Get(project).Should().Be(42);
     }
     finally { Directory.Delete(root, true); }
   }
@@ -54,7 +54,7 @@ public sealed class MainPersonStoreTests
     try
     {
       var project = Project("sample.gt4");
-      store.Set(project, 1, "Someone");
+      store.Set(project, 1);
 
       store.Clear(project);
 
@@ -69,11 +69,11 @@ public sealed class MainPersonStoreTests
     var (store, root) = NewStore();
     try
     {
-      store.Set(Project("a.gt4"), 1, "A");
-      store.Set(Project("b.gt4"), 2, "B");
+      store.Set(Project("a.gt4"), 1);
+      store.Set(Project("b.gt4"), 2);
 
-      store.Get(Project("a.gt4")).Should().Be(new MainPersonInfo(1, "A"));
-      store.Get(Project("b.gt4")).Should().Be(new MainPersonInfo(2, "B"));
+      store.Get(Project("a.gt4")).Should().Be(1);
+      store.Get(Project("b.gt4")).Should().Be(2);
     }
     finally { Directory.Delete(root, true); }
   }

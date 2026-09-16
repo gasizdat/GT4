@@ -14,4 +14,6 @@ public interface IProjectList
   Task<ProjectInfo> ImportAsync(Stream content, CancellationToken token);
   Task RemoveAsync(FileDescription origin, CancellationToken token);
   Task SanitizeRevisionsAsync(CancellationToken token);
+  /// <summary>Drops the cached listing so the next <see cref="GetItemsAsync"/> re-reads every project.</summary>
+  void InvalidateItems();
 }

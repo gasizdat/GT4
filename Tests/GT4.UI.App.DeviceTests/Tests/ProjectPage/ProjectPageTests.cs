@@ -525,7 +525,7 @@ public class ProjectPageTests
     var services = new TestServices();
     var person = new Person(7, UnknownDate, null, BiologicalSex.Male);
     var personInfo = P(7, "Alexander");
-    services.MainPersonStore.Setup(s => s.Get(TestServices.SampleProjectInfo)).Returns(new MainPersonInfo(7, "Alexander"));
+    services.MainPersonStore.Setup(s => s.Get(TestServices.SampleProjectInfo)).Returns(7);
     services.Persons.Setup(p => p.TryGetPersonByIdAsync(7, It.IsAny<CancellationToken>())).ReturnsAsync(person);
     services.PersonManager
       .Setup(m => m.GetPersonInfosAsync(new[] { person }, true, It.IsAny<CancellationToken>()))
@@ -546,7 +546,7 @@ public class ProjectPageTests
     var services = new TestServices();
     var person = new Person(7, UnknownDate, null, BiologicalSex.Male);
     var personInfo = P(7, "Alexander");
-    services.MainPersonStore.Setup(s => s.Get(TestServices.SampleProjectInfo)).Returns(new MainPersonInfo(7, "Alexander"));
+    services.MainPersonStore.Setup(s => s.Get(TestServices.SampleProjectInfo)).Returns(7);
     services.Persons.Setup(p => p.TryGetPersonByIdAsync(7, It.IsAny<CancellationToken>())).ReturnsAsync(person);
     services.PersonManager
       .Setup(m => m.GetPersonInfosAsync(new[] { person }, true, It.IsAny<CancellationToken>()))

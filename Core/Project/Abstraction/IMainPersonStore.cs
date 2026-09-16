@@ -4,9 +4,7 @@ namespace GT4.Core.Project.Abstraction;
 
 public interface IMainPersonStore
 {
-  MainPersonInfo? Get(ProjectInfo project);
-  void Set(ProjectInfo project, int personId, string displayName);
+  int? Get(ProjectInfo project);
+  void Set(ProjectInfo project, int personId);
   void Clear(ProjectInfo project);
 }
-
-public record class MainPersonInfo(int PersonId, string DisplayName);

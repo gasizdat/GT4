@@ -92,13 +92,14 @@ public class PersonPageTests
 
     await page.InvokePageCommandAsync("ToggleMainPerson");
 
-    services.MainPersonStore.Verify(s => s.Set(TestServices.SampleProjectInfo, person.Id, person.DisplayName), Times.Once());
-    services.MainPersonStore.Setup(s => s.Get(TestServices.SampleProjectInfo)).Returns(new MainPersonInfo(person.Id, person.DisplayName));
+    services.MainPersonStore.Verify(s => s.Set(TestServices.SampleProjectInfo, person.Id), Times.Once());
+    services.MainPersonStore.Setup(s => s.Get(TestServices.SampleProjectInfo)).Returns(person.Id);
     Assert.Equal(string.Format(UIStrings.MenuItemNameUnmarkAsMainPerson_1, "⭐"), page.MainPersonMenuItemName);
 
     await page.InvokePageCommandAsync("ToggleMainPerson");
 
     services.MainPersonStore.Verify(s => s.Clear(TestServices.SampleProjectInfo), Times.Once());
+    services.ProjectList.Verify(p => p.InvalidateItems(), Times.Exactly(2));
   }
 
   [Fact]
@@ -110,10 +111,10 @@ public class PersonPageTests
 
     // A stateful fake, not a one-shot stub: the button glyph flips off the same OnPropertyChanged
     // that fires synchronously inside OnToggleMainPerson, so Get must reflect the Set it just made.
-    MainPersonInfo? stored = null;
+    int? stored = null;
     services.MainPersonStore
-      .Setup(s => s.Set(It.IsAny<ProjectInfo>(), It.IsAny<int>(), It.IsAny<string>()))
-      .Callback<ProjectInfo, int, string>((_, id, name) => stored = new MainPersonInfo(id, name));
+      .Setup(s => s.Set(It.IsAny<ProjectInfo>(), It.IsAny<int>()))
+      .Callback<ProjectInfo, int>((_, id) => stored = id);
     services.MainPersonStore.Setup(s => s.Clear(It.IsAny<ProjectInfo>())).Callback<ProjectInfo>(_ => stored = null);
     services.MainPersonStore.Setup(s => s.Get(It.IsAny<ProjectInfo>())).Returns(() => stored);
 

@@ -18,13 +18,13 @@ public sealed class MainPersonResolver
 
   public async Task<PersonInfo?> TryResolveAsync(ProjectInfo project, IProjectDocument document, CancellationToken token)
   {
-    var stored = _Store.Get(project);
-    if (stored is null)
+    var personId = _Store.Get(project);
+    if (personId is null)
     {
       return null;
     }
 
-    var person = await document.Persons.TryGetPersonByIdAsync(stored.PersonId, token);
+    var person = await document.Persons.TryGetPersonByIdAsync(personId.Value, token);
     if (person is null)
     {
       _Store.Clear(project);
@@ -33,15 +33,6 @@ public sealed class MainPersonResolver
     }
 
     var infos = await document.PersonManager.GetPersonInfosAsync([person], selectMainPhoto: true, token);
-    var info = infos.Length > 0 ? infos[0] : null;
-
-    // Keeps the ProjectListPage card badge from drifting after a rename, GEDCOM re-import, or
-    // revision restore -- covers every resolution call site for free instead of hooking each one.
-    if (info is not null && info.DisplayName != stored.DisplayName)
-    {
-      _Store.Set(project, info.Id, info.DisplayName);
-    }
-
-    return info;
+    return infos.Length > 0 ? infos[0] : null;
   }
 }

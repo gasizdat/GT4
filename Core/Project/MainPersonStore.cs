@@ -7,7 +7,6 @@ namespace GT4.Core.Project;
 internal sealed class MainPersonStore : IMainPersonStore
 {
   private const string IdKey = "MainPerson.Id";
-  private const string NameKey = "MainPerson.Name";
 
   private readonly ProjectConfigurationProvider.Factory _Factory;
 
@@ -16,26 +15,19 @@ internal sealed class MainPersonStore : IMainPersonStore
     _Factory = factory;
   }
 
-  public MainPersonInfo? Get(ProjectInfo project)
+  public int? Get(ProjectInfo project)
   {
     var provider = _Factory.Create(project.Origin);
     provider.Load();
 
-    if (!provider.TryGet(IdKey, out var idValue) || !int.TryParse(idValue, out var personId) ||
-      !provider.TryGet(NameKey, out var name))
-    {
-      return null;
-    }
-
-    return new MainPersonInfo(personId, name!);
+    return provider.TryGet(IdKey, out var idValue) && int.TryParse(idValue, out var personId) ? personId : null;
   }
 
-  public void Set(ProjectInfo project, int personId, string displayName)
+  public void Set(ProjectInfo project, int personId)
   {
     var provider = _Factory.Create(project.Origin);
     provider.Load();
     provider.SetKey(IdKey, personId.ToString());
-    provider.SetKey(NameKey, displayName);
     provider.Flush();
   }
 
@@ -44,7 +36,6 @@ internal sealed class MainPersonStore : IMainPersonStore
     var provider = _Factory.Create(project.Origin);
     provider.Load();
     provider.RemoveKey(IdKey);
-    provider.RemoveKey(NameKey);
     provider.Flush();
   }
 }

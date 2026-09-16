@@ -23,6 +23,7 @@ public partial class PersonPage : ContentPage
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IMainPersonStore _MainPersonStore;
+  private readonly IProjectList _ProjectList;
   private readonly IDateSpanFormatter _DateSpanFormatter;
   private readonly IDateFormatter _DateFormatter;
   private readonly INameFormatter _NameFormatter;
@@ -71,12 +72,14 @@ public partial class PersonPage : ContentPage
     INavigationService navigationService,
     IBiologicalSexFormatter biologicalSexFormatter,
     CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory,
-    InlineMediaProvider mediaProvider
+    InlineMediaProvider mediaProvider,
+    IProjectList projectList
     )
   {
     _CancellationTokenProvider = cancellationTokenProvider;
     _CurrentProjectProvider = currentProjectProvider;
     _MainPersonStore = mainPersonStore;
+    _ProjectList = projectList;
     _DateSpanFormatter = dateSpanFormatter;
     _DateFormatter = dateFormatter;
     _NameFormatter = nameFormatter;
@@ -138,7 +141,7 @@ public partial class PersonPage : ContentPage
     IsMainPerson ? UIStrings.MenuItemNameUnmarkAsMainPerson_1 : UIStrings.MenuItemNameMarkAsMainPerson_1,
     IsMainPerson ? "⭐" : "☆");
 
-  private bool IsMainPerson => _MainPersonStore.Get(_CurrentProjectProvider.Info)?.PersonId == _PersonFullInfo.Id;
+  private bool IsMainPerson => _MainPersonStore.Get(_CurrentProjectProvider.Info) == _PersonFullInfo.Id;
 
   private void RefreshRelatives() => _Relatives.SetFilter(FilterView.IsAnyFilterActive, r => FilterView.Matches(r));
 
@@ -619,8 +622,13 @@ public partial class PersonPage : ContentPage
     }
     else
     {
-      _MainPersonStore.Set(_CurrentProjectProvider.Info, _PersonFullInfo.Id, _PersonFullInfo.DisplayName);
+      _MainPersonStore.Set(_CurrentProjectProvider.Info, _PersonFullInfo.Id);
     }
+
+    // The list page reads the mark straight off the cached ProjectInfo now (resolved live while a
+    // project is open for listing), so a mark toggled here must drop that cache or the badge won't
+    // reflect it until something else invalidates it.
+    _ProjectList.InvalidateItems();
 
     OnPropertyChanged(nameof(MainPersonMenuItemName));
   }

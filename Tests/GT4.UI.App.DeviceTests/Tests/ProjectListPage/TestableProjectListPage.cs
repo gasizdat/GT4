@@ -26,7 +26,6 @@ internal sealed class TestableProjectListPage : ProjectListPage
     IAlertService alertService,
     INavigationService navigationService,
     IImageCache imageCache,
-    IMainPersonStore mainPersonStore,
     MainPersonResolver mainPersonResolver)
     : base(
       cancellationTokenProvider,
@@ -38,7 +37,6 @@ internal sealed class TestableProjectListPage : ProjectListPage
       alertService,
       navigationService,
       imageCache,
-      mainPersonStore,
       mainPersonResolver)
   {
   }

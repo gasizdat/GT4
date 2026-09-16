@@ -38,7 +38,6 @@ public partial class ProjectListPage : ContentPage
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
   private readonly IImageCache _ImageCache;
-  private readonly IMainPersonStore _MainPersonStore;
   private readonly MainPersonResolver _MainPersonResolver;
   private readonly ObservableCollection<ProjectItem> _Projects = new();
   private ProjectItem? _SelectedProject;
@@ -53,7 +52,6 @@ public partial class ProjectListPage : ContentPage
     IAlertService alertService,
     INavigationService navigationService,
     IImageCache imageCache,
-    IMainPersonStore mainPersonStore,
     MainPersonResolver mainPersonResolver
     )
   {
@@ -66,7 +64,6 @@ public partial class ProjectListPage : ContentPage
     _AlertService = alertService;
     _NavigationService = navigationService;
     _ImageCache = imageCache;
-    _MainPersonStore = mainPersonStore;
     _MainPersonResolver = mainPersonResolver;
     Loading = new PageLoading(_AlertService);
     Loading.PropertyChanged += (_, _) => OnPropertyChanged(nameof(IsEmptyStateVisible));
@@ -160,7 +157,7 @@ public partial class ProjectListPage : ContentPage
     using var token = _CancellationTokenProvider.CreateDbCancellationToken();
     var items = await _ProjectList.GetItemsAsync(token);
     var projects = items
-      .Select(projectInfo => new ProjectItem(projectInfo, _MainPersonStore.Get(projectInfo)))
+      .Select(projectInfo => new ProjectItem(projectInfo, projectInfo.MainPerson))
       .OrderBy(item => item.Info, _ProjectInfoComparer);
 
     _Projects.Clear();

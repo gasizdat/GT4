@@ -12,16 +12,18 @@ internal class ProjectList : IProjectList
 {
   private readonly IStorage _Storage;
   private readonly IFileSystem _FileSystem;
+  private readonly IMainPersonStore _MainPersonStore;
   private readonly WeakReference<ProjectInfo[]?> _Items = new(null);
   private readonly static string[] RevisionFileSuffixes = ["", "-journal", "-wal", "-shm"];
   private const int SqliteCantOpen = 14;
 
   public readonly static string ProjectExtension = "gt4";
 
-  public ProjectList(IStorage storage, IFileSystem fileSystem)
+  public ProjectList(IStorage storage, IFileSystem fileSystem, IMainPersonStore mainPersonStore)
   {
     _Storage = storage;
     _FileSystem = fileSystem;
+    _MainPersonStore = mainPersonStore;
   }
 
   public async Task<ProjectInfo[]> GetItemsAsync(CancellationToken token)
@@ -178,6 +180,8 @@ internal class ProjectList : IProjectList
     };
   }
 
+  public void InvalidateItems() => _Items.SetTarget(null);
+
   private async Task<ProjectInfo> GetProjectInfoAsync(IProjectDocument project, CancellationToken token)
   {
     // Sequential, not Task.WhenAll: the single-connection gate serializes these onto one connection, so
@@ -214,8 +218,10 @@ internal class ProjectList : IProjectList
       using var projectHost = await OpenAnyVersionAsync(origin, token);
       using var project = projectHost.Project!;
       var projectInfo = await GetProjectInfoAsync(project, token);
+      projectInfo = projectInfo with { Origin = origin };
 
-      return projectInfo with { Origin = origin };
+      var mainPerson = await TryResolveMainPersonAsync(project, projectInfo, token);
+      return projectInfo with { MainPerson = mainPerson };
     }
     catch (Exception ex)
     {
@@ -226,6 +232,28 @@ internal class ProjectList : IProjectList
         Origin: origin
       );
     }
+  }
+
+  // Fails soft: a mark with no matching person (deleted since, or never valid) simply leaves the
+  // listing without a badge -- the actual clear-and-warn cleanup is MainPersonResolver's job, run
+  // only when the project is opened for real. This project is already open for its name/description,
+  // so resolving the live display name here costs one more query, not a second project open.
+  private async Task<MainPersonInfo?> TryResolveMainPersonAsync(IProjectDocument project, ProjectInfo projectInfo, CancellationToken token)
+  {
+    var personId = _MainPersonStore.Get(projectInfo);
+    if (personId is null)
+    {
+      return null;
+    }
+
+    var person = await project.Persons.TryGetPersonByIdAsync(personId.Value, token);
+    if (person is null)
+    {
+      return null;
+    }
+
+    var infos = await project.PersonManager.GetPersonInfosAsync([person], selectMainPhoto: false, token);
+    return infos.Length > 0 ? new MainPersonInfo(infos[0].Id, infos[0].DisplayName) : null;
   }
 
   // Null means SQLite rejected the file's content - the sweep's definition of garbage. A file it could
@@ -268,8 +296,6 @@ internal class ProjectList : IProjectList
 
   private static bool CompareNames(string name1, string name2) =>
     string.Equals(name1, name2, StringComparison.InvariantCultureIgnoreCase);
-
-  private void InvalidateItems() => _Items.SetTarget(null);
 
   private FileDescription GetCacheFileDescription(string projectName)
   {
