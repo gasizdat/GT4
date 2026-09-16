@@ -18,7 +18,7 @@ public sealed class MainPersonResolver
 
   public async Task<PersonInfo?> TryResolveAsync(ProjectInfo project, IProjectDocument document, CancellationToken token)
   {
-    var stored = _Store.Get(project.Origin);
+    var stored = _Store.Get(project);
     if (stored is null)
     {
       return null;
@@ -27,7 +27,7 @@ public sealed class MainPersonResolver
     var person = await document.Persons.TryGetPersonByIdAsync(stored.PersonId, token);
     if (person is null)
     {
-      _Store.Clear(project.Origin);
+      _Store.Clear(project);
       await _AlertService.ShowWarningAsync(UIStrings.AlertTextMainPersonMissing);
       return null;
     }
@@ -39,7 +39,7 @@ public sealed class MainPersonResolver
     // revision restore -- covers every resolution call site for free instead of hooking each one.
     if (info is not null && info.DisplayName != stored.DisplayName)
     {
-      _Store.Set(project.Origin, info.Id, info.DisplayName);
+      _Store.Set(project, info.Id, info.DisplayName);
     }
 
     return info;

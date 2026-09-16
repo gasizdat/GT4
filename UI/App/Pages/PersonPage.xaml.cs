@@ -138,7 +138,7 @@ public partial class PersonPage : ContentPage
     IsMainPerson ? UIStrings.MenuItemNameUnmarkAsMainPerson_1 : UIStrings.MenuItemNameMarkAsMainPerson_1,
     IsMainPerson ? "⭐" : "☆");
 
-  private bool IsMainPerson => _MainPersonStore.Get(_CurrentProjectProvider.Info.Origin)?.PersonId == _PersonFullInfo.Id;
+  private bool IsMainPerson => _MainPersonStore.Get(_CurrentProjectProvider.Info)?.PersonId == _PersonFullInfo.Id;
 
   private void RefreshRelatives() => _Relatives.SetFilter(FilterView.IsAnyFilterActive, r => FilterView.Matches(r));
 
@@ -613,14 +613,13 @@ public partial class PersonPage : ContentPage
 
   private void OnToggleMainPerson()
   {
-    var origin = _CurrentProjectProvider.Info.Origin;
     if (IsMainPerson)
     {
-      _MainPersonStore.Clear(origin);
+      _MainPersonStore.Clear(_CurrentProjectProvider.Info);
     }
     else
     {
-      _MainPersonStore.Set(origin, _PersonFullInfo.Id, _PersonFullInfo.DisplayName);
+      _MainPersonStore.Set(_CurrentProjectProvider.Info, _PersonFullInfo.Id, _PersonFullInfo.DisplayName);
     }
 
     OnPropertyChanged(nameof(MainPersonMenuItemName));

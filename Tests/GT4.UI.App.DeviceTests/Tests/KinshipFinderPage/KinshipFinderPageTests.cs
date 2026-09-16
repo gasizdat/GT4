@@ -207,7 +207,7 @@ public class KinshipFinderPageTests
     var services = new TestServices();
     var person = new Person(7, Date.Create(null, null, null, DateStatus.Unknown), null, BiologicalSex.Male);
     var personInfo = P(7, names: [new Name(1, "Alexander", NameType.FirstName, null)]);
-    services.MainPersonStore.Setup(s => s.Get(TestServices.SampleProjectInfo.Origin)).Returns(new MainPersonInfo(7, "Alexander"));
+    services.MainPersonStore.Setup(s => s.Get(TestServices.SampleProjectInfo)).Returns(new MainPersonInfo(7, "Alexander"));
     services.Persons.Setup(p => p.TryGetPersonByIdAsync(7, It.IsAny<CancellationToken>())).ReturnsAsync(person);
     services.PersonManager
       .Setup(m => m.GetPersonInfosAsync(new[] { person }, true, It.IsAny<CancellationToken>()))

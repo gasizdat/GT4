@@ -1,4 +1,5 @@
 using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 
 namespace GT4.Core.Project;
@@ -15,9 +16,9 @@ internal sealed class MainPersonStore : IMainPersonStore
     _Factory = factory;
   }
 
-  public MainPersonInfo? Get(FileDescription origin)
+  public MainPersonInfo? Get(ProjectInfo project)
   {
-    var provider = _Factory.Create(origin);
+    var provider = _Factory.Create(project.Origin);
     provider.Load();
 
     if (!provider.TryGet(IdKey, out var idValue) || !int.TryParse(idValue, out var personId) ||
@@ -29,18 +30,18 @@ internal sealed class MainPersonStore : IMainPersonStore
     return new MainPersonInfo(personId, name!);
   }
 
-  public void Set(FileDescription origin, int personId, string displayName)
+  public void Set(ProjectInfo project, int personId, string displayName)
   {
-    var provider = _Factory.Create(origin);
+    var provider = _Factory.Create(project.Origin);
     provider.Load();
     provider.SetKey(IdKey, personId.ToString());
     provider.SetKey(NameKey, displayName);
     provider.Flush();
   }
 
-  public void Clear(FileDescription origin)
+  public void Clear(ProjectInfo project)
   {
-    var provider = _Factory.Create(origin);
+    var provider = _Factory.Create(project.Origin);
     provider.Load();
     provider.RemoveKey(IdKey);
     provider.RemoveKey(NameKey);

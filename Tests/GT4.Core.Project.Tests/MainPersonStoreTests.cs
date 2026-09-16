@@ -1,5 +1,6 @@
 using FluentAssertions;
 using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using Xunit;
 
@@ -15,8 +16,11 @@ public sealed class MainPersonStoreTests
     return (new MainPersonStore(factory), root);
   }
 
-  private static FileDescription Origin(string fileName) =>
-    new(new DirectoryDescription(Environment.SpecialFolder.MyDocuments, ["a", "b"]), fileName, null);
+  private static ProjectInfo Project(string fileName) => new(
+    Name: fileName,
+    Description: string.Empty,
+    Revision: null,
+    Origin: new FileDescription(new DirectoryDescription(Environment.SpecialFolder.MyDocuments, ["a", "b"]), fileName, null));
 
   [Fact]
   public void Get_WhenNothingStored_ReturnsNull()
@@ -24,7 +28,7 @@ public sealed class MainPersonStoreTests
     var (store, root) = NewStore();
     try
     {
-      store.Get(Origin("sample.gt4")).Should().BeNull();
+      store.Get(Project("sample.gt4")).Should().BeNull();
     }
     finally { Directory.Delete(root, true); }
   }
@@ -35,10 +39,10 @@ public sealed class MainPersonStoreTests
     var (store, root) = NewStore();
     try
     {
-      var origin = Origin("sample.gt4");
-      store.Set(origin, 42, "Ada Lovelace");
+      var project = Project("sample.gt4");
+      store.Set(project, 42, "Ada Lovelace");
 
-      store.Get(origin).Should().Be(new MainPersonInfo(42, "Ada Lovelace"));
+      store.Get(project).Should().Be(new MainPersonInfo(42, "Ada Lovelace"));
     }
     finally { Directory.Delete(root, true); }
   }
@@ -49,12 +53,12 @@ public sealed class MainPersonStoreTests
     var (store, root) = NewStore();
     try
     {
-      var origin = Origin("sample.gt4");
-      store.Set(origin, 1, "Someone");
+      var project = Project("sample.gt4");
+      store.Set(project, 1, "Someone");
 
-      store.Clear(origin);
+      store.Clear(project);
 
-      store.Get(origin).Should().BeNull();
+      store.Get(project).Should().BeNull();
     }
     finally { Directory.Delete(root, true); }
   }
@@ -65,11 +69,11 @@ public sealed class MainPersonStoreTests
     var (store, root) = NewStore();
     try
     {
-      store.Set(Origin("a.gt4"), 1, "A");
-      store.Set(Origin("b.gt4"), 2, "B");
+      store.Set(Project("a.gt4"), 1, "A");
+      store.Set(Project("b.gt4"), 2, "B");
 
-      store.Get(Origin("a.gt4")).Should().Be(new MainPersonInfo(1, "A"));
-      store.Get(Origin("b.gt4")).Should().Be(new MainPersonInfo(2, "B"));
+      store.Get(Project("a.gt4")).Should().Be(new MainPersonInfo(1, "A"));
+      store.Get(Project("b.gt4")).Should().Be(new MainPersonInfo(2, "B"));
     }
     finally { Directory.Delete(root, true); }
   }

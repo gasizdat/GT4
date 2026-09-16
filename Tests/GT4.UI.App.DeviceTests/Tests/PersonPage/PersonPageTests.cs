@@ -92,13 +92,13 @@ public class PersonPageTests
 
     await page.InvokePageCommandAsync("ToggleMainPerson");
 
-    services.MainPersonStore.Verify(s => s.Set(TestServices.SampleProjectInfo.Origin, person.Id, person.DisplayName), Times.Once());
-    services.MainPersonStore.Setup(s => s.Get(TestServices.SampleProjectInfo.Origin)).Returns(new MainPersonInfo(person.Id, person.DisplayName));
+    services.MainPersonStore.Verify(s => s.Set(TestServices.SampleProjectInfo, person.Id, person.DisplayName), Times.Once());
+    services.MainPersonStore.Setup(s => s.Get(TestServices.SampleProjectInfo)).Returns(new MainPersonInfo(person.Id, person.DisplayName));
     Assert.Equal(string.Format(UIStrings.MenuItemNameUnmarkAsMainPerson_1, "⭐"), page.MainPersonMenuItemName);
 
     await page.InvokePageCommandAsync("ToggleMainPerson");
 
-    services.MainPersonStore.Verify(s => s.Clear(TestServices.SampleProjectInfo.Origin), Times.Once());
+    services.MainPersonStore.Verify(s => s.Clear(TestServices.SampleProjectInfo), Times.Once());
   }
 
   [Fact]
@@ -112,10 +112,10 @@ public class PersonPageTests
     // that fires synchronously inside OnToggleMainPerson, so Get must reflect the Set it just made.
     MainPersonInfo? stored = null;
     services.MainPersonStore
-      .Setup(s => s.Set(It.IsAny<FileDescription>(), It.IsAny<int>(), It.IsAny<string>()))
-      .Callback<FileDescription, int, string>((_, id, name) => stored = new MainPersonInfo(id, name));
-    services.MainPersonStore.Setup(s => s.Clear(It.IsAny<FileDescription>())).Callback<FileDescription>(_ => stored = null);
-    services.MainPersonStore.Setup(s => s.Get(It.IsAny<FileDescription>())).Returns(() => stored);
+      .Setup(s => s.Set(It.IsAny<ProjectInfo>(), It.IsAny<int>(), It.IsAny<string>()))
+      .Callback<ProjectInfo, int, string>((_, id, name) => stored = new MainPersonInfo(id, name));
+    services.MainPersonStore.Setup(s => s.Clear(It.IsAny<ProjectInfo>())).Callback<ProjectInfo>(_ => stored = null);
+    services.MainPersonStore.Setup(s => s.Get(It.IsAny<ProjectInfo>())).Returns(() => stored);
 
     var page = await CreatePageAsync(services);
     await WaitForLoadAsync(page, services, () => page.PersonInfo = person);

@@ -1,12 +1,12 @@
-using GT4.Core.Utils;
+using GT4.Core.Project.Dto;
 
 namespace GT4.Core.Project.Abstraction;
 
 public interface IMainPersonStore
 {
-  MainPersonInfo? Get(FileDescription origin);
-  void Set(FileDescription origin, int personId, string displayName);
-  void Clear(FileDescription origin);
+  MainPersonInfo? Get(ProjectInfo project);
+  void Set(ProjectInfo project, int personId, string displayName);
+  void Clear(ProjectInfo project);
 }
 
 public record class MainPersonInfo(int PersonId, string DisplayName);

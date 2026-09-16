@@ -160,7 +160,7 @@ public partial class ProjectListPage : ContentPage
     using var token = _CancellationTokenProvider.CreateDbCancellationToken();
     var items = await _ProjectList.GetItemsAsync(token);
     var projects = items
-      .Select(projectInfo => new ProjectItem(projectInfo, _MainPersonStore.Get(projectInfo.Origin)))
+      .Select(projectInfo => new ProjectItem(projectInfo, _MainPersonStore.Get(projectInfo)))
       .OrderBy(item => item.Info, _ProjectInfoComparer);
 
     _Projects.Clear();

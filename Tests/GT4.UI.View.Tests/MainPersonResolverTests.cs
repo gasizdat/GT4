@@ -40,7 +40,7 @@ public class MainPersonResolverTests
   public async Task TryResolveAsync_WhenNothingStored_ReturnsNullWithoutTouchingTheDocument()
   {
     var fixture = new Fixture();
-    fixture.Store.Setup(s => s.Get(Origin)).Returns((MainPersonInfo?)null);
+    fixture.Store.Setup(s => s.Get(Project)).Returns((MainPersonInfo?)null);
 
     var result = await fixture.Resolver.TryResolveAsync(Project, fixture.Document.Object, CancellationToken.None);
 
@@ -54,7 +54,7 @@ public class MainPersonResolverTests
     var fixture = new Fixture();
     var person = new Person(7, Date.Now, null, BiologicalSex.Female);
     var personInfo = MakePersonInfo(7, "Ada");
-    fixture.Store.Setup(s => s.Get(Origin)).Returns(new MainPersonInfo(7, "Ada"));
+    fixture.Store.Setup(s => s.Get(Project)).Returns(new MainPersonInfo(7, "Ada"));
     fixture.Persons.Setup(p => p.TryGetPersonByIdAsync(7, It.IsAny<CancellationToken>())).ReturnsAsync(person);
     fixture.PersonManager
       .Setup(m => m.GetPersonInfosAsync(new[] { person }, true, It.IsAny<CancellationToken>()))
@@ -63,20 +63,20 @@ public class MainPersonResolverTests
     var result = await fixture.Resolver.TryResolveAsync(Project, fixture.Document.Object, CancellationToken.None);
 
     result.Should().Be(personInfo);
-    fixture.Store.Verify(s => s.Clear(It.IsAny<FileDescription>()), Times.Never);
+    fixture.Store.Verify(s => s.Clear(It.IsAny<ProjectInfo>()), Times.Never);
   }
 
   [Fact]
   public async Task TryResolveAsync_WhenStoredPersonIsMissing_ClearsAndWarnsOnceAndReturnsNull()
   {
     var fixture = new Fixture();
-    fixture.Store.Setup(s => s.Get(Origin)).Returns(new MainPersonInfo(7, "Ada"));
+    fixture.Store.Setup(s => s.Get(Project)).Returns(new MainPersonInfo(7, "Ada"));
     fixture.Persons.Setup(p => p.TryGetPersonByIdAsync(7, It.IsAny<CancellationToken>())).ReturnsAsync((Person?)null);
 
     var result = await fixture.Resolver.TryResolveAsync(Project, fixture.Document.Object, CancellationToken.None);
 
     result.Should().BeNull();
-    fixture.Store.Verify(s => s.Clear(Origin), Times.Once);
+    fixture.Store.Verify(s => s.Clear(Project), Times.Once);
     fixture.AlertService.Verify(a => a.ShowWarningAsync(It.IsAny<string>()), Times.Once);
   }
 
@@ -86,7 +86,7 @@ public class MainPersonResolverTests
     var fixture = new Fixture();
     var person = new Person(7, Date.Now, null, BiologicalSex.Female);
     var renamed = MakePersonInfo(7, "Augusta");
-    fixture.Store.Setup(s => s.Get(Origin)).Returns(new MainPersonInfo(7, "Ada"));
+    fixture.Store.Setup(s => s.Get(Project)).Returns(new MainPersonInfo(7, "Ada"));
     fixture.Persons.Setup(p => p.TryGetPersonByIdAsync(7, It.IsAny<CancellationToken>())).ReturnsAsync(person);
     fixture.PersonManager
       .Setup(m => m.GetPersonInfosAsync(new[] { person }, true, It.IsAny<CancellationToken>()))
@@ -95,6 +95,6 @@ public class MainPersonResolverTests
     var result = await fixture.Resolver.TryResolveAsync(Project, fixture.Document.Object, CancellationToken.None);
 
     result.Should().Be(renamed);
-    fixture.Store.Verify(s => s.Set(Origin, 7, "Augusta"), Times.Once);
+    fixture.Store.Verify(s => s.Set(Project, 7, "Augusta"), Times.Once);
   }
 }

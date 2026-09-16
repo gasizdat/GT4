@@ -132,8 +132,8 @@ public class ProjectListPageTests
       .Setup(p => p.OpenAsync(info, It.IsAny<CancellationToken>()))
       .Returns(Task.CompletedTask);
     // OpenAsync's mock doesn't change what CurrentProjectProvider.Info returns afterward (fixed to
-    // TestServices.SampleProjectInfo), so the store lookup must key off that origin, not info.Origin.
-    services.MainPersonStore.Setup(s => s.Get(TestServices.SampleProjectInfo.Origin)).Returns(new MainPersonInfo(7, "Alexander"));
+    // TestServices.SampleProjectInfo), so the store lookup must key off that, not info.
+    services.MainPersonStore.Setup(s => s.Get(TestServices.SampleProjectInfo)).Returns(new MainPersonInfo(7, "Alexander"));
     var person = new Person(7, Date.Now, null, BiologicalSex.Male);
     var personInfo = new PersonInfo(person, [new Name(1, "Alexander", NameType.FirstName, null)], null);
     services.Persons.Setup(p => p.TryGetPersonByIdAsync(7, It.IsAny<CancellationToken>())).ReturnsAsync(person);
@@ -156,7 +156,7 @@ public class ProjectListPageTests
     var services = new TestServices();
     var info = P("Pushkin");
     services.ProjectList.Setup(p => p.GetItemsAsync(It.IsAny<CancellationToken>())).ReturnsAsync([info]);
-    services.MainPersonStore.Setup(s => s.Get(info.Origin)).Returns(new MainPersonInfo(7, "Alexander"));
+    services.MainPersonStore.Setup(s => s.Get(info)).Returns(new MainPersonInfo(7, "Alexander"));
     var page = await CreatePageAsync(services);
 
     await MainThread.InvokeOnMainThreadAsync(page.InvokeUpdateProjectListAsync);
