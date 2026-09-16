@@ -38,6 +38,6 @@ public sealed class MainPersonResolver
     }
 
     var infos = await document.PersonManager.GetPersonInfosAsync([person], selectMainPhoto: true, token);
-    return infos.Length > 0 ? infos[0] : null;
+    return infos.FirstOrDefault();
   }
 }

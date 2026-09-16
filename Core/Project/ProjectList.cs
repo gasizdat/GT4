@@ -253,7 +253,7 @@ internal class ProjectList : IProjectList
     }
 
     var infos = await project.PersonManager.GetPersonInfosAsync([person], selectMainPhoto: true, token);
-    return infos.Length > 0 ? infos[0] : null;
+    return infos.FirstOrDefault();
   }
 
   // Null means SQLite rejected the file's content - the sweep's definition of garbage. A file it could
