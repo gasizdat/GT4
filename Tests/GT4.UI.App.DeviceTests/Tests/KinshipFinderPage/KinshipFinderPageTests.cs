@@ -202,6 +202,28 @@ public class KinshipFinderPageTests
   }
 
   [Fact]
+  public async Task OnNavigatedTo_seeds_PersonFrom_with_the_resolved_main_person_when_none_is_picked()
+  {
+    var services = new TestServices();
+    var person = new Person(7, Date.Create(null, null, null, DateStatus.Unknown), null, BiologicalSex.Male);
+    var personInfo = P(7, names: [new Name(1, "Alexander", NameType.FirstName, null)]);
+    services.MainPersonStore.Setup(s => s.Get(TestServices.SampleProjectInfo)).Returns(7);
+    services.Persons.Setup(p => p.TryGetPersonByIdAsync(7, It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    services.PersonManager
+      .Setup(m => m.GetPersonInfosAsync(new[] { person }, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([personInfo]);
+    var page = await CreatePageAsync(services);
+
+    await MainThread.InvokeOnMainThreadAsync(page.InvokeNavigatedTo);
+
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => page.PersonFromName),
+      name => name == "Alexander",
+      timeoutMessage: "OnNavigatedTo did not seed PersonFrom with the main person.");
+    Assert.False(page.CanSwapPersons);
+  }
+
+  [Fact]
   public async Task Tapping_a_chain_entry_navigates_to_PersonPage()
   {
     var services = new TestServices();

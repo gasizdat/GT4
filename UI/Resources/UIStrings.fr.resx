@@ -1491,4 +1491,22 @@ FN - nom de famille</value>
   <data name="TitleWithProjectName_2" xml:space="preserve">
     <value>{0} | {1}</value>
   </data>
+  <data name="MenuItemNameMarkAsMainPerson_1" xml:space="preserve">
+    <value>{0} Marquer comme personne principale</value>
+  </data>
+  <data name="MenuItemNameUnmarkAsMainPerson_1" xml:space="preserve">
+    <value>{0} Retirer la marque de personne principale</value>
+  </data>
+  <data name="MenuItemGoToMainPerson" xml:space="preserve">
+    <value>⭐ Personne principale</value>
+  </data>
+  <data name="MenuItemGoToMainPersonFamilyTree" xml:space="preserve">
+    <value>🌳 Arbre de la personne principale</value>
+  </data>
+  <data name="AlertTextMainPersonMissing" xml:space="preserve">
+    <value>La personne principale de ce projet est introuvable ; la marque a été retirée.</value>
+  </data>
+  <data name="FieldMainPerson_1" xml:space="preserve">
+    <value>⭐ {0}</value>
+  </data>
 </root>

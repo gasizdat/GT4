@@ -3,6 +3,7 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Pages;
+using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
 
 namespace GT4.UI.DeviceTests;
@@ -20,8 +21,9 @@ internal sealed class TestableKinshipFinderPage : KinshipFinderPage
     IAlertService alertService,
     INameFormatter nameFormatter,
     IComparer<PersonInfo> personInfoComparer,
-    INavigationService navigationService)
-    : base(currentProjectProvider, cancellationTokenProvider, alertService, nameFormatter, personInfoComparer, navigationService)
+    INavigationService navigationService,
+    MainPersonResolver mainPersonResolver)
+    : base(currentProjectProvider, cancellationTokenProvider, alertService, nameFormatter, personInfoComparer, navigationService, mainPersonResolver)
   {
   }
 

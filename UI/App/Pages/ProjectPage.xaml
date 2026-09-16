@@ -64,6 +64,14 @@
           Text="{x:Static resources:UIStrings.MenuItemGoToKinshipFinder}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="GoToMainPerson"
+          Text="{x:Static resources:UIStrings.MenuItemGoToMainPerson}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="GoToMainPersonFamilyTree"
+          Text="{x:Static resources:UIStrings.MenuItemGoToMainPersonFamilyTree}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="GoToRevisions"
           Text="{x:Static resources:UIStrings.MenuItemGoToRevisions}" />
       <items:PageMenuItem

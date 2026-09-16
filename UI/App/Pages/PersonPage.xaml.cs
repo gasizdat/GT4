@@ -22,6 +22,8 @@ public partial class PersonPage : ContentPage
 {
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
+  private readonly IMainPersonStore _MainPersonStore;
+  private readonly IProjectList _ProjectList;
   private readonly IDateSpanFormatter _DateSpanFormatter;
   private readonly IDateFormatter _DateFormatter;
   private readonly INameFormatter _NameFormatter;
@@ -57,6 +59,7 @@ public partial class PersonPage : ContentPage
   public PersonPage(
     ICancellationTokenProvider cancellationTokenProvider,
     ICurrentProjectProvider currentProjectProvider,
+    IMainPersonStore mainPersonStore,
     IDateSpanFormatter dateSpanFormatter,
     IDateFormatter dateFormatter,
     INameFormatter nameFormatter,
@@ -69,11 +72,14 @@ public partial class PersonPage : ContentPage
     INavigationService navigationService,
     IBiologicalSexFormatter biologicalSexFormatter,
     CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory,
-    InlineMediaProvider mediaProvider
+    InlineMediaProvider mediaProvider,
+    IProjectList projectList
     )
   {
     _CancellationTokenProvider = cancellationTokenProvider;
     _CurrentProjectProvider = currentProjectProvider;
+    _MainPersonStore = mainPersonStore;
+    _ProjectList = projectList;
     _DateSpanFormatter = dateSpanFormatter;
     _DateFormatter = dateFormatter;
     _NameFormatter = nameFormatter;
@@ -130,6 +136,12 @@ public partial class PersonPage : ContentPage
 
   public string ToggleAllMenuItemName =>
     string.Format(ExpandAll ? UIStrings.MenuItemCollapseAll_1 : UIStrings.MenuItemExpandAll_1, ToggleAllButtonName);
+
+  public string MainPersonMenuItemName => string.Format(
+    IsMainPerson ? UIStrings.MenuItemNameUnmarkAsMainPerson_1 : UIStrings.MenuItemNameMarkAsMainPerson_1,
+    IsMainPerson ? "⭐" : "☆");
+
+  private bool IsMainPerson => _MainPersonStore.Get(_CurrentProjectProvider.Info) == _PersonFullInfo.Id;
 
   private void RefreshRelatives() => _Relatives.SetFilter(FilterView.IsAnyFilterActive, r => FilterView.Matches(r));
 
@@ -520,6 +532,9 @@ public partial class PersonPage : ContentPage
       case string commandName when commandName == "EditPerson":
         await OnPersonEditAsync();
         break;
+      case string commandName when commandName == "ToggleMainPerson":
+        OnToggleMainPerson();
+        break;
       case string commandName when commandName == "Refresh":
         ShowPersonInfo(_PersonFullInfo, false);
         break;
@@ -597,5 +612,24 @@ public partial class PersonPage : ContentPage
       .UpdatePersonAsync(info, token);
 
     PersonInfo = info;
+  }
+
+  private void OnToggleMainPerson()
+  {
+    if (IsMainPerson)
+    {
+      _MainPersonStore.Clear(_CurrentProjectProvider.Info);
+    }
+    else
+    {
+      _MainPersonStore.Set(_CurrentProjectProvider.Info, _PersonFullInfo.Id);
+    }
+
+    // The list page reads the mark straight off the cached ProjectInfo now (resolved live while a
+    // project is open for listing), so a mark toggled here must drop that cache or the badge won't
+    // reflect it until something else invalidates it.
+    _ProjectList.InvalidateItems();
+
+    OnPropertyChanged(nameof(MainPersonMenuItemName));
   }
 }

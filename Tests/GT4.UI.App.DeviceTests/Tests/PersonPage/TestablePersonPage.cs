@@ -27,6 +27,7 @@ internal sealed class TestablePersonPage : PersonPage
   public TestablePersonPage(
     ICancellationTokenProvider cancellationTokenProvider,
     ICurrentProjectProvider currentProjectProvider,
+    IMainPersonStore mainPersonStore,
     IDateSpanFormatter dateSpanFormatter,
     IDateFormatter dateFormatter,
     INameFormatter nameFormatter,
@@ -39,10 +40,12 @@ internal sealed class TestablePersonPage : PersonPage
     INavigationService navigationService,
     IBiologicalSexFormatter biologicalSexFormatter,
     CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory,
-    InlineMediaProvider mediaProvider)
+    InlineMediaProvider mediaProvider,
+    IProjectList projectList)
     : base(
       cancellationTokenProvider,
       currentProjectProvider,
+      mainPersonStore,
       dateSpanFormatter,
       dateFormatter,
       nameFormatter,
@@ -53,7 +56,8 @@ internal sealed class TestablePersonPage : PersonPage
       navigationService,
       biologicalSexFormatter,
       createOrUpdatePersonDialogFactory,
-      mediaProvider)
+      mediaProvider,
+      projectList)
   {
     // FilterDataLoaded fires exactly once per lazy fetch, after SetMarriedIds/SetYearBounds have
     // been applied on the main thread.

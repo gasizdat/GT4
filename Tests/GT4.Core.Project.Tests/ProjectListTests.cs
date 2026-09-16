@@ -22,6 +22,7 @@ public sealed class ProjectListTests : IDisposable
   private readonly string _root = Path.Combine(Path.GetTempPath(), $"gt4_list_{Guid.NewGuid():N}");
   private readonly DiskFileSystem _fs;
   private readonly TempStorage _storage = new();
+  private readonly IMainPersonStore _mainPersonStore;
   private readonly ProjectList _list;
   private CancellationToken Token => TestContext.Current.CancellationToken;
 
@@ -29,7 +30,8 @@ public sealed class ProjectListTests : IDisposable
   {
     Directory.CreateDirectory(_root);
     _fs = new DiskFileSystem(_root);
-    _list = new ProjectList(_storage, _fs);
+    _mainPersonStore = new MainPersonStore(new ProjectConfigurationProvider.Factory(_fs, _storage));
+    _list = new ProjectList(_storage, _fs, _mainPersonStore);
   }
 
   public void Dispose()
@@ -308,6 +310,43 @@ public sealed class ProjectListTests : IDisposable
 
     items.Should().ContainSingle();
     items[0].Name.Should().StartWith("Error:");
+    items[0].MainPerson.Should().BeNull();
+  }
+
+  [Fact]
+  public async Task GetItems_MarkedPersonDeleted_ListsWithNoMainPerson()
+  {
+    // The mark points at a person id the project never actually has -- same as one that existed and
+    // was since deleted. Listing must still succeed; only the actual open (MainPersonResolver) clears it.
+    var origin = await SeedProjectAsync("Orphaned", "d");
+    _mainPersonStore.Set(new ProjectInfo("Orphaned", "d", null, origin), 999);
+
+    var items = await _list.GetItemsAsync(Token);
+
+    items.Should().ContainSingle();
+    items[0].MainPerson.Should().BeNull();
+  }
+
+  [Fact]
+  public async Task GetItems_MarkedPersonExists_ResolvesTheLiveDisplayName()
+  {
+    var origin = await SeedProjectAsync("Marked", "d");
+    int personId;
+    await using (var doc = await ProjectDocument.OpenAsync(_fs.ToPath(origin), Token))
+    {
+      var name = await doc.Names.AddNameAsync("Ada", NameType.FirstName, null, Token);
+      var personFullInfo = PersonFullInfo.Empty with { Names = [name] };
+      var added = await doc.PersonManager.AddPersonAsync(personFullInfo, Token);
+      personId = added.Id;
+    }
+    _mainPersonStore.Set(new ProjectInfo("Marked", "d", null, origin), personId);
+
+    var items = await _list.GetItemsAsync(Token);
+
+    items.Should().ContainSingle();
+    items[0].MainPerson.Should().NotBeNull();
+    items[0].MainPerson!.Id.Should().Be(personId);
+    items[0].MainPerson!.DisplayName.Should().Be("Ada");
   }
 
   [Fact]
@@ -320,7 +359,7 @@ public sealed class ProjectListTests : IDisposable
     fileSystem
       .Setup(fs => fs.GetFiles(_storage.ProjectsRoot, $"*.{ProjectList.ProjectExtension}", true))
       .Throws(new IOException("disk unavailable"));
-    var list = new ProjectList(_storage, fileSystem.Object);
+    var list = new ProjectList(_storage, fileSystem.Object, _mainPersonStore);
 
     var act = () => list.GetItemsAsync(Token);
 
@@ -407,7 +446,7 @@ public sealed class ProjectListTests : IDisposable
     var staleOlder = SeedRevision("Unflushed", "version-2.gt4", origin, new DateTime(2026, 2, 1));
     var staleNewer = SeedRevision("Unflushed", "version-3.gt4", origin, new DateTime(2026, 3, 1));
 
-    var list = new ProjectList(_storage, new DiskFileSystem(_root, _ => 0));
+    var list = new ProjectList(_storage, new DiskFileSystem(_root, _ => 0), _mainPersonStore);
     await list.SanitizeRevisionsAsync(Token);
 
     _fs.FileExists(committed).Should().BeTrue();
@@ -442,7 +481,7 @@ public sealed class ProjectListTests : IDisposable
     var older = SeedRevision("Resized", "version-1.gt4", origin, new DateTime(2026, 1, 1));
     var newer = SeedRevision("Resized", "version-22.gt4", origin, new DateTime(2026, 2, 1));
 
-    var list = new ProjectList(_storage, new DiskFileSystem(_root, file => file.FileName.Length));
+    var list = new ProjectList(_storage, new DiskFileSystem(_root, file => file.FileName.Length), _mainPersonStore);
     await list.SanitizeRevisionsAsync(Token);
 
     _fs.FileExists(older).Should().BeTrue();

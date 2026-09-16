@@ -1,125 +1,16 @@
-﻿using Microsoft.Extensions.Configuration;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-
 namespace GT4.Core.Utils;
 
-internal partial class AppConfigurationProvider : ConfigurationProvider, IInteractiveConfiguration
+internal sealed class AppConfigurationProvider : FlatJsonConfigurationProvider
 {
-  [JsonSourceGenerationOptions(
-    WriteIndented = true,
-    PropertyNameCaseInsensitive = true,
-    PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
-    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
-  [JsonSerializable(typeof(Dictionary<string, string?>))]
-  private partial class JsonContext : JsonSerializerContext
-  {
-  }
-
-  private static readonly TimeSpan SaveDebounce = TimeSpan.FromSeconds(2);
-
-  private readonly IFileSystem _FileSystem;
   private readonly IStorage _Storage;
-  private bool _FlushRequested = false;
 
-  public string Name => WellKnownActiveConfigurations.AppConfig;
-
-  public AppConfigurationProvider(IFileSystem fileSystem, IStorage storage)
+  public AppConfigurationProvider(IFileSystem fileSystem, IStorage storage) : base(fileSystem)
   {
-    _FileSystem = fileSystem;
     _Storage = storage;
   }
 
-  protected FileDescription File =>
+  public override string Name => WellKnownActiveConfigurations.AppConfig;
+
+  protected override FileDescription File =>
     new FileDescription(_Storage.AppConfig, "appconfig.json", System.Net.Mime.MediaTypeNames.Text.Plain);
-
-  protected void RequestFlush()
-  {
-    if (!Interlocked.Exchange(ref _FlushRequested, true))
-    {
-      async Task DelayAndUpdate()
-      {
-        try
-        {
-          await Task.Delay(SaveDebounce);
-        }
-        finally
-        {
-          Flush();
-          OnReload();
-        }
-      }
-
-      Task.Run(DelayAndUpdate);
-    }
-  }
-
-  public override void Load()
-  {
-    base.Load();
-
-    try
-    {
-      if (_FileSystem.FileExists(File))
-      {
-        using var stream = _FileSystem.OpenReadStream(File);
-        var data = JsonSerializer.Deserialize(stream, JsonContext.Default.DictionaryStringString);
-        if (data == null)
-        {
-          return;
-        }
-
-        lock (Data)
-        {
-          foreach (var item in data)
-          {
-            Data.Add(item);
-          }
-        }
-      }
-    }
-    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
-    {
-      // A missing/locked/corrupt config file must not crash startup; the provider just stays empty.
-      // Unexpected exceptions are left to propagate so real bugs are not hidden.
-      System.Diagnostics.Debug.WriteLine($"{nameof(Load)}(): {ex}");
-    }
-  }
-
-  public void SetKey(string key, string value)
-  {
-    lock (Data)
-    {
-      Data[key] = value;
-      RequestFlush();
-    }
-  }
-
-  public void RemoveKey(string key)
-  {
-    lock (Data)
-    {
-      Data.Remove(key);
-      RequestFlush();
-    }
-  }
-
-  public void Flush()
-  {
-    lock (Data)
-    {
-      if (Interlocked.Exchange(ref _FlushRequested, false))
-      {
-        try
-        {
-          using var stream = _FileSystem.OpenWriteStream(File);
-          JsonSerializer.Serialize(stream, Data, JsonContext.Default.DictionaryStringString);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
-        {
-          System.Diagnostics.Debug.WriteLine($"{nameof(Flush)}(): {ex}");
-        }
-      }
-    }
-  }
 }

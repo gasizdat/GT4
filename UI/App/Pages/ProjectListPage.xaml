@@ -69,6 +69,15 @@
                         Style="{StaticResource CardContent}"
                         Text="{Binding Revision}" />
 
+                    <components:PersonInfoView
+                        IsVisible="{Binding MainPersonVisible}"
+                        NameFormat="CommonPersonName"
+                        NameLabelStyle="{StaticResource CardContent}"
+                        Person="{Binding MainPerson}"
+                        PhotoStyle="{StaticResource PhotoCompactStyle}"
+                        ShowAge="False"
+                        ShowDates="False" />
+
                   </VerticalStackLayout>
 
                 </FlexLayout>

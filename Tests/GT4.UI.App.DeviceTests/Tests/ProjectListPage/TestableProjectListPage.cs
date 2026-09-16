@@ -5,6 +5,7 @@ using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Items;
 using GT4.UI.Pages;
+using GT4.UI.Utils;
 
 namespace GT4.UI.DeviceTests;
 
@@ -24,7 +25,8 @@ internal sealed class TestableProjectListPage : ProjectListPage
     GedcomImportEncoding gedcomImportEncoding,
     IAlertService alertService,
     INavigationService navigationService,
-    IImageCache imageCache)
+    IImageCache imageCache,
+    MainPersonResolver mainPersonResolver)
     : base(
       cancellationTokenProvider,
       currentProjectProvider,
@@ -34,7 +36,8 @@ internal sealed class TestableProjectListPage : ProjectListPage
       gedcomImportEncoding,
       alertService,
       navigationService,
-      imageCache)
+      imageCache,
+      mainPersonResolver)
   {
   }
 

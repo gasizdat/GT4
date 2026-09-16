@@ -95,7 +95,16 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("AlertTextKinshipUnfoldingAborted", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to The main person for this project could no longer be found, so it has been unmarked..
+        /// </summary>
+        public static string AlertTextMainPersonMissing {
+            get {
+                return ResourceManager.GetString("AlertTextMainPersonMissing", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to This project was created by an older version of the app. It has to be updated before it can be opened. Update it now?.
         /// </summary>
@@ -1055,7 +1064,16 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("FieldLastNameMaleEntry", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to ⭐ {0}.
+        /// </summary>
+        public static string FieldMainPerson_1 {
+            get {
+                return ResourceManager.GetString("FieldMainPerson_1", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Marital status.
         /// </summary>
@@ -2393,7 +2411,25 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("MenuItemGoToKinshipFinder", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to ⭐ Main person.
+        /// </summary>
+        public static string MenuItemGoToMainPerson {
+            get {
+                return ResourceManager.GetString("MenuItemGoToMainPerson", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 🌳 Main person's family tree.
+        /// </summary>
+        public static string MenuItemGoToMainPersonFamilyTree {
+            get {
+                return ResourceManager.GetString("MenuItemGoToMainPersonFamilyTree", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to 📝 To Names.
         /// </summary>
@@ -2501,7 +2537,16 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("MenuItemNameFilters", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} Mark as main person.
+        /// </summary>
+        public static string MenuItemNameMarkAsMainPerson_1 {
+            get {
+                return ResourceManager.GetString("MenuItemNameMarkAsMainPerson_1", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to 👤 Open {0}.
         /// </summary>
@@ -2537,7 +2582,16 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("MenuItemNameSettings", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} Unmark as main person.
+        /// </summary>
+        public static string MenuItemNameUnmarkAsMainPerson_1 {
+            get {
+                return ResourceManager.GetString("MenuItemNameUnmarkAsMainPerson_1", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to January.
         /// </summary>

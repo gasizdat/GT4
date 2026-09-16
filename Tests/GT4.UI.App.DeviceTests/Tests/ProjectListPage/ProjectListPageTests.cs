@@ -30,6 +30,8 @@ public class ProjectListPageTests
   private static ProjectHost CreateHost(ProjectInfo info) =>
     new(Mock.Of<IFileSystem>(), info.Origin, info.Origin);
 
+  private static ProjectItem CreateItem(ProjectInfo info, PersonInfo? mainPerson = null) => new(info, mainPerson);
+
   private static async Task<TestableProjectListPage> CreatePageAsync(TestServices services)
   {
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
@@ -114,13 +116,57 @@ public class ProjectListPageTests
       .Setup(p => p.OpenAsync(info, It.IsAny<CancellationToken>()))
       .Returns(Task.CompletedTask);
     var page = await CreatePageAsync(services);
-    var projectItem = new ProjectItem(info);
+    var projectItem = CreateItem(info);
 
     await page.InvokeProjectSelectedAsync(projectItem);
 
     services.CurrentProjectProvider.Verify(p => p.OpenAsync(info, It.IsAny<CancellationToken>()), Times.Once());
     services.NavigationService.Verify(n => n.GoToAsync($"{typeof(ProjectPage).Namespace}/{typeof(ProjectPage).Name}"), Times.Once());
     Assert.Null(page.SelectedProject);
+  }
+
+  [Fact]
+  public async Task SelectProject_with_a_main_person_also_navigates_to_them()
+  {
+    var services = new TestServices();
+    var info = P("Pushkin");
+    services.CurrentProjectProvider
+      .Setup(p => p.OpenAsync(info, It.IsAny<CancellationToken>()))
+      .Returns(Task.CompletedTask);
+    // OpenAsync's mock doesn't change what CurrentProjectProvider.Info returns afterward (fixed to
+    // TestServices.SampleProjectInfo), so the store lookup must key off that, not info.
+    services.MainPersonStore.Setup(s => s.Get(TestServices.SampleProjectInfo)).Returns(7);
+    var person = new Person(7, Date.Now, null, BiologicalSex.Male);
+    var personInfo = new PersonInfo(person, [new Name(1, "Alexander", NameType.FirstName, null)], null);
+    services.Persons.Setup(p => p.TryGetPersonByIdAsync(7, It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    services.PersonManager
+      .Setup(m => m.GetPersonInfosAsync(new[] { person }, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([personInfo]);
+    var page = await CreatePageAsync(services);
+
+    await page.InvokeProjectSelectedAsync(CreateItem(info));
+
+    var expectedRoute = $"{typeof(PersonPage).Namespace}/{typeof(PersonPage).Name}";
+    services.NavigationService.Verify(
+      n => n.GoToAsync(expectedRoute, true, It.Is<Dictionary<string, object>>(d => Equals(d["PersonInfo"], personInfo))),
+      Times.Once());
+  }
+
+  [Fact]
+  public async Task UpdateProjectList_shows_the_main_person_badge_when_one_is_marked()
+  {
+    var services = new TestServices();
+    var mainPerson = new PersonInfo(
+      new Person(7, Date.Now, null, BiologicalSex.Male), [new Name(1, "Alexander", NameType.FirstName, null)], null);
+    var info = P("Pushkin") with { MainPerson = mainPerson };
+    services.ProjectList.Setup(p => p.GetItemsAsync(It.IsAny<CancellationToken>())).ReturnsAsync([info]);
+    var page = await CreatePageAsync(services);
+
+    await MainThread.InvokeOnMainThreadAsync(page.InvokeUpdateProjectListAsync);
+    var project = await MainThread.InvokeOnMainThreadAsync(() => page.Projects.Single());
+
+    Assert.True(project.MainPersonVisible);
+    Assert.Equal(mainPerson, project.MainPerson);
   }
 
   [Fact]
@@ -137,7 +183,7 @@ public class ProjectListPageTests
       .ReturnsAsync(true);
     var page = await CreatePageAsync(services);
 
-    await page.InvokeProjectSelectedAsync(new ProjectItem(info));
+    await page.InvokeProjectSelectedAsync(CreateItem(info));
 
     services.ProjectList.Verify(p => p.UpgradeAsync(info.Origin, It.IsAny<CancellationToken>()), Times.Once());
     services.CurrentProjectProvider.Verify(p => p.OpenAsync(info, It.IsAny<CancellationToken>()), Times.Exactly(2));
@@ -158,7 +204,7 @@ public class ProjectListPageTests
       .Setup(a => a.ShowConfirmationAsync(UIStrings.AlertTextProjectSchemaOutdated))
       .ReturnsAsync(false);
     var page = await CreatePageAsync(services);
-    var projectItem = new ProjectItem(info);
+    var projectItem = CreateItem(info);
 
     await MainThread.InvokeOnMainThreadAsync(() => page.SelectedProject = projectItem);
     await Poll.UntilAsync(
@@ -181,7 +227,7 @@ public class ProjectListPageTests
       .Setup(p => p.OpenAsync(info, It.IsAny<CancellationToken>()))
       .ThrowsAsync(new InvalidOperationException("The project could not be opened."));
     var page = await CreatePageAsync(services);
-    var projectItem = new ProjectItem(info);
+    var projectItem = CreateItem(info);
 
     await MainThread.InvokeOnMainThreadAsync(() => page.SelectedProject = projectItem);
     await Poll.UntilAsync(
@@ -202,7 +248,7 @@ public class ProjectListPageTests
       .ThrowsAsync(new ProjectSchemaTooNewException(99, 1));
     var page = await CreatePageAsync(services);
 
-    await page.InvokeProjectSelectedAsync(new ProjectItem(info));
+    await page.InvokeProjectSelectedAsync(CreateItem(info));
 
     services.AlertService.Verify(a => a.ShowWarningAsync(UIStrings.AlertTextProjectSchemaTooNew), Times.Once());
     services.ProjectList.Verify(p => p.UpgradeAsync(It.IsAny<FileDescription>(), It.IsAny<CancellationToken>()), Times.Never());

@@ -37,6 +37,7 @@ internal sealed class TestServices
   public Mock<IKinshipFinder> KinshipFinder { get; } = new();
   public Mock<IAlertService> AlertService { get; } = new();
   public Mock<INavigationService> NavigationService { get; } = new();
+  public Mock<IMainPersonStore> MainPersonStore { get; } = new();
   public IServiceProvider Provider { get; }
 
   public static readonly ProjectInfo SampleProjectInfo = new(
@@ -157,6 +158,7 @@ internal sealed class TestServices
     services.AddSingleton(NavigationService.Object);
     services.AddSingleton(ProjectList.Object);
     services.AddSingleton(Importer.Object);
+    services.AddSingleton(MainPersonStore.Object);
     services.AddSingleton<TestableNamesPage>();
     services.AddSingleton<TestableGalleryPage>();
     services.AddSingleton<TestableFamilyPage>();

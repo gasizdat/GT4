@@ -19,6 +19,7 @@ public partial class KinshipFinderPage : ContentPage
   private readonly INameFormatter _NameFormatter;
   private readonly IComparer<PersonInfo> _PersonInfoComparer;
   private readonly INavigationService _NavigationService;
+  private readonly MainPersonResolver _MainPersonResolver;
   private readonly ICommand _PageCommand;
 
   private PersonInfo? _PersonFrom;
@@ -107,7 +108,8 @@ public partial class KinshipFinderPage : ContentPage
     IAlertService alertService,
     INameFormatter nameFormatter,
     IComparer<PersonInfo> personInfoComparer,
-    INavigationService navigationService)
+    INavigationService navigationService,
+    MainPersonResolver mainPersonResolver)
   {
     _CurrentProjectProvider = currentProjectProvider;
     _CancellationTokenProvider = cancellationTokenProvider;
@@ -115,6 +117,7 @@ public partial class KinshipFinderPage : ContentPage
     _NameFormatter = nameFormatter;
     _PersonInfoComparer = personInfoComparer;
     _NavigationService = navigationService;
+    _MainPersonResolver = mainPersonResolver;
     Loading = new PageLoading(_AlertService);
     _PageCommand = new SafeCommand(OnPageCommand, _AlertService);
 
@@ -131,12 +134,29 @@ public partial class KinshipFinderPage : ContentPage
     {
       Refresh();
     }
+    else if (_PersonFrom is null)
+    {
+      _ = SafeTask.GuardAsync(TrySeedMainPersonAsync, _AlertService);
+    }
   }
 
   private void Refresh()
   {
     _LastProjectInfo = _CurrentProjectProvider.Info;
     _ = SafeTask.GuardAsync(FindAsync, _AlertService);
+  }
+
+  private async Task TrySeedMainPersonAsync()
+  {
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    var mainPerson = await _MainPersonResolver.TryResolveAsync(_CurrentProjectProvider.Info, _CurrentProjectProvider.Project, token);
+
+    // The resolution is async: guard against a person the user already picked by hand while it ran.
+    if (mainPerson is not null && _PersonFrom is null)
+    {
+      _PersonFrom = mainPerson;
+      this.RefreshView();
+    }
   }
 
   public PageLoading Loading { get; }
