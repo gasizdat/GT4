@@ -12,8 +12,8 @@ using CoreFileSystem = GT4.Core.Utils.FileSystem;
 
 /// <summary>
 /// Coverage for the Core.Utils infrastructure: cancellation-token helpers, <see cref="Storage"/>,
-/// the interactive <see cref="AppConfigurationProvider"/>, the DI registration extensions and the
-/// real-disk <see cref="FileSystem"/>.
+/// the interactive <see cref="AppConfigurationProvider"/> and <see cref="ProjectConfigurationProvider"/>,
+/// the DI registration extensions and the real-disk <see cref="FileSystem"/>.
 /// </summary>
 public sealed class UtilsInfraTests
 {
@@ -111,6 +111,29 @@ public sealed class UtilsInfraTests
   }
 
   [Fact]
+  public void ProjectConfiguration_SetKey_WritesUnderTheProjectsOwnCacheFolder()
+  {
+    var root = Path.Combine(Path.GetTempPath(), $"gt4_cfg_{Guid.NewGuid():N}");
+    Directory.CreateDirectory(root);
+    try
+    {
+      var fileSystem = new DiskFileSystem(root);
+      var storage = new TempStorage();
+      var origin = new FileDescription(new DirectoryDescription(Environment.SpecialFolder.MyDocuments, ["a", "b"]), "sample.gt4", null);
+      var factory = new ProjectConfigurationProvider.Factory(fileSystem, storage);
+      var provider = factory.Create(origin);
+      provider.SetKey("MainPerson.Id", "1");
+      provider.Flush();
+
+      var projectDir = storage.ProjectsCache with { Path = [.. storage.ProjectsCache.Path, "sample"] };
+      fileSystem.FileExists(new FileDescription(projectDir, "projectconfig.json", null)).Should().BeTrue();
+      fileSystem.FileExists(new FileDescription(storage.AppConfig, "projectconfig.json", null)).Should().BeFalse();
+      fileSystem.FileExists(new FileDescription(storage.AppConfig, "appconfig.json", null)).Should().BeFalse();
+    }
+    finally { Directory.Delete(root, true); }
+  }
+
+  [Fact]
   public void AddCoreUtils_RegistersStorageAndCancellationProvider()
   {
     using var sp = new ServiceCollection().AddCoreUtils().BuildServiceProvider();
@@ -146,6 +169,26 @@ public sealed class UtilsInfraTests
     var configurationRoot = builder.Build();
 
     configurationRoot.Providers.OfType<IInteractiveConfiguration>().Should().ContainSingle();
+  }
+
+  [Fact]
+  public void ProjectConfigurationFactory_CreatesADistinctProviderPerOrigin()
+  {
+    var root = Path.Combine(Path.GetTempPath(), $"gt4_cfg_{Guid.NewGuid():N}");
+    Directory.CreateDirectory(root);
+    try
+    {
+      var factory = new ProjectConfigurationProvider.Factory(new DiskFileSystem(root), new TempStorage());
+      var originA = new FileDescription(new DirectoryDescription(Environment.SpecialFolder.MyDocuments, ["a"]), "a.gt4", null);
+      var originB = new FileDescription(new DirectoryDescription(Environment.SpecialFolder.MyDocuments, ["b"]), "b.gt4", null);
+
+      var providerA = factory.Create(originA);
+      var providerB = factory.Create(originB);
+
+      providerA.Should().NotBeSameAs(providerB);
+      providerA.Name.Should().Be(WellKnownActiveConfigurations.ProjectConfig);
+    }
+    finally { Directory.Delete(root, true); }
   }
 
   [Fact]

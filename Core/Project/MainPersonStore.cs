@@ -1,58 +1,49 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Utils;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace GT4.Core.Project;
 
 internal sealed class MainPersonStore : IMainPersonStore
 {
-  private const string KeyPrefix = "MainPerson";
+  private const string IdKey = "MainPerson.Id";
+  private const string NameKey = "MainPerson.Name";
 
-  private readonly IConfiguration _Configuration;
-  private readonly IInteractiveConfiguration? _InteractiveConfiguration;
+  private readonly ProjectConfigurationProvider.Factory _Factory;
 
-  public MainPersonStore(
-    IConfiguration configuration,
-    [FromKeyedServices(WellKnownActiveConfigurations.AppConfig)]
-    IInteractiveConfiguration? interactiveConfiguration)
+  public MainPersonStore(ProjectConfigurationProvider.Factory factory)
   {
-    _Configuration = configuration;
-    _InteractiveConfiguration = interactiveConfiguration;
+    _Factory = factory;
   }
 
   public MainPersonInfo? Get(FileDescription origin)
   {
-    var (idKey, nameKey) = KeysFor(origin);
-    var name = _Configuration[nameKey];
-    return int.TryParse(_Configuration[idKey], out var personId) && name is not null
-      ? new MainPersonInfo(personId, name)
-      : null;
+    var provider = _Factory.Create(origin);
+    provider.Load();
+
+    if (!provider.TryGet(IdKey, out var idValue) || !int.TryParse(idValue, out var personId) ||
+      !provider.TryGet(NameKey, out var name))
+    {
+      return null;
+    }
+
+    return new MainPersonInfo(personId, name!);
   }
 
   public void Set(FileDescription origin, int personId, string displayName)
   {
-    var (idKey, nameKey) = KeysFor(origin);
-    _InteractiveConfiguration?.SetKey(idKey, personId.ToString());
-    _InteractiveConfiguration?.SetKey(nameKey, displayName);
+    var provider = _Factory.Create(origin);
+    provider.Load();
+    provider.SetKey(IdKey, personId.ToString());
+    provider.SetKey(NameKey, displayName);
+    provider.Flush();
   }
 
   public void Clear(FileDescription origin)
   {
-    var (idKey, nameKey) = KeysFor(origin);
-    _InteractiveConfiguration?.RemoveKey(idKey);
-    _InteractiveConfiguration?.RemoveKey(nameKey);
-  }
-
-  // Origin is a path, and ':' (a Windows drive letter) collides with the flat config store's own
-  // section delimiter -- hashing sidesteps sanitizing arbitrary path segments entirely.
-  private static (string IdKey, string NameKey) KeysFor(FileDescription origin)
-  {
-    var raw = $"{origin.Directory.Root}|{string.Join('/', origin.Directory.Path)}|{origin.FileName}";
-    var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(raw)))[..16];
-    var key = $"{KeyPrefix}.{hash}";
-    return (key, $"{key}.Name");
+    var provider = _Factory.Create(origin);
+    provider.Load();
+    provider.RemoveKey(IdKey);
+    provider.RemoveKey(NameKey);
+    provider.Flush();
   }
 }

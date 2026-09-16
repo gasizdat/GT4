@@ -1,7 +1,6 @@
 using FluentAssertions;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Utils;
-using Microsoft.Extensions.Configuration;
 using Xunit;
 
 namespace GT4.Core.Project.Tests;
@@ -12,9 +11,8 @@ public sealed class MainPersonStoreTests
   {
     var root = Path.Combine(Path.GetTempPath(), $"gt4_mainperson_{Guid.NewGuid():N}");
     Directory.CreateDirectory(root);
-    var provider = new AppConfigurationProvider(new DiskFileSystem(root), new TempStorage());
-    var configurationRoot = new ConfigurationRoot(new IConfigurationProvider[] { provider });
-    return (new MainPersonStore(configurationRoot, provider), root);
+    var factory = new ProjectConfigurationProvider.Factory(new DiskFileSystem(root), new TempStorage());
+    return (new MainPersonStore(factory), root);
   }
 
   private static FileDescription Origin(string fileName) =>
