@@ -9,6 +9,7 @@
     x:Name="Root">
 
   <components:PageLayout
+      x:Name="LayoutView"
       Title="{x:Static resources:UIStrings.TitleProjectPage}"
       HasBackButton="True"
       Hint="{x:Static resources:UIStrings.HintProjectPage}"
@@ -18,10 +19,12 @@
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="Create"
+          EditingAction="True"
           Text="{x:Static resources:UIStrings.MenuItemNameCreateGenealogyTree}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="Import"
+          EditingAction="True"
           Text="{x:Static resources:UIStrings.MenuItemImport}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
@@ -120,6 +123,7 @@
           CommandParameter="Create"
           FontSize="{DynamicResource ActionButtonTextSize}"
           HorizontalOptions="Fill"
+          IsVisible="{Binding ReadOnlyMode.CanEdit, Source={x:Reference LayoutView}}"
           Text="{x:Static resources:UIStrings.BtnNameCreateGenealogyTree}" />
     </components:PageLayout.Footer>
 

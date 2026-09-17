@@ -26,6 +26,7 @@
   </ContentPage.Resources>
 
   <components:PageLayout
+      x:Name="LayoutView"
       Title="{Binding FamilyName.Value, Source={x:Reference Root}}"
       HasBackButton="True"
       Hint="{x:Static resources:UIStrings.HintFamilyPage}"
@@ -35,16 +36,19 @@
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="RemoveFamily"
+          EditingAction="True"
           IsEnabled="{Binding EnableFamilyChanges, Source={x:Reference Root}}"
           Text="{Binding RemoveFamilyToolbarItemName, Source={x:Reference Root}}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="EditFamily"
+          EditingAction="True"
           IsEnabled="{Binding EnableFamilyChanges, Source={x:Reference Root}}"
           Text="{Binding EditFamilyToolbarItemName, Source={x:Reference Root}}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="CreatePerson"
+          EditingAction="True"
           Text="{x:Static resources:UIStrings.MenuItemNameAddPerson}" />
       <items:PageMenuItem
           Command="{Binding FilterCommand, Source={x:Reference FilterView}}"
@@ -145,6 +149,7 @@
           CommandParameter="CreatePerson"
           FontSize="{DynamicResource ActionButtonTextSize}"
           HorizontalOptions="Fill"
+          IsVisible="{Binding ReadOnlyMode.CanEdit, Source={x:Reference LayoutView}}"
           Text="{x:Static resources:UIStrings.BtnNameCreateFamilyPerson}" />
     </components:PageLayout.Footer>
   </components:PageLayout>

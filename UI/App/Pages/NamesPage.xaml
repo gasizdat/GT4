@@ -11,6 +11,7 @@
     x:Name="Root">
 
   <components:PageLayout
+      x:Name="LayoutView"
       Title="{x:Static resources:UIStrings.TitleNamesPage}"
       HasBackButton="True"
       Hint="{x:Static resources:UIStrings.HintNamesPage}"
@@ -115,6 +116,7 @@
                   Grid.Column="1"
                   Command="{Binding DeleteNameCommand, Source={x:Reference Root}}"
                   CommandParameter="{Binding .}"
+                  IsVisible="{Binding ReadOnlyMode.CanEdit, Source={x:Reference LayoutView}}"
                   Style="{StaticResource DeleteAdorner}"
                   VerticalOptions="Start" />
 
@@ -122,6 +124,7 @@
                   Grid.Column="2"
                   Command="{Binding EditNameCommand, Source={x:Reference Root}}"
                   CommandParameter="{Binding .}"
+                  IsVisible="{Binding ReadOnlyMode.CanEdit, Source={x:Reference LayoutView}}"
                   Style="{StaticResource EditAdorner}"
                   VerticalOptions="Start" />
 
@@ -144,6 +147,7 @@
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="AddName"
           HorizontalOptions="Fill"
+          IsVisible="{Binding ReadOnlyMode.CanEdit, Source={x:Reference LayoutView}}"
           Style="{StaticResource AddAdorner}" />
     </components:PageLayout.Footer>
 

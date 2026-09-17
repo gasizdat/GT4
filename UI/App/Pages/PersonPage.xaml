@@ -60,14 +60,17 @@
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="RemovePerson"
+          EditingAction="True"
           Text="{Binding RemovePersonToolbarItemName, Source={x:Reference Root}}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="EditPerson"
+          EditingAction="True"
           Text="{Binding EditPersonToolbarItemName, Source={x:Reference Root}}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="ToggleMainPerson"
+          EditingAction="True"
           Text="{Binding MainPersonMenuItemName, Source={x:Reference Root}}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"

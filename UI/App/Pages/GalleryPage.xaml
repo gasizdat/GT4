@@ -10,6 +10,7 @@
     x:Name="Root">
 
   <components:PageLayout
+      x:Name="LayoutView"
       Title="{x:Static resources:UIStrings.TitleGalleryPage}"
       HasBackButton="True"
       Loading="{Binding Loading, Source={x:Reference Root}}"
@@ -100,6 +101,7 @@
                   Grid.Column="2"
                   Command="{Binding DeleteDataCommand, Source={x:Reference Root}}"
                   CommandParameter="{Binding .}"
+                  IsVisible="{Binding ReadOnlyMode.CanEdit, Source={x:Reference LayoutView}}"
                   Style="{StaticResource DeleteAdorner}"
                   VerticalOptions="Start" />
 
