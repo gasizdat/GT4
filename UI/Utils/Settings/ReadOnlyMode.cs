@@ -20,9 +20,12 @@ public sealed class ReadOnlyMode : INotifyPropertyChanged
       {
         _IsEnabled = value;
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsEnabled)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CanEdit)));
       }
     }
   }
+
+  public bool CanEdit => !IsEnabled;
 
   public void Apply(string? enabledValue) => IsEnabled = bool.TryParse(enabledValue, out var parsed) && parsed;
 }
