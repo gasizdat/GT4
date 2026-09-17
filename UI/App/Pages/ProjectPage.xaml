@@ -11,9 +11,11 @@
 
   <ContentPage.Resources>
     <components:ChipWidthFractionConverter x:Key="ChipWidthFractionConverter" />
+    <components:InvertedBoolConverter x:Key="InvertedBoolConverter" />
   </ContentPage.Resources>
 
   <components:PageLayout
+      x:Name="LayoutView"
       Title="{x:Static resources:UIStrings.TitleFamiliesPage}"
       HasBackButton="True"
       Hint="{x:Static resources:UIStrings.HintFamiliesPage}"
@@ -172,6 +174,7 @@
           CommandParameter="CreateFamily"
           FontSize="{DynamicResource ActionButtonTextSize}"
           HorizontalOptions="Fill"
+          IsVisible="{Binding ReadOnlyMode.IsEnabled, Source={x:Reference LayoutView}, Converter={StaticResource InvertedBoolConverter}}"
           Text="{x:Static resources:UIStrings.BtnNameCreateFamily}" />
     </components:PageLayout.Footer>
 
