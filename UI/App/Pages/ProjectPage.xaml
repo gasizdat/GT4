@@ -25,18 +25,22 @@
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="RemoveProject"
+          EditingAction="True"
           Text="{Binding RemoveProjectToolbarItemName, Source={x:Reference Root}}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="EditProject"
+          EditingAction="True"
           Text="{Binding EditProjectToolbarItemName, Source={x:Reference Root}}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="CreateFamily"
+          EditingAction="True"
           Text="{x:Static resources:UIStrings.MenuItemNameCreateFamily}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="ImportGedcom"
+          EditingAction="True"
           Text="{x:Static resources:UIStrings.MenuItemImportGedcom}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"

@@ -4,10 +4,13 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:items="clr-namespace:GT4.UI.Items"
+    xmlns:local="clr-namespace:GT4.UI.Components"
     x:Name="Root">
 
   <ContentView.Resources>
     <ResourceDictionary>
+      <local:EditingActionVisibleConverter x:Key="EditingActionVisibleConverter" />
+
       <Thickness
           x:Key="HeaderPadding"
           Bottom="0"
@@ -35,6 +38,14 @@
         <Setter Property="IsEnabled" Value="{Binding IsEnabled}" />
         <Setter Property="Text" Value="{Binding ButtonText}" />
         <Setter Property="ToolTipProperties.Text" Value="{Binding ToolTipText}" />
+        <Setter Property="IsVisible">
+          <Setter.Value>
+            <MultiBinding Converter="{StaticResource EditingActionVisibleConverter}">
+              <Binding Path="EditingAction" />
+              <Binding Path="ReadOnlyMode.IsEnabled" Source="{x:Reference Root}" />
+            </MultiBinding>
+          </Setter.Value>
+        </Setter>
       </Style>
 
       <DataTemplate

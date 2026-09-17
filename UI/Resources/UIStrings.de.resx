@@ -1065,6 +1065,12 @@ FN - Familienname</value>
   <data name="FieldBackgroundAnimationHint" xml:space="preserve">
     <value>Ob der animierte Baumhintergrund auf jeder Seite abgespielt wird.</value>
   </data>
+  <data name="FieldReadOnlyMode" xml:space="preserve">
+    <value>Schreibgeschützter Modus</value>
+  </data>
+  <data name="FieldReadOnlyModeHint" xml:space="preserve">
+    <value>Blendet Menüpunkte aus, die Daten bearbeiten, erstellen oder entfernen. Navigation, Filter und Aktualisieren bleiben verfügbar.</value>
+  </data>
   <data name="FieldTheme" xml:space="preserve">
     <value>Design</value>
   </data>

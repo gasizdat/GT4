@@ -21,6 +21,7 @@ public partial class PageLayout : ContentView
   public PageLayout(IServiceProvider serviceProvider)
   {
     Animation = serviceProvider.GetRequiredService<BackgroundAnimation>();
+    ReadOnlyMode = serviceProvider.GetRequiredService<ReadOnlyMode>();
     _NavigationService = serviceProvider.GetRequiredService<INavigationService>();
     _CurrentProjectProvider = serviceProvider.GetRequiredService<ICurrentProjectProvider>();
 
@@ -48,6 +49,8 @@ public partial class PageLayout : ContentView
   public const string GoBackCommandParameter = "PageLayout.GoBackCommand";
 
   public BackgroundAnimation Animation { get; }
+
+  public ReadOnlyMode ReadOnlyMode { get; }
 
   public PageMenuItem BackItem { get; }
 
