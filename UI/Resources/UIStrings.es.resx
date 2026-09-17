@@ -1065,6 +1065,12 @@ FN - apellido familiar</value>
   <data name="FieldBackgroundAnimationHint" xml:space="preserve">
     <value>Si se reproduce la animación del árbol de fondo en todas las páginas.</value>
   </data>
+  <data name="FieldReadOnlyMode" xml:space="preserve">
+    <value>Modo de solo lectura</value>
+  </data>
+  <data name="FieldReadOnlyModeHint" xml:space="preserve">
+    <value>Oculta los elementos de menú que editan, crean o eliminan datos. La navegación, los filtros y la actualización siguen disponibles.</value>
+  </data>
   <data name="FieldTheme" xml:space="preserve">
     <value>Tema</value>
   </data>

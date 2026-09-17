@@ -38,6 +38,9 @@ public partial class App : Application
     [FromKeyedServices(SettingKeys.Theme)]
     ISettingEditor? themeSetting,
     Theme theme,
+    [FromKeyedServices(SettingKeys.ReadOnlyMode)]
+    ISettingEditor? readOnlyModeSetting,
+    ReadOnlyMode readOnlyMode,
     [FromKeyedServices(WellKnownActiveConfigurations.AppConfig)]
     IInteractiveConfiguration? appConfiguration)
   {
@@ -58,6 +61,7 @@ public partial class App : Application
     fontScale.Apply(fontScaleSetting?.Value);
     backgroundAnimation.Apply(backgroundAnimationSetting?.Value);
     theme.Apply(themeSetting?.Value);
+    readOnlyMode.Apply(readOnlyModeSetting?.Value);
 
 #if ANDROID
     Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific.Application.UseWindowSoftInputModeAdjust(

@@ -14,6 +14,7 @@
   </ContentPage.Resources>
 
   <components:PageLayout
+      x:Name="LayoutView"
       Title="{x:Static resources:UIStrings.TitleFamiliesPage}"
       HasBackButton="True"
       Hint="{x:Static resources:UIStrings.HintFamiliesPage}"
@@ -25,18 +26,22 @@
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="RemoveProject"
+          EditingAction="True"
           Text="{Binding RemoveProjectToolbarItemName, Source={x:Reference Root}}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="EditProject"
+          EditingAction="True"
           Text="{Binding EditProjectToolbarItemName, Source={x:Reference Root}}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="CreateFamily"
+          EditingAction="True"
           Text="{x:Static resources:UIStrings.MenuItemNameCreateFamily}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="ImportGedcom"
+          EditingAction="True"
           Text="{x:Static resources:UIStrings.MenuItemImportGedcom}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
@@ -168,6 +173,7 @@
           CommandParameter="CreateFamily"
           FontSize="{DynamicResource ActionButtonTextSize}"
           HorizontalOptions="Fill"
+          IsVisible="{Binding ReadOnlyMode.CanEdit, Source={x:Reference LayoutView}}"
           Text="{x:Static resources:UIStrings.BtnNameCreateFamily}" />
     </components:PageLayout.Footer>
 

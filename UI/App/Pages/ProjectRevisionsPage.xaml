@@ -10,6 +10,7 @@
     NavigatedTo="OnNavigatedTo">
 
   <components:PageLayout
+      x:Name="LayoutView"
       Title="{x:Static resources:UIStrings.TitleProjectRevisionsPage}"
       HasBackButton="True"
       Hint="{x:Static resources:UIStrings.HintProjectRevisionsPage}"
@@ -47,6 +48,7 @@
                   Grid.Column="1"
                   Command="{Binding DeleteRevisionCommand, Source={x:Reference Root}}"
                   CommandParameter="{Binding .}"
+                  IsVisible="{Binding ReadOnlyMode.CanEdit, Source={x:Reference LayoutView}}"
                   Style="{StaticResource DeleteAdorner}"
                   VerticalOptions="Start" />
 
@@ -62,6 +64,7 @@
           CommandParameter="Restore"
           FontSize="{DynamicResource ActionButtonTextSize}"
           HorizontalOptions="Fill"
+          IsVisible="{Binding ReadOnlyMode.CanEdit, Source={x:Reference LayoutView}}"
           Text="{Binding RestoreBtnName, Source={x:Reference Root}}" />
     </components:PageLayout.Footer>
   </components:PageLayout>

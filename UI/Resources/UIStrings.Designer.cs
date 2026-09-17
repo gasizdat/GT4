@@ -708,7 +708,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("FieldBackgroundAnimationHint", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Biological sex.
         /// </summary>
@@ -1221,6 +1221,24 @@ namespace GT4.UI.Resources {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to Read-only mode.
+        /// </summary>
+        public static string FieldReadOnlyMode {
+            get {
+                return ResourceManager.GetString("FieldReadOnlyMode", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Hides menu items that edit, create, or remove data. Navigation, filters, and refresh stay available..
+        /// </summary>
+        public static string FieldReadOnlyModeHint {
+            get {
+                return ResourceManager.GetString("FieldReadOnlyModeHint", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Start date.
         /// </summary>

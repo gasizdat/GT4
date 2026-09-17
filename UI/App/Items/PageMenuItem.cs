@@ -2,6 +2,9 @@ namespace GT4.UI.Items;
 
 public class PageMenuItem : MenuItem
 {
+  // Marks an item as performing a mutation, so PageLayout can hide it under ReadOnlyMode.
+  public bool EditingAction { get; set; }
+
   public string ButtonText
   {
     get

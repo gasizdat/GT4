@@ -1065,6 +1065,12 @@ FN - family name</value>
   <data name="FieldBackgroundAnimationHint" xml:space="preserve">
     <value>Whether the animated tree background on every page plays.</value>
   </data>
+  <data name="FieldReadOnlyMode" xml:space="preserve">
+    <value>Read-only mode</value>
+  </data>
+  <data name="FieldReadOnlyModeHint" xml:space="preserve">
+    <value>Hides menu items that edit, create, or remove data. Navigation, filters, and refresh stay available.</value>
+  </data>
   <data name="FieldTheme" xml:space="preserve">
     <value>Theme</value>
   </data>
