@@ -3,12 +3,28 @@
 Source copy for the Partner Center listing of **Genealogy Tree**
 (package identity `gasizdat.GenealogyTree`, see `UI/App/AppCommon.props`).
 
+**[listing-data-en-us.csv](listing-data-en-us.csv) is what actually gets
+imported into Partner Center** (Store listings page has a matching
+Export/Import pair) — update it alongside this file rather than retyping
+fields into the UI by hand. This file stays the rationale layer: why each
+claim is worded the way it is, character-limit tracking, and the Play
+appendix, none of which the CSV carries. When copy changes, edit the prose
+here first, then carry the same wording into the CSV in Partner Center's
+plain-text style (see the note below).
+
+**Partner Center's Description field does not render Markdown.** A live
+export confirmed it: `###` headings and `**bold**` markers both came back as
+literal characters, so the checked-in CSV uses ALL-CAPS section headings and
+plain punctuation instead (an em dash becomes a comma or semicolon; a
+`**Label**` lead-in becomes `Label,`). Match that style in the CSV even though
+this file keeps Markdown for its own readability.
+
 Character limits below are Microsoft's published limits as of this writing —
 re-check them in Partner Center before pasting, since Microsoft revises them.
 
 Every claim here is traceable to shipping behaviour; see
 [claim-sources.md](claim-sources.md) for the file each one comes from. If a
-feature changes, fix that table and this file together.
+feature changes, fix that table, this file, and the CSV together.
 
 ## Product name
 
@@ -30,12 +46,6 @@ family calendar. No account, no cloud.
 *4,396 characters once the source line wraps below are unwrapped into single
 spaces, counting the `###` and `-` markers. Well inside the 10,000 limit; see
 the Play appendix, where it matters.*
-
-*Paste it into Partner Center and check the preview before saving: how much
-Markdown the Description field renders has changed over time. If the `###`
-headings come out as literal hashes, drop the hashes and leave the heading text
-on its own line — the section breaks still read.*
-
 
 **Genealogy Tree keeps your family history where it belongs: on your own
 computer.** There is no account to create, no server to sync with and no

@@ -199,11 +199,20 @@ the user picks them in Settings — but the Store will list English only unless
 package-level language resources are added. Say so in the listing copy (it does)
 rather than expecting Partner Center to show all five.
 
-**Store listings** — copy from
-[microsoft-store-listing-en.md](microsoft-store-listing-en.md); screenshots and
-their captions and order from [screenshots/README.md](screenshots/README.md).
-Every claim in the copy is traced in [claim-sources.md](claim-sources.md); fix
-both files together when behaviour changes.
+**Store listings** — upload [listing-data-en-us.csv](listing-data-en-us.csv)
+via the Store listings page's **Import** button rather than retyping fields;
+it carries Description, What's new, Features, Search terms and screenshot
+captions in the exact plain-text style Partner Center's fields actually
+render (see the note in
+[microsoft-store-listing-en.md](microsoft-store-listing-en.md) — Markdown
+doesn't render there). The screenshot-file rows still hold whatever asset URLs
+were live in Partner Center at the last export; how the Import path treats
+those cells when screenshots actually change hasn't been tested yet — verify
+with one screenshot before trusting it for a full set, and update this note
+with what's learned. Screenshots themselves, their captions and order are also
+described in [screenshots/README.md](screenshots/README.md). Every claim in
+the copy is traced in [claim-sources.md](claim-sources.md); fix the CSV, this
+file's prose copy, and that table together when behaviour changes.
 
 ## Known at the time of this release
 
