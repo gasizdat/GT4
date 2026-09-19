@@ -177,6 +177,19 @@ signed by a trusted CA: the Store re-signs every MSIX it accepts. The
 `runFullTrust` restricted capability is normal for a packaged desktop app; if the
 form asks for justification, it is "packaged Win32/WinUI desktop application".
 
+**Mandatory update** — a per-submission toggle on the Packages page, not a
+property of the app in general; decide it fresh each time, not from what a
+previous submission did. Default to leaving it off: most updates here are
+features and non-crash bug fixes, and marking every submission mandatory just
+trains the toggle to be ignored. Turn it on when a submission fixes a crash or
+a data-loss/corruption bug that shipped in a previous submission — the
+September 2026 release (this one, at the time of writing) qualifies: PR #372
+fixes a `STATUS_STOWED_EXCEPTION` crash decoding photo thumbnails. Word it
+precisely if you note the reason anywhere user-facing: PR #372 fixes that crash
+on the one repro path it targeted (thumbnail decoding contending with WinUI's
+UI-thread lock); issue #370 — the same crash class — stays open for other
+triggers, so "fixes a crash" is accurate and "fixes the crash" is not.
+
 The package declares **`EN-US` only** — read out of the shipped
 `GT4-4.0.656.0-win-x64.msix`. The manifest asks for
 `<Resource Language="x-generate" />`, and the PRI build finds one language,
