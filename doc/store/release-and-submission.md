@@ -220,16 +220,15 @@ file's prose copy, and that table together when behaviour changes.
   survive a GEDCOM export/reimport round trip, via a GT4 extension record
   (`_FAML`). `claim-sources.md`'s exclusion for this has been widened
   accordingly; the listing copy now states it.
-- **The `.gt4` MSIX file-association path is still unconfirmed against a real
-  packaged build.** PR #384 added `windows.fileTypeAssociation` for `.gt4` to
-  `Package.appxmanifest` and reads the activating path from whichever of
-  `argv` / `AppInstance.GetActivatedEventArgs()` is populated, defensively,
-  since nothing in the repo exercised that API before. **Before this
-  submission**, install the signed MSIX (see "Before uploading" above) and
-  double-click a `.gt4` file to confirm it actually launches/imports — this
-  wasn't done for the PR and hasn't been done since. If it fails, the listing's
-  "Export or import a whole project as a single .gt4 file" feature line and the
-  "double-click to open" claim need to come back out until it's fixed.
+- **The `.gt4` MSIX file-association is confirmed working**, verified
+  2026-09-19 against the real packaged build (`4.0.688.0`, installed via
+  `install-release.ps1`): double-clicking a `.gt4` file offered "Genealogy
+  Tree" in Windows' app picker and it opened the project correctly when
+  chosen. (A second double-click opened SQLiteBrowser instead — expected,
+  since the first pick was "Just once," not "Always," so Windows never set
+  GT4 as the default handler; that's this dev machine's pre-existing default
+  for `.gt4`, not a GT4 defect.) The listing's "double-click to open" and
+  ".gt4 export/import" claims stand as written.
 - **Double-clicking a second `.gt4` while the app is already running opens a
   second instance.** Deliberate, per PR #384 — single-instance redirection was
   out of scope.

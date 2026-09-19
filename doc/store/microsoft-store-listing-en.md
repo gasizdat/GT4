@@ -212,11 +212,10 @@ verify the current limit and trim from the bottom if needed.*
   [screenshots/README.md](screenshots/README.md) ("Still worth fixing").
 - **The home/project-list screen is deliberately not in the screenshot set**
   — see screenshots/README.md ("No home screen in this set").
-- **The ".gt4 double-click to open" claim (Features list, What's new) depends
-  on a check that hasn't been run yet.** Install the signed MSIX and confirm a
-  double-click actually opens it before submitting — see "Known at the time of
-  this release" in [release-and-submission.md](release-and-submission.md). If
-  it doesn't work, pull that claim from both places first.
+- **The ".gt4 double-click to open" claim (Features list, What's new) is
+  verified** against the real packaged MSIX (`4.0.688.0`, 2026-09-19) — see
+  "Known at the time of this release" in
+  [release-and-submission.md](release-and-submission.md).
 
 ---
 
