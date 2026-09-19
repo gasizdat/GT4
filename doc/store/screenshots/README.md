@@ -1,36 +1,40 @@
 # Store screenshots
 
-Thirteen 1920×1080 PNGs, captured from the **Release** Windows head
-(`UI/App/AppWinOnly.csproj`), English, 100% text scale; light theme except `12`
-and `13`. The data is the bundled Brontë demo tree
-(`UI/App/Resources/Raw/demo.ged`) — every portrait in it is a public-domain
+Eleven PNGs at the app's natural window size (1426×746 as captured; MAUI list
+pages don't reflow into extra width, so — unlike earlier shoots — the window is
+*not* stretched to 1920×1080: doing that left wide empty margins either side of
+list content and made the shots look sparse). Captured from the **Release**
+Windows head (`UI/App/AppWinOnly.csproj`), English, 100% text scale, default
+name/date formats; light theme except `13`. The data is the bundled Brontë demo
+tree (`UI/App/Resources/Raw/demo.ged`) — every portrait in it is a public-domain
 Wikimedia image, so nothing here is anyone's private research.
 
 Release, not Debug, matters: `PersonInfoView.CommonName` appends `" (Id: N)"` to
 every displayed name under `#if DEBUG`, which would put a stray id after each
 name in the shots.
 
+## No home screen in this set
+
+Earlier sets included the project-list ("home") screen, light and dark. As of
+the September 2026 reshoot that screen is deliberately dropped: it's an empty
+list-or-create screen with nothing to show off, and it happens to be the one
+screen carrying real risk during capture — it's the page that lists *every*
+project on the machine that took the screenshots, not just the demo tree used
+for the rest of the set. Every remaining screenshot is taken from inside the
+opened demo project, and each one's header names it ("Families | Brontë Family
+(Demo)", etc.) so that's independently checkable from the image itself.
+
 ## Which build each shot came from
 
-The package being submitted is `v4.0.656.0` (commit `6d588c18`). Three shots come
-from it; the other ten are from `v4.0.652.0` (commit `24aa0264`), and that is not
-an oversight:
-
-- **`01-home.png` and `12-home-dark.png` — `656`.** The home screen prints the
-  version, so a shot from any other build contradicts the package it ships with.
-  Against their `652` predecessors these differ by 73 pixels each, all of them the
-  one glyph that changed.
-- **`04-person.png` — `656`.** At `652` the caption stretched the photo pane to
-  the width of its text; #362 capped it against the picture.
-- **The other ten — `652`.** The only code between the tags is that cap, and it
-  reaches one pane: the photo on the person page's Relatives tab. None of the ten
-  can show it — the demo tree gives the family page no photos, the biography tab
-  is a different tab, and the gallery never uses the component.
+All eleven are from a single session against this release branch's tip. Unlike
+the previous set, no shot in this set displays the app version (that only ever
+appeared on the now-dropped home screen), so there's no version-pinning
+constraint on which commit they're built from.
 
 ## Suggested Partner Center order and captions
 
-Microsoft Store takes up to 10 screenshots per device family, so the last three
-below are spares.
+Microsoft Store takes up to 10 screenshots per device family, so the last one
+below is a spare.
 
 | # | File | Caption |
 |---|------|---------|
@@ -43,10 +47,8 @@ below are spares.
 | 7 | `02-families.png` | Families at a glance, each with the people in it |
 | 8 | `08-gallery.png` | Every photo and document in the project, linked to who it belongs to |
 | 9 | `13-family-tree-dark.png` | Light, dark, or follow the system |
-| 10 | `01-home.png` | Open a tree, or start one — no account, nothing to sign up for |
+| 10 | `11-settings.png` | Text size, theme, calendar and date formats are yours to set |
 | — | `03-family.png` | *(spare)* One family's members with their life spans |
-| — | `11-settings.png` | *(spare)* Text size, theme and date formats are yours to set |
-| — | `12-home-dark.png` | *(spare)* Home in the dark palette |
 
 ## Choices behind these shots
 
@@ -65,7 +67,14 @@ them comes out visibly worse:
 
 `09-kinship-finder.png` pairs Hugh Brunty with his granddaughter Charlotte —
 far enough apart to show a connecting chain rather than a one-line answer, and
-the demo tree's longest blood relationship.
+the demo tree's longest blood relationship. It also shows the swap button
+(the ⇅ control next to the two "Choose…" buttons, added since the last shoot).
+
+`11-settings.png` is the unscrolled top of the page (Text size, Background
+animation, Theme, with the Calendar section heading visible at the bottom) —
+a compromise between showing the settings likely to matter most and hinting at
+what's further down; the date-format settings below it aren't visible in this
+crop.
 
 ## Still worth fixing
 
@@ -82,4 +91,8 @@ the demo tree's longest blood relationship.
 ## Reproducing the set
 
 `capture/README.md` has the recipe, the two scripts, and the traps that cost the
-most time (synthetic clicks, hover colours, exact 1920×1080 framing).
+most time (synthetic clicks, hover colours, native ComboBox popups that
+`PrintWindow` can't see, mouse-wheel scrolling a page). Getting a demo project
+onto the machine without exposing the real project list is also covered there
+("Getting a demo project without the file picker") — follow it exactly; it's
+what keeps this set free of anyone's actual family data.

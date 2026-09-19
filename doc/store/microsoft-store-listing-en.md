@@ -27,7 +27,7 @@ family calendar. No account, no cloud.
 
 ## Description (≤10,000 chars)
 
-*3,988 characters once the source line wraps below are unwrapped into single
+*4,396 characters once the source line wraps below are unwrapped into single
 spaces, counting the `###` and `-` markers. Well inside the 10,000 limit; see
 the Play appendix, where it matters.*
 
@@ -93,9 +93,12 @@ Each person gets photos, a biography and attachments:
   values, not blanks you have to fake.
 - **GEDCOM 5.5.1 import and export.** Bring a tree in from other genealogy
   software and take it out again. Tags Genealogy Tree doesn't model natively are
-  carried through the round trip rather than silently dropped. If a file
-  declares an ambiguous character set, the app asks which codepage it was
-  written in instead of mangling every name in it.
+  carried through the round trip rather than silently dropped, and so are family
+  photos and attachments. If a file declares an ambiguous character set, the app
+  asks which codepage it was written in instead of mangling every name in it.
+- **Read dates in your calendar.** View every date in the Gregorian, Julian,
+  Hebrew or French Republican calendar — switch anytime, without changing how
+  anything is stored.
 - **Multiple projects.** Keep separate trees for separate branches, or a
   scratch tree next to the real one.
 - **Restore points.** Earlier working copies of a project are kept, so a session
@@ -106,6 +109,10 @@ Each person gets photos, a biography and attachments:
 Light, dark or follow-the-system theme. Scale every piece of text in the app up
 or down with Ctrl + plus / minus / 0 — useful for a laptop screen, essential
 for a long evening of reading old handwriting.
+
+Mark one person as your project's main person and the app opens straight to
+them next time. Handing a project to someone else just to browse? Read-only
+mode hides every editing action behind a single toggle.
 
 Available in **English, Russian, German, Spanish and French**.
 
@@ -118,7 +125,7 @@ then open it.
 
 ## Features (≤200 chars each, up to 20 entries)
 
-*18 entries; the longest is 108 characters.*
+*20 entries; the longest is 136 characters.*
 
 
 - Zoomable, pannable family tree of ancestors and descendants, re-centred on any relative with a click
@@ -130,9 +137,11 @@ then open it.
 - Project-wide gallery of every photo and attachment, linked back to its person or family
 - Filter any list by name with * and ? wildcards, by sex, or by year
 - Several names per person — first, patronymic, last, family — in a display order you choose
-- Approximate and unknown dates are first-class, not blanks
-- GEDCOM 5.5.1 import and export that preserves tags the app doesn't model natively
+- Approximate and unknown dates are first-class, and any date can display in the Gregorian, Julian, Hebrew or French Republican calendar
+- GEDCOM 5.5.1 import and export that preserves tags the app doesn't model natively, family photos and attachments included
 - Ambiguous GEDCOM character sets are resolved by asking, not by guessing
+- Export or import a whole project as a single .gt4 file, opening with a double-click once associated on Windows
+- Mark a project's main person to open straight to them, or switch to read-only mode to browse without editing
 - Multiple independent projects, each a single file in your Documents folder
 - Restore points to roll a project back to an earlier state
 - Light, dark or system theme, and app-wide text scaling with Ctrl + plus / minus / 0
@@ -155,13 +164,27 @@ verify the current limit and trim from the bottom if needed.*
 
 ## What's new in this version
 
-First release on the Microsoft Store.
+**New**
+- Mark a project's main person — the app opens straight to them next time.
+- Read-only mode: hide every editing action behind one toggle, for safely
+  browsing a shared or borrowed project.
+- Display dates in the Gregorian, Julian, Hebrew or French Republican
+  calendar. GEDCOM dates written in the French Republican calendar now import
+  correctly too.
+- Export or import a whole project as a single .gt4 file; on Windows it opens
+  with a double-click once associated.
+- Family photos and attachments now survive a GEDCOM export and reimport,
+  alongside the tags that already did.
+- The kinship finder has a swap button to flip the two selected people.
+- Every page now shows which project is open.
 
-Build your family tree offline: import and export GEDCOM files, give every
-person photos, a biography and attachments, explore ancestors and descendants
-in a zoomable tree, find how any two relatives are connected, and see births,
-anniversaries and remembrances on a calendar of the year. Open the built-in
-Brontë demo tree to look around first.
+**Fixed**
+- A rare crash decoding some photo thumbnails on Windows.
+- Incomplete or asymmetric kinship results for people connected through a
+  spouse's sibling.
+- Misaligned columns on the families list.
+- A duplicated date line on GEDCOM export.
+- A crash opening the photo viewer when every photo was a placeholder.
 
 ## Before submitting
 
@@ -173,9 +196,17 @@ Brontë demo tree to look around first.
   other four are .NET satellite assemblies the package never advertises. The
   copy's "Available in English, Russian, German, Spanish and French" is still
   true of the app.
-- **Two screenshot caveats** — an off-brand button in the dark shot, and a
-  text-heavy gallery shot — are in
-  [screenshots/README.md](screenshots/README.md).
+- **The gallery screenshot is text-heavy** — every row is a Wikimedia
+  attribution line from the demo file's `TITL` tags, so it reads more like a
+  credits list than a gallery. See
+  [screenshots/README.md](screenshots/README.md) ("Still worth fixing").
+- **The home/project-list screen is deliberately not in the screenshot set**
+  — see screenshots/README.md ("No home screen in this set").
+- **The ".gt4 double-click to open" claim (Features list, What's new) depends
+  on a check that hasn't been run yet.** Install the signed MSIX and confirm a
+  double-click actually opens it before submitting — see "Known at the time of
+  this release" in [release-and-submission.md](release-and-submission.md). If
+  it doesn't work, pull that claim from both places first.
 
 ---
 
@@ -192,10 +223,11 @@ a ready submission.
 **Short description:** Your family tree, offline and private. GEDCOM in and
 out, photos, kinship tools. (80 chars)
 
-**Full description:** the Description above is 3,988 characters against Play's
-4,000 limit — 12 to spare, i.e. no margin at all, and Play renders no rich text,
-so the `###` and `**` markers have to go and whatever you put in their place
-counts. Plan on cutting a section, not on trimming words. Two edits are needed
-regardless: replace the Ctrl + plus / minus / 0 shortcut with the pinch-to-zoom
-gesture Android uses for the same thing, and drop the "on your own computer"
-framing in the opening line, which reads oddly on a phone.
+**Full description:** the Description above is 4,396 characters against Play's
+4,000 limit, so it no longer fits as-is (it did, barely, before this release's
+new features were added) and a section has to be cut, not just trimmed. Play
+also renders no rich text, so the `###` and `**` markers have to go and
+whatever you put in their place counts too. Two edits are needed regardless:
+replace the Ctrl + plus / minus / 0 shortcut with the pinch-to-zoom gesture
+Android uses for the same thing, and drop the "on your own computer" framing in
+the opening line, which reads oddly on a phone.

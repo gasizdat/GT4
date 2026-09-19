@@ -194,14 +194,35 @@ both files together when behaviour changes.
 
 ## Known at the time of this release
 
-- **Issue #281** — a GEDCOM export followed by a re-import silently loses family
-  photos and attachments (person media survives). The listing copy is worded to
-  avoid promising otherwise; see the exclusion in `claim-sources.md`.
-The screenshots are not among these. The three that `v4.0.656.0` invalidated —
-`04-person.png` for the caption fix, `01-home.png` and `12-home-dark.png` for the
-version they print — were re-shot at that tag, and
-[screenshots/README.md](screenshots/README.md) records which build each of the
-thirteen came from.
+- **Issue #281 is closed** (PR #369) — family photos and attachments now
+  survive a GEDCOM export/reimport round trip, via a GT4 extension record
+  (`_FAML`). `claim-sources.md`'s exclusion for this has been widened
+  accordingly; the listing copy now states it.
+- **The `.gt4` MSIX file-association path is still unconfirmed against a real
+  packaged build.** PR #384 added `windows.fileTypeAssociation` for `.gt4` to
+  `Package.appxmanifest` and reads the activating path from whichever of
+  `argv` / `AppInstance.GetActivatedEventArgs()` is populated, defensively,
+  since nothing in the repo exercised that API before. **Before this
+  submission**, install the signed MSIX (see "Before uploading" above) and
+  double-click a `.gt4` file to confirm it actually launches/imports — this
+  wasn't done for the PR and hasn't been done since. If it fails, the listing's
+  "Export or import a whole project as a single .gt4 file" feature line and the
+  "double-click to open" claim need to come back out until it's fixed.
+- **Double-clicking a second `.gt4` while the app is already running opens a
+  second instance.** Deliberate, per PR #384 — single-instance redirection was
+  out of scope.
+- **A hand-authored `_FAML` photo `OBJE` with a sub-tag GT4 doesn't model (e.g.
+  `TITL`) drops that sub-tag on import.** Deliberate gap noted in PR #369: GT4's
+  own export never produces this shape, since family photo categories have no
+  `*Tagged` counterpart to carry it.
+- **Issue #370** (a Windows `STATUS_STOWED_EXCEPTION` crash on regaining focus)
+  is only partly fixed. PR #372 fixed the one reproduction path it targeted
+  (thumbnail decoding off the UI thread); the issue stays open for other
+  triggers of the same crash class.
+
+The screenshots are not among these — the set was fully re-shot for this
+release (11 shots, home screens dropped); see
+[screenshots/README.md](screenshots/README.md) for what changed and why.
 
 The palette needs no inventory here any more. #358 and #360 cleared the
 last of the MAUI template colours, and what replaced them is pinned by the

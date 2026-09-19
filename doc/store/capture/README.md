@@ -9,19 +9,30 @@ see, capture again.
 dotnet build UI\App\AppWinOnly.csproj -c Release
 $exe = 'UI\App\bin\Release\net10.0-windows10.0.19041.0\win-x64\AppWinOnly.exe'
 $p = Start-Process $exe -PassThru; Start-Sleep 14
-.\doc\store\capture\capture.ps1 -ProcessId $p.Id -Out shot.png -Width 1934 -Height 1087
+.\doc\store\capture\capture.ps1 -ProcessId $p.Id -Out shot.png
 .\doc\store\capture\click.ps1   -ProcessId $p.Id -X 960 -Y 1039 -WaitMs 5000 -Out next.png
 ```
 
+## Don't force the window to 1920×1080
+
+Earlier shots resized the window to `-Width 1934 -Height 1087` (see below for why
+those numbers) to land an exact 1920×1080 PNG. Since the September 2026 reshoot
+that is deliberately not done: MAUI's list pages don't reflow into extra width,
+so stretching the window that wide leaves wide empty margins either side of the
+content and the shot reads as sparse or empty. Omit `-Width`/`-Height` and let
+`capture.ps1` shoot the window at whatever size it naturally opens at instead
+(around 1426×746 on this machine — it will vary with whatever size Windows
+remembers from the last run).
+
 ## What the numbers mean
 
-**`-Width 1934 -Height 1087` gives an exactly 1920×1080 PNG.** `PrintWindow`
-renders from the window rect, but the shot is cropped to the DWM *extended frame
-bounds*, which is inset by 7px left, 7px right and 7px bottom — so the frame is
-`(width - 14) × (height - 7)`. The window ends up larger than the 1920×1080
-screen; that is fine, `PrintWindow` re-renders rather than screen-scraping, so
-nothing is clipped. Position it at x = -7 to line the visible frame up with the
-screen edge.
+**`-Width 1934 -Height 1087` gives an exactly 1920×1080 PNG, if you do need that
+exact size for something.** `PrintWindow` renders from the window rect, but the
+shot is cropped to the DWM *extended frame bounds*, which is inset by 7px left,
+7px right and 7px bottom — so the frame is `(width - 14) × (height - 7)`. The
+window ends up larger than the 1920×1080 screen; that is fine, `PrintWindow`
+re-renders rather than screen-scraping, so nothing is clipped. Position it at
+x = -7 to line the visible frame up with the screen edge.
 
 **Click coordinates are window-rect coordinates, not frame coordinates.** The
 captured image starts at the window origin, so image (x, y) maps to screen
@@ -39,11 +50,14 @@ just lands somewhere else.
 
 - **Release build only.** `PersonInfoView.CommonName` appends `" (Id: N)"` to
   every name under `#if DEBUG`.
-- **Build from the released commit, not from the branch holding the shots.** The
-  version is `git rev-list --count HEAD`, so the commits that carry these PNGs and
-  this file each raise it: a build from the screenshot branch prints a version no
-  package will ever have. Check out `release/rc-sep-04` or the tag, build there,
-  then come back to commit the PNGs.
+- **Build from the released commit, not from the branch holding the shots —
+  unless nothing in the set shows the version.** The version is
+  `git rev-list --count HEAD`, so the commits that carry these PNGs and this file
+  each raise it: a build from the screenshot branch prints a version no package
+  will ever have. This only matters for a shot that displays the version string;
+  the current set doesn't have one (that was the now-dropped home screen), so it
+  can be built from whatever's checked out. If a future shot brings the version
+  back into frame, go back to building from the released commit or tag first.
 - **The session has to be unlocked, and the failure is silent.** `PrintWindow`
   renders a window that does not own the foreground, so `capture.ps1` keeps
   producing plausible PNGs with the lock screen up while every click lands on
@@ -89,6 +103,32 @@ just lands somewhere else.
 - **Settings live in `%APPDATA%\{067F098F-…}\.config\appconfig.json`** — language,
   theme, font scale, date formats. Editing it before launch is the reliable way
   to set up a shot. Back it up and restore it: it is the developer's own config.
+- **A native `Picker`/`ComboBox` dropdown popup is invisible to `PrintWindow`.**
+  It renders in its own top-level window, not inside the main window's client
+  area, so a capture taken with the popup open just shows the closed control.
+  Clicking blind at where an option should be is unreliable for the same reason
+  — there is nothing in the captured image to confirm the click landed. For a
+  setting like Theme, editing `appconfig.json` and relaunching is more reliable
+  than trying to drive the popup.
+- **`click.ps1` has no keyboard**, only mouse. To type into a search/filter
+  field, click it to focus, then drive
+  `[System.Windows.Forms.SendKeys]::SendWait("text")` (needs
+  `Add-Type -AssemblyName System.Windows.Forms` first) before the next capture.
+- **Scrolling needs a synthetic mouse wheel, not `{PGDN}`.** `SendKeys "{PGDN}"`
+  does nothing because nothing has keyboard focus to receive it. Position the
+  real cursor over the page first (`[System.Windows.Forms.Cursor]::Position =
+  New-Object System.Drawing.Point(x, y)`, screen coordinates) and send
+  `mouse_event` with `MOUSEEVENTF_WHEEL` (`0x0800`) and a delta of `±120` per
+  notch. Where the cursor sits matters: park it over a plain content area, not
+  over an `Entry`/`Picker` — those consume the wheel themselves instead of
+  scrolling the page, and a layout shift after one scroll can walk the same
+  fixed cursor position onto one of them mid-sequence.
+- **The project list ("home") screen shows every real project on the
+  machine that ran the capture**, not just the demo tree — it's the one screen
+  in the app that isn't scoped to whatever project is open. Don't screenshot it.
+  Every other screen is scoped to the opened project, and its header names that
+  project (e.g. "Families | Brontë Family (Demo)"), so check that before keeping
+  any shot.
 
 ## Getting a demo project without the file picker
 

@@ -21,7 +21,8 @@ which came from which.
 | Filters: name wildcards, sex, year | `UI/App/Components/PersonFilterView.xaml` binds `FieldSearchText` (hint `HintNameFilterWildcard`, "`*` and `?` wildcards supported"), `FieldFilterSex`, `FieldYear` |
 | Several names per person: first, patronymic, last, family | `UIStrings.NameFirst` / `NamePatronymic` / `NameLast` / `NameFamily`; display order is a user setting (`PersonNameSetting`, keyed per `NameFormat`) |
 | Approximate and unknown dates are first-class | `UIStrings.DateStatusYearApproximate_1` ("about {0}"), `DateStatusUnknown`, `DateStatusNotDefined`; rendered as "about 1755 (about 271 years)" in `screenshots/09-kinship-finder.png`'s picker |
-| GEDCOM 5.5.1 import/export preserves unmodeled tags | `doc/dev/00-overview.md` and `doc/dev/subsystems/core-gedcom.md`: import/export "is built around preserving whatever isn't natively modeled rather than silently dropping it on a round-trip". Visible as the "Additional details" / "Family details" sections in `screenshots/05-biography.png`. **Scope this to tags** — see the round-trip exclusion below |
+| GEDCOM 5.5.1 import/export preserves unmodeled tags | `doc/dev/00-overview.md` and `doc/dev/subsystems/core-gedcom.md`: import/export "is built around preserving whatever isn't natively modeled rather than silently dropping it on a round-trip". Visible as the "Additional details" / "Family details" sections in `screenshots/05-biography.png`. **Scope this to tags** — see the round-trip note below |
+| Family (clan) photos and attachments survive a GEDCOM export/reimport round trip | PR #369 (fixes #281): a new GT4 extension record, `_FAML` (keyed by the family's bare `NAME`), carries `FamilyMainPhoto`/`FamilyPhoto`/`FamilyAttachment` through export and back. Other GEDCOM tools ignore the underscore-prefixed tag, so this is safe to round-trip through them too — they just won't preserve it themselves. Person photos/attachments already round-tripped via `PersonData`; this closes the gap for family-level media specifically |
 | Ambiguous GEDCOM charsets prompt rather than guess | `UIStrings.HintGedcomDeclaredCharset_1` + `TitleSelectEncodingDialog` (issue #121) |
 | Attachments open in the OS's own app | `PersonPage.xaml.cs` / `GalleryPage.xaml.cs` call `attachment.OpenAsync` |
 | Biographies are Markdown with inline media | `MarkdownView` over Markdig (`Markdig` package in `AppCommon.props`); `InlineMediaProvider` resolves embedded media |
@@ -44,14 +45,15 @@ says otherwise, and a reviewer can read the manifest.
 
 ## Claims deliberately **not** made
 
-- **"A GEDCOM round trip doesn't cost you data."** An earlier draft said this.
-  Open issue #281: the three family media categories (`FamilyMainPhoto`,
-  `FamilyPhoto`, `FamilyAttachment`) live in `NameData`, which `Core.Gedcom`
-  never reads, so exporting and re-importing silently loses every family photo
-  and attachment. Person media survives, because `GedcomExporter` reads
-  `PersonData`. The listing therefore promises only what is true — unmodeled
-  *tags* are carried through — and says nothing about media surviving the trip.
-  Widen this again once #281 ships.
+- **"A GEDCOM round trip doesn't cost you data," stated as a single unqualified
+  claim.** An earlier draft said this outright. Issue #281 (family photos and
+  attachments silently dropped by export/reimport) closed via PR #369 — see the
+  round-trip row in the table above — so as of this release the copy can and
+  does say family media round-trips too. It's still stated precisely rather than
+  as one blanket claim: unmodeled *tags* round-trip losslessly (native GEDCOM
+  behaviour), while family media round-trips through a GT4-specific extension
+  tag. Both are true; they're not the same mechanism, so they're not collapsed
+  into one sentence.
 - **"Revision history — every change is tracked."** The previous listing draft
   said this. Revisions are recovery snapshots, not an edit log: `ProjectHost`
   copies the project to a working cache and flushes it back on clean close, so a
