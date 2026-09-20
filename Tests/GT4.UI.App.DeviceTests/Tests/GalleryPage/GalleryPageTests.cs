@@ -234,6 +234,25 @@ public class GalleryPageTests
       "An uncaptioned photo claimed its owners were worth a line separate from its title.");
   }
 
+  // Issue #420: all three share the same owner, so a sort keyed off Owners would leave them in
+  // whatever order the data set happened to enumerate rather than the order their titles show.
+  [Fact]
+  public async Task Items_sharing_an_owner_are_ordered_by_their_titles_not_the_owner_string()
+  {
+    var services = new TestServices();
+    var ivan = P(1, "Ivan");
+    SetUpProject(
+      services,
+      dataSet: [Attachment(50, "zebra.pdf"), Attachment(51, "apple.pdf"), Attachment(52, "mango.pdf")],
+      persons: [ivan],
+      personIdsByData: new() { [50] = [ivan.Id], [51] = [ivan.Id], [52] = [ivan.Id] });
+    var page = await CreatePageAsync(services);
+
+    var items = await WaitForItemsAsync(page, 3);
+
+    Assert.Equal([51, 52, 50], items.Select(item => item.Info.Id));
+  }
+
   [Fact]
   public async Task Deleting_an_item_drops_every_owner_link_and_the_row()
   {

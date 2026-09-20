@@ -1,3 +1,4 @@
+using GT4.Core.Gedcom;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Project.Extensions;
@@ -112,6 +113,20 @@ public sealed class GalleryDataItem : CollectionItemBase<Data>, INotifyPropertyC
       RequestContent();
       return string.IsNullOrWhiteSpace(_Caption) ? Owners : _Caption;
     }
+  }
+
+  /// <summary>Same fallback as <see cref="Title"/>, but resolved from the residue's own metadata rather
+  /// than a full conversion -- cheap enough to call for every item up front, to sort by what the row
+  /// will display instead of by <see cref="Owners"/>.</summary>
+  public async Task<string> ResolveSortTitleAsync(CancellationToken token)
+  {
+    var title = await GedcomPhotoResidue.ExtractTitleAsync(Info, token);
+    if (string.IsNullOrWhiteSpace(title) && Info.Category.IsAttachment())
+    {
+      title = await GedcomPhotoResidue.ExtractFileNameAsync(Info, token);
+    }
+
+    return string.IsNullOrWhiteSpace(title) ? Owners : title;
   }
 
   public override ImageSource Icon
