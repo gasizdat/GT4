@@ -118,6 +118,41 @@ public class CalendarSettingTests
     Make("Hebrew", fullDateFormat: "YYYY").Example.Should().BeOneOf("5560 (Hebrew)", "5561 (Hebrew)");
   }
 
+  // Pinned against fixed (month, day) pairs rather than the system clock -- the bug this guards
+  // against only ever showed up ~5 days a year, right before French Republican's Sept epoch, plus
+  // Feb 29 (1800 isn't a leap year), so a clock-dependent test would rarely exercise either branch.
+  [Theory]
+  [InlineData(9, 20)] // lands in French Republican's own unmodeled complementary days every year
+  [InlineData(2, 29)] // 1800 isn't a leap year; forcing it onto today's month/day would throw
+  public void ResolveExampleDate_FallsBackToASafeDateWhenTodayIsNotRepresentable(int month, int day)
+  {
+    var today = Date.Create(1793, month, day, DateStatus.WellKnown);
+
+    var resolved = CalendarSetting.ResolveExampleDate(today, nameof(DisplayCalendar.FrenchRepublican));
+
+    (resolved.Year, resolved.Month, resolved.Day).Should().Be((1800, 1, 1));
+  }
+
+  [Fact]
+  public void ResolveExampleDate_KeepsTodayWhenAlreadyRepresentable()
+  {
+    var today = Date.Create(1793, 6, 15, DateStatus.WellKnown);
+
+    var resolved = CalendarSetting.ResolveExampleDate(today, nameof(DisplayCalendar.FrenchRepublican));
+
+    (resolved.Year, resolved.Month, resolved.Day).Should().Be((1800, 6, 15));
+  }
+
+  [Fact]
+  public void ResolveExampleDate_IgnoresRepresentabilityForOtherCalendars()
+  {
+    var today = Date.Create(1793, 9, 20, DateStatus.WellKnown);
+
+    var resolved = CalendarSetting.ResolveExampleDate(today, nameof(DisplayCalendar.Gregorian));
+
+    (resolved.Year, resolved.Month, resolved.Day).Should().Be((1800, 9, 20));
+  }
+
   [Fact]
   public void SetValue_PersistsTheChosenCalendar()
   {
