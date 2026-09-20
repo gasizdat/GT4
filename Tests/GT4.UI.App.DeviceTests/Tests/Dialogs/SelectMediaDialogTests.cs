@@ -1,8 +1,11 @@
+using GT4.Core.Gedcom;
+using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Behaviors;
 using GT4.UI.Dialogs;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
+using Moq;
 using Xunit;
 
 namespace GT4.UI.DeviceTests;
@@ -40,5 +43,30 @@ public class SelectMediaDialogTests
     var behavior = ownerEntry.Behaviors.OfType<FocusOnTrueBehavior>().Single();
 
     Assert.Equal(DeviceInfo.Idiom == DeviceIdiom.Desktop, behavior.IsFocused);
+  }
+
+  // Issue #420: all three are foreign (own-media-first still separates them as a group), and all
+  // three share the same owner, so a sort keyed off Owners would leave them in data-set order
+  // instead of the order their file names show.
+  [Fact]
+  public async Task Foreign_items_sharing_an_owner_are_ordered_by_their_titles_not_the_owner_string()
+  {
+    var services = new TestServices();
+    var ivan = new PersonInfo(1, default(Date), null, BiologicalSex.Male, [new Name(100, "Ivan", NameType.FirstName | NameType.MaleDeclension, null)], null);
+    Data Attachment(int id, string fileName) =>
+      new(id, GedcomPhotoResidue.EncodeAttachment([1, 2, 3], fileName), "application/pdf", DataCategory.PersonAttachment);
+    services.Data.Setup(d => d.GetDataSetAsync(It.IsAny<CancellationToken>()))
+      .ReturnsAsync([Attachment(50, "zebra.pdf"), Attachment(51, "apple.pdf"), Attachment(52, "mango.pdf")]);
+    services.PersonManager.Setup(p => p.GetPersonInfosAsync(false, It.IsAny<CancellationToken>())).ReturnsAsync([ivan]);
+    services.PersonData.Setup(p => p.GetPersonIdsByDataAsync(It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new Dictionary<int, int[]> { [50] = [ivan.Id], [51] = [ivan.Id], [52] = [ivan.Id] });
+
+    var dialog = await CreateDialogAsync(services);
+    var items = await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => dialog.Items.ToArray()),
+      items => items.Length == 3,
+      timeoutMessage: "The dialog did not settle on 3 item(s); check the TestServices mock setup.");
+
+    Assert.Equal([51, 52, 50], items.Select(item => item.Info.Id));
   }
 }

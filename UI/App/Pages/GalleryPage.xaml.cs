@@ -128,9 +128,12 @@ public partial class GalleryPage : ContentPage
           _DataConverterResolver,
           token);
 
+        var sortTitles = await Task.WhenAll(media.Select(item => item.ResolveSortTitleAsync(token)));
         var items = media
-          .OrderBy(item => item.Owners, StringComparer.CurrentCulture)
-          .ThenBy(item => item.Info.Id)
+          .Zip(sortTitles, (item, title) => (item, title))
+          .OrderBy(x => x.title, StringComparer.CurrentCulture)
+          .ThenBy(x => x.item.Info.Id)
+          .Select(x => x.item)
           .ToArray();
 
         MainThread.BeginInvokeOnMainThread(() =>
