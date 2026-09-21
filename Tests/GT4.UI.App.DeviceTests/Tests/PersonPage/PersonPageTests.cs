@@ -1158,10 +1158,9 @@ public class PersonPageTests
     Assert.Null(attachment);
   }
 
-  // Regression for issue #422: PersonPage's biography ScrollView toggles IsVisible, but the
-  // MarkdownView it wraps did not -- so MarkdownView's own hidden-preview gate (see
-  // MarkdownViewVisibilityGatingTests) never engaged here, and the biography's images were built
-  // on every load even on tabs that never showed it.
+  // PersonPage's biography ScrollView toggling IsVisible doesn't propagate to the MarkdownView it
+  // wraps on its own; pins that MarkdownView.IsVisible is bound to the same tab state so its
+  // hidden-preview gate actually engages here.
   [Fact]
   public async Task Biography_builds_no_preview_images_until_its_tab_is_shown()
   {

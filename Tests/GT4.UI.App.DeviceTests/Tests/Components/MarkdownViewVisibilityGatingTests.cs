@@ -4,12 +4,9 @@ using Xunit;
 
 namespace GT4.UI.DeviceTests;
 
-// Regression coverage for issue #422 (editor lags/freezes on large biographies with many media
-// links). The issue's investigation found MarkdownView.Render() unconditionally rebuilding its
-// entire native visual tree -- one Image plus two ContentView wrappers per resolved media link --
-// on every Markdown change, even while the preview was hidden behind the editor tab. These tests
-// pin the fix: no native-tree rebuild happens while MarkdownView.IsVisible is false, and a single
-// catch-up render fires once it becomes visible again.
+// Pins MarkdownView's hidden-preview gate: no native-tree rebuild (an Image plus wrapper views per
+// resolved media link) happens while IsVisible is false, and a catch-up render fires once it
+// becomes visible again.
 public class MarkdownViewVisibilityGatingTests
 {
   private const int MediaLinkCount = 20;

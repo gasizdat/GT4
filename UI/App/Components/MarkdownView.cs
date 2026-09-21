@@ -337,9 +337,8 @@ public class MarkdownView : ContentView
   }
 
   // Hands back what it parsed so a refresh can read the referenced links off the same tree it just drew.
-  // Parsing and media resolution still run while hidden, so a resolved image is ready the instant the
-  // preview is shown -- only the expensive part, rebuilding every media link's Image/wrapper pair, is
-  // deferred to that catch-up render.
+  // Media resolution keeps running while hidden -- only rebuilding the Image/wrapper pairs is deferred
+  // to the catch-up render -- so showing the preview doesn't also have to wait on resolver round-trips.
   private MarkdownDocument Render()
   {
     var document = Markdig.Markdown.Parse(Markdown ?? string.Empty, Pipeline);
