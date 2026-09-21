@@ -39,6 +39,37 @@ public class PersonPageTests
   private static Task WaitForLoadAsync(TestablePersonPage page, TestServices services, Action interact) =>
     LoadWait.UntilAsync(() => page.CompletedLoads, services, interact, "Person");
 
+  private static IEnumerable<BindableObject> Descendants(BindableObject node)
+  {
+    foreach (var child in Children(node))
+    {
+      yield return child;
+      foreach (var descendant in Descendants(child))
+      {
+        yield return descendant;
+      }
+    }
+  }
+
+  private static IEnumerable<BindableObject> Children(BindableObject node)
+  {
+    switch (node)
+    {
+      case ScrollView { Content: not null } scroll:
+        return [scroll.Content];
+      case ContentView { Content: not null } view:
+        return [view.Content];
+      case Border { Content: not null } border:
+        return [border.Content];
+      case Layout layout:
+        return layout.Children.OfType<BindableObject>();
+      case Label { FormattedText: not null } label:
+        return label.FormattedText.Spans;
+      default:
+        return [];
+    }
+  }
+
   // Matches the [4-byte tag-length][UTF-8 GEDCOM tag text][image bytes] layout GedcomPhotoResidue
   // encodes; hand-built here since Encode itself isn't visible outside Core.Gedcom.
   private static byte[] BuildTaggedPhotoContent(string tagText, byte[] imageBytes)
@@ -1125,6 +1156,44 @@ public class PersonPageTests
     var attachment = await page.ResolveAttachmentAsync(41);
 
     Assert.Null(attachment);
+  }
+
+  // Regression for issue #422: PersonPage's biography ScrollView toggles IsVisible, but the
+  // MarkdownView it wraps did not -- so MarkdownView's own hidden-preview gate (see
+  // MarkdownViewVisibilityGatingTests) never engaged here, and the biography's images were built
+  // on every load even on tabs that never showed it.
+  [Fact]
+  public async Task Biography_builds_no_preview_images_until_its_tab_is_shown()
+  {
+    var services = new TestServices();
+    var content = BuildTaggedPhotoContent("0 OBJE\n1 TITL A caption\n", [1, 2, 3]);
+    var photo = new Data(10, content, "image/png", DataCategory.PersonMainPhotoTagged);
+    services.Data
+      .Setup(table => table.TryGetDataByIdAsync(10, It.IsAny<CancellationToken>()))
+      .ReturnsAsync(photo);
+    var biography = new Data(
+      Id: 0,
+      Content: System.Text.Encoding.UTF8.GetBytes("![A caption](media:10)"),
+      MimeType: System.Net.Mime.MediaTypeNames.Text.Plain,
+      Category: default);
+    var person = CreateSamplePerson() with { Biography = biography };
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+    Assert.False(page.ShowBiographyTab);
+
+    await MainThread.InvokeOnMainThreadAsync(() => { });
+    Assert.Empty(Descendants(page.BiographyForTest).OfType<Image>());
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.InvokePageCommandAsync("TabBiography"));
+
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => Descendants(page.BiographyForTest).OfType<Image>().Count()),
+      rendered => rendered == 1,
+      timeoutMessage: "The biography preview never caught up once its tab was shown.");
   }
 
   [Fact]

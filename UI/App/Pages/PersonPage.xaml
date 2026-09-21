@@ -315,6 +315,7 @@
           <Border>
             <components:MarkdownView
                 AttachmentLinkTapped="OnAttachmentLinkTapped"
+                IsVisible="{Binding ShowBiographyTab, Source={x:Reference Root}}"
                 Markdown="{Binding Biography, Source={x:Reference Root}, Mode=OneWay}"
                 MediaResolver="{Binding MediaResolver, Source={x:Reference Root}}"
                 PersonLinkTapped="OnPersonLinkTapped" />
