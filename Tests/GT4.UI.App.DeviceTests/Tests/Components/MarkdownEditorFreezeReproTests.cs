@@ -8,10 +8,14 @@ namespace GT4.UI.DeviceTests;
 // media links). The issue's own investigation (stack captures + code reading) landed on a specific
 // mechanism: MarkdownView.Render() unconditionally re-parses the whole Markdown string and rebuilds
 // its entire native visual tree -- one Image plus two ContentView wrappers per resolved media link
-// -- on every Markdown change, with no gating on whether the preview is even visible. These tests
-// pin that mechanism directly (object-identity across an edit, not wall-clock timing) rather than
-// trying to reproduce the freeze itself, which needs a real device and a large enough biography to
-// be perceptible -- the same reasoning ScrollCrashReproTests uses for its own native crash.
+// -- on every Markdown change. This test pins that mechanism directly (object-identity across an
+// edit, not wall-clock timing) rather than trying to reproduce the freeze itself, which needs a
+// real device and a large enough biography to be perceptible -- the same reasoning
+// ScrollCrashReproTests uses for its own native crash.
+//
+// The other half of the original finding -- this rebuild ran even while the preview tab was
+// hidden, with no gate on visibility at all -- is now fixed (see MarkdownView.OnPropertyChanged /
+// Render's IsVisible check) and pinned by MarkdownViewVisibilityGatingTests instead.
 public class MarkdownEditorFreezeReproTests
 {
   private const int MediaLinkCount = 20;
@@ -45,44 +49,6 @@ public class MarkdownEditorFreezeReproTests
     await MainThread.InvokeOnMainThreadAsync(() => view.Markdown = markdown + "\n\nAn epilogue naming no media link.");
 
     var after = Descendants(view).OfType<Image>().ToArray();
-    Assert.Equal(MediaLinkCount, after.Length);
-    Assert.Empty(before.Intersect(after));
-  }
-
-  // Reproduces the other half: MarkdownEditor keeps the plain-text editor and the markdown preview
-  // as permanent siblings toggled by IsVisible, and nothing in the Markdown -> MarkdownView binding
-  // checks that flag. So the preview's Image controls get rebuilt on every edit even while the
-  // "Markdown Editor" tab (not "Markdown View") is the one showing -- confirmed work wasted on a
-  // native tree nobody is looking at, which is the "definite fix" candidate the issue records.
-  [Fact]
-  public async Task EditingWhileThePreviewTabIsHidden_StillRebuildsThePreviewsImages()
-  {
-    var markdown = MarkdownWithMediaLinks(MediaLinkCount);
-    var mediaSources = MediaSources(MediaLinkCount);
-
-    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
-    var editor = await MainThread.InvokeOnMainThreadAsync(() => new MarkdownEditor
-    {
-      MediaResolver = MakeResolver(mediaSources),
-      Markdown = markdown,
-    });
-
-    Assert.Equal(0, editor.TabIndex);
-    Assert.True(editor.DisplayEditor);
-    Assert.False(editor.DisplayPreview);
-
-    await Poll.UntilAsync(
-      () => MainThread.InvokeOnMainThreadAsync(() => Descendants(editor).OfType<Image>().Count()),
-      rendered => rendered == MediaLinkCount,
-      timeoutMessage: "The preview never resolved its media while hidden.");
-
-    var before = Descendants(editor).OfType<Image>().ToArray();
-
-    // Still on tab 0 (the plain-text editor) -- the preview is never shown during this edit.
-    await MainThread.InvokeOnMainThreadAsync(() => editor.Markdown = markdown + "\n\nAn epilogue naming no media link.");
-
-    Assert.False(editor.DisplayPreview);
-    var after = Descendants(editor).OfType<Image>().ToArray();
     Assert.Equal(MediaLinkCount, after.Length);
     Assert.Empty(before.Intersect(after));
   }
