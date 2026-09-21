@@ -32,6 +32,7 @@ public class MarkdownView : ContentView
   private readonly Dictionary<string, InlineMedia?> _ResolvedMedia = [];
   private readonly HashSet<string> _ResolvingMedia = [];
   private int _MediaGeneration;
+  private bool _ContentDirty;
 
   public MarkdownView()
   {
@@ -102,6 +103,18 @@ public class MarkdownView : ContentView
       view._ResolvingMedia.Clear();
       view._MediaGeneration++;
       view.Refresh();
+    }
+  }
+
+  // The preview is a permanent sibling of the plain-text editor, toggled only by IsVisible, not
+  // added/removed from the tree -- so this is the only signal that distinguishes "about to be
+  // looked at" from "off-screen behind the editor tab".
+  protected override void OnPropertyChanged(string? propertyName = null)
+  {
+    base.OnPropertyChanged(propertyName);
+    if (propertyName == IsVisibleProperty.PropertyName && IsVisible && _ContentDirty)
+    {
+      Refresh();
     }
   }
 
@@ -324,10 +337,21 @@ public class MarkdownView : ContentView
   }
 
   // Hands back what it parsed so a refresh can read the referenced links off the same tree it just drew.
+  // Media resolution keeps running while hidden -- only rebuilding the Image/wrapper pairs is deferred
+  // to the catch-up render -- so showing the preview doesn't also have to wait on resolver round-trips.
   private MarkdownDocument Render()
   {
     var document = Markdig.Markdown.Parse(Markdown ?? string.Empty, Pipeline);
-    Content = RenderContainer(document);
+    if (IsVisible)
+    {
+      Content = RenderContainer(document);
+      _ContentDirty = false;
+    }
+    else
+    {
+      _ContentDirty = true;
+    }
+
     return document;
   }
 
