@@ -1205,6 +1205,32 @@ public class PersonPageTests
     await MainThread.InvokeOnMainThreadAsync(() => page.Navigation.PopModalAsync());
   }
 
+  // Regression for #445: a real tap dispatches off the UI thread (MarkdownView's tap handling runs
+  // through SafeTask), and PushModalAsync from that thread throws a COMException on Windows. Calling
+  // RaiseAttachmentLinkTapped from the test's own (non-UI) thread reproduces that dispatch.
+  [Fact]
+  public async Task AttachmentLinkTapped_from_a_background_thread_still_shows_the_photo_viewer()
+  {
+    var services = new TestServices();
+    var content = BuildTaggedPhotoContent("0 OBJE\n1 FILE scan.png\n1 TITL A scan\n", TestImages.ValidPng);
+    var scan = new Data(44, content, "image/png", DataCategory.PersonAttachment);
+    services.Data
+      .Setup(table => table.TryGetDataByIdAsync(44, It.IsAny<CancellationToken>()))
+      .ReturnsAsync(scan);
+    var person = CreateSamplePerson();
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+
+    await using var window = await WindowHost.AttachAsync(page);
+    page.RaiseAttachmentLinkTapped(44);
+    var dialog = await ModalDialogHarness.WaitForModalAsync<PhotoViewerDialog>(page);
+
+    Assert.NotNull(dialog);
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+    await MainThread.InvokeOnMainThreadAsync(() => page.Navigation.PopModalAsync());
+  }
+
   // Basic open/close smoke coverage for a carried attachment -- this harness's modal push/pop
   // bypasses Shell entirely, so it cannot reproduce Shell's query-property resend on pop.
   [Fact]

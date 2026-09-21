@@ -329,8 +329,9 @@ public partial class PersonPage : ContentPage
     }
   }
 
-  private void OnAttachmentLinkTapped(object? sender, int attachmentId) =>
-    SafeTask.Run(() => OpenAttachmentLinkAsync(attachmentId), _AlertService);
+  // Unlike OnPersonLinkTapped, this can end in Navigation.PushModalAsync, which requires the UI thread.
+  protected void OnAttachmentLinkTapped(object? sender, int attachmentId) =>
+    SafeTask.RunOnMainThread(() => OpenAttachmentLinkAsync(attachmentId), _AlertService);
 
   // A dangling link (the referenced attachment was since removed) is simply inert.
   protected async Task OpenAttachmentLinkAsync(int attachmentId)
