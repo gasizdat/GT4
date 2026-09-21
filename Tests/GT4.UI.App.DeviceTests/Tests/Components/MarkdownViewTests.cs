@@ -159,8 +159,8 @@ public class MarkdownViewTests
     Assert.Equal([5], tapped);
   }
 
-  // Opens the same viewer a person's photo does (ImagePresenter.OpenViewerCommand), which is why this
-  // reaches through Shell.Current rather than a Navigation this ContentView doesn't have.
+  // MarkdownView is a ContentView with no Navigation of its own, so the tap reaches the viewer through
+  // Shell.Current -- an AppShell is needed here, not just a plain ContentPage.
   [Fact]
   public async Task MediaImage_Tapped_OpensThePhotoViewer()
   {
