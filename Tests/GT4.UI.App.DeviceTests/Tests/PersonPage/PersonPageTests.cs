@@ -1143,6 +1143,29 @@ public class PersonPageTests
   }
 
   [Fact]
+  public async Task AttachmentLinkTapped_with_an_image_attachment_shows_it_in_the_photo_viewer()
+  {
+    var services = new TestServices();
+    var content = BuildTaggedPhotoContent("0 OBJE\n1 FILE scan.png\n1 TITL A scan\n", TestImages.ValidPng);
+    var scan = new Data(42, content, "image/png", DataCategory.PersonAttachment);
+    services.Data
+      .Setup(table => table.TryGetDataByIdAsync(42, It.IsAny<CancellationToken>()))
+      .ReturnsAsync(scan);
+    var person = CreateSamplePerson();
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+
+    await using var window = await WindowHost.AttachAsync(page);
+    var tapTask = await MainThreadTask.StartAsync(() => page.InvokeAttachmentLinkTappedAsync(42));
+    var dialog = await ModalDialogHarness.WaitForModalAsync<PhotoViewerDialog>(page);
+    await tapTask;
+
+    Assert.NotNull(dialog);
+    await MainThread.InvokeOnMainThreadAsync(() => page.Navigation.PopModalAsync());
+  }
+
+  [Fact]
   public async Task AttachmentLinkTapped_with_an_id_naming_a_photo_is_inert()
   {
     var services = new TestServices();

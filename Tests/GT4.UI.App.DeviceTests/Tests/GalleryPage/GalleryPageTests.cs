@@ -30,8 +30,8 @@ public class GalleryPageTests
 
   private static Data Photo(int id, DataCategory category) => new(id, ValidPngBytes, "image/png", category);
 
-  private static Data Attachment(int id, string fileName) =>
-    new(id, GedcomPhotoResidue.EncodeAttachment(ValidPngBytes, fileName), "application/pdf", DataCategory.PersonAttachment);
+  private static Data Attachment(int id, string fileName, string mimeType = "application/pdf") =>
+    new(id, GedcomPhotoResidue.EncodeAttachment(ValidPngBytes, fileName), mimeType, DataCategory.PersonAttachment);
 
   private static async Task<TestableGalleryPage> CreatePageAsync(TestServices services)
   {
@@ -295,13 +295,30 @@ public class GalleryPageTests
       Times.Never());
   }
 
-  // The attachment branch hands the file to Launcher.Default, which has no headless outcome to assert;
+  // A non-image attachment hands the file to Launcher.Default, which has no headless outcome to assert;
   // it is AttachmentInfo.OpenAsync, the same call PersonPage makes for a person's own attachments.
   [Fact]
   public async Task Opening_a_photo_shows_it_in_the_photo_viewer()
   {
     var services = new TestServices();
     SetUpProject(services, dataSet: [Photo(100, DataCategory.PersonPhoto)]);
+    var page = await CreatePageAsync(services);
+    var items = await WaitForItemsAsync(page, 1);
+
+    await using var window = await WindowHost.AttachAsync(page);
+    var openTask = await MainThreadTask.StartAsync(() => page.InvokeOpenAsync(items.Single()));
+    var dialog = await ModalDialogHarness.WaitForModalAsync<PhotoViewerDialog>(page);
+    await openTask;
+
+    Assert.NotNull(dialog);
+    await MainThread.InvokeOnMainThreadAsync(() => page.Navigation.PopModalAsync());
+  }
+
+  [Fact]
+  public async Task Opening_an_image_attachment_shows_it_in_the_photo_viewer()
+  {
+    var services = new TestServices();
+    SetUpProject(services, dataSet: [Attachment(101, "scan.png", "image/png")]);
     var page = await CreatePageAsync(services);
     var items = await WaitForItemsAsync(page, 1);
 

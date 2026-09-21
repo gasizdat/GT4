@@ -212,6 +212,12 @@ public partial class FamilyPage : ContentPage
 
   private async Task OnOpenAttachmentAsync(AttachmentInfo attachment)
   {
+    if (attachment.Image is not null)
+    {
+      await Navigation.PushModalAsync(new PhotoViewerDialog([attachment.Image.Source], _AlertService));
+      return;
+    }
+
     using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
     await attachment.OpenAsync(token);
   }

@@ -474,6 +474,32 @@ public class FamilyPageTests
     Assert.Equal("deed.pdf", page.Attachments.Single().FileName);
   }
 
+  [Fact]
+  public async Task PageCommand_with_an_image_attachment_shows_it_in_the_photo_viewer()
+  {
+    var services = new TestServices();
+    var familyName = N(5, "Ivanov", NameType.FamilyName);
+    var attachment = new Data(
+      3, Content: GedcomPhotoResidue.EncodeAttachment(TestImages.ValidPng, "scan.png"), MimeType: "image/png", Category: DataCategory.FamilyAttachment);
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosByNameAsync(familyName, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([]);
+    services.FamilyManager
+      .Setup(f => f.GetFamilyFullInfoAsync(familyName, It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new FamilyFullInfo(familyName, null, [], [attachment]));
+    var page = await CreatePageAsync(services);
+    await page.ReloadPersonsAsync(() => page.FamilyName = familyName);
+    var attachmentInfo = page.Attachments.Single();
+
+    await using var window = await WindowHost.AttachAsync(page);
+    var commandTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync(attachmentInfo));
+    var dialog = await ModalDialogHarness.WaitForModalAsync<PhotoViewerDialog>(page);
+    await commandTask;
+
+    Assert.NotNull(dialog);
+    await MainThread.InvokeOnMainThreadAsync(() => page.Navigation.PopModalAsync());
+  }
+
   private const int MembersBelowCrashThreshold = 100;
 
   // Member heights must stay uneven; uniform ones stop the layout tests below discriminating.
