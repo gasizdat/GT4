@@ -64,13 +64,10 @@ public partial class SelectMediaDialog : ContentPage
           token);
 
         var ownMediaIds = _OwnMediaIds.ToHashSet();
-        var sortTitles = await Task.WhenAll(media.Select(item => item.ResolveSortTitleAsync(token)));
         var items = media
-          .Zip(sortTitles, (item, title) => (item, title))
-          .OrderByDescending(x => ownMediaIds.Contains(x.item.Info.Id))
-          .ThenBy(x => x.title, StringComparer.CurrentCulture)
-          .ThenBy(x => x.item.Info.Id)
-          .Select(x => x.item);
+          .OrderByDescending(item => ownMediaIds.Contains(item.Info.Id))
+          .ThenBy(item => item.SortTitle, StringComparer.CurrentCulture)
+          .ThenBy(item => item.Info.Id);
 
         MainThread.BeginInvokeOnMainThread(() => _Items.AddRange(items));
       }
