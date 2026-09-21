@@ -1,3 +1,5 @@
+using GT4.UI.Abstraction;
+using GT4.UI.Dialogs;
 using GT4.UI.Utils;
 using Markdig;
 using Markdig.Parsers;
@@ -28,15 +30,24 @@ public class MarkdownView : ContentView
 
   private static readonly MarkdownPipeline Pipeline = BuildPipeline();
 
+  private readonly IAlertService _AlertService;
   private readonly Command<string> _LinkCommand;
+  private readonly SafeCommand<ImageSource> _ImageTapCommand;
   private readonly Dictionary<string, InlineMedia?> _ResolvedMedia = [];
   private readonly HashSet<string> _ResolvingMedia = [];
   private int _MediaGeneration;
   private bool _ContentDirty;
 
-  public MarkdownView()
+  protected MarkdownView(IServiceProvider serviceProvider)
   {
+    _AlertService = serviceProvider.GetRequiredService<IAlertService>();
     _LinkCommand = new Command<string>(OnLinkTapped);
+    _ImageTapCommand = new SafeCommand<ImageSource>(OnImageTappedAsync, _AlertService);
+  }
+
+  public MarkdownView()
+    : this(GT4Services.Provider)
+  {
   }
 
   public static readonly BindableProperty MarkdownProperty =
@@ -296,9 +307,10 @@ public class MarkdownView : ContentView
   // MAUI keeps the height it measured a full-width image at, so capping the width alone leaves it in an
   // over-tall box: both axes have to come from the host's width. That needs the pixel dimensions, so a
   // remote image -- whose bytes this view doesn't hold -- keeps the plain fit, percentage included.
-  private static View ScaledImage(ImageSource source, Size? pixelSize, int? widthPercent)
+  private View ScaledImage(ImageSource source, Size? pixelSize, int? widthPercent)
   {
     var image = new Image { Source = source, Aspect = Aspect.AspectFit };
+    image.GestureRecognizers.Add(new TapGestureRecognizer { Command = _ImageTapCommand, CommandParameter = source });
     if (pixelSize is null)
     {
       return image;
@@ -587,6 +599,11 @@ public class MarkdownView : ContentView
       System.Diagnostics.Debug.WriteLine(ex);
     }
   }
+
+  // This view already holds the resolved ImageSource, so opening the viewer needs no project lookup
+  // even for a media: link.
+  private Task OnImageTappedAsync(ImageSource source) =>
+    Shell.Current.Navigation.PushModalAsync(new PhotoViewerDialog([source], _AlertService));
 
   // Spans carry their own font and colour -- none of it is inherited from the hosting Label -- so the
   // block-level choices have to travel down the inline tree.
