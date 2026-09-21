@@ -296,9 +296,7 @@ public class PersonPageTests
   }
 
   // Shell re-sends the PersonInfo [QueryProperty] with the person already on screen on a plain
-  // modal pop (e.g. closing the photo viewer), not just on a genuine navigation to a new person --
-  // confirmed by the user on the running app, where this was re-running the whole fetch pipeline
-  // and resetting every tab's scroll position.
+  // modal pop (e.g. closing the photo viewer), not just on a genuine navigation to a new person.
   [Fact]
   public async Task Setting_PersonInfo_to_the_currently_displayed_person_is_a_no_op()
   {
@@ -1207,10 +1205,8 @@ public class PersonPageTests
     await MainThread.InvokeOnMainThreadAsync(() => page.Navigation.PopModalAsync());
   }
 
-  // Basic open/close smoke coverage for a carried attachment. This does NOT reproduce Shell's
-  // re-send of the PersonInfo [QueryProperty] on modal pop (the actual cause of the reported scroll
-  // reset, see Setting_PersonInfo_to_the_currently_displayed_person_is_a_no_op below) -- this test
-  // harness's modal push/pop bypasses Shell entirely (see WindowHost), so it cannot exercise that path.
+  // Basic open/close smoke coverage for a carried attachment -- this harness's modal push/pop
+  // bypasses Shell entirely, so it cannot reproduce Shell's query-property resend on pop.
   [Fact]
   public async Task Closing_the_photo_viewer_does_not_rebind_the_attachments_list()
   {

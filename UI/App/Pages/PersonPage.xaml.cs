@@ -208,10 +208,7 @@ public partial class PersonPage : ContentPage
   public PersonFullInfo PersonFullInfo => _PersonFullInfo;
 
   // Shell re-sends this [QueryProperty] with the same person on a plain modal pop (e.g. closing the
-  // photo viewer), not just on a genuine navigation -- ignore a same-person re-set rather than
-  // re-running the whole fetch pipeline and resetting every tab's scroll position for nothing. A
-  // deliberate same-person reload (e.g. after an edit) must go through ShowPersonInfo directly,
-  // not this setter -- see OnPersonEditAsync.
+  // photo viewer), not just on a genuine navigation -- ignore a same-person re-set.
   public PersonInfo PersonInfo
   {
     set
@@ -630,9 +627,7 @@ public partial class PersonPage : ContentPage
       .PersonManager
       .UpdatePersonAsync(info, token);
 
-    // Not the PersonInfo setter: its same-person guard exists for Shell's spurious re-send of this
-    // [QueryProperty] on a plain modal pop, and would wrongly swallow this deliberate post-edit
-    // reload of the same person's (now changed) data.
+    // Not the PersonInfo setter: its same-person guard would swallow this deliberate reload.
     ShowPersonInfo(info, true);
   }
 
