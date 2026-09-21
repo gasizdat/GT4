@@ -77,8 +77,7 @@
               <Grid.GestureRecognizers>
                 <TapGestureRecognizer
                     Command="{Binding OpenDataCommand, Source={x:Reference Root}}"
-                    CommandParameter="{Binding .}"
-                    NumberOfTapsRequired="2" />
+                    CommandParameter="{Binding .}" />
               </Grid.GestureRecognizers>
 
               <Image
