@@ -1,5 +1,6 @@
 using GT4.Core.Project.Abstraction;
 using GT4.UI.Components;
+using GT4.UI.Dialogs;
 using GT4.UI.Utils;
 using Xunit;
 
@@ -156,6 +157,25 @@ public class MarkdownViewTests
 
     Assert.Equal("person:5", ((TapGestureRecognizer)recognizer).CommandParameter);
     Assert.Equal([5], tapped);
+  }
+
+  // Opens the same viewer a person's photo does (ImagePresenter.OpenViewerCommand), which is why this
+  // reaches through Shell.Current rather than a Navigation this ContentView doesn't have.
+  [Fact]
+  public async Task MediaImage_Tapped_OpensThePhotoViewer()
+  {
+    var view = await CreateViewAsync("![A caption](media:11)", new Dictionary<string, byte[]> { ["media:11"] = SamplePng });
+    var shell = await MainThread.InvokeOnMainThreadAsync(() => new AppShell());
+    await using var window = await WindowHost.AttachAsync(shell);
+
+    var image = Descendants(view).OfType<Image>().Single();
+    var tap = image.GestureRecognizers.OfType<TapGestureRecognizer>().Single();
+    await MainThread.InvokeOnMainThreadAsync(() => tap.Command!.Execute(tap.CommandParameter));
+
+    var dialog = await ModalDialogHarness.WaitForModalAsync<PhotoViewerDialog>(shell);
+
+    Assert.Same(image.Source, Assert.Single(dialog.Photos));
+    await MainThread.InvokeOnMainThreadAsync(() => shell.Navigation.PopModalAsync());
   }
 
   // A cancelled lookup says nothing about the id -- the host's short-operation token can outrun a slow
