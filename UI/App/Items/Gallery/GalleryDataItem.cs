@@ -26,6 +26,7 @@ public sealed class GalleryDataItem : CollectionItemBase<Data>, INotifyPropertyC
   private ImageSource? _Icon;
   private string? _Caption;
   private bool _ContentRequested;
+  private string _SortTitle;
 
   public GalleryDataItem(
     Data data,
@@ -42,6 +43,7 @@ public sealed class GalleryDataItem : CollectionItemBase<Data>, INotifyPropertyC
     PersonNames = [.. persons.Select(person => nameFormatter.ToString(person, NameFormat.CommonPersonName))];
     FamilyNames = [.. families.Select(family => family.Value)];
     Owners = string.Join(", ", PersonNames.Concat(FamilyNames));
+    _SortTitle = Owners;
     _CancellationTokenProvider = cancellationTokenProvider;
     _AlertService = alertService;
     _DataConverterResolver = dataConverterResolver;
@@ -116,8 +118,9 @@ public sealed class GalleryDataItem : CollectionItemBase<Data>, INotifyPropertyC
   }
 
   /// <summary>Same fallback as <see cref="Title"/>, but resolved from the residue's own metadata rather
-  /// than a full conversion -- cheap enough to call for every item up front, to sort by what the row
-  /// will display instead of by <see cref="Owners"/>.</summary>
+  /// than a full conversion -- cheap enough to call for every item up front, to sort and filter by what
+  /// the row will display instead of by <see cref="Owners"/> alone. Cached for <see cref="MatchesFilter"/>.
+  /// </summary>
   public async Task<string> ResolveSortTitleAsync(CancellationToken token)
   {
     var title = await GedcomPhotoResidue.ExtractTitleAsync(Info, token);
@@ -126,8 +129,15 @@ public sealed class GalleryDataItem : CollectionItemBase<Data>, INotifyPropertyC
       title = await GedcomPhotoResidue.ExtractFileNameAsync(Info, token);
     }
 
-    return string.IsNullOrWhiteSpace(title) ? Owners : title;
+    _SortTitle = string.IsNullOrWhiteSpace(title) ? Owners : title;
+    return _SortTitle;
   }
+
+  /// <summary>Deliberately not <see cref="Title"/> -- reading it would decode every blob in the project on
+  /// the first keystroke.</summary>
+  public bool MatchesFilter(string filter) =>
+    Owners.Contains(filter, StringComparison.InvariantCultureIgnoreCase) ||
+    _SortTitle.Contains(filter, StringComparison.InvariantCultureIgnoreCase);
 
   public override ImageSource Icon
   {

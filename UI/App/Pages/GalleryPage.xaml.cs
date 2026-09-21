@@ -104,8 +104,7 @@ public partial class GalleryPage : ContentPage
   }
 
   private bool OwnersFilter(FilteredObservableCollection<GalleryDataItem> _, GalleryDataItem item) =>
-    string.IsNullOrEmpty(_OwnerFilter) ||
-    item.Owners.Contains(_OwnerFilter, StringComparison.InvariantCultureIgnoreCase);
+    string.IsNullOrEmpty(_OwnerFilter) || item.MatchesFilter(_OwnerFilter);
 
   public PageLoading Loading { get; }
 

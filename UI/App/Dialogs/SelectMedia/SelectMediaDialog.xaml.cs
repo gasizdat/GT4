@@ -87,8 +87,6 @@ public partial class SelectMediaDialog : ContentPage
     }
   }
 
-  // Owners rather than Title: a row's title comes out of a conversion the item defers until something
-  // renders it, so filtering on it would decode every blob in the project on the first keystroke.
   public string OwnerFilter
   {
     get => _OwnerFilter;
@@ -142,6 +140,5 @@ public partial class SelectMediaDialog : ContentPage
   private void Cancel() => _Info.TrySetResult(null);
 
   private bool OwnersFilter(FilteredObservableCollection<GalleryDataItem> collection, GalleryDataItem item) =>
-    string.IsNullOrEmpty(_OwnerFilter) ||
-    item.Owners.Contains(_OwnerFilter, StringComparison.InvariantCultureIgnoreCase);
+    string.IsNullOrEmpty(_OwnerFilter) || item.MatchesFilter(_OwnerFilter);
 }

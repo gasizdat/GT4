@@ -69,4 +69,41 @@ public class SelectMediaDialogTests
 
     Assert.Equal([51, 52, 50], items.Select(item => item.Info.Id));
   }
+
+  // Issue #421: both attachments share the same owner, so only a match against the resolved file
+  // name -- not just Owners -- tells them apart.
+  [Fact]
+  public async Task OwnerFilter_also_matches_the_resolved_file_name()
+  {
+    var services = new TestServices();
+    var ivan = new PersonInfo(1, default(Date), null, BiologicalSex.Male, [new Name(100, "Ivan", NameType.FirstName | NameType.MaleDeclension, null)], null);
+    Data Attachment(int id, string fileName) =>
+      new(id, GedcomPhotoResidue.EncodeAttachment([1, 2, 3], fileName), "application/pdf", DataCategory.PersonAttachment);
+    services.Data.Setup(d => d.GetDataSetAsync(It.IsAny<CancellationToken>()))
+      .ReturnsAsync([Attachment(60, "receipt-1900.pdf"), Attachment(61, "deed-1920.pdf")]);
+    services.PersonManager.Setup(p => p.GetPersonInfosAsync(false, It.IsAny<CancellationToken>())).ReturnsAsync([ivan]);
+    services.PersonData.Setup(p => p.GetPersonIdsByDataAsync(It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new Dictionary<int, int[]> { [60] = [ivan.Id], [61] = [ivan.Id] });
+
+    var dialog = await CreateDialogAsync(services);
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => dialog.Items.ToArray()),
+      items => items.Length == 2,
+      timeoutMessage: "The dialog did not settle on 2 item(s); check the TestServices mock setup.");
+    var callsBefore = services.Data.Invocations.Count;
+
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.OwnerFilter = "1900");
+    var filtered = await MainThread.InvokeOnMainThreadAsync(() => dialog.Items.ToArray());
+    var match = filtered.Single();
+
+    Assert.Equal(60, match.Info.Id);
+    Assert.Equal(callsBefore, services.Data.Invocations.Count);
+    // The filter must match the cached sort title, not Title itself -- reading Title is what starts
+    // the full conversion (RequestContent) the "decode every blob on a keystroke" comment warned about.
+    await Poll.ConfirmNeverAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => match.HasDistinctOwners),
+      distinct => distinct,
+      TimeSpan.FromSeconds(1),
+      "Filtering triggered the attachment's full content conversion instead of matching its cached sort title.");
+  }
 }
