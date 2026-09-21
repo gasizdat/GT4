@@ -329,9 +329,8 @@ public partial class PersonPage : ContentPage
     }
   }
 
-  // Unlike OnPersonLinkTapped, this can end in Navigation.PushModalAsync, which requires the UI thread.
   protected void OnAttachmentLinkTapped(object? sender, int attachmentId) =>
-    SafeTask.RunOnMainThread(() => OpenAttachmentLinkAsync(attachmentId), _AlertService);
+    SafeTask.Run(() => OpenAttachmentLinkAsync(attachmentId), _AlertService);
 
   // A dangling link (the referenced attachment was since removed) is simply inert.
   protected async Task OpenAttachmentLinkAsync(int attachmentId)
@@ -361,7 +360,9 @@ public partial class PersonPage : ContentPage
   {
     if (attachment.Image is not null)
     {
-      await Navigation.PushModalAsync(new PhotoViewerDialog([attachment.Image.Source], _AlertService));
+      // OnAttachmentLinkTapped's caller reaches here off the UI thread; PushModalAsync needs it.
+      await MainThread.InvokeOnMainThreadAsync(
+        () => Navigation.PushModalAsync(new PhotoViewerDialog([attachment.Image.Source], _AlertService)));
       return;
     }
 
