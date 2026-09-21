@@ -104,8 +104,7 @@ public partial class GalleryPage : ContentPage
   }
 
   private bool OwnersFilter(FilteredObservableCollection<GalleryDataItem> _, GalleryDataItem item) =>
-    string.IsNullOrEmpty(_OwnerFilter) ||
-    item.Owners.Contains(_OwnerFilter, StringComparison.InvariantCultureIgnoreCase);
+    string.IsNullOrEmpty(_OwnerFilter) || item.MatchesFilter(_OwnerFilter);
 
   public PageLoading Loading { get; }
 
@@ -128,12 +127,9 @@ public partial class GalleryPage : ContentPage
           _DataConverterResolver,
           token);
 
-        var sortTitles = await Task.WhenAll(media.Select(item => item.ResolveSortTitleAsync(token)));
         var items = media
-          .Zip(sortTitles, (item, title) => (item, title))
-          .OrderBy(x => x.title, StringComparer.CurrentCulture)
-          .ThenBy(x => x.item.Info.Id)
-          .Select(x => x.item)
+          .OrderBy(item => item.SortTitle, StringComparer.CurrentCulture)
+          .ThenBy(item => item.Info.Id)
           .ToArray();
 
         MainThread.BeginInvokeOnMainThread(() =>

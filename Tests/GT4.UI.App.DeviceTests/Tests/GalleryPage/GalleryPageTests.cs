@@ -343,6 +343,37 @@ public class GalleryPageTests
     Assert.Equal(2, restored.Length);
   }
 
+  // Issue #421: both items share the same owner, so only a match against the resolved title/file
+  // name -- not just Owners -- tells them apart.
+  [Fact]
+  public async Task OwnerFilter_also_matches_the_resolved_title_without_reloading()
+  {
+    var services = new TestServices();
+    var ivan = P(1, "Ivan");
+    SetUpProject(
+      services,
+      dataSet: [Attachment(90, "receipt-1900.pdf"), Photo(91, DataCategory.PersonPhoto)],
+      persons: [ivan],
+      personIdsByData: new() { [90] = [ivan.Id], [91] = [ivan.Id] });
+    var page = await CreatePageAsync(services);
+    await WaitForItemsAsync(page, 2);
+    var callsBefore = services.Data.Invocations.Count;
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.OwnerFilter = "1900");
+    var filtered = await MainThread.InvokeOnMainThreadAsync(() => page.Items.ToArray());
+    var match = filtered.Single();
+
+    Assert.Equal(90, match.Info.Id);
+    Assert.Equal(callsBefore, services.Data.Invocations.Count);
+    // The filter must match the cached sort title, not Title itself -- reading Title is what starts
+    // the full conversion (RequestContent) the "decode every blob on a keystroke" comment warned about.
+    await Poll.ConfirmNeverAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => match.HasDistinctOwners),
+      distinct => distinct,
+      TimeSpan.FromSeconds(1),
+      "Filtering triggered the attachment's full content conversion instead of matching its cached sort title.");
+  }
+
   [Fact]
   public async Task An_image_resolves_its_own_thumbnail_as_the_icon()
   {

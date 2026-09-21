@@ -27,11 +27,14 @@ public sealed class GalleryDataItem : CollectionItemBase<Data>, INotifyPropertyC
   private string? _Caption;
   private bool _ContentRequested;
 
-  public GalleryDataItem(
+  private GalleryDataItem(
     Data data,
     PersonInfo[] persons,
     Name[] families,
-    INameFormatter nameFormatter,
+    string[] personNames,
+    string[] familyNames,
+    string owners,
+    string sortTitle,
     ICancellationTokenProvider cancellationTokenProvider,
     IAlertService alertService,
     DataConverterResolver dataConverterResolver)
@@ -39,12 +42,42 @@ public sealed class GalleryDataItem : CollectionItemBase<Data>, INotifyPropertyC
   {
     Persons = persons;
     Families = families;
-    PersonNames = [.. persons.Select(person => nameFormatter.ToString(person, NameFormat.CommonPersonName))];
-    FamilyNames = [.. families.Select(family => family.Value)];
-    Owners = string.Join(", ", PersonNames.Concat(FamilyNames));
+    PersonNames = personNames;
+    FamilyNames = familyNames;
+    Owners = owners;
+    SortTitle = sortTitle;
     _CancellationTokenProvider = cancellationTokenProvider;
     _AlertService = alertService;
     _DataConverterResolver = dataConverterResolver;
+  }
+
+  /// <summary>Resolves the sort/filter title up front -- from the residue's own TITL/FILE metadata rather
+  /// than a full conversion -- so every item is immediately consistent instead of carrying an Owners
+  /// fallback until something later calls a separate resolve step.</summary>
+  private static async Task<GalleryDataItem> CreateAsync(
+    Data data,
+    PersonInfo[] persons,
+    Name[] families,
+    INameFormatter nameFormatter,
+    ICancellationTokenProvider cancellationTokenProvider,
+    IAlertService alertService,
+    DataConverterResolver dataConverterResolver,
+    CancellationToken token)
+  {
+    string[] personNames = [.. persons.Select(person => nameFormatter.ToString(person, NameFormat.CommonPersonName))];
+    string[] familyNames = [.. families.Select(family => family.Value)];
+    var owners = string.Join(", ", personNames.Concat(familyNames));
+
+    var title = await GedcomPhotoResidue.ExtractTitleAsync(data, token);
+    if (string.IsNullOrWhiteSpace(title) && data.Category.IsAttachment())
+    {
+      title = await GedcomPhotoResidue.ExtractFileNameAsync(data, token);
+    }
+    var sortTitle = string.IsNullOrWhiteSpace(title) ? owners : title;
+
+    return new(
+      data, persons, families, personNames, familyNames, owners, sortTitle,
+      cancellationTokenProvider, alertService, dataConverterResolver);
   }
 
   /// <summary>
@@ -69,23 +102,23 @@ public sealed class GalleryDataItem : CollectionItemBase<Data>, INotifyPropertyC
     var personsById = persons.ToDictionary(person => person.Id);
     var namesById = names.ToDictionary(name => name.Id);
 
-    GalleryDataItem CreateItem(Data media)
+    Task<GalleryDataItem> CreateItemAsync(Data media)
     {
       var ownerPersonIds = personIdsByData.GetValueOrDefault(media.Id) ?? [];
       var ownerNameIds = nameIdsByData.GetValueOrDefault(media.Id) ?? [];
       PersonInfo[] owningPersons = [.. ownerPersonIds.Select(id => personsById[id])];
       Name[] owningFamilies = [.. ownerNameIds.Select(id => namesById[id])];
 
-      return new(
+      return CreateAsync(
         media, owningPersons, owningFamilies, nameFormatter,
-        cancellationTokenProvider, alertService, dataConverterResolver);
+        cancellationTokenProvider, alertService, dataConverterResolver, token);
     }
 
-    var items = dataSet
+    var itemTasks = dataSet
       .Where(media => media.Category.IsPhoto() || media.Category.IsAttachment())
-      .Select(CreateItem);
+      .Select(CreateItemAsync);
 
-    return [.. items];
+    return await Task.WhenAll(itemTasks);
   }
 
   public event PropertyChangedEventHandler? PropertyChanged;
@@ -116,18 +149,15 @@ public sealed class GalleryDataItem : CollectionItemBase<Data>, INotifyPropertyC
   }
 
   /// <summary>Same fallback as <see cref="Title"/>, but resolved from the residue's own metadata rather
-  /// than a full conversion -- cheap enough to call for every item up front, to sort by what the row
-  /// will display instead of by <see cref="Owners"/>.</summary>
-  public async Task<string> ResolveSortTitleAsync(CancellationToken token)
-  {
-    var title = await GedcomPhotoResidue.ExtractTitleAsync(Info, token);
-    if (string.IsNullOrWhiteSpace(title) && Info.Category.IsAttachment())
-    {
-      title = await GedcomPhotoResidue.ExtractFileNameAsync(Info, token);
-    }
+  /// than a full conversion -- cheap enough to have resolved for every item up front, to sort and filter
+  /// by what the row will display instead of by <see cref="Owners"/> alone.</summary>
+  public string SortTitle { get; }
 
-    return string.IsNullOrWhiteSpace(title) ? Owners : title;
-  }
+  /// <summary>Deliberately not <see cref="Title"/> -- reading it would decode every blob in the project on
+  /// the first keystroke.</summary>
+  public bool MatchesFilter(string filter) =>
+    Owners.Contains(filter, StringComparison.InvariantCultureIgnoreCase) ||
+    SortTitle.Contains(filter, StringComparison.InvariantCultureIgnoreCase);
 
   public override ImageSource Icon
   {

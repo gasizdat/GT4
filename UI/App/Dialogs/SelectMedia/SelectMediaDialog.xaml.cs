@@ -64,13 +64,10 @@ public partial class SelectMediaDialog : ContentPage
           token);
 
         var ownMediaIds = _OwnMediaIds.ToHashSet();
-        var sortTitles = await Task.WhenAll(media.Select(item => item.ResolveSortTitleAsync(token)));
         var items = media
-          .Zip(sortTitles, (item, title) => (item, title))
-          .OrderByDescending(x => ownMediaIds.Contains(x.item.Info.Id))
-          .ThenBy(x => x.title, StringComparer.CurrentCulture)
-          .ThenBy(x => x.item.Info.Id)
-          .Select(x => x.item);
+          .OrderByDescending(item => ownMediaIds.Contains(item.Info.Id))
+          .ThenBy(item => item.SortTitle, StringComparer.CurrentCulture)
+          .ThenBy(item => item.Info.Id);
 
         MainThread.BeginInvokeOnMainThread(() => _Items.AddRange(items));
       }
@@ -87,8 +84,6 @@ public partial class SelectMediaDialog : ContentPage
     }
   }
 
-  // Owners rather than Title: a row's title comes out of a conversion the item defers until something
-  // renders it, so filtering on it would decode every blob in the project on the first keystroke.
   public string OwnerFilter
   {
     get => _OwnerFilter;
@@ -142,6 +137,5 @@ public partial class SelectMediaDialog : ContentPage
   private void Cancel() => _Info.TrySetResult(null);
 
   private bool OwnersFilter(FilteredObservableCollection<GalleryDataItem> collection, GalleryDataItem item) =>
-    string.IsNullOrEmpty(_OwnerFilter) ||
-    item.Owners.Contains(_OwnerFilter, StringComparison.InvariantCultureIgnoreCase);
+    string.IsNullOrEmpty(_OwnerFilter) || item.MatchesFilter(_OwnerFilter);
 }
