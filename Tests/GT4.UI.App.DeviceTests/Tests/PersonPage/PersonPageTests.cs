@@ -1165,6 +1165,60 @@ public class PersonPageTests
     await MainThread.InvokeOnMainThreadAsync(() => page.Navigation.PopModalAsync());
   }
 
+  // Closing through the dialog's own CloseCommand -- not a raw PopModalAsync -- is what actually
+  // drives PersonPage.OnNavigatedTo, where the reported scroll-restore fix lives. This does not pin
+  // the scroll position itself (no headless getter for it); it pins that OnNavigatedTo's Refresh()
+  // guard still holds for this transition, so the Attachments array is not reassigned underneath it.
+  [Fact]
+  public async Task Closing_the_photo_viewer_does_not_rebind_the_attachments_list()
+  {
+    var services = new TestServices();
+    var content = BuildTaggedPhotoContent("0 OBJE\n1 FILE scan.png\n1 TITL A scan\n", TestImages.ValidPng);
+    var scan = new Data(43, content, "image/png", DataCategory.PersonAttachment);
+    var person = CreateSamplePerson() with { Attachments = [scan] };
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+    var attachment = page.Attachments.Single();
+
+    await using var window = await WindowHost.AttachAsync(page);
+    var commandTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync(attachment));
+    var dialog = await ModalDialogHarness.WaitForModalAsync<PhotoViewerDialog>(page);
+    await commandTask;
+
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.CloseCommand.Execute(null));
+
+    Assert.Same(attachment, page.Attachments.Single());
+  }
+
+  // Same close path, but for an attachment the Attachments tab never carried (reached only via a
+  // bio attachment: link). A smoke test, not a pin of the _Attachments.Contains guard itself --
+  // ScrollTo on an item outside ItemsSource did not throw in this harness either way when tried.
+  [Fact]
+  public async Task Closing_the_photo_viewer_for_an_uncarried_attachment_completes_without_an_error_alert()
+  {
+    var services = new TestServices();
+    var content = BuildTaggedPhotoContent("0 OBJE\n1 FILE scan.png\n1 TITL Another scan\n", TestImages.ValidPng);
+    var scan = new Data(44, content, "image/png", DataCategory.PersonAttachment);
+    services.Data
+      .Setup(table => table.TryGetDataByIdAsync(44, It.IsAny<CancellationToken>()))
+      .ReturnsAsync(scan);
+    var person = CreateSamplePerson();
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+
+    await using var window = await WindowHost.AttachAsync(page);
+    var tapTask = await MainThreadTask.StartAsync(() => page.InvokeAttachmentLinkTappedAsync(44));
+    var dialog = await ModalDialogHarness.WaitForModalAsync<PhotoViewerDialog>(page);
+    await tapTask;
+
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.CloseCommand.Execute(null));
+
+    Assert.Empty(page.Attachments);
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+  }
+
   [Fact]
   public async Task AttachmentLinkTapped_with_an_id_naming_a_photo_is_inert()
   {

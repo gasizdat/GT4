@@ -47,6 +47,7 @@ public partial class PersonPage : ContentPage
   private bool _ExpandAll = false;
   private RelativeInfo[] _AllRoots = [];
   private ProjectInfo? _LastProjectInfo;
+  private AttachmentInfo? _LastOpenedAttachment;
 
   // Relatives first: it is the only one every person has, and so the one anything else falls back to.
   private enum PersonTab
@@ -297,6 +298,16 @@ public partial class PersonPage : ContentPage
     {
       Refresh();
     }
+
+    // Users report the Attachments tab scrolled back to the top after closing the modal photo
+    // viewer. Refresh() above is confirmed not the cause (its guard holds; _Attachments is not
+    // reassigned) -- the suspected cause is the platform resetting the CollectionView's native
+    // scroll offset on modal pop. Scroll the just-viewed item back into view either way.
+    if (_LastOpenedAttachment is { } attachment)
+    {
+      _LastOpenedAttachment = null;
+      AttachmentsListView.ScrollTo(attachment, position: ScrollToPosition.MakeVisible, animate: false);
+    }
   }
 
   private void Refresh()
@@ -350,6 +361,13 @@ public partial class PersonPage : ContentPage
   {
     if (attachment.Image is not null)
     {
+      // Only an attachment actually in the Attachments tab's own list is worth scrolling back to --
+      // a bio attachment: link can open one the person's Attachments tab never carried.
+      if (_Attachments.Contains(attachment))
+      {
+        _LastOpenedAttachment = attachment;
+      }
+
       await Navigation.PushModalAsync(new PhotoViewerDialog([attachment.Image.Source], _AlertService));
       return;
     }
