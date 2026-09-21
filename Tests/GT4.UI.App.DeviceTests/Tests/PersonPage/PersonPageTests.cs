@@ -295,6 +295,48 @@ public class PersonPageTests
     Assert.Equal(loadsBefore, page.CompletedLoads);
   }
 
+  // Shell re-sends the PersonInfo [QueryProperty] with the person already on screen on a plain
+  // modal pop (e.g. closing the photo viewer), not just on a genuine navigation to a new person --
+  // confirmed by the user on the running app, where this was re-running the whole fetch pipeline
+  // and resetting every tab's scroll position.
+  [Fact]
+  public async Task Setting_PersonInfo_to_the_currently_displayed_person_is_a_no_op()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson();
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+    var loadsBefore = page.CompletedLoads;
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.PersonInfo = person);
+    await Task.Delay(200);
+
+    Assert.Equal(loadsBefore, page.CompletedLoads);
+  }
+
+  [Fact]
+  public async Task Setting_PersonInfo_to_a_different_person_still_loads_it()
+  {
+    var services = new TestServices();
+    var first = CreateSamplePerson();
+    var second = CreateSamplePerson() with { Id = 2 };
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.Is<Person>(x => x.Id == 1), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(first);
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.Is<Person>(x => x.Id == 2), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(second);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = first);
+
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = second);
+
+    Assert.Equal(second.Id, page.PersonFullInfo.Id);
+  }
+
   [Fact]
   public async Task Loading_a_person_with_a_tagged_main_photo_surfaces_its_caption()
   {
@@ -1165,10 +1207,10 @@ public class PersonPageTests
     await MainThread.InvokeOnMainThreadAsync(() => page.Navigation.PopModalAsync());
   }
 
-  // Closing through the dialog's own CloseCommand -- not a raw PopModalAsync -- is what actually
-  // drives PersonPage.OnNavigatedTo, where the reported scroll-restore fix lives. This does not pin
-  // the scroll position itself (no headless getter for it); it pins that OnNavigatedTo's Refresh()
-  // guard still holds for this transition, so the Attachments array is not reassigned underneath it.
+  // Basic open/close smoke coverage for a carried attachment. This does NOT reproduce Shell's
+  // re-send of the PersonInfo [QueryProperty] on modal pop (the actual cause of the reported scroll
+  // reset, see Setting_PersonInfo_to_the_currently_displayed_person_is_a_no_op below) -- this test
+  // harness's modal push/pop bypasses Shell entirely (see WindowHost), so it cannot exercise that path.
   [Fact]
   public async Task Closing_the_photo_viewer_does_not_rebind_the_attachments_list()
   {
@@ -1191,9 +1233,8 @@ public class PersonPageTests
     Assert.Same(attachment, page.Attachments.Single());
   }
 
-  // Same close path, but for an attachment the Attachments tab never carried (reached only via a
-  // bio attachment: link). A smoke test, not a pin of the _Attachments.Contains guard itself --
-  // ScrollTo on an item outside ItemsSource did not throw in this harness either way when tried.
+  // Same open/close smoke coverage, but for an attachment the Attachments tab never carried
+  // (reached only via a bio attachment: link).
   [Fact]
   public async Task Closing_the_photo_viewer_for_an_uncarried_attachment_completes_without_an_error_alert()
   {

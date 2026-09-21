@@ -323,7 +323,6 @@
         </ScrollView>
 
         <CollectionView
-            x:Name="AttachmentsListView"
             Grid.Row="1"
             IsVisible="{Binding ShowAttachmentsTab, Source={x:Reference Root}}"
             ItemsSource="{Binding Attachments, Source={x:Reference Root}}"
