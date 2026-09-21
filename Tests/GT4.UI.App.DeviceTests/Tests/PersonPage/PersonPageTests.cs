@@ -295,6 +295,46 @@ public class PersonPageTests
     Assert.Equal(loadsBefore, page.CompletedLoads);
   }
 
+  // Shell re-sends the PersonInfo [QueryProperty] with the person already on screen on a plain
+  // modal pop (e.g. closing the photo viewer), not just on a genuine navigation to a new person.
+  [Fact]
+  public async Task Setting_PersonInfo_to_the_currently_displayed_person_is_a_no_op()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson();
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+    var loadsBefore = page.CompletedLoads;
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.PersonInfo = person);
+    await Task.Delay(200);
+
+    Assert.Equal(loadsBefore, page.CompletedLoads);
+  }
+
+  [Fact]
+  public async Task Setting_PersonInfo_to_a_different_person_still_loads_it()
+  {
+    var services = new TestServices();
+    var first = CreateSamplePerson();
+    var second = CreateSamplePerson() with { Id = 2 };
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.Is<Person>(x => x.Id == 1), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(first);
+    services.PersonManager
+      .Setup(p => p.GetPersonFullInfoAsync(It.Is<Person>(x => x.Id == 2), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(second);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = first);
+
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = second);
+
+    Assert.Equal(second.Id, page.PersonFullInfo.Id);
+  }
+
   [Fact]
   public async Task Loading_a_person_with_a_tagged_main_photo_surfaces_its_caption()
   {
@@ -1140,6 +1180,106 @@ public class PersonPageTests
     Assert.Empty(page.Attachments);
     Assert.NotNull(attachment);
     Assert.Equal("Another deed", attachment.Title);
+  }
+
+  [Fact]
+  public async Task AttachmentLinkTapped_with_an_image_attachment_shows_it_in_the_photo_viewer()
+  {
+    var services = new TestServices();
+    var content = BuildTaggedPhotoContent("0 OBJE\n1 FILE scan.png\n1 TITL A scan\n", TestImages.ValidPng);
+    var scan = new Data(42, content, "image/png", DataCategory.PersonAttachment);
+    services.Data
+      .Setup(table => table.TryGetDataByIdAsync(42, It.IsAny<CancellationToken>()))
+      .ReturnsAsync(scan);
+    var person = CreateSamplePerson();
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+
+    await using var window = await WindowHost.AttachAsync(page);
+    var tapTask = await MainThreadTask.StartAsync(() => page.InvokeAttachmentLinkTappedAsync(42));
+    var dialog = await ModalDialogHarness.WaitForModalAsync<PhotoViewerDialog>(page);
+    await tapTask;
+
+    Assert.NotNull(dialog);
+    await MainThread.InvokeOnMainThreadAsync(() => page.Navigation.PopModalAsync());
+  }
+
+  // Regression for #445: a real tap dispatches off the UI thread (MarkdownView's tap handling runs
+  // through SafeTask), and PushModalAsync from that thread throws a COMException on Windows. Calling
+  // RaiseAttachmentLinkTapped from the test's own (non-UI) thread reproduces that dispatch.
+  [Fact]
+  public async Task AttachmentLinkTapped_from_a_background_thread_still_shows_the_photo_viewer()
+  {
+    var services = new TestServices();
+    var content = BuildTaggedPhotoContent("0 OBJE\n1 FILE scan.png\n1 TITL A scan\n", TestImages.ValidPng);
+    var scan = new Data(44, content, "image/png", DataCategory.PersonAttachment);
+    services.Data
+      .Setup(table => table.TryGetDataByIdAsync(44, It.IsAny<CancellationToken>()))
+      .ReturnsAsync(scan);
+    var person = CreateSamplePerson();
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+
+    await using var window = await WindowHost.AttachAsync(page);
+    page.RaiseAttachmentLinkTapped(44);
+    var dialog = await ModalDialogHarness.WaitForModalAsync<PhotoViewerDialog>(page);
+
+    Assert.NotNull(dialog);
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+    await MainThread.InvokeOnMainThreadAsync(() => page.Navigation.PopModalAsync());
+  }
+
+  // Basic open/close smoke coverage for a carried attachment -- this harness's modal push/pop
+  // bypasses Shell entirely, so it cannot reproduce Shell's query-property resend on pop.
+  [Fact]
+  public async Task Closing_the_photo_viewer_does_not_rebind_the_attachments_list()
+  {
+    var services = new TestServices();
+    var content = BuildTaggedPhotoContent("0 OBJE\n1 FILE scan.png\n1 TITL A scan\n", TestImages.ValidPng);
+    var scan = new Data(43, content, "image/png", DataCategory.PersonAttachment);
+    var person = CreateSamplePerson() with { Attachments = [scan] };
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+    var attachment = page.Attachments.Single();
+
+    await using var window = await WindowHost.AttachAsync(page);
+    var commandTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync(attachment));
+    var dialog = await ModalDialogHarness.WaitForModalAsync<PhotoViewerDialog>(page);
+    await commandTask;
+
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.CloseCommand.Execute(null));
+
+    Assert.Same(attachment, page.Attachments.Single());
+  }
+
+  // Same open/close smoke coverage, but for an attachment the Attachments tab never carried
+  // (reached only via a bio attachment: link).
+  [Fact]
+  public async Task Closing_the_photo_viewer_for_an_uncarried_attachment_completes_without_an_error_alert()
+  {
+    var services = new TestServices();
+    var content = BuildTaggedPhotoContent("0 OBJE\n1 FILE scan.png\n1 TITL Another scan\n", TestImages.ValidPng);
+    var scan = new Data(44, content, "image/png", DataCategory.PersonAttachment);
+    services.Data
+      .Setup(table => table.TryGetDataByIdAsync(44, It.IsAny<CancellationToken>()))
+      .ReturnsAsync(scan);
+    var person = CreateSamplePerson();
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+
+    await using var window = await WindowHost.AttachAsync(page);
+    var tapTask = await MainThreadTask.StartAsync(() => page.InvokeAttachmentLinkTappedAsync(44));
+    var dialog = await ModalDialogHarness.WaitForModalAsync<PhotoViewerDialog>(page);
+    await tapTask;
+
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.CloseCommand.Execute(null));
+
+    Assert.Empty(page.Attachments);
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
 
   [Fact]

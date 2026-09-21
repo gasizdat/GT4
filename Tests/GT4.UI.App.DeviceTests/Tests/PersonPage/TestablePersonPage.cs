@@ -75,6 +75,11 @@ internal sealed class TestablePersonPage : PersonPage
 
   public Task InvokeAttachmentLinkTappedAsync(int attachmentId) => OpenAttachmentLinkAsync(attachmentId);
 
+  // Unlike InvokeAttachmentLinkTappedAsync, this goes through the real tap handler -- MarkdownView
+  // raises AttachmentLinkTapped from whatever thread this is called on, so a test calling it from its
+  // own (non-UI) thread reproduces the same off-UI-thread dispatch a real tap goes through.
+  public void RaiseAttachmentLinkTapped(int attachmentId) => OnAttachmentLinkTapped(null, attachmentId);
+
   // AttachmentInfo.OpenAsync launches a platform viewer, so the tap resolution is exercised on its own.
   public Task<AttachmentInfo?> ResolveAttachmentAsync(int attachmentId) => TryResolveAttachmentAsync(attachmentId);
 

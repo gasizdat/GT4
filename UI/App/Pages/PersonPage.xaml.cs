@@ -207,9 +207,19 @@ public partial class PersonPage : ContentPage
 
   public PersonFullInfo PersonFullInfo => _PersonFullInfo;
 
+  // Shell re-sends this [QueryProperty] with the same person on a plain modal pop (e.g. closing the
+  // photo viewer), not just on a genuine navigation -- ignore a same-person re-set.
   public PersonInfo PersonInfo
   {
-    set => ShowPersonInfo(value, true);
+    set
+    {
+      if (value.Id == _PersonFullInfo.Id)
+      {
+        return;
+      }
+
+      ShowPersonInfo(value, true);
+    }
   }
 
   public bool ShowRelativesTab => _SelectedTab == PersonTab.Relatives;
@@ -319,7 +329,7 @@ public partial class PersonPage : ContentPage
     }
   }
 
-  private void OnAttachmentLinkTapped(object? sender, int attachmentId) =>
+  protected void OnAttachmentLinkTapped(object? sender, int attachmentId) =>
     SafeTask.Run(() => OpenAttachmentLinkAsync(attachmentId), _AlertService);
 
   // A dangling link (the referenced attachment was since removed) is simply inert.
@@ -348,6 +358,14 @@ public partial class PersonPage : ContentPage
 
   private async Task OnOpenAttachmentAsync(AttachmentInfo attachment)
   {
+    if (attachment.Image is not null)
+    {
+      // OnAttachmentLinkTapped's caller reaches here off the UI thread; PushModalAsync needs it.
+      await MainThread.InvokeOnMainThreadAsync(
+        () => Navigation.PushModalAsync(new PhotoViewerDialog([attachment.Image.Source], _AlertService)));
+      return;
+    }
+
     using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
     await attachment.OpenAsync(token);
   }
@@ -611,7 +629,8 @@ public partial class PersonPage : ContentPage
       .PersonManager
       .UpdatePersonAsync(info, token);
 
-    PersonInfo = info;
+    // Not the PersonInfo setter: its same-person guard would swallow this deliberate reload.
+    ShowPersonInfo(info, true);
   }
 
   private void OnToggleMainPerson()
