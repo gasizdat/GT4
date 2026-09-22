@@ -15,7 +15,7 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
   private readonly IAlertService _AlertService;
   private object? _Content = null;
   private bool _IsReady = false;
-  private bool _IsModified = false;
+  private bool _ContentModified = false;
   private string? _CaptionOverride;
   private bool _CaptionModified = false;
 
@@ -72,7 +72,7 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
       if (_Content != value)
       {
         _Content = value;
-        _IsModified = true;
+        _ContentModified = true;
         OnContentChanged();
       }
     }
@@ -101,7 +101,7 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
     }
   }
 
-  public bool IsModified => _IsModified || _CaptionModified;
+  public bool IsModified => _ContentModified || _CaptionModified;
 
   public async Task<Data?> ToDataAsync()
   {
@@ -114,7 +114,7 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
     }
 
     // Unmodified items skip reconversion, which would be lossy for a tagged photo.
-    if (!_IsModified)
+    if (!_ContentModified)
       return Info;
 
     using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
