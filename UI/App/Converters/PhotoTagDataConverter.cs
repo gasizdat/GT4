@@ -29,7 +29,7 @@ public sealed class PhotoTagDataConverter : IDataConverter
   public async Task<Data?> FromObjectAsync(object? data, CancellationToken token)
   {
     var ret = await _ImageConverter.FromObjectAsync(data, token);
-    if (ret is null || data is not PhotoInfo photo || string.IsNullOrEmpty(photo.Caption))
+    if (ret is null || data is not PhotoInfo photo || string.IsNullOrWhiteSpace(photo.Caption))
     {
       return ret;
     }

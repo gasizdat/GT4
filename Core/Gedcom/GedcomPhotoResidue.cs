@@ -47,7 +47,7 @@ public static class GedcomPhotoResidue
       return data with { Id = ElementId.NonCommittedId, Content = content };
     }
 
-    if (string.IsNullOrEmpty(title))
+    if (string.IsNullOrWhiteSpace(title))
     {
       var content = data.Category.IsTaggedPhoto() ? ExtractImageBytes(data.Content) : data.Content;
       return data with { Id = ElementId.NonCommittedId, Content = content, Category = data.Category.AsPlainPhoto() };
@@ -63,7 +63,7 @@ public static class GedcomPhotoResidue
   {
     var residual = await DecodeResidualAsync(content, token);
     residual.Children.RemoveAll(child => child.Tag == GedcomTags.Title);
-    if (!string.IsNullOrEmpty(title))
+    if (!string.IsNullOrWhiteSpace(title))
     {
       residual.Add(new GedcomNode { Tag = GedcomTags.Title, Value = title });
     }

@@ -178,6 +178,31 @@ public sealed class GedcomPhotoResidueTests
   }
 
   [Fact]
+  public async Task WithTitleAsync_AttachmentGivenAWhitespaceOnlyTitle_DropsTheTitleButKeepsFile()
+  {
+    byte[] file = [1];
+    var content = GedcomPhotoResidue.Encode(file, Residual(("FILE", "scan.pdf"), ("TITL", "A title")));
+    var titled = new Data(5, content, "application/pdf", DataCategory.PersonAttachment);
+
+    var cleared = await GedcomPhotoResidue.WithTitleAsync(titled, "   ", _Token);
+
+    (await GedcomPhotoResidue.ExtractTitleAsync(cleared, _Token)).Should().BeNull();
+    (await GedcomPhotoResidue.ExtractFileNameAsync(cleared, _Token)).Should().Be("scan.pdf");
+  }
+
+  [Fact]
+  public async Task WithTitleAsync_PlainPhotoGivenAWhitespaceOnlyTitle_StaysPlain()
+  {
+    byte[] image = [1, 2, 3];
+    var photo = new Data(3, image, "image/png", DataCategory.PersonPhoto);
+
+    var updated = await GedcomPhotoResidue.WithTitleAsync(photo, "   ", _Token);
+
+    updated.Category.Should().Be(DataCategory.PersonPhoto);
+    updated.Content.Should().Equal(image);
+  }
+
+  [Fact]
   public async Task WithTitleAsync_PlainPhotoGivenATitle_PromotesToTaggedAndPreservesImageBytes()
   {
     byte[] image = [10, 20, 30];
