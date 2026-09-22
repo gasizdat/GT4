@@ -82,12 +82,7 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
   // wins once set so a fast typist never loses input to a slower background decode.
   public string? Caption
   {
-    get => _CaptionOverride ?? Content switch
-    {
-      PhotoInfo photo => photo.Caption,
-      AttachmentInfo attachment => attachment.Title,
-      _ => null
-    };
+    get => _CaptionOverride ?? (Content as PhotoInfo)?.Caption ?? (Content as AttachmentInfo)?.Title;
     set
     {
       // _CaptionModified is the only reliable touched-flag: an override of null is indistinguishable
