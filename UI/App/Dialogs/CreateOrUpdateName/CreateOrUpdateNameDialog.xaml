@@ -210,15 +210,25 @@
                         x:Name="FamilyAttachment"
                         Padding="{StaticResource CollectionItemsVerticalPadding}"
                         ColumnDefinitions="*, Auto, Auto, Auto, Auto"
+                        RowDefinitions="Auto, Auto"
                         Style="{StaticResource HoverItem}">
 
                       <Label
+                          Grid.Row="0"
                           Grid.Column="0"
                           Style="{StaticResource FieldValue}"
                           Text="{Binding Content.DisplayName}"
                           VerticalOptions="Center" />
 
+                      <Entry
+                          Grid.Row="1"
+                          Grid.Column="0"
+                          Placeholder="{x:Static resources:UIStrings.TxtPlaceholderCaption}"
+                          Text="{Binding Caption}" />
+
                       <Button
+                          Grid.Row="0"
+                          Grid.RowSpan="2"
                           Grid.Column="1"
                           Command="{Binding MediaCommand, Source={x:Reference Root}}"
                           Style="{StaticResource UpAdorner}"
@@ -232,6 +242,8 @@
                       </Button>
 
                       <Button
+                          Grid.Row="0"
+                          Grid.RowSpan="2"
                           Grid.Column="2"
                           Command="{Binding MediaCommand, Source={x:Reference Root}}"
                           Style="{StaticResource DownAdorner}"
@@ -245,6 +257,8 @@
                       </Button>
 
                       <Button
+                          Grid.Row="0"
+                          Grid.RowSpan="2"
                           Grid.Column="3"
                           Command="{Binding MediaCommand, Source={x:Reference Root}}"
                           Style="{StaticResource EditAdorner}"
@@ -258,6 +272,8 @@
                       </Button>
 
                       <Button
+                          Grid.Row="0"
+                          Grid.RowSpan="2"
                           Grid.Column="4"
                           Command="{Binding MediaCommand, Source={x:Reference Root}}"
                           Style="{StaticResource DeleteAdorner}"

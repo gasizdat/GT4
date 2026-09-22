@@ -429,6 +429,38 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task MainPhoto_GivenATitleViaWithTitleAsync_SurvivesExportThenReimport()
+  {
+    // Mirrors the app flow (issue #437): a plain photo promoted to tagged by PersonDataItem.ToDataAsync's
+    // WithTitleAsync call when a caption is typed, not a hand-built residual simulating a GEDCOM import.
+    var name = await _source.Names.AddNameAsync("Captioned", NameType.FirstName, null, Token);
+    var imageBytes = Encoding.UTF8.GetBytes("PORTRAIT-BYTES");
+    var plain = new Data(ElementId.NonCommittedId, imageBytes, "image/jpeg", DataCategory.PersonMainPhoto);
+    var main = await GedcomPhotoResidue.WithTitleAsync(plain, "Grandma, 1952", Token);
+    var info = PersonFullInfo.Empty with
+    {
+      BirthDate = Year(1900),
+      Names = [name],
+      MainPhoto = main,
+    };
+    await _source.PersonManager.AddPersonAsync(info, Token);
+
+    var text = await ExportToTextAsync(_source);
+    text.Should().Contain("2 TITL Grandma, 1952");
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
+
+    var person = (await reimported.Persons.GetPersonsAsync(Token)).Single();
+    var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, Token);
+
+    full.MainPhoto.Should().NotBeNull();
+    full.MainPhoto!.Category.Should().Be(DataCategory.PersonMainPhotoTagged);
+    GedcomPhotoResidue.ExtractImageBytes(full.MainPhoto.Content).Should().Equal(imageBytes);
+    (await GedcomPhotoResidue.ExtractTitleAsync(full.MainPhoto, Token)).Should().Be("Grandma, 1952");
+  }
+
+  [Fact]
   public async Task AdditionalPhotos_MixOfPlainAndTagged_BothSurviveExportAndReimport()
   {
     // Exercises GedcomExporter.GetPhotosByCategoriesAsync's concatenation branch: a person present in
@@ -674,6 +706,38 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     reimportedAttachment.Category.Should().Be(DataCategory.PersonAttachment);
     GedcomPhotoResidue.ExtractImageBytes(reimportedAttachment.Content).Should().Equal(fileBytes);
     (await GedcomPhotoResidue.ExtractFileNameAsync(reimportedAttachment, Token)).Should().Be("deed.pdf");
+  }
+
+  [Fact]
+  public async Task Attachment_GivenATitleViaWithTitleAsync_SurvivesExportThenReimport()
+  {
+    // Mirrors the app flow (issue #437): PersonDataItem.ToDataAsync calls WithTitleAsync when a caption
+    // is set, rather than encoding the residual by hand.
+    var name = await _source.Names.AddNameAsync("Titled", NameType.FirstName, null, Token);
+    var fileBytes = Encoding.UTF8.GetBytes("PDF-BYTES");
+    var pickedContent = GedcomPhotoResidue.EncodeAttachment(fileBytes, "deed.pdf");
+    var picked = new Data(ElementId.NonCommittedId, pickedContent, "application/pdf", DataCategory.PersonAttachment);
+    var attachment = await GedcomPhotoResidue.WithTitleAsync(picked, "Estate deed", Token);
+    var info = PersonFullInfo.Empty with
+    {
+      BirthDate = Year(1900),
+      Names = [name],
+      Attachments = [attachment],
+    };
+    await _source.PersonManager.AddPersonAsync(info, Token);
+
+    var text = await ExportToTextAsync(_source);
+    text.Should().Contain("2 TITL Estate deed");
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
+
+    var person = (await reimported.Persons.GetPersonsAsync(Token)).Single();
+    var full = await reimported.PersonManager.GetPersonFullInfoAsync(person, Token);
+    var reimportedAttachment = full.Attachments.Should().ContainSingle().Which;
+    GedcomPhotoResidue.ExtractImageBytes(reimportedAttachment.Content).Should().Equal(fileBytes);
+    (await GedcomPhotoResidue.ExtractFileNameAsync(reimportedAttachment, Token)).Should().Be("deed.pdf");
+    (await GedcomPhotoResidue.ExtractTitleAsync(reimportedAttachment, Token)).Should().Be("Estate deed");
   }
 
   [Fact]

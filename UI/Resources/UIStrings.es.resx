@@ -283,6 +283,9 @@
   <data name="BtnNameAddPersonAttachment" xml:space="preserve">
     <value>Añadir adjunto</value>
   </data>
+  <data name="TxtPlaceholderCaption" xml:space="preserve">
+    <value>Añadir descripción</value>
+  </data>
   <data name="RelMother" xml:space="preserve">
     <value>Madre</value>
   </data>

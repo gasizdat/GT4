@@ -131,4 +131,102 @@ public sealed class GedcomPhotoResidueTests
     GedcomPhotoResidue.ExtractImageBytes(content).Should().Equal(file);
     (await GedcomPhotoResidue.ExtractFileNameAsync(attachment, _Token)).Should().Be("scan.pdf");
   }
+
+  [Fact]
+  public async Task WithTitleAsync_AttachmentWithNoTitle_AddsTitleAndKeepsFileAndBytes()
+  {
+    byte[] file = [1, 2, 3];
+    var content = GedcomPhotoResidue.EncodeAttachment(file, "deed.pdf");
+    var attachment = new Data(5, content, "application/pdf", DataCategory.PersonAttachment);
+
+    var updated = await GedcomPhotoResidue.WithTitleAsync(attachment, "Acte de Bapteme", _Token);
+
+    updated.Id.Should().Be(ElementId.NonCommittedId);
+    updated.Category.Should().Be(DataCategory.PersonAttachment);
+    GedcomPhotoResidue.ExtractImageBytes(updated.Content).Should().Equal(file);
+    (await GedcomPhotoResidue.ExtractTitleAsync(updated, _Token)).Should().Be("Acte de Bapteme");
+    (await GedcomPhotoResidue.ExtractFileNameAsync(updated, _Token)).Should().Be("deed.pdf");
+  }
+
+  [Fact]
+  public async Task WithTitleAsync_AttachmentWithExistingTitle_ReplacesItAndKeepsOtherResidualChildren()
+  {
+    byte[] file = [9, 8, 7];
+    var content = GedcomPhotoResidue.Encode(file, Residual(("FILE", "deed.pdf"), ("TITL", "Old title"), ("NOTE", "scanned 2019")));
+    var attachment = new Data(5, content, "application/pdf", DataCategory.PersonAttachment);
+
+    var updated = await GedcomPhotoResidue.WithTitleAsync(attachment, "New title", _Token);
+
+    (await GedcomPhotoResidue.ExtractTitleAsync(updated, _Token)).Should().Be("New title");
+    (await GedcomPhotoResidue.ExtractFileNameAsync(updated, _Token)).Should().Be("deed.pdf");
+    var decoded = await GedcomPhotoResidue.DecodeResidualAsync(updated.Content, _Token);
+    decoded.ChildValue("NOTE").Should().Be("scanned 2019");
+  }
+
+  [Fact]
+  public async Task WithTitleAsync_AttachmentClearingTitle_RemovesTitleButKeepsFileAndEnvelope()
+  {
+    byte[] file = [1];
+    var content = GedcomPhotoResidue.Encode(file, Residual(("FILE", "scan.pdf"), ("TITL", "A title")));
+    var titled = new Data(5, content, "application/pdf", DataCategory.PersonAttachment);
+
+    var cleared = await GedcomPhotoResidue.WithTitleAsync(titled, null, _Token);
+
+    cleared.Category.Should().Be(DataCategory.PersonAttachment);
+    (await GedcomPhotoResidue.ExtractTitleAsync(cleared, _Token)).Should().BeNull();
+    (await GedcomPhotoResidue.ExtractFileNameAsync(cleared, _Token)).Should().Be("scan.pdf");
+  }
+
+  [Fact]
+  public async Task WithTitleAsync_PlainPhotoGivenATitle_PromotesToTaggedAndPreservesImageBytes()
+  {
+    byte[] image = [10, 20, 30];
+    var photo = new Data(3, image, "image/png", DataCategory.PersonPhoto);
+
+    var updated = await GedcomPhotoResidue.WithTitleAsync(photo, "Louis XIII", _Token);
+
+    updated.Category.Should().Be(DataCategory.PersonPhotoTagged);
+    GedcomPhotoResidue.ExtractImageBytes(updated.Content).Should().Equal(image);
+    (await GedcomPhotoResidue.ExtractTitleAsync(updated, _Token)).Should().Be("Louis XIII");
+  }
+
+  [Fact]
+  public async Task WithTitleAsync_TaggedPhotoGivenANewTitle_ReplacesItAndKeepsOtherResidualChildren()
+  {
+    byte[] image = [1, 2, 3];
+    var content = GedcomPhotoResidue.Encode(image, Residual(("TITL", "Old caption"), ("NOTE", "family archive")));
+    var photo = new Data(3, content, "image/jpeg", DataCategory.PersonMainPhotoTagged);
+
+    var updated = await GedcomPhotoResidue.WithTitleAsync(photo, "New caption", _Token);
+
+    updated.Category.Should().Be(DataCategory.PersonMainPhotoTagged);
+    GedcomPhotoResidue.ExtractImageBytes(updated.Content).Should().Equal(image);
+    (await GedcomPhotoResidue.ExtractTitleAsync(updated, _Token)).Should().Be("New caption");
+    var decoded = await GedcomPhotoResidue.DecodeResidualAsync(updated.Content, _Token);
+    decoded.ChildValue("NOTE").Should().Be("family archive");
+  }
+
+  [Fact]
+  public async Task WithTitleAsync_TaggedPhotoClearingTitle_DemotesToPlainWithOriginalImageBytes()
+  {
+    byte[] image = [4, 5, 6];
+    var content = GedcomPhotoResidue.EncodePhotoTitle(image, "A caption");
+    var photo = new Data(3, content, "image/png", DataCategory.PersonPhotoTagged);
+
+    var updated = await GedcomPhotoResidue.WithTitleAsync(photo, null, _Token);
+
+    updated.Category.Should().Be(DataCategory.PersonPhoto);
+    updated.Content.Should().Equal(image);
+  }
+
+  [Fact]
+  public async Task WithTitleAsync_AnyModifiedResult_HasNonCommittedId()
+  {
+    byte[] image = [1];
+    var photo = new Data(42, image, "image/png", DataCategory.PersonMainPhoto);
+
+    var updated = await GedcomPhotoResidue.WithTitleAsync(photo, "A caption", _Token);
+
+    updated.Id.Should().Be(ElementId.NonCommittedId);
+  }
 }

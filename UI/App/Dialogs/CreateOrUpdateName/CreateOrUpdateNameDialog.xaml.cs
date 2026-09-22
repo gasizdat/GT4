@@ -338,7 +338,16 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   private PersonDataItem GetFamilyData(Data data, DataCategory dataCategory)
   {
     var converter = _DataConverterResolver(dataCategory);
-    return new(data, converter, _CancellationTokenProvider, _AlertService);
+    var ret = new PersonDataItem(data, converter, _CancellationTokenProvider, _AlertService);
+    // ret.IsModified at this point reflects a genuine caption edit, not the Caption change this same
+    // event also fires once Content's background load completes -- that one leaves IsModified false.
+    ret.PropertyChanged += (_, args) =>
+    {
+      if (args.PropertyName == nameof(PersonDataItem.Caption) && ret.IsModified)
+        IsModified = true;
+    };
+
+    return ret;
   }
 
   private async Task OnAddOrUpdateFamilyPhotoAsync(PersonDataItem? photo)

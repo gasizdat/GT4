@@ -77,6 +77,86 @@ public class PersonDataItemTests
   }
 
   [Fact]
+  public async Task ToDataAsync_CaptionSetOnAPlainPhoto_PromotesToTaggedWithoutTouchingImageBytes()
+  {
+    var services = new TestServices();
+    byte[] imageBytes = [1, 2, 3];
+    var original = new Data(10, imageBytes, "image/png", DataCategory.PersonPhoto);
+    var item = new PersonDataItem(original, new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>(), new ImageCache(CacheSizeLimit)), TokenProvider(services), services.AlertService.Object);
+
+    item.Caption = "A caption";
+    var result = await item.ToDataAsync();
+
+    Assert.NotNull(result);
+    Assert.Equal(DataCategory.PersonPhotoTagged, result.Category);
+    Assert.Equal(ElementId.NonCommittedId, result.Id);
+    Assert.Equal(imageBytes, GedcomPhotoResidue.ExtractImageBytes(result.Content));
+    Assert.Equal("A caption", await GedcomPhotoResidue.ExtractTitleAsync(result, CancellationToken.None));
+  }
+
+  [Fact]
+  public async Task ToDataAsync_CaptionClearedOnATaggedPhoto_DemotesToPlainWithOriginalImageBytes()
+  {
+    var services = new TestServices();
+    byte[] imageBytes = [4, 5, 6];
+    var content = GedcomPhotoResidue.EncodePhotoTitle(imageBytes, "Old caption");
+    var original = new Data(10, content, "image/png", DataCategory.PersonMainPhotoTagged);
+    var item = new PersonDataItem(original, new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>(), new ImageCache(CacheSizeLimit)), TokenProvider(services), services.AlertService.Object);
+
+    item.Caption = null;
+    var result = await item.ToDataAsync();
+
+    Assert.NotNull(result);
+    Assert.Equal(DataCategory.PersonMainPhoto, result.Category);
+    Assert.Equal(imageBytes, result.Content);
+  }
+
+  [Fact]
+  public async Task ToDataAsync_CaptionSetOnAnAttachment_KeepsFileNameAndEnvelope()
+  {
+    var services = new TestServices();
+    byte[] fileBytes = [9, 8, 7];
+    var content = GedcomPhotoResidue.EncodeAttachment(fileBytes, "deed.pdf");
+    var original = new Data(10, content, "application/pdf", DataCategory.PersonAttachment);
+    var item = new PersonDataItem(original, new AttachmentDataConverter(DataCategory.PersonAttachment, Mock.Of<IHttpClientFactory>(), new ImageCache(CacheSizeLimit)), TokenProvider(services), services.AlertService.Object);
+
+    item.Caption = "Estate deed";
+    var result = await item.ToDataAsync();
+
+    Assert.NotNull(result);
+    Assert.Equal(DataCategory.PersonAttachment, result.Category);
+    Assert.Equal(fileBytes, GedcomPhotoResidue.ExtractImageBytes(result.Content));
+    Assert.Equal("deed.pdf", await GedcomPhotoResidue.ExtractFileNameAsync(result, CancellationToken.None));
+    Assert.Equal("Estate deed", await GedcomPhotoResidue.ExtractTitleAsync(result, CancellationToken.None));
+  }
+
+  [Fact]
+  public void Caption_Get_FallsBackToDecodedContentCaption()
+  {
+    var services = new TestServices();
+    var original = new Data(10, [], "image/png", DataCategory.PersonMainPhotoTagged);
+    var item = new PersonDataItem(original, new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>(), new ImageCache(CacheSizeLimit)), TokenProvider(services), services.AlertService.Object);
+
+    item.Content = new PhotoInfo(ImageSource.FromStream(() => new MemoryStream([1])), "Decoded caption");
+
+    Assert.Equal("Decoded caption", item.Caption);
+  }
+
+  [Fact]
+  public void Caption_Set_OverridesTheDecodedContentCaptionAndMarksTheItemModified()
+  {
+    var services = new TestServices();
+    var original = new Data(10, [], "image/png", DataCategory.PersonMainPhotoTagged);
+    var item = new PersonDataItem(original, new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>(), new ImageCache(CacheSizeLimit)), TokenProvider(services), services.AlertService.Object);
+    item.Content = new PhotoInfo(ImageSource.FromStream(() => new MemoryStream([1])), "Decoded caption");
+
+    item.Caption = "Typed caption";
+
+    Assert.Equal("Typed caption", item.Caption);
+    Assert.True(item.IsModified);
+  }
+
+  [Fact]
   public async Task ToDataAsync_ModifiedNonPhotoItem_LeavesCategoryUntouched()
   {
     // AsPlainPhoto() throws for non-photo categories, so ToDataAsync only reaches it behind an

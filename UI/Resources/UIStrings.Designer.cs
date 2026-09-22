@@ -4148,7 +4148,16 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("TxtPlaceholderBiography", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Add a description.
+        /// </summary>
+        public static string TxtPlaceholderCaption {
+            get {
+                return ResourceManager.GetString("TxtPlaceholderCaption", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Enter a Family name in the plural (for example, Smiths).
         /// </summary>

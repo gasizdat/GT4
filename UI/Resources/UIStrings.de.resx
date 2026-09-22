@@ -283,6 +283,9 @@ Stammbaum und haben Sie Freude daran!</value>
   <data name="BtnNameAddPersonAttachment" xml:space="preserve">
     <value>Anhang hinzufügen</value>
   </data>
+  <data name="TxtPlaceholderCaption" xml:space="preserve">
+    <value>Beschreibung hinzufügen</value>
+  </data>
   <data name="RelMother" xml:space="preserve">
     <value>Mutter</value>
   </data>

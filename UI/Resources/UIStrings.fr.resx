@@ -283,6 +283,9 @@ arbre généalogique et profitez-en !</value>
   <data name="BtnNameAddPersonAttachment" xml:space="preserve">
     <value>Ajouter une pièce jointe</value>
   </data>
+  <data name="TxtPlaceholderCaption" xml:space="preserve">
+    <value>Ajouter une description</value>
+  </data>
   <data name="RelMother" xml:space="preserve">
     <value>Mère</value>
   </data>
