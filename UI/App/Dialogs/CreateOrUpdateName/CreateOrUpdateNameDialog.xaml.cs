@@ -339,8 +339,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   {
     var converter = _DataConverterResolver(dataCategory);
     var ret = new PersonDataItem(data, converter, _CancellationTokenProvider, _AlertService);
-    // ret.IsModified at this point reflects a genuine caption edit, not the Caption change this same
-    // event also fires once Content's background load completes -- that one leaves IsModified false.
+    // ret.IsModified is false for the initial background-load notification, true only for a real edit.
     ret.PropertyChanged += (_, args) =>
     {
       if (args.PropertyName == nameof(PersonDataItem.Caption) && ret.IsModified)

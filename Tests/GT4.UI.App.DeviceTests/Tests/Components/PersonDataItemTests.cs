@@ -97,9 +97,8 @@ public class PersonDataItemTests
   [Fact]
   public async Task ToDataAsync_WhitespaceOnlyCaptionSetOnAPlainPhoto_StaysPlain()
   {
-    // A caption edit that leaves only whitespace is treated the same as a clear -- there's no reason to
-    // persist a blank title. This also pins that ToDataAsync branches on _CaptionModified (was the item
-    // touched), not on whether the resulting value is blank -- a real, non-blank caption must still save.
+    // Whitespace-only counts as no caption. This also pins that ToDataAsync branches on _CaptionModified
+    // (was the item touched), not on whether the value is blank -- a real caption must still save.
     var services = new TestServices();
     byte[] imageBytes = [1, 2, 3];
     var original = new Data(10, imageBytes, "image/png", DataCategory.PersonPhoto);

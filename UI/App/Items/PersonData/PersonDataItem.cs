@@ -90,9 +90,8 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
     };
     set
     {
-      // _CaptionModified alone tells "never touched" from "touched, currently null" -- comparing against
-      // the getter would race Content's background decode, and comparing against _CaptionOverride alone
-      // can't tell a first-time clear (both null) from a genuine no-op resend.
+      // _CaptionModified is the only reliable touched-flag: an override of null is indistinguishable
+      // from never-set, and comparing against the Caption getter would race Content's background decode.
       if (_CaptionModified && _CaptionOverride == value)
         return;
 
@@ -107,7 +106,7 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
   public async Task<Data?> ToDataAsync()
   {
     // Bypasses _DataConverter entirely: it operates on Info's raw bytes, not the lazily-decoded Content,
-    // so it never races the background load and never re-encodes the image (see GedcomPhotoResidue.WithTitleAsync).
+    // so it never races the background load and never re-encodes the image.
     if (_CaptionModified)
     {
       using var captionToken = _CancellationTokenProvider.CreateShortOperationCancellationToken();

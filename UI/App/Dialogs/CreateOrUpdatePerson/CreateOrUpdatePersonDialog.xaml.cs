@@ -84,8 +84,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       converter,
       _Factory.CancellationTokenProvider,
       _Factory.AlertService);
-    // ret.IsModified at this point reflects a genuine caption edit, not the Caption change this same
-    // event also fires once Content's background load completes -- that one leaves IsModified false.
+    // ret.IsModified is false for the initial background-load notification, true only for a real edit.
     ret.PropertyChanged += (_, args) =>
     {
       if (args.PropertyName == nameof(PersonDataItem.Caption) && ret.IsModified)
@@ -120,9 +119,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         _Names.Add(name);
       }
 
-      // Resolved via AsTaggedPhoto() regardless of the photo's own (possibly still plain) category, so
-      // every photo item is bound to PhotoTagDataConverter and can gain a caption later -- see
-      // PhotoTagDataConverter.ToObjectAsync's plain-category guard.
+      // Converter resolved via AsTaggedPhoto(), not the photo's own (possibly plain) category, so every
+      // photo item can gain a caption later even if it starts out untagged.
       if (person.MainPhoto is not null)
       {
         _Photos.Add(GetPersonData(person.MainPhoto, person.MainPhoto.Category.AsTaggedPhoto()));

@@ -120,6 +120,17 @@ public class CreateOrUpdatePersonDialogTests
   }
 
   [Fact]
+  public async Task Loading_an_existing_photos_caption_in_the_background_does_not_mark_the_dialog_modified()
+  {
+    var dialog = await CreateDialogAsync(new TestServices(), CreateSamplePerson());
+    var photo = dialog.Photos.First();
+
+    await WaitForAsync(() => photo.Content, content => content is not null, "Photo content never finished loading.");
+
+    Assert.Equal(Resources.UIStrings.BtnNameCancel, dialog.DialogButtonName);
+  }
+
+  [Fact]
   public async Task Ctor_with_no_person_starts_empty()
   {
     var dialog = await CreateDialogAsync(new TestServices(), null);

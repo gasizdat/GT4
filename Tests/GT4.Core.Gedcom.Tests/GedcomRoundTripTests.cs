@@ -431,7 +431,7 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
   [Fact]
   public async Task MainPhoto_GivenATitleViaWithTitleAsync_SurvivesExportThenReimport()
   {
-    // Mirrors the app flow (issue #437): a plain photo promoted to tagged by PersonDataItem.ToDataAsync's
+    // Mirrors the app flow: a plain photo promoted to tagged by PersonDataItem.ToDataAsync's
     // WithTitleAsync call when a caption is typed, not a hand-built residual simulating a GEDCOM import.
     var name = await _source.Names.AddNameAsync("Captioned", NameType.FirstName, null, Token);
     var imageBytes = Encoding.UTF8.GetBytes("PORTRAIT-BYTES");
@@ -711,8 +711,8 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
   [Fact]
   public async Task Attachment_GivenATitleViaWithTitleAsync_SurvivesExportThenReimport()
   {
-    // Mirrors the app flow (issue #437): PersonDataItem.ToDataAsync calls WithTitleAsync when a caption
-    // is set, rather than encoding the residual by hand.
+    // Mirrors the app flow: PersonDataItem.ToDataAsync calls WithTitleAsync when a caption is set,
+    // rather than encoding the residual by hand.
     var name = await _source.Names.AddNameAsync("Titled", NameType.FirstName, null, Token);
     var fileBytes = Encoding.UTF8.GetBytes("PDF-BYTES");
     var pickedContent = GedcomPhotoResidue.EncodeAttachment(fileBytes, "deed.pdf");
