@@ -94,10 +94,12 @@ from the code.
   pushes the new text into the `Entry`, that same write's `TextChanged` round-trips through the
   `TwoWay` binding and calls the source setter again with the identical value. A setter that treats
   "I was called" as "the user edited this" (e.g. arming a dialog's modified flag) will falsely fire
-  on that echo. Fixed for `PersonDataItem.Caption` by comparing the incoming value against what the
-  getter already reports once the backing data has loaded — see its `_ContentLoaded` guard. A device
-  test that only constructs the page without ever attaching it to a real `Window` won't catch this:
-  no native `Entry` handler exists yet, so `TextChanged` never fires — the bug is real-UI-only.
+  on that echo. `PersonDataItem.Caption` hit this while it was inline-`TwoWay`-bound; the fix that
+  shipped (issue #437) wasn't a same-value guard but removing the binding mode entirely — captions
+  are now edited through an explicit `EditCaptionDialog`, so nothing ever binds `Caption` `TwoWay`
+  and the echo can't occur. A device test that only constructs the page without ever attaching it to
+  a real `Window` won't catch this class of bug: no native `Entry` handler exists yet, so
+  `TextChanged` never fires — it's real-UI-only.
 
 ## Don't re-derive stale snapshots
 

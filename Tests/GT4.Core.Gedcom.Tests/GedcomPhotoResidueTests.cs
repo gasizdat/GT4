@@ -216,6 +216,17 @@ public sealed class GedcomPhotoResidueTests
   }
 
   [Fact]
+  public async Task WithTitleAsync_PlainPhotoGivenAMultiLineTitle_PreservesAllLinesOnRoundTrip()
+  {
+    byte[] image = [1, 2, 3];
+    var photo = new Data(3, image, "image/png", DataCategory.PersonPhoto);
+
+    var updated = await GedcomPhotoResidue.WithTitleAsync(photo, "Line one\nLine two", _Token);
+
+    (await GedcomPhotoResidue.ExtractTitleAsync(updated, _Token)).Should().Be("Line one\nLine two");
+  }
+
+  [Fact]
   public async Task WithTitleAsync_TaggedPhotoGivenANewTitle_ReplacesItAndKeepsOtherResidualChildren()
   {
     byte[] image = [1, 2, 3];

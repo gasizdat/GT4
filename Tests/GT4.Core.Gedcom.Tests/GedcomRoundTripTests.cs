@@ -850,6 +850,19 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task FamilyMedia_CaptionedMainPhoto_EmitsTitlUnderTheFamilyRecordsObje()
+  {
+    var family = await _source.Names.AddNameAsync("Bourbon", NameType.FamilyName, null, Token);
+    var content = GedcomPhotoResidue.EncodePhotoTitle(Encoding.UTF8.GetBytes("CREST-BYTES"), "Family crest, 1789");
+    var mainPhoto = new Data(ElementId.NonCommittedId, content, "image/jpeg", DataCategory.FamilyMainPhotoTagged);
+    await _source.NameData.AddNameDataSetAsync(family, [mainPhoto], Token);
+
+    var text = await ExportToTextAsync(_source);
+
+    text.Should().Contain($"2 {GedcomTags.Title} Family crest, 1789");
+  }
+
+  [Fact]
   public async Task FamilyMedia_ReusesTheSameFamilyNameAPersonsSurnameAlreadyCreated()
   {
     // GedcomImporter.BuildNamesAsync creates a family Name from a person's bare surname before the
@@ -876,9 +889,9 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
   [Fact]
   public async Task FamilyRecord_PhotoWithAResidualTag_ImportsWithoutThrowingAndDropsTheResidual()
   {
-    // Family photo categories have no *Tagged counterpart to carry a residual in, unlike a person's
-    // PersonMainPhotoTagged/PersonPhotoTagged -- a hand-authored _FAML OBJE with an unmodeled sub-tag
-    // like TITL must be dropped on import, not crash the whole transaction.
+    // Import never recaptures a hand-authored FAM OBJE's TITL into FamilyMainPhotoTagged (unimplemented
+    // scope, see GedcomImporter.TaggableCategories) -- an unmodeled sub-tag like TITL must still be
+    // dropped without crashing the whole transaction.
     var ged =
       "0 HEAD\n1 CHAR UTF-8\n" +
       $"0 @FM1@ {GedcomTags.FamilyRecord}\n1 NAME Crested\n1 {GedcomTags.Object}\n2 {GedcomTags.Form} jpg\n2 {GedcomTags.Blob} WA==\n2 {GedcomTags.Title} Family crest\n" +

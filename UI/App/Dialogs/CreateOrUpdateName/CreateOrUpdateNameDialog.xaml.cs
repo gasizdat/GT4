@@ -112,11 +112,11 @@ public partial class CreateOrUpdateNameDialog : ContentPage
 
     if (family?.MainPhoto is { } mainPhoto)
     {
-      _Photos.Add(GetFamilyData(mainPhoto, mainPhoto.Category));
+      _Photos.Add(GetFamilyData(mainPhoto, mainPhoto.Category.AsTaggedPhoto()));
     }
     foreach (var data in family?.AdditionalPhotos ?? [])
     {
-      _Photos.Add(GetFamilyData(data, data.Category));
+      _Photos.Add(GetFamilyData(data, data.Category.AsTaggedPhoto()));
     }
     foreach (var data in family?.Attachments ?? [])
     {
@@ -338,15 +338,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   private PersonDataItem GetFamilyData(Data data, DataCategory dataCategory)
   {
     var converter = _DataConverterResolver(dataCategory);
-    var ret = new PersonDataItem(data, converter, _CancellationTokenProvider, _AlertService);
-    // The background decode also raises PropertyChanged, with IsModified still false.
-    ret.PropertyChanged += (_, _) =>
-    {
-      if (ret.IsModified)
-        IsModified = true;
-    };
-
-    return ret;
+    return new PersonDataItem(data, converter, _CancellationTokenProvider, _AlertService);
   }
 
   private async Task OnAddOrUpdateFamilyPhotoAsync(PersonDataItem? photo)
@@ -372,7 +364,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     foreach (var photoAsset in photoAssets)
     {
       var category = _Photos.Count() == 0 ? DataCategory.FamilyMainPhoto : DataCategory.FamilyPhoto;
-      var item = GetFamilyData(photoAsset with { Category = category }, category);
+      var item = GetFamilyData(data: photoAsset with { Category = category }, category.AsTaggedPhoto());
       if (photo is not null)
       {
         _Photos[_Photos.IndexOf(photo)] = item;
@@ -418,6 +410,21 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     }
 
     IsModified = true;
+  }
+
+  private async Task OnEditCaptionAsync(PersonDataItem item)
+  {
+    var dialog = new EditCaptionDialog(item.Caption, _AlertService);
+
+    await Navigation.PushModalAsync(dialog);
+    var caption = await dialog.Info;
+    await Navigation.PopModalAsync();
+
+    if (caption != item.Caption)
+    {
+      item.Caption = caption;
+      IsModified = true;
+    }
   }
 
   private void MoveItem<T>(ObservableCollection<T> collection, T item, int dIndex)
@@ -470,6 +477,9 @@ public partial class CreateOrUpdateNameDialog : ContentPage
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "MoveFamilyAttachmentDownCommand" && adorner.Element is PersonDataItem attachment:
         MoveItem(_Attachments, attachment, 1);
+        break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "EditCaptionCommand" && adorner.Element is PersonDataItem item:
+        await OnEditCaptionAsync(item);
         break;
     }
   }

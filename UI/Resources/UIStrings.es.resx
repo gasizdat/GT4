@@ -394,6 +394,9 @@
   <data name="TitleSelectDateDialog" xml:space="preserve">
     <value>Seleccionar fecha</value>
   </data>
+  <data name="TitleEditCaptionDialog" xml:space="preserve">
+    <value>Descripción</value>
+  </data>
   <data name="FieldYear" xml:space="preserve">
     <value>Año</value>
   </data>

@@ -4067,7 +4067,16 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("TitleSelectDateDialog", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Description.
+        /// </summary>
+        public static string TitleEditCaptionDialog {
+            get {
+                return ResourceManager.GetString("TitleEditCaptionDialog", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Select text encoding.
         /// </summary>

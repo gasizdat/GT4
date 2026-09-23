@@ -394,6 +394,9 @@ Stammbaum und haben Sie Freude daran!</value>
   <data name="TitleSelectDateDialog" xml:space="preserve">
     <value>Datum auswählen</value>
   </data>
+  <data name="TitleEditCaptionDialog" xml:space="preserve">
+    <value>Beschreibung</value>
+  </data>
   <data name="FieldYear" xml:space="preserve">
     <value>Jahr</value>
   </data>

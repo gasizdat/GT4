@@ -394,6 +394,9 @@ arbre généalogique et profitez-en !</value>
   <data name="TitleSelectDateDialog" xml:space="preserve">
     <value>Sélectionner une date</value>
   </data>
+  <data name="TitleEditCaptionDialog" xml:space="preserve">
+    <value>Description</value>
+  </data>
   <data name="FieldYear" xml:space="preserve">
     <value>Année</value>
   </data>

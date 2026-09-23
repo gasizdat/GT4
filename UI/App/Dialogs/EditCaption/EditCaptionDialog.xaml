@@ -1,0 +1,42 @@
+<ContentPage
+    x:Class="GT4.UI.Dialogs.EditCaptionDialog"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:behaviors="clr-namespace:GT4.UI.Behaviors"
+    xmlns:components="clr-namespace:GT4.UI.Components"
+    xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
+    x:Name="Root">
+
+  <components:PageLayout
+      Title="{x:Static resources:UIStrings.TitleEditCaptionDialog}"
+      BackCommand="{Binding CancelCommand, Source={x:Reference Root}}"
+      HasBackButton="True">
+
+    <components:PageLayout.Body>
+      <!--  A fixed box instead of AutoSize="TextChanges": a typed newline was reported visually stuck at
+            the first line under AutoSize, though GedcomPhotoResidueTests confirms the underlying value
+            round-trips multi-line text correctly, so this gives the control unambiguous room to grow
+            into up front rather than depending on AutoSize's own height recalculation.  -->
+      <Editor
+          HeightRequest="120"
+          HorizontalOptions="Fill"
+          Style="{StaticResource FieldValue}"
+          VerticalOptions="Start"
+          Placeholder="{x:Static resources:UIStrings.TxtPlaceholderCaption}"
+          Text="{Binding Caption, Source={x:Reference Root}}">
+
+        <Editor.Behaviors>
+          <behaviors:FocusOnTrueBehavior IsFocused="True" />
+        </Editor.Behaviors>
+      </Editor>
+    </components:PageLayout.Body>
+
+    <components:PageLayout.Footer>
+      <Button
+          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+          FontSize="{DynamicResource ActionButtonTextSize}"
+          HorizontalOptions="Fill"
+          Text="{x:Static resources:UIStrings.BtnNameOk}" />
+    </components:PageLayout.Footer>
+  </components:PageLayout>
+</ContentPage>

@@ -127,10 +127,23 @@
 
                       </Grid>
 
-                      <Entry
-                          HorizontalOptions="Fill"
-                          Placeholder="{x:Static resources:UIStrings.TxtPlaceholderCaption}"
-                          Text="{Binding Caption}" />
+                      <HorizontalStackLayout>
+                        <Button
+                            Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                            Style="{StaticResource CaptionAdorner}">
+
+                          <Button.CommandParameter>
+                            <components:AdornerCommandParameter
+                                CommandName="EditCaptionCommand"
+                                Element="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
+                          </Button.CommandParameter>
+                        </Button>
+
+                        <Label
+                            Style="{StaticResource FieldValue}"
+                            Text="{Binding Caption}"
+                            VerticalOptions="Center" />
+                      </HorizontalStackLayout>
                     </VerticalStackLayout>
                   </DataTemplate>
                 </CollectionView.ItemTemplate>
@@ -182,11 +195,25 @@
                           Text="{Binding Content.DisplayName}"
                           VerticalOptions="Center" />
 
-                      <Entry
+                      <HorizontalStackLayout
                           Grid.Row="1"
-                          Grid.Column="0"
-                          Placeholder="{x:Static resources:UIStrings.TxtPlaceholderCaption}"
-                          Text="{Binding Caption}" />
+                          Grid.Column="0">
+                        <Button
+                            Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                            Style="{StaticResource CaptionAdorner}">
+
+                          <Button.CommandParameter>
+                            <components:AdornerCommandParameter
+                                CommandName="EditCaptionCommand"
+                                Element="{Binding Source={x:Reference PersonAttachment}, Path=BindingContext}" />
+                          </Button.CommandParameter>
+                        </Button>
+
+                        <Label
+                            Style="{StaticResource FieldValue}"
+                            Text="{Binding Caption}"
+                            VerticalOptions="Center" />
+                      </HorizontalStackLayout>
 
                       <Button
                           Grid.Row="0"

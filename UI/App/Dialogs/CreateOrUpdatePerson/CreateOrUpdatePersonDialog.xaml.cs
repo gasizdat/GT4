@@ -79,19 +79,11 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private PersonDataItem GetPersonData(Data data, DataCategory dataCategory)
   {
     var converter = _Factory.DataConverterResolver(dataCategory);
-    var ret = new PersonDataItem(
+    return new PersonDataItem(
       data: data,
       converter,
       _Factory.CancellationTokenProvider,
       _Factory.AlertService);
-    // The background decode also raises PropertyChanged, with IsModified still false.
-    ret.PropertyChanged += (_, _) =>
-    {
-      if (ret.IsModified)
-        IsModified = true;
-    };
-
-    return ret;
   }
 
   private void UpdatePersonInformation(PersonFullInfo? person)
@@ -436,6 +428,21 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     IsModified = true;
   }
 
+  private async Task OnEditCaptionAsync(PersonDataItem item)
+  {
+    var dialog = new EditCaptionDialog(item.Caption, _Factory.AlertService);
+
+    await Navigation.PushModalAsync(dialog);
+    var caption = await dialog.Info;
+    await Navigation.PopModalAsync();
+
+    if (caption != item.Caption)
+    {
+      item.Caption = caption;
+      IsModified = true;
+    }
+  }
+
   private async Task OnAddRelationshipAsync()
   {
     var dialog = _Factory.SelectRelativesDialogFactory.Create(_BiologicalSex?.Info, [.. Relatives]);
@@ -603,6 +610,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "MoveAttachmentDownCommand" && adorner.Element is PersonDataItem attachment:
         MoveItem(_Attachments, attachment, 1);
+        break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "EditCaptionCommand" && adorner.Element is PersonDataItem item:
+        await OnEditCaptionAsync(item);
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "EditNameCommand" && adorner.Element is NameInfoItem name:
         await OnEditPersonNameAsync(name);

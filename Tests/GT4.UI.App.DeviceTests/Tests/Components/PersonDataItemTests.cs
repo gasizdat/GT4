@@ -175,29 +175,6 @@ public class PersonDataItemTests
   }
 
   [Fact]
-  public async Task Caption_EchoedBackFromTheBackgroundDecodesPropertyChanged_DoesNotMarkTheItemModified()
-  {
-    // item.Caption = item.Caption simulates a bound Entry's TwoWay-binding echo of the value it was
-    // just handed by Content's background decode.
-    var services = new TestServices();
-    byte[] imageBytes = [4, 5, 6];
-    var content = GedcomPhotoResidue.EncodePhotoTitle(imageBytes, "Decoded caption");
-    var original = new Data(10, content, "image/png", DataCategory.PersonMainPhotoTagged);
-    var item = new PersonDataItem(original, new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>(), new ImageCache(CacheSizeLimit)), TokenProvider(services), services.AlertService.Object);
-    item.PropertyChanged += (_, args) =>
-    {
-      if (args.PropertyName == nameof(PersonDataItem.Caption))
-        item.Caption = item.Caption;
-    };
-
-    _ = item.Content;
-    await Poll.UntilAsync(() => MainThread.InvokeOnMainThreadAsync(() => item.Content), c => c is not null, timeoutMessage: "Photo content never finished loading.");
-
-    Assert.False(item.IsModified);
-    Assert.Equal("Decoded caption", item.Caption);
-  }
-
-  [Fact]
   public async Task ToDataAsync_ModifiedNonPhotoItem_LeavesCategoryUntouched()
   {
     // AsPlainPhoto() throws for non-photo categories, so ToDataAsync only reaches it behind an

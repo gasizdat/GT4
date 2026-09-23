@@ -30,6 +30,8 @@ public class GT4Services
       .AddKeyedSingleton<IDataConverter, GedcomDataConverter>(DataCategory.PersonGedcomTags)
       .AddKeyedSingleton<IDataConverter, PhotoTagDataConverter>(DataCategory.PersonMainPhotoTagged)
       .AddKeyedSingleton<IDataConverter, PhotoTagDataConverter>(DataCategory.PersonPhotoTagged)
+      .AddKeyedSingleton<IDataConverter, PhotoTagDataConverter>(DataCategory.FamilyMainPhotoTagged)
+      .AddKeyedSingleton<IDataConverter, PhotoTagDataConverter>(DataCategory.FamilyPhotoTagged)
       .AddKeyedSingleton<IDataConverter, AttachmentDataConverter>(DataCategory.PersonAttachment)
       .AddKeyedSingleton<IDataConverter, AttachmentDataConverter>(DataCategory.FamilyAttachment)
       .AddSingleton<InlineMediaProvider>()

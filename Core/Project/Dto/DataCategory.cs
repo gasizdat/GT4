@@ -23,5 +23,9 @@ public enum DataCategory
   FamilyPhoto = 9,
   // Non-photo family file attachment; Content is always a GedcomPhotoResidue envelope carrying the
   // original filename, the same as PersonAttachment
-  FamilyAttachment = 10
+  FamilyAttachment = 10,
+  // Main family photo whose Content is a GedcomPhotoResidue envelope (residual OBJE tags + image bytes)
+  FamilyMainPhotoTagged = 11,
+  // Additional family photo whose Content is a GedcomPhotoResidue envelope (residual OBJE tags + image bytes)
+  FamilyPhotoTagged = 12
 }
