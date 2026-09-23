@@ -339,10 +339,10 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   {
     var converter = _DataConverterResolver(dataCategory);
     var ret = new PersonDataItem(data, converter, _CancellationTokenProvider, _AlertService);
-    // ret.IsModified is false for the initial background-load notification, true only for a real edit.
-    ret.PropertyChanged += (_, args) =>
+    // The background decode also raises PropertyChanged, with IsModified still false.
+    ret.PropertyChanged += (_, _) =>
     {
-      if (args.PropertyName == nameof(PersonDataItem.Caption) && ret.IsModified)
+      if (ret.IsModified)
         IsModified = true;
     };
 
