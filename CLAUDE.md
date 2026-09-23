@@ -88,6 +88,16 @@ from the code.
   `LabelTextSizeDefault` through the app-wide implicit `Label` style. Don't assume a keyed style with
   no `FontSize`/`TextColor`/etc. setter falls back to the platform default — check what the implicit
   style for that `TargetType` already provides first.
+- **A `TwoWay`-bound `Entry` can echo a source-driven `Text` update straight back into its own
+  setter.** WinUI's native `TextBox` fires `TextChanged` on a *programmatic* write, not just user
+  input, so when a bindable source property changes (e.g. a background decode landing) and MAUI
+  pushes the new text into the `Entry`, that same write's `TextChanged` round-trips through the
+  `TwoWay` binding and calls the source setter again with the identical value. A setter that treats
+  "I was called" as "the user edited this" (e.g. arming a dialog's modified flag) will falsely fire
+  on that echo. Fixed for `PersonDataItem.Caption` by comparing the incoming value against what the
+  getter already reports once the backing data has loaded — see its `_ContentLoaded` guard. A device
+  test that only constructs the page without ever attaching it to a real `Window` won't catch this:
+  no native `Entry` handler exists yet, so `TextChanged` never fires — the bug is real-UI-only.
 
 ## Don't re-derive stale snapshots
 
