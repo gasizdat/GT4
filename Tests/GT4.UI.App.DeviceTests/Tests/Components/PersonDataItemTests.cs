@@ -175,6 +175,31 @@ public class PersonDataItemTests
   }
 
   [Fact]
+  public async Task Caption_EchoedBackFromTheBackgroundDecodesPropertyChanged_DoesNotMarkTheItemModified()
+  {
+    // Reproduces a bound Entry's TwoWay-binding echo: once Content's background decode raises
+    // PropertyChanged(Caption), a WinUI Entry can push the identical text straight back into this
+    // setter (its native TextBox fires TextChanged on a programmatic write, and MAUI's binding treats
+    // that as user input). This must not register as a real edit.
+    var services = new TestServices();
+    byte[] imageBytes = [4, 5, 6];
+    var content = GedcomPhotoResidue.EncodePhotoTitle(imageBytes, "Decoded caption");
+    var original = new Data(10, content, "image/png", DataCategory.PersonMainPhotoTagged);
+    var item = new PersonDataItem(original, new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>(), new ImageCache(CacheSizeLimit)), TokenProvider(services), services.AlertService.Object);
+    item.PropertyChanged += (_, args) =>
+    {
+      if (args.PropertyName == nameof(PersonDataItem.Caption))
+        item.Caption = item.Caption;
+    };
+
+    _ = item.Content;
+    await Poll.UntilAsync(() => MainThread.InvokeOnMainThreadAsync(() => item.Content), c => c is not null, timeoutMessage: "Photo content never finished loading.");
+
+    Assert.False(item.IsModified);
+    Assert.Equal("Decoded caption", item.Caption);
+  }
+
+  [Fact]
   public async Task ToDataAsync_ModifiedNonPhotoItem_LeavesCategoryUntouched()
   {
     // AsPlainPhoto() throws for non-photo categories, so ToDataAsync only reaches it behind an

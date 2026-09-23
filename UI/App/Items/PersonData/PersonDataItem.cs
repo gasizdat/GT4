@@ -15,6 +15,7 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
   private readonly IAlertService _AlertService;
   private object? _Content = null;
   private bool _IsReady = false;
+  private bool _ContentLoaded = false;
   private bool _ContentModified = false;
   private string? _CaptionOverride;
   private bool _CaptionModified = false;
@@ -85,9 +86,14 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
     get => _CaptionOverride ?? (Content as PhotoInfo)?.Caption ?? (Content as AttachmentInfo)?.Title;
     set
     {
-      // _CaptionModified is the only reliable touched-flag: an override of null is indistinguishable
-      // from never-set, and comparing against the Caption getter would race Content's background decode.
-      if (_CaptionModified && _CaptionOverride == value)
+      // A bound Entry's TwoWay binding echoes back into this setter with the unchanged value once
+      // Content's background decode raises Caption (WinUI's native TextBox fires TextChanged on a
+      // programmatic Text write, which MAUI's binding treats as user input). Once Content has loaded,
+      // an incoming value identical to what the getter already reports is that echo, not an edit --
+      // gated on _ContentLoaded rather than compared unconditionally, since before Content loads the
+      // getter's fallback is always null and would misread a genuine clear-to-null as a non-edit.
+      var isEcho = _CaptionModified ? _CaptionOverride == value : _ContentLoaded && value == Caption;
+      if (isEcho)
         return;
 
       _CaptionOverride = value;
@@ -142,6 +148,7 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
 
   private void OnContentChanged()
   {
+    _ContentLoaded = true;
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Content)));
     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Caption)));
   }
