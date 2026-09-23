@@ -177,10 +177,8 @@ public class PersonDataItemTests
   [Fact]
   public async Task Caption_EchoedBackFromTheBackgroundDecodesPropertyChanged_DoesNotMarkTheItemModified()
   {
-    // Reproduces a bound Entry's TwoWay-binding echo: once Content's background decode raises
-    // PropertyChanged(Caption), a WinUI Entry can push the identical text straight back into this
-    // setter (its native TextBox fires TextChanged on a programmatic write, and MAUI's binding treats
-    // that as user input). This must not register as a real edit.
+    // item.Caption = item.Caption simulates a bound Entry's TwoWay-binding echo of the value it was
+    // just handed by Content's background decode.
     var services = new TestServices();
     byte[] imageBytes = [4, 5, 6];
     var content = GedcomPhotoResidue.EncodePhotoTitle(imageBytes, "Decoded caption");

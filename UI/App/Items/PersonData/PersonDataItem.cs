@@ -86,11 +86,9 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
     get => _CaptionOverride ?? (Content as PhotoInfo)?.Caption ?? (Content as AttachmentInfo)?.Title;
     set
     {
-      // A bound Entry's TwoWay binding echoes back into this setter with the unchanged value once
-      // Content's background decode raises Caption (WinUI's native TextBox fires TextChanged on a
-      // programmatic Text write, which MAUI's binding treats as user input). Once Content has loaded,
-      // an incoming value identical to what the getter already reports is that echo, not an edit --
-      // gated on _ContentLoaded rather than compared unconditionally, since before Content loads the
+      // A bound Entry's TwoWay binding can echo the same text back into this setter (WinUI's TextBox
+      // fires TextChanged on a programmatic write, which MAUI treats as user input). Gated on
+      // _ContentLoaded rather than an unconditional value comparison, since before Content loads the
       // getter's fallback is always null and would misread a genuine clear-to-null as a non-edit.
       var isEcho = _CaptionModified ? _CaptionOverride == value : _ContentLoaded && value == Caption;
       if (isEcho)
