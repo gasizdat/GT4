@@ -36,7 +36,7 @@
           Command="{Binding DialogCommand, Source={x:Reference Root}}"
           FontSize="{DynamicResource ActionButtonTextSize}"
           HorizontalOptions="Fill"
-          Text="{x:Static resources:UIStrings.BtnNameOk}" />
+          Text="{Binding DialogButtonName, Source={x:Reference Root}}" />
     </components:PageLayout.Footer>
   </components:PageLayout>
 </ContentPage>

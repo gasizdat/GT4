@@ -436,7 +436,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     var caption = await dialog.Info;
     await Navigation.PopModalAsync();
 
-    if (caption != item.Caption)
+    if (caption is not null && caption != item.Caption)
     {
       item.Caption = caption;
       IsModified = true;

@@ -14,7 +14,6 @@
     <ResourceDictionary>
 
       <Style x:Key="PhotoStyle" TargetType="Image">
-        <!--  The box is a fixed size, so fitting a wide photo into it would leave most of it empty.  -->
         <Setter Property="Aspect" Value="AspectFill" />
         <Setter Property="HeightRequest" Value="{StaticResource PhotoHeight}" />
         <Setter Property="WidthRequest" Value="{StaticResource PhotoWidth}" />
@@ -121,7 +120,7 @@
           </VerticalStackLayout>
         </CollectionView.Header>
 
-        <!-- A GridItemsLayout row takes its tallest cell's height, and uneven rows crash WinUI. -->
+        <!--  A GridItemsLayout row takes its tallest cell's height, and uneven rows crash WinUI.  -->
         <CollectionView.ItemsLayout>
           <LinearItemsLayout Orientation="Vertical" />
         </CollectionView.ItemsLayout>
