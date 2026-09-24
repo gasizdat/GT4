@@ -1,5 +1,6 @@
 using GT4.Core.Gedcom;
 using GT4.Core.Project.Dto;
+using GT4.Core.Project.Extensions;
 using GT4.UI.Abstraction;
 using GT4.UI.Utils.Converters;
 
@@ -14,7 +15,9 @@ namespace GT4.UI.Converters;
 /// the caption so it survives an edit, and returns a tagged Category to signal that the Content is
 /// enveloped. Only the caption is rebuilt: a PhotoInfo carries no other residual tag, so any other
 /// imported OBJE child is lost on modification. Lives in UI.App (not UI.Utils) because unwrapping the
-/// residue envelope needs Core.Gedcom.
+/// residue envelope needs Core.Gedcom. Also accepts a plain-category Data, delegating straight to the
+/// composed ImageDataConverter: dialogs bind this converter to every photo item regardless of its
+/// current tagged-vs-plain state, so a plain photo can still be promoted to tagged by a later caption.
 /// </summary>
 public sealed class PhotoTagDataConverter : IDataConverter
 {
@@ -26,7 +29,7 @@ public sealed class PhotoTagDataConverter : IDataConverter
   public async Task<Data?> FromObjectAsync(object? data, CancellationToken token)
   {
     var ret = await _ImageConverter.FromObjectAsync(data, token);
-    if (ret is null || data is not PhotoInfo photo || string.IsNullOrEmpty(photo.Caption))
+    if (ret is null || data is not PhotoInfo photo || string.IsNullOrWhiteSpace(photo.Caption))
     {
       return ret;
     }
@@ -40,6 +43,11 @@ public sealed class PhotoTagDataConverter : IDataConverter
     if (data is null || data.Content.Length == 0)
     {
       return null;
+    }
+
+    if (!data.Category.IsTaggedPhoto())
+    {
+      return await _ImageConverter.ToObjectAsync(data, token);
     }
 
     var caption = await GedcomPhotoResidue.ExtractTitleAsync(data, token);

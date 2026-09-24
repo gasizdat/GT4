@@ -32,6 +32,45 @@ public static class GedcomPhotoResidue
     return Encode(imageBytes, residual);
   }
 
+  /// <summary>
+  /// Sets, replaces, or clears a photo's or attachment's TITL without decoding/re-encoding its raw
+  /// bytes -- unlike routing a caption edit through a photo's <c>IDataConverter</c>, which would decode
+  /// and lossily re-encode the image. An attachment stays enveloped either way (its FILE node is
+  /// mandatory); a photo demotes to plain when the title is cleared and promotes to tagged when a title
+  /// is first set. Any other residual child (e.g. an imported NOTE) survives untouched.
+  /// </summary>
+  public static async Task<Data> WithTitleAsync(Data data, string? title, CancellationToken token)
+  {
+    if (data.Category.IsAttachment())
+    {
+      var content = await ReplaceTitleAsync(data.Content, title, token);
+      return data with { Id = ElementId.NonCommittedId, Content = content };
+    }
+
+    if (string.IsNullOrWhiteSpace(title))
+    {
+      var content = data.Category.IsTaggedPhoto() ? ExtractImageBytes(data.Content) : data.Content;
+      return data with { Id = ElementId.NonCommittedId, Content = content, Category = data.Category.AsPlainPhoto() };
+    }
+
+    var newContent = data.Category.IsTaggedPhoto()
+      ? await ReplaceTitleAsync(data.Content, title, token)
+      : EncodePhotoTitle(data.Content, title);
+    return data with { Id = ElementId.NonCommittedId, Content = newContent, Category = data.Category.AsTaggedPhoto() };
+  }
+
+  private static async Task<byte[]> ReplaceTitleAsync(byte[] content, string? title, CancellationToken token)
+  {
+    var residual = await DecodeResidualAsync(content, token);
+    residual.Children.RemoveAll(child => child.Tag == GedcomTags.Title);
+    if (!string.IsNullOrWhiteSpace(title))
+    {
+      residual.Add(new GedcomNode { Tag = GedcomTags.Title, Value = title });
+    }
+
+    return Encode(ExtractImageBytes(content), residual);
+  }
+
   internal static byte[] Encode(byte[] imageBytes, GedcomNode residual)
   {
     var tagWriter = new StringWriter();

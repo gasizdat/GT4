@@ -746,7 +746,11 @@ internal sealed class GedcomImporter : IGedcomImporter
     return (main, additional);
   }
 
-  // AsTaggedPhoto() throws for any category but these, so a family photo's residual is never computed.
+  // FamilyMainPhoto/FamilyPhoto do have a *Tagged counterpart (added for issue #437's family caption
+  // support), but only for photos an app session captions directly via the SQLite-backed dialogs -- a
+  // captioned family photo already round-trips through export (AddPhotoAsync reads IsTaggedPhoto()
+  // generically). Recapturing a hand-authored FAM OBJE's TITL as a caption on reimport is unimplemented
+  // scope, not a limitation of the category itself; family photos are left out of this set deliberately.
   private static readonly HashSet<DataCategory> TaggableCategories = [DataCategory.PersonMainPhoto, DataCategory.PersonPhoto];
 
   private static Data BuildPhotoData(PhotoCandidate candidate, DataCategory plainCategory)

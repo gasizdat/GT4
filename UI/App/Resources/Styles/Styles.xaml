@@ -334,6 +334,10 @@
     <Setter Property="Text" Value="🖋️" />
   </Style>
 
+  <Style x:Key="CaptionAdorner" BasedOn="{StaticResource EmojiAdorner}" TargetType="Button">
+    <Setter Property="Text" Value="💬" />
+  </Style>
+
   <Style x:Key="LeftAdorner" BasedOn="{StaticResource EmojiAdorner}" TargetType="Button">
     <Setter Property="Text" Value="◀" />
   </Style>

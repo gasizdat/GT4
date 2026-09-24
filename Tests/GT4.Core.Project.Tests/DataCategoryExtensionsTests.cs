@@ -10,22 +10,26 @@ public sealed class DataCategoryExtensionsTests
   [Theory]
   [InlineData(DataCategory.PersonMainPhotoTagged, true)]
   [InlineData(DataCategory.PersonPhotoTagged, true)]
+  [InlineData(DataCategory.FamilyMainPhotoTagged, true)]
+  [InlineData(DataCategory.FamilyPhotoTagged, true)]
   [InlineData(DataCategory.PersonMainPhoto, false)]
   [InlineData(DataCategory.PersonPhoto, false)]
   [InlineData(DataCategory.PersonBio, false)]
   [InlineData(DataCategory.PersonGedcomTags, false)]
   [InlineData(DataCategory.FamilyMainPhoto, false)]
   [InlineData(DataCategory.FamilyPhoto, false)]
-  public void IsTaggedPhoto_IdentifiesOnlyTheTwoTaggedPhotoCategories(DataCategory category, bool expected) =>
+  public void IsTaggedPhoto_IdentifiesOnlyTheFourTaggedPhotoCategories(DataCategory category, bool expected) =>
     category.IsTaggedPhoto().Should().Be(expected);
 
   [Theory]
   [InlineData(DataCategory.PersonMainPhoto, true)]
   [InlineData(DataCategory.PersonMainPhotoTagged, true)]
   [InlineData(DataCategory.FamilyMainPhoto, true)]
+  [InlineData(DataCategory.FamilyMainPhotoTagged, true)]
   [InlineData(DataCategory.PersonPhoto, false)]
   [InlineData(DataCategory.PersonPhotoTagged, false)]
   [InlineData(DataCategory.FamilyPhoto, false)]
+  [InlineData(DataCategory.FamilyPhotoTagged, false)]
   [InlineData(DataCategory.PersonBio, false)]
   [InlineData(DataCategory.PersonGedcomTags, false)]
   public void IsMainPhoto_IdentifiesPlainOrTaggedMainPhoto(DataCategory category, bool expected) =>
@@ -35,9 +39,11 @@ public sealed class DataCategoryExtensionsTests
   [InlineData(DataCategory.PersonPhoto, true)]
   [InlineData(DataCategory.PersonPhotoTagged, true)]
   [InlineData(DataCategory.FamilyPhoto, true)]
+  [InlineData(DataCategory.FamilyPhotoTagged, true)]
   [InlineData(DataCategory.PersonMainPhoto, false)]
   [InlineData(DataCategory.PersonMainPhotoTagged, false)]
   [InlineData(DataCategory.FamilyMainPhoto, false)]
+  [InlineData(DataCategory.FamilyMainPhotoTagged, false)]
   [InlineData(DataCategory.PersonBio, false)]
   [InlineData(DataCategory.PersonGedcomTags, false)]
   public void IsAdditionalPhoto_IdentifiesPlainOrTaggedAdditionalPhoto(DataCategory category, bool expected) =>
@@ -48,13 +54,11 @@ public sealed class DataCategoryExtensionsTests
   [InlineData(DataCategory.PersonPhoto, DataCategory.PersonMainPhoto)]
   [InlineData(DataCategory.PersonMainPhotoTagged, DataCategory.PersonMainPhotoTagged)]
   [InlineData(DataCategory.PersonPhotoTagged, DataCategory.PersonMainPhotoTagged)]
-  public void AsMainPhoto_PreservesTaggedness(DataCategory category, DataCategory expected) =>
-    category.AsMainPhoto().Should().Be(expected);
-
-  [Theory]
   [InlineData(DataCategory.FamilyMainPhoto, DataCategory.FamilyMainPhoto)]
   [InlineData(DataCategory.FamilyPhoto, DataCategory.FamilyMainPhoto)]
-  public void AsMainPhoto_HasNoTaggedVariantForFamilyCategories(DataCategory category, DataCategory expected) =>
+  [InlineData(DataCategory.FamilyMainPhotoTagged, DataCategory.FamilyMainPhotoTagged)]
+  [InlineData(DataCategory.FamilyPhotoTagged, DataCategory.FamilyMainPhotoTagged)]
+  public void AsMainPhoto_PreservesTaggedness(DataCategory category, DataCategory expected) =>
     category.AsMainPhoto().Should().Be(expected);
 
   [Theory]
@@ -68,13 +72,11 @@ public sealed class DataCategoryExtensionsTests
   [InlineData(DataCategory.PersonPhoto, DataCategory.PersonPhoto)]
   [InlineData(DataCategory.PersonMainPhotoTagged, DataCategory.PersonPhotoTagged)]
   [InlineData(DataCategory.PersonPhotoTagged, DataCategory.PersonPhotoTagged)]
-  public void AsAdditionalPhoto_PreservesTaggedness(DataCategory category, DataCategory expected) =>
-    category.AsAdditionalPhoto().Should().Be(expected);
-
-  [Theory]
   [InlineData(DataCategory.FamilyMainPhoto, DataCategory.FamilyPhoto)]
   [InlineData(DataCategory.FamilyPhoto, DataCategory.FamilyPhoto)]
-  public void AsAdditionalPhoto_HasNoTaggedVariantForFamilyCategories(DataCategory category, DataCategory expected) =>
+  [InlineData(DataCategory.FamilyMainPhotoTagged, DataCategory.FamilyPhotoTagged)]
+  [InlineData(DataCategory.FamilyPhotoTagged, DataCategory.FamilyPhotoTagged)]
+  public void AsAdditionalPhoto_PreservesTaggedness(DataCategory category, DataCategory expected) =>
     category.AsAdditionalPhoto().Should().Be(expected);
 
   [Theory]
@@ -88,14 +90,16 @@ public sealed class DataCategoryExtensionsTests
   [InlineData(DataCategory.PersonPhoto, DataCategory.PersonPhoto)]
   [InlineData(DataCategory.PersonMainPhotoTagged, DataCategory.PersonMainPhoto)]
   [InlineData(DataCategory.PersonPhotoTagged, DataCategory.PersonPhoto)]
+  [InlineData(DataCategory.FamilyMainPhoto, DataCategory.FamilyMainPhoto)]
+  [InlineData(DataCategory.FamilyPhoto, DataCategory.FamilyPhoto)]
+  [InlineData(DataCategory.FamilyMainPhotoTagged, DataCategory.FamilyMainPhoto)]
+  [InlineData(DataCategory.FamilyPhotoTagged, DataCategory.FamilyPhoto)]
   public void AsPlainPhoto_AlwaysDowngradesToPlain(DataCategory category, DataCategory expected) =>
     category.AsPlainPhoto().Should().Be(expected);
 
   [Theory]
   [InlineData(DataCategory.PersonBio)]
   [InlineData(DataCategory.PersonGedcomTags)]
-  [InlineData(DataCategory.FamilyMainPhoto)]
-  [InlineData(DataCategory.FamilyPhoto)]
   public void AsPlainPhoto_ThrowsForNonPhotoCategories(DataCategory category) =>
     FluentActions.Invoking(() => category.AsPlainPhoto()).Should().Throw<ArgumentOutOfRangeException>();
 
@@ -104,14 +108,16 @@ public sealed class DataCategoryExtensionsTests
   [InlineData(DataCategory.PersonMainPhotoTagged, DataCategory.PersonMainPhotoTagged)]
   [InlineData(DataCategory.PersonPhoto, DataCategory.PersonPhotoTagged)]
   [InlineData(DataCategory.PersonPhotoTagged, DataCategory.PersonPhotoTagged)]
+  [InlineData(DataCategory.FamilyMainPhoto, DataCategory.FamilyMainPhotoTagged)]
+  [InlineData(DataCategory.FamilyMainPhotoTagged, DataCategory.FamilyMainPhotoTagged)]
+  [InlineData(DataCategory.FamilyPhoto, DataCategory.FamilyPhotoTagged)]
+  [InlineData(DataCategory.FamilyPhotoTagged, DataCategory.FamilyPhotoTagged)]
   public void AsTaggedPhoto_AlwaysUpgradesToTagged(DataCategory category, DataCategory expected) =>
     category.AsTaggedPhoto().Should().Be(expected);
 
   [Theory]
   [InlineData(DataCategory.PersonBio)]
   [InlineData(DataCategory.PersonGedcomTags)]
-  [InlineData(DataCategory.FamilyMainPhoto)]
-  [InlineData(DataCategory.FamilyPhoto)]
   public void AsTaggedPhoto_ThrowsForNonPhotoCategories(DataCategory category) =>
     FluentActions.Invoking(() => category.AsTaggedPhoto()).Should().Throw<ArgumentOutOfRangeException>();
 
@@ -122,6 +128,8 @@ public sealed class DataCategoryExtensionsTests
   [InlineData(DataCategory.PersonPhotoTagged, true)]
   [InlineData(DataCategory.FamilyMainPhoto, true)]
   [InlineData(DataCategory.FamilyPhoto, true)]
+  [InlineData(DataCategory.FamilyMainPhotoTagged, true)]
+  [InlineData(DataCategory.FamilyPhotoTagged, true)]
   [InlineData(DataCategory.PersonBio, false)]
   [InlineData(DataCategory.PersonGedcomTags, false)]
   public void IsPhoto_IdentifiesAnyPhotoCategory(DataCategory category, bool expected) =>

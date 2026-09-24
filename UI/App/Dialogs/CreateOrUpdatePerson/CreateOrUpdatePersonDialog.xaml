@@ -58,73 +58,93 @@
 
                 <CollectionView.ItemTemplate>
                   <DataTemplate>
-                    <Grid
-                        x:Name="PersonPhoto"
-                        ColumnDefinitions="*, Auto, Auto"
-                        RowDefinitions="Auto, Auto, *"
-                        Style="{StaticResource HoverItem}">
+                    <VerticalStackLayout>
+                      <Grid
+                          x:Name="PersonPhoto"
+                          ColumnDefinitions="*, Auto, Auto"
+                          RowDefinitions="Auto, Auto, *"
+                          Style="{StaticResource HoverItem}">
 
-                      <Image
-                          Grid.Row="0"
-                          Grid.RowSpan="3"
-                          Grid.Column="0"
-                          Grid.ColumnSpan="3"
-                          Source="{Binding Content.Source}"
-                          Style="{StaticResource PhotoPreviewStyle}" />
+                        <Image
+                            Grid.Row="0"
+                            Grid.RowSpan="3"
+                            Grid.Column="0"
+                            Grid.ColumnSpan="3"
+                            Source="{Binding Content.Source}"
+                            Style="{StaticResource PhotoPreviewStyle}" />
 
-                      <Button
-                          Grid.Row="0"
-                          Grid.Column="1"
-                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
-                          Style="{StaticResource EditAdorner}">
+                        <Button
+                            Grid.Row="0"
+                            Grid.Column="1"
+                            Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                            Style="{StaticResource EditAdorner}">
 
-                        <Button.CommandParameter>
-                          <components:AdornerCommandParameter
-                              CommandName="EditPhotoCommand"
-                              Element="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
-                        </Button.CommandParameter>
-                      </Button>
+                          <Button.CommandParameter>
+                            <components:AdornerCommandParameter
+                                CommandName="EditPhotoCommand"
+                                Element="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
+                          </Button.CommandParameter>
+                        </Button>
 
-                      <Button
-                          Grid.Row="0"
-                          Grid.Column="2"
-                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
-                          Style="{StaticResource DeleteAdorner}">
+                        <Button
+                            Grid.Row="0"
+                            Grid.Column="2"
+                            Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                            Style="{StaticResource DeleteAdorner}">
 
-                        <Button.CommandParameter>
-                          <components:AdornerCommandParameter
-                              CommandName="RemovePhotoCommand"
-                              Element="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
-                        </Button.CommandParameter>
-                      </Button>
+                          <Button.CommandParameter>
+                            <components:AdornerCommandParameter
+                                CommandName="RemovePhotoCommand"
+                                Element="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
+                          </Button.CommandParameter>
+                        </Button>
 
-                      <Button
-                          Grid.Row="1"
-                          Grid.Column="1"
-                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
-                          Style="{StaticResource LeftAdorner}">
+                        <Button
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                            Style="{StaticResource LeftAdorner}">
 
-                        <Button.CommandParameter>
-                          <components:AdornerCommandParameter
-                              CommandName="MovePhotoToLeftCommand"
-                              Element="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
-                        </Button.CommandParameter>
-                      </Button>
+                          <Button.CommandParameter>
+                            <components:AdornerCommandParameter
+                                CommandName="MovePhotoToLeftCommand"
+                                Element="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
+                          </Button.CommandParameter>
+                        </Button>
 
-                      <Button
-                          Grid.Row="1"
-                          Grid.Column="2"
-                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
-                          Style="{StaticResource RightAdorner}">
+                        <Button
+                            Grid.Row="1"
+                            Grid.Column="2"
+                            Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                            Style="{StaticResource RightAdorner}">
 
-                        <Button.CommandParameter>
-                          <components:AdornerCommandParameter
-                              CommandName="MovePhotoToRightCommand"
-                              Element="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
-                        </Button.CommandParameter>
-                      </Button>
+                          <Button.CommandParameter>
+                            <components:AdornerCommandParameter
+                                CommandName="MovePhotoToRightCommand"
+                                Element="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
+                          </Button.CommandParameter>
+                        </Button>
 
-                    </Grid>
+                      </Grid>
+
+                      <HorizontalStackLayout>
+                        <Button
+                            Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                            Style="{StaticResource CaptionAdorner}">
+
+                          <Button.CommandParameter>
+                            <components:AdornerCommandParameter
+                                CommandName="EditCaptionCommand"
+                                Element="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
+                          </Button.CommandParameter>
+                        </Button>
+
+                        <Label
+                            Style="{StaticResource FieldValue}"
+                            Text="{Binding Caption}"
+                            VerticalOptions="Center" />
+                      </HorizontalStackLayout>
+                    </VerticalStackLayout>
                   </DataTemplate>
                 </CollectionView.ItemTemplate>
               </CollectionView>
@@ -165,15 +185,39 @@
                         x:Name="PersonAttachment"
                         Padding="{StaticResource CollectionItemsVerticalPadding}"
                         ColumnDefinitions="*, Auto, Auto, Auto, Auto"
+                        RowDefinitions="Auto, Auto"
                         Style="{StaticResource HoverItem}">
 
                       <Label
+                          Grid.Row="0"
                           Grid.Column="0"
                           Style="{StaticResource FieldValue}"
                           Text="{Binding Content.DisplayName}"
                           VerticalOptions="Center" />
 
+                      <HorizontalStackLayout
+                          Grid.Row="1"
+                          Grid.Column="0">
+                        <Button
+                            Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                            Style="{StaticResource CaptionAdorner}">
+
+                          <Button.CommandParameter>
+                            <components:AdornerCommandParameter
+                                CommandName="EditCaptionCommand"
+                                Element="{Binding Source={x:Reference PersonAttachment}, Path=BindingContext}" />
+                          </Button.CommandParameter>
+                        </Button>
+
+                        <Label
+                            Style="{StaticResource FieldValue}"
+                            Text="{Binding Caption}"
+                            VerticalOptions="Center" />
+                      </HorizontalStackLayout>
+
                       <Button
+                          Grid.Row="0"
+                          Grid.RowSpan="2"
                           Grid.Column="1"
                           Command="{Binding DialogCommand, Source={x:Reference Root}}"
                           Style="{StaticResource UpAdorner}"
@@ -187,6 +231,8 @@
                       </Button>
 
                       <Button
+                          Grid.Row="0"
+                          Grid.RowSpan="2"
                           Grid.Column="2"
                           Command="{Binding DialogCommand, Source={x:Reference Root}}"
                           Style="{StaticResource DownAdorner}"
@@ -200,6 +246,8 @@
                       </Button>
 
                       <Button
+                          Grid.Row="0"
+                          Grid.RowSpan="2"
                           Grid.Column="3"
                           Command="{Binding DialogCommand, Source={x:Reference Root}}"
                           Style="{StaticResource EditAdorner}"
@@ -213,6 +261,8 @@
                       </Button>
 
                       <Button
+                          Grid.Row="0"
+                          Grid.RowSpan="2"
                           Grid.Column="4"
                           Command="{Binding DialogCommand, Source={x:Reference Root}}"
                           Style="{StaticResource DeleteAdorner}"

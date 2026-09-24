@@ -63,6 +63,8 @@ internal sealed class TestableCreateOrUpdatePersonDialog : CreateOrUpdatePersonD
 
   public Task InvokeEditPersonNameAsync(NameInfoItem name) => OnEditPersonNameAsync(name);
 
+  public Task InvokeEditCaptionAsync(PersonDataItem item) => OnEditCaptionAsync(item);
+
   public Task InvokeInsertLinkAsync() => OnInsertLinkAsync();
 
   public Task InvokeInsertMediaLinkAsync() => OnInsertMediaLinkAsync();

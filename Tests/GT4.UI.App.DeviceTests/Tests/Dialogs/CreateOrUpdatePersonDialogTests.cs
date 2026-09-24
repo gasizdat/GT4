@@ -120,6 +120,17 @@ public class CreateOrUpdatePersonDialogTests
   }
 
   [Fact]
+  public async Task Loading_an_existing_photos_caption_in_the_background_does_not_mark_the_dialog_modified()
+  {
+    var dialog = await CreateDialogAsync(new TestServices(), CreateSamplePerson());
+    var photo = dialog.Photos.First();
+
+    await WaitForAsync(() => photo.Content, content => content is not null, "Photo content never finished loading.");
+
+    Assert.Equal(Resources.UIStrings.BtnNameCancel, dialog.DialogButtonName);
+  }
+
+  [Fact]
   public async Task Ctor_with_no_person_starts_empty()
   {
     var dialog = await CreateDialogAsync(new TestServices(), null);
@@ -713,5 +724,34 @@ public class CreateOrUpdatePersonDialogTests
     await editTask;
 
     Assert.Contains(dialog.Names, item => item.Info.Id == updatedPatronymic.Id);
+  }
+
+  // Guards the null-means-cancel contract at the call site: EditCaptionDialog now arms its own
+  // IsModified on any edit, so a type-then-revert round trip still returns a non-null caption --
+  // it must equal the original for the outer dialog to stay unmodified too.
+  [Fact]
+  public async Task EditCaptionCommand_typing_then_reverting_to_the_original_text_does_not_mark_the_dialog_modified()
+  {
+    var services = new TestServices();
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    var dialog = await MainThread.InvokeOnMainThreadAsync(
+      () => services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialog.Factory>().Create(CreateSamplePerson()));
+    var photo = dialog.Photos.First();
+    await MainThread.InvokeOnMainThreadAsync(() => photo.Caption = "Original caption");
+
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var editTask = await MainThreadTask.StartAsync(() => dialog.InvokeEditCaptionAsync(photo));
+    var captionDialog = await ModalDialogHarness.WaitForModalAsync<EditCaptionDialog>(dialog);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      captionDialog.Caption = "Typed but reverted";
+      captionDialog.Caption = "Original caption";
+      captionDialog.DialogCommand.Execute(null);
+    });
+    await editTask;
+
+    Assert.Equal("Original caption", photo.Caption);
+    Assert.Equal(Resources.UIStrings.BtnNameCancel, dialog.DialogButtonName);
   }
 }

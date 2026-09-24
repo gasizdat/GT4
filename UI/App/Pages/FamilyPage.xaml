@@ -14,11 +14,13 @@
     <ResourceDictionary>
 
       <Style x:Key="PhotoStyle" TargetType="Image">
-        <!--  The box is a fixed size, so fitting a wide photo into it would leave most of it empty.  -->
         <Setter Property="Aspect" Value="AspectFill" />
         <Setter Property="HeightRequest" Value="{StaticResource PhotoHeight}" />
         <Setter Property="WidthRequest" Value="{StaticResource PhotoWidth}" />
-        <Setter Property="HorizontalOptions" Value="Start" />
+        <!--  Center, not Start: ImagePresenter's caption overlay is a full-width Label capped to this
+              image's measured width, so it centers in the host regardless, stranding it away from a
+              left-pinned photo. Every other photo style with a caption already centers.  -->
+        <Setter Property="HorizontalOptions" Value="Center" />
         <Setter Property="VerticalOptions" Value="Center" />
       </Style>
 
@@ -118,7 +120,7 @@
           </VerticalStackLayout>
         </CollectionView.Header>
 
-        <!-- A GridItemsLayout row takes its tallest cell's height, and uneven rows crash WinUI. -->
+        <!--  A GridItemsLayout row takes its tallest cell's height, and uneven rows crash WinUI.  -->
         <CollectionView.ItemsLayout>
           <LinearItemsLayout Orientation="Vertical" />
         </CollectionView.ItemsLayout>

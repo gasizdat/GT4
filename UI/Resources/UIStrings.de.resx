@@ -283,6 +283,9 @@ Stammbaum und haben Sie Freude daran!</value>
   <data name="BtnNameAddPersonAttachment" xml:space="preserve">
     <value>Anhang hinzufügen</value>
   </data>
+  <data name="TxtPlaceholderCaption" xml:space="preserve">
+    <value>Beschreibung hinzufügen</value>
+  </data>
   <data name="RelMother" xml:space="preserve">
     <value>Mutter</value>
   </data>
@@ -390,6 +393,9 @@ Stammbaum und haben Sie Freude daran!</value>
   </data>
   <data name="TitleSelectDateDialog" xml:space="preserve">
     <value>Datum auswählen</value>
+  </data>
+  <data name="TitleEditCaptionDialog" xml:space="preserve">
+    <value>Beschreibung</value>
   </data>
   <data name="FieldYear" xml:space="preserve">
     <value>Jahr</value>

@@ -6,13 +6,16 @@ using GT4.Core.Project.Dto;
 public static class DataCategoryExtensions
 {
   public static bool IsTaggedPhoto(this DataCategory category) =>
-    category is DataCategory.PersonMainPhotoTagged or DataCategory.PersonPhotoTagged;
+    category is DataCategory.PersonMainPhotoTagged or DataCategory.PersonPhotoTagged
+      or DataCategory.FamilyMainPhotoTagged or DataCategory.FamilyPhotoTagged;
 
   public static bool IsMainPhoto(this DataCategory category) =>
-    category is DataCategory.PersonMainPhoto or DataCategory.PersonMainPhotoTagged or DataCategory.FamilyMainPhoto;
+    category is DataCategory.PersonMainPhoto or DataCategory.PersonMainPhotoTagged
+      or DataCategory.FamilyMainPhoto or DataCategory.FamilyMainPhotoTagged;
 
   public static bool IsAdditionalPhoto(this DataCategory category) =>
-    category is DataCategory.PersonPhoto or DataCategory.PersonPhotoTagged or DataCategory.FamilyPhoto;
+    category is DataCategory.PersonPhoto or DataCategory.PersonPhotoTagged
+      or DataCategory.FamilyPhoto or DataCategory.FamilyPhotoTagged;
 
   public static bool IsPhoto(this DataCategory category) => category.IsMainPhoto() || category.IsAdditionalPhoto();
 
@@ -25,6 +28,7 @@ public static class DataCategoryExtensions
   {
     DataCategory.PersonMainPhotoTagged or DataCategory.PersonPhotoTagged => DataCategory.PersonMainPhotoTagged,
     DataCategory.PersonMainPhoto or DataCategory.PersonPhoto => DataCategory.PersonMainPhoto,
+    DataCategory.FamilyMainPhotoTagged or DataCategory.FamilyPhotoTagged => DataCategory.FamilyMainPhotoTagged,
     DataCategory.FamilyMainPhoto or DataCategory.FamilyPhoto => DataCategory.FamilyMainPhoto,
     _ => throw new ArgumentOutOfRangeException(nameof(category), category, "Not a photo category.")
   };
@@ -33,6 +37,7 @@ public static class DataCategoryExtensions
   {
     DataCategory.PersonMainPhotoTagged or DataCategory.PersonPhotoTagged => DataCategory.PersonPhotoTagged,
     DataCategory.PersonMainPhoto or DataCategory.PersonPhoto => DataCategory.PersonPhoto,
+    DataCategory.FamilyMainPhotoTagged or DataCategory.FamilyPhotoTagged => DataCategory.FamilyPhotoTagged,
     DataCategory.FamilyMainPhoto or DataCategory.FamilyPhoto => DataCategory.FamilyPhoto,
     _ => throw new ArgumentOutOfRangeException(nameof(category), category, "Not a photo category.")
   };
@@ -42,6 +47,8 @@ public static class DataCategoryExtensions
   {
     DataCategory.PersonMainPhotoTagged or DataCategory.PersonMainPhoto => DataCategory.PersonMainPhoto,
     DataCategory.PersonPhotoTagged or DataCategory.PersonPhoto => DataCategory.PersonPhoto,
+    DataCategory.FamilyMainPhotoTagged or DataCategory.FamilyMainPhoto => DataCategory.FamilyMainPhoto,
+    DataCategory.FamilyPhotoTagged or DataCategory.FamilyPhoto => DataCategory.FamilyPhoto,
     _ => throw new ArgumentOutOfRangeException(nameof(category), category, "Not a photo category.")
   };
 
@@ -51,6 +58,8 @@ public static class DataCategoryExtensions
   {
     DataCategory.PersonMainPhotoTagged or DataCategory.PersonMainPhoto => DataCategory.PersonMainPhotoTagged,
     DataCategory.PersonPhotoTagged or DataCategory.PersonPhoto => DataCategory.PersonPhotoTagged,
+    DataCategory.FamilyMainPhotoTagged or DataCategory.FamilyMainPhoto => DataCategory.FamilyMainPhotoTagged,
+    DataCategory.FamilyPhotoTagged or DataCategory.FamilyPhoto => DataCategory.FamilyPhotoTagged,
     _ => throw new ArgumentOutOfRangeException(nameof(category), category, "Not a photo category.")
   };
 }

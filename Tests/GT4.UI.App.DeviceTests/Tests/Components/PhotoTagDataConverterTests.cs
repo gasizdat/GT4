@@ -82,6 +82,23 @@ public class PhotoTagDataConverterTests
   }
 
   [Fact]
+  public async Task ToObjectAsync_delegates_to_ImageDataConverter_for_a_plain_category_photo()
+  {
+    // Dialogs now bind this converter to every photo item regardless of its current tagged-vs-plain
+    // state (so a plain photo can still be promoted by a later caption); a plain Data must decode
+    // safely instead of ExtractImageBytes mis-slicing the raw image bytes as an envelope.
+    byte[] image = [1, 2, 3, 4, 5];
+    var photo = new Data(104, image, "image/png", DataCategory.PersonMainPhoto);
+
+    var result = await new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>(), new ImageCache(CacheSizeLimit))
+      .ToObjectAsync(photo, CancellationToken.None);
+
+    var photoInfo = Assert.IsType<PhotoInfo>(result);
+    Assert.Null(photoInfo.Caption);
+    Assert.Equal(image, await ReadBytesAsync(photoInfo.Source));
+  }
+
+  [Fact]
   public async Task FromObjectAsync_returns_null_for_null_input()
   {
     var result = await new PhotoTagDataConverter(Mock.Of<IHttpClientFactory>(), new ImageCache(CacheSizeLimit))

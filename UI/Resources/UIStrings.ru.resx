@@ -283,6 +283,9 @@
   <data name="BtnNameAddPersonAttachment" xml:space="preserve">
     <value>Добавить вложение</value>
   </data>
+  <data name="TxtPlaceholderCaption" xml:space="preserve">
+    <value>Добавьте описание</value>
+  </data>
   <data name="RelMother" xml:space="preserve">
     <value>Мать</value>
   </data>
@@ -390,6 +393,9 @@
   </data>
   <data name="TitleSelectDateDialog" xml:space="preserve">
     <value>Выбрать дату</value>
+  </data>
+  <data name="TitleEditCaptionDialog" xml:space="preserve">
+    <value>Описание</value>
   </data>
   <data name="FieldYear" xml:space="preserve">
     <value>Год</value>

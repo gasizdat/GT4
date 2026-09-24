@@ -4067,7 +4067,16 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("TitleSelectDateDialog", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Description.
+        /// </summary>
+        public static string TitleEditCaptionDialog {
+            get {
+                return ResourceManager.GetString("TitleEditCaptionDialog", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Select text encoding.
         /// </summary>
@@ -4148,7 +4157,16 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("TxtPlaceholderBiography", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Add a description.
+        /// </summary>
+        public static string TxtPlaceholderCaption {
+            get {
+                return ResourceManager.GetString("TxtPlaceholderCaption", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Enter a Family name in the plural (for example, Smiths).
         /// </summary>

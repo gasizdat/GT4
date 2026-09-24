@@ -104,6 +104,7 @@
 
                 <CollectionView.ItemTemplate>
                   <DataTemplate>
+                    <VerticalStackLayout>
                     <Grid
                         x:Name="FamilyPhoto"
                         ColumnDefinitions="*, Auto, Auto"
@@ -171,6 +172,25 @@
                       </Button>
 
                     </Grid>
+
+                    <HorizontalStackLayout>
+                      <Button
+                          Command="{Binding MediaCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource CaptionAdorner}">
+
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="EditCaptionCommand"
+                              Element="{Binding Source={x:Reference FamilyPhoto}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
+
+                      <Label
+                          Style="{StaticResource FieldValue}"
+                          Text="{Binding Caption}"
+                          VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                    </VerticalStackLayout>
                   </DataTemplate>
                 </CollectionView.ItemTemplate>
               </CollectionView>
@@ -210,15 +230,39 @@
                         x:Name="FamilyAttachment"
                         Padding="{StaticResource CollectionItemsVerticalPadding}"
                         ColumnDefinitions="*, Auto, Auto, Auto, Auto"
+                        RowDefinitions="Auto, Auto"
                         Style="{StaticResource HoverItem}">
 
                       <Label
+                          Grid.Row="0"
                           Grid.Column="0"
                           Style="{StaticResource FieldValue}"
                           Text="{Binding Content.DisplayName}"
                           VerticalOptions="Center" />
 
+                      <HorizontalStackLayout
+                          Grid.Row="1"
+                          Grid.Column="0">
+                        <Button
+                            Command="{Binding MediaCommand, Source={x:Reference Root}}"
+                            Style="{StaticResource CaptionAdorner}">
+
+                          <Button.CommandParameter>
+                            <components:AdornerCommandParameter
+                                CommandName="EditCaptionCommand"
+                                Element="{Binding Source={x:Reference FamilyAttachment}, Path=BindingContext}" />
+                          </Button.CommandParameter>
+                        </Button>
+
+                        <Label
+                            Style="{StaticResource FieldValue}"
+                            Text="{Binding Caption}"
+                            VerticalOptions="Center" />
+                      </HorizontalStackLayout>
+
                       <Button
+                          Grid.Row="0"
+                          Grid.RowSpan="2"
                           Grid.Column="1"
                           Command="{Binding MediaCommand, Source={x:Reference Root}}"
                           Style="{StaticResource UpAdorner}"
@@ -232,6 +276,8 @@
                       </Button>
 
                       <Button
+                          Grid.Row="0"
+                          Grid.RowSpan="2"
                           Grid.Column="2"
                           Command="{Binding MediaCommand, Source={x:Reference Root}}"
                           Style="{StaticResource DownAdorner}"
@@ -245,6 +291,8 @@
                       </Button>
 
                       <Button
+                          Grid.Row="0"
+                          Grid.RowSpan="2"
                           Grid.Column="3"
                           Command="{Binding MediaCommand, Source={x:Reference Root}}"
                           Style="{StaticResource EditAdorner}"
@@ -258,6 +306,8 @@
                       </Button>
 
                       <Button
+                          Grid.Row="0"
+                          Grid.RowSpan="2"
                           Grid.Column="4"
                           Command="{Binding MediaCommand, Source={x:Reference Root}}"
                           Style="{StaticResource DeleteAdorner}"

@@ -79,13 +79,11 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private PersonDataItem GetPersonData(Data data, DataCategory dataCategory)
   {
     var converter = _Factory.DataConverterResolver(dataCategory);
-    var ret = new PersonDataItem(
+    return new PersonDataItem(
       data: data,
       converter,
       _Factory.CancellationTokenProvider,
       _Factory.AlertService);
-
-    return ret;
   }
 
   private void UpdatePersonInformation(PersonFullInfo? person)
@@ -113,14 +111,16 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         _Names.Add(name);
       }
 
+      // Converter resolved via AsTaggedPhoto(), not the photo's own (possibly plain) category, so every
+      // photo item can gain a caption later even if it starts out untagged.
       if (person.MainPhoto is not null)
       {
-        _Photos.Add(GetPersonData(person.MainPhoto, person.MainPhoto.Category));
+        _Photos.Add(GetPersonData(person.MainPhoto, person.MainPhoto.Category.AsTaggedPhoto()));
       }
 
       foreach (var photo in person.AdditionalPhotos)
       {
-        _Photos.Add(GetPersonData(photo, photo.Category));
+        _Photos.Add(GetPersonData(photo, photo.Category.AsTaggedPhoto()));
       }
 
       foreach (var attachment in person.Attachments)
@@ -380,7 +380,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     foreach (var photoAsset in photoAssets)
     {
       var category = _Photos.Count() == 0 ? DataCategory.PersonMainPhoto : DataCategory.PersonPhoto;
-      var item = GetPersonData(data: photoAsset with { Category = category }, category);
+      var item = GetPersonData(data: photoAsset with { Category = category }, category.AsTaggedPhoto());
       if (photo is not null)
       {
         _Photos[_Photos.IndexOf(photo)] = item;
@@ -426,6 +426,21 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
 
     IsModified = true;
+  }
+
+  protected async Task OnEditCaptionAsync(PersonDataItem item)
+  {
+    var dialog = new EditCaptionDialog(item.Caption, _Factory.AlertService);
+
+    await Navigation.PushModalAsync(dialog);
+    var caption = await dialog.Info;
+    await Navigation.PopModalAsync();
+
+    if (caption is not null && caption != item.Caption)
+    {
+      item.Caption = caption;
+      IsModified = true;
+    }
   }
 
   private async Task OnAddRelationshipAsync()
@@ -595,6 +610,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "MoveAttachmentDownCommand" && adorner.Element is PersonDataItem attachment:
         MoveItem(_Attachments, attachment, 1);
+        break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "EditCaptionCommand" && adorner.Element is PersonDataItem item:
+        await OnEditCaptionAsync(item);
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "EditNameCommand" && adorner.Element is NameInfoItem name:
         await OnEditPersonNameAsync(name);

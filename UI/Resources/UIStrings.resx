@@ -283,6 +283,9 @@ genealogy tree and enjoy!</value>
   <data name="BtnNameAddPersonAttachment" xml:space="preserve">
     <value>Add attachment</value>
   </data>
+  <data name="TxtPlaceholderCaption" xml:space="preserve">
+    <value>Add a description</value>
+  </data>
   <data name="RelMother" xml:space="preserve">
     <value>Mother</value>
   </data>
@@ -390,6 +393,9 @@ genealogy tree and enjoy!</value>
   </data>
   <data name="TitleSelectDateDialog" xml:space="preserve">
     <value>Select date</value>
+  </data>
+  <data name="TitleEditCaptionDialog" xml:space="preserve">
+    <value>Description</value>
   </data>
   <data name="FieldYear" xml:space="preserve">
     <value>Year</value>

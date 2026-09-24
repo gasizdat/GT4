@@ -92,6 +92,17 @@ public class CreateOrUpdateNameDialogTests
   }
 
   [Fact]
+  public async Task Loading_an_existing_attachments_caption_in_the_background_does_not_mark_the_dialog_modified()
+  {
+    var dialog = await CreateDialogAsync(new TestServices(), [Attachment(1)]);
+    var attachment = dialog.Attachments.Single();
+
+    await WaitForAsync(() => attachment.Content, content => content is not null, "Attachment content never finished loading.");
+
+    Assert.Equal(Resources.UIStrings.BtnNameCancel, dialog.DialogButtonName);
+  }
+
+  [Fact]
   public async Task Ctor_seeds_the_main_photo_first_regardless_of_the_provided_order()
   {
     // The provided array puts the additional photo before the main photo (arbitrary DB row order);
