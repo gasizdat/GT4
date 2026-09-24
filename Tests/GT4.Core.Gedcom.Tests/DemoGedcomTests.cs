@@ -1,7 +1,6 @@
 using FluentAssertions;
 using GT4.Core.Project;
 using GT4.Core.Project.Dto;
-using GT4.Core.Project.Extensions;
 using System.Reflection;
 using System.Text;
 using Xunit;
@@ -79,7 +78,7 @@ public sealed class DemoGedcomTests : IAsyncLifetime
     await using var document = await ImportDemoAsync();
 
     var persons = await document.Persons.GetPersonsAsync(Token);
-    var mainPhotos = await document.PersonData.GetMergedPhotoSetAsync(persons, DataCategory.PersonMainPhoto, Token);
+    var mainPhotos = await document.PersonData.GetPersonPhotoSetAsync(persons, DataCategory.PersonMainPhoto, Token);
     mainPhotos.Count(entry => entry.Value.Length != 0).Should().Be(6);
 
     var byName = await GedcomTestGraph.PersonsByNameAsync(document, Token);

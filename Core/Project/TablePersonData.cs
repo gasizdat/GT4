@@ -16,6 +16,9 @@ internal partial class TablePersonData : TableOwnerData<Person>, ITablePersonDat
   public Task<Dictionary<int, Data[]>> GetPersonDataSetAsync(Person[] persons, DataCategory? category, CancellationToken token) =>
     GetDataSetAsync(persons, category, token);
 
+  public Task<Dictionary<int, Data[]>> GetPersonPhotoSetAsync(Person[] persons, DataCategory plainCategory, CancellationToken token) =>
+    GetPhotoSetAsync(persons, plainCategory, token);
+
   public Task<Dictionary<int, int[]>> GetPersonIdsByDataAsync(CancellationToken token) =>
     GetDataOwnerIdsAsync(token);
 

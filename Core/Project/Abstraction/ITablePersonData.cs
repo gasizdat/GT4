@@ -8,6 +8,7 @@ public interface ITablePersonData
   Task<Data[]> GetPersonDataSetAsync(Person person, DataCategory? category, CancellationToken token);
   Task<Dictionary<int, Data[]>> GetPersonDataSetAsync(Person[] persons, DataCategory? category, CancellationToken token);
   Task<Dictionary<int, int[]>> GetPersonIdsByDataAsync(CancellationToken token);
+  Task<Dictionary<int, Data[]>> GetPersonPhotoSetAsync(Person[] persons, DataCategory plainCategory, CancellationToken token);
   Task RemovePersonDataAsync(Person person, Data data, CancellationToken token);
   Task UpdatePersonDataAsync(Person person, Data? newData, DataCategory dataCategory, CancellationToken token);
   Task UpdatePersonDataSetAsync(Person person, Data[] dataSet, CancellationToken token);

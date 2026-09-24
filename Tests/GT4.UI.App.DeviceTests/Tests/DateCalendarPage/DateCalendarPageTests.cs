@@ -82,15 +82,15 @@ public class DateCalendarPageTests
       "Month photo fetch did not complete.");
 
     services.PersonData.Verify(
-      p => p.GetPersonDataSetAsync(
+      p => p.GetPersonPhotoSetAsync(
         It.Is<Person[]>(arr => arr.Length == 1 && arr[0].Id == shown.Id),
-        It.IsAny<DataCategory?>(),
+        DataCategory.PersonMainPhoto,
         It.IsAny<CancellationToken>()),
       Times.AtLeastOnce());
     services.PersonData.Verify(
-      p => p.GetPersonDataSetAsync(
+      p => p.GetPersonPhotoSetAsync(
         It.Is<Person[]>(arr => arr.Any(x => x.Id == elsewhere.Id)),
-        It.IsAny<DataCategory?>(),
+        DataCategory.PersonMainPhoto,
         It.IsAny<CancellationToken>()),
       Times.Never());
   }

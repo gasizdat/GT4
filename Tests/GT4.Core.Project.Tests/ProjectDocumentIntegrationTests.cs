@@ -654,6 +654,56 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task GetPersonPhotoSet_PersonHasBothPlainAndTagged_ConcatenatesPlainThenTagged()
+  {
+    var person = await AddBarePersonAsync();
+    await _doc.PersonData.AddPersonDataSetAsync(person,
+      [NewData(DataCategory.PersonPhoto, 1), NewData(DataCategory.PersonPhotoTagged, 2)], Token);
+
+    var result = await _doc.PersonData.GetPersonPhotoSetAsync([person], DataCategory.PersonPhoto, Token);
+
+    result[person.Id].Select(d => d.Content[0]).Should().Equal(1, 2);
+  }
+
+  [Fact]
+  public async Task GetPersonPhotoSet_PersonHasOnlyTaggedPhotos_ReturnsThoseDirectly()
+  {
+    var person = await AddBarePersonAsync();
+    await _doc.PersonData.AddPersonDataSetAsync(person, [NewData(DataCategory.PersonPhotoTagged, 2)], Token);
+
+    var result = await _doc.PersonData.GetPersonPhotoSetAsync([person], DataCategory.PersonPhoto, Token);
+
+    result[person.Id].Should().ContainSingle().Which.Content.Should().Equal(2);
+  }
+
+  [Fact]
+  public async Task GetPersonPhotoSet_PersonHasNoPhotos_IsOmittedFromResult()
+  {
+    var person = await AddBarePersonAsync();
+
+    var result = await _doc.PersonData.GetPersonPhotoSetAsync([person], DataCategory.PersonPhoto, Token);
+
+    result.Should().BeEmpty();
+  }
+
+  [Fact]
+  public async Task GetPersonPhotoSet_ExcludesOtherSlotsAndCategories()
+  {
+    var person = await AddBarePersonAsync();
+    await _doc.PersonData.AddPersonDataSetAsync(person,
+      [
+        NewData(DataCategory.PersonPhoto, 1),
+        NewData(DataCategory.PersonMainPhoto, 2),
+        NewData(DataCategory.PersonBio, 3),
+        NewData(DataCategory.PersonMainPhotoTagged, 4),
+      ], Token);
+
+    var result = await _doc.PersonData.GetPersonPhotoSetAsync([person], DataCategory.PersonPhoto, Token);
+
+    result[person.Id].Should().ContainSingle().Which.Content.Should().Equal(1);
+  }
+
+  [Fact]
   public async Task PersonData_UpdateDataSet_ReclaimingADroppedBlob_KeepsItIfAnotherPersonStillHoldsIt()
   {
     // The same blob linked to two persons. Dropping it from personA's set must reclaim it there but
