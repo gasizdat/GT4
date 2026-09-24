@@ -24,7 +24,18 @@ public class EditCaptionDialogTests
   }
 
   [Fact]
-  public async Task CancelCommand_discardsTheEditAndReturnsTheOriginalCaption()
+  public async Task DialogCommand_returns_null_when_the_caption_was_not_touched()
+  {
+    var dialog = await CreateDialogAsync(new TestServices(), "Old caption");
+
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.DialogCommand.Execute(null));
+    var result = await dialog.Info;
+
+    Assert.Null(result);
+  }
+
+  [Fact]
+  public async Task CancelCommand_discardsTheEditAndReturnsNull()
   {
     var dialog = await CreateDialogAsync(new TestServices(), "Old caption");
     await MainThread.InvokeOnMainThreadAsync(() => dialog.Caption = "Typed but abandoned");
@@ -32,7 +43,7 @@ public class EditCaptionDialogTests
     await MainThread.InvokeOnMainThreadAsync(() => dialog.CancelCommand.Execute(null));
     var result = await dialog.Info;
 
-    Assert.Equal("Old caption", result);
+    Assert.Null(result);
   }
 
   [Fact]
@@ -45,6 +56,6 @@ public class EditCaptionDialogTests
     var result = await dialog.Info;
 
     Assert.True(handled);
-    Assert.Equal("Old caption", result);
+    Assert.Null(result);
   }
 }

@@ -428,7 +428,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     IsModified = true;
   }
 
-  private async Task OnEditCaptionAsync(PersonDataItem item)
+  protected async Task OnEditCaptionAsync(PersonDataItem item)
   {
     var dialog = new EditCaptionDialog(item.Caption, _Factory.AlertService);
 
