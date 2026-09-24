@@ -800,6 +800,56 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task GetNamePhotoSet_FamilyHasBothPlainAndTagged_ConcatenatesPlainThenTagged()
+  {
+    var family = await AddBareFamilyNameAsync();
+    await _doc.NameData.AddNameDataSetAsync(family,
+      [NewData(DataCategory.FamilyPhoto, 1), NewData(DataCategory.FamilyPhotoTagged, 2)], Token);
+
+    var result = await _doc.NameData.GetNamePhotoSetAsync([family], DataCategory.FamilyPhoto, Token);
+
+    result[family.Id].Select(d => d.Content[0]).Should().Equal(1, 2);
+  }
+
+  [Fact]
+  public async Task GetNamePhotoSet_FamilyHasOnlyTaggedPhotos_ReturnsThoseDirectly()
+  {
+    var family = await AddBareFamilyNameAsync();
+    await _doc.NameData.AddNameDataSetAsync(family, [NewData(DataCategory.FamilyPhotoTagged, 2)], Token);
+
+    var result = await _doc.NameData.GetNamePhotoSetAsync([family], DataCategory.FamilyPhoto, Token);
+
+    result[family.Id].Should().ContainSingle().Which.Content.Should().Equal(2);
+  }
+
+  [Fact]
+  public async Task GetNamePhotoSet_FamilyHasNoPhotos_IsOmittedFromResult()
+  {
+    var family = await AddBareFamilyNameAsync();
+
+    var result = await _doc.NameData.GetNamePhotoSetAsync([family], DataCategory.FamilyPhoto, Token);
+
+    result.Should().BeEmpty();
+  }
+
+  [Fact]
+  public async Task GetNamePhotoSet_ExcludesOtherSlotsAndCategories()
+  {
+    var family = await AddBareFamilyNameAsync();
+    await _doc.NameData.AddNameDataSetAsync(family,
+      [
+        NewData(DataCategory.FamilyPhoto, 1),
+        NewData(DataCategory.FamilyMainPhoto, 2),
+        NewData(DataCategory.FamilyAttachment, 3),
+        NewData(DataCategory.FamilyMainPhotoTagged, 4),
+      ], Token);
+
+    var result = await _doc.NameData.GetNamePhotoSetAsync([family], DataCategory.FamilyPhoto, Token);
+
+    result[family.Id].Should().ContainSingle().Which.Content.Should().Equal(1);
+  }
+
+  [Fact]
   public async Task RemoveNameData_KeepsSharedDataReferencedByAnotherName()
   {
     var shared = await _doc.Data.AddDataAsync([7, 7], "application/octet-stream", DataCategory.FamilyMainPhoto, Token);

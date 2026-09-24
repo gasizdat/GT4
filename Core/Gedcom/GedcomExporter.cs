@@ -82,8 +82,8 @@ internal sealed class GedcomExporter : IGedcomExporter
     if (familyNames.Length == 0)
       return;
 
-    var mainPhotos = await document.NameData.GetMergedPhotoSetAsync(familyNames, DataCategory.FamilyMainPhoto, token);
-    var additionalPhotos = await document.NameData.GetMergedPhotoSetAsync(familyNames, DataCategory.FamilyPhoto, token);
+    var mainPhotos = await document.NameData.GetNamePhotoSetAsync(familyNames, DataCategory.FamilyMainPhoto, token);
+    var additionalPhotos = await document.NameData.GetNamePhotoSetAsync(familyNames, DataCategory.FamilyPhoto, token);
     var attachments = await document.NameData.GetNameDataSetAsync(familyNames, DataCategory.FamilyAttachment, token);
 
     var index = 0;
