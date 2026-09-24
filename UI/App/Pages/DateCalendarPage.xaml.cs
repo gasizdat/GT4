@@ -1,6 +1,5 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
-using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Items;
@@ -125,7 +124,7 @@ public partial class DateCalendarPage : ContentPage
   private async Task LoadMonthPhotosAsync(PersonInfo[] persons)
   {
     using var token = _CancellationTokenProvider.CreateDbCancellationToken();
-    var photosByPersonId = await _CurrentProjectProvider.Project.PersonData.GetMergedPhotoSetAsync(persons, DataCategory.PersonMainPhoto, token);
+    var photosByPersonId = await _CurrentProjectProvider.Project.PersonData.GetPersonPhotoSetAsync(persons, DataCategory.PersonMainPhoto, token);
 
     await SafeTask.RunOnMainThread(() =>
     {

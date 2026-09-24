@@ -51,7 +51,7 @@ internal class PersonManager : ProjectComponentBase, IPersonManager
 
     var namesTask = Document.PersonNames.GetPersonNamesAsync(persons, token);
     var photosTask = selectMainPhoto
-      ? Document.PersonData.GetMergedPhotoSetAsync(persons, DataCategory.PersonMainPhoto, token)
+      ? Document.PersonData.GetPersonPhotoSetAsync(persons, DataCategory.PersonMainPhoto, token)
       : Task.FromResult<Dictionary<int, Data[]>>([]);
     await Task.WhenAll(namesTask, photosTask);
 

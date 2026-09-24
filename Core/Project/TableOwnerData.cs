@@ -1,5 +1,6 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
+using GT4.Core.Project.Extensions;
 using Microsoft.Data.Sqlite;
 using System.Data.Common;
 
@@ -127,6 +128,23 @@ internal abstract class TableOwnerData<TOwner> : TableBase where TOwner : Elemen
     }
 
     return buckets.ToDictionary(kv => kv.Key, kv => kv.Value.ToArray());
+  }
+
+  // A main photo is only ever plain or tagged, and additional photos can freely mix both, so
+  // concatenating the two categories' rows is safe for either slot.
+  protected async Task<Dictionary<int, Data[]>> GetPhotoSetAsync(TOwner[] owners, DataCategory plainCategory, CancellationToken token)
+  {
+    var tagged = plainCategory.AsTaggedPhoto();
+    var plainTask = GetDataSetAsync(owners, plainCategory, token);
+    var taggedTask = GetDataSetAsync(owners, tagged, token);
+    await Task.WhenAll(plainTask, taggedTask);
+
+    var merged = new Dictionary<int, Data[]>(plainTask.Result);
+    foreach (var (ownerId, photos) in taggedTask.Result)
+    {
+      merged[ownerId] = merged.TryGetValue(ownerId, out var existing) ? [.. existing, .. photos] : photos;
+    }
+    return merged;
   }
 
   // The inverse of GetDataSetAsync: every link in the table, keyed by the data rather than by the owner.

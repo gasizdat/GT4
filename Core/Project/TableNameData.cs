@@ -16,6 +16,9 @@ internal class TableNameData : TableOwnerData<Name>, ITableNameData
   public Task<Dictionary<int, Data[]>> GetNameDataSetAsync(Name[] names, DataCategory? category, CancellationToken token) =>
     GetDataSetAsync(names, category, token);
 
+  public Task<Dictionary<int, Data[]>> GetNamePhotoSetAsync(Name[] names, DataCategory plainCategory, CancellationToken token) =>
+    GetPhotoSetAsync(names, plainCategory, token);
+
   public Task<Dictionary<int, int[]>> GetNameIdsByDataAsync(CancellationToken token) =>
     GetDataOwnerIdsAsync(token);
 

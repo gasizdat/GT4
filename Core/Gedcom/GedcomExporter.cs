@@ -49,8 +49,8 @@ internal sealed class GedcomExporter : IGedcomExporter
     var infoById = personInfos.ToDictionary(p => p.Id);
     var biographies = await document.PersonData.GetPersonDataSetAsync(persons, DataCategory.PersonBio, token);
     var residues = await document.PersonData.GetPersonDataSetAsync(persons, DataCategory.PersonGedcomTags, token);
-    var mainPhotos = await document.PersonData.GetMergedPhotoSetAsync(persons, DataCategory.PersonMainPhoto, token);
-    var additionalPhotos = await document.PersonData.GetMergedPhotoSetAsync(persons, DataCategory.PersonPhoto, token);
+    var mainPhotos = await document.PersonData.GetPersonPhotoSetAsync(persons, DataCategory.PersonMainPhoto, token);
+    var additionalPhotos = await document.PersonData.GetPersonPhotoSetAsync(persons, DataCategory.PersonPhoto, token);
     var attachments = await document.PersonData.GetPersonDataSetAsync(persons, DataCategory.PersonAttachment, token);
     var relatives = await document.Relatives.GetRelativesForPersonsAsync(persons, token);
 
@@ -82,8 +82,8 @@ internal sealed class GedcomExporter : IGedcomExporter
     if (familyNames.Length == 0)
       return;
 
-    var mainPhotos = await document.NameData.GetMergedPhotoSetAsync(familyNames, DataCategory.FamilyMainPhoto, token);
-    var additionalPhotos = await document.NameData.GetMergedPhotoSetAsync(familyNames, DataCategory.FamilyPhoto, token);
+    var mainPhotos = await document.NameData.GetNamePhotoSetAsync(familyNames, DataCategory.FamilyMainPhoto, token);
+    var additionalPhotos = await document.NameData.GetNamePhotoSetAsync(familyNames, DataCategory.FamilyPhoto, token);
     var attachments = await document.NameData.GetNameDataSetAsync(familyNames, DataCategory.FamilyAttachment, token);
 
     var index = 0;

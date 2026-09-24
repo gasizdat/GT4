@@ -124,6 +124,9 @@ internal sealed class TestServices
     PersonData
       .Setup(p => p.GetPersonDataSetAsync(It.IsAny<Person[]>(), It.IsAny<DataCategory?>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(new Dictionary<int, Data[]>());
+    PersonData
+      .Setup(p => p.GetPersonPhotoSetAsync(It.IsAny<Person[]>(), It.IsAny<DataCategory>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new Dictionary<int, Data[]>());
 
     NameData
       .Setup(n => n.GetNameDataSetAsync(It.IsAny<Name[]>(), It.IsAny<DataCategory?>(), It.IsAny<CancellationToken>()))

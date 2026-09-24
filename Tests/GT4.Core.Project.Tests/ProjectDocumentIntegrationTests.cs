@@ -654,6 +654,56 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task GetPersonPhotoSet_PersonHasBothPlainAndTagged_ConcatenatesPlainThenTagged()
+  {
+    var person = await AddBarePersonAsync();
+    await _doc.PersonData.AddPersonDataSetAsync(person,
+      [NewData(DataCategory.PersonPhoto, 1), NewData(DataCategory.PersonPhotoTagged, 2)], Token);
+
+    var result = await _doc.PersonData.GetPersonPhotoSetAsync([person], DataCategory.PersonPhoto, Token);
+
+    result[person.Id].Select(d => d.Content[0]).Should().Equal(1, 2);
+  }
+
+  [Fact]
+  public async Task GetPersonPhotoSet_PersonHasOnlyTaggedPhotos_ReturnsThoseDirectly()
+  {
+    var person = await AddBarePersonAsync();
+    await _doc.PersonData.AddPersonDataSetAsync(person, [NewData(DataCategory.PersonPhotoTagged, 2)], Token);
+
+    var result = await _doc.PersonData.GetPersonPhotoSetAsync([person], DataCategory.PersonPhoto, Token);
+
+    result[person.Id].Should().ContainSingle().Which.Content.Should().Equal(2);
+  }
+
+  [Fact]
+  public async Task GetPersonPhotoSet_PersonHasNoPhotos_IsOmittedFromResult()
+  {
+    var person = await AddBarePersonAsync();
+
+    var result = await _doc.PersonData.GetPersonPhotoSetAsync([person], DataCategory.PersonPhoto, Token);
+
+    result.Should().BeEmpty();
+  }
+
+  [Fact]
+  public async Task GetPersonPhotoSet_ExcludesOtherSlotsAndCategories()
+  {
+    var person = await AddBarePersonAsync();
+    await _doc.PersonData.AddPersonDataSetAsync(person,
+      [
+        NewData(DataCategory.PersonPhoto, 1),
+        NewData(DataCategory.PersonMainPhoto, 2),
+        NewData(DataCategory.PersonBio, 3),
+        NewData(DataCategory.PersonMainPhotoTagged, 4),
+      ], Token);
+
+    var result = await _doc.PersonData.GetPersonPhotoSetAsync([person], DataCategory.PersonPhoto, Token);
+
+    result[person.Id].Should().ContainSingle().Which.Content.Should().Equal(1);
+  }
+
+  [Fact]
   public async Task PersonData_UpdateDataSet_ReclaimingADroppedBlob_KeepsItIfAnotherPersonStillHoldsIt()
   {
     // The same blob linked to two persons. Dropping it from personA's set must reclaim it there but
@@ -747,6 +797,56 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
     result.Should().ContainKey(familyB.Id);
     result[familyA.Id].Should().ContainSingle().Which.Content.Should().Equal(1, 2);
     result[familyB.Id].Should().ContainSingle().Which.Content.Should().Equal(3, 4);
+  }
+
+  [Fact]
+  public async Task GetNamePhotoSet_FamilyHasBothPlainAndTagged_ConcatenatesPlainThenTagged()
+  {
+    var family = await AddBareFamilyNameAsync();
+    await _doc.NameData.AddNameDataSetAsync(family,
+      [NewData(DataCategory.FamilyPhoto, 1), NewData(DataCategory.FamilyPhotoTagged, 2)], Token);
+
+    var result = await _doc.NameData.GetNamePhotoSetAsync([family], DataCategory.FamilyPhoto, Token);
+
+    result[family.Id].Select(d => d.Content[0]).Should().Equal(1, 2);
+  }
+
+  [Fact]
+  public async Task GetNamePhotoSet_FamilyHasOnlyTaggedPhotos_ReturnsThoseDirectly()
+  {
+    var family = await AddBareFamilyNameAsync();
+    await _doc.NameData.AddNameDataSetAsync(family, [NewData(DataCategory.FamilyPhotoTagged, 2)], Token);
+
+    var result = await _doc.NameData.GetNamePhotoSetAsync([family], DataCategory.FamilyPhoto, Token);
+
+    result[family.Id].Should().ContainSingle().Which.Content.Should().Equal(2);
+  }
+
+  [Fact]
+  public async Task GetNamePhotoSet_FamilyHasNoPhotos_IsOmittedFromResult()
+  {
+    var family = await AddBareFamilyNameAsync();
+
+    var result = await _doc.NameData.GetNamePhotoSetAsync([family], DataCategory.FamilyPhoto, Token);
+
+    result.Should().BeEmpty();
+  }
+
+  [Fact]
+  public async Task GetNamePhotoSet_ExcludesOtherSlotsAndCategories()
+  {
+    var family = await AddBareFamilyNameAsync();
+    await _doc.NameData.AddNameDataSetAsync(family,
+      [
+        NewData(DataCategory.FamilyPhoto, 1),
+        NewData(DataCategory.FamilyMainPhoto, 2),
+        NewData(DataCategory.FamilyAttachment, 3),
+        NewData(DataCategory.FamilyMainPhotoTagged, 4),
+      ], Token);
+
+    var result = await _doc.NameData.GetNamePhotoSetAsync([family], DataCategory.FamilyPhoto, Token);
+
+    result[family.Id].Should().ContainSingle().Which.Content.Should().Equal(1);
   }
 
   [Fact]
