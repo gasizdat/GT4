@@ -2,6 +2,7 @@ using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
+using GT4.UI.Components;
 using GT4.UI.Converters;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
@@ -68,4 +69,8 @@ internal sealed class TestableCreateOrUpdatePersonDialog : CreateOrUpdatePersonD
   public Task InvokeInsertLinkAsync() => OnInsertLinkAsync();
 
   public Task InvokeInsertMediaLinkAsync() => OnInsertMediaLinkAsync();
+
+  public ScrollView FormForTest => FormScrollView;
+
+  public MarkdownEditor BiographyEditorForTest => BiographyMarkdownEditor;
 }

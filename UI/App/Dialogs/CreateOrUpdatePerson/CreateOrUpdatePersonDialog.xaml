@@ -31,7 +31,7 @@
       HasBackButton="True">
 
     <components:PageLayout.Body>
-      <ScrollView>
+      <ScrollView x:Name="FormView">
         <VerticalStackLayout>
 
           <!--  Pictures  -->

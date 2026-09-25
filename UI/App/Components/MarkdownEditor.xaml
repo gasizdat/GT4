@@ -7,11 +7,44 @@
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root">
 
-  <Grid RowDefinitions="Auto,*">
-    <!--  Header  -->
+  <AbsoluteLayout>
+    <VerticalStackLayout
+        AbsoluteLayout.LayoutBounds="0,0,1,AutoSize"
+        AbsoluteLayout.LayoutFlags="WidthProportional">
+
+      <!--  Reserves the floating header's own height so the content starts below it at rest  -->
+      <BoxView
+          HeightRequest="{Binding Source={x:Reference Header}, Path=Height}"
+          InputTransparent="True"
+          Opacity="0" />
+
+      <!--  Content  -->
+      <Grid>
+        <Editor
+            x:Name="TextEditor"
+            AutoSize="TextChanges"
+            HorizontalOptions="Fill"
+            IsVisible="{Binding DisplayEditor, Source={x:Reference Root}}"
+            Placeholder="{Binding Placeholder, Source={x:Reference Root}}"
+            Text="{Binding Markdown, Source={x:Reference Root}}"
+            VerticalOptions="Fill" />
+
+        <components:MarkdownView
+            HorizontalOptions="Fill"
+            IsVisible="{Binding DisplayPreview, Source={x:Reference Root}}"
+            Markdown="{Binding Markdown, Source={x:Reference Root}}"
+            MediaResolver="{Binding MediaResolver, Source={x:Reference Root}}"
+            VerticalOptions="Fill" />
+      </Grid>
+    </VerticalStackLayout>
+
+    <!--  Header, floated over the content (#446)  -->
     <HorizontalStackLayout
-        Grid.Row="0"
-        Margin="{Thickness Bottom={StaticResource PageContentSpacing}}">
+        x:Name="Header"
+        AbsoluteLayout.LayoutBounds="0,0,1,AutoSize"
+        AbsoluteLayout.LayoutFlags="WidthProportional"
+        BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceSubtle}, Dark={StaticResource OffBlack}}"
+        Padding="{Thickness Bottom={StaticResource PageContentSpacing}}">
       <components:TabItemView
           Margin="{Thickness Right={StaticResource PageContentSpacing}}"
           Command="{Binding Command, Source={x:Reference Root}}"
@@ -38,24 +71,5 @@
           IsVisible="{Binding DisplayEditor, Source={x:Reference Root}}"
           Text="{x:Static resources:UIStrings.BtnNameInsertMediaLink}" />
     </HorizontalStackLayout>
-
-    <!--  Content  -->
-    <Grid Grid.Row="1">
-      <Editor
-          x:Name="TextEditor"
-          AutoSize="TextChanges"
-          HorizontalOptions="Fill"
-          IsVisible="{Binding DisplayEditor, Source={x:Reference Root}}"
-          Placeholder="{Binding Placeholder, Source={x:Reference Root}}"
-          Text="{Binding Markdown, Source={x:Reference Root}}"
-          VerticalOptions="Fill" />
-
-      <components:MarkdownView
-          HorizontalOptions="Fill"
-          IsVisible="{Binding DisplayPreview, Source={x:Reference Root}}"
-          Markdown="{Binding Markdown, Source={x:Reference Root}}"
-          MediaResolver="{Binding MediaResolver, Source={x:Reference Root}}"
-          VerticalOptions="Fill" />
-    </Grid>
-  </Grid>
+  </AbsoluteLayout>
 </ContentView>
