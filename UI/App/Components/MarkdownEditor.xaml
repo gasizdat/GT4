@@ -38,17 +38,13 @@
       </Grid>
     </VerticalStackLayout>
 
-    <!--
-      Header, floated over the content: the code-behind pins its TranslationY so it never scrolls
-      above the ancestor ScrollView's own visible top, nor below its resting position at the top
-      of the editor (#446).
-    -->
+    <!--  Header, floated over the content (#446)  -->
     <HorizontalStackLayout
         x:Name="Header"
         AbsoluteLayout.LayoutBounds="0,0,1,AutoSize"
         AbsoluteLayout.LayoutFlags="WidthProportional"
         BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceSubtle}, Dark={StaticResource OffBlack}}"
-        Margin="{Thickness Bottom={StaticResource PageContentSpacing}}">
+        Padding="{Thickness Bottom={StaticResource PageContentSpacing}}">
       <components:TabItemView
           Margin="{Thickness Right={StaticResource PageContentSpacing}}"
           Command="{Binding Command, Source={x:Reference Root}}"

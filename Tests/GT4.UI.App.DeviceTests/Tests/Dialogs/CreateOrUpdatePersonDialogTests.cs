@@ -792,14 +792,13 @@ public class CreateOrUpdatePersonDialogTests
 
     var editorHeight = await MainThread.InvokeOnMainThreadAsync(() => dialog.BiographyEditorForTest.Height);
 
-    // MinBioHeight's Desktop floor is 300; a 300-line biography must dwarf it, proving the editor
-    // isn't capped to a fixed viewport the way an earlier, reverted design bounded it.
+    // MinBioHeight's Desktop floor is 300; a 300-line biography must dwarf it.
     Assert.True(editorHeight > 1000,
       $"The biography editor is only {editorHeight} tall for a long biography -- it looks capped.");
   }
 
   [Fact]
-  public async Task Biography_editor_toolbar_tracks_scroll_1to1_once_stuck_and_stays_within_the_editor()
+  public async Task Biography_editor_toolbar_rests_at_the_editor_top_then_tracks_scroll_1to1_once_stuck()
   {
     var services = new TestServices();
     var longText = LongBiographyText();
@@ -832,16 +831,10 @@ public class CreateOrUpdatePersonDialogTests
         scrollY => scrollY >= firstScrollY - 0.5,
         timeoutMessage: "The dialog never scrolled to the first position.");
 
-      var (translationAfterFirstScroll, maxOffset) = await MainThread.InvokeOnMainThreadAsync(() =>
-      {
-        var editor = dialog.BiographyEditorForTest;
-        return (editor.HeaderView.TranslationY, Math.Max(0, editor.Height - editor.HeaderView.Height));
-      });
-
+      var translationAfterFirstScroll = await MainThread.InvokeOnMainThreadAsync(
+        () => dialog.BiographyEditorForTest.HeaderView.TranslationY);
       Assert.True(translationAfterFirstScroll > 0,
         "The toolbar never stuck to the viewport top once scrolled past its resting position.");
-      Assert.True(translationAfterFirstScroll <= maxOffset + 0.5,
-        $"The toolbar translated {translationAfterFirstScroll}, past its own editor's bottom ({maxOffset}).");
 
       const double delta = 100;
       var secondScrollY = firstScrollY + delta;
@@ -857,6 +850,17 @@ public class CreateOrUpdatePersonDialogTests
 
       Assert.True(Math.Abs(tracked - delta) < 0.5,
         $"The toolbar did not track the scroll 1:1 while stuck: moved {tracked} for a {delta} scroll.");
+
+      await MainThread.InvokeOnMainThreadAsync(() => dialog.FormForTest.ScrollToAsync(0, 0, false));
+      await Poll.UntilAsync(
+        () => MainThread.InvokeOnMainThreadAsync(() => dialog.FormForTest.ScrollY),
+        scrollY => scrollY <= 0.5,
+        timeoutMessage: "The dialog never scrolled back to the top.");
+
+      var translationAtRest = await MainThread.InvokeOnMainThreadAsync(
+        () => dialog.BiographyEditorForTest.HeaderView.TranslationY);
+      Assert.True(Math.Abs(translationAtRest) < 0.5,
+        $"The toolbar did not return to its resting position (translation {translationAtRest}) once scrolled back to the top.");
     }
     finally
     {

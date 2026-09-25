@@ -19,6 +19,7 @@ public partial class MarkdownEditor : ContentView
 
     Loaded += OnLoaded;
     Unloaded += OnUnloaded;
+    SizeChanged += OnSizeChanged;
   }
 
   public MarkdownEditor()
@@ -154,7 +155,6 @@ public partial class MarkdownEditor : ContentView
       _AncestorScrollView.Scrolled += OnAncestorScrolled;
     }
 
-    SizeChanged += OnSizeChanged;
     UpdateHeaderPosition();
   }
 
@@ -165,8 +165,6 @@ public partial class MarkdownEditor : ContentView
       _AncestorScrollView.Scrolled -= OnAncestorScrolled;
       _AncestorScrollView = null;
     }
-
-    SizeChanged -= OnSizeChanged;
   }
 
   private ScrollView? FindAncestorScrollView()
@@ -186,9 +184,9 @@ public partial class MarkdownEditor : ContentView
 
   private void OnSizeChanged(object? sender, EventArgs e) => UpdateHeaderPosition();
 
-  // Keeps the toolbar reachable on a long biography (#446) by floating it at the ancestor
-  // ScrollView's own visible top, clamped so it never rises above that top nor sinks below its
-  // resting position at the editor's own top, and never past the editor's own bottom.
+  // Keeps the toolbar reachable on a long biography (#446): floats it at the ancestor
+  // ScrollView's own visible top once scrolled past, but never lets it rise above its resting
+  // position at the editor's own top.
   private void UpdateHeaderPosition()
   {
     if (_AncestorScrollView is null)
@@ -197,8 +195,7 @@ public partial class MarkdownEditor : ContentView
     }
 
     var editorTop = YRelativeTo(this, _AncestorScrollView);
-    var maxOffset = Math.Max(0, Height - Header.Height);
-    Header.TranslationY = Math.Clamp(_AncestorScrollView.ScrollY - editorTop, 0, maxOffset);
+    Header.TranslationY = Math.Max(0, _AncestorScrollView.ScrollY - editorTop);
   }
 
   // VisualElement.Y is relative to the immediate parent's own layout, unaffected by scrolling, so
