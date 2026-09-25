@@ -124,8 +124,6 @@ public class MarkdownViewVisibilityGatingTests
         return [view.Content];
       case Border { Content: not null } border:
         return [border.Content];
-      case ScrollView { Content: not null } scroll:
-        return [scroll.Content];
       case Layout layout:
         return layout.Children.OfType<BindableObject>();
       case Label { FormattedText: not null } label:

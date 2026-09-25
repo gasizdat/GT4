@@ -8,6 +8,7 @@ public partial class MarkdownEditor : ContentView
 {
   private readonly ICommand _Command;
   private int _TabIndex;
+  private ScrollView? _AncestorScrollView;
 
   protected MarkdownEditor(IServiceProvider serviceProvider)
   {
@@ -15,6 +16,9 @@ public partial class MarkdownEditor : ContentView
     _TabIndex = 0;
 
     InitializeComponent();
+
+    Loaded += OnLoaded;
+    Unloaded += OnUnloaded;
   }
 
   public MarkdownEditor()
@@ -86,6 +90,8 @@ public partial class MarkdownEditor : ContentView
 
   public ICommand Command => _Command;
 
+  public View HeaderView => Header;
+
   public void InsertLink(string displayName, int personId)
   {
     var url = MarkdownLinkUtils.PersonUrl(personId);
@@ -138,5 +144,77 @@ public partial class MarkdownEditor : ContentView
         TabIndex = 1;
         break;
     }
+  }
+
+  private void OnLoaded(object? sender, EventArgs e)
+  {
+    _AncestorScrollView = FindAncestorScrollView();
+    if (_AncestorScrollView is not null)
+    {
+      _AncestorScrollView.Scrolled += OnAncestorScrolled;
+    }
+
+    SizeChanged += OnSizeChanged;
+    UpdateHeaderPosition();
+  }
+
+  private void OnUnloaded(object? sender, EventArgs e)
+  {
+    if (_AncestorScrollView is not null)
+    {
+      _AncestorScrollView.Scrolled -= OnAncestorScrolled;
+      _AncestorScrollView = null;
+    }
+
+    SizeChanged -= OnSizeChanged;
+  }
+
+  private ScrollView? FindAncestorScrollView()
+  {
+    for (var element = Parent; element is not null; element = element.Parent)
+    {
+      if (element is ScrollView scrollView)
+      {
+        return scrollView;
+      }
+    }
+
+    return null;
+  }
+
+  private void OnAncestorScrolled(object? sender, ScrolledEventArgs e) => UpdateHeaderPosition();
+
+  private void OnSizeChanged(object? sender, EventArgs e) => UpdateHeaderPosition();
+
+  // Keeps the toolbar reachable on a long biography (#446) by floating it at the ancestor
+  // ScrollView's own visible top, clamped so it never rises above that top nor sinks below its
+  // resting position at the editor's own top, and never past the editor's own bottom.
+  private void UpdateHeaderPosition()
+  {
+    if (_AncestorScrollView is null)
+    {
+      return;
+    }
+
+    var editorTop = YRelativeTo(this, _AncestorScrollView);
+    var maxOffset = Math.Max(0, Height - Header.Height);
+    Header.TranslationY = Math.Clamp(_AncestorScrollView.ScrollY - editorTop, 0, maxOffset);
+  }
+
+  // VisualElement.Y is relative to the immediate parent's own layout, unaffected by scrolling, so
+  // summing it up the chain gives a position in the ancestor's own (unscrolled) content space --
+  // directly comparable to ScrollView.ScrollY.
+  private static double YRelativeTo(Element element, Element ancestor)
+  {
+    var y = 0.0;
+    for (var current = element; current is not null && current != ancestor; current = current.Parent)
+    {
+      if (current is VisualElement visual)
+      {
+        y += visual.Y;
+      }
+    }
+
+    return y;
   }
 }

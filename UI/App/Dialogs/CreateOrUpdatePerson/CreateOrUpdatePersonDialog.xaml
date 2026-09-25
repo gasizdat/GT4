@@ -587,10 +587,7 @@
           </Border>
 
           <!--  Biography  -->
-          <Border
-              HeightRequest="{Binding Height, Source={x:Reference FormView}}"
-              MinimumHeightRequest="{StaticResource MinBioHeight}"
-              Style="{StaticResource CardBorderStyle}">
+          <Border Style="{StaticResource CardBorderStyle}">
             <Grid
                 ColumnDefinitions="*"
                 RowDefinitions="Auto, *">
@@ -608,6 +605,7 @@
                   InsertLinkCommand="{Binding DialogCommand, Source={x:Reference Root}}"
                   Markdown="{Binding Biography.Content, Source={x:Reference Root}}"
                   MediaResolver="{Binding MediaResolver, Source={x:Reference Root}}"
+                  MinimumHeightRequest="{StaticResource MinBioHeight}"
                   Placeholder="{x:Static resources:UIStrings.TxtPlaceholderBiography}" />
             </Grid>
           </Border>
