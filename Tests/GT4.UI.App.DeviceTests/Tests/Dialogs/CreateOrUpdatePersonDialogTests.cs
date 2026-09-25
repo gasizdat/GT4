@@ -754,4 +754,104 @@ public class CreateOrUpdatePersonDialogTests
     Assert.Equal("Original caption", photo.Caption);
     Assert.Equal(Resources.UIStrings.BtnNameCancel, dialog.DialogButtonName);
   }
+
+#if WINDOWS
+  // #446: the biography card must stay bounded to the dialog's own scroll viewport instead of
+  // growing with the biography text, so its toolbar never scrolls out of reach.
+  private static string LongBiographyText(int lines = 200) =>
+    string.Concat(Enumerable.Repeat("Line of biography text.\n", lines));
+
+  private static Editor BiographyTextEditor(TestableCreateOrUpdatePersonDialog dialog)
+  {
+    var contentGrid = ((Grid)dialog.BiographyEditorForTest.Content).Children.OfType<Grid>().Single();
+    return contentGrid.Children.OfType<Editor>().Single();
+  }
+
+  private static async Task AssertBiographyEditorStaysInsideItsCardAsync(double windowWidth, double windowHeight)
+  {
+    var services = new TestServices();
+    var longText = LongBiographyText();
+    var person = CreateSamplePerson() with { Biography = Bio(longText) };
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    var dialog = await MainThread.InvokeOnMainThreadAsync(
+      () => services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialog.Factory>().Create(person));
+
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var hostWindow = Application.Current!.Windows[0];
+    var (originalWidth, originalHeight) = (hostWindow.Width, hostWindow.Height);
+    try
+    {
+      await MainThread.InvokeOnMainThreadAsync(() =>
+      {
+        hostWindow.Width = windowWidth;
+        hostWindow.Height = windowHeight;
+      });
+
+      await Poll.UntilAsync(
+        () => MainThread.InvokeOnMainThreadAsync(() => dialog.Biography!.Content),
+        content => Equals(content, longText),
+        timeoutMessage: "The biography content never finished loading.");
+      await Poll.UntilAsync(
+        () => MainThread.InvokeOnMainThreadAsync(() => dialog.BiographyEditorForTest.Height),
+        height => height > 0,
+        timeoutMessage: "The biography editor never got arranged.");
+
+      var (formHeight, editor, cardGrid) = await MainThread.InvokeOnMainThreadAsync(() =>
+      {
+        var textEditor = BiographyTextEditor(dialog);
+        var grid = (Grid)dialog.BiographyEditorForTest.Parent;
+        return (dialog.FormForTest.Height, textEditor, grid);
+      });
+
+      var expectedMax = Math.Max(formHeight, 300);
+      await MainThread.InvokeOnMainThreadAsync(() =>
+      {
+        Assert.True(editor.Height <= expectedMax + 0.5,
+          $"The biography editor is {editor.Height} tall, taller than the {expectedMax} viewport/floor.");
+        Assert.True(editor.Height > 50,
+          $"The biography editor is only {editor.Height} tall -- it looks starved.");
+        Assert.True(editor.Y + editor.Height <= cardGrid.Height + 0.5,
+          $"The editor is arranged past its card's bottom edge ({editor.Y + editor.Height} vs {cardGrid.Height}).");
+        Assert.True(dialog.BiographyEditorForTest.Y + dialog.BiographyEditorForTest.Height <= cardGrid.Height + 0.5,
+          $"MarkdownEditor is arranged past its card's bottom edge ({dialog.BiographyEditorForTest.Y + dialog.BiographyEditorForTest.Height} vs {cardGrid.Height}).");
+      });
+
+      var heightBefore = await MainThread.InvokeOnMainThreadAsync(() => editor.Height);
+      var contentHeightBefore = await MainThread.InvokeOnMainThreadAsync(() => dialog.FormForTest.ContentSize.Height);
+
+      var appendedText = longText + LongBiographyText();
+      await MainThread.InvokeOnMainThreadAsync(() => dialog.Biography!.Content = appendedText);
+      await Poll.UntilAsync(
+        () => MainThread.InvokeOnMainThreadAsync(() => editor.Text?.Length),
+        length => length == appendedText.Length,
+        timeoutMessage: "The appended biography text never reached the editor.");
+      // Let one more layout pass settle before reading geometry.
+      await MainThread.InvokeOnMainThreadAsync(() => { });
+
+      var heightAfter = await MainThread.InvokeOnMainThreadAsync(() => editor.Height);
+      var contentHeightAfter = await MainThread.InvokeOnMainThreadAsync(() => dialog.FormForTest.ContentSize.Height);
+
+      Assert.True(Math.Abs(heightAfter - heightBefore) < 0.5,
+        $"The biography editor grew from {heightBefore} to {heightAfter} after appending more text.");
+      Assert.True(Math.Abs(contentHeightAfter - contentHeightBefore) < 0.5,
+        $"The dialog's scroll content grew from {contentHeightBefore} to {contentHeightAfter} after appending more text.");
+    }
+    finally
+    {
+      await MainThread.InvokeOnMainThreadAsync(() =>
+      {
+        hostWindow.Width = originalWidth;
+        hostWindow.Height = originalHeight;
+      });
+    }
+  }
+
+  [Fact]
+  public Task Biography_editor_toolbar_stays_reachable_in_a_desktop_window() =>
+    AssertBiographyEditorStaysInsideItsCardAsync(1280, 800);
+
+  [Fact]
+  public Task Biography_editor_toolbar_stays_reachable_in_a_short_window() =>
+    AssertBiographyEditorStaysInsideItsCardAsync(1424, 478);
+#endif
 }

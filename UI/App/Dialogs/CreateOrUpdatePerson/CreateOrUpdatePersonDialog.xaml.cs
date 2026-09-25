@@ -228,6 +228,10 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   public string DialogButtonName => _NotReady ? UIStrings.BtnNameCancel : _SaveButtonName;
 
+  protected ScrollView FormScrollView => FormView;
+
+  protected MarkdownEditor BiographyMarkdownEditor => BiographyEditor;
+
   protected override bool OnBackButtonPressed()
   {
     Cancel();
