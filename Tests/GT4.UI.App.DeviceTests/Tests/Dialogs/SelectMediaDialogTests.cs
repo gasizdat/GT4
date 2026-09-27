@@ -101,6 +101,25 @@ public class SelectMediaDialogTests
     Assert.Equal((false, false), onDeed);
   }
 
+  [Fact]
+  public async Task Footer_controls_drive_the_link_kind_and_width()
+  {
+    var dialog = await CreateDialogAsync(new TestServices());
+
+    var (insertAsPicture, widthPercent) = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      var descendants = dialog.GetVisualTreeDescendants();
+      var picker = descendants.OfType<Picker>().Single();
+      picker.SelectedIndex = picker.ItemsSource.IndexOf("50%");
+      var linkRadio = descendants.OfType<RadioButton>().Last();
+      linkRadio.IsChecked = true;
+      return (dialog.InsertAsPicture, dialog.ImageWidthPercent);
+    });
+
+    Assert.False(insertAsPicture);
+    Assert.Equal(50, widthPercent);
+  }
+
   // Issue #421: both attachments share the same owner, so only a match against the resolved file
   // name -- not just Owners -- tells them apart.
   [Fact]
