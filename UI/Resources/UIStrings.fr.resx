@@ -957,6 +957,18 @@ FN - nom de famille</value>
   <data name="BtnNameInsertMediaLink" xml:space="preserve">
     <value>Lier un média</value>
   </data>
+  <data name="BtnNameFormatBold" xml:space="preserve">
+    <value>Gras</value>
+  </data>
+  <data name="BtnNameFormatItalic" xml:space="preserve">
+    <value>Italique</value>
+  </data>
+  <data name="BtnNameFormatHeading" xml:space="preserve">
+    <value>Titre</value>
+  </data>
+  <data name="BtnNameFormatBulletList" xml:space="preserve">
+    <value>Liste à puces</value>
+  </data>
   <data name="TitleSelectMediaDialog" xml:space="preserve">
     <value>Sélectionner un média</value>
   </data>
