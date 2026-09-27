@@ -99,10 +99,11 @@ public partial class MarkdownEditor : ContentView
     InsertText($"[{displayName}]({url})");
   }
 
-  public void InsertMediaLink(string displayName, int mediaId)
+  public void InsertMediaLink(string displayName, int mediaId, int? widthPercent)
   {
     var url = MarkdownLinkUtils.MediaUrl(mediaId);
-    InsertText($"![{displayName}]({url})");
+    var description = MarkdownLinkUtils.ImageDescription(displayName, widthPercent);
+    InsertText($"![{description}]({url})");
   }
 
   public void InsertAttachmentLink(string displayName, int attachmentId)

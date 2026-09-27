@@ -1037,7 +1037,25 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("FieldGedcomFamilyDetails", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Width.
+        /// </summary>
+        public static string FieldImageWidth {
+            get {
+                return ResourceManager.GetString("FieldImageWidth", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Original.
+        /// </summary>
+        public static string FieldImageWidthOriginal {
+            get {
+                return ResourceManager.GetString("FieldImageWidthOriginal", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Connecting relatives.
         /// </summary>
@@ -1136,7 +1154,34 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("FieldMaritalStatusSingle", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Insert as.
+        /// </summary>
+        public static string FieldMediaLinkKind {
+            get {
+                return ResourceManager.GetString("FieldMediaLinkKind", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Link.
+        /// </summary>
+        public static string FieldMediaLinkKindLink {
+            get {
+                return ResourceManager.GetString("FieldMediaLinkKindLink", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Picture.
+        /// </summary>
+        public static string FieldMediaLinkKindPicture {
+            get {
+                return ResourceManager.GetString("FieldMediaLinkKindPicture", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Month.
         /// </summary>

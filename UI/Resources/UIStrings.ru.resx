@@ -972,6 +972,21 @@ FN - род</value>
   <data name="TitleSelectMediaDialog" xml:space="preserve">
     <value>Выбор медиа</value>
   </data>
+  <data name="FieldMediaLinkKind" xml:space="preserve">
+    <value>Вставить как</value>
+  </data>
+  <data name="FieldMediaLinkKindPicture" xml:space="preserve">
+    <value>Картинку</value>
+  </data>
+  <data name="FieldMediaLinkKindLink" xml:space="preserve">
+    <value>Ссылку</value>
+  </data>
+  <data name="FieldImageWidth" xml:space="preserve">
+    <value>Ширина</value>
+  </data>
+  <data name="FieldImageWidthOriginal" xml:space="preserve">
+    <value>Исходная</value>
+  </data>
   <data name="FieldRevision_1" xml:space="preserve">
     <value>Ревизия: {0}</value>
   </data>

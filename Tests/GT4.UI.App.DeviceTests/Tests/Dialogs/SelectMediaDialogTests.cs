@@ -70,6 +70,37 @@ public class SelectMediaDialogTests
     Assert.Equal([51, 52, 50], items.Select(item => item.Info.Id));
   }
 
+  // Issue #449: a document can only be linked, so the Picture choice -- still selected from the photo
+  // picked before it -- must not reach it.
+  [Fact]
+  public async Task Picture_is_offered_only_while_an_inline_image_is_selected()
+  {
+    var services = new TestServices();
+    var photo = new Data(70, [1, 2, 3], "image/png", DataCategory.PersonPhoto);
+    var deed = new Data(71, GedcomPhotoResidue.EncodeAttachment([1, 2, 3], "deed.pdf"), "application/pdf", DataCategory.PersonAttachment);
+    services.Data.Setup(d => d.GetDataSetAsync(It.IsAny<CancellationToken>())).ReturnsAsync([photo, deed]);
+
+    var dialog = await CreateDialogAsync(services);
+    var items = await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => dialog.Items.ToArray()),
+      items => items.Length == 2,
+      timeoutMessage: "The dialog did not settle on 2 item(s); check the TestServices mock setup.");
+
+    var onPhoto = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      dialog.SelectedItem = items.Single(item => item.Info.Id == 70);
+      return (dialog.CanInsertAsPicture, dialog.InsertsPicture);
+    });
+    var onDeed = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      dialog.SelectedItem = items.Single(item => item.Info.Id == 71);
+      return (dialog.CanInsertAsPicture, dialog.InsertsPicture);
+    });
+
+    Assert.Equal((true, true), onPhoto);
+    Assert.Equal((false, false), onDeed);
+  }
+
   // Issue #421: both attachments share the same owner, so only a match against the resolved file
   // name -- not just Owners -- tells them apart.
   [Fact]

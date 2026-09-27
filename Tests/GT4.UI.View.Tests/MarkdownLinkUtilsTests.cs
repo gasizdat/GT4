@@ -94,4 +94,25 @@ public class MarkdownLinkUtilsTests
     parsed.WidthPercent.Should().BeNull();
     parsed.Caption.Should().Be(description);
   }
+
+  [Theory]
+  [InlineData("Grandpa", 50)]
+  [InlineData("Grandpa", 200)]
+  [InlineData("Sale 20%", 50)]
+  [InlineData("", 25)]
+  public void ImageDescription_RoundTripsThroughItsParser(string caption, int widthPercent)
+  {
+    var description = MarkdownLinkUtils.ImageDescription(caption, widthPercent);
+
+    var parsed = MarkdownLinkUtils.ParseImageDescription(description);
+
+    parsed.WidthPercent.Should().Be(widthPercent);
+    parsed.Caption.Should().Be(caption);
+  }
+
+  [Fact]
+  public void ImageDescription_WithoutAWidth_IsTheBareCaption()
+  {
+    MarkdownLinkUtils.ImageDescription("Grandpa", null).Should().Be("Grandpa");
+  }
 }

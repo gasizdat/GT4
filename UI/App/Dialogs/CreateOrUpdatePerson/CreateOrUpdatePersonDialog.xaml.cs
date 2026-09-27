@@ -501,9 +501,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     using var token = _Factory.CancellationTokenProvider.CreateShortOperationCancellationToken();
     var media = picked.Info;
     var displayName = await MediaLinkNameAsync(picked, token);
-    if (media.IsInlineImage())
+    if (dialog.InsertsPicture)
     {
-      BiographyEditor.InsertMediaLink(displayName, media.Id);
+      BiographyEditor.InsertMediaLink(displayName, media.Id, dialog.ImageWidthPercent);
     }
     else
     {
