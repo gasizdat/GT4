@@ -1282,20 +1282,29 @@ public class PersonPageTests
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
 
+  // Issue #449: the media picker can link a photo as a reference, so its id reaches this handler too.
   [Fact]
-  public async Task AttachmentLinkTapped_with_an_id_naming_a_photo_is_inert()
+  public async Task AttachmentLinkTapped_with_an_id_naming_a_photo_shows_it_in_the_photo_viewer()
   {
     var services = new TestServices();
-    var content = BuildTaggedPhotoContent("0 OBJE\n1 TITL A caption\n", [1, 2, 3]);
+    var content = BuildTaggedPhotoContent("0 OBJE\n1 TITL A caption\n", TestImages.ValidPng);
     var mainPhoto = new Data(41, content, "image/png", DataCategory.PersonMainPhotoTagged);
     services.Data
       .Setup(table => table.TryGetDataByIdAsync(41, It.IsAny<CancellationToken>()))
       .ReturnsAsync(mainPhoto);
+    var person = CreateSamplePerson();
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
     var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
 
-    var attachment = await page.ResolveAttachmentAsync(41);
+    await using var window = await WindowHost.AttachAsync(page);
+    var tapTask = await MainThreadTask.StartAsync(() => page.InvokeAttachmentLinkTappedAsync(41));
+    var dialog = await ModalDialogHarness.WaitForModalAsync<PhotoViewerDialog>(page);
+    await tapTask;
 
-    Assert.Null(attachment);
+    Assert.NotNull(dialog);
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+    await MainThread.InvokeOnMainThreadAsync(() => page.Navigation.PopModalAsync());
   }
 
   // PersonPage's biography ScrollView toggling IsVisible doesn't propagate to the MarkdownView it
