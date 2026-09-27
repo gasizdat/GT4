@@ -957,6 +957,18 @@ FN - род</value>
   <data name="BtnNameInsertMediaLink" xml:space="preserve">
     <value>Ссылка на медиа</value>
   </data>
+  <data name="BtnNameFormatBold" xml:space="preserve">
+    <value>Полужирный</value>
+  </data>
+  <data name="BtnNameFormatItalic" xml:space="preserve">
+    <value>Курсив</value>
+  </data>
+  <data name="BtnNameFormatHeading" xml:space="preserve">
+    <value>Заголовок</value>
+  </data>
+  <data name="BtnNameFormatBulletList" xml:space="preserve">
+    <value>Маркированный список</value>
+  </data>
   <data name="TitleSelectMediaDialog" xml:space="preserve">
     <value>Выбор медиа</value>
   </data>

@@ -118,6 +118,52 @@ public partial class MarkdownEditor : ContentView
     TextEditor.CursorPosition = cursor + text.Length;
   }
 
+  private void WrapSelection(string marker)
+  {
+    var text = Markdown ?? string.Empty;
+    var start = Math.Clamp(TextEditor.CursorPosition, 0, text.Length);
+    var length = Math.Clamp(TextEditor.SelectionLength, 0, text.Length - start);
+    var wrapped = text.Insert(start + length, marker).Insert(start, marker);
+    ReplaceText(wrapped, start + marker.Length, length);
+  }
+
+  private void PrefixSelectedLines(string prefix)
+  {
+    var text = Markdown ?? string.Empty;
+    var start = Math.Clamp(TextEditor.CursorPosition, 0, text.Length);
+    var length = Math.Clamp(TextEditor.SelectionLength, 0, text.Length - start);
+    var firstLineStart = start;
+    while (!IsLineStart(text, firstLineStart))
+    {
+      firstLineStart--;
+    }
+
+    // A selection ending right at a line's start doesn't take that line in.
+    var lineStarts = Enumerable.Range(start + 1, Math.Max(0, length - 1))
+      .Where(position => IsLineStart(text, position))
+      .Prepend(firstLineStart)
+      .ToArray();
+    var prefixed = Enumerable.Reverse(lineStarts).Aggregate(text, (result, lineStart) => result.Insert(lineStart, prefix));
+    ReplaceText(prefixed, start + prefix.Length, length + prefix.Length * (lineStarts.Length - 1));
+  }
+
+  private void ReplaceText(string markdown, int selectionStart, int selectionLength)
+  {
+    // Writing the text drops the native selection without updating SelectionLength, so an
+    // unchanged SelectionLength set afterwards would never reach the native control.
+    TextEditor.SelectionLength = 0;
+    Markdown = markdown;
+    TextEditor.CursorPosition = selectionStart;
+    TextEditor.SelectionLength = selectionLength;
+    TextEditor.Focus();
+  }
+
+  // WinUI's TextBox separates lines with a bare '\r'; imported text may carry "\r\n" or '\n'.
+  private static bool IsLineStart(string text, int position) =>
+    position == 0
+    || text[position - 1] == '\n'
+    || (text[position - 1] == '\r' && (position == text.Length || text[position] != '\n'));
+
   private static void OnMarkdownChanged(BindableObject obj, object oldValue, object newValue)
   {
     if (obj is MarkdownEditor markdownEditor && oldValue != newValue)
@@ -143,6 +189,18 @@ public partial class MarkdownEditor : ContentView
         break;
       case string commandName when commandName == "Tab1":
         TabIndex = 1;
+        break;
+      case string commandName when commandName == "FormatBold":
+        WrapSelection("**");
+        break;
+      case string commandName when commandName == "FormatItalic":
+        WrapSelection("*");
+        break;
+      case string commandName when commandName == "FormatHeading":
+        PrefixSelectedLines("## ");
+        break;
+      case string commandName when commandName == "FormatBulletList":
+        PrefixSelectedLines("- ");
         break;
     }
   }

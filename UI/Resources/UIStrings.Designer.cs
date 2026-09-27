@@ -321,7 +321,43 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("BtnNameCreateName_1", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Bold.
+        /// </summary>
+        public static string BtnNameFormatBold {
+            get {
+                return ResourceManager.GetString("BtnNameFormatBold", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Bulleted list.
+        /// </summary>
+        public static string BtnNameFormatBulletList {
+            get {
+                return ResourceManager.GetString("BtnNameFormatBulletList", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Heading.
+        /// </summary>
+        public static string BtnNameFormatHeading {
+            get {
+                return ResourceManager.GetString("BtnNameFormatHeading", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Italic.
+        /// </summary>
+        public static string BtnNameFormatItalic {
+            get {
+                return ResourceManager.GetString("BtnNameFormatItalic", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Link Media.
         /// </summary>
