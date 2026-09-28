@@ -972,6 +972,21 @@ FN - nom de famille</value>
   <data name="TitleSelectMediaDialog" xml:space="preserve">
     <value>Sélectionner un média</value>
   </data>
+  <data name="FieldMediaLinkKind" xml:space="preserve">
+    <value>Insérer comme</value>
+  </data>
+  <data name="FieldMediaLinkKindPicture" xml:space="preserve">
+    <value>Image</value>
+  </data>
+  <data name="FieldMediaLinkKindLink" xml:space="preserve">
+    <value>Lien</value>
+  </data>
+  <data name="FieldImageWidth" xml:space="preserve">
+    <value>Largeur</value>
+  </data>
+  <data name="FieldImageWidthOriginal" xml:space="preserve">
+    <value>Originale</value>
+  </data>
   <data name="FieldRevision_1" xml:space="preserve">
     <value>Révision : {0}</value>
   </data>

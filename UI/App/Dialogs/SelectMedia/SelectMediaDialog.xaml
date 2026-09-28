@@ -93,11 +93,49 @@
     </components:PageLayout.Body>
 
     <components:PageLayout.Footer>
-      <Button
-          Command="{Binding DialogCommand, Source={x:Reference Root}}"
-          CommandParameter="SelectMediaCommand"
-          FontSize="{DynamicResource ActionButtonTextSize}"
-          Text="{Binding DialogButtonName, Source={x:Reference Root}}" />
+      <VerticalStackLayout Spacing="{StaticResource PageContentSpacing}">
+
+        <FlexLayout
+            AlignItems="Center"
+            IsVisible="{Binding CanInsertAsPicture, Source={x:Reference Root}}"
+            Wrap="Wrap">
+
+          <Label
+              Margin="{Thickness Right={StaticResource PageContentSpacing}}"
+              Style="{StaticResource FieldName}"
+              Text="{x:Static resources:UIStrings.FieldMediaLinkKind}" />
+
+          <RadioButton
+              Margin="{Thickness Right={StaticResource PageContentSpacing}}"
+              Content="{x:Static resources:UIStrings.FieldMediaLinkKindPicture}"
+              IsChecked="{Binding InsertAsPicture, Source={x:Reference Root}}" />
+
+          <RadioButton
+              Content="{x:Static resources:UIStrings.FieldMediaLinkKindLink}"
+              IsChecked="{Binding InsertAsLink, Source={x:Reference Root}}" />
+        </FlexLayout>
+
+        <HorizontalStackLayout
+            IsVisible="{Binding InsertsPicture, Source={x:Reference Root}}"
+            Spacing="{StaticResource PageContentSpacing}">
+
+          <Label
+              Style="{StaticResource FieldName}"
+              Text="{x:Static resources:UIStrings.FieldImageWidth}"
+              VerticalOptions="Center" />
+
+          <Picker
+              ItemsSource="{Binding ImageWidthLabels, Source={x:Reference Root}}"
+              SelectedIndex="{Binding ImageWidthIndex, Source={x:Reference Root}}"
+              Style="{StaticResource FieldValue}" />
+        </HorizontalStackLayout>
+
+        <Button
+            Command="{Binding DialogCommand, Source={x:Reference Root}}"
+            CommandParameter="SelectMediaCommand"
+            FontSize="{DynamicResource ActionButtonTextSize}"
+            Text="{Binding DialogButtonName, Source={x:Reference Root}}" />
+      </VerticalStackLayout>
     </components:PageLayout.Footer>
   </components:PageLayout>
 </ContentPage>

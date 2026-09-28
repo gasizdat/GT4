@@ -1,4 +1,5 @@
 using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Components;
@@ -28,6 +29,9 @@ public partial class SelectMediaDialog : ContentPage
     public SelectMediaDialog Create(int[] ownMediaIds) => new SelectMediaDialog(this, ownMediaIds);
   }
 
+  // null is the image's own width: an explicit "100%" would only widen the set of captions that read as a size.
+  private static readonly int?[] _ImageWidths = [25, 50, 75, null, 150, 200];
+
   private readonly Factory _Factory;
   private readonly int[] _OwnMediaIds;
   private readonly FilteredObservableCollection<GalleryDataItem> _Items = new();
@@ -36,6 +40,7 @@ public partial class SelectMediaDialog : ContentPage
   private bool _LoadItems = true;
   private string _OwnerFilter = string.Empty;
   private GalleryDataItem? _SelectedItem;
+  private bool _InsertAsPicture = true;
 
   public SelectMediaDialog(Factory factory, int[] ownMediaIds)
   {
@@ -102,8 +107,39 @@ public partial class SelectMediaDialog : ContentPage
       _SelectedItem = value;
       OnPropertyChanged(nameof(SelectedItem));
       OnPropertyChanged(nameof(DialogButtonName));
+      OnPropertyChanged(nameof(CanInsertAsPicture));
+      OnPropertyChanged(nameof(InsertsPicture));
     }
   }
+
+  public bool CanInsertAsPicture => _SelectedItem?.Info.IsInlineImage() == true;
+
+  public bool InsertAsPicture
+  {
+    get => _InsertAsPicture;
+    set
+    {
+      _InsertAsPicture = value;
+      OnPropertyChanged(nameof(InsertAsPicture));
+      OnPropertyChanged(nameof(InsertAsLink));
+      OnPropertyChanged(nameof(InsertsPicture));
+    }
+  }
+
+  public bool InsertAsLink
+  {
+    get => !_InsertAsPicture;
+    set => InsertAsPicture = !value;
+  }
+
+  public bool InsertsPicture => CanInsertAsPicture && _InsertAsPicture;
+
+  public string[] ImageWidthLabels { get; } =
+    [.. _ImageWidths.Select(width => width is null ? UIStrings.FieldImageWidthOriginal : $"{width}%")];
+
+  public int ImageWidthIndex { get; set; } = Array.IndexOf(_ImageWidths, null);
+
+  public int? ImageWidthPercent => _ImageWidths[ImageWidthIndex];
 
   public PageLoading Loading { get; }
 

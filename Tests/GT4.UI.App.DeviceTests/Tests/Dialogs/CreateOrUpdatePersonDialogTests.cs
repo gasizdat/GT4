@@ -476,6 +476,61 @@ public class CreateOrUpdatePersonDialogTests
     Assert.Equal($"![{CommonName(services, ivan)}](media:11)", dialog.Biography!.Content);
   }
 
+  [Fact]
+  public async Task InsertMediaLinkCommand_sizes_an_embedded_photo_at_the_chosen_width()
+  {
+    var services = new TestServices();
+    var ivan = P(1, "Ivan");
+    SetUpProjectMedia(services, dataSet: [Photo(11)], persons: [ivan], personIdsByData: new() { [11] = [ivan.Id] });
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    var dialog = await MainThread.InvokeOnMainThreadAsync(
+      () => services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialog.Factory>().Create(CreateSamplePerson()));
+
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var insertTask = await MainThreadTask.StartAsync(dialog.InvokeInsertMediaLinkAsync);
+    var selectDialog = await ModalDialogHarness.WaitForModalAsync<SelectMediaDialog>(dialog);
+    var items = await WaitForMediaAsync(selectDialog, 1);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      selectDialog.SelectedItem = items.Single();
+      selectDialog.ImageWidthIndex = Array.IndexOf(selectDialog.ImageWidthLabels, "50%");
+      selectDialog.DialogCommand.Execute("SelectMediaCommand");
+    });
+    await insertTask;
+
+    Assert.Equal($"![{CommonName(services, ivan)} 50%](media:11)", dialog.Biography!.Content);
+  }
+
+  // Issue #449: "mention this photo" rather than "show it" -- and a width picked before switching to a
+  // link has nothing to size.
+  [Fact]
+  public async Task InsertMediaLinkCommand_links_a_photo_as_a_reference_when_Link_is_chosen()
+  {
+    var services = new TestServices();
+    var ivan = P(1, "Ivan");
+    SetUpProjectMedia(services, dataSet: [Photo(11)], persons: [ivan], personIdsByData: new() { [11] = [ivan.Id] });
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    var dialog = await MainThread.InvokeOnMainThreadAsync(
+      () => services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialog.Factory>().Create(CreateSamplePerson()));
+
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var insertTask = await MainThreadTask.StartAsync(dialog.InvokeInsertMediaLinkAsync);
+    var selectDialog = await ModalDialogHarness.WaitForModalAsync<SelectMediaDialog>(dialog);
+    var items = await WaitForMediaAsync(selectDialog, 1);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      selectDialog.SelectedItem = items.Single();
+      selectDialog.ImageWidthIndex = Array.IndexOf(selectDialog.ImageWidthLabels, "50%");
+      selectDialog.InsertAsLink = true;
+      selectDialog.DialogCommand.Execute("SelectMediaCommand");
+    });
+    await insertTask;
+
+    Assert.Equal($"[{CommonName(services, ivan)}](attachment:11)", dialog.Biography!.Content);
+  }
+
   // A photo whose caption is blank has nothing of its own to be named by; project-wide, the person it
   // belongs to is the only label that still tells the user which photo they linked.
   [Fact]

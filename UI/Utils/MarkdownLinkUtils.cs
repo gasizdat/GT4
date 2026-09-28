@@ -28,6 +28,9 @@ public static partial class MarkdownLinkUtils
 
   public static bool TryParseMediaId(string url, out int mediaId) => TryParseId(url, MediaScheme, out mediaId);
 
+  public static string ImageDescription(string caption, int? widthPercent) =>
+    widthPercent is null ? caption : $"{caption} {widthPercent}%";
+
   // A trailing percentage in an image's description -- "![Grandpa 50%](media:5)" -- asks for that share
   // of the width the image would otherwise take, and the rest of the description stays the caption. Any
   // description ending in 1-299% reads as a size, so "Sale 50%" sizes the image rather than captioning it.

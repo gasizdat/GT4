@@ -353,7 +353,13 @@ public partial class PersonPage : ContentPage
     }
 
     var content = await _DataConverterResolver(data.Category).ToObjectAsync(data, token);
-    return content as AttachmentInfo;
+    return content switch
+    {
+      AttachmentInfo attachment => attachment,
+      // Opened like an image attachment, which goes straight to the viewer and never reads FileName.
+      PhotoInfo photo => new AttachmentInfo(string.Empty, photo.Caption, data, photo),
+      _ => null
+    };
   }
 
   private async Task OnOpenAttachmentAsync(AttachmentInfo attachment)
