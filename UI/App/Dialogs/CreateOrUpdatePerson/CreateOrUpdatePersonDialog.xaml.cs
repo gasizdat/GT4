@@ -276,8 +276,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       // bucket -- position 0 is authoritative regardless of each photo's category coming in, since
       // reordering (MovePhotoToLeft/Right) doesn't itself update DataCategory.
       mainPhoto: mainPhoto is null ? null : mainPhoto with { Category = mainPhoto.Category.AsMainPhoto() },
-      // A stored empty biography is not "no biography": GEDCOM export writes it as an empty NOTE, and a
-      // re-import won't fill it in.
+      // Empty means none: a stored empty biography exports as an empty NOTE and blocks an imported one.
       biography: biography is { Content.Length: > 0 } ? biography : null,
       gedcomData: _GedcomData,
       attachments: attachments);

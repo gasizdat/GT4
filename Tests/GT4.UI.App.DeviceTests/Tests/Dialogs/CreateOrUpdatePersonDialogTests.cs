@@ -178,7 +178,6 @@ public class CreateOrUpdatePersonDialogTests
     Assert.Equal(Resources.UIStrings.BtnNameCancel, dialog.DialogButtonName);
   }
 
-  // Issue #451: the create path used to have no biography item at all, so typed text had nowhere to go.
   [Fact]
   public async Task CreatePersonCommand_for_a_new_person_returns_the_typed_biography()
   {
