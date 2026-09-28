@@ -1372,6 +1372,38 @@ public class PersonPageTests
     services.AlertService.VerifyNoOtherCalls();
   }
 
+#if WINDOWS
+  [Fact]
+  public async Task The_copy_targets_carry_a_native_context_flyout()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson() with { Biography = LongBiography() };
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await using var window = await WindowHost.AttachAsync(page);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+    await MainThread.InvokeOnMainThreadAsync(() => page.InvokePageCommandAsync("TabBiography"));
+    var layout = (PageLayout)page.Content;
+    var name = Descendants(layout.Header).OfType<Label>().First(CopyText.GetIsEnabled);
+    var markdown = Descendants(page.BiographyForTest).OfType<MarkdownView>().Single();
+
+    foreach (var view in new View[] { name, markdown })
+    {
+      var flyout = await Poll.UntilAsync(
+        () => MainThread.InvokeOnMainThreadAsync(() => NativeContextFlyout(view)),
+        native => native is not null,
+        timeoutMessage: $"{view.GetType().Name} never got a native context flyout.");
+      Assert.IsType<Microsoft.UI.Xaml.Controls.MenuFlyout>(flyout);
+    }
+  }
+
+  private static Microsoft.UI.Xaml.Controls.Primitives.FlyoutBase? NativeContextFlyout(View view)
+  {
+    var handler = (IPlatformViewHandler?)view.Handler;
+    return handler?.PlatformView?.ContextFlyout;
+  }
+#endif
+
   private static async Task AssertCopiesAsync(View view, string expected)
   {
     await MainThread.InvokeOnMainThreadAsync(async () =>
