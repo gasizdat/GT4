@@ -28,7 +28,6 @@ public static class CopyText
     FlyoutBase.SetContextFlyout(view, new MenuFlyout { item });
   }
 
-  // The text is read on use, so it is always what the view shows at that moment.
   private static void Copy(View view)
   {
     var text = view is MarkdownView markdown ? markdown.PlainText : ((Label)view).Text;

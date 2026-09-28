@@ -81,8 +81,7 @@ public class MarkdownView : ContentView
   // opening the referenced attachment, same reason as PersonLinkTapped.
   public event EventHandler<int>? AttachmentLinkTapped;
 
-  // Read off the rendered tree rather than the Markdown: a link target or an image's size token never
-  // reaches a label, and a list marker exists only there.
+  // From the rendered labels, not the Markdown: only they drop link targets and keep list markers.
   public string PlainText => TextOf(Content);
 
   // CommonMark hands a run of lines opening with a tag to the HTML block parser as one opaque chunk,

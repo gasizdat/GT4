@@ -1372,7 +1372,6 @@ public class PersonPageTests
     services.AlertService.VerifyNoOtherCalls();
   }
 
-  // Clicks the view's own context-flyout entry, so this fails if the flyout was never attached.
   private static async Task AssertCopiesAsync(View view, string expected)
   {
     await MainThread.InvokeOnMainThreadAsync(async () =>

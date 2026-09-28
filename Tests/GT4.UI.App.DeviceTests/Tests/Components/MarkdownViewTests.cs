@@ -429,7 +429,6 @@ public class MarkdownViewTests
     Assert.Equal(2, Descendants(view).OfType<Label>().Count(label => label.Text == "•"));
   }
 
-  // Markdig's own ToPlainText would keep "Portrait 50%" and "Grandpa 50%" and drop the list markers.
   [Fact]
   public async Task PlainText_IsTheTextAsRendered()
   {

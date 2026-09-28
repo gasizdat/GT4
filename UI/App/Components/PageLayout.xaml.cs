@@ -225,7 +225,6 @@ public partial class PageLayout : ContentView
 
   private Task GoBackAsync() => _NavigationService.GoToAsync("..", true);
 
-  // A copy while the notice is up restarts its countdown rather than queueing a second one.
   private async Task CopyAsync(string text)
   {
     await Clipboard.Default.SetTextAsync(text);
