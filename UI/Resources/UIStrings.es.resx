@@ -586,6 +586,9 @@
   <data name="MenuItemNameRefresh" xml:space="preserve">
     <value>🔄️ Actualizar</value>
   </data>
+  <data name="MenuItemNameResetArrangement" xml:space="preserve">
+    <value>📌 Restablecer la disposición</value>
+  </data>
   <data name="RelBrother" xml:space="preserve">
     <value>Hermano</value>
   </data>
@@ -1053,8 +1056,14 @@ FN - apellido familiar</value>
   <data name="TitleFamilyTreePage_1" xml:space="preserve">
     <value>🌳 {0}</value>
   </data>
+  <data name="TitleFamilyTreePageArranged_1" xml:space="preserve">
+    <value>🌳 {0} 📌</value>
+  </data>
   <data name="HintFamilyTreePage" xml:space="preserve">
     <value>Toque un pariente para centrar el árbol en él</value>
+  </data>
+  <data name="HintFamilyTreePageArranging" xml:space="preserve">
+    <value>Arrastre un pariente hacia un lado para colocarlo</value>
   </data>
   <data name="MenuItemNameOpenPerson_1" xml:space="preserve">
     <value>👤 Abrir {0}</value>
@@ -1067,6 +1076,9 @@ FN - apellido familiar</value>
   </data>
   <data name="LblRelatives" xml:space="preserve">
     <value>Parientes</value>
+  </data>
+  <data name="LblArrange" xml:space="preserve">
+    <value>Organizar</value>
   </data>
   <data name="AlertTextKinshipUnfoldingAborted" xml:space="preserve">
     <value>La operación ha tardado más de lo esperado. Algunos niveles de parentesco han quedado plegados. Puede desplegarlos manualmente.</value>

@@ -586,6 +586,9 @@ genealogy tree and enjoy!</value>
   <data name="MenuItemNameRefresh" xml:space="preserve">
     <value>🔄️ Refresh</value>
   </data>
+  <data name="MenuItemNameResetArrangement" xml:space="preserve">
+    <value>📌 Reset arrangement</value>
+  </data>
   <data name="RelBrother" xml:space="preserve">
     <value>Brother</value>
   </data>
@@ -1053,8 +1056,14 @@ FN - family name</value>
   <data name="TitleFamilyTreePage_1" xml:space="preserve">
     <value>🌳 {0}</value>
   </data>
+  <data name="TitleFamilyTreePageArranged_1" xml:space="preserve">
+    <value>🌳 {0} 📌</value>
+  </data>
   <data name="HintFamilyTreePage" xml:space="preserve">
     <value>Tap a relative to centre the tree on them</value>
+  </data>
+  <data name="HintFamilyTreePageArranging" xml:space="preserve">
+    <value>Drag a relative sideways to place them</value>
   </data>
   <data name="MenuItemNameOpenPerson_1" xml:space="preserve">
     <value>👤 Open {0}</value>
@@ -1067,6 +1076,9 @@ FN - family name</value>
   </data>
   <data name="LblRelatives" xml:space="preserve">
     <value>Relatives</value>
+  </data>
+  <data name="LblArrange" xml:space="preserve">
+    <value>Arrange</value>
   </data>
   <data name="AlertTextKinshipUnfoldingAborted" xml:space="preserve">
     <value>The operation took longer than expected. Some kinship levels remained folded. You can unfold them manually.</value>

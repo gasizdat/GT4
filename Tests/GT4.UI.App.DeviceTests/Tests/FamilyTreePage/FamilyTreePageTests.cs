@@ -3,6 +3,7 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Pages;
+using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Settings;
 using Moq;
@@ -43,6 +44,33 @@ public class FamilyTreePageTests
 
   private static Task WaitForLoadAsync(TestableFamilyTreePage page, TestServices services, Action interact) =>
     LoadWait.UntilAsync(() => page.CompletedLoads, services, interact, "FamilyTree");
+
+  private static readonly double SlotPitch = new FamilyTreeLayoutMetrics().SlotPitch;
+
+  // The centre with the given children one row below it; with nothing pinned each child sits under it.
+  private static void SetupTree(TestServices services, PersonInfo center, params PersonInfo[] children) =>
+    services.FamilyTreeProvider
+      .Setup(f => f.BuildAsync(It.IsAny<Person>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new FamilyTree(
+        center.Id,
+        [new FamilyTreeNode(center, 0), .. children.Select(child => new FamilyTreeNode(child, -1))],
+        [.. children.Select(child => FamilyTreeEdge.ParentChild(parentId: center.Id, childId: child.Id))]));
+
+  private static Task<Rect[]> NodeBoundsAsync(TestableFamilyTreePage page) =>
+    MainThread.InvokeOnMainThreadAsync(() => page
+      .FindByName<AbsoluteLayout>("Nodes")
+      .Children
+      .Select(child => AbsoluteLayout.GetLayoutBounds((BindableObject)child))
+      .ToArray());
+
+  // With one centre and one child, how far the child sits from the centre, in slots.
+  private static async Task<double> ChildOffsetAsync(TestableFamilyTreePage page)
+  {
+    var bounds = await NodeBoundsAsync(page);
+    var center = bounds.MinBy(b => b.Top);
+    var child = bounds.MaxBy(b => b.Top);
+    return (child.Left - center.Left) / SlotPitch;
+  }
 
   [Fact]
   public async Task Ctor_resolves_dependencies_and_defaults()
@@ -370,5 +398,138 @@ public class FamilyTreePageTests
     await Task.Delay(200);
 
     Assert.Equal(loadsAfterReset, page.CompletedLoads);
+  }
+
+  [Fact]
+  public async Task A_centre_with_a_stored_arrangement_is_laid_out_and_titled_as_arranged()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    SetupTree(services, center, P(2, "Petr"));
+    services.ArrangementStore
+      .Setup(s => s.Get(TestServices.SampleProjectInfo, center.Id))
+      .Returns(new Dictionary<int, double> { [2] = 3 });
+    var page = await CreatePageAsync(services);
+
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+
+    Assert.Equal(3, await ChildOffsetAsync(page), precision: 6);
+    Assert.True(page.IsArranged);
+    Assert.Equal(string.Format(UIStrings.TitleFamilyTreePageArranged_1, "Ivan"), page.PageTitle);
+  }
+
+  [Fact]
+  public async Task A_centre_without_an_arrangement_is_titled_plainly()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = P(1, "Ivan"));
+
+    Assert.False(page.IsArranged);
+    Assert.Equal(string.Format(UIStrings.TitleFamilyTreePage_1, "Ivan"), page.PageTitle);
+  }
+
+  [Fact]
+  public async Task While_arranging_a_node_tap_neither_recenters_nor_navigates()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+    var center = P(1, "Ivan");
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    var other = P(2, "Petr");
+    await MainThread.InvokeOnMainThreadAsync(() => page.IsArranging = true);
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.InvokePageCommandAsync(center));
+    await MainThread.InvokeOnMainThreadAsync(() => page.InvokePageCommandAsync(other));
+    await Task.Delay(200);
+
+    services.NavigationService.Verify(
+      n => n.GoToAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<Dictionary<string, object>>()),
+      Times.Never());
+    services.FamilyTreeProvider.Verify(
+      f => f.BuildAsync(other, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()),
+      Times.Never());
+    Assert.Contains("Ivan", page.PageTitle);
+  }
+
+  [Fact]
+  public async Task Arranging_swaps_the_hint_for_the_drag_one()
+  {
+    var page = await CreatePageAsync(new TestServices());
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.IsArranging = true);
+
+    Assert.Equal(UIStrings.HintFamilyTreePageArranging, page.PageHint);
+  }
+
+  [Fact]
+  public async Task Dropping_a_node_pins_it_where_it_was_released_and_saves_it()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    SetupTree(services, center, P(2, "Petr"));
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+
+    await WaitForLoadAsync(page, services, () => page.InvokeDropNode(2, 2 * SlotPitch));
+
+    services.ArrangementStore.Verify(
+      s => s.Set(
+        TestServices.SampleProjectInfo,
+        center.Id,
+        It.Is<IReadOnlyDictionary<int, double>>(pins => pins.Count == 1 && Math.Abs(pins[2] - 2) < 1e-6)),
+      Times.Once());
+    Assert.Equal(2, await ChildOffsetAsync(page), precision: 6);
+    Assert.True(page.IsArranged);
+  }
+
+  [Fact]
+  public async Task A_node_dropped_onto_a_pinned_one_lands_a_whole_slot_clear_of_it()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    SetupTree(services, center, P(2, "Petr"), P(3, "Oleg"));
+    services.ArrangementStore
+      .Setup(s => s.Get(TestServices.SampleProjectInfo, center.Id))
+      .Returns(new Dictionary<int, double> { [2] = 1 });
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    var bounds = await NodeBoundsAsync(page);
+    var centerLeft = bounds.MinBy(b => b.Top).Left;
+    var children = bounds.Where(b => b.Top > bounds.Min(c => c.Top)).ToArray();
+    var pinnedLeft = centerLeft + SlotPitch;
+    var freeLeft = children.Single(b => Math.Abs(b.Left - pinnedLeft) > 1e-6).Left;
+
+    // Released 0.3 of a slot right of the pinned child: the nearer clear side is one slot further right.
+    await WaitForLoadAsync(page, services, () => page.InvokeDropNode(3, pinnedLeft + (0.3 * SlotPitch) - freeLeft));
+
+    services.ArrangementStore.Verify(
+      s => s.Set(
+        TestServices.SampleProjectInfo,
+        center.Id,
+        It.Is<IReadOnlyDictionary<int, double>>(pins => pins[2] == 1 && Math.Abs(pins[3] - 2) < 1e-6)),
+      Times.Once());
+  }
+
+  [Fact]
+  public async Task ResetArrangement_forgets_it_and_lays_the_tree_out_afresh()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    SetupTree(services, center, P(2, "Petr"));
+    services.ArrangementStore
+      .Setup(s => s.Get(TestServices.SampleProjectInfo, center.Id))
+      .Returns(new Dictionary<int, double> { [2] = 3 });
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+
+    await WaitForLoadAsync(page, services, () => page.InvokePageCommandAsync("ResetArrangement"));
+
+    services.ArrangementStore.Verify(s => s.Clear(TestServices.SampleProjectInfo, center.Id), Times.Once());
+    // The lone child is back under its parent, not left where the arrangement had it.
+    Assert.Equal(0, await ChildOffsetAsync(page), precision: 6);
+    Assert.False(page.IsArranged);
+    Assert.Equal(string.Format(UIStrings.TitleFamilyTreePage_1, "Ivan"), page.PageTitle);
   }
 }

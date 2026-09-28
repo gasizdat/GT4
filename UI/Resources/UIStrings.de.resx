@@ -586,6 +586,9 @@ Stammbaum und haben Sie Freude daran!</value>
   <data name="MenuItemNameRefresh" xml:space="preserve">
     <value>🔄️ Aktualisieren</value>
   </data>
+  <data name="MenuItemNameResetArrangement" xml:space="preserve">
+    <value>📌 Anordnung zurücksetzen</value>
+  </data>
   <data name="RelBrother" xml:space="preserve">
     <value>Bruder</value>
   </data>
@@ -1053,8 +1056,14 @@ FN - Familienname</value>
   <data name="TitleFamilyTreePage_1" xml:space="preserve">
     <value>🌳 {0}</value>
   </data>
+  <data name="TitleFamilyTreePageArranged_1" xml:space="preserve">
+    <value>🌳 {0} 📌</value>
+  </data>
   <data name="HintFamilyTreePage" xml:space="preserve">
     <value>Tippen Sie auf einen Verwandten, um den Baum auf ihn auszurichten</value>
+  </data>
+  <data name="HintFamilyTreePageArranging" xml:space="preserve">
+    <value>Ziehen Sie einen Verwandten seitwärts, um ihn zu platzieren</value>
   </data>
   <data name="MenuItemNameOpenPerson_1" xml:space="preserve">
     <value>👤 {0} öffnen</value>
@@ -1067,6 +1076,9 @@ FN - Familienname</value>
   </data>
   <data name="LblRelatives" xml:space="preserve">
     <value>Verwandte</value>
+  </data>
+  <data name="LblArrange" xml:space="preserve">
+    <value>Anordnen</value>
   </data>
   <data name="AlertTextKinshipUnfoldingAborted" xml:space="preserve">
     <value>Der Vorgang hat länger gedauert als erwartet. Einige Verwandtschaftsebenen blieben zugeklappt. Sie können sie manuell ausklappen.</value>

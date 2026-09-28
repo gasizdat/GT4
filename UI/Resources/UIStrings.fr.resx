@@ -586,6 +586,9 @@ arbre généalogique et profitez-en !</value>
   <data name="MenuItemNameRefresh" xml:space="preserve">
     <value>🔄️ Actualiser</value>
   </data>
+  <data name="MenuItemNameResetArrangement" xml:space="preserve">
+    <value>📌 Réinitialiser la disposition</value>
+  </data>
   <data name="RelBrother" xml:space="preserve">
     <value>Frère</value>
   </data>
@@ -1053,8 +1056,14 @@ FN - nom de famille</value>
   <data name="TitleFamilyTreePage_1" xml:space="preserve">
     <value>🌳 {0}</value>
   </data>
+  <data name="TitleFamilyTreePageArranged_1" xml:space="preserve">
+    <value>🌳 {0} 📌</value>
+  </data>
   <data name="HintFamilyTreePage" xml:space="preserve">
     <value>Touchez un proche pour centrer l'arbre sur lui</value>
+  </data>
+  <data name="HintFamilyTreePageArranging" xml:space="preserve">
+    <value>Faites glisser un proche sur le côté pour le placer</value>
   </data>
   <data name="MenuItemNameOpenPerson_1" xml:space="preserve">
     <value>👤 Ouvrir {0}</value>
@@ -1067,6 +1076,9 @@ FN - nom de famille</value>
   </data>
   <data name="LblRelatives" xml:space="preserve">
     <value>Proches</value>
+  </data>
+  <data name="LblArrange" xml:space="preserve">
+    <value>Disposer</value>
   </data>
   <data name="AlertTextKinshipUnfoldingAborted" xml:space="preserve">
     <value>L'opération a pris plus de temps que prévu. Certains niveaux de parenté sont restés repliés. Vous pouvez les déplier manuellement.</value>
