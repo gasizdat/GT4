@@ -146,11 +146,6 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
 
   private void OnNodePan(FamilyTreeNodeView view, int personId, PanUpdatedEventArgs e)
   {
-    if (!IsArranging)
-    {
-      return;
-    }
-
     switch (e.StatusType)
     {
       case GestureStatus.Started:
@@ -202,6 +197,10 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
       }
 
       _IsArranging = value;
+      foreach (var (personId, entry) in _NodeCache)
+      {
+        SyncNodeDrag(entry.View, personId, entry.IsCenter);
+      }
       OnPropertyChanged(nameof(IsArranging));
       OnPropertyChanged(nameof(PageHint));
     }
@@ -561,16 +560,29 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     var view = new FamilyTreeNodeView(
       photo, _FontScale, displayName, isCenter, nodeLayout.Bounds.Width, nodeLayout.Bounds.Height, zoom);
     view.GestureRecognizers.Add(new TapGestureRecognizer { Command = PageCommand, CommandParameter = person });
-    // The centre is what every pin is measured from, so it stays put.
-    if (!isCenter)
-    {
-      var drag = new PanGestureRecognizer();
-      drag.PanUpdated += (_, e) => OnNodePan(view, person.Id, e);
-      view.GestureRecognizers.Add(drag);
-    }
+    SyncNodeDrag(view, person.Id, isCenter);
     AbsoluteLayout.SetLayoutFlags(view, AbsoluteLayoutFlags.None);
     Nodes.Children.Add(view);
     return view;
+  }
+
+  // A node carries a drag only while arranging: on touch, a pan recognizer on a node can take the
+  // gesture from the canvas pan and the node tap even when it ignores it. The centre never carries
+  // one, since every pin is measured from it.
+  private void SyncNodeDrag(FamilyTreeNodeView view, int personId, bool isCenter)
+  {
+    var drag = view.GestureRecognizers.OfType<PanGestureRecognizer>().SingleOrDefault();
+    if (drag is not null)
+    {
+      view.GestureRecognizers.Remove(drag);
+    }
+
+    if (IsArranging && !isCenter)
+    {
+      drag = new PanGestureRecognizer();
+      drag.PanUpdated += (_, e) => OnNodePan(view, personId, e);
+      view.GestureRecognizers.Add(drag);
+    }
   }
 
   private void RemoveNode(FamilyTreeNodeView view)

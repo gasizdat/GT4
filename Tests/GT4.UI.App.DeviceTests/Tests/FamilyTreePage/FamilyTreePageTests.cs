@@ -454,6 +454,34 @@ public class FamilyTreePageTests
   }
 
   [Fact]
+  public async Task Only_an_arranging_tree_lets_a_node_other_than_the_centre_be_dragged()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    SetupTree(services, center, P(2, "Petr"));
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+
+    // The centre is the node in the top row.
+    Task<(bool CenterDrags, bool ChildDrags)> DragsAsync() =>
+      MainThread.InvokeOnMainThreadAsync(() =>
+      {
+        var views = page.FindByName<AbsoluteLayout>("Nodes").Children.Cast<View>().ToArray();
+        var centerView = views.MinBy(v => AbsoluteLayout.GetLayoutBounds(v).Top)!;
+        var childView = views.Single(v => v != centerView);
+        return (
+          centerView.GestureRecognizers.OfType<PanGestureRecognizer>().Any(),
+          childView.GestureRecognizers.OfType<PanGestureRecognizer>().Any());
+      });
+
+    Assert.Equal((false, false), await DragsAsync());
+    await MainThread.InvokeOnMainThreadAsync(() => page.IsArranging = true);
+    Assert.Equal((false, true), await DragsAsync());
+    await MainThread.InvokeOnMainThreadAsync(() => page.IsArranging = false);
+    Assert.Equal((false, false), await DragsAsync());
+  }
+
+  [Fact]
   public async Task Arranging_swaps_the_hint_for_the_drag_one()
   {
     var page = await CreatePageAsync(new TestServices());
