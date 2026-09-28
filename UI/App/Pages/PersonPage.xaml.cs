@@ -207,19 +207,9 @@ public partial class PersonPage : ContentPage
 
   public PersonFullInfo PersonFullInfo => _PersonFullInfo;
 
-  // Shell re-sends this [QueryProperty] with the same person on a plain modal pop (e.g. closing the
-  // photo viewer), not just on a genuine navigation -- ignore a same-person re-set.
   public PersonInfo PersonInfo
   {
-    set
-    {
-      if (value.Id == _PersonFullInfo.Id)
-      {
-        return;
-      }
-
-      ShowPersonInfo(value, true);
-    }
+    set => ShowPersonInfo(value, true);
   }
 
   public bool ShowRelativesTab => _SelectedTab == PersonTab.Relatives;
