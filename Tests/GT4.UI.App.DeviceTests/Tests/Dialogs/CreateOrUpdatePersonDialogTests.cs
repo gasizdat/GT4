@@ -6,6 +6,7 @@ using GT4.UI.Abstraction;
 using GT4.UI.Components;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
+using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
 using Moq;
 using System.Text;
@@ -59,6 +60,40 @@ public class CreateOrUpdatePersonDialogTests
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
     return await MainThread.InvokeOnMainThreadAsync(
       () => services.Provider.GetRequiredService<CreateOrUpdatePersonDialog.Factory>().Create(person));
+  }
+
+  private static async Task<CreateOrUpdatePersonDialog> CreateDialogAsync(TestServices services, PersonFullInfo? person, IDataConverter bioConverter)
+  {
+    var factory = services.Provider.GetRequiredService<CreateOrUpdatePersonDialog.Factory>() with { PersonBioConverter = bioConverter };
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    return await MainThread.InvokeOnMainThreadAsync(() => factory.Create(person));
+  }
+
+  // Holds a new biography's background decode until Release(), so a test decides when its completion
+  // notification lands relative to other edits.
+  private sealed class GatedBioConverter : IDataConverter
+  {
+    private readonly TextDataConverter _Inner = new();
+    private readonly TaskCompletionSource _Gate = new();
+
+    public void Release() => _Gate.SetResult();
+
+    public Task<Data?> FromObjectAsync(object? data, CancellationToken token) => _Inner.FromObjectAsync(data, token);
+
+    public async Task<object?> ToObjectAsync(Data? data, CancellationToken token)
+    {
+      await _Gate.Task;
+      return await _Inner.ToObjectAsync(data, token);
+    }
+  }
+
+  private static async Task ReleaseBiographyDecodeAsync(CreateOrUpdatePersonDialog dialog, GatedBioConverter converter)
+  {
+    var decoded = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    dialog.Biography.PropertyChanged += (_, _) => decoded.TrySetResult();
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.Biography.Content);
+    converter.Release();
+    await decoded.Task.WaitAsync(TimeSpan.FromSeconds(5));
   }
 
   private static AdornerCommandParameter Adorner(string commandName, object element) =>
@@ -141,6 +176,80 @@ public class CreateOrUpdatePersonDialogTests
     Assert.Null(dialog.BioSex);
     Assert.Null(dialog.BirthDate);
     Assert.Equal(Resources.UIStrings.BtnNameCancel, dialog.DialogButtonName);
+  }
+
+  [Fact]
+  public async Task CreatePersonCommand_for_a_new_person_returns_the_typed_biography()
+  {
+    var converter = new GatedBioConverter();
+    var dialog = await CreateDialogAsync(new TestServices(), null, converter);
+    await ReleaseBiographyDecodeAsync(dialog, converter);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      dialog.BioSex = dialog.BiologicalSexes.Single(s => s.Info == BiologicalSex.Male);
+      dialog.BirthDate = Date.Create(2000, 1, 1, DateStatus.WellKnown);
+      dialog.Biography.Content = "Typed biography";
+      dialog.DialogCommand.Execute("CreatePersonCommand");
+    });
+    var saved = await dialog.Info;
+
+    Assert.NotNull(saved?.Biography);
+    Assert.Equal(DataCategory.PersonBio, saved.Biography.Category);
+    Assert.Equal("text/plain", saved.Biography.MimeType);
+    Assert.Equal("Typed biography", Encoding.UTF8.GetString(saved.Biography.Content));
+  }
+
+  [Fact]
+  public async Task CreatePersonCommand_for_a_new_person_with_no_biography_typed_returns_none()
+  {
+    var dialog = await CreateDialogAsync(new TestServices(), null);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      dialog.BioSex = dialog.BiologicalSexes.Single(s => s.Info == BiologicalSex.Male);
+      dialog.BirthDate = Date.Create(2000, 1, 1, DateStatus.WellKnown);
+      dialog.DialogCommand.Execute("CreatePersonCommand");
+    });
+    var saved = await dialog.Info;
+
+    Assert.NotNull(saved);
+    Assert.Null(saved.Biography);
+  }
+
+  [Fact]
+  public async Task CreatePersonCommand_with_a_cleared_biography_returns_none()
+  {
+    var person = CreateSamplePerson() with { Biography = Bio("Old biography") };
+    var dialog = await CreateDialogAsync(new TestServices(), person);
+    await WaitForAsync(
+      () => dialog.Biography.Content, content => Equals(content, "Old biography"),
+      "The biography content never finished loading.");
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      dialog.Biography.Content = string.Empty;
+      dialog.DialogCommand.Execute("CreatePersonCommand");
+    });
+    var saved = await dialog.Info;
+
+    Assert.NotNull(saved);
+    Assert.Null(saved.Biography);
+  }
+
+  // Issue #451: the biography's decode notification carries no edit of its own, so it must not
+  // disarm one made elsewhere before it landed.
+  [Fact]
+  public async Task A_biography_decode_landing_after_another_edit_keeps_the_dialog_modified()
+  {
+    var converter = new GatedBioConverter();
+    var dialog = await CreateDialogAsync(new TestServices(), CreateSamplePerson(), converter);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+      dialog.BioSex = dialog.BiologicalSexes.Single(s => s.Info == BiologicalSex.Male));
+    await ReleaseBiographyDecodeAsync(dialog, converter);
+
+    Assert.Equal(Resources.UIStrings.BtnNameUpdateFamilyPerson, dialog.DialogButtonName);
   }
 
   [Fact]

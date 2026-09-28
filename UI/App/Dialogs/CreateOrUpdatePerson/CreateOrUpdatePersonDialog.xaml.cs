@@ -48,11 +48,11 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   private readonly ObservableCollection<RelativeInfo> _Relatives = new();
   private readonly ObservableCollection<BiologicalSexItem> _BiologicalSexes = new();
   private readonly TaskCompletionSource<PersonFullInfo?> _Info = new(null);
+  private readonly PersonDataItem _Biography;
   private int? _PersonId;
   private Date? _BirthDate;
   private Date? _DeathDate;
   private BiologicalSexItem? _BiologicalSex;
-  private PersonDataItem? _Biography;
   private Data? _GedcomData;
   private bool _IsModified;
   private bool _NotReady => _BiologicalSex is null || _BirthDate is null || !_IsModified;
@@ -67,6 +67,23 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Female, _Factory.BiologicalSexFormatter));
     _BiologicalSexes.Add(new BiologicalSexItem(BiologicalSex.Unknown, _Factory.BiologicalSexFormatter));
     _BiologicalSex = _BiologicalSexes.FirstOrDefault(i => i.Info == person?.BiologicalSex);
+    _Biography = person?.Biography switch
+    {
+      Data biography => GetPersonData(biography, DataCategory.PersonBio),
+
+      _ => new PersonDataItem(
+            dataCategory: DataCategory.PersonBio,
+            _Factory.PersonBioConverter,
+            _Factory.CancellationTokenProvider,
+            _Factory.AlertService)
+    };
+    _Biography.PropertyChanged += (_, _) =>
+    {
+      if (_Biography.IsModified)
+      {
+        IsModified = true;
+      }
+    };
 
     UpdatePersonInformation(person);
 
@@ -128,18 +145,6 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         _Attachments.Add(GetPersonData(attachment, DataCategory.PersonAttachment));
       }
 
-      _Biography = person.Biography switch
-      {
-        Data biography => GetPersonData(biography, DataCategory.PersonBio),
-
-        _ => new PersonDataItem(
-              dataCategory: DataCategory.PersonBio,
-              _Factory.PersonBioConverter,
-              _Factory.CancellationTokenProvider,
-              _Factory.AlertService)
-      };
-      _Biography.PropertyChanged += (_, _) => IsModified = _Biography.IsModified;
-
       var relatives = person
         .RelativeInfos
         .OrderBy(item => item, _Factory.PersonInfoComparer);
@@ -177,7 +182,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   public ICollection<BiologicalSexItem> BiologicalSexes => _BiologicalSexes;
 
-  public PersonDataItem? Biography => _Biography;
+  public PersonDataItem Biography => _Biography;
 
   public string PersonFullName
   {
@@ -250,6 +255,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
     var photos = await PersonDataItem.ToDataAsync(_Photos);
     var attachments = await PersonDataItem.ToDataAsync(_Attachments);
+    var biography = await _Biography.ToDataAsync();
 
     var mainPhoto = photos.FirstOrDefault();
     var additionalPhotos = photos
@@ -270,7 +276,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       // bucket -- position 0 is authoritative regardless of each photo's category coming in, since
       // reordering (MovePhotoToLeft/Right) doesn't itself update DataCategory.
       mainPhoto: mainPhoto is null ? null : mainPhoto with { Category = mainPhoto.Category.AsMainPhoto() },
-      biography: _Biography?.ToDataAsync().Result,
+      // Empty means none: a stored empty biography exports as an empty NOTE and blocks an imported one.
+      biography: biography is { Content.Length: > 0 } ? biography : null,
       gedcomData: _GedcomData,
       attachments: attachments);
 
