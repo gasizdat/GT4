@@ -429,6 +429,20 @@ public class MarkdownViewTests
     Assert.Equal(2, Descendants(view).OfType<Label>().Count(label => label.Text == "•"));
   }
 
+  // Markdig's own ToPlainText would keep "Portrait 50%" and "Grandpa 50%" and drop the list markers.
+  [Fact]
+  public async Task PlainText_IsTheTextAsRendered()
+  {
+    var view = await CreateViewAsync(
+      "# Life\n\nMarried [Ann](person:2) in **1900**.\n\n- one\n- two\n\n![Portrait 50%](media:11)\n\n" +
+      "Look: *![Grandpa 50%](media:11)* here.\n\n> quoted\n\n```\ncode line\n```\n\n---\n",
+      new Dictionary<string, byte[]> { ["media:11"] = SamplePng });
+
+    var text = await MainThread.InvokeOnMainThreadAsync(() => view.PlainText);
+
+    Assert.Equal("Life\nMarried Ann in 1900.\n• one\n• two\nLook: Grandpa here.\nquoted\ncode line", text);
+  }
+
   // Lays the view out inside a fixed-width column on a real window, so the assertions are about the
   // size the image ends up drawn at rather than the layout properties asked for.
   private static async Task AssertRenderedImageSizeAsync(string markdown, double columnWidth, Size expectedSize, string link = "media:11")

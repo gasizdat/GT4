@@ -1548,4 +1548,10 @@ FN - nom de famille</value>
   <data name="FieldMainPerson_1" xml:space="preserve">
     <value>⭐ {0}</value>
   </data>
+  <data name="MenuItemNameCopy" xml:space="preserve">
+    <value>Copier</value>
+  </data>
+  <data name="MsgCopied" xml:space="preserve">
+    <value>Copié</value>
+  </data>
 </root>

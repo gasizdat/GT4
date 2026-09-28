@@ -81,6 +81,10 @@ public class MarkdownView : ContentView
   // opening the referenced attachment, same reason as PersonLinkTapped.
   public event EventHandler<int>? AttachmentLinkTapped;
 
+  // Read off the rendered tree rather than the Markdown: a link target or an image's size token never
+  // reaches a label, and a list marker exists only there.
+  public string PlainText => TextOf(Content);
+
   // CommonMark hands a run of lines opening with a tag to the HTML block parser as one opaque chunk,
   // and this renderer has no shape for one -- the text inside would render as nothing at all. Without
   // that parser the tags parse as inline HTML, which the inline walker already drops while keeping the
@@ -552,6 +556,24 @@ public class MarkdownView : ContentView
     };
     row.Add(marker);
     return row;
+  }
+
+  // A marked row reads as one line, its marker leading; anything else stacks its blocks.
+  private static string TextOf(View? view)
+  {
+    switch (view)
+    {
+      case Label label:
+        return label.FormattedText?.ToString() ?? label.Text;
+      case Border border:
+        return TextOf(border.Content);
+      case Layout layout:
+        var separator = layout is Grid ? " " : "\n";
+        var texts = layout.Children.OfType<View>().Select(TextOf).Where(text => text.Length > 0);
+        return string.Join(separator, texts);
+      default:
+        return string.Empty;
+    }
   }
 
   // A link the resolver has not answered for yet, or answered nothing for, renders nothing at all rather

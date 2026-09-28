@@ -3,8 +3,10 @@
     x:Class="GT4.UI.Components.PageLayout"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:behaviors="clr-namespace:GT4.UI.Behaviors"
     xmlns:components="clr-namespace:GT4.UI.Components"
     xmlns:items="clr-namespace:GT4.UI.Items"
+    xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     x:Name="Root">
 
   <ContentView.Resources>
@@ -153,6 +155,25 @@
         IsRunning="{Binding Loading.IsLoading, Source={x:Reference Root}, FallbackValue=False}"
         IsVisible="{Binding Loading.IsLoading, Source={x:Reference Root}, FallbackValue=False}"
         VerticalOptions="Center" />
+
+    <Border
+        Grid.Row="3"
+        Margin="{StaticResource BodyPadding}"
+        Padding="12,6"
+        BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceSubtle},
+                                          Dark={StaticResource SurfaceSubtleDark}}"
+        HorizontalOptions="Center"
+        InputTransparent="True"
+        StrokeShape="RoundRectangle 8"
+        StrokeThickness="0"
+        VerticalOptions="End">
+      <Border.Behaviors>
+        <behaviors:FadeVisibilityBehavior IsVisible="{Binding IsCopiedNoticeVisible, Source={x:Reference Root}}" />
+      </Border.Behaviors>
+      <Label
+          Style="{StaticResource FieldValue}"
+          Text="{x:Static resources:UIStrings.MsgCopied}" />
+    </Border>
 
     <!--  Footer slot  -->
     <ContentView
