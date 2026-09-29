@@ -49,6 +49,8 @@ public sealed class HtmlExporter
   private static readonly HtmlTemplate AvatarEmptyTemplate = HtmlTemplate.Load("avatar-empty.html");
   private static readonly HtmlTemplate AttachmentItemTemplate = HtmlTemplate.Load("attachment-item.html");
   private static readonly HtmlTemplate AttachmentFileNameTemplate = HtmlTemplate.Load("attachment-file-name.html");
+  private static readonly HtmlTemplate PortraitTemplate = HtmlTemplate.Load("portrait.html");
+  private static readonly HtmlTemplate PortraitEmptyTemplate = HtmlTemplate.Load("portrait-empty.html");
   private static readonly HtmlTemplate GalleryTemplate = HtmlTemplate.Load("gallery.html");
   private static readonly HtmlTemplate FigureTemplate = HtmlTemplate.Load("figure.html");
   private static readonly HtmlTemplate FigcaptionTemplate = HtmlTemplate.Load("figcaption.html");
@@ -276,12 +278,14 @@ public sealed class HtmlExporter
     var fullName = _NameFormatter.ToString(full, NameFormat.FullPersonName);
     var families = full.Names.Where(name => name.Type.HasFlag(NameType.FamilyName)).DefaultIfEmpty(NoFamily.Name);
     var navigation = RenderNavigation(site, families);
+    var portrait = await RenderPortraitAsync(site, full.MainPhoto);
     var dates = RenderDates(full);
     var photos = await RenderPhotosAsync(site, full.MainPhoto, full.AdditionalPhotos);
     var relatives = await RenderRelativesAsync(site, roots, full.BirthDate);
     var biographySection = await RenderBiographyAsync(site, biography);
     var attachmentList = await RenderAttachmentsAsync(site, attachments);
     var body = PersonPageTemplate.Fill(
+      ("portrait", portrait),
       ("name", shortName),
       ("fullName", fullName),
       ("dates", dates),
@@ -310,14 +314,27 @@ public sealed class HtmlExporter
     var birthDate = _DateFormatter.ToString(person.BirthDate);
     var span = person.DeathDate.GetValueOrDefault(Date.Now) - person.BirthDate;
     var age = _DateSpanFormatter.ToString(span);
-    var fields = new List<HtmlContent> { FieldTemplate.Fill(("label", UIStrings.FieldDateOfBirth), ("value", birthDate)) };
+    var fields = new List<HtmlContent> { FieldTemplate.Fill(("class", "birth"), ("label", UIStrings.FieldDateOfBirth), ("value", birthDate)) };
     if (person.DeathDate.HasValue)
     {
       var deathDate = _DateFormatter.ToString(person.DeathDate);
-      fields.Add(FieldTemplate.Fill(("label", UIStrings.FieldDateOfDeath), ("value", deathDate)));
+      fields.Add(FieldTemplate.Fill(("class", "death"), ("label", UIStrings.FieldDateOfDeath), ("value", deathDate)));
     }
-    fields.Add(FieldTemplate.Fill(("label", UIStrings.FieldAge), ("value", age)));
+    fields.Add(FieldTemplate.Fill(("class", string.Empty), ("label", UIStrings.FieldAge), ("value", age)));
     return HtmlContent.Join(fields);
+  }
+
+  private static async Task<string?> ReadCaptionAsync(Site site, Data photo) =>
+    photo.Category.IsTaggedPhoto() ? await GedcomPhotoResidue.ExtractTitleAsync(photo, site.Token) : null;
+
+  private static async Task<HtmlContent> RenderPortraitAsync(Site site, Data? mainPhoto)
+  {
+    if (mainPhoto is null)
+      return PortraitEmptyTemplate.Fill();
+
+    var media = await site.WriteMediaAsync(mainPhoto);
+    var caption = await ReadCaptionAsync(site, mainPhoto);
+    return PortraitTemplate.Fill(("src", media.Href), ("caption", caption));
   }
 
   private static async Task<HtmlContent> RenderPhotosAsync(Site site, Data? mainPhoto, Data[] additionalPhotos)
@@ -330,7 +347,7 @@ public sealed class HtmlExporter
     foreach (var photo in photos)
     {
       var media = await site.WriteMediaAsync(photo);
-      var caption = photo.Category.IsTaggedPhoto() ? await GedcomPhotoResidue.ExtractTitleAsync(photo, site.Token) : null;
+      var caption = await ReadCaptionAsync(site, photo);
       var figcaption = string.IsNullOrWhiteSpace(caption) ? HtmlContent.Empty : FigcaptionTemplate.Fill(("caption", caption));
       var figure = FigureTemplate.Fill(("src", media.Href), ("caption", caption), ("figcaption", figcaption));
       figures.Add(figure);

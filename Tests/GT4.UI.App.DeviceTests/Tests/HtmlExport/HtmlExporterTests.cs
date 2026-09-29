@@ -244,6 +244,38 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task PersonPage_HeadsWithThePortraitOrASilhouette()
+  {
+    var john = await PersonAsync("John");
+    var mary = await PersonAsync("Mary");
+    var portrait = $"<a class=\"portrait\" href=\"media/{john.MainPhoto!.Id}/photo.png\">";
+
+    var site = await ExportAsync();
+
+    var johnsPage = site.PersonPage(john);
+    var marysPage = site.PersonPage(mary);
+    Assert.Contains(portrait, johnsPage);
+    Assert.Contains("<span class=\"portrait\"></span>", marysPage);
+  }
+
+  [Fact]
+  public async Task PersonPage_MarksBirthAndDeathOnlyWhereRecorded()
+  {
+    var john = await PersonAsync("John");
+    var mary = await PersonAsync("Mary");
+    var birthLabel = System.Net.WebUtility.HtmlEncode(UIStrings.FieldDateOfBirth);
+    var deathLabel = System.Net.WebUtility.HtmlEncode(UIStrings.FieldDateOfDeath);
+
+    var site = await ExportAsync();
+
+    var johnsPage = site.PersonPage(john);
+    var marysPage = site.PersonPage(mary);
+    Assert.Contains($"<div class=\"birth\"><dt>{birthLabel}</dt>", johnsPage);
+    Assert.Contains($"<div class=\"death\"><dt>{deathLabel}</dt>", johnsPage);
+    Assert.DoesNotContain("class=\"death\"", marysPage);
+  }
+
+  [Fact]
   public async Task PersonPage_HeadsPhotosOnlyWhenThereAreAny()
   {
     var john = await PersonAsync("John");
