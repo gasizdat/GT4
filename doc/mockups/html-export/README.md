@@ -9,6 +9,7 @@ the layout is tested against real text lengths. Open them straight from disk, as
 - `family-8.html`: a family with none
 - `person-10.html`: a person with photos
 - `person-6.html`: a person with none
+- `statistics.html`: the Statistics page, linked from the header of every page
 
 Links to pages outside this set are dead. This folder goes once the templates implement the design.
 
@@ -23,6 +24,7 @@ Links to pages outside this set are dead. This folder goes once the templates im
 | The family page gets a "Persons" heading | Existing string |
 | Index: families as chips; persons grouped by initial, with a jump bar | C#: group the sorted list by the common name's first letter |
 | Biography at a readable measure, quotes styled | CSS only |
+| A Statistics page mirroring the app's, with births by decade as horizontal bars | C#: a new template, `StatisticsPage`'s private formatting moved somewhere shared, and one bulk relatives query. A new page, so it can land after the rest |
 
 The palette is the app's `Colors.xaml`, with dark mode through `prefers-color-scheme`. There are no
 web fonts and no script, so the site still works offline from `file://`.
