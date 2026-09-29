@@ -145,6 +145,15 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
     public IEnumerable<string> Pages => entries.Where(entry => entry.Name.EndsWith(".html")).Select(entry => entry.Name);
   }
 
+  // A card is the link to that person's page, up to where its anchor closes.
+  private static string Card(string page, Person person)
+  {
+    var start = page.IndexOf($"<a class=\"card\" href=\"person-{person.Id}.html\"");
+    Assert.True(start >= 0, $"No card for person {person.Id}.");
+    var end = page.IndexOf("</a>", start);
+    return page[start..end];
+  }
+
   private static string Heading(string text) => $"<h2>{System.Net.WebUtility.HtmlEncode(text)}</h2>";
 
   [GeneratedRegex("(?:href|src)=\"([^\"]*)\"")]
@@ -354,7 +363,38 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
     var commonName = nameFormatter.ToString(john, NameFormat.CommonPersonName);
     var encodedName = System.Net.WebUtility.HtmlEncode(commonName);
     var index = site.Page("index.html");
-    Assert.Contains($"href=\"person-{john.Id}.html\">{encodedName}</a>", index);
+    var card = Card(index, john);
+    Assert.Contains($"<span class=\"name\">{encodedName}</span>", card);
+  }
+
+  [Fact]
+  public async Task PersonCards_ShowTheMainPhotoOrAnEmptyAvatar()
+  {
+    var john = await PersonAsync("John");
+    var mary = await PersonAsync("Mary");
+    var photo = $"src=\"media/{john.MainPhoto!.Id}/photo.png\"";
+
+    var site = await ExportAsync();
+
+    var index = site.Page("index.html");
+    var johnsCard = Card(index, john);
+    var marysCard = Card(index, mary);
+    Assert.Contains(photo, johnsCard);
+    Assert.Contains("<span class=\"avatar\"></span>", marysCard);
+  }
+
+  [Fact]
+  public async Task RelativeCards_ShowTheRelativesMainPhoto()
+  {
+    var john = await PersonAsync("John");
+    var mary = await PersonAsync("Mary");
+    var photo = $"src=\"media/{john.MainPhoto!.Id}/photo.png\"";
+
+    var site = await ExportAsync();
+
+    var page = site.PersonPage(mary);
+    var johnsCard = Card(page, john);
+    Assert.Contains(photo, johnsCard);
   }
 
   [Fact]
