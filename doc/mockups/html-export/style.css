@@ -1,0 +1,112 @@
+:root {
+  color-scheme: light dark;
+  --bg: #F1EEE7;
+  --card: #FDFCF9;
+  --ink: #2B2925;
+  --muted: #6B6659;
+  --line: #D5D0C3;
+  --subtle: #EAE7E0;
+  --primary: #1E4437;
+  --primary-soft: #D6E4DC;
+  --accent: #8B6F4E;
+  --birth: #BC6A7E;
+  --death: #64707C;
+  --header-bg: #1E4437;
+  --header-ink: #F1EEE7;
+  --silhouette: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238A8577'%3E%3Ccircle cx='12' cy='8' r='4.5'/%3E%3Cpath d='M3 23c0-5.5 4-9 9-9s9 3.5 9 9z'/%3E%3C/svg%3E");
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1D1C1A;
+    --card: #2B2925;
+    --ink: #E6E2D9;
+    --muted: #BEB8A9;
+    --line: #3A3833;
+    --subtle: #353530;
+    --primary: #7FC0A4;
+    --primary-soft: #2E3B35;
+    --accent: #D8B37F;
+    --birth: #E39BAE;
+    --death: #9AA7B4;
+    --header-bg: #12241D;
+    --header-ink: #C6DCD0;
+  }
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 1rem/1.55 system-ui, "Segoe UI", Roboto, sans-serif; }
+a { color: var(--primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+img { max-width: 100%; height: auto; }
+
+.wrap { max-width: 64rem; margin: 0 auto; padding-inline: 1rem; }
+main { padding-top: 1.5rem; padding-bottom: 3rem; }
+
+.site-header { background: var(--header-bg); color: var(--header-ink); }
+.site-header nav { display: flex; flex-wrap: wrap; gap: 0.25rem 0.5rem; padding-top: 0.75rem; padding-bottom: 0.75rem; }
+.site-header a { color: inherit; }
+.site-header a:first-child { font-weight: 600; letter-spacing: 0.02em; }
+.site-header .separator { opacity: 0.6; }
+
+h1 { font-family: Georgia, "Times New Roman", serif; font-weight: 600; font-size: clamp(1.75rem, 5vw, 2.5rem); line-height: 1.15; margin: 0 0 0.25rem; }
+h2 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin: 2.5rem 0 0.75rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--line); }
+h3 { font-family: Georgia, "Times New Roman", serif; font-size: 1.25rem; margin: 1.5rem 0 0.5rem; }
+.subtitle { color: var(--muted); margin: 0; }
+
+/* Person summary */
+.hero { display: grid; grid-template-columns: 11rem 1fr; gap: 1.5rem; align-items: start; padding: 1.25rem; background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
+.portrait { display: block; aspect-ratio: 3 / 4; border-radius: 8px; overflow: hidden; background: var(--subtle) var(--silhouette) center 70% / 70% no-repeat; }
+.portrait img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.facts { display: grid; grid-template-columns: auto 1fr; gap: 0.25rem 1rem; margin: 1rem 0 0; }
+.facts div { display: contents; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; }
+.facts .birth dt::before, .facts .death dt::before { content: ""; display: inline-block; width: 0.55rem; height: 0.55rem; margin-right: 0.45rem; border-radius: 50%; vertical-align: 0.05rem; }
+.facts .birth dt::before { background: var(--birth); }
+.facts .death dt::before { background: var(--death); }
+
+/* Person cards: family members, relatives */
+.cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(17rem, 100%), 1fr)); gap: 0.75rem; }
+.card { display: flex; align-items: center; gap: 0.75rem; height: 100%; padding: 0.75rem; background: var(--card); border: 1px solid var(--line); border-radius: 10px; color: var(--ink); }
+.card:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgb(0 0 0 / 0.08); text-decoration: none; }
+.card .name { font-weight: 600; color: var(--primary); }
+.card-text { display: flex; flex-direction: column; min-width: 0; }
+.relation { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); }
+.dates { font-size: 0.875rem; color: var(--muted); }
+
+.avatar { flex: none; width: 3.25rem; height: 3.25rem; border-radius: 50%; overflow: hidden; background: var(--subtle) var(--silhouette) center 80% / 75% no-repeat; }
+.avatar img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; }
+
+/* Index: compact rows, grouped by initial */
+.chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.chips a { display: inline-block; padding: 0.35rem 0.9rem; border-radius: 999px; background: var(--primary-soft); }
+.initials { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-bottom: 0.5rem; }
+.initials a { min-width: 2rem; padding: 0.2rem 0.4rem; text-align: center; border-radius: 6px; background: var(--card); border: 1px solid var(--line); }
+.initial { scroll-margin-top: 1rem; }
+.rows { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(20rem, 100%), 1fr)); gap: 0.25rem 1rem; }
+.rows .card { padding: 0.4rem 0.5rem; background: none; border-color: transparent; }
+.rows .card:hover { background: var(--card); border-color: var(--line); box-shadow: none; }
+.rows .avatar { width: 2.5rem; height: 2.5rem; }
+
+/* Photos */
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: 1rem; }
+.gallery figure { margin: 0; background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.gallery a { display: block; }
+.gallery img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
+.gallery figcaption { padding: 0.5rem 0.75rem; font-size: 0.8rem; color: var(--muted); }
+
+/* Biography and the details rendered with it */
+.prose { max-width: 42rem; }
+.prose blockquote { margin: 1rem 0; padding: 0.25rem 1rem; border-left: 3px solid var(--accent); font-family: Georgia, "Times New Roman", serif; font-style: italic; }
+.prose ul ul { margin: 0.25rem 0; }
+
+/* Attachments */
+.files { padding-left: 1.25rem; }
+.files .file { margin-left: 0.5rem; color: var(--muted); font-size: 0.875rem; }
+
+@media (max-width: 36rem) {
+  .hero { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+  .portrait { width: 9rem; }
+  .facts { text-align: left; }
+}
