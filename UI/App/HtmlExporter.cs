@@ -47,6 +47,7 @@ public sealed class HtmlExporter
   private readonly INameFormatter _NameFormatter;
   private readonly IDateFormatter _DateFormatter;
   private readonly IDateSpanFormatter _DateSpanFormatter;
+  private readonly ILifeDatesFormatter _LifeDatesFormatter;
   private readonly IRelationshipTypeFormatter _RelationshipTypeFormatter;
   private readonly DataConverterResolver _DataConverterResolver;
   private readonly IComparer<Name> _NameComparer;
@@ -57,6 +58,7 @@ public sealed class HtmlExporter
     INameFormatter nameFormatter,
     IDateFormatter dateFormatter,
     IDateSpanFormatter dateSpanFormatter,
+    ILifeDatesFormatter lifeDatesFormatter,
     IRelationshipTypeFormatter relationshipTypeFormatter,
     DataConverterResolver dataConverterResolver,
     IComparer<Name> nameComparer,
@@ -67,6 +69,7 @@ public sealed class HtmlExporter
     _NameFormatter = nameFormatter;
     _DateFormatter = dateFormatter;
     _DateSpanFormatter = dateSpanFormatter;
+    _LifeDatesFormatter = lifeDatesFormatter;
     _RelationshipTypeFormatter = relationshipTypeFormatter;
     _DataConverterResolver = dataConverterResolver;
     _NameComparer = nameComparer;
@@ -158,7 +161,7 @@ public sealed class HtmlExporter
     {
       var href = PersonHref(person.Id);
       var name = _NameFormatter.ToString(person, nameFormat);
-      var dates = PersonInfoView.FormatLifeDates(person, showDeathDate: true, showAge: true, _DateFormatter, _DateSpanFormatter);
+      var dates = _LifeDatesFormatter.ToString(person, showDeathDate: true, showAge: true);
       html.Raw("<li>");
       html.Link(href, name);
       html.Raw(" ");
@@ -281,7 +284,7 @@ public sealed class HtmlExporter
       var bloodShare = RelativeInfoView.FormatBloodShare(relative);
       var href = PersonHref(relative.Id);
       var name = _NameFormatter.ToString(relative, NameFormat.CommonPersonName);
-      var dates = PersonInfoView.FormatLifeDates(relative, showDeathDate: true, showAge: true, _DateFormatter, _DateSpanFormatter);
+      var dates = _LifeDatesFormatter.ToString(relative, showDeathDate: true, showAge: true);
       html.Raw("<li>");
       html.Text(relation);
       if (bloodShare.Length > 0)
