@@ -1068,6 +1068,18 @@ FN - family name</value>
   <data name="LblRelatives" xml:space="preserve">
     <value>Relatives</value>
   </data>
+  <data name="MenuItemNameHideFromTree" xml:space="preserve">
+    <value>Hide from tree</value>
+  </data>
+  <data name="BtnNameHiddenPersons_1" xml:space="preserve">
+    <value>🙈 {0} hidden</value>
+  </data>
+  <data name="TitleHiddenPersons" xml:space="preserve">
+    <value>Hidden from the tree</value>
+  </data>
+  <data name="BtnNameShowAll" xml:space="preserve">
+    <value>Show all</value>
+  </data>
   <data name="AlertTextKinshipUnfoldingAborted" xml:space="preserve">
     <value>The operation took longer than expected. Some kinship levels remained folded. You can unfold them manually.</value>
   </data>

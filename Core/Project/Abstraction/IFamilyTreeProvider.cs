@@ -14,11 +14,16 @@ public interface IFamilyTreeProvider
   /// seeded from every ancestor, so siblings, aunts/uncles and cousins branch off the ancestral line
   /// for a fuller chart. When <see langword="false"/> only the centre's own descendants are shown.
   /// </para>
+  /// <para>
+  /// The walk never enters a person in <paramref name="hiddenIds"/>, so everyone reachable only through
+  /// them is dropped as well. The centre is shown even when hidden.
+  /// </para>
   /// </summary>
   Task<FamilyTree> BuildAsync(
     Person center,
     int ancestorGenerations,
     int descendantGenerations,
     bool includeCollaterals,
+    int[] hiddenIds,
     CancellationToken token);
 }

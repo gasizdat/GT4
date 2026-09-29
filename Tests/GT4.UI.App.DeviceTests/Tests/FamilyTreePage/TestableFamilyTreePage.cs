@@ -2,6 +2,7 @@ using GT4.Core.Project.Abstraction;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Pages;
+using GT4.UI.Resources;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
 using GT4.UI.Utils.Settings;
@@ -25,7 +26,8 @@ internal sealed class TestableFamilyTreePage : FamilyTreePage
     FontScale? fontScale,
     IAlertService alertService,
     INavigationService navigationService,
-    DataConverterResolver dataConverterResolver)
+    DataConverterResolver dataConverterResolver,
+    IFamilyTreeHiddenPersonsStore hiddenPersonsStore)
     : base(
       cancellationTokenProvider,
       currentProjectProvider,
@@ -33,16 +35,27 @@ internal sealed class TestableFamilyTreePage : FamilyTreePage
       fontScale,
       alertService,
       navigationService,
-      dataConverterResolver)
+      dataConverterResolver,
+      hiddenPersonsStore)
   {
   }
 
   public int CompletedLoads => _CompletedLoads;
 
+  public string[] OfferedHiddenNames { get; private set; } = [];
+
+  public string HiddenPersonAnswer { get; set; } = UIStrings.BtnNameCancel;
+
   public Task InvokePageCommandAsync(object parameter) => OnPageCommand(parameter);
 
   // NavigatedToEventArgs has no accessible test-side constructor and OnNavigatedTo never reads it.
   public void InvokeNavigatedTo() => OnNavigatedTo(null!);
+
+  protected override Task<string> ChooseHiddenPersonAsync(string[] names)
+  {
+    OfferedHiddenNames = names;
+    return Task.FromResult(HiddenPersonAnswer);
+  }
 
   protected override void OnPropertyChanged([CallerMemberName] string? propertyName = null)
   {

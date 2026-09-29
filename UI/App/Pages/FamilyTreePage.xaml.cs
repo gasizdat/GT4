@@ -28,6 +28,8 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
   private readonly DataConverterResolver _DataConverterResolver;
+  private readonly IFamilyTreeHiddenPersonsStore _HiddenPersonsStore;
+  private readonly ICommand _HideCommand;
   // Reused across loads so an incremental "load more" updates the existing canvas instead of rebuilding
   // every node view; views that do leave the tree are disconnected to release their native resources.
   private readonly Dictionary<int, NodeEntry> _NodeCache = [];
@@ -59,6 +61,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   private long _LastZoomTicks;
   private int _LoadOperationsCount = 0;
   private ProjectInfo? _LastProjectInfo;
+  private int[] _HiddenIds = [];
 
   // Where to park the viewport after a (re)build.
   private enum ViewTarget { Center, Top, Bottom }
@@ -73,7 +76,8 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     FontScale? fontScale,
     IAlertService alertService,
     INavigationService navigationService,
-    DataConverterResolver dataConverterResolver
+    DataConverterResolver dataConverterResolver,
+    IFamilyTreeHiddenPersonsStore hiddenPersonsStore
   )
   {
     _CancellationTokenProvider = cancellationTokenProvider;
@@ -83,8 +87,10 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     _AlertService = alertService;
     _NavigationService = navigationService;
     _DataConverterResolver = dataConverterResolver;
+    _HiddenPersonsStore = hiddenPersonsStore;
     Loading = new PageLoading(_AlertService);
     PageCommand = new SafeCommand(OnPageCommand, _AlertService);
+    _HideCommand = new SafeCommand<PersonInfo>(Hide, _AlertService);
 
     InitializeComponent();
 
@@ -142,6 +148,10 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   public string PageTitle => string.Format(UIStrings.TitleFamilyTreePage_1, _CenterName);
 
   public string OpenPersonToolbarItemName => string.Format(UIStrings.MenuItemNameOpenPerson_1, _CenterName);
+
+  public bool HasHiddenPersons => _HiddenIds.Length != 0;
+
+  public string HiddenPersonsButtonName => string.Format(UIStrings.BtnNameHiddenPersons_1, _HiddenIds.Length);
 
   // Drive the visibility of the top/bottom "load more" buttons.
   public bool CanLoadMoreAncestors
@@ -268,6 +278,9 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
 
     _ViewTarget = target;
     var center = _Center;
+    _HiddenIds = _HiddenPersonsStore.Get(_CurrentProjectProvider.Info);
+    OnPropertyChanged(nameof(HasHiddenPersons));
+    OnPropertyChanged(nameof(HiddenPersonsButtonName));
     SetLoadInProgress();
     _ = SafeTask.Run(() => LoadAsync(center), _AlertService);
   }
@@ -298,7 +311,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
       var tree = await _CurrentProjectProvider
         .Project
         .FamilyTreeProvider
-        .BuildAsync(center, _AncestorGenerations, _DescendantGenerations, _IncludeCollaterals, token);
+        .BuildAsync(center, _AncestorGenerations, _DescendantGenerations, _IncludeCollaterals, _HiddenIds, token);
 
       var zoom = _ZoomScale;
       var scaledMetrics = _Metrics with
@@ -456,6 +469,11 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     var view = new FamilyTreeNodeView(
       photo, _FontScale, displayName, isCenter, nodeLayout.Bounds.Width, nodeLayout.Bounds.Height, zoom);
     view.GestureRecognizers.Add(new TapGestureRecognizer { Command = PageCommand, CommandParameter = person });
+    if (!isCenter)
+    {
+      var hide = new MenuFlyoutItem { Text = UIStrings.MenuItemNameHideFromTree, Command = _HideCommand, CommandParameter = person };
+      FlyoutBase.SetContextFlyout(view, new MenuFlyout { hide });
+    }
     AbsoluteLayout.SetLayoutFlags(view, AbsoluteLayoutFlags.None);
     Nodes.Children.Add(view);
     return view;
@@ -561,6 +579,10 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
         Reload(ViewTarget.Center);
         break;
 
+      case string command when command == "ShowHidden":
+        await ShowHiddenAsync();
+        break;
+
 #if DEBUG
       // Diagnostic: render a deep tree in ONE pass (no incremental Clear()+rebuild churn) to
       // separate a size/element-count limit from per-render rebuild cost. Each tap jumps deeper.
@@ -575,6 +597,45 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
         await AutoLoadAncestorsAsync();
         break;
 #endif
+    }
+  }
+
+  // Virtual so a device test can answer it: an action sheet cannot be driven from a test.
+  protected virtual Task<string> ChooseHiddenPersonAsync(string[] names) =>
+    DisplayActionSheetAsync(UIStrings.TitleHiddenPersons, UIStrings.BtnNameCancel, UIStrings.BtnNameShowAll, names);
+
+  private void Hide(PersonInfo person) => SetHidden(_HiddenIds.Append(person.Id));
+
+  private void SetHidden(IEnumerable<int> personIds)
+  {
+    _HiddenPersonsStore.Set(_CurrentProjectProvider.Info, personIds);
+    Reload(ViewTarget.Center);
+  }
+
+  // Resolved against the persons that still exist, so an id left behind by a deleted person is never
+  // listed and is dropped with the next unhide.
+  private async Task ShowHiddenAsync()
+  {
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    var project = _CurrentProjectProvider.Project;
+    var persons = await project.Persons.GetPersonsAsync(token);
+    var hidden = persons.Where(person => _HiddenIds.Contains(person.Id)).ToArray();
+    var infos = await project.PersonManager.GetPersonInfosAsync(hidden, selectMainPhoto: false, token);
+    var names = infos.Select(info => _NameFormatter.ToString(info, NameFormat.FullPersonName)).ToArray();
+    Array.Sort(names, infos);
+
+    var choice = await ChooseHiddenPersonAsync(names);
+    if (choice == UIStrings.BtnNameShowAll)
+    {
+      SetHidden([]);
+      return;
+    }
+
+    var index = Array.IndexOf(names, choice);
+    if (index >= 0)
+    {
+      var shownId = infos[index].Id;
+      SetHidden(infos.Select(info => info.Id).Where(id => id != shownId));
     }
   }
 

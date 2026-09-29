@@ -1068,6 +1068,18 @@ FN - Familienname</value>
   <data name="LblRelatives" xml:space="preserve">
     <value>Verwandte</value>
   </data>
+  <data name="MenuItemNameHideFromTree" xml:space="preserve">
+    <value>Im Baum ausblenden</value>
+  </data>
+  <data name="BtnNameHiddenPersons_1" xml:space="preserve">
+    <value>🙈 {0} ausgeblendet</value>
+  </data>
+  <data name="TitleHiddenPersons" xml:space="preserve">
+    <value>Im Baum ausgeblendet</value>
+  </data>
+  <data name="BtnNameShowAll" xml:space="preserve">
+    <value>Alle anzeigen</value>
+  </data>
   <data name="AlertTextKinshipUnfoldingAborted" xml:space="preserve">
     <value>Der Vorgang hat länger gedauert als erwartet. Einige Verwandtschaftsebenen blieben zugeklappt. Sie können sie manuell ausklappen.</value>
   </data>

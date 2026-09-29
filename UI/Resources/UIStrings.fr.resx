@@ -1068,6 +1068,18 @@ FN - nom de famille</value>
   <data name="LblRelatives" xml:space="preserve">
     <value>Proches</value>
   </data>
+  <data name="MenuItemNameHideFromTree" xml:space="preserve">
+    <value>Masquer dans l'arbre</value>
+  </data>
+  <data name="BtnNameHiddenPersons_1" xml:space="preserve">
+    <value>🙈 {0} masqués</value>
+  </data>
+  <data name="TitleHiddenPersons" xml:space="preserve">
+    <value>Masqués dans l'arbre</value>
+  </data>
+  <data name="BtnNameShowAll" xml:space="preserve">
+    <value>Tout afficher</value>
+  </data>
   <data name="AlertTextKinshipUnfoldingAborted" xml:space="preserve">
     <value>L'opération a pris plus de temps que prévu. Certains niveaux de parenté sont restés repliés. Vous pouvez les déplier manuellement.</value>
   </data>

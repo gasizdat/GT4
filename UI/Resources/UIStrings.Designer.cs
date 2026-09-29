@@ -359,6 +359,15 @@ namespace GT4.UI.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to 🙈 {0} hidden.
+        /// </summary>
+        public static string BtnNameHiddenPersons_1 {
+            get {
+                return ResourceManager.GetString("BtnNameHiddenPersons_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Link Media.
         /// </summary>
         public static string BtnNameInsertMediaLink {
@@ -463,6 +472,15 @@ namespace GT4.UI.Resources {
         public static string BtnNameRestore_1 {
             get {
                 return ResourceManager.GetString("BtnNameRestore_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Show all.
+        /// </summary>
+        public static string BtnNameShowAll {
+            get {
+                return ResourceManager.GetString("BtnNameShowAll", resourceCulture);
             }
         }
         
@@ -2638,6 +2656,15 @@ namespace GT4.UI.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Hide from tree.
+        /// </summary>
+        public static string MenuItemNameHideFromTree {
+            get {
+                return ResourceManager.GetString("MenuItemNameHideFromTree", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to {0} Mark as main person.
         /// </summary>
         public static string MenuItemNameMarkAsMainPerson_1 {
@@ -4101,6 +4128,15 @@ namespace GT4.UI.Resources {
         public static string TitleGedcomImportDialog {
             get {
                 return ResourceManager.GetString("TitleGedcomImportDialog", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Hidden from the tree.
+        /// </summary>
+        public static string TitleHiddenPersons {
+            get {
+                return ResourceManager.GetString("TitleHiddenPersons", resourceCulture);
             }
         }
         

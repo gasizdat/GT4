@@ -30,6 +30,13 @@
       <HorizontalStackLayout
           HorizontalOptions="End"
           Spacing="{StaticResource PageContentSpacing}">
+        <Button
+            Padding="16,6"
+            Command="{Binding PageCommand, Source={x:Reference Root}}"
+            CommandParameter="ShowHidden"
+            IsVisible="{Binding HasHiddenPersons, Source={x:Reference Root}}"
+            Text="{Binding HiddenPersonsButtonName, Source={x:Reference Root}}"
+            VerticalOptions="Center" />
         <Label
             Style="{StaticResource FieldName}"
             Text="{x:Static resources:UIStrings.LblRelatives}"
