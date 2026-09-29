@@ -6,6 +6,7 @@ using GT4.UI.HtmlExport;
 using GT4.UI.Resources;
 using GT4.UI.Utils.Formatters;
 using Microsoft.Extensions.DependencyInjection;
+using System.Globalization;
 using System.IO.Compression;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -462,6 +463,51 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
     var page = site.PersonPage(mary);
     var johnsCard = Card(page, john);
     Assert.Contains(photo, johnsCard);
+  }
+
+  [Fact]
+  public async Task EveryPage_LinksTheStatisticsPage()
+  {
+    var site = await ExportAsync();
+
+    Assert.Contains("statistics.html", site.Names);
+    Assert.All(site.Pages, name =>
+    {
+      var page = site.Page(name);
+      Assert.Contains("href=\"statistics.html\"", page);
+    });
+  }
+
+  [Fact]
+  public async Task StatisticsPage_CountsTheProject()
+  {
+    var site = await ExportAsync();
+
+    var page = site.Page("statistics.html");
+    var label = System.Net.WebUtility.HtmlEncode(UIStrings.FieldStatTotalPersons);
+    var families = System.Net.WebUtility.HtmlEncode(UIStrings.FieldStatTotalFamilies);
+    Assert.Contains($"<dt>{label}</dt><dd>4</dd>", page);
+    Assert.Contains($"<dt>{families}</dt><dd>1</dd>", page);
+  }
+
+  // John's is the only known birth, so his decade's bar is the busiest: 1 / 1.1 of its row.
+  [Fact]
+  public async Task DecadeBars_KeepADotDecimalWidthUnderACommaDecimalCulture()
+  {
+    var culture = CultureInfo.CurrentCulture;
+    CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("de-DE");
+    Site site;
+    try
+    {
+      site = await ExportAsync();
+    }
+    finally
+    {
+      CultureInfo.CurrentCulture = culture;
+    }
+
+    var page = site.Page("statistics.html");
+    Assert.Contains("style=\"width:90.9%\"", page);
   }
 
   [Fact]

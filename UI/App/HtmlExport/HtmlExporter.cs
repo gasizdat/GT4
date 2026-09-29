@@ -27,6 +27,7 @@ namespace GT4.UI.HtmlExport;
 public sealed class HtmlExporter
 {
   private const string IndexPage = "index.html";
+  private const string StatisticsPage = "statistics.html";
   private const string StyleSheet = "style.css";
   private const string MediaFolder = "media";
 
@@ -34,6 +35,9 @@ public sealed class HtmlExporter
   private static readonly HtmlTemplate IndexPageTemplate = HtmlTemplate.Load("index-page.html");
   private static readonly HtmlTemplate FamilyPageTemplate = HtmlTemplate.Load("family-page.html");
   private static readonly HtmlTemplate PersonPageTemplate = HtmlTemplate.Load("person-page.html");
+  private static readonly HtmlTemplate StatisticsPageTemplate = HtmlTemplate.Load("statistics-page.html");
+  private static readonly HtmlTemplate DefinitionsTemplate = HtmlTemplate.Load("definitions.html");
+  private static readonly HtmlTemplate DecadeItemTemplate = HtmlTemplate.Load("decade-item.html");
   private static readonly HtmlTemplate NavigationTemplate = HtmlTemplate.Load("navigation.html");
   private static readonly HtmlTemplate NavigationFamilyTemplate = HtmlTemplate.Load("navigation-family.html");
   private static readonly HtmlTemplate SectionTemplate = HtmlTemplate.Load("section.html");
@@ -119,6 +123,8 @@ public sealed class HtmlExporter
     var css = HtmlTemplate.ReadResource(StyleSheet);
     await site.WriteTextAsync(StyleSheet, css);
     await site.WriteTextAsync(IndexPage, index);
+    var statistics = await RenderStatisticsAsync(site, persons, families);
+    await site.WriteTextAsync(StatisticsPage, statistics);
     foreach (var (family, members) in familyMembers)
     {
       var page = await RenderFamilyAsync(site, family, members);
@@ -147,7 +153,7 @@ public sealed class HtmlExporter
   {
     var crumbs = families.Select(family => RenderFamilyLink(NavigationFamilyTemplate, family));
     var joined = HtmlContent.Join(crumbs);
-    return NavigationTemplate.Fill(("project", site.ProjectName), ("families", joined));
+    return NavigationTemplate.Fill(("project", site.ProjectName), ("families", joined), ("statistics", UIStrings.TitleStatisticsPage));
   }
 
   private static HtmlContent RenderFamilyLink(HtmlTemplate template, Name family)
@@ -236,6 +242,80 @@ public sealed class HtmlExporter
     var name = _NameFormatter.ToString(person, nameFormat);
     var dates = _LifeDatesFormatter.ToString(person, showDeathDate: true, showAge: true);
     return PersonItemTemplate.Fill(("href", href), ("avatar", avatar), ("name", name), ("dates", dates));
+  }
+
+  // The sections and labels of StatisticsPage, in its order.
+  private async Task<string> RenderStatisticsAsync(Site site, PersonInfo[] persons, Name[] families)
+  {
+    var relatives = await site.Document.Relatives.GetRelativesForPersonsAsync(persons, site.Token);
+    var statistics = ProjectStatisticsCalculator.Compute(persons, families, relatives);
+    var text = new ProjectStatisticsText(statistics, _NameFormatter);
+    var decades = RenderDecades(text);
+    HtmlContent[] sections =
+    [
+      RenderStatisticsSection(UIStrings.FieldStatOverview, "tiles",
+        (UIStrings.FieldStatTotalPersons, text.TotalPersons),
+        (UIStrings.FieldStatTotalFamilies, text.TotalFamilies),
+        (UIStrings.FieldStatMenCount, text.MenCount),
+        (UIStrings.FieldStatWomenCount, text.WomenCount),
+        (UIStrings.FieldStatUnknownSexCount, text.UnknownSexCount),
+        (UIStrings.FieldStatLivingCount, text.LivingCount)),
+      RenderStatisticsSection(UIStrings.FieldStatAge, "stats",
+        (UIStrings.FieldStatAverageLifespan, text.AverageLifespan),
+        (UIStrings.FieldStatLifespan95thPercentile, text.Lifespan95thPercentile),
+        (UIStrings.FieldStatOldestLiving, text.OldestLiving),
+        (UIStrings.FieldStatLongestLifespan, text.LongestLifespan)),
+      RenderStatisticsSection(UIStrings.FieldStatBirthYears, "stats",
+        (UIStrings.FieldStatBirthYearSpan, text.BirthYearSpan),
+        (UIStrings.FieldStatMedianBirthYear, text.MedianBirthYear),
+        (UIStrings.FieldStatBirthsByDecade, decades)),
+      RenderStatisticsSection(UIStrings.FieldStatNames, "stats",
+        (UIStrings.FieldStatLargestFamily, text.TopLargestFamilies),
+        (UIStrings.FieldStatSingleMemberFamilies, text.SingleMemberFamilies),
+        (UIStrings.FieldStatTopMaleFirstNames, text.TopMaleFirstNames),
+        (UIStrings.FieldStatTopFemaleFirstNames, text.TopFemaleFirstNames)),
+      RenderStatisticsSection(UIStrings.FieldStatDataCompleteness, "stats",
+        (UIStrings.FieldStatIncompleteBirthDates, text.IncompleteBirthDateCount),
+        (UIStrings.FieldStatPhotoCoverage, text.PhotoCoverage),
+        (UIStrings.FieldStatIsolatedPersons, text.IsolatedPersonCount)),
+      RenderStatisticsSection(UIStrings.FieldStatRelationships, "stats",
+        (UIStrings.FieldStatMarriageCount, text.MarriageCount),
+        (UIStrings.FieldStatAverageChildren, text.AverageChildren),
+        (UIStrings.FieldStatMostChildren, text.MostChildren)),
+    ];
+
+    var joined = HtmlContent.Join(sections);
+    var navigation = RenderNavigation(site, []);
+    var body = StatisticsPageTemplate.Fill(("title", UIStrings.TitleStatisticsPage), ("sections", joined));
+    return RenderDocument(UIStrings.TitleStatisticsPage, navigation, body);
+  }
+
+  private static HtmlContent RenderStatisticsSection(string heading, string listClass, params (string Label, HtmlContent Value)[] fields)
+  {
+    var items = fields.Select(field => FieldTemplate.Fill(("class", string.Empty), ("label", field.Label), ("value", field.Value)));
+    var joined = HtmlContent.Join(items);
+    var list = DefinitionsTemplate.Fill(("class", listClass), ("fields", joined));
+    return RenderSection(heading, list);
+  }
+
+  private static HtmlContent RenderDecades(ProjectStatisticsText text)
+  {
+    var decades = text.BirthsByDecade;
+    if (decades.Length == 0)
+      return UIStrings.StatValueNone;
+
+    var rowLength = text.DecadeRowLength;
+    var items = decades.Select(births => RenderDecade(births, rowLength));
+    return RenderList("decades", items);
+  }
+
+  // A CSS length, so the invariant culture: under a comma-decimal one the browser would drop the width.
+  private static HtmlContent RenderDecade((string Decade, int Count) births, double rowLength)
+  {
+    var percent = births.Count / rowLength * 100;
+    var width = percent.ToString("0.#", CultureInfo.InvariantCulture);
+    var count = births.Count.ToString();
+    return DecadeItemTemplate.Fill(("decade", births.Decade), ("width", width), ("count", count));
   }
 
   private async Task<string> RenderFamilyAsync(Site site, Name family, PersonInfo[] members)
