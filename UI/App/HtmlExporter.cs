@@ -200,7 +200,7 @@ public sealed class HtmlExporter
     var bio = await _DataConverterResolver(DataCategory.PersonBio).ToObjectAsync(full.Biography, token);
     var gedcomDetails = await _DataConverterResolver(DataCategory.PersonGedcomTags).ToObjectAsync(full.GedcomData, token);
     var familyDetails = await PersonFamilyDetails.ReadAsync(project, full, attachments, _NameFormatter, token);
-    var biography = PersonPage.CombineBiography(bio as string, gedcomDetails as string, familyDetails);
+    var biography = BiographySections.Combine(bio as string, gedcomDetails as string, familyDetails);
 
     var shortName = _NameFormatter.ToString(full, NameFormat.ShortPersonName);
     var fullName = _NameFormatter.ToString(full, NameFormat.FullPersonName);

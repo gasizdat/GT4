@@ -245,15 +245,6 @@ public partial class PersonPage : ContentPage
 
   public bool ShowBiography => !string.IsNullOrWhiteSpace(_Biography);
 
-  // The biography block doubles as the home for the read-only GEDCOM details: the stored bio first, then
-  // the person's own residual tags, then their couples', so a person carrying only imported GEDCOM data
-  // still shows the block.
-  internal static string CombineBiography(params string?[] sections)
-  {
-    var present = sections.Where(section => !string.IsNullOrWhiteSpace(section));
-    return string.Join("\n\n", present);
-  }
-
   public Name FamilyName =>
     _PersonFullInfo.Names.SingleOrDefault(n => n.Type == NameType.FamilyName, FamilyInfoItem.NoFamilyName);
 
@@ -454,7 +445,7 @@ public partial class PersonPage : ContentPage
     _PersonFullInfo = data.PersonFullInfo;
     _Photos = data.Photos;
     _Attachments = data.Attachments;
-    _Biography = CombineBiography(data.Bio, data.GedcomDetails, data.FamilyDetails);
+    _Biography = BiographySections.Combine(data.Bio, data.GedcomDetails, data.FamilyDetails);
     _AllRoots = data.Roots;
     // A tab is hidden for a person without its content, which would leave the body blank and unleavable.
     if (!IsTabAvailable(_SelectedTab))
