@@ -874,7 +874,7 @@
   <data name="HintGedcomImportInProgress" xml:space="preserve">
     <value>Импорт файла. Это может занять некоторое время…</value>
   </data>
-  <data name="HintGedcomImportCancelling" xml:space="preserve">
+  <data name="HintProgressCancelling" xml:space="preserve">
     <value>Отмена…</value>
   </data>
   <data name="TitleSelectEncodingDialog" xml:space="preserve">

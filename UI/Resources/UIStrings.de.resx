@@ -874,7 +874,7 @@ Stammbaum und haben Sie Freude daran!</value>
   <data name="HintGedcomImportInProgress" xml:space="preserve">
     <value>Die Datei wird importiert. Das kann eine Weile dauern…</value>
   </data>
-  <data name="HintGedcomImportCancelling" xml:space="preserve">
+  <data name="HintProgressCancelling" xml:space="preserve">
     <value>Wird abgebrochen…</value>
   </data>
   <data name="TitleSelectEncodingDialog" xml:space="preserve">

@@ -39,7 +39,8 @@ public class ProgressDialogTests
     dialog.DialogCommand.Execute(null);
 
     Assert.False(dialog.CanCancel);
-    Assert.Equal(Resources.UIStrings.HintGedcomImportCancelling, dialog.StatusText);
+    Assert.Equal(Resources.UIStrings.HintProgressCancelling, dialog.StatusText);
+    Assert.False(string.IsNullOrEmpty(dialog.StatusText));
     Assert.True(dialog.Token.IsCancellationRequested);
   }
 

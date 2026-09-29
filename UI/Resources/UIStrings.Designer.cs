@@ -2341,15 +2341,6 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cancelling….
-        /// </summary>
-        public static string HintGedcomImportCancelling {
-            get {
-                return ResourceManager.GetString("HintGedcomImportCancelling", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Importing the file. This may take a while….
         /// </summary>
         public static string HintGedcomImportInProgress {
@@ -2393,7 +2384,16 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("HintNamesPage", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Cancelling….
+        /// </summary>
+        public static string HintProgressCancelling {
+            get {
+                return ResourceManager.GetString("HintProgressCancelling", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Open or create a new one.
         /// </summary>

@@ -874,7 +874,7 @@ genealogy tree and enjoy!</value>
   <data name="HintGedcomImportInProgress" xml:space="preserve">
     <value>Importing the file. This may take a while…</value>
   </data>
-  <data name="HintGedcomImportCancelling" xml:space="preserve">
+  <data name="HintProgressCancelling" xml:space="preserve">
     <value>Cancelling…</value>
   </data>
   <data name="TitleSelectEncodingDialog" xml:space="preserve">

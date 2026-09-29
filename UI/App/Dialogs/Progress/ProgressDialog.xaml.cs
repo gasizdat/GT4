@@ -32,7 +32,7 @@ public partial class ProgressDialog : ContentPage
   public bool CanCancel => !_Cancelling;
 
   public string StatusText => _Cancelling
-    ? UIStrings.HintGedcomImportCancelling
+    ? UIStrings.HintProgressCancelling
     : _InProgressText;
 
   public ICommand DialogCommand => _DialogCommand;
