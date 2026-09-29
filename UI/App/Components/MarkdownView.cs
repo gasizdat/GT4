@@ -10,6 +10,8 @@ namespace GT4.UI.Components;
 
 public class MarkdownView : ContentView
 {
+  internal static readonly MarkdownPipeline Pipeline = BuildPipeline();
+
   private const string BodyTextSizeKey = "LabelTextSizeDefault";
   private const string BlockSpacingKey = "PageContentSpacing";
   private const double MarkerSpacing = 6;
@@ -27,8 +29,6 @@ public class MarkdownView : ContentView
     BodyTextSizeKey,
     BodyTextSizeKey,
   ];
-
-  private static readonly MarkdownPipeline Pipeline = BuildPipeline();
 
   private readonly IAlertService _AlertService;
   private readonly Command<string> _LinkCommand;
@@ -80,6 +80,13 @@ public class MarkdownView : ContentView
   // Raised instead of navigating when a rendered [Name](attachment:123) link is tapped; the host page owns
   // opening the referenced attachment, same reason as PersonLinkTapped.
   public event EventHandler<int>? AttachmentLinkTapped;
+
+  internal static (int? WidthPercent, string Caption) DescriptionOf(LinkInline image)
+  {
+    var literals = image.OfType<LiteralInline>().Select(literal => literal.Content.ToString());
+    var description = string.Concat(literals);
+    return MarkdownLinkUtils.ParseImageDescription(description);
+  }
 
   // CommonMark hands a run of lines opening with a tag to the HTML block parser as one opaque chunk,
   // and this renderer has no shape for one -- the text inside would render as nothing at all. Without
@@ -295,13 +302,6 @@ public class MarkdownView : ContentView
     var rule = new BoxView { HeightRequest = RuleHeight };
     SetThemeColor(rule, BoxView.ColorProperty, "Gray200", "Gray500");
     return rule;
-  }
-
-  private static (int? WidthPercent, string Caption) DescriptionOf(LinkInline image)
-  {
-    var literals = image.OfType<LiteralInline>().Select(literal => literal.Content.ToString());
-    var description = string.Concat(literals);
-    return MarkdownLinkUtils.ParseImageDescription(description);
   }
 
   // MAUI keeps the height it measured a full-width image at, so capping the width alone leaves it in an

@@ -97,52 +97,9 @@ public partial class PersonInfoView : ContentView
       return name;
     }
   }
-  public string? LifeDates
-  {
-    get
-    {
-      if (Person is null || !ShowDates)
-      {
-        return null;
-      }
-
-      var personDates = string.Empty;
-      var isDeathDateDisplayed = ShowDeathDate && Person.DeathDate.HasValue;
-
-      if (Person.BirthDate.Status != DateStatus.Unknown || !isDeathDateDisplayed)
-      {
-        personDates = _DateFormatter.ToString(Person.BirthDate);
-      }
-
-      if (isDeathDateDisplayed)
-      {
-        var deathDate = Person.DeathDate!.Value.Status == DateStatus.Unknown
-                        ? string.Empty
-                        : _DateFormatter.ToString(Person.DeathDate);
-        deathDate = string.Format(UIStrings.PersonDeathMark_1, deathDate);
-
-        if (personDates == string.Empty)
-        {
-          personDates = deathDate;
-        }
-        else
-        {
-          personDates = string.Format(UIStrings.PersonDates_2, personDates, deathDate);
-        }
-      }
-
-      if (ShowAge)
-      {
-        var timeSpan = (Person.DeathDate.HasValue ? Person.DeathDate : Date.Now) - Person.BirthDate;
-        if (timeSpan.HasValue && timeSpan.Value.Status != DateStatus.Unknown)
-        {
-          personDates = string.Format(UIStrings.PersonAge_2, personDates, _DateSpanFormatter.ToString(timeSpan));
-        }
-      }
-
-      return personDates;
-    }
-  }
+  public string? LifeDates => Person is null || !ShowDates
+    ? null
+    : FormatLifeDates(Person, ShowDeathDate, ShowAge, _DateFormatter, _DateSpanFormatter);
   public ImageSource Photo
   {
     get
@@ -187,6 +144,50 @@ public partial class PersonInfoView : ContentView
 
       return _PhotoSource ?? GetDefaultImage();
     }
+  }
+
+  internal static string FormatLifeDates(
+    Person person,
+    bool showDeathDate,
+    bool showAge,
+    IDateFormatter dateFormatter,
+    IDateSpanFormatter dateSpanFormatter)
+  {
+    var personDates = string.Empty;
+    var isDeathDateDisplayed = showDeathDate && person.DeathDate.HasValue;
+
+    if (person.BirthDate.Status != DateStatus.Unknown || !isDeathDateDisplayed)
+    {
+      personDates = dateFormatter.ToString(person.BirthDate);
+    }
+
+    if (isDeathDateDisplayed)
+    {
+      var deathDate = person.DeathDate!.Value.Status == DateStatus.Unknown
+                      ? string.Empty
+                      : dateFormatter.ToString(person.DeathDate);
+      deathDate = string.Format(UIStrings.PersonDeathMark_1, deathDate);
+
+      if (personDates == string.Empty)
+      {
+        personDates = deathDate;
+      }
+      else
+      {
+        personDates = string.Format(UIStrings.PersonDates_2, personDates, deathDate);
+      }
+    }
+
+    if (showAge)
+    {
+      var timeSpan = (person.DeathDate.HasValue ? person.DeathDate : Date.Now) - person.BirthDate;
+      if (timeSpan.HasValue && timeSpan.Value.Status != DateStatus.Unknown)
+      {
+        personDates = string.Format(UIStrings.PersonAge_2, personDates, dateSpanFormatter.ToString(timeSpan));
+      }
+    }
+
+    return personDates;
   }
 
   private static void OnPersonChanged(BindableObject obj, object oldValue, object newValue)

@@ -33,13 +33,6 @@ public partial class RelativeInfoView : ContentView
 
   }
 
-  private Date? _RelationshipDate => Relative?.Type switch
-  {
-    RelationshipType.Parent => PersonBirthDate,
-    RelationshipType.Child => Relative?.BirthDate,
-    _ => Relative?.Date
-  };
-
   public static readonly BindableProperty PersonBirthDateProperty = BindableProperty.Create(
     nameof(PersonBirthDate),
     typeof(Date),
@@ -107,10 +100,40 @@ public partial class RelativeInfoView : ContentView
     set => SetValue(SelectCommandProperty, value);
   }
 
-  public bool ShowDate =>
-    _RelationshipDate.HasValue &&
-    _RelationshipDate.Value.Status != DateStatus.Unknown &&
-    Relative?.Type switch
+  public bool ShowDate => Relative is not null && ShowsRelationshipDate(Relative, PersonBirthDate);
+
+  public string RelationshipDate
+  {
+    get
+    {
+      var date = Relative is null ? null : RelationshipDateOf(Relative, PersonBirthDate);
+      return _DateFormatter.ToString(date);
+    }
+  }
+
+  public string RelationTypeName =>
+    Relative is null
+    ? string.Empty
+    : _RelationshipTypeFormatter.ToString(
+      Relative.Type,
+      Relative.BiologicalSex,
+      Relative.Generation,
+      Relative.Consanguinity);
+
+  public bool HasBloodShare => Relative?.GetBloodShare() is not null;
+
+  public string BloodShareText => Relative is null ? string.Empty : FormatBloodShare(Relative);
+
+  internal static Date? RelationshipDateOf(RelativeInfo relative, Date? personBirthDate) => relative.Type switch
+  {
+    RelationshipType.Parent => personBirthDate,
+    RelationshipType.Child => relative.BirthDate,
+    _ => relative.Date
+  };
+
+  internal static bool ShowsRelationshipDate(RelativeInfo relative, Date? personBirthDate) =>
+    RelationshipDateOf(relative, personBirthDate) is { Status: not DateStatus.Unknown } &&
+    relative.Type switch
     {
       RelationshipType.Spouse => true,
       RelationshipType.AdoptiveChild => true,
@@ -122,22 +145,7 @@ public partial class RelativeInfoView : ContentView
       _ => false
     };
 
-  public string RelationshipDate => _DateFormatter.ToString(_RelationshipDate);
-
-  public string RelationTypeName =>
-    Relative is null
-    ? string.Empty
-    : _RelationshipTypeFormatter.ToString(
-      Relative.Type,
-      Relative.BiologicalSex,
-      Relative.Generation,
-      Relative.Consanguinity);
-
-  private double? BloodShare => Relative?.GetBloodShare();
-
-  public bool HasBloodShare => BloodShare.HasValue;
-
-  public string BloodShareText => BloodShare is { } share
+  internal static string FormatBloodShare(RelativeInfo relative) => relative.GetBloodShare() is { } share
     ? string.Format(UIStrings.RelBloodShare_1, Math.Round(share * 100, 2))
     : string.Empty;
 

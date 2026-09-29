@@ -820,6 +820,24 @@
   <data name="MenuItemExportGedcom" xml:space="preserve">
     <value>📤 Экспорт в GEDCOM</value>
   </data>
+  <data name="MenuItemExportHtml" xml:space="preserve">
+    <value>📤 Экспорт в HTML</value>
+  </data>
+  <data name="ShareHtmlTitle" xml:space="preserve">
+    <value>Экспорт HTML</value>
+  </data>
+  <data name="AlertExportHtmlConfirm" xml:space="preserve">
+    <value>HTML-экспорт включает всех персон проекта, в том числе ныне живущих, со всеми биографиями, фотографиями и вложениями. Экспортировать?</value>
+  </data>
+  <data name="TitleHtmlExportDialog" xml:space="preserve">
+    <value>Экспорт HTML</value>
+  </data>
+  <data name="HintHtmlExportInProgress" xml:space="preserve">
+    <value>Запись страниц. Это может занять некоторое время…</value>
+  </data>
+  <data name="LblPersons" xml:space="preserve">
+    <value>Персоны</value>
+  </data>
   <data name="MenuItemImport" xml:space="preserve">
     <value>📥 Импорт</value>
   </data>

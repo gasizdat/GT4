@@ -248,7 +248,7 @@ public partial class PersonPage : ContentPage
   // The biography block doubles as the home for the read-only GEDCOM details: the stored bio first, then
   // the person's own residual tags, then their couples', so a person carrying only imported GEDCOM data
   // still shows the block.
-  private static string CombineBiography(params string?[] sections)
+  internal static string CombineBiography(params string?[] sections)
   {
     var present = sections.Where(section => !string.IsNullOrWhiteSpace(section));
     return string.Join("\n\n", present);
@@ -455,7 +455,7 @@ public partial class PersonPage : ContentPage
     return photos;
   }
 
-  private static RelativeInfo[] AssembleRoots(
+  internal static RelativeInfo[] AssembleRoots(
     PersonFullInfo personFullInfo,
     Parents parents,
     Siblings siblings,

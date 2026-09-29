@@ -61,6 +61,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The HTML export includes everyone in the project, living people too, with every biography, photo and attachment. Export?.
+        /// </summary>
+        public static string AlertExportHtmlConfirm {
+            get {
+                return ResourceManager.GetString("AlertExportHtmlConfirm", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to This archive contains no GEDCOM file..
         /// </summary>
         public static string AlertImportGedcomArchiveEmpty {
@@ -2350,6 +2359,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Writing the pages. This may take a while….
+        /// </summary>
+        public static string HintHtmlExportInProgress {
+            get {
+                return ResourceManager.GetString("HintHtmlExportInProgress", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Imported from GEDCOM.
         /// </summary>
         public static string HintImportedFromGedcom {
@@ -2422,6 +2440,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to People.
+        /// </summary>
+        public static string LblPersons {
+            get {
+                return ResourceManager.GetString("LblPersons", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Relatives.
         /// </summary>
         public static string LblRelatives {
@@ -2463,6 +2490,15 @@ namespace GT4.UI.Resources {
         public static string MenuItemExportGedcom {
             get {
                 return ResourceManager.GetString("MenuItemExportGedcom", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 📤 Export to HTML.
+        /// </summary>
+        public static string MenuItemExportHtml {
+            get {
+                return ResourceManager.GetString("MenuItemExportHtml", resourceCulture);
             }
         }
         
@@ -3907,6 +3943,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Export HTML.
+        /// </summary>
+        public static string ShareHtmlTitle {
+            get {
+                return ResourceManager.GetString("ShareHtmlTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Export .gt4.
         /// </summary>
         public static string ShareProjectFileTitle {
@@ -4101,6 +4146,15 @@ namespace GT4.UI.Resources {
         public static string TitleGedcomImportDialog {
             get {
                 return ResourceManager.GetString("TitleGedcomImportDialog", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Exporting HTML.
+        /// </summary>
+        public static string TitleHtmlExportDialog {
+            get {
+                return ResourceManager.GetString("TitleHtmlExportDialog", resourceCulture);
             }
         }
         

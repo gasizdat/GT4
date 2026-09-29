@@ -35,6 +35,7 @@ public partial class ProjectPage : ContentPage
   private readonly IProjectList _ProjectList;
   private readonly IGedcomExporter _Exporter;
   private readonly IGedcomImporter _Importer;
+  private readonly HtmlExporter _HtmlExporter;
   private readonly GedcomImportEncoding _GedcomImportEncoding;
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
@@ -56,6 +57,7 @@ public partial class ProjectPage : ContentPage
     IProjectList projectList,
     IGedcomExporter exporter,
     IGedcomImporter importer,
+    HtmlExporter htmlExporter,
     GedcomImportEncoding gedcomImportEncoding,
     IAlertService alertService,
     INavigationService navigationService,
@@ -73,6 +75,7 @@ public partial class ProjectPage : ContentPage
     _ProjectList = projectList;
     _Exporter = exporter;
     _Importer = importer;
+    _HtmlExporter = htmlExporter;
     _GedcomImportEncoding = gedcomImportEncoding;
     _AlertService = alertService;
     _NavigationService = navigationService;
@@ -379,7 +382,7 @@ public partial class ProjectPage : ContentPage
   {
     var choice = await DisplayActionSheetAsync(
       UIStrings.TitleExportChoice, UIStrings.BtnNameCancel, null,
-      UIStrings.MenuItemExportGedcom, UIStrings.MenuItemExportProjectFile);
+      UIStrings.MenuItemExportGedcom, UIStrings.MenuItemExportProjectFile, UIStrings.MenuItemExportHtml);
 
     if (choice == UIStrings.MenuItemExportGedcom)
     {
@@ -388,6 +391,10 @@ public partial class ProjectPage : ContentPage
     else if (choice == UIStrings.MenuItemExportProjectFile)
     {
       await OnExportProjectFile();
+    }
+    else if (choice == UIStrings.MenuItemExportHtml)
+    {
+      await OnExportHtml();
     }
   }
 
@@ -426,6 +433,45 @@ public partial class ProjectPage : ContentPage
 
     var request = new ShareFileRequest { Title = UIStrings.ShareProjectFileTitle, File = new ShareFile(path) };
     await Share.Default.RequestAsync(request);
+  }
+
+  // Exports the open project as a zipped static site and hands it to the OS share sheet. The site carries
+  // every person, living ones included, so the user confirms that first. A large project can take a while,
+  // so it runs on a background thread behind the cancellable progress modal; a cancelled export leaves no
+  // half-written archive behind.
+  private async Task OnExportHtml()
+  {
+    if (!await _AlertService.ShowConfirmationAsync(UIStrings.AlertExportHtmlConfirm))
+      return;
+
+    var projectName = _CurrentProjectProvider.Info.Name;
+    var name = FileNameUtils.Sanitize(projectName, "project") + ".html";
+    var path = Path.Combine(FileSystem.CacheDirectory, name + ProjectFileExtensions.ZipExtension);
+
+    var dialog = new ProgressDialog(UIStrings.TitleHtmlExportDialog, projectName, UIStrings.HintHtmlExportInProgress, _AlertService);
+    await Navigation.PushModalAsync(dialog);
+    try
+    {
+      await Task.Run(() => RunHtmlExportAsync(path, projectName, dialog.Token));
+    }
+    catch (OperationCanceledException)
+    {
+      File.Delete(path);
+      return;
+    }
+    finally
+    {
+      await Navigation.PopModalAsync();
+    }
+
+    var request = new ShareFileRequest { Title = UIStrings.ShareHtmlTitle, File = new ShareFile(path) };
+    await Share.Default.RequestAsync(request);
+  }
+
+  private async Task RunHtmlExportAsync(string path, string projectName, CancellationToken token)
+  {
+    await using var archive = new FileStream(path, FileMode.Create);
+    await _HtmlExporter.ExportAsync(_CurrentProjectProvider.Project, projectName, archive, token);
   }
 
   // Merges a GEDCOM file into the open project. Unlike the project list's import (which always lands in a
