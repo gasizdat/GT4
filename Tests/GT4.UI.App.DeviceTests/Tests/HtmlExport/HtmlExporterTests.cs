@@ -288,7 +288,7 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
     Assert.DoesNotContain(heading, site.PersonPage(mary));
   }
 
-  // The portrait already heads the page, so the relatives come first, as the mockup has them.
+  // The portrait already heads the page, so the relatives come first.
   [Fact]
   public async Task PersonPage_ListsRelativesBeforePhotos()
   {

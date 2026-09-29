@@ -259,7 +259,8 @@ public sealed class HtmlExporter
     return RenderDocument(family.Value, navigation, body);
   }
 
-  // Gathers what PersonPage.GetPersonDataAsync does, in the same order, so the sections match the page's.
+  // Gathers what PersonPage.GetPersonDataAsync does, so the sections hold what the page's do. Unlike the
+  // page, the relatives come before the photos: the portrait already heads the page.
   private async Task<string> RenderPersonAsync(Site site, PersonInfo person)
   {
     var project = site.Document;
@@ -314,13 +315,16 @@ public sealed class HtmlExporter
     var birthDate = _DateFormatter.ToString(person.BirthDate);
     var span = person.DeathDate.GetValueOrDefault(Date.Now) - person.BirthDate;
     var age = _DateSpanFormatter.ToString(span);
-    var fields = new List<HtmlContent> { FieldTemplate.Fill(("class", "birth"), ("label", UIStrings.FieldDateOfBirth), ("value", birthDate)) };
+    var birth = FieldTemplate.Fill(("class", "birth"), ("label", UIStrings.FieldDateOfBirth), ("value", birthDate));
+    var fields = new List<HtmlContent> { birth };
     if (person.DeathDate.HasValue)
     {
       var deathDate = _DateFormatter.ToString(person.DeathDate);
-      fields.Add(FieldTemplate.Fill(("class", "death"), ("label", UIStrings.FieldDateOfDeath), ("value", deathDate)));
+      var death = FieldTemplate.Fill(("class", "death"), ("label", UIStrings.FieldDateOfDeath), ("value", deathDate));
+      fields.Add(death);
     }
-    fields.Add(FieldTemplate.Fill(("class", string.Empty), ("label", UIStrings.FieldAge), ("value", age)));
+    var ageField = FieldTemplate.Fill(("class", string.Empty), ("label", UIStrings.FieldAge), ("value", age));
+    fields.Add(ageField);
     return HtmlContent.Join(fields);
   }
 
