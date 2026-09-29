@@ -159,6 +159,12 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
   [GeneratedRegex("(?:href|src)=\"([^\"]*)\"")]
   private static partial Regex LinkPattern();
 
+  [GeneratedRegex("<section class=\"initial\" id=\"[^\"]*\">\n<h3>([^<]*)</h3>(.*?)</section>", RegexOptions.Singleline)]
+  private static partial Regex InitialGroupPattern();
+
+  [GeneratedRegex("<a class=\"card\"")]
+  private static partial Regex CardPattern();
+
   [Fact]
   public async Task EveryLinkResolvesToAnEntryInTheArchive()
   {
@@ -170,12 +176,19 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
 
     var site = await ExportAsync();
 
-    var pages = site.Pages.Select(site.Page);
-    var matches = pages.SelectMany(page => LinkPattern().Matches(page));
-    string[] links = [.. matches.Select(match => match.Groups[1].Value)];
-    var targets = links.Select(Uri.UnescapeDataString);
+    var links = new List<string>();
+    foreach (var page in site.Pages.Select(site.Page))
+    {
+      var matches = LinkPattern().Matches(page);
+      string[] pageLinks = [.. matches.Select(match => match.Groups[1].Value)];
+      var fragments = pageLinks.Where(link => link.StartsWith('#'));
+      var targets = pageLinks.Except(fragments).Select(Uri.UnescapeDataString);
+      Assert.All(fragments, fragment => Assert.Contains($"id=\"{fragment[1..]}\"", page));
+      Assert.All(targets, target => Assert.Contains(target, site.Names));
+      links.AddRange(pageLinks);
+    }
     Assert.Contains(links, link => link.StartsWith("media/"));
-    Assert.All(targets, target => Assert.Contains(target, site.Names));
+    Assert.Contains(links, link => link.StartsWith('#'));
   }
 
   [Fact]
@@ -365,6 +378,28 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
     var index = site.Page("index.html");
     var card = Card(index, john);
     Assert.Contains($"<span class=\"name\">{encodedName}</span>", card);
+  }
+
+  [Fact]
+  public async Task Index_GroupsEveryPersonOnceUnderTheInitialOfTheirCommonName()
+  {
+    var persons = await _Document.PersonManager.GetPersonInfosAsync(selectMainPhoto: false, Token);
+    var nameFormatter = new TestServices().Provider.GetRequiredService<INameFormatter>();
+
+    var site = await ExportAsync();
+
+    var index = site.Page("index.html");
+    var matches = InitialGroupPattern().Matches(index);
+    var groups = matches.ToDictionary(match => match.Groups[1].Value, match => match.Groups[2].Value);
+    foreach (var person in persons)
+    {
+      var commonName = nameFormatter.ToString(person, NameFormat.CommonPersonName);
+      var initial = commonName[..1].ToUpper();
+      var group = groups[initial];
+      Assert.Contains($"<a class=\"card\" href=\"person-{person.Id}.html\"", group);
+    }
+    var cardCount = groups.Values.Sum(group => CardPattern().Count(group));
+    Assert.Equal(persons.Length, cardCount);
   }
 
   [Fact]

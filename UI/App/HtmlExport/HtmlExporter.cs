@@ -40,6 +40,9 @@ public sealed class HtmlExporter
   private static readonly HtmlTemplate ListTemplate = HtmlTemplate.Load("list.html");
   private static readonly HtmlTemplate FieldTemplate = HtmlTemplate.Load("field.html");
   private static readonly HtmlTemplate FamilyItemTemplate = HtmlTemplate.Load("family-item.html");
+  private static readonly HtmlTemplate InitialsTemplate = HtmlTemplate.Load("initials.html");
+  private static readonly HtmlTemplate InitialLinkTemplate = HtmlTemplate.Load("initial-link.html");
+  private static readonly HtmlTemplate InitialGroupTemplate = HtmlTemplate.Load("initial-group.html");
   private static readonly HtmlTemplate PersonItemTemplate = HtmlTemplate.Load("person-item.html");
   private static readonly HtmlTemplate RelativeItemTemplate = HtmlTemplate.Load("relative-item.html");
   private static readonly HtmlTemplate AvatarTemplate = HtmlTemplate.Load("avatar.html");
@@ -175,16 +178,42 @@ public sealed class HtmlExporter
     var familyList = RenderList("chips", familyItems);
     var familySection = RenderSection(UIStrings.TitleFamiliesPage, familyList);
     // Common names, not the family cards' short ones: outside a family, two Annes are no longer told apart.
-    var personList = await RenderPersonListAsync(site, persons, NameFormat.CommonPersonName, _PersonInfoComparer, "rows");
-    var personSection = RenderSection(UIStrings.LblPersons, personList);
+    var groups = persons
+      .OrderBy(person => person, _PersonInfoComparer)
+      .GroupBy(InitialOf);
+    var links = new List<HtmlContent>();
+    var sections = new List<HtmlContent>();
+    foreach (var (index, group) in groups.Index())
+    {
+      var id = $"initial-{index}";
+      var link = InitialLinkTemplate.Fill(("id", id), ("initial", group.Key));
+      var personList = await RenderPersonListAsync(site, group, NameFormat.CommonPersonName, _PersonInfoComparer, "rows");
+      var section = InitialGroupTemplate.Fill(("id", id), ("initial", group.Key), ("persons", personList));
+      links.Add(link);
+      sections.Add(section);
+    }
+    var joinedLinks = HtmlContent.Join(links);
+    var initials = InitialsTemplate.Fill(("links", joinedLinks));
+    var personContent = HtmlContent.Join([initials, .. sections]);
+    var personSection = RenderSection(UIStrings.LblPersons, personContent);
     var navigation = RenderNavigation(site, []);
     var body = IndexPageTemplate.Fill(("project", site.ProjectName), ("families", familySection), ("persons", personSection));
     return RenderDocument(site.ProjectName, navigation, body);
   }
 
+  private string InitialOf(PersonInfo person)
+  {
+    var name = _NameFormatter.ToString(person, NameFormat.CommonPersonName);
+    if (name.Length == 0)
+      return "?";
+
+    var initial = StringInfo.GetNextTextElement(name);
+    return initial.ToUpper(CultureInfo.CurrentCulture);
+  }
+
   private async Task<HtmlContent> RenderPersonListAsync(
     Site site,
-    PersonInfo[] persons,
+    IEnumerable<PersonInfo> persons,
     NameFormat nameFormat,
     IComparer<PersonInfo> comparer,
     string listClass)
