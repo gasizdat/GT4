@@ -22,10 +22,8 @@ using System.Text;
 namespace GT4.UI;
 
 /// <summary>
-/// Renders the whole project as a static site packed into one zip: an index over families and persons, a
-/// page per family and per person, and every photo and attachment as a file of its own. Names, dates and
-/// relatives go through the same formatters and display rules as the screens the pages mirror, so an
-/// exported page reads the way the app does.
+/// Renders the whole project as a zipped static site. Pages go through the app's own formatters and
+/// display rules, so they read the way the screens they mirror do.
 /// </summary>
 public sealed class HtmlExporter
 {
@@ -43,7 +41,7 @@ public sealed class HtmlExporter
     @media (prefers-color-scheme: dark) { body { background: #1e1e1e; color: #e6e6e6; } a { color: #8cb4ff; } }
     """;
 
-  // Everything else a biography links to -- javascript:, data:, file:, a relative path -- renders as text.
+  // A biography link to any other scheme renders as text.
   private static readonly string[] SafeSchemes = [Uri.UriSchemeHttp, Uri.UriSchemeHttps, Uri.UriSchemeMailto, "tel"];
 
   private readonly INameFormatter _NameFormatter;
@@ -84,7 +82,7 @@ public sealed class HtmlExporter
     HashSet<int> personIds = [.. persons.Select(person => person.Id)];
     var site = new Site(archive, document, projectName, personIds, token);
 
-    // Grouped the way ProjectPage groups its family cards, "No family" bucket included.
+    // Grouped as ProjectPage's family cards are, "No family" bucket included.
     var membersByNameId = persons
       .SelectMany(person => person.Names.Select(name => (NameId: name.Id, Person: person)))
       .ToLookup(x => x.NameId, x => x.Person);
@@ -172,7 +170,7 @@ public sealed class HtmlExporter
 
   private async Task<string> RenderFamilyAsync(Site site, Name family, PersonInfo[] members)
   {
-    // The "No family" bucket has no row of its own, so it has no media either -- as on FamilyPage.
+    // The "No family" bucket has no row of its own, so no media either.
     var info = family.Id == FamilyInfoItem.NoFamilyName.Id
       ? new FamilyFullInfo(family, null, [], [])
       : await site.Document.FamilyManager.GetFamilyFullInfoAsync(family, site.Token);
@@ -223,8 +221,7 @@ public sealed class HtmlExporter
     return html.ToDocument(shortName);
   }
 
-  // Built directly rather than through the attachment converter, which would also decode every image
-  // attachment into an ImageSource held by the app's image cache -- nothing a page written to disk needs.
+  // Not through the attachment converter: it would park every image attachment in the app's image cache.
   private static async Task<AttachmentInfo[]> ReadAttachmentsAsync(Data[] attachments, CancellationToken token)
   {
     var infos = new List<AttachmentInfo>();
@@ -330,10 +327,8 @@ public sealed class HtmlExporter
     html.Raw("</ul>\n");
   }
 
-  // Parsed with MarkdownView's own pipeline so a biography is read exactly as the app reads it, then
-  // cleaned of whatever the app would not render before Markdig writes it out: raw HTML tags (the app
-  // drops them and keeps the text they wrap), attribute blocks, and links to anything but a page, a media
-  // file or a safe scheme.
+  // Read with MarkdownView's pipeline, then stripped of what the app never renders: raw HTML tags (their
+  // text stays), attribute blocks, and links to anything but a page, a media file or a safe scheme.
   private static async Task<string> RenderMarkdownAsync(Site site, string markdown)
   {
     var document = Markdown.Parse(markdown, MarkdownView.Pipeline);
@@ -377,7 +372,7 @@ public sealed class HtmlExporter
       return;
     }
 
-    // An image nothing answers for renders as nothing in the app, not as a broken picture.
+    // As in the app, an unresolved image renders as nothing rather than a broken picture.
     if (target is not { IsImage: true })
     {
       link.Remove();
@@ -493,7 +488,6 @@ public sealed class HtmlExporter
     }
   }
 
-  // One export's output: the zip, and the media already written into it.
   private sealed class Site(ZipArchive archive, IProjectDocument document, string projectName, HashSet<int> personIds, CancellationToken token)
   {
     private readonly Dictionary<int, SiteLink> _Media = [];
@@ -506,16 +500,14 @@ public sealed class HtmlExporter
 
     public bool HasPerson(int personId) => personIds.Contains(personId);
 
-    // A zip in Create mode allows one open entry at a time, so a page is rendered in full -- media it
-    // links included -- before its own entry is created.
+    // A zip in Create mode allows one open entry at a time, so a page is written only once fully rendered.
     public Task WriteTextAsync(string path, string text)
     {
       var bytes = Encoding.UTF8.GetBytes(text);
       return WriteAsync(path, bytes);
     }
 
-    // Media owned by two persons, or linked from several biographies, arrives more than once; a zip entry
-    // created twice under one name extracts as a broken archive, so each row is written only the first time.
+    // Shared media arrives more than once, and a zip entry created twice extracts as a broken archive.
     public async Task<SiteLink> WriteMediaAsync(Data data)
     {
       if (_Media.TryGetValue(data.Id, out var written))

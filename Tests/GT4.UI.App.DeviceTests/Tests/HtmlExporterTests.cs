@@ -270,6 +270,21 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task DanglingImage_RendersNothing()
+  {
+    var john = await PersonAsync("John");
+    await SetBiographyAsync(john, "Before ![Lost](media:99999) after");
+
+    var site = await ExportAsync();
+
+    // John's own portrait is an <img> too, but it sits above the biography.
+    var page = site.PersonPage(john);
+    var biography = page.Split("Before")[1];
+    Assert.DoesNotContain("<img", biography);
+    Assert.DoesNotContain("Lost", page);
+  }
+
+  [Fact]
   public async Task Index_ListsEveryFamilyIncludingTheNoFamilyBucket()
   {
     var solo = await PersonAsync("Solo");

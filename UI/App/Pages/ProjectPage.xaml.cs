@@ -435,10 +435,7 @@ public partial class ProjectPage : ContentPage
     await Share.Default.RequestAsync(request);
   }
 
-  // Exports the open project as a zipped static site and hands it to the OS share sheet. The site carries
-  // every person, living ones included, so the user confirms that first. A large project can take a while,
-  // so it runs on a background thread behind the cancellable progress modal; a cancelled export leaves no
-  // half-written archive behind.
+  // The site carries every person, living ones included, so the user confirms that first.
   private async Task OnExportHtml()
   {
     if (!await _AlertService.ShowConfirmationAsync(UIStrings.AlertExportHtmlConfirm))
