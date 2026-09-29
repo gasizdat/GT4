@@ -14,7 +14,7 @@ public partial class PageLayout : ContentView
   private readonly INavigationService _NavigationService;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly ICommand _GoBackCommand;
-  private readonly IDispatcherTimer _CopiedNoticeTimer;
+  private IDispatcherTimer? _CopiedNoticeTimer;
   private bool _IsTopMenuVisible;
   private bool _IsSideMenuVisible;
   private bool _IsCopiedNoticeVisible;
@@ -36,11 +36,6 @@ public partial class PageLayout : ContentView
       CommandParameter = GoBackCommandParameter
     };
     CopyCommand = new SafeCommand<string>(CopyAsync, alertService);
-
-    _CopiedNoticeTimer = Dispatcher.CreateTimer();
-    _CopiedNoticeTimer.Interval = TimeSpan.FromSeconds(2);
-    _CopiedNoticeTimer.IsRepeating = false;
-    _CopiedNoticeTimer.Tick += (_, _) => IsCopiedNoticeVisible = false;
 
     SizeChanged += OnMenuPlacementChanged;
     _MenuItems.CollectionChanged += OnMenuPlacementChanged;
@@ -228,6 +223,14 @@ public partial class PageLayout : ContentView
   private async Task CopyAsync(string text)
   {
     await Clipboard.Default.SetTextAsync(text);
+    if (_CopiedNoticeTimer is null)
+    {
+      _CopiedNoticeTimer = Dispatcher.CreateTimer();
+      _CopiedNoticeTimer.Interval = TimeSpan.FromSeconds(2);
+      _CopiedNoticeTimer.IsRepeating = false;
+      _CopiedNoticeTimer.Tick += (_, _) => IsCopiedNoticeVisible = false;
+    }
+
     _CopiedNoticeTimer.Stop();
     IsCopiedNoticeVisible = true;
     _CopiedNoticeTimer.Start();
