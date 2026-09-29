@@ -110,11 +110,11 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
     await _Document.PersonManager.UpdatePersonAsync(person with { Biography = biography }, Token);
   }
 
-  private async Task<Site> ExportAsync(CancellationToken token = default)
+  private async Task<Site> ExportAsync(CancellationToken token = default, string projectName = "Smiths")
   {
     var exporter = new TestServices().Provider.GetRequiredService<HtmlExporter>();
     using var output = new MemoryStream();
-    await exporter.ExportAsync(_Document, "Smiths", output, token);
+    await exporter.ExportAsync(_Document, projectName, output, token);
 
     output.Position = 0;
     using var archive = new ZipArchive(output, ZipArchiveMode.Read);
@@ -310,6 +310,17 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
     var encodedName = System.Net.WebUtility.HtmlEncode(commonName);
     var index = site.Page("index.html");
     Assert.Contains($"href=\"person-{john.Id}.html\">{encodedName}</a>", index);
+  }
+
+  [Fact]
+  public async Task TextFilledIntoTemplates_IsEncoded()
+  {
+    var site = await ExportAsync(projectName: "<b>Smiths</b>");
+
+    var index = site.Page("index.html");
+    Assert.Contains("<title>&lt;b&gt;Smiths&lt;/b&gt;</title>", index);
+    Assert.Contains("<h1>&lt;b&gt;Smiths&lt;/b&gt;</h1>", index);
+    Assert.DoesNotContain("<b>", index);
   }
 
   [Fact]

@@ -16,7 +16,6 @@ using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
 using System.Globalization;
 using System.IO.Compression;
-using System.Net;
 using System.Text;
 
 namespace GT4.UI.HtmlExport;
@@ -30,16 +29,23 @@ public sealed class HtmlExporter
   private const string IndexPage = "index.html";
   private const string StyleSheet = "style.css";
   private const string MediaFolder = "media";
-  private const string Css = """
-    body { font-family: system-ui, sans-serif; line-height: 1.5; max-width: 60rem; margin: 0 auto; padding: 1rem; }
-    nav { margin-bottom: 1rem; }
-    img { max-width: 100%; height: auto; }
-    figure { display: inline-block; margin: 0 1rem 1rem 0; vertical-align: top; }
-    figure img { max-height: 25rem; }
-    dt { font-weight: bold; }
-    .subtitle, .dates, .file { opacity: 0.7; }
-    @media (prefers-color-scheme: dark) { body { background: #1e1e1e; color: #e6e6e6; } a { color: #8cb4ff; } }
-    """;
+
+  private static readonly HtmlTemplate DocumentTemplate = HtmlTemplate.Load("document.html");
+  private static readonly HtmlTemplate IndexPageTemplate = HtmlTemplate.Load("index-page.html");
+  private static readonly HtmlTemplate FamilyPageTemplate = HtmlTemplate.Load("family-page.html");
+  private static readonly HtmlTemplate PersonPageTemplate = HtmlTemplate.Load("person-page.html");
+  private static readonly HtmlTemplate NavigationTemplate = HtmlTemplate.Load("navigation.html");
+  private static readonly HtmlTemplate NavigationFamilyTemplate = HtmlTemplate.Load("navigation-family.html");
+  private static readonly HtmlTemplate SectionTemplate = HtmlTemplate.Load("section.html");
+  private static readonly HtmlTemplate ListTemplate = HtmlTemplate.Load("list.html");
+  private static readonly HtmlTemplate FieldTemplate = HtmlTemplate.Load("field.html");
+  private static readonly HtmlTemplate FamilyItemTemplate = HtmlTemplate.Load("family-item.html");
+  private static readonly HtmlTemplate PersonItemTemplate = HtmlTemplate.Load("person-item.html");
+  private static readonly HtmlTemplate RelativeItemTemplate = HtmlTemplate.Load("relative-item.html");
+  private static readonly HtmlTemplate AttachmentItemTemplate = HtmlTemplate.Load("attachment-item.html");
+  private static readonly HtmlTemplate AttachmentFileNameTemplate = HtmlTemplate.Load("attachment-file-name.html");
+  private static readonly HtmlTemplate FigureTemplate = HtmlTemplate.Load("figure.html");
+  private static readonly HtmlTemplate FigcaptionTemplate = HtmlTemplate.Load("figcaption.html");
 
   // A biography link to any other scheme renders as text.
   private static readonly string[] SafeSchemes = [Uri.UriSchemeHttp, Uri.UriSchemeHttps, Uri.UriSchemeMailto, "tel"];
@@ -101,7 +107,8 @@ public sealed class HtmlExporter
 
     Name[] indexedFamilies = [.. familyMembers.Select(f => f.Family)];
     var index = RenderIndex(site, indexedFamilies, persons);
-    await site.WriteTextAsync(StyleSheet, Css);
+    var css = HtmlTemplate.ReadResource(StyleSheet);
+    await site.WriteTextAsync(StyleSheet, css);
     await site.WriteTextAsync(IndexPage, index);
     foreach (var (family, members) in familyMembers)
     {
@@ -121,54 +128,60 @@ public sealed class HtmlExporter
 
   private static string PersonHref(int personId) => $"person-{personId}.html";
 
-  private static void AppendNavigation(HtmlBuilder html, Site site, IEnumerable<Name> families)
+  private static string RenderDocument(string title, HtmlContent body)
   {
-    html.Raw("<nav>");
-    html.Link(IndexPage, site.ProjectName);
-    foreach (var family in families)
-    {
-      var href = FamilyHref(family.Id);
-      html.Raw(" › ");
-      html.Link(href, family.Value);
-    }
-    html.Raw("</nav>\n");
+    var document = DocumentTemplate.Fill(("title", title), ("body", body));
+    return document.Markup;
+  }
+
+  private static HtmlContent RenderNavigation(Site site, IEnumerable<Name> families)
+  {
+    var crumbs = families.Select(family => RenderFamilyLink(NavigationFamilyTemplate, family));
+    var joined = HtmlContent.Join(crumbs);
+    return NavigationTemplate.Fill(("project", site.ProjectName), ("families", joined));
+  }
+
+  private static HtmlContent RenderFamilyLink(HtmlTemplate template, Name family)
+  {
+    var href = FamilyHref(family.Id);
+    return template.Fill(("href", href), ("family", family.Value));
+  }
+
+  private static HtmlContent RenderSection(string heading, HtmlContent content) =>
+    SectionTemplate.Fill(("heading", heading), ("content", content));
+
+  private static HtmlContent RenderList(IEnumerable<HtmlContent> items)
+  {
+    var joined = HtmlContent.Join(items);
+    return ListTemplate.Fill(("items", joined));
   }
 
   private string RenderIndex(Site site, Name[] families, PersonInfo[] persons)
   {
-    var html = new HtmlBuilder();
-    html.Element("h1", site.ProjectName);
-    html.Element("h2", UIStrings.TitleFamiliesPage);
-    html.Raw("<ul>\n");
-    foreach (var family in families)
-    {
-      var href = FamilyHref(family.Id);
-      html.Raw("<li>");
-      html.Link(href, family.Value);
-      html.Raw("</li>\n");
-    }
-    html.Raw("</ul>\n");
+    var familyItems = families.Select(family => RenderFamilyLink(FamilyItemTemplate, family));
+    var familyList = RenderList(familyItems);
+    var familySection = RenderSection(UIStrings.TitleFamiliesPage, familyList);
     // Common names, not the family cards' short ones: outside a family, two Annes are no longer told apart.
-    html.Element("h2", UIStrings.LblPersons);
-    AppendPersonList(html, persons, NameFormat.CommonPersonName, _PersonInfoComparer);
-    return html.ToDocument(site.ProjectName);
+    var personList = RenderPersonList(persons, NameFormat.CommonPersonName, _PersonInfoComparer);
+    var personSection = RenderSection(UIStrings.LblPersons, personList);
+    var body = IndexPageTemplate.Fill(("project", site.ProjectName), ("families", familySection), ("persons", personSection));
+    return RenderDocument(site.ProjectName, body);
   }
 
-  private void AppendPersonList(HtmlBuilder html, PersonInfo[] persons, NameFormat nameFormat, IComparer<PersonInfo> comparer)
+  private HtmlContent RenderPersonList(PersonInfo[] persons, NameFormat nameFormat, IComparer<PersonInfo> comparer)
   {
-    html.Raw("<ul>\n");
-    foreach (var person in persons.OrderBy(person => person, comparer))
-    {
-      var href = PersonHref(person.Id);
-      var name = _NameFormatter.ToString(person, nameFormat);
-      var dates = _LifeDatesFormatter.ToString(person, showDeathDate: true, showAge: true);
-      html.Raw("<li>");
-      html.Link(href, name);
-      html.Raw(" ");
-      html.Element("span", dates, "dates");
-      html.Raw("</li>\n");
-    }
-    html.Raw("</ul>\n");
+    var items = persons
+      .OrderBy(person => person, comparer)
+      .Select(person => RenderPersonItem(person, nameFormat));
+    return RenderList(items);
+  }
+
+  private HtmlContent RenderPersonItem(PersonInfo person, NameFormat nameFormat)
+  {
+    var href = PersonHref(person.Id);
+    var name = _NameFormatter.ToString(person, nameFormat);
+    var dates = _LifeDatesFormatter.ToString(person, showDeathDate: true, showAge: true);
+    return PersonItemTemplate.Fill(("href", href), ("name", name), ("dates", dates));
   }
 
   private async Task<string> RenderFamilyAsync(Site site, Name family, PersonInfo[] members)
@@ -179,13 +192,17 @@ public sealed class HtmlExporter
       : await site.Document.FamilyManager.GetFamilyFullInfoAsync(family, site.Token);
     var attachments = await ReadAttachmentsAsync(info.Attachments, site.Token);
 
-    var html = new HtmlBuilder();
-    AppendNavigation(html, site, []);
-    html.Element("h1", family.Value);
-    await AppendPhotosAsync(html, site, info.MainPhoto, info.AdditionalPhotos);
-    await AppendAttachmentsAsync(html, site, attachments);
-    AppendPersonList(html, members, NameFormat.ShortPersonName, _PersonInfoComparerByShortNames);
-    return html.ToDocument(family.Value);
+    var navigation = RenderNavigation(site, []);
+    var photos = await RenderPhotosAsync(site, info.MainPhoto, info.AdditionalPhotos);
+    var attachmentList = await RenderAttachmentsAsync(site, attachments);
+    var personList = RenderPersonList(members, NameFormat.ShortPersonName, _PersonInfoComparerByShortNames);
+    var body = FamilyPageTemplate.Fill(
+      ("navigation", navigation),
+      ("family", family.Value),
+      ("photos", photos),
+      ("attachments", attachmentList),
+      ("persons", personList));
+    return RenderDocument(family.Value, body);
   }
 
   // Gathers what PersonPage.GetPersonDataAsync does, in the same order, so the sections match the page's.
@@ -196,29 +213,32 @@ public sealed class HtmlExporter
     var full = await project.PersonManager.GetPersonFullInfoAsync(person, token);
     var roots = await project.RelativesProvider.GetRootsAsync(full, token);
     var attachments = await ReadAttachmentsAsync(full.Attachments, token);
-    var bio = await _DataConverterResolver(DataCategory.PersonBio).ToObjectAsync(full.Biography, token);
-    var gedcomDetails = await _DataConverterResolver(DataCategory.PersonGedcomTags).ToObjectAsync(full.GedcomData, token);
+    var bioConverter = _DataConverterResolver(DataCategory.PersonBio);
+    var gedcomConverter = _DataConverterResolver(DataCategory.PersonGedcomTags);
+    var bio = await bioConverter.ToObjectAsync(full.Biography, token);
+    var gedcomDetails = await gedcomConverter.ToObjectAsync(full.GedcomData, token);
     var familyDetails = await PersonFamilyDetails.ReadAsync(project, full, attachments, _NameFormatter, token);
     var biography = BiographySections.Combine(bio as string, gedcomDetails as string, familyDetails);
 
     var shortName = _NameFormatter.ToString(full, NameFormat.ShortPersonName);
     var fullName = _NameFormatter.ToString(full, NameFormat.FullPersonName);
     var families = full.Names.Where(name => name.Type.HasFlag(NameType.FamilyName)).DefaultIfEmpty(NoFamily.Name);
-    var html = new HtmlBuilder();
-    AppendNavigation(html, site, families);
-    html.Element("h1", shortName);
-    html.Element("p", fullName, "subtitle");
-    AppendDates(html, full);
-    await AppendPhotosAsync(html, site, full.MainPhoto, full.AdditionalPhotos);
-    AppendRelatives(html, roots, full.BirthDate);
-    if (!string.IsNullOrWhiteSpace(biography))
-    {
-      var rendered = await RenderMarkdownAsync(site, biography);
-      html.Element("h2", UIStrings.FieldPersonBiography);
-      html.Raw(rendered);
-    }
-    await AppendAttachmentsAsync(html, site, attachments);
-    return html.ToDocument(shortName);
+    var navigation = RenderNavigation(site, families);
+    var dates = RenderDates(full);
+    var photos = await RenderPhotosAsync(site, full.MainPhoto, full.AdditionalPhotos);
+    var relatives = RenderRelatives(roots, full.BirthDate);
+    var biographySection = await RenderBiographyAsync(site, biography);
+    var attachmentList = await RenderAttachmentsAsync(site, attachments);
+    var body = PersonPageTemplate.Fill(
+      ("navigation", navigation),
+      ("name", shortName),
+      ("fullName", fullName),
+      ("dates", dates),
+      ("photos", photos),
+      ("relatives", relatives),
+      ("biography", biographySection),
+      ("attachments", attachmentList));
+    return RenderDocument(shortName, body);
   }
 
   // Not through the attachment converter: it would park every image attachment in the app's image cache.
@@ -234,102 +254,103 @@ public sealed class HtmlExporter
     return [.. infos];
   }
 
-  private void AppendDates(HtmlBuilder html, PersonFullInfo person)
+  private HtmlContent RenderDates(PersonFullInfo person)
   {
     var birthDate = _DateFormatter.ToString(person.BirthDate);
     var span = person.DeathDate.GetValueOrDefault(Date.Now) - person.BirthDate;
     var age = _DateSpanFormatter.ToString(span);
-    html.Raw("<dl>\n");
-    html.Field(UIStrings.FieldDateOfBirth, birthDate);
+    var fields = new List<HtmlContent> { FieldTemplate.Fill(("label", UIStrings.FieldDateOfBirth), ("value", birthDate)) };
     if (person.DeathDate.HasValue)
     {
       var deathDate = _DateFormatter.ToString(person.DeathDate);
-      html.Field(UIStrings.FieldDateOfDeath, deathDate);
+      fields.Add(FieldTemplate.Fill(("label", UIStrings.FieldDateOfDeath), ("value", deathDate)));
     }
-    html.Field(UIStrings.FieldAge, age);
-    html.Raw("</dl>\n");
+    fields.Add(FieldTemplate.Fill(("label", UIStrings.FieldAge), ("value", age)));
+    return HtmlContent.Join(fields);
   }
 
-  private static async Task AppendPhotosAsync(HtmlBuilder html, Site site, Data? mainPhoto, Data[] additionalPhotos)
+  private static async Task<HtmlContent> RenderPhotosAsync(Site site, Data? mainPhoto, Data[] additionalPhotos)
   {
     Data[] photos = mainPhoto is null ? additionalPhotos : [mainPhoto, .. additionalPhotos];
+    var figures = new List<HtmlContent>();
     foreach (var photo in photos)
     {
       var media = await site.WriteMediaAsync(photo);
       var caption = photo.Category.IsTaggedPhoto() ? await GedcomPhotoResidue.ExtractTitleAsync(photo, site.Token) : null;
-      html.Raw("<figure>");
-      html.Image(media.Href, caption);
-      if (!string.IsNullOrWhiteSpace(caption))
-      {
-        html.Element("figcaption", caption);
-      }
-      html.Raw("</figure>\n");
+      var figcaption = string.IsNullOrWhiteSpace(caption) ? HtmlContent.Empty : FigcaptionTemplate.Fill(("caption", caption));
+      var figure = FigureTemplate.Fill(("src", media.Href), ("caption", caption), ("figcaption", figcaption));
+      figures.Add(figure);
     }
+    return HtmlContent.Join(figures);
   }
 
   // The first level of PersonPage's relatives tree, as it shows before anything is expanded.
-  private void AppendRelatives(HtmlBuilder html, RelativeInfo[] relatives, Date personBirthDate)
+  private HtmlContent RenderRelatives(RelativeInfo[] relatives, Date personBirthDate)
   {
     if (relatives.Length == 0)
-      return;
+      return HtmlContent.Empty;
 
-    html.Element("h2", UIStrings.LblRelatives);
-    html.Raw("<ul>\n");
-    foreach (var relative in relatives)
-    {
-      var relation = _RelationshipTypeFormatter.ToString(relative.Type, relative.BiologicalSex, relative.Generation, relative.Consanguinity);
-      var bloodShare = relative.GetBloodShareText();
-      var href = PersonHref(relative.Id);
-      var name = _NameFormatter.ToString(relative, NameFormat.CommonPersonName);
-      var dates = _LifeDatesFormatter.ToString(relative, showDeathDate: true, showAge: true);
-      html.Raw("<li>");
-      html.Text(relation);
-      if (bloodShare.Length > 0)
-      {
-        html.Raw(" ");
-        html.Text(bloodShare);
-      }
-      if (relative.ShowsRelationshipDate(personBirthDate))
-      {
-        var relationshipDate = relative.GetRelationshipDate(personBirthDate);
-        var date = _DateFormatter.ToString(relationshipDate);
-        html.Raw(" ");
-        html.Text(date);
-      }
-      html.Raw("<br>");
-      html.Link(href, name);
-      html.Raw(" ");
-      html.Element("span", dates, "dates");
-      html.Raw("</li>\n");
-    }
-    html.Raw("</ul>\n");
+    var items = relatives.Select(relative => RenderRelativeItem(relative, personBirthDate));
+    var list = RenderList(items);
+    return RenderSection(UIStrings.LblRelatives, list);
   }
 
-  private static async Task AppendAttachmentsAsync(HtmlBuilder html, Site site, AttachmentInfo[] attachments)
+  private HtmlContent RenderRelativeItem(RelativeInfo relative, Date personBirthDate)
+  {
+    var relation = new List<string>
+    {
+      _RelationshipTypeFormatter.ToString(relative.Type, relative.BiologicalSex, relative.Generation, relative.Consanguinity),
+    };
+    var bloodShare = relative.GetBloodShareText();
+    if (bloodShare.Length > 0)
+    {
+      relation.Add(bloodShare);
+    }
+    if (relative.ShowsRelationshipDate(personBirthDate))
+    {
+      var relationshipDate = relative.GetRelationshipDate(personBirthDate);
+      var date = _DateFormatter.ToString(relationshipDate);
+      relation.Add(date);
+    }
+
+    var caption = string.Join(' ', relation);
+    var href = PersonHref(relative.Id);
+    var name = _NameFormatter.ToString(relative, NameFormat.CommonPersonName);
+    var dates = _LifeDatesFormatter.ToString(relative, showDeathDate: true, showAge: true);
+    return RelativeItemTemplate.Fill(("relation", caption), ("href", href), ("name", name), ("dates", dates));
+  }
+
+  private static async Task<HtmlContent> RenderBiographyAsync(Site site, string biography)
+  {
+    if (string.IsNullOrWhiteSpace(biography))
+      return HtmlContent.Empty;
+
+    var rendered = await RenderMarkdownAsync(site, biography);
+    return RenderSection(UIStrings.FieldPersonBiography, rendered);
+  }
+
+  private static async Task<HtmlContent> RenderAttachmentsAsync(Site site, AttachmentInfo[] attachments)
   {
     if (attachments.Length == 0)
-      return;
+      return HtmlContent.Empty;
 
-    html.Element("h2", UIStrings.FieldPersonAttachments);
-    html.Raw("<ul>\n");
+    var items = new List<HtmlContent>();
     foreach (var attachment in attachments)
     {
       var media = await site.WriteMediaAsync(attachment.Data);
-      html.Raw("<li>");
-      html.Link(media.Href, attachment.DisplayName);
-      if (attachment.ShowFileName)
-      {
-        html.Raw(" ");
-        html.Element("span", attachment.FileName, "file");
-      }
-      html.Raw("</li>\n");
+      var fileName = attachment.ShowFileName
+        ? AttachmentFileNameTemplate.Fill(("fileName", attachment.FileName))
+        : HtmlContent.Empty;
+      var item = AttachmentItemTemplate.Fill(("href", media.Href), ("name", attachment.DisplayName), ("fileName", fileName));
+      items.Add(item);
     }
-    html.Raw("</ul>\n");
+    var list = RenderList(items);
+    return RenderSection(UIStrings.FieldPersonAttachments, list);
   }
 
   // Read with MarkdownView's pipeline, then stripped of what the app never renders: raw HTML tags (their
   // text stays), attribute blocks, and links to anything but a page, a media file or a safe scheme.
-  private static async Task<string> RenderMarkdownAsync(Site site, string markdown)
+  private static async Task<HtmlContent> RenderMarkdownAsync(Site site, string markdown)
   {
     var document = Markdown.Parse(markdown, BiographyMarkdown.Pipeline);
     foreach (var node in document.Descendants())
@@ -352,7 +373,8 @@ public sealed class HtmlExporter
     {
       await RewriteLinkAsync(site, link);
     }
-    return document.ToHtml(BiographyMarkdown.Pipeline);
+    var html = document.ToHtml(BiographyMarkdown.Pipeline);
+    return HtmlContent.Raw(html);
   }
 
   private static bool IsSafe(string url) =>
@@ -426,67 +448,6 @@ public sealed class HtmlExporter
   }
 
   private sealed record SiteLink(string Href, bool IsImage, Size? PixelSize);
-
-  // Every piece of text goes through here encoded; only the markup this class writes itself is raw.
-  private sealed class HtmlBuilder
-  {
-    private readonly StringBuilder _Html = new();
-
-    public void Raw(string html) => _Html.Append(html);
-
-    public void Text(string? text) => _Html.Append(WebUtility.HtmlEncode(text));
-
-    public void Element(string tag, string? text, string? cssClass = null)
-    {
-      _Html.Append('<').Append(tag);
-      if (cssClass is not null)
-      {
-        _Html.Append(" class=\"").Append(cssClass).Append('"');
-      }
-      _Html.Append('>');
-      Text(text);
-      _Html.Append("</").Append(tag).Append(">\n");
-    }
-
-    public void Link(string href, string? text)
-    {
-      _Html.Append("<a href=\"").Append(href).Append("\">");
-      Text(text);
-      _Html.Append("</a>");
-    }
-
-    public void Image(string src, string? alt)
-    {
-      _Html.Append("<img src=\"").Append(src).Append("\" alt=\"");
-      Text(alt);
-      _Html.Append("\">");
-    }
-
-    public void Field(string name, string value)
-    {
-      Element("dt", name);
-      Element("dd", value);
-    }
-
-    public string ToDocument(string title)
-    {
-      var encodedTitle = WebUtility.HtmlEncode(title);
-      return $$"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>{{encodedTitle}}</title>
-        <link rel="stylesheet" href="{{StyleSheet}}">
-        </head>
-        <body>
-        {{_Html}}
-        </body>
-        </html>
-        """;
-    }
-  }
 
   private sealed class Site(ZipArchive archive, IProjectDocument document, string projectName, HashSet<int> personIds, CancellationToken token)
   {
