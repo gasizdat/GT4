@@ -9,6 +9,7 @@ using GT4.UI.Pages;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
+using GT4.UI.Utils.Extensions;
 using GT4.UI.Utils.Formatters;
 using Markdig;
 using Markdig.Renderers.Html;
@@ -281,7 +282,7 @@ public sealed class HtmlExporter
     foreach (var relative in relatives)
     {
       var relation = _RelationshipTypeFormatter.ToString(relative.Type, relative.BiologicalSex, relative.Generation, relative.Consanguinity);
-      var bloodShare = RelativeInfoView.FormatBloodShare(relative);
+      var bloodShare = relative.GetBloodShareText();
       var href = PersonHref(relative.Id);
       var name = _NameFormatter.ToString(relative, NameFormat.CommonPersonName);
       var dates = _LifeDatesFormatter.ToString(relative, showDeathDate: true, showAge: true);
@@ -292,9 +293,9 @@ public sealed class HtmlExporter
         html.Raw(" ");
         html.Text(bloodShare);
       }
-      if (RelativeInfoView.ShowsRelationshipDate(relative, personBirthDate))
+      if (relative.ShowsRelationshipDate(personBirthDate))
       {
-        var relationshipDate = RelativeInfoView.RelationshipDateOf(relative, personBirthDate);
+        var relationshipDate = relative.GetRelationshipDate(personBirthDate);
         var date = _DateFormatter.ToString(relationshipDate);
         html.Raw(" ");
         html.Text(date);

@@ -1,7 +1,6 @@
 using GT4.Core.Project.Dto;
 using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
-using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Extensions;
 using GT4.UI.Utils.Formatters;
@@ -100,13 +99,13 @@ public partial class RelativeInfoView : ContentView
     set => SetValue(SelectCommandProperty, value);
   }
 
-  public bool ShowDate => Relative is not null && ShowsRelationshipDate(Relative, PersonBirthDate);
+  public bool ShowDate => Relative?.ShowsRelationshipDate(PersonBirthDate) == true;
 
   public string RelationshipDate
   {
     get
     {
-      var date = Relative is null ? null : RelationshipDateOf(Relative, PersonBirthDate);
+      var date = Relative?.GetRelationshipDate(PersonBirthDate);
       return _DateFormatter.ToString(date);
     }
   }
@@ -122,32 +121,7 @@ public partial class RelativeInfoView : ContentView
 
   public bool HasBloodShare => Relative?.GetBloodShare() is not null;
 
-  public string BloodShareText => Relative is null ? string.Empty : FormatBloodShare(Relative);
-
-  internal static Date? RelationshipDateOf(RelativeInfo relative, Date? personBirthDate) => relative.Type switch
-  {
-    RelationshipType.Parent => personBirthDate,
-    RelationshipType.Child => relative.BirthDate,
-    _ => relative.Date
-  };
-
-  internal static bool ShowsRelationshipDate(RelativeInfo relative, Date? personBirthDate) =>
-    RelationshipDateOf(relative, personBirthDate) is { Status: not DateStatus.Unknown } &&
-    relative.Type switch
-    {
-      RelationshipType.Spouse => true,
-      RelationshipType.AdoptiveChild => true,
-      RelationshipType.StepChild => true,
-      RelationshipType.AdoptiveParent => true,
-      RelationshipType.StepParent => true,
-      RelationshipType.AdoptiveSibling => true,
-      RelationshipType.StepSibling => true,
-      _ => false
-    };
-
-  internal static string FormatBloodShare(RelativeInfo relative) => relative.GetBloodShare() is { } share
-    ? string.Format(UIStrings.RelBloodShare_1, Math.Round(share * 100, 2))
-    : string.Empty;
+  public string BloodShareText => Relative?.GetBloodShareText() ?? string.Empty;
 
   private static void OnRelativeInfoChanged(BindableObject obj, object oldValue, object newValue)
   {
