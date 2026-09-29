@@ -4,34 +4,40 @@ using System.Windows.Input;
 
 namespace GT4.UI.Dialogs;
 
-// Modal shown while a GEDCOM import runs on a background thread. It surfaces progress and lets the user
-// cancel: the Cancel button (or the Android hardware back button) trips the token the import observes.
-public partial class GedcomImportDialog : ContentPage
+// Modal shown while a long operation (a GEDCOM import, an HTML export) runs on a background thread. It
+// surfaces progress and lets the user cancel: the Cancel button (or the Android hardware back button) trips
+// the token the operation observes.
+public partial class ProgressDialog : ContentPage
 {
   private readonly CancellationTokenSource _Cancellation = new();
   private readonly ICommand _DialogCommand;
+  private readonly string _InProgressText;
   private bool _Cancelling;
 
-  public GedcomImportDialog(string importingProjectName, IAlertService alertService)
+  public ProgressDialog(string heading, string subject, string inProgressText, IAlertService alertService)
   {
-    ImportingProjectName = importingProjectName;
+    Heading = heading;
+    Subject = subject;
+    _InProgressText = inProgressText;
     _DialogCommand = new SafeCommand(Cancel, alertService);
     InitializeComponent();
   }
 
   public CancellationToken Token => _Cancellation.Token;
 
-  public string ImportingProjectName { get; init; }
+  public string Heading { get; init; }
+
+  public string Subject { get; init; }
 
   public bool CanCancel => !_Cancelling;
 
   public string StatusText => _Cancelling
     ? UIStrings.HintGedcomImportCancelling
-    : UIStrings.HintGedcomImportInProgress;
+    : _InProgressText;
 
   public ICommand DialogCommand => _DialogCommand;
 
-  // The hardware back button would otherwise dismiss the modal and leave the import running headless;
+  // The hardware back button would otherwise dismiss the modal and leave the operation running headless;
   // route it to cancellation and swallow the dismissal.
   protected override bool OnBackButtonPressed()
   {

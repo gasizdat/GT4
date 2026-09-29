@@ -449,7 +449,8 @@ public partial class ProjectPage : ContentPage
     if (reader is null)
       return;
 
-    var dialog = new GedcomImportDialog(_CurrentProjectProvider.Info.Name, _AlertService);
+    var dialog = new ProgressDialog(
+      UIStrings.TitleGedcomImportDialog, _CurrentProjectProvider.Info.Name, UIStrings.HintGedcomImportInProgress, _AlertService);
     await Navigation.PushModalAsync(dialog);
     try
     {

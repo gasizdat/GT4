@@ -12,7 +12,7 @@ namespace GT4.UI.DeviceTests;
 /// <summary>
 /// Covers the one rule every modal dialog shares: its way out completes the result task its caller is
 /// parked on, and never dismisses the page itself -- the caller owns the push/await/pop protocol.
-/// GedcomImportDialog is absent because it cancels a running import rather than returning a result,
+/// ProgressDialog is absent because it cancels a running operation rather than returning a result,
 /// and PhotoViewerDialog because it is not built on PageLayout at all.
 /// </summary>
 public class DialogBackButtonTests

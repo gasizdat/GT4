@@ -3,18 +3,20 @@ using Xunit;
 namespace GT4.UI.DeviceTests;
 
 /// <summary>
-/// Covers GedcomImportDialog directly: its only service dependency is the IAlertService behind the
+/// Covers ProgressDialog directly: its only service dependency is the IAlertService behind the
 /// cancel command, so it's constructed straight from a TestServices mock.
-/// The actual import (ProjectPage/ProjectListPage's OnImportGedcom) is out of scope -- FilePicker is
-/// an external dependency -- but the cancellation UI this dialog owns is self-contained and testable.
+/// The operations it fronts (ProjectPage/ProjectListPage's GEDCOM import, ProjectPage's HTML export) are
+/// out of scope -- FilePicker and the share sheet are external dependencies -- but the cancellation UI
+/// this dialog owns is self-contained and testable.
 /// </summary>
-public class GedcomImportDialogTests
+public class ProgressDialogTests
 {
-  private static async Task<TestableGedcomImportDialog> CreateDialogAsync()
+  private static async Task<TestableProgressDialog> CreateDialogAsync()
   {
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
     var services = new TestServices();
-    return await MainThread.InvokeOnMainThreadAsync(() => new TestableGedcomImportDialog("My Tree", services.AlertService.Object));
+    return await MainThread.InvokeOnMainThreadAsync(
+      () => new TestableProgressDialog("Heading", "My Tree", "Working", services.AlertService.Object));
   }
 
   [Fact]
@@ -22,9 +24,10 @@ public class GedcomImportDialogTests
   {
     var dialog = await CreateDialogAsync();
 
-    Assert.Equal("My Tree", dialog.ImportingProjectName);
+    Assert.Equal("Heading", dialog.Heading);
+    Assert.Equal("My Tree", dialog.Subject);
     Assert.True(dialog.CanCancel);
-    Assert.Equal(Resources.UIStrings.HintGedcomImportInProgress, dialog.StatusText);
+    Assert.Equal("Working", dialog.StatusText);
     Assert.False(dialog.Token.IsCancellationRequested);
   }
 

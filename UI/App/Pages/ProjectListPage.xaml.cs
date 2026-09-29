@@ -281,7 +281,7 @@ public partial class ProjectListPage : ContentPage
   // is opened as current and we navigate straight into it.
   private async Task ImportIntoNewProjectAsync(TextReader reader, string name, string description, string? mediaBasePath)
   {
-    var dialog = new GedcomImportDialog(name, _AlertService);
+    var dialog = new ProgressDialog(UIStrings.TitleGedcomImportDialog, name, UIStrings.HintGedcomImportInProgress, _AlertService);
     await Navigation.PushModalAsync(dialog);
     ProjectInfo? info = null;
     try
