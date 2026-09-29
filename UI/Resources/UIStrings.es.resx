@@ -1072,7 +1072,7 @@ FN - apellido familiar</value>
     <value>Ocultar en el árbol</value>
   </data>
   <data name="BtnNameHiddenPersons_1" xml:space="preserve">
-    <value>🙈 {0} ocultos</value>
+    <value>🙈 Ocultos: {0}</value>
   </data>
   <data name="TitleHiddenPersons" xml:space="preserve">
     <value>Ocultos en el árbol</value>

@@ -388,8 +388,9 @@ public class FamilyTreePageTests
     services.FamilyTreeProvider.Verify(
       f => f.BuildAsync(center, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.Is<int[]>(ids => ids.SequenceEqual(new[] { 7 })), It.IsAny<CancellationToken>()),
       Times.Once());
+    var expectedCount = string.Format(UIStrings.BtnNameHiddenPersons_1, 1);
     Assert.True(page.HasHiddenPersons);
-    Assert.Equal(string.Format(UIStrings.BtnNameHiddenPersons_1, 1), page.HiddenPersonsButtonName);
+    Assert.Equal(expectedCount, page.HiddenPersonsButtonName);
   }
 
   [Fact]
@@ -451,7 +452,8 @@ public class FamilyTreePageTests
 
     await WaitForLoadAsync(page, services, () => page.InvokePageCommandAsync("ShowHidden"));
 
-    Assert.Equal(new[] { FullName(services, anna), FullName(services, petr) }, page.OfferedHiddenNames);
+    var expectedNames = new[] { FullName(services, anna), FullName(services, petr) };
+    Assert.Equal(expectedNames, page.OfferedHiddenNames);
     Assert.Equal(new[] { anna.Id }, hidden());
   }
 
@@ -515,7 +517,7 @@ public class FamilyTreePageTests
   }
 #endif
 
-  // A stateful stand-in for the per-project store; the returned probe reads what the page last stored.
+  // The returned probe reads what the page last stored.
   private static Func<int[]> UseHiddenPersons(TestServices services, params int[] ids)
   {
     var stored = ids;

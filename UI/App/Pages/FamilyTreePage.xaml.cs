@@ -600,11 +600,15 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     }
   }
 
-  // Virtual so a device test can answer it: an action sheet cannot be driven from a test.
+  // Virtual only so a device test can answer the sheet, which a test cannot drive.
   protected virtual Task<string> ChooseHiddenPersonAsync(string[] names) =>
     DisplayActionSheetAsync(UIStrings.TitleHiddenPersons, UIStrings.BtnNameCancel, UIStrings.BtnNameShowAll, names);
 
-  private void Hide(PersonInfo person) => SetHidden(_HiddenIds.Append(person.Id));
+  private void Hide(PersonInfo person)
+  {
+    var hiddenIds = _HiddenIds.Append(person.Id);
+    SetHidden(hiddenIds);
+  }
 
   private void SetHidden(IEnumerable<int> personIds)
   {
@@ -612,8 +616,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     Reload(ViewTarget.Center);
   }
 
-  // Resolved against the persons that still exist, so an id left behind by a deleted person is never
-  // listed and is dropped with the next unhide.
+  // A deleted person's leftover id is never listed, and the next unhide drops it.
   private async Task ShowHiddenAsync()
   {
     using var token = _CancellationTokenProvider.CreateDbCancellationToken();
@@ -635,7 +638,8 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     if (index >= 0)
     {
       var shownId = infos[index].Id;
-      SetHidden(infos.Select(info => info.Id).Where(id => id != shownId));
+      var stillHiddenIds = infos.Select(info => info.Id).Where(id => id != shownId);
+      SetHidden(stillHiddenIds);
     }
   }
 

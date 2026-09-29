@@ -1072,7 +1072,7 @@ FN - nom de famille</value>
     <value>Masquer dans l'arbre</value>
   </data>
   <data name="BtnNameHiddenPersons_1" xml:space="preserve">
-    <value>🙈 {0} masqués</value>
+    <value>🙈 Masqués : {0}</value>
   </data>
   <data name="TitleHiddenPersons" xml:space="preserve">
     <value>Masqués dans l'arbre</value>
