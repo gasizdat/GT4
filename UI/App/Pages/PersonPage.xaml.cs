@@ -377,27 +377,21 @@ public partial class PersonPage : ContentPage
       var project = _CurrentProjectProvider.Project;
       var startInfo = _CurrentProjectProvider.Info;
       var personFullInfo = await project.PersonManager.GetPersonFullInfoAsync(person, token);
-      var parentsTasks = project.RelativesProvider.GetParentsAsync(personFullInfo.RelativeInfos, token);
-      var stepChildrenTasks = project.RelativesProvider.GetStepChildrenAsync(personFullInfo.RelativeInfos, token);
+      var rootsTask = project.RelativesProvider.GetRootsAsync(personFullInfo, token);
       var bioTask = _TextConverter.ToObjectAsync(personFullInfo.Biography, token);
       var gedcomTask = _GedcomConverter.ToObjectAsync(personFullInfo.GedcomData, token);
       var attachmentsTask = Task.WhenAll(
         personFullInfo.Attachments.Select(data => _DataConverterResolver(data.Category).ToObjectAsync(data, token)));
-      await Task.WhenAll(parentsTasks, stepChildrenTasks, bioTask, gedcomTask, attachmentsTask);
+      await Task.WhenAll(rootsTask, bioTask, gedcomTask, attachmentsTask);
 
       // Sequenced after the attachments: a couple's media renders under the name the attachment row carries.
       var attachments = attachmentsTask.Result.OfType<AttachmentInfo>().ToArray();
       var familyDetails = await PersonFamilyDetails.ReadAsync(project, personFullInfo, attachments, _NameFormatter, token);
 
-      var parents = parentsTasks.Result;
-      var stepChildren = stepChildrenTasks.Result;
-      var relativesProvider = project.RelativesProvider;
-      var siblings = relativesProvider.GetSiblings(personFullInfo, parents);
-      var roots = AssembleRoots(personFullInfo, parents, siblings, stepChildren, relativesProvider);
       var photos = await LoadPhotosAsync(personFullInfo, token);
       var data = new PersonPageData(
         personFullInfo,
-        roots,
+        rootsTask.Result,
         photos,
         attachments,
         bioTask.Result as string,
@@ -453,32 +447,6 @@ public partial class PersonPage : ContentPage
     }
 
     return photos;
-  }
-
-  internal static RelativeInfo[] AssembleRoots(
-    PersonFullInfo personFullInfo,
-    Parents parents,
-    Siblings siblings,
-    RelativeInfo[] stepChildren,
-    IRelativesProvider relativesProvider)
-  {
-    var roots = new List<RelativeInfo>();
-    void Add(IEnumerable<RelativeInfo> relatives) => roots.AddRange(relatives.OrderBy(r => r.BiologicalSex));
-
-    Add(personFullInfo.RelativeInfos.Where(r => r.Type == RelationshipType.Spouse));
-    Add(parents.Native);
-    Add(parents.Adoptive);
-    Add(parents.Step);
-    Add(siblings.Native);
-    Add(siblings.ByFather);
-    Add(siblings.ByMother);
-    Add(siblings.Step);
-    Add(siblings.Adoptive);
-    Add(relativesProvider.GetChildren(personFullInfo.RelativeInfos));
-    Add(relativesProvider.GetAdoptiveChildren(personFullInfo.RelativeInfos));
-    Add(stepChildren);
-
-    return [.. roots];
   }
 
   private void UpdateUI(PersonPageData data)

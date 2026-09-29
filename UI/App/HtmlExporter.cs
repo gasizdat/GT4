@@ -195,10 +195,7 @@ public sealed class HtmlExporter
     var project = site.Document;
     var token = site.Token;
     var full = await project.PersonManager.GetPersonFullInfoAsync(person, token);
-    var parents = await project.RelativesProvider.GetParentsAsync(full.RelativeInfos, token);
-    var stepChildren = await project.RelativesProvider.GetStepChildrenAsync(full.RelativeInfos, token);
-    var siblings = project.RelativesProvider.GetSiblings(full, parents);
-    var roots = PersonPage.AssembleRoots(full, parents, siblings, stepChildren, project.RelativesProvider);
+    var roots = await project.RelativesProvider.GetRootsAsync(full, token);
     var attachments = await ReadAttachmentsAsync(full.Attachments, token);
     var bio = await _DataConverterResolver(DataCategory.PersonBio).ToObjectAsync(full.Biography, token);
     var gedcomDetails = await _DataConverterResolver(DataCategory.PersonGedcomTags).ToObjectAsync(full.GedcomData, token);
