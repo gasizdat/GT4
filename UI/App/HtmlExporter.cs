@@ -332,7 +332,7 @@ public sealed class HtmlExporter
   // text stays), attribute blocks, and links to anything but a page, a media file or a safe scheme.
   private static async Task<string> RenderMarkdownAsync(Site site, string markdown)
   {
-    var document = Markdown.Parse(markdown, MarkdownView.Pipeline);
+    var document = Markdown.Parse(markdown, BiographyMarkdown.Pipeline);
     foreach (var node in document.Descendants())
     {
       node.TryGetAttributes()?.Properties?.Clear();
@@ -353,7 +353,7 @@ public sealed class HtmlExporter
     {
       await RewriteLinkAsync(site, link);
     }
-    return document.ToHtml(MarkdownView.Pipeline);
+    return document.ToHtml(BiographyMarkdown.Pipeline);
   }
 
   private static bool IsSafe(string url) =>
@@ -381,7 +381,7 @@ public sealed class HtmlExporter
     }
 
     link.Url = target.Href;
-    var (widthPercent, caption) = MarkdownView.DescriptionOf(link);
+    var (widthPercent, caption) = BiographyMarkdown.DescriptionOf(link);
     if (widthPercent is null)
       return;
 

@@ -1,8 +1,6 @@
 using GT4.UI.Abstraction;
 using GT4.UI.Dialogs;
 using GT4.UI.Utils;
-using Markdig;
-using Markdig.Parsers;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
 
@@ -10,8 +8,6 @@ namespace GT4.UI.Components;
 
 public class MarkdownView : ContentView
 {
-  internal static readonly MarkdownPipeline Pipeline = BuildPipeline();
-
   private const string BodyTextSizeKey = "LabelTextSizeDefault";
   private const string BlockSpacingKey = "PageContentSpacing";
   private const double MarkerSpacing = 6;
@@ -80,26 +76,6 @@ public class MarkdownView : ContentView
   // Raised instead of navigating when a rendered [Name](attachment:123) link is tapped; the host page owns
   // opening the referenced attachment, same reason as PersonLinkTapped.
   public event EventHandler<int>? AttachmentLinkTapped;
-
-  internal static (int? WidthPercent, string Caption) DescriptionOf(LinkInline image)
-  {
-    var literals = image.OfType<LiteralInline>().Select(literal => literal.Content.ToString());
-    var description = string.Concat(literals);
-    return MarkdownLinkUtils.ParseImageDescription(description);
-  }
-
-  // CommonMark hands a run of lines opening with a tag to the HTML block parser as one opaque chunk,
-  // and this renderer has no shape for one -- the text inside would render as nothing at all. Without
-  // that parser the tags parse as inline HTML, which the inline walker already drops while keeping the
-  // text they wrap.
-  private static MarkdownPipeline BuildPipeline()
-  {
-    var builder = new MarkdownPipelineBuilder()
-      .UseAdvancedExtensions()
-      .UseSoftlineBreakAsHardlineBreak();
-    builder.BlockParsers.TryRemove<HtmlBlockParser>();
-    return builder.Build();
-  }
 
   private static void OnSourceChanged(BindableObject obj, object oldValue, object newValue)
   {
@@ -353,7 +329,7 @@ public class MarkdownView : ContentView
   // to the catch-up render -- so showing the preview doesn't also have to wait on resolver round-trips.
   private MarkdownDocument Render()
   {
-    var document = Markdig.Markdown.Parse(Markdown ?? string.Empty, Pipeline);
+    var document = Markdig.Markdown.Parse(Markdown ?? string.Empty, BiographyMarkdown.Pipeline);
     if (IsVisible)
     {
       Content = RenderContainer(document);
@@ -418,7 +394,7 @@ public class MarkdownView : ContentView
         formatted = new FormattedString();
       }
 
-      var description = DescriptionOf(image);
+      var description = BiographyMarkdown.DescriptionOf(image);
       var imageView = CreateImageView(image.Url, description.WidthPercent);
       if (imageView is not null)
       {
@@ -474,7 +450,7 @@ public class MarkdownView : ContentView
       // An image nested in emphasis or in a link can't become an Image view from inside a FormattedString,
       // so its caption stands in -- minus the size token, which is markup rather than text.
       case LinkInline { IsImage: true } image:
-        var (_, caption) = DescriptionOf(image);
+        var (_, caption) = BiographyMarkdown.DescriptionOf(image);
         formatted.Spans.Add(CreateSpan(caption, style));
         break;
 
