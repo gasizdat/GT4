@@ -28,11 +28,25 @@ internal sealed partial class HtmlTemplate
     return reader.ReadToEnd();
   }
 
-  // A slot the template names but the call leaves out throws, so a template and its caller can't drift apart silently.
+  // A slot missing on either side throws, so a template and its caller can't drift apart silently.
   public HtmlContent Fill(params (string Slot, HtmlContent Content)[] contents)
   {
     var markups = contents.ToDictionary(content => content.Slot, content => content.Content.Markup);
-    var filled = SlotPattern().Replace(_Text, match => markups[match.Groups[1].Value]);
+    var unused = markups.Keys.ToHashSet();
+    string FillSlot(Match match)
+    {
+      var slot = match.Groups[1].Value;
+      unused.Remove(slot);
+      return markups[slot];
+    }
+
+    var filled = SlotPattern().Replace(_Text, FillSlot);
+    if (unused.Count > 0)
+    {
+      var names = string.Join(", ", unused);
+      throw new InvalidOperationException($"The template has no slot named {names}.");
+    }
+
     return HtmlContent.Raw(filled);
   }
 
