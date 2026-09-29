@@ -2,6 +2,7 @@ using GT4.Core.Gedcom.Abstraction;
 using GT4.Core.Gedcom.Extensions;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
+using GT4.UI.HtmlExport;
 using GT4.UI.Utils.Formatters;
 using Microsoft.Extensions.DependencyInjection;
 using System.IO.Compression;

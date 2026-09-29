@@ -5,7 +5,6 @@ using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
 using GT4.UI.Components;
 using GT4.UI.Items;
-using GT4.UI.Pages;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
@@ -20,7 +19,7 @@ using System.IO.Compression;
 using System.Net;
 using System.Text;
 
-namespace GT4.UI;
+namespace GT4.UI.HtmlExport;
 
 /// <summary>
 /// Renders the whole project as a zipped static site. Pages go through the app's own formatters and

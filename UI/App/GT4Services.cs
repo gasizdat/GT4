@@ -5,6 +5,7 @@ using GT4.Core.Utils.Extensions;
 using GT4.UI.Abstraction;
 using GT4.UI.Converters;
 using GT4.UI.Dialogs;
+using GT4.UI.HtmlExport;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Extensions;
 using Microsoft.Extensions.Configuration;
