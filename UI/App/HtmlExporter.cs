@@ -94,10 +94,10 @@ public sealed class HtmlExporter
       .OrderBy(family => family, _NameComparer)
       .Select(family => (Family: (Name)family, Members: membersByNameId[family.Id].ToArray()))
       .ToList();
-    PersonInfo[] familyless = [.. persons.Where(FamilyInfoItem.HasNoFamily)];
+    PersonInfo[] familyless = [.. persons.Where(NoFamily.Includes)];
     if (familyless.Length > 0)
     {
-      familyMembers.Add((FamilyInfoItem.NoFamilyName, familyless));
+      familyMembers.Add((NoFamily.Name, familyless));
     }
 
     Name[] indexedFamilies = [.. familyMembers.Select(f => f.Family)];
@@ -175,7 +175,7 @@ public sealed class HtmlExporter
   private async Task<string> RenderFamilyAsync(Site site, Name family, PersonInfo[] members)
   {
     // The "No family" bucket has no row of its own, so no media either.
-    var info = family.Id == FamilyInfoItem.NoFamilyName.Id
+    var info = family.Id == NoFamily.Name.Id
       ? new FamilyFullInfo(family, null, [], [])
       : await site.Document.FamilyManager.GetFamilyFullInfoAsync(family, site.Token);
     var attachments = await ReadAttachmentsAsync(info.Attachments, site.Token);
@@ -204,7 +204,7 @@ public sealed class HtmlExporter
 
     var shortName = _NameFormatter.ToString(full, NameFormat.ShortPersonName);
     var fullName = _NameFormatter.ToString(full, NameFormat.FullPersonName);
-    var families = full.Names.Where(name => name.Type.HasFlag(NameType.FamilyName)).DefaultIfEmpty(FamilyInfoItem.NoFamilyName);
+    var families = full.Names.Where(name => name.Type.HasFlag(NameType.FamilyName)).DefaultIfEmpty(NoFamily.Name);
     var html = new HtmlBuilder();
     AppendNavigation(html, site, families);
     html.Element("h1", shortName);

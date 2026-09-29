@@ -246,7 +246,7 @@ public partial class PersonPage : ContentPage
   public bool ShowBiography => !string.IsNullOrWhiteSpace(_Biography);
 
   public Name FamilyName =>
-    _PersonFullInfo.Names.SingleOrDefault(n => n.Type == NameType.FamilyName, FamilyInfoItem.NoFamilyName);
+    _PersonFullInfo.Names.SingleOrDefault(n => n.Type == NameType.FamilyName, NoFamily.Name);
 
   public ICollection NavigationHistory => _NavigationHistory;
 

@@ -46,13 +46,6 @@ public class FamilyInfoItem : CollectionItemBase<FamilyInfo>, INotifyPropertyCha
     _DisplayedPersons = ComputeDisplayedPersons();
   }
 
-  // Sentinel family for persons that have no FamilyName-typed name; Id 0 never collides with a
-  // real name because SQLite rowids start at 1.
-  public static Name NoFamilyName { get; } = new(0, UIStrings.FamilyNameNoFamily, NameType.FamilyName, null);
-
-  public static bool HasNoFamily(PersonInfo person) =>
-    !person.Names.Any(name => name.Type.HasFlag(NameType.FamilyName));
-
   public event PropertyChangedEventHandler? PropertyChanged;
 
   public override ImageSource Icon

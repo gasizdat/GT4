@@ -143,13 +143,13 @@ public partial class ProjectPage : ContentPage
         .ToList();
 
       var familylessPersons = persons
-        .Where(FamilyInfoItem.HasNoFamily)
+        .Where(NoFamily.Includes)
         .OrderBy(item => item, _PersonInfoComparer)
         .ToArray();
       if (familylessPersons.Length > 0)
       {
         families.Add(new FamilyInfoItem(
-          new FamilyInfo(FamilyInfoItem.NoFamilyName, null), familylessPersons, (_, person) => FilterView.Matches(person),
+          new FamilyInfo(NoFamily.Name, null), familylessPersons, (_, person) => FilterView.Matches(person),
           _CancellationTokenProvider, _AlertService, _DataConverterResolver));
       }
 
