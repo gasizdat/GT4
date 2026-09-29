@@ -44,8 +44,10 @@ public sealed class HtmlExporter
   private static readonly HtmlTemplate RelativeItemTemplate = HtmlTemplate.Load("relative-item.html");
   private static readonly HtmlTemplate AttachmentItemTemplate = HtmlTemplate.Load("attachment-item.html");
   private static readonly HtmlTemplate AttachmentFileNameTemplate = HtmlTemplate.Load("attachment-file-name.html");
+  private static readonly HtmlTemplate GalleryTemplate = HtmlTemplate.Load("gallery.html");
   private static readonly HtmlTemplate FigureTemplate = HtmlTemplate.Load("figure.html");
   private static readonly HtmlTemplate FigcaptionTemplate = HtmlTemplate.Load("figcaption.html");
+  private static readonly HtmlTemplate ProseTemplate = HtmlTemplate.Load("prose.html");
 
   // A biography link to any other scheme renders as text.
   private static readonly string[] SafeSchemes = [Uri.UriSchemeHttp, Uri.UriSchemeHttps, Uri.UriSchemeMailto, "tel"];
@@ -128,9 +130,9 @@ public sealed class HtmlExporter
 
   private static string PersonHref(int personId) => $"person-{personId}.html";
 
-  private static string RenderDocument(string title, HtmlContent body)
+  private static string RenderDocument(string title, HtmlContent navigation, HtmlContent body)
   {
-    var document = DocumentTemplate.Fill(("title", title), ("body", body));
+    var document = DocumentTemplate.Fill(("title", title), ("navigation", navigation), ("body", body));
     return document.Markup;
   }
 
@@ -150,30 +152,31 @@ public sealed class HtmlExporter
   private static HtmlContent RenderSection(string heading, HtmlContent content) =>
     SectionTemplate.Fill(("heading", heading), ("content", content));
 
-  private static HtmlContent RenderList(IEnumerable<HtmlContent> items)
+  private static HtmlContent RenderList(string listClass, IEnumerable<HtmlContent> items)
   {
     var joined = HtmlContent.Join(items);
-    return ListTemplate.Fill(("items", joined));
+    return ListTemplate.Fill(("class", listClass), ("items", joined));
   }
 
   private string RenderIndex(Site site, Name[] families, PersonInfo[] persons)
   {
     var familyItems = families.Select(family => RenderFamilyLink(FamilyItemTemplate, family));
-    var familyList = RenderList(familyItems);
+    var familyList = RenderList("chips", familyItems);
     var familySection = RenderSection(UIStrings.TitleFamiliesPage, familyList);
     // Common names, not the family cards' short ones: outside a family, two Annes are no longer told apart.
-    var personList = RenderPersonList(persons, NameFormat.CommonPersonName, _PersonInfoComparer);
+    var personList = RenderPersonList(persons, NameFormat.CommonPersonName, _PersonInfoComparer, "rows");
     var personSection = RenderSection(UIStrings.LblPersons, personList);
+    var navigation = RenderNavigation(site, []);
     var body = IndexPageTemplate.Fill(("project", site.ProjectName), ("families", familySection), ("persons", personSection));
-    return RenderDocument(site.ProjectName, body);
+    return RenderDocument(site.ProjectName, navigation, body);
   }
 
-  private HtmlContent RenderPersonList(PersonInfo[] persons, NameFormat nameFormat, IComparer<PersonInfo> comparer)
+  private HtmlContent RenderPersonList(PersonInfo[] persons, NameFormat nameFormat, IComparer<PersonInfo> comparer, string listClass)
   {
     var items = persons
       .OrderBy(person => person, comparer)
       .Select(person => RenderPersonItem(person, nameFormat));
-    return RenderList(items);
+    return RenderList(listClass, items);
   }
 
   private HtmlContent RenderPersonItem(PersonInfo person, NameFormat nameFormat)
@@ -195,14 +198,14 @@ public sealed class HtmlExporter
     var navigation = RenderNavigation(site, []);
     var photos = await RenderPhotosAsync(site, info.MainPhoto, info.AdditionalPhotos);
     var attachmentList = await RenderAttachmentsAsync(site, attachments);
-    var personList = RenderPersonList(members, NameFormat.ShortPersonName, _PersonInfoComparerByShortNames);
+    var personList = RenderPersonList(members, NameFormat.ShortPersonName, _PersonInfoComparerByShortNames, "cards");
+    var personSection = RenderSection(UIStrings.LblPersons, personList);
     var body = FamilyPageTemplate.Fill(
-      ("navigation", navigation),
       ("family", family.Value),
       ("photos", photos),
       ("attachments", attachmentList),
-      ("persons", personList));
-    return RenderDocument(family.Value, body);
+      ("persons", personSection));
+    return RenderDocument(family.Value, navigation, body);
   }
 
   // Gathers what PersonPage.GetPersonDataAsync does, in the same order, so the sections match the page's.
@@ -230,7 +233,6 @@ public sealed class HtmlExporter
     var biographySection = await RenderBiographyAsync(site, biography);
     var attachmentList = await RenderAttachmentsAsync(site, attachments);
     var body = PersonPageTemplate.Fill(
-      ("navigation", navigation),
       ("name", shortName),
       ("fullName", fullName),
       ("dates", dates),
@@ -238,7 +240,7 @@ public sealed class HtmlExporter
       ("relatives", relatives),
       ("biography", biographySection),
       ("attachments", attachmentList));
-    return RenderDocument(shortName, body);
+    return RenderDocument(shortName, navigation, body);
   }
 
   // Not through the attachment converter: it would park every image attachment in the app's image cache.
@@ -272,6 +274,9 @@ public sealed class HtmlExporter
   private static async Task<HtmlContent> RenderPhotosAsync(Site site, Data? mainPhoto, Data[] additionalPhotos)
   {
     Data[] photos = mainPhoto is null ? additionalPhotos : [mainPhoto, .. additionalPhotos];
+    if (photos.Length == 0)
+      return HtmlContent.Empty;
+
     var figures = new List<HtmlContent>();
     foreach (var photo in photos)
     {
@@ -281,7 +286,9 @@ public sealed class HtmlExporter
       var figure = FigureTemplate.Fill(("src", media.Href), ("caption", caption), ("figcaption", figcaption));
       figures.Add(figure);
     }
-    return HtmlContent.Join(figures);
+    var joined = HtmlContent.Join(figures);
+    var gallery = GalleryTemplate.Fill(("figures", joined));
+    return RenderSection(UIStrings.FieldPersonPhotos, gallery);
   }
 
   // The first level of PersonPage's relatives tree, as it shows before anything is expanded.
@@ -291,7 +298,7 @@ public sealed class HtmlExporter
       return HtmlContent.Empty;
 
     var items = relatives.Select(relative => RenderRelativeItem(relative, personBirthDate));
-    var list = RenderList(items);
+    var list = RenderList("cards", items);
     return RenderSection(UIStrings.LblRelatives, list);
   }
 
@@ -326,7 +333,8 @@ public sealed class HtmlExporter
       return HtmlContent.Empty;
 
     var rendered = await RenderMarkdownAsync(site, biography);
-    return RenderSection(UIStrings.FieldPersonBiography, rendered);
+    var prose = ProseTemplate.Fill(("content", rendered));
+    return RenderSection(UIStrings.FieldPersonBiography, prose);
   }
 
   private static async Task<HtmlContent> RenderAttachmentsAsync(Site site, AttachmentInfo[] attachments)
@@ -344,7 +352,7 @@ public sealed class HtmlExporter
       var item = AttachmentItemTemplate.Fill(("href", media.Href), ("name", attachment.DisplayName), ("fileName", fileName));
       items.Add(item);
     }
-    var list = RenderList(items);
+    var list = RenderList("files", items);
     return RenderSection(UIStrings.FieldPersonAttachments, list);
   }
 

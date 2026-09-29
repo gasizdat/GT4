@@ -3,6 +3,7 @@ using GT4.Core.Gedcom.Extensions;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.UI.HtmlExport;
+using GT4.UI.Resources;
 using GT4.UI.Utils.Formatters;
 using Microsoft.Extensions.DependencyInjection;
 using System.IO.Compression;
@@ -144,6 +145,8 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
     public IEnumerable<string> Pages => entries.Where(entry => entry.Name.EndsWith(".html")).Select(entry => entry.Name);
   }
 
+  private static string Heading(string text) => $"<h2>{System.Net.WebUtility.HtmlEncode(text)}</h2>";
+
   [GeneratedRegex("(?:href|src)=\"([^\"]*)\"")]
   private static partial Regex LinkPattern();
 
@@ -216,6 +219,48 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
     var page = site.PersonPage(john);
     Assert.Contains($"href=\"person-{mary.Id}.html\"", page);
     Assert.Contains($"href=\"person-{tom.Id}.html\"", page);
+  }
+
+  [Fact]
+  public async Task PersonPage_HeadsPhotosOnlyWhenThereAreAny()
+  {
+    var john = await PersonAsync("John");
+    var mary = await PersonAsync("Mary");
+
+    var site = await ExportAsync();
+
+    var heading = Heading(UIStrings.FieldPersonPhotos);
+    Assert.Contains(heading, site.PersonPage(john));
+    Assert.DoesNotContain(heading, site.PersonPage(mary));
+  }
+
+  // The portrait already heads the page, so the relatives come first, as the mockup has them.
+  [Fact]
+  public async Task PersonPage_ListsRelativesBeforePhotos()
+  {
+    var john = await PersonAsync("John");
+
+    var site = await ExportAsync();
+
+    var page = site.PersonPage(john);
+    var relativesHeading = Heading(UIStrings.LblRelatives);
+    var photosHeading = Heading(UIStrings.FieldPersonPhotos);
+    var relatives = page.IndexOf(relativesHeading);
+    var photos = page.IndexOf(photosHeading);
+    Assert.InRange(relatives, 0, photos - 1);
+  }
+
+  [Fact]
+  public async Task FamilyPage_HeadsItsMembers()
+  {
+    var families = await _Document.FamilyManager.GetFamiliesAsync(Token);
+    var smiths = families.Single();
+
+    var site = await ExportAsync();
+
+    var page = site.Page($"family-{smiths.Id}.html");
+    var heading = Heading(UIStrings.LblPersons);
+    Assert.Contains(heading, page);
   }
 
   [Fact]
