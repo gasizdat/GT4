@@ -30,6 +30,8 @@ web fonts and no script, so the site still works offline from `file://`.
 ## Open question: thumbnail cost
 
 The mockup sizes the originals with CSS and loads them with `loading="lazy"`, so a long index only
-fetches the thumbnails scrolled into view. The demo portraits are 250 to 330 px and about 20 KB each.
-The alternative is writing downscaled copies alongside the originals, which costs a decode and encode
-per photo during export.
+fetches the thumbnails scrolled into view. That doesn't help above the fold: a person page with a
+dozen relatives, or a family page, loads every visible avatar at original size at once. The demo
+portraits (250 to 330 px, about 20 KB each) are curated web images, not the full-resolution phone or
+scanner originals a real project holds, so they don't show that cost. The alternative is writing
+downscaled copies alongside the originals, which costs a decode and encode per photo during export.
