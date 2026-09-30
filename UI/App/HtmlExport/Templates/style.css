@@ -1,8 +1,0 @@
-body { font-family: system-ui, sans-serif; line-height: 1.5; max-width: 60rem; margin: 0 auto; padding: 1rem; }
-nav { margin-bottom: 1rem; }
-img { max-width: 100%; height: auto; }
-figure { display: inline-block; margin: 0 1rem 1rem 0; vertical-align: top; }
-figure img { max-height: 25rem; }
-dt { font-weight: bold; }
-.subtitle, .dates, .file { opacity: 0.7; }
-@media (prefers-color-scheme: dark) { body { background: #1e1e1e; color: #e6e6e6; } a { color: #8cb4ff; } }

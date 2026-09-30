@@ -3,8 +3,10 @@ using GT4.Core.Gedcom.Extensions;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.UI.HtmlExport;
+using GT4.UI.Resources;
 using GT4.UI.Utils.Formatters;
 using Microsoft.Extensions.DependencyInjection;
+using System.Globalization;
 using System.IO.Compression;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -144,8 +146,25 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
     public IEnumerable<string> Pages => entries.Where(entry => entry.Name.EndsWith(".html")).Select(entry => entry.Name);
   }
 
+  // A card is the link to that person's page, up to where its anchor closes.
+  private static string Card(string page, Person person)
+  {
+    var start = page.IndexOf($"<a class=\"card\" href=\"person-{person.Id}.html\"");
+    Assert.True(start >= 0, $"No card for person {person.Id}.");
+    var end = page.IndexOf("</a>", start);
+    return page[start..end];
+  }
+
+  private static string Heading(string text) => $"<h2>{System.Net.WebUtility.HtmlEncode(text)}</h2>";
+
   [GeneratedRegex("(?:href|src)=\"([^\"]*)\"")]
   private static partial Regex LinkPattern();
+
+  [GeneratedRegex("<section class=\"initial\" id=\"[^\"]*\">\n<h3>([^<]*)</h3>(.*?)</section>", RegexOptions.Singleline)]
+  private static partial Regex InitialGroupPattern();
+
+  [GeneratedRegex("<a class=\"card\"")]
+  private static partial Regex CardPattern();
 
   [Fact]
   public async Task EveryLinkResolvesToAnEntryInTheArchive()
@@ -158,12 +177,19 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
 
     var site = await ExportAsync();
 
-    var pages = site.Pages.Select(site.Page);
-    var matches = pages.SelectMany(page => LinkPattern().Matches(page));
-    string[] links = [.. matches.Select(match => match.Groups[1].Value)];
-    var targets = links.Select(Uri.UnescapeDataString);
+    var links = new List<string>();
+    foreach (var page in site.Pages.Select(site.Page))
+    {
+      var matches = LinkPattern().Matches(page);
+      string[] pageLinks = [.. matches.Select(match => match.Groups[1].Value)];
+      var fragments = pageLinks.Where(link => link.StartsWith('#'));
+      var targets = pageLinks.Except(fragments).Select(Uri.UnescapeDataString);
+      Assert.All(fragments, fragment => Assert.Contains($"id=\"{fragment[1..]}\"", page));
+      Assert.All(targets, target => Assert.Contains(target, site.Names));
+      links.AddRange(pageLinks);
+    }
     Assert.Contains(links, link => link.StartsWith("media/"));
-    Assert.All(targets, target => Assert.Contains(target, site.Names));
+    Assert.Contains(links, link => link.StartsWith('#'));
   }
 
   [Fact]
@@ -216,6 +242,80 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
     var page = site.PersonPage(john);
     Assert.Contains($"href=\"person-{mary.Id}.html\"", page);
     Assert.Contains($"href=\"person-{tom.Id}.html\"", page);
+  }
+
+  [Fact]
+  public async Task PersonPage_HeadsWithThePortraitOrASilhouette()
+  {
+    var john = await PersonAsync("John");
+    var mary = await PersonAsync("Mary");
+    var portrait = $"<a class=\"portrait\" href=\"media/{john.MainPhoto!.Id}/photo.png\">";
+
+    var site = await ExportAsync();
+
+    var johnsPage = site.PersonPage(john);
+    var marysPage = site.PersonPage(mary);
+    Assert.Contains(portrait, johnsPage);
+    Assert.Contains("<span class=\"portrait\"></span>", marysPage);
+  }
+
+  [Fact]
+  public async Task PersonPage_MarksBirthAndDeathOnlyWhereRecorded()
+  {
+    var john = await PersonAsync("John");
+    var mary = await PersonAsync("Mary");
+    var birthLabel = System.Net.WebUtility.HtmlEncode(UIStrings.FieldDateOfBirth);
+    var deathLabel = System.Net.WebUtility.HtmlEncode(UIStrings.FieldDateOfDeath);
+
+    var site = await ExportAsync();
+
+    var johnsPage = site.PersonPage(john);
+    var marysPage = site.PersonPage(mary);
+    Assert.Contains($"<div class=\"birth\"><dt>{birthLabel}</dt>", johnsPage);
+    Assert.Contains($"<div class=\"death\"><dt>{deathLabel}</dt>", johnsPage);
+    Assert.DoesNotContain("class=\"death\"", marysPage);
+  }
+
+  [Fact]
+  public async Task PersonPage_HeadsPhotosOnlyWhenThereAreAny()
+  {
+    var john = await PersonAsync("John");
+    var mary = await PersonAsync("Mary");
+
+    var site = await ExportAsync();
+
+    var heading = Heading(UIStrings.FieldPersonPhotos);
+    Assert.Contains(heading, site.PersonPage(john));
+    Assert.DoesNotContain(heading, site.PersonPage(mary));
+  }
+
+  // The portrait already heads the page, so the relatives come first.
+  [Fact]
+  public async Task PersonPage_ListsRelativesBeforePhotos()
+  {
+    var john = await PersonAsync("John");
+
+    var site = await ExportAsync();
+
+    var page = site.PersonPage(john);
+    var relativesHeading = Heading(UIStrings.LblRelatives);
+    var photosHeading = Heading(UIStrings.FieldPersonPhotos);
+    var relatives = page.IndexOf(relativesHeading);
+    var photos = page.IndexOf(photosHeading);
+    Assert.InRange(relatives, 0, photos - 1);
+  }
+
+  [Fact]
+  public async Task FamilyPage_HeadsItsMembers()
+  {
+    var families = await _Document.FamilyManager.GetFamiliesAsync(Token);
+    var smiths = families.Single();
+
+    var site = await ExportAsync();
+
+    var page = site.Page($"family-{smiths.Id}.html");
+    var heading = Heading(UIStrings.LblPersons);
+    Assert.Contains(heading, page);
   }
 
   [Fact]
@@ -309,7 +409,105 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
     var commonName = nameFormatter.ToString(john, NameFormat.CommonPersonName);
     var encodedName = System.Net.WebUtility.HtmlEncode(commonName);
     var index = site.Page("index.html");
-    Assert.Contains($"href=\"person-{john.Id}.html\">{encodedName}</a>", index);
+    var card = Card(index, john);
+    Assert.Contains($"<span class=\"name\">{encodedName}</span>", card);
+  }
+
+  [Fact]
+  public async Task Index_GroupsEveryPersonOnceUnderTheInitialOfTheirCommonName()
+  {
+    var persons = await _Document.PersonManager.GetPersonInfosAsync(selectMainPhoto: false, Token);
+    var nameFormatter = new TestServices().Provider.GetRequiredService<INameFormatter>();
+
+    var site = await ExportAsync();
+
+    var index = site.Page("index.html");
+    var matches = InitialGroupPattern().Matches(index);
+    var groups = matches.ToDictionary(match => match.Groups[1].Value, match => match.Groups[2].Value);
+    foreach (var person in persons)
+    {
+      var commonName = nameFormatter.ToString(person, NameFormat.CommonPersonName);
+      var initial = commonName[..1].ToUpper();
+      var group = groups[initial];
+      Assert.Contains($"<a class=\"card\" href=\"person-{person.Id}.html\"", group);
+    }
+    var cardCount = groups.Values.Sum(group => CardPattern().Count(group));
+    Assert.Equal(persons.Length, cardCount);
+  }
+
+  [Fact]
+  public async Task PersonCards_ShowTheMainPhotoOrAnEmptyAvatar()
+  {
+    var john = await PersonAsync("John");
+    var mary = await PersonAsync("Mary");
+    var photo = $"src=\"media/{john.MainPhoto!.Id}/photo.png\"";
+
+    var site = await ExportAsync();
+
+    var index = site.Page("index.html");
+    var johnsCard = Card(index, john);
+    var marysCard = Card(index, mary);
+    Assert.Contains(photo, johnsCard);
+    Assert.Contains("<span class=\"avatar\"></span>", marysCard);
+  }
+
+  [Fact]
+  public async Task RelativeCards_ShowTheRelativesMainPhoto()
+  {
+    var john = await PersonAsync("John");
+    var mary = await PersonAsync("Mary");
+    var photo = $"src=\"media/{john.MainPhoto!.Id}/photo.png\"";
+
+    var site = await ExportAsync();
+
+    var page = site.PersonPage(mary);
+    var johnsCard = Card(page, john);
+    Assert.Contains(photo, johnsCard);
+  }
+
+  [Fact]
+  public async Task EveryPage_LinksTheStatisticsPage()
+  {
+    var site = await ExportAsync();
+
+    Assert.Contains("statistics.html", site.Names);
+    Assert.All(site.Pages, name =>
+    {
+      var page = site.Page(name);
+      Assert.Contains("href=\"statistics.html\"", page);
+    });
+  }
+
+  [Fact]
+  public async Task StatisticsPage_CountsTheProject()
+  {
+    var site = await ExportAsync();
+
+    var page = site.Page("statistics.html");
+    var label = System.Net.WebUtility.HtmlEncode(UIStrings.FieldStatTotalPersons);
+    var families = System.Net.WebUtility.HtmlEncode(UIStrings.FieldStatTotalFamilies);
+    Assert.Contains($"<dt>{label}</dt><dd>4</dd>", page);
+    Assert.Contains($"<dt>{families}</dt><dd>1</dd>", page);
+  }
+
+  // John's is the only known birth, so his decade's bar is the busiest: 1 / 1.1 of its row.
+  [Fact]
+  public async Task DecadeBars_KeepADotDecimalWidthUnderACommaDecimalCulture()
+  {
+    var culture = CultureInfo.CurrentCulture;
+    CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("de-DE");
+    Site site;
+    try
+    {
+      site = await ExportAsync();
+    }
+    finally
+    {
+      CultureInfo.CurrentCulture = culture;
+    }
+
+    var page = site.Page("statistics.html");
+    Assert.Contains("style=\"width:90.9%\"", page);
   }
 
   [Fact]

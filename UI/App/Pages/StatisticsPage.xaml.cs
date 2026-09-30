@@ -3,7 +3,6 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Items;
-using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Extensions;
 using GT4.UI.Utils.Formatters;
@@ -12,9 +11,6 @@ namespace GT4.UI.Pages;
 
 public partial class StatisticsPage : ContentPage
 {
-  // Kept past the end of the longest bar for its count to sit in, as a share of that bar.
-  private const double CountGutterShare = 0.1;
-
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly IAlertService _AlertService;
@@ -99,30 +95,18 @@ public partial class StatisticsPage : ContentPage
     _ = Statistics;
   }
 
-  private static string FormatYears(double? years) =>
-    years is { } value ? string.Format(UIStrings.StatValueYears_1, value.ToString("F1")) : UIStrings.StatValueNone;
+  // Built on every read, so each display property still goes through Statistics and its lazy load.
+  private ProjectStatisticsText StatisticsText => new(Statistics, _NameFormatter);
 
-  private string FormatPersonYears(PersonInfo? person, int? years) =>
-    person is not null
-      ? string.Format(UIStrings.StatValuePersonYears_2, _NameFormatter.ToString(person, NameFormat.CommonPersonName), years)
-      : UIStrings.StatValueNone;
-
-  private static string FormatNameCounts((string Name, int Count)[] items) =>
-    items.Length > 0
-      ? string.Join(", ", items.Select(item => string.Format(UIStrings.StatValueNameCount_2, item.Name, item.Count)))
-      : UIStrings.StatValueNone;
-
-  private static BirthDecadeItem ToBirthDecadeItem((int Decade, int Count) births, int busiest)
+  private static BirthDecadeItem ToBirthDecadeItem((string Decade, int Count) births, double rowLength)
   {
-    var total = busiest * (1 + CountGutterShare);
     var filled = new GridLength(births.Count, GridUnitType.Star);
-    var rest = new GridLength(total - births.Count, GridUnitType.Star);
+    var rest = new GridLength(rowLength - births.Count, GridUnitType.Star);
     var barColumn = new ColumnDefinition(filled);
     var restColumn = new ColumnDefinition(rest);
     var columns = new ColumnDefinitionCollection(barColumn, restColumn);
-    var decade = string.Format(UIStrings.StatValueDecade_1, births.Decade);
 
-    return new BirthDecadeItem(decade, births.Count.ToString(), columns);
+    return new BirthDecadeItem(births.Decade, births.Count.ToString(), columns);
   }
 
   // Rendered once to size the name column every row then binds to.
@@ -135,72 +119,57 @@ public partial class StatisticsPage : ContentPage
     }
   }
 
-  public string TotalPersonsText => Statistics.TotalPersons.ToString();
+  public string TotalPersonsText => StatisticsText.TotalPersons;
 
-  public string TotalFamiliesText => Statistics.TotalFamilies.ToString();
+  public string TotalFamiliesText => StatisticsText.TotalFamilies;
 
-  public string MenCountText => Statistics.MenCount.ToString();
+  public string MenCountText => StatisticsText.MenCount;
 
-  public string WomenCountText => Statistics.WomenCount.ToString();
+  public string WomenCountText => StatisticsText.WomenCount;
 
-  public string UnknownSexCountText => Statistics.UnknownSexCount.ToString();
+  public string UnknownSexCountText => StatisticsText.UnknownSexCount;
 
-  public string LivingCountText => Statistics.LivingCount.ToString();
+  public string LivingCountText => StatisticsText.LivingCount;
 
-  public string AverageLifespanText => FormatYears(Statistics.AverageLifespanYears);
+  public string AverageLifespanText => StatisticsText.AverageLifespan;
 
-  public string Lifespan95thPercentileText => FormatYears(Statistics.Lifespan95thPercentileYears);
+  public string Lifespan95thPercentileText => StatisticsText.Lifespan95thPercentile;
 
-  public string OldestLivingText => FormatPersonYears(Statistics.OldestLivingPerson, Statistics.OldestLivingAgeYears);
+  public string OldestLivingText => StatisticsText.OldestLiving;
 
-  public string LongestLifespanText => FormatPersonYears(Statistics.LongestLifespanPerson, Statistics.LongestLifespanYears);
+  public string LongestLifespanText => StatisticsText.LongestLifespan;
 
-  public string BirthYearSpanText => Statistics.EarliestBirthYear is not null && Statistics.LatestBirthYear is not null
-    ? string.Format(UIStrings.StatValueYearRange_2, Statistics.EarliestBirthYear, Statistics.LatestBirthYear)
-    : UIStrings.StatValueNone;
+  public string BirthYearSpanText => StatisticsText.BirthYearSpan;
 
-  public string MedianBirthYearText => Statistics.MedianBirthYear?.ToString() ?? UIStrings.StatValueNone;
+  public string MedianBirthYearText => StatisticsText.MedianBirthYear;
 
   public BirthDecadeItem[] BirthsByDecade
   {
     get
     {
-      var decades = Statistics.BirthsByDecade;
-
-      if (decades.Length == 0)
-      {
-        return [];
-      }
-
-      var busiest = decades.Max(d => d.Count);
-
-      return [.. decades.Select(d => ToBirthDecadeItem(d, busiest))];
+      var text = StatisticsText;
+      var rowLength = text.DecadeRowLength;
+      return [.. text.BirthsByDecade.Select(births => ToBirthDecadeItem(births, rowLength))];
     }
   }
 
-  public string TopLargestFamiliesText => FormatNameCounts(Statistics.TopLargestFamilies);
+  public string TopLargestFamiliesText => StatisticsText.TopLargestFamilies;
 
-  public string SingleMemberFamiliesText => Statistics.SingleMemberFamilyNames.Length > 0
-    ? string.Join(", ", Statistics.SingleMemberFamilyNames)
-    : UIStrings.StatValueNone;
+  public string SingleMemberFamiliesText => StatisticsText.SingleMemberFamilies;
 
-  public string TopMaleFirstNamesText => FormatNameCounts(Statistics.TopMaleFirstNames);
+  public string TopMaleFirstNamesText => StatisticsText.TopMaleFirstNames;
 
-  public string TopFemaleFirstNamesText => FormatNameCounts(Statistics.TopFemaleFirstNames);
+  public string TopFemaleFirstNamesText => StatisticsText.TopFemaleFirstNames;
 
-  public string IncompleteBirthDateCountText => Statistics.IncompleteBirthDateCount.ToString();
+  public string IncompleteBirthDateCountText => StatisticsText.IncompleteBirthDateCount;
 
-  public string PhotoCoverageText => string.Format(UIStrings.StatValueCoverage_2, Statistics.PhotoCoverageCount, Statistics.TotalPersons);
+  public string PhotoCoverageText => StatisticsText.PhotoCoverage;
 
-  public string IsolatedPersonCountText => Statistics.IsolatedPersonCount.ToString();
+  public string IsolatedPersonCountText => StatisticsText.IsolatedPersonCount;
 
-  public string MarriageCountText => Statistics.MarriageCount.ToString();
+  public string MarriageCountText => StatisticsText.MarriageCount;
 
-  public string AverageChildrenText => Statistics.AverageChildrenPerParent is { } average
-    ? string.Format(UIStrings.StatValueChildrenAverage_1, average.ToString("F1"))
-    : UIStrings.StatValueNone;
+  public string AverageChildrenText => StatisticsText.AverageChildren;
 
-  public string MostChildrenText => Statistics.MostChildrenPerson is { } person
-    ? string.Format(UIStrings.StatValuePersonChildren_2, _NameFormatter.ToString(person, NameFormat.CommonPersonName), Statistics.MostChildrenCount)
-    : UIStrings.StatValueNone;
+  public string MostChildrenText => StatisticsText.MostChildren;
 }
