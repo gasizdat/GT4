@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 
 namespace GT4.UI.HtmlExport;
 
-// A fragment under HtmlExport/Templates whose {{slot}} placeholders are filled with content.
+// A fragment under Resources/HtmlTemplates whose {{slot}} placeholders are filled with content.
 internal sealed partial class HtmlTemplate
 {
   private const string ResourcePrefix = "HtmlExport.";
