@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage
-    x:Class="GT4.UI.Dialogs.GedcomImportDialog"
+    x:Class="GT4.UI.Dialogs.ProgressDialog"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:components="clr-namespace:GT4.UI.Components"
@@ -11,7 +11,7 @@
     <components:PageLayout.Header>
       <Label
           Style="{StaticResource PageTitle}"
-          Text="{x:Static resources:UIStrings.TitleGedcomImportDialog}" />
+          Text="{Binding Heading, Source={x:Reference Root}}" />
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>
@@ -27,7 +27,7 @@
             HorizontalOptions="Center"
             HorizontalTextAlignment="Center"
             Style="{StaticResource CardSubtitle}"
-            Text="{Binding ImportingProjectName, Source={x:Reference Root}}" />
+            Text="{Binding Subject, Source={x:Reference Root}}" />
 
         <Label
             HorizontalOptions="Center"

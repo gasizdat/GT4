@@ -9,7 +9,7 @@ namespace GT4.Core.Gedcom;
 /// <c>pdf</c>, ...). The mapping is an <c>image/</c>/<c>application/</c> prefix swap, chosen so every
 /// value — including a null MIME — round-trips.
 /// </summary>
-internal static class GedcomMedia
+public static class GedcomMedia
 {
   private const string ImagePrefix = "image/";
   private const string ApplicationPrefix = "application/";

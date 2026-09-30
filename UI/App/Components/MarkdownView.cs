@@ -1,8 +1,6 @@
 using GT4.UI.Abstraction;
 using GT4.UI.Dialogs;
 using GT4.UI.Utils;
-using Markdig;
-using Markdig.Parsers;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
 
@@ -27,8 +25,6 @@ public class MarkdownView : ContentView
     BodyTextSizeKey,
     BodyTextSizeKey,
   ];
-
-  private static readonly MarkdownPipeline Pipeline = BuildPipeline();
 
   private readonly IAlertService _AlertService;
   private readonly Command<string> _LinkCommand;
@@ -83,19 +79,6 @@ public class MarkdownView : ContentView
 
   // From the rendered labels, not the Markdown: only they drop link targets and keep list markers.
   public string PlainText => TextOf(Content);
-
-  // CommonMark hands a run of lines opening with a tag to the HTML block parser as one opaque chunk,
-  // and this renderer has no shape for one -- the text inside would render as nothing at all. Without
-  // that parser the tags parse as inline HTML, which the inline walker already drops while keeping the
-  // text they wrap.
-  private static MarkdownPipeline BuildPipeline()
-  {
-    var builder = new MarkdownPipelineBuilder()
-      .UseAdvancedExtensions()
-      .UseSoftlineBreakAsHardlineBreak();
-    builder.BlockParsers.TryRemove<HtmlBlockParser>();
-    return builder.Build();
-  }
 
   private static void OnSourceChanged(BindableObject obj, object oldValue, object newValue)
   {
@@ -300,13 +283,6 @@ public class MarkdownView : ContentView
     return rule;
   }
 
-  private static (int? WidthPercent, string Caption) DescriptionOf(LinkInline image)
-  {
-    var literals = image.OfType<LiteralInline>().Select(literal => literal.Content.ToString());
-    var description = string.Concat(literals);
-    return MarkdownLinkUtils.ParseImageDescription(description);
-  }
-
   // MAUI keeps the height it measured a full-width image at, so capping the width alone leaves it in an
   // over-tall box: both axes have to come from the host's width. That needs the pixel dimensions, so a
   // remote image -- whose bytes this view doesn't hold -- keeps the plain fit, percentage included.
@@ -356,7 +332,7 @@ public class MarkdownView : ContentView
   // to the catch-up render -- so showing the preview doesn't also have to wait on resolver round-trips.
   private MarkdownDocument Render()
   {
-    var document = Markdig.Markdown.Parse(Markdown ?? string.Empty, Pipeline);
+    var document = Markdig.Markdown.Parse(Markdown ?? string.Empty, BiographyMarkdown.Pipeline);
     if (IsVisible)
     {
       Content = RenderContainer(document);
@@ -421,7 +397,7 @@ public class MarkdownView : ContentView
         formatted = new FormattedString();
       }
 
-      var description = DescriptionOf(image);
+      var description = BiographyMarkdown.DescriptionOf(image);
       var imageView = CreateImageView(image.Url, description.WidthPercent);
       if (imageView is not null)
       {
@@ -477,7 +453,7 @@ public class MarkdownView : ContentView
       // An image nested in emphasis or in a link can't become an Image view from inside a FormattedString,
       // so its caption stands in -- minus the size token, which is markup rather than text.
       case LinkInline { IsImage: true } image:
-        var (_, caption) = DescriptionOf(image);
+        var (_, caption) = BiographyMarkdown.DescriptionOf(image);
         formatted.Spans.Add(CreateSpan(caption, style));
         break;
 

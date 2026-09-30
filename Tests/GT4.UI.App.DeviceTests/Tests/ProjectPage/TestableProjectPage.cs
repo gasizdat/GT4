@@ -4,6 +4,7 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Components;
+using GT4.UI.HtmlExport;
 using GT4.UI.Items;
 using GT4.UI.Pages;
 using GT4.UI.Utils;
@@ -33,6 +34,7 @@ internal sealed class TestableProjectPage : ProjectPage
     IProjectList projectList,
     IGedcomExporter exporter,
     IGedcomImporter importer,
+    HtmlExporter htmlExporter,
     GedcomImportEncoding gedcomImportEncoding,
     IAlertService alertService,
     INavigationService navigationService,
@@ -49,6 +51,7 @@ internal sealed class TestableProjectPage : ProjectPage
       projectList,
       exporter,
       importer,
+      htmlExporter,
       gedcomImportEncoding,
       alertService,
       navigationService,

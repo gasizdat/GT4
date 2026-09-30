@@ -7,6 +7,7 @@ using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Pages;
 using GT4.UI.Resources;
+using GT4.UI.Utils;
 using Moq;
 using Xunit;
 
@@ -717,7 +718,7 @@ public class PersonPageTests
       n => n.GoToAsync(
         expectedRoute,
         true,
-        It.Is<Dictionary<string, object>>(d => Equals(d["FamilyName"], FamilyInfoItem.NoFamilyName))),
+        It.Is<Dictionary<string, object>>(d => Equals(d["FamilyName"], NoFamily.Name))),
       Times.Once());
   }
 
