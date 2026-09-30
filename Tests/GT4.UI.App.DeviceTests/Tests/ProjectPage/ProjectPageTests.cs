@@ -169,8 +169,8 @@ public class ProjectPageTests
 
     var families = await page.WaitForFamiliesAsync();
 
-    Assert.Equal(["Ivanov", FamilyInfoItem.NoFamilyName.Value], families.Select(f => f.Info.Value));
-    Assert.Equal(FI(FamilyInfoItem.NoFamilyName), families[^1].Info);
+    Assert.Equal(["Ivanov", NoFamily.Name.Value], families.Select(f => f.Info.Value));
+    Assert.Equal(FI(NoFamily.Name), families[^1].Info);
     Assert.Equal(["Orphan"], families[^1].Persons.Select(p => p.DisplayName));
   }
 

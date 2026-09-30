@@ -823,6 +823,24 @@ Stammbaum und haben Sie Freude daran!</value>
   <data name="MenuItemExportGedcom" xml:space="preserve">
     <value>📤 Nach GEDCOM exportieren</value>
   </data>
+  <data name="MenuItemExportHtml" xml:space="preserve">
+    <value>📤 Nach HTML exportieren</value>
+  </data>
+  <data name="ShareHtmlTitle" xml:space="preserve">
+    <value>HTML exportieren</value>
+  </data>
+  <data name="AlertExportHtmlConfirm" xml:space="preserve">
+    <value>Der HTML-Export enthält alle Personen des Projekts, auch lebende, mit allen Biografien, Fotos und Anhängen. Exportieren?</value>
+  </data>
+  <data name="TitleHtmlExportDialog" xml:space="preserve">
+    <value>HTML wird exportiert</value>
+  </data>
+  <data name="HintHtmlExportInProgress" xml:space="preserve">
+    <value>Die Seiten werden geschrieben. Das kann eine Weile dauern…</value>
+  </data>
+  <data name="LblPersons" xml:space="preserve">
+    <value>Personen</value>
+  </data>
   <data name="MenuItemImport" xml:space="preserve">
     <value>📥 Importieren</value>
   </data>
@@ -859,7 +877,7 @@ Stammbaum und haben Sie Freude daran!</value>
   <data name="HintGedcomImportInProgress" xml:space="preserve">
     <value>Die Datei wird importiert. Das kann eine Weile dauern…</value>
   </data>
-  <data name="HintGedcomImportCancelling" xml:space="preserve">
+  <data name="HintProgressCancelling" xml:space="preserve">
     <value>Wird abgebrochen…</value>
   </data>
   <data name="TitleSelectEncodingDialog" xml:space="preserve">
@@ -1559,5 +1577,11 @@ FN - Familienname</value>
   </data>
   <data name="FieldMainPerson_1" xml:space="preserve">
     <value>⭐ {0}</value>
+  </data>
+  <data name="MenuItemNameCopy" xml:space="preserve">
+    <value>Kopieren</value>
+  </data>
+  <data name="MsgCopied" xml:space="preserve">
+    <value>Kopiert</value>
   </data>
 </root>

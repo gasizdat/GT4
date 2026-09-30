@@ -29,7 +29,7 @@ public class KinshipFinderTests
   [Fact]
   public async Task FindPathAsync_Sibling_ReturnsSingleHopWithSiblingConsanguinity()
   {
-    // The subject's own siblings are seeded as roots (mirroring PersonPage.AssembleRoots), not
+    // The subject's own siblings are seeded as roots (mirroring RelativesProviderExtensions.GetRootsAsync), not
     // discovered via RelativesProvider's generic recursive expansion. Both parents must be shared
     // (and sexed) for GetSiblings to classify the pair as full (Native), not half-, siblings.
     var father = _documentMock.CreatePerson(BiologicalSex.Male);

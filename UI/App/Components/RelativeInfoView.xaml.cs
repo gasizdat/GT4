@@ -1,7 +1,6 @@
 using GT4.Core.Project.Dto;
 using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
-using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Extensions;
 using GT4.UI.Utils.Formatters;
@@ -32,13 +31,6 @@ public partial class RelativeInfoView : ContentView
   {
 
   }
-
-  private Date? _RelationshipDate => Relative?.Type switch
-  {
-    RelationshipType.Parent => PersonBirthDate,
-    RelationshipType.Child => Relative?.BirthDate,
-    _ => Relative?.Date
-  };
 
   public static readonly BindableProperty PersonBirthDateProperty = BindableProperty.Create(
     nameof(PersonBirthDate),
@@ -107,22 +99,16 @@ public partial class RelativeInfoView : ContentView
     set => SetValue(SelectCommandProperty, value);
   }
 
-  public bool ShowDate =>
-    _RelationshipDate.HasValue &&
-    _RelationshipDate.Value.Status != DateStatus.Unknown &&
-    Relative?.Type switch
-    {
-      RelationshipType.Spouse => true,
-      RelationshipType.AdoptiveChild => true,
-      RelationshipType.StepChild => true,
-      RelationshipType.AdoptiveParent => true,
-      RelationshipType.StepParent => true,
-      RelationshipType.AdoptiveSibling => true,
-      RelationshipType.StepSibling => true,
-      _ => false
-    };
+  public bool ShowDate => Relative?.ShowsRelationshipDate(PersonBirthDate) == true;
 
-  public string RelationshipDate => _DateFormatter.ToString(_RelationshipDate);
+  public string RelationshipDate
+  {
+    get
+    {
+      var date = Relative?.GetRelationshipDate(PersonBirthDate);
+      return _DateFormatter.ToString(date);
+    }
+  }
 
   public string RelationTypeName =>
     Relative is null
@@ -133,13 +119,9 @@ public partial class RelativeInfoView : ContentView
       Relative.Generation,
       Relative.Consanguinity);
 
-  private double? BloodShare => Relative?.GetBloodShare();
+  public bool HasBloodShare => Relative?.GetBloodShare() is not null;
 
-  public bool HasBloodShare => BloodShare.HasValue;
-
-  public string BloodShareText => BloodShare is { } share
-    ? string.Format(UIStrings.RelBloodShare_1, Math.Round(share * 100, 2))
-    : string.Empty;
+  public string BloodShareText => Relative?.GetBloodShareText() ?? string.Empty;
 
   private static void OnRelativeInfoChanged(BindableObject obj, object oldValue, object newValue)
   {

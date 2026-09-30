@@ -823,6 +823,24 @@ genealogy tree and enjoy!</value>
   <data name="MenuItemExportGedcom" xml:space="preserve">
     <value>📤 Export to GEDCOM</value>
   </data>
+  <data name="MenuItemExportHtml" xml:space="preserve">
+    <value>📤 Export to HTML</value>
+  </data>
+  <data name="ShareHtmlTitle" xml:space="preserve">
+    <value>Export HTML</value>
+  </data>
+  <data name="AlertExportHtmlConfirm" xml:space="preserve">
+    <value>The HTML export includes everyone in the project, living people too, with every biography, photo and attachment. Export?</value>
+  </data>
+  <data name="TitleHtmlExportDialog" xml:space="preserve">
+    <value>Exporting HTML</value>
+  </data>
+  <data name="HintHtmlExportInProgress" xml:space="preserve">
+    <value>Writing the pages. This may take a while…</value>
+  </data>
+  <data name="LblPersons" xml:space="preserve">
+    <value>People</value>
+  </data>
   <data name="MenuItemImport" xml:space="preserve">
     <value>📥 Import</value>
   </data>
@@ -859,7 +877,7 @@ genealogy tree and enjoy!</value>
   <data name="HintGedcomImportInProgress" xml:space="preserve">
     <value>Importing the file. This may take a while…</value>
   </data>
-  <data name="HintGedcomImportCancelling" xml:space="preserve">
+  <data name="HintProgressCancelling" xml:space="preserve">
     <value>Cancelling…</value>
   </data>
   <data name="TitleSelectEncodingDialog" xml:space="preserve">
@@ -1559,5 +1577,11 @@ FN - family name</value>
   </data>
   <data name="FieldMainPerson_1" xml:space="preserve">
     <value>⭐ {0}</value>
+  </data>
+  <data name="MenuItemNameCopy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="MsgCopied" xml:space="preserve">
+    <value>Copied</value>
   </data>
 </root>
