@@ -558,6 +558,40 @@ public class PageLayoutTests
   }
 
   [Fact]
+  public async Task Copy_puts_the_text_on_the_clipboard_and_the_notice_comes_and_goes_without_an_alert()
+  {
+    var services = new TestServices();
+    var layout = await CreateLayoutAsync(services);
+
+    await MainThread.InvokeOnMainThreadAsync(() => layout.CopyCommand.Execute("Ivan Ivanov"));
+
+    await Poll.UntilAsync(
+      () => Task.FromResult(layout.IsCopiedNoticeVisible),
+      visible => visible,
+      timeoutMessage: "The copied notice never showed.");
+    var copied = await MainThread.InvokeOnMainThreadAsync(Clipboard.Default.GetTextAsync);
+    Assert.Equal("Ivan Ivanov", copied);
+    await Poll.UntilAsync(
+      () => Task.FromResult(layout.IsCopiedNoticeVisible),
+      visible => !visible,
+      timeoutMessage: "The copied notice never went away.");
+    services.AlertService.VerifyNoOtherCalls();
+  }
+
+  [Fact]
+  public async Task A_second_copy_restarts_the_notice_countdown()
+  {
+    var layout = await CreateLayoutAsync();
+
+    await MainThread.InvokeOnMainThreadAsync(() => layout.CopyCommand.Execute("first"));
+    await Task.Delay(TimeSpan.FromSeconds(1.2));
+    await MainThread.InvokeOnMainThreadAsync(() => layout.CopyCommand.Execute("second"));
+    await Task.Delay(TimeSpan.FromSeconds(1.2));
+
+    Assert.True(layout.IsCopiedNoticeVisible, "The notice went away on the first copy's countdown.");
+  }
+
+  [Fact]
   public async Task A_layout_left_without_a_loading_flag_keeps_the_indicator_hidden()
   {
     var layout = await CreateLayoutAsync();

@@ -1566,4 +1566,10 @@ FN - apellido familiar</value>
   <data name="FieldMainPerson_1" xml:space="preserve">
     <value>⭐ {0}</value>
   </data>
+  <data name="MenuItemNameCopy" xml:space="preserve">
+    <value>Copiar</value>
+  </data>
+  <data name="MsgCopied" xml:space="preserve">
+    <value>Copiado</value>
+  </data>
 </root>

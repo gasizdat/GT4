@@ -77,6 +77,9 @@ public class MarkdownView : ContentView
   // opening the referenced attachment, same reason as PersonLinkTapped.
   public event EventHandler<int>? AttachmentLinkTapped;
 
+  // From the rendered labels, not the Markdown: only they drop link targets and keep list markers.
+  public string PlainText => TextOf(Content);
+
   private static void OnSourceChanged(BindableObject obj, object oldValue, object newValue)
   {
     if (obj is MarkdownView view && oldValue != newValue)
@@ -528,6 +531,24 @@ public class MarkdownView : ContentView
     };
     row.Add(marker);
     return row;
+  }
+
+  // A marked row reads as one line, its marker leading; anything else stacks its blocks.
+  private static string TextOf(View? view)
+  {
+    switch (view)
+    {
+      case Label label:
+        return label.FormattedText?.ToString() ?? label.Text;
+      case Border border:
+        return TextOf(border.Content);
+      case Layout layout:
+        var separator = layout is Grid ? " " : "\n";
+        var texts = layout.Children.OfType<View>().Select(TextOf).Where(text => text.Length > 0);
+        return string.Join(separator, texts);
+      default:
+        return string.Empty;
+    }
   }
 
   // A link the resolver has not answered for yet, or answered nothing for, renders nothing at all rather

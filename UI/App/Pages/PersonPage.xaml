@@ -158,6 +158,7 @@
             Grid.Row="2"
             Grid.Column="1"
             Grid.ColumnSpan="2"
+            behaviors:CopyText.IsEnabled="True"
             Style="{StaticResource CardSubtitle}"
             Text="{Binding FullName, Source={x:Reference Root}}" />
 
@@ -170,6 +171,7 @@
         <Label
             Grid.Row="3"
             Grid.Column="2"
+            behaviors:CopyText.IsEnabled="True"
             Style="{StaticResource FieldValue}"
             Text="{Binding BirthDate, Source={x:Reference Root}}" />
 
@@ -183,6 +185,7 @@
         <Label
             Grid.Row="4"
             Grid.Column="2"
+            behaviors:CopyText.IsEnabled="True"
             IsVisible="{Binding ShowDeathDate, Source={x:Reference Root}}"
             Style="{StaticResource FieldValue}"
             Text="{Binding DeathDate, Source={x:Reference Root}}" />
@@ -314,6 +317,7 @@
             VerticalScrollBarVisibility="Always">
           <Border>
             <components:MarkdownView
+                behaviors:CopyText.IsEnabled="True"
                 AttachmentLinkTapped="OnAttachmentLinkTapped"
                 IsVisible="{Binding ShowBiographyTab, Source={x:Reference Root}}"
                 Markdown="{Binding Biography, Source={x:Reference Root}, Mode=OneWay}"

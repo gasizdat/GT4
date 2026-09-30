@@ -1,6 +1,7 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.Behaviors;
 using GT4.UI.Components;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
@@ -1323,6 +1324,102 @@ public class PersonPageTests
       () => MainThread.InvokeOnMainThreadAsync(() => Descendants(page.BiographyForTest).OfType<Image>().Count()),
       rendered => rendered == 1,
       timeoutMessage: "The biography preview never caught up once its tab was shown.");
+  }
+
+  [Fact]
+  public async Task Copy_on_the_name_and_dates_puts_the_displayed_text_on_the_clipboard()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson() with
+    {
+      BirthDate = Date.Create(1900, 5, 1, DateStatus.WellKnown),
+      DeathDate = Date.Create(1970, 2, 3, DateStatus.WellKnown),
+    };
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+    var layout = (PageLayout)page.Content;
+
+    var copyable = Descendants(layout.Header).OfType<Label>().Where(CopyText.GetIsEnabled).ToArray();
+
+    Assert.Equal([page.FullName, page.BirthDate, page.DeathDate], copyable.Select(label => label.Text));
+    foreach (var label in copyable)
+    {
+      await AssertCopiesAsync(label, label.Text);
+    }
+
+    Assert.True(layout.IsCopiedNoticeVisible);
+    services.AlertService.VerifyNoOtherCalls();
+  }
+
+  [Fact]
+  public async Task Copy_on_the_biography_puts_its_rendered_text_on_the_clipboard()
+  {
+    var services = new TestServices();
+    var biography = new Data(
+      Id: 0,
+      Content: System.Text.Encoding.UTF8.GetBytes("Married [Ann](person:2) in **1900**."),
+      MimeType: System.Net.Mime.MediaTypeNames.Text.Plain,
+      Category: default);
+    var person = CreateSamplePerson() with { Biography = biography };
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+    await MainThread.InvokeOnMainThreadAsync(() => page.InvokePageCommandAsync("TabBiography"));
+
+    var markdown = Descendants(page.BiographyForTest).OfType<MarkdownView>().Single();
+
+    await AssertCopiesAsync(markdown, "Married Ann in 1900.");
+    services.AlertService.VerifyNoOtherCalls();
+  }
+
+#if WINDOWS
+  [Fact]
+  public async Task The_copy_targets_carry_a_native_context_flyout()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson() with { Biography = LongBiography() };
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await using var window = await WindowHost.AttachAsync(page);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+    await MainThread.InvokeOnMainThreadAsync(() => page.InvokePageCommandAsync("TabBiography"));
+    var layout = (PageLayout)page.Content;
+    var name = Descendants(layout.Header).OfType<Label>().First(CopyText.GetIsEnabled);
+    var markdown = Descendants(page.BiographyForTest).OfType<MarkdownView>().Single();
+
+    foreach (var view in new View[] { name, markdown })
+    {
+      var flyout = await Poll.UntilAsync(
+        () => MainThread.InvokeOnMainThreadAsync(() => NativeContextFlyout(view)),
+        native => native is not null,
+        timeoutMessage: $"{view.GetType().Name} never got a native context flyout.");
+      Assert.IsType<Microsoft.UI.Xaml.Controls.MenuFlyout>(flyout);
+    }
+  }
+
+  private static Microsoft.UI.Xaml.Controls.Primitives.FlyoutBase? NativeContextFlyout(View view)
+  {
+    var handler = (IPlatformViewHandler?)view.Handler;
+    return handler?.PlatformView?.ContextFlyout;
+  }
+#endif
+
+  private static async Task AssertCopiesAsync(View view, string expected)
+  {
+    await MainThread.InvokeOnMainThreadAsync(async () =>
+    {
+      await Clipboard.Default.SetTextAsync(null);
+      var flyout = (MenuFlyout)FlyoutBase.GetContextFlyout(view);
+      var item = Assert.Single(flyout);
+      Assert.Equal(UIStrings.MenuItemNameCopy, item.Text);
+      item.Clicked();
+    });
+
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(Clipboard.Default.GetTextAsync),
+      text => text == expected,
+      timeoutMessage: $"\"{expected}\" never reached the clipboard.");
   }
 
   [Fact]

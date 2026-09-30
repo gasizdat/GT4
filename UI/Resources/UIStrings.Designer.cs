@@ -2629,6 +2629,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Copy.
+        /// </summary>
+        public static string MenuItemNameCopy {
+            get {
+                return ResourceManager.GetString("MenuItemNameCopy", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to ➕ Create a Family.
         /// </summary>
         public static string MenuItemNameCreateFamily {
@@ -3066,6 +3075,15 @@ namespace GT4.UI.Resources {
         public static string MonthHebrew_Tishrei {
             get {
                 return ResourceManager.GetString("MonthHebrew_Tishrei", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Copied.
+        /// </summary>
+        public static string MsgCopied {
+            get {
+                return ResourceManager.GetString("MsgCopied", resourceCulture);
             }
         }
         

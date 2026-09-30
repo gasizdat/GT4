@@ -14,8 +14,10 @@ public partial class PageLayout : ContentView
   private readonly INavigationService _NavigationService;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly ICommand _GoBackCommand;
+  private IDispatcherTimer? _CopiedNoticeTimer;
   private bool _IsTopMenuVisible;
   private bool _IsSideMenuVisible;
+  private bool _IsCopiedNoticeVisible;
 
 
   public PageLayout(IServiceProvider serviceProvider)
@@ -33,6 +35,7 @@ public partial class PageLayout : ContentView
       Command = _GoBackCommand,
       CommandParameter = GoBackCommandParameter
     };
+    CopyCommand = new SafeCommand<string>(CopyAsync, alertService);
 
     SizeChanged += OnMenuPlacementChanged;
     _MenuItems.CollectionChanged += OnMenuPlacementChanged;
@@ -53,6 +56,8 @@ public partial class PageLayout : ContentView
   public ReadOnlyMode ReadOnlyMode { get; }
 
   public PageMenuItem BackItem { get; }
+
+  public ICommand CopyCommand { get; }
 
   public static readonly BindableProperty HasBackButtonProperty =
     BindableProperty.Create(
@@ -215,6 +220,22 @@ public partial class PageLayout : ContentView
 
   private Task GoBackAsync() => _NavigationService.GoToAsync("..", true);
 
+  private async Task CopyAsync(string text)
+  {
+    await Clipboard.Default.SetTextAsync(text);
+    if (_CopiedNoticeTimer is null)
+    {
+      _CopiedNoticeTimer = Dispatcher.CreateTimer();
+      _CopiedNoticeTimer.Interval = TimeSpan.FromSeconds(2);
+      _CopiedNoticeTimer.IsRepeating = false;
+      _CopiedNoticeTimer.Tick += (_, _) => IsCopiedNoticeVisible = false;
+    }
+
+    _CopiedNoticeTimer.Stop();
+    IsCopiedNoticeVisible = true;
+    _CopiedNoticeTimer.Start();
+  }
+
   public ICollection<PageMenuItem> MenuItems => _MenuItems;
 
   public bool HasBackButton
@@ -297,4 +318,14 @@ public partial class PageLayout : ContentView
   public bool IsHeaderVisible => Header is not null;
 
   public bool IsFooterVisible => Footer is not null;
+
+  public bool IsCopiedNoticeVisible
+  {
+    get => _IsCopiedNoticeVisible;
+    private set
+    {
+      _IsCopiedNoticeVisible = value;
+      OnPropertyChanged();
+    }
+  }
 }
