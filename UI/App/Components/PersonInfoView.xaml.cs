@@ -1,7 +1,6 @@
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
-using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Dto;
@@ -13,8 +12,7 @@ public partial class PersonInfoView : ContentView
 {
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly IAlertService _AlertService;
-  private readonly IDateSpanFormatter _DateSpanFormatter;
-  private readonly IDateFormatter _DateFormatter;
+  private readonly ILifeDatesFormatter _LifeDatesFormatter;
   private readonly INameFormatter _NameFormatter;
   private readonly DataConverterResolver _DataConverterResolver;
   private ImageSource? _PhotoSource;
@@ -25,8 +23,7 @@ public partial class PersonInfoView : ContentView
   {
     _CancellationTokenProvider = serviceProvider.GetRequiredService<ICancellationTokenProvider>();
     _AlertService = serviceProvider.GetRequiredService<IAlertService>();
-    _DateSpanFormatter = serviceProvider.GetRequiredService<IDateSpanFormatter>();
-    _DateFormatter = serviceProvider.GetRequiredService<IDateFormatter>();
+    _LifeDatesFormatter = serviceProvider.GetRequiredService<ILifeDatesFormatter>();
     _NameFormatter = serviceProvider.GetRequiredService<INameFormatter>();
     _DataConverterResolver = serviceProvider.GetRequiredService<DataConverterResolver>();
     InitializeComponent();
@@ -97,52 +94,9 @@ public partial class PersonInfoView : ContentView
       return name;
     }
   }
-  public string? LifeDates
-  {
-    get
-    {
-      if (Person is null || !ShowDates)
-      {
-        return null;
-      }
-
-      var personDates = string.Empty;
-      var isDeathDateDisplayed = ShowDeathDate && Person.DeathDate.HasValue;
-
-      if (Person.BirthDate.Status != DateStatus.Unknown || !isDeathDateDisplayed)
-      {
-        personDates = _DateFormatter.ToString(Person.BirthDate);
-      }
-
-      if (isDeathDateDisplayed)
-      {
-        var deathDate = Person.DeathDate!.Value.Status == DateStatus.Unknown
-                        ? string.Empty
-                        : _DateFormatter.ToString(Person.DeathDate);
-        deathDate = string.Format(UIStrings.PersonDeathMark_1, deathDate);
-
-        if (personDates == string.Empty)
-        {
-          personDates = deathDate;
-        }
-        else
-        {
-          personDates = string.Format(UIStrings.PersonDates_2, personDates, deathDate);
-        }
-      }
-
-      if (ShowAge)
-      {
-        var timeSpan = (Person.DeathDate.HasValue ? Person.DeathDate : Date.Now) - Person.BirthDate;
-        if (timeSpan.HasValue && timeSpan.Value.Status != DateStatus.Unknown)
-        {
-          personDates = string.Format(UIStrings.PersonAge_2, personDates, _DateSpanFormatter.ToString(timeSpan));
-        }
-      }
-
-      return personDates;
-    }
-  }
+  public string? LifeDates => Person is null || !ShowDates
+    ? null
+    : _LifeDatesFormatter.ToString(Person, ShowDeathDate, ShowAge);
   public ImageSource Photo
   {
     get

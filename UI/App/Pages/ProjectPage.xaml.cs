@@ -5,6 +5,7 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Dialogs;
+using GT4.UI.HtmlExport;
 using GT4.UI.Items;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
@@ -35,6 +36,7 @@ public partial class ProjectPage : ContentPage
   private readonly IProjectList _ProjectList;
   private readonly IGedcomExporter _Exporter;
   private readonly IGedcomImporter _Importer;
+  private readonly HtmlExporter _HtmlExporter;
   private readonly GedcomImportEncoding _GedcomImportEncoding;
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
@@ -56,6 +58,7 @@ public partial class ProjectPage : ContentPage
     IProjectList projectList,
     IGedcomExporter exporter,
     IGedcomImporter importer,
+    HtmlExporter htmlExporter,
     GedcomImportEncoding gedcomImportEncoding,
     IAlertService alertService,
     INavigationService navigationService,
@@ -73,6 +76,7 @@ public partial class ProjectPage : ContentPage
     _ProjectList = projectList;
     _Exporter = exporter;
     _Importer = importer;
+    _HtmlExporter = htmlExporter;
     _GedcomImportEncoding = gedcomImportEncoding;
     _AlertService = alertService;
     _NavigationService = navigationService;
@@ -140,13 +144,13 @@ public partial class ProjectPage : ContentPage
         .ToList();
 
       var familylessPersons = persons
-        .Where(FamilyInfoItem.HasNoFamily)
+        .Where(NoFamily.Includes)
         .OrderBy(item => item, _PersonInfoComparer)
         .ToArray();
       if (familylessPersons.Length > 0)
       {
         families.Add(new FamilyInfoItem(
-          new FamilyInfo(FamilyInfoItem.NoFamilyName, null), familylessPersons, (_, person) => FilterView.Matches(person),
+          new FamilyInfo(NoFamily.Name, null), familylessPersons, (_, person) => FilterView.Matches(person),
           _CancellationTokenProvider, _AlertService, _DataConverterResolver));
       }
 
@@ -379,7 +383,7 @@ public partial class ProjectPage : ContentPage
   {
     var choice = await DisplayActionSheetAsync(
       UIStrings.TitleExportChoice, UIStrings.BtnNameCancel, null,
-      UIStrings.MenuItemExportGedcom, UIStrings.MenuItemExportProjectFile);
+      UIStrings.MenuItemExportGedcom, UIStrings.MenuItemExportProjectFile, UIStrings.MenuItemExportHtml);
 
     if (choice == UIStrings.MenuItemExportGedcom)
     {
@@ -388,6 +392,10 @@ public partial class ProjectPage : ContentPage
     else if (choice == UIStrings.MenuItemExportProjectFile)
     {
       await OnExportProjectFile();
+    }
+    else if (choice == UIStrings.MenuItemExportHtml)
+    {
+      await OnExportHtml();
     }
   }
 
@@ -428,6 +436,42 @@ public partial class ProjectPage : ContentPage
     await Share.Default.RequestAsync(request);
   }
 
+  // The site carries every person, living ones included, so the user confirms that first.
+  private async Task OnExportHtml()
+  {
+    if (!await _AlertService.ShowConfirmationAsync(UIStrings.AlertExportHtmlConfirm))
+      return;
+
+    var projectName = _CurrentProjectProvider.Info.Name;
+    var name = FileNameUtils.Sanitize(projectName, "project") + ".html";
+    var path = Path.Combine(FileSystem.CacheDirectory, name + ProjectFileExtensions.ZipExtension);
+
+    var dialog = new ProgressDialog(UIStrings.TitleHtmlExportDialog, projectName, UIStrings.HintHtmlExportInProgress, _AlertService);
+    await Navigation.PushModalAsync(dialog);
+    try
+    {
+      await Task.Run(() => RunHtmlExportAsync(path, projectName, dialog.Token));
+    }
+    catch (OperationCanceledException)
+    {
+      File.Delete(path);
+      return;
+    }
+    finally
+    {
+      await Navigation.PopModalAsync();
+    }
+
+    var request = new ShareFileRequest { Title = UIStrings.ShareHtmlTitle, File = new ShareFile(path) };
+    await Share.Default.RequestAsync(request);
+  }
+
+  private async Task RunHtmlExportAsync(string path, string projectName, CancellationToken token)
+  {
+    await using var archive = new FileStream(path, FileMode.Create);
+    await _HtmlExporter.ExportAsync(_CurrentProjectProvider.Project, projectName, archive, token);
+  }
+
   // Merges a GEDCOM file into the open project. Unlike the project list's import (which always lands in a
   // fresh project), this folds people that match an existing person and adds the rest. It mutates the
   // current project, so it is confirmed first; the import is one transaction, so a cancellation or a
@@ -449,7 +493,8 @@ public partial class ProjectPage : ContentPage
     if (reader is null)
       return;
 
-    var dialog = new GedcomImportDialog(_CurrentProjectProvider.Info.Name, _AlertService);
+    var dialog = new ProgressDialog(
+      UIStrings.TitleGedcomImportDialog, _CurrentProjectProvider.Info.Name, UIStrings.HintGedcomImportInProgress, _AlertService);
     await Navigation.PushModalAsync(dialog);
     try
     {

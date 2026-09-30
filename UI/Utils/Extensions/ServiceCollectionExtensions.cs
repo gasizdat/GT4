@@ -18,6 +18,7 @@ public static class ServiceCollectionExtensions
       .AddSingleton<IDateFormatter, DateFormatter>()
       .AddSingleton<INameFormatter, NameFormatter>()
       .AddSingleton<IDateSpanFormatter, DateSpanFormatter>()
+      .AddSingleton<ILifeDatesFormatter, LifeDatesFormatter>()
       .AddSingleton<IRelationshipTypeFormatter, RelationshipTypeFormatter>()
       .AddSingleton<INameTypeFormatter, NameTypeFormatter>()
       .AddSingleton<IBiologicalSexFormatter, BiologicalSexFormatter>()
