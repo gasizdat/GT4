@@ -405,7 +405,8 @@ public class FamilyTreePageTests
   {
     var services = new TestServices();
     var center = P(1, "Ivan");
-    SetupTree(services, center, P(2, "Petr"));
+    var child = P(2, "Petr");
+    SetupTree(services, center, child);
     services.ArrangementStore
       .Setup(s => s.Get(TestServices.SampleProjectInfo, center.Id))
       .Returns(new Dictionary<int, double> { [2] = 3 });
@@ -413,9 +414,11 @@ public class FamilyTreePageTests
 
     await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
 
-    Assert.Equal(3, await ChildOffsetAsync(page), precision: 6);
+    var offset = await ChildOffsetAsync(page);
+    Assert.Equal(3, offset, precision: 6);
     Assert.True(page.IsArranged);
-    Assert.Equal(string.Format(UIStrings.TitleFamilyTreePageArranged_1, "Ivan"), page.PageTitle);
+    var expectedTitle = string.Format(UIStrings.TitleFamilyTreePageArranged_1, "Ivan");
+    Assert.Equal(expectedTitle, page.PageTitle);
   }
 
   [Fact]
@@ -427,7 +430,8 @@ public class FamilyTreePageTests
     await WaitForLoadAsync(page, services, () => page.PersonInfo = P(1, "Ivan"));
 
     Assert.False(page.IsArranged);
-    Assert.Equal(string.Format(UIStrings.TitleFamilyTreePage_1, "Ivan"), page.PageTitle);
+    var expectedTitle = string.Format(UIStrings.TitleFamilyTreePage_1, "Ivan");
+    Assert.Equal(expectedTitle, page.PageTitle);
   }
 
   [Fact]
@@ -442,7 +446,11 @@ public class FamilyTreePageTests
 
     await MainThread.InvokeOnMainThreadAsync(() => page.InvokePageCommandAsync(center));
     await MainThread.InvokeOnMainThreadAsync(() => page.InvokePageCommandAsync(other));
-    await Task.Delay(200);
+    await Poll.ConfirmNeverAsync(
+      () => Task.FromResult(page.PageTitle),
+      title => !title.Contains("Ivan"),
+      TimeSpan.FromMilliseconds(200),
+      "A tap while arranging re-centred the tree.");
 
     services.NavigationService.Verify(
       n => n.GoToAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<Dictionary<string, object>>()),
@@ -450,7 +458,6 @@ public class FamilyTreePageTests
     services.FamilyTreeProvider.Verify(
       f => f.BuildAsync(other, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()),
       Times.Never());
-    Assert.Contains("Ivan", page.PageTitle);
   }
 
   [Fact]
@@ -458,7 +465,8 @@ public class FamilyTreePageTests
   {
     var services = new TestServices();
     var center = P(1, "Ivan");
-    SetupTree(services, center, P(2, "Petr"));
+    var child = P(2, "Petr");
+    SetupTree(services, center, child);
     var page = await CreatePageAsync(services);
     await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
 
@@ -474,11 +482,14 @@ public class FamilyTreePageTests
           childView.GestureRecognizers.OfType<PanGestureRecognizer>().Any());
       });
 
-    Assert.Equal((false, false), await DragsAsync());
+    var atRest = await DragsAsync();
+    Assert.Equal((false, false), atRest);
     await MainThread.InvokeOnMainThreadAsync(() => page.IsArranging = true);
-    Assert.Equal((false, true), await DragsAsync());
+    var arranging = await DragsAsync();
+    Assert.Equal((false, true), arranging);
     await MainThread.InvokeOnMainThreadAsync(() => page.IsArranging = false);
-    Assert.Equal((false, false), await DragsAsync());
+    var stopped = await DragsAsync();
+    Assert.Equal((false, false), stopped);
   }
 
   [Fact]
@@ -496,7 +507,8 @@ public class FamilyTreePageTests
   {
     var services = new TestServices();
     var center = P(1, "Ivan");
-    SetupTree(services, center, P(2, "Petr"));
+    var child = P(2, "Petr");
+    SetupTree(services, center, child);
     var page = await CreatePageAsync(services);
     await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
 
@@ -508,7 +520,8 @@ public class FamilyTreePageTests
         center.Id,
         It.Is<IReadOnlyDictionary<int, double>>(pins => pins.Count == 1 && Math.Abs(pins[2] - 2) < 1e-6)),
       Times.Once());
-    Assert.Equal(2, await ChildOffsetAsync(page), precision: 6);
+    var offset = await ChildOffsetAsync(page);
+    Assert.Equal(2, offset, precision: 6);
     Assert.True(page.IsArranged);
   }
 
@@ -517,7 +530,9 @@ public class FamilyTreePageTests
   {
     var services = new TestServices();
     var center = P(1, "Ivan");
-    SetupTree(services, center, P(2, "Petr"), P(3, "Oleg"));
+    var child = P(2, "Petr");
+    var sibling = P(3, "Oleg");
+    SetupTree(services, center, child, sibling);
     services.ArrangementStore
       .Setup(s => s.Get(TestServices.SampleProjectInfo, center.Id))
       .Returns(new Dictionary<int, double> { [2] = 1 });
@@ -525,7 +540,8 @@ public class FamilyTreePageTests
     await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
     var bounds = await NodeBoundsAsync(page);
     var centerLeft = bounds.MinBy(b => b.Top).Left;
-    var children = bounds.Where(b => b.Top > bounds.Min(c => c.Top)).ToArray();
+    var topRow = bounds.Min(b => b.Top);
+    var children = bounds.Where(b => b.Top > topRow).ToArray();
     var pinnedLeft = centerLeft + SlotPitch;
     var freeLeft = children.Single(b => Math.Abs(b.Left - pinnedLeft) > 1e-6).Left;
 
@@ -545,7 +561,8 @@ public class FamilyTreePageTests
   {
     var services = new TestServices();
     var center = P(1, "Ivan");
-    SetupTree(services, center, P(2, "Petr"));
+    var child = P(2, "Petr");
+    SetupTree(services, center, child);
     services.ArrangementStore
       .Setup(s => s.Get(TestServices.SampleProjectInfo, center.Id))
       .Returns(new Dictionary<int, double> { [2] = 3 });
@@ -556,8 +573,10 @@ public class FamilyTreePageTests
 
     services.ArrangementStore.Verify(s => s.Clear(TestServices.SampleProjectInfo, center.Id), Times.Once());
     // The lone child is back under its parent, not left where the arrangement had it.
-    Assert.Equal(0, await ChildOffsetAsync(page), precision: 6);
+    var offset = await ChildOffsetAsync(page);
+    Assert.Equal(0, offset, precision: 6);
     Assert.False(page.IsArranged);
-    Assert.Equal(string.Format(UIStrings.TitleFamilyTreePage_1, "Ivan"), page.PageTitle);
+    var expectedTitle = string.Format(UIStrings.TitleFamilyTreePage_1, "Ivan");
+    Assert.Equal(expectedTitle, page.PageTitle);
   }
 }

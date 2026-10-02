@@ -27,7 +27,9 @@ public sealed class FamilyTreeArrangementStoreTests
     var (store, root) = NewStore();
     try
     {
-      store.Get(Project("sample.gt4"), 1).Should().BeEmpty();
+      var project = Project("sample.gt4");
+
+      store.Get(project, 1).Should().BeEmpty();
     }
     finally { Directory.Delete(root, true); }
   }
@@ -86,9 +88,11 @@ public sealed class FamilyTreeArrangementStoreTests
     var (store, root) = NewStore();
     try
     {
-      store.Set(Project("a.gt4"), 1, new Dictionary<int, double> { [2] = 1 });
+      var a = Project("a.gt4");
+      var b = Project("b.gt4");
+      store.Set(a, 1, new Dictionary<int, double> { [2] = 1 });
 
-      store.Get(Project("b.gt4"), 1).Should().BeEmpty();
+      store.Get(b, 1).Should().BeEmpty();
     }
     finally { Directory.Delete(root, true); }
   }

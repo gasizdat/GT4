@@ -453,7 +453,9 @@ public class FamilyTreeLayoutTests
   [Fact]
   public void Update_PinnedNode_SitsAtItsOffsetFromTheCenter()
   {
-    var result = new FamilyTreeLayout().Update(ShallowTree(), _metrics, new Dictionary<int, double> { [4] = -3.5 });
+    var tree = ShallowTree();
+
+    var result = new FamilyTreeLayout().Update(tree, _metrics, new Dictionary<int, double> { [4] = -3.5 });
 
     OffsetFromCenter(result, 4).Should().BeApproximately(-3.5, 1e-6);
   }
@@ -461,9 +463,10 @@ public class FamilyTreeLayoutTests
   [Fact]
   public void Update_Pin_HoldsInAFreshLayoutOfADeeperTree()
   {
+    var tree = DeeperTree();
     var pins = new Dictionary<int, double> { [2] = 2.25, [5] = -4 };
 
-    var reopened = new FamilyTreeLayout().Update(DeeperTree(), _metrics, pins);
+    var reopened = new FamilyTreeLayout().Update(tree, _metrics, pins);
 
     OffsetFromCenter(reopened, 2).Should().BeApproximately(2.25, 1e-6);
     OffsetFromCenter(reopened, 5).Should().BeApproximately(-4, 1e-6);
@@ -472,10 +475,12 @@ public class FamilyTreeLayoutTests
   [Fact]
   public void Update_Pin_HoldsAcrossAnIncrementalLoad()
   {
+    var shallow = ShallowTree();
+    var deeper = DeeperTree();
     var layout = new FamilyTreeLayout();
-    layout.Update(ShallowTree(), _metrics);
+    layout.Update(shallow, _metrics);
 
-    var loadedMore = layout.Update(DeeperTree(), _metrics, new Dictionary<int, double> { [7] = 5 });
+    var loadedMore = layout.Update(deeper, _metrics, new Dictionary<int, double> { [7] = 5 });
 
     OffsetFromCenter(loadedMore, 7).Should().BeApproximately(5, 1e-6);
   }
@@ -485,9 +490,10 @@ public class FamilyTreeLayoutTests
   {
     // One child pinned almost under the centre, where its free sibling would sit, and a grandchild
     // pinned between its two free siblings.
+    var tree = DeeperTree();
     var pins = new Dictionary<int, double> { [4] = 0.3, [8] = 0 };
 
-    var result = new FamilyTreeLayout().Update(DeeperTree(), _metrics, pins);
+    var result = new FamilyTreeLayout().Update(tree, _metrics, pins);
 
     AssertNoRowOverlaps(result);
   }
@@ -495,23 +501,27 @@ public class FamilyTreeLayoutTests
   [Fact]
   public void Update_PinOfANodeNotInTheTree_IsIgnored()
   {
-    var pinned = new FamilyTreeLayout().Update(ShallowTree(), _metrics, new Dictionary<int, double> { [99] = 3 });
-    var fresh = new FamilyTreeLayout().Update(ShallowTree(), _metrics);
+    var tree = ShallowTree();
+    var pinned = new FamilyTreeLayout().Update(tree, _metrics, new Dictionary<int, double> { [99] = 3 });
+    var fresh = new FamilyTreeLayout().Update(tree, _metrics);
 
-    pinned.Nodes.Select(n => n.Bounds).Should().Equal(fresh.Nodes.Select(n => n.Bounds));
+    var freshBounds = fresh.Nodes.Select(n => n.Bounds);
+    pinned.Nodes.Select(n => n.Bounds).Should().Equal(freshBounds);
   }
 
   [Fact]
   public void Reset_DropsAnArrangementSoTheNextUpdateMatchesAFreshLayout()
   {
+    var tree = ShallowTree();
     var layout = new FamilyTreeLayout();
-    layout.Update(ShallowTree(), _metrics, new Dictionary<int, double> { [4] = -6, [2] = 5 });
+    layout.Update(tree, _metrics, new Dictionary<int, double> { [4] = -6, [2] = 5 });
 
     layout.Reset();
-    var afterReset = layout.Update(ShallowTree(), _metrics);
+    var afterReset = layout.Update(tree, _metrics);
 
-    var fresh = new FamilyTreeLayout().Update(ShallowTree(), _metrics);
-    afterReset.Nodes.Select(n => n.Bounds).Should().Equal(fresh.Nodes.Select(n => n.Bounds));
+    var fresh = new FamilyTreeLayout().Update(tree, _metrics);
+    var freshBounds = fresh.Nodes.Select(n => n.Bounds);
+    afterReset.Nodes.Select(n => n.Bounds).Should().Equal(freshBounds);
   }
 
   [Theory]
