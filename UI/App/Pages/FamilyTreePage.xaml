@@ -27,6 +27,7 @@
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="ResetArrangement"
+          EditingAction="True"
           IsEnabled="{Binding CanResetArrangement, Source={x:Reference Root}}"
           Text="{x:Static resources:UIStrings.MenuItemNameResetArrangement}" />
     </components:PageLayout.MenuItems>
@@ -36,11 +37,14 @@
           HorizontalOptions="End"
           Spacing="{StaticResource PageContentSpacing}">
         <Label
+            IsVisible="{Binding ReadOnlyMode.CanEdit, Source={x:Reference LayoutView}}"
             Style="{StaticResource FieldName}"
             Text="{x:Static resources:UIStrings.LblArrange}"
             VerticalOptions="Center" />
         <Switch
+            x:Name="ArrangeSwitch"
             IsToggled="{Binding IsArranging, Source={x:Reference Root}}"
+            IsVisible="{Binding ReadOnlyMode.CanEdit, Source={x:Reference LayoutView}}"
             VerticalOptions="Center" />
         <Label
             Style="{StaticResource FieldName}"

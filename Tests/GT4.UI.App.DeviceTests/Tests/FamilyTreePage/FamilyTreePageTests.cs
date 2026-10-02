@@ -2,6 +2,7 @@ using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
+using GT4.UI.Components;
 using GT4.UI.Pages;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
@@ -755,5 +756,33 @@ public class FamilyTreePageTests
     Assert.True(canResetAtRest);
     Assert.False(canResetWhileLoading);
     Assert.True(page.CanResetArrangement);
+  }
+
+  [Fact]
+  public async Task Read_only_mode_hides_arranging_and_marks_its_reset_as_editing()
+  {
+    var page = await CreatePageAsync(new TestServices());
+    var layout = page.FindByName<PageLayout>("LayoutView");
+    var arrange = page.FindByName<Switch>("ArrangeSwitch");
+    var reset = layout.MenuItems.Single(item => "ResetArrangement".Equals(item.CommandParameter));
+    var shownWhileEditable = await MainThread.InvokeOnMainThreadAsync(() => arrange.IsVisible);
+
+    try
+    {
+      var shownWhileReadOnly = await MainThread.InvokeOnMainThreadAsync(() =>
+      {
+        layout.ReadOnlyMode.Apply("True");
+        return arrange.IsVisible;
+      });
+
+      Assert.True(shownWhileEditable);
+      Assert.False(shownWhileReadOnly);
+      Assert.True(reset.EditingAction);
+    }
+    finally
+    {
+      // ReadOnlyMode is the app-wide singleton, shared with every later test.
+      await MainThread.InvokeOnMainThreadAsync(() => layout.ReadOnlyMode.Apply("False"));
+    }
   }
 }
