@@ -24,7 +24,6 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   private readonly IFamilyTreeArrangementStore _ArrangementStore;
   private readonly INameFormatter _NameFormatter;
   private readonly FamilyTreeLayoutMetrics _Metrics = new() { Margin = OverlayClearance };
-  private readonly FamilyTreeLayout _Layout = new();
   private readonly FontScale? _FontScale;
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
@@ -181,7 +180,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
 
   public bool IsArranged => _Pins.Count != 0;
 
-  // Held off while a load runs: that load would lay out again the columns Reset just cleared.
+  // Held off while a load runs: that load still carries the arrangement and could render after the reset.
   public bool CanResetArrangement => IsArranged && !LoadInProgress;
 
   // Node taps and the canvas pan give way to dragging nodes along their rows.
@@ -316,10 +315,9 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   {
     _Center = person;
     _CenterName = _NameFormatter.ToString(person, NameFormat.ShortPersonName);
-    // A new centre starts a fresh view, so reset the depth and all stored layout positions.
+    // A new centre starts a fresh view, so reset the depth.
     _AncestorGenerations = InitialGenerations;
     _DescendantGenerations = InitialGenerations;
-    _Layout.Reset();
     var pins = _ArrangementStore.Get(_CurrentProjectProvider.Info, person.Id);
     SetPins(pins);
     OnPropertyChanged(nameof(OpenPersonToolbarItemName));
@@ -418,7 +416,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
         CornerRadius = _Metrics.CornerRadius * zoom,
       };
 
-      var layout = _Layout.Update(tree, scaledMetrics, pins);
+      var layout = FamilyTreeLayout.Compute(tree, scaledMetrics, pins);
       var names = layout.Nodes.ToDictionary(
         node => node.Node.Id,
         node => _NameFormatter.ToString(node.Node.Person, NameFormat.ShortPersonName));
@@ -705,8 +703,6 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
       case string command when command == "ResetArrangement" && _Center is PersonInfo center:
         _ArrangementStore.Clear(_CurrentProjectProvider.Info, center.Id);
         SetPins(new Dictionary<int, double>());
-        // The stored columns still hold the arrangement, so lay out from scratch.
-        _Layout.Reset();
         Reload(ViewTarget.Center);
         break;
 

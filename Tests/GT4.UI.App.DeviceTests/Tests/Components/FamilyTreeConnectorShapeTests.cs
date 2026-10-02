@@ -138,6 +138,20 @@ public class FamilyTreeConnectorShapeTests
   }
 
   [Fact]
+  public void A_loop_is_dashed_and_its_path_reused_for_a_plain_connector_is_solid_again()
+  {
+    var loop = new FamilyTreeConnector(FamilyTreeRelation.ParentChild, [new PointF(0, 0), new PointF(10, 10)], IsLoop: true);
+    var path = FamilyTreeConnectorShape.Create(loop, cornerRadius: 0, lineWidth: 1, Colors.Black);
+    var dashes = path.StrokeDashArray.ToArray();
+
+    FamilyTreeConnectorShape.Update(
+      path, MakeConnector(new PointF(0, 0), new PointF(10, 10)), cornerRadius: 0, lineWidth: 1, Colors.Black);
+
+    Assert.NotEmpty(dashes);
+    Assert.Empty(path.StrokeDashArray);
+  }
+
+  [Fact]
   public void Update_re_specifies_an_existing_path_instance_for_a_new_connector()
   {
     var path = FamilyTreeConnectorShape.Create(
