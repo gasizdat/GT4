@@ -83,6 +83,23 @@ public class FamilyTreePageTests
   private static IPanGestureController NodeDrag(View view) =>
     view.GestureRecognizers.OfType<PanGestureRecognizer>().Single();
 
+  // Many more columns than any runner window is wide, so the canvas can scroll both ways.
+  private static PersonInfo[] ManyChildren() => [.. Enumerable.Range(2, 30).Select(id => P(id, $"Child{id}"))];
+
+  private static Task<double> ScrollXAsync(TestableFamilyTreePage page) =>
+    MainThread.InvokeOnMainThreadAsync(() => page.FindByName<ScrollView>("Scroller").ScrollX);
+
+  private static async Task<double> ScrollToAsync(TestableFamilyTreePage page, double x)
+  {
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      var scroller = page.FindByName<ScrollView>("Scroller");
+      return scroller.ScrollToAsync(x, scroller.ScrollY, animated: false);
+    });
+
+    return await Poll.UntilAsync(() => ScrollXAsync(page), scrolled => Math.Abs(scrolled - x) < 1, timeoutMessage: "The viewport did not scroll.");
+  }
+
   private static Task<double> NodeLeftAsync(TestableFamilyTreePage page, int personId) =>
     MainThread.InvokeOnMainThreadAsync(() =>
     {
@@ -756,6 +773,76 @@ public class FamilyTreePageTests
     Assert.True(canResetAtRest);
     Assert.False(canResetWhileLoading);
     Assert.True(page.CanResetArrangement);
+  }
+
+  [Fact]
+  public async Task While_arranging_dragging_the_canvas_does_not_scroll_it()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    var children = ManyChildren();
+    SetupTree(services, center, children);
+    var page = await CreatePageAsync(services);
+    await using var window = await WindowHost.AttachAsync(page);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    var start = await ScrollToAsync(page, 1000);
+
+    void PanCanvas(int gestureId)
+    {
+      var canvas = page.FindByName<Grid>("Canvas");
+      IPanGestureController pan = canvas.GestureRecognizers.OfType<PanGestureRecognizer>().Single();
+      pan.SendPanStarted(canvas, gestureId);
+      pan.SendPan(canvas, -100, 0, gestureId);
+      pan.SendPanCompleted(canvas, gestureId);
+    }
+
+    // Not arranging, the same drag scrolls, so the check below is able to fail.
+    await MainThread.InvokeOnMainThreadAsync(() => PanCanvas(1));
+    var panned = await Poll.UntilAsync(() => ScrollXAsync(page), x => Math.Abs(x - (start + 100)) < 1, timeoutMessage: "A canvas drag did not scroll even when not arranging.");
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      page.IsArranging = true;
+      PanCanvas(2);
+    });
+
+    await Poll.ConfirmNeverAsync(
+      () => ScrollXAsync(page),
+      x => Math.Abs(x - panned) >= 1,
+      TimeSpan.FromMilliseconds(300),
+      "A canvas drag scrolled while arranging.");
+  }
+
+  [Fact]
+  public async Task A_dropped_node_stays_where_it_was_released_on_screen()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    var children = ManyChildren();
+    SetupTree(services, center, children);
+    var page = await CreatePageAsync(services);
+    await using var window = await WindowHost.AttachAsync(page);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+
+    // Off the centre: re-centring would also keep a node beside the centre in place, so only an
+    // off-centre viewport tells following the drop apart from re-centring.
+    var scrollBefore = await ScrollToAsync(page, 700);
+    var dropped = children[children.Length / 2];
+    var leftBefore = await NodeLeftAsync(page, dropped.Id);
+    var deltaX = 1.5 * SlotPitch;
+    var released = leftBefore + deltaX - scrollBefore;
+
+    await WaitForLoadAsync(page, services, () => page.InvokeDropNode(dropped.Id, deltaX));
+
+    await Poll.UntilAsync(
+      async () =>
+      {
+        var left = await NodeLeftAsync(page, dropped.Id);
+        var scroll = await ScrollXAsync(page);
+        return left - scroll;
+      },
+      onScreen => Math.Abs(onScreen - released) < 1,
+      timeoutMessage: "The dropped node did not stay where it was released.");
   }
 
   [Fact]
