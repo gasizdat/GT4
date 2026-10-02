@@ -661,7 +661,7 @@ public class FamilyTreePageTests
   }
 
   [Fact]
-  public async Task A_drag_under_a_quarter_slot_is_put_back_and_not_saved()
+  public async Task A_drag_of_a_few_pixels_is_put_back_and_not_saved()
   {
     var services = new TestServices();
     var center = P(1, "Ivan");
@@ -673,8 +673,8 @@ public class FamilyTreePageTests
     var translation = await MainThread.InvokeOnMainThreadAsync(() =>
     {
       var view = NodeView(page, child.Id);
-      view.TranslationX = 0.2 * SlotPitch;
-      page.InvokeDropNode(child.Id, 0.2 * SlotPitch);
+      view.TranslationX = 4;
+      page.InvokeDropNode(child.Id, 4);
       return view.TranslationX;
     });
 
@@ -684,6 +684,23 @@ public class FamilyTreePageTests
     services.ArrangementStore.Verify(
       s => s.Set(It.IsAny<ProjectInfo>(), It.IsAny<int>(), It.IsAny<IReadOnlyDictionary<int, double>>()),
       Times.Never());
+  }
+
+  [Fact]
+  public async Task A_drag_well_under_a_slot_still_pins_the_node()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    var child = P(2, "Petr");
+    SetupTree(services, center, child);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+
+    await WaitForLoadAsync(page, services, () => page.InvokeDropNode(child.Id, 50));
+
+    var offset = await ChildOffsetAsync(page);
+    Assert.Equal(50 / SlotPitch, offset, precision: 6);
+    Assert.True(page.IsArranged);
   }
 
   [Fact]

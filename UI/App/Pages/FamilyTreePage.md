@@ -113,7 +113,7 @@ between them, centred on a focal person.
   the canvas pan and the tap even when it ignores it). The centre never gets one, since every pin is
   measured from it.
 - A drag moves the node by its `TranslationX`. On release, `DropNode` puts it back without saving if
-  a load is in flight or the drag is shorter than `MinDragSlots`. Otherwise it pins the node at its
+  a load is in flight or the drag is shorter than `MinDragDistance`. Otherwise it pins the node at its
   release offset in slots from the centre, moved by `FamilyTreeLayout.NearestClearSlot` to clear the
   centre and the other pinned nodes in its row. The pins are saved through
   `IFamilyTreeArrangementStore` (per project, per centre) and the tree reloads with

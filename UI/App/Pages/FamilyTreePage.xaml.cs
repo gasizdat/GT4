@@ -45,8 +45,8 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   private const int ZoomIntervalMs = 300;
   // Sized to clear the tallest of the "load more" and zoom buttons pinned over the canvas.
   private const double OverlayClearance = 72;
-  // A shorter drag is a tap, or a scroll that started on a node, not a move.
-  private const double MinDragSlots = 0.25;
+  // A shorter drag is a tap or a slipped touch, not a move; it is far below a slot at any zoom.
+  private const double MinDragDistance = 8;
 
   private Person? _Center;
   private string _CenterName = string.Empty;
@@ -354,7 +354,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   {
     var pitch = _Metrics.SlotPitch * _ZoomScale;
     // A load in flight is about to replace the layout the drop would be measured against.
-    if (LoadInProgress || Math.Abs(deltaX) < MinDragSlots * pitch)
+    if (LoadInProgress || Math.Abs(deltaX) < MinDragDistance)
     {
       _NodeCache[personId].View.TranslationX = 0;
       return;
