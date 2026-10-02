@@ -11,6 +11,7 @@ between them, centred on a focal person.
   - tap on the **current centre** → navigate to that person's `PersonPage`;
   - tap on **any other node** → re-centre the tree on that person (`SetCenter`);
   - the `"OpenPerson"` toolbar command → open the centre in `PersonPage`.
+- While arranging (`IsArranging`), node taps do nothing.
 
 ## State
 - `_Center` (a `Person?`) / `_CenterName`: the focal person and its formatted short name.
@@ -19,7 +20,13 @@ between them, centred on a focal person.
   (3) at a time.
 - `_IncludeCollaterals`: toggles siblings/cousins; flipping it triggers a reload.
 - `_CanLoadMoreAncestors` / `_CanLoadMoreDescendants`: backing fields for the load-more bindables.
-- `_ViewTarget` (Center/Top/Bottom): records where the viewport should park after a rebuild.
+- `_ViewTarget` (Center/Top/Bottom/Dropped): records where the viewport should park after a rebuild.
+- `_Pins`: the centre's arrangement, person id → offset from the centre in slots. Replaced, never
+  mutated, so a load in flight keeps the set it started with.
+- `_IsArranging`: arrange mode (header switch); while on, nodes drag instead of tapping and the
+  canvas doesn't pan.
+- `_Dropped` / `_LastLayout`: the last dropped node with its release position, and the rendered
+  layout a drop is measured against.
 - `_PanStartScrollX/Y`: scroll offsets captured at the start of a drag-pan.
 - `_ZoomScale`: current zoom factor (`MinZoom` 0.4–`MaxZoom` 2.5, `ZoomStep` 0.25), scales every
   `FamilyTreeLayoutMetrics` dimension before layout and triggers a full `Reload` — except `Margin`,
@@ -33,8 +40,9 @@ between them, centred on a focal person.
 
 ## Build & render pipeline
 1. `SetCenter` resets generation depth to default, clears the layout's stored positions
-   (`_Layout.Reset()`) so the new centre lays out from scratch, raises title/menu property changes,
-   and calls `Reload(ViewTarget.Center)`.
+   (`_Layout.Reset()`) so the new centre lays out from scratch, loads the centre's arrangement from
+   `IFamilyTreeArrangementStore` into `_Pins`, raises title/menu property changes, and calls
+   `Reload(ViewTarget.Center)`.
 2. `Reload` snapshots the centre, marks a load in progress (`SetLoadInProgress`), and fires
    `LoadAsync` off the UI thread via `SafeTask.Run`.
 3. `LoadAsync`:
@@ -85,7 +93,9 @@ between them, centred on a focal person.
 
 ## Viewport positioning (`PositionViewportAsync`)
 - Yields once so the ScrollView can measure new content first.
-- Always horizontally centres the focal column.
+- Horizontally centres the focal column, except after a drop (`ViewTarget.Dropped`): then it
+  scrolls by however far the relayout moved the dropped node, so the node stays where it was
+  released.
 - Vertically parks per `_ViewTarget`: top (0) after loading ancestors, bottom (maxY) after loading
   descendants, otherwise centred on the focal person.
 - All scroll targets are clamped to valid extents.
@@ -95,6 +105,25 @@ between them, centred on a focal person.
 - On `Started` it captures the current scroll offsets; on `Running` it translates the pan delta
   into a scroll offset (subtracting the delta so dragging right reveals left-side content),
   clamped to the canvas edges.
+- Off while arranging.
+
+## Arranging
+- The Arrange switch sets `IsArranging`; `SyncNodeDrag` gives every node except the centre a
+  `PanGestureRecognizer` only while arranging (on touch, a pan recognizer can take the gesture from
+  the canvas pan and the tap even when it ignores it). The centre never gets one, since every pin is
+  measured from it.
+- A drag moves the node by its `TranslationX`. On release, `DropNode` puts it back without saving if
+  a load is in flight or the drag is shorter than `MinDragSlots`. Otherwise it pins the node at its
+  release offset in slots from the centre, moved by `FamilyTreeLayout.NearestClearSlot` to clear the
+  centre and the other pinned nodes in its row. The pins are saved through
+  `IFamilyTreeArrangementStore` (per project, per centre) and the tree reloads with
+  `ViewTarget.Dropped`.
+- `FamilyTreeLayout.Update` keeps pinned nodes at their offsets. Two pins that end up sharing a slot
+  are kept a whole slot apart. Free nodes reflow around them.
+- `IsArranged` (any stored pin) switches the title to its arranged form. "Reset arrangement"
+  (enabled by `CanResetArrangement`: arranged and no load running) clears the store and `_Layout`'s
+  stored columns, then reloads.
+- Under Read-only mode the switch and Reset are hidden.
 
 ## Connectors & theming
 - Each connector is an individual vector `Path` built by `FamilyTreeConnectorShape.Create` and added
