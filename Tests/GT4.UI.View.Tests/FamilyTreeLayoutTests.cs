@@ -442,9 +442,9 @@ public class FamilyTreeLayoutTests
       }
   }
 
-  // Two runs on one line read as one unless a real gap parts them; the only exception is a T-junction,
-  // where both runs end on a vertical.
-  private static void AssertNoMerges(Segment[] segments, FamilyTreeLayoutMetrics metrics)
+  // Two runs on one line read as one unless a real gap parts them. The exceptions are a T-junction, where
+  // both runs end on a vertical, and two lines meeting behind a node, as a person between two spouses.
+  private static void AssertNoMerges(FamilyTreeLayoutResult result, Segment[] segments, FamilyTreeLayoutMetrics metrics)
   {
     var horizontals = segments.Where(s => s.Horizontal).ToArray();
     var verticals = segments.Where(s => !s.Horizontal).ToArray();
@@ -456,8 +456,9 @@ public class FamilyTreeLayoutTests
         if (gap >= metrics.HorizontalGap / 2)
           continue;
         var touch = left.To;
-        var atJunction = Math.Abs(gap) < 1e-6
-          && verticals.Any(v => Math.Abs(v.Fixed - touch) < 1e-6 && v.From <= a.Fixed + 1e-6 && v.To >= a.Fixed - 1e-6);
+        var onVertical = verticals.Any(v => Math.Abs(v.Fixed - touch) < 1e-6 && v.From <= a.Fixed + 1e-6 && v.To >= a.Fixed - 1e-6);
+        var behindNode = result.Nodes.Any(n => Inside(n.Bounds, touch, a.Fixed));
+        var atJunction = Math.Abs(gap) < 1e-6 && (onVertical || behindNode);
         atJunction.Should().BeTrue("connectors {0} and {1} run along y={2} without a gap", a.Connector, b.Connector, a.Fixed);
       }
   }
@@ -473,6 +474,10 @@ public class FamilyTreeLayoutTests
       (s.To - s.From).Should().BeGreaterThanOrEqualTo(2 * metrics.CornerRadius - 1e-6, "connector {0} has a jog", s.Connector);
   }
 
+  private static bool Inside(Rect r, double x, double y) =>
+    x > r.Left + 0.5 && x < r.Right - 0.5 && y > r.Top + 0.5 && y < r.Bottom - 0.5;
+
+  // A segment may end inside the node it joins, where the node's own photo covers it.
   private static void AssertNothingThroughANode(FamilyTreeLayoutResult result, Segment[] segments)
   {
     foreach (var node in result.Nodes)
@@ -480,6 +485,11 @@ public class FamilyTreeLayoutTests
       var r = node.Bounds;
       foreach (var s in segments)
       {
+        var endsHere = s.Horizontal
+          ? Inside(r, s.From, s.Fixed) || Inside(r, s.To, s.Fixed)
+          : Inside(r, s.Fixed, s.From) || Inside(r, s.Fixed, s.To);
+        if (endsHere)
+          continue;
         var crosses = s.Horizontal
           ? s.Fixed > r.Top + 0.5 && s.Fixed < r.Bottom - 0.5 && s.To > r.Left + 0.5 && s.From < r.Right - 0.5
           : s.Fixed > r.Left + 0.5 && s.Fixed < r.Right - 0.5 && s.To > r.Top + 0.5 && s.From < r.Bottom - 0.5;
@@ -559,7 +569,7 @@ public class FamilyTreeLayoutTests
 
     var segments = Segments(result);
     AssertDrawnOnce(segments);
-    AssertNoMerges(segments, metrics);
+    AssertNoMerges(result, segments, metrics);
     AssertNoShortJogs(result, segments, metrics);
     AssertNothingThroughANode(result, segments);
     AssertWholeUnitCentres(result);
@@ -635,6 +645,14 @@ public class FamilyTreeLayoutTests
     AssertUnderParents(result, 1, 2, 3);
     var spouseLines = result.Connectors.Where(c => c.Relation == FamilyTreeRelation.Spouse);
     spouseLines.Should().ContainSingle("only the grandparents are married");
+    var (father, mother) = (CentreX(result, 2), CentreX(result, 3));
+    var parentsLines = result.Connectors.Where(c =>
+      c.Relation == FamilyTreeRelation.ParentChild &&
+      c.Points.Length == 2 &&
+      c.Points[0].Y == c.Points[1].Y &&
+      c.Points[0].X == father &&
+      c.Points[1].X == mother);
+    parentsLines.Should().ContainSingle("the parents are still joined");
   }
 
   [Fact]
@@ -993,7 +1011,7 @@ public class FamilyTreeLayoutTests
   }
 
   [Fact]
-  public void Compute_SpouseConnector_RunsFromRightEdgeOfLeftNodeToLeftEdgeOfRightNode()
+  public void Compute_SpouseConnector_RunsBetweenThePartnersCentres()
   {
     var nodes = new[] { MakeNode(1, 0), MakeNode(2, 0) };
     var edges = new[] { FamilyTreeEdge.Spouse(1, 2) };
@@ -1006,8 +1024,8 @@ public class FamilyTreeLayoutTests
 
     var leftX = Math.Min(pts[0].X, pts[1].X);
     var rightX = Math.Max(pts[0].X, pts[1].X);
-    ((double)leftX).Should().BeApproximately(left.Right, 0.01);
-    ((double)rightX).Should().BeApproximately(right.Left, 0.01);
+    ((double)leftX).Should().BeApproximately(left.Center.X, 0.01);
+    ((double)rightX).Should().BeApproximately(right.Center.X, 0.01);
   }
 
   [Fact]

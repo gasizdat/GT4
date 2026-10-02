@@ -784,6 +784,7 @@ public static class FamilyTreeLayout
     var attachments = new Dictionary<int, List<double>>();
     var gapUses = new Dictionary<(int Generation, double Column), int>();
     var hosts = new HashSet<int>();
+    var joined = new HashSet<(int, int)>();
 
     // A loop leaves a node off its centre line, which belongs to the node's own families, and off any
     // column another loop already runs down in the same band, as from a node straight above or below.
@@ -871,12 +872,24 @@ public static class FamilyTreeLayout
       var children = families.ChildrenOf(key);
       var placed = children.Where(child => placedBy.GetValueOrDefault(child) == key).OrderBy(child => x[child]).ToArray();
       var generation = families.Generation(partners[0]);
+      var together = partners.Length > 1 && IsClear(families, x, partners[0], partners[^1], partners);
+
+      // Parents with no marriage on record, as the GEDCOM import leaves a family without a MARR, are
+      // still joined, in the descent colour so the line claims no marriage.
+      if (together)
+      {
+        var unmarried = partners
+          .Zip(partners.Skip(1))
+          .Where(pair => !families.AreSpouses(pair.First, pair.Second) && joined.Add((pair.First, pair.Second)));
+        foreach (var (a, b) in unmarried)
+          drawing.Line(FamilyTreeRelation.ParentChild, false, new(CentreX(a), Middle(generation)), new(CentreX(b), Middle(generation)));
+      }
 
       if (placed.Length != 0)
       {
         double dropX;
         double dropTop;
-        if (partners.Length > 1 && IsClear(families, x, partners[0], partners[^1], partners))
+        if (together)
         {
           var drop = (x[partners[0]] + x[partners[^1]]) / 2;
           dropX = Snap(drop);
@@ -953,11 +966,11 @@ public static class FamilyTreeLayout
         Bridge(a, b, FamilyTreeRelation.Spouse, isLoop: false);
         continue;
       }
+      // Centre to centre: the photos cover the ends, so the line reaches each photo however much wider
+      // than the photo the node is.
       var (left, right) = x[a] <= x[b] ? (a, b) : (b, a);
       var y = Middle(families.Generation(a));
-      var from = CentreX(left) + (metrics.NodeWidth / 2);
-      var to = CentreX(right) - (metrics.NodeWidth / 2);
-      drawing.Line(FamilyTreeRelation.Spouse, false, new(from, y), new(to, y));
+      drawing.Line(FamilyTreeRelation.Spouse, false, new(CentreX(left), y), new(CentreX(right), y));
     }
 
     foreach (var (parent, child) in families.OffRowParents)

@@ -129,8 +129,10 @@ between them, centred on a focal person.
 ## Connectors & theming
 - Each connector is an individual vector `Path` built by `FamilyTreeConnectorShape.Create` and added
   to the `Connectors` AbsoluteLayout. Each family is drawn the pedigree-chart way, every segment once:
-  a straight spouse line between partners, one drop from its midpoint, a sibship bar with softly
-  rounded outer corners, and a stub to each child. A relationship the rows can't hold (pedigree
+  a line between the partners' centres (hidden behind their photos), one drop from its midpoint, a
+  sibship bar with softly rounded outer corners, and a stub to each child. The partner line takes the
+  spouse colour for a recorded marriage and the descent colour otherwise, since a GEDCOM import leaves
+  a family without a MARR unmarried. A relationship the rows can't hold (pedigree
   collapse) is a dashed loop connector (`FamilyTreeConnector.IsLoop`). Per-shape vector geometry
   (rather than a single canvas-spanning `GraphicsView`) scrolls in lockstep with the nodes, so the connectors
   themselves never allocate one surface larger than the GPU's 16384px max-texture size. Note: the
