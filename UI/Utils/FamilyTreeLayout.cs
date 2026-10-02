@@ -79,7 +79,8 @@ public sealed class FamilyTreeLayout
 
   /// <param name="pins">
   /// Slot offsets from the centre person for nodes the user placed by hand. When any apply, the
-  /// centre stays where it was seeded, and the pinned nodes never move from their offsets.
+  /// centre stays where it was seeded, and each pinned node keeps its offset unless an earlier pin in
+  /// its row already holds that slot, in which case it takes the nearest clear one.
   /// </param>
   public FamilyTreeLayoutResult Update(
     FamilyTree tree,
@@ -123,13 +124,24 @@ public sealed class FamilyTreeLayout
     // Pre-seed new nodes toward their already-placed neighbours.
     ReseedNewNodes(x, existing, adj);
 
-    // Applied last, so neither a stored column nor the reseed can displace a pin.
+    // Applied last, so neither a stored column nor the reseed can displace a pin. A pin placed while
+    // another was out of the tree can share its slot, so each keeps clear of those before it in its row.
     var centerX = x[tree.CenterId];
-    var pinned = (pins ?? new Dictionary<int, double>())
+    var applicable = (pins ?? new Dictionary<int, double>())
       .Where(pin => x.ContainsKey(pin.Key))
-      .ToDictionary(pin => pin.Key, pin => centerX + pin.Value);
-    if (pinned.Count != 0)
+      .ToArray();
+    var pinned = new Dictionary<int, double>();
+    if (applicable.Length != 0)
       pinned[tree.CenterId] = centerX;
+    foreach (var (id, offset) in applicable)
+    {
+      var generation = nodesById[id].Generation;
+      var taken = pinned
+        .Where(pin => nodesById[pin.Key].Generation == generation)
+        .Select(pin => pin.Value)
+        .ToArray();
+      pinned[id] = NearestClearSlot(centerX + offset, taken);
+    }
     foreach (var (id, slot) in pinned)
       x[id] = slot;
 

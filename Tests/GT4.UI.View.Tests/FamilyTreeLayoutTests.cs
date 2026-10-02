@@ -499,6 +499,18 @@ public class FamilyTreeLayoutTests
   }
 
   [Fact]
+  public void Update_TwoPinsOnOneSlot_EndUpAWholeSlotApart()
+  {
+    var tree = ShallowTree();
+    var pins = new Dictionary<int, double> { [4] = 2, [5] = 2 };
+
+    var result = new FamilyTreeLayout().Update(tree, _metrics, pins);
+
+    OffsetFromCenter(result, 4).Should().BeApproximately(2, 1e-6);
+    AssertNoRowOverlaps(result);
+  }
+
+  [Fact]
   public void Update_PinOfANodeNotInTheTree_IsIgnored()
   {
     var tree = ShallowTree();
