@@ -783,6 +783,7 @@ public static class FamilyTreeLayout
     var drawing = new Drawing();
     var attachments = new Dictionary<int, List<double>>();
     var gapUses = new Dictionary<(int Generation, double Column), int>();
+    var hosts = new HashSet<int>();
 
     // A loop leaves a node off its centre line, which belongs to the node's own families, and off any
     // column another loop already runs down in the same band, as from a node straight above or below.
@@ -886,7 +887,8 @@ public static class FamilyTreeLayout
         {
           var mean = placed.Average(child => x[child]);
           var host = partners.MinBy(p => (Math.Abs(x[p] - mean), x[p]));
-          dropX = CentreX(host);
+          // A second family hung from one person, as after a third marriage, drops beside the first.
+          dropX = hosts.Add(host) ? CentreX(host) : Attach(host, top: false, Snap(mean));
           dropTop = Bottom(generation);
           foreach (var partner in partners.Where(p => p != host && !families.AreSpouses(p, host)))
             Loop(partner, host, FamilyTreeRelation.ParentChild);

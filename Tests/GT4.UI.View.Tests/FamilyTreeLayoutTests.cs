@@ -164,6 +164,26 @@ public class FamilyTreeLayoutTests
     return b.Build(center);
   }
 
+  // The centre, with parents above, married as many times as asked, with a child or two by each wife.
+  private static FamilyTree ManyMarriages(int marriages)
+  {
+    var b = new TreeBuilder();
+    var center = b.Person(0, Male, 1950);
+    var father = b.Person(1, Male);
+    var mother = b.Person(1, Female);
+    b.Marry(father, mother);
+    b.Children([father, mother], center);
+    for (var i = 1; i <= marriages; i++)
+    {
+      var wife = b.Person(0, Female, 1950 + i);
+      b.Marry(center, wife);
+      b.Children([center, wife], b.Person(-1, birthYear: 1970 + (10 * i)));
+      if (i % 2 == 0)
+        b.Children([center, wife], b.Person(-1, birthYear: 1975 + (10 * i)));
+    }
+    return b.Build(center);
+  }
+
   private static FamilyTree Collaterals()
   {
     var b = new TreeBuilder();
@@ -360,6 +380,8 @@ public class FamilyTreeLayoutTests
   {
     ["bow-tie"] = BowTie,
     ["two marriages"] = TwoMarriages,
+    ["three marriages"] = () => ManyMarriages(3),
+    ["four marriages"] = () => ManyMarriages(4),
     ["collaterals"] = Collaterals,
     ["wide descendants"] = WideDescendants,
     ["cousin marriage"] = CousinMarriage,
