@@ -562,7 +562,7 @@ public class FamilyTreeLayoutTests
   [Fact]
   public void NearestClearSlot_BelowTheMinimum_RisesToIt()
   {
-    // Every neighbour of the taken slot is below the minimum; this used to throw.
+    // Every neighbour of the taken slot is below the minimum.
     var clear = FamilyTreeLayout.NearestClearSlot(-5, [-3], minimum: 0);
 
     clear.Should().BeApproximately(0, 1e-9);

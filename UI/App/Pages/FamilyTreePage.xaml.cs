@@ -343,17 +343,14 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   private void SetPins(IReadOnlyDictionary<int, double> pins)
   {
     _Pins = pins;
-    OnPropertyChanged(nameof(IsArranged));
     OnPropertyChanged(nameof(CanResetArrangement));
     OnPropertyChanged(nameof(PageTitle));
   }
 
-  // Pins the node where it was released, in slot offsets from the centre, clear of every other node
-  // already fixed in its row; the rest of the row makes way for it.
   protected void DropNode(int personId, double deltaX)
   {
-    var pitch = _Metrics.SlotPitch * _ZoomScale;
-    // A load in flight is about to replace the layout the drop would be measured against.
+    // A load in flight is about to replace the layout the drop would be measured against, and a drag
+    // shorter than MinDragDistance is no move at all.
     if (LoadInProgress || Math.Abs(deltaX) < MinDragDistance)
     {
       _NodeCache[personId].View.TranslationX = 0;
@@ -362,17 +359,14 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
 
     var layout = _LastLayout!;
     var centerId = _Center!.Id;
-    var centerLeft = layout.CenterTopLeft.X;
     var dropped = layout.Nodes.Single(node => node.Node.Id == personId);
     var left = dropped.Bounds.Left + deltaX;
-    var taken = layout
-      .Nodes
-      .Where(node => node.Node.Generation == dropped.Node.Generation && node.Node.Id != personId)
-      .Where(node => node.Node.Id == centerId || _Pins.ContainsKey(node.Node.Id))
-      .Select(node => (node.Bounds.Left - centerLeft) / pitch)
-      .ToArray();
-    var offset = FamilyTreeLayout.NearestClearSlot((left - centerLeft) / pitch, taken);
-    var pins = new Dictionary<int, double>(_Pins) { [personId] = offset };
+    var offset = (left - layout.CenterTopLeft.X) / layout.Metrics.SlotPitch;
+    // Last, so the layout clears the drop of the pins already in its row instead of moving them.
+    var pins = _Pins
+      .Where(pin => pin.Key != personId)
+      .Append(KeyValuePair.Create(personId, offset))
+      .ToDictionary();
 
     _ArrangementStore.Set(_CurrentProjectProvider.Info, centerId, pins);
     SetPins(pins);
@@ -496,7 +490,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     Canvas.HeightRequest = layout.CanvasSize.Height;
     _LastLayout = layout;
 
-    _ = PositionViewportAsync(layout, scroll, zoom);
+    _ = PositionViewportAsync(layout, scroll);
   }
 
   // Connectors carry no stable identity (they are redrawn from scratch each layout), so a simple index
@@ -625,7 +619,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     _ConnectorPool.Clear();
   }
 
-  private async Task PositionViewportAsync(FamilyTreeLayoutResult layout, Point scroll, double zoom)
+  private async Task PositionViewportAsync(FamilyTreeLayoutResult layout, Point scroll)
   {
     // Let the ScrollView measure its new content before scrolling so the viewport size and extents
     // are known.
@@ -639,7 +633,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     // whole canvas, so follow the dropped node to keep it where it was released.
     var targetX = _ViewTarget == ViewTarget.Dropped
       ? scroll.X + layout.Nodes.Single(node => node.Node.Id == _Dropped.Id).Bounds.Left - _Dropped.Left
-      : centerTopLeft.X + (_Metrics.NodeWidth * zoom / 2) - (Scroller.Width / 2);
+      : centerTopLeft.X + (layout.Metrics.NodeWidth / 2) - (Scroller.Width / 2);
 
     // Vertically, park where the freshly loaded generation appears: the top after loading ancestors,
     // the bottom after loading descendants, otherwise centred on the focal person.
@@ -648,7 +642,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
       ViewTarget.Top => 0,
       ViewTarget.Bottom => maxY,
       ViewTarget.Dropped => scroll.Y,
-      _ => centerTopLeft.Y + (_Metrics.NodeHeight * zoom / 2) - (Scroller.Height / 2),
+      _ => centerTopLeft.Y + (layout.Metrics.NodeHeight / 2) - (Scroller.Height / 2),
     };
 
     await Scroller.ScrollToAsync(Math.Clamp(targetX, 0, maxX), Math.Clamp(targetY, 0, maxY), animated: false);

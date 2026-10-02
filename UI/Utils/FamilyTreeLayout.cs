@@ -25,7 +25,8 @@ public sealed record FamilyTreeLayoutResult(
   IReadOnlyList<FamilyTreeNodeLayout> Nodes,
   IReadOnlyList<FamilyTreeConnector> Connectors,
   Size CanvasSize,
-  Point CenterTopLeft);
+  Point CenterTopLeft,
+  FamilyTreeLayoutMetrics Metrics);
 
 /// <summary>
 /// Turns a <see cref="FamilyTree"/> into absolute node rectangles and orthogonal connectors.
@@ -79,8 +80,8 @@ public sealed class FamilyTreeLayout
 
   /// <param name="pins">
   /// Slot offsets from the centre person for nodes the user placed by hand. When any apply, the
-  /// centre stays where it was seeded, and each pinned node keeps its offset unless an earlier pin in
-  /// its row already holds that slot, in which case it takes the nearest clear one.
+  /// centre stays where it was seeded, and each pinned node keeps its offset unless the centre or an
+  /// earlier pin in its row already holds that slot, in which case it takes the nearest clear one.
   /// </param>
   public FamilyTreeLayoutResult Update(
     FamilyTree tree,
@@ -91,7 +92,7 @@ public sealed class FamilyTreeLayout
     ArgumentNullException.ThrowIfNull(metrics);
 
     if (tree.Nodes.Count == 0)
-      return new FamilyTreeLayoutResult([], [], new Size(0, 0), new Point(0, 0));
+      return new FamilyTreeLayoutResult([], [], new Size(0, 0), new Point(0, 0), metrics);
 
     var nodesById = tree.Nodes.ToDictionary(n => n.Id);
     var childrenByParent = BuildAdjacency(tree, nodesById, descendants: true);
@@ -124,24 +125,8 @@ public sealed class FamilyTreeLayout
     // Pre-seed new nodes toward their already-placed neighbours.
     ReseedNewNodes(x, existing, adj);
 
-    // Applied last, so neither a stored column nor the reseed can displace a pin. A pin placed while
-    // another was out of the tree can share its slot, so each keeps clear of those before it in its row.
-    var centerX = x[tree.CenterId];
-    var applicable = (pins ?? new Dictionary<int, double>())
-      .Where(pin => x.ContainsKey(pin.Key))
-      .ToArray();
-    var pinned = new Dictionary<int, double>();
-    if (applicable.Length != 0)
-      pinned[tree.CenterId] = centerX;
-    foreach (var (id, offset) in applicable)
-    {
-      var generation = nodesById[id].Generation;
-      var taken = pinned
-        .Where(pin => nodesById[pin.Key].Generation == generation)
-        .Select(pin => pin.Value)
-        .ToArray();
-      pinned[id] = NearestClearSlot(centerX + offset, taken);
-    }
+    // Applied last, so neither a stored column nor the reseed can displace a pin.
+    var pinned = ResolvePins(tree.CenterId, nodesById, x, pins);
     foreach (var (id, slot) in pinned)
       x[id] = slot;
 
@@ -181,7 +166,7 @@ public sealed class FamilyTreeLayout
   /// The slot nearest <paramref name="slot"/>, no lower than <paramref name="minimum"/>, that keeps a
   /// whole slot clear of every <paramref name="taken"/> one.
   /// </summary>
-  public static double NearestClearSlot(double slot, double[] taken, double minimum = double.NegativeInfinity)
+  internal static double NearestClearSlot(double slot, double[] taken, double minimum = double.NegativeInfinity)
   {
     // The clear region is bounded by the minimum and the taken slots' neighbours, so the nearest clear
     // slot is the one asked for (raised to the minimum) or one of those neighbours.
@@ -213,6 +198,31 @@ public sealed class FamilyTreeLayout
       adj[edge.ToId].Add((edge.FromId, w));
     }
     return adj;
+  }
+
+  private static Dictionary<int, double> ResolvePins(
+    int centerId,
+    IReadOnlyDictionary<int, FamilyTreeNode> nodesById,
+    IReadOnlyDictionary<int, double> x,
+    IReadOnlyDictionary<int, double>? pins)
+  {
+    var pinned = new Dictionary<int, double>();
+    var applicable = pins?.Where(pin => x.ContainsKey(pin.Key)).ToArray() ?? [];
+    if (applicable.Length == 0)
+      return pinned;
+
+    var centerX = x[centerId];
+    pinned[centerId] = centerX;
+    foreach (var (id, offset) in applicable)
+    {
+      var generation = nodesById[id].Generation;
+      var taken = pinned
+        .Where(pin => nodesById[pin.Key].Generation == generation)
+        .Select(pin => pin.Value)
+        .ToArray();
+      pinned[id] = NearestClearSlot(centerX + offset, taken);
+    }
+    return pinned;
   }
 
   // Pre-seed new nodes at the weighted average X of already-placed neighbours so the spring covers
@@ -262,7 +272,6 @@ public sealed class FamilyTreeLayout
     IReadOnlyDictionary<int, List<HorizontalRun>> segByLevel,
     IReadOnlyDictionary<int, double> pinned)
   {
-    // A pinned node keeps its own column; only the rest of its row is reordered around it.
     var free = nodesById.Values.Where(n => !pinned.ContainsKey(n.Id));
     foreach (var group in free.GroupBy(n => n.Generation))
     {
@@ -645,7 +654,7 @@ public sealed class FamilyTreeLayout
       ? centerRect.Location
       : new Point(0, 0);
 
-    return new FamilyTreeLayoutResult(layouts, connectors, new Size(width, height), centerTopLeft);
+    return new FamilyTreeLayoutResult(layouts, connectors, new Size(width, height), centerTopLeft, metrics);
   }
 
   private static FamilyTreeConnector[] BuildConnectors(

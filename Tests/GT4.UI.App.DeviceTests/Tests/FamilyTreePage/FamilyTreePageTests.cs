@@ -589,22 +589,43 @@ public class FamilyTreePageTests
       .Returns(new Dictionary<int, double> { [2] = 1 });
     var page = await CreatePageAsync(services);
     await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
-    var bounds = await NodeBoundsAsync(page);
-    var centerLeft = bounds.MinBy(b => b.Top).Left;
-    var topRow = bounds.Min(b => b.Top);
-    var children = bounds.Where(b => b.Top > topRow).ToArray();
+    var centerLeft = await NodeLeftAsync(page, center.Id);
+    var freeLeft = await NodeLeftAsync(page, sibling.Id);
     var pinnedLeft = centerLeft + SlotPitch;
-    var freeLeft = children.Single(b => Math.Abs(b.Left - pinnedLeft) > 1e-6).Left;
 
     // Released 0.3 of a slot right of the pinned child: the nearer clear side is one slot further right.
-    await WaitForLoadAsync(page, services, () => page.InvokeDropNode(3, pinnedLeft + (0.3 * SlotPitch) - freeLeft));
+    await WaitForLoadAsync(page, services, () => page.InvokeDropNode(sibling.Id, pinnedLeft + (0.3 * SlotPitch) - freeLeft));
 
-    services.ArrangementStore.Verify(
-      s => s.Set(
-        TestServices.SampleProjectInfo,
-        center.Id,
-        It.Is<IReadOnlyDictionary<int, double>>(pins => pins[2] == 1 && Math.Abs(pins[3] - 2) < 1e-6)),
-      Times.Once());
+    var droppedCenterLeft = await NodeLeftAsync(page, center.Id);
+    var childLeft = await NodeLeftAsync(page, child.Id);
+    var siblingLeft = await NodeLeftAsync(page, sibling.Id);
+    Assert.Equal(1, (childLeft - droppedCenterLeft) / SlotPitch, precision: 6);
+    Assert.Equal(2, (siblingLeft - droppedCenterLeft) / SlotPitch, precision: 6);
+  }
+
+  [Fact]
+  public async Task A_pinned_node_dropped_onto_another_pin_moves_itself_not_the_other()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    var child = P(2, "Petr");
+    var sibling = P(3, "Oleg");
+    SetupTree(services, center, child, sibling);
+    // The sibling is pinned first, so a drop that kept the stored order would clear the child of it.
+    services.ArrangementStore
+      .Setup(s => s.Get(TestServices.SampleProjectInfo, center.Id))
+      .Returns(new Dictionary<int, double> { [3] = -1, [2] = 1 });
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+
+    // From one slot left of the centre to 0.3 of a slot right of the child.
+    await WaitForLoadAsync(page, services, () => page.InvokeDropNode(sibling.Id, 2.3 * SlotPitch));
+
+    var centerLeft = await NodeLeftAsync(page, center.Id);
+    var childLeft = await NodeLeftAsync(page, child.Id);
+    var siblingLeft = await NodeLeftAsync(page, sibling.Id);
+    Assert.Equal(1, (childLeft - centerLeft) / SlotPitch, precision: 6);
+    Assert.Equal(2, (siblingLeft - centerLeft) / SlotPitch, precision: 6);
   }
 
   [Fact]
