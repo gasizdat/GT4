@@ -166,7 +166,7 @@ public sealed class FamilyTreeLayout
   /// The slot nearest <paramref name="slot"/>, no lower than <paramref name="minimum"/>, that keeps a
   /// whole slot clear of every <paramref name="taken"/> one.
   /// </summary>
-  internal static double NearestClearSlot(double slot, double[] taken, double minimum = double.NegativeInfinity)
+  public static double NearestClearSlot(double slot, double[] taken, double minimum = double.NegativeInfinity)
   {
     // The clear region is bounded by the minimum and the taken slots' neighbours, so the nearest clear
     // slot is the one asked for (raised to the minimum) or one of those neighbours.

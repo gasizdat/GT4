@@ -359,14 +359,19 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
 
     var layout = _LastLayout!;
     var centerId = _Center!.Id;
+    var centerLeft = layout.CenterTopLeft.X;
+    var pitch = layout.Metrics.SlotPitch;
     var dropped = layout.Nodes.Single(node => node.Node.Id == personId);
     var left = dropped.Bounds.Left + deltaX;
-    var offset = (left - layout.CenterTopLeft.X) / layout.Metrics.SlotPitch;
-    // Last, so the layout clears the drop of the pins already in its row instead of moving them.
-    var pins = _Pins
-      .Where(pin => pin.Key != personId)
-      .Append(KeyValuePair.Create(personId, offset))
-      .ToDictionary();
+    // Stored already clear, so a pin it was moved off can later leave without it sliding back.
+    var taken = layout
+      .Nodes
+      .Where(node => node.Node.Generation == dropped.Node.Generation && node.Node.Id != personId)
+      .Where(node => node.Node.Id == centerId || _Pins.ContainsKey(node.Node.Id))
+      .Select(node => (node.Bounds.Left - centerLeft) / pitch)
+      .ToArray();
+    var offset = FamilyTreeLayout.NearestClearSlot((left - centerLeft) / pitch, taken);
+    var pins = new Dictionary<int, double>(_Pins) { [personId] = offset };
 
     _ArrangementStore.Set(_CurrentProjectProvider.Info, centerId, pins);
     SetPins(pins);
@@ -698,7 +703,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
         Reload(ViewTarget.Center);
         break;
 
-      case string command when command == "ResetArrangement" && _Center is Person center:
+      case string command when command == "ResetArrangement" && _Center is PersonInfo center:
         _ArrangementStore.Clear(_CurrentProjectProvider.Info, center.Id);
         SetPins(new Dictionary<int, double>());
         // The stored columns still hold the arrangement, so lay out from scratch.

@@ -601,6 +601,38 @@ public class FamilyTreePageTests
     var siblingLeft = await NodeLeftAsync(page, sibling.Id);
     Assert.Equal(1, (childLeft - droppedCenterLeft) / SlotPitch, precision: 6);
     Assert.Equal(2, (siblingLeft - droppedCenterLeft) / SlotPitch, precision: 6);
+    services.ArrangementStore.Verify(
+      s => s.Set(
+        TestServices.SampleProjectInfo,
+        center.Id,
+        It.Is<IReadOnlyDictionary<int, double>>(pins => pins[2] == 1 && Math.Abs(pins[3] - 2) < 1e-6)),
+      Times.Once());
+  }
+
+  [Fact]
+  public async Task A_node_cleared_of_a_pin_stays_put_when_that_pin_moves_away()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    var child = P(2, "Petr");
+    var sibling = P(3, "Oleg");
+    SetupTree(services, center, child, sibling);
+    services.ArrangementStore
+      .Setup(s => s.Get(TestServices.SampleProjectInfo, center.Id))
+      .Returns(new Dictionary<int, double> { [2] = 1 });
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    var centerLeft = await NodeLeftAsync(page, center.Id);
+    var siblingLeft = await NodeLeftAsync(page, sibling.Id);
+    // Released 0.3 of a slot right of the pinned child, so it lands a slot further right.
+    await WaitForLoadAsync(page, services, () => page.InvokeDropNode(sibling.Id, centerLeft + (1.3 * SlotPitch) - siblingLeft));
+
+    // From one slot right of the centre to two slots left of it.
+    await WaitForLoadAsync(page, services, () => page.InvokeDropNode(child.Id, -3 * SlotPitch));
+
+    var movedCenterLeft = await NodeLeftAsync(page, center.Id);
+    var siblingMovedLeft = await NodeLeftAsync(page, sibling.Id);
+    Assert.Equal(2, (siblingMovedLeft - movedCenterLeft) / SlotPitch, precision: 6);
   }
 
   [Fact]
@@ -611,7 +643,7 @@ public class FamilyTreePageTests
     var child = P(2, "Petr");
     var sibling = P(3, "Oleg");
     SetupTree(services, center, child, sibling);
-    // The sibling is pinned first, so a drop that kept the stored order would clear the child of it.
+    // The sibling is pinned before the child, so a drop stored uncleared would push the child aside.
     services.ArrangementStore
       .Setup(s => s.Get(TestServices.SampleProjectInfo, center.Id))
       .Returns(new Dictionary<int, double> { [3] = -1, [2] = 1 });

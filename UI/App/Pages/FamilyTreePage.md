@@ -114,12 +114,13 @@ between them, centred on a focal person.
   measured from it.
 - A drag moves the node by its `TranslationX`. On release, `DropNode` puts it back without saving if
   a load is in flight or the drag is shorter than `MinDragDistance`. Otherwise it pins the node at its
-  release offset in slots from the centre, measured with the rendered layout's own metrics, and puts
-  that pin last. The pins are saved through `IFamilyTreeArrangementStore` (per project, per centre)
-  and the tree reloads with `ViewTarget.Dropped`.
-- `FamilyTreeLayout.Update` keeps pinned nodes at their offsets. A pin that would share a slot with
-  the centre or an earlier pin in its row takes the nearest clear slot, so a dropped node, being last,
-  moves clear rather than pushing the others. Free nodes reflow around them.
+  release offset in slots from the centre, measured with the rendered layout's own metrics and moved
+  by `FamilyTreeLayout.NearestClearSlot` to clear the centre and the other pinned nodes in its row.
+  The pins are saved through `IFamilyTreeArrangementStore` (per project, per centre) and the tree
+  reloads with `ViewTarget.Dropped`.
+- `FamilyTreeLayout.Update` keeps pinned nodes at their offsets. Two pins that end up sharing a slot
+  (one was placed while the other was out of the tree) are kept a whole slot apart. Free nodes reflow
+  around them.
 - `IsArranged` (any stored pin) switches the title to its arranged form. "Reset arrangement"
   (enabled by `CanResetArrangement`: arranged and no load running) clears the store and `_Layout`'s
   stored columns, then reloads.
