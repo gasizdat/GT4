@@ -521,13 +521,11 @@ public class FamilyTreePageTests
     var page = await CreatePageAsync(services);
     await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
 
-    // The centre is the node in the top row.
     Task<(bool CenterDrags, bool ChildDrags)> DragsAsync() =>
       MainThread.InvokeOnMainThreadAsync(() =>
       {
-        var views = page.FindByName<AbsoluteLayout>("Nodes").Children.Cast<View>().ToArray();
-        var centerView = views.MinBy(v => AbsoluteLayout.GetLayoutBounds(v).Top)!;
-        var childView = views.Single(v => v != centerView);
+        var centerView = NodeView(page, center.Id);
+        var childView = NodeView(page, child.Id);
         return (
           centerView.GestureRecognizers.OfType<PanGestureRecognizer>().Any(),
           childView.GestureRecognizers.OfType<PanGestureRecognizer>().Any());

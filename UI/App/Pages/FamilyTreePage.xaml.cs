@@ -349,8 +349,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
 
   protected void DropNode(int personId, double deltaX)
   {
-    // A load in flight is about to replace the layout the drop would be measured against, and a drag
-    // shorter than MinDragDistance is no move at all.
+    // A load in flight is about to replace the layout the drop would be measured against.
     if (LoadInProgress || Math.Abs(deltaX) < MinDragDistance)
     {
       _NodeCache[personId].View.TranslationX = 0;
