@@ -38,6 +38,7 @@ internal sealed class TestServices
   public Mock<IAlertService> AlertService { get; } = new();
   public Mock<INavigationService> NavigationService { get; } = new();
   public Mock<IMainPersonStore> MainPersonStore { get; } = new();
+  public Mock<IFamilyTreeArrangementStore> ArrangementStore { get; } = new();
   public IServiceProvider Provider { get; }
 
   public static readonly ProjectInfo SampleProjectInfo = new(
@@ -153,6 +154,10 @@ internal sealed class TestServices
     FamilyTreeProvider
       .Setup(f => f.BuildAsync(It.IsAny<Person>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(FamilyTree.Empty);
+    // Moq has no empty default for a dictionary, and a null here would fail FamilyTreePage.SetCenter.
+    ArrangementStore
+      .Setup(s => s.Get(It.IsAny<ProjectInfo>(), It.IsAny<int>()))
+      .Returns(new Dictionary<int, double>());
 
     var services = new ServiceCollection();
     GT4Services.Add(services);
@@ -162,6 +167,7 @@ internal sealed class TestServices
     services.AddSingleton(ProjectList.Object);
     services.AddSingleton(Importer.Object);
     services.AddSingleton(MainPersonStore.Object);
+    services.AddSingleton(ArrangementStore.Object);
     services.AddSingleton<TestableNamesPage>();
     services.AddSingleton<TestableGalleryPage>();
     services.AddSingleton<TestableFamilyPage>();

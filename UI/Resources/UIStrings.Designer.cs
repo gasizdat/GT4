@@ -2323,6 +2323,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Drag a relative sideways to place them.
+        /// </summary>
+        public static string HintFamilyTreePageArranging {
+            get {
+                return ResourceManager.GetString("HintFamilyTreePageArranging", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to All photos and attachments of the project, with the persons and families they belong to..
         /// </summary>
         public static string HintGalleryPage {
@@ -2439,6 +2448,15 @@ namespace GT4.UI.Resources {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to Arrange.
+        /// </summary>
+        public static string LblArrange {
+            get {
+                return ResourceManager.GetString("LblArrange", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to People.
         /// </summary>
@@ -2715,6 +2733,15 @@ namespace GT4.UI.Resources {
         public static string MenuItemNameRemove_1 {
             get {
                 return ResourceManager.GetString("MenuItemNameRemove_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 📌 Reset arrangement.
+        /// </summary>
+        public static string MenuItemNameResetArrangement {
+            get {
+                return ResourceManager.GetString("MenuItemNameResetArrangement", resourceCulture);
             }
         }
         
@@ -4137,6 +4164,15 @@ namespace GT4.UI.Resources {
         public static string TitleFamiliesPage {
             get {
                 return ResourceManager.GetString("TitleFamiliesPage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 🌳 {0} 📌.
+        /// </summary>
+        public static string TitleFamilyTreePageArranged_1 {
+            get {
+                return ResourceManager.GetString("TitleFamilyTreePageArranged_1", resourceCulture);
             }
         }
         

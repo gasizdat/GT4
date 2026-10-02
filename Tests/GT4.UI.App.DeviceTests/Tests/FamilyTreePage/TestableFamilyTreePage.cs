@@ -21,6 +21,7 @@ internal sealed class TestableFamilyTreePage : FamilyTreePage
   public TestableFamilyTreePage(
     ICancellationTokenProvider cancellationTokenProvider,
     ICurrentProjectProvider currentProjectProvider,
+    IFamilyTreeArrangementStore arrangementStore,
     INameFormatter nameFormatter,
     FontScale? fontScale,
     IAlertService alertService,
@@ -29,6 +30,7 @@ internal sealed class TestableFamilyTreePage : FamilyTreePage
     : base(
       cancellationTokenProvider,
       currentProjectProvider,
+      arrangementStore,
       nameFormatter,
       fontScale,
       alertService,
@@ -40,6 +42,9 @@ internal sealed class TestableFamilyTreePage : FamilyTreePage
   public int CompletedLoads => _CompletedLoads;
 
   public Task InvokePageCommandAsync(object parameter) => OnPageCommand(parameter);
+
+  // The drag gesture itself is native-only; this is where it lands.
+  public void InvokeDropNode(int personId, double deltaX) => DropNode(personId, deltaX);
 
   // NavigatedToEventArgs has no accessible test-side constructor and OnNavigatedTo never reads it.
   public void InvokeNavigatedTo() => OnNavigatedTo(null!);

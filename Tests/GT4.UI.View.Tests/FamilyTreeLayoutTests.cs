@@ -19,6 +19,51 @@ public class FamilyTreeLayoutTests
   private static FamilyTree MakeTree(int centerId, FamilyTreeNode[] nodes, FamilyTreeEdge[]? edges = null) =>
     new(centerId, nodes, edges ?? []);
 
+  private static double OffsetFromCenter(FamilyTreeLayoutResult result, int id) =>
+    (result.Nodes.Single(n => n.Node.Id == id).Bounds.Left - result.CenterTopLeft.X) / _metrics.SlotPitch;
+
+  // Centre 1 with parents 2 and 3 above and children 4 and 5 below.
+  private static FamilyTree ShallowTree() => MakeTree(
+    1,
+    [MakeNode(1, 0), MakeNode(2, 1), MakeNode(3, 1), MakeNode(4, -1), MakeNode(5, -1)],
+    [
+      FamilyTreeEdge.ParentChild(parentId: 2, childId: 1),
+      FamilyTreeEdge.ParentChild(parentId: 3, childId: 1),
+      FamilyTreeEdge.Spouse(2, 3),
+      FamilyTreeEdge.ParentChild(parentId: 1, childId: 4),
+      FamilyTreeEdge.ParentChild(parentId: 1, childId: 5),
+    ]);
+
+  // ShallowTree plus a grandparent above 2 and three grandchildren under 4, which moves the centre's
+  // own seed column.
+  private static FamilyTree DeeperTree() => MakeTree(
+    1,
+    [
+      MakeNode(1, 0), MakeNode(2, 1), MakeNode(3, 1), MakeNode(4, -1), MakeNode(5, -1),
+      MakeNode(6, 2), MakeNode(7, -2), MakeNode(8, -2), MakeNode(9, -2),
+    ],
+    [
+      FamilyTreeEdge.ParentChild(parentId: 2, childId: 1),
+      FamilyTreeEdge.ParentChild(parentId: 3, childId: 1),
+      FamilyTreeEdge.Spouse(2, 3),
+      FamilyTreeEdge.ParentChild(parentId: 1, childId: 4),
+      FamilyTreeEdge.ParentChild(parentId: 1, childId: 5),
+      FamilyTreeEdge.ParentChild(parentId: 6, childId: 2),
+      FamilyTreeEdge.ParentChild(parentId: 4, childId: 7),
+      FamilyTreeEdge.ParentChild(parentId: 4, childId: 8),
+      FamilyTreeEdge.ParentChild(parentId: 4, childId: 9),
+    ]);
+
+  private static void AssertNoRowOverlaps(FamilyTreeLayoutResult result)
+  {
+    foreach (var row in result.Nodes.GroupBy(n => n.Node.Generation))
+    {
+      var ordered = row.Select(n => n.Bounds).OrderBy(b => b.Left).ToArray();
+      for (var i = 1; i < ordered.Length; i++)
+        ordered[i].Left.Should().BeGreaterThanOrEqualTo(ordered[i - 1].Right - 0.001, $"row {row.Key} must not overlap");
+    }
+  }
+
   [Fact]
   public void Metrics_SlotPitch_IsNodeWidthPlusHorizontalGap()
   {
@@ -403,5 +448,123 @@ public class FamilyTreeLayoutTests
     // in the second run.  We just assert that the layout produced valid (non-zero-size) output.
     withHistory.CanvasSize.Width.Should().BeGreaterThan(0);
     withHistory.Nodes.Should().HaveCount(2);
+  }
+
+  [Fact]
+  public void Update_PinnedNode_SitsAtItsOffsetFromTheCenter()
+  {
+    var tree = ShallowTree();
+
+    var result = new FamilyTreeLayout().Update(tree, _metrics, new Dictionary<int, double> { [4] = -3.5 });
+
+    OffsetFromCenter(result, 4).Should().BeApproximately(-3.5, 1e-6);
+  }
+
+  [Fact]
+  public void Update_Pin_HoldsInAFreshLayoutOfADeeperTree()
+  {
+    var tree = DeeperTree();
+    var pins = new Dictionary<int, double> { [2] = 2.25, [5] = -4 };
+
+    var reopened = new FamilyTreeLayout().Update(tree, _metrics, pins);
+
+    OffsetFromCenter(reopened, 2).Should().BeApproximately(2.25, 1e-6);
+    OffsetFromCenter(reopened, 5).Should().BeApproximately(-4, 1e-6);
+  }
+
+  [Fact]
+  public void Update_Pin_HoldsAcrossAnIncrementalLoad()
+  {
+    var shallow = ShallowTree();
+    var deeper = DeeperTree();
+    var layout = new FamilyTreeLayout();
+    layout.Update(shallow, _metrics);
+
+    var loadedMore = layout.Update(deeper, _metrics, new Dictionary<int, double> { [7] = 5 });
+
+    OffsetFromCenter(loadedMore, 7).Should().BeApproximately(5, 1e-6);
+  }
+
+  [Fact]
+  public void Update_FreeNodes_KeepClearOfPinnedOnes()
+  {
+    // One child pinned almost under the centre, where its free sibling would sit, and a grandchild
+    // pinned between its two free siblings.
+    var tree = DeeperTree();
+    var pins = new Dictionary<int, double> { [4] = 0.3, [8] = 0 };
+
+    var result = new FamilyTreeLayout().Update(tree, _metrics, pins);
+
+    AssertNoRowOverlaps(result);
+  }
+
+  [Fact]
+  public void Update_TwoPinsOnOneSlot_EndUpAWholeSlotApart()
+  {
+    var tree = ShallowTree();
+    var pins = new Dictionary<int, double> { [4] = 2, [5] = 2 };
+
+    var result = new FamilyTreeLayout().Update(tree, _metrics, pins);
+
+    OffsetFromCenter(result, 4).Should().BeApproximately(2, 1e-6);
+    AssertNoRowOverlaps(result);
+  }
+
+  [Fact]
+  public void Update_PinOfANodeNotInTheTree_IsIgnored()
+  {
+    var tree = ShallowTree();
+    var pinned = new FamilyTreeLayout().Update(tree, _metrics, new Dictionary<int, double> { [99] = 3 });
+    var fresh = new FamilyTreeLayout().Update(tree, _metrics);
+
+    var freshBounds = fresh.Nodes.Select(n => n.Bounds);
+    pinned.Nodes.Select(n => n.Bounds).Should().Equal(freshBounds);
+  }
+
+  [Fact]
+  public void Reset_DropsAnArrangementSoTheNextUpdateMatchesAFreshLayout()
+  {
+    var tree = ShallowTree();
+    var layout = new FamilyTreeLayout();
+    layout.Update(tree, _metrics, new Dictionary<int, double> { [4] = -6, [2] = 5 });
+
+    layout.Reset();
+    var afterReset = layout.Update(tree, _metrics);
+
+    var fresh = new FamilyTreeLayout().Update(tree, _metrics);
+    var freshBounds = fresh.Nodes.Select(n => n.Bounds);
+    afterReset.Nodes.Select(n => n.Bounds).Should().Equal(freshBounds);
+  }
+
+  [Theory]
+  [InlineData(3.0, 3.0)]   // already clear
+  [InlineData(0.4, 1.0)]   // blocked, right of the pin
+  [InlineData(-0.4, -1.0)] // blocked, left of the pin
+  [InlineData(0.9, 1.0)]   // just short of clear
+  public void NearestClearSlot_MovesOnlyAsFarAsTheNearestClearSide(double slot, double expected)
+  {
+    FamilyTreeLayout.NearestClearSlot(slot, [0]).Should().BeApproximately(expected, 1e-9);
+  }
+
+  [Fact]
+  public void NearestClearSlot_SkipsAGapTooNarrowForANode()
+  {
+    // 0 and 1.5 leave no whole slot between them, so the nearest clear side is outside the pair.
+    FamilyTreeLayout.NearestClearSlot(0.7, [0, 1.5]).Should().BeApproximately(-1, 1e-9);
+  }
+
+  [Fact]
+  public void NearestClearSlot_NeverGoesBelowTheMinimum()
+  {
+    FamilyTreeLayout.NearestClearSlot(-0.4, [0], minimum: -0.5).Should().BeApproximately(1, 1e-9);
+  }
+
+  [Fact]
+  public void NearestClearSlot_BelowTheMinimum_RisesToIt()
+  {
+    // Every neighbour of the taken slot is below the minimum.
+    var clear = FamilyTreeLayout.NearestClearSlot(-5, [-3], minimum: 0);
+
+    clear.Should().BeApproximately(0, 1e-9);
   }
 }

@@ -21,6 +21,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
 {
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
+  private readonly IFamilyTreeArrangementStore _ArrangementStore;
   private readonly INameFormatter _NameFormatter;
   private readonly FamilyTreeLayoutMetrics _Metrics = new() { Margin = OverlayClearance };
   private readonly FamilyTreeLayout _Layout = new();
@@ -44,6 +45,8 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   private const int ZoomIntervalMs = 300;
   // Sized to clear the tallest of the "load more" and zoom buttons pinned over the canvas.
   private const double OverlayClearance = 72;
+  // A shorter drag is a tap or a slipped touch, not a move; it is far below a slot at any zoom.
+  private const double MinDragDistance = 8;
 
   private Person? _Center;
   private string _CenterName = string.Empty;
@@ -59,9 +62,14 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   private long _LastZoomTicks;
   private int _LoadOperationsCount = 0;
   private ProjectInfo? _LastProjectInfo;
+  // Replaced, never mutated, so a load in flight keeps the set it started with.
+  private IReadOnlyDictionary<int, double> _Pins = new Dictionary<int, double>();
+  private bool _IsArranging;
+  private (int Id, double Left) _Dropped;
+  private FamilyTreeLayoutResult? _LastLayout;
 
   // Where to park the viewport after a (re)build.
-  private enum ViewTarget { Center, Top, Bottom }
+  private enum ViewTarget { Center, Top, Bottom, Dropped }
 
   // A cached node view plus the size/centre/theme state it was built for, so it can be reused while those hold.
   private sealed record NodeEntry(FamilyTreeNodeView View, double Zoom, bool IsCenter, AppTheme Theme);
@@ -69,6 +77,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   public FamilyTreePage(
     ICancellationTokenProvider cancellationTokenProvider,
     ICurrentProjectProvider currentProjectProvider,
+    IFamilyTreeArrangementStore arrangementStore,
     INameFormatter nameFormatter,
     FontScale? fontScale,
     IAlertService alertService,
@@ -78,6 +87,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   {
     _CancellationTokenProvider = cancellationTokenProvider;
     _CurrentProjectProvider = currentProjectProvider;
+    _ArrangementStore = arrangementStore;
     _NameFormatter = nameFormatter;
     _FontScale = fontScale;
     _AlertService = alertService;
@@ -111,6 +121,11 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
 
   private void OnCanvasPan(object? sender, PanUpdatedEventArgs e)
   {
+    if (IsArranging)
+    {
+      return;
+    }
+
     switch (e.StatusType)
     {
       case GestureStatus.Started:
@@ -130,6 +145,25 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     }
   }
 
+  private void OnNodePan(FamilyTreeNodeView view, int personId, PanUpdatedEventArgs e)
+  {
+    switch (e.StatusType)
+    {
+      case GestureStatus.Running:
+        view.TranslationX = e.TotalX;
+        break;
+
+      // Some platforms report no offset on completion, so the drop uses the one the node shows.
+      case GestureStatus.Completed:
+        DropNode(personId, view.TranslationX);
+        break;
+
+      case GestureStatus.Canceled:
+        view.TranslationX = 0;
+        break;
+    }
+  }
+
   public PageLoading Loading { get; }
 
   public ICommand PageCommand { get; }
@@ -139,7 +173,37 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     set => SetCenter(value);
   }
 
-  public string PageTitle => string.Format(UIStrings.TitleFamilyTreePage_1, _CenterName);
+  public string PageTitle => string.Format(
+    IsArranged ? UIStrings.TitleFamilyTreePageArranged_1 : UIStrings.TitleFamilyTreePage_1,
+    _CenterName);
+
+  public string PageHint => IsArranging ? UIStrings.HintFamilyTreePageArranging : UIStrings.HintFamilyTreePage;
+
+  public bool IsArranged => _Pins.Count != 0;
+
+  // Held off while a load runs: that load would lay out again the columns Reset just cleared.
+  public bool CanResetArrangement => IsArranged && !LoadInProgress;
+
+  // Node taps and the canvas pan give way to dragging nodes along their rows.
+  public bool IsArranging
+  {
+    get => _IsArranging;
+    set
+    {
+      if (_IsArranging == value)
+      {
+        return;
+      }
+
+      _IsArranging = value;
+      foreach (var (personId, entry) in _NodeCache)
+      {
+        SyncNodeDrag(entry.View, personId, entry.IsCenter);
+      }
+      OnPropertyChanged(nameof(IsArranging));
+      OnPropertyChanged(nameof(PageHint));
+    }
+  }
 
   public string OpenPersonToolbarItemName => string.Format(UIStrings.MenuItemNameOpenPerson_1, _CenterName);
 
@@ -234,6 +298,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     OnPropertyChanged(nameof(LoadInProgress));
     OnPropertyChanged(nameof(CanLoadMoreAncestors));
     OnPropertyChanged(nameof(CanLoadMoreDescendants));
+    OnPropertyChanged(nameof(CanResetArrangement));
   }
 
   private void ResetLoadInProgress()
@@ -244,6 +309,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     OnPropertyChanged(nameof(LoadInProgress));
     OnPropertyChanged(nameof(CanLoadMoreAncestors));
     OnPropertyChanged(nameof(CanLoadMoreDescendants));
+    OnPropertyChanged(nameof(CanResetArrangement));
   }
 
   private void SetCenter(PersonInfo person)
@@ -254,7 +320,8 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     _AncestorGenerations = InitialGenerations;
     _DescendantGenerations = InitialGenerations;
     _Layout.Reset();
-    OnPropertyChanged(nameof(PageTitle));
+    var pins = _ArrangementStore.Get(_CurrentProjectProvider.Info, person.Id);
+    SetPins(pins);
     OnPropertyChanged(nameof(OpenPersonToolbarItemName));
     Reload(ViewTarget.Center);
   }
@@ -268,8 +335,47 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
 
     _ViewTarget = target;
     var center = _Center;
+    var pins = _Pins;
     SetLoadInProgress();
-    _ = SafeTask.Run(() => LoadAsync(center), _AlertService);
+    _ = SafeTask.Run(() => LoadAsync(center, pins), _AlertService);
+  }
+
+  private void SetPins(IReadOnlyDictionary<int, double> pins)
+  {
+    _Pins = pins;
+    OnPropertyChanged(nameof(CanResetArrangement));
+    OnPropertyChanged(nameof(PageTitle));
+  }
+
+  protected void DropNode(int personId, double deltaX)
+  {
+    // A load in flight is about to replace the layout the drop would be measured against.
+    if (LoadInProgress || Math.Abs(deltaX) < MinDragDistance)
+    {
+      _NodeCache[personId].View.TranslationX = 0;
+      return;
+    }
+
+    var layout = _LastLayout!;
+    var centerId = _Center!.Id;
+    var centerLeft = layout.CenterTopLeft.X;
+    var pitch = layout.Metrics.SlotPitch;
+    var dropped = layout.Nodes.Single(node => node.Node.Id == personId);
+    var left = dropped.Bounds.Left + deltaX;
+    // Stored already clear, so a pin it was moved off can later leave without it sliding back.
+    var taken = layout
+      .Nodes
+      .Where(node => node.Node.Generation == dropped.Node.Generation && node.Node.Id != personId)
+      .Where(node => node.Node.Id == centerId || _Pins.ContainsKey(node.Node.Id))
+      .Select(node => (node.Bounds.Left - centerLeft) / pitch)
+      .ToArray();
+    var offset = FamilyTreeLayout.NearestClearSlot((left - centerLeft) / pitch, taken);
+    var pins = new Dictionary<int, double>(_Pins) { [personId] = offset };
+
+    _ArrangementStore.Set(_CurrentProjectProvider.Info, centerId, pins);
+    SetPins(pins);
+    _Dropped = (personId, left);
+    Reload(ViewTarget.Dropped);
   }
 
   // See ProjectPage.OnNavigatedTo: node views are cached and never auto-reload (see ClearRenderCache),
@@ -290,7 +396,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     Reload(ViewTarget.Center);
   }
 
-  private async Task LoadAsync(Person center)
+  private async Task LoadAsync(Person center, IReadOnlyDictionary<int, double> pins)
   {
     try
     {
@@ -312,7 +418,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
         CornerRadius = _Metrics.CornerRadius * zoom,
       };
 
-      var layout = _Layout.Update(tree, scaledMetrics);
+      var layout = _Layout.Update(tree, scaledMetrics, pins);
       var names = layout.Nodes.ToDictionary(
         node => node.Node.Id,
         node => _NameFormatter.ToString(node.Node.Person, NameFormat.ShortPersonName));
@@ -382,10 +488,13 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     CanLoadMoreAncestors = _AncestorGenerations < MaxGenerations && maxGeneration >= _AncestorGenerations;
     CanLoadMoreDescendants = _DescendantGenerations < MaxGenerations && minGeneration <= -_DescendantGenerations;
 
+    // Read before the resize below, which can clamp the scroll offset a dropped node is kept against.
+    var scroll = new Point(Scroller.ScrollX, Scroller.ScrollY);
     Canvas.WidthRequest = layout.CanvasSize.Width;
     Canvas.HeightRequest = layout.CanvasSize.Height;
+    _LastLayout = layout;
 
-    _ = PositionViewportAsync(layout.CenterTopLeft, zoom);
+    _ = PositionViewportAsync(layout, scroll);
   }
 
   // Connectors carry no stable identity (they are redrawn from scratch each layout), so a simple index
@@ -441,6 +550,8 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
         _NodeCache[person.Id] = entry;
       }
       AbsoluteLayout.SetLayoutBounds(entry.View, nodeLayout.Bounds);
+      // A dragged node rode on its translation until this layout placed it.
+      entry.View.TranslationX = 0;
     }
 
     foreach (var id in _NodeCache.Keys.Where(id => !used.Contains(id)).ToList())
@@ -456,9 +567,31 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     var view = new FamilyTreeNodeView(
       photo, _FontScale, displayName, isCenter, nodeLayout.Bounds.Width, nodeLayout.Bounds.Height, zoom);
     view.GestureRecognizers.Add(new TapGestureRecognizer { Command = PageCommand, CommandParameter = person });
+    SyncNodeDrag(view, person.Id, isCenter);
     AbsoluteLayout.SetLayoutFlags(view, AbsoluteLayoutFlags.None);
     Nodes.Children.Add(view);
     return view;
+  }
+
+  // A node carries a drag only while arranging: on touch, a pan recognizer on a node can take the
+  // gesture from the canvas pan and the node tap even when it ignores it. The centre never carries
+  // one, since every pin is measured from it.
+  private void SyncNodeDrag(FamilyTreeNodeView view, int personId, bool isCenter)
+  {
+    var drag = view.GestureRecognizers.OfType<PanGestureRecognizer>().SingleOrDefault();
+    if (drag is not null)
+    {
+      view.GestureRecognizers.Remove(drag);
+      // A drag cut off here never completes, so nothing else would put the node back.
+      view.TranslationX = 0;
+    }
+
+    if (IsArranging && !isCenter)
+    {
+      drag = new PanGestureRecognizer();
+      drag.PanUpdated += (_, e) => OnNodePan(view, personId, e);
+      view.GestureRecognizers.Add(drag);
+    }
   }
 
   private void RemoveNode(FamilyTreeNodeView view)
@@ -490,7 +623,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     _ConnectorPool.Clear();
   }
 
-  private async Task PositionViewportAsync(Point centerTopLeft, double zoom)
+  private async Task PositionViewportAsync(FamilyTreeLayoutResult layout, Point scroll)
   {
     // Let the ScrollView measure its new content before scrolling so the viewport size and extents
     // are known.
@@ -498,9 +631,13 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
 
     var maxX = Math.Max(0, Canvas.Width - Scroller.Width);
     var maxY = Math.Max(0, Canvas.Height - Scroller.Height);
+    var centerTopLeft = layout.CenterTopLeft;
 
-    // Always keep the centre's column horizontally centred.
-    var targetX = centerTopLeft.X + (_Metrics.NodeWidth * zoom / 2) - (Scroller.Width / 2);
+    // Keep the centre's column horizontally centred, except after a drop: the relayout can shift the
+    // whole canvas, so follow the dropped node to keep it where it was released.
+    var targetX = _ViewTarget == ViewTarget.Dropped
+      ? scroll.X + layout.Nodes.Single(node => node.Node.Id == _Dropped.Id).Bounds.Left - _Dropped.Left
+      : centerTopLeft.X + (layout.Metrics.NodeWidth / 2) - (Scroller.Width / 2);
 
     // Vertically, park where the freshly loaded generation appears: the top after loading ancestors,
     // the bottom after loading descendants, otherwise centred on the focal person.
@@ -508,7 +645,8 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     {
       ViewTarget.Top => 0,
       ViewTarget.Bottom => maxY,
-      _ => centerTopLeft.Y + (_Metrics.NodeHeight * zoom / 2) - (Scroller.Height / 2),
+      ViewTarget.Dropped => scroll.Y,
+      _ => centerTopLeft.Y + (layout.Metrics.NodeHeight / 2) - (Scroller.Height / 2),
     };
 
     await Scroller.ScrollToAsync(Math.Clamp(targetX, 0, maxX), Math.Clamp(targetY, 0, maxY), animated: false);
@@ -518,6 +656,9 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   {
     switch (parameter)
     {
+      case PersonInfo _ when IsArranging:
+        break;
+
       case PersonInfo person when person.Id == _Center?.Id:
         await _NavigationService.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { ["PersonInfo"] = person });
         break;
@@ -561,6 +702,14 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
         Reload(ViewTarget.Center);
         break;
 
+      case string command when command == "ResetArrangement" && _Center is PersonInfo center:
+        _ArrangementStore.Clear(_CurrentProjectProvider.Info, center.Id);
+        SetPins(new Dictionary<int, double>());
+        // The stored columns still hold the arrangement, so lay out from scratch.
+        _Layout.Reset();
+        Reload(ViewTarget.Center);
+        break;
+
 #if DEBUG
       // Diagnostic: render a deep tree in ONE pass (no incremental Clear()+rebuild churn) to
       // separate a size/element-count limit from per-render rebuild cost. Each tap jumps deeper.
@@ -590,7 +739,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     while (_CanLoadMoreAncestors && _AncestorGenerations < MaxGenerations)
     {
       _AncestorGenerations++;
-      await LoadAsync(_Center);
+      await LoadAsync(_Center, _Pins);
       await Task.Delay(400);
     }
   }

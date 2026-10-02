@@ -25,7 +25,8 @@ public sealed record FamilyTreeLayoutResult(
   IReadOnlyList<FamilyTreeNodeLayout> Nodes,
   IReadOnlyList<FamilyTreeConnector> Connectors,
   Size CanvasSize,
-  Point CenterTopLeft);
+  Point CenterTopLeft,
+  FamilyTreeLayoutMetrics Metrics);
 
 /// <summary>
 /// Turns a <see cref="FamilyTree"/> into absolute node rectangles and orthogonal connectors.
@@ -68,6 +69,8 @@ public sealed class FamilyTreeLayout
   // Fee per slot of overlap between two horizontal connector runs sharing a generation band.
   // Kept far larger than any spring/anchor term so eliminating overlap dominates every swap.
   private const double OverlapK = 100.0;
+  // Absorbs the rounding in a neighbouring slot computed as taken ± 1.
+  private const double SlotTolerance = 1e-9;
 
   /// <summary>
   /// Clears stored positions so the next <see cref="Update"/> starts from scratch.
@@ -75,13 +78,21 @@ public sealed class FamilyTreeLayout
   /// </summary>
   public void Reset() => _xSlots = [];
 
-  public FamilyTreeLayoutResult Update(FamilyTree tree, FamilyTreeLayoutMetrics metrics)
+  /// <param name="pins">
+  /// Slot offsets from the centre person for nodes the user placed by hand. When any apply, the
+  /// centre stays where it was seeded, and each pinned node keeps its offset unless the centre or an
+  /// earlier pin in its row already holds that slot, in which case it takes the nearest clear one.
+  /// </param>
+  public FamilyTreeLayoutResult Update(
+    FamilyTree tree,
+    FamilyTreeLayoutMetrics metrics,
+    IReadOnlyDictionary<int, double>? pins = null)
   {
     ArgumentNullException.ThrowIfNull(tree);
     ArgumentNullException.ThrowIfNull(metrics);
 
     if (tree.Nodes.Count == 0)
-      return new FamilyTreeLayoutResult([], [], new Size(0, 0), new Point(0, 0));
+      return new FamilyTreeLayoutResult([], [], new Size(0, 0), new Point(0, 0), metrics);
 
     var nodesById = tree.Nodes.ToDictionary(n => n.Id);
     var childrenByParent = BuildAdjacency(tree, nodesById, descendants: true);
@@ -114,6 +125,11 @@ public sealed class FamilyTreeLayout
     // Pre-seed new nodes toward their already-placed neighbours.
     ReseedNewNodes(x, existing, adj);
 
+    // Applied last, so neither a stored column nor the reseed can displace a pin.
+    var pinned = ResolvePins(tree.CenterId, nodesById, x, pins);
+    foreach (var (id, slot) in pinned)
+      x[id] = slot;
+
     // ── settle phase ──────────────────────────────────────────────────────────────────────────
     // Relax once before ordering so the reorder pass sees realistic columns. This matters when the
     // centred person is a leaf (e.g. a married-in spouse with no ancestors in view): the tidy seed
@@ -122,28 +138,47 @@ public sealed class FamilyTreeLayout
     // edge springs keep children under their parents, so the overlap fee reflects the real layout
     // rather than artefacts of the raw seed.
     var settleAnchorX = existing.ToDictionary(id => id, id => x[id]);
-    SpringRelax(nodesById, x, adj, settleAnchorX);
+    SpringRelax(nodesById, x, adj, settleAnchorX, pinned);
 
     // ── ordering phase ────────────────────────────────────────────────────────────────────────
     // Reorder each row to minimise overlap + spring energy, anchored to settled positions.
     var originalAnchorX = existing.ToDictionary(id => id, id => x[id]);
-    ReorderRows(nodesById, x, adj, originalAnchorX, segByNode, segByLevel);
+    ReorderRows(nodesById, x, adj, originalAnchorX, segByNode, segByLevel, pinned);
 
     // ── position phase ────────────────────────────────────────────────────────────────────────
     // Anchor to post-swap positions so the spring refines within the new ordering rather than
     // pulling nodes back to where they were before the swap.
     var springAnchorX = existing.ToDictionary(id => id, id => x[id]);
-    SpringRelax(nodesById, x, adj, springAnchorX);
+    SpringRelax(nodesById, x, adj, springAnchorX, pinned);
 
     // The spring has no overlap awareness and its edge forces can re-cross a couple that the ordering
     // pass separated (a child's parent springs can drag it back across its spouse). Re-run the
     // ordering on the settled positions and enforce that final order so it cannot be undone again.
-    ReorderRows(nodesById, x, adj, springAnchorX, segByNode, segByLevel);
+    ReorderRows(nodesById, x, adj, springAnchorX, segByNode, segByLevel, pinned);
 
-    ResolveRowOverlaps(nodesById, x);
+    ResolveRowOverlaps(nodesById, x, pinned);
 
     _xSlots = new Dictionary<int, double>(x);
     return Assemble(tree, nodesById, x, metrics);
+  }
+
+  /// <summary>
+  /// The slot nearest <paramref name="slot"/>, no lower than <paramref name="minimum"/>, that keeps a
+  /// whole slot clear of every <paramref name="taken"/> one.
+  /// </summary>
+  public static double NearestClearSlot(double slot, double[] taken, double minimum = double.NegativeInfinity)
+  {
+    // The clear region is bounded by the minimum and the taken slots' neighbours, so the nearest clear
+    // slot is the one asked for (raised to the minimum) or one of those neighbours.
+    bool IsClear(double candidate) =>
+      candidate >= minimum && taken.All(t => Math.Abs(candidate - t) >= 1 - SlotTolerance);
+
+    var wanted = Math.Max(slot, minimum);
+    return taken
+      .SelectMany(t => new[] { t - 1, t + 1 })
+      .Prepend(wanted)
+      .Where(IsClear)
+      .MinBy(candidate => Math.Abs(candidate - slot));
   }
 
   // ── optimisation passes ───────────────────────────────────────────────────────────────────────
@@ -163,6 +198,31 @@ public sealed class FamilyTreeLayout
       adj[edge.ToId].Add((edge.FromId, w));
     }
     return adj;
+  }
+
+  private static Dictionary<int, double> ResolvePins(
+    int centerId,
+    IReadOnlyDictionary<int, FamilyTreeNode> nodesById,
+    IReadOnlyDictionary<int, double> x,
+    IReadOnlyDictionary<int, double>? pins)
+  {
+    var pinned = new Dictionary<int, double>();
+    var applicable = pins?.Where(pin => x.ContainsKey(pin.Key)).ToArray() ?? [];
+    if (applicable.Length == 0)
+      return pinned;
+
+    var centerX = x[centerId];
+    pinned[centerId] = centerX;
+    foreach (var (id, offset) in applicable)
+    {
+      var generation = nodesById[id].Generation;
+      var taken = pinned
+        .Where(pin => nodesById[pin.Key].Generation == generation)
+        .Select(pin => pin.Value)
+        .ToArray();
+      pinned[id] = NearestClearSlot(centerX + offset, taken);
+    }
+    return pinned;
   }
 
   // Pre-seed new nodes at the weighted average X of already-placed neighbours so the spring covers
@@ -209,9 +269,11 @@ public sealed class FamilyTreeLayout
     IReadOnlyDictionary<int, List<(int Id, double W)>> adj,
     IReadOnlyDictionary<int, double> anchorX,
     IReadOnlyDictionary<int, List<HorizontalRun>> segByNode,
-    IReadOnlyDictionary<int, List<HorizontalRun>> segByLevel)
+    IReadOnlyDictionary<int, List<HorizontalRun>> segByLevel,
+    IReadOnlyDictionary<int, double> pinned)
   {
-    foreach (var group in nodesById.Values.GroupBy(n => n.Generation))
+    var free = nodesById.Values.Where(n => !pinned.ContainsKey(n.Id));
+    foreach (var group in free.GroupBy(n => n.Generation))
     {
       var order = group.Select(n => n.Id).OrderBy(id => x[id]).ToList();
       if (order.Count < 2)
@@ -375,7 +437,8 @@ public sealed class FamilyTreeLayout
     IReadOnlyDictionary<int, FamilyTreeNode> nodesById,
     Dictionary<int, double> x,
     IReadOnlyDictionary<int, List<(int Id, double W)>> adj,
-    IReadOnlyDictionary<int, double> anchorX)
+    IReadOnlyDictionary<int, double> anchorX,
+    IReadOnlyDictionary<int, double> pinned)
   {
     var velocity = nodesById.Keys.ToDictionary(id => id, _ => 0.0);
     var rows = nodesById.Values
@@ -426,6 +489,8 @@ public sealed class FamilyTreeLayout
       // Semi-implicit Euler.
       foreach (var id in nodesById.Keys)
       {
+        if (pinned.ContainsKey(id))
+          continue;
         velocity[id] = (velocity[id] + forces[id] * TimeStep) * Damping;
         x[id] += velocity[id] * TimeStep;
       }
@@ -542,16 +607,18 @@ public sealed class FamilyTreeLayout
 
   private static void ResolveRowOverlaps(
     IReadOnlyDictionary<int, FamilyTreeNode> nodesById,
-    Dictionary<int, double> x)
+    Dictionary<int, double> x,
+    IReadOnlyDictionary<int, double> pinned)
   {
     foreach (var row in nodesById.Values.GroupBy(n => n.Generation))
     {
-      var ordered = row.OrderBy(n => x[n.Id]).ThenBy(n => n.Id).ToArray();
-      for (var i = 1; i < ordered.Length; i++)
+      var taken = row.Where(n => pinned.ContainsKey(n.Id)).Select(n => x[n.Id]).ToArray();
+      var free = row.Where(n => !pinned.ContainsKey(n.Id)).OrderBy(n => x[n.Id]).ThenBy(n => n.Id);
+      var minimum = double.NegativeInfinity;
+      foreach (var node in free)
       {
-        var minimum = x[ordered[i - 1].Id] + 1;
-        if (x[ordered[i].Id] < minimum)
-          x[ordered[i].Id] = minimum;
+        x[node.Id] = NearestClearSlot(x[node.Id], taken, minimum);
+        minimum = x[node.Id] + 1;
       }
     }
   }
@@ -587,7 +654,7 @@ public sealed class FamilyTreeLayout
       ? centerRect.Location
       : new Point(0, 0);
 
-    return new FamilyTreeLayoutResult(layouts, connectors, new Size(width, height), centerTopLeft);
+    return new FamilyTreeLayoutResult(layouts, connectors, new Size(width, height), centerTopLeft, metrics);
   }
 
   private static FamilyTreeConnector[] BuildConnectors(

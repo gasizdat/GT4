@@ -586,6 +586,9 @@
   <data name="MenuItemNameRefresh" xml:space="preserve">
     <value>🔄️ Обновить</value>
   </data>
+  <data name="MenuItemNameResetArrangement" xml:space="preserve">
+    <value>📌 Сбросить расстановку</value>
+  </data>
   <data name="RelBrother" xml:space="preserve">
     <value>Брат</value>
   </data>
@@ -1071,8 +1074,14 @@ FN - род</value>
   <data name="TitleFamilyTreePage_1" xml:space="preserve">
     <value>🌳 {0}</value>
   </data>
+  <data name="TitleFamilyTreePageArranged_1" xml:space="preserve">
+    <value>🌳 {0} 📌</value>
+  </data>
   <data name="HintFamilyTreePage" xml:space="preserve">
     <value>Нажмите на родственника, чтобы поместить его в центр</value>
+  </data>
+  <data name="HintFamilyTreePageArranging" xml:space="preserve">
+    <value>Перетащите родственника в сторону, чтобы переставить его</value>
   </data>
   <data name="MenuItemNameOpenPerson_1" xml:space="preserve">
     <value>👤 Открыть {0}</value>
@@ -1085,6 +1094,9 @@ FN - род</value>
   </data>
   <data name="LblRelatives" xml:space="preserve">
     <value>Родственники</value>
+  </data>
+  <data name="LblArrange" xml:space="preserve">
+    <value>Расставить</value>
   </data>
   <data name="AlertTextKinshipUnfoldingAborted" xml:space="preserve">
     <value>Операция заняла больше времени, чем ожидалось. Некоторые уровни родства остались нераскрытыми. Вы можете развернуть их вручную</value>
