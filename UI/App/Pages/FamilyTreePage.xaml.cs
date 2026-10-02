@@ -181,6 +181,9 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
 
   public bool IsArranged => _Pins.Count != 0;
 
+  // Held off while a load runs: that load would lay out again the columns Reset just cleared.
+  public bool CanResetArrangement => IsArranged && !LoadInProgress;
+
   // Node taps and the canvas pan give way to dragging nodes along their rows.
   public bool IsArranging
   {
@@ -295,6 +298,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     OnPropertyChanged(nameof(LoadInProgress));
     OnPropertyChanged(nameof(CanLoadMoreAncestors));
     OnPropertyChanged(nameof(CanLoadMoreDescendants));
+    OnPropertyChanged(nameof(CanResetArrangement));
   }
 
   private void ResetLoadInProgress()
@@ -305,6 +309,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     OnPropertyChanged(nameof(LoadInProgress));
     OnPropertyChanged(nameof(CanLoadMoreAncestors));
     OnPropertyChanged(nameof(CanLoadMoreDescendants));
+    OnPropertyChanged(nameof(CanResetArrangement));
   }
 
   private void SetCenter(PersonInfo person)
@@ -339,6 +344,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   {
     _Pins = pins;
     OnPropertyChanged(nameof(IsArranged));
+    OnPropertyChanged(nameof(CanResetArrangement));
     OnPropertyChanged(nameof(PageTitle));
   }
 

@@ -27,7 +27,7 @@
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="ResetArrangement"
-          IsEnabled="{Binding IsArranged, Source={x:Reference Root}}"
+          IsEnabled="{Binding CanResetArrangement, Source={x:Reference Root}}"
           Text="{x:Static resources:UIStrings.MenuItemNameResetArrangement}" />
     </components:PageLayout.MenuItems>
 

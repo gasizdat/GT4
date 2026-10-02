@@ -729,4 +729,31 @@ public class FamilyTreePageTests
         It.Is<IReadOnlyDictionary<int, double>>(pins => pins.Count == 1 && Math.Abs(pins[2] - expected) < 1e-6)),
       Times.Once());
   }
+
+  [Fact]
+  public async Task ResetArrangement_is_held_off_while_a_load_is_in_flight()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    var child = P(2, "Petr");
+    var tree = SetupTree(services, center, child);
+    services.ArrangementStore
+      .Setup(s => s.Get(TestServices.SampleProjectInfo, center.Id))
+      .Returns(new Dictionary<int, double> { [2] = 3 });
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    var canResetAtRest = page.CanResetArrangement;
+    var held = HoldBuilds(services);
+
+    var canResetWhileLoading = await MainThread.InvokeOnMainThreadAsync(async () =>
+    {
+      await page.InvokePageCommandAsync("ZoomIn");
+      return page.CanResetArrangement;
+    });
+    await WaitForLoadAsync(page, services, () => held.SetResult(tree));
+
+    Assert.True(canResetAtRest);
+    Assert.False(canResetWhileLoading);
+    Assert.True(page.CanResetArrangement);
+  }
 }
