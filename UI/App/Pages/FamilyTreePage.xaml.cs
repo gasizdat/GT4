@@ -45,6 +45,8 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   private const int ZoomIntervalMs = 300;
   // Sized to clear the tallest of the "load more" and zoom buttons pinned over the canvas.
   private const double OverlayClearance = 72;
+  // A shorter drag is a tap, or a scroll that started on a node, not a move.
+  private const double MinDragSlots = 0.25;
 
   private Person? _Center;
   private string _CenterName = string.Empty;
@@ -63,7 +65,6 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   // Replaced, never mutated, so a load in flight keeps the set it started with.
   private IReadOnlyDictionary<int, double> _Pins = new Dictionary<int, double>();
   private bool _IsArranging;
-  private double _DragX;
   private (int Id, double Left) _Dropped;
   private FamilyTreeLayoutResult? _LastLayout;
 
@@ -148,18 +149,13 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   {
     switch (e.StatusType)
     {
-      case GestureStatus.Started:
-        _DragX = 0;
-        break;
-
       case GestureStatus.Running:
-        _DragX = e.TotalX;
-        view.TranslationX = _DragX;
+        view.TranslationX = e.TotalX;
         break;
 
-      // Some platforms report no offset on completion, so the drop uses the last running one.
+      // Some platforms report no offset on completion, so the drop uses the one the node shows.
       case GestureStatus.Completed:
-        DropNode(personId, _DragX);
+        DropNode(personId, view.TranslationX);
         break;
 
       case GestureStatus.Canceled:
@@ -350,9 +346,16 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   // already fixed in its row; the rest of the row makes way for it.
   protected void DropNode(int personId, double deltaX)
   {
+    var pitch = _Metrics.SlotPitch * _ZoomScale;
+    // A load in flight is about to replace the layout the drop would be measured against.
+    if (LoadInProgress || Math.Abs(deltaX) < MinDragSlots * pitch)
+    {
+      _NodeCache[personId].View.TranslationX = 0;
+      return;
+    }
+
     var layout = _LastLayout!;
     var centerId = _Center!.Id;
-    var pitch = _Metrics.SlotPitch * _ZoomScale;
     var centerLeft = layout.CenterTopLeft.X;
     var dropped = layout.Nodes.Single(node => node.Node.Id == personId);
     var left = dropped.Bounds.Left + deltaX;
@@ -575,6 +578,8 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     if (drag is not null)
     {
       view.GestureRecognizers.Remove(drag);
+      // A drag cut off here never completes, so nothing else would put the node back.
+      view.TranslationX = 0;
     }
 
     if (IsArranging && !isCenter)

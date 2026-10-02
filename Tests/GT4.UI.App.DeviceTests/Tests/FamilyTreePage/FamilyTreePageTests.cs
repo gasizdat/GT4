@@ -48,13 +48,46 @@ public class FamilyTreePageTests
   private static readonly double SlotPitch = new FamilyTreeLayoutMetrics().SlotPitch;
 
   // The centre with the given children one row below it; with nothing pinned each child sits under it.
-  private static void SetupTree(TestServices services, PersonInfo center, params PersonInfo[] children) =>
+  private static FamilyTree SetupTree(TestServices services, PersonInfo center, params PersonInfo[] children)
+  {
+    var tree = new FamilyTree(
+      center.Id,
+      [new FamilyTreeNode(center, 0), .. children.Select(child => new FamilyTreeNode(child, -1))],
+      [.. children.Select(child => FamilyTreeEdge.ParentChild(parentId: center.Id, childId: child.Id))]);
     services.FamilyTreeProvider
       .Setup(f => f.BuildAsync(It.IsAny<Person>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-      .ReturnsAsync(new FamilyTree(
-        center.Id,
-        [new FamilyTreeNode(center, 0), .. children.Select(child => new FamilyTreeNode(child, -1))],
-        [.. children.Select(child => FamilyTreeEdge.ParentChild(parentId: center.Id, childId: child.Id))]));
+      .ReturnsAsync(tree);
+    return tree;
+  }
+
+  // Every build from here on waits until the test completes the returned source. Continuations run
+  // asynchronously, so releasing it never runs the rest of the load inline on the releasing thread.
+  private static TaskCompletionSource<FamilyTree> HoldBuilds(TestServices services)
+  {
+    var held = new TaskCompletionSource<FamilyTree>(TaskCreationOptions.RunContinuationsAsynchronously);
+    services.FamilyTreeProvider
+      .Setup(f => f.BuildAsync(It.IsAny<Person>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+      .Returns(held.Task);
+    return held;
+  }
+
+  // Found through the person its tap carries. Main thread only.
+  private static View NodeView(TestableFamilyTreePage page, int personId) =>
+    page
+      .FindByName<AbsoluteLayout>("Nodes")
+      .Children
+      .Cast<View>()
+      .Single(view => view.GestureRecognizers.OfType<TapGestureRecognizer>().Any(tap => tap.CommandParameter is Person person && person.Id == personId));
+
+  private static IPanGestureController NodeDrag(View view) =>
+    view.GestureRecognizers.OfType<PanGestureRecognizer>().Single();
+
+  private static Task<double> NodeLeftAsync(TestableFamilyTreePage page, int personId) =>
+    MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      var view = NodeView(page, personId);
+      return AbsoluteLayout.GetLayoutBounds(view).Left;
+    });
 
   private static Task<Rect[]> NodeBoundsAsync(TestableFamilyTreePage page) =>
     MainThread.InvokeOnMainThreadAsync(() => page
@@ -578,5 +611,122 @@ public class FamilyTreePageTests
     Assert.False(page.IsArranged);
     var expectedTitle = string.Format(UIStrings.TitleFamilyTreePage_1, "Ivan");
     Assert.Equal(expectedTitle, page.PageTitle);
+  }
+
+  [Fact]
+  public async Task A_drop_while_a_load_is_in_flight_is_put_back_and_not_saved()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    var child = P(2, "Petr");
+    var tree = SetupTree(services, center, child);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    var held = HoldBuilds(services);
+
+    // ZoomIn, not Refresh: Refresh empties the node cache, leaving no node to drag.
+    var translation = await MainThread.InvokeOnMainThreadAsync(async () =>
+    {
+      await page.InvokePageCommandAsync("ZoomIn");
+      var view = NodeView(page, child.Id);
+      view.TranslationX = 2 * SlotPitch;
+      page.InvokeDropNode(child.Id, 2 * SlotPitch);
+      return view.TranslationX;
+    });
+    await WaitForLoadAsync(page, services, () => held.SetResult(tree));
+
+    Assert.Equal(0, translation);
+    Assert.False(page.IsArranged);
+    services.ArrangementStore.Verify(
+      s => s.Set(It.IsAny<ProjectInfo>(), It.IsAny<int>(), It.IsAny<IReadOnlyDictionary<int, double>>()),
+      Times.Never());
+  }
+
+  [Fact]
+  public async Task A_drag_under_a_quarter_slot_is_put_back_and_not_saved()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    var child = P(2, "Petr");
+    SetupTree(services, center, child);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+
+    var translation = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      var view = NodeView(page, child.Id);
+      view.TranslationX = 0.2 * SlotPitch;
+      page.InvokeDropNode(child.Id, 0.2 * SlotPitch);
+      return view.TranslationX;
+    });
+
+    Assert.Equal(0, translation);
+    Assert.False(page.LoadInProgress);
+    Assert.False(page.IsArranged);
+    services.ArrangementStore.Verify(
+      s => s.Set(It.IsAny<ProjectInfo>(), It.IsAny<int>(), It.IsAny<IReadOnlyDictionary<int, double>>()),
+      Times.Never());
+  }
+
+  [Fact]
+  public async Task Turning_arranging_off_mid_drag_puts_the_node_back()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    var child = P(2, "Petr");
+    SetupTree(services, center, child);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+
+    var (midDrag, afterOff) = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      page.IsArranging = true;
+      var view = NodeView(page, child.Id);
+      var drag = NodeDrag(view);
+      drag.SendPanStarted(view, 1);
+      drag.SendPan(view, SlotPitch, 0, 1);
+      var shifted = view.TranslationX;
+      page.IsArranging = false;
+      return (shifted, view.TranslationX);
+    });
+
+    Assert.Equal(SlotPitch, midDrag);
+    Assert.Equal(0, afterOff);
+  }
+
+  [Fact]
+  public async Task Two_overlapping_drags_each_drop_by_their_own_offset()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    var first = P(2, "Petr");
+    var second = P(3, "Oleg");
+    SetupTree(services, center, first, second);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    var centerLeft = await NodeLeftAsync(page, center.Id);
+    var firstLeft = await NodeLeftAsync(page, first.Id);
+    var expected = ((firstLeft - centerLeft) / SlotPitch) + 3;
+    await MainThread.InvokeOnMainThreadAsync(() => page.IsArranging = true);
+
+    await WaitForLoadAsync(page, services, () =>
+    {
+      var firstView = NodeView(page, first.Id);
+      var secondView = NodeView(page, second.Id);
+      var firstDrag = NodeDrag(firstView);
+      var secondDrag = NodeDrag(secondView);
+      firstDrag.SendPanStarted(firstView, 1);
+      secondDrag.SendPanStarted(secondView, 2);
+      firstDrag.SendPan(firstView, 3 * SlotPitch, 0, 1);
+      secondDrag.SendPan(secondView, -0.5 * SlotPitch, 0, 2);
+      firstDrag.SendPanCompleted(firstView, 1);
+    });
+
+    services.ArrangementStore.Verify(
+      s => s.Set(
+        TestServices.SampleProjectInfo,
+        center.Id,
+        It.Is<IReadOnlyDictionary<int, double>>(pins => pins.Count == 1 && Math.Abs(pins[2] - expected) < 1e-6)),
+      Times.Once());
   }
 }
