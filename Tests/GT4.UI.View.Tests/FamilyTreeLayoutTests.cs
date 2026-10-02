@@ -558,4 +558,13 @@ public class FamilyTreeLayoutTests
   {
     FamilyTreeLayout.NearestClearSlot(-0.4, [0], minimum: -0.5).Should().BeApproximately(1, 1e-9);
   }
+
+  [Fact]
+  public void NearestClearSlot_BelowTheMinimum_RisesToIt()
+  {
+    // Every neighbour of the taken slot is below the minimum; this used to throw.
+    var clear = FamilyTreeLayout.NearestClearSlot(-5, [-3], minimum: 0);
+
+    clear.Should().BeApproximately(0, 1e-9);
+  }
 }

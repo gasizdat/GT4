@@ -183,14 +183,15 @@ public sealed class FamilyTreeLayout
   /// </summary>
   public static double NearestClearSlot(double slot, double[] taken, double minimum = double.NegativeInfinity)
   {
-    // The clear region is bounded by the taken slots' neighbours, so the nearest clear slot is
-    // either the one asked for or one of those neighbours.
+    // The clear region is bounded by the minimum and the taken slots' neighbours, so the nearest clear
+    // slot is the one asked for (raised to the minimum) or one of those neighbours.
     bool IsClear(double candidate) =>
       candidate >= minimum && taken.All(t => Math.Abs(candidate - t) >= 1 - SlotTolerance);
 
+    var wanted = Math.Max(slot, minimum);
     return taken
       .SelectMany(t => new[] { t - 1, t + 1 })
-      .Prepend(slot)
+      .Prepend(wanted)
       .Where(IsClear)
       .MinBy(candidate => Math.Abs(candidate - slot));
   }
@@ -607,8 +608,7 @@ public sealed class FamilyTreeLayout
       var minimum = double.NegativeInfinity;
       foreach (var node in free)
       {
-        var wanted = Math.Max(x[node.Id], minimum);
-        x[node.Id] = NearestClearSlot(wanted, taken, minimum);
+        x[node.Id] = NearestClearSlot(x[node.Id], taken, minimum);
         minimum = x[node.Id] + 1;
       }
     }
