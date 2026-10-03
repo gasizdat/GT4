@@ -11,7 +11,7 @@ The goal: converge the codebase on one consistent pattern per concern, a little 
 
 A "pass" fixes one or more consistency-issue categories (e.g. naming scheme, DI pattern, collection type usage, error-handling idiom, member ordering, comment hygiene) within exactly one boundary:
 
-- **Production**: `Core/`, `UI/` (excluding `Tests/`), `Tools/` (excluding its `.Tests` project).
+- **Production**: `Core/`, `UI/`, `Tools/`.
 - **Test**: everything under `Tests/`.
 
 Never mix boundaries in the same branch or PR — a production regression and a test regression must never be able to land in the same change. If fixing a production site surfaces a matching inconsistency in test code (or vice versa), file it as a separate issue for a future pass — don't fix it inline.
@@ -34,7 +34,7 @@ The site list for a category comes from Roslyn. A category is a *shape* — a re
 - Walk the **syntax** model for the declaration shape (`MethodDeclarationSyntax`, `LocalFunctionStatementSyntax`, `PropertyDeclarationSyntax`, …) so no spelling escapes. Expect it to over-enumerate — it surfaces shapes the category doesn't want, so triage the hits rather than assuming a query that returns more than you expected is broken. Use the **semantic** model wherever the rule depends on types or usage rather than syntax — "never mutated after it's returned" is a usage question and syntax alone cannot answer it.
 - **Assert completeness before trusting the output.** Always report the document count actually analyzed. A syntax-only walk needs nothing more. Once the query uses the semantic model, also confirm there are no unresolved-symbol diagnostics: a compilation with unresolved references returns *fewer* sites and looks exactly like a clean run — the same failure as the grep it replaced, with better provenance.
 - Getting the load right is the first step, not an afterthought. If opening the solution filter doesn't work, parse the boundary's `.cs` files and add `MetadataReference`s to the already-built `bin/Release/…` assemblies — same semantic model, no MSBuild dependency.
-- `GT4.Core.Utils` multi-targets (`net10.0;net10.0-android`), so it loads as two projects and yields each document twice. Dedup the site list or pin one target framework.
+- `GT4.Core.Utils` multi-targets, so it loads once per target framework and yields each document more than once. Dedup the site list or pin one target framework.
 - Comments are trivia, not nodes: `DescendantNodes()` finds none of them and reports a clean zero (measured — 0 across 174 files in `Core/`, where `DescendantTrivia()` finds 604). Sweeping comment hygiene means `DescendantTrivia()` filtered to `SingleLineCommentTrivia`, `MultiLineCommentTrivia`, `SingleLineDocumentationCommentTrivia`, `MultiLineDocumentationCommentTrivia`. Classify per `comments-sweep` (history / narration / claim / contract / rationale); only the last two survive.
 - Run the query from the scratchpad, not the repo — it's throwaway, and nothing about it belongs in the product tree.
 - Where a built-in IDE analyzer already covers the category, enable it and read the build diagnostics instead: that enumerates *and* stops the inconsistency coming back.
