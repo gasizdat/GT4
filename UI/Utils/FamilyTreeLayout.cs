@@ -889,8 +889,7 @@ public static class FamilyTreeLayout
         {
           var mean = placed.Average(child => x[child]);
           var host = partners.MinBy(p => (Math.Abs(x[p] - mean), x[p]));
-          // Parents with no marriage on record, as the GEDCOM import leaves a family without a MARR, each
-          // drop to the bar: a line between them would claim the marriage.
+          // Parents with no marriage on record each drop on their own: a line between them would claim one.
           var droppers = together ? partners : [host];
           var toward = Snap(mean);
           var bottom = Bottom(generation);
@@ -912,13 +911,23 @@ public static class FamilyTreeLayout
         {
           var (low, high) = (columns[0], columns[^1]);
           var bar = drawing.Track(generation, low, high);
-          Waypoint End(double column) =>
-            Through(column) ? new(column, 0, bar) : new(column, tops.GetValueOrDefault(column, childTop));
+          Waypoint End(double column)
+          {
+            if (Through(column))
+              return new(column, 0, bar);
+            var y = tops.GetValueOrDefault(column, childTop);
+            return new(column, y);
+          }
 
           // The bar turns into its two end columns round a corner; every column between meets it at a T.
-          drawing.Line(FamilyTreeRelation.ParentChild, false, End(low), new(low, 0, bar), new(high, 0, bar), End(high));
+          var first = End(low);
+          var last = End(high);
+          drawing.Line(FamilyTreeRelation.ParentChild, false, first, new(low, 0, bar), new(high, 0, bar), last);
           foreach (var column in columns[1..^1].Where(column => !Through(column)))
-            drawing.Line(FamilyTreeRelation.ParentChild, false, new(column, 0, bar), End(column));
+          {
+            var end = End(column);
+            drawing.Line(FamilyTreeRelation.ParentChild, false, new(column, 0, bar), end);
+          }
         }
       }
 
