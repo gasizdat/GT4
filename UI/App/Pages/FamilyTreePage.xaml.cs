@@ -218,7 +218,8 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   public string HiddenPersonsButtonName => string.Format(UIStrings.BtnNameHiddenPersons_1, _HiddenIds.Length);
 
   // Held off while a load runs: that load still carries the old set and could render after the change.
-  public bool CanChangeHidden => !LoadInProgress;
+  // Read-only mode is switched only in Settings, which this page must be popped to reach.
+  public bool CanChangeHidden => LayoutView.ReadOnlyMode.CanEdit && !LoadInProgress;
 
   // Drive the visibility of the top/bottom "load more" buttons.
   public bool CanLoadMoreAncestors
@@ -599,7 +600,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
       photo, _FontScale, displayName, isCenter, nodeLayout.Bounds.Width, nodeLayout.Bounds.Height, zoom);
     view.GestureRecognizers.Add(new TapGestureRecognizer { Command = PageCommand, CommandParameter = person });
     SyncNodeDrag(view, person.Id, isCenter);
-    if (!isCenter)
+    if (!isCenter && LayoutView.ReadOnlyMode.CanEdit)
     {
       var hide = new MenuFlyoutItem { Text = UIStrings.MenuItemNameHideFromTree, Command = _HideCommand, CommandParameter = person };
       FlyoutBase.SetContextFlyout(view, new MenuFlyout { hide });

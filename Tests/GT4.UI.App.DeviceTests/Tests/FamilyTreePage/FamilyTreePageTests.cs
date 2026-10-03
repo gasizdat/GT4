@@ -1086,6 +1086,39 @@ public class FamilyTreePageTests
   }
 
   [Fact]
+  public async Task Read_only_mode_offers_no_hide_and_disables_the_hidden_count()
+  {
+    var services = new TestServices();
+    UseHiddenPersons(services, 7);
+    var center = P(1, "Ivan");
+    var child = P(2, "Petr");
+    SetupTree(services, center, child);
+    var page = await CreatePageAsync(services);
+    var layout = page.FindByName<PageLayout>("LayoutView");
+    // Before the load: read-only mode is never switched while a tree page is up.
+    await MainThread.InvokeOnMainThreadAsync(() => layout.ReadOnlyMode.Apply("True"));
+
+    try
+    {
+      await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+
+      var flyout = await MainThread.InvokeOnMainThreadAsync(() =>
+      {
+        var view = NodeView(page, child.Id);
+        return FlyoutBase.GetContextFlyout(view);
+      });
+      Assert.Null(flyout);
+      Assert.True(page.HasHiddenPersons);
+      Assert.False(page.CanChangeHidden);
+    }
+    finally
+    {
+      // ReadOnlyMode is the app-wide singleton, shared with every later test.
+      await MainThread.InvokeOnMainThreadAsync(() => layout.ReadOnlyMode.Apply("False"));
+    }
+  }
+
+  [Fact]
   public async Task Hiding_is_held_off_while_a_load_is_in_flight()
   {
     var services = new TestServices();
