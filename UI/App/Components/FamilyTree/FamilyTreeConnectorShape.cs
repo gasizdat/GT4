@@ -1,5 +1,5 @@
 using GT4.Core.Project.Dto;
-using GT4.UI.Utils;
+using GT4.UI.Utils.Genealogy;
 using Microsoft.Maui.Controls.Shapes;
 using Microsoft.Maui.Layouts;
 using Path = Microsoft.Maui.Controls.Shapes.Path;

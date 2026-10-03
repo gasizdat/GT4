@@ -1,7 +1,7 @@
 using FluentAssertions;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
-using GT4.UI.Utils;
+using GT4.UI.Utils.Genealogy;
 using System.Diagnostics;
 using Xunit;
 

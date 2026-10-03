@@ -5,7 +5,7 @@ using GT4.UI.Abstraction;
 using GT4.UI.Components;
 using GT4.UI.Pages;
 using GT4.UI.Resources;
-using GT4.UI.Utils;
+using GT4.UI.Utils.Genealogy;
 using GT4.UI.Utils.Settings;
 using Moq;
 using Xunit;
