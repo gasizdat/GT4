@@ -125,6 +125,28 @@ public class FamilyTreePageTests
     return (child.Left - center.Left) / SlotPitch;
   }
 
+  // The returned probe reads what the page last stored.
+  private static Func<int[]> UseHiddenPersons(TestServices services, params int[] ids)
+  {
+    var stored = ids;
+    services.HiddenPersonsStore.Setup(s => s.Get(It.IsAny<ProjectInfo>())).Returns(() => stored);
+    services.HiddenPersonsStore
+      .Setup(s => s.Set(It.IsAny<ProjectInfo>(), It.IsAny<IEnumerable<int>>()))
+      .Callback((ProjectInfo _, IEnumerable<int> personIds) => stored = [.. personIds]);
+    return () => stored;
+  }
+
+  private static void UsePersons(TestServices services, params PersonInfo[] persons)
+  {
+    services.Persons.Setup(p => p.GetPersonsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(persons);
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosAsync(It.IsAny<Person[]>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync((Person[] requested, bool _, CancellationToken _) => requested.Cast<PersonInfo>().ToArray());
+  }
+
+  private static string FullName(TestServices services, PersonInfo person) =>
+    services.Provider.GetRequiredService<INameFormatter>().ToString(person, NameFormat.FullPersonName);
+
   [Fact]
   public async Task Ctor_resolves_dependencies_and_defaults()
   {
@@ -978,10 +1000,8 @@ public class FamilyTreePageTests
     var services = new TestServices();
     var hidden = UseHiddenPersons(services);
     var center = P(1, "Ivan");
-    var parent = P(2, "Petr");
-    services.FamilyTreeProvider
-      .Setup(f => f.BuildAsync(It.IsAny<Person>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<int[]>(), It.IsAny<CancellationToken>()))
-      .ReturnsAsync(new FamilyTree(center.Id, [new FamilyTreeNode(center, 0), new FamilyTreeNode(parent, 1)], [FamilyTreeEdge.ParentChild(parent.Id, center.Id)]));
+    var child = P(2, "Petr");
+    SetupTree(services, center, child);
     var page = await CreatePageAsync(services);
     await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
 
@@ -998,9 +1018,9 @@ public class FamilyTreePageTests
 
     await WaitForLoadAsync(page, services, () => hide.Command.Execute(hide.CommandParameter));
 
-    Assert.Equal(new[] { parent.Id }, hidden());
+    Assert.Equal(new[] { child.Id }, hidden());
     services.FamilyTreeProvider.Verify(
-      f => f.BuildAsync(center, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.Is<int[]>(ids => ids.SequenceEqual(new[] { parent.Id })), It.IsAny<CancellationToken>()),
+      f => f.BuildAsync(center, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.Is<int[]>(ids => ids.SequenceEqual(new[] { child.Id })), It.IsAny<CancellationToken>()),
       Times.Once());
     Assert.True(page.HasHiddenPersons);
   }
@@ -1063,18 +1083,12 @@ public class FamilyTreePageTests
   {
     var services = new TestServices();
     var center = P(1, "Ivan");
-    var parent = P(2, "Petr");
-    services.FamilyTreeProvider
-      .Setup(f => f.BuildAsync(It.IsAny<Person>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<int[]>(), It.IsAny<CancellationToken>()))
-      .ReturnsAsync(new FamilyTree(center.Id, [new FamilyTreeNode(center, 0), new FamilyTreeNode(parent, 1)], [FamilyTreeEdge.ParentChild(parent.Id, center.Id)]));
+    var child = P(2, "Petr");
+    SetupTree(services, center, child);
     var page = await CreatePageAsync(services);
     await using var window = await WindowHost.AttachAsync(page);
     await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
-    var node = await MainThread.InvokeOnMainThreadAsync(() => page
-      .FindByName<AbsoluteLayout>("Nodes")
-      .Children
-      .OfType<FamilyTreeNodeView>()
-      .Single(view => FlyoutBase.GetContextFlyout(view) is not null));
+    var node = await MainThread.InvokeOnMainThreadAsync(() => NodeView(page, child.Id));
 
     var flyout = await Poll.UntilAsync(
       () => MainThread.InvokeOnMainThreadAsync(() => ((IPlatformViewHandler?)node.Handler)?.PlatformView?.ContextFlyout),
@@ -1084,26 +1098,4 @@ public class FamilyTreePageTests
     Assert.IsType<Microsoft.UI.Xaml.Controls.MenuFlyout>(flyout);
   }
 #endif
-
-  // The returned probe reads what the page last stored.
-  private static Func<int[]> UseHiddenPersons(TestServices services, params int[] ids)
-  {
-    var stored = ids;
-    services.HiddenPersonsStore.Setup(s => s.Get(It.IsAny<ProjectInfo>())).Returns(() => stored);
-    services.HiddenPersonsStore
-      .Setup(s => s.Set(It.IsAny<ProjectInfo>(), It.IsAny<IEnumerable<int>>()))
-      .Callback((ProjectInfo _, IEnumerable<int> personIds) => stored = [.. personIds]);
-    return () => stored;
-  }
-
-  private static void UsePersons(TestServices services, params PersonInfo[] persons)
-  {
-    services.Persons.Setup(p => p.GetPersonsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(persons);
-    services.PersonManager
-      .Setup(p => p.GetPersonInfosAsync(It.IsAny<Person[]>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-      .ReturnsAsync((Person[] requested, bool _, CancellationToken _) => requested.Cast<PersonInfo>().ToArray());
-  }
-
-  private static string FullName(TestServices services, PersonInfo person) =>
-    services.Provider.GetRequiredService<INameFormatter>().ToString(person, NameFormat.FullPersonName);
 }
