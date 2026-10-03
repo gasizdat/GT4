@@ -25,14 +25,14 @@ internal sealed class Placement
   public static Placement Compute(Families families, int centerId)
   {
     var placement = new Placement(families, new Dictionary<int, Hint>());
-    placement.Run(centerId);
+    placement.Pack(centerId);
 
     // kinship2's autohint: married blood relatives in one row move to the facing ends of their sibships.
     var hints = FacingEnds(families, placement.X);
     if (hints.Count == 0)
       return placement;
     placement = new Placement(families, hints);
-    placement.Run(centerId);
+    placement.Pack(centerId);
     return placement;
   }
 
@@ -59,7 +59,7 @@ internal sealed class Placement
     return hints;
   }
 
-  private void Run(int centerId)
+  private void Pack(int centerId)
   {
     var ancestors = new Stack<int>([centerId]);
     _DirectLine.Add(centerId);
@@ -71,7 +71,7 @@ internal sealed class Placement
     }
 
     _Visited.Add(centerId);
-    var own = Block(centerId, Side.Both, excludedKey: null);
+    var own = Subtree(centerId, Side.Both, excludedKey: null);
     var contour = Ancestry(centerId, Side.Both, own);
 
     var rest = _Families.Nodes.Values.OrderByDescending(node => node.Generation).ThenBy(node => node.Id);
@@ -79,7 +79,7 @@ internal sealed class Placement
     {
       if (!_Visited.Add(node.Id))
         continue;
-      var part = Block(node.Id, Side.Both, excludedKey: null);
+      var part = Subtree(node.Id, Side.Both, excludedKey: null);
       var dx = contour.OffsetBeside(part);
       contour.Absorb(part, dx);
     }
@@ -91,12 +91,12 @@ internal sealed class Placement
 
   private int HintRank(int id) => _Hints.TryGetValue(id, out var hint) ? hint.Direction + 1 : 1;
 
-  private IEnumerable<int> Ordered(IEnumerable<int> ids) =>
+  private IEnumerable<int> InSiblingOrder(IEnumerable<int> ids) =>
     ids.OrderBy(id => (HintRank(id), BirthOrder(_Families.Nodes[id])));
 
   // The person with the partners who join them on their row, and below them each family's children.
   // A partner on either side of the person is spread out until their family's drop is over its children.
-  private Contour Block(int person, Side side, string? excludedKey)
+  private Contour Subtree(int person, Side side, string? excludedKey)
   {
     var generation = _Families.Generation(person);
     int[] excludedPartners = excludedKey is null ? [] : _Families.Partners(excludedKey);
@@ -164,7 +164,7 @@ internal sealed class Placement
       rightCentre = Centre(contour, rightGroup.Value.Children);
     }
 
-    // A hinted partner is not in the block, so its family's drop is pinned half a slot off the person.
+    // A hinted partner is not in the subtree, so its family's drop is pinned half a slot off the person.
     var x = middleCentre ?? (leftCentre, rightCentre) switch
     {
       (double l, double r) when left.Count != 0 && right.Count != 0 => (l + r) / 2,
@@ -191,14 +191,14 @@ internal sealed class Placement
     var children = new List<int>();
     foreach (var key in keys)
     {
-      foreach (var child in Ordered(_Families.ChildrenOf(key)))
+      foreach (var child in InSiblingOrder(_Families.ChildrenOf(key)))
       {
         if (!IsFree(child))
           continue;
         _Visited.Add(child);
         PlacedBy[child] = key;
         children.Add(child);
-        var subtree = Block(child, Side.Both, excludedKey: null);
+        var subtree = Subtree(child, Side.Both, excludedKey: null);
         contour.Append(subtree);
       }
     }
@@ -223,7 +223,7 @@ internal sealed class Placement
       .Where(parent => !_Visited.Contains(parent))
       .OrderBy(parent => (_Families.Nodes[parent].Person.BiologicalSex != BiologicalSex.Male, BirthOrder(_Families.Nodes[parent])))
       .ToArray();
-    var parents = Couples(unplaced);
+    var parents = InCoupleOrder(unplaced);
     if (parents.Length == 0)
       return own;
     foreach (var parent in parents)
@@ -241,18 +241,18 @@ internal sealed class Placement
         var (index, count) when index == count - 1 => Side.Right,
         _ => Side.Both,
       };
-      var block = Block(parents[i], sides[i], key);
-      units[i] = Ancestry(parents[i], sides[i], block);
+      var subtree = Subtree(parents[i], sides[i], key);
+      units[i] = Ancestry(parents[i], sides[i], subtree);
     }
 
     var siblings = new List<(int Id, Contour Contour)>();
-    foreach (var sibling in Ordered(_Families.ChildrenOf(key)))
+    foreach (var sibling in InSiblingOrder(_Families.ChildrenOf(key)))
     {
       if (sibling == person || !IsFree(sibling))
         continue;
       _Visited.Add(sibling);
       PlacedBy[sibling] = key;
-      var subtree = Block(sibling, Side.Both, excludedKey: null);
+      var subtree = Subtree(sibling, Side.Both, excludedKey: null);
       siblings.Add((sibling, subtree));
     }
 
@@ -262,7 +262,7 @@ internal sealed class Placement
 
   // Each parent followed by the spouses they have among the others, so birth and adoptive couples
   // each sit side by side.
-  private int[] Couples(int[] parents)
+  private int[] InCoupleOrder(int[] parents)
   {
     var ordered = new List<int>();
     foreach (var parent in parents)
