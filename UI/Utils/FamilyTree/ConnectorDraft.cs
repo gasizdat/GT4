@@ -2,24 +2,24 @@ using GT4.Core.Project.Dto;
 
 namespace GT4.UI.Utils.Genealogy;
 
-internal sealed class Drawing
+internal sealed class ConnectorDraft
 {
   private readonly List<(FamilyTreeRelation Relation, bool IsLoop, Waypoint[] Points)> _Lines = [];
   private readonly List<Run> _Runs = [];
 
-  public Run Track(int band, double from, double to)
+  public Run AddRun(int band, double from, double to)
   {
     var run = new Run(band, from, to);
     _Runs.Add(run);
     return run;
   }
 
-  public void Line(FamilyTreeRelation relation, bool isLoop, params Waypoint[] points) =>
+  public void AddLine(FamilyTreeRelation relation, bool isLoop, params Waypoint[] points) =>
     _Lines.Add((relation, isLoop, points));
 
   // Left-edge channel routing: runs that overlap, or come within half a gap of each other, in one band
   // take separate tracks spread evenly through the band.
-  public FamilyTreeConnector[] Resolve(Func<int, double> bandTop, FamilyTreeLayoutMetrics metrics)
+  public FamilyTreeConnector[] ToConnectors(Func<int, double> bandTop, FamilyTreeLayoutMetrics metrics)
   {
     foreach (var band in _Runs.GroupBy(run => run.Band))
     {
@@ -50,7 +50,7 @@ internal sealed class Drawing
     var points = new List<PointF>();
     foreach (var waypoint in waypoints)
     {
-      var point = new PointF((float)waypoint.X, (float)(waypoint.Track?.Y ?? waypoint.Y));
+      var point = new PointF((float)waypoint.X, (float)(waypoint.Run?.Y ?? waypoint.Y));
       if (points.Count != 0 && points[^1] == point)
         continue;
       if (points.Count >= 2)

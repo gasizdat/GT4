@@ -9,7 +9,7 @@ internal sealed class ConnectorRouter
   private readonly IReadOnlyDictionary<int, string> _PlacedBy;
   private readonly PixelGrid _Grid;
   private readonly FamilyTreeLayoutMetrics _Metrics;
-  private readonly Drawing _Drawing = new();
+  private readonly ConnectorDraft _Draft = new();
   private readonly Dictionary<int, List<double>> _Attachments = [];
   private readonly Dictionary<(int Generation, double Column), int> _GapUses = [];
   private readonly HashSet<int> _Hosts = [];
@@ -49,13 +49,13 @@ internal sealed class ConnectorRouter
       // than the photo the node is.
       var (left, right) = _X[a] <= _X[b] ? (a, b) : (b, a);
       var y = _Grid.Middle(_Families.Generation(a));
-      _Drawing.Line(FamilyTreeRelation.Spouse, false, new(_Grid.CentreX(left), y), new(_Grid.CentreX(right), y));
+      _Draft.AddLine(FamilyTreeRelation.Spouse, false, new(_Grid.CentreX(left), y), new(_Grid.CentreX(right), y));
     }
 
     foreach (var (parent, child) in _Families.OffRowParents)
       Loop(parent, child, FamilyTreeRelation.ParentChild);
 
-    return _Drawing.Resolve(_Grid.Bottom, _Metrics);
+    return _Draft.ToConnectors(_Grid.Bottom, _Metrics);
   }
 
   private void DrawFamily(string key)
@@ -98,11 +98,11 @@ internal sealed class ConnectorRouter
       bool Through(double column) => tops.ContainsKey(column) && xs.Contains(column);
 
       foreach (var column in columns.Where(Through))
-        _Drawing.Line(FamilyTreeRelation.ParentChild, false, new(column, tops[column]), new(column, childTop));
+        _Draft.AddLine(FamilyTreeRelation.ParentChild, false, new(column, tops[column]), new(column, childTop));
       if (columns.Length > 1)
       {
         var (low, high) = (columns[0], columns[^1]);
-        var bar = _Drawing.Track(generation, low, high);
+        var bar = _Draft.AddRun(generation, low, high);
         Waypoint End(double column)
         {
           if (Through(column))
@@ -114,11 +114,11 @@ internal sealed class ConnectorRouter
         // The bar turns into its two end columns round a corner; every column between meets it at a T.
         var first = End(low);
         var last = End(high);
-        _Drawing.Line(FamilyTreeRelation.ParentChild, false, first, new(low, 0, bar), new(high, 0, bar), last);
+        _Draft.AddLine(FamilyTreeRelation.ParentChild, false, first, new(low, 0, bar), new(high, 0, bar), last);
         foreach (var column in columns[1..^1].Where(column => !Through(column)))
         {
           var end = End(column);
-          _Drawing.Line(FamilyTreeRelation.ParentChild, false, new(column, 0, bar), end);
+          _Draft.AddLine(FamilyTreeRelation.ParentChild, false, new(column, 0, bar), end);
         }
       }
     }
@@ -177,8 +177,8 @@ internal sealed class ConnectorRouter
     var bx = _Grid.CentreX(b);
     var ax = Attach(a, above, bx);
     var ex = Attach(b, above, _Grid.CentreX(a));
-    var run = _Drawing.Track(band, ax, ex);
-    _Drawing.Line(relation, isLoop, new(ax, y), new(ax, 0, run), new(ex, 0, run), new(ex, y));
+    var run = _Draft.AddRun(band, ax, ex);
+    _Draft.AddLine(relation, isLoop, new(ax, y), new(ax, 0, run), new(ex, 0, run), new(ex, y));
   }
 
   private void Loop(int a, int b, FamilyTreeRelation relation)
@@ -201,13 +201,13 @@ internal sealed class ConnectorRouter
       var next = generation == lowerGeneration ? end : Column(generation, current, end);
       if (Math.Abs(next - current) >= 0.5)
       {
-        var run = _Drawing.Track(generation + 1, current, next);
+        var run = _Draft.AddRun(generation + 1, current, next);
         points.Add(new(current, 0, run));
         points.Add(new(next, 0, run));
       }
       current = next;
     }
     points.Add(new(end, _Grid.Top(lowerGeneration)));
-    _Drawing.Line(relation, true, [.. points]);
+    _Draft.AddLine(relation, true, [.. points]);
   }
 }
