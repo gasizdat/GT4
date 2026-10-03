@@ -2737,7 +2737,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 📌 Reset arrangement.
+        ///   Looks up a localized string similar to 🔀 Reset arrangement.
         /// </summary>
         public static string MenuItemNameResetArrangement {
             get {

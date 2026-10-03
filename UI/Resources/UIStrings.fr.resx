@@ -587,7 +587,7 @@ arbre généalogique et profitez-en !</value>
     <value>🔄️ Actualiser</value>
   </data>
   <data name="MenuItemNameResetArrangement" xml:space="preserve">
-    <value>📌 Réinitialiser la disposition</value>
+    <value>🔀 Réinitialiser la disposition</value>
   </data>
   <data name="RelBrother" xml:space="preserve">
     <value>Frère</value>

@@ -587,7 +587,7 @@
     <value>🔄️ Actualizar</value>
   </data>
   <data name="MenuItemNameResetArrangement" xml:space="preserve">
-    <value>📌 Restablecer la disposición</value>
+    <value>🔀 Restablecer la disposición</value>
   </data>
   <data name="RelBrother" xml:space="preserve">
     <value>Hermano</value>

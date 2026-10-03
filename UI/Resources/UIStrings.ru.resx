@@ -587,7 +587,7 @@
     <value>🔄️ Обновить</value>
   </data>
   <data name="MenuItemNameResetArrangement" xml:space="preserve">
-    <value>📌 Сбросить расстановку</value>
+    <value>🔀 Сбросить расстановку</value>
   </data>
   <data name="RelBrother" xml:space="preserve">
     <value>Брат</value>

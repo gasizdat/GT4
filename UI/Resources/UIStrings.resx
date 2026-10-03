@@ -587,7 +587,7 @@ genealogy tree and enjoy!</value>
     <value>🔄️ Refresh</value>
   </data>
   <data name="MenuItemNameResetArrangement" xml:space="preserve">
-    <value>📌 Reset arrangement</value>
+    <value>🔀 Reset arrangement</value>
   </data>
   <data name="RelBrother" xml:space="preserve">
     <value>Brother</value>

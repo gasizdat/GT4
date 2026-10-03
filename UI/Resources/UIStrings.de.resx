@@ -587,7 +587,7 @@ Stammbaum und haben Sie Freude daran!</value>
     <value>🔄️ Aktualisieren</value>
   </data>
   <data name="MenuItemNameResetArrangement" xml:space="preserve">
-    <value>📌 Anordnung zurücksetzen</value>
+    <value>🔀 Anordnung zurücksetzen</value>
   </data>
   <data name="RelBrother" xml:space="preserve">
     <value>Bruder</value>
