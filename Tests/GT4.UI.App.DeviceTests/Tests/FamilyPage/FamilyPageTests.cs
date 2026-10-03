@@ -7,6 +7,7 @@ using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Pages;
 using GT4.UI.Resources;
+using GT4.UI.Utils;
 using Moq;
 using Xunit;
 
@@ -382,7 +383,7 @@ public class FamilyPageTests
       .ReturnsAsync([P(1, "Anna"), InFamily(P(2, "Boris"), ivanov)]);
     var page = await CreatePageAsync(services);
 
-    var persons = await page.ReloadPersonsAsync(() => page.FamilyName = FamilyInfoItem.NoFamilyName);
+    var persons = await page.ReloadPersonsAsync(() => page.FamilyName = NoFamily.Name);
 
     Assert.Equal(["Anna"], persons.Select(p => p.DisplayName));
     services.PersonManager.Verify(
@@ -400,7 +401,7 @@ public class FamilyPageTests
     var buttons = topMenu.Children.OfType<Button>().ToArray();
     Assert.Equal(5, buttons.Length);
 
-    await MainThread.InvokeOnMainThreadAsync(() => page.FamilyName = FamilyInfoItem.NoFamilyName);
+    await MainThread.InvokeOnMainThreadAsync(() => page.FamilyName = NoFamily.Name);
 
     var parameters = await MainThread.InvokeOnMainThreadAsync(
       () => buttons.Where(b => b.IsEnabled).Select(b => ((PageMenuItem)b.BindingContext!).CommandParameter).ToArray());
@@ -415,7 +416,7 @@ public class FamilyPageTests
       .Setup(p => p.AddPersonAsync(It.IsAny<PersonFullInfo>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync((PersonFullInfo info, CancellationToken _) => info);
     var page = await CreatePageAsync(services);
-    await MainThread.InvokeOnMainThreadAsync(() => page.FamilyName = FamilyInfoItem.NoFamilyName);
+    await MainThread.InvokeOnMainThreadAsync(() => page.FamilyName = NoFamily.Name);
 
     await using var window = await WindowHost.AttachAsync(page);
     var commandTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync("CreatePerson"));

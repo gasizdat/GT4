@@ -11,6 +11,7 @@ between them, centred on a focal person.
   - tap on the **current centre** → navigate to that person's `PersonPage`;
   - tap on **any other node** → re-centre the tree on that person (`SetCenter`);
   - the `"OpenPerson"` toolbar command → open the centre in `PersonPage`.
+- While arranging (`IsArranging`), node taps do nothing.
 
 ## State
 - `_Center` (a `Person?`) / `_CenterName`: the focal person and its formatted short name.
@@ -19,7 +20,13 @@ between them, centred on a focal person.
   (3) at a time.
 - `_IncludeCollaterals`: toggles siblings/cousins; flipping it triggers a reload.
 - `_CanLoadMoreAncestors` / `_CanLoadMoreDescendants`: backing fields for the load-more bindables.
-- `_ViewTarget` (Center/Top/Bottom): records where the viewport should park after a rebuild.
+- `_ViewTarget` (Center/Top/Bottom/Dropped): records where the viewport should park after a rebuild.
+- `_Pins`: the centre's arrangement, person id → offset from the centre in slots. Replaced, never
+  mutated, so a load in flight keeps the set it started with.
+- `_IsArranging`: arrange mode (header switch); while on, nodes drag instead of tapping and the
+  canvas doesn't pan.
+- `_Dropped` / `_LastLayout`: the last dropped node with its release position, and the rendered
+  layout a drop is measured against.
 - `_PanStartScrollX/Y`: scroll offsets captured at the start of a drag-pan.
 - `_ZoomScale`: current zoom factor (`MinZoom` 0.4–`MaxZoom` 2.5, `ZoomStep` 0.25), scales every
   `FamilyTreeLayoutMetrics` dimension before layout and triggers a full `Reload` — except `Margin`,
@@ -28,23 +35,26 @@ between them, centred on a focal person.
   zoom.
 - `_LoadOperationsCount`: reentrant in-flight-load counter backing `LoadInProgress`; the load-more
   buttons disable while any load is running.
-- `_NodeCache` / `_ConnectorPool` / `_ThumbnailCache`: retained node views, pooled connector shapes,
-  and decoded photo thumbnails, reused across loads (see Render, below).
+- `_NodeCache` / `_ConnectorPool`: retained node views and pooled connector shapes, reused across
+  loads (see Render, below).
 
 ## Build & render pipeline
-1. `SetCenter` resets generation depth to default, clears the layout's stored positions
-   (`_Layout.Reset()`) so the new centre lays out from scratch, raises title/menu property changes,
-   and calls `Reload(ViewTarget.Center)`.
+1. `SetCenter` resets generation depth to default, loads the centre's arrangement from
+   `IFamilyTreeArrangementStore` into `_Pins`, raises title/menu property changes, and calls
+   `Reload(ViewTarget.Center)`.
 2. `Reload` snapshots the centre, marks a load in progress (`SetLoadInProgress`), and fires
    `LoadAsync` off the UI thread via `SafeTask.Run`.
 3. `LoadAsync`:
    - gets a DB cancellation token (`CreateDbCancellationToken`),
    - asks `FamilyTreeProvider.BuildAsync` for the tree at the current depths/collateral setting,
    - scales a copy of `FamilyTreeLayoutMetrics` by `_ZoomScale`,
-   - runs `FamilyTreeLayout.Update` with the scaled metrics to compute node bounds + connectors (a
-     spring layout with an insertion-based row-reorder pass that keeps spouses adjacent and
-     connector lines from overlapping; see `FamilyTreeLayout` for the algorithm),
-   - decodes any newly-seen photos into `_ThumbnailCache` (`CacheThumbnails`),
+   - runs `FamilyTreeLayout.Compute` with the scaled metrics to compute node bounds + connectors (a
+     stateless, tidy pedigree layout: children centred under their parents, each family drawn once;
+     see `FamilyTreeLayout` for the algorithm). Being stateless, a "load more" may move people
+     already on screen sideways; their left-to-right order holds, and the viewport stays on the
+     centre,
+   - loads each node's main photo as a thumbnail through its data converter, falling back to the
+     default portrait for the person's sex,
    - precomputes a node-id → display-name dictionary,
    - marshals back to the main thread (`SafeTask.RunOnMainThread`) to call `Render`, then clears
      the in-progress flag (`ResetLoadInProgress`) in a `finally`.
@@ -60,7 +70,7 @@ between them, centred on a focal person.
    - recomputes `CanLoadMoreAncestors`/`CanLoadMoreDescendants` from the returned min/max generation,
    - kicks off `PositionViewportAsync`.
    - `"Refresh"` (`OnPageCommand`) is the exception: it calls `ClearRenderCache` first to drop every
-     cached node/connector/thumbnail, so a stale name or photo edited elsewhere is picked up — the
+     cached node and connector, so a stale name or photo edited elsewhere is picked up — the
      page never auto-reloads on its own.
 
 ## Zoom
@@ -85,7 +95,9 @@ between them, centred on a focal person.
 
 ## Viewport positioning (`PositionViewportAsync`)
 - Yields once so the ScrollView can measure new content first.
-- Always horizontally centres the focal column.
+- Horizontally centres the focal column, except after a drop (`ViewTarget.Dropped`): then it
+  scrolls by however far the relayout moved the dropped node, so the node stays where it was
+  released.
 - Vertically parks per `_ViewTarget`: top (0) after loading ancestors, bottom (maxY) after loading
   descendants, otherwise centred on the focal person.
 - All scroll targets are clamped to valid extents.
@@ -95,12 +107,36 @@ between them, centred on a focal person.
 - On `Started` it captures the current scroll offsets; on `Running` it translates the pan delta
   into a scroll offset (subtracting the delta so dragging right reveals left-side content),
   clamped to the canvas edges.
+- Off while arranging.
+
+## Arranging
+- The Arrange switch sets `IsArranging`; `SyncNodeDrag` gives every node except the centre a
+  `PanGestureRecognizer` only while arranging (on touch, a pan recognizer can take the gesture from
+  the canvas pan and the tap even when it ignores it). The centre never gets one, since every pin is
+  measured from it.
+- A drag moves the node by its `TranslationX`. On release, `DropNode` puts it back without saving if
+  a load is in flight or the drag is shorter than `MinDragDistance`. Otherwise it pins the node at its
+  release offset in slots from the centre, measured with the rendered layout's own metrics and moved
+  by `FamilyTreeLayout.NearestClearSlot` to clear the centre and the other pinned nodes in its row.
+  The pins are saved through `IFamilyTreeArrangementStore` (per project, per centre) and the tree
+  reloads with `ViewTarget.Dropped`.
+- `FamilyTreeLayout.Compute` keeps pinned nodes at their offsets. Two pins that end up sharing a slot
+  (one was placed while the other was out of the tree) are kept a whole slot apart. Only a pinned node
+  moves: free nodes keep their order and move only as far as it takes to clear the pins.
+- `IsArranged` (any stored pin) switches the title to its arranged form. "Reset arrangement"
+  (enabled by `CanResetArrangement`: arranged and no load running) clears the store, then reloads.
+- Under Read-only mode the switch and Reset are hidden.
 
 ## Connectors & theming
 - Each connector is an individual vector `Path` built by `FamilyTreeConnectorShape.Create` and added
-  to the `Connectors` AbsoluteLayout: parent-child links are orthogonal lines with softly rounded
-  right-angle bends, spouse links straight horizontal lines. Per-shape vector geometry (rather than a
-  single canvas-spanning `GraphicsView`) scrolls in lockstep with the nodes, so the connectors
+  to the `Connectors` AbsoluteLayout. Each family is drawn the pedigree-chart way, every segment once:
+  a marriage line between the partners' centres (hidden behind their photos) with one drop from its
+  midpoint, a sibship bar with softly rounded outer corners, and a stub to each child. Parents with no
+  marriage on record, as a GEDCOM import leaves a family without a MARR, get no line between them:
+  each drops to the sibship bar on their own, so nothing claims a marriage the data doesn't hold. A
+  relationship the rows can't hold (pedigree
+  collapse) is a dashed loop connector (`FamilyTreeConnector.IsLoop`). Per-shape vector geometry
+  (rather than a single canvas-spanning `GraphicsView`) scrolls in lockstep with the nodes, so the connectors
   themselves never allocate one surface larger than the GPU's 16384px max-texture size. Note: the
   page still has a known, unresolved GPU-texture-limit crash on very deep trees from other causes
   (see `FamilyTreePageTests.cs`'s class remarks and the `#if DEBUG` `LoadDeep`/`AutoLoad` diagnostic

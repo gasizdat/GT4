@@ -34,8 +34,11 @@ from the code.
   you find a "no debounce" comment near `FamilyInfoItem`, it's not an oversight.
 - **`PhotoCache`/`DefaultImageCache`** — superseded by the generic `IImageCache` +
   `ImageDataWithMaxSize`; don't resurrect the old branch or design.
-- **Numeral-per-disjunct in the greatness-computation text** (issue #318) — tried, reverted, then
-  restored; both arguments for "numeral once" were re-litigated once already, see PR #326.
+- **One `N-` numeral shared by both halves of a disjunctive greatness label** (issue #318) —
+  rejected: past `_GreatnessMaxLevel` the numeral is the only record of depth, so each gendered
+  half carries its own (`12-Urgroßonkel oder 12-Urgroßtante`). The shipped fix (PR #327) formats
+  the male and female labels in full and joins them; the competing PR #326, closed unmerged,
+  records why both arguments for "numeral once" failed.
 - **Skip desktop's close-on-`Deactivate` and flush cache→origin only on `Destroying`** (PR #356) —
   closed unmerged: the file-picker churn/race it fixes is real but benign (reopen always wins the
   race; `.Project` never throws). The fix regresses durability instead — `Destroying`'s cache→origin

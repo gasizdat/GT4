@@ -1,6 +1,6 @@
 using GT4.Core.Project.Dto;
 using GT4.UI.Components.Genealogy;
-using GT4.UI.Utils;
+using GT4.UI.Utils.Genealogy;
 using Microsoft.Maui.Controls.Shapes;
 using Microsoft.Maui.Layouts;
 using Xunit;
@@ -135,6 +135,20 @@ public class FamilyTreeConnectorShapeTests
     var corner = Assert.IsType<QuadraticBezierSegment>(figure.Segments[1]);
     Assert.Equal(new Point(0, 0), corner.Point1);
     Assert.Equal(new Point(0, 2), corner.Point2);
+  }
+
+  [Fact]
+  public void A_loop_is_dashed_and_its_path_reused_for_a_plain_connector_is_solid_again()
+  {
+    var loop = new FamilyTreeConnector(FamilyTreeRelation.ParentChild, [new PointF(0, 0), new PointF(10, 10)], IsLoop: true);
+    var path = FamilyTreeConnectorShape.Create(loop, cornerRadius: 0, lineWidth: 1, Colors.Black);
+    var dashes = path.StrokeDashArray.ToArray();
+
+    FamilyTreeConnectorShape.Update(
+      path, MakeConnector(new PointF(0, 0), new PointF(10, 10)), cornerRadius: 0, lineWidth: 1, Colors.Black);
+
+    Assert.NotEmpty(dashes);
+    Assert.Empty(path.StrokeDashArray);
   }
 
   [Fact]

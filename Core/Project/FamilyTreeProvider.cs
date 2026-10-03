@@ -38,7 +38,7 @@ internal sealed class FamilyTreeProvider : ProjectComponentBase, IFamilyTreeProv
       seeds: [centerNode],
       depth: ancestorGenerations,
       generationStep: +1,
-      follow: static type => type is RelationshipType.Parent or RelationshipType.AdoptiveParent,
+      follow: IsParent,
       makeEdge: static (fromId, relativeId) => FamilyTreeEdge.ParentChild(parentId: relativeId, childId: fromId),
       hiddenIds: hiddenIds,
       nodes: nodes,
@@ -61,9 +61,13 @@ internal sealed class FamilyTreeProvider : ProjectComponentBase, IFamilyTreeProv
       token: token);
 
     await AddSpousesAsync(nodes, edges, hiddenIds, token);
+    await AddParentEdgesAsync(nodes, edges, token);
 
     return new FamilyTree(center.Id, [.. nodes.Values], [.. edges]);
   }
+
+  private static bool IsParent(RelationshipType type) =>
+    type is RelationshipType.Parent or RelationshipType.AdoptiveParent;
 
   private async Task ExpandAsync(
     IReadOnlyCollection<FamilyTreeNode> seeds,
@@ -126,6 +130,29 @@ internal sealed class FamilyTreeProvider : ProjectComponentBase, IFamilyTreeProv
         {
           nodes[spouse.Id] = new FamilyTreeNode(spouse, node.Generation);
         }
+      }
+    }
+  }
+
+  // The walk links a child only to the parent it came through, so a descendant's married-in parent and a
+  // collateral's in-law would otherwise never get theirs.
+  private async Task AddParentEdgesAsync(
+    Dictionary<int, FamilyTreeNode> nodes,
+    HashSet<FamilyTreeEdge> edges,
+    CancellationToken token)
+  {
+    Person[] persons = [.. nodes.Values.Select(node => node.Person)];
+    var relativesByChild = await Document.Relatives.GetRelativesForPersonsAsync(persons, token);
+
+    foreach (var (childId, relatives) in relativesByChild)
+    {
+      var parentIds = relatives
+        .Where(relative => IsParent(relative.Type) && nodes.ContainsKey(relative.Id))
+        .Select(relative => relative.Id);
+
+      foreach (var parentId in parentIds)
+      {
+        edges.Add(FamilyTreeEdge.ParentChild(parentId, childId));
       }
     }
   }

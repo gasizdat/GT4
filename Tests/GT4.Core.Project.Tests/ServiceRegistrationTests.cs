@@ -21,6 +21,7 @@ public sealed class ServiceRegistrationTests
     sp.GetService<IProjectList>().Should().NotBeNull();
     sp.GetService<ICurrentProjectProvider>().Should().NotBeNull();
     sp.GetService<IMainPersonStore>().Should().NotBeNull();
+    sp.GetService<IFamilyTreeArrangementStore>().Should().NotBeNull();
     sp.GetService<IFamilyTreeHiddenPersonsStore>().Should().NotBeNull();
   }
 }

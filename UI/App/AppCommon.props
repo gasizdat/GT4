@@ -77,6 +77,9 @@
     <!-- Custom Fonts -->
     <MauiFont Include="Resources\Fonts\*" />
 
+    <!-- HTML export templates, read back by name whatever the project's root namespace -->
+    <EmbeddedResource Include="Resources\HtmlTemplates\*" LogicalName="HtmlExport.%(Filename)%(Extension)" />
+
     <!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
     <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>

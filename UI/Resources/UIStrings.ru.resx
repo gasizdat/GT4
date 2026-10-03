@@ -586,6 +586,9 @@
   <data name="MenuItemNameRefresh" xml:space="preserve">
     <value>🔄️ Обновить</value>
   </data>
+  <data name="MenuItemNameResetArrangement" xml:space="preserve">
+    <value>📌 Сбросить расстановку</value>
+  </data>
   <data name="RelBrother" xml:space="preserve">
     <value>Брат</value>
   </data>
@@ -820,6 +823,24 @@
   <data name="MenuItemExportGedcom" xml:space="preserve">
     <value>📤 Экспорт в GEDCOM</value>
   </data>
+  <data name="MenuItemExportHtml" xml:space="preserve">
+    <value>📤 Экспорт в HTML</value>
+  </data>
+  <data name="ShareHtmlTitle" xml:space="preserve">
+    <value>Экспорт HTML</value>
+  </data>
+  <data name="AlertExportHtmlConfirm" xml:space="preserve">
+    <value>HTML-экспорт включает всех персон проекта, в том числе ныне живущих, со всеми биографиями, фотографиями и вложениями. Экспортировать?</value>
+  </data>
+  <data name="TitleHtmlExportDialog" xml:space="preserve">
+    <value>Экспорт HTML</value>
+  </data>
+  <data name="HintHtmlExportInProgress" xml:space="preserve">
+    <value>Запись страниц. Это может занять некоторое время…</value>
+  </data>
+  <data name="LblPersons" xml:space="preserve">
+    <value>Персоны</value>
+  </data>
   <data name="MenuItemImport" xml:space="preserve">
     <value>📥 Импорт</value>
   </data>
@@ -856,7 +877,7 @@
   <data name="HintGedcomImportInProgress" xml:space="preserve">
     <value>Импорт файла. Это может занять некоторое время…</value>
   </data>
-  <data name="HintGedcomImportCancelling" xml:space="preserve">
+  <data name="HintProgressCancelling" xml:space="preserve">
     <value>Отмена…</value>
   </data>
   <data name="TitleSelectEncodingDialog" xml:space="preserve">
@@ -1053,8 +1074,14 @@ FN - род</value>
   <data name="TitleFamilyTreePage_1" xml:space="preserve">
     <value>🌳 {0}</value>
   </data>
+  <data name="TitleFamilyTreePageArranged_1" xml:space="preserve">
+    <value>🌳 {0} 📌</value>
+  </data>
   <data name="HintFamilyTreePage" xml:space="preserve">
     <value>Нажмите на родственника, чтобы поместить его в центр</value>
+  </data>
+  <data name="HintFamilyTreePageArranging" xml:space="preserve">
+    <value>Перетащите родственника в сторону, чтобы переставить его</value>
   </data>
   <data name="MenuItemNameOpenPerson_1" xml:space="preserve">
     <value>👤 Открыть {0}</value>
@@ -1079,6 +1106,9 @@ FN - род</value>
   </data>
   <data name="BtnNameShowAll" xml:space="preserve">
     <value>Показать всех</value>
+  </data>
+  <data name="LblArrange" xml:space="preserve">
+    <value>Расставить</value>
   </data>
   <data name="AlertTextKinshipUnfoldingAborted" xml:space="preserve">
     <value>Операция заняла больше времени, чем ожидалось. Некоторые уровни родства остались нераскрытыми. Вы можете развернуть их вручную</value>
@@ -1559,5 +1589,11 @@ FN - род</value>
   </data>
   <data name="FieldMainPerson_1" xml:space="preserve">
     <value>⭐ {0}</value>
+  </data>
+  <data name="MenuItemNameCopy" xml:space="preserve">
+    <value>Копировать</value>
+  </data>
+  <data name="MsgCopied" xml:space="preserve">
+    <value>Скопировано</value>
   </data>
 </root>

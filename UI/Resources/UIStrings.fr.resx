@@ -586,6 +586,9 @@ arbre généalogique et profitez-en !</value>
   <data name="MenuItemNameRefresh" xml:space="preserve">
     <value>🔄️ Actualiser</value>
   </data>
+  <data name="MenuItemNameResetArrangement" xml:space="preserve">
+    <value>📌 Réinitialiser la disposition</value>
+  </data>
   <data name="RelBrother" xml:space="preserve">
     <value>Frère</value>
   </data>
@@ -820,6 +823,24 @@ arbre généalogique et profitez-en !</value>
   <data name="MenuItemExportGedcom" xml:space="preserve">
     <value>📤 Exporter vers GEDCOM</value>
   </data>
+  <data name="MenuItemExportHtml" xml:space="preserve">
+    <value>📤 Exporter vers HTML</value>
+  </data>
+  <data name="ShareHtmlTitle" xml:space="preserve">
+    <value>Exporter HTML</value>
+  </data>
+  <data name="AlertExportHtmlConfirm" xml:space="preserve">
+    <value>L'export HTML inclut toutes les personnes du projet, y compris les vivants, avec chaque biographie, photo et pièce jointe. Exporter ?</value>
+  </data>
+  <data name="TitleHtmlExportDialog" xml:space="preserve">
+    <value>Exportation HTML</value>
+  </data>
+  <data name="HintHtmlExportInProgress" xml:space="preserve">
+    <value>Écriture des pages en cours. Cela peut prendre un moment…</value>
+  </data>
+  <data name="LblPersons" xml:space="preserve">
+    <value>Personnes</value>
+  </data>
   <data name="MenuItemImport" xml:space="preserve">
     <value>📥 Importer</value>
   </data>
@@ -856,7 +877,7 @@ arbre généalogique et profitez-en !</value>
   <data name="HintGedcomImportInProgress" xml:space="preserve">
     <value>Importation du fichier en cours. Cela peut prendre un moment…</value>
   </data>
-  <data name="HintGedcomImportCancelling" xml:space="preserve">
+  <data name="HintProgressCancelling" xml:space="preserve">
     <value>Annulation…</value>
   </data>
   <data name="TitleSelectEncodingDialog" xml:space="preserve">
@@ -1053,8 +1074,14 @@ FN - nom de famille</value>
   <data name="TitleFamilyTreePage_1" xml:space="preserve">
     <value>🌳 {0}</value>
   </data>
+  <data name="TitleFamilyTreePageArranged_1" xml:space="preserve">
+    <value>🌳 {0} 📌</value>
+  </data>
   <data name="HintFamilyTreePage" xml:space="preserve">
     <value>Touchez un proche pour centrer l'arbre sur lui</value>
+  </data>
+  <data name="HintFamilyTreePageArranging" xml:space="preserve">
+    <value>Faites glisser un proche sur le côté pour le placer</value>
   </data>
   <data name="MenuItemNameOpenPerson_1" xml:space="preserve">
     <value>👤 Ouvrir {0}</value>
@@ -1079,6 +1106,9 @@ FN - nom de famille</value>
   </data>
   <data name="BtnNameShowAll" xml:space="preserve">
     <value>Tout afficher</value>
+  </data>
+  <data name="LblArrange" xml:space="preserve">
+    <value>Disposer</value>
   </data>
   <data name="AlertTextKinshipUnfoldingAborted" xml:space="preserve">
     <value>L'opération a pris plus de temps que prévu. Certains niveaux de parenté sont restés repliés. Vous pouvez les déplier manuellement.</value>
@@ -1559,5 +1589,11 @@ FN - nom de famille</value>
   </data>
   <data name="FieldMainPerson_1" xml:space="preserve">
     <value>⭐ {0}</value>
+  </data>
+  <data name="MenuItemNameCopy" xml:space="preserve">
+    <value>Copier</value>
+  </data>
+  <data name="MsgCopied" xml:space="preserve">
+    <value>Copié</value>
   </data>
 </root>

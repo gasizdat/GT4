@@ -36,4 +36,4 @@ A comment must never be the only place a required behavior is recorded. Prose ro
 
 ## Cross-reference
 
-For the mechanics of each edit — targeting, avoiding overengineering, blending in, verification — see `surgical-change`. For running this as a category over a boundary, see `refactor-sweep`. Writing *new* doc comments is governed by `surgical-change`'s "Blend in" rules, not here.
+For the mechanics of each edit — targeting, avoiding overengineering, blending in, verification — see `gt4-surgical-change`. For running this as a category over a boundary, see `refactor-sweep`. Writing *new* doc comments is governed by `surgical-change`'s "Blend in" rules, not here.

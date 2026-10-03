@@ -1,5 +1,5 @@
 using GT4.Core.Project.Dto;
-using GT4.UI.Utils;
+using GT4.UI.Utils.Genealogy;
 using Microsoft.Maui.Controls.Shapes;
 using Microsoft.Maui.Layouts;
 using Path = Microsoft.Maui.Controls.Shapes.Path;
@@ -14,6 +14,9 @@ namespace GT4.UI.Components.Genealogy;
 /// </summary>
 public static class FamilyTreeConnectorShape
 {
+  // In multiples of the stroke thickness.
+  private const double LoopDash = 3;
+
   public static Path Create(FamilyTreeConnector connector, double cornerRadius, double lineWidth, Color color)
   {
     var path = new Path
@@ -49,6 +52,8 @@ public static class FamilyTreeConnectorShape
     path.Data = BuildGeometry(local, cornerRadius);
     path.Stroke = color;
     path.StrokeThickness = lineWidth;
+    // Set either way: a pooled path that last drew a loop must not keep its dashes.
+    path.StrokeDashArray = connector.IsLoop ? [LoopDash, LoopDash] : [];
     AbsoluteLayout.SetLayoutBounds(path, bounds);
   }
 

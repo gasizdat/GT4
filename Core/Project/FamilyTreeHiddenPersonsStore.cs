@@ -9,7 +9,7 @@ namespace GT4.Core.Project;
 internal sealed partial class FamilyTreeHiddenPersonsStore : IFamilyTreeHiddenPersonsStore
 {
   [JsonSerializable(typeof(int[]))]
-  private partial class JsonContext : JsonSerializerContext
+  private partial class HiddenPersonsJsonContext : JsonSerializerContext
   {
   }
 
@@ -28,7 +28,7 @@ internal sealed partial class FamilyTreeHiddenPersonsStore : IFamilyTreeHiddenPe
     provider.Load();
 
     return provider.TryGet(IdsKey, out var json) && json is not null
-      ? JsonSerializer.Deserialize(json, JsonContext.Default.Int32Array) ?? []
+      ? JsonSerializer.Deserialize(json, HiddenPersonsJsonContext.Default.Int32Array) ?? []
       : [];
   }
 
@@ -37,7 +37,7 @@ internal sealed partial class FamilyTreeHiddenPersonsStore : IFamilyTreeHiddenPe
     var provider = _Factory.Create(project.Origin);
     provider.Load();
     int[] ids = [.. personIds];
-    var json = JsonSerializer.Serialize(ids, JsonContext.Default.Int32Array);
+    var json = JsonSerializer.Serialize(ids, HiddenPersonsJsonContext.Default.Int32Array);
     provider.SetKey(IdsKey, json);
     provider.Flush();
   }

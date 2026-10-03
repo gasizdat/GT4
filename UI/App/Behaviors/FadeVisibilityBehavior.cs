@@ -66,7 +66,12 @@ public sealed class FadeVisibilityBehavior : Behavior<VisualElement>
     else
     {
       await element.FadeToAsync(0, behavior.Duration);
-      element.IsVisible = false;
+
+      // A re-show aborts this fade, and the await resumes all the same.
+      if (!behavior.IsVisible)
+      {
+        element.IsVisible = false;
+      }
     }
   }
 }

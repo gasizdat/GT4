@@ -119,7 +119,7 @@ public partial class FamilyPage : ContentPage
           var allPersons = await project
             .PersonManager
             .GetPersonInfosAsync(selectMainPhoto: true, token);
-          persons = [.. allPersons.Where(FamilyInfoItem.HasNoFamily)];
+          persons = [.. allPersons.Where(NoFamily.Includes)];
         }
         else
         {
@@ -190,7 +190,7 @@ public partial class FamilyPage : ContentPage
     }
   }
 
-  private bool IsNoFamilyMode => _FamilyName?.Id == FamilyInfoItem.NoFamilyName.Id;
+  private bool IsNoFamilyMode => _FamilyName?.Id == NoFamily.Name.Id;
 
   private async Task<(PhotoInfo[] Photos, AttachmentInfo[] Attachments)> LoadFamilyMediaAsync(FamilyFullInfo familyInfo, CancellationToken token)
   {

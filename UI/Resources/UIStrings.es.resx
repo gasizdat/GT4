@@ -586,6 +586,9 @@
   <data name="MenuItemNameRefresh" xml:space="preserve">
     <value>🔄️ Actualizar</value>
   </data>
+  <data name="MenuItemNameResetArrangement" xml:space="preserve">
+    <value>📌 Restablecer la disposición</value>
+  </data>
   <data name="RelBrother" xml:space="preserve">
     <value>Hermano</value>
   </data>
@@ -820,6 +823,24 @@
   <data name="MenuItemExportGedcom" xml:space="preserve">
     <value>📤 Exportar a GEDCOM</value>
   </data>
+  <data name="MenuItemExportHtml" xml:space="preserve">
+    <value>📤 Exportar a HTML</value>
+  </data>
+  <data name="ShareHtmlTitle" xml:space="preserve">
+    <value>Exportar HTML</value>
+  </data>
+  <data name="AlertExportHtmlConfirm" xml:space="preserve">
+    <value>La exportación HTML incluye a todas las personas del proyecto, también a las que viven, con todas sus biografías, fotos y adjuntos. ¿Exportar?</value>
+  </data>
+  <data name="TitleHtmlExportDialog" xml:space="preserve">
+    <value>Exportando HTML</value>
+  </data>
+  <data name="HintHtmlExportInProgress" xml:space="preserve">
+    <value>Escribiendo las páginas. Esto puede tardar un rato…</value>
+  </data>
+  <data name="LblPersons" xml:space="preserve">
+    <value>Personas</value>
+  </data>
   <data name="MenuItemImport" xml:space="preserve">
     <value>📥 Importar</value>
   </data>
@@ -856,7 +877,7 @@
   <data name="HintGedcomImportInProgress" xml:space="preserve">
     <value>Importando el archivo. Esto puede tardar un rato…</value>
   </data>
-  <data name="HintGedcomImportCancelling" xml:space="preserve">
+  <data name="HintProgressCancelling" xml:space="preserve">
     <value>Cancelando…</value>
   </data>
   <data name="TitleSelectEncodingDialog" xml:space="preserve">
@@ -1053,8 +1074,14 @@ FN - apellido familiar</value>
   <data name="TitleFamilyTreePage_1" xml:space="preserve">
     <value>🌳 {0}</value>
   </data>
+  <data name="TitleFamilyTreePageArranged_1" xml:space="preserve">
+    <value>🌳 {0} 📌</value>
+  </data>
   <data name="HintFamilyTreePage" xml:space="preserve">
     <value>Toque un pariente para centrar el árbol en él</value>
+  </data>
+  <data name="HintFamilyTreePageArranging" xml:space="preserve">
+    <value>Arrastre un pariente hacia un lado para colocarlo</value>
   </data>
   <data name="MenuItemNameOpenPerson_1" xml:space="preserve">
     <value>👤 Abrir {0}</value>
@@ -1079,6 +1106,9 @@ FN - apellido familiar</value>
   </data>
   <data name="BtnNameShowAll" xml:space="preserve">
     <value>Mostrar todos</value>
+  </data>
+  <data name="LblArrange" xml:space="preserve">
+    <value>Organizar</value>
   </data>
   <data name="AlertTextKinshipUnfoldingAborted" xml:space="preserve">
     <value>La operación ha tardado más de lo esperado. Algunos niveles de parentesco han quedado plegados. Puede desplegarlos manualmente.</value>
@@ -1559,5 +1589,11 @@ FN - apellido familiar</value>
   </data>
   <data name="FieldMainPerson_1" xml:space="preserve">
     <value>⭐ {0}</value>
+  </data>
+  <data name="MenuItemNameCopy" xml:space="preserve">
+    <value>Copiar</value>
+  </data>
+  <data name="MsgCopied" xml:space="preserve">
+    <value>Copiado</value>
   </data>
 </root>
