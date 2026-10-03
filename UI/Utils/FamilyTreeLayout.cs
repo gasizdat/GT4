@@ -38,7 +38,7 @@ public sealed record FamilyTreeLayoutResult(
 /// Children are grouped into families by the parents they have in the row above. Positions come from a
 /// tidy, contour-packed layout in slots (1 slot = <see cref="FamilyTreeLayoutMetrics.SlotPitch"/>): each
 /// subtree packs beside its neighbours as closely as their row-by-row extents allow, a family's children
-/// are centred under its drop, and every direct-line ancestor sits exactly over the child it descends to.
+/// are centred under its drop, and each person on the direct line sits exactly under their parents' drop.
 /// The father's relatives go outboard to the left, the mother's to the right. Each person is placed once,
 /// so a relationship the placement cannot hold, as with pedigree collapse, is drawn as a loop.
 /// </para>
@@ -456,8 +456,8 @@ public static class FamilyTreeLayout
       return (xs.Min() + xs.Max()) / 2;
     }
 
-    // The person's ancestry hung above <paramref name="own"/>, which already holds the person and
-    // whatever hangs below them. <paramref name="side"/> is where the person's siblings may go.
+    // The person's ancestry hung above own, which already holds the person and whatever hangs below them.
+    // side is where the person's siblings may go.
     private Shape Ancestry(int person, Side side, Shape own)
     {
       var key = _Families.KeyOf(person);
@@ -786,8 +786,9 @@ public static class FamilyTreeLayout
     var gapUses = new Dictionary<(int Generation, double Column), int>();
     var hosts = new HashSet<int>();
 
-    // A loop leaves a node off its centre line, which belongs to the node's own families, and off any
-    // column another loop already runs down in the same band, as from a node straight above or below.
+    // A loop, or a family beyond the first one dropping from the node, leaves it off its centre line,
+    // which belongs to the node's own families, and off any column already attached in the same band, as
+    // by a loop from a node straight above or below.
     double Attach(int id, bool top, double toward)
     {
       var band = families.Generation(id) + (top ? 1 : 0);

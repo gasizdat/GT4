@@ -330,7 +330,8 @@ public class FamilyTreeLayoutTests
     return b.Build(center);
   }
 
-  // Ids: centre 1, mother 2, children 3-4, one under each parent.
+  // Ids: father 1, mother 2, children 3-4. Centred on the father, so the children are centred under the
+  // drop, one under each parent; a child as the centre would sit under the drop itself.
   private static FamilyTree TwoChildren(bool married)
   {
     var b = new TreeBuilder();

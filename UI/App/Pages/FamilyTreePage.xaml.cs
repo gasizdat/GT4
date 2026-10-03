@@ -315,7 +315,6 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   {
     _Center = person;
     _CenterName = _NameFormatter.ToString(person, NameFormat.ShortPersonName);
-    // A new centre starts a fresh view, so reset the depth.
     _AncestorGenerations = InitialGenerations;
     _DescendantGenerations = InitialGenerations;
     var pins = _ArrangementStore.Get(_CurrentProjectProvider.Info, person.Id);
