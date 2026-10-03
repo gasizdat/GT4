@@ -1075,7 +1075,7 @@ FN - family name</value>
     <value>🌳 {0}</value>
   </data>
   <data name="TitleFamilyTreePageArranged_1" xml:space="preserve">
-    <value>🌳 {0} 📌</value>
+    <value>🌳 {0} 🔀</value>
   </data>
   <data name="HintFamilyTreePage" xml:space="preserve">
     <value>Tap a relative to centre the tree on them</value>

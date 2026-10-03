@@ -1075,7 +1075,7 @@ FN - род</value>
     <value>🌳 {0}</value>
   </data>
   <data name="TitleFamilyTreePageArranged_1" xml:space="preserve">
-    <value>🌳 {0} 📌</value>
+    <value>🌳 {0} 🔀</value>
   </data>
   <data name="HintFamilyTreePage" xml:space="preserve">
     <value>Нажмите на родственника, чтобы поместить его в центр</value>
