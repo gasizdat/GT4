@@ -64,4 +64,4 @@ If a sweep has too many sites for one reviewable PR, split it — by sub-area (e
 
 ## Cross-reference
 
-For the mechanics of each individual edit — targeting, avoiding overengineering, blending in, verification, branch/commit conventions — see `surgical-change`. This skill does not duplicate that content.
+For the mechanics of each individual edit — targeting, avoiding overengineering, blending in, verification, branch/commit conventions — see `gt4-surgical-change`. This skill does not duplicate that content.
