@@ -43,8 +43,9 @@ public sealed record FamilyTreeLayoutResult(
 /// so a relationship the placement cannot hold, as with pedigree collapse, is drawn as a loop.
 /// </para>
 /// <para>
-/// Each family is drawn once: a partner line, one drop from its midpoint, one sibship bar and a stub per
-/// child. Horizontal runs that would overlap in the band between two rows get separate tracks there.
+/// Each family is drawn once: a marriage line with one drop from its midpoint, or a drop from each parent
+/// when they have no marriage on record, then one sibship bar and a stub per child. Horizontal runs that
+/// would overlap in the band between two rows get separate tracks there.
 /// </para>
 /// </summary>
 public static class FamilyTreeLayout
@@ -784,7 +785,6 @@ public static class FamilyTreeLayout
     var attachments = new Dictionary<int, List<double>>();
     var gapUses = new Dictionary<(int Generation, double Column), int>();
     var hosts = new HashSet<int>();
-    var joined = new HashSet<(int, int)>();
 
     // A loop leaves a node off its centre line, which belongs to the node's own families, and off any
     // column another loop already runs down in the same band, as from a node straight above or below.
@@ -872,78 +872,53 @@ public static class FamilyTreeLayout
       var children = families.ChildrenOf(key);
       var placed = children.Where(child => placedBy.GetValueOrDefault(child) == key).OrderBy(child => x[child]).ToArray();
       var generation = families.Generation(partners[0]);
-      var together = partners.Length > 1 && IsClear(families, x, partners[0], partners[^1], partners);
-
-      // Parents with no marriage on record, as the GEDCOM import leaves a family without a MARR, are
-      // still joined, in the descent colour so the line claims no marriage.
-      if (together)
-      {
-        var unmarried = partners
-          .Zip(partners.Skip(1))
-          .Where(pair => !families.AreSpouses(pair.First, pair.Second) && joined.Add((pair.First, pair.Second)));
-        foreach (var (a, b) in unmarried)
-          drawing.Line(FamilyTreeRelation.ParentChild, false, new(CentreX(a), Middle(generation)), new(CentreX(b), Middle(generation)));
-      }
 
       if (placed.Length != 0)
       {
-        double dropX;
-        double dropTop;
-        if (together)
+        var together = partners.Length > 1 && IsClear(families, x, partners[0], partners[^1], partners);
+        var married = partners.Zip(partners.Skip(1)).All(pair => families.AreSpouses(pair.First, pair.Second));
+        (double X, double Top)[] drops;
+        if (together && married)
         {
           var drop = (x[partners[0]] + x[partners[^1]]) / 2;
-          dropX = Snap(drop);
+          var dropX = Snap(drop);
           var onPartner = partners.Any(p => Math.Abs(CentreX(p) - dropX) < metrics.NodeWidth / 2);
-          dropTop = onPartner ? Bottom(generation) : Middle(generation);
+          drops = [(dropX, onPartner ? Bottom(generation) : Middle(generation))];
         }
         else
         {
           var mean = placed.Average(child => x[child]);
           var host = partners.MinBy(p => (Math.Abs(x[p] - mean), x[p]));
+          // Parents with no marriage on record, as the GEDCOM import leaves a family without a MARR, each
+          // drop to the bar: a line between them would claim the marriage.
+          var droppers = together ? partners : [host];
+          var toward = Snap(mean);
+          var bottom = Bottom(generation);
           // A second family hung from one person, as after a third marriage, drops beside the first.
-          dropX = hosts.Add(host) ? CentreX(host) : Attach(host, top: false, Snap(mean));
-          dropTop = Bottom(generation);
-          foreach (var partner in partners.Where(p => p != host && !families.AreSpouses(p, host)))
+          drops = [.. droppers.Select(p => (hosts.Add(p) ? CentreX(p) : Attach(p, top: false, toward), bottom))];
+          foreach (var partner in partners.Where(p => !droppers.Contains(p) && !families.AreSpouses(p, host)))
             Loop(partner, host, FamilyTreeRelation.ParentChild);
         }
 
         var childTop = Top(generation - 1);
         var xs = placed.Select(CentreX).ToArray();
-        var low = Math.Min(dropX, xs[0]);
-        var high = Math.Max(dropX, xs[^1]);
-        var underDrop = xs.Contains(dropX);
-        if (low == high)
+        var tops = drops.ToDictionary(d => d.X, d => d.Top);
+        var columns = tops.Keys.Union(xs).Order().ToArray();
+        bool Through(double column) => tops.ContainsKey(column) && xs.Contains(column);
+
+        foreach (var column in columns.Where(Through))
+          drawing.Line(FamilyTreeRelation.ParentChild, false, new(column, tops[column]), new(column, childTop));
+        if (columns.Length > 1)
         {
-          drawing.Line(FamilyTreeRelation.ParentChild, false, new(dropX, dropTop), new(dropX, childTop));
-        }
-        else
-        {
+          var (low, high) = (columns[0], columns[^1]);
           var bar = drawing.Track(generation, low, high);
-          var hasLeftArm = xs[0] < dropX;
-          var hasRightArm = xs[^1] > dropX;
-          Waypoint[] trunk = underDrop
-            ? [new(dropX, dropTop), new(dropX, 0, bar), new(dropX, childTop)]
-            : [new(dropX, dropTop), new(dropX, 0, bar)];
-          Waypoint[] leftArm = [new(xs[0], childTop), new(xs[0], 0, bar), new(dropX, 0, bar)];
-          Waypoint[] rightArm = [new(dropX, 0, bar), new(xs[^1], 0, bar), new(xs[^1], childTop)];
+          Waypoint End(double column) =>
+            Through(column) ? new(column, 0, bar) : new(column, tops.GetValueOrDefault(column, childTop));
 
-          // A trunk with a single arm turns into it as one elbow; anywhere else it meets the bar at a T.
-          if (!underDrop && hasLeftArm != hasRightArm)
-          {
-            Waypoint[] elbow = hasLeftArm ? [.. trunk, .. leftArm.Reverse()] : [.. trunk, .. rightArm];
-            drawing.Line(FamilyTreeRelation.ParentChild, false, elbow);
-          }
-          else
-          {
-            drawing.Line(FamilyTreeRelation.ParentChild, false, trunk);
-            if (hasLeftArm)
-              drawing.Line(FamilyTreeRelation.ParentChild, false, leftArm);
-            if (hasRightArm)
-              drawing.Line(FamilyTreeRelation.ParentChild, false, rightArm);
-          }
-
-          foreach (var stub in xs.Where(c => c > xs[0] && c < xs[^1] && c != dropX))
-            drawing.Line(FamilyTreeRelation.ParentChild, false, new(stub, 0, bar), new(stub, childTop));
+          // The bar turns into its two end columns round a corner; every column between meets it at a T.
+          drawing.Line(FamilyTreeRelation.ParentChild, false, End(low), new(low, 0, bar), new(high, 0, bar), End(high));
+          foreach (var column in columns[1..^1].Where(column => !Through(column)))
+            drawing.Line(FamilyTreeRelation.ParentChild, false, new(column, 0, bar), End(column));
         }
       }
 

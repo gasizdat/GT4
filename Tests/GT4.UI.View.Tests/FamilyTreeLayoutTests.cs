@@ -330,6 +330,31 @@ public class FamilyTreeLayoutTests
     return b.Build(center);
   }
 
+  // Ids: centre 1, mother 2, children 3-4, one under each parent.
+  private static FamilyTree TwoChildren(bool married)
+  {
+    var b = new TreeBuilder();
+    var center = b.Person(1, Male);
+    var mother = b.Person(1, Female);
+    if (married)
+      b.Marry(center, mother);
+    b.Children([center, mother], b.Person(0, birthYear: 1950), b.Person(0, birthYear: 1952));
+    return b.Build(center);
+  }
+
+  // Ids: centre 1, his first partner 2, their children 3-4, his second partner 5, their child 6. He married
+  // neither.
+  private static FamilyTree UnmarriedPartners()
+  {
+    var b = new TreeBuilder();
+    var center = b.Person(0, Male);
+    var first = b.Person(0, Female);
+    b.Children([center, first], b.Person(-1, birthYear: 1970), b.Person(-1, birthYear: 1972));
+    var second = b.Person(0, Female);
+    b.Children([center, second], b.Person(-1, birthYear: 1980));
+    return b.Build(center);
+  }
+
   // Ids: centre 1, father 2, mother 3, adoptive father 4, adoptive mother 5, centre's child 6. All four
   // parents are in the row above.
   private static FamilyTree ManyParents()
@@ -386,6 +411,8 @@ public class FamilyTreeLayoutTests
     ["wide descendants"] = WideDescendants,
     ["cousin marriage"] = CousinMarriage,
     ["co-parents"] = CoParents,
+    ["unmarried partners"] = UnmarriedPartners,
+    ["unmarried over two"] = () => TwoChildren(married: false),
     ["many parents"] = ManyParents,
     ["pedigree collapse"] = PedigreeCollapse,
     ["cousin parents"] = CousinParents,
@@ -645,14 +672,46 @@ public class FamilyTreeLayoutTests
     AssertUnderParents(result, 1, 2, 3);
     var spouseLines = result.Connectors.Where(c => c.Relation == FamilyTreeRelation.Spouse);
     spouseLines.Should().ContainSingle("only the grandparents are married");
-    var (father, mother) = (CentreX(result, 2), CentreX(result, 3));
-    var parentsLines = result.Connectors.Where(c =>
-      c.Relation == FamilyTreeRelation.ParentChild &&
-      c.Points.Length == 2 &&
-      c.Points[0].Y == c.Points[1].Y &&
-      c.Points[0].X == father &&
-      c.Points[1].X == mother);
-    parentsLines.Should().ContainSingle("the parents are still joined");
+    var segments = Segments(result);
+    var middle = result.Nodes.Single(n => n.Node.Id == 2).Bounds.Center.Y;
+    segments.Should().NotContain(s => s.Horizontal && s.Fixed == middle, "a line between the parents would claim a marriage");
+    foreach (var parent in new[] { 2, 3 })
+    {
+      var bounds = result.Nodes.Single(n => n.Node.Id == parent).Bounds;
+      segments.Should().Contain(
+        s => !s.Horizontal && s.Fixed == bounds.Center.X && s.From == bounds.Bottom,
+        "parent {0} drops to the child's bar on their own",
+        parent);
+    }
+  }
+
+  [Fact]
+  public void Compute_UnmarriedParents_EachDropStraightToTheChildUnderThem()
+  {
+    var result = Layout(TwoChildren(married: false), _metrics);
+
+    var segments = Segments(result);
+    foreach (var parent in new[] { 1, 2 })
+    {
+      var bounds = result.Nodes.Single(n => n.Node.Id == parent).Bounds;
+      var child = result.Nodes.Single(n => n.Node.Generation == 0 && n.Bounds.Center.X == bounds.Center.X).Bounds;
+      segments.Should().Contain(
+        s => !s.Horizontal && s.Fixed == bounds.Center.X && s.From == bounds.Bottom && s.To == child.Top,
+        "parent {0} runs straight through the bar to the child under them",
+        parent);
+    }
+  }
+
+  [Fact]
+  public void Compute_MarriedParents_DropOnceFromTheMiddleOfTheirMarriageLine()
+  {
+    var result = Layout(TwoChildren(married: true), _metrics);
+
+    var parents = result.Nodes.Single(n => n.Node.Id == 1).Bounds;
+    var fromTheirRow = Segments(result).Where(s => !s.Horizontal && s.From < parents.Bottom);
+    var drop = fromTheirRow.Should().ContainSingle("a married couple shares one drop").Subject;
+    drop.Fixed.Should().Be((CentreX(result, 1) + CentreX(result, 2)) / 2);
+    drop.From.Should().Be(parents.Center.Y);
   }
 
   [Fact]
