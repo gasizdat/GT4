@@ -125,11 +125,11 @@ public class FamilyTreePageTests
     return (child.Left - center.Left) / SlotPitch;
   }
 
-  // The returned probe reads what the page last stored.
+  // The returned probe reads what the page last stored. Each read is a fresh copy, as the real store's is.
   private static Func<int[]> UseHiddenPersons(TestServices services, params int[] ids)
   {
     var stored = ids;
-    services.HiddenPersonsStore.Setup(s => s.Get(It.IsAny<ProjectInfo>())).Returns(() => stored);
+    services.HiddenPersonsStore.Setup(s => s.Get(It.IsAny<ProjectInfo>())).Returns(() => [.. stored]);
     services.HiddenPersonsStore
       .Setup(s => s.Set(It.IsAny<ProjectInfo>(), It.IsAny<IEnumerable<int>>()))
       .Callback((ProjectInfo _, IEnumerable<int> personIds) => stored = [.. personIds]);
@@ -146,6 +146,14 @@ public class FamilyTreePageTests
 
   private static string FullName(TestServices services, PersonInfo person) =>
     services.Provider.GetRequiredService<INameFormatter>().ToString(person, NameFormat.FullPersonName);
+
+  // Main thread only.
+  private static MenuFlyoutItem HideItem(TestableFamilyTreePage page, int personId)
+  {
+    var view = NodeView(page, personId);
+    var flyout = (MenuFlyout)FlyoutBase.GetContextFlyout(view);
+    return (MenuFlyoutItem)flyout.Single();
+  }
 
   [Fact]
   public async Task Ctor_resolves_dependencies_and_defaults()
@@ -1075,6 +1083,50 @@ public class FamilyTreePageTests
     await MainThread.InvokeOnMainThreadAsync(() => page.InvokePageCommandAsync("ShowHidden"));
 
     services.HiddenPersonsStore.Verify(s => s.Set(It.IsAny<ProjectInfo>(), It.IsAny<IEnumerable<int>>()), Times.Never());
+  }
+
+  [Fact]
+  public async Task Returning_takes_in_a_hide_made_on_a_tree_opened_from_here_and_keeps_it()
+  {
+    var services = new TestServices();
+    var hidden = UseHiddenPersons(services);
+    var center = P(1, "Ivan");
+    var child = P(2, "Petr");
+    SetupTree(services, center, child);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    // Stands in for a second tree page, opened through the centre's person page.
+    services.HiddenPersonsStore.Object.Set(TestServices.SampleProjectInfo, [7]);
+
+    await WaitForLoadAsync(page, services, page.InvokeNavigatedTo);
+    await WaitForLoadAsync(page, services, () =>
+    {
+      var hide = HideItem(page, child.Id);
+      hide.Command.Execute(hide.CommandParameter);
+    });
+
+    services.FamilyTreeProvider.Verify(
+      f => f.BuildAsync(center, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.Is<int[]>(ids => ids.SequenceEqual(new[] { 7 })), It.IsAny<CancellationToken>()),
+      Times.Once());
+    Assert.Equal(new[] { 7, child.Id }, hidden());
+  }
+
+  [Fact]
+  public async Task Returning_to_an_unchanged_hidden_set_does_not_rebuild()
+  {
+    var services = new TestServices();
+    UseHiddenPersons(services, 7);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = P(1, "Ivan"));
+    var loadsBefore = page.CompletedLoads;
+
+    await MainThread.InvokeOnMainThreadAsync(page.InvokeNavigatedTo);
+
+    await Poll.ConfirmNeverAsync(
+      () => Task.FromResult(page.CompletedLoads),
+      loads => loads != loadsBefore,
+      TimeSpan.FromMilliseconds(200),
+      "Returning to an unchanged hidden set rebuilt the tree.");
   }
 
 #if WINDOWS

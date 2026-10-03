@@ -64,12 +64,12 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   private long _LastZoomTicks;
   private int _LoadOperationsCount = 0;
   private ProjectInfo? _LastProjectInfo;
-  // Replaced, never mutated, so a load in flight keeps the set it started with.
+  // Both replaced, never mutated, so a load in flight keeps the sets it started with.
   private IReadOnlyDictionary<int, double> _Pins = new Dictionary<int, double>();
+  private int[] _HiddenIds = [];
   private bool _IsArranging;
   private (int Id, double Left) _Dropped;
   private FamilyTreeLayoutResult? _LastLayout;
-  private int[] _HiddenIds = [];
 
   // Where to park the viewport after a (re)build.
   private enum ViewTarget { Center, Top, Bottom, Dropped }
@@ -330,6 +330,8 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     _DescendantGenerations = InitialGenerations;
     var pins = _ArrangementStore.Get(_CurrentProjectProvider.Info, person.Id);
     SetPins(pins);
+    var hiddenIds = _HiddenPersonsStore.Get(_CurrentProjectProvider.Info);
+    SetHiddenIds(hiddenIds);
     OnPropertyChanged(nameof(OpenPersonToolbarItemName));
     Reload(ViewTarget.Center);
   }
@@ -343,12 +345,10 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
 
     _ViewTarget = target;
     var center = _Center;
-    _HiddenIds = _HiddenPersonsStore.Get(_CurrentProjectProvider.Info);
-    OnPropertyChanged(nameof(HasHiddenPersons));
-    OnPropertyChanged(nameof(HiddenPersonsButtonName));
     var pins = _Pins;
+    var hiddenIds = _HiddenIds;
     SetLoadInProgress();
-    _ = SafeTask.Run(() => LoadAsync(center, pins), _AlertService);
+    _ = SafeTask.Run(() => LoadAsync(center, pins, hiddenIds), _AlertService);
   }
 
   private void SetPins(IReadOnlyDictionary<int, double> pins)
@@ -356,6 +356,13 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     _Pins = pins;
     OnPropertyChanged(nameof(CanResetArrangement));
     OnPropertyChanged(nameof(PageTitle));
+  }
+
+  private void SetHiddenIds(int[] hiddenIds)
+  {
+    _HiddenIds = hiddenIds;
+    OnPropertyChanged(nameof(HasHiddenPersons));
+    OnPropertyChanged(nameof(HiddenPersonsButtonName));
   }
 
   protected void DropNode(int personId, double deltaX)
@@ -391,12 +398,20 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
 
   // See ProjectPage.OnNavigatedTo: node views are cached and never auto-reload (see ClearRenderCache),
   // so an edit made on the person subpage this navigates to must rebuild the tree on the way back.
+  // So must a hide on a tree page opened from there, or the next hide here would write over it.
   protected override void OnNavigatedTo(NavigatedToEventArgs args)
   {
     base.OnNavigatedTo(args);
+    var hiddenIds = _HiddenPersonsStore.Get(_CurrentProjectProvider.Info);
+    var isHiddenChanged = !hiddenIds.SequenceEqual(_HiddenIds);
+    SetHiddenIds(hiddenIds);
     if (_LastProjectInfo != _CurrentProjectProvider.Info)
     {
       Refresh();
+    }
+    else if (isHiddenChanged)
+    {
+      Reload(ViewTarget.Center);
     }
   }
 
@@ -407,7 +422,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     Reload(ViewTarget.Center);
   }
 
-  private async Task LoadAsync(Person center, IReadOnlyDictionary<int, double> pins)
+  private async Task LoadAsync(Person center, IReadOnlyDictionary<int, double> pins, int[] hiddenIds)
   {
     try
     {
@@ -415,7 +430,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
       var tree = await _CurrentProjectProvider
         .Project
         .FamilyTreeProvider
-        .BuildAsync(center, _AncestorGenerations, _DescendantGenerations, _IncludeCollaterals, _HiddenIds, token);
+        .BuildAsync(center, _AncestorGenerations, _DescendantGenerations, _IncludeCollaterals, hiddenIds, token);
 
       var zoom = _ZoomScale;
       var scaledMetrics = _Metrics with
@@ -752,12 +767,14 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   private void Hide(PersonInfo person)
   {
     var hiddenIds = _HiddenIds.Append(person.Id);
-    SetHidden(hiddenIds);
+    SaveHidden(hiddenIds);
   }
 
-  private void SetHidden(IEnumerable<int> personIds)
+  private void SaveHidden(IEnumerable<int> personIds)
   {
-    _HiddenPersonsStore.Set(_CurrentProjectProvider.Info, personIds);
+    int[] hiddenIds = [.. personIds];
+    _HiddenPersonsStore.Set(_CurrentProjectProvider.Info, hiddenIds);
+    SetHiddenIds(hiddenIds);
     Reload(ViewTarget.Center);
   }
 
@@ -775,7 +792,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     var choice = await ChooseHiddenPersonAsync(names);
     if (choice == UIStrings.BtnNameShowAll)
     {
-      SetHidden([]);
+      SaveHidden([]);
       return;
     }
 
@@ -784,7 +801,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     {
       var shownId = infos[index].Id;
       var stillHiddenIds = infos.Select(info => info.Id).Where(id => id != shownId);
-      SetHidden(stillHiddenIds);
+      SaveHidden(stillHiddenIds);
     }
   }
 
@@ -800,7 +817,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     while (_CanLoadMoreAncestors && _AncestorGenerations < MaxGenerations)
     {
       _AncestorGenerations++;
-      await LoadAsync(_Center, _Pins);
+      await LoadAsync(_Center, _Pins, _HiddenIds);
       await Task.Delay(400);
     }
   }
