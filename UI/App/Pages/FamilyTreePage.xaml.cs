@@ -217,6 +217,9 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
 
   public string HiddenPersonsButtonName => string.Format(UIStrings.BtnNameHiddenPersons_1, _HiddenIds.Length);
 
+  // Held off while a load runs: that load still carries the old set and could render after the change.
+  public bool CanChangeHidden => !LoadInProgress;
+
   // Drive the visibility of the top/bottom "load more" buttons.
   public bool CanLoadMoreAncestors
   {
@@ -309,6 +312,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     OnPropertyChanged(nameof(CanLoadMoreAncestors));
     OnPropertyChanged(nameof(CanLoadMoreDescendants));
     OnPropertyChanged(nameof(CanResetArrangement));
+    OnPropertyChanged(nameof(CanChangeHidden));
   }
 
   private void ResetLoadInProgress()
@@ -320,6 +324,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     OnPropertyChanged(nameof(CanLoadMoreAncestors));
     OnPropertyChanged(nameof(CanLoadMoreDescendants));
     OnPropertyChanged(nameof(CanResetArrangement));
+    OnPropertyChanged(nameof(CanChangeHidden));
   }
 
   private void SetCenter(PersonInfo person)
@@ -766,6 +771,11 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
 
   private void Hide(PersonInfo person)
   {
+    if (!CanChangeHidden)
+    {
+      return;
+    }
+
     var hiddenIds = _HiddenIds.Append(person.Id);
     SaveHidden(hiddenIds);
   }

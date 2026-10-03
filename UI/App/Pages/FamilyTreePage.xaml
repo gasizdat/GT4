@@ -40,6 +40,7 @@
             Padding="16,6"
             Command="{Binding PageCommand, Source={x:Reference Root}}"
             CommandParameter="ShowHidden"
+            IsEnabled="{Binding CanChangeHidden, Source={x:Reference Root}}"
             IsVisible="{Binding HasHiddenPersons, Source={x:Reference Root}}"
             Text="{Binding HiddenPersonsButtonName, Source={x:Reference Root}}"
             VerticalOptions="Center" />

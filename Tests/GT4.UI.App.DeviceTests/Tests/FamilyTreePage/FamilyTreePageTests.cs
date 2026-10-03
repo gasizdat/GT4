@@ -1086,6 +1086,35 @@ public class FamilyTreePageTests
   }
 
   [Fact]
+  public async Task Hiding_is_held_off_while_a_load_is_in_flight()
+  {
+    var services = new TestServices();
+    UseHiddenPersons(services);
+    var center = P(1, "Ivan");
+    var child = P(2, "Petr");
+    var tree = SetupTree(services, center, child);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    var canChangeAtRest = page.CanChangeHidden;
+    var held = HoldBuilds(services);
+
+    // ZoomIn, not Refresh: Refresh empties the node cache, leaving no node to hide.
+    var canChangeWhileLoading = await MainThread.InvokeOnMainThreadAsync(async () =>
+    {
+      await page.InvokePageCommandAsync("ZoomIn");
+      var hide = HideItem(page, child.Id);
+      hide.Command.Execute(hide.CommandParameter);
+      return page.CanChangeHidden;
+    });
+    await WaitForLoadAsync(page, services, () => held.SetResult(tree));
+
+    Assert.True(canChangeAtRest);
+    Assert.False(canChangeWhileLoading);
+    Assert.True(page.CanChangeHidden);
+    services.HiddenPersonsStore.Verify(s => s.Set(It.IsAny<ProjectInfo>(), It.IsAny<IEnumerable<int>>()), Times.Never());
+  }
+
+  [Fact]
   public async Task Returning_takes_in_a_hide_made_on_a_tree_opened_from_here_and_keeps_it()
   {
     var services = new TestServices();
