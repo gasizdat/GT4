@@ -39,8 +39,7 @@ between them, centred on a focal person.
   and decoded photo thumbnails, reused across loads (see Render, below).
 
 ## Build & render pipeline
-1. `SetCenter` resets generation depth to default, clears the layout's stored positions
-   (`_Layout.Reset()`) so the new centre lays out from scratch, loads the centre's arrangement from
+1. `SetCenter` resets generation depth to default, loads the centre's arrangement from
    `IFamilyTreeArrangementStore` into `_Pins`, raises title/menu property changes, and calls
    `Reload(ViewTarget.Center)`.
 2. `Reload` snapshots the centre, marks a load in progress (`SetLoadInProgress`), and fires
@@ -49,9 +48,11 @@ between them, centred on a focal person.
    - gets a DB cancellation token (`CreateDbCancellationToken`),
    - asks `FamilyTreeProvider.BuildAsync` for the tree at the current depths/collateral setting,
    - scales a copy of `FamilyTreeLayoutMetrics` by `_ZoomScale`,
-   - runs `FamilyTreeLayout.Update` with the scaled metrics to compute node bounds + connectors (a
-     spring layout with an insertion-based row-reorder pass that keeps spouses adjacent and
-     connector lines from overlapping; see `FamilyTreeLayout` for the algorithm),
+   - runs `FamilyTreeLayout.Compute` with the scaled metrics to compute node bounds + connectors (a
+     stateless, tidy pedigree layout: children centred under their parents, each family drawn once;
+     see `FamilyTreeLayout` for the algorithm). Being stateless, a "load more" may move people
+     already on screen sideways; their left-to-right order holds, and the viewport stays on the
+     centre,
    - decodes any newly-seen photos into `_ThumbnailCache` (`CacheThumbnails`),
    - precomputes a node-id → display-name dictionary,
    - marshals back to the main thread (`SafeTask.RunOnMainThread`) to call `Render`, then clears
@@ -118,19 +119,23 @@ between them, centred on a focal person.
   by `FamilyTreeLayout.NearestClearSlot` to clear the centre and the other pinned nodes in its row.
   The pins are saved through `IFamilyTreeArrangementStore` (per project, per centre) and the tree
   reloads with `ViewTarget.Dropped`.
-- `FamilyTreeLayout.Update` keeps pinned nodes at their offsets. Two pins that end up sharing a slot
-  (one was placed while the other was out of the tree) are kept a whole slot apart. Free nodes reflow
-  around them.
+- `FamilyTreeLayout.Compute` keeps pinned nodes at their offsets. Two pins that end up sharing a slot
+  (one was placed while the other was out of the tree) are kept a whole slot apart. Only a pinned node
+  moves: free nodes keep their order and move only as far as it takes to clear the pins.
 - `IsArranged` (any stored pin) switches the title to its arranged form. "Reset arrangement"
-  (enabled by `CanResetArrangement`: arranged and no load running) clears the store and `_Layout`'s
-  stored columns, then reloads.
+  (enabled by `CanResetArrangement`: arranged and no load running) clears the store, then reloads.
 - Under Read-only mode the switch and Reset are hidden.
 
 ## Connectors & theming
 - Each connector is an individual vector `Path` built by `FamilyTreeConnectorShape.Create` and added
-  to the `Connectors` AbsoluteLayout: parent-child links are orthogonal lines with softly rounded
-  right-angle bends, spouse links straight horizontal lines. Per-shape vector geometry (rather than a
-  single canvas-spanning `GraphicsView`) scrolls in lockstep with the nodes, so the connectors
+  to the `Connectors` AbsoluteLayout. Each family is drawn the pedigree-chart way, every segment once:
+  a marriage line between the partners' centres (hidden behind their photos) with one drop from its
+  midpoint, a sibship bar with softly rounded outer corners, and a stub to each child. Parents with no
+  marriage on record, as a GEDCOM import leaves a family without a MARR, get no line between them:
+  each drops to the sibship bar on their own, so nothing claims a marriage the data doesn't hold. A
+  relationship the rows can't hold (pedigree
+  collapse) is a dashed loop connector (`FamilyTreeConnector.IsLoop`). Per-shape vector geometry
+  (rather than a single canvas-spanning `GraphicsView`) scrolls in lockstep with the nodes, so the connectors
   themselves never allocate one surface larger than the GPU's 16384px max-texture size. Note: the
   page still has a known, unresolved GPU-texture-limit crash on very deep trees from other causes
   (see `FamilyTreePageTests.cs`'s class remarks and the `#if DEBUG` `LoadDeep`/`AutoLoad` diagnostic

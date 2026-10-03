@@ -153,6 +153,77 @@ public class FamilyTreeProviderTests
   }
 
   [Fact]
+  public async Task Build_LinksADescendantToBothParentsInTheTree()
+  {
+    var person = _documentMock.CreatePerson();
+    var spouse = _documentMock.CreatePerson();
+    var child = _documentMock.CreatePerson();
+
+    _documentMock.AddRelationship(person, spouse, RelationshipType.Spouse);
+    _documentMock.AddRelationship(person, child, RelationshipType.Child);
+    _documentMock.AddRelationship(spouse, child, RelationshipType.Child);
+
+    var tree = await Provider.BuildAsync(person, ancestorGenerations: 0, descendantGenerations: 1, includeCollaterals: false, CancellationToken.None);
+
+    tree.Edges.Should().Contain(FamilyTreeEdge.ParentChild(person.Id, child.Id));
+    tree.Edges.Should().Contain(FamilyTreeEdge.ParentChild(spouse.Id, child.Id));
+  }
+
+  [Fact]
+  public async Task Build_LeavesOutACoParentWhoIsNotOtherwiseInTheTree()
+  {
+    var person = _documentMock.CreatePerson();
+    var coParent = _documentMock.CreatePerson();
+    var child = _documentMock.CreatePerson();
+
+    _documentMock.AddRelationship(person, child, RelationshipType.Child);
+    _documentMock.AddRelationship(coParent, child, RelationshipType.Child);
+
+    var tree = await Provider.BuildAsync(person, ancestorGenerations: 0, descendantGenerations: 1, includeCollaterals: false, CancellationToken.None);
+
+    tree.Nodes.Id().Should().BeEquivalentTo([person.Id, child.Id]);
+    tree.Edges.Should().NotContain(edge => edge.FromId == coParent.Id);
+  }
+
+  [Fact]
+  public async Task Build_LeavesOutTheParentsOfAMarriedInSpouse()
+  {
+    var person = _documentMock.CreatePerson();
+    var spouse = _documentMock.CreatePerson();
+    var spouseParent = _documentMock.CreatePerson();
+
+    _documentMock.AddRelationship(person, spouse, RelationshipType.Spouse);
+    _documentMock.AddRelationship(spouseParent, spouse, RelationshipType.Child);
+
+    var tree = await Provider.BuildAsync(person, ancestorGenerations: 2, descendantGenerations: 2, includeCollaterals: true, CancellationToken.None);
+
+    tree.Nodes.Id().Should().BeEquivalentTo([person.Id, spouse.Id]);
+  }
+
+  [Fact]
+  public async Task Build_WithCollaterals_LinksACousinToTheAuntsHusband()
+  {
+    var grandParent = _documentMock.CreatePerson();
+    var parent = _documentMock.CreatePerson();
+    var aunt = _documentMock.CreatePerson();
+    var auntsHusband = _documentMock.CreatePerson();
+    var cousin = _documentMock.CreatePerson();
+    var child = _documentMock.CreatePerson();
+
+    _documentMock.AddRelationship(grandParent, parent, RelationshipType.Child);
+    _documentMock.AddRelationship(grandParent, aunt, RelationshipType.Child);
+    _documentMock.AddRelationship(aunt, auntsHusband, RelationshipType.Spouse);
+    _documentMock.AddRelationship(aunt, cousin, RelationshipType.Child);
+    _documentMock.AddRelationship(auntsHusband, cousin, RelationshipType.Child);
+    _documentMock.AddRelationship(parent, child, RelationshipType.Child);
+
+    var tree = await Provider.BuildAsync(child, ancestorGenerations: 2, descendantGenerations: 2, includeCollaterals: true, CancellationToken.None);
+
+    tree.Edges.Should().Contain(FamilyTreeEdge.ParentChild(aunt.Id, cousin.Id));
+    tree.Edges.Should().Contain(FamilyTreeEdge.ParentChild(auntsHusband.Id, cousin.Id));
+  }
+
+  [Fact]
   public async Task Build_WithCollaterals_IncludesSiblings()
   {
     var parent = _documentMock.CreatePerson();
