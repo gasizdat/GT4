@@ -29,7 +29,7 @@ internal static class Pins
 
   // Moves the free nodes of each pinned row as little as keeps them in order and a slot clear of each
   // other and of the pins. A gap between two pins takes only as many nodes as fit; the rest move on.
-  public static void Clear(Families families, Dictionary<int, double> x, IReadOnlyDictionary<int, double> pinned)
+  public static void MakeRoom(Families families, Dictionary<int, double> x, IReadOnlyDictionary<int, double> pinned)
   {
     foreach (var generation in families.Nodes.Values.Select(node => node.Generation).Distinct())
     {

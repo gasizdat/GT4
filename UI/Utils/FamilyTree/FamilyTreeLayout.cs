@@ -49,7 +49,7 @@ public static class FamilyTreeLayout
     {
       foreach (var (id, slot) in pinned)
         x[id] = slot;
-      Pins.Clear(families, x, pinned);
+      Pins.MakeRoom(families, x, pinned);
     }
 
     return Assemble(tree.CenterId, families, x, placement.PlacedBy, metrics);
