@@ -31,7 +31,7 @@ internal sealed class ConnectorRouter
   public FamilyTreeConnector[] Route()
   {
     foreach (var key in _Families.Keys)
-      DrawFamily(key);
+      RouteFamily(key);
 
     foreach (var (a, b) in _Families.Spouses)
     {
@@ -58,7 +58,7 @@ internal sealed class ConnectorRouter
     return _Draft.ToConnectors(_Grid.Bottom, _Metrics);
   }
 
-  private void DrawFamily(string key)
+  private void RouteFamily(string key)
   {
     var partners = _Families.Partners(key).OrderBy(p => _X[p]).ToArray();
     var children = _Families.ChildrenOf(key);
@@ -149,7 +149,7 @@ internal sealed class ConnectorRouter
   }
 
   // Where a vertical can cross a row: in a gap between two of its nodes, or past either end.
-  private double Column(int generation, double from, double to)
+  private double CrossingColumn(int generation, double from, double to)
   {
     var centres = _Families.Row(generation).Select(_Grid.CentreX).Order().ToArray();
     if (centres.Length == 0)
@@ -198,7 +198,7 @@ internal sealed class ConnectorRouter
     var current = start;
     for (var generation = upperGeneration - 1; generation >= lowerGeneration; generation--)
     {
-      var next = generation == lowerGeneration ? end : Column(generation, current, end);
+      var next = generation == lowerGeneration ? end : CrossingColumn(generation, current, end);
       if (Math.Abs(next - current) >= 0.5)
       {
         var run = _Draft.AddRun(generation + 1, current, next);
