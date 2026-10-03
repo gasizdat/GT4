@@ -333,6 +333,23 @@ public class FamilyTreeProviderTests
   }
 
   [Fact]
+  public async Task Build_LinksAChildOnlyToTheParentWhoIsNotHidden()
+  {
+    var person = _documentMock.CreatePerson();
+    var spouse = _documentMock.CreatePerson();
+    var child = _documentMock.CreatePerson();
+
+    _documentMock.AddRelationship(person, spouse, RelationshipType.Spouse);
+    _documentMock.AddRelationship(person, child, RelationshipType.Child);
+    _documentMock.AddRelationship(spouse, child, RelationshipType.Child);
+
+    var tree = await Provider.BuildAsync(person, ancestorGenerations: 0, descendantGenerations: 1, includeCollaterals: false, hiddenIds: [spouse.Id], CancellationToken.None);
+
+    tree.Nodes.Id().Should().BeEquivalentTo([person.Id, child.Id]);
+    tree.Edges.Should().BeEquivalentTo([FamilyTreeEdge.ParentChild(person.Id, child.Id)]);
+  }
+
+  [Fact]
   public async Task Build_KeepsAnAncestorStillReachedByAnotherLine()
   {
     // Pedigree collapse: the common ancestor heads both the father's and the mother's line.
