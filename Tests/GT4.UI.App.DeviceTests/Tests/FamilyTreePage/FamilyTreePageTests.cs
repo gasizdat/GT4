@@ -1095,6 +1095,8 @@ public class FamilyTreePageTests
     SetupTree(services, center, child);
     var page = await CreatePageAsync(services);
     var layout = page.FindByName<PageLayout>("LayoutView");
+    var count = page.FindByName<Button>("HiddenCountButton");
+    var enabledWhileEditable = await MainThread.InvokeOnMainThreadAsync(() => count.IsEnabled);
     // Before the load: read-only mode is never switched while a tree page is up.
     await MainThread.InvokeOnMainThreadAsync(() => layout.ReadOnlyMode.Apply("True"));
 
@@ -1102,14 +1104,15 @@ public class FamilyTreePageTests
     {
       await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
 
-      var flyout = await MainThread.InvokeOnMainThreadAsync(() =>
+      var (flyout, enabledWhileReadOnly) = await MainThread.InvokeOnMainThreadAsync(() =>
       {
         var view = NodeView(page, child.Id);
-        return FlyoutBase.GetContextFlyout(view);
+        return (FlyoutBase.GetContextFlyout(view), count.IsEnabled);
       });
       Assert.Null(flyout);
       Assert.True(page.HasHiddenPersons);
-      Assert.False(page.CanChangeHidden);
+      Assert.True(enabledWhileEditable);
+      Assert.False(enabledWhileReadOnly);
     }
     finally
     {
@@ -1119,31 +1122,30 @@ public class FamilyTreePageTests
   }
 
   [Fact]
-  public async Task Hiding_is_held_off_while_a_load_is_in_flight()
+  public async Task Hiding_and_showing_are_held_off_while_a_load_is_in_flight()
   {
     var services = new TestServices();
-    UseHiddenPersons(services);
+    UseHiddenPersons(services, 7);
+    UsePersons(services, P(7, "Anna"));
     var center = P(1, "Ivan");
     var child = P(2, "Petr");
     var tree = SetupTree(services, center, child);
     var page = await CreatePageAsync(services);
     await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
-    var canChangeAtRest = page.CanChangeHidden;
+    page.HiddenPersonAnswer = UIStrings.BtnNameShowAll;
     var held = HoldBuilds(services);
 
     // ZoomIn, not Refresh: Refresh empties the node cache, leaving no node to hide.
-    var canChangeWhileLoading = await MainThread.InvokeOnMainThreadAsync(async () =>
+    await MainThread.InvokeOnMainThreadAsync(async () =>
     {
       await page.InvokePageCommandAsync("ZoomIn");
       var hide = HideItem(page, child.Id);
       hide.Command.Execute(hide.CommandParameter);
-      return page.CanChangeHidden;
+      await page.InvokePageCommandAsync("ShowHidden");
     });
     await WaitForLoadAsync(page, services, () => held.SetResult(tree));
 
-    Assert.True(canChangeAtRest);
-    Assert.False(canChangeWhileLoading);
-    Assert.True(page.CanChangeHidden);
+    Assert.Empty(page.OfferedHiddenNames);
     services.HiddenPersonsStore.Verify(s => s.Set(It.IsAny<ProjectInfo>(), It.IsAny<IEnumerable<int>>()), Times.Never());
   }
 

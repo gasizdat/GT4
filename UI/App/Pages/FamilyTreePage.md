@@ -144,9 +144,9 @@ between them, centred on a focal person.
   sheet (`ChooseHiddenPersonAsync`) listing them by full name: picking one shows them again, "Show
   all" clears the set. A deleted person's leftover id is never listed and drops out on the next
   unhide.
-- `CanChangeHidden` (no load running, not Read-only mode) enables the count button and lets `Hide`
-  through; a load in flight still carries the old set and could render last. Under Read-only mode
-  nodes get no flyout, and the count stays visible but disabled.
+- While a load runs, `Hide` and the count do nothing: the load in flight still carries the old set
+  and could render last. Under Read-only mode nodes get no flyout, and the count stays visible but
+  disabled.
 - `OnNavigatedTo` re-reads the stored set and reloads when it changed. PersonPage opens a tree of its
   own, so a hide made on a tree page stacked above this one would otherwise be written over by this
   page's next hide.

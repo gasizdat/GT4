@@ -217,10 +217,6 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
 
   public string HiddenPersonsButtonName => string.Format(UIStrings.BtnNameHiddenPersons_1, _HiddenIds.Length);
 
-  // Held off while a load runs: that load still carries the old set and could render after the change.
-  // Read-only mode is switched only in Settings, which this page must be popped to reach.
-  public bool CanChangeHidden => LayoutView.ReadOnlyMode.CanEdit && !LoadInProgress;
-
   // Drive the visibility of the top/bottom "load more" buttons.
   public bool CanLoadMoreAncestors
   {
@@ -313,7 +309,6 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     OnPropertyChanged(nameof(CanLoadMoreAncestors));
     OnPropertyChanged(nameof(CanLoadMoreDescendants));
     OnPropertyChanged(nameof(CanResetArrangement));
-    OnPropertyChanged(nameof(CanChangeHidden));
   }
 
   private void ResetLoadInProgress()
@@ -325,7 +320,6 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     OnPropertyChanged(nameof(CanLoadMoreAncestors));
     OnPropertyChanged(nameof(CanLoadMoreDescendants));
     OnPropertyChanged(nameof(CanResetArrangement));
-    OnPropertyChanged(nameof(CanChangeHidden));
   }
 
   private void SetCenter(PersonInfo person)
@@ -600,6 +594,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
       photo, _FontScale, displayName, isCenter, nodeLayout.Bounds.Width, nodeLayout.Bounds.Height, zoom);
     view.GestureRecognizers.Add(new TapGestureRecognizer { Command = PageCommand, CommandParameter = person });
     SyncNodeDrag(view, person.Id, isCenter);
+    // Read-only mode is switched only in Settings, which this page must be popped to reach.
     if (!isCenter && LayoutView.ReadOnlyMode.CanEdit)
     {
       var hide = new MenuFlyoutItem { Text = UIStrings.MenuItemNameHideFromTree, Command = _HideCommand, CommandParameter = person };
@@ -772,7 +767,8 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
 
   private void Hide(PersonInfo person)
   {
-    if (!CanChangeHidden)
+    // A load in flight still carries the old set and could render after the change.
+    if (LoadInProgress)
     {
       return;
     }
@@ -792,6 +788,11 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   // A deleted person's leftover id is never listed, and the next unhide drops it.
   private async Task ShowHiddenAsync()
   {
+    if (LoadInProgress)
+    {
+      return;
+    }
+
     using var token = _CancellationTokenProvider.CreateDbCancellationToken();
     var project = _CurrentProjectProvider.Project;
     var persons = await project.Persons.GetPersonsAsync(token);
