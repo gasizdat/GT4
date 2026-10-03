@@ -9,6 +9,7 @@ using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Dto;
 using GT4.UI.Utils.Formatters;
+using GT4.UI.Utils.Genealogy;
 using GT4.UI.Utils.Settings;
 using Microsoft.Maui.Layouts;
 using System.Windows.Input;

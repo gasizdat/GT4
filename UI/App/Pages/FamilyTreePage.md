@@ -35,8 +35,8 @@ between them, centred on a focal person.
   zoom.
 - `_LoadOperationsCount`: reentrant in-flight-load counter backing `LoadInProgress`; the load-more
   buttons disable while any load is running.
-- `_NodeCache` / `_ConnectorPool` / `_ThumbnailCache`: retained node views, pooled connector shapes,
-  and decoded photo thumbnails, reused across loads (see Render, below).
+- `_NodeCache` / `_ConnectorPool`: retained node views and pooled connector shapes, reused across
+  loads (see Render, below).
 
 ## Build & render pipeline
 1. `SetCenter` resets generation depth to default, loads the centre's arrangement from
@@ -53,7 +53,8 @@ between them, centred on a focal person.
      see `FamilyTreeLayout` for the algorithm). Being stateless, a "load more" may move people
      already on screen sideways; their left-to-right order holds, and the viewport stays on the
      centre,
-   - decodes any newly-seen photos into `_ThumbnailCache` (`CacheThumbnails`),
+   - loads each node's main photo as a thumbnail through its data converter, falling back to the
+     default portrait for the person's sex,
    - precomputes a node-id → display-name dictionary,
    - marshals back to the main thread (`SafeTask.RunOnMainThread`) to call `Render`, then clears
      the in-progress flag (`ResetLoadInProgress`) in a `finally`.
@@ -69,7 +70,7 @@ between them, centred on a focal person.
    - recomputes `CanLoadMoreAncestors`/`CanLoadMoreDescendants` from the returned min/max generation,
    - kicks off `PositionViewportAsync`.
    - `"Refresh"` (`OnPageCommand`) is the exception: it calls `ClearRenderCache` first to drop every
-     cached node/connector/thumbnail, so a stale name or photo edited elsewhere is picked up — the
+     cached node and connector, so a stale name or photo edited elsewhere is picked up — the
      page never auto-reloads on its own.
 
 ## Zoom
