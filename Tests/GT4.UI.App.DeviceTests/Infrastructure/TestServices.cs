@@ -39,6 +39,7 @@ internal sealed class TestServices
   public Mock<INavigationService> NavigationService { get; } = new();
   public Mock<IMainPersonStore> MainPersonStore { get; } = new();
   public Mock<IFamilyTreeArrangementStore> ArrangementStore { get; } = new();
+  public Mock<IFamilyTreeHiddenPersonsStore> HiddenPersonsStore { get; } = new();
   public IServiceProvider Provider { get; }
 
   public static readonly ProjectInfo SampleProjectInfo = new(
@@ -152,7 +153,7 @@ internal sealed class TestServices
     // Same reasoning as PersonPage's collaborators above: FamilyTreePage.LoadAsync's pipeline needs
     // a non-null tree up front.
     FamilyTreeProvider
-      .Setup(f => f.BuildAsync(It.IsAny<Person>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+      .Setup(f => f.BuildAsync(It.IsAny<Person>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<int[]>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(FamilyTree.Empty);
     // Moq has no empty default for a dictionary, and a null here would fail FamilyTreePage.SetCenter.
     ArrangementStore
@@ -168,6 +169,7 @@ internal sealed class TestServices
     services.AddSingleton(Importer.Object);
     services.AddSingleton(MainPersonStore.Object);
     services.AddSingleton(ArrangementStore.Object);
+    services.AddSingleton(HiddenPersonsStore.Object);
     services.AddSingleton<TestableNamesPage>();
     services.AddSingleton<TestableGalleryPage>();
     services.AddSingleton<TestableFamilyPage>();

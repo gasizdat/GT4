@@ -1095,6 +1095,18 @@ FN - род</value>
   <data name="LblRelatives" xml:space="preserve">
     <value>Родственники</value>
   </data>
+  <data name="MenuItemNameHideFromTree" xml:space="preserve">
+    <value>Скрыть в дереве</value>
+  </data>
+  <data name="BtnNameHiddenPersons_1" xml:space="preserve">
+    <value>🙈 Скрыто: {0}</value>
+  </data>
+  <data name="TitleHiddenPersons" xml:space="preserve">
+    <value>Скрыты в дереве</value>
+  </data>
+  <data name="BtnNameShowAll" xml:space="preserve">
+    <value>Показать всех</value>
+  </data>
   <data name="LblArrange" xml:space="preserve">
     <value>Расставить</value>
   </data>

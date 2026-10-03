@@ -21,6 +21,7 @@ internal sealed class FamilyTreeProvider : ProjectComponentBase, IFamilyTreeProv
     int ancestorGenerations,
     int descendantGenerations,
     bool includeCollaterals,
+    int[] hiddenIds,
     CancellationToken token)
   {
     ArgumentNullException.ThrowIfNull(center);
@@ -39,6 +40,7 @@ internal sealed class FamilyTreeProvider : ProjectComponentBase, IFamilyTreeProv
       generationStep: +1,
       follow: IsParent,
       makeEdge: static (fromId, relativeId) => FamilyTreeEdge.ParentChild(parentId: relativeId, childId: fromId),
+      hiddenIds: hiddenIds,
       nodes: nodes,
       edges: edges,
       token: token);
@@ -53,11 +55,12 @@ internal sealed class FamilyTreeProvider : ProjectComponentBase, IFamilyTreeProv
       generationStep: -1,
       follow: static type => type is RelationshipType.Child or RelationshipType.AdoptiveChild,
       makeEdge: static (fromId, relativeId) => FamilyTreeEdge.ParentChild(parentId: fromId, childId: relativeId),
+      hiddenIds: hiddenIds,
       nodes: nodes,
       edges: edges,
       token: token);
 
-    await AddSpousesAsync(nodes, edges, token);
+    await AddSpousesAsync(nodes, edges, hiddenIds, token);
     await AddParentEdgesAsync(nodes, edges, token);
 
     return new FamilyTree(center.Id, [.. nodes.Values], [.. edges]);
@@ -72,6 +75,7 @@ internal sealed class FamilyTreeProvider : ProjectComponentBase, IFamilyTreeProv
     int generationStep,
     Func<RelationshipType, bool> follow,
     Func<int, int, FamilyTreeEdge> makeEdge,
+    int[] hiddenIds,
     Dictionary<int, FamilyTreeNode> nodes,
     HashSet<FamilyTreeEdge> edges,
     CancellationToken token)
@@ -85,7 +89,7 @@ internal sealed class FamilyTreeProvider : ProjectComponentBase, IFamilyTreeProv
       foreach (var node in frontier)
       {
         var generation = node.Generation + generationStep;
-        var matches = await GetRelativesAsync(node.Person, follow, token);
+        var matches = await GetRelativesAsync(node.Person, follow, hiddenIds, token);
 
         foreach (var relative in matches)
         {
@@ -109,13 +113,14 @@ internal sealed class FamilyTreeProvider : ProjectComponentBase, IFamilyTreeProv
   private async Task AddSpousesAsync(
     Dictionary<int, FamilyTreeNode> nodes,
     HashSet<FamilyTreeEdge> edges,
+    int[] hiddenIds,
     CancellationToken token)
   {
     // Spouses sit on the same generation as the person they marry into. Snapshot the blood relatives
     // first so the spouses added here are not themselves expanded for further spouses.
     foreach (var node in nodes.Values.ToList())
     {
-      var spouses = await GetRelativesAsync(node.Person, static type => type == RelationshipType.Spouse, token);
+      var spouses = await GetRelativesAsync(node.Person, static type => type == RelationshipType.Spouse, hiddenIds, token);
 
       foreach (var spouse in spouses)
       {
@@ -155,10 +160,11 @@ internal sealed class FamilyTreeProvider : ProjectComponentBase, IFamilyTreeProv
   private async Task<PersonInfo[]> GetRelativesAsync(
     Person person,
     Func<RelationshipType, bool> follow,
+    int[] hiddenIds,
     CancellationToken token)
   {
     var relatives = await Document.Relatives.GetRelativesAsync(person, token);
-    var matched = relatives.Where(relative => follow(relative.Type)).ToArray();
+    var matched = relatives.Where(relative => follow(relative.Type) && !hiddenIds.Contains(relative.Id)).ToArray();
 
     if (matched.Length == 0)
     {

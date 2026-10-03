@@ -67,6 +67,14 @@ from the code.
 - **A `TargetType=Label` style assigned directly to a custom `ContentView`** crashes only in
   Release (`InvalidCastException` to `ITextElement`) — pass label styling through bindable
   properties on the `ContentView` instead.
+- **A page property bound from the page's own XAML must not read an `x:Name` field** — it throws
+  only in Debug. Debug inflates XAML at run time and can evaluate the binding inside
+  `InitializeComponent`, before the named field is assigned (a `NullReferenceException` opening
+  `FamilyTreePage`, PR #461). Release's compiled XAML assigns the field first, and the device tests
+  refuse Debug, so no test sees it. Bind through `{x:Reference Name}` in the XAML instead. Injecting
+  the object (e.g. `ReadOnlyMode`) instead of reading it off `PageLayout` breaks the other way:
+  device tests resolve the page from `TestServices` but `PageLayout` from the host's container, so
+  the two hold different instances.
 - **MAUI gives a star (`*`) row the whole grid once any child in that row spans columns** — a
   `ColumnSpan` on one cell can silently swallow a footer row or unbound a body slot that looked
   fine before the span was added.

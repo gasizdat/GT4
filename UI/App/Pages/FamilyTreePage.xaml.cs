@@ -23,12 +23,14 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
   private readonly IFamilyTreeArrangementStore _ArrangementStore;
+  private readonly IFamilyTreeHiddenPersonsStore _HiddenPersonsStore;
   private readonly INameFormatter _NameFormatter;
   private readonly FamilyTreeLayoutMetrics _Metrics = new() { Margin = OverlayClearance };
   private readonly FontScale? _FontScale;
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
   private readonly DataConverterResolver _DataConverterResolver;
+  private readonly ICommand _HideCommand;
   // Reused across loads so an incremental "load more" updates the existing canvas instead of rebuilding
   // every node view; views that do leave the tree are disconnected to release their native resources.
   private readonly Dictionary<int, NodeEntry> _NodeCache = [];
@@ -62,8 +64,9 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   private long _LastZoomTicks;
   private int _LoadOperationsCount = 0;
   private ProjectInfo? _LastProjectInfo;
-  // Replaced, never mutated, so a load in flight keeps the set it started with.
+  // Both replaced, never mutated, so a load in flight keeps the sets it started with.
   private IReadOnlyDictionary<int, double> _Pins = new Dictionary<int, double>();
+  private int[] _HiddenIds = [];
   private bool _IsArranging;
   private (int Id, double Left) _Dropped;
   private FamilyTreeLayoutResult? _LastLayout;
@@ -78,6 +81,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     ICancellationTokenProvider cancellationTokenProvider,
     ICurrentProjectProvider currentProjectProvider,
     IFamilyTreeArrangementStore arrangementStore,
+    IFamilyTreeHiddenPersonsStore hiddenPersonsStore,
     INameFormatter nameFormatter,
     FontScale? fontScale,
     IAlertService alertService,
@@ -88,6 +92,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     _CancellationTokenProvider = cancellationTokenProvider;
     _CurrentProjectProvider = currentProjectProvider;
     _ArrangementStore = arrangementStore;
+    _HiddenPersonsStore = hiddenPersonsStore;
     _NameFormatter = nameFormatter;
     _FontScale = fontScale;
     _AlertService = alertService;
@@ -95,6 +100,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     _DataConverterResolver = dataConverterResolver;
     Loading = new PageLoading(_AlertService);
     PageCommand = new SafeCommand(OnPageCommand, _AlertService);
+    _HideCommand = new SafeCommand<PersonInfo>(Hide, _AlertService);
 
     InitializeComponent();
 
@@ -206,6 +212,10 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   }
 
   public string OpenPersonToolbarItemName => string.Format(UIStrings.MenuItemNameOpenPerson_1, _CenterName);
+
+  public bool HasHiddenPersons => _HiddenIds.Length != 0;
+
+  public string HiddenPersonsButtonName => string.Format(UIStrings.BtnNameHiddenPersons_1, _HiddenIds.Length);
 
   // Drive the visibility of the top/bottom "load more" buttons.
   public bool CanLoadMoreAncestors
@@ -320,6 +330,8 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     _DescendantGenerations = InitialGenerations;
     var pins = _ArrangementStore.Get(_CurrentProjectProvider.Info, person.Id);
     SetPins(pins);
+    var hiddenIds = _HiddenPersonsStore.Get(_CurrentProjectProvider.Info);
+    SetHiddenIds(hiddenIds);
     OnPropertyChanged(nameof(OpenPersonToolbarItemName));
     Reload(ViewTarget.Center);
   }
@@ -334,8 +346,9 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     _ViewTarget = target;
     var center = _Center;
     var pins = _Pins;
+    var hiddenIds = _HiddenIds;
     SetLoadInProgress();
-    _ = SafeTask.Run(() => LoadAsync(center, pins), _AlertService);
+    _ = SafeTask.Run(() => LoadAsync(center, pins, hiddenIds), _AlertService);
   }
 
   private void SetPins(IReadOnlyDictionary<int, double> pins)
@@ -343,6 +356,13 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     _Pins = pins;
     OnPropertyChanged(nameof(CanResetArrangement));
     OnPropertyChanged(nameof(PageTitle));
+  }
+
+  private void SetHiddenIds(int[] hiddenIds)
+  {
+    _HiddenIds = hiddenIds;
+    OnPropertyChanged(nameof(HasHiddenPersons));
+    OnPropertyChanged(nameof(HiddenPersonsButtonName));
   }
 
   protected void DropNode(int personId, double deltaX)
@@ -378,12 +398,20 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
 
   // See ProjectPage.OnNavigatedTo: node views are cached and never auto-reload (see ClearRenderCache),
   // so an edit made on the person subpage this navigates to must rebuild the tree on the way back.
+  // So must a hide on a tree page opened from there, or the next hide here would write over it.
   protected override void OnNavigatedTo(NavigatedToEventArgs args)
   {
     base.OnNavigatedTo(args);
+    var hiddenIds = _HiddenPersonsStore.Get(_CurrentProjectProvider.Info);
+    var isHiddenChanged = !hiddenIds.SequenceEqual(_HiddenIds);
+    SetHiddenIds(hiddenIds);
     if (_LastProjectInfo != _CurrentProjectProvider.Info)
     {
       Refresh();
+    }
+    else if (isHiddenChanged)
+    {
+      Reload(ViewTarget.Center);
     }
   }
 
@@ -394,7 +422,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     Reload(ViewTarget.Center);
   }
 
-  private async Task LoadAsync(Person center, IReadOnlyDictionary<int, double> pins)
+  private async Task LoadAsync(Person center, IReadOnlyDictionary<int, double> pins, int[] hiddenIds)
   {
     try
     {
@@ -402,7 +430,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
       var tree = await _CurrentProjectProvider
         .Project
         .FamilyTreeProvider
-        .BuildAsync(center, _AncestorGenerations, _DescendantGenerations, _IncludeCollaterals, token);
+        .BuildAsync(center, _AncestorGenerations, _DescendantGenerations, _IncludeCollaterals, hiddenIds, token);
 
       var zoom = _ZoomScale;
       var scaledMetrics = _Metrics with
@@ -566,6 +594,12 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
       photo, _FontScale, displayName, isCenter, nodeLayout.Bounds.Width, nodeLayout.Bounds.Height, zoom);
     view.GestureRecognizers.Add(new TapGestureRecognizer { Command = PageCommand, CommandParameter = person });
     SyncNodeDrag(view, person.Id, isCenter);
+    // Read-only mode is switched only in Settings, which this page must be popped to reach.
+    if (!isCenter && LayoutView.ReadOnlyMode.CanEdit)
+    {
+      var hide = new MenuFlyoutItem { Text = UIStrings.MenuItemNameHideFromTree, Command = _HideCommand, CommandParameter = person };
+      FlyoutBase.SetContextFlyout(view, new MenuFlyout { hide });
+    }
     AbsoluteLayout.SetLayoutFlags(view, AbsoluteLayoutFlags.None);
     Nodes.Children.Add(view);
     return view;
@@ -706,6 +740,10 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
         Reload(ViewTarget.Center);
         break;
 
+      case string command when command == "ShowHidden":
+        await ShowHiddenAsync();
+        break;
+
 #if DEBUG
       // Diagnostic: render a deep tree in ONE pass (no incremental Clear()+rebuild churn) to
       // separate a size/element-count limit from per-render rebuild cost. Each tap jumps deeper.
@@ -723,6 +761,62 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     }
   }
 
+  // Virtual only so a device test can answer the sheet, which a test cannot drive.
+  protected virtual Task<string> ChooseHiddenPersonAsync(string[] names) =>
+    DisplayActionSheetAsync(UIStrings.TitleHiddenPersons, UIStrings.BtnNameCancel, UIStrings.BtnNameShowAll, names);
+
+  private void Hide(PersonInfo person)
+  {
+    // A load in flight still carries the old set and could render after the change.
+    if (LoadInProgress)
+    {
+      return;
+    }
+
+    var hiddenIds = _HiddenIds.Append(person.Id);
+    SaveHidden(hiddenIds);
+  }
+
+  private void SaveHidden(IEnumerable<int> personIds)
+  {
+    int[] hiddenIds = [.. personIds];
+    _HiddenPersonsStore.Set(_CurrentProjectProvider.Info, hiddenIds);
+    SetHiddenIds(hiddenIds);
+    Reload(ViewTarget.Center);
+  }
+
+  // A deleted person's leftover id is never listed, and the next unhide drops it.
+  private async Task ShowHiddenAsync()
+  {
+    if (LoadInProgress)
+    {
+      return;
+    }
+
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    var project = _CurrentProjectProvider.Project;
+    var persons = await project.Persons.GetPersonsAsync(token);
+    var hidden = persons.Where(person => _HiddenIds.Contains(person.Id)).ToArray();
+    var infos = await project.PersonManager.GetPersonInfosAsync(hidden, selectMainPhoto: false, token);
+    var names = infos.Select(info => _NameFormatter.ToString(info, NameFormat.FullPersonName)).ToArray();
+    Array.Sort(names, infos);
+
+    var choice = await ChooseHiddenPersonAsync(names);
+    if (choice == UIStrings.BtnNameShowAll)
+    {
+      SaveHidden([]);
+      return;
+    }
+
+    var index = Array.IndexOf(names, choice);
+    if (index >= 0)
+    {
+      var shownId = infos[index].Id;
+      var stillHiddenIds = infos.Select(info => info.Id).Where(id => id != shownId);
+      SaveHidden(stillHiddenIds);
+    }
+  }
+
 #if DEBUG
   private async Task AutoLoadAncestorsAsync()
   {
@@ -735,7 +829,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     while (_CanLoadMoreAncestors && _AncestorGenerations < MaxGenerations)
     {
       _AncestorGenerations++;
-      await LoadAsync(_Center, _Pins);
+      await LoadAsync(_Center, _Pins, _HiddenIds);
       await Task.Delay(400);
     }
   }

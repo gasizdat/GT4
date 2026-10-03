@@ -12,5 +12,6 @@ public static class ServiceCollectionExtensions
       .AddSingleton<ICurrentProjectProvider, CurrentProjectProvider>()
       .AddSingleton<IProjectDocumentFactory, ProjectDocumentFactory>()
       .AddSingleton<IMainPersonStore, MainPersonStore>()
-      .AddSingleton<IFamilyTreeArrangementStore, FamilyTreeArrangementStore>();
+      .AddSingleton<IFamilyTreeArrangementStore, FamilyTreeArrangementStore>()
+      .AddSingleton<IFamilyTreeHiddenPersonsStore, FamilyTreeHiddenPersonsStore>();
 }

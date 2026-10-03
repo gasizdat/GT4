@@ -1095,6 +1095,18 @@ FN - nom de famille</value>
   <data name="LblRelatives" xml:space="preserve">
     <value>Proches</value>
   </data>
+  <data name="MenuItemNameHideFromTree" xml:space="preserve">
+    <value>Masquer dans l'arbre</value>
+  </data>
+  <data name="BtnNameHiddenPersons_1" xml:space="preserve">
+    <value>🙈 Masqués : {0}</value>
+  </data>
+  <data name="TitleHiddenPersons" xml:space="preserve">
+    <value>Masqués dans l'arbre</value>
+  </data>
+  <data name="BtnNameShowAll" xml:space="preserve">
+    <value>Tout afficher</value>
+  </data>
   <data name="LblArrange" xml:space="preserve">
     <value>Disposer</value>
   </data>

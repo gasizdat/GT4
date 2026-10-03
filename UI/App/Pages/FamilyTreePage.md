@@ -12,6 +12,7 @@ between them, centred on a focal person.
   - tap on **any other node** → re-centre the tree on that person (`SetCenter`);
   - the `"OpenPerson"` toolbar command → open the centre in `PersonPage`.
 - While arranging (`IsArranging`), node taps do nothing.
+- Right-clicking any node but the centre offers "Hide from tree" (see Hiding, below).
 
 ## State
 - `_Center` (a `Person?`) / `_CenterName`: the focal person and its formatted short name.
@@ -23,6 +24,8 @@ between them, centred on a focal person.
 - `_ViewTarget` (Center/Top/Bottom/Dropped): records where the viewport should park after a rebuild.
 - `_Pins`: the centre's arrangement, person id → offset from the centre in slots. Replaced, never
   mutated, so a load in flight keeps the set it started with.
+- `_HiddenIds`: the ids hidden from the tree, one set for the whole project. Replaced, never
+  mutated, and handed to each load like `_Pins`.
 - `_IsArranging`: arrange mode (header switch); while on, nodes drag instead of tapping and the
   canvas doesn't pan.
 - `_Dropped` / `_LastLayout`: the last dropped node with its release position, and the rendered
@@ -40,13 +43,14 @@ between them, centred on a focal person.
 
 ## Build & render pipeline
 1. `SetCenter` resets generation depth to default, loads the centre's arrangement from
-   `IFamilyTreeArrangementStore` into `_Pins`, raises title/menu property changes, and calls
-   `Reload(ViewTarget.Center)`.
-2. `Reload` snapshots the centre, marks a load in progress (`SetLoadInProgress`), and fires
-   `LoadAsync` off the UI thread via `SafeTask.Run`.
+   `IFamilyTreeArrangementStore` into `_Pins` and the hidden set from `IFamilyTreeHiddenPersonsStore`
+   into `_HiddenIds`, raises title/menu property changes, and calls `Reload(ViewTarget.Center)`.
+2. `Reload` snapshots the centre, pins and hidden set, marks a load in progress
+   (`SetLoadInProgress`), and fires `LoadAsync` off the UI thread via `SafeTask.Run`.
 3. `LoadAsync`:
    - gets a DB cancellation token (`CreateDbCancellationToken`),
    - asks `FamilyTreeProvider.BuildAsync` for the tree at the current depths/collateral setting,
+     without the hidden persons,
    - scales a copy of `FamilyTreeLayoutMetrics` by `_ZoomScale`,
    - runs `FamilyTreeLayout.Compute` with the scaled metrics to compute node bounds + connectors (a
      stateless, tidy pedigree layout: children centred under their parents, each family drawn once;
@@ -126,6 +130,26 @@ between them, centred on a focal person.
 - `IsArranged` (any stored pin) switches the title to its arranged form. "Reset arrangement"
   (enabled by `CanResetArrangement`: arranged and no load running) clears the store, then reloads.
 - Under Read-only mode the switch and Reset are hidden.
+
+## Hiding
+- Hiding is a view preference, not an edit: `IFamilyTreeHiddenPersonsStore` keeps one JSON id array
+  per project in the per-project settings file, never in the document.
+- Every node except the centre carries a context flyout with "Hide from tree" (a desktop right-click;
+  mobile has no entry point). `Hide` adds the person and reloads.
+- `FamilyTreeProvider.BuildAsync` never walks into a hidden person, so everyone reachable only
+  through them drops out, while anyone with another path (the other parent, a second ancestral line)
+  stays. The centre is shown even when hidden. The load-more buttons read the returned tree, so
+  hidden people never count toward the depth reached.
+- While anyone is hidden, the header shows their count (`HiddenPersonsButtonName`). It opens an action
+  sheet (`ChooseHiddenPersonAsync`) listing them by full name: picking one shows them again, "Show
+  all" clears the set. A deleted person's leftover id is never listed and drops out on the next
+  unhide.
+- While a load runs, `Hide` and the count do nothing: the load in flight still carries the old set
+  and could render last. Under Read-only mode nodes get no flyout, and the count stays visible but
+  disabled.
+- `OnNavigatedTo` re-reads the stored set and reloads when it changed. PersonPage opens a tree of its
+  own, so a hide made on a tree page stacked above this one would otherwise be written over by this
+  page's next hide.
 
 ## Connectors & theming
 - Each connector is an individual vector `Path` built by `FamilyTreeConnectorShape.Create` and added

@@ -1095,6 +1095,18 @@ FN - apellido familiar</value>
   <data name="LblRelatives" xml:space="preserve">
     <value>Parientes</value>
   </data>
+  <data name="MenuItemNameHideFromTree" xml:space="preserve">
+    <value>Ocultar en el árbol</value>
+  </data>
+  <data name="BtnNameHiddenPersons_1" xml:space="preserve">
+    <value>🙈 Ocultos: {0}</value>
+  </data>
+  <data name="TitleHiddenPersons" xml:space="preserve">
+    <value>Ocultos en el árbol</value>
+  </data>
+  <data name="BtnNameShowAll" xml:space="preserve">
+    <value>Mostrar todos</value>
+  </data>
   <data name="LblArrange" xml:space="preserve">
     <value>Organizar</value>
   </data>
