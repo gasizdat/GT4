@@ -145,27 +145,27 @@ internal sealed class Placement
     var rightGroup = Group(keys.Where(key => key == rightKey));
 
     var contour = new Contour();
-    double? leftCentre = null;
-    double? middleCentre = null;
-    double? rightCentre = null;
+    double? leftCenter = null;
+    double? middleCenter = null;
+    double? rightCenter = null;
     if (leftGroup is not null)
     {
       contour.Append(leftGroup.Value.Contour);
-      leftCentre = Centre(contour, leftGroup.Value.Children);
+      leftCenter = Center(contour, leftGroup.Value.Children);
     }
     if (middleGroup is not null)
     {
       contour.Append(middleGroup.Value.Contour);
-      middleCentre = Centre(contour, middleGroup.Value.Children);
+      middleCenter = Center(contour, middleGroup.Value.Children);
     }
     if (rightGroup is not null)
     {
       contour.Append(rightGroup.Value.Contour);
-      rightCentre = Centre(contour, rightGroup.Value.Children);
+      rightCenter = Center(contour, rightGroup.Value.Children);
     }
 
     // A hinted partner is not in the subtree, so its family's drop is pinned half a slot off the person.
-    var x = middleCentre ?? (leftCentre, rightCentre) switch
+    var x = middleCenter ?? (leftCenter, rightCenter) switch
     {
       (double l, double r) when left.Count != 0 && right.Count != 0 => (l + r) / 2,
       (double l, double r) => left.Count == 0 ? l + 0.5 : r - 0.5,
@@ -175,10 +175,10 @@ internal sealed class Placement
     };
     contour.Place(person, generation, x);
 
-    var leftX = leftCentre is double lc && left.Count != 0 ? (2 * lc) - x : x - 1;
+    var leftX = leftCenter is double lc && left.Count != 0 ? (2 * lc) - x : x - 1;
     for (var i = 0; i < left.Count; i++)
       contour.Place(left[i], generation, leftX - i);
-    var rightX = rightCentre is double rc && right.Count != 0 ? (2 * rc) - x : x + 1;
+    var rightX = rightCenter is double rc && right.Count != 0 ? (2 * rc) - x : x + 1;
     for (var i = 0; i < right.Count; i++)
       contour.Place(right[i], generation, rightX + i);
 
@@ -205,7 +205,7 @@ internal sealed class Placement
     return children.Count == 0 ? null : (contour, [.. children]);
   }
 
-  private static double Centre(Contour contour, int[] children)
+  private static double Center(Contour contour, int[] children)
   {
     var xs = children.Select(child => contour.X[child]).ToArray();
     return (xs.Min() + xs.Max()) / 2;

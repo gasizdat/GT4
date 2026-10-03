@@ -49,7 +49,7 @@ internal sealed class ConnectorRouter
       // than the photo the node is.
       var (left, right) = _X[a] <= _X[b] ? (a, b) : (b, a);
       var y = _Grid.Middle(_Families.Generation(a));
-      _Draft.AddLine(FamilyTreeRelation.Spouse, false, new(_Grid.CentreX(left), y), new(_Grid.CentreX(right), y));
+      _Draft.AddLine(FamilyTreeRelation.Spouse, false, new(_Grid.CenterX(left), y), new(_Grid.CenterX(right), y));
     }
 
     foreach (var (parent, child) in _Families.OffRowParents)
@@ -74,7 +74,7 @@ internal sealed class ConnectorRouter
       {
         var drop = (_X[partners[0]] + _X[partners[^1]]) / 2;
         var dropX = _Grid.Snap(drop);
-        var onPartner = partners.Any(p => Math.Abs(_Grid.CentreX(p) - dropX) < _Metrics.NodeWidth / 2);
+        var onPartner = partners.Any(p => Math.Abs(_Grid.CenterX(p) - dropX) < _Metrics.NodeWidth / 2);
         drops = [(dropX, onPartner ? _Grid.Bottom(generation) : _Grid.Middle(generation))];
       }
       else
@@ -86,13 +86,13 @@ internal sealed class ConnectorRouter
         var toward = _Grid.Snap(mean);
         var bottom = _Grid.Bottom(generation);
         // A second family hung from one person, as after a third marriage, drops beside the first.
-        drops = [.. droppers.Select(p => (_Hosts.Add(p) ? _Grid.CentreX(p) : Attach(p, top: false, toward), bottom))];
+        drops = [.. droppers.Select(p => (_Hosts.Add(p) ? _Grid.CenterX(p) : Attach(p, top: false, toward), bottom))];
         foreach (var partner in partners.Where(p => !droppers.Contains(p) && !_Families.AreSpouses(p, host)))
           Loop(partner, host, FamilyTreeRelation.ParentChild);
       }
 
       var childTop = _Grid.Top(generation - 1);
-      var xs = placed.Select(_Grid.CentreX).ToArray();
+      var xs = placed.Select(_Grid.CenterX).ToArray();
       var tops = drops.ToDictionary(d => d.X, d => d.Top);
       var columns = tops.Keys.Union(xs).Order().ToArray();
       bool Through(double column) => tops.ContainsKey(column) && xs.Contains(column);
@@ -138,10 +138,10 @@ internal sealed class ConnectorRouter
     var band = _Families.Generation(id) + (top ? 1 : 0);
     if (!_Attachments.TryGetValue(band, out var taken))
       _Attachments[band] = taken = [];
-    var centre = _Grid.CentreX(id);
-    var sign = toward >= centre ? 1 : -1;
+    var center = _Grid.CenterX(id);
+    var sign = toward >= center ? 1 : -1;
     var columns = new[] { 0.25, -0.25, 0.375, -0.375, 0.125, -0.125 }
-      .Select(reach => Math.Round(centre + (sign * reach * _Metrics.NodeWidth)))
+      .Select(reach => Math.Round(center + (sign * reach * _Metrics.NodeWidth)))
       .ToArray();
     var column = columns.FirstOrDefault(c => !taken.Any(t => Math.Abs(t - c) < 1), columns[0]);
     taken.Add(column);
@@ -151,14 +151,14 @@ internal sealed class ConnectorRouter
   // Where a vertical can cross a row: in a gap between two of its nodes, or past either end.
   private double CrossingColumn(int generation, double from, double to)
   {
-    var centres = _Families.Row(generation).Select(_Grid.CentreX).Order().ToArray();
-    if (centres.Length == 0)
+    var centers = _Families.Row(generation).Select(_Grid.CenterX).Order().ToArray();
+    if (centers.Length == 0)
       return from;
     var half = _Metrics.SlotPitch / 2;
-    var candidates = centres
-      .Zip(centres.Skip(1), (a, b) => (a + b) / 2)
-      .Prepend(centres[0] - half)
-      .Append(centres[^1] + half);
+    var candidates = centers
+      .Zip(centers.Skip(1), (a, b) => (a + b) / 2)
+      .Prepend(centers[0] - half)
+      .Append(centers[^1] + half);
     var gap = candidates.MinBy(c => (Math.Abs(c - from) + Math.Abs(c - to), c));
     var uses = _GapUses.GetValueOrDefault((generation, gap));
     _GapUses[(generation, gap)] = uses + 1;
@@ -174,9 +174,9 @@ internal sealed class ConnectorRouter
     var above = generation < _Grid.MaxGeneration;
     var y = above ? _Grid.Top(generation) : _Grid.Bottom(generation);
     var band = above ? generation + 1 : generation;
-    var bx = _Grid.CentreX(b);
+    var bx = _Grid.CenterX(b);
     var ax = Attach(a, above, bx);
-    var ex = Attach(b, above, _Grid.CentreX(a));
+    var ex = Attach(b, above, _Grid.CenterX(a));
     var run = _Draft.AddRun(band, ax, ex);
     _Draft.AddLine(relation, isLoop, new(ax, y), new(ax, 0, run), new(ex, 0, run), new(ex, y));
   }
@@ -192,8 +192,8 @@ internal sealed class ConnectorRouter
     var (upper, lower) = _Families.Generation(a) > _Families.Generation(b) ? (a, b) : (b, a);
     var upperGeneration = _Families.Generation(upper);
     var lowerGeneration = _Families.Generation(lower);
-    var start = Attach(upper, top: false, _Grid.CentreX(lower));
-    var end = Attach(lower, top: true, _Grid.CentreX(upper));
+    var start = Attach(upper, top: false, _Grid.CenterX(lower));
+    var end = Attach(lower, top: true, _Grid.CenterX(upper));
     var points = new List<Waypoint> { new(start, _Grid.Bottom(upperGeneration)) };
     var current = start;
     for (var generation = upperGeneration - 1; generation >= lowerGeneration; generation--)

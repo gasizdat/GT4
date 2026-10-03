@@ -21,7 +21,7 @@ internal sealed class PixelGrid
   // The one place a slot becomes a pixel, so positions equal in slots stay equal on screen.
   public double Snap(double slot) => _Origin + Math.Round((slot - _MinSlot) * _Metrics.SlotPitch, MidpointRounding.AwayFromZero);
 
-  public double CentreX(int id) => Snap(_X[id]);
+  public double CenterX(int id) => Snap(_X[id]);
 
   public double Top(int generation) => _Metrics.Margin + ((MaxGeneration - generation) * _Metrics.RowPitch);
 

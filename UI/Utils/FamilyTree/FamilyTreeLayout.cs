@@ -85,7 +85,7 @@ public static class FamilyTreeLayout
     var layouts = new List<FamilyTreeNodeLayout>(families.Nodes.Count);
     foreach (var node in families.Nodes.Values)
     {
-      var left = grid.CentreX(node.Id) - (metrics.NodeWidth / 2);
+      var left = grid.CenterX(node.Id) - (metrics.NodeWidth / 2);
       var rect = new Rect(left, grid.Top(node.Generation), metrics.NodeWidth, metrics.NodeHeight);
       layouts.Add(new FamilyTreeNodeLayout(node, rect));
     }
