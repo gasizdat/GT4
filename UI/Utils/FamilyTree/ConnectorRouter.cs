@@ -40,7 +40,7 @@ internal sealed class ConnectorRouter
         Loop(a, b, FamilyTreeRelation.Spouse);
         continue;
       }
-      if (!_Families.IsClear(_X, a, b, [a, b]))
+      if (!_Families.IsClearBetween(_X, a, b, [a, b]))
       {
         Bridge(a, b, FamilyTreeRelation.Spouse, isLoop: false);
         continue;
@@ -67,7 +67,7 @@ internal sealed class ConnectorRouter
 
     if (placed.Length != 0)
     {
-      var together = partners.Length > 1 && _Families.IsClear(_X, partners[0], partners[^1], partners);
+      var together = partners.Length > 1 && _Families.IsClearBetween(_X, partners[0], partners[^1], partners);
       var married = partners.Zip(partners.Skip(1)).All(pair => _Families.AreSpouses(pair.First, pair.Second));
       (double X, double Top)[] drops;
       if (together && married)

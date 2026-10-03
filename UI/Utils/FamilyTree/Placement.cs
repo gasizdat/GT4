@@ -50,7 +50,7 @@ internal sealed class Placement
     foreach (var (a, b) in families.Spouses)
     {
       var blood = families.ParentsOf(a).Length != 0 && families.ParentsOf(b).Length != 0;
-      if (!blood || families.Generation(a) != families.Generation(b) || families.IsClear(x, a, b, [a, b]))
+      if (!blood || families.Generation(a) != families.Generation(b) || families.IsClearBetween(x, a, b, [a, b]))
         continue;
       var direction = Math.Sign(x[b] - x[a]);
       hints.TryAdd(a, new Hint(direction, b));

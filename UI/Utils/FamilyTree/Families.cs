@@ -80,7 +80,7 @@ internal sealed class Families
 
   public bool AreSpouses(int a, int b) => SpousesOf(a).Contains(b);
 
-  public bool IsClear(IReadOnlyDictionary<int, double> x, int a, int b, int[] except)
+  public bool IsClearBetween(IReadOnlyDictionary<int, double> x, int a, int b, int[] except)
   {
     var low = Math.Min(x[a], x[b]);
     var high = Math.Max(x[a], x[b]);
