@@ -8,6 +8,6 @@ namespace GT4.UI.Utils.Genealogy;
 /// </summary>
 /// <param name="PersonIds">
 /// Whose lines this is: everyone whose way to a parent, a child or a spouse runs along it. A sibship bar
-/// is split where that changes, so a sibling's stub is never part of another child's way up.
+/// is split at each of its columns, so a sibling's stub is never part of another child's way up.
 /// </param>
 public sealed record FamilyTreeConnector(FamilyTreeRelation Relation, PointF[] Points, int[] PersonIds, bool IsLoop = false);
