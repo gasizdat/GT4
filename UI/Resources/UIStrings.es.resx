@@ -587,7 +587,7 @@
     <value>🔄️ Actualizar</value>
   </data>
   <data name="MenuItemNameResetArrangement" xml:space="preserve">
-    <value>📌 Restablecer la disposición</value>
+    <value>🔀 Restablecer la disposición</value>
   </data>
   <data name="RelBrother" xml:space="preserve">
     <value>Hermano</value>
@@ -1075,7 +1075,7 @@ FN - apellido familiar</value>
     <value>🌳 {0}</value>
   </data>
   <data name="TitleFamilyTreePageArranged_1" xml:space="preserve">
-    <value>🌳 {0} 📌</value>
+    <value>🌳 {0} 🔀</value>
   </data>
   <data name="HintFamilyTreePage" xml:space="preserve">
     <value>Toque un pariente para centrar el árbol en él</value>
