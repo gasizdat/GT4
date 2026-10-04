@@ -119,6 +119,37 @@ public class FamilyTreeNodeViewTests
   }
 
   [Fact]
+  public async Task A_highlight_doubles_the_ring_and_keeps_its_footprint()
+  {
+    var node = await CreateNodeAsync(isCenter: false, zoomScale: 1.0);
+    var (ring, _) = GetParts(node);
+
+    await MainThread.InvokeOnMainThreadAsync(() => node.SetHighlighted(true));
+
+    Assert.Equal(3, ring.StrokeThickness);
+    Assert.Equal(60 + 3 * 2, ring.WidthRequest);
+    Assert.Equal(60 + 1.5 * 2, ring.WidthRequest + ring.Margin.HorizontalThickness);
+    Assert.Equal(60 + 1.5 * 2, ring.HeightRequest + ring.Margin.VerticalThickness);
+  }
+
+  [Fact]
+  public async Task Clearing_a_highlight_restores_the_ring()
+  {
+    var node = await CreateNodeAsync(isCenter: true, zoomScale: 1.0);
+    var (ring, _) = GetParts(node);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      node.SetHighlighted(true);
+      node.SetHighlighted(false);
+    });
+
+    Assert.Equal(3, ring.StrokeThickness);
+    Assert.Equal(60 + 3 * 2, ring.WidthRequest);
+    Assert.Equal(new Thickness(0), ring.Margin);
+  }
+
+  [Fact]
   public async Task The_label_shows_the_display_name_and_wraps_up_to_two_lines()
   {
     var node = await CreateNodeAsync(displayName: "Jane Doe");

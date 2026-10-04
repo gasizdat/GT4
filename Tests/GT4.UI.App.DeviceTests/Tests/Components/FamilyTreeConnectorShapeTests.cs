@@ -17,7 +17,7 @@ namespace GT4.UI.DeviceTests;
 public class FamilyTreeConnectorShapeTests
 {
   private static FamilyTreeConnector MakeConnector(params PointF[] points) =>
-    new(FamilyTreeRelation.ParentChild, points);
+    new(FamilyTreeRelation.ParentChild, points, []);
 
   [Fact]
   public void Create_sets_the_paths_fixed_rendering_properties()
@@ -140,7 +140,7 @@ public class FamilyTreeConnectorShapeTests
   [Fact]
   public void A_loop_is_dashed_and_its_path_reused_for_a_plain_connector_is_solid_again()
   {
-    var loop = new FamilyTreeConnector(FamilyTreeRelation.ParentChild, [new PointF(0, 0), new PointF(10, 10)], IsLoop: true);
+    var loop = new FamilyTreeConnector(FamilyTreeRelation.ParentChild, [new PointF(0, 0), new PointF(10, 10)], [], IsLoop: true);
     var path = FamilyTreeConnectorShape.Create(loop, cornerRadius: 0, lineWidth: 1, Colors.Black);
     var dashes = path.StrokeDashArray.ToArray();
 

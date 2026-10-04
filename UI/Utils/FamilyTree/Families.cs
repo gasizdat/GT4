@@ -12,6 +12,7 @@ internal sealed class Families
   private readonly Dictionary<int, string[]> _KeysOf;
   private readonly Dictionary<int, int[]> _SpousesOf;
   private readonly Dictionary<int, int[]> _Rows;
+  private readonly Dictionary<int, int[]> _ChildrenByParent;
 
   public Families(FamilyTree tree)
   {
@@ -50,6 +51,9 @@ internal sealed class Families
     _Rows = Nodes.Values
       .GroupBy(node => node.Generation)
       .ToDictionary(group => group.Key, group => group.Select(node => node.Id).Order().ToArray());
+    _ChildrenByParent = parentEdges
+      .GroupBy(edge => edge.FromId)
+      .ToDictionary(group => group.Key, group => group.Select(edge => edge.ToId).ToArray());
   }
 
   public IReadOnlyDictionary<int, FamilyTreeNode> Nodes { get; }
@@ -79,6 +83,14 @@ internal sealed class Families
   public int[] Row(int generation) => _Rows.GetValueOrDefault(generation, []);
 
   public bool AreSpouses(int a, int b) => SpousesOf(a).Contains(b);
+
+  // In any row, so a parent the rows cannot hold still counts.
+  public int[] ChildrenOfBoth(int a, int b)
+  {
+    var childrenOfA = _ChildrenByParent.GetValueOrDefault(a, []);
+    var childrenOfB = _ChildrenByParent.GetValueOrDefault(b, []);
+    return [.. childrenOfA.Intersect(childrenOfB)];
+  }
 
   public bool IsClearBetween(IReadOnlyDictionary<int, double> x, int a, int b, int[] except)
   {

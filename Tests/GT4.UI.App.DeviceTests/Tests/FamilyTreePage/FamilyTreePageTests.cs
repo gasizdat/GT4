@@ -155,6 +155,38 @@ public class FamilyTreePageTests
     return (MenuFlyoutItem)flyout.Single();
   }
 
+  // The pointer itself is native-only; these are where it lands. Main thread only.
+  private static void PointerEnters(TestableFamilyTreePage page, int personId)
+  {
+    var pointer = NodeView(page, personId).GestureRecognizers.OfType<PointerGestureRecognizer>().Single();
+    pointer.PointerEnteredCommand.Execute(pointer.PointerEnteredCommandParameter);
+  }
+
+  private static void PointerExits(TestableFamilyTreePage page, int personId)
+  {
+    var pointer = NodeView(page, personId).GestureRecognizers.OfType<PointerGestureRecognizer>().Single();
+    pointer.PointerExitedCommand.Execute(pointer.PointerExitedCommandParameter);
+  }
+
+  // Main thread only.
+  private static double[] LineThicknesses(TestableFamilyTreePage page) =>
+  [
+    .. page
+      .FindByName<AbsoluteLayout>("Connectors")
+      .Children
+      .OfType<Microsoft.Maui.Controls.Shapes.Path>()
+      .Select(path => path.StrokeThickness)
+      .OrderDescending(),
+  ];
+
+  // Main thread only.
+  private static double RingThickness(TestableFamilyTreePage page, int personId)
+  {
+    var node = (FamilyTreeNodeView)NodeView(page, personId);
+    var stack = (VerticalStackLayout)node.Content;
+    return ((Border)stack.Children[0]).StrokeThickness;
+  }
+
   [Fact]
   public async Task Ctor_resolves_dependencies_and_defaults()
   {
@@ -1191,6 +1223,96 @@ public class FamilyTreePageTests
       loads => loads != loadsBefore,
       TimeSpan.FromMilliseconds(200),
       "Returning to an unchanged hidden set rebuilt the tree.");
+  }
+
+  [Fact]
+  public async Task Hovering_a_node_highlights_its_ring_and_its_own_lines_until_the_pointer_leaves()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    var child = P(2, "Petr");
+    var sibling = P(3, "Oleg");
+    SetupTree(services, center, child, sibling);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+
+    var (hovered, hoveredRing) = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      PointerEnters(page, child.Id);
+      return (LineThicknesses(page), RingThickness(page, child.Id));
+    });
+    var (left, leftRing) = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      PointerExits(page, child.Id);
+      return (LineThicknesses(page), RingThickness(page, child.Id));
+    });
+
+    // The child's stub with the bar up to the drop, and the drop; never the sibling's stub.
+    Assert.Equal(new double[] { 4, 4, 2 }, hovered);
+    Assert.Equal(3, hoveredRing);
+    Assert.Equal(new double[] { 2, 2, 2 }, left);
+    Assert.Equal(1.5, leftRing);
+  }
+
+  [Fact]
+  public async Task A_late_exit_from_the_last_node_leaves_the_next_one_highlighted()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    var child = P(2, "Petr");
+    var sibling = P(3, "Oleg");
+    SetupTree(services, center, child, sibling);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+
+    var (lines, childRing, siblingRing) = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      PointerEnters(page, child.Id);
+      PointerEnters(page, sibling.Id);
+      PointerExits(page, child.Id);
+      return (LineThicknesses(page), RingThickness(page, child.Id), RingThickness(page, sibling.Id));
+    });
+
+    Assert.Equal(new double[] { 4, 4, 2 }, lines);
+    Assert.Equal(1.5, childRing);
+    Assert.Equal(3, siblingRing);
+  }
+
+  [Fact]
+  public async Task A_reload_clears_the_highlight_of_a_node_it_keeps()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    var child = P(2, "Petr");
+    SetupTree(services, center, child);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    await MainThread.InvokeOnMainThreadAsync(() => PointerEnters(page, child.Id));
+
+    // LoadAncestors, not ZoomIn or Refresh: those build every node view afresh.
+    await WaitForLoadAsync(page, services, () => page.InvokePageCommandAsync("LoadAncestors"));
+
+    var (lines, ring) = await MainThread.InvokeOnMainThreadAsync(() => (LineThicknesses(page), RingThickness(page, child.Id)));
+    Assert.All(lines, thickness => Assert.Equal(2, thickness));
+    Assert.Equal(1.5, ring);
+  }
+
+  [Fact]
+  public async Task Refreshing_while_a_node_is_hovered_rebuilds_without_an_error()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    var child = P(2, "Petr");
+    SetupTree(services, center, child);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    await MainThread.InvokeOnMainThreadAsync(() => PointerEnters(page, child.Id));
+
+    await WaitForLoadAsync(page, services, () => page.InvokePageCommandAsync("Refresh"));
+
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+    var lines = await MainThread.InvokeOnMainThreadAsync(() => LineThicknesses(page));
+    Assert.All(lines, thickness => Assert.Equal(2, thickness));
   }
 
 #if WINDOWS
