@@ -849,7 +849,6 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     }
   }
 
-  // Unlights whoever was lit first: a node removed under the pointer never reports its exit.
   private void SetHovered(int? personId)
   {
     if (_HoveredId is int hoveredId)

@@ -168,7 +168,7 @@ public class FamilyTreePageTests
     pointer.PointerExitedCommand.Execute(pointer.PointerExitedCommandParameter);
   }
 
-  // Heaviest first. Main thread only.
+  // Main thread only.
   private static double[] LineThicknesses(TestableFamilyTreePage page) =>
   [
     .. page
