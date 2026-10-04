@@ -4,7 +4,7 @@ namespace GT4.UI.Utils.Genealogy;
 
 internal sealed class ConnectorDraft
 {
-  private readonly List<(FamilyTreeRelation Relation, bool IsLoop, Waypoint[] Points)> _Lines = [];
+  private readonly List<(FamilyTreeRelation Relation, bool IsLoop, int[] PersonIds, Waypoint[] Points)> _Lines = [];
   private readonly List<Run> _Runs = [];
 
   public Run AddRun(int band, double from, double to)
@@ -14,8 +14,8 @@ internal sealed class ConnectorDraft
     return run;
   }
 
-  public void AddLine(FamilyTreeRelation relation, bool isLoop, params Waypoint[] points) =>
-    _Lines.Add((relation, isLoop, points));
+  public void AddLine(FamilyTreeRelation relation, bool isLoop, int[] personIds, params Waypoint[] points) =>
+    _Lines.Add((relation, isLoop, personIds, points));
 
   // Left-edge channel routing: runs that overlap, or come within half a gap of each other, in one band
   // take separate tracks spread evenly through the band.
@@ -41,7 +41,7 @@ internal sealed class ConnectorDraft
         run.Y = Math.Round(top + ((track + 1) * metrics.VerticalGap / (tracks.Count + 1)));
     }
 
-    return [.. _Lines.Select(line => new FamilyTreeConnector(line.Relation, Simplify(line.Points), line.IsLoop))];
+    return [.. _Lines.Select(line => new FamilyTreeConnector(line.Relation, Simplify(line.Points), line.PersonIds, line.IsLoop))];
   }
 
   // Drops repeated points and the middle of three in a line, so every point left is a real bend.

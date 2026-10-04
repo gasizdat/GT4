@@ -31,11 +31,14 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   private readonly INavigationService _NavigationService;
   private readonly DataConverterResolver _DataConverterResolver;
   private readonly ICommand _HideCommand;
+  private readonly ICommand _HoverCommand;
+  private readonly ICommand _UnhoverCommand;
   // Reused across loads so an incremental "load more" updates the existing canvas instead of rebuilding
   // every node view; views that do leave the tree are disconnected to release their native resources.
   private readonly Dictionary<int, NodeEntry> _NodeCache = [];
   private readonly List<Path> _ConnectorPool = [];
   private const double ConnectorLineWidth = 2;
+  private const double HighlightedLineWidth = 2 * ConnectorLineWidth;
   // Each "load more" click adds GenerationsPerLoad generations, up to this hard ceiling.
   private const int GenerationsPerLoad = 3;
   private const int MaxGenerations = 120;
@@ -70,6 +73,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   private bool _IsArranging;
   private (int Id, double Left) _Dropped;
   private FamilyTreeLayoutResult? _LastLayout;
+  private int? _HoveredId;
 
   // Where to park the viewport after a (re)build.
   private enum ViewTarget { Center, Top, Bottom, Dropped }
@@ -101,6 +105,8 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     Loading = new PageLoading(_AlertService);
     PageCommand = new SafeCommand(OnPageCommand, _AlertService);
     _HideCommand = new SafeCommand<PersonInfo>(Hide, _AlertService);
+    _HoverCommand = new SafeCommand<PersonInfo>(Hover, _AlertService);
+    _UnhoverCommand = new SafeCommand<PersonInfo>(Unhover, _AlertService);
 
     InitializeComponent();
 
@@ -500,6 +506,9 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
       $"managedMB={managedMb} privateMB={privateMb}");
 #endif
 
+    // While the pool still holds the layout the highlight was drawn against.
+    SetHovered(null);
+
     // Reuse the connector shapes and node views across loads instead of clearing and rebuilding the
     // whole canvas: an incremental "load more" only adds the new generation's elements rather than
     // recreating hundreds of node views and connector shapes every time. Elements that do leave the
@@ -528,12 +537,10 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   private void UpdateConnectors(IReadOnlyList<FamilyTreeConnector> connectors, double zoom)
   {
     var cornerRadius = _Metrics.CornerRadius * zoom;
-    var parentChildColor = ThemedColor.Resolve("Primary", Color.FromArgb("#1E4437"));
-    var spouseColor = ThemedColor.Resolve("Accent", Color.FromArgb("#8B6F4E"));
     for (var i = 0; i < connectors.Count; i++)
     {
       var connector = connectors[i];
-      var color = connector.Relation == FamilyTreeRelation.Spouse ? spouseColor : parentChildColor;
+      var color = ConnectorColor(connector);
       if (i < _ConnectorPool.Count)
       {
         FamilyTreeConnectorShape.Update(_ConnectorPool[i], connector, cornerRadius, ConnectorLineWidth, color);
@@ -552,6 +559,11 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
       _ConnectorPool.RemoveAt(i);
     }
   }
+
+  private static Color ConnectorColor(FamilyTreeConnector connector) =>
+    connector.Relation == FamilyTreeRelation.Spouse
+      ? ThemedColor.Resolve("Accent", Color.FromArgb("#8B6F4E"))
+      : ThemedColor.Resolve("Primary", Color.FromArgb("#1E4437"));
 
   // Node views are keyed by person id and kept alive across loads. A cached view is reused as long as
   // its size (zoom), centre styling and theme still match; mismatches force a single rebuild of that
@@ -593,6 +605,13 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     var view = new FamilyTreeNodeView(
       photo, _FontScale, displayName, isCenter, nodeLayout.Bounds.Width, nodeLayout.Bounds.Height, zoom);
     view.GestureRecognizers.Add(new TapGestureRecognizer { Command = PageCommand, CommandParameter = person });
+    view.GestureRecognizers.Add(new PointerGestureRecognizer
+    {
+      PointerEnteredCommand = _HoverCommand,
+      PointerEnteredCommandParameter = person,
+      PointerExitedCommand = _UnhoverCommand,
+      PointerExitedCommandParameter = person,
+    });
     SyncNodeDrag(view, person.Id, isCenter);
     // Read-only mode is switched only in Settings, which this page must be popped to reach.
     if (!isCenter && LayoutView.ReadOnlyMode.CanEdit)
@@ -653,6 +672,8 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     }
     _NodeCache.Clear();
     _ConnectorPool.Clear();
+    // Forgotten rather than unlit: the paths it would restyle are gone.
+    _HoveredId = null;
   }
 
   private async Task PositionViewportAsync(FamilyTreeLayoutResult layout, Point scroll)
@@ -814,6 +835,53 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
       var shownId = infos[index].Id;
       var stillHiddenIds = infos.Select(info => info.Id).Where(id => id != shownId);
       SaveHidden(stillHiddenIds);
+    }
+  }
+
+  private void Hover(PersonInfo person) => SetHovered(person.Id);
+
+  // A node's exit can come after the next node's enter.
+  private void Unhover(PersonInfo person)
+  {
+    if (_HoveredId == person.Id)
+    {
+      SetHovered(null);
+    }
+  }
+
+  // Unlights whoever was lit first: a node removed under the pointer never reports its exit.
+  private void SetHovered(int? personId)
+  {
+    if (_HoveredId is int hoveredId)
+    {
+      Highlight(hoveredId, false);
+    }
+
+    _HoveredId = personId;
+    if (personId is int id)
+    {
+      Highlight(id, true);
+    }
+  }
+
+  private void Highlight(int personId, bool isHighlighted)
+  {
+    var layout = _LastLayout!;
+    var lineWidth = isHighlighted ? HighlightedLineWidth : ConnectorLineWidth;
+    _NodeCache[personId].View.SetHighlighted(isHighlighted);
+    for (var i = 0; i < layout.Connectors.Count; i++)
+    {
+      var connector = layout.Connectors[i];
+      if (!connector.PersonIds.Contains(personId))
+      {
+        continue;
+      }
+
+      var path = _ConnectorPool[i];
+      var color = ConnectorColor(connector);
+      FamilyTreeConnectorShape.Update(path, connector, layout.Metrics.CornerRadius, lineWidth, color);
+      // Over the plain lines, so none crossing it cuts it.
+      path.ZIndex = isHighlighted ? 1 : 0;
     }
   }
 

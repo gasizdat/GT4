@@ -16,6 +16,11 @@ public sealed class FamilyTreeNodeView : ContentView
   private const double PhotoSizeBase = 60;
   private const double FontSizeBase = 12;
   private const double SpacingBase = 4;
+  private const double HighlightedRingFactor = 2;
+
+  private readonly Border _Ring;
+  private readonly double _PhotoSize;
+  private readonly double _RingThickness;
 
   public FamilyTreeNodeView(
     ImageSource photo,
@@ -32,7 +37,8 @@ public sealed class FamilyTreeNodeView : ContentView
 
     var photoSize = PhotoSizeBase * zoomScale;
     var ringColor = ThemedColor.Resolve(isCenter ? "Primary" : "Accent", isCenter ? Colors.DarkGreen : Color.FromArgb("#8B6F4E"));
-    var borderThikness = (isCenter ? CenterBorderThikness : BorderThikness) * zoomScale;
+    _PhotoSize = photoSize;
+    _RingThickness = (isCenter ? CenterBorderThikness : BorderThikness) * zoomScale;
 
     var image = new Image
     {
@@ -43,17 +49,15 @@ public sealed class FamilyTreeNodeView : ContentView
       Clip = new EllipseGeometry(new Point(photoSize / 2, photoSize / 2), photoSize / 2, photoSize / 2),
     };
 
-    var ring = new Border
+    _Ring = new Border
     {
-      WidthRequest = photoSize + borderThikness * 2,
-      HeightRequest = photoSize + borderThikness * 2,
       Padding = 0,
       Stroke = ringColor,
-      StrokeThickness = borderThikness,
       StrokeShape = new Ellipse(),
       HorizontalOptions = LayoutOptions.Center,
       Content = image,
     };
+    SetHighlighted(false);
 
     var name = new Label
     {
@@ -70,7 +74,7 @@ public sealed class FamilyTreeNodeView : ContentView
     {
       Spacing = SpacingBase * zoomScale,
       HorizontalOptions = LayoutOptions.Center,
-      Children = { ring, name },
+      Children = { _Ring, name },
     };
 
     if (fontScale is not null)
@@ -81,5 +85,15 @@ public sealed class FamilyTreeNodeView : ContentView
       fontScale.Changed += OnFontScaleChanged;
       Unloaded += (_, _) => fontScale.Changed -= OnFontScaleChanged;
     }
+  }
+
+  // A heavier ring grows outward over a negative margin, so the photo and the name under it stay put.
+  public void SetHighlighted(bool isHighlighted)
+  {
+    var thickness = isHighlighted ? _RingThickness * HighlightedRingFactor : _RingThickness;
+    _Ring.StrokeThickness = thickness;
+    _Ring.WidthRequest = _PhotoSize + (thickness * 2);
+    _Ring.HeightRequest = _PhotoSize + (thickness * 2);
+    _Ring.Margin = _RingThickness - thickness;
   }
 }

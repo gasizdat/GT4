@@ -35,25 +35,27 @@ internal sealed class ConnectorRouter
 
     foreach (var (a, b) in _Families.Spouses)
     {
+      // Their children's too: a child's way to either parent can run along it.
+      int[] personIds = [a, b, .. _Families.ChildrenOfBoth(a, b)];
       if (_Families.Generation(a) != _Families.Generation(b))
       {
-        Loop(a, b, FamilyTreeRelation.Spouse);
+        Loop(a, b, FamilyTreeRelation.Spouse, personIds);
         continue;
       }
       if (!_Families.IsClearBetween(_X, a, b, [a, b]))
       {
-        Bridge(a, b, FamilyTreeRelation.Spouse, isLoop: false);
+        Bridge(a, b, FamilyTreeRelation.Spouse, isLoop: false, personIds);
         continue;
       }
       // Centre to centre: the photos cover the ends, so the line reaches each photo however much wider
       // than the photo the node is.
       var (left, right) = _X[a] <= _X[b] ? (a, b) : (b, a);
       var y = _Grid.Middle(_Families.Generation(a));
-      _Draft.AddLine(FamilyTreeRelation.Spouse, false, new(_Grid.CenterX(left), y), new(_Grid.CenterX(right), y));
+      _Draft.AddLine(FamilyTreeRelation.Spouse, false, personIds, new(_Grid.CenterX(left), y), new(_Grid.CenterX(right), y));
     }
 
     foreach (var (parent, child) in _Families.OffRowParents)
-      Loop(parent, child, FamilyTreeRelation.ParentChild);
+      Loop(parent, child, FamilyTreeRelation.ParentChild, [parent, child]);
 
     return _Draft.ToConnectors(_Grid.Bottom, _Metrics);
   }
@@ -69,13 +71,14 @@ internal sealed class ConnectorRouter
     {
       var together = partners.Length > 1 && _Families.IsClearBetween(_X, partners[0], partners[^1], partners);
       var married = partners.Zip(partners.Skip(1)).All(pair => _Families.AreSpouses(pair.First, pair.Second));
-      (double X, double Top)[] drops;
+      // Each with the partners whose way down to the children runs through it.
+      (int[] Parents, double X, double Top)[] drops;
       if (together && married)
       {
         var drop = (_X[partners[0]] + _X[partners[^1]]) / 2;
         var dropX = _Grid.Snap(drop);
         var onPartner = partners.Any(p => Math.Abs(_Grid.CenterX(p) - dropX) < _Metrics.NodeWidth / 2);
-        drops = [(dropX, onPartner ? _Grid.Bottom(generation) : _Grid.Middle(generation))];
+        drops = [(partners, dropX, onPartner ? _Grid.Bottom(generation) : _Grid.Middle(generation))];
       }
       else
       {
@@ -86,39 +89,56 @@ internal sealed class ConnectorRouter
         var toward = _Grid.Snap(mean);
         var bottom = _Grid.Bottom(generation);
         // A second family hung from one person, as after a third marriage, drops beside the first.
-        drops = [.. droppers.Select(p => (_Hosts.Add(p) ? _Grid.CenterX(p) : Attach(p, top: false, toward), bottom))];
+        drops = [.. droppers.Select(p => (together ? [p] : partners, _Hosts.Add(p) ? _Grid.CenterX(p) : Attach(p, top: false, toward), bottom))];
         foreach (var partner in partners.Where(p => !droppers.Contains(p) && !_Families.AreSpouses(p, host)))
-          Loop(partner, host, FamilyTreeRelation.ParentChild);
+          Loop(partner, host, FamilyTreeRelation.ParentChild, [partner, .. placed]);
       }
 
       var childTop = _Grid.Top(generation - 1);
-      var xs = placed.Select(_Grid.CenterX).ToArray();
-      var tops = drops.ToDictionary(d => d.X, d => d.Top);
-      var columns = tops.Keys.Union(xs).Order().ToArray();
-      bool Through(double column) => tops.ContainsKey(column) && xs.Contains(column);
+      var stubs = placed.ToDictionary(_Grid.CenterX);
+      var tops = drops.ToDictionary(d => d.X);
+      var columns = tops.Keys.Union(stubs.Keys).Order().ToArray();
+      bool Through(double column) => tops.ContainsKey(column) && stubs.ContainsKey(column);
+      int[] Down(double column) => [.. tops[column].Parents, .. placed];
+      int[] Up(double column) => [.. partners, stubs[column]];
+      int[] Along(double from, double to)
+      {
+        var routes = drops.SelectMany(drop => stubs.Select(stub => (drop.Parents, drop.X, Stub: stub)));
+        var across = routes.Where(route => Math.Min(route.X, route.Stub.Key) <= from && Math.Max(route.X, route.Stub.Key) >= to);
+        return [.. across.SelectMany(route => route.Parents.Append(route.Stub.Value)).Distinct()];
+      }
 
-      foreach (var column in columns.Where(Through))
-        _Draft.AddLine(FamilyTreeRelation.ParentChild, false, new(column, tops[column]), new(column, childTop));
-      if (columns.Length > 1)
+      if (columns.Length == 1)
+      {
+        var column = columns[0];
+        _Draft.AddLine(FamilyTreeRelation.ParentChild, false, Down(column), new(column, tops[column].Top), new(column, childTop));
+      }
+      else
       {
         var (low, high) = (columns[0], columns[^1]);
         var bar = _Draft.AddRun(generation, low, high);
-        Waypoint End(double column)
-        {
-          if (Through(column))
-            return new(column, 0, bar);
-          var y = tops.GetValueOrDefault(column, childTop);
-          return new(column, y);
-        }
+        Waypoint End(double column) => new(column, tops.TryGetValue(column, out var drop) ? drop.Top : childTop);
 
-        // The bar turns into its two end columns round a corner; every column between meets it at a T.
-        var first = End(low);
-        var last = End(high);
-        _Draft.AddLine(FamilyTreeRelation.ParentChild, false, first, new(low, 0, bar), new(high, 0, bar), last);
+        // A drop straight over a child crosses the bar, and only its part above the bar is every child's.
+        foreach (var column in columns.Where(Through))
+        {
+          _Draft.AddLine(FamilyTreeRelation.ParentChild, false, Down(column), new(column, tops[column].Top), new(column, 0, bar));
+          _Draft.AddLine(FamilyTreeRelation.ParentChild, false, Up(column), new(column, 0, bar), new(column, childTop));
+        }
+        // The bar turns into its two end columns round a corner; every column between meets it at a T. An end
+        // column's line carries the same people as the span beside it, so the two stay one line.
+        for (var i = 1; i < columns.Length; i++)
+        {
+          var (from, to) = (columns[i - 1], columns[i]);
+          Waypoint[] start = i == 1 && !Through(from) ? [End(from)] : [];
+          Waypoint[] finish = i == columns.Length - 1 && !Through(to) ? [End(to)] : [];
+          _Draft.AddLine(FamilyTreeRelation.ParentChild, false, Along(from, to), [.. start, new(from, 0, bar), new(to, 0, bar), .. finish]);
+        }
         foreach (var column in columns[1..^1].Where(column => !Through(column)))
         {
           var end = End(column);
-          _Draft.AddLine(FamilyTreeRelation.ParentChild, false, new(column, 0, bar), end);
+          var personIds = tops.ContainsKey(column) ? Down(column) : Up(column);
+          _Draft.AddLine(FamilyTreeRelation.ParentChild, false, personIds, new(column, 0, bar), end);
         }
       }
     }
@@ -126,7 +146,7 @@ internal sealed class ConnectorRouter
     foreach (var child in children.Except(placed))
     {
       var nearest = partners.MinBy(p => (Math.Abs(_X[p] - _X[child]), _X[p]));
-      Loop(nearest, child, FamilyTreeRelation.ParentChild);
+      Loop(nearest, child, FamilyTreeRelation.ParentChild, [.. partners, child]);
     }
   }
 
@@ -168,7 +188,7 @@ internal sealed class ConnectorRouter
   }
 
   // Over the row through the band above it, or below the top row through the band under it.
-  private void Bridge(int a, int b, FamilyTreeRelation relation, bool isLoop)
+  private void Bridge(int a, int b, FamilyTreeRelation relation, bool isLoop, int[] personIds)
   {
     var generation = _Families.Generation(a);
     var above = generation < _Grid.MaxGeneration;
@@ -178,14 +198,14 @@ internal sealed class ConnectorRouter
     var ax = Attach(a, above, bx);
     var ex = Attach(b, above, _Grid.CenterX(a));
     var run = _Draft.AddRun(band, ax, ex);
-    _Draft.AddLine(relation, isLoop, new(ax, y), new(ax, 0, run), new(ex, 0, run), new(ex, y));
+    _Draft.AddLine(relation, isLoop, personIds, new(ax, y), new(ax, 0, run), new(ex, 0, run), new(ex, y));
   }
 
-  private void Loop(int a, int b, FamilyTreeRelation relation)
+  private void Loop(int a, int b, FamilyTreeRelation relation, int[] personIds)
   {
     if (_Families.Generation(a) == _Families.Generation(b))
     {
-      Bridge(a, b, relation, isLoop: true);
+      Bridge(a, b, relation, isLoop: true, personIds);
       return;
     }
 
@@ -208,6 +228,6 @@ internal sealed class ConnectorRouter
       current = next;
     }
     points.Add(new(end, _Grid.Top(lowerGeneration)));
-    _Draft.AddLine(relation, true, [.. points]);
+    _Draft.AddLine(relation, true, personIds, [.. points]);
   }
 }

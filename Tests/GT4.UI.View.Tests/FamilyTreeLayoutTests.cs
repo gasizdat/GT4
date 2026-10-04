@@ -576,8 +576,18 @@ public class FamilyTreeLayoutTests
     return (Touches(first, a) && Touches(last, b)) || (Touches(first, b) && Touches(last, a));
   }
 
-  private static (FamilyTreeRelation, bool, PointF[])[] Drawing(FamilyTreeLayoutResult result) =>
-    [.. result.Connectors.Select(c => (c.Relation, c.IsLoop, c.Points))];
+  private static (FamilyTreeRelation, bool, PointF[], int[])[] Drawing(FamilyTreeLayoutResult result) =>
+    [.. result.Connectors.Select(c => (c.Relation, c.IsLoop, c.Points, c.PersonIds))];
+
+  private static FamilyTreeConnector[] LinesOf(FamilyTreeLayoutResult result, int id) =>
+    [.. result.Connectors.Where(c => c.PersonIds.Contains(id))];
+
+  private static bool EndsAt(FamilyTreeLayoutResult result, FamilyTreeConnector connector, int id, bool top)
+  {
+    var bounds = result.Nodes.Single(n => n.Node.Id == id).Bounds;
+    var end = new PointF((float)bounds.Center.X, (float)(top ? bounds.Top : bounds.Bottom));
+    return connector.Points[0] == end || connector.Points[^1] == end;
+  }
 
   private static FamilyTree Reversed(FamilyTree tree)
   {
@@ -696,10 +706,13 @@ public class FamilyTreeLayoutTests
     {
       var bounds = result.Nodes.Single(n => n.Node.Id == parent).Bounds;
       var child = result.Nodes.Single(n => n.Node.Generation == 0 && n.Bounds.Center.X == bounds.Center.X).Bounds;
-      segments.Should().Contain(
-        s => !s.Horizontal && s.Fixed == bounds.Center.X && s.From == bounds.Bottom && s.To == child.Top,
+      var pieces = segments.Where(s => !s.Horizontal && s.Fixed == bounds.Center.X).OrderBy(s => s.From).ToArray();
+      pieces[0].From.Should().Be(bounds.Bottom);
+      pieces.Zip(pieces.Skip(1)).Should().OnlyContain(
+        pair => pair.First.To == pair.Second.From,
         "parent {0} runs straight through the bar to the child under them",
         parent);
+      pieces[^1].To.Should().Be(child.Top);
     }
   }
 
@@ -757,6 +770,56 @@ public class FamilyTreeLayoutTests
     AssertUnderParents(result, 6, 4);
     var loop = result.Connectors.Where(c => c.IsLoop).Should().ContainSingle().Subject;
     (Joins(result, loop, 1, 4) || Joins(result, loop, 2, 4)).Should().BeTrue("the mother's mother hangs from her own parents by the loop");
+  }
+
+  [Fact]
+  public void Compute_AChildsLinesRunToItsParentsAndNotToItsSiblings()
+  {
+    var result = Layout(BowTie(), _metrics);
+
+    var lines = LinesOf(result, 9);
+
+    var couple = (CentreX(result, 1) + CentreX(result, 2)) / 2;
+    var marriage = result.Nodes.Single(n => n.Node.Id == 1).Bounds.Center.Y;
+    lines.Should().Contain(c => EndsAt(result, c, 9, top: true));
+    lines.Should().Contain(c => c.Points.Contains(new PointF((float)couple, (float)marriage)), "its way up runs through the couple's drop");
+    lines.Should().Contain(c => c.Relation == FamilyTreeRelation.Spouse && Joins(result, c, 1, 2), "the drop hangs from the parents' marriage line");
+    lines.Should().NotContain(c => EndsAt(result, c, 10, top: true) || EndsAt(result, c, 11, top: true), "a sibling's stub is theirs alone");
+  }
+
+  [Fact]
+  public void Compute_AParentsLinesRunToEachOfTheirChildren()
+  {
+    var result = Layout(BowTie(), _metrics);
+
+    var lines = LinesOf(result, 1);
+
+    foreach (var child in new[] { 9, 10, 11 })
+      lines.Should().Contain(c => EndsAt(result, c, child, top: true), "child {0} is the centre's", child);
+    lines.Should().Contain(c => c.Relation == FamilyTreeRelation.Spouse && Joins(result, c, 1, 2));
+  }
+
+  [Fact]
+  public void Compute_UnmarriedParents_EachKeepTheirOwnDrop()
+  {
+    var result = Layout(TwoChildren(married: false), _metrics);
+
+    var childLines = LinesOf(result, 3);
+
+    LinesOf(result, 1).Should().NotContain(c => EndsAt(result, c, 2, top: false), "the mother's drop is no part of the father's way to a child");
+    childLines.Should().Contain(c => EndsAt(result, c, 1, top: false));
+    childLines.Should().Contain(c => EndsAt(result, c, 2, top: false));
+    childLines.Should().NotContain(c => EndsAt(result, c, 4, top: true));
+  }
+
+  [Fact]
+  public void Compute_PedigreeCollapse_AMarriageTheRowsCannotHoldIsStillTheirChildsLine()
+  {
+    var result = Layout(PedigreeCollapse(), _metrics);
+
+    var marriage = result.Connectors.Single(c => c.Relation == FamilyTreeRelation.Spouse && c.IsLoop && Joins(result, c, 4, 8));
+
+    marriage.PersonIds.Should().Contain(6, "Y is the son of X and Z, though X shares his row");
   }
 
   [Fact]

@@ -13,6 +13,7 @@ between them, centred on a focal person.
   - the `"OpenPerson"` toolbar command → open the centre in `PersonPage`.
 - While arranging (`IsArranging`), node taps do nothing.
 - Right-clicking any node but the centre offers "Hide from tree" (see Hiding, below).
+- Hovering a node highlights it and its own lines (see Hovering, below).
 
 ## State
 - `_Center` (a `Person?`) / `_CenterName`: the focal person and its formatted short name.
@@ -36,6 +37,7 @@ between them, centred on a focal person.
   which is the `OverlayClearance` gap keeping the tree clear of the pinned "load more"/zoom buttons.
   Those are fixed-size overlays, so that one metric follows the font scale that sizes them, never the
   zoom.
+- `_HoveredId`: the person under the pointer, whose ring and lines are drawn highlighted.
 - `_LoadOperationsCount`: reentrant in-flight-load counter backing `LoadInProgress`; the load-more
   buttons disable while any load is running.
 - `_NodeCache` / `_ConnectorPool`: retained node views and pooled connector shapes, reused across
@@ -150,6 +152,26 @@ between them, centred on a focal person.
 - `OnNavigatedTo` re-reads the stored set and reloads when it changed. PersonPage opens a tree of its
   own, so a hide made on a tree page stacked above this one would otherwise be written over by this
   page's next hide.
+
+## Hovering
+- Hover answers "who is this connected to?" without spending a gesture: a tap re-centres or opens the
+  person, and a right-click holds "Hide from tree". Each node carries a `PointerGestureRecognizer`
+  whose enter/exit commands call `SetHovered`; touch has no hover, so mobile has no entry point.
+- A highlight doubles the weight of the node's ring (`FamilyTreeNodeView.SetHighlighted`, which grows
+  it outward so the photo and name don't move) and of the person's own lines, which are also raised
+  above the plain ones. The colours stay as they are.
+- "Own lines" are those whose `FamilyTreeConnector.PersonIds` hold the person: the route up to each
+  parent, down to each child and across to each spouse, dashed loops included. A child's route also
+  takes in the parents' marriage line, which its drop hangs from. A sibling's stub stays plain:
+  `ConnectorRouter` splits each sibship bar at its columns, and a drop straight over a child at the
+  bar, so every piece carries only the routes drawn along it.
+- `SetHovered` restyles only the previous and the new person's lines. It unlights the previous one
+  first, since a node removed under the pointer never reports its exit, and an exit counts only for
+  the node still hovered, since it can arrive after the next node's enter.
+- `Render` clears the highlight before `UpdateConnectors` reuses the pool, while the pool still holds
+  the layout it was drawn against; `ClearRenderCache` just forgets it, since its paths are gone. The
+  highlight stays available while arranging and in Read-only mode, and the centre behaves like
+  anyone else.
 
 ## Connectors & theming
 - Each connector is an individual vector `Path` built by `FamilyTreeConnectorShape.Create` and added
