@@ -1119,6 +1119,9 @@ FN - Familienname</value>
   <data name="HintRelativeMultipleConnections" xml:space="preserve">
     <value>Diese Person ist über mehr als eine Verwandtschaftsbeziehung mit der Familie verbunden.</value>
   </data>
+  <data name="HintRelativesTruncated_1" xml:space="preserve">
+    <value>Die Liste endet nach {0} Einträgen, weiter entfernte Verwandte fehlen daher.</value>
+  </data>
   <data name="FieldFontScale" xml:space="preserve">
     <value>Textgröße</value>
   </data>

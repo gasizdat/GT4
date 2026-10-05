@@ -42,6 +42,8 @@ public partial class ProjectPage : ContentPage
   private readonly INavigationService _NavigationService;
   private readonly DataConverterResolver _DataConverterResolver;
   private readonly MainPersonResolver _MainPersonResolver;
+  private readonly IFamilyTreeHiddenPersonsStore _HiddenPersonsStore;
+  private readonly IFamilyTreeArrangementStore _ArrangementStore;
 
   private readonly FilteredObservableCollection<FamilyInfoItem> _Families = new();
   private bool _FamiliesLoaded;
@@ -64,7 +66,9 @@ public partial class ProjectPage : ContentPage
     INavigationService navigationService,
     IBiologicalSexFormatter biologicalSexFormatter,
     DataConverterResolver dataConverterResolver,
-    MainPersonResolver mainPersonResolver
+    MainPersonResolver mainPersonResolver,
+    IFamilyTreeHiddenPersonsStore hiddenPersonsStore,
+    IFamilyTreeArrangementStore arrangementStore
     )
   {
     _NameTypeFormatter = nameTypeFormatter;
@@ -81,6 +85,8 @@ public partial class ProjectPage : ContentPage
     _AlertService = alertService;
     _NavigationService = navigationService;
     _MainPersonResolver = mainPersonResolver;
+    _HiddenPersonsStore = hiddenPersonsStore;
+    _ArrangementStore = arrangementStore;
 
     // Set once: family visibility is re-evaluated via _Families.Update() (through UpdateFamilies),
     // not by reassigning this predicate.
@@ -442,15 +448,17 @@ public partial class ProjectPage : ContentPage
     if (!await _AlertService.ShowConfirmationAsync(UIStrings.AlertExportHtmlConfirm))
       return;
 
-    var projectName = _CurrentProjectProvider.Info.Name;
+    var projectInfo = _CurrentProjectProvider.Info;
+    var projectName = projectInfo.Name;
     var name = FileNameUtils.Sanitize(projectName, "project") + ".html";
     var path = Path.Combine(FileSystem.CacheDirectory, name + ProjectFileExtensions.ZipExtension);
+    var mainPerson = await ResolveMainPersonExportAsync(projectInfo);
 
     var dialog = new ProgressDialog(UIStrings.TitleHtmlExportDialog, projectName, UIStrings.HintHtmlExportInProgress, _AlertService);
     await Navigation.PushModalAsync(dialog);
     try
     {
-      await Task.Run(() => RunHtmlExportAsync(path, projectName, dialog.Token));
+      await Task.Run(() => RunHtmlExportAsync(path, projectName, mainPerson, dialog.Token));
     }
     catch (OperationCanceledException)
     {
@@ -466,10 +474,23 @@ public partial class ProjectPage : ContentPage
     await Share.Default.RequestAsync(request);
   }
 
-  private async Task RunHtmlExportAsync(string path, string projectName, CancellationToken token)
+  // Up front, not in the export's background run: a dangling main person raises an alert.
+  private async Task<MainPersonExport?> ResolveMainPersonExportAsync(ProjectInfo projectInfo)
+  {
+    using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+    var person = await _MainPersonResolver.TryResolveAsync(projectInfo, _CurrentProjectProvider.Project, token);
+    if (person is null)
+      return null;
+
+    var hiddenIds = _HiddenPersonsStore.Get(projectInfo);
+    var pins = _ArrangementStore.Get(projectInfo, person.Id);
+    return new MainPersonExport(person, hiddenIds, pins);
+  }
+
+  private async Task RunHtmlExportAsync(string path, string projectName, MainPersonExport? mainPerson, CancellationToken token)
   {
     await using var archive = new FileStream(path, FileMode.Create);
-    await _HtmlExporter.ExportAsync(_CurrentProjectProvider.Project, projectName, archive, token);
+    await _HtmlExporter.ExportAsync(_CurrentProjectProvider.Project, projectName, mainPerson, archive, token);
   }
 
   // Merges a GEDCOM file into the open project. Unlike the project list's import (which always lands in a

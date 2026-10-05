@@ -2465,7 +2465,16 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("HintRelativeMultipleConnections", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to The list stops at {0} entries, so more distant relatives are left out..
+        /// </summary>
+        public static string HintRelativesTruncated_1 {
+            get {
+                return ResourceManager.GetString("HintRelativesTruncated_1", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Arrange.
         /// </summary>

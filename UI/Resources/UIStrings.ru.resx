@@ -1119,6 +1119,9 @@ FN - род</value>
   <data name="HintRelativeMultipleConnections" xml:space="preserve">
     <value>Этот человек связан с семьёй более чем одним родством.</value>
   </data>
+  <data name="HintRelativesTruncated_1" xml:space="preserve">
+    <value>Список ограничен {0} записями, поэтому более дальние родственники не показаны.</value>
+  </data>
   <data name="FieldFontScale" xml:space="preserve">
     <value>Размер текста</value>
   </data>
