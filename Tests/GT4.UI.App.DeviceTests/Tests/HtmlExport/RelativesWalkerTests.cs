@@ -2,10 +2,11 @@ using FluentAssertions;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.UI.HtmlExport;
 using Moq;
 using Xunit;
 
-namespace GT4.Core.Project.Tests;
+namespace GT4.UI.DeviceTests;
 
 public sealed class RelativesWalkerTests
 {

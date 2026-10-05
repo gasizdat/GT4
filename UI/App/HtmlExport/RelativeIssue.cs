@@ -1,4 +1,4 @@
-namespace GT4.Core.Project.Dto;
+namespace GT4.UI.HtmlExport;
 
 public enum RelativeIssue
 {

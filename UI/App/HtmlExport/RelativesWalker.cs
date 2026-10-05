@@ -2,7 +2,7 @@ using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Project.Extensions;
 
-namespace GT4.Core.Project;
+namespace GT4.UI.HtmlExport;
 
 /// <summary>
 /// Expands relatives nearest first and lists them in tree order. Each person is expanded once: a repeat
