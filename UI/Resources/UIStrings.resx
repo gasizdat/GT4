@@ -1119,6 +1119,9 @@ FN - family name</value>
   <data name="HintRelativeMultipleConnections" xml:space="preserve">
     <value>This person connects to the family through more than one relationship.</value>
   </data>
+  <data name="HintRelativesTruncated_1" xml:space="preserve">
+    <value>The list stops at {0} entries, so more distant relatives are left out.</value>
+  </data>
   <data name="FieldFontScale" xml:space="preserve">
     <value>Text size</value>
   </data>

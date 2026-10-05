@@ -10,6 +10,7 @@ using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Extensions;
 using GT4.UI.Utils.Formatters;
+using GT4.UI.Utils.Genealogy;
 using Markdig;
 using Markdig.Renderers.Html;
 using Markdig.Syntax;
@@ -28,18 +29,24 @@ public sealed class HtmlExporter
 {
   private const string IndexPage = "index.html";
   private const string StatisticsPage = "statistics.html";
+  private const string MainPersonPage = "main-person.html";
   private const string StyleSheet = "style.css";
   private const string MediaFolder = "media";
+  private const int MaxRelativeRows = 500;
+  private const int MaxTreeNodes = 300;
 
   private static readonly HtmlTemplate DocumentTemplate = HtmlTemplate.Load("document.html");
   private static readonly HtmlTemplate IndexPageTemplate = HtmlTemplate.Load("index-page.html");
   private static readonly HtmlTemplate FamilyPageTemplate = HtmlTemplate.Load("family-page.html");
   private static readonly HtmlTemplate PersonPageTemplate = HtmlTemplate.Load("person-page.html");
   private static readonly HtmlTemplate StatisticsPageTemplate = HtmlTemplate.Load("statistics-page.html");
+  private static readonly HtmlTemplate MainPersonPageTemplate = HtmlTemplate.Load("main-person-page.html");
   private static readonly HtmlTemplate DefinitionsTemplate = HtmlTemplate.Load("definitions.html");
   private static readonly HtmlTemplate DecadeItemTemplate = HtmlTemplate.Load("decade-item.html");
   private static readonly HtmlTemplate NavigationTemplate = HtmlTemplate.Load("navigation.html");
   private static readonly HtmlTemplate NavigationFamilyTemplate = HtmlTemplate.Load("navigation-family.html");
+  private static readonly HtmlTemplate NavigationMainPersonTemplate = HtmlTemplate.Load("navigation-main-person.html");
+  private static readonly HtmlTemplate MainPersonLinkTemplate = HtmlTemplate.Load("main-person-link.html");
   private static readonly HtmlTemplate SectionTemplate = HtmlTemplate.Load("section.html");
   private static readonly HtmlTemplate ListTemplate = HtmlTemplate.Load("list.html");
   private static readonly HtmlTemplate FieldTemplate = HtmlTemplate.Load("field.html");
@@ -49,6 +56,11 @@ public sealed class HtmlExporter
   private static readonly HtmlTemplate InitialGroupTemplate = HtmlTemplate.Load("initial-group.html");
   private static readonly HtmlTemplate PersonItemTemplate = HtmlTemplate.Load("person-item.html");
   private static readonly HtmlTemplate RelativeItemTemplate = HtmlTemplate.Load("relative-item.html");
+  private static readonly HtmlTemplate RelativeIssueTemplate = HtmlTemplate.Load("relative-issue.html");
+  private static readonly HtmlTemplate NoteTemplate = HtmlTemplate.Load("note.html");
+  private static readonly HtmlTemplate TreeTemplate = HtmlTemplate.Load("tree.html");
+  private static readonly HtmlTemplate TreeNodeTemplate = HtmlTemplate.Load("tree-node.html");
+  private static readonly HtmlTemplate TreeConnectorTemplate = HtmlTemplate.Load("tree-connector.html");
   private static readonly HtmlTemplate AvatarTemplate = HtmlTemplate.Load("avatar.html");
   private static readonly HtmlTemplate AvatarEmptyTemplate = HtmlTemplate.Load("avatar-empty.html");
   private static readonly HtmlTemplate AvatarStubTemplate = HtmlTemplate.Load("avatar-stub.html");
@@ -98,13 +110,18 @@ public sealed class HtmlExporter
     _PersonInfoComparerByShortNames = personInfoComparerByShortNames;
   }
 
-  public async Task ExportAsync(IProjectDocument document, string projectName, Stream output, CancellationToken token)
+  public async Task ExportAsync(
+    IProjectDocument document,
+    string projectName,
+    MainPersonExport? mainPerson,
+    Stream output,
+    CancellationToken token)
   {
     using var archive = new ZipArchive(output, ZipArchiveMode.Create, leaveOpen: true);
     var persons = await document.PersonManager.GetPersonInfosAsync(selectMainPhoto: true, token);
     var families = await document.FamilyManager.GetFamiliesAsync(token);
-    HashSet<int> personIds = [.. persons.Select(person => person.Id)];
-    var site = new Site(archive, document, projectName, personIds, token);
+    var personsById = persons.ToDictionary(person => person.Id);
+    var site = new Site(archive, document, projectName, personsById, mainPerson?.Person, token);
 
     // Grouped as ProjectPage's family cards are, "No family" bucket included.
     var membersByNameId = persons
@@ -127,6 +144,11 @@ public sealed class HtmlExporter
     await site.WriteTextAsync(IndexPage, index);
     var statistics = await RenderStatisticsAsync(site, persons, families);
     await site.WriteTextAsync(StatisticsPage, statistics);
+    if (mainPerson is not null)
+    {
+      var page = await RenderMainPersonAsync(site, mainPerson);
+      await site.WriteTextAsync(MainPersonPage, page);
+    }
     foreach (var (family, members) in familyMembers)
     {
       var page = await RenderFamilyAsync(site, family, members);
@@ -151,11 +173,22 @@ public sealed class HtmlExporter
     return document.Markup;
   }
 
-  private static HtmlContent RenderNavigation(Site site, IEnumerable<Name> families)
+  private HtmlContent RenderNavigation(Site site, IEnumerable<Name> families)
   {
     var crumbs = families.Select(family => RenderFamilyLink(NavigationFamilyTemplate, family));
     var joined = HtmlContent.Join(crumbs);
-    return NavigationTemplate.Fill(("project", site.ProjectName), ("families", joined), ("statistics", UIStrings.TitleStatisticsPage));
+    var mainPerson = HtmlContent.Empty;
+    if (site.MainPerson is not null)
+    {
+      var name = _NameFormatter.ToString(site.MainPerson, NameFormat.ShortPersonName);
+      var label = string.Format(UIStrings.FieldMainPerson_1, name);
+      mainPerson = NavigationMainPersonTemplate.Fill(("name", label));
+    }
+    return NavigationTemplate.Fill(
+      ("project", site.ProjectName),
+      ("families", joined),
+      ("mainPerson", mainPerson),
+      ("statistics", UIStrings.TitleStatisticsPage));
   }
 
   private static HtmlContent RenderFamilyLink(HtmlTemplate template, Name family)
@@ -317,13 +350,126 @@ public sealed class HtmlExporter
     return RenderList("decades", items);
   }
 
-  // A CSS length, so the invariant culture: under a comma-decimal one the browser would drop the width.
   private static HtmlContent RenderDecade((string Decade, int Count) births, double rowLength)
   {
     var percent = births.Count / rowLength * 100;
-    var width = percent.ToString("0.#", CultureInfo.InvariantCulture);
+    var width = Length(percent);
     var count = births.Count.ToString();
     return DecadeItemTemplate.Fill(("decade", births.Decade), ("width", width), ("count", count));
+  }
+
+  // A CSS or SVG length, so the invariant culture: under a comma-decimal one the browser would drop it.
+  private static string Length(double value) => value.ToString("0.#", CultureInfo.InvariantCulture);
+
+  private async Task<string> RenderMainPersonAsync(Site site, MainPersonExport mainPerson)
+  {
+    var project = site.Document;
+    var token = site.Token;
+    var full = await project.PersonManager.GetPersonFullInfoAsync(mainPerson.Person, token);
+    var roots = await project.RelativesProvider.GetRootsAsync(full, token);
+    var walker = new RelativesWalker(project.RelativesProvider);
+    var (rows, isTruncated) = await walker.WalkAsync(roots, MaxRelativeRows, token);
+
+    var name = _NameFormatter.ToString(full, NameFormat.ShortPersonName);
+    var navigation = RenderNavigation(site, []);
+    var tree = await RenderTreeAsync(site, mainPerson, name);
+    var relatives = await RenderLineageAsync(site, rows, isTruncated, full.BirthDate);
+    var body = MainPersonPageTemplate.Fill(("name", name), ("tree", tree), ("relatives", relatives));
+    return RenderDocument(name, navigation, body);
+  }
+
+  private async Task<HtmlContent> RenderTreeAsync(Site site, MainPersonExport mainPerson, string name)
+  {
+    var tree = await BuildTreeAsync(site, mainPerson);
+    var layout = FamilyTreeLayout.Compute(tree, new FamilyTreeLayoutMetrics(), mainPerson.Pins);
+    var nodes = new List<HtmlContent>();
+    foreach (var node in layout.Nodes)
+    {
+      var item = await RenderTreeNodeAsync(site, node, tree.CenterId);
+      nodes.Add(item);
+    }
+    var connectors = layout.Connectors.Select(RenderConnector);
+    var joinedNodes = HtmlContent.Join(nodes);
+    var joinedConnectors = HtmlContent.Join(connectors);
+    var width = Length(layout.CanvasSize.Width);
+    var height = Length(layout.CanvasSize.Height);
+    var canvas = TreeTemplate.Fill(("width", width), ("height", height), ("connectors", joinedConnectors), ("nodes", joinedNodes));
+    var heading = string.Format(UIStrings.TitleFamilyTreePage_1, name);
+    return RenderSection(heading, canvas);
+  }
+
+  // The deepest tree within the budget, ancestors and descendants grown together. A step that adds
+  // nobody means the whole tree is already in.
+  private static async Task<FamilyTree> BuildTreeAsync(Site site, MainPersonExport mainPerson)
+  {
+    var provider = site.Document.FamilyTreeProvider;
+    var tree = await provider.BuildAsync(mainPerson.Person, 0, 0, includeCollaterals: false, mainPerson.HiddenIds, site.Token);
+    for (var generations = 1; ; generations++)
+    {
+      var grown = await provider.BuildAsync(mainPerson.Person, generations, generations, includeCollaterals: false, mainPerson.HiddenIds, site.Token);
+      if (grown.Nodes.Count > MaxTreeNodes || grown.Nodes.Count == tree.Nodes.Count)
+        return tree;
+
+      tree = grown;
+    }
+  }
+
+  private async Task<HtmlContent> RenderTreeNodeAsync(Site site, FamilyTreeNodeLayout node, int centerId)
+  {
+    var person = node.Node.Person;
+    var bounds = node.Bounds;
+    var nodeClass = person.Id == centerId ? "tree-node main" : "tree-node";
+    var href = PersonHref(person.Id);
+    var avatar = await RenderAvatarAsync(site, person.MainPhoto, person.BiologicalSex);
+    var name = _NameFormatter.ToString(person, NameFormat.ShortPersonName);
+    var dates = _LifeDatesFormatter.ToString(person, showDeathDate: true, showAge: false);
+    var left = Length(bounds.Left);
+    var top = Length(bounds.Top);
+    var width = Length(bounds.Width);
+    var height = Length(bounds.Height);
+    return TreeNodeTemplate.Fill(
+      ("class", nodeClass),
+      ("href", href),
+      ("left", left),
+      ("top", top),
+      ("width", width),
+      ("height", height),
+      ("avatar", avatar),
+      ("name", name),
+      ("dates", dates));
+  }
+
+  private static HtmlContent RenderConnector(FamilyTreeConnector connector)
+  {
+    var points = connector.Points.Select(point => Length(point.X) + "," + Length(point.Y));
+    var joined = string.Join(' ', points);
+    var relation = connector.Relation == FamilyTreeRelation.Spouse ? "spouse" : "parent";
+    var connectorClass = connector.IsLoop ? relation + " loop" : relation;
+    return TreeConnectorTemplate.Fill(("class", connectorClass), ("points", joined));
+  }
+
+  // Each row's relation date is against the row it was expanded from, as RelativeTree dates it.
+  private async Task<HtmlContent> RenderLineageAsync(Site site, RelativesWalkRow[] rows, bool isTruncated, Date personBirthDate)
+  {
+    if (rows.Length == 0)
+      return HtmlContent.Empty;
+
+    var items = new List<HtmlContent>();
+    foreach (var row in rows)
+    {
+      var parentBirthDate = row.Parent?.BirthDate ?? personBirthDate;
+      var item = await RenderRelativeItemAsync(site, row, parentBirthDate);
+      items.Add(item);
+    }
+    var list = RenderList("lineage", items);
+    var note = HtmlContent.Empty;
+    if (isTruncated)
+    {
+      var text = string.Format(UIStrings.HintRelativesTruncated_1, MaxRelativeRows);
+      note = NoteTemplate.Fill(("note", text));
+    }
+    var content = HtmlContent.Join([list, note]);
+    return RenderSection(UIStrings.LblRelatives, content);
   }
 
   private async Task<string> RenderFamilyAsync(Site site, Name family, PersonInfo[] members)
@@ -371,6 +517,9 @@ public sealed class HtmlExporter
     var dates = RenderDates(full);
     var photos = await RenderPhotosAsync(site, full.MainPhoto, full.AdditionalPhotos);
     var relatives = await RenderRelativesAsync(site, roots, full.BirthDate);
+    var mainPersonLink = person.Id == site.MainPerson?.Id
+      ? MainPersonLinkTemplate.Fill(("label", UIStrings.MenuItemNameFamilyTree))
+      : HtmlContent.Empty;
     var biographySection = await RenderBiographyAsync(site, biography);
     var attachmentList = await RenderAttachmentsAsync(site, attachments);
     var body = PersonPageTemplate.Fill(
@@ -380,6 +529,7 @@ public sealed class HtmlExporter
       ("dates", dates),
       ("photos", photos),
       ("relatives", relatives),
+      ("mainPersonLink", mainPersonLink),
       ("biography", biographySection),
       ("attachments", attachmentList));
     return RenderDocument(shortName, navigation, body);
@@ -464,15 +614,17 @@ public sealed class HtmlExporter
     var items = new List<HtmlContent>();
     foreach (var relative in relatives)
     {
-      var item = await RenderRelativeItemAsync(site, relative, personBirthDate);
+      var row = new RelativesWalkRow(relative, Parent: null, Depth: 0, RelativeIssue.None);
+      var item = await RenderRelativeItemAsync(site, row, personBirthDate);
       items.Add(item);
     }
     var list = RenderList("cards", items);
     return RenderSection(UIStrings.LblRelatives, list);
   }
 
-  private async Task<HtmlContent> RenderRelativeItemAsync(Site site, RelativeInfo relative, Date personBirthDate)
+  private async Task<HtmlContent> RenderRelativeItemAsync(Site site, RelativesWalkRow row, Date personBirthDate)
   {
+    var relative = row.Relative;
     var relation = new List<string>
     {
       _RelationshipTypeFormatter.ToString(relative.Type, relative.BiologicalSex, relative.Generation, relative.Consanguinity),
@@ -490,11 +642,27 @@ public sealed class HtmlExporter
     }
 
     var caption = string.Join(' ', relation);
+    var depth = row.Depth.ToString(CultureInfo.InvariantCulture);
     var href = PersonHref(relative.Id);
-    var avatar = await RenderAvatarAsync(site, relative.MainPhoto, relative.BiologicalSex);
+    // A walked row comes without its photo.
+    var mainPhoto = site.MainPhotoOf(relative.Id);
+    var avatar = await RenderAvatarAsync(site, mainPhoto, relative.BiologicalSex);
     var name = _NameFormatter.ToString(relative, NameFormat.CommonPersonName);
     var dates = _LifeDatesFormatter.ToString(relative, showDeathDate: true, showAge: true);
-    return RelativeItemTemplate.Fill(("href", href), ("avatar", avatar), ("relation", caption), ("name", name), ("dates", dates));
+    var issue = row.Issue switch
+    {
+      RelativeIssue.MultipleConnections => RelativeIssueTemplate.Fill(("hint", UIStrings.HintRelativeMultipleConnections)),
+      RelativeIssue.Loop => RelativeIssueTemplate.Fill(("hint", UIStrings.HintRelativeLoopDetected)),
+      _ => HtmlContent.Empty,
+    };
+    return RelativeItemTemplate.Fill(
+      ("depth", depth),
+      ("href", href),
+      ("avatar", avatar),
+      ("relation", caption),
+      ("name", name),
+      ("dates", dates),
+      ("issue", issue));
   }
 
   private static async Task<HtmlContent> RenderBiographyAsync(Site site, string biography)
@@ -627,7 +795,13 @@ public sealed class HtmlExporter
 
   private sealed record SiteLink(string Href, bool IsImage, Size? PixelSize);
 
-  private sealed class Site(ZipArchive archive, IProjectDocument document, string projectName, HashSet<int> personIds, CancellationToken token)
+  private sealed class Site(
+    ZipArchive archive,
+    IProjectDocument document,
+    string projectName,
+    Dictionary<int, PersonInfo> persons,
+    PersonInfo? mainPerson,
+    CancellationToken token)
   {
     private readonly Dictionary<int, SiteLink> _Media = [];
     private readonly HashSet<string> _Stubs = [];
@@ -636,9 +810,13 @@ public sealed class HtmlExporter
 
     public string ProjectName => projectName;
 
+    public PersonInfo? MainPerson => mainPerson;
+
     public CancellationToken Token => token;
 
-    public bool HasPerson(int personId) => personIds.Contains(personId);
+    public bool HasPerson(int personId) => persons.ContainsKey(personId);
+
+    public Data? MainPhotoOf(int personId) => persons[personId].MainPhoto;
 
     // A zip in Create mode allows one open entry at a time, so a page is written only once fully rendered.
     public Task WriteTextAsync(string path, string text)

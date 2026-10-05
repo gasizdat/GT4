@@ -1119,6 +1119,9 @@ FN - apellido familiar</value>
   <data name="HintRelativeMultipleConnections" xml:space="preserve">
     <value>Esta persona se conecta con la familia mediante más de un parentesco.</value>
   </data>
+  <data name="HintRelativesTruncated_1" xml:space="preserve">
+    <value>La lista se detiene en {0} entradas, así que los parientes más lejanos no aparecen.</value>
+  </data>
   <data name="FieldFontScale" xml:space="preserve">
     <value>Tamaño del texto</value>
   </data>
