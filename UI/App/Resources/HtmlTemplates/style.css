@@ -95,10 +95,9 @@ h3 { font-family: Georgia, "Times New Roman", serif; font-size: 1.25rem; margin:
 .rows .card:hover { background: var(--card); border-color: var(--line); box-shadow: none; }
 .rows .avatar { width: 2.5rem; height: 2.5rem; }
 
-/* Main person: every relative in tree order. The indent stops growing after a few levels, so a deep
-   pedigree still fits a phone. */
-.lineage { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
-.lineage li { padding-left: calc(min(var(--depth), 6) * 1.25rem); }
+/* Main person: every relative in tree order, indented per level as in the app */
+.lineage { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.5rem; }
+.lineage li { padding-left: calc(var(--depth) * 1.25rem); }
 .lineage .card { max-width: 30rem; }
 
 /* Main person: the family tree, cards placed over one layer of connectors */
@@ -153,4 +152,5 @@ h3 { font-family: Georgia, "Times New Roman", serif; font-size: 1.25rem; margin:
   .portrait { width: 9rem; }
   .facts { text-align: left; }
   .stats div { grid-template-columns: 1fr; }
+  .lineage li { padding-left: calc(var(--depth) * 0.625rem); }
 }
