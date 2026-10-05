@@ -730,6 +730,25 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task WithoutAPhoto_AnExpandedRowAndATreeCard_ShowTheDefaultPhotoForTheSex()
+  {
+    var document = await ImportAsync(LineageGedcom);
+    var tom = await PersonAsync("Tom", document);
+    var mary = await PersonAsync("Mary", document);
+    var stub = "<span class=\"avatar stub\" style=\"background-image:url('media/female_stub.png')\"></span>";
+
+    var site = await ExportAsync(document: document, mainPerson: MainPerson(tom));
+
+    var page = site.Page("main-person.html");
+    var row = Row(page, mary);
+    var start = page.IndexOf($"<a class=\"tree-node\" href=\"person-{mary.Id}.html\"");
+    var end = page.IndexOf("</a>", start);
+    var treeCard = page[start..end];
+    Assert.Contains(stub, row);
+    Assert.Contains(stub, treeCard);
+  }
+
+  [Fact]
   public async Task AListUnderTheCap_CarriesNoNote()
   {
     var document = await ImportAsync(LineageGedcom);
