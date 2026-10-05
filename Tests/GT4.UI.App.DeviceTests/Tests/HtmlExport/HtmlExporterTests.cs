@@ -4,6 +4,7 @@ using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.UI.HtmlExport;
 using GT4.UI.Resources;
+using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
 using GT4.UI.Utils.Genealogy;
 using Microsoft.Extensions.DependencyInjection;
@@ -186,6 +187,8 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
   {
     public string[] Names => [.. entries.Select(entry => entry.Name)];
 
+    public byte[] Content(string name) => entries.Single(entry => entry.Name == name).Content;
+
     public string Page(string name)
     {
       var page = entries.Single(entry => entry.Name == name);
@@ -339,18 +342,21 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
   }
 
   [Fact]
-  public async Task PersonPage_HeadsWithThePortraitOrASilhouette()
+  public async Task PersonPage_HeadsWithThePortraitOrTheDefaultPhotoForTheSex()
   {
     var john = await PersonAsync("John");
     var mary = await PersonAsync("Mary");
+    var solo = await PersonAsync("Solo");
     var portrait = $"<a class=\"portrait\" href=\"media/{john.MainPhoto!.Id}/photo.png\">";
 
     var site = await ExportAsync();
 
     var johnsPage = site.PersonPage(john);
     var marysPage = site.PersonPage(mary);
+    var solosPage = site.PersonPage(solo);
     Assert.Contains(portrait, johnsPage);
-    Assert.Contains("<span class=\"portrait\"></span>", marysPage);
+    Assert.Contains("<span class=\"portrait stub\" style=\"background-image:url('media/female_stub.png')\"></span>", marysPage);
+    Assert.Contains("<span class=\"portrait\"></span>", solosPage);
   }
 
   [Fact]
@@ -530,10 +536,12 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
   }
 
   [Fact]
-  public async Task PersonCards_ShowTheMainPhotoOrAnEmptyAvatar()
+  public async Task PersonCards_ShowTheMainPhotoOrTheDefaultPhotoForTheSex()
   {
     var john = await PersonAsync("John");
     var mary = await PersonAsync("Mary");
+    var tom = await PersonAsync("Tom");
+    var solo = await PersonAsync("Solo");
     var photo = $"src=\"media/{john.MainPhoto!.Id}/photo.png\"";
 
     var site = await ExportAsync();
@@ -541,8 +549,37 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
     var index = site.Page("index.html");
     var johnsCard = Card(index, john);
     var marysCard = Card(index, mary);
+    var tomsCard = Card(index, tom);
+    var solosCard = Card(index, solo);
     Assert.Contains(photo, johnsCard);
-    Assert.Contains("<span class=\"avatar\"></span>", marysCard);
+    Assert.Contains("<span class=\"avatar stub\" style=\"background-image:url('media/female_stub.png')\"></span>", marysCard);
+    Assert.Contains("<span class=\"avatar stub\" style=\"background-image:url('media/male_stub.png')\"></span>", tomsCard);
+    Assert.Contains("<span class=\"avatar\"></span>", solosCard);
+  }
+
+  // Tom's photo-less male card appears on several pages, but the zip holds his stub once.
+  [Fact]
+  public async Task TheDefaultPhotos_AreWrittenOncePerSex()
+  {
+    var site = await ExportAsync();
+
+    var stubs = site.Names.Where(name => name.EndsWith("_stub.png"));
+    Assert.Equal(["media/female_stub.png", "media/male_stub.png"], stubs.Order());
+    var male = site.Content("media/male_stub.png");
+    Assert.NotNull(ImageUtils.PixelSize(male));
+  }
+
+  [Fact]
+  public async Task WithoutAPhotolessPersonOfKnownSex_NoDefaultPhotoIsWritten()
+  {
+    var mary = await PersonAsync("Mary");
+    var tom = await PersonAsync("Tom");
+    await _Document.PersonManager.UpdatePersonAsync(mary with { BiologicalSex = BiologicalSex.Unknown }, Token);
+    await _Document.PersonManager.UpdatePersonAsync(tom with { BiologicalSex = BiologicalSex.Unknown }, Token);
+
+    var site = await ExportAsync();
+
+    Assert.DoesNotContain(site.Names, name => name.EndsWith("_stub.png"));
   }
 
   [Fact]
@@ -690,6 +727,25 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
 
     var row = Row(site.Page("main-person.html"), old);
     Assert.Contains($"src=\"media/{old.MainPhoto!.Id}/photo.png\"", row);
+  }
+
+  [Fact]
+  public async Task WithoutAPhoto_AnExpandedRowAndATreeCard_ShowTheDefaultPhotoForTheSex()
+  {
+    var document = await ImportAsync(LineageGedcom);
+    var tom = await PersonAsync("Tom", document);
+    var mary = await PersonAsync("Mary", document);
+    var stub = "<span class=\"avatar stub\" style=\"background-image:url('media/female_stub.png')\"></span>";
+
+    var site = await ExportAsync(document: document, mainPerson: MainPerson(tom));
+
+    var page = site.Page("main-person.html");
+    var row = Row(page, mary);
+    var start = page.IndexOf($"<a class=\"tree-node\" href=\"person-{mary.Id}.html\"");
+    var end = page.IndexOf("</a>", start);
+    var treeCard = page[start..end];
+    Assert.Contains(stub, row);
+    Assert.Contains(stub, treeCard);
   }
 
   [Fact]

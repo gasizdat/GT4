@@ -63,10 +63,12 @@ public sealed class HtmlExporter
   private static readonly HtmlTemplate TreeConnectorTemplate = HtmlTemplate.Load("tree-connector.html");
   private static readonly HtmlTemplate AvatarTemplate = HtmlTemplate.Load("avatar.html");
   private static readonly HtmlTemplate AvatarEmptyTemplate = HtmlTemplate.Load("avatar-empty.html");
+  private static readonly HtmlTemplate AvatarStubTemplate = HtmlTemplate.Load("avatar-stub.html");
   private static readonly HtmlTemplate AttachmentItemTemplate = HtmlTemplate.Load("attachment-item.html");
   private static readonly HtmlTemplate AttachmentFileNameTemplate = HtmlTemplate.Load("attachment-file-name.html");
   private static readonly HtmlTemplate PortraitTemplate = HtmlTemplate.Load("portrait.html");
   private static readonly HtmlTemplate PortraitEmptyTemplate = HtmlTemplate.Load("portrait-empty.html");
+  private static readonly HtmlTemplate PortraitStubTemplate = HtmlTemplate.Load("portrait-stub.html");
   private static readonly HtmlTemplate GalleryTemplate = HtmlTemplate.Load("gallery.html");
   private static readonly HtmlTemplate FigureTemplate = HtmlTemplate.Load("figure.html");
   private static readonly HtmlTemplate FigcaptionTemplate = HtmlTemplate.Load("figcaption.html");
@@ -204,10 +206,16 @@ public sealed class HtmlExporter
     return ListTemplate.Fill(("class", listClass), ("items", joined));
   }
 
-  private static async Task<HtmlContent> RenderAvatarAsync(Site site, Data? mainPhoto)
+  private static async Task<HtmlContent> RenderAvatarAsync(Site site, Data? mainPhoto, BiologicalSex sex)
   {
     if (mainPhoto is null)
-      return AvatarEmptyTemplate.Fill();
+    {
+      if (sex == BiologicalSex.Unknown)
+        return AvatarEmptyTemplate.Fill();
+
+      var stub = await site.WriteStubAsync(sex);
+      return AvatarStubTemplate.Fill(("src", stub));
+    }
 
     var media = await site.WriteMediaAsync(mainPhoto);
     return AvatarTemplate.Fill(("src", media.Href));
@@ -271,7 +279,7 @@ public sealed class HtmlExporter
   private async Task<HtmlContent> RenderPersonItemAsync(Site site, PersonInfo person, NameFormat nameFormat)
   {
     var href = PersonHref(person.Id);
-    var avatar = await RenderAvatarAsync(site, person.MainPhoto);
+    var avatar = await RenderAvatarAsync(site, person.MainPhoto, person.BiologicalSex);
     var name = _NameFormatter.ToString(person, nameFormat);
     var dates = _LifeDatesFormatter.ToString(person, showDeathDate: true, showAge: true);
     return PersonItemTemplate.Fill(("href", href), ("avatar", avatar), ("name", name), ("dates", dates));
@@ -412,7 +420,7 @@ public sealed class HtmlExporter
     var bounds = node.Bounds;
     var nodeClass = person.Id == centerId ? "tree-node main" : "tree-node";
     var href = PersonHref(person.Id);
-    var avatar = await RenderAvatarAsync(site, person.MainPhoto);
+    var avatar = await RenderAvatarAsync(site, person.MainPhoto, person.BiologicalSex);
     var name = _NameFormatter.ToString(person, NameFormat.ShortPersonName);
     var dates = _LifeDatesFormatter.ToString(person, showDeathDate: true, showAge: false);
     var left = Length(bounds.Left);
@@ -505,7 +513,7 @@ public sealed class HtmlExporter
     var fullName = _NameFormatter.ToString(full, NameFormat.FullPersonName);
     var families = full.Names.Where(name => name.Type.HasFlag(NameType.FamilyName)).DefaultIfEmpty(NoFamily.Name);
     var navigation = RenderNavigation(site, families);
-    var portrait = await RenderPortraitAsync(site, full.MainPhoto);
+    var portrait = await RenderPortraitAsync(site, full.MainPhoto, full.BiologicalSex);
     var dates = RenderDates(full);
     var photos = await RenderPhotosAsync(site, full.MainPhoto, full.AdditionalPhotos);
     var relatives = await RenderRelativesAsync(site, roots, full.BirthDate);
@@ -561,10 +569,16 @@ public sealed class HtmlExporter
   private static async Task<string?> ReadCaptionAsync(Site site, Data photo) =>
     photo.Category.IsTaggedPhoto() ? await GedcomPhotoResidue.ExtractTitleAsync(photo, site.Token) : null;
 
-  private static async Task<HtmlContent> RenderPortraitAsync(Site site, Data? mainPhoto)
+  private static async Task<HtmlContent> RenderPortraitAsync(Site site, Data? mainPhoto, BiologicalSex sex)
   {
     if (mainPhoto is null)
-      return PortraitEmptyTemplate.Fill();
+    {
+      if (sex == BiologicalSex.Unknown)
+        return PortraitEmptyTemplate.Fill();
+
+      var stub = await site.WriteStubAsync(sex);
+      return PortraitStubTemplate.Fill(("src", stub));
+    }
 
     var media = await site.WriteMediaAsync(mainPhoto);
     var caption = await ReadCaptionAsync(site, mainPhoto);
@@ -632,7 +646,7 @@ public sealed class HtmlExporter
     var href = PersonHref(relative.Id);
     // A walked row comes without its photo.
     var mainPhoto = site.MainPhotoOf(relative.Id);
-    var avatar = await RenderAvatarAsync(site, mainPhoto);
+    var avatar = await RenderAvatarAsync(site, mainPhoto, relative.BiologicalSex);
     var name = _NameFormatter.ToString(relative, NameFormat.CommonPersonName);
     var dates = _LifeDatesFormatter.ToString(relative, showDeathDate: true, showAge: true);
     var issue = row.Issue switch
@@ -790,6 +804,7 @@ public sealed class HtmlExporter
     CancellationToken token)
   {
     private readonly Dictionary<int, SiteLink> _Media = [];
+    private readonly HashSet<string> _Stubs = [];
 
     public IProjectDocument Document => document;
 
@@ -831,6 +846,21 @@ public sealed class HtmlExporter
       var link = new SiteLink(href, isImage, pixelSize);
       _Media[data.Id] = link;
       return link;
+    }
+
+    // The app's default photo for the sex, shared by everyone of that sex without a photo of their own.
+    public async Task<string> WriteStubAsync(BiologicalSex sex)
+    {
+      var name = ImageUtils.DefaultPersonPhotoResourceName(sex);
+      var path = MediaFolder + "/" + name;
+      if (!_Stubs.Add(path))
+        return path;
+
+      await using var asset = await FileSystem.OpenAppPackageFileAsync(name);
+      using var copy = new MemoryStream();
+      await asset.CopyToAsync(copy, token);
+      await WriteAsync(path, copy.ToArray());
+      return path;
     }
 
     // A biography can link any photo or attachment in the project, not only its own person's.
