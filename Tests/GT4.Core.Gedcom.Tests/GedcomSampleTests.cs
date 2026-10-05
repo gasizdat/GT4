@@ -229,6 +229,19 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task Import_AManRecordedInTheFemaleFormDoesNotMakeItInvariant()
+  {
+    // Иванова on a man is a mis-sexed record, not an invariant surname: Иванов claims the same plural.
+    await using var document = await ImportIndividualsAsync(
+      ("Иван", "Иванов", "M"),
+      ("Пётр", "Иванова", "M"),
+      ("Мария", "Иванова", "F"));
+
+    var paired = await LastNamesAsync(document, "Ивановы");
+    paired.Select(n => n.Value).Should().BeEquivalentTo("Иванов", "Иванова");
+  }
+
+  [Fact]
   public async Task Import_TwoMaleSpellingsOfOnePluralDoNotShareItsMaleSlot()
   {
     // Толстой and Толстый both pluralize to Толстые, but a family has one last name per declension: the

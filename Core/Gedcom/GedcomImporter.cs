@@ -61,7 +61,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     var existingPersons = await document.PersonManager.GetPersonInfosAsync(selectMainPhoto: false, token);
     var matches = await ResolveMatchesAsync(document, individuals, existingPersons, token);
     var existingEdges = await CollectExistingEdgesAsync(document, matches.Values, token);
-    var maleSurnames = CollectMaleSurnames(individuals, existingNames);
+    var invariantSurnames = CollectInvariantSurnames(individuals, existingNames);
 
     // One outer transaction on a single flow: every inner Add* collapses to a SAVEPOINT and the lone
     // root commit stamps the revision, so the import lands all-or-nothing. The two passes stay strictly
@@ -82,7 +82,7 @@ internal sealed class GedcomImporter : IGedcomImporter
       }
       else
       {
-        person = await ImportIndividualAsync(document, individual, nameCache, maleSurnames, recordsByXref, referencedMedia, mediaBasePath, token);
+        person = await ImportIndividualAsync(document, individual, nameCache, invariantSurnames, recordsByXref, referencedMedia, mediaBasePath, token);
       }
 
       if (individual.Xref is not null)
@@ -101,9 +101,10 @@ internal sealed class GedcomImporter : IGedcomImporter
       await ImportFamilyMediaAsync(document, family, personByXref, matches, attachments, referenced, referencedMedia, token);
     }
 
+    var pairedRecordFamilies = new HashSet<string>();
     foreach (var familyRecord in familyRecords)
     {
-      await ImportFamilyRecordAsync(document, familyRecord, recordsByXref, nameCache, mediaBasePath, token);
+      await ImportFamilyRecordAsync(document, familyRecord, recordsByXref, nameCache, pairedRecordFamilies, mediaBasePath, token);
     }
 
     await ImportPassthroughRecordsAsync(document, records, token);
@@ -320,6 +321,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     GedcomNode familyRecord,
     IReadOnlyDictionary<string, GedcomNode> recordsByXref,
     Dictionary<(string, NameType, int?), Name> nameCache,
+    HashSet<string> pairedRecordFamilies,
     string? mediaBasePath,
     CancellationToken token)
   {
@@ -329,10 +331,15 @@ internal sealed class GedcomImporter : IGedcomImporter
 
     // An export from before Russian families were paired names one by a member's singular surname, so
     // it maps to the plural -- unless a family already carries that exact name, as one left unpaired by
-    // BuildNamesAsync does.
+    // BuildNamesAsync does, or another record of the old split pair (Иванов, Иванова) already took the
+    // plural: the add-only guard below would drop this one's media.
     var plural = GedcomFamilyName.Plural(surname, NameType.MaleDeclension)
       ?? GedcomFamilyName.Plural(surname, NameType.FemaleDeclension);
-    var familyValue = plural is null || nameCache.ContainsKey((surname, NameType.FamilyName, null)) ? surname : plural;
+    var familyValue = plural is null
+      || nameCache.ContainsKey((surname, NameType.FamilyName, null))
+      || !pairedRecordFamilies.Add(plural)
+      ? surname
+      : plural;
     var family = await GetOrAddNameAsync(document, familyValue, NameType.FamilyName, null, nameCache, token);
 
     // AddNameDataSetAsync is add-only, so a re-import must skip categories the family already has --
@@ -397,17 +404,29 @@ internal sealed class GedcomImporter : IGedcomImporter
     return string.Equals(pedigree, GedcomTags.AdoptedPedigree, StringComparison.OrdinalIgnoreCase);
   }
 
-  // Collected up front so a woman's family does not depend on whether a man with her surname was read first.
-  private static HashSet<string> CollectMaleSurnames(GedcomNode[] individuals, Name[] existingNames)
+  /// <summary>
+  /// The female-looking surnames a man carries (Щербина), in this file or the project, which are therefore
+  /// invariant. One whose plural a man's male form also claims (Иванова next to Иванов) is a mis-sexed record
+  /// instead, and stays out so it cannot keep every real Иванова out of the paired family. Collected up front
+  /// so a woman's family does not depend on whether a man with her surname was read first.
+  /// </summary>
+  private static HashSet<string> CollectInvariantSurnames(GedcomNode[] individuals, Name[] existingNames)
   {
     var existing = existingNames
       .Where(name => name.Type == (NameType.LastName | NameType.MaleDeclension))
       .Select(name => name.Value);
-    return individuals
+    var maleSurnames = individuals
       .Where(individual => GedcomMapping.ParseSex(individual.ChildValue(GedcomTags.Sex)) == BiologicalSex.Male)
       .Select(individual => RawNameParts(individual).Surname)
       .OfType<string>()
       .Concat(existing)
+      .ToHashSet();
+    var malePlurals = maleSurnames
+      .Select(surname => GedcomFamilyName.Plural(surname, NameType.MaleDeclension))
+      .OfType<string>()
+      .ToHashSet();
+    return maleSurnames
+      .Where(surname => GedcomFamilyName.Plural(surname, NameType.FemaleDeclension) is { } plural && !malePlurals.Contains(plural))
       .ToHashSet();
   }
 
@@ -415,14 +434,14 @@ internal sealed class GedcomImporter : IGedcomImporter
     IProjectDocument document,
     GedcomNode individual,
     Dictionary<(string, NameType, int?), Name> nameCache,
-    HashSet<string> maleSurnames,
+    HashSet<string> invariantSurnames,
     IReadOnlyDictionary<string, GedcomNode> recordsByXref,
     Dictionary<GedcomNode, ReferencedMedia> referencedMedia,
     string? mediaBasePath,
     CancellationToken token)
   {
     var sex = GedcomMapping.ParseSex(individual.ChildValue(GedcomTags.Sex));
-    var names = await BuildNamesAsync(document, individual, sex, nameCache, maleSurnames, token);
+    var names = await BuildNamesAsync(document, individual, sex, nameCache, invariantSurnames, token);
     var biography = BuildBiography(individual);
     var photos = SelectPhotos(individual, recordsByXref, mediaBasePath);
     GedcomNode[] photoNodes = [.. photos.Select(p => p.Node)];
@@ -1017,7 +1036,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     GedcomNode individual,
     BiologicalSex sex,
     Dictionary<(string, NameType, int?), Name> nameCache,
-    HashSet<string> maleSurnames,
+    HashSet<string> invariantSurnames,
     CancellationToken token)
   {
     var nameNode = individual.Child(GedcomTags.Name);
@@ -1048,7 +1067,7 @@ internal sealed class GedcomImporter : IGedcomImporter
       // name lives under the family (the same shape FamilyManager.AddFamilyAsync builds) and is what the
       // exporter reads back as the surname.
       var trimmed = surname.Trim();
-      var familyValue = PairedFamily(trimmed, declension, nameCache, maleSurnames) ?? trimmed;
+      var familyValue = PairedFamily(trimmed, declension, nameCache, invariantSurnames) ?? trimmed;
       var family = await GetOrAddNameAsync(document, familyValue, NameType.FamilyName, null, nameCache, token);
       var lastName = await GetOrAddNameAsync(document, trimmed, NameType.LastName | declension, family, nameCache, token);
       names.Add(family);
@@ -1059,17 +1078,18 @@ internal sealed class GedcomImporter : IGedcomImporter
 
   /// <summary>
   /// The plural family a Russian surname's male and female forms share ("Иванов"/"Иванова" -> "Ивановы"),
-  /// or null when the person's family is named by the bare surname instead. A surname some man carries is
-  /// invariant whatever its ending (Щербина), and a family already holding another spelling for this
-  /// declension (Толстой next to Толстый) cannot take a second: every reader of that slot expects one.
+  /// or null when the person's family is named by the bare surname instead: an invariant surname
+  /// (<see cref="CollectInvariantSurnames"/>), or a family already holding another spelling for this
+  /// declension (Толстой next to Толстый), which cannot take a second because every reader of that slot
+  /// expects one.
   /// </summary>
   private static string? PairedFamily(
     string surname,
     NameType declension,
     Dictionary<(string, NameType, int?), Name> nameCache,
-    HashSet<string> maleSurnames)
+    HashSet<string> invariantSurnames)
   {
-    if (declension == NameType.FemaleDeclension && maleSurnames.Contains(surname))
+    if (invariantSurnames.Contains(surname))
       return null;
 
     var plural = GedcomFamilyName.Plural(surname, declension);

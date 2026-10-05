@@ -98,13 +98,18 @@ surname — Latin script, invariant (Черных), unknown sex, a woman recorde
 family named by the bare surname. Two more cases also keep the bare family (`PairedFamily`):
 
 - **A female-looking surname that some man also carries** (Щербина), in the file or the project.
-  It is invariant, so pairing it would split a woman from her brother.
+  It is invariant, so pairing it would split a woman from her brother. A man's surname whose plural
+  another man's male form already claims (SURN Иванова next to Иванов) is a mis-sexed record
+  instead, and doesn't count (`CollectInvariantSurnames`).
 - **A family whose slot for that sex already holds another spelling** (Толстой next to Толстый).
   `FamilyManager.GetRequiredNames` and the names UI read that slot with `SingleOrDefault`, so a
   second last name of one declension under a family makes them throw.
 
 A `_FAML` family-name record from an older export carries the singular, so it maps to the plural
-too, unless a family already holds that exact name.
+too. It keeps its exact name when a family already holds that name, or when another record in the
+same file already took the plural. An older export of a split family has one record for each form,
+and family media is add-only per category, so a second record mapped to the same plural would lose
+its media.
 
 ## Non-goals
 

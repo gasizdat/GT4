@@ -951,6 +951,52 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task FamilyRecord_BothRecordsOfAnOlderSplitPairKeepTheirMedia()
+  {
+    // Family media is add-only per category, so the second record must not resolve to the family the
+    // first one already gave a photo to.
+    var ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME Иван /Иванов/\n1 SEX M\n" +
+      "0 @I2@ INDI\n1 NAME Мария /Иванова/\n1 SEX F\n" +
+      $"0 @FM1@ {GedcomTags.FamilyRecord}\n1 NAME Иванов\n1 {GedcomTags.Object}\n2 {GedcomTags.Form} jpg\n2 {GedcomTags.Blob} WA==\n" +
+      $"0 @FM2@ {GedcomTags.FamilyRecord}\n1 NAME Иванова\n1 {GedcomTags.Object}\n2 {GedcomTags.Form} jpg\n2 {GedcomTags.Blob} WQ==\n" +
+      "0 TRLR\n";
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(ged), Token, _mediaPath);
+
+    var families = await reimported.Names.GetNamesByTypeAsync(NameType.FamilyName, Token);
+    var photos = new List<byte[]>();
+    foreach (var family in families)
+    {
+      var familyData = await reimported.NameData.GetNameDataSetAsync(family, DataCategory.FamilyMainPhoto, Token);
+      photos.AddRange(familyData.Select(d => d.Content));
+    }
+    photos.Should().BeEquivalentTo([Convert.FromBase64String("WA=="), Convert.FromBase64String("WQ==")]);
+  }
+
+  [Fact]
+  public async Task PairedFamilyMadeInTheApp_ReimportingItsOwnExportMatchesEveryMember()
+  {
+    // A member of unknown sex has the family but no last name, so the export writes no SURN for them:
+    // the identity has to read the last name alone, never fall back to the family's plural.
+    var family = await _source.FamilyManager.AddFamilyAsync("Ивановы", "Иванов", "Иванова", Token);
+    foreach (var (given, sex) in new[] { ("Иван", BiologicalSex.Male), ("Мария", BiologicalSex.Female), ("Саша", BiologicalSex.Unknown) })
+    {
+      var name = await _source.Names.AddNameAsync(given, NameType.FirstName, null, Token);
+      var info = PersonFullInfo.Empty with { BirthDate = Year(1900), BiologicalSex = sex, Names = [name] };
+      var required = await _source.FamilyManager.GetRequiredNames(family, info, Token);
+      await _source.PersonManager.AddPersonAsync(info with { Names = [name, .. required] }, Token);
+    }
+
+    var text = await ExportToTextAsync(_source);
+    await _importer.ImportAsync(_source, new StringReader(text), Token, _mediaPath);
+
+    (await _source.Persons.GetPersonsAsync(Token)).Should().HaveCount(3);
+  }
+
+  [Fact]
   public async Task FamilyMedia_OfAnUnpairedFemaleLookingFamilyStaysOnItAcrossARoundTrip()
   {
     // Малина is a man's surname here, so its family keeps the bare name and its record exports as
