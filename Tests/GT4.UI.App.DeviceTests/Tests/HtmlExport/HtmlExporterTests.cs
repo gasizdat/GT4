@@ -5,6 +5,7 @@ using GT4.Core.Project.Dto;
 using GT4.UI.HtmlExport;
 using GT4.UI.Resources;
 using GT4.UI.Utils.Formatters;
+using GT4.UI.Utils.Genealogy;
 using Microsoft.Extensions.DependencyInjection;
 using System.Globalization;
 using System.IO.Compression;
@@ -59,7 +60,43 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
     0 TRLR
     """;
 
+  // Three generations for the main-person page: Tom's grandfather Old holds the only photo, so it shows
+  // only if an expanded row still gets one.
+  private const string LineageGedcom = """
+    0 HEAD
+    1 CHAR UTF-8
+    0 @I1@ INDI
+    1 NAME Old /Smith/
+    1 SEX M
+    1 FAMS @F0@
+    1 OBJE
+    2 FILE portrait.png
+    3 FORM png
+    0 @I2@ INDI
+    1 NAME John /Smith/
+    1 SEX M
+    1 FAMC @F0@
+    1 FAMS @F1@
+    0 @I3@ INDI
+    1 NAME Mary /Smith/
+    1 SEX F
+    1 FAMS @F1@
+    0 @I4@ INDI
+    1 NAME Tom /Smith/
+    1 SEX M
+    1 FAMC @F1@
+    0 @F0@ FAM
+    1 HUSB @I1@
+    1 CHIL @I2@
+    0 @F1@ FAM
+    1 HUSB @I2@
+    1 WIFE @I3@
+    1 CHIL @I4@
+    0 TRLR
+    """;
+
   private readonly string _Folder = Path.Combine(Path.GetTempPath(), $"gt4_html_{Guid.NewGuid():N}");
+  private readonly List<IProjectDocument> _Documents = [];
   private IProjectDocument _Document = null!;
 
   private static CancellationToken Token => TestContext.Current.CancellationToken;
@@ -72,19 +109,28 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
     var recordPath = Path.Combine(_Folder, "marriage record.pdf");
     await File.WriteAllBytesAsync(portraitPath, portrait, Token);
     await File.WriteAllBytesAsync(recordPath, [0x25, 0x50, 0x44, 0x46], Token);
-
-    var factory = new TestServices().Provider.GetRequiredService<IProjectDocumentFactory>();
-    var projectPath = Path.Combine(_Folder, "project.gt4");
-    _Document = await factory.CreateNewAsync(projectPath, "Smiths", Token);
-    var importer = new ServiceCollection().AddGedcom().BuildServiceProvider().GetRequiredService<IGedcomImporter>();
-    using var reader = new StringReader(Gedcom);
-    await importer.ImportAsync(_Document, reader, Token, _Folder);
+    _Document = await ImportAsync(Gedcom);
   }
 
   public async ValueTask DisposeAsync()
   {
-    await _Document.DisposeAsync();
+    foreach (var document in _Documents)
+    {
+      await document.DisposeAsync();
+    }
     try { Directory.Delete(_Folder, recursive: true); } catch { /* best-effort temp cleanup */ }
+  }
+
+  private async Task<IProjectDocument> ImportAsync(string gedcom)
+  {
+    var factory = new TestServices().Provider.GetRequiredService<IProjectDocumentFactory>();
+    var projectPath = Path.Combine(_Folder, $"project{_Documents.Count}.gt4");
+    var document = await factory.CreateNewAsync(projectPath, "Smiths", Token);
+    _Documents.Add(document);
+    var importer = new ServiceCollection().AddGedcom().BuildServiceProvider().GetRequiredService<IGedcomImporter>();
+    using var reader = new StringReader(gedcom);
+    await importer.ImportAsync(document, reader, Token, _Folder);
+    return document;
   }
 
   // Just the signature and the IHDR dimensions, which is all the exporter reads to size an inline image.
@@ -98,11 +144,12 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
     return png;
   }
 
-  private async Task<PersonFullInfo> PersonAsync(string givenName)
+  private async Task<PersonFullInfo> PersonAsync(string givenName, IProjectDocument? document = null)
   {
-    var persons = await _Document.PersonManager.GetPersonInfosAsync(selectMainPhoto: false, Token);
+    document ??= _Document;
+    var persons = await document.PersonManager.GetPersonInfosAsync(selectMainPhoto: false, Token);
     var person = persons.Single(p => p.Names.Any(name => name.Value == givenName));
-    return await _Document.PersonManager.GetPersonFullInfoAsync(person, Token);
+    return await document.PersonManager.GetPersonFullInfoAsync(person, Token);
   }
 
   private async Task SetBiographyAsync(PersonFullInfo person, string markdown)
@@ -112,11 +159,15 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
     await _Document.PersonManager.UpdatePersonAsync(person with { Biography = biography }, Token);
   }
 
-  private async Task<Site> ExportAsync(CancellationToken token = default, string projectName = "Smiths")
+  private async Task<Site> ExportAsync(
+    CancellationToken token = default,
+    string projectName = "Smiths",
+    IProjectDocument? document = null,
+    MainPersonExport? mainPerson = null)
   {
     var exporter = new TestServices().Provider.GetRequiredService<HtmlExporter>();
     using var output = new MemoryStream();
-    await exporter.ExportAsync(_Document, projectName, output, token);
+    await exporter.ExportAsync(document ?? _Document, projectName, mainPerson, output, token);
 
     output.Position = 0;
     using var archive = new ZipArchive(output, ZipArchiveMode.Read);
@@ -165,6 +216,49 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
 
   [GeneratedRegex("<a class=\"card\"")]
   private static partial Regex CardPattern();
+
+  [GeneratedRegex("<a class=\"tree-node(?: main)?\" href=\"person-(\\d+)\\.html\" style=\"left:([0-9.]+)px")]
+  private static partial Regex TreeNodePattern();
+
+  // Root and eight generations of two children each, 511 persons numbered as a binary heap (Pn's children
+  // are P2n and P2n+1): more than the relatives list or the tree holds. One wide family would instead list
+  // all its children on each of their pages, enough to exhaust the test host.
+  private static string DescendantsGedcom()
+  {
+    const int count = 511;
+    const int parents = count / 2;
+    var persons = Enumerable.Range(1, count).Select(n =>
+    {
+      var name = n == 1 ? "Root" : $"P{n}";
+      var childOf = n == 1 ? string.Empty : $"\n1 FAMC @F{n / 2}@";
+      var parentIn = n > parents ? string.Empty : $"\n1 FAMS @F{n}@";
+      return $"0 @P{n}@ INDI\n1 NAME {name} /Heap/\n1 SEX M{childOf}{parentIn}";
+    });
+    var families = Enumerable.Range(1, parents).Select(n => $"0 @F{n}@ FAM\n1 HUSB @P{n}@\n1 CHIL @P{2 * n}@\n1 CHIL @P{(2 * n) + 1}@");
+    string[] lines = ["0 HEAD", "1 CHAR UTF-8", .. persons, .. families, "0 TRLR"];
+    return string.Join('\n', lines);
+  }
+
+  private static MainPersonExport MainPerson(PersonInfo person, int[]? hiddenIds = null, Dictionary<int, double>? pins = null) =>
+    new(person, hiddenIds ?? [], pins ?? []);
+
+  // A relatives-list row, from its item to where its card closes.
+  private static string Row(string page, Person person)
+  {
+    var card = page.IndexOf($"<a class=\"card\" href=\"person-{person.Id}.html\"");
+    Assert.True(card >= 0, $"No row for person {person.Id}.");
+    var start = page.LastIndexOf("<li", card);
+    var end = page.IndexOf("</a>", card);
+    return page[start..end];
+  }
+
+  private static Dictionary<int, double> TreeNodeLefts(string page)
+  {
+    var matches = TreeNodePattern().Matches(page);
+    return matches.ToDictionary(
+      match => int.Parse(match.Groups[1].Value),
+      match => double.Parse(match.Groups[2].Value, CultureInfo.InvariantCulture));
+  }
 
   [Fact]
   public async Task EveryLinkResolvesToAnEntryInTheArchive()
@@ -519,6 +613,169 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
     Assert.Contains("<title>&lt;b&gt;Smiths&lt;/b&gt;</title>", index);
     Assert.Contains("<h1>&lt;b&gt;Smiths&lt;/b&gt;</h1>", index);
     Assert.DoesNotContain("<b>", index);
+  }
+
+  [Fact]
+  public async Task WithAMainPerson_EveryPageLinksTheMainPersonPage()
+  {
+    var john = await PersonAsync("John");
+
+    var site = await ExportAsync(mainPerson: MainPerson(john));
+
+    Assert.Contains("main-person.html", site.Names);
+    Assert.All(site.Pages, name =>
+    {
+      var page = site.Page(name);
+      Assert.Contains("href=\"main-person.html\"", page);
+    });
+  }
+
+  [Fact]
+  public async Task WithoutAMainPerson_NoPageLinksAMainPersonPage()
+  {
+    var site = await ExportAsync();
+
+    Assert.DoesNotContain("main-person.html", site.Names);
+    Assert.All(site.Pages, name =>
+    {
+      var page = site.Page(name);
+      Assert.DoesNotContain("main-person.html", page);
+    });
+  }
+
+  [Fact]
+  public async Task OnlyTheMainPersonsOwnPage_LinksTheMainPersonPageBesideItsRelatives()
+  {
+    var john = await PersonAsync("John");
+    var mary = await PersonAsync("Mary");
+    const string link = "<p class=\"more\"><a href=\"main-person.html\">";
+
+    var site = await ExportAsync(mainPerson: MainPerson(john));
+
+    Assert.Contains(link, site.PersonPage(john));
+    Assert.DoesNotContain(link, site.PersonPage(mary));
+  }
+
+  // Old is listed by expanding John, yet labelled as Tom's grandfather.
+  [Fact]
+  public async Task AnExpandedRow_IsLabelledFromTheMainPerson()
+  {
+    var document = await ImportAsync(LineageGedcom);
+    var tom = await PersonAsync("Tom", document);
+    var old = await PersonAsync("Old", document);
+    var father = tom.RelativeInfos.Single(relative => relative.Type == RelationshipType.Parent && relative.BiologicalSex == BiologicalSex.Male);
+    var fathersRelatives = await document.RelativesProvider.GetRelativeInfosAsync(father, false, Token);
+    var grandfather = fathersRelatives.Single(relative => relative.Id == old.Id);
+    var formatter = new TestServices().Provider.GetRequiredService<IRelationshipTypeFormatter>();
+    var label = formatter.ToString(grandfather.Type, grandfather.BiologicalSex, grandfather.Generation, grandfather.Consanguinity);
+    var encodedLabel = System.Net.WebUtility.HtmlEncode(label);
+
+    var site = await ExportAsync(document: document, mainPerson: MainPerson(tom));
+
+    var row = Row(site.Page("main-person.html"), old);
+    Assert.Equal(new Generation(2), grandfather.Generation);
+    Assert.StartsWith("<li style=\"--depth:1\">", row);
+    Assert.Contains($"<span class=\"relation\">{encodedLabel}", row);
+  }
+
+  // The walk fetches relatives without their photos.
+  [Fact]
+  public async Task AnExpandedRow_ShowsTheRelativesMainPhoto()
+  {
+    var document = await ImportAsync(LineageGedcom);
+    var tom = await PersonAsync("Tom", document);
+    var old = await PersonAsync("Old", document);
+
+    var site = await ExportAsync(document: document, mainPerson: MainPerson(tom));
+
+    var row = Row(site.Page("main-person.html"), old);
+    Assert.Contains($"src=\"media/{old.MainPhoto!.Id}/photo.png\"", row);
+  }
+
+  [Fact]
+  public async Task AListUnderTheCap_CarriesNoNote()
+  {
+    var document = await ImportAsync(LineageGedcom);
+    var tom = await PersonAsync("Tom", document);
+
+    var site = await ExportAsync(document: document, mainPerson: MainPerson(tom));
+
+    var page = site.Page("main-person.html");
+    Assert.DoesNotContain("class=\"note\"", page);
+  }
+
+  [Fact]
+  public async Task AListCutByTheCap_EndsWithANote()
+  {
+    var document = await ImportAsync(DescendantsGedcom());
+    var root = await PersonAsync("Root", document);
+    var note = string.Format(UIStrings.HintRelativesTruncated_1, 500);
+    var encodedNote = System.Net.WebUtility.HtmlEncode(note);
+
+    var site = await ExportAsync(document: document, mainPerson: MainPerson(root));
+
+    var page = site.Page("main-person.html");
+    Assert.Equal(500, CardPattern().Count(page));
+    Assert.Contains($"<p class=\"note\">{encodedNote}</p>", page);
+  }
+
+  // Seven generations hold 255 persons; the eighth would take the tree to 511.
+  [Fact]
+  public async Task TheTree_KeepsTheDeepestGenerationWithinTheNodeBudget()
+  {
+    var document = await ImportAsync(DescendantsGedcom());
+    var root = await PersonAsync("Root", document);
+
+    var site = await ExportAsync(document: document, mainPerson: MainPerson(root));
+
+    var lefts = TreeNodeLefts(site.Page("main-person.html"));
+    Assert.Equal(255, lefts.Count);
+  }
+
+  [Fact]
+  public async Task TheTree_HasOneCardPerPersonLinkingToTheirPage()
+  {
+    var document = await ImportAsync(LineageGedcom);
+    var persons = await document.PersonManager.GetPersonInfosAsync(selectMainPhoto: false, Token);
+    var tom = await PersonAsync("Tom", document);
+
+    var site = await ExportAsync(document: document, mainPerson: MainPerson(tom));
+
+    var page = site.Page("main-person.html");
+    var lefts = TreeNodeLefts(page);
+    var personIds = persons.Select(person => person.Id);
+    Assert.Equal(personIds.Order(), lefts.Keys.Order());
+    Assert.Contains($"<a class=\"tree-node main\" href=\"person-{tom.Id}.html\"", page);
+  }
+
+  [Fact]
+  public async Task AHiddenPerson_HasNoTreeCardButStaysInTheRelativesList()
+  {
+    var document = await ImportAsync(LineageGedcom);
+    var tom = await PersonAsync("Tom", document);
+    var old = await PersonAsync("Old", document);
+
+    var site = await ExportAsync(document: document, mainPerson: MainPerson(tom, hiddenIds: [old.Id]));
+
+    var page = site.Page("main-person.html");
+    var lefts = TreeNodeLefts(page);
+    Assert.DoesNotContain(old.Id, lefts.Keys);
+    Assert.Contains(tom.Id, lefts.Keys);
+    Assert.Contains($"<a class=\"card\" href=\"person-{old.Id}.html\"", page);
+  }
+
+  [Fact]
+  public async Task ASavedArrangement_PlacesThePinnedCardInItsColumn()
+  {
+    var document = await ImportAsync(LineageGedcom);
+    var tom = await PersonAsync("Tom", document);
+    var mary = await PersonAsync("Mary", document);
+    var pitch = new FamilyTreeLayoutMetrics().SlotPitch;
+
+    var site = await ExportAsync(document: document, mainPerson: MainPerson(tom, pins: new() { [mary.Id] = 3 }));
+
+    var lefts = TreeNodeLefts(site.Page("main-person.html"));
+    Assert.Equal(lefts[tom.Id] + (3 * pitch), lefts[mary.Id]);
   }
 
   [Fact]
