@@ -179,7 +179,6 @@ public sealed class GedcomSampleTests : IAsyncLifetime
       (female, NameType.LastName | NameType.FemaleDeclension),
     ]);
 
-    // Each person still shows their own surname, not the family's plural.
     var members = await document.PersonManager.GetPersonInfosByNameAsync(familyName, selectMainPhoto: false, Token);
     members.Select(m => m.DisplayName).Should().BeEquivalentTo($"Иван {male}", $"Мария {female}");
   }
@@ -201,8 +200,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   [Fact]
   public async Task Import_AWomanRecordedInTheMaleFormDoesNotKeepTheRealFemaleFormOutOfThePairedFamily()
   {
-    // Read first, she must not claim the paired family's female slot: if she did, every Иванова after her
-    // would be pushed into a family of her own, and which one got the slot would depend on file order.
+    // She is read first, so a slot she took would make the pairing depend on file order.
     await using var document = await ImportIndividualsAsync(
       ("Ольга", "Иванов", "F"),
       ("Мария", "Иванова", "F"),
@@ -218,7 +216,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   [Fact]
   public async Task Import_AFemaleLookingSurnameAManAlsoCarriesStaysOneUnpairedFamily()
   {
-    // Щербина is invariant: the woman is read before her brother, and still must not land in "Щербины".
+    // The woman is read before her brother.
     await using var document = await ImportIndividualsAsync(
       ("Анна", "Щербина", "F"),
       ("Пётр", "Щербина", "M"),
@@ -231,7 +229,6 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   [Fact]
   public async Task Import_AManRecordedInTheFemaleFormDoesNotMakeItInvariant()
   {
-    // Иванова on a man is a mis-sexed record, not an invariant surname: Иванов claims the same plural.
     await using var document = await ImportIndividualsAsync(
       ("Иван", "Иванов", "M"),
       ("Пётр", "Иванова", "M"),
@@ -244,8 +241,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   [Fact]
   public async Task Import_TwoMaleSpellingsOfOnePluralDoNotShareItsMaleSlot()
   {
-    // Толстой and Толстый both pluralize to Толстые, but a family has one last name per declension: the
-    // second spelling keeps a family of its own rather than a second male slot that readers throw on.
+    // Both spellings pluralize to Толстые.
     await using var document = await ImportIndividualsAsync(("Лев", "Толстой", "M"), ("Пётр", "Толстый", "M"));
 
     var families = await document.FamilyManager.GetFamiliesAsync(Token);

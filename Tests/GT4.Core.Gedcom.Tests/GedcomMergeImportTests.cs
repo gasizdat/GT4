@@ -224,8 +224,6 @@ public sealed class GedcomMergeImportTests : IAsyncLifetime
   [Fact]
   public async Task ExistingFamilyWithAnotherFemaleSpelling_GetsNoSecondFemaleLastName()
   {
-    // The family's female slot was edited in the app; the incoming Иванова keeps a family of her own
-    // rather than a second female last name, which FamilyManager.GetRequiredNames would throw on.
     await using var document = await NewDocumentAsync();
     var family = await document.FamilyManager.AddFamilyAsync("Ивановы", "Иванов", "Иванова-Петрова", Token);
 

@@ -953,8 +953,6 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
   [Fact]
   public async Task FamilyRecord_BothRecordsOfAnOlderSplitPairKeepTheirMedia()
   {
-    // Family media is add-only per category, so the second record must not resolve to the family the
-    // first one already gave a photo to.
     var ged =
       "0 HEAD\n1 CHAR UTF-8\n" +
       "0 @I1@ INDI\n1 NAME Иван /Иванов/\n1 SEX M\n" +
@@ -979,8 +977,7 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
   [Fact]
   public async Task PairedFamilyMadeInTheApp_ReimportingItsOwnExportMatchesEveryMember()
   {
-    // A member of unknown sex has the family but no last name, so the export writes no SURN for them:
-    // the identity has to read the last name alone, never fall back to the family's plural.
+    // The unknown-sex member has no last name, so the export writes no SURN for them.
     var family = await _source.FamilyManager.AddFamilyAsync("Ивановы", "Иванов", "Иванова", Token);
     foreach (var (given, sex) in new[] { ("Иван", BiologicalSex.Male), ("Мария", BiologicalSex.Female), ("Саша", BiologicalSex.Unknown) })
     {
@@ -999,8 +996,7 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
   [Fact]
   public async Task FamilyMedia_OfAnUnpairedFemaleLookingFamilyStaysOnItAcrossARoundTrip()
   {
-    // Малина is a man's surname here, so its family keeps the bare name and its record exports as
-    // "Малина"; mapping that record by its ending alone would move the photo to an orphan "Малины".
+    // A man's Малина keeps the bare family, so its record exports as "Малина", which looks singular.
     var name = await _source.Names.AddNameAsync("Игорь", NameType.FirstName | NameType.MaleDeclension, null, Token);
     var family = await _source.Names.AddNameAsync("Малина", NameType.FamilyName, null, Token);
     var lastName = await _source.Names.AddNameAsync("Малина", NameType.LastName | NameType.MaleDeclension, family, Token);

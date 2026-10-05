@@ -3,13 +3,12 @@ using GT4.Core.Project.Dto;
 namespace GT4.Core.Gedcom;
 
 /// <summary>
-/// The plural a Russian family is named by in GT4 ("Ивановы"), derived from one member's own gendered
-/// surname -- the inverse of the UI's NameDeclension rules, which derive the singular forms from it.
+/// The plural a Russian family is named by in GT4 ("Ивановы") from a member's gendered surname: the
+/// inverse of the UI's NameDeclension rules.
 /// </summary>
 internal static class GedcomFamilyName
 {
-  // The letters after which an adjectival plural is spelled -ие rather than -ые.
-  private const string Hushing = "гкхжшчщ";
+  private const string VelarsAndSibilants = "гкхжшчщ";
 
   // A null plural is adjectival: it depends on the letter before the ending.
   private static readonly (string Ending, NameType Declension, string? Plural)[] Rules =
@@ -32,8 +31,8 @@ internal static class GedcomFamilyName
   ];
 
   /// <summary>
-  /// The family plural of a Cyrillic surname whose ending is the <paramref name="declension"/>'s form, or
-  /// null for any other surname, which names its family as is.
+  /// The family plural of a Cyrillic surname whose ending is the <paramref name="declension"/>'s form,
+  /// else null.
   /// </summary>
   public static string? Plural(string surname, NameType declension)
   {
@@ -51,7 +50,7 @@ internal static class GedcomFamilyName
     return null;
   }
 
-  private static string AdjectivalPlural(char last) => Hushing.Contains(last) ? "ие" : "ые";
+  private static string AdjectivalPlural(char last) => VelarsAndSibilants.Contains(last) ? "ие" : "ые";
 
   private static bool IsCyrillicLetter(char c) => c is >= 'Ѐ' and <= 'ӿ' && char.IsLetter(c);
 }

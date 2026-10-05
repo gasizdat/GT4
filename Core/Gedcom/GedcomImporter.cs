@@ -267,8 +267,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     }
   }
 
-  // The person's own last name, not their family: export writes it back as the SURN, while a Russian
-  // family is named by the plural both its male and female surnames share.
+  // The last name alone, never the family: export writes only the last name back as SURN.
   private static PersonIdentity? ExistingIdentity(PersonInfo person)
   {
     var firstName = person.Names.FirstOrDefault(name => name.Type.HasFlag(NameType.FirstName))?.Value;
@@ -329,10 +328,8 @@ internal sealed class GedcomImporter : IGedcomImporter
     if (string.IsNullOrWhiteSpace(surname))
       return;
 
-    // An export from before Russian families were paired names one by a member's singular surname, so
-    // it maps to the plural -- unless a family already carries that exact name, as one left unpaired by
-    // BuildNamesAsync does, or another record of the old split pair (Иванов, Иванова) already took the
-    // plural: the add-only guard below would drop this one's media.
+    // An older export's singular name maps to the plural, unless a family already has that exact name
+    // or another record took the plural first: the add-only guard below would drop this one's media.
     var plural = GedcomFamilyName.Plural(surname, NameType.MaleDeclension)
       ?? GedcomFamilyName.Plural(surname, NameType.FemaleDeclension);
     var familyValue = plural is null
@@ -405,10 +402,8 @@ internal sealed class GedcomImporter : IGedcomImporter
   }
 
   /// <summary>
-  /// The female-looking surnames a man carries (Щербина), in this file or the project, which are therefore
-  /// invariant. One whose plural a man's male form also claims (Иванова next to Иванов) is a mis-sexed record
-  /// instead, and stays out so it cannot keep every real Иванова out of the paired family. Collected up front
-  /// so a woman's family does not depend on whether a man with her surname was read first.
+  /// The female-looking surnames a man carries in this file or the project (Щербина), which are invariant;
+  /// one whose plural a man's male form also gives (Иванова next to Иванов) is a mis-sexed record instead.
   /// </summary>
   private static HashSet<string> CollectInvariantSurnames(GedcomNode[] individuals, Name[] existingNames)
   {
@@ -1077,11 +1072,8 @@ internal sealed class GedcomImporter : IGedcomImporter
   }
 
   /// <summary>
-  /// The plural family a Russian surname's male and female forms share ("Иванов"/"Иванова" -> "Ивановы"),
-  /// or null when the person's family is named by the bare surname instead: an invariant surname
-  /// (<see cref="CollectInvariantSurnames"/>), or a family already holding another spelling for this
-  /// declension (Толстой next to Толстый), which cannot take a second because every reader of that slot
-  /// expects one.
+  /// The plural family a Russian surname's male and female forms share, or null to keep the bare surname.
+  /// A family holds one last name per declension: every reader of that slot expects one.
   /// </summary>
   private static string? PairedFamily(
     string surname,
