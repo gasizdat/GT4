@@ -36,7 +36,6 @@ internal static class GedcomFamilyName
   /// </summary>
   public static string? Plural(string surname, NameType declension)
   {
-    // A decomposed й or ё is a base letter plus a combining mark outside the Russian alphabet.
     var composed = surname.Normalize();
     if (!composed.All(IsRussianLetter))
       return null;
