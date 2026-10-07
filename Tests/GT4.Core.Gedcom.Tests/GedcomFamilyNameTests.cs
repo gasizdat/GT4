@@ -34,6 +34,16 @@ public sealed class GedcomFamilyNameTests
   }
 
   [Theory]
+  [InlineData("Толстой", NameType.MaleDeclension, "Толстые")]
+  [InlineData("Достоевский", NameType.MaleDeclension, "Достоевские")]
+  [InlineData("Королёв", NameType.MaleDeclension, "Королёвы")]
+  [InlineData("Королёва", NameType.FemaleDeclension, "Королёвы")]
+  public void Plural_PairsADecomposedSurnameWithItsComposedFamily(string surname, NameType declension, string family)
+  {
+    GedcomFamilyName.Plural(surname, declension).Should().Be(family);
+  }
+
+  [Theory]
   [InlineData("Иванова", NameType.MaleDeclension)]
   [InlineData("Иванов", NameType.FemaleDeclension)]
   [InlineData("Иванов", (NameType)0)]
@@ -46,6 +56,10 @@ public sealed class GedcomFamilyNameTests
   [InlineData("ИВАНОВ", NameType.MaleDeclension)]
   [InlineData("Ivanov", NameType.MaleDeclension)]
   [InlineData("Ivanova", NameType.FemaleDeclension)]
+  [InlineData("Білов", NameType.MaleDeclension)]
+  [InlineData("Білова", NameType.FemaleDeclension)]
+  [InlineData("Ґонтаров", NameType.MaleDeclension)]
+  [InlineData("Іванова", NameType.FemaleDeclension)]
   [InlineData("Ов", NameType.MaleDeclension)]
   [InlineData("Ивановы", NameType.MaleDeclension)]
   [InlineData("Ивановы", NameType.FemaleDeclension)]

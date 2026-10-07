@@ -31,20 +31,22 @@ internal static class GedcomFamilyName
   ];
 
   /// <summary>
-  /// The family plural of a Cyrillic surname whose ending is the <paramref name="declension"/>'s form,
+  /// The family plural of a Russian surname whose ending is the <paramref name="declension"/>'s form,
   /// else null.
   /// </summary>
   public static string? Plural(string surname, NameType declension)
   {
-    if (!surname.All(IsCyrillicLetter))
+    // A decomposed й or ё is a base letter plus a combining mark outside the Russian alphabet.
+    var composed = surname.Normalize();
+    if (!composed.All(IsRussianLetter))
       return null;
 
     foreach (var (ending, ruleDeclension, plural) in Rules)
     {
-      if (ruleDeclension != declension || surname.Length <= ending.Length || !surname.EndsWith(ending, StringComparison.Ordinal))
+      if (ruleDeclension != declension || composed.Length <= ending.Length || !composed.EndsWith(ending, StringComparison.Ordinal))
         continue;
 
-      var stem = surname[..^ending.Length];
+      var stem = composed[..^ending.Length];
       return stem + (plural ?? AdjectivalPlural(stem[^1]));
     }
     return null;
@@ -52,5 +54,5 @@ internal static class GedcomFamilyName
 
   private static string AdjectivalPlural(char last) => VelarsAndSibilants.Contains(last) ? "ие" : "ые";
 
-  private static bool IsCyrillicLetter(char c) => c is >= 'Ѐ' and <= 'ӿ' && char.IsLetter(c);
+  private static bool IsRussianLetter(char c) => c is >= 'А' and <= 'я' or 'Ё' or 'ё';
 }

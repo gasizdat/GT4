@@ -93,9 +93,12 @@ GEDCOM records each person's own surname, so a Russian file carries Иванов
 Иванова for the women of one family. `GedcomImporter.BuildNamesAsync` files both under the plural
 GT4 names a Russian family by ("Ивановы", the shape `FamilyManager.AddFamilyAsync` builds), with
 each person's surname as the last name for their sex. `GedcomFamilyName.Plural` derives the plural
-only from a Cyrillic surname whose gendered ending agrees with the person's `SEX`. Every other
-surname — Latin script, invariant (Черных), unknown sex, a woman recorded in the male form — keeps a
-family named by the bare surname. Two more cases also keep the bare family (`PairedFamily`):
+only from a surname written in the Russian alphabet (composed first, so a decomposed й or ё
+counts) whose gendered ending agrees with the person's `SEX`. Every other surname — Latin script,
+another Cyrillic alphabet (Ukrainian Білов, whose family is Білови), invariant (Черных), unknown
+sex, a woman recorded in the male form — keeps a family named by the bare surname. Letters can't
+tell a Bulgarian Иванов from a Russian one, so a Bulgarian file still gets Russian plurals. Two
+more cases also keep the bare family (`PairedFamily`):
 
 - **A female-looking surname that some man also carries** (Щербина), in the file or the project.
   It is invariant, so pairing it would split a woman from her brother. A man's surname whose plural
