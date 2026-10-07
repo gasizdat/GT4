@@ -92,6 +92,30 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     return new StreamReader(stream, Encoding.UTF8);
   }
 
+  private async Task<ProjectDocument> ImportIndividualsAsync(params (string Given, string Surname, string? Sex)[] individuals)
+  {
+    var ged = new StringBuilder("0 HEAD\n1 CHAR UTF-8\n");
+    foreach (var (index, (given, surname, sex)) in individuals.Index())
+    {
+      ged.Append($"0 @I{index}@ INDI\n1 NAME {given} /{surname}/\n");
+      if (sex is not null)
+        ged.Append($"1 SEX {sex}\n");
+    }
+    ged.Append("0 TRLR\n");
+
+    var document = await NewDocumentAsync();
+    await _importer.ImportAsync(document, new StringReader(ged.ToString()), Token);
+    return document;
+  }
+
+  private static async Task<Name[]> LastNamesAsync(ProjectDocument document, string family)
+  {
+    var families = await document.FamilyManager.GetFamiliesAsync(Token);
+    var familyName = families.Single(f => f.Value == family);
+    var names = await document.Names.TryGetNameWithSubnamesByIdAsync(familyName.Id, Token);
+    return [.. names!.Where(n => n.ParentId == familyName.Id)];
+  }
+
   [Fact]
   public async Task Family_ImportsPersonFieldsMarriageAndBothChildKinds()
   {
@@ -134,6 +158,97 @@ public sealed class GedcomSampleTests : IAsyncLifetime
     var williams = families.Single(f => f.Value == "Williams");
     var members = await document.PersonManager.GetPersonInfosByNameAsync(williams, selectMainPhoto: false, Token);
     members.Select(m => m.DisplayName).Should().BeEquivalentTo("Robert Eugene Williams", "Joe Williams", "Anna Williams");
+  }
+
+  [Theory]
+  [InlineData("Иванов", "Иванова", "Ивановы")]
+  [InlineData("Толстой", "Толстая", "Толстые")]
+  [InlineData("Достоевский", "Достоевская", "Достоевские")]
+  public async Task Import_PairsRussianMaleAndFemaleSurnamesUnderOnePluralFamily(string male, string female, string family)
+  {
+    await using var document = await ImportIndividualsAsync(("Иван", male, "M"), ("Мария", female, "F"));
+
+    var families = await document.FamilyManager.GetFamiliesAsync(Token);
+    var familyName = families.Should().ContainSingle().Which;
+    familyName.Value.Should().Be(family);
+
+    var lastNames = await LastNamesAsync(document, family);
+    lastNames.Select(n => (n.Value, n.Type)).Should().BeEquivalentTo(
+    [
+      (male, NameType.LastName | NameType.MaleDeclension),
+      (female, NameType.LastName | NameType.FemaleDeclension),
+    ]);
+
+    var members = await document.PersonManager.GetPersonInfosByNameAsync(familyName, selectMainPhoto: false, Token);
+    members.Select(m => m.DisplayName).Should().BeEquivalentTo($"Иван {male}", $"Мария {female}");
+  }
+
+  [Fact]
+  public async Task Import_KeepsTheBareSurnameFamilyForInvariantLatinAndSexlessSurnames()
+  {
+    await using var document = await ImportIndividualsAsync(
+      ("Пётр", "Черных", "M"),
+      ("Анна", "Черных", "F"),
+      ("John", "Kennedy", "M"),
+      ("Rose", "Kennedy", "F"),
+      ("Олег", "Петров", null));
+
+    var families = await document.FamilyManager.GetFamiliesAsync(Token);
+    families.Select(f => f.Value).Should().BeEquivalentTo("Черных", "Kennedy", "Петров");
+  }
+
+  [Fact]
+  public async Task Import_AWomanRecordedInTheMaleFormDoesNotKeepTheRealFemaleFormOutOfThePairedFamily()
+  {
+    // She is read first, so a slot she took would make the pairing depend on file order.
+    await using var document = await ImportIndividualsAsync(
+      ("Ольга", "Иванов", "F"),
+      ("Мария", "Иванова", "F"),
+      ("Иван", "Иванов", "M"));
+
+    var families = await document.FamilyManager.GetFamiliesAsync(Token);
+    families.Select(f => f.Value).Should().BeEquivalentTo("Ивановы", "Иванов");
+
+    var paired = await LastNamesAsync(document, "Ивановы");
+    paired.Select(n => n.Value).Should().BeEquivalentTo("Иванов", "Иванова");
+  }
+
+  [Fact]
+  public async Task Import_AFemaleLookingSurnameAManAlsoCarriesStaysOneUnpairedFamily()
+  {
+    // The woman is read before her brother.
+    await using var document = await ImportIndividualsAsync(
+      ("Анна", "Щербина", "F"),
+      ("Пётр", "Щербина", "M"),
+      ("Игорь", "Малина", "M"));
+
+    var families = await document.FamilyManager.GetFamiliesAsync(Token);
+    families.Select(f => f.Value).Should().BeEquivalentTo("Щербина", "Малина");
+  }
+
+  [Fact]
+  public async Task Import_AManRecordedInTheFemaleFormDoesNotMakeItInvariant()
+  {
+    await using var document = await ImportIndividualsAsync(
+      ("Иван", "Иванов", "M"),
+      ("Пётр", "Иванова", "M"),
+      ("Мария", "Иванова", "F"));
+
+    var paired = await LastNamesAsync(document, "Ивановы");
+    paired.Select(n => n.Value).Should().BeEquivalentTo("Иванов", "Иванова");
+  }
+
+  [Fact]
+  public async Task Import_TwoMaleSpellingsOfOnePluralDoNotShareItsMaleSlot()
+  {
+    // Both spellings pluralize to Толстые.
+    await using var document = await ImportIndividualsAsync(("Лев", "Толстой", "M"), ("Пётр", "Толстый", "M"));
+
+    var families = await document.FamilyManager.GetFamiliesAsync(Token);
+    families.Select(f => f.Value).Should().BeEquivalentTo("Толстые", "Толстый");
+
+    var paired = await LastNamesAsync(document, "Толстые");
+    paired.Should().ContainSingle().Which.Value.Should().Be("Толстой");
   }
 
   [Fact]

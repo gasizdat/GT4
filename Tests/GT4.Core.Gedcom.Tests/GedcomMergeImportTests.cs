@@ -10,7 +10,7 @@ namespace GT4.Core.Gedcom.Tests;
 
 /// <summary>
 /// Importing into a populated project. The importer reuses existing names and folds an incoming
-/// individual into an existing person when they share a first name, family name and birth date (where an
+/// individual into an existing person when they share a first name, surname and birth date (where an
 /// absent or unknown birth date matches another absent or unknown one); every ambiguous case stays a new
 /// person so two distinct people are never collapsed into one. A matched person is gap-filled (missing
 /// fields only) and relationship edges that already exist are not duplicated.
@@ -45,10 +45,10 @@ public sealed class GedcomMergeImportTests : IAsyncLifetime
   private Task ImportAsync(ProjectDocument document, string ged) =>
     _importer.ImportAsync(document, new StringReader(ged), Token);
 
-  private static string Indi(string xref, string given, string surname, int? birthYear = null, int? deathYear = null, string? note = null)
+  private static string Indi(string xref, string given, string surname, int? birthYear = null, int? deathYear = null, string? note = null, string sex = "M")
   {
     var sb = new StringBuilder();
-    sb.Append($"0 {xref} INDI\n1 NAME {given} /{surname}/\n1 SEX M\n");
+    sb.Append($"0 {xref} INDI\n1 NAME {given} /{surname}/\n1 SEX {sex}\n");
     if (birthYear is not null)
       sb.Append($"1 BIRT\n2 DATE 1 JAN {birthYear}\n");
     if (deathYear is not null)
@@ -186,6 +186,56 @@ public sealed class GedcomMergeImportTests : IAsyncLifetime
     (await PersonInfosAsync(document)).Should().HaveCount(2);
     var families = await document.FamilyManager.GetFamiliesAsync(Token);
     families.Where(f => f.Value == "Smith").Should().ContainSingle();
+  }
+
+  [Fact]
+  public async Task ReimportingARussianFile_MatchesPersonsByTheirOwnSurnameNotThePluralFamily()
+  {
+    var file = Doc(
+      Indi("@I1@", "Иван", "Иванов", birthYear: 1850),
+      Indi("@I2@", "Мария", "Иванова", birthYear: 1855, sex: "F"));
+
+    await using var document = await NewDocumentAsync();
+    await ImportAsync(document, file);
+    await ImportAsync(document, file);
+
+    (await PersonInfosAsync(document)).Should().HaveCount(2);
+  }
+
+  [Fact]
+  public async Task ExistingFamilyMadeInTheApp_IsReusedForBothSurnameForms()
+  {
+    await using var document = await NewDocumentAsync();
+    var family = await document.FamilyManager.AddFamilyAsync("Ивановы", "Иванов", "Иванова", Token);
+
+    await ImportAsync(document, Doc(
+      Indi("@I1@", "Иван", "Иванов", birthYear: 1850),
+      Indi("@I2@", "Мария", "Иванова", birthYear: 1855, sex: "F")));
+
+    var families = await document.FamilyManager.GetFamiliesAsync(Token);
+    families.Should().ContainSingle().Which.Value.Should().Be("Ивановы");
+    var names = await document.Names.TryGetNameWithSubnamesByIdAsync(family.Id, Token);
+    names!.Where(n => n.ParentId == family.Id).Should().HaveCount(2);
+
+    var members = await document.PersonManager.GetPersonInfosByNameAsync(family, selectMainPhoto: false, Token);
+    members.Select(m => m.DisplayName).Should().BeEquivalentTo("Иван Иванов", "Мария Иванова");
+  }
+
+  [Fact]
+  public async Task ExistingFamilyWithAnotherFemaleSpelling_GetsNoSecondFemaleLastName()
+  {
+    await using var document = await NewDocumentAsync();
+    var family = await document.FamilyManager.AddFamilyAsync("Ивановы", "Иванов", "Иванова-Петрова", Token);
+
+    await ImportAsync(document, Doc(Indi("@I1@", "Мария", "Иванова", birthYear: 1855, sex: "F")));
+
+    var families = await document.FamilyManager.GetFamiliesAsync(Token);
+    families.Select(f => f.Value).Should().BeEquivalentTo("Ивановы", "Иванова");
+    var names = await document.Names.TryGetNameWithSubnamesByIdAsync(family.Id, Token);
+    names!.Where(n => n.ParentId == family.Id).Select(n => n.Value).Should().BeEquivalentTo("Иванов", "Иванова-Петрова");
+
+    var maria = (await PersonInfosAsync(document)).Single();
+    await document.FamilyManager.Invoking(m => m.GetRequiredNames(family, maria, Token)).Should().NotThrowAsync();
   }
 
   [Fact]

@@ -77,13 +77,42 @@ does with it (see [ui-app.md](ui-app.md) for the photo/attachment distinction do
 ## Invariant: re-importing into a populated project merges, it doesn't duplicate
 
 `GedcomImporter.ResolveMatchesAsync` matches an incoming individual against an existing person by
-first name, family name, and birth date — an absent/unknown birth date matches only another
+first name, surname, and birth date — an absent/unknown birth date matches only another
 absent/unknown one, never a dated person — and only when the match is unambiguous on both sides.
+The existing side's surname is the person's own last name, which export writes back as `SURN`,
+not their family name: the two differ for a paired Russian family (below).
 A matched individual is **gap-filled**, not overwritten: `GapFillAsync` adds a biography, photos,
 attachments, or residue only for fields the existing person doesn't already have, and relative
 edges are added only if an equivalent edge (same owner, relative, type, and date-code) doesn't
 already exist. This is what makes importing the same file twice, or importing an updated export
 from another tool, safe rather than a duplication hazard.
+
+## Invariant: a Russian surname's male and female forms share one family
+
+GEDCOM records each person's own surname, so a Russian file carries Иванов for the men and
+Иванова for the women of one family. `GedcomImporter.BuildNamesAsync` files both under the plural
+GT4 names a Russian family by ("Ивановы", the shape `FamilyManager.AddFamilyAsync` builds), with
+each person's surname as the last name for their sex. `GedcomFamilyName.Plural` derives the plural
+only from a surname written in the Russian alphabet (composed first, so a decomposed й or ё
+counts) whose gendered ending agrees with the person's `SEX`. Every other surname — Latin script,
+another Cyrillic alphabet (Ukrainian Білов, whose family is Білови), invariant (Черных), unknown
+sex, a woman recorded in the male form — keeps a family named by the bare surname. Letters can't
+tell a Bulgarian Иванов from a Russian one, so a Bulgarian file still gets Russian plurals. Two
+more cases also keep the bare family (`PairedFamily`):
+
+- **A female-looking surname that some man also carries** (Щербина), in the file or the project.
+  It is invariant, so pairing it would split a woman from her brother. A man's surname whose plural
+  another man's male form already claims (SURN Иванова next to Иванов) is a mis-sexed record
+  instead, and doesn't count (`CollectInvariantSurnames`).
+- **A family whose slot for that sex already holds another spelling** (Толстой next to Толстый).
+  `FamilyManager.GetRequiredNames` and the names UI read that slot with `SingleOrDefault`, so a
+  second last name of one declension under a family makes them throw.
+
+A `_FAML` family-name record from an older export carries the singular, so it maps to the plural
+too. It keeps its exact name when a family already holds that name, or when another record in the
+same file already took the plural. An older export of a split family has one record for each form,
+and family media is add-only per category, so a second record mapped to the same plural would lose
+its media.
 
 ## Non-goals
 

@@ -53,7 +53,7 @@ internal sealed class GedcomImporter : IGedcomImporter
 
     // Merge support: an import may land in a populated project. Existing names are reused so the
     // UNIQUE(Value, Type, ParentId) index never throws, and an incoming individual that matches an
-    // existing person (same first name, family name and birth date, where an absent or unknown birth
+    // existing person (same first name, surname and birth date, where an absent or unknown birth
     // date matches another absent or unknown one) is folded into that person instead of duplicated.
     // Every read below runs before the write transaction so the parallel reads inside
     // GetPersonFullInfoAsync never share the flow-affine import transaction.
@@ -61,6 +61,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     var existingPersons = await document.PersonManager.GetPersonInfosAsync(selectMainPhoto: false, token);
     var matches = await ResolveMatchesAsync(document, individuals, existingPersons, token);
     var existingEdges = await CollectExistingEdgesAsync(document, matches.Values, token);
+    var invariantSurnames = CollectInvariantSurnames(individuals, existingNames);
 
     // One outer transaction on a single flow: every inner Add* collapses to a SAVEPOINT and the lone
     // root commit stamps the revision, so the import lands all-or-nothing. The two passes stay strictly
@@ -81,7 +82,7 @@ internal sealed class GedcomImporter : IGedcomImporter
       }
       else
       {
-        person = await ImportIndividualAsync(document, individual, nameCache, recordsByXref, referencedMedia, mediaBasePath, token);
+        person = await ImportIndividualAsync(document, individual, nameCache, invariantSurnames, recordsByXref, referencedMedia, mediaBasePath, token);
       }
 
       if (individual.Xref is not null)
@@ -100,9 +101,10 @@ internal sealed class GedcomImporter : IGedcomImporter
       await ImportFamilyMediaAsync(document, family, personByXref, matches, attachments, referenced, referencedMedia, token);
     }
 
+    var pairedRecordFamilies = new HashSet<string>();
     foreach (var familyRecord in familyRecords)
     {
-      await ImportFamilyRecordAsync(document, familyRecord, recordsByXref, nameCache, mediaBasePath, token);
+      await ImportFamilyRecordAsync(document, familyRecord, recordsByXref, nameCache, pairedRecordFamilies, mediaBasePath, token);
     }
 
     await ImportPassthroughRecordsAsync(document, records, token);
@@ -117,10 +119,10 @@ internal sealed class GedcomImporter : IGedcomImporter
   // The identity an incoming individual and an existing person are matched on. Built whenever a first
   // name is present; an absent or unknown birth date is carried as null, so an undated person matches
   // only another undated person and never folds into a dated one.
-  private readonly record struct PersonIdentity(string FirstName, string? FamilyName, Date? BirthDate);
+  private readonly record struct PersonIdentity(string FirstName, string? Surname, Date? BirthDate);
 
   /// <summary>
-  /// Decides which incoming individuals fold into an existing person, keyed on first name, family name
+  /// Decides which incoming individuals fold into an existing person, keyed on first name, surname
   /// and birth date (undated matches only undated); anything ambiguous on either side imports as new.
   /// </summary>
   private static async Task<Dictionary<string, Match>> ResolveMatchesAsync(
@@ -265,36 +267,37 @@ internal sealed class GedcomImporter : IGedcomImporter
     }
   }
 
+  // The last name alone, never the family: export writes only the last name back as SURN.
   private static PersonIdentity? ExistingIdentity(PersonInfo person)
   {
     var firstName = person.Names.FirstOrDefault(name => name.Type.HasFlag(NameType.FirstName))?.Value;
-    var familyName = person.Names.FirstOrDefault(name => name.Type.HasFlag(NameType.FamilyName))?.Value;
-    return ToIdentity(firstName, familyName, person.BirthDate);
+    var lastName = person.Names.FirstOrDefault(name => name.Type.HasFlag(NameType.LastName))?.Value;
+    return ToIdentity(firstName, lastName, person.BirthDate);
   }
 
   private static PersonIdentity? IncomingIdentity(GedcomNode individual)
   {
     var birthDate = ParseEventDate(individual, GedcomTags.Birth);
-    var (firstName, familyName) = RawNameParts(individual);
-    return ToIdentity(firstName, familyName, birthDate);
+    var (firstName, surname) = RawNameParts(individual);
+    return ToIdentity(firstName, surname, birthDate);
   }
 
-  private static PersonIdentity? ToIdentity(string? firstName, string? familyName, Date? birthDate)
+  private static PersonIdentity? ToIdentity(string? firstName, string? surname, Date? birthDate)
   {
     if (string.IsNullOrWhiteSpace(firstName))
       return null;
 
-    var family = string.IsNullOrWhiteSpace(familyName) ? null : familyName;
+    var last = string.IsNullOrWhiteSpace(surname) ? null : surname;
     var birth = birthDate is { Status: not DateStatus.Unknown } ? birthDate : null;
-    return new PersonIdentity(firstName, family, birth);
+    return new PersonIdentity(firstName, last, birth);
   }
 
   /// <summary>
   /// The first given token and the surname straight from the GEDCOM NAME, matching how
-  /// <see cref="BuildNamesAsync"/> stores the first name and family name, so the identity computed here
+  /// <see cref="BuildNamesAsync"/> stores the first name and last name, so the identity computed here
   /// lines up with the one read back off an existing person.
   /// </summary>
-  private static (string? First, string? Family) RawNameParts(GedcomNode individual)
+  private static (string? First, string? Surname) RawNameParts(GedcomNode individual)
   {
     var nameNode = individual.Child(GedcomTags.Name);
     if (nameNode is null)
@@ -306,17 +309,18 @@ internal sealed class GedcomImporter : IGedcomImporter
   }
 
   /// <summary>
-  /// Imports one <see cref="GedcomTags.FamilyRecord"/> written by <see cref="GedcomExporter"/>: re-derives
-  /// the same GT4 family (clan) <c>Name</c> from its NAME the way a person's surname does in
-  /// <see cref="BuildNamesAsync"/> -- reusing <paramref name="nameCache"/> so a family already created from
-  /// a person's surname in this same import is reused rather than duplicated -- and commits its
-  /// photos/attachments to <see cref="ITableNameData"/> the way a person's land on <see cref="ITablePersonData"/>.
+  /// Imports one <see cref="GedcomTags.FamilyRecord"/> written by <see cref="GedcomExporter"/>: resolves
+  /// its NAME to the GT4 family (clan) <c>Name</c> -- reusing <paramref name="nameCache"/> so a family
+  /// already created from a person's surname in this same import is reused rather than duplicated -- and
+  /// commits its photos/attachments to <see cref="ITableNameData"/> the way a person's land on
+  /// <see cref="ITablePersonData"/>.
   /// </summary>
   private async Task ImportFamilyRecordAsync(
     IProjectDocument document,
     GedcomNode familyRecord,
     IReadOnlyDictionary<string, GedcomNode> recordsByXref,
     Dictionary<(string, NameType, int?), Name> nameCache,
+    HashSet<string> pairedRecordFamilies,
     string? mediaBasePath,
     CancellationToken token)
   {
@@ -324,7 +328,16 @@ internal sealed class GedcomImporter : IGedcomImporter
     if (string.IsNullOrWhiteSpace(surname))
       return;
 
-    var family = await GetOrAddNameAsync(document, surname, NameType.FamilyName, null, nameCache, token);
+    // An older export's singular name maps to the plural, unless a family already has that exact name
+    // or another record took the plural first: the add-only guard below would drop this one's media.
+    var plural = GedcomFamilyName.Plural(surname, NameType.MaleDeclension)
+      ?? GedcomFamilyName.Plural(surname, NameType.FemaleDeclension);
+    var familyValue = plural is null
+      || nameCache.ContainsKey((surname, NameType.FamilyName, null))
+      || !pairedRecordFamilies.Add(plural)
+      ? surname
+      : plural;
+    var family = await GetOrAddNameAsync(document, familyValue, NameType.FamilyName, null, nameCache, token);
 
     // AddNameDataSetAsync is add-only, so a re-import must skip categories the family already has --
     // mirrors GapFillAsync's addingPhotos/addingAttachments guard on the person side.
@@ -388,17 +401,42 @@ internal sealed class GedcomImporter : IGedcomImporter
     return string.Equals(pedigree, GedcomTags.AdoptedPedigree, StringComparison.OrdinalIgnoreCase);
   }
 
+  /// <summary>
+  /// The female-looking surnames a man carries in this file or the project (Щербина), which are invariant;
+  /// one whose plural a man's male form also gives (Иванова next to Иванов) is a mis-sexed record instead.
+  /// </summary>
+  private static HashSet<string> CollectInvariantSurnames(GedcomNode[] individuals, Name[] existingNames)
+  {
+    var existing = existingNames
+      .Where(name => name.Type == (NameType.LastName | NameType.MaleDeclension))
+      .Select(name => name.Value);
+    var maleSurnames = individuals
+      .Where(individual => GedcomMapping.ParseSex(individual.ChildValue(GedcomTags.Sex)) == BiologicalSex.Male)
+      .Select(individual => RawNameParts(individual).Surname)
+      .OfType<string>()
+      .Concat(existing)
+      .ToHashSet();
+    var malePlurals = maleSurnames
+      .Select(surname => GedcomFamilyName.Plural(surname, NameType.MaleDeclension))
+      .OfType<string>()
+      .ToHashSet();
+    return maleSurnames
+      .Where(surname => GedcomFamilyName.Plural(surname, NameType.FemaleDeclension) is { } plural && !malePlurals.Contains(plural))
+      .ToHashSet();
+  }
+
   private async Task<Person> ImportIndividualAsync(
     IProjectDocument document,
     GedcomNode individual,
     Dictionary<(string, NameType, int?), Name> nameCache,
+    HashSet<string> invariantSurnames,
     IReadOnlyDictionary<string, GedcomNode> recordsByXref,
     Dictionary<GedcomNode, ReferencedMedia> referencedMedia,
     string? mediaBasePath,
     CancellationToken token)
   {
     var sex = GedcomMapping.ParseSex(individual.ChildValue(GedcomTags.Sex));
-    var names = await BuildNamesAsync(document, individual, sex, nameCache, token);
+    var names = await BuildNamesAsync(document, individual, sex, nameCache, invariantSurnames, token);
     var biography = BuildBiography(individual);
     var photos = SelectPhotos(individual, recordsByXref, mediaBasePath);
     GedcomNode[] photoNodes = [.. photos.Select(p => p.Node)];
@@ -993,6 +1031,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     GedcomNode individual,
     BiologicalSex sex,
     Dictionary<(string, NameType, int?), Name> nameCache,
+    HashSet<string> invariantSurnames,
     CancellationToken token)
   {
     var nameNode = individual.Child(GedcomTags.Name);
@@ -1019,16 +1058,42 @@ internal sealed class GedcomImporter : IGedcomImporter
     }
     if (!string.IsNullOrWhiteSpace(surname))
     {
-      // Group people by surname into a GT4 family so they appear on the families page. The family name is
-      // the bare surname; the declined last name lives under it (the same shape FamilyManager.AddFamilyAsync
-      // builds) and is what the exporter reads back as the surname.
+      // Group people by surname into a GT4 family so they appear on the families page. The declined last
+      // name lives under the family (the same shape FamilyManager.AddFamilyAsync builds) and is what the
+      // exporter reads back as the surname.
       var trimmed = surname.Trim();
-      var family = await GetOrAddNameAsync(document, trimmed, NameType.FamilyName, null, nameCache, token);
+      var familyValue = PairedFamily(trimmed, declension, nameCache, invariantSurnames) ?? trimmed;
+      var family = await GetOrAddNameAsync(document, familyValue, NameType.FamilyName, null, nameCache, token);
       var lastName = await GetOrAddNameAsync(document, trimmed, NameType.LastName | declension, family, nameCache, token);
       names.Add(family);
       names.Add(lastName);
     }
     return [.. names];
+  }
+
+  /// <summary>
+  /// The plural family a Russian surname's male and female forms share, or null to keep the bare surname.
+  /// A family holds one last name per declension: every reader of that slot expects one.
+  /// </summary>
+  private static string? PairedFamily(
+    string surname,
+    NameType declension,
+    Dictionary<(string, NameType, int?), Name> nameCache,
+    HashSet<string> invariantSurnames)
+  {
+    if (invariantSurnames.Contains(surname))
+      return null;
+
+    var plural = GedcomFamilyName.Plural(surname, declension);
+    if (plural is null || !nameCache.TryGetValue((plural, NameType.FamilyName, null), out var family))
+      return plural;
+
+    var lastNameType = NameType.LastName | declension;
+    if (nameCache.ContainsKey((surname, lastNameType, family.Id)))
+      return plural;
+
+    var taken = nameCache.Values.Any(name => name.ParentId == family.Id && name.Type == lastNameType);
+    return taken ? null : plural;
   }
 
   private static async Task<Name> GetOrAddNameAsync(

@@ -927,6 +927,111 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     familyData.Should().ContainSingle();
   }
 
+  [Theory]
+  [InlineData("Иванов")]
+  [InlineData("Иванова")]
+  [InlineData("Ивановы")]
+  public async Task FamilyRecord_ASingularNameFromAnOlderExportResolvesToThePairedFamily(string recordName)
+  {
+    var ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME Иван /Иванов/\n1 SEX M\n" +
+      "0 @I2@ INDI\n1 NAME Мария /Иванова/\n1 SEX F\n" +
+      $"0 @FM1@ {GedcomTags.FamilyRecord}\n1 NAME {recordName}\n1 {GedcomTags.Object}\n2 {GedcomTags.Form} jpg\n2 {GedcomTags.Blob} WA==\n" +
+      "0 TRLR\n";
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(ged), Token, _mediaPath);
+
+    var families = await reimported.Names.GetNamesByTypeAsync(NameType.FamilyName, Token);
+    var family = families.Should().ContainSingle().Which;
+    family.Value.Should().Be("Ивановы");
+    var familyData = await reimported.NameData.GetNameDataSetAsync(family, DataCategory.FamilyMainPhoto, Token);
+    familyData.Should().ContainSingle();
+  }
+
+  [Fact]
+  public async Task FamilyRecord_BothRecordsOfAnOlderSplitPairKeepTheirMedia()
+  {
+    var ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME Иван /Иванов/\n1 SEX M\n" +
+      "0 @I2@ INDI\n1 NAME Мария /Иванова/\n1 SEX F\n" +
+      $"0 @FM1@ {GedcomTags.FamilyRecord}\n1 NAME Иванов\n1 {GedcomTags.Object}\n2 {GedcomTags.Form} jpg\n2 {GedcomTags.Blob} WA==\n" +
+      $"0 @FM2@ {GedcomTags.FamilyRecord}\n1 NAME Иванова\n1 {GedcomTags.Object}\n2 {GedcomTags.Form} jpg\n2 {GedcomTags.Blob} WQ==\n" +
+      "0 TRLR\n";
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(ged), Token, _mediaPath);
+
+    var families = await reimported.Names.GetNamesByTypeAsync(NameType.FamilyName, Token);
+    var photos = new List<byte[]>();
+    foreach (var family in families)
+    {
+      var familyData = await reimported.NameData.GetNameDataSetAsync(family, DataCategory.FamilyMainPhoto, Token);
+      photos.AddRange(familyData.Select(d => d.Content));
+    }
+    photos.Should().BeEquivalentTo([Convert.FromBase64String("WA=="), Convert.FromBase64String("WQ==")]);
+  }
+
+  [Fact]
+  public async Task PairedFamilyMadeInTheApp_ReimportingItsOwnExportMatchesEveryMember()
+  {
+    // The unknown-sex member has no last name, so the export writes no SURN for them.
+    var family = await _source.FamilyManager.AddFamilyAsync("Ивановы", "Иванов", "Иванова", Token);
+    foreach (var (given, sex) in new[] { ("Иван", BiologicalSex.Male), ("Мария", BiologicalSex.Female), ("Саша", BiologicalSex.Unknown) })
+    {
+      var name = await _source.Names.AddNameAsync(given, NameType.FirstName, null, Token);
+      var info = PersonFullInfo.Empty with { BirthDate = Year(1900), BiologicalSex = sex, Names = [name] };
+      var required = await _source.FamilyManager.GetRequiredNames(family, info, Token);
+      await _source.PersonManager.AddPersonAsync(info with { Names = [name, .. required] }, Token);
+    }
+
+    var text = await ExportToTextAsync(_source);
+    await _importer.ImportAsync(_source, new StringReader(text), Token, _mediaPath);
+
+    (await _source.Persons.GetPersonsAsync(Token)).Should().HaveCount(3);
+  }
+
+  [Fact]
+  public async Task FamilyMedia_OfAnUnpairedFemaleLookingFamilyStaysOnItAcrossARoundTrip()
+  {
+    // A man's Малина keeps the bare family, so its record exports as "Малина", which looks singular.
+    var name = await _source.Names.AddNameAsync("Игорь", NameType.FirstName | NameType.MaleDeclension, null, Token);
+    var family = await _source.Names.AddNameAsync("Малина", NameType.FamilyName, null, Token);
+    var lastName = await _source.Names.AddNameAsync("Малина", NameType.LastName | NameType.MaleDeclension, family, Token);
+    var info = PersonFullInfo.Empty with { BirthDate = Year(1900), BiologicalSex = BiologicalSex.Male, Names = [name, family, lastName] };
+    await _source.PersonManager.AddPersonAsync(info, Token);
+    var mainPhoto = new Data(ElementId.NonCommittedId, Encoding.UTF8.GetBytes("CREST-BYTES"), "image/jpeg", DataCategory.FamilyMainPhoto);
+    await _source.NameData.AddNameDataSetAsync(family, [mainPhoto], Token);
+
+    var text = await ExportToTextAsync(_source);
+
+    await using var reimported = await NewDocumentAsync();
+    await _importer.ImportAsync(reimported, new StringReader(text), Token, _mediaPath);
+
+    var families = await reimported.Names.GetNamesByTypeAsync(NameType.FamilyName, Token);
+    var reimportedFamily = families.Should().ContainSingle().Which;
+    reimportedFamily.Value.Should().Be("Малина");
+    var familyData = await reimported.NameData.GetNameDataSetAsync(reimportedFamily, DataCategory.FamilyMainPhoto, Token);
+    familyData.Should().ContainSingle();
+  }
+
+  [Fact]
+  public async Task PairedRussianFamily_ExportsEachPersonsOwnSurname()
+  {
+    var ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @I1@ INDI\n1 NAME Иван /Иванов/\n1 SEX M\n" +
+      "0 @I2@ INDI\n1 NAME Мария /Иванова/\n1 SEX F\n" +
+      "0 TRLR\n";
+    await _importer.ImportAsync(_source, new StringReader(ged), Token, _mediaPath);
+
+    var text = await ExportToTextAsync(_source);
+
+    text.Should().Contain("1 NAME Иван /Иванов/").And.Contain("1 NAME Мария /Иванова/").And.NotContain("Ивановы");
+  }
+
   private async Task<string> ExportToTextAsync(ProjectDocument document)
   {
     var writer = new StringWriter();
