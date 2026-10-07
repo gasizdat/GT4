@@ -211,6 +211,9 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
     public string PersonPage(Person person) => Page($"person-{person.Id}.html");
 
     public IEnumerable<string> Pages => entries.Where(entry => entry.Name.EndsWith(".html")).Select(entry => entry.Name);
+
+    // The photo viewer opens in a window of its own, so it carries no site header.
+    public IEnumerable<string> HeaderedPages => Pages.Where(name => name != "photo.html");
   }
 
   // A card is the link to that person's page, up to where its anchor closes.
@@ -223,6 +226,28 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
   }
 
   private static string Heading(string text) => $"<h2>{System.Net.WebUtility.HtmlEncode(text)}</h2>";
+
+  // As a page writes it: the fragment's values escaped, then the whole href HTML-encoded.
+  private static string ViewerHref(Data photo, string caption = "")
+  {
+    var escapedCaption = Uri.EscapeDataString(caption);
+    return $"photo.html#src=media%2F{photo.Id}%2Fphoto.png&amp;caption={escapedCaption}";
+  }
+
+  private static string FileOf(string link)
+  {
+    var path = link.Split('#')[0];
+    return Uri.UnescapeDataString(path);
+  }
+
+  // The viewer's fragment holds the photo's own href, escaped once more.
+  private static string ViewedPhotoOf(string link)
+  {
+    var fragment = link.Split('#')[1];
+    var decoded = System.Net.WebUtility.HtmlDecode(fragment);
+    var values = System.Web.HttpUtility.ParseQueryString(decoded);
+    return Uri.UnescapeDataString(values["src"]!);
+  }
 
   [GeneratedRegex("(?:href|src)=\"([^\"]*)\"")]
   private static partial Regex LinkPattern();
@@ -293,13 +318,16 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
       var matches = LinkPattern().Matches(page);
       string[] pageLinks = [.. matches.Select(match => match.Groups[1].Value)];
       var fragments = pageLinks.Where(link => link.StartsWith('#'));
-      var targets = pageLinks.Except(fragments).Select(Uri.UnescapeDataString);
+      var targets = pageLinks.Except(fragments).Select(FileOf);
+      var viewed = pageLinks.Where(link => link.StartsWith("photo.html#")).Select(ViewedPhotoOf);
       Assert.All(fragments, fragment => Assert.Contains($"id=\"{fragment[1..]}\"", page));
       Assert.All(targets, target => Assert.Contains(target, site.Names));
+      Assert.All(viewed, target => Assert.Contains(target, site.Names));
       links.AddRange(pageLinks);
     }
     Assert.Contains(links, link => link.StartsWith("media/"));
     Assert.Contains(links, link => link.StartsWith('#'));
+    Assert.Contains(links, link => link.StartsWith("photo.html#"));
   }
 
   [Fact]
@@ -360,7 +388,8 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
     var john = await PersonAsync("John");
     var mary = await PersonAsync("Mary");
     var solo = await PersonAsync("Solo");
-    var portrait = $"<a class=\"portrait\" href=\"photo-{john.MainPhoto!.Id}.html\" target=\"_blank\"><img src=\"media/{john.MainPhoto!.Id}/photo.png\"";
+    var viewer = ViewerHref(john.MainPhoto!);
+    var portrait = $"<a class=\"portrait\" href=\"{viewer}\" target=\"_blank\"><img src=\"media/{john.MainPhoto!.Id}/photo.png\"";
 
     var site = await ExportAsync();
 
@@ -373,45 +402,42 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
   }
 
   [Fact]
-  public async Task PortraitAndGallery_OpenOnePreviewPageInANewWindow()
+  public async Task PortraitAndGallery_OpenTheOneViewerPageInANewWindow()
   {
     var john = await PersonAsync("John");
-    var preview = $"photo-{john.MainPhoto!.Id}.html";
+    var viewer = ViewerHref(john.MainPhoto!);
 
     var site = await ExportAsync();
 
     var page = site.PersonPage(john);
-    Assert.Contains($"<a class=\"portrait\" href=\"{preview}\" target=\"_blank\">", page);
-    Assert.Contains($"<figure><a href=\"{preview}\" target=\"_blank\">", page);
-    Assert.Single(site.Names, name => name == preview);
+    Assert.Contains($"<a class=\"portrait\" href=\"{viewer}\" target=\"_blank\">", page);
+    Assert.Contains($"<figure><a href=\"{viewer}\" target=\"_blank\">", page);
+    var viewerPage = Assert.Single(site.Pages, name => name.StartsWith("photo"));
+    Assert.Equal("photo.html", viewerPage);
   }
 
   [Fact]
-  public async Task PhotoPreview_ShowsThePhotoWithItsCaption()
+  public async Task ViewerLink_CarriesThePhotosCaption()
   {
     var document = await ImportAsync(CaptionedGedcom);
     var john = await PersonAsync("John", document);
-    var photo = john.MainPhoto!;
+    var viewer = ViewerHref(john.MainPhoto!, "John at the mill");
 
     var site = await ExportAsync(document: document);
 
-    var preview = site.Page($"photo-{photo.Id}.html");
-    Assert.Contains($"<img src=\"media/{photo.Id}/photo.png\" alt=\"John at the mill\">", preview);
-    Assert.Contains("<figcaption>John at the mill</figcaption>", preview);
-    Assert.Contains("<title>John at the mill</title>", preview);
+    var page = site.PersonPage(john);
+    Assert.Contains($"<a class=\"portrait\" href=\"{viewer}\"", page);
+    Assert.Contains($"<figure><a href=\"{viewer}\"", page);
   }
 
   [Fact]
-  public async Task PhotoPreview_WithoutCaption_HasNoFigcaption()
+  public async Task Viewer_IsTitledInTheAppsLanguage()
   {
-    var john = await PersonAsync("John");
-
     var site = await ExportAsync();
 
-    var preview = site.Page($"photo-{john.MainPhoto!.Id}.html");
+    var viewer = site.Page("photo.html");
     var title = System.Net.WebUtility.HtmlEncode(UIStrings.FieldPersonPhotos);
-    Assert.DoesNotContain("<figcaption>", preview);
-    Assert.Contains($"<title>{title}</title>", preview);
+    Assert.Contains($"<title>{title}</title>", viewer);
   }
 
   [Fact]
@@ -670,7 +696,7 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
     var site = await ExportAsync();
 
     Assert.Contains("statistics.html", site.Names);
-    Assert.All(site.Pages, name =>
+    Assert.All(site.HeaderedPages, name =>
     {
       var page = site.Page(name);
       Assert.Contains("href=\"statistics.html\"", page);
@@ -728,7 +754,7 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
     var site = await ExportAsync(mainPerson: MainPerson(john));
 
     Assert.Contains("main-person.html", site.Names);
-    Assert.All(site.Pages, name =>
+    Assert.All(site.HeaderedPages, name =>
     {
       var page = site.Page(name);
       Assert.Contains("href=\"main-person.html\"", page);
