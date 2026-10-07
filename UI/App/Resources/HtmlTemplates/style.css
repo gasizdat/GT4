@@ -122,6 +122,9 @@ h3 { font-family: Georgia, "Times New Roman", serif; font-size: 1.25rem; margin:
 .gallery a { display: block; }
 .gallery img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
 .gallery figcaption { padding: 0.5rem 0.75rem; font-size: 0.8rem; color: var(--muted); }
+.preview { margin: 0; text-align: center; }
+.preview img { max-height: 85vh; border-radius: 8px; }
+.preview figcaption { margin-top: 0.75rem; color: var(--muted); }
 
 /* Biography and the details rendered with it */
 .prose { max-width: 42rem; }

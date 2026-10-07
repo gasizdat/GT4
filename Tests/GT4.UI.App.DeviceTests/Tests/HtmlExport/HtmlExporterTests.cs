@@ -96,6 +96,19 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
     0 TRLR
     """;
 
+  private const string CaptionedGedcom = """
+    0 HEAD
+    1 CHAR UTF-8
+    0 @I1@ INDI
+    1 NAME John /Smith/
+    1 SEX M
+    1 OBJE
+    2 FILE portrait.png
+    3 FORM png
+    2 TITL John at the mill
+    0 TRLR
+    """;
+
   private readonly string _Folder = Path.Combine(Path.GetTempPath(), $"gt4_html_{Guid.NewGuid():N}");
   private readonly List<IProjectDocument> _Documents = [];
   private IProjectDocument _Document = null!;
@@ -347,7 +360,7 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
     var john = await PersonAsync("John");
     var mary = await PersonAsync("Mary");
     var solo = await PersonAsync("Solo");
-    var portrait = $"<a class=\"portrait\" href=\"media/{john.MainPhoto!.Id}/photo.png\">";
+    var portrait = $"<a class=\"portrait\" href=\"photo-{john.MainPhoto!.Id}.html\" target=\"_blank\"><img src=\"media/{john.MainPhoto!.Id}/photo.png\"";
 
     var site = await ExportAsync();
 
@@ -357,6 +370,61 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
     Assert.Contains(portrait, johnsPage);
     Assert.Contains("<span class=\"portrait stub\" style=\"background-image:url('media/female_stub.png')\"></span>", marysPage);
     Assert.Contains("<span class=\"portrait\"></span>", solosPage);
+  }
+
+  [Fact]
+  public async Task PortraitAndGallery_OpenOnePreviewPageInANewWindow()
+  {
+    var john = await PersonAsync("John");
+    var preview = $"photo-{john.MainPhoto!.Id}.html";
+
+    var site = await ExportAsync();
+
+    var page = site.PersonPage(john);
+    Assert.Contains($"<a class=\"portrait\" href=\"{preview}\" target=\"_blank\">", page);
+    Assert.Contains($"<figure><a href=\"{preview}\" target=\"_blank\">", page);
+    Assert.Single(site.Names, name => name == preview);
+  }
+
+  [Fact]
+  public async Task PhotoPreview_ShowsThePhotoWithItsCaption()
+  {
+    var document = await ImportAsync(CaptionedGedcom);
+    var john = await PersonAsync("John", document);
+    var photo = john.MainPhoto!;
+
+    var site = await ExportAsync(document: document);
+
+    var preview = site.Page($"photo-{photo.Id}.html");
+    Assert.Contains($"<img src=\"media/{photo.Id}/photo.png\" alt=\"John at the mill\">", preview);
+    Assert.Contains("<figcaption>John at the mill</figcaption>", preview);
+    Assert.Contains("<title>John at the mill</title>", preview);
+  }
+
+  [Fact]
+  public async Task PhotoPreview_WithoutCaption_HasNoFigcaption()
+  {
+    var john = await PersonAsync("John");
+
+    var site = await ExportAsync();
+
+    var preview = site.Page($"photo-{john.MainPhoto!.Id}.html");
+    var title = System.Net.WebUtility.HtmlEncode(UIStrings.FieldPersonPhotos);
+    Assert.DoesNotContain("<figcaption>", preview);
+    Assert.Contains($"<title>{title}</title>", preview);
+  }
+
+  [Fact]
+  public async Task Avatars_KeepLinkingToThePersonPage()
+  {
+    var john = await PersonAsync("John");
+    var mary = await PersonAsync("Mary");
+
+    var site = await ExportAsync();
+
+    var card = Card(site.PersonPage(mary), john);
+    Assert.Contains("class=\"avatar\"", card);
+    Assert.DoesNotContain("photo-", card);
   }
 
   [Fact]

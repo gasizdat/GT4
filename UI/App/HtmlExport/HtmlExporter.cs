@@ -72,6 +72,7 @@ public sealed class HtmlExporter
   private static readonly HtmlTemplate GalleryTemplate = HtmlTemplate.Load("gallery.html");
   private static readonly HtmlTemplate FigureTemplate = HtmlTemplate.Load("figure.html");
   private static readonly HtmlTemplate FigcaptionTemplate = HtmlTemplate.Load("figcaption.html");
+  private static readonly HtmlTemplate PhotoPageTemplate = HtmlTemplate.Load("photo-page.html");
   private static readonly HtmlTemplate ProseTemplate = HtmlTemplate.Load("prose.html");
 
   // A biography link to any other scheme renders as text.
@@ -166,6 +167,8 @@ public sealed class HtmlExporter
   private static string FamilyHref(int familyId) => $"family-{familyId}.html";
 
   private static string PersonHref(int personId) => $"person-{personId}.html";
+
+  private static string PhotoHref(int dataId) => $"photo-{dataId}.html";
 
   private static string RenderDocument(string title, HtmlContent navigation, HtmlContent body)
   {
@@ -569,7 +572,28 @@ public sealed class HtmlExporter
   private static async Task<string?> ReadCaptionAsync(Site site, Data photo) =>
     photo.Category.IsTaggedPhoto() ? await GedcomPhotoResidue.ExtractTitleAsync(photo, site.Token) : null;
 
-  private static async Task<HtmlContent> RenderPortraitAsync(Site site, Data? mainPhoto, BiologicalSex sex)
+  private static HtmlContent RenderFigcaption(string? caption) =>
+    string.IsNullOrWhiteSpace(caption) ? HtmlContent.Empty : FigcaptionTemplate.Fill(("caption", caption));
+
+  // The preview page holds only what the photo itself carries: whichever page reaches it first writes it.
+  private async Task<SitePhoto> WritePhotoAsync(Site site, Data photo)
+  {
+    var media = await site.WriteMediaAsync(photo);
+    var caption = await ReadCaptionAsync(site, photo);
+    var href = PhotoHref(photo.Id);
+    if (site.AddPreview(photo.Id))
+    {
+      var navigation = RenderNavigation(site, []);
+      var figcaption = RenderFigcaption(caption);
+      var body = PhotoPageTemplate.Fill(("src", media.Href), ("caption", caption), ("figcaption", figcaption));
+      var title = string.IsNullOrWhiteSpace(caption) ? UIStrings.FieldPersonPhotos : caption;
+      var page = RenderDocument(title, navigation, body);
+      await site.WriteTextAsync(href, page);
+    }
+    return new SitePhoto(href, media.Href, caption);
+  }
+
+  private async Task<HtmlContent> RenderPortraitAsync(Site site, Data? mainPhoto, BiologicalSex sex)
   {
     if (mainPhoto is null)
     {
@@ -580,24 +604,26 @@ public sealed class HtmlExporter
       return PortraitStubTemplate.Fill(("src", stub));
     }
 
-    var media = await site.WriteMediaAsync(mainPhoto);
-    var caption = await ReadCaptionAsync(site, mainPhoto);
-    return PortraitTemplate.Fill(("src", media.Href), ("caption", caption));
+    var photo = await WritePhotoAsync(site, mainPhoto);
+    return PortraitTemplate.Fill(("href", photo.PreviewHref), ("src", photo.Src), ("caption", photo.Caption));
   }
 
-  private static async Task<HtmlContent> RenderPhotosAsync(Site site, Data? mainPhoto, Data[] additionalPhotos)
+  private async Task<HtmlContent> RenderPhotosAsync(Site site, Data? mainPhoto, Data[] additionalPhotos)
   {
     Data[] photos = mainPhoto is null ? additionalPhotos : [mainPhoto, .. additionalPhotos];
     if (photos.Length == 0)
       return HtmlContent.Empty;
 
     var figures = new List<HtmlContent>();
-    foreach (var photo in photos)
+    foreach (var data in photos)
     {
-      var media = await site.WriteMediaAsync(photo);
-      var caption = await ReadCaptionAsync(site, photo);
-      var figcaption = string.IsNullOrWhiteSpace(caption) ? HtmlContent.Empty : FigcaptionTemplate.Fill(("caption", caption));
-      var figure = FigureTemplate.Fill(("src", media.Href), ("caption", caption), ("figcaption", figcaption));
+      var photo = await WritePhotoAsync(site, data);
+      var figcaption = RenderFigcaption(photo.Caption);
+      var figure = FigureTemplate.Fill(
+        ("href", photo.PreviewHref),
+        ("src", photo.Src),
+        ("caption", photo.Caption),
+        ("figcaption", figcaption));
       figures.Add(figure);
     }
     var joined = HtmlContent.Join(figures);
@@ -795,6 +821,8 @@ public sealed class HtmlExporter
 
   private sealed record SiteLink(string Href, bool IsImage, Size? PixelSize);
 
+  private sealed record SitePhoto(string PreviewHref, string Src, string? Caption);
+
   private sealed class Site(
     ZipArchive archive,
     IProjectDocument document,
@@ -805,6 +833,7 @@ public sealed class HtmlExporter
   {
     private readonly Dictionary<int, SiteLink> _Media = [];
     private readonly HashSet<string> _Stubs = [];
+    private readonly HashSet<int> _Previews = [];
 
     public IProjectDocument Document => document;
 
@@ -817,6 +846,9 @@ public sealed class HtmlExporter
     public bool HasPerson(int personId) => persons.ContainsKey(personId);
 
     public Data? MainPhotoOf(int personId) => persons[personId].MainPhoto;
+
+    // The main photo is previewed from both the portrait and the gallery.
+    public bool AddPreview(int dataId) => _Previews.Add(dataId);
 
     // A zip in Create mode allows one open entry at a time, so a page is written only once fully rendered.
     public Task WriteTextAsync(string path, string text)
