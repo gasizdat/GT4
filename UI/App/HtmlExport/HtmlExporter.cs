@@ -575,7 +575,7 @@ public sealed class HtmlExporter
   private static HtmlContent RenderFigcaption(string? caption) =>
     string.IsNullOrWhiteSpace(caption) ? HtmlContent.Empty : FigcaptionTemplate.Fill(("caption", caption));
 
-  // The preview page holds only what the photo itself carries: whichever page reaches it first writes it.
+  // Built from the photo alone, since the first page to reach it writes it.
   private async Task<SitePhoto> WritePhotoAsync(Site site, Data photo)
   {
     var media = await site.WriteMediaAsync(photo);
@@ -847,7 +847,6 @@ public sealed class HtmlExporter
 
     public Data? MainPhotoOf(int personId) => persons[personId].MainPhoto;
 
-    // The main photo is previewed from both the portrait and the gallery.
     public bool AddPreview(int dataId) => _Previews.Add(dataId);
 
     // A zip in Create mode allows one open entry at a time, so a page is written only once fully rendered.
