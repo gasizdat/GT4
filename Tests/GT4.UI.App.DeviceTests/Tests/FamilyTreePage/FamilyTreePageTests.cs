@@ -136,7 +136,6 @@ public class FamilyTreePageTests
     return () => stored;
   }
 
-  // The same, for the arrangement stored under one centre.
   private static Func<IReadOnlyDictionary<int, double>> UseArrangement(TestServices services, int centerId, Dictionary<int, double> pins)
   {
     var stored = pins;
