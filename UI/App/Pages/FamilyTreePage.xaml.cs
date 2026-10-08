@@ -404,18 +404,21 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
 
   // See ProjectPage.OnNavigatedTo: node views are cached and never auto-reload (see ClearRenderCache),
   // so an edit made on the person subpage this navigates to must rebuild the tree on the way back.
-  // So must a hide on a tree page opened from there, or the next hide here would write over it.
+  // So must a hide or a drop on a tree page opened from there, or the next one here would write over it.
   protected override void OnNavigatedTo(NavigatedToEventArgs args)
   {
     base.OnNavigatedTo(args);
     var hiddenIds = _HiddenPersonsStore.Get(_CurrentProjectProvider.Info);
     var isHiddenChanged = !hiddenIds.SequenceEqual(_HiddenIds);
     SetHiddenIds(hiddenIds);
+    var pins = _Center is null ? _Pins : _ArrangementStore.Get(_CurrentProjectProvider.Info, _Center.Id);
+    var isArrangementChanged = pins.Count != _Pins.Count || pins.Except(_Pins).Any();
+    SetPins(pins);
     if (_LastProjectInfo != _CurrentProjectProvider.Info)
     {
       Refresh();
     }
-    else if (isHiddenChanged)
+    else if (isHiddenChanged || isArrangementChanged)
     {
       Reload(ViewTarget.Center);
     }
