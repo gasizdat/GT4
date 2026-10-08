@@ -123,6 +123,13 @@ h3 { font-family: Georgia, "Times New Roman", serif; font-size: 1.25rem; margin:
 .gallery img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
 .gallery figcaption { padding: 0.5rem 0.75rem; font-size: 0.8rem; color: var(--muted); }
 
+/* Photo viewer: dark in either theme, as the app's is */
+.viewer { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; background: #1D1C1A; color: #BEB8A9; }
+.viewer figure { margin: 0; text-align: center; }
+.viewer img { max-height: calc(100vh - 6rem); cursor: zoom-out; }
+.viewer figcaption { margin-top: 0.75rem; }
+.viewer button { position: fixed; top: 1rem; right: 1rem; width: 2.75rem; height: 2.75rem; border: 0; border-radius: 50%; background: rgb(153 153 153 / 0.2); color: #FFFFFF; font-size: 1.25rem; cursor: pointer; }
+
 /* Biography and the details rendered with it */
 .prose { max-width: 42rem; }
 .prose blockquote { margin: 1rem 0; padding: 0.25rem 1rem; border-left: 3px solid var(--accent); font-family: Georgia, "Times New Roman", serif; font-style: italic; }

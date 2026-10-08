@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{title}}</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="viewer">
+<figure>
+<img alt="">
+<figcaption hidden></figcaption>
+</figure>
+<button type="button">✕</button>
+<script>
+const params = new URLSearchParams(location.hash.slice(1));
+const image = document.querySelector("img");
+const caption = document.querySelector("figcaption");
+const text = params.get("caption");
+image.src = params.get("src");
+image.alt = text;
+caption.textContent = text;
+caption.hidden = text.length === 0;
+if (text.length > 0) {
+  document.title = text;
+}
+const close = () => window.close();
+image.addEventListener("click", close);
+document.querySelector("button").addEventListener("click", close);
+</script>
+</body>
+</html>

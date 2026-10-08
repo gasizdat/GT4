@@ -31,6 +31,7 @@ public sealed class HtmlExporter
   private const string StatisticsPage = "statistics.html";
   private const string MainPersonPage = "main-person.html";
   private const string StyleSheet = "style.css";
+  private const string PhotoViewerPage = "photo.html";
   private const string MediaFolder = "media";
   private const int MaxRelativeRows = 500;
   private const int MaxTreeNodes = 300;
@@ -72,6 +73,7 @@ public sealed class HtmlExporter
   private static readonly HtmlTemplate GalleryTemplate = HtmlTemplate.Load("gallery.html");
   private static readonly HtmlTemplate FigureTemplate = HtmlTemplate.Load("figure.html");
   private static readonly HtmlTemplate FigcaptionTemplate = HtmlTemplate.Load("figcaption.html");
+  private static readonly HtmlTemplate PhotoViewerTemplate = HtmlTemplate.Load("photo-viewer.html");
   private static readonly HtmlTemplate ProseTemplate = HtmlTemplate.Load("prose.html");
 
   // A biography link to any other scheme renders as text.
@@ -141,6 +143,8 @@ public sealed class HtmlExporter
     var index = await RenderIndexAsync(site, indexedFamilies, persons);
     var css = HtmlTemplate.ReadResource(StyleSheet);
     await site.WriteTextAsync(StyleSheet, css);
+    var viewer = PhotoViewerTemplate.Fill(("title", UIStrings.FieldPersonPhotos));
+    await site.WriteTextAsync(PhotoViewerPage, viewer.Markup);
     await site.WriteTextAsync(IndexPage, index);
     var statistics = await RenderStatisticsAsync(site, persons, families);
     await site.WriteTextAsync(StatisticsPage, statistics);
@@ -166,6 +170,13 @@ public sealed class HtmlExporter
   private static string FamilyHref(int familyId) => $"family-{familyId}.html";
 
   private static string PersonHref(int personId) => $"person-{personId}.html";
+
+  private static string PhotoViewerHref(string src, string? caption)
+  {
+    var escapedSrc = Uri.EscapeDataString(src);
+    var escapedCaption = Uri.EscapeDataString(caption ?? string.Empty);
+    return $"{PhotoViewerPage}#src={escapedSrc}&caption={escapedCaption}";
+  }
 
   private static string RenderDocument(string title, HtmlContent navigation, HtmlContent body)
   {
@@ -582,7 +593,8 @@ public sealed class HtmlExporter
 
     var media = await site.WriteMediaAsync(mainPhoto);
     var caption = await ReadCaptionAsync(site, mainPhoto);
-    return PortraitTemplate.Fill(("src", media.Href), ("caption", caption));
+    var viewer = PhotoViewerHref(media.Href, caption);
+    return PortraitTemplate.Fill(("href", viewer), ("src", media.Href), ("caption", caption));
   }
 
   private static async Task<HtmlContent> RenderPhotosAsync(Site site, Data? mainPhoto, Data[] additionalPhotos)
@@ -596,8 +608,9 @@ public sealed class HtmlExporter
     {
       var media = await site.WriteMediaAsync(photo);
       var caption = await ReadCaptionAsync(site, photo);
+      var viewer = PhotoViewerHref(media.Href, caption);
       var figcaption = string.IsNullOrWhiteSpace(caption) ? HtmlContent.Empty : FigcaptionTemplate.Fill(("caption", caption));
-      var figure = FigureTemplate.Fill(("src", media.Href), ("caption", caption), ("figcaption", figcaption));
+      var figure = FigureTemplate.Fill(("href", viewer), ("src", media.Href), ("caption", caption), ("figcaption", figcaption));
       figures.Add(figure);
     }
     var joined = HtmlContent.Join(figures);
