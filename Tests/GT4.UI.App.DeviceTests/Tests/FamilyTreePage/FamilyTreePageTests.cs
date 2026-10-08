@@ -136,6 +136,17 @@ public class FamilyTreePageTests
     return () => stored;
   }
 
+  // The same, for the arrangement stored under one centre.
+  private static Func<IReadOnlyDictionary<int, double>> UseArrangement(TestServices services, int centerId, Dictionary<int, double> pins)
+  {
+    var stored = pins;
+    services.ArrangementStore.Setup(s => s.Get(It.IsAny<ProjectInfo>(), centerId)).Returns(() => new Dictionary<int, double>(stored));
+    services.ArrangementStore
+      .Setup(s => s.Set(It.IsAny<ProjectInfo>(), centerId, It.IsAny<IReadOnlyDictionary<int, double>>()))
+      .Callback((ProjectInfo _, int _, IReadOnlyDictionary<int, double> offsets) => stored = new Dictionary<int, double>(offsets));
+    return () => stored;
+  }
+
   private static void UsePersons(TestServices services, params PersonInfo[] persons)
   {
     services.Persons.Setup(p => p.GetPersonsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(persons);
@@ -1223,6 +1234,53 @@ public class FamilyTreePageTests
       loads => loads != loadsBefore,
       TimeSpan.FromMilliseconds(200),
       "Returning to an unchanged hidden set rebuilt the tree.");
+  }
+
+  [Fact]
+  public async Task Returning_takes_in_an_arrangement_made_on_a_tree_opened_from_here_and_keeps_it()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    var child = P(2, "Petr");
+    var sibling = P(3, "Oleg");
+    var stored = UseArrangement(services, center.Id, []);
+    SetupTree(services, center, child, sibling);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    // Stands in for a second tree page, opened through the centre's person page.
+    services.ArrangementStore.Object.Set(TestServices.SampleProjectInfo, center.Id, new Dictionary<int, double> { [2] = 3 });
+
+    await WaitForLoadAsync(page, services, page.InvokeNavigatedTo);
+    var centerLeft = await NodeLeftAsync(page, center.Id);
+    var childLeft = await NodeLeftAsync(page, child.Id);
+    var expectedTitle = string.Format(UIStrings.TitleFamilyTreePageArranged_1, "Ivan");
+    Assert.Equal(expectedTitle, page.PageTitle);
+    Assert.Equal(3, (childLeft - centerLeft) / SlotPitch, precision: 6);
+    await WaitForLoadAsync(page, services, () => page.InvokeDropNode(sibling.Id, -2 * SlotPitch));
+
+    var pins = stored();
+    Assert.Equal(3, pins[child.Id]);
+    Assert.Equal(new[] { child.Id, sibling.Id }, pins.Keys.Order());
+  }
+
+  [Fact]
+  public async Task Returning_to_an_unchanged_arrangement_does_not_rebuild()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    UseArrangement(services, center.Id, new() { [2] = 3 });
+    SetupTree(services, center, P(2, "Petr"));
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    var loadsBefore = page.CompletedLoads;
+
+    await MainThread.InvokeOnMainThreadAsync(page.InvokeNavigatedTo);
+
+    await Poll.ConfirmNeverAsync(
+      () => Task.FromResult(page.CompletedLoads),
+      loads => loads != loadsBefore,
+      TimeSpan.FromMilliseconds(200),
+      "Returning to an unchanged arrangement rebuilt the tree.");
   }
 
   [Fact]
