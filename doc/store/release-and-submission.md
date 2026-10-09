@@ -279,8 +279,16 @@ See [screenshots/README.md](screenshots/README.md).
 **The sideload check passed** on 2026-10-09: `4.0.723.0` installed from the
 release's `.msix`, `Get-AppxPackage` reports PFN
 `gasizdat.GenealogyTree_25ksdz0mncfjg`, and the app launched, opened a project
-and drove the family tree. The Windows App Certification Kit run is still up to
-whoever submits.
+and drove the family tree.
+
+**WACK passed** on the same package (kit 10.0.28000, 2026-10-09): 23 of 24 tests
+pass, overall result PASS. The one failure, *Blocked executables*, is an
+optional test (`OPTIONAL="TRUE"` in the report) aimed at Windows S mode, and
+expected here. `Process.Start`/`ShellExecute` are MAUI's `Launcher`, which
+opens attachments and biography links. The "Cmd"/"reG"/"CdB"/"MSBuild" hits are
+substring matches in strings: in GT4's own resources, the Mac hotkey hint
+"Cmd + +/-/0"; the rest are inside Markdig, MAUI and WinRT. Expect the same
+result on every release; a new *required* failure is what to look for.
 
 The palette needs no inventory here any more. #358 and #360 cleared the
 last of the MAUI template colours, and what replaced them is pinned by the
