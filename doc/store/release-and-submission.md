@@ -182,13 +182,23 @@ property of the app in general; decide it fresh each time, not from what a
 previous submission did. Default to leaving it off: most updates here are
 features and non-crash bug fixes, and marking every submission mandatory just
 trains the toggle to be ignored. Turn it on when a submission fixes a crash or
-a data-loss/corruption bug that shipped in a previous submission — the
-September 2026 release (this one, at the time of writing) qualifies: PR #372
-fixes a `STATUS_STOWED_EXCEPTION` crash decoding photo thumbnails. Word it
-precisely if you note the reason anywhere user-facing: PR #372 fixes that crash
-on the one repro path it targeted (thumbnail decoding contending with WinUI's
-UI-thread lock); issue #370 — the same crash class — stays open for other
-triggers, so "fixes a crash" is accurate and "fixes the crash" is not.
+a data-loss/corruption bug that shipped in a previous submission.
+
+The October 2026 release (this one, at the time of writing) qualifies, on data
+loss: PR #458 fixes #451, where a biography typed into the *create* person
+dialog was silently discarded on save. Checked against `v4.0.688.0` rather than
+assumed — there the dialog showed the biography editor unconditionally, but only
+built the item behind it for an existing person, so the editor had nothing to
+write to. Only new persons were affected; editing an existing person's
+biography always saved. It also carries a crash fix (PR #436: the Settings
+calendar preview threw on 29 February with a non-Gregorian calendar chosen),
+but that one can't have reached a user — no 29 February has
+fallen since the calendar feature shipped — so it isn't the reason for the
+toggle.
+
+(September 2026 was mandatory for a crash: PR #372 fixed a
+`STATUS_STOWED_EXCEPTION` decoding photo thumbnails. #370 was closed against it
+on 2026-10-08 after a 1,700-iteration stress run.)
 
 The package declares **`EN-US` only** — read out of the shipped
 `GT4-4.0.656.0-win-x64.msix`. The manifest asks for
@@ -236,14 +246,37 @@ file's prose copy, and that table together when behaviour changes.
   `TITL`) drops that sub-tag on import.** Deliberate gap noted in PR #369: GT4's
   own export never produces this shape, since family photo categories have no
   `*Tagged` counterpart to carry it.
-- **Issue #370** (a Windows `STATUS_STOWED_EXCEPTION` crash on regaining focus)
-  is only partly fixed. PR #372 fixed the one reproduction path it targeted
-  (thumbnail decoding off the UI thread); the issue stays open for other
-  triggers of the same crash class.
+- **Issue #370 is closed** (2026-10-08) as fixed by PR #372, which shipped in
+  `v4.0.688.0`.
+- **Tree arrangements and hidden persons stay on the machine.** Both live in
+  the project's `projectconfig.json` in the app's project cache, not in the
+  `.gt4` file, so a project copied or exported as `.gt4` arrives with the
+  default tree. The listing says "remembered per project", which is true; don't
+  strengthen it to "saved in the project".
+- **The HTML export includes living people.** It asks for confirmation first,
+  and it's handed to the OS share sheet rather than uploaded anywhere — the
+  privacy policy's "Files you export" section says so.
+- **Copying text and hiding from the tree are right-click only** — fine for
+  this Windows submission; any Play copy has to drop them.
 
-The screenshots are not among these — the set was fully re-shot for this
-release (11 shots, home screens dropped); see
-[screenshots/README.md](screenshots/README.md) for what changed and why.
+### Open bugs at the time of this release, judged not blocking
+
+Pulled live on 2026-10-09; none touch the Windows Store build's correctness.
+
+- **#466** — a flaky device test (`PersonPageTests`, photo box in a very short
+  landscape window). Test-only; the workflow runs no tests anyway.
+- **#271** — `PersonInfoView` retained after in-place rebinding. Android-only,
+  shipped in every earlier release.
+- **#262** — memory growth scrolling the families list one card at a time;
+  partly fixed earlier, the remainder shipped in every earlier release.
+
+**The two family-tree screenshots are stale.** `06-family-tree.png` (the lead
+shot) and `13-family-tree-dark.png` show the spring layout that #469 replaced,
+so they misrepresent the screen the Description now describes. Re-shoot both
+before uploading. The other nine were not re-checked against this build;
+`04-person.png` (photo captions), `05-biography.png` and `08-gallery.png` (now
+sorted by title) are the likeliest to differ. See
+[screenshots/README.md](screenshots/README.md).
 
 The palette needs no inventory here any more. #358 and #360 cleared the
 last of the MAUI template colours, and what replaced them is pinned by the

@@ -43,9 +43,9 @@ family calendar. No account, no cloud.
 
 ## Description (≤10,000 chars)
 
-*4,396 characters once the source line wraps below are unwrapped into single
-spaces, counting the `###` and `-` markers. Well inside the 10,000 limit; see
-the Play appendix, where it matters.*
+*About 4,940 characters once the source line wraps below are unwrapped into
+single spaces, counting the `###` and `-` markers. Well inside the 10,000
+limit; see the Play appendix, where it matters.*
 
 **Genealogy Tree keeps your family history where it belongs: on your own
 computer.** There is no account to create, no server to sync with and no
@@ -59,22 +59,25 @@ research elsewhere? Import a GEDCOM file and your tree is there.
 
 ### See how the family fits together
 
-The family tree screen draws ancestors and descendants around one person, with
-spouses kept side by side and connecting lines that never cross more than they
-have to. Click any relative to re-centre the tree on them. Pull in more
-generations upwards or downwards whenever you want, switch siblings and cousins
-on or off, zoom from a whole-tree overview down to a single branch, and drag the
-canvas to pan around it.
+The family tree screen draws ancestors and descendants around one person as a
+tidy pedigree: children centred under their parents, each family drawn once.
+Click any relative to re-centre the tree on them. Pull in more generations
+upwards or downwards whenever you want, switch siblings and cousins on or off,
+zoom from a whole-tree overview down to a single branch, and drag the canvas to
+pan around it. Want it your way? Drag people into place, or right-click someone
+to hide them from the tree; the app remembers both for that project.
 
 ### A page for every person
 
 Each person gets photos, a biography and attachments:
 
-- **Photos** — a main portrait plus as many additional photos as you like, in a
-  full-screen viewer.
-- **Biography** — rich text with formatting, headings, lists and links. Drop
-  images from the person's own photos straight into the text.
-- **Attachments** — scans, certificates, PDFs, audio, anything. They open in
+- **Photos** — a main portrait plus as many additional photos as you like, each
+  with its own caption, in a full-screen viewer.
+- **Biography** — rich text with formatting, headings, lists and links, written
+  with a formatting toolbar. Drop photos from the project straight into the
+  text at the width you choose, or insert them as plain links.
+- **Attachments** — scans, certificates, PDFs, audio, anything, each with its own
+  caption. Images open in the app's own viewer; everything else opens in
   whichever app you normally use for that file type.
 - **Relatives** — an expandable tree of everyone connected to this person,
   walked one branch at a time.
@@ -106,6 +109,9 @@ Each person gets photos, a biography and attachments:
   carried through the round trip rather than silently dropped, and so are family
   photos and attachments. If a file declares an ambiguous character set, the app
   asks which codepage it was written in instead of mangling every name in it.
+- **Share it as a website.** Export the whole project as a self-contained HTML
+  site, with a page for every person and family, that opens in any browser
+  without the app.
 - **Read dates in your calendar.** View every date in the Gregorian, Julian,
   Hebrew or French Republican calendar — switch anytime, without changing how
   anything is stored.
@@ -122,7 +128,8 @@ for a long evening of reading old handwriting.
 
 Mark one person as your project's main person and the app opens straight to
 them next time. Handing a project to someone else just to browse? Read-only
-mode hides every editing action behind a single toggle.
+mode hides every editing action behind a single toggle. Need a name for a
+search engine? Right-click a person's name, dates or biography to copy it.
 
 Available in **English, Russian, German, Spanish and French**.
 
@@ -135,12 +142,12 @@ then open it.
 
 ## Features (≤200 chars each, up to 20 entries)
 
-*20 entries; the longest is 136 characters.*
+*20 entries; the longest is 134 characters.*
 
 
-- Zoomable, pannable family tree of ancestors and descendants, re-centred on any relative with a click
-- Load more generations upwards or downwards on demand, with siblings and cousins optional
-- Person pages with a main portrait, extra photos, a formatted biography and file attachments
+- Zoomable, pannable family tree of ancestors and descendants, re-centred on any relative with a click, more generations on demand
+- Drag people into place on the tree or hide them from it, remembered per project
+- Person pages with a main portrait, extra photos, a formatted biography and file attachments, each photo and file captioned
 - Kinship finder: the relationship between any two people, plus the full chain of relatives connecting them
 - Date calendar of births, wedding anniversaries and remembrances, with milestone years highlighted
 - Over twenty project statistics: lifespans, births by decade, common names, and where your data is incomplete
@@ -151,9 +158,9 @@ then open it.
 - GEDCOM 5.5.1 import and export that preserves tags the app doesn't model natively, family photos and attachments included
 - Ambiguous GEDCOM character sets are resolved by asking, not by guessing
 - Export or import a whole project as a single .gt4 file, opening with a double-click once associated on Windows
+- Export the whole project as a self-contained HTML website, a page for every person and family
 - Mark a project's main person to open straight to them, or switch to read-only mode to browse without editing
-- Multiple independent projects, each a single file in your Documents folder
-- Restore points to roll a project back to an earlier state
+- Multiple independent projects, each a single file in your Documents folder, with restore points to roll back to
 - Light, dark or system theme, and app-wide text scaling with Ctrl + plus / minus / 0
 - Built-in Brontë family demo tree to explore before you start your own
 - Interface in English, Russian, German, Spanish and French
@@ -175,26 +182,31 @@ verify the current limit and trim from the bottom if needed.*
 ## What's new in this version
 
 **New**
-- Mark a project's main person — the app opens straight to them next time.
-- Read-only mode: hide every editing action behind one toggle, for safely
-  browsing a shared or borrowed project.
-- Display dates in the Gregorian, Julian, Hebrew or French Republican
-  calendar. GEDCOM dates written in the French Republican calendar now import
-  correctly too.
-- Export or import a whole project as a single .gt4 file; on Windows it opens
-  with a double-click once associated.
-- Family photos and attachments now survive a GEDCOM export and reimport,
-  alongside the tags that already did.
-- The kinship finder has a swap button to flip the two selected people.
-- Every page now shows which project is open.
+- Export the whole project as an HTML website: a page for every person and
+  family, a main-person page with the family tree, and full-size photo previews.
+- The family tree is laid out as a tidy pedigree, with children centred under
+  their parents.
+- Drag people into place on the family tree, or right-click to hide someone
+  from it; both are remembered per project.
+- Hovering a person on the tree highlights them and their lines.
+- Captions for a person's photos and attachments.
+- The biography editor has formatting buttons (bold, italic, heading, list),
+  and its toolbar stays in view on a long biography.
+- Insert a photo into a biography as a picture at a chosen width, or as a plain
+  link.
+- Image attachments, and images in a biography, open in the app's own photo
+  viewer.
+- Right-click a person's name, dates or biography to copy it.
+- GEDCOM import keeps a Russian surname's male and female forms under one
+  family.
+- Gallery items open with a single click, sort by title, and search matches
+  titles and file names.
 
 **Fixed**
-- A rare crash decoding some photo thumbnails on Windows.
-- Incomplete or asymmetric kinship results for people connected through a
-  spouse's sibling.
-- Misaligned columns on the families list.
-- A duplicated date line on GEDCOM export.
-- A crash opening the photo viewer when every photo was a placeholder.
+- A biography typed while creating a new person was lost on save.
+- The editor could freeze on a long biography with many pictures.
+- Closing a photo preview could jump to a different person.
+- A crash in the Settings calendar preview on 29 February.
 
 ## Before submitting
 
@@ -210,6 +222,9 @@ verify the current limit and trim from the bottom if needed.*
   attribution line from the demo file's `TITL` tags, so it reads more like a
   credits list than a gallery. See
   [screenshots/README.md](screenshots/README.md) ("Still worth fixing").
+- **The two family-tree screenshots predate the tidy-pedigree layout** (#469),
+  and `06-family-tree.png` leads the set. Re-shoot both before uploading — see
+  screenshots/README.md ("Stale since the October 2026 release").
 - **The home/project-list screen is deliberately not in the screenshot set**
   — see screenshots/README.md ("No home screen in this set").
 - **The ".gt4 double-click to open" claim (Features list, What's new) is
@@ -232,11 +247,13 @@ a ready submission.
 **Short description:** Your family tree, offline and private. GEDCOM in and
 out, photos, kinship tools. (80 chars)
 
-**Full description:** the Description above is 4,396 characters against Play's
-4,000 limit, so it no longer fits as-is (it did, barely, before this release's
-new features were added) and a section has to be cut, not just trimmed. Play
+**Full description:** the Description above is about 4,940 characters against
+Play's 4,000 limit, so it no longer fits as-is and a section has to be cut, not
+just trimmed. Play
 also renders no rich text, so the `###` and `**` markers have to go and
-whatever you put in their place counts too. Two edits are needed regardless:
+whatever you put in their place counts too. Three edits are needed regardless:
 replace the Ctrl + plus / minus / 0 shortcut with the pinch-to-zoom gesture
-Android uses for the same thing, and drop the "on your own computer" framing in
-the opening line, which reads oddly on a phone.
+Android uses for the same thing, drop the "on your own computer" framing in
+the opening line, which reads oddly on a phone, and drop the right-click
+claims (copying text, hiding someone from the tree), which have no Android
+gesture yet.

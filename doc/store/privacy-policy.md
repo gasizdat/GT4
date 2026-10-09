@@ -3,7 +3,7 @@
 *Submitted as policy text directly in Partner Center → Properties, rather than a
 hosted URL, since the repo has no public domain to host it at.*
 
-*Last updated: 6 September 2026*
+*Last updated: 9 October 2026*
 
 ## The short version
 
@@ -58,6 +58,14 @@ a web address into a biography, the app never makes a network request at all.
 When you import a GEDCOM file, attach a document or pick a photo, Windows shows
 you its own file picker and the app receives only the file you selected. It does
 not browse or index the rest of your disk.
+
+## Files you export
+
+Exporting a project — as GEDCOM, as a `.gt4` file, or as an HTML website —
+creates a file and hands it to Windows' own share dialog. Where it goes
+from there is your choice; the app does not upload it anywhere. An HTML export
+contains every person in the project, living people included, so the app asks
+you to confirm before creating one.
 
 ## Children
 

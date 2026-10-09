@@ -76,6 +76,16 @@ a compromise between showing the settings likely to matter most and hinting at
 what's further down; the date-format settings below it aren't visible in this
 crop.
 
+## Stale since the October 2026 release
+
+- **`06-family-tree.png` and `13-family-tree-dark.png`** show the spring layout
+  that the tidy-pedigree layout (#469) replaced. `06` leads the set, so it must
+  be re-shot before this release's listing goes up. The *Relatives* toggle the
+  choice below depends on still exists (`IncludeCollaterals`), so keep it on.
+- **Not re-checked:** `04-person.png` (person photos can now carry captions),
+  `05-biography.png`, and `08-gallery.png` (the gallery now sorts by title).
+  Compare each against the release build before deciding to keep it.
+
 ## Still worth fixing
 
 - **`08-gallery.png`** is honest but text-heavy: every row is a Wikimedia
