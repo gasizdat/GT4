@@ -62,8 +62,9 @@ not browse or index the rest of your disk.
 ## Files you export
 
 Exporting a project — as GEDCOM, as a `.gt4` file, or as an HTML website —
-creates a file and hands it to Windows' own share dialog. Where it goes
-from there is your choice; the app does not upload it anywhere. An HTML export
+creates a file in the app's own cache folder and hands it to Windows' own share
+dialog. Where it goes from there is your choice; the app does not upload it
+anywhere. The copy in the cache folder stays there after sharing. An HTML export
 contains every person in the project, living people included, so the app asks
 you to confirm before creating one.
 
