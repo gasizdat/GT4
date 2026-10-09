@@ -222,9 +222,9 @@ verify the current limit and trim from the bottom if needed.*
   attribution line from the demo file's `TITL` tags, so it reads more like a
   credits list than a gallery. See
   [screenshots/README.md](screenshots/README.md) ("Still worth fixing").
-- **The two family-tree screenshots predate the tidy-pedigree layout** (#469),
-  and `06-family-tree.png` leads the set. Re-shoot both before uploading — see
-  screenshots/README.md ("Stale since the October 2026 release").
+- **The two family-tree screenshots were re-shot for the tidy-pedigree layout**
+  (#469). Upload them by hand; the CSV's screenshot rows still name
+  September's assets. See screenshots/README.md ("October 2026 release").
 - **The home/project-list screen is deliberately not in the screenshot set**
   — see screenshots/README.md ("No home screen in this set").
 - **The ".gt4 double-click to open" claim (Features list, What's new) is

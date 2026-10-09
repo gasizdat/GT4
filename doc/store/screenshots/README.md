@@ -26,7 +26,9 @@ opened demo project, and each one's header names it ("Families | Brontë Family
 
 ## Which build each shot came from
 
-All eleven are from a single session against this release branch's tip. Unlike
+Nine are from a single session against the September release branch's tip;
+`06` and `13` were re-shot in October against the installed `4.0.723.0` MSIX
+(see "October 2026 release" below). Unlike
 the previous set, no shot in this set displays the app version (that only ever
 appeared on the now-dropped home screen), so there's no version-pinning
 constraint on which commit they're built from.
@@ -76,15 +78,23 @@ a compromise between showing the settings likely to matter most and hinting at
 what's further down; the date-format settings below it aren't visible in this
 crop.
 
-## Stale since the October 2026 release
+## October 2026 release
 
-- **`06-family-tree.png` and `13-family-tree-dark.png`** show the spring layout
-  that the tidy-pedigree layout (#469) replaced. `06` leads the set, so it must
-  be re-shot before this release's listing goes up. The *Relatives* toggle the
-  choice below depends on still exists (`IncludeCollaterals`), so keep it on.
-- **Not re-checked:** `04-person.png` (person photos can now carry captions),
-  `05-biography.png`, and `08-gallery.png` (the gallery now sorts by title).
-  Compare each against the release build before deciding to keep it.
+- **`06-family-tree.png` and `13-family-tree-dark.png` were re-shot** against the
+  installed `4.0.723.0` MSIX, because the tidy-pedigree layout (#469) replaced
+  the spring layout they showed. Same framing as before: Charlotte centred,
+  *Relatives* on. The new *Arrange* switch and the 🔀 button are in frame.
+- **`04-person.png`, `05-biography.png` and `08-gallery.png` were compared
+  against the same build and kept.** The only differences were drift, not app
+  changes: "since birth" reads a month later, and `08`'s header spells the
+  project "Bronte" because of the name it was shot with. The gallery's new
+  sort-by-title gives the same order for the demo tree.
+- **The packaged app reads the developer's own `appconfig.json`.** MSIX doesn't
+  redirect a file that already exists in `%APPDATA%`, so a sideloaded build on a
+  dev machine starts with that machine's name and date formats, not the
+  defaults. The README's "default name/date formats" meant removing the
+  `NameFormatter.*`, `DateFormatter.*Format` and `DateSpanFormatter.*` keys
+  (backed up first, restored after), not trusting a fresh install.
 
 ## Still worth fixing
 

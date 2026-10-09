@@ -270,13 +270,17 @@ Pulled live on 2026-10-09; none touch the Windows Store build's correctness.
 - **#262** — memory growth scrolling the families list one card at a time;
   partly fixed earlier, the remainder shipped in every earlier release.
 
-**The two family-tree screenshots are stale.** `06-family-tree.png` (the lead
-shot) and `13-family-tree-dark.png` show the spring layout that #469 replaced,
-so they misrepresent the screen the Description now describes. Re-shoot both
-before uploading. The other nine were not re-checked against this build;
-`04-person.png` (photo captions), `05-biography.png` and `08-gallery.png` (now
-sorted by title) are the likeliest to differ. See
-[screenshots/README.md](screenshots/README.md).
+**The two family-tree screenshots were re-shot** against the installed
+`4.0.723.0` MSIX, since #469 replaced the layout they showed; `04`, `05` and `08`
+were compared against the same build and kept. Upload the two new files by hand
+in Partner Center: the CSV's screenshot rows still point to September's assets.
+See [screenshots/README.md](screenshots/README.md).
+
+**The sideload check passed** on 2026-10-09: `4.0.723.0` installed from the
+release's `.msix`, `Get-AppxPackage` reports PFN
+`gasizdat.GenealogyTree_25ksdz0mncfjg`, and the app launched, opened a project
+and drove the family tree. The Windows App Certification Kit run is still up to
+whoever submits.
 
 The palette needs no inventory here any more. #358 and #360 cleared the
 last of the MAUI template colours, and what replaced them is pinned by the
