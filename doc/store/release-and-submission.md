@@ -27,6 +27,7 @@ move these documents to master.
 ```powershell
 git fetch origin
 git checkout --no-track -b release/rc-<month>-<day> origin/master
+git merge --no-edit origin/release/rc-<previous>
 git push -u origin release/rc-<month>-<day>
 gh workflow run release.yml --ref release/rc-<month>-<day>
 gh run watch (gh run list --workflow release.yml --limit 1 --json databaseId -q '.[0].databaseId')
@@ -34,6 +35,13 @@ gh run watch (gh run list --workflow release.yml --limit 1 --json databaseId -q 
 
 Cut the branch only from a master commit whose CI is green — the workflow builds
 and publishes but runs no tests.
+
+The merge carries `doc/store` forward: it lives only on release branches, so a
+branch cut from master alone has no runbook, listing CSV or screenshots.
+`<previous>` is the last release branch (`git branch -r --list
+"origin/release/rc-*"`). Afterwards `git diff --stat origin/master HEAD` should
+list nothing outside `doc/store`; anything else means the previous branch
+carried a code commit, which has to be resolved before dispatching.
 
 ## Version
 
