@@ -16,8 +16,9 @@ from the code.
 - Never delete a `drafts/ai/*` branch, local or remote, even after it's merged — omit
   `--delete-branch` on `gh pr merge`. Likewise, don't clean up old `git stash` entries you find;
   they're kept deliberately as recovery points for abandoned or paused work.
-- `doc/store` (Store submission material, screenshots, listing text) lives on `release/rc-sep-04`,
-  not `master` — don't move it.
+- `doc/store` (Store submission material, screenshots, listing text) lives on the latest
+  `release/rc-*` branch, not `master` — don't move it. Each new release branch merges the previous
+  one to carry it forward; `doc/store/release-and-submission.md` there has the commands.
 - Never `git push` or open/merge a PR without being asked first, even if a previous push in the
   same session was approved.
 
