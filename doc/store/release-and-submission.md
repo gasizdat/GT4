@@ -232,10 +232,13 @@ that this layout depends on:
   `listings/`.
 - An image path **starts with the folder's own name** —
   `listings/06-family-tree.png`, not `06-family-tree.png`.
-- **An emptied image cell changes nothing**: the old image stays. That's why
-  the October 2026 `.csv`-only import, whose screenshot rows held September's
-  Partner Center URLs, left every screenshot in place. So keep all ten rows
-  filled, and remove a screenshot by hand in Partner Center if the set shrinks.
+- **An emptied image cell changes nothing**: the old image stays. So keep all
+  ten rows filled, and remove a screenshot by hand in Partner Center if the set
+  shrinks.
+- A cell holding an existing asset's Partner Center URL re-applies that asset.
+  That's what the October 2026 `.csv`-only import did: its rows held the URLs
+  of the screenshots already in the submission, so every screenshot stayed as
+  it was.
 - An import with any error saves nothing, so a rejected import is harmless —
   fix it and import again. **View errors** says which cell failed.
 - After a folder import, Partner Center's own *Export* turns the paths into
