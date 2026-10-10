@@ -214,21 +214,44 @@ the user picks them in Settings — but the Store will list English only unless
 package-level language resources are added. Say so in the listing copy (it does)
 rather than expecting Partner Center to show all five.
 
-**Store listings** — upload [listing-data-en-us.csv](listing-data-en-us.csv)
-via the Store listings page's **Import** button rather than retyping fields;
-it carries Description, What's new, Features, Search terms and screenshot
-captions in the exact plain-text style Partner Center's fields actually
-render (see the note in
+**Store listings** — **Import listings → Import folder**, and select
+`doc\store\screenshots`. That one folder holds
+[listing-data-en-us.csv](screenshots/listing-data-en-us.csv) and every
+screenshot it names, so a single import sets the text, the ten screenshots,
+their order and their captions together; nothing is retyped or swapped by hand.
+The CSV carries Description, What's new, Features, Search terms and captions in
+the plain-text style Partner Center's fields actually render (see the note in
 [microsoft-store-listing-en.md](microsoft-store-listing-en.md) — Markdown
-doesn't render there). The screenshot-file rows still hold whatever asset URLs
-were live in Partner Center at the last export. Importing them back keeps the
-existing screenshots and captions in place (confirmed on the October 2026
-submission), so a changed screenshot is replaced by hand on the listing page
-after the import. That release swapped two that way (`06`, `13`) and left the
-other eight untouched. Screenshots themselves, their captions and order are also
-described in [screenshots/README.md](screenshots/README.md). Every claim in
-the copy is traced in [claim-sources.md](claim-sources.md); fix the CSV, this
-file's prose copy, and that table together when behaviour changes.
+doesn't render there).
+
+Rules from Microsoft's
+[import/export page](https://learn.microsoft.com/windows/apps/publish/publish-your-app/msix/import-and-export-store-listings)
+that this layout depends on:
+
+- The folder may hold **only one `.csv`**; keep it the only one in
+  `screenshots/`.
+- An image path **starts with the folder's own name** —
+  `screenshots/06-family-tree.png`, not `06-family-tree.png`.
+- **An emptied image cell changes nothing**: the old image stays. That's why
+  the October 2026 `.csv`-only import, whose screenshot rows held September's
+  Partner Center URLs, left every screenshot in place. So keep all ten rows
+  filled, and remove a screenshot by hand in Partner Center if the set shrinks.
+- An import with any error saves nothing, so a rejected import is harmless —
+  fix it and import again. **View errors** says which cell failed.
+- After a folder import, Partner Center's own *Export* turns the paths into
+  asset URLs. Don't export over this file; it's the source, and the relative
+  paths are what make it re-importable.
+
+Not yet tried: whether the import tolerates the folder's other files
+(`README.md`, the spare `03-family.png`). If it complains, copy the `.csv` and
+the ten PNGs into a fresh folder named `screenshots` and import that instead —
+the paths stay valid as long as the folder name does.
+
+Screenshots, their captions and order are described in
+[screenshots/README.md](screenshots/README.md); the CSV's rows must follow that
+order. Every claim in the copy is traced in
+[claim-sources.md](claim-sources.md); fix the CSV, this file's prose copy, and
+that table together when behaviour changes.
 
 ## Known at the time of this release
 
@@ -278,8 +301,9 @@ Pulled live on 2026-10-09; none touch the Windows Store build's correctness.
 
 **The two family-tree screenshots were re-shot** against the installed
 `4.0.723.0` MSIX, since #469 replaced the layout they showed; `04`, `05` and `08`
-were compared against the same build and kept. Upload the two new files by hand
-in Partner Center: the CSV's screenshot rows still point to September's assets.
+were compared against the same build and kept. This submission swapped the two
+new files in by hand after a `.csv`-only import; from the next release on, the
+folder import above carries all ten.
 See [screenshots/README.md](screenshots/README.md).
 
 **The sideload check passed** on 2026-10-09: `4.0.723.0` installed from the

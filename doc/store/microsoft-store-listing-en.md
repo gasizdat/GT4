@@ -3,10 +3,10 @@
 Source copy for the Partner Center listing of **Genealogy Tree**
 (package identity `gasizdat.GenealogyTree`, see `UI/App/AppCommon.props`).
 
-**[listing-data-en-us.csv](listing-data-en-us.csv) is what actually gets
-imported into Partner Center** (Store listings page has a matching
-Export/Import pair) — update it alongside this file rather than retyping
-fields into the UI by hand. This file stays the rationale layer: why each
+**[listing-data-en-us.csv](screenshots/listing-data-en-us.csv) is what
+actually gets imported into Partner Center**, together with the screenshots
+beside it, as one folder import (see release-and-submission.md) — update it
+alongside this file rather than retyping fields into the UI by hand. This file stays the rationale layer: why each
 claim is worded the way it is, character-limit tracking, and the Play
 appendix, none of which the CSV carries. When copy changes, edit the prose
 here first, then carry the same wording into the CSV in Partner Center's
@@ -223,8 +223,8 @@ verify the current limit and trim from the bottom if needed.*
   credits list than a gallery. See
   [screenshots/README.md](screenshots/README.md) ("Still worth fixing").
 - **The two family-tree screenshots were re-shot for the tidy-pedigree layout**
-  (#469). Upload them by hand; the CSV's screenshot rows still name
-  September's assets. See screenshots/README.md ("October 2026 release").
+  (#469). The CSV now names all ten screenshots by path, so the folder import
+  uploads them with the text. See screenshots/README.md ("October 2026 release").
 - **The home/project-list screen is deliberately not in the screenshot set**
   — see screenshots/README.md ("No home screen in this set").
 - **The ".gt4 double-click to open" claim (Features list, What's new) is

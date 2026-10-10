@@ -36,7 +36,8 @@ constraint on which commit they're built from.
 ## Suggested Partner Center order and captions
 
 Microsoft Store takes up to 10 screenshots per device family, so the last one
-below is a spare.
+below is a spare. `listing-data-en-us.csv` in this folder encodes this order and
+these captions (`DesktopScreenshot1`–`10`); change both together.
 
 | # | File | Caption |
 |---|------|---------|

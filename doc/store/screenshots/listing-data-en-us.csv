@@ -73,16 +73,16 @@ ShortDescription,8,Text,,"Build your family tree offline, on your own machine. G
 DevStudio,9,Text,,gasizdat
 CopyrightTrademarkInformation,12,Text,,© 2026 gasizdat
 AdditionalLicenseTerms,13,Text,,
-DesktopScreenshot1,100,Relative path (or URL to file in Partner Center),,https://developer.microsoft.com/en-us/dashboard/apps/9MV3J705L3QP/submissions/1152921505701933740/listings/1152922700027345856/listingassets/3037580311651425728
-DesktopScreenshot2,101,Relative path (or URL to file in Partner Center),,https://developer.microsoft.com/en-us/dashboard/apps/9MV3J705L3QP/submissions/1152921505701933740/listings/1152922700027345856/listingassets/3055266194366051132
-DesktopScreenshot3,102,Relative path (or URL to file in Partner Center),,https://developer.microsoft.com/en-us/dashboard/apps/9MV3J705L3QP/submissions/1152921505701933740/listings/1152922700027345856/listingassets/3067736584425641855
-DesktopScreenshot4,103,Relative path (or URL to file in Partner Center),,https://developer.microsoft.com/en-us/dashboard/apps/9MV3J705L3QP/submissions/1152921505701933740/listings/1152922700027345856/listingassets/3016946760464144636
-DesktopScreenshot5,104,Relative path (or URL to file in Partner Center),,https://developer.microsoft.com/en-us/dashboard/apps/9MV3J705L3QP/submissions/1152921505701933740/listings/1152922700027345856/listingassets/3045659597634805750
-DesktopScreenshot6,105,Relative path (or URL to file in Partner Center),,https://developer.microsoft.com/en-us/dashboard/apps/9MV3J705L3QP/submissions/1152921505701933740/listings/1152922700027345856/listingassets/3007869731608989295
-DesktopScreenshot7,106,Relative path (or URL to file in Partner Center),,https://developer.microsoft.com/en-us/dashboard/apps/9MV3J705L3QP/submissions/1152921505701933740/listings/1152922700027345856/listingassets/3040038817014784184
-DesktopScreenshot8,107,Relative path (or URL to file in Partner Center),,https://developer.microsoft.com/en-us/dashboard/apps/9MV3J705L3QP/submissions/1152921505701933740/listings/1152922700027345856/listingassets/3024203358949852478
-DesktopScreenshot9,108,Relative path (or URL to file in Partner Center),,https://developer.microsoft.com/en-us/dashboard/apps/9MV3J705L3QP/submissions/1152921505701933740/listings/1152922700027345856/listingassets/3054018344924489626
-DesktopScreenshot10,109,Relative path (or URL to file in Partner Center),,https://developer.microsoft.com/en-us/dashboard/apps/9MV3J705L3QP/submissions/1152921505701933740/listings/1152922700027345856/listingassets/3071997020517847721
+DesktopScreenshot1,100,Relative path (or URL to file in Partner Center),,screenshots/06-family-tree.png
+DesktopScreenshot2,101,Relative path (or URL to file in Partner Center),,screenshots/04-person.png
+DesktopScreenshot3,102,Relative path (or URL to file in Partner Center),,screenshots/05-biography.png
+DesktopScreenshot4,103,Relative path (or URL to file in Partner Center),,screenshots/09-kinship-finder.png
+DesktopScreenshot5,104,Relative path (or URL to file in Partner Center),,screenshots/10-date-calendar.png
+DesktopScreenshot6,105,Relative path (or URL to file in Partner Center),,screenshots/07-statistics.png
+DesktopScreenshot7,106,Relative path (or URL to file in Partner Center),,screenshots/02-families.png
+DesktopScreenshot8,107,Relative path (or URL to file in Partner Center),,screenshots/08-gallery.png
+DesktopScreenshot9,108,Relative path (or URL to file in Partner Center),,screenshots/13-family-tree-dark.png
+DesktopScreenshot10,109,Relative path (or URL to file in Partner Center),,screenshots/11-settings.png
 DesktopScreenshot11,110,Relative path (or URL to file in Partner Center),,
 DesktopScreenshot12,111,Relative path (or URL to file in Partner Center),,
 DesktopScreenshot13,112,Relative path (or URL to file in Partner Center),,
