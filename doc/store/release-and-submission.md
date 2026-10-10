@@ -154,6 +154,11 @@ one. CI is unaffected — it starts from an empty `obj`.
 
 ## Submitting to the Store
 
+Once the app is live, the product page shows only a read-only **Store
+presence** for the current submission. A new release starts from **Update your
+product → Start update**, which creates a new submission as a copy of the live
+one; edit only what changed, then **Submit to the Store**.
+
 Partner Center walks five sections.
 
 **Pricing and availability** — free; markets; visibility. No blockers.
@@ -216,10 +221,11 @@ captions in the exact plain-text style Partner Center's fields actually
 render (see the note in
 [microsoft-store-listing-en.md](microsoft-store-listing-en.md) — Markdown
 doesn't render there). The screenshot-file rows still hold whatever asset URLs
-were live in Partner Center at the last export; how the Import path treats
-those cells when screenshots actually change hasn't been tested yet — verify
-with one screenshot before trusting it for a full set, and update this note
-with what's learned. Screenshots themselves, their captions and order are also
+were live in Partner Center at the last export. Importing them back keeps the
+existing screenshots and captions in place (confirmed on the October 2026
+submission), so a changed screenshot is replaced by hand on the listing page
+after the import. That release swapped two that way (`06`, `13`) and left the
+other eight untouched. Screenshots themselves, their captions and order are also
 described in [screenshots/README.md](screenshots/README.md). Every claim in
 the copy is traced in [claim-sources.md](claim-sources.md); fix the CSV, this
 file's prose copy, and that table together when behaviour changes.
