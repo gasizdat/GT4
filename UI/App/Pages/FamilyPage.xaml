@@ -58,6 +58,10 @@
           Text="{x:Static resources:UIStrings.MenuItemNameFilters}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="GoToStatistics"
+          Text="{x:Static resources:UIStrings.MenuItemGoToStatistics}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="Refresh"
           Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
     </components:PageLayout.MenuItems>

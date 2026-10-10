@@ -45,7 +45,7 @@
   </ContentPage.Resources>
 
   <components:PageLayout
-      Title="{x:Static resources:UIStrings.TitleStatisticsPage}"
+      Title="{Binding PageTitle, Source={x:Reference Root}}"
       HasBackButton="True"
       Loading="{Binding Loading, Source={x:Reference Root}}"
       ShowsProjectName="True">
@@ -75,11 +75,13 @@
           <Label
               Grid.Row="2"
               Grid.Column="0"
+              IsVisible="{Binding ShowsProjectWideCounts, Source={x:Reference Root}}"
               Style="{StaticResource FieldNameTop}"
               Text="{x:Static resources:UIStrings.FieldStatTotalFamilies}" />
           <Label
               Grid.Row="2"
               Grid.Column="1"
+              IsVisible="{Binding ShowsProjectWideCounts, Source={x:Reference Root}}"
               Style="{StaticResource FieldValueWordWrap}"
               Text="{Binding TotalFamiliesText, Source={x:Reference Root}}" />
           <Label
@@ -254,21 +256,25 @@
           <Label
               Grid.Row="17"
               Grid.Column="0"
+              IsVisible="{Binding ShowsProjectWideCounts, Source={x:Reference Root}}"
               Style="{StaticResource FieldNameTop}"
               Text="{x:Static resources:UIStrings.FieldStatLargestFamily}" />
           <Label
               Grid.Row="17"
               Grid.Column="1"
+              IsVisible="{Binding ShowsProjectWideCounts, Source={x:Reference Root}}"
               Style="{StaticResource FieldValueWordWrap}"
               Text="{Binding TopLargestFamiliesText, Source={x:Reference Root}}" />
           <Label
               Grid.Row="18"
               Grid.Column="0"
+              IsVisible="{Binding ShowsProjectWideCounts, Source={x:Reference Root}}"
               Style="{StaticResource FieldNameTop}"
               Text="{x:Static resources:UIStrings.FieldStatSingleMemberFamilies}" />
           <Label
               Grid.Row="18"
               Grid.Column="1"
+              IsVisible="{Binding ShowsProjectWideCounts, Source={x:Reference Root}}"
               Style="{StaticResource FieldValueWordWrap}"
               Text="{Binding SingleMemberFamiliesText, Source={x:Reference Root}}" />
           <Label

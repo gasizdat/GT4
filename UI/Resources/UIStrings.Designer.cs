@@ -4204,6 +4204,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Statistics: {0}.
+        /// </summary>
+        public static string TitleFamilyStatisticsPage_1 {
+            get {
+                return ResourceManager.GetString("TitleFamilyStatisticsPage_1", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to 🌳 {0} 🔀.
         /// </summary>
         public static string TitleFamilyTreePageArranged_1 {

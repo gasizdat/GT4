@@ -1071,6 +1071,9 @@ FN - apellido familiar</value>
   <data name="MenuItemNameFamilyTree" xml:space="preserve">
     <value>🌳 Árbol familiar</value>
   </data>
+  <data name="TitleFamilyStatisticsPage_1" xml:space="preserve">
+    <value>Estadísticas: {0}</value>
+  </data>
   <data name="TitleFamilyTreePage_1" xml:space="preserve">
     <value>🌳 {0}</value>
   </data>
