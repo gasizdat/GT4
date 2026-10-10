@@ -3,6 +3,8 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI;
 using GT4.UI.Abstraction;
+using GT4.UI.Components;
+using GT4.UI.Pages;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
 using Moq;
@@ -20,6 +22,13 @@ public class StatisticsPageTests
 
   private static PersonInfo P(int id, BiologicalSex sex = BiologicalSex.Unknown, Date? birthDate = null, Date? deathDate = null, Name[]? names = null) =>
     new(id, birthDate ?? Date.Create(null, null, null, DateStatus.Unknown), deathDate, sex, names ?? [], null);
+
+  private static readonly string[] ProjectWideFields =
+  [
+    Resources.UIStrings.FieldStatTotalFamilies,
+    Resources.UIStrings.FieldStatLargestFamily,
+    Resources.UIStrings.FieldStatSingleMemberFamilies,
+  ];
 
   private static async Task<TestableStatisticsPage> CreatePageAsync(TestServices services)
   {
@@ -64,6 +73,180 @@ public class StatisticsPageTests
     Assert.Equal(1, statistics.UnknownSexCount);
     Assert.Equal("3", page.TotalPersonsText);
     Assert.Equal("Smith (2)", page.TopLargestFamiliesText);
+  }
+
+  private static async Task<bool[]> RowVisibilityAsync(StatisticsPage page, string fieldName) =>
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      var layout = (PageLayout)page.Content;
+      var scrollView = (ScrollView)layout.Body;
+      var grid = (Grid)scrollView.Content;
+      var labels = grid.Children.OfType<Label>().ToArray();
+      var nameLabel = labels.Single(label => label.Text == fieldName);
+      var row = Grid.GetRow(nameLabel);
+      return labels.Where(label => Grid.GetRow(label) == row).Select(label => label.IsVisible).ToArray();
+    });
+
+  [Fact]
+  public async Task A_family_scope_counts_only_that_familys_members()
+  {
+    var services = new TestServices();
+    var family = N(100, "Smith", NameType.FamilyName);
+    var husband = P(1, BiologicalSex.Male, names: [family]);
+    var wife = P(2, BiologicalSex.Female, names: [family]);
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([husband, wife, P(3, BiologicalSex.Unknown)]);
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosByNameAsync(family, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([husband, wife]);
+    var page = await CreatePageAsync(services);
+    await page.WaitForFirstLoadAsync();
+
+    var statistics = await page.ReloadStatisticsAsync(() => page.FamilyName = family);
+
+    Assert.Equal(2, statistics.TotalPersons);
+    Assert.Equal(1, statistics.MenCount);
+    Assert.Equal(1, statistics.WomenCount);
+    Assert.Equal(0, statistics.UnknownSexCount);
+  }
+
+  // A member's relatives count in full, even from other families: most marriages join two surnames.
+  [Fact]
+  public async Task A_family_scope_counts_a_marriage_into_another_family()
+  {
+    var services = new TestServices();
+    var family = N(100, "Smith", NameType.FamilyName);
+    var husband = P(1, BiologicalSex.Male, names: [family]);
+    var wifeFromAnotherFamily = P(2, BiologicalSex.Female);
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosByNameAsync(family, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([husband]);
+    services.Relatives
+      .Setup(r => r.GetRelativesForPersonsAsync(It.IsAny<Person[]>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new Dictionary<int, Relative[]> { [husband.Id] = [new Relative(wifeFromAnotherFamily, RelationshipType.Spouse, null)] });
+    var page = await CreatePageAsync(services);
+    await page.WaitForFirstLoadAsync();
+
+    var statistics = await page.ReloadStatisticsAsync(() => page.FamilyName = family);
+
+    Assert.Equal(1, statistics.MarriageCount);
+    Assert.Equal(0, statistics.IsolatedPersonCount);
+  }
+
+  [Fact]
+  public async Task The_NoFamily_scope_counts_the_persons_without_a_family_name()
+  {
+    var services = new TestServices();
+    var family = N(100, "Smith", NameType.FamilyName);
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([P(1, names: [family]), P(2), P(3)]);
+    var page = await CreatePageAsync(services);
+    await page.WaitForFirstLoadAsync();
+
+    var statistics = await page.ReloadStatisticsAsync(() => page.FamilyName = NoFamily.Name);
+
+    Assert.Equal(2, statistics.TotalPersons);
+    services.PersonManager.Verify(
+      p => p.GetPersonInfosByNameAsync(It.IsAny<Name>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()),
+      Times.Never());
+  }
+
+  // Shell delivers the scope only after InitializeComponent has already started a whole-project load.
+  [Fact]
+  public async Task A_whole_project_load_finishing_after_the_scope_arrived_is_discarded()
+  {
+    var services = new TestServices();
+    var family = N(100, "Smith", NameType.FamilyName);
+    var wholeProject = new TaskCompletionSource<PersonInfo[]>();
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+      .Returns(wholeProject.Task);
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosByNameAsync(family, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([P(1, names: [family])]);
+    var page = await CreatePageAsync(services);
+    await page.ReloadStatisticsAsync(() => page.FamilyName = family);
+    services.PersonManager.Verify(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()), Times.Once());
+
+    wholeProject.SetResult([P(1, names: [family]), P(2), P(3)]);
+
+    await Poll.ConfirmNeverAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => page.Statistics.TotalPersons),
+      total => total != 1,
+      TimeSpan.FromMilliseconds(300),
+      failureMessage: "The stale whole-project load overwrote the family's statistics.");
+  }
+
+  // The scope must show at once, not wait for the family's load to refresh the page.
+  [Fact]
+  public async Task A_family_scope_retitles_the_page_and_hides_the_rows_that_count_families_before_its_load_lands()
+  {
+    var services = new TestServices();
+    var family = N(100, "Smith", NameType.FamilyName);
+    var members = new TaskCompletionSource<PersonInfo[]>();
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosByNameAsync(family, true, It.IsAny<CancellationToken>()))
+      .Returns(members.Task);
+    var page = await CreatePageAsync(services);
+    await page.WaitForFirstLoadAsync();
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.FamilyName = family);
+
+    var title = await MainThread.InvokeOnMainThreadAsync(() => ((PageLayout)page.Content).Title);
+    Assert.Equal(string.Format(Resources.UIStrings.TitleFamilyStatisticsPage_1, "Smith"), title);
+    foreach (var field in ProjectWideFields)
+    {
+      var visibility = await RowVisibilityAsync(page, field);
+      Assert.All(visibility, Assert.False);
+    }
+    var totalPersonsVisibility = await RowVisibilityAsync(page, Resources.UIStrings.FieldStatTotalPersons);
+    Assert.All(totalPersonsVisibility, Assert.True);
+    members.SetResult([]);
+  }
+
+  [Fact]
+  public async Task OnNavigatedTo_reloads_a_family_scope_as_that_family()
+  {
+    var services = new TestServices();
+    var family = N(100, "Smith", NameType.FamilyName);
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosAsync(true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([P(1, names: [family]), P(2), P(3)]);
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosByNameAsync(family, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([P(1, names: [family])]);
+    var page = await CreatePageAsync(services);
+    await page.WaitForFirstLoadAsync();
+    await page.ReloadStatisticsAsync(() => page.FamilyName = family);
+    services.CurrentProjectProvider.SetupGet(p => p.Info).Returns(TestServices.SampleProjectInfo with { Revision = 42 });
+
+    var statistics = await page.ReloadStatisticsAsync(page.InvokeNavigatedTo);
+
+    Assert.Equal(1, statistics.TotalPersons);
+    services.PersonManager.Verify(
+      p => p.GetPersonInfosByNameAsync(family, true, It.IsAny<CancellationToken>()),
+      Times.Exactly(2));
+  }
+
+  [Fact]
+  public async Task The_project_wide_page_shows_the_rows_that_count_families_and_never_queries_by_name()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+    await page.WaitForFirstLoadAsync();
+
+    foreach (var field in ProjectWideFields)
+    {
+      var visibility = await RowVisibilityAsync(page, field);
+      Assert.All(visibility, Assert.True);
+    }
+    var title = await MainThread.InvokeOnMainThreadAsync(() => ((PageLayout)page.Content).Title);
+    Assert.Equal(Resources.UIStrings.TitleStatisticsPage, title);
+    services.PersonManager.Verify(
+      p => p.GetPersonInfosByNameAsync(It.IsAny<Name>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()),
+      Times.Never());
   }
 
   [Fact]

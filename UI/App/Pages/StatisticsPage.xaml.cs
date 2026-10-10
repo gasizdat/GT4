@@ -3,12 +3,14 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Items;
+using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Extensions;
 using GT4.UI.Utils.Formatters;
 
 namespace GT4.UI.Pages;
 
+[QueryProperty(nameof(FamilyName), "FamilyName")]
 public partial class StatisticsPage : ContentPage
 {
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
@@ -22,6 +24,7 @@ public partial class StatisticsPage : ContentPage
   // compares equal to Empty even once loaded, and every refresh would re-show the indicator.
   private bool _StatisticsLoaded;
   private ProjectInfo? _LastProjectInfo;
+  private Name? _FamilyName;
 
   public StatisticsPage(
     ICurrentProjectProvider currentProjectProvider,
@@ -41,6 +44,24 @@ public partial class StatisticsPage : ContentPage
 
   public PageLoading Loading { get; }
 
+  public Name? FamilyName
+  {
+    get => _FamilyName;
+    set
+    {
+      _FamilyName = value;
+      OnPropertyChanged(nameof(PageTitle));
+      OnPropertyChanged(nameof(ShowsProjectWideCounts));
+      Refresh();
+    }
+  }
+
+  public string PageTitle => _FamilyName is null
+    ? UIStrings.TitleStatisticsPage
+    : string.Format(UIStrings.TitleFamilyStatisticsPage_1, _FamilyName.Value);
+
+  public bool ShowsProjectWideCounts => _FamilyName is null;
+
   // The single trigger for the (lazy, async) load: every display property below reads Statistics, so
   // whichever one XAML binds first kicks off the load, following the same lazy-getter idiom as
   // NamesPage.Names / ProjectPage.Families.
@@ -51,26 +72,43 @@ public partial class StatisticsPage : ContentPage
       if (_UpdateStatistics)
       {
         _UpdateStatistics = false;
-        Loading.Run(_StatisticsLoaded, LoadStatisticsAsync);
+        var familyName = _FamilyName;
+        Loading.Run(_StatisticsLoaded, () => LoadStatisticsAsync(familyName));
       }
 
       return _Statistics;
     }
   }
 
-  private async Task LoadStatisticsAsync()
+  private async Task LoadStatisticsAsync(Name? familyName)
   {
     using var token = _CancellationTokenProvider.CreateDbCancellationToken();
     var project = _CurrentProjectProvider.Project;
 
-    var persons = await project.PersonManager.GetPersonInfosAsync(selectMainPhoto: true, token);
-    var familyNames = await project.FamilyManager.GetFamiliesAsync(token);
+    PersonInfo[] persons;
+    Name[] familyNames;
+    if (familyName is null)
+    {
+      persons = await project.PersonManager.GetPersonInfosAsync(selectMainPhoto: true, token);
+      familyNames = await project.FamilyManager.GetFamiliesAsync(token);
+    }
+    else
+    {
+      persons = await project.PersonManager.GetFamilyMembersAsync(familyName, token);
+      familyNames = [];
+    }
     var relativesByPersonId = await project.Relatives.GetRelativesForPersonsAsync(persons, token);
 
     var statistics = ProjectStatisticsCalculator.Compute(persons, familyNames, relativesByPersonId);
 
     await SafeTask.RunOnMainThread(() =>
     {
+      // XAML starts a whole-project load inside InitializeComponent, before Shell delivers the scope.
+      if (familyName != _FamilyName)
+      {
+        return;
+      }
+
       _Statistics = statistics;
       _StatisticsLoaded = true;
       this.RefreshView();

@@ -109,26 +109,15 @@ public partial class FamilyPage : ContentPage
         using var token = _CancellationTokenProvider.CreateDbCancellationToken();
         var project = _CurrentProjectProvider.Project;
         var startInfo = _CurrentProjectProvider.Info;
-        PersonInfo[] persons;
         // The sentinel "no family" bucket has no Name.Id of its own, so there is no family media to fetch.
         var familyInfoTask = IsNoFamilyMode
           ? Task.FromResult(new FamilyFullInfo(familyName, null, [], []))
           : project.FamilyManager.GetFamilyFullInfoAsync(familyName, token);
-        if (IsNoFamilyMode)
-        {
-          var allPersons = await project
-            .PersonManager
-            .GetPersonInfosAsync(selectMainPhoto: true, token);
-          persons = [.. allPersons.Where(NoFamily.Includes)];
-        }
-        else
-        {
-          persons = await project
-            .PersonManager
-            .GetPersonInfosByNameAsync(name: familyName, selectMainPhoto: true, token);
-        }
+        var members = await project
+          .PersonManager
+          .GetFamilyMembersAsync(familyName, token);
 
-        persons = [.. persons.OrderBy(item => item, _PersonInfoComparer)];
+        PersonInfo[] persons = [.. members.OrderBy(item => item, _PersonInfoComparer)];
         var (photos, attachments) = await LoadFamilyMediaAsync(await familyInfoTask, token);
 
         await SafeTask.RunOnMainThread(() =>
@@ -299,6 +288,11 @@ public partial class FamilyPage : ContentPage
 
       case string commandName when commandName == "CreatePerson":
         await OnCreatePerson();
+        break;
+
+      case string commandName when commandName == "GoToStatistics":
+        var route = UIRoutes.GetRoute<StatisticsPage>();
+        await _NavigationService.GoToAsync(route, true, new() { ["FamilyName"] = FamilyName! });
         break;
 
       case string commandName when commandName == "Refresh":

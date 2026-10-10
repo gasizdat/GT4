@@ -1071,6 +1071,9 @@ FN - Familienname</value>
   <data name="MenuItemNameFamilyTree" xml:space="preserve">
     <value>🌳 Stammbaum</value>
   </data>
+  <data name="TitleFamilyStatisticsPage_1" xml:space="preserve">
+    <value>Statistik: {0}</value>
+  </data>
   <data name="TitleFamilyTreePage_1" xml:space="preserve">
     <value>🌳 {0}</value>
   </data>

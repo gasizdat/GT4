@@ -319,6 +319,28 @@ public class FamilyPageTests
   }
 
   [Fact]
+  public async Task GoToStatistics_menu_item_navigates_to_StatisticsPage_scoped_to_this_family()
+  {
+    var services = new TestServices();
+    var familyName = N(5, "Ivanov", NameType.FamilyName);
+    var page = await CreatePageAsync(services);
+    await MainThread.InvokeOnMainThreadAsync(() => page.FamilyName = familyName);
+    var layout = (PageLayout)page.Content;
+    var statisticsItem = layout.MenuItems.Single(item => (string?)item.CommandParameter == "GoToStatistics");
+    var expectedRoute = $"{typeof(StatisticsPage).Namespace}/{typeof(StatisticsPage).Name}";
+
+    Assert.Same(page.PageCommand, statisticsItem.Command);
+    await page.InvokePageCommandAsync(statisticsItem.CommandParameter);
+
+    services.NavigationService.Verify(
+      n => n.GoToAsync(
+        expectedRoute,
+        true,
+        It.Is<Dictionary<string, object>>(d => ReferenceEquals(d["FamilyName"], familyName))),
+      Times.Once());
+  }
+
+  [Fact]
   public async Task CreatePerson_modal_flow_adds_the_person_to_the_family()
   {
     var services = new TestServices();
@@ -399,13 +421,13 @@ public class FamilyPageTests
     await MainThread.InvokeOnMainThreadAsync(() => ((IView)layout).Arrange(new Rect(0, 0, 400, 800)));
     var topMenu = layout.FindByName<FlexLayout>("TopMenu");
     var buttons = topMenu.Children.OfType<Button>().ToArray();
-    Assert.Equal(5, buttons.Length);
+    Assert.Equal(6, buttons.Length);
 
     await MainThread.InvokeOnMainThreadAsync(() => page.FamilyName = NoFamily.Name);
 
     var parameters = await MainThread.InvokeOnMainThreadAsync(
       () => buttons.Where(b => b.IsEnabled).Select(b => ((PageMenuItem)b.BindingContext!).CommandParameter).ToArray());
-    Assert.Equal(["CreatePerson", "ToggleFiltersCommand", "Refresh"], parameters);
+    Assert.Equal(["CreatePerson", "ToggleFiltersCommand", "GoToStatistics", "Refresh"], parameters);
   }
 
   [Fact]
