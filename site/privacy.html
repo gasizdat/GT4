@@ -113,10 +113,11 @@
       <h2>On Android</h2>
       <ul>
         <li>
-          The app asks for permission to read your device's shared storage, including
-          images, audio and video. It uses that permission to find your project files in
-          the Documents folder and to let you pick photos and attachments. It does not
-          read anything else.
+          The app declares permission to read your device's shared storage, including
+          the image, audio and video permissions Android groups it under. The app itself
+          reads only its own project files in the <code>GT4</code> folder of your
+          Documents. Photos and attachments you add come through the system picker,
+          which hands over only the file you choose.
         </li>
         <li>
           The app declares internet access only for the two cases described under
