@@ -981,11 +981,15 @@ public class PersonPageTests
       await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
       // The resize lands in a later layout pass, and IsWideLayout cannot tell when: it reflects only
       // the latest allocation, which can still be the runner's own window or a page with no size yet.
-      // Resized means the page fills the requested window less its frame, measured at 16x40.
+      // Resized means the page fills the window less its frame, measured at 16x40 -- the window as it
+      // reports itself, since Windows clamps one asked to be wider than the screen.
       await Poll.UntilAsync(
-        () => MainThread.InvokeOnMainThreadAsync(() => new Size(page.Width, page.Height)),
-        pageSize => windowWidth - pageSize.Width is >= 0 and < 100 && windowHeight - pageSize.Height is >= 0 and < 100,
-        timeoutMessage: $"The page was never laid out inside the {windowWidth}x{windowHeight} window.");
+        () => MainThread.InvokeOnMainThreadAsync(() => (
+          Window: new Size(hostWindow.Width, hostWindow.Height),
+          Page: new Size(page.Width, page.Height))),
+        sizes => sizes.Window.Width - sizes.Page.Width is >= 0 and < 100
+          && sizes.Window.Height - sizes.Page.Height is >= 0 and < 100,
+        timeoutMessage: $"The page was never laid out inside the window resized to {windowWidth}x{windowHeight}.");
       await Poll.UntilAsync(
         () => MainThread.InvokeOnMainThreadAsync(() => page.PersonPhotoForTest.Height),
         photoHeight => photoHeight > 0,
