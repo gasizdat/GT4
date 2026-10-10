@@ -3,7 +3,7 @@
 Source copy for the Partner Center listing of **Genealogy Tree**
 (package identity `gasizdat.GenealogyTree`, see `UI/App/AppCommon.props`).
 
-**[listing-data-en-us.csv](screenshots/listing-data-en-us.csv) is what
+**[listing-data-en-us.csv](listings/listing-data-en-us.csv) is what
 actually gets imported into Partner Center**, together with the screenshots
 beside it, as one folder import (see release-and-submission.md) — update it
 alongside this file rather than retyping fields into the UI by hand. This file stays the rationale layer: why each
@@ -221,12 +221,12 @@ verify the current limit and trim from the bottom if needed.*
 - **The gallery screenshot is text-heavy** — every row is a Wikimedia
   attribution line from the demo file's `TITL` tags, so it reads more like a
   credits list than a gallery. See
-  [screenshots/README.md](screenshots/README.md) ("Still worth fixing").
+  [listings/README.md](listings/README.md) ("Still worth fixing").
 - **The two family-tree screenshots were re-shot for the tidy-pedigree layout**
   (#469). The CSV now names all ten screenshots by path, so the folder import
-  uploads them with the text. See screenshots/README.md ("October 2026 release").
+  uploads them with the text. See listings/README.md ("October 2026 release").
 - **The home/project-list screen is deliberately not in the screenshot set**
-  — see screenshots/README.md ("No home screen in this set").
+  — see listings/README.md ("No home screen in this set").
 - **The ".gt4 double-click to open" claim (Features list, What's new) is
   verified** against the real packaged MSIX (`4.0.688.0`, 2026-09-19) — see
   "Known at the time of this release" in

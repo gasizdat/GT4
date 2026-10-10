@@ -215,8 +215,8 @@ package-level language resources are added. Say so in the listing copy (it does)
 rather than expecting Partner Center to show all five.
 
 **Store listings** — **Import listings → Import folder**, and select
-`doc\store\screenshots`. That one folder holds
-[listing-data-en-us.csv](screenshots/listing-data-en-us.csv) and every
+`doc\store\listings`. That one folder holds
+[listing-data-en-us.csv](listings/listing-data-en-us.csv) and every
 screenshot it names, so a single import sets the text, the ten screenshots,
 their order and their captions together; nothing is retyped or swapped by hand.
 The CSV carries Description, What's new, Features, Search terms and captions in
@@ -229,9 +229,9 @@ Rules from Microsoft's
 that this layout depends on:
 
 - The folder may hold **only one `.csv`**; keep it the only one in
-  `screenshots/`.
+  `listings/`.
 - An image path **starts with the folder's own name** —
-  `screenshots/06-family-tree.png`, not `06-family-tree.png`.
+  `listings/06-family-tree.png`, not `06-family-tree.png`.
 - **An emptied image cell changes nothing**: the old image stays. That's why
   the October 2026 `.csv`-only import, whose screenshot rows held September's
   Partner Center URLs, left every screenshot in place. So keep all ten rows
@@ -244,11 +244,11 @@ that this layout depends on:
 
 Not yet tried: whether the import tolerates the folder's other files
 (`README.md`, the spare `03-family.png`). If it complains, copy the `.csv` and
-the ten PNGs into a fresh folder named `screenshots` and import that instead —
+the ten PNGs into a fresh folder named `listings` and import that instead —
 the paths stay valid as long as the folder name does.
 
 Screenshots, their captions and order are described in
-[screenshots/README.md](screenshots/README.md); the CSV's rows must follow that
+[listings/README.md](listings/README.md); the CSV's rows must follow that
 order. Every claim in the copy is traced in
 [claim-sources.md](claim-sources.md); fix the CSV, this file's prose copy, and
 that table together when behaviour changes.
@@ -304,7 +304,7 @@ Pulled live on 2026-10-09; none touch the Windows Store build's correctness.
 were compared against the same build and kept. This submission swapped the two
 new files in by hand after a `.csv`-only import; from the next release on, the
 folder import above carries all ten.
-See [screenshots/README.md](screenshots/README.md).
+See [listings/README.md](listings/README.md).
 
 **The sideload check passed** on 2026-10-09: `4.0.723.0` installed from the
 release's `.msix`, `Get-AppxPackage` reports PFN
