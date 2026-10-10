@@ -1,0 +1,257 @@
+:root {
+  --bg: #f6f3ec;
+  --surface: #fffdf8;
+  --text: #22201c;
+  --muted: #5e5a52;
+  --accent: #1e4437;
+  --accent-text: #ffffff;
+  --link: #1e5a45;
+  --border: #ddd6c8;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141816;
+    --surface: #1d2321;
+    --text: #e8e4dc;
+    --muted: #a7a196;
+    --accent: #2a5c4a;
+    --accent-text: #ffffff;
+    --link: #8fd1b3;
+    --border: #333b38;
+    --shadow: none;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 17px/1.6 "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+}
+
+a {
+  color: var(--link);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+code, kbd {
+  font-family: Consolas, ui-monospace, monospace;
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+
+kbd {
+  padding: 0 0.3em;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+}
+
+.wrap {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+header.site {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+header.site .wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 24px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+header.site .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: inherit;
+  font-weight: 600;
+  font-size: 1.15rem;
+  text-decoration: none;
+}
+
+header.site .brand img {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35);
+}
+
+header.site nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+}
+
+header.site nav a {
+  color: inherit;
+  text-decoration: none;
+  opacity: 0.85;
+}
+
+header.site nav a:hover,
+header.site nav a[aria-current="page"] {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+main {
+  padding: 32px 0 48px;
+}
+
+h1, h2, h3 {
+  line-height: 1.25;
+}
+
+h1 {
+  font-size: 2rem;
+  margin: 0 0 0.5em;
+}
+
+h2 {
+  margin-top: 2em;
+}
+
+.lead {
+  font-size: 1.2rem;
+  color: var(--muted);
+  max-width: 44em;
+}
+
+.updated {
+  color: var(--muted);
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 24px 0;
+}
+
+.button {
+  display: inline-block;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.button.secondary {
+  background: transparent;
+  color: var(--link);
+  border-color: var(--border);
+}
+
+.shot {
+  margin: 24px 0;
+}
+
+.shot img {
+  display: block;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.shot figcaption {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.card {
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.card h3 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+}
+
+.card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.toc {
+  padding: 16px 20px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.toc ol {
+  margin: 0;
+  padding-left: 1.4em;
+}
+
+.note {
+  padding: 12px 16px;
+  border-left: 4px solid var(--accent);
+  background: var(--surface);
+  border-radius: 0 8px 8px 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+footer.site {
+  border-top: 1px solid var(--border);
+  padding: 20px 0 32px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+footer.site .wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+}

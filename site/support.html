@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Support · Genealogy Tree</title>
+  <meta name="description" content="Get help with Genealogy Tree: report a problem, ask a question, or find answers to common questions.">
+  <link rel="icon" href="images/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site">
+    <div class="wrap">
+      <a class="brand" href="index.html"><img src="images/icon.svg" alt="">Genealogy Tree</a>
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="guide.html">User guide</a>
+        <a href="support.html" aria-current="page">Support</a>
+        <a href="privacy.html">Privacy</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap">
+      <h1>Support</h1>
+      <p class="lead">
+        Start with the <a href="guide.html">user guide</a>. If it doesn't answer your
+        question, get in touch.
+      </p>
+
+      <h2>Contact</h2>
+      <ul>
+        <li>
+          <strong>Email:</strong> <a href="mailto:gasizdat@gmail.com">gasizdat@gmail.com</a>
+        </li>
+        <li>
+          <strong>Bug reports and feature requests:</strong>
+          <a href="https://github.com/gasizdat/GT4/issues">GitHub issues</a>
+          (needs a free GitHub account)
+        </li>
+      </ul>
+      <p>When reporting a problem, it helps to include:</p>
+      <ul>
+        <li>the app version and whether you use Windows or Android;</li>
+        <li>what you did, what you expected, and what happened instead;</li>
+        <li>
+          if the app crashed, the newest file from its <code>CrashLogs</code> folder
+          (see below). Logs are never sent automatically.
+        </li>
+      </ul>
+      <p>
+        Please don't send your project file unless you're comfortable sharing the
+        family data in it.
+      </p>
+
+      <h2>Common questions</h2>
+
+      <h3>Where are my projects stored?</h3>
+      <p>
+        Each project is a <code>.gt4</code> file in the <code>GT4</code> folder inside
+        your Documents folder. To back up a project, copy that file, or use
+        <strong>📤 Export</strong> → <strong>Export to .gt4</strong> from the Families page.
+      </p>
+
+      <h3>Where are the crash logs on Windows?</h3>
+      <p>
+        Paste one of these into the File Explorer address bar:
+      </p>
+      <ul>
+        <li><code>%APPDATA%\GT4\CrashLogs</code></li>
+        <li>
+          <code>%LOCALAPPDATA%\Packages\gasizdat.GenealogyTree_25ksdz0mncfjg\LocalCache\Roaming\GT4\CrashLogs</code>
+          (where Windows may keep it for the Microsoft Store version)
+        </li>
+      </ul>
+
+      <h3>How do I move my tree to another computer?</h3>
+      <p>
+        Export it to <code>.gt4</code> (or copy the file from Documents\GT4), then on
+        the other computer choose <strong>📥 Import</strong> on the project list and pick
+        the file. Family tree arrangements and hidden people are stored per device, so
+        they don't travel with the file.
+      </p>
+
+      <h3>Can I use my tree in other genealogy software?</h3>
+      <p>
+        Yes. <strong>📤 Export</strong> → <strong>Export to GEDCOM</strong> creates a
+        <code>.zip</code> with a GEDCOM 5.5.1 file and its photos and attachments, which
+        most genealogy programs can import.
+      </p>
+
+      <h3>I imported a GEDCOM file and the names look garbled.</h3>
+      <p>
+        When a file declares an ambiguous character set, the app asks for the
+        <strong>Codepage</strong> it was written in. If the names come out garbled, the
+        wrong one was picked: delete the imported project and import again with another
+        codepage (for example, Windows-1251 for older Russian files).
+      </p>
+
+      <h3>I closed the app unexpectedly. Did I lose my work?</h3>
+      <p>
+        Open the project and check <strong>📌 Revisions</strong> on the Families page.
+        If the app kept an earlier copy, you can restore it from there.
+      </p>
+
+      <h3>Does the app need an internet connection?</h3>
+      <p>
+        No. It only goes online when a biography contains a web image or you click a web
+        link in one. See the <a href="privacy.html">privacy policy</a>.
+      </p>
+
+      <h3>Is it free?</h3>
+      <p>
+        Yes. There are no ads, subscriptions or in-app purchases, and the
+        <a href="https://github.com/gasizdat/GT4">source code</a> is available under the
+        Apache License 2.0.
+      </p>
+    </div>
+  </main>
+
+  <footer class="site">
+    <div class="wrap">
+      <span>Genealogy Tree</span>
+      <a href="guide.html">User guide</a>
+      <a href="support.html">Support</a>
+      <a href="privacy.html">Privacy policy</a>
+      <a href="https://github.com/gasizdat/GT4">Source on GitHub</a>
+    </div>
+  </footer>
+</body>
+</html>
