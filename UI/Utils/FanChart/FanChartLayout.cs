@@ -155,7 +155,7 @@ public static class FanChartLayout
     // Across a radial label the segment is narrowest at its inner end.
     var thickness = isAlongRing ? metrics.RingWidth : 2 * inner * halfSweepTan;
     // Only a name shrinks: shrunk years would leave an outer ring's names larger than an inner ring's.
-    // Never below the zoomed size, so zooming out still drops the labels that no longer fit.
+    // The floor never rises above the zoomed size, so zooming out still drops the labels that no longer fit.
     var minLineHeight = Math.Min(metrics.MinLineHeight, metrics.LineHeight);
     var label = thickness >= 2 * metrics.LineHeight
       ? FanChartLabel.Full
