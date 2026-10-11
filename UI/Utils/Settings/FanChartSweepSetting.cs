@@ -30,7 +30,7 @@ internal sealed class FanChartSweepSetting : ISettingEditor
   {
     get
     {
-      var selected = Options.Single(o => o.Value == Value);
+      var selected = FanChartSweep.Kind.Options.Single(o => o.Value == Value);
       return selected.Label;
     }
   }
@@ -46,10 +46,7 @@ internal sealed class FanChartSweepSetting : ISettingEditor
     set => _InteractiveConfiguration?.SetKey(SweepSection, value);
   }
 
-  public SettingKind Kind => new SettingKind.Choice(Options);
+  public SettingKind Kind => FanChartSweep.Kind;
 
   public void ResetToDefault() => _InteractiveConfiguration?.RemoveKey(SweepSection);
-
-  private static SettingKind.Option[] Options =>
-    [.. FanChartSweep.Options.Select(sweep => new SettingKind.Option($"{sweep}", $"{sweep}°"))];
 }

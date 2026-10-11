@@ -5,7 +5,7 @@ namespace GT4.UI.Utils.Genealogy;
 public sealed record FanChartLayoutResult(
   FamilyTreeNode Center,
   FanChartSegment[] Segments,
-  double SweepDegrees,
+  int OuterGeneration,
   Size CanvasSize,
   Point Origin,
   FanChartMetrics Metrics);

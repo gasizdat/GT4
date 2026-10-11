@@ -164,9 +164,8 @@ internal sealed class TestServices
       .Setup(s => s.Get(It.IsAny<ProjectInfo>(), It.IsAny<int>()))
       .Returns(new Dictionary<int, double>());
 
-    SettingKind.Option[] sweepOptions = [.. FanChartSweep.Options.Select(sweep => new SettingKind.Option($"{sweep}", $"{sweep}°"))];
     FanChartSweepSetting.SetupProperty(s => s.Value, $"{FanChartSweep.Default}");
-    FanChartSweepSetting.SetupGet(s => s.Kind).Returns(new SettingKind.Choice(sweepOptions));
+    FanChartSweepSetting.SetupGet(s => s.Kind).Returns(FanChartSweep.Kind);
 
     var services = new ServiceCollection();
     GT4Services.Add(services);

@@ -17,6 +17,8 @@ public static class FanChartLayout
 
   private readonly record struct Placement(int Slot, int Generation, FamilyTreeNode Node, bool IsRepeat);
 
+  private readonly record struct LabelFit(FanChartLabel Label, double LineHeight, Size Size, double Rotation);
+
   public static FanChartLayoutResult Compute(FamilyTree tree, int generations, double sweepDegrees, FanChartMetrics metrics)
   {
     ArgumentNullException.ThrowIfNull(tree);
@@ -28,7 +30,7 @@ public static class FanChartLayout
     var segments = placements.Select(placement => Segment(placement, sweepDegrees, origin, metrics)).ToArray();
     var center = tree.Nodes.Single(node => node.Id == tree.CenterId);
 
-    return new FanChartLayoutResult(center, segments, sweepDegrees, canvasSize, origin, metrics);
+    return new FanChartLayoutResult(center, segments, outerGeneration, canvasSize, origin, metrics);
   }
 
   /// <returns>The person drawn under <paramref name="point"/>, the centre included.</returns>
@@ -147,8 +149,29 @@ public static class FanChartLayout
     var start = (-sweepDegrees / 2) + ((placement.Slot - count) * sweep);
     var inner = metrics.CenterRadius + ((placement.Generation - 1) * metrics.RingWidth);
     var outer = inner + metrics.RingWidth;
-    var middle = (inner + outer) / 2;
     var bearing = start + (sweep / 2);
+    var fit = FitLabel(inner, outer, sweep, bearing, metrics);
+    var labelCenter = PointAt(origin, (inner + outer) / 2, bearing);
+
+    return new FanChartSegment(
+      placement.Slot,
+      placement.Generation,
+      placement.Node,
+      placement.IsRepeat,
+      start,
+      sweep,
+      inner,
+      outer,
+      labelCenter,
+      fit.Rotation,
+      fit.Size,
+      fit.LineHeight,
+      fit.Label);
+  }
+
+  private static LabelFit FitLabel(double inner, double outer, double sweep, double bearing, FanChartMetrics metrics)
+  {
+    var middle = (inner + outer) / 2;
     var arcLength = middle * sweep * Math.PI / 180;
     var isAlongRing = arcLength >= metrics.RingWidth;
     var halfSweepTan = Math.Tan(sweep * Math.PI / 360);
@@ -161,33 +184,22 @@ public static class FanChartLayout
       ? FanChartLabel.Full
       : thickness >= minLineHeight ? FanChartLabel.NameOnly : FanChartLabel.None;
     var lineHeight = Math.Min(metrics.LineHeight, thickness);
-    // A label is straight, so along a ring its two lines of text must stop short of the segment's sides,
-    // which the lower line meets first, and of the ring's outer edge, which the upper line meets first.
-    var betweenSides = 2 * (middle - lineHeight) * halfSweepTan;
-    var textTop = middle + lineHeight;
-    var withinRing = 2 * Math.Sqrt((outer * outer) - (textTop * textTop));
-    var alongRing = Math.Min(betweenSides, withinRing);
+
+    if (isAlongRing)
+    {
+      // A label is straight, so its two lines of text must stop short of the segment's sides, which the
+      // lower line meets first, and of the ring's outer edge, which the upper line meets first.
+      var betweenSides = 2 * (middle - lineHeight) * halfSweepTan;
+      var textTop = middle + lineHeight;
+      var withinRing = 2 * Math.Sqrt((outer * outer) - (textTop * textTop));
+      var alongRing = Math.Min(betweenSides, withinRing);
+      return new LabelFit(label, lineHeight, new Size(alongRing, thickness), Upright(bearing));
+    }
+
     // Likewise a radial label's outer corners must stop short of the outer edge.
     var halfThickness = thickness / 2;
     var radial = 2 * (Math.Sqrt((outer * outer) - (halfThickness * halfThickness)) - middle);
-    var labelSize = isAlongRing ? new Size(alongRing, thickness) : new Size(radial, thickness);
-    var rotation = Upright(isAlongRing ? bearing : bearing - 90);
-    var labelCenter = PointAt(origin, middle, bearing);
-
-    return new FanChartSegment(
-      placement.Slot,
-      placement.Generation,
-      placement.Node,
-      placement.IsRepeat,
-      start,
-      sweep,
-      inner,
-      outer,
-      labelCenter,
-      rotation,
-      labelSize,
-      lineHeight,
-      label);
+    return new LabelFit(label, lineHeight, new Size(radial, thickness), Upright(bearing - 90));
   }
 
   // A line of text turned half a turn reads the same line, upside down.

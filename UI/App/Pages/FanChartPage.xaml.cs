@@ -55,7 +55,7 @@ public partial class FanChartPage : ContentPage, IZoomablePage
   private ProjectInfo? _LastProjectInfo;
   private int[] _HiddenIds = [];
   private FanChartLayoutResult? _LastLayout;
-  private (FanChartSegment Segment, Path Shape)[] _Shapes = [];
+  private ILookup<int, (FanChartSegment Segment, Path Shape)>? _ShapesByPerson;
   private FamilyTreeNodeView? _CenterView;
   private int? _HoveredId;
 
@@ -298,7 +298,7 @@ public partial class FanChartPage : ContentPage, IZoomablePage
   {
     var lineWidth = isHighlighted ? HighlightedLineWidth : LineWidth;
     var origin = _LastLayout!.Origin;
-    foreach (var (segment, shape) in _Shapes.Where(item => item.Segment.Node.Id == personId))
+    foreach (var (segment, shape) in _ShapesByPerson![personId])
     {
       FanChartSegmentShape.Update(shape, segment, origin, lineWidth);
       // Over its neighbours, whose strokes would otherwise cover half of its own.
@@ -446,7 +446,7 @@ public partial class FanChartPage : ContentPage, IZoomablePage
     AbsoluteLayout.SetLayoutBounds(disc, discBounds);
     Segments.Children.Add(disc);
 
-    var shapes = new List<(FanChartSegment, Path)>();
+    var shapes = new List<(FanChartSegment Segment, Path Shape)>();
     foreach (var segment in layout.Segments)
     {
       var segmentFill = segment.IsRepeat ? repeatFill : fill;
@@ -467,12 +467,11 @@ public partial class FanChartPage : ContentPage, IZoomablePage
     var centerBounds = new Rect(origin.X - (width / 2), origin.Y - (height / 2), width, height);
     AbsoluteLayout.SetLayoutBounds(centerView, centerBounds);
     Labels.Children.Add(centerView);
-    _Shapes = [.. shapes];
+    _ShapesByPerson = shapes.ToLookup(item => item.Segment.Node.Id);
     _CenterView = centerView;
 
     // Offered only while the chart reaches the requested depth: a shorter one has no more data to fetch.
-    var outerGeneration = layout.Segments.Length == 0 ? 0 : layout.Segments.Max(segment => segment.Generation);
-    CanLoadMore = generations < MaxGenerations && outerGeneration >= generations;
+    CanLoadMore = generations < MaxGenerations && layout.OuterGeneration >= generations;
 
     Canvas.WidthRequest = layout.CanvasSize.Width;
     Canvas.HeightRequest = layout.CanvasSize.Height;
