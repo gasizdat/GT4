@@ -447,7 +447,7 @@ public class FanChartPageTests
     Assert.Single(highlighted, path => path.StrokeDashArray.Count != 0);
   }
 
-  // The rebuilt chart has new shapes, so the person still under the pointer must light up again.
+  // A rebuild forgets the hover, so moving over the same person again must light their new shapes.
   [Fact]
   public async Task Hovering_the_same_ancestor_after_a_reload_highlights_them_again()
   {

@@ -202,7 +202,6 @@ public static class FanChartLayout
     return new LabelFit(label, lineHeight, new Size(radial, thickness), Upright(bearing - 90));
   }
 
-  // A line of text turned half a turn reads the same line, upside down.
   private static double Upright(double degrees)
   {
     var upright = degrees;

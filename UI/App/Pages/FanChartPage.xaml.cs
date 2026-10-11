@@ -293,7 +293,6 @@ public partial class FanChartPage : ContentPage, IZoomablePage
     }
   }
 
-  // Every segment the person holds, so a repeat lights up with their first slot.
   private void Highlight(int personId, bool isHighlighted)
   {
     var lineWidth = isHighlighted ? HighlightedLineWidth : LineWidth;
