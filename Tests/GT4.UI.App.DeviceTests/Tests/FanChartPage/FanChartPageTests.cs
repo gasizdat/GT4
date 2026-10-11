@@ -49,6 +49,9 @@ public class FanChartPageTests
     return new FamilyTree(center.Id, [.. line.Select((person, generation) => new FamilyTreeNode(person, generation))], [.. edges]);
   }
 
+  private static FamilyTree WithFather(PersonInfo child, PersonInfo father) =>
+    new(child.Id, [new(child, 0), new(father, 1)], [FamilyTreeEdge.ParentChild(father.Id, child.Id)]);
+
   private static void VerifyBuilds(TestServices services, int generations, Times times) =>
     services.FamilyTreeProvider.Verify(
       f => f.BuildAsync(It.IsAny<Person>(), generations, 0, false, It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
@@ -83,6 +86,10 @@ public class FanChartPageTests
       .Children
       .OfType<Label>()
       .Where(label => label.Text.StartsWith("Father"))];
+
+  // Main thread only.
+  private static string[] LabelTexts(TestableFanChartPage page) =>
+    [.. page.FindByName<AbsoluteLayout>("Labels").Children.OfType<Label>().Select(label => label.Text)];
 
   // Main thread only.
   private static Path[] SegmentPaths(TestableFanChartPage page) =>
@@ -181,6 +188,46 @@ public class FanChartPageTests
     services.FamilyTreeProvider.Verify(
       f => f.BuildAsync(father, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
       Times.Once());
+  }
+
+  [Fact]
+  public async Task A_load_overtaken_by_a_later_one_is_never_drawn()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    var tree = Fathers(center, 2);
+    var father = tree.Nodes.Single(node => node.Id == 2).Person;
+    var grandfather = tree.Nodes.Single(node => node.Id == 3).Person;
+    UseTree(services, tree);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    var overtakenTree = WithFather(father, P(10, "Overtaken"));
+    var latestTree = WithFather(grandfather, P(11, "Latest"));
+    var fathersTree = new TaskCompletionSource<FamilyTree>(TaskCreationOptions.RunContinuationsAsynchronously);
+    services.FamilyTreeProvider
+      .Setup(f => f.BuildAsync(father, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<int[]>(), It.IsAny<CancellationToken>()))
+      .Returns(fathersTree.Task);
+    services.FamilyTreeProvider
+      .Setup(f => f.BuildAsync(grandfather, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<int[]>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(latestTree);
+
+    // The father's chart is still loading when the grandfather is tapped on the first one.
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      var fatherPoint = LabelCenter(page, "Father1");
+      var grandfatherPoint = LabelCenter(page, "Father2");
+      page.InvokeTapAt(fatherPoint);
+      page.InvokeTapAt(grandfatherPoint);
+    });
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => LabelTexts(page)),
+      texts => texts.Any(text => text.Contains("Latest")),
+      timeoutMessage: "The grandfather's chart was never drawn.");
+    await WaitForLoadAsync(page, services, () => fathersTree.SetResult(overtakenTree));
+
+    var texts = await MainThread.InvokeOnMainThreadAsync(() => LabelTexts(page));
+    Assert.Contains(texts, text => text.Contains("Latest"));
+    Assert.DoesNotContain(texts, text => text.Contains("Overtaken"));
   }
 
   [Fact]

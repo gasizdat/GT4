@@ -51,6 +51,7 @@ public partial class FanChartPage : ContentPage, IZoomablePage
   private double _PanStartScrollX;
   private double _PanStartScrollY;
   private int _LoadOperationsCount = 0;
+  private int _LatestLoad;
   private ProjectInfo? _LastProjectInfo;
   private int[] _HiddenIds = [];
   private FanChartLayoutResult? _LastLayout;
@@ -331,8 +332,9 @@ public partial class FanChartPage : ContentPage, IZoomablePage
     var center = _Center;
     var generations = _Generations;
     var hiddenIds = _HiddenIds;
+    var load = ++_LatestLoad;
     SetLoadInProgress();
-    _ = SafeTask.Run(() => LoadAsync(center, generations, hiddenIds), _AlertService);
+    _ = SafeTask.Run(() => LoadAsync(load, center, generations, hiddenIds), _AlertService);
   }
 
   private void SetLoadInProgress()
@@ -353,7 +355,7 @@ public partial class FanChartPage : ContentPage, IZoomablePage
     OnPropertyChanged(nameof(CanLoadMore));
   }
 
-  private async Task LoadAsync(Person center, int generations, int[] hiddenIds)
+  private async Task LoadAsync(int load, Person center, int generations, int[] hiddenIds)
   {
     try
     {
@@ -384,7 +386,7 @@ public partial class FanChartPage : ContentPage, IZoomablePage
       var centerName = _NameFormatter.ToString(layout.Center.Person, NameFormat.ShortPersonName);
       var photo = await LoadPhotoAsync(layout.Center.Person, token);
 
-      await SafeTask.RunOnMainThread(() => Render(layout, generations, labels, centerName, photo, zoom), _AlertService);
+      await SafeTask.RunOnMainThread(() => Render(load, layout, generations, labels, centerName, photo, zoom), _AlertService);
     }
     finally
     {
@@ -416,6 +418,7 @@ public partial class FanChartPage : ContentPage, IZoomablePage
   }
 
   private void Render(
+    int load,
     FanChartLayoutResult layout,
     int generations,
     IReadOnlyDictionary<int, string> labels,
@@ -423,6 +426,12 @@ public partial class FanChartPage : ContentPage, IZoomablePage
     ImageSource photo,
     double zoom)
   {
+    // Every draw rebuilds the whole chart, and an older load can finish after the latest one.
+    if (load != _LatestLoad)
+    {
+      return;
+    }
+
     ClearCanvas();
 
     var fill = ThemedColor.Resolve("ControlFill", Color.FromArgb("#1A1E4437"));
