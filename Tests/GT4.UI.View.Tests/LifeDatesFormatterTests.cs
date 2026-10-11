@@ -52,6 +52,16 @@ public class LifeDatesFormatterTests
   }
 
   [Fact]
+  public void ToYearsString_MarksAYearBeforeChrist()
+  {
+    TestLanguage.Use(Language.EN);
+
+    var person = MakePerson(Date.Create(-630000, DateStatus.MonthUnknown), Year(14));
+
+    Create().ToYearsString(person).Should().Be("63 B.C. - † 14");
+  }
+
+  [Fact]
   public void ToYearsString_KeepsTheDeathMarkForAnUnknownDeathDate()
   {
     TestLanguage.Use(Language.EN);

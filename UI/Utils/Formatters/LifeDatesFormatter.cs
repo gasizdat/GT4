@@ -70,7 +70,7 @@ internal class LifeDatesFormatter : ILifeDatesFormatter
   private static string Year(Date date) => date.Status switch
   {
     DateStatus.Unknown => string.Empty,
-    DateStatus.YearApproximate => $"~{date.Year}",
-    _ => date.Year.ToString(),
+    DateStatus.YearApproximate => $"~{DateFormatter.GregorianYears(date)}",
+    _ => DateFormatter.GregorianYears(date),
   };
 }
