@@ -242,6 +242,12 @@ mandatory **1024×500 feature graphic** and **portrait phone screenshots** — n
 of which the Windows capture pass produces. Treat this as a starting point, not
 a ready submission.
 
+**Privacy policy URL** (required; Play takes no pasted text):
+`https://gasizdat.github.io/GT4/privacy.html`. Website:
+`https://gasizdat.github.io/GT4/`. Check before submitting whether the
+declared `READ_MEDIA_IMAGES`/`READ_MEDIA_VIDEO` permissions need a Play
+permissions declaration, given the app itself reads only its project files.
+
 **Title:** Genealogy Tree (14 chars)
 
 **Short description:** Your family tree, offline and private. GEDCOM in and

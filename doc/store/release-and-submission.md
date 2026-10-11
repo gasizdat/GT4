@@ -173,11 +173,16 @@ Partner Center walks five sections.
 
 **Properties**
 - Category: Books + reference, subcategory Reference; secondary Productivity.
-- Privacy policy: the repo has no public domain to host a URL at, so
-  [privacy-policy.md](privacy-policy.md) goes in as policy text directly —
-  Partner Center accepts that in place of a URL.
-- Support contact: `gasizdat@gmail.com`.
-- Website: optional; the GitHub repository works.
+- Privacy policy: `https://gasizdat.github.io/GT4/privacy.html`. Earlier
+  submissions pasted [privacy-policy.md](privacy-policy.md) in as policy text
+  because no hosted URL existed; replace that text with the URL.
+- Support contact: `gasizdat@gmail.com`; support URL
+  `https://gasizdat.github.io/GT4/support.html`.
+- Website: `https://gasizdat.github.io/GT4/`.
+
+All three pages are served by GitHub Pages from `site/` on master (deployed by
+`.github/workflows/pages.yml`), so policy or support wording changes land
+there, not on a release branch.
 
 **Age ratings** — the IARC questionnaire. The honest answers are: no violence, no
 sexual content, no gambling, no in-app purchases, no advertising, no data shared
