@@ -49,6 +49,9 @@ internal sealed class TestableFanChartPage : FanChartPage
   // The tap gesture itself is native-only; this is where it lands.
   public void InvokeTapAt(Point point) => TapAt(point);
 
+  // Likewise the pointer's moves and exit, which passes null.
+  public void InvokeHoverAt(Point? point) => HoverAt(point);
+
   // NavigatedToEventArgs has no accessible test-side constructor and OnNavigatedTo never reads it.
   public void InvokeNavigatedTo() => OnNavigatedTo(null!);
 

@@ -10,9 +10,9 @@ using Path = Microsoft.Maui.Controls.Shapes.Path;
 namespace GT4.UI.DeviceTests;
 
 /// <summary>
-/// Covers FanChartPage's loading, navigation and settings. The sector geometry and hit testing are
-/// FanChartLayout's, covered in GT4.UI.View.Tests; a tap here lands through TapAt at a point read off
-/// the rendered labels, since the gesture itself is native-only.
+/// Covers FanChartPage's loading, navigation, settings and hover. The sector geometry and hit testing
+/// are FanChartLayout's, covered in GT4.UI.View.Tests; a tap or hover here lands through TapAt or
+/// HoverAt at a point read off the rendered labels, since the gestures themselves are native-only.
 /// </summary>
 public class FanChartPageTests
 {
@@ -87,6 +87,47 @@ public class FanChartPageTests
   // Main thread only.
   private static Path[] SegmentPaths(TestableFanChartPage page) =>
     [.. page.FindByName<AbsoluteLayout>("Segments").Children.OfType<Path>()];
+
+  // Main thread only.
+  private static Path[] HighlightedPaths(TestableFanChartPage page)
+  {
+    var plain = SegmentPaths(page).Min(path => path.StrokeThickness);
+    return [.. SegmentPaths(page).Where(path => path.StrokeThickness > plain)];
+  }
+
+  // Over the first label naming the person; a repeat has a label of its own.
+  private static Task<Path[]> HoverAsync(TestableFanChartPage page, string name) =>
+    MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      var label = page
+        .FindByName<AbsoluteLayout>("Labels")
+        .Children
+        .OfType<Label>()
+        .First(label => label.Text.Contains(name));
+      var bounds = AbsoluteLayout.GetLayoutBounds(label);
+      page.InvokeHoverAt(bounds.Center);
+      return HighlightedPaths(page);
+    });
+
+  // Slots 2 and 3 are the parents, 4 and 6 their fathers: the same man, so slot 6 is a repeat and slot
+  // 12, his father again, is never drawn.
+  private static FamilyTree CollapsedTree(PersonInfo center)
+  {
+    var father = P(2, "Father");
+    var mother = P(3, "Mother", BiologicalSex.Female);
+    var grandfather = P(4, "Grandfather");
+    var greatGrandfather = P(5, "Great");
+    FamilyTreeNode[] nodes = [new(center, 0), new(father, 1), new(mother, 1), new(grandfather, 2), new(greatGrandfather, 3)];
+    FamilyTreeEdge[] edges =
+    [
+      FamilyTreeEdge.ParentChild(father.Id, center.Id),
+      FamilyTreeEdge.ParentChild(mother.Id, center.Id),
+      FamilyTreeEdge.ParentChild(grandfather.Id, father.Id),
+      FamilyTreeEdge.ParentChild(grandfather.Id, mother.Id),
+      FamilyTreeEdge.ParentChild(greatGrandfather.Id, grandfather.Id),
+    ];
+    return new FamilyTree(center.Id, nodes, edges);
+  }
 
   [Fact]
   public async Task Ctor_resolves_dependencies_and_defaults()
@@ -303,27 +344,12 @@ public class FanChartPageTests
     Assert.Equal(1, page.SweepIndex);
   }
 
-  // Slots 2 and 3 are the parents, 4 and 6 their fathers: the same man, so slot 6 is a repeat and slot
-  // 12, his father again, is never drawn.
   [Fact]
   public async Task A_repeated_ancestor_is_drawn_dashed_with_nothing_behind_it()
   {
     var services = new TestServices();
     var center = P(1, "Ivan");
-    var father = P(2, "Father");
-    var mother = P(3, "Mother", BiologicalSex.Female);
-    var grandfather = P(4, "Grandfather");
-    var greatGrandfather = P(5, "Great");
-    FamilyTreeNode[] nodes = [new(center, 0), new(father, 1), new(mother, 1), new(grandfather, 2), new(greatGrandfather, 3)];
-    FamilyTreeEdge[] edges =
-    [
-      FamilyTreeEdge.ParentChild(father.Id, center.Id),
-      FamilyTreeEdge.ParentChild(mother.Id, center.Id),
-      FamilyTreeEdge.ParentChild(grandfather.Id, father.Id),
-      FamilyTreeEdge.ParentChild(grandfather.Id, mother.Id),
-      FamilyTreeEdge.ParentChild(greatGrandfather.Id, grandfather.Id),
-    ];
-    UseTree(services, new FamilyTree(center.Id, nodes, edges));
+    UseTree(services, CollapsedTree(center));
     var page = await CreatePageAsync(services);
 
     await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
@@ -331,6 +357,66 @@ public class FanChartPageTests
     var paths = await MainThread.InvokeOnMainThreadAsync(() => SegmentPaths(page));
     Assert.Equal(5, paths.Length);
     Assert.Single(paths, path => path.StrokeDashArray.Count != 0);
+  }
+
+  [Fact]
+  public async Task Hovering_an_ancestor_highlights_their_segment_until_the_pointer_moves_on()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    UseTree(services, Fathers(center, 2));
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+
+    var first = await HoverAsync(page, "Father1");
+    var firstPath = Assert.Single(first);
+    Assert.Equal(1, firstPath.ZIndex);
+
+    var second = await HoverAsync(page, "Father2");
+    var secondPath = Assert.Single(second);
+    Assert.NotSame(firstPath, secondPath);
+    Assert.Equal(0, firstPath.ZIndex);
+
+    var none = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      page.InvokeHoverAt(null);
+      return HighlightedPaths(page);
+    });
+    Assert.Empty(none);
+  }
+
+  [Fact]
+  public async Task Hovering_a_repeated_ancestor_highlights_every_segment_they_hold()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    UseTree(services, CollapsedTree(center));
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+
+    var highlighted = await HoverAsync(page, "Grandfather");
+
+    Assert.Equal(2, highlighted.Length);
+    Assert.Single(highlighted, path => path.StrokeDashArray.Count != 0);
+  }
+
+  // The rebuilt chart has new shapes, so the person still under the pointer must light up again.
+  [Fact]
+  public async Task Hovering_the_same_ancestor_after_a_reload_highlights_them_again()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    UseTree(services, Fathers(center, 2));
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    await HoverAsync(page, "Father1");
+
+    await WaitForLoadAsync(page, services, () => page.InvokePageCommandAsync("Refresh"));
+    var afterReload = await MainThread.InvokeOnMainThreadAsync(() => HighlightedPaths(page));
+    var hoveredAgain = await HoverAsync(page, "Father1");
+
+    Assert.Empty(afterReload);
+    Assert.Single(hoveredAgain);
   }
 
   [Fact]

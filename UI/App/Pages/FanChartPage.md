@@ -10,9 +10,18 @@ It is opened from PersonPage's and FamilyTreePage's menus.
 - A tap resolves through `TapAt`: tapping the **centre** opens their `PersonPage`, tapping any
   **ancestor** (a repeat included) re-centres the chart on them. The `"OpenPerson"` menu command
   opens the centre too.
-- Every canvas layer is input-transparent and the canvas carries the tap and pan recognizers. A
-  sector's bounding rectangle overlaps its neighbours', so only `FanChartLayout.HitTest`, by radius
-  and angle, can tell which segment a point is in.
+- Every canvas layer is input-transparent and the canvas carries the tap, pan and pointer
+  recognizers. A sector's bounding rectangle overlaps its neighbours', so only
+  `FanChartLayout.HitTest`, by radius and angle, can tell which segment a point is in.
+
+## Hovering
+- The pointer resolves through `HoverAt`, like a tap, and lights up the person under it: every
+  segment they hold (a repeat and their first slot together) gets twice the outline weight and is
+  raised over its neighbours, and the centre's ring thickens as on FamilyTreePage. Colours stay as
+  they are. Touch has no hover, so mobile has none of this.
+- `SetHovered` restyles only the previous and the new person. `Render` rebuilds the shapes, so
+  `ClearCanvas` forgets the hovered person rather than unlighting them, and the next pointer move
+  lights them up again.
 
 ## State
 - `_Center` / `_CenterName`: the focal person and their short name.
@@ -24,7 +33,9 @@ It is opened from PersonPage's and FamilyTreePage's menus.
 - `_SweepSetting`: the keyed `FanChartSweepSetting` (180°, 270° or 360°, saved app-wide). The header
   picker binds to `SweepNames` / `SweepIndex`, and choosing a sweep stores it and rebuilds. Choosing
   the one already shown does neither, since the picker echoes its own update back.
-- `_LastLayout`: the rendered layout, which taps and the viewport are measured against.
+- `_LastLayout`: the rendered layout, which taps, hover and the viewport are measured against.
+- `_Shapes` / `_CenterView` / `_HoveredId`: the rendered segment paths and centre view, and who the
+  pointer is over.
 
 ## Build & render pipeline
 1. `Reload` snapshots the centre, depth and hidden set and runs `LoadAsync` off the UI thread.

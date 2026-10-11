@@ -13,6 +13,7 @@ using GT4.UI.Utils.Settings;
 using Microsoft.Maui.Controls.Shapes;
 using Microsoft.Maui.Layouts;
 using System.Windows.Input;
+using Path = Microsoft.Maui.Controls.Shapes.Path;
 
 namespace GT4.UI.Pages;
 
@@ -34,6 +35,7 @@ public partial class FanChartPage : ContentPage, IZoomablePage
   private readonly FamilyTreeLayoutMetrics _CenterMetrics = new();
   private readonly PageZoom _Zoom = new();
   private const double LineWidth = 1.5;
+  private const double HighlightedLineWidth = 2 * LineWidth;
   private const double FontSizeBase = 12;
   private const int InitialGenerations = 4;
   private const int GenerationsPerLoad = 2;
@@ -52,6 +54,9 @@ public partial class FanChartPage : ContentPage, IZoomablePage
   private ProjectInfo? _LastProjectInfo;
   private int[] _HiddenIds = [];
   private FanChartLayoutResult? _LastLayout;
+  private (FanChartSegment Segment, Path Shape)[] _Shapes = [];
+  private FamilyTreeNodeView? _CenterView;
+  private int? _HoveredId;
 
   public FanChartPage(
     ICancellationTokenProvider cancellationTokenProvider,
@@ -83,7 +88,7 @@ public partial class FanChartPage : ContentPage, IZoomablePage
 
     InitializeComponent();
 
-    // Every layer is input-transparent, so the canvas takes both gestures: a sector's bounding rectangle
+    // Every layer is input-transparent, so the canvas takes every gesture: a sector's bounding rectangle
     // overlaps its neighbours', and only the angle and radius tell them apart.
     var pan = new PanGestureRecognizer();
     pan.PanUpdated += OnCanvasPan;
@@ -91,6 +96,10 @@ public partial class FanChartPage : ContentPage, IZoomablePage
     var tap = new TapGestureRecognizer();
     tap.Tapped += OnCanvasTapped;
     Canvas.GestureRecognizers.Add(tap);
+    var pointer = new PointerGestureRecognizer();
+    pointer.PointerMoved += OnCanvasPointerMoved;
+    pointer.PointerExited += OnCanvasPointerExited;
+    Canvas.GestureRecognizers.Add(pointer);
     // A new size reaches the scroll extents only once the canvas has been laid out at it; centring any
     // earlier clamps the scroll to the old extents.
     Canvas.SizeChanged += (_, _) => _ = CenterViewportAsync();
@@ -173,6 +182,12 @@ public partial class FanChartPage : ContentPage, IZoomablePage
     }
   }
 
+  protected void HoverAt(Point? point)
+  {
+    var node = point is Point at && _LastLayout is not null ? FanChartLayout.HitTest(_LastLayout, at) : null;
+    SetHovered(node?.Id);
+  }
+
   // An edit on a person page, or a hide on a family tree, opened from here must show on the way back.
   protected override void OnNavigatedTo(NavigatedToEventArgs args)
   {
@@ -251,6 +266,47 @@ public partial class FanChartPage : ContentPage, IZoomablePage
     if (e.GetPosition(Canvas) is Point point)
     {
       TapAt(point);
+    }
+  }
+
+  private void OnCanvasPointerMoved(object? sender, PointerEventArgs e) => HoverAt(e.GetPosition(Canvas));
+
+  private void OnCanvasPointerExited(object? sender, PointerEventArgs e) => HoverAt(null);
+
+  private void SetHovered(int? personId)
+  {
+    if (personId == _HoveredId)
+    {
+      return;
+    }
+
+    if (_HoveredId is int hoveredId)
+    {
+      Highlight(hoveredId, false);
+    }
+
+    _HoveredId = personId;
+    if (personId is int id)
+    {
+      Highlight(id, true);
+    }
+  }
+
+  // Every segment the person holds, so a repeat lights up with their first slot.
+  private void Highlight(int personId, bool isHighlighted)
+  {
+    var lineWidth = isHighlighted ? HighlightedLineWidth : LineWidth;
+    var origin = _LastLayout!.Origin;
+    foreach (var (segment, shape) in _Shapes.Where(item => item.Segment.Node.Id == personId))
+    {
+      FanChartSegmentShape.Update(shape, segment, origin, lineWidth);
+      // Over its neighbours, whose strokes would otherwise cover half of its own.
+      shape.ZIndex = isHighlighted ? 1 : 0;
+    }
+
+    if (personId == _LastLayout.Center.Id)
+    {
+      _CenterView!.SetHighlighted(isHighlighted);
     }
   }
 
@@ -381,11 +437,13 @@ public partial class FanChartPage : ContentPage, IZoomablePage
     AbsoluteLayout.SetLayoutBounds(disc, discBounds);
     Segments.Children.Add(disc);
 
+    var shapes = new List<(FanChartSegment, Path)>();
     foreach (var segment in layout.Segments)
     {
       var segmentFill = segment.IsRepeat ? repeatFill : fill;
       var shape = FanChartSegmentShape.Create(segment, origin, LineWidth, segmentFill, stroke);
       Segments.Children.Add(shape);
+      shapes.Add((segment, shape));
 
       if (labels.TryGetValue(segment.Slot, out var text))
       {
@@ -400,6 +458,8 @@ public partial class FanChartPage : ContentPage, IZoomablePage
     var centerBounds = new Rect(origin.X - (width / 2), origin.Y - (height / 2), width, height);
     AbsoluteLayout.SetLayoutBounds(centerView, centerBounds);
     Labels.Children.Add(centerView);
+    _Shapes = [.. shapes];
+    _CenterView = centerView;
 
     // Offered only while the chart reaches the requested depth: a shorter one has no more data to fetch.
     var outerGeneration = layout.Segments.Length == 0 ? 0 : layout.Segments.Max(segment => segment.Generation);
@@ -435,6 +495,8 @@ public partial class FanChartPage : ContentPage, IZoomablePage
   // The chart is rebuilt whole on every load, so every view is disconnected to release its native resources.
   private void ClearCanvas()
   {
+    // Forgotten rather than unlit: the shapes it would restyle are going.
+    _HoveredId = null;
     View[] views = [.. Segments.Children.OfType<View>(), .. Labels.Children.OfType<View>()];
     Segments.Children.Clear();
     Labels.Children.Clear();
