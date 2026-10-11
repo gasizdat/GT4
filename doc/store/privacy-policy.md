@@ -1,7 +1,10 @@
 # Privacy policy — Genealogy Tree
 
-*Submitted as policy text directly in Partner Center → Properties, rather than a
-hosted URL, since the repo has no public domain to host it at.*
+*Superseded by the hosted policy at
+<https://gasizdat.github.io/GT4/privacy.html> (source: `site/privacy.html` on
+master), which also covers Android. This is the Windows-only text that earlier
+submissions pasted into Partner Center → Properties; edit the hosted page, not
+this file.*
 
 *Last updated: 9 October 2026*
 
