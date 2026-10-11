@@ -100,6 +100,17 @@ internal class DateFormatter : IDateFormatter
     _ => throw new NotImplementedException($"DisplayCalendar={calendar}")
   };
 
+  public static string GregorianYears(Date date)
+  {
+    var ret = date.Year.ToString();
+    if (date.Sign < 0)
+    {
+      ret = string.Format(UIStrings.DateEraBeforeChrist_1, ret);
+    }
+
+    return ret;
+  }
+
   protected static string YearToString(Date date, DisplayCalendar displayCalendar)
   {
     var ret = displayCalendar switch
@@ -110,17 +121,6 @@ internal class DateFormatter : IDateFormatter
       DisplayCalendar.FrenchRepublican => NonGregorianYears(date),
       _ => throw new NotImplementedException($"DisplayCalendar={displayCalendar}")
     };
-
-    return ret;
-  }
-
-  protected static string GregorianYears(Date date)
-  {
-    var ret = date.Year.ToString();
-    if (date.Sign < 0)
-    {
-      ret = string.Format(UIStrings.DateEraBeforeChrist_1, ret);
-    }
 
     return ret;
   }

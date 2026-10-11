@@ -1602,4 +1602,22 @@ FN - род</value>
   <data name="MsgCopied" xml:space="preserve">
     <value>Скопировано</value>
   </data>
+  <data name="MenuItemNameFanChart" xml:space="preserve">
+    <value>◔ Веерная схема</value>
+  </data>
+  <data name="TitleFanChartPage_1" xml:space="preserve">
+    <value>◔ {0}</value>
+  </data>
+  <data name="HintFanChartPage" xml:space="preserve">
+    <value>Нажмите на предка, чтобы поместить его в центр</value>
+  </data>
+  <data name="LblFanChartSweep" xml:space="preserve">
+    <value>Охват</value>
+  </data>
+  <data name="FieldFanChartSweep" xml:space="preserve">
+    <value>Охват веерной схемы</value>
+  </data>
+  <data name="FieldFanChartSweepHint" xml:space="preserve">
+    <value>Какую часть круга занимает веерная схема: половину, три четверти или весь круг.</value>
+  </data>
 </root>

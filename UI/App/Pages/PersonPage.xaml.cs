@@ -512,11 +512,10 @@ public partial class PersonPage : ContentPage
         ShowPersonInfo(_PersonFullInfo, false);
         break;
       case string commandName when commandName == "GoToFamilyTree":
-        // Shell matches the target's [QueryProperty] by exact runtime type, so hand it a plain
-        // PersonInfo — passing the PersonFullInfo subclass sends Shell down a Convert.ChangeType path
-        // that throws (the object is not IConvertible).
-        var centerInfo = new PersonInfo(_PersonFullInfo, _PersonFullInfo.Names, _PersonFullInfo.MainPhoto);
-        await _NavigationService.GoToAsync(UIRoutes.GetRoute<FamilyTreePage>(), true, new() { ["PersonInfo"] = centerInfo });
+        await OnGoToChartAsync<FamilyTreePage>();
+        break;
+      case string commandName when commandName == "GoToFanChart":
+        await OnGoToChartAsync<FanChartPage>();
         break;
       case RelativeInfo relativeInfo:
         ShowPersonInfo(relativeInfo, true);
@@ -605,5 +604,15 @@ public partial class PersonPage : ContentPage
     _ProjectList.InvalidateItems();
 
     OnPropertyChanged(nameof(MainPersonMenuItemName));
+  }
+
+  private async Task OnGoToChartAsync<TPage>()
+  {
+    // Shell matches the target's [QueryProperty] by exact runtime type, so hand it a plain
+    // PersonInfo — passing the PersonFullInfo subclass sends Shell down a Convert.ChangeType path
+    // that throws (the object is not IConvertible).
+    var centerInfo = new PersonInfo(_PersonFullInfo, _PersonFullInfo.Names, _PersonFullInfo.MainPhoto);
+    var route = UIRoutes.GetRoute<TPage>();
+    await _NavigationService.GoToAsync(route, true, new() { ["PersonInfo"] = centerInfo });
   }
 }

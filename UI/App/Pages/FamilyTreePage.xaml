@@ -22,6 +22,10 @@
           Text="{Binding OpenPersonToolbarItemName, Source={x:Reference Root}}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="OpenFanChart"
+          Text="{x:Static resources:UIStrings.MenuItemNameFanChart}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="Refresh"
           Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
       <items:PageMenuItem

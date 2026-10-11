@@ -1602,4 +1602,22 @@ FN - nom de famille</value>
   <data name="MsgCopied" xml:space="preserve">
     <value>Copié</value>
   </data>
+  <data name="MenuItemNameFanChart" xml:space="preserve">
+    <value>◔ Éventail</value>
+  </data>
+  <data name="TitleFanChartPage_1" xml:space="preserve">
+    <value>◔ {0}</value>
+  </data>
+  <data name="HintFanChartPage" xml:space="preserve">
+    <value>Touchez un ancêtre pour centrer l&apos;éventail sur lui</value>
+  </data>
+  <data name="LblFanChartSweep" xml:space="preserve">
+    <value>Arc</value>
+  </data>
+  <data name="FieldFanChartSweep" xml:space="preserve">
+    <value>Arc de l&apos;éventail</value>
+  </data>
+  <data name="FieldFanChartSweepHint" xml:space="preserve">
+    <value>Quelle part d&apos;un cercle l&apos;éventail couvre : une moitié, trois quarts ou le cercle entier.</value>
+  </data>
 </root>

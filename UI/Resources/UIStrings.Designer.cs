@@ -949,6 +949,24 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Fan chart span.
+        /// </summary>
+        public static string FieldFanChartSweep {
+            get {
+                return ResourceManager.GetString("FieldFanChartSweep", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to How much of a circle the fan chart spans: a half, three quarters or the whole..
+        /// </summary>
+        public static string FieldFanChartSweepHint {
+            get {
+                return ResourceManager.GetString("FieldFanChartSweepHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Any.
         /// </summary>
         public static string FieldFilterAny {
@@ -2350,6 +2368,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Tap an ancestor to centre the chart on them.
+        /// </summary>
+        public static string HintFanChartPage {
+            get {
+                return ResourceManager.GetString("HintFanChartPage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to All photos and attachments of the project, with the persons and families they belong to..
         /// </summary>
         public static string HintGalleryPage {
@@ -2484,6 +2511,15 @@ namespace GT4.UI.Resources {
             }
         }
 
+        /// <summary>
+        ///   Looks up a localized string similar to Span.
+        /// </summary>
+        public static string LblFanChartSweep {
+            get {
+                return ResourceManager.GetString("LblFanChartSweep", resourceCulture);
+            }
+        }
+        
         /// <summary>
         ///   Looks up a localized string similar to People.
         /// </summary>
@@ -2715,6 +2751,15 @@ namespace GT4.UI.Resources {
         public static string MenuItemNameFamilyTree {
             get {
                 return ResourceManager.GetString("MenuItemNameFamilyTree", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ◔ Fan chart.
+        /// </summary>
+        public static string MenuItemNameFanChart {
+            get {
+                return ResourceManager.GetString("MenuItemNameFanChart", resourceCulture);
             }
         }
         
@@ -4227,6 +4272,15 @@ namespace GT4.UI.Resources {
         public static string TitleFamilyTreePage_1 {
             get {
                 return ResourceManager.GetString("TitleFamilyTreePage_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ◔ {0}.
+        /// </summary>
+        public static string TitleFanChartPage_1 {
+            get {
+                return ResourceManager.GetString("TitleFanChartPage_1", resourceCulture);
             }
         }
         

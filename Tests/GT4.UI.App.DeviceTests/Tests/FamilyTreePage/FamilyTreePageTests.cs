@@ -337,6 +337,25 @@ public class FamilyTreePageTests
   }
 
   [Fact]
+  public async Task OpenFanChart_navigates_with_the_current_center()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+    var center = P(1, "Ivan");
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    var expectedRoute = $"{typeof(FanChartPage).Namespace}/{typeof(FanChartPage).Name}";
+
+    await page.InvokePageCommandAsync("OpenFanChart");
+
+    services.NavigationService.Verify(
+      n => n.GoToAsync(
+        expectedRoute,
+        true,
+        It.Is<Dictionary<string, object>>(d => ReferenceEquals(d["PersonInfo"], center))),
+      Times.Once());
+  }
+
+  [Fact]
   public async Task IncludeCollaterals_reloads_with_collaterals_included()
   {
     var services = new TestServices();

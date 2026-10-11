@@ -37,17 +37,13 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   // every node view; views that do leave the tree are disconnected to release their native resources.
   private readonly Dictionary<int, NodeEntry> _NodeCache = [];
   private readonly List<Path> _ConnectorPool = [];
+  private readonly PageZoom _Zoom = new();
   private const double ConnectorLineWidth = 2;
   private const double HighlightedLineWidth = 2 * ConnectorLineWidth;
   // Each "load more" click adds GenerationsPerLoad generations, up to this hard ceiling.
   private const int GenerationsPerLoad = 3;
   private const int MaxGenerations = 120;
   private const int InitialGenerations = 2;
-  private const double MinZoom = 0.4;
-  private const double MaxZoom = 2.5;
-  private const double ZoomStep = 0.25;
-  private const double DefaultZoom = 1.0;
-  private const int ZoomIntervalMs = 300;
   // Sized to clear the tallest of the "load more" and zoom buttons pinned over the canvas.
   private const double OverlayClearance = 72;
   // A shorter drag is a tap or a slipped touch, not a move; it is far below a slot at any zoom.
@@ -63,8 +59,6 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   private ViewTarget _ViewTarget = ViewTarget.Center;
   private double _PanStartScrollX;
   private double _PanStartScrollY;
-  private double _ZoomScale = DefaultZoom;
-  private long _LastZoomTicks;
   private int _LoadOperationsCount = 0;
   private ProjectInfo? _LastProjectInfo;
   // Both replaced, never mutated, so a load in flight keeps the sets it started with.
@@ -275,34 +269,20 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     get => _LoadOperationsCount != 0;
   }
 
-  // A pinch's delta bears no useful relation to a ZoomStep, so pace in time and use only its sign.
   public void Zoom(double delta)
   {
-    var ticks = Environment.TickCount64;
-    if (ticks - _LastZoomTicks < ZoomIntervalMs)
+    if (_Zoom.Pinch(delta))
     {
-      return;
+      Reload(ViewTarget.Center);
     }
-
-    _LastZoomTicks = ticks;
-    var direction = Math.Sign(delta);
-    SetZoom(_ZoomScale + direction * ZoomStep);
   }
 
-  // Deliberately not paced: this is a discrete command, never part of a gesture stream.
-  public void ResetZoom() => SetZoom(DefaultZoom);
-
-  // A scale change costs a full rebuild, so repeated steps against a clamp must not reload.
-  private void SetZoom(double scale)
+  public void ResetZoom()
   {
-    var clamped = Math.Clamp(scale, MinZoom, MaxZoom);
-    if (clamped == _ZoomScale)
+    if (_Zoom.Reset())
     {
-      return;
+      Reload(ViewTarget.Center);
     }
-
-    _ZoomScale = clamped;
-    Reload(ViewTarget.Center);
   }
 
   private void SetLoadInProgress()
@@ -441,7 +421,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
         .FamilyTreeProvider
         .BuildAsync(center, _AncestorGenerations, _DescendantGenerations, _IncludeCollaterals, hiddenIds, token);
 
-      var zoom = _ZoomScale;
+      var zoom = _Zoom.Scale;
       var scaledMetrics = _Metrics with
       {
         NodeWidth = _Metrics.NodeWidth * zoom,
@@ -727,6 +707,11 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
         await _NavigationService.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { ["PersonInfo"] = center });
         break;
 
+      case string command when command == "OpenFanChart" && _Center is PersonInfo center:
+        var fanChartRoute = UIRoutes.GetRoute<FanChartPage>();
+        await _NavigationService.GoToAsync(fanChartRoute, true, new() { ["PersonInfo"] = center });
+        break;
+
       case string command when command == "LoadAncestors":
         var newAncestorGenerations = Math.Min(_AncestorGenerations + GenerationsPerLoad, MaxGenerations);
         if (_AncestorGenerations < newAncestorGenerations)
@@ -746,11 +731,17 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
         break;
 
       case string command when command == "ZoomIn":
-        SetZoom(_ZoomScale + ZoomStep);
+        if (_Zoom.ZoomIn())
+        {
+          Reload(ViewTarget.Center);
+        }
         break;
 
       case string command when command == "ZoomOut":
-        SetZoom(_ZoomScale - ZoomStep);
+        if (_Zoom.ZoomOut())
+        {
+          Reload(ViewTarget.Center);
+        }
         break;
 
       case string command when command == "Refresh":

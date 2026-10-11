@@ -102,7 +102,7 @@ public class PersonPageTests
     await MainThread.InvokeOnMainThreadAsync(() => ((IView)layout).Arrange(new Rect(0, 0, 400, 800)));
     var topMenu = layout.FindByName<FlexLayout>("TopMenu");
     var buttons = topMenu.Children.OfType<Button>().ToArray();
-    Assert.Equal(7, buttons.Length);
+    Assert.Equal(8, buttons.Length);
 
     var toggleButton = buttons.Single(b => (string)((PageMenuItem)b.BindingContext!).CommandParameter == "ToggleAll");
     Assert.Equal("⏬", toggleButton.Text);
@@ -1449,9 +1449,28 @@ public class PersonPageTests
       n => n.GoToAsync(
         expectedRoute,
         true,
-        // Shell requires the exact runtime type PersonInfo, not the PersonFullInfo subclass --
-        // see PersonPage.xaml.cs's own comment on this GoToFamilyTree branch.
+        // Shell requires the exact runtime type PersonInfo, not the PersonFullInfo subclass.
         It.Is<Dictionary<string, object>>(d => d["PersonInfo"].GetType() == typeof(PersonInfo))),
+      Times.Once());
+  }
+
+  [Fact]
+  public async Task GoToFanChart_navigates_with_a_plain_PersonInfo()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson();
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+    var expectedRoute = $"{typeof(FanChartPage).Namespace}/{typeof(FanChartPage).Name}";
+
+    await page.InvokePageCommandAsync("GoToFanChart");
+
+    services.NavigationService.Verify(
+      n => n.GoToAsync(
+        expectedRoute,
+        true,
+        It.Is<Dictionary<string, object>>(d => d["PersonInfo"].GetType() == typeof(PersonInfo) && ((PersonInfo)d["PersonInfo"]).Id == person.Id)),
       Times.Once());
   }
 }

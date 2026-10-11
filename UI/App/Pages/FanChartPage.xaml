@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="GT4.UI.Pages.FanChartPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:components="clr-namespace:GT4.UI.Components"
+    xmlns:items="clr-namespace:GT4.UI.Items"
+    xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
+    x:Name="Root">
+
+  <components:PageLayout
+      x:Name="LayoutView"
+      HasBackButton="True"
+      Hint="{x:Static resources:UIStrings.HintFanChartPage}"
+      Title="{Binding PageTitle, Source={x:Reference Root}}"
+      Loading="{Binding Loading, Source={x:Reference Root}}">
+
+    <components:PageLayout.MenuItems>
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="OpenPerson"
+          Text="{Binding OpenPersonToolbarItemName, Source={x:Reference Root}}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="Refresh"
+          Text="{x:Static resources:UIStrings.MenuItemNameRefresh}" />
+    </components:PageLayout.MenuItems>
+
+    <components:PageLayout.Header>
+      <HorizontalStackLayout
+          HorizontalOptions="End"
+          Spacing="{StaticResource PageContentSpacing}">
+        <Label
+            Style="{StaticResource FieldName}"
+            Text="{x:Static resources:UIStrings.LblFanChartSweep}"
+            VerticalOptions="Center" />
+        <Picker
+            x:Name="SweepPicker"
+            ItemsSource="{Binding SweepNames, Source={x:Reference Root}}"
+            SelectedIndex="{Binding SweepIndex, Source={x:Reference Root}}"
+            VerticalOptions="Center" />
+      </HorizontalStackLayout>
+    </components:PageLayout.Header>
+
+    <components:PageLayout.Body>
+      <Grid>
+        <ScrollView
+            x:Name="Scroller"
+            Orientation="Both">
+          <Grid
+              x:Name="Canvas"
+              BackgroundColor="Transparent"
+              HorizontalOptions="Center"
+              VerticalOptions="Start">
+            <AbsoluteLayout
+                x:Name="Segments"
+                InputTransparent="True" />
+            <AbsoluteLayout
+                x:Name="Labels"
+                InputTransparent="True" />
+          </Grid>
+        </ScrollView>
+
+        <Button
+            Margin="0,8"
+            Padding="16,6"
+            Command="{Binding PageCommand, Source={x:Reference Root}}"
+            CommandParameter="LoadMore"
+            HorizontalOptions="Center"
+            IsEnabled="{Binding CanLoadMore, Source={x:Reference Root}}"
+            Text="{x:Static resources:UIStrings.BtnNameLoadAncestors}"
+            VerticalOptions="Start" />
+
+        <HorizontalStackLayout
+            Margin="8"
+            HorizontalOptions="End"
+            Spacing="4"
+            VerticalOptions="End">
+          <Button
+              Command="{Binding PageCommand, Source={x:Reference Root}}"
+              CommandParameter="ZoomOut"
+              Style="{StaticResource ZoomOut}" />
+          <Button
+              Command="{Binding PageCommand, Source={x:Reference Root}}"
+              CommandParameter="ZoomIn"
+              Style="{StaticResource ZoomIn}" />
+        </HorizontalStackLayout>
+      </Grid>
+    </components:PageLayout.Body>
+
+  </components:PageLayout>
+</ContentPage>

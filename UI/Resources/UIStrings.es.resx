@@ -1602,4 +1602,22 @@ FN - apellido familiar</value>
   <data name="MsgCopied" xml:space="preserve">
     <value>Copiado</value>
   </data>
+  <data name="MenuItemNameFanChart" xml:space="preserve">
+    <value>◔ Gráfico de abanico</value>
+  </data>
+  <data name="TitleFanChartPage_1" xml:space="preserve">
+    <value>◔ {0}</value>
+  </data>
+  <data name="HintFanChartPage" xml:space="preserve">
+    <value>Toque un antepasado para centrar el gráfico en él</value>
+  </data>
+  <data name="LblFanChartSweep" xml:space="preserve">
+    <value>Arco</value>
+  </data>
+  <data name="FieldFanChartSweep" xml:space="preserve">
+    <value>Arco del gráfico de abanico</value>
+  </data>
+  <data name="FieldFanChartSweepHint" xml:space="preserve">
+    <value>Qué parte de un círculo abarca el gráfico de abanico: la mitad, tres cuartos o el círculo entero.</value>
+  </data>
 </root>
