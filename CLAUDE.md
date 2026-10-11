@@ -90,6 +90,14 @@ from the code.
   `App.InitializeComponent()` cannot be instantiated from that host (it loads app-level resource
   dictionaries the test host doesn't have), so lifecycle behavior gated on a real `App` instance is
   verified against the built binary, not a device test — that's a deliberate gap, not a missed one.
+- **Device tests run with the developer's own saved app settings and UI culture.** `TestServices`
+  builds its container through `GT4Services.Add`, whose `IConfiguration` comes from
+  `AddAppConfiguration()` — the real settings file of whoever runs the tests — and the host keeps
+  the machine's culture. So date/name formats, the display calendar and `UIStrings` language all
+  vary by machine: an HTML export from the host came out as "1816 г., 21 April" here, not the
+  default "21 04 1816". Anything whose output must not depend on the machine registers an empty
+  `IConfiguration` after `GT4Services.Add` and sets `CurrentCulture`, `CurrentUICulture` and
+  `UIStrings.Culture` explicitly, restoring them afterwards (`SampleSiteGenerator`, PR #490).
 - **MAUI derives the MSIX package version from `ApplicationDisplayVersion`+`ApplicationVersion`**,
   not from `$(Version)` — the Store reserves version field 4 for its own use.
   `.github/workflows/release.yml`'s signing-certificate subject must track the `Publisher`
