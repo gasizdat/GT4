@@ -151,17 +151,27 @@ public static class FanChartLayout
     var bearing = start + (sweep / 2);
     var arcLength = middle * sweep * Math.PI / 180;
     var isAlongRing = arcLength >= metrics.RingWidth;
+    var halfSweepTan = Math.Tan(sweep * Math.PI / 360);
+    // Across a radial label the segment is narrowest at its inner end.
+    var thickness = isAlongRing ? metrics.RingWidth : 2 * inner * halfSweepTan;
+    // Only a name shrinks: shrunk years would leave an outer ring's names larger than an inner ring's.
+    // Never below the zoomed size, so zooming out still drops the labels that no longer fit.
+    var minLineHeight = Math.Min(metrics.MinLineHeight, metrics.LineHeight);
+    var label = thickness >= 2 * metrics.LineHeight
+      ? FanChartLabel.Full
+      : thickness >= minLineHeight ? FanChartLabel.NameOnly : FanChartLabel.None;
+    var lineHeight = Math.Min(metrics.LineHeight, thickness);
     // A label is straight, so along a ring its two lines of text must stop short of the segment's sides,
     // which the lower line meets first, and of the ring's outer edge, which the upper line meets first.
-    var betweenSides = 2 * (middle - metrics.LineHeight) * Math.Tan(sweep * Math.PI / 360);
-    var textTop = middle + metrics.LineHeight;
+    var betweenSides = 2 * (middle - lineHeight) * halfSweepTan;
+    var textTop = middle + lineHeight;
     var withinRing = 2 * Math.Sqrt((outer * outer) - (textTop * textTop));
     var alongRing = Math.Min(betweenSides, withinRing);
-    var labelSize = isAlongRing ? new Size(alongRing, metrics.RingWidth) : new Size(metrics.RingWidth, arcLength);
+    // Likewise a radial label's outer corners must stop short of the outer edge.
+    var halfThickness = thickness / 2;
+    var radial = 2 * (Math.Sqrt((outer * outer) - (halfThickness * halfThickness)) - middle);
+    var labelSize = isAlongRing ? new Size(alongRing, thickness) : new Size(radial, thickness);
     var rotation = Upright(isAlongRing ? bearing : bearing - 90);
-    var label = labelSize.Height >= 2 * metrics.LineHeight
-      ? FanChartLabel.Full
-      : labelSize.Height >= metrics.LineHeight ? FanChartLabel.NameOnly : FanChartLabel.None;
     var labelCenter = PointAt(origin, middle, bearing);
 
     return new FanChartSegment(
@@ -176,6 +186,7 @@ public static class FanChartLayout
       labelCenter,
       rotation,
       labelSize,
+      lineHeight,
       label);
   }
 

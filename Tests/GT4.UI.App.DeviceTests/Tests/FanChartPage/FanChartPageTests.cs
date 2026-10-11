@@ -77,6 +77,14 @@ public class FanChartPageTests
   }
 
   // Main thread only.
+  private static Label[] FatherLabels(TestableFanChartPage page) =>
+    [.. page
+      .FindByName<AbsoluteLayout>("Labels")
+      .Children
+      .OfType<Label>()
+      .Where(label => label.Text.StartsWith("Father"))];
+
+  // Main thread only.
   private static Path[] SegmentPaths(TestableFanChartPage page) =>
     [.. page.FindByName<AbsoluteLayout>("Segments").Children.OfType<Path>()];
 
@@ -215,6 +223,27 @@ public class FanChartPageTests
     VerifyBuilds(services, 6, Times.Once());
     VerifyBuilds(services, 8, Times.Once());
     VerifyBuilds(services, 10, Times.Once());
+  }
+
+  [Fact]
+  public async Task Zooming_in_labels_deeper_ancestors_in_smaller_text()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    UseEndlessFathers(services, center);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    foreach (var _ in Enumerable.Range(0, 3))
+      await WaitForLoadAsync(page, services, () => page.InvokePageCommandAsync("LoadMore"));
+    var unzoomed = await MainThread.InvokeOnMainThreadAsync(() => FatherLabels(page));
+
+    foreach (var _ in Enumerable.Range(0, 6))
+      await WaitForLoadAsync(page, services, () => page.InvokePageCommandAsync("ZoomIn"));
+
+    var zoomed = await MainThread.InvokeOnMainThreadAsync(() => FatherLabels(page));
+    Assert.True(zoomed.Length > unzoomed.Length);
+    var largest = zoomed.Max(label => label.FontSize);
+    Assert.Contains(zoomed, label => label.FontSize < largest);
   }
 
   [Fact]

@@ -30,13 +30,14 @@ It is opened from PersonPage's and FamilyTreePage's menus.
 1. `Reload` snapshots the centre, depth and hidden set and runs `LoadAsync` off the UI thread.
 2. `LoadAsync` asks `FamilyTreeProvider.BuildAsync` for ancestors only (no descendants, no
    collaterals), scales `FanChartMetrics` by the zoom (line height by the font scale too, margin by
-   the font scale alone, as FamilyTreePage does), runs `FanChartLayout.Compute`, formats each label
-   (short name, plus `ILifeDatesFormatter.ToYearsString` where the segment has room), and loads the
-   centre's photo.
+   the font scale alone, as FamilyTreePage does). The minimum line height follows the font scale
+   alone: when zoomed in, a thin ring's labels shrink back toward the unzoomed size instead of
+   disappearing. Then it runs `FanChartLayout.Compute`, formats each label (short name, plus
+   `ILifeDatesFormatter.ToYearsString` where the segment has room), and loads the centre's photo.
 3. `Render` rebuilds the canvas whole: the centre disc, one `FanChartSegmentShape` path per segment
-   (repeats dashed, on a muted fill), a rotated `Label` per labelled segment, and a
-   `FamilyTreeNodeView` for the centre. Every old view is disconnected first, to release its native
-   resources.
+   (repeats dashed, on a muted fill), a rotated `Label` per labelled segment at its ring's line
+   height, and a `FamilyTreeNodeView` for the centre. Every old view is disconnected first, to
+   release its native resources.
 4. "Load more" is offered only while the chart reaches the depth asked for.
 5. The viewport centres on the centre person once the canvas has been laid out at its new size
    (`Canvas.SizeChanged`): centring before that clamps the scroll to the old extents.

@@ -55,6 +55,14 @@ public class FanChartLayoutTests
   private static FanChartLayoutResult Layout(FamilyTree tree, int generations = 4, double sweep = 360) =>
     FanChartLayout.Compute(tree, generations, sweep, _metrics);
 
+  // As the page scales them: everything but the minimum line height follows the zoom.
+  private static FanChartMetrics Zoomed(double zoom) => _metrics with
+  {
+    CenterRadius = _metrics.CenterRadius * zoom,
+    RingWidth = _metrics.RingWidth * zoom,
+    LineHeight = _metrics.LineHeight * zoom,
+  };
+
   private static Dictionary<int, int> PersonBySlot(FanChartLayoutResult layout) =>
     layout.Segments.ToDictionary(segment => segment.Slot, segment => segment.Node.Id);
 
@@ -292,28 +300,38 @@ public class FanChartLayoutTests
     top.LabelRotation.Should().BeApproximately(45, Tolerance);
     top.LabelSize.Width.Should().BeGreaterThan(top.LabelSize.Height);
     var outer = At(layout, 64);
-    outer.LabelSize.Width.Should().Be(_metrics.RingWidth);
+    outer.LabelSize.Width.Should().BeGreaterThan(outer.LabelSize.Height);
     outer.LabelSize.Height.Should().BeLessThan(_metrics.RingWidth);
   }
 
-  // The straight box of two lines of text, centred on the label, must not cross the segment's outer arc
-  // or its sides, however wide the arc it sits on.
+  // The straight box of the label's lines of text must not cross the segment's outer arc or its sides,
+  // however wide the arc it sits on or whichever way it runs.
   [Theory]
-  [MemberData(nameof(Sweeps))]
-  public void Compute_KeepsALabelAlongARingInsideItsSegment(double sweep)
+  [InlineData(180, 1.0)]
+  [InlineData(270, 1.0)]
+  [InlineData(360, 1.0)]
+  [InlineData(360, 0.4)]
+  [InlineData(180, 2.5)]
+  [InlineData(360, 2.5)]
+  public void Compute_KeepsALabelInsideItsSegment(double sweep, double zoom)
   {
     var builder = new TreeBuilder();
-    builder.Full(generations: 4);
+    builder.Full(generations: 9);
 
-    var layout = Layout(builder.Build(), sweep: sweep);
+    var metrics = Zoomed(zoom);
 
-    var alongRing = layout.Segments.Where(segment => segment.LabelSize.Height == _metrics.RingWidth && segment.LabelSize.Width != _metrics.RingWidth);
-    alongRing.Should().NotBeEmpty();
-    foreach (var segment in alongRing)
+    var layout = FanChartLayout.Compute(builder.Build(), 9, sweep, metrics);
+
+    var labelled = layout.Segments.Where(segment => segment.Label != FanChartLabel.None).ToArray();
+    labelled.Should().Contain(segment => segment.LabelSize.Height == metrics.RingWidth, "some labels run along a ring");
+    labelled.Should().Contain(segment => segment.LabelSize.Height < metrics.RingWidth, "some labels run along a radius");
+    foreach (var segment in labelled)
     {
+      var lines = segment.Label == FanChartLabel.Full ? 2 : 1;
+      var halfText = lines * segment.LineHeight / 2;
       var radians = segment.LabelRotation * Math.PI / 180;
       var along = new Point(Math.Cos(radians) * segment.LabelSize.Width / 2, Math.Sin(radians) * segment.LabelSize.Width / 2);
-      var across = new Point(-Math.Sin(radians) * _metrics.LineHeight, Math.Cos(radians) * _metrics.LineHeight);
+      var across = new Point(-Math.Sin(radians) * halfText, Math.Cos(radians) * halfText);
       foreach (var (x, y) in new[] { (1, 1), (1, -1), (-1, 1), (-1, -1) })
       {
         var dx = segment.LabelCenter.X + (x * along.X) + (y * across.X) - layout.Origin.X;
@@ -343,6 +361,47 @@ public class FanChartLayoutTests
       segment.Label.Should().Be(expected);
     }
     layout.Segments.Select(segment => segment.Label).Distinct().Should().BeEquivalentTo(new[] { FanChartLabel.Full, FanChartLabel.NameOnly, FanChartLabel.None });
+  }
+
+  [Fact]
+  public void Compute_ShrinksAThinRingsTextWhenZoomedInRatherThanDropIt()
+  {
+    var builder = new TreeBuilder();
+    builder.Full(generations: 10);
+    var tree = builder.Build();
+    var metrics = Zoomed(2.5);
+
+    var unzoomed = Layout(tree, generations: 10);
+    var zoomed = FanChartLayout.Compute(tree, 10, 360, metrics);
+
+    var labelled = zoomed.Segments.Where(segment => segment.Label != FanChartLabel.None).ToArray();
+    labelled.Should().OnlyContain(segment => segment.LineHeight >= metrics.MinLineHeight && segment.LineHeight <= metrics.LineHeight);
+    labelled.Should().Contain(segment => segment.LineHeight < metrics.LineHeight);
+    var deepest = unzoomed.Segments.Where(segment => segment.Label != FanChartLabel.None).Max(segment => segment.Generation);
+    labelled.Max(segment => segment.Generation).Should().BeGreaterThan(deepest);
+    labelled.Where(segment => segment.Label == FanChartLabel.Full).Should().OnlyContain(segment => segment.LineHeight == metrics.LineHeight);
+    var ringLineHeights = labelled
+      .GroupBy(segment => segment.Generation)
+      .OrderBy(ring => ring.Key)
+      .Select(ring => ring.Select(segment => segment.LineHeight).Distinct().Single())
+      .ToArray();
+    ringLineHeights.Should().BeInDescendingOrder("an outer ring's text is never larger than an inner ring's");
+  }
+
+  // Shrinking stops at the unzoomed size, so zoomed out a ring keeps the zoomed size or loses its labels.
+  [Fact]
+  public void Compute_KeepsTheZoomedTextSizeWhenZoomedOut()
+  {
+    var builder = new TreeBuilder();
+    builder.Full(generations: 10);
+    var tree = builder.Build();
+    var metrics = Zoomed(0.4);
+
+    var unzoomed = Layout(tree, generations: 10);
+    var zoomed = FanChartLayout.Compute(tree, 10, 360, metrics);
+
+    zoomed.Segments.Select(segment => segment.Label).Should().Equal(unzoomed.Segments.Select(segment => segment.Label));
+    zoomed.Segments.Where(segment => segment.Label != FanChartLabel.None).Should().OnlyContain(segment => segment.LineHeight == metrics.LineHeight);
   }
 
   [Theory]

@@ -314,6 +314,8 @@ public partial class FanChartPage : ContentPage, IZoomablePage
         CenterRadius = _Metrics.CenterRadius * zoom,
         RingWidth = _Metrics.RingWidth * zoom,
         LineHeight = _Metrics.LineHeight * zoom * fontFactor,
+        // Not the zoom: zooming in shrinks the text to the unzoomed size before it gives up a label.
+        MinLineHeight = _Metrics.MinLineHeight * fontFactor,
         // Not the zoom: this metric clears fixed-size overlays, so it tracks the font that sizes them.
         Margin = _Metrics.Margin * fontFactor,
       };
@@ -370,7 +372,7 @@ public partial class FanChartPage : ContentPage, IZoomablePage
     var fill = ThemedColor.Resolve("ControlFill", Color.FromArgb("#1A1E4437"));
     var repeatFill = ThemedColor.Resolve("SurfaceSubtle", Color.FromArgb("#EAE7E0"));
     var stroke = ThemedColor.Resolve("Outline", Color.FromArgb("#991E4437"));
-    var fontSize = FontSizeBase * zoom * (_FontScale?.CurrentFactor ?? FontScale.DefaultFactor);
+    var fontSizePerLineHeight = FontSizeBase / _Metrics.LineHeight;
     var origin = layout.Origin;
     var radius = layout.Metrics.CenterRadius;
 
@@ -387,7 +389,7 @@ public partial class FanChartPage : ContentPage, IZoomablePage
 
       if (labels.TryGetValue(segment.Slot, out var text))
       {
-        var label = CreateLabel(segment, text, fontSize);
+        var label = CreateLabel(segment, text, segment.LineHeight * fontSizePerLineHeight);
         Labels.Children.Add(label);
       }
     }

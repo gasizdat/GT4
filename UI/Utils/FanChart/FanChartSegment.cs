@@ -14,6 +14,7 @@ namespace GT4.UI.Utils.Genealogy;
 /// <param name="LabelCenter">Where the label's centre lands on the canvas.</param>
 /// <param name="LabelRotation">Clockwise, in (−90°, 90°], so the text never reads upside down.</param>
 /// <param name="LabelSize">In the label's own unrotated frame: the width runs along the text.</param>
+/// <param name="LineHeight">The same for every segment of a ring.</param>
 public sealed record FanChartSegment(
   int Slot,
   int Generation,
@@ -26,4 +27,5 @@ public sealed record FanChartSegment(
   Point LabelCenter,
   double LabelRotation,
   Size LabelSize,
+  double LineHeight,
   FanChartLabel Label);
