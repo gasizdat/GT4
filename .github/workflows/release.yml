@@ -94,4 +94,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "v${{ steps.version.outputs.version }}" "GT4-${{ steps.version.outputs.version }}-win-x64.zip" "${{ steps.msix.outputs.path }}" "${{ steps.cerfile.outputs.path }}" --title "v${{ steps.version.outputs.version }}" --generate-notes --target "${{ github.sha }}"
+          gh release create "v${{ steps.version.outputs.version }}" "GT4-${{ steps.version.outputs.version }}-win-x64.zip" "${{ steps.msix.outputs.path }}" "${{ steps.cerfile.outputs.path }}" --title "v${{ steps.version.outputs.version }}" --notes-file .github/release-links.md --generate-notes --target "${{ github.sha }}"
