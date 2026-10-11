@@ -10,7 +10,8 @@ between them, centred on a focal person.
 - Tapping any node routes through `PageCommand` (`OnPageCommand`):
   - tap on the **current centre** → navigate to that person's `PersonPage`;
   - tap on **any other node** → re-centre the tree on that person (`SetCenter`);
-  - the `"OpenPerson"` toolbar command → open the centre in `PersonPage`.
+  - the `"OpenPerson"` toolbar command → open the centre in `PersonPage`;
+  - the `"OpenFanChart"` toolbar command → open the centre in `FanChartPage`.
 - While arranging (`IsArranging`), node taps do nothing.
 - Right-clicking any node but the centre offers "Hide from tree" (see Hiding, below).
 - Hovering a node highlights it and its own lines (see Hovering, below).
@@ -32,11 +33,11 @@ between them, centred on a focal person.
 - `_Dropped` / `_LastLayout`: the last dropped node with its release position, and the rendered
   layout a drop is measured against.
 - `_PanStartScrollX/Y`: scroll offsets captured at the start of a drag-pan.
-- `_ZoomScale`: current zoom factor (`MinZoom` 0.4–`MaxZoom` 2.5, `ZoomStep` 0.25), scales every
-  `FamilyTreeLayoutMetrics` dimension before layout and triggers a full `Reload` — except `Margin`,
-  which is the `OverlayClearance` gap keeping the tree clear of the pinned "load more"/zoom buttons.
-  Those are fixed-size overlays, so that one metric follows the font scale that sizes them, never the
-  zoom.
+- `_Zoom`: the page's `PageZoom` (0.4–2.5 in steps of 0.25). Its `Scale` scales every
+  `FamilyTreeLayoutMetrics` dimension before layout, and a change triggers a full `Reload` — except
+  `Margin`, which is the `OverlayClearance` gap keeping the tree clear of the pinned "load more"/zoom
+  buttons. Those are fixed-size overlays, so that one metric follows the font scale that sizes them,
+  never the zoom.
 - `_HoveredId`: the person under the pointer, whose ring and lines are drawn highlighted.
 - `_LoadOperationsCount`: reentrant in-flight-load counter backing `LoadInProgress`; the load-more
   buttons disable while any load is running.
@@ -53,7 +54,7 @@ between them, centred on a focal person.
    - gets a DB cancellation token (`CreateDbCancellationToken`),
    - asks `FamilyTreeProvider.BuildAsync` for the tree at the current depths/collateral setting,
      without the hidden persons,
-   - scales a copy of `FamilyTreeLayoutMetrics` by `_ZoomScale`,
+   - scales a copy of `FamilyTreeLayoutMetrics` by `_Zoom.Scale`,
    - runs `FamilyTreeLayout.Compute` with the scaled metrics to compute node bounds + connectors (a
      stateless, tidy pedigree layout: children centred under their parents, each family drawn once;
      see `FamilyTreeLayout` for the algorithm). Being stateless, a "load more" may move people
@@ -80,15 +81,15 @@ between them, centred on a focal person.
      page never auto-reloads on its own.
 
 ## Zoom
-- `"ZoomIn"` / `"ZoomOut"` (`OnPageCommand`) step `_ZoomScale` by `ZoomStep` through `SetZoom`, which
-  clamps to `[MinZoom, MaxZoom]` and reloads (`ViewTarget.Center`) only when the scale actually
-  changed — a full reload, since every node/connector size and the canvas itself depend on the
-  scaled metrics.
+- `"ZoomIn"` / `"ZoomOut"` (`OnPageCommand`) step `_Zoom` one way or the other. `PageZoom` clamps
+  the scale and reports whether it actually changed, and the page reloads (`ViewTarget.Center`) only
+  then — a full reload, since every node/connector size and the canvas itself depend on the scaled
+  metrics.
 - The page implements `IZoomablePage`, so while it is the current page the app-wide zoom gesture
   (Android pinch) and hotkeys (Ctrl/Cmd +/-, 0) drive the tree instead of the global font scale.
-  A pinch calls `Zoom` continuously, so it paces in the time domain — one `ZoomStep` per
-  `ZoomIntervalMs` (300), in the sign of the delta, magnitude ignored. `ResetZoom` is unpaced (a
-  discrete command, not a gesture) and returns to `DefaultZoom`.
+  A pinch calls `Zoom` continuously, so `PageZoom.Pinch` paces it in the time domain — one step per
+  300ms, in the sign of the delta, magnitude ignored. `ResetZoom` is unpaced (a discrete command,
+  not a gesture) and returns to 1. `FanChartPage` zooms through the same `PageZoom`.
 
 ## "Load more" affordances
 - `CanLoadMoreAncestors` / `CanLoadMoreDescendants` are bindable bools driving the top/bottom

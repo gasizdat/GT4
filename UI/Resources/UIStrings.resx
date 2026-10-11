@@ -1602,4 +1602,22 @@ FN - family name</value>
   <data name="MsgCopied" xml:space="preserve">
     <value>Copied</value>
   </data>
+  <data name="MenuItemNameFanChart" xml:space="preserve">
+    <value>◔ Fan chart</value>
+  </data>
+  <data name="TitleFanChartPage_1" xml:space="preserve">
+    <value>◔ {0}</value>
+  </data>
+  <data name="HintFanChartPage" xml:space="preserve">
+    <value>Tap an ancestor to centre the chart on them</value>
+  </data>
+  <data name="LblFanChartSweep" xml:space="preserve">
+    <value>Span</value>
+  </data>
+  <data name="FieldFanChartSweep" xml:space="preserve">
+    <value>Fan chart span</value>
+  </data>
+  <data name="FieldFanChartSweepHint" xml:space="preserve">
+    <value>How much of a circle the fan chart spans: a half, three quarters or the whole.</value>
+  </data>
 </root>

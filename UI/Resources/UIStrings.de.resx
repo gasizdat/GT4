@@ -1602,4 +1602,22 @@ FN - Familienname</value>
   <data name="MsgCopied" xml:space="preserve">
     <value>Kopiert</value>
   </data>
+  <data name="MenuItemNameFanChart" xml:space="preserve">
+    <value>◔ Fächerdiagramm</value>
+  </data>
+  <data name="TitleFanChartPage_1" xml:space="preserve">
+    <value>◔ {0}</value>
+  </data>
+  <data name="HintFanChartPage" xml:space="preserve">
+    <value>Tippen Sie auf einen Vorfahren, um das Diagramm auf ihn auszurichten</value>
+  </data>
+  <data name="LblFanChartSweep" xml:space="preserve">
+    <value>Bogen</value>
+  </data>
+  <data name="FieldFanChartSweep" xml:space="preserve">
+    <value>Bogen des Fächerdiagramms</value>
+  </data>
+  <data name="FieldFanChartSweepHint" xml:space="preserve">
+    <value>Wie viel eines Kreises das Fächerdiagramm umfasst: einen halben, drei Viertel oder den ganzen.</value>
+  </data>
 </root>

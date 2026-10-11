@@ -7,6 +7,7 @@ using GT4.UI.Dialogs;
 using GT4.UI.Pages;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
+using GT4.UI.Utils.Settings;
 using Moq;
 
 namespace GT4.UI.DeviceTests;
@@ -40,6 +41,9 @@ internal sealed class TestServices
   public Mock<IMainPersonStore> MainPersonStore { get; } = new();
   public Mock<IFamilyTreeArrangementStore> ArrangementStore { get; } = new();
   public Mock<IFamilyTreeHiddenPersonsStore> HiddenPersonsStore { get; } = new();
+  // Stands in for the app-config-backed setting, which would read and write the developer's own
+  // settings file; it starts at the default sweep.
+  public Mock<ISettingEditor> FanChartSweepSetting { get; } = new();
   public IServiceProvider Provider { get; }
 
   public static readonly ProjectInfo SampleProjectInfo = new(
@@ -160,6 +164,10 @@ internal sealed class TestServices
       .Setup(s => s.Get(It.IsAny<ProjectInfo>(), It.IsAny<int>()))
       .Returns(new Dictionary<int, double>());
 
+    SettingKind.Option[] sweepOptions = [.. FanChartSweep.Options.Select(sweep => new SettingKind.Option($"{sweep}", $"{sweep}°"))];
+    FanChartSweepSetting.SetupProperty(s => s.Value, $"{FanChartSweep.Default}");
+    FanChartSweepSetting.SetupGet(s => s.Kind).Returns(new SettingKind.Choice(sweepOptions));
+
     var services = new ServiceCollection();
     GT4Services.Add(services);
     services.AddSingleton(CurrentProjectProvider.Object);
@@ -179,6 +187,7 @@ internal sealed class TestServices
     services.AddSingleton<MainPage>();
     services.AddSingleton<ProjectRevisionsPage>();
     services.AddSingleton<TestableFamilyTreePage>();
+    services.AddSingleton(provider => ActivatorUtilities.CreateInstance<TestableFanChartPage>(provider, FanChartSweepSetting.Object));
     services.AddSingleton<SettingsPage>();
     services.AddSingleton<TestableStatisticsPage>();
     services.AddSingleton<TestableKinshipFinderPage>();

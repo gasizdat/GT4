@@ -1,0 +1,462 @@
+using GT4.Core.Project.Abstraction;
+using GT4.Core.Project.Dto;
+using GT4.Core.Utils;
+using GT4.UI.Abstraction;
+using GT4.UI.Components.Genealogy;
+using GT4.UI.Resources;
+using GT4.UI.Utils;
+using GT4.UI.Utils.Converters;
+using GT4.UI.Utils.Dto;
+using GT4.UI.Utils.Formatters;
+using GT4.UI.Utils.Genealogy;
+using GT4.UI.Utils.Settings;
+using Microsoft.Maui.Controls.Shapes;
+using Microsoft.Maui.Layouts;
+using System.Windows.Input;
+
+namespace GT4.UI.Pages;
+
+[QueryProperty(nameof(PersonInfo), "PersonInfo")]
+public partial class FanChartPage : ContentPage, IZoomablePage
+{
+  private readonly ICancellationTokenProvider _CancellationTokenProvider;
+  private readonly ICurrentProjectProvider _CurrentProjectProvider;
+  private readonly IFamilyTreeHiddenPersonsStore _HiddenPersonsStore;
+  private readonly INameFormatter _NameFormatter;
+  private readonly ILifeDatesFormatter _LifeDatesFormatter;
+  private readonly ISettingEditor _SweepSetting;
+  private readonly SettingKind.Option[] _SweepOptions;
+  private readonly FontScale? _FontScale;
+  private readonly IAlertService _AlertService;
+  private readonly INavigationService _NavigationService;
+  private readonly DataConverterResolver _DataConverterResolver;
+  private readonly FanChartMetrics _Metrics = new() { Margin = OverlayClearance };
+  private readonly FamilyTreeLayoutMetrics _CenterMetrics = new();
+  private readonly PageZoom _Zoom = new();
+  private const double LineWidth = 1.5;
+  private const double FontSizeBase = 12;
+  private const int InitialGenerations = 4;
+  private const int GenerationsPerLoad = 2;
+  // Past this, a ring's segments are too thin to show or hit at any zoom.
+  private const int MaxGenerations = 10;
+  // Sized to clear the tallest of the "load more" and zoom buttons pinned over the canvas.
+  private const double OverlayClearance = 72;
+
+  private PersonInfo? _Center;
+  private string _CenterName = string.Empty;
+  private int _Generations = InitialGenerations;
+  private bool _CanLoadMore;
+  private double _PanStartScrollX;
+  private double _PanStartScrollY;
+  private int _LoadOperationsCount = 0;
+  private ProjectInfo? _LastProjectInfo;
+  private int[] _HiddenIds = [];
+  private FanChartLayoutResult? _LastLayout;
+
+  public FanChartPage(
+    ICancellationTokenProvider cancellationTokenProvider,
+    ICurrentProjectProvider currentProjectProvider,
+    IFamilyTreeHiddenPersonsStore hiddenPersonsStore,
+    INameFormatter nameFormatter,
+    ILifeDatesFormatter lifeDatesFormatter,
+    [FromKeyedServices(SettingKeys.FanChartSweep)]
+    ISettingEditor sweepSetting,
+    FontScale? fontScale,
+    IAlertService alertService,
+    INavigationService navigationService,
+    DataConverterResolver dataConverterResolver
+  )
+  {
+    _CancellationTokenProvider = cancellationTokenProvider;
+    _CurrentProjectProvider = currentProjectProvider;
+    _HiddenPersonsStore = hiddenPersonsStore;
+    _NameFormatter = nameFormatter;
+    _LifeDatesFormatter = lifeDatesFormatter;
+    _SweepSetting = sweepSetting;
+    _SweepOptions = ((SettingKind.Choice)sweepSetting.Kind).Options;
+    _FontScale = fontScale;
+    _AlertService = alertService;
+    _NavigationService = navigationService;
+    _DataConverterResolver = dataConverterResolver;
+    Loading = new PageLoading(_AlertService);
+    PageCommand = new SafeCommand(OnPageCommand, _AlertService);
+
+    InitializeComponent();
+
+    // Every layer is input-transparent, so the canvas takes both gestures: a sector's bounding rectangle
+    // overlaps its neighbours', and only the angle and radius tell them apart.
+    var pan = new PanGestureRecognizer();
+    pan.PanUpdated += OnCanvasPan;
+    Canvas.GestureRecognizers.Add(pan);
+    var tap = new TapGestureRecognizer();
+    tap.Tapped += OnCanvasTapped;
+    Canvas.GestureRecognizers.Add(tap);
+    // A new size reaches the scroll extents only once the canvas has been laid out at it; centring any
+    // earlier clamps the scroll to the old extents.
+    Canvas.SizeChanged += (_, _) => _ = CenterViewportAsync();
+    _LastProjectInfo = _CurrentProjectProvider.Info;
+  }
+
+  public PageLoading Loading { get; }
+
+  public ICommand PageCommand { get; }
+
+  public PersonInfo PersonInfo
+  {
+    set => SetCenter(value);
+  }
+
+  public string PageTitle => string.Format(UIStrings.TitleFanChartPage_1, _CenterName);
+
+  public string OpenPersonToolbarItemName => string.Format(UIStrings.MenuItemNameOpenPerson_1, _CenterName);
+
+  public string[] SweepNames => [.. _SweepOptions.Select(option => option.Label)];
+
+  public int SweepIndex
+  {
+    get => Array.FindIndex(_SweepOptions, option => option.Value == _SweepSetting.Value);
+    set
+    {
+      if (SweepIndex == value)
+      {
+        return;
+      }
+
+      _SweepSetting.Value = _SweepOptions[value].Value;
+      OnPropertyChanged(nameof(SweepIndex));
+      Reload();
+    }
+  }
+
+  public bool CanLoadMore
+  {
+    get => _CanLoadMore && !LoadInProgress;
+    private set
+    {
+      if (_CanLoadMore == value)
+      {
+        return;
+      }
+
+      _CanLoadMore = value;
+      OnPropertyChanged(nameof(CanLoadMore));
+    }
+  }
+
+  public bool LoadInProgress
+  {
+    get => _LoadOperationsCount != 0;
+  }
+
+  public void Zoom(double delta)
+  {
+    if (_Zoom.Pinch(delta))
+    {
+      Reload();
+    }
+  }
+
+  public void ResetZoom()
+  {
+    if (_Zoom.Reset())
+    {
+      Reload();
+    }
+  }
+
+  protected void TapAt(Point point)
+  {
+    var node = _LastLayout is null ? null : FanChartLayout.HitTest(_LastLayout, point);
+    if (node is not null)
+    {
+      PageCommand.Execute(node.Person);
+    }
+  }
+
+  // An edit on a person page, or a hide on a family tree, opened from here must show on the way back.
+  protected override void OnNavigatedTo(NavigatedToEventArgs args)
+  {
+    base.OnNavigatedTo(args);
+    var hiddenIds = _HiddenPersonsStore.Get(_CurrentProjectProvider.Info);
+    if (_LastProjectInfo != _CurrentProjectProvider.Info || !hiddenIds.SequenceEqual(_HiddenIds))
+    {
+      _LastProjectInfo = _CurrentProjectProvider.Info;
+      _HiddenIds = hiddenIds;
+      Reload();
+    }
+  }
+
+  protected async Task OnPageCommand(object parameter)
+  {
+    switch (parameter)
+    {
+      case PersonInfo person when person.Id == _Center?.Id:
+        await _NavigationService.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { ["PersonInfo"] = person });
+        break;
+
+      case PersonInfo person:
+        SetCenter(person);
+        break;
+
+      case string command when command == "OpenPerson" && _Center is not null:
+        await _NavigationService.GoToAsync(UIRoutes.GetRoute<PersonPage>(), true, new() { ["PersonInfo"] = _Center });
+        break;
+
+      case string command when command == "LoadMore":
+        _Generations = Math.Min(_Generations + GenerationsPerLoad, MaxGenerations);
+        Reload();
+        break;
+
+      case string command when command == "ZoomIn":
+        if (_Zoom.ZoomIn())
+        {
+          Reload();
+        }
+        break;
+
+      case string command when command == "ZoomOut":
+        if (_Zoom.ZoomOut())
+        {
+          Reload();
+        }
+        break;
+
+      case string command when command == "Refresh":
+        Reload();
+        break;
+    }
+  }
+
+  private void OnCanvasPan(object? sender, PanUpdatedEventArgs e)
+  {
+    switch (e.StatusType)
+    {
+      case GestureStatus.Started:
+        _PanStartScrollX = Scroller.ScrollX;
+        _PanStartScrollY = Scroller.ScrollY;
+        break;
+
+      case GestureStatus.Running:
+        var maxX = Math.Max(0, Canvas.Width - Scroller.Width);
+        var maxY = Math.Max(0, Canvas.Height - Scroller.Height);
+        var targetX = Math.Clamp(_PanStartScrollX - e.TotalX, 0, maxX);
+        var targetY = Math.Clamp(_PanStartScrollY - e.TotalY, 0, maxY);
+        _ = Scroller.ScrollToAsync(targetX, targetY, animated: false);
+        break;
+    }
+  }
+
+  private void OnCanvasTapped(object? sender, TappedEventArgs e)
+  {
+    if (e.GetPosition(Canvas) is Point point)
+    {
+      TapAt(point);
+    }
+  }
+
+  private void SetCenter(PersonInfo person)
+  {
+    _Center = person;
+    _CenterName = _NameFormatter.ToString(person, NameFormat.ShortPersonName);
+    _Generations = InitialGenerations;
+    _HiddenIds = _HiddenPersonsStore.Get(_CurrentProjectProvider.Info);
+    OnPropertyChanged(nameof(PageTitle));
+    OnPropertyChanged(nameof(OpenPersonToolbarItemName));
+    Reload();
+  }
+
+  private void Reload()
+  {
+    if (_Center is null)
+    {
+      return;
+    }
+
+    var center = _Center;
+    var generations = _Generations;
+    var hiddenIds = _HiddenIds;
+    SetLoadInProgress();
+    _ = SafeTask.Run(() => LoadAsync(center, generations, hiddenIds), _AlertService);
+  }
+
+  private void SetLoadInProgress()
+  {
+    _LoadOperationsCount++;
+    Loading.Begin(hasContent: _LastLayout is not null);
+
+    OnPropertyChanged(nameof(LoadInProgress));
+    OnPropertyChanged(nameof(CanLoadMore));
+  }
+
+  private void ResetLoadInProgress()
+  {
+    _LoadOperationsCount = Math.Max(_LoadOperationsCount - 1, 0);
+    Loading.End();
+
+    OnPropertyChanged(nameof(LoadInProgress));
+    OnPropertyChanged(nameof(CanLoadMore));
+  }
+
+  private async Task LoadAsync(Person center, int generations, int[] hiddenIds)
+  {
+    try
+    {
+      using var token = _CancellationTokenProvider.CreateDbCancellationToken();
+      var tree = await _CurrentProjectProvider
+        .Project
+        .FamilyTreeProvider
+        .BuildAsync(center, generations, descendantGenerations: 0, includeCollaterals: false, hiddenIds, token);
+
+      var zoom = _Zoom.Scale;
+      var fontFactor = _FontScale?.CurrentFactor ?? FontScale.DefaultFactor;
+      var metrics = _Metrics with
+      {
+        CenterRadius = _Metrics.CenterRadius * zoom,
+        RingWidth = _Metrics.RingWidth * zoom,
+        LineHeight = _Metrics.LineHeight * zoom * fontFactor,
+        // Not the zoom: this metric clears fixed-size overlays, so it tracks the font that sizes them.
+        Margin = _Metrics.Margin * fontFactor,
+      };
+      var sweep = FanChartSweep.Parse(_SweepSetting.Value);
+      var layout = FanChartLayout.Compute(tree, generations, sweep, metrics);
+      var labels = layout
+        .Segments
+        .Where(segment => segment.Label != FanChartLabel.None)
+        .ToDictionary(segment => segment.Slot, LabelText);
+      var centerName = _NameFormatter.ToString(layout.Center.Person, NameFormat.ShortPersonName);
+      var photo = await LoadPhotoAsync(layout.Center.Person, token);
+
+      await SafeTask.RunOnMainThread(() => Render(layout, generations, labels, centerName, photo, zoom), _AlertService);
+    }
+    finally
+    {
+      await SafeTask.RunOnMainThread(ResetLoadInProgress, _AlertService);
+    }
+  }
+
+  private string LabelText(FanChartSegment segment)
+  {
+    var name = _NameFormatter.ToString(segment.Node.Person, NameFormat.ShortPersonName);
+    var years = _LifeDatesFormatter.ToYearsString(segment.Node.Person);
+    return segment.Label == FanChartLabel.Full && years.Length != 0 ? $"{name}\n{years}" : name;
+  }
+
+  private async Task<ImageSource> LoadPhotoAsync(PersonInfo person, CancellationToken token)
+  {
+    if (person.MainPhoto is not null)
+    {
+      var thumbnail = new ImageDataWithMaxSize(person.MainPhoto, ImageUtils.ThumbnailSize);
+      var converter = _DataConverterResolver(person.MainPhoto.Category);
+      if (await converter.ToObjectAsync(thumbnail, token) is PhotoInfo photoInfo)
+      {
+        return photoInfo.Source;
+      }
+    }
+
+    var resourceName = ImageUtils.DefaultPersonPhotoResourceName(person.BiologicalSex);
+    return ImageUtils.ImageFromRawResource(resourceName, ImageUtils.ThumbnailSize);
+  }
+
+  private void Render(
+    FanChartLayoutResult layout,
+    int generations,
+    IReadOnlyDictionary<int, string> labels,
+    string centerName,
+    ImageSource photo,
+    double zoom)
+  {
+    ClearCanvas();
+
+    var fill = ThemedColor.Resolve("ControlFill", Color.FromArgb("#1A1E4437"));
+    var repeatFill = ThemedColor.Resolve("SurfaceSubtle", Color.FromArgb("#EAE7E0"));
+    var stroke = ThemedColor.Resolve("Outline", Color.FromArgb("#991E4437"));
+    var fontSize = FontSizeBase * zoom * (_FontScale?.CurrentFactor ?? FontScale.DefaultFactor);
+    var origin = layout.Origin;
+    var radius = layout.Metrics.CenterRadius;
+
+    var disc = new Ellipse { Fill = fill, Stroke = stroke, StrokeThickness = LineWidth };
+    var discBounds = new Rect(origin.X - radius, origin.Y - radius, 2 * radius, 2 * radius);
+    AbsoluteLayout.SetLayoutBounds(disc, discBounds);
+    Segments.Children.Add(disc);
+
+    foreach (var segment in layout.Segments)
+    {
+      var segmentFill = segment.IsRepeat ? repeatFill : fill;
+      var shape = FanChartSegmentShape.Create(segment, origin, LineWidth, segmentFill, stroke);
+      Segments.Children.Add(shape);
+
+      if (labels.TryGetValue(segment.Slot, out var text))
+      {
+        var label = CreateLabel(segment, text, fontSize);
+        Labels.Children.Add(label);
+      }
+    }
+
+    var width = _CenterMetrics.NodeWidth * zoom;
+    var height = _CenterMetrics.NodeHeight * zoom;
+    var centerView = new FamilyTreeNodeView(photo, _FontScale, centerName, isCenter: true, width, height, zoom);
+    var centerBounds = new Rect(origin.X - (width / 2), origin.Y - (height / 2), width, height);
+    AbsoluteLayout.SetLayoutBounds(centerView, centerBounds);
+    Labels.Children.Add(centerView);
+
+    // Offered only while the chart reaches the requested depth: a shorter one has no more data to fetch.
+    var outerGeneration = layout.Segments.Length == 0 ? 0 : layout.Segments.Max(segment => segment.Generation);
+    CanLoadMore = generations < MaxGenerations && outerGeneration >= generations;
+
+    Canvas.WidthRequest = layout.CanvasSize.Width;
+    Canvas.HeightRequest = layout.CanvasSize.Height;
+    _LastLayout = layout;
+
+    _ = CenterViewportAsync();
+  }
+
+  private static Label CreateLabel(FanChartSegment segment, string text, double fontSize)
+  {
+    var size = segment.LabelSize;
+    var center = segment.LabelCenter;
+    var label = new Label
+    {
+      Text = text,
+      FontSize = fontSize,
+      MaxLines = segment.Label == FanChartLabel.Full ? 2 : 1,
+      LineBreakMode = LineBreakMode.TailTruncation,
+      HorizontalTextAlignment = TextAlignment.Center,
+      VerticalTextAlignment = TextAlignment.Center,
+      Rotation = segment.LabelRotation,
+    };
+    var bounds = new Rect(center.X - (size.Width / 2), center.Y - (size.Height / 2), size.Width, size.Height);
+    AbsoluteLayout.SetLayoutFlags(label, AbsoluteLayoutFlags.None);
+    AbsoluteLayout.SetLayoutBounds(label, bounds);
+    return label;
+  }
+
+  // The chart is rebuilt whole on every load, so every view is disconnected to release its native resources.
+  private void ClearCanvas()
+  {
+    View[] views = [.. Segments.Children.OfType<View>(), .. Labels.Children.OfType<View>()];
+    Segments.Children.Clear();
+    Labels.Children.Clear();
+    foreach (var view in views)
+    {
+      view.Handler?.DisconnectHandler();
+    }
+  }
+
+  private async Task CenterViewportAsync()
+  {
+    // Let the ScrollView measure its new content first, so the viewport size and extents are known.
+    await Task.Yield();
+
+    if (_LastLayout is null)
+    {
+      return;
+    }
+
+    var origin = _LastLayout.Origin;
+    var maxX = Math.Max(0, Canvas.Width - Scroller.Width);
+    var maxY = Math.Max(0, Canvas.Height - Scroller.Height);
+    var targetX = Math.Clamp(origin.X - (Scroller.Width / 2), 0, maxX);
+    var targetY = Math.Clamp(origin.Y - (Scroller.Height / 2), 0, maxY);
+    await Scroller.ScrollToAsync(targetX, targetY, animated: false);
+  }
+}

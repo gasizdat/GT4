@@ -5,4 +5,6 @@ namespace GT4.UI.Utils.Formatters;
 public interface ILifeDatesFormatter
 {
   string ToString(Person person, bool showDeathDate, bool showAge);
+
+  string ToYearsString(Person person);
 }

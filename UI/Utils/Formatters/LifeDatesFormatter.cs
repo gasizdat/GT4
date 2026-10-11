@@ -53,4 +53,24 @@ internal class LifeDatesFormatter : ILifeDatesFormatter
 
     return personDates;
   }
+
+  // For a space too small for whole dates, so an approximate year takes a mark, not "about".
+  public string ToYearsString(Person person)
+  {
+    var birthYear = Year(person.BirthDate);
+    if (person.DeathDate is not Date deathDate)
+    {
+      return birthYear;
+    }
+
+    var deathMark = string.Format(UIStrings.PersonDeathMark_1, Year(deathDate));
+    return birthYear == string.Empty ? deathMark : string.Format(UIStrings.PersonDates_2, birthYear, deathMark);
+  }
+
+  private static string Year(Date date) => date.Status switch
+  {
+    DateStatus.Unknown => string.Empty,
+    DateStatus.YearApproximate => $"~{date.Year}",
+    _ => date.Year.ToString(),
+  };
 }

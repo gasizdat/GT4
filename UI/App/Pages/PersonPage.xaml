@@ -78,6 +78,10 @@
           Text="{x:Static resources:UIStrings.MenuItemNameFamilyTree}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
+          CommandParameter="GoToFanChart"
+          Text="{x:Static resources:UIStrings.MenuItemNameFanChart}" />
+      <items:PageMenuItem
+          Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="ToggleAll"
           Text="{Binding ToggleAllMenuItemName, Source={x:Reference Root}}" />
       <items:PageMenuItem
