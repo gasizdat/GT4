@@ -151,7 +151,13 @@ public static class FanChartLayout
     var bearing = start + (sweep / 2);
     var arcLength = middle * sweep * Math.PI / 180;
     var isAlongRing = arcLength >= metrics.RingWidth;
-    var labelSize = isAlongRing ? new Size(arcLength, metrics.RingWidth) : new Size(metrics.RingWidth, arcLength);
+    // A label is straight, so along a ring its two lines of text must stop short of the segment's sides,
+    // which the lower line meets first, and of the ring's outer edge, which the upper line meets first.
+    var betweenSides = 2 * (middle - metrics.LineHeight) * Math.Tan(sweep * Math.PI / 360);
+    var textTop = middle + metrics.LineHeight;
+    var withinRing = 2 * Math.Sqrt((outer * outer) - (textTop * textTop));
+    var alongRing = Math.Min(betweenSides, withinRing);
+    var labelSize = isAlongRing ? new Size(alongRing, metrics.RingWidth) : new Size(metrics.RingWidth, arcLength);
     var rotation = Upright(isAlongRing ? bearing : bearing - 90);
     var label = labelSize.Height >= 2 * metrics.LineHeight
       ? FanChartLabel.Full

@@ -296,6 +296,37 @@ public class FanChartLayoutTests
     outer.LabelSize.Height.Should().BeLessThan(_metrics.RingWidth);
   }
 
+  // The straight box of two lines of text, centred on the label, must not cross the segment's outer arc
+  // or its sides, however wide the arc it sits on.
+  [Theory]
+  [MemberData(nameof(Sweeps))]
+  public void Compute_KeepsALabelAlongARingInsideItsSegment(double sweep)
+  {
+    var builder = new TreeBuilder();
+    builder.Full(generations: 4);
+
+    var layout = Layout(builder.Build(), sweep: sweep);
+
+    var alongRing = layout.Segments.Where(segment => segment.LabelSize.Height == _metrics.RingWidth && segment.LabelSize.Width != _metrics.RingWidth);
+    alongRing.Should().NotBeEmpty();
+    foreach (var segment in alongRing)
+    {
+      var radians = segment.LabelRotation * Math.PI / 180;
+      var along = new Point(Math.Cos(radians) * segment.LabelSize.Width / 2, Math.Sin(radians) * segment.LabelSize.Width / 2);
+      var across = new Point(-Math.Sin(radians) * _metrics.LineHeight, Math.Cos(radians) * _metrics.LineHeight);
+      foreach (var (x, y) in new[] { (1, 1), (1, -1), (-1, 1), (-1, -1) })
+      {
+        var dx = segment.LabelCenter.X + (x * along.X) + (y * across.X) - layout.Origin.X;
+        var dy = segment.LabelCenter.Y + (x * along.Y) + (y * across.Y) - layout.Origin.Y;
+        var bearing = Math.Atan2(dx, -dy) * 180 / Math.PI;
+        // -180 and 180 are the same bearing.
+        var fromStart = Math.IEEERemainder(bearing - segment.StartAngle, 360);
+        Math.Sqrt((dx * dx) + (dy * dy)).Should().BeLessThanOrEqualTo(segment.OuterRadius + Tolerance, $"slot {segment.Slot}");
+        fromStart.Should().BeInRange(-Tolerance, segment.SweepAngle + Tolerance, $"slot {segment.Slot}");
+      }
+    }
+  }
+
   [Fact]
   public void Compute_DropsTheYearsAndThenTheNameAsSegmentsThin()
   {
