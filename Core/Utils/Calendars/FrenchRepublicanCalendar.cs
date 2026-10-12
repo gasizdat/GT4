@@ -9,8 +9,8 @@ namespace GT4.Core.Utils.Calendars;
 /// </summary>
 public static class FrenchRepublicanCalendar
 {
-  private const int DaysPerMonth = 30;
-  private const int MonthsPerYear = 12;
+  public const int DaysPerMonth = 30;
+  public const int MonthsPerYear = 12;
 
   // Shared with GedcomDate's parser as the literal tokens GEDCOM text uses -- not a display string,
   // so localizing it would break import of French Republican dates. The localized display names
@@ -29,9 +29,11 @@ public static class FrenchRepublicanCalendar
   // bounds a naive epoch-window lookup from above without this.
   private static readonly DateTime Abolition = new(1806, 1, 1);
 
+  public static int LastYear => Epochs.Length;
+
   public static DateTime? ToGregorian(int year, int month, int day)
   {
-    if (day is < 1 or > DaysPerMonth || month is < 1 or > MonthsPerYear || year < 1 || year > Epochs.Length)
+    if (day is < 1 or > DaysPerMonth || month is < 1 or > MonthsPerYear || year < 1 || year > LastYear)
       return null;
 
     var epoch = EpochStart(year);
