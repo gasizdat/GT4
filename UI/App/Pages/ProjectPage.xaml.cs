@@ -143,25 +143,14 @@ public partial class ProjectPage : ContentPage
         .ToLookup(x => x.NameId, x => x.Person);
 
       var familyPersons = familyInfos
-        .Select(family => (Family: family, Persons: personsByFamilyNameId[family.Id].OrderBy(item => item, _PersonInfoComparer)));
-
-      var families = familyPersons
-        .Select(f => new FamilyInfoItem(
-          f.Family, [.. f.Persons], (_, person) => FilterView.Matches(person),
-          _CancellationTokenProvider, _AlertService, _DataConverterResolver))
-        .OrderBy(item => item.Info, _NameComparer)
-        .ToList();
+        .Select(family => (Family: family, Persons: personsByFamilyNameId[family.Id].OrderBy(item => item, _PersonInfoComparer).ToArray()))
+        .OrderBy(f => f.Family, _NameComparer)
+        .ToArray();
 
       var familylessPersons = persons
         .Where(NoFamily.Includes)
         .OrderBy(item => item, _PersonInfoComparer)
         .ToArray();
-      if (familylessPersons.Length > 0)
-      {
-        families.Add(new FamilyInfoItem(
-          new FamilyInfo(NoFamily.Name, null), familylessPersons, (_, person) => FilterView.Matches(person),
-          _CancellationTokenProvider, _AlertService, _DataConverterResolver));
-      }
 
       // Clear and AddRange together, not eagerly when the load starts: an overlapping second load
       // (Refresh() can re-enter this while one is in flight) would otherwise append onto a stale,
@@ -173,6 +162,21 @@ public partial class ProjectPage : ContentPage
         {
           Refresh();
           return;
+        }
+
+        // The items are built here because their constructor runs the filter, which reads FilterView.
+        // Under Debug, run-time XAML assigns that field only after InitializeComponent returns, but
+        // InitializeComponent is what starts this load.
+        var families = familyPersons
+          .Select(f => new FamilyInfoItem(
+            f.Family, f.Persons, (_, person) => FilterView.Matches(person),
+            _CancellationTokenProvider, _AlertService, _DataConverterResolver))
+          .ToList();
+        if (familylessPersons.Length > 0)
+        {
+          families.Add(new FamilyInfoItem(
+            new FamilyInfo(NoFamily.Name, null), familylessPersons, (_, person) => FilterView.Matches(person),
+            _CancellationTokenProvider, _AlertService, _DataConverterResolver));
         }
 
         _Families.Clear();
