@@ -41,6 +41,7 @@ internal sealed class TestableProjectPage : ProjectPage
     IBiologicalSexFormatter biologicalSexFormatter,
     DataConverterResolver dataConverterResolver,
     MainPersonResolver mainPersonResolver,
+    IMainPersonStore mainPersonStore,
     IFamilyTreeHiddenPersonsStore hiddenPersonsStore,
     IFamilyTreeArrangementStore arrangementStore)
     : base(
@@ -60,6 +61,7 @@ internal sealed class TestableProjectPage : ProjectPage
       biologicalSexFormatter,
       dataConverterResolver,
       mainPersonResolver,
+      mainPersonStore,
       hiddenPersonsStore,
       arrangementStore)
   {

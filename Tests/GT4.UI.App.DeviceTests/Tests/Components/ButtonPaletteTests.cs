@@ -45,6 +45,25 @@ public class ButtonPaletteTests
       $"{theme} button border {border.ToArgbHex()} on page {chrome.Page.ToArgbHex()} is {ratio:F2}:1.");
   }
 
+  [Fact]
+  public async Task A_disabled_adorner_dims_and_recovers_when_enabled_again()
+  {
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+
+    var opacity = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      var button = new Button { Style = (Style)Application.Current!.Resources["EmojiAdorner"] };
+      var enabled = button.Opacity;
+      button.IsEnabled = false;
+      var disabled = button.Opacity;
+      button.IsEnabled = true;
+      return (Enabled: enabled, Disabled: disabled, Reenabled: button.Opacity);
+    });
+
+    Assert.True(opacity.Disabled < opacity.Enabled, $"disabled opacity {opacity.Disabled} is not below enabled {opacity.Enabled}.");
+    Assert.Equal(opacity.Enabled, opacity.Reenabled);
+  }
+
   private static Task<ButtonChrome> ResolveButtonChromeAsync(AppTheme theme, string state)
   {
     return ThemeContrast.UnderThemeAsync(theme, () =>

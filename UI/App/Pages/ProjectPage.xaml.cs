@@ -42,6 +42,7 @@ public partial class ProjectPage : ContentPage
   private readonly INavigationService _NavigationService;
   private readonly DataConverterResolver _DataConverterResolver;
   private readonly MainPersonResolver _MainPersonResolver;
+  private readonly IMainPersonStore _MainPersonStore;
   private readonly IFamilyTreeHiddenPersonsStore _HiddenPersonsStore;
   private readonly IFamilyTreeArrangementStore _ArrangementStore;
 
@@ -67,6 +68,7 @@ public partial class ProjectPage : ContentPage
     IBiologicalSexFormatter biologicalSexFormatter,
     DataConverterResolver dataConverterResolver,
     MainPersonResolver mainPersonResolver,
+    IMainPersonStore mainPersonStore,
     IFamilyTreeHiddenPersonsStore hiddenPersonsStore,
     IFamilyTreeArrangementStore arrangementStore
     )
@@ -85,6 +87,7 @@ public partial class ProjectPage : ContentPage
     _AlertService = alertService;
     _NavigationService = navigationService;
     _MainPersonResolver = mainPersonResolver;
+    _MainPersonStore = mainPersonStore;
     _HiddenPersonsStore = hiddenPersonsStore;
     _ArrangementStore = arrangementStore;
 
@@ -200,6 +203,8 @@ public partial class ProjectPage : ContentPage
   public string EditProjectToolbarItemName =>
     string.Format(UIStrings.MenuItemNameEdit_1, _CurrentProjectProvider.Info.Name);
 
+  public bool HasMainPerson => _MainPersonStore.Get(_CurrentProjectProvider.Info) is not null;
+
   public async void OnFamilySelected(object sender, SelectionChangedEventArgs e)
   {
     if (e.CurrentSelection.FirstOrDefault() is FamilyInfoItem item)
@@ -238,6 +243,10 @@ public partial class ProjectPage : ContentPage
     {
       Refresh();
     }
+
+    // The main-person mark lives in per-project config, not the project DB, so marking someone on a
+    // subpage leaves the revision unchanged.
+    OnPropertyChanged(nameof(HasMainPerson));
   }
 
   protected async Task OnPageCommand(object obj)
@@ -345,6 +354,7 @@ public partial class ProjectPage : ContentPage
     var mainPerson = await _MainPersonResolver.TryResolveAsync(_CurrentProjectProvider.Info, _CurrentProjectProvider.Project, token);
     if (mainPerson is null)
     {
+      OnPropertyChanged(nameof(HasMainPerson));
       return;
     }
 
@@ -480,7 +490,10 @@ public partial class ProjectPage : ContentPage
     using var token = _CancellationTokenProvider.CreateDbCancellationToken();
     var person = await _MainPersonResolver.TryResolveAsync(projectInfo, _CurrentProjectProvider.Project, token);
     if (person is null)
+    {
+      OnPropertyChanged(nameof(HasMainPerson));
       return null;
+    }
 
     var hiddenIds = _HiddenPersonsStore.Get(projectInfo);
     var pins = _ArrangementStore.Get(projectInfo, person.Id);

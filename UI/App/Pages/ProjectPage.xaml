@@ -70,10 +70,12 @@
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="GoToMainPerson"
+          IsEnabled="{Binding HasMainPerson, Source={x:Reference Root}}"
           Text="{x:Static resources:UIStrings.MenuItemGoToMainPerson}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"
           CommandParameter="GoToMainPersonFamilyTree"
+          IsEnabled="{Binding HasMainPerson, Source={x:Reference Root}}"
           Text="{x:Static resources:UIStrings.MenuItemGoToMainPersonFamilyTree}" />
       <items:PageMenuItem
           Command="{Binding PageCommand, Source={x:Reference Root}}"

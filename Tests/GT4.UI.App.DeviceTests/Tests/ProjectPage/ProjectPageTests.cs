@@ -44,6 +44,15 @@ public class ProjectPageTests
     return await MainThread.InvokeOnMainThreadAsync(() => services.Provider.GetRequiredService<TestableProjectPage>());
   }
 
+  private static Task<bool[]> MainPersonItemsEnabledAsync(TestableProjectPage page)
+  {
+    var layout = (PageLayout)page.Content;
+    var items = layout.MenuItems
+      .Where(item => (string?)item.CommandParameter is "GoToMainPerson" or "GoToMainPersonFamilyTree")
+      .ToArray();
+    return MainThread.InvokeOnMainThreadAsync(() => items.Select(item => item.IsEnabled).ToArray());
+  }
+
   [Fact]
   public async Task Ctor_resolves_dependencies_and_defaults()
   {
@@ -570,6 +579,62 @@ public class ProjectPageTests
     await page.InvokePageCommandAsync("GoToMainPerson");
 
     services.NavigationService.Verify(n => n.GoToAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<Dictionary<string, object>>()), Times.Never());
+  }
+
+  [Fact]
+  public async Task MainPerson_items_are_disabled_when_no_main_person_is_marked()
+  {
+    var page = await CreatePageAsync(new TestServices());
+
+    var enabled = await MainPersonItemsEnabledAsync(page);
+
+    Assert.Equal([false, false], enabled);
+  }
+
+  [Fact]
+  public async Task MainPerson_items_are_enabled_when_a_main_person_is_marked()
+  {
+    var services = new TestServices();
+    services.MainPersonStore.Setup(s => s.Get(TestServices.SampleProjectInfo)).Returns(7);
+    var page = await CreatePageAsync(services);
+
+    var enabled = await MainPersonItemsEnabledAsync(page);
+
+    Assert.Equal([true, true], enabled);
+  }
+
+  [Fact]
+  public async Task MainPerson_items_enable_on_return_after_marking_someone_at_an_unchanged_revision()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+    var enabledBefore = await MainPersonItemsEnabledAsync(page);
+    Assert.Equal([false, false], enabledBefore);
+    services.MainPersonStore.Setup(s => s.Get(TestServices.SampleProjectInfo)).Returns(7);
+
+    await MainThread.InvokeOnMainThreadAsync(page.InvokeNavigatedTo);
+
+    var enabledAfter = await MainPersonItemsEnabledAsync(page);
+    Assert.Equal([true, true], enabledAfter);
+  }
+
+  [Fact]
+  public async Task MainPerson_items_disable_once_the_resolver_clears_a_dangling_mark()
+  {
+    var services = new TestServices();
+    int? marked = 7;
+    services.MainPersonStore.Setup(s => s.Get(TestServices.SampleProjectInfo)).Returns(() => marked);
+    services.MainPersonStore.Setup(s => s.Clear(TestServices.SampleProjectInfo)).Callback(() => marked = null);
+    services.Persons.Setup(p => p.TryGetPersonByIdAsync(7, It.IsAny<CancellationToken>())).ReturnsAsync((Person?)null);
+    var page = await CreatePageAsync(services);
+    var enabledBefore = await MainPersonItemsEnabledAsync(page);
+    Assert.Equal([true, true], enabledBefore);
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.InvokePageCommandAsync("GoToMainPerson"));
+
+    services.AlertService.Verify(a => a.ShowWarningAsync(UIStrings.AlertTextMainPersonMissing), Times.Once());
+    var enabledAfter = await MainPersonItemsEnabledAsync(page);
+    Assert.Equal([false, false], enabledAfter);
   }
 
   [Fact]
