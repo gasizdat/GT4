@@ -238,7 +238,30 @@ public sealed class CalendarConversionTests
     CalendarConversion.YearRange(calendar).Should().Be((min, max));
   }
 
-  // Each must come back null rather than throw -- the month and day lookups throw outside the range.
+  [Theory]
+  [InlineData(DisplayCalendar.Gregorian)]
+  [InlineData(DisplayCalendar.Julian)]
+  [InlineData(DisplayCalendar.Hebrew)]
+  [InlineData(DisplayCalendar.FrenchRepublican)]
+  public void YearRange_IsAcceptedByTheMonthAndDayLookups(DisplayCalendar calendar)
+  {
+    var (min, max) = CalendarConversion.YearRange(calendar);
+
+    foreach (var year in new[] { min, max })
+    {
+      var months = CalendarConversion.MonthsInYear(calendar, year);
+      CalendarConversion.DaysInMonth(calendar, year, months).Should().BePositive();
+    }
+  }
+
+  [Fact]
+  public void ToGregorian_Gregorian_ReturnsTheDateUnchanged()
+  {
+    var gregorian = CalendarConversion.ToGregorian(DisplayCalendar.Gregorian, 2000, 3, 15);
+
+    gregorian.Should().Be(Date.Create(2000, 3, 15, DateStatus.WellKnown));
+  }
+
   [Theory]
   [InlineData(DisplayCalendar.Gregorian, 0, 1, 1)]
   [InlineData(DisplayCalendar.Gregorian, 2000, 13, 1)]
