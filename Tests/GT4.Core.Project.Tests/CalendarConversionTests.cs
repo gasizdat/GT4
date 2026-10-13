@@ -119,9 +119,8 @@ public sealed class CalendarConversionTests
     result.Applied.Should().Be(DisplayCalendar.Gregorian);
   }
 
-  // Old Style -> New Style pairs from the historical record, one per century's gap: Britain's switch
-  // (2 September 1752 O.S. was followed by 14 September N.S.), the Emancipation Manifesto, and the
-  // October Revolution.
+  // Historical O.S. -> N.S. pairs, one per century's gap: Britain's switch (its 2 September was
+  // followed by the 14th), the Emancipation Manifesto, the October Revolution.
   [Theory]
   [InlineData(1752, 9, 2, 1752, 9, 13)]
   [InlineData(1861, 2, 19, 1861, 3, 3)]
@@ -136,8 +135,7 @@ public sealed class CalendarConversionTests
       .Should().Be((DisplayCalendar.Julian, year, month, day));
   }
 
-  // 1 March 1900 O.S. is already 13 days behind (the October Revolution gap), so the Julian-only leap
-  // day before it lands one day earlier.
+  // The 13-day gap already applies here: 1 March 1900 O.S. is 14 March N.S.
   [Fact]
   public void ToGregorian_Julian_LeapDayInACenturyYear_Exists()
   {
@@ -162,7 +160,7 @@ public sealed class CalendarConversionTests
     CalendarConversion.ToGregorian(DisplayCalendar.Gregorian, 1900, 2, 29).Should().BeNull();
   }
 
-  // The hebcal-verified and documented pairs above, reversed.
+  // Documented on HebrewCalendar and verified on hebcal.com.
   [Theory]
   [InlineData(5761, 4, 6, 2001, 1, 1)]
   [InlineData(5784, 6, 1, 2024, 2, 10)]
@@ -205,8 +203,6 @@ public sealed class CalendarConversionTests
     gregorian.Should().Be(Date.Create(1792, 9, 22, DateStatus.WellKnown));
   }
 
-  // Year XIV began on 23 September 1805, so 10 Nivose is 31 December -- the calendar was abolished
-  // the next day.
   [Fact]
   public void ToGregorian_FrenchRepublican_EndsAtAbolition()
   {
