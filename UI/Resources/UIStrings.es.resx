@@ -1647,9 +1647,6 @@ FN - apellido familiar</value>
   <data name="FieldPeriodTo" xml:space="preserve">
     <value>Hasta</value>
   </data>
-  <data name="BtnNameConvert" xml:space="preserve">
-    <value>Convertir</value>
-  </data>
   <data name="BtnNameSwapCalendars" xml:space="preserve">
     <value>Intercambiar calendarios</value>
   </data>

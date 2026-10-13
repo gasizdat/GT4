@@ -18,8 +18,6 @@ public partial class DateToolsPage : ContentPage
   private DisplayCalendar _ConvertFromCalendar = DisplayCalendar.Gregorian;
   private DisplayCalendar _ConvertToCalendar;
   private Date? _ConvertInput = Date.Now;
-  private Date? _ConvertResult;
-  private string _ConvertResultText = string.Empty;
   private DisplayCalendar _PeriodFromCalendar = DisplayCalendar.Gregorian;
   private DisplayCalendar _PeriodToCalendar = DisplayCalendar.Gregorian;
   private Date? _PeriodFrom = Date.Now;
@@ -45,9 +43,6 @@ public partial class DateToolsPage : ContentPage
   {
     switch (arg)
     {
-      case string commandName when commandName == "Convert":
-        Convert();
-        break;
       case string commandName when commandName == "Swap":
         Swap();
         break;
@@ -65,7 +60,7 @@ public partial class DateToolsPage : ContentPage
       {
         _ConvertFromCalendar = value;
         OnPropertyChanged(nameof(ConvertFromCalendar));
-        ClearConvertResult();
+        OnPropertyChanged(nameof(ConvertResultText));
       }
     }
   }
@@ -79,7 +74,7 @@ public partial class DateToolsPage : ContentPage
       {
         _ConvertInput = value;
         OnPropertyChanged(nameof(ConvertInput));
-        ClearConvertResult();
+        OnPropertyChanged(nameof(ConvertResultText));
       }
     }
   }
@@ -94,7 +89,7 @@ public partial class DateToolsPage : ContentPage
         _ConvertToCalendar = value;
         OnPropertyChanged(nameof(ConvertToCalendar));
         OnPropertyChanged(nameof(ConvertToCalendarIndex));
-        ClearConvertResult();
+        OnPropertyChanged(nameof(ConvertResultText));
       }
     }
   }
@@ -107,11 +102,14 @@ public partial class DateToolsPage : ContentPage
 
   public string ConvertResultText
   {
-    get => _ConvertResultText;
-    private set
+    get
     {
-      _ConvertResultText = value;
-      OnPropertyChanged(nameof(ConvertResultText));
+      if (_ConvertInput is not Date input)
+        return NotInCalendar(UIStrings.DateToolsInputNotRepresentable_2, _ConvertFromCalendar);
+
+      return IsRepresentable(input, _ConvertToCalendar)
+        ? _DateFormatter.ToString(input, _ConvertToCalendar)
+        : NotInCalendar(UIStrings.DateToolsResultNotRepresentable_2, _ConvertToCalendar);
     }
   }
 
@@ -174,42 +172,25 @@ public partial class DateToolsPage : ContentPage
     }
   }
 
-  private void Convert()
-  {
-    if (_ConvertInput is not Date input)
-    {
-      ConvertResultText = NotInCalendar(UIStrings.DateToolsInputNotRepresentable_2, _ConvertFromCalendar);
-      return;
-    }
-
-    var (applied, _, _, _) = CalendarConversion.TryConvert(input, _ConvertToCalendar);
-    if (applied != _ConvertToCalendar)
-    {
-      ConvertResultText = NotInCalendar(UIStrings.DateToolsResultNotRepresentable_2, _ConvertToCalendar);
-      return;
-    }
-
-    ConvertResultText = _DateFormatter.ToString(input, _ConvertToCalendar);
-    _ConvertResult = input;
-  }
-
-  // Each setter clears the result, so it is taken first.
+  // The result is the input's own date. The From view reinterprets its typed numbers in the new
+  // calendar, so that date is put back afterwards.
   private void Swap()
   {
-    var result = _ConvertResult;
+    var input = _ConvertInput;
+    var hasResult = input is Date date && IsRepresentable(date, _ConvertToCalendar);
     var from = _ConvertFromCalendar;
     ConvertFromCalendar = _ConvertToCalendar;
     ConvertToCalendar = from;
-    if (result is not null)
+    if (hasResult)
     {
-      ConvertInput = result;
+      ConvertInput = input;
     }
   }
 
-  private void ClearConvertResult()
+  private static bool IsRepresentable(Date date, DisplayCalendar calendar)
   {
-    _ConvertResult = null;
-    ConvertResultText = string.Empty;
+    var (applied, _, _, _) = CalendarConversion.TryConvert(date, calendar);
+    return applied == calendar;
   }
 
   private string NotInCalendar(string format, DisplayCalendar calendar)

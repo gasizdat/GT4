@@ -1647,9 +1647,6 @@ FN - род</value>
   <data name="FieldPeriodTo" xml:space="preserve">
     <value>По</value>
   </data>
-  <data name="BtnNameConvert" xml:space="preserve">
-    <value>Перевести</value>
-  </data>
   <data name="BtnNameSwapCalendars" xml:space="preserve">
     <value>Поменять календари местами</value>
   </data>

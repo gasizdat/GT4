@@ -296,15 +296,6 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Convert.
-        /// </summary>
-        public static string BtnNameConvert {
-            get {
-                return ResourceManager.GetString("BtnNameConvert", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Create a Family.
         /// </summary>
         public static string BtnNameCreateFamily {

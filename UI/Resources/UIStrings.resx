@@ -1647,9 +1647,6 @@ FN - family name</value>
   <data name="FieldPeriodTo" xml:space="preserve">
     <value>To</value>
   </data>
-  <data name="BtnNameConvert" xml:space="preserve">
-    <value>Convert</value>
-  </data>
   <data name="BtnNameSwapCalendars" xml:space="preserve">
     <value>Swap calendars</value>
   </data>

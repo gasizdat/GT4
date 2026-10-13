@@ -48,12 +48,6 @@
               Style="{StaticResource FieldValue}"
               Text="{Binding ConvertResultText, Source={x:Reference Root}}" />
 
-          <Button
-              Command="{Binding PageCommand, Source={x:Reference Root}}"
-              CommandParameter="Convert"
-              HorizontalOptions="Fill"
-              Text="{x:Static resources:UIStrings.BtnNameConvert}" />
-
           <BoxView Style="{StaticResource HorizontalDivider}" />
 
           <Label

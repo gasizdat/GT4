@@ -66,41 +66,31 @@ public class DateToolsPageTests
   }
 
   [Fact]
-  public async Task Convert_shows_the_date_in_the_target_calendar()
+  public async Task The_result_follows_the_input()
   {
     var services = new TestServices();
     var page = await CreatePageAsync(services);
 
-    await MainThread.InvokeOnMainThreadAsync(() =>
-    {
-      page.ConvertInput = Emancipation;
-      page.PageCommand.Execute("Convert");
-    });
+    await MainThread.InvokeOnMainThreadAsync(() => page.ConvertInput = Emancipation);
 
     var expected = services.Provider.GetRequiredService<IDateFormatter>().ToString(Emancipation, DisplayCalendar.Julian);
     Assert.Equal(expected, page.ConvertResultText);
   }
 
   [Fact]
-  public async Task The_result_waits_for_Convert()
+  public async Task The_result_follows_the_target_calendar()
   {
-    var page = await CreatePageAsync(new TestServices());
-
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
     await MainThread.InvokeOnMainThreadAsync(() => page.ConvertInput = Emancipation);
-
-    Assert.Empty(page.ConvertResultText);
-  }
-
-  [Fact]
-  public async Task Changing_the_target_calendar_clears_the_result()
-  {
-    var page = await CreatePageAsync(new TestServices());
-    await MainThread.InvokeOnMainThreadAsync(() => page.PageCommand.Execute("Convert"));
-    Assert.NotEmpty(page.ConvertResultText);
+    var changed = new List<string?>();
+    page.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
 
     await MainThread.InvokeOnMainThreadAsync(() => page.ConvertToCalendar = DisplayCalendar.Hebrew);
 
-    Assert.Empty(page.ConvertResultText);
+    Assert.Contains(nameof(DateToolsPage.ConvertResultText), changed);
+    var expected = services.Provider.GetRequiredService<IDateFormatter>().ToString(Emancipation, DisplayCalendar.Hebrew);
+    Assert.Equal(expected, page.ConvertResultText);
   }
 
   [Fact]
@@ -113,7 +103,6 @@ public class DateToolsPageTests
     {
       page.ConvertInput = Emancipation;
       page.ConvertToCalendar = DisplayCalendar.FrenchRepublican;
-      page.PageCommand.Execute("Convert");
     });
 
     var expected = NotInCalendar(
@@ -132,7 +121,6 @@ public class DateToolsPageTests
     {
       from.Calendar = DisplayCalendar.Hebrew;
       from.Year = "5342";
-      page.PageCommand.Execute("Convert");
     });
 
     Assert.Null(page.ConvertInput);
@@ -142,29 +130,10 @@ public class DateToolsPageTests
   }
 
   [Fact]
-  public async Task Swap_after_Convert_moves_the_result_into_the_input()
+  public async Task Swap_moves_the_result_into_the_input()
   {
-    var page = await CreatePageAsync(new TestServices());
-    var from = (await InputViewsAsync(page))[0];
-    await MainThread.InvokeOnMainThreadAsync(() =>
-    {
-      page.ConvertInput = Emancipation;
-      page.PageCommand.Execute("Convert");
-    });
-
-    await MainThread.InvokeOnMainThreadAsync(() => page.PageCommand.Execute("Swap"));
-
-    Assert.Equal(DisplayCalendar.Julian, page.ConvertFromCalendar);
-    Assert.Equal(DisplayCalendar.Gregorian, page.ConvertToCalendar);
-    Assert.Equal(Emancipation, page.ConvertInput);
-    Assert.Equal(("1861", 1, 18), (from.Year, from.MonthIndex, from.DayIndex));
-    Assert.Empty(page.ConvertResultText);
-  }
-
-  [Fact]
-  public async Task Swap_without_a_result_swaps_only_the_calendars()
-  {
-    var page = await CreatePageAsync(new TestServices());
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
     var from = (await InputViewsAsync(page))[0];
     await MainThread.InvokeOnMainThreadAsync(() => page.ConvertInput = Emancipation);
 
@@ -172,8 +141,29 @@ public class DateToolsPageTests
 
     Assert.Equal(DisplayCalendar.Julian, page.ConvertFromCalendar);
     Assert.Equal(DisplayCalendar.Gregorian, page.ConvertToCalendar);
+    Assert.Equal(Emancipation, page.ConvertInput);
+    Assert.Equal(("1861", 1, 18), (from.Year, from.MonthIndex, from.DayIndex));
+    var expected = services.Provider.GetRequiredService<IDateFormatter>().ToString(Emancipation, DisplayCalendar.Gregorian);
+    Assert.Equal(expected, page.ConvertResultText);
+  }
+
+  [Fact]
+  public async Task Swap_without_a_result_swaps_only_the_calendars()
+  {
+    var page = await CreatePageAsync(new TestServices());
+    var from = (await InputViewsAsync(page))[0];
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      page.ConvertInput = Emancipation;
+      page.ConvertToCalendar = DisplayCalendar.FrenchRepublican;
+    });
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.PageCommand.Execute("Swap"));
+
+    Assert.Equal(DisplayCalendar.FrenchRepublican, page.ConvertFromCalendar);
+    Assert.Equal(DisplayCalendar.Gregorian, page.ConvertToCalendar);
     Assert.Equal(("1861", 2, 2), (from.Year, from.MonthIndex, from.DayIndex));
-    Assert.Equal(CalendarConversion.ToGregorian(DisplayCalendar.Julian, 1861, 3, 3), page.ConvertInput);
+    Assert.Null(page.ConvertInput);
   }
 
   // 1900 is not a Gregorian leap year: 29 days, where the Y/M/D form borrows a 30-day month.
