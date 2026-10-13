@@ -10,9 +10,14 @@ public partial class CalendarDateView : ContentView
   private static readonly DisplayCalendar[] Calendars = Enum.GetValues<DisplayCalendar>();
 
   private readonly IDateFormatter _DateFormatter;
+  // The month and day as picked: a year typed one digit at a time passes through years they don't
+  // fit, so they are clamped only where read.
   private int _Year;
   private int _Month = 1;
   private int _Day = 1;
+  // The year whose Hebrew month numbering _Month follows.
+  private int _MonthYear;
+  private bool _Refreshing;
 
   protected CalendarDateView(IServiceProvider serviceProvider)
   {
@@ -49,7 +54,8 @@ public partial class CalendarDateView : ContentView
   {
     if (obj is CalendarDateView view)
     {
-      view.SetParts(view._Year, view._Month, view._Day);
+      view._MonthYear = view.LookupYear(view._Year);
+      view.Refresh();
     }
   }
 
@@ -61,7 +67,8 @@ public partial class CalendarDateView : ContentView
     var (applied, year, month, day) = CalendarConversion.TryConvert(date, view.Calendar);
     if (applied == view.Calendar)
     {
-      view.SetParts(year, month, day);
+      (view._Year, view._Month, view._Day, view._MonthYear) = (year, month, day, year);
+      view.Refresh();
       view.OnPropertyChanged(nameof(Year));
     }
   }
@@ -97,10 +104,15 @@ public partial class CalendarDateView : ContentView
       if (year == _Year)
         return;
 
-      var month = Calendar == DisplayCalendar.Hebrew
-        ? CalendarConversion.HebrewMonthInYear(_Month, LookupYear(_Year), LookupYear(year))
-        : _Month;
-      SetParts(year, month, _Day);
+      _Year = year;
+      var (min, max) = CalendarConversion.YearRange(Calendar);
+      if (Calendar == DisplayCalendar.Hebrew && year >= min && year <= max)
+      {
+        _Month = CalendarConversion.HebrewMonthInYear(_Month, _MonthYear, year);
+        _MonthYear = year;
+      }
+
+      Refresh();
     }
   }
 
@@ -115,15 +127,23 @@ public partial class CalendarDateView : ContentView
 
   public int MonthIndex
   {
-    get => _Month - 1;
-    set => SetParts(_Year, value + 1, _Day);
+    get => Month - 1;
+    set
+    {
+      if (!_Refreshing)
+      {
+        _Month = value + 1;
+        _MonthYear = LookupYear(_Year);
+        Refresh();
+      }
+    }
   }
 
   public string[] Days
   {
     get
     {
-      var count = CalendarConversion.DaysInMonth(Calendar, LookupYear(_Year), _Month);
+      var count = CalendarConversion.DaysInMonth(Calendar, LookupYear(_Year), Month);
       var days = Enumerable.Range(1, count);
       return [.. days.Select(day => day.ToString(D2))];
     }
@@ -131,11 +151,36 @@ public partial class CalendarDateView : ContentView
 
   public int DayIndex
   {
-    get => _Day - 1;
-    set => SetParts(_Year, _Month, value + 1);
+    get => Day - 1;
+    set
+    {
+      if (!_Refreshing)
+      {
+        _Day = value + 1;
+        Refresh();
+      }
+    }
   }
 
-  private Date? Entered => CalendarConversion.ToGregorian(Calendar, _Year, _Month, _Day);
+  private int Month
+  {
+    get
+    {
+      var months = CalendarConversion.MonthsInYear(Calendar, LookupYear(_Year));
+      return Math.Clamp(_Month, 1, months);
+    }
+  }
+
+  private int Day
+  {
+    get
+    {
+      var days = CalendarConversion.DaysInMonth(Calendar, LookupYear(_Year), Month);
+      return Math.Clamp(_Day, 1, days);
+    }
+  }
+
+  private Date? Entered => CalendarConversion.ToGregorian(Calendar, _Year, Month, Day);
 
   // The month and day lists still need a year the calendar's lookups accept while the entered one
   // is out of range, e.g. halfway through typing it.
@@ -145,20 +190,23 @@ public partial class CalendarDateView : ContentView
     return Math.Clamp(year, min, max);
   }
 
-  private void SetParts(int year, int month, int day)
+  private void Refresh()
   {
-    var lookupYear = LookupYear(year);
-    var months = CalendarConversion.MonthsInYear(Calendar, lookupYear);
-    _Year = year;
-    _Month = Math.Clamp(month, 1, months);
-    var days = CalendarConversion.DaysInMonth(Calendar, lookupYear, _Month);
-    _Day = Math.Clamp(day, 1, days);
+    // A shorter list clamps a picker's selection, and the picker pushes the clamped index back.
+    _Refreshing = true;
+    try
+    {
+      OnPropertyChanged(nameof(CalendarIndex));
+      OnPropertyChanged(nameof(Months));
+      OnPropertyChanged(nameof(MonthIndex));
+      OnPropertyChanged(nameof(Days));
+      OnPropertyChanged(nameof(DayIndex));
+    }
+    finally
+    {
+      _Refreshing = false;
+    }
 
-    OnPropertyChanged(nameof(CalendarIndex));
-    OnPropertyChanged(nameof(Months));
-    OnPropertyChanged(nameof(MonthIndex));
-    OnPropertyChanged(nameof(Days));
-    OnPropertyChanged(nameof(DayIndex));
     Date = Entered;
   }
 }

@@ -47,6 +47,25 @@ public class DateToolsPageTests
   }
 
   [Fact]
+  public async Task Disconnecting_the_pickers_keeps_the_entered_dates()
+  {
+    var page = await CreatePageAsync(new TestServices(), nameof(DisplayCalendar.Hebrew));
+    await MainThread.InvokeOnMainThreadAsync(() => page.ConvertInput = Emancipation);
+    await using (await WindowHost.AttachAsync(page))
+    {
+      await Poll.UntilAsync(
+        () => MainThread.InvokeOnMainThreadAsync(() => page.GetVisualTreeDescendants().OfType<Picker>().All(p => p.IsLoaded)),
+        loaded => loaded,
+        timeoutMessage: "The pickers never loaded.");
+      await MainThread.InvokeOnMainThreadAsync(page.DisconnectHandlers);
+    }
+
+    Assert.Equal(DisplayCalendar.Gregorian, page.ConvertFromCalendar);
+    Assert.Equal(DisplayCalendar.Hebrew, page.ConvertToCalendar);
+    Assert.Equal(Emancipation, page.ConvertInput);
+  }
+
+  [Fact]
   public async Task Convert_shows_the_date_in_the_target_calendar()
   {
     var services = new TestServices();

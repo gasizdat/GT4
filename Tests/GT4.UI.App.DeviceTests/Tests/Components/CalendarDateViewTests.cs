@@ -1,5 +1,6 @@
 using GT4.Core.Utils;
 using GT4.Core.Utils.Calendars;
+using GT4.UI.Components;
 using GT4.UI.Resources;
 using Xunit;
 
@@ -23,6 +24,16 @@ public class CalendarDateViewTests
   }
 
   private static Date WellKnown(int year, int month, int day) => Date.Create(year, month, day, DateStatus.WellKnown);
+
+  private static async Task<Picker[]> WaitForPickersAsync(CalendarDateView view)
+  {
+    var pickers = await MainThread.InvokeOnMainThreadAsync(() => view.GetVisualTreeDescendants().OfType<Picker>().ToArray());
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => pickers.All(p => p.IsLoaded)),
+      loaded => loaded,
+      timeoutMessage: "The pickers never loaded.");
+    return pickers;
+  }
 
   [Fact]
   public async Task The_entered_parts_give_their_Gregorian_date()
@@ -105,6 +116,39 @@ public class CalendarDateViewTests
     Assert.EndsWith(UIStrings.MonthHebrew_Nisan, view.Months[view.MonthIndex]);
   }
 
+  // Retyping 5784 as 5787, both leap years, passes through 578, outside the range.
+  [Fact]
+  public async Task Typing_a_year_through_an_out_of_range_one_keeps_the_month()
+  {
+    var view = await CreateViewAsync(DisplayCalendar.Hebrew, "5784", monthIndex: 5);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      view.Year = "578";
+      view.Year = "5787";
+    });
+
+    Assert.Equal(5, view.MonthIndex);
+    Assert.EndsWith(UIStrings.MonthHebrew_AdarI, view.Months[view.MonthIndex]);
+  }
+
+  // Retyping 2000 as 2004 passes through 200, whose February has 28 days.
+  [Fact]
+  public async Task Typing_a_year_through_a_shorter_month_keeps_the_day()
+  {
+    var view = await CreateViewAsync(DisplayCalendar.Gregorian, "2000", monthIndex: 1, dayIndex: 28);
+    var page = await MainThread.InvokeOnMainThreadAsync(() => new ContentPage { Content = view });
+    await using var window = await WindowHost.AttachAsync(page);
+    await WaitForPickersAsync(view);
+
+    await MainThread.InvokeOnMainThreadAsync(() => view.Year = "200");
+    Assert.Equal(27, view.DayIndex);
+    await MainThread.InvokeOnMainThreadAsync(() => view.Year = "2004");
+
+    Assert.Equal(28, view.DayIndex);
+    Assert.Equal(WellKnown(2004, 2, 29), view.Date);
+  }
+
   // Attached, the native pickers have their lists replaced under a live selection.
   [Fact]
   public async Task Replacing_the_month_list_keeps_the_selection_on_screen()
@@ -112,11 +156,7 @@ public class CalendarDateViewTests
     var view = await CreateViewAsync(DisplayCalendar.Hebrew, "5784", monthIndex: 12, dayIndex: 28);
     var page = await MainThread.InvokeOnMainThreadAsync(() => new ContentPage { Content = view });
     await using var window = await WindowHost.AttachAsync(page);
-    var pickers = await MainThread.InvokeOnMainThreadAsync(() => view.GetVisualTreeDescendants().OfType<Picker>().ToArray());
-    await Poll.UntilAsync(
-      () => MainThread.InvokeOnMainThreadAsync(() => pickers.All(p => p.IsLoaded)),
-      loaded => loaded,
-      timeoutMessage: "The pickers never loaded.");
+    var pickers = await WaitForPickersAsync(view);
 
     await MainThread.InvokeOnMainThreadAsync(() => view.Year = "5785");
 
