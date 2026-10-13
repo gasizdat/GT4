@@ -3,16 +3,18 @@ using System.Globalization;
 namespace GT4.Core.Utils.Calendars;
 
 /// <summary>
-/// Converts a stored (Gregorian) <see cref="Date"/> into another calendar for display, storage
+/// Converts between a stored (Gregorian) <see cref="Date"/> and another calendar, storage
 /// itself stays Gregorian-only. Each non-Gregorian calendar has a real range outside which it
 /// cannot represent a date -- Hebrew's year 5343-5999 AM (<see cref="HebrewCalendar"/>'s own
 /// range), French Republican's years I-XIV, Julian's only bound is <see cref="DateTime"/>'s own
-/// year 1-9999 ceiling. Outside that range, <see cref="TryConvert"/> falls back to the original
-/// Gregorian value and reports <see cref="DisplayCalendar.Gregorian"/> as what was actually
-/// applied, rather than throwing or approximating.
+/// year 1-9999 ceiling. These ranges begin and end mid-year (Hebrew starts on 7 Tevet 5343).
+/// Outside that range, <see cref="TryConvert"/> falls back to the original Gregorian value and
+/// reports <see cref="DisplayCalendar.Gregorian"/> as what was actually applied, and
+/// <see cref="ToGregorian"/> returns <c>null</c>, rather than throwing or approximating.
 /// </summary>
 public static class CalendarConversion
 {
+  private static readonly GregorianCalendar Gregorian = new();
   private static readonly JulianCalendar Julian = new();
   private static readonly HebrewCalendar Hebrew = new();
 
@@ -42,7 +44,65 @@ public static class CalendarConversion
     };
   }
 
+  /// <summary><c>null</c> when the date does not exist in <paramref name="calendar"/> or falls outside
+  /// the range it can represent.</summary>
+  public static Date? ToGregorian(DisplayCalendar calendar, int year, int month, int day)
+  {
+    if (calendar == DisplayCalendar.FrenchRepublican)
+    {
+      var republican = FrenchRepublicanCalendar.ToGregorian(year, month, day);
+      return republican is null ? null : Date.Create(republican.Value);
+    }
+
+    // Range first: the month and day lookups throw for a year outside it.
+    var system = SystemCalendar(calendar);
+    var first = DateOf(system, system.MinSupportedDateTime);
+    var last = DateOf(system, system.MaxSupportedDateTime);
+    var date = (year, month, day);
+    if (date.CompareTo(first) < 0 || date.CompareTo(last) > 0 ||
+        month < 1 || month > system.GetMonthsInYear(year) ||
+        day < 1 || day > system.GetDaysInMonth(year, month))
+      return null;
+
+    var gregorian = system.ToDateTime(year, month, day, 0, 0, 0, 0);
+    return Date.Create(gregorian);
+  }
+
+  /// <summary>The years <see cref="MonthsInYear"/> and <see cref="DaysInMonth"/> accept. The first and
+  /// last of them may be only partly representable.</summary>
+  public static (int Min, int Max) YearRange(DisplayCalendar calendar)
+  {
+    if (calendar == DisplayCalendar.FrenchRepublican)
+      return (1, FrenchRepublicanCalendar.LastYear);
+
+    var system = SystemCalendar(calendar);
+    var first = system.GetYear(system.MinSupportedDateTime);
+    var last = system.GetYear(system.MaxSupportedDateTime);
+    return (first, last);
+  }
+
+  public static int MonthsInYear(DisplayCalendar calendar, int year) =>
+    calendar == DisplayCalendar.FrenchRepublican
+      ? FrenchRepublicanCalendar.MonthsPerYear
+      : SystemCalendar(calendar).GetMonthsInYear(year);
+
+  public static int DaysInMonth(DisplayCalendar calendar, int year, int month) =>
+    calendar == DisplayCalendar.FrenchRepublican
+      ? FrenchRepublicanCalendar.DaysPerMonth
+      : SystemCalendar(calendar).GetDaysInMonth(year, month);
+
   /// <summary>Whether <paramref name="year"/> is a 13-month Hebrew leap year -- Adar splits into Adar I
   /// (month 6) and Adar II (month 7), shifting every later month's number up by one.</summary>
   public static bool IsHebrewLeapYear(int year) => Hebrew.IsLeapYear(year);
+
+  private static Calendar SystemCalendar(DisplayCalendar calendar) => calendar switch
+  {
+    DisplayCalendar.Gregorian => Gregorian,
+    DisplayCalendar.Julian => Julian,
+    DisplayCalendar.Hebrew => Hebrew,
+    _ => throw new NotImplementedException($"DisplayCalendar={calendar}")
+  };
+
+  private static (int Year, int Month, int Day) DateOf(Calendar calendar, DateTime time) =>
+    (calendar.GetYear(time), calendar.GetMonth(time), calendar.GetDayOfMonth(time));
 }
