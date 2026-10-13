@@ -20,6 +20,7 @@ internal static class UIRoutes
     AddRoute<StatisticsPage>();
     AddRoute<KinshipFinderPage>();
     AddRoute<DateCalendarPage>();
+    AddRoute<DateToolsPage>();
   }
 
   public static string GetRoute<TPage>() => $"{typeof(TPage).Namespace}/{typeof(TPage).Name}";

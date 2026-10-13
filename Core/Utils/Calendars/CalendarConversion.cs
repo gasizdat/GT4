@@ -14,6 +14,10 @@ namespace GT4.Core.Utils.Calendars;
 /// </summary>
 public static class CalendarConversion
 {
+  // Adar I in a leap year shares Adar's number.
+  private const int HebrewAdar = 6;
+  private const int HebrewAdarII = 7;
+
   private static readonly GregorianCalendar Gregorian = new();
   private static readonly JulianCalendar Julian = new();
   private static readonly HebrewCalendar Hebrew = new();
@@ -94,6 +98,17 @@ public static class CalendarConversion
   /// <summary>Whether <paramref name="year"/> is a 13-month Hebrew leap year -- Adar splits into Adar I
   /// (month 6) and Adar II (month 7), shifting every later month's number up by one.</summary>
   public static bool IsHebrewLeapYear(int year) => Hebrew.IsLeapYear(year);
+
+  /// <summary>The number <paramref name="month"/> of <paramref name="fromYear"/> has in
+  /// <paramref name="toYear"/>, kept by name. Adar maps to Adar II, as the leap year's Adar II holds the
+  /// observances of a common year's Adar.</summary>
+  public static int HebrewMonthInYear(int month, int fromYear, int toYear) =>
+    (IsHebrewLeapYear(fromYear), IsHebrewLeapYear(toYear)) switch
+    {
+      (true, false) when month >= HebrewAdarII => month - 1,
+      (false, true) when month >= HebrewAdar => month + 1,
+      _ => month,
+    };
 
   private static Calendar SystemCalendar(DisplayCalendar calendar) => calendar switch
   {

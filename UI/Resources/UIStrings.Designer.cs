@@ -296,6 +296,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Convert.
+        /// </summary>
+        public static string BtnNameConvert {
+            get {
+                return ResourceManager.GetString("BtnNameConvert", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Create a Family.
         /// </summary>
         public static string BtnNameCreateFamily {
@@ -490,6 +499,15 @@ namespace GT4.UI.Resources {
         public static string BtnNameShowAll {
             get {
                 return ResourceManager.GetString("BtnNameShowAll", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Swap calendars.
+        /// </summary>
+        public static string BtnNameSwapCalendars {
+            get {
+                return ResourceManager.GetString("BtnNameSwapCalendars", resourceCulture);
             }
         }
         
@@ -710,6 +728,78 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Convert between calendars.
+        /// </summary>
+        public static string DateToolsConvertTitle {
+            get {
+                return ResourceManager.GetString("DateToolsConvertTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This date does not exist in the {0} calendar. {1}.
+        /// </summary>
+        public static string DateToolsInputNotRepresentable_2 {
+            get {
+                return ResourceManager.GetString("DateToolsInputNotRepresentable_2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} (total days: {1}).
+        /// </summary>
+        public static string DateToolsPeriodResult_2 {
+            get {
+                return ResourceManager.GetString("DateToolsPeriodResult_2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Period between two dates.
+        /// </summary>
+        public static string DateToolsPeriodTitle {
+            get {
+                return ResourceManager.GetString("DateToolsPeriodTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Only years 1 to 9999 are supported..
+        /// </summary>
+        public static string DateToolsRangeCommon {
+            get {
+                return ResourceManager.GetString("DateToolsRangeCommon", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Only years 1 to 14 are supported, from 1 Vendémiaire 1 to 10 Nivôse 14 (22 September 1792 to 31 December 1805), without the complementary days..
+        /// </summary>
+        public static string DateToolsRangeFrenchRepublican {
+            get {
+                return ResourceManager.GetString("DateToolsRangeFrenchRepublican", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Supported from 7 Tevet 5343 to 29 Elul 5999 (1 January 1583 to 29 September 2239)..
+        /// </summary>
+        public static string DateToolsRangeHebrew {
+            get {
+                return ResourceManager.GetString("DateToolsRangeHebrew", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This date cannot be shown in the {0} calendar. {1}.
+        /// </summary>
+        public static string DateToolsResultNotRepresentable_2 {
+            get {
+                return ResourceManager.GetString("DateToolsResultNotRepresentable_2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to At least the following persons share name {0}: {1}.
         /// </summary>
         public static string ErrorNameIsShared_2 {
@@ -850,6 +940,24 @@ namespace GT4.UI.Resources {
         public static string FieldCommonPersonNameFormat {
             get {
                 return ResourceManager.GetString("FieldCommonPersonNameFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to From.
+        /// </summary>
+        public static string FieldConvertFrom {
+            get {
+                return ResourceManager.GetString("FieldConvertFrom", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to To.
+        /// </summary>
+        public static string FieldConvertTo {
+            get {
+                return ResourceManager.GetString("FieldConvertTo", resourceCulture);
             }
         }
         
@@ -1269,6 +1377,24 @@ namespace GT4.UI.Resources {
         public static string FieldPatronymicMaleEntry {
             get {
                 return ResourceManager.GetString("FieldPatronymicMaleEntry", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to From.
+        /// </summary>
+        public static string FieldPeriodFrom {
+            get {
+                return ResourceManager.GetString("FieldPeriodFrom", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to To.
+        /// </summary>
+        public static string FieldPeriodTo {
+            get {
+                return ResourceManager.GetString("FieldPeriodTo", resourceCulture);
             }
         }
         
@@ -2323,6 +2449,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Convert a date between calendars, or find the time between two dates..
+        /// </summary>
+        public static string HintDateToolsPage {
+            get {
+                return ResourceManager.GetString("HintDateToolsPage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to A sample tree to explore — safe to delete.
         /// </summary>
         public static string HintDemoProject {
@@ -2598,6 +2733,15 @@ namespace GT4.UI.Resources {
         public static string MenuItemGoToDateCalendar {
             get {
                 return ResourceManager.GetString("MenuItemGoToDateCalendar", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 📅 Date tools.
+        /// </summary>
+        public static string MenuItemGoToDateTools {
+            get {
+                return ResourceManager.GetString("MenuItemGoToDateTools", resourceCulture);
             }
         }
         
@@ -4218,6 +4362,15 @@ namespace GT4.UI.Resources {
         public static string TitleDateCalendarPage {
             get {
                 return ResourceManager.GetString("TitleDateCalendarPage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Date tools.
+        /// </summary>
+        public static string TitleDateToolsPage {
+            get {
+                return ResourceManager.GetString("TitleDateToolsPage", resourceCulture);
             }
         }
         

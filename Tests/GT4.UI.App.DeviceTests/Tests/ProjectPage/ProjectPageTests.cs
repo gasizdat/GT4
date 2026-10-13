@@ -529,6 +529,18 @@ public class ProjectPageTests
   }
 
   [Fact]
+  public async Task GoToDateTools_navigates_to_DateToolsPage()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+    var expectedRoute = $"{typeof(DateToolsPage).Namespace}/{typeof(DateToolsPage).Name}";
+
+    await page.InvokePageCommandAsync("GoToDateTools");
+
+    services.NavigationService.Verify(n => n.GoToAsync(expectedRoute), Times.Once());
+  }
+
+  [Fact]
   public async Task GoToMainPerson_navigates_to_the_resolved_main_person()
   {
     var services = new TestServices();

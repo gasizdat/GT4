@@ -1620,4 +1620,55 @@ FN - family name</value>
   <data name="FieldFanChartSweepHint" xml:space="preserve">
     <value>How much of a circle the fan chart spans: a half, three quarters or the whole.</value>
   </data>
+  <data name="TitleDateToolsPage" xml:space="preserve">
+    <value>Date tools</value>
+  </data>
+  <data name="HintDateToolsPage" xml:space="preserve">
+    <value>Convert a date between calendars, or find the time between two dates.</value>
+  </data>
+  <data name="MenuItemGoToDateTools" xml:space="preserve">
+    <value>📅 Date tools</value>
+  </data>
+  <data name="DateToolsConvertTitle" xml:space="preserve">
+    <value>Convert between calendars</value>
+  </data>
+  <data name="DateToolsPeriodTitle" xml:space="preserve">
+    <value>Period between two dates</value>
+  </data>
+  <data name="FieldConvertFrom" xml:space="preserve">
+    <value>From</value>
+  </data>
+  <data name="FieldConvertTo" xml:space="preserve">
+    <value>To</value>
+  </data>
+  <data name="FieldPeriodFrom" xml:space="preserve">
+    <value>From</value>
+  </data>
+  <data name="FieldPeriodTo" xml:space="preserve">
+    <value>To</value>
+  </data>
+  <data name="BtnNameConvert" xml:space="preserve">
+    <value>Convert</value>
+  </data>
+  <data name="BtnNameSwapCalendars" xml:space="preserve">
+    <value>Swap calendars</value>
+  </data>
+  <data name="DateToolsInputNotRepresentable_2" xml:space="preserve">
+    <value>This date does not exist in the {0} calendar. {1}</value>
+  </data>
+  <data name="DateToolsResultNotRepresentable_2" xml:space="preserve">
+    <value>This date cannot be shown in the {0} calendar. {1}</value>
+  </data>
+  <data name="DateToolsRangeCommon" xml:space="preserve">
+    <value>Only years 1 to 9999 are supported.</value>
+  </data>
+  <data name="DateToolsRangeHebrew" xml:space="preserve">
+    <value>Supported from 7 Tevet 5343 to 29 Elul 5999 (1 January 1583 to 29 September 2239).</value>
+  </data>
+  <data name="DateToolsRangeFrenchRepublican" xml:space="preserve">
+    <value>Only years 1 to 14 are supported, from 1 Vendémiaire 1 to 10 Nivôse 14 (22 September 1792 to 31 December 1805), without the complementary days.</value>
+  </data>
+  <data name="DateToolsPeriodResult_2" xml:space="preserve">
+    <value>{0} (total days: {1})</value>
+  </data>
 </root>

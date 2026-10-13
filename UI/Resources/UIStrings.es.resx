@@ -1620,4 +1620,55 @@ FN - apellido familiar</value>
   <data name="FieldFanChartSweepHint" xml:space="preserve">
     <value>Qué parte de un círculo abarca el gráfico de abanico: la mitad, tres cuartos o el círculo entero.</value>
   </data>
+  <data name="TitleDateToolsPage" xml:space="preserve">
+    <value>Herramientas de fechas</value>
+  </data>
+  <data name="HintDateToolsPage" xml:space="preserve">
+    <value>Convierta una fecha a otro calendario o calcule el tiempo entre dos fechas.</value>
+  </data>
+  <data name="MenuItemGoToDateTools" xml:space="preserve">
+    <value>📅 Herramientas de fechas</value>
+  </data>
+  <data name="DateToolsConvertTitle" xml:space="preserve">
+    <value>Convertir entre calendarios</value>
+  </data>
+  <data name="DateToolsPeriodTitle" xml:space="preserve">
+    <value>Período entre dos fechas</value>
+  </data>
+  <data name="FieldConvertFrom" xml:space="preserve">
+    <value>De</value>
+  </data>
+  <data name="FieldConvertTo" xml:space="preserve">
+    <value>A</value>
+  </data>
+  <data name="FieldPeriodFrom" xml:space="preserve">
+    <value>Desde</value>
+  </data>
+  <data name="FieldPeriodTo" xml:space="preserve">
+    <value>Hasta</value>
+  </data>
+  <data name="BtnNameConvert" xml:space="preserve">
+    <value>Convertir</value>
+  </data>
+  <data name="BtnNameSwapCalendars" xml:space="preserve">
+    <value>Intercambiar calendarios</value>
+  </data>
+  <data name="DateToolsInputNotRepresentable_2" xml:space="preserve">
+    <value>Esta fecha no existe en el calendario {0}. {1}</value>
+  </data>
+  <data name="DateToolsResultNotRepresentable_2" xml:space="preserve">
+    <value>Esta fecha no se puede expresar en el calendario {0}. {1}</value>
+  </data>
+  <data name="DateToolsRangeCommon" xml:space="preserve">
+    <value>Solo se admiten los años 1 a 9999.</value>
+  </data>
+  <data name="DateToolsRangeHebrew" xml:space="preserve">
+    <value>Se admiten fechas del 7 de Tevet de 5343 al 29 de Elul de 5999 (del 1 de enero de 1583 al 29 de septiembre de 2239).</value>
+  </data>
+  <data name="DateToolsRangeFrenchRepublican" xml:space="preserve">
+    <value>Solo se admiten los años 1 a 14, del 1 de Vendimiario del año 1 al 10 de Nivoso del año 14 (del 22 de septiembre de 1792 al 31 de diciembre de 1805), sin los días complementarios.</value>
+  </data>
+  <data name="DateToolsPeriodResult_2" xml:space="preserve">
+    <value>{0} (total de días: {1})</value>
+  </data>
 </root>

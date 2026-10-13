@@ -29,6 +29,9 @@ public partial class MainPage : ContentPage
       case string commandName when commandName == "OpenSettings":
         await _NavigationService.GoToAsync(UIRoutes.GetRoute<SettingsPage>());
         break;
+      case string commandName when commandName == "OpenDateTools":
+        await _NavigationService.GoToAsync(UIRoutes.GetRoute<DateToolsPage>());
+        break;
     }
   }, _AlertService);
 

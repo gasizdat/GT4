@@ -484,6 +484,7 @@ public class PageLayoutTests
     typeof(TestableStatisticsPage),
     typeof(ProjectRevisionsPage),
     typeof(SettingsPage),
+    typeof(DateToolsPage),
   ];
 
   [Theory]
