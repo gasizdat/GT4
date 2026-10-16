@@ -2,7 +2,6 @@
 
 public struct Date
 {
-  private const int AverageDaysInMonth = 30;
   private const int Digit = 100;
   private const int MonthsInYear = 12;
   private const int UndefinedValue = 0;
@@ -118,7 +117,11 @@ public struct Date
           var days = to.Day - from.Day;
           if (int.IsNegative(days))
           {
-            days += AverageDaysInMonth;
+            var (borrowedYear, borrowedMonth) = to.Month == 1
+              ? (to.SignedYear - 1, MonthsInYear)
+              : (to.SignedYear, to.Month - 1);
+            var borrowedDays = DaysInMonth(borrowedYear, borrowedMonth);
+            days = to.Day + borrowedDays - Math.Min(from.Day, borrowedDays);
             months--;
           }
           if (int.IsNegative(months))
@@ -146,4 +149,12 @@ public struct Date
     (Status >= DateStatus.DayUnknown ? UndefinedValue : Day) +
     (Status >= DateStatus.MonthUnknown ? UndefinedValue : (Digit * Month)) +
     (Status >= DateStatus.Unknown ? UndefinedValue : (Digit * Digit * SignedYear));
+
+  // DateTime rejects the astronomical years 0 and below.
+  private static int DaysInMonth(int signedYear, int month) => month switch
+  {
+    2 => signedYear % 4 == 0 && (signedYear % 100 != 0 || signedYear % 400 == 0) ? 29 : 28,
+    4 or 6 or 9 or 11 => 30,
+    _ => 31,
+  };
 }

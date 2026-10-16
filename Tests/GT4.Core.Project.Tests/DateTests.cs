@@ -245,10 +245,43 @@ public sealed class DateTests
 
     var span = to - from;
 
-    // 5 - 20 days -> borrow a month (+30); 1 - 3 months -> borrow a year (+12).
-    span.Days.Should().Be(15);
+    // 5 - 20 days -> borrow December (+31); 1 - 3 months -> borrow a year (+12).
+    span.Days.Should().Be(16);
     span.Months.Should().Be(9);
     span.Years.Should().Be(2);
+  }
+
+  [Theory]
+  [InlineData(20230228, 20230301, 0, 1)]
+  [InlineData(20240228, 20240301, 0, 2)]
+  [InlineData(19000131, 19000301, 1, 1)]
+  [InlineData(19000130, 19000301, 1, 1)]
+  [InlineData(19000115, 19000310, 1, 23)]
+  [InlineData(20000229, 20010228, 11, 30)]
+  public void Difference_WellKnown_BorrowsThePreviousMonthsLength(int fromCode, int toCode, int months, int days)
+  {
+    var from = Date.Create(fromCode, DateStatus.WellKnown);
+    var to = Date.Create(toCode, DateStatus.WellKnown);
+
+    var span = to - from;
+
+    span.Months.Should().Be(months);
+    span.Days.Should().Be(days);
+  }
+
+  [Theory]
+  [InlineData(-11220, 10105, 16)] // 20 Dec 1 B.C. -> 5 Jan 1 A.D.
+  [InlineData(-10220, -10305, 14)] // 20 Feb -> 5 Mar 1 B.C., a leap year
+  public void Difference_WellKnown_BorrowsAcrossTheEraBoundary(int fromCode, int toCode, int days)
+  {
+    var from = Date.Create(fromCode, DateStatus.WellKnown);
+    var to = Date.Create(toCode, DateStatus.WellKnown);
+
+    var span = to - from;
+
+    span.Years.Should().Be(0);
+    span.Months.Should().Be(0);
+    span.Days.Should().Be(days);
   }
 
   [Fact]

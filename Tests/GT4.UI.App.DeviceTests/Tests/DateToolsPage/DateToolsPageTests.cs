@@ -166,7 +166,7 @@ public class DateToolsPageTests
     Assert.Null(page.ConvertInput);
   }
 
-  // 1900 is not a Gregorian leap year: 29 days, where the Y/M/D form borrows a 30-day month.
+  // 1900 is not a Gregorian leap year: 1 month 1 day, 29 days in all.
   [Fact]
   public async Task Period_shows_the_span_and_the_exact_day_count_in_either_order()
   {
