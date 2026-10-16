@@ -40,7 +40,8 @@ public class CalendarDateViewTests
   {
     var view = await CreateViewAsync(DisplayCalendar.Julian, "1861", monthIndex: 1, dayIndex: 18);
 
-    Assert.Equal(WellKnown(1861, 3, 3), view.Date);
+    var expected = WellKnown(1861, 3, 3);
+    Assert.Equal(expected, view.Date);
   }
 
   [Fact]
@@ -73,7 +74,8 @@ public class CalendarDateViewTests
     await MainThread.InvokeOnMainThreadAsync(() => view.MonthIndex = 1);
 
     Assert.Equal(27, view.DayIndex);
-    Assert.Equal(WellKnown(2001, 2, 28), view.Date);
+    var expected = WellKnown(2001, 2, 28);
+    Assert.Equal(expected, view.Date);
   }
 
   [Fact]
@@ -86,7 +88,8 @@ public class CalendarDateViewTests
     Assert.Equal("1900", view.Year);
     Assert.Equal(1, view.MonthIndex);
     Assert.Equal(27, view.DayIndex);
-    Assert.Equal(CalendarConversion.ToGregorian(DisplayCalendar.Julian, 1900, 2, 28), view.Date);
+    var expected = CalendarConversion.ToGregorian(DisplayCalendar.Julian, 1900, 2, 28);
+    Assert.Equal(expected, view.Date);
   }
 
   // Typing 5784 passes through 5, 57 and 578, none of which the Hebrew lookups accept.
@@ -146,7 +149,8 @@ public class CalendarDateViewTests
     await MainThread.InvokeOnMainThreadAsync(() => view.Year = "2004");
 
     Assert.Equal(28, view.DayIndex);
-    Assert.Equal(WellKnown(2004, 2, 29), view.Date);
+    var expected = WellKnown(2004, 2, 29);
+    Assert.Equal(expected, view.Date);
   }
 
   // Attached, the native pickers have their lists replaced under a live selection.
@@ -162,6 +166,7 @@ public class CalendarDateViewTests
 
     var selected = await MainThread.InvokeOnMainThreadAsync(() => pickers.Select(p => p.SelectedIndex).ToArray());
     Assert.Equal([2, 11, 28], selected);
-    Assert.Equal(CalendarConversion.ToGregorian(DisplayCalendar.Hebrew, 5785, 12, 29), view.Date);
+    var expected = CalendarConversion.ToGregorian(DisplayCalendar.Hebrew, 5785, 12, 29);
+    Assert.Equal(expected, view.Date);
   }
 }

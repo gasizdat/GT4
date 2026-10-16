@@ -52,7 +52,7 @@ public partial class CalendarDateView : ContentView
   {
     if (obj is CalendarDateView view)
     {
-      view._MonthNumberingYear = view.LookupYear(view._Year);
+      view._MonthNumberingYear = view.LookupYear;
       view.Refresh();
     }
   }
@@ -118,7 +118,7 @@ public partial class CalendarDateView : ContentView
   {
     get
     {
-      var names = _DateFormatter.MonthNames(Calendar, LookupYear(_Year));
+      var names = _DateFormatter.MonthNames(Calendar, LookupYear);
       return [.. names.Select((name, index) => $"{(index + 1).ToString(D2)} - {name}")];
     }
   }
@@ -131,7 +131,7 @@ public partial class CalendarDateView : ContentView
       if (!_Refreshing)
       {
         _Month = value + 1;
-        _MonthNumberingYear = LookupYear(_Year);
+        _MonthNumberingYear = LookupYear;
         Refresh();
       }
     }
@@ -141,7 +141,7 @@ public partial class CalendarDateView : ContentView
   {
     get
     {
-      var count = CalendarConversion.DaysInMonth(Calendar, LookupYear(_Year), Month);
+      var count = CalendarConversion.DaysInMonth(Calendar, LookupYear, Month);
       var days = Enumerable.Range(1, count);
       return [.. days.Select(day => day.ToString(D2))];
     }
@@ -164,7 +164,7 @@ public partial class CalendarDateView : ContentView
   {
     get
     {
-      var months = CalendarConversion.MonthsInYear(Calendar, LookupYear(_Year));
+      var months = CalendarConversion.MonthsInYear(Calendar, LookupYear);
       return Math.Clamp(_Month, 1, months);
     }
   }
@@ -173,7 +173,7 @@ public partial class CalendarDateView : ContentView
   {
     get
     {
-      var days = CalendarConversion.DaysInMonth(Calendar, LookupYear(_Year), Month);
+      var days = CalendarConversion.DaysInMonth(Calendar, LookupYear, Month);
       return Math.Clamp(_Day, 1, days);
     }
   }
@@ -181,10 +181,13 @@ public partial class CalendarDateView : ContentView
   private Date? Entered => CalendarConversion.ToGregorian(Calendar, _Year, Month, Day);
 
   // The calendar's lookups throw outside its range, which a year passes through while typed.
-  private int LookupYear(int year)
+  private int LookupYear
   {
-    var (min, max) = CalendarConversion.YearRange(Calendar);
-    return Math.Clamp(year, min, max);
+    get
+    {
+      var (min, max) = CalendarConversion.YearRange(Calendar);
+      return Math.Clamp(_Year, min, max);
+    }
   }
 
   private void Refresh()

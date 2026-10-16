@@ -183,7 +183,8 @@ public partial class DateToolsPage : ContentPage
       var span = to - from;
       var spanText = _DateSpanFormatter.ToString(span);
       var totalDays = (ToDateTime(to) - ToDateTime(from)).Days;
-      return string.Format(UIStrings.DateToolsPeriodResult_2, spanText, Math.Abs(totalDays));
+      var absoluteDays = Math.Abs(totalDays);
+      return string.Format(UIStrings.DateToolsPeriodResult_2, spanText, absoluteDays);
     }
   }
 
