@@ -10,13 +10,11 @@ public partial class CalendarDateView : ContentView
   private static readonly DisplayCalendar[] Calendars = Enum.GetValues<DisplayCalendar>();
 
   private readonly IDateFormatter _DateFormatter;
-  // The month and day as picked: a year typed one digit at a time passes through years they don't
-  // fit, so they are clamped only where read.
+  // Unclamped: a year typed one digit at a time passes through years the picked month and day don't fit.
   private int _Year;
   private int _Month = 1;
   private int _Day = 1;
-  // The year whose Hebrew month numbering _Month follows.
-  private int _MonthYear;
+  private int _MonthNumberingYear;
   private bool _Refreshing;
 
   protected CalendarDateView(IServiceProvider serviceProvider)
@@ -54,7 +52,7 @@ public partial class CalendarDateView : ContentView
   {
     if (obj is CalendarDateView view)
     {
-      view._MonthYear = view.LookupYear(view._Year);
+      view._MonthNumberingYear = view.LookupYear(view._Year);
       view.Refresh();
     }
   }
@@ -67,7 +65,7 @@ public partial class CalendarDateView : ContentView
     var (applied, year, month, day) = CalendarConversion.TryConvert(date, view.Calendar);
     if (applied == view.Calendar)
     {
-      (view._Year, view._Month, view._Day, view._MonthYear) = (year, month, day, year);
+      (view._Year, view._Month, view._Day, view._MonthNumberingYear) = (year, month, day, year);
       view.Refresh();
       view.OnPropertyChanged(nameof(Year));
     }
@@ -108,8 +106,8 @@ public partial class CalendarDateView : ContentView
       var (min, max) = CalendarConversion.YearRange(Calendar);
       if (Calendar == DisplayCalendar.Hebrew && year >= min && year <= max)
       {
-        _Month = CalendarConversion.HebrewMonthInYear(_Month, _MonthYear, year);
-        _MonthYear = year;
+        _Month = CalendarConversion.HebrewMonthInYear(_Month, _MonthNumberingYear, year);
+        _MonthNumberingYear = year;
       }
 
       Refresh();
@@ -133,7 +131,7 @@ public partial class CalendarDateView : ContentView
       if (!_Refreshing)
       {
         _Month = value + 1;
-        _MonthYear = LookupYear(_Year);
+        _MonthNumberingYear = LookupYear(_Year);
         Refresh();
       }
     }
@@ -182,8 +180,7 @@ public partial class CalendarDateView : ContentView
 
   private Date? Entered => CalendarConversion.ToGregorian(Calendar, _Year, Month, Day);
 
-  // The month and day lists still need a year the calendar's lookups accept while the entered one
-  // is out of range, e.g. halfway through typing it.
+  // The calendar's lookups throw outside its range, which a year passes through while typed.
   private int LookupYear(int year)
   {
     var (min, max) = CalendarConversion.YearRange(Calendar);

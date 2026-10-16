@@ -153,7 +153,6 @@ public partial class DateToolsPage : ContentPage
     }
   }
 
-  // Empty for the same date twice: a zero span has nothing to report.
   public string PeriodText
   {
     get
@@ -172,8 +171,7 @@ public partial class DateToolsPage : ContentPage
     }
   }
 
-  // The result is the input's own date. The From view reinterprets its typed numbers in the new
-  // calendar, so that date is put back afterwards.
+  // The result is the input's own date, which the From view overwrites by reinterpreting its numbers.
   private void Swap()
   {
     var input = _ConvertInput;

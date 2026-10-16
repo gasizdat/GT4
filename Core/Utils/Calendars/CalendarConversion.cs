@@ -14,7 +14,6 @@ namespace GT4.Core.Utils.Calendars;
 /// </summary>
 public static class CalendarConversion
 {
-  // Adar I in a leap year shares Adar's number.
   private const int HebrewAdar = 6;
   private const int HebrewAdarII = 7;
 
