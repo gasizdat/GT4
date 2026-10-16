@@ -172,6 +172,7 @@ public class DateToolsPageTests
   {
     var services = new TestServices();
     var page = await CreatePageAsync(services);
+    var views = await InputViewsAsync(page);
     var earlier = Date.Create(1900, 1, 31, DateStatus.WellKnown);
     var later = Date.Create(1900, 3, 1, DateStatus.WellKnown);
 
@@ -181,6 +182,8 @@ public class DateToolsPageTests
       page.PeriodTo = earlier;
     });
 
+    Assert.Equal(("1900", 2, 0), (views[1].Year, views[1].MonthIndex, views[1].DayIndex));
+    Assert.Equal(("1900", 0, 30), (views[2].Year, views[2].MonthIndex, views[2].DayIndex));
     var span = services.Provider.GetRequiredService<IDateSpanFormatter>().ToString(later - earlier);
     Assert.Equal(string.Format(UIStrings.DateToolsPeriodResult_2, span, 29), page.PeriodText);
   }

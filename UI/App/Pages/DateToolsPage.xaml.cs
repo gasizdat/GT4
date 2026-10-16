@@ -118,8 +118,12 @@ public partial class DateToolsPage : ContentPage
     get => _PeriodFromCalendar;
     set
     {
-      _PeriodFromCalendar = value;
-      OnPropertyChanged(nameof(PeriodText));
+      if (_PeriodFromCalendar != value)
+      {
+        _PeriodFromCalendar = value;
+        OnPropertyChanged(nameof(PeriodFromCalendar));
+        OnPropertyChanged(nameof(PeriodText));
+      }
     }
   }
 
@@ -128,8 +132,12 @@ public partial class DateToolsPage : ContentPage
     get => _PeriodToCalendar;
     set
     {
-      _PeriodToCalendar = value;
-      OnPropertyChanged(nameof(PeriodText));
+      if (_PeriodToCalendar != value)
+      {
+        _PeriodToCalendar = value;
+        OnPropertyChanged(nameof(PeriodToCalendar));
+        OnPropertyChanged(nameof(PeriodText));
+      }
     }
   }
 
@@ -138,8 +146,12 @@ public partial class DateToolsPage : ContentPage
     get => _PeriodFrom;
     set
     {
-      _PeriodFrom = value;
-      OnPropertyChanged(nameof(PeriodText));
+      if (_PeriodFrom != value)
+      {
+        _PeriodFrom = value;
+        OnPropertyChanged(nameof(PeriodFrom));
+        OnPropertyChanged(nameof(PeriodText));
+      }
     }
   }
 
@@ -148,8 +160,12 @@ public partial class DateToolsPage : ContentPage
     get => _PeriodTo;
     set
     {
-      _PeriodTo = value;
-      OnPropertyChanged(nameof(PeriodText));
+      if (_PeriodTo != value)
+      {
+        _PeriodTo = value;
+        OnPropertyChanged(nameof(PeriodTo));
+        OnPropertyChanged(nameof(PeriodText));
+      }
     }
   }
 
