@@ -89,8 +89,14 @@ public struct Date
   // Proleptic, as stored dates are: the rule also covers the years before 1582 and before leap years began in 45 B.C.
   public static bool IsLeapYear(int year)
   {
-    var signedYear = year < 0 ? year + 1 : year;
+    var signedYear = ToSignedYear(year);
     return IsLeapSignedYear(signedYear);
+  }
+
+  public static int DaysInMonth(int year, int month)
+  {
+    var signedYear = ToSignedYear(year);
+    return DaysInMonthOfSignedYear(signedYear, month);
   }
 
   public static DateSpan operator -(Date to, Date from)
@@ -127,7 +133,7 @@ public struct Date
             var (borrowedYear, borrowedMonth) = to.Month == 1
               ? (to.SignedYear - 1, MonthsInYear)
               : (to.SignedYear, to.Month - 1);
-            var borrowedDays = DaysInMonth(borrowedYear, borrowedMonth);
+            var borrowedDays = DaysInMonthOfSignedYear(borrowedYear, borrowedMonth);
             days = to.Day + borrowedDays - Math.Min(from.Day, borrowedDays);
             months--;
           }
@@ -148,8 +154,7 @@ public struct Date
 
   public override int GetHashCode() => HashCode.Combine(Code, Status);
 
-  // There is no year 0: 1 B.C. is followed directly by 1 A.D., so B.C. year N is astronomical year 1-N.
-  private int SignedYear => Sign < 0 ? 1 - Year : Year;
+  private int SignedYear => ToSignedYear(Sign * Year);
 
   // Monotonic in calendar time, unlike Code whose Sign factor flips month/day ordering for B.C. dates.
   private int SequenceCode =>
@@ -157,8 +162,11 @@ public struct Date
     (Status >= DateStatus.MonthUnknown ? UndefinedValue : (Digit * Month)) +
     (Status >= DateStatus.Unknown ? UndefinedValue : (Digit * Digit * SignedYear));
 
+  // There is no year 0: 1 B.C. is followed directly by 1 A.D., so B.C. year N is astronomical year 1-N.
+  private static int ToSignedYear(int year) => year < 0 ? year + 1 : year;
+
   // DateTime rejects the astronomical years 0 and below.
-  private static int DaysInMonth(int signedYear, int month) => month switch
+  private static int DaysInMonthOfSignedYear(int signedYear, int month) => month switch
   {
     2 => IsLeapSignedYear(signedYear) ? 29 : 28,
     4 or 6 or 9 or 11 => 30,
