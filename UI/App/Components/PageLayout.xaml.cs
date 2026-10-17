@@ -4,12 +4,17 @@ using GT4.UI.Items;
 using GT4.UI.Resources;
 using GT4.UI.Utils.Settings;
 using System.Collections.ObjectModel;
+using System.Runtime.InteropServices;
 using System.Windows.Input;
 
 namespace GT4.UI.Components;
 
 public partial class PageLayout : ContentView
 {
+  // CLIPBRD_E_CANT_OPEN: clipboard listeners (history, cloud sync) hold it briefly after every change.
+  private const int ClipboardBusy = unchecked((int)0x800401D0);
+  private const int ClipboardAttempts = 10;
+  private static readonly TimeSpan ClipboardRetryDelay = TimeSpan.FromMilliseconds(100);
   private readonly ObservableCollection<PageMenuItem> _MenuItems = new();
   private readonly INavigationService _NavigationService;
   private readonly ICurrentProjectProvider _CurrentProjectProvider;
@@ -143,6 +148,22 @@ public partial class PageLayout : ContentView
       null,
       OnFooterChanged);
 
+  internal static async Task SetClipboardTextAsync(string? text)
+  {
+    for (var attempt = 1; ; attempt++)
+    {
+      try
+      {
+        await Clipboard.Default.SetTextAsync(text);
+        return;
+      }
+      catch (COMException ex) when (ex.HResult == ClipboardBusy && attempt < ClipboardAttempts)
+      {
+        await Task.Delay(ClipboardRetryDelay);
+      }
+    }
+  }
+
   private static void OnHasBackButtonChanged(BindableObject bindableObject, object oldValue, object newValue)
   {
     if (bindableObject is PageLayout view && oldValue != newValue)
@@ -222,7 +243,7 @@ public partial class PageLayout : ContentView
 
   private async Task CopyAsync(string text)
   {
-    await Clipboard.Default.SetTextAsync(text);
+    await SetClipboardTextAsync(text);
     if (_CopiedNoticeTimer is null)
     {
       _CopiedNoticeTimer = Dispatcher.CreateTimer();
