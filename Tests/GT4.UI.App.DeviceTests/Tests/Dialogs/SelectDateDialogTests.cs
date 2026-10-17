@@ -10,8 +10,8 @@ namespace GT4.UI.DeviceTests;
 
 /// <summary>
 /// Covers SelectDateDialog directly: it has no IServiceProvider/navigation dependency at all, just
-/// a real (unmocked) IDateFormatter and the mocked IAlertService behind its command, so it's
-/// constructed straight from TestServices.
+/// a real IDateFormatter and the mocked IAlertService behind its command, so it's constructed
+/// straight from TestServices.
 /// The switch cascade rules (YearSwitch/MonthSwitch/DaySwitch/ApproximateSwitch) are the page's own
 /// non-obvious logic and the main thing worth pinning here.
 /// </summary>
