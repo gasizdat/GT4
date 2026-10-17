@@ -86,6 +86,13 @@ public struct Date
       .Select(d => d.Status)
       .Max();
 
+  // Proleptic, as stored dates are: the rule also covers the years before 1582 and before leap years began in 45 B.C.
+  public static bool IsLeapYear(int year)
+  {
+    var signedYear = year < 0 ? year + 1 : year;
+    return IsLeapSignedYear(signedYear);
+  }
+
   public static DateSpan operator -(Date to, Date from)
   {
     if (to < from)
@@ -153,8 +160,11 @@ public struct Date
   // DateTime rejects the astronomical years 0 and below.
   private static int DaysInMonth(int signedYear, int month) => month switch
   {
-    2 => signedYear % 4 == 0 && (signedYear % 100 != 0 || signedYear % 400 == 0) ? 29 : 28,
+    2 => IsLeapSignedYear(signedYear) ? 29 : 28,
     4 or 6 or 9 or 11 => 30,
     _ => 31,
   };
+
+  private static bool IsLeapSignedYear(int signedYear) =>
+    signedYear % 4 == 0 && (signedYear % 100 != 0 || signedYear % 400 == 0);
 }

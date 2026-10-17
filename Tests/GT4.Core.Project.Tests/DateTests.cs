@@ -213,6 +213,31 @@ public sealed class DateTests
     Date.GetWorstStatus(wellKnown, dayUnknown).Should().Be(DateStatus.DayUnknown);
   }
 
+  [Theory]
+  [InlineData(2000)]  // divisible by 400
+  [InlineData(1600)]
+  [InlineData(1996)]  // divisible by 4, not 100
+  [InlineData(2024)]
+  [InlineData(2004)]
+  [InlineData(-1)]    // astronomical year 0
+  [InlineData(-5)]
+  [InlineData(-49)]   // before leap years began in 45 B.C.
+  [InlineData(-401)]  // astronomical year -400
+  public void IsLeapYear_LeapYear_ReturnsTrue(int year) =>
+    Date.IsLeapYear(year).Should().BeTrue();
+
+  [Theory]
+  [InlineData(1900)]  // divisible by 100, not 400
+  [InlineData(1800)]
+  [InlineData(1700)]
+  [InlineData(1997)]  // not divisible by 4
+  [InlineData(2023)]
+  [InlineData(2100)]
+  [InlineData(-4)]    // astronomical year -3
+  [InlineData(-101)]  // astronomical year -100
+  public void IsLeapYear_NonLeapYear_ReturnsFalse(int year) =>
+    Date.IsLeapYear(year).Should().BeFalse();
+
   [Fact]
   public void Difference_WellKnown_ReturnsYearsMonthsDays()
   {

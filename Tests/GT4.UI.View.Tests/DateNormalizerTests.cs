@@ -27,25 +27,6 @@ public class DateNormalizerTests
     DateNormalizer.NormalizeMonth(month).Should().Be(expected);
 
   [Theory]
-  [InlineData(2000)]  // divisible by 400
-  [InlineData(1600)]
-  [InlineData(1996)]  // divisible by 4, not 100
-  [InlineData(2024)]
-  [InlineData(2004)]
-  public void IsLeapYear_LeapYear_ReturnsTrue(int year) =>
-    DateNormalizer.IsLeapYear(year).Should().BeTrue();
-
-  [Theory]
-  [InlineData(1900)]  // divisible by 100, not 400
-  [InlineData(1800)]
-  [InlineData(1700)]
-  [InlineData(1997)]  // not divisible by 4
-  [InlineData(2023)]
-  [InlineData(2100)]
-  public void IsLeapYear_NonLeapYear_ReturnsFalse(int year) =>
-    DateNormalizer.IsLeapYear(year).Should().BeFalse();
-
-  [Theory]
   [InlineData(1, 31)]   // January
   [InlineData(3, 31)]   // March
   [InlineData(5, 31)]   // May
@@ -101,4 +82,10 @@ public class DateNormalizerTests
   [Fact]
   public void NormalizeDay_February29_Year1900_ClampsTo28() =>
     DateNormalizer.NormalizeDay(1900, month: 2, day: 29).Should().Be(28);
+
+  [Theory]
+  [InlineData(-1, 29)]  // astronomical year 0
+  [InlineData(-4, 28)]  // astronomical year -3
+  public void NormalizeDay_February29_BeforeCommonEra_FollowsTheAstronomicalYear(int year, int expected) =>
+    DateNormalizer.NormalizeDay(year, month: 2, day: 29).Should().Be(expected);
 }
