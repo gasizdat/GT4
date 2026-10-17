@@ -24,10 +24,15 @@ internal class DateFormatter : IDateFormatter
 
   public string ToString(Date? date)
   {
+    var calendar = CalendarConversion.ToDisplayCalendar(_CalendarSetting.Value);
+    return ToString(date, calendar);
+  }
+
+  public string ToString(Date? date, DisplayCalendar requestedCalendar)
+  {
     if (date.HasValue)
     {
       string ret;
-      var requestedCalendar = CalendarConversion.ToDisplayCalendar(_CalendarSetting.Value);
       var appliedCalendar = DisplayCalendar.Gregorian;
 
       switch (date.Value.Status)
@@ -79,6 +84,10 @@ internal class DateFormatter : IDateFormatter
       return UIStrings.DateStatusNotDefined;
     }
   }
+
+  public string CalendarName(DisplayCalendar calendar) => CalendarLabel(calendar);
+
+  public string[] MonthNames(DisplayCalendar calendar, int year) => Months(calendar, year);
 
   /// <summary>Stateless, so callers that already hold the format they want (e.g. a setting previewing
   /// its own configured value) don't need an <see cref="IDateFormatter"/> instance to use it.</summary>
@@ -140,16 +149,18 @@ internal class DateFormatter : IDateFormatter
     return ret;
   }
 
+  protected static string[] Months(DisplayCalendar displayCalendar, int year) => displayCalendar switch
+  {
+    DisplayCalendar.Gregorian or
+    DisplayCalendar.Julian => GregorianMonths,
+    DisplayCalendar.Hebrew => HebrewMonths(year),
+    DisplayCalendar.FrenchRepublican => FrenchRepublicanMonths,
+    _ => throw new NotImplementedException($"DisplayCalendar={displayCalendar}")
+  };
+
   protected static string MonthToString(Date date, DisplayCalendar displayCalendar)
   {
-    var monthNames = displayCalendar switch
-    {
-      DisplayCalendar.Gregorian or
-      DisplayCalendar.Julian => GregorianMonths,
-      DisplayCalendar.Hebrew => HebrewMonths(date),
-      DisplayCalendar.FrenchRepublican => FrenchRepublicanMonths,
-      _ => throw new NotImplementedException($"DisplayCalendar={displayCalendar}")
-    };
+    var monthNames = Months(displayCalendar, date.Year);
 
     if (date.Month < 1 || date.Month > monthNames.Length)
     {
@@ -187,7 +198,7 @@ internal class DateFormatter : IDateFormatter
       UIStrings.Month_12
     ];
 
-  protected static string[] HebrewMonths(Date date) => CalendarConversion.IsHebrewLeapYear(date.Year) ?
+  protected static string[] HebrewMonths(int year) => CalendarConversion.IsHebrewLeapYear(year) ?
     [
       UIStrings.MonthHebrew_Tishrei,
       UIStrings.MonthHebrew_Cheshvan,

@@ -213,6 +213,31 @@ public sealed class DateTests
     Date.GetWorstStatus(wellKnown, dayUnknown).Should().Be(DateStatus.DayUnknown);
   }
 
+  [Theory]
+  [InlineData(2000)]  // divisible by 400
+  [InlineData(1600)]
+  [InlineData(1996)]  // divisible by 4, not 100
+  [InlineData(2024)]
+  [InlineData(2004)]
+  [InlineData(-1)]    // astronomical year 0
+  [InlineData(-5)]
+  [InlineData(-49)]   // before leap years began in 45 B.C.
+  [InlineData(-401)]  // astronomical year -400
+  public void IsLeapYear_LeapYear_ReturnsTrue(int year) =>
+    Date.IsLeapYear(year).Should().BeTrue();
+
+  [Theory]
+  [InlineData(1900)]  // divisible by 100, not 400
+  [InlineData(1800)]
+  [InlineData(1700)]
+  [InlineData(1997)]  // not divisible by 4
+  [InlineData(2023)]
+  [InlineData(2100)]
+  [InlineData(-4)]    // astronomical year -3
+  [InlineData(-101)]  // astronomical year -100
+  public void IsLeapYear_NonLeapYear_ReturnsFalse(int year) =>
+    Date.IsLeapYear(year).Should().BeFalse();
+
   [Fact]
   public void Difference_WellKnown_ReturnsYearsMonthsDays()
   {
@@ -245,10 +270,43 @@ public sealed class DateTests
 
     var span = to - from;
 
-    // 5 - 20 days -> borrow a month (+30); 1 - 3 months -> borrow a year (+12).
-    span.Days.Should().Be(15);
+    // 5 - 20 days -> borrow December (+31); 1 - 3 months -> borrow a year (+12).
+    span.Days.Should().Be(16);
     span.Months.Should().Be(9);
     span.Years.Should().Be(2);
+  }
+
+  [Theory]
+  [InlineData(20230228, 20230301, 0, 1)]
+  [InlineData(20240228, 20240301, 0, 2)]
+  [InlineData(19000131, 19000301, 1, 1)]
+  [InlineData(19000130, 19000301, 1, 1)]
+  [InlineData(19000115, 19000310, 1, 23)]
+  [InlineData(20000229, 20010228, 11, 30)]
+  public void Difference_WellKnown_BorrowsThePreviousMonthsLength(int fromCode, int toCode, int months, int days)
+  {
+    var from = Date.Create(fromCode, DateStatus.WellKnown);
+    var to = Date.Create(toCode, DateStatus.WellKnown);
+
+    var span = to - from;
+
+    span.Months.Should().Be(months);
+    span.Days.Should().Be(days);
+  }
+
+  [Theory]
+  [InlineData(-11220, 10105, 16)] // 20 Dec 1 B.C. -> 5 Jan 1 A.D.
+  [InlineData(-10220, -10305, 14)] // 20 Feb -> 5 Mar 1 B.C., a leap year
+  public void Difference_WellKnown_BorrowsAcrossTheEraBoundary(int fromCode, int toCode, int days)
+  {
+    var from = Date.Create(fromCode, DateStatus.WellKnown);
+    var to = Date.Create(toCode, DateStatus.WellKnown);
+
+    var span = to - from;
+
+    span.Years.Should().Be(0);
+    span.Months.Should().Be(0);
+    span.Days.Should().Be(days);
   }
 
   [Fact]

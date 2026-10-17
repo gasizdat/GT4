@@ -1,5 +1,6 @@
 using FluentAssertions;
 using GT4.Core.Utils;
+using GT4.Core.Utils.Calendars;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Formatters;
 using Moq;
@@ -418,5 +419,48 @@ public class DateFormatterTests
     SetEn();
     var date = Date.Create(0, 0, 0, DateStatus.Unknown);
     Create(calendar: "Hebrew").ToString(date).Should().Be("unknown (Hebrew)");
+  }
+
+  [Fact]
+  public void WellKnown_ExplicitCalendar_OverridesTheSetting()
+  {
+    SetEn();
+    var date = Date.Create(1861, 3, 3, DateStatus.WellKnown);
+    Create(calendar: "Hebrew").ToString(date, DisplayCalendar.Julian).Should().Be("19 February 1861 (Julian)");
+  }
+
+  [Fact]
+  public void WellKnown_ExplicitGregorian_HasNoLabel()
+  {
+    SetEn();
+    var date = Date.Create(1861, 3, 3, DateStatus.WellKnown);
+    Create(calendar: "Hebrew").ToString(date, DisplayCalendar.Gregorian).Should().Be("03 March 1861");
+  }
+
+  [Theory]
+  [InlineData(DisplayCalendar.Gregorian, 2000, 12)]
+  [InlineData(DisplayCalendar.Julian, 2000, 12)]
+  [InlineData(DisplayCalendar.Hebrew, 5784, 13)]
+  [InlineData(DisplayCalendar.Hebrew, 5785, 12)]
+  [InlineData(DisplayCalendar.FrenchRepublican, 3, 12)]
+  public void MonthNames_ListsEveryMonthOfTheYear(DisplayCalendar calendar, int year, int count)
+  {
+    SetEn();
+    Create().MonthNames(calendar, year).Should().HaveCount(count);
+  }
+
+  [Fact]
+  public void MonthNames_HebrewLeapYear_SplitsAdar()
+  {
+    SetEn();
+    Create().MonthNames(DisplayCalendar.Hebrew, 5784)[5..8].Should().Equal("Adar I", "Adar II", "Nisan");
+  }
+
+  // A date renders a Russian month in the genitive; a picker lists it as is.
+  [Fact]
+  public void RU_MonthNames_AreNominative()
+  {
+    SetRu();
+    Create().MonthNames(DisplayCalendar.Gregorian, 2000)[0].Should().Be("Январь");
   }
 }

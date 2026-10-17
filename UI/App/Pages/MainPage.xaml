@@ -18,6 +18,16 @@
             ItemsSource="{Binding Languages, Source={x:Reference Root}}"
             SelectedItem="{Binding SelectedLanguage, Source={x:Reference Root}}" />
         <Button
+            x:Name="DateToolsBtn"
+            Command="{Binding PageCommand, Source={x:Reference Root}}"
+            CommandParameter="OpenDateTools"
+            FontSize="{DynamicResource ActionButtonTextSize}"
+            Style="{StaticResource EmojiAdorner}"
+            Text="{Binding GoToDateToolsGlyph, Source={x:Reference Root}}"
+            ToolTipProperties.Text="{Binding GoToDateToolsTooltip, Source={x:Reference Root}}"
+            VerticalOptions="Fill"
+            WidthRequest="{Binding Source={x:Reference DateToolsBtn}, Path=Height}" />
+        <Button
             x:Name="SettingsBtn"
             Command="{Binding PageCommand, Source={x:Reference Root}}"
             CommandParameter="OpenSettings"

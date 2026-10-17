@@ -1,4 +1,6 @@
 using GT4.UI.Abstraction;
+using GT4.UI.Items;
+using GT4.UI.Resources;
 using GT4.UI.Utils.Settings;
 using System.Reflection;
 using System.Windows.Input;
@@ -28,6 +30,9 @@ public partial class MainPage : ContentPage
         break;
       case string commandName when commandName == "OpenSettings":
         await _NavigationService.GoToAsync(UIRoutes.GetRoute<SettingsPage>());
+        break;
+      case string commandName when commandName == "OpenDateTools":
+        await _NavigationService.GoToAsync(UIRoutes.GetRoute<DateToolsPage>());
         break;
     }
   }, _AlertService);
@@ -63,4 +68,8 @@ public partial class MainPage : ContentPage
       return $"({version?.ToString() ?? "??"})";
     }
   }
+
+  public string GoToDateToolsGlyph => PageMenuItem.GetGlyph(UIStrings.MenuItemGoToDateTools);
+
+  public string GoToDateToolsTooltip => PageMenuItem.GetTooltip(UIStrings.MenuItemGoToDateTools);
 }

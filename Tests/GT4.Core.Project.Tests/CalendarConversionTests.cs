@@ -181,6 +181,22 @@ public sealed class CalendarConversionTests
     CalendarConversion.MonthsInYear(DisplayCalendar.Hebrew, year).Should().Be(months);
   }
 
+  // 5784 is a leap year, 5785 and 5786 are common.
+  [Theory]
+  [InlineData(1, 5784, 5785, 1)]
+  [InlineData(6, 5784, 5785, 6)]
+  [InlineData(7, 5784, 5785, 6)]
+  [InlineData(8, 5784, 5785, 7)]
+  [InlineData(13, 5784, 5785, 12)]
+  [InlineData(5, 5785, 5784, 5)]
+  [InlineData(6, 5785, 5784, 7)]
+  [InlineData(7, 5785, 5784, 8)]
+  [InlineData(7, 5785, 5786, 7)]
+  public void HebrewMonthInYear_KeepsTheMonthByName(int month, int fromYear, int toYear, int expected)
+  {
+    CalendarConversion.HebrewMonthInYear(month, fromYear, toYear).Should().Be(expected);
+  }
+
   [Fact]
   public void ToGregorian_Hebrew_ThirteenthMonthOfACommonYear_DoesNotExist()
   {

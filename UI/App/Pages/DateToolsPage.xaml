@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="GT4.UI.Pages.DateToolsPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:components="clr-namespace:GT4.UI.Components"
+    xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
+    x:Name="Root">
+
+  <components:PageLayout
+      Title="{x:Static resources:UIStrings.TitleDateToolsPage}"
+      HasBackButton="True"
+      Hint="{x:Static resources:UIStrings.HintDateToolsPage}">
+    <components:PageLayout.Body>
+      <ScrollView>
+        <VerticalStackLayout
+            MaximumWidthRequest="600"
+            Spacing="{StaticResource PageContentSpacing}">
+
+          <Label
+              Style="{StaticResource GroupTitle}"
+              Text="{x:Static resources:UIStrings.DateToolsConvertTitle}" />
+
+          <Label
+              Style="{StaticResource FieldName}"
+              Text="{x:Static resources:UIStrings.FieldConvertFrom}" />
+
+          <components:CalendarDateView
+              Calendar="{Binding ConvertFromCalendar, Source={x:Reference Root}}"
+              Date="{Binding ConvertInput, Source={x:Reference Root}}" />
+
+          <Button
+              Command="{Binding PageCommand, Source={x:Reference Root}}"
+              CommandParameter="Swap"
+              HorizontalOptions="Center"
+              Style="{StaticResource TextAdorner}"
+              Text="⇅"
+              ToolTipProperties.Text="{x:Static resources:UIStrings.BtnNameSwapCalendars}" />
+
+          <Label
+              Style="{StaticResource FieldName}"
+              Text="{x:Static resources:UIStrings.FieldConvertTo}" />
+
+          <Picker
+              HorizontalOptions="Fill"
+              ItemsSource="{Binding CalendarNames, Source={x:Reference Root}}"
+              SelectedIndex="{Binding ConvertToCalendarIndex, Source={x:Reference Root}}" />
+
+          <Label
+              Style="{StaticResource FieldValue}"
+              Text="{Binding ConvertResultText, Source={x:Reference Root}}" />
+
+          <BoxView Style="{StaticResource HorizontalDivider}" />
+
+          <Label
+              Style="{StaticResource GroupTitle}"
+              Text="{x:Static resources:UIStrings.DateToolsPeriodTitle}" />
+
+          <Label
+              Style="{StaticResource FieldName}"
+              Text="{x:Static resources:UIStrings.FieldPeriodFrom}" />
+
+          <components:CalendarDateView
+              Calendar="{Binding PeriodFromCalendar, Source={x:Reference Root}}"
+              Date="{Binding PeriodFrom, Source={x:Reference Root}}" />
+
+          <Label
+              Style="{StaticResource FieldName}"
+              Text="{x:Static resources:UIStrings.FieldPeriodTo}" />
+
+          <components:CalendarDateView
+              Calendar="{Binding PeriodToCalendar, Source={x:Reference Root}}"
+              Date="{Binding PeriodTo, Source={x:Reference Root}}" />
+
+          <Label
+              Style="{StaticResource FieldValue}"
+              Text="{Binding PeriodText, Source={x:Reference Root}}" />
+
+        </VerticalStackLayout>
+      </ScrollView>
+    </components:PageLayout.Body>
+  </components:PageLayout>
+</ContentPage>

@@ -56,4 +56,20 @@ public class MainPageTests
       timeoutMessage: "OpenSettings did not navigate.");
     services.NavigationService.Verify(n => n.GoToAsync(expectedRoute), Times.Once());
   }
+
+  [Fact]
+  public async Task OpenDateTools_navigates_to_DateToolsPage()
+  {
+    var services = new TestServices();
+    var page = await CreatePageAsync(services);
+    var expectedRoute = $"{typeof(DateToolsPage).Namespace}/{typeof(DateToolsPage).Name}";
+
+    await MainThread.InvokeOnMainThreadAsync(() => page.PageCommand.Execute("OpenDateTools"));
+
+    await Poll.UntilAsync(
+      () => Task.FromResult(services.NavigationService.Invocations.Count),
+      count => count > 0,
+      timeoutMessage: "OpenDateTools did not navigate.");
+    services.NavigationService.Verify(n => n.GoToAsync(expectedRoute), Times.Once());
+  }
 }

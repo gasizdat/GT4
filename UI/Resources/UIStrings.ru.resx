@@ -1620,4 +1620,52 @@ FN - род</value>
   <data name="FieldFanChartSweepHint" xml:space="preserve">
     <value>Какую часть круга занимает веерная схема: половину, три четверти или весь круг.</value>
   </data>
+  <data name="TitleDateToolsPage" xml:space="preserve">
+    <value>Работа с датами</value>
+  </data>
+  <data name="HintDateToolsPage" xml:space="preserve">
+    <value>Переведите дату из одного календаря в другой или узнайте, сколько времени прошло между двумя датами.</value>
+  </data>
+  <data name="MenuItemGoToDateTools" xml:space="preserve">
+    <value>📟 Работа с датами</value>
+  </data>
+  <data name="DateToolsConvertTitle" xml:space="preserve">
+    <value>Перевод между календарями</value>
+  </data>
+  <data name="DateToolsPeriodTitle" xml:space="preserve">
+    <value>Период между двумя датами</value>
+  </data>
+  <data name="FieldConvertFrom" xml:space="preserve">
+    <value>Из календаря</value>
+  </data>
+  <data name="FieldConvertTo" xml:space="preserve">
+    <value>В календарь</value>
+  </data>
+  <data name="FieldPeriodFrom" xml:space="preserve">
+    <value>С</value>
+  </data>
+  <data name="FieldPeriodTo" xml:space="preserve">
+    <value>По</value>
+  </data>
+  <data name="BtnNameSwapCalendars" xml:space="preserve">
+    <value>Поменять календари местами</value>
+  </data>
+  <data name="DateToolsInputNotRepresentable_2" xml:space="preserve">
+    <value>{0} календарь: такой даты нет. {1}</value>
+  </data>
+  <data name="DateToolsResultNotRepresentable_2" xml:space="preserve">
+    <value>{0} календарь не может показать эту дату. {1}</value>
+  </data>
+  <data name="DateToolsRangeCommon" xml:space="preserve">
+    <value>Поддерживаются только годы с 1 по 9999.</value>
+  </data>
+  <data name="DateToolsRangeHebrew" xml:space="preserve">
+    <value>Поддерживаются даты с 7 тевета 5343 по 29 элула 5999 (с 1 января 1583 по 29 сентября 2239).</value>
+  </data>
+  <data name="DateToolsRangeFrenchRepublican" xml:space="preserve">
+    <value>Поддерживаются только годы с 1 по 14: с 1 вандемьера 1 года по 10 нивоза 14 года (с 22 сентября 1792 по 31 декабря 1805), без дополнительных дней.</value>
+  </data>
+  <data name="DateToolsPeriodResult_2" xml:space="preserve">
+    <value>{0} (всего дней: {1})</value>
+  </data>
 </root>

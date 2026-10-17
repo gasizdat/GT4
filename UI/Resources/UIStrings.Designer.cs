@@ -104,7 +104,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("AlertTextKinshipUnfoldingAborted", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to The main person for this project could no longer be found, so it has been unmarked..
         /// </summary>
@@ -113,7 +113,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("AlertTextMainPersonMissing", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to This project was created by an older version of the app. It has to be updated before it can be opened. Update it now?.
         /// </summary>
@@ -330,7 +330,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("BtnNameCreateName_1", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Bold.
         /// </summary>
@@ -339,7 +339,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("BtnNameFormatBold", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Bulleted list.
         /// </summary>
@@ -348,7 +348,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("BtnNameFormatBulletList", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Heading.
         /// </summary>
@@ -357,7 +357,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("BtnNameFormatHeading", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Italic.
         /// </summary>
@@ -366,7 +366,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("BtnNameFormatItalic", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to 🙈 {0} hidden.
         /// </summary>
@@ -490,6 +490,15 @@ namespace GT4.UI.Resources {
         public static string BtnNameShowAll {
             get {
                 return ResourceManager.GetString("BtnNameShowAll", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Swap calendars.
+        /// </summary>
+        public static string BtnNameSwapCalendars {
+            get {
+                return ResourceManager.GetString("BtnNameSwapCalendars", resourceCulture);
             }
         }
         
@@ -710,6 +719,78 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Convert between calendars.
+        /// </summary>
+        public static string DateToolsConvertTitle {
+            get {
+                return ResourceManager.GetString("DateToolsConvertTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This date does not exist in the {0} calendar. {1}.
+        /// </summary>
+        public static string DateToolsInputNotRepresentable_2 {
+            get {
+                return ResourceManager.GetString("DateToolsInputNotRepresentable_2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} (total days: {1}).
+        /// </summary>
+        public static string DateToolsPeriodResult_2 {
+            get {
+                return ResourceManager.GetString("DateToolsPeriodResult_2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Period between two dates.
+        /// </summary>
+        public static string DateToolsPeriodTitle {
+            get {
+                return ResourceManager.GetString("DateToolsPeriodTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Only years 1 to 9999 are supported..
+        /// </summary>
+        public static string DateToolsRangeCommon {
+            get {
+                return ResourceManager.GetString("DateToolsRangeCommon", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Only years 1 to 14 are supported, from 1 Vendémiaire 1 to 10 Nivôse 14 (22 September 1792 to 31 December 1805), without the complementary days..
+        /// </summary>
+        public static string DateToolsRangeFrenchRepublican {
+            get {
+                return ResourceManager.GetString("DateToolsRangeFrenchRepublican", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Supported from 7 Tevet 5343 to 29 Elul 5999 (1 January 1583 to 29 September 2239)..
+        /// </summary>
+        public static string DateToolsRangeHebrew {
+            get {
+                return ResourceManager.GetString("DateToolsRangeHebrew", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This date cannot be shown in the {0} calendar. {1}.
+        /// </summary>
+        public static string DateToolsResultNotRepresentable_2 {
+            get {
+                return ResourceManager.GetString("DateToolsResultNotRepresentable_2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to At least the following persons share name {0}: {1}.
         /// </summary>
         public static string ErrorNameIsShared_2 {
@@ -771,7 +852,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("FieldBackgroundAnimationHint", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Biological sex.
         /// </summary>
@@ -850,6 +931,24 @@ namespace GT4.UI.Resources {
         public static string FieldCommonPersonNameFormat {
             get {
                 return ResourceManager.GetString("FieldCommonPersonNameFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to From.
+        /// </summary>
+        public static string FieldConvertFrom {
+            get {
+                return ResourceManager.GetString("FieldConvertFrom", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to To.
+        /// </summary>
+        public static string FieldConvertTo {
+            get {
+                return ResourceManager.GetString("FieldConvertTo", resourceCulture);
             }
         }
         
@@ -1082,7 +1181,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("FieldGedcomFamilyDetails", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Width.
         /// </summary>
@@ -1091,7 +1190,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("FieldImageWidth", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Original.
         /// </summary>
@@ -1100,7 +1199,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("FieldImageWidthOriginal", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Connecting relatives.
         /// </summary>
@@ -1163,7 +1262,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("FieldLastNameMaleEntry", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to ⭐ {0}.
         /// </summary>
@@ -1172,7 +1271,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("FieldMainPerson_1", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Marital status.
         /// </summary>
@@ -1199,7 +1298,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("FieldMaritalStatusSingle", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Insert as.
         /// </summary>
@@ -1208,7 +1307,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("FieldMediaLinkKind", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Link.
         /// </summary>
@@ -1217,7 +1316,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("FieldMediaLinkKindLink", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Picture.
         /// </summary>
@@ -1226,7 +1325,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("FieldMediaLinkKindPicture", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Month.
         /// </summary>
@@ -1269,6 +1368,24 @@ namespace GT4.UI.Resources {
         public static string FieldPatronymicMaleEntry {
             get {
                 return ResourceManager.GetString("FieldPatronymicMaleEntry", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to From.
+        /// </summary>
+        public static string FieldPeriodFrom {
+            get {
+                return ResourceManager.GetString("FieldPeriodFrom", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to To.
+        /// </summary>
+        public static string FieldPeriodTo {
+            get {
+                return ResourceManager.GetString("FieldPeriodTo", resourceCulture);
             }
         }
         
@@ -1355,7 +1472,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("FieldReadOnlyMode", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Hides menu items that edit, create, or remove data. Navigation, filters, and refresh stay available..
         /// </summary>
@@ -1364,7 +1481,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("FieldReadOnlyModeHint", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Start date.
         /// </summary>
@@ -2323,6 +2440,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Convert a date between calendars, or find the time between two dates..
+        /// </summary>
+        public static string HintDateToolsPage {
+            get {
+                return ResourceManager.GetString("HintDateToolsPage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to A sample tree to explore — safe to delete.
         /// </summary>
         public static string HintDemoProject {
@@ -2438,7 +2564,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("HintNamesPage", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Cancelling….
         /// </summary>
@@ -2447,7 +2573,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("HintProgressCancelling", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Open or create a new one.
         /// </summary>
@@ -2492,7 +2618,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("HintRelativeMultipleConnections", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to The list stops at {0} entries, so more distant relatives are left out..
         /// </summary>
@@ -2501,7 +2627,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("HintRelativesTruncated_1", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Arrange.
         /// </summary>
@@ -2510,7 +2636,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("LblArrange", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Span.
         /// </summary>
@@ -2602,6 +2728,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 📟 Date tools.
+        /// </summary>
+        public static string MenuItemGoToDateTools {
+            get {
+                return ResourceManager.GetString("MenuItemGoToDateTools", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 👪 To family: {0}.
         /// </summary>
         public static string MenuItemGotoFamily_1 {
@@ -2627,7 +2762,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("MenuItemGoToKinshipFinder", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to ⭐ Main person.
         /// </summary>
@@ -2636,16 +2771,16 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("MenuItemGoToMainPerson", resourceCulture);
             }
         }
-
+        
         /// <summary>
-        ///   Looks up a localized string similar to 🌳 Main person's family tree.
+        ///   Looks up a localized string similar to 🌳 Main person&apos;s family tree.
         /// </summary>
         public static string MenuItemGoToMainPersonFamilyTree {
             get {
                 return ResourceManager.GetString("MenuItemGoToMainPersonFamilyTree", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to 📝 To Names.
         /// </summary>
@@ -2771,7 +2906,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("MenuItemNameFilters", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Hide from tree.
         /// </summary>
@@ -2789,7 +2924,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("MenuItemNameMarkAsMainPerson_1", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to 👤 Open {0}.
         /// </summary>
@@ -2834,7 +2969,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("MenuItemNameSettings", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to {0} Unmark as main person.
         /// </summary>
@@ -2843,7 +2978,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("MenuItemNameUnmarkAsMainPerson_1", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to January.
         /// </summary>
@@ -3689,7 +3824,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("RelHusbandsBrother", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Father-in-law.
         /// </summary>
@@ -3707,7 +3842,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("RelHusbandsMother", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Sister-in-law.
         /// </summary>
@@ -3716,7 +3851,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("RelHusbandsSister", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to In-law.
         /// </summary>
@@ -4031,7 +4166,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("RelWifesBrother", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Father-in-law.
         /// </summary>
@@ -4040,7 +4175,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("RelWifesFather", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Mother-in-law.
         /// </summary>
@@ -4049,7 +4184,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("RelWifesMother", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Sister-in-law.
         /// </summary>
@@ -4058,7 +4193,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("RelWifesSister", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Export GEDCOM.
         /// </summary>
@@ -4222,11 +4357,29 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Date tools.
+        /// </summary>
+        public static string TitleDateToolsPage {
+            get {
+                return ResourceManager.GetString("TitleDateToolsPage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Brontë Family (Demo).
         /// </summary>
         public static string TitleDemoProject {
             get {
                 return ResourceManager.GetString("TitleDemoProject", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Description.
+        /// </summary>
+        public static string TitleEditCaptionDialog {
+            get {
+                return ResourceManager.GetString("TitleEditCaptionDialog", resourceCulture);
             }
         }
         
@@ -4256,15 +4409,6 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("TitleFamilyStatisticsPage_1", resourceCulture);
             }
         }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 🌳 {0} 🔀.
-        /// </summary>
-        public static string TitleFamilyTreePageArranged_1 {
-            get {
-                return ResourceManager.GetString("TitleFamilyTreePageArranged_1", resourceCulture);
-            }
-        }
         
         /// <summary>
         ///   Looks up a localized string similar to 🌳 {0}.
@@ -4272,6 +4416,15 @@ namespace GT4.UI.Resources {
         public static string TitleFamilyTreePage_1 {
             get {
                 return ResourceManager.GetString("TitleFamilyTreePage_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 🌳 {0} 🔀.
+        /// </summary>
+        public static string TitleFamilyTreePageArranged_1 {
+            get {
+                return ResourceManager.GetString("TitleFamilyTreePageArranged_1", resourceCulture);
             }
         }
         
@@ -4310,7 +4463,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("TitleHiddenPersons", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Exporting HTML.
         /// </summary>
@@ -4364,16 +4517,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("TitleSelectDateDialog", resourceCulture);
             }
         }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Description.
-        /// </summary>
-        public static string TitleEditCaptionDialog {
-            get {
-                return ResourceManager.GetString("TitleEditCaptionDialog", resourceCulture);
-            }
-        }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Select text encoding.
         /// </summary>
@@ -4454,7 +4598,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("TxtPlaceholderBiography", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Add a description.
         /// </summary>
@@ -4463,7 +4607,7 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("TxtPlaceholderCaption", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Enter a Family name in the plural (for example, Smiths).
         /// </summary>

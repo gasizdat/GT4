@@ -1609,15 +1609,63 @@ FN - nom de famille</value>
     <value>◔ {0}</value>
   </data>
   <data name="HintFanChartPage" xml:space="preserve">
-    <value>Touchez un ancêtre pour centrer l&apos;éventail sur lui</value>
+    <value>Touchez un ancêtre pour centrer l'éventail sur lui</value>
   </data>
   <data name="LblFanChartSweep" xml:space="preserve">
     <value>Arc</value>
   </data>
   <data name="FieldFanChartSweep" xml:space="preserve">
-    <value>Arc de l&apos;éventail</value>
+    <value>Arc de l'éventail</value>
   </data>
   <data name="FieldFanChartSweepHint" xml:space="preserve">
-    <value>Quelle part d&apos;un cercle l&apos;éventail couvre : une moitié, trois quarts ou le cercle entier.</value>
+    <value>Quelle part d'un cercle l'éventail couvre : une moitié, trois quarts ou le cercle entier.</value>
+  </data>
+  <data name="TitleDateToolsPage" xml:space="preserve">
+    <value>Outils de dates</value>
+  </data>
+  <data name="HintDateToolsPage" xml:space="preserve">
+    <value>Convertissez une date d'un calendrier à l'autre ou calculez la durée entre deux dates.</value>
+  </data>
+  <data name="MenuItemGoToDateTools" xml:space="preserve">
+    <value>📟 Outils de dates</value>
+  </data>
+  <data name="DateToolsConvertTitle" xml:space="preserve">
+    <value>Convertir entre calendriers</value>
+  </data>
+  <data name="DateToolsPeriodTitle" xml:space="preserve">
+    <value>Durée entre deux dates</value>
+  </data>
+  <data name="FieldConvertFrom" xml:space="preserve">
+    <value>De</value>
+  </data>
+  <data name="FieldConvertTo" xml:space="preserve">
+    <value>Vers</value>
+  </data>
+  <data name="FieldPeriodFrom" xml:space="preserve">
+    <value>Du</value>
+  </data>
+  <data name="FieldPeriodTo" xml:space="preserve">
+    <value>Au</value>
+  </data>
+  <data name="BtnNameSwapCalendars" xml:space="preserve">
+    <value>Inverser les calendriers</value>
+  </data>
+  <data name="DateToolsInputNotRepresentable_2" xml:space="preserve">
+    <value>Cette date n'existe pas dans le calendrier {0}. {1}</value>
+  </data>
+  <data name="DateToolsResultNotRepresentable_2" xml:space="preserve">
+    <value>Cette date ne peut pas être exprimée dans le calendrier {0}. {1}</value>
+  </data>
+  <data name="DateToolsRangeCommon" xml:space="preserve">
+    <value>Seules les années 1 à 9999 sont prises en charge.</value>
+  </data>
+  <data name="DateToolsRangeHebrew" xml:space="preserve">
+    <value>Les dates prises en charge vont du 7 Tevet 5343 au 29 Eloul 5999 (du 1er janvier 1583 au 29 septembre 2239).</value>
+  </data>
+  <data name="DateToolsRangeFrenchRepublican" xml:space="preserve">
+    <value>Seules les années 1 à 14 sont prises en charge, du 1er vendémiaire an 1 au 10 nivôse an 14 (du 22 septembre 1792 au 31 décembre 1805), sans les jours complémentaires.</value>
+  </data>
+  <data name="DateToolsPeriodResult_2" xml:space="preserve">
+    <value>{0} (nombre total de jours : {1})</value>
   </data>
 </root>
