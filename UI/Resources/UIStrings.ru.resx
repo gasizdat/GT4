@@ -1668,4 +1668,7 @@ FN - род</value>
   <data name="DateToolsPeriodResult_2" xml:space="preserve">
     <value>{0} (всего дней: {1})</value>
   </data>
+  <data name="DateInOtherCalendar" xml:space="preserve">
+    <value>Ввести в другом календаре</value>
+  </data>
 </root>

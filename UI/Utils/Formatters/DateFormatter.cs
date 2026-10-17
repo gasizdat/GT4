@@ -22,11 +22,9 @@ internal class DateFormatter : IDateFormatter
     _CalendarSetting = calendarSetting;
   }
 
-  public string ToString(Date? date)
-  {
-    var calendar = CalendarConversion.ToDisplayCalendar(_CalendarSetting.Value);
-    return ToString(date, calendar);
-  }
+  public DisplayCalendar Calendar => CalendarConversion.ToDisplayCalendar(_CalendarSetting.Value);
+
+  public string ToString(Date? date) => ToString(date, Calendar);
 
   public string ToString(Date? date, DisplayCalendar requestedCalendar)
   {
@@ -88,6 +86,13 @@ internal class DateFormatter : IDateFormatter
   public string CalendarName(DisplayCalendar calendar) => CalendarLabel(calendar);
 
   public string[] MonthNames(DisplayCalendar calendar, int year) => Months(calendar, year);
+
+  public string CalendarRange(DisplayCalendar calendar) => calendar switch
+  {
+    DisplayCalendar.Hebrew => UIStrings.DateToolsRangeHebrew,
+    DisplayCalendar.FrenchRepublican => UIStrings.DateToolsRangeFrenchRepublican,
+    _ => UIStrings.DateToolsRangeCommon,
+  };
 
   /// <summary>Stateless, so callers that already hold the format they want (e.g. a setting previewing
   /// its own configured value) don't need an <see cref="IDateFormatter"/> instance to use it.</summary>

@@ -5,6 +5,9 @@ namespace GT4.UI.Utils.Formatters;
 
 public interface IDateFormatter
 {
+  /// <summary>The calendar the setting chooses, which <see cref="ToString(Date?)"/> displays.</summary>
+  DisplayCalendar Calendar { get; }
+
   string ToString(Date? date);
 
   string ToString(Date? date, DisplayCalendar requestedCalendar);
@@ -14,4 +17,7 @@ public interface IDateFormatter
   /// <summary>Nominative, as a picker lists them. <paramref name="year"/> must be within
   /// <see cref="CalendarConversion.YearRange"/>: a Hebrew year decides whether Adar is split.</summary>
   string[] MonthNames(DisplayCalendar calendar, int year);
+
+  /// <summary>The dates <paramref name="calendar"/> can represent, as a sentence.</summary>
+  string CalendarRange(DisplayCalendar calendar);
 }

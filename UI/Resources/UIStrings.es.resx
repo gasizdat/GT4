@@ -1668,4 +1668,7 @@ FN - apellido familiar</value>
   <data name="DateToolsPeriodResult_2" xml:space="preserve">
     <value>{0} (total de días: {1})</value>
   </data>
+  <data name="DateInOtherCalendar" xml:space="preserve">
+    <value>Introducir en otro calendario</value>
+  </data>
 </root>

@@ -1,4 +1,5 @@
 using GT4.Core.Utils;
+using GT4.Core.Utils.Calendars;
 using GT4.UI.Abstraction;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
@@ -24,6 +25,9 @@ public partial class SelectDateDialog : ContentPage
   private bool _YearSwitch = false;
   private bool _MonthSwitch = false;
   private bool _DaySwitch = false;
+  private bool _OtherCalendarSwitch = false;
+  private DisplayCalendar _OtherCalendar;
+  private Date? _OtherCalendarDate;
   private bool _NotReady = true;
 
   public SelectDateDialog(Date? date, IDateFormatter dateFormatter, IAlertService alertService)
@@ -31,6 +35,7 @@ public partial class SelectDateDialog : ContentPage
     _DateFormatter = dateFormatter;
     _DialogCommand = new SafeCommand(OnSelectDate, alertService);
     _CancelCommand = new SafeCommand(Cancel, alertService);
+    _OtherCalendar = CalendarConversion.OtherThanGregorian(dateFormatter.Calendar);
     if (date.HasValue)
     {
       var signedYear = date.Value.Sign < 0 ? -date.Value.Year : date.Value.Year;
@@ -253,6 +258,71 @@ public partial class SelectDateDialog : ContentPage
     }
   }
 
+  public bool OtherCalendarSwitch
+  {
+    get => _OtherCalendarSwitch;
+    set
+    {
+      if (_OtherCalendarSwitch != value)
+      {
+        _OtherCalendarSwitch = value;
+        if (_OtherCalendarSwitch)
+        {
+          // The view keeps its numbers for a date it can't show, which would then disagree with them.
+          var date = Date;
+          if (date.Status == DateStatus.WellKnown && CalendarConversion.IsRepresentable(date, _OtherCalendar))
+          {
+            OtherCalendarDate = date;
+          }
+        }
+        else if (_OtherCalendarDate is Date date)
+        {
+          _Year = date.Year;
+          _Month = date.Month;
+          _Day = date.Day;
+          DaySwitch = true;
+          OnPropertyChanged(nameof(Year));
+          OnPropertyChanged(nameof(Month));
+          OnPropertyChanged(nameof(Day));
+        }
+
+        OnPropertyChanged(nameof(OtherCalendarSwitch));
+        OnPropertyChanged(nameof(IsGregorianInputVisible));
+        Refresh();
+      }
+    }
+  }
+
+  public bool IsGregorianInputVisible => !_OtherCalendarSwitch;
+
+  public DisplayCalendar OtherCalendar
+  {
+    get => _OtherCalendar;
+    set
+    {
+      if (_OtherCalendar != value)
+      {
+        _OtherCalendar = value;
+        OnPropertyChanged(nameof(OtherCalendar));
+        Refresh();
+      }
+    }
+  }
+
+  public Date? OtherCalendarDate
+  {
+    get => _OtherCalendarDate;
+    set
+    {
+      if (_OtherCalendarDate != value)
+      {
+        _OtherCalendarDate = value;
+        OnPropertyChanged(nameof(OtherCalendarDate));
+        Refresh();
+      }
+    }
+  }
+
   private Date Date
   {
     get
@@ -274,9 +344,24 @@ public partial class SelectDateDialog : ContentPage
     }
   }
 
-  public string DateString => _DateFormatter.ToString(Date);
+  private Date? Result => _NotReady ? null : EnteredDate;
 
-  public string DialogButtonName => _NotReady ? UIStrings.BtnNameCancel : UIStrings.BtnNameOk;
+  private Date? EnteredDate => _OtherCalendarSwitch ? _OtherCalendarDate : Date;
+
+  public string DateString
+  {
+    get
+    {
+      if (EnteredDate is not null)
+        return _DateFormatter.ToString(EnteredDate);
+
+      var name = _DateFormatter.CalendarName(_OtherCalendar);
+      var range = _DateFormatter.CalendarRange(_OtherCalendar);
+      return string.Format(UIStrings.DateToolsInputNotRepresentable_2, name, range);
+    }
+  }
+
+  public string DialogButtonName => Result is null ? UIStrings.BtnNameCancel : UIStrings.BtnNameOk;
 
   public Task<Date?> Info => _Info.Task;
 
@@ -290,7 +375,7 @@ public partial class SelectDateDialog : ContentPage
     return true;
   }
 
-  private void OnSelectDate() => _Info.TrySetResult(_NotReady ? null : Date);
+  private void OnSelectDate() => _Info.TrySetResult(Result);
 
   private void Cancel() => _Info.TrySetResult(null);
 }

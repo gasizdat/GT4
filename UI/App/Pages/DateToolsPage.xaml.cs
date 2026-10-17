@@ -34,7 +34,7 @@ public partial class DateToolsPage : ContentPage
     _DateSpanFormatter = dateSpanFormatter;
     _AlertService = alertService;
     var calendar = CalendarConversion.ToDisplayCalendar(calendarSetting.Value);
-    _ConvertToCalendar = calendar == DisplayCalendar.Gregorian ? DisplayCalendar.Julian : calendar;
+    _ConvertToCalendar = CalendarConversion.OtherThanGregorian(calendar);
 
     InitializeComponent();
   }
@@ -107,7 +107,7 @@ public partial class DateToolsPage : ContentPage
       if (_ConvertInput is not Date input)
         return NotInCalendar(UIStrings.DateToolsInputNotRepresentable_2, _ConvertFromCalendar);
 
-      return IsRepresentable(input, _ConvertToCalendar)
+      return CalendarConversion.IsRepresentable(input, _ConvertToCalendar)
         ? _DateFormatter.ToString(input, _ConvertToCalendar)
         : NotInCalendar(UIStrings.DateToolsResultNotRepresentable_2, _ConvertToCalendar);
     }
@@ -192,7 +192,7 @@ public partial class DateToolsPage : ContentPage
   private void Swap()
   {
     var input = _ConvertInput;
-    var hasResult = input is Date date && IsRepresentable(date, _ConvertToCalendar);
+    var hasResult = input is Date date && CalendarConversion.IsRepresentable(date, _ConvertToCalendar);
     var from = _ConvertFromCalendar;
     ConvertFromCalendar = _ConvertToCalendar;
     ConvertToCalendar = from;
@@ -202,21 +202,10 @@ public partial class DateToolsPage : ContentPage
     }
   }
 
-  private static bool IsRepresentable(Date date, DisplayCalendar calendar)
-  {
-    var (applied, _, _, _) = CalendarConversion.TryConvert(date, calendar);
-    return applied == calendar;
-  }
-
   private string NotInCalendar(string format, DisplayCalendar calendar)
   {
     var name = _DateFormatter.CalendarName(calendar);
-    var range = calendar switch
-    {
-      DisplayCalendar.Hebrew => UIStrings.DateToolsRangeHebrew,
-      DisplayCalendar.FrenchRepublican => UIStrings.DateToolsRangeFrenchRepublican,
-      _ => UIStrings.DateToolsRangeCommon,
-    };
+    var range = _DateFormatter.CalendarRange(calendar);
     return string.Format(format, name, range);
   }
 

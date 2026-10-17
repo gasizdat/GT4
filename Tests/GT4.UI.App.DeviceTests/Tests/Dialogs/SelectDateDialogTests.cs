@@ -1,6 +1,9 @@
 using GT4.Core.Utils;
+using GT4.Core.Utils.Calendars;
+using GT4.UI.Components;
 using GT4.UI.Dialogs;
 using GT4.UI.Utils.Formatters;
+using Moq;
 using Xunit;
 
 namespace GT4.UI.DeviceTests;
@@ -20,6 +23,11 @@ public class SelectDateDialogTests
     var dateFormatter = services.Provider.GetRequiredService<IDateFormatter>();
     return await MainThread.InvokeOnMainThreadAsync(() => new SelectDateDialog(date, dateFormatter, services.AlertService.Object));
   }
+
+  private static Task<CalendarDateView> OtherCalendarViewAsync(SelectDateDialog dialog) =>
+    MainThread.InvokeOnMainThreadAsync(() => dialog.GetVisualTreeDescendants().OfType<CalendarDateView>().Single());
+
+  private static Date WellKnown(int year, int month, int day) => Date.Create(year, month, day, DateStatus.WellKnown);
 
   [Fact]
   public async Task Ctor_with_no_date_starts_empty_and_not_ready()
@@ -183,5 +191,157 @@ public class SelectDateDialogTests
     var result = await dialog.Info;
 
     Assert.Equal(Date.Create(1990, 3, 10, DateStatus.WellKnown), result);
+  }
+
+  // The host's formatter reads the developer's own calendar setting, so a mock pins it.
+  [Theory]
+  [InlineData(DisplayCalendar.Gregorian, DisplayCalendar.Julian)]
+  [InlineData(DisplayCalendar.Hebrew, DisplayCalendar.Hebrew)]
+  public async Task The_other_calendar_is_the_display_calendar_unless_it_is_Gregorian(DisplayCalendar displayCalendar, DisplayCalendar expected)
+  {
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    var services = new TestServices();
+    var dateFormatter = new Mock<IDateFormatter>();
+    dateFormatter.SetupGet(f => f.Calendar).Returns(displayCalendar);
+    var dialog = await MainThread.InvokeOnMainThreadAsync(() => new SelectDateDialog(null, dateFormatter.Object, services.AlertService.Object));
+    var view = await OtherCalendarViewAsync(dialog);
+
+    Assert.Equal(expected, dialog.OtherCalendar);
+    Assert.Equal(expected, view.Calendar);
+  }
+
+  [Fact]
+  public async Task A_date_entered_in_another_calendar_returns_its_Gregorian_date()
+  {
+    var services = new TestServices();
+    var dialog = await CreateDialogAsync(services, null);
+    var view = await OtherCalendarViewAsync(dialog);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      dialog.OtherCalendarSwitch = true;
+      view.Calendar = DisplayCalendar.Julian;
+      view.Year = "1861";
+      view.MonthIndex = 1;
+      view.DayIndex = 18;
+    });
+
+    var expected = WellKnown(1861, 3, 3);
+    var expectedText = services.Provider.GetRequiredService<IDateFormatter>().ToString(expected);
+    Assert.Equal(expectedText, dialog.DateString);
+    Assert.Equal(Resources.UIStrings.BtnNameOk, dialog.DialogButtonName);
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.DialogCommand.Execute(null));
+    Assert.Equal(expected, await dialog.Info);
+  }
+
+  [Fact]
+  public async Task A_date_outside_the_other_calendar_says_why_and_returns_nothing()
+  {
+    var services = new TestServices();
+    var dialog = await CreateDialogAsync(services, WellKnown(2000, 5, 15));
+    var view = await OtherCalendarViewAsync(dialog);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      dialog.OtherCalendarSwitch = true;
+      view.Calendar = DisplayCalendar.Hebrew;
+      view.Year = "5342";
+    });
+
+    var name = services.Provider.GetRequiredService<IDateFormatter>().CalendarName(DisplayCalendar.Hebrew);
+    var expectedText = string.Format(Resources.UIStrings.DateToolsInputNotRepresentable_2, name, Resources.UIStrings.DateToolsRangeHebrew);
+    Assert.Equal(expectedText, dialog.DateString);
+    Assert.Equal(Resources.UIStrings.BtnNameCancel, dialog.DialogButtonName);
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.DialogCommand.Execute(null));
+    Assert.Null(await dialog.Info);
+  }
+
+  [Fact]
+  public async Task Turning_the_other_calendar_on_shows_the_date_in_it()
+  {
+    var date = WellKnown(1861, 3, 3);
+    var dialog = await CreateDialogAsync(new TestServices(), date);
+    var view = await OtherCalendarViewAsync(dialog);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      dialog.OtherCalendar = DisplayCalendar.Julian;
+      dialog.OtherCalendarSwitch = true;
+    });
+
+    Assert.Equal(("1861", 1, 18), (view.Year, view.MonthIndex, view.DayIndex));
+    Assert.Equal(date, dialog.OtherCalendarDate);
+  }
+
+  // Hebrew starts in 1583.
+  [Theory]
+  [InlineData(1861, 0, 0, DateStatus.MonthUnknown, DisplayCalendar.Julian)]
+  [InlineData(1500, 1, 1, DateStatus.WellKnown, DisplayCalendar.Hebrew)]
+  public async Task Turning_the_other_calendar_on_converts_only_a_full_date_it_can_show(
+    int year, int month, int day, DateStatus status, DisplayCalendar calendar)
+  {
+    var dialog = await CreateDialogAsync(new TestServices(), Date.Create(year, month, day, status));
+    var view = await OtherCalendarViewAsync(dialog);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      dialog.OtherCalendar = calendar;
+      dialog.OtherCalendarSwitch = true;
+    });
+
+    Assert.Equal("0", view.Year);
+    Assert.Null(dialog.OtherCalendarDate);
+  }
+
+  [Fact]
+  public async Task Turning_the_other_calendar_off_shows_its_date_in_the_Gregorian_fields()
+  {
+    var dialog = await CreateDialogAsync(new TestServices(), null);
+    var view = await OtherCalendarViewAsync(dialog);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      dialog.OtherCalendarSwitch = true;
+      view.Calendar = DisplayCalendar.Julian;
+      view.Year = "1861";
+      view.MonthIndex = 1;
+      view.DayIndex = 18;
+      dialog.OtherCalendarSwitch = false;
+    });
+
+    Assert.Equal(("1861", dialog.Months[2], dialog.Days[2]), (dialog.Year, dialog.Month, dialog.Day));
+    Assert.True(dialog.DaySwitch);
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.DialogCommand.Execute(null));
+    Assert.Equal(WellKnown(1861, 3, 3), await dialog.Info);
+  }
+
+  // Attached, the native pickers push their selections back through the bindings.
+  [Fact]
+  public async Task Attached_the_other_calendar_takes_the_date_without_touching_it()
+  {
+    var date = WellKnown(1861, 3, 3);
+    var dialog = await CreateDialogAsync(new TestServices(), date);
+    await using var window = await WindowHost.AttachAsync(dialog);
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => dialog.GetVisualTreeDescendants().OfType<Picker>().All(p => p.IsLoaded)),
+      loaded => loaded,
+      timeoutMessage: "The pickers never loaded.");
+    Assert.Equal(Resources.UIStrings.BtnNameCancel, dialog.DialogButtonName);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      dialog.OtherCalendar = DisplayCalendar.Julian;
+      dialog.OtherCalendarSwitch = true;
+    });
+    var view = await OtherCalendarViewAsync(dialog);
+    var pickers = await MainThread.InvokeOnMainThreadAsync(() => view.GetVisualTreeDescendants().OfType<Picker>().ToArray());
+    var julian = Array.IndexOf(Enum.GetValues<DisplayCalendar>(), DisplayCalendar.Julian);
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => pickers.Select(p => p.SelectedIndex).ToArray()),
+      selected => selected.SequenceEqual([julian, 1, 18]),
+      timeoutMessage: "The pickers never showed Julian 19 February 1861.");
+
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.DialogCommand.Execute(null));
+    Assert.Equal(date, await dialog.Info);
   }
 }
