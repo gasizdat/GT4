@@ -23,8 +23,8 @@
             CommandParameter="OpenDateTools"
             FontSize="{DynamicResource ActionButtonTextSize}"
             Style="{StaticResource EmojiAdorner}"
-            Text="📅"
-            ToolTipProperties.Text="{x:Static resources:UIStrings.TitleDateToolsPage}"
+            Text="{Binding GoToDateToolsGlyph, Source={x:Reference Root}}"
+            ToolTipProperties.Text="{Binding GoToDateToolsTooltip, Source={x:Reference Root}}"
             VerticalOptions="Fill"
             WidthRequest="{Binding Source={x:Reference DateToolsBtn}, Path=Height}" />
         <Button

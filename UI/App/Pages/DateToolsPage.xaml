@@ -13,7 +13,9 @@
       Hint="{x:Static resources:UIStrings.HintDateToolsPage}">
     <components:PageLayout.Body>
       <ScrollView>
-        <VerticalStackLayout Spacing="{StaticResource PageContentSpacing}">
+        <VerticalStackLayout
+            MaximumWidthRequest="600"
+            Spacing="{StaticResource PageContentSpacing}">
 
           <Label
               Style="{StaticResource GroupTitle}"

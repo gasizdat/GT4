@@ -1627,7 +1627,7 @@ FN - apellido familiar</value>
     <value>Convierta una fecha a otro calendario o calcule el tiempo entre dos fechas.</value>
   </data>
   <data name="MenuItemGoToDateTools" xml:space="preserve">
-    <value>📅 Herramientas de fechas</value>
+    <value>📟 Herramientas de fechas</value>
   </data>
   <data name="DateToolsConvertTitle" xml:space="preserve">
     <value>Convertir entre calendarios</value>

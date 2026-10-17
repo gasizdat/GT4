@@ -2728,7 +2728,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 📅 Date tools.
+        ///   Looks up a localized string similar to 📟 Date tools.
         /// </summary>
         public static string MenuItemGoToDateTools {
             get {

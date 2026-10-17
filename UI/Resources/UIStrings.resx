@@ -1627,7 +1627,7 @@ FN - family name</value>
     <value>Convert a date between calendars, or find the time between two dates.</value>
   </data>
   <data name="MenuItemGoToDateTools" xml:space="preserve">
-    <value>📅 Date tools</value>
+    <value>📟 Date tools</value>
   </data>
   <data name="DateToolsConvertTitle" xml:space="preserve">
     <value>Convert between calendars</value>

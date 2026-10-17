@@ -1627,7 +1627,7 @@ FN - род</value>
     <value>Переведите дату из одного календаря в другой или узнайте, сколько времени прошло между двумя датами.</value>
   </data>
   <data name="MenuItemGoToDateTools" xml:space="preserve">
-    <value>📅 Работа с датами</value>
+    <value>📟 Работа с датами</value>
   </data>
   <data name="DateToolsConvertTitle" xml:space="preserve">
     <value>Перевод между календарями</value>
