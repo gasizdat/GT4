@@ -17,6 +17,7 @@ public class GT4Services
   public static void Add(IServiceCollection serviceCollection)
   {
     var configurationRoot = new ConfigurationBuilder()
+      .SetBasePath(FileSystem.AppDataDirectory)
       .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
       .AddAppConfiguration()
       .Build();
