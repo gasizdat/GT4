@@ -592,6 +592,70 @@ public class PageLayoutTests
     Assert.True(layout.IsCopiedNoticeVisible, "The notice went away on the first copy's countdown.");
   }
 
+#if WINDOWS
+  [System.Runtime.InteropServices.DllImport("user32.dll")]
+  private static extern bool OpenClipboard(IntPtr hWndNewOwner);
+
+  [System.Runtime.InteropServices.DllImport("user32.dll")]
+  private static extern bool CloseClipboard();
+
+  // Holds the clipboard open the way a listener does after a change; the returned task completes on release.
+  private static async Task<Task> HoldClipboardAsync(TimeSpan duration)
+  {
+    var opened = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var released = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var thread = new Thread(() =>
+    {
+      var isOpen = OpenClipboard(IntPtr.Zero);
+      opened.SetResult(isOpen);
+      if (isOpen)
+      {
+        Thread.Sleep(duration);
+        CloseClipboard();
+      }
+
+      released.SetResult();
+    });
+    thread.Start();
+
+    Assert.True(await opened.Task, "The clipboard could not be opened to hold it.");
+    return released.Task;
+  }
+
+  [Fact]
+  public async Task Copy_waits_out_a_briefly_busy_clipboard_without_an_alert()
+  {
+    var services = new TestServices();
+    var layout = await CreateLayoutAsync(services);
+    var released = await HoldClipboardAsync(TimeSpan.FromMilliseconds(300));
+
+    await MainThread.InvokeOnMainThreadAsync(() => layout.CopyCommand.Execute("Ivan Ivanov"));
+    await released;
+
+    await Poll.UntilAsync(
+      () => Task.FromResult(layout.IsCopiedNoticeVisible),
+      visible => visible,
+      timeoutMessage: "The copied notice never showed.");
+    var copied = await MainThread.InvokeOnMainThreadAsync(Clipboard.Default.GetTextAsync);
+    Assert.Equal("Ivan Ivanov", copied);
+    services.AlertService.VerifyNoOtherCalls();
+  }
+
+  [Fact]
+  public async Task Copy_reports_a_clipboard_that_stays_busy()
+  {
+    var services = new TestServices();
+    var layout = await CreateLayoutAsync(services);
+    var released = await HoldClipboardAsync(TimeSpan.FromSeconds(2));
+
+    await MainThread.InvokeOnMainThreadAsync(() => layout.CopyCommand.Execute("Ivan Ivanov"));
+    await released;
+
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<System.Runtime.InteropServices.COMException>()), Times.Once());
+    Assert.False(layout.IsCopiedNoticeVisible);
+  }
+#endif
+
   [Fact]
   public async Task A_layout_left_without_a_loading_flag_keeps_the_indicator_hidden()
   {

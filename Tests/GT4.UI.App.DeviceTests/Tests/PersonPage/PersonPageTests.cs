@@ -1420,7 +1420,7 @@ public class PersonPageTests
   {
     await MainThread.InvokeOnMainThreadAsync(async () =>
     {
-      await Clipboard.Default.SetTextAsync(null);
+      await PageLayout.SetClipboardTextAsync(null);
       var flyout = (MenuFlyout)FlyoutBase.GetContextFlyout(view);
       var item = Assert.Single(flyout);
       Assert.Equal(UIStrings.MenuItemNameCopy, item.Text);
