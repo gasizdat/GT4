@@ -14,129 +14,147 @@
 
     <components:PageLayout.Body>
       <ScrollView>
-        <Grid
-            ColumnDefinitions="Auto, *, Auto"
-            ColumnSpacing="{x:StaticResource PageContentSpacing}"
-            RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto"
-            RowSpacing="{x:StaticResource PageContentSpacing}">
+        <!-- One grid per input: a grid keeps the spacing of a row whose children are all hidden. -->
+        <VerticalStackLayout Spacing="{x:StaticResource PageContentSpacing}">
 
-          <Label
-              Grid.Row="0"
-              Grid.Column="1"
-              HorizontalOptions="Fill"
-              HorizontalTextAlignment="End"
-              Style="{StaticResource FieldValue}"
-              Text="{x:Static resources:UIStrings.DateInOtherCalendar}" />
+          <Grid
+              ColumnDefinitions="*, Auto"
+              ColumnSpacing="{x:StaticResource PageContentSpacing}">
 
-          <Switch
-              Grid.Row="0"
-              Grid.Column="2"
-              IsToggled="{Binding OtherCalendarSwitch, Source={x:Reference Root}}" />
+            <Label
+                Grid.Column="0"
+                HorizontalOptions="Fill"
+                HorizontalTextAlignment="End"
+                Style="{StaticResource FieldValue}"
+                Text="{x:Static resources:UIStrings.DateInOtherCalendar}" />
 
-          <Label
-              Grid.Row="1"
-              Grid.Column="1"
-              HorizontalOptions="Fill"
-              HorizontalTextAlignment="End"
+            <Switch
+                Grid.Column="1"
+                IsToggled="{Binding OtherCalendarSwitch, Source={x:Reference Root}}" />
+
+          </Grid>
+
+          <Grid
+              ColumnDefinitions="Auto, *, Auto"
+              ColumnSpacing="{x:StaticResource PageContentSpacing}"
               IsVisible="{Binding IsGregorianInputVisible, Source={x:Reference Root}}"
-              Style="{StaticResource FieldValue}"
-              Text="{x:Static resources:UIStrings.DateKnownApproximately}" />
+              RowDefinitions="Auto, Auto, Auto, Auto, Auto"
+              RowSpacing="{x:StaticResource PageContentSpacing}">
 
-          <Switch
-              Grid.Row="1"
-              Grid.Column="2"
-              IsToggled="{Binding ApproximateSwitch, Source={x:Reference Root}}"
-              IsVisible="{Binding IsGregorianInputVisible, Source={x:Reference Root}}" />
+            <Label
+                Grid.Row="0"
+                Grid.Column="1"
+                HorizontalOptions="Fill"
+                HorizontalTextAlignment="End"
+                Style="{StaticResource FieldValue}"
+                Text="{x:Static resources:UIStrings.DateKnownApproximately}" />
 
-          <Label
-              Grid.Row="2"
-              Grid.Column="0"
-              IsVisible="{Binding IsGregorianInputVisible, Source={x:Reference Root}}"
-              Style="{StaticResource FieldName}"
-              Text="{x:Static resources:UIStrings.FieldYear}" />
+            <Switch
+                Grid.Row="0"
+                Grid.Column="2"
+                IsToggled="{Binding ApproximateSwitch, Source={x:Reference Root}}" />
+
+            <Label
+                Grid.Row="1"
+                Grid.Column="0"
+                Style="{StaticResource FieldName}"
+                Text="{x:Static resources:UIStrings.FieldYear}" />
 
 
-          <Entry
-              Grid.Row="2"
-              Grid.Column="1"
-              HorizontalOptions="Fill"
-              IsVisible="{Binding IsGregorianInputVisible, Source={x:Reference Root}}"
-              Keyboard="Numeric"
-              Style="{StaticResource FieldValue}"
-              Text="{Binding Year, Source={x:Reference Root}}" />
+            <Entry
+                Grid.Row="1"
+                Grid.Column="1"
+                HorizontalOptions="Fill"
+                Keyboard="Numeric"
+                Style="{StaticResource FieldValue}"
+                Text="{Binding Year, Source={x:Reference Root}}" />
 
-          <Switch
-              Grid.Row="2"
-              Grid.Column="2"
-              IsToggled="{Binding YearSwitch, Source={x:Reference Root}}"
-              IsVisible="{Binding IsGregorianInputVisible, Source={x:Reference Root}}" />
+            <Switch
+                Grid.Row="1"
+                Grid.Column="2"
+                IsToggled="{Binding YearSwitch, Source={x:Reference Root}}" />
 
-          <Label
-              Grid.Row="3"
-              Grid.Column="0"
-              IsVisible="{Binding IsGregorianInputVisible, Source={x:Reference Root}}"
-              Style="{StaticResource FieldName}"
-              Text="{x:Static resources:UIStrings.FieldMonth}" />
+            <Label
+                Grid.Row="2"
+                Grid.Column="0"
+                Style="{StaticResource FieldName}"
+                Text="{x:Static resources:UIStrings.FieldMonth}" />
 
-          <Picker
-              Grid.Row="3"
-              Grid.Column="1"
-              HorizontalOptions="Fill"
-              IsVisible="{Binding IsGregorianInputVisible, Source={x:Reference Root}}"
-              ItemDisplayBinding="{Binding .}"
-              ItemsSource="{Binding Months, Source={x:Reference Root}}"
-              SelectedItem="{Binding Month, Source={x:Reference Root}}" />
+            <Picker
+                Grid.Row="2"
+                Grid.Column="1"
+                HorizontalOptions="Fill"
+                ItemDisplayBinding="{Binding .}"
+                ItemsSource="{Binding Months, Source={x:Reference Root}}"
+                SelectedItem="{Binding Month, Source={x:Reference Root}}" />
 
-          <Switch
-              Grid.Row="3"
-              Grid.Column="2"
-              IsToggled="{Binding MonthSwitch, Source={x:Reference Root}}"
-              IsVisible="{Binding IsGregorianInputVisible, Source={x:Reference Root}}" />
+            <Switch
+                Grid.Row="2"
+                Grid.Column="2"
+                IsToggled="{Binding MonthSwitch, Source={x:Reference Root}}" />
 
-          <Label
-              Grid.Row="4"
-              Grid.Column="0"
-              IsVisible="{Binding IsGregorianInputVisible, Source={x:Reference Root}}"
-              Style="{StaticResource FieldName}"
-              Text="{x:Static resources:UIStrings.FieldDay}" />
+            <Label
+                Grid.Row="3"
+                Grid.Column="0"
+                Style="{StaticResource FieldName}"
+                Text="{x:Static resources:UIStrings.FieldDay}" />
 
-          <Picker
-              Grid.Row="4"
-              Grid.Column="1"
-              HorizontalOptions="Fill"
-              IsVisible="{Binding IsGregorianInputVisible, Source={x:Reference Root}}"
-              ItemDisplayBinding="{Binding .}"
-              ItemsSource="{Binding Days, Source={x:Reference Root}}"
-              SelectedItem="{Binding Day, Source={x:Reference Root}}" />
+            <Picker
+                Grid.Row="3"
+                Grid.Column="1"
+                HorizontalOptions="Fill"
+                ItemDisplayBinding="{Binding .}"
+                ItemsSource="{Binding Days, Source={x:Reference Root}}"
+                SelectedItem="{Binding Day, Source={x:Reference Root}}" />
 
-          <Switch
-              Grid.Row="4"
-              Grid.Column="2"
-              IsToggled="{Binding DaySwitch, Source={x:Reference Root}}"
-              IsVisible="{Binding IsGregorianInputVisible, Source={x:Reference Root}}" />
+            <Switch
+                Grid.Row="3"
+                Grid.Column="2"
+                IsToggled="{Binding DaySwitch, Source={x:Reference Root}}" />
 
-          <components:CalendarDateView
-              Grid.Row="1"
-              Grid.RowSpan="4"
-              Grid.ColumnSpan="3"
-              Calendar="{Binding OtherCalendar, Source={x:Reference Root}}"
-              Date="{Binding OtherCalendarDate, Source={x:Reference Root}}"
-              IsVisible="{Binding OtherCalendarSwitch, Source={x:Reference Root}}" />
+            <Label
+                Grid.Row="4"
+                Grid.Column="0"
+                Style="{StaticResource FieldName}"
+                Text="{x:Static resources:UIStrings.FieldDateEntered}" />
 
-          <Label
-              Grid.Row="5"
-              Grid.Column="0"
-              Style="{StaticResource FieldName}"
-              Text="{x:Static resources:UIStrings.FieldDateEntered}" />
+            <Label
+                Grid.Row="4"
+                Grid.Column="1"
+                Grid.ColumnSpan="2"
+                Style="{StaticResource FieldValue}"
+                Text="{Binding DateString, Source={x:Reference Root}}" />
 
-          <Label
-              Grid.Row="5"
-              Grid.Column="1"
-              Grid.ColumnSpan="2"
-              Style="{StaticResource FieldValue}"
-              Text="{Binding DateString, Source={x:Reference Root}}" />
+          </Grid>
 
-        </Grid>
+          <Grid
+              ColumnDefinitions="Auto, *"
+              ColumnSpacing="{x:StaticResource PageContentSpacing}"
+              IsVisible="{Binding OtherCalendarSwitch, Source={x:Reference Root}}"
+              RowDefinitions="Auto, Auto"
+              RowSpacing="{x:StaticResource PageContentSpacing}">
+
+            <components:CalendarDateView
+                Grid.Row="0"
+                Grid.ColumnSpan="2"
+                Calendar="{Binding OtherCalendar, Source={x:Reference Root}}"
+                Date="{Binding OtherCalendarDate, Source={x:Reference Root}}" />
+
+            <Label
+                Grid.Row="1"
+                Grid.Column="0"
+                Style="{StaticResource FieldName}"
+                Text="{x:Static resources:UIStrings.FieldDateEntered}" />
+
+            <Label
+                Grid.Row="1"
+                Grid.Column="1"
+                Style="{StaticResource FieldValue}"
+                Text="{Binding DateString, Source={x:Reference Root}}" />
+
+          </Grid>
+
+        </VerticalStackLayout>
       </ScrollView>
     </components:PageLayout.Body>
 
