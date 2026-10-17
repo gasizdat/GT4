@@ -1668,4 +1668,7 @@ FN - family name</value>
   <data name="DateToolsPeriodResult_2" xml:space="preserve">
     <value>{0} (total days: {1})</value>
   </data>
+  <data name="DateInOtherCalendar" xml:space="preserve">
+    <value>Enter in another calendar</value>
+  </data>
 </root>
