@@ -15,27 +15,27 @@
 
     <components:PageLayout.Body>
       <ScrollView>
-        <!-- One grid per input: a grid keeps the spacing of a row whose children are all hidden. -->
-        <VerticalStackLayout Spacing="{x:StaticResource PageContentSpacing}">
+        <!--  Both inputs share one row: a grid keeps the spacing of a row whose children are all hidden.  -->
+        <Grid
+            ColumnDefinitions="*, Auto"
+            ColumnSpacing="{x:StaticResource PageContentSpacing}"
+            RowDefinitions="Auto, Auto"
+            RowSpacing="{x:StaticResource PageContentSpacing}">
+
+          <Label
+              Grid.Column="0"
+              HorizontalOptions="Fill"
+              HorizontalTextAlignment="End"
+              Style="{StaticResource FieldValue}"
+              Text="{x:Static resources:UIStrings.DateInOtherCalendar}" />
+
+          <Switch
+              Grid.Column="1"
+              IsToggled="{Binding OtherCalendarSwitch, Source={x:Reference Root}}" />
 
           <Grid
-              ColumnDefinitions="*, Auto"
-              ColumnSpacing="{x:StaticResource PageContentSpacing}">
-
-            <Label
-                Grid.Column="0"
-                HorizontalOptions="Fill"
-                HorizontalTextAlignment="End"
-                Style="{StaticResource FieldValue}"
-                Text="{x:Static resources:UIStrings.DateInOtherCalendar}" />
-
-            <Switch
-                Grid.Column="1"
-                IsToggled="{Binding OtherCalendarSwitch, Source={x:Reference Root}}" />
-
-          </Grid>
-
-          <Grid
+              Grid.Row="1"
+              Grid.ColumnSpan="2"
               ColumnDefinitions="Auto, *, Auto"
               ColumnSpacing="{x:StaticResource PageContentSpacing}"
               IsVisible="{Binding IsGregorianInputVisible, Source={x:Reference Root}}"
@@ -129,6 +129,8 @@
           </Grid>
 
           <components:CalendarDateView
+              Grid.Row="1"
+              Grid.Column="0"
               Calendar="{Binding OtherCalendar, Source={x:Reference Root}}"
               Date="{Binding OtherCalendarDate, Source={x:Reference Root}}"
               IsVisible="{Binding OtherCalendarSwitch, Source={x:Reference Root}}">
@@ -210,7 +212,7 @@
             </components:CalendarDateView.ControlTemplate>
           </components:CalendarDateView>
 
-        </VerticalStackLayout>
+        </Grid>
       </ScrollView>
     </components:PageLayout.Body>
 
