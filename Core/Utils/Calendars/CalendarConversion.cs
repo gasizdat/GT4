@@ -29,8 +29,8 @@ public static class CalendarConversion
     displayCalendar == DisplayCalendar.Gregorian ? DisplayCalendar.Julian : displayCalendar;
 
   /// <summary>Assumes <paramref name="date"/> is <see cref="DateStatus.WellKnown"/> -- a partial date
-  /// (year/month only) has no single correct placement in another calendar, so callers convert only
-  /// full dates and render every other status in Gregorian.</summary>
+  /// (year/month only) has no single day in another calendar, only a year: see
+  /// <see cref="TryConvertYear"/>.</summary>
   public static (DisplayCalendar Applied, int Year, int Month, int Day) TryConvert(Date date, DisplayCalendar target)
   {
     var fallback = (Applied: DisplayCalendar.Gregorian, date.Year, date.Month, date.Day);
@@ -48,6 +48,34 @@ public static class CalendarConversion
         (DisplayCalendar.FrenchRepublican, republican.Year, republican.Month, republican.Day),
       _ => fallback,
     };
+  }
+
+  /// <summary>The year of a partial date, which spans its month or its whole year. A span across
+  /// <paramref name="target"/>'s new year gives its middle day's year, as approximate. Falls back to
+  /// Gregorian, as <see cref="TryConvert"/> does, when either end of the span does.</summary>
+  public static (DisplayCalendar Applied, int Year, bool Approximate) TryConvertYear(Date date, DisplayCalendar target)
+  {
+    var approximate = date.Status == DateStatus.YearApproximate;
+    var (firstMonth, lastMonth) = date.Status == DateStatus.DayUnknown ? (date.Month, date.Month) : (1, 12);
+    var lastDay = Date.DaysInMonth(date.Year, lastMonth);
+    var first = date with { Month = firstMonth, Day = 1, Status = DateStatus.WellKnown };
+    var last = date with { Month = lastMonth, Day = lastDay, Status = DateStatus.WellKnown };
+    var (firstApplied, firstYear, _, _) = TryConvert(first, target);
+    var (lastApplied, lastYear, _, _) = TryConvert(last, target);
+    if (firstApplied != target || lastApplied != target)
+      return (DisplayCalendar.Gregorian, date.Year, approximate);
+
+    if (firstYear == lastYear)
+      return (target, firstYear, approximate);
+
+    // Never a French Republican complementary day (17-23 September): a month's middle is before the 17th,
+    // a year's is in July.
+    var start = new DateTime(date.Year, firstMonth, 1);
+    var end = new DateTime(date.Year, lastMonth, lastDay);
+    var middle = start.AddDays((end - start).Days / 2);
+    var middleDate = Date.Create(middle);
+    var (_, middleYear, _, _) = TryConvert(middleDate, target);
+    return (target, middleYear, true);
   }
 
   /// <summary>Assumes <see cref="DateStatus.WellKnown"/>, as <see cref="TryConvert"/> does.</summary>

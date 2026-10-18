@@ -119,6 +119,96 @@ public sealed class CalendarConversionTests
     result.Applied.Should().Be(DisplayCalendar.Gregorian);
   }
 
+  // 1 Tishrei 5579 fell on 1 October 1818, so neither September nor October 1818 crosses the Hebrew new
+  // year, although October holds Rosh Hashanah.
+  [Theory]
+  [InlineData(1861, 3, DateStatus.DayUnknown, DisplayCalendar.Julian, 1861)]
+  [InlineData(1861, 3, DateStatus.DayUnknown, DisplayCalendar.Hebrew, 5621)]
+  [InlineData(1861, 1, DateStatus.DayUnknown, DisplayCalendar.Hebrew, 5621)]
+  [InlineData(2000, 9, DateStatus.DayUnknown, DisplayCalendar.Julian, 2000)]
+  [InlineData(1795, 9, DateStatus.DayUnknown, DisplayCalendar.Julian, 1795)]
+  [InlineData(1818, 9, DateStatus.DayUnknown, DisplayCalendar.Hebrew, 5578)]
+  [InlineData(1818, 10, DateStatus.DayUnknown, DisplayCalendar.Hebrew, 5579)]
+  public void TryConvertYear_SpanWithinOneYear_IsExact(int year, int month, DateStatus status, DisplayCalendar target, int expected)
+  {
+    var date = Date.Create(year, month, 0, status);
+
+    var result = CalendarConversion.TryConvertYear(date, target);
+
+    result.Should().Be((target, expected, false));
+  }
+
+  // The span's middle day is 16 January, 15 September, or 2 July (1 July in a leap year). The Julian
+  // calendar runs behind, so a whole Gregorian year starts in the previous Julian year yet still shows
+  // its own number. French Republican September 1795 spans year III's complementary days, 17-22
+  // September, and its middle is 29 Fructidor III. 1 Tishrei 5784 fell on 16 September 2023, splitting
+  // that month in half, and the earlier half's year wins.
+  [Theory]
+  [InlineData(1861, 1, DateStatus.DayUnknown, DisplayCalendar.Julian, 1861)]
+  [InlineData(2000, 9, DateStatus.DayUnknown, DisplayCalendar.Hebrew, 5760)]
+  [InlineData(2023, 9, DateStatus.DayUnknown, DisplayCalendar.Hebrew, 5783)]
+  [InlineData(1990, 0, DateStatus.MonthUnknown, DisplayCalendar.Julian, 1990)]
+  [InlineData(1990, 0, DateStatus.MonthUnknown, DisplayCalendar.Hebrew, 5750)]
+  [InlineData(1990, 0, DateStatus.YearApproximate, DisplayCalendar.Julian, 1990)]
+  [InlineData(1990, 0, DateStatus.YearApproximate, DisplayCalendar.Hebrew, 5750)]
+  [InlineData(1795, 9, DateStatus.DayUnknown, DisplayCalendar.Hebrew, 5556)]
+  [InlineData(1795, 9, DateStatus.DayUnknown, DisplayCalendar.FrenchRepublican, 3)]
+  [InlineData(1795, 0, DateStatus.MonthUnknown, DisplayCalendar.Julian, 1795)]
+  [InlineData(1795, 0, DateStatus.MonthUnknown, DisplayCalendar.Hebrew, 5555)]
+  [InlineData(1795, 0, DateStatus.MonthUnknown, DisplayCalendar.FrenchRepublican, 3)]
+  [InlineData(1792, 0, DateStatus.MonthUnknown, DisplayCalendar.Julian, 1792)]
+  [InlineData(1792, 0, DateStatus.MonthUnknown, DisplayCalendar.Hebrew, 5552)]
+  [InlineData(1583, 0, DateStatus.MonthUnknown, DisplayCalendar.Hebrew, 5343)]
+  [InlineData(1805, 0, DateStatus.MonthUnknown, DisplayCalendar.FrenchRepublican, 13)]
+  public void TryConvertYear_SpanAcrossANewYear_IsTheMiddleDaysYearAsApproximate(
+    int year, int month, DateStatus status, DisplayCalendar target, int expected)
+  {
+    var date = Date.Create(year, month, 0, status);
+
+    var result = CalendarConversion.TryConvertYear(date, target);
+
+    result.Should().Be((target, expected, true));
+  }
+
+  // The Julian and Gregorian calendars coincide in the 3rd century, so the year 250 is one Julian year.
+  [Fact]
+  public void TryConvertYear_YearApproximate_StaysApproximateWithinOneYear()
+  {
+    var monthUnknown = Date.Create(250, 0, 0, DateStatus.MonthUnknown);
+    var yearApproximate = Date.Create(250, 0, 0, DateStatus.YearApproximate);
+
+    CalendarConversion.TryConvertYear(monthUnknown, DisplayCalendar.Julian).Should().Be((DisplayCalendar.Julian, 250, false));
+    CalendarConversion.TryConvertYear(yearApproximate, DisplayCalendar.Julian).Should().Be((DisplayCalendar.Julian, 250, true));
+  }
+
+  // HebrewCalendar's range is 1 January 1583 to September 2239, the French Republican calendar's
+  // 22 September 1792 to 31 December 1805.
+  [Theory]
+  [InlineData(1861, 3, DateStatus.DayUnknown, DisplayCalendar.FrenchRepublican)]
+  [InlineData(1990, 0, DateStatus.MonthUnknown, DisplayCalendar.FrenchRepublican)]
+  [InlineData(1990, 0, DateStatus.YearApproximate, DisplayCalendar.FrenchRepublican)]
+  [InlineData(1792, 0, DateStatus.MonthUnknown, DisplayCalendar.FrenchRepublican)]
+  [InlineData(1582, 0, DateStatus.MonthUnknown, DisplayCalendar.Hebrew)]
+  [InlineData(2239, 0, DateStatus.MonthUnknown, DisplayCalendar.Hebrew)]
+  public void TryConvertYear_SpanEndOutsideTheCalendar_FallsBackToGregorian(int year, int month, DateStatus status, DisplayCalendar target)
+  {
+    var date = Date.Create(year, month, 0, status);
+
+    var result = CalendarConversion.TryConvertYear(date, target);
+
+    result.Should().Be((DisplayCalendar.Gregorian, year, status == DateStatus.YearApproximate));
+  }
+
+  [Fact]
+  public void TryConvertYear_BeforeCommonEra_FallsBackToGregorian()
+  {
+    var date = Date.Create(-1000000, DateStatus.MonthUnknown);
+
+    var result = CalendarConversion.TryConvertYear(date, DisplayCalendar.Julian);
+
+    result.Should().Be((DisplayCalendar.Gregorian, 100, false));
+  }
+
   // Historical O.S. -> N.S. pairs, one per century's gap: Britain's switch (its 2 September was
   // followed by the 14th), the Emancipation Manifesto, the October Revolution.
   [Theory]
