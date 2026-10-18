@@ -17,8 +17,9 @@ It is opened from PersonPage's and FamilyTreePage's menus.
 ## Hovering
 - The pointer resolves through `HoverAt`, like a tap, and lights up the person under it: every
   segment they hold (a repeat and their first slot together) gets an unfilled outline at twice the
-  weight, and the centre's ring thickens as on FamilyTreePage. Colours stay as they are. Touch has no
-  hover, so mobile has none of this.
+  weight, and the centre's ring thickens as on FamilyTreePage. Fills stay as they are. The outline's
+  translucent colour lies over the segment's own stroke, so the hovered line reads a shade stronger
+  than the plain one. Touch has no hover, so mobile has none of this.
 - The outlines go on a `Highlights` layer of their own, between the segments and the labels, and
   `SetHovered` replaces its contents when the hovered person changes. The segments are never
   restyled or raised: at ten generations their layer holds 2,046 shapes, and raising one over its
