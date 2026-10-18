@@ -270,10 +270,8 @@ public partial class SelectDateDialog : ContentPage
         {
           // The view keeps its numbers for a date it can't show, which would then disagree with them.
           var date = Date;
-          if (date.Status == DateStatus.WellKnown && CalendarConversion.IsRepresentable(date, _OtherCalendar))
-          {
-            OtherCalendarDate = date;
-          }
+          var convertible = date.Status == DateStatus.WellKnown && CalendarConversion.IsRepresentable(date, _OtherCalendar);
+          OtherCalendarDate = convertible ? date : null;
         }
         else if (_OtherCalendarDate is Date date)
         {

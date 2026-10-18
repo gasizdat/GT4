@@ -291,6 +291,49 @@ public class SelectDateDialogTests
   }
 
   [Fact]
+  public async Task Turning_the_other_calendar_on_clears_the_date_it_held_before()
+  {
+    var dialog = await CreateDialogAsync(new TestServices(), WellKnown(1900, 5, 5));
+    var view = await OtherCalendarViewAsync(dialog);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      dialog.OtherCalendar = DisplayCalendar.Julian;
+      dialog.OtherCalendarSwitch = true;
+      dialog.OtherCalendarSwitch = false;
+      dialog.Year = "1950";
+      dialog.DaySwitch = false;
+      dialog.OtherCalendarSwitch = true;
+    });
+
+    Assert.Equal("0", view.Year);
+    Assert.Null(dialog.OtherCalendarDate);
+    Assert.Equal(Resources.UIStrings.BtnNameCancel, dialog.DialogButtonName);
+  }
+
+  [Fact]
+  public async Task Turning_the_other_calendar_off_keeps_a_Gregorian_date_it_could_not_show()
+  {
+    var dialog = await CreateDialogAsync(new TestServices(), WellKnown(1900, 5, 5));
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      dialog.OtherCalendar = DisplayCalendar.Julian;
+      dialog.OtherCalendarSwitch = true;
+      dialog.OtherCalendarSwitch = false;
+      dialog.Year = "1950";
+      dialog.DaySwitch = false;
+      dialog.OtherCalendarSwitch = true;
+      dialog.OtherCalendarSwitch = false;
+    });
+
+    Assert.Equal("1950", dialog.Year);
+    Assert.False(dialog.DaySwitch);
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.DialogCommand.Execute(null));
+    Assert.Equal(Date.Create(1950, 5, 5, DateStatus.DayUnknown), await dialog.Info);
+  }
+
+  [Fact]
   public async Task Turning_the_other_calendar_off_shows_its_date_in_the_Gregorian_fields()
   {
     var dialog = await CreateDialogAsync(new TestServices(), null);

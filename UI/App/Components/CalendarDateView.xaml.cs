@@ -59,13 +59,16 @@ public partial class CalendarDateView : ContentView
 
   private static void OnDateChanged(BindableObject obj, object oldValue, object newValue)
   {
-    if (obj is not CalendarDateView view || newValue is not Date date || view.Entered == date)
+    if (obj is not CalendarDateView view || view.Entered == (Date?)newValue)
       return;
 
-    var (applied, year, month, day) = CalendarConversion.TryConvert(date, view.Calendar);
+    var (applied, year, month, day) = newValue is Date date
+      ? CalendarConversion.TryConvert(date, view.Calendar)
+      : (view.Calendar, 0, 1, 1);
     if (applied == view.Calendar)
     {
-      (view._Year, view._Month, view._Day, view._MonthNumberingYear) = (year, month, day, year);
+      (view._Year, view._Month, view._Day) = (year, month, day);
+      view._MonthNumberingYear = view.LookupYear;
       view.Refresh();
       view.OnPropertyChanged(nameof(Year));
     }
@@ -78,7 +81,7 @@ public partial class CalendarDateView : ContentView
   }
 
   /// <summary>The Gregorian date entered, <c>null</c> while it does not exist in <see cref="Calendar"/>
-  /// or falls outside its range.</summary>
+  /// or falls outside its range. Assigning <c>null</c> clears the entry.</summary>
   public Date? Date
   {
     get => (Date?)GetValue(DateProperty);
