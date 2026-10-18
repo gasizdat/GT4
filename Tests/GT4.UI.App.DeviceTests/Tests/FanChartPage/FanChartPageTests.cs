@@ -1,8 +1,10 @@
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.Core.Utils.Calendars;
 using GT4.UI.Abstraction;
 using GT4.UI.Components.Genealogy;
 using GT4.UI.Pages;
+using GT4.UI.Resources;
 using Moq;
 using Xunit;
 using Path = Microsoft.Maui.Controls.Shapes.Path;
@@ -114,6 +116,14 @@ public class FanChartPageTests
   // Main thread only.
   private static Path[] Outlines(TestableFanChartPage page) =>
     [.. page.FindByName<AbsoluteLayout>("Highlights").Children.OfType<Path>()];
+
+  // Main thread only.
+  private static (bool IsVisible, string[] Texts) YearsCalendarMark(TestableFanChartPage page)
+  {
+    var mark = page.FindByName<HorizontalStackLayout>("YearsCalendar");
+    string[] texts = [.. mark.Children.OfType<Label>().Select(label => label.Text)];
+    return (mark.IsVisible, texts);
+  }
 
   // Over the first label naming the person; a repeat has a label of its own.
   private static Task<Path[]> HoverAsync(TestableFanChartPage page, string name) =>
@@ -402,6 +412,31 @@ public class FanChartPageTests
     var page = await CreatePageAsync(services);
 
     Assert.Equal(1, page.SweepIndex);
+  }
+
+  [Theory]
+  [InlineData(nameof(DisplayCalendar.Julian))]
+  [InlineData(nameof(DisplayCalendar.Hebrew))]
+  [InlineData(nameof(DisplayCalendar.FrenchRepublican))]
+  public async Task Marks_the_years_Gregorian_under_another_calendar(string calendar)
+  {
+    var services = new TestServices();
+    services.FanChartCalendarSetting.Object.Value = calendar;
+
+    var page = await CreatePageAsync(services);
+
+    var mark = await MainThread.InvokeOnMainThreadAsync(() => YearsCalendarMark(page));
+    Assert.True(mark.IsVisible);
+    Assert.Contains(UIStrings.FieldCalendarGregorian, mark.Texts);
+  }
+
+  [Fact]
+  public async Task Leaves_the_years_unmarked_under_Gregorian()
+  {
+    var page = await CreatePageAsync(new TestServices());
+
+    var mark = await MainThread.InvokeOnMainThreadAsync(() => YearsCalendarMark(page));
+    Assert.False(mark.IsVisible);
   }
 
   [Fact]

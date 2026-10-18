@@ -1614,6 +1614,9 @@ FN - Familienname</value>
   <data name="LblFanChartSweep" xml:space="preserve">
     <value>Bogen</value>
   </data>
+  <data name="LblFanChartYears" xml:space="preserve">
+    <value>Jahre</value>
+  </data>
   <data name="FieldFanChartSweep" xml:space="preserve">
     <value>Bogen des Fächerdiagramms</value>
   </data>

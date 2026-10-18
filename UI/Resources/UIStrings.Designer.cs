@@ -2656,6 +2656,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Years.
+        /// </summary>
+        public static string LblFanChartYears {
+            get {
+                return ResourceManager.GetString("LblFanChartYears", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to People.
         /// </summary>
         public static string LblPersons {

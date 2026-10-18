@@ -1,6 +1,7 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.Core.Utils.Calendars;
 using GT4.UI.Abstraction;
 using GT4.UI.Components.Genealogy;
 using GT4.UI.Resources;
@@ -66,6 +67,8 @@ public partial class FanChartPage : ContentPage, IZoomablePage
     ILifeDatesFormatter lifeDatesFormatter,
     [FromKeyedServices(SettingKeys.FanChartSweep)]
     ISettingEditor sweepSetting,
+    [FromKeyedServices(SettingKeys.Calendar)]
+    ISettingEditor calendarSetting,
     FontScale? fontScale,
     IAlertService alertService,
     INavigationService navigationService,
@@ -79,6 +82,8 @@ public partial class FanChartPage : ContentPage, IZoomablePage
     _LifeDatesFormatter = lifeDatesFormatter;
     _SweepSetting = sweepSetting;
     _SweepOptions = ((SettingKind.Choice)sweepSetting.Kind).Options;
+    var calendar = CalendarConversion.ToDisplayCalendar(calendarSetting.Value);
+    IsYearsCalendarVisible = calendar != DisplayCalendar.Gregorian;
     _FontScale = fontScale;
     _AlertService = alertService;
     _NavigationService = navigationService;
@@ -136,6 +141,8 @@ public partial class FanChartPage : ContentPage, IZoomablePage
       Reload();
     }
   }
+
+  public bool IsYearsCalendarVisible { get; }
 
   public bool CanLoadMore
   {

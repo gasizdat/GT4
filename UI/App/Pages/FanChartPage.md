@@ -37,6 +37,11 @@ It is opened from PersonPage's and FamilyTreePage's menus.
 - `_SweepSetting`: the keyed `FanChartSweepSetting` (180°, 270° or 360°, saved app-wide). The header
   picker binds to `SweepNames` / `SweepIndex`, and choosing a sweep stores it and rebuilds. Choosing
   the one already shown does neither, since the picker echoes its own update back.
+- `IsYearsCalendarVisible`: whether the header marks the labels' years as Gregorian, which it does
+  while the keyed `CalendarSetting` is any other calendar. The years are always the stored Gregorian
+  ones: a bare year can't be converted, since a Hebrew or French Republican year starts in autumn.
+  Read once at construction: SettingsPage opens only from pages below this one, so the calendar
+  can't change while the chart is open.
 - `_LastLayout`: the rendered layout, which taps, hover and the viewport are measured against.
 - `_Stroke` / `_CenterView` / `_HoveredId`: the rendered outline colour and centre view, and who the
   pointer is over.

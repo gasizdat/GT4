@@ -30,6 +30,19 @@
       <HorizontalStackLayout
           HorizontalOptions="End"
           Spacing="{StaticResource PageContentSpacing}">
+        <HorizontalStackLayout
+            x:Name="YearsCalendar"
+            IsVisible="{Binding IsYearsCalendarVisible, Source={x:Reference Root}}"
+            Spacing="{StaticResource PageContentSpacing}">
+          <Label
+              Style="{StaticResource FieldName}"
+              Text="{x:Static resources:UIStrings.LblFanChartYears}"
+              VerticalOptions="Center" />
+          <Label
+              Style="{StaticResource FieldValue}"
+              Text="{x:Static resources:UIStrings.FieldCalendarGregorian}"
+              VerticalOptions="Center" />
+        </HorizontalStackLayout>
         <Label
             Style="{StaticResource FieldName}"
             Text="{x:Static resources:UIStrings.LblFanChartSweep}"
