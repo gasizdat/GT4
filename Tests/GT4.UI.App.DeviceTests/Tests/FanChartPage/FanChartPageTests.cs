@@ -80,6 +80,18 @@ public class FanChartPageTests
   }
 
   // Main thread only.
+  private static double CenterRingThickness(TestableFanChartPage page)
+  {
+    var view = page
+      .FindByName<AbsoluteLayout>("Labels")
+      .Children
+      .OfType<FamilyTreeNodeView>()
+      .Single();
+    var stack = (VerticalStackLayout)view.Content;
+    return ((Border)stack.Children[0]).StrokeThickness;
+  }
+
+  // Main thread only.
   private static Label[] FatherLabels(TestableFanChartPage page) =>
     [.. page
       .FindByName<AbsoluteLayout>("Labels")
@@ -434,6 +446,30 @@ public class FanChartPageTests
       return Outlines(page);
     });
     Assert.Empty(none);
+  }
+
+  [Fact]
+  public async Task Hovering_the_centre_thickens_their_ring_until_the_pointer_moves_on()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    UseTree(services, Fathers(center, 1));
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+
+    var (plain, hovered, left) = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      var centerPoint = CenterOfChart(page);
+      var fatherPoint = LabelCenter(page, "Father1");
+      var before = CenterRingThickness(page);
+      page.InvokeHoverAt(centerPoint);
+      var over = CenterRingThickness(page);
+      page.InvokeHoverAt(fatherPoint);
+      return (before, over, CenterRingThickness(page));
+    });
+
+    Assert.True(hovered > plain);
+    Assert.Equal(plain, left);
   }
 
   [Fact]
