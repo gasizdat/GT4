@@ -3,6 +3,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:components="clr-namespace:GT4.UI.Components"
+    xmlns:dialogs="clr-namespace:GT4.UI.Dialogs"
     xmlns:resources="clr-namespace:GT4.UI.Resources;assembly=GT4.UI.Resources"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2021/maui/toolkit"
     x:Name="Root">
@@ -127,32 +128,87 @@
 
           </Grid>
 
-          <Grid
-              ColumnDefinitions="Auto, *"
-              ColumnSpacing="{x:StaticResource PageContentSpacing}"
-              IsVisible="{Binding OtherCalendarSwitch, Source={x:Reference Root}}"
-              RowDefinitions="Auto, Auto"
-              RowSpacing="{x:StaticResource PageContentSpacing}">
+          <components:CalendarDateView
+              Calendar="{Binding OtherCalendar, Source={x:Reference Root}}"
+              Date="{Binding OtherCalendarDate, Source={x:Reference Root}}"
+              IsVisible="{Binding OtherCalendarSwitch, Source={x:Reference Root}}">
+            <components:CalendarDateView.ControlTemplate>
+              <ControlTemplate>
+                <Grid
+                    ColumnDefinitions="Auto, *"
+                    ColumnSpacing="{x:StaticResource PageContentSpacing}"
+                    RowDefinitions="Auto, Auto, Auto, Auto, Auto"
+                    RowSpacing="{x:StaticResource PageContentSpacing}">
 
-            <components:CalendarDateView
-                Grid.Row="0"
-                Grid.ColumnSpan="2"
-                Calendar="{Binding OtherCalendar, Source={x:Reference Root}}"
-                Date="{Binding OtherCalendarDate, Source={x:Reference Root}}" />
+                  <Label
+                      Grid.Row="0"
+                      Grid.Column="0"
+                      Style="{StaticResource FieldName}"
+                      Text="{x:Static resources:UIStrings.FieldCalendar}" />
 
-            <Label
-                Grid.Row="1"
-                Grid.Column="0"
-                Style="{StaticResource FieldName}"
-                Text="{x:Static resources:UIStrings.FieldDateEntered}" />
+                  <Picker
+                      Grid.Row="0"
+                      Grid.Column="1"
+                      HorizontalOptions="Fill"
+                      ItemsSource="{Binding CalendarNames, Source={RelativeSource TemplatedParent}}"
+                      SelectedIndex="{Binding CalendarIndex, Source={RelativeSource TemplatedParent}}" />
 
-            <Label
-                Grid.Row="1"
-                Grid.Column="1"
-                Style="{StaticResource FieldValue}"
-                Text="{Binding DateString, Source={x:Reference Root}}" />
+                  <Label
+                      Grid.Row="1"
+                      Grid.Column="0"
+                      Style="{StaticResource FieldName}"
+                      Text="{x:Static resources:UIStrings.FieldYear}" />
 
-          </Grid>
+                  <Entry
+                      Grid.Row="1"
+                      Grid.Column="1"
+                      HorizontalOptions="Fill"
+                      Keyboard="Numeric"
+                      Style="{StaticResource FieldValue}"
+                      Text="{Binding Year, Source={RelativeSource TemplatedParent}}" />
+
+                  <Label
+                      Grid.Row="2"
+                      Grid.Column="0"
+                      Style="{StaticResource FieldName}"
+                      Text="{x:Static resources:UIStrings.FieldMonth}" />
+
+                  <Picker
+                      Grid.Row="2"
+                      Grid.Column="1"
+                      HorizontalOptions="Fill"
+                      ItemsSource="{Binding Months, Source={RelativeSource TemplatedParent}}"
+                      SelectedIndex="{Binding MonthIndex, Source={RelativeSource TemplatedParent}}" />
+
+                  <Label
+                      Grid.Row="3"
+                      Grid.Column="0"
+                      Style="{StaticResource FieldName}"
+                      Text="{x:Static resources:UIStrings.FieldDay}" />
+
+                  <Picker
+                      Grid.Row="3"
+                      Grid.Column="1"
+                      HorizontalOptions="Fill"
+                      ItemsSource="{Binding Days, Source={RelativeSource TemplatedParent}}"
+                      SelectedIndex="{Binding DayIndex, Source={RelativeSource TemplatedParent}}" />
+
+                  <Label
+                      Grid.Row="4"
+                      Grid.Column="0"
+                      Style="{StaticResource FieldName}"
+                      Text="{x:Static resources:UIStrings.FieldDateEntered}" />
+
+                  <Label
+                      Grid.Row="4"
+                      Grid.Column="1"
+                      Style="{StaticResource FieldValue}"
+                      Text="{Binding DateString, Source={RelativeSource AncestorType={x:Type dialogs:SelectDateDialog}}}" />
+
+                </Grid>
+              </ControlTemplate>
+            </components:CalendarDateView.ControlTemplate>
+          </components:CalendarDateView>
 
         </VerticalStackLayout>
       </ScrollView>
