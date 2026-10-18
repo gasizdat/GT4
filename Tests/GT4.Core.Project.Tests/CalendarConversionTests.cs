@@ -185,6 +185,8 @@ public sealed class CalendarConversionTests
   // 22 September 1792 to 31 December 1805.
   [Theory]
   [InlineData(1861, 3, DateStatus.DayUnknown, DisplayCalendar.FrenchRepublican)]
+  [InlineData(1861, 1, DateStatus.DayUnknown, DisplayCalendar.FrenchRepublican)]
+  [InlineData(2000, 9, DateStatus.DayUnknown, DisplayCalendar.FrenchRepublican)]
   [InlineData(1990, 0, DateStatus.MonthUnknown, DisplayCalendar.FrenchRepublican)]
   [InlineData(1990, 0, DateStatus.YearApproximate, DisplayCalendar.FrenchRepublican)]
   [InlineData(1792, 0, DateStatus.MonthUnknown, DisplayCalendar.FrenchRepublican)]
