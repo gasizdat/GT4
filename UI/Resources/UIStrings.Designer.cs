@@ -692,6 +692,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Enter a date in the {0} calendar. {1}.
+        /// </summary>
+        public static string DateInOtherCalendarPrompt_2 {
+            get {
+                return ResourceManager.GetString("DateInOtherCalendarPrompt_2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Date is known approximately.
         /// </summary>
         public static string DateKnownApproximately {

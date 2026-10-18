@@ -1671,4 +1671,7 @@ FN - family name</value>
   <data name="DateInOtherCalendar" xml:space="preserve">
     <value>Enter in another calendar</value>
   </data>
+  <data name="DateInOtherCalendarPrompt_2" xml:space="preserve">
+    <value>Enter a date in the {0} calendar. {1}</value>
+  </data>
 </root>

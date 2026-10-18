@@ -355,7 +355,7 @@ public partial class SelectDateDialog : ContentPage
 
       var name = _DateFormatter.CalendarName(_OtherCalendar);
       var range = _DateFormatter.CalendarRange(_OtherCalendar);
-      return string.Format(UIStrings.DateToolsInputNotRepresentable_2, name, range);
+      return string.Format(UIStrings.DateInOtherCalendarPrompt_2, name, range);
     }
   }
 

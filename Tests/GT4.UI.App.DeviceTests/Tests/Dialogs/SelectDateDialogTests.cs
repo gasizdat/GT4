@@ -247,11 +247,28 @@ public class SelectDateDialogTests
     });
 
     var name = services.Provider.GetRequiredService<IDateFormatter>().CalendarName(DisplayCalendar.Hebrew);
-    var expectedText = string.Format(Resources.UIStrings.DateToolsInputNotRepresentable_2, name, Resources.UIStrings.DateToolsRangeHebrew);
+    var expectedText = string.Format(Resources.UIStrings.DateInOtherCalendarPrompt_2, name, Resources.UIStrings.DateToolsRangeHebrew);
     Assert.Equal(expectedText, dialog.DateString);
     Assert.Equal(Resources.UIStrings.BtnNameCancel, dialog.DialogButtonName);
     await MainThread.InvokeOnMainThreadAsync(() => dialog.DialogCommand.Execute(null));
     Assert.Null(await dialog.Info);
+  }
+
+  [Fact]
+  public async Task Turning_the_other_calendar_on_with_nothing_entered_asks_for_a_date()
+  {
+    var services = new TestServices();
+    var dialog = await CreateDialogAsync(services, null);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      dialog.OtherCalendar = DisplayCalendar.Julian;
+      dialog.OtherCalendarSwitch = true;
+    });
+
+    var name = services.Provider.GetRequiredService<IDateFormatter>().CalendarName(DisplayCalendar.Julian);
+    var expectedText = string.Format(Resources.UIStrings.DateInOtherCalendarPrompt_2, name, Resources.UIStrings.DateToolsRangeCommon);
+    Assert.Equal(expectedText, dialog.DateString);
   }
 
   [Fact]

@@ -1671,4 +1671,7 @@ FN - род</value>
   <data name="DateInOtherCalendar" xml:space="preserve">
     <value>Ввести в другом календаре</value>
   </data>
+  <data name="DateInOtherCalendarPrompt_2" xml:space="preserve">
+    <value>{0} календарь: введите дату. {1}</value>
+  </data>
 </root>
