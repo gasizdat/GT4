@@ -13,7 +13,6 @@ using GT4.UI.Utils.Settings;
 using Microsoft.Maui.Controls.Shapes;
 using Microsoft.Maui.Layouts;
 using System.Windows.Input;
-using Path = Microsoft.Maui.Controls.Shapes.Path;
 
 namespace GT4.UI.Pages;
 
@@ -55,7 +54,7 @@ public partial class FanChartPage : ContentPage, IZoomablePage
   private ProjectInfo? _LastProjectInfo;
   private int[] _HiddenIds = [];
   private FanChartLayoutResult? _LastLayout;
-  private ILookup<int, (FanChartSegment Segment, Path Shape)>? _ShapesByPerson;
+  private Color? _Stroke;
   private FamilyTreeNodeView? _CenterView;
   private int? _HoveredId;
 
@@ -281,33 +280,21 @@ public partial class FanChartPage : ContentPage, IZoomablePage
       return;
     }
 
-    if (_HoveredId is int hoveredId)
-    {
-      Highlight(hoveredId, false);
-    }
-
     _HoveredId = personId;
-    if (personId is int id)
+    var layout = _LastLayout!;
+    ClearLayer(Highlights);
+    // On a layer of their own: raising a segment over its neighbours instead reorders the native
+    // children of a layer that can hold thousands of them.
+    var outlines = layout
+      .Segments
+      .Where(segment => segment.Node.Id == personId)
+      .Select(segment => FanChartSegmentShape.Create(segment, layout.Origin, HighlightedLineWidth, Colors.Transparent, _Stroke!));
+    foreach (var outline in outlines)
     {
-      Highlight(id, true);
-    }
-  }
-
-  private void Highlight(int personId, bool isHighlighted)
-  {
-    var lineWidth = isHighlighted ? HighlightedLineWidth : LineWidth;
-    var origin = _LastLayout!.Origin;
-    foreach (var (segment, shape) in _ShapesByPerson![personId])
-    {
-      FanChartSegmentShape.Update(shape, segment, origin, lineWidth);
-      // Over its neighbours, whose strokes would otherwise cover half of its own.
-      shape.ZIndex = isHighlighted ? 1 : 0;
+      Highlights.Children.Add(outline);
     }
 
-    if (personId == _LastLayout.Center.Id)
-    {
-      _CenterView!.SetHighlighted(isHighlighted);
-    }
+    _CenterView!.SetHighlighted(personId == layout.Center.Id);
   }
 
   private void SetCenter(PersonInfo person)
@@ -435,23 +422,21 @@ public partial class FanChartPage : ContentPage, IZoomablePage
 
     var fill = ThemedColor.Resolve("ControlFill", Color.FromArgb("#1A1E4437"));
     var repeatFill = ThemedColor.Resolve("SurfaceSubtle", Color.FromArgb("#EAE7E0"));
-    var stroke = ThemedColor.Resolve("Outline", Color.FromArgb("#991E4437"));
+    _Stroke = ThemedColor.Resolve("Outline", Color.FromArgb("#991E4437"));
     var fontSizePerLineHeight = FontSizeBase / _Metrics.LineHeight;
     var origin = layout.Origin;
     var radius = layout.Metrics.CenterRadius;
 
-    var disc = new Ellipse { Fill = fill, Stroke = stroke, StrokeThickness = LineWidth };
+    var disc = new Ellipse { Fill = fill, Stroke = _Stroke, StrokeThickness = LineWidth };
     var discBounds = new Rect(origin.X - radius, origin.Y - radius, 2 * radius, 2 * radius);
     AbsoluteLayout.SetLayoutBounds(disc, discBounds);
     Segments.Children.Add(disc);
 
-    var shapes = new List<(FanChartSegment Segment, Path Shape)>();
     foreach (var segment in layout.Segments)
     {
       var segmentFill = segment.IsRepeat ? repeatFill : fill;
-      var shape = FanChartSegmentShape.Create(segment, origin, LineWidth, segmentFill, stroke);
+      var shape = FanChartSegmentShape.Create(segment, origin, LineWidth, segmentFill, _Stroke);
       Segments.Children.Add(shape);
-      shapes.Add((segment, shape));
 
       if (labels.TryGetValue(segment.Slot, out var text))
       {
@@ -466,7 +451,6 @@ public partial class FanChartPage : ContentPage, IZoomablePage
     var centerBounds = new Rect(origin.X - (width / 2), origin.Y - (height / 2), width, height);
     AbsoluteLayout.SetLayoutBounds(centerView, centerBounds);
     Labels.Children.Add(centerView);
-    _ShapesByPerson = shapes.ToLookup(item => item.Segment.Node.Id);
     _CenterView = centerView;
 
     // Offered only while the chart reaches the requested depth: a shorter one has no more data to fetch.
@@ -499,14 +483,20 @@ public partial class FanChartPage : ContentPage, IZoomablePage
     return label;
   }
 
-  // The chart is rebuilt whole on every load, so every view is disconnected to release its native resources.
   private void ClearCanvas()
   {
-    // Forgotten rather than unlit: the shapes it would restyle are going.
+    // Forgotten with the outlines, or the next move over the same person would leave the new chart unlit.
     _HoveredId = null;
-    View[] views = [.. Segments.Children.OfType<View>(), .. Labels.Children.OfType<View>()];
-    Segments.Children.Clear();
-    Labels.Children.Clear();
+    ClearLayer(Segments);
+    ClearLayer(Highlights);
+    ClearLayer(Labels);
+  }
+
+  // Disconnected to release each removed view's native resources.
+  private static void ClearLayer(AbsoluteLayout layer)
+  {
+    View[] views = [.. layer.Children.OfType<View>()];
+    layer.Children.Clear();
     foreach (var view in views)
     {
       view.Handler?.DisconnectHandler();

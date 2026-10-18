@@ -16,12 +16,16 @@ It is opened from PersonPage's and FamilyTreePage's menus.
 
 ## Hovering
 - The pointer resolves through `HoverAt`, like a tap, and lights up the person under it: every
-  segment they hold (a repeat and their first slot together) gets twice the outline weight and is
-  raised over its neighbours, and the centre's ring thickens as on FamilyTreePage. Colours stay as
-  they are. Touch has no hover, so mobile has none of this.
-- `SetHovered` restyles only the previous and the new person. `Render` rebuilds the shapes, so
-  `ClearCanvas` forgets the hovered person rather than unlighting them, and the next pointer move
-  lights them up again.
+  segment they hold (a repeat and their first slot together) gets an unfilled outline at twice the
+  weight, and the centre's ring thickens as on FamilyTreePage. Fills stay as they are. The outline's
+  translucent colour lies over the segment's own stroke, so the hovered line reads a shade stronger
+  than the plain one. Touch has no hover, so mobile has none of this.
+- The outlines go on a `Highlights` layer of their own, between the segments and the labels, and
+  `SetHovered` replaces its contents when the hovered person changes. The segments are never
+  restyled or raised: at ten generations their layer holds 2,046 shapes, and raising one over its
+  neighbours reorders that layer's native children on every hover change.
+- `Render` rebuilds every layer, so `ClearCanvas` forgets the hovered person, and the next pointer
+  move outlines them on the new chart.
 
 ## State
 - `_Center` / `_CenterName`: the focal person and their short name.
@@ -34,7 +38,7 @@ It is opened from PersonPage's and FamilyTreePage's menus.
   picker binds to `SweepNames` / `SweepIndex`, and choosing a sweep stores it and rebuilds. Choosing
   the one already shown does neither, since the picker echoes its own update back.
 - `_LastLayout`: the rendered layout, which taps, hover and the viewport are measured against.
-- `_Shapes` / `_CenterView` / `_HoveredId`: the rendered segment paths and centre view, and who the
+- `_Stroke` / `_CenterView` / `_HoveredId`: the rendered outline colour and centre view, and who the
   pointer is over.
 
 ## Build & render pipeline
