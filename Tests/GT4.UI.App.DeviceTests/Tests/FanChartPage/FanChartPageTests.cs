@@ -96,11 +96,12 @@ public class FanChartPageTests
     [.. page.FindByName<AbsoluteLayout>("Segments").Children.OfType<Path>()];
 
   // Main thread only.
-  private static Path[] HighlightedPaths(TestableFanChartPage page)
-  {
-    var plain = SegmentPaths(page).Min(path => path.StrokeThickness);
-    return [.. SegmentPaths(page).Where(path => path.StrokeThickness > plain)];
-  }
+  private static (double Thickness, int ZIndex, Rect Bounds)[] SegmentStyles(TestableFanChartPage page) =>
+    [.. SegmentPaths(page).Select(path => (path.StrokeThickness, path.ZIndex, AbsoluteLayout.GetLayoutBounds(path)))];
+
+  // Main thread only.
+  private static Path[] Outlines(TestableFanChartPage page) =>
+    [.. page.FindByName<AbsoluteLayout>("Highlights").Children.OfType<Path>()];
 
   // Over the first label naming the person; a repeat has a label of its own.
   private static Task<Path[]> HoverAsync(TestableFanChartPage page, string name) =>
@@ -113,7 +114,7 @@ public class FanChartPageTests
         .First(label => label.Text.Contains(name));
       var bounds = AbsoluteLayout.GetLayoutBounds(label);
       page.InvokeHoverAt(bounds.Center);
-      return HighlightedPaths(page);
+      return Outlines(page);
     });
 
   // Slots 2 and 3 are the parents, 4 and 6 their fathers: the same man, so slot 6 is a repeat and slot
@@ -407,33 +408,52 @@ public class FanChartPageTests
   }
 
   [Fact]
-  public async Task Hovering_an_ancestor_highlights_their_segment_until_the_pointer_moves_on()
+  public async Task Hovering_an_ancestor_outlines_their_segment_until_the_pointer_moves_on()
   {
     var services = new TestServices();
     var center = P(1, "Ivan");
     UseTree(services, Fathers(center, 2));
     var page = await CreatePageAsync(services);
     await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    var plain = await MainThread.InvokeOnMainThreadAsync(() => SegmentPaths(page).Max(path => path.StrokeThickness));
 
     var first = await HoverAsync(page, "Father1");
-    var firstPath = Assert.Single(first);
-    Assert.Equal(1, firstPath.ZIndex);
+    var firstOutline = Assert.Single(first);
+    Assert.True(firstOutline.StrokeThickness > plain);
+    // A fill would tint the segment under it.
+    var fill = Assert.IsType<SolidColorBrush>(firstOutline.Fill);
+    Assert.Equal(Colors.Transparent, fill.Color);
 
     var second = await HoverAsync(page, "Father2");
-    var secondPath = Assert.Single(second);
-    Assert.NotSame(firstPath, secondPath);
-    Assert.Equal(0, firstPath.ZIndex);
+    var secondOutline = Assert.Single(second);
+    Assert.NotSame(firstOutline, secondOutline);
 
     var none = await MainThread.InvokeOnMainThreadAsync(() =>
     {
       page.InvokeHoverAt(null);
-      return HighlightedPaths(page);
+      return Outlines(page);
     });
     Assert.Empty(none);
   }
 
   [Fact]
-  public async Task Hovering_a_repeated_ancestor_highlights_every_segment_they_hold()
+  public async Task Hovering_leaves_the_segments_as_drawn()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    UseTree(services, CollapsedTree(center));
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    var drawn = await MainThread.InvokeOnMainThreadAsync(() => SegmentStyles(page));
+
+    await HoverAsync(page, "Grandfather");
+
+    var hovered = await MainThread.InvokeOnMainThreadAsync(() => SegmentStyles(page));
+    Assert.Equal(drawn, hovered);
+  }
+
+  [Fact]
+  public async Task Hovering_a_repeated_ancestor_outlines_every_segment_they_hold()
   {
     var services = new TestServices();
     var center = P(1, "Ivan");
@@ -441,15 +461,18 @@ public class FanChartPageTests
     var page = await CreatePageAsync(services);
     await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
 
-    var highlighted = await HoverAsync(page, "Grandfather");
+    var outlines = await HoverAsync(page, "Grandfather");
 
-    Assert.Equal(2, highlighted.Length);
-    Assert.Single(highlighted, path => path.StrokeDashArray.Count != 0);
+    Assert.Equal(2, outlines.Length);
+    var dashed = Assert.Single(outlines, path => path.StrokeDashArray.Count != 0);
+    var repeat = await MainThread.InvokeOnMainThreadAsync(() => SegmentPaths(page).Single(path => path.StrokeDashArray.Count != 0));
+    // In step with the segment's own dashes, which would otherwise show through the outline's gaps.
+    Assert.Equal(repeat.StrokeDashArray[0] * repeat.StrokeThickness, dashed.StrokeDashArray[0] * dashed.StrokeThickness, 6);
   }
 
-  // A rebuild forgets the hover, so moving over the same person again must light their new shapes.
+  // A rebuild clears the outlines, so moving over the same person again must draw them on the new chart.
   [Fact]
-  public async Task Hovering_the_same_ancestor_after_a_reload_highlights_them_again()
+  public async Task Hovering_the_same_ancestor_after_a_reload_outlines_them_again()
   {
     var services = new TestServices();
     var center = P(1, "Ivan");
@@ -459,7 +482,7 @@ public class FanChartPageTests
     await HoverAsync(page, "Father1");
 
     await WaitForLoadAsync(page, services, () => page.InvokePageCommandAsync("Refresh"));
-    var afterReload = await MainThread.InvokeOnMainThreadAsync(() => HighlightedPaths(page));
+    var afterReload = await MainThread.InvokeOnMainThreadAsync(() => Outlines(page));
     var hoveredAgain = await HoverAsync(page, "Father1");
 
     Assert.Empty(afterReload);

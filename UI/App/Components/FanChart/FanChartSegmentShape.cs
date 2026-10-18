@@ -11,35 +11,32 @@ namespace GT4.UI.Components.Genealogy;
 /// </summary>
 public static class FanChartSegmentShape
 {
-  // In multiples of the stroke thickness.
-  private const double RepeatDash = 3;
+  // Absolute, not in stroke thicknesses as a dash array counts, so a thicker outline over a segment
+  // dashes in step with it.
+  private const double RepeatDashLength = 4.5;
 
   public static Path Create(FanChartSegment segment, Point origin, double lineWidth, Color fill, Color stroke)
   {
-    var path = new Path
-    {
-      Fill = fill,
-      Stroke = stroke,
-      StrokeLineJoin = PenLineJoin.Round,
-      StrokeDashArray = segment.IsRepeat ? [RepeatDash, RepeatDash] : [],
-      Aspect = Stretch.None,
-      InputTransparent = true,
-    };
-    AbsoluteLayout.SetLayoutFlags(path, AbsoluteLayoutFlags.None);
-    Update(path, segment, origin, lineWidth);
-    return path;
-  }
-
-  // The bounds follow the stroke, so a thicker one isn't clipped.
-  public static void Update(Path path, FanChartSegment segment, Point origin, double lineWidth)
-  {
+    // The bounds follow the stroke, so a thicker one isn't clipped.
     var half = lineWidth / 2;
     var sector = FanChartLayout.SectorBounds(origin, segment.InnerRadius, segment.OuterRadius, segment.StartAngle, segment.SweepAngle);
     var bounds = sector.Inflate(half, half);
     var localOrigin = new Point(origin.X - bounds.Left, origin.Y - bounds.Top);
-    path.Data = BuildGeometry(segment, localOrigin);
-    path.StrokeThickness = lineWidth;
+    var dash = RepeatDashLength / lineWidth;
+    var path = new Path
+    {
+      Data = BuildGeometry(segment, localOrigin),
+      Fill = fill,
+      Stroke = stroke,
+      StrokeThickness = lineWidth,
+      StrokeLineJoin = PenLineJoin.Round,
+      StrokeDashArray = segment.IsRepeat ? [dash, dash] : [],
+      Aspect = Stretch.None,
+      InputTransparent = true,
+    };
+    AbsoluteLayout.SetLayoutFlags(path, AbsoluteLayoutFlags.None);
     AbsoluteLayout.SetLayoutBounds(path, bounds);
+    return path;
   }
 
   // Bearings grow clockwise on screen, so the outer arc runs clockwise and the inner one back.
