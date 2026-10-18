@@ -27,9 +27,10 @@
     </components:PageLayout.MenuItems>
 
     <components:PageLayout.Header>
-      <HorizontalStackLayout
-          HorizontalOptions="End"
-          Spacing="{StaticResource PageContentSpacing}">
+      <FlexLayout
+          AlignItems="Center"
+          JustifyContent="End"
+          Wrap="Wrap">
         <HorizontalStackLayout
             x:Name="YearsCalendar"
             IsVisible="{Binding IsYearsCalendarVisible, Source={x:Reference Root}}"
@@ -43,16 +44,20 @@
               Text="{x:Static resources:UIStrings.FieldCalendarGregorian}"
               VerticalOptions="Center" />
         </HorizontalStackLayout>
-        <Label
-            Style="{StaticResource FieldName}"
-            Text="{x:Static resources:UIStrings.LblFanChartSweep}"
-            VerticalOptions="Center" />
-        <Picker
-            x:Name="SweepPicker"
-            ItemsSource="{Binding SweepNames, Source={x:Reference Root}}"
-            SelectedIndex="{Binding SweepIndex, Source={x:Reference Root}}"
-            VerticalOptions="Center" />
-      </HorizontalStackLayout>
+        <HorizontalStackLayout
+            Padding="{Thickness Left={StaticResource PageContentSpacing}}"
+            Spacing="{StaticResource PageContentSpacing}">
+          <Label
+              Style="{StaticResource FieldName}"
+              Text="{x:Static resources:UIStrings.LblFanChartSweep}"
+              VerticalOptions="Center" />
+          <Picker
+              x:Name="SweepPicker"
+              ItemsSource="{Binding SweepNames, Source={x:Reference Root}}"
+              SelectedIndex="{Binding SweepIndex, Source={x:Reference Root}}"
+              VerticalOptions="Center" />
+        </HorizontalStackLayout>
+      </FlexLayout>
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>

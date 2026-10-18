@@ -440,6 +440,42 @@ public class FanChartPageTests
   }
 
   [Fact]
+  public async Task A_header_too_narrow_for_one_row_puts_the_mark_above_the_span()
+  {
+    var services = new TestServices();
+    services.FanChartCalendarSetting.Object.Value = nameof(DisplayCalendar.Hebrew);
+    var page = await CreatePageAsync(services);
+
+    await using (await WindowHost.AttachAsync(page))
+    {
+      await Poll.UntilAsync(
+        () => MainThread.InvokeOnMainThreadAsync(() => page.FindByName<Picker>("SweepPicker").IsLoaded),
+        loaded => loaded,
+        timeoutMessage: "The sweep picker never loaded.");
+
+      var layout = await MainThread.InvokeOnMainThreadAsync(() =>
+      {
+        var mark = page.FindByName<View>("YearsCalendar");
+        var picker = page.FindByName<Picker>("SweepPicker");
+        var span = (View)picker.Parent;
+        // A plain Arrange only queues a native pass; the layout manager arranges the children now.
+        var header = (ICrossPlatformLayout)mark.Parent;
+        var markSize = mark.Measure(double.PositiveInfinity, double.PositiveInfinity);
+        var spanSize = span.Measure(double.PositiveInfinity, double.PositiveInfinity);
+        // Wide enough for either alone, too narrow for both side by side.
+        var width = Math.Max(markSize.Width, spanSize.Width);
+        var size = header.CrossPlatformMeasure(width, double.PositiveInfinity);
+        header.CrossPlatformArrange(new Rect(0, 0, width, size.Height));
+        return (Width: width, Mark: mark.Frame, Span: span.Frame);
+      });
+
+      Assert.True(layout.Mark.Bottom <= layout.Span.Top, $"mark {layout.Mark}, span {layout.Span}");
+      Assert.True(layout.Mark.Right <= layout.Width, $"mark {layout.Mark}, width {layout.Width}");
+      Assert.True(layout.Span.Right <= layout.Width, $"span {layout.Span}, width {layout.Width}");
+    }
+  }
+
+  [Fact]
   public async Task A_repeated_ancestor_is_drawn_dashed_with_nothing_behind_it()
   {
     var services = new TestServices();

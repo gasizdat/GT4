@@ -38,7 +38,8 @@ It is opened from PersonPage's and FamilyTreePage's menus.
   picker binds to `SweepNames` / `SweepIndex`, and choosing a sweep stores it and rebuilds. Choosing
   the one already shown does neither, since the picker echoes its own update back.
 - `IsYearsCalendarVisible`: whether the header marks the labels' years as Gregorian, which it does
-  while the keyed `CalendarSetting` is any other calendar. The years are always the stored Gregorian
+  while the keyed `CalendarSetting` is any other calendar; a header too narrow for both wraps the
+  mark onto a row above the span picker. The years are always the stored Gregorian
   ones: a bare year can't be converted, since a Hebrew or French Republican year starts in autumn.
   Read once at construction: SettingsPage opens only from pages below this one, so the calendar
   can't change while the chart is open.
