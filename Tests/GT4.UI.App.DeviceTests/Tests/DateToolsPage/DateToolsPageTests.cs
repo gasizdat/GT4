@@ -29,10 +29,10 @@ public class DateToolsPageTests
   private static Task<CalendarDateView[]> InputViewsAsync(DateToolsPage page) =>
     MainThread.InvokeOnMainThreadAsync(() => page.GetVisualTreeDescendants().OfType<CalendarDateView>().ToArray());
 
-  private static string NotInCalendar(TestServices services, string format, DisplayCalendar calendar, string range)
+  private static string NotInCalendar(TestServices services, DisplayCalendar calendar, string range)
   {
     var name = services.Provider.GetRequiredService<IDateFormatter>().CalendarName(calendar);
-    return string.Format(format, name, range);
+    return string.Format(UIStrings.DateToolsNotRepresentable_2, name, range);
   }
 
   [Theory]
@@ -105,8 +105,7 @@ public class DateToolsPageTests
       page.ConvertToCalendar = DisplayCalendar.FrenchRepublican;
     });
 
-    var expected = NotInCalendar(
-      services, UIStrings.DateToolsResultNotRepresentable_2, DisplayCalendar.FrenchRepublican, UIStrings.DateToolsRangeFrenchRepublican);
+    var expected = NotInCalendar(services, DisplayCalendar.FrenchRepublican, UIStrings.DateToolsRangeFrenchRepublican);
     Assert.Equal(expected, page.ConvertResultText);
   }
 
@@ -124,8 +123,7 @@ public class DateToolsPageTests
     });
 
     Assert.Null(page.ConvertInput);
-    var expected = NotInCalendar(
-      services, UIStrings.DateToolsInputNotRepresentable_2, DisplayCalendar.Hebrew, UIStrings.DateToolsRangeHebrew);
+    var expected = NotInCalendar(services, DisplayCalendar.Hebrew, UIStrings.DateToolsRangeHebrew);
     Assert.Equal(expected, page.ConvertResultText);
   }
 
@@ -211,8 +209,7 @@ public class DateToolsPageTests
       to.Year = "15";
     });
 
-    var expected = NotInCalendar(
-      services, UIStrings.DateToolsInputNotRepresentable_2, DisplayCalendar.FrenchRepublican, UIStrings.DateToolsRangeFrenchRepublican);
+    var expected = NotInCalendar(services, DisplayCalendar.FrenchRepublican, UIStrings.DateToolsRangeFrenchRepublican);
     Assert.Equal(expected, page.PeriodText);
   }
 }

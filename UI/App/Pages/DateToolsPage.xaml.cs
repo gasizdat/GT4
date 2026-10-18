@@ -34,7 +34,7 @@ public partial class DateToolsPage : ContentPage
     _DateSpanFormatter = dateSpanFormatter;
     _AlertService = alertService;
     var calendar = CalendarConversion.ToDisplayCalendar(calendarSetting.Value);
-    _ConvertToCalendar = calendar == DisplayCalendar.Gregorian ? DisplayCalendar.Julian : calendar;
+    _ConvertToCalendar = CalendarConversion.OtherThanGregorian(calendar);
 
     InitializeComponent();
   }
@@ -105,11 +105,11 @@ public partial class DateToolsPage : ContentPage
     get
     {
       if (_ConvertInput is not Date input)
-        return NotInCalendar(UIStrings.DateToolsInputNotRepresentable_2, _ConvertFromCalendar);
+        return NotInCalendar(_ConvertFromCalendar);
 
-      return IsRepresentable(input, _ConvertToCalendar)
+      return CalendarConversion.IsRepresentable(input, _ConvertToCalendar)
         ? _DateFormatter.ToString(input, _ConvertToCalendar)
-        : NotInCalendar(UIStrings.DateToolsResultNotRepresentable_2, _ConvertToCalendar);
+        : NotInCalendar(_ConvertToCalendar);
     }
   }
 
@@ -174,9 +174,9 @@ public partial class DateToolsPage : ContentPage
     get
     {
       if (_PeriodFrom is not Date from)
-        return NotInCalendar(UIStrings.DateToolsInputNotRepresentable_2, _PeriodFromCalendar);
+        return NotInCalendar(_PeriodFromCalendar);
       if (_PeriodTo is not Date to)
-        return NotInCalendar(UIStrings.DateToolsInputNotRepresentable_2, _PeriodToCalendar);
+        return NotInCalendar(_PeriodToCalendar);
       if (from == to)
         return string.Empty;
 
@@ -192,7 +192,7 @@ public partial class DateToolsPage : ContentPage
   private void Swap()
   {
     var input = _ConvertInput;
-    var hasResult = input is Date date && IsRepresentable(date, _ConvertToCalendar);
+    var hasResult = input is Date date && CalendarConversion.IsRepresentable(date, _ConvertToCalendar);
     var from = _ConvertFromCalendar;
     ConvertFromCalendar = _ConvertToCalendar;
     ConvertToCalendar = from;
@@ -202,22 +202,11 @@ public partial class DateToolsPage : ContentPage
     }
   }
 
-  private static bool IsRepresentable(Date date, DisplayCalendar calendar)
-  {
-    var (applied, _, _, _) = CalendarConversion.TryConvert(date, calendar);
-    return applied == calendar;
-  }
-
-  private string NotInCalendar(string format, DisplayCalendar calendar)
+  private string NotInCalendar(DisplayCalendar calendar)
   {
     var name = _DateFormatter.CalendarName(calendar);
-    var range = calendar switch
-    {
-      DisplayCalendar.Hebrew => UIStrings.DateToolsRangeHebrew,
-      DisplayCalendar.FrenchRepublican => UIStrings.DateToolsRangeFrenchRepublican,
-      _ => UIStrings.DateToolsRangeCommon,
-    };
-    return string.Format(format, name, range);
+    var range = _DateFormatter.CalendarRange(calendar);
+    return string.Format(UIStrings.DateToolsNotRepresentable_2, name, range);
   }
 
   private static DateTime ToDateTime(Date date) => new(date.Year, date.Month, date.Day);

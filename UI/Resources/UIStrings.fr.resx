@@ -1650,10 +1650,7 @@ FN - nom de famille</value>
   <data name="BtnNameSwapCalendars" xml:space="preserve">
     <value>Inverser les calendriers</value>
   </data>
-  <data name="DateToolsInputNotRepresentable_2" xml:space="preserve">
-    <value>Cette date n'existe pas dans le calendrier {0}. {1}</value>
-  </data>
-  <data name="DateToolsResultNotRepresentable_2" xml:space="preserve">
+  <data name="DateToolsNotRepresentable_2" xml:space="preserve">
     <value>Cette date ne peut pas être exprimée dans le calendrier {0}. {1}</value>
   </data>
   <data name="DateToolsRangeCommon" xml:space="preserve">
@@ -1667,5 +1664,11 @@ FN - nom de famille</value>
   </data>
   <data name="DateToolsPeriodResult_2" xml:space="preserve">
     <value>{0} (nombre total de jours : {1})</value>
+  </data>
+  <data name="DateInOtherCalendar" xml:space="preserve">
+    <value>Saisir dans un autre calendrier</value>
+  </data>
+  <data name="DateInOtherCalendarPrompt_2" xml:space="preserve">
+    <value>Saisissez une date dans le calendrier {0}. {1}</value>
   </data>
 </root>

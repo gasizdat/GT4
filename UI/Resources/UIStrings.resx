@@ -1650,10 +1650,7 @@ FN - family name</value>
   <data name="BtnNameSwapCalendars" xml:space="preserve">
     <value>Swap calendars</value>
   </data>
-  <data name="DateToolsInputNotRepresentable_2" xml:space="preserve">
-    <value>This date does not exist in the {0} calendar. {1}</value>
-  </data>
-  <data name="DateToolsResultNotRepresentable_2" xml:space="preserve">
+  <data name="DateToolsNotRepresentable_2" xml:space="preserve">
     <value>This date cannot be shown in the {0} calendar. {1}</value>
   </data>
   <data name="DateToolsRangeCommon" xml:space="preserve">
@@ -1667,5 +1664,11 @@ FN - family name</value>
   </data>
   <data name="DateToolsPeriodResult_2" xml:space="preserve">
     <value>{0} (total days: {1})</value>
+  </data>
+  <data name="DateInOtherCalendar" xml:space="preserve">
+    <value>Enter in another calendar</value>
+  </data>
+  <data name="DateInOtherCalendarPrompt_2" xml:space="preserve">
+    <value>Enter a date in the {0} calendar. {1}</value>
   </data>
 </root>

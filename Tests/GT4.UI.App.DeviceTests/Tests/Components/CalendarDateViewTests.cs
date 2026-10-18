@@ -56,6 +56,34 @@ public class CalendarDateViewTests
     Assert.Equal(18, view.DayIndex);
   }
 
+  [Fact]
+  public async Task Setting_no_Date_clears_the_entry()
+  {
+    var view = await CreateViewAsync(DisplayCalendar.Julian, "1861", monthIndex: 1, dayIndex: 18);
+
+    await MainThread.InvokeOnMainThreadAsync(() => view.Date = null);
+
+    Assert.Equal("0", view.Year);
+    Assert.Equal(0, view.MonthIndex);
+    Assert.Equal(0, view.DayIndex);
+    Assert.Null(view.Date);
+  }
+
+  [Fact]
+  public async Task A_year_typed_into_a_cleared_Hebrew_entry_gives_its_date()
+  {
+    var view = await CreateViewAsync(DisplayCalendar.Hebrew, "5784", monthIndex: 7);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      view.Date = null;
+      view.Year = "5785";
+    });
+
+    var expected = CalendarConversion.ToGregorian(DisplayCalendar.Hebrew, 5785, 1, 1);
+    Assert.Equal(expected, view.Date);
+  }
+
   [Theory]
   [InlineData(DisplayCalendar.Julian, 29)]
   [InlineData(DisplayCalendar.Gregorian, 28)]

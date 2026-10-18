@@ -1650,10 +1650,7 @@ FN - apellido familiar</value>
   <data name="BtnNameSwapCalendars" xml:space="preserve">
     <value>Intercambiar calendarios</value>
   </data>
-  <data name="DateToolsInputNotRepresentable_2" xml:space="preserve">
-    <value>Esta fecha no existe en el calendario {0}. {1}</value>
-  </data>
-  <data name="DateToolsResultNotRepresentable_2" xml:space="preserve">
+  <data name="DateToolsNotRepresentable_2" xml:space="preserve">
     <value>Esta fecha no se puede expresar en el calendario {0}. {1}</value>
   </data>
   <data name="DateToolsRangeCommon" xml:space="preserve">
@@ -1667,5 +1664,11 @@ FN - apellido familiar</value>
   </data>
   <data name="DateToolsPeriodResult_2" xml:space="preserve">
     <value>{0} (total de días: {1})</value>
+  </data>
+  <data name="DateInOtherCalendar" xml:space="preserve">
+    <value>Introducir en otro calendario</value>
+  </data>
+  <data name="DateInOtherCalendarPrompt_2" xml:space="preserve">
+    <value>Introduzca una fecha en el calendario {0}. {1}</value>
   </data>
 </root>

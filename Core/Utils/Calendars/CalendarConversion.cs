@@ -25,6 +25,9 @@ public static class CalendarConversion
   public static DisplayCalendar ToDisplayCalendar(string? calendarType) =>
     Enum.TryParse<DisplayCalendar>(calendarType, out var parsed) ? parsed : DisplayCalendar.Gregorian;
 
+  public static DisplayCalendar OtherThanGregorian(DisplayCalendar displayCalendar) =>
+    displayCalendar == DisplayCalendar.Gregorian ? DisplayCalendar.Julian : displayCalendar;
+
   /// <summary>Assumes <paramref name="date"/> is <see cref="DateStatus.WellKnown"/> -- a partial date
   /// (year/month only) has no single correct placement in another calendar, so callers convert only
   /// full dates and render every other status in Gregorian.</summary>
@@ -45,6 +48,13 @@ public static class CalendarConversion
         (DisplayCalendar.FrenchRepublican, republican.Year, republican.Month, republican.Day),
       _ => fallback,
     };
+  }
+
+  /// <summary>Assumes <see cref="DateStatus.WellKnown"/>, as <see cref="TryConvert"/> does.</summary>
+  public static bool IsRepresentable(Date date, DisplayCalendar calendar)
+  {
+    var (applied, _, _, _) = TryConvert(date, calendar);
+    return applied == calendar;
   }
 
   /// <summary><c>null</c> when the date does not exist in <paramref name="calendar"/> or falls outside
