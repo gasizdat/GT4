@@ -392,7 +392,8 @@ public class SelectDateDialogTests
     });
     var view = await OtherCalendarViewAsync(dialog);
     var pickers = await MainThread.InvokeOnMainThreadAsync(() => view.GetVisualTreeDescendants().OfType<Picker>().ToArray());
-    var julian = Array.IndexOf(Enum.GetValues<DisplayCalendar>(), DisplayCalendar.Julian);
+    var calendars = Enum.GetValues<DisplayCalendar>();
+    var julian = Array.IndexOf(calendars, DisplayCalendar.Julian);
     await Poll.UntilAsync(
       () => MainThread.InvokeOnMainThreadAsync(() => pickers.Select(p => p.SelectedIndex).ToArray()),
       selected => selected.SequenceEqual([julian, 1, 18]),
