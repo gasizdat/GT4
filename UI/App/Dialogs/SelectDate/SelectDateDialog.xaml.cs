@@ -63,42 +63,6 @@ public partial class SelectDateDialog : ContentPage
     InitializeComponent();
   }
 
-  private static int NormalizeYear(int year) => year;
-
-  private static int NormalizeMonth(int month) => DateNormalizer.NormalizeMonth(month);
-
-  private static int NormalizeDay(int year, int month, int day) =>
-    DateNormalizer.NormalizeDay(year, month, day);
-
-  private static string[] GetMonths()
-  {
-    var ret = new List<string>();
-    for (var i = 1; i <= 12; i++)
-    {
-      var monthNo = i.ToString(D2);
-      var monthName = UIStrings.ResourceManager.GetString($"Month_{monthNo}", UIStrings.Culture) ?? "??";
-      ret.Add($"{monthNo} - {monthName}");
-    }
-    return [.. ret];
-  }
-
-  private static string[] GetDays()
-  {
-    var ret = new List<string>();
-    for (var i = 1; i <= 31; i++)
-    {
-      ret.Add(i.ToString(D2));
-    }
-    return [.. ret];
-  }
-
-  private void Refresh()
-  {
-    _NotReady = false;
-    OnPropertyChanged(nameof(DateString));
-    OnPropertyChanged(nameof(DialogButtonName));
-  }
-
   public string[] Months => _Months;
 
   public string[] Days => _Days;
@@ -321,31 +285,6 @@ public partial class SelectDateDialog : ContentPage
     }
   }
 
-  private Date Date
-  {
-    get
-    {
-      DateStatus status;
-
-      if (_ApproximateSwitch)
-        status = DateStatus.YearApproximate;
-      else if (!YearSwitch)
-        status = DateStatus.Unknown;
-      else if (!MonthSwitch)
-        status = DateStatus.MonthUnknown;
-      else if (!DaySwitch)
-        status = DateStatus.DayUnknown;
-      else
-        status = DateStatus.WellKnown;
-
-      return Date.Create(_Year, _Month, _Day, status);
-    }
-  }
-
-  private Date? Result => _NotReady ? null : EnteredDate;
-
-  private Date? EnteredDate => _OtherCalendarSwitch ? _OtherCalendarDate : Date;
-
   public string DateString
   {
     get
@@ -373,7 +312,68 @@ public partial class SelectDateDialog : ContentPage
     return true;
   }
 
+  private Date Date
+  {
+    get
+    {
+      DateStatus status;
+
+      if (_ApproximateSwitch)
+        status = DateStatus.YearApproximate;
+      else if (!YearSwitch)
+        status = DateStatus.Unknown;
+      else if (!MonthSwitch)
+        status = DateStatus.MonthUnknown;
+      else if (!DaySwitch)
+        status = DateStatus.DayUnknown;
+      else
+        status = DateStatus.WellKnown;
+
+      return Date.Create(_Year, _Month, _Day, status);
+    }
+  }
+
+  private Date? Result => _NotReady ? null : EnteredDate;
+
+  private Date? EnteredDate => _OtherCalendarSwitch ? _OtherCalendarDate : Date;
+
+  private void Refresh()
+  {
+    _NotReady = false;
+    OnPropertyChanged(nameof(DateString));
+    OnPropertyChanged(nameof(DialogButtonName));
+  }
+
   private void OnSelectDate() => _Info.TrySetResult(Result);
 
   private void Cancel() => _Info.TrySetResult(null);
+
+  private static int NormalizeYear(int year) => year;
+
+  private static int NormalizeMonth(int month) => DateNormalizer.NormalizeMonth(month);
+
+  private static int NormalizeDay(int year, int month, int day) =>
+    DateNormalizer.NormalizeDay(year, month, day);
+
+  private static string[] GetMonths()
+  {
+    var ret = new List<string>();
+    for (var i = 1; i <= 12; i++)
+    {
+      var monthNo = i.ToString(D2);
+      var monthName = UIStrings.ResourceManager.GetString($"Month_{monthNo}", UIStrings.Culture) ?? "??";
+      ret.Add($"{monthNo} - {monthName}");
+    }
+    return [.. ret];
+  }
+
+  private static string[] GetDays()
+  {
+    var ret = new List<string>();
+    for (var i = 1; i <= 31; i++)
+    {
+      ret.Add(i.ToString(D2));
+    }
+    return [.. ret];
+  }
 }
