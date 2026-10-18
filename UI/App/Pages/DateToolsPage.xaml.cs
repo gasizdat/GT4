@@ -105,11 +105,11 @@ public partial class DateToolsPage : ContentPage
     get
     {
       if (_ConvertInput is not Date input)
-        return NotInCalendar(UIStrings.DateToolsInputNotRepresentable_2, _ConvertFromCalendar);
+        return NotInCalendar(_ConvertFromCalendar);
 
       return CalendarConversion.IsRepresentable(input, _ConvertToCalendar)
         ? _DateFormatter.ToString(input, _ConvertToCalendar)
-        : NotInCalendar(UIStrings.DateToolsResultNotRepresentable_2, _ConvertToCalendar);
+        : NotInCalendar(_ConvertToCalendar);
     }
   }
 
@@ -174,9 +174,9 @@ public partial class DateToolsPage : ContentPage
     get
     {
       if (_PeriodFrom is not Date from)
-        return NotInCalendar(UIStrings.DateToolsInputNotRepresentable_2, _PeriodFromCalendar);
+        return NotInCalendar(_PeriodFromCalendar);
       if (_PeriodTo is not Date to)
-        return NotInCalendar(UIStrings.DateToolsInputNotRepresentable_2, _PeriodToCalendar);
+        return NotInCalendar(_PeriodToCalendar);
       if (from == to)
         return string.Empty;
 
@@ -202,11 +202,11 @@ public partial class DateToolsPage : ContentPage
     }
   }
 
-  private string NotInCalendar(string format, DisplayCalendar calendar)
+  private string NotInCalendar(DisplayCalendar calendar)
   {
     var name = _DateFormatter.CalendarName(calendar);
     var range = _DateFormatter.CalendarRange(calendar);
-    return string.Format(format, name, range);
+    return string.Format(UIStrings.DateToolsNotRepresentable_2, name, range);
   }
 
   private static DateTime ToDateTime(Date date) => new(date.Year, date.Month, date.Day);

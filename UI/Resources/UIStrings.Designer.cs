@@ -746,11 +746,11 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to This date does not exist in the {0} calendar. {1}.
+        ///   Looks up a localized string similar to This date cannot be shown in the {0} calendar. {1}.
         /// </summary>
-        public static string DateToolsInputNotRepresentable_2 {
+        public static string DateToolsNotRepresentable_2 {
             get {
-                return ResourceManager.GetString("DateToolsInputNotRepresentable_2", resourceCulture);
+                return ResourceManager.GetString("DateToolsNotRepresentable_2", resourceCulture);
             }
         }
         
@@ -796,15 +796,6 @@ namespace GT4.UI.Resources {
         public static string DateToolsRangeHebrew {
             get {
                 return ResourceManager.GetString("DateToolsRangeHebrew", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to This date cannot be shown in the {0} calendar. {1}.
-        /// </summary>
-        public static string DateToolsResultNotRepresentable_2 {
-            get {
-                return ResourceManager.GetString("DateToolsResultNotRepresentable_2", resourceCulture);
             }
         }
         

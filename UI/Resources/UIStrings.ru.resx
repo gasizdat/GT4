@@ -1650,10 +1650,7 @@ FN - род</value>
   <data name="BtnNameSwapCalendars" xml:space="preserve">
     <value>Поменять календари местами</value>
   </data>
-  <data name="DateToolsInputNotRepresentable_2" xml:space="preserve">
-    <value>{0} календарь: такой даты нет. {1}</value>
-  </data>
-  <data name="DateToolsResultNotRepresentable_2" xml:space="preserve">
+  <data name="DateToolsNotRepresentable_2" xml:space="preserve">
     <value>{0} календарь не может показать эту дату. {1}</value>
   </data>
   <data name="DateToolsRangeCommon" xml:space="preserve">

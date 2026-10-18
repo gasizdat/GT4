@@ -1650,10 +1650,7 @@ FN - Familienname</value>
   <data name="BtnNameSwapCalendars" xml:space="preserve">
     <value>Kalender tauschen</value>
   </data>
-  <data name="DateToolsInputNotRepresentable_2" xml:space="preserve">
-    <value>Dieses Datum gibt es im Kalender „{0}“ nicht. {1}</value>
-  </data>
-  <data name="DateToolsResultNotRepresentable_2" xml:space="preserve">
+  <data name="DateToolsNotRepresentable_2" xml:space="preserve">
     <value>Dieses Datum lässt sich im Kalender „{0}“ nicht darstellen. {1}</value>
   </data>
   <data name="DateToolsRangeCommon" xml:space="preserve">
