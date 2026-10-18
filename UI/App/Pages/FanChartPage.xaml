@@ -37,7 +37,7 @@
             Spacing="{StaticResource PageContentSpacing}">
           <Label
               Style="{StaticResource FieldName}"
-              Text="{x:Static resources:UIStrings.LblFanChartYears}"
+              Text="{x:Static resources:UIStrings.FieldCalendar}"
               VerticalOptions="Center" />
           <Label
               Style="{StaticResource FieldValue}"

@@ -1614,9 +1614,6 @@ FN - род</value>
   <data name="LblFanChartSweep" xml:space="preserve">
     <value>Охват</value>
   </data>
-  <data name="LblFanChartYears" xml:space="preserve">
-    <value>Годы</value>
-  </data>
   <data name="FieldFanChartSweep" xml:space="preserve">
     <value>Охват веерной схемы</value>
   </data>

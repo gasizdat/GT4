@@ -1614,9 +1614,6 @@ FN - apellido familiar</value>
   <data name="LblFanChartSweep" xml:space="preserve">
     <value>Arco</value>
   </data>
-  <data name="LblFanChartYears" xml:space="preserve">
-    <value>Años</value>
-  </data>
   <data name="FieldFanChartSweep" xml:space="preserve">
     <value>Arco del gráfico de abanico</value>
   </data>

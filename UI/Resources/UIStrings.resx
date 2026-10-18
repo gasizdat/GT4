@@ -1614,9 +1614,6 @@ FN - family name</value>
   <data name="LblFanChartSweep" xml:space="preserve">
     <value>Span</value>
   </data>
-  <data name="LblFanChartYears" xml:space="preserve">
-    <value>Years</value>
-  </data>
   <data name="FieldFanChartSweep" xml:space="preserve">
     <value>Fan chart span</value>
   </data>
