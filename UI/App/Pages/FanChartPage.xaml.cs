@@ -1,6 +1,7 @@
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.Core.Utils.Calendars;
 using GT4.UI.Abstraction;
 using GT4.UI.Components.Genealogy;
 using GT4.UI.Resources;
@@ -26,6 +27,7 @@ public partial class FanChartPage : ContentPage, IZoomablePage
   private readonly ILifeDatesFormatter _LifeDatesFormatter;
   private readonly ISettingEditor _SweepSetting;
   private readonly SettingKind.Option[] _SweepOptions;
+  private readonly DisplayCalendar _Calendar;
   private readonly FontScale? _FontScale;
   private readonly IAlertService _AlertService;
   private readonly INavigationService _NavigationService;
@@ -47,6 +49,7 @@ public partial class FanChartPage : ContentPage, IZoomablePage
   private string _CenterName = string.Empty;
   private int _Generations = InitialGenerations;
   private bool _CanLoadMore;
+  private bool _HasFallbackYears;
   private double _PanStartScrollX;
   private double _PanStartScrollY;
   private int _LoadOperationsCount = 0;
@@ -63,9 +66,12 @@ public partial class FanChartPage : ContentPage, IZoomablePage
     ICurrentProjectProvider currentProjectProvider,
     IFamilyTreeHiddenPersonsStore hiddenPersonsStore,
     INameFormatter nameFormatter,
+    IDateFormatter dateFormatter,
     ILifeDatesFormatter lifeDatesFormatter,
     [FromKeyedServices(SettingKeys.FanChartSweep)]
     ISettingEditor sweepSetting,
+    [FromKeyedServices(SettingKeys.Calendar)]
+    ISettingEditor calendarSetting,
     FontScale? fontScale,
     IAlertService alertService,
     INavigationService navigationService,
@@ -79,6 +85,8 @@ public partial class FanChartPage : ContentPage, IZoomablePage
     _LifeDatesFormatter = lifeDatesFormatter;
     _SweepSetting = sweepSetting;
     _SweepOptions = ((SettingKind.Choice)sweepSetting.Kind).Options;
+    _Calendar = CalendarConversion.ToDisplayCalendar(calendarSetting.Value);
+    CalendarName = dateFormatter.CalendarName(_Calendar);
     _FontScale = fontScale;
     _AlertService = alertService;
     _NavigationService = navigationService;
@@ -136,6 +144,13 @@ public partial class FanChartPage : ContentPage, IZoomablePage
       Reload();
     }
   }
+
+  public bool IsCalendarVisible => _Calendar != DisplayCalendar.Gregorian;
+
+  public string CalendarName { get; }
+
+  // A no-break space, so a wrapped mark keeps the dot on the legend's line.
+  public string FallbackLegend => _HasFallbackYears ? $" ·\u00A0{UIStrings.FieldCalendarGregorian}" : string.Empty;
 
   public bool CanLoadMore
   {
@@ -368,7 +383,7 @@ public partial class FanChartPage : ContentPage, IZoomablePage
       var labels = layout
         .Segments
         .Where(segment => segment.Label != FanChartLabel.None)
-        .ToDictionary(segment => segment.Slot, LabelText);
+        .ToDictionary(segment => segment.Slot, LabelRuns);
       var centerName = _NameFormatter.ToString(layout.Center.Person, NameFormat.ShortPersonName);
       var photo = await LoadPhotoAsync(layout.Center.Person, token);
 
@@ -380,11 +395,11 @@ public partial class FanChartPage : ContentPage, IZoomablePage
     }
   }
 
-  private string LabelText(FanChartSegment segment)
+  private (string Text, bool IsFallback)[] LabelRuns(FanChartSegment segment)
   {
     var name = _NameFormatter.ToString(segment.Node.Person, NameFormat.ShortPersonName);
-    var years = _LifeDatesFormatter.ToYearsString(segment.Node.Person);
-    return segment.Label == FanChartLabel.Full && years.Length != 0 ? $"{name}\n{years}" : name;
+    var years = _LifeDatesFormatter.ToYears(segment.Node.Person, _Calendar);
+    return segment.Label == FanChartLabel.Full && years.Length != 0 ? [($"{name}\n", false), .. years] : [(name, false)];
   }
 
   private async Task<ImageSource> LoadPhotoAsync(PersonInfo person, CancellationToken token)
@@ -407,7 +422,7 @@ public partial class FanChartPage : ContentPage, IZoomablePage
     int load,
     FanChartLayoutResult layout,
     int generations,
-    IReadOnlyDictionary<int, string> labels,
+    IReadOnlyDictionary<int, (string Text, bool IsFallback)[]> labels,
     string centerName,
     ImageSource photo,
     double zoom)
@@ -422,6 +437,7 @@ public partial class FanChartPage : ContentPage, IZoomablePage
 
     var fill = ThemedColor.Resolve("ControlFill", Color.FromArgb("#1A1E4437"));
     var repeatFill = ThemedColor.Resolve("SurfaceSubtle", Color.FromArgb("#EAE7E0"));
+    var fallbackText = ThemedColor.Resolve("MutedText", Color.FromArgb("#6B6659"));
     _Stroke = ThemedColor.Resolve("Outline", Color.FromArgb("#991E4437"));
     var fontSizePerLineHeight = FontSizeBase / _Metrics.LineHeight;
     var origin = layout.Origin;
@@ -438,12 +454,15 @@ public partial class FanChartPage : ContentPage, IZoomablePage
       var shape = FanChartSegmentShape.Create(segment, origin, LineWidth, segmentFill, _Stroke);
       Segments.Children.Add(shape);
 
-      if (labels.TryGetValue(segment.Slot, out var text))
+      if (labels.TryGetValue(segment.Slot, out var runs))
       {
-        var label = CreateLabel(segment, text, segment.LineHeight * fontSizePerLineHeight);
+        var label = CreateLabel(segment, runs, segment.LineHeight * fontSizePerLineHeight, fallbackText);
         Labels.Children.Add(label);
       }
     }
+
+    _HasFallbackYears = labels.Values.Any(runs => runs.Any(run => run.IsFallback));
+    OnPropertyChanged(nameof(FallbackLegend));
 
     var width = _CenterMetrics.NodeWidth * zoom;
     var height = _CenterMetrics.NodeHeight * zoom;
@@ -463,13 +482,20 @@ public partial class FanChartPage : ContentPage, IZoomablePage
     _ = CenterViewportAsync();
   }
 
-  private static Label CreateLabel(FanChartSegment segment, string text, double fontSize)
+  private static Label CreateLabel(FanChartSegment segment, (string Text, bool IsFallback)[] runs, double fontSize, Color fallbackText)
   {
     var size = segment.LabelSize;
     var center = segment.LabelCenter;
+    var text = new FormattedString();
+    foreach (var run in runs)
+    {
+      var span = new Span { Text = run.Text, TextColor = run.IsFallback ? fallbackText : null };
+      text.Spans.Add(span);
+    }
+
     var label = new Label
     {
-      Text = text,
+      FormattedText = text,
       FontSize = fontSize,
       MaxLines = segment.Label == FanChartLabel.Full ? 2 : 1,
       LineBreakMode = LineBreakMode.TailTruncation,

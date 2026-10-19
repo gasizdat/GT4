@@ -1,8 +1,10 @@
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.Core.Utils.Calendars;
 using GT4.UI.Abstraction;
 using GT4.UI.Components.Genealogy;
 using GT4.UI.Pages;
+using GT4.UI.Utils.Formatters;
 using Moq;
 using Xunit;
 using Path = Microsoft.Maui.Controls.Shapes.Path;
@@ -18,8 +20,8 @@ public class FanChartPageTests
 {
   private static Name N(int id, string value, NameType type) => new(id, value, type, null);
 
-  private static PersonInfo P(int id, string firstName, BiologicalSex sex = BiologicalSex.Male) =>
-    new(id, Date.Create(1900, null, null, DateStatus.MonthUnknown), null, sex,
+  private static PersonInfo P(int id, string firstName, BiologicalSex sex = BiologicalSex.Male, int birthYear = 1900) =>
+    new(id, Date.Create(birthYear, null, null, DateStatus.MonthUnknown), null, sex,
       [N(id * 100, firstName, NameType.FirstName | NameType.MaleDeclension)], null);
 
   private static async Task<TestableFanChartPage> CreatePageAsync(TestServices services)
@@ -52,20 +54,58 @@ public class FanChartPageTests
   private static FamilyTree WithFather(PersonInfo child, PersonInfo father) =>
     new(child.Id, [new(child, 0), new(father, 1)], [FamilyTreeEdge.ParentChild(father.Id, child.Id)]);
 
+  private static FamilyTree WithParents(PersonInfo child, PersonInfo father, PersonInfo mother) =>
+    new(child.Id, [new(child, 0), new(father, 1), new(mother, 1)],
+      [FamilyTreeEdge.ParentChild(father.Id, child.Id), FamilyTreeEdge.ParentChild(mother.Id, child.Id)]);
+
+  // A father the Hebrew calendar can't hold (before 1583) and a mother it can.
+  private static FamilyTree WithOldFather(PersonInfo child) =>
+    WithParents(child, P(2, "Old", birthYear: 1575), P(3, "Mother", BiologicalSex.Female));
+
   private static void VerifyBuilds(TestServices services, int generations, Times times) =>
     services.FamilyTreeProvider.Verify(
       f => f.BuildAsync(It.IsAny<Person>(), generations, 0, false, It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
       times);
 
+  // A segment's label is drawn in spans, so its Text stays empty.
+  private static string TextOf(Label label) => label.FormattedText.ToString();
+
   // Main thread only.
-  private static Point LabelCenter(TestableFanChartPage page, string name)
-  {
-    var label = page
+  private static Label LabelOf(TestableFanChartPage page, string name) =>
+    page
       .FindByName<AbsoluteLayout>("Labels")
       .Children
       .OfType<Label>()
-      .Single(label => label.Text.Contains(name));
+      .Single(label => TextOf(label).Contains(name));
+
+  // Main thread only.
+  private static Span[] SpansOf(TestableFanChartPage page, string name)
+  {
+    var label = LabelOf(page, name);
+    return [.. label.FormattedText.Spans];
+  }
+
+  // Main thread only.
+  private static Point LabelCenter(TestableFanChartPage page, string name)
+  {
+    var label = LabelOf(page, name);
     return AbsoluteLayout.GetLayoutBounds(label).Center;
+  }
+
+  // Main thread only.
+  private static (bool IsVisible, string[] Texts) CalendarMark(TestableFanChartPage page)
+  {
+    var mark = page.FindByName<Label>("CalendarMark");
+    string[] texts = [.. mark.FormattedText.Spans.Select(span => span.Text)];
+    return (mark.IsVisible, texts);
+  }
+
+  // Main thread only. The legend is the mark's last span, empty while no year falls back.
+  private static (bool IsShown, Color Color) FallbackLegend(TestableFanChartPage page)
+  {
+    var mark = page.FindByName<Label>("CalendarMark");
+    var legend = mark.FormattedText.Spans.Last();
+    return (legend.Text.Length != 0, legend.TextColor);
   }
 
   // Main thread only.
@@ -97,11 +137,11 @@ public class FanChartPageTests
       .FindByName<AbsoluteLayout>("Labels")
       .Children
       .OfType<Label>()
-      .Where(label => label.Text.StartsWith("Father"))];
+      .Where(label => TextOf(label).StartsWith("Father"))];
 
   // Main thread only.
   private static string[] LabelTexts(TestableFanChartPage page) =>
-    [.. page.FindByName<AbsoluteLayout>("Labels").Children.OfType<Label>().Select(label => label.Text)];
+    [.. page.FindByName<AbsoluteLayout>("Labels").Children.OfType<Label>().Select(TextOf)];
 
   // Main thread only.
   private static Path[] SegmentPaths(TestableFanChartPage page) =>
@@ -123,7 +163,7 @@ public class FanChartPageTests
         .FindByName<AbsoluteLayout>("Labels")
         .Children
         .OfType<Label>()
-        .First(label => label.Text.Contains(name));
+        .First(label => TextOf(label).Contains(name));
       var bounds = AbsoluteLayout.GetLayoutBounds(label);
       page.InvokeHoverAt(bounds.Center);
       return Outlines(page);
@@ -402,6 +442,122 @@ public class FanChartPageTests
     var page = await CreatePageAsync(services);
 
     Assert.Equal(1, page.SweepIndex);
+  }
+
+  [Theory]
+  [InlineData(DisplayCalendar.Julian)]
+  [InlineData(DisplayCalendar.Hebrew)]
+  [InlineData(DisplayCalendar.FrenchRepublican)]
+  public async Task Names_another_calendar_in_the_header(DisplayCalendar calendar)
+  {
+    var services = new TestServices();
+    services.FanChartCalendarSetting.Object.Value = $"{calendar}";
+
+    var page = await CreatePageAsync(services);
+
+    var mark = await MainThread.InvokeOnMainThreadAsync(() => CalendarMark(page));
+    var expected = services.Provider.GetRequiredService<IDateFormatter>().CalendarName(calendar);
+    Assert.True(mark.IsVisible);
+    Assert.Contains(expected, mark.Texts);
+  }
+
+  [Fact]
+  public async Task Under_Gregorian_names_no_calendar_and_mutes_no_year()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    UseTree(services, WithOldFather(center));
+    var page = await CreatePageAsync(services);
+
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+
+    var (mark, legend, spans) = await MainThread.InvokeOnMainThreadAsync(() =>
+      (CalendarMark(page), FallbackLegend(page), SpansOf(page, "Old")));
+    Assert.False(mark.IsVisible);
+    Assert.False(legend.IsShown);
+    Assert.Contains(spans, span => span.Text == "1575");
+    Assert.All(spans, span => Assert.Null(span.TextColor));
+  }
+
+  [Fact]
+  public async Task A_year_the_calendar_cannot_hold_stays_Gregorian_in_the_legends_colour()
+  {
+    var services = new TestServices();
+    services.FanChartCalendarSetting.Object.Value = nameof(DisplayCalendar.Hebrew);
+    var center = P(1, "Ivan");
+    UseTree(services, WithOldFather(center));
+    var page = await CreatePageAsync(services);
+
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+
+    var (legend, father, mother) = await MainThread.InvokeOnMainThreadAsync(() =>
+      (FallbackLegend(page), SpansOf(page, "Old"), SpansOf(page, "Mother")));
+    Assert.True(legend.IsShown);
+    var fallback = Assert.Single(father, span => span.Text == "1575");
+    Assert.NotNull(fallback.TextColor);
+    Assert.Equal(legend.Color, fallback.TextColor);
+    // 1900 spans the Hebrew new year, so the converted year is approximate.
+    var converted = Assert.Single(mother, span => span.Text == "~5660");
+    Assert.Null(converted.TextColor);
+  }
+
+  [Fact]
+  public async Task The_legend_follows_the_chart_drawn()
+  {
+    var services = new TestServices();
+    services.FanChartCalendarSetting.Object.Value = nameof(DisplayCalendar.Hebrew);
+    var center = P(1, "Ivan");
+    UseTree(services, WithOldFather(center));
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    var before = await MainThread.InvokeOnMainThreadAsync(() => FallbackLegend(page).IsShown);
+    UseTree(services, Fathers(center, 1));
+
+    await WaitForLoadAsync(page, services, () => page.InvokePageCommandAsync("Refresh"));
+
+    var after = await MainThread.InvokeOnMainThreadAsync(() => FallbackLegend(page).IsShown);
+    Assert.True(before);
+    Assert.False(after);
+  }
+
+  [Fact]
+  public async Task A_header_too_narrow_for_one_row_wraps_inside_its_width()
+  {
+    var services = new TestServices();
+    services.FanChartCalendarSetting.Object.Value = nameof(DisplayCalendar.FrenchRepublican);
+    var center = P(1, "Ivan");
+    UseTree(services, WithOldFather(center));
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+
+    await using (await WindowHost.AttachAsync(page))
+    {
+      await Poll.UntilAsync(
+        () => MainThread.InvokeOnMainThreadAsync(() => page.FindByName<Picker>("SweepPicker").IsLoaded),
+        loaded => loaded,
+        timeoutMessage: "The sweep picker never loaded.");
+
+      var layout = await MainThread.InvokeOnMainThreadAsync(() =>
+      {
+        var mark = page.FindByName<Label>("CalendarMark");
+        var picker = page.FindByName<Picker>("SweepPicker");
+        var span = (View)picker.Parent;
+        var header = (ICrossPlatformLayout)mark.Parent;
+        var line = mark.Measure(double.PositiveInfinity, double.PositiveInfinity);
+        // Wide enough for the span picker, too narrow for the calendar's caption, name and legend on one line.
+        var width = span.Measure(double.PositiveInfinity, double.PositiveInfinity).Width;
+        // A plain Arrange only queues a native pass; the layout manager arranges the children now.
+        var size = header.CrossPlatformMeasure(width, double.PositiveInfinity);
+        header.CrossPlatformArrange(new Rect(0, 0, width, size.Height));
+        return (Width: width, Line: line, Mark: mark.Frame, Span: span.Frame);
+      });
+
+      Assert.True(layout.Line.Width > layout.Width, $"line {layout.Line}, width {layout.Width}");
+      Assert.True(layout.Mark.Height > layout.Line.Height, $"mark {layout.Mark}, line {layout.Line}");
+      Assert.True(layout.Mark.Bottom <= layout.Span.Top, $"mark {layout.Mark}, span {layout.Span}");
+      Assert.True(layout.Mark.Right <= layout.Width, $"mark {layout.Mark}, width {layout.Width}");
+      Assert.True(layout.Span.Right <= layout.Width, $"span {layout.Span}, width {layout.Width}");
+    }
   }
 
   [Fact]

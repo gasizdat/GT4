@@ -28,6 +28,9 @@
   <Color x:Key="DateCalendarDeathWashDark">#2C3034</Color>
   <Color x:Key="DateCalendarWeddingWash">#F5EFE4</Color>
   <Color x:Key="DateCalendarWeddingWashDark">#3A3227</Color>
+  <!--  Clears 4.5:1 on both of FanChartPage's segment fills, ControlFill and SurfaceSubtle.  -->
+  <Color x:Key="MutedText">#6B6659</Color>
+  <Color x:Key="MutedTextDark">#BEB8A9</Color>
   <Color x:Key="Primary">#1E4437</Color>
   <Color x:Key="PrimaryDark">#7FC0A4</Color>
   <Color x:Key="PrimaryDarkText">#12241D</Color>
