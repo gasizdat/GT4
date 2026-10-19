@@ -389,28 +389,54 @@ public class DateFormatterTests
     Create(calendar: "Hebrew").ToString(date).Should().Be("01 Elul 5761 (Hebrew)");
   }
 
+  // March 2000 lies within Hebrew 5760, but no Hebrew month matches it.
   [Fact]
-  public void DayUnknown_NonGregorianCalendar_StillLabelsAsGregorian()
+  public void DayUnknown_NonGregorianCalendar_ShowsOnlyTheConvertedYear()
   {
     SetEn();
     var date = Date.Create(2000, 3, 0, DateStatus.DayUnknown);
-    Create(shortFormat: "MMM YYYY", calendar: "Hebrew").ToString(date).Should().Be("March 2000 (Gregorian)");
+    Create(shortFormat: "MMM YYYY", calendar: "Hebrew").ToString(date).Should().Be("5760 (Hebrew)");
   }
 
+  // 1985 runs from Hebrew 5745 into 5746, which begins in September.
   [Fact]
-  public void MonthUnknown_NonGregorianCalendar_StillLabelsAsGregorian()
+  public void MonthUnknown_NonGregorianCalendar_SpanAcrossANewYear_IsAboutTheMiddleDaysYear()
   {
     SetEn();
     var date = Date.Create(1985, 0, 0, DateStatus.MonthUnknown);
-    Create(calendar: "Hebrew").ToString(date).Should().Be("1985 (Gregorian)");
+    Create(calendar: "Hebrew").ToString(date).Should().Be("about 5745 (Hebrew)");
   }
 
   [Fact]
-  public void YearApproximate_NonGregorianCalendar_StillLabelsAsGregorian()
+  public void YearApproximate_NonGregorianCalendar_ConvertsTheYear()
   {
     SetEn();
     var date = Date.Create(1990, 0, 0, DateStatus.YearApproximate);
-    Create(calendar: "Hebrew").ToString(date).Should().Be("about 1990 (Gregorian)");
+    Create(calendar: "Hebrew").ToString(date).Should().Be("about 5750 (Hebrew)");
+  }
+
+  [Fact]
+  public void RU_MonthUnknown_JulianCalendar_SpanAcrossANewYear_IsLocalized()
+  {
+    SetRu();
+    var date = Date.Create(1990, 0, 0, DateStatus.MonthUnknown);
+    Create(calendar: "Julian").ToString(date).Should().Be("около 1990 (Юлианский)");
+  }
+
+  [Fact]
+  public void DayUnknown_OutsideTheCalendar_FallsBackToGregorianAndKeepsTheMonth()
+  {
+    SetEn();
+    var date = Date.Create(1861, 3, 0, DateStatus.DayUnknown);
+    Create(shortFormat: "MMM YYYY", calendar: "FrenchRepublican").ToString(date).Should().Be("March 1861 (Gregorian)");
+  }
+
+  [Fact]
+  public void YearApproximate_OutsideTheCalendar_FallsBackToGregorian()
+  {
+    SetEn();
+    var date = Date.Create(1990, 0, 0, DateStatus.YearApproximate);
+    Create(calendar: "FrenchRepublican").ToString(date).Should().Be("about 1990 (Gregorian)");
   }
 
   [Fact]

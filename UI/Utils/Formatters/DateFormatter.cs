@@ -47,6 +47,17 @@ internal class DateFormatter : IDateFormatter
           appliedCalendar = applied;
           break;
 
+        case DateStatus.DayUnknown or DateStatus.MonthUnknown or DateStatus.YearApproximate
+          when requestedCalendar != DisplayCalendar.Gregorian &&
+            CalendarConversion.TryConvertYear(date.Value, requestedCalendar) is { Applied: not DisplayCalendar.Gregorian } converted:
+          ret = YearToString(date.Value with { Year = converted.Year }, converted.Applied);
+          if (converted.Approximate)
+          {
+            ret = string.Format(UIStrings.DateStatusYearApproximate_1, ret);
+          }
+          appliedCalendar = converted.Applied;
+          break;
+
         case DateStatus.DayUnknown:
           ret = GregorianFormat(_ShortDateFormatSetting.Value, date.Value);
           break;
