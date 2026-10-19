@@ -48,7 +48,8 @@ internal class DateFormatter : IDateFormatter
           break;
 
         case DateStatus.DayUnknown or DateStatus.MonthUnknown or DateStatus.YearApproximate
-          when CalendarConversion.TryConvertYear(date.Value, requestedCalendar) is { Applied: not DisplayCalendar.Gregorian } converted:
+          when requestedCalendar != DisplayCalendar.Gregorian &&
+            CalendarConversion.TryConvertYear(date.Value, requestedCalendar) is { Applied: not DisplayCalendar.Gregorian } converted:
           ret = YearToString(date.Value with { Year = converted.Year }, converted.Applied);
           if (converted.Approximate)
           {
