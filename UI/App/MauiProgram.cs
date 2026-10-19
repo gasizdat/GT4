@@ -33,6 +33,10 @@ public static class MauiProgram
     });
 #endif
 
+#if ANDROID
+    builder.ConfigureMauiHandlers(_ => WrappedViewPivot.Register());
+#endif
+
     GT4Services.Add(builder.Services);
 
     var app = builder.Build();
