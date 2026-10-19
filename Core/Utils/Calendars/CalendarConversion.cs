@@ -68,8 +68,8 @@ public static class CalendarConversion
     if (firstYear == lastYear)
       return (target, firstYear, approximate);
 
-    // Never a French Republican complementary day (17-23 September): a month's middle is before the 17th,
-    // a year's is in July.
+    // The middle always converts when both ends do: French Republican's only gap, its complementary
+    // days (17-23 September), comes after September's middle (the 15th) and a year's (July).
     var start = new DateTime(date.Year, firstMonth, 1);
     var end = new DateTime(date.Year, lastMonth, lastDay);
     var middle = start.AddDays((end - start).Days / 2);
