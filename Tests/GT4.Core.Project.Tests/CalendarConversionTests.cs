@@ -122,6 +122,8 @@ public sealed class CalendarConversionTests
   // 1 Tishrei 5579 fell on 1 October 1818, so neither September nor October 1818 crosses the Hebrew new
   // year, although October holds Rosh Hashanah.
   [Theory]
+  [InlineData(1861, 3, DateStatus.DayUnknown, DisplayCalendar.Gregorian, 1861)]
+  [InlineData(1990, 0, DateStatus.MonthUnknown, DisplayCalendar.Gregorian, 1990)]
   [InlineData(1861, 3, DateStatus.DayUnknown, DisplayCalendar.Julian, 1861)]
   [InlineData(1861, 3, DateStatus.DayUnknown, DisplayCalendar.Hebrew, 5621)]
   [InlineData(1861, 1, DateStatus.DayUnknown, DisplayCalendar.Hebrew, 5621)]
