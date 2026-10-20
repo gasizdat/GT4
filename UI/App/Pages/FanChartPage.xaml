@@ -27,19 +27,46 @@
     </components:PageLayout.MenuItems>
 
     <components:PageLayout.Header>
-      <HorizontalStackLayout
-          HorizontalOptions="End"
-          Spacing="{StaticResource PageContentSpacing}">
+      <FlexLayout
+          AlignItems="Center"
+          JustifyContent="End"
+          Wrap="Wrap">
+        <!--  One label, so a calendar name too long for its caption's row wraps instead of clipping: a
+              wrapping layout nested in this one crashes WinUI on attach.  -->
         <Label
-            Style="{StaticResource FieldName}"
-            Text="{x:Static resources:UIStrings.LblFanChartSweep}"
-            VerticalOptions="Center" />
-        <Picker
-            x:Name="SweepPicker"
-            ItemsSource="{Binding SweepNames, Source={x:Reference Root}}"
-            SelectedIndex="{Binding SweepIndex, Source={x:Reference Root}}"
-            VerticalOptions="Center" />
-      </HorizontalStackLayout>
+            x:Name="CalendarMark"
+            HorizontalTextAlignment="End"
+            IsVisible="{Binding IsCalendarVisible, Source={x:Reference Root}}"
+            Style="{StaticResource FieldValue}"
+            VerticalOptions="Center">
+          <Label.FormattedText>
+            <FormattedString>
+              <Span
+                  FontAttributes="Bold"
+                  Text="{x:Static resources:UIStrings.FieldCalendar}" />
+              <Span Text=" " />
+              <Span Text="{Binding CalendarName, Source={x:Reference Root}}" />
+              <Span
+                  Text="{Binding FallbackLegend, Source={x:Reference Root}}"
+                  TextColor="{AppThemeBinding Light={StaticResource MutedText},
+                                              Dark={StaticResource MutedTextDark}}" />
+            </FormattedString>
+          </Label.FormattedText>
+        </Label>
+        <HorizontalStackLayout
+            Padding="{Thickness Left={StaticResource PageContentSpacing}}"
+            Spacing="{StaticResource PageContentSpacing}">
+          <Label
+              Style="{StaticResource FieldName}"
+              Text="{x:Static resources:UIStrings.LblFanChartSweep}"
+              VerticalOptions="Center" />
+          <Picker
+              x:Name="SweepPicker"
+              ItemsSource="{Binding SweepNames, Source={x:Reference Root}}"
+              SelectedIndex="{Binding SweepIndex, Source={x:Reference Root}}"
+              VerticalOptions="Center" />
+        </HorizontalStackLayout>
+      </FlexLayout>
     </components:PageLayout.Header>
 
     <components:PageLayout.Body>

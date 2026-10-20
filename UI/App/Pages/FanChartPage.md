@@ -37,6 +37,15 @@ It is opened from PersonPage's and FamilyTreePage's menus.
 - `_SweepSetting`: the keyed `FanChartSweepSetting` (180°, 270° or 360°, saved app-wide). The header
   picker binds to `SweepNames` / `SweepIndex`, and choosing a sweep stores it and rebuilds. Choosing
   the one already shown does neither, since the picker echoes its own update back.
+- `_Calendar`: the keyed `CalendarSetting`, read once at construction: SettingsPage opens only from
+  pages below this one, so it can't change while the chart is open. The labels' years are drawn in
+  it, and the header names it (`IsCalendarVisible` / `CalendarName`) unless it is Gregorian.
+- `_HasFallbackYears`: whether a drawn label holds a year left in Gregorian because the calendar
+  can't represent it (Hebrew before 1583, French Republican outside 1792-1805, Julian before Christ).
+  Such a year is drawn in `MutedText`, and while one is on the chart the header's calendar mark
+  ends in a "· Gregorian" legend (`FallbackLegend`) in the same colour. `Render` recomputes it, so it
+  follows each reload. The mark is one label of spans so that a long calendar name wraps in a narrow
+  header: a wrapping `FlexLayout` nested in the header's crashes WinUI on attach.
 - `_LastLayout`: the rendered layout, which taps, hover and the viewport are measured against.
 - `_Stroke` / `_CenterView` / `_HoveredId`: the rendered outline colour and centre view, and who the
   pointer is over.
@@ -47,12 +56,13 @@ It is opened from PersonPage's and FamilyTreePage's menus.
    collaterals), scales `FanChartMetrics` by the zoom (line height by the font scale too, margin by
    the font scale alone, as FamilyTreePage does). The minimum line height follows the font scale
    alone: when zoomed in, a thin ring's labels shrink back toward the unzoomed size instead of
-   disappearing. Then it runs `FanChartLayout.Compute`, formats each label (short name, plus
-   `ILifeDatesFormatter.ToYearsString` where the segment has room), and loads the centre's photo.
+   disappearing. Then it runs `FanChartLayout.Compute`, formats each label as runs of text (short
+   name, plus `ILifeDatesFormatter.ToYears` in `_Calendar` where the segment has room), and loads the
+   centre's photo.
 3. `Render` rebuilds the canvas whole: the centre disc, one `FanChartSegmentShape` path per segment
    (repeats dashed, on a muted fill), a rotated `Label` per labelled segment at its ring's line
-   height, and a `FamilyTreeNodeView` for the centre. Every old view is disconnected first, to
-   release its native resources.
+   height with one span per run, and a `FamilyTreeNodeView` for the centre. Every old view is
+   disconnected first, to release its native resources.
 4. "Load more" is offered only while the chart reaches the depth asked for.
 5. The viewport centres on the centre person once the canvas has been laid out at its new size
    (`Canvas.SizeChanged`): centring before that clamps the scroll to the old extents.

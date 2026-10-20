@@ -2,6 +2,7 @@ using GT4.Core.Gedcom.Abstraction;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
+using GT4.Core.Utils.Calendars;
 using GT4.UI.Abstraction;
 using GT4.UI.Dialogs;
 using GT4.UI.Pages;
@@ -44,6 +45,9 @@ internal sealed class TestServices
   // Stands in for the app-config-backed setting, which would read and write the developer's own
   // settings file; it starts at the default sweep.
   public Mock<ISettingEditor> FanChartSweepSetting { get; } = new();
+  // Likewise the calendar the fan chart reads and draws its years in; every other date still reads the
+  // developer's own.
+  public Mock<ISettingEditor> FanChartCalendarSetting { get; } = new();
   public IServiceProvider Provider { get; }
 
   public static readonly ProjectInfo SampleProjectInfo = new(
@@ -166,6 +170,7 @@ internal sealed class TestServices
 
     FanChartSweepSetting.SetupProperty(s => s.Value, $"{FanChartSweep.Default}");
     FanChartSweepSetting.SetupGet(s => s.Kind).Returns(FanChartSweep.Kind);
+    FanChartCalendarSetting.SetupProperty(s => s.Value, nameof(DisplayCalendar.Gregorian));
 
     var services = new ServiceCollection();
     GT4Services.Add(services);
@@ -186,7 +191,7 @@ internal sealed class TestServices
     services.AddSingleton<MainPage>();
     services.AddSingleton<ProjectRevisionsPage>();
     services.AddSingleton<TestableFamilyTreePage>();
-    services.AddSingleton(provider => ActivatorUtilities.CreateInstance<TestableFanChartPage>(provider, FanChartSweepSetting.Object));
+    services.AddSingleton(provider => ActivatorUtilities.CreateInstance<TestableFanChartPage>(provider, FanChartSweepSetting.Object, FanChartCalendarSetting.Object));
     services.AddSingleton<SettingsPage>();
     services.AddSingleton<TestableStatisticsPage>();
     services.AddSingleton<TestableKinshipFinderPage>();
