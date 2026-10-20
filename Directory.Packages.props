@@ -2,6 +2,10 @@
 
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <!-- Pinned rather than taken from the installed workload: since 10.0.101 (dotnet/maui#39342),
+         MAUI's Resizetizer throws MissingMethodException rasterizing the SVG text and drop-shadow
+         filter in our app icon and splash, and CI's runner image picks such versions up unannounced. -->
+    <MauiVersion>10.0.20</MauiVersion>
   </PropertyGroup>
 
   <ItemGroup>
