@@ -127,7 +127,7 @@ from the code.
   fan chart's labels all landed displaced this way while Windows looked fine. `WrappedViewPivot`
   (`Platforms/Android`, registered in both `MauiProgram.cs` files) keeps the inner pivot in step;
   MAUI 10.0.71 still has the bug. Only the Android device-test leg can see it
-  (`WrappedViewPivotTests`), which is why `AppAndroidLib.csproj` now compiles `Platforms/Android`
+  (`WrappedViewPivotTests`), which is why `AppAndroidLib.csproj` compiles `Platforms/Android`
   except `MainActivity`/`MainApplication`.
 
 ## Don't re-derive stale snapshots
