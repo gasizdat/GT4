@@ -120,6 +120,15 @@ from the code.
   and the echo can't occur. A device test that only constructs the page without ever attaching it to
   a real `Window` won't catch this class of bug: no native `Entry` handler exists yet, so
   `TextChanged` never fires — it's real-UI-only.
+- **On Android, a view rotated or scaled from the start turns about its top-left corner if MAUI
+  wraps it** — input-transparent (including transparency inherited from its layout), clipped or
+  shadowed. MAUI applies the initial transforms to the inner native view with a pivot taken from
+  the pre-layout frame (−1 wide), then re-pivots only the wrapping container on every layout. The
+  fan chart's labels all landed displaced this way while Windows looked fine. `WrappedViewPivot`
+  (`Platforms/Android`, registered in both `MauiProgram.cs` files) keeps the inner pivot in step;
+  MAUI 10.0.71 still has the bug. Only the Android device-test leg can see it
+  (`WrappedViewPivotTests`), which is why `AppAndroidLib.csproj` now compiles `Platforms/Android`
+  except `MainActivity`/`MainApplication`.
 
 ## Don't re-derive stale snapshots
 
