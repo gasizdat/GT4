@@ -3,8 +3,6 @@ using Xunit;
 
 namespace GT4.UI.DeviceTests;
 
-// Pins GT4.UI.WrappedViewPivot: a label rotated from the start inside an input-transparent layer, as
-// the fan chart draws its labels, must turn about its centre once laid out, not about its corner.
 public class WrappedViewPivotTests
 {
   [Fact]
