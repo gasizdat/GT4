@@ -197,6 +197,13 @@ public class FamilyTreePageTests
     return ((Border)stack.Children[0]).StrokeThickness;
   }
 
+  // Who the card shows, or null while it is hidden. Main thread only.
+  private static int? CardPersonId(TestableFamilyTreePage page)
+  {
+    var card = page.FindByName<PersonCardView>("PersonCard");
+    return card.IsVisible ? card.Person!.Id : null;
+  }
+
   [Fact]
   public async Task Ctor_resolves_dependencies_and_defaults()
   {
@@ -1391,6 +1398,95 @@ public class FamilyTreePageTests
     Assert.All(lines, thickness => Assert.Equal(2, thickness));
   }
 
+  [Fact]
+  public async Task Hovering_a_node_shows_their_card_until_the_pointer_leaves()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    var child = P(2, "Petr");
+    SetupTree(services, center, child);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+
+    var cards = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      var before = CardPersonId(page);
+      PointerEnters(page, child.Id);
+      var hovered = CardPersonId(page);
+      PointerExits(page, child.Id);
+      return new[] { before, hovered, CardPersonId(page) };
+    });
+
+    Assert.Equal(new int?[] { null, child.Id, null }, cards);
+  }
+
+  [Fact]
+  public async Task A_late_exit_from_the_last_node_leaves_the_next_ones_card()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    var child = P(2, "Petr");
+    var sibling = P(3, "Oleg");
+    SetupTree(services, center, child, sibling);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+
+    var card = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      PointerEnters(page, child.Id);
+      PointerEnters(page, sibling.Id);
+      PointerExits(page, child.Id);
+      return CardPersonId(page);
+    });
+
+    Assert.Equal(sibling.Id, card);
+  }
+
+  // Refresh drops the node views at once, so the card must not wait for the rebuilt tree to go.
+  [Fact]
+  public async Task Refreshing_hides_the_card_before_the_rebuilt_tree_arrives()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    var child = P(2, "Petr");
+    var tree = SetupTree(services, center, child);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    await MainThread.InvokeOnMainThreadAsync(() => PointerEnters(page, child.Id));
+    var held = HoldBuilds(services);
+
+    var refreshing = await MainThread.InvokeOnMainThreadAsync(async () =>
+    {
+      await page.InvokePageCommandAsync("Refresh");
+      return CardPersonId(page);
+    });
+    await WaitForLoadAsync(page, services, () => held.SetResult(tree));
+
+    Assert.Null(refreshing);
+  }
+
+  [Fact]
+  public async Task Hiding_the_hovered_person_hides_their_card()
+  {
+    var services = new TestServices();
+    UseHiddenPersons(services);
+    var center = P(1, "Ivan");
+    var child = P(2, "Petr");
+    SetupTree(services, center, child);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    await MainThread.InvokeOnMainThreadAsync(() => PointerEnters(page, child.Id));
+
+    await WaitForLoadAsync(page, services, () =>
+    {
+      var hide = HideItem(page, child.Id);
+      hide.Command.Execute(hide.CommandParameter);
+    });
+
+    var card = await MainThread.InvokeOnMainThreadAsync(() => CardPersonId(page));
+    Assert.Null(card);
+  }
+
 #if WINDOWS
   [Fact]
   public async Task The_hide_entry_reaches_the_native_node()
@@ -1410,6 +1506,86 @@ public class FamilyTreePageTests
       timeoutMessage: "The relative's node never got a native context flyout.");
 
     Assert.IsType<Microsoft.UI.Xaml.Controls.MenuFlyout>(flyout);
+  }
+
+  // The card's overlay spans the page, so beside the button only its own transparency keeps it off the tree.
+  [Fact]
+  public async Task The_card_overlay_leaves_the_pointer_to_the_tree_beside_the_button()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    SetupTree(services, center, P(2, "Petr"));
+    var page = await CreatePageAsync(services);
+    await using var window = await WindowHost.AttachAsync(page);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+
+    var (overlayHit, scrollerHit) = await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() =>
+      {
+        var overlay = (Grid)page.FindByName<PersonCardView>("PersonCard").Parent;
+        var scroller = page.FindByName<ScrollView>("Scroller");
+        var hits = WinUIHitTest.At(overlay, new Point(4, 4));
+        return (hits.Contains(WinUIHitTest.Native(overlay)), hits.Contains(WinUIHitTest.Native(scroller)));
+      }),
+      state => state.Item2,
+      timeoutMessage: "The point beside the button never reached the tree's scroller.");
+
+    Assert.False(overlayHit);
+    Assert.True(scrollerHit);
+  }
+#endif
+
+#if ANDROID
+  [Fact]
+  public async Task A_node_carries_a_hold_only_while_not_arranging()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    var child = P(2, "Petr");
+    SetupTree(services, center, child);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+
+    var holds = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      int Holds() => NodeView(page, child.Id).GestureRecognizers.OfType<DragGestureRecognizer>().Count();
+      var browsing = Holds();
+      page.IsArranging = true;
+      var arranging = Holds();
+      page.IsArranging = false;
+      return new[] { browsing, arranging, Holds() };
+    });
+
+    Assert.Equal(new[] { 1, 0, 1 }, holds);
+  }
+
+  [Fact]
+  public async Task Holding_a_node_shows_their_card_until_the_finger_lifts_and_never_recentres()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    var child = P(2, "Petr");
+    SetupTree(services, center, child);
+    var page = await CreatePageAsync(services);
+    await using var window = await WindowHost.AttachAsync(page);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    var node = await MainThread.InvokeOnMainThreadAsync(() => NodeView(page, child.Id));
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => node.Handler),
+      handler => handler is not null,
+      timeoutMessage: "The relative's node never got a native view.");
+    var title = page.PageTitle;
+    var at = new Point(10, 10);
+
+    var downTime = await AndroidTouch.DownAsync(node, at);
+    await AndroidTouch.OutlastLongPressAsync();
+    var held = await MainThread.InvokeOnMainThreadAsync(() => CardPersonId(page));
+    await AndroidTouch.UpAsync(node, at, downTime);
+    var lifted = await MainThread.InvokeOnMainThreadAsync(() => CardPersonId(page));
+
+    Assert.Equal(child.Id, held);
+    Assert.Null(lifted);
+    Assert.Equal(title, page.PageTitle);
   }
 #endif
 }

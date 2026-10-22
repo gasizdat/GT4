@@ -19,13 +19,19 @@ It is opened from PersonPage's and FamilyTreePage's menus.
   segment they hold (a repeat and their first slot together) gets an unfilled outline at twice the
   weight, and the centre's ring thickens as on FamilyTreePage. Fills stay as they are. The outline's
   translucent colour lies over the segment's own stroke, so the hovered line reads a shade stronger
-  than the plain one. Touch has no hover, so mobile has none of this.
+  than the plain one.
+- The hovered person (`HoveredPerson`) also shows in a `PersonCardView`: their photo, full name and
+  life dates, in a card stacked under the "More ancestors" button. A portrait phone has no room for
+  it beside the button. The card is input-transparent, so the pointer reaches the chart under it.
+- Touch has no hover, so on Android a held finger stands in for the pointer: `TouchHold` resolves the
+  hold through `HoverAt` and the lift (`PointerReleased`) clears it. The lift raises no tap, so a hold
+  never re-centres. A finger that rests before it moves holds instead of panning. iOS has neither.
 - The outlines go on a `Highlights` layer of their own, between the segments and the labels, and
   `SetHovered` replaces its contents when the hovered person changes. The segments are never
   restyled or raised: at ten generations their layer holds 2,046 shapes, and raising one over its
   neighbours reorders that layer's native children on every hover change.
-- `Render` rebuilds every layer, so `ClearCanvas` forgets the hovered person, and the next pointer
-  move outlines them on the new chart.
+- `Render` rebuilds every layer, so `ClearCanvas` forgets the hovered person and hides the card, and
+  the next pointer move outlines them on the new chart.
 
 ## State
 - `_Center` / `_CenterName`: the focal person and their short name.
@@ -47,8 +53,8 @@ It is opened from PersonPage's and FamilyTreePage's menus.
   follows each reload. The mark is one label of spans so that a long calendar name wraps in a narrow
   header: a wrapping `FlexLayout` nested in the header's crashes WinUI on attach.
 - `_LastLayout`: the rendered layout, which taps, hover and the viewport are measured against.
-- `_Stroke` / `_CenterView` / `_HoveredId`: the rendered outline colour and centre view, and who the
-  pointer is over.
+- `_Stroke` / `_CenterView` / `_HoveredPerson`: the rendered outline colour and centre view, and who
+  the pointer is over.
 
 ## Build & render pipeline
 1. `Reload` snapshots the centre, depth and hidden set and runs `LoadAsync` off the UI thread.
