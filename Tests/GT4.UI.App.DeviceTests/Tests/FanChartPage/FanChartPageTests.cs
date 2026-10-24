@@ -552,11 +552,13 @@ public class FanChartPageTests
         return (Width: width, Line: line, Mark: mark.Frame, Span: span.Frame);
       });
 
+      // FlexLayout arranges in single precision, so an edge can land a few ulps past its double neighbour.
+      const double Slack = 1e-3;
       Assert.True(layout.Line.Width > layout.Width, $"line {layout.Line}, width {layout.Width}");
       Assert.True(layout.Mark.Height > layout.Line.Height, $"mark {layout.Mark}, line {layout.Line}");
-      Assert.True(layout.Mark.Bottom <= layout.Span.Top, $"mark {layout.Mark}, span {layout.Span}");
-      Assert.True(layout.Mark.Right <= layout.Width, $"mark {layout.Mark}, width {layout.Width}");
-      Assert.True(layout.Span.Right <= layout.Width, $"span {layout.Span}, width {layout.Width}");
+      Assert.True(layout.Mark.Bottom <= layout.Span.Top + Slack, $"mark {layout.Mark}, span {layout.Span}");
+      Assert.True(layout.Mark.Right <= layout.Width + Slack, $"mark {layout.Mark}, width {layout.Width}");
+      Assert.True(layout.Span.Right <= layout.Width + Slack, $"span {layout.Span}, width {layout.Width}");
     }
   }
 
