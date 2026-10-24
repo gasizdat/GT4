@@ -45,6 +45,10 @@ public partial class SelectDateDialog : ContentPage
 
       switch (date.Value.Status)
       {
+        case DateStatus.YearApproximate:
+          _ApproximateSwitch = true;
+          _YearSwitch = true;
+          break;
         case DateStatus.MonthUnknown:
           _YearSwitch = true;
           break;
