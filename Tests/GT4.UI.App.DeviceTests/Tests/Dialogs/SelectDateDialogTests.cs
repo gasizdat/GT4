@@ -82,6 +82,30 @@ public class SelectDateDialogTests
   }
 
   [Fact]
+  public async Task Ctor_with_a_YearApproximate_date_enables_the_approximate_and_year_switches()
+  {
+    var date = Date.Create(1861, 0, 0, DateStatus.YearApproximate);
+    var dialog = await CreateDialogAsync(new TestServices(), date);
+
+    Assert.True(dialog.ApproximateSwitch);
+    Assert.True(dialog.YearSwitch);
+    Assert.False(dialog.MonthSwitch);
+    Assert.False(dialog.DaySwitch);
+  }
+
+  [Fact]
+  public async Task Editing_the_year_of_an_approximate_date_keeps_it_approximate()
+  {
+    var dialog = await CreateDialogAsync(new TestServices(), Date.Create(1861, 0, 0, DateStatus.YearApproximate));
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.Year = "1862");
+
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.DialogCommand.Execute(null));
+    var result = await dialog.Info;
+
+    Assert.Equal(Date.Create(1862, 0, 0, DateStatus.YearApproximate), result);
+  }
+
+  [Fact]
   public async Task Ctor_with_a_BeforeCommonEra_date_shows_the_negative_year()
   {
     var date = Date.Create(-100, 0, 0, DateStatus.MonthUnknown);
@@ -348,6 +372,22 @@ public class SelectDateDialogTests
     Assert.False(dialog.DaySwitch);
     await MainThread.InvokeOnMainThreadAsync(() => dialog.DialogCommand.Execute(null));
     Assert.Equal(Date.Create(1950, 5, 5, DateStatus.DayUnknown), await dialog.Info);
+  }
+
+  [Fact]
+  public async Task Turning_the_other_calendar_on_and_off_keeps_an_approximate_date()
+  {
+    var date = Date.Create(1861, 0, 0, DateStatus.YearApproximate);
+    var dialog = await CreateDialogAsync(new TestServices(), date);
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      dialog.OtherCalendarSwitch = true;
+      dialog.OtherCalendarSwitch = false;
+    });
+
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.DialogCommand.Execute(null));
+    Assert.Equal(date, await dialog.Info);
   }
 
   [Fact]
