@@ -12,8 +12,7 @@
       Padding="12,6"
       BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceSubtle},
                                         Dark={StaticResource SurfaceSubtleDark}}"
-      StrokeShape="RoundRectangle 8"
-      StrokeThickness="0">
+      StrokeShape="RoundRectangle 8">
     <components:PersonInfoView
         NameFormat="FullPersonName"
         Person="{Binding Person, Source={x:Reference Root}}" />
