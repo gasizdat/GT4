@@ -45,6 +45,10 @@ public sealed class GedcomComparerTests
     return await GedcomComparer.CompareAsync(left, right, Token);
   }
 
+  // Mary and Joe trade xrefs, so the same text names the other person.
+  private static string SwapMaryAndJoe(string gedcom) =>
+    gedcom.Replace("@I2@", "@SWAP@").Replace("@I3@", "@I2@").Replace("@SWAP@", "@I3@");
+
   [Fact]
   public async Task IdenticalFiles_HaveNoDifferences()
   {
@@ -434,6 +438,30 @@ public sealed class GedcomComparerTests
     var differences = await CompareAsync(pointer, inline);
 
     differences.Should().BeEmpty();
+  }
+
+  [Fact]
+  public async Task PersonPointerToTheSamePersonUnderAnotherXref_IsNotADifference()
+  {
+    var withAssociation = Couple.Replace("1 NAME Robert /Williams/", "1 NAME Robert /Williams/\r\n1 ASSO @I3@");
+    var swapped = SwapMaryAndJoe(withAssociation);
+
+    var differences = await CompareAsync(withAssociation, swapped);
+
+    differences.Should().BeEmpty();
+  }
+
+  [Fact]
+  public async Task PersonPointerToAnotherPersonUnderTheSameXref_IsReported()
+  {
+    // What a verbatim pointer does once export renumbers: the text survives, the person it names does not.
+    var association = "1 NAME Robert /Williams/\r\n1 ASSO @I3@";
+    var first = Couple.Replace("1 NAME Robert /Williams/", association);
+    var second = SwapMaryAndJoe(Couple).Replace("1 NAME Robert /Williams/", association);
+
+    var differences = await CompareAsync(first, second);
+
+    differences.Should().Contain(d => d.Kind == GedcomDifferenceKind.Tag && d.Detail.Contains("ASSO"));
   }
 
   [Fact]

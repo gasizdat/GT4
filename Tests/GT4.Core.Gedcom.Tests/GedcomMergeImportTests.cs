@@ -419,6 +419,44 @@ public sealed class GedcomMergeImportTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task ReimportingPersonPointer_DoesNotGrowTheBlob()
+  {
+    // The incoming ASSO is repointed before the merge compares it, so it equals the one already stored.
+    var file = Doc(
+      Indi("@ANN@", "Ann", "Smith", birthYear: 1850, sex: "F") + "1 ASSO @BEN@\n",
+      Indi("@BEN@", "Ben", "Jones", birthYear: 1840));
+    await using var document = await NewDocumentAsync();
+    await ImportAsync(document, file);
+    var ann = (await PersonInfosAsync(document)).Single(p => p.DisplayName == "Ann Smith");
+    var before = Encoding.UTF8.GetString((await document.PersonManager.GetPersonFullInfoAsync(ann, Token)).GedcomData!.Content);
+
+    await ImportAsync(document, file);
+    var after = Encoding.UTF8.GetString((await document.PersonManager.GetPersonFullInfoAsync(ann, Token)).GedcomData!.Content);
+    after.Should().Be(before);
+  }
+
+  [Fact]
+  public async Task MergingResidue_LeavesStoredPersonPointersAlone()
+  {
+    // Ann's stored ASSO names Ben by GT4 id. The second file's own @I{Ben's id}@ is Carl, and its residue for
+    // Ann is merged into the stored blob: only the incoming roots may be repointed, never the stored ones.
+    await using var document = await NewDocumentAsync();
+    await ImportAsync(document, Doc(
+      Indi("@ANN@", "Ann", "Smith", birthYear: 1850, sex: "F") + "1 ASSO @BEN@\n",
+      Indi("@BEN@", "Ben", "Jones", birthYear: 1840)));
+    var ben = (await PersonInfosAsync(document)).Single(p => p.DisplayName == "Ben Jones");
+    var benXref = GedcomMapping.PersonXref(ben.Id);
+
+    await ImportAsync(document, Doc(
+      Indi(benXref, "Carl", "Brown", birthYear: 1860),
+      Indi("@X1@", "Ann", "Smith", birthYear: 1850, sex: "F") + "1 OCCU Baker\n"));
+
+    var ann = (await PersonInfosAsync(document)).Single(p => p.DisplayName == "Ann Smith");
+    var blob = Encoding.UTF8.GetString((await document.PersonManager.GetPersonFullInfoAsync(ann, Token)).GedcomData!.Content);
+    blob.Should().Contain("OCCU Baker").And.Contain($"ASSO {benXref}");
+  }
+
+  [Fact]
   public async Task ReimportingRealFile_KeepsEveryPersonDistinct()
   {
     // The real Brontë file mixes precise, year-only, month-year and "abt" birth dates, two people with no

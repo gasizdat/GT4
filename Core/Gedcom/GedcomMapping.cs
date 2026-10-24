@@ -46,6 +46,9 @@ internal static class GedcomMapping
   public static bool IsEventAssertion(GedcomNode owned) =>
     owned.Tag is GedcomTags.Birth or GedcomTags.Death or GedcomTags.Marriage && !string.IsNullOrWhiteSpace(owned.Value);
 
+  /// <summary>The xref export writes a person's INDI under, and so the one import repoints residue pointers to.</summary>
+  public static string PersonXref(int personId) => $"@I{personId}@";
+
   public static string SexLetter(BiologicalSex sex) => sex switch
   {
     BiologicalSex.Male => "M",

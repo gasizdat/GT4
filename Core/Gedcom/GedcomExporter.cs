@@ -409,7 +409,7 @@ internal sealed class GedcomExporter : IGedcomExporter
     CancellationToken token)
   {
     var person = individual.Person;
-    var node = new GedcomNode { Tag = GedcomTags.Individual, Xref = $"@I{person.Id}@" };
+    var node = new GedcomNode { Tag = GedcomTags.Individual, Xref = GedcomMapping.PersonXref(person.Id) };
 
     // The residue splits into the unmodeled sub-tags of owned tags (merged back into the regenerated NAME /
     // SEX / BIRT / DEAT / NOTE below) and the fully-unmodeled INDI children (re-attached whole at the end).
@@ -801,11 +801,11 @@ internal sealed class GedcomExporter : IGedcomExporter
       var familyKey = GedcomMetadata.FamilyKey(family.HusbandId, family.WifeId);
       if (family.HusbandId is not null)
       {
-        node.Add(new GedcomNode { Tag = GedcomTags.Husband, Value = $"@I{family.HusbandId}@" });
+        node.Add(new GedcomNode { Tag = GedcomTags.Husband, Value = GedcomMapping.PersonXref(family.HusbandId.Value) });
       }
       if (family.WifeId is not null)
       {
-        node.Add(new GedcomNode { Tag = GedcomTags.Wife, Value = $"@I{family.WifeId}@" });
+        node.Add(new GedcomNode { Tag = GedcomTags.Wife, Value = GedcomMapping.PersonXref(family.WifeId.Value) });
       }
       foreach (var date in family.MarriageDates)
       {
@@ -814,7 +814,7 @@ internal sealed class GedcomExporter : IGedcomExporter
       }
       foreach (var (childId, _) in family.Children)
       {
-        node.Add(new GedcomNode { Tag = GedcomTags.Child, Value = $"@I{childId}@" });
+        node.Add(new GedcomNode { Tag = GedcomTags.Child, Value = GedcomMapping.PersonXref(childId) });
       }
       // Re-attach the fully-unmodeled FAM sub-tags after the regenerated links, as an INDI's are.
       node.Add(residues.GetValueOrDefault(familyKey) ?? []);
