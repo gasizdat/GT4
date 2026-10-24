@@ -59,7 +59,7 @@ public partial class FanChartPage : ContentPage, IZoomablePage
   private FanChartLayoutResult? _LastLayout;
   private Color? _Stroke;
   private FamilyTreeNodeView? _CenterView;
-  private int? _HoveredId;
+  private PersonInfo? _HoveredPerson;
 
   public FanChartPage(
     ICancellationTokenProvider cancellationTokenProvider,
@@ -108,6 +108,12 @@ public partial class FanChartPage : ContentPage, IZoomablePage
     pointer.PointerMoved += OnCanvasPointerMoved;
     pointer.PointerExited += OnCanvasPointerExited;
     Canvas.GestureRecognizers.Add(pointer);
+#if ANDROID
+    // Touch has no hover, so a held finger stands in for the pointer until it lifts.
+    pointer.PointerReleased += OnCanvasPointerExited;
+    var hold = TouchHold.Create(OnCanvasHeld);
+    Canvas.GestureRecognizers.Add(hold);
+#endif
     // A new size reaches the scroll extents only once the canvas has been laid out at it; centring any
     // earlier clamps the scroll to the old extents.
     Canvas.SizeChanged += (_, _) => _ = CenterViewportAsync();
@@ -172,6 +178,16 @@ public partial class FanChartPage : ContentPage, IZoomablePage
     get => _LoadOperationsCount != 0;
   }
 
+  public PersonInfo? HoveredPerson
+  {
+    get => _HoveredPerson;
+    private set
+    {
+      _HoveredPerson = value;
+      OnPropertyChanged(nameof(HoveredPerson));
+    }
+  }
+
   public void Zoom(double delta)
   {
     if (_Zoom.Pinch(delta))
@@ -200,7 +216,7 @@ public partial class FanChartPage : ContentPage, IZoomablePage
   protected void HoverAt(Point? point)
   {
     var node = point is Point at && _LastLayout is not null ? FanChartLayout.HitTest(_LastLayout, at) : null;
-    SetHovered(node?.Id);
+    SetHovered(node?.Person);
   }
 
   // An edit on a person page, or a hide on a family tree, opened from here must show on the way back.
@@ -288,14 +304,19 @@ public partial class FanChartPage : ContentPage, IZoomablePage
 
   private void OnCanvasPointerExited(object? sender, PointerEventArgs e) => HoverAt(null);
 
-  private void SetHovered(int? personId)
+#if ANDROID
+  private void OnCanvasHeld(DragStartingEventArgs e) => HoverAt(e.GetPosition(Canvas));
+#endif
+
+  private void SetHovered(PersonInfo? person)
   {
-    if (personId == _HoveredId)
+    var personId = person?.Id;
+    if (personId == HoveredPerson?.Id)
     {
       return;
     }
 
-    _HoveredId = personId;
+    HoveredPerson = person;
     var layout = _LastLayout!;
     ClearLayer(Highlights);
     // On a layer of their own: raising a segment over its neighbours instead reorders the native
@@ -512,7 +533,7 @@ public partial class FanChartPage : ContentPage, IZoomablePage
   private void ClearCanvas()
   {
     // Forgotten with the outlines, or the next move over the same person would leave the new chart unlit.
-    _HoveredId = null;
+    HoveredPerson = null;
     ClearLayer(Segments);
     ClearLayer(Highlights);
     ClearLayer(Labels);

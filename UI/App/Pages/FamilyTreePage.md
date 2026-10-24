@@ -38,11 +38,12 @@ between them, centred on a focal person.
   `Margin`, which is the `OverlayClearance` gap keeping the tree clear of the pinned "load more"/zoom
   buttons. Those are fixed-size overlays, so that one metric follows the font scale that sizes them,
   never the zoom.
-- `_HoveredId`: the person under the pointer, whose ring and lines are drawn highlighted.
+- `_HoveredPerson`: the person under the pointer, whose ring and lines are drawn highlighted and who
+  the card shows.
 - `_LoadOperationsCount`: reentrant in-flight-load counter backing `LoadInProgress`; the load-more
   buttons disable while any load is running.
-- `_NodeCache` / `_ConnectorPool`: retained node views and pooled connector shapes, reused across
-  loads (see Render, below).
+- `_NodeCache` / `_ConnectorPool`: retained node views, each with the person it was built for, and
+  pooled connector shapes, reused across loads (see Render, below).
 
 ## Build & render pipeline
 1. `SetCenter` resets generation depth to default, loads the centre's arrangement from
@@ -157,7 +158,15 @@ between them, centred on a focal person.
 ## Hovering
 - Hover answers "who is this connected to?" without spending a gesture: a tap re-centres or opens the
   person, and a right-click holds "Hide from tree". Each node carries a `PointerGestureRecognizer`
-  whose enter/exit commands call `SetHovered`; touch has no hover, so mobile has no entry point.
+  whose enter/exit commands call `SetHovered`.
+- Touch has no hover, so on Android a held finger stands in for the pointer. `SyncNodeDrag` gives
+  every node a `TouchHold`, whose hold calls `SetHovered`, and the lift (`PointerReleased`) unhovers
+  it. The lift raises no tap, so a hold never re-centres. The hold is taken off while arranging: the
+  long-press it turns on would stop a finger that rests before dragging from moving the node. iOS has
+  neither.
+- The hovered person (`HoveredPerson`) also shows in a `PersonCardView`: their photo, full name and
+  life dates, in a card stacked under the "More ancestors" button. A portrait phone has no room for
+  it beside the button. The card is input-transparent, so a node under it still takes the pointer.
 - A highlight doubles the weight of the node's ring (`FamilyTreeNodeView.SetHighlighted`, which grows
   it outward so the photo and name don't move) and of the person's own lines, which are also raised
   above the plain ones. The colours stay as they are.
@@ -170,7 +179,8 @@ between them, centred on a focal person.
   first, since a node removed under the pointer never reports its exit, and an exit counts only for
   the node still hovered, since it can arrive after the next node's enter.
 - `Render` clears the highlight before `UpdateConnectors` reuses the pool, while the pool still holds
-  the layout it was drawn against; `ClearRenderCache` just forgets it, since its paths are gone. The
+  the layout it was drawn against; `ClearRenderCache` just forgets it, since its paths are gone. Both
+  hide the card. The
   highlight stays available while arranging and in Read-only mode, and the centre behaves like
   anyone else.
 

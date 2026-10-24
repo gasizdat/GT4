@@ -67,13 +67,14 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   private bool _IsArranging;
   private (int Id, double Left) _Dropped;
   private FamilyTreeLayoutResult? _LastLayout;
-  private int? _HoveredId;
+  private PersonInfo? _HoveredPerson;
 
   // Where to park the viewport after a (re)build.
   private enum ViewTarget { Center, Top, Bottom, Dropped }
 
-  // A cached node view plus the size/centre/theme state it was built for, so it can be reused while those hold.
-  private sealed record NodeEntry(FamilyTreeNodeView View, double Zoom, bool IsCenter, AppTheme Theme);
+  // A cached node view plus the person and the size/centre/theme state it was built for, so it can be
+  // reused while those hold.
+  private sealed record NodeEntry(FamilyTreeNodeView View, PersonInfo Person, double Zoom, bool IsCenter, AppTheme Theme);
 
   public FamilyTreePage(
     ICancellationTokenProvider cancellationTokenProvider,
@@ -202,9 +203,9 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
       }
 
       _IsArranging = value;
-      foreach (var (personId, entry) in _NodeCache)
+      foreach (var entry in _NodeCache.Values)
       {
-        SyncNodeDrag(entry.View, personId, entry.IsCenter);
+        SyncNodeDrag(entry.View, entry.Person, entry.IsCenter);
       }
       OnPropertyChanged(nameof(IsArranging));
       OnPropertyChanged(nameof(PageHint));
@@ -267,6 +268,16 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   public bool LoadInProgress
   {
     get => _LoadOperationsCount != 0;
+  }
+
+  public PersonInfo? HoveredPerson
+  {
+    get => _HoveredPerson;
+    private set
+    {
+      _HoveredPerson = value;
+      OnPropertyChanged(nameof(HoveredPerson));
+    }
   }
 
   public void Zoom(double delta)
@@ -567,7 +578,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
           RemoveNode(entry.View);
         }
         var view = CreateNode(nodeLayout, names[person.Id], photos[person.Id], isCenter, zoom);
-        entry = new NodeEntry(view, zoom, isCenter, theme);
+        entry = new NodeEntry(view, person, zoom, isCenter, theme);
         _NodeCache[person.Id] = entry;
       }
       AbsoluteLayout.SetLayoutBounds(entry.View, nodeLayout.Bounds);
@@ -588,14 +599,20 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     var view = new FamilyTreeNodeView(
       photo, _FontScale, displayName, isCenter, nodeLayout.Bounds.Width, nodeLayout.Bounds.Height, zoom);
     view.GestureRecognizers.Add(new TapGestureRecognizer { Command = PageCommand, CommandParameter = person });
-    view.GestureRecognizers.Add(new PointerGestureRecognizer
+    var pointer = new PointerGestureRecognizer
     {
       PointerEnteredCommand = _HoverCommand,
       PointerEnteredCommandParameter = person,
       PointerExitedCommand = _UnhoverCommand,
       PointerExitedCommandParameter = person,
-    });
-    SyncNodeDrag(view, person.Id, isCenter);
+    };
+#if ANDROID
+    // Touch has no hover, so a held finger stands in for the pointer until it lifts.
+    pointer.PointerReleasedCommand = _UnhoverCommand;
+    pointer.PointerReleasedCommandParameter = person;
+#endif
+    view.GestureRecognizers.Add(pointer);
+    SyncNodeDrag(view, person, isCenter);
     // Read-only mode is switched only in Settings, which this page must be popped to reach.
     if (!isCenter && LayoutView.ReadOnlyMode.CanEdit)
     {
@@ -610,7 +627,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
   // A node carries a drag only while arranging: on touch, a pan recognizer on a node can take the
   // gesture from the canvas pan and the node tap even when it ignores it. The centre never carries
   // one, since every pin is measured from it.
-  private void SyncNodeDrag(FamilyTreeNodeView view, int personId, bool isCenter)
+  private void SyncNodeDrag(FamilyTreeNodeView view, PersonInfo person, bool isCenter)
   {
     var drag = view.GestureRecognizers.OfType<PanGestureRecognizer>().SingleOrDefault();
     if (drag is not null)
@@ -623,9 +640,24 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     if (IsArranging && !isCenter)
     {
       drag = new PanGestureRecognizer();
-      drag.PanUpdated += (_, e) => OnNodePan(view, personId, e);
+      drag.PanUpdated += (_, e) => OnNodePan(view, person.Id, e);
       view.GestureRecognizers.Add(drag);
     }
+
+#if ANDROID
+    // Off while arranging: the long-press a hold turns on stops a finger that rests first from dragging.
+    var hold = view.GestureRecognizers.OfType<DragGestureRecognizer>().SingleOrDefault();
+    if (hold is not null)
+    {
+      view.GestureRecognizers.Remove(hold);
+    }
+
+    if (!IsArranging)
+    {
+      hold = TouchHold.Create(_ => Hover(person));
+      view.GestureRecognizers.Add(hold);
+    }
+#endif
   }
 
   private void RemoveNode(FamilyTreeNodeView view)
@@ -656,7 +688,7 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     _NodeCache.Clear();
     _ConnectorPool.Clear();
     // Forgotten rather than unlit: the paths it would restyle are gone.
-    _HoveredId = null;
+    HoveredPerson = null;
   }
 
   private async Task PositionViewportAsync(FamilyTreeLayoutResult layout, Point scroll)
@@ -832,28 +864,28 @@ public partial class FamilyTreePage : ContentPage, IZoomablePage
     }
   }
 
-  private void Hover(PersonInfo person) => SetHovered(person.Id);
+  private void Hover(PersonInfo person) => SetHovered(person);
 
   // A node's exit can come after the next node's enter.
   private void Unhover(PersonInfo person)
   {
-    if (_HoveredId == person.Id)
+    if (HoveredPerson?.Id == person.Id)
     {
       SetHovered(null);
     }
   }
 
-  private void SetHovered(int? personId)
+  private void SetHovered(PersonInfo? person)
   {
-    if (_HoveredId is int hoveredId)
+    if (HoveredPerson is PersonInfo hovered)
     {
-      Highlight(hoveredId, false);
+      Highlight(hovered.Id, false);
     }
 
-    _HoveredId = personId;
-    if (personId is int id)
+    HoveredPerson = person;
+    if (person is not null)
     {
-      Highlight(id, true);
+      Highlight(person.Id, true);
     }
   }
 

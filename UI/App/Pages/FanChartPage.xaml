@@ -91,15 +91,26 @@
           </Grid>
         </ScrollView>
 
-        <Button
-            Margin="0,8"
-            Padding="16,6"
-            Command="{Binding PageCommand, Source={x:Reference Root}}"
-            CommandParameter="LoadMore"
-            HorizontalOptions="Center"
-            IsEnabled="{Binding CanLoadMore, Source={x:Reference Root}}"
-            Text="{x:Static resources:UIStrings.BtnNameLoadAncestors}"
-            VerticalOptions="Start" />
+        <!--  The card stacks under the button rather than beside it, which a portrait phone has no room for.  -->
+        <Grid
+            CascadeInputTransparent="False"
+            InputTransparent="True"
+            RowDefinitions="Auto, Auto"
+            VerticalOptions="Start">
+          <Button
+              Margin="0,8"
+              Padding="16,6"
+              Command="{Binding PageCommand, Source={x:Reference Root}}"
+              CommandParameter="LoadMore"
+              HorizontalOptions="Center"
+              IsEnabled="{Binding CanLoadMore, Source={x:Reference Root}}"
+              Text="{x:Static resources:UIStrings.BtnNameLoadAncestors}" />
+          <components:PersonCardView
+              x:Name="PersonCard"
+              Grid.Row="1"
+              HorizontalOptions="Start"
+              Person="{Binding HoveredPerson, Source={x:Reference Root}}" />
+        </Grid>
 
         <HorizontalStackLayout
             Margin="8"

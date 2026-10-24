@@ -2,6 +2,7 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.Core.Utils.Calendars;
 using GT4.UI.Abstraction;
+using GT4.UI.Components;
 using GT4.UI.Components.Genealogy;
 using GT4.UI.Pages;
 using GT4.UI.Utils.Formatters;
@@ -154,6 +155,13 @@ public class FanChartPageTests
   // Main thread only.
   private static Path[] Outlines(TestableFanChartPage page) =>
     [.. page.FindByName<AbsoluteLayout>("Highlights").Children.OfType<Path>()];
+
+  // Who the card shows, or null while it is hidden. Main thread only.
+  private static int? CardPersonId(TestableFanChartPage page)
+  {
+    var card = page.FindByName<PersonCardView>("PersonCard");
+    return card.IsVisible ? card.Person!.Id : null;
+  }
 
   // Over the first label naming the person; a repeat has a label of its own.
   private static Task<Path[]> HoverAsync(TestableFanChartPage page, string name) =>
@@ -684,6 +692,48 @@ public class FanChartPageTests
   }
 
   [Fact]
+  public async Task Hovering_a_person_shows_their_card_until_the_pointer_moves_off()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    UseTree(services, Fathers(center, 1));
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+
+    var cards = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      var before = CardPersonId(page);
+      page.InvokeHoverAt(LabelCenter(page, "Father1"));
+      var father = CardPersonId(page);
+      page.InvokeHoverAt(CenterOfChart(page));
+      var centre = CardPersonId(page);
+      page.InvokeHoverAt(null);
+      return new[] { before, father, centre, CardPersonId(page) };
+    });
+
+    Assert.Equal(new int?[] { null, 2, center.Id, null }, cards);
+  }
+
+  [Fact]
+  public async Task A_reload_hides_the_card_until_the_pointer_moves_again()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    UseTree(services, Fathers(center, 1));
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    await HoverAsync(page, "Father1");
+
+    await WaitForLoadAsync(page, services, () => page.InvokePageCommandAsync("Refresh"));
+    var afterReload = await MainThread.InvokeOnMainThreadAsync(() => CardPersonId(page));
+    await HoverAsync(page, "Father1");
+    var hoveredAgain = await MainThread.InvokeOnMainThreadAsync(() => CardPersonId(page));
+
+    Assert.Null(afterReload);
+    Assert.Equal(2, hoveredAgain);
+  }
+
+  [Fact]
   public async Task OnNavigatedTo_rebuilds_without_a_person_hidden_from_a_tree_since()
   {
     var services = new TestServices();
@@ -731,4 +781,61 @@ public class FanChartPageTests
 
     Assert.Equal(loadsBefore, page.CompletedLoads);
   }
+
+#if WINDOWS
+  // The card's overlay spans the page, so beside the button only its own transparency keeps it off the chart.
+  [Fact]
+  public async Task The_card_overlay_leaves_the_pointer_to_the_chart_beside_the_button()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    UseTree(services, Fathers(center, 1));
+    var page = await CreatePageAsync(services);
+    await using var window = await WindowHost.AttachAsync(page);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+
+    var (overlayHit, scrollerHit) = await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() =>
+      {
+        var overlay = (Grid)page.FindByName<PersonCardView>("PersonCard").Parent;
+        var scroller = page.FindByName<ScrollView>("Scroller");
+        var hits = WinUIHitTest.At(overlay, new Point(4, 4));
+        return (hits.Contains(WinUIHitTest.Native(overlay)), hits.Contains(WinUIHitTest.Native(scroller)));
+      }),
+      state => state.Item2,
+      timeoutMessage: "The point beside the button never reached the chart's scroller.");
+
+    Assert.False(overlayHit);
+    Assert.True(scrollerHit);
+  }
+#endif
+
+#if ANDROID
+  [Fact]
+  public async Task Holding_a_person_shows_their_card_until_the_finger_lifts_and_never_recentres()
+  {
+    var services = new TestServices();
+    var center = P(1, "Ivan");
+    UseTree(services, Fathers(center, 1));
+    var page = await CreatePageAsync(services);
+    await using var window = await WindowHost.AttachAsync(page);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = center);
+    var (canvas, at) = await MainThread.InvokeOnMainThreadAsync(() => (page.FindByName<Grid>("Canvas"), LabelCenter(page, "Father1")));
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => canvas.Handler),
+      handler => handler is not null,
+      timeoutMessage: "The canvas never got a native view.");
+    var title = page.PageTitle;
+
+    var downTime = await AndroidTouch.DownAsync(canvas, at);
+    await AndroidTouch.OutlastLongPressAsync();
+    var held = await MainThread.InvokeOnMainThreadAsync(() => CardPersonId(page));
+    await AndroidTouch.UpAsync(canvas, at, downTime);
+    var lifted = await MainThread.InvokeOnMainThreadAsync(() => CardPersonId(page));
+
+    Assert.Equal(2, held);
+    Assert.Null(lifted);
+    Assert.Equal(title, page.PageTitle);
+  }
+#endif
 }
