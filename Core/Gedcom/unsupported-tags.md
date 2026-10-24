@@ -90,6 +90,13 @@ GEDCOM blob (DataCategory.PersonGedcomTags) at import and re-attached under the 
 on export, including its own sub-structure (OCCU/DATE, RESI/PLAC, ...). GT4 reads
 none of them into its model; they exist only to survive the round-trip.
 
+A pointer to an individual inside preserved residue — an `ASSO`, an `ALIA`, a
+witness under an event, at any depth, in INDI, FAM or MARR residue alike — is
+rewritten at import to the xref export writes that person under, so it still
+names the same person after export renumbers every INDI. A pointer to a family
+there (an `ADOP`'s `FAMC`) is not: export renumbers families too, so it comes
+out dangling or naming another family.
+
 - CHR — Christening (infant baptism).
 - CHRA — Adult christening.
 - BAPM — Baptism.

@@ -71,24 +71,36 @@ internal sealed class GedcomImporter : IGedcomImporter
     var nameCache = existingNames.ToDictionary(n => (n.Value, n.Type, n.ParentId), n => n);
     var personByXref = new Dictionary<string, Person>();
     var referencedMedia = new Dictionary<GedcomNode, ReferencedMedia>();
+    var residues = new List<(Person Person, GedcomNode[] Roots, Data? Stored)>();
 
     foreach (var individual in individuals)
     {
       Person person;
+      GedcomNode[] residue;
+      Data? storedResidue = null;
       if (individual.Xref is not null && matches.TryGetValue(individual.Xref, out var match))
       {
         person = match.Existing;
-        await GapFillAsync(document, match, individual, recordsByXref, referencedMedia, mediaBasePath, token);
+        residue = await GapFillAsync(document, match, individual, recordsByXref, referencedMedia, mediaBasePath, token);
+        storedResidue = match.Full.GedcomData;
       }
       else
       {
-        person = await ImportIndividualAsync(document, individual, nameCache, invariantSurnames, recordsByXref, referencedMedia, mediaBasePath, token);
+        (person, residue) = await ImportIndividualAsync(document, individual, nameCache, invariantSurnames, recordsByXref, referencedMedia, mediaBasePath, token);
       }
 
+      residues.Add((person, residue, storedResidue));
       if (individual.Xref is not null)
       {
         personByXref[individual.Xref] = person;
       }
+    }
+
+    // A residue pointer may name an individual further down the file, so residue is stored only once every
+    // person exists to repoint it at.
+    foreach (var (person, roots, stored) in residues)
+    {
+      await StorePersonResidueAsync(document, person, roots, stored, personByXref, token);
     }
 
     foreach (var family in families)
@@ -186,8 +198,11 @@ internal sealed class GedcomImporter : IGedcomImporter
     return edges;
   }
 
-  /// <summary>Fills only the fields a matched person is missing; populated values are never overwritten.</summary>
-  private async Task GapFillAsync(
+  /// <summary>
+  /// Fills only the fields a matched person is missing; populated values are never overwritten. Returns the
+  /// incoming residue, which <see cref="StorePersonResidueAsync"/> folds in once every person exists.
+  /// </summary>
+  private async Task<GedcomNode[]> GapFillAsync(
     IProjectDocument document,
     Match match,
     GedcomNode individual,
@@ -220,12 +235,6 @@ internal sealed class GedcomImporter : IGedcomImporter
         additions.Add(biography);
     }
 
-    var incomingResidue = BuildResidueRoots(individual, consumedNodes);
-    if (full.GedcomData is null && incomingResidue.Length > 0)
-    {
-      additions.Add(ToResidueData(incomingResidue));
-    }
-
     if (addingPhotos)
     {
       var (mainPhoto, additionalPhotos) = BuildPhotos(photos, DataCategory.PersonMainPhoto, DataCategory.PersonPhoto);
@@ -249,13 +258,6 @@ internal sealed class GedcomImporter : IGedcomImporter
       await AddReferencedMediaAsync(document, match.Existing, referenced, referencedMedia, token);
     }
 
-    if (full.GedcomData is not null && incomingResidue.Length > 0)
-    {
-      var merged = await MergeResidueAsync(full.GedcomData, incomingResidue, token);
-      if (merged is not null)
-        await document.PersonData.UpdatePersonDataAsync(match.Existing, merged, DataCategory.PersonGedcomTags, token);
-    }
-
     if (full.DeathDate is null)
     {
       var death = ParseEventDate(individual, GedcomTags.Death);
@@ -265,6 +267,8 @@ internal sealed class GedcomImporter : IGedcomImporter
         await document.Persons.UpdatePersonAsync(updated, token);
       }
     }
+
+    return BuildResidueRoots(individual, consumedNodes);
   }
 
   // The last name alone, never the family: export writes only the last name back as SURN.
@@ -425,7 +429,7 @@ internal sealed class GedcomImporter : IGedcomImporter
       .ToHashSet();
   }
 
-  private async Task<Person> ImportIndividualAsync(
+  private async Task<(Person Person, GedcomNode[] Residue)> ImportIndividualAsync(
     IProjectDocument document,
     GedcomNode individual,
     Dictionary<(string, NameType, int?), Name> nameCache,
@@ -457,13 +461,12 @@ internal sealed class GedcomImporter : IGedcomImporter
       AdditionalPhotos = additionalPhotos,
       Attachments = [.. attachments.Select(a => BuildAttachmentData(a, DataCategory.PersonAttachment))],
       Biography = biography,
-      GedcomData = BuildResidueData(individual, consumedNodes),
     };
 
     var added = await document.PersonManager.AddPersonAsync(toAdd, token);
     var person = new Person(added.Id, added.BirthDate, added.DeathDate, added.BiologicalSex);
     await AddReferencedMediaAsync(document, person, referenced, referencedMedia, token);
-    return person;
+    return (person, BuildResidueRoots(individual, consumedNodes));
   }
 
   /// <summary>
@@ -512,23 +515,41 @@ internal sealed class GedcomImporter : IGedcomImporter
   }
 
   /// <summary>
-  /// Captures everything GT4 does not model as one verbatim GEDCOM blob: each fully-unmodeled direct INDI
-  /// child (<c>OCCU</c>, <c>RESI</c>, <c>EVEN</c>, ...) whole, plus the unmodeled sub-tags of the owned tags
-  /// GT4 reads only part of (a <c>BIRT</c>'s <c>PLAC</c>/<c>SOUR</c>, a <c>NAME</c>'s <c>NICK</c>, ...) as a
-  /// residual copy of that tag. Carried on <see cref="PersonFullInfo.GedcomData"/>, the blob is stored with
-  /// the person and merged back on export, so the round-trip loses nothing in its original document order.
+  /// Stores this import's residue for a person -- everything GT4 does not model, as one verbatim GEDCOM blob
+  /// merged back on export -- added when they carry none and folded into what they carry otherwise. Only the
+  /// incoming roots are repointed, and before the merge compares them: a stored pointer already names a GT4
+  /// person, and its text can be an unrelated xref in this file.
   /// </summary>
-  private static Data? BuildResidueData(GedcomNode individual, GedcomNode[] consumedPhotoNodes)
+  private static async Task StorePersonResidueAsync(
+    IProjectDocument document,
+    Person person,
+    GedcomNode[] roots,
+    Data? stored,
+    IReadOnlyDictionary<string, Person> personByXref,
+    CancellationToken token)
   {
-    var roots = BuildResidueRoots(individual, consumedPhotoNodes);
-    return roots.Length == 0 ? null : ToResidueData(roots);
+    if (roots.Length == 0)
+      return;
+
+    RepointPersons(roots, personByXref);
+    if (stored is null)
+    {
+      await document.PersonData.AddPersonDataSetAsync(person, [ToResidueData(roots)], token);
+      return;
+    }
+
+    var merged = await MergeResidueAsync(stored, roots, token);
+    if (merged is not null)
+      await document.PersonData.UpdatePersonDataAsync(person, merged, DataCategory.PersonGedcomTags, token);
   }
 
   /// <summary>
-  /// The residue roots of an individual: each fully-unmodeled INDI child whole, the first occurrence of an
-  /// owned tag reduced to a residual copy of just its unmodeled sub-tags, and every later occurrence of an
-  /// owned tag whole. GT4's readers all take <c>Child(tag)</c>, so only the first occurrence is consumed into
-  /// the model; a repeated <c>NAME</c>/<c>NOTE</c> keeps its value here and is re-emitted standalone on export.
+  /// The residue roots of an individual, each a copy: every fully-unmodeled INDI child (<c>OCCU</c>,
+  /// <c>RESI</c>, <c>EVEN</c>, ...) whole, the first occurrence of an owned tag reduced to a residual copy of
+  /// just its unmodeled sub-tags (a <c>BIRT</c>'s <c>PLAC</c>/<c>SOUR</c>, a <c>NAME</c>'s <c>NICK</c>, ...),
+  /// and every later occurrence of an owned tag whole. GT4's readers all take <c>Child(tag)</c>, so only the
+  /// first occurrence is consumed into the model; a repeated <c>NAME</c>/<c>NOTE</c> keeps its value here and
+  /// is re-emitted standalone on export.
   /// </summary>
   private static GedcomNode[] BuildResidueRoots(GedcomNode individual, GedcomNode[] consumedPhotoNodes)
   {
@@ -617,6 +638,24 @@ internal sealed class GedcomImporter : IGedcomImporter
 
     var isPointer = value.Length >= 2 && value[0] == '@' && value[^1] == '@';
     return isPointer ? notesByXref.GetValueOrDefault(value) : value;
+  }
+
+  /// <summary>
+  /// Rewrites every pointer to an individual of this file in place into the xref export writes that person
+  /// under, whatever tag carries it -- an <c>ASSO</c>, an event's witness. Export renumbers every INDI, so a
+  /// source xref left in residue would name nobody, or somebody else. A value no individual answers keeps it.
+  /// </summary>
+  private static void RepointPersons(IEnumerable<GedcomNode> nodes, IReadOnlyDictionary<string, Person> personByXref)
+  {
+    foreach (var node in nodes)
+    {
+      if (node.Value is not null && personByXref.TryGetValue(node.Value, out var person))
+      {
+        node.Value = GedcomMapping.PersonXref(person.Id);
+      }
+
+      RepointPersons(node.Children, personByXref);
+    }
   }
 
   private static IEnumerable<GedcomNode> SplitObject(GedcomNode obje)
@@ -1175,10 +1214,10 @@ internal sealed class GedcomImporter : IGedcomImporter
         await document.Relatives.AddRelativesAsync(husband, spouses, token);
       }
 
-      await StoreMarriageResidueAsync(document, marriages, husband, wife, consumed, token);
+      await StoreMarriageResidueAsync(document, marriages, husband, wife, consumed, personByXref, token);
     }
 
-    await StoreFamilyResidueAsync(document, family, husband, wife, residualMarriages, consumed, token);
+    await StoreFamilyResidueAsync(document, family, husband, wife, residualMarriages, consumed, personByXref, token);
 
     if (children.Length == 0)
       return;
@@ -1222,6 +1261,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     Person? wife,
     GedcomNode[] residualMarriages,
     GedcomNode[] consumed,
+    IReadOnlyDictionary<string, Person> personByXref,
     CancellationToken token)
   {
     if (husband is null && wife is null)
@@ -1235,7 +1275,7 @@ internal sealed class GedcomImporter : IGedcomImporter
       .ToArray();
 
     var key = GedcomMetadata.FamilyKey(husband?.Id, wife?.Id);
-    await StoreResidueAsync(document, key, roots, token);
+    await StoreResidueAsync(document, key, roots, personByXref, token);
   }
 
   /// <summary>
@@ -1249,6 +1289,7 @@ internal sealed class GedcomImporter : IGedcomImporter
     Person husband,
     Person wife,
     GedcomNode[] consumed,
+    IReadOnlyDictionary<string, Person> personByXref,
     CancellationToken token)
   {
     var familyKey = GedcomMetadata.FamilyKey(husband.Id, wife.Id);
@@ -1261,7 +1302,7 @@ internal sealed class GedcomImporter : IGedcomImporter
 
       var date = ParseSpouseDate(marriage);
       var key = GedcomMetadata.MarriageKey(familyKey, date);
-      await StoreResidueAsync(document, key, [residual], token);
+      await StoreResidueAsync(document, key, [residual], personByXref, token);
     }
   }
 
@@ -1271,11 +1312,17 @@ internal sealed class GedcomImporter : IGedcomImporter
   /// <see cref="MergeResidueAsync"/> applies to a person's blob, over the metadata row a family's lives in.
   /// Writes nothing when there is nothing new, so a re-import of the same source is a no-op.
   /// </summary>
-  private static async Task StoreResidueAsync(IProjectDocument document, string key, GedcomNode[] roots, CancellationToken token)
+  private static async Task StoreResidueAsync(
+    IProjectDocument document,
+    string key,
+    GedcomNode[] roots,
+    IReadOnlyDictionary<string, Person> personByXref,
+    CancellationToken token)
   {
     if (roots.Length == 0)
       return;
 
+    RepointPersons(roots, personByXref);
     var stored = await document.Metadata.GetAsync<string>(key, token);
     if (stored is null)
     {

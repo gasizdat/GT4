@@ -1032,6 +1032,35 @@ public sealed class GedcomRoundTripTests : IAsyncLifetime
     text.Should().Contain("1 NAME Иван /Иванов/").And.Contain("1 NAME Мария /Иванова/").And.NotContain("Ивановы");
   }
 
+  [Fact]
+  public async Task PersonPointersInResidue_NameTheSamePersonAfterExport()
+  {
+    // Export renumbers every INDI, so a pointer kept verbatim in residue would name nobody, or somebody else.
+    // Ann's ASSO points forward at Ben; the rest point back at Ann from an event, a family and a marriage.
+    var ged =
+      "0 HEAD\n1 CHAR UTF-8\n" +
+      "0 @ANN@ INDI\n1 NAME Ann /Smith/\n1 SEX F\n1 ASSO @BEN@\n2 RELA Godfather\n1 ALIA Nan\n" +
+      "0 @BEN@ INDI\n1 NAME Ben /Jones/\n1 SEX M\n1 BIRT\n2 DATE 1 JAN 1850\n2 _WITN @ANN@\n" +
+      "0 @CAT@ INDI\n1 NAME Cat /Jones/\n1 SEX F\n" +
+      "0 @F1@ FAM\n1 HUSB @BEN@\n1 WIFE @CAT@\n1 MARR\n2 DATE 1 JUN 1875\n2 _WITN @ANN@\n1 ASSO @ANN@\n" +
+      "0 TRLR\n";
+    await _importer.ImportAsync(_source, new StringReader(ged), Token, _mediaPath);
+
+    var text = await ExportToTextAsync(_source);
+
+    var records = await GedcomReader.ReadAsync(new StringReader(text), Token);
+    var individuals = records.Where(r => r.Tag == "INDI").ToArray();
+    var nameByXref = individuals.ToDictionary(r => r.Xref!, r => r.ChildValue("NAME"));
+    var ann = individuals.Single(r => r.ChildValue("NAME") == "Ann /Smith/");
+    var ben = individuals.Single(r => r.ChildValue("NAME") == "Ben /Jones/");
+    var family = records.Single(r => r.Tag == "FAM");
+    nameByXref.GetValueOrDefault(ann.ChildValue("ASSO")!).Should().Be("Ben /Jones/");
+    nameByXref.GetValueOrDefault(ben.Child("BIRT")!.ChildValue("_WITN")!).Should().Be("Ann /Smith/");
+    nameByXref.GetValueOrDefault(family.ChildValue("ASSO")!).Should().Be("Ann /Smith/");
+    nameByXref.GetValueOrDefault(family.Child("MARR")!.ChildValue("_WITN")!).Should().Be("Ann /Smith/");
+    ann.ChildValue("ALIA").Should().Be("Nan", "a value that is no pointer keeps its text");
+  }
+
   private async Task<string> ExportToTextAsync(ProjectDocument document)
   {
     var writer = new StringWriter();

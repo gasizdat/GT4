@@ -339,7 +339,7 @@ internal static class GedcomComparer
   /// A node as a canonical string. Children are sorted, so re-emission order is not a difference, and an
   /// empty node is nothing at all -- a bare "1 BIRT" says nothing and does not survive import.
   /// </summary>
-  private static string Serialize(GedcomNode node, IReadOnlyDictionary<string, string> notes)
+  private static string Serialize(GedcomNode node, Side side)
   {
     var parts = new List<string>();
     foreach (var child in node.Children)
@@ -351,7 +351,7 @@ internal static class GedcomComparer
 
       // A modeled date GT4 cannot parse becomes nothing on export, and ReportUnrepresentableDates already
       // says so -- serializing the empty result would report the same loss a second time here.
-      var text = IsModeledDate(node, child) ? ModeledDate(child) : Serialize(child, notes);
+      var text = IsModeledDate(node, child) ? ModeledDate(child) : Serialize(child, side);
       if (text.Length > 0)
       {
         parts.Add(text);
@@ -359,7 +359,7 @@ internal static class GedcomComparer
     }
     parts.Sort(StringComparer.Ordinal);
 
-    var value = NodeValue(node, notes);
+    var value = NodeValue(node, side);
     if (value.Length == 0 && parts.Count == 0)
       return string.Empty;
 
@@ -382,13 +382,13 @@ internal static class GedcomComparer
     return canonical.Length == 0 ? string.Empty : $"{GedcomTags.Date}={canonical}";
   }
 
-  private static string NodeValue(GedcomNode node, IReadOnlyDictionary<string, string> notes)
+  private static string NodeValue(GedcomNode node, Side side)
   {
     if (node.Tag == GedcomTags.Note)
-      return ResolveNote(node.Value, notes);
+      return ResolveNote(node.Value, side.Notes);
 
     if (node.Tag != GedcomTags.Name)
-      return (node.Value ?? string.Empty).Trim();
+      return ResolveIndividual(node.Value, side);
 
     var (given, surname) = GedcomName.Parts(node);
     var collapsedGiven = Collapse(given);
@@ -408,6 +408,17 @@ internal static class GedcomComparer
       return text.Trim();
 
     return trimmed;
+  }
+
+  /// <summary>
+  /// A pointer to an individual -- an ASSO, a witness -- names a person, and export renumbers every person, so
+  /// it is compared as the individual matching paired it with rather than as the xref either file spells.
+  /// </summary>
+  private static string ResolveIndividual(string? value, Side side)
+  {
+    var trimmed = (value ?? string.Empty).Trim();
+    var individual = side.Resolve(trimmed);
+    return individual is null ? trimmed : $"{individual.Label}#{individual.MatchId}";
   }
 
   private static string? EventDateValue(GedcomNode individual, string tag)
@@ -610,19 +621,19 @@ internal static class GedcomComparer
   {
     private readonly GedcomNode[] _roots;
     private readonly Dictionary<string, Individual> _byXref;
-    private readonly Dictionary<string, string> _notes;
 
     private Side(GedcomNode[] roots, Individual[] individuals, Family[] families, Dictionary<string, string> notes)
     {
       _roots = roots;
       _byXref = individuals.ToDictionary(individual => individual.Xref);
-      _notes = notes;
       Individuals = individuals;
       Families = families;
+      Notes = notes;
     }
 
     public Individual[] Individuals { get; }
     public Family[] Families { get; }
+    public IReadOnlyDictionary<string, string> Notes { get; }
 
     public static Side Build(GedcomNode[] roots)
     {
@@ -680,13 +691,13 @@ internal static class GedcomComparer
     public Passthrough[] PassthroughRecords()
     {
       var records = _roots.Where(GedcomMetadata.IsPassthrough);
-      return records.Select(record => new Passthrough($"{record.Tag} {record.Xref}", Serialize(record, _notes))).ToArray();
+      return records.Select(record => new Passthrough($"{record.Tag} {record.Xref}", Serialize(record, this))).ToArray();
     }
 
     private string[] ContentTags(GedcomNode record, HashSet<string> structural)
     {
       var compared = record.Children.Where(child => !structural.Contains(child.Tag));
-      var serialized = compared.Select(child => Serialize(child, _notes));
+      var serialized = compared.Select(child => Serialize(child, this));
       return serialized.Where(text => text.Length > 0).ToArray();
     }
 
