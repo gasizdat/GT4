@@ -144,6 +144,23 @@
                             Text="{Binding Caption}"
                             VerticalOptions="Center" />
                       </HorizontalStackLayout>
+
+                      <HorizontalStackLayout BindableLayout.ItemsSource="{Binding Enhancements, Source={x:Reference Root}}">
+                        <BindableLayout.ItemTemplate>
+                          <DataTemplate>
+                            <Button
+                                Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                                Text="{Binding DisplayName}">
+
+                              <Button.CommandParameter>
+                                <components:EnhanceCommandParameter
+                                    Enhancement="{Binding .}"
+                                    Photo="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
+                              </Button.CommandParameter>
+                            </Button>
+                          </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                      </HorizontalStackLayout>
                     </VerticalStackLayout>
                   </DataTemplate>
                 </CollectionView.ItemTemplate>
