@@ -41,6 +41,7 @@ public static class ServiceCollectionExtensions
       // nothing to offer there -- no ONNX Runtime binary exists outside this TFM to run one with.
       .AddSingleton<IPhotoEnhancement, UpscalePhotoEnhancement>()
       .AddSingleton<IPhotoEnhancement, ColorizePhotoEnhancement>()
+      .AddSingleton<IPhotoEnhancement, RestorePhotoEnhancement>()
 #endif
       .AddSingleton<DataConverterResolver>(provider =>
         category => provider.GetKeyedService<IDataConverter>(category) ?? new FallbackDataConverter(category))
