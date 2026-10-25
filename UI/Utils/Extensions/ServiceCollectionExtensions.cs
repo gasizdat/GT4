@@ -40,6 +40,7 @@ public static class ServiceCollectionExtensions
       // Every other target leaves IPhotoEnhancement unregistered, so the enhance adorner just has
       // nothing to offer there -- no ONNX Runtime binary exists outside this TFM to run one with.
       .AddSingleton<IPhotoEnhancement, UpscalePhotoEnhancement>()
+      .AddSingleton<IPhotoEnhancement, ColorizePhotoEnhancement>()
 #endif
       .AddSingleton<DataConverterResolver>(provider =>
         category => provider.GetKeyedService<IDataConverter>(category) ?? new FallbackDataConverter(category))
