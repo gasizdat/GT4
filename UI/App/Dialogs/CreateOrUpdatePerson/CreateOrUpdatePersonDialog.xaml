@@ -149,12 +149,13 @@
                         <BindableLayout.ItemTemplate>
                           <DataTemplate>
                             <Button
+                                x:Name="EnhanceButton"
                                 Command="{Binding DialogCommand, Source={x:Reference Root}}"
                                 Text="{Binding DisplayName}">
 
                               <Button.CommandParameter>
                                 <components:EnhanceCommandParameter
-                                    Enhancement="{Binding .}"
+                                    Enhancement="{Binding Source={x:Reference EnhanceButton}, Path=BindingContext}"
                                     Photo="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
                               </Button.CommandParameter>
                             </Button>

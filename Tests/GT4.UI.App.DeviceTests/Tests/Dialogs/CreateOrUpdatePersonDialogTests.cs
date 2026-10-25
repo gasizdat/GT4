@@ -339,6 +339,33 @@ public class CreateOrUpdatePersonDialogTests
     Assert.DoesNotContain(photo, dialog.Photos);
   }
 
+  // A page constructed detached (as CreateDialogAsync does above) never realizes its XAML bindings --
+  // the EnhanceCommandParameter.Enhancement binding needs a live visual tree to resolve, and silently
+  // stayed null without one (NullReferenceException in OnEnhancePhotoAsync).
+  [Fact]
+  public async Task Each_photo_offers_one_bound_enhance_button_per_registered_enhancement()
+  {
+    var services = new TestServices();
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    var dialog = await MainThread.InvokeOnMainThreadAsync(
+      () => services.Provider.GetRequiredService<CreateOrUpdatePersonDialog.Factory>().Create(CreateSamplePerson()));
+
+    await using var window = await WindowHost.AttachAsync(dialog);
+
+    var expectedCount = dialog.Photos.Count * dialog.Enhancements.Count();
+    var parameters = await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => dialog
+        .GetVisualTreeDescendants()
+        .OfType<Button>()
+        .Select(button => button.CommandParameter)
+        .OfType<EnhanceCommandParameter>()
+        .ToArray()),
+      found => found.Length == expectedCount,
+      timeoutMessage: "The CollectionView's enhance buttons never materialized.");
+    Assert.All(parameters, parameter => Assert.NotNull(parameter.Enhancement));
+    Assert.All(parameters, parameter => Assert.Contains(parameter.Photo, dialog.Photos));
+  }
+
   [Fact]
   public async Task SaveCommand_UntouchedTaggedMainPhoto_SurvivesByteForByte()
   {
