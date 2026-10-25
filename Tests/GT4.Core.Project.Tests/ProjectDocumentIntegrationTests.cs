@@ -120,6 +120,17 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   }
 
   [Fact]
+  public async Task GetFamiliesAsync_MainPhotoIsTagged_StillSurfacesAsMainPhoto()
+  {
+    var family = await AddBareFamilyNameAsync();
+    await _doc.NameData.AddNameDataSetAsync(family, [NewData(DataCategory.FamilyMainPhotoTagged, 1)], Token);
+
+    var families = await _doc.FamilyManager.GetFamiliesAsync(Token);
+
+    families.Should().ContainSingle(f => f.Id == family.Id).Which.MainPhoto!.Content.Should().Equal(1);
+  }
+
+  [Fact]
   public async Task AddFamilyThenUpdateFamilyData_RollBackOuterTransaction_UndoesBoth()
   {
     Name family;
