@@ -17,7 +17,7 @@ internal class FamilyManager : ProjectComponentBase, IFamilyManager
     if (familyNames.Length == 0)
       return [];
 
-    var photosByFamilyId = await Document.NameData.GetNameDataSetAsync(familyNames, DataCategory.FamilyMainPhoto, token);
+    var photosByFamilyId = await Document.NameData.GetNamePhotoSetAsync(familyNames, DataCategory.FamilyMainPhoto, token);
 
     return [.. familyNames.Select(name => new FamilyInfo(name, photosByFamilyId.GetValueOrDefault(name.Id)?.FirstOrDefault()))];
   }
