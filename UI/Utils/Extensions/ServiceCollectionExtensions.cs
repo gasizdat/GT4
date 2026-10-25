@@ -5,6 +5,9 @@ using GT4.UI.Utils.Comparers;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
 using GT4.UI.Utils.Settings;
+#if WINDOWS
+using GT4.UI.Utils.Platforms.Windows;
+#endif
 
 namespace GT4.UI.Utils.Extensions;
 
@@ -33,6 +36,12 @@ public static class ServiceCollectionExtensions
       .AddSingleton<IComparer<PersonInfo>, PersonInfoComparer>()
       .AddSingleton<IComparer<Name>, NameComparer>()
       .AddSingleton<IImageCache>(new ImageCache(CacheSizeLimit))
+#if WINDOWS
+      // Every other target leaves IPhotoEnhancement unregistered, so the enhance adorner just has
+      // nothing to offer there -- no ONNX Runtime binary exists outside this TFM to run one with.
+      .AddSingleton<IPhotoEnhancement, UpscalePhotoEnhancement>()
+      .AddSingleton<IPhotoEnhancement, ColorizePhotoEnhancement>()
+#endif
       .AddSingleton<DataConverterResolver>(provider =>
         category => provider.GetKeyedService<IDataConverter>(category) ?? new FallbackDataConverter(category))
       .AddKeyedSingleton<IDataConverter, ImageDataConverter>(DataCategory.PersonPhoto)

@@ -32,7 +32,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     SelectRelativesDialog.Factory SelectRelativesDialogFactory,
     SelectPersonDialog.Factory SelectPersonDialogFactory,
     SelectMediaDialog.Factory SelectMediaDialogFactory,
-    InlineMediaProvider MediaProvider)
+    InlineMediaProvider MediaProvider,
+    IEnumerable<IPhotoEnhancement> Enhancements)
   {
     public CreateOrUpdatePersonDialog Create(PersonFullInfo? person) =>
       new CreateOrUpdatePersonDialog(this, person);
@@ -171,6 +172,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   public ICommand DialogCommand => _DialogCommand;
 
   public ICollection<PersonDataItem> Photos => _Photos;
+
+  public IEnumerable<IPhotoEnhancement> Enhancements => _Factory.Enhancements;
 
   public InlineMediaResolver MediaResolver => _MediaResolver;
 
@@ -405,6 +408,25 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     IsModified = true;
   }
 
+  private async Task OnEnhancePhotoAsync(IPhotoEnhancement enhancement, PersonDataItem photo)
+  {
+    var dialog = new ProgressDialog(enhancement.DisplayName, enhancement.DisplayName, "Enhancing photo...", _Factory.AlertService);
+    await Navigation.PushModalAsync(dialog);
+    try
+    {
+      var enhanced = await Task.Run(() => enhancement.ApplyAsync(photo.Info, dialog.Token));
+      _Photos.Insert(_Photos.IndexOf(photo) + 1, GetPersonData(enhanced, enhanced.Category.AsTaggedPhoto()));
+      IsModified = true;
+    }
+    catch (OperationCanceledException)
+    {
+    }
+    finally
+    {
+      await Navigation.PopModalAsync();
+    }
+  }
+
   private async Task OnAddOrUpdateAttachmentAsync(PersonDataItem? attachment)
   {
     var pickOptions = new PickOptions { PickerTitle = UIStrings.FileDialogSelectAttachment };
@@ -598,6 +620,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
       case AdornerCommandParameter adorner when adorner.CommandName == "EditPhotoCommand" && adorner.Element is PersonDataItem photo:
         await OnAddOrUpdatePhotoAsync(photo);
+        break;
+      case EnhanceCommandParameter enhance:
+        await OnEnhancePhotoAsync(enhance.Enhancement, enhance.Photo);
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "RemovePhotoCommand" && adorner.Element is PersonDataItem photo:
         _Photos.Remove(photo);
