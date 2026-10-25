@@ -581,6 +581,7 @@ internal sealed class TempStorage : IStorage
   public DirectoryDescription ProjectsCache => new(Environment.SpecialFolder.ApplicationData, ["GT4", ".cache"]);
   public DirectoryDescription ProjectsRoot => new(Environment.SpecialFolder.MyDocuments, ["GT4"]);
   public DirectoryDescription AppConfig => new(Environment.SpecialFolder.ApplicationData, ["GT4", ".config"]);
+  public DirectoryDescription Models => new(Environment.SpecialFolder.ApplicationData, ["GT4", ".models"]);
 }
 
 /// <summary>
