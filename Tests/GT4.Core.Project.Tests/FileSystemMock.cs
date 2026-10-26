@@ -50,6 +50,17 @@ internal sealed class FileSystemMock : IFileSystem
     Operations.Add($"copy {ToPath(from)} -> {ToPath(to)}");
   }
 
+  public void Move(FileDescription from, FileDescription to)
+  {
+    if (!_Files.TryGetValue(from, out _))
+    {
+      throw new FileNotFoundException(ToPath(from));
+    }
+    _Files.Remove(from);
+    _Files[to] = DateTime.UtcNow;
+    Operations.Add($"move {ToPath(from)} -> {ToPath(to)}");
+  }
+
   public void RemoveFile(FileDescription fileDescription)
   {
     _Files.Remove(fileDescription);
