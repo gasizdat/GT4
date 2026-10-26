@@ -25,6 +25,9 @@ fully known ahead of render time** →
 [principles/rendering-inversion.md](principles/rendering-inversion.md) before writing the view;
 `MarkdownView`/`InlineMediaProvider` is the worked example.
 
+**Adding or changing an `IPhotoEnhancement`, or touching how an existing one's model pipeline
+works** → [subsystems/photo-enhancement.md](subsystems/photo-enhancement.md).
+
 **Adding a new page, dialog, or a service other code needs to consume** →
 [principles/dependency-injection.md](principles/dependency-injection.md) for how to declare the
 dependency, [subsystems/ui-app.md](subsystems/ui-app.md) for the page-vs-dialog construction split.
