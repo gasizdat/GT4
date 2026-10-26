@@ -7,7 +7,7 @@ using SkiaSharp;
 
 namespace GT4.UI.Utils.Platforms.Windows;
 
-public class UpscalePhotoEnhancement : IPhotoEnhancement
+public class UpscalePhotoEnhancement : IPhotoEnhancement, IDisposable
 {
   private static readonly ModelDescriptor Model = new(
     "realesr-general-x4v3.onnx",
@@ -44,6 +44,8 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement
 
     return photo with { Content = encoded.ToArray(), MimeType = "image/jpeg" };
   }
+
+  public void Dispose() => _Session?.Dispose();
 
   private static DenseTensor<float> ToInputTensor(SKBitmap bitmap)
   {

@@ -7,7 +7,7 @@ using SkiaSharp;
 
 namespace GT4.UI.Utils.Platforms.Windows;
 
-public class ColorizePhotoEnhancement : IPhotoEnhancement
+public class ColorizePhotoEnhancement : IPhotoEnhancement, IDisposable
 {
   private static readonly ModelDescriptor Model = new(
     "ddcolor-tiny-fp16.onnx",
@@ -58,6 +58,8 @@ public class ColorizePhotoEnhancement : IPhotoEnhancement
 
     return photo with { Content = encoded.ToArray(), MimeType = "image/jpeg" };
   }
+
+  public void Dispose() => _Session?.Dispose();
 
   private static DenseTensor<float> ToInputTensor(float[,] fullL, int width, int height)
   {
