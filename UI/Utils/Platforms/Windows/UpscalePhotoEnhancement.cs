@@ -1,11 +1,9 @@
 #if WINDOWS
 using GT4.Core.Project.Dto;
-using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using SkiaSharp;
-using IFileSystem = GT4.Core.Utils.IFileSystem;
 
 namespace GT4.UI.Utils.Platforms.Windows;
 
@@ -16,16 +14,12 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement
     new Uri("https://github.com/gasizdat/GT4/releases/download/models-v1/realesr-general-x4v3.onnx"),
     "924EBAD6532777303582D4CE7811849B88869231A3AE7093E0F21200249DF8D5");
 
-  private readonly IModelDownloader _ModelDownloader;
-  private readonly IStorage _Storage;
-  private readonly IFileSystem _FileSystem;
+  private readonly IModelSessionFactory _SessionFactory;
   private InferenceSession? _Session;
 
-  public UpscalePhotoEnhancement(IModelDownloader modelDownloader, IStorage storage, IFileSystem fileSystem)
+  public UpscalePhotoEnhancement(IModelSessionFactory sessionFactory)
   {
-    _ModelDownloader = modelDownloader;
-    _Storage = storage;
-    _FileSystem = fileSystem;
+    _SessionFactory = sessionFactory;
   }
 
   public string DisplayName => "Upscale";
@@ -34,7 +28,7 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement
   {
     token.ThrowIfCancellationRequested();
 
-    var session = _Session ??= await ModelSessionFactory.LoadSessionAsync(_ModelDownloader, _FileSystem, _Storage, Model, token);
+    var session = _Session ??= await _SessionFactory.LoadSessionAsync(Model, token);
     using var bitmap = SKBitmap.Decode(photo.Content) ?? throw new InvalidOperationException("Could not decode the photo.");
 
     var inputName = session.InputMetadata.Keys.First();

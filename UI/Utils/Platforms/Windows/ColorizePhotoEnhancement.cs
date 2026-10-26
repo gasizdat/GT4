@@ -1,11 +1,9 @@
 #if WINDOWS
 using GT4.Core.Project.Dto;
-using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using SkiaSharp;
-using IFileSystem = GT4.Core.Utils.IFileSystem;
 
 namespace GT4.UI.Utils.Platforms.Windows;
 
@@ -17,16 +15,12 @@ public class ColorizePhotoEnhancement : IPhotoEnhancement
     "2653DA00DC15E54A45E5200B61DBF82EE9CEAF56B02BB9B9657569AC775E82E6");
   private const int ModelSize = 512;
 
-  private readonly IModelDownloader _ModelDownloader;
-  private readonly IStorage _Storage;
-  private readonly IFileSystem _FileSystem;
+  private readonly IModelSessionFactory _SessionFactory;
   private InferenceSession? _Session;
 
-  public ColorizePhotoEnhancement(IModelDownloader modelDownloader, IStorage storage, IFileSystem fileSystem)
+  public ColorizePhotoEnhancement(IModelSessionFactory sessionFactory)
   {
-    _ModelDownloader = modelDownloader;
-    _Storage = storage;
-    _FileSystem = fileSystem;
+    _SessionFactory = sessionFactory;
   }
 
   public string DisplayName => "Colorize";
@@ -35,7 +29,7 @@ public class ColorizePhotoEnhancement : IPhotoEnhancement
   {
     token.ThrowIfCancellationRequested();
 
-    var session = _Session ??= await ModelSessionFactory.LoadSessionAsync(_ModelDownloader, _FileSystem, _Storage, Model, token);
+    var session = _Session ??= await _SessionFactory.LoadSessionAsync(Model, token);
     using var bitmap = SKBitmap.Decode(photo.Content) ?? throw new InvalidOperationException("Could not decode the photo.");
     var width = bitmap.Width;
     var height = bitmap.Height;

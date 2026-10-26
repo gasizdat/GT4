@@ -6,10 +6,14 @@ using IFileSystem = GT4.Core.Utils.IFileSystem;
 
 namespace GT4.UI.Utils.Platforms.Windows;
 
-internal static class ModelSessionFactory
+public interface IModelSessionFactory
 {
-  public static async Task<InferenceSession> LoadSessionAsync(
-    IModelDownloader downloader, IFileSystem fileSystem, IStorage storage, ModelDescriptor model, CancellationToken token)
+  Task<InferenceSession> LoadSessionAsync(ModelDescriptor model, CancellationToken token);
+}
+
+internal class ModelSessionFactory(IModelDownloader downloader, IFileSystem fileSystem, IStorage storage) : IModelSessionFactory
+{
+  public async Task<InferenceSession> LoadSessionAsync(ModelDescriptor model, CancellationToken token)
   {
     await downloader.EnsureModelAsync(model, token);
 
