@@ -11,25 +11,30 @@ namespace GT4.UI.Utils.Platforms.Windows;
 
 public class UpscalePhotoEnhancement : IPhotoEnhancement
 {
-  private const string ModelFileName = "realesr-general-x4v3.onnx";
+  private static readonly ModelDescriptor Model = new(
+    "realesr-general-x4v3.onnx",
+    new Uri("https://github.com/gasizdat/GT4/releases/download/models-v1/realesr-general-x4v3.onnx"),
+    "924EBAD6532777303582D4CE7811849B88869231A3AE7093E0F21200249DF8D5");
 
+  private readonly IModelDownloader _ModelDownloader;
   private readonly IStorage _Storage;
   private readonly IFileSystem _FileSystem;
   private InferenceSession? _Session;
 
-  public UpscalePhotoEnhancement(IStorage storage, IFileSystem fileSystem)
+  public UpscalePhotoEnhancement(IModelDownloader modelDownloader, IStorage storage, IFileSystem fileSystem)
   {
+    _ModelDownloader = modelDownloader;
     _Storage = storage;
     _FileSystem = fileSystem;
   }
 
   public string DisplayName => "Upscale";
 
-  public Task<Data> ApplyAsync(Data photo, CancellationToken token)
+  public async Task<Data> ApplyAsync(Data photo, CancellationToken token)
   {
     token.ThrowIfCancellationRequested();
 
-    var session = _Session ??= LoadSession();
+    var session = _Session ??= await ModelSessionFactory.LoadSessionAsync(_ModelDownloader, _FileSystem, _Storage, Model, token);
     using var bitmap = SKBitmap.Decode(photo.Content) ?? throw new InvalidOperationException("Could not decode the photo.");
 
     var inputName = session.InputMetadata.Keys.First();
@@ -43,15 +48,7 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement
     using var image = SKImage.FromBitmap(outBitmap);
     using var encoded = image.Encode(SKEncodedImageFormat.Jpeg, 85);
 
-    return Task.FromResult(photo with { Content = encoded.ToArray(), MimeType = "image/jpeg" });
-  }
-
-  private InferenceSession LoadSession()
-  {
-    using var stream = _FileSystem.OpenReadStream(new FileDescription(_Storage.Models, ModelFileName, null));
-    using var modelBytes = new MemoryStream();
-    stream.CopyTo(modelBytes);
-    return new InferenceSession(modelBytes.ToArray());
+    return photo with { Content = encoded.ToArray(), MimeType = "image/jpeg" };
   }
 
   private static DenseTensor<float> ToInputTensor(SKBitmap bitmap)

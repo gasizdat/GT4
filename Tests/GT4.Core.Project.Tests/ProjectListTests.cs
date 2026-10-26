@@ -624,6 +624,13 @@ internal sealed class DiskFileSystem(string root, Func<FileDescription, long>? f
     from.CopyTo(target);
   }
 
+  public void Move(FileDescription from, FileDescription to)
+  {
+    var targetPath = ToPath(to);
+    Directory.CreateDirectory(Path.GetDirectoryName(targetPath)!);
+    File.Move(ToPath(from), targetPath, overwrite: true);
+  }
+
   public void RemoveFile(FileDescription file)
   {
     var path = ToPath(file);

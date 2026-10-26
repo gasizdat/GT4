@@ -70,6 +70,13 @@ internal class FileSystem : IFileSystem
     targetStream.Close();
   }
 
+  public void Move(FileDescription from, FileDescription to)
+  {
+    var targetPath = ToPath(to);
+    CreatePath(targetPath);
+    File.Move(ToPath(from), targetPath, overwrite: true);
+  }
+
   public bool FileExists(FileDescription FileExists) => File.Exists(ToPath(FileExists));
 
   public DateTime GetLastWriteTime(FileDescription fileDescription)

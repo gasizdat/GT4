@@ -11,26 +11,31 @@ namespace GT4.UI.Utils.Platforms.Windows;
 
 public class ColorizePhotoEnhancement : IPhotoEnhancement
 {
-  private const string ModelFileName = "ddcolor-tiny-fp16.onnx";
+  private static readonly ModelDescriptor Model = new(
+    "ddcolor-tiny-fp16.onnx",
+    new Uri("https://github.com/gasizdat/GT4/releases/download/models-v1/ddcolor-tiny-fp16.onnx"),
+    "2653DA00DC15E54A45E5200B61DBF82EE9CEAF56B02BB9B9657569AC775E82E6");
   private const int ModelSize = 512;
 
+  private readonly IModelDownloader _ModelDownloader;
   private readonly IStorage _Storage;
   private readonly IFileSystem _FileSystem;
   private InferenceSession? _Session;
 
-  public ColorizePhotoEnhancement(IStorage storage, IFileSystem fileSystem)
+  public ColorizePhotoEnhancement(IModelDownloader modelDownloader, IStorage storage, IFileSystem fileSystem)
   {
+    _ModelDownloader = modelDownloader;
     _Storage = storage;
     _FileSystem = fileSystem;
   }
 
   public string DisplayName => "Colorize";
 
-  public Task<Data> ApplyAsync(Data photo, CancellationToken token)
+  public async Task<Data> ApplyAsync(Data photo, CancellationToken token)
   {
     token.ThrowIfCancellationRequested();
 
-    var session = _Session ??= LoadSession();
+    var session = _Session ??= await ModelSessionFactory.LoadSessionAsync(_ModelDownloader, _FileSystem, _Storage, Model, token);
     using var bitmap = SKBitmap.Decode(photo.Content) ?? throw new InvalidOperationException("Could not decode the photo.");
     var width = bitmap.Width;
     var height = bitmap.Height;
@@ -57,15 +62,7 @@ public class ColorizePhotoEnhancement : IPhotoEnhancement
     using var image = SKImage.FromBitmap(outBitmap);
     using var encoded = image.Encode(SKEncodedImageFormat.Jpeg, 85);
 
-    return Task.FromResult(photo with { Content = encoded.ToArray(), MimeType = "image/jpeg" });
-  }
-
-  private InferenceSession LoadSession()
-  {
-    using var stream = _FileSystem.OpenReadStream(new FileDescription(_Storage.Models, ModelFileName, null));
-    using var modelBytes = new MemoryStream();
-    stream.CopyTo(modelBytes);
-    return new InferenceSession(modelBytes.ToArray());
+    return photo with { Content = encoded.ToArray(), MimeType = "image/jpeg" };
   }
 
   private static DenseTensor<float> ToInputTensor(float[,] fullL, int width, int height)

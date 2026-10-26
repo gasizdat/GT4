@@ -18,6 +18,7 @@ public static class ServiceCollectionExtensions
   public static IServiceCollection AddUIUtils(this IServiceCollection services) =>
     services
       .AddHttpClient()
+      .AddSingleton<IModelDownloader, ModelDownloader>()
       .AddSingleton<IDateFormatter, DateFormatter>()
       .AddSingleton<INameFormatter, NameFormatter>()
       .AddSingleton<IDateSpanFormatter, DateSpanFormatter>()

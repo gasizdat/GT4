@@ -56,6 +56,14 @@ public class AndroidFileSystem : IFileSystem
     targetStream.Close();
   }
 
+  // Moves can cross storages the same way copies can, so this composes from Copy + RemoveFile
+  // rather than dispatching whole to a single storage.
+  public void Move(FileDescription from, FileDescription to)
+  {
+    Copy(from, to);
+    RemoveFile(from);
+  }
+
   public bool FileExists(FileDescription fileDescription) =>
     Select(fileDescription.Directory).FileExists(fileDescription);
 
@@ -144,6 +152,10 @@ public class AndroidFileSystem : IFileSystem
 
     public void Copy(Stream from, FileDescription to) =>
       throw new NotSupportedException(nameof(Copy));
+
+    // Never reached: AndroidFileSystem composes moves from Copy + RemoveFile.
+    public void Move(FileDescription from, FileDescription to) =>
+      throw new NotSupportedException(nameof(Move));
 
     public bool FileExists(FileDescription fileDescription)
     {
