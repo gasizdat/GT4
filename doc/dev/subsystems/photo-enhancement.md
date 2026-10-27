@@ -12,8 +12,7 @@ takes, not a line-by-line trace — read the class for that.
 Model: Real-ESRGAN `realesr-general-x4v3` (SRVGGNetCompact weights). Decode the photo, normalize
 RGB to `[0, 1]` into a CHW tensor, and run the *whole* image through the model in one pass — the
 model's input/output axes are dynamic, so there's no tiling or batching. Denormalize the 4x-larger
-output tensor back into a bitmap. No face-specific handling: it shares the same known failure mode
-as the restore model below on extreme-angle or low-confidence faces.
+output tensor back into a bitmap.
 
 ## Colorize — `ColorizePhotoEnhancement.cs`
 
@@ -25,17 +24,28 @@ always the original photo's; the model only ever adds color.
 
 ## Restore — `RestorePhotoEnhancement.cs`
 
-Two models in sequence, per detected face, not whole-image:
+General structural damage repair (scratches, creases, tears, dust), not face-specific — the
+originally-scoped #506 design, after GFPGAN's face-restoration substitute was found to carry a
+genuine license defect (confirmed from TencentARC/GFPGAN's own `LICENSE` file: its StyleGAN2-
+derived generator is restricted to non-commercial research/evaluation under NVIDIA's license,
+independent of the repo's Apache-2.0 header). See issue #506's comment thread for the full
+investigation and the alternatives considered.
 
-1. **Detect** — YuNet (`yunet-2023mar.onnx`) finds faces and landmarks. Its decode logic is ported
-   from OpenCV's `face_detect.cpp` rather than run through the ONNX graph itself (`YuNetFaceDetector`).
-2. **Align, restore, paste back** — each face's landmarks are fit to facexlib's FFHQ template with a
-   least-squares similarity transform (`FaceAligner`), cropped/warped to the 512x512 GFPGAN v1.4
-   expects, and restored. The restored crop is pasted back with an analytic distance-to-edge feather
-   standing in for facexlib's raster erode-then-blur mask — chosen specifically to avoid depending on
-   facexlib's separately licensed face-parsing model. Everything outside detected face regions is
-   untouched.
+Two models in sequence, over the whole photo, not per-face:
 
-See the commit introducing this file for the detector/weights license breakdown (YuNet: MIT;
-GFPGAN: Apache-2.0 code/weights, but trained against StyleGAN2, whose license restricts the Work to
-non-commercial research/evaluation — a deferred question, not resolved by this doc).
+1. **Detect** — a U-Net scratch detector (`scratch-detector.onnx`, converted from Microsoft's
+   Bringing-Old-Photos-Back-to-Life project's `FT_Epoch_latest.pt` checkpoint by
+   `Tools/GT4.Tools.ModelExport`) produces a binary damage mask: grayscale, resized so the short
+   side is 256 (rounded to a multiple of 16), sigmoid + a 0.4 threshold, then resized back to the
+   photo's full resolution with nearest-neighbor.
+2. **Inpaint, composite** — LaMa (`lama-fp32.onnx`, `Carve/LaMa-ONNX`'s `lama_fp32.onnx`) fills
+   damage at its fixed 512x512 input, tiled across the photo at native resolution (never resizing
+   the whole photo through the model) with reflect-padding at the edges; tiles with no mask pixels
+   are skipped. `RestorePhotoEnhancement.CompositeMaskedPixels` then takes the inpainted value only
+   where the mask marks damage — every other pixel stays exactly the source pixel.
+
+Model licenses: the scratch detector's code and weights are MIT (Microsoft's own README also
+carries a non-binding "academic research use only" note, confirmed not to be a second enforceable
+license term); LaMa is Apache-2.0, trained on Places2, whose dataset-redistribution terms raise an
+unresolved (industry-wide, not GT4-specific) question about whether that restriction also binds a
+model trained on it.
