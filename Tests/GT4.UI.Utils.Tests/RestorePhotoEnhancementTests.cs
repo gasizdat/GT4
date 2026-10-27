@@ -37,18 +37,20 @@ public class RestorePhotoEnhancementTests : IDisposable
     SeedModel("scratch-detector.onnx", "tiny-detector-identity.onnx");
     SeedModel("lama-fp32.onnx", "tiny-inpainter-constant.onnx");
     using var enhancement = new RestorePhotoEnhancement(SessionFactory());
-    var photo = new Data(1, HalfBlackHalfWhitePng(20, 16), "image/png", DataCategory.PersonPhoto);
+    // 64x48: the dilated boundary (a few pixels either side of x=32) stays inside its own JPEG
+    // blocks, leaving the far sample points below unaffected by quality-85 ringing.
+    var photo = new Data(1, HalfBlackHalfWhitePng(64, 48), "image/png", DataCategory.PersonPhoto);
 
     var result = await enhancement.ApplyAsync(photo, CancellationToken.None);
 
     result.MimeType.Should().Be("image/jpeg");
     using var bitmap = SKBitmap.Decode(result.Content);
-    bitmap.Width.Should().Be(20);
-    bitmap.Height.Should().Be(16);
+    bitmap.Width.Should().Be(64);
+    bitmap.Height.Should().Be(48);
     // Left (black, clean under the sigmoid/0.4 threshold) stays exactly black.
-    bitmap.GetPixel(2, 8).Should().Be(new SKColor(0, 0, 0));
+    bitmap.GetPixel(4, 24).Should().Be(new SKColor(0, 0, 0));
     // Right (white, flagged as damaged) becomes the inpainter fixture's constant.
-    bitmap.GetPixel(17, 8).Should().Be(new SKColor(128, 128, 128));
+    bitmap.GetPixel(60, 24).Should().Be(new SKColor(128, 128, 128));
   }
 
   [Fact]
@@ -73,6 +75,29 @@ public class RestorePhotoEnhancementTests : IDisposable
     // Outside the dilation's reach: untouched.
     mask.GetPixel(128, 120).Should().Be(SKColors.Black);
     mask.GetPixel(128, 136).Should().Be(SKColors.Black);
+  }
+
+  [Fact]
+  public async Task LargePhoto_DilationMarginStaysBoundedRegardlessOfDownsampleRatio()
+  {
+    SeedModel("scratch-detector.onnx", "tiny-detector-identity.onnx");
+    var detector = await SessionFactory().LoadSessionAsync(
+      new ModelDescriptor("scratch-detector.onnx", new Uri("https://example.test/unused"), ""), CancellationToken.None);
+    using var _ = detector;
+    // 2048x2048 downsamples to a 256x256 detector input (an 8x ratio) -- large enough that
+    // dilating in the detector's own low resolution before upsampling, instead of after, would
+    // make the margin visibly wrong (8x too wide on each side) rather than just imprecise.
+    using var bitmap = SKBitmap.Decode(HorizontalLinePng(2048, 2048, 1024));
+
+    using var mask = RestorePhotoEnhancement.DetectDamageMask(detector, bitmap);
+
+    // The forward/backward nearest-neighbor mapping alone already blocks the single detected
+    // detector row out to the full 8px source block (rows 1024-1031); the 3-iteration dilation
+    // adds exactly 3 more photo pixels on each side of that block, not 3 detector pixels' worth.
+    mask.GetPixel(1024, 1021).Should().Be(SKColors.White);
+    mask.GetPixel(1024, 1034).Should().Be(SKColors.White);
+    mask.GetPixel(1024, 1020).Should().Be(SKColors.Black);
+    mask.GetPixel(1024, 1035).Should().Be(SKColors.Black);
   }
 
   [Fact]

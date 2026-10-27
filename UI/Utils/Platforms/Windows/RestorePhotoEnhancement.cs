@@ -28,10 +28,11 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IDisposable
   private const int InpaintTileSize = 512;
 
   // BOPBTL's own Global/test.py dilates the detector's raw per-pixel mask with a 3x3 kernel over
-  // this many iterations before inpainting (its HR mode -- the regime that matches tiling at
-  // native resolution instead of downsampling the whole photo first, like this pipeline does). An
-  // undilated mask is a 1-detector-pixel-wide line; LaMa just interpolates that gap from its
-  // immediate neighbors, so the repair is there but invisible.
+  // this many iterations before inpainting -- an undilated mask is a 1-detector-pixel-wide line,
+  // and LaMa just interpolates that gap from its immediate neighbors, so the repair is there but
+  // invisible. Applied at full photo resolution (not BOPBTL's own low detector resolution) so the
+  // margin stays a few pixels regardless of photo size; dilating before the detector mask is
+  // upsampled would scale the margin by the photo/detector downsample ratio instead.
   private const int MaskDilationIterations = 3;
 
   private readonly IModelSessionFactory _SessionFactory;
@@ -86,24 +87,24 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IDisposable
     using var results = detector.Run([NamedOnnxValue.CreateFromTensor(inputName, input)]);
     var logits = results.First(r => r.Name == outputName).AsTensor<float>();
 
-    var damaged = new bool[dh, dw];
-    for (var y = 0; y < dh; y++)
+    var damaged = new bool[bitmap.Height, bitmap.Width];
+    for (var y = 0; y < bitmap.Height; y++)
     {
-      for (var x = 0; x < dw; x++)
+      var dy = Math.Min(dh - 1, y * dh / bitmap.Height);
+      for (var x = 0; x < bitmap.Width; x++)
       {
-        damaged[y, x] = Sigmoid(logits[0, 0, y, x]) >= DamageThreshold;
+        var dx = Math.Min(dw - 1, x * dw / bitmap.Width);
+        damaged[y, x] = Sigmoid(logits[0, 0, dy, dx]) >= DamageThreshold;
       }
     }
-    damaged = DilateMask(damaged, dw, dh);
+    damaged = DilateMask(damaged, bitmap.Width, bitmap.Height);
 
     var mask = new SKBitmap(bitmap.Width, bitmap.Height);
     for (var y = 0; y < bitmap.Height; y++)
     {
       for (var x = 0; x < bitmap.Width; x++)
       {
-        var dy = Math.Min(dh - 1, y * dh / bitmap.Height);
-        var dx = Math.Min(dw - 1, x * dw / bitmap.Width);
-        mask.SetPixel(x, y, damaged[dy, dx] ? SKColors.White : SKColors.Black);
+        mask.SetPixel(x, y, damaged[y, x] ? SKColors.White : SKColors.Black);
       }
     }
     return mask;
@@ -141,20 +142,7 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IDisposable
     return false;
   }
 
-  private static bool HasAnyDamage(SKBitmap mask)
-  {
-    for (var y = 0; y < mask.Height; y++)
-    {
-      for (var x = 0; x < mask.Width; x++)
-      {
-        if (mask.GetPixel(x, y).Red != 0)
-        {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
+  private static bool HasAnyDamage(SKBitmap mask) => HasDamageIn(mask, 0, 0, mask.Width, mask.Height);
 
   private async Task<SKBitmap> InpaintAsync(SKBitmap bitmap, SKBitmap mask, CancellationToken token)
   {
@@ -181,13 +169,14 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IDisposable
     return output;
   }
 
-  private static bool TileHasDamage(SKBitmap mask, int tileX, int tileY)
+  private static bool TileHasDamage(SKBitmap mask, int tileX, int tileY) => HasDamageIn(
+    mask, tileX, tileY, Math.Min(tileX + InpaintTileSize, mask.Width), Math.Min(tileY + InpaintTileSize, mask.Height));
+
+  private static bool HasDamageIn(SKBitmap mask, int x0, int y0, int x1, int y1)
   {
-    var endY = Math.Min(tileY + InpaintTileSize, mask.Height);
-    var endX = Math.Min(tileX + InpaintTileSize, mask.Width);
-    for (var y = tileY; y < endY; y++)
+    for (var y = y0; y < y1; y++)
     {
-      for (var x = tileX; x < endX; x++)
+      for (var x = x0; x < x1; x++)
       {
         if (mask.GetPixel(x, y).Red != 0)
         {
@@ -268,7 +257,11 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IDisposable
     return (RoundToMultipleOf16(width * scale), RoundToMultipleOf16(height * scale));
   }
 
-  private static int RoundToMultipleOf16(double value) => Math.Max(16, (int)Math.Round(value / 16.0) * 16);
+  private static int RoundToMultipleOf16(double value)
+  {
+    var rounded = (int)Math.Round(value / 16.0) * 16;
+    return Math.Max(16, rounded);
+  }
 
   // Mirrors an out-of-range index back into [0, length) -- the standard reflect-boundary
   // formula, not a single-bounce approximation, since a source smaller than one inpaint tile
