@@ -67,7 +67,7 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IDisposable
     _InpainterSession?.Dispose();
   }
 
-  private static SKBitmap DetectDamageMask(InferenceSession detector, SKBitmap bitmap)
+  internal static SKBitmap DetectDamageMask(InferenceSession detector, SKBitmap bitmap)
   {
     var (dw, dh) = ShortSideTo(bitmap.Width, bitmap.Height, DetectorInputSize);
     var input = new DenseTensor<float>([1, 1, dh, dw]);

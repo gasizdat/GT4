@@ -52,6 +52,30 @@ public class RestorePhotoEnhancementTests : IDisposable
   }
 
   [Fact]
+  public async Task ThinDamagedLine_DilatesTheMaskBeyondTheDetectorsRawThreshold()
+  {
+    SeedModel("scratch-detector.onnx", "tiny-detector-identity.onnx");
+    var detector = await SessionFactory().LoadSessionAsync(
+      new ModelDescriptor("scratch-detector.onnx", new Uri("https://example.test/unused"), ""), CancellationToken.None);
+    using var _ = detector;
+    // 256x256 so the detector's working resolution maps 1:1 onto photo pixels -- the dilation's
+    // 3-detector-pixel reach is then directly observable.
+    using var bitmap = SKBitmap.Decode(HorizontalLinePng(256, 256, 128));
+
+    using var mask = RestorePhotoEnhancement.DetectDamageMask(detector, bitmap);
+
+    // On the line: flagged directly by the detector's threshold.
+    mask.GetPixel(128, 128).Should().Be(SKColors.White);
+    // Within the 3-iteration dilation's reach: also flagged, though the detector's raw threshold
+    // never touched these rows -- this is what distinguishes dilation from a plain threshold.
+    mask.GetPixel(128, 125).Should().Be(SKColors.White);
+    mask.GetPixel(128, 131).Should().Be(SKColors.White);
+    // Outside the dilation's reach: untouched.
+    mask.GetPixel(128, 120).Should().Be(SKColors.Black);
+    mask.GetPixel(128, 136).Should().Be(SKColors.Black);
+  }
+
+  [Fact]
   public async Task UndamagedPhoto_NeverLoadsTheInpainterModel()
   {
     SeedModel("scratch-detector.onnx", "tiny-detector-identity.onnx");
@@ -124,6 +148,17 @@ public class RestorePhotoEnhancementTests : IDisposable
     using var surface = SKSurface.Create(info);
     surface.Canvas.Clear(SKColors.Black);
     surface.Canvas.DrawRect(width / 2f, 0, width / 2f, height, new SKPaint { Color = SKColors.White });
+    using var image = surface.Snapshot();
+    using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+    return data.ToArray();
+  }
+
+  private static byte[] HorizontalLinePng(int width, int height, int lineY)
+  {
+    var info = new SKImageInfo(width, height);
+    using var surface = SKSurface.Create(info);
+    surface.Canvas.Clear(SKColors.Black);
+    surface.Canvas.DrawRect(0, lineY, width, 1, new SKPaint { Color = SKColors.White });
     using var image = surface.Snapshot();
     using var data = image.Encode(SKEncodedImageFormat.Png, 100);
     return data.ToArray();
