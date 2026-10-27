@@ -27,6 +27,13 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IDisposable
   // Carve/LaMa-ONNX's lama_fp32.onnx is exported at a fixed 512x512.
   private const int InpaintTileSize = 512;
 
+  // BOPBTL's own Global/test.py dilates the detector's raw per-pixel mask with a 3x3 kernel over
+  // this many iterations before inpainting (its HR mode -- the regime that matches tiling at
+  // native resolution instead of downsampling the whole photo first, like this pipeline does). An
+  // undilated mask is a 1-detector-pixel-wide line; LaMa just interpolates that gap from its
+  // immediate neighbors, so the repair is there but invisible.
+  private const int MaskDilationIterations = 3;
+
   private readonly IModelSessionFactory _SessionFactory;
   private InferenceSession? _DetectorSession;
   private InferenceSession? _InpainterSession;
@@ -79,6 +86,16 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IDisposable
     using var results = detector.Run([NamedOnnxValue.CreateFromTensor(inputName, input)]);
     var logits = results.First(r => r.Name == outputName).AsTensor<float>();
 
+    var damaged = new bool[dh, dw];
+    for (var y = 0; y < dh; y++)
+    {
+      for (var x = 0; x < dw; x++)
+      {
+        damaged[y, x] = Sigmoid(logits[0, 0, y, x]) >= DamageThreshold;
+      }
+    }
+    damaged = DilateMask(damaged, dw, dh);
+
     var mask = new SKBitmap(bitmap.Width, bitmap.Height);
     for (var y = 0; y < bitmap.Height; y++)
     {
@@ -86,11 +103,42 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IDisposable
       {
         var dy = Math.Min(dh - 1, y * dh / bitmap.Height);
         var dx = Math.Min(dw - 1, x * dw / bitmap.Width);
-        var damaged = Sigmoid(logits[0, 0, dy, dx]) >= DamageThreshold;
-        mask.SetPixel(x, y, damaged ? SKColors.White : SKColors.Black);
+        mask.SetPixel(x, y, damaged[dy, dx] ? SKColors.White : SKColors.Black);
       }
     }
     return mask;
+  }
+
+  private static bool[,] DilateMask(bool[,] mask, int width, int height)
+  {
+    for (var i = 0; i < MaskDilationIterations; i++)
+    {
+      var grown = new bool[height, width];
+      for (var y = 0; y < height; y++)
+      {
+        for (var x = 0; x < width; x++)
+        {
+          grown[y, x] = HasSetNeighbor(mask, x, y, width, height);
+        }
+      }
+      mask = grown;
+    }
+    return mask;
+  }
+
+  private static bool HasSetNeighbor(bool[,] mask, int x, int y, int width, int height)
+  {
+    for (var ny = Math.Max(0, y - 1); ny <= Math.Min(height - 1, y + 1); ny++)
+    {
+      for (var nx = Math.Max(0, x - 1); nx <= Math.Min(width - 1, x + 1); nx++)
+      {
+        if (mask[ny, nx])
+        {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private static bool HasAnyDamage(SKBitmap mask)
