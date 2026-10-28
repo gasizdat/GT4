@@ -52,8 +52,7 @@ internal class ModelDownloader(IHttpClientFactory httpClientFactory, IFileSystem
     }
   }
 
-  // A listed model's in-flight download is kept too: the app isn't single-instance, so another
-  // instance may be writing it right now.
+  // The app isn't single-instance, so a listed model's .download may be another instance's in-flight write.
   public void RemoveUnusedModels(IEnumerable<ModelDescriptor> models)
   {
     var used = models

@@ -3,8 +3,7 @@ using GT4.UI.Abstraction;
 
 namespace GT4.UI.Utils.Platforms.Windows;
 
-// Runs inside MauiApp.Build, before any page exists, so no enhancer of this instance can be
-// downloading or holding a model open yet.
+// Safe to delete here: MauiApp.Build runs this before any page can start a download.
 internal class ModelCacheSweep(IModelDownloader downloader, IEnumerable<IModelDefinition> definitions) : IMauiInitializeService
 {
   public void Initialize(IServiceProvider services)

@@ -74,8 +74,7 @@ public static class ServiceCollectionExtensions
       .AddTransient<SettingEditorsResolver>(sp => () => sp.GetKeyedServices<ISettingEditor>(KeyedService.AnyKey))
       ;
 
-  // Registers both roles together: an enhancer whose models aren't also declared would have them
-  // deleted by ModelCacheSweep on every launch and re-downloaded on next use.
+  // An enhancer with undeclared models would have them swept on every launch and re-downloaded on use.
   private static IServiceCollection AddPhotoEnhancement<T>(this IServiceCollection services)
     where T : class, IPhotoEnhancement, IModelDefinition =>
     services
