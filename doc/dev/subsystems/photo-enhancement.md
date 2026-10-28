@@ -125,11 +125,16 @@ heavy third-party dependencies that have no reason to be restored on every CI ru
   convolution instead of a depthwise one — a numerical parity check against the real upstream
   PyTorch model is what caught it, plausibility alone would not have.
 - **Always verify numerically against the real upstream model before trusting an export** — not
-  just "it runs and produces a plausible-looking output." Compare the exported ONNX's output to
-  the original PyTorch model's output (via `onnxruntime` in Python) across a few input sizes,
-  including one at or below the architecture's known minimum size, so a legitimate failure mode
-  is confirmed to match too, not just the happy path. The scratch detector's own conversion landed
-  at ~2-4e-5 max absolute difference (float32 noise floor) at every size that's expected to work.
+  just "it runs and produces a plausible-looking output."
+  `Tools/GT4.Tools.ModelExport/verify_parity.py` automates this for the scratch detector: an
+  independent PyTorch reimplementation (copied from the real upstream source, not reusing the
+  TorchSharp port's own code, so a bug shared by both wouldn't be masked) compared against the
+  exported ONNX via `onnxruntime`, across a few input sizes plus one at or below the
+  architecture's known minimum size, so a legitimate failure mode is confirmed to match too, not
+  just the happy path. Run manually — `python verify_parity.py <checkpoint.pt> <exported.onnx>`,
+  needs `torch`+`onnxruntime` locally — there's no CI path for it, same reasoning as the tool
+  itself. The scratch detector's own conversion lands at ~2-4e-5 max absolute difference (float32
+  noise floor) at every size that's expected to work.
 
 ## Known gap: test-fixture generators aren't committed
 
