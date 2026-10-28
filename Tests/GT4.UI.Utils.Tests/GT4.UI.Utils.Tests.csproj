@@ -29,4 +29,8 @@
         <ProjectReference Include="..\..\UI\Utils\GT4.UI.Utils.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+        <EmbeddedResource Include="Fixtures\*.onnx" />
+    </ItemGroup>
+
 </Project>

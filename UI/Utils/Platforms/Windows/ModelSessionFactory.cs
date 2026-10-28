@@ -17,10 +17,7 @@ internal class ModelSessionFactory(IModelDownloader downloader, IFileSystem file
   {
     await downloader.EnsureModelAsync(model, token);
 
-    using var stream = fileSystem.OpenReadStream(new FileDescription(storage.Models, model.FileName, null));
-    using var bytes = new MemoryStream();
-    stream.CopyTo(bytes);
-    return new InferenceSession(bytes.ToArray());
+    return new InferenceSession(fileSystem.ToPath(new FileDescription(storage.Models, model.FileName, null)));
   }
 }
 #endif

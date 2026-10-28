@@ -43,6 +43,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppAndroidLib", "UI\App\App
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GT4.Tools.RelativesCli.Tests", "Tests\GT4.Tools.RelativesCli.Tests\GT4.Tools.RelativesCli.Tests.csproj", "{5A211653-27FB-4516-B173-B50F635886B8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GT4.Tools.ModelExport", "Tools\GT4.Tools.ModelExport\GT4.Tools.ModelExport.csproj", "{21760E06-C936-4043-984E-48D7576B8E40}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -253,6 +255,18 @@ Global
 		{5A211653-27FB-4516-B173-B50F635886B8}.Release|x64.Build.0 = Release|Any CPU
 		{5A211653-27FB-4516-B173-B50F635886B8}.Release|x86.ActiveCfg = Release|Any CPU
 		{5A211653-27FB-4516-B173-B50F635886B8}.Release|x86.Build.0 = Release|Any CPU
+		{21760E06-C936-4043-984E-48D7576B8E40}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{21760E06-C936-4043-984E-48D7576B8E40}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{21760E06-C936-4043-984E-48D7576B8E40}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{21760E06-C936-4043-984E-48D7576B8E40}.Debug|x64.Build.0 = Debug|Any CPU
+		{21760E06-C936-4043-984E-48D7576B8E40}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{21760E06-C936-4043-984E-48D7576B8E40}.Debug|x86.Build.0 = Debug|Any CPU
+		{21760E06-C936-4043-984E-48D7576B8E40}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{21760E06-C936-4043-984E-48D7576B8E40}.Release|Any CPU.Build.0 = Release|Any CPU
+		{21760E06-C936-4043-984E-48D7576B8E40}.Release|x64.ActiveCfg = Release|Any CPU
+		{21760E06-C936-4043-984E-48D7576B8E40}.Release|x64.Build.0 = Release|Any CPU
+		{21760E06-C936-4043-984E-48D7576B8E40}.Release|x86.ActiveCfg = Release|Any CPU
+		{21760E06-C936-4043-984E-48D7576B8E40}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -273,6 +287,7 @@ Global
 		{07E113C9-5CD7-43B2-BA10-248D35BCF5C9} = {F23DDE06-8EB2-4853-B881-0A3F0CC788FF}
 		{BD35B681-30F8-7045-5467-3B2F88908EF3} = {2C45F3B0-27B2-4593-B85C-7406FA85C87A}
 		{5A211653-27FB-4516-B173-B50F635886B8} = {F23DDE06-8EB2-4853-B881-0A3F0CC788FF}
+		{21760E06-C936-4043-984E-48D7576B8E40} = {2C45F3B0-27B2-4593-B85C-7406FA85C87A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8C54C6B2-3760-4F0B-A163-CA52515D2575}
