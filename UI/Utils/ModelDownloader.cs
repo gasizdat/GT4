@@ -9,14 +9,14 @@ internal class ModelDownloader(IHttpClientFactory httpClientFactory, IFileSystem
 {
   public async Task EnsureModelAsync(ModelDescriptor model, CancellationToken token)
   {
-    var target = new FileDescription(storage.Models, model.FileName, null);
+    var target = new FileDescription(storage.Models, model.CacheFileName, null);
     if (fileSystem.FileExists(target))
     {
       // Reaches this path only after the hash check below passes, via an atomic Move -- never re-verified.
       return;
     }
 
-    var temp = new FileDescription(storage.Models, $"{model.FileName}.download", null);
+    var temp = new FileDescription(storage.Models, TempFileName(model), null);
     try
     {
       using (var http = httpClientFactory.CreateClient())
@@ -51,4 +51,23 @@ internal class ModelDownloader(IHttpClientFactory httpClientFactory, IFileSystem
       }
     }
   }
+
+  // A listed model's in-flight download is kept too: the app isn't single-instance, so another
+  // instance may be writing it right now.
+  public void RemoveUnusedModels(IEnumerable<ModelDescriptor> models)
+  {
+    var used = models
+      .SelectMany(model => new[] { model.CacheFileName, TempFileName(model) })
+      .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    var unused = fileSystem
+      .GetFiles(storage.Models, "*", recursive: false)
+      .Where(file => !used.Contains(file.FileName));
+
+    foreach (var file in unused)
+    {
+      fileSystem.RemoveFile(file);
+    }
+  }
+
+  private static string TempFileName(ModelDescriptor model) => $"{model.CacheFileName}.download";
 }

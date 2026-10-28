@@ -7,7 +7,7 @@ using SkiaSharp;
 
 namespace GT4.UI.Utils.Platforms.Windows;
 
-public class UpscalePhotoEnhancement : IPhotoEnhancement, IDisposable
+public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDisposable
 {
   private static readonly ModelDescriptor Model = new(
     "realesr-general-x4v3.onnx",
@@ -23,6 +23,8 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement, IDisposable
   }
 
   public string DisplayName => "Upscale";
+
+  public ModelDescriptor[] Models => [Model];
 
   public async Task<Data> ApplyAsync(Data photo, CancellationToken token)
   {
