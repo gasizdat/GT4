@@ -49,3 +49,92 @@ carries a non-binding "academic research use only" note, confirmed not to be a s
 license term); LaMa is Apache-2.0, trained on Places2, whose dataset-redistribution terms raise an
 unresolved (industry-wide, not GT4-specific) question about whether that restriction also binds a
 model trained on it.
+
+## Model loading and caching
+
+`ModelDescriptor(FileName, Url, Sha256)` (`UI/Utils/Abstraction`) pins a model's identity;
+`Sha256` is the uppercase hex digest and is compared case-insensitively.
+
+- `ModelDownloader.EnsureModelAsync` (`UI/Utils/ModelDownloader.cs`) downloads to
+  `<name>.download` beside the final cache path, hashes the downloaded bytes, and only renames it
+  into place on a match (`fileSystem.Move`, atomic). A mismatch throws `ModelDownloadException`
+  and leaves no partial file at the final name. If the final file already exists, it's trusted
+  without re-hashing — the integrity check runs once, at download time, never again on every load.
+- `ModelSessionFactory.LoadSessionAsync` (`UI/Utils/Platforms/Windows/ModelSessionFactory.cs`)
+  opens `InferenceSession` from the cached file's path, not a buffered stream — matters once a
+  model gets into the hundreds of MB (LaMa is ~208MB); a `MemoryStream` copy would transiently
+  double that.
+- Cache location: `IStorage.Models`, under `%APPDATA%\{app GUID}\.models`.
+- All three Windows `IPhotoEnhancement`s are registered `AddSingleton` and lazily
+  `??=` their `InferenceSession`(s) on first use, so a loaded session lives for the app's
+  lifetime. That `??=` isn't guarded against a concurrent first-use race — a known, accepted,
+  pre-existing pattern shared by all three enhancers, not something to fix in just one of them.
+- `RestorePhotoEnhancement` only loads the inpainter session if the detector found any damage
+  (`HasAnyDamage`) — an undamaged photo never pays LaMa's load cost.
+- Perf: LaMa measured ~2.2s per 512x512 tile in Release with default `SessionOptions`. A first-ever
+  Debug run on one machine took ~15 minutes once — a one-time JIT/cold-start anomaly, not a
+  sustained cost; re-running under the same conditions matched the Release number.
+
+## Publishing a model release
+
+Convention: one `models-vN` GitHub release per asset *generation*, not per model —
+`models-v1` is Upscale + Colorize's weights, `models-v2` is Restore's. A later change to any one
+model's bytes gets a new tag (`models-v3`, ...); never `gh release upload --clobber` onto an
+existing tag, and never delete an old release or its assets — a shipped build pins its own
+`ModelDescriptor.Sha256` against the tag current when it was built, so old tags must keep
+resolving. Per-asset convention: `<name>.onnx` plus `<name>.LICENSE.txt` (the upstream project's
+actual LICENSE text, not a paraphrase), plus a NOTICE file where the license requires attribution
+beyond the license text itself.
+
+Checklist for adding or replacing a model:
+
+1. Produce the final `.onnx` bytes — either converted from a checkpoint via
+   `Tools/GT4.Tools.ModelExport` (below) or downloaded ready-made from a trustworthy ONNX export.
+2. `Get-FileHash -Algorithm SHA256 <file>` — this value becomes `ModelDescriptor.Sha256`.
+3. Write `<name>.LICENSE.txt`.
+4. **Ask the user before uploading anything.** This is the standing never-publish-without-asking
+   rule, and a model release also carries its own licensing judgment calls the owner needs to
+   weigh (e.g. BOPBTL's non-binding "research only" README note, LaMa's Places2 training-data
+   question) — a prior "let's try this approach" is not the same sign-off as "publish these
+   bytes."
+5. `gh release create models-vN --title ... --notes ...`, then `gh release upload models-vN
+   <file1> <file2> ...`.
+6. Update the `ModelDescriptor` literals in code: `FileName`, `Url` (pointing at the new tag),
+   `Sha256`.
+7. Re-download from the real published URL and re-hash it, confirming it matches what's now
+   pinned in code — this closes the loop on "did the upload actually produce the bytes I hashed,"
+   not just "did I hash the right local file before uploading."
+
+## Converting a PyTorch checkpoint (`Tools/GT4.Tools.ModelExport`)
+
+Windows-only console tool (TorchSharp CPU + `TorchSharp.PyBridge` + `Onnxify.TorchSharp`), in
+`GT4.Windows.slnf` but deliberately not in any CI filter — it's a one-off conversion aid with
+heavy third-party dependencies that have no reason to be restored on every CI run. Usage:
+`GT4.Tools.ModelExport <checkpoint.pt> <output.onnx>`.
+
+- **A legacy (pre-1.6, non-zip) pickle checkpoint must be re-saved first.** `PyBridge.load_py`
+  flatly rejects that format (`NotImplementedException`). Fix it once with Python:
+  `torch.save(torch.load("old.pt", weights_only=False), "new.pt")`.
+- **Module field names must mirror the original Python attribute names exactly**, not C#
+  convention (`down_sample`, not `DownSample`) — `PyBridge` matches `state_dict` keys by name.
+- **Fixed, non-learned buffers don't load from the checkpoint.** `load_py(strict: false,
+  loadedParameters: ...)` returns which parameters loaded; the scratch detector's own antialiasing
+  filters are exactly the ones that don't, and get set analytically afterward
+  (`SetAntialiasingFilters`). The one real bug this process caught: the first attempt set that
+  filter on a `Conv2d` without `groups: channels`, which silently broadcast it into a full dense
+  convolution instead of a depthwise one — a numerical parity check against the real upstream
+  PyTorch model is what caught it, plausibility alone would not have.
+- **Always verify numerically against the real upstream model before trusting an export** — not
+  just "it runs and produces a plausible-looking output." Compare the exported ONNX's output to
+  the original PyTorch model's output (via `onnxruntime` in Python) across a few input sizes,
+  including one at or below the architecture's known minimum size, so a legitimate failure mode
+  is confirmed to match too, not just the happy path. The scratch detector's own conversion landed
+  at ~2-4e-5 max absolute difference (float32 noise floor) at every size that's expected to work.
+
+## Known gap: test-fixture generators aren't committed
+
+`Tests/GT4.UI.Utils.Tests/Fixtures/*.onnx` (including `tiny-detector-identity.onnx` and
+`tiny-inpainter-constant.onnx`) are committed as binaries, but the `Onnxify`-based script that
+built them only ever existed in a scratchpad and is gone now — the same gap noted on #528's
+fixtures. If one of these fixtures ever needs to change, its generator has to be rebuilt from
+scratch against `Onnxify`'s graph API, not edited in place.
