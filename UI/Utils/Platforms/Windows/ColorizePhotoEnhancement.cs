@@ -7,7 +7,7 @@ using SkiaSharp;
 
 namespace GT4.UI.Utils.Platforms.Windows;
 
-public class ColorizePhotoEnhancement : IPhotoEnhancement, IDisposable
+public class ColorizePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDisposable
 {
   private static readonly ModelDescriptor Model = new(
     "ddcolor-tiny-fp16.onnx",
@@ -24,6 +24,8 @@ public class ColorizePhotoEnhancement : IPhotoEnhancement, IDisposable
   }
 
   public string DisplayName => "Colorize";
+
+  public ModelDescriptor[] Models => [Model];
 
   public async Task<Data> ApplyAsync(Data photo, CancellationToken token)
   {

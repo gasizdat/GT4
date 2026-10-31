@@ -7,13 +7,13 @@ using SkiaSharp;
 
 namespace GT4.UI.Utils.Platforms.Windows;
 
-public class RestorePhotoEnhancement : IPhotoEnhancement, IDisposable
+public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDisposable
 {
-  private static readonly ModelDescriptor DetectorModel = new(
+  internal static readonly ModelDescriptor DetectorModel = new(
     "scratch-detector.onnx",
     new Uri("https://github.com/gasizdat/GT4/releases/download/models-v2/scratch-detector.onnx"),
     "7DCB1C76001706F06480C3EDCFFCD085C3082B26B5E68E266F38316776B73D2D");
-  private static readonly ModelDescriptor InpainterModel = new(
+  internal static readonly ModelDescriptor InpainterModel = new(
     "lama-fp32.onnx",
     new Uri("https://github.com/gasizdat/GT4/releases/download/models-v2/lama-fp32.onnx"),
     "1FAEF5301D78DB7DDA502FE59966957EC4B79DD64E16F03ED96913C7A4EB68D6");
@@ -45,6 +45,8 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IDisposable
   }
 
   public string DisplayName => "Restore damage";
+
+  public ModelDescriptor[] Models => [DetectorModel, InpainterModel];
 
   public async Task<Data> ApplyAsync(Data photo, CancellationToken token)
   {

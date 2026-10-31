@@ -41,9 +41,10 @@ public static class ServiceCollectionExtensions
       // Every other target leaves IPhotoEnhancement unregistered, so the enhance adorner just has
       // nothing to offer there -- no ONNX Runtime binary exists outside this TFM to run one with.
       .AddSingleton<IModelSessionFactory, ModelSessionFactory>()
-      .AddSingleton<IPhotoEnhancement, UpscalePhotoEnhancement>()
-      .AddSingleton<IPhotoEnhancement, ColorizePhotoEnhancement>()
-      .AddSingleton<IPhotoEnhancement, RestorePhotoEnhancement>()
+      .AddTransient<IMauiInitializeService, ModelCacheSweep>()
+      .AddPhotoEnhancement<UpscalePhotoEnhancement>()
+      .AddPhotoEnhancement<ColorizePhotoEnhancement>()
+      .AddPhotoEnhancement<RestorePhotoEnhancement>()
 #endif
       .AddSingleton<DataConverterResolver>(provider =>
         category => provider.GetKeyedService<IDataConverter>(category) ?? new FallbackDataConverter(category))
@@ -72,4 +73,11 @@ public static class ServiceCollectionExtensions
       .AddKeyedSingleton<IComparer<PersonInfo>, PersonInfoComparer>(NameFormat.PersonInitials)
       .AddTransient<SettingEditorsResolver>(sp => () => sp.GetKeyedServices<ISettingEditor>(KeyedService.AnyKey))
       ;
+
+  // An enhancer with undeclared models would have them swept on every launch and re-downloaded on use.
+  private static IServiceCollection AddPhotoEnhancement<T>(this IServiceCollection services)
+    where T : class, IPhotoEnhancement, IModelDefinition =>
+    services
+      .AddSingleton<IPhotoEnhancement, T>()
+      .AddTransient<IModelDefinition, T>();
 }

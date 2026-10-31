@@ -17,7 +17,7 @@ internal class ModelSessionFactory(IModelDownloader downloader, IFileSystem file
   {
     await downloader.EnsureModelAsync(model, token);
 
-    return new InferenceSession(fileSystem.ToPath(new FileDescription(storage.Models, model.FileName, null)));
+    return new InferenceSession(fileSystem.ToPath(new FileDescription(storage.Models, model.CacheFileName, null)));
   }
 }
 #endif

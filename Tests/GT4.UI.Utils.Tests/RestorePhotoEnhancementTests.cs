@@ -34,8 +34,8 @@ public class RestorePhotoEnhancementTests : IDisposable
   [Fact]
   public async Task HalfDamagedPhoto_OnlyReplacesTheDamagedHalfWithTheInpaintedConstant()
   {
-    SeedModel("scratch-detector.onnx", "tiny-detector-identity.onnx");
-    SeedModel("lama-fp32.onnx", "tiny-inpainter-constant.onnx");
+    SeedModel(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
+    SeedModel(RestorePhotoEnhancement.InpainterModel, "tiny-inpainter-constant.onnx");
     using var enhancement = new RestorePhotoEnhancement(SessionFactory());
     // 64x48: the dilated boundary (a few pixels either side of x=32) stays inside its own JPEG
     // blocks, leaving the far sample points below unaffected by quality-85 ringing.
@@ -56,9 +56,8 @@ public class RestorePhotoEnhancementTests : IDisposable
   [Fact]
   public async Task ThinDamagedLine_DilatesTheMaskBeyondTheDetectorsRawThreshold()
   {
-    SeedModel("scratch-detector.onnx", "tiny-detector-identity.onnx");
-    var detector = await SessionFactory().LoadSessionAsync(
-      new ModelDescriptor("scratch-detector.onnx", new Uri("https://example.test/unused"), ""), CancellationToken.None);
+    SeedModel(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
+    var detector = await SessionFactory().LoadSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
     using var _ = detector;
     // 256x256 so the detector's working resolution maps 1:1 onto photo pixels -- the dilation's
     // 3-detector-pixel reach is then directly observable.
@@ -80,9 +79,8 @@ public class RestorePhotoEnhancementTests : IDisposable
   [Fact]
   public async Task LargePhoto_DilationMarginStaysBoundedRegardlessOfDownsampleRatio()
   {
-    SeedModel("scratch-detector.onnx", "tiny-detector-identity.onnx");
-    var detector = await SessionFactory().LoadSessionAsync(
-      new ModelDescriptor("scratch-detector.onnx", new Uri("https://example.test/unused"), ""), CancellationToken.None);
+    SeedModel(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
+    var detector = await SessionFactory().LoadSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
     using var _ = detector;
     // 2048x2048 downsamples to a 256x256 detector input (an 8x ratio) -- large enough that
     // dilating in the detector's own low resolution before upsampling, instead of after, would
@@ -103,7 +101,7 @@ public class RestorePhotoEnhancementTests : IDisposable
   [Fact]
   public async Task UndamagedPhoto_NeverLoadsTheInpainterModel()
   {
-    SeedModel("scratch-detector.onnx", "tiny-detector-identity.onnx");
+    SeedModel(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
     // No lama-fp32.onnx seeded, and the factory's downloader always fails -- if the enhancer
     // tried to load the inpainter for an undamaged photo, this would throw.
     using var enhancement = new RestorePhotoEnhancement(SessionFactory());
@@ -154,10 +152,10 @@ public class RestorePhotoEnhancementTests : IDisposable
     return new ModelSessionFactory(downloader, _FileSystem, _Storage);
   }
 
-  private void SeedModel(string modelFileName, string fixtureFileName)
+  private void SeedModel(ModelDescriptor model, string fixtureFileName)
   {
     using var fixture = OpenFixture(fixtureFileName);
-    _FileSystem.Copy(fixture, new FileDescription(_Storage.Models, modelFileName, null));
+    _FileSystem.Copy(fixture, new FileDescription(_Storage.Models, model.CacheFileName, null));
   }
 
   private static Stream OpenFixture(string fileName)

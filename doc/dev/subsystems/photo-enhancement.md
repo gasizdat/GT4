@@ -55,11 +55,21 @@ model trained on it.
 `ModelDescriptor(FileName, Url, Sha256)` (`UI/Utils/Abstraction`) pins a model's identity;
 `Sha256` is the uppercase hex digest and is compared case-insensitively.
 
+- The cache file name is `ModelDescriptor.CacheFileName`: the first 16 hex digits of `Sha256`, a
+  dash, then `FileName`. A model whose bytes change therefore lands under a new name even when its
+  `FileName` doesn't, so the release checklist below needs no file-renaming rule.
 - `ModelDownloader.EnsureModelAsync` (`UI/Utils/ModelDownloader.cs`) downloads to
-  `<name>.download` beside the final cache path, hashes the downloaded bytes, and only renames it
-  into place on a match (`fileSystem.Move`, atomic). A mismatch throws `ModelDownloadException`
+  `<cache name>.download` beside the final cache path, hashes the downloaded bytes, and only renames
+  it into place on a match (`fileSystem.Move`, atomic). A mismatch throws `ModelDownloadException`
   and leaves no partial file at the final name. If the final file already exists, it's trusted
   without re-hashing — the integrity check runs once, at download time, never again on every load.
+- Every enhancer is also an `IModelDefinition` listing its `ModelDescriptor`s; both roles are
+  registered together by `AddPhotoEnhancement<T>`. At startup `ModelCacheSweep` (an
+  `IMauiInitializeService`, so it runs inside `MauiApp.Build` before any page exists) calls
+  `ModelDownloader.RemoveUnusedModels`, which deletes every file in the cache that isn't a listed
+  model's cache name or its `.download` — the latter kept because the app isn't single-instance and
+  another instance may be mid-download. This is what removes a retired model (e.g. the GFPGAN/YuNet
+  pair) or a replaced model's previous bytes.
 - `ModelSessionFactory.LoadSessionAsync` (`UI/Utils/Platforms/Windows/ModelSessionFactory.cs`)
   opens `InferenceSession` from the cached file's path, not a buffered stream — matters once a
   model gets into the hundreds of MB (LaMa is ~208MB); a `MemoryStream` copy would transiently

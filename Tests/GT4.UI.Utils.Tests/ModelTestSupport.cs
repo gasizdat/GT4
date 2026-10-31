@@ -67,6 +67,18 @@ internal sealed class TempFileSystem(string root) : IFileSystem
 
   public void RemoveDirectory(DirectoryDescription directory) => throw new NotSupportedException();
 
-  public FileDescription[] GetFiles(DirectoryDescription directory, string searchPattern, bool recursive) =>
-    throw new NotSupportedException();
+  public FileDescription[] GetFiles(DirectoryDescription directory, string searchPattern, bool recursive)
+  {
+    var path = ToPath(directory);
+    if (!Directory.Exists(path))
+    {
+      return [];
+    }
+
+    return Directory
+      .GetFiles(path, searchPattern)
+      .Select(Path.GetFileName)
+      .Select(fileName => new FileDescription(directory, fileName!, null))
+      .ToArray();
+  }
 }
