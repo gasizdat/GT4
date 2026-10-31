@@ -31,6 +31,34 @@ public class RestorePhotoEnhancementTests : IDisposable
   }
 
   [Fact]
+  public async Task DamageOnlyPastTheFirstTile_IsInpaintedWhereItIs()
+  {
+    _Models.Seed(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
+    _Models.Seed(RestorePhotoEnhancement.InpainterModel, "tiny-inpainter-constant.onnx");
+    using var enhancement = new RestorePhotoEnhancement(_Models.SessionFactory());
+    // 600 wide: the second 512px tile column is partial, so it is reflect-padded too.
+    using var photo = SKBitmap.Decode(WhiteSquarePng(600, 40, x: 540, y: 10, size: 20));
+
+    using var bitmap = await enhancement.ApplyAsync(photo, CancellationToken.None);
+
+    bitmap.GetPixel(550, 20).Should().Be(new SKColor(128, 128, 128));
+    bitmap.GetPixel(100, 20).Should().Be(new SKColor(0, 0, 0));
+    bitmap.GetPixel(590, 20).Should().Be(new SKColor(0, 0, 0));
+  }
+
+  [Fact]
+  public async Task MissingInpainterModel_SurfacesModelDownloadException()
+  {
+    _Models.Seed(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
+    using var enhancement = new RestorePhotoEnhancement(_Models.SessionFactory());
+    using var photo = SKBitmap.Decode(HalfBlackHalfWhitePng(64, 48));
+
+    var act = () => enhancement.ApplyAsync(photo, CancellationToken.None);
+
+    await act.Should().ThrowAsync<ModelDownloadException>();
+  }
+
+  [Fact]
   public async Task ThinDamagedLine_DilatesTheMaskBeyondTheDetectorsRawThreshold()
   {
     _Models.Seed(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
@@ -126,6 +154,17 @@ public class RestorePhotoEnhancementTests : IDisposable
     using var surface = SKSurface.Create(info);
     surface.Canvas.Clear(SKColors.Black);
     surface.Canvas.DrawRect(width / 2f, 0, width / 2f, height, new SKPaint { Color = SKColors.White });
+    using var image = surface.Snapshot();
+    using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+    return data.ToArray();
+  }
+
+  private static byte[] WhiteSquarePng(int width, int height, int x, int y, int size)
+  {
+    var info = new SKImageInfo(width, height);
+    using var surface = SKSurface.Create(info);
+    surface.Canvas.Clear(SKColors.Black);
+    surface.Canvas.DrawRect(x, y, size, size, new SKPaint { Color = SKColors.White });
     using var image = surface.Snapshot();
     using var data = image.Encode(SKEncodedImageFormat.Png, 100);
     return data.ToArray();
