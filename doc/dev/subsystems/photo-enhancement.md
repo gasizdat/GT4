@@ -7,6 +7,14 @@ unregistered everywhere else). Each one is an independent, single-step image tra
 flow offers as a button; none of them chain automatically. This page sketches the *approach* each
 takes, not a line-by-line trace — read the class for that.
 
+An enhancer only ever sees decoded pixels: `ApplyAsync(SKBitmap)`. `PhotoEnhancementExtensions.EnhanceAsync`
+wraps it for the `PhotoInfo` the photo's `IDataConverter` hands out (decode, enhance, re-encode as JPEG,
+keep the caption), and `CreateOrUpdatePersonDialog` turns the result back into a photo through that same
+converter. The copy is therefore a new, uncommitted photo — never the source's stored `Id`, which would
+show the source's cached image and collide with it on save — and a captioned source's caption is
+re-enveloped onto it. Never hand an enhancer `Data.Content`: a captioned photo's bytes are a
+`GedcomPhotoResidue` envelope, not an image.
+
 ## Upscale — `UpscalePhotoEnhancement.cs`
 
 Model: Real-ESRGAN `realesr-general-x4v3` (SRVGGNetCompact weights). Decode the photo, normalize

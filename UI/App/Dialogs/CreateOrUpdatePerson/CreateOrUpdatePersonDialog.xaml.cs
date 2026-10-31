@@ -9,6 +9,7 @@ using GT4.UI.Items;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
+using GT4.UI.Utils.Extensions;
 using GT4.UI.Utils.Formatters;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
@@ -410,12 +411,20 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   private async Task OnEnhancePhotoAsync(IPhotoEnhancement enhancement, PersonDataItem photo)
   {
+    var converter = _Factory.DataConverterResolver(photo.Info.Category.AsTaggedPhoto());
     var dialog = new ProgressDialog(enhancement.DisplayName, enhancement.DisplayName, "Enhancing photo...", _Factory.AlertService);
     await Navigation.PushModalAsync(dialog);
     try
     {
-      var enhanced = await Task.Run(() => enhancement.ApplyAsync(photo.Info, dialog.Token));
-      _Photos.Insert(_Photos.IndexOf(photo) + 1, GetPersonData(enhanced, enhanced.Category.AsTaggedPhoto()));
+      // As edited so far: an unsaved caption change carries over to the copy.
+      var current = await photo.ToDataAsync();
+      var source = await converter.ToObjectAsync(current, dialog.Token);
+      var enhanced = await Task.Run(() => enhancement.EnhanceAsync((PhotoInfo)source!, dialog.Token));
+      // A new photo, so it must not carry the source's stored Id.
+      var data = await converter.FromObjectAsync(enhanced, dialog.Token);
+      var category = data!.Category.IsTaggedPhoto() ? DataCategory.PersonPhotoTagged : DataCategory.PersonPhoto;
+      var item = GetPersonData(data with { Category = category }, category.AsTaggedPhoto());
+      _Photos.Insert(_Photos.IndexOf(photo) + 1, item);
       IsModified = true;
     }
     catch (OperationCanceledException)

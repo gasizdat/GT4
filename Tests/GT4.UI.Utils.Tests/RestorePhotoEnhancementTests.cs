@@ -1,11 +1,6 @@
-using System.Net;
-using System.Reflection;
 using FluentAssertions;
-using GT4.Core.Project.Dto;
-using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Utils.Platforms.Windows;
-using Moq;
 using SkiaSharp;
 using Xunit;
 
@@ -13,38 +8,20 @@ namespace GT4.UI.Utils.Tests;
 
 public class RestorePhotoEnhancementTests : IDisposable
 {
-  private readonly string _Root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-  private readonly TempFileSystem _FileSystem;
-  private readonly FixedStorage _Storage;
+  private readonly FixtureModelCache _Models = new();
 
-  public RestorePhotoEnhancementTests()
-  {
-    _FileSystem = new TempFileSystem(_Root);
-    _Storage = new FixedStorage(new DirectoryDescription(Environment.SpecialFolder.ApplicationData, ["models"]));
-  }
-
-  public void Dispose()
-  {
-    if (Directory.Exists(_Root))
-    {
-      Directory.Delete(_Root, recursive: true);
-    }
-  }
+  public void Dispose() => _Models.Dispose();
 
   [Fact]
   public async Task HalfDamagedPhoto_OnlyReplacesTheDamagedHalfWithTheInpaintedConstant()
   {
-    SeedModel(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
-    SeedModel(RestorePhotoEnhancement.InpainterModel, "tiny-inpainter-constant.onnx");
-    using var enhancement = new RestorePhotoEnhancement(SessionFactory());
-    // 64x48: the dilated boundary (a few pixels either side of x=32) stays inside its own JPEG
-    // blocks, leaving the far sample points below unaffected by quality-85 ringing.
-    var photo = new Data(1, HalfBlackHalfWhitePng(64, 48), "image/png", DataCategory.PersonPhoto);
+    _Models.Seed(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
+    _Models.Seed(RestorePhotoEnhancement.InpainterModel, "tiny-inpainter-constant.onnx");
+    using var enhancement = new RestorePhotoEnhancement(_Models.SessionFactory());
+    using var photo = SKBitmap.Decode(HalfBlackHalfWhitePng(64, 48));
 
-    var result = await enhancement.ApplyAsync(photo, CancellationToken.None);
+    using var bitmap = await enhancement.ApplyAsync(photo, CancellationToken.None);
 
-    result.MimeType.Should().Be("image/jpeg");
-    using var bitmap = SKBitmap.Decode(result.Content);
     bitmap.Width.Should().Be(64);
     bitmap.Height.Should().Be(48);
     // Left (black, clean under the sigmoid/0.4 threshold) stays exactly black.
@@ -56,8 +33,8 @@ public class RestorePhotoEnhancementTests : IDisposable
   [Fact]
   public async Task ThinDamagedLine_DilatesTheMaskBeyondTheDetectorsRawThreshold()
   {
-    SeedModel(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
-    var detector = await SessionFactory().LoadSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
+    _Models.Seed(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
+    var detector = await _Models.SessionFactory().LoadSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
     using var _ = detector;
     // 256x256 so the detector's working resolution maps 1:1 onto photo pixels -- the dilation's
     // 3-detector-pixel reach is then directly observable.
@@ -79,8 +56,8 @@ public class RestorePhotoEnhancementTests : IDisposable
   [Fact]
   public async Task LargePhoto_DilationMarginStaysBoundedRegardlessOfDownsampleRatio()
   {
-    SeedModel(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
-    var detector = await SessionFactory().LoadSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
+    _Models.Seed(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
+    var detector = await _Models.SessionFactory().LoadSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
     using var _ = detector;
     // 2048x2048 downsamples to a 256x256 detector input (an 8x ratio) -- large enough that
     // dilating in the detector's own low resolution before upsampling, instead of after, would
@@ -101,23 +78,22 @@ public class RestorePhotoEnhancementTests : IDisposable
   [Fact]
   public async Task UndamagedPhoto_NeverLoadsTheInpainterModel()
   {
-    SeedModel(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
+    _Models.Seed(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
     // No lama-fp32.onnx seeded, and the factory's downloader always fails -- if the enhancer
     // tried to load the inpainter for an undamaged photo, this would throw.
-    using var enhancement = new RestorePhotoEnhancement(SessionFactory());
-    var photo = new Data(1, SolidColorPng(20, 16, 0, 0, 0), "image/png", DataCategory.PersonPhoto);
+    using var enhancement = new RestorePhotoEnhancement(_Models.SessionFactory());
+    using var photo = SKBitmap.Decode(SolidColorPng(20, 16, 0, 0, 0));
 
-    var result = await enhancement.ApplyAsync(photo, CancellationToken.None);
+    using var bitmap = await enhancement.ApplyAsync(photo, CancellationToken.None);
 
-    using var bitmap = SKBitmap.Decode(result.Content);
     bitmap.GetPixel(10, 8).Should().Be(new SKColor(0, 0, 0));
   }
 
   [Fact]
   public async Task MissingDetectorModel_SurfacesModelDownloadException()
   {
-    using var enhancement = new RestorePhotoEnhancement(SessionFactory());
-    var photo = new Data(1, SolidColorPng(10, 10, 255, 255, 255), "image/png", DataCategory.PersonPhoto);
+    using var enhancement = new RestorePhotoEnhancement(_Models.SessionFactory());
+    using var photo = SKBitmap.Decode(SolidColorPng(10, 10, 255, 255, 255));
 
     var act = () => enhancement.ApplyAsync(photo, CancellationToken.None);
 
@@ -142,27 +118,6 @@ public class RestorePhotoEnhancementTests : IDisposable
     destination.GetPixel(1, 0).Should().Be(new SKColor(10, 20, 30));
     destination.GetPixel(2, 0).Should().Be(new SKColor(200, 210, 220));
     destination.GetPixel(3, 0).Should().Be(new SKColor(10, 20, 30));
-  }
-
-  private IModelSessionFactory SessionFactory()
-  {
-    var factory = new Mock<IHttpClientFactory>();
-    factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(() => new HttpClient(new FailingHandler()));
-    var downloader = new ModelDownloader(factory.Object, _FileSystem, _Storage);
-    return new ModelSessionFactory(downloader, _FileSystem, _Storage);
-  }
-
-  private void SeedModel(ModelDescriptor model, string fixtureFileName)
-  {
-    using var fixture = OpenFixture(fixtureFileName);
-    _FileSystem.Copy(fixture, new FileDescription(_Storage.Models, model.CacheFileName, null));
-  }
-
-  private static Stream OpenFixture(string fileName)
-  {
-    var assembly = Assembly.GetExecutingAssembly();
-    var name = assembly.GetManifestResourceNames().Single(n => n.EndsWith($".{fileName}", StringComparison.Ordinal));
-    return assembly.GetManifestResourceStream(name)!;
   }
 
   private static byte[] HalfBlackHalfWhitePng(int width, int height)
@@ -208,11 +163,5 @@ public class RestorePhotoEnhancementTests : IDisposable
       }
     }
     return bitmap;
-  }
-
-  private sealed class FailingHandler : HttpMessageHandler
-  {
-    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken token) =>
-      Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
   }
 }

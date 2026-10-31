@@ -1,5 +1,4 @@
 #if WINDOWS
-using GT4.Core.Project.Dto;
 using GT4.UI.Abstraction;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
@@ -27,12 +26,11 @@ public class ColorizePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDi
 
   public ModelDescriptor[] Models => [Model];
 
-  public async Task<Data> ApplyAsync(Data photo, CancellationToken token)
+  public async Task<SKBitmap> ApplyAsync(SKBitmap bitmap, CancellationToken token)
   {
     token.ThrowIfCancellationRequested();
 
     var session = _Session ??= await _SessionFactory.LoadSessionAsync(Model, token);
-    using var bitmap = SKBitmap.Decode(photo.Content) ?? throw new InvalidOperationException("Could not decode the photo.");
     var width = bitmap.Width;
     var height = bitmap.Height;
 
@@ -54,11 +52,7 @@ public class ColorizePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDi
     using var results = session.Run([NamedOnnxValue.CreateFromTensor(inputName, input)]);
     var ab = results.First(r => r.Name == outputName).AsTensor<float>();
 
-    using var outBitmap = ToOutputBitmap(fullL, ab, width, height);
-    using var image = SKImage.FromBitmap(outBitmap);
-    using var encoded = image.Encode(SKEncodedImageFormat.Jpeg, 85);
-
-    return photo with { Content = encoded.ToArray(), MimeType = "image/jpeg" };
+    return ToOutputBitmap(fullL, ab, width, height);
   }
 
   public void Dispose() => _Session?.Dispose();

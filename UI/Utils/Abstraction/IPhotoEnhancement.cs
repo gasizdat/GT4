@@ -1,9 +1,9 @@
-using GT4.Core.Project.Dto;
+using SkiaSharp;
 
 namespace GT4.UI.Abstraction;
 
 public interface IPhotoEnhancement
 {
   string DisplayName { get; }
-  Task<Data> ApplyAsync(Data photo, CancellationToken token);
+  Task<SKBitmap> ApplyAsync(SKBitmap bitmap, CancellationToken token);
 }
