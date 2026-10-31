@@ -423,7 +423,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       // A new photo, so it must not carry the source's stored Id.
       var data = await converter.FromObjectAsync(enhanced, dialog.Token);
       var category = data!.Category.IsTaggedPhoto() ? DataCategory.PersonPhotoTagged : DataCategory.PersonPhoto;
-      var item = GetPersonData(data with { Category = category }, category.AsTaggedPhoto());
+      // The converter labels everything it encodes image/bmp; unlabelled, the JPEG bytes are sniffed instead.
+      var item = GetPersonData(data with { MimeType = null, Category = category }, category.AsTaggedPhoto());
       _Photos.Insert(_Photos.IndexOf(photo) + 1, item);
       IsModified = true;
     }

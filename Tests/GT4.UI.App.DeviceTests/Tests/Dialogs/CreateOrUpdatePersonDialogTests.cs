@@ -448,6 +448,7 @@ public class CreateOrUpdatePersonDialogTests
     Assert.Equal(ElementId.NonCommittedId, savedCopy.Id);
     Assert.Equal(DataCategory.PersonPhoto, savedCopy.Category);
     Assert.Equal(new SKSizeI(8, 6), ImageSize(savedCopy.Content));
+    Assert.Equal("jpeg", GedcomMedia.ResolveForm(savedCopy.MimeType, savedCopy.Content));
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
 
