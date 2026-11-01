@@ -1,5 +1,4 @@
 #if WINDOWS
-using GT4.Core.Project.Dto;
 using GT4.UI.Abstraction;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
@@ -48,20 +47,14 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
 
   public ModelDescriptor[] Models => [DetectorModel, InpainterModel];
 
-  public async Task<Data> ApplyAsync(Data photo, CancellationToken token)
+  public async Task<SKBitmap> ApplyAsync(SKBitmap bitmap, CancellationToken token)
   {
     token.ThrowIfCancellationRequested();
 
     var detector = _DetectorSession ??= await _SessionFactory.LoadSessionAsync(DetectorModel, token);
-    using var bitmap = SKBitmap.Decode(photo.Content) ?? throw new InvalidOperationException("Could not decode the photo.");
     using var mask = DetectDamageMask(detector, bitmap);
 
-    using var output = HasAnyDamage(mask) ? await InpaintAsync(bitmap, mask, token) : bitmap.Copy();
-
-    using var image = SKImage.FromBitmap(output);
-    using var encoded = image.Encode(SKEncodedImageFormat.Jpeg, 85);
-
-    return photo with { Content = encoded.ToArray(), MimeType = "image/jpeg" };
+    return HasAnyDamage(mask) ? await InpaintAsync(bitmap, mask, token) : bitmap.Copy();
   }
 
   public void Dispose()

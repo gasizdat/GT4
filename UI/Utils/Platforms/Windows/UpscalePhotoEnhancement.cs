@@ -1,5 +1,4 @@
 #if WINDOWS
-using GT4.Core.Project.Dto;
 using GT4.UI.Abstraction;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
@@ -26,12 +25,11 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
 
   public ModelDescriptor[] Models => [Model];
 
-  public async Task<Data> ApplyAsync(Data photo, CancellationToken token)
+  public async Task<SKBitmap> ApplyAsync(SKBitmap bitmap, CancellationToken token)
   {
     token.ThrowIfCancellationRequested();
 
     var session = _Session ??= await _SessionFactory.LoadSessionAsync(Model, token);
-    using var bitmap = SKBitmap.Decode(photo.Content) ?? throw new InvalidOperationException("Could not decode the photo.");
 
     var inputName = session.InputMetadata.Keys.First();
     var outputName = session.OutputMetadata.Keys.First();
@@ -40,11 +38,7 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
     using var results = session.Run([NamedOnnxValue.CreateFromTensor(inputName, input)]);
     var output = results.First(r => r.Name == outputName).AsTensor<float>();
 
-    using var outBitmap = ToOutputBitmap(output);
-    using var image = SKImage.FromBitmap(outBitmap);
-    using var encoded = image.Encode(SKEncodedImageFormat.Jpeg, 85);
-
-    return photo with { Content = encoded.ToArray(), MimeType = "image/jpeg" };
+    return ToOutputBitmap(output);
   }
 
   public void Dispose() => _Session?.Dispose();
