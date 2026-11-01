@@ -61,9 +61,9 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0} needs these models, downloaded once:
+        ///   Looks up a localized string similar to {0} needs a one-time download:
 ///{1}
-///Download them now?.
+///Download now?.
         /// </summary>
         public static string AlertDownloadModelsConfirm_2 {
             get {
@@ -2568,7 +2568,7 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Downloading the models. This may take a while….
+        ///   Looks up a localized string similar to Downloading. This may take a while….
         /// </summary>
         public static string HintModelDownloadInProgress {
             get {

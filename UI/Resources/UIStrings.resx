@@ -839,15 +839,15 @@ genealogy tree and enjoy!</value>
     <value>Writing the pages. This may take a while…</value>
   </data>
   <data name="AlertDownloadModelsConfirm_2" xml:space="preserve">
-    <value>{0} needs these models, downloaded once:
+    <value>{0} needs a one-time download:
 {1}
-Download them now?</value>
+Download now?</value>
   </data>
   <data name="ModelDownloadEntry_3" xml:space="preserve">
     <value>• {0} ({1}, {2:N0} MB)</value>
   </data>
   <data name="HintModelDownloadInProgress" xml:space="preserve">
-    <value>Downloading the models. This may take a while…</value>
+    <value>Downloading. This may take a while…</value>
   </data>
   <data name="LblPersons" xml:space="preserve">
     <value>People</value>
