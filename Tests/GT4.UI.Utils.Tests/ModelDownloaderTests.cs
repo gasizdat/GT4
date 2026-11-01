@@ -188,7 +188,7 @@ public class ModelDownloaderTests : IDisposable
       Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(body) });
   }
 
-  // A body that stalls far longer than the test waits, unless its read is cancelled.
+  // The stall is bounded so a download that ignores cancellation fails the test instead of hanging it.
   private sealed class StalledStream : Stream
   {
     private readonly TaskCompletionSource _Reading = new(TaskCreationOptions.RunContinuationsAsynchronously);
