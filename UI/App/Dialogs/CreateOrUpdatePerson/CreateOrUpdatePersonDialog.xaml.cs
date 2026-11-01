@@ -34,7 +34,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     SelectPersonDialog.Factory SelectPersonDialogFactory,
     SelectMediaDialog.Factory SelectMediaDialogFactory,
     InlineMediaProvider MediaProvider,
-    IEnumerable<IPhotoEnhancement> Enhancements)
+    IEnumerable<IPhotoEnhancement> Enhancements,
+    IModelDownloader ModelDownloader)
   {
     public CreateOrUpdatePersonDialog Create(PersonFullInfo? person) =>
       new CreateOrUpdatePersonDialog(this, person);
@@ -411,6 +412,11 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   private async Task OnEnhancePhotoAsync(IPhotoEnhancement enhancement, PersonDataItem photo)
   {
+    if (!await DownloadMissingModelsAsync(enhancement))
+    {
+      return;
+    }
+
     var converter = _Factory.DataConverterResolver(photo.Info.Category.AsTaggedPhoto());
     var dialog = new ProgressDialog(enhancement.DisplayName, enhancement.DisplayName, "Enhancing photo...", _Factory.AlertService);
     await Navigation.PushModalAsync(dialog);
@@ -430,6 +436,49 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
     catch (OperationCanceledException)
     {
+    }
+    finally
+    {
+      await Navigation.PopModalAsync();
+    }
+  }
+
+  private async Task<bool> DownloadMissingModelsAsync(IPhotoEnhancement enhancement)
+  {
+    const double BytesPerMegabyte = 1024 * 1024;
+
+    var missing = enhancement.Models
+      .Where(model => !_Factory.ModelDownloader.IsDownloaded(model))
+      .ToArray();
+    if (missing.Length == 0)
+    {
+      return true;
+    }
+
+    var entries = missing.Select(model =>
+      string.Format(UIStrings.ModelDownloadEntry_3, model.DisplayName, model.License, model.Size / BytesPerMegabyte));
+    var list = string.Join(Environment.NewLine, entries);
+    var confirmationText = string.Format(UIStrings.AlertDownloadModelsConfirm_2, enhancement.DisplayName, list);
+    if (!await _Factory.AlertService.ShowConfirmationAsync(confirmationText))
+    {
+      return false;
+    }
+
+    var names = missing.Select(model => model.DisplayName);
+    var subject = string.Join(", ", names);
+    var dialog = new ProgressDialog(enhancement.DisplayName, subject, UIStrings.HintModelDownloadInProgress, _Factory.AlertService);
+    await Navigation.PushModalAsync(dialog);
+    try
+    {
+      foreach (var model in missing)
+      {
+        await _Factory.ModelDownloader.EnsureModelAsync(model, dialog.Token);
+      }
+      return true;
+    }
+    catch (OperationCanceledException)
+    {
+      return false;
     }
     finally
     {

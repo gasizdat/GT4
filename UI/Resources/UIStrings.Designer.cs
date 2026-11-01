@@ -61,6 +61,17 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {0} needs these models, downloaded once:
+///{1}
+///Download them now?.
+        /// </summary>
+        public static string AlertDownloadModelsConfirm_2 {
+            get {
+                return ResourceManager.GetString("AlertDownloadModelsConfirm_2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The HTML export includes everyone in the project, living people too, with every biography, photo and attachment. Export?.
         /// </summary>
         public static string AlertExportHtmlConfirm {
@@ -2557,6 +2568,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Downloading the models. This may take a while….
+        /// </summary>
+        public static string HintModelDownloadInProgress {
+            get {
+                return ResourceManager.GetString("HintModelDownloadInProgress", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Name contains… (* and ? wildcards supported).
         /// </summary>
         public static string HintNameFilterWildcard {
@@ -2985,6 +3005,15 @@ namespace GT4.UI.Resources {
         public static string MenuItemNameUnmarkAsMainPerson_1 {
             get {
                 return ResourceManager.GetString("MenuItemNameUnmarkAsMainPerson_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to • {0} ({1}, {2:N0} MB).
+        /// </summary>
+        public static string ModelDownloadEntry_3 {
+            get {
+                return ResourceManager.GetString("ModelDownloadEntry_3", resourceCulture);
             }
         }
         

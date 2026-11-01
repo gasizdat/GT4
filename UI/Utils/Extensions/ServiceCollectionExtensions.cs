@@ -76,7 +76,7 @@ public static class ServiceCollectionExtensions
 
   // An enhancer with undeclared models would have them swept on every launch and re-downloaded on use.
   private static IServiceCollection AddPhotoEnhancement<T>(this IServiceCollection services)
-    where T : class, IPhotoEnhancement, IModelDefinition =>
+    where T : class, IPhotoEnhancement =>
     services
       .AddSingleton<IPhotoEnhancement, T>()
       .AddTransient<IModelDefinition, T>();

@@ -60,8 +60,9 @@ model trained on it.
 
 ## Model loading and caching
 
-`ModelDescriptor(FileName, Url, Sha256)` (`UI/Utils/Abstraction`) pins a model's identity;
-`Sha256` is the uppercase hex digest and is compared case-insensitively.
+`ModelDescriptor(FileName, Url, Sha256, DisplayName, License, Size)` (`UI/Utils/Abstraction`) pins
+a model's identity and what the download prompt tells the user; `Sha256` is the uppercase hex digest
+and is compared case-insensitively.
 
 - The cache file name is `ModelDescriptor.CacheFileName`: the first 16 hex digits of `Sha256`, a
   dash, then `FileName`. A model whose bytes change therefore lands under a new name even when its
@@ -71,8 +72,14 @@ model trained on it.
   it into place on a match (`fileSystem.Move`, atomic). A mismatch throws `ModelDownloadException`
   and leaves no partial file at the final name. If the final file already exists, it's trusted
   without re-hashing — the integrity check runs once, at download time, never again on every load.
-- Every enhancer is also an `IModelDefinition` listing its `ModelDescriptor`s; both roles are
-  registered together by `AddPhotoEnhancement<T>`. At startup `ModelCacheSweep` (an
+- Nothing downloads unasked. Before enhancing, `CreateOrUpdatePersonDialog` collects the
+  enhancement's models that `IModelDownloader.IsDownloaded` doesn't find and asks
+  (`IAlertService.ShowConfirmationAsync`), naming each with its license and size. On Yes it
+  downloads them under their own `ProgressDialog`, then enhances; declining changes nothing.
+  Restore asks for and downloads both of its models up front, though it only loads LaMa for a
+  damaged photo.
+- Every `IPhotoEnhancement` is an `IModelDefinition` listing its `ModelDescriptor`s, and
+  `AddPhotoEnhancement<T>` registers it in both roles. At startup `ModelCacheSweep` (an
   `IMauiInitializeService`, so it runs inside `MauiApp.Build` before any page exists) calls
   `ModelDownloader.RemoveUnusedModels`, which deletes every file in the cache that isn't a listed
   model's cache name or its `.download` — the latter kept because the app isn't single-instance and

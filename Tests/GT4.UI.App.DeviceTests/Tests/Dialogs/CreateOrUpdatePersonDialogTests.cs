@@ -381,11 +381,17 @@ public class CreateOrUpdatePersonDialogTests
     return new SKSizeI(bitmap.Width, bitmap.Height);
   }
 
+  // 77 MB, so the prompt's size can't match any other number in it by accident.
+  private static readonly ModelDescriptor TestModel = new(
+    "model.onnx", new Uri("https://example.test/model.onnx"), new string('A', 64), "Test Model", "MIT", 77 * 1024 * 1024);
+
   private sealed class DoublingEnhancement : IPhotoEnhancement
   {
     public SKSizeI? Received { get; private set; }
 
     public string DisplayName => "Double";
+
+    public ModelDescriptor[] Models { get; init; } = [];
 
     public Task<SKBitmap> ApplyAsync(SKBitmap bitmap, CancellationToken token)
     {
@@ -482,6 +488,74 @@ public class CreateOrUpdatePersonDialogTests
     var saved = await SaveAsync(dialog);
 
     Assert.Equal("Edited", await GedcomPhotoResidue.ExtractTitleAsync(saved.AdditionalPhotos[0], CancellationToken.None));
+  }
+
+  [Fact]
+  public async Task EnhanceCommand_with_a_missing_model_asks_first_and_changes_nothing_when_declined()
+  {
+    var services = new TestServices();
+    string? prompt = null;
+    services.AlertService
+      .Setup(a => a.ShowConfirmationAsync(It.IsAny<string>()))
+      .Callback<string>(text => prompt = text)
+      .ReturnsAsync(false);
+    var person = CreateSamplePerson() with { MainPhoto = new Data(10, Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
+    var dialog = await CreateDialogAsync(services, person);
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var enhancement = new DoublingEnhancement { Models = [TestModel] };
+    var before = dialog.Photos.Count;
+
+    await MainThread.InvokeOnMainThreadAsync(() =>
+      dialog.DialogCommand.Execute(new EnhanceCommandParameter { Enhancement = enhancement, Photo = dialog.Photos.First() }));
+    await Poll.ConfirmNeverAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => dialog.Photos.Count),
+      count => count != before,
+      TimeSpan.FromSeconds(1),
+      "Declining the download still added a photo.");
+
+    Assert.NotNull(prompt);
+    Assert.Contains("Test Model", prompt);
+    Assert.Contains("MIT", prompt);
+    Assert.Contains("77", prompt);
+    services.ModelDownloader.Verify(d => d.EnsureModelAsync(It.IsAny<ModelDescriptor>(), It.IsAny<CancellationToken>()), Times.Never());
+    Assert.Null(enhancement.Received);
+  }
+
+  [Fact]
+  public async Task EnhanceCommand_with_a_missing_model_downloads_it_once_confirmed_and_then_enhances()
+  {
+    var services = new TestServices();
+    services.AlertService.Setup(a => a.ShowConfirmationAsync(It.IsAny<string>())).ReturnsAsync(true);
+    var enhancement = new DoublingEnhancement { Models = [TestModel] };
+    bool? enhancedBeforeDownload = null;
+    services.ModelDownloader
+      .Setup(d => d.EnsureModelAsync(TestModel, It.IsAny<CancellationToken>()))
+      .Callback(() => enhancedBeforeDownload = enhancement.Received is not null)
+      .Returns(Task.CompletedTask);
+    var person = CreateSamplePerson() with { MainPhoto = new Data(10, Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
+    var dialog = await CreateDialogAsync(services, person);
+    await using var window = await WindowHost.AttachAsync(dialog);
+
+    await EnhanceAsync(dialog, dialog.Photos.First(), enhancement);
+
+    services.ModelDownloader.Verify(d => d.EnsureModelAsync(TestModel, It.IsAny<CancellationToken>()), Times.Once());
+    Assert.False(enhancedBeforeDownload);
+    Assert.NotNull(enhancement.Received);
+  }
+
+  [Fact]
+  public async Task EnhanceCommand_does_not_ask_when_every_model_is_already_downloaded()
+  {
+    var services = new TestServices();
+    services.ModelDownloader.Setup(d => d.IsDownloaded(TestModel)).Returns(true);
+    var person = CreateSamplePerson() with { MainPhoto = new Data(10, Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
+    var dialog = await CreateDialogAsync(services, person);
+    await using var window = await WindowHost.AttachAsync(dialog);
+
+    await EnhanceAsync(dialog, dialog.Photos.First(), new DoublingEnhancement { Models = [TestModel] });
+
+    services.AlertService.Verify(a => a.ShowConfirmationAsync(It.IsAny<string>()), Times.Never());
+    services.ModelDownloader.Verify(d => d.EnsureModelAsync(It.IsAny<ModelDescriptor>(), It.IsAny<CancellationToken>()), Times.Never());
   }
 
   [Fact]

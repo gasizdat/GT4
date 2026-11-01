@@ -838,6 +838,17 @@
   <data name="HintHtmlExportInProgress" xml:space="preserve">
     <value>Запись страниц. Это может занять некоторое время…</value>
   </data>
+  <data name="AlertDownloadModelsConfirm_2" xml:space="preserve">
+    <value>Для «{0}» нужны эти модели, они скачиваются один раз:
+{1}
+Скачать их сейчас?</value>
+  </data>
+  <data name="ModelDownloadEntry_3" xml:space="preserve">
+    <value>• {0} ({1}, {2:N0} МБ)</value>
+  </data>
+  <data name="HintModelDownloadInProgress" xml:space="preserve">
+    <value>Загрузка моделей. Это может занять некоторое время…</value>
+  </data>
   <data name="LblPersons" xml:space="preserve">
     <value>Персоны</value>
   </data>

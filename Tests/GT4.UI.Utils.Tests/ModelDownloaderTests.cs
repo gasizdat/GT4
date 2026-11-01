@@ -33,7 +33,7 @@ public class ModelDownloaderTests : IDisposable
   [Fact]
   public async Task AlreadyPresentModel_NoHttpCallMade()
   {
-    var model = new ModelDescriptor("model.onnx", new Uri("https://example.test/model.onnx"), UnverifiedHash);
+    var model = new ModelDescriptor("model.onnx", new Uri("https://example.test/model.onnx"), UnverifiedHash, "Model", "MIT", 3);
     Seed(model.CacheFileName);
     var handler = new RecordingHandler([1, 2, 3]);
 
@@ -43,11 +43,26 @@ public class ModelDownloaderTests : IDisposable
   }
 
   [Fact]
+  public void IsDownloaded_OnlyForAFileUnderTheModelsCacheName()
+  {
+    var model = new ModelDescriptor("model.onnx", new Uri("https://example.test/model.onnx"), UnverifiedHash, "Model", "MIT", 3);
+    var downloader = Downloader(new FailingHandler());
+    Seed(model.FileName);
+
+    var beforeDownload = downloader.IsDownloaded(model);
+    Seed(model.CacheFileName);
+    var afterDownload = downloader.IsDownloaded(model);
+
+    beforeDownload.Should().BeFalse();
+    afterDownload.Should().BeTrue();
+  }
+
+  [Fact]
   public async Task SameFileNameWithNewHash_DownloadsInsteadOfReusingTheOldFile()
   {
     byte[] content = [1, 2, 3, 4, 5];
     var hash = Convert.ToHexString(SHA256.HashData(content));
-    var stale = new ModelDescriptor("model.onnx", new Uri("https://example.test/model.onnx"), UnverifiedHash);
+    var stale = new ModelDescriptor("model.onnx", new Uri("https://example.test/model.onnx"), UnverifiedHash, "Model", "MIT", 3);
     var model = stale with { Sha256 = hash };
     Seed(stale.CacheFileName);
     var handler = new RecordingHandler(content);
@@ -63,7 +78,7 @@ public class ModelDownloaderTests : IDisposable
   {
     byte[] content = [1, 2, 3, 4, 5];
     var hash = Convert.ToHexString(SHA256.HashData(content));
-    var model = new ModelDescriptor("model.onnx", new Uri("https://example.test/model.onnx"), hash);
+    var model = new ModelDescriptor("model.onnx", new Uri("https://example.test/model.onnx"), hash, "Model", "MIT", 5);
     var handler = new RecordingHandler(content);
 
     await Downloader(handler).EnsureModelAsync(model, CancellationToken.None);
@@ -81,7 +96,7 @@ public class ModelDownloaderTests : IDisposable
   public async Task FreshDownload_HashMismatch_ThrowsAndLeavesNoFile()
   {
     byte[] content = [1, 2, 3, 4, 5];
-    var model = new ModelDescriptor("model.onnx", new Uri("https://example.test/model.onnx"), UnverifiedHash);
+    var model = new ModelDescriptor("model.onnx", new Uri("https://example.test/model.onnx"), UnverifiedHash, "Model", "MIT", 3);
     var handler = new RecordingHandler(content);
 
     var act = () => Downloader(handler).EnsureModelAsync(model, CancellationToken.None);
@@ -94,7 +109,7 @@ public class ModelDownloaderTests : IDisposable
   [Fact]
   public async Task HttpFailure_ThrowsModelDownloadException()
   {
-    var model = new ModelDescriptor("model.onnx", new Uri("https://example.test/model.onnx"), UnverifiedHash);
+    var model = new ModelDescriptor("model.onnx", new Uri("https://example.test/model.onnx"), UnverifiedHash, "Model", "MIT", 3);
     var handler = new FailingHandler();
 
     var act = () => Downloader(handler).EnsureModelAsync(model, CancellationToken.None);
@@ -105,7 +120,7 @@ public class ModelDownloaderTests : IDisposable
   [Fact]
   public async Task CancelledMidDownload_StopsAndLeavesNoFile()
   {
-    var model = new ModelDescriptor("model.onnx", new Uri("https://example.test/model.onnx"), UnverifiedHash);
+    var model = new ModelDescriptor("model.onnx", new Uri("https://example.test/model.onnx"), UnverifiedHash, "Model", "MIT", 3);
     var body = new StalledStream();
     using var cancellation = new CancellationTokenSource();
 
@@ -122,7 +137,7 @@ public class ModelDownloaderTests : IDisposable
   [Fact]
   public void RemoveUnusedModels_DeletesEveryFileNoListedModelOwns()
   {
-    var model = new ModelDescriptor("model.onnx", new Uri("https://example.test/model.onnx"), UnverifiedHash);
+    var model = new ModelDescriptor("model.onnx", new Uri("https://example.test/model.onnx"), UnverifiedHash, "Model", "MIT", 3);
     var older = model with { Sha256 = "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB" };
     string[] unused = ["model.onnx", older.CacheFileName, "retired.onnx", "retired.onnx.download"];
     foreach (var fileName in unused)
@@ -140,7 +155,7 @@ public class ModelDownloaderTests : IDisposable
   [Fact]
   public void RemoveUnusedModels_KeepsListedModelsAndTheirInFlightDownloads()
   {
-    var model = new ModelDescriptor("model.onnx", new Uri("https://example.test/model.onnx"), UnverifiedHash);
+    var model = new ModelDescriptor("model.onnx", new Uri("https://example.test/model.onnx"), UnverifiedHash, "Model", "MIT", 3);
     var lowercase = model with { Sha256 = UnverifiedHash.ToLowerInvariant() };
     string[] used = [model.CacheFileName, $"{model.CacheFileName}.download"];
     foreach (var fileName in used)
