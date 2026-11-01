@@ -21,8 +21,9 @@ internal class ModelDownloader(IHttpClientFactory httpClientFactory, IFileSystem
     {
       using (var http = httpClientFactory.CreateClient())
       using (var source = await http.GetStreamAsync(model.Url, token).ConfigureAwait(false))
+      using (var download = fileSystem.OpenWriteStream(temp))
       {
-        fileSystem.Copy(source, temp);
+        await source.CopyToAsync(download, token).ConfigureAwait(false);
       }
 
       string hash;

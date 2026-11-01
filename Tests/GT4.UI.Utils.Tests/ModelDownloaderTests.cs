@@ -103,6 +103,23 @@ public class ModelDownloaderTests : IDisposable
   }
 
   [Fact]
+  public async Task CancelledMidDownload_StopsAndLeavesNoFile()
+  {
+    var model = new ModelDescriptor("model.onnx", new Uri("https://example.test/model.onnx"), UnverifiedHash);
+    var body = new StalledStream();
+    using var cancellation = new CancellationTokenSource();
+
+    var download = Downloader(new StreamHandler(body)).EnsureModelAsync(model, cancellation.Token);
+    await body.Reading;
+    cancellation.Cancel();
+
+    var act = () => download;
+    await act.Should().ThrowWithinAsync<OperationCanceledException>(TimeSpan.FromSeconds(5));
+    _FileSystem.FileExists(new FileDescription(_Storage.Models, model.CacheFileName, null)).Should().BeFalse();
+    _FileSystem.FileExists(new FileDescription(_Storage.Models, $"{model.CacheFileName}.download", null)).Should().BeFalse();
+  }
+
+  [Fact]
   public void RemoveUnusedModels_DeletesEveryFileNoListedModelOwns()
   {
     var model = new ModelDescriptor("model.onnx", new Uri("https://example.test/model.onnx"), UnverifiedHash);
@@ -163,5 +180,38 @@ public class ModelDownloaderTests : IDisposable
   {
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken token) =>
       Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
+  }
+
+  private sealed class StreamHandler(Stream body) : HttpMessageHandler
+  {
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken token) =>
+      Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(body) });
+  }
+
+  // A body that stalls far longer than the test waits, unless its read is cancelled.
+  private sealed class StalledStream : Stream
+  {
+    private readonly TaskCompletionSource _Reading = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    public Task Reading => _Reading.Task;
+
+    public override bool CanRead => true;
+    public override bool CanSeek => false;
+    public override bool CanWrite => false;
+    public override long Length => throw new NotSupportedException();
+    public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+
+    public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken token)
+    {
+      _Reading.TrySetResult();
+      await Task.Delay(TimeSpan.FromSeconds(30), token);
+      return 0;
+    }
+
+    public override int Read(byte[] buffer, int offset, int count) => ReadAsync(buffer.AsMemory(offset, count), CancellationToken.None).AsTask().Result;
+    public override void Flush() => throw new NotSupportedException();
+    public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+    public override void SetLength(long value) => throw new NotSupportedException();
+    public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
   }
 }
