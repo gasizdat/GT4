@@ -367,7 +367,6 @@ public class CreateOrUpdatePersonDialogTests
     Assert.All(parameters, parameter => Assert.Contains(parameter.Photo, dialog.Photos));
   }
 
-  // Unlike Photo(id)'s placeholder bytes, enhancing decodes the image.
   private static byte[] Png(int width, int height)
   {
     using var bitmap = new SKBitmap(width, height);
@@ -382,7 +381,6 @@ public class CreateOrUpdatePersonDialogTests
     return new SKSizeI(bitmap.Width, bitmap.Height);
   }
 
-  // Doubles the photo, so its copy is told apart from the source by size alone.
   private sealed class DoublingEnhancement : IPhotoEnhancement
   {
     public SKSizeI? Received { get; private set; }
@@ -419,8 +417,6 @@ public class CreateOrUpdatePersonDialogTests
     return saved;
   }
 
-  // A copy reusing the source's stored Id shows the source's cached image, and saving both breaks
-  // PersonData's unique (PersonId, DataId) index.
   [Fact]
   public async Task EnhanceCommand_on_a_saved_photo_adds_its_copy_as_a_new_photo_right_after_it()
   {
@@ -452,7 +448,6 @@ public class CreateOrUpdatePersonDialogTests
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
 
-  // A captioned photo's Content is a residue envelope; the enhancement gets the image inside it.
   [Fact]
   public async Task EnhanceCommand_on_a_captioned_photo_enhances_its_image_and_keeps_the_caption()
   {

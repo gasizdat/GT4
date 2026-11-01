@@ -36,7 +36,7 @@ public class RestorePhotoEnhancementTests : IDisposable
     _Models.Seed(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
     _Models.Seed(RestorePhotoEnhancement.InpainterModel, "tiny-inpainter-constant.onnx");
     using var enhancement = new RestorePhotoEnhancement(_Models.SessionFactory());
-    // 600 wide: the second 512px tile column is partial, so it is reflect-padded too.
+    // 600 wide, so the damage sits in the second, partial 512px tile column.
     using var photo = SKBitmap.Decode(WhiteSquarePng(600, 40, x: 540, y: 10, size: 20));
 
     using var bitmap = await enhancement.ApplyAsync(photo, CancellationToken.None);

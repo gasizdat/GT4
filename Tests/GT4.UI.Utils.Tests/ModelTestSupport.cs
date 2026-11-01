@@ -8,8 +8,6 @@ using IFileSystem = GT4.Core.Utils.IFileSystem;
 
 namespace GT4.UI.Utils.Tests;
 
-// The enhancer tests' model cache: the real ModelDownloader over a temp directory, where a seeded fixture
-// short-circuits the download and any unseeded model fails it.
 internal sealed class FixtureModelCache : IDisposable
 {
   private readonly string _Root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());

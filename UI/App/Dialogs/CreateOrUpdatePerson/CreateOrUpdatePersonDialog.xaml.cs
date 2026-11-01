@@ -416,7 +416,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     await Navigation.PushModalAsync(dialog);
     try
     {
-      // As edited so far: an unsaved caption change carries over to the copy.
+      // An unsaved caption edit carries over to the copy.
       var current = await photo.ToDataAsync();
       var source = await converter.ToObjectAsync(current, dialog.Token);
       var enhanced = await Task.Run(() => enhancement.EnhanceAsync((PhotoInfo)source!, dialog.Token));
