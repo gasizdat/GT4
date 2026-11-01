@@ -12,6 +12,11 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
     "realesr-general-x4v3.onnx",
     new Uri("https://github.com/gasizdat/GT4/releases/download/models-v1/realesr-general-x4v3.onnx"),
     "924EBAD6532777303582D4CE7811849B88869231A3AE7093E0F21200249DF8D5");
+  private const int Scale = 4;
+  private const int TileSize = 512;
+  // The model stacks 34 3x3 convolutions, so an output pixel depends on input pixels up to 34 away;
+  // a tile padded by that much comes out identical to a single pass over the whole photo.
+  private const int TilePadding = 34;
 
   private readonly IModelSessionFactory _SessionFactory;
   private InferenceSession? _Session;
@@ -33,24 +38,44 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
 
     var inputName = session.InputMetadata.Keys.First();
     var outputName = session.OutputMetadata.Keys.First();
-    var input = ToInputTensor(bitmap);
+    var upscaled = new SKBitmap(bitmap.Width * Scale, bitmap.Height * Scale);
+    try
+    {
+      for (var tileY = 0; tileY < bitmap.Height; tileY += TileSize)
+      {
+        for (var tileX = 0; tileX < bitmap.Width; tileX += TileSize)
+        {
+          token.ThrowIfCancellationRequested();
+          var tile = SKRectI.Create(tileX, tileY, TileSize, TileSize);
+          tile.Intersect(bitmap.Info.Rect);
+          var padded = SKRectI.Inflate(tile, TilePadding, TilePadding);
+          padded.Intersect(bitmap.Info.Rect);
+          var input = ToInputTensor(bitmap, padded);
 
-    using var results = session.Run([NamedOnnxValue.CreateFromTensor(inputName, input)]);
-    var output = results.First(r => r.Name == outputName).AsTensor<float>();
-
-    return ToOutputBitmap(output);
+          using var results = session.Run([NamedOnnxValue.CreateFromTensor(inputName, input)]);
+          var output = results.First(r => r.Name == outputName).AsTensor<float>();
+          CopyTileInto(upscaled, output, tile, padded);
+        }
+      }
+    }
+    catch
+    {
+      upscaled.Dispose();
+      throw;
+    }
+    return upscaled;
   }
 
   public void Dispose() => _Session?.Dispose();
 
-  private static DenseTensor<float> ToInputTensor(SKBitmap bitmap)
+  private static DenseTensor<float> ToInputTensor(SKBitmap bitmap, SKRectI area)
   {
-    var tensor = new DenseTensor<float>([1, 3, bitmap.Height, bitmap.Width]);
-    for (var y = 0; y < bitmap.Height; y++)
+    var tensor = new DenseTensor<float>([1, 3, area.Height, area.Width]);
+    for (var y = 0; y < area.Height; y++)
     {
-      for (var x = 0; x < bitmap.Width; x++)
+      for (var x = 0; x < area.Width; x++)
       {
-        var pixel = bitmap.GetPixel(x, y);
+        var pixel = bitmap.GetPixel(area.Left + x, area.Top + y);
         tensor[0, 0, y, x] = pixel.Red / 255f;
         tensor[0, 1, y, x] = pixel.Green / 255f;
         tensor[0, 2, y, x] = pixel.Blue / 255f;
@@ -59,20 +84,23 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
     return tensor;
   }
 
-  private static SKBitmap ToOutputBitmap(Tensor<float> output)
+  private static void CopyTileInto(SKBitmap destination, Tensor<float> output, SKRectI tile, SKRectI padded)
   {
-    var height = output.Dimensions[2];
-    var width = output.Dimensions[3];
-    var bitmap = new SKBitmap(width, height);
-    for (var y = 0; y < height; y++)
+    static byte Clamp(float v) => (byte)Math.Clamp(v * 255f, 0f, 255f);
+
+    for (var y = tile.Top * Scale; y < tile.Bottom * Scale; y++)
     {
-      for (var x = 0; x < width; x++)
+      var outputY = y - padded.Top * Scale;
+      for (var x = tile.Left * Scale; x < tile.Right * Scale; x++)
       {
-        byte Clamp(float v) => (byte)Math.Clamp(v * 255f, 0f, 255f);
-        bitmap.SetPixel(x, y, new SKColor(Clamp(output[0, 0, y, x]), Clamp(output[0, 1, y, x]), Clamp(output[0, 2, y, x])));
+        var outputX = x - padded.Left * Scale;
+        var red = Clamp(output[0, 0, outputY, outputX]);
+        var green = Clamp(output[0, 1, outputY, outputX]);
+        var blue = Clamp(output[0, 2, outputY, outputX]);
+        var color = new SKColor(red, green, blue);
+        destination.SetPixel(x, y, color);
       }
     }
-    return bitmap;
   }
 }
 #endif
