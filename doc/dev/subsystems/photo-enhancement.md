@@ -17,10 +17,15 @@ re-enveloped onto it. Never hand an enhancer `Data.Content`: a captioned photo's
 
 ## Upscale — `UpscalePhotoEnhancement.cs`
 
-Model: Real-ESRGAN `realesr-general-x4v3` (SRVGGNetCompact weights). Decode the photo, normalize
-RGB to `[0, 1]` into a CHW tensor, and run the *whole* image through the model in one pass — the
-model's input/output axes are dynamic, so there's no tiling or batching. Denormalize the 4x-larger
-output tensor back into a bitmap.
+Model: Real-ESRGAN `realesr-general-x4v3` (SRVGGNetCompact weights). Normalize RGB to `[0, 1]` into
+a CHW tensor and run the photo through the model in 512x512 tiles. A single pass would need about
+1.1 GB of working memory per input megapixel; tiled, memory grows only with the 4x-larger result
+bitmap. Each tile is padded with 34 px of its real neighbours, the reach of the model's 34 stacked
+3x3 convolutions, so the stitched result is identical to a single pass, with no seams (measured
+bit-exact against one). Denormalize each tile's output into the result, which has 16 times the
+source's pixels. A photo over 1 MP (1024x1024) is therefore refused with an alert before the model
+loads. Run time (about 37 s per input megapixel, measured on the CPU provider) and the result's
+memory both grow with area, so a 44 MP scan would need a 2.8 GB result bitmap and about half an hour.
 
 ## Colorize — `ColorizePhotoEnhancement.cs`
 

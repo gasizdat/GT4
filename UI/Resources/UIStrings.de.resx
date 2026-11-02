@@ -1025,6 +1025,9 @@ FN - Familienname</value>
   <data name="ErrorTheBoundIsReached" xml:space="preserve">
     <value>Das Limit der Liste ist erreicht.</value>
   </data>
+  <data name="ErrorPhotoTooLarge_3" xml:space="preserve">
+    <value>{0} verarbeitet Fotos mit bis zu {1:N1} Megapixeln, dieses hat {2:N1}.</value>
+  </data>
   <data name="NameFamily" xml:space="preserve">
     <value>Familie</value>
   </data>

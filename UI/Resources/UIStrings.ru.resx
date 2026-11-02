@@ -1025,6 +1025,9 @@ FN - род</value>
   <data name="ErrorTheBoundIsReached" xml:space="preserve">
     <value>Достигнута граница списка</value>
   </data>
+  <data name="ErrorPhotoTooLarge_3" xml:space="preserve">
+    <value>«{0}» работает с фото до {1:N1} Мп, а в этом — {2:N1} Мп.</value>
+  </data>
   <data name="NameFamily" xml:space="preserve">
     <value>Род</value>
   </data>
