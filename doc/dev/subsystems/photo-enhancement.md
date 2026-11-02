@@ -22,8 +22,10 @@ a CHW tensor and run the photo through the model in 512x512 tiles. A single pass
 1.1 GB of working memory per input megapixel; tiled, memory grows only with the 4x-larger result
 bitmap. Each tile is padded with 34 px of its real neighbours, the reach of the model's 34 stacked
 3x3 convolutions, so the stitched result is identical to a single pass, with no seams (measured
-bit-exact against one). Denormalize each tile's output into the result, which still has 16 times
-the source's pixels.
+bit-exact against one). Denormalize each tile's output into the result, which has 16 times the
+source's pixels. A photo over 1 MP (1024x1024) is therefore refused with an alert before the model
+loads. Run time (about 37 s per input megapixel, measured on the CPU provider) and the result's
+memory both grow with area, so a 44 MP scan would need a 2.8 GB result bitmap and about half an hour.
 
 ## Colorize — `ColorizePhotoEnhancement.cs`
 

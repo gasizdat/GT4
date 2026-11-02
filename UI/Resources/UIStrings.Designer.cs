@@ -809,6 +809,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {0} works on photos of up to {1:N1} megapixels, and this one has {2:N1}..
+        /// </summary>
+        public static string ErrorPhotoTooLarge_3 {
+            get {
+                return ResourceManager.GetString("ErrorPhotoTooLarge_3", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The collection limit has been reached..
         /// </summary>
         public static string ErrorTheBoundIsReached {

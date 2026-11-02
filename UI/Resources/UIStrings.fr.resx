@@ -1014,6 +1014,9 @@ FN - nom de famille</value>
   <data name="ErrorTheBoundIsReached" xml:space="preserve">
     <value>La limite de la collection a été atteinte.</value>
   </data>
+  <data name="ErrorPhotoTooLarge_3" xml:space="preserve">
+    <value>{0} fonctionne avec les photos jusqu'à {1:N1} mégapixels, et celle-ci en a {2:N1}.</value>
+  </data>
   <data name="NameFamily" xml:space="preserve">
     <value>Famille</value>
   </data>

@@ -64,6 +64,29 @@ public class PhotoEnhancementTests : IDisposable
     await act.Should().ThrowAsync<ModelDownloadException>();
   }
 
+  [Fact]
+  public async Task Upscale_PhotoOverOneMegapixel_IsRefusedBeforeTheModelLoads()
+  {
+    using var enhancement = new UpscalePhotoEnhancement(_Models.SessionFactory());
+    using var photo = TestBitmap(1025, 1024);
+
+    var act = () => enhancement.ApplyAsync(photo, CancellationToken.None);
+
+    // No model is seeded, so loading one would throw ModelDownloadException instead.
+    await act.Should().ThrowExactlyAsync<InvalidOperationException>();
+  }
+
+  [Fact]
+  public async Task Upscale_PhotoOfExactlyOneMegapixel_GoesOnToLoadTheModel()
+  {
+    using var enhancement = new UpscalePhotoEnhancement(_Models.SessionFactory());
+    using var photo = TestBitmap(1024, 1024);
+
+    var act = () => enhancement.ApplyAsync(photo, CancellationToken.None);
+
+    await act.Should().ThrowAsync<ModelDownloadException>();
+  }
+
   private static SKBitmap TestBitmap(int width, int height)
   {
     var bitmap = new SKBitmap(width, height);

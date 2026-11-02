@@ -1,5 +1,6 @@
 #if WINDOWS
 using GT4.UI.Abstraction;
+using GT4.UI.Resources;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using SkiaSharp;
@@ -13,6 +14,7 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
     new Uri("https://github.com/gasizdat/GT4/releases/download/models-v1/realesr-general-x4v3.onnx"),
     "924EBAD6532777303582D4CE7811849B88869231A3AE7093E0F21200249DF8D5");
   private const int Scale = 4;
+  private const int MaxPixels = 1024 * 1024;
   private const int TileSize = 512;
   // The model stacks 34 3x3 convolutions, so an output pixel depends on input pixels up to 34 away;
   // a tile padded by that much comes out identical to a single pass over the whole photo.
@@ -32,7 +34,16 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
 
   public async Task<SKBitmap> ApplyAsync(SKBitmap bitmap, CancellationToken token)
   {
+    const double Megapixel = 1_000_000;
+
     token.ThrowIfCancellationRequested();
+
+    var pixels = bitmap.Width * bitmap.Height;
+    if (pixels > MaxPixels)
+    {
+      var message = string.Format(UIStrings.ErrorPhotoTooLarge_3, DisplayName, MaxPixels / Megapixel, pixels / Megapixel);
+      throw new InvalidOperationException(message);
+    }
 
     var session = _Session ??= await _SessionFactory.LoadSessionAsync(Model, token);
 
