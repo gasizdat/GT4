@@ -83,7 +83,7 @@ public class UprightDecodeTests
 
   // Skia's encoder writes no EXIF, so an APP1 segment carrying only the orientation tag is spliced in
   // after the SOI marker.
-  private static byte[] MarkedJpeg(SKEncodedOrigin origin)
+  internal static byte[] MarkedJpeg(SKEncodedOrigin origin)
   {
     byte[] app1 =
     [

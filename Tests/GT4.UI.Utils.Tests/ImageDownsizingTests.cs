@@ -41,6 +41,16 @@ public class ImageDownsizingTests
   }
 
   [Fact]
+  public void RotatedPhotoIsScaledUpright()
+  {
+    var original = UprightDecodeTests.MarkedJpeg(SKEncodedOrigin.RightTop);
+
+    var downsized = ImageUtils.DownsizedPng(original, 32);
+
+    PixelSizeOf(downsized).Should().Be(new Size(16, 32));
+  }
+
+  [Fact]
   public void UndecodableBytesAreRejected()
   {
     byte[] notAnImage = [0x00, 0x01, 0x02, 0x03];
