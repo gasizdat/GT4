@@ -412,7 +412,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   // Virtual only so a device test can answer the sheet, which a test cannot drive.
   protected virtual Task<string> ChooseEnhancementAsync(string[] names) =>
-    DisplayActionSheetAsync(null, UIStrings.BtnNameCancel, null, names);
+    DisplayActionSheetAsync(UIStrings.TitleEnhancePhoto, UIStrings.BtnNameCancel, null, names);
 
   private async Task OnChooseEnhancementAsync(PersonDataItem photo)
   {

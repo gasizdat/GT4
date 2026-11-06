@@ -870,6 +870,9 @@
   <data name="TitleExportChoice" xml:space="preserve">
     <value>Exportar como…</value>
   </data>
+  <data name="TitleEnhancePhoto" xml:space="preserve">
+    <value>Mejorar la foto</value>
+  </data>
   <data name="AlertImportGedcomConfirm_1" xml:space="preserve">
     <value>¿Importar un archivo GEDCOM en {0}? Las personas que coincidan con una existente se fusionan; el resto se añaden.</value>
   </data>
