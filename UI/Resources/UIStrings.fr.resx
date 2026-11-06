@@ -838,6 +838,17 @@ arbre généalogique et profitez-en !</value>
   <data name="HintHtmlExportInProgress" xml:space="preserve">
     <value>Écriture des pages en cours. Cela peut prendre un moment…</value>
   </data>
+  <data name="AlertDownloadModelsConfirm_2" xml:space="preserve">
+    <value>{0} nécessite un téléchargement unique :
+{1}
+Télécharger maintenant ?</value>
+  </data>
+  <data name="ModelDownloadEntry_3" xml:space="preserve">
+    <value>• {0} ({1}, {2:N0} Mo)</value>
+  </data>
+  <data name="HintModelDownloadInProgress" xml:space="preserve">
+    <value>Téléchargement en cours. Cela peut prendre un moment…</value>
+  </data>
   <data name="LblPersons" xml:space="preserve">
     <value>Personnes</value>
   </data>

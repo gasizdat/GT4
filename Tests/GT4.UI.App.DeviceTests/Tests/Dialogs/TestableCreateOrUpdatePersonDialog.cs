@@ -34,7 +34,8 @@ internal sealed class TestableCreateOrUpdatePersonDialog : CreateOrUpdatePersonD
     SelectPersonDialog.Factory SelectPersonDialogFactory,
     SelectMediaDialog.Factory SelectMediaDialogFactory,
     InlineMediaProvider MediaProvider,
-    IEnumerable<IPhotoEnhancement> Enhancements)
+    IEnumerable<IPhotoEnhancement> Enhancements,
+    IModelDownloader ModelDownloader)
     : CreateOrUpdatePersonDialog.Factory(
       CancellationTokenProvider,
       BiologicalSexFormatter,
@@ -51,7 +52,8 @@ internal sealed class TestableCreateOrUpdatePersonDialog : CreateOrUpdatePersonD
       SelectPersonDialogFactory,
       SelectMediaDialogFactory,
       MediaProvider,
-      Enhancements)
+      Enhancements,
+      ModelDownloader)
   {
     public new TestableCreateOrUpdatePersonDialog Create(PersonFullInfo? person) =>
       new TestableCreateOrUpdatePersonDialog(this, person);

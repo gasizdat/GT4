@@ -11,7 +11,10 @@ public class ColorizePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDi
   private static readonly ModelDescriptor Model = new(
     "ddcolor-tiny-fp16.onnx",
     new Uri("https://github.com/gasizdat/GT4/releases/download/models-v1/ddcolor-tiny-fp16.onnx"),
-    "2653DA00DC15E54A45E5200B61DBF82EE9CEAF56B02BB9B9657569AC775E82E6");
+    "2653DA00DC15E54A45E5200B61DBF82EE9CEAF56B02BB9B9657569AC775E82E6",
+    "DDColor",
+    "Apache-2.0",
+    135444402);
   private const int ModelSize = 512;
 
   private readonly IModelSessionFactory _SessionFactory;

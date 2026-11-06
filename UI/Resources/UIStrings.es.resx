@@ -838,6 +838,17 @@
   <data name="HintHtmlExportInProgress" xml:space="preserve">
     <value>Escribiendo las páginas. Esto puede tardar un rato…</value>
   </data>
+  <data name="AlertDownloadModelsConfirm_2" xml:space="preserve">
+    <value>{0} necesita una descarga única:
+{1}
+¿Descargar ahora?</value>
+  </data>
+  <data name="ModelDownloadEntry_3" xml:space="preserve">
+    <value>• {0} ({1}, {2:N0} MB)</value>
+  </data>
+  <data name="HintModelDownloadInProgress" xml:space="preserve">
+    <value>Descargando. Esto puede tardar un rato…</value>
+  </data>
   <data name="LblPersons" xml:space="preserve">
     <value>Personas</value>
   </data>

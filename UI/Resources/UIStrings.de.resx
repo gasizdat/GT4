@@ -838,6 +838,17 @@ Stammbaum und haben Sie Freude daran!</value>
   <data name="HintHtmlExportInProgress" xml:space="preserve">
     <value>Die Seiten werden geschrieben. Das kann eine Weile dauern…</value>
   </data>
+  <data name="AlertDownloadModelsConfirm_2" xml:space="preserve">
+    <value>{0} benötigt einen einmaligen Download:
+{1}
+Jetzt herunterladen?</value>
+  </data>
+  <data name="ModelDownloadEntry_3" xml:space="preserve">
+    <value>• {0} ({1}, {2:N0} MB)</value>
+  </data>
+  <data name="HintModelDownloadInProgress" xml:space="preserve">
+    <value>Wird heruntergeladen. Das kann eine Weile dauern…</value>
+  </data>
   <data name="LblPersons" xml:space="preserve">
     <value>Personen</value>
   </data>

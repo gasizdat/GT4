@@ -11,11 +11,17 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
   internal static readonly ModelDescriptor DetectorModel = new(
     "scratch-detector.onnx",
     new Uri("https://github.com/gasizdat/GT4/releases/download/models-v2/scratch-detector.onnx"),
-    "7DCB1C76001706F06480C3EDCFFCD085C3082B26B5E68E266F38316776B73D2D");
+    "7DCB1C76001706F06480C3EDCFFCD085C3082B26B5E68E266F38316776B73D2D",
+    "Bringing Old Photos Back to Life",
+    "MIT",
+    150622382);
   internal static readonly ModelDescriptor InpainterModel = new(
     "lama-fp32.onnx",
     new Uri("https://github.com/gasizdat/GT4/releases/download/models-v2/lama-fp32.onnx"),
-    "1FAEF5301D78DB7DDA502FE59966957EC4B79DD64E16F03ED96913C7A4EB68D6");
+    "1FAEF5301D78DB7DDA502FE59966957EC4B79DD64E16F03ED96913C7A4EB68D6",
+    "LaMa",
+    "Apache-2.0",
+    208044816);
 
   // Global/detection_models matches BOPBTL's own scale_256 preprocessing (short side 256,
   // rounded to a multiple of 16 -- the UNet's depth-4 downsampling requires it) and its 0.4

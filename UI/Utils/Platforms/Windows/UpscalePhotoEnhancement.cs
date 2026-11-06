@@ -12,7 +12,10 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
   private static readonly ModelDescriptor Model = new(
     "realesr-general-x4v3.onnx",
     new Uri("https://github.com/gasizdat/GT4/releases/download/models-v1/realesr-general-x4v3.onnx"),
-    "924EBAD6532777303582D4CE7811849B88869231A3AE7093E0F21200249DF8D5");
+    "924EBAD6532777303582D4CE7811849B88869231A3AE7093E0F21200249DF8D5",
+    "Real-ESRGAN",
+    "BSD-3-Clause",
+    4866396);
   private const int Scale = 4;
   private const int MaxPixels = 1024 * 1024;
   private const int TileSize = 512;

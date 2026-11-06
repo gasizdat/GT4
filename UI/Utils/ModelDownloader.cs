@@ -7,12 +7,14 @@ namespace GT4.UI.Utils;
 
 internal class ModelDownloader(IHttpClientFactory httpClientFactory, IFileSystem fileSystem, IStorage storage) : IModelDownloader
 {
+  // A file reaches its cache name only after the hash check below passes, via an atomic Move, so
+  // it's never re-verified.
+  public bool IsDownloaded(ModelDescriptor model) => fileSystem.FileExists(CachedFile(model));
+
   public async Task EnsureModelAsync(ModelDescriptor model, CancellationToken token)
   {
-    var target = new FileDescription(storage.Models, model.CacheFileName, null);
-    if (fileSystem.FileExists(target))
+    if (IsDownloaded(model))
     {
-      // Reaches this path only after the hash check below passes, via an atomic Move -- never re-verified.
       return;
     }
 
@@ -38,7 +40,7 @@ internal class ModelDownloader(IHttpClientFactory httpClientFactory, IFileSystem
           new InvalidDataException($"Expected SHA-256 {model.Sha256}, got {hash}."));
       }
 
-      fileSystem.Move(temp, target);
+      fileSystem.Move(temp, CachedFile(model));
     }
     catch (Exception ex) when (ex is not OperationCanceledException and not ModelDownloadException)
     {
@@ -68,6 +70,8 @@ internal class ModelDownloader(IHttpClientFactory httpClientFactory, IFileSystem
       fileSystem.RemoveFile(file);
     }
   }
+
+  private FileDescription CachedFile(ModelDescriptor model) => new(storage.Models, model.CacheFileName, null);
 
   private static string TempFileName(ModelDescriptor model) => $"{model.CacheFileName}.download";
 }
