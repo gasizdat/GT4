@@ -375,6 +375,26 @@ public class CreateOrUpdatePersonDialogTests
     return data.ToArray();
   }
 
+  // Tagged with EXIF orientation 6, so upright it is height x width. Skia's encoder writes no EXIF, so the
+  // tag's APP1 segment is spliced in after the SOI marker.
+  private static byte[] JpegTurnedAQuarter(int width, int height)
+  {
+    byte[] app1 =
+    [
+      0xFF, 0xE1, 0x00, 0x22,
+      0x45, 0x78, 0x69, 0x66, 0x00, 0x00,
+      0x49, 0x49, 0x2A, 0x00, 0x08, 0x00, 0x00, 0x00,
+      0x01, 0x00,
+      0x12, 0x01, 0x03, 0x00, 0x01, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+    ];
+    using var bitmap = new SKBitmap(width, height);
+    bitmap.Erase(SKColors.Red);
+    using var data = bitmap.Encode(SKEncodedImageFormat.Jpeg, 100);
+    var jpeg = data.ToArray();
+    return [.. jpeg[..2], .. app1, .. jpeg[2..]];
+  }
+
   private static SKSizeI ImageSize(byte[] content)
   {
     using var bitmap = SKBitmap.Decode(content);
@@ -488,6 +508,23 @@ public class CreateOrUpdatePersonDialogTests
     var saved = await SaveAsync(dialog);
 
     Assert.Equal("Edited", await GedcomPhotoResidue.ExtractTitleAsync(saved.AdditionalPhotos[0], CancellationToken.None));
+  }
+
+  [Fact]
+  public async Task EnhanceCommand_on_an_EXIF_rotated_photo_enhances_and_saves_it_upright()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson() with { MainPhoto = new Data(10, JpegTurnedAQuarter(4, 3), "image/jpeg", DataCategory.PersonMainPhoto) };
+    var dialog = await CreateDialogAsync(services, person);
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var enhancement = new DoublingEnhancement();
+
+    await EnhanceAsync(dialog, dialog.Photos.First(), enhancement);
+    var saved = await SaveAsync(dialog);
+
+    Assert.Equal(new SKSizeI(3, 4), enhancement.Received);
+    Assert.Equal(new SKSizeI(6, 8), ImageSize(saved.AdditionalPhotos[0].Content));
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
 
   [Fact]
