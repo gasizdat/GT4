@@ -42,8 +42,11 @@ internal class ModelDownloader(IHttpClientFactory httpClientFactory, IFileSystem
 
       fileSystem.Move(temp, CachedFile(model));
     }
-    // HttpClient's own timeout also throws an OperationCanceledException, so only the caller's token makes it a cancel.
-    catch (Exception ex) when (ex is not ModelDownloadException && (ex is not OperationCanceledException || !token.IsCancellationRequested))
+    catch (OperationCanceledException) when (token.IsCancellationRequested)
+    {
+      throw;
+    }
+    catch (Exception ex) when (ex is not ModelDownloadException)
     {
       throw new ModelDownloadException($"Failed to download the '{model.FileName}' model.", ex);
     }
