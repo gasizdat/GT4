@@ -50,7 +50,7 @@ public static class ImageUtils
   }
 
   /// <summary>
-  /// The image's own pixel dimensions read straight from its header, or null for anything malformed or
+  /// The image's upright pixel dimensions read straight from its header, or null for anything malformed or
   /// encoded some other way -- callers lay such an image out without an aspect ratio rather than failing
   /// the render around it. Read rather than decoded on purpose: a full decode yields the same two numbers
   /// but costs ~110ms for a 12MP photo (measured with MAUI's PlatformImage), on the UI thread, per image
@@ -188,10 +188,12 @@ public static class ImageUtils
     return new Size(width, height);
   }
 
-  // Segment-hop from the SOI to the start-of-frame that carries the dimensions. Anything unexpected on
-  // the way -- a missing marker, a length that wouldn't advance -- gives up rather than guessing.
+  // Segment-hop from the SOI to the start-of-frame that carries the dimensions, swapping them when an Exif
+  // segment on the way turns the image a quarter. Anything unexpected on the way -- a missing marker, a
+  // length that wouldn't advance -- gives up rather than guessing.
   private static Size? JpegPixelSize(ReadOnlySpan<byte> bytes)
   {
+    var quarterTurned = false;
     for (var offset = 2; offset + 9 < bytes.Length;)
     {
       if (bytes[offset] != 0xFF)
@@ -204,13 +206,19 @@ public static class ImageUtils
       {
         var height = BinaryPrimitives.ReadUInt16BigEndian(bytes[(offset + 5)..]);
         var width = BinaryPrimitives.ReadUInt16BigEndian(bytes[(offset + 7)..]);
-        return new Size(width, height);
+        return quarterTurned ? new Size(height, width) : new Size(width, height);
       }
 
       var length = BinaryPrimitives.ReadUInt16BigEndian(bytes[(offset + 2)..]);
       if (length < 2)
       {
         return null;
+      }
+
+      if (marker == 0xE1)
+      {
+        var end = Math.Min(offset + 2 + length, bytes.Length);
+        quarterTurned |= IsQuarterTurned(bytes[(offset + 4)..end]);
       }
 
       offset += 2 + length;
@@ -223,6 +231,54 @@ public static class ImageUtils
   // arithmetic-coding tables instead.
   private static bool IsStartOfFrame(byte marker) =>
     marker is >= 0xC0 and <= 0xCF and not (0xC4 or 0xC8 or 0xCC);
+
+  // Orientations 5-8 are the quarter turns. APP1 also carries XMP, hence the Exif identifier check; an Exif
+  // segment too short for what it claims reads as no orientation, so the stored size still stands.
+  private static bool IsQuarterTurned(ReadOnlySpan<byte> app1)
+  {
+    if (!app1.StartsWith("Exif\0\0"u8))
+    {
+      return false;
+    }
+
+    // Exif offsets count from the TIFF header, which opens with its byte order: "II" or "MM".
+    var tiff = app1[6..];
+    if (tiff.Length < 8)
+    {
+      return false;
+    }
+
+    var littleEndian = tiff.StartsWith("II"u8);
+    var ifd = ReadTiffUInt32(tiff[4..], littleEndian);
+    if (ifd > tiff.Length - 2)
+    {
+      return false;
+    }
+
+    var entries = ReadTiffUInt16(tiff[(int)ifd..], littleEndian);
+    for (var i = 0; i < entries; i++)
+    {
+      var entry = (int)ifd + 2 + i * 12;
+      if (entry + 12 > tiff.Length)
+      {
+        return false;
+      }
+
+      if (ReadTiffUInt16(tiff[entry..], littleEndian) == 0x0112)
+      {
+        var orientation = ReadTiffUInt16(tiff[(entry + 8)..], littleEndian);
+        return orientation is >= 5 and <= 8;
+      }
+    }
+
+    return false;
+  }
+
+  private static ushort ReadTiffUInt16(ReadOnlySpan<byte> bytes, bool littleEndian) =>
+    littleEndian ? BinaryPrimitives.ReadUInt16LittleEndian(bytes) : BinaryPrimitives.ReadUInt16BigEndian(bytes);
+
+  private static uint ReadTiffUInt32(ReadOnlySpan<byte> bytes, bool littleEndian) =>
+    littleEndian ? BinaryPrimitives.ReadUInt32LittleEndian(bytes) : BinaryPrimitives.ReadUInt32BigEndian(bytes);
 
   private static Size? GifPixelSize(ReadOnlySpan<byte> bytes) =>
     bytes.Length < 10

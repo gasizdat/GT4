@@ -48,6 +48,43 @@ public class ImageUtilsTests
     PixelSizeOf(frame).Should().Be(new Size(640, 480));
   }
 
+  [Theory]
+  [InlineData(true, 1, 4000, 3000)]
+  [InlineData(true, 3, 4000, 3000)]
+  [InlineData(true, 6, 3000, 4000)]
+  [InlineData(true, 8, 3000, 4000)]
+  [InlineData(false, 3, 4000, 3000)]
+  [InlineData(false, 6, 3000, 4000)]
+  public void Jpeg_SwapsItsDimensionsOnlyForAQuarterTurnOrientation(bool littleEndian, ushort orientation, int width, int height)
+  {
+    var exif = ExifSegment(orientation, littleEndian);
+    var jpeg = JpegOf(4000, 3000, exif);
+
+    PixelSizeOf(jpeg).Should().Be(new Size(width, height));
+  }
+
+  [Fact]
+  public void Jpeg_KeepsItsExifQuarterTurnPastALaterXmpSegment()
+  {
+    var exif = ExifSegment(6, littleEndian: true);
+    byte[] xmpPayload = [.. "http://ns.adobe.com/xap/1.0/\0"u8, .. "<x:xmpmeta/>"u8];
+    var xmp = Segment(0xE1, xmpPayload);
+    var jpeg = JpegOf(4000, 3000, exif, xmp);
+
+    PixelSizeOf(jpeg).Should().Be(new Size(3000, 4000));
+  }
+
+  [Fact]
+  public void Jpeg_WithAnIfdOffsetPastItsExifSegment_KeepsItsStoredSize()
+  {
+    var exif = ExifSegment(6, littleEndian: true);
+    // The IFD0 offset's low byte, right after the APP1 header, the Exif identifier and "II*\0".
+    exif[4 + 6 + 4] = 0xFF;
+    var jpeg = JpegOf(4000, 3000, exif);
+
+    PixelSizeOf(jpeg).Should().Be(new Size(4000, 3000));
+  }
+
   [Fact]
   public void Gif_ReadsItsLittleEndianScreenSize()
   {
@@ -96,6 +133,68 @@ public class ImageUtilsTests
     var size = ImageUtils.PixelSize(data);
     size.Should().NotBeNull();
     return size!.Value;
+  }
+
+  private static byte[] JpegOf(ushort width, ushort height, params byte[][] segments)
+  {
+    var frame = new byte[13];
+    frame[0] = 0xFF;
+    frame[1] = 0xC0;
+    WriteBigEndian16(frame.AsSpan(2), 0x11);
+    frame[4] = 0x08;
+    WriteBigEndian16(frame.AsSpan(5), height);
+    WriteBigEndian16(frame.AsSpan(7), width);
+    return [0xFF, 0xD8, .. segments.SelectMany(segment => segment), .. frame];
+  }
+
+  // A TIFF header and an IFD0 holding only the orientation tag, a single SHORT.
+  private static byte[] ExifSegment(ushort orientation, bool littleEndian)
+  {
+    var tiff = new byte[26];
+    var byteOrder = littleEndian ? "II"u8 : "MM"u8;
+    byteOrder.CopyTo(tiff);
+    WriteTiff16(tiff.AsSpan(2), 42, littleEndian);
+    WriteTiff32(tiff.AsSpan(4), 8, littleEndian);
+    WriteTiff16(tiff.AsSpan(8), 1, littleEndian);
+    WriteTiff16(tiff.AsSpan(10), 0x0112, littleEndian);
+    WriteTiff16(tiff.AsSpan(12), 3, littleEndian);
+    WriteTiff32(tiff.AsSpan(14), 1, littleEndian);
+    WriteTiff16(tiff.AsSpan(18), orientation, littleEndian);
+    return Segment(0xE1, [.. "Exif\0\0"u8, .. tiff]);
+  }
+
+  private static byte[] Segment(byte marker, byte[] payload)
+  {
+    var segment = new byte[4 + payload.Length];
+    segment[0] = 0xFF;
+    segment[1] = marker;
+    WriteBigEndian16(segment.AsSpan(2), (ushort)(2 + payload.Length));
+    payload.CopyTo(segment, 4);
+    return segment;
+  }
+
+  private static void WriteTiff16(Span<byte> target, ushort value, bool littleEndian)
+  {
+    if (littleEndian)
+    {
+      BinaryPrimitives.WriteUInt16LittleEndian(target, value);
+    }
+    else
+    {
+      BinaryPrimitives.WriteUInt16BigEndian(target, value);
+    }
+  }
+
+  private static void WriteTiff32(Span<byte> target, uint value, bool littleEndian)
+  {
+    if (littleEndian)
+    {
+      BinaryPrimitives.WriteUInt32LittleEndian(target, value);
+    }
+    else
+    {
+      BinaryPrimitives.WriteUInt32BigEndian(target, value);
+    }
   }
 
   private static void WriteBigEndian32(Span<byte> target, uint value) =>
