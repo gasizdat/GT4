@@ -1,5 +1,6 @@
 #if WINDOWS
 using GT4.UI.Abstraction;
+using GT4.UI.Resources;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using SkiaSharp;
@@ -49,7 +50,7 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
     _SessionFactory = sessionFactory;
   }
 
-  public string DisplayName => "Restore damage";
+  public string DisplayName => UIStrings.EnhancementRestore;
 
   public ModelDescriptor[] Models => [DetectorModel, InpainterModel];
 

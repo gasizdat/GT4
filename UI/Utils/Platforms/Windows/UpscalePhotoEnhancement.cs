@@ -31,7 +31,7 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
     _SessionFactory = sessionFactory;
   }
 
-  public string DisplayName => "Upscale";
+  public string DisplayName => UIStrings.EnhancementUpscale;
 
   public ModelDescriptor[] Models => [Model];
 

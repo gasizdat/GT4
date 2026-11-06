@@ -1,5 +1,6 @@
 #if WINDOWS
 using GT4.UI.Abstraction;
+using GT4.UI.Resources;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using SkiaSharp;
@@ -25,7 +26,7 @@ public class ColorizePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDi
     _SessionFactory = sessionFactory;
   }
 
-  public string DisplayName => "Colorize";
+  public string DisplayName => UIStrings.EnhancementColorize;
 
   public ModelDescriptor[] Models => [Model];
 

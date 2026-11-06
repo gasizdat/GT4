@@ -811,6 +811,33 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Colorize.
+        /// </summary>
+        public static string EnhancementColorize {
+            get {
+                return ResourceManager.GetString("EnhancementColorize", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Restore damage.
+        /// </summary>
+        public static string EnhancementRestore {
+            get {
+                return ResourceManager.GetString("EnhancementRestore", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Upscale.
+        /// </summary>
+        public static string EnhancementUpscale {
+            get {
+                return ResourceManager.GetString("EnhancementUpscale", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to At least the following persons share name {0}: {1}.
         /// </summary>
         public static string ErrorNameIsShared_2 {
@@ -2600,6 +2627,15 @@ namespace GT4.UI.Resources {
         public static string HintNamesPage {
             get {
                 return ResourceManager.GetString("HintNamesPage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enhancing the photo….
+        /// </summary>
+        public static string HintPhotoEnhancementInProgress {
+            get {
+                return ResourceManager.GetString("HintPhotoEnhancementInProgress", resourceCulture);
             }
         }
         
