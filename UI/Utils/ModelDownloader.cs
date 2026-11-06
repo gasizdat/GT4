@@ -42,7 +42,11 @@ internal class ModelDownloader(IHttpClientFactory httpClientFactory, IFileSystem
 
       fileSystem.Move(temp, CachedFile(model));
     }
-    catch (Exception ex) when (ex is not OperationCanceledException and not ModelDownloadException)
+    catch (OperationCanceledException) when (token.IsCancellationRequested)
+    {
+      throw;
+    }
+    catch (Exception ex) when (ex is not ModelDownloadException)
     {
       throw new ModelDownloadException($"Failed to download the '{model.FileName}' model.", ex);
     }

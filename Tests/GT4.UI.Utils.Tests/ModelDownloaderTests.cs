@@ -118,6 +118,18 @@ public class ModelDownloaderTests : IDisposable
   }
 
   [Fact]
+  public async Task HttpTimeout_ThrowsModelDownloadException()
+  {
+    var model = new ModelDescriptor("model.onnx", new Uri("https://example.test/model.onnx"), UnverifiedHash, "Model", "MIT", 3);
+    var handler = new TimingOutHandler();
+
+    var act = () => Downloader(handler).EnsureModelAsync(model, CancellationToken.None);
+
+    var thrown = await act.Should().ThrowAsync<ModelDownloadException>();
+    thrown.WithInnerException<TaskCanceledException>();
+  }
+
+  [Fact]
   public async Task CancelledMidDownload_StopsAndLeavesNoFile()
   {
     var model = new ModelDescriptor("model.onnx", new Uri("https://example.test/model.onnx"), UnverifiedHash, "Model", "MIT", 3);
@@ -195,6 +207,12 @@ public class ModelDownloaderTests : IDisposable
   {
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken token) =>
       Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
+  }
+
+  private sealed class TimingOutHandler : HttpMessageHandler
+  {
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken token) =>
+      Task.FromException<HttpResponseMessage>(new TaskCanceledException());
   }
 
   private sealed class StreamHandler(Stream body) : HttpMessageHandler
