@@ -119,6 +119,41 @@ public static class ImageUtils
     })!;
   }
 
+  /// <summary>
+  /// Skia's encoders write no EXIF, so a bitmap that gets re-encoded needs its orientation applied to the
+  /// pixels, or the copy loses the only record of how to turn it.
+  /// </summary>
+  public static SKBitmap? DecodeUpright(Stream stream)
+  {
+    using var data = SKData.Create(stream);
+    using var codec = SKCodec.Create(data);
+    if (codec is null)
+    {
+      return null;
+    }
+
+    var decoded = SKBitmap.Decode(codec);
+    var origin = codec.EncodedOrigin;
+    if (decoded is null || origin == SKEncodedOrigin.TopLeft)
+    {
+      return decoded;
+    }
+
+    using (decoded)
+    {
+      var (width, height) = origin >= SKEncodedOrigin.LeftTop
+        ? (decoded.Height, decoded.Width)
+        : (decoded.Width, decoded.Height);
+      var info = decoded.Info.WithSize(width, height);
+      var upright = new SKBitmap(info);
+      using var canvas = new SKCanvas(upright);
+      var matrix = OriginMatrix(origin, decoded.Width, decoded.Height);
+      canvas.SetMatrix(matrix);
+      canvas.DrawBitmap(decoded, 0, 0, SKSamplingOptions.Default);
+      return upright;
+    }
+  }
+
   public static async Task<byte[]?> ToBytesAsync(ImageSource? source, IHttpClientFactory httpClientFactory, CancellationToken token)
   {
     if (source == null)
@@ -175,6 +210,19 @@ public static class ImageUtils
 
     return encoded.ToArray();
   }
+
+  // Skia's SkEncodedOriginToMatrix: maps the stored pixels (width x height) onto the upright image.
+  private static SKMatrix OriginMatrix(SKEncodedOrigin origin, int width, int height) => origin switch
+  {
+    SKEncodedOrigin.TopRight => new SKMatrix(-1, 0, width, 0, 1, 0, 0, 0, 1),
+    SKEncodedOrigin.BottomRight => new SKMatrix(-1, 0, width, 0, -1, height, 0, 0, 1),
+    SKEncodedOrigin.BottomLeft => new SKMatrix(1, 0, 0, 0, -1, height, 0, 0, 1),
+    SKEncodedOrigin.LeftTop => new SKMatrix(0, 1, 0, 1, 0, 0, 0, 0, 1),
+    SKEncodedOrigin.RightTop => new SKMatrix(0, -1, height, 1, 0, 0, 0, 0, 1),
+    SKEncodedOrigin.RightBottom => new SKMatrix(0, -1, height, -1, 0, width, 0, 0, 1),
+    SKEncodedOrigin.LeftBottom => new SKMatrix(0, 1, 0, -1, 0, width, 0, 0, 1),
+    _ => SKMatrix.Identity,
+  };
 
   private static Size? PngPixelSize(ReadOnlySpan<byte> bytes)
   {
