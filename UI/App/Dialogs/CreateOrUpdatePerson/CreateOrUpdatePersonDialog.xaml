@@ -75,6 +75,20 @@
 
                         <Button
                             Grid.Row="0"
+                            Grid.Column="0"
+                            Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                            IsVisible="{Binding CanEnhance, Source={x:Reference Root}}"
+                            Style="{StaticResource EnhanceAdorner}">
+
+                          <Button.CommandParameter>
+                            <components:AdornerCommandParameter
+                                CommandName="EnhancePhotoCommand"
+                                Element="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
+                          </Button.CommandParameter>
+                        </Button>
+
+                        <Button
+                            Grid.Row="0"
                             Grid.Column="1"
                             Command="{Binding DialogCommand, Source={x:Reference Root}}"
                             Style="{StaticResource EditAdorner}">
@@ -143,24 +157,6 @@
                             Style="{StaticResource FieldValue}"
                             Text="{Binding Caption}"
                             VerticalOptions="Center" />
-                      </HorizontalStackLayout>
-
-                      <HorizontalStackLayout BindableLayout.ItemsSource="{Binding Enhancements, Source={x:Reference Root}}">
-                        <BindableLayout.ItemTemplate>
-                          <DataTemplate>
-                            <Button
-                                x:Name="EnhanceButton"
-                                Command="{Binding DialogCommand, Source={x:Reference Root}}"
-                                Text="{Binding DisplayName}">
-
-                              <Button.CommandParameter>
-                                <components:EnhanceCommandParameter
-                                    Enhancement="{Binding Source={x:Reference EnhanceButton}, Path=BindingContext}"
-                                    Photo="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
-                              </Button.CommandParameter>
-                            </Button>
-                          </DataTemplate>
-                        </BindableLayout.ItemTemplate>
                       </HorizontalStackLayout>
                     </VerticalStackLayout>
                   </DataTemplate>

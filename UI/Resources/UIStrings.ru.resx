@@ -870,6 +870,9 @@
   <data name="TitleExportChoice" xml:space="preserve">
     <value>Экспортировать как…</value>
   </data>
+  <data name="TitleEnhancePhoto" xml:space="preserve">
+    <value>Улучшить фото</value>
+  </data>
   <data name="AlertImportGedcomConfirm_1" xml:space="preserve">
     <value>Импортировать файл GEDCOM в {0}? Совпадающие люди будут объединены, остальные добавлены.</value>
   </data>

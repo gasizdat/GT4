@@ -4431,6 +4431,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Enhance photo.
+        /// </summary>
+        public static string TitleEnhancePhoto {
+            get {
+                return ResourceManager.GetString("TitleEnhancePhoto", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Export as….
         /// </summary>
         public static string TitleExportChoice {
