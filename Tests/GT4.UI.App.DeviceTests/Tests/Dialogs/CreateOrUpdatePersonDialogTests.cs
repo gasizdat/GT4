@@ -340,14 +340,14 @@ public class CreateOrUpdatePersonDialogTests
     Assert.DoesNotContain(photo, dialog.Photos);
   }
 
-  private static async Task<TestableCreateOrUpdatePersonDialog> CreateEnhancingDialogAsync(
+  private static async Task<(TestableCreateOrUpdatePersonDialog, TestablePhotoEnhancer)> CreateEnhancingDialogAsync(
     TestServices services, PersonFullInfo person, params IPhotoEnhancement[] enhancements)
   {
-    var converterResolver = services.Provider.GetRequiredService<DataConverterResolver>();
-    var photoEnhancer = new PhotoEnhancer(enhancements, services.ModelDownloader.Object, services.AlertService.Object, converterResolver);
-    var factory = services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialog.Factory>() with { PhotoEnhancer = photoEnhancer };
+    var enhancer = new TestablePhotoEnhancer(services, enhancements);
+    var factory = services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialog.Factory>() with { PhotoEnhancer = enhancer };
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
-    return await MainThread.InvokeOnMainThreadAsync(() => factory.Create(person));
+    var dialog = await MainThread.InvokeOnMainThreadAsync(() => factory.Create(person));
+    return (dialog, enhancer);
   }
 
   private static Task<Button[]> WaitForEnhanceAdornersAsync(CreateOrUpdatePersonDialog dialog) =>
@@ -360,7 +360,7 @@ public class CreateOrUpdatePersonDialogTests
   public async Task Each_photo_offers_one_bound_enhance_adorner_and_no_per_enhancement_button()
   {
     var enhancement = new DoublingEnhancement();
-    var dialog = await CreateEnhancingDialogAsync(new TestServices(), CreateSamplePerson(), enhancement);
+    var (dialog, _) = await CreateEnhancingDialogAsync(new TestServices(), CreateSamplePerson(), enhancement);
     await using var window = await WindowHost.AttachAsync(dialog);
 
     var adorners = await WaitForEnhanceAdornersAsync(dialog);
@@ -377,7 +377,7 @@ public class CreateOrUpdatePersonDialogTests
   [Fact]
   public async Task No_enhance_adorner_shows_when_no_enhancement_is_registered()
   {
-    var dialog = await CreateEnhancingDialogAsync(new TestServices(), CreateSamplePerson());
+    var (dialog, _) = await CreateEnhancingDialogAsync(new TestServices(), CreateSamplePerson());
     await using var window = await WindowHost.AttachAsync(dialog);
 
     var adorners = await WaitForEnhanceAdornersAsync(dialog);
@@ -396,12 +396,12 @@ public class CreateOrUpdatePersonDialogTests
     };
     var unpicked = new DoublingEnhancement();
     var picked = new DoublingEnhancement { DisplayName = "Other" };
-    var dialog = await CreateEnhancingDialogAsync(services, person, unpicked, picked);
+    var (dialog, enhancer) = await CreateEnhancingDialogAsync(services, person, unpicked, picked);
     await using var window = await WindowHost.AttachAsync(dialog);
 
-    await EnhanceAsync(dialog, dialog.Photos.ElementAt(1), picked);
+    await EnhanceAsync(dialog, enhancer, dialog.Photos.ElementAt(1), picked);
 
-    Assert.Equal(["Double", "Other"], dialog.OfferedEnhancementNames);
+    Assert.Equal(["Double", "Other"], enhancer.OfferedEnhancementNames);
     Assert.Equal(new SKSizeI(5, 2), picked.Received);
     Assert.Null(unpicked.Received);
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
@@ -412,7 +412,7 @@ public class CreateOrUpdatePersonDialogTests
   {
     var person = CreateSamplePerson() with { MainPhoto = new Data(10, Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
     var enhancement = new DoublingEnhancement();
-    var dialog = await CreateEnhancingDialogAsync(new TestServices(), person, enhancement);
+    var (dialog, enhancer) = await CreateEnhancingDialogAsync(new TestServices(), person, enhancement);
     await using var window = await WindowHost.AttachAsync(dialog);
     var before = dialog.Photos.Count;
 
@@ -423,7 +423,7 @@ public class CreateOrUpdatePersonDialogTests
       TimeSpan.FromSeconds(1),
       "Cancelling the sheet still added a photo.");
 
-    Assert.Equal(["Double"], dialog.OfferedEnhancementNames);
+    Assert.Equal(["Double"], enhancer.OfferedEnhancementNames);
     Assert.Null(enhancement.Received);
   }
 
@@ -465,10 +465,11 @@ public class CreateOrUpdatePersonDialogTests
   private static readonly ModelDescriptor TestModel = new(
     "model.onnx", new Uri("https://example.test/model.onnx"), new string('A', 64), "Test Model", "MIT", 77 * 1024 * 1024);
 
-  private static async Task<PersonDataItem> EnhanceAsync(TestableCreateOrUpdatePersonDialog dialog, PersonDataItem photo, IPhotoEnhancement enhancement)
+  private static async Task<PersonDataItem> EnhanceAsync(
+    TestableCreateOrUpdatePersonDialog dialog, TestablePhotoEnhancer enhancer, PersonDataItem photo, IPhotoEnhancement enhancement)
   {
     var before = dialog.Photos.ToArray();
-    dialog.EnhancementAnswer = enhancement.DisplayName;
+    enhancer.EnhancementAnswer = enhancement.DisplayName;
     await TapEnhanceAdornerAsync(dialog, photo);
     var after = await WaitForAsync(
       () => dialog.Photos.ToArray(), photos => photos.Length == before.Length + 1, "The enhanced photo was never added.");
@@ -492,10 +493,10 @@ public class CreateOrUpdatePersonDialogTests
     var services = new TestServices();
     var person = CreateSamplePerson() with { MainPhoto = new Data(10, Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
     var enhancement = new DoublingEnhancement();
-    var dialog = await CreateEnhancingDialogAsync(services, person, enhancement);
+    var (dialog, enhancer) = await CreateEnhancingDialogAsync(services, person, enhancement);
     await using var window = await WindowHost.AttachAsync(dialog);
 
-    var copy = await EnhanceAsync(dialog, dialog.Photos.First(), enhancement);
+    var copy = await EnhanceAsync(dialog, enhancer, dialog.Photos.First(), enhancement);
 
     Assert.Equal(new SKSizeI(4, 3), enhancement.Received);
     var shown = await WaitForAsync(() => copy.Content as PhotoInfo, content => content is not null, "The copy never loaded.");
@@ -524,10 +525,10 @@ public class CreateOrUpdatePersonDialogTests
     var content = GedcomPhotoResidue.EncodePhotoTitle(Png(4, 3), "Grandma");
     var person = CreateSamplePerson() with { MainPhoto = new Data(10, content, "image/png", DataCategory.PersonMainPhotoTagged) };
     var enhancement = new DoublingEnhancement();
-    var dialog = await CreateEnhancingDialogAsync(services, person, enhancement);
+    var (dialog, enhancer) = await CreateEnhancingDialogAsync(services, person, enhancement);
     await using var window = await WindowHost.AttachAsync(dialog);
 
-    await EnhanceAsync(dialog, dialog.Photos.First(), enhancement);
+    await EnhanceAsync(dialog, enhancer, dialog.Photos.First(), enhancement);
     var saved = await SaveAsync(dialog);
 
     Assert.Equal(new SKSizeI(4, 3), enhancement.Received);
@@ -543,12 +544,12 @@ public class CreateOrUpdatePersonDialogTests
   {
     var person = CreateSamplePerson() with { MainPhoto = new Data(10, Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
     var enhancement = new DoublingEnhancement();
-    var dialog = await CreateEnhancingDialogAsync(new TestServices(), person, enhancement);
+    var (dialog, enhancer) = await CreateEnhancingDialogAsync(new TestServices(), person, enhancement);
     await using var window = await WindowHost.AttachAsync(dialog);
     var photo = dialog.Photos.First();
     await MainThread.InvokeOnMainThreadAsync(() => photo.Caption = "Edited");
 
-    await EnhanceAsync(dialog, photo, enhancement);
+    await EnhanceAsync(dialog, enhancer, photo, enhancement);
     var saved = await SaveAsync(dialog);
 
     Assert.Equal("Edited", await GedcomPhotoResidue.ExtractTitleAsync(saved.AdditionalPhotos[0], CancellationToken.None));
@@ -560,10 +561,10 @@ public class CreateOrUpdatePersonDialogTests
     var services = new TestServices();
     var person = CreateSamplePerson() with { MainPhoto = new Data(10, JpegTurnedAQuarter(4, 3), "image/jpeg", DataCategory.PersonMainPhoto) };
     var enhancement = new DoublingEnhancement();
-    var dialog = await CreateEnhancingDialogAsync(services, person, enhancement);
+    var (dialog, enhancer) = await CreateEnhancingDialogAsync(services, person, enhancement);
     await using var window = await WindowHost.AttachAsync(dialog);
 
-    await EnhanceAsync(dialog, dialog.Photos.First(), enhancement);
+    await EnhanceAsync(dialog, enhancer, dialog.Photos.First(), enhancement);
     var saved = await SaveAsync(dialog);
 
     Assert.Equal(new SKSizeI(3, 4), enhancement.Received);
@@ -582,10 +583,10 @@ public class CreateOrUpdatePersonDialogTests
       .ReturnsAsync(false);
     var person = CreateSamplePerson() with { MainPhoto = new Data(10, Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
     var enhancement = new DoublingEnhancement { Models = [TestModel] };
-    var dialog = await CreateEnhancingDialogAsync(services, person, enhancement);
+    var (dialog, enhancer) = await CreateEnhancingDialogAsync(services, person, enhancement);
     await using var window = await WindowHost.AttachAsync(dialog);
     var before = dialog.Photos.Count;
-    dialog.EnhancementAnswer = enhancement.DisplayName;
+    enhancer.EnhancementAnswer = enhancement.DisplayName;
 
     await TapEnhanceAdornerAsync(dialog, dialog.Photos.First());
     await Poll.ConfirmNeverAsync(
@@ -614,10 +615,10 @@ public class CreateOrUpdatePersonDialogTests
       .Callback(() => enhancedBeforeDownload = enhancement.Received is not null)
       .Returns(Task.CompletedTask);
     var person = CreateSamplePerson() with { MainPhoto = new Data(10, Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
-    var dialog = await CreateEnhancingDialogAsync(services, person, enhancement);
+    var (dialog, enhancer) = await CreateEnhancingDialogAsync(services, person, enhancement);
     await using var window = await WindowHost.AttachAsync(dialog);
 
-    await EnhanceAsync(dialog, dialog.Photos.First(), enhancement);
+    await EnhanceAsync(dialog, enhancer, dialog.Photos.First(), enhancement);
 
     services.ModelDownloader.Verify(d => d.EnsureModelAsync(TestModel, It.IsAny<CancellationToken>()), Times.Once());
     Assert.False(enhancedBeforeDownload);
@@ -631,10 +632,10 @@ public class CreateOrUpdatePersonDialogTests
     services.ModelDownloader.Setup(d => d.IsDownloaded(TestModel)).Returns(true);
     var person = CreateSamplePerson() with { MainPhoto = new Data(10, Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
     var enhancement = new DoublingEnhancement { Models = [TestModel] };
-    var dialog = await CreateEnhancingDialogAsync(services, person, enhancement);
+    var (dialog, enhancer) = await CreateEnhancingDialogAsync(services, person, enhancement);
     await using var window = await WindowHost.AttachAsync(dialog);
 
-    await EnhanceAsync(dialog, dialog.Photos.First(), enhancement);
+    await EnhanceAsync(dialog, enhancer, dialog.Photos.First(), enhancement);
 
     services.AlertService.Verify(a => a.ShowConfirmationAsync(It.IsAny<string>()), Times.Never());
     services.ModelDownloader.Verify(d => d.EnsureModelAsync(It.IsAny<ModelDescriptor>(), It.IsAny<CancellationToken>()), Times.Never());

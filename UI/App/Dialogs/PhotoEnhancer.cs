@@ -8,7 +8,7 @@ using GT4.UI.Utils.Extensions;
 
 namespace GT4.UI.Dialogs;
 
-public sealed class PhotoEnhancer
+public class PhotoEnhancer
 {
   private readonly IEnumerable<IPhotoEnhancement> _Enhancements;
   private readonly IModelDownloader _ModelDownloader;
@@ -29,19 +29,19 @@ public sealed class PhotoEnhancer
 
   public bool CanEnhance => _Enhancements.Any();
 
-  public async Task<Data?> EnhanceAsync(INavigation navigation, PersonDataItem photo, Func<string[], Task<string>> chooseEnhancement)
+  public async Task<Data?> EnhanceAsync(Page page, PersonDataItem photo)
   {
     var names = _Enhancements.Select(enhancement => enhancement.DisplayName).ToArray();
-    var choice = await chooseEnhancement(names);
+    var choice = await ChooseEnhancementAsync(page, names);
     var enhancement = _Enhancements.FirstOrDefault(enhancement => enhancement.DisplayName == choice);
-    if (enhancement is null || !await DownloadMissingModelsAsync(navigation, enhancement))
+    if (enhancement is null || !await DownloadMissingModelsAsync(page.Navigation, enhancement))
     {
       return null;
     }
 
     var converter = _DataConverterResolver(photo.Info.Category.AsTaggedPhoto());
     var dialog = new ProgressDialog(enhancement.DisplayName, enhancement.DisplayName, "Enhancing photo...", _AlertService);
-    await navigation.PushModalAsync(dialog);
+    await page.Navigation.PushModalAsync(dialog);
     try
     {
       // An unsaved caption edit carries over to the copy.
@@ -62,9 +62,13 @@ public sealed class PhotoEnhancer
     }
     finally
     {
-      await navigation.PopModalAsync();
+      await page.Navigation.PopModalAsync();
     }
   }
+
+  // Virtual only so a device test can answer the sheet, which a test cannot drive.
+  protected virtual Task<string> ChooseEnhancementAsync(Page page, string[] names) =>
+    page.DisplayActionSheetAsync(UIStrings.TitleEnhancePhoto, UIStrings.BtnNameCancel, null, names);
 
   private async Task<bool> DownloadMissingModelsAsync(INavigation navigation, IPhotoEnhancement enhancement)
   {

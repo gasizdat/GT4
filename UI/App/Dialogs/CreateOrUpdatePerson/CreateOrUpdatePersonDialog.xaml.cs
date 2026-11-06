@@ -408,13 +408,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     IsModified = true;
   }
 
-  // Virtual only so a device test can answer the sheet, which a test cannot drive.
-  protected virtual Task<string> ChooseEnhancementAsync(string[] names) =>
-    DisplayActionSheetAsync(UIStrings.TitleEnhancePhoto, UIStrings.BtnNameCancel, null, names);
-
   private async Task OnEnhancePhotoAsync(PersonDataItem photo)
   {
-    var copy = await _Factory.PhotoEnhancer.EnhanceAsync(Navigation, photo, ChooseEnhancementAsync);
+    var copy = await _Factory.PhotoEnhancer.EnhanceAsync(this, photo);
     if (copy is not null)
     {
       var item = GetPersonData(copy, copy.Category.AsTaggedPhoto());
