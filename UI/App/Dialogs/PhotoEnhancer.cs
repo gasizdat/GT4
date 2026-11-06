@@ -50,11 +50,10 @@ public class PhotoEnhancer
       var enhanced = await Task.Run(() => enhancement.EnhanceAsync((PhotoInfo)source!, dialog.Token));
       // A new photo, so it must not carry the source's stored Id.
       var data = await converter.FromObjectAsync(enhanced, dialog.Token);
-      // The converter's category says only whether it enveloped a caption; person or family is the source's.
-      var additional = photo.Info.Category.AsAdditionalPhoto();
-      var category = data!.Category.IsTaggedPhoto() ? additional.AsTaggedPhoto() : additional.AsPlainPhoto();
+      // The copy's caption mark makes it Tagged, but person or family is the source's, not the converter's.
+      var category = photo.Info.Category.AsAdditionalPhoto().AsTaggedPhoto();
       // The converter labels everything it encodes image/bmp; unlabelled, the JPEG bytes are sniffed instead.
-      return data with { MimeType = null, Category = category };
+      return data! with { MimeType = null, Category = category };
     }
     catch (OperationCanceledException)
     {

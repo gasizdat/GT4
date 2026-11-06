@@ -10,13 +10,23 @@ takes, not a line-by-line trace — read the class for that.
 
 An enhancer only ever sees decoded pixels: `ApplyAsync(SKBitmap)`. `PhotoEnhancementExtensions.EnhanceAsync`
 wraps it for the `PhotoInfo` the photo's `IDataConverter` hands out (decode, enhance, re-encode as JPEG,
-keep the caption), and `PhotoEnhancer` (`UI/App/Dialogs`), the flow both `CreateOrUpdatePersonDialog`
+mark the caption), and `PhotoEnhancer` (`UI/App/Dialogs`), the flow both `CreateOrUpdatePersonDialog`
 and `CreateOrUpdateNameDialog` call, turns the result back into a photo through that same converter.
 The copy is therefore a new, uncommitted photo — never the source's stored `Id`, which would show the
-source's cached image and collide with it on save — and a captioned source's caption is re-enveloped
-onto it. The converter's category only says whether the copy is captioned, so whether it is a person
-or a family photo comes from the source. Never hand an enhancer `Data.Content`: a captioned photo's bytes are a
+source's cached image and collide with it on save. Never hand an enhancer `Data.Content`: a captioned photo's bytes are a
 `GedcomPhotoResidue` envelope, not an image.
+
+Every copy says it was AI-altered: its caption is the source's with the enhancement's localized
+`CaptionMark` appended (`Ivan, 1952 (AI: colorized)`), or just the mark when the source has none. A
+copy of a copy appends again, so its caption names every step in order and nothing parses an earlier
+mark. The mark is an ordinary caption: it exports as GEDCOM `TITL` and the user can edit or remove it.
+Because every copy is captioned, it is always saved in the Tagged category; whether it is a person or
+a family photo comes from the source, since the converter stamps a person category on whatever it
+envelopes.
+
+An enhancer refuses a photo it can't or needn't change by throwing `InvalidOperationException` with
+a localized message, before any copy exists; `SafeCommand`'s error alert shows it, and nothing is
+added.
 
 ## Upscale — `UpscalePhotoEnhancement.cs`
 
@@ -59,6 +69,9 @@ Two models in sequence, over the whole photo, not per-face:
    the whole photo through the model) with reflect-padding at the edges; tiles with no mask pixels
    are skipped. `RestorePhotoEnhancement.CompositeMaskedPixels` then takes the inpainted value only
    where the mask marks damage — every other pixel stays exactly the source pixel.
+
+A photo whose mask marks nothing is refused ("no damage was found") rather than returned as a
+re-encoded duplicate of the source.
 
 Model licenses: the scratch detector's code and weights are MIT (Microsoft's own README also
 carries a non-binding "academic research use only" note, confirmed not to be a second enforceable
@@ -103,7 +116,7 @@ and is compared case-insensitively.
   lifetime. That `??=` isn't guarded against a concurrent first-use race — a known, accepted,
   pre-existing pattern shared by all three enhancers, not something to fix in just one of them.
 - `RestorePhotoEnhancement` only loads the inpainter session if the detector found any damage
-  (`HasAnyDamage`) — an undamaged photo never pays LaMa's load cost.
+  (`HasAnyDamage`) — an undamaged photo is refused without paying LaMa's load cost.
 - Perf: LaMa measured ~2.2s per 512x512 tile in Release with default `SessionOptions`. A first-ever
   Debug run on one machine took ~15 minutes once — a one-time JIT/cold-start anomaly, not a
   sustained cost; re-running under the same conditions matched the Release number.

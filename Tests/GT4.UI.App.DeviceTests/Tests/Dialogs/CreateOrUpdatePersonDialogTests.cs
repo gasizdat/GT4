@@ -6,6 +6,7 @@ using GT4.UI.Abstraction;
 using GT4.UI.Components;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
+using GT4.UI.Resources;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
 using Moq;
@@ -512,14 +513,16 @@ public class CreateOrUpdatePersonDialogTests
     Assert.Equal(new SKSizeI(4, 3), ImageSize(saved.MainPhoto.Content));
     var savedCopy = saved.AdditionalPhotos[0];
     Assert.Equal(ElementId.NonCommittedId, savedCopy.Id);
-    Assert.Equal(DataCategory.PersonPhoto, savedCopy.Category);
-    Assert.Equal(new SKSizeI(8, 6), ImageSize(savedCopy.Content));
-    Assert.Equal("jpeg", GedcomMedia.ResolveForm(savedCopy.MimeType, savedCopy.Content));
+    Assert.Equal(DataCategory.PersonPhotoTagged, savedCopy.Category);
+    Assert.Equal(enhancement.CaptionMark, await GedcomPhotoResidue.ExtractTitleAsync(savedCopy, CancellationToken.None));
+    var image = GedcomPhotoResidue.ExtractImageBytes(savedCopy.Content);
+    Assert.Equal(new SKSizeI(8, 6), ImageSize(image));
+    Assert.Equal("jpeg", GedcomMedia.ResolveForm(savedCopy.MimeType, image));
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
 
   [Fact]
-  public async Task EnhanceCommand_on_a_captioned_photo_enhances_its_image_and_keeps_the_caption()
+  public async Task EnhanceCommand_on_a_captioned_photo_enhances_its_image_and_marks_the_caption()
   {
     var services = new TestServices();
     var content = GedcomPhotoResidue.EncodePhotoTitle(Png(4, 3), "Grandma");
@@ -534,9 +537,51 @@ public class CreateOrUpdatePersonDialogTests
     Assert.Equal(new SKSizeI(4, 3), enhancement.Received);
     var savedCopy = saved.AdditionalPhotos[0];
     Assert.Equal(DataCategory.PersonPhotoTagged, savedCopy.Category);
-    Assert.Equal("Grandma", await GedcomPhotoResidue.ExtractTitleAsync(savedCopy, CancellationToken.None));
+    Assert.Equal("Grandma (Doubled)", await GedcomPhotoResidue.ExtractTitleAsync(savedCopy, CancellationToken.None));
     Assert.Equal(new SKSizeI(8, 6), ImageSize(GedcomPhotoResidue.ExtractImageBytes(savedCopy.Content)));
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+  }
+
+  [Fact]
+  public async Task EnhanceCommand_on_an_enhanced_copy_marks_both_steps_in_order()
+  {
+    var content = GedcomPhotoResidue.EncodePhotoTitle(Png(4, 3), "Grandma");
+    var person = CreateSamplePerson() with { MainPhoto = new Data(10, content, "image/png", DataCategory.PersonMainPhotoTagged) };
+    var first = new DoublingEnhancement { DisplayName = "First", CaptionMark = "AI: first" };
+    var second = new DoublingEnhancement { DisplayName = "Second", CaptionMark = "AI: second" };
+    var (dialog, enhancer) = await CreateEnhancingDialogAsync(new TestServices(), person, first, second);
+    await using var window = await WindowHost.AttachAsync(dialog);
+
+    var copy = await EnhanceAsync(dialog, enhancer, dialog.Photos.First(), first);
+    await EnhanceAsync(dialog, enhancer, copy, second);
+    var saved = await SaveAsync(dialog);
+
+    var copyOfCopy = saved.AdditionalPhotos[1];
+    Assert.Equal(DataCategory.PersonPhotoTagged, copyOfCopy.Category);
+    Assert.Equal("Grandma (AI: first) (AI: second)", await GedcomPhotoResidue.ExtractTitleAsync(copyOfCopy, CancellationToken.None));
+  }
+
+  [Fact]
+  public async Task EnhanceCommand_refused_by_the_enhancement_adds_no_copy_and_shows_why()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson() with { MainPhoto = new Data(10, Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
+    var refusal = new InvalidOperationException(UIStrings.ErrorPhotoHasNoDamage);
+    var enhancement = new DoublingEnhancement { Refusal = refusal };
+    var (dialog, enhancer) = await CreateEnhancingDialogAsync(services, person, enhancement);
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var before = dialog.Photos.Count;
+    enhancer.EnhancementAnswer = enhancement.DisplayName;
+
+    await TapEnhanceAdornerAsync(dialog, dialog.Photos.First());
+    await WaitForAsync(() => enhancement.Received, received => received is not null, "The enhancement never ran.");
+    await Poll.ConfirmNeverAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => dialog.Photos.Count),
+      count => count != before,
+      TimeSpan.FromSeconds(1),
+      "A refused enhancement still added a photo.");
+
+    services.AlertService.Verify(a => a.ShowErrorAsync(refusal), Times.Once());
   }
 
   [Fact]
@@ -552,7 +597,7 @@ public class CreateOrUpdatePersonDialogTests
     await EnhanceAsync(dialog, enhancer, photo, enhancement);
     var saved = await SaveAsync(dialog);
 
-    Assert.Equal("Edited", await GedcomPhotoResidue.ExtractTitleAsync(saved.AdditionalPhotos[0], CancellationToken.None));
+    Assert.Equal("Edited (Doubled)", await GedcomPhotoResidue.ExtractTitleAsync(saved.AdditionalPhotos[0], CancellationToken.None));
   }
 
   [Fact]
@@ -568,7 +613,7 @@ public class CreateOrUpdatePersonDialogTests
     var saved = await SaveAsync(dialog);
 
     Assert.Equal(new SKSizeI(3, 4), enhancement.Received);
-    Assert.Equal(new SKSizeI(6, 8), ImageSize(saved.AdditionalPhotos[0].Content));
+    Assert.Equal(new SKSizeI(6, 8), ImageSize(GedcomPhotoResidue.ExtractImageBytes(saved.AdditionalPhotos[0].Content)));
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
 

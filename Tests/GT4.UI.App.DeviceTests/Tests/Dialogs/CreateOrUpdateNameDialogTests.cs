@@ -206,13 +206,13 @@ public class CreateOrUpdateNameDialogTests
     Assert.Equal(ElementId.NonCommittedId, saved.Id);
   }
 
-  // The captioned case is the one that can leak a person category: the tagged-photo converter stamps
+  // The copy's caption mark makes the tagged-photo converter re-envelope it, and that converter stamps
   // PersonPhotoTagged on whatever it re-envelopes.
   [Theory]
-  [InlineData(null, DataCategory.FamilyMainPhoto, DataCategory.FamilyPhoto)]
-  [InlineData("Wedding", DataCategory.FamilyMainPhotoTagged, DataCategory.FamilyPhotoTagged)]
+  [InlineData(null, DataCategory.FamilyMainPhoto)]
+  [InlineData("Wedding", DataCategory.FamilyMainPhotoTagged)]
   public async Task EnhanceFamilyPhotoCommand_saves_the_copy_next_to_its_source_with_a_family_category(
-    string? caption, DataCategory sourceCategory, DataCategory copyCategory)
+    string? caption, DataCategory sourceCategory)
   {
     var services = new TestServices();
     var content = caption is null ? TestImages.ValidPng : GedcomPhotoResidue.EncodePhotoTitle(TestImages.ValidPng, caption);
@@ -232,7 +232,7 @@ public class CreateOrUpdateNameDialogTests
     var ids = info.Photos.Select(photo => photo.Id);
     var categories = info.Photos.Select(photo => photo.Category);
     Assert.Equal(new[] { 10, ElementId.NonCommittedId }, ids);
-    Assert.Equal(new[] { sourceCategory, copyCategory }, categories);
+    Assert.Equal(new[] { sourceCategory, DataCategory.FamilyPhotoTagged }, categories);
     Assert.NotNull(enhancement.Received);
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }

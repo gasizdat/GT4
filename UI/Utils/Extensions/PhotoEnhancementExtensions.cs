@@ -16,7 +16,11 @@ public static class PhotoEnhancementExtensions
     using var image = SKImage.FromBitmap(enhanced);
     using var encoded = image.Encode(SKEncodedImageFormat.Jpeg, 85);
     var bytes = encoded.ToArray();
+    // Appended rather than merged, so a copy of a copy names every step in order without parsing an earlier mark.
+    var caption = string.IsNullOrWhiteSpace(photo.Caption)
+      ? enhancement.CaptionMark
+      : $"{photo.Caption} ({enhancement.CaptionMark})";
 
-    return photo with { Source = ImageSource.FromStream(() => new MemoryStream(bytes)) };
+    return photo with { Source = ImageSource.FromStream(() => new MemoryStream(bytes)), Caption = caption };
   }
 }

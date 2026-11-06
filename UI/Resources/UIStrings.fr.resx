@@ -1031,6 +1031,18 @@ FN - nom de famille</value>
   <data name="ErrorPhotoTooLarge_3" xml:space="preserve">
     <value>{0} fonctionne avec les photos jusqu'à {1:N1} mégapixels, et celle-ci en a {2:N1}.</value>
   </data>
+  <data name="ErrorPhotoHasNoDamage" xml:space="preserve">
+    <value>Aucun dommage n'a été trouvé sur cette photo ; aucune copie n'a été ajoutée.</value>
+  </data>
+  <data name="PhotoMarkRestore" xml:space="preserve">
+    <value>IA : restaurée</value>
+  </data>
+  <data name="PhotoMarkColorize" xml:space="preserve">
+    <value>IA : colorisée</value>
+  </data>
+  <data name="PhotoMarkUpscale_1" xml:space="preserve">
+    <value>IA : agrandie ×{0}</value>
+  </data>
   <data name="NameFamily" xml:space="preserve">
     <value>Famille</value>
   </data>
