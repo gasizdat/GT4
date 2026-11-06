@@ -46,8 +46,9 @@ public class DialogBackButtonTests
           var nameTypeFormatter = provider.GetRequiredService<INameTypeFormatter>();
           var tokenProvider = provider.GetRequiredService<ICancellationTokenProvider>();
           var converterResolver = provider.GetRequiredService<DataConverterResolver>();
+          var photoEnhancer = provider.GetRequiredService<PhotoEnhancer>();
           var dialog = new CreateOrUpdateNameDialog(
-            NameType.FamilyName, nameTypeFormatter, alertService, tokenProvider, converterResolver);
+            NameType.FamilyName, nameTypeFormatter, alertService, tokenProvider, converterResolver, photoEnhancer);
           return new(dialog, BoxAsync(dialog.Info), null);
         }
 

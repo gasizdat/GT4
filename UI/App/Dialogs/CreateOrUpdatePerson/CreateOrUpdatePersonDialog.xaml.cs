@@ -9,7 +9,6 @@ using GT4.UI.Items;
 using GT4.UI.Resources;
 using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
-using GT4.UI.Utils.Extensions;
 using GT4.UI.Utils.Formatters;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
@@ -34,8 +33,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     SelectPersonDialog.Factory SelectPersonDialogFactory,
     SelectMediaDialog.Factory SelectMediaDialogFactory,
     InlineMediaProvider MediaProvider,
-    IEnumerable<IPhotoEnhancement> Enhancements,
-    IModelDownloader ModelDownloader)
+    PhotoEnhancer PhotoEnhancer)
   {
     public CreateOrUpdatePersonDialog Create(PersonFullInfo? person) =>
       new CreateOrUpdatePersonDialog(this, person);
@@ -175,7 +173,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   public ICollection<PersonDataItem> Photos => _Photos;
 
-  public bool CanEnhance => _Factory.Enhancements.Any();
+  public bool CanEnhance => _Factory.PhotoEnhancer.CanEnhance;
 
   public InlineMediaResolver MediaResolver => _MediaResolver;
 
@@ -410,94 +408,14 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     IsModified = true;
   }
 
-  // Virtual only so a device test can answer the sheet, which a test cannot drive.
-  protected virtual Task<string> ChooseEnhancementAsync(string[] names) =>
-    DisplayActionSheetAsync(UIStrings.TitleEnhancePhoto, UIStrings.BtnNameCancel, null, names);
-
-  private async Task OnChooseEnhancementAsync(PersonDataItem photo)
+  private async Task OnEnhancePhotoAsync(PersonDataItem photo)
   {
-    var names = _Factory.Enhancements.Select(enhancement => enhancement.DisplayName).ToArray();
-    var choice = await ChooseEnhancementAsync(names);
-    var picked = _Factory.Enhancements.FirstOrDefault(enhancement => enhancement.DisplayName == choice);
-    if (picked is not null)
+    var copy = await _Factory.PhotoEnhancer.EnhanceAsync(this, photo);
+    if (copy is not null)
     {
-      await OnEnhancePhotoAsync(picked, photo);
-    }
-  }
-
-  private async Task OnEnhancePhotoAsync(IPhotoEnhancement enhancement, PersonDataItem photo)
-  {
-    if (!await DownloadMissingModelsAsync(enhancement))
-    {
-      return;
-    }
-
-    var converter = _Factory.DataConverterResolver(photo.Info.Category.AsTaggedPhoto());
-    var dialog = new ProgressDialog(enhancement.DisplayName, enhancement.DisplayName, "Enhancing photo...", _Factory.AlertService);
-    await Navigation.PushModalAsync(dialog);
-    try
-    {
-      // An unsaved caption edit carries over to the copy.
-      var current = await photo.ToDataAsync();
-      var source = await converter.ToObjectAsync(current, dialog.Token);
-      var enhanced = await Task.Run(() => enhancement.EnhanceAsync((PhotoInfo)source!, dialog.Token));
-      // A new photo, so it must not carry the source's stored Id.
-      var data = await converter.FromObjectAsync(enhanced, dialog.Token);
-      var category = data!.Category.IsTaggedPhoto() ? DataCategory.PersonPhotoTagged : DataCategory.PersonPhoto;
-      // The converter labels everything it encodes image/bmp; unlabelled, the JPEG bytes are sniffed instead.
-      var item = GetPersonData(data with { MimeType = null, Category = category }, category.AsTaggedPhoto());
+      var item = GetPersonData(copy, copy.Category.AsTaggedPhoto());
       _Photos.Insert(_Photos.IndexOf(photo) + 1, item);
       IsModified = true;
-    }
-    catch (OperationCanceledException)
-    {
-    }
-    finally
-    {
-      await Navigation.PopModalAsync();
-    }
-  }
-
-  private async Task<bool> DownloadMissingModelsAsync(IPhotoEnhancement enhancement)
-  {
-    const double BytesPerMegabyte = 1024 * 1024;
-
-    var missing = enhancement.Models
-      .Where(model => !_Factory.ModelDownloader.IsDownloaded(model))
-      .ToArray();
-    if (missing.Length == 0)
-    {
-      return true;
-    }
-
-    var entries = missing.Select(model =>
-      string.Format(UIStrings.ModelDownloadEntry_3, model.DisplayName, model.License, model.Size / BytesPerMegabyte));
-    var list = string.Join(Environment.NewLine, entries);
-    var confirmationText = string.Format(UIStrings.AlertDownloadModelsConfirm_2, enhancement.DisplayName, list);
-    if (!await _Factory.AlertService.ShowConfirmationAsync(confirmationText))
-    {
-      return false;
-    }
-
-    var names = missing.Select(model => model.DisplayName);
-    var subject = string.Join(", ", names);
-    var dialog = new ProgressDialog(enhancement.DisplayName, subject, UIStrings.HintModelDownloadInProgress, _Factory.AlertService);
-    await Navigation.PushModalAsync(dialog);
-    try
-    {
-      foreach (var model in missing)
-      {
-        await _Factory.ModelDownloader.EnsureModelAsync(model, dialog.Token);
-      }
-      return true;
-    }
-    catch (OperationCanceledException)
-    {
-      return false;
-    }
-    finally
-    {
-      await Navigation.PopModalAsync();
     }
   }
 
@@ -696,7 +614,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         await OnAddOrUpdatePhotoAsync(photo);
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "EnhancePhotoCommand" && adorner.Element is PersonDataItem photo:
-        await OnChooseEnhancementAsync(photo);
+        await OnEnhancePhotoAsync(photo);
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "RemovePhotoCommand" && adorner.Element is PersonDataItem photo:
         _Photos.Remove(photo);

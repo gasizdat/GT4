@@ -121,6 +121,20 @@
 
                       <Button
                           Grid.Row="0"
+                          Grid.Column="0"
+                          Command="{Binding MediaCommand, Source={x:Reference Root}}"
+                          IsVisible="{Binding CanEnhance, Source={x:Reference Root}}"
+                          Style="{StaticResource EnhanceAdorner}">
+
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="EnhanceFamilyPhotoCommand"
+                              Element="{Binding Source={x:Reference FamilyPhoto}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
+
+                      <Button
+                          Grid.Row="0"
                           Grid.Column="1"
                           Command="{Binding MediaCommand, Source={x:Reference Root}}"
                           Style="{StaticResource EditAdorner}">

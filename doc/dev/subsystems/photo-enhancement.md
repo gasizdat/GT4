@@ -3,16 +3,19 @@
 `UI/Utils/Platforms/Windows/*PhotoEnhancement.cs` implements `IPhotoEnhancement` against local
 ONNX models via `Microsoft.ML.OnnxRuntime`, Windows-only (`GT4.UI.Utils` multi-targets
 android/ios/maccatalyst/windows, so every implementation is `#if WINDOWS`-gated and left
-unregistered everywhere else). Each one is an independent, single-step image transform the add-photo
-flow offers as a button; none of them chain automatically. This page sketches the *approach* each
+unregistered everywhere else). Each one is an independent, single-step image transform, offered from
+a photo's ✨ adorner menu in both the person dialog and the family dialog; none of them chain
+automatically. This page sketches the *approach* each
 takes, not a line-by-line trace — read the class for that.
 
 An enhancer only ever sees decoded pixels: `ApplyAsync(SKBitmap)`. `PhotoEnhancementExtensions.EnhanceAsync`
 wraps it for the `PhotoInfo` the photo's `IDataConverter` hands out (decode, enhance, re-encode as JPEG,
-keep the caption), and `CreateOrUpdatePersonDialog` turns the result back into a photo through that same
-converter. The copy is therefore a new, uncommitted photo — never the source's stored `Id`, which would
-show the source's cached image and collide with it on save — and a captioned source's caption is
-re-enveloped onto it. Never hand an enhancer `Data.Content`: a captioned photo's bytes are a
+keep the caption), and `PhotoEnhancer` (`UI/App/Dialogs`), the flow both `CreateOrUpdatePersonDialog`
+and `CreateOrUpdateNameDialog` call, turns the result back into a photo through that same converter.
+The copy is therefore a new, uncommitted photo — never the source's stored `Id`, which would show the
+source's cached image and collide with it on save — and a captioned source's caption is re-enveloped
+onto it. The converter's category only says whether the copy is captioned, so whether it is a person
+or a family photo comes from the source. Never hand an enhancer `Data.Content`: a captioned photo's bytes are a
 `GedcomPhotoResidue` envelope, not an image.
 
 ## Upscale — `UpscalePhotoEnhancement.cs`
@@ -77,7 +80,7 @@ and is compared case-insensitively.
   it into place on a match (`fileSystem.Move`, atomic). A mismatch throws `ModelDownloadException`
   and leaves no partial file at the final name. If the final file already exists, it's trusted
   without re-hashing — the integrity check runs once, at download time, never again on every load.
-- Nothing downloads unasked. Before enhancing, `CreateOrUpdatePersonDialog` collects the
+- Nothing downloads unasked. Before enhancing, `PhotoEnhancer` collects the
   enhancement's models that `IModelDownloader.IsDownloaded` doesn't find and asks
   (`IAlertService.ShowConfirmationAsync`), naming each with its license and size. On Yes it
   downloads them under their own `ProgressDialog`, then enhances; declining changes nothing.

@@ -45,6 +45,7 @@ public partial class ProjectPage : ContentPage
   private readonly IMainPersonStore _MainPersonStore;
   private readonly IFamilyTreeHiddenPersonsStore _HiddenPersonsStore;
   private readonly IFamilyTreeArrangementStore _ArrangementStore;
+  private readonly PhotoEnhancer _PhotoEnhancer;
 
   private readonly FilteredObservableCollection<FamilyInfoItem> _Families = new();
   private bool _FamiliesLoaded;
@@ -70,7 +71,8 @@ public partial class ProjectPage : ContentPage
     MainPersonResolver mainPersonResolver,
     IMainPersonStore mainPersonStore,
     IFamilyTreeHiddenPersonsStore hiddenPersonsStore,
-    IFamilyTreeArrangementStore arrangementStore
+    IFamilyTreeArrangementStore arrangementStore,
+    PhotoEnhancer photoEnhancer
     )
   {
     _NameTypeFormatter = nameTypeFormatter;
@@ -90,6 +92,7 @@ public partial class ProjectPage : ContentPage
     _MainPersonStore = mainPersonStore;
     _HiddenPersonsStore = hiddenPersonsStore;
     _ArrangementStore = arrangementStore;
+    _PhotoEnhancer = photoEnhancer;
 
     // Set once: family visibility is re-evaluated via _Families.Update() (through UpdateFamilies),
     // not by reassigning this predicate.
@@ -372,7 +375,7 @@ public partial class ProjectPage : ContentPage
 
   private async Task OnCreateFamily()
   {
-    var dialog = new CreateOrUpdateNameDialog(NameType.FamilyName, _NameTypeFormatter, _AlertService, _CancellationTokenProvider, _DataConverterResolver);
+    var dialog = new CreateOrUpdateNameDialog(NameType.FamilyName, _NameTypeFormatter, _AlertService, _CancellationTokenProvider, _DataConverterResolver, _PhotoEnhancer);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;

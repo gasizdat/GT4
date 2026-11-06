@@ -6,7 +6,6 @@ using GT4.UI.Components;
 using GT4.UI.Converters;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
-using GT4.UI.Resources;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
 
@@ -35,8 +34,7 @@ internal sealed class TestableCreateOrUpdatePersonDialog : CreateOrUpdatePersonD
     SelectPersonDialog.Factory SelectPersonDialogFactory,
     SelectMediaDialog.Factory SelectMediaDialogFactory,
     InlineMediaProvider MediaProvider,
-    IEnumerable<IPhotoEnhancement> Enhancements,
-    IModelDownloader ModelDownloader)
+    PhotoEnhancer PhotoEnhancer)
     : CreateOrUpdatePersonDialog.Factory(
       CancellationTokenProvider,
       BiologicalSexFormatter,
@@ -53,8 +51,7 @@ internal sealed class TestableCreateOrUpdatePersonDialog : CreateOrUpdatePersonD
       SelectPersonDialogFactory,
       SelectMediaDialogFactory,
       MediaProvider,
-      Enhancements,
-      ModelDownloader)
+      PhotoEnhancer)
   {
     public new TestableCreateOrUpdatePersonDialog Create(PersonFullInfo? person) =>
       new TestableCreateOrUpdatePersonDialog(this, person);
@@ -64,10 +61,6 @@ internal sealed class TestableCreateOrUpdatePersonDialog : CreateOrUpdatePersonD
     : base(factory, person)
   {
   }
-
-  public string[] OfferedEnhancementNames { get; private set; } = [];
-
-  public string EnhancementAnswer { get; set; } = UIStrings.BtnNameCancel;
 
   public Task InvokeAddPersonNameAsync() => OnAddPersonNameAsync();
 
@@ -82,10 +75,4 @@ internal sealed class TestableCreateOrUpdatePersonDialog : CreateOrUpdatePersonD
   public ScrollView FormForTest => FormScrollView;
 
   public MarkdownEditor BiographyEditorForTest => BiographyMarkdownEditor;
-
-  protected override Task<string> ChooseEnhancementAsync(string[] names)
-  {
-    OfferedEnhancementNames = names;
-    return Task.FromResult(EnhancementAnswer);
-  }
 }
