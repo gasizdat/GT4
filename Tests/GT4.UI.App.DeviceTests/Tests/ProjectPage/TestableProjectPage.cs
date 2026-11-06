@@ -4,6 +4,7 @@ using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Components;
+using GT4.UI.Dialogs;
 using GT4.UI.HtmlExport;
 using GT4.UI.Items;
 using GT4.UI.Pages;
@@ -43,7 +44,8 @@ internal sealed class TestableProjectPage : ProjectPage
     MainPersonResolver mainPersonResolver,
     IMainPersonStore mainPersonStore,
     IFamilyTreeHiddenPersonsStore hiddenPersonsStore,
-    IFamilyTreeArrangementStore arrangementStore)
+    IFamilyTreeArrangementStore arrangementStore,
+    PhotoEnhancer photoEnhancer)
     : base(
       nameTypeFormatter,
       cancellationTokenProvider,
@@ -63,7 +65,8 @@ internal sealed class TestableProjectPage : ProjectPage
       mainPersonResolver,
       mainPersonStore,
       hiddenPersonsStore,
-      arrangementStore)
+      arrangementStore,
+      photoEnhancer)
   {
     // Families is bound to CollectionChanged, not PropertyChanged: RefreshView() (used by the
     // "Refresh" command and OnNavigatedTo) reflectively raises OnPropertyChanged for every one of

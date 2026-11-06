@@ -20,7 +20,8 @@ public partial class SelectNameDialog : ContentPage
     ICancellationTokenProvider CancellationTokenProvider,
     IComparer<Name> NameComparer,
     IAlertService AlertService,
-    DataConverterResolver DataConverterResolver)
+    DataConverterResolver DataConverterResolver,
+    PhotoEnhancer PhotoEnhancer)
   {
     public SelectNameDialog Create(BiologicalSex biologicalSex, NameType[] nameTypes) =>
       new SelectNameDialog(this, biologicalSex, nameTypes);
@@ -78,7 +79,8 @@ public partial class SelectNameDialog : ContentPage
           _Factory.NameTypeFormatter,
           _Factory.AlertService,
           Navigation,
-          _Factory.DataConverterResolver);
+          _Factory.DataConverterResolver,
+          _Factory.PhotoEnhancer);
         Names = null;
         CurrentName = Names?.SingleOrDefault(n => n.Info.Id == nameInfo.Id);
         break;
@@ -173,7 +175,7 @@ public partial class SelectNameDialog : ContentPage
     }
 
     var dialog = new CreateOrUpdateNameDialog(
-      dialogNameType, _Factory.NameTypeFormatter, _Factory.AlertService, _Factory.CancellationTokenProvider, _Factory.DataConverterResolver);
+      dialogNameType, _Factory.NameTypeFormatter, _Factory.AlertService, _Factory.CancellationTokenProvider, _Factory.DataConverterResolver, _Factory.PhotoEnhancer);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;

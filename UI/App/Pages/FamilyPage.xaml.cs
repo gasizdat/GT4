@@ -25,6 +25,7 @@ public partial class FamilyPage : ContentPage
   private readonly INameTypeFormatter _NameTypeFormatter;
   private readonly CreateOrUpdatePersonDialog.Factory _CreateOrUpdatePersonDialogFactory;
   private readonly DataConverterResolver _DataConverterResolver;
+  private readonly PhotoEnhancer _PhotoEnhancer;
   private readonly FilteredObservableCollection<PersonInfo> _Persons = new();
   private bool _PersonsLoaded;
   private Name? _FamilyName = null;
@@ -43,7 +44,8 @@ public partial class FamilyPage : ContentPage
     IBiologicalSexFormatter biologicalSexFormatter,
     INameTypeFormatter nameTypeFormatter,
     CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory,
-    DataConverterResolver dataConverterResolver
+    DataConverterResolver dataConverterResolver,
+    PhotoEnhancer photoEnhancer
     )
   {
     _CancellationTokenProvider = cancellationTokenProvider;
@@ -54,6 +56,7 @@ public partial class FamilyPage : ContentPage
     _NameTypeFormatter = nameTypeFormatter;
     _CreateOrUpdatePersonDialogFactory = createOrUpdatePersonDialogFactory;
     _DataConverterResolver = dataConverterResolver;
+    _PhotoEnhancer = photoEnhancer;
 
     _Persons.Filter = (_, person) => FilterView.Matches(person);
 
@@ -282,7 +285,8 @@ public partial class FamilyPage : ContentPage
           _NameTypeFormatter,
           _AlertService,
           Navigation,
-          _DataConverterResolver);
+          _DataConverterResolver,
+          _PhotoEnhancer);
         Refresh();
         break;
 

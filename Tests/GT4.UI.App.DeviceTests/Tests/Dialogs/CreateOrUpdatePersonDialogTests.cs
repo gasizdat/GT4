@@ -343,32 +343,18 @@ public class CreateOrUpdatePersonDialogTests
   private static async Task<TestableCreateOrUpdatePersonDialog> CreateEnhancingDialogAsync(
     TestServices services, PersonFullInfo person, params IPhotoEnhancement[] enhancements)
   {
-    var factory = services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialog.Factory>() with { Enhancements = enhancements };
+    var converterResolver = services.Provider.GetRequiredService<DataConverterResolver>();
+    var photoEnhancer = new PhotoEnhancer(enhancements, services.ModelDownloader.Object, services.AlertService.Object, converterResolver);
+    var factory = services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialog.Factory>() with { PhotoEnhancer = photoEnhancer };
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
     return await MainThread.InvokeOnMainThreadAsync(() => factory.Create(person));
   }
 
-  // A page constructed detached never realizes its XAML bindings, so the adorner's Element stays null
-  // until the page is attached to a window.
   private static Task<Button[]> WaitForEnhanceAdornersAsync(CreateOrUpdatePersonDialog dialog) =>
-    Poll.UntilAsync(
-      () => MainThread.InvokeOnMainThreadAsync(() => dialog
-        .GetVisualTreeDescendants()
-        .OfType<Button>()
-        .Where(button => button.CommandParameter is AdornerCommandParameter { CommandName: "EnhancePhotoCommand", Element: not null })
-        .ToArray()),
-      found => found.Length == dialog.Photos.Count,
-      timeoutMessage: "The CollectionView's enhance adorners never materialized.");
+    EnhanceAdorners.WaitAsync(dialog, dialog.Photos, "EnhancePhotoCommand");
 
-  private static PersonDataItem AdornedPhoto(Button adorner) =>
-    (PersonDataItem)((AdornerCommandParameter)adorner.CommandParameter).Element;
-
-  private static async Task TapEnhanceAdornerAsync(CreateOrUpdatePersonDialog dialog, PersonDataItem photo)
-  {
-    var adorners = await WaitForEnhanceAdornersAsync(dialog);
-    var adorner = adorners.Single(button => AdornedPhoto(button) == photo);
-    await MainThread.InvokeOnMainThreadAsync(() => adorner.Command.Execute(adorner.CommandParameter));
-  }
+  private static Task TapEnhanceAdornerAsync(CreateOrUpdatePersonDialog dialog, PersonDataItem photo) =>
+    EnhanceAdorners.TapAsync(dialog, dialog.Photos, "EnhancePhotoCommand", photo);
 
   [Fact]
   public async Task Each_photo_offers_one_bound_enhance_adorner_and_no_per_enhancement_button()
@@ -382,7 +368,7 @@ public class CreateOrUpdatePersonDialogTests
     await MainThread.InvokeOnMainThreadAsync(() =>
     {
       Assert.All(adorners, adorner => Assert.True(adorner.IsVisible));
-      Assert.All(adorners, adorner => Assert.Contains(AdornedPhoto(adorner), dialog.Photos));
+      Assert.All(adorners, adorner => Assert.Contains(EnhanceAdorners.Photo(adorner), dialog.Photos));
       var texts = dialog.GetVisualTreeDescendants().OfType<Button>().Select(button => button.Text);
       Assert.DoesNotContain(enhancement.DisplayName, texts);
     });
@@ -478,23 +464,6 @@ public class CreateOrUpdatePersonDialogTests
   // 77 MB, so the prompt's size can't match any other number in it by accident.
   private static readonly ModelDescriptor TestModel = new(
     "model.onnx", new Uri("https://example.test/model.onnx"), new string('A', 64), "Test Model", "MIT", 77 * 1024 * 1024);
-
-  private sealed class DoublingEnhancement : IPhotoEnhancement
-  {
-    public SKSizeI? Received { get; private set; }
-
-    public string DisplayName { get; init; } = "Double";
-
-    public ModelDescriptor[] Models { get; init; } = [];
-
-    public Task<SKBitmap> ApplyAsync(SKBitmap bitmap, CancellationToken token)
-    {
-      Received = new SKSizeI(bitmap.Width, bitmap.Height);
-      var doubled = new SKBitmap(bitmap.Width * 2, bitmap.Height * 2);
-      doubled.Erase(SKColors.Blue);
-      return Task.FromResult(doubled);
-    }
-  }
 
   private static async Task<PersonDataItem> EnhanceAsync(TestableCreateOrUpdatePersonDialog dialog, PersonDataItem photo, IPhotoEnhancement enhancement)
   {

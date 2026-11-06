@@ -7,6 +7,7 @@ using GT4.UI.Components;
 using GT4.UI.Dialogs;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
+using Moq;
 using Xunit;
 
 namespace GT4.UI.DeviceTests;
@@ -36,7 +37,8 @@ public class CreateOrUpdateNameDialogTests
   private static AdornerCommandParameter Adorner(string commandName, object element) =>
     new() { CommandName = commandName, Element = element };
 
-  private static async Task<CreateOrUpdateNameDialog> CreateDialogAsync(TestServices services, Data[]? familyData = null)
+  private static async Task<TestableCreateOrUpdateNameDialog> CreateDialogAsync(
+    TestServices services, Data[]? familyData = null, params IPhotoEnhancement[] enhancements)
   {
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
     var family = familyData is null
@@ -46,14 +48,17 @@ public class CreateOrUpdateNameDialogTests
           familyData.FirstOrDefault(data => data.Category.IsMainPhoto()),
           [.. familyData.Where(data => data.Category.IsAdditionalPhoto())],
           [.. familyData.Where(data => data.Category.IsAttachment())]);
-    return await MainThread.InvokeOnMainThreadAsync(() => new CreateOrUpdateNameDialog(
+    var converterResolver = services.Provider.GetRequiredService<DataConverterResolver>();
+    var photoEnhancer = new PhotoEnhancer(enhancements, services.ModelDownloader.Object, services.AlertService.Object, converterResolver);
+    return await MainThread.InvokeOnMainThreadAsync(() => new TestableCreateOrUpdateNameDialog(
       Family(),
       MaleLastName(),
       FemaleLastName(),
       services.Provider.GetRequiredService<INameTypeFormatter>(),
       services.AlertService.Object,
       services.Provider.GetRequiredService<ICancellationTokenProvider>(),
-      services.Provider.GetRequiredService<DataConverterResolver>(),
+      converterResolver,
+      photoEnhancer,
       family));
   }
 
@@ -65,7 +70,8 @@ public class CreateOrUpdateNameDialogTests
       services.Provider.GetRequiredService<INameTypeFormatter>(),
       services.AlertService.Object,
       services.Provider.GetRequiredService<ICancellationTokenProvider>(),
-      services.Provider.GetRequiredService<DataConverterResolver>()));
+      services.Provider.GetRequiredService<DataConverterResolver>(),
+      services.Provider.GetRequiredService<PhotoEnhancer>()));
   }
 
   private static Task<T> WaitForAsync<T>(Func<T> probe, Func<T, bool> isReady, string message) =>
@@ -199,5 +205,47 @@ public class CreateOrUpdateNameDialogTests
     Assert.Equal<byte[]>([9, 9, 9], saved.Content);
     // Reconverted content has no committed row behind it yet.
     Assert.Equal(ElementId.NonCommittedId, saved.Id);
+  }
+
+  // The captioned case is the one that can leak a person category: the tagged-photo converter stamps
+  // PersonPhotoTagged on whatever it re-envelopes.
+  [Theory]
+  [InlineData(null, DataCategory.FamilyMainPhoto, DataCategory.FamilyPhoto)]
+  [InlineData("Wedding", DataCategory.FamilyMainPhotoTagged, DataCategory.FamilyPhotoTagged)]
+  public async Task EnhanceFamilyPhotoCommand_saves_the_copy_next_to_its_source_with_a_family_category(
+    string? caption, DataCategory sourceCategory, DataCategory copyCategory)
+  {
+    var services = new TestServices();
+    var content = caption is null ? TestImages.ValidPng : GedcomPhotoResidue.EncodePhotoTitle(TestImages.ValidPng, caption);
+    var enhancement = new DoublingEnhancement();
+    var dialog = await CreateDialogAsync(services, [new Data(10, content, "image/png", sourceCategory)], enhancement);
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var source = dialog.Photos.Single();
+    dialog.EnhancementAnswer = enhancement.DisplayName;
+
+    await EnhanceAdorners.TapAsync(dialog, dialog.Photos, "EnhanceFamilyPhotoCommand", source);
+    await WaitForAsync(() => dialog.Photos.Count, count => count == 2, "The enhanced photo was never added.");
+    Assert.Same(source, dialog.Photos.ElementAt(0));
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.DialogCommand.Execute(null));
+    var info = await dialog.Info;
+
+    Assert.NotNull(info);
+    var ids = info.Photos.Select(photo => photo.Id);
+    var categories = info.Photos.Select(photo => photo.Category);
+    Assert.Equal(new[] { 10, ElementId.NonCommittedId }, ids);
+    Assert.Equal(new[] { sourceCategory, copyCategory }, categories);
+    Assert.NotNull(enhancement.Received);
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+  }
+
+  [Fact]
+  public async Task No_enhance_adorner_shows_when_no_enhancement_is_registered()
+  {
+    var dialog = await CreateDialogAsync(new TestServices(), [Photo(1, DataCategory.FamilyMainPhoto), Photo(2)]);
+    await using var window = await WindowHost.AttachAsync(dialog);
+
+    var adorners = await EnhanceAdorners.WaitAsync(dialog, dialog.Photos, "EnhanceFamilyPhotoCommand");
+
+    await MainThread.InvokeOnMainThreadAsync(() => Assert.All(adorners, adorner => Assert.False(adorner.IsVisible)));
   }
 }
