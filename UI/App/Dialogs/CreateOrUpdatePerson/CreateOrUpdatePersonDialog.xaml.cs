@@ -175,7 +175,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   public ICollection<PersonDataItem> Photos => _Photos;
 
-  public IEnumerable<IPhotoEnhancement> Enhancements => _Factory.Enhancements;
+  public bool CanEnhance => _Factory.Enhancements.Any();
 
   public InlineMediaResolver MediaResolver => _MediaResolver;
 
@@ -408,6 +408,21 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
 
     IsModified = true;
+  }
+
+  // Virtual only so a device test can answer the sheet, which a test cannot drive.
+  protected virtual Task<string> ChooseEnhancementAsync(string[] names) =>
+    DisplayActionSheetAsync(null, UIStrings.BtnNameCancel, null, names);
+
+  private async Task OnChooseEnhancementAsync(PersonDataItem photo)
+  {
+    var names = _Factory.Enhancements.Select(enhancement => enhancement.DisplayName).ToArray();
+    var choice = await ChooseEnhancementAsync(names);
+    var picked = _Factory.Enhancements.FirstOrDefault(enhancement => enhancement.DisplayName == choice);
+    if (picked is not null)
+    {
+      await OnEnhancePhotoAsync(picked, photo);
+    }
   }
 
   private async Task OnEnhancePhotoAsync(IPhotoEnhancement enhancement, PersonDataItem photo)
@@ -680,8 +695,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       case AdornerCommandParameter adorner when adorner.CommandName == "EditPhotoCommand" && adorner.Element is PersonDataItem photo:
         await OnAddOrUpdatePhotoAsync(photo);
         break;
-      case EnhanceCommandParameter enhance:
-        await OnEnhancePhotoAsync(enhance.Enhancement, enhance.Photo);
+      case AdornerCommandParameter adorner when adorner.CommandName == "EnhancePhotoCommand" && adorner.Element is PersonDataItem photo:
+        await OnChooseEnhancementAsync(photo);
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "RemovePhotoCommand" && adorner.Element is PersonDataItem photo:
         _Photos.Remove(photo);
