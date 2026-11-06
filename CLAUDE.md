@@ -10,6 +10,9 @@ from the code.
   draft branch must never track `origin/master` (avoids accidental fast-forward pushes to it).
 - One item of work = one `drafts/ai/<slug>` branch = one PR. A refactor sweep across many call
   sites is the exception: bundle it into one branch/PR instead of one per site.
+- A PR body names each issue it fixes as `Fixes #N`; "Related: #N" is only for issues it leaves open.
+  On a PR into a feature branch (not `master`), `.github/workflows/close-issues.yml` closes them on
+  merge, since GitHub's own keyword closing only fires for the default branch.
 - Run `dotnet format whitespace GT4.sln` before opening a PR; gate on `git diff` being empty
   afterward (not `dotnet format --verify-no-changes`, which reports differently). Never hand-fix
   formatting.
