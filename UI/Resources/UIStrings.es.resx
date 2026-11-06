@@ -849,6 +849,9 @@
   <data name="HintModelDownloadInProgress" xml:space="preserve">
     <value>Descargando. Esto puede tardar un rato…</value>
   </data>
+  <data name="MenuItemUpscaleNotForPortraits_1" xml:space="preserve">
+    <value>{0} (no para retratos)</value>
+  </data>
   <data name="LblPersons" xml:space="preserve">
     <value>Personas</value>
   </data>

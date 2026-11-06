@@ -35,6 +35,9 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
 
   public string CaptionMark => string.Format(UIStrings.PhotoMarkUpscale_1, Scale);
 
+  // The model was measured to posterize and band real faces.
+  public string MenuLabel => string.Format(UIStrings.MenuItemUpscaleNotForPortraits_1, DisplayName);
+
   public ModelDescriptor[] Models => [Model];
 
   public async Task<SKBitmap> ApplyAsync(SKBitmap bitmap, CancellationToken token)

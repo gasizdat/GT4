@@ -409,6 +409,22 @@ public class CreateOrUpdatePersonDialogTests
   }
 
   [Fact]
+  public async Task The_adorner_sheet_offers_each_menu_label_and_picking_one_runs_its_enhancement()
+  {
+    var person = CreateSamplePerson() with { MainPhoto = new Data(10, Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
+    var plain = new DoublingEnhancement();
+    var labelled = new DoublingEnhancement { DisplayName = "Other", Label = "Other (with a note)" };
+    var (dialog, enhancer) = await CreateEnhancingDialogAsync(new TestServices(), person, plain, labelled);
+    await using var window = await WindowHost.AttachAsync(dialog);
+
+    await EnhanceAsync(dialog, enhancer, dialog.Photos.First(), labelled);
+
+    Assert.Equal(["Double", "Other (with a note)"], enhancer.OfferedEnhancementNames);
+    Assert.Equal(new SKSizeI(4, 3), labelled.Received);
+    Assert.Null(plain.Received);
+  }
+
+  [Fact]
   public async Task Cancelling_the_enhance_sheet_adds_no_photo()
   {
     var person = CreateSamplePerson() with { MainPhoto = new Data(10, Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
@@ -470,7 +486,7 @@ public class CreateOrUpdatePersonDialogTests
     TestableCreateOrUpdatePersonDialog dialog, TestablePhotoEnhancer enhancer, PersonDataItem photo, IPhotoEnhancement enhancement)
   {
     var before = dialog.Photos.ToArray();
-    enhancer.EnhancementAnswer = enhancement.DisplayName;
+    enhancer.EnhancementAnswer = enhancement.MenuLabel;
     await TapEnhanceAdornerAsync(dialog, photo);
     var after = await WaitForAsync(
       () => dialog.Photos.ToArray(), photos => photos.Length == before.Length + 1, "The enhanced photo was never added.");

@@ -11,6 +11,10 @@ internal sealed class DoublingEnhancement : IPhotoEnhancement
 
   public string CaptionMark { get; init; } = "Doubled";
 
+  public string? Label { get; init; }
+
+  public string MenuLabel => Label ?? DisplayName;
+
   public ModelDescriptor[] Models { get; init; } = [];
 
   public Exception? Refusal { get; init; }

@@ -30,6 +30,8 @@ public class ColorizePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDi
 
   public string CaptionMark => UIStrings.PhotoMarkColorize;
 
+  public string MenuLabel => DisplayName;
+
   public ModelDescriptor[] Models => [Model];
 
   public async Task<SKBitmap> ApplyAsync(SKBitmap bitmap, CancellationToken token)

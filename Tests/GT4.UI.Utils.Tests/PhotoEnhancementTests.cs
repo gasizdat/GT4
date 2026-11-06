@@ -1,5 +1,6 @@
 using FluentAssertions;
 using GT4.UI.Abstraction;
+using GT4.UI.Resources;
 using GT4.UI.Utils.Platforms.Windows;
 using SkiaSharp;
 using System.Globalization;
@@ -108,6 +109,26 @@ public class PhotoEnhancementTests : IDisposable
     {
       CultureInfo.CurrentUICulture = previous;
     }
+  }
+
+  [Fact]
+  public void Upscale_MenuLabel_SaysItIsNotForPortraits()
+  {
+    using var enhancement = new UpscalePhotoEnhancement(_Models.SessionFactory());
+
+    var expected = string.Format(UIStrings.MenuItemUpscaleNotForPortraits_1, enhancement.DisplayName);
+
+    enhancement.MenuLabel.Should().Be(expected).And.NotBe(enhancement.DisplayName);
+  }
+
+  [Fact]
+  public void ColorizeAndRestore_MenuLabels_CarryNoNote()
+  {
+    using var colorize = new ColorizePhotoEnhancement(_Models.SessionFactory());
+    using var restore = new RestorePhotoEnhancement(_Models.SessionFactory());
+
+    colorize.MenuLabel.Should().Be(colorize.DisplayName);
+    restore.MenuLabel.Should().Be(restore.DisplayName);
   }
 
   private static SKBitmap TestBitmap(int width, int height)

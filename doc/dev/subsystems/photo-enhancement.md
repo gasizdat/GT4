@@ -40,6 +40,12 @@ source's pixels. A photo over 1 MP (1024x1024) is therefore refused with an aler
 loads. Run time (about 37 s per input megapixel, measured on the CPU provider) and the result's
 memory both grow with area, so a 44 MP scan would need a 2.8 GB result bitmap and about half an hour.
 
+The model posterizes, bands and destroys detail in real faces (both Real-ESRGAN models tried did).
+Rather than detect faces, its enhance-menu entry says it isn't for portraits: `MenuLabel` is the
+sheet's entry, kept apart from `DisplayName`, which is also the progress dialog's heading. Colorize
+and Restore carry no such note — Colorize keeps the source's lightness, and Restore changes only the
+pixels its detector marks — so it doesn't steer users away from them on old portraits.
+
 ## Colorize — `ColorizePhotoEnhancement.cs`
 
 Model: DDColor-tiny (fp16). Split the photo into CIE Lab's `L` (lightness) channel at full

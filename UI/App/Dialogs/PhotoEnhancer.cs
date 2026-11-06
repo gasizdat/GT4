@@ -31,9 +31,9 @@ public class PhotoEnhancer
 
   public async Task<Data?> EnhanceAsync(Page page, PersonDataItem photo)
   {
-    var names = _Enhancements.Select(enhancement => enhancement.DisplayName).ToArray();
-    var choice = await ChooseEnhancementAsync(page, names);
-    var enhancement = _Enhancements.FirstOrDefault(enhancement => enhancement.DisplayName == choice);
+    var labels = _Enhancements.Select(enhancement => enhancement.MenuLabel).ToArray();
+    var choice = await ChooseEnhancementAsync(page, labels);
+    var enhancement = _Enhancements.FirstOrDefault(enhancement => enhancement.MenuLabel == choice);
     if (enhancement is null || !await DownloadMissingModelsAsync(page.Navigation, enhancement))
     {
       return null;

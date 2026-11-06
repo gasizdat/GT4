@@ -54,6 +54,8 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
 
   public string CaptionMark => UIStrings.PhotoMarkRestore;
 
+  public string MenuLabel => DisplayName;
+
   public ModelDescriptor[] Models => [DetectorModel, InpainterModel];
 
   public async Task<SKBitmap> ApplyAsync(SKBitmap bitmap, CancellationToken token)

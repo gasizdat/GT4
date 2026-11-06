@@ -3063,6 +3063,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {0} (not for portraits).
+        /// </summary>
+        public static string MenuItemUpscaleNotForPortraits_1 {
+            get {
+                return ResourceManager.GetString("MenuItemUpscaleNotForPortraits_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to • {0} ({1}, {2:N0} MB).
         /// </summary>
         public static string ModelDownloadEntry_3 {
