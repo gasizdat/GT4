@@ -193,8 +193,7 @@ public static class ImageUtils
   // contended wait pumps COM messages -- re-entering XAML mid-layout, which is fatal (issue #370).
   private static byte[] DownsizedPngStream(Stream input, float maxSize)
   {
-    using var data = SKData.Create(input);
-    using var original = SKBitmap.Decode(data);
+    using var original = DecodeUpright(input);
     if (original is null)
     {
       throw new InvalidOperationException("Could not decode the image.");
