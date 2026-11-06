@@ -6,8 +6,15 @@ from the code.
 
 ## Delivery workflow
 
-- Branch from `origin/master` with `git switch --no-track -c drafts/ai/<slug> origin/master` — a
-  draft branch must never track `origin/master` (avoids accidental fast-forward pushes to it).
+- Branch for an issue with `gh issue develop <N> --base <target> --name drafts/ai/<slug> --checkout`,
+  where `<target>` is `master` or the feature branch the PR will merge into. GitHub links that branch
+  to the issue, and a PR opened from it shows in the issue's Development section even when it merges
+  into a feature branch, which "Fixes #N" alone can't do there; no API links an existing branch or PR
+  afterwards. The command creates the branch on origin at once; that's a standing exception to "never
+  push without asking". The branch tracks its own remote twin, never `origin/master`.
+- Work with no issue (e.g. a refactor sweep) branches with
+  `git switch --no-track -c drafts/ai/<slug> origin/master` — a draft branch must never track
+  `origin/master` (avoids accidental fast-forward pushes to it).
 - One item of work = one `drafts/ai/<slug>` branch = one PR. A refactor sweep across many call
   sites is the exception: bundle it into one branch/PR instead of one per site.
 - A PR body names each issue it fixes as `Fixes #N`; "Related: #N" is only for issues it leaves open.
@@ -23,7 +30,9 @@ from the code.
   `release/rc-*` branch, not `master` — don't move it. Each new release branch merges the previous
   one to carry it forward; `doc/store/release-and-submission.md` there has the commands.
 - Never `git push` or open/merge a PR without being asked first, even if a previous push in the
-  same session was approved.
+  same session was approved. The one exception is the branch `gh issue develop` creates.
+- In a PR body that targets `master`, never quote "Fixes #N" as example text: GitHub links and closes
+  #N on merge anyway. PR #561 quoted it as a test case and became #538's linked PR instead of #557.
 
 ## Rejected designs — don't re-propose without new evidence
 

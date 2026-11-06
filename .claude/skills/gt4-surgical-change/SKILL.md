@@ -18,4 +18,5 @@ Follow `surgical-change` for the method. This adds what's specific to GT4.
 
 ## Branching
 
-- `git fetch` first (local `master` goes stale), and never stack a branch on an unmerged one. If a change genuinely cannot sit on `master`, discuss it with the user before branching. A `refactor-sweep` sweep counts as one item.
+- `git fetch` first (local `master` goes stale), and never stack a branch on an unmerged one.
+- Create the branch with `gh issue develop <N> --base <target> --name drafts/ai/<slug> --checkout`, so its PR shows in the issue's Development section; `CLAUDE.md` has the details and the no-issue fallback. If a change genuinely cannot sit on `master`, discuss it with the user before branching. A `refactor-sweep` sweep counts as one item.
