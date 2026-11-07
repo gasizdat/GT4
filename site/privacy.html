@@ -25,7 +25,7 @@
   <main>
     <div class="wrap">
       <h1>Privacy policy</h1>
-      <p class="updated">Last updated: 10 October 2026</p>
+      <p class="updated">Last updated: 7 November 2026</p>
 
       <h2>The short version</h2>
       <p>
@@ -53,6 +53,12 @@
           display order) are kept in a small configuration file in the same folder.
         </li>
         <li>
+          <strong>Photo enhancement models</strong> you download on Windows (see below)
+          are kept in a <code>.models</code> folder in the same folder and reused, so each
+          is downloaded only once. When an app update replaces a model, the old file is
+          deleted and the new one is downloaded the next time you use that enhancement.
+        </li>
+        <li>
           <strong>Error logs</strong>, if the app fails, are written to a
           <code>CrashLogs</code> folder in the app's data folder. They are never
           uploaded; they exist so you can read them or send them to us yourself if you
@@ -63,8 +69,8 @@
 
       <h2>What the app sends over the network</h2>
       <p>
-        Genealogy Tree works offline. It makes a network request in exactly two
-        situations, both of which you start yourself:
+        Genealogy Tree works offline. It makes a network request in exactly three
+        situations, all of which you start yourself:
       </p>
       <ol>
         <li>
@@ -74,11 +80,28 @@
         <li>
           You click a web link inside a biography, and the app hands it to your browser.
         </li>
+        <li>
+          On Windows, you choose a photo enhancement whose model is not on your device
+          yet. The app first names the model, its license and its download size, and
+          downloads it only if you agree.
+        </li>
       </ol>
       <p>
-        In both cases the request goes to the site you named, not to us, and it carries
-        nothing about your family data beyond the address you supplied. If you never put
-        a web address into a biography, the app never makes a network request at all.
+        For a web image or link, the request goes to the site you named, not to us, and
+        it carries nothing about your family data beyond the address you supplied.
+      </p>
+      <p>
+        A model download is a plain request for a fixed file in the
+        <code>models-v1</code> or <code>models-v2</code> release of the app's own
+        repository, <a href="https://github.com/gasizdat/GT4">github.com/gasizdat/GT4</a>,
+        so it goes to GitHub. It carries nothing about your project or your photos.
+        GitHub's <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">privacy
+        statement</a> covers what GitHub records about the request. The enhancement itself
+        runs on your device, and the photo never leaves it.
+      </p>
+      <p>
+        If you never put a web address into a biography and never download an
+        enhancement model, the app never makes a network request at all.
       </p>
 
       <h2>What the app does not do</h2>
@@ -121,7 +144,7 @@
           which hands over only the file you choose.
         </li>
         <li>
-          The app declares internet access only for the two cases described under
+          The app declares internet access only for the first two cases described under
           "What the app sends over the network".
         </li>
         <li>
