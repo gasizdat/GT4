@@ -16,7 +16,10 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
     "Real-ESRGAN",
     "BSD-3-Clause",
     4866396);
-  private const int Scale = 4;
+  private const int ModelScale = 4;
+  // The model's result is halved, as Real-ESRGAN's own outscale option does: a quarter of the pixels
+  // to store and decode, still twice the source's size.
+  private const int OutputScale = 2;
   private const int MaxPixels = 1024 * 1024;
   private const int TileSize = 512;
   // The model stacks 34 3x3 convolutions, so an output pixel depends on input pixels up to 34 away;
@@ -33,7 +36,7 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
 
   public string DisplayName => UIStrings.EnhancementUpscale;
 
-  public string CaptionMark => string.Format(UIStrings.PhotoMarkUpscale_1, Scale);
+  public string CaptionMark => string.Format(UIStrings.PhotoMarkUpscale_1, OutputScale);
 
   public ModelDescriptor[] Models => [Model];
 
@@ -54,32 +57,27 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
 
     var inputName = session.InputMetadata.Keys.First();
     var outputName = session.OutputMetadata.Keys.First();
-    var upscaled = new SKBitmap(bitmap.Width * Scale, bitmap.Height * Scale);
-    try
+    using var upscaled = new SKBitmap(bitmap.Width * ModelScale, bitmap.Height * ModelScale);
+    for (var tileY = 0; tileY < bitmap.Height; tileY += TileSize)
     {
-      for (var tileY = 0; tileY < bitmap.Height; tileY += TileSize)
+      for (var tileX = 0; tileX < bitmap.Width; tileX += TileSize)
       {
-        for (var tileX = 0; tileX < bitmap.Width; tileX += TileSize)
-        {
-          token.ThrowIfCancellationRequested();
-          var tile = SKRectI.Create(tileX, tileY, TileSize, TileSize);
-          tile.Intersect(bitmap.Info.Rect);
-          var padded = SKRectI.Inflate(tile, TilePadding, TilePadding);
-          padded.Intersect(bitmap.Info.Rect);
-          var input = ToInputTensor(bitmap, padded);
+        token.ThrowIfCancellationRequested();
+        var tile = SKRectI.Create(tileX, tileY, TileSize, TileSize);
+        tile.Intersect(bitmap.Info.Rect);
+        var padded = SKRectI.Inflate(tile, TilePadding, TilePadding);
+        padded.Intersect(bitmap.Info.Rect);
+        var input = ToInputTensor(bitmap, padded);
 
-          using var results = session.Run([NamedOnnxValue.CreateFromTensor(inputName, input)]);
-          var output = results.First(r => r.Name == outputName).AsTensor<float>();
-          CopyTileInto(upscaled, output, tile, padded);
-        }
+        using var results = session.Run([NamedOnnxValue.CreateFromTensor(inputName, input)]);
+        var output = results.First(r => r.Name == outputName).AsTensor<float>();
+        CopyTileInto(upscaled, output, tile, padded);
       }
     }
-    catch
-    {
-      upscaled.Dispose();
-      throw;
-    }
-    return upscaled;
+
+    var info = new SKImageInfo(bitmap.Width * OutputScale, bitmap.Height * OutputScale);
+    var sampling = new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear);
+    return upscaled.Resize(info, sampling);
   }
 
   public void Dispose() => _Session?.Dispose();
@@ -104,12 +102,12 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
   {
     static byte Clamp(float v) => (byte)Math.Clamp(v * 255f, 0f, 255f);
 
-    for (var y = tile.Top * Scale; y < tile.Bottom * Scale; y++)
+    for (var y = tile.Top * ModelScale; y < tile.Bottom * ModelScale; y++)
     {
-      var outputY = y - padded.Top * Scale;
-      for (var x = tile.Left * Scale; x < tile.Right * Scale; x++)
+      var outputY = y - padded.Top * ModelScale;
+      for (var x = tile.Left * ModelScale; x < tile.Right * ModelScale; x++)
       {
-        var outputX = x - padded.Left * Scale;
+        var outputX = x - padded.Left * ModelScale;
         var red = Clamp(output[0, 0, outputY, outputX]);
         var green = Clamp(output[0, 1, outputY, outputX]);
         var blue = Clamp(output[0, 2, outputY, outputX]);
