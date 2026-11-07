@@ -782,19 +782,8 @@ public class CreateOrUpdatePersonDialogTests
     services.ModelDownloader.Verify(d => d.EnsureModelAsync(It.IsAny<ModelDescriptor>(), It.IsAny<CancellationToken>()), Times.Never());
   }
 
-  private static Task<Button[]> WaitForAttachmentAdornersAsync(CreateOrUpdatePersonDialog dialog) =>
-    EnhanceAdorners.WaitAsync(dialog, dialog.Attachments, "EnhanceAttachmentCommand");
-
-  // Every adorner is hidden until its attachment's content decodes, so a hidden one means nothing before that.
-  private static async Task<(bool Image, bool Document)> AttachmentAdornersShownAsync(CreateOrUpdatePersonDialog dialog)
-  {
-    var adorners = await WaitForAttachmentAdornersAsync(dialog);
-    var image = adorners.Single(adorner => EnhanceAdorners.Photo(adorner).Info.MimeType == "image/png");
-    var document = adorners.Single(adorner => EnhanceAdorners.Photo(adorner).Info.MimeType == "application/pdf");
-    await WaitForAsync(
-      () => dialog.Attachments.All(attachment => attachment.Content is not null), loaded => loaded, "The attachments never loaded.");
-    return await MainThread.InvokeOnMainThreadAsync(() => (EnhanceAdorners.IsShown(image), EnhanceAdorners.IsShown(document)));
-  }
+  private static Task<(bool Image, bool Document)> AttachmentAdornersShownAsync(CreateOrUpdatePersonDialog dialog) =>
+    EnhanceAdorners.AttachmentsShownAsync(dialog, dialog.Attachments, "EnhanceAttachmentCommand");
 
   [Fact]
   public async Task Only_an_image_attachment_offers_the_enhance_adorner()
