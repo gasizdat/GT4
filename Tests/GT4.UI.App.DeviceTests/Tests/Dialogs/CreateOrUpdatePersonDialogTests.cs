@@ -357,6 +357,10 @@ public class CreateOrUpdatePersonDialogTests
   private static Task TapEnhanceAdornerAsync(CreateOrUpdatePersonDialog dialog, PersonDataItem photo) =>
     EnhanceAdorners.TapAsync(dialog, dialog.Photos, "EnhancePhotoCommand", photo);
 
+  private static Task WaitForProgressToCloseAsync(CreateOrUpdatePersonDialog dialog) =>
+    WaitForAsync(
+      () => dialog.Navigation.ModalStack.OfType<ProgressDialog>().Any(), open => !open, "The progress dialog never closed.");
+
   [Fact]
   public async Task Each_photo_offers_one_bound_enhance_adorner_and_no_per_enhancement_button()
   {
@@ -385,6 +389,19 @@ public class CreateOrUpdatePersonDialogTests
 
     await MainThread.InvokeOnMainThreadAsync(() => Assert.All(adorners, adorner => Assert.False(adorner.IsVisible)));
   }
+
+#if ANDROID
+  [Fact]
+  public async Task No_enhance_adorner_shows_on_Android()
+  {
+    var dialog = await CreateDialogAsync(new TestServices(), CreateSamplePerson());
+    await using var window = await WindowHost.AttachAsync(dialog);
+
+    var adorners = await WaitForEnhanceAdornersAsync(dialog);
+
+    await MainThread.InvokeOnMainThreadAsync(() => Assert.All(adorners, adorner => Assert.False(adorner.IsVisible)));
+  }
+#endif
 
   [Fact]
   public async Task Picking_an_enhancement_from_the_adorner_sheet_runs_it_on_that_photo()
@@ -426,6 +443,33 @@ public class CreateOrUpdatePersonDialogTests
 
     Assert.Equal(["Double"], enhancer.OfferedEnhancementNames);
     Assert.Null(enhancement.Received);
+    Assert.Equal(UIStrings.BtnNameCancel, dialog.DialogButtonName);
+  }
+
+  [Fact]
+  public async Task Cancelling_a_running_enhancement_closes_its_progress_and_leaves_the_dialog_unmodified()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson() with { MainPhoto = new Data(10, Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
+    var enhancement = new DoublingEnhancement { RunsUntilCancelled = true };
+    var (dialog, enhancer) = await CreateEnhancingDialogAsync(services, person, enhancement);
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var before = dialog.Photos.Count;
+    enhancer.EnhancementAnswer = enhancement.DisplayName;
+
+    await TapEnhanceAdornerAsync(dialog, dialog.Photos.First());
+    var progress = await ModalDialogHarness.WaitForModalAsync<ProgressDialog>(dialog);
+    await WaitForAsync(() => enhancement.Received, received => received is not null, "The enhancement never ran.");
+    await MainThread.InvokeOnMainThreadAsync(() => progress.DialogCommand.Execute(null));
+    await WaitForProgressToCloseAsync(dialog);
+    await Poll.ConfirmNeverAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => dialog.Photos.Count),
+      count => count != before,
+      TimeSpan.FromSeconds(1),
+      "A cancelled enhancement still added a photo.");
+
+    Assert.Equal(UIStrings.BtnNameCancel, dialog.DialogButtonName);
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
 
   [Fact]
@@ -608,8 +652,31 @@ public class CreateOrUpdatePersonDialogTests
       count => count != before,
       TimeSpan.FromSeconds(1),
       "A refused enhancement still added a photo.");
+    await WaitForProgressToCloseAsync(dialog);
 
     services.AlertService.Verify(a => a.ShowErrorAsync(refusal), Times.Once());
+  }
+
+  [Fact]
+  public async Task EnhanceCommand_on_a_photo_whose_bytes_do_not_decode_adds_no_copy_and_shows_one_error()
+  {
+    var services = new TestServices();
+    var enhancement = new DoublingEnhancement();
+    var (dialog, enhancer) = await CreateEnhancingDialogAsync(services, CreateSamplePerson(), enhancement);
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var before = dialog.Photos.Count;
+    enhancer.EnhancementAnswer = enhancement.DisplayName;
+
+    await TapEnhanceAdornerAsync(dialog, dialog.Photos.First());
+    await WaitForAsync(
+      () => services.AlertService.Invocations.Count(i => i.Method.Name == nameof(IAlertService.ShowErrorAsync)),
+      count => count > 0,
+      "The decode failure was never reported.");
+    await WaitForProgressToCloseAsync(dialog);
+
+    Assert.Equal(before, dialog.Photos.Count);
+    Assert.Null(enhancement.Received);
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<InvalidOperationException>()), Times.Once());
   }
 
   [Fact]
@@ -674,6 +741,7 @@ public class CreateOrUpdatePersonDialogTests
     Assert.Contains("77", prompt);
     services.ModelDownloader.Verify(d => d.EnsureModelAsync(It.IsAny<ModelDescriptor>(), It.IsAny<CancellationToken>()), Times.Never());
     Assert.Null(enhancement.Received);
+    Assert.Equal(UIStrings.BtnNameCancel, dialog.DialogButtonName);
   }
 
   [Fact]

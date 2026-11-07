@@ -65,6 +65,20 @@ public class PhotoEnhancementTests : IDisposable
   }
 
   [Fact]
+  public async Task Colorize_KeepsTheSourceLightnessOfEveryPixel()
+  {
+    var enhancement = new ColorizePhotoEnhancement(_Models.SessionProvider());
+    _Models.Seed(enhancement.Models.Single(), "tiny-colorize.onnx");
+    // Larger than the model's 512px input both ways, so lightness taken from the model's grid instead of the source shows.
+    using var photo = PatternBitmap(600, 530);
+
+    using var bitmap = await enhancement.ApplyAsync(photo, CancellationToken.None);
+
+    var drift = photo.Pixels.Zip(bitmap.Pixels, (source, colorized) => Math.Abs(Lightness(source) - Lightness(colorized)));
+    drift.Max().Should().BeLessThan(1f);
+  }
+
+  [Fact]
   public async Task Upscale_MissingModel_SurfacesModelDownloadException()
   {
     var enhancement = new UpscalePhotoEnhancement(_Models.SessionProvider());
@@ -118,6 +132,12 @@ public class PhotoEnhancementTests : IDisposable
     {
       CultureInfo.CurrentUICulture = previous;
     }
+  }
+
+  private static float Lightness(SKColor color)
+  {
+    var (l, _, _) = Lab.FromSRgb(color.Red / 255f, color.Green / 255f, color.Blue / 255f);
+    return l;
   }
 
   private static SKBitmap TestBitmap(int width, int height)
