@@ -35,10 +35,17 @@ a CHW tensor and run the photo through the model in 512x512 tiles. A single pass
 1.1 GB of working memory per input megapixel; tiled, memory grows only with the 4x-larger result
 bitmap. Each tile is padded with 34 px of its real neighbours, the reach of the model's 34 stacked
 3x3 convolutions, so the stitched result is identical to a single pass, with no seams (measured
-bit-exact against one). Denormalize each tile's output into the result, which has 16 times the
+bit-exact against one). Denormalize each tile's output into the x4 bitmap, which has 16 times the
 source's pixels. A photo over 1 MP (1024x1024) is therefore refused with an alert before the model
-loads. Run time (about 37 s per input megapixel, measured on the CPU provider) and the result's
-memory both grow with area, so a 44 MP scan would need a 2.8 GB result bitmap and about half an hour.
+loads. Run time (about 37 s per input megapixel, measured on the CPU provider) and the x4 bitmap's
+memory both grow with area, so a 44 MP scan would need a 2.8 GB bitmap and about half an hour.
+
+The x4 bitmap is then halved, as Real-ESRGAN's own outscale option does, so the copy is x2 and its
+caption says so. That changes only what is stored and shown: the file is about 0.38 times x4's at
+the same JPEG quality, and a 1 MP source still comes out about 2048 px on the long side.
+Measurements are on #539. The filter is GT4's choice, not upstream's Lanczos: linear mipmaps,
+which at exactly half are a true 2x2 average with no ringing. Side by side on real photos, Skia's
+Mitchell cubic came out softer, and Catmull-Rom looked about the same as the average.
 
 ## Colorize — `ColorizePhotoEnhancement.cs`
 

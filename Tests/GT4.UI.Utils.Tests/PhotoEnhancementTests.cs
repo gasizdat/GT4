@@ -14,7 +14,7 @@ public class PhotoEnhancementTests : IDisposable
   public void Dispose() => _Models.Dispose();
 
   [Fact]
-  public async Task Upscale_PhotoSpanningSeveralTiles_MatchesANearestNeighbourUpscaleWithoutSeams()
+  public async Task Upscale_PhotoSpanningSeveralTiles_MatchesANearestNeighbourX2WithoutSeams()
   {
     using var enhancement = new UpscalePhotoEnhancement(_Models.SessionFactory());
     _Models.Seed(enhancement.Models.Single(), "tiny-upscale-x4.onnx");
@@ -23,8 +23,10 @@ public class PhotoEnhancementTests : IDisposable
 
     using var bitmap = await enhancement.ApplyAsync(photo, CancellationToken.None);
 
-    bitmap.Width.Should().Be(2400);
-    bitmap.Height.Should().Be(2120);
+    // The fixture's x4 repeats each pixel 4x4, so halving it by averaging 2x2 blocks gives every
+    // pixel exactly 2x2 again; a cubic halving would blend neighbours at each block's edge.
+    bitmap.Width.Should().Be(1200);
+    bitmap.Height.Should().Be(1060);
     var upscaled = bitmap.Pixels;
     var source = photo.Pixels;
     var mismatches = 0;
@@ -32,13 +34,21 @@ public class PhotoEnhancementTests : IDisposable
     {
       for (var x = 0; x < bitmap.Width; x++)
       {
-        if (upscaled[y * bitmap.Width + x] != source[y / 4 * photo.Width + x / 4])
+        if (upscaled[y * bitmap.Width + x] != source[y / 2 * photo.Width + x / 2])
         {
           mismatches++;
         }
       }
     }
     mismatches.Should().Be(0);
+  }
+
+  [Fact]
+  public void Upscale_CaptionMark_NamesTheOutputScaleNotTheModels()
+  {
+    using var enhancement = new UpscalePhotoEnhancement(_Models.SessionFactory());
+
+    enhancement.CaptionMark.Should().EndWith("×2");
   }
 
   [Fact]
