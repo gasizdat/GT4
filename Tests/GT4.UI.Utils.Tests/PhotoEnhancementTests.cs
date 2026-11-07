@@ -2,6 +2,7 @@ using FluentAssertions;
 using GT4.UI.Abstraction;
 using GT4.UI.Utils.Platforms.Windows;
 using SkiaSharp;
+using System.Globalization;
 using Xunit;
 
 namespace GT4.UI.Utils.Tests;
@@ -85,6 +86,28 @@ public class PhotoEnhancementTests : IDisposable
     var act = () => enhancement.ApplyAsync(photo, CancellationToken.None);
 
     await act.Should().ThrowAsync<ModelDownloadException>();
+  }
+
+  [Fact]
+  public void DisplayNames_FollowTheUICulture()
+  {
+    // UIStrings.Culture is process-global and would race other classes; CurrentUICulture stays inside this test.
+    var previous = CultureInfo.CurrentUICulture;
+    CultureInfo.CurrentUICulture = new CultureInfo(Language.DE.Code);
+    try
+    {
+      using var upscale = new UpscalePhotoEnhancement(_Models.SessionFactory());
+      using var colorize = new ColorizePhotoEnhancement(_Models.SessionFactory());
+      using var restore = new RestorePhotoEnhancement(_Models.SessionFactory());
+
+      string[] names = [upscale.DisplayName, colorize.DisplayName, restore.DisplayName];
+
+      names.Should().Equal("Hochskalieren", "Kolorieren", "Schäden beheben");
+    }
+    finally
+    {
+      CultureInfo.CurrentUICulture = previous;
+    }
   }
 
   private static SKBitmap TestBitmap(int width, int height)

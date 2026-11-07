@@ -873,6 +873,18 @@
   <data name="TitleEnhancePhoto" xml:space="preserve">
     <value>Улучшить фото</value>
   </data>
+  <data name="EnhancementUpscale" xml:space="preserve">
+    <value>Увеличить</value>
+  </data>
+  <data name="EnhancementColorize" xml:space="preserve">
+    <value>Раскрасить</value>
+  </data>
+  <data name="EnhancementRestore" xml:space="preserve">
+    <value>Устранить повреждения</value>
+  </data>
+  <data name="HintPhotoEnhancementInProgress" xml:space="preserve">
+    <value>Улучшение фото…</value>
+  </data>
   <data name="AlertImportGedcomConfirm_1" xml:space="preserve">
     <value>Импортировать файл GEDCOM в {0}? Совпадающие люди будут объединены, остальные добавлены.</value>
   </data>

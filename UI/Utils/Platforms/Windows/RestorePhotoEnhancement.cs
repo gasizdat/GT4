@@ -50,7 +50,7 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
     _SessionFactory = sessionFactory;
   }
 
-  public string DisplayName => "Restore damage";
+  public string DisplayName => UIStrings.EnhancementRestore;
 
   public string CaptionMark => UIStrings.PhotoMarkRestore;
 

@@ -26,7 +26,7 @@ public class ColorizePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDi
     _SessionFactory = sessionFactory;
   }
 
-  public string DisplayName => "Colorize";
+  public string DisplayName => UIStrings.EnhancementColorize;
 
   public string CaptionMark => UIStrings.PhotoMarkColorize;
 

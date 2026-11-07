@@ -873,6 +873,18 @@ Download now?</value>
   <data name="TitleEnhancePhoto" xml:space="preserve">
     <value>Enhance photo</value>
   </data>
+  <data name="EnhancementUpscale" xml:space="preserve">
+    <value>Upscale</value>
+  </data>
+  <data name="EnhancementColorize" xml:space="preserve">
+    <value>Colorize</value>
+  </data>
+  <data name="EnhancementRestore" xml:space="preserve">
+    <value>Restore damage</value>
+  </data>
+  <data name="HintPhotoEnhancementInProgress" xml:space="preserve">
+    <value>Enhancing the photo…</value>
+  </data>
   <data name="AlertImportGedcomConfirm_1" xml:space="preserve">
     <value>Import a GEDCOM file into {0}? People that match an existing person are merged; the rest are added.</value>
   </data>

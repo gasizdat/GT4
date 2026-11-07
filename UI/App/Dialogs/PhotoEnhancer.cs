@@ -40,7 +40,7 @@ public class PhotoEnhancer
     }
 
     var converter = _DataConverterResolver(photo.Info.Category.AsTaggedPhoto());
-    var dialog = new ProgressDialog(enhancement.DisplayName, enhancement.DisplayName, "Enhancing photo...", _AlertService);
+    var dialog = new ProgressDialog(enhancement.DisplayName, enhancement.DisplayName, UIStrings.HintPhotoEnhancementInProgress, _AlertService);
     await page.Navigation.PushModalAsync(dialog);
     try
     {
