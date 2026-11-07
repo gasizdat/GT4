@@ -61,16 +61,18 @@ public class CreateOrUpdateNameDialogTests
       family));
   }
 
-  private static async Task<CreateOrUpdateNameDialog> CreateDialogForTypeAsync(TestServices services, NameType nameType)
+  private static async Task<CreateOrUpdateNameDialog> CreateDialogForTypeAsync(
+    TestServices services, NameType nameType, PhotoEnhancer? photoEnhancer = null)
   {
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+    var enhancer = photoEnhancer ?? services.Provider.GetRequiredService<PhotoEnhancer>();
     return await MainThread.InvokeOnMainThreadAsync(() => new CreateOrUpdateNameDialog(
       nameType,
       services.Provider.GetRequiredService<INameTypeFormatter>(),
       services.AlertService.Object,
       services.Provider.GetRequiredService<ICancellationTokenProvider>(),
       services.Provider.GetRequiredService<DataConverterResolver>(),
-      services.Provider.GetRequiredService<PhotoEnhancer>()));
+      enhancer));
   }
 
   private static Task<T> WaitForAsync<T>(Func<T> probe, Func<T, bool> isReady, string message) =>
@@ -266,6 +268,20 @@ public class CreateOrUpdateNameDialogTests
 
     Assert.Null(await dialog.Info);
     Assert.Equal(1, enhancement.ReleaseCount);
+  }
+
+  [Fact]
+  public async Task Closing_a_persons_own_name_dialog_leaves_the_enhancement_models_loaded()
+  {
+    var services = new TestServices();
+    var enhancement = new DoublingEnhancement();
+    var enhancer = new TestablePhotoEnhancer(services, [enhancement]);
+    var dialog = await CreateDialogForTypeAsync(services, NameType.FirstName | NameType.MaleDeclension, enhancer);
+
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.CancelCommand.Execute(null));
+
+    Assert.Null(await dialog.Info);
+    Assert.Equal(0, enhancement.ReleaseCount);
   }
 
   [Fact]

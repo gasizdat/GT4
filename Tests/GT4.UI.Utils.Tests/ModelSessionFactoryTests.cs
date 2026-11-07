@@ -39,6 +39,7 @@ public class ModelSessionFactoryTests : IDisposable
 
     var reloaded = await factory.LoadSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
     reloaded.Should().NotBeSameAs(released);
+    using var mask = RestorePhotoEnhancement.DetectDamageMask(reloaded, photo);
     var act = () => RestorePhotoEnhancement.DetectDamageMask(released, photo);
     // ORT 1.20.1 throws NullReferenceException, not ObjectDisposedException, from a disposed session.
     act.Should().Throw<Exception>();

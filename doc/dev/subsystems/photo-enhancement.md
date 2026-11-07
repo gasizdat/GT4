@@ -121,8 +121,9 @@ and is compared case-insensitively.
 - Cache location: `IStorage.Models`, under `%APPDATA%\{app GUID}\.models`.
 - `ModelSessionFactory` owns every `InferenceSession`. It caches one per model, and a gate makes
   a concurrent first load share a single session. The enhancers hold none themselves. A loaded
-  session stays loaded until `PhotoEnhancer.ReleaseModels`, which the person and name dialogs call
-  as they complete (saved or cancelled). The photos enhanced in one dialog then pay each model's
+  session stays loaded until `PhotoEnhancer.ReleaseModels`. The person dialog and the family-name
+  dialog call it as they complete, saved or cancelled. A person's own name dialogs can't enhance,
+  so they don't call it. The photos enhanced in one dialog then pay each model's
   load once, and nothing stays held after it closes. Measured costs (#541): ORT's arena grows
   during the first `Run`, so a used session holds Upscale ~350 MB, Colorize ~2.1 GB, the
   detector ~530 MB and LaMa ~610 MB. Reloading costs 0.02 s, 0.45 s, 0.35 s and 7.7 s

@@ -65,8 +65,8 @@ public class PhotoEnhancer
     }
   }
 
-  // Called as the dialog that enhanced completes, not after each enhancement, so the photos enhanced in one
-  // dialog pay a model's load once (LaMa's is ~8 s); a used model can otherwise hold up to ~2 GB.
+  // Called as a dialog that can enhance completes, not after each enhancement, so the photos enhanced in one
+  // dialog pay each model's load once.
   public void ReleaseModels()
   {
     foreach (var enhancement in _Enhancements)

@@ -319,7 +319,11 @@ public partial class CreateOrUpdateNameDialog : ContentPage
 
   private void Complete(Result? result)
   {
-    _PhotoEnhancer.ReleaseModels();
+    // A person's own name dialogs open inside the person dialog and can't enhance, so they leave its models loaded.
+    if (ShowFamilyMedia)
+    {
+      _PhotoEnhancer.ReleaseModels();
+    }
     _Info.TrySetResult(result);
   }
 
