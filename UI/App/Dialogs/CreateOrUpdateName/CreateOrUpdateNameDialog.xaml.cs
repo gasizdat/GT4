@@ -394,13 +394,13 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     IsModified = true;
   }
 
-  private async Task OnEnhanceFamilyPhotoAsync(PersonDataItem photo)
+  private async Task OnEnhanceFamilyMediaAsync(ObservableCollection<PersonDataItem> media, PersonDataItem source)
   {
-    var copy = await _PhotoEnhancer.EnhanceAsync(this, photo);
+    var copy = await _PhotoEnhancer.EnhanceAsync(this, source);
     if (copy is not null)
     {
-      var item = GetFamilyData(copy, copy.Category.AsTaggedPhoto());
-      _Photos.Insert(_Photos.IndexOf(photo) + 1, item);
+      var item = GetFamilyData(copy, copy.Category);
+      media.Insert(media.IndexOf(source) + 1, item);
       IsModified = true;
     }
   }
@@ -483,7 +483,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
         await OnAddOrUpdateFamilyPhotoAsync(photo);
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "EnhanceFamilyPhotoCommand" && adorner.Element is PersonDataItem photo:
-        await OnEnhanceFamilyPhotoAsync(photo);
+        await OnEnhanceFamilyMediaAsync(_Photos, photo);
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "RemoveFamilyPhotoCommand" && adorner.Element is PersonDataItem photo:
         _Photos.Remove(photo);
@@ -497,6 +497,9 @@ public partial class CreateOrUpdateNameDialog : ContentPage
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "EditFamilyAttachmentCommand" && adorner.Element is PersonDataItem attachment:
         await OnAddOrUpdateFamilyAttachmentAsync(attachment);
+        break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "EnhanceFamilyAttachmentCommand" && adorner.Element is PersonDataItem attachment:
+        await OnEnhanceFamilyMediaAsync(_Attachments, attachment);
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "RemoveFamilyAttachmentCommand" && adorner.Element is PersonDataItem attachment:
         _Attachments.Remove(attachment);

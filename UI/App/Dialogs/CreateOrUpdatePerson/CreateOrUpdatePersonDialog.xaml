@@ -202,7 +202,7 @@
                     <Grid
                         x:Name="PersonAttachment"
                         Padding="{StaticResource CollectionItemsVerticalPadding}"
-                        ColumnDefinitions="*, Auto, Auto, Auto, Auto"
+                        ColumnDefinitions="*, Auto, Auto, Auto, Auto, Auto"
                         RowDefinitions="Auto, Auto"
                         Style="{StaticResource HoverItem}">
 
@@ -212,6 +212,85 @@
                           Style="{StaticResource FieldValue}"
                           Text="{Binding Content.DisplayName}"
                           VerticalOptions="Center" />
+
+                      <ContentView
+                          Grid.Row="0"
+                          Grid.RowSpan="2"
+                          Grid.Column="1"
+                          IsVisible="{Binding CanEnhance, Source={x:Reference Root}}"
+                          VerticalOptions="Center">
+                        <Button
+                            Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                            IsVisible="{Binding Content.IsImage}"
+                            Style="{StaticResource EnhanceAdorner}">
+
+                          <Button.CommandParameter>
+                            <components:AdornerCommandParameter
+                                CommandName="EnhanceAttachmentCommand"
+                                Element="{Binding Source={x:Reference PersonAttachment}, Path=BindingContext}" />
+                          </Button.CommandParameter>
+                        </Button>
+                      </ContentView>
+
+                      <Button
+                          Grid.Row="0"
+                          Grid.RowSpan="2"
+                          Grid.Column="2"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource UpAdorner}"
+                          VerticalOptions="Center">
+
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="MoveAttachmentUpCommand"
+                              Element="{Binding Source={x:Reference PersonAttachment}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
+
+                      <Button
+                          Grid.Row="0"
+                          Grid.RowSpan="2"
+                          Grid.Column="3"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource DownAdorner}"
+                          VerticalOptions="Center">
+
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="MoveAttachmentDownCommand"
+                              Element="{Binding Source={x:Reference PersonAttachment}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
+
+                      <Button
+                          Grid.Row="0"
+                          Grid.RowSpan="2"
+                          Grid.Column="4"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource EditAdorner}"
+                          VerticalOptions="Center">
+
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="EditAttachmentCommand"
+                              Element="{Binding Source={x:Reference PersonAttachment}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
+
+                      <Button
+                          Grid.Row="0"
+                          Grid.RowSpan="2"
+                          Grid.Column="5"
+                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                          Style="{StaticResource DeleteAdorner}"
+                          VerticalOptions="Center">
+
+                        <Button.CommandParameter>
+                          <components:AdornerCommandParameter
+                              CommandName="RemoveAttachmentCommand"
+                              Element="{Binding Source={x:Reference PersonAttachment}, Path=BindingContext}" />
+                        </Button.CommandParameter>
+                      </Button>
 
                       <Grid
                           Grid.Row="1"
@@ -235,66 +314,6 @@
                             Text="{Binding Caption}"
                             VerticalOptions="Center" />
                       </Grid>
-
-                      <Button
-                          Grid.Row="0"
-                          Grid.RowSpan="2"
-                          Grid.Column="1"
-                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
-                          Style="{StaticResource UpAdorner}"
-                          VerticalOptions="Center">
-
-                        <Button.CommandParameter>
-                          <components:AdornerCommandParameter
-                              CommandName="MoveAttachmentUpCommand"
-                              Element="{Binding Source={x:Reference PersonAttachment}, Path=BindingContext}" />
-                        </Button.CommandParameter>
-                      </Button>
-
-                      <Button
-                          Grid.Row="0"
-                          Grid.RowSpan="2"
-                          Grid.Column="2"
-                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
-                          Style="{StaticResource DownAdorner}"
-                          VerticalOptions="Center">
-
-                        <Button.CommandParameter>
-                          <components:AdornerCommandParameter
-                              CommandName="MoveAttachmentDownCommand"
-                              Element="{Binding Source={x:Reference PersonAttachment}, Path=BindingContext}" />
-                        </Button.CommandParameter>
-                      </Button>
-
-                      <Button
-                          Grid.Row="0"
-                          Grid.RowSpan="2"
-                          Grid.Column="3"
-                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
-                          Style="{StaticResource EditAdorner}"
-                          VerticalOptions="Center">
-
-                        <Button.CommandParameter>
-                          <components:AdornerCommandParameter
-                              CommandName="EditAttachmentCommand"
-                              Element="{Binding Source={x:Reference PersonAttachment}, Path=BindingContext}" />
-                        </Button.CommandParameter>
-                      </Button>
-
-                      <Button
-                          Grid.Row="0"
-                          Grid.RowSpan="2"
-                          Grid.Column="4"
-                          Command="{Binding DialogCommand, Source={x:Reference Root}}"
-                          Style="{StaticResource DeleteAdorner}"
-                          VerticalOptions="Center">
-
-                        <Button.CommandParameter>
-                          <components:AdornerCommandParameter
-                              CommandName="RemoveAttachmentCommand"
-                              Element="{Binding Source={x:Reference PersonAttachment}, Path=BindingContext}" />
-                        </Button.CommandParameter>
-                      </Button>
 
                     </Grid>
                   </DataTemplate>

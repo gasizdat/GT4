@@ -34,6 +34,9 @@ public class CreateOrUpdateNameDialogTests
   private static Data Attachment(int id, string fileName = "deed.pdf") =>
     new(id, Content: GedcomPhotoResidue.EncodeAttachment([1, 2, 3], fileName), MimeType: "application/pdf", Category: DataCategory.FamilyAttachment);
 
+  private static Data ImageAttachment(int id) =>
+    new(id, Content: GedcomPhotoResidue.EncodeAttachment([1, 2, 3], "deed.png"), MimeType: "image/png", Category: DataCategory.FamilyAttachment);
+
   private static AdornerCommandParameter Adorner(string commandName, object element) =>
     new() { CommandName = commandName, Element = element };
 
@@ -236,6 +239,60 @@ public class CreateOrUpdateNameDialogTests
     Assert.Equal(new[] { 10, ElementId.NonCommittedId }, ids);
     Assert.Equal(new[] { sourceCategory, DataCategory.FamilyPhotoTagged }, categories);
     Assert.NotNull(enhancement.Received);
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+  }
+
+  [Fact]
+  public async Task Only_an_image_attachment_offers_the_enhance_adorner()
+  {
+    var services = new TestServices();
+    var enhancer = new TestablePhotoEnhancer(services, [new DoublingEnhancement()]);
+    var dialog = await CreateDialogAsync(services, [ImageAttachment(1), Attachment(2)], enhancer);
+    await using var window = await WindowHost.AttachAsync(dialog);
+
+    var shown = await EnhanceAdorners.AttachmentsShownAsync(dialog, dialog.Attachments, "EnhanceFamilyAttachmentCommand");
+
+    Assert.True(shown.Image);
+    Assert.False(shown.Document);
+  }
+
+  [Fact]
+  public async Task No_attachment_enhance_adorner_shows_when_no_enhancement_is_registered()
+  {
+    var dialog = await CreateDialogAsync(new TestServices(), [ImageAttachment(1), Attachment(2)]);
+    await using var window = await WindowHost.AttachAsync(dialog);
+
+    var shown = await EnhanceAdorners.AttachmentsShownAsync(dialog, dialog.Attachments, "EnhanceFamilyAttachmentCommand");
+
+    Assert.False(shown.Image);
+    Assert.False(shown.Document);
+  }
+
+  [Fact]
+  public async Task EnhanceFamilyAttachmentCommand_saves_the_copy_after_its_source_as_a_family_attachment()
+  {
+    var services = new TestServices();
+    var scan = new Data(10, GedcomPhotoResidue.EncodeAttachment(TestImages.ValidPng, "deed.png"), "image/png", DataCategory.FamilyAttachment);
+    var enhancement = new DoublingEnhancement();
+    var enhancer = new TestablePhotoEnhancer(services, [enhancement]) { EnhancementAnswer = enhancement.DisplayName };
+    var dialog = await CreateDialogAsync(services, [Photo(1, DataCategory.FamilyMainPhoto), scan, Attachment(11)], enhancer);
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var source = dialog.Attachments.First();
+
+    await EnhanceAdorners.TapAsync(dialog, dialog.Attachments, "EnhanceFamilyAttachmentCommand", source);
+    await WaitForAsync(() => dialog.Attachments.Count, count => count == 3, "The enhanced attachment was never added.");
+    Assert.Single(dialog.Photos);
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.DialogCommand.Execute(null));
+    var info = await dialog.Info;
+
+    Assert.NotNull(info);
+    var photo = Assert.Single(info.Photos);
+    Assert.Equal(1, photo.Id);
+    var ids = info.Attachments.Select(attachment => attachment.Id);
+    var categories = info.Attachments.Select(attachment => attachment.Category).Distinct();
+    Assert.Equal(new[] { 10, ElementId.NonCommittedId, 11 }, ids);
+    Assert.Equal(new[] { DataCategory.FamilyAttachment }, categories);
+    Assert.Equal("image/jpeg", info.Attachments[1].MimeType);
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
 
