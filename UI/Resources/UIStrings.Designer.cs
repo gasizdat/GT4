@@ -820,6 +820,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to No damage was found in this photo, so no copy was added..
+        /// </summary>
+        public static string ErrorPhotoHasNoDamage {
+            get {
+                return ResourceManager.GetString("ErrorPhotoHasNoDamage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to {0} works on photos of up to {1:N1} megapixels, and this one has {2:N1}..
         /// </summary>
         public static string ErrorPhotoTooLarge_3 {
@@ -3464,6 +3473,33 @@ namespace GT4.UI.Resources {
         public static string PersonSinceBirthDay_1 {
             get {
                 return ResourceManager.GetString("PersonSinceBirthDay_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to AI: colorized.
+        /// </summary>
+        public static string PhotoMarkColorize {
+            get {
+                return ResourceManager.GetString("PhotoMarkColorize", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to AI: restored.
+        /// </summary>
+        public static string PhotoMarkRestore {
+            get {
+                return ResourceManager.GetString("PhotoMarkRestore", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to AI: upscaled ×{0}.
+        /// </summary>
+        public static string PhotoMarkUpscale_1 {
+            get {
+                return ResourceManager.GetString("PhotoMarkUpscale_1", resourceCulture);
             }
         }
         

@@ -206,13 +206,13 @@ public class CreateOrUpdateNameDialogTests
     Assert.Equal(ElementId.NonCommittedId, saved.Id);
   }
 
-  // The captioned case is the one that can leak a person category: the tagged-photo converter stamps
+  // The copy's caption mark makes the tagged-photo converter re-envelope it, and that converter stamps
   // PersonPhotoTagged on whatever it re-envelopes.
   [Theory]
-  [InlineData(null, DataCategory.FamilyMainPhoto, DataCategory.FamilyPhoto)]
-  [InlineData("Wedding", DataCategory.FamilyMainPhotoTagged, DataCategory.FamilyPhotoTagged)]
+  [InlineData(null, DataCategory.FamilyMainPhoto)]
+  [InlineData("Wedding", DataCategory.FamilyMainPhotoTagged)]
   public async Task EnhanceFamilyPhotoCommand_saves_the_copy_next_to_its_source_with_a_family_category(
-    string? caption, DataCategory sourceCategory, DataCategory copyCategory)
+    string? caption, DataCategory sourceCategory)
   {
     var services = new TestServices();
     var content = caption is null ? TestImages.ValidPng : GedcomPhotoResidue.EncodePhotoTitle(TestImages.ValidPng, caption);
@@ -232,9 +232,37 @@ public class CreateOrUpdateNameDialogTests
     var ids = info.Photos.Select(photo => photo.Id);
     var categories = info.Photos.Select(photo => photo.Category);
     Assert.Equal(new[] { 10, ElementId.NonCommittedId }, ids);
-    Assert.Equal(new[] { sourceCategory, copyCategory }, categories);
+    Assert.Equal(new[] { sourceCategory, DataCategory.FamilyPhotoTagged }, categories);
     Assert.NotNull(enhancement.Received);
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+  }
+
+  [Fact]
+  public async Task A_long_photo_caption_does_not_widen_the_photo_slot()
+  {
+    var dialog = await CreateDialogAsync(new TestServices(), [Photo(1, DataCategory.FamilyMainPhoto)]);
+    var photo = dialog.Photos.Single();
+    await MainThread.InvokeOnMainThreadAsync(
+      () => photo.Caption = "The family at the old house in the summer of 1952 (AI: colorized) (AI: restored) (AI: upscaled x4)");
+
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var (slot, picture) = await CaptionRows.PhotoSlotWidthsAsync(dialog, photo);
+
+    Assert.Equal(picture, slot, 1.0);
+  }
+
+  [Fact]
+  public async Task A_long_attachment_caption_stays_within_its_row()
+  {
+    var dialog = await CreateDialogAsync(new TestServices(), [Attachment(1)]);
+    var attachment = dialog.Attachments.Single();
+    var sentences = Enumerable.Repeat("A deed to the family farm from the county records office. ", 8);
+    await MainThread.InvokeOnMainThreadAsync(() => attachment.Caption = string.Concat(sentences));
+
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var (row, captionRight) = await CaptionRows.CaptionExtentAsync(dialog, attachment);
+
+    Assert.InRange(captionRight, 0, row + 1);
   }
 
   [Fact]

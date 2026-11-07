@@ -1,5 +1,6 @@
 using FluentAssertions;
 using GT4.UI.Abstraction;
+using GT4.UI.Resources;
 using GT4.UI.Utils.Platforms.Windows;
 using SkiaSharp;
 using Xunit;
@@ -104,17 +105,17 @@ public class RestorePhotoEnhancementTests : IDisposable
   }
 
   [Fact]
-  public async Task UndamagedPhoto_NeverLoadsTheInpainterModel()
+  public async Task UndamagedPhoto_IsRefusedWithoutLoadingTheInpainterModel()
   {
     _Models.Seed(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
     // No lama-fp32.onnx seeded, and the factory's downloader always fails -- if the enhancer
-    // tried to load the inpainter for an undamaged photo, this would throw.
+    // tried to load the inpainter for an undamaged photo, this would throw ModelDownloadException.
     using var enhancement = new RestorePhotoEnhancement(_Models.SessionFactory());
     using var photo = SKBitmap.Decode(SolidColorPng(20, 16, 0, 0, 0));
 
-    using var bitmap = await enhancement.ApplyAsync(photo, CancellationToken.None);
+    var act = () => enhancement.ApplyAsync(photo, CancellationToken.None);
 
-    bitmap.GetPixel(10, 8).Should().Be(new SKColor(0, 0, 0));
+    await act.Should().ThrowExactlyAsync<InvalidOperationException>().WithMessage(UIStrings.ErrorPhotoHasNoDamage);
   }
 
   [Fact]

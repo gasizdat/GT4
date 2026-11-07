@@ -33,6 +33,8 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
 
   public string DisplayName => "Upscale";
 
+  public string CaptionMark => string.Format(UIStrings.PhotoMarkUpscale_1, Scale);
+
   public ModelDescriptor[] Models => [Model];
 
   public async Task<SKBitmap> ApplyAsync(SKBitmap bitmap, CancellationToken token)

@@ -1031,6 +1031,18 @@ FN - род</value>
   <data name="ErrorPhotoTooLarge_3" xml:space="preserve">
     <value>«{0}» работает с фото до {1:N1} Мп, а в этом — {2:N1} Мп.</value>
   </data>
+  <data name="ErrorPhotoHasNoDamage" xml:space="preserve">
+    <value>На этом фото не найдено повреждений, поэтому копия не добавлена.</value>
+  </data>
+  <data name="PhotoMarkRestore" xml:space="preserve">
+    <value>ИИ: восстановлено</value>
+  </data>
+  <data name="PhotoMarkColorize" xml:space="preserve">
+    <value>ИИ: раскрашено</value>
+  </data>
+  <data name="PhotoMarkUpscale_1" xml:space="preserve">
+    <value>ИИ: увеличено ×{0}</value>
+  </data>
   <data name="NameFamily" xml:space="preserve">
     <value>Род</value>
   </data>

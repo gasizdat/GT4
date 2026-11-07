@@ -1,5 +1,6 @@
 #if WINDOWS
 using GT4.UI.Abstraction;
+using GT4.UI.Resources;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using SkiaSharp;
@@ -51,6 +52,8 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
 
   public string DisplayName => "Restore damage";
 
+  public string CaptionMark => UIStrings.PhotoMarkRestore;
+
   public ModelDescriptor[] Models => [DetectorModel, InpainterModel];
 
   public async Task<SKBitmap> ApplyAsync(SKBitmap bitmap, CancellationToken token)
@@ -59,8 +62,12 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
 
     var detector = _DetectorSession ??= await _SessionFactory.LoadSessionAsync(DetectorModel, token);
     using var mask = DetectDamageMask(detector, bitmap);
+    if (!HasAnyDamage(mask))
+    {
+      throw new InvalidOperationException(UIStrings.ErrorPhotoHasNoDamage);
+    }
 
-    return HasAnyDamage(mask) ? await InpaintAsync(bitmap, mask, token) : bitmap.Copy();
+    return await InpaintAsync(bitmap, mask, token);
   }
 
   public void Dispose()
