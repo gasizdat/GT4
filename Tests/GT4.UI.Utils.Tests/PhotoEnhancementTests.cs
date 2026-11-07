@@ -16,7 +16,7 @@ public class PhotoEnhancementTests : IDisposable
   [Fact]
   public async Task Upscale_PhotoSpanningSeveralTiles_MatchesANearestNeighbourX2WithoutSeams()
   {
-    using var enhancement = new UpscalePhotoEnhancement(_Models.SessionFactory());
+    var enhancement = new UpscalePhotoEnhancement(_Models.SessionProvider());
     _Models.Seed(enhancement.Models.Single(), "tiny-upscale-x4.onnx");
     // 600x530 spans two 512px tiles each way, so every tile edge and partial tile is crossed.
     using var photo = PatternBitmap(600, 530);
@@ -46,7 +46,7 @@ public class PhotoEnhancementTests : IDisposable
   [Fact]
   public void Upscale_CaptionMark_NamesTheOutputScaleNotTheModels()
   {
-    using var enhancement = new UpscalePhotoEnhancement(_Models.SessionFactory());
+    var enhancement = new UpscalePhotoEnhancement(_Models.SessionProvider());
 
     enhancement.CaptionMark.Should().EndWith("×2");
   }
@@ -54,7 +54,7 @@ public class PhotoEnhancementTests : IDisposable
   [Fact]
   public async Task Colorize_KeepsSourceDimensions()
   {
-    using var enhancement = new ColorizePhotoEnhancement(_Models.SessionFactory());
+    var enhancement = new ColorizePhotoEnhancement(_Models.SessionProvider());
     _Models.Seed(enhancement.Models.Single(), "tiny-colorize.onnx");
     using var photo = TestBitmap(30, 20);
 
@@ -67,7 +67,7 @@ public class PhotoEnhancementTests : IDisposable
   [Fact]
   public async Task Upscale_MissingModel_SurfacesModelDownloadException()
   {
-    using var enhancement = new UpscalePhotoEnhancement(_Models.SessionFactory());
+    var enhancement = new UpscalePhotoEnhancement(_Models.SessionProvider());
     using var photo = TestBitmap(10, 10);
 
     var act = () => enhancement.ApplyAsync(photo, CancellationToken.None);
@@ -78,7 +78,7 @@ public class PhotoEnhancementTests : IDisposable
   [Fact]
   public async Task Upscale_PhotoOverOneMegapixel_IsRefusedBeforeTheModelLoads()
   {
-    using var enhancement = new UpscalePhotoEnhancement(_Models.SessionFactory());
+    var enhancement = new UpscalePhotoEnhancement(_Models.SessionProvider());
     using var photo = TestBitmap(1025, 1024);
 
     var act = () => enhancement.ApplyAsync(photo, CancellationToken.None);
@@ -90,7 +90,7 @@ public class PhotoEnhancementTests : IDisposable
   [Fact]
   public async Task Upscale_PhotoOfExactlyOneMegapixel_GoesOnToLoadTheModel()
   {
-    using var enhancement = new UpscalePhotoEnhancement(_Models.SessionFactory());
+    var enhancement = new UpscalePhotoEnhancement(_Models.SessionProvider());
     using var photo = TestBitmap(1024, 1024);
 
     var act = () => enhancement.ApplyAsync(photo, CancellationToken.None);
@@ -106,9 +106,9 @@ public class PhotoEnhancementTests : IDisposable
     CultureInfo.CurrentUICulture = new CultureInfo(Language.DE.Code);
     try
     {
-      using var upscale = new UpscalePhotoEnhancement(_Models.SessionFactory());
-      using var colorize = new ColorizePhotoEnhancement(_Models.SessionFactory());
-      using var restore = new RestorePhotoEnhancement(_Models.SessionFactory());
+      var upscale = new UpscalePhotoEnhancement(_Models.SessionProvider());
+      var colorize = new ColorizePhotoEnhancement(_Models.SessionProvider());
+      var restore = new RestorePhotoEnhancement(_Models.SessionProvider());
 
       string[] names = [upscale.DisplayName, colorize.DisplayName, restore.DisplayName];
 

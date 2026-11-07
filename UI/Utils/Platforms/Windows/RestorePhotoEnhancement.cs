@@ -7,7 +7,7 @@ using SkiaSharp;
 
 namespace GT4.UI.Utils.Platforms.Windows;
 
-public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDisposable
+public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
 {
   internal static readonly ModelDescriptor DetectorModel = new(
     "scratch-detector.onnx",
@@ -40,13 +40,11 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
   // upsampled would scale the margin by the photo/detector downsample ratio instead.
   private const int MaskDilationIterations = 3;
 
-  private readonly IModelSessionFactory _SessionFactory;
-  private InferenceSession? _DetectorSession;
-  private InferenceSession? _InpainterSession;
+  private readonly IModelSessionProvider _SessionProvider;
 
-  public RestorePhotoEnhancement(IModelSessionFactory sessionFactory)
+  public RestorePhotoEnhancement(IModelSessionProvider sessionProvider)
   {
-    _SessionFactory = sessionFactory;
+    _SessionProvider = sessionProvider;
   }
 
   public string DisplayName => UIStrings.EnhancementRestore;
@@ -59,7 +57,7 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
   {
     token.ThrowIfCancellationRequested();
 
-    var detector = _DetectorSession ??= await _SessionFactory.LoadSessionAsync(DetectorModel, token);
+    var detector = await _SessionProvider.GetSessionAsync(DetectorModel, token);
     using var mask = DetectDamageMask(detector, bitmap);
     if (!HasAnyDamage(mask))
     {
@@ -69,11 +67,7 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
     return await InpaintAsync(bitmap, mask, token);
   }
 
-  public void Dispose()
-  {
-    _DetectorSession?.Dispose();
-    _InpainterSession?.Dispose();
-  }
+  public void ReleaseModels() => _SessionProvider.Release(Models);
 
   internal static SKBitmap DetectDamageMask(InferenceSession detector, SKBitmap bitmap)
   {
@@ -158,7 +152,7 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
 
   private async Task<SKBitmap> InpaintAsync(SKBitmap bitmap, SKBitmap mask, CancellationToken token)
   {
-    var inpainter = _InpainterSession ??= await _SessionFactory.LoadSessionAsync(InpainterModel, token);
+    var inpainter = await _SessionProvider.GetSessionAsync(InpainterModel, token);
 
     using var inpaintedFull = bitmap.Copy();
     for (var tileY = 0; tileY < bitmap.Height; tileY += InpaintTileSize)

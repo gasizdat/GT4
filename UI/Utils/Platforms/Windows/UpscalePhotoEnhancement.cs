@@ -7,7 +7,7 @@ using SkiaSharp;
 
 namespace GT4.UI.Utils.Platforms.Windows;
 
-public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDisposable
+public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition
 {
   private static readonly ModelDescriptor Model = new(
     "realesr-general-x4v3.onnx",
@@ -26,12 +26,11 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
   // a tile padded by that much comes out identical to a single pass over the whole photo.
   private const int TilePadding = 34;
 
-  private readonly IModelSessionFactory _SessionFactory;
-  private InferenceSession? _Session;
+  private readonly IModelSessionProvider _SessionProvider;
 
-  public UpscalePhotoEnhancement(IModelSessionFactory sessionFactory)
+  public UpscalePhotoEnhancement(IModelSessionProvider sessionProvider)
   {
-    _SessionFactory = sessionFactory;
+    _SessionProvider = sessionProvider;
   }
 
   public string DisplayName => UIStrings.EnhancementUpscale;
@@ -53,7 +52,7 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
       throw new InvalidOperationException(message);
     }
 
-    var session = _Session ??= await _SessionFactory.LoadSessionAsync(Model, token);
+    var session = await _SessionProvider.GetSessionAsync(Model, token);
 
     var inputName = session.InputMetadata.Keys.First();
     var outputName = session.OutputMetadata.Keys.First();
@@ -80,7 +79,7 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
     return upscaled.Resize(info, sampling);
   }
 
-  public void Dispose() => _Session?.Dispose();
+  public void ReleaseModels() => _SessionProvider.Release(Models);
 
   private static DenseTensor<float> ToInputTensor(SKBitmap bitmap, SKRectI area)
   {

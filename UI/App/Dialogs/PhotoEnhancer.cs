@@ -65,6 +65,16 @@ public class PhotoEnhancer
     }
   }
 
+  // Called as a dialog that can enhance completes, not after each enhancement, so the photos enhanced in one
+  // dialog pay each model's load once.
+  public void ReleaseModels()
+  {
+    foreach (var enhancement in _Enhancements)
+    {
+      enhancement.ReleaseModels();
+    }
+  }
+
   // Virtual only so a device test can answer the sheet, which a test cannot drive.
   protected virtual Task<string> ChooseEnhancementAsync(Page page, string[] names) =>
     page.DisplayActionSheetAsync(UIStrings.TitleEnhancePhoto, UIStrings.BtnNameCancel, null, names);
