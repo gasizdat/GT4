@@ -7,6 +7,8 @@ internal sealed class DoublingEnhancement : IPhotoEnhancement
 {
   public SKSizeI? Received { get; private set; }
 
+  public int ReleaseCount { get; private set; }
+
   public string DisplayName { get; init; } = "Double";
 
   public string CaptionMark { get; init; } = "Doubled";
@@ -27,4 +29,6 @@ internal sealed class DoublingEnhancement : IPhotoEnhancement
     doubled.Erase(SKColors.Blue);
     return Task.FromResult(doubled);
   }
+
+  public void ReleaseModels() => ReleaseCount++;
 }

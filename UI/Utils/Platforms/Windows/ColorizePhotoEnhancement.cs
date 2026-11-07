@@ -7,7 +7,7 @@ using SkiaSharp;
 
 namespace GT4.UI.Utils.Platforms.Windows;
 
-public class ColorizePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDisposable
+public class ColorizePhotoEnhancement : IPhotoEnhancement, IModelDefinition
 {
   private static readonly ModelDescriptor Model = new(
     "ddcolor-tiny-fp16.onnx",
@@ -19,7 +19,6 @@ public class ColorizePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDi
   private const int ModelSize = 512;
 
   private readonly IModelSessionFactory _SessionFactory;
-  private InferenceSession? _Session;
 
   public ColorizePhotoEnhancement(IModelSessionFactory sessionFactory)
   {
@@ -36,7 +35,7 @@ public class ColorizePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDi
   {
     token.ThrowIfCancellationRequested();
 
-    var session = _Session ??= await _SessionFactory.LoadSessionAsync(Model, token);
+    var session = await _SessionFactory.LoadSessionAsync(Model, token);
     var width = bitmap.Width;
     var height = bitmap.Height;
 
@@ -61,7 +60,7 @@ public class ColorizePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDi
     return ToOutputBitmap(fullL, ab, width, height);
   }
 
-  public void Dispose() => _Session?.Dispose();
+  public void ReleaseModels() => _SessionFactory.Release(Models);
 
   private static DenseTensor<float> ToInputTensor(float[,] fullL, int width, int height)
   {

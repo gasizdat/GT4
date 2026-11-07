@@ -238,6 +238,37 @@ public class CreateOrUpdateNameDialogTests
   }
 
   [Fact]
+  public async Task Enhancement_models_stay_loaded_until_the_dialog_is_saved()
+  {
+    var services = new TestServices();
+    var enhancement = new DoublingEnhancement();
+    var enhancer = new TestablePhotoEnhancer(services, [enhancement]) { EnhancementAnswer = enhancement.DisplayName };
+    var dialog = await CreateDialogAsync(services, [new Data(10, TestImages.ValidPng, "image/png", DataCategory.FamilyMainPhoto)], enhancer);
+    await using var window = await WindowHost.AttachAsync(dialog);
+
+    await EnhanceAdorners.TapAsync(dialog, dialog.Photos, "EnhanceFamilyPhotoCommand", dialog.Photos.Single());
+    await WaitForAsync(() => dialog.Photos.Count, count => count == 2, "The enhanced photo was never added.");
+    Assert.Equal(0, enhancement.ReleaseCount);
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.DialogCommand.Execute(null));
+    await dialog.Info;
+
+    Assert.Equal(1, enhancement.ReleaseCount);
+  }
+
+  [Fact]
+  public async Task Cancelling_the_dialog_releases_the_enhancement_models()
+  {
+    var services = new TestServices();
+    var enhancement = new DoublingEnhancement();
+    var dialog = await CreateDialogAsync(services, photoEnhancer: new TestablePhotoEnhancer(services, [enhancement]));
+
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.CancelCommand.Execute(null));
+
+    Assert.Null(await dialog.Info);
+    Assert.Equal(1, enhancement.ReleaseCount);
+  }
+
+  [Fact]
   public async Task A_long_photo_caption_does_not_widen_the_photo_slot()
   {
     var dialog = await CreateDialogAsync(new TestServices(), [Photo(1, DataCategory.FamilyMainPhoto)]);

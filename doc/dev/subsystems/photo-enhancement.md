@@ -119,10 +119,16 @@ and is compared case-insensitively.
   model gets into the hundreds of MB (LaMa is ~208MB); a `MemoryStream` copy would transiently
   double that.
 - Cache location: `IStorage.Models`, under `%APPDATA%\{app GUID}\.models`.
-- All three Windows `IPhotoEnhancement`s are registered `AddSingleton` and lazily
-  `??=` their `InferenceSession`(s) on first use, so a loaded session lives for the app's
-  lifetime. That `??=` isn't guarded against a concurrent first-use race — a known, accepted,
-  pre-existing pattern shared by all three enhancers, not something to fix in just one of them.
+- `ModelSessionFactory` owns every `InferenceSession`. It caches one per model, and a gate makes
+  a concurrent first load share a single session. The enhancers hold none themselves. A loaded
+  session stays loaded until `PhotoEnhancer.ReleaseModels`, which the person and name dialogs call
+  as they complete (saved or cancelled). The photos enhanced in one dialog then pay each model's
+  load once, and nothing stays held after it closes. Measured costs (#541): ORT's arena grows
+  during the first `Run`, so a used session holds Upscale ~350 MB, Colorize ~2.1 GB, the
+  detector ~530 MB and LaMa ~610 MB. Reloading costs 0.02 s, 0.45 s, 0.35 s and 7.7 s
+  respectively. LaMa's load isn't graph optimization: it is still 6.2 s with optimization off.
+  Closing a family-name dialog nested inside the person dialog releases the person dialog's
+  sessions too, because the cache is shared.
 - `RestorePhotoEnhancement` only loads the inpainter session if the detector found any damage
   (`HasAnyDamage`) — an undamaged photo is refused without paying LaMa's load cost.
 - Perf: LaMa measured ~2.2s per 512x512 tile in Release with default `SessionOptions`. A first-ever

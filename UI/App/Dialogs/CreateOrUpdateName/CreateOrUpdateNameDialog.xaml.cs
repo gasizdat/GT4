@@ -315,13 +315,19 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     return true;
   }
 
-  private void Cancel() => _Info.TrySetResult(null);
+  private void Cancel() => Complete(null);
+
+  private void Complete(Result? result)
+  {
+    _PhotoEnhancer.ReleaseModels();
+    _Info.TrySetResult(result);
+  }
 
   private async Task OnCreateFamilyAsync()
   {
     if (NotReady)
     {
-      _Info.TrySetResult(null);
+      Complete(null);
       return;
     }
 
@@ -338,7 +344,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     var maleName = ShowDeclensionNames ? MaleName : string.Empty;
     var femaleName = ShowDeclensionNames ? FemaleName : string.Empty;
     var attachments = await PersonDataItem.ToDataAsync(_Attachments);
-    _Info.TrySetResult(new(name, maleName, femaleName, allPhotos, attachments));
+    Complete(new(name, maleName, femaleName, allPhotos, attachments));
   }
 
   private PersonDataItem GetFamilyData(Data data, DataCategory dataCategory)

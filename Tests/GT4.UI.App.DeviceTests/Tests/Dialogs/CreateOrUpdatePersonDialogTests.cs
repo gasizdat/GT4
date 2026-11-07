@@ -428,6 +428,34 @@ public class CreateOrUpdatePersonDialogTests
     Assert.Null(enhancement.Received);
   }
 
+  [Fact]
+  public async Task Enhancement_models_stay_loaded_until_the_dialog_is_saved()
+  {
+    var person = CreateSamplePerson() with { MainPhoto = new Data(10, Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
+    var enhancement = new DoublingEnhancement();
+    var (dialog, enhancer) = await CreateEnhancingDialogAsync(new TestServices(), person, enhancement);
+    await using var window = await WindowHost.AttachAsync(dialog);
+
+    var copy = await EnhanceAsync(dialog, enhancer, dialog.Photos.First(), enhancement);
+    await EnhanceAsync(dialog, enhancer, copy, enhancement);
+    Assert.Equal(0, enhancement.ReleaseCount);
+    await SaveAsync(dialog);
+
+    Assert.Equal(1, enhancement.ReleaseCount);
+  }
+
+  [Fact]
+  public async Task Cancelling_the_dialog_releases_the_enhancement_models()
+  {
+    var enhancement = new DoublingEnhancement();
+    var (dialog, _) = await CreateEnhancingDialogAsync(new TestServices(), CreateSamplePerson(), enhancement);
+
+    await MainThread.InvokeOnMainThreadAsync(() => dialog.DialogCommand.Execute(PageLayout.GoBackCommandParameter));
+
+    Assert.Null(await dialog.Info);
+    Assert.Equal(1, enhancement.ReleaseCount);
+  }
+
   private static byte[] Png(int width, int height)
   {
     using var bitmap = new SKBitmap(width, height);

@@ -246,13 +246,19 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     return true;
   }
 
-  private void Cancel() => _Info.TrySetResult(null);
+  private void Cancel() => Complete(null);
+
+  private void Complete(PersonFullInfo? result)
+  {
+    _Factory.PhotoEnhancer.ReleaseModels();
+    _Info.TrySetResult(result);
+  }
 
   private async Task OnCreatePersonCommandAsync()
   {
     if (_NotReady)
     {
-      _Info.TrySetResult(null);
+      Complete(null);
       return;
     }
 
@@ -284,7 +290,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       gedcomData: _GedcomData,
       attachments: attachments);
 
-    _Info.TrySetResult(result);
+    Complete(result);
   }
 
   protected async Task OnAddPersonNameAsync()

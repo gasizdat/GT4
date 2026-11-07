@@ -65,6 +65,16 @@ public class PhotoEnhancer
     }
   }
 
+  // Called as the dialog that enhanced completes, not after each enhancement, so the photos enhanced in one
+  // dialog pay a model's load once (LaMa's is ~8 s); a used model can otherwise hold up to ~2 GB.
+  public void ReleaseModels()
+  {
+    foreach (var enhancement in _Enhancements)
+    {
+      enhancement.ReleaseModels();
+    }
+  }
+
   // Virtual only so a device test can answer the sheet, which a test cannot drive.
   protected virtual Task<string> ChooseEnhancementAsync(Page page, string[] names) =>
     page.DisplayActionSheetAsync(UIStrings.TitleEnhancePhoto, UIStrings.BtnNameCancel, null, names);
