@@ -1266,6 +1266,20 @@ public class CreateOrUpdatePersonDialogTests
     Assert.Equal(Resources.UIStrings.BtnNameCancel, dialog.DialogButtonName);
   }
 
+  [Fact]
+  public async Task A_long_photo_caption_does_not_widen_the_photo_slot()
+  {
+    var dialog = await CreateDialogAsync(new TestServices(), CreateSamplePerson());
+    var photo = dialog.Photos.First();
+    await MainThread.InvokeOnMainThreadAsync(
+      () => photo.Caption = "Grandma at the farm in the summer of 1952 (AI: colorized) (AI: restored) (AI: upscaled x4)");
+
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var (slot, picture) = await PhotoSlot.WidthsAsync(dialog, photo);
+
+    Assert.Equal(picture, slot, 1.0);
+  }
+
 #if WINDOWS
   // #446: a long biography must keep growing freely (no artificial cap), and its toolbar must
   // float to stay reachable at the dialog's own scroll viewport top instead of scrolling away.

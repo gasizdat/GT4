@@ -238,6 +238,20 @@ public class CreateOrUpdateNameDialogTests
   }
 
   [Fact]
+  public async Task A_long_photo_caption_does_not_widen_the_photo_slot()
+  {
+    var dialog = await CreateDialogAsync(new TestServices(), [Photo(1, DataCategory.FamilyMainPhoto)]);
+    var photo = dialog.Photos.Single();
+    await MainThread.InvokeOnMainThreadAsync(
+      () => photo.Caption = "The family at the old house in the summer of 1952 (AI: colorized) (AI: restored) (AI: upscaled x4)");
+
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var (slot, picture) = await PhotoSlot.WidthsAsync(dialog, photo);
+
+    Assert.Equal(picture, slot, 1.0);
+  }
+
+  [Fact]
   public async Task No_enhance_adorner_shows_when_no_enhancement_is_registered()
   {
     var dialog = await CreateDialogAsync(new TestServices(), [Photo(1, DataCategory.FamilyMainPhoto), Photo(2)]);

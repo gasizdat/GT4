@@ -141,8 +141,11 @@
 
                       </Grid>
 
-                      <HorizontalStackLayout>
+                      <Grid
+                          ColumnDefinitions="Auto, *"
+                          WidthRequest="{StaticResource PhotoWidth}">
                         <Button
+                            Grid.Column="0"
                             Command="{Binding DialogCommand, Source={x:Reference Root}}"
                             Style="{StaticResource CaptionAdorner}">
 
@@ -154,10 +157,11 @@
                         </Button>
 
                         <Label
+                            Grid.Column="1"
                             Style="{StaticResource FieldValue}"
                             Text="{Binding Caption}"
                             VerticalOptions="Center" />
-                      </HorizontalStackLayout>
+                      </Grid>
                     </VerticalStackLayout>
                   </DataTemplate>
                 </CollectionView.ItemTemplate>
@@ -209,10 +213,12 @@
                           Text="{Binding Content.DisplayName}"
                           VerticalOptions="Center" />
 
-                      <HorizontalStackLayout
+                      <Grid
                           Grid.Row="1"
-                          Grid.Column="0">
+                          Grid.Column="0"
+                          ColumnDefinitions="Auto, *">
                         <Button
+                            Grid.Column="0"
                             Command="{Binding DialogCommand, Source={x:Reference Root}}"
                             Style="{StaticResource CaptionAdorner}">
 
@@ -224,10 +230,11 @@
                         </Button>
 
                         <Label
+                            Grid.Column="1"
                             Style="{StaticResource FieldValue}"
                             Text="{Binding Caption}"
                             VerticalOptions="Center" />
-                      </HorizontalStackLayout>
+                      </Grid>
 
                       <Button
                           Grid.Row="0"
