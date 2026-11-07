@@ -63,7 +63,8 @@ Two models in sequence, over the whole photo, not per-face:
    Bringing-Old-Photos-Back-to-Life project's `FT_Epoch_latest.pt` checkpoint by
    `Tools/GT4.Tools.ModelExport`) produces a binary damage mask: grayscale, resized so the short
    side is 256 (rounded to a multiple of 16), sigmoid + a 0.4 threshold, then resized back to the
-   photo's full resolution with nearest-neighbor.
+   photo's full resolution with nearest-neighbor. The shrink averages (linear mipmaps, as
+   upstream's Pillow bicubic does), so dust specks too small to survive it go unflagged.
 2. **Inpaint, composite** — LaMa (`lama-fp32.onnx`, `Carve/LaMa-ONNX`'s `lama_fp32.onnx`) fills
    damage at its fixed 512x512 input, tiled across the photo at native resolution (never resizing
    the whole photo through the model) with reflect-padding at the edges; tiles with no mask pixels

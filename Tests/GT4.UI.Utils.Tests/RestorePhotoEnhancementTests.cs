@@ -67,7 +67,7 @@ public class RestorePhotoEnhancementTests : IDisposable
     using var _ = detector;
     // 256x256 so the detector's working resolution maps 1:1 onto photo pixels -- the dilation's
     // 3-detector-pixel reach is then directly observable.
-    using var bitmap = SKBitmap.Decode(HorizontalLinePng(256, 256, 128));
+    using var bitmap = SKBitmap.Decode(HorizontalLinePng(256, 256, 128, 1));
 
     using var mask = RestorePhotoEnhancement.DetectDamageMask(detector, bitmap);
 
@@ -91,17 +91,32 @@ public class RestorePhotoEnhancementTests : IDisposable
     // 2048x2048 downsamples to a 256x256 detector input (an 8x ratio) -- large enough that
     // dilating in the detector's own low resolution before upsampling, instead of after, would
     // make the margin visibly wrong (8x too wide on each side) rather than just imprecise.
-    using var bitmap = SKBitmap.Decode(HorizontalLinePng(2048, 2048, 1024));
+    // The 8px line fills exactly detector row 128's source block (rows 1024-1031).
+    using var bitmap = SKBitmap.Decode(HorizontalLinePng(2048, 2048, 1024, 8));
 
     using var mask = RestorePhotoEnhancement.DetectDamageMask(detector, bitmap);
 
-    // The forward/backward nearest-neighbor mapping alone already blocks the single detected
-    // detector row out to the full 8px source block (rows 1024-1031); the 3-iteration dilation
-    // adds exactly 3 more photo pixels on each side of that block, not 3 detector pixels' worth.
+    // Mapping the detected row back covers its 8px source block; the 3-iteration dilation adds
+    // exactly 3 more photo pixels on each side of that block, not 3 detector pixels' worth.
     mask.GetPixel(1024, 1021).Should().Be(SKColors.White);
     mask.GetPixel(1024, 1034).Should().Be(SKColors.White);
     mask.GetPixel(1024, 1020).Should().Be(SKColors.Black);
     mask.GetPixel(1024, 1035).Should().Be(SKColors.Black);
+  }
+
+  [Fact]
+  public async Task OnePixelLineOnALargePhoto_IsAveragedBelowTheThreshold()
+  {
+    _Models.Seed(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
+    var detector = await _Models.SessionFactory().LoadSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
+    using var _ = detector;
+    // Row 1024 is one that point sampling at the 8x reduction reads at full contrast; averaged,
+    // the line is 1/8 white, under the identity detector's threshold.
+    using var bitmap = SKBitmap.Decode(HorizontalLinePng(2048, 2048, 1024, 1));
+
+    using var mask = RestorePhotoEnhancement.DetectDamageMask(detector, bitmap);
+
+    mask.GetPixel(1024, 1024).Should().Be(SKColors.Black);
   }
 
   [Fact]
@@ -171,12 +186,12 @@ public class RestorePhotoEnhancementTests : IDisposable
     return data.ToArray();
   }
 
-  private static byte[] HorizontalLinePng(int width, int height, int lineY)
+  private static byte[] HorizontalLinePng(int width, int height, int lineY, int lineHeight)
   {
     var info = new SKImageInfo(width, height);
     using var surface = SKSurface.Create(info);
     surface.Canvas.Clear(SKColors.Black);
-    surface.Canvas.DrawRect(0, lineY, width, 1, new SKPaint { Color = SKColors.White });
+    surface.Canvas.DrawRect(0, lineY, width, lineHeight, new SKPaint { Color = SKColors.White });
     using var image = surface.Snapshot();
     using var data = image.Encode(SKEncodedImageFormat.Png, 100);
     return data.ToArray();
