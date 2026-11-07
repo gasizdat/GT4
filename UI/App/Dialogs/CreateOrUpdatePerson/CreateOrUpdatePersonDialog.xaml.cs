@@ -258,7 +258,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
   {
     if (_NotReady)
     {
-      Complete(null);
+      Cancel();
       return;
     }
 

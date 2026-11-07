@@ -331,7 +331,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   {
     if (NotReady)
     {
-      Complete(null);
+      Cancel();
       return;
     }
 
