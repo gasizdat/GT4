@@ -56,6 +56,7 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition
 
     var inputName = session.InputMetadata.Keys.First();
     var outputName = session.OutputMetadata.Keys.First();
+    using var source = bitmap.Copy(SKColorType.Bgra8888);
     using var upscaled = new SKBitmap(bitmap.Width * ModelScale, bitmap.Height * ModelScale);
     for (var tileY = 0; tileY < bitmap.Height; tileY += TileSize)
     {
@@ -66,10 +67,10 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition
         tile.Intersect(bitmap.Info.Rect);
         var padded = SKRectI.Inflate(tile, TilePadding, TilePadding);
         padded.Intersect(bitmap.Info.Rect);
-        var input = ToInputTensor(bitmap, padded);
+        var input = ToInputTensor(source, padded);
 
         using var results = session.Run([NamedOnnxValue.CreateFromTensor(inputName, input)]);
-        var output = results.First(r => r.Name == outputName).AsTensor<float>();
+        var output = (DenseTensor<float>)results.First(r => r.Name == outputName).AsTensor<float>();
         CopyTileInto(upscaled, output, tile, padded);
       }
     }
@@ -84,34 +85,43 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition
   private static DenseTensor<float> ToInputTensor(SKBitmap bitmap, SKRectI area)
   {
     var tensor = new DenseTensor<float>([1, 3, area.Height, area.Width]);
+    var values = tensor.Buffer.Span;
+    var plane = area.Width * area.Height;
+    var pixels = BitmapColors.Of(bitmap);
     for (var y = 0; y < area.Height; y++)
     {
       for (var x = 0; x < area.Width; x++)
       {
-        var pixel = bitmap.GetPixel(area.Left + x, area.Top + y);
-        tensor[0, 0, y, x] = pixel.Red / 255f;
-        tensor[0, 1, y, x] = pixel.Green / 255f;
-        tensor[0, 2, y, x] = pixel.Blue / 255f;
+        var pixel = pixels[(area.Top + y) * bitmap.Width + area.Left + x];
+        var i = y * area.Width + x;
+        values[i] = pixel.Red / 255f;
+        values[plane + i] = pixel.Green / 255f;
+        values[2 * plane + i] = pixel.Blue / 255f;
       }
     }
     return tensor;
   }
 
-  private static void CopyTileInto(SKBitmap destination, Tensor<float> output, SKRectI tile, SKRectI padded)
+  private static void CopyTileInto(SKBitmap destination, DenseTensor<float> output, SKRectI tile, SKRectI padded)
   {
     static byte Clamp(float v) => (byte)Math.Clamp(v * 255f, 0f, 255f);
 
+    var values = output.Buffer.Span;
+    var outputWidth = output.Dimensions[3];
+    var plane = output.Dimensions[2] * outputWidth;
+    var pixels = BitmapColors.Of(destination);
     for (var y = tile.Top * ModelScale; y < tile.Bottom * ModelScale; y++)
     {
       var outputY = y - padded.Top * ModelScale;
       for (var x = tile.Left * ModelScale; x < tile.Right * ModelScale; x++)
       {
         var outputX = x - padded.Left * ModelScale;
-        var red = Clamp(output[0, 0, outputY, outputX]);
-        var green = Clamp(output[0, 1, outputY, outputX]);
-        var blue = Clamp(output[0, 2, outputY, outputX]);
+        var i = outputY * outputWidth + outputX;
+        var red = Clamp(values[i]);
+        var green = Clamp(values[plane + i]);
+        var blue = Clamp(values[2 * plane + i]);
         var color = new SKColor(red, green, blue);
-        destination.SetPixel(x, y, color);
+        pixels[y * destination.Width + x] = color;
       }
     }
   }

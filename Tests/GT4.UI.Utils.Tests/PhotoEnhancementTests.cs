@@ -44,6 +44,32 @@ public class PhotoEnhancementTests : IDisposable
   }
 
   [Fact]
+  public async Task Upscale_GrayscalePhoto_MatchesANearestNeighbourX2()
+  {
+    var enhancement = new UpscalePhotoEnhancement(_Models.SessionProvider());
+    _Models.Seed(enhancement.Models.Single(), "tiny-upscale-x4.onnx");
+    using var photo = GrayPatternBitmap(40, 30);
+
+    using var bitmap = await enhancement.ApplyAsync(photo, CancellationToken.None);
+
+    var upscaled = bitmap.Pixels;
+    var source = photo.GetPixelSpan().ToArray();
+    var mismatches = 0;
+    for (var y = 0; y < bitmap.Height; y++)
+    {
+      for (var x = 0; x < bitmap.Width; x++)
+      {
+        var gray = source[y / 2 * photo.Width + x / 2];
+        if (upscaled[y * bitmap.Width + x] != new SKColor(gray, gray, gray))
+        {
+          mismatches++;
+        }
+      }
+    }
+    mismatches.Should().Be(0);
+  }
+
+  [Fact]
   public void Upscale_CaptionMark_NamesTheOutputScaleNotTheModels()
   {
     var enhancement = new UpscalePhotoEnhancement(_Models.SessionProvider());
@@ -75,6 +101,20 @@ public class PhotoEnhancementTests : IDisposable
     using var bitmap = await enhancement.ApplyAsync(photo, CancellationToken.None);
 
     var drift = photo.Pixels.Zip(bitmap.Pixels, (source, colorized) => Math.Abs(Lightness(source) - Lightness(colorized)));
+    drift.Max().Should().BeLessThan(1f);
+  }
+
+  [Fact]
+  public async Task Colorize_GrayscalePhoto_KeepsTheSourceLightnessOfEveryPixel()
+  {
+    var enhancement = new ColorizePhotoEnhancement(_Models.SessionProvider());
+    _Models.Seed(enhancement.Models.Single(), "tiny-colorize.onnx");
+    using var photo = GrayPatternBitmap(40, 30);
+
+    using var bitmap = await enhancement.ApplyAsync(photo, CancellationToken.None);
+
+    var source = photo.GetPixelSpan().ToArray().Select(gray => new SKColor(gray, gray, gray));
+    var drift = source.Zip(bitmap.Pixels, (gray, colorized) => Math.Abs(Lightness(gray) - Lightness(colorized)));
     drift.Max().Should().BeLessThan(1f);
   }
 
@@ -158,6 +198,18 @@ public class PhotoEnhancementTests : IDisposable
         var color = new SKColor((byte)(x % 251), (byte)(y % 241), (byte)((x + y) % 239));
         bitmap.SetPixel(x, y, color);
       }
+    }
+    return bitmap;
+  }
+
+  // A grayscale JPEG decodes as Gray8, one byte per pixel.
+  private static SKBitmap GrayPatternBitmap(int width, int height)
+  {
+    var bitmap = new SKBitmap(new SKImageInfo(width, height, SKColorType.Gray8, SKAlphaType.Opaque));
+    var pixels = bitmap.GetPixelSpan();
+    for (var i = 0; i < pixels.Length; i++)
+    {
+      pixels[i] = (byte)(i * 7 % 251);
     }
     return bitmap;
   }
