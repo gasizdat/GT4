@@ -17,6 +17,10 @@ internal static class EnhanceAdorners
       found => found.Length == photos.Count,
       timeoutMessage: "The CollectionView's enhance adorners never materialized.");
 
+  // An attachment's adorner hides through its own binding or through the wrapper around it.
+  public static bool IsShown(Element element) =>
+    element is not VisualElement visual || visual.IsVisible && (element.Parent is null || IsShown(element.Parent));
+
   public static PersonDataItem Photo(Button adorner) =>
     (PersonDataItem)((AdornerCommandParameter)adorner.CommandParameter).Element;
 

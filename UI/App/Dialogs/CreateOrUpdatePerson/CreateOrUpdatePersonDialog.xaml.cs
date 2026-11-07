@@ -414,13 +414,13 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     IsModified = true;
   }
 
-  private async Task OnEnhancePhotoAsync(PersonDataItem photo)
+  private async Task OnEnhanceMediaAsync(ObservableCollection<PersonDataItem> media, PersonDataItem source)
   {
-    var copy = await _Factory.PhotoEnhancer.EnhanceAsync(this, photo);
+    var copy = await _Factory.PhotoEnhancer.EnhanceAsync(this, source);
     if (copy is not null)
     {
-      var item = GetPersonData(copy, copy.Category.AsTaggedPhoto());
-      _Photos.Insert(_Photos.IndexOf(photo) + 1, item);
+      var item = GetPersonData(copy, copy.Category);
+      media.Insert(media.IndexOf(source) + 1, item);
       IsModified = true;
     }
   }
@@ -620,7 +620,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         await OnAddOrUpdatePhotoAsync(photo);
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "EnhancePhotoCommand" && adorner.Element is PersonDataItem photo:
-        await OnEnhancePhotoAsync(photo);
+        await OnEnhanceMediaAsync(_Photos, photo);
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "RemovePhotoCommand" && adorner.Element is PersonDataItem photo:
         _Photos.Remove(photo);
@@ -634,6 +634,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "EditAttachmentCommand" && adorner.Element is PersonDataItem attachment:
         await OnAddOrUpdateAttachmentAsync(attachment);
+        break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "EnhanceAttachmentCommand" && adorner.Element is PersonDataItem attachment:
+        await OnEnhanceMediaAsync(_Attachments, attachment);
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "RemoveAttachmentCommand" && adorner.Element is PersonDataItem attachment:
         _Attachments.Remove(attachment);

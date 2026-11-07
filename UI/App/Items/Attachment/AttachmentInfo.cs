@@ -13,6 +13,8 @@ public sealed record AttachmentInfo(string FileName, string? Title, Data Data, P
 
   public bool ShowFileName => !string.IsNullOrWhiteSpace(Title);
 
+  public bool IsImage => Image is not null;
+
   // FileName is often a full original path -- a common artifact of GEDCOM imports.
   public async Task OpenAsync(CancellationToken token)
   {

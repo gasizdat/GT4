@@ -29,7 +29,7 @@ public class PhotoEnhancer
 
   public bool CanEnhance => _Enhancements.Any();
 
-  public async Task<Data?> EnhanceAsync(Page page, PersonDataItem photo)
+  public async Task<Data?> EnhanceAsync(Page page, PersonDataItem media)
   {
     var names = _Enhancements.Select(enhancement => enhancement.DisplayName).ToArray();
     var choice = await ChooseEnhancementAsync(page, names);
@@ -39,21 +39,30 @@ public class PhotoEnhancer
       return null;
     }
 
-    var converter = _DataConverterResolver(photo.Info.Category.AsTaggedPhoto());
+    var category = media.Info.Category;
+    var converter = _DataConverterResolver(category.IsAttachment() ? category : category.AsTaggedPhoto());
     var dialog = new ProgressDialog(enhancement.DisplayName, enhancement.DisplayName, UIStrings.HintPhotoEnhancementInProgress, _AlertService);
     await page.Navigation.PushModalAsync(dialog);
     try
     {
       // An unsaved caption edit carries over to the copy.
-      var current = await photo.ToDataAsync();
+      var current = await media.ToDataAsync();
       var source = await converter.ToObjectAsync(current, dialog.Token);
-      var enhanced = await Task.Run(() => enhancement.EnhanceAsync((PhotoInfo)source!, dialog.Token));
+      var attachment = source as AttachmentInfo;
+      var photo = attachment is null ? (PhotoInfo)source! : attachment.Image! with { Caption = attachment.Title };
+      var enhanced = await Task.Run(() => enhancement.EnhanceAsync(photo, dialog.Token));
+      if (attachment is not null)
+      {
+        var copy = attachment with { Title = enhanced.Caption, Image = enhanced };
+        return await converter.FromObjectAsync(copy, dialog.Token);
+      }
+
       // A new photo, so it must not carry the source's stored Id.
       var data = await converter.FromObjectAsync(enhanced, dialog.Token);
       // The copy's caption mark makes it Tagged, but person or family is the source's, not the converter's.
-      var category = photo.Info.Category.AsAdditionalPhoto().AsTaggedPhoto();
+      var copyCategory = category.AsAdditionalPhoto().AsTaggedPhoto();
       // The converter labels everything it encodes image/bmp; unlabelled, the JPEG bytes are sniffed instead.
-      return data! with { MimeType = null, Category = category };
+      return data! with { MimeType = null, Category = copyCategory };
     }
     catch (OperationCanceledException)
     {

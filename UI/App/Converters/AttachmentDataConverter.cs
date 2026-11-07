@@ -12,10 +12,11 @@ public sealed record AttachmentPick(byte[] Content, string FileName, string? Mim
 /// <summary>
 /// Converts a <see cref="DataCategory.PersonAttachment"/>/<see cref="DataCategory.FamilyAttachment"/>'s
 /// <see cref="Data"/> to/from an <see cref="AttachmentInfo"/>; the constructor's category picks which of
-/// the two a freshly picked file is stamped as (one keyed DI registration per category). Unlike a photo,
+/// the two a new attachment is stamped as (one keyed DI registration per category). Unlike a photo,
 /// an attachment is never edited in place -- there is no UI that reassigns an existing attachment's bytes
-/// -- so FromObjectAsync only ever builds a brand-new attachment from a freshly picked file. Lives in
-/// UI.App (not UI.Utils) because encoding/decoding the residue envelope needs Core.Gedcom, same reason as
+/// -- so FromObjectAsync only ever builds a brand-new attachment: from a freshly picked file, or from an
+/// <see cref="AttachmentInfo"/> whose Image is an enhanced copy of its source's. Lives in UI.App (not
+/// UI.Utils) because encoding/decoding the residue envelope needs Core.Gedcom, same reason as
 /// <see cref="PhotoTagDataConverter"/>.
 /// </summary>
 public sealed class AttachmentDataConverter : IDataConverter
@@ -31,19 +32,12 @@ public sealed class AttachmentDataConverter : IDataConverter
     _ImageConverter = new ImageDataConverter(httpClientFactory, imageCache);
   }
 
-  public Task<Data?> FromObjectAsync(object? data, CancellationToken token)
+  public async Task<Data?> FromObjectAsync(object? data, CancellationToken token) => data switch
   {
-    // Null/empty MimeType emits no FORM on export and reimports as a photo, not an attachment.
-    Data? ret = data is AttachmentPick pick
-      ? new Data(
-          Id: ElementId.NonCommittedId,
-          Content: GedcomPhotoResidue.EncodeAttachment(pick.Content, pick.FileName),
-          MimeType: string.IsNullOrEmpty(pick.MimeType) ? MimeTypeOctetStream : pick.MimeType,
-          Category: _Category)
-      : null;
-
-    return Task.FromResult(ret);
-  }
+    AttachmentPick pick => FromFile(pick.Content, pick.FileName, pick.MimeType),
+    AttachmentInfo { Image: { } image } attachment => await FromImageAsync(attachment, image, token),
+    _ => null
+  };
 
   public async Task<object?> ToObjectAsync(Data? data, CancellationToken token)
   {
@@ -59,6 +53,23 @@ public sealed class AttachmentDataConverter : IDataConverter
       : null;
 
     return new AttachmentInfo(fileName ?? string.Empty, title, data, image);
+  }
+
+  // Null/empty MimeType emits no FORM on export and reimports as a photo, not an attachment.
+  private Data FromFile(byte[] content, string fileName, string? mimeType) => new(
+    Id: ElementId.NonCommittedId,
+    Content: GedcomPhotoResidue.EncodeAttachment(content, fileName),
+    MimeType: string.IsNullOrEmpty(mimeType) ? MimeTypeOctetStream : mimeType,
+    Category: _Category);
+
+  private async Task<Data> FromImageAsync(AttachmentInfo attachment, PhotoInfo image, CancellationToken token)
+  {
+    var encoded = await _ImageConverter.FromObjectAsync(image, token);
+    var form = GedcomMedia.SniffForm(encoded!.Content);
+    var fileName = Path.ChangeExtension(attachment.FileName, form);
+    var mimeType = GedcomMedia.ToMimeType(form);
+    var copy = FromFile(encoded.Content, fileName, mimeType);
+    return await GedcomPhotoResidue.WithTitleAsync(copy, attachment.Title, token);
   }
 
   private async Task<PhotoInfo?> ToImageAsync(Data data, CancellationToken token)

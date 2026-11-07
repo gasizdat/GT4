@@ -4,7 +4,7 @@
 ONNX models via `Microsoft.ML.OnnxRuntime`, Windows-only (`GT4.UI.Utils` multi-targets
 android/ios/maccatalyst/windows, so every implementation is `#if WINDOWS`-gated and left
 unregistered everywhere else). Each one is an independent, single-step image transform, offered from
-a photo's ✨ adorner menu in both the person dialog and the family dialog; none of them chain
+a photo's or image attachment's ✨ adorner menu in both the person dialog and the family dialog; none of them chain
 automatically. This page sketches the *approach* each
 takes, not a line-by-line trace — read the class for that.
 
@@ -23,6 +23,12 @@ mark. The mark is an ordinary caption: it exports as GEDCOM `TITL` and the user 
 Because every copy is captioned, it is always saved in the Tagged category; whether it is a person or
 a family photo comes from the source, since the converter stamps a person category on whatever it
 envelopes.
+
+An image attachment (a scanned letter, a certificate) gets the same ✨ adorner; a PDF or other file
+doesn't. Its copy stays an attachment of the source's category, inserted right after it, and its title
+takes the mark. `AttachmentDataConverter` encodes it from the `AttachmentInfo` whose `Image` is the
+result, so the copy is typed by its JPEG bytes: `image/jpeg`, and the source's file name with a
+`.jpeg` extension.
 
 An enhancer refuses a photo it can't or needn't change by throwing `InvalidOperationException` with
 a localized message, before any copy exists; `SafeCommand`'s error alert shows it, and nothing is
