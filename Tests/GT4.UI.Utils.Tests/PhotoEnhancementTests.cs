@@ -43,24 +43,26 @@ public class PhotoEnhancementTests : IDisposable
     mismatches.Should().Be(0);
   }
 
-  [Fact]
-  public async Task Upscale_GrayscalePhoto_MatchesANearestNeighbourX2()
+  [Theory]
+  [InlineData(SKColorType.Gray8, SKAlphaType.Opaque)]
+  [InlineData(SKColorType.Bgra8888, SKAlphaType.Premul)]
+  public async Task Upscale_GrayOrTranslucentPhoto_MatchesANearestNeighbourX2OfItsColours(SKColorType colorType, SKAlphaType alphaType)
   {
     var enhancement = new UpscalePhotoEnhancement(_Models.SessionProvider());
     _Models.Seed(enhancement.Models.Single(), "tiny-upscale-x4.onnx");
-    using var photo = GrayPatternBitmap(40, 30);
+    using var photo = PatternBitmapStoredAs(40, 30, colorType, alphaType);
 
     using var bitmap = await enhancement.ApplyAsync(photo, CancellationToken.None);
 
     var upscaled = bitmap.Pixels;
-    var source = photo.GetPixelSpan().ToArray();
+    var source = photo.Pixels;
     var mismatches = 0;
     for (var y = 0; y < bitmap.Height; y++)
     {
       for (var x = 0; x < bitmap.Width; x++)
       {
-        var gray = source[y / 2 * photo.Width + x / 2];
-        if (upscaled[y * bitmap.Width + x] != new SKColor(gray, gray, gray))
+        var expected = source[y / 2 * photo.Width + x / 2].WithAlpha(255);
+        if (upscaled[y * bitmap.Width + x] != expected)
         {
           mismatches++;
         }
@@ -104,17 +106,18 @@ public class PhotoEnhancementTests : IDisposable
     drift.Max().Should().BeLessThan(1f);
   }
 
-  [Fact]
-  public async Task Colorize_GrayscalePhoto_KeepsTheSourceLightnessOfEveryPixel()
+  [Theory]
+  [InlineData(SKColorType.Gray8, SKAlphaType.Opaque)]
+  [InlineData(SKColorType.Bgra8888, SKAlphaType.Premul)]
+  public async Task Colorize_GrayOrTranslucentPhoto_KeepsTheSourceLightnessOfEveryPixel(SKColorType colorType, SKAlphaType alphaType)
   {
     var enhancement = new ColorizePhotoEnhancement(_Models.SessionProvider());
     _Models.Seed(enhancement.Models.Single(), "tiny-colorize.onnx");
-    using var photo = GrayPatternBitmap(40, 30);
+    using var photo = PatternBitmapStoredAs(40, 30, colorType, alphaType);
 
     using var bitmap = await enhancement.ApplyAsync(photo, CancellationToken.None);
 
-    var source = photo.GetPixelSpan().ToArray().Select(gray => new SKColor(gray, gray, gray));
-    var drift = source.Zip(bitmap.Pixels, (gray, colorized) => Math.Abs(Lightness(gray) - Lightness(colorized)));
+    var drift = photo.Pixels.Zip(bitmap.Pixels, (source, colorized) => Math.Abs(Lightness(source) - Lightness(colorized)));
     drift.Max().Should().BeLessThan(1f);
   }
 
@@ -202,14 +205,18 @@ public class PhotoEnhancementTests : IDisposable
     return bitmap;
   }
 
-  // A grayscale JPEG decodes as Gray8, one byte per pixel.
-  private static SKBitmap GrayPatternBitmap(int width, int height)
+  // A grayscale JPEG decodes as Gray8, and a translucent PNG as premultiplied Bgra8888; neither
+  // stores the colours GetPixel reads back.
+  private static SKBitmap PatternBitmapStoredAs(int width, int height, SKColorType colorType, SKAlphaType alphaType)
   {
-    var bitmap = new SKBitmap(new SKImageInfo(width, height, SKColorType.Gray8, SKAlphaType.Opaque));
-    var pixels = bitmap.GetPixelSpan();
-    for (var i = 0; i < pixels.Length; i++)
+    var bitmap = new SKBitmap(new SKImageInfo(width, height, colorType, alphaType));
+    for (var y = 0; y < height; y++)
     {
-      pixels[i] = (byte)(i * 7 % 251);
+      for (var x = 0; x < width; x++)
+      {
+        var color = new SKColor((byte)(x * 7 % 251), (byte)(y * 11 % 241), (byte)((x + y) * 5 % 239), (byte)(40 + (x + y) % 200));
+        bitmap.SetPixel(x, y, color);
+      }
     }
     return bitmap;
   }

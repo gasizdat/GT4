@@ -39,7 +39,17 @@ public class ColorizePhotoEnhancement : IPhotoEnhancement, IModelDefinition
     var width = bitmap.Width;
     var height = bitmap.Height;
 
-    var fullL = LightnessOf(bitmap);
+    var pixels = bitmap.Pixels;
+    var fullL = new float[height, width];
+    for (var y = 0; y < height; y++)
+    {
+      for (var x = 0; x < width; x++)
+      {
+        var pixel = pixels[y * width + x];
+        var (l, _, _) = Lab.FromSRgb(pixel.Red / 255f, pixel.Green / 255f, pixel.Blue / 255f);
+        fullL[y, x] = l;
+      }
+    }
 
     var inputName = session.InputMetadata.Keys.First();
     var outputName = session.OutputMetadata.Keys.First();
@@ -52,23 +62,6 @@ public class ColorizePhotoEnhancement : IPhotoEnhancement, IModelDefinition
   }
 
   public void ReleaseModels() => _SessionProvider.Release(Models);
-
-  private static float[,] LightnessOf(SKBitmap bitmap)
-  {
-    using var source = bitmap.Copy(SKColorType.Bgra8888);
-    var pixels = BitmapColors.Of(source);
-    var fullL = new float[bitmap.Height, bitmap.Width];
-    for (var y = 0; y < bitmap.Height; y++)
-    {
-      for (var x = 0; x < bitmap.Width; x++)
-      {
-        var pixel = pixels[y * bitmap.Width + x];
-        var (l, _, _) = Lab.FromSRgb(pixel.Red / 255f, pixel.Green / 255f, pixel.Blue / 255f);
-        fullL[y, x] = l;
-      }
-    }
-    return fullL;
-  }
 
   private static DenseTensor<float> ToInputTensor(float[,] fullL, int width, int height)
   {

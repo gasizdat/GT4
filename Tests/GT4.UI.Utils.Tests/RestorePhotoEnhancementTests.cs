@@ -48,6 +48,31 @@ public class RestorePhotoEnhancementTests : IDisposable
   }
 
   [Fact]
+  public async Task TranslucentPhoto_IsReadByItsColoursNotItsPremultipliedValues()
+  {
+    _Models.Seed(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
+    _Models.Seed(RestorePhotoEnhancement.InpainterModel, "tiny-inpainter-constant.onnx");
+    var enhancement = new RestorePhotoEnhancement(_Models.SessionProvider());
+    using var photo = new SKBitmap(64, 48);
+    photo.Erase(new SKColor(40, 60, 80, 128));
+    // Stored premultiplied as 64/255 gray, under the identity detector's threshold.
+    var translucentWhite = new SKColor(255, 255, 255, 64);
+    for (var y = 0; y < 48; y++)
+    {
+      for (var x = 32; x < 64; x++)
+      {
+        photo.SetPixel(x, y, translucentWhite);
+      }
+    }
+    var clean = photo.GetPixel(4, 24);
+
+    using var bitmap = await enhancement.ApplyAsync(photo, CancellationToken.None);
+
+    bitmap.GetPixel(4, 24).Should().Be(clean);
+    bitmap.GetPixel(60, 24).Should().Be(new SKColor(128, 128, 128));
+  }
+
+  [Fact]
   public async Task DamageOnlyPastTheFirstTile_IsInpaintedWhereItIs()
   {
     _Models.Seed(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");

@@ -56,7 +56,7 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition
 
     var inputName = session.InputMetadata.Keys.First();
     var outputName = session.OutputMetadata.Keys.First();
-    using var source = bitmap.Copy(SKColorType.Bgra8888);
+    var colors = bitmap.Pixels;
     using var upscaled = new SKBitmap(bitmap.Width * ModelScale, bitmap.Height * ModelScale);
     for (var tileY = 0; tileY < bitmap.Height; tileY += TileSize)
     {
@@ -67,7 +67,7 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition
         tile.Intersect(bitmap.Info.Rect);
         var padded = SKRectI.Inflate(tile, TilePadding, TilePadding);
         padded.Intersect(bitmap.Info.Rect);
-        var input = ToInputTensor(source, padded);
+        var input = ToInputTensor(colors, bitmap.Width, padded);
 
         using var results = session.Run([NamedOnnxValue.CreateFromTensor(inputName, input)]);
         var output = (DenseTensor<float>)results.First(r => r.Name == outputName).AsTensor<float>();
@@ -82,17 +82,16 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition
 
   public void ReleaseModels() => _SessionProvider.Release(Models);
 
-  private static DenseTensor<float> ToInputTensor(SKBitmap bitmap, SKRectI area)
+  private static DenseTensor<float> ToInputTensor(SKColor[] pixels, int width, SKRectI area)
   {
     var tensor = new DenseTensor<float>([1, 3, area.Height, area.Width]);
     var values = tensor.Buffer.Span;
     var plane = area.Width * area.Height;
-    var pixels = BitmapColors.Of(bitmap);
     for (var y = 0; y < area.Height; y++)
     {
       for (var x = 0; x < area.Width; x++)
       {
-        var pixel = pixels[(area.Top + y) * bitmap.Width + area.Left + x];
+        var pixel = pixels[(area.Top + y) * width + area.Left + x];
         var i = y * area.Width + x;
         values[i] = pixel.Red / 255f;
         values[plane + i] = pixel.Green / 255f;
