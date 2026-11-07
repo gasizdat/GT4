@@ -43,6 +43,34 @@ public class PhotoEnhancementTests : IDisposable
     mismatches.Should().Be(0);
   }
 
+  [Theory]
+  [InlineData(SKColorType.Gray8, SKAlphaType.Opaque)]
+  [InlineData(SKColorType.Bgra8888, SKAlphaType.Premul)]
+  public async Task Upscale_GrayOrTranslucentPhoto_MatchesANearestNeighbourX2OfItsColours(SKColorType colorType, SKAlphaType alphaType)
+  {
+    var enhancement = new UpscalePhotoEnhancement(_Models.SessionProvider());
+    _Models.Seed(enhancement.Models.Single(), "tiny-upscale-x4.onnx");
+    using var photo = PatternBitmapStoredAs(40, 30, colorType, alphaType);
+
+    using var bitmap = await enhancement.ApplyAsync(photo, CancellationToken.None);
+
+    var upscaled = bitmap.Pixels;
+    var source = photo.Pixels;
+    var mismatches = 0;
+    for (var y = 0; y < bitmap.Height; y++)
+    {
+      for (var x = 0; x < bitmap.Width; x++)
+      {
+        var expected = source[y / 2 * photo.Width + x / 2].WithAlpha(255);
+        if (upscaled[y * bitmap.Width + x] != expected)
+        {
+          mismatches++;
+        }
+      }
+    }
+    mismatches.Should().Be(0);
+  }
+
   [Fact]
   public void Upscale_CaptionMark_NamesTheOutputScaleNotTheModels()
   {
@@ -71,6 +99,21 @@ public class PhotoEnhancementTests : IDisposable
     _Models.Seed(enhancement.Models.Single(), "tiny-colorize.onnx");
     // Larger than the model's 512px input both ways, so lightness taken from the model's grid instead of the source shows.
     using var photo = PatternBitmap(600, 530);
+
+    using var bitmap = await enhancement.ApplyAsync(photo, CancellationToken.None);
+
+    var drift = photo.Pixels.Zip(bitmap.Pixels, (source, colorized) => Math.Abs(Lightness(source) - Lightness(colorized)));
+    drift.Max().Should().BeLessThan(1f);
+  }
+
+  [Theory]
+  [InlineData(SKColorType.Gray8, SKAlphaType.Opaque)]
+  [InlineData(SKColorType.Bgra8888, SKAlphaType.Premul)]
+  public async Task Colorize_GrayOrTranslucentPhoto_KeepsTheSourceLightnessOfEveryPixel(SKColorType colorType, SKAlphaType alphaType)
+  {
+    var enhancement = new ColorizePhotoEnhancement(_Models.SessionProvider());
+    _Models.Seed(enhancement.Models.Single(), "tiny-colorize.onnx");
+    using var photo = PatternBitmapStoredAs(40, 30, colorType, alphaType);
 
     using var bitmap = await enhancement.ApplyAsync(photo, CancellationToken.None);
 
@@ -156,6 +199,22 @@ public class PhotoEnhancementTests : IDisposable
       for (var x = 0; x < width; x++)
       {
         var color = new SKColor((byte)(x % 251), (byte)(y % 241), (byte)((x + y) % 239));
+        bitmap.SetPixel(x, y, color);
+      }
+    }
+    return bitmap;
+  }
+
+  // A grayscale JPEG decodes as Gray8, and a translucent PNG as premultiplied Bgra8888; neither
+  // stores the colours GetPixel reads back.
+  private static SKBitmap PatternBitmapStoredAs(int width, int height, SKColorType colorType, SKAlphaType alphaType)
+  {
+    var bitmap = new SKBitmap(new SKImageInfo(width, height, colorType, alphaType));
+    for (var y = 0; y < height; y++)
+    {
+      for (var x = 0; x < width; x++)
+      {
+        var color = new SKColor((byte)(x * 7 % 251), (byte)(y * 11 % 241), (byte)((x + y) * 5 % 239), (byte)(40 + (x + y) % 200));
         bitmap.SetPixel(x, y, color);
       }
     }

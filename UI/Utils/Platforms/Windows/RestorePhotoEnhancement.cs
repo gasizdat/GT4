@@ -80,21 +80,22 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
     var info = new SKImageInfo(dw, dh);
     var sampling = new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear);
     using var resized = bitmap.Resize(info, sampling);
+    var resizedPixels = resized.Pixels;
     var input = new DenseTensor<float>([1, 1, dh, dw]);
-    for (var y = 0; y < dh; y++)
+    var inputValues = input.Buffer.Span;
+    for (var i = 0; i < dw * dh; i++)
     {
-      for (var x = 0; x < dw; x++)
-      {
-        var pixel = resized.GetPixel(x, y);
-        var gray = (pixel.Red * 0.299f + pixel.Green * 0.587f + pixel.Blue * 0.114f) / 255f;
-        input[0, 0, y, x] = gray * 2f - 1f;
-      }
+      var pixel = resizedPixels[i];
+      var gray = (pixel.Red * 0.299f + pixel.Green * 0.587f + pixel.Blue * 0.114f) / 255f;
+      inputValues[i] = gray * 2f - 1f;
     }
 
     var inputName = detector.InputMetadata.Keys.First();
     var outputName = detector.OutputMetadata.Keys.First();
     using var results = detector.Run([NamedOnnxValue.CreateFromTensor(inputName, input)]);
-    var logits = results.First(r => r.Name == outputName).AsTensor<float>();
+    var logits = (DenseTensor<float>)results.First(r => r.Name == outputName).AsTensor<float>();
+    var logitValues = logits.Buffer.Span;
+    var logitWidth = logits.Dimensions[3];
 
     var damaged = new bool[bitmap.Height, bitmap.Width];
     for (var y = 0; y < bitmap.Height; y++)
@@ -103,17 +104,18 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
       for (var x = 0; x < bitmap.Width; x++)
       {
         var dx = Math.Min(dw - 1, x * dw / bitmap.Width);
-        damaged[y, x] = Sigmoid(logits[0, 0, dy, dx]) >= DamageThreshold;
+        damaged[y, x] = Sigmoid(logitValues[dy * logitWidth + dx]) >= DamageThreshold;
       }
     }
     damaged = DilateMask(damaged, bitmap.Width, bitmap.Height);
 
     var mask = new SKBitmap(bitmap.Width, bitmap.Height);
+    var maskPixels = BitmapColors.Of(mask);
     for (var y = 0; y < bitmap.Height; y++)
     {
       for (var x = 0; x < bitmap.Width; x++)
       {
-        mask.SetPixel(x, y, damaged[y, x] ? SKColors.White : SKColors.Black);
+        maskPixels[y * bitmap.Width + x] = damaged[y, x] ? SKColors.White : SKColors.Black;
       }
     }
     return mask;
@@ -157,7 +159,9 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
   {
     var inpainter = await _SessionProvider.GetSessionAsync(InpainterModel, token);
 
-    using var inpaintedFull = bitmap.Copy();
+    var source = bitmap.Pixels;
+    using var inpaintedFull = new SKBitmap(bitmap.Width, bitmap.Height);
+    inpaintedFull.Pixels = source;
     var weights = new float[bitmap.Height, bitmap.Width];
     foreach (var tileY in TileOrigins(bitmap.Height))
     {
@@ -169,7 +173,7 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
           continue;
         }
 
-        using var tileResult = InpaintTile(inpainter, bitmap, mask, tileX, tileY);
+        using var tileResult = InpaintTile(inpainter, source, mask, tileX, tileY);
         BlendTileInto(inpaintedFull, weights, tileResult, tileX, tileY);
       }
     }
@@ -194,11 +198,12 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
 
   private static bool HasDamageIn(SKBitmap mask, int x0, int y0, int x1, int y1)
   {
+    var pixels = BitmapColors.Of(mask);
     for (var y = y0; y < y1; y++)
     {
       for (var x = x0; x < x1; x++)
       {
-        if (mask.GetPixel(x, y).Red != 0)
+        if (pixels[y * mask.Width + x].Red != 0)
         {
           return true;
         }
@@ -207,21 +212,31 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
     return false;
   }
 
-  private static SKBitmap InpaintTile(InferenceSession inpainter, SKBitmap bitmap, SKBitmap mask, int tileX, int tileY)
+  private static SKBitmap InpaintTile(InferenceSession inpainter, SKColor[] pixels, SKBitmap mask, int tileX, int tileY)
   {
+    const int Plane = InpaintTileSize * InpaintTileSize;
+    // lama_fp32.onnx's output is already scaled to 0-255 -- confirmed empirically (a known
+    // all-255 channel in, all-255 channel out), unlike its [0,1]-normalized input.
+    static byte ToByte(float v) => (byte)Math.Clamp(v, 0f, 255f);
+
     var image = new DenseTensor<float>([1, 3, InpaintTileSize, InpaintTileSize]);
     var maskTensor = new DenseTensor<float>([1, 1, InpaintTileSize, InpaintTileSize]);
+    var imageValues = image.Buffer.Span;
+    var maskValues = maskTensor.Buffer.Span;
+    var maskPixels = BitmapColors.Of(mask);
     for (var y = 0; y < InpaintTileSize; y++)
     {
-      var sourceY = ReflectIndex(tileY + y, bitmap.Height);
+      var sourceY = ReflectIndex(tileY + y, mask.Height);
       for (var x = 0; x < InpaintTileSize; x++)
       {
-        var sourceX = ReflectIndex(tileX + x, bitmap.Width);
-        var pixel = bitmap.GetPixel(sourceX, sourceY);
-        image[0, 0, y, x] = pixel.Red / 255f;
-        image[0, 1, y, x] = pixel.Green / 255f;
-        image[0, 2, y, x] = pixel.Blue / 255f;
-        maskTensor[0, 0, y, x] = mask.GetPixel(sourceX, sourceY).Red != 0 ? 1f : 0f;
+        var sourceX = ReflectIndex(tileX + x, mask.Width);
+        var sourceIndex = sourceY * mask.Width + sourceX;
+        var pixel = pixels[sourceIndex];
+        var i = y * InpaintTileSize + x;
+        imageValues[i] = pixel.Red / 255f;
+        imageValues[Plane + i] = pixel.Green / 255f;
+        imageValues[2 * Plane + i] = pixel.Blue / 255f;
+        maskValues[i] = maskPixels[sourceIndex].Red != 0 ? 1f : 0f;
       }
     }
 
@@ -229,19 +244,15 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
       NamedOnnxValue.CreateFromTensor("image", image),
       NamedOnnxValue.CreateFromTensor("mask", maskTensor),
     ]);
-    var output = results.First(r => r.Name == "output").AsTensor<float>();
+    var output = (DenseTensor<float>)results.First(r => r.Name == "output").AsTensor<float>();
+    var outputValues = output.Buffer.Span;
 
     var tile = new SKBitmap(InpaintTileSize, InpaintTileSize);
-    for (var y = 0; y < InpaintTileSize; y++)
+    var tilePixels = BitmapColors.Of(tile);
+    for (var i = 0; i < Plane; i++)
     {
-      for (var x = 0; x < InpaintTileSize; x++)
-      {
-        // lama_fp32.onnx's output is already scaled to 0-255 -- confirmed empirically (a known
-        // all-255 channel in, all-255 channel out), unlike its [0,1]-normalized input.
-        byte ToByte(float v) => (byte)Math.Clamp(v, 0f, 255f);
-        tile.SetPixel(x, y, new SKColor(
-          ToByte(output[0, 0, y, x]), ToByte(output[0, 1, y, x]), ToByte(output[0, 2, y, x])));
-      }
+      tilePixels[i] = new SKColor(
+        ToByte(outputValues[i]), ToByte(outputValues[Plane + i]), ToByte(outputValues[2 * Plane + i]));
     }
     return tile;
   }
@@ -251,6 +262,8 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
   {
     var endY = Math.Min(tileY + InpaintTileSize, destination.Height);
     var endX = Math.Min(tileX + InpaintTileSize, destination.Width);
+    var pixels = BitmapColors.Of(destination);
+    var tilePixels = BitmapColors.Of(tile);
     for (var y = tileY; y < endY; y++)
     {
       var weightY = TileEdgeWeight(y - tileY, tileY, destination.Height);
@@ -259,11 +272,12 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
         var weight = weightY * TileEdgeWeight(x - tileX, tileX, destination.Width);
         var total = weights[y, x] + weight;
         var share = weight / total;
-        var current = destination.GetPixel(x, y);
-        var added = tile.GetPixel(x - tileX, y - tileY);
+        var index = y * destination.Width + x;
+        var current = pixels[index];
+        var added = tilePixels[(y - tileY) * InpaintTileSize + x - tileX];
         byte Mix(byte from, byte to) => (byte)MathF.Round(from + (to - from) * share);
-        destination.SetPixel(x, y, new SKColor(
-          Mix(current.Red, added.Red), Mix(current.Green, added.Green), Mix(current.Blue, added.Blue)));
+        pixels[index] = new SKColor(
+          Mix(current.Red, added.Red), Mix(current.Green, added.Green), Mix(current.Blue, added.Blue));
         weights[y, x] = total;
       }
     }
@@ -281,13 +295,17 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
   // Every unmasked pixel stays exactly the source pixel -- the invariant #506 calls for.
   internal static void CompositeMaskedPixels(SKBitmap source, SKBitmap inpainted, SKBitmap mask, SKBitmap destination)
   {
-    for (var y = 0; y < source.Height; y++)
+    var pixels = source.Pixels;
+    var inpaintedPixels = BitmapColors.Of(inpainted);
+    var maskPixels = BitmapColors.Of(mask);
+    for (var i = 0; i < pixels.Length; i++)
     {
-      for (var x = 0; x < source.Width; x++)
+      if (maskPixels[i].Red != 0)
       {
-        destination.SetPixel(x, y, mask.GetPixel(x, y).Red != 0 ? inpainted.GetPixel(x, y) : source.GetPixel(x, y));
+        pixels[i] = inpaintedPixels[i];
       }
     }
+    destination.Pixels = pixels;
   }
 
   private static (int Width, int Height) ShortSideTo(int width, int height, int shortSide)
