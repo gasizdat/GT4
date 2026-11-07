@@ -215,3 +215,6 @@ heavy third-party dependencies that have no reason to be restored on every CI ru
 built them only ever existed in a scratchpad and is gone now — the same gap noted on #528's
 fixtures. If one of these fixtures ever needs to change, its generator has to be rebuilt from
 scratch against `Onnxify`'s graph API, not edited in place.
+
+The exception is `tiny-inpainter-mean.onnx`: its generator, `tiny-inpainter-mean.py`, sits beside
+it and needs only Python's `onnx` package.
