@@ -246,9 +246,23 @@ public class CreateOrUpdateNameDialogTests
       () => photo.Caption = "The family at the old house in the summer of 1952 (AI: colorized) (AI: restored) (AI: upscaled x4)");
 
     await using var window = await WindowHost.AttachAsync(dialog);
-    var (slot, picture) = await PhotoSlot.WidthsAsync(dialog, photo);
+    var (slot, picture) = await CaptionRows.PhotoSlotWidthsAsync(dialog, photo);
 
     Assert.Equal(picture, slot, 1.0);
+  }
+
+  [Fact]
+  public async Task A_long_attachment_caption_stays_within_its_row()
+  {
+    var dialog = await CreateDialogAsync(new TestServices(), [Attachment(1)]);
+    var attachment = dialog.Attachments.Single();
+    var sentences = Enumerable.Repeat("A deed to the family farm from the county records office. ", 8);
+    await MainThread.InvokeOnMainThreadAsync(() => attachment.Caption = string.Concat(sentences));
+
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var (row, captionRight) = await CaptionRows.CaptionExtentAsync(dialog, attachment);
+
+    Assert.InRange(captionRight, 0, row + 1);
   }
 
   [Fact]
