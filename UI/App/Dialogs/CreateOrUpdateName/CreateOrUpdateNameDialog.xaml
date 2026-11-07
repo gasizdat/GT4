@@ -117,7 +117,17 @@
                             Grid.Column="0"
                             Grid.ColumnSpan="3"
                             Source="{Binding Content.Source}"
-                            Style="{StaticResource PhotoPreviewStyle}" />
+                            Style="{StaticResource PhotoPreviewStyle}">
+                          <Image.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding MediaCommand, Source={x:Reference Root}}">
+                              <TapGestureRecognizer.CommandParameter>
+                                <components:AdornerCommandParameter
+                                    CommandName="PreviewMediaCommand"
+                                    Element="{Binding Source={x:Reference FamilyPhoto}, Path=BindingContext}" />
+                              </TapGestureRecognizer.CommandParameter>
+                            </TapGestureRecognizer>
+                          </Image.GestureRecognizers>
+                        </Image>
 
                         <Button
                             Grid.Row="0"
@@ -247,13 +257,32 @@
                     <Grid
                         x:Name="FamilyAttachment"
                         Padding="{StaticResource CollectionItemsVerticalPadding}"
-                        ColumnDefinitions="*, Auto, Auto, Auto, Auto, Auto"
+                        ColumnDefinitions="Auto, *, Auto, Auto, Auto, Auto, Auto"
                         RowDefinitions="Auto, Auto"
                         Style="{StaticResource HoverItem}">
 
+                      <Image
+                          Grid.Row="0"
+                          Grid.RowSpan="2"
+                          Grid.Column="0"
+                          Margin="{Thickness Right={StaticResource PageContentSpacing}}"
+                          IsVisible="{Binding HasThumbnail}"
+                          Source="{Binding Thumbnail}"
+                          Style="{StaticResource PhotoThumbStyle}">
+                        <Image.GestureRecognizers>
+                          <TapGestureRecognizer Command="{Binding MediaCommand, Source={x:Reference Root}}">
+                            <TapGestureRecognizer.CommandParameter>
+                              <components:AdornerCommandParameter
+                                  CommandName="PreviewMediaCommand"
+                                  Element="{Binding Source={x:Reference FamilyAttachment}, Path=BindingContext}" />
+                            </TapGestureRecognizer.CommandParameter>
+                          </TapGestureRecognizer>
+                        </Image.GestureRecognizers>
+                      </Image>
+
                       <Label
                           Grid.Row="0"
-                          Grid.Column="0"
+                          Grid.Column="1"
                           Style="{StaticResource FieldValue}"
                           Text="{Binding Content.DisplayName}"
                           VerticalOptions="Center" />
@@ -261,7 +290,7 @@
                       <ContentView
                           Grid.Row="0"
                           Grid.RowSpan="2"
-                          Grid.Column="1"
+                          Grid.Column="2"
                           IsVisible="{Binding CanEnhance, Source={x:Reference Root}}"
                           VerticalOptions="Center">
                         <Button
@@ -280,7 +309,7 @@
                       <Button
                           Grid.Row="0"
                           Grid.RowSpan="2"
-                          Grid.Column="2"
+                          Grid.Column="3"
                           Command="{Binding MediaCommand, Source={x:Reference Root}}"
                           Style="{StaticResource UpAdorner}"
                           VerticalOptions="Center">
@@ -295,7 +324,7 @@
                       <Button
                           Grid.Row="0"
                           Grid.RowSpan="2"
-                          Grid.Column="3"
+                          Grid.Column="4"
                           Command="{Binding MediaCommand, Source={x:Reference Root}}"
                           Style="{StaticResource DownAdorner}"
                           VerticalOptions="Center">
@@ -310,7 +339,7 @@
                       <Button
                           Grid.Row="0"
                           Grid.RowSpan="2"
-                          Grid.Column="4"
+                          Grid.Column="5"
                           Command="{Binding MediaCommand, Source={x:Reference Root}}"
                           Style="{StaticResource EditAdorner}"
                           VerticalOptions="Center">
@@ -325,7 +354,7 @@
                       <Button
                           Grid.Row="0"
                           Grid.RowSpan="2"
-                          Grid.Column="5"
+                          Grid.Column="6"
                           Command="{Binding MediaCommand, Source={x:Reference Root}}"
                           Style="{StaticResource DeleteAdorner}"
                           VerticalOptions="Center">
@@ -339,7 +368,7 @@
 
                       <Grid
                           Grid.Row="1"
-                          Grid.Column="0"
+                          Grid.Column="1"
                           ColumnDefinitions="Auto, *">
                         <Button
                             Grid.Column="0"

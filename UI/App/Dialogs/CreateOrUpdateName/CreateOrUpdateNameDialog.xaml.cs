@@ -514,6 +514,9 @@ public partial class CreateOrUpdateNameDialog : ContentPage
       case AdornerCommandParameter adorner when adorner.CommandName == "EditCaptionCommand" && adorner.Element is PersonDataItem item:
         await OnEditCaptionAsync(item);
         break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "PreviewMediaCommand" && adorner.Element is PersonDataItem { Image: { } image }:
+        await Navigation.PushModalAsync(new PhotoViewerDialog([image], _AlertService));
+        break;
     }
   }
 

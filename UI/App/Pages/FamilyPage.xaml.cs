@@ -32,6 +32,7 @@ public partial class FamilyPage : ContentPage
   private ProjectInfo? _LastProjectInfo;
   private PhotoInfo[] _Photos = [];
   private AttachmentInfo[] _Attachments = [];
+  private AttachmentItem[] _AttachmentItems = [];
 
   public FamilyPage(
     ICancellationTokenProvider cancellationTokenProvider,
@@ -135,6 +136,8 @@ public partial class FamilyPage : ContentPage
           _Persons.AddRange(persons);
           _Photos = photos;
           _Attachments = attachments;
+          _AttachmentItems = [.. attachments.Select(attachment =>
+            new AttachmentItem(attachment, _DataConverterResolver, _CancellationTokenProvider, _AlertService))];
           FilterView.ResetFilterData();
           this.RefreshView();
         }, _AlertService);
@@ -155,6 +158,8 @@ public partial class FamilyPage : ContentPage
   public bool ShowPhotos => _Photos.Length != 0;
 
   public AttachmentInfo[] Attachments => _Attachments;
+
+  public AttachmentItem[] AttachmentItems => _AttachmentItems;
 
   public bool ShowAttachments => _Attachments.Length != 0;
 

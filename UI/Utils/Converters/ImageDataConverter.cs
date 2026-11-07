@@ -37,7 +37,13 @@ public sealed class ImageDataConverter : IDataConverter
     }
 
     ImageSource imageSource;
-    if (data.Id == ElementId.NonCommittedId)
+    if (data is ImageDataWithMaxSize { Id: ElementId.NonCommittedId } uncommitted)
+    {
+      // Not cached: without an id there is no key that stays this image's own.
+      var thumbnail = ImageUtils.DownsizedPng(data.Content, uncommitted.MaxSize);
+      imageSource = ImageSource.FromStream(() => new MemoryStream(thumbnail));
+    }
+    else if (data.Id == ElementId.NonCommittedId)
     {
       imageSource = ImageSource.FromStream(token => Task.Run<Stream>(() => new MemoryStream(data.Content), token));
     }

@@ -41,6 +41,7 @@ public partial class PersonPage : ContentPage
   private PersonFullInfo _PersonFullInfo = PersonFullInfo.Empty;
   private PhotoInfo[] _Photos = [];
   private AttachmentInfo[] _Attachments = [];
+  private AttachmentItem[] _AttachmentItems = [];
   private string _Biography = string.Empty;
   private bool _IsNarrow = true;
   private PersonTab _SelectedTab;
@@ -202,6 +203,8 @@ public partial class PersonPage : ContentPage
   public InlineMediaResolver MediaResolver => _MediaResolver;
 
   public AttachmentInfo[] Attachments => _Attachments;
+
+  public AttachmentItem[] AttachmentItems => _AttachmentItems;
 
   public bool ShowAttachments => _Attachments.Length != 0;
 
@@ -445,6 +448,8 @@ public partial class PersonPage : ContentPage
     _PersonFullInfo = data.PersonFullInfo;
     _Photos = data.Photos;
     _Attachments = data.Attachments;
+    _AttachmentItems = [.. _Attachments.Select(attachment =>
+      new AttachmentItem(attachment, _DataConverterResolver, _CancellationTokenProvider, _AlertService))];
     _Biography = BiographySections.Combine(data.Bio, data.GedcomDetails, data.FamilyDetails);
     _AllRoots = data.Roots;
     // A tab is hidden for a person without its content, which would leave the body blank and unleavable.

@@ -1,3 +1,4 @@
+using GT4.Core.Gedcom;
 using GT4.Core.Project.Abstraction;
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
@@ -1246,6 +1247,36 @@ public class PersonPageTests
     await MainThread.InvokeOnMainThreadAsync(() => dialog.CloseCommand.Execute(null));
 
     Assert.Same(attachment, page.Attachments.Single());
+  }
+
+  [Fact]
+  public async Task An_image_attachment_row_gets_a_downsized_thumbnail_and_a_document_row_none()
+  {
+    var services = new TestServices();
+    // Wider than ThumbnailSize on both sides, so a thumbnail can't pass for the full-size image.
+    var scan = new Data(
+      43, GedcomPhotoResidue.EncodeAttachment(TestImages.Png(300, 200), "scan.png"), "image/png", DataCategory.PersonAttachment);
+    var deed = new Data(
+      44, GedcomPhotoResidue.EncodeAttachment([1, 2, 3], "deed.pdf"), "application/pdf", DataCategory.PersonAttachment);
+    var person = CreateSamplePerson() with { Attachments = [scan, deed] };
+    services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
+    var page = await CreatePageAsync(services);
+    await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
+    var rows = page.AttachmentItems;
+
+    var thumbnail = await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => rows[0].Thumbnail),
+      source => source is not null,
+      timeoutMessage: "The scan's thumbnail never resolved.");
+    await Poll.ConfirmNeverAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => rows[1].HasThumbnail),
+      shown => shown,
+      TimeSpan.FromSeconds(1),
+      "A document row resolved a thumbnail.");
+
+    Assert.Equal(page.Attachments, rows.Select(row => row.Attachment));
+    Assert.Equal(new Size(100, 67), ImageUtils.PixelSize(await PhotoBytes.ReadAsync(thumbnail!)));
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
 
   // Same open/close smoke coverage, but for an attachment the Attachments tab never carried

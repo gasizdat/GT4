@@ -1,7 +1,17 @@
+using SkiaSharp;
+
 namespace GT4.UI.DeviceTests;
 
 internal static class TestImages
 {
+  public static byte[] Png(int width, int height)
+  {
+    using var bitmap = new SKBitmap(width, height);
+    bitmap.Erase(SKColors.Red);
+    using var data = bitmap.Encode(SKEncodedImageFormat.Png, 100);
+    return data.ToArray();
+  }
+
   /// <summary>
   /// A 1x1 RGBA PNG, byte-for-byte valid: correct chunk lengths and CRC32 on every chunk. Any test that
   /// puts image bytes through a converter needs this rather than a hand-typed literal -- Windows decodes
